@@ -72,7 +72,11 @@ impl StableBlobStorage {
             chunk_index_bytes: Default::default(),
         };
 
-        let mut iter = self.blobs.range(range_start..).take_while(move |(k, _)| k.prefix == hash);
+        let mut iter = self
+            .blobs
+            .range(range_start..)
+            .take_while(move |e| e.key().prefix == hash)
+            .map(|e| e.into_pair());
 
         let first = iter.next()?;
 
@@ -121,9 +125,11 @@ impl Key {
 
 impl Storable for Key {
     fn to_bytes(&self) -> Cow<[u8]> {
-        let bytes = unsafe { std::slice::from_raw_parts((self as *const Key) as *const u8, size_of::<Key>()) };
+        Cow::from(self.to_vec())
+    }
 
-        Cow::from(bytes)
+    fn into_bytes(self) -> Vec<u8> {
+        self.to_vec()
     }
 
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
@@ -136,6 +142,12 @@ impl Storable for Key {
         max_size: size_of::<Key>() as u32,
         is_fixed_size: false,
     };
+}
+
+impl Key {
+    fn to_vec(&self) -> Vec<u8> {
+        unsafe { std::slice::from_raw_parts((self as *const Key) as *const u8, size_of::<Key>()) }.to_vec()
+    }
 }
 
 struct Chunk {
@@ -155,6 +167,10 @@ impl Chunk {
 impl Storable for Chunk {
     fn to_bytes(&self) -> Cow<[u8]> {
         Cow::Borrowed(&self.bytes)
+    }
+
+    fn into_bytes(self) -> Vec<u8> {
+        self.bytes
     }
 
     fn from_bytes(bytes: Cow<[u8]>) -> Self {

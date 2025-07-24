@@ -51,12 +51,12 @@ impl Files {
         self.blob_reference_counts.insert(blob_reference, count);
 
         let total_file_bytes = self.total_file_bytes.get().saturating_add(file.size);
-        self.total_file_bytes.set(total_file_bytes).unwrap();
+        self.total_file_bytes.set(total_file_bytes);
 
         if count == 1 {
             self.blob_sizes.insert(file.hash, file.size);
             let total_blob_bytes = self.total_blob_bytes.get().saturating_add(file.size);
-            self.total_blob_bytes.set(total_blob_bytes).unwrap();
+            self.total_blob_bytes.set(total_blob_bytes);
         }
     }
 
@@ -81,7 +81,7 @@ impl Files {
                     size = self.blob_sizes.remove(&hash);
                     if let Some(blob_size) = size {
                         let total_blob_bytes = self.total_blob_bytes.get().saturating_sub(blob_size);
-                        self.total_blob_bytes.set(total_blob_bytes).unwrap();
+                        self.total_blob_bytes.set(total_blob_bytes);
                     }
                 }
             } else {
@@ -90,7 +90,7 @@ impl Files {
 
             let size = size.or_else(|| self.blob_sizes.get(&hash)).unwrap_or_default();
             let total_file_bytes = self.total_file_bytes.get().saturating_sub(size);
-            self.total_file_bytes.set(total_file_bytes).unwrap();
+            self.total_file_bytes.set(total_file_bytes);
 
             Ok(RemoveFileSuccess { hash, size })
         } else {
@@ -159,7 +159,8 @@ impl Files {
         };
         self.files_by_user
             .range(range_start..)
-            .take_while(move |(k, _)| k.user_id == user_id)
+            .take_while(move |e| e.key().user_id == user_id)
+            .map(|e| e.into_pair())
     }
 
     fn iter_blob_reference_counts(
@@ -174,7 +175,8 @@ impl Files {
         };
         self.blob_reference_counts
             .range(range_start..)
-            .take_while(move |(r, _)| r.hash == hash && user_id.is_none_or(|u| u == r.user_id))
+            .take_while(move |e| e.key().hash == hash && user_id.is_none_or(|u| u == e.key().user_id))
+            .map(|e| e.into_pair())
     }
 }
 
@@ -211,11 +213,11 @@ impl From<&FileRemoved> for FileIdByUserThenCreated {
 
 impl Storable for FileIdByUserThenCreated {
     fn to_bytes(&self) -> Cow<[u8]> {
-        let mut bytes = Vec::with_capacity(Self::MAX_SIZE);
-        bytes.extend_from_slice(self.user_id.as_slice());
-        bytes.extend_from_slice(&self.created.to_be_bytes());
-        bytes.extend_from_slice(&self.file_id.to_be_bytes());
-        Cow::Owned(bytes)
+        Cow::Owned(self.to_vec())
+    }
+
+    fn into_bytes(self) -> Vec<u8> {
+        self.to_vec()
     }
 
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
@@ -233,6 +235,16 @@ impl Storable for FileIdByUserThenCreated {
         max_size: Self::MAX_SIZE as u32,
         is_fixed_size: false,
     };
+}
+
+impl FileIdByUserThenCreated {
+    fn to_vec(&self) -> Vec<u8> {
+        let mut bytes = Vec::with_capacity(Self::MAX_SIZE);
+        bytes.extend_from_slice(self.user_id.as_slice());
+        bytes.extend_from_slice(&self.created.to_be_bytes());
+        bytes.extend_from_slice(&self.file_id.to_be_bytes());
+        bytes
+    }
 }
 
 pub struct UserFile {
@@ -254,10 +266,11 @@ impl HashAndBucket {
 
 impl Storable for HashAndBucket {
     fn to_bytes(&self) -> Cow<[u8]> {
-        let mut bytes = Vec::with_capacity(Self::MAX_SIZE);
-        bytes.extend_from_slice(&self.hash);
-        bytes.extend_from_slice(self.bucket.as_slice());
-        Cow::Owned(bytes)
+        Cow::Owned(self.to_vec())
+    }
+
+    fn into_bytes(self) -> Vec<u8> {
+        self.to_vec()
     }
 
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
@@ -273,6 +286,15 @@ impl Storable for HashAndBucket {
         max_size: Self::MAX_SIZE as u32,
         is_fixed_size: false,
     };
+}
+
+impl HashAndBucket {
+    fn to_vec(&self) -> Vec<u8> {
+        let mut bytes = Vec::with_capacity(Self::MAX_SIZE);
+        bytes.extend_from_slice(&self.hash);
+        bytes.extend_from_slice(self.bucket.as_slice());
+        bytes
+    }
 }
 
 pub struct RemoveFileSuccess {
@@ -293,13 +315,11 @@ impl BlobReference {
 
 impl Storable for BlobReference {
     fn to_bytes(&self) -> Cow<[u8]> {
-        let mut bytes = Vec::with_capacity(Self::MAX_SIZE);
-        bytes.extend_from_slice(&self.hash);
-        let user_id_bytes = self.user_id.as_slice();
-        bytes.push(user_id_bytes.len() as u8);
-        bytes.extend_from_slice(user_id_bytes);
-        bytes.extend_from_slice(self.canister_id.as_slice());
-        Cow::Owned(bytes)
+        Cow::Owned(self.to_vec())
+    }
+
+    fn into_bytes(self) -> Vec<u8> {
+        self.to_vec()
     }
 
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
@@ -318,6 +338,18 @@ impl Storable for BlobReference {
         max_size: Self::MAX_SIZE as u32,
         is_fixed_size: false,
     };
+}
+
+impl BlobReference {
+    fn to_vec(&self) -> Vec<u8> {
+        let mut bytes = Vec::with_capacity(Self::MAX_SIZE);
+        bytes.extend_from_slice(&self.hash);
+        let user_id_bytes = self.user_id.as_slice();
+        bytes.push(user_id_bytes.len() as u8);
+        bytes.extend_from_slice(user_id_bytes);
+        bytes.extend_from_slice(self.canister_id.as_slice());
+        bytes
+    }
 }
 
 impl Default for Files {
@@ -353,13 +385,13 @@ fn init_blob_sizes() -> StableBTreeMap<Hash, u64, Memory> {
 fn init_total_file_bytes() -> StableCell<u64, Memory> {
     let memory = get_total_file_bytes_memory();
 
-    StableCell::init(memory, 0).unwrap()
+    StableCell::init(memory, 0)
 }
 
 fn init_total_blob_bytes() -> StableCell<u64, Memory> {
     let memory = get_total_blob_bytes_memory();
 
-    StableCell::init(memory, 0).unwrap()
+    StableCell::init(memory, 0)
 }
 
 pub struct Metrics {
