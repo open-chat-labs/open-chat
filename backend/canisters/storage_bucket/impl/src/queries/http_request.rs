@@ -212,16 +212,14 @@ fn extract_range_from_headers(headers: &[(String, String)]) -> Option<BytesRange
 
     if let Some(start) = start {
         Some(BytesRange::From(start, end))
-    } else if let Some(len) = end {
-        Some(BytesRange::Suffix(len))
     } else {
-        None
+        end.map(BytesRange::Suffix)
     }
 }
 
 fn parse_range_limit(s: &str) -> Result<Option<usize>, ParseIntError> {
     let s = s.trim();
-    if s.is_empty() { Ok(None) } else { usize::from_str(s).map(|u| Some(u)) }
+    if s.is_empty() { Ok(None) } else { usize::from_str(s).map(Some) }
 }
 
 #[cfg(test)]
