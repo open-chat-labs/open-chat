@@ -71,14 +71,6 @@ impl Files {
         self.blobs.get(hash)
     }
 
-    pub fn blob_bytes_range(&self, hash: &Hash, start: usize, end: Option<usize>) -> Option<Vec<u8>> {
-        self.blobs.get_range(hash, start, end)
-    }
-
-    pub fn blob_bytes_suffix(&self, hash: &Hash, len: usize) -> Option<Vec<u8>> {
-        self.blobs.get_suffix(hash, len)
-    }
-
     pub fn owner(&self, file_id: &FileId) -> Option<Principal> {
         self.get(file_id)
             .map(|f| f.owner)

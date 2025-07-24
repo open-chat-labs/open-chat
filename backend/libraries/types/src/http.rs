@@ -83,6 +83,10 @@ impl HttpResponse {
         }
     }
 
+    pub fn range_not_satisfiable() -> HttpResponse {
+        HttpResponse::status_code(416)
+    }
+
     pub fn upgrade() -> HttpResponse {
         HttpResponse {
             status_code: 200,

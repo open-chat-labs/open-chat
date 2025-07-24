@@ -22,24 +22,6 @@ impl StableBlobStorage {
         Some(iter.flat_map(|(_, c)| c.bytes).collect())
     }
 
-    pub fn get_range(&self, hash: &Hash, start: usize, end: Option<usize>) -> Option<Vec<u8>> {
-        let iter = self.value_chunks_iterator(*hash)?.flat_map(|(_, c)| c.bytes);
-
-        match end {
-            Some(end) => {
-                let len = end.checked_sub(start)?;
-                Some(iter.skip(start).take(len).collect())
-            }
-            None => Some(iter.skip(start).collect()),
-        }
-    }
-
-    pub fn get_suffix(&self, hash: &Hash, len: usize) -> Option<Vec<u8>> {
-        let bytes = self.get(hash)?;
-        let start = bytes.len().checked_sub(len)?;
-        Some(bytes[start..].to_vec())
-    }
-
     pub fn data_size(&self, hash: &Hash) -> Option<u64> {
         let iter = self.value_chunks_iterator(*hash)?;
 
