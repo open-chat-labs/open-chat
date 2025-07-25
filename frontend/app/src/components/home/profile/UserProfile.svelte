@@ -656,7 +656,7 @@
             </CollapsibleCard>
         </div>
         {#if !$anonUserStore}
-            {#if client.config.accountLinkingCodesEnabled}
+            {#if client.accountLinkingCodeEnabled()}
                 <div class="link-device">
                     <CollapsibleCard
                         onToggle={linkDeviceSectionOpen.toggle}

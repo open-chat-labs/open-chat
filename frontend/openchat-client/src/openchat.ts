@@ -708,6 +708,10 @@ export class OpenChat {
         });
     }
 
+    accountLinkingCodeEnabled() {
+        return this.config.accountLinkingCodesEnabled;
+    }
+
     deleteCurrentUser(
         identityKey: CryptoKeyPair,
         delegation: JsonnableDelegationChain,
@@ -5079,7 +5083,7 @@ export class OpenChat {
     getDisplayName(
         userId: string | undefined,
         communityMembers?: ReadonlyMap<string, Member>,
-        webhooks?: ReadonlyMap<string, WebhookDetails>
+        webhooks?: ReadonlyMap<string, WebhookDetails>,
     ): string {
         if (userId !== undefined) {
             const user = userStore.get(userId);
@@ -7085,13 +7089,17 @@ export class OpenChat {
             for (const [userId] of selectedChatMembersStore.value) {
                 const user = userStore.get(userId);
                 if (user !== undefined) {
-                    const displayName = this.getDisplayName(userId, selectedCommunityMembersStore.value);
-                    lookup[user.username.toLowerCase()] = displayName === user.displayName
-                        ? user
-                        : {
-                            ...user,
-                            displayName
-                        };
+                    const displayName = this.getDisplayName(
+                        userId,
+                        selectedCommunityMembersStore.value,
+                    );
+                    lookup[user.username.toLowerCase()] =
+                        displayName === user.displayName
+                            ? user
+                            : {
+                                  ...user,
+                                  displayName,
+                              };
                 }
             }
             if (selectedCommunitySummaryStore.value !== undefined) {

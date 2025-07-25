@@ -15,10 +15,12 @@
     type CodeStatus = "notRequested" | "success" | "error";
 
     let modalStatus = $state<ModalStatus>("closed");
-    let codeStatus = $state<CodeStatus>("notRequested")
+    let codeStatus = $state<CodeStatus>("notRequested");
     let loadingCode = $state(false);
-    let accountLinkingCode = $state();
-    let expired = $derived(accountLinkingCode ? $now500 >= Number(accountLinkingCode.expiresAt) : false);
+    let accountLinkingCode = $state<AccountLinkingCode>();
+    let expired = $derived(
+        accountLinkingCode ? $now500 >= Number(accountLinkingCode.expiresAt) : false,
+    );
     let remaining = $derived(accountLinkingCode ? calculateRemaining() : undefined);
 
     function showModal() {
@@ -29,27 +31,32 @@
     function calculateRemaining() {
         return accountLinkingCode
             ? client.durationFromMilliseconds(
-                Math.max(0, Number(accountLinkingCode.expiresAt) - $now500)
-            ) : undefined
+                  Math.max(0, Number(accountLinkingCode.expiresAt) - $now500),
+              )
+            : undefined;
     }
-    
+
     function fetchAccountLinkingCode() {
         loadingCode = true;
-        client.createAccountLinkingCode()
+        client
+            .createAccountLinkingCode()
             .then((res) => {
                 codeStatus = "success";
                 accountLinkingCode = res;
-            }).catch((e) => {
+            })
+            .catch((e) => {
+                console.error(e);
                 codeStatus = "error";
-            }).finally(() => {
+            })
+            .finally(() => {
                 modalStatus = "open";
                 loadingCode = false;
             });
     }
 
     function formatRemaining() {
-        const pv = (n: number): string => n.toString().padStart(2, '0');
-        return `${pv(remaining.minutes)}:${pv(remaining.seconds)}`;
+        const pv = (n: number): string => n.toString().padStart(2, "0");
+        return remaining ? `${pv(remaining.minutes)}:${pv(remaining.seconds)}` : "";
     }
 
     function modalClose() {
@@ -57,7 +64,6 @@
         codeStatus = "notRequested";
     }
 </script>
-
 
 {#if "open" === modalStatus}
     <Overlay>
@@ -69,7 +75,8 @@
                     </div>
                     {#if "success" === codeStatus}
                         <p class="subtitle">
-                            <Translatable resourceKey={i18nKey("accountLinkingCode.webModal.subtitle")} />
+                            <Translatable
+                                resourceKey={i18nKey("accountLinkingCode.webModal.subtitle")} />
                         </p>
                     {/if}
                 </div>
@@ -78,41 +85,56 @@
                 <div class="code-content {expired ? 'expired' : ''}">
                     {#if "success" === codeStatus}
                         <div class="code-chars">
-                            {#each accountLinkingCode.value as char}
-                                <div class="char">{char}</div>
-                            {/each}
+                            {#if accountLinkingCode}
+                                {#each accountLinkingCode.value as char}
+                                    <div class="char">{char}</div>
+                                {/each}
+                            {/if}
                         </div>
                         <div class="remaining">
                             {#if expired}
-                                <Translatable resourceKey={i18nKey("accountLinkingCode.webModal.expired")} />
+                                <Translatable
+                                    resourceKey={i18nKey("accountLinkingCode.webModal.expired")} />
                             {:else if remaining}
-                                <Translatable resourceKey={i18nKey("accountLinkingCode.webModal.willExpireIn", { remaining: formatRemaining()})} />
+                                <Translatable
+                                    resourceKey={i18nKey(
+                                        "accountLinkingCode.webModal.willExpireIn",
+                                        { remaining: formatRemaining() },
+                                    )} />
                             {/if}
                         </div>
                     {:else if "error" === codeStatus}
                         <div class="error">
                             <div class="msg">
-                                <Translatable resourceKey={i18nKey("accountLinkingCode.webModal.error.msg")} />
+                                <Translatable
+                                    resourceKey={i18nKey(
+                                        "accountLinkingCode.webModal.error.msg",
+                                    )} />
                             </div>
                         </div>
                     {/if}
                 </div>
             {/snippet}
             {#snippet footer()}
-            <div class="footer">
-                {#if "success" === codeStatus}
-                    <Button onClick={modalClose} fill={true} danger={expired}>
-                        <Translatable resourceKey={i18nKey("accountLinkingCode.webModal.close")} />
-                    </Button>
-                {:else if "error" === codeStatus}
-                    <Button onClick={fetchAccountLinkingCode} loading={loadingCode}>
-                        <Translatable resourceKey={i18nKey("accountLinkingCode.webModal.error.tryAgain")} />
-                    </Button>
-                    <Button onClick={modalClose} secondary={true}>
-                        <Translatable resourceKey={i18nKey("accountLinkingCode.webModal.error.cancel")} />
-                    </Button>
-                {/if}
-            </div>
+                <div class="footer">
+                    {#if "success" === codeStatus}
+                        <Button onClick={modalClose} fill={true} danger={expired}>
+                            <Translatable
+                                resourceKey={i18nKey("accountLinkingCode.webModal.close")} />
+                        </Button>
+                    {:else if "error" === codeStatus}
+                        <Button onClick={fetchAccountLinkingCode} loading={loadingCode}>
+                            <Translatable
+                                resourceKey={i18nKey(
+                                    "accountLinkingCode.webModal.error.tryAgain",
+                                )} />
+                        </Button>
+                        <Button onClick={modalClose} secondary={true}>
+                            <Translatable
+                                resourceKey={i18nKey("accountLinkingCode.webModal.error.cancel")} />
+                        </Button>
+                    {/if}
+                </div>
             {/snippet}
         </ModalContent>
     </Overlay>
@@ -135,7 +157,9 @@
         color: var(--txt-light);
     }
 
-    .header, .footer, .code-content {
+    .header,
+    .footer,
+    .code-content {
         width: 28rem;
         padding-left: $sp4;
         padding-right: $sp4;
