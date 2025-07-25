@@ -15,7 +15,6 @@
         selectedCommunityInvitedUsersStore,
         selectedCommunityLapsedMembersStore,
         selectedCommunityMembersStore,
-        type UserSummary,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -32,8 +31,8 @@
         community: CommunitySummary;
         selectedTab?: "community" | "channel";
         onClose: () => void;
-        onBlockCommunityUser?: (args: { userId: string }) => void;
-        onUnblockCommunityUser: (user: UserSummary) => void;
+        onBlockCommunityUser?: (userId: string) => void;
+        onUnblockCommunityUser: (userId: string) => void;
         onRemoveCommunityMember?: (userId: string) => void;
         onChangeCommunityRole?: (args: {
             userId: string;
@@ -42,8 +41,8 @@
         }) => void;
         onCancelCommunityInvite: (userId: string) => void;
         onShowInviteCommunityUsers: () => void;
-        onBlockGroupUser: (args: { userId: string }) => void;
-        onUnblockGroupUser: (user: UserSummary) => void;
+        onBlockGroupUser: (userId: string) => void;
+        onUnblockGroupUser: (userId: string) => void;
         onRemoveGroupMember: (userId: string) => void;
         onChangeGroupRole: (args: {
             userId: string;

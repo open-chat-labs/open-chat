@@ -16,7 +16,7 @@
         canUnblockUser?: boolean;
         searchTerm?: string;
         me?: boolean;
-        onUnblockUser: (user: UserSummary) => void;
+        onUnblockUser: (userId: string) => void;
     }
 
     let {
@@ -39,7 +39,7 @@
                 {/snippet}
                 {#snippet menuItems()}
                     <Menu>
-                        <MenuItem onclick={() => onUnblockUser(user)}>
+                        <MenuItem onclick={() => onUnblockUser(user.userId)}>
                             {#snippet icon()}
                                 <Cancel size={$iconSize} color={"var(--icon-inverted-txt)"} />
                             {/snippet}
