@@ -24,7 +24,7 @@ impl LastOnlineDates {
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (Principal, TimestampMillis)> + '_ {
-        self.map.iter()
+        self.map.iter().map(|e| e.into_pair())
     }
 }
 

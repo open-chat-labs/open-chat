@@ -128,7 +128,7 @@ impl StableMemoryMapInner {
         let end = map_bound(range.end_bound());
 
         Iter {
-            inner: self.map.range((start, end)),
+            inner: self.map.range((start, end)).map(|e| e.into_pair()),
             _phantom: PhantomData,
         }
     }
@@ -142,9 +142,9 @@ pub fn garbage_collect(prefix: BaseKeyPrefix) -> Result<u32, u32> {
             let keys: Vec<_> = m
                 .map
                 .range(BaseKey::from(prefix.clone())..)
-                .take_while(|(k, _)| k.matches_prefix(&prefix))
-                .map(|(k, _)| k)
+                .take_while(|e| e.key().matches_prefix(&prefix))
                 .take(100)
+                .map(|e| e.key().clone())
                 .collect();
 
             let batch_count = keys.len() as u32;

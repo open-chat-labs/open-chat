@@ -35,6 +35,10 @@ impl Storable for BaseKey {
         Cow::Borrowed(&self.0)
     }
 
+    fn into_bytes(self) -> Vec<u8> {
+        self.0
+    }
+
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
         BaseKey(bytes.to_vec())
     }
