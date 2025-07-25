@@ -21,11 +21,6 @@ mod updates;
 const MAX_BLOB_SIZE_BYTES: u64 = 100 * (1 << 20); // 100MB
 const MAX_EVENTS_TO_SYNC_PER_BATCH: usize = 1000;
 
-#[derive(CandidType, Serialize, Deserialize)]
-enum StateVersion {
-    V1,
-}
-
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
 }
