@@ -11,7 +11,7 @@ use types::{
 };
 
 const MAX_RESPONSE_SIZE_BYTES: usize = 3 << 19; // 1.5MB
-const DEFAULT_RANGE_RESPONSE_CHUNK_SIZE: usize = 1 << 18; // 256KB
+const DEFAULT_RANGE_RESPONSE_CHUNK_SIZE: usize = 1 << 19; // 512KB
 const CACHE_HEADER_VALUE: &str = "public, max-age=100000000, immutable";
 
 #[query]
