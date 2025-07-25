@@ -106,6 +106,25 @@
     },
     "account": "Cuenta",
     "accountCopiedToClipboard": "¡Dirección de cuenta copiada al portapapeles!",
+    "accountLinkingCode": {
+        "settingsMenu": {
+            "cta": "Mostrar el código de vinculación de la cuenta",
+            "disclaimer": "Si desea vincular esta cuenta a un dispositivo con la aplicación nativa de OpenChat instalada, haga clic en el botón de abajo para obtener su código de vinculación. Úselo solo en un dispositivo de confianza.",
+            "title": "Vincular con nuevo dispositivo"
+        },
+        "webModal": {
+            "close": "Cerca",
+            "error": {
+                "cancel": "Cancelar",
+                "msg": "No se pudo cargar el código de vinculación de su cuenta, inténtelo nuevamente.",
+                "tryAgain": "Intentar otra vez"
+            },
+            "expired": "¡Tu código ha expirado!",
+            "subtitle": "Utilice el código a continuación para vincular su cuenta actual con un nuevo dispositivo confiable.",
+            "title": "Código de vinculación de cuenta",
+            "willExpireIn": "El código expirará en {remaining}"
+        }
+    },
     "accounts": "cuentas",
     "accountSuspended": "Cuenta suspendida",
     "activity": {
@@ -1080,20 +1099,25 @@
     "messageUrlCopiedToClipboard": "URL del mensaje copiada al portapapeles.",
     "minimumAmount": "Mínimo: {amount} {symbol}",
     "minutes": "Minutos",
-    "mobile": {
-        "credentials": {
-            "errors": {
-                "genericSignIn": "No se pudo iniciar sesión con una clave de acceso.",
-                "genericSignUp": "No se pudo crear una clave de acceso."
-            }
-        }
-    },
     "moderator": "moderador",
     "months": "Meses",
     "mustBeFutureDateError": "Debes seleccionar una fecha futura",
     "muted": "silenciado",
     "muteNotifications": "Silenciar notificaciones",
     "myAccount": "Mi cuenta",
+    "native": {
+        "auth": {
+            "createAccount": "Crear nueva cuenta",
+            "error": "Error de autenticación. Inténtalo de nuevo.",
+            "existingAccount": "Soy un usuario existente",
+            "linkAccount": {
+                "cta": "Vincular cuenta",
+                "info": "Para vincularse con su cuenta OpenChat existente, ingrese su contraseña de un solo uso a continuación.",
+                "note": "La contraseña de un solo uso se puede encontrar en su perfil/avanzado, en el dispositivo en el que haya iniciado sesión actualmente.",
+                "title": "Vincular con cuenta existente"
+            }
+        }
+    },
     "new": "nuevo",
     "newChat": "Nuevo chat",
     "newGroup": "Nuevo grupo",

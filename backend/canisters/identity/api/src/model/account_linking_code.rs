@@ -1,9 +1,10 @@
 use candid::CandidType;
+use constants::MINUTE_IN_MS;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{TimestampMillis, UserId};
 
-const ALC_DURATION: u64 = 5 * 60 * 1000; // 5 minutes in milliseconds
+const ALC_DURATION: u64 = 3 * MINUTE_IN_MS; // 3 minutes in milliseconds
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 #[ts_export]

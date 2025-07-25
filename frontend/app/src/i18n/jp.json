@@ -106,6 +106,25 @@
     },
     "account": "アカウント",
     "accountCopiedToClipboard": "アカウントアドレスがクリップボードにコピーされました。",
+    "accountLinkingCode": {
+        "settingsMenu": {
+            "cta": "アカウントリンクコードを表示",
+            "disclaimer": "このアカウントをOpenChatネイティブアプリがインストールされたデバイスに連携させたい場合は、下のボタンをクリックしてアカウント連携コードを取得してください。このコードは信頼できるデバイスでのみご利用ください。",
+            "title": "新しいデバイスとリンク"
+        },
+        "webModal": {
+            "close": "近い",
+            "error": {
+                "cancel": "キャンセル",
+                "msg": "アカウントリンクコードを読み込めませんでした。もう一度お試しください。",
+                "tryAgain": "もう一度やり直してください"
+            },
+            "expired": "コードの有効期限が切れました。",
+            "subtitle": "以下のコードを使用して、現在のアカウントを新しい信頼できるデバイスにリンクします。",
+            "title": "アカウントリンクコード",
+            "willExpireIn": "コードは{remaining}に期限切れになります"
+        }
+    },
     "accounts": "アカウント",
     "accountSuspended": "アカウントが一時停止",
     "activity": {
@@ -1080,20 +1099,25 @@
     "messageUrlCopiedToClipboard": "メッセージのURLがクリップボードにコピーされました！",
     "minimumAmount": "最小値: {amount} {symbol}",
     "minutes": "分",
-    "mobile": {
-        "credentials": {
-            "errors": {
-                "genericSignIn": "パスキーでサインインできませんでした。",
-                "genericSignUp": "パスキーを作成できませんでした。"
-            }
-        }
-    },
     "moderator": "モデレータ",
     "months": "月",
     "mustBeFutureDateError": "将来の日付を選択する必要があります",
     "muted": "ミュート",
     "muteNotifications": "通知をミュートする",
     "myAccount": "マイアカウント",
+    "native": {
+        "auth": {
+            "createAccount": "新しいアカウントを作成",
+            "error": "認証に失敗しました。もう一度お試しください。",
+            "existingAccount": "私は既存のユーザーです",
+            "linkAccount": {
+                "cta": "アカウントをリンク",
+                "info": "既存のOpenChatアカウントと連携するには、下記にワンタイムパスワードを入力してください。",
+                "note": "ワンタイムパスワードは、現在サインインしているデバイスの「プロフィール/詳細設定」の下にあります。",
+                "title": "既存のアカウントとリンク"
+            }
+        }
+    },
     "new": "new",
     "newChat": "新規チャット",
     "newGroup": "新規グループ",

@@ -6,6 +6,7 @@
     import Button from "../../Button.svelte";
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
+    import { now500 } from "../../../stores/time";
     import { type AccountLinkingCode } from "openchat-shared";
 
     const client = getContext<OpenChat>("client");
@@ -16,27 +17,28 @@
     let modalStatus = $state<ModalStatus>("closed");
     let codeStatus = $state<CodeStatus>("notRequested")
     let loadingCode = $state(false);
-    let remaining = $state(undefined);
-    let remainingInterval = $state(undefined);
-    let accountLinkingCode: AccountLinkingCode | undefined = $state(undefined);
+    let accountLinkingCode = $state();
+    let expired = $derived(accountLinkingCode ? $now500 >= Number(accountLinkingCode.expiresAt) : false);
+    let remaining = $derived(accountLinkingCode ? calculateRemaining() : undefined);
 
     function showModal() {
         modalStatus = "initialLoad";
         fetchAccountLinkingCode();
+    }
+
+    function calculateRemaining() {
+        return accountLinkingCode
+            ? client.durationFromMilliseconds(
+                Math.max(0, Number(accountLinkingCode.expiresAt) - $now500)
+            ) : undefined
     }
     
     function fetchAccountLinkingCode() {
         loadingCode = true;
         client.createAccountLinkingCode()
             .then((res) => {
-                // codeStatus = "error";
                 codeStatus = "success";
                 accountLinkingCode = res;
-
-                // Init remaining
-                calculateRemaining();
-                // Sets the interval that counts down the code validity!
-                remainingInterval = setInterval(calculateRemaining, 1000);
             }).catch((e) => {
                 codeStatus = "error";
             }).finally(() => {
@@ -45,27 +47,14 @@
             });
     }
 
-    function calculateRemaining() {
-        if (accountLinkingCode) {
-            remaining = Math.max(0, Math.floor((Number(accountLinkingCode.expiresAt) - Date.now()) / 1000));
-
-            if (!remaining) {
-                clearInterval(remainingInterval);
-            }
-        }
-    }
-
     function formatRemaining() {
-        const remainingMin = Math.floor(remaining / 60);
-        const remainingSec = remaining % 60;
-        const padValue = n => n.toString().padStart(2, '0');
-        return `${padValue(remainingMin)}:${padValue(remainingSec)}`;
+        const pv = (n: number): string => n.toString().padStart(2, '0');
+        return `${pv(remaining.minutes)}:${pv(remaining.seconds)}`;
     }
 
     function modalClose() {
         modalStatus = "closed";
         codeStatus = "notRequested";
-        clearInterval(remainingInterval);
     }
 </script>
 
@@ -86,7 +75,7 @@
                 </div>
             {/snippet}
             {#snippet body()}
-                <div class="code-content {!remaining ? 'expired' : ''}">
+                <div class="code-content {expired ? 'expired' : ''}">
                     {#if "success" === codeStatus}
                         <div class="code-chars">
                             {#each accountLinkingCode.value as char}
@@ -94,9 +83,9 @@
                             {/each}
                         </div>
                         <div class="remaining">
-                            {#if !remaining}
+                            {#if expired}
                                 <Translatable resourceKey={i18nKey("accountLinkingCode.webModal.expired")} />
-                            {:else}
+                            {:else if remaining}
                                 <Translatable resourceKey={i18nKey("accountLinkingCode.webModal.willExpireIn", { remaining: formatRemaining()})} />
                             {/if}
                         </div>
@@ -112,7 +101,7 @@
             {#snippet footer()}
             <div class="footer">
                 {#if "success" === codeStatus}
-                    <Button onClick={modalClose} fill={true} danger={!remaining}>
+                    <Button onClick={modalClose} fill={true} danger={expired}>
                         <Translatable resourceKey={i18nKey("accountLinkingCode.webModal.close")} />
                     </Button>
                 {:else if "error" === codeStatus}
@@ -139,10 +128,6 @@
 </div>
 
 <style lang="scss">
-    :global(.modal-content) {
-        width: 32rem;
-    }
-
     .subtitle {
         @include font(book, normal, fs-100);
         padding-top: $sp4;
@@ -150,31 +135,34 @@
         color: var(--txt-light);
     }
 
-    .header, .footer, .error {
+    .header, .footer, .code-content {
+        width: 28rem;
         padding-left: $sp4;
         padding-right: $sp4;
     }
 
     .account-linking {
+        gap: 2rem;
         display: flex;
         flex-direction: column;
-        gap: 2rem;
     }
 
-    .code-content.expired {
-        .code-chars .char:after {
-            background-color: var(--toast-failure-bg);
-        }
+    .code-content {
+        &.expired {
+            .code-chars .char:after {
+                background-color: var(--toast-failure-bg);
+            }
 
-        .remaining {
-            color: var(--toast-failure-bg);
+            .remaining {
+                color: var(--toast-failure-bg);
+            }
         }
     }
 
     .code-chars {
+        @include font(book, normal, fs-220);
         display: flex;
         gap: $sp4;
-        font-size: 3rem;
         justify-content: center;
 
         .char {

@@ -106,6 +106,25 @@
     },
     "account": "Account",
     "accountCopiedToClipboard": "Indirizzo dell'account copiato negli appunti!",
+    "accountLinkingCode": {
+        "settingsMenu": {
+            "cta": "Mostra il codice di collegamento dell'account",
+            "disclaimer": "Se desideri collegare questo account a un dispositivo con l'app nativa OpenChat installata, clicca sul pulsante qui sotto per ottenere il codice di collegamento dell'account! Utilizza il codice solo su un dispositivo attendibile.",
+            "title": "Collegamento con il nuovo dispositivo"
+        },
+        "webModal": {
+            "close": "Vicino",
+            "error": {
+                "cancel": "Cancellare",
+                "msg": "Non è stato possibile caricare il codice di collegamento del tuo account. Riprova.",
+                "tryAgain": "Riprova"
+            },
+            "expired": "Il tuo codice è scaduto!",
+            "subtitle": "Utilizza il codice sottostante per collegare il tuo account attuale a un nuovo dispositivo attendibile.",
+            "title": "Codice di collegamento dell'account",
+            "willExpireIn": "Il codice scadrà tra {remaining}"
+        }
+    },
     "accounts": "Conti",
     "accountSuspended": "Account sospeso",
     "activity": {
@@ -1080,20 +1099,25 @@
     "messageUrlCopiedToClipboard": "URL del messaggio copiato negli appunti!",
     "minimumAmount": "Minimo: {amount} {symbol}",
     "minutes": "Minuti",
-    "mobile": {
-        "credentials": {
-            "errors": {
-                "genericSignIn": "Impossibile accedere con una passkey.",
-                "genericSignUp": "Impossibile creare una passkey."
-            }
-        }
-    },
     "moderator": "moderatore",
     "months": "Mesi",
     "mustBeFutureDateError": "Devi selezionare una data futura",
     "muted": "muto",
     "muteNotifications": "Notifiche mute",
     "myAccount": "Il mio account",
+    "native": {
+        "auth": {
+            "createAccount": "Crea un nuovo account",
+            "error": "Autenticazione non riuscita. Riprova.",
+            "existingAccount": "Sono un utente esistente",
+            "linkAccount": {
+                "cta": "Collega account",
+                "info": "Per effettuare il collegamento al tuo account OpenChat esistente, inserisci la tua password monouso qui sotto.",
+                "note": "La password monouso si trova nella sezione \"Profilo\"/\"Avanzate\" del dispositivo su cui hai effettuato l'accesso.",
+                "title": "Collegamento con account esistente"
+            }
+        }
+    },
     "new": "nuovo",
     "newChat": "Nuova chat",
     "newGroup": "Nuovo gruppo",

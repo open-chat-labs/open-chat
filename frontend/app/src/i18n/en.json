@@ -106,27 +106,27 @@
     },
     "account": "Account",
     "accountCopiedToClipboard": "Account address copied to clipboard!",
-    "accounts": "Accounts",
-    "accountSuspended": "Account suspended",
     "accountLinkingCode": {
         "settingsMenu": {
-            "title": "Link with new device",
+            "cta": "Show account linking code",
             "disclaimer": "If you would like to link this account to a device with the OpenChat native app installed, click on the button below to get your Account Linking Code! Use the code on a trusted device only.",
-            "cta": "Show account linking code"
+            "title": "Link with new device"
         },
         "webModal": {
-            "title": "Account Linking Code",
-            "subtitle": "Use the code below to link your current account with a new trusted device. The code is case sensitive.",
-            "expired": "Your code has expired!",
-            "willExpireIn": "The code will expire in {remaining}",
-            "close": "Thanks, close the modal",
+            "close": "Close",
             "error": {
+                "cancel": "Cancel",
                 "msg": "Your account linking code could not be loaded, please try again.",
-                "tryAgain": "Try again",
-                "cancel": "Cancel"
-            }
+                "tryAgain": "Try again"
+            },
+            "expired": "Your code has expired!",
+            "subtitle": "Use the code below to link your current account with a new trusted device.",
+            "title": "Account Linking Code",
+            "willExpireIn": "The code will expire in {remaining}"
         }
     },
+    "accounts": "Accounts",
+    "accountSuspended": "Account suspended",
     "activity": {
         "anon": "An anonymous user",
         "crypto": "{username} sent you a crypto message",
@@ -1099,25 +1099,25 @@
     "messageUrlCopiedToClipboard": "Message url copied to clipboard!",
     "minimumAmount": "Minimum: {amount} {symbol}",
     "minutes": "Minutes",
-    "native": {
-        "auth": {
-            "createAccount": "Create new account",
-            "existingAccount": "I'm an existing user",
-            "linkAccount": {
-                "title": "Link with existing account",
-                "info": "To link with your existing OpenChat account, please enter your one-time-password below.",
-                "note": "One-time-password can be found under your profile / advanced, on a device where you are currently signed in.",
-                "cta": "Link account"
-            },
-            "error": "Authentication failed. Please try again."
-        }
-    },
     "moderator": "moderator",
     "months": "Months",
     "mustBeFutureDateError": "You must select a future date",
     "muted": "muted",
     "muteNotifications": "Mute notifications",
     "myAccount": "My account",
+    "native": {
+        "auth": {
+            "createAccount": "Create new account",
+            "error": "Authentication failed. Please try again.",
+            "existingAccount": "I'm an existing user",
+            "linkAccount": {
+                "cta": "Link account",
+                "info": "To link with your existing OpenChat account, please enter your one-time-password below.",
+                "note": "One-time-password can be found under your profile / advanced, on a device where you are currently signed in.",
+                "title": "Link with existing account"
+            }
+        }
+    },
     "new": "new",
     "newChat": "New chat",
     "newGroup": "New group",

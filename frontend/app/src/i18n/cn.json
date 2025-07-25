@@ -106,6 +106,25 @@
     },
     "account": "账户",
     "accountCopiedToClipboard": "帐户地址已复制到剪贴板！",
+    "accountLinkingCode": {
+        "settingsMenu": {
+            "cta": "显示账户关联代码",
+            "disclaimer": "如果您想将此帐户链接到安装了 OpenChat 原生应用的设备，请点击下方按钮获取您的帐户链接代码！请仅在受信任的设备上使用此代码。",
+            "title": "与新设备链接"
+        },
+        "webModal": {
+            "close": "关闭",
+            "error": {
+                "cancel": "取消",
+                "msg": "无法加载您的帐户链接代码，请重试。",
+                "tryAgain": "再试一次"
+            },
+            "expired": "您的代码已过期！",
+            "subtitle": "使用以下代码将您当前的帐户与新的受信任设备关联。",
+            "title": "账户关联代码",
+            "willExpireIn": "此代码将于 {remaining} 过期"
+        }
+    },
     "accounts": "账户",
     "accountSuspended": "帐户暂停",
     "activity": {
@@ -1080,20 +1099,25 @@
     "messageUrlCopiedToClipboard": "消息网址已复制到剪贴板！",
     "minimumAmount": "最小值：{amount} {symbol}",
     "minutes": "分钟",
-    "mobile": {
-        "credentials": {
-            "errors": {
-                "genericSignIn": "无法使用密钥登录。",
-                "genericSignUp": "无法创建密钥。"
-            }
-        }
-    },
     "moderator": "版主",
     "months": "月份",
     "mustBeFutureDateError": "您必须选择一个未来日期",
     "muted": "静默",
     "muteNotifications": "关闭通知",
     "myAccount": "我的帐户",
+    "native": {
+        "auth": {
+            "createAccount": "创建新帐户",
+            "error": "身份验证失败。请重试。",
+            "existingAccount": "我是现有用户",
+            "linkAccount": {
+                "cta": "关联账户",
+                "info": "要链接到您现有的 OpenChat 帐户，请在下面输入您的一次性密码。",
+                "note": "您可以在当前登录的设备上，在个人资料/高级下找到一次性密码。",
+                "title": "与现有帐户关联"
+            }
+        }
+    },
     "new": "新的",
     "newChat": "新的聊天",
     "newGroup": "新的群聊",
