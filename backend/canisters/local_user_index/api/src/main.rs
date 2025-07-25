@@ -1,5 +1,6 @@
 use std::env;
 use ts_export::generate_ts_method;
+use types::BotEventWrapper;
 
 fn main() {
     let directory = env::current_dir().unwrap().join("tsBindings/localUserIndex");
@@ -35,4 +36,6 @@ fn main() {
     generate_ts_method!(local_user_index, register_user);
     generate_ts_method!(local_user_index, uninstall_bot);
     generate_ts_method!(local_user_index, withdraw_from_icpswap);
+
+    <BotEventWrapper as ::ts_rs::TS>::export_all_to("tsBindings").unwrap();
 }

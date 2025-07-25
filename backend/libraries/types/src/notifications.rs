@@ -43,6 +43,7 @@ pub struct BotNotification {
     pub timestamp: TimestampMillis,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum BotEvent {
     #[serde(alias = "c")]
@@ -53,6 +54,7 @@ pub enum BotEvent {
     Lifecycle(BotLifecycleEvent),
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BotEventWrapper {
     #[serde(alias = "g")]
@@ -63,6 +65,7 @@ pub struct BotEventWrapper {
     pub timestamp: TimestampMillis,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BotChatEvent {
     #[serde(alias = "v")]
@@ -77,6 +80,7 @@ pub struct BotChatEvent {
     pub latest_event_index: EventIndex,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BotCommunityEvent {
     #[serde(alias = "e")]
@@ -89,6 +93,7 @@ pub struct BotCommunityEvent {
     pub latest_event_index: EventIndex,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum BotLifecycleEvent {
     #[serde(alias = "r")]
@@ -99,6 +104,7 @@ pub enum BotLifecycleEvent {
     Uninstalled(BotUninstalledEvent),
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BotInstalledEvent {
     #[serde(alias = "u")]
@@ -111,6 +117,7 @@ pub struct BotInstalledEvent {
     pub granted_autonomous_permissions: BotPermissions,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BotUninstalledEvent {
     #[serde(alias = "u")]
@@ -119,6 +126,7 @@ pub struct BotUninstalledEvent {
     pub location: BotInstallationLocation,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BotRegisteredEvent {
     #[serde(alias = "i")]
