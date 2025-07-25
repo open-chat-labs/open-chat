@@ -18,11 +18,10 @@ pub struct AccountLinkingCodes {
 impl AccountLinkingCodes {
     /// Creates a new code, saves it, and returns a clone back!
     pub fn get_new_linking_code(&mut self, user_id: UserId, rng: &mut StdRng, now: TimestampMillis) -> AccountLinkingCode {
-        let code = Self::generate_code(rng);
+        let code = self.generate_code(rng);
         let new_linking_code = AccountLinkingCode::new(user_id, code.clone(), now);
 
-        // Add to the map of existing account linking codes! If the same code
-        // existed before it will get overwritten, and therefore invalid.
+        // Add to the map of existing account linking codes
         self.codes.insert(code, new_linking_code.clone());
 
         new_linking_code
@@ -57,12 +56,18 @@ impl AccountLinkingCodes {
     }
 
     // Generates a random 6 character string.
-    fn generate_code(rng: &mut StdRng) -> String {
-        (0..ALC_LENGTH)
-            .map(|_| {
-                let idx = rng.gen_range(0..ALC_CHARSET.len());
-                ALC_CHARSET[idx] as char
-            })
-            .collect()
+    fn generate_code(&self, rng: &mut StdRng) -> String {
+        loop {
+            let code = (0..ALC_LENGTH)
+                .map(|_| {
+                    let idx = rng.gen_range(0..ALC_CHARSET.len());
+                    ALC_CHARSET[idx] as char
+                })
+                .collect();
+
+            if !self.codes.contains_key(&code) {
+                return code;
+            }
+        }
     }
 }

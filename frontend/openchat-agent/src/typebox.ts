@@ -1197,6 +1197,13 @@ export const OptionalCommunityPermissions = Type.Object({
     manage_user_groups: Type.Optional(CommunityPermissionRole),
 });
 
+export type PrimaryLanguageChanged = Static<typeof PrimaryLanguageChanged>;
+export const PrimaryLanguageChanged = Type.Object({
+    previous: Type.String(),
+    new: Type.String(),
+    changed_by: UserId,
+});
+
 export type CommunityMembership = Static<typeof CommunityMembership>;
 export const CommunityMembership = Type.Object({
     joined: Type.BigInt(),
@@ -4507,6 +4514,13 @@ export const GroupSubtype = Type.Object({
     GovernanceProposals: GovernanceProposalsSubtype,
 });
 
+export type CommunityMembersRemoved = Static<typeof CommunityMembersRemoved>;
+export const CommunityMembersRemoved = Type.Object({
+    user_ids: Type.Array(UserId),
+    removed_by: UserId,
+    referred_by: Type.Record(UserId, UserId),
+});
+
 export type AccountICRC1 = Static<typeof AccountICRC1>;
 export const AccountICRC1 = Type.Object({
     owner: TSPrincipal,
@@ -4651,6 +4665,13 @@ export const ActiveProposalTalliesSuccessResult = Type.Object({
     tallies: Type.Array(Type.Tuple([EventIndex, Tally])),
 });
 
+export type CommunityPermissionsChanged = Static<typeof CommunityPermissionsChanged>;
+export const CommunityPermissionsChanged = Type.Object({
+    old_permissions: CommunityPermissions,
+    new_permissions: CommunityPermissions,
+    changed_by: UserId,
+});
+
 export type ChatId = Static<typeof ChatId>;
 export const ChatId = TSPrincipal;
 
@@ -4659,6 +4680,21 @@ export const AvatarChanged = Type.Object({
     new_avatar: Type.Optional(Type.BigInt()),
     previous_avatar: Type.Optional(Type.BigInt()),
     changed_by: UserId,
+});
+
+export type CommunityUsersBlocked = Static<typeof CommunityUsersBlocked>;
+export const CommunityUsersBlocked = Type.Object({
+    user_ids: Type.Array(UserId),
+    blocked_by: UserId,
+    referred_by: Type.Record(UserId, UserId),
+});
+
+export type ChannelCreated = Static<typeof ChannelCreated>;
+export const ChannelCreated = Type.Object({
+    channel_id: ChannelId,
+    is_public: Type.Boolean(),
+    name: Type.String(),
+    created_by: UserId,
 });
 
 export type CryptoAccountICRC1 = Static<typeof CryptoAccountICRC1>;
@@ -4879,6 +4915,12 @@ export const StringParam = Type.Object({
     multi_line: Type.Boolean(),
 });
 
+export type CommunityMemberJoined = Static<typeof CommunityMemberJoined>;
+export const CommunityMemberJoined = Type.Object({
+    user_id: UserId,
+    channel_id: Type.Optional(ChannelId),
+    invited_by: Type.Optional(UserId),
+});
 export type GroupInviteCodeChanged = Static<typeof GroupInviteCodeChanged>;
 export const GroupInviteCodeChanged = Type.Object({
     change: GroupInviteCodeChange,
@@ -4890,6 +4932,12 @@ export const ChitEarned = Type.Object({
     amount: Type.Number(),
     timestamp: Type.BigInt(),
     reason: ChitEarnedReason,
+});
+
+export type CommunityVisibilityChanged = Static<typeof CommunityVisibilityChanged>;
+export const CommunityVisibilityChanged = Type.Object({
+    now_public: Type.Boolean(),
+    changed_by: UserId,
 });
 
 export type CustomContent = Static<typeof CustomContent>;
@@ -4929,6 +4977,13 @@ export const Chat = Type.Union([
         Channel: Type.Tuple([CommunityId, ChannelId]),
     }),
 ]);
+
+export type CommunityRoleChanged = Static<typeof CommunityRoleChanged>;
+export const CommunityRoleChanged = Type.Object({
+    user_ids: Type.Array(UserId),
+    changed_by: UserId,
+    old_role: CommunityRole,
+});
 
 export type DeletedBy = Static<typeof DeletedBy>;
 export const DeletedBy = Type.Object({
@@ -5108,6 +5163,11 @@ export const ActiveProposalTalliesResponse = Type.Union([
         Error: OCError,
     }),
 ]);
+export type GroupImported = Static<typeof GroupImported>;
+export const GroupImported = Type.Object({
+    group_id: ChatId,
+    channel_id: ChannelId,
+});
 
 export type GroupFrozen = Static<typeof GroupFrozen>;
 export const GroupFrozen = Type.Object({
@@ -5179,6 +5239,12 @@ export const ChannelReactionAddedNotification = Type.Object({
     cha: Type.Optional(Type.BigInt()),
 });
 
+export type BotRegisteredEvent = Static<typeof BotRegisteredEvent>;
+export const BotRegisteredEvent = Type.Object({
+    bot_id: UserId,
+    bot_name: Type.String(),
+});
+
 export type UsersInvited = Static<typeof UsersInvited>;
 export const UsersInvited = Type.Object({
     user_ids: Type.Array(UserId),
@@ -5194,6 +5260,13 @@ export const PendingCryptoTransactionNNS = Type.Object({
     fee: Type.Optional(Tokens),
     memo: Type.Optional(Type.BigInt()),
     created: Type.BigInt(),
+});
+
+export type BannerChanged = Static<typeof BannerChanged>;
+export const BannerChanged = Type.Object({
+    new_banner: Type.Optional(Type.BigInt()),
+    previous_banner: Type.Optional(Type.BigInt()),
+    changed_by: UserId,
 });
 
 export type OptionUpdateVideoCall = Static<typeof OptionUpdateVideoCall>;
@@ -5608,6 +5681,12 @@ export const GroupMessageNotification = Type.Object({
     i: Type.Optional(Type.String()),
     a: Type.Optional(Type.BigInt()),
     ct: Type.Optional(CryptoTransferDetails),
+});
+
+export type BotUninstalledEvent = Static<typeof BotUninstalledEvent>;
+export const BotUninstalledEvent = Type.Object({
+    uninstalled_by: UserId,
+    location: BotInstallationLocation,
 });
 
 export type OptionUpdateDocument = Static<typeof OptionUpdateDocument>;
@@ -6680,6 +6759,14 @@ export const EventWrapperGroupFrozen = Type.Object({
     event: GroupFrozen,
 });
 
+export type BotInstalledEvent = Static<typeof BotInstalledEvent>;
+export const BotInstalledEvent = Type.Object({
+    installed_by: UserId,
+    location: BotInstallationLocation,
+    granted_command_permissions: BotPermissions,
+    granted_autonomous_permissions: BotPermissions,
+});
+
 export type SignedDelegation = Static<typeof SignedDelegation>;
 export const SignedDelegation = Type.Object({
     delegation: Delegation,
@@ -6848,6 +6935,19 @@ export const PollVotes = Type.Object({
     user: Type.Array(Type.Number()),
 });
 
+export type BotLifecycleEvent = Static<typeof BotLifecycleEvent>;
+export const BotLifecycleEvent = Type.Union([
+    Type.Object({
+        Registered: BotRegisteredEvent,
+    }),
+    Type.Object({
+        Installed: BotInstalledEvent,
+    }),
+    Type.Object({
+        Uninstalled: BotUninstalledEvent,
+    }),
+]);
+
 export type AccessGateNonComposite = Static<typeof AccessGateNonComposite>;
 export const AccessGateNonComposite = Type.Union([
     Type.Literal("DiamondMember"),
@@ -6929,6 +7029,13 @@ export const BotCommandParam = Type.Object({
     param_type: BotCommandParamType,
 });
 
+export type ChannelDeleted = Static<typeof ChannelDeleted>;
+export const ChannelDeleted = Type.Object({
+    channel_id: ChannelId,
+    name: Type.String(),
+    deleted_by: UserId,
+    bot_command: Type.Optional(BotCommand),
+});
 export type DiamondMembershipStatusFull = Static<typeof DiamondMembershipStatusFull>;
 export const DiamondMembershipStatusFull = Type.Union([
     Type.Literal("Inactive"),
@@ -8203,6 +8310,97 @@ export const ChatSummaryGroup = Type.Object({
     member_count: Type.Number(),
 });
 
+export type CommunityEvent = Static<typeof CommunityEvent>;
+export const CommunityEvent = Type.Union([
+    Type.Object({
+        Created: GroupCreated,
+    }),
+    Type.Object({
+        NameChanged: GroupNameChanged,
+    }),
+    Type.Object({
+        DescriptionChanged: GroupDescriptionChanged,
+    }),
+    Type.Object({
+        RulesChanged: GroupRulesChanged,
+    }),
+    Type.Object({
+        AvatarChanged: AvatarChanged,
+    }),
+    Type.Object({
+        BannerChanged: BannerChanged,
+    }),
+    Type.Object({
+        UsersInvited: UsersInvited,
+    }),
+    Type.Object({
+        MemberJoined: CommunityMemberJoined,
+    }),
+    Type.Object({
+        MemberLeft: MemberLeft,
+    }),
+    Type.Object({
+        MembersRemoved: CommunityMembersRemoved,
+    }),
+    Type.Object({
+        RoleChanged: CommunityRoleChanged,
+    }),
+    Type.Object({
+        UsersBlocked: CommunityUsersBlocked,
+    }),
+    Type.Object({
+        UsersUnblocked: UsersUnblocked,
+    }),
+    Type.Object({
+        PermissionsChanged: CommunityPermissionsChanged,
+    }),
+    Type.Object({
+        VisibilityChanged: CommunityVisibilityChanged,
+    }),
+    Type.Object({
+        InviteCodeChanged: GroupInviteCodeChanged,
+    }),
+    Type.Object({
+        Frozen: GroupFrozen,
+    }),
+    Type.Object({
+        Unfrozen: GroupUnfrozen,
+    }),
+    Type.Object({
+        GateUpdated: GroupGateUpdated,
+    }),
+    Type.Object({
+        ChannelCreated: ChannelCreated,
+    }),
+    Type.Object({
+        ChannelDeleted: ChannelDeleted,
+    }),
+    Type.Object({
+        PrimaryLanguageChanged: PrimaryLanguageChanged,
+    }),
+    Type.Object({
+        GroupImported: GroupImported,
+    }),
+    Type.Object({
+        BotAdded: BotAdded,
+    }),
+    Type.Object({
+        BotRemoved: BotRemoved,
+    }),
+    Type.Object({
+        BotUpdated: BotUpdated,
+    }),
+    Type.Literal("FailedToDeserialize"),
+]);
+
+export type EventWrapperCommunityEvent = Static<typeof EventWrapperCommunityEvent>;
+export const EventWrapperCommunityEvent = Type.Object({
+    index: EventIndex,
+    timestamp: Type.BigInt(),
+    expires_at: Type.Optional(Type.BigInt()),
+    event: CommunityEvent,
+});
+
 export type ChannelMatch = Static<typeof ChannelMatch>;
 export const ChannelMatch = Type.Object({
     id: ChannelId,
@@ -8240,6 +8438,14 @@ export const ChatSummary = Type.Union([
         Direct: ChatSummaryDirect,
     }),
 ]);
+
+export type BotCommunityEvent = Static<typeof BotCommunityEvent>;
+export const BotCommunityEvent = Type.Object({
+    event: CommunityEvent,
+    community_id: CommunityId,
+    event_index: EventIndex,
+    latest_event_index: EventIndex,
+});
 
 export type CommunityMatch = Static<typeof CommunityMatch>;
 export const CommunityMatch = Type.Object({
@@ -8709,6 +8915,15 @@ export const CommunityCanisterChannelSummary = Type.Object({
     external_url: Type.Optional(Type.String()),
 });
 
+export type BotChatEvent = Static<typeof BotChatEvent>;
+export const BotChatEvent = Type.Object({
+    event: ChatEvent,
+    chat: Chat,
+    thread: Type.Optional(MessageIndex),
+    event_index: EventIndex,
+    latest_event_index: EventIndex,
+});
+
 export type GroupIndexRecommendedGroupsSuccessResult = Static<
     typeof GroupIndexRecommendedGroupsSuccessResult
 >;
@@ -8906,6 +9121,19 @@ export const EventsResponse = Type.Object({
     latest_event_index: EventIndex,
     chat_last_updated: Type.BigInt(),
 });
+
+export type BotEvent = Static<typeof BotEvent>;
+export const BotEvent = Type.Union([
+    Type.Object({
+        Chat: BotChatEvent,
+    }),
+    Type.Object({
+        Community: BotCommunityEvent,
+    }),
+    Type.Object({
+        Lifecycle: BotLifecycleEvent,
+    }),
+]);
 
 export type CommunityCanisterCommunitySummary = Static<typeof CommunityCanisterCommunitySummary>;
 export const CommunityCanisterCommunitySummary = Type.Object({
@@ -9237,3 +9465,10 @@ export const UserUpdatesResponse = Type.Union([
     }),
     Type.Literal("SuccessNoUpdates"),
 ]);
+
+export type BotEventWrapper = Static<typeof BotEventWrapper>;
+export const BotEventWrapper = Type.Object({
+    api_gateway: TSPrincipal,
+    event: BotEvent,
+    timestamp: Type.BigInt(),
+});
