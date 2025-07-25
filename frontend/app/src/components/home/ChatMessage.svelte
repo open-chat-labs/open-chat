@@ -23,6 +23,7 @@
         screenWidth,
         ScreenWidth,
         selectedChatBlockedUsersStore,
+        selectedChatWebhooksStore,
         selectedCommunityMembersStore,
         type SenderContext,
         translationsStore,
@@ -484,7 +485,7 @@
         (!inert || canRevealDeleted || canRevealBlocked) && !readonly && !ephemeral,
     );
     let canUndelete = $derived(msg.deleted && msg.content.kind !== "deleted_content");
-    let senderDisplayName = $derived(client.getDisplayName(sender, $selectedCommunityMembersStore));
+    let senderDisplayName = $derived(client.getDisplayName(msg.sender, $selectedCommunityMembersStore, $selectedChatWebhooksStore));
     let tips = $derived(msg.tips ? Object.entries(msg.tips) : []);
     let canBlockUser = $derived(canBlockUsers && !$selectedChatBlockedUsersStore.has(msg.sender));
     let edited = $derived(

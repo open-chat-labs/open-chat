@@ -17,6 +17,7 @@
         selectedChatBlockedUsersStore,
         selectedChatMembersStore,
         selectedChatSummaryStore,
+        selectedChatWebhooksStore,
         selectedCommunityBlockedUsersStore,
         selectedCommunityMembersStore,
         selectedCommunitySummaryStore,
@@ -256,12 +257,9 @@
     );
     let displayName = $derived(
         client.getDisplayName(
-            {
-                userId,
-                username: profile?.username ?? "",
-                displayName: profile?.displayName,
-            },
+            userId,
             inGlobalContext ? undefined : $selectedCommunityMembersStore,
+            inGlobalContext ? undefined : $selectedChatWebhooksStore,
         ),
     );
     let canBlock = $derived(

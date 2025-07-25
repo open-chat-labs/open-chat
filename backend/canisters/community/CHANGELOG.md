@@ -20,7 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - On uninstall unsubscribe bot from community events ([#8330](https://github.com/open-chat-labs/open-chat/pull/8330))
 - Call to remove member will also remove any invite ([#8332](https://github.com/open-chat-labs/open-chat/pull/8332))
 
-## [[2.0.1829](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1829-community)] - 2025-07-09
+## [[2.0.1828](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1828-community)] - 2025-07-09
 
 ### Added
 
