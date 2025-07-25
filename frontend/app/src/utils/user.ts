@@ -11,7 +11,7 @@ export function buildDisplayName(
     let name;
     switch (userType) {
         case "user": {
-            const summary = findSender(userId, users);
+            const summary = findUser(userId, users);
             name = summary?.displayName ?? summary?.username ?? get(_)("unknownUser");
             break;
         }
@@ -31,17 +31,17 @@ export function trimLeadingAtSymbol(term: string): string {
     return term.length > 0 && term[0] === "@" ? term.substring(1) : term;
 }
 
-export function findSender(
-    senderId: string,
+export function findUser(
+    userId: string,
     users: UserLookup,
     webhooks: ReadonlyMap<string, WebhookDetails> | undefined = undefined,
 ): UserSummary | undefined {
-    const user = users.get(senderId);
+    const user = users.get(userId);
     if (user !== undefined) {
         return user;
     }
 
-    const webhook = webhooks?.get(senderId);
+    const webhook = webhooks?.get(userId);
     if (webhook === undefined) {
         return undefined;
     }

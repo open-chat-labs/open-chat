@@ -39,7 +39,7 @@
         if (chat !== undefined) {
             switch (chat.kind) {
                 case "direct_chat":
-                    parts.push(client.getDisplayNameById(chat.them.userId));
+                    parts.push(client.getDisplayName(chat.them.userId));
                     break;
                 case "group_chat":
                     parts.push(chat.name);

@@ -173,7 +173,7 @@
         </HoverIcon>
     {/if}
     <h4>
-        <Translatable resourceKey={i18nKey(`Direct chat with ${client.getDisplayName(user)}`)} />
+        <Translatable resourceKey={i18nKey(`Direct chat with ${client.getDisplayName(chat.them.userId)}`)} />
     </h4>
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
