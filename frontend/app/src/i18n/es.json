@@ -9,6 +9,8 @@
         "approvePaymentTitle": "Aprobar pago",
         "bypassWarning": "Cualquier usuario que esté invitado explícitamente a este {level} no tendrá que pasar las puertas de acceso.",
         "cannotMakePublic": "No puede hacer público un {level} privado, ya que eso pondría en riesgo la privacidad de los miembros existentes.",
+        "chitEarnedGate": "CHIT mínimo ganado",
+        "chitEarnedGateInfo": "Los usuarios sólo pueden unirse si han ganado suficiente CHIT",
         "chooseGate": "Elige una puerta de acceso",
         "chooseNervousSystem": "Elige sistema nervioso",
         "chooseOneGate": "Elige una puerta",
@@ -67,6 +69,7 @@
         "minimumBalanceInfo": "Los usuarios solo pueden unirse si tienen un saldo mínimo de tokens",
         "minimumBalanceInfo2": "Los usuarios solo pueden unirse si tienen al menos {n} {token} tokens en su billetera",
         "minimumBalanceN": "Saldo mínimo de tokens {n}",
+        "minimumChitEarned": "CHIT mínimo ganado",
         "minimumTokenBalance": "Saldo mínimo de {token}",
         "minStake": "Apuesta mínima (tokens)",
         "minStakeN": "Apuesta mínima {n} tokens",
@@ -1080,20 +1083,25 @@
     "messageUrlCopiedToClipboard": "URL del mensaje copiada al portapapeles.",
     "minimumAmount": "Mínimo: {amount} {symbol}",
     "minutes": "Minutos",
-    "mobile": {
-        "credentials": {
-            "errors": {
-                "genericSignIn": "No se pudo iniciar sesión con una clave de acceso.",
-                "genericSignUp": "No se pudo crear una clave de acceso."
-            }
-        }
-    },
     "moderator": "moderador",
     "months": "Meses",
     "mustBeFutureDateError": "Debes seleccionar una fecha futura",
     "muted": "silenciado",
     "muteNotifications": "Silenciar notificaciones",
     "myAccount": "Mi cuenta",
+    "native": {
+        "auth": {
+            "createAccount": "Crear nueva cuenta",
+            "error": "Error de autenticación. Inténtalo de nuevo.",
+            "existingAccount": "Soy un usuario existente",
+            "linkAccount": {
+                "cta": "Vincular cuenta",
+                "info": "Para vincularse con su cuenta OpenChat existente, ingrese su contraseña de un solo uso a continuación.",
+                "note": "La contraseña de un solo uso se puede encontrar en su perfil/avanzado, en el dispositivo en el que haya iniciado sesión actualmente.",
+                "title": "Vincular con cuenta existente"
+            }
+        }
+    },
     "new": "nuevo",
     "newChat": "Nuevo chat",
     "newGroup": "Nuevo grupo",

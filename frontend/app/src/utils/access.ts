@@ -31,6 +31,7 @@ export const gateLabel: Record<AccessGate["kind"], string> = {
     unique_person_gate: "access.uniquePerson",
     locked_gate: "access.lockedGate",
     referred_by_member_gate: "access.referredByMember",
+    chit_earned_gate: "access.chitEarnedGate",
 };
 
 export function getGateBindings(level: Level): GateBinding[] {
@@ -49,6 +50,7 @@ export function getGateBindings(level: Level): GateBinding[] {
         gates.push(referredByMemberGate);
     }
     gates.push(nftGate);
+    gates.push(chitEarnedGate);
     return gates;
 }
 
@@ -123,6 +125,13 @@ const diamondGate: GateBinding = {
     key: "diamond_gate",
     gate: { kind: "diamond_gate" },
     enabled: true,
+};
+
+const chitEarnedGate: GateBinding = {
+    label: "access.chitEarnedGate",
+    key: "chit_earned_gate",
+    gate: { kind: "chit_earned_gate", minEarned: 0n },
+    enabled: false,
 };
 
 const lifetimeDiamondGate: GateBinding = {

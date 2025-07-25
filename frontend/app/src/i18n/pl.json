@@ -9,6 +9,8 @@
         "approvePaymentTitle": "Zatwierdź płatność",
         "bypassWarning": "Użytkownicy wyraźnie zaproszeni do tego {level} nie będą musieli przechodzić przez bramki dostępu",
         "cannotMakePublic": "Nie możesz ustawić prywatnego {level} jako publicznego, ponieważ zagroziłoby to prywatności istniejących członków.",
+        "chitEarnedGate": "Minimalna zdobyta liczba punktów CHIT",
+        "chitEarnedGateInfo": "Użytkownicy mogą dołączyć tylko wtedy, gdy zgromadzili wystarczającą liczbę CHIT",
         "chooseGate": "Wybierz bramę dostępową",
         "chooseNervousSystem": "Wybierz układ nerwowy",
         "chooseOneGate": "Wybierz bramę",
@@ -67,6 +69,7 @@
         "minimumBalanceInfo": "Użytkownicy mogą dołączyć tylko wtedy, gdy mają minimalne saldo tokenów",
         "minimumBalanceInfo2": "Użytkownicy mogą dołączyć tylko wtedy, gdy mają w portfelu co najmniej tokenów {n} {token}",
         "minimumBalanceN": "Minimalne saldo tokenów {n}",
+        "minimumChitEarned": "Minimalna zdobyta liczba CHIT",
         "minimumTokenBalance": "Minimalne saldo {token}",
         "minStake": "Minimalna stawka (tokeny)",
         "minStakeN": "Tokeny o minimalnej stawce {n}",
@@ -1080,20 +1083,25 @@
     "messageUrlCopiedToClipboard": "Adres URL wiadomości skopiowany do schowka!",
     "minimumAmount": "Minimum: {amount} {symbol}",
     "minutes": "Minuty",
-    "mobile": {
-        "credentials": {
-            "errors": {
-                "genericSignIn": "Nie można zalogować się za pomocą klucza dostępu.",
-                "genericSignUp": "Nie można utworzyć klucza dostępu."
-            }
-        }
-    },
     "moderator": "moderator",
     "months": "Miesiące",
     "mustBeFutureDateError": "Musisz wybrać przyszłą datę",
     "muted": "wyciszony",
     "muteNotifications": "Wycisz powiadomienia",
     "myAccount": "Moje konto",
+    "native": {
+        "auth": {
+            "createAccount": "Utwórz nowe konto",
+            "error": "Uwierzytelnianie nie powiodło się. Spróbuj ponownie.",
+            "existingAccount": "Jestem istniejącym użytkownikiem",
+            "linkAccount": {
+                "cta": "Połącz konto",
+                "info": "Aby połączyć się z istniejącym kontem OpenChat, wprowadź poniżej jednorazowe hasło.",
+                "note": "Jednorazowe hasło znajdziesz w swoim profilu / w zaawansowanych opcjach na urządzeniu, na którym jesteś aktualnie zalogowany.",
+                "title": "Połącz z istniejącym kontem"
+            }
+        }
+    },
     "new": "nowy",
     "newChat": "Nowy czat",
     "newGroup": "Nowa grupa",

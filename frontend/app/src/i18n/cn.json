@@ -9,6 +9,8 @@
         "approvePaymentTitle": "批准付款",
         "bypassWarning": "任何明确受邀参加此 {level} 的用户都无需通过访问门",
         "cannotMakePublic": "您不能将私有的 {level} 设为公开，因为这会危及现有成员的隐私。",
+        "chitEarnedGate": "获得的最低 CHIT",
+        "chitEarnedGateInfo": "用户只有获得足够的 CHIT 才能加入",
         "chooseGate": "选择一个门禁",
         "chooseNervousSystem": "选择神经系统",
         "chooseOneGate": "选择一扇门",
@@ -67,6 +69,7 @@
         "minimumBalanceInfo": "用户只有拥有最低代币余额才能加入",
         "minimumBalanceInfo2": "用户只有钱包中至少有 {n} {token} 代币才能加入",
         "minimumBalanceN": "{n} 代币的最低余额",
+        "minimumChitEarned": "获得的最低 CHIT",
         "minimumTokenBalance": "最低 {token} 余额",
         "minStake": "最小股份（代币）",
         "minStakeN": "最小质押 {n} 个代币",
@@ -1080,20 +1083,25 @@
     "messageUrlCopiedToClipboard": "消息网址已复制到剪贴板！",
     "minimumAmount": "最小值：{amount} {symbol}",
     "minutes": "分钟",
-    "mobile": {
-        "credentials": {
-            "errors": {
-                "genericSignIn": "无法使用密钥登录。",
-                "genericSignUp": "无法创建密钥。"
-            }
-        }
-    },
     "moderator": "版主",
     "months": "月份",
     "mustBeFutureDateError": "您必须选择一个未来日期",
     "muted": "静默",
     "muteNotifications": "关闭通知",
     "myAccount": "我的帐户",
+    "native": {
+        "auth": {
+            "createAccount": "创建新帐户",
+            "error": "身份验证失败。请重试。",
+            "existingAccount": "我是现有用户",
+            "linkAccount": {
+                "cta": "关联账户",
+                "info": "要链接到您现有的 OpenChat 帐户，请在下面输入您的一次性密码。",
+                "note": "您可以在当前登录的设备上，在个人资料/高级下找到一次性密码。",
+                "title": "与现有帐户关联"
+            }
+        }
+    },
     "new": "新的",
     "newChat": "新的聊天",
     "newGroup": "新的群聊",

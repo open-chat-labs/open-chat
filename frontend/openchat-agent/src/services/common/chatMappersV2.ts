@@ -1742,6 +1742,7 @@ export function apiAccessGate(domain: AccessGate): TAccessGate {
 function apiLeafAccessGate(domain: AccessGate): TAccessGateNonComposite {
     if (domain.kind === "locked_gate") return "Locked";
     if (domain.kind === "diamond_gate") return "DiamondMember";
+    if (domain.kind === "chit_earned_gate") return "DiamondMember"; //TODO - this will need to be updated when the back end is ready
     if (domain.kind === "lifetime_diamond_gate") return "LifetimeDiamondMember";
     if (domain.kind === "unique_person_gate") return "UniquePerson";
     if (domain.kind === "credential_gate")
@@ -1824,6 +1825,7 @@ export function accessGateConfig(value: TAccessGateConfig): AccessGateConfig {
 }
 
 export function accessGate(value: TAccessGate): AccessGate {
+    //TODO - add chitEarnedGate when back end is done
     if (value === "DiamondMember") {
         return {
             kind: "diamond_gate",

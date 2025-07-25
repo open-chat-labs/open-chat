@@ -9,6 +9,8 @@
         "approvePaymentTitle": "אשר תשלום",
         "bypassWarning": "כל המשתמשים שיוזמנו במפורש ל-{level} הזה לא יידרשו לעבור את שערי הגישה",
         "cannotMakePublic": "אינך יכול להפוך {level} פרטי לציבורי מכיוון שזה יסכן את הפרטיות של החברים הקיימים.",
+        "chitEarnedGate": "סכום CHIT מינימלי שנצבר",
+        "chitEarnedGateInfo": "משתמשים יכולים להצטרף רק אם צברו מספיק CHIT",
         "chooseGate": "בחר שער גישה",
         "chooseNervousSystem": "בחר מערכת עצבים",
         "chooseOneGate": "בחר שער",
@@ -67,6 +69,7 @@
         "minimumBalanceInfo": "משתמשים יכולים להצטרף רק אם יש להם יתרה מינימלית של אסימונים",
         "minimumBalanceInfo2": "משתמשים יכולים להצטרף רק אם יש להם לפחות {n} {token} אסימונים בארנק שלהם",
         "minimumBalanceN": "יתרה מינימלית של {n} אסימונים",
+        "minimumChitEarned": "מינימום צבירת CHIT",
         "minimumTokenBalance": "יתרה מינימלית של {token}",
         "minStake": "הימור מינימלי (אסימונים)",
         "minStakeN": "אסימוני הימור מינימליים של {n}",
@@ -1080,20 +1083,25 @@
     "messageUrlCopiedToClipboard": "כתובת האתר של ההודעה הועתקה ללוח!",
     "minimumAmount": "מינימום: {amount} {symbol}",
     "minutes": "דקות",
-    "mobile": {
-        "credentials": {
-            "errors": {
-                "genericSignIn": "לא ניתן היה להיכנס באמצעות סיסמה.",
-                "genericSignUp": "לא ניתן היה ליצור סיסמה."
-            }
-        }
-    },
     "moderator": "מַנחֶה",
     "months": "חודשים",
     "mustBeFutureDateError": "עליך לבחור תאריך עתידי",
     "muted": "מושתק",
     "muteNotifications": "השתק התראות",
     "myAccount": "החשבון שלי",
+    "native": {
+        "auth": {
+            "createAccount": "צור חשבון חדש",
+            "error": "האימות נכשל. אנא נסה שוב.",
+            "existingAccount": "אני משתמש קיים",
+            "linkAccount": {
+                "cta": "קישור חשבון",
+                "info": "כדי להתחבר לחשבון OpenChat הקיים שלך, אנא הזן את הסיסמה החד-פעמית שלך למטה.",
+                "note": "ניתן למצוא סיסמה חד-פעמית תחת הפרופיל שלך / מתקדם, במכשיר שבו אתה מחובר כעת.",
+                "title": "קישור עם חשבון קיים"
+            }
+        }
+    },
     "new": "חָדָשׁ",
     "newChat": "שיחה חדשה",
     "newGroup": "קבוצה חדשה",
