@@ -658,8 +658,6 @@ export class OpenChat {
         this.#vapidPublicKey = config.vapidPublicKey;
         locale.subscribe((v) => (this.#locale = v ?? "en"));
 
-        console.log("OpenChatConfig: ", config);
-
         userStore.setSpecialUsers([
             openChatBotUser,
             videoCallBotUser,
@@ -5078,7 +5076,7 @@ export class OpenChat {
     getDisplayName(
         userId: string | undefined,
         communityMembers?: ReadonlyMap<string, Member>,
-        webhooks?: ReadonlyMap<string, WebhookDetails>
+        webhooks?: ReadonlyMap<string, WebhookDetails>,
     ): string {
         if (userId !== undefined) {
             const user = userStore.get(userId);
@@ -7084,13 +7082,17 @@ export class OpenChat {
             for (const [userId] of selectedChatMembersStore.value) {
                 const user = userStore.get(userId);
                 if (user !== undefined) {
-                    const displayName = this.getDisplayName(userId, selectedCommunityMembersStore.value);
-                    lookup[user.username.toLowerCase()] = displayName === user.displayName
-                        ? user
-                        : {
-                            ...user,
-                            displayName
-                        };
+                    const displayName = this.getDisplayName(
+                        userId,
+                        selectedCommunityMembersStore.value,
+                    );
+                    lookup[user.username.toLowerCase()] =
+                        displayName === user.displayName
+                            ? user
+                            : {
+                                  ...user,
+                                  displayName,
+                              };
                 }
             }
             if (selectedCommunitySummaryStore.value !== undefined) {
@@ -7311,7 +7313,10 @@ export class OpenChat {
         if (chat !== undefined) {
             if (chat.kind === "direct_chat") {
                 userIds.push(chat.them.userId);
-            } else if (this.isChatPrivate(chat) && chatIdentifiersEqual(selectedChatIdStore.value, chatId)) {
+            } else if (
+                this.isChatPrivate(chat) &&
+                chatIdentifiersEqual(selectedChatIdStore.value, chatId)
+            ) {
                 userIds = [...selectedChatMembersStore.value.keys()].filter((id) => id !== me);
             }
             if (0 < userIds.length && userIds.length < 50) {
