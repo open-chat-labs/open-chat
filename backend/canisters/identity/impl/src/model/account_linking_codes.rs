@@ -28,7 +28,7 @@ impl AccountLinkingCodes {
     }
 
     /// Get the account linking code with specified value.
-    pub fn get(&self, code: &String) -> Option<&AccountLinkingCode> {
+    pub fn get(&self, code: String) -> Option<&AccountLinkingCode> {
         self.codes.get(&code.to_uppercase())
     }
 
@@ -41,7 +41,7 @@ impl AccountLinkingCodes {
     }
 
     /// Remove a specific code, that may still be valid!
-    pub fn remove(&mut self, code: &String) {
+    pub fn remove(&mut self, code: String) {
         self.codes.remove(&code.to_uppercase());
     }
 

@@ -36,7 +36,7 @@ fn create_account_linking_code_impl(state: &mut RuntimeState) -> Response {
             // generate a new one! Users might have too little time to enter
             // the code, and if we don't do this it may cause weirdness if
             // users have two active codes.
-            state.data.account_linking_codes.remove(&code.value);
+            state.data.account_linking_codes.remove(code.value);
         }
     }
 
