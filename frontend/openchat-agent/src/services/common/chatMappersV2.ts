@@ -773,6 +773,8 @@ function prizeContent(value: TPrizeContent): PrizeContent {
         endDate: value.end_date,
         caption: value.caption,
         requiresCaptcha: value.requires_captcha,
+        // minChitEarned: value.min_chit_earned, // TODO fill in when back end is in sync
+        minChitEarned: 500_000,
     };
 }
 
@@ -1915,6 +1917,7 @@ export function apiPrizeContentInitial(domain: PrizeContentInitial): TPrizeConte
         lifetime_diamond_only: domain.lifetimeDiamondOnly,
         unique_person_only: domain.uniquePersonOnly,
         streak_only: domain.streakOnly,
+        // min_chit_earned: domain.minChitEarned, //TODO fill in when back end is in sync
         prizes_v2: domain.prizes,
         requires_captcha: domain.requiresCaptcha,
     };

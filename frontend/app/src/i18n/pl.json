@@ -1080,20 +1080,25 @@
     "messageUrlCopiedToClipboard": "Adres URL wiadomości skopiowany do schowka!",
     "minimumAmount": "Minimum: {amount} {symbol}",
     "minutes": "Minuty",
-    "mobile": {
-        "credentials": {
-            "errors": {
-                "genericSignIn": "Nie można zalogować się za pomocą klucza dostępu.",
-                "genericSignUp": "Nie można utworzyć klucza dostępu."
-            }
-        }
-    },
     "moderator": "moderator",
     "months": "Miesiące",
     "mustBeFutureDateError": "Musisz wybrać przyszłą datę",
     "muted": "wyciszony",
     "muteNotifications": "Wycisz powiadomienia",
     "myAccount": "Moje konto",
+    "native": {
+        "auth": {
+            "createAccount": "Utwórz nowe konto",
+            "error": "Uwierzytelnianie nie powiodło się. Spróbuj ponownie.",
+            "existingAccount": "Jestem istniejącym użytkownikiem",
+            "linkAccount": {
+                "cta": "Połącz konto",
+                "info": "Aby połączyć się z istniejącym kontem OpenChat, wprowadź poniżej jednorazowe hasło.",
+                "note": "Jednorazowe hasło znajdziesz w swoim profilu / w zaawansowanych opcjach na urządzeniu, na którym jesteś aktualnie zalogowany.",
+                "title": "Połącz z istniejącym kontem"
+            }
+        }
+    },
     "new": "nowy",
     "newChat": "Nowy czat",
     "newGroup": "Nowa grupa",
@@ -1348,8 +1353,11 @@
         "lifetimeDiamondMembership": "Dożywotnie członkostwo diamentowe",
         "live": "Wiadomość o nagrodzie na żywo! Inni mogą kliknąć, aby odebrać 🎁",
         "maxPrize": "Jaka jest maksymalna nagroda?",
+        "minChitEarned": "Minimalna zdobyta liczba CHIT",
+        "minChitEarnedValue": "Zarobiono co najmniej {n} CHIT",
         "minPrize": "Jaka jest minimalna nagroda?",
         "numberOfWinners": "Liczba zwycięzców",
+        "onlyChit": "Tylko użytkownicy z CHIT",
         "onlyDiamond": "Tylko użytkownicy Diamonda",
         "onlyStreak": "Tylko użytkownicy z passą",
         "onlyUniquePerson": "Tylko wyjątkowi ludzie",

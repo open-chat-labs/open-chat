@@ -1080,20 +1080,25 @@
     "messageUrlCopiedToClipboard": "URL del messaggio copiato negli appunti!",
     "minimumAmount": "Minimo: {amount} {symbol}",
     "minutes": "Minuti",
-    "mobile": {
-        "credentials": {
-            "errors": {
-                "genericSignIn": "Impossibile accedere con una passkey.",
-                "genericSignUp": "Impossibile creare una passkey."
-            }
-        }
-    },
     "moderator": "moderatore",
     "months": "Mesi",
     "mustBeFutureDateError": "Devi selezionare una data futura",
     "muted": "muto",
     "muteNotifications": "Notifiche mute",
     "myAccount": "Il mio account",
+    "native": {
+        "auth": {
+            "createAccount": "Crea un nuovo account",
+            "error": "Autenticazione non riuscita. Riprova.",
+            "existingAccount": "Sono un utente esistente",
+            "linkAccount": {
+                "cta": "Collega account",
+                "info": "Per effettuare il collegamento al tuo account OpenChat esistente, inserisci la tua password monouso qui sotto.",
+                "note": "La password monouso si trova nella sezione \"Profilo\"/\"Avanzate\" del dispositivo su cui hai effettuato l'accesso.",
+                "title": "Collegamento con account esistente"
+            }
+        }
+    },
     "new": "nuovo",
     "newChat": "Nuova chat",
     "newGroup": "Nuovo gruppo",
@@ -1348,8 +1353,11 @@
         "lifetimeDiamondMembership": "Abbonamento Diamond a vita",
         "live": "Messaggio del premio in diretta! Gli altri possono fare clic per rivendicare 🎁",
         "maxPrize": "Qual è il premio massimo?",
+        "minChitEarned": "CHIT minimo guadagnato",
+        "minChitEarnedValue": "Almeno {n} CHIT guadagnati",
         "minPrize": "Qual è il premio minimo?",
         "numberOfWinners": "Numero di vincitori",
+        "onlyChit": "Solo utenti con CHIT",
         "onlyDiamond": "Solo utenti Diamond",
         "onlyStreak": "Solo utenti con una serie",
         "onlyUniquePerson": "Solo gli umani unici",

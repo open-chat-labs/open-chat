@@ -1080,20 +1080,25 @@
     "messageUrlCopiedToClipboard": "כתובת האתר של ההודעה הועתקה ללוח!",
     "minimumAmount": "מינימום: {amount} {symbol}",
     "minutes": "דקות",
-    "mobile": {
-        "credentials": {
-            "errors": {
-                "genericSignIn": "לא ניתן היה להיכנס באמצעות סיסמה.",
-                "genericSignUp": "לא ניתן היה ליצור סיסמה."
-            }
-        }
-    },
     "moderator": "מַנחֶה",
     "months": "חודשים",
     "mustBeFutureDateError": "עליך לבחור תאריך עתידי",
     "muted": "מושתק",
     "muteNotifications": "השתק התראות",
     "myAccount": "החשבון שלי",
+    "native": {
+        "auth": {
+            "createAccount": "צור חשבון חדש",
+            "error": "האימות נכשל. אנא נסה שוב.",
+            "existingAccount": "אני משתמש קיים",
+            "linkAccount": {
+                "cta": "קישור חשבון",
+                "info": "כדי להתחבר לחשבון OpenChat הקיים שלך, אנא הזן את הסיסמה החד-פעמית שלך למטה.",
+                "note": "ניתן למצוא סיסמה חד-פעמית תחת הפרופיל שלך / מתקדם, במכשיר שבו אתה מחובר כעת.",
+                "title": "קישור עם חשבון קיים"
+            }
+        }
+    },
     "new": "חָדָשׁ",
     "newChat": "שיחה חדשה",
     "newGroup": "קבוצה חדשה",
@@ -1348,8 +1353,11 @@
         "lifetimeDiamondMembership": "חברות יהלומים לכל החיים",
         "live": "הודעת פרס בשידור חי! אחרים יכולים ללחוץ כדי לתבוע 🎁",
         "maxPrize": "מהו הפרס המקסימלי?",
+        "minChitEarned": "מינימום צבירת CHIT",
+        "minChitEarnedValue": "לפחות {n} CHIT הרווחתם",
         "minPrize": "מהו הפרס המינימלי?",
         "numberOfWinners": "מספר הזוכים",
+        "onlyChit": "רק משתמשים עם CHIT",
         "onlyDiamond": "רק משתמשי Diamond",
         "onlyStreak": "רק משתמשים עם פס",
         "onlyUniquePerson": "רק בני אדם ייחודיים",

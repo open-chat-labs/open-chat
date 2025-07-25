@@ -1080,20 +1080,25 @@
     "messageUrlCopiedToClipboard": "Nachrichten-URL in die Zwischenablage kopiert!",
     "minimumAmount": "Minimum: {amount} {symbol}",
     "minutes": "Protokoll",
-    "mobile": {
-        "credentials": {
-            "errors": {
-                "genericSignIn": "Anmeldung mit einem Passkey nicht möglich.",
-                "genericSignUp": "Es konnte kein Hauptschlüssel erstellt werden."
-            }
-        }
-    },
     "moderator": "Moderator",
     "months": "Monate",
     "mustBeFutureDateError": "Sie müssen ein zukünftiges Datum auswählen",
     "muted": "stummgeschaltet",
     "muteNotifications": "Benachrichtigungen stummschalten",
     "myAccount": "Mein Konto",
+    "native": {
+        "auth": {
+            "createAccount": "Neues Konto erstellen",
+            "error": "Authentifizierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+            "existingAccount": "Ich bin ein bestehender Benutzer",
+            "linkAccount": {
+                "cta": "Konto verknüpfen",
+                "info": "Um eine Verknüpfung mit Ihrem bestehenden OpenChat-Konto herzustellen, geben Sie unten bitte Ihr Einmalkennwort ein.",
+                "note": "Das Einmalkennwort finden Sie unter Ihrem Profil/Erweitert auf einem Gerät, auf dem Sie aktuell angemeldet sind.",
+                "title": "Mit bestehendem Konto verknüpfen"
+            }
+        }
+    },
     "new": "Neu",
     "newChat": "Neuer Chat",
     "newGroup": "Neue Gruppe",
@@ -1348,8 +1353,11 @@
         "lifetimeDiamondMembership": "Lebenslange Diamant-Mitgliedschaft",
         "live": "Gewinnnachricht live! Andere können klicken, um Anspruch zu erheben 🎁",
         "maxPrize": "Was ist der Höchstgewinn?",
+        "minChitEarned": "Mindestens verdienter CHIT",
+        "minChitEarnedValue": "Mindestens {n} CHIT verdient",
         "minPrize": "Was ist der Mindestpreis?",
         "numberOfWinners": "Anzahl der Gewinner",
+        "onlyChit": "Nur Benutzer mit CHIT",
         "onlyDiamond": "Nur Diamond-Benutzer",
         "onlyStreak": "Nur Benutzer mit einem Streak",
         "onlyUniquePerson": "Nur einzigartige Menschen",

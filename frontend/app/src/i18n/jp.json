@@ -1080,20 +1080,25 @@
     "messageUrlCopiedToClipboard": "メッセージのURLがクリップボードにコピーされました！",
     "minimumAmount": "最小値: {amount} {symbol}",
     "minutes": "分",
-    "mobile": {
-        "credentials": {
-            "errors": {
-                "genericSignIn": "パスキーでサインインできませんでした。",
-                "genericSignUp": "パスキーを作成できませんでした。"
-            }
-        }
-    },
     "moderator": "モデレータ",
     "months": "月",
     "mustBeFutureDateError": "将来の日付を選択する必要があります",
     "muted": "ミュート",
     "muteNotifications": "通知をミュートする",
     "myAccount": "マイアカウント",
+    "native": {
+        "auth": {
+            "createAccount": "新しいアカウントを作成",
+            "error": "認証に失敗しました。もう一度お試しください。",
+            "existingAccount": "私は既存のユーザーです",
+            "linkAccount": {
+                "cta": "アカウントをリンク",
+                "info": "既存のOpenChatアカウントと連携するには、下記にワンタイムパスワードを入力してください。",
+                "note": "ワンタイムパスワードは、現在サインインしているデバイスの「プロフィール/詳細設定」の下にあります。",
+                "title": "既存のアカウントとリンク"
+            }
+        }
+    },
     "new": "new",
     "newChat": "新規チャット",
     "newGroup": "新規グループ",
@@ -1348,8 +1353,11 @@
         "lifetimeDiamondMembership": "生涯ダイヤモンド会員",
         "live": "賞金メッセージを実施中！他の人はクリックして申請できます 🎁",
         "maxPrize": "賞金の最高額はいくらですか?",
+        "minChitEarned": "獲得した最低CHIT",
+        "minChitEarnedValue": "少なくとも{n}CHITを獲得しました",
         "minPrize": "最低賞金額はいくらですか?",
         "numberOfWinners": "当選者数",
+        "onlyChit": "CHITを持つユーザーのみ",
         "onlyDiamond": "ダイヤモンドユーザーのみ",
         "onlyStreak": "連続記録を持つユーザーのみ",
         "onlyUniquePerson": "ユニークな人間だけ",
