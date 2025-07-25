@@ -38,10 +38,10 @@ export function generateCspForScripts(inlineScripts, development) {
         upgrade-insecure-requests;
         script-src 'self' https://scripts.wobbl3.com/ https://api.rollbar.com/api/ https://platform.twitter.com/ https://www.googletagmanager.com/ ${cspHashValues.join(
             " ",
-        )}`
-        + (development ? " http://localhost:* http://127.0.0.1:*;\n" : "")
-        + (development ? "connect-src 'self' ws: http:;\n" : "")
-        + (production ? "connect-src 'self' wss: https:;\n" : "")
+        )}` +
+        (development ? " http://localhost:* http://127.0.0.1:*;\n" : ";") +
+        (development ? "connect-src 'self' ws: http:;\n" : "") +
+        (production ? "connect-src 'self' wss: https:;\n" : "")
     );
 }
 
