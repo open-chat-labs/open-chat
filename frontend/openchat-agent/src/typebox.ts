@@ -4663,6 +4663,8 @@ export const MessagePermissions = Type.Object({
 export type ActiveProposalTalliesSuccessResult = Static<typeof ActiveProposalTalliesSuccessResult>;
 export const ActiveProposalTalliesSuccessResult = Type.Object({
     tallies: Type.Array(Type.Tuple([EventIndex, Tally])),
+});
+
 export type CommunityPermissionsChanged = Static<typeof CommunityPermissionsChanged>;
 export const CommunityPermissionsChanged = Type.Object({
     old_permissions: CommunityPermissions,
@@ -4981,6 +4983,8 @@ export const CommunityRoleChanged = Type.Object({
     user_ids: Type.Array(UserId),
     changed_by: UserId,
     old_role: CommunityRole,
+});
+
 export type DeletedBy = Static<typeof DeletedBy>;
 export const DeletedBy = Type.Object({
     deleted_by: UserId,
@@ -5233,6 +5237,8 @@ export const ChannelReactionAddedNotification = Type.Object({
     r: Reaction,
     ca: Type.Optional(Type.BigInt()),
     cha: Type.Optional(Type.BigInt()),
+});
+
 export type BotRegisteredEvent = Static<typeof BotRegisteredEvent>;
 export const BotRegisteredEvent = Type.Object({
     bot_id: UserId,
@@ -5675,6 +5681,8 @@ export const GroupMessageNotification = Type.Object({
     i: Type.Optional(Type.String()),
     a: Type.Optional(Type.BigInt()),
     ct: Type.Optional(CryptoTransferDetails),
+});
+
 export type BotUninstalledEvent = Static<typeof BotUninstalledEvent>;
 export const BotUninstalledEvent = Type.Object({
     uninstalled_by: UserId,
