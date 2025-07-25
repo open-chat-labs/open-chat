@@ -19,6 +19,7 @@ import {
     IdentityRemoveIdentityLinkArgs,
     IdentityRemoveIdentityLinkResponse,
     UnitResult as TUnitResult,
+    IdentityCreateAccountLinkingCodeResponse,
 } from "../../typebox";
 import type {
     ApproveIdentityLinkResponse,
@@ -34,6 +35,7 @@ import type {
     RemoveIdentityLinkResponse,
     Success,
     WebAuthnKeyFull,
+    AccountLinkingCode,
 } from "openchat-shared";
 import {
     apiWebAuthnKey,
@@ -189,7 +191,7 @@ export class IdentityClient extends MsgpackCanisterAgent {
             TUnitResult,
         );
     }
-    
+
     getAuthenticationPrincipals(): Promise<AuthenticationPrincipalsResponse> {
         return this.executeMsgpackQuery(
             "auth_principals",
@@ -214,6 +216,20 @@ export class IdentityClient extends MsgpackCanisterAgent {
             },
             IdentityLookupWebauthnPubkeyArgs,
             IdentityLookupWebauthnPubkeyResponse,
+        );
+    }
+
+    createAccountLinkingCode(): Promise<AccountLinkingCode | undefined> {
+        return this.executeMsgpackUpdate(
+            "create_account_linking_code",
+            {},
+            (resp) => {
+                return typeof resp === "object" && "Success" in resp
+                    ? { value: resp.Success.value, expiresAt: resp.Success.expires_at }
+                    : undefined;
+            },
+            Empty,
+            IdentityCreateAccountLinkingCodeResponse,
         );
     }
 

@@ -54,4 +54,5 @@ export const configKeys = {
     browseChannels: "openchat_browse_channels",
     useBlockLevelMarkdown: "openchat_block_markdown",
     hideTokenBalances: "openchat_hide_token_balances",
+    linkDeviceSection: "link_account_with_native_app",
 };

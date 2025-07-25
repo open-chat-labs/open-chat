@@ -136,3 +136,8 @@ export type WebAuthnKeyFull = WebAuthnKey & {
     crossPlatform: boolean;
     aaguid: Uint8Array;
 };
+
+export type AccountLinkingCode = {
+    value: string;
+    expiresAt: bigint;
+};

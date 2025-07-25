@@ -106,6 +106,25 @@
     },
     "account": "Konto",
     "accountCopiedToClipboard": "Adres konta został skopiowany do schowka!",
+    "accountLinkingCode": {
+        "settingsMenu": {
+            "cta": "Pokaż kod łączący konto",
+            "disclaimer": "Jeśli chcesz połączyć to konto z urządzeniem z zainstalowaną natywną aplikacją OpenChat, kliknij poniższy przycisk, aby uzyskać kod łączący konto! Używaj kodu tylko na zaufanym urządzeniu.",
+            "title": "Połącz z nowym urządzeniem"
+        },
+        "webModal": {
+            "close": "Zamknąć",
+            "error": {
+                "cancel": "Anulować",
+                "msg": "Nie udało się załadować kodu łączącego Twoje konto. Spróbuj ponownie.",
+                "tryAgain": "Spróbuj ponownie"
+            },
+            "expired": "Twój kod wygasł!",
+            "subtitle": "Użyj poniższego kodu, aby połączyć swoje obecne konto z nowym zaufanym urządzeniem.",
+            "title": "Kod łączący konta",
+            "willExpireIn": "Kod wygaśnie za {remaining}"
+        }
+    },
     "accounts": "Konta",
     "accountSuspended": "Konto zawieszone",
     "activity": {
@@ -1080,20 +1099,25 @@
     "messageUrlCopiedToClipboard": "Adres URL wiadomości skopiowany do schowka!",
     "minimumAmount": "Minimum: {amount} {symbol}",
     "minutes": "Minuty",
-    "mobile": {
-        "credentials": {
-            "errors": {
-                "genericSignIn": "Nie można zalogować się za pomocą klucza dostępu.",
-                "genericSignUp": "Nie można utworzyć klucza dostępu."
-            }
-        }
-    },
     "moderator": "moderator",
     "months": "Miesiące",
     "mustBeFutureDateError": "Musisz wybrać przyszłą datę",
     "muted": "wyciszony",
     "muteNotifications": "Wycisz powiadomienia",
     "myAccount": "Moje konto",
+    "native": {
+        "auth": {
+            "createAccount": "Utwórz nowe konto",
+            "error": "Uwierzytelnianie nie powiodło się. Spróbuj ponownie.",
+            "existingAccount": "Jestem istniejącym użytkownikiem",
+            "linkAccount": {
+                "cta": "Połącz konto",
+                "info": "Aby połączyć się z istniejącym kontem OpenChat, wprowadź poniżej jednorazowe hasło.",
+                "note": "Jednorazowe hasło znajdziesz w swoim profilu / w zaawansowanych opcjach na urządzeniu, na którym jesteś aktualnie zalogowany.",
+                "title": "Połącz z istniejącym kontem"
+            }
+        }
+    },
     "new": "nowy",
     "newChat": "Nowy czat",
     "newGroup": "Nowa grupa",

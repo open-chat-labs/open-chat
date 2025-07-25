@@ -103,6 +103,7 @@
             env: import.meta.env.OC_BUILD_ENV!,
             bitcoinMainnetEnabled: import.meta.env.OC_BITCOIN_MAINNET_ENABLED! === "true",
             vapidPublicKey: import.meta.env.OC_VAPID_PUBLIC_KEY!,
+            accountLinkingCodesEnabled: import.meta.env.OC_ACCOUNT_LINKING_CODES_ENABLED! === "true",
         });
     }
 

@@ -6,9 +6,9 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::TimestampMillis;
 
-// For [a-zA-Z0-9] characters this gives us 62^6 = 56,800,235,584 possible combinations
+// For Crockford's charset this gives us $32^6 = 1,073,741,824 possible combinations
 const ALC_LENGTH: usize = 6;
-const ALC_CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+const ALC_CHARSET: &[u8] = b"0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 
 #[derive(CandidType, Serialize, Deserialize, Default, Debug)]
 pub struct AccountLinkingCodes {
@@ -28,8 +28,8 @@ impl AccountLinkingCodes {
     }
 
     /// Get the account linking code with specified value.
-    pub fn get(&self, code: &String) -> Option<&AccountLinkingCode> {
-        self.codes.get(code)
+    pub fn get(&self, code: String) -> Option<&AccountLinkingCode> {
+        self.codes.get(&code.to_uppercase())
     }
 
     /// Get account linking code for a user.
@@ -41,8 +41,8 @@ impl AccountLinkingCodes {
     }
 
     /// Remove a specific code, that may still be valid!
-    pub fn remove(&mut self, code: &String) {
-        self.codes.remove(code);
+    pub fn remove(&mut self, code: String) {
+        self.codes.remove(&code.to_uppercase());
     }
 
     /// Used to manually clean up expired codes.

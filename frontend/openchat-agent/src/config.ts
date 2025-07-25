@@ -29,4 +29,5 @@ export type AgentConfig = {
     bitcoinMainnetEnabled: boolean;
     groupInvite?: GroupInvite;
     logger: Logger;
+    accountLinkingCodesEnabled: boolean;
 };

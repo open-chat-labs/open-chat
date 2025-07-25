@@ -5119,6 +5119,7 @@ name = "identity_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "constants",
  "oc_error_codes",
  "serde",
  "serde_bytes",

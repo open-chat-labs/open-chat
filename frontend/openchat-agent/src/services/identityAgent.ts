@@ -13,6 +13,7 @@ import type {
     RemoveIdentityLinkResponse,
     Success,
     WebAuthnKeyFull,
+    AccountLinkingCode,
 } from "openchat-shared";
 import { buildDelegationIdentity, toDer } from "openchat-shared";
 import { createHttpAgent } from "../utils/httpAgent";
@@ -55,9 +56,10 @@ export class IdentityAgent {
         webAuthnCredentialId: Uint8Array | undefined,
         challengeAttempt: ChallengeAttempt | undefined,
     ): Promise<DelegationIdentity | CreateOpenChatIdentityError> {
-        const webAuthnKey = webAuthnCredentialId !== undefined
-            ? await this.hydrateWebAuthnKey(webAuthnCredentialId)
-            : undefined;
+        const webAuthnKey =
+            webAuthnCredentialId !== undefined
+                ? await this.hydrateWebAuthnKey(webAuthnCredentialId)
+                : undefined;
 
         const sessionKeyDer = toDer(sessionKey);
         const createIdentityResponse = await this._identityClient.createIdentity(
@@ -91,11 +93,11 @@ export class IdentityAgent {
 
         return prepareDelegationResponse.kind === "success"
             ? this.getDelegation(
-                prepareDelegationResponse.userKey,
-                sessionKey,
-                sessionKeyDer,
-                prepareDelegationResponse.expiration,
-            )
+                  prepareDelegationResponse.userKey,
+                  sessionKey,
+                  sessionKeyDer,
+                  prepareDelegationResponse.expiration,
+              )
             : undefined;
     }
 
@@ -105,13 +107,18 @@ export class IdentityAgent {
 
     async initiateIdentityLink(
         linkToPrincipal: string,
-        webAuthnCredentialId: Uint8Array | undefined
+        webAuthnCredentialId: Uint8Array | undefined,
     ): Promise<InitiateIdentityLinkResponse> {
-        const webAuthnKey = webAuthnCredentialId !== undefined
-            ? await this.hydrateWebAuthnKey(webAuthnCredentialId)
-            : undefined;
+        const webAuthnKey =
+            webAuthnCredentialId !== undefined
+                ? await this.hydrateWebAuthnKey(webAuthnCredentialId)
+                : undefined;
 
-        return this._identityClient.initiateIdentityLink(linkToPrincipal, webAuthnKey, this._isIIPrincipal);
+        return this._identityClient.initiateIdentityLink(
+            linkToPrincipal,
+            webAuthnKey,
+            this._isIIPrincipal,
+        );
     }
 
     approveIdentityLink(linkInitiatedBy: string): Promise<ApproveIdentityLinkResponse> {
@@ -164,5 +171,9 @@ export class IdentityAgent {
         const key = await getCachedWebAuthnKey(credentialId);
         if (key === undefined) throw new Error("Failed to find WebAuthnKey details");
         return key;
+    }
+
+    createAccountLinkingCode(): Promise<AccountLinkingCode | undefined> {
+        return this._identityClient.createAccountLinkingCode();
     }
 }

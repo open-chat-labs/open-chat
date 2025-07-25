@@ -298,6 +298,7 @@ import {
     type WorkerRequest,
     type WorkerResponse,
     type WorkerResult,
+    type AccountLinkingCode,
 } from "openchat-shared";
 import page from "page";
 import { tick } from "svelte";
@@ -703,6 +704,10 @@ export class OpenChat {
         return this.#sendRequest({
             kind: "clearCachedData",
         });
+    }
+
+    accountLinkingCodeEnabled() {
+        return this.config.accountLinkingCodesEnabled;
     }
 
     deleteCurrentUser(
@@ -3712,7 +3717,7 @@ export class OpenChat {
             // now a new latest message and if so, mark it as a local chat summary update.
             let latestMessageIndex =
                 threadRootMessageIndex === undefined
-                    ? allServerChatsStore.value.get(chatId)?.latestMessageIndex ?? -1
+                    ? (allServerChatsStore.value.get(chatId)?.latestMessageIndex ?? -1)
                     : undefined;
             let newLatestMessage: EventWrapper<Message> | undefined = undefined;
 
@@ -8410,7 +8415,7 @@ export class OpenChat {
     }
 
     getStreak(userId: string | undefined) {
-        return userId ? userStore.get(userId)?.streak ?? 0 : 0;
+        return userId ? (userStore.get(userId)?.streak ?? 0) : 0;
     }
 
     getBotDefinition(endpoint: string): Promise<BotDefinitionResponse> {
@@ -8954,6 +8959,12 @@ export class OpenChat {
         return AuthProvider.II;
     }
 
+    createAccountLinkingCode(): Promise<AccountLinkingCode | undefined> {
+        return this.#sendRequest({
+            kind: "createAccountLinkingCode",
+        });
+    }
+
     getAuthenticationPrincipals(): Promise<
         (AuthenticationPrincipal & { provider: AuthProvider })[]
     > {
@@ -9131,6 +9142,7 @@ export class OpenChat {
                     bitcoinMainnetEnabled: this.config.bitcoinMainnetEnabled,
                     groupInvite: this.config.groupInvite,
                     communityInvite: this.config.communityInvite,
+                    accountLinkingCodesEnabled: this.config.accountLinkingCodesEnabled,
                 },
                 true,
             ).then((resp) => {

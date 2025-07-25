@@ -29,7 +29,7 @@ fn link_with_account_linking_code_impl(args: Args, state: &mut RuntimeState) -> 
 
     // Basically checks if the code provided by the user match any of the codes
     // that are saved.
-    let Some(linking_code) = state.data.account_linking_codes.get(&args.code) else {
+    let Some(linking_code) = state.data.account_linking_codes.get(args.code.clone()) else {
         return Err(OCErrorCode::LinkingCodeNotFound.into());
     };
 
@@ -94,7 +94,7 @@ fn link_with_account_linking_code_impl(args: Args, state: &mut RuntimeState) -> 
         }
 
         // Remove the linking code from the state, as it has been used.
-        state.data.account_linking_codes.remove(&args.code);
+        state.data.account_linking_codes.remove(args.code);
 
         // Linking done!
         Ok(())

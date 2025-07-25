@@ -34,4 +34,5 @@ export type AgentConfig = {
     env: string;
     bitcoinMainnetEnabled: boolean;
     groupInvite?: GroupInvite;
+    accountLinkingCodesEnabled: boolean;
 };

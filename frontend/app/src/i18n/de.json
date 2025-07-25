@@ -106,6 +106,25 @@
     },
     "account": "Konto",
     "accountCopiedToClipboard": "Kontoadresse in die Zwischenablage kopiert!",
+    "accountLinkingCode": {
+        "settingsMenu": {
+            "cta": "Kontoverknüpfungscode anzeigen",
+            "disclaimer": "Wenn Sie dieses Konto mit einem Gerät verknüpfen möchten, auf dem die OpenChat-App installiert ist, klicken Sie auf die Schaltfläche unten, um Ihren Kontoverknüpfungscode zu erhalten! Verwenden Sie den Code nur auf einem vertrauenswürdigen Gerät.",
+            "title": "Mit neuem Gerät verknüpfen"
+        },
+        "webModal": {
+            "close": "Schließen",
+            "error": {
+                "cancel": "Stornieren",
+                "msg": "Ihr Kontoverknüpfungscode konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
+                "tryAgain": "Versuchen Sie es erneut"
+            },
+            "expired": "Ihr Code ist abgelaufen!",
+            "subtitle": "Verwenden Sie den folgenden Code, um Ihr aktuelles Konto mit einem neuen vertrauenswürdigen Gerät zu verknüpfen.",
+            "title": "Kontoverknüpfungscode",
+            "willExpireIn": "Der Code läuft in {remaining} ab"
+        }
+    },
     "accounts": "Konten",
     "accountSuspended": "Konto gesperrt",
     "activity": {
@@ -1080,20 +1099,25 @@
     "messageUrlCopiedToClipboard": "Nachrichten-URL in die Zwischenablage kopiert!",
     "minimumAmount": "Minimum: {amount} {symbol}",
     "minutes": "Protokoll",
-    "mobile": {
-        "credentials": {
-            "errors": {
-                "genericSignIn": "Anmeldung mit einem Passkey nicht möglich.",
-                "genericSignUp": "Es konnte kein Hauptschlüssel erstellt werden."
-            }
-        }
-    },
     "moderator": "Moderator",
     "months": "Monate",
     "mustBeFutureDateError": "Sie müssen ein zukünftiges Datum auswählen",
     "muted": "stummgeschaltet",
     "muteNotifications": "Benachrichtigungen stummschalten",
     "myAccount": "Mein Konto",
+    "native": {
+        "auth": {
+            "createAccount": "Neues Konto erstellen",
+            "error": "Authentifizierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+            "existingAccount": "Ich bin ein bestehender Benutzer",
+            "linkAccount": {
+                "cta": "Konto verknüpfen",
+                "info": "Um eine Verknüpfung mit Ihrem bestehenden OpenChat-Konto herzustellen, geben Sie unten bitte Ihr Einmalkennwort ein.",
+                "note": "Das Einmalkennwort finden Sie unter Ihrem Profil/Erweitert auf einem Gerät, auf dem Sie aktuell angemeldet sind.",
+                "title": "Mit bestehendem Konto verknüpfen"
+            }
+        }
+    },
     "new": "Neu",
     "newChat": "Neuer Chat",
     "newGroup": "Neue Gruppe",
