@@ -37,7 +37,7 @@
         searchTerm?: string;
         onRemoveMember?: (userId: string) => void;
         onChangeRole?: (args: { userId: string; newRole: MemberRole; oldRole: MemberRole }) => void;
-        onBlockUser?: (args: { userId: string }) => void;
+        onBlockUser?: (userId: string) => void;
     }
 
     let {
@@ -88,7 +88,7 @@
     }
 
     function blockUser() {
-        onBlockUser?.({ userId: member.userId });
+        onBlockUser?.(member.userId);
     }
 </script>
 

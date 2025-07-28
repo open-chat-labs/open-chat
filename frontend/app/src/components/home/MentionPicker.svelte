@@ -204,7 +204,7 @@
                                 {:else}
                                     <span class="display-name">
                                         {client.getDisplayName(
-                                            item,
+                                            item.userId,
                                             $selectedCommunityMembersStore,
                                         )}
                                     </span>

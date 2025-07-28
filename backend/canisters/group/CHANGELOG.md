@@ -13,12 +13,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add delay before retrying c2c call under certain error conditions ([#8355](https://github.com/open-chat-labs/open-chat/pull/8355))
 - Generalise Escrow so it can be used by 3rd parties ([#8356](https://github.com/open-chat-labs/open-chat/pull/8356))
 - `token:Cryptocurrency` -> `token_symbol:String` ([#8368](https://github.com/open-chat-labs/open-chat/pull/8368))
+- Use full names for bot event notification fields ([#8389](https://github.com/open-chat-labs/open-chat/pull/8389))
 
 ### Fixed
 
 - Call to remove member will also remove any invite ([#8332](https://github.com/open-chat-labs/open-chat/pull/8332))
 
-## [[2.0.1828](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1828-group)] - 2025-07-09
+## [[2.0.1829](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1829-group)] - 2025-07-09
 
 ### Added
 

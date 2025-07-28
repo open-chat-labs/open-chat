@@ -37,7 +37,7 @@
                     size={AvatarSize.Tiny} />
             </div>
             <div class="name">
-                {client.getDisplayName(user)}
+                {client.getDisplayName(user.userId)}
             </div>
         </div>
     {:else if accounts[address] !== undefined}

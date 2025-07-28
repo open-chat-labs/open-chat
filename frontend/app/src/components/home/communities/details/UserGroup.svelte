@@ -112,17 +112,17 @@
         );
     }
 
-    function addUserToGroup(user: UserSummary) {
+    function addUserToGroup(userId: string) {
         searchTermEntered = "";
-        added.add(user.userId);
-        removed.delete(user.userId);
-        changeUsers(() => userGroup.members.add(user.userId));
+        added.add(userId);
+        removed.delete(userId);
+        changeUsers(() => userGroup.members.add(userId));
     }
 
-    function removeUserFromGroup(user: UserSummary) {
-        removed.add(user.userId);
-        added.delete(user.userId);
-        changeUsers(() => userGroup.members.delete(user.userId));
+    function removeUserFromGroup(userId: string) {
+        removed.add(userId);
+        added.delete(userId);
+        changeUsers(() => userGroup.members.delete(userId));
     }
 
     function changeUsers(fn: () => void) {
@@ -181,7 +181,7 @@
                     items={matchedUsers}>
                     {#snippet children(item)}
                         <User
-                            onClick={() => addUserToGroup(item)}
+                            onClick={() => addUserToGroup(item.userId)}
                             user={item}
                             me={false}
                             profile={false}
@@ -207,7 +207,7 @@
             <div class="user">
                 <User {user} me={false}>
                     {#if canManageUserGroups}
-                        <div onclick={() => removeUserFromGroup(user)} class="delete">
+                        <div onclick={() => removeUserFromGroup(user.userId)} class="delete">
                             <DeleteOutline size={$iconSize} color={"var(--icon-txt)"} />
                         </div>
                     {/if}

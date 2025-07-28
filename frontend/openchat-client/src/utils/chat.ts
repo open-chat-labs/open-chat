@@ -365,10 +365,9 @@ export function mergeUnconfirmedThreadsIntoSummary<T extends GroupChatSummary | 
 export function mergeUnconfirmedIntoSummary(
     chatSummary: Immutable<ChatSummary>,
     formatter: MessageFormatter,
-    userId: string,
+    currentUserId: string,
     localMessageUpdates: MessageMap<MessageLocalUpdates>,
     blockedUsers: Set<string>,
-    currentUserId: string,
     messageFilters: MessageFilter[],
     unconfirmed: MessageContextMap<UnconfirmedState>,
 ) {
@@ -385,7 +384,7 @@ export function mergeUnconfirmedIntoSummary(
     let anyUpdates = false;
 
     if (unconfirmedMessages != undefined && unconfirmedMessages.length > 0) {
-        const incomingMentions = mentionsFromMessages(formatter, userId, unconfirmedMessages);
+        const incomingMentions = mentionsFromMessages(formatter, currentUserId, unconfirmedMessages);
         if (incomingMentions.length > 0) {
             anyUpdates = true;
         }
@@ -414,17 +413,20 @@ export function mergeUnconfirmedIntoSummary(
                 : false;
 
         if (updates !== undefined || senderBlocked || failedMessageFilter) {
-            latestMessage.event = mergeLocalUpdates(
-                latestMessage.event,
-                updates,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                senderBlocked,
-                false,
-                failedMessageFilter,
-            );
+            latestMessage = {
+                ...latestMessage,
+                event: mergeLocalUpdates(
+                    { ...latestMessage.event },
+                    updates,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    senderBlocked,
+                    false,
+                    failedMessageFilter,
+                ),
+            };
             anyUpdates = true;
         }
     }

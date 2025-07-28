@@ -44,7 +44,6 @@ fn c2c_install_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         event: BotEvent::Lifecycle(BotLifecycleEvent::Installed(BotInstalledEvent {
             installed_by: member.user_id,
             location: BotInstallationLocation::Community(state.env.canister_id().into()),
-            api_gateway: state.data.local_user_index_canister_id,
             granted_command_permissions: args.granted_permissions,
             granted_autonomous_permissions: args.granted_autonomous_permissions.unwrap_or_default(),
         })),

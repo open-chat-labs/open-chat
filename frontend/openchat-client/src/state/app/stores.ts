@@ -973,7 +973,6 @@ export const allChatsStore = derived(
                 currentUserId,
                 messageLocalUpdates,
                 selectedChatBlockedOrSuspendedUsers,
-                currentUserId,
                 messageFilters,
                 unconfirmed,
             );

@@ -63,9 +63,9 @@
         onClose: () => void;
         onShowInviteUsers: () => void;
         onChangeRole?: (args: { userId: string; newRole: MemberRole; oldRole: MemberRole }) => void;
-        onBlockUser?: (args: { userId: string }) => void;
+        onBlockUser?: (userId: string) => void;
         onRemoveMember?: (userId: string) => void;
-        onUnblockUser: (user: UserSummary) => void;
+        onUnblockUser: (userId: string) => void;
         onCancelInvite: (userId: string) => void;
     }
 

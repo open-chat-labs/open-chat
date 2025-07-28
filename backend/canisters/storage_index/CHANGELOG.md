@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1839](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1839-storage_index)] - 2025-07-25
+
 ### Added
 
 - Implement ability for StorageIndex to create buckets via the CMC ([#8370](https://github.com/open-chat-labs/open-chat/pull/8370))

@@ -280,12 +280,12 @@
             });
     }
 
-    async function onBlockGroupUser(args: { userId: string }) {
+    async function onBlockGroupUser(userId: string) {
         if (
             $selectedChatIdStore !== undefined &&
             ($selectedChatIdStore.kind === "group_chat" || $selectedChatIdStore.kind === "channel")
         ) {
-            const success = await client.blockUser($selectedChatIdStore, args.userId);
+            const success = await client.blockUser($selectedChatIdStore, userId);
             if (success) {
                 toastStore.showSuccessToast(i18nKey("blockUserSucceeded"));
             } else {
@@ -294,11 +294,11 @@
         }
     }
 
-    async function onBlockCommunityUser(args: { userId: string }) {
+    async function onBlockCommunityUser(userId: string) {
         if ($selectedCommunitySummaryStore !== undefined) {
             const success = await client.blockCommunityUser(
                 $selectedCommunitySummaryStore.id,
-                args.userId,
+                userId,
             );
             if (success) {
                 toastStore.showSuccessToast(i18nKey("blockUserSucceeded"));
@@ -308,12 +308,12 @@
         }
     }
 
-    async function onUnblockGroupUser(user: UserSummary) {
+    async function onUnblockGroupUser(userId: string) {
         if (
             $selectedChatIdStore !== undefined &&
             ($selectedChatIdStore.kind === "group_chat" || $selectedChatIdStore.kind === "channel")
         ) {
-            const success = await client.unblockUser($selectedChatIdStore, user.userId);
+            const success = await client.unblockUser($selectedChatIdStore, userId);
             if (success) {
                 toastStore.showSuccessToast(i18nKey("unblockUserSucceeded"));
             } else {
@@ -322,11 +322,11 @@
         }
     }
 
-    async function onUnblockCommunityUser(user: UserSummary) {
+    async function onUnblockCommunityUser(userId: string) {
         if ($selectedCommunitySummaryStore !== undefined) {
             const success = await client.unblockCommunityUser(
                 $selectedCommunitySummaryStore.id,
-                user.userId,
+                userId,
             );
             if (success) {
                 toastStore.showSuccessToast(i18nKey("unblockUserSucceeded"));

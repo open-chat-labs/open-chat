@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { findSender } from "@src/utils/user";
+    import { findUser } from "@src/utils/user";
     import {
         allUsersStore,
         currentUserIdStore,
@@ -163,7 +163,7 @@
 
     let sender = $derived(
         event.event.kind === "message"
-            ? findSender(event.event.sender, $allUsersStore, $selectedChatWebhooksStore)
+            ? findUser(event.event.sender, $allUsersStore, $selectedChatWebhooksStore)
             : undefined,
     );
 </script>
