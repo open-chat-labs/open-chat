@@ -160,7 +160,10 @@
     .header,
     .footer,
     .code-content {
-        width: 28rem;
+        @include size-above(sm) {
+            width: 28rem;
+        }
+
         padding-left: $sp4;
         padding-right: $sp4;
     }
