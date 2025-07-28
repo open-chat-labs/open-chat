@@ -1,15 +1,17 @@
-import type { Writable } from "svelte/store";
-import { setsAreEqual } from "../utils/set";
+import { dequal } from "dequal";
+import { writable } from "../utils/stores";
+import { notEq } from "../state/utils";
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export function createSetStore<T>(store: Writable<Set<T>>) {
-    let storeValue = new Set<T>();
+export function createSetStore<T>(initialValue = new Set<T>()) {
+    let storeValue = initialValue;
+    const store = writable(initialValue, undefined, notEq);
     store.subscribe((value) => (storeValue = value));
 
     return {
         subscribe: store.subscribe,
         set: (s: Set<T>) => {
-            if (!setsAreEqual(s, storeValue)) {
+            if (!dequal(s, storeValue)) {
                 store.set(s);
             }
         },
@@ -60,6 +62,6 @@ export function createSetStore<T>(store: Writable<Set<T>>) {
                 ids.clear();
                 return ids;
             }),
-        value: (): Set<T> => storeValue,
+        get value(): Set<T> { return storeValue },
     };
 }
