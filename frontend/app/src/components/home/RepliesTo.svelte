@@ -7,6 +7,7 @@
         currentUserIdStore,
         OpenChat,
         routeForChatIdentifier,
+        selectedChatWebhooksStore,
         selectedCommunityMembersStore,
     } from "openchat-client";
     import page from "page";
@@ -38,7 +39,7 @@
     let displayName = $derived(
         me
             ? client.toTitleCase($_("you"))
-            : client.getDisplayNameById(repliesTo.senderId, $selectedCommunityMembersStore),
+            : client.getDisplayName(repliesTo.senderId, $selectedCommunityMembersStore, $selectedChatWebhooksStore),
     );
 
     function getUrl() {

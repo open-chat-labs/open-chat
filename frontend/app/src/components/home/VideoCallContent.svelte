@@ -7,6 +7,7 @@
         currentUserIdStore,
         publish,
         selectedChatSummaryStore,
+        selectedChatWebhooksStore,
         selectedCommunityMembersStore,
         type VideoCallContent,
     } from "openchat-client";
@@ -28,7 +29,7 @@
 
     let { content, messageIndex, timestamp, senderId }: Props = $props();
 
-    let displayName = $derived(client.getDisplayNameById(senderId, $selectedCommunityMembersStore));
+    let displayName = $derived(client.getDisplayName(senderId, $selectedCommunityMembersStore, $selectedChatWebhooksStore));
     let inCall = $derived(
         $activeVideoCall !== undefined &&
             $selectedChatSummaryStore !== undefined &&

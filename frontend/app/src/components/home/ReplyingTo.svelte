@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { CreatedUser, EnhancedReplyContext, OpenChat } from "openchat-client";
-    import { iconSize, selectedCommunityMembersStore } from "openchat-client";
+    import { iconSize, selectedChatWebhooksStore, selectedCommunityMembersStore } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -25,7 +25,7 @@
     let displayName = $derived(
         me
             ? client.toTitleCase($_("you"))
-            : client.getDisplayName(replyingTo.sender, $selectedCommunityMembersStore),
+            : client.getDisplayName(replyingTo.sender?.userId, $selectedCommunityMembersStore, $selectedChatWebhooksStore),
     );
 </script>
 

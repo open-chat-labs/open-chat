@@ -14,13 +14,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Generalise Escrow so it can be used by 3rd parties ([#8356](https://github.com/open-chat-labs/open-chat/pull/8356))
 - Allow members to read community summary/membership ([#8357](https://github.com/open-chat-labs/open-chat/pull/8357))
 - `token:Cryptocurrency` -> `token_symbol:String` ([#8368](https://github.com/open-chat-labs/open-chat/pull/8368))
+- Use full names for bot event notification fields ([#8389](https://github.com/open-chat-labs/open-chat/pull/8389))
 
 ### Fixed
 
 - On uninstall unsubscribe bot from community events ([#8330](https://github.com/open-chat-labs/open-chat/pull/8330))
 - Call to remove member will also remove any invite ([#8332](https://github.com/open-chat-labs/open-chat/pull/8332))
 
-## [[2.0.1829](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1829-community)] - 2025-07-09
+## [[2.0.1828](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1828-community)] - 2025-07-09
 
 ### Added
 
