@@ -659,8 +659,6 @@ export class OpenChat {
         this.#vapidPublicKey = config.vapidPublicKey;
         locale.subscribe((v) => (this.#locale = v ?? "en"));
 
-        console.log("OpenChatConfig: ", config);
-
         userStore.setSpecialUsers([
             openChatBotUser,
             videoCallBotUser,
