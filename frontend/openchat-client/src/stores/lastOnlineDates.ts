@@ -1,4 +1,4 @@
-import { writable } from "svelte/store";
+import { type Subscriber, writable } from "svelte/store";
 
 const TWO_MINUTES_MILLIS = 120 * 1000;
 
@@ -17,7 +17,7 @@ function createLastOnlineDatesStore() {
     }
 
     return {
-        subscribe: store.subscribe,
+        subscribe: (subscriber: Subscriber<Map<string, LastOnline>>, invalidate?: () => void) => store.subscribe(subscriber, invalidate),
         get: (userId: string, now: number): LastOnline | undefined => {
             const value = storeValue.get(userId);
             return value !== undefined && !expired(value, now) ? value : undefined;

@@ -5341,7 +5341,7 @@ export class OpenChat {
                 .map((g) => chatIdentifierToString(g.id)),
         );
 
-        recommendedGroupExclusions.value().forEach((c) => exclusions.add(c));
+        recommendedGroupExclusions.value.forEach((c) => exclusions.add(c));
 
         return this.#sendRequest({
             kind: "getRecommendedGroups",
