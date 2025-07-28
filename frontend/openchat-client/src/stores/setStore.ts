@@ -1,3 +1,4 @@
+import type { Subscriber } from "svelte/store";
 import { dequal } from "dequal";
 import { writable } from "../utils/stores";
 import { notEq } from "../state/utils";
@@ -9,7 +10,7 @@ export function createSetStore<T>(initialValue = new Set<T>()) {
     store.subscribe((value) => (storeValue = value));
 
     return {
-        subscribe: store.subscribe,
+        subscribe: (subscriber: Subscriber<Set<T>>, invalidate?: () => void) => store.subscribe(subscriber, invalidate),
         set: (s: Set<T>) => {
             if (!dequal(s, storeValue)) {
                 store.set(s);

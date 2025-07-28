@@ -87,7 +87,7 @@ export function readable<T>(
 ): Readable<T> {
     const store = writable(value, start, equalityCheck);
     return {
-        subscribe: store.subscribe,
+        subscribe: (subscriber: Subscriber<T>, invalidate?: () => void) => store.subscribe(subscriber, invalidate),
         value: store.value,
         dirty: store.dirty,
     };

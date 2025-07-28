@@ -1,5 +1,5 @@
 import type { BotMatch, CommunityMatch, GroupMatch } from "openchat-client";
-import { writable } from "svelte/store";
+import { type Subscriber, writable } from "svelte/store";
 
 type Search<T> = {
     scrollPos: number;
@@ -18,7 +18,8 @@ function createSearchStore<T>() {
         index: 0,
     });
     return {
-        subscribe: store.subscribe,
+        subscribe: (subscriber: Subscriber<Search<T>>, invalidate?: () => void) =>
+            store.subscribe(subscriber, invalidate),
         setSearchTerm: (term: string) => store.update((val) => ({ ...val, term })),
         setScrollPos: (scrollPos: number) => store.update((val) => ({ ...val, scrollPos })),
         reset: () => store.update((val) => ({ ...val, index: 0 })),
