@@ -11,9 +11,7 @@
         iconSize,
         messagesRead,
         selectedChatPinnedMessagesStore,
-        setsAreEqual,
         subscribe,
-        withEqCheck,
     } from "openchat-client";
     import { isSuccessfulEventsResponse } from "openchat-shared";
     import { getContext, onMount, tick, untrack } from "svelte";
@@ -38,9 +36,7 @@
 
     const client = getContext<OpenChat>("client");
     let unread = $state<boolean>(false);
-    let pinnedMessages = $derived.by(
-        withEqCheck(() => $selectedChatPinnedMessagesStore, setsAreEqual),
-    );
+    let pinnedMessages = $selectedChatPinnedMessagesStore;
 
     onMount(() => {
         const unsubs = [
