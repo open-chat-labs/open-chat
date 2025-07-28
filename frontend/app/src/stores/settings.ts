@@ -87,3 +87,4 @@ export const communityInviteUsersOpen = new LocalStorageBoolStore(
     false,
 );
 export const referredUsersOpen = new LocalStorageBoolStore(configKeys.referredUsersOpen, false);
+export const linkDeviceSectionOpen = new LocalStorageBoolStore(configKeys.linkDeviceSection, false);

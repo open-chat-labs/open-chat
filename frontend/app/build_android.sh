@@ -9,6 +9,7 @@ export OC_WEBAUTHN_ORIGIN=oc.app
 export OC_BITCOIN_MAINNET_ENABLED=true
 export OC_IC_URL=https://icp-api.io
 export OC_DFX_NETWORK=ic
+export OC_ACCOUNT_LINKING_CODES_ENABLED=false
 
 export OC_INTERNET_IDENTITY_CANISTER_ID=rdmx6-jaaaa-aaaaa-aaadq-cai
 export OC_INTERNET_IDENTITY_URL=https://identity.internetcomputer.org

@@ -2,6 +2,9 @@ import { readable } from "svelte/store";
 
 function intervalStore(duration: number) {
     return readable(Date.now(), (set) => {
+        // Set initial value immediately
+        set(Date.now());
+
         const interval = window.setInterval(() => {
             set(Date.now());
         }, duration);

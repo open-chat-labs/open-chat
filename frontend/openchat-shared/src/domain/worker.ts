@@ -145,6 +145,7 @@ import type {
     TranslationCorrections,
 } from "./i18n";
 import type {
+    AccountLinkingCode,
     AuthenticationPrincipalsResponse,
     ChallengeAttempt,
     CreateOpenChatIdentityResponse,
@@ -452,7 +453,8 @@ export type WorkerRequest =
     | UpdateDirectChatSettings
     | UpdateProposalTallies
     | FcmTokenExists
-    | AddFcmToken;
+    | AddFcmToken
+    | CreateAccountLinkingCode;
 
 type SetMinLogLevel = {
     kind: "setMinLogLevel";
@@ -475,7 +477,7 @@ type UpdateDirectChatSettings = {
 type UpdateProposalTallies = {
     kind: "updateProposalTallies";
     chatId: MultiUserChatIdentifier;
-}
+};
 
 type RegisterWebhook = {
     kind: "registerWebhook";
@@ -1569,6 +1571,10 @@ type WithdrawFromIcpSwap = {
     fee: bigint | undefined;
 };
 
+type CreateAccountLinkingCode = {
+    kind: "createAccountLinkingCode";
+};
+
 /**
  * Worker error type
  */
@@ -1737,7 +1743,8 @@ export type WorkerResponseInner =
     | BotDefinitionResponse
     | BotCommandResponse
     | PayForStreakInsuranceResponse
-    | FullWebhookDetails;
+    | FullWebhookDetails
+    | AccountLinkingCode;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 

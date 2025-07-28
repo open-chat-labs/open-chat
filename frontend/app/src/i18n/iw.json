@@ -106,6 +106,25 @@
     },
     "account": "חֶשְׁבּוֹן",
     "accountCopiedToClipboard": "כתובת החשבון הועתקה ללוח!",
+    "accountLinkingCode": {
+        "settingsMenu": {
+            "cta": "הצג קוד קישור חשבון",
+            "disclaimer": "אם ברצונך לקשר חשבון זה למכשיר שבו מותקנת אפליקציית OpenChat המקורית, לחץ על הכפתור למטה כדי לקבל את קוד קישור החשבון שלך! השתמש בקוד במכשיר מהימן בלבד.",
+            "title": "קישור עם מכשיר חדש"
+        },
+        "webModal": {
+            "close": "לִסְגוֹר",
+            "error": {
+                "cancel": "לְבַטֵל",
+                "msg": "לא ניתן היה לטעון את קוד קישור החשבון שלך, אנא נסה שוב.",
+                "tryAgain": "נסה שוב"
+            },
+            "expired": "פג תוקף הקוד שלך!",
+            "subtitle": "השתמש בקוד למטה כדי לקשר את החשבון הנוכחי שלך למכשיר מהימן חדש.",
+            "title": "קוד קישור חשבון",
+            "willExpireIn": "הקוד יפוג תוקפו בעוד {remaining}"
+        }
+    },
     "accounts": "חשבונות",
     "accountSuspended": "חשבון מושעה",
     "activity": {
@@ -1080,20 +1099,25 @@
     "messageUrlCopiedToClipboard": "כתובת האתר של ההודעה הועתקה ללוח!",
     "minimumAmount": "מינימום: {amount} {symbol}",
     "minutes": "דקות",
-    "mobile": {
-        "credentials": {
-            "errors": {
-                "genericSignIn": "לא ניתן היה להיכנס באמצעות סיסמה.",
-                "genericSignUp": "לא ניתן היה ליצור סיסמה."
-            }
-        }
-    },
     "moderator": "מַנחֶה",
     "months": "חודשים",
     "mustBeFutureDateError": "עליך לבחור תאריך עתידי",
     "muted": "מושתק",
     "muteNotifications": "השתק התראות",
     "myAccount": "החשבון שלי",
+    "native": {
+        "auth": {
+            "createAccount": "צור חשבון חדש",
+            "error": "האימות נכשל. אנא נסה שוב.",
+            "existingAccount": "אני משתמש קיים",
+            "linkAccount": {
+                "cta": "קישור חשבון",
+                "info": "כדי להתחבר לחשבון OpenChat הקיים שלך, אנא הזן את הסיסמה החד-פעמית שלך למטה.",
+                "note": "ניתן למצוא סיסמה חד-פעמית תחת הפרופיל שלך / מתקדם, במכשיר שבו אתה מחובר כעת.",
+                "title": "קישור עם חשבון קיים"
+            }
+        }
+    },
     "new": "חָדָשׁ",
     "newChat": "שיחה חדשה",
     "newGroup": "קבוצה חדשה",

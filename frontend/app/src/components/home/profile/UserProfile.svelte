@@ -56,6 +56,7 @@
         userInfoOpen,
         verificationSectionOpen,
         videoSectionOpen,
+        linkDeviceSectionOpen,
     } from "../../../stores/settings";
     import { toastStore } from "../../../stores/toast";
     import { uniquePersonGate } from "../../../utils/access";
@@ -86,6 +87,7 @@
     import ConfirmDeleteAccount from "./ConfirmDeleteAccount.svelte";
     import FontSize from "./FontSize.svelte";
     import LinkedAuthAccounts from "./LinkedAuthAccounts.svelte";
+    import AccountLinkingCode from "./AccountLinkingCode.svelte";
     import ReferredUsersList from "./ReferredUsersList.svelte";
     import ReferUsers from "./ReferUsers.svelte";
     import ThemeSelector from "./ThemeSelector.svelte";
@@ -654,6 +656,16 @@
             </CollapsibleCard>
         </div>
         {#if !$anonUserStore}
+            {#if client.accountLinkingCodeEnabled()}
+                <div class="link-device">
+                    <CollapsibleCard
+                        onToggle={linkDeviceSectionOpen.toggle}
+                        open={$linkDeviceSectionOpen}
+                        headerText={i18nKey("accountLinkingCode.settingsMenu.title")}>
+                        <AccountLinkingCode />
+                    </CollapsibleCard>
+                </div>
+            {/if}
             <div class="danger">
                 <CollapsibleCard
                     onToggle={deleteAccountSectionOpen.toggle}

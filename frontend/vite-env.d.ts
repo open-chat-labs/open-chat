@@ -38,6 +38,7 @@ interface ImportMetaEnv {
     readonly OC_WALLET_CONNECT_PROJECT_ID: string;
     readonly OC_WEBAUTHN_ORIGIN: string;
     readonly OC_BITCOIN_MAINNET_ENABLED: string;
+    readonly OC_ACCOUNT_LINKING_CODES_ENABLED: string;
 }
 
 interface ImportMeta {

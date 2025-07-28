@@ -9472,3 +9472,30 @@ export const BotEventWrapper = Type.Object({
     event: BotEvent,
     timestamp: Type.BigInt(),
 });
+
+export type AccountLinkingCode = Static<typeof AccountLinkingCode>;
+export const AccountLinkingCode = Type.Object({
+    value: Type.String(),
+    expires_at: Type.BigInt(),
+    user_id: UserId,
+});
+
+export type IdentityCreateAccountLinkingCodeResponse = Static<
+    typeof IdentityCreateAccountLinkingCodeResponse
+>;
+export const IdentityCreateAccountLinkingCodeResponse = Type.Union([
+    Type.Object({
+        Success: AccountLinkingCode,
+    }),
+    Type.Literal("UserNotFound"),
+    Type.Literal("FailedToGenerateCode"),
+]);
+
+export type IdentityLinkWithAccountLinkingCodeArgs = Static<
+    typeof IdentityLinkWithAccountLinkingCodeArgs
+>;
+export const IdentityLinkWithAccountLinkingCodeArgs = Type.Object({
+    code: Type.String(),
+    public_key: TSBytes,
+    webauthn_key: Type.Optional(IdentityWebAuthnKey),
+});
