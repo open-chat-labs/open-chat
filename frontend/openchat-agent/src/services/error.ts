@@ -1,4 +1,4 @@
-import type { Identity } from "@dfinity/agent";
+import { HttpErrorCode, type Identity, ProtocolError } from "@dfinity/agent";
 import { ResponseTooLargeError } from "openchat-shared";
 import {
     getTimeUntilSessionExpiryMs,
@@ -58,32 +58,15 @@ export function toCanisterResponseError(
         return tooLarge;
     }
 
-    const statusLine = error.message
-        .split("\n")
-        .map((l) => l.trim().toLowerCase())
-        .find((l) => l.startsWith("code:") || l.startsWith("http status code:"));
-
-    if (statusLine) {
-        const parts = statusLine.split(":");
-        if (parts && parts.length > 1) {
-            let valueText = parts[1].trim();
-            const valueParts = valueText.split(" ");
-            if (valueParts && valueParts.length > 1) {
-                valueText = valueParts[0].trim();
-            }
-            code = parseInt(valueText, 10);
-            if (isNaN(code)) {
-                code = 500;
-            }
+    if (error instanceof ProtocolError) {
+        if (error.cause.code instanceof HttpErrorCode) {
+            code = error.cause.code.status;
         }
-    }
-
-    // if we make an api call after the session has expired (which should not happen) it will manifest as a 400 error
-    if (code === 400) {
-        if (getTimeUntilSessionExpiryMs(identity) < 0) {
+        const timeUntilSessionExpiryMs = getTimeUntilSessionExpiryMs(identity);
+        if (timeUntilSessionExpiryMs < 0) {
             console.debug(
                 "SESSION: we received a 400 response and the session has timed out: ",
-                getTimeUntilSessionExpiryMs(identity),
+                timeUntilSessionExpiryMs,
             );
             return new SessionExpiryError(code, error);
         } else if (error.message.includes("Invalid delegation")) {
