@@ -7,14 +7,14 @@ use types::{Empty, UserId};
 pub type Args = Empty;
 
 #[ts_export(identity, check_auth_principal_v2)]
-#[derive(CandidType, Serialize, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
     NotFound,
 }
 
 #[ts_export(identity, check_auth_principal_v2)]
-#[derive(CandidType, Serialize, Deserialize)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub user_id: Option<UserId>,
     pub originating_canister: Principal,
