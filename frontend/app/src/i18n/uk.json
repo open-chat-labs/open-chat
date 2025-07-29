@@ -670,6 +670,7 @@
     "deleteGroupSuccess": "{level} успішно видалено",
     "deleteMessage": "Видалити",
     "deleteMessageAndReport": "Видалити та повідомити",
+    "deleteMessageConfirm": "Ви справді хочете видалити це повідомлення?",
     "deleteMessageForMe": "Видалити для мене",
     "demoteFailed": "Не вдалося понизити до {role}",
     "demoteTo": "Понизити до {role}",

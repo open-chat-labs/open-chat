@@ -670,6 +670,7 @@
     "deleteGroupSuccess": "{level} eliminato con successo",
     "deleteMessage": "Elimina",
     "deleteMessageAndReport": "Elimina e segnala",
+    "deleteMessageConfirm": "Vuoi davvero eliminare questo messaggio?",
     "deleteMessageForMe": "Cancella per me",
     "demoteFailed": "Impossibile retrocedere a {role}",
     "demoteTo": "Retrocedi a {role}",

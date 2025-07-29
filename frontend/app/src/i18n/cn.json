@@ -670,6 +670,7 @@
     "deleteGroupSuccess": "{level} 已成功删除",
     "deleteMessage": "删除",
     "deleteMessageAndReport": "删除并举报",
+    "deleteMessageConfirm": "您确实要删除此消息吗？",
     "deleteMessageForMe": "帮我删除",
     "demoteFailed": "无法降级到 {role}",
     "demoteTo": "降级为 {role}",

@@ -670,6 +670,7 @@
     "deleteGroupSuccess": "{level} נמחק בהצלחה",
     "deleteMessage": "לִמְחוֹק",
     "deleteMessageAndReport": "מחק ודווח",
+    "deleteMessageConfirm": "האם אתה באמת רוצה למחוק את ההודעה הזו?",
     "deleteMessageForMe": "מחק בשבילי",
     "demoteFailed": "לא ניתן לרדת בדרגה ל-{role}",
     "demoteTo": "הורד ל-{role}",

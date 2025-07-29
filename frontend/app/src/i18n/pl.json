@@ -670,6 +670,7 @@
     "deleteGroupSuccess": "Pomyślnie usunięto {level}",
     "deleteMessage": "Usuwać",
     "deleteMessageAndReport": "Usuń i zgłoś",
+    "deleteMessageConfirm": "Czy na pewno chcesz usunąć tę wiadomość?",
     "deleteMessageForMe": "Usuń dla mnie",
     "demoteFailed": "Nie można zdegradować do {role}",
     "demoteTo": "Zdegraduj do {role}",

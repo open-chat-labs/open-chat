@@ -670,6 +670,7 @@
     "deleteGroupSuccess": "{level} は正常に削除されました",
     "deleteMessage": "消去",
     "deleteMessageAndReport": "削除して報告",
+    "deleteMessageConfirm": "このメッセージを本当に削除しますか?",
     "deleteMessageForMe": "削除してください",
     "demoteFailed": "{role} に降格できません",
     "demoteTo": "{role}に降格",

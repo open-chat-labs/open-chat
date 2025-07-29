@@ -670,6 +670,7 @@
     "deleteGroupSuccess": "تم حذف {level} بنجاح",
     "deleteMessage": "يمسح",
     "deleteMessageAndReport": "حذف والإبلاغ",
+    "deleteMessageConfirm": "هل تريد حقًا حذف هذه الرسالة؟",
     "deleteMessageForMe": "حذف بالنسبة لي",
     "demoteFailed": "غير قادر على التخفيض إلى {role}",
     "demoteTo": "تخفيض إلى {role}",
