@@ -4205,7 +4205,7 @@ export class OpenChat {
         blockLevelMarkdown: boolean,
         mentioned: User[] = [],
         forwarded: boolean = false,
-        retrying = false,
+        messageIdIfRetrying?: bigint,
     ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
         const chat = chatSummariesStore.value.get(chatId);
@@ -4218,7 +4218,7 @@ export class OpenChat {
         const msg = {
             timestamp: BigInt(timestamp),
             expiresAt: threadRootMessageIndex ? undefined : this.eventExpiry(chat, timestamp),
-            messageId: random64(),
+            messageId: messageIdIfRetrying ?? random64(),
             sender: currentUserIdStore.value,
             content,
             repliesTo: draftMessage?.replyingTo,
@@ -4226,7 +4226,7 @@ export class OpenChat {
             blockLevelMarkdown,
         };
 
-        return this.#sendMessageCommon(chat, messageContext, msg, mentioned, retrying);
+        return this.#sendMessageCommon(chat, messageContext, msg, mentioned, messageIdIfRetrying !== undefined);
     }
 
     #throttleSendMessage(): boolean {

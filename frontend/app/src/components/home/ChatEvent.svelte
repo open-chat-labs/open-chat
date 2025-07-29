@@ -157,7 +157,7 @@
             message.event.blockLevelMarkdown,
             [],
             message.event.forwarded,
-            true,
+            message.event.messageId,
         );
     }
 
