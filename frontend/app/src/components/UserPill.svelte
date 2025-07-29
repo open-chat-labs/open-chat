@@ -1,6 +1,10 @@
 <script lang="ts">
     import type { OpenChat, UserOrUserGroup } from "openchat-client";
-    import { AvatarSize, selectedChatWebhooksStore, selectedCommunityMembersStore } from "openchat-client";
+    import {
+        AvatarSize,
+        selectedChatWebhooksStore,
+        selectedCommunityMembersStore,
+    } from "openchat-client";
     import { getContext } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import Avatar from "./Avatar.svelte";
@@ -25,7 +29,11 @@
     let displayName = $derived(
         userOrGroup.kind === "user_group" || userOrGroup.kind === "everyone"
             ? undefined
-            : client.getDisplayName(userOrGroup.userId, $selectedCommunityMembersStore, $selectedChatWebhooksStore),
+            : client.getDisplayName(
+                  userOrGroup.userId,
+                  $selectedCommunityMembersStore,
+                  $selectedChatWebhooksStore,
+              ),
     );
 </script>
 
@@ -52,6 +60,7 @@
         padding: $sp2 $sp3;
         align-items: center;
         border-radius: var(--rd);
+        border-radius: $sp5;
         gap: $sp2;
         @include box-shadow(1);
 

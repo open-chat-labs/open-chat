@@ -68,7 +68,7 @@
 
         .command {
             @include font(book, normal, fs-80);
-            background-color: var(--button-bg);
+            background: var(--button-bg);
             border: 1px solid var(--button-bg);
             color: var(--button-txt);
             padding: $sp3 $sp4;
@@ -83,9 +83,10 @@
             }
 
             &.not_permitted {
-                background-color: unset;
-                color: var(--txt);
                 opacity: 0.8;
+                background: transparent;
+                color: var(--button-hollow-txt);
+                border: var(--bw) solid var(--button-hollow-bd);
             }
 
             &.command-error {

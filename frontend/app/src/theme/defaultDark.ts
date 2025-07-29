@@ -54,6 +54,9 @@ export function darkTheme(defaultTheme: Theme): Theme {
         "font-bold": '"Manrope", sans-serif',
 
         unread: {
+            txt: "var(--txt)",
+            bg: "var(--accent)",
+            "txt-sh": "var(--accentDarker)",
             mute: "rgba(255,255,255,0.2)",
             "mute-solid": "#555",
             "mute-txt": txt,
@@ -183,6 +186,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
             "inverted-sh": "0px -10px 10px 0px rgba(8,93,140,0.3)",
             bd: textBodyLight,
             separator: "rgba(255,255,255,0.2)",
+            rd: "var(--rd)",
         },
 
         button: {
@@ -198,6 +202,16 @@ export function darkTheme(defaultTheme: Theme): Theme {
             rd: "4px",
             sh: "none",
             "hv-sh": "none",
+            hollow: {
+                bd: "var(--bd)",
+                txt: "var(--txt)",
+            },
+            secondary: {
+                bd: "var(--bd)",
+                "bd-hv": "var(--txt-light)",
+                txt: "var(--txt-light)",
+                "txt-hv": "var(--txt-light)",
+            },
         },
 
         modal: {

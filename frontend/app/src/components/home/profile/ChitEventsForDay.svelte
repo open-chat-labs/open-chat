@@ -65,12 +65,12 @@
         justify-content: center;
 
         &.has-events {
-            background-color: var(--button-bg);
+            background: var(--button-bg);
             color: var(--button-txt);
             transition: background-color 300ms ease-in-out;
 
             &:hover {
-                background-color: var(--button-hv);
+                background: var(--button-hv);
             }
         }
 
@@ -78,7 +78,7 @@
             background: var(--button-disabled);
             color: var(--button-disabled-txt);
             &:hover {
-                background-color: var(--button-disabled);
+                background: var(--button-disabled);
             }
         }
     }

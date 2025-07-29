@@ -79,7 +79,7 @@
         display: flex;
         align-items: center;
         gap: $sp3;
-        background-color: var(--button-bg);
+        background: var(--button-bg);
         border-radius: var(--button-rd);
         color: var(--button-txt);
         transition:

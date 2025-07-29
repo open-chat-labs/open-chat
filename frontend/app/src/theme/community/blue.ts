@@ -13,6 +13,7 @@ const txtDark75pc = hexPercent(txtDark, 75);
 const disabledTxt = txtLight;
 const border = "rgba(255,255,255,0.1)";
 const borderWidth = "1px";
+const success = "#05b09f";
 
 export function getTheme(): Theme {
     return {
@@ -24,6 +25,7 @@ export function getTheme(): Theme {
         logo: true,
         mode: "light",
         warn: "#f36D28",
+        success,
 
         bg: "linear-gradient(#22A7F2, #5f2583)",
         // bg: "#ffffff",
@@ -46,6 +48,9 @@ export function getTheme(): Theme {
         "font-bold": '"Manrope", sans-serif',
 
         unread: {
+            txt: "var(--txt)",
+            bg: "var(--accent)",
+            "txt-sh": "var(--accentDarker)",
             mute: "rgba(0,0,0,0.1)",
             "mute-solid": "rgb(55,127,195)",
             "mute-txt": txt,
@@ -91,7 +96,7 @@ export function getTheme(): Theme {
                 txt: "#ffffff",
             },
             success: {
-                bg: "#05b09f",
+                bg: success,
                 txt: "#ffffff",
             },
         },
@@ -176,6 +181,7 @@ export function getTheme(): Theme {
             "inverted-sh": "0px -10px 10px 0px rgba(85, 85, 85, 0.3)",
             bd: "transparent",
             separator: "rgba(0,0,0,0.1)",
+            rd: "var(--rd)",
         },
 
         button: {
@@ -191,6 +197,16 @@ export function getTheme(): Theme {
             rd: "4px",
             sh: "none",
             "hv-sh": "none",
+            hollow: {
+                bd: "var(--bd)",
+                txt: "var(--txt)",
+            },
+            secondary: {
+                bd: "var(--bd)",
+                "bd-hv": "var(--txt-light)",
+                txt: "var(--txt-light)",
+                "txt-hv": "var(--txt-light)",
+            },
         },
 
         link: {

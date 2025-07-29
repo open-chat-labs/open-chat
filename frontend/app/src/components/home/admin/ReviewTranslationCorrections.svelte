@@ -366,7 +366,7 @@
     }
 
     th {
-        background-color: var(--button-bg);
+        background: var(--button-bg);
         color: var(--button-txt);
 
         &.locale,

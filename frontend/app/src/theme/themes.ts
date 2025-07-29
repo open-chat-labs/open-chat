@@ -11,6 +11,7 @@ import { getTheme as getSolarizedDarkTheme } from "./community/solarizeddark";
 import { getTheme as getHalloweenTheme } from "./community/halloween";
 import { getTheme as getSignalsTheme } from "./community/signals";
 import { getTheme as getWindoge98Theme } from "./community/windoge98";
+import { getTheme as getNeonTheme } from "./community/neon";
 import type { Theme, Themes } from "./types";
 import { deepMerge } from "./merge";
 import { createLocalStorageStore } from "../utils/store";
@@ -31,6 +32,7 @@ export const communityThemes = [
     getSolarizedDarkTheme(cloneTheme(defaultDark)),
     getHalloweenTheme(cloneTheme(defaultDark)),
     getSignalsTheme(cloneTheme(blueTheme)),
+    getNeonTheme(cloneTheme(defaultDark)),
 ];
 
 export const themes: Themes = {

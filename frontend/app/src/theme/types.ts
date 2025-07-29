@@ -24,6 +24,7 @@ export interface Theme {
 
     error: string;
     warn: string;
+    success: string;
     accent: string;
     accentDarker: string;
     disabledTxt: string;
@@ -41,6 +42,9 @@ export interface Theme {
     };
 
     unread: {
+        txt: string;
+        bg: string;
+        "txt-sh": string;
         mute: string;
         "mute-solid": string;
         "mute-txt": string;
@@ -164,6 +168,7 @@ export interface Theme {
         "inverted-sh": string;
         bd: string;
         separator: string;
+        rd: string;
     };
 
     button: {
@@ -179,6 +184,18 @@ export interface Theme {
         rd: string;
         sh: string;
         "hv-sh": string;
+
+        hollow: {
+            bd: string;
+            txt: string;
+        };
+
+        secondary: {
+            bd: string;
+            "bd-hv": string;
+            txt: string;
+            "txt-hv": string;
+        };
     };
 
     link: {

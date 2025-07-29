@@ -122,9 +122,9 @@
         }
 
         &.hollow {
-            background-color: transparent;
-            color: var(--txt);
-            border: var(--bw) solid var(--bd);
+            background: transparent;
+            color: var(--button-hollow-txt);
+            border: var(--bw) solid var(--button-hollow-bd);
         }
 
         &.disabled {
@@ -136,12 +136,13 @@
 
         &.secondary {
             background: none;
-            color: var(--txt-light);
-            border: var(--bw) solid var(--bd);
+            color: var(--button-secondary-txt);
+            border: var(--bw) solid var(--button-secondary-bd);
 
             @media (hover: hover) {
                 &:hover {
-                    border: var(--bw) solid var(--txt-light);
+                    border: var(--bw) solid var(--button-secondary-bd-hv);
+                    color: var(--button-secondary-txt-hv);
                 }
             }
         }

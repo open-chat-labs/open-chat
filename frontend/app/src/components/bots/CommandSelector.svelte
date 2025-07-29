@@ -332,7 +332,7 @@
                         line-height: 18px;
 
                         &.required {
-                            background-color: var(--button-bg);
+                            background: var(--button-bg);
                             color: var(--button-txt);
                             border: none;
                         }

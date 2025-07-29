@@ -94,7 +94,7 @@
 
     .message {
         transition: background-color 200ms ease-in-out;
-        background-color: var(--button-bg);
+        background: var(--button-bg);
         padding: $sp4;
         width: 75%;
         max-width: 800px;
