@@ -33,6 +33,18 @@ impl Streak {
         0
     }
 
+    pub fn set_start_day(&mut self, day: u16) {
+        self.start_day = day;
+    }
+
+    pub fn set_end_day(&mut self, day: u16) {
+        self.end_day = day;
+        let streak = 1 + self.end_day - self.start_day;
+        if streak > self.max_streak {
+            self.max_streak = streak;
+        }
+    }
+
     pub fn ends(&self) -> TimestampMillis {
         self.day_to_timestamp(self.end_day + 2)
     }
@@ -130,7 +142,11 @@ impl Streak {
     }
 
     pub fn day_to_timestamp(&self, day: u16) -> TimestampMillis {
-        let utc_offset_ms = mins_to_ms(self.utc_offset_mins);
+        self.day_to_timestamp_with_offset(day, self.utc_offset_mins)
+    }
+
+    pub fn day_to_timestamp_with_offset(&self, day: u16, utc_offset_mins: i16) -> TimestampMillis {
+        let utc_offset_ms = mins_to_ms(utc_offset_mins);
         (((DAY_ZERO + DAY_IN_MS * day as u64) as i64) - utc_offset_ms) as TimestampMillis
     }
 
@@ -195,20 +211,12 @@ impl Streak {
             .unwrap_or_default()
     }
 
-    pub fn set_end_day(&mut self, day: u16) {
-        self.end_day = day;
-        let streak = 1 + self.end_day - self.start_day;
-        if streak > self.max_streak {
-            self.max_streak = streak;
-        }
-    }
-
     fn is_new_streak(&self, today: u16) -> bool {
         today > (self.end_day + 1)
     }
 
     fn final_timestamp_of_day(&self, day: u16) -> TimestampMillis {
-        self.day_to_timestamp(day + 1) - 1
+        self.day_to_timestamp(day) + DAY_IN_MS - 1
     }
 
     fn insurance_cost_for_day(day_index: u8) -> u128 {

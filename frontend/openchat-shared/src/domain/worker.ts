@@ -454,7 +454,8 @@ export type WorkerRequest =
     | UpdateProposalTallies
     | FcmTokenExists
     | AddFcmToken
-    | CreateAccountLinkingCode;
+    | CreateAccountLinkingCode
+    | ReinstateMissedDailyClaims;
 
 type SetMinLogLevel = {
     kind: "setMinLogLevel";
@@ -1575,6 +1576,12 @@ type CreateAccountLinkingCode = {
     kind: "createAccountLinkingCode";
 };
 
+type ReinstateMissedDailyClaims = {
+    kind: "reinstateMissedDailyClaims";
+    userId: string;
+    days: number[];
+};
+
 /**
  * Worker error type
  */
@@ -2500,4 +2507,8 @@ export type WorkerResult<T> = T extends Init
     ? boolean
     : T extends UpdateProposalTallies
     ? EventWrapper<Message>[]
+    : T extends CreateAccountLinkingCode
+    ? AccountLinkingCode | undefined
+    : T extends ReinstateMissedDailyClaims
+    ? boolean
     : never;

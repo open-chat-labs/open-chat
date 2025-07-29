@@ -4563,6 +4563,11 @@ export class OpenChatAgent extends EventTarget {
             await updateCachedProposalTallies(this.db, chatId, tallies);
         }
     }
+
+    async reinstateMissedDailyClaims(userId: string, days: number[]): Promise<boolean> {
+        const localUserIndex = await this.getLocalUserIndexForUser(userId);
+        return this.getLocalUserIndexClient(localUserIndex).reinstateMissedDailyClaims(userId, days);
+    }
 }
 
 export interface ExchangeRateClient {

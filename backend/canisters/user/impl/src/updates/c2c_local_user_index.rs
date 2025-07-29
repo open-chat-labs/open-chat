@@ -150,5 +150,6 @@ fn process_event(event: LocalUserIndexEvent, state: &mut RuntimeState) {
         LocalUserIndexEvent::ExternalAchievementAwarded(ev) => {
             state.award_external_achievement(ev.name, ev.chit_reward, now);
         }
+        LocalUserIndexEvent::ReinstateMissedDailyClaims(days) => state.reinstate_missed_daily_claims(days),
     }
 }
