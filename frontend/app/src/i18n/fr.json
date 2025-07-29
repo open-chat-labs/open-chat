@@ -670,6 +670,7 @@
     "deleteGroupSuccess": "{level} supprimé avec succès",
     "deleteMessage": "Effacer",
     "deleteMessageAndReport": "Supprimer et signaler",
+    "deleteMessageConfirm": "Voulez-vous vraiment supprimer ce message ?",
     "deleteMessageForMe": "Supprimer pour moi",
     "demoteFailed": "Impossible de rétrograder à {role}",
     "demoteTo": "Rétrograder à {role}",

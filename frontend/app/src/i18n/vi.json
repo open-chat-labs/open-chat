@@ -670,6 +670,7 @@
     "deleteGroupSuccess": "{level} đã xóa thành công",
     "deleteMessage": "Xóa bỏ",
     "deleteMessageAndReport": "Xóa và báo cáo",
+    "deleteMessageConfirm": "Bạn có thực sự muốn xóa tin nhắn này không?",
     "deleteMessageForMe": "Xóa cho tôi",
     "demoteFailed": "Không thể hạ cấp xuống {role}",
     "demoteTo": "Giảm xuống {role}",

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { confirmMessageDeletion } from "@src/stores/settings";
     import {
         chatListScopeStore,
         cryptoLookup,
@@ -50,6 +51,8 @@
     import { isTouchOnlyDevice } from "../../utils/devices";
     import * as shareFunctions from "../../utils/share";
     import { copyToClipboard } from "../../utils/urls";
+    import AreYouSure from "../AreYouSure.svelte";
+    import Checkbox from "../Checkbox.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import Bitcoin from "../icons/Bitcoin.svelte";
     import Menu from "../Menu.svelte";
@@ -145,6 +148,7 @@
 
     let menuIconEl: MenuIcon | undefined;
     let quickReactionIconSize = "1.2rem";
+    let showConfirmDelete = $state(false);
 
     let canRemind = $derived(
         msg.content.kind !== "message_reminder_content" &&
@@ -232,13 +236,20 @@
         publish("forward", msg);
     }
 
-    function deleteMessage() {
+    async function deleteMessage(deletionConfirmed: boolean) {
         if (failed) {
             onDeleteFailedMessage?.();
             return;
         }
         if (!canDeleteMessage) return;
-        client.deleteMessage(chatId, threadRootMessageIndex, msg.messageId);
+
+        if (!deletionConfirmed) {
+            showConfirmDelete = !showConfirmDelete;
+            return;
+        }
+
+        showConfirmDelete = false;
+        await client.deleteMessage(chatId, threadRootMessageIndex, msg.messageId);
     }
 
     function undeleteMessage() {
@@ -316,6 +327,22 @@
         );
     }
 </script>
+
+{#if showConfirmDelete}
+    <AreYouSure action={deleteMessage}>
+        <div class="confirm">
+            <Translatable resourceKey={i18nKey("deleteMessageConfirm")}></Translatable>
+            <div class="dont-show">
+                <Checkbox
+                    id="dont_show"
+                    label={i18nKey("install.dontShow")}
+                    checked={!$confirmMessageDeletion}
+                    onChange={confirmMessageDeletion.toggle}>
+                </Checkbox>
+            </div>
+        </div>
+    </AreYouSure>
+{/if}
 
 <div class="menu" class:touch={isTouchOnlyDevice} class:inert class:rtl={$rtlStore}>
     {#if !inert && !isTouchOnlyDevice}
@@ -594,7 +621,7 @@
                     </MenuItem>
                 {/if}
                 {#if canDeleteMessage}
-                    <MenuItem onclick={deleteMessage}>
+                    <MenuItem onclick={() => deleteMessage(!$confirmMessageDeletion)}>
                         {#snippet icon()}
                             <DeleteOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
                         {/snippet}
@@ -723,5 +750,14 @@
         display: flex;
         align-items: center;
         justify-content: center;
+    }
+
+    .confirm {
+        display: flex;
+        flex-direction: column;
+        gap: $sp4;
+    }
+    .dont-show {
+        @include font(light, normal, fs-80);
     }
 </style>
