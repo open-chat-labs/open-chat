@@ -5607,11 +5607,7 @@ export class OpenChat {
                     userStore.setUpdated(allOtherUsers, resp.serverTimestamp);
                 }
                 if (resp.currentUser) {
-                    currentUserStore.set(
-                        resp.currentUser
-                            ? updateCreatedUser(currentUserStore.value, resp.currentUser)
-                            : currentUserStore.value,
-                    );
+                    currentUserStore.set(updateCreatedUser(currentUserStore.value, resp.currentUser));
                 }
                 return resp;
             })
