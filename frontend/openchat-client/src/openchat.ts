@@ -5607,11 +5607,7 @@ export class OpenChat {
                     userStore.setUpdated(allOtherUsers, resp.serverTimestamp);
                 }
                 if (resp.currentUser) {
-                    currentUserStore.set(
-                        resp.currentUser
-                            ? updateCreatedUser(currentUserStore.value, resp.currentUser)
-                            : currentUserStore.value,
-                    );
+                    currentUserStore.set(updateCreatedUser(currentUserStore.value, resp.currentUser));
                 }
                 return resp;
             })
@@ -5671,7 +5667,7 @@ export class OpenChat {
                     ...currentUserStore.value,
                     username,
                 });
-                this.#overwriteUserInStore(userId, (user) => ({ ...user, username }));
+                userStore.updateUser(userId, (user) => ({ ...user, username }));
             }
             return resp;
         });
@@ -5687,7 +5683,7 @@ export class OpenChat {
                     ...currentUserStore.value,
                     displayName,
                 });
-                this.#overwriteUserInStore(userId, (user) => ({ ...user, displayName }));
+                userStore.updateUser(userId, (user) => ({ ...user, displayName }));
             }
             return resp;
         });
@@ -6397,12 +6393,14 @@ export class OpenChat {
                     : streakInsurance.value,
             );
         }
-        if (chitState !== undefined) {
-            chitStateStore.update((curr) => {
-                // Skip the new update if it is behind what we already have locally
-                const skipUpdate = chitState.streakEnds < curr.streakEnds;
-                return skipUpdate ? curr : chitState;
-            });
+        if (chitState !== undefined && chitState.streakEnds >= chitStateStore.value.streakEnds) {
+            chitStateStore.set(chitState);
+            userStore.updateUser(currentUserIdStore.value, (user) => ({
+                ...user,
+                chitBalance: chitState.chitBalance,
+                streak: chitState.streak,
+                maxStreak: chitState.maxStreak,
+            }));
         }
     }
 
@@ -6750,21 +6748,8 @@ export class OpenChat {
             }));
     }
 
-    #overwriteUserInStore(
-        userId: string,
-        updater: (user: UserSummary) => UserSummary | undefined,
-    ): void {
-        const user = userStore.get(userId);
-        if (user !== undefined) {
-            const updated = updater(user);
-            if (updated !== undefined) {
-                userStore.addUser(updated);
-            }
-        }
-    }
-
     #updateDiamondStatusInUserStore(status: DiamondMembershipStatus): void {
-        this.#overwriteUserInStore(currentUserIdStore.value, (user) => {
+        userStore.updateUser(currentUserIdStore.value, (user) => {
             const changed = status.kind !== user.diamondStatus;
             return changed ? { ...user, diamondStatus: status.kind } : undefined;
         });
@@ -8011,7 +7996,7 @@ export class OpenChat {
                         ...currentUserStore.value,
                         isUniquePerson: true,
                     });
-                    this.#overwriteUserInStore(currentUserIdStore.value, (u) => ({
+                    userStore.updateUser(currentUserIdStore.value, (u) => ({
                         ...u,
                         isUniquePerson: true,
                     }));
@@ -8907,7 +8892,7 @@ export class OpenChat {
                         totalChitEarned: state.totalChitEarned + resp.chitEarned,
                     }));
                 }
-                this.#overwriteUserInStore(userId, (user) => ({
+                userStore.updateUser(userId, (user) => ({
                     ...user,
                     chitBalance: resp.chitBalance,
                     streak: resp.streak,

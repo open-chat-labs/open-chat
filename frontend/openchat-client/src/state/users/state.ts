@@ -116,6 +116,19 @@ export class UsersState {
         }
     }
 
+    updateUser(
+        userId: string,
+        updater: (user: UserSummary) => UserSummary | undefined,
+    ): void {
+        const user = this.get(userId);
+        if (user !== undefined) {
+            const updated = updater(user);
+            if (updated !== undefined) {
+                this.addUser(updated);
+            }
+        }
+    }
+
     get blockedUsers() {
         return this.#blockedUsers;
     }

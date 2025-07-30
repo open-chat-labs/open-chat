@@ -1,10 +1,11 @@
 <script lang="ts">
     import CollapsibleCard from "@src/components/CollapsibleCard.svelte";
-    import { chitStateStore, currentUserIdStore, OpenChat, type ChitEarned } from "openchat-client";
+    import { chitStateStore, OpenChat, type ChitEarned } from "openchat-client";
     import { getContext } from "svelte";
     import { menuCloser } from "../../../actions/closeMenu";
     import { i18nKey } from "../../../i18n/i18n";
     import { chitPopup, disableChit, hideChitIcon, utcMode } from "../../../stores/settings";
+    import { now500 } from "../../../stores/time";
     import Calendar from "../../calendar/Calendar.svelte";
     import { calendarState, type DateRange } from "../../calendar/calendarState.svelte";
     import { isSameDay } from "../../calendar/utils";
@@ -17,7 +18,7 @@
     const client = getContext<OpenChat>("client");
     let events = $state<ChitEarned[]>([]);
 
-    let streak = $derived(client.getStreak($currentUserIdStore));
+    let streak = $derived($chitStateStore.streakEnds < $now500 ? 0 : $chitStateStore.streak);
     let totalEarned = $derived(
         events.reduce((total, ev) => {
             const eventDate = new Date(Number(ev.timestamp));
