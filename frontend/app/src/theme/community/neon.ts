@@ -49,6 +49,7 @@ export function getTheme(base: Theme): Theme {
     base.disabledTxt = txtSecondary;
     base.panel.bg = level0;
     base.panel.right.bg = level0;
+    base.panel.left.bg = level0;
     base.panel.right.modal = level0;
     base.panel.nav.bg = level1;
     base.placeholder = txtPlaceholder;
@@ -58,6 +59,7 @@ export function getTheme(base: Theme): Theme {
     base.button["hv-txt"] = txtOnPrimary;
     base.button.disabled = buttonDisabled;
     base.button["disabled-txt"] = level0;
+    base.button.spinner = primary;
     base.input.bg = txtTertiary;
     base.input.bd = "none";
     base.input.sh = "none";
@@ -87,9 +89,14 @@ export function getTheme(base: Theme): Theme {
     base.icon.selected = primary;
     base.currentChat.msg.bg = level1;
     base.currentChat.msg.me.bg = primary;
+    base.currentChat.msg.focus = secondary;
     base.entry.bg = "none";
     base.entry.input.bg = base.input.bg;
     base.entry.input.sh = "none";
+
+    // TODO - not convinced that Manrope for the default body text is good.
+    // Works well for headers but not for default message text - roboto (the current default) feels better
+    // base.font = '"Manrope", sans-serif';
 
     base.chatSearch.bg = base.input.bg;
     base.chatSearch.sh = "none";

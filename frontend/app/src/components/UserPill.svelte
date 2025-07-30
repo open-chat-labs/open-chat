@@ -8,6 +8,7 @@
     import { getContext } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import Avatar from "./Avatar.svelte";
+    import Pill from "./Pill.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -37,7 +38,7 @@
     );
 </script>
 
-<div class="user-pill" title={name}>
+<Pill title={name}>
     <div class="avatar">
         <Avatar url={avatarUrl} {userId} size={AvatarSize.Small} />
     </div>
@@ -47,36 +48,26 @@
         {/if}
         <span class="username">@{name}</span>
     </div>
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <span class="close" onclick={() => onDeleteUser(userOrGroup)}>
         <Close size={"1.2em"} color={"var(--button-txt)"} />
     </span>
-</div>
+</Pill>
 
 <style lang="scss">
-    .user-pill {
-        background: var(--button-bg);
-        color: var(--button-txt);
-        display: inline-flex;
-        padding: $sp2 $sp3;
-        align-items: center;
-        border-radius: var(--rd);
-        border-radius: $sp5;
-        gap: $sp2;
-        @include box-shadow(1);
+    .name {
+        flex: auto;
+        padding: $sp3;
+    }
 
-        .name {
-            flex: auto;
-            padding: $sp3;
-        }
+    .username {
+        color: var(--button-disabled-txt);
+    }
 
-        .username {
-            color: var(--button-disabled-txt);
-        }
-
-        .close {
-            cursor: pointer;
-            width: 20px;
-            display: flex;
-        }
+    .close {
+        cursor: pointer;
+        width: 20px;
+        display: flex;
     }
 </style>

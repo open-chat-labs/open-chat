@@ -24,6 +24,6 @@
 </script>
 
 <ButtonGroup align="start">
-    <Button onClick={deleteCommunity}
+    <Button danger onClick={deleteCommunity}
         ><Translatable resourceKey={i18nKey("communities.delete")} /></Button>
 </ButtonGroup>

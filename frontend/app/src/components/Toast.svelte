@@ -93,7 +93,7 @@
     }
 
     .message {
-        transition: background-color 200ms ease-in-out;
+        transition: background 200ms ease-in-out;
         background: var(--button-bg);
         padding: $sp4;
         width: 75%;
@@ -110,12 +110,12 @@
 
         @media (hover: hover) {
             &:hover {
-                background-color: var(--button-hv);
+                background: var(--button-hv);
             }
         }
 
         &.failure {
-            background-color: var(--toast-failure-bg);
+            background: var(--toast-failure-bg);
             color: var(--toast-failure-txt);
         }
 
@@ -125,7 +125,7 @@
         }
 
         &.success {
-            background-color: var(--toast-success-bg);
+            background: var(--toast-success-bg);
             color: var(--toast-success-txt);
         }
 

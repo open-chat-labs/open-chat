@@ -1,5 +1,5 @@
-import { hexPercent } from "./utils";
 import type { Theme } from "./types";
+import { hexPercent } from "./utils";
 
 const backgroundBlack = "#1B1C21";
 
@@ -256,6 +256,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
                 r1: "8px",
                 r2: "4px",
                 separator: "rgba(255,255,255,0.2)",
+                focus: "var(--notificationBar-bg)",
 
                 me: {
                     bg: blueAccent,

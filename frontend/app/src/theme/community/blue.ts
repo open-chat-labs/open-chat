@@ -1,5 +1,5 @@
-import { hexPercent } from "../utils";
 import type { Theme } from "../types";
+import { hexPercent } from "../utils";
 
 const orangeAccent = "#ff9505";
 const pinkAccent = "#ff005c";
@@ -254,6 +254,7 @@ export function getTheme(): Theme {
                 r1: "8px",
                 r2: "4px",
                 separator: "rgba(255,255,255,0.2)",
+                focus: "var(--notificationBar-bg)",
 
                 me: {
                     bg: hexPercent(primary, 50),

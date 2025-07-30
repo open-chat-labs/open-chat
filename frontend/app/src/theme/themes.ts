@@ -1,20 +1,20 @@
-import { darkTheme } from "./defaultDark";
-import { getTheme as getBlueTheme } from "./community/blue";
-import { getTheme as getWhiteTheme } from "./defaultLight";
 import { derived, readable, writable } from "svelte/store";
-import { getTheme as getSubmarineTheme } from "./community/submarine";
-import { getTheme as getNightvisionTheme } from "./community/nightvision";
-import { getTheme as getMatteBlackGoldTheme } from "./community/matteblackgold";
-import { getTheme as getBarbieTheme } from "./community/barbie";
-import { getTheme as getTokyoNightTheme } from "./community/tokyonight";
-import { getTheme as getSolarizedDarkTheme } from "./community/solarizeddark";
-import { getTheme as getHalloweenTheme } from "./community/halloween";
-import { getTheme as getSignalsTheme } from "./community/signals";
-import { getTheme as getWindoge98Theme } from "./community/windoge98";
-import { getTheme as getNeonTheme } from "./community/neon";
-import type { Theme, Themes } from "./types";
-import { deepMerge } from "./merge";
 import { createLocalStorageStore } from "../utils/store";
+import { getTheme as getBarbieTheme } from "./community/barbie";
+import { getTheme as getBlueTheme } from "./community/blue";
+import { getTheme as getHalloweenTheme } from "./community/halloween";
+import { getTheme as getMatteBlackGoldTheme } from "./community/matteblackgold";
+// import { getTheme as getNeonTheme } from "./community/neon";
+import { getTheme as getNightvisionTheme } from "./community/nightvision";
+import { getTheme as getSignalsTheme } from "./community/signals";
+import { getTheme as getSolarizedDarkTheme } from "./community/solarizeddark";
+import { getTheme as getSubmarineTheme } from "./community/submarine";
+import { getTheme as getTokyoNightTheme } from "./community/tokyonight";
+import { getTheme as getWindoge98Theme } from "./community/windoge98";
+import { darkTheme } from "./defaultDark";
+import { getTheme as getWhiteTheme } from "./defaultLight";
+import { deepMerge } from "./merge";
+import type { Theme, Themes } from "./types";
 
 const blueTheme = getBlueTheme();
 const defaultLight = getWhiteTheme(cloneTheme(blueTheme));
@@ -32,7 +32,7 @@ export const communityThemes = [
     getSolarizedDarkTheme(cloneTheme(defaultDark)),
     getHalloweenTheme(cloneTheme(defaultDark)),
     getSignalsTheme(cloneTheme(blueTheme)),
-    getNeonTheme(cloneTheme(defaultDark)),
+    // getNeonTheme(cloneTheme(defaultDark)), //TODO - uncomment this to expose the (dark) Neon theme
 ];
 
 export const themes: Themes = {

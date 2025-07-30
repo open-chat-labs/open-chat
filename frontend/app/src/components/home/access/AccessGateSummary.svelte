@@ -95,12 +95,8 @@
         }
 
         &.invalid {
-            background-color: var(--error);
-            @media (hover: hover) {
-                &:hover {
-                    background: var(--error);
-                }
-            }
+            background: var(--toast-failure-bg);
+            color: var(--toast-failure-txt);
         }
     }
 </style>

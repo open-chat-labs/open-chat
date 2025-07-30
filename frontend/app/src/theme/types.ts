@@ -241,6 +241,7 @@ export interface Theme {
             r1: string;
             r2: string;
             separator: string;
+            focus: string;
 
             me: {
                 bg: string;
