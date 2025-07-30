@@ -5671,7 +5671,7 @@ export class OpenChat {
                     ...currentUserStore.value,
                     username,
                 });
-                this.#overwriteUserInStore(userId, (user) => ({ ...user, username }));
+                userStore.updateUser(userId, (user) => ({ ...user, username }));
             }
             return resp;
         });
@@ -5687,7 +5687,7 @@ export class OpenChat {
                     ...currentUserStore.value,
                     displayName,
                 });
-                this.#overwriteUserInStore(userId, (user) => ({ ...user, displayName }));
+                userStore.updateUser(userId, (user) => ({ ...user, displayName }));
             }
             return resp;
         });
@@ -6223,7 +6223,7 @@ export class OpenChat {
                 pinNumberRequiredStore.set(chatsResponse.pinNumberSettings !== "set_to_none");
             }
 
-            this.#setGlobalStateStores(
+            OpenChat.setGlobalStateStores(
                 chatsResponse.directChatsAddedUpdated,
                 chatsResponse.groupsAddedUpdated,
                 chatsResponse.communitiesAddedUpdated,
@@ -6307,7 +6307,7 @@ export class OpenChat {
         }
     }
 
-    #setGlobalStateStores(
+    static setGlobalStateStores(
         directChatsAddedUpdated: DirectChatSummary[],
         groupsAddedUpdated: GroupChatSummary[],
         communitiesAddedUpdated: CommunitySummary[],
@@ -6399,7 +6399,7 @@ export class OpenChat {
         }
         if (chitState !== undefined && chitState.streakEnds >= chitStateStore.value.streakEnds) {
             chitStateStore.set(chitState);
-            this.#overwriteUserInStore(currentUserIdStore.value, (user) => ({
+            userStore.updateUser(currentUserIdStore.value, (user) => ({
                 ...user,
                 chitBalance: chitState.chitBalance,
                 streak: chitState.streak,
@@ -6752,21 +6752,8 @@ export class OpenChat {
             }));
     }
 
-    #overwriteUserInStore(
-        userId: string,
-        updater: (user: UserSummary) => UserSummary | undefined,
-    ): void {
-        const user = userStore.get(userId);
-        if (user !== undefined) {
-            const updated = updater(user);
-            if (updated !== undefined) {
-                userStore.addUser(updated);
-            }
-        }
-    }
-
     #updateDiamondStatusInUserStore(status: DiamondMembershipStatus): void {
-        this.#overwriteUserInStore(currentUserIdStore.value, (user) => {
+        userStore.updateUser(currentUserIdStore.value, (user) => {
             const changed = status.kind !== user.diamondStatus;
             return changed ? { ...user, diamondStatus: status.kind } : undefined;
         });
@@ -8013,7 +8000,7 @@ export class OpenChat {
                         ...currentUserStore.value,
                         isUniquePerson: true,
                     });
-                    this.#overwriteUserInStore(currentUserIdStore.value, (u) => ({
+                    userStore.updateUser(currentUserIdStore.value, (u) => ({
                         ...u,
                         isUniquePerson: true,
                     }));
@@ -8909,7 +8896,7 @@ export class OpenChat {
                         totalChitEarned: state.totalChitEarned + resp.chitEarned,
                     }));
                 }
-                this.#overwriteUserInStore(userId, (user) => ({
+                userStore.updateUser(userId, (user) => ({
                     ...user,
                     chitBalance: resp.chitBalance,
                     streak: resp.streak,
