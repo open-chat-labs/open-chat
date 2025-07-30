@@ -20,6 +20,7 @@ fn accept_identity_link_via_qr_code_impl(args: Args, state: &mut RuntimeState) -
     } = match state.verify_new_identity(VerifyNewIdentityArgs {
         public_key: args.public_key,
         webauthn_key: args.webauthn_key,
+        override_principal: None,
         allow_existing_provided_not_linked_to_oc_account: true,
     }) {
         Ok(ok) => ok,

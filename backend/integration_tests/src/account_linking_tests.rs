@@ -3,7 +3,8 @@ use crate::env::ENV;
 use crate::utils::now_millis;
 use crate::{TestEnv, client};
 use identity_canister::create_account_linking_code::Response as CreateAccountLinkingCodeResponse;
-use identity_canister::link_with_account_linking_code::Response as LinkWithAccountLinkingCodeResponse;
+use identity_canister::finalise_account_linking_with_code::Response as FinaliseAccountLinkingWithCodeResponse;
+use identity_canister::verify_account_linking_code::Response as VerifyAccountLinkingCodeResponse;
 use std::ops::Deref;
 use testing::rng::random_delegated_principal;
 
@@ -58,22 +59,42 @@ fn test_account_linking_create_link_code() {
     let (new_principal, new_pub_key) = random_delegated_principal(canister_ids.sign_in_with_email);
 
     //
-    // ---- Link account auth methods using the code ----
+    // ---- Verify account linking code ----
     //
-    let account_linking_response = client::identity::link_with_account_linking_code(
+    let verify_response = client::identity::verify_account_linking_code(
         env,
         new_principal,
         canister_ids.identity,
-        &identity_canister::link_with_account_linking_code::Args {
+        &identity_canister::verify_account_linking_code::Args {
             code: created_linking_code.value.clone(),
+        },
+    );
+
+    match verify_response {
+        VerifyAccountLinkingCodeResponse::Success(username) => {
+            assert_eq!(username, "72awj".to_string());
+        }
+        VerifyAccountLinkingCodeResponse::Error(err) => panic!("Verify linking code failed: {err:#?}"),
+    }
+
+    //
+    // ---- Finalise account linking ----
+    //
+
+    let finalise_response = client::identity::finalise_account_linking_with_code(
+        env,
+        new_principal,
+        canister_ids.identity,
+        &identity_canister::finalise_account_linking_with_code::Args {
+            principal: new_principal,
             public_key: new_pub_key,
             webauthn_key: None,
         },
     );
 
-    match account_linking_response {
-        LinkWithAccountLinkingCodeResponse::Success => {}
-        LinkWithAccountLinkingCodeResponse::Error(err) => panic!("Account linking failed with: {err:#?}"),
+    match finalise_response {
+        FinaliseAccountLinkingWithCodeResponse::Success => {}
+        FinaliseAccountLinkingWithCodeResponse::Error(err) => panic!("Finalise linking accounts failed: {err:#?}"),
     }
 
     //
