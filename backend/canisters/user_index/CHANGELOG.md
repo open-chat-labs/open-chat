@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1845](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1845-user_index)] - 2025-07-29
+
 ### Changed
 
 - `token:Cryptocurrency` -> `token_symbol:String` ([#8368](https://github.com/open-chat-labs/open-chat/pull/8368))
