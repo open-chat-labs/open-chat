@@ -326,6 +326,7 @@ fn prize_content() {
         prizes_paid: 10,
         fee_percent: 5,
         requires_captcha: true,
+        min_chit_earned: 100,
     });
     let bytes = generate_then_serialize_value(content, &mut rng);
     assert_eq!(bytes, PRIZE_CURRENT);
