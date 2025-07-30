@@ -11,4 +11,4 @@ tauri = { workspace = true }
 thiserror = { workspace = true }
 
 [build-dependencies]
-tauri-plugin = { version = "2.2.0", features = ["build"] }
+tauri-plugin = { version = "2.3.1", features = ["build"] }
