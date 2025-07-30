@@ -6223,7 +6223,7 @@ export class OpenChat {
                 pinNumberRequiredStore.set(chatsResponse.pinNumberSettings !== "set_to_none");
             }
 
-            OpenChat.setGlobalStateStores(
+            this.#setGlobalStateStores(
                 chatsResponse.directChatsAddedUpdated,
                 chatsResponse.groupsAddedUpdated,
                 chatsResponse.communitiesAddedUpdated,
@@ -6307,7 +6307,7 @@ export class OpenChat {
         }
     }
 
-    static setGlobalStateStores(
+    #setGlobalStateStores(
         directChatsAddedUpdated: DirectChatSummary[],
         groupsAddedUpdated: GroupChatSummary[],
         communitiesAddedUpdated: CommunitySummary[],
@@ -6397,12 +6397,14 @@ export class OpenChat {
                     : streakInsurance.value,
             );
         }
-        if (chitState !== undefined) {
-            chitStateStore.update((curr) => {
-                // Skip the new update if it is behind what we already have locally
-                const skipUpdate = chitState.streakEnds < curr.streakEnds;
-                return skipUpdate ? curr : chitState;
-            });
+        if (chitState !== undefined && chitState.streakEnds >= chitStateStore.value.streakEnds) {
+            chitStateStore.set(chitState);
+            this.#overwriteUserInStore(currentUserIdStore.value, (user) => ({
+                ...user,
+                chitBalance: chitState.chitBalance,
+                streak: chitState.streak,
+                maxStreak: chitState.maxStreak,
+            }));
         }
     }
 
