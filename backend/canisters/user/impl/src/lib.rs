@@ -36,7 +36,6 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
 use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
-use tracing::info;
 use types::{
     Achievement, BotInitiator, BotNotification, BotPermissions, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics,
     ChitEarned, ChitEarnedReason, CommunityId, Cycles, Document, FcmData, IdempotentEnvelope, Milliseconds, Notification,
@@ -347,58 +346,21 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
         }
     }
 
-    pub fn reinstate_missed_daily_claims(&mut self, mut days_to_reinstate: Vec<u16>) {
+    pub fn reinstate_missed_daily_claims(&mut self, days_to_reinstate: Vec<u16>) {
         let now = self.env.now();
-        let now_day = self.data.streak.timestamp_to_day(now).unwrap();
-        let previous_streak = self.data.streak.days(now);
 
-        let mut chit_claims: BTreeMap<_, _> = self
+        let daily_claims = self.data.chit_events.iter_daily_claims().collect();
+
+        let new_events = self
             .data
-            .chit_events
-            .iter_daily_claims()
-            .flat_map(|ts| Streak::timestamp_to_offset_day(ts, self.data.streak.utc_offset_mins_at_ts(ts)).map(|d| (d, ts)))
-            .collect();
+            .streak
+            .reinstate_missed_daily_claims(days_to_reinstate, daily_claims, now);
 
-        days_to_reinstate.retain(|day| !chit_claims.contains_key(day) && *day <= now_day);
-
-        info!(?days_to_reinstate, "Reinstating daily claims");
-
-        if days_to_reinstate.is_empty() {
-            return;
+        let count = new_events.len();
+        for event in new_events {
+            self.data.chit_events.push(event);
         }
-
-        let count = days_to_reinstate.len();
-        for day in days_to_reinstate {
-            let timestamp_of_previous_claim = chit_claims
-                .iter()
-                .rev()
-                .find(|(d, _)| **d < day)
-                .map(|(_, ts)| *ts)
-                .unwrap_or_default();
-            // We use timestamp_of_previous_claim + 1 because the claim may have updated the utc
-            // offset, and we want to use that updated value
-            let utc_offset_mins = self.data.streak.utc_offset_mins_at_ts(timestamp_of_previous_claim + 1);
-            // Calculate the timestamp of the end of the day
-            let timestamp = self.data.streak.day_to_timestamp_with_offset(day, utc_offset_mins) + DAY_IN_MS - 1;
-            self.data.chit_events.push(ChitEarned {
-                timestamp,
-                reason: ChitEarnedReason::DailyClaimReinstated,
-                amount: 0,
-            });
-            chit_claims.insert(day, timestamp);
-            info!(day, timestamp, "Daily claim reinstated");
-        }
-
-        let end_day = chit_claims.keys().next_back().copied().unwrap_or_default();
-        let mut start_day = end_day;
-        while chit_claims.contains_key(&(start_day - 1)) {
-            start_day -= 1;
-        }
-
-        self.data.streak.set_start_day(start_day);
-        self.data.streak.set_end_day(end_day);
         let new_streak = self.data.streak.days(now);
-        assert!(new_streak >= previous_streak);
 
         let first_line = if count == 1 {
             "missed daily claim has been reinstated."
@@ -407,9 +369,7 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
         };
         let message = format!(
             "{count} {first_line}
-Your new streak length is now {new_streak}!
-
-Going forward, daily claims will operate in your local timezone rather than UTC."
+Your new streak length is now {new_streak}!"
         );
 
         openchat_bot::send_text_message(message, Vec::new(), false, self);
