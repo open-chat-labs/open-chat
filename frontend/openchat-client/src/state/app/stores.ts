@@ -533,12 +533,15 @@ export const nextCommunityIndexStore = derived(
     (sortedCommunitiesStore) => (sortedCommunitiesStore[0]?.membership?.index ?? -1) + 1,
 );
 
-export const userGroupSummariesStore = derived(communitiesStore, (communities) => {
-    return [...communities.values()].reduce((map, community) => {
-        community.userGroups.forEach((ug) => map.set(ug.id, ug));
-        return map;
-    }, new Map<number, UserGroupSummary>());
-});
+export const userGroupSummariesStore = derived(
+    communitiesStore, (communities) => {
+        return [...communities.values()].reduce((map, community) => {
+            community.userGroups.forEach((ug) => map.set(ug.id, ug));
+            return map;
+        }, new Map<number, UserGroupSummary>());
+    },
+    notEq
+);
 
 export const serverEventsStore = writable<EventWrapper<ChatEvent>[]>([], undefined, notEq);
 export const serverThreadEventsStore = writable<EventWrapper<ChatEvent>[]>(
@@ -621,6 +624,7 @@ export const selectedCommunityMembersStore = derived(
         if (updates === undefined) return community.members;
         return updates.apply(community.members);
     },
+    notEq,
 );
 
 export const selectedCommunityBotsStore = derived(
@@ -686,6 +690,7 @@ export const selectedCommunitySummaryStore = derived(
     [selectedCommunityIdStore, communitiesStore],
     ([selectedCommunityId, communities]) =>
         selectedCommunityId ? communities.get(selectedCommunityId) : undefined,
+    notEq,
 );
 
 export const selectedServerChatStore = writable<ChatDetailsState | undefined>(
@@ -699,6 +704,7 @@ export const selectedChatMembersStore = derived(
         if (chat === undefined) return new Map() as ReadonlyMap<string, Member>;
         return members.get(chat.chatId)?.apply(chat.members) ?? chat.members;
     },
+    notEq,
 );
 export const selectedChatBlockedUsersStore = derived(
     [selectedServerChatStore, chatDetailsLocalUpdates.blockedUsers],
@@ -708,9 +714,10 @@ export const selectedChatBlockedUsersStore = derived(
     },
     notEq,
 );
-export const selectedChatLapsedMembersStore = derived(selectedServerChatStore, (chat) => {
-    return chat?.lapsedMembers ?? (new Set() as ReadonlySet<string>);
-});
+export const selectedChatLapsedMembersStore = derived(
+    selectedServerChatStore, (chat) => chat?.lapsedMembers ?? (new Set() as ReadonlySet<string>),
+    notEq
+);
 export const selectedChatPinnedMessagesStore = derived(
     [selectedServerChatStore, chatDetailsLocalUpdates.pinnedMessages],
     ([chat, pinnedMessages]) => {
