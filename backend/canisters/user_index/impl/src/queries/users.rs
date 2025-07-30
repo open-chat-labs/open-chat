@@ -45,7 +45,7 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
                     is_unique_person: u.unique_person_proof.is_some(),
                     total_chit_earned: u.total_chit_earned(),
                     chit_balance: u.current_chit_balance(now),
-                    streak: u.streak,
+                    streak: u.streak(now),
                     max_streak: u.max_streak,
                 });
             }
