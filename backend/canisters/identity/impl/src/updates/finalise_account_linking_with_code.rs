@@ -1,7 +1,7 @@
 use crate::{RuntimeState, VerifyNewIdentityArgs, VerifyNewIdentityError, VerifyNewIdentitySuccess, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use identity_canister::link_with_account_linking_code::{Args, Response};
+use identity_canister::finalise_account_linking_with_code::{Args, Response};
 use oc_error_codes::OCErrorCode;
 use types::OCResult;
 
@@ -11,35 +11,25 @@ const MAX_LINKED_IDENTITIES: usize = 10;
 
 #[update(msgpack = true, candid = true)]
 #[trace]
-fn link_with_account_linking_code(args: Args) -> Response {
-    mutate_state(|state| link_with_account_linking_code_impl(args, state)).into()
+fn finalise_account_linking_with_code(args: Args) -> Response {
+    mutate_state(|state| finalise_account_linking_with_code_impl(args, state)).into()
 }
 
-// Link accounts!
+// Finalise account linking with code!
 //
-// At this point, no user is actually logged in, which means that the `caller`
-// value cannot be used to identify any user; but we can figure out principals
-// from the user id attached to the linking code.
-//
-// TODO Consider ways to make this functionality more secure: set limit on the
-// number of attempts to link; lock-out after too many failed attempts; log
-// and audit failed attempts; consider reducing validity time for linking codes.
-fn link_with_account_linking_code_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+// At this point, we use the caller principal as a temp_key to get the linking
+// code that was already verified, then verify the new identity, and finally link
+// the new principal with an existing user.
+fn finalise_account_linking_with_code_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+    let caller = state.env.caller();
     let now = state.env.now();
 
-    // Basically checks if the code provided by the user match any of the codes
-    // that are saved.
-    let Some(linking_code) = state.data.account_linking_codes.get(args.code.clone()) else {
+    let Some(linking_code) = state.data.account_linking_codes.get_verified_by_temp_key(&caller) else {
         return Err(OCErrorCode::LinkingCodeNotFound.into());
     };
 
-    // Check if the linking code is still valid (i.e. not expired).
-    if !linking_code.is_valid(state.env.now()) {
-        return Err(OCErrorCode::LinkingCodeExpired.into());
-    }
-
-    // Verify the new identity using the provided public key and webauthn key.
-    // This will also check if the caller is already registered.
+    // At this point, we've verified the account linking code, and verify identity
+    // will not allow us to link with any already existing principal.
     let VerifyNewIdentitySuccess {
         caller: _,
         auth_principal: new_auth_principal,
@@ -48,6 +38,7 @@ fn link_with_account_linking_code_impl(args: Args, state: &mut RuntimeState) -> 
     } = match state.verify_new_identity(VerifyNewIdentityArgs {
         public_key: args.public_key,
         webauthn_key: args.webauthn_key,
+        override_principal: Some(args.principal),
         allow_existing_provided_not_linked_to_oc_account: true,
     }) {
         Ok(ok) => ok,
@@ -71,13 +62,7 @@ fn link_with_account_linking_code_impl(args: Args, state: &mut RuntimeState) -> 
 
     // Check that the target user principal has not reached the maximum number of linked identities
     if user_principal.auth_principals.len() >= MAX_LINKED_IDENTITIES {
-        // return LinkedIdentitiesLimitReached(MAX_LINKED_IDENTITIES as u32);
-        return Err(OCErrorCode::UserLimitReached.into());
-    }
-
-    // Check if the auth principal is already linked to the target user principal
-    if user_principal.auth_principals.contains(&new_auth_principal) {
-        return Err(OCErrorCode::PrincipalAlreadyUsed.into());
+        return Err(OCErrorCode::MaxLinkedIdentitiesLimitReached.into());
     }
 
     // Link the user with the new auth principal!
@@ -94,7 +79,7 @@ fn link_with_account_linking_code_impl(args: Args, state: &mut RuntimeState) -> 
         }
 
         // Remove the linking code from the state, as it has been used.
-        state.data.account_linking_codes.remove(args.code);
+        state.data.account_linking_codes.remove_verified(&caller);
 
         // Linking done!
         Ok(())
