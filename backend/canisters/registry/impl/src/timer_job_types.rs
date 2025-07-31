@@ -55,7 +55,8 @@ impl ExpandOntoSubnetJob {
         let delay = match self.process_step_inner(next_step, now).await {
             Ok(Some(false)) => 0,
             Err(error) => {
-                error!("ExpandOntoSubnet processing failed: {:?}", error);
+                error!("ExpandOntoSubnet processing failed. Step: {next_step:?}. Error: {error:?}",);
+                ic_cdk::eprintln!("ExpandOntoSubnet processing failed. Step: {next_step:?}. Error: {error:?}");
                 MINUTE_IN_MS
             }
             Ok(Some(true)) | Ok(None) => return,
