@@ -84,7 +84,8 @@ export function getTheme(base: Theme): Theme {
     base.menu.bd = "none";
     base.menu.rd = "1rem";
     base.menu.warn = error;
-    (base.menu.separator = "rgba(255,255,255,0.1)"), (base.icon.hv = darkGray);
+    base.menu.separator = "rgba(255,255,255,0.1)";
+    base.icon.hv = darkGray;
     base.icon.txt = txtSecondary;
     base.icon.selected = primary;
     base.currentChat.msg.bg = level1;
