@@ -3,7 +3,7 @@ import { dequal } from "dequal";
 import { writable } from "../utils/stores";
 import { notEq } from "../state/utils";
 
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+ 
 export function createSetStore<T>(initialValue = new Set<T>()) {
     let storeValue = initialValue;
     const store = writable(initialValue, undefined, notEq);

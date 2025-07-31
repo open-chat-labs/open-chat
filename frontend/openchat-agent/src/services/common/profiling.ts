@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-types */
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 function end<T>(start: number, key: string): (result: T) => T {
@@ -26,7 +24,7 @@ export function measure<T>(key: string, fn: () => Promise<T>): Promise<T> {
 
 export const profile =
     (service: string) =>
-    (_target: Object, _propertyKey: string, descriptor: PropertyDescriptor) => {
+    (_target: object, _propertyKey: string, descriptor: PropertyDescriptor) => {
         return descriptor;
 
         // FIXME - we can't access local storage in a worker
