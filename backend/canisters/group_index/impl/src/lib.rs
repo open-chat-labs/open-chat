@@ -532,6 +532,7 @@ pub struct AccessGateMetrics {
     pub composite: u32,
     pub locked: u32,
     pub referred_by_member: u32,
+    #[serde(default)]
     pub total_chit_earned: u32,
 }
 
