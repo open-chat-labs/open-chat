@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1847](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1847-community)] - 2025-07-30
+
 ### Changed
 
 - When a bot invites a user also send an invitation ([#8320](https://github.com/open-chat-labs/open-chat/pull/8320))
