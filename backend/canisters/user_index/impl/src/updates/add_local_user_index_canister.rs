@@ -3,13 +3,15 @@ use crate::updates::upgrade_user_canister_wasm::upgrade_user_wasm_in_local_user_
 use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::management_canister::CanisterInfoArgs;
+use ic_cdk::management_canister::{CanisterInfoArgs, CanisterInstallMode};
 use local_user_index_canister::{UserDetailsFull, UserIndexEvent};
 use tracing::info;
 use types::{BuildVersion, CanisterId, CanisterWasm, Hash};
 use user_index_canister::ChildCanisterType;
 use user_index_canister::add_local_user_index_canister::{Response::*, *};
-use utils::canister::{install_basic, set_controllers};
+use utils::canister::{
+    CanisterToInstall, ChunkedWasmToInstall, WasmToInstall, install, set_controllers, upload_wasm_in_chunks,
+};
 
 #[update(guard = "caller_is_registry_canister", msgpack = true)]
 #[trace]
@@ -37,7 +39,27 @@ async fn add_local_user_index_canister(args: Args) -> Response {
             }
 
             if canister_info.module_hash != Some(result.canister_wasm_hash.to_vec()) {
-                if let Err(error) = install_basic(args.canister_id, result.canister_wasm, result.init_args).await {
+                let chunks = match upload_wasm_in_chunks(&result.canister_wasm.module, args.canister_id).await {
+                    Ok(chunks) => chunks,
+                    Err(error) => return InternalError(format!("Failed to upload wasm to chunks: {error:?}")),
+                };
+
+                if let Err(error) = install(CanisterToInstall {
+                    canister_id: args.canister_id,
+                    current_wasm_version: BuildVersion::default(),
+                    new_wasm_version: result.canister_wasm.version,
+                    new_wasm: WasmToInstall::Chunked(ChunkedWasmToInstall {
+                        chunks,
+                        wasm_hash: result.canister_wasm_hash,
+                        store_canister_id: args.canister_id,
+                    }),
+                    deposit_cycles_if_needed: true,
+                    args: candid::encode_one(&result.init_args).unwrap(),
+                    mode: CanisterInstallMode::Reinstall,
+                    stop_start_canister: false,
+                })
+                .await
+                {
                     return InternalError(format!("Failed to install canister: {error:?}"));
                 }
                 info!("Installed wasm");
