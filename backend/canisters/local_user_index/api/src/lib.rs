@@ -52,6 +52,7 @@ pub enum UserIndexEvent {
     SyncExistingUser(UserDetailsFull),
     UserBlocked(UserId, UserId),
     UserUnblocked(UserId, UserId),
+    UpdateChitBalance(UserId, ChitBalance),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -264,13 +265,13 @@ pub struct GlobalUser {
     pub unique_person_proof: Option<UniquePersonProof>,
     pub user_type: UserType,
     #[serde(default)]
-    pub chit: ChitRecord,
+    pub chit: ChitBalance,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
-pub struct ChitRecord {
-    pub earned: i32,
-    pub balance: i32,
+pub struct ChitBalance {
+    pub total_earned: i32,
+    pub curr_balance: i32,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

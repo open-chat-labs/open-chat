@@ -1,5 +1,5 @@
 use candid::Principal;
-use local_user_index_canister::{ChitRecord, GlobalUser};
+use local_user_index_canister::{ChitBalance, GlobalUser};
 use principal_to_user_id_map::PrincipalToUserIdMap;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::StableMemoryMap;
@@ -17,7 +17,7 @@ pub struct GlobalUserMap {
     oc_controlled_bot_users: HashSet<UserId>,
     diamond_membership_expiry_dates: HashMap<UserId, TimestampMillis>,
     #[serde(default)]
-    chit: HashMap<UserId, ChitRecord>,
+    chit: HashMap<UserId, ChitBalance>,
 }
 
 impl GlobalUserMap {
@@ -102,6 +102,10 @@ impl GlobalUserMap {
 
     pub fn insert_unique_person_proof(&mut self, user_id: UserId, proof: UniquePersonProof) {
         self.unique_person_proofs.insert(user_id, proof);
+    }
+
+    pub fn insert_chit_record(&mut self, user_id: UserId, chit_record: ChitBalance) {
+        self.chit.insert(user_id, chit_record);
     }
 
     pub fn is_bot(&self, user_id: &UserId) -> bool {

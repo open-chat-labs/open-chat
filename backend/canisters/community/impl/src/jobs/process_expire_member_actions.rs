@@ -55,7 +55,7 @@ async fn process_lookup_users(user_ids: Vec<UserId>) {
                     u.user_id,
                     u.diamond_membership_expires_at,
                     u.unique_person_proof.is_some(),
-                    u.chit.earned,
+                    u.chit.total_earned,
                 );
             }
         })

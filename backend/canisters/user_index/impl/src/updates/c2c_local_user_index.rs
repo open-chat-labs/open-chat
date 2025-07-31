@@ -8,8 +8,8 @@ use constants::ONE_MB;
 use event_store_producer::EventBuilder;
 use group_index_canister::UserIndexEvent as GroupIndexEvent;
 use local_user_index_canister::{
-    DeleteUser, OpenChatBotMessage, OpenChatBotMessageV2, UserIndexEvent, UserJoinedCommunityOrChannel, UserJoinedGroup,
-    UserRegistered, UsernameChanged,
+    ChitBalance, DeleteUser, OpenChatBotMessage, OpenChatBotMessageV2, UserIndexEvent, UserJoinedCommunityOrChannel,
+    UserJoinedGroup, UserRegistered, UsernameChanged,
 };
 use rand::RngCore;
 use stable_memory_map::StableMemoryMap;
@@ -115,6 +115,11 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         }
         LocalUserIndexEvent::NotifyChit(ev) => {
             let (user_id, chit) = *ev;
+            let Some(user) = state.data.users.get_by_user_id(&user_id) else {
+                return;
+            };
+
+            let total_chit_earned = user.total_chit_earned();
 
             if state.data.users.set_chit(
                 &user_id,
@@ -124,16 +129,25 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 chit.streak_ends,
                 **now,
             ) {
-                if let Some(user) = state.data.users.get_by_user_id(&user_id) {
-                    state.data.chit_leaderboard.update_position(
-                        user_id,
-                        user.total_chit_earned(),
-                        chit.chit_balance,
-                        chit.timestamp,
-                        **now,
-                    );
-                }
+                state.data.chit_leaderboard.update_position(
+                    user_id,
+                    total_chit_earned,
+                    chit.chit_balance,
+                    chit.timestamp,
+                    **now,
+                );
             }
+
+            state.push_event_to_all_local_user_indexes(
+                UserIndexEvent::UpdateChitBalance(
+                    user_id,
+                    ChitBalance {
+                        total_earned: total_chit_earned,
+                        curr_balance: total_chit_earned, // We don't yet maintain the users total chit balance
+                    },
+                ),
+                Some(caller),
+            );
         }
         LocalUserIndexEvent::NotifyStreakInsurancePayment(payment) => state.data.streak_insurance_logs.mark_payment(*payment),
         LocalUserIndexEvent::NotifyStreakInsuranceClaim(claim) => state.data.streak_insurance_logs.mark_claim(*claim),
