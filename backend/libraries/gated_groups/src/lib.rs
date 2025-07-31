@@ -11,8 +11,8 @@ use oc_error_codes::{OCError, OCErrorCode};
 use sns_governance_canister::types::Neuron;
 use sns_governance_canister::types::neuron::DissolveState;
 use types::{
-    AccessGate, AccessGateNonComposite, AccessGateScope, CanisterId, CompositeGate, GateCheckFailedReason, PaymentGate,
-    SnsNeuronGate, TimestampMillis, TokenBalanceGate, UserId, VerifiedCredentialGate,
+    AccessGate, AccessGateNonComposite, AccessGateScope, CanisterId, ChitEarnedGate, CompositeGate, GateCheckFailedReason,
+    PaymentGate, SnsNeuronGate, TimestampMillis, TokenBalanceGate, UserId, VerifiedCredentialGate,
 };
 
 const SNS_FEE_SHARE_PERCENT: u128 = 2;
@@ -43,6 +43,7 @@ pub struct CheckGateArgs {
     pub is_unique_person: bool,
     pub verified_credential_args: Option<CheckVerifiedCredentialGateArgs>,
     pub referred_by_member: bool,
+    pub total_chit_earned: i32,
     pub now: TimestampMillis,
 }
 
@@ -84,6 +85,7 @@ async fn check_non_composite_gate(gate: AccessGateNonComposite, args: CheckGateA
         AccessGateNonComposite::TokenBalance(g) => check_token_balance_gate(&g, args.user_id).await,
         AccessGateNonComposite::Locked => CheckIfPassesGateResult::Failed(GateCheckFailedReason::Locked),
         AccessGateNonComposite::ReferredByMember => check_referred_by_member_gate(args.referred_by_member),
+        AccessGateNonComposite::TotalChitEarned(g) => check_chit_earned_gate(&g, args.total_chit_earned),
     }
 }
 
@@ -142,6 +144,14 @@ fn check_unique_person_gate(is_unique_person: bool) -> CheckIfPassesGateResult {
         CheckIfPassesGateResult::Success(Vec::new())
     } else {
         CheckIfPassesGateResult::Failed(GateCheckFailedReason::NoUniquePersonProof)
+    }
+}
+
+fn check_chit_earned_gate(gate: &ChitEarnedGate, total_chit_earned: i32) -> CheckIfPassesGateResult {
+    if total_chit_earned.max(0) as u32 >= gate.min_chit_earned {
+        CheckIfPassesGateResult::Success(Vec::new())
+    } else {
+        CheckIfPassesGateResult::Failed(GateCheckFailedReason::ChitEarnedTooLow)
     }
 }
 

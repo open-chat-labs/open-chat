@@ -51,10 +51,12 @@ async fn process_lookup_users(user_ids: Vec<UserId>) {
     if let Ok(user_details) = lookup_users_result {
         mutate_state(|state| {
             for u in user_details.values() {
-                state
-                    .data
-                    .user_cache
-                    .insert(u.user_id, u.diamond_membership_expires_at, u.unique_person_proof.is_some());
+                state.data.user_cache.insert(
+                    u.user_id,
+                    u.diamond_membership_expires_at,
+                    u.unique_person_proof.is_some(),
+                    u.chit.earned,
+                );
             }
         })
     };
@@ -83,11 +85,10 @@ struct PrepareResult {
 fn prepare_gate_check(details: ExpiringMemberActionDetails, state: &RuntimeState) -> Option<PrepareResult> {
     let gate_config = state.data.get_access_gate_config(details.channel_id).cloned()?;
 
-    let (diamond_membership_expires_at, is_unique_person) = state
-        .data
-        .user_cache
-        .get(&details.user_id)
-        .map_or((None, false), |u| (u.diamond_membership_expires_at, u.is_unique_person));
+    let (diamond_membership_expires_at, is_unique_person, total_chit_earned) =
+        state.data.user_cache.get(&details.user_id).map_or((None, false, 0), |u| {
+            (u.diamond_membership_expires_at, u.is_unique_person, u.total_chit_earned)
+        });
 
     let check_gate_args = CheckGateArgs {
         user_id: details.user_id,
@@ -96,6 +97,7 @@ fn prepare_gate_check(details: ExpiringMemberActionDetails, state: &RuntimeState
         is_unique_person,
         verified_credential_args: None,
         referred_by_member: false,
+        total_chit_earned,
         now: state.env.now(),
     };
 

@@ -532,6 +532,7 @@ pub struct AccessGateMetrics {
     pub composite: u32,
     pub locked: u32,
     pub referred_by_member: u32,
+    pub total_chit_earned: u32,
 }
 
 impl AccessGateMetrics {
@@ -547,6 +548,7 @@ impl AccessGateMetrics {
             AccessGate::Composite(_) => self.composite += 1,
             AccessGate::Locked => self.locked += 1,
             AccessGate::ReferredByMember => self.referred_by_member += 1,
+            AccessGate::TotalChitEarned(_) => self.total_chit_earned += 1,
         }
     }
 }
