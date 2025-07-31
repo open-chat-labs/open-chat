@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
+ 
 import { ChatSet, identity } from "openchat-shared";
 import { vi } from "vitest";
 import { LocalSet } from "./set";

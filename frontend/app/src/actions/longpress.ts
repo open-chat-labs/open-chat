@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
+ 
 import { eventListLastScrolled } from "openchat-client";
 import { get } from "svelte/store";
 import { isTouchDevice, mobileOperatingSystem } from "../utils/devices";

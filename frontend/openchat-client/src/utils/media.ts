@@ -110,7 +110,7 @@ export function changeDimensions(
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     const context = canvas.getContext("2d")!;
     context.drawImage(original, 0, 0, canvas.width, canvas.height);
     const resultMimeType = mimeType === "image/jpeg" ? "image/jpeg" : "image/png";

@@ -376,7 +376,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
                         // our cached copy is up to date.
                         users.push({
                             ...cached,
-                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                             
                             updated: apiResponse.serverTimestamp!,
                         });
                     } else {

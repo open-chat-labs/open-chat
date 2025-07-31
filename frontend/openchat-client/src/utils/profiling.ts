@@ -1,9 +1,5 @@
-/* eslint-disable @typescript-eslint/ban-types */
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-import { configKeys } from "./config";
 import { profileStore } from "../stores/profiling";
+import { configKeys } from "./config";
 
 export function showTrace() {
     return localStorage.getItem(configKeys.profile) === "true";
