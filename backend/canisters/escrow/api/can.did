@@ -126,6 +126,9 @@ type LookupSwapArgs = record {
     accepting_principal : opt principal;
 };
 
+// The deposit addresses uses the standard text encoding for ICRC-1 accounts:
+// https://github.com/dfinity/ICRC-1/blob/main/standards/ICRC-1/TextualEncoding.md#textual-encoding-of-icrc-1-accounts
+
 type LookupSwapResponse = variant {
     Success: record {
         id : nat32;
@@ -137,14 +140,10 @@ type LookupSwapResponse = variant {
         restricted_to : opt principal;
         token0 : TokenInfo;
         amount0 : nat;
-        // This address uses the standard text encoding for ICRC-1 accounts:
-        // https://github.com/dfinity/ICRC-1/blob/main/standards/ICRC-1/TextualEncoding.md#textual-encoding-of-icrc-1-accounts
         token0_deposit_address : text;
         token1 : TokenInfo;
         amount1 : nat;
-        // This address uses the standard text encoding for ICRC-1 accounts:
-        // https://github.com/dfinity/ICRC-1/blob/main/standards/ICRC-1/TextualEncoding.md#textual-encoding-of-icrc-1-accounts        
-        token1_deposit_address : text;
+        token1_deposit_address : opt text;
         expires_at : TimestampMillis;
         additional_admins : vec principal;
         canister_to_notify : opt CanisterId;
@@ -152,7 +151,6 @@ type LookupSwapResponse = variant {
     };
     SwapNotFound;
     SwapIsPrivate;
-    PrincipalNotFound;
     Error : OCError;
 };
 
