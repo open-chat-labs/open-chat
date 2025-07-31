@@ -5,6 +5,7 @@ use crate::{TestEnv, client};
 use identity_canister::create_account_linking_code::Response as CreateAccountLinkingCodeResponse;
 use identity_canister::finalise_account_linking_with_code::Response as FinaliseAccountLinkingWithCodeResponse;
 use identity_canister::verify_account_linking_code::Response as VerifyAccountLinkingCodeResponse;
+use rand::random;
 use std::ops::Deref;
 use testing::rng::{random_internet_identity_principal, random_principal};
 
@@ -82,6 +83,7 @@ fn test_account_linking_create_link_code() {
 
     // Initialise new identity
     let (new_principal, new_pub_key) = random_internet_identity_principal();
+    let session_key = random::<[u8; 32]>().to_vec();
 
     let finalise_response = client::identity::finalise_account_linking_with_code(
         env,
@@ -90,12 +92,14 @@ fn test_account_linking_create_link_code() {
         &identity_canister::finalise_account_linking_with_code::Args {
             principal: new_principal,
             public_key: new_pub_key,
+            session_key,
+            max_time_to_live: None,
             webauthn_key: None,
         },
     );
 
     match finalise_response {
-        FinaliseAccountLinkingWithCodeResponse::Success => {}
+        FinaliseAccountLinkingWithCodeResponse::Success(_) => {}
         FinaliseAccountLinkingWithCodeResponse::Error(err) => panic!("Finalise linking accounts failed: {err:#?}"),
     }
 

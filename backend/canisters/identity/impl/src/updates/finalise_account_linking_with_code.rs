@@ -1,7 +1,8 @@
+use crate::updates::prepare_delegation::prepare_delegation_inner;
 use crate::{RuntimeState, VerifyNewIdentityArgs, VerifyNewIdentityError, VerifyNewIdentitySuccess, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use identity_canister::finalise_account_linking_with_code::{Args, Response};
+use identity_canister::finalise_account_linking_with_code::*;
 use oc_error_codes::OCErrorCode;
 use types::OCResult;
 
@@ -12,7 +13,10 @@ const MAX_LINKED_IDENTITIES: usize = 10;
 #[update(msgpack = true, candid = true)]
 #[trace]
 fn finalise_account_linking_with_code(args: Args) -> Response {
-    mutate_state(|state| finalise_account_linking_with_code_impl(args, state)).into()
+    mutate_state(|state| match finalise_account_linking_with_code_impl(args, state) {
+        Ok(res) => Response::Success(res),
+        Err(oc_error) => Response::Error(oc_error),
+    })
 }
 
 // Finalise account linking with code!
@@ -20,7 +24,7 @@ fn finalise_account_linking_with_code(args: Args) -> Response {
 // At this point, we use the caller principal as a temp_key to get the linking
 // code that was already verified, then verify the new identity, and finally link
 // the new principal with an existing user.
-fn finalise_account_linking_with_code_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+fn finalise_account_linking_with_code_impl(args: Args, state: &mut RuntimeState) -> OCResult<SuccessResult> {
     let caller = state.env.caller();
     let now = state.env.now();
 
@@ -81,8 +85,9 @@ fn finalise_account_linking_with_code_impl(args: Args, state: &mut RuntimeState)
         // Remove the linking code from the state, as it has been used.
         state.data.account_linking_codes.remove_verified(&caller);
 
-        // Linking done!
-        Ok(())
+        let seed = state.data.calculate_seed(user_principal.index);
+
+        Ok(prepare_delegation_inner(seed, args.session_key, args.max_time_to_live, state))
     } else {
         Err(OCErrorCode::PrincipalAlreadyUsed.into())
     }
