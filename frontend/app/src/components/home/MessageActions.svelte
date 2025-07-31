@@ -284,7 +284,7 @@
 
 <style lang="scss">
     :global(.message-actions.useDrawer.visible .wrapper) {
-        background-color: var(--button-bg);
+        background: var(--button-bg);
         @include box-shadow(1);
 
         &:hover {

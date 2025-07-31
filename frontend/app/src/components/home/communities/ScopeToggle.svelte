@@ -79,7 +79,7 @@
                 color ease-in-out 200ms;
 
             &.selected {
-                background-color: var(--button-bg);
+                background: var(--button-bg);
                 color: var(--button-txt);
                 @media (hover: hover) {
                     &:hover {

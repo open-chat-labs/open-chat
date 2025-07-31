@@ -165,7 +165,7 @@
         }
 
         input:checked + label {
-            background-color: var(--button-bg);
+            background-color: var(--input-accent);
         }
 
         input:checked + label:after {

@@ -265,7 +265,7 @@ textarea {
 
 a {
     color: #22a7f2;
-    color: var(--primary);
+    color: var(--link-underline);
 }
 
 .iti__flag {
@@ -467,11 +467,11 @@ body.native-android {
         > .wrapper {
             top: var(--status-bar-height);
         }
-    
+
         > .main {
             margin-top: var(--status-bar-height);
             padding-top: var(--status-bar-height);
             height: calc(100vh - var(--status-bar-height));
         }
-    }  
+    }
 }

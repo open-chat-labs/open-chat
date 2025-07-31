@@ -13,6 +13,7 @@ import { derived, writable } from "../../utils/stores";
 import { isCanisterUrl, removeQueryStringParam } from "../../utils/url";
 import { LocalStorageStore } from "../localStorageStore";
 import { routeStore } from "../path/stores";
+import { notEq } from "../utils";
 
 function translateScale(scale: FontScale): number {
     if (scale === 0) return 0.75;
@@ -97,10 +98,7 @@ function someHomeRoute(route: RouteParams["kind"]): boolean {
         route === "selected_community_route"
     );
 }
-export const rightPanelHistory = writable<RightPanelContent[]>([], undefined, (a, b) => {
-    if (a.length === 0 && b.length === 0) return true;
-    return a === b;
-});
+export const rightPanelHistory = writable<RightPanelContent[]>([], undefined, notEq);
 export const lastRightPanelState = derived(
     rightPanelHistory,
     (rightPanelHistory) => rightPanelHistory[rightPanelHistory.length - 1] ?? { kind: "no_panel" },

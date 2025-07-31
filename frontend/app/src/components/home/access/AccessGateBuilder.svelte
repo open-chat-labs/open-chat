@@ -292,8 +292,8 @@
         }
 
         &.invalid::after {
-            content: "!";
-            color: var(--menu-warn);
+            content: " !";
+            color: var(--error);
         }
     }
 
