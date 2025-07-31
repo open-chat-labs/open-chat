@@ -42,16 +42,17 @@ fn post_upgrade(args: Args) {
             .collect();
 
         for (user_id, total_chit_earned) in users_to_sync {
-            state.push_event_to_all_local_user_indexes(
-                UserIndexEvent::UpdateChitBalance(
-                    user_id,
-                    ChitBalance {
-                        total_earned: total_chit_earned,
-                        curr_balance: total_chit_earned, // We don't yet maintain the users total chit balance
-                    },
-                ),
-                None,
+            let event = UserIndexEvent::UpdateChitBalance(
+                user_id,
+                ChitBalance {
+                    total_earned: total_chit_earned,
+                    curr_balance: total_chit_earned, // We don't yet maintain the users total chit balance
+                },
             );
+
+            for canister_id in state.data.local_index_map.canisters() {
+                state.data.user_index_event_sync_queue.push(*canister_id, event.clone());
+            }
         }
     });
 }

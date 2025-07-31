@@ -9,15 +9,11 @@ pub struct UserCache {
 
 #[derive(Serialize, Deserialize)]
 pub struct CachedUser {
-    #[serde(
-        rename = "d",
-        alias = "diamond_membership_expires_at",
-        skip_serializing_if = "Option::is_none"
-    )]
+    #[serde(rename = "d", skip_serializing_if = "Option::is_none")]
     pub diamond_membership_expires_at: Option<TimestampMillis>,
-    #[serde(rename = "u", alias = "is_unique_person", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "u", default, skip_serializing_if = "is_default")]
     pub is_unique_person: bool,
-    #[serde(rename = "c", alias = "chit_earned", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "c", default, skip_serializing_if = "is_default")]
     pub total_chit_earned: i32,
 }
 
