@@ -12,14 +12,16 @@ pub struct AccountLinkingCode {
     pub value: String,
     pub expires_at: TimestampMillis,
     pub user_id: UserId,
+    pub username: String,
 }
 
 impl AccountLinkingCode {
-    pub fn new(user_id: UserId, value: String, now: TimestampMillis) -> Self {
+    pub fn new(value: String, user_id: UserId, username: String, now: TimestampMillis) -> Self {
         Self {
             value,
             expires_at: now + ALC_DURATION,
             user_id,
+            username,
         }
     }
 

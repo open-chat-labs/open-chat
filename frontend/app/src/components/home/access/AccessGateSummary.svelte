@@ -79,7 +79,7 @@
         display: flex;
         align-items: center;
         gap: $sp3;
-        background-color: var(--button-bg);
+        background: var(--button-bg);
         border-radius: var(--button-rd);
         color: var(--button-txt);
         transition:
@@ -95,12 +95,8 @@
         }
 
         &.invalid {
-            background-color: var(--error);
-            @media (hover: hover) {
-                &:hover {
-                    background: var(--error);
-                }
-            }
+            background: var(--toast-failure-bg);
+            color: var(--toast-failure-txt);
         }
     }
 </style>

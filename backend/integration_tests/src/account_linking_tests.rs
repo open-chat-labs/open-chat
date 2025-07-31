@@ -3,9 +3,10 @@ use crate::env::ENV;
 use crate::utils::now_millis;
 use crate::{TestEnv, client};
 use identity_canister::create_account_linking_code::Response as CreateAccountLinkingCodeResponse;
-use identity_canister::link_with_account_linking_code::Response as LinkWithAccountLinkingCodeResponse;
+use identity_canister::finalise_account_linking_with_code::Response as FinaliseAccountLinkingWithCodeResponse;
+use identity_canister::verify_account_linking_code::Response as VerifyAccountLinkingCodeResponse;
 use std::ops::Deref;
-use testing::rng::random_delegated_principal;
+use testing::rng::{random_internet_identity_principal, random_principal};
 
 #[test]
 fn test_account_linking_create_link_code() {
@@ -53,27 +54,49 @@ fn test_account_linking_create_link_code() {
     };
 
     //
-    // ---- Initialise new identity to link ----
+    // ---- Verify account linking code ----
     //
-    let (new_principal, new_pub_key) = random_delegated_principal(canister_ids.sign_in_with_email);
+
+    // Initialise temp principal for code verification
+    let temp_key_principal = random_principal();
+
+    let verify_response = client::identity::verify_account_linking_code(
+        env,
+        temp_key_principal,
+        canister_ids.identity,
+        &identity_canister::verify_account_linking_code::Args {
+            code: created_linking_code.value.clone(),
+        },
+    );
+
+    match verify_response {
+        VerifyAccountLinkingCodeResponse::Success(username) => {
+            assert_eq!(username, user.username());
+        }
+        VerifyAccountLinkingCodeResponse::Error(err) => panic!("Verify linking code failed: {err:#?}"),
+    }
 
     //
-    // ---- Link account auth methods using the code ----
+    // ---- Finalise account linking ----
     //
-    let account_linking_response = client::identity::link_with_account_linking_code(
+
+    // Initialise new identity
+    let (new_principal, new_pub_key) = random_internet_identity_principal();
+
+    let finalise_response = client::identity::finalise_account_linking_with_code(
         env,
-        new_principal,
+        temp_key_principal,
         canister_ids.identity,
-        &identity_canister::link_with_account_linking_code::Args {
-            code: created_linking_code.value.clone(),
+        &identity_canister::finalise_account_linking_with_code::Args {
+            principal: new_principal,
             public_key: new_pub_key,
             webauthn_key: None,
         },
     );
 
-    match account_linking_response {
-        LinkWithAccountLinkingCodeResponse::Success => {}
-        LinkWithAccountLinkingCodeResponse::Error(err) => panic!("Account linking failed with: {err:#?}"),
+    match finalise_response {
+        FinaliseAccountLinkingWithCodeResponse::Success => {}
+        FinaliseAccountLinkingWithCodeResponse::Error(err) => panic!("Finalise linking accounts failed: {err:#?}"),
     }
 
     //

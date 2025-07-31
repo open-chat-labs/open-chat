@@ -175,7 +175,7 @@
             padding: $sp3 $sp4;
             cursor: pointer;
             align-items: center;
-            background-color: var(--button-bg);
+            background: var(--button-bg);
             color: var(--button-txt);
             transition:
                 background ease-in-out 200ms,

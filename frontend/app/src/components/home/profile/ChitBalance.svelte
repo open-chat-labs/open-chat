@@ -54,7 +54,7 @@
 <style lang="scss">
     .balance {
         border-radius: var(--rd);
-        background-color: var(--button-bg);
+        background: var(--button-bg);
         color: var(--button-txt);
         display: flex;
         align-items: center;
