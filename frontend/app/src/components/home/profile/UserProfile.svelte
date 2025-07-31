@@ -5,6 +5,7 @@
         type ModerationFlag,
         ModerationFlags,
         type OpenChat,
+        ROLE_NONE,
         type UserSummary,
         adultEnabledStore,
         anonUserStore,
@@ -20,7 +21,6 @@
         offensiveEnabledStore,
         publish,
         referralsStore,
-        ROLE_NONE,
         sortedCommunitiesStore,
         suspendedUserStore,
         underReviewEnabledStore,
@@ -47,6 +47,7 @@
         dclickReply,
         deleteAccountSectionOpen,
         enterSend,
+        linkDeviceSectionOpen,
         lowBandwidth,
         referralOpen,
         renderPreviews,
@@ -56,7 +57,6 @@
         userInfoOpen,
         verificationSectionOpen,
         videoSectionOpen,
-        linkDeviceSectionOpen,
     } from "../../../stores/settings";
     import { toastStore } from "../../../stores/toast";
     import { uniquePersonGate } from "../../../utils/access";
@@ -81,13 +81,13 @@
     import Markdown from "../Markdown.svelte";
     import Stats from "../Stats.svelte";
     import Expiry from "../upgrade/Expiry.svelte";
+    import AccountLinkingCode from "./AccountLinkingCode.svelte";
     import BotConfigData from "./BotConfigData.svelte";
     import ChitEvents from "./ChitEvents.svelte";
     import CommunityProfile from "./CommunityProfile.svelte";
     import ConfirmDeleteAccount from "./ConfirmDeleteAccount.svelte";
     import FontSize from "./FontSize.svelte";
     import LinkedAuthAccounts from "./LinkedAuthAccounts.svelte";
-    import AccountLinkingCode from "./AccountLinkingCode.svelte";
     import ReferredUsersList from "./ReferredUsersList.svelte";
     import ReferUsers from "./ReferUsers.svelte";
     import ThemeSelector from "./ThemeSelector.svelte";
