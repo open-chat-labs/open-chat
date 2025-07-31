@@ -11,6 +11,7 @@ pub struct Args {
     pub principal: Principal,
     #[serde(with = "serde_bytes")]
     pub public_key: Vec<u8>,
+    #[serde(with = "serde_bytes")]
     pub session_key: Vec<u8>,
     pub max_time_to_live: Option<Nanoseconds>,
     pub webauthn_key: Option<WebAuthnKey>,
