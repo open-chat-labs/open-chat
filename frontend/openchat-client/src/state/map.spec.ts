@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
+ 
 import { SafeMap } from "openchat-shared";
 import { vi } from "vitest";
 import { LocalMap } from "./map";

@@ -1,6 +1,6 @@
 import type { Subscriber, Writable } from "svelte/store";
 
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+ 
 export function createMapStore<K, V>(store: Writable<Map<K, V>>) {
     let storeValue = new Map<K, V>();
     store.subscribe((v) => (storeValue = v));

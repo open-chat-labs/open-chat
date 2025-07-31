@@ -87,7 +87,8 @@ export function readable<T>(
 ): Readable<T> {
     const store = writable(value, start, equalityCheck);
     return {
-        subscribe: (subscriber: Subscriber<T>, invalidate?: () => void) => store.subscribe(subscriber, invalidate),
+        subscribe: (subscriber: Subscriber<T>, invalidate?: () => void) =>
+            store.subscribe(subscriber, invalidate),
         value: store.value,
         dirty: store.dirty,
     };
@@ -218,6 +219,7 @@ class _Derived<S extends Stores, T> {
     #dependenciesPending = 0;
     #unsubscribers: Unsubscriber[] = [];
     // The first time you call `value` a subscription will be created, ensuring subsequent accesses are fast
+    // eslint-disable-next-line no-unused-private-class-members
     #valueSubscriber: Unsubscriber | undefined = undefined;
 
     constructor(stores: S, fn: (values: StoresValues<S>) => T, equalityCheck?: EqualityCheck<T>) {

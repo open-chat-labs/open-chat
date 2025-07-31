@@ -3567,7 +3567,7 @@ export class OpenChat {
                       .then((resp) =>
                           this.#handleThreadEventsResponse(
                               serverChat.id,
-                              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                               
                               selectedThreadRootMessageIndex!,
                               resp,
                           ),
@@ -9530,7 +9530,7 @@ export class OpenChat {
 
     #extract_p256dh_key(subscription: PushSubscription): string {
         const json = subscription.toJSON();
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+         
         const key = json.keys!["p256dh"];
         return key;
     }
