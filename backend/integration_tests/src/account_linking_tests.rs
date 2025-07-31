@@ -6,7 +6,7 @@ use identity_canister::create_account_linking_code::Response as CreateAccountLin
 use identity_canister::finalise_account_linking_with_code::Response as FinaliseAccountLinkingWithCodeResponse;
 use identity_canister::verify_account_linking_code::Response as VerifyAccountLinkingCodeResponse;
 use std::ops::Deref;
-use testing::rng::random_delegated_principal;
+use testing::rng::{random_internet_identity_principal, random_principal};
 
 #[test]
 fn test_account_linking_create_link_code() {
@@ -54,16 +54,15 @@ fn test_account_linking_create_link_code() {
     };
 
     //
-    // ---- Initialise new identity to link ----
-    //
-    let (new_principal, new_pub_key) = random_delegated_principal(canister_ids.sign_in_with_email);
-
-    //
     // ---- Verify account linking code ----
     //
+
+    // Initialise temp principal for code verification
+    let temp_key_principal = random_principal();
+
     let verify_response = client::identity::verify_account_linking_code(
         env,
-        new_principal,
+        temp_key_principal,
         canister_ids.identity,
         &identity_canister::verify_account_linking_code::Args {
             code: created_linking_code.value.clone(),
@@ -72,7 +71,7 @@ fn test_account_linking_create_link_code() {
 
     match verify_response {
         VerifyAccountLinkingCodeResponse::Success(username) => {
-            assert_eq!(username, "72awj".to_string());
+            assert_eq!(username, user.username());
         }
         VerifyAccountLinkingCodeResponse::Error(err) => panic!("Verify linking code failed: {err:#?}"),
     }
@@ -81,9 +80,12 @@ fn test_account_linking_create_link_code() {
     // ---- Finalise account linking ----
     //
 
+    // Initialise new identity
+    let (new_principal, new_pub_key) = random_internet_identity_principal();
+
     let finalise_response = client::identity::finalise_account_linking_with_code(
         env,
-        new_principal,
+        temp_key_principal,
         canister_ids.identity,
         &identity_canister::finalise_account_linking_with_code::Args {
             principal: new_principal,

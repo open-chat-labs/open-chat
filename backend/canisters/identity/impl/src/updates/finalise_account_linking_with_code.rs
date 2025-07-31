@@ -62,7 +62,7 @@ fn finalise_account_linking_with_code_impl(args: Args, state: &mut RuntimeState)
 
     // Check that the target user principal has not reached the maximum number of linked identities
     if user_principal.auth_principals.len() >= MAX_LINKED_IDENTITIES {
-        return Err(OCErrorCode::UserLimitReached.into());
+        return Err(OCErrorCode::MaxLinkedIdentitiesLimitReached.into());
     }
 
     // Link the user with the new auth principal!
