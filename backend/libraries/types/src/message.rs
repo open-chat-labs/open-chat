@@ -222,6 +222,8 @@ pub struct PrizeContentEventPayload {
     pub lifetime_diamond_only: bool,
     pub unique_person_only: bool,
     pub streak_only: u16,
+    pub requires_captcha: bool,
+    pub min_chit_earned: u32,
 }
 
 #[derive(Serialize)]

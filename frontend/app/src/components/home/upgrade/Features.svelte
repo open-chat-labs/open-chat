@@ -31,10 +31,10 @@
             <Translatable resourceKey={i18nKey("upgrade.textMessages")} />
         {/snippet}
         {#snippet free()}
-            <Check size={"1em"} color={"limegreen"} />
+            <Check size={"1em"} color={"var(--success)"} />
         {/snippet}
         {#snippet diamond()}
-            <Check size={"1em"} color={"limegreen"} />
+            <Check size={"1em"} color={"var(--success)"} />
         {/snippet}
     </Feature>
 
@@ -43,10 +43,10 @@
             <Translatable resourceKey={i18nKey("upgrade.giphys")} />
         {/snippet}
         {#snippet free()}
-            <Check size={"1em"} color={"limegreen"} />
+            <Check size={"1em"} color={"var(--success)"} />
         {/snippet}
         {#snippet diamond()}
-            <Check size={"1em"} color={"limegreen"} />
+            <Check size={"1em"} color={"var(--success)"} />
         {/snippet}
     </Feature>
 
@@ -55,10 +55,10 @@
             <Translatable resourceKey={i18nKey("upgrade.reactions")} />
         {/snippet}
         {#snippet free()}
-            <Check size={"1em"} color={"limegreen"} />
+            <Check size={"1em"} color={"var(--success)"} />
         {/snippet}
         {#snippet diamond()}
-            <Check size={"1em"} color={"limegreen"} />
+            <Check size={"1em"} color={"var(--success)"} />
         {/snippet}
     </Feature>
 
@@ -67,10 +67,10 @@
             <Translatable resourceKey={i18nKey("upgrade.polls")} />
         {/snippet}
         {#snippet free()}
-            <Check size={"1em"} color={"limegreen"} />
+            <Check size={"1em"} color={"var(--success)"} />
         {/snippet}
         {#snippet diamond()}
-            <Check size={"1em"} color={"limegreen"} />
+            <Check size={"1em"} color={"var(--success)"} />
         {/snippet}
     </Feature>
 
@@ -79,10 +79,10 @@
             <Translatable resourceKey={i18nKey("upgrade.reminders")} />
         {/snippet}
         {#snippet free()}
-            <Check size={"1em"} color={"limegreen"} />
+            <Check size={"1em"} color={"var(--success)"} />
         {/snippet}
         {#snippet diamond()}
-            <Check size={"1em"} color={"limegreen"} />
+            <Check size={"1em"} color={"var(--success)"} />
         {/snippet}
     </Feature>
 
@@ -91,10 +91,10 @@
             <Translatable resourceKey={i18nKey("upgrade.crypto")} />
         {/snippet}
         {#snippet free()}
-            <Check size={"1em"} color={"limegreen"} />
+            <Check size={"1em"} color={"var(--success)"} />
         {/snippet}
         {#snippet diamond()}
-            <Check size={"1em"} color={"limegreen"} />
+            <Check size={"1em"} color={"var(--success)"} />
         {/snippet}
     </Feature>
 
@@ -106,7 +106,7 @@
             <Minus size={"1em"} color={"var(--menu-warn)"} />
         {/snippet}
         {#snippet diamond()}
-            <Check size={"1em"} color={"limegreen"} />
+            <Check size={"1em"} color={"var(--success)"} />
         {/snippet}
     </Feature>
 
@@ -160,7 +160,7 @@
             <Minus size={"1em"} color={"var(--menu-warn)"} />
         {/snippet}
         {#snippet diamond()}
-            <Check size={"1em"} color={"limegreen"} />
+            <Check size={"1em"} color={"var(--success)"} />
         {/snippet}
     </Feature>
 
@@ -169,10 +169,10 @@
             <Translatable resourceKey={i18nKey("upgrade.directChats")} />
         {/snippet}
         {#snippet free()}
-            <Check size={"1em"} color={"limegreen"} />
+            <Check size={"1em"} color={"var(--success)"} />
         {/snippet}
         {#snippet diamond()}
-            <Check size={"1em"} color={"limegreen"} />
+            <Check size={"1em"} color={"var(--success)"} />
         {/snippet}
     </Feature>
 
@@ -208,7 +208,7 @@
             <Minus size={"1em"} color={"var(--menu-warn)"} />
         {/snippet}
         {#snippet diamond()}
-            <Check size={"1em"} color={"limegreen"} />
+            <Check size={"1em"} color={"var(--success)"} />
         {/snippet}
     </Feature>
 
@@ -220,7 +220,7 @@
             <Minus size={"1em"} color={"var(--menu-warn)"} />
         {/snippet}
         {#snippet diamond()}
-            <Check size={"1em"} color={"limegreen"} />
+            <Check size={"1em"} color={"var(--success)"} />
         {/snippet}
     </Feature>
 
@@ -232,7 +232,7 @@
             <Minus size={"1em"} color={"var(--menu-warn)"} />
         {/snippet}
         {#snippet diamond()}
-            <Check size={"1em"} color={"limegreen"} />
+            <Check size={"1em"} color={"var(--success)"} />
         {/snippet}
     </Feature>
 
@@ -244,7 +244,7 @@
             <Minus size={"1em"} color={"var(--menu-warn)"} />
         {/snippet}
         {#snippet diamond()}
-            <Check size={"1em"} color={"limegreen"} />
+            <Check size={"1em"} color={"var(--success)"} />
         {/snippet}
     </Feature>
 

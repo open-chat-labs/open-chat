@@ -63,8 +63,8 @@
                 border-bottom: 4px solid var(--primary);
             }
             &.invalid::after {
-                content: "!";
-                color: var(--menu-warn);
+                content: " !";
+                color: var(--error);
             }
         }
 

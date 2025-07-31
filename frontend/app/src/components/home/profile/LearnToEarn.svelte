@@ -365,7 +365,7 @@
     }
 
     .reward {
-        background-color: var(--button-bg);
+        background: var(--button-bg);
         color: var(--button-txt);
         padding: $sp1 $sp2;
         border-radius: $sp2;

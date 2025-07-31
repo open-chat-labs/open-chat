@@ -34,7 +34,7 @@
         cursor: pointer;
         display: flex;
         align-items: center;
-        background-color: var(--button-bg);
+        background: var(--button-bg);
         color: var(--button-txt);
         transition:
             background ease-in-out 200ms,

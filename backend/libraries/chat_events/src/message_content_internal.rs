@@ -338,6 +338,8 @@ impl MessageContentInternal {
                 lifetime_diamond_only: c.lifetime_diamond_only,
                 unique_person_only: c.unique_person_only,
                 streak_only: c.streak_only,
+                requires_captcha: c.requires_captcha,
+                min_chit_earned: c.min_chit_earned,
             }),
             MessageContentInternal::PrizeWinner(c) => MessageContentEventPayload::PrizeWinner(PrizeWinnerContentEventPayload {
                 token: c.token_symbol.clone(),
@@ -1493,6 +1495,8 @@ pub struct PrizeContentInternal {
     pub fee_percent: u8,
     #[serde(rename = "rc", default, skip_serializing_if = "is_default")]
     pub requires_captcha: bool,
+    #[serde(rename = "mc", default, skip_serializing_if = "is_default")]
+    pub min_chit_earned: u32,
 }
 
 impl PrizeContentInternal {
@@ -1513,6 +1517,7 @@ impl PrizeContentInternal {
             prizes_paid: 0,
             fee_percent: PRIZE_FEE_PERCENT,
             requires_captcha: content.requires_captcha,
+            min_chit_earned: content.min_chit_earned,
         }
     }
 
@@ -1585,6 +1590,7 @@ impl MessageContentInternalSubtype for PrizeContentInternal {
             unique_person_only: self.unique_person_only,
             streak_only: self.streak_only,
             requires_captcha: self.requires_captcha,
+            min_chit_earned: self.min_chit_earned,
         }
     }
 }
