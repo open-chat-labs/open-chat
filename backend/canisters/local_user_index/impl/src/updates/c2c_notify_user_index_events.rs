@@ -248,6 +248,9 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             }
             state.data.global_users.insert_unique_person_proof(user_id, proof);
         }
+        UserIndexEvent::UpdateChitBalance(user_id, chit_record) => {
+            state.data.global_users.insert_chit_record(user_id, chit_record);
+        }
         UserIndexEvent::AddCanisterToPool(canister_id) => {
             if !state.data.canister_pool.contains(&canister_id) {
                 state.data.canister_pool.push(canister_id);

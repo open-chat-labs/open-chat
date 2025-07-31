@@ -75,12 +75,14 @@ fn run() {
                     is_unique_person: false,
                     verified_credential_args: None,
                     referred_by_member: false,
+                    total_chit_earned: 0,
                     now: state.env.now(),
                 };
 
                 if let Some(cached_details) = state.data.user_cache.get(&member.user_id) {
                     check_gate_args.diamond_membership_expires_at = cached_details.diamond_membership_expires_at;
                     check_gate_args.is_unique_person = cached_details.is_unique_person;
+                    check_gate_args.total_chit_earned = cached_details.total_chit_earned;
                 }
 
                 let passes_gate = check_if_passes_gate_synchronously(gate_config.gate().clone(), check_gate_args)
