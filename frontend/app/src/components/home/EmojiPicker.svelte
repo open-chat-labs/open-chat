@@ -42,6 +42,10 @@
     class:light={$currentTheme.mode === "light"}></emoji-picker>
 
 <style lang="scss">
+    :global(.emoji-overlay .modal-content) {
+        background-color: var(--menu-bg);
+    }
+
     emoji-picker {
         width: 100%;
         --emoji-padding: 0.3rem;

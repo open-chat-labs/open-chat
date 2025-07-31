@@ -3,6 +3,7 @@
     import { currentTheme } from "../theme/themes";
     import { darkenHexColour } from "../theme/utils";
     import type { ButtonProps } from "./Button.svelte";
+    import Spinner from "./icons/Spinner.svelte";
 
     let {
         cls = "",
@@ -62,6 +63,8 @@
     class:fill>
     {#if !loading}
         {@render children?.()}
+    {:else}
+        <Spinner backgroundColour={"rgba(0,0,0,0.5)"} foregroundColour={"var(--button-spinner)"} />
     {/if}
 </button>
 
@@ -122,9 +125,9 @@
         }
 
         &.hollow {
-            background-color: transparent;
-            color: var(--txt);
-            border: var(--bw) solid var(--bd);
+            background: transparent;
+            color: var(--button-hollow-txt);
+            border: var(--bw) solid var(--button-hollow-bd);
         }
 
         &.disabled {
@@ -136,12 +139,13 @@
 
         &.secondary {
             background: none;
-            color: var(--txt-light);
-            border: var(--bw) solid var(--bd);
+            color: var(--button-secondary-txt);
+            border: var(--bw) solid var(--button-secondary-bd);
 
             @media (hover: hover) {
                 &:hover {
-                    border: var(--bw) solid var(--txt-light);
+                    border: var(--bw) solid var(--button-secondary-bd-hv);
+                    color: var(--button-secondary-txt-hv);
                 }
             }
         }
@@ -166,15 +170,6 @@
             pointer-events: none;
             animation: pulse 3s linear infinite;
             transform-origin: top;
-        }
-
-        &.loading {
-            @include loading-spinner(
-                1em,
-                0.5em,
-                var(--button-spinner),
-                "/assets/plain-spinner.svg"
-            );
         }
     }
 

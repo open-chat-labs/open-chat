@@ -190,7 +190,7 @@
 
     .chit {
         border-radius: var(--rd);
-        background-color: var(--button-bg);
+        background: var(--button-bg);
         color: var(--button-txt);
         width: fit-content;
         padding: $sp2 $sp3;

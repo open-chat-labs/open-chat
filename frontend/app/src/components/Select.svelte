@@ -7,7 +7,7 @@
         invalid?: boolean;
         disabled?: boolean;
         margin?: boolean;
-        children?: import('svelte').Snippet;
+        children?: import("svelte").Snippet;
         onchange?: () => void;
     }
 
@@ -22,12 +22,12 @@
 </script>
 
 <div class:rtl={$rtlStore} class="wrapper">
-    <select class:invalid class:margin {disabled} bind:value class={`select`} {onchange} >
+    <select class:invalid class:margin {disabled} bind:value class={`select`} {onchange}>
         {@render children?.()}
     </select>
     {#if !disabled}
         <div class="icon">
-            <MenuDown color={"var(--primary)"} size="1.8em" />
+            <MenuDown color={"var(--input-accent)"} size="1.8em" />
         </div>
     {/if}
 </div>

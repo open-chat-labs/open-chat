@@ -43,6 +43,6 @@
         border-radius: 50%;
         width: 1.3em;
         height: 1.3em;
-        background-color: var(--button-bg);
+        background: var(--button-bg);
     }
 </style>

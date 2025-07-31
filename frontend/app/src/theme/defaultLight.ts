@@ -47,6 +47,7 @@ export function getTheme(base: Theme): Theme {
     base.panel.nav.bg = white;
     base.panel.right.bg = "transparent";
     base.panel.right.modal = white;
+    base.unread.txt = white;
     base.unread.mute = "#dddddd";
     base.unread["mute-solid"] = "#dddddd";
     base.unread["mute-txt"] = "#999999";

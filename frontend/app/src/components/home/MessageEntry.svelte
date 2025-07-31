@@ -772,7 +772,7 @@
         min-height: toRem(60);
 
         &.editing {
-            background-color: var(--button-bg);
+            background: var(--button-bg);
         }
 
         .icons {
