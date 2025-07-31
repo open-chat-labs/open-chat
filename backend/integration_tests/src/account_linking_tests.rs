@@ -15,6 +15,11 @@ fn test_account_linking_create_link_code() {
     // Original user that will create the linking code
     let (user, user_auth) = register_user_and_include_auth(env, canister_ids);
 
+    let create_account_linking_code_args = identity_canister::create_account_linking_code::Args {
+        public_key: user.public_key,
+        delegation: user_auth.delegation,
+    };
+
     //
     // ---- Create a linking code ----
     //
@@ -22,7 +27,7 @@ fn test_account_linking_create_link_code() {
         env,
         user_auth.auth_principal,
         canister_ids.identity,
-        &identity_canister::create_account_linking_code::Args {},
+        &create_account_linking_code_args,
     );
 
     let created_linking_code = match create_linking_code_response {
@@ -30,7 +35,7 @@ fn test_account_linking_create_link_code() {
         response => panic!("'create_account_linking_code' error: {response:?}"),
     };
 
-    assert!(created_linking_code.value.len() == 6);
+    assert_eq!(created_linking_code.value.len(), 6);
     assert!(created_linking_code.is_valid(now_millis(env)));
     assert_eq!(created_linking_code.user_id, user.user_id);
 
@@ -42,7 +47,7 @@ fn test_account_linking_create_link_code() {
         env,
         user_auth.auth_principal,
         canister_ids.identity,
-        &identity_canister::create_account_linking_code::Args {},
+        &create_account_linking_code_args,
     );
 
     match repeated_linking_code_response {
@@ -79,9 +84,8 @@ fn test_account_linking_create_link_code() {
     //
     // ---- Verify that the linking is successful by querying for it ----
     //
-    let auth_principals_response = client::identity::happy_path::auth_principals(env, new_principal, canister_ids.identity);
+    let check_auth_principal_response =
+        client::identity::happy_path::check_auth_principal(env, new_principal, canister_ids.identity);
 
-    assert_eq!(auth_principals_response.len(), 2);
-    assert!(auth_principals_response.first().unwrap().is_ii_principal);
-    assert!(!auth_principals_response.last().unwrap().is_ii_principal);
+    assert_eq!(check_auth_principal_response.user_id, Some(user.user_id));
 }

@@ -148,14 +148,6 @@ impl RuntimeState {
         }
     }
 
-    pub fn get_user_id_by_caller(&self) -> Option<UserId> {
-        let caller = self.caller_auth_principal();
-        self.data
-            .user_principals
-            .get_by_auth_principal(&caller)
-            .and_then(|u| u.user_id)
-    }
-
     pub fn metrics(&self) -> Metrics {
         Metrics {
             heap_memory_used: utils::memory::heap(),

@@ -273,7 +273,7 @@ impl UserPrincipals {
             .and_then(|p| self.user_principals.get_mut(p.user_principal_index as usize))
     }
 
-    fn user_principal_by_index(&self, user_principal_index: u32) -> Option<UserPrincipal> {
+    pub fn user_principal_by_index(&self, user_principal_index: u32) -> Option<UserPrincipal> {
         self.user_principals
             .get(usize::try_from(user_principal_index).unwrap())
             .map(|u| UserPrincipal {

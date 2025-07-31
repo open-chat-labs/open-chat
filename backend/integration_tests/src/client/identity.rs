@@ -22,7 +22,7 @@ pub mod happy_path {
     use candid::Principal;
     use identity_canister::auth_principals::UserPrincipal;
     use pocket_ic::PocketIc;
-    use types::{CanisterId, SignedDelegation, TimestampMillis};
+    use types::{CanisterId, Empty, SignedDelegation, TimestampMillis};
 
     pub fn create_identity(
         env: &mut PocketIc,
@@ -211,6 +211,19 @@ pub mod happy_path {
         match response {
             identity_canister::accept_identity_link_via_qr_code::Response::Success => (),
             response => panic!("'accept_identity_link_via_qr_code' error: {response:?}"),
+        }
+    }
+
+    pub fn check_auth_principal(
+        env: &PocketIc,
+        sender: Principal,
+        identity_canister_id: CanisterId,
+    ) -> identity_canister::check_auth_principal_v2::SuccessResult {
+        let response = super::check_auth_principal_v2(env, sender, identity_canister_id, &Empty {});
+
+        match response {
+            identity_canister::check_auth_principal_v2::Response::Success(result) => result,
+            response => panic!("'check_auth_principal_v2' error: {response:?}"),
         }
     }
 

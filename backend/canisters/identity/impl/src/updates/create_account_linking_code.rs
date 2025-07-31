@@ -6,16 +6,35 @@ use identity_canister::create_account_linking_code::{Response::*, *};
 
 #[update(msgpack = true, candid = true)]
 #[trace]
-fn create_account_linking_code(_args: Args) -> Response {
-    mutate_state(create_account_linking_code_impl)
+fn create_account_linking_code(args: Args) -> Response {
+    mutate_state(|state| create_account_linking_code_impl(args, state))
 }
 
-fn create_account_linking_code_impl(state: &mut RuntimeState) -> Response {
-    let Some(user_id) = state.get_user_id_by_caller() else {
+fn create_account_linking_code_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let caller = state.caller_auth_principal();
+
+    let Some(auth_principal) = state.data.user_principals.get_auth_principal(&caller) else {
+        return UserNotFound;
+    };
+
+    let Some(user_id) = state
+        .data
+        .user_principals
+        .user_principal_by_index(auth_principal.user_principal_index)
+        .and_then(|p| p.user_id)
+    else {
         return UserNotFound;
     };
 
     let now = state.env.now();
+    if state
+        .data
+        .verify_certificate_time(&auth_principal, &args.delegation.signature, now, 5 * MINUTE_IN_MS)
+        .is_err()
+    {
+        return DelegationTooOld;
+    }
+
     let rng = state.env.rng();
 
     // Clean up expired codes, keeps the memory footprint smaller in
