@@ -1520,6 +1520,7 @@ type PrizeContent = record {
     unique_person_only : bool;
     streak_only : nat16;
     requires_captcha : bool;
+    min_chit_earned : nat32;
 };
 
 type PrizeWinnerContent = record {
