@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Fix current user streak length inconsistency ([#8408](https://github.com/open-chat-labs/open-chat/pull/8408))
+- Fix sending total CHIT earned to all LocalUserIndexes ([#8426](https://github.com/open-chat-labs/open-chat/pull/8426))
 
 ## [[2.0.1845](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1845-user_index)] - 2025-07-29
 
