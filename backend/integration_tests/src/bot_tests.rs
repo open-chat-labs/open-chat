@@ -36,7 +36,7 @@ fn e2e_command_bot_test() {
     env.advance_time(Duration::from_millis(1));
     let owner = client::register_diamond_user(env, canister_ids, *controller);
     let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
-    let local_user_index = canister_ids.local_user_index(group_id);
+    let local_user_index = canister_ids.local_user_index(env, group_id);
 
     // Register a bot
     let bot_name = random_string();
