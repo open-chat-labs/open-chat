@@ -174,3 +174,8 @@ export const chitBands = new Map<number, string>([
     [500_000, "500k"],
     [1_000_000, "1m"],
 ]);
+
+export function findClosestChitBand(earned: number): number {
+    const keys = [...chitBands.keys()].sort((a, b) => b - a);
+    return keys.find((k) => k < earned) ?? 0;
+}

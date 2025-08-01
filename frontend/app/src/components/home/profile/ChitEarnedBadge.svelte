@@ -1,7 +1,7 @@
 <script lang="ts">
     import Translatable from "@src/components/Translatable.svelte";
     import { i18nKey } from "@src/i18n/i18n";
-    import { chitBands } from "openchat-client";
+    import { chitBands, findClosestChitBand } from "openchat-client";
     import Tooltip from "../../tooltip/Tooltip.svelte";
 
     interface Props {
@@ -11,10 +11,12 @@
 
     let { earned, showTooltip = true }: Props = $props();
 
+    let closest = $derived(findClosestChitBand(earned));
+
     let chitIconText = $derived(
-        earned === 1_000_000 ? "1 m" : Math.floor(earned / 1_000).toString(),
+        closest === 1_000_000 ? "1 m" : Math.floor(closest / 1_000).toString(),
     );
-    let show = $derived(earned > 0);
+    let show = $derived(closest > 0);
 </script>
 
 {#if show}
@@ -26,7 +28,7 @@
             {#snippet popupTemplate()}
                 <Translatable
                     resourceKey={i18nKey("prizes.minChitEarnedValue", {
-                        n: chitBands.get(earned) ?? "0",
+                        n: chitBands.get(closest) ?? "0",
                     })}></Translatable>
             {/snippet}
         </Tooltip>
@@ -35,7 +37,7 @@
             <div>
                 <Translatable
                     resourceKey={i18nKey("prizes.minChitEarnedValue", {
-                        n: chitBands.get(earned) ?? "0",
+                        n: chitBands.get(closest) ?? "0",
                     })}></Translatable>
             </div>
             <div class={`icon`}>
@@ -53,6 +55,7 @@
         height: $size;
         background-position: 50%;
         background-image: url("/assets/chit.svg");
+        filter: saturate(0.8);
         text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
         display: flex;
         align-items: center;
