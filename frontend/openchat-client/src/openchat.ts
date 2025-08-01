@@ -143,6 +143,7 @@ import {
     type InviteCodeResponse,
     isBalanceGate,
     isCaptionedContent,
+    isChitEarnedGate,
     isCompositeGate,
     isCredentialGate,
     isEditableContent,
@@ -3095,6 +3096,9 @@ export class OpenChat {
         const original = originalConfig.gate;
         if (current.kind !== original.kind) return true;
         if (currentConfig.expiry !== originalConfig.expiry) return true;
+        if (isChitEarnedGate(current) && isChitEarnedGate(original)) {
+            return current.minEarned !== original.minEarned;
+        }
         if (isNeuronGate(current) && isNeuronGate(original)) {
             return (
                 current.governanceCanister !== original.governanceCanister ||
