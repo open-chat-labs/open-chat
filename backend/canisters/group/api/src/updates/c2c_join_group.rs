@@ -16,6 +16,8 @@ pub struct Args {
     pub diamond_membership_expires_at: Option<TimestampMillis>,
     pub verified_credential_args: Option<VerifiedCredentialGateArgs>,
     pub unique_person_proof: Option<UniquePersonProof>,
+    #[serde(default)]
+    pub total_chit_earned: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

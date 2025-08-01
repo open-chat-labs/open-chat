@@ -75,6 +75,7 @@ fn run() {
                     is_unique_person: false,
                     verified_credential_args: None,
                     referred_by_member: false,
+                    total_chit_earned: 0,
                     now: state.env.now(),
                 };
 

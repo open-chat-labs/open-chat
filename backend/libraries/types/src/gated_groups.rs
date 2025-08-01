@@ -76,6 +76,7 @@ pub enum AccessGate {
     Composite(CompositeGate),
     Locked,
     ReferredByMember,
+    TotalChitEarned(ChitEarnedGate),
 }
 
 #[derive(Serialize, Deserialize, Eq, PartialEq)]
@@ -90,6 +91,7 @@ pub enum AccessGateType {
     Composite,
     Locked,
     ReferredByMember,
+    ChitEarnedGate,
 }
 
 impl Display for AccessGateType {
@@ -105,6 +107,7 @@ impl Display for AccessGateType {
             AccessGateType::Composite => "composite",
             AccessGateType::Locked => "locked",
             AccessGateType::ReferredByMember => "referred_by_member",
+            AccessGateType::ChitEarnedGate => "chit_earned",
         };
 
         f.write_str(str)
@@ -123,6 +126,7 @@ pub enum AccessGateNonComposite {
     TokenBalance(TokenBalanceGate),
     Locked,
     ReferredByMember,
+    TotalChitEarned(ChitEarnedGate),
 }
 
 pub enum AccessGateScope {
@@ -153,6 +157,7 @@ impl From<AccessGate> for AccessGateScope {
             AccessGate::TokenBalance(gate) => AccessGateScope::NonComposite(AccessGateNonComposite::TokenBalance(gate)),
             AccessGate::Locked => AccessGateScope::NonComposite(AccessGateNonComposite::Locked),
             AccessGate::ReferredByMember => AccessGateScope::NonComposite(AccessGateNonComposite::ReferredByMember),
+            AccessGate::TotalChitEarned(gate) => AccessGateScope::NonComposite(AccessGateNonComposite::TotalChitEarned(gate)),
         }
     }
 }
@@ -214,9 +219,10 @@ impl From<&AccessGate> for AccessGateExpiryBehaviour {
 impl From<AccessGateType> for AccessGateExpiryBehaviour {
     fn from(value: AccessGateType) -> Self {
         match value {
-            AccessGateType::DiamondMember | AccessGateType::LifetimeDiamondMember | AccessGateType::UniquePerson => {
-                AccessGateExpiryBehaviour::UserLookup
-            }
+            AccessGateType::DiamondMember
+            | AccessGateType::LifetimeDiamondMember
+            | AccessGateType::UniquePerson
+            | AccessGateType::ChitEarnedGate => AccessGateExpiryBehaviour::UserLookup,
             AccessGateType::Payment | AccessGateType::VerifiedCredential => AccessGateExpiryBehaviour::Lapse,
             AccessGateType::SnsNeuron | AccessGateType::TokenBalance => AccessGateExpiryBehaviour::Check,
             _ => AccessGateExpiryBehaviour::Invalid,
@@ -237,6 +243,7 @@ impl From<&AccessGate> for AccessGateType {
             AccessGate::Composite(_) => AccessGateType::Composite,
             AccessGate::Locked => AccessGateType::Locked,
             AccessGate::ReferredByMember => AccessGateType::ReferredByMember,
+            AccessGate::TotalChitEarned(_) => AccessGateType::ChitEarnedGate,
         }
     }
 }
@@ -253,6 +260,7 @@ impl From<&AccessGateNonComposite> for AccessGateType {
             AccessGateNonComposite::TokenBalance(_) => AccessGateType::TokenBalance,
             AccessGateNonComposite::Locked => AccessGateType::Locked,
             AccessGateNonComposite::ReferredByMember => AccessGateType::ReferredByMember,
+            AccessGateNonComposite::TotalChitEarned(_) => AccessGateType::ChitEarnedGate,
         }
     }
 }
@@ -351,6 +359,12 @@ pub struct CompositeGate {
 }
 
 #[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct ChitEarnedGate {
+    pub min_chit_earned: u32,
+}
+
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum GateCheckFailedReason {
     NotDiamondMember,
@@ -364,6 +378,7 @@ pub enum GateCheckFailedReason {
     FailedVerifiedCredentialCheck(String),
     Locked,
     NotReferredByMember,
+    ChitEarnedTooLow,
 }
 
 #[ts_export]

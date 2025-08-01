@@ -16,7 +16,6 @@ pub enum Response {
     Success(Swap),
     SwapNotFound,
     SwapIsPrivate,
-    PrincipalNotFound,
     Error(OCError),
 }
 
@@ -34,7 +33,7 @@ pub struct Swap {
     pub token0_deposit_address: String,
     pub token1: TokenInfo,
     pub amount1: u128,
-    pub token1_deposit_address: String,
+    pub token1_deposit_address: Option<String>,
     pub expires_at: TimestampMillis,
     pub additional_admins: Vec<Principal>,
     pub canister_to_notify: Option<CanisterId>,

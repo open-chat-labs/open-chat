@@ -48,6 +48,7 @@ async fn c2c_join_channel_impl(args: Args) -> Response {
             diamond_membership_expires_at: args.diamond_membership_expires_at,
             verified_credential_args: args.verified_credential_args.clone(),
             unique_person_proof: args.unique_person_proof.clone(),
+            total_chit_earned: args.total_chit_earned,
         })
         .await
         {
@@ -77,6 +78,7 @@ pub(crate) fn join_channel_synchronously(
     user_principal: Principal,
     diamond_membership_expires_at: Option<TimestampMillis>,
     unique_person_proof: Option<UniquePersonProof>,
+    total_chit_earned: i32,
     explicit_join: bool,
 ) {
     let is_unique_person = unique_person_proof.is_some();
@@ -88,6 +90,7 @@ pub(crate) fn join_channel_synchronously(
             diamond_membership_expires_at,
             unique_person_proof,
             None,
+            total_chit_earned,
             state,
         )
     }) {
@@ -109,6 +112,7 @@ pub(crate) fn join_channel_synchronously(
             user_principal,
             diamond_membership_expires_at,
             is_unique_person,
+            total_chit_earned,
             Vec::new(),
             explicit_join,
             state,
@@ -124,6 +128,7 @@ async fn check_gate_then_join_channel(args: &Args) -> Response {
             args.diamond_membership_expires_at,
             args.unique_person_proof.clone(),
             args.verified_credential_args.clone(),
+            args.total_chit_earned,
             state,
         )
     }) {
@@ -142,6 +147,7 @@ async fn check_gate_then_join_channel(args: &Args) -> Response {
             args.principal,
             args.diamond_membership_expires_at,
             args.unique_person_proof.is_some(),
+            args.total_chit_earned,
             payments,
             true,
             state,
@@ -155,6 +161,7 @@ fn is_permitted_to_join(
     diamond_membership_expires_at: Option<TimestampMillis>,
     unique_person_proof: Option<UniquePersonProof>,
     verified_credential_args: Option<VerifiedCredentialGateArgs>,
+    total_chit_earned: i32,
     state: &RuntimeState,
 ) -> Result<Option<(AccessGateConfigInternal, CheckGateArgs)>, Response> {
     if state.data.is_frozen() {
@@ -205,6 +212,7 @@ fn is_permitted_to_join(
                             ii_origin: vc.ii_origin,
                         }),
                         referred_by_member: false,
+                        total_chit_earned,
                         now: state.env.now(),
                     },
                 )
@@ -217,11 +225,13 @@ fn is_permitted_to_join(
     }
 }
 
+#[expect(clippy::too_many_arguments)]
 fn commit(
     channel_id: ChannelId,
     user_principal: Principal,
     diamond_membership_expires_at: Option<TimestampMillis>,
     is_unique_person: bool,
+    total_chit_earned: i32,
     payments: Vec<GatePayment>,
     explicit_join: bool,
     state: &mut RuntimeState,
@@ -271,7 +281,7 @@ fn commit(
             state
                 .data
                 .user_cache
-                .insert(user_id, diamond_membership_expires_at, is_unique_person);
+                .insert(user_id, diamond_membership_expires_at, is_unique_person, total_chit_earned);
 
             jobs::expire_members::start_job_if_required(state);
 
