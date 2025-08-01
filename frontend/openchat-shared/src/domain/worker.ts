@@ -159,6 +159,8 @@ import type {
     SiwsPrepareLoginResponse,
     WebAuthnKey,
     WebAuthnKeyFull,
+    VerifyAccountLinkingCodeResponse,
+    FinaliseAccountLinkingResponse,
 } from "./identity";
 import type { CommunityInvite, GroupInvite } from "./inviteCodes";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -454,7 +456,9 @@ export type WorkerRequest =
     | UpdateProposalTallies
     | FcmTokenExists
     | AddFcmToken
-    | CreateAccountLinkingCode;
+    | CreateAccountLinkingCode
+    | VerifyAccountLinkingCode
+    | FinaliseAccountLinkingWithCode;
 
 type SetMinLogLevel = {
     kind: "setMinLogLevel";
@@ -1575,6 +1579,20 @@ type CreateAccountLinkingCode = {
     kind: "createAccountLinkingCode";
 };
 
+type VerifyAccountLinkingCode = {
+    kind: "verifyAccountLinkingCode";
+    code: string;
+    tempKey: CryptoKeyPair;
+};
+
+type FinaliseAccountLinkingWithCode = {
+    kind: "finaliseAccountLinkingWithCode";
+    tempKey: CryptoKeyPair;
+    principal: string;
+    publicKey: Uint8Array;
+    webAuthnKey?: WebAuthnKeyFull;
+};
+
 /**
  * Worker error type
  */
@@ -1744,7 +1762,9 @@ export type WorkerResponseInner =
     | BotCommandResponse
     | PayForStreakInsuranceResponse
     | FullWebhookDetails
-    | AccountLinkingCode;
+    | AccountLinkingCode
+    | VerifyAccountLinkingCodeResponse
+    | FinaliseAccountLinkingResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 

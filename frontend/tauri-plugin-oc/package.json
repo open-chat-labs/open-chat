@@ -17,6 +17,7 @@
     ],
     "scripts": {
         "build": "rollup -c",
+        "build:docker": "npm run build",
         "dev": "npm run clean && rollup -cw",
         "dev:mobile": "npm run dev",
         "wait": "npm run clean && wait-on dist-js/index.js",
