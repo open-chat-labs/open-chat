@@ -2616,6 +2616,14 @@ export const LocalUserIndexInviteUsersToChannelArgs = Type.Object({
     caller_username: Type.String(),
 });
 
+export type LocalUserIndexReinstateMissedDailyClaimsArgs = Static<
+    typeof LocalUserIndexReinstateMissedDailyClaimsArgs
+>;
+export const LocalUserIndexReinstateMissedDailyClaimsArgs = Type.Object({
+    user_id: UserId,
+    days: Type.Array(Type.Number()),
+});
+
 export type LocalUserIndexAccessTokenV2Response = Static<
     typeof LocalUserIndexAccessTokenV2Response
 >;

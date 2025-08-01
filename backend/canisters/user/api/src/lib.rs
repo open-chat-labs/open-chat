@@ -107,6 +107,7 @@ pub enum LocalUserIndexEvent {
     DiamondMembershipPaymentReceived(Box<DiamondMembershipPaymentReceived>),
     NotifyUniquePersonProof(Box<UniquePersonProof>),
     ExternalAchievementAwarded(Box<ExternalAchievementAwarded>),
+    ReinstateMissedDailyClaims(Vec<u16>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

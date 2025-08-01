@@ -2107,6 +2107,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "reinstateMissedDailyClaims":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.reinstateMissedDailyClaims(payload.userId, payload.days)
+                );
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }
