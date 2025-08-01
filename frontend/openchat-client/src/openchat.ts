@@ -15,6 +15,7 @@ import {
     type AccessGate,
     type AccessGateConfig,
     type AccessTokenType,
+    type AccountLinkingCode,
     type AccountTransactionResult,
     type Achievement,
     type AddMembersToChannelResponse,
@@ -298,7 +299,6 @@ import {
     type WorkerRequest,
     type WorkerResponse,
     type WorkerResult,
-    type AccountLinkingCode,
 } from "openchat-shared";
 import page from "page";
 import { tick } from "svelte";
@@ -3567,7 +3567,7 @@ export class OpenChat {
                       .then((resp) =>
                           this.#handleThreadEventsResponse(
                               serverChat.id,
-                               
+
                               selectedThreadRootMessageIndex!,
                               resp,
                           ),
@@ -3717,7 +3717,7 @@ export class OpenChat {
             // now a new latest message and if so, mark it as a local chat summary update.
             let latestMessageIndex =
                 threadRootMessageIndex === undefined
-                    ? (allServerChatsStore.value.get(chatId)?.latestMessageIndex ?? -1)
+                    ? allServerChatsStore.value.get(chatId)?.latestMessageIndex ?? -1
                     : undefined;
             let newLatestMessage: EventWrapper<Message> | undefined = undefined;
 
@@ -4226,7 +4226,13 @@ export class OpenChat {
             blockLevelMarkdown,
         };
 
-        return this.#sendMessageCommon(chat, messageContext, msg, mentioned, messageIdIfRetrying !== undefined);
+        return this.#sendMessageCommon(
+            chat,
+            messageContext,
+            msg,
+            mentioned,
+            messageIdIfRetrying !== undefined,
+        );
     }
 
     #throttleSendMessage(): boolean {
@@ -4627,6 +4633,8 @@ export class OpenChat {
                 return currentUserStore.value.diamondStatus.kind === "lifetime";
             } else if (gate.kind === "unique_person_gate") {
                 return currentUserStore.value.isUniquePerson;
+            } else if (gate.kind === "chit_earned_gate") {
+                return currentUserStore.value.totalChitEarned >= gate.minEarned;
             } else {
                 return false;
             }
@@ -5607,7 +5615,9 @@ export class OpenChat {
                     userStore.setUpdated(allOtherUsers, resp.serverTimestamp);
                 }
                 if (resp.currentUser) {
-                    currentUserStore.set(updateCreatedUser(currentUserStore.value, resp.currentUser));
+                    currentUserStore.set(
+                        updateCreatedUser(currentUserStore.value, resp.currentUser),
+                    );
                 }
                 return resp;
             })
@@ -8400,7 +8410,7 @@ export class OpenChat {
     }
 
     getStreak(userId: string | undefined) {
-        return userId ? (userStore.get(userId)?.streak ?? 0) : 0;
+        return userId ? userStore.get(userId)?.streak ?? 0 : 0;
     }
 
     getBotDefinition(endpoint: string): Promise<BotDefinitionResponse> {
@@ -9530,7 +9540,7 @@ export class OpenChat {
 
     #extract_p256dh_key(subscription: PushSubscription): string {
         const json = subscription.toJSON();
-         
+
         const key = json.keys!["p256dh"];
         return key;
     }
