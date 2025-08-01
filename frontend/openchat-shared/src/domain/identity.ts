@@ -141,3 +141,28 @@ export type AccountLinkingCode = {
     value: string;
     expiresAt: bigint;
 };
+
+export type VerifyAccountLinkingCodeResponse =
+    | { kind: "success"; username: string }
+    | AccountLinkingError;
+
+export type FinaliseAccountLinkingResponse = { kind: "success" } | AccountLinkingError;
+
+export type AccountLinkingError = {
+    kind: "error";
+    code: AccountLinkingErrorCode;
+    msg?: string;
+};
+
+export enum AccountLinkingErrorCode {
+    DelegationNotFound = "delegationNotFound",
+    InvalidWebAuthnKey = "invalidWebAuthnKey",
+    UnknownError = "unknownError",
+    InitiatorNotFound = "initiatorNotFound",
+    AlreadyRegistered = "alreadyRegistered",
+    PrincipalAlreadyUsed = "principalAlreadyUsed",
+    InvalidPublicKey = "invalidPublicKey",
+    InvalidOriginatingCanister = "invalidOriginatingCanister",
+    LinkingCodeNotFound = "linkingCodeNotFound",
+    MaxLinkedIdentitiesLimitReached = "maxLinkedIdentitiesLimitReached",
+}

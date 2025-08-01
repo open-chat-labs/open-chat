@@ -1109,7 +1109,15 @@
     "native": {
         "auth": {
             "createAccount": "Tạo tài khoản mới",
-            "error": "Xác thực không thành công. Vui lòng thử lại.",
+            "errors": {
+                "alreadyRegistered": "Phương thức xác thực đã được liên kết. Hãy thử đăng nhập!",
+                "codeInvalid": "Mã liên kết tài khoản của bạn có vẻ không hợp lệ!",
+                "cretePasskeyFail": "Không tạo được mật khẩu, vui lòng thử lại.",
+                "default": "Xác thực không thành công. Vui lòng thử lại.",
+                "linkingCodeNotFound": "Vui lòng kiểm tra mã liên kết của bạn đã chính xác chưa!",
+                "maxLinkedIdentitiesLimitReached": "Bạn đã đạt đến giới hạn về số lượng danh tính được liên kết tối đa.",
+                "noProviders": "Không có trình quản lý thông tin đăng nhập nào khả dụng trên điện thoại của bạn! Bạn sẽ cần bật hoặc cài đặt ít nhất một trình quản lý."
+            },
             "existingAccount": "Tôi là người dùng hiện tại",
             "linkAccount": {
                 "cta": "Liên kết tài khoản",
