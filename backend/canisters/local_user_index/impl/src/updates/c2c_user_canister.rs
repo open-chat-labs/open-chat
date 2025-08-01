@@ -52,6 +52,8 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
 ) {
     match event {
         UserEvent::NotifyChit(ev) => {
+            // TODO set CHIT record here
+            // state.data.global_users.insert_chit_record(user_id, ..);
             state.push_event_to_user_index(UserIndexEvent::NotifyChit(Box::new((user_id, ev))), **now);
         }
         UserEvent::NotifyStreakInsurancePayment(payment) => {
