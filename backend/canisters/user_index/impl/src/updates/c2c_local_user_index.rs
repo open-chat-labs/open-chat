@@ -146,7 +146,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                         curr_balance: total_chit_earned, // We don't yet maintain the users total chit balance
                     },
                 ),
-                Some(caller),
+                None,
             );
         }
         LocalUserIndexEvent::NotifyStreakInsurancePayment(payment) => state.data.streak_insurance_logs.mark_payment(*payment),
