@@ -106,6 +106,25 @@
     },
     "account": "アカウント",
     "accountCopiedToClipboard": "アカウントアドレスがクリップボードにコピーされました。",
+    "accountLinkingCode": {
+        "settingsMenu": {
+            "cta": "アカウントリンクコードを表示",
+            "disclaimer": "このアカウントをOpenChatネイティブアプリがインストールされたデバイスに連携させたい場合は、下のボタンをクリックしてアカウント連携コードを取得してください。このコードは信頼できるデバイスでのみご利用ください。",
+            "title": "新しいデバイスとリンク"
+        },
+        "webModal": {
+            "close": "近い",
+            "error": {
+                "cancel": "キャンセル",
+                "msg": "アカウントリンクコードを読み込めませんでした。もう一度お試しください。",
+                "tryAgain": "もう一度やり直してください"
+            },
+            "expired": "コードの有効期限が切れました。",
+            "subtitle": "以下のコードを使用して、現在のアカウントを新しい信頼できるデバイスにリンクします。",
+            "title": "アカウントリンクコード",
+            "willExpireIn": "コードは{remaining}に期限切れになります"
+        }
+    },
     "accounts": "アカウント",
     "accountSuspended": "アカウントが一時停止",
     "activity": {
@@ -651,6 +670,7 @@
     "deleteGroupSuccess": "{level} は正常に削除されました",
     "deleteMessage": "消去",
     "deleteMessageAndReport": "削除して報告",
+    "deleteMessageConfirm": "このメッセージを本当に削除しますか?",
     "deleteMessageForMe": "削除してください",
     "demoteFailed": "{role} に降格できません",
     "demoteTo": "{role}に降格",

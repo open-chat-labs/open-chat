@@ -106,6 +106,25 @@
     },
     "account": "حساب",
     "accountCopiedToClipboard": "تم نسخ عنوان الحساب إلى الحافظة!",
+    "accountLinkingCode": {
+        "settingsMenu": {
+            "cta": "إظهار رمز ربط الحساب",
+            "disclaimer": "إذا كنت ترغب في ربط هذا الحساب بجهاز مُثبّت عليه تطبيق OpenChat الأصلي، فانقر على الزر أدناه للحصول على رمز ربط حسابك! استخدم الرمز على جهاز موثوق فقط.",
+            "title": "الارتباط بالجهاز الجديد"
+        },
+        "webModal": {
+            "close": "يغلق",
+            "error": {
+                "cancel": "يلغي",
+                "msg": "لم يتم تحميل رمز ربط حسابك، يرجى المحاولة مرة أخرى.",
+                "tryAgain": "حاول ثانية"
+            },
+            "expired": "لقد انتهت صلاحية الكود الخاص بك!",
+            "subtitle": "استخدم الكود أدناه لربط حسابك الحالي بجهاز موثوق جديد.",
+            "title": "كود ربط الحساب",
+            "willExpireIn": "سينتهي صلاحية الكود في {remaining}"
+        }
+    },
     "accounts": "الحسابات",
     "accountSuspended": "تم تعليق الحساب",
     "activity": {
@@ -651,6 +670,7 @@
     "deleteGroupSuccess": "تم حذف {level} بنجاح",
     "deleteMessage": "يمسح",
     "deleteMessageAndReport": "حذف والإبلاغ",
+    "deleteMessageConfirm": "هل تريد حقًا حذف هذه الرسالة؟",
     "deleteMessageForMe": "حذف بالنسبة لي",
     "demoteFailed": "غير قادر على التخفيض إلى {role}",
     "demoteTo": "تخفيض إلى {role}",

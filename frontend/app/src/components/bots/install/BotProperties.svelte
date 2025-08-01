@@ -96,11 +96,11 @@
             transition:
                 background-color ease-in-out 100ms,
                 border-color ease-in-out 100ms;
-            @media (hover: hover) {
+            /* @media (hover: hover) {
                 &:hover {
                     background-color: var(--members-hv);
                 }
-            }
+            } */
 
             @include mobile() {
                 padding: $sp3 toRem(10);

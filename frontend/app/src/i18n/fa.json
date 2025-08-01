@@ -106,6 +106,25 @@
     },
     "account": "حساب",
     "accountCopiedToClipboard": "آدرس حساب در کلیپ‌بورد کپی شد!",
+    "accountLinkingCode": {
+        "settingsMenu": {
+            "cta": "نمایش کد لینک حساب کاربری",
+            "disclaimer": "اگر می‌خواهید این حساب را به دستگاهی که برنامه بومی OpenChat روی آن نصب شده است، متصل کنید، برای دریافت کد اتصال حساب خود، روی دکمه زیر کلیک کنید! کد را فقط در یک دستگاه قابل اعتماد استفاده کنید.",
+            "title": "پیوند با دستگاه جدید"
+        },
+        "webModal": {
+            "close": "بستن",
+            "error": {
+                "cancel": "لغو",
+                "msg": "کد اتصال حساب شما قابل بارگیری نیست، لطفاً دوباره امتحان کنید.",
+                "tryAgain": "دوباره امتحان کنید"
+            },
+            "expired": "کد شما منقضی شده است!",
+            "subtitle": "از کد زیر برای پیوند دادن حساب فعلی خود با یک دستگاه مورد اعتماد جدید استفاده کنید.",
+            "title": "کد اتصال حساب",
+            "willExpireIn": "کد در تاریخ {remaining} منقضی خواهد شد."
+        }
+    },
     "accounts": "حساب ها",
     "accountSuspended": "حساب معلق شده است",
     "activity": {
@@ -651,6 +670,7 @@
     "deleteGroupSuccess": "{level} با موفقیت حذف شد",
     "deleteMessage": "حذف",
     "deleteMessageAndReport": "حذف و گزارش دهید",
+    "deleteMessageConfirm": "آیا واقعاً می‌خواهید این پیام را حذف کنید؟",
     "deleteMessageForMe": "برای من حذف کن",
     "demoteFailed": "تنزل به {role} ممکن نیست",
     "demoteTo": "تنزل به {role}",

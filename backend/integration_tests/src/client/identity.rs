@@ -11,11 +11,12 @@ generate_msgpack_update_call!(approve_identity_link);
 generate_msgpack_update_call!(create_account_linking_code);
 generate_msgpack_update_call!(create_identity);
 generate_msgpack_update_call!(delete_user);
+generate_msgpack_update_call!(finalise_account_linking_with_code);
 generate_msgpack_update_call!(initiate_identity_link);
 generate_msgpack_update_call!(initiate_identity_link_via_qr_code);
-generate_msgpack_update_call!(link_with_account_linking_code);
 generate_msgpack_update_call!(prepare_delegation);
 generate_msgpack_update_call!(remove_identity_link);
+generate_msgpack_update_call!(verify_account_linking_code);
 
 pub mod happy_path {
     use crate::UserAuth;

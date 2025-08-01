@@ -6,10 +6,10 @@ use std::collections::HashMap;
 use types::nns::CryptoAmount;
 use types::{
     AutonomousConfig, BotCommandDefinition, BotDataEncoding, BotDefinition, BotInstallationLocation, BotSubscriptions,
-    BuildVersion, CanisterId, ChannelLatestMessageIndex, ChatId, ChitEarnedReason, CommunityId, CyclesTopUp,
-    DiamondMembershipPlanDuration, MessageContent, MessageContentInitial, MessageId, MessageIndex, Notification, NotifyChit,
-    PhoneNumber, ReferralType, SuspensionDuration, TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User,
-    UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserType, is_default,
+    BuildVersion, CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, CyclesTopUp, DiamondMembershipPlanDuration,
+    MessageContent, MessageContentInitial, MessageId, MessageIndex, Notification, NotifyChit, PhoneNumber, ReferralType,
+    SuspensionDuration, TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User, UserCanisterStreakInsuranceClaim,
+    UserCanisterStreakInsurancePayment, UserId, UserType, is_default,
 };
 
 mod lifecycle;
@@ -52,6 +52,7 @@ pub enum UserIndexEvent {
     SyncExistingUser(UserDetailsFull),
     UserBlocked(UserId, UserId),
     UserUnblocked(UserId, UserId),
+    UpdateChitBalance(UserId, ChitBalance),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -263,14 +264,14 @@ pub struct GlobalUser {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub unique_person_proof: Option<UniquePersonProof>,
     pub user_type: UserType,
+    #[serde(default)]
+    pub chit: ChitBalance,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct ChitEarned {
-    pub user_id: UserId,
-    pub amount: i32,
-    pub timestamp: TimestampMillis,
-    pub reason: ChitEarnedReason,
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct ChitBalance {
+    pub total_earned: i32,
+    pub curr_balance: i32,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

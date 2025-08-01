@@ -5,6 +5,7 @@
         type ModerationFlag,
         ModerationFlags,
         type OpenChat,
+        ROLE_NONE,
         type UserSummary,
         adultEnabledStore,
         anonUserStore,
@@ -20,7 +21,6 @@
         offensiveEnabledStore,
         publish,
         referralsStore,
-        ROLE_NONE,
         sortedCommunitiesStore,
         suspendedUserStore,
         underReviewEnabledStore,
@@ -47,6 +47,7 @@
         dclickReply,
         deleteAccountSectionOpen,
         enterSend,
+        linkDeviceSectionOpen,
         lowBandwidth,
         referralOpen,
         renderPreviews,
@@ -80,6 +81,7 @@
     import Markdown from "../Markdown.svelte";
     import Stats from "../Stats.svelte";
     import Expiry from "../upgrade/Expiry.svelte";
+    import AccountLinkingCode from "./AccountLinkingCode.svelte";
     import BotConfigData from "./BotConfigData.svelte";
     import ChitEvents from "./ChitEvents.svelte";
     import CommunityProfile from "./CommunityProfile.svelte";
@@ -654,6 +656,16 @@
             </CollapsibleCard>
         </div>
         {#if !$anonUserStore}
+            {#if client.accountLinkingCodeEnabled()}
+                <div class="link-device">
+                    <CollapsibleCard
+                        onToggle={linkDeviceSectionOpen.toggle}
+                        open={$linkDeviceSectionOpen}
+                        headerText={i18nKey("accountLinkingCode.settingsMenu.title")}>
+                        <AccountLinkingCode />
+                    </CollapsibleCard>
+                </div>
+            {/if}
             <div class="danger">
                 <CollapsibleCard
                     onToggle={deleteAccountSectionOpen.toggle}

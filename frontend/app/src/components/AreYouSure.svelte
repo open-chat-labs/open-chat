@@ -1,14 +1,15 @@
 <script lang="ts">
-    import ModalContent from "./ModalContent.svelte";
+    import type { ResourceKey } from "openchat-client";
+    import type { Snippet } from "svelte";
+    import { _ } from "svelte-i18n";
+    import { i18nKey, interpolate } from "../i18n/i18n";
     import Button from "./Button.svelte";
     import ButtonGroup from "./ButtonGroup.svelte";
-    import Overlay from "./Overlay.svelte";
-    import { _ } from "svelte-i18n";
-    import Input from "./Input.svelte";
     import Markdown from "./home/Markdown.svelte";
-    import { i18nKey, interpolate } from "../i18n/i18n";
+    import Input from "./Input.svelte";
+    import ModalContent from "./ModalContent.svelte";
+    import Overlay from "./Overlay.svelte";
     import Translatable from "./Translatable.svelte";
-    import type { ResourceKey } from "openchat-client";
 
     interface Props {
         message?: ResourceKey | undefined;
@@ -17,15 +18,17 @@
         title?: ResourceKey | undefined;
         yesLabel?: ResourceKey | undefined;
         noLabel?: ResourceKey | undefined;
+        children?: Snippet;
     }
 
     let {
-        message = undefined,
+        message,
         action,
-        doubleCheck = undefined,
+        doubleCheck,
         title = i18nKey("areYouSure"),
         yesLabel = i18nKey("yesPlease"),
         noLabel = i18nKey("noThanks"),
+        children,
     }: Props = $props();
 
     let inProgress = $state(false);
@@ -48,13 +51,14 @@
 </script>
 
 <Overlay>
-    <ModalContent hideBody={message === undefined}>
+    <ModalContent hideBody={message === undefined && children === undefined}>
         {#snippet header()}
             {#if title !== undefined}
                 <Translatable resourceKey={title} />
             {/if}
         {/snippet}
         {#snippet body()}
+            {@render children?.()}
             {#if message !== undefined}
                 <Markdown inline={false} text={interpolate($_, message)} />
 

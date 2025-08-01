@@ -106,6 +106,25 @@
     },
     "account": "Tài khoản",
     "accountCopiedToClipboard": "Đã sao chép địa chỉ tài khoản vào bảng tạm!",
+    "accountLinkingCode": {
+        "settingsMenu": {
+            "cta": "Hiển thị mã liên kết tài khoản",
+            "disclaimer": "Nếu bạn muốn liên kết tài khoản này với thiết bị đã cài đặt ứng dụng gốc OpenChat, hãy nhấp vào nút bên dưới để nhận Mã liên kết tài khoản! Chỉ sử dụng mã này trên thiết bị đáng tin cậy.",
+            "title": "Liên kết với thiết bị mới"
+        },
+        "webModal": {
+            "close": "Đóng",
+            "error": {
+                "cancel": "Hủy bỏ",
+                "msg": "Không thể tải mã liên kết tài khoản của bạn, vui lòng thử lại.",
+                "tryAgain": "Thử lại"
+            },
+            "expired": "Mã của bạn đã hết hạn!",
+            "subtitle": "Sử dụng mã bên dưới để liên kết tài khoản hiện tại của bạn với thiết bị đáng tin cậy mới.",
+            "title": "Mã liên kết tài khoản",
+            "willExpireIn": "Mã sẽ hết hạn vào {remaining}"
+        }
+    },
     "accounts": "Tài khoản",
     "accountSuspended": "Toàn khoản bị đình chỉ",
     "activity": {
@@ -651,6 +670,7 @@
     "deleteGroupSuccess": "{level} đã xóa thành công",
     "deleteMessage": "Xóa bỏ",
     "deleteMessageAndReport": "Xóa và báo cáo",
+    "deleteMessageConfirm": "Bạn có thực sự muốn xóa tin nhắn này không?",
     "deleteMessageForMe": "Xóa cho tôi",
     "demoteFailed": "Không thể hạ cấp xuống {role}",
     "demoteTo": "Giảm xuống {role}",

@@ -10,7 +10,7 @@ import {
     type DailyThemeConfig,
 } from "@daily-co/daily-js";
 import { type ChatIdentifier, type VideoCallType } from "openchat-client";
-import { get, writable } from "svelte/store";
+import { get, type Subscriber, writable } from "svelte/store";
 import { createLocalStorageStore } from "../utils/store";
 
 export type InterCallMessage =
@@ -75,7 +75,8 @@ export const sharing = writable<boolean>(false);
 export const selectedRingtone = createLocalStorageStore("openchat_ringtone", "boring");
 
 export const incomingVideoCall = {
-    subscribe: incomingStore.subscribe,
+    subscribe: (subscriber: Subscriber<IncomingVideoCall | undefined>, invalidate?: () => void) =>
+        incomingStore.subscribe(subscriber, invalidate),
     set: (call: IncomingVideoCall | undefined) => {
         if (call === undefined) {
             incomingStore.set(undefined);
@@ -117,7 +118,8 @@ function updateParticipant(
 export type ActiveVideoCallStore = typeof activeVideoCall;
 
 export const activeVideoCall = {
-    subscribe: activeStore.subscribe,
+    subscribe: (subscriber: Subscriber<ActiveVideoCall | undefined>, invalidate?: () => void) =>
+        activeStore.subscribe(subscriber, invalidate),
     setCall: (chatId: ChatIdentifier, messageId: bigint, call: DailyCall) => {
         return updateCall((current) => ({
             ...current,

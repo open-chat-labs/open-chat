@@ -20,6 +20,7 @@ fn create_identity_impl(args: Args, state: &mut RuntimeState) -> Response {
     } = match state.verify_new_identity(VerifyNewIdentityArgs {
         public_key: args.public_key,
         webauthn_key: args.webauthn_key,
+        override_principal: None,
         allow_existing_provided_not_linked_to_oc_account: false,
     }) {
         Ok(ok) => ok,

@@ -15,7 +15,7 @@ val tauriProperties = Properties().apply {
 }
 
 android {
-    compileSdk = 35
+    compileSdk = 36
     namespace = "com.oc.app"
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -25,7 +25,7 @@ android {
         manifestPlaceholders["usesCleartextTraffic"] = "false"
         applicationId = "com.oc.app"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
         versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
     }
@@ -77,15 +77,15 @@ rust {
 }
 
 dependencies {
-    implementation("androidx.webkit:webkit:1.13.0")
-    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("androidx.webkit:webkit:1.14.0")
+    implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("com.google.android.material:material:1.12.0")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
-    implementation("androidx.lifecycle:lifecycle-process:2.9.1")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.1")
-    implementation("com.google.firebase:firebase-messaging:24.1.2")
+    implementation("androidx.lifecycle:lifecycle-process:2.9.2")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.2")
+    implementation("com.google.firebase:firebase-messaging:25.0.0")
 }
 
 apply(from = "tauri.build.gradle.kts")

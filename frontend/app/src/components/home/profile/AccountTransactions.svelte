@@ -314,7 +314,7 @@
         text-align: left;
     }
     th {
-        background-color: var(--button-bg);
+        background: var(--button-bg);
         color: var(--button-txt);
     }
     tr {

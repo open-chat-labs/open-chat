@@ -255,9 +255,9 @@ $avatar-mod-offset-small: toRem(-3);
 
 /* z-index stuff */
 
-/* 
-    Add items to this map in the order that they need to stack in the UI 
-    then apply z-index using the z-index mixin and the real z-indexes will 
+/*
+    Add items to this map in the order that they need to stack in the UI
+    then apply z-index using the z-index mixin and the real z-indexes will
     be sorted out magically
 */
 $z-indexed-items: (
@@ -426,11 +426,11 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: var(--accent);
-    text-shadow: 1px 1px 1px var(--accentDarker);
+    background-color: var(--unread-bg);
+    text-shadow: 1px 1px 1px var(--unread-txt-sh);
     border-radius: toRem(12);
     @include font(bold, normal, fs-50);
-    color: #ffffff;
+    color: var(--unread-txt);
     min-width: toRem(24);
     padding: 0 $sp2;
     height: toRem(24);

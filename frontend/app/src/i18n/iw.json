@@ -106,6 +106,25 @@
     },
     "account": "חֶשְׁבּוֹן",
     "accountCopiedToClipboard": "כתובת החשבון הועתקה ללוח!",
+    "accountLinkingCode": {
+        "settingsMenu": {
+            "cta": "הצג קוד קישור חשבון",
+            "disclaimer": "אם ברצונך לקשר חשבון זה למכשיר שבו מותקנת אפליקציית OpenChat המקורית, לחץ על הכפתור למטה כדי לקבל את קוד קישור החשבון שלך! השתמש בקוד במכשיר מהימן בלבד.",
+            "title": "קישור עם מכשיר חדש"
+        },
+        "webModal": {
+            "close": "לִסְגוֹר",
+            "error": {
+                "cancel": "לְבַטֵל",
+                "msg": "לא ניתן היה לטעון את קוד קישור החשבון שלך, אנא נסה שוב.",
+                "tryAgain": "נסה שוב"
+            },
+            "expired": "פג תוקף הקוד שלך!",
+            "subtitle": "השתמש בקוד למטה כדי לקשר את החשבון הנוכחי שלך למכשיר מהימן חדש.",
+            "title": "קוד קישור חשבון",
+            "willExpireIn": "הקוד יפוג תוקפו בעוד {remaining}"
+        }
+    },
     "accounts": "חשבונות",
     "accountSuspended": "חשבון מושעה",
     "activity": {
@@ -651,6 +670,7 @@
     "deleteGroupSuccess": "{level} נמחק בהצלחה",
     "deleteMessage": "לִמְחוֹק",
     "deleteMessageAndReport": "מחק ודווח",
+    "deleteMessageConfirm": "האם אתה באמת רוצה למחוק את ההודעה הזו?",
     "deleteMessageForMe": "מחק בשבילי",
     "demoteFailed": "לא ניתן לרדת בדרגה ל-{role}",
     "demoteTo": "הורד ל-{role}",

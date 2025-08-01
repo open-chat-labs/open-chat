@@ -106,6 +106,25 @@
     },
     "account": "Konto",
     "accountCopiedToClipboard": "Kontoadresse in die Zwischenablage kopiert!",
+    "accountLinkingCode": {
+        "settingsMenu": {
+            "cta": "Kontoverknüpfungscode anzeigen",
+            "disclaimer": "Wenn Sie dieses Konto mit einem Gerät verknüpfen möchten, auf dem die OpenChat-App installiert ist, klicken Sie auf die Schaltfläche unten, um Ihren Kontoverknüpfungscode zu erhalten! Verwenden Sie den Code nur auf einem vertrauenswürdigen Gerät.",
+            "title": "Mit neuem Gerät verknüpfen"
+        },
+        "webModal": {
+            "close": "Schließen",
+            "error": {
+                "cancel": "Stornieren",
+                "msg": "Ihr Kontoverknüpfungscode konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
+                "tryAgain": "Versuchen Sie es erneut"
+            },
+            "expired": "Ihr Code ist abgelaufen!",
+            "subtitle": "Verwenden Sie den folgenden Code, um Ihr aktuelles Konto mit einem neuen vertrauenswürdigen Gerät zu verknüpfen.",
+            "title": "Kontoverknüpfungscode",
+            "willExpireIn": "Der Code läuft in {remaining} ab"
+        }
+    },
     "accounts": "Konten",
     "accountSuspended": "Konto gesperrt",
     "activity": {
@@ -651,6 +670,7 @@
     "deleteGroupSuccess": "{level} erfolgreich gelöscht",
     "deleteMessage": "Löschen",
     "deleteMessageAndReport": "Löschen und melden",
+    "deleteMessageConfirm": "Möchten Sie diese Nachricht wirklich löschen?",
     "deleteMessageForMe": "Für mich löschen",
     "demoteFailed": "Herabstufung auf {role} nicht möglich",
     "demoteTo": "Zurückstufen auf {role}",

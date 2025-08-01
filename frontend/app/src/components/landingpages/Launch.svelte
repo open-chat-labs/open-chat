@@ -40,9 +40,9 @@
 <style lang="scss">
     .launch {
         display: inline-block;
-        transition: background-color ease-in-out 200ms;
+        transition: background ease-in-out 200ms;
         color: var(--button-txt);
-        background-color: var(--button-bg);
+        background: var(--button-bg);
         border: none;
         border-radius: toRem(4);
         cursor: pointer;

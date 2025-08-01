@@ -1825,6 +1825,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
+                    // TODO add type for the `res`
                     identityAgent?.checkAuthPrincipal().then((res) => {
                         return res.kind === "success" ? res.webAuthnKey : undefined;
                     }) ?? Promise.resolve(undefined),
@@ -2095,6 +2096,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     payload,
                     correlationId,
                     agent.updateProposalTallies(payload.chatId),
+                );
+                break;
+
+            case "createAccountLinkingCode":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    identityAgent?.createAccountLinkingCode() ?? Promise.resolve(undefined),
                 );
                 break;
 

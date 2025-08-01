@@ -10,6 +10,7 @@ export const configKeys = {
     hideChitIcon: "openchat_hide_chit_icon",
     disableChit: "openchat_disable_chit",
     showHomeScreenPrompt: "openchat_show_home_screen_prompt",
+    confirmMessageDeletion: "openchat_confirm_message_deletion",
     userInfoSection: "openchat_userinfo_section",
     appearanceSection: "openchat_appearance_section",
     chatsSection: "openchat_chats_section",
@@ -54,4 +55,5 @@ export const configKeys = {
     browseChannels: "openchat_browse_channels",
     useBlockLevelMarkdown: "openchat_block_markdown",
     hideTokenBalances: "openchat_hide_token_balances",
+    linkDeviceSection: "link_account_with_native_app",
 };

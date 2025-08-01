@@ -106,6 +106,25 @@
     },
     "account": "Compte",
     "accountCopiedToClipboard": "Adresse du compte copiée dans le presse-papiers !",
+    "accountLinkingCode": {
+        "settingsMenu": {
+            "cta": "Afficher le code de liaison du compte",
+            "disclaimer": "Si vous souhaitez associer ce compte à un appareil équipé de l'application native OpenChat, cliquez sur le bouton ci-dessous pour obtenir votre code d'association ! Utilisez ce code uniquement sur un appareil de confiance.",
+            "title": "Lien avec un nouvel appareil"
+        },
+        "webModal": {
+            "close": "Fermer",
+            "error": {
+                "cancel": "Annuler",
+                "msg": "Votre code de liaison de compte n'a pas pu être chargé, veuillez réessayer.",
+                "tryAgain": "Essayer à nouveau"
+            },
+            "expired": "Votre code a expiré !",
+            "subtitle": "Utilisez le code ci-dessous pour lier votre compte actuel à un nouvel appareil de confiance.",
+            "title": "Code de liaison de compte",
+            "willExpireIn": "Le code expirera dans {remaining}"
+        }
+    },
     "accounts": "Comptes",
     "accountSuspended": "Compte suspendu",
     "activity": {
@@ -651,6 +670,7 @@
     "deleteGroupSuccess": "{level} supprimé avec succès",
     "deleteMessage": "Effacer",
     "deleteMessageAndReport": "Supprimer et signaler",
+    "deleteMessageConfirm": "Voulez-vous vraiment supprimer ce message ?",
     "deleteMessageForMe": "Supprimer pour moi",
     "demoteFailed": "Impossible de rétrograder à {role}",
     "demoteTo": "Rétrograder à {role}",
@@ -1089,7 +1109,7 @@
     "native": {
         "auth": {
             "createAccount": "Créer un nouveau compte",
-            "error": "Échec de l'authentification. Veuillez réessayer.",
+            "error": "L'authentification a échoué. Veuillez réessayer.",
             "existingAccount": "Je suis un utilisateur existant",
             "linkAccount": {
                 "cta": "Lier le compte",

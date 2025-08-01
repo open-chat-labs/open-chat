@@ -35,10 +35,20 @@
 
     let { location, bot, onClose, level, installedBots }: Props = $props();
     let requestedPermissions = $derived(definitionToPermissions(bot.definition));
-    let grantedPermissions = $state(definitionToPermissions(bot.definition));
+    let grantedPermissions = $state(filterByLocation(definitionToPermissions(bot.definition)));
 
     let busy = $state(false);
     let step = $state<Step>(firstStep());
+
+    function filterByLocation(perm: GrantedBotPermissions): GrantedBotPermissions {
+        if (level === "group") {
+            perm.command.communityPermissions = [];
+            if (perm.autonomous !== undefined) {
+                perm.autonomous.communityPermissions = [];
+            }
+        }
+        return perm;
+    }
 
     function firstStep(): Step {
         if (bot.definition.commands.length > 0) {

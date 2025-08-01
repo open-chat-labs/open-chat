@@ -79,6 +79,7 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> OCResult<IsPermitt
                         ii_origin: vc.ii_origin.clone(),
                     }),
                 referred_by_member: false,
+                total_chit_earned: args.total_chit_earned,
                 now: state.env.now(),
             }),
         )
@@ -176,6 +177,7 @@ fn commit(args: Args, payments: Vec<GatePayment>, state: &mut RuntimeState) -> R
         args.user_id,
         args.diamond_membership_expires_at,
         args.unique_person_proof.is_some(),
+        args.total_chit_earned,
     );
 
     jobs::expire_members::start_job_if_required(state);

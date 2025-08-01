@@ -298,6 +298,7 @@ import {
     type WorkerRequest,
     type WorkerResponse,
     type WorkerResult,
+    type AccountLinkingCode,
 } from "openchat-shared";
 import page from "page";
 import { tick } from "svelte";
@@ -703,6 +704,10 @@ export class OpenChat {
         return this.#sendRequest({
             kind: "clearCachedData",
         });
+    }
+
+    accountLinkingCodeEnabled() {
+        return this.config.accountLinkingCodesEnabled;
     }
 
     deleteCurrentUser(
@@ -3562,7 +3567,7 @@ export class OpenChat {
                       .then((resp) =>
                           this.#handleThreadEventsResponse(
                               serverChat.id,
-                              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                               
                               selectedThreadRootMessageIndex!,
                               resp,
                           ),
@@ -3712,7 +3717,7 @@ export class OpenChat {
             // now a new latest message and if so, mark it as a local chat summary update.
             let latestMessageIndex =
                 threadRootMessageIndex === undefined
-                    ? allServerChatsStore.value.get(chatId)?.latestMessageIndex ?? -1
+                    ? (allServerChatsStore.value.get(chatId)?.latestMessageIndex ?? -1)
                     : undefined;
             let newLatestMessage: EventWrapper<Message> | undefined = undefined;
 
@@ -4200,7 +4205,7 @@ export class OpenChat {
         blockLevelMarkdown: boolean,
         mentioned: User[] = [],
         forwarded: boolean = false,
-        retrying = false,
+        messageIdIfRetrying?: bigint,
     ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
         const chat = chatSummariesStore.value.get(chatId);
@@ -4213,7 +4218,7 @@ export class OpenChat {
         const msg = {
             timestamp: BigInt(timestamp),
             expiresAt: threadRootMessageIndex ? undefined : this.eventExpiry(chat, timestamp),
-            messageId: random64(),
+            messageId: messageIdIfRetrying ?? random64(),
             sender: currentUserIdStore.value,
             content,
             repliesTo: draftMessage?.replyingTo,
@@ -4221,7 +4226,7 @@ export class OpenChat {
             blockLevelMarkdown,
         };
 
-        return this.#sendMessageCommon(chat, messageContext, msg, mentioned, retrying);
+        return this.#sendMessageCommon(chat, messageContext, msg, mentioned, messageIdIfRetrying !== undefined);
     }
 
     #throttleSendMessage(): boolean {
@@ -5336,7 +5341,7 @@ export class OpenChat {
                 .map((g) => chatIdentifierToString(g.id)),
         );
 
-        recommendedGroupExclusions.value().forEach((c) => exclusions.add(c));
+        recommendedGroupExclusions.value.forEach((c) => exclusions.add(c));
 
         return this.#sendRequest({
             kind: "getRecommendedGroups",
@@ -5602,11 +5607,7 @@ export class OpenChat {
                     userStore.setUpdated(allOtherUsers, resp.serverTimestamp);
                 }
                 if (resp.currentUser) {
-                    currentUserStore.set(
-                        resp.currentUser
-                            ? updateCreatedUser(currentUserStore.value, resp.currentUser)
-                            : currentUserStore.value,
-                    );
+                    currentUserStore.set(updateCreatedUser(currentUserStore.value, resp.currentUser));
                 }
                 return resp;
             })
@@ -5666,7 +5667,7 @@ export class OpenChat {
                     ...currentUserStore.value,
                     username,
                 });
-                this.#overwriteUserInStore(userId, (user) => ({ ...user, username }));
+                userStore.updateUser(userId, (user) => ({ ...user, username }));
             }
             return resp;
         });
@@ -5682,7 +5683,7 @@ export class OpenChat {
                     ...currentUserStore.value,
                     displayName,
                 });
-                this.#overwriteUserInStore(userId, (user) => ({ ...user, displayName }));
+                userStore.updateUser(userId, (user) => ({ ...user, displayName }));
             }
             return resp;
         });
@@ -6392,12 +6393,14 @@ export class OpenChat {
                     : streakInsurance.value,
             );
         }
-        if (chitState !== undefined) {
-            chitStateStore.update((curr) => {
-                // Skip the new update if it is behind what we already have locally
-                const skipUpdate = chitState.streakEnds < curr.streakEnds;
-                return skipUpdate ? curr : chitState;
-            });
+        if (chitState !== undefined && chitState.streakEnds >= chitStateStore.value.streakEnds) {
+            chitStateStore.set(chitState);
+            userStore.updateUser(currentUserIdStore.value, (user) => ({
+                ...user,
+                chitBalance: chitState.chitBalance,
+                streak: chitState.streak,
+                maxStreak: chitState.maxStreak,
+            }));
         }
     }
 
@@ -6745,21 +6748,8 @@ export class OpenChat {
             }));
     }
 
-    #overwriteUserInStore(
-        userId: string,
-        updater: (user: UserSummary) => UserSummary | undefined,
-    ): void {
-        const user = userStore.get(userId);
-        if (user !== undefined) {
-            const updated = updater(user);
-            if (updated !== undefined) {
-                userStore.addUser(updated);
-            }
-        }
-    }
-
     #updateDiamondStatusInUserStore(status: DiamondMembershipStatus): void {
-        this.#overwriteUserInStore(currentUserIdStore.value, (user) => {
+        userStore.updateUser(currentUserIdStore.value, (user) => {
             const changed = status.kind !== user.diamondStatus;
             return changed ? { ...user, diamondStatus: status.kind } : undefined;
         });
@@ -8006,7 +7996,7 @@ export class OpenChat {
                         ...currentUserStore.value,
                         isUniquePerson: true,
                     });
-                    this.#overwriteUserInStore(currentUserIdStore.value, (u) => ({
+                    userStore.updateUser(currentUserIdStore.value, (u) => ({
                         ...u,
                         isUniquePerson: true,
                     }));
@@ -8410,7 +8400,7 @@ export class OpenChat {
     }
 
     getStreak(userId: string | undefined) {
-        return userId ? userStore.get(userId)?.streak ?? 0 : 0;
+        return userId ? (userStore.get(userId)?.streak ?? 0) : 0;
     }
 
     getBotDefinition(endpoint: string): Promise<BotDefinitionResponse> {
@@ -8902,7 +8892,7 @@ export class OpenChat {
                         totalChitEarned: state.totalChitEarned + resp.chitEarned,
                     }));
                 }
-                this.#overwriteUserInStore(userId, (user) => ({
+                userStore.updateUser(userId, (user) => ({
                     ...user,
                     chitBalance: resp.chitBalance,
                     streak: resp.streak,
@@ -8952,6 +8942,12 @@ export class OpenChat {
             }
         }
         return AuthProvider.II;
+    }
+
+    createAccountLinkingCode(): Promise<AccountLinkingCode | undefined> {
+        return this.#sendRequest({
+            kind: "createAccountLinkingCode",
+        });
     }
 
     getAuthenticationPrincipals(): Promise<
@@ -9131,6 +9127,7 @@ export class OpenChat {
                     bitcoinMainnetEnabled: this.config.bitcoinMainnetEnabled,
                     groupInvite: this.config.groupInvite,
                     communityInvite: this.config.communityInvite,
+                    accountLinkingCodesEnabled: this.config.accountLinkingCodesEnabled,
                 },
                 true,
             ).then((resp) => {
@@ -9533,7 +9530,7 @@ export class OpenChat {
 
     #extract_p256dh_key(subscription: PushSubscription): string {
         const json = subscription.toJSON();
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+         
         const key = json.keys!["p256dh"];
         return key;
     }

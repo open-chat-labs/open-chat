@@ -6,6 +6,10 @@ export const showHomeScreenPrompt = new LocalStorageBoolStore(
     configKeys.showHomeScreenPrompt,
     mobileOperatingSystem === "iOS",
 );
+export const confirmMessageDeletion = new LocalStorageBoolStore(
+    configKeys.confirmMessageDeletion,
+    true,
+);
 export const chitPopup = new LocalStorageBoolStore(configKeys.chitPopup, true);
 export const hideChitIcon = new LocalStorageBoolStore(configKeys.hideChitIcon, false);
 export const disableChit = new LocalStorageBoolStore(configKeys.disableChit, false);
@@ -87,3 +91,4 @@ export const communityInviteUsersOpen = new LocalStorageBoolStore(
     false,
 );
 export const referredUsersOpen = new LocalStorageBoolStore(configKeys.referredUsersOpen, false);
+export const linkDeviceSectionOpen = new LocalStorageBoolStore(configKeys.linkDeviceSection, false);

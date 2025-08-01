@@ -106,6 +106,25 @@
     },
     "account": "Konto",
     "accountCopiedToClipboard": "Adres konta został skopiowany do schowka!",
+    "accountLinkingCode": {
+        "settingsMenu": {
+            "cta": "Pokaż kod łączący konto",
+            "disclaimer": "Jeśli chcesz połączyć to konto z urządzeniem z zainstalowaną natywną aplikacją OpenChat, kliknij poniższy przycisk, aby uzyskać kod łączący konto! Używaj kodu tylko na zaufanym urządzeniu.",
+            "title": "Połącz z nowym urządzeniem"
+        },
+        "webModal": {
+            "close": "Zamknąć",
+            "error": {
+                "cancel": "Anulować",
+                "msg": "Nie udało się załadować kodu łączącego Twoje konto. Spróbuj ponownie.",
+                "tryAgain": "Spróbuj ponownie"
+            },
+            "expired": "Twój kod wygasł!",
+            "subtitle": "Użyj poniższego kodu, aby połączyć swoje obecne konto z nowym zaufanym urządzeniem.",
+            "title": "Kod łączący konta",
+            "willExpireIn": "Kod wygaśnie za {remaining}"
+        }
+    },
     "accounts": "Konta",
     "accountSuspended": "Konto zawieszone",
     "activity": {
@@ -651,6 +670,7 @@
     "deleteGroupSuccess": "Pomyślnie usunięto {level}",
     "deleteMessage": "Usuwać",
     "deleteMessageAndReport": "Usuń i zgłoś",
+    "deleteMessageConfirm": "Czy na pewno chcesz usunąć tę wiadomość?",
     "deleteMessageForMe": "Usuń dla mnie",
     "demoteFailed": "Nie można zdegradować do {role}",
     "demoteTo": "Zdegraduj do {role}",

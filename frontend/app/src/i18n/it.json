@@ -106,6 +106,25 @@
     },
     "account": "Account",
     "accountCopiedToClipboard": "Indirizzo dell'account copiato negli appunti!",
+    "accountLinkingCode": {
+        "settingsMenu": {
+            "cta": "Mostra il codice di collegamento dell'account",
+            "disclaimer": "Se desideri collegare questo account a un dispositivo con l'app nativa OpenChat installata, clicca sul pulsante qui sotto per ottenere il codice di collegamento dell'account! Utilizza il codice solo su un dispositivo attendibile.",
+            "title": "Collegamento con il nuovo dispositivo"
+        },
+        "webModal": {
+            "close": "Vicino",
+            "error": {
+                "cancel": "Cancellare",
+                "msg": "Non è stato possibile caricare il codice di collegamento del tuo account. Riprova.",
+                "tryAgain": "Riprova"
+            },
+            "expired": "Il tuo codice è scaduto!",
+            "subtitle": "Utilizza il codice sottostante per collegare il tuo account attuale a un nuovo dispositivo attendibile.",
+            "title": "Codice di collegamento dell'account",
+            "willExpireIn": "Il codice scadrà tra {remaining}"
+        }
+    },
     "accounts": "Conti",
     "accountSuspended": "Account sospeso",
     "activity": {
@@ -651,6 +670,7 @@
     "deleteGroupSuccess": "{level} eliminato con successo",
     "deleteMessage": "Elimina",
     "deleteMessageAndReport": "Elimina e segnala",
+    "deleteMessageConfirm": "Vuoi davvero eliminare questo messaggio?",
     "deleteMessageForMe": "Cancella per me",
     "demoteFailed": "Impossibile retrocedere a {role}",
     "demoteTo": "Retrocedi a {role}",

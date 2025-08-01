@@ -129,7 +129,7 @@ fn external_swap_via_escrow_canister_succeeds() {
         env,
         *controller,
         canister_ids.chat_ledger,
-        Account::from_str(swap.token1_deposit_address.as_str()).unwrap(),
+        Account::from_str(swap.token1_deposit_address.unwrap().as_str()).unwrap(),
         chat_amount + 100_000,
     );
 

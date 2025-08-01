@@ -106,6 +106,25 @@
     },
     "account": "账户",
     "accountCopiedToClipboard": "帐户地址已复制到剪贴板！",
+    "accountLinkingCode": {
+        "settingsMenu": {
+            "cta": "显示账户关联代码",
+            "disclaimer": "如果您想将此帐户链接到安装了 OpenChat 原生应用的设备，请点击下方按钮获取您的帐户链接代码！请仅在受信任的设备上使用此代码。",
+            "title": "与新设备链接"
+        },
+        "webModal": {
+            "close": "关闭",
+            "error": {
+                "cancel": "取消",
+                "msg": "无法加载您的帐户链接代码，请重试。",
+                "tryAgain": "再试一次"
+            },
+            "expired": "您的代码已过期！",
+            "subtitle": "使用以下代码将您当前的帐户与新的受信任设备关联。",
+            "title": "账户关联代码",
+            "willExpireIn": "此代码将于 {remaining} 过期"
+        }
+    },
     "accounts": "账户",
     "accountSuspended": "帐户暂停",
     "activity": {
@@ -651,6 +670,7 @@
     "deleteGroupSuccess": "{level} 已成功删除",
     "deleteMessage": "删除",
     "deleteMessageAndReport": "删除并举报",
+    "deleteMessageConfirm": "您确实要删除此消息吗？",
     "deleteMessageForMe": "帮我删除",
     "demoteFailed": "无法降级到 {role}",
     "demoteTo": "降级为 {role}",

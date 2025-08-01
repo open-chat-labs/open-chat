@@ -54,7 +54,7 @@
                 <ul>
                     {#each [...partitioned[role]] as perm}
                         <li class="permission">
-                            <Check size={"1em"} color={"limegreen"} />
+                            <Check size={"1em"} color={"var(--success)"} />
                             <Translatable resourceKey={i18nKey(perm)} />
                         </li>
                     {/each}
