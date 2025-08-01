@@ -237,13 +237,13 @@ fn suspend_user_for_duration() {
     );
 
     env.advance_time(Duration::from_millis(999));
-    env.tick();
+    tick_many(env, 3);
 
     let user_response1 = client::user_index::happy_path::current_user(env, user1.principal, canister_ids.user_index);
     assert!(user_response1.suspension_details.is_some());
 
     env.advance_time(Duration::from_millis(1));
-    env.tick();
+    tick_many(env, 3);
 
     let user_response2 = client::user_index::happy_path::current_user(env, user1.principal, canister_ids.user_index);
     assert!(user_response2.suspension_details.is_none());
