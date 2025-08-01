@@ -2,6 +2,7 @@
     import { mobileWidth } from "openchat-client";
     import { onMount, tick, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
+    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { fade } from "svelte/transition";
     import { i18nKey } from "../i18n/i18n";
@@ -11,7 +12,6 @@
     import HoverIcon from "./HoverIcon.svelte";
     import Translatable from "./Translatable.svelte";
     import { portalState } from "./portalState.svelte";
-    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
 
     type OnClose = (() => void) | undefined;
 
@@ -41,6 +41,7 @@
         footer?: Snippet<[OnClose]>;
         onClose?: OnClose;
         onBack?: OnClose;
+        footerClass?: string;
     }
 
     let {
@@ -67,6 +68,7 @@
         footer,
         onClose,
         onBack,
+        footerClass,
     }: Props = $props();
 
     actualWidth;
@@ -165,7 +167,7 @@
         </div>
     {/if}
     {#if !hideFooter}
-        <div class="footer" class:rtl={$rtlStore} class:compact={compactFooter}>
+        <div class={`footer ${footerClass}`} class:rtl={$rtlStore} class:compact={compactFooter}>
             {#if footer}{@render footer(onClose)}{:else}
                 <Button onClick={() => onClose?.()} small={!$mobileWidth} tiny={$mobileWidth}>
                     <Translatable resourceKey={i18nKey("close")} />
@@ -185,9 +187,16 @@
         bottom: 0;
         background-image: var(--custom-bg);
         background-size: cover;
-        filter: contrast(0.8) sepia(0.5) grayscale(0.5);
+        background-position: center;
+        background-repeat: no-repeat;
+        // filter: contrast(0.8) sepia(0.5) grayscale(0.5);
+        filter: saturate(0.5);
         z-index: -1;
         border-radius: var(--modal-rd);
+    }
+
+    .modal-content.custom-bg.square::before {
+        border-radius: $sp3;
     }
 
     .modal-content {
@@ -284,7 +293,8 @@
         }
     }
 
-    .close, .back {
+    .close,
+    .back {
         position: absolute;
         top: $sp3;
         &:not(.rtl) {

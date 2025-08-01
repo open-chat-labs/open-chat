@@ -1,6 +1,5 @@
 <script lang="ts">
     import {
-        AvatarSize,
         type BotClientConfigData,
         type ModerationFlag,
         ModerationFlags,
@@ -26,7 +25,7 @@
         underReviewEnabledStore,
         userMetricsStore,
     } from "openchat-client";
-    import { ErrorCode } from "openchat-shared";
+    import { type DataContent, ErrorCode, type PublicProfile } from "openchat-shared";
     import { getContext, onMount } from "svelte";
     import { _, locale } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -61,12 +60,10 @@
     import { toastStore } from "../../../stores/toast";
     import { uniquePersonGate } from "../../../utils/access";
     import { isTouchDevice } from "../../../utils/devices";
-    import Avatar from "../../Avatar.svelte";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
     import DisplayNameInput from "../../DisplayNameInput.svelte";
-    import EditableAvatar from "../../EditableAvatar.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Verified from "../../icons/Verified.svelte";
@@ -91,6 +88,7 @@
     import ReferredUsersList from "./ReferredUsersList.svelte";
     import ReferUsers from "./ReferUsers.svelte";
     import ThemeSelector from "./ThemeSelector.svelte";
+    import UserProfileCard from "./UserProfileCard.svelte";
     import VideoCallSettings from "./VideoCallSettings.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -105,7 +103,9 @@
     let { user, onCloseProfile, onUnsubscribeNotifications }: Props = $props();
 
     let originalBio = $state("");
+    let originalBackgroundImage = $state<DataContent>();
     let userbio = $state("");
+    let backgroundImage = $state<DataContent>();
     let selectedLocale = $state(($locale as string).substring(0, 2));
     let usernameError: string | undefined = $state(undefined);
     let displayNameError: string | undefined = $state(undefined);
@@ -154,10 +154,26 @@
     let canEditTranslations = $derived(!$locale?.startsWith("en"));
     let referredUserIds = $derived(new Set($referralsStore.map((r) => r.userId)));
 
+    let candidateProfile: PublicProfile = $derived.by(() => {
+        return {
+            username: username,
+            displayName: displayName,
+            avatarId: 0n,
+            bio: userbio,
+            isPremium: false,
+            phoneIsVerified: false,
+            created: 0n,
+            background: backgroundImage,
+        };
+    });
+
     onMount(() => {
         if (!$anonUserStore) {
             client.getBio().then((bio) => {
                 originalBio = userbio = bio;
+            });
+            client.getProfileBackgroundImage().then((image) => {
+                originalBackgroundImage = backgroundImage = image;
             });
         }
     });
@@ -255,14 +271,6 @@
         }
     }
 
-    function userAvatarSelected(detail: { url: string; data: Uint8Array }): void {
-        client.setUserAvatar(detail.data, detail.url).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast(i18nKey("avatarUpdateFailed"));
-            }
-        });
-    }
-
     function onCopy() {
         navigator.clipboard.writeText(user.userId).then(() => {
             toastStore.showSuccessToast(i18nKey("userIdCopiedToClipboard"));
@@ -332,22 +340,11 @@
                 onToggle={userInfoOpen.toggle}
                 open={$userInfoOpen}
                 headerText={i18nKey("userInfoHeader")}>
-                <div class="avatar">
-                    {#if readonly}
-                        <Avatar
-                            url={client.userAvatarUrl(user)}
-                            userId={user.userId}
-                            size={AvatarSize.Large} />
-                    {:else}
-                        <EditableAvatar
-                            overlayIcon
-                            image={client.userAvatarUrl(user)}
-                            onImageSelected={userAvatarSelected} />
-                    {/if}
-                    <div class="human">
-                        <Verified size={"large"} {verified} tooltip={i18nKey("human.verified")} />
-                    </div>
+                <div class="profile-card">
+                    <UserProfileCard profile={candidateProfile} {user} userProfileMode
+                    ></UserProfileCard>
                 </div>
+                <!-- <ProfileImages {user} {readonly} /> -->
                 {#if $anonUserStore}
                     <div class="guest">
                         <p><Translatable resourceKey={i18nKey("guestUser")} /></p>
@@ -712,17 +709,6 @@
         margin-top: $sp4;
     }
 
-    .avatar {
-        margin: $sp4 0 $sp5 0;
-        position: relative;
-    }
-
-    .human {
-        position: absolute;
-        bottom: 0;
-        left: calc(50% + 32px);
-    }
-
     .userid {
         margin-bottom: $sp4;
         .userid-txt {
@@ -821,5 +807,9 @@
         display: flex;
         gap: $sp4;
         align-items: center;
+    }
+
+    .profile-card {
+        margin-bottom: $sp4;
     }
 </style>

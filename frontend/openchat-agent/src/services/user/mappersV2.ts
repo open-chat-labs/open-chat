@@ -412,6 +412,13 @@ export function publicProfileResponse(value: UserPublicProfileResponse): PublicP
         isPremium: profile.is_premium,
         phoneIsVerified: profile.phone_is_verified,
         created: profile.created,
+        background: {
+            blobReference: {
+                // blobId: 229924665492313186523778746799989525230n,
+                blobId: 229924665561690190197629442160783703621n,
+                canisterId: "w7lou-c7777-77774-qaamq-cai",
+            },
+        },
     };
 }
 

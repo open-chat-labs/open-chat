@@ -16,7 +16,7 @@
     import Reload from "svelte-material-icons/Reload.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
-    import EditableAvatar from "../EditableAvatar.svelte";
+    import EditableImage from "../EditableImage.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import Markdown from "../home/Markdown.svelte";
     import SingleUserSelector from "../home/SingleUserSelector.svelte";
@@ -224,7 +224,7 @@
 <form onsubmit={onSubmit} class="bot">
     <Legend label={i18nKey("bots.builder.iconLabel")} />
     <div class="photo">
-        <EditableAvatar
+        <EditableImage
             overlayIcon
             size={"medium"}
             image={candidate.avatarUrl}

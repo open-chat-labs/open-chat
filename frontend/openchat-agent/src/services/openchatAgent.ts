@@ -2820,6 +2820,16 @@ export class OpenChatAgent extends EventTarget {
         return userClient.getBio();
     }
 
+    #rehydratePublicProfile(p: PublicProfile): PublicProfile {
+        if (p.background !== undefined) {
+            return {
+                ...p,
+                background: this.rehydrateDataContent(p.background),
+            };
+        }
+        return p;
+    }
+
     getPublicProfile(userId?: string): Promise<PublicProfile | undefined> {
         if (userId) {
             return isUserIdDeleted(userId).then((deleted) => {
@@ -2831,10 +2841,10 @@ export class OpenChatAgent extends EventTarget {
                     this.config,
                     this.db,
                 );
-                return userClient.getPublicProfile();
+                return userClient.getPublicProfile().then((p) => this.#rehydratePublicProfile(p));
             });
         } else {
-            return this.userClient.getPublicProfile();
+            return this.userClient.getPublicProfile().then((p) => this.#rehydratePublicProfile(p));
         }
     }
 

@@ -15,6 +15,7 @@ import {
     type AccessGate,
     type AccessGateConfig,
     type AccessTokenType,
+    type AccountLinkingCode,
     type AccountTransactionResult,
     type Achievement,
     type AddMembersToChannelResponse,
@@ -26,6 +27,7 @@ import {
     type AttachmentContent,
     type AuthenticationPrincipal,
     AuthProvider,
+    type BlobReference,
     type BlogRoute,
     type BotActionScope,
     type BotClientConfigData,
@@ -298,7 +300,6 @@ import {
     type WorkerRequest,
     type WorkerResponse,
     type WorkerResult,
-    type AccountLinkingCode,
 } from "openchat-shared";
 import page from "page";
 import { tick } from "svelte";
@@ -1446,6 +1447,10 @@ export class OpenChat {
         return this.#sendRequest({ kind: "setUserAvatar", data })
             .then((_resp) => true)
             .catch(() => false);
+    }
+
+    setUserProfileBackground(_data: Uint8Array, _url: string): Promise<boolean> {
+        return Promise.resolve(true);
     }
 
     deleteGroup(chatId: MultiUserChatIdentifier): Promise<boolean> {
@@ -3567,7 +3572,7 @@ export class OpenChat {
                       .then((resp) =>
                           this.#handleThreadEventsResponse(
                               serverChat.id,
-                               
+
                               selectedThreadRootMessageIndex!,
                               resp,
                           ),
@@ -3717,7 +3722,7 @@ export class OpenChat {
             // now a new latest message and if so, mark it as a local chat summary update.
             let latestMessageIndex =
                 threadRootMessageIndex === undefined
-                    ? (allServerChatsStore.value.get(chatId)?.latestMessageIndex ?? -1)
+                    ? allServerChatsStore.value.get(chatId)?.latestMessageIndex ?? -1
                     : undefined;
             let newLatestMessage: EventWrapper<Message> | undefined = undefined;
 
@@ -4226,7 +4231,13 @@ export class OpenChat {
             blockLevelMarkdown,
         };
 
-        return this.#sendMessageCommon(chat, messageContext, msg, mentioned, messageIdIfRetrying !== undefined);
+        return this.#sendMessageCommon(
+            chat,
+            messageContext,
+            msg,
+            mentioned,
+            messageIdIfRetrying !== undefined,
+        );
     }
 
     #throttleSendMessage(): boolean {
@@ -5607,7 +5618,9 @@ export class OpenChat {
                     userStore.setUpdated(allOtherUsers, resp.serverTimestamp);
                 }
                 if (resp.currentUser) {
-                    currentUserStore.set(updateCreatedUser(currentUserStore.value, resp.currentUser));
+                    currentUserStore.set(
+                        updateCreatedUser(currentUserStore.value, resp.currentUser),
+                    );
                 }
                 return resp;
             })
@@ -5695,6 +5708,18 @@ export class OpenChat {
 
     getBio(userId?: string): Promise<string> {
         return this.#sendRequest({ kind: "getBio", userId });
+    }
+
+    getProfileBackgroundImage(_userId?: string): Promise<DataContent | undefined> {
+        const ref: BlobReference = {
+            // blobId: 229924665492313186523778746799989525230n,
+            blobId: 229924665561690190197629442160783703621n,
+            canisterId: "w7lou-c7777-77774-qaamq-cai",
+        };
+        return Promise.resolve({
+            blobReference: ref,
+            blobUrl: buildBlobUrl(this.config.blobUrlPattern, ref.canisterId, ref.blobId, "blobs"),
+        });
     }
 
     async withdrawCryptocurrency(
@@ -8400,7 +8425,7 @@ export class OpenChat {
     }
 
     getStreak(userId: string | undefined) {
-        return userId ? (userStore.get(userId)?.streak ?? 0) : 0;
+        return userId ? userStore.get(userId)?.streak ?? 0 : 0;
     }
 
     getBotDefinition(endpoint: string): Promise<BotDefinitionResponse> {
@@ -9530,7 +9555,7 @@ export class OpenChat {
 
     #extract_p256dh_key(subscription: PushSubscription): string {
         const json = subscription.toJSON();
-         
+
         const key = json.keys!["p256dh"];
         return key;
     }

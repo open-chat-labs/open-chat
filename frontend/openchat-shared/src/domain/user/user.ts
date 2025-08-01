@@ -175,6 +175,7 @@ export type PublicProfile = {
     isPremium: boolean;
     phoneIsVerified: boolean;
     created: bigint;
+    background?: DataContent;
 };
 
 export type UsersArgs = {

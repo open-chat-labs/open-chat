@@ -1,11 +1,10 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import type { CandidateGroupChat } from "openchat-client";
-    import EditableAvatar from "../../EditableAvatar.svelte";
-    import Input from "../../Input.svelte";
-    import TextArea from "../../TextArea.svelte";
-    import Legend from "../../Legend.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import EditableImage from "../../EditableImage.svelte";
+    import Input from "../../Input.svelte";
+    import Legend from "../../Legend.svelte";
+    import TextArea from "../../TextArea.svelte";
     import Translatable from "../../Translatable.svelte";
 
     const MIN_LENGTH = 3;
@@ -61,7 +60,7 @@
 <section>
     <Legend label={i18nKey("group.image", undefined, candidateGroup.level)} />
     <div class="photo">
-        <EditableAvatar
+        <EditableImage
             overlayIcon
             image={candidateGroup.avatar?.blobUrl}
             onImageSelected={groupAvatarSelected} />

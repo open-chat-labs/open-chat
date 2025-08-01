@@ -1,12 +1,12 @@
 <script lang="ts">
-    import Overlay from "./Overlay.svelte";
+    import type { CropData } from "svelte-easy-crop";
+    import Cropper from "svelte-easy-crop";
+    import { i18nKey } from "../i18n/i18n";
     import Button from "./Button.svelte";
     import ButtonGroup from "./ButtonGroup.svelte";
-    import ModalContent from "./ModalContent.svelte";
-    import Cropper from "svelte-easy-crop";
-    import type { CropData } from "svelte-easy-crop";
     import ChooseImage from "./icons/ChooseImage.svelte";
-    import { i18nKey } from "../i18n/i18n";
+    import ModalContent from "./ModalContent.svelte";
+    import Overlay from "./Overlay.svelte";
     import Translatable from "./Translatable.svelte";
 
     interface Props {
@@ -28,12 +28,12 @@
     }: Props = $props();
 
     type Dimensions = { width: number; height: number };
-    type Mode = "banner" | "avatar";
+    type Mode = "banner" | "avatar" | "profile";
     type Size = "small" | "medium" | "large";
     type CropShape = "round" | "rect";
 
     let fileinput: HTMLInputElement;
-    let avatar: string | null | undefined = $state();
+    let selectedImage: string | null | undefined = $state();
     let originalImage = new Image();
     let showModal = $state(false);
     let cropData: CropData | undefined = undefined;
@@ -44,6 +44,8 @@
                 return { width: 150, height: 150 };
             case "banner":
                 return { width: 600, height: 300 };
+            case "profile":
+                return { width: 600, height: 800 };
         }
     }
 
@@ -72,8 +74,8 @@
                 let reader = new FileReader();
                 reader.readAsDataURL(image);
                 reader.onload = (e) => {
-                    avatar = e?.target?.result as string;
-                    originalImage.src = avatar;
+                    selectedImage = e?.target?.result as string;
+                    originalImage.src = selectedImage;
                     showModal = true;
                     fileinput.value = "";
                 };
@@ -124,8 +126,9 @@
     let CROP_SHAPE = $derived(mode === "avatar" ? "round" : ("rect" as CropShape));
     let width = $state(0);
 
-    let height = $derived(width / (600 / 300));
+    let height = $derived(width / (SAVE_DIMS.width / SAVE_DIMS.height));
     let iconSize = $derived(getIconSize(size));
+    let aspect = $derived(mode === "avatar" ? 1 : SAVE_DIMS.width / SAVE_DIMS.height);
 </script>
 
 {#if showModal}
@@ -137,10 +140,10 @@
             {#snippet body()}
                 <div class="cropper">
                     <Cropper
-                        image={avatar}
+                        image={selectedImage}
                         on:cropcomplete={onCrop}
                         crop={{ x: 0, y: 0 }}
-                        aspect={mode === "banner" ? SAVE_DIMS.width / SAVE_DIMS.height : 1}
+                        {aspect}
                         cropShape={CROP_SHAPE} />
                 </div>
             {/snippet}
@@ -165,6 +168,7 @@
 
 {#if mode === "banner"}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
         bind:clientWidth={width}
         class={`photo-section ${mode}`}
@@ -176,8 +180,23 @@
             <ChooseImage size={iconSize} color={image ? "#fff" : "var(--icon-txt)"} />
         </div>
     </div>
-{:else}
+{:else if mode === "profile"}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+        bind:clientWidth={width}
+        class={`photo-section ${mode}`}
+        onclick={addPhoto}
+        style={image
+            ? `height: ${height}px; background-image: url(${image})`
+            : `height: ${height}px`}>
+        <div class={`photo-icon ${size} ${mode}`}>
+            <ChooseImage size={iconSize} color={image ? "#fff" : "var(--icon-txt)"} />
+        </div>
+    </div>
+{:else if mode === "avatar"}
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class={`photo-section ${mode}`} onclick={addPhoto}>
         <div class={`photo-icon ${size} ${mode}`}>
             {#if image}
@@ -212,6 +231,11 @@
             background-color: var(--input-bg);
             background-size: cover;
             height: 200px;
+        }
+
+        &.profile {
+            background-size: cover;
+            background-repeat: no-repeat;
         }
     }
 

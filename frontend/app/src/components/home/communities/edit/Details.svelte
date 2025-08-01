@@ -1,12 +1,11 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
-    import EditableAvatar from "../../../EditableAvatar.svelte";
-    import Input from "../../../Input.svelte";
-    import TextArea from "../../../TextArea.svelte";
-    import Select from "../../../Select.svelte";
-    import Legend from "../../../Legend.svelte";
-    import { i18nKey, supportedLanguages } from "../../../../i18n/i18n";
     import type { CommunitySummary } from "openchat-client";
+    import { i18nKey, supportedLanguages } from "../../../../i18n/i18n";
+    import EditableImage from "../../../EditableImage.svelte";
+    import Input from "../../../Input.svelte";
+    import Legend from "../../../Legend.svelte";
+    import Select from "../../../Select.svelte";
+    import TextArea from "../../../TextArea.svelte";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
@@ -50,14 +49,14 @@
     <Legend label={i18nKey("communities.imageLabel")} />
     <div class="images">
         <div class="banner">
-            <EditableAvatar
+            <EditableImage
                 mode={"banner"}
                 overlayIcon
                 image={candidate.banner?.blobUrl}
                 onImageSelected={communityBannerSelected} />
         </div>
         <div class="avatar">
-            <EditableAvatar
+            <EditableImage
                 overlayIcon
                 size={"medium"}
                 image={candidate.avatar?.blobUrl}
