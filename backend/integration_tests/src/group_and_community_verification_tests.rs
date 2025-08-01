@@ -58,6 +58,7 @@ fn e2e_group_and_community_verification_test() {
     tick_many(env, 3);
     let time_after_community_verification = now_millis(env);
     env.advance_time(Duration::from_secs(10));
+    tick_many(env, 3);
 
     let Some(updates) = client::community::happy_path::summary_updates(env, user.principal, community_id, initial_time) else {
         panic!("expected community::summary_updates");

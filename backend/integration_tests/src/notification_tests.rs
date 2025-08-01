@@ -271,15 +271,15 @@ fn notifications_blocked_from_blocked_users() {
     let TestData { user1, user2 } = init_test_data(env, canister_ids);
 
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), false, false);
+    let local_user_index_canister = canister_ids.local_user_index(env, group_id);
     client::local_user_index::happy_path::add_users_to_group(
         env,
         &user1,
-        canister_ids.local_user_index(env, group_id),
+        local_user_index_canister,
         group_id,
         vec![(user2.user_id, user2.principal)],
     );
 
-    let local_user_index_canister = canister_ids.local_user_index(env, group_id);
     let latest_notification_index =
         client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index_canister);
 
@@ -297,7 +297,7 @@ fn notifications_blocked_from_blocked_users() {
 
     client::user::happy_path::block_user(env, &user2, user1.user_id);
 
-    tick_many(env, 3);
+    tick_many(env, 5);
 
     client::group::happy_path::send_text_message(env, &user1, group_id, None, random_string(), None);
 
@@ -312,7 +312,7 @@ fn notifications_blocked_from_blocked_users() {
 
     client::user::happy_path::unblock_user(env, &user2, user1.user_id);
 
-    tick_many(env, 3);
+    tick_many(env, 5);
 
     client::group::happy_path::send_text_message(env, &user1, group_id, None, random_string(), None);
 

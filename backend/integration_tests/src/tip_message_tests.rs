@@ -28,6 +28,8 @@ fn tip_direct_message_succeeds() {
     let event_index =
         client::user::happy_path::send_text_message(env, &user2, user1.user_id, "TEXT", Some(message_id)).event_index;
 
+    tick_many(env, 3);
+
     client::user::happy_path::tip_message(
         env,
         &user1,
@@ -300,10 +302,10 @@ fn tip_channel_message_retries_if_c2c_call_fails() {
         user_canister::tip_message::Response::Retrying(_)
     ));
 
-    env.tick();
+    tick_many(env, 3);
     start_canister(env, local_user_index, community_id.into());
     env.advance_time(Duration::from_secs(10));
-    env.tick();
+    tick_many(env, 3);
 
     let message = client::community::happy_path::events_by_index(env, &user2, community_id, channel_id, vec![event_index])
         .events

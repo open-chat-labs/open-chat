@@ -40,7 +40,7 @@ fn suspend_user() {
         },
     );
 
-    env.tick();
+    tick_many(env, 3);
 
     let user_response1 = client::user_index::happy_path::current_user(env, user1.principal, canister_ids.user_index);
     assert!(user_response1.suspension_details.is_some());
