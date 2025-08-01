@@ -13,7 +13,8 @@
         selectedCommunityMembersStore,
     } from "openchat-client";
 
-    import EditableImage from "@src/components/EditableImage.svelte";
+    import EditableAvatar from "@src/components/EditableAvatar.svelte";
+    import EditableImageWrapper from "@src/components/EditableImageWrapper.svelte";
     import HoverIcon from "@src/components/HoverIcon.svelte";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
@@ -44,7 +45,7 @@
         inGlobalContext = false,
         onClose,
         userProfileMode = false,
-        profile,
+        profile = $bindable(),
         user,
     }: Props = $props();
 
@@ -105,96 +106,117 @@
             }
         });
     }
+
+    function onBackgroundImageSelected(args: { url: string; data: Uint8Array }) {
+        client.setUserProfileBackground(args.data, args.url).then((success) => {
+            profile = {
+                ...profile,
+                background: {
+                    blobData: args.data,
+                    blobUrl: args.url,
+                },
+            };
+            if (!success) {
+                toastStore.showFailureToast(i18nKey("avatarUpdateFailed"));
+            }
+        });
+    }
 </script>
 
 {#if profile !== undefined}
-    <div
-        class="profile_card"
-        class:userProfileMode
-        class:hasCustomBackground
-        style={userProfileMode && profile.background
-            ? `background-image: url(${profile.background.blobUrl})`
-            : ""}>
-        <div class="header" class:hasCustomBackground>
-            <div class="handle">
-                <div class="display_name">
-                    {displayName}
-                </div>
-                <div class="name_and_badges">
-                    <div class="username">
-                        @{profile!.username}
+    <EditableImageWrapper
+        image={profile.background?.blobUrl}
+        mode={"profile"}
+        onImageSelected={onBackgroundImageSelected}>
+        {#snippet children(choosePhoto: () => void)}
+            <div
+                class="profile_card"
+                class:userProfileMode
+                class:hasCustomBackground
+                style={userProfileMode && profile.background
+                    ? `background-image: url(${profile.background.blobUrl})`
+                    : ""}>
+                <div class="header" class:hasCustomBackground>
+                    <div class="handle">
+                        <div class="display_name">
+                            {displayName}
+                        </div>
+                        <div class="name_and_badges">
+                            <div class="username">
+                                @{profile!.username}
+                            </div>
+                            <Badges
+                                uniquePerson={user?.isUniquePerson}
+                                {diamondStatus}
+                                streak={user?.streak} />
+                            {#if user !== undefined && $selectedChatSummaryStore !== undefined && $selectedChatSummaryStore.kind !== "direct_chat"}
+                                <WithRole
+                                    userId={user.userId}
+                                    chatMembers={$selectedChatMembersStore}
+                                    communityMembers={$selectedCommunityMembersStore}>
+                                    {#snippet children(communityRole, chatRole)}
+                                        <RoleIcon level="community" popup role={communityRole} />
+                                        <RoleIcon
+                                            level={$selectedChatSummaryStore?.kind === "channel"
+                                                ? "channel"
+                                                : "group"}
+                                            popup
+                                            role={chatRole} />
+                                    {/snippet}
+                                </WithRole>
+                            {/if}
+                        </div>
                     </div>
-                    <Badges
-                        uniquePerson={user?.isUniquePerson}
-                        {diamondStatus}
-                        streak={user?.streak} />
-                    {#if user !== undefined && $selectedChatSummaryStore !== undefined && $selectedChatSummaryStore.kind !== "direct_chat"}
-                        <WithRole
-                            userId={user.userId}
-                            chatMembers={$selectedChatMembersStore}
-                            communityMembers={$selectedCommunityMembersStore}>
-                            {#snippet children(communityRole, chatRole)}
-                                <RoleIcon level="community" popup role={communityRole} />
-                                <RoleIcon
-                                    level={$selectedChatSummaryStore?.kind === "channel"
-                                        ? "channel"
-                                        : "group"}
-                                    popup
-                                    role={chatRole} />
-                            {/snippet}
-                        </WithRole>
+                    {#if userProfileMode}
+                        <HoverIcon onclick={choosePhoto}>
+                            <Close size={"1em"} color={txtColour} />
+                        </HoverIcon>
+                    {:else}
+                        <HoverIcon onclick={onClose}>
+                            <Close size={"1em"} color={txtColour} />
+                        </HoverIcon>
                     {/if}
                 </div>
-            </div>
-            {#if userProfileMode}
-                <HoverIcon onclick={onClose}>
-                    <Close size={"1em"} color={txtColour} />
-                </HoverIcon>
-            {:else}
-                <HoverIcon onclick={onClose}>
-                    <Close size={"1em"} color={txtColour} />
-                </HoverIcon>
-            {/if}
-        </div>
-        <div class="body" class:modal>
-            <div class="avatar">
-                {#if userProfileMode}
-                    <EditableImage
-                        mode={"avatar"}
-                        overlayIcon
-                        size={"medium"}
-                        image={client.userAvatarUrl(user)}
-                        onImageSelected={userAvatarSelected} />
-                {:else}
-                    <Avatar url={avatarUrl} userId={user.userId} size={AvatarSize.Large} />
-                {/if}
-            </div>
-            {#if user !== undefined && !$disableChit}
-                <ChitBalance size={"small"} {me} totalEarned={user.totalChitEarned} />
-            {/if}
-            <CustomBackgroundOverlay {userProfileMode} {hasCustomBackground}>
-                {#if profile!.bio.length > 0}
-                    <p class="bio"><Markdown inline={false} text={profile!.bio} /></p>
-                {/if}
-                <div class="meta">
-                    <div class="left" class:suspended={isSuspended}>
-                        {#if isSuspended}
-                            <Translatable resourceKey={i18nKey("accountSuspended")} />
+                <div class="body" class:modal>
+                    <div class="avatar">
+                        {#if userProfileMode}
+                            <EditableAvatar
+                                overlayIcon
+                                size={"medium"}
+                                image={client.userAvatarUrl(user)}
+                                onImageSelected={userAvatarSelected} />
                         {:else}
-                            {#if online}
-                                <div class="online"></div>
-                            {/if}
-                            {status === "" ? "..." : status}
+                            <Avatar url={avatarUrl} userId={user.userId} size={AvatarSize.Large} />
                         {/if}
                     </div>
-                    <div class="right">
-                        <ClockOutline size={"12px"} color={txtColour} />
-                        {joined}
-                    </div>
+                    {#if user !== undefined && !$disableChit}
+                        <ChitBalance size={"small"} {me} totalEarned={user.totalChitEarned} />
+                    {/if}
+                    <CustomBackgroundOverlay {userProfileMode} {hasCustomBackground}>
+                        {#if profile!.bio.length > 0}
+                            <p class="bio"><Markdown inline={false} text={profile!.bio} /></p>
+                        {/if}
+                        <div class="meta">
+                            <div class="left" class:suspended={isSuspended}>
+                                {#if isSuspended}
+                                    <Translatable resourceKey={i18nKey("accountSuspended")} />
+                                {:else}
+                                    {#if online}
+                                        <div class="online"></div>
+                                    {/if}
+                                    {status === "" ? "..." : status}
+                                {/if}
+                            </div>
+                            <div class="right">
+                                <ClockOutline size={"12px"} color={txtColour} />
+                                {joined}
+                            </div>
+                        </div>
+                    </CustomBackgroundOverlay>
                 </div>
-            </CustomBackgroundOverlay>
-        </div>
-    </div>
+            </div>
+        {/snippet}
+    </EditableImageWrapper>
 {/if}
 
 <style lang="scss">

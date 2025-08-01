@@ -1,7 +1,7 @@
 <script lang="ts">
+    import EditableAvatar from "@src/components/EditableAvatar.svelte";
     import type { CandidateGroupChat } from "openchat-client";
     import { i18nKey } from "../../../i18n/i18n";
-    import EditableImage from "../../EditableImage.svelte";
     import Input from "../../Input.svelte";
     import Legend from "../../Legend.svelte";
     import TextArea from "../../TextArea.svelte";
@@ -60,7 +60,7 @@
 <section>
     <Legend label={i18nKey("group.image", undefined, candidateGroup.level)} />
     <div class="photo">
-        <EditableImage
+        <EditableAvatar
             overlayIcon
             image={candidateGroup.avatar?.blobUrl}
             onImageSelected={groupAvatarSelected} />

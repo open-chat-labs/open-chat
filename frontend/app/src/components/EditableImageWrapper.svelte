@@ -1,35 +1,34 @@
 <script lang="ts">
+    import type { Snippet } from "svelte";
     import type { CropData } from "svelte-easy-crop";
     import Cropper from "svelte-easy-crop";
     import { i18nKey } from "../i18n/i18n";
     import Button from "./Button.svelte";
     import ButtonGroup from "./ButtonGroup.svelte";
-    import ChooseImage from "./icons/ChooseImage.svelte";
     import ModalContent from "./ModalContent.svelte";
     import Overlay from "./Overlay.svelte";
     import Translatable from "./Translatable.svelte";
 
+    type OnChoosePhoto = () => void;
+
     interface Props {
         image: string | null | undefined;
         disabled?: boolean;
-        size?: Size;
         mode?: Mode;
-        overlayIcon?: boolean;
         onImageSelected: (args: { url: string; data: Uint8Array }) => void;
+        children: Snippet<[OnChoosePhoto, number, number]>;
     }
 
     let {
         image = $bindable(),
         disabled = false,
-        size = "large",
         mode = "avatar",
-        overlayIcon = false,
         onImageSelected,
+        children,
     }: Props = $props();
 
     type Dimensions = { width: number; height: number };
     type Mode = "banner" | "avatar" | "profile";
-    type Size = "small" | "medium" | "large";
     type CropShape = "round" | "rect";
 
     let fileinput: HTMLInputElement;
@@ -46,17 +45,6 @@
                 return { width: 600, height: 300 };
             case "profile":
                 return { width: 600, height: 800 };
-        }
-    }
-
-    function getIconSize(size: Size): string {
-        switch (size) {
-            case "large":
-                return "3em";
-            case "medium":
-                return "2em";
-            case "small":
-                return "1em";
         }
     }
 
@@ -124,10 +112,8 @@
     }
     let SAVE_DIMS = $derived(getSaveDimensions(mode));
     let CROP_SHAPE = $derived(mode === "avatar" ? "round" : ("rect" as CropShape));
-    let width = $state(0);
-
-    let height = $derived(width / (SAVE_DIMS.width / SAVE_DIMS.height));
-    let iconSize = $derived(getIconSize(size));
+    let elementWidth = $state(0);
+    let elementHeight = $derived(elementWidth / (SAVE_DIMS.width / SAVE_DIMS.height));
     let aspect = $derived(mode === "avatar" ? 1 : SAVE_DIMS.width / SAVE_DIMS.height);
 </script>
 
@@ -166,112 +152,14 @@
     onchange={onFileSelected}
     bind:this={fileinput} />
 
-{#if mode === "banner"}
-    <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-        bind:clientWidth={width}
-        class={`photo-section ${mode}`}
-        onclick={addPhoto}
-        style={image
-            ? `height: ${height}px; background-image: url(${image})`
-            : `height: ${height}px`}>
-        <div class={`photo-icon ${size} ${mode}`}>
-            <ChooseImage size={iconSize} color={image ? "#fff" : "var(--icon-txt)"} />
-        </div>
-    </div>
-{:else if mode === "profile"}
-    <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-        bind:clientWidth={width}
-        class={`photo-section ${mode}`}
-        onclick={addPhoto}
-        style={image
-            ? `height: ${height}px; background-image: url(${image})`
-            : `height: ${height}px`}>
-        <div class={`photo-icon ${size} ${mode}`}>
-            <ChooseImage size={iconSize} color={image ? "#fff" : "var(--icon-txt)"} />
-        </div>
-    </div>
-{:else if mode === "avatar"}
-    <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class={`photo-section ${mode}`} onclick={addPhoto}>
-        <div class={`photo-icon ${size} ${mode}`}>
-            {#if image}
-                <div class="avatar" style={`background-image: url(${image})`}></div>
-                {#if overlayIcon}
-                    <div class="overlay">
-                        <ChooseImage size={iconSize} color={"#fff"} />
-                    </div>
-                {/if}
-            {:else}
-                <ChooseImage size={iconSize} color={"var(--icon-txt)"} />
-            {/if}
-        </div>
-    </div>
-{/if}
+<div class="editable-image" bind:clientWidth={elementWidth}>
+    {@render children(addPhoto, elementWidth, elementHeight)}
+</div>
 
 <style lang="scss">
     .cropper {
         position: relative;
         height: 400px;
         width: 100%;
-    }
-
-    .photo-section {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-
-        &.banner {
-            background-color: var(--input-bg);
-            background-size: cover;
-            height: 200px;
-        }
-
-        &.profile {
-            background-size: cover;
-            background-repeat: no-repeat;
-        }
-    }
-
-    .overlay {
-        position: absolute;
-    }
-
-    .photo-icon {
-        border-radius: var(--avatar-rd);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        position: relative;
-
-        &.avatar {
-            background-color: var(--input-bg);
-        }
-
-        &.large {
-            width: toRem(150);
-            height: toRem(150);
-        }
-        &.medium {
-            width: toRem(100);
-            height: toRem(100);
-        }
-        &.small {
-            width: toRem(48);
-            height: toRem(48);
-        }
-
-        .avatar {
-            width: 100%;
-            height: 100%;
-            background-size: cover;
-            border-radius: var(--avatar-rd);
-        }
     }
 </style>

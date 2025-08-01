@@ -341,10 +341,9 @@
                 open={$userInfoOpen}
                 headerText={i18nKey("userInfoHeader")}>
                 <div class="profile-card">
-                    <UserProfileCard profile={candidateProfile} {user} userProfileMode
+                    <UserProfileCard bind:profile={candidateProfile} {user} userProfileMode
                     ></UserProfileCard>
                 </div>
-                <!-- <ProfileImages {user} {readonly} /> -->
                 {#if $anonUserStore}
                     <div class="guest">
                         <p><Translatable resourceKey={i18nKey("guestUser")} /></p>

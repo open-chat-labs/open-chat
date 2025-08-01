@@ -1,7 +1,8 @@
 <script lang="ts">
+    import EditableAvatar from "@src/components/EditableAvatar.svelte";
+    import EditableBanner from "@src/components/EditableBanner.svelte";
     import type { CommunitySummary } from "openchat-client";
     import { i18nKey, supportedLanguages } from "../../../../i18n/i18n";
-    import EditableImage from "../../../EditableImage.svelte";
     import Input from "../../../Input.svelte";
     import Legend from "../../../Legend.svelte";
     import Select from "../../../Select.svelte";
@@ -49,14 +50,12 @@
     <Legend label={i18nKey("communities.imageLabel")} />
     <div class="images">
         <div class="banner">
-            <EditableImage
-                mode={"banner"}
-                overlayIcon
+            <EditableBanner
                 image={candidate.banner?.blobUrl}
                 onImageSelected={communityBannerSelected} />
         </div>
         <div class="avatar">
-            <EditableImage
+            <EditableAvatar
                 overlayIcon
                 size={"medium"}
                 image={candidate.avatar?.blobUrl}

@@ -16,7 +16,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import EditableImage from "../EditableImage.svelte";
+    import EditableAvatar from "../EditableAvatar.svelte";
     import Legend from "../Legend.svelte";
     import ModalContent from "../ModalContent.svelte";
     import Translatable from "../Translatable.svelte";
@@ -154,7 +154,7 @@
             <form onsubmit={onSubmit} class="webhook-form">
                 <Legend label={i18nKey("webhook.avatarLabel")} />
                 <div class="photo">
-                    <EditableImage
+                    <EditableAvatar
                         overlayIcon
                         size={"medium"}
                         image={webhook.current.avatarUrl}
