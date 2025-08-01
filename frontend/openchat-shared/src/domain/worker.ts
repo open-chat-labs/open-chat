@@ -1,4 +1,4 @@
-import type { DelegationIdentity, JsonnableDelegationChain } from "@dfinity/identity";
+import type { JsonnableDelegationChain } from "@dfinity/identity";
 import type { AccessGateConfig, Rules, UpdatedRules, VerifiedCredentialArgs } from "./access";
 import type {
     CkbtcMinterDepositInfo,
