@@ -23,6 +23,7 @@ async fn join_channel(args: Args) -> Response {
         diamond_membership_expires_at: user_details.diamond_membership_expires_at,
         verified_credential_args: args.verified_credential_args.clone(),
         unique_person_proof: user_details.unique_person_proof.clone(),
+        total_chit_earned: user_details.chit.total_earned,
     };
     match community_canister_c2c_client::c2c_join_channel(args.community_id.into(), &c2c_args).await {
         Ok(response) => match response {

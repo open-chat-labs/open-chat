@@ -1580,6 +1580,7 @@ type AccessGate = variant {
     };
     Locked;
     ReferredByMember;
+    TotalChitEarned : ChitEarnedGate;
 };
 
 type AccessGateNonComposite = variant {
@@ -1592,6 +1593,7 @@ type AccessGateNonComposite = variant {
     TokenBalance : TokenBalanceGate;
     Locked;
     ReferredByMember;
+    TotalChitEarned : ChitEarnedGate;
 };
 
 type AccessGateUpdate = variant {
@@ -1657,6 +1659,10 @@ type PaymentGate = record {
 type TokenBalanceGate = record {
     ledger_canister_id : CanisterId;
     min_balance : nat;
+};
+
+type ChitEarnedGate = record {
+    min_chit_earned : nat32;
 };
 
 type GateCheckFailedReason = variant {

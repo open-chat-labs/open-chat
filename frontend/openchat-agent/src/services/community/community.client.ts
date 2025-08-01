@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+ 
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import type {
     AcceptP2PSwapResponse,

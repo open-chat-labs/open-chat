@@ -20,13 +20,9 @@ fn lookup_swap_impl(args: Args, state: &RuntimeState) -> Response {
         return SwapIsPrivate;
     }
 
-    let accepting_principal = args.accepting_principal.unwrap_or(caller);
+    let accepting_principal = swap.restricted_to.or(args.accepting_principal);
 
     let escrow_canister_id = state.env.canister_id();
-
-    if swap.restricted_to.is_some_and(|p| p != accepting_principal) {
-        return PrincipalNotFound;
-    }
 
     Success(Swap {
         id: swap.id,
@@ -41,7 +37,7 @@ fn lookup_swap_impl(args: Args, state: &RuntimeState) -> Response {
         token0_deposit_address: deposit_address(swap.offered_by, swap.id, escrow_canister_id),
         token1: swap.token1.clone(),
         amount1: swap.amount1,
-        token1_deposit_address: deposit_address(accepting_principal, swap.id, escrow_canister_id),
+        token1_deposit_address: accepting_principal.map(|principal| deposit_address(principal, swap.id, escrow_canister_id)),
         expires_at: swap.expires_at,
         additional_admins: swap.additional_admins.clone(),
         canister_to_notify: swap.canister_to_notify,

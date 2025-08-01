@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
+ 
 import { locale, dictionary } from "svelte-i18n";
 import { editmode, editingLabel } from "../i18n/i18n";
 import { derived, get } from "svelte/store";

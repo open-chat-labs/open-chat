@@ -42,6 +42,7 @@ pub(crate) async fn join_community(args: Args) -> Response {
                     args.principal,
                     args.diamond_membership_expires_at,
                     args.unique_person_proof.clone(),
+                    args.total_chit_earned,
                     false,
                 );
             }
@@ -105,6 +106,7 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> OCResult<IsPermitt
                 referred_by_member: args
                     .referred_by
                     .is_some_and(|user_id| state.data.members.get_by_user_id(&user_id).is_some()),
+                total_chit_earned: args.total_chit_earned,
                 now: state.env.now(),
             }),
         )
@@ -179,6 +181,7 @@ pub(crate) fn join_community_impl(
         args.user_id,
         args.diamond_membership_expires_at,
         args.unique_person_proof.is_some(),
+        args.total_chit_earned,
     );
 
     jobs::expire_members::start_job_if_required(state);

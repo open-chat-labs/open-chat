@@ -111,7 +111,7 @@ export class MultiWebAuthnIdentity extends SignIdentity {
                 signature: new Uint8Array(response.signature),
             }),
         );
-        // eslint-disable-next-line
+         
         if (!cbor) {
             throw new Error("failed to encode cbor");
         }

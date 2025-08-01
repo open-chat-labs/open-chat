@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Install LocalUserIndex in chunks as wasm exceeds single message limit ([#8418](https://github.com/open-chat-labs/open-chat/pull/8418))
+- Set initial chit balance for all users in LUIs ([#8422](https://github.com/open-chat-labs/open-chat/pull/8422))
 
 ### Fixed
 

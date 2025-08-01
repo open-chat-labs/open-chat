@@ -9,23 +9,28 @@ pub struct UserCache {
 
 #[derive(Serialize, Deserialize)]
 pub struct CachedUser {
-    #[serde(
-        rename = "d",
-        alias = "diamond_membership_expires_at",
-        skip_serializing_if = "Option::is_none"
-    )]
+    #[serde(rename = "d", skip_serializing_if = "Option::is_none")]
     pub diamond_membership_expires_at: Option<TimestampMillis>,
-    #[serde(rename = "u", alias = "is_unique_person", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "u", default, skip_serializing_if = "is_default")]
     pub is_unique_person: bool,
+    #[serde(rename = "c", default, skip_serializing_if = "is_default")]
+    pub total_chit_earned: i32,
 }
 
 impl UserCache {
-    pub fn insert(&mut self, user_id: UserId, diamond_membership_expires_at: Option<TimestampMillis>, is_unique_person: bool) {
+    pub fn insert(
+        &mut self,
+        user_id: UserId,
+        diamond_membership_expires_at: Option<TimestampMillis>,
+        is_unique_person: bool,
+        total_chit_earned: i32,
+    ) {
         self.map.insert(
             user_id,
             CachedUser {
                 diamond_membership_expires_at,
                 is_unique_person,
+                total_chit_earned,
             },
         );
     }

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-types */
 import type { Theme } from "./types";
 
 type Subset<K> = {
