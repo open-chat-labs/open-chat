@@ -239,8 +239,8 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
             return TestData {
                 user1,
                 user2,
-                group_id1,
-                group_id2,
+                group_id1: groups.pop().unwrap(),
+                group_id2: groups.pop().unwrap(),
                 community_id,
                 channel_id,
             };

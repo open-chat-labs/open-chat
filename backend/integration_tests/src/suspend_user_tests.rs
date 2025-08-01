@@ -1,5 +1,5 @@
 use crate::env::ENV;
-use crate::utils::now_millis;
+use crate::utils::{now_millis, tick_many};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use itertools::Itertools;
@@ -279,11 +279,13 @@ fn suspended_users_returned_from_user_index_users() {
         },
     );
 
+    tick_many(env, 3);
+
     get_and_validate_users_response(start, env, canister_ids.user_index, vec![(user1.user_id, true)]);
     get_and_validate_users_response(start + 1, env, canister_ids.user_index, Vec::new());
 
     env.advance_time(Duration::from_millis(1000));
-    env.tick();
+    tick_many(env, 3);
 
     get_and_validate_users_response(start + 1000, env, canister_ids.user_index, vec![(user1.user_id, false)]);
     get_and_validate_users_response(start + 1001, env, canister_ids.user_index, Vec::new());

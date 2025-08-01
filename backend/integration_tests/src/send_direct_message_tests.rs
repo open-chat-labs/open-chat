@@ -1,5 +1,6 @@
 use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
+use crate::utils::tick_many;
 use crate::{TestEnv, client};
 use oc_error_codes::OCErrorCode;
 use std::ops::Deref;
@@ -124,6 +125,8 @@ fn messages_arrive_in_order_even_if_some_fail_originally() {
     start_canister(env, user2.local_user_index, user2.user_id.into());
 
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, "3", None);
+
+    tick_many(env, 3);
 
     let events_response = client::user::happy_path::events(env, &user2, user1.user_id, EventIndex::default(), true, 100, 100);
 

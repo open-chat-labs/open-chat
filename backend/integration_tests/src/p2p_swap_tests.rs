@@ -318,7 +318,7 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
         ));
     }
 
-    tick_many(env, 5);
+    tick_many(env, 10);
 
     assert_eq!(
         client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, Principal::from(user1.user_id)),
@@ -447,7 +447,7 @@ fn cancel_p2p_swap_in_group_chat_succeeds(delete_message: bool) {
         ));
     }
 
-    tick_many(env, 5);
+    tick_many(env, 10);
 
     assert_eq!(
         client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, Principal::from(user1.user_id)),

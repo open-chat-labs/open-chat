@@ -1,5 +1,5 @@
 use crate::env::ENV;
-use crate::utils::now_millis;
+use crate::utils::{now_millis, tick_many};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use pocket_ic::PocketIc;
@@ -55,7 +55,7 @@ fn join_private_group_with_invitation_succeeds() {
 
     client::group::happy_path::join_group(env, user2.principal, group_id);
 
-    env.tick();
+    tick_many(env, 3);
 
     let initial_state = client::user::happy_path::initial_state(env, &user2);
 
@@ -133,7 +133,7 @@ fn join_leave_group_triggers_correct_updates() {
 
     client::group::happy_path::join_group(env, user2.principal, group_id);
 
-    env.tick();
+    tick_many(env, 3);
 
     let updates = client::user::happy_path::updates(env, &user2, now_millis(env) - 1);
 

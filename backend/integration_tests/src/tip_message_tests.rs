@@ -1,5 +1,6 @@
 use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
+use crate::utils::tick_many;
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use constants::{ICP_SYMBOL, ICP_TRANSFER_FEE};
@@ -38,6 +39,8 @@ fn tip_direct_message_succeeds() {
         tip_amount,
         ICP_TRANSFER_FEE,
     );
+
+    tick_many(env, 3);
 
     let user1_message = client::user::happy_path::events_by_index(env, &user2, user1.user_id, vec![event_index])
         .events

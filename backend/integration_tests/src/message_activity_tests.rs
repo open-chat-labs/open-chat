@@ -36,6 +36,7 @@ fn react_to_message_and_check_activity_feed(chat_type: ChatType) {
     match chat {
         Chat::Direct(_) => {
             client::user::happy_path::send_text_message(env, &us, them.user_id, text, Some(message_id));
+            env.tick();
             client::user::happy_path::add_reaction(env, &them, us.user_id, reaction, message_id);
         }
         Chat::Group(group_id) => {
@@ -451,6 +452,7 @@ fn multiple_events_on_one_message_and_check_activity_feed(chat_type: ChatType) {
     match chat {
         Chat::Direct(_) => {
             client::user::happy_path::send_text_message(env, &us, them.user_id, text, Some(message_id));
+            env.tick();
             client::user::happy_path::add_reaction(env, &them, us.user_id, reaction, message_id);
         }
         Chat::Group(group_id) => {
