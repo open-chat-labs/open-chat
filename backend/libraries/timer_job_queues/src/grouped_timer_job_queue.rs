@@ -209,7 +209,7 @@ where
             i.in_progress.remove(&key);
             if retry {
                 let queue = i.items_map.entry(key.clone()).or_default();
-                for item in batch.into_items() {
+                for item in batch.into_items().into_iter().rev() {
                     queue.push_front(item);
                 }
             }

@@ -32,6 +32,8 @@ fn disappearing_messages_in_direct_chats() {
         client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
     }
 
+    tick_many(env, 3);
+
     for b in [true, false] {
         let (user_a, user_b) = if b { (&user1, &user2) } else { (&user2, &user1) };
         assert!(
