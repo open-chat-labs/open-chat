@@ -358,6 +358,8 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds) -> TestData {
         "https://xyz.com/",
     );
 
+    tick_many(env, 3);
+
     TestData { user1, user2 }
 }
 

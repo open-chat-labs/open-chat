@@ -36,6 +36,7 @@ fn e2e_command_bot_test() {
     env.advance_time(Duration::from_millis(1));
     let owner = client::register_diamond_user(env, canister_ids, *controller);
     let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
+    let local_user_index = canister_ids.local_user_index(group_id);
 
     // Register a bot
     let bot_name = random_string();
@@ -59,7 +60,7 @@ fn e2e_command_bot_test() {
     client::local_user_index::happy_path::install_bot(
         env,
         owner.principal,
-        canister_ids.local_user_index(env, group_id),
+        local_user_index,
         installation_location,
         bot.id,
         granted_permissions.clone(),
@@ -103,12 +104,7 @@ fn e2e_command_bot_test() {
         }),
     });
 
-    let response = client::local_user_index::access_token_v2(
-        env,
-        owner.principal,
-        canister_ids.local_user_index(env, group_id),
-        &access_token_args,
-    );
+    let response = client::local_user_index::access_token_v2(env, owner.principal, local_user_index, &access_token_args);
 
     // Confirm bot is unauthorised
     assert!(matches!(
@@ -127,15 +123,11 @@ fn e2e_command_bot_test() {
     assert_eq!(response.bots_added_or_updated[0].user_id, bot.id);
 
     // Try again to get an access token to call the greet command
-    let access_token = match client::local_user_index::access_token_v2(
-        env,
-        owner.principal,
-        canister_ids.local_user_index(env, group_id),
-        &access_token_args,
-    ) {
-        local_user_index_canister::access_token_v2::Response::Success(access_token) => access_token,
-        response => panic!("'access_token' error: {response:?}"),
-    };
+    let access_token =
+        match client::local_user_index::access_token_v2(env, owner.principal, local_user_index, &access_token_args) {
+            local_user_index_canister::access_token_v2::Response::Success(access_token) => access_token,
+            response => panic!("'access_token' error: {response:?}"),
+        };
 
     println!("ACCESS TOKEN: {access_token}");
 
@@ -145,7 +137,7 @@ fn e2e_command_bot_test() {
     let response = client::local_user_index::bot_send_message(
         env,
         bot_principal,
-        canister_ids.local_user_index(env, group_id),
+        local_user_index,
         &local_user_index_canister::bot_send_message::Args {
             chat_context: BotChatContext::Command(access_token.clone()),
             thread: None,
@@ -182,7 +174,7 @@ fn e2e_command_bot_test() {
     let response = client::local_user_index::bot_send_message(
         env,
         bot_principal,
-        canister_ids.local_user_index(env, group_id),
+        local_user_index,
         &local_user_index_canister::bot_send_message::Args {
             chat_context: BotChatContext::Command(access_token.clone()),
             thread: None,
@@ -405,6 +397,7 @@ fn create_channel_autonomously() {
     let owner = client::register_diamond_user(env, canister_ids, *controller);
     let community_id =
         client::user::happy_path::create_community(env, &owner, &random_string(), true, vec!["General".to_string()]);
+    let local_user_index = canister_ids.local_user_index(env, community_id);
 
     // Register a bot
     let bot_name = random_string();
@@ -415,7 +408,7 @@ fn create_channel_autonomously() {
     client::local_user_index::happy_path::install_bot(
         env,
         owner.principal,
-        canister_ids.local_user_index(env, community_id),
+        local_user_index,
         BotInstallationLocation::Community(community_id),
         bot_id,
         BotPermissions::text_only(),
@@ -431,7 +424,7 @@ fn create_channel_autonomously() {
     let response = client::local_user_index::bot_create_channel(
         env,
         bot_principal,
-        canister_ids.local_user_index(env, community_id),
+        local_user_index,
         &local_user_index_canister::bot_create_channel::Args {
             community_id,
             is_public: true,
@@ -459,7 +452,7 @@ fn create_channel_autonomously() {
     let response = client::local_user_index::bot_send_message(
         env,
         bot_principal,
-        canister_ids.local_user_index(env, community_id),
+        local_user_index,
         &local_user_index_canister::bot_send_message::Args {
             chat_context: BotChatContext::Autonomous(Chat::Channel(community_id, result.channel_id)),
             thread: None,
@@ -481,7 +474,7 @@ fn create_channel_autonomously() {
     let response = client::local_user_index::bot_delete_channel(
         env,
         bot_principal,
-        canister_ids.local_user_index(env, community_id),
+        local_user_index,
         &local_user_index_canister::bot_delete_channel::Args {
             community_id,
             channel_id: result.channel_id,
