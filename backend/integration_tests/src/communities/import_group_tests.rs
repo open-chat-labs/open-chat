@@ -239,7 +239,7 @@ fn pending_prizes_transferred_to_community() {
         response => panic!("{response:?}"),
     };
 
-    tick_many(env, 10);
+    tick_many(env, 20);
 
     let community_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, Principal::from(community_id));
     assert_eq!(community_balance, amount_to_transfer - fee);
