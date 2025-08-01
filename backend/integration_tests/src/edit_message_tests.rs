@@ -79,7 +79,7 @@ fn update_block_level_markdown_succeeds(starting_value: bool) {
     let new_value = !starting_value;
     client::user::happy_path::edit_text_message(env, &user1, user2.user_id, message_id, "TEXT", Some(new_value));
 
-    env.tick();
+    tick_many(env, 3);
 
     let user1_event =
         client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![send_message_result.event_index])

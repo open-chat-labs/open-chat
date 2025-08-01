@@ -530,6 +530,8 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
         }
     };
 
+    tick_many(env, 3);
+
     TestData { them, us, chat }
 }
 

@@ -52,15 +52,15 @@ fn group_message_notification_succeeds() {
 
     let TestData { user1, user2 } = init_test_data(env, canister_ids);
 
-    let local_user_index_canister = canister_ids.local_user_index(env, user2.canister());
+    let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), false, false);
+    let local_user_index_canister = canister_ids.local_user_index(env, group_id);
     let latest_notification_index =
         client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index_canister);
 
-    let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), false, false);
     client::local_user_index::happy_path::add_users_to_group(
         env,
         &user1,
-        canister_ids.local_user_index(env, group_id),
+        local_user_index_canister,
         group_id,
         vec![(user2.user_id, user2.principal)],
     );
@@ -232,6 +232,8 @@ fn only_store_up_to_10_subscriptions_per_user() {
         client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index_canister);
 
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
+
+    tick_many(env, 3);
 
     let mut notifications_response = client::local_user_index::happy_path::notifications(
         env,
