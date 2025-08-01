@@ -5,3 +5,4 @@ export { getFcmToken } from "./commands/getFcmToken";
 export { showNotification } from "./commands/showNotification";
 export { svelteReady } from "./commands/svelteReady";
 export * from "./models/credentials";
+export * from "./models/error";

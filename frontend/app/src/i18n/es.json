@@ -1109,7 +1109,15 @@
     "native": {
         "auth": {
             "createAccount": "Crear nueva cuenta",
-            "error": "Error de autenticación. Inténtalo de nuevo.",
+            "errors": {
+                "alreadyRegistered": "El método de autenticación ya está vinculado. ¡Intenta iniciar sesión!",
+                "codeInvalid": "¡Su código de vinculación de cuenta parece ser inválido!",
+                "cretePasskeyFail": "Error en la creación de la clave de acceso, inténtelo nuevamente.",
+                "default": "Error de autenticación. Inténtalo de nuevo.",
+                "linkingCodeNotFound": "¡Por favor verifique que su código de enlace sea correcto!",
+                "maxLinkedIdentitiesLimitReached": "Ha alcanzado el límite del número máximo de identidades vinculadas.",
+                "noProviders": "¡No hay administradores de credenciales disponibles en tu teléfono! Necesitarás habilitar o instalar al menos uno."
+            },
             "existingAccount": "Soy un usuario existente",
             "linkAccount": {
                 "cta": "Vincular cuenta",

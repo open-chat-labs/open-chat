@@ -87,12 +87,11 @@ class PasskeyAuth(private val activity: Activity) {
             } catch (e: CreateCredentialNoCreateOptionException) {
                 // Exception raised if credential manager providers are not available (aka the
                 // passkey cannot be saved anywhere)
-                // TODO should we return error codes?
                 Log.e("ERROR", "No providers available to store the passkey", e)
-                invoke.reject("No credential provider available on this device.")
+                invoke.reject(errResponse("NO_PROVIDERS", "No providers available to store the passkey"))
             } catch (e: Exception) {
                 Log.e("ERROR", "Error creating credentials", e)
-                invoke.reject("Failed to create passkey: ${e.localizedMessage}")
+                invoke.reject(errResponse("PASSKEY_CREATE_FAILED", e.toString()))
             }
         }
     }
@@ -136,13 +135,13 @@ class PasskeyAuth(private val activity: Activity) {
                 invoke.resolve(tauriResponse)
             } catch (e: GetCredentialCancellationException) {
                 Log.d("TEST_OC", "User cancelled auth: $e")
-                invoke.reject("USER_CANCELED")
+                invoke.reject(errResponse("USER_CANCELLED", "User cancelled auth: $e"))
             } catch (e: GetCredentialException) {
                 Log.d("TEST_OC", "No passkey found: $e")
-                invoke.reject("NO_PASSKEY")
+                invoke.reject(errResponse("NO_PASSKEY", "No passkey found: $e"))
             } catch (e: Exception) {
                 Log.d("TEST_OC", "Sign in failed: $e")
-                invoke.reject("AUTH_FAILED")
+                invoke.reject(errResponse("AUTH_FAILED", "Sign in failed: $e"))
             }
         }
     }
@@ -158,5 +157,12 @@ class PasskeyAuth(private val activity: Activity) {
     // Base64-url encode without padding, for WebAuthn challenge/user ID formatting
     private fun encodeBase64Url(data: ByteArray): String {
         return Base64.encodeToString(data, Base64.URL_SAFE or Base64.NO_PADDING or Base64.NO_WRAP)
+    }
+
+    private fun errResponse(code: String, msg: String): String {
+        return JSONObject().apply {
+            put("code", code)
+            put("msg", msg)
+        }.toString()
     }
 }

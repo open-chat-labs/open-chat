@@ -1109,7 +1109,15 @@
     "native": {
         "auth": {
             "createAccount": "创建新帐户",
-            "error": "身份验证失败。请重试。",
+            "errors": {
+                "alreadyRegistered": "身份验证方法已链接。请尝试登录！",
+                "codeInvalid": "您的帐户链接代码似乎无效！",
+                "cretePasskeyFail": "密钥创建失败，请重试。",
+                "default": "身份验证失败。请重试。",
+                "linkingCodeNotFound": "请检查您的链接代码是否正确！",
+                "maxLinkedIdentitiesLimitReached": "您已达到链接身份的最大数量限制。",
+                "noProviders": "您的手机上没有可用的凭证管理器！您需要启用或安装至少一个。"
+            },
             "existingAccount": "我是现有用户",
             "linkAccount": {
                 "cta": "关联账户",
