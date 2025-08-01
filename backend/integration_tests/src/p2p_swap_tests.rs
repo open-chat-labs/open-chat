@@ -411,6 +411,8 @@ fn cancel_p2p_swap_in_group_chat_succeeds(delete_message: bool) {
         user_canister::send_message_with_transfer_to_group::Response::Success(_)
     ));
 
+    tick_many(env, 3);
+
     if delete_message {
         let delete_message_response = client::group::delete_messages(
             env,
