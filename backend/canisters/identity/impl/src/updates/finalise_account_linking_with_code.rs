@@ -2,6 +2,7 @@ use crate::updates::prepare_delegation::prepare_delegation_inner;
 use crate::{RuntimeState, VerifyNewIdentityArgs, VerifyNewIdentityError, VerifyNewIdentitySuccess, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use constants::MINUTE_IN_MS;
 use identity_canister::finalise_account_linking_with_code::*;
 use oc_error_codes::OCErrorCode;
 use types::OCResult;
@@ -84,6 +85,11 @@ fn finalise_account_linking_with_code_impl(args: Args, state: &mut RuntimeState)
 
         // Remove the linking code from the state, as it has been used.
         state.data.account_linking_codes.remove_verified(&caller);
+
+        state
+            .data
+            .user_principals
+            .add_temp_key(caller, new_auth_principal, now, now + 5 * MINUTE_IN_MS);
 
         let seed = state.data.calculate_seed(user_principal.index);
 
