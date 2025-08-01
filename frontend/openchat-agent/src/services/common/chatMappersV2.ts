@@ -773,6 +773,7 @@ function prizeContent(value: TPrizeContent): PrizeContent {
         endDate: value.end_date,
         caption: value.caption,
         requiresCaptcha: value.requires_captcha,
+        minChitEarned: value.min_chit_earned,
     };
 }
 
@@ -1680,6 +1681,13 @@ export function apiMaybeAccessGate(domain: AccessGate): TAccessGate | undefined 
     if (domain.kind === "unique_person_gate") return "UniquePerson";
     if (domain.kind === "diamond_gate") return "DiamondMember";
     if (domain.kind === "locked_gate") return "Locked";
+    if (domain.kind === "chit_earned_gate") {
+        return {
+            TotalChitEarned: {
+                min_chit_earned: domain.minEarned,
+            },
+        };
+    }
     if (domain.kind === "credential_gate") {
         return {
             VerifiedCredential: {
@@ -1744,6 +1752,13 @@ function apiLeafAccessGate(domain: AccessGate): TAccessGateNonComposite {
     if (domain.kind === "diamond_gate") return "DiamondMember";
     if (domain.kind === "lifetime_diamond_gate") return "LifetimeDiamondMember";
     if (domain.kind === "unique_person_gate") return "UniquePerson";
+    if (domain.kind === "chit_earned_gate") {
+        return {
+            TotalChitEarned: {
+                min_chit_earned: domain.minEarned,
+            },
+        };
+    }
     if (domain.kind === "credential_gate")
         return {
             VerifiedCredential: {
@@ -1849,6 +1864,12 @@ export function accessGate(value: TAccessGate): AccessGate {
             kind: "referred_by_member_gate",
         };
     }
+    if ("TotalChitEarned" in value) {
+        return {
+            kind: "chit_earned_gate",
+            minEarned: value.TotalChitEarned.min_chit_earned,
+        };
+    }
     if ("Composite" in value) {
         return {
             kind: "composite_gate",
@@ -1915,6 +1936,7 @@ export function apiPrizeContentInitial(domain: PrizeContentInitial): TPrizeConte
         lifetime_diamond_only: domain.lifetimeDiamondOnly,
         unique_person_only: domain.uniquePersonOnly,
         streak_only: domain.streakOnly,
+        min_chit_earned: domain.minChitEarned,
         prizes_v2: domain.prizes,
         requires_captcha: domain.requiresCaptcha,
     };
@@ -2311,6 +2333,9 @@ export function gateCheckFailedReason(value: TGateCheckFailedReason): GateCheckF
     }
     if (value === "Locked") {
         return "locked";
+    }
+    if (value === "ChitEarnedTooLow") {
+        return "chit_earned_too_low";
     }
     if (typeof value !== "string") {
         if ("PaymentFailed" in value) {

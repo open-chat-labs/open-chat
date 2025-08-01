@@ -64,7 +64,7 @@
     {#if !loading}
         {@render children?.()}
     {:else}
-        <Spinner backgroundColour={"rgba(0,0,0,0.5)"} foregroundColour={"var(--button-spinner)"} />
+        <Spinner backgroundColour={"rgba(0,0,0,0.3)"} foregroundColour={"var(--button-spinner)"} />
     {/if}
 </button>
 
@@ -86,6 +86,12 @@
         @include font(book, normal, fs-100, 20);
         text-shadow: var(--button-txt-sh);
         box-shadow: var(--button-sh);
+
+        &.loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
         &:hover {
             box-shadow: var(--buton-hv-sh);

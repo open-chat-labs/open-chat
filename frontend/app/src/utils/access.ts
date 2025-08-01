@@ -31,6 +31,7 @@ export const gateLabel: Record<AccessGate["kind"], string> = {
     unique_person_gate: "access.uniquePerson",
     locked_gate: "access.lockedGate",
     referred_by_member_gate: "access.referredByMember",
+    chit_earned_gate: "access.chitEarnedGate",
 };
 
 export function getGateBindings(level: Level): GateBinding[] {
@@ -44,6 +45,7 @@ export function getGateBindings(level: Level): GateBinding[] {
         credentialGate,
         uniquePersonGate,
         lockedGate,
+        chitEarnedGate,
     ];
     if (level === "community") {
         gates.push(referredByMemberGate);
@@ -51,6 +53,13 @@ export function getGateBindings(level: Level): GateBinding[] {
     gates.push(nftGate);
     return gates;
 }
+
+const chitEarnedGate: GateBinding = {
+    label: "access.chitEarnedGate",
+    key: "chit_earned_gate",
+    gate: { kind: "chit_earned_gate", minEarned: 0 },
+    enabled: true,
+};
 
 export function getNeuronGateBindings(
     nervousSystemLookup: ReadonlyMap<string, NervousSystemDetails>,

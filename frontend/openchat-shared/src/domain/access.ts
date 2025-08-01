@@ -25,6 +25,7 @@ export type LeafGate =
     | NeuronGate
     | PaymentGate
     | DiamondGate
+    | ChitEarnedGate
     | LifetimeDiamondGate
     | NftGate
     | CredentialGate
@@ -32,6 +33,11 @@ export type LeafGate =
     | UniquePersonGate
     | LockedGate
     | ReferredByMemberGate;
+
+export type ChitEarnedGate = {
+    kind: "chit_earned_gate";
+    minEarned: number;
+};
 
 export type ReferredByMemberGate = {
     kind: "referred_by_member_gate";
@@ -140,6 +146,10 @@ export function isPaymentGate(gate: AccessGate): gate is PaymentGate {
 
 export function isBalanceGate(gate: AccessGate): gate is TokenBalanceGate {
     return gate.kind === "token_balance_gate";
+}
+
+export function isChitEarnedGate(gate: AccessGate): gate is ChitEarnedGate {
+    return gate.kind === "chit_earned_gate";
 }
 
 export function isCredentialGate(gate: AccessGate): gate is CredentialGate {

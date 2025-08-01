@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        chitBands,
         chitStateStore,
         cryptoLookup,
         currentUserStore,
@@ -29,6 +30,7 @@
     import SecureButton from "../SecureButton.svelte";
     import Translatable from "../Translatable.svelte";
     import Badges from "./profile/Badges.svelte";
+    import ChitEarnedBadge from "./profile/ChitEarnedBadge.svelte";
     import Streak from "./profile/Streak.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -90,7 +92,8 @@
         (!content.diamondOnly || $isDiamondStore) &&
             (!content.lifetimeDiamondOnly || $isLifetimeDiamondStore) &&
             (!content.uniquePersonOnly || $currentUserStore.isUniquePerson) &&
-            content.streakOnly <= $chitStateStore.streak,
+            content.streakOnly <= $chitStateStore.streak &&
+            content.minChitEarned <= $chitStateStore.totalChitEarned,
     );
     let disabled = $derived(finished || claimedByYou || allClaimed || !userEligible);
     let timeRemaining = $derived(
@@ -110,7 +113,8 @@
             content.lifetimeDiamondOnly ||
             content.uniquePersonOnly ||
             content.streakOnly > 0 ||
-            content.requiresCaptcha,
+            content.requiresCaptcha ||
+            content.minChitEarned > 0,
     );
     let showChallenge = $state(false);
     let spin = $derived(intersecting && !finished && !allClaimed);
@@ -146,6 +150,7 @@
                     <Badges
                         {diamondStatus}
                         uniquePerson={content.uniquePersonOnly}
+                        chitEarned={content.minChitEarned}
                         streak={content.streakOnly} />
                 </div>
             {/if}
@@ -171,6 +176,18 @@
                                 resourceKey={i18nKey("prizes.requiresCaptcha", {
                                     n: content.streakOnly,
                                 })} />
+                        </div>
+                    {/if}
+                    {#if content.minChitEarned > 0}
+                        <div class="chit_earned">
+                            <span class="chit_icon">
+                                <ChitEarnedBadge earned={content.minChitEarned}></ChitEarnedBadge>
+                            </span>
+
+                            <Translatable
+                                resourceKey={i18nKey("prizes.minChitEarnedValue", {
+                                    n: chitBands.get(content.minChitEarned) ?? "0",
+                                })}></Translatable>
                         </div>
                     {/if}
                     {#if content.diamondOnly || content.lifetimeDiamondOnly}
@@ -414,5 +431,13 @@
     .captcha-icon {
         @include font-size(fs-110);
         text-align: center;
+    }
+
+    .chit_icon {
+        $size: 18px;
+        width: $size;
+        height: $size;
+        display: flex;
+        align-items: center;
     }
 </style>

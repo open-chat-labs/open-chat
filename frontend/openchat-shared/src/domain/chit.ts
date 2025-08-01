@@ -35,7 +35,7 @@ export type DailyClaimReinstated = {
 
 export type StreakInsuranceClaim = {
     kind: "streak_insurance_claim";
-}
+};
 
 export type MemeContestWinner = {
     kind: "meme_contest_winner";
@@ -164,3 +164,18 @@ export type ExternalAchievement = {
 };
 
 export type PayForStreakInsuranceResponse = Success | OCError | Failure;
+
+export const chitBands = new Map<number, string>([
+    [10_000, "10k"],
+    [25_000, "25k"],
+    [50_000, "50k"],
+    [100_000, "100k"],
+    [250_000, "250k"],
+    [500_000, "500k"],
+    [1_000_000, "1m"],
+]);
+
+export function findClosestChitBand(earned: number): number {
+    const keys = [...chitBands.keys()].sort((a, b) => b - a);
+    return keys.find((k) => k < earned) ?? 0;
+}

@@ -41,6 +41,7 @@ export function getTheme(base: Theme): Theme {
     base.entry.input.bg = white;
     base.button.bg = base.primary;
     base.button.disabled = "rgba(0,0,0,0.15)";
+    base.button.spinner = "rgba(255,255,255,0.8)";
     // base.entry.input.sh = "inset 0px 2px 4px rgba(138, 138, 138, 0.5)";
     base.panel.bg = "transparent";
     base.panel.left.bg = "transparent";

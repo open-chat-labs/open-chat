@@ -129,6 +129,14 @@
                     resourceKey={i18nKey("access.lockedGateInfo", undefined, level, true)} />
             {/snippet}
         </Tooltip>
+    {:else if gateConfig.gate.kind === "chit_earned_gate"}
+        <Tooltip {position} {align}>
+            <div class="chit"></div>
+            {#snippet popupTemplate()}
+                <Translatable
+                    resourceKey={i18nKey("access.chitEarnedGateInfo", undefined, level, true)} />
+            {/snippet}
+        </Tooltip>
     {:else if gateConfig.gate.kind === "composite_gate"}
         <Tooltip {position} {align}>
             <div class="composite">
@@ -279,6 +287,14 @@
         width: $size;
         height: $size;
         background-image: url("/assets/locked.svg");
+    }
+
+    .chit {
+        $size: 20px;
+        background-repeat: no-repeat;
+        width: $size;
+        height: $size;
+        background-image: url("/assets/chit.svg");
     }
 
     .wrapper {
