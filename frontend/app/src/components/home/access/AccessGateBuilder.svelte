@@ -34,7 +34,7 @@
     import AccessGateIcon from "./AccessGateIcon.svelte";
     import LeafGateBuilder from "./LeafGateBuilder.svelte";
 
-    const MAX_GATES = 5;
+    const MAX_GATES = 10;
 
     interface Props {
         gateConfig: AccessGateConfig;
