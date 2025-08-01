@@ -26,7 +26,7 @@ fn join_public_group_succeeds() {
 
     client::group::happy_path::join_group(env, user2.principal, group_id);
 
-    env.tick();
+    tick_many(env, 3);
 
     let initial_state = client::user::happy_path::initial_state(env, &user2);
 

@@ -67,6 +67,8 @@ fn group_message_notification_succeeds() {
 
     client::group::happy_path::send_text_message(env, &user1, group_id, None, random_string(), None);
 
+    env.tick();
+
     let notifications_response = client::local_user_index::happy_path::notifications(
         env,
         *controller,
