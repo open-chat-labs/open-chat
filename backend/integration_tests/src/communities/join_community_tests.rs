@@ -155,7 +155,7 @@ fn join_private_community_using_invite_code_succeeds() {
         local_user_index_canister::join_community::Response::Success(_)
     ));
 
-    env.tick();
+    tick_many(env, 3);
 
     let initial_state = client::user::happy_path::initial_state(env, &user2);
 

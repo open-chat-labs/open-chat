@@ -146,7 +146,7 @@ fn read_up_to_data_maintained_after_import() {
         response => panic!("{response:?}"),
     };
 
-    tick_many(env, 10);
+    tick_many(env, 20);
 
     let initial_state = client::user::happy_path::initial_state(env, &user2);
 

@@ -1,5 +1,5 @@
 use crate::env::ENV;
-use crate::utils::now_millis;
+use crate::utils::{now_millis, tick_many};
 use crate::{TestEnv, User, client};
 use constants::{DAY_IN_MS, HOUR_IN_MS};
 use itertools::Itertools;
@@ -104,7 +104,7 @@ fn chit_stored_per_month() {
         advance_to_next_month(env);
     }
 
-    env.tick();
+    tick_many(env, 3);
 
     let mut month = start_month;
     for i in 1..5 {

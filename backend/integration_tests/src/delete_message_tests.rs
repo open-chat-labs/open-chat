@@ -1,4 +1,5 @@
 use crate::env::ENV;
+use crate::utils::tick_many;
 use crate::{TestEnv, client};
 use constants::MINUTE_IN_MS;
 use oc_error_codes::OCErrorCode;
@@ -35,6 +36,8 @@ fn delete_direct_message_succeeds() {
         delete_messages_response,
         user_canister::delete_messages::Response::Success
     ));
+
+    tick_many(env, 3);
 
     let user1_events_response =
         client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![send_message_response.event_index]);
@@ -117,7 +120,7 @@ fn file_deleted_after_direct_message_deleted() {
     ));
 
     env.advance_time(Duration::from_secs(300));
-    env.tick();
+    tick_many(env, 3);
 
     assert!(!client::storage_bucket::happy_path::file_exists(
         env,
@@ -140,6 +143,8 @@ fn delete_their_direct_message_succeeds() {
     let send_message_response =
         client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", Some(message_id));
 
+    env.tick();
+
     let delete_messages_response = client::user::delete_messages(
         env,
         user2.principal,
@@ -154,6 +159,8 @@ fn delete_their_direct_message_succeeds() {
         delete_messages_response,
         user_canister::delete_messages::Response::Success
     ));
+
+    env.tick();
 
     // The message should only be deleted for user2
     let user1_events_response =

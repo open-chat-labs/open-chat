@@ -42,7 +42,7 @@ fn disappearing_messages_in_direct_chats() {
     }
 
     env.advance_time(Duration::from_millis(2000));
-    env.tick();
+    tick_many(env, 3);
 
     let expected_expired_events_range = (
         send_message_response1.event_index,
