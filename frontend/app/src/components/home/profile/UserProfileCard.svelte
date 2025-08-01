@@ -16,6 +16,7 @@
     import EditableAvatar from "@src/components/EditableAvatar.svelte";
     import EditableImageWrapper from "@src/components/EditableImageWrapper.svelte";
     import HoverIcon from "@src/components/HoverIcon.svelte";
+    import ChooseImage from "@src/components/icons/ChooseImage.svelte";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import ClockOutline from "svelte-material-icons/ClockOutline.svelte";
@@ -169,7 +170,7 @@
                     </div>
                     {#if userProfileMode}
                         <HoverIcon onclick={choosePhoto}>
-                            <Close size={"1em"} color={txtColour} />
+                            <ChooseImage size={"1.5em"} color={txtColour} />
                         </HoverIcon>
                     {:else}
                         <HoverIcon onclick={onClose}>
@@ -222,6 +223,9 @@
 <style lang="scss">
     .profile_card:not(.userProfileMode) {
         width: 320px;
+        @include mobile() {
+            width: 100%;
+        }
     }
 
     .profile_card {

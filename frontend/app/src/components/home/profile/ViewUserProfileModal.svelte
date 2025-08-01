@@ -304,6 +304,9 @@
 
     :global(.modal-content .footer.mask-footer) {
         background-color: rgba(0, 0, 0, 0.45);
-        border-radius: 0 0 var(--modal-rd) var(--modal-rd);
+
+        @include not-mobile() {
+            border-radius: 0 0 var(--modal-rd) var(--modal-rd);
+        }
     }
 </style>

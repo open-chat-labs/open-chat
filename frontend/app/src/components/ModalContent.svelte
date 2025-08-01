@@ -189,14 +189,20 @@
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
-        // filter: contrast(0.8) sepia(0.5) grayscale(0.5);
-        filter: saturate(0.5);
+        filter: saturate(0.6);
         z-index: -1;
         border-radius: var(--modal-rd);
+
+        @include mobile() {
+            border-radius: var(--modal-rd) var(--modal-rd) 0 0;
+        }
     }
 
     .modal-content.custom-bg.square::before {
         border-radius: $sp3;
+        @include mobile() {
+            border-radius: $sp3 $sp3 0 0;
+        }
     }
 
     .modal-content {
