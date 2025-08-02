@@ -26,6 +26,8 @@ fn disappearing_messages_in_direct_chats() {
         },
     );
 
+    tick_many(env, 3);
+
     let send_message_response1 = client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
 
     for _ in 0..5 {
@@ -44,7 +46,7 @@ fn disappearing_messages_in_direct_chats() {
     }
 
     env.advance_time(Duration::from_millis(2000));
-    tick_many(env, 5);
+    env.tick();
 
     let expected_expired_events_range = (
         send_message_response1.event_index,
