@@ -297,9 +297,11 @@ fn notifications_blocked_from_blocked_users() {
 
     client::user::happy_path::block_user(env, &user2, user1.user_id);
 
-    tick_many(env, 10);
+    tick_many(env, 5);
 
     client::group::happy_path::send_text_message(env, &user1, group_id, None, random_string(), None);
+
+    env.tick();
 
     let notifications_response = client::local_user_index::happy_path::notifications(
         env,

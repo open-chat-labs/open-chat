@@ -18,6 +18,8 @@ fn send_message_succeeds() {
 
     let send_message_result = client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", None);
 
+    tick_many(env, 3);
+
     let events_response1 =
         client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![send_message_result.event_index]);
     let events_response2 =
