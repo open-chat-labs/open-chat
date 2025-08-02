@@ -36,6 +36,7 @@ fn react_to_message_and_check_activity_feed(chat_type: ChatType) {
     match chat {
         Chat::Direct(_) => {
             client::user::happy_path::send_text_message(env, &us, them.user_id, text, Some(message_id));
+            env.tick();
             client::user::happy_path::add_reaction(env, &them, us.user_id, reaction, message_id);
         }
         Chat::Group(group_id) => {
@@ -365,6 +366,7 @@ fn accept_p2p_swap_and_check_activity_feed(chat_type: ChatType) {
     match chat {
         Chat::Direct(_) => {
             client::user::happy_path::send_message(env, &us, them.user_id, None, content, None, Some(message_id));
+            env.tick();
             client::user::happy_path::accept_p2p_swap(env, &them, us.user_id, message_id);
         }
         Chat::Group(group_id) => {
@@ -451,6 +453,7 @@ fn multiple_events_on_one_message_and_check_activity_feed(chat_type: ChatType) {
     match chat {
         Chat::Direct(_) => {
             client::user::happy_path::send_text_message(env, &us, them.user_id, text, Some(message_id));
+            env.tick();
             client::user::happy_path::add_reaction(env, &them, us.user_id, reaction, message_id);
         }
         Chat::Group(group_id) => {
@@ -527,6 +530,8 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
             Chat::Channel(community_id, channel_id)
         }
     };
+
+    tick_many(env, 3);
 
     TestData { them, us, chat }
 }

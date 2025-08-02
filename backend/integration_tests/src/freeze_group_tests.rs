@@ -226,7 +226,7 @@ fn delete_frozen_group() {
         "{delete_group_response:?}"
     );
 
-    tick_many(env, 5);
+    tick_many(env, 10);
 
     assert!(!env.canister_exists(Principal::from(group_id).as_slice().try_into().unwrap()));
 }

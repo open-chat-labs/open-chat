@@ -214,20 +214,37 @@ fn assert_is_summary_updates_with_id(response: &SummaryUpdatesResponse, canister
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
-    let user2 = client::register_user(env, canister_ids);
+    let subnet = env.get_subnet(user1.canister()).unwrap();
+    let user2 = client::register_user_on_subnet(env, canister_ids, subnet);
 
-    let group_id1 = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
-    let group_id2 = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
-    let community_id = client::user::happy_path::create_community(env, &user1, &random_string(), true, vec![random_string()]);
-    let channel_id = client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string());
+    let mut groups = Vec::new();
 
-    TestData {
-        user1,
-        user2,
-        group_id1,
-        group_id2,
-        community_id,
-        channel_id,
+    loop {
+        let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
+        if env.get_subnet(group_id.into()) == Some(subnet) {
+            groups.push(group_id);
+            if groups.len() == 2 {
+                break;
+            }
+        }
+    }
+
+    loop {
+        let community_id =
+            client::user::happy_path::create_community(env, &user1, &random_string(), true, vec![random_string()]);
+        if env.get_subnet(community_id.into()) == Some(subnet) {
+            let channel_id =
+                client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string());
+
+            return TestData {
+                user1,
+                user2,
+                group_id1: groups.pop().unwrap(),
+                group_id2: groups.pop().unwrap(),
+                community_id,
+                channel_id,
+            };
+        }
     }
 }
 

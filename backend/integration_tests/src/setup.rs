@@ -53,6 +53,7 @@ fn initialize_base_state(controller: Principal, seed: Option<Hash>) -> (PocketIc
         .with_nns_subnet()
         .with_sns_subnet()
         .with_application_subnet()
+        .with_application_subnet()
         .with_state(PocketIcState::new())
         .build();
 
@@ -467,17 +468,21 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         cycles_minting_canister_init_args,
     );
 
-    let application_subnet = *env.topology().get_app_subnets().first().unwrap();
-
+    let application_subnets = env.topology().get_app_subnets();
     client::cmc::set_authorized_subnetwork_list(
         env,
         nns_governance_canister_id,
         cycles_minting_canister_id,
         &cycles_minting_canister::set_authorized_subnetwork_list::Args {
             who: None,
-            subnets: vec![application_subnet],
+            subnets: application_subnets.clone(),
         },
     );
+
+    let subnets: Vec<_> = application_subnets
+        .into_iter()
+        .map(|s| client::registry::happy_path::expand_onto_subnet(env, controller, registry_canister_id, s))
+        .collect();
 
     let sns_wasm_canister_init_args = SnsWasmCanisterInitPayload::default();
     install_canister(
@@ -488,12 +493,10 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         sns_wasm_canister_init_args,
     );
 
-    let subnet = client::registry::happy_path::expand_onto_subnet(env, controller, registry_canister_id, application_subnet);
-
     let airdrop_bot_init_args = airdrop_bot_canister::init::Args {
         admins: vec![controller],
         user_index_canister_id,
-        local_user_index_canister_id: subnet.local_user_index,
+        local_user_index_canister_id: subnets.first().unwrap().local_user_index,
         online_users_canister_id,
         chat_ledger_canister_id,
         wasm_version,
@@ -507,7 +510,12 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         airdrop_bot_init_args,
     );
 
-    client::storage_index::happy_path::add_bucket_canister(env, controller, storage_index_canister_id, application_subnet);
+    client::storage_index::happy_path::add_bucket_canister(
+        env,
+        controller,
+        storage_index_canister_id,
+        subnets.first().unwrap().subnet_id,
+    );
 
     // Tick a load of times so that all the child canisters have time to get installed
     tick_many(env, 10);
@@ -532,7 +540,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         icp_ledger: nns_ledger_canister_id,
         chat_ledger: chat_ledger_canister_id,
         cycles_minting_canister: cycles_minting_canister_id,
-        subnets: vec![subnet],
+        subnets,
     };
 
     println!("Test env setup complete. {canister_ids:?}");

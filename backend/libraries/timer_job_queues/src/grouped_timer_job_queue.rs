@@ -209,7 +209,9 @@ where
             i.in_progress.remove(&key);
             if retry {
                 let queue = i.items_map.entry(key.clone()).or_default();
-                for item in batch.into_items() {
+                // Re-queue the failed items to the front of the queue so that items are always
+                // processed in the order they first arrived
+                for item in batch.into_items().into_iter().rev() {
                     queue.push_front(item);
                 }
             }

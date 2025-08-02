@@ -1,5 +1,5 @@
 use crate::env::ENV;
-use crate::utils::now_millis;
+use crate::utils::{now_millis, tick_many};
 use crate::{TestEnv, User, client};
 use constants::{DAY_IN_MS, HOUR_IN_MS};
 use itertools::Itertools;
@@ -34,7 +34,7 @@ fn claim_daily_chit_reflected_in_user_index() {
     assert_eq!(events.events[0].amount, 200);
     assert!(matches!(events.events[0].reason, ChitEarnedReason::DailyClaim));
 
-    env.tick();
+    tick_many(env, 3);
 
     let result = client::user_index::happy_path::users(env, user2.principal, canister_ids.user_index, vec![user.user_id]);
 
@@ -104,7 +104,7 @@ fn chit_stored_per_month() {
         advance_to_next_month(env);
     }
 
-    env.tick();
+    tick_many(env, 3);
 
     let mut month = start_month;
     for i in 1..5 {
