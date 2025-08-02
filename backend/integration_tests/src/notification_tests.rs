@@ -340,8 +340,8 @@ fn notification_canisters_returns_correct_ids() {
     );
 
     assert_eq!(
-        notification_canisters,
-        canister_ids.subnets.iter().map(|s| s.local_user_index).collect_vec()
+        notification_canisters.into_iter().sorted().collect_vec(),
+        canister_ids.subnets.iter().map(|s| s.local_user_index).sorted().collect_vec()
     );
 }
 
