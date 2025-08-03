@@ -26,7 +26,7 @@ fn disappearing_messages_in_direct_chats() {
         },
     );
 
-    tick_many(env, 3);
+    tick_many(env, 5);
 
     let send_message_response1 = client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
 
