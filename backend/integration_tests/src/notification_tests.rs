@@ -77,7 +77,7 @@ fn group_message_notification_succeeds() {
     );
 
     // There should be 2 notifications (1 for being added to the group, 1 for the message)
-    assert_eq!(notifications_response.notifications.len(), 2);
+    assert_eq!(notifications_response.notifications.len(), 2, "{notifications_response:?}");
     assert!(notifications_response.subscriptions.contains_key(&user2.user_id));
 }
 
@@ -310,7 +310,11 @@ fn notifications_blocked_from_blocked_users() {
         latest_notification_index + 2,
     );
 
-    assert!(notifications_response.notifications.is_empty());
+    assert!(
+        notifications_response.notifications.is_empty(),
+        "{:?}",
+        notifications_response.notifications
+    );
 
     client::user::happy_path::unblock_user(env, &user2, user1.user_id);
 
@@ -325,7 +329,12 @@ fn notifications_blocked_from_blocked_users() {
         latest_notification_index + 2,
     );
 
-    assert_eq!(notifications_response.notifications.len(), 1);
+    assert_eq!(
+        notifications_response.notifications.len(),
+        1,
+        "{:?}",
+        notifications_response.notifications
+    );
     assert!(notifications_response.subscriptions.contains_key(&user2.user_id));
 }
 
