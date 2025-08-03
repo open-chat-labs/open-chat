@@ -58,7 +58,7 @@ pub mod happy_path {
             },
         );
 
-        tick_many(env, 3);
+        tick_many(env, 5);
 
         match response {
             local_user_index_canister::register_user::Response::Success(res) => User {
