@@ -283,6 +283,8 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
         user_canister::send_message_v2::Response::TransferSuccessV2(_)
     ));
 
+    tick_many(env, 3);
+
     if delete_message {
         let delete_message_response = client::user::delete_messages(
             env,
@@ -318,7 +320,7 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
         ));
     }
 
-    tick_many(env, 20);
+    tick_many(env, 10);
 
     assert_eq!(
         client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, Principal::from(user1.user_id)),
