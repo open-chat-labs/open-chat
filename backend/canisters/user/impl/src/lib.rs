@@ -369,7 +369,7 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
         };
         let message = format!(
             "{count} {first_line}
-Your new streak length is now {new_streak}!"
+Your streak is now {new_streak} days!"
         );
 
         openchat_bot::send_text_message(message, Vec::new(), false, self);
