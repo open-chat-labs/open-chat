@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import type { ResourceKey } from "openchat-client";
     import { onMount } from "svelte";
+    import { _ } from "svelte-i18n";
     import { interpolate } from "../i18n/i18n";
 
     interface Props {
@@ -51,7 +51,9 @@
         if (inp) {
             if (shouldClamp) {
                 value = clamp(parseInt(e.currentTarget.value, 10));
-                inp.value = value.toString();
+                if (value != null) {
+                    inp.value = value.toString();
+                }
             }
             onChange?.();
         }

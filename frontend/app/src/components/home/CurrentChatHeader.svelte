@@ -95,6 +95,7 @@
                     name: client.displayName(them),
                     diamondStatus: them?.diamondStatus ?? "inactive",
                     streak: them?.streak ?? 0,
+                    chitEarned: them?.totalChitEarned,
                     avatarUrl: client.userAvatarUrl(them),
                     userId: chatSummary.them.userId,
                     typing: client.getTypingString(
@@ -112,6 +113,7 @@
                     name: chatSummary.name,
                     diamondStatus: "inactive" as DiamondMembershipStatus["kind"],
                     streak: 0,
+                    chitEarned: undefined,
                     avatarUrl: client.groupAvatarUrl(chatSummary, $selectedCommunitySummaryStore),
                     userId: undefined,
                     username: undefined,
@@ -204,7 +206,8 @@
                 <Badges
                     uniquePerson={chat.uniquePerson}
                     diamondStatus={chat.diamondStatus}
-                    streak={chat.streak} />
+                    streak={chat.streak}
+                    chitEarned={chat.chitEarned} />
                 <span class="username">{chat.username}</span>
             {:else}
                 {chat.name}
