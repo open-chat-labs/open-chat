@@ -66,7 +66,7 @@ impl ChatEvents {
             metrics: ChatMetricsInternal::default(),
             per_user_metrics: BTreeMap::new(),
             frozen: false,
-            events_ttl: Timestamped::new(events_ttl, 0),
+            events_ttl: Timestamped::new(events_ttl, now),
             expiring_events: ExpiringEvents::default(),
             last_updated_timestamps: LastUpdatedTimestamps::default(),
             video_call_in_progress: Timestamped::default(),
