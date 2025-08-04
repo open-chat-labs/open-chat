@@ -27,6 +27,8 @@ fn direct_message_notification_succeeds() {
 
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
 
+    tick_many(env, 3);
+
     let notifications_response = client::local_user_index::happy_path::notifications(
         env,
         *controller,
@@ -50,20 +52,23 @@ fn group_message_notification_succeeds() {
 
     let TestData { user1, user2 } = init_test_data(env, canister_ids);
 
-    let local_user_index_canister = canister_ids.local_user_index(env, user2.canister());
-    let latest_notification_index =
-        client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index_canister);
-
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), false, false);
+    let local_user_index_canister = canister_ids.local_user_index(env, group_id);
+
     client::local_user_index::happy_path::add_users_to_group(
         env,
         &user1,
-        canister_ids.local_user_index(env, group_id),
+        local_user_index_canister,
         group_id,
         vec![(user2.user_id, user2.principal)],
     );
 
+    let latest_notification_index =
+        client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index_canister);
+
     client::group::happy_path::send_text_message(env, &user1, group_id, None, random_string(), None);
+
+    tick_many(env, 3);
 
     let notifications_response = client::local_user_index::happy_path::notifications(
         env,
@@ -72,8 +77,7 @@ fn group_message_notification_succeeds() {
         latest_notification_index + 1,
     );
 
-    // There should be 2 notifications (1 for being added to the group, 1 for the message)
-    assert_eq!(notifications_response.notifications.len(), 2);
+    assert_eq!(notifications_response.notifications.len(), 1);
     assert!(notifications_response.subscriptions.contains_key(&user2.user_id));
 }
 
@@ -134,10 +138,11 @@ fn group_message_notification_muted(case: u32) {
     let TestData { user1, user2 } = init_test_data(env, canister_ids);
 
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), false, false);
+    let local_user_index_canister = canister_ids.local_user_index(env, group_id);
     client::local_user_index::happy_path::add_users_to_group(
         env,
         &user1,
-        canister_ids.local_user_index(env, group_id),
+        local_user_index_canister,
         group_id,
         vec![(user2.user_id, user2.principal)],
     );
@@ -149,7 +154,6 @@ fn group_message_notification_muted(case: u32) {
         &group_canister::toggle_mute_notifications::Args { mute: true },
     );
 
-    let local_user_index_canister = canister_ids.local_user_index(env, user2.canister());
     let latest_notification_index =
         client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index_canister);
 
@@ -231,6 +235,8 @@ fn only_store_up_to_10_subscriptions_per_user() {
 
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
 
+    tick_many(env, 3);
+
     let mut notifications_response = client::local_user_index::happy_path::notifications(
         env,
         *controller,
@@ -265,15 +271,15 @@ fn notifications_blocked_from_blocked_users() {
     let TestData { user1, user2 } = init_test_data(env, canister_ids);
 
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), false, false);
+    let local_user_index_canister = canister_ids.local_user_index(env, group_id);
     client::local_user_index::happy_path::add_users_to_group(
         env,
         &user1,
-        canister_ids.local_user_index(env, group_id),
+        local_user_index_canister,
         group_id,
         vec![(user2.user_id, user2.principal)],
     );
 
-    let local_user_index_canister = canister_ids.local_user_index(env, group_id);
     let latest_notification_index =
         client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index_canister);
 
@@ -291,9 +297,11 @@ fn notifications_blocked_from_blocked_users() {
 
     client::user::happy_path::block_user(env, &user2, user1.user_id);
 
-    tick_many(env, 3);
+    tick_many(env, 10);
 
     client::group::happy_path::send_text_message(env, &user1, group_id, None, random_string(), None);
+
+    tick_many(env, 3);
 
     let notifications_response = client::local_user_index::happy_path::notifications(
         env,
@@ -306,9 +314,11 @@ fn notifications_blocked_from_blocked_users() {
 
     client::user::happy_path::unblock_user(env, &user2, user1.user_id);
 
-    tick_many(env, 3);
+    tick_many(env, 10);
 
     client::group::happy_path::send_text_message(env, &user1, group_id, None, random_string(), None);
+
+    tick_many(env, 3);
 
     let notifications_response = client::local_user_index::happy_path::notifications(
         env,
@@ -326,8 +336,6 @@ fn notification_canisters_returns_correct_ids() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user = client::register_user(env, canister_ids);
-
     let notification_canisters = client::notifications_index::notification_canisters(
         env,
         Principal::anonymous(),
@@ -336,8 +344,8 @@ fn notification_canisters_returns_correct_ids() {
     );
 
     assert_eq!(
-        notification_canisters,
-        vec![canister_ids.local_user_index(env, user.canister())]
+        notification_canisters.into_iter().sorted().collect_vec(),
+        canister_ids.subnets.iter().map(|s| s.local_user_index).sorted().collect_vec()
     );
 }
 
@@ -353,6 +361,8 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds) -> TestData {
         "456",
         "https://xyz.com/",
     );
+
+    tick_many(env, 3);
 
     TestData { user1, user2 }
 }

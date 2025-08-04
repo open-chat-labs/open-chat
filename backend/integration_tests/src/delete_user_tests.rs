@@ -75,13 +75,13 @@ fn deleted_user_removed_from_groups_and_communities() {
     let user1 = client::register_diamond_user(env, canister_ids, *controller);
     let (user2, user2_auth) = register_user_and_include_auth(env, canister_ids);
 
-    env.tick();
-
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
     let community_id = client::user::happy_path::create_community(env, &user1, &random_string(), true, vec![random_string()]);
 
     client::group::happy_path::join_group(env, user2.principal, group_id);
     client::community::happy_path::join_community(env, user2.principal, community_id);
+
+    tick_many(env, 3);
 
     let group_summary = client::group::happy_path::selected_initial(env, user1.principal, group_id);
     let community_summary = client::community::happy_path::selected_initial(env, user1.principal, community_id);
@@ -91,7 +91,7 @@ fn deleted_user_removed_from_groups_and_communities() {
 
     client::identity::happy_path::delete_user(env, &user2_auth, canister_ids.identity);
 
-    tick_many(env, 10);
+    tick_many(env, 20);
 
     let group_summary = client::group::happy_path::selected_initial(env, user1.principal, group_id);
     let community_summary = client::community::happy_path::selected_initial(env, user1.principal, community_id);
