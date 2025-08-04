@@ -3,7 +3,6 @@ import type { Identity, Signature } from "@dfinity/agent";
 import type { Address } from "openchat-agent/src/services/signInWithSolana/candid/types";
 import type { OCError } from "./error";
 import type { Success } from "./response";
-import type { ErrorCode } from "./error";
 
 export type HasIdentity = {
     id: string;
