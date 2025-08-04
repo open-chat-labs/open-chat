@@ -26,8 +26,6 @@ fn disappearing_messages_in_direct_chats() {
         },
     );
 
-    tick_many(env, 5);
-
     let send_message_response1 = client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
 
     for _ in 0..5 {
@@ -46,7 +44,7 @@ fn disappearing_messages_in_direct_chats() {
     }
 
     env.advance_time(Duration::from_millis(2000));
-    tick_many(env, 3);
+    env.tick();
 
     let expected_expired_events_range = (
         send_message_response1.event_index,
@@ -61,11 +59,7 @@ fn disappearing_messages_in_direct_chats() {
         let (user_a, user_b) = if b { (&user1, &user2) } else { (&user2, &user1) };
         let events_by_index_response =
             client::user::happy_path::events_by_index(env, user_a, user_b.user_id, vec![send_message_response1.event_index]);
-        assert!(
-            events_by_index_response.events.is_empty(),
-            "Case: {b}. Events: {:?}",
-            events_by_index_response.events
-        );
+        assert!(events_by_index_response.events.is_empty());
         assert_eq!(
             *events_by_index_response.expired_event_ranges.first().unwrap(),
             expected_expired_events_range

@@ -65,6 +65,16 @@ fn group_message_notification_succeeds() {
         vec![(user2.user_id, user2.principal)],
     );
 
+    let notifications_response = client::local_user_index::happy_path::notifications(
+        env,
+        *controller,
+        local_user_index_canister,
+        latest_notification_index + 1,
+    );
+
+    assert_eq!(notifications_response.notifications.len(), 1, "{notifications_response:?}");
+    assert!(notifications_response.subscriptions.contains_key(&user2.user_id));
+
     client::group::happy_path::send_text_message(env, &user1, group_id, None, random_string(), None);
 
     tick_many(env, 3);
