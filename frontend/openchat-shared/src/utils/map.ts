@@ -254,10 +254,6 @@ export class ChatListScopeMap<V> extends SafeMap<ChatListScope, V> {
             _map,
         );
     }
-
-    static fromMap<V>(map: Map<string, V>): MessageContextMap<V> {
-        return new MessageContextMap<V>(map);
-    }
 }
 
 export class CommunityMap<V> extends SafeMap<CommunityIdentifier, V> {
