@@ -1112,7 +1112,7 @@
             "errors": {
                 "alreadyRegistered": "El método de autenticación ya está vinculado. ¡Intenta iniciar sesión!",
                 "codeInvalid": "¡Su código de vinculación de cuenta parece ser inválido!",
-                "cretePasskeyFail": "Error en la creación de la clave de acceso, inténtelo nuevamente.",
+                "createPasskeyFail": "Error al crear la clave de acceso, inténtelo nuevamente.",
                 "default": "Error de autenticación. Inténtalo de nuevo.",
                 "linkingCodeNotFound": "¡Por favor verifique que su código de enlace sea correcto!",
                 "maxLinkedIdentitiesLimitReached": "Ha alcanzado el límite del número máximo de identidades vinculadas.",

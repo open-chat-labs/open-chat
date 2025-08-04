@@ -1112,7 +1112,7 @@
             "errors": {
                 "alreadyRegistered": "Phương thức xác thực đã được liên kết. Hãy thử đăng nhập!",
                 "codeInvalid": "Mã liên kết tài khoản của bạn có vẻ không hợp lệ!",
-                "cretePasskeyFail": "Không tạo được mật khẩu, vui lòng thử lại.",
+                "createPasskeyFail": "Không tạo được mật khẩu, vui lòng thử lại.",
                 "default": "Xác thực không thành công. Vui lòng thử lại.",
                 "linkingCodeNotFound": "Vui lòng kiểm tra mã liên kết của bạn đã chính xác chưa!",
                 "maxLinkedIdentitiesLimitReached": "Bạn đã đạt đến giới hạn về số lượng danh tính được liên kết tối đa.",

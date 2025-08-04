@@ -1112,7 +1112,7 @@
             "errors": {
                 "alreadyRegistered": "認証方法はすでにリンクされています。サインインしてみてください。",
                 "codeInvalid": "アカウントリンクコードが無効のようです。",
-                "cretePasskeyFail": "パスキーの作成に失敗しました。もう一度お試しください。",
+                "createPasskeyFail": "パスキーの作成に失敗しました。もう一度お試しください。",
                 "default": "認証に失敗しました。もう一度お試しください。",
                 "linkingCodeNotFound": "リンクコードが正しいことを確認してください。",
                 "maxLinkedIdentitiesLimitReached": "リンクされた ID の最大数の制限に達しました。",

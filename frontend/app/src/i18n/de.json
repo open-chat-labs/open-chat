@@ -1112,7 +1112,7 @@
             "errors": {
                 "alreadyRegistered": "Die Authentifizierungsmethode wurde bereits verknüpft. Versuchen Sie, sich anzumelden!",
                 "codeInvalid": "Ihr Kontoverknüpfungscode scheint ungültig zu sein!",
-                "cretePasskeyFail": "Die Erstellung des Passkeys ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
+                "createPasskeyFail": "Das Erstellen des Passkeys ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
                 "default": "Authentifizierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
                 "linkingCodeNotFound": "Bitte überprüfen Sie, ob Ihr Verknüpfungscode korrekt ist!",
                 "maxLinkedIdentitiesLimitReached": "Sie haben das Limit für die maximale Anzahl verknüpfter Identitäten erreicht.",

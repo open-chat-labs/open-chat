@@ -1112,7 +1112,7 @@
             "errors": {
                 "alreadyRegistered": "La méthode d'authentification a déjà été associée. Essayez de vous connecter !",
                 "codeInvalid": "Votre code de liaison de compte semble être invalide !",
-                "cretePasskeyFail": "La création de la clé d'accès a échoué, veuillez réessayer.",
+                "createPasskeyFail": "La création de la clé d'accès a échoué, veuillez réessayer.",
                 "default": "Échec de l'authentification. Veuillez réessayer.",
                 "linkingCodeNotFound": "Veuillez vérifier que votre code de liaison est correct !",
                 "maxLinkedIdentitiesLimitReached": "Vous avez atteint la limite du nombre maximal d'identités liées.",

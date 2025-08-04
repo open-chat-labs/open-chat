@@ -1112,7 +1112,7 @@
             "errors": {
                 "alreadyRegistered": "Il metodo di autenticazione è già stato collegato. Prova ad accedere!",
                 "codeInvalid": "Il codice di collegamento del tuo account sembra non essere valido!",
-                "cretePasskeyFail": "Creazione della passkey non riuscita, riprovare.",
+                "createPasskeyFail": "Creazione della passkey non riuscita, riprovare.",
                 "default": "Autenticazione non riuscita. Riprova.",
                 "linkingCodeNotFound": "Verifica che il codice di collegamento sia corretto!",
                 "maxLinkedIdentitiesLimitReached": "Hai raggiunto il limite massimo di identità collegate.",

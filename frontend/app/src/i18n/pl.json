@@ -1112,7 +1112,7 @@
             "errors": {
                 "alreadyRegistered": "Metoda autoryzacji została już powiązana. Spróbuj się zalogować!",
                 "codeInvalid": "Wygląda na to, że kod łączący Twoje konto jest nieprawidłowy!",
-                "cretePasskeyFail": "Utworzenie klucza dostępu nie powiodło się. Spróbuj ponownie.",
+                "createPasskeyFail": "Utworzenie klucza dostępu nie powiodło się. Spróbuj ponownie.",
                 "default": "Uwierzytelnianie nie powiodło się. Spróbuj ponownie.",
                 "linkingCodeNotFound": "Sprawdź, czy kod linku jest poprawny!",
                 "maxLinkedIdentitiesLimitReached": "Osiągnięto limit maksymalnej liczby powiązanych tożsamości.",

@@ -1112,7 +1112,7 @@
             "errors": {
                 "alreadyRegistered": "שיטת האימות כבר קושרת. נסה להתחבר!",
                 "codeInvalid": "נראה שקוד קישור החשבון שלך אינו תקין!",
-                "cretePasskeyFail": "יצירת המפתח נכשלה, אנא נסה שוב.",
+                "createPasskeyFail": "יצירת קוד הגישה נכשלה, אנא נסה שוב.",
                 "default": "האימות נכשל. אנא נסה שוב.",
                 "linkingCodeNotFound": "אנא בדוק שקוד הקישור שלך נכון!",
                 "maxLinkedIdentitiesLimitReached": "הגעת למגבלה של מספר הזהויות המקושרות המרבי.",
