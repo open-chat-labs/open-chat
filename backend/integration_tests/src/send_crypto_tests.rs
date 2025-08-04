@@ -214,7 +214,7 @@ fn send_message_with_transfer_to_group_succeeds(with_c2c_error: bool, icrc2: boo
     assert_eq!(user2_balance, amount);
 
     if with_c2c_error {
-        env.advance_time(Duration::from_secs(10));
+        env.advance_time(Duration::from_secs(15));
         start_canister(env, local_user_index, group_id.into());
     }
 
