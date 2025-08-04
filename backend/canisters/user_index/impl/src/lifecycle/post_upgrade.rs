@@ -1,11 +1,12 @@
+use crate::Data;
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
-use crate::{Data, mutate_state};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
-use local_user_index_canister::{ChitBalance, UserIndexEvent};
+use local_user_index_canister::UserIndexEvent;
 use stable_memory::get_reader;
+use stable_memory_map::StableMemoryMap;
 use tracing::info;
 use user_index_canister::post_upgrade::Args;
 use utils::cycles::init_cycles_dispenser_client;
@@ -18,8 +19,34 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
 
-    let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
+    let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
+
+    let blocked_users = data.blocked_users.collect_all();
+    let blocked_users_len = data.blocked_users.len();
+
+    let mut blocked_user_pairs = Vec::new();
+    for (user_id, blocked_users) in blocked_users.iter() {
+        for blocked in blocked_users {
+            assert!(data.blocked_users.remove(&(*user_id, *blocked)).is_some());
+        }
+    }
+
+    for (user_id, blocked_users) in blocked_users {
+        for blocked in blocked_users {
+            assert!(data.blocked_users.insert((blocked, user_id), ()).is_none());
+            blocked_user_pairs.push((user_id, blocked));
+        }
+    }
+
+    assert_eq!(blocked_users_len, data.blocked_users.len());
+
+    for local_user_index in data.local_index_map.canisters().copied() {
+        for (user_id, blocked) in blocked_user_pairs.iter().copied() {
+            data.user_index_event_sync_queue
+                .push(local_user_index, UserIndexEvent::UserBlocked(user_id, blocked));
+        }
+    }
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
@@ -29,30 +56,4 @@ fn post_upgrade(args: Args) {
 
     let total_instructions = ic_cdk::api::call_context_instruction_counter();
     info!(version = %args.wasm_version, total_instructions, "Post-upgrade complete");
-
-    mutate_state(|state| {
-        let users_to_sync: Vec<_> = state
-            .data
-            .users
-            .iter()
-            .filter_map(|user| {
-                let total_chit_earned = user.total_chit_earned();
-                if total_chit_earned != 0 { Some((user.user_id, total_chit_earned)) } else { None }
-            })
-            .collect();
-
-        for (user_id, total_chit_earned) in users_to_sync {
-            let event = UserIndexEvent::UpdateChitBalance(
-                user_id,
-                ChitBalance {
-                    total_earned: total_chit_earned,
-                    curr_balance: total_chit_earned, // We don't yet maintain the users total chit balance
-                },
-            );
-
-            for canister_id in state.data.local_index_map.canisters() {
-                state.data.user_index_event_sync_queue.push(*canister_id, event.clone());
-            }
-        }
-    });
 }

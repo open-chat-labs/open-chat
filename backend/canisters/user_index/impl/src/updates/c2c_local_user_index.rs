@@ -146,7 +146,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                         curr_balance: total_chit_earned, // We don't yet maintain the users total chit balance
                     },
                 ),
-                Some(caller),
+                None,
             );
         }
         LocalUserIndexEvent::NotifyStreakInsurancePayment(payment) => state.data.streak_insurance_logs.mark_payment(*payment),
@@ -166,11 +166,11 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             state.data.users.remove_bot_installation(ev.bot_id, &ev.location);
         }
         LocalUserIndexEvent::UserBlocked(user_id, blocked) => {
-            state.data.blocked_users.insert((user_id, blocked), ());
+            state.data.blocked_users.insert((blocked, user_id), ());
             state.push_event_to_all_local_user_indexes(UserIndexEvent::UserBlocked(user_id, blocked), Some(caller));
         }
         LocalUserIndexEvent::UserUnblocked(user_id, unblocked) => {
-            state.data.blocked_users.remove(&(user_id, unblocked));
+            state.data.blocked_users.remove(&(unblocked, user_id));
             state.push_event_to_all_local_user_indexes(UserIndexEvent::UserUnblocked(user_id, unblocked), Some(caller));
         }
         LocalUserIndexEvent::SetMaxStreak(user_id, max_streak) => state.data.users.set_max_streak(&user_id, max_streak),
