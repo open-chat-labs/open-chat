@@ -143,6 +143,7 @@ import {
     type InviteCodeResponse,
     isBalanceGate,
     isCaptionedContent,
+    isChitEarnedGate,
     isCompositeGate,
     isCredentialGate,
     isEditableContent,
@@ -3103,6 +3104,9 @@ export class OpenChat {
         const original = originalConfig.gate;
         if (current.kind !== original.kind) return true;
         if (currentConfig.expiry !== originalConfig.expiry) return true;
+        if (isChitEarnedGate(current) && isChitEarnedGate(original)) {
+            return current.minEarned !== original.minEarned;
+        }
         if (isNeuronGate(current) && isNeuronGate(original)) {
             return (
                 current.governanceCanister !== original.governanceCanister ||
@@ -4640,6 +4644,8 @@ export class OpenChat {
                 return currentUserStore.value.diamondStatus.kind === "lifetime";
             } else if (gate.kind === "unique_person_gate") {
                 return currentUserStore.value.isUniquePerson;
+            } else if (gate.kind === "chit_earned_gate") {
+                return currentUserStore.value.totalChitEarned >= gate.minEarned;
             } else {
                 return false;
             }

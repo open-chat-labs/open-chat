@@ -149,6 +149,7 @@
                     name: client.displayName(them),
                     diamondStatus: them?.diamondStatus ?? "inactive",
                     streak: them?.streak ?? 0,
+                    chitEarned: them?.totalChitEarned,
                     hasAchievedMaxStreak: (them?.maxStreak ?? 0) >= 365,
                     avatarUrl: client.userAvatarUrl(them),
                     userId: chatSummary.them,
@@ -170,6 +171,7 @@
                     name: chatSummary.name,
                     diamondStatus: "inactive" as DiamondMembershipStatus["kind"],
                     streak: 0,
+                    chitEarned: undefined,
                     hasAchievedMaxStreak: false,
                     avatarUrl: client.groupAvatarUrl(chatSummary, $selectedCommunitySummaryStore),
                     userId: undefined,
@@ -431,7 +433,8 @@
                         <Badges
                             uniquePerson={chat.uniquePerson}
                             diamondStatus={chat.diamondStatus}
-                            streak={chat.streak} />
+                            streak={chat.streak}
+                            chitEarned={chat.chitEarned} />
                     </WithVerifiedBadge>
                     <BotBadge bot={chat.bot} />
                 </div>

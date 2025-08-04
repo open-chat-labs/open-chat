@@ -4800,6 +4800,7 @@ export const PrizeContent = Type.Object({
     unique_person_only: Type.Boolean(),
     streak_only: Type.Number(),
     requires_captcha: Type.Boolean(),
+    min_chit_earned: Type.Number(),
 });
 
 export type GroupRulesChanged = Static<typeof GroupRulesChanged>;
@@ -5030,6 +5031,7 @@ export const GateCheckFailedReason = Type.Union([
     }),
     Type.Literal("Locked"),
     Type.Literal("NotReferredByMember"),
+    Type.Literal("ChitEarnedTooLow"),
 ]);
 
 export type StartVideoCallArgs = Static<typeof StartVideoCallArgs>;
@@ -6948,6 +6950,11 @@ export const BotLifecycleEvent = Type.Union([
     }),
 ]);
 
+export type ChitEarnedGate = Static<typeof ChitEarnedGate>;
+export const ChitEarnedGate = Type.Object({
+    min_chit_earned: Type.Number(),
+});
+
 export type AccessGateNonComposite = Static<typeof AccessGateNonComposite>;
 export const AccessGateNonComposite = Type.Union([
     Type.Literal("DiamondMember"),
@@ -6967,6 +6974,9 @@ export const AccessGateNonComposite = Type.Union([
     }),
     Type.Literal("Locked"),
     Type.Literal("ReferredByMember"),
+    Type.Object({
+        TotalChitEarned: ChitEarnedGate,
+    }),
 ]);
 
 export type CompletedCryptoTransaction = Static<typeof CompletedCryptoTransaction>;
@@ -7648,6 +7658,9 @@ export const AccessGate = Type.Union([
     }),
     Type.Literal("Locked"),
     Type.Literal("ReferredByMember"),
+    Type.Object({
+        TotalChitEarned: ChitEarnedGate,
+    }),
 ]);
 
 export type BotDefinition = Static<typeof BotDefinition>;
@@ -7828,6 +7841,7 @@ export const PrizeContentInitial = Type.Object({
     unique_person_only: Type.Boolean(),
     streak_only: Type.Number(),
     requires_captcha: Type.Boolean(),
+    min_chit_earned: Type.Number(),
 });
 
 export type MessageContent = Static<typeof MessageContent>;
