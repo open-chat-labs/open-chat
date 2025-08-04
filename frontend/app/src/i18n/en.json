@@ -1112,7 +1112,7 @@
             "errors": {
                 "alreadyRegistered": "Auth method has already been linked. Try signing in!",
                 "codeInvalid": "Your account linking code seems to be invalid!",
-                "cretePasskeyFail": "Passkey creation failed, please try again.",
+                "cretePasskeyFail": "Passkey create failed, please try again.",
                 "default": "Authentication failed. Please try again.",
                 "linkingCodeNotFound": "Please check your linking code is correct!",
                 "maxLinkedIdentitiesLimitReached": "You've reached the limit for the max number of linked identities.",

@@ -300,7 +300,6 @@ import {
     type WorkerResponse,
     type WorkerResult,
     type VerifyAccountLinkingCodeResponse,
-    AccountLinkingErrorCode,
 } from "openchat-shared";
 import page from "page";
 import { tick } from "svelte";
@@ -7673,7 +7672,7 @@ export class OpenChat {
             console.error(e);
             return Promise.reject({
                 kind: "error",
-                code: AccountLinkingErrorCode.UnknownError,
+                code: ErrorCode.Unknown,
                 msg: e ? e.toString() : undefined,
             });
         }

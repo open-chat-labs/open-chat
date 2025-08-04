@@ -16,10 +16,9 @@ import type {
     AccountLinkingCode,
     VerifyAccountLinkingCodeResponse,
 } from "openchat-shared";
-import { buildDelegationIdentity, toDer, AccountLinkingErrorCode } from "openchat-shared";
+import { buildDelegationIdentity, toDer, ErrorCode } from "openchat-shared";
 import { createHttpAgent } from "../utils/httpAgent";
 import { getCachedWebAuthnKey } from "../utils/webAuthnKeyCache";
-import { mapAccountLinkingErrorCode } from "./identity/mappers";
 import { consolidateBytes } from "../utils/mapping";
 
 export class IdentityAgent {
@@ -201,7 +200,7 @@ export class IdentityAgent {
         if ("Error" in finaliseRes) {
             return Promise.reject({
                 kind: "error",
-                code: mapAccountLinkingErrorCode(finaliseRes.Error[0]),
+                code: finaliseRes.Error[0],
             });
         }
 
@@ -212,7 +211,7 @@ export class IdentityAgent {
         if (delegation === undefined) {
             return Promise.reject({
                 kind: "error",
-                code: AccountLinkingErrorCode.DelegationNotFound,
+                code: ErrorCode.Unknown,
                 msg: "Delegation not found, this should never happen",
             });
         }

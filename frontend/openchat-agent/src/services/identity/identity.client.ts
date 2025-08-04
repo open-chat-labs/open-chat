@@ -52,7 +52,6 @@ import {
     initiateIdentityLinkResponse,
     prepareDelegationResponse,
     removeIdentityLinkResponse,
-    mapAccountLinkingErrorCode,
 } from "./mappers";
 import { consolidateBytes, mapOptional, principalStringToBytes } from "../../utils/mapping";
 import type { DelegationIdentity } from "@dfinity/identity";
@@ -246,7 +245,7 @@ export class IdentityClient extends MsgpackCanisterAgent {
             (resp) => {
                 return "Success" in resp
                     ? { kind: "success", username: resp.Success }
-                    : { kind: "error", code: mapAccountLinkingErrorCode(resp.Error[0]) };
+                    : { kind: "error", code: resp.Error[0] };
             },
             IdentityVerifyAccountLinkingCodeArgs,
             IdentityVerifyAccountLinkingCodeResponse,
@@ -269,7 +268,7 @@ export class IdentityClient extends MsgpackCanisterAgent {
         return this.executeMsgpackUpdate(
             "finalise_account_linking_with_code",
             args,
-            (resp) => resp,
+            unitResult,
             IdentityFinaliseAccountLinkingWithCodeArgs,
             IdentityFinaliseAccountLinkingWithCodeResponse,
         );

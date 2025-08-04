@@ -22,7 +22,7 @@ import type {
     RemoveIdentityLinkResponse,
     WebAuthnKeyFull,
 } from "openchat-shared";
-import { AccountLinkingErrorCode, UnsupportedValueError } from "openchat-shared";
+import { UnsupportedValueError } from "openchat-shared";
 import { consolidateBytes, mapOptional, principalBytesToString } from "../../utils/mapping";
 import type { Signature } from "@dfinity/agent";
 import { Delegation } from "@dfinity/identity";
@@ -243,25 +243,4 @@ export function apiWebAuthnKey(key: WebAuthnKeyFull): IdentityWebAuthnKey {
             number,
         ],
     };
-}
-
-export function mapAccountLinkingErrorCode(code: number): AccountLinkingErrorCode {
-    switch (code) {
-        case 100:
-            return AccountLinkingErrorCode.InitiatorNotFound;
-        case 224:
-            return AccountLinkingErrorCode.AlreadyRegistered;
-        case 225:
-            return AccountLinkingErrorCode.PrincipalAlreadyUsed;
-        case 259:
-            return AccountLinkingErrorCode.InvalidPublicKey;
-        case 341:
-            return AccountLinkingErrorCode.InvalidOriginatingCanister;
-        case 342:
-            return AccountLinkingErrorCode.LinkingCodeNotFound;
-        case 343:
-            return AccountLinkingErrorCode.MaxLinkedIdentitiesLimitReached;
-        default:
-            return AccountLinkingErrorCode.UnknownError;
-    }
 }

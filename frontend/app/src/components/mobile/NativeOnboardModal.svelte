@@ -13,8 +13,7 @@
     import LinkVariant from "svelte-material-icons/LinkVariant.svelte";
     import Button from "../Button.svelte";
     import SignUp from "../onboard/SignUp.svelte";
-    import { AccountLinkingErrorCode } from "openchat-shared";
-    import { AndroidWebAuthnErrorCode } from "tauri-plugin-oc-api";
+    import { ErrorCode } from "openchat-shared";
 
     const ALC_LENGTH = 6;
 
@@ -62,6 +61,19 @@
         step = "new-user";
     }
 
+    function errorCodeToi18nKey(code: number | string): string {
+        switch (code) {
+            case ErrorCode.AlreadyRegistered:
+                return "alreadyRegistered";
+            case ErrorCode.LinkingCodeNotFound:
+                return "linkingCodeNotFound";
+            case ErrorCode.MaxLinkedIdentitiesLimitReached:
+                return "maxLinkedIdentitiesLimitReached";
+            default:
+                return "string" === typeof code ? code : "default";
+        }
+    }
+
     function linkAccount() {
         if (!linkingInProgress && accountLinkingCode.length === ALC_LENGTH) {
             linkingInProgress = true;
@@ -70,17 +82,7 @@
                 console.error(err);
                 linkingInProgress = false;
                 if (err && "object" === typeof err && "code" in err) {
-                    switch (err.code) {
-                        case AccountLinkingErrorCode.AlreadyRegistered:
-                        case AccountLinkingErrorCode.LinkingCodeNotFound:
-                        case AccountLinkingErrorCode.MaxLinkedIdentitiesLimitReached:
-                        case AndroidWebAuthnErrorCode.NoProviders:
-                        case AndroidWebAuthnErrorCode.CreatePasskeyFail:
-                            error = err.code;
-                            break;
-                        default:
-                            error = "default";
-                    }
+                    error = errorCodeToi18nKey(err.code);
                 } else {
                     error = "default";
                 }
