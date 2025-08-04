@@ -1112,7 +1112,15 @@
     "native": {
         "auth": {
             "createAccount": "Neues Konto erstellen",
-            "error": "Authentifizierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+            "errors": {
+                "alreadyRegistered": "Die Authentifizierungsmethode wurde bereits verknüpft. Versuchen Sie, sich anzumelden!",
+                "codeInvalid": "Ihr Kontoverknüpfungscode scheint ungültig zu sein!",
+                "createPasskeyFail": "Das Erstellen des Passkeys ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
+                "default": "Authentifizierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+                "linkingCodeNotFound": "Bitte überprüfen Sie, ob Ihr Verknüpfungscode korrekt ist!",
+                "maxLinkedIdentitiesLimitReached": "Sie haben das Limit für die maximale Anzahl verknüpfter Identitäten erreicht.",
+                "noProviders": "Auf Ihrem Telefon sind keine Anmeldeinformationsmanager verfügbar! Sie müssen mindestens einen aktivieren oder installieren."
+            },
             "existingAccount": "Ich bin ein bestehender Benutzer",
             "linkAccount": {
                 "cta": "Konto verknüpfen",

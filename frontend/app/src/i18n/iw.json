@@ -1112,7 +1112,15 @@
     "native": {
         "auth": {
             "createAccount": "צור חשבון חדש",
-            "error": "האימות נכשל. אנא נסה שוב.",
+            "errors": {
+                "alreadyRegistered": "שיטת האימות כבר קושרת. נסה להתחבר!",
+                "codeInvalid": "נראה שקוד קישור החשבון שלך אינו תקין!",
+                "createPasskeyFail": "יצירת קוד הגישה נכשלה, אנא נסה שוב.",
+                "default": "האימות נכשל. אנא נסה שוב.",
+                "linkingCodeNotFound": "אנא בדוק שקוד הקישור שלך נכון!",
+                "maxLinkedIdentitiesLimitReached": "הגעת למגבלה של מספר הזהויות המקושרות המרבי.",
+                "noProviders": "אין מנהלי אישורים זמינים בטלפון שלך! תצטרך להפעיל או להתקין לפחות אחד."
+            },
             "existingAccount": "אני משתמש קיים",
             "linkAccount": {
                 "cta": "קישור חשבון",

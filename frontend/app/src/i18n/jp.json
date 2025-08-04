@@ -1112,7 +1112,15 @@
     "native": {
         "auth": {
             "createAccount": "新しいアカウントを作成",
-            "error": "認証に失敗しました。もう一度お試しください。",
+            "errors": {
+                "alreadyRegistered": "認証方法はすでにリンクされています。サインインしてみてください。",
+                "codeInvalid": "アカウントリンクコードが無効のようです。",
+                "createPasskeyFail": "パスキーの作成に失敗しました。もう一度お試しください。",
+                "default": "認証に失敗しました。もう一度お試しください。",
+                "linkingCodeNotFound": "リンクコードが正しいことを確認してください。",
+                "maxLinkedIdentitiesLimitReached": "リンクされた ID の最大数の制限に達しました。",
+                "noProviders": "お使いの携帯電話には利用可能な認証情報マネージャーがありません。少なくとも 1 つを有効にするかインストールする必要があります。"
+            },
             "existingAccount": "私は既存のユーザーです",
             "linkAccount": {
                 "cta": "アカウントをリンク",

@@ -300,6 +300,7 @@ import {
     type WorkerRequest,
     type WorkerResponse,
     type WorkerResult,
+    type VerifyAccountLinkingCodeResponse,
 } from "openchat-shared";
 import page from "page";
 import { tick } from "svelte";
@@ -588,6 +589,7 @@ import {
 } from "./utils/user";
 import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 import { createWebAuthnIdentity, MultiWebAuthnIdentity } from "./utils/webAuthn";
+import { AndroidWebAuthnErrorCode } from "tauri-plugin-oc-api";
 
 export const DEFAULT_WORKER_TIMEOUT = 1000 * 90;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -3577,7 +3579,6 @@ export class OpenChat {
                       .then((resp) =>
                           this.#handleThreadEventsResponse(
                               serverChat.id,
-
                               selectedThreadRootMessageIndex!,
                               resp,
                           ),
@@ -3727,7 +3728,7 @@ export class OpenChat {
             // now a new latest message and if so, mark it as a local chat summary update.
             let latestMessageIndex =
                 threadRootMessageIndex === undefined
-                    ? allServerChatsStore.value.get(chatId)?.latestMessageIndex ?? -1
+                    ? (allServerChatsStore.value.get(chatId)?.latestMessageIndex ?? -1)
                     : undefined;
             let newLatestMessage: EventWrapper<Message> | undefined = undefined;
 
@@ -7624,6 +7625,65 @@ export class OpenChat {
         return await this.#finaliseWebAuthnSignin(tempKey, () => webAuthnIdentity, assumeIdentity);
     }
 
+    async linkAccountsWithAndroidWebAuthn(accountLinkingCode: string): Promise<void> {
+        try {
+            // Also used as session key
+            const tempKey = await ECDSAKeyIdentity.generate();
+
+            // Verify code
+            const verificationRes = await this.verifyAccountLinkingCode(
+                accountLinkingCode,
+                tempKey,
+            );
+
+            // Error should be of type AccountLinkingError
+            if ("error" === verificationRes.kind) {
+                return Promise.reject(verificationRes);
+            }
+
+            // Create passkey
+            let cachedWebAuthnKey: WebAuthnKeyFull | undefined;
+            const webAuthnIdentity = await createAndroidWebAuthnPasskeyIdentity(
+                verificationRes.username,
+                (key) => {
+                    cachedWebAuthnKey = key;
+                    return this.#storeWebAuthnKeyInCache(key);
+                },
+            );
+
+            if (!cachedWebAuthnKey) {
+                return Promise.reject({
+                    code: AndroidWebAuthnErrorCode.NoWebAuthnKey,
+                });
+            }
+
+            // Finalise linking and get the delegated identity
+            await this.finaliseAccountLinkingWithCode(
+                tempKey,
+                webAuthnIdentity.getPrincipal().toString(),
+                webAuthnIdentity.getPublicKey().toDer(),
+                cachedWebAuthnKey,
+            );
+
+            await this.#finaliseWebAuthnSignin(tempKey, () => webAuthnIdentity, true);
+
+            return Promise.resolve();
+        } catch (e) {
+            if (typeof e === "object") {
+                // Either android webauthn error, or account linking error
+                return Promise.reject(e);
+            }
+
+            // Unknown error!
+            console.error(e);
+            return Promise.reject({
+                kind: "error",
+                code: ErrorCode.Unknown,
+                msg: e ? e.toString() : undefined,
+            });
+        }
+    }
+
     async signInWithWebAuthn() {
         const webAuthnOrigin = this.config.webAuthnOrigin;
         if (webAuthnOrigin === undefined) throw new Error("WebAuthn origin not set");
@@ -8440,7 +8500,7 @@ export class OpenChat {
     }
 
     getStreak(userId: string | undefined) {
-        return userId ? userStore.get(userId)?.streak ?? 0 : 0;
+        return userId ? (userStore.get(userId)?.streak ?? 0) : 0;
     }
 
     getBotDefinition(endpoint: string): Promise<BotDefinitionResponse> {
@@ -8987,6 +9047,32 @@ export class OpenChat {
     createAccountLinkingCode(): Promise<AccountLinkingCode | undefined> {
         return this.#sendRequest({
             kind: "createAccountLinkingCode",
+        });
+    }
+
+    verifyAccountLinkingCode(
+        code: string,
+        tempKey: ECDSAKeyIdentity,
+    ): Promise<VerifyAccountLinkingCodeResponse> {
+        return this.#sendRequest({
+            kind: "verifyAccountLinkingCode",
+            code,
+            tempKey: tempKey.getKeyPair(),
+        });
+    }
+
+    finaliseAccountLinkingWithCode(
+        tempKey: ECDSAKeyIdentity,
+        principal: string,
+        publicKey: Uint8Array,
+        webAuthnKey?: WebAuthnKeyFull,
+    ): Promise<DelegationIdentity> {
+        return this.#sendRequest({
+            kind: "finaliseAccountLinkingWithCode",
+            tempKey: tempKey.getKeyPair(),
+            principal,
+            publicKey,
+            webAuthnKey,
         });
     }
 

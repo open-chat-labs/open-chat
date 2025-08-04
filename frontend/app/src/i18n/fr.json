@@ -1112,7 +1112,15 @@
     "native": {
         "auth": {
             "createAccount": "Créer un nouveau compte",
-            "error": "L'authentification a échoué. Veuillez réessayer.",
+            "errors": {
+                "alreadyRegistered": "La méthode d'authentification a déjà été associée. Essayez de vous connecter !",
+                "codeInvalid": "Votre code de liaison de compte semble être invalide !",
+                "createPasskeyFail": "La création de la clé d'accès a échoué, veuillez réessayer.",
+                "default": "Échec de l'authentification. Veuillez réessayer.",
+                "linkingCodeNotFound": "Veuillez vérifier que votre code de liaison est correct !",
+                "maxLinkedIdentitiesLimitReached": "Vous avez atteint la limite du nombre maximal d'identités liées.",
+                "noProviders": "Aucun gestionnaire d'identifiants n'est disponible sur votre téléphone ! Vous devrez en activer ou en installer au moins un."
+            },
             "existingAccount": "Je suis un utilisateur existant",
             "linkAccount": {
                 "cta": "Lier le compte",

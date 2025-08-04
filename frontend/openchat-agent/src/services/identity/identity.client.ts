@@ -20,6 +20,10 @@ import {
     IdentityRemoveIdentityLinkResponse,
     UnitResult as TUnitResult,
     IdentityCreateAccountLinkingCodeResponse,
+    IdentityVerifyAccountLinkingCodeArgs,
+    IdentityVerifyAccountLinkingCodeResponse,
+    IdentityFinaliseAccountLinkingWithCodeArgs,
+    IdentityFinaliseAccountLinkingWithCodeResponse,
 } from "../../typebox";
 import type {
     ApproveIdentityLinkResponse,
@@ -36,6 +40,7 @@ import type {
     Success,
     WebAuthnKeyFull,
     AccountLinkingCode,
+    VerifyAccountLinkingCodeResponse,
 } from "openchat-shared";
 import {
     apiWebAuthnKey,
@@ -51,7 +56,7 @@ import {
 import { consolidateBytes, mapOptional, principalStringToBytes } from "../../utils/mapping";
 import type { DelegationIdentity } from "@dfinity/identity";
 import { signedDelegation } from "../../utils/id";
-import { unitResult } from "../common/chatMappersV2";
+import { unitResult, mapResult } from "../common/chatMappersV2";
 import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
 
 export class IdentityClient extends MsgpackCanisterAgent {
@@ -230,6 +235,38 @@ export class IdentityClient extends MsgpackCanisterAgent {
             },
             Empty,
             IdentityCreateAccountLinkingCodeResponse,
+        );
+    }
+
+    verifyAccountLinkingCode(code: string): Promise<VerifyAccountLinkingCodeResponse> {
+        return this.executeMsgpackUpdate(
+            "verify_account_linking_code",
+            { code },
+            (resp) => mapResult(resp, (username) => ({ kind: "success", username })),
+            IdentityVerifyAccountLinkingCodeArgs,
+            IdentityVerifyAccountLinkingCodeResponse,
+        );
+    }
+
+    finaliseAccountLinkingWithCode(
+        principal: string,
+        publicKey: Uint8Array,
+        sessionKey: Uint8Array,
+        webAuthnKey?: WebAuthnKeyFull,
+    ): Promise<IdentityFinaliseAccountLinkingWithCodeResponse> {
+        const args = {
+            principal,
+            public_key: publicKey,
+            session_key: sessionKey,
+            max_time_to_live: undefined,
+            webauthn_key: mapOptional(webAuthnKey, apiWebAuthnKey),
+        };
+        return this.executeMsgpackUpdate(
+            "finalise_account_linking_with_code",
+            args,
+            (resp) => resp,
+            IdentityFinaliseAccountLinkingWithCodeArgs,
+            IdentityFinaliseAccountLinkingWithCodeResponse,
         );
     }
 

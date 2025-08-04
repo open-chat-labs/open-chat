@@ -8,12 +8,14 @@
     import Select from "../Select.svelte";
     import Translatable from "../Translatable.svelte";
     import OnBoardOptionLogo from "@components/home/profile/OnBoardOptionLogo.svelte";
-    // import { userCreatedStore } from "openchat-client";
     import AccountPlus from "svelte-material-icons/AccountPlus.svelte";
     import Login from "svelte-material-icons/Login.svelte";
     import LinkVariant from "svelte-material-icons/LinkVariant.svelte";
     import Button from "../Button.svelte";
     import SignUp from "../onboard/SignUp.svelte";
+    import { ErrorCode } from "openchat-shared";
+
+    const ALC_LENGTH = 6;
 
     interface Props {
         onClose: () => void;
@@ -22,14 +24,14 @@
     let { onClose }: Props = $props();
 
     const client = getContext<OpenChat>("client");
-    // const hasExistingAccount = $userCreatedStore;
 
     type Step = "choose-auth" | "new-user" | "one-time-password";
     let step: Step = $state("choose-auth");
-    let otp = $state("");
-    let otpInput: HTMLInputElement | undefined = $state(undefined);
+    let accountLinkingCode = $state("");
+    let alcInput: HTMLInputElement | undefined = $state(undefined);
     let linkingInProgress = $state(false);
     let error: string | undefined = $state(undefined);
+    let signUpError: string | undefined = $state(undefined);
     let selectedLocale = $state(($locale as string).substring(0, 2));
 
     $effect(() => {
@@ -59,10 +61,34 @@
         step = "new-user";
     }
 
+    function errorCodeToi18nKey(code: number | string): string {
+        switch (code) {
+            case ErrorCode.AlreadyRegistered:
+                return "alreadyRegistered";
+            case ErrorCode.LinkingCodeNotFound:
+                return "linkingCodeNotFound";
+            case ErrorCode.MaxLinkedIdentitiesLimitReached:
+                return "maxLinkedIdentitiesLimitReached";
+            default:
+                return "string" === typeof code ? code : "default";
+        }
+    }
+
     function linkAccount() {
-        if (!linkingInProgress && otp.length === 6) {
+        if (!linkingInProgress && accountLinkingCode.length === ALC_LENGTH) {
             linkingInProgress = true;
-            console.log("Linking account with OTP:", otp);
+            error = undefined;
+            client.linkAccountsWithAndroidWebAuthn(accountLinkingCode).catch((err) => {
+                console.error(err);
+                linkingInProgress = false;
+                if (err && "object" === typeof err && "code" in err) {
+                    error = errorCodeToi18nKey(err.code);
+                } else {
+                    error = "default";
+                }
+            });
+        } else {
+            error = "codeInvalid";
         }
     }
 
@@ -130,9 +156,10 @@
     {/snippet}
     {#snippet body()}
         <div class="body">
-            {#if error}
+            {#if error || signUpError}
                 <div class="error">
-                    <Translatable resourceKey={i18nKey("native.auth.error")} />
+                    <Translatable
+                        resourceKey={i18nKey(`native.auth.errors.${error ?? "default"}`)} />
                 </div>
             {/if}
             {#if step === "choose-auth"}
@@ -141,25 +168,25 @@
                     {@render button(false, "native.auth.existingAccount", "Login", signIn)}
                 </div>
             {:else if step === "new-user"}
-                <SignUp {onCreatedUser} bind:error />
+                <SignUp {onCreatedUser} bind:error={signUpError} />
             {:else if step === "one-time-password"}
-                <div class="otp-container">
+                <div class="alc-container">
                     <div class="title">
                         <Translatable resourceKey={i18nKey("native.auth.linkAccount.info")} />
                     </div>
                     <input
-                        class="otp-input"
-                        bind:value={otp}
-                        bind:this={otpInput}
+                        class="alc-input"
+                        bind:value={accountLinkingCode}
+                        bind:this={alcInput}
                         type="text"
                         maxlength="6"
                         pattern="[a-zA-Z0-9]{6}" />
                     <!-- svelte-ignore a11y_no_static_element_interactions -->
                     <!-- svelte-ignore a11y_click_events_have_key_events -->
-                    <div class="otp" onclick={() => otpInput?.focus()}>
+                    <div class="alc" onclick={() => alcInput?.focus()}>
                         {#each [...Array(6).keys()] as key}
-                            <div class="char {key === otp.length ? 'current' : ''}">
-                                <span class="value">{otp[key] || ""}</span>
+                            <div class="char {key === accountLinkingCode.length ? 'current' : ''}">
+                                <span class="value">{accountLinkingCode[key] || ""}</span>
                             </div>
                         {/each}
                     </div>
@@ -263,8 +290,8 @@
         width: 100%;
     }
 
-    .otp-container {
-        .otp {
+    .alc-container {
+        .alc {
             display: flex;
             padding: $sp6 0;
             gap: $sp4;
@@ -303,13 +330,13 @@
             margin-top: $sp3;
         }
 
-        .otp-input {
+        .alc-input {
             height: 0;
             padding: 0;
             border: none;
             position: absolute;
             left: -2000px;
-            &:focus + .otp > .char.current {
+            &:focus + .alc > .char.current {
                 &:before {
                     content: "";
                     display: block;
