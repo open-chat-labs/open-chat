@@ -297,7 +297,7 @@ fn notifications_blocked_from_blocked_users() {
 
     client::user::happy_path::block_user(env, &user2, user1.user_id);
 
-    tick_many(env, 5);
+    tick_many(env, 10);
 
     client::group::happy_path::send_text_message(env, &user1, group_id, None, random_string(), None);
 
@@ -314,9 +314,11 @@ fn notifications_blocked_from_blocked_users() {
 
     client::user::happy_path::unblock_user(env, &user2, user1.user_id);
 
-    tick_many(env, 5);
+    tick_many(env, 10);
 
     client::group::happy_path::send_text_message(env, &user1, group_id, None, random_string(), None);
+
+    tick_many(env, 3);
 
     let notifications_response = client::local_user_index::happy_path::notifications(
         env,
@@ -325,12 +327,7 @@ fn notifications_blocked_from_blocked_users() {
         latest_notification_index + 2,
     );
 
-    assert_eq!(
-        notifications_response.notifications.len(),
-        1,
-        "{:?}",
-        notifications_response.notifications
-    );
+    assert_eq!(notifications_response.notifications.len(), 1);
     assert!(notifications_response.subscriptions.contains_key(&user2.user_id));
 }
 
