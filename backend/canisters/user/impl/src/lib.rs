@@ -324,6 +324,7 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
         self.push_local_user_index_canister_event(
             LocalUserIndexEvent::NotifyChit(NotifyChit {
                 timestamp: now,
+                total_chit_earned: self.data.chit_events.total_chit_earned(),
                 chit_balance: self.data.chit_events.balance_for_month_by_timestamp(now),
                 streak: self.data.streak.days(now),
                 streak_ends: self.data.streak.ends(),

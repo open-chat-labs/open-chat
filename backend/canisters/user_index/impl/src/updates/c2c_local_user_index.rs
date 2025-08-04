@@ -123,6 +123,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
 
             if state.data.users.set_chit(
                 &user_id,
+                chit.total_chit_earned,
                 chit.timestamp,
                 chit.chit_balance,
                 chit.streak,
