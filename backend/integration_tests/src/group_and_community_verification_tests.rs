@@ -58,6 +58,7 @@ fn e2e_group_and_community_verification_test() {
     tick_many(env, 3);
     let time_after_community_verification = now_millis(env);
     env.advance_time(Duration::from_secs(10));
+    tick_many(env, 3);
 
     let Some(updates) = client::community::happy_path::summary_updates(env, user.principal, community_id, initial_time) else {
         panic!("expected community::summary_updates");
@@ -93,9 +94,9 @@ fn e2e_group_and_community_verification_test() {
     );
     assert!(matches!(response, revoke_community_verification::Response::Success));
 
+    tick_many(env, 3);
     assert_community_verification_status(env, user.principal, community_id, canister_ids.group_index, false);
 
-    tick_many(env, 3);
     let time_after_community_unverified = now_millis(env);
     env.advance_time(Duration::from_secs(10));
 
@@ -130,7 +131,7 @@ fn e2e_group_and_community_verification_test() {
     assert_ne!(&new_community_name, &group_name);
     assert!(community_match.name.starts_with(&group_name));
 
-    tick_many(env, 3);
+    tick_many(env, 5);
     let time_after_group_verification = now_millis(env);
     env.advance_time(Duration::from_secs(10));
 
@@ -160,9 +161,9 @@ fn e2e_group_and_community_verification_test() {
     );
     assert!(matches!(response, revoke_group_verification::Response::Success));
 
+    tick_many(env, 5);
     assert_group_verification_status(env, user.principal, group_id, canister_ids.group_index, false);
 
-    tick_many(env, 3);
     env.advance_time(Duration::from_secs(10));
 
     let Some(updates) =
@@ -195,7 +196,6 @@ fn group_verification_revoked_if_name_changed() {
     );
 
     env.tick();
-
     assert_group_verification_status(env, user.principal, group_id, canister_ids.group_index, true);
 
     client::group::happy_path::update_group(
@@ -233,7 +233,6 @@ fn community_verification_revoked_if_name_changed() {
     );
 
     env.tick();
-
     assert_community_verification_status(env, user.principal, community_id, canister_ids.group_index, true);
 
     client::community::happy_path::update_community(
@@ -246,6 +245,7 @@ fn community_verification_revoked_if_name_changed() {
         },
     );
 
+    env.tick();
     assert_community_verification_status(env, user.principal, community_id, canister_ids.group_index, false);
 }
 

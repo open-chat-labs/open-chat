@@ -129,14 +129,19 @@ pub fn register_user(env: &mut PocketIc, canister_ids: &CanisterIds) -> User {
     register_user_with_referrer(env, canister_ids, None)
 }
 
+pub fn register_user_on_subnet(env: &mut PocketIc, canister_ids: &CanisterIds, subnet: Principal) -> User {
+    let (auth_principal, public_key) = random_internet_identity_principal();
+    register_user_internal(env, canister_ids, None, auth_principal, public_key, Some(subnet))
+}
+
 pub fn register_user_with_referrer(env: &mut PocketIc, canister_ids: &CanisterIds, referral_code: Option<String>) -> User {
     let (auth_principal, public_key) = random_internet_identity_principal();
-    register_user_internal(env, canister_ids, referral_code, auth_principal, public_key)
+    register_user_internal(env, canister_ids, referral_code, auth_principal, public_key, None)
 }
 
 pub fn register_user_and_include_auth(env: &mut PocketIc, canister_ids: &CanisterIds) -> (User, UserAuth) {
     let (auth_principal, public_key, delegation) = sign_in_with_email(env, canister_ids);
-    let user = register_user_internal(env, canister_ids, None, auth_principal, public_key.clone());
+    let user = register_user_internal(env, canister_ids, None, auth_principal, public_key.clone(), None);
     let user_auth = UserAuth {
         auth_principal,
         public_key,
@@ -186,6 +191,7 @@ fn register_user_internal(
     referral_code: Option<String>,
     auth_principal: Principal,
     public_key: Vec<u8>,
+    subnet: Option<Principal>,
 ) -> User {
     let session_key = random::<[u8; 32]>().to_vec();
     let create_identity_result = identity::happy_path::create_identity(
@@ -197,7 +203,16 @@ fn register_user_internal(
         true,
     );
 
-    let local_user_index = user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let local_user_index = subnet
+        .map(|sid| {
+            canister_ids
+                .subnets
+                .iter()
+                .find(|s| s.subnet_id == sid)
+                .unwrap()
+                .local_user_index
+        })
+        .unwrap_or_else(|| user_index::happy_path::user_registration_canister(env, canister_ids.user_index));
 
     local_user_index::happy_path::register_user_with_referrer(
         env,

@@ -28,7 +28,7 @@ fn join_public_community_succeeds() {
 
     client::community::happy_path::join_community(env, user2.principal, community_id);
 
-    env.tick();
+    tick_many(env, 3);
 
     let initial_state = client::user::happy_path::initial_state(env, &user2);
 
@@ -101,7 +101,7 @@ fn join_private_community_with_invitation_succeeds() {
 
     client::community::happy_path::join_community(env, user2.principal, community_id);
 
-    env.tick();
+    tick_many(env, 3);
 
     let initial_state = client::user::happy_path::initial_state(env, &user2);
 
@@ -155,7 +155,7 @@ fn join_private_community_using_invite_code_succeeds() {
         local_user_index_canister::join_community::Response::Success(_)
     ));
 
-    env.tick();
+    tick_many(env, 3);
 
     let initial_state = client::user::happy_path::initial_state(env, &user2);
 
