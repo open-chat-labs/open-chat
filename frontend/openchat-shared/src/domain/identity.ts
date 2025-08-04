@@ -143,14 +143,6 @@ export type AccountLinkingCode = {
     expiresAt: bigint;
 };
 
-export type VerifyAccountLinkingCodeResponse =
-    | { kind: "success"; username: string }
-    | AccountLinkingError;
+export type VerifyAccountLinkingCodeResponse = { kind: "success"; username: string } | OCError;
 
-export type FinaliseAccountLinkingResponse = { kind: "success" } | AccountLinkingError;
-
-export type AccountLinkingError = {
-    kind: "error";
-    code: ErrorCode;
-    msg?: string;
-};
+export type FinaliseAccountLinkingResponse = { kind: "success" } | OCError;

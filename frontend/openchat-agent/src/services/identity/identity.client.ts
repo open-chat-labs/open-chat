@@ -245,7 +245,7 @@ export class IdentityClient extends MsgpackCanisterAgent {
             (resp) => {
                 return "Success" in resp
                     ? { kind: "success", username: resp.Success }
-                    : { kind: "error", code: resp.Error[0] };
+                    : { kind: "error", code: resp.Error[0], message: resp.Error[1] ?? undefined };
             },
             IdentityVerifyAccountLinkingCodeArgs,
             IdentityVerifyAccountLinkingCodeResponse,
