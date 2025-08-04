@@ -61,7 +61,11 @@ fn disappearing_messages_in_direct_chats() {
         let (user_a, user_b) = if b { (&user1, &user2) } else { (&user2, &user1) };
         let events_by_index_response =
             client::user::happy_path::events_by_index(env, user_a, user_b.user_id, vec![send_message_response1.event_index]);
-        assert!(events_by_index_response.events.is_empty());
+        assert!(
+            events_by_index_response.events.is_empty(),
+            "Case: {b}. Events: {:?}",
+            events_by_index_response.events
+        );
         assert_eq!(
             *events_by_index_response.expired_event_ranges.first().unwrap(),
             expected_expired_events_range
