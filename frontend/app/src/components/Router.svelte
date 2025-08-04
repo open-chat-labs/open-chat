@@ -249,7 +249,7 @@
                 client.setSelectedCommunity(id).then((preview) => {
                     if (preview && $selectedChatIdStore === undefined) {
                         // if we are previewing the community we need to select the first chat manually
-                        client.selectFirstChat();
+                        client.selectDefaultChat();
                     }
                 });
             });
@@ -294,7 +294,7 @@
             $chatListScopeStore.kind !== "none" &&
             !$exploringStore
         ) {
-            client.selectFirstChat();
+            client.selectDefaultChat();
         }
     });
 
