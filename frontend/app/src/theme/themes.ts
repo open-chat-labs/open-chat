@@ -4,7 +4,7 @@ import { getTheme as getBarbieTheme } from "./community/barbie";
 import { getTheme as getBlueTheme } from "./community/blue";
 import { getTheme as getHalloweenTheme } from "./community/halloween";
 import { getTheme as getMatteBlackGoldTheme } from "./community/matteblackgold";
-// import { getTheme as getNeonTheme } from "./community/neon";
+import { getTheme as getNeonTheme } from "./community/neon";
 import { getTheme as getNightvisionTheme } from "./community/nightvision";
 import { getTheme as getSignalsTheme } from "./community/signals";
 import { getTheme as getSolarizedDarkTheme } from "./community/solarizeddark";
@@ -32,8 +32,11 @@ export const communityThemes = [
     getSolarizedDarkTheme(cloneTheme(defaultDark)),
     getHalloweenTheme(cloneTheme(defaultDark)),
     getSignalsTheme(cloneTheme(blueTheme)),
-    // getNeonTheme(cloneTheme(defaultDark)), //TODO - uncomment this to expose the (dark) Neon theme
 ];
+
+if (localStorage.getItem("openchat_neon_theme") === "true") {
+    communityThemes.push(getNeonTheme(cloneTheme(defaultDark)));
+}
 
 export const themes: Themes = {
     white: defaultLight,
