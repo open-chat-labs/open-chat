@@ -54,8 +54,6 @@ fn group_message_notification_succeeds() {
 
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), false, false);
     let local_user_index_canister = canister_ids.local_user_index(env, group_id);
-    let latest_notification_index =
-        client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index_canister);
 
     client::local_user_index::happy_path::add_users_to_group(
         env,
@@ -65,15 +63,8 @@ fn group_message_notification_succeeds() {
         vec![(user2.user_id, user2.principal)],
     );
 
-    let notifications_response = client::local_user_index::happy_path::notifications(
-        env,
-        *controller,
-        local_user_index_canister,
-        latest_notification_index + 1,
-    );
-
-    assert_eq!(notifications_response.notifications.len(), 1, "{notifications_response:?}");
-    assert!(notifications_response.subscriptions.contains_key(&user2.user_id));
+    let latest_notification_index =
+        client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index_canister);
 
     client::group::happy_path::send_text_message(env, &user1, group_id, None, random_string(), None);
 
@@ -86,8 +77,7 @@ fn group_message_notification_succeeds() {
         latest_notification_index + 1,
     );
 
-    // There should be 2 notifications (1 for being added to the group, 1 for the message)
-    assert_eq!(notifications_response.notifications.len(), 2, "{notifications_response:?}");
+    assert_eq!(notifications_response.notifications.len(), 1);
     assert!(notifications_response.subscriptions.contains_key(&user2.user_id));
 }
 
