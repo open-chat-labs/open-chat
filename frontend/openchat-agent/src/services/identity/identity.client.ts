@@ -56,7 +56,7 @@ import {
 import { consolidateBytes, mapOptional, principalStringToBytes } from "../../utils/mapping";
 import type { DelegationIdentity } from "@dfinity/identity";
 import { signedDelegation } from "../../utils/id";
-import { unitResult } from "../common/chatMappersV2";
+import { unitResult, mapResult } from "../common/chatMappersV2";
 import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
 
 export class IdentityClient extends MsgpackCanisterAgent {
@@ -242,11 +242,7 @@ export class IdentityClient extends MsgpackCanisterAgent {
         return this.executeMsgpackUpdate(
             "verify_account_linking_code",
             { code },
-            (resp) => {
-                return "Success" in resp
-                    ? { kind: "success", username: resp.Success }
-                    : { kind: "error", code: resp.Error[0], message: resp.Error[1] ?? undefined };
-            },
+            (resp) => mapResult(resp, (username) => ({ kind: "success", username })),
             IdentityVerifyAccountLinkingCodeArgs,
             IdentityVerifyAccountLinkingCodeResponse,
         );
