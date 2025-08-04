@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Maintain event ordering when retrying failed c2c calls ([#8429](https://github.com/open-chat-labs/open-chat/pull/8429))
+- Invert the map of blocked users ([#8431](https://github.com/open-chat-labs/open-chat/pull/8431))
 
 ## [[2.0.1848](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1848-local_user_index)] - 2025-08-04
 

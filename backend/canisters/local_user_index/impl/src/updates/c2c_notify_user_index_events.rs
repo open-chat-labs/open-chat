@@ -306,10 +306,10 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             );
         }
         UserIndexEvent::UserBlocked(user_id, blocked) => {
-            state.data.blocked_users.insert((user_id, blocked), ());
+            state.data.blocked_users.insert((blocked, user_id), ());
         }
         UserIndexEvent::UserUnblocked(user_id, unblocked) => {
-            state.data.blocked_users.remove(&(user_id, unblocked));
+            state.data.blocked_users.remove(&(unblocked, user_id));
         }
     }
 }
