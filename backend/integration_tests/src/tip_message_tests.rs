@@ -1,5 +1,6 @@
 use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
+use crate::utils::tick_many;
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use constants::{ICP_SYMBOL, ICP_TRANSFER_FEE};
@@ -27,6 +28,8 @@ fn tip_direct_message_succeeds() {
     let event_index =
         client::user::happy_path::send_text_message(env, &user2, user1.user_id, "TEXT", Some(message_id)).event_index;
 
+    tick_many(env, 3);
+
     client::user::happy_path::tip_message(
         env,
         &user1,
@@ -38,6 +41,8 @@ fn tip_direct_message_succeeds() {
         tip_amount,
         ICP_TRANSFER_FEE,
     );
+
+    tick_many(env, 3);
 
     let user1_message = client::user::happy_path::events_by_index(env, &user2, user1.user_id, vec![event_index])
         .events
@@ -226,7 +231,7 @@ fn tip_group_message_retries_if_c2c_call_fails() {
     env.tick();
     start_canister(env, local_user_index, group_id.into());
     env.advance_time(Duration::from_secs(10));
-    env.tick();
+    tick_many(env, 3);
 
     let message = client::group::happy_path::events_by_index(env, &user2, group_id, vec![event_index])
         .events
@@ -297,10 +302,10 @@ fn tip_channel_message_retries_if_c2c_call_fails() {
         user_canister::tip_message::Response::Retrying(_)
     ));
 
-    env.tick();
+    tick_many(env, 3);
     start_canister(env, local_user_index, community_id.into());
     env.advance_time(Duration::from_secs(10));
-    env.tick();
+    tick_many(env, 3);
 
     let message = client::community::happy_path::events_by_index(env, &user2, community_id, channel_id, vec![event_index])
         .events
@@ -320,6 +325,8 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     let user2 = client::register_user(env, canister_ids);
 
     client::ledger::happy_path::transfer(env, controller, canister_ids.icp_ledger, user1.user_id, 10_000_000_000);
+
+    tick_many(env, 3);
 
     TestData { user1, user2 }
 }

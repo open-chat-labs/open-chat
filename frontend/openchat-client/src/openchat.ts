@@ -340,6 +340,7 @@ import {
     isDiamondStore,
     isLifetimeDiamondStore,
     lastCryptoSent,
+    lastSelectedChatByScopeStore,
     latestSuccessfulUpdatesLoop,
     localUpdates,
     messageActivitySummaryStore,
@@ -1322,7 +1323,7 @@ export class OpenChat {
     archiveChat(chatId: ChatIdentifier): Promise<boolean> {
         const undo = localUpdates.updateArchived(chatId, true);
         if (chatIdentifiersEqual(chatId, selectedChatIdStore.value)) {
-            this.selectFirstChat();
+            this.selectDefaultChat();
         }
         return this.#sendRequest({ kind: "archiveChat", chatId })
             .then((resp) => {
@@ -1456,7 +1457,7 @@ export class OpenChat {
                 if (resp.kind === "success") {
                     this.removeChat(chatId);
                     if (chatIdentifiersEqual(chatId, selectedChatIdStore.value)) {
-                        this.selectFirstChat();
+                        this.selectDefaultChat();
                     }
                     return true;
                 } else {
@@ -2925,6 +2926,11 @@ export class OpenChat {
                     this.getUser(selectedChat.them.userId);
                 }
             }
+
+            lastSelectedChatByScopeStore.update((map) => {
+                map.set(chatListScopeStore.value, chatId);
+                return map;
+            });
         }
 
         if (isProposalsChat(clientChat)) {
@@ -7956,14 +7962,34 @@ export class OpenChat {
         return preview;
     }
 
-    selectFirstChat(): boolean {
+    #selectLastSelectedChat(): boolean {
+        const scope = chatListScopeStore.value;
+        const mostRecentId = lastSelectedChatByScopeStore.value.get(scope);
+        const mostRecentChat = mostRecentId
+            ? chatSummariesStore.value.get(mostRecentId)
+            : undefined;
+        if (mostRecentChat !== undefined) {
+            pageRedirect(routeForChatIdentifier(scope.kind, mostRecentChat.id));
+            return true;
+        }
+        return false;
+    }
+
+    #selectFirstChat(): boolean {
+        const first = [...chatSummariesListStore.value.values()].find(
+            (c) => !c.membership.archived,
+        );
+        if (first !== undefined) {
+            pageRedirect(routeForChatIdentifier(chatListScopeStore.value.kind, first.id));
+            return true;
+        }
+        return false;
+    }
+
+    selectDefaultChat(): boolean {
         if (!get(mobileWidth)) {
-            const first = [...chatSummariesListStore.value.values()].find(
-                (c) => !c.membership.archived,
-            );
-            if (first !== undefined) {
-                pageRedirect(routeForChatIdentifier(chatListScopeStore.value.kind, first.id));
-                return true;
+            if (!this.#selectLastSelectedChat()) {
+                return this.#selectFirstChat();
             }
         }
         return false;

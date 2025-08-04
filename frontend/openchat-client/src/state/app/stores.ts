@@ -6,6 +6,7 @@ import {
     applyOptionUpdate,
     AuthProvider,
     chatIdentifiersEqual,
+    ChatListScopeMap,
     ChatMap,
     ChatSet,
     CommunityMap,
@@ -20,6 +21,7 @@ import {
     SafeMap,
     videoCallsInProgressForChats,
     type ChatEvent,
+    type ChatIdentifier,
     type ChatSummary,
     type ChitState,
     type CombinedUnreadCounts,
@@ -55,6 +57,7 @@ import {
     type WalletConfig,
     type WebhookDetails,
 } from "openchat-shared";
+import { createSetStore } from "../../stores/setStore";
 import {
     getMessagePermissionsForSelectedChat,
     mergeChatMetrics,
@@ -80,7 +83,6 @@ import { SnsFunctions } from "../snsFunctions.svelte";
 import { messagesRead } from "../unread/markRead";
 import { blockedUsersStore, suspendedUsersStore } from "../users/stores";
 import { notEq } from "../utils";
-import { createSetStore } from "../../stores/setStore";
 
 export const ONE_MB = 1024 * 1024;
 export const ONE_GB = ONE_MB * 1024;
@@ -101,6 +103,12 @@ type GovernanceCanister = string;
 export const hideMessagesFromDirectBlocked = new LocalStorageBoolStore(
     "openchat_hideblocked",
     false,
+);
+
+export const lastSelectedChatByScopeStore = writable<ChatListScopeMap<ChatIdentifier>>(
+    new ChatListScopeMap(),
+    undefined,
+    notEq,
 );
 
 export const cryptoLookup = writable<ReadonlyMap<LedgerCanister, CryptocurrencyDetails>>(
@@ -534,32 +542,21 @@ export const nextCommunityIndexStore = derived(
 );
 
 export const userGroupSummariesStore = derived(
-    communitiesStore, (communities) => {
+    communitiesStore,
+    (communities) => {
         return [...communities.values()].reduce((map, community) => {
             community.userGroups.forEach((ug) => map.set(ug.id, ug));
             return map;
         }, new Map<number, UserGroupSummary>());
     },
-    notEq
+    notEq,
 );
 
 export const serverEventsStore = writable<EventWrapper<ChatEvent>[]>([], undefined, notEq);
-export const serverThreadEventsStore = writable<EventWrapper<ChatEvent>[]>(
-    [],
-    undefined,
-    notEq,
-);
+export const serverThreadEventsStore = writable<EventWrapper<ChatEvent>[]>([], undefined, notEq);
 export const expiredServerEventRanges = writable<DRange>(new DRange(), undefined, notEq);
-export const selectedChatUserIdsStore = writable<Set<string>>(
-    new Set(),
-    undefined,
-    notEq,
-);
-export const selectedChatUserGroupKeysStore = writable<Set<string>>(
-    new Set(),
-    undefined,
-    notEq,
-);
+export const selectedChatUserIdsStore = writable<Set<string>>(new Set(), undefined, notEq);
+export const selectedChatUserGroupKeysStore = writable<Set<string>>(new Set(), undefined, notEq);
 export const selectedChatExpandedDeletedMessageStore = writable<Set<number>>(
     new Set(),
     undefined,
@@ -715,8 +712,9 @@ export const selectedChatBlockedUsersStore = derived(
     notEq,
 );
 export const selectedChatLapsedMembersStore = derived(
-    selectedServerChatStore, (chat) => chat?.lapsedMembers ?? (new Set() as ReadonlySet<string>),
-    notEq
+    selectedServerChatStore,
+    (chat) => chat?.lapsedMembers ?? (new Set() as ReadonlySet<string>),
+    notEq,
 );
 export const selectedChatPinnedMessagesStore = derived(
     [selectedServerChatStore, chatDetailsLocalUpdates.pinnedMessages],

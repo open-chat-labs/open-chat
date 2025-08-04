@@ -38,6 +38,7 @@ generate_msgpack_update_call!(update_bot);
 
 pub mod happy_path {
     use crate::User;
+    use crate::utils::tick_many;
     use candid::Principal;
     use constants::{CHAT_LEDGER_CANISTER_ID, CHUNK_STORE_CHUNK_SIZE, ICP_LEDGER_CANISTER_ID};
     use pocket_ic::PocketIc;
@@ -280,7 +281,10 @@ pub mod happy_path {
         );
 
         match response {
-            user_index_canister::register_bot::Response::Success(result) => (result.bot_id, principal),
+            user_index_canister::register_bot::Response::Success(result) => {
+                tick_many(env, 3);
+                (result.bot_id, principal)
+            }
             response => panic!("'register_bot' error: {response:?}"),
         }
     }

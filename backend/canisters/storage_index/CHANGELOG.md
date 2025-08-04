@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Maintain event ordering when retrying failed c2c calls ([#8429](https://github.com/open-chat-labs/open-chat/pull/8429))
+
 ## [[2.0.1839](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1839-storage_index)] - 2025-07-25
 
 ### Added

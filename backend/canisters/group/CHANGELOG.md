@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Maintain event ordering when retrying failed c2c calls ([#8429](https://github.com/open-chat-labs/open-chat/pull/8429))
+
+## [[2.0.1853](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1853-group)] - 2025-08-04
+
 ### Changed
 
 - Add "total chit earned" access gate ([#8422](https://github.com/open-chat-labs/open-chat/pull/8422))
