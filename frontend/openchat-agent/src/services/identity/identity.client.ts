@@ -268,7 +268,7 @@ export class IdentityClient extends MsgpackCanisterAgent {
         return this.executeMsgpackUpdate(
             "finalise_account_linking_with_code",
             args,
-            unitResult,
+            (resp) => resp,
             IdentityFinaliseAccountLinkingWithCodeArgs,
             IdentityFinaliseAccountLinkingWithCodeResponse,
         );
