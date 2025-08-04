@@ -247,6 +247,10 @@ export const ANON_USERNAME = "guest_user";
 export const ANON_DISPLAY_NAME = "Guest user";
 export const ANON_AVATAR_URL = "/assets/anon.svg";
 
+export enum PaidFeature {
+    CustomProfileBackground,
+}
+
 type CurrentUserCommon = DataContent & {
     username: string;
     isPlatformOperator: boolean;
@@ -265,6 +269,7 @@ type CurrentUserCommon = DataContent & {
     chitBalance: number;
     streak: number;
     maxStreak: number;
+    paidFeatures: Set<number>;
 };
 
 export type CurrentUserSummary = CurrentUserCommon & {
@@ -298,6 +303,7 @@ export function anonymousUser(): CreatedUser {
         chitBalance: 0,
         streak: 0,
         maxStreak: 0,
+        paidFeatures: new Set(),
     };
 }
 

@@ -103,7 +103,6 @@
     let { user, onCloseProfile, onUnsubscribeNotifications }: Props = $props();
 
     let originalBio = $state("");
-    let originalBackgroundImage = $state<DataContent>();
     let userbio = $state("");
     let backgroundImage = $state<DataContent>();
     let selectedLocale = $state(($locale as string).substring(0, 2));
@@ -173,7 +172,7 @@
                 originalBio = userbio = bio;
             });
             client.getProfileBackgroundImage().then((image) => {
-                originalBackgroundImage = backgroundImage = image;
+                backgroundImage = image;
             });
         }
     });

@@ -219,6 +219,8 @@ export function currentUserSummary(
         chitBalance: value.chit_balance,
         streak: value.streak,
         maxStreak: value.max_streak,
+        //paidFeatures: new Set([PaidFeature.CustomProfileBackground]),
+        paidFeatures: new Set(),
     };
 }
 
@@ -318,6 +320,8 @@ export function currentUserResponse(value: UserIndexCurrentUserResponse): Curren
             chitBalance: value.Success.chit_balance,
             streak: value.Success.streak,
             maxStreak: value.Success.max_streak,
+            // paidFeatures: new Set([PaidFeature.CustomProfileBackground]),
+            paidFeatures: new Set(),
         };
     }
 

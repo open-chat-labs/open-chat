@@ -3,6 +3,7 @@
     import {
         AvatarSize,
         type OpenChat,
+        PaidFeature,
         type PublicProfile,
         type UserSummary,
         currentUserIdStore,
@@ -17,6 +18,7 @@
     import EditableImageWrapper from "@src/components/EditableImageWrapper.svelte";
     import HoverIcon from "@src/components/HoverIcon.svelte";
     import ChooseImage from "@src/components/icons/ChooseImage.svelte";
+    import PaidFeatureComponent from "@src/components/PaidFeature.svelte";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import ClockOutline from "svelte-material-icons/ClockOutline.svelte";
@@ -169,9 +171,15 @@
                         </div>
                     </div>
                     {#if userProfileMode}
-                        <HoverIcon onclick={choosePhoto}>
-                            <ChooseImage size={"1.5em"} color={txtColour} />
-                        </HoverIcon>
+                        <PaidFeatureComponent
+                            feature={PaidFeature.CustomProfileBackground}
+                            onClick={choosePhoto}>
+                            {#snippet children(click)}
+                                <HoverIcon onclick={click}>
+                                    <ChooseImage size={"1.5em"} color={txtColour} />
+                                </HoverIcon>
+                            {/snippet}
+                        </PaidFeatureComponent>
                     {:else}
                         <HoverIcon onclick={onClose}>
                             <Close size={"1em"} color={txtColour} />
