@@ -160,7 +160,7 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
 
             // If this is a newly created chat, or the incoming timestamp is higher than the
             // existing one, update the TTL.
-            // If the timestamps are equal (meaning both users updated at exactly the same time),
+            // Else, if the timestamps are equal (meaning both users updated at the same time),
             // pick the TTL from whichever user has the lowest userId when their bytes are compared.
             // This ensures the TTL is always the same in each user's canister.
             if is_new_chat
