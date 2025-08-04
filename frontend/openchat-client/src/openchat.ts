@@ -15,6 +15,7 @@ import {
     type AccessGate,
     type AccessGateConfig,
     type AccessTokenType,
+    type AccountLinkingCode,
     type AccountTransactionResult,
     type Achievement,
     type AddMembersToChannelResponse,
@@ -298,7 +299,6 @@ import {
     type WorkerRequest,
     type WorkerResponse,
     type WorkerResult,
-    type AccountLinkingCode,
 } from "openchat-shared";
 import page from "page";
 import { tick } from "svelte";
@@ -339,6 +339,7 @@ import {
     isDiamondStore,
     isLifetimeDiamondStore,
     lastCryptoSent,
+    lastSelectedChatByScopeStore,
     latestSuccessfulUpdatesLoop,
     localUpdates,
     messageActivitySummaryStore,
@@ -1321,7 +1322,7 @@ export class OpenChat {
     archiveChat(chatId: ChatIdentifier): Promise<boolean> {
         const undo = localUpdates.updateArchived(chatId, true);
         if (chatIdentifiersEqual(chatId, selectedChatIdStore.value)) {
-            this.selectFirstChat();
+            this.selectDefaultChat();
         }
         return this.#sendRequest({ kind: "archiveChat", chatId })
             .then((resp) => {
@@ -1455,7 +1456,7 @@ export class OpenChat {
                 if (resp.kind === "success") {
                     this.removeChat(chatId);
                     if (chatIdentifiersEqual(chatId, selectedChatIdStore.value)) {
-                        this.selectFirstChat();
+                        this.selectDefaultChat();
                     }
                     return true;
                 } else {
@@ -2924,6 +2925,11 @@ export class OpenChat {
                     this.getUser(selectedChat.them.userId);
                 }
             }
+
+            lastSelectedChatByScopeStore.update((map) => {
+                map.set(chatListScopeStore.value, chatId);
+                return map;
+            });
         }
 
         if (isProposalsChat(clientChat)) {
@@ -3567,7 +3573,7 @@ export class OpenChat {
                       .then((resp) =>
                           this.#handleThreadEventsResponse(
                               serverChat.id,
-                               
+
                               selectedThreadRootMessageIndex!,
                               resp,
                           ),
@@ -3717,7 +3723,7 @@ export class OpenChat {
             // now a new latest message and if so, mark it as a local chat summary update.
             let latestMessageIndex =
                 threadRootMessageIndex === undefined
-                    ? (allServerChatsStore.value.get(chatId)?.latestMessageIndex ?? -1)
+                    ? allServerChatsStore.value.get(chatId)?.latestMessageIndex ?? -1
                     : undefined;
             let newLatestMessage: EventWrapper<Message> | undefined = undefined;
 
@@ -4226,7 +4232,13 @@ export class OpenChat {
             blockLevelMarkdown,
         };
 
-        return this.#sendMessageCommon(chat, messageContext, msg, mentioned, messageIdIfRetrying !== undefined);
+        return this.#sendMessageCommon(
+            chat,
+            messageContext,
+            msg,
+            mentioned,
+            messageIdIfRetrying !== undefined,
+        );
     }
 
     #throttleSendMessage(): boolean {
@@ -5607,7 +5619,9 @@ export class OpenChat {
                     userStore.setUpdated(allOtherUsers, resp.serverTimestamp);
                 }
                 if (resp.currentUser) {
-                    currentUserStore.set(updateCreatedUser(currentUserStore.value, resp.currentUser));
+                    currentUserStore.set(
+                        updateCreatedUser(currentUserStore.value, resp.currentUser),
+                    );
                 }
                 return resp;
             })
@@ -7942,14 +7956,34 @@ export class OpenChat {
         return preview;
     }
 
-    selectFirstChat(): boolean {
+    #selectLastSelectedChat(): boolean {
+        const scope = chatListScopeStore.value;
+        const mostRecentId = lastSelectedChatByScopeStore.value.get(scope);
+        const mostRecentChat = mostRecentId
+            ? chatSummariesStore.value.get(mostRecentId)
+            : undefined;
+        if (mostRecentChat !== undefined) {
+            pageRedirect(routeForChatIdentifier(scope.kind, mostRecentChat.id));
+            return true;
+        }
+        return false;
+    }
+
+    #selectFirstChat(): boolean {
+        const first = [...chatSummariesListStore.value.values()].find(
+            (c) => !c.membership.archived,
+        );
+        if (first !== undefined) {
+            pageRedirect(routeForChatIdentifier(chatListScopeStore.value.kind, first.id));
+            return true;
+        }
+        return false;
+    }
+
+    selectDefaultChat(): boolean {
         if (!get(mobileWidth)) {
-            const first = [...chatSummariesListStore.value.values()].find(
-                (c) => !c.membership.archived,
-            );
-            if (first !== undefined) {
-                pageRedirect(routeForChatIdentifier(chatListScopeStore.value.kind, first.id));
-                return true;
+            if (!this.#selectLastSelectedChat()) {
+                return this.#selectFirstChat();
             }
         }
         return false;
@@ -8400,7 +8434,7 @@ export class OpenChat {
     }
 
     getStreak(userId: string | undefined) {
-        return userId ? (userStore.get(userId)?.streak ?? 0) : 0;
+        return userId ? userStore.get(userId)?.streak ?? 0 : 0;
     }
 
     getBotDefinition(endpoint: string): Promise<BotDefinitionResponse> {
@@ -9530,7 +9564,7 @@ export class OpenChat {
 
     #extract_p256dh_key(subscription: PushSubscription): string {
         const json = subscription.toJSON();
-         
+
         const key = json.keys!["p256dh"];
         return key;
     }
