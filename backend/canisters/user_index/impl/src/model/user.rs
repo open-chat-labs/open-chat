@@ -17,9 +17,9 @@ pub struct User {
     pub user_id: UserId,
     #[serde(rename = "un")]
     pub username: String,
-    #[serde(rename = "dn", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "dn", skip_serializing_if = "Option::is_none")]
     pub display_name: Option<String>,
-    #[serde(rename = "dnu", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "dnu", skip_serializing_if = "Option::is_none")]
     pub display_name_upper: Option<String>,
     #[serde(rename = "dc")]
     pub date_created: TimestampMillis,
@@ -27,19 +27,19 @@ pub struct User {
     pub date_updated: TimestampMillis,
     #[serde(rename = "ct")]
     pub cycle_top_ups: Vec<CyclesTopUpInternal>,
-    #[serde(rename = "av", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "av", skip_serializing_if = "Option::is_none")]
     pub avatar_id: Option<u128>,
-    #[serde(rename = "rf", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "rf", skip_serializing_if = "Option::is_none")]
     pub registration_fee: Option<RegistrationFee>,
     #[serde(rename = "ab", default, skip_serializing_if = "AccountBilling::is_empty")]
     pub account_billing: AccountBilling,
     #[serde(rename = "ps", default, skip_serializing_if = "is_default")]
     pub phone_status: PhoneStatus,
-    #[serde(rename = "rb", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "rb", skip_serializing_if = "Option::is_none")]
     pub referred_by: Option<UserId>,
     #[serde(rename = "ut", default, skip_serializing_if = "is_default")]
     pub user_type: UserType,
-    #[serde(rename = "sd", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "sd", skip_serializing_if = "Option::is_none")]
     pub suspension_details: Option<SuspensionDetails>,
     #[serde(
         rename = "dm",
@@ -185,7 +185,7 @@ impl User {
     }
 
     pub fn total_chit_earned(&self) -> i32 {
-        self.chit_per_month.values().copied().sum()
+        self.total_chit_earned
     }
 
     pub fn current_chit_balance(&self, now: TimestampMillis) -> i32 {
