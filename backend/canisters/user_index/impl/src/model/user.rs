@@ -65,8 +65,10 @@ pub struct User {
     pub latest_chit_event: TimestampMillis,
     #[serde(rename = "lcp", default)]
     pub latest_chit_event_previous_month: TimestampMillis,
-    #[serde(rename = "uh", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "uh", skip_serializing_if = "Option::is_none")]
     pub unique_person_proof: Option<UniquePersonProof>,
+    #[serde(rename = "ce", default, skip_serializing_if = "is_default")]
+    pub total_chit_earned: i32,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, Eq, PartialEq)]
@@ -118,6 +120,7 @@ impl User {
             latest_chit_event: 0,
             latest_chit_event_previous_month: 0,
             unique_person_proof: None,
+            total_chit_earned: 0,
         }
     }
 
@@ -254,6 +257,7 @@ impl Default for User {
             latest_chit_event: 0,
             latest_chit_event_previous_month: 0,
             unique_person_proof: None,
+            total_chit_earned: 0,
         }
     }
 }

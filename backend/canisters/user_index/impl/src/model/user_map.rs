@@ -377,11 +377,13 @@ impl UserMap {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn set_chit(
         &mut self,
         user_id: &UserId,
+        total_chit_earned: i32,
         chit_event_timestamp: TimestampMillis,
-        chit_balance: i32,
+        chit_earned_in_month: i32,
         streak: u16,
         streak_ends: TimestampMillis,
         now: TimestampMillis,
@@ -411,8 +413,9 @@ impl UserMap {
             }
         }
 
+        user.total_chit_earned = total_chit_earned;
         user.chit_updated = now;
-        user.chit_per_month.insert(chit_event_month, chit_balance);
+        user.chit_per_month.insert(chit_event_month, chit_earned_in_month);
         true
     }
 
