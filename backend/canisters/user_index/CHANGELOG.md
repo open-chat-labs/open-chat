@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Store `total_chit_earned` on each user record ([#8434](https://github.com/open-chat-labs/open-chat/pull/8434))
 
+## [[2.0.1855](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1855-user_index)] - 2025-08-05
+
 ### Fixed
 
 - Maintain event ordering when retrying failed c2c calls ([#8429](https://github.com/open-chat-labs/open-chat/pull/8429))
