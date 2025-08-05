@@ -5,11 +5,10 @@ use constants::{DAY_IN_MS, HOUR_IN_MS};
 use itertools::Itertools;
 use pocket_ic::PocketIc;
 use std::cmp::max;
-use std::ops::{Add, Deref};
+use std::ops::Deref;
 use std::time::{Duration, SystemTime};
 use test_case::test_case;
 use types::{ChitEarnedReason, OptionUpdate, TimestampMillis};
-use utils::time::MonthKey;
 
 const DAY_ZERO: TimestampMillis = 1704067200000; // Mon Jan 01 2024 00:00:00 GMT+0000
 const ONE_CHAT: u128 = 100_000_000;
@@ -332,16 +331,6 @@ fn pay_for_premium_item_succeeds() {
 
     assert_eq!(current_user.premium_items, vec![1]);
     assert_eq!(current_user.total_chit_earned - current_user.chit_balance, 10_000)
-}
-
-fn advance_to_next_month(env: &mut PocketIc) {
-    let now = now_millis(env);
-    let next_month = MonthKey::from_timestamp(now).next();
-    env.set_time(
-        SystemTime::UNIX_EPOCH
-            .add(Duration::from_millis(next_month.start_timestamp()))
-            .into(),
-    );
 }
 
 fn ensure_time_at_least_day0(env: &mut PocketIc) {
