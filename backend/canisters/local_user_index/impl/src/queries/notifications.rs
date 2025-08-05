@@ -27,7 +27,7 @@ pub(crate) fn notifications_impl(args: Args, state: &RuntimeState) -> Response {
                 for user_id in n.recipients.iter() {
                     // Get web push and firebase subscriptions for the user
                     let notification_subscriptions = get_notification_subscriptions(user_id, state);
-                    has_subscriptions = !notification_subscriptions.is_empty();
+                    has_subscriptions |= !notification_subscriptions.is_empty();
 
                     // If user's subscriptions are already processed, skip them
                     if !subscriptions.contains_key(user_id) {
