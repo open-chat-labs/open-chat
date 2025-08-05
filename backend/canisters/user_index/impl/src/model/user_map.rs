@@ -377,6 +377,7 @@ impl UserMap {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn set_chit(
         &mut self,
         user_id: &UserId,
