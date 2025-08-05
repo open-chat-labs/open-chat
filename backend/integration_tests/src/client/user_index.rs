@@ -22,6 +22,7 @@ generate_update_call!(add_platform_operator);
 generate_update_call!(assign_platform_moderators_group);
 generate_msgpack_update_call!(delete_user);
 generate_msgpack_update_call!(pay_for_diamond_membership);
+generate_msgpack_update_call!(pay_for_premium_item);
 generate_msgpack_update_call!(remove_bot);
 generate_update_call!(remove_platform_moderator);
 generate_msgpack_update_call!(set_display_name);
@@ -116,6 +117,30 @@ pub mod happy_path {
         match response {
             user_index_canister::pay_for_diamond_membership::Response::Success(result) => result,
             response => panic!("'pay_for_diamond_membership' error: {response:?}"),
+        }
+    }
+
+    pub fn pay_for_premium_item(
+        env: &mut PocketIc,
+        sender: Principal,
+        canister_id: CanisterId,
+        item_id: u32,
+        expected_cost: u32,
+    ) {
+        let response = super::pay_for_premium_item(
+            env,
+            sender,
+            canister_id,
+            &user_index_canister::pay_for_premium_item::Args {
+                item_id,
+                pay_in_chat: false,
+                expected_cost,
+            },
+        );
+
+        match response {
+            user_index_canister::pay_for_premium_item::Response::Success => {}
+            response => panic!("'pay_for_premium_item' error: {response:?}"),
         }
     }
 

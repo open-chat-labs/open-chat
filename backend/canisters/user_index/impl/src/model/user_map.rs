@@ -291,6 +291,16 @@ impl UserMap {
         self.username_to_user_id.get(username).and_then(|u| self.users.get(u))
     }
 
+    pub fn get_mut(&mut self, user_id_or_principal: &Principal) -> Option<&mut User> {
+        let user_id = self
+            .principal_to_user_id
+            .get(user_id_or_principal)
+            .copied()
+            .unwrap_or_else(|| UserId::from(*user_id_or_principal));
+
+        self.users.get_mut(&user_id)
+    }
+
     pub fn get_bot(&self, user_id: &UserId) -> Option<&Bot> {
         self.bots.get(user_id)
     }

@@ -19,16 +19,16 @@ fn claim_daily_chit_reflected_in_user_index() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user = client::register_user(env, canister_ids);
+    let user1 = client::register_user(env, canister_ids);
     let user2 = client::register_user(env, canister_ids);
     ensure_time_at_least_day0(env);
 
-    let result = client::user::happy_path::claim_daily_chit(env, &user, None);
+    let result = client::user::happy_path::claim_daily_chit(env, &user1, None);
     assert_eq!(result.chit_balance, 200);
     assert_eq!(result.chit_earned, 200);
     assert_eq!(result.streak, 1);
 
-    let events = client::user::happy_path::chit_events(env, &user, None, None, 10);
+    let events = client::user::happy_path::chit_events(env, &user1, None, None, 10);
     assert_eq!(events.total, 1);
     assert_eq!(events.events.len(), 1);
     assert_eq!(events.events[0].amount, 200);
@@ -36,7 +36,7 @@ fn claim_daily_chit_reflected_in_user_index() {
 
     tick_many(env, 3);
 
-    let result = client::user_index::happy_path::users(env, user2.principal, canister_ids.user_index, vec![user.user_id]);
+    let result = client::user_index::happy_path::users(env, user2.principal, canister_ids.user_index, vec![user1.user_id]);
 
     assert_eq!(result.users.len(), 1);
 
@@ -348,6 +348,29 @@ fn streak_utc_offset_can_be_updated() {
     assert_eq!(result1.streak, 3);
     assert!(!result1.utc_offset_updated);
     assert_eq!(result1.next_claim, result2.next_claim + (10 * HOUR_IN_MS));
+}
+
+#[test]
+fn pay_for_premium_item_succeeds() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let user = client::register_user(env, canister_ids);
+    ensure_time_at_least_day0(env);
+
+    for _ in 0..30 {
+        client::user::happy_path::claim_daily_chit(env, &user, None);
+        env.advance_time(Duration::from_millis(DAY_IN_MS));
+    }
+
+    tick_many(env, 3);
+
+    client::user_index::happy_path::pay_for_premium_item(env, user.principal, canister_ids.user_index, 1, 10_000);
+
+    let current_user = client::user_index::happy_path::current_user(env, user.principal, canister_ids.user_index);
+
+    assert_eq!(current_user.premium_items, vec![1]);
+    assert_eq!(current_user.total_chit_earned - current_user.chit_balance, 10_000)
 }
 
 fn advance_to_next_month(env: &mut PocketIc) {

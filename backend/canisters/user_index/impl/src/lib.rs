@@ -1,5 +1,6 @@
 use crate::model::group_index_event_batch::GroupIndexEventBatch;
 use crate::model::local_user_index_map::LocalUserIndex;
+use crate::model::premium_items::PremiumItems;
 use crate::model::storage_index_user_config_batch::StorageIndexUserConfigBatch;
 use crate::model::storage_index_users_to_remove_batch::StorageIndexUsersToRemoveBatch;
 use crate::model::streak_insurance_logs::StreakInsuranceLogs;
@@ -408,6 +409,8 @@ struct Data {
     pub streak_insurance_logs: StreakInsuranceLogs,
     pub idempotency_checker: IdempotencyChecker,
     pub blocked_users: UserIdsSet,
+    #[serde(default)]
+    pub premium_items: PremiumItems,
 }
 
 impl Data {
@@ -491,6 +494,7 @@ impl Data {
             streak_insurance_logs: StreakInsuranceLogs::default(),
             idempotency_checker: IdempotencyChecker::default(),
             blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
+            premium_items: PremiumItems::default(),
         };
 
         // Register the ProposalsBot
@@ -606,6 +610,7 @@ impl Default for Data {
             streak_insurance_logs: StreakInsuranceLogs::default(),
             idempotency_checker: IdempotencyChecker::default(),
             blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
+            premium_items: PremiumItems::default(),
         }
     }
 }

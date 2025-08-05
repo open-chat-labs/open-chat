@@ -185,6 +185,7 @@ pub enum OCErrorCode {
     InvalidOriginatingCanister = 341,
     LinkingCodeNotFound = 342,
     MaxLinkedIdentitiesLimitReached = 343,
+    ItemNotFound = 344,
 
     // InternalError
     C2CError = 500,
