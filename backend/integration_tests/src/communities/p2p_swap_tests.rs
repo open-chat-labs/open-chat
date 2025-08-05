@@ -193,6 +193,8 @@ fn cancel_p2p_swap_in_channel_succeeds(delete_message: bool) {
         user_canister::send_message_with_transfer_to_channel::Response::Success(_)
     ));
 
+    tick_many(env, 3);
+
     if delete_message {
         let delete_message_response = client::community::delete_messages(
             env,
