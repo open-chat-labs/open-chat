@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Configure a default crypto provider in the notifications pusher ([8440](https://github.com/open-chat-labs/open-chat/pull/8440))
+- Configure a default crypto provider in the notification pusher ([8440](https://github.com/open-chat-labs/open-chat/pull/8440))
 
 ## [[2.0.1830](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1830-notification_pusher)] - 2025-07-09
 
