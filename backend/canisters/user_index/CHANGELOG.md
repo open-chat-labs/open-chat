@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Implement ability to pay for premium items using CHIT ([#8439](https://github.com/open-chat-labs/open-chat/pull/8439))
+
 ### Changed
 
 - Store `total_chit_earned` on each user record ([#8434](https://github.com/open-chat-labs/open-chat/pull/8434))
