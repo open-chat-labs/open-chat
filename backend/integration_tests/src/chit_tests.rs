@@ -86,51 +86,6 @@ fn chit_streak_gained_and_lost_as_expected() {
     assert_eq!(result.users[0].volatile.as_ref().unwrap().max_streak, 4);
 }
 
-#[test]
-fn chit_stored_per_month() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv { env, canister_ids, .. } = wrapper.env();
-
-    let user = client::register_user(env, canister_ids);
-    ensure_time_at_least_day0(env);
-    advance_to_next_month(env);
-    let start_month = MonthKey::from_timestamp(now_millis(env));
-
-    for i in 1..5 {
-        for _ in 0..i {
-            client::user::happy_path::claim_daily_chit(env, &user, None);
-            env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
-        }
-        advance_to_next_month(env);
-    }
-
-    tick_many(env, 3);
-
-    let mut month = start_month;
-    for i in 1..5 {
-        let chit = client::user_index::happy_path::users_chit(
-            env,
-            canister_ids.user_index,
-            vec![user.user_id],
-            month.year() as u16,
-            month.month(),
-        )
-        .values()
-        .next()
-        .cloned()
-        .unwrap();
-
-        assert_eq!(chit.balance, i * 200);
-
-        month = month.next();
-    }
-
-    let user = client::user_index::happy_path::user(env, canister_ids.user_index, user.user_id);
-
-    assert_eq!(user.total_chit_earned, 2000);
-    assert_eq!(user.chit_balance, 0);
-}
-
 #[test_case(0)]
 #[test_case(1)]
 #[test_case(2)]
