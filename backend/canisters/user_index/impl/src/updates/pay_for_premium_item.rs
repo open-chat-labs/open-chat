@@ -4,32 +4,33 @@ use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
-use types::OCResult;
-use user_index_canister::pay_for_premium_item::*;
+use user_index_canister::pay_for_premium_item::{Response::*, *};
 
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
 fn pay_for_premium_item(args: Args) -> Response {
-    mutate_state(|state| pay_for_premium_item_impl(args, state)).into()
+    mutate_state(|state| pay_for_premium_item_impl(args, state))
 }
 
-fn pay_for_premium_item_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+fn pay_for_premium_item_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
     let user = state.data.users.get_mut(&caller).unwrap();
 
-    if user.premium_items().contains(&args.item_id) {
-        return Err(OCErrorCode::AlreadyAdded.into());
+    if user.premium_items.contains(&args.item_id) {
+        return Error(OCErrorCode::AlreadyAdded.into());
     }
 
-    let cost = PremiumItems::cost_in_chit(args.item_id).ok_or(OCErrorCode::ItemNotFound)?;
+    let Some(cost) = PremiumItems::cost_in_chit(args.item_id) else {
+        return Error(OCErrorCode::ItemNotFound.into());
+    };
 
     if cost != args.expected_cost {
-        return Err(OCErrorCode::PriceMismatch.into());
+        return Error(OCErrorCode::PriceMismatch.into());
     }
 
     let chit_balance = user.total_chit_earned - user.total_chit_spent;
     if chit_balance < (cost as i32) {
-        return Err(OCErrorCode::InsufficientFunds.with_message(chit_balance));
+        return Error(OCErrorCode::InsufficientFunds.with_message(chit_balance));
     }
 
     let now = state.env.now();
@@ -39,5 +40,8 @@ fn pay_for_premium_item_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         .premium_items
         .log_purchase(user.user_id, args.item_id, false, cost, now);
 
-    Ok(())
+    Success(SuccessResult {
+        total_chit_earned: user.total_chit_earned,
+        chit_balance: user.total_chit_earned - user.total_chit_spent,
+    })
 }

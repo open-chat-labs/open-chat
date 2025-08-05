@@ -46,7 +46,7 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
                     chit_balance: u.total_chit_earned - u.total_chit_spent,
                     streak: u.streak(now),
                     max_streak: u.max_streak,
-                    premium_items: u.premium_items().iter().copied().collect(),
+                    premium_items: u.premium_items.iter().copied().collect(),
                 });
             }
         }

@@ -365,7 +365,13 @@ fn pay_for_premium_item_succeeds() {
 
     tick_many(env, 3);
 
-    client::user_index::happy_path::pay_for_premium_item(env, user.principal, canister_ids.user_index, 1, 10_000);
+    let pay_for_premium_item_result =
+        client::user_index::happy_path::pay_for_premium_item(env, user.principal, canister_ids.user_index, 1, 10_000);
+
+    assert_eq!(
+        pay_for_premium_item_result.total_chit_earned - pay_for_premium_item_result.chit_balance,
+        10_000
+    );
 
     let current_user = client::user_index::happy_path::current_user(env, user.principal, canister_ids.user_index);
 

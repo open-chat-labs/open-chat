@@ -126,7 +126,7 @@ pub mod happy_path {
         canister_id: CanisterId,
         item_id: u32,
         expected_cost: u32,
-    ) {
+    ) -> user_index_canister::pay_for_premium_item::SuccessResult {
         let response = super::pay_for_premium_item(
             env,
             sender,
@@ -139,7 +139,7 @@ pub mod happy_path {
         );
 
         match response {
-            user_index_canister::pay_for_premium_item::Response::Success => {}
+            user_index_canister::pay_for_premium_item::Response::Success(result) => result,
             response => panic!("'pay_for_premium_item' error: {response:?}"),
         }
     }

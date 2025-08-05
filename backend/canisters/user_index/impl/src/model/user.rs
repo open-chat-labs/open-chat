@@ -72,7 +72,7 @@ pub struct User {
     #[serde(rename = "cs", default, skip_serializing_if = "is_default")]
     pub total_chit_spent: i32,
     #[serde(rename = "pi", default, skip_serializing_if = "BTreeSet::is_empty")]
-    premium_items: BTreeSet<u32>,
+    pub premium_items: BTreeSet<u32>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, Eq, PartialEq)]
@@ -188,10 +188,6 @@ impl User {
 
     pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
         self.cycle_top_ups.push(top_up.into())
-    }
-
-    pub fn premium_items(&self) -> &BTreeSet<u32> {
-        &self.premium_items
     }
 
     pub fn pay_for_premium_item(&mut self, item_id: u32, cost: u32, now: TimestampMillis) -> bool {
