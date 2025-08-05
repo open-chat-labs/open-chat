@@ -23,6 +23,9 @@ pub async fn run_notifications_pusher<I: IndexStore + 'static>(config: Config<I>
     info!("Notifications pusher starting");
 
     Metrics::init();
+    rustls::crypto::ring::default_provider()
+        .install_default()
+        .expect("Failed to install rustls crypto provider");
 
     let notification_canister_ids = config
         .ic_agent
