@@ -26,6 +26,8 @@ pub struct UserNotification {
     pub sender: Option<UserId>,
     #[serde(rename = "r")]
     pub recipients: Vec<UserId>,
+    // This will be removed once all canisters have been switched to the new field
+    #[deprecated]
     #[serde(rename = "n")]
     pub notification_bytes: Option<ByteBuf>,
     #[serde(rename = "n2")]

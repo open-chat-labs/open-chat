@@ -573,6 +573,7 @@ impl Data {
     pub fn handle_notification(&mut self, notification: Notification, this_canister_id: CanisterId, now: TimestampMillis) {
         match notification {
             Notification::User(user_notification) => {
+                #[expect(deprecated)]
                 let Some(notification_bytes) = user_notification.notification_bytes.or_else(|| {
                     user_notification
                         .notification

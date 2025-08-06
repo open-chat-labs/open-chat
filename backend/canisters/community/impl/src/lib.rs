@@ -128,6 +128,7 @@ impl RuntimeState {
         notification: UserNotificationPayload,
     ) {
         if !recipients.is_empty() {
+            #[expect(deprecated)]
             let notification = Notification::User(UserNotification {
                 sender,
                 recipients,
