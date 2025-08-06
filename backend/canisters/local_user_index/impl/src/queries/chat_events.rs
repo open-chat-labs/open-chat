@@ -5,7 +5,7 @@ use canister_api_macros::query;
 use local_user_index_canister::chat_events::{Response::*, *};
 use types::{BotInitiator, C2CError, UserId};
 
-#[query(composite = true, guard = "caller_is_openchat_user", candid = true, msgpack = true)]
+#[query(composite = true, guard = "caller_is_openchat_user", msgpack = true)]
 async fn chat_events(args: Args) -> Response {
     let (user, now) = read_state(|state| (state.calling_user(), state.env.now()));
 

@@ -6,7 +6,7 @@ use canister_tracing_macros::trace;
 use local_user_index_canister::invite_users_to_group::{Response::*, *};
 use types::{ChatId, MessageContent, TextContent, UserId};
 
-#[update(guard = "caller_is_openchat_user", candid = true, msgpack = true)]
+#[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
 async fn invite_users_to_group(args: Args) -> Response {
     let PrepareResult { invited_by, users } = read_state(|state| prepare(&args, state));
