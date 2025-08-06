@@ -5,7 +5,7 @@ use canister_api_macros::query;
 use local_user_index_canister::group_and_community_summary_updates_v2::{Response::*, *};
 use types::{C2CError, CanisterId, TimestampMillis, UserId};
 
-#[query(composite = true, guard = "caller_is_openchat_user", candid = true, msgpack = true)]
+#[query(composite = true, guard = "caller_is_openchat_user", msgpack = true)]
 async fn group_and_community_summary_updates_v2(args: Args) -> Response {
     let PrepareResult {
         caller,
