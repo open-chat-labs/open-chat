@@ -1,4 +1,4 @@
-use crate::{ChannelId, Chat, ChatId, CommunityId, MessageId, UserId};
+use crate::{ChannelId, Chat, ChatId, CommunityId, MessageIndex, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -9,7 +9,7 @@ pub struct FcmData {
     #[serde(rename = "c")]
     pub chat_id: Chat,
     #[serde(rename = "t")]
-    pub thread_id: Option<MessageId>,
+    pub thread_root_message_index: Option<MessageIndex>,
     #[serde(rename = "b")]
     pub body: Option<String>,
     #[serde(rename = "i")]
@@ -26,7 +26,7 @@ impl FcmData {
     fn default(chat_id: Chat) -> Self {
         Self {
             chat_id,
-            thread_id: None,
+            thread_root_message_index: None,
             body: None,
             image: None,
             sender_id: None,
@@ -50,9 +50,16 @@ impl FcmData {
         Self::default(Chat::Channel(community_id, channel_id))
     }
 
-    pub fn set_thread_id(self, thread_id: MessageId) -> Self {
+    pub fn set_thread(self, thread_root_message_index: MessageIndex) -> Self {
         Self {
-            thread_id: Some(thread_id),
+            thread_root_message_index: Some(thread_root_message_index),
+            ..self
+        }
+    }
+
+    pub fn set_optional_thread(self, thread_root_message_index: Option<MessageIndex>) -> Self {
+        Self {
+            thread_root_message_index,
             ..self
         }
     }
@@ -64,9 +71,9 @@ impl FcmData {
         }
     }
 
-    pub fn set_body_with_alt(self, body: &Option<String>, alt_body: &str) -> Self {
+    pub fn set_body_with_alt(self, body: Option<String>, alt_body: String) -> Self {
         Self {
-            body: if body.is_some() { body.clone() } else { Some(alt_body.into()) },
+            body: Some(body.unwrap_or(alt_body)),
             ..self
         }
     }
@@ -89,9 +96,9 @@ impl FcmData {
         }
     }
 
-    pub fn set_sender_name_with_alt(self, sender_name: &Option<String>, alt_sender_name: &str) -> Self {
+    pub fn set_sender_name_with_alt(self, sender_name: Option<String>, alt_sender_name: String) -> Self {
         Self {
-            sender_name: if sender_name.is_some() { sender_name.clone() } else { Some(alt_sender_name.into()) },
+            sender_name: Some(sender_name.unwrap_or(alt_sender_name)),
             ..self
         }
     }
@@ -120,8 +127,8 @@ impl FcmData {
             }
         }
 
-        if let Some(thread_id) = self.thread_id {
-            map.insert("threadId".into(), thread_id.to_string());
+        if let Some(thread) = self.thread_root_message_index {
+            map.insert("thread".into(), thread.to_string());
         }
 
         if let Some(body) = &self.body {
