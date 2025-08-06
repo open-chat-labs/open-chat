@@ -24,12 +24,10 @@ use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, 
 use model::events::CommunityEventInternal;
 use model::user_event_batch::UserEventBatch;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
-use msgpack::serialize_then_unwrap;
 use oc_error_codes::OCErrorCode;
 use rand::RngCore;
 use rand::rngs::StdRng;
 use serde::{Deserialize, Serialize};
-use serde_bytes::ByteBuf;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
@@ -39,7 +37,7 @@ use types::{
     AccessGate, AccessGateConfigInternal, Achievement, BotCommunityEvent, BotEventsCaller, BotInitiator, BotNotification,
     BotPermissions, BuildVersion, Caller, CanisterId, ChannelCreated, ChannelId, ChatEventCategory, ChatEventType, ChatMetrics,
     ChatPermission, CommunityCanisterCommunitySummary, CommunityEvent, CommunityEventCategory, CommunityEventType,
-    CommunityMembership, CommunityPermissions, Cycles, Document, EventIndex, EventsCaller, FcmData, FrozenGroupInfo, GroupRole,
+    CommunityMembership, CommunityPermissions, Cycles, Document, EventIndex, EventsCaller, FrozenGroupInfo, GroupRole,
     IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId,
     UserNotification, UserNotificationPayload, UserType,
 };
@@ -128,14 +126,13 @@ impl RuntimeState {
         sender: Option<UserId>,
         recipients: Vec<UserId>,
         notification: UserNotificationPayload,
-        fcm_data: FcmData,
     ) {
         if !recipients.is_empty() {
             let notification = Notification::User(UserNotification {
                 sender,
                 recipients,
-                notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
-                fcm_data: Some(fcm_data),
+                notification: Some(notification),
+                notification_bytes: None,
             });
             self.push_notification_inner(notification);
         }

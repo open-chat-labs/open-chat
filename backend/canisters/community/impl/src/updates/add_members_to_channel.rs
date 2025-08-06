@@ -5,7 +5,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::add_members_to_channel::{Response::*, *};
 use oc_error_codes::OCErrorCode;
-use types::{AddedToChannelNotification, ChannelId, CommunityId, FcmData, OCResult, UserId, UserNotificationPayload, UserType};
+use types::{AddedToChannelNotification, ChannelId, OCResult, UserId, UserNotificationPayload, UserType};
 
 #[update(msgpack = true)]
 #[trace]
@@ -106,16 +106,6 @@ fn commit(
         });
     }
 
-    let community_id: CommunityId = state.env.canister_id().into();
-    let community_avatar_id = state.data.avatar.as_ref().map(|d| d.id);
-
-    // TODO i18n
-    let fcm_body = format!("You have been added to channel {}", channel_name.clone());
-    let fcm_data = FcmData::for_channel(community_id, channel_id)
-        .set_body(fcm_body)
-        .set_sender_name_with_alt(&added_by_display_name, &added_by_name)
-        .set_avatar_id(community_avatar_id);
-
     let notification = UserNotificationPayload::AddedToChannel(AddedToChannelNotification {
         community_id: state.env.canister_id().into(),
         community_name: state.data.name.value.clone(),
@@ -128,7 +118,7 @@ fn commit(
         channel_avatar_id,
     });
 
-    state.push_notification(Some(added_by), users_added.clone(), notification, fcm_data);
+    state.push_notification(Some(added_by), users_added.clone(), notification);
     state.push_bot_notification(bot_notification);
 
     jobs::expire_members::start_job_if_required(state);

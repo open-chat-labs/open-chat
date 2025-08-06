@@ -19,7 +19,7 @@ use regex_lite::Regex;
 use std::str::FromStr;
 use types::{
     Achievement, BotCaller, BotPermissions, Caller, ChannelId, ChannelMessageNotification, Chat, CommunityId, EventIndex,
-    EventWrapper, FcmData, IdempotentEnvelope, Message, MessageContent, MessageIndex, OCResult, TimestampMillis, User, UserId,
+    EventWrapper, IdempotentEnvelope, Message, MessageContent, MessageIndex, OCResult, TimestampMillis, User, UserId,
     UserNotificationPayload, Version,
 };
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
@@ -245,17 +245,8 @@ fn process_send_message_result(
 
     if !result.unfinalised_bot_message {
         let sender = caller.agent();
-
-        let message_type = content.content_type().to_string();
         let message_text =
             content.notification_text(&users_mentioned.mentioned_directly, &users_mentioned.user_groups_mentioned);
-
-        // TODO i18n
-        let fcm_data = FcmData::for_channel(community_id, channel_id)
-            .set_body_with_alt(&message_text, &message_type)
-            .set_sender_id(sender)
-            .set_sender_name_with_alt(&sender_display_name, &sender_username)
-            .set_avatar_id(channel_avatar_id);
 
         let notification = UserNotificationPayload::ChannelMessage(ChannelMessageNotification {
             community_id,
@@ -268,14 +259,14 @@ fn process_send_message_result(
             sender,
             sender_name: sender_username,
             sender_display_name,
-            message_type,
+            message_type: content.content_type().to_string(),
             message_text,
             image_url: content.notification_image_url(),
             community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
             channel_avatar_id,
             crypto_transfer: content.notification_crypto_transfer_details(&users_mentioned.mentioned_directly),
         });
-        state.push_notification(Some(sender), result.users_to_notify, notification, fcm_data);
+        state.push_notification(Some(sender), result.users_to_notify, notification);
 
         if new_achievement && !caller.is_bot() {
             for a in result

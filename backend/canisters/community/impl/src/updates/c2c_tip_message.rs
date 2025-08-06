@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use chat_events::TipMessageArgs;
 use community_canister::c2c_tip_message::*;
 use ledger_utils::format_crypto_amount_with_symbol;
-use types::{Achievement, ChannelMessageTipped, Chat, EventIndex, FcmData, OCResult, UserNotificationPayload};
+use types::{Achievement, ChannelMessageTipped, Chat, EventIndex, OCResult, UserNotificationPayload};
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
 #[update(msgpack = true)]
@@ -63,13 +63,6 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
                 let channel_avatar_id = channel.chat.avatar.as_ref().map(|a| a.id);
                 let tip = format_crypto_amount_with_symbol(args.amount, args.decimals, &args.token_symbol);
-                // TODO i18n
-                let fcm_body = format!("Tipped your message {}", tip.clone());
-                let fcm_data = FcmData::for_channel(community_id, channel.id)
-                    .set_body(fcm_body)
-                    .set_sender_name_with_alt(&args.display_name, &args.username)
-                    .set_avatar_id(channel_avatar_id);
-
                 let notification = UserNotificationPayload::ChannelMessageTipped(ChannelMessageTipped {
                     community_id,
                     channel_id: channel.id,
@@ -86,7 +79,7 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
                     channel_avatar_id,
                 });
 
-                state.push_notification(Some(user_id), vec![message.sender], notification, fcm_data);
+                state.push_notification(Some(user_id), vec![message.sender], notification);
                 state.push_event_to_user(message.sender, event, now);
                 state.notify_user_of_achievement(message.sender, Achievement::HadMessageTipped, now);
             }

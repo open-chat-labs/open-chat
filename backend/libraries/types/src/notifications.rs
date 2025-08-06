@@ -26,11 +26,9 @@ pub struct UserNotification {
     #[serde(rename = "r")]
     pub recipients: Vec<UserId>,
     #[serde(rename = "n")]
-    pub notification_bytes: ByteBuf,
-
-    // Values relevant for the FCM notifications
-    #[serde(rename = "f", skip_deserializing)]
-    pub fcm_data: Option<FcmData>,
+    pub notification_bytes: Option<ByteBuf>,
+    #[serde(rename = "n2")]
+    pub notification: Option<UserNotificationPayload>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -140,7 +138,6 @@ impl Debug for UserNotification {
         f.debug_struct("UserNotification")
             .field("sender", &self.sender)
             .field("recipients", &self.recipients)
-            .field("notification_bytes_length", &self.notification_bytes.len())
             .finish()
     }
 }
@@ -159,8 +156,8 @@ pub struct UserNotificationEnvelope {
     pub notification_bytes: ByteBuf,
     #[serde(rename = "t")]
     pub timestamp: TimestampMillis,
-    #[serde(rename = "f", skip_deserializing)]
-    pub fcm_data: Option<FcmData>,
+    #[serde(rename = "f")]
+    pub fcm_data: FcmData,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -197,7 +194,7 @@ impl BotNotificationEnvelope {
 }
 
 #[ts_export]
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub enum UserNotificationPayload {
     #[serde(rename = "ac")]
     AddedToChannel(AddedToChannelNotification),

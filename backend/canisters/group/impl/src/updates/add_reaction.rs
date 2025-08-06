@@ -6,7 +6,7 @@ use canister_tracing_macros::trace;
 use group_canister::{add_reaction::*, c2c_bot_add_reaction};
 use oc_error_codes::{OCError, OCErrorCode};
 use types::{
-    Achievement, BotCaller, BotPermissions, Caller, Chat, ChatId, ChatPermission, EventIndex, FcmData,
+    Achievement, BotCaller, BotPermissions, Caller, Chat, ChatId, ChatPermission, EventIndex,
     GroupReactionAddedNotification, OCResult, UserNotificationPayload,
 };
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
@@ -89,17 +89,6 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
                     .is_none_or(|p| p.notifications_muted().value || p.suspended().value);
 
                 if !notifications_muted {
-                    let added_by_name = args.username;
-                    let added_by_display_name = args.display_name;
-                    let group_avatar_id = state.data.chat.avatar.as_ref().map(|d| d.id);
-
-                    // TODO i18n
-                    // TODO create alternative channels for notifications that we consider to be low priority
-                    let fcm_data = FcmData::for_group(chat_id)
-                        .set_body(format!("Reacted {} to your message", args.reaction.clone().0))
-                        .set_sender_name_with_alt(&added_by_display_name, &added_by_name)
-                        .set_avatar_id(group_avatar_id);
-
                     let user_notification_payload =
                         UserNotificationPayload::GroupReactionAdded(GroupReactionAddedNotification {
                             chat_id,
@@ -108,13 +97,13 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
                             message_event_index: event_index,
                             group_name: state.data.chat.name.value.clone(),
                             added_by: agent,
-                            added_by_name,
-                            added_by_display_name,
+                            added_by_name: args.username,
+                            added_by_display_name: args.display_name,
                             reaction: args.reaction,
-                            group_avatar_id,
+                            group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
                         });
 
-                    state.push_notification(Some(agent), vec![message.sender], user_notification_payload, fcm_data);
+                    state.push_notification(Some(agent), vec![message.sender], user_notification_payload);
                 }
 
                 state.push_event_to_user(

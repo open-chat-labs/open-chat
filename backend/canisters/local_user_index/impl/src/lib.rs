@@ -33,7 +33,7 @@ use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     BotDataEncoding, BotEventWrapper, BotNotification, BotNotificationEnvelope, BuildVersion, CanisterId,
     ChannelLatestMessageIndex, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
-    CommunityId, Cycles, DiamondMembershipDetails, IdempotentEnvelope, MessageContent, Milliseconds, Notification,
+    CommunityId, Cycles, DiamondMembershipDetails, FcmData, IdempotentEnvelope, MessageContent, Milliseconds, Notification,
     NotificationEnvelope, ReferralType, TimestampMillis, Timestamped, UserId, UserNotificationEnvelope,
     VerifiedCredentialGateArgs,
 };
@@ -573,6 +573,14 @@ impl Data {
     pub fn handle_notification(&mut self, notification: Notification, this_canister_id: CanisterId, now: TimestampMillis) {
         match notification {
             Notification::User(user_notification) => {
+                let Some(notification_bytes) = user_notification.notification_bytes.or_else(|| {
+                    user_notification
+                        .notification
+                        .map(|n| ByteBuf::from(msgpack::serialize_then_unwrap(&n)))
+                }) else {
+                    return;
+                };
+
                 let users_who_have_blocked_sender: HashSet<_> = user_notification
                     .sender
                     .map(|s| self.blocked_users.all_linked_users(s))
@@ -590,9 +598,10 @@ impl Data {
                 if !filtered_recipients.is_empty() {
                     self.notifications.add(NotificationEnvelope::User(UserNotificationEnvelope {
                         recipients: filtered_recipients,
-                        notification_bytes: user_notification.notification_bytes.clone(),
+                        notification_bytes,
                         timestamp: now,
-                        fcm_data: user_notification.fcm_data,
+                        // TODO populate fcm_data properly
+                        fcm_data: FcmData::for_group(Principal::anonymous().into()),
                     }));
                 }
             }

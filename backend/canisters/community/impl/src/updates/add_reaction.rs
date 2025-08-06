@@ -7,7 +7,7 @@ use community_canister::{add_reaction::*, c2c_bot_add_reaction};
 use oc_error_codes::OCErrorCode;
 use types::{
     Achievement, BotCaller, BotPermissions, Caller, ChannelReactionAddedNotification, Chat, ChatPermission, CommunityId,
-    EventIndex, FcmData, OCResult, UserNotificationPayload,
+    EventIndex, OCResult, UserNotificationPayload,
 };
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -98,13 +98,6 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
                         .or(args.display_name);
                     let channel_avatar_id = channel.chat.avatar.as_ref().map(|d| d.id);
 
-                    // TODO i18n
-                    let fcm_body = format!("Reacted {} to your message", args.reaction.clone().0);
-                    let fcm_data = FcmData::for_channel(community_id, args.channel_id)
-                        .set_body(fcm_body)
-                        .set_sender_name_with_alt(&display_name, &args.username)
-                        .set_avatar_id(channel_avatar_id);
-
                     let notification = UserNotificationPayload::ChannelReactionAdded(ChannelReactionAddedNotification {
                         community_id,
                         channel_id: args.channel_id,
@@ -121,7 +114,7 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
                         channel_avatar_id,
                     });
 
-                    state.push_notification(Some(agent), vec![message.sender], notification, fcm_data);
+                    state.push_notification(Some(agent), vec![message.sender], notification);
                 }
 
                 state.push_event_to_user(

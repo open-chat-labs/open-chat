@@ -25,12 +25,10 @@ use model::favourite_chats::FavouriteChats;
 use model::message_activity_events::MessageActivityEvents;
 use model::referrals::Referrals;
 use model::streak::Streak;
-use msgpack::serialize_then_unwrap;
 use oc_error_codes::OCErrorCode;
 use rand::RngCore;
 use rand::prelude::StdRng;
 use serde::{Deserialize, Serialize};
-use serde_bytes::ByteBuf;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
@@ -38,9 +36,9 @@ use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     Achievement, BotInitiator, BotNotification, BotPermissions, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics,
-    ChitEarned, ChitEarnedReason, CommunityId, Cycles, Document, FcmData, IdempotentEnvelope, Milliseconds, Notification,
-    NotifyChit, TimestampMillis, Timestamped, UniquePersonProof, UserCanisterStreakInsuranceClaim,
-    UserCanisterStreakInsurancePayment, UserId, UserNotification, UserNotificationPayload,
+    ChitEarned, ChitEarnedReason, CommunityId, Cycles, Document, IdempotentEnvelope, Milliseconds, Notification, NotifyChit,
+    TimestampMillis, Timestamped, UniquePersonProof, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment,
+    UserId, UserNotification, UserNotificationPayload,
 };
 use user_canister::{MessageActivityEvent, NamedAccount, UserCanisterEvent, WalletConfig};
 use utils::env::Environment;
@@ -116,21 +114,15 @@ impl RuntimeState {
         self.data.video_call_operators.contains(&caller)
     }
 
-    pub fn push_notification(
-        &mut self,
-        sender: Option<UserId>,
-        recipient: UserId,
-        notification: UserNotificationPayload,
-        fcm_data: FcmData,
-    ) {
+    pub fn push_notification(&mut self, sender: Option<UserId>, recipient: UserId, notification: UserNotificationPayload) {
         self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
             created_at: self.env.now(),
             idempotency_id: self.env.rng().next_u64(),
             value: local_user_index_canister::UserEvent::Notification(Box::new(Notification::User(UserNotification {
                 sender,
                 recipients: vec![recipient],
-                notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
-                fcm_data: Some(fcm_data),
+                notification: Some(notification),
+                notification_bytes: None,
             }))),
         })
     }
