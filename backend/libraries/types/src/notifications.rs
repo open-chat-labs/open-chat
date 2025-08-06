@@ -223,7 +223,7 @@ impl UserNotificationPayload {
     pub fn to_fcm_data(self) -> FcmData {
         match self {
             UserNotificationPayload::AddedToChannel(n) => FcmData::for_channel(n.community_id, n.channel_id)
-                .set_body(format!("You have been added to channel {}", n.channel_name))
+                .set_body(format!("Added you to the channel '{}'", n.channel_name))
                 .set_sender_name_with_alt(n.added_by_display_name, n.added_by_name)
                 .set_avatar_id(n.community_avatar_id),
             UserNotificationPayload::DirectMessage(n) => FcmData::for_direct_chat(n.sender)
@@ -246,7 +246,40 @@ impl UserNotificationPayload {
                 .set_body_with_alt(n.message_text, n.message_type)
                 .set_optional_image(n.image_url)
                 .set_avatar_id(n.channel_avatar_id.or(n.community_avatar_id)),
-            _ => FcmData::for_group(Principal::anonymous().into()),
+            UserNotificationPayload::DirectReactionAdded(n) => FcmData::for_direct_chat(n.them)
+                .set_sender_name_with_alt(n.display_name, n.username)
+                .set_optional_thread(n.thread_root_message_index)
+                .set_body(format!("Reacted {} to your message", n.reaction.0))
+                .set_avatar_id(n.user_avatar_id),
+            UserNotificationPayload::GroupReactionAdded(n) => FcmData::for_group(n.chat_id)
+                .set_sender_id(n.added_by)
+                .set_sender_name_with_alt(n.added_by_display_name, n.added_by_name)
+                .set_optional_thread(n.thread_root_message_index)
+                .set_body(format!("Reacted {} to your message", n.reaction.0))
+                .set_avatar_id(n.group_avatar_id),
+            UserNotificationPayload::ChannelReactionAdded(n) => FcmData::for_channel(n.community_id, n.channel_id)
+                .set_sender_id(n.added_by)
+                .set_sender_name_with_alt(n.added_by_display_name, n.added_by_name)
+                .set_optional_thread(n.thread_root_message_index)
+                .set_body(format!("Reacted {} to your message", n.reaction.0))
+                .set_avatar_id(n.channel_avatar_id.or(n.community_avatar_id)),
+            UserNotificationPayload::DirectMessageTipped(n) => FcmData::for_direct_chat(n.them)
+                .set_sender_name_with_alt(n.display_name, n.username)
+                .set_optional_thread(n.thread_root_message_index)
+                .set_body(format!("Tipped your message {}", n.tip))
+                .set_avatar_id(n.user_avatar_id),
+            UserNotificationPayload::GroupMessageTipped(n) => FcmData::for_group(n.chat_id)
+                .set_sender_id(n.tipped_by)
+                .set_sender_name_with_alt(n.tipped_by_display_name, n.tipped_by_name)
+                .set_optional_thread(n.thread_root_message_index)
+                .set_body(format!("Tipped your message {}", n.tip))
+                .set_avatar_id(n.group_avatar_id),
+            UserNotificationPayload::ChannelMessageTipped(n) => FcmData::for_channel(n.community_id, n.channel_id)
+                .set_sender_id(n.tipped_by)
+                .set_sender_name_with_alt(n.tipped_by_display_name, n.tipped_by_name)
+                .set_optional_thread(n.thread_root_message_index)
+                .set_body(format!("Tipped your message {}", n.tip))
+                .set_avatar_id(n.channel_avatar_id.or(n.community_avatar_id)),
         }
     }
 }
