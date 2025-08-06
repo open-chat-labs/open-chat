@@ -16,27 +16,7 @@
         customEmojis?: Map<string, CustomEmoji>;
     }
 
-    let paid = new Set([2, 3]);
-
     let { mode = "message", onEmojiSelected, onSkintoneChanged, customEmojis }: Props = $props();
-
-    function lockedCss(code: string) {
-        return `
-        .custom-emoji[id*="-${code}"] {
-            filter: saturate(0.8);
-            position: relative;
-        }
-
-        .custom-emoji[id*="-${code}"]::before {
-            content: "";
-            width: 16px;
-            height: 16px;
-            background-image: url(/assets/locked_solid.svg);
-            background-repeat: no-repeat;
-            position: absolute;
-        }
-        `;
-    }
 
     function lockedCategoryCss(groupId: number, price: number) {
         return `
@@ -67,13 +47,6 @@
 
     function createCustomCss(): string {
         const rules: string[] = [];
-
-        // customEmojis?.entries().forEach(([_, emoji]) => {
-        //     if (!paid.has(emoji.groupId)) {
-        //         rules.push(lockedCss(emoji.code));
-        //     }
-        // });
-
         rules.push(lockedCategoryCss(0, 10_000));
         rules.push(lockedCategoryCss(1, 50_000));
         return rules.join("\n");
