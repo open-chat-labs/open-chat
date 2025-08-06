@@ -132,7 +132,7 @@ impl Pusher {
         let fcm_data = fcm_notification_to_push.fcm_data;
         let mut message = FcmMessage::new();
 
-        message.set_data(Some(fcm_data.as_data()));
+        message.set_data(fcm_data.map(|d| d.as_data()));
         message.set_target(Target::Token(fcm_notification_to_push.fcm_token.0));
 
         let res = self.fcm_service.send_notification(message).await;

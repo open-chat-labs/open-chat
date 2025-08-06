@@ -74,7 +74,7 @@ pub enum PushNotification {
 
 #[derive(Debug)]
 pub struct FcmNotification {
-    fcm_data: FcmData,
+    fcm_data: Option<FcmData>,
     fcm_token: FcmToken,
     metadata: NotificationMetadata,
 }

@@ -33,7 +33,7 @@ use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     BotDataEncoding, BotEventWrapper, BotNotification, BotNotificationEnvelope, BuildVersion, CanisterId,
     ChannelLatestMessageIndex, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
-    CommunityId, Cycles, DiamondMembershipDetails, FcmData, IdempotentEnvelope, MessageContent, Milliseconds, Notification,
+    CommunityId, Cycles, DiamondMembershipDetails, IdempotentEnvelope, MessageContent, Milliseconds, Notification,
     NotificationEnvelope, ReferralType, TimestampMillis, Timestamped, UserId, UserNotificationEnvelope,
     VerifiedCredentialGateArgs,
 };
@@ -576,7 +576,9 @@ impl Data {
                 let Some(notification_bytes) = user_notification.notification_bytes.or_else(|| {
                     user_notification
                         .notification
-                        .map(|n| ByteBuf::from(msgpack::serialize_then_unwrap(&n)))
+                        .as_ref()
+                        .map(msgpack::serialize_then_unwrap)
+                        .map(ByteBuf::from)
                 }) else {
                     return;
                 };
@@ -600,8 +602,7 @@ impl Data {
                         recipients: filtered_recipients,
                         notification_bytes,
                         timestamp: now,
-                        // TODO populate fcm_data properly
-                        fcm_data: FcmData::for_group(Principal::anonymous().into()),
+                        fcm_data: user_notification.notification.map(|n| n.to_fcm_data()),
                     }));
                 }
             }

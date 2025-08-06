@@ -11,6 +11,7 @@ use std::{
 };
 use ts_export::ts_export;
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Notification {
     #[serde(rename = "u")]
@@ -157,7 +158,7 @@ pub struct UserNotificationEnvelope {
     #[serde(rename = "t")]
     pub timestamp: TimestampMillis,
     #[serde(rename = "f")]
-    pub fcm_data: FcmData,
+    pub fcm_data: Option<FcmData>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -216,6 +217,12 @@ pub enum UserNotificationPayload {
     GroupMessageTipped(GroupMessageTipped),
     #[serde(rename = "ct")]
     ChannelMessageTipped(ChannelMessageTipped),
+}
+
+impl UserNotificationPayload {
+    pub fn to_fcm_data(self) -> FcmData {
+        FcmData::for_group(Principal::anonymous().into())
+    }
 }
 
 #[ts_export]
