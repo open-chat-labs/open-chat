@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Sync `total_chit_earned` to UserIndex ([#8434](https://github.com/open-chat-labs/open-chat/pull/8434))
+- Send strongly typed notifications to LocalUserIndex ([#8444](https://github.com/open-chat-labs/open-chat/pull/8444))
 
 ### Fixed
 
