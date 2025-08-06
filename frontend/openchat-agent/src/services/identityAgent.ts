@@ -14,10 +14,12 @@ import type {
     Success,
     WebAuthnKeyFull,
     AccountLinkingCode,
+    VerifyAccountLinkingCodeResponse,
 } from "openchat-shared";
-import { buildDelegationIdentity, toDer } from "openchat-shared";
+import { buildDelegationIdentity, toDer, ErrorCode } from "openchat-shared";
 import { createHttpAgent } from "../utils/httpAgent";
 import { getCachedWebAuthnKey } from "../utils/webAuthnKeyCache";
+import { consolidateBytes } from "../utils/mapping";
 
 export class IdentityAgent {
     private readonly _identityClient: IdentityClient;
@@ -175,5 +177,45 @@ export class IdentityAgent {
 
     createAccountLinkingCode(): Promise<AccountLinkingCode | undefined> {
         return this._identityClient.createAccountLinkingCode();
+    }
+
+    verifyAccountLinkingCode(code: string): Promise<VerifyAccountLinkingCodeResponse> {
+        return this._identityClient.verifyAccountLinkingCode(code);
+    }
+
+    async finaliseAccountLinkingWithCode(
+        principal: string,
+        publicKey: Uint8Array,
+        sessionKey: SignIdentity,
+        webAuthnKey?: WebAuthnKeyFull,
+    ): Promise<DelegationIdentity> {
+        const sessionKeyDer = toDer(sessionKey);
+        const finaliseRes = await this._identityClient.finaliseAccountLinkingWithCode(
+            principal,
+            publicKey,
+            sessionKeyDer,
+            webAuthnKey,
+        );
+
+        if ("Error" in finaliseRes) {
+            return Promise.reject({
+                kind: "error",
+                code: finaliseRes.Error[0],
+            });
+        }
+
+        const userKey = consolidateBytes(finaliseRes.Success.user_key);
+        const expiration = finaliseRes.Success.expiration;
+        const delegation = await this.getDelegation(userKey, sessionKey, sessionKeyDer, expiration);
+
+        if (delegation === undefined) {
+            return Promise.reject({
+                kind: "error",
+                code: ErrorCode.Unknown,
+                msg: "Delegation not found, this should never happen",
+            });
+        }
+
+        return delegation;
     }
 }

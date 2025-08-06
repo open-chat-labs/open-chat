@@ -9,6 +9,8 @@
         "approvePaymentTitle": "Zatwierdź płatność",
         "bypassWarning": "Użytkownicy wyraźnie zaproszeni do tego {level} nie będą musieli przechodzić przez bramki dostępu",
         "cannotMakePublic": "Nie możesz ustawić prywatnego {level} jako publicznego, ponieważ zagroziłoby to prywatności istniejących członków.",
+        "chitEarnedGate": "Minimalna zdobyta liczba punktów CHIT",
+        "chitEarnedGateInfo": "Użytkownicy mogą dołączyć tylko wtedy, gdy zgromadzili wystarczającą liczbę CHIT",
         "chooseGate": "Wybierz bramę dostępową",
         "chooseNervousSystem": "Wybierz układ nerwowy",
         "chooseOneGate": "Wybierz bramę",
@@ -67,6 +69,7 @@
         "minimumBalanceInfo": "Użytkownicy mogą dołączyć tylko wtedy, gdy mają minimalne saldo tokenów",
         "minimumBalanceInfo2": "Użytkownicy mogą dołączyć tylko wtedy, gdy mają w portfelu co najmniej tokenów {n} {token}",
         "minimumBalanceN": "Minimalne saldo tokenów {n}",
+        "minimumChitEarned": "Minimalna zdobyta liczba CHIT",
         "minimumTokenBalance": "Minimalne saldo {token}",
         "minStake": "Minimalna stawka (tokeny)",
         "minStakeN": "Tokeny o minimalnej stawce {n}",
@@ -1109,7 +1112,15 @@
     "native": {
         "auth": {
             "createAccount": "Utwórz nowe konto",
-            "error": "Uwierzytelnianie nie powiodło się. Spróbuj ponownie.",
+            "errors": {
+                "alreadyRegistered": "Metoda autoryzacji została już powiązana. Spróbuj się zalogować!",
+                "codeInvalid": "Wygląda na to, że kod łączący Twoje konto jest nieprawidłowy!",
+                "createPasskeyFail": "Utworzenie klucza dostępu nie powiodło się. Spróbuj ponownie.",
+                "default": "Uwierzytelnianie nie powiodło się. Spróbuj ponownie.",
+                "linkingCodeNotFound": "Sprawdź, czy kod linku jest poprawny!",
+                "maxLinkedIdentitiesLimitReached": "Osiągnięto limit maksymalnej liczby powiązanych tożsamości.",
+                "noProviders": "W Twoim telefonie nie ma dostępnych menedżerów danych uwierzytelniających! Musisz włączyć lub zainstalować co najmniej jednego."
+            },
             "existingAccount": "Jestem istniejącym użytkownikiem",
             "linkAccount": {
                 "cta": "Połącz konto",
@@ -1373,8 +1384,11 @@
         "lifetimeDiamondMembership": "Dożywotnie członkostwo diamentowe",
         "live": "Wiadomość o nagrodzie na żywo! Inni mogą kliknąć, aby odebrać 🎁",
         "maxPrize": "Jaka jest maksymalna nagroda?",
+        "minChitEarned": "Minimalna zdobyta liczba CHIT",
+        "minChitEarnedValue": "Zarobiono co najmniej {n} CHIT",
         "minPrize": "Jaka jest minimalna nagroda?",
         "numberOfWinners": "Liczba zwycięzców",
+        "onlyChit": "Tylko użytkownicy z CHIT",
         "onlyDiamond": "Tylko użytkownicy Diamonda",
         "onlyStreak": "Tylko użytkownicy z passą",
         "onlyUniquePerson": "Tylko wyjątkowi ludzie",

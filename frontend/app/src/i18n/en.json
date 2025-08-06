@@ -9,6 +9,8 @@
         "approvePaymentTitle": "Approve payment",
         "bypassWarning": "Any users who are explicitly invited to this {level} will not be required to pass the access gates",
         "cannotMakePublic": "You cannot make a private {level} public as that would risk the privacy of the existing members.",
+        "chitEarnedGate": "Minimum CHIT Earned",
+        "chitEarnedGateInfo": "Users can only join if they have earned enough CHIT",
         "chooseGate": "Access gate type",
         "chooseNervousSystem": "Choose nervous system",
         "chooseOneGate": "Choose a gate",
@@ -67,6 +69,7 @@
         "minimumBalanceInfo": "Users can only join if they have a minimum balance of tokens",
         "minimumBalanceInfo2": "Users can only join if they have at least {n} {token} tokens in their wallet",
         "minimumBalanceN": "Minimum balance of {n} tokens",
+        "minimumChitEarned": "Minimum CHIT earned",
         "minimumTokenBalance": "Minimum {token} balance",
         "minStake": "Min stake (tokens)",
         "minStakeN": "Min stake {n} tokens",
@@ -1109,12 +1112,20 @@
     "native": {
         "auth": {
             "createAccount": "Create new account",
-            "error": "Authentication failed. Please try again.",
+            "errors": {
+                "alreadyRegistered": "Auth method has already been linked. Try signing in!",
+                "codeInvalid": "Your account linking code seems to be invalid!",
+                "createPasskeyFail": "Creating passkey failed, please try again.",
+                "default": "Authentication failed. Please try again.",
+                "linkingCodeNotFound": "Please check your linking code is correct!",
+                "maxLinkedIdentitiesLimitReached": "You've reached the limit for the max number of linked identities.",
+                "noProviders": "There are no available credentials managers on your phone! You will need to enable or install at least one."
+            },
             "existingAccount": "I'm an existing user",
             "linkAccount": {
                 "cta": "Link account",
-                "info": "To link with your existing OpenChat account, please enter your one-time-password below.",
-                "note": "One-time-password can be found under your profile / advanced, on a device where you are currently signed in.",
+                "info": "To link with your existing OpenChat account, please enter your account linking code below.",
+                "note": "Account linking code can be found under your profile options, on a device where you are currently signed in.",
                 "title": "Link with existing account"
             }
         }
@@ -1373,8 +1384,11 @@
         "lifetimeDiamondMembership": "Lifetime diamond membership",
         "live": "Prize message live! Others can click to claim 🎁",
         "maxPrize": "What is the maximum prize?",
+        "minChitEarned": "Minimum CHIT earned",
+        "minChitEarnedValue": "At least {n} CHIT earned",
         "minPrize": "What is the minimum prize?",
         "numberOfWinners": "Number of winners",
+        "onlyChit": "Only users with CHIT",
         "onlyDiamond": "Only Diamond users",
         "onlyStreak": "Only users with a streak",
         "onlyUniquePerson": "Only Unique humans",

@@ -151,7 +151,8 @@
                             <Badges
                                 uniquePerson={user?.isUniquePerson}
                                 {diamondStatus}
-                                streak={user?.streak} />
+                                streak={user?.streak}
+                                chitEarned={user?.totalChitEarned} />
                             {#if user !== undefined && $selectedChatSummaryStore !== undefined && $selectedChatSummaryStore.kind !== "direct_chat"}
                                 <WithRole
                                     userId={user.userId}

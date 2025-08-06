@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Implement ability to pay for premium items using CHIT ([#8439](https://github.com/open-chat-labs/open-chat/pull/8439))
+
+### Changed
+
+- Store `total_chit_earned` on each user record ([#8434](https://github.com/open-chat-labs/open-chat/pull/8434))
+- Initialise `total_chit_earned` from the monthly CHIT amounts ([#8437](https://github.com/open-chat-labs/open-chat/pull/8437))
+
+## [[2.0.1855](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1855-user_index)] - 2025-08-05
+
 ### Fixed
 
 - Maintain event ordering when retrying failed c2c calls ([#8429](https://github.com/open-chat-labs/open-chat/pull/8429))

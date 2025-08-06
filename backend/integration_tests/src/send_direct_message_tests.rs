@@ -1,5 +1,6 @@
 use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
+use crate::utils::tick_many;
 use crate::{TestEnv, client};
 use oc_error_codes::OCErrorCode;
 use std::ops::Deref;
@@ -16,6 +17,8 @@ fn send_message_succeeds() {
     let user2 = client::register_user(env, canister_ids);
 
     let send_message_result = client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", None);
+
+    tick_many(env, 3);
 
     let events_response1 =
         client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![send_message_result.event_index]);
@@ -94,12 +97,12 @@ fn send_message_retries_if_fails() {
     stop_canister(env, user2.local_user_index, user2.user_id.into());
 
     let send_message_result = client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", None);
-    env.tick();
+    tick_many(env, 3);
 
     start_canister(env, user2.local_user_index, user2.user_id.into());
 
     env.advance_time(Duration::from_secs(10));
-    env.tick();
+    tick_many(env, 3);
 
     let events_response =
         client::user::happy_path::events_by_index(env, &user2, user1.user_id, vec![send_message_result.event_index]);
@@ -124,6 +127,8 @@ fn messages_arrive_in_order_even_if_some_fail_originally() {
     start_canister(env, user2.local_user_index, user2.user_id.into());
 
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, "3", None);
+
+    tick_many(env, 3);
 
     let events_response = client::user::happy_path::events(env, &user2, user1.user_id, EventIndex::default(), true, 100, 100);
 

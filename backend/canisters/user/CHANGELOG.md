@@ -27,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `token:Cryptocurrency` -> `token_symbol:String` ([#8368](https://github.com/open-chat-labs/open-chat/pull/8368))
 - Use full names for bot event notification fields ([#8389](https://github.com/open-chat-labs/open-chat/pull/8389))
 - Add 'min_chit_earned' prize message criterion ([#8413](https://github.com/open-chat-labs/open-chat/pull/8413))
+- Sync `total_chit_earned` to UserIndex ([#8434](https://github.com/open-chat-labs/open-chat/pull/8434))
 
 ### Removed
 

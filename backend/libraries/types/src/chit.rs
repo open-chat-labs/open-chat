@@ -14,6 +14,8 @@ pub struct ChitEarned {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct NotifyChit {
     pub timestamp: TimestampMillis,
+    #[serde(default)]
+    pub total_chit_earned: i32,
     pub chit_balance: i32,
     pub streak: u16,
     pub streak_ends: TimestampMillis,

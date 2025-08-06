@@ -2,7 +2,7 @@ export type OCError = {
     kind: "error";
     code: number;
     message: string | undefined;
-}
+};
 
 export class UnsupportedValueError extends Error {
     constructor(msg: string, value: never) {
@@ -235,6 +235,8 @@ export enum ErrorCode {
     NoEligibleNeurons = 334,
     ProposalNotFound = 335,
     ProposalNotAcceptingVotes = 336,
+    LinkingCodeNotFound = 342,
+    MaxLinkedIdentitiesLimitReached = 343,
 
     // InternalError
     C2CError = 500,

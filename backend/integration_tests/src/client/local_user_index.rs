@@ -58,7 +58,7 @@ pub mod happy_path {
             },
         );
 
-        tick_many(env, 3);
+        tick_many(env, 5);
 
         match response {
             local_user_index_canister::register_user::Response::Success(res) => User {
@@ -128,7 +128,7 @@ pub mod happy_path {
             join_group(env, principal, local_user_index_canister_id, group_id);
         }
 
-        env.tick();
+        tick_many(env, 5);
     }
 
     pub fn invite_users_to_community(

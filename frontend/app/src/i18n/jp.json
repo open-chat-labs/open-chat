@@ -9,6 +9,8 @@
         "approvePaymentTitle": "支払いの承認",
         "bypassWarning": "この{level}に明示的に招待されたユーザーは、アクセスゲートを通過する必要はありません。",
         "cannotMakePublic": "既存のメンバーのプライバシーが危険にさらされるため、非公開の {level} を公開することはできません。",
+        "chitEarnedGate": "獲得した最低CHIT",
+        "chitEarnedGateInfo": "ユーザーは十分なCHITを獲得した場合にのみ参加できます",
         "chooseGate": "アクセスゲートを選択してください",
         "chooseNervousSystem": "神経系を選択する",
         "chooseOneGate": "ゲートを選択",
@@ -67,6 +69,7 @@
         "minimumBalanceInfo": "ユーザーは最低トークン残高を持っている場合にのみ参加できます",
         "minimumBalanceInfo2": "ユーザーはウォレットに少なくとも {n} {token} トークンがある場合にのみ参加できます",
         "minimumBalanceN": "{n} トークンの最小残高",
+        "minimumChitEarned": "獲得した最低CHIT",
         "minimumTokenBalance": "最低 {token} 残高",
         "minStake": "最小ステーク (トークン)",
         "minStakeN": "最小ステーク {n} トークン",
@@ -1109,7 +1112,15 @@
     "native": {
         "auth": {
             "createAccount": "新しいアカウントを作成",
-            "error": "認証に失敗しました。もう一度お試しください。",
+            "errors": {
+                "alreadyRegistered": "認証方法はすでにリンクされています。サインインしてみてください。",
+                "codeInvalid": "アカウントリンクコードが無効のようです。",
+                "createPasskeyFail": "パスキーの作成に失敗しました。もう一度お試しください。",
+                "default": "認証に失敗しました。もう一度お試しください。",
+                "linkingCodeNotFound": "リンクコードが正しいことを確認してください。",
+                "maxLinkedIdentitiesLimitReached": "リンクされた ID の最大数の制限に達しました。",
+                "noProviders": "お使いの携帯電話には利用可能な認証情報マネージャーがありません。少なくとも 1 つを有効にするかインストールする必要があります。"
+            },
             "existingAccount": "私は既存のユーザーです",
             "linkAccount": {
                 "cta": "アカウントをリンク",
@@ -1373,8 +1384,11 @@
         "lifetimeDiamondMembership": "生涯ダイヤモンド会員",
         "live": "賞金メッセージを実施中！他の人はクリックして申請できます 🎁",
         "maxPrize": "賞金の最高額はいくらですか?",
+        "minChitEarned": "獲得した最低CHIT",
+        "minChitEarnedValue": "少なくとも{n}CHITを獲得しました",
         "minPrize": "最低賞金額はいくらですか?",
         "numberOfWinners": "当選者数",
+        "onlyChit": "CHITを持つユーザーのみ",
         "onlyDiamond": "ダイヤモンドユーザーのみ",
         "onlyStreak": "連続記録を持つユーザーのみ",
         "onlyUniquePerson": "ユニークな人間だけ",

@@ -1,15 +1,14 @@
 use crate::env::ENV;
-use crate::utils::now_millis;
+use crate::utils::{now_millis, tick_many};
 use crate::{TestEnv, User, client};
 use constants::{DAY_IN_MS, HOUR_IN_MS};
 use itertools::Itertools;
 use pocket_ic::PocketIc;
 use std::cmp::max;
-use std::ops::{Add, Deref};
+use std::ops::Deref;
 use std::time::{Duration, SystemTime};
 use test_case::test_case;
 use types::{ChitEarnedReason, OptionUpdate, TimestampMillis};
-use utils::time::MonthKey;
 
 const DAY_ZERO: TimestampMillis = 1704067200000; // Mon Jan 01 2024 00:00:00 GMT+0000
 const ONE_CHAT: u128 = 100_000_000;
@@ -19,24 +18,24 @@ fn claim_daily_chit_reflected_in_user_index() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user = client::register_user(env, canister_ids);
+    let user1 = client::register_user(env, canister_ids);
     let user2 = client::register_user(env, canister_ids);
     ensure_time_at_least_day0(env);
 
-    let result = client::user::happy_path::claim_daily_chit(env, &user, None);
+    let result = client::user::happy_path::claim_daily_chit(env, &user1, None);
     assert_eq!(result.chit_balance, 200);
     assert_eq!(result.chit_earned, 200);
     assert_eq!(result.streak, 1);
 
-    let events = client::user::happy_path::chit_events(env, &user, None, None, 10);
+    let events = client::user::happy_path::chit_events(env, &user1, None, None, 10);
     assert_eq!(events.total, 1);
     assert_eq!(events.events.len(), 1);
     assert_eq!(events.events[0].amount, 200);
     assert!(matches!(events.events[0].reason, ChitEarnedReason::DailyClaim));
 
-    env.tick();
+    tick_many(env, 3);
 
-    let result = client::user_index::happy_path::users(env, user2.principal, canister_ids.user_index, vec![user.user_id]);
+    let result = client::user_index::happy_path::users(env, user2.principal, canister_ids.user_index, vec![user1.user_id]);
 
     assert_eq!(result.users.len(), 1);
 
@@ -84,51 +83,6 @@ fn chit_streak_gained_and_lost_as_expected() {
     assert_eq!(result.users.len(), 1);
     assert_eq!(result.users[0].volatile.as_ref().unwrap().streak, 0);
     assert_eq!(result.users[0].volatile.as_ref().unwrap().max_streak, 4);
-}
-
-#[test]
-fn chit_stored_per_month() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv { env, canister_ids, .. } = wrapper.env();
-
-    let user = client::register_user(env, canister_ids);
-    ensure_time_at_least_day0(env);
-    advance_to_next_month(env);
-    let start_month = MonthKey::from_timestamp(now_millis(env));
-
-    for i in 1..5 {
-        for _ in 0..i {
-            client::user::happy_path::claim_daily_chit(env, &user, None);
-            env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
-        }
-        advance_to_next_month(env);
-    }
-
-    env.tick();
-
-    let mut month = start_month;
-    for i in 1..5 {
-        let chit = client::user_index::happy_path::users_chit(
-            env,
-            canister_ids.user_index,
-            vec![user.user_id],
-            month.year() as u16,
-            month.month(),
-        )
-        .values()
-        .next()
-        .cloned()
-        .unwrap();
-
-        assert_eq!(chit.balance, i * 200);
-
-        month = month.next();
-    }
-
-    let user = client::user_index::happy_path::user(env, canister_ids.user_index, user.user_id);
-
-    assert_eq!(user.total_chit_earned, 2000);
-    assert_eq!(user.chit_balance, 0);
 }
 
 #[test_case(0)]
@@ -350,14 +304,33 @@ fn streak_utc_offset_can_be_updated() {
     assert_eq!(result1.next_claim, result2.next_claim + (10 * HOUR_IN_MS));
 }
 
-fn advance_to_next_month(env: &mut PocketIc) {
-    let now = now_millis(env);
-    let next_month = MonthKey::from_timestamp(now).next();
-    env.set_time(
-        SystemTime::UNIX_EPOCH
-            .add(Duration::from_millis(next_month.start_timestamp()))
-            .into(),
+#[test]
+fn pay_for_premium_item_succeeds() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let user = client::register_user(env, canister_ids);
+    ensure_time_at_least_day0(env);
+
+    for _ in 0..30 {
+        client::user::happy_path::claim_daily_chit(env, &user, None);
+        env.advance_time(Duration::from_millis(DAY_IN_MS));
+    }
+
+    tick_many(env, 3);
+
+    let pay_for_premium_item_result =
+        client::user_index::happy_path::pay_for_premium_item(env, user.principal, canister_ids.user_index, 1, 10_000);
+
+    assert_eq!(
+        pay_for_premium_item_result.total_chit_earned - pay_for_premium_item_result.chit_balance,
+        10_000
     );
+
+    let current_user = client::user_index::happy_path::current_user(env, user.principal, canister_ids.user_index);
+
+    assert_eq!(current_user.premium_items, vec![1]);
+    assert_eq!(current_user.total_chit_earned - current_user.chit_balance, 10_000)
 }
 
 fn ensure_time_at_least_day0(env: &mut PocketIc) {

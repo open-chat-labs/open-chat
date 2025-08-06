@@ -19,6 +19,7 @@ notifications_index_canister_client = { path = "../../canisters/notifications_in
 openssl = { workspace = true, features = ["vendored"] }
 prometheus = { workspace = true }
 reqwest = { workspace = true }
+rustls = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true, features = ["macros", "time"] }

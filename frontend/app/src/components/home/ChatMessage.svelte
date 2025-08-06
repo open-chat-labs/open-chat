@@ -190,6 +190,7 @@
     let confirmedReadByThem = $derived(client.messageIsReadByThem(chatId, msg.messageIndex));
     let readByThem = $derived(confirmedReadByThem || $unconfirmedReadByThem.has(msg.messageId));
     let streak = $derived(sender?.streak ?? 0);
+    let chitEarned = $derived(sender?.totalChitEarned ?? 0);
     let hasAchievedMaxStreak = $derived((sender?.maxStreak ?? 0) >= 365);
 
     trackedEffect("read-by-them", () => {
@@ -630,10 +631,12 @@
                                         <h4 class="username" class:fill class:crypto>
                                             {senderDisplayName}
                                         </h4>
+
                                         <Badges
                                             uniquePerson={sender?.isUniquePerson}
                                             diamondStatus={sender?.diamondStatus}
-                                            {streak} />
+                                            {streak}
+                                            {chitEarned} />
                                         <BotBadge
                                             bot={senderContext?.kind === "bot"}
                                             webhook={senderContext?.kind === "webhook"} />

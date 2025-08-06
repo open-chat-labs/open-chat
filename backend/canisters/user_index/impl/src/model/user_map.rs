@@ -291,6 +291,16 @@ impl UserMap {
         self.username_to_user_id.get(username).and_then(|u| self.users.get(u))
     }
 
+    pub fn get_mut(&mut self, user_id_or_principal: &Principal) -> Option<&mut User> {
+        let user_id = self
+            .principal_to_user_id
+            .get(user_id_or_principal)
+            .copied()
+            .unwrap_or_else(|| UserId::from(*user_id_or_principal));
+
+        self.users.get_mut(&user_id)
+    }
+
     pub fn get_bot(&self, user_id: &UserId) -> Option<&Bot> {
         self.bots.get(user_id)
     }
@@ -377,11 +387,13 @@ impl UserMap {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn set_chit(
         &mut self,
         user_id: &UserId,
+        total_chit_earned: i32,
         chit_event_timestamp: TimestampMillis,
-        chit_balance: i32,
+        chit_earned_in_month: i32,
         streak: u16,
         streak_ends: TimestampMillis,
         now: TimestampMillis,
@@ -411,8 +423,10 @@ impl UserMap {
             }
         }
 
+        // TODO remove the if condition once User canisters are upgraded
+        user.total_chit_earned = if total_chit_earned != 0 { total_chit_earned } else { user.chit_per_month.values().sum() };
         user.chit_updated = now;
-        user.chit_per_month.insert(chit_event_month, chit_balance);
+        user.chit_per_month.insert(chit_event_month, chit_earned_in_month);
         true
     }
 
@@ -489,6 +503,10 @@ impl UserMap {
 
     pub fn iter(&self) -> impl Iterator<Item = &User> {
         self.users.values()
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut User> {
+        self.users.values_mut()
     }
 
     pub fn len(&self) -> usize {

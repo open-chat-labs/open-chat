@@ -9,6 +9,8 @@
         "approvePaymentTitle": "Aprobar pago",
         "bypassWarning": "Cualquier usuario que esté invitado explícitamente a este {level} no tendrá que pasar las puertas de acceso.",
         "cannotMakePublic": "No puede hacer público un {level} privado, ya que eso pondría en riesgo la privacidad de los miembros existentes.",
+        "chitEarnedGate": "CHIT mínimo ganado",
+        "chitEarnedGateInfo": "Los usuarios sólo pueden unirse si han ganado suficiente CHIT",
         "chooseGate": "Elige una puerta de acceso",
         "chooseNervousSystem": "Elige sistema nervioso",
         "chooseOneGate": "Elige una puerta",
@@ -67,6 +69,7 @@
         "minimumBalanceInfo": "Los usuarios solo pueden unirse si tienen un saldo mínimo de tokens",
         "minimumBalanceInfo2": "Los usuarios solo pueden unirse si tienen al menos {n} {token} tokens en su billetera",
         "minimumBalanceN": "Saldo mínimo de tokens {n}",
+        "minimumChitEarned": "CHIT mínimo ganado",
         "minimumTokenBalance": "Saldo mínimo de {token}",
         "minStake": "Apuesta mínima (tokens)",
         "minStakeN": "Apuesta mínima {n} tokens",
@@ -1109,7 +1112,15 @@
     "native": {
         "auth": {
             "createAccount": "Crear nueva cuenta",
-            "error": "Error de autenticación. Inténtalo de nuevo.",
+            "errors": {
+                "alreadyRegistered": "El método de autenticación ya está vinculado. ¡Intenta iniciar sesión!",
+                "codeInvalid": "¡Su código de vinculación de cuenta parece ser inválido!",
+                "createPasskeyFail": "Error al crear la clave de acceso, inténtelo nuevamente.",
+                "default": "Error de autenticación. Inténtalo de nuevo.",
+                "linkingCodeNotFound": "¡Por favor verifique que su código de enlace sea correcto!",
+                "maxLinkedIdentitiesLimitReached": "Ha alcanzado el límite del número máximo de identidades vinculadas.",
+                "noProviders": "¡No hay administradores de credenciales disponibles en tu teléfono! Necesitarás habilitar o instalar al menos uno."
+            },
             "existingAccount": "Soy un usuario existente",
             "linkAccount": {
                 "cta": "Vincular cuenta",
@@ -1373,8 +1384,11 @@
         "lifetimeDiamondMembership": "Membresía de diamante de por vida",
         "live": "¡Mensaje de premio en vivo! Otros pueden hacer clic para reclamar 🎁",
         "maxPrize": "¿Cuál es el premio máximo?",
+        "minChitEarned": "CHIT mínimo ganado",
+        "minChitEarnedValue": "Se obtuvieron al menos {n} CHIT",
         "minPrize": "¿Cuál es el premio mínimo?",
         "numberOfWinners": "Número de ganadores",
+        "onlyChit": "Sólo usuarios con CHIT",
         "onlyDiamond": "Sólo usuarios Diamante",
         "onlyStreak": "Solo usuarios con racha",
         "onlyUniquePerson": "Sólo humanos únicos",

@@ -129,7 +129,7 @@ impl CanisterIds {
     }
 
     fn subnet(&self, env: &PocketIc, canister_id: CanisterId) -> Subnet {
-        let subnet_id = env.topology().get_subnet(canister_id).unwrap();
+        let subnet_id = env.get_subnet(canister_id).unwrap();
         self.subnets.iter().find(|s| s.subnet_id == subnet_id).cloned().unwrap()
     }
 }

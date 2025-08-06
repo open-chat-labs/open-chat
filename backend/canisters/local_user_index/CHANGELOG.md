@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Sync `total_chit_earned` to UserIndex ([#8434](https://github.com/open-chat-labs/open-chat/pull/8434))
+
+### Fixed
+
+- Fix rare scenario where notification could be skipped incorrectly ([#8441](https://github.com/open-chat-labs/open-chat/pull/8441))
+
+## [[2.0.1854](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1854-local_user_index)] - 2025-08-05
+
 ### Fixed
 
 - Maintain event ordering when retrying failed c2c calls ([#8429](https://github.com/open-chat-labs/open-chat/pull/8429))

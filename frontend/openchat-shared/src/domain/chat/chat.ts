@@ -87,6 +87,7 @@ export interface PrizeContentInitial {
     lifetimeDiamondOnly: boolean;
     uniquePersonOnly: boolean;
     streakOnly: number;
+    minChitEarned: number;
     endDate: bigint;
     caption?: string;
     transfer: PendingCryptocurrencyTransfer;
@@ -357,6 +358,7 @@ export interface PrizeContent {
     endDate: bigint;
     caption?: string;
     requiresCaptcha: boolean;
+    minChitEarned: number;
 }
 
 export interface P2PSwapContent {
@@ -1896,7 +1898,8 @@ export type GateCheckFailedReason =
     | "no_unique_person_proof"
     | "not_lifetime_diamond"
     | "locked"
-    | "not_referred_by_member";
+    | "not_referred_by_member"
+    | "chit_earned_too_low";
 
 export type ChatFrozenEvent = {
     kind: "chat_frozen";

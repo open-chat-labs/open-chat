@@ -5,7 +5,13 @@
         OpenChat,
         PrizeContentInitial,
     } from "openchat-client";
-    import { bigIntMax, cryptoBalanceStore, cryptoLookup, mobileWidth } from "openchat-client";
+    import {
+        bigIntMax,
+        chitBands,
+        cryptoBalanceStore,
+        cryptoLookup,
+        mobileWidth,
+    } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
@@ -62,7 +68,9 @@
     let diamondType: "standard" | "lifetime" = $state("standard");
     let uniquePersonOnly = $state(false);
     let streakOnly = $state(false);
+    let chitOnly = $state(false);
     let streakValue = $state("3");
+    let minChitEarned = $state<number>();
     let refreshing = false;
     let error: string | undefined = $state(undefined);
     let message = $state("");
@@ -75,7 +83,7 @@
 
     let anyUser = $state(true);
     $effect(() => {
-        anyUser = !diamondOnly && !uniquePersonOnly && !streakOnly;
+        anyUser = !diamondOnly && !uniquePersonOnly && !streakOnly && !chitOnly;
     });
     let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? 0n);
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
@@ -148,7 +156,8 @@
             diamondOnly: diamondOnly && diamondType === "standard",
             lifetimeDiamondOnly: diamondOnly && diamondType === "lifetime",
             uniquePersonOnly,
-            streakOnly: streakOnly ? parseInt(streakValue) : 0,
+            streakOnly: streakOnly ? parseInt(streakValue, 10) : 0,
+            minChitEarned: chitOnly ? minChitEarned ?? 0 : 0,
             transfer: {
                 kind: "pending",
                 ledger,
@@ -279,6 +288,7 @@
         diamondOnly = false;
         uniquePersonOnly = false;
         streakOnly = false;
+        chitOnly = false;
     }
 </script>
 
@@ -441,10 +451,29 @@
                                 {#if streakOnly}
                                     <Select bind:value={streakValue}>
                                         {#each streaks as streak}
-                                            <option value={streak}
-                                                >{$_("prizes.streakValue", {
-                                                    values: { n: streak },
-                                                })}</option>
+                                            <option value={streak}>
+                                                <Translatable
+                                                    resourceKey={i18nKey("prizes.streakValue", {
+                                                        n: streak,
+                                                    })}></Translatable>
+                                            </option>
+                                        {/each}
+                                    </Select>
+                                {/if}
+                                <Checkbox
+                                    id="chit_only"
+                                    label={i18nKey(`prizes.onlyChit`)}
+                                    bind:checked={chitOnly} />
+                                {#if chitOnly}
+                                    <Select bind:value={minChitEarned}>
+                                        {#each chitBands.entries() as [value, name]}
+                                            <option {value}>
+                                                <Translatable
+                                                    resourceKey={i18nKey(
+                                                        "prizes.minChitEarnedValue",
+                                                        { n: name },
+                                                    )}></Translatable>
+                                            </option>
                                         {/each}
                                     </Select>
                                 {/if}
