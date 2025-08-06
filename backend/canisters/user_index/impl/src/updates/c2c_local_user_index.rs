@@ -140,7 +140,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                             user_id,
                             ChitBalance {
                                 total_earned: total_chit_earned,
-                                curr_balance: total_chit_earned,
+                                curr_balance: total_chit_earned - user.total_chit_spent,
                             },
                         ),
                         None,

@@ -78,6 +78,7 @@ type CurrentUserResponse = variant {
         chit_balance : int32;
         streak : nat16;
         max_streak : nat16;
+        premium_items : vec nat32;
     };
     UserNotFound;
     Error : OCError;

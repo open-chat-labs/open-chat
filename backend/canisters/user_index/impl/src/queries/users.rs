@@ -3,7 +3,6 @@ use canister_api_macros::query;
 use std::collections::HashSet;
 use types::{CurrentUserSummary, UserSummaryV2};
 use user_index_canister::users::{Response::*, *};
-use utils::time::MonthKey;
 
 #[query(candid = true, msgpack = true)]
 fn users(args: Args) -> Response {
@@ -43,16 +42,16 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
                     diamond_membership_status: u.diamond_membership_details.status_full(now),
                     moderation_flags_enabled: u.moderation_flags_enabled,
                     is_unique_person: u.unique_person_proof.is_some(),
-                    total_chit_earned: u.total_chit_earned(),
-                    chit_balance: u.current_chit_balance(now),
+                    total_chit_earned: u.total_chit_earned,
+                    chit_balance: u.total_chit_earned - u.total_chit_spent,
                     streak: u.streak(now),
                     max_streak: u.max_streak,
+                    premium_items: u.premium_items.iter().copied().collect(),
                 });
             }
         }
     }
 
-    let now_month = MonthKey::from_timestamp(now);
     for group in args.user_groups {
         let updated_since = group.updated_since;
 
@@ -69,7 +68,7 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
                 users.push(UserSummaryV2 {
                     user_id,
                     stable: (user.date_updated > updated_since).then(|| user.to_summary_stable(now)),
-                    volatile: Some(user.to_summary_volatile(now, now_month)),
+                    volatile: Some(user.to_summary_volatile(now)),
                 });
                 // TODO maybe convert `deleted_users` to a HashMap?
             } else if state.data.users.is_deleted(&user_id) {
@@ -88,7 +87,7 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
                 .take(100)
                 .filter(|u| user_ids.insert(*u))
                 .filter_map(|u| state.data.users.get_by_user_id(&u))
-                .map(|u| u.to_summary_v2(now, now_month)),
+                .map(|u| u.to_summary_v2(now)),
         );
     }
 
