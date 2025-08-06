@@ -1,6 +1,6 @@
 use crate::model::group_index_event_batch::GroupIndexEventBatch;
 use crate::model::local_user_index_map::LocalUserIndex;
-use crate::model::premium_items::PremiumItems;
+use crate::model::premium_items::{PremiumItemMetrics, PremiumItems};
 use crate::model::storage_index_user_config_batch::StorageIndexUserConfigBatch;
 use crate::model::storage_index_users_to_remove_batch::StorageIndexUsersToRemoveBatch;
 use crate::model::streak_insurance_logs::StreakInsuranceLogs;
@@ -303,6 +303,7 @@ impl RuntimeState {
                 .collect(),
             stable_memory_sizes: memory::memory_sizes(),
             streak_insurance_metrics: self.data.streak_insurance_logs.metrics(),
+            premium_item_metrics: self.data.premium_items.metrics(),
             canister_ids: CanisterIds {
                 group_index: self.data.group_index_canister_id,
                 notifications_index: self.data.notifications_index_canister_id,
@@ -660,6 +661,7 @@ pub struct Metrics {
     pub wasm_chunks_uploaded: Vec<(ChildCanisterType, String)>,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub streak_insurance_metrics: StreakInsuranceMetrics,
+    pub premium_item_metrics: PremiumItemMetrics,
     pub canister_ids: CanisterIds,
 }
 
