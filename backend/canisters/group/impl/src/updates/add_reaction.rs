@@ -6,8 +6,8 @@ use canister_tracing_macros::trace;
 use group_canister::{add_reaction::*, c2c_bot_add_reaction};
 use oc_error_codes::{OCError, OCErrorCode};
 use types::{
-    Achievement, BotCaller, BotPermissions, Caller, Chat, ChatId, ChatPermission, EventIndex,
-    GroupReactionAddedNotification, OCResult, UserNotificationPayload,
+    Achievement, BotCaller, BotPermissions, Caller, Chat, ChatId, ChatPermission, EventIndex, GroupReactionAddedNotification,
+    OCResult, UserNotificationPayload,
 };
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 

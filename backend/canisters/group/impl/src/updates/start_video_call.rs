@@ -8,9 +8,7 @@ use chat_events::{CallParticipantInternal, MessageContentInternal, VideoCallCont
 use constants::HOUR_IN_MS;
 use group_canister::start_video_call_v2::*;
 use oc_error_codes::OCErrorCode;
-use types::{
-    Caller, GroupMessageNotification, OCResult, UserNotificationPayload, VideoCallPresence, VideoCallType,
-};
+use types::{Caller, GroupMessageNotification, OCResult, UserNotificationPayload, VideoCallPresence, VideoCallType};
 
 #[update(guard = "caller_is_video_call_operator", candid = true, msgpack = true)]
 #[trace]
