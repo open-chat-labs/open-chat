@@ -179,3 +179,7 @@ export function findClosestChitBand(earned: number): number {
     const keys = [...chitBands.keys()].sort((a, b) => b - a);
     return keys.find((k) => k < earned) ?? 0;
 }
+
+export type PayForPremiumItemResponse = PayForPremiumItemSuccess | OCError;
+
+export type PayForPremiumItemSuccess = Success & { totalChitEarned: number; chitBalance: number };

@@ -65,11 +65,16 @@ export type MessageContent =
     | ReportedMessageContent
     | UserReferralCard
     | MemeFighterContent
-    | VideoCallContent;
+    | VideoCallContent
+    | EncryptedContent;
 
 export type VideoCallParticipant = {
     userId: string;
     joined: bigint;
+};
+
+export type EncryptedContent = {
+    kind: "encrypted_content";
 };
 
 export type VideoCallContent = {

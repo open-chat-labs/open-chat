@@ -863,7 +863,6 @@ export class OpenChatAgent extends EventTarget {
     async inviteUsers(
         id: MultiUserChatIdentifier | CommunityIdentifier,
         userIds: string[],
-        callerUsername: string,
     ): Promise<boolean> {
         if (!userIds.length) {
             return Promise.resolve(true);
@@ -875,16 +874,12 @@ export class OpenChatAgent extends EventTarget {
             case "community": {
                 const localUserIndex = await this.communityClient(id.communityId).localUserIndex();
                 const localUserIndexClient = this.getLocalUserIndexClient(localUserIndex);
-                return localUserIndexClient.inviteUsersToCommunity(
-                    id.communityId,
-                    userIds,
-                    callerUsername,
-                );
+                return localUserIndexClient.inviteUsersToCommunity(id.communityId, userIds);
             }
             case "group_chat": {
                 const localUserIndex = await this.getGroupClient(id.groupId).localUserIndex();
                 const localUserIndexClient = this.getLocalUserIndexClient(localUserIndex);
-                return localUserIndexClient.inviteUsersToGroup(id.groupId, userIds, callerUsername);
+                return localUserIndexClient.inviteUsersToGroup(id.groupId, userIds);
             }
             case "channel": {
                 const localUserIndex = await this.communityClient(id.communityId).localUserIndex();
@@ -893,7 +888,6 @@ export class OpenChatAgent extends EventTarget {
                     id.communityId,
                     id.channelId,
                     userIds,
-                    callerUsername,
                 );
             }
         }

@@ -691,6 +691,11 @@ export function messageContent(value: TMessageContent, sender: string): MessageC
     if ("VideoCall" in value) {
         return videoCallContent(value.VideoCall);
     }
+    if ("Encrypted" in value) {
+        return {
+            kind: "encrypted_content",
+        };
+    }
     throw new UnsupportedValueError("Unexpected ApiMessageContent type received", value);
 }
 
@@ -1551,6 +1556,7 @@ export function apiMessageContent(domain: MessageContent): TMessageContentInitia
         case "message_reminder_created_content":
         case "reported_message_content":
         case "p2p_swap_content":
+        case "encrypted_content":
             throw new Error(`Incorrectly attempting to send {domain.kind} content to the server`);
     }
 }

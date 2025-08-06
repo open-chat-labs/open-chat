@@ -3,7 +3,7 @@
     import {
         AvatarSize,
         type OpenChat,
-        PaidFeature,
+        PremiumItem,
         type PublicProfile,
         type UserSummary,
         currentUserIdStore,
@@ -173,7 +173,7 @@
                     </div>
                     {#if userProfileMode}
                         <PaidFeatureComponent
-                            feature={PaidFeature.CustomProfileBackground}
+                            feature={PremiumItem.CustomProfileBackground}
                             onClick={choosePhoto}>
                             {#snippet children(click)}
                                 <HoverIcon onclick={click}>

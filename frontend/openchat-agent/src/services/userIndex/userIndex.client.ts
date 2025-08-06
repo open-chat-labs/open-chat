@@ -12,6 +12,8 @@ import type {
     ExternalAchievementsResponse,
     ExternalBot,
     PayForDiamondMembershipResponse,
+    PayForPremiumItemResponse,
+    PremiumItem,
     SetDisplayNameResponse,
     SetUsernameResponse,
     SetUserUpgradeConcurrencyResponse,
@@ -27,6 +29,7 @@ import type {
 import {
     mergeUserSummaryWithUpdates,
     offline,
+    premiumPrices,
     Stream,
     userSummaryFromCurrentUserSummary,
 } from "openchat-shared";
@@ -45,6 +48,8 @@ import {
     UserIndexExternalAchievementsResponse,
     UserIndexPayForDiamondMembershipArgs,
     UserIndexPayForDiamondMembershipResponse,
+    UserIndexPayForPremiumItemArgs,
+    UserIndexPayForPremiumItemResponse,
     UserIndexPlatformModeratorsGroupResponse,
     UserIndexRegisterBotArgs,
     UserIndexRegisterBotResponse,
@@ -199,10 +204,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
         );
     }
 
-    async getUsers(
-        users: UsersArgs,
-        allowStale: boolean,
-    ): Promise<UsersResponse> {
+    async getUsers(users: UsersArgs, allowStale: boolean): Promise<UsersResponse> {
         const allUsers = users.userGroups.flatMap((g) => g.users);
 
         const fromCache = await getCachedUsers(allUsers);
@@ -261,8 +263,8 @@ export class UserIndexClient extends MsgpackCanisterAgent {
                     userId: user.userId,
                     ...user.stable,
                     ...user.volatile,
-                    updated: apiResponse.serverTimestamp
-                })
+                    updated: apiResponse.serverTimestamp,
+                });
             }
         }
 
@@ -376,7 +378,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
                         // our cached copy is up to date.
                         users.push({
                             ...cached,
-                             
+
                             updated: apiResponse.serverTimestamp!,
                         });
                     } else {
@@ -729,6 +731,20 @@ export class UserIndexClient extends MsgpackCanisterAgent {
             (resp) => botUpdatesResponse(resp, current, this.blobUrlPattern, this.canisterId),
             UserIndexBotUpdatesArgs,
             UserIndexBotUpdatesResponse,
+        );
+    }
+
+    payForPremiumItem(item: PremiumItem): Promise<PayForPremiumItemResponse> {
+        return this.executeMsgpackUpdate(
+            "pay_for_premium_item",
+            {
+                item_id: item,
+                pay_in_chat: false,
+                expected_cost: premiumPrices[item],
+            },
+            (_) => ({ kind: "success", totalChitEarned: 0, chitBalance: 0 }),
+            UserIndexPayForPremiumItemArgs,
+            UserIndexPayForPremiumItemResponse,
         );
     }
 }

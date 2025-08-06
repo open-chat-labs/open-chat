@@ -68,7 +68,11 @@ import {
     principalStringToBytes,
 } from "../../utils/mapping";
 import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
-import { apiChatIdentifier, apiExternalBotPermissions, joinGroupResponse } from "../common/chatMappersV2";
+import {
+    apiChatIdentifier,
+    apiExternalBotPermissions,
+    joinGroupResponse,
+} from "../common/chatMappersV2";
 import {
     accessTokenResponse,
     activeProposalTalliesResponse,
@@ -247,7 +251,9 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
         );
     }
 
-    activeProposalTallies(chatIds: MultiUserChatIdentifier[]): Promise<Map<MultiUserChatIdentifier, [number, Tally][]>> {
+    activeProposalTallies(
+        chatIds: MultiUserChatIdentifier[],
+    ): Promise<Map<MultiUserChatIdentifier, [number, Tally][]>> {
         return this.executeMsgpackQuery(
             "active_proposal_tallies",
             {
@@ -337,17 +343,12 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
         );
     }
 
-    inviteUsersToCommunity(
-        communityId: string,
-        userIds: string[],
-        callerUsername: string,
-    ): Promise<boolean> {
+    inviteUsersToCommunity(communityId: string, userIds: string[]): Promise<boolean> {
         return this.executeMsgpackUpdate(
             "invite_users_to_community",
             {
                 community_id: principalStringToBytes(communityId),
                 user_ids: userIds.map(principalStringToBytes),
-                caller_username: callerUsername,
             },
             inviteUsersResponse,
             LocalUserIndexInviteUsersToCommunityArgs,
@@ -355,17 +356,12 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
         );
     }
 
-    inviteUsersToGroup(
-        chatId: string,
-        userIds: string[],
-        callerUsername: string,
-    ): Promise<boolean> {
+    inviteUsersToGroup(chatId: string, userIds: string[]): Promise<boolean> {
         return this.executeMsgpackUpdate(
             "invite_users_to_group",
             {
                 group_id: principalStringToBytes(chatId),
                 user_ids: userIds.map(principalStringToBytes),
-                caller_username: callerUsername,
             },
             inviteUsersResponse,
             LocalUserIndexInviteUsersToGroupArgs,
@@ -377,7 +373,6 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
         communityId: string,
         channelId: number,
         userIds: string[],
-        callerUsername: string,
     ): Promise<boolean> {
         return this.executeMsgpackUpdate(
             "invite_users_to_channel",
@@ -385,7 +380,6 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
                 community_id: principalStringToBytes(communityId),
                 channel_id: toBigInt32(channelId),
                 user_ids: userIds.map(principalStringToBytes),
-                caller_username: callerUsername,
             },
             inviteUsersResponse,
             LocalUserIndexInviteUsersToChannelArgs,

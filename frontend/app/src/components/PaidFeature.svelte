@@ -1,6 +1,6 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { currentUserStore, PaidFeature, type ResourceKey } from "openchat-client";
+    import { currentUserStore, PremiumItem, type ResourceKey } from "openchat-client";
     import type { Snippet } from "svelte";
     import Lock from "svelte-material-icons/Lock.svelte";
     import Button from "./Button.svelte";
@@ -16,14 +16,14 @@
 
     type OnClick = () => void;
 
-    const labels: Map<PaidFeature, ResourceKey> = new Map([
-        [PaidFeature.CustomProfileBackground, i18nKey("Custom profile background")],
+    const labels: Map<PremiumItem, ResourceKey> = new Map([
+        [PremiumItem.CustomProfileBackground, i18nKey("Custom profile background")],
     ]);
 
     interface Props {
         onClick: OnClick;
         children: Snippet<[OnClick]>;
-        feature: PaidFeature;
+        feature: PremiumItem;
     }
 
     let { onClick, children, feature }: Props = $props();
