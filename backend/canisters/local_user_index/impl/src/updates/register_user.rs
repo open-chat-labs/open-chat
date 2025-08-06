@@ -15,7 +15,7 @@ use utils::canister;
 use utils::text_validation::{UsernameValidationError, validate_username};
 use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn register_user(args: Args) -> Response {
     // Check the principal is derived from Internet Identity + check the username is valid

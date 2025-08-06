@@ -12,7 +12,7 @@ use types::c2c_can_issue_access_token::{
 };
 use types::{AutonomousBotScope, BotActionByCommandClaims, BotCommand, Chat, JoinOrEndVideoCallClaims, StartVideoCallClaims};
 
-#[query(composite = true, candid = true, msgpack = true)]
+#[query(composite = true, msgpack = true)]
 #[trace]
 async fn access_token_v2(args_wrapper: Args) -> Response {
     let Ok(args_wrapper) = ArgsInternal::from(args_wrapper) else {
