@@ -2,6 +2,7 @@
     import "@styles/global.scss";
 
     import Router from "@components/Router.svelte";
+    import "@components/web-components/customEmoji";
     import "@components/web-components/profileLink";
     import "@i18n/i18n";
     import { reviewingTranslations } from "@i18n/i18n";
@@ -12,6 +13,11 @@
     import { broadcastLoggedInUser } from "@stores/xframe";
     import { currentTheme } from "@theme/themes";
     import "@utils/markdown";
+    import {
+        expectNewFcmToken,
+        expectNotificationTap,
+        expectPushNotifications,
+    } from "@utils/native/notification_channels";
     import "@utils/scream";
     import {
         isCanisterUrl,
@@ -42,6 +48,7 @@
     import { onMount, setContext } from "svelte";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
     import { _, isLoading } from "svelte-i18n";
+    import { getFcmToken, svelteReady } from "tauri-plugin-oc-api";
     import Head from "./Head.svelte";
     import Profiler from "./Profiler.svelte";
     import Snow from "./Snow.svelte";
@@ -55,12 +62,6 @@
     import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
     import { portalState } from "./portalState.svelte";
     import Upgrading from "./upgrading/Upgrading.svelte";
-    import {
-        expectNewFcmToken,
-        expectPushNotifications,
-        expectNotificationTap,
-    } from "@utils/native/notification_channels";
-    import { getFcmToken, svelteReady } from "tauri-plugin-oc-api";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
@@ -103,7 +104,8 @@
             env: import.meta.env.OC_BUILD_ENV!,
             bitcoinMainnetEnabled: import.meta.env.OC_BITCOIN_MAINNET_ENABLED! === "true",
             vapidPublicKey: import.meta.env.OC_VAPID_PUBLIC_KEY!,
-            accountLinkingCodesEnabled: import.meta.env.OC_ACCOUNT_LINKING_CODES_ENABLED! === "true",
+            accountLinkingCodesEnabled:
+                import.meta.env.OC_ACCOUNT_LINKING_CODES_ENABLED! === "true",
         });
     }
 

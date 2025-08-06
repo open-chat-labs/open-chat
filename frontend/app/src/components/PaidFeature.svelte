@@ -2,6 +2,7 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { currentUserStore, PaidFeature, type ResourceKey } from "openchat-client";
     import type { Snippet } from "svelte";
+    import Lock from "svelte-material-icons/Lock.svelte";
     import Button from "./Button.svelte";
     import ButtonGroup from "./ButtonGroup.svelte";
     import ModalContent from "./ModalContent.svelte";
@@ -76,29 +77,31 @@
 
 <div class="premium" class:locked={!hasFeature}>
     {@render children(wrappedClick)}
+
+    {#if !hasFeature}
+        <div class="locked">
+            <Lock size={"1.3em"} color={"var(--accent)"} />
+        </div>
+    {/if}
 </div>
 
 <style lang="scss">
-    :global(.premium.locked *) {
-        filter: blur(2px);
-    }
-
     .premium {
         position: relative;
         display: flex;
-        justify-content: center;
-        align-items: center;
-    }
+        justify-content: flex-start;
+        align-items: flex-start;
 
-    .premium.locked::after {
-        $size: $sp4;
-        content: "";
-        width: $size;
-        height: $size;
-        background-image: url("/assets/locked.svg");
-        background-repeat: no-repeat;
-        background-position: 50%;
-        position: absolute;
-        pointer-events: none;
+        .locked {
+            transition: opacity 200ms ease-in-out;
+            position: absolute;
+            pointer-events: none;
+        }
+
+        &:hover {
+            .locked {
+                opacity: 0.8;
+            }
+        }
     }
 </style>

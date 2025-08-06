@@ -12,6 +12,7 @@
         MessageContext,
         MultiUserChat,
         OpenChat,
+        SelectedEmoji,
         User,
         UserOrUserGroup,
     } from "openchat-client";
@@ -151,17 +152,35 @@
     // Update this to force a new textbox instance to be created
     let textboxId = $state(Symbol());
 
-    export function replaceSelection(text: string) {
+    // TODO - note that this is not actually going to work yet - there is a lot
+    // more to do to make the message entry component work with non-text elements
+    // But we will come back to this a bit later. Custom emoji reactions is a
+    // much easier place to start
+    export function insertEmoji(emoji: SelectedEmoji) {
+        if (emoji.kind === "native") {
+            replaceSelectionWithNode(document.createTextNode(emoji.unicode));
+        } else {
+            const el = document.createElement("custom-emoji");
+            el.dataset.id = emoji.code;
+            replaceSelectionWithNode(el);
+        }
+    }
+
+    export function replaceSelectionWithNode(node: Node) {
         restoreSelection();
         let range = window.getSelection()?.getRangeAt(0);
         if (range !== undefined) {
             range.deleteContents();
-            range.insertNode(document.createTextNode(text));
+            range.insertNode(node);
             range.collapse(false);
             const inputContent = inp?.textContent ?? "";
             triggerCommandSelector(inputContent);
             onSetTextContent(inputContent.trim().length === 0 ? undefined : inputContent);
         }
+    }
+
+    export function replaceSelection(text: string) {
+        replaceSelectionWithNode(document.createTextNode(text));
     }
 
     function onInput() {

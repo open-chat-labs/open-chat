@@ -1,25 +1,102 @@
 <script lang="ts">
-    import { onMount } from "svelte";
     import "emoji-picker-element";
-    import { currentTheme } from "../../theme/themes";
     import type {
         EmojiClickEvent,
         SkinTone,
         SkinToneChangeEvent,
     } from "emoji-picker-element/shared";
+    import { emojiGroupNames, type CustomEmoji, type SelectedEmoji } from "openchat-client";
+    import { onMount } from "svelte";
+    import { currentTheme } from "../../theme/themes";
 
     interface Props {
         mode?: "message" | "reaction" | "thread";
-        onEmojiSelected: (unicode?: string) => void;
+        onEmojiSelected: (emoji: SelectedEmoji) => void;
         onSkintoneChanged?: (tone: SkinTone) => void;
+        customEmojis?: Map<string, CustomEmoji>;
     }
 
-    let { mode = "message", onEmojiSelected, onSkintoneChanged }: Props = $props();
+    let paid = new Set([2, 3]);
+
+    let { mode = "message", onEmojiSelected, onSkintoneChanged, customEmojis }: Props = $props();
+
+    function lockedCss(code: string) {
+        return `
+        .custom-emoji[id*="-${code}"] {
+            filter: saturate(0.8);
+            position: relative;
+        }
+
+        .custom-emoji[id*="-${code}"]::before {
+            content: "";
+            width: 16px;
+            height: 16px;
+            background-image: url(/assets/locked_solid.svg);
+            background-repeat: no-repeat;
+            position: absolute;
+        }
+        `;
+    }
+
+    function lockedCategoryCss(groupId: number) {
+        return `
+            .category:not(.gone)#menu-label-${groupId} {
+                position: relative;
+            }
+
+            .category:not(.gone)#menu-label-${groupId}::after {
+                content: "";
+                width: 16px;
+                height: 16px;
+                background-image: url(/assets/locked_solid.svg);
+                background-repeat: no-repeat;
+                position: absolute;
+                margin-left: 5px;
+                top: 8px;
+            }
+
+            .category:not(.gone)#menu-label-${groupId} + .emoji-menu[aria-labelledby="menu-label-${groupId}"] {
+                opacity: 0.5;
+            }
+        `;
+    }
+
+    function createCustomCss(): string {
+        const rules: string[] = [];
+
+        // customEmojis?.entries().forEach(([_, emoji]) => {
+        //     if (!paid.has(emoji.groupId)) {
+        //         rules.push(lockedCss(emoji.code));
+        //     }
+        // });
+
+        rules.push(lockedCategoryCss(0));
+        rules.push(lockedCategoryCss(1));
+        return rules.join("\n");
+    }
 
     onMount(() => {
         const emojiPicker = document.querySelector("emoji-picker");
+
+        if (emojiPicker && customEmojis) {
+            emojiPicker.customEmoji = [
+                ...customEmojis.entries().map(([_, emoji]) => {
+                    return {
+                        name: emoji.code,
+                        shortcodes: [emoji.code],
+                        url: emoji.url,
+                        category: emojiGroupNames[emoji.groupId],
+                    };
+                }),
+            ];
+        }
         emojiPicker?.addEventListener("emoji-click", onClick);
         emojiPicker?.addEventListener("skin-tone-change", skinToneChanged);
+
+        const style = document.createElement("style");
+        style.textContent = createCustomCss();
+        emojiPicker?.shadowRoot?.appendChild(style);
+
         return () => {
             emojiPicker?.removeEventListener("emoji-click", onClick);
         };
@@ -30,7 +107,14 @@
     }
 
     function onClick(ev: EmojiClickEvent) {
-        onEmojiSelected(ev.detail.unicode);
+        if (ev.detail.unicode) {
+            onEmojiSelected({ kind: "native", unicode: ev.detail.unicode });
+        } else if (ev.detail.name !== undefined) {
+            const custom = customEmojis?.get(ev.detail.name);
+            if (custom !== undefined) {
+                onEmojiSelected(custom);
+            }
+        }
     }
 </script>
 

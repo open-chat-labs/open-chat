@@ -14,6 +14,7 @@
         type MessageContext,
         type MultiUserChat,
         type OpenChat,
+        type SelectedEmoji,
         type User,
     } from "openchat-client";
     import { getContext, onMount, tick } from "svelte";
@@ -26,7 +27,7 @@
     import ModalContent from "../ModalContent.svelte";
     import Translatable from "../Translatable.svelte";
     import DraftMediaMessage from "./DraftMediaMessage.svelte";
-    import EmojiPicker from "./EmojiPicker.svelte";
+    import EmojiPicker from "./EmojiPickerWrapper.svelte";
     import MessageEntry from "./MessageEntry.svelte";
     import ReplyingTo from "./ReplyingTo.svelte";
 
@@ -166,10 +167,8 @@
         }
     }
 
-    function emojiSelected(code?: string) {
-        if (code) {
-            messageEntry?.replaceSelection(code);
-        }
+    function emojiSelected(selected: SelectedEmoji) {
+        messageEntry?.insertEmoji(selected);
     }
 
     $effect(() => {
@@ -196,7 +195,7 @@
                             </HoverIcon>
                         </span>
                     </div>
-                    <EmojiPicker onEmojiSelected={emojiSelected} {mode} />
+                    <EmojiPicker onEmojiSelected={emojiSelected} {mode} supportCustom={false} />
                 </span>
             {/snippet}
             {#snippet footer()}
