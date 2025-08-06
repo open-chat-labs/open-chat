@@ -38,20 +38,24 @@
         `;
     }
 
-    function lockedCategoryCss(groupId: number) {
+    function lockedCategoryCss(groupId: number, price: number) {
         return `
             .category:not(.gone)#menu-label-${groupId} {
                 position: relative;
             }
 
             .category:not(.gone)#menu-label-${groupId}::after {
-                content: "";
-                width: 16px;
-                height: 16px;
+                content: "(${price.toLocaleString()} CHIT)";
+                font-size: 10px;
+                height: 14px;
                 background-image: url(/assets/locked_solid.svg);
                 background-repeat: no-repeat;
                 position: absolute;
                 margin-left: 5px;
+                padding-left: 18px;
+                padding-top: 2px;
+                color: var(--txt-light);
+                vertical-align: middle;
                 top: 8px;
             }
 
@@ -70,8 +74,8 @@
         //     }
         // });
 
-        rules.push(lockedCategoryCss(0));
-        rules.push(lockedCategoryCss(1));
+        rules.push(lockedCategoryCss(0, 10_000));
+        rules.push(lockedCategoryCss(1, 50_000));
         return rules.join("\n");
     }
 
