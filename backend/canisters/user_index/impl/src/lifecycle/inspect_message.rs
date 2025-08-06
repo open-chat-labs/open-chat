@@ -16,6 +16,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "mark_as_online"
         | "mark_suspected_bot"
         | "pay_for_diamond_membership"
+        | "pay_for_premium_item"
         | "register_bot"
         | "set_display_name"
         | "set_moderation_flags"

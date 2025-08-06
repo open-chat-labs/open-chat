@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
+ 
 import { portalState } from "@src/components/portalState.svelte";
 
 function hideMenu() {

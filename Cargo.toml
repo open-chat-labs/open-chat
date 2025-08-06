@@ -240,6 +240,7 @@ range-set = "0.0.11"
 regex-lite = "0.1"
 reqwest = "0.12"
 rmp-serde = "1"
+rustls = "0.23"
 serde = "1"
 serde_bytes = "0.11"
 serde_cbor = "0.11"
@@ -251,7 +252,7 @@ sha3 = "0.10"
 sign_in_with_email_canister = { git = "https://github.com/open-chat-labs/ic-sign-in-with-email", rev = "v0.13.0" }
 sign_in_with_email_canister_test_utils = { package = "test_utils", git = "https://github.com/open-chat-labs/ic-sign-in-with-email", rev = "v0.13.0" }
 syn = "2"
-tauri = "2"
+tauri = "2.7.0"
 test-case = "3"
 test-strategy = "0.4"
 thiserror = "2"
@@ -260,7 +261,9 @@ tokio = "1"
 tracing = "0.1"
 tracing-subscriber = "0.3"
 ts-rs = { version = "10", features = ["no-serde-warnings"] }
-twox-hash = { version = "2", default-features = false, features = ["xxhash3_128"] }
+twox-hash = { version = "2", default-features = false, features = [
+    "xxhash3_128",
+] }
 url = "2"
 urlencoding = "2"
 web-push = { version = "0.11", default-features = false, features = [

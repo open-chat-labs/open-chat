@@ -9,8 +9,10 @@ import {
     type Signature,
 } from "@dfinity/agent";
 import {
+    AndroidWebAuthnErrorCode,
     signUp,
     signIn,
+    decodePluginError,
     type Credential,
     type SignUpCredential,
     type SignInCredential,
@@ -37,7 +39,10 @@ export async function createAndroidWebAuthnPasskeyIdentity(
         signUp({ username })
             .then((credential: Credential<SignUpCredential> | null) => {
                 if (!credential) {
-                    reject("no credential");
+                    reject({
+                        code: AndroidWebAuthnErrorCode.NoPasskey,
+                        msg: "no passkey available",
+                    });
                 } else {
                     const credentialId = new Uint8Array(credential.rawId);
                     const attObject = borc.decodeFirst(
@@ -64,9 +69,8 @@ export async function createAndroidWebAuthnPasskeyIdentity(
                     });
                 }
             })
-            .catch((err: Error) => {
-                console.error("Error creating passkey: ", err);
-                reject(err);
+            .catch((err: string) => {
+                reject(decodePluginError(err));
             });
     });
 }
@@ -86,15 +90,17 @@ async function getExistingAndroidWebAuthnPasskey(
         signIn({ challenge })
             .then((credential: Credential<SignInCredential> | null) => {
                 if (!credential) {
-                    console.error("Passkey credential not available");
-                    reject("no passkey");
+                    reject({
+                        code: AndroidWebAuthnErrorCode.NoPasskey,
+                        msg: "Passkey credential not available",
+                    });
                 } else {
                     resolve(credential);
                 }
             })
-            .catch((err: Error) => {
+            .catch((err: string) => {
                 console.error("Error signing in with passkey: ", err);
-                reject(err);
+                reject(decodePluginError(err));
             });
     });
 }
@@ -152,7 +158,6 @@ export class AndroidWebAuthnPasskeyIdentity extends SignIdentity {
             }),
         );
 
-        // eslint-disable-next-line
         if (!cbor) {
             throw new Error("failed to encode cbor");
         }

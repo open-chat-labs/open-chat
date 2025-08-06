@@ -15,6 +15,7 @@ import {
     type AccessGate,
     type AccessGateConfig,
     type AccessTokenType,
+    type AccountLinkingCode,
     type AccountTransactionResult,
     type Achievement,
     type AddMembersToChannelResponse,
@@ -142,6 +143,7 @@ import {
     type InviteCodeResponse,
     isBalanceGate,
     isCaptionedContent,
+    isChitEarnedGate,
     isCompositeGate,
     isCredentialGate,
     isEditableContent,
@@ -298,7 +300,7 @@ import {
     type WorkerRequest,
     type WorkerResponse,
     type WorkerResult,
-    type AccountLinkingCode,
+    type VerifyAccountLinkingCodeResponse,
 } from "openchat-shared";
 import page from "page";
 import { tick } from "svelte";
@@ -339,6 +341,7 @@ import {
     isDiamondStore,
     isLifetimeDiamondStore,
     lastCryptoSent,
+    lastSelectedChatByScopeStore,
     latestSuccessfulUpdatesLoop,
     localUpdates,
     messageActivitySummaryStore,
@@ -586,6 +589,7 @@ import {
 } from "./utils/user";
 import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 import { createWebAuthnIdentity, MultiWebAuthnIdentity } from "./utils/webAuthn";
+import { AndroidWebAuthnErrorCode } from "tauri-plugin-oc-api";
 
 export const DEFAULT_WORKER_TIMEOUT = 1000 * 90;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -1321,7 +1325,7 @@ export class OpenChat {
     archiveChat(chatId: ChatIdentifier): Promise<boolean> {
         const undo = localUpdates.updateArchived(chatId, true);
         if (chatIdentifiersEqual(chatId, selectedChatIdStore.value)) {
-            this.selectFirstChat();
+            this.selectDefaultChat();
         }
         return this.#sendRequest({ kind: "archiveChat", chatId })
             .then((resp) => {
@@ -1455,7 +1459,7 @@ export class OpenChat {
                 if (resp.kind === "success") {
                     this.removeChat(chatId);
                     if (chatIdentifiersEqual(chatId, selectedChatIdStore.value)) {
-                        this.selectFirstChat();
+                        this.selectDefaultChat();
                     }
                     return true;
                 } else {
@@ -2924,6 +2928,11 @@ export class OpenChat {
                     this.getUser(selectedChat.them.userId);
                 }
             }
+
+            lastSelectedChatByScopeStore.update((map) => {
+                map.set(chatListScopeStore.value, chatId);
+                return map;
+            });
         }
 
         if (isProposalsChat(clientChat)) {
@@ -3095,6 +3104,9 @@ export class OpenChat {
         const original = originalConfig.gate;
         if (current.kind !== original.kind) return true;
         if (currentConfig.expiry !== originalConfig.expiry) return true;
+        if (isChitEarnedGate(current) && isChitEarnedGate(original)) {
+            return current.minEarned !== original.minEarned;
+        }
         if (isNeuronGate(current) && isNeuronGate(original)) {
             return (
                 current.governanceCanister !== original.governanceCanister ||
@@ -3567,7 +3579,6 @@ export class OpenChat {
                       .then((resp) =>
                           this.#handleThreadEventsResponse(
                               serverChat.id,
-                              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                               selectedThreadRootMessageIndex!,
                               resp,
                           ),
@@ -4205,7 +4216,7 @@ export class OpenChat {
         blockLevelMarkdown: boolean,
         mentioned: User[] = [],
         forwarded: boolean = false,
-        retrying = false,
+        messageIdIfRetrying?: bigint,
     ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
         const chat = chatSummariesStore.value.get(chatId);
@@ -4218,7 +4229,7 @@ export class OpenChat {
         const msg = {
             timestamp: BigInt(timestamp),
             expiresAt: threadRootMessageIndex ? undefined : this.eventExpiry(chat, timestamp),
-            messageId: random64(),
+            messageId: messageIdIfRetrying ?? random64(),
             sender: currentUserIdStore.value,
             content,
             repliesTo: draftMessage?.replyingTo,
@@ -4226,7 +4237,13 @@ export class OpenChat {
             blockLevelMarkdown,
         };
 
-        return this.#sendMessageCommon(chat, messageContext, msg, mentioned, retrying);
+        return this.#sendMessageCommon(
+            chat,
+            messageContext,
+            msg,
+            mentioned,
+            messageIdIfRetrying !== undefined,
+        );
     }
 
     #throttleSendMessage(): boolean {
@@ -4627,6 +4644,8 @@ export class OpenChat {
                 return currentUserStore.value.diamondStatus.kind === "lifetime";
             } else if (gate.kind === "unique_person_gate") {
                 return currentUserStore.value.isUniquePerson;
+            } else if (gate.kind === "chit_earned_gate") {
+                return currentUserStore.value.totalChitEarned >= gate.minEarned;
             } else {
                 return false;
             }
@@ -5608,9 +5627,7 @@ export class OpenChat {
                 }
                 if (resp.currentUser) {
                     currentUserStore.set(
-                        resp.currentUser
-                            ? updateCreatedUser(currentUserStore.value, resp.currentUser)
-                            : currentUserStore.value,
+                        updateCreatedUser(currentUserStore.value, resp.currentUser),
                     );
                 }
                 return resp;
@@ -5671,7 +5688,7 @@ export class OpenChat {
                     ...currentUserStore.value,
                     username,
                 });
-                this.#overwriteUserInStore(userId, (user) => ({ ...user, username }));
+                userStore.updateUser(userId, (user) => ({ ...user, username }));
             }
             return resp;
         });
@@ -5687,7 +5704,7 @@ export class OpenChat {
                     ...currentUserStore.value,
                     displayName,
                 });
-                this.#overwriteUserInStore(userId, (user) => ({ ...user, displayName }));
+                userStore.updateUser(userId, (user) => ({ ...user, displayName }));
             }
             return resp;
         });
@@ -6397,12 +6414,14 @@ export class OpenChat {
                     : streakInsurance.value,
             );
         }
-        if (chitState !== undefined) {
-            chitStateStore.update((curr) => {
-                // Skip the new update if it is behind what we already have locally
-                const skipUpdate = chitState.streakEnds < curr.streakEnds;
-                return skipUpdate ? curr : chitState;
-            });
+        if (chitState !== undefined && chitState.streakEnds >= chitStateStore.value.streakEnds) {
+            chitStateStore.set(chitState);
+            userStore.updateUser(currentUserIdStore.value, (user) => ({
+                ...user,
+                chitBalance: chitState.chitBalance,
+                streak: chitState.streak,
+                maxStreak: chitState.maxStreak,
+            }));
         }
     }
 
@@ -6750,21 +6769,8 @@ export class OpenChat {
             }));
     }
 
-    #overwriteUserInStore(
-        userId: string,
-        updater: (user: UserSummary) => UserSummary | undefined,
-    ): void {
-        const user = userStore.get(userId);
-        if (user !== undefined) {
-            const updated = updater(user);
-            if (updated !== undefined) {
-                userStore.addUser(updated);
-            }
-        }
-    }
-
     #updateDiamondStatusInUserStore(status: DiamondMembershipStatus): void {
-        this.#overwriteUserInStore(currentUserIdStore.value, (user) => {
+        userStore.updateUser(currentUserIdStore.value, (user) => {
             const changed = status.kind !== user.diamondStatus;
             return changed ? { ...user, diamondStatus: status.kind } : undefined;
         });
@@ -7619,6 +7625,65 @@ export class OpenChat {
         return await this.#finaliseWebAuthnSignin(tempKey, () => webAuthnIdentity, assumeIdentity);
     }
 
+    async linkAccountsWithAndroidWebAuthn(accountLinkingCode: string): Promise<void> {
+        try {
+            // Also used as session key
+            const tempKey = await ECDSAKeyIdentity.generate();
+
+            // Verify code
+            const verificationRes = await this.verifyAccountLinkingCode(
+                accountLinkingCode,
+                tempKey,
+            );
+
+            // Error should be of type AccountLinkingError
+            if ("error" === verificationRes.kind) {
+                return Promise.reject(verificationRes);
+            }
+
+            // Create passkey
+            let cachedWebAuthnKey: WebAuthnKeyFull | undefined;
+            const webAuthnIdentity = await createAndroidWebAuthnPasskeyIdentity(
+                verificationRes.username,
+                (key) => {
+                    cachedWebAuthnKey = key;
+                    return this.#storeWebAuthnKeyInCache(key);
+                },
+            );
+
+            if (!cachedWebAuthnKey) {
+                return Promise.reject({
+                    code: AndroidWebAuthnErrorCode.NoWebAuthnKey,
+                });
+            }
+
+            // Finalise linking and get the delegated identity
+            await this.finaliseAccountLinkingWithCode(
+                tempKey,
+                webAuthnIdentity.getPrincipal().toString(),
+                webAuthnIdentity.getPublicKey().toDer(),
+                cachedWebAuthnKey,
+            );
+
+            await this.#finaliseWebAuthnSignin(tempKey, () => webAuthnIdentity, true);
+
+            return Promise.resolve();
+        } catch (e) {
+            if (typeof e === "object") {
+                // Either android webauthn error, or account linking error
+                return Promise.reject(e);
+            }
+
+            // Unknown error!
+            console.error(e);
+            return Promise.reject({
+                kind: "error",
+                code: ErrorCode.Unknown,
+                msg: e ? e.toString() : undefined,
+            });
+        }
+    }
+
     async signInWithWebAuthn() {
         const webAuthnOrigin = this.config.webAuthnOrigin;
         if (webAuthnOrigin === undefined) throw new Error("WebAuthn origin not set");
@@ -7957,14 +8022,34 @@ export class OpenChat {
         return preview;
     }
 
-    selectFirstChat(): boolean {
+    #selectLastSelectedChat(): boolean {
+        const scope = chatListScopeStore.value;
+        const mostRecentId = lastSelectedChatByScopeStore.value.get(scope);
+        const mostRecentChat = mostRecentId
+            ? chatSummariesStore.value.get(mostRecentId)
+            : undefined;
+        if (mostRecentChat !== undefined) {
+            pageRedirect(routeForChatIdentifier(scope.kind, mostRecentChat.id));
+            return true;
+        }
+        return false;
+    }
+
+    #selectFirstChat(): boolean {
+        const first = [...chatSummariesListStore.value.values()].find(
+            (c) => !c.membership.archived,
+        );
+        if (first !== undefined) {
+            pageRedirect(routeForChatIdentifier(chatListScopeStore.value.kind, first.id));
+            return true;
+        }
+        return false;
+    }
+
+    selectDefaultChat(): boolean {
         if (!get(mobileWidth)) {
-            const first = [...chatSummariesListStore.value.values()].find(
-                (c) => !c.membership.archived,
-            );
-            if (first !== undefined) {
-                pageRedirect(routeForChatIdentifier(chatListScopeStore.value.kind, first.id));
-                return true;
+            if (!this.#selectLastSelectedChat()) {
+                return this.#selectFirstChat();
             }
         }
         return false;
@@ -8011,7 +8096,7 @@ export class OpenChat {
                         ...currentUserStore.value,
                         isUniquePerson: true,
                     });
-                    this.#overwriteUserInStore(currentUserIdStore.value, (u) => ({
+                    userStore.updateUser(currentUserIdStore.value, (u) => ({
                         ...u,
                         isUniquePerson: true,
                     }));
@@ -8907,7 +8992,7 @@ export class OpenChat {
                         totalChitEarned: state.totalChitEarned + resp.chitEarned,
                     }));
                 }
-                this.#overwriteUserInStore(userId, (user) => ({
+                userStore.updateUser(userId, (user) => ({
                     ...user,
                     chitBalance: resp.chitBalance,
                     streak: resp.streak,
@@ -8962,6 +9047,32 @@ export class OpenChat {
     createAccountLinkingCode(): Promise<AccountLinkingCode | undefined> {
         return this.#sendRequest({
             kind: "createAccountLinkingCode",
+        });
+    }
+
+    verifyAccountLinkingCode(
+        code: string,
+        tempKey: ECDSAKeyIdentity,
+    ): Promise<VerifyAccountLinkingCodeResponse> {
+        return this.#sendRequest({
+            kind: "verifyAccountLinkingCode",
+            code,
+            tempKey: tempKey.getKeyPair(),
+        });
+    }
+
+    finaliseAccountLinkingWithCode(
+        tempKey: ECDSAKeyIdentity,
+        principal: string,
+        publicKey: Uint8Array,
+        webAuthnKey?: WebAuthnKeyFull,
+    ): Promise<DelegationIdentity> {
+        return this.#sendRequest({
+            kind: "finaliseAccountLinkingWithCode",
+            tempKey: tempKey.getKeyPair(),
+            principal,
+            publicKey,
+            webAuthnKey,
         });
     }
 
@@ -9545,7 +9656,7 @@ export class OpenChat {
 
     #extract_p256dh_key(subscription: PushSubscription): string {
         const json = subscription.toJSON();
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
         const key = json.keys!["p256dh"];
         return key;
     }

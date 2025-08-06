@@ -7,6 +7,7 @@
 import {
     defaultDeserialiser,
     defaultSerialiser,
+    type ChatListScope,
     type CommunityIdentifier,
     type Primitive,
 } from "../domain";
@@ -242,6 +243,16 @@ export class MessageContextMap<V> extends SafeMap<MessageContext, V> {
 
     static fromMap<V>(map: Map<string, V>): MessageContextMap<V> {
         return new MessageContextMap<V>(map);
+    }
+}
+
+export class ChatListScopeMap<V> extends SafeMap<ChatListScope, V> {
+    constructor(_map?: Map<string, V>) {
+        super(
+            (k) => JSON.stringify(k),
+            (k) => JSON.parse(String(k)) as ChatListScope,
+            _map,
+        );
     }
 }
 

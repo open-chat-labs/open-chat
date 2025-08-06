@@ -8,6 +8,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Sync `total_chit_earned` to UserIndex ([#8434](https://github.com/open-chat-labs/open-chat/pull/8434))
+
+### Fixed
+
+- Fix rare scenario where notification could be skipped incorrectly ([#8441](https://github.com/open-chat-labs/open-chat/pull/8441))
+
+## [[2.0.1854](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1854-local_user_index)] - 2025-08-05
+
+### Fixed
+
+- Maintain event ordering when retrying failed c2c calls ([#8429](https://github.com/open-chat-labs/open-chat/pull/8429))
+- Invert the map of blocked users ([#8431](https://github.com/open-chat-labs/open-chat/pull/8431))
+
+## [[2.0.1848](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1848-local_user_index)] - 2025-08-04
+
+### Changed
+
+- Maintain chit balance for all users ([#8422](https://github.com/open-chat-labs/open-chat/pull/8422))
+
+## [[2.0.1844](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1844-local_user_index)] - 2025-07-29
+
+### Changed
+
+- Add 'min_chit_earned' prize message criterion ([#8413](https://github.com/open-chat-labs/open-chat/pull/8413))
+
+## [[2.0.1844](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1844-local_user_index)] - 2025-07-29
+
+### Changed
+
 - `token:Cryptocurrency` -> `token_symbol:String` ([#8368](https://github.com/open-chat-labs/open-chat/pull/8368))
 - Use full names for bot event notification fields ([#8389](https://github.com/open-chat-labs/open-chat/pull/8389))
 

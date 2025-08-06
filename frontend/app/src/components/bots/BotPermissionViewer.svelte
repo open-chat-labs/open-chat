@@ -26,7 +26,7 @@
     <div class="perm" class:disabled={!requested}>
         <div class="check">
             {#if requested}
-                <Check size={"1em"} color={"limegreen"} />
+                <Check size={"1em"} color={"var(--success)"} />
             {:else}
                 <Minus size={"1em"} color={"var(--txt-light)"} />
             {/if}

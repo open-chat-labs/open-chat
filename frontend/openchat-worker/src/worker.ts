@@ -25,12 +25,15 @@ import {
     type ChallengeAttempt,
     type CorrelatedWorkerRequest,
     type CreateOpenChatIdentityError,
+    type FinaliseAccountLinkingResponse,
     type GetOpenChatIdentityResponse,
     type Init,
     type LinkIdentitiesResponse,
     type Logger,
     type RemoveIdentityLinkResponse,
+    type VerifyAccountLinkingCodeResponse,
     type WebAuthnKey,
+    type WebAuthnKeyFull,
     type WorkerEvent,
     type WorkerRequest,
     type WorkerResponseInner,
@@ -2112,6 +2115,26 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     payload,
                     correlationId,
                     agent.reinstateMissedDailyClaims(payload.userId, payload.days)
+
+            case "verifyAccountLinkingCode":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    verifyAccountLinkingCode(payload.code, payload.tempKey) ??
+                        Promise.resolve(undefined),
+                );
+                break;
+
+            case "finaliseAccountLinkingWithCode":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    finaliseAccountLinkingWithCode(
+                        payload.tempKey,
+                        payload.principal,
+                        payload.publicKey,
+                        payload.webAuthnKey,
+                    ) ?? Promise.resolve(undefined),
                 );
                 break;
 
@@ -2123,6 +2146,43 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
         sendError(correlationId)(err);
     }
 });
+
+async function verifyAccountLinkingCode(
+    code: string,
+    tempKey: CryptoKeyPair,
+): Promise<VerifyAccountLinkingCodeResponse> {
+    let ecdsaIdentity = await ECDSAKeyIdentity.fromKeyPair(tempKey);
+    const identityAgent = await IdentityAgent.create(ecdsaIdentity, identityCanister, icUrl, false);
+
+    return await identityAgent.verifyAccountLinkingCode(code);
+}
+
+async function finaliseAccountLinkingWithCode(
+    tempKey: CryptoKeyPair,
+    principal: string,
+    publicKey: Uint8Array,
+    webAuthnKey?: WebAuthnKeyFull,
+): Promise<FinaliseAccountLinkingResponse> {
+    const ecdsaIdentity = await ECDSAKeyIdentity.fromKeyPair(tempKey);
+    const identityAgent = await IdentityAgent.create(ecdsaIdentity, identityCanister, icUrl, false);
+
+    const delegationIdentity = await identityAgent.finaliseAccountLinkingWithCode(
+        principal,
+        publicKey,
+        ecdsaIdentity,
+        webAuthnKey,
+    );
+
+    const delegationChain = delegationIdentity.getDelegation();
+
+    await ocIdentityStorage.set(
+        ecdsaIdentity,
+        delegationChain,
+        ecdsaIdentity.getPrincipal().toString(),
+    );
+
+    return { kind: "success" };
+}
 
 async function linkIdentities(
     initiatorKey: CryptoKeyPair,

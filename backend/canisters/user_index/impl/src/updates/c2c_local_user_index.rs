@@ -8,8 +8,8 @@ use constants::ONE_MB;
 use event_store_producer::EventBuilder;
 use group_index_canister::UserIndexEvent as GroupIndexEvent;
 use local_user_index_canister::{
-    DeleteUser, OpenChatBotMessage, OpenChatBotMessageV2, UserIndexEvent, UserJoinedCommunityOrChannel, UserJoinedGroup,
-    UserRegistered, UsernameChanged,
+    ChitBalance, DeleteUser, OpenChatBotMessage, OpenChatBotMessageV2, UserIndexEvent, UserJoinedCommunityOrChannel,
+    UserJoinedGroup, UserRegistered, UsernameChanged,
 };
 use rand::RngCore;
 use stable_memory_map::StableMemoryMap;
@@ -118,6 +118,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
 
             if state.data.users.set_chit(
                 &user_id,
+                chit.total_chit_earned,
                 chit.timestamp,
                 chit.chit_balance,
                 chit.streak,
@@ -125,12 +126,24 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 **now,
             ) {
                 if let Some(user) = state.data.users.get_by_user_id(&user_id) {
+                    let total_chit_earned = user.total_chit_earned;
                     state.data.chit_leaderboard.update_position(
                         user_id,
-                        user.total_chit_earned(),
+                        total_chit_earned,
                         chit.chit_balance,
                         chit.timestamp,
                         **now,
+                    );
+
+                    state.push_event_to_all_local_user_indexes(
+                        UserIndexEvent::UpdateChitBalance(
+                            user_id,
+                            ChitBalance {
+                                total_earned: total_chit_earned,
+                                curr_balance: total_chit_earned - user.total_chit_spent,
+                            },
+                        ),
+                        None,
                     );
                 }
             }
@@ -152,11 +165,11 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             state.data.users.remove_bot_installation(ev.bot_id, &ev.location);
         }
         LocalUserIndexEvent::UserBlocked(user_id, blocked) => {
-            state.data.blocked_users.insert((user_id, blocked), ());
+            state.data.blocked_users.insert((blocked, user_id), ());
             state.push_event_to_all_local_user_indexes(UserIndexEvent::UserBlocked(user_id, blocked), Some(caller));
         }
         LocalUserIndexEvent::UserUnblocked(user_id, unblocked) => {
-            state.data.blocked_users.remove(&(user_id, unblocked));
+            state.data.blocked_users.remove(&(unblocked, user_id));
             state.push_event_to_all_local_user_indexes(UserIndexEvent::UserUnblocked(user_id, unblocked), Some(caller));
         }
         LocalUserIndexEvent::SetMaxStreak(user_id, max_streak) => state.data.users.set_max_streak(&user_id, max_streak),

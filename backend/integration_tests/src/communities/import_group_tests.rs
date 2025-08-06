@@ -146,7 +146,7 @@ fn read_up_to_data_maintained_after_import() {
         response => panic!("{response:?}"),
     };
 
-    tick_many(env, 10);
+    tick_many(env, 20);
 
     let initial_state = client::user::happy_path::initial_state(env, &user2);
 
@@ -211,6 +211,7 @@ fn pending_prizes_transferred_to_community() {
                 unique_person_only: false,
                 streak_only: 0,
                 requires_captcha: false,
+                min_chit_earned: 0,
             }),
             sender_name: user1.username(),
             sender_display_name: None,
@@ -224,6 +225,8 @@ fn pending_prizes_transferred_to_community() {
         },
     );
 
+    tick_many(env, 3);
+
     let import_group_response = client::community::import_group(
         env,
         user1.principal,
@@ -236,7 +239,7 @@ fn pending_prizes_transferred_to_community() {
         response => panic!("{response:?}"),
     };
 
-    tick_many(env, 10);
+    tick_many(env, 20);
 
     let community_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, Principal::from(community_id));
     assert_eq!(community_balance, amount_to_transfer - fee);
@@ -301,7 +304,7 @@ fn private_replies_to_group_updated_to_community() {
         response => panic!("{response:?}"),
     };
 
-    tick_many(env, 10);
+    tick_many(env, 20);
 
     let user1_event = client::user::happy_path::events(env, &user1, user2.user_id, EventIndex::default(), true, 10, 10)
         .events

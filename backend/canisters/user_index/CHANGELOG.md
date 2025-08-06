@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Implement ability to pay for premium items using CHIT ([#8439](https://github.com/open-chat-labs/open-chat/pull/8439))
+
+### Changed
+
+- Store `total_chit_earned` on each user record ([#8434](https://github.com/open-chat-labs/open-chat/pull/8434))
+- Initialise `total_chit_earned` from the monthly CHIT amounts ([#8437](https://github.com/open-chat-labs/open-chat/pull/8437))
+
+## [[2.0.1855](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1855-user_index)] - 2025-08-05
+
+### Fixed
+
+- Maintain event ordering when retrying failed c2c calls ([#8429](https://github.com/open-chat-labs/open-chat/pull/8429))
+- Invert the map of blocked users ([#8431](https://github.com/open-chat-labs/open-chat/pull/8431))
+
+## [[2.0.1851](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1851-user_index)] - 2025-08-04
+
+### Changed
+
+- Install LocalUserIndex in chunks as wasm exceeds single message limit ([#8418](https://github.com/open-chat-labs/open-chat/pull/8418))
+- Set initial chit balance for all users in LUIs ([#8422](https://github.com/open-chat-labs/open-chat/pull/8422))
+
+### Fixed
+
+- Fix current user streak length inconsistency ([#8408](https://github.com/open-chat-labs/open-chat/pull/8408))
+- Fix sending total CHIT earned to all LocalUserIndexes ([#8426](https://github.com/open-chat-labs/open-chat/pull/8426))
+
+## [[2.0.1845](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1845-user_index)] - 2025-07-29
+
 ### Changed
 
 - `token:Cryptocurrency` -> `token_symbol:String` ([#8368](https://github.com/open-chat-labs/open-chat/pull/8368))

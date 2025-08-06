@@ -159,6 +159,8 @@ import type {
     SiwsPrepareLoginResponse,
     WebAuthnKey,
     WebAuthnKeyFull,
+    VerifyAccountLinkingCodeResponse,
+    FinaliseAccountLinkingResponse,
 } from "./identity";
 import type { CommunityInvite, GroupInvite } from "./inviteCodes";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -455,7 +457,9 @@ export type WorkerRequest =
     | FcmTokenExists
     | AddFcmToken
     | CreateAccountLinkingCode
-    | ReinstateMissedDailyClaims;
+    | ReinstateMissedDailyClaims
+    | VerifyAccountLinkingCode
+    | FinaliseAccountLinkingWithCode;
 
 type SetMinLogLevel = {
     kind: "setMinLogLevel";
@@ -1580,6 +1584,19 @@ type ReinstateMissedDailyClaims = {
     kind: "reinstateMissedDailyClaims";
     userId: string;
     days: number[];
+
+type VerifyAccountLinkingCode = {
+    kind: "verifyAccountLinkingCode";
+    code: string;
+    tempKey: CryptoKeyPair;
+};
+
+type FinaliseAccountLinkingWithCode = {
+    kind: "finaliseAccountLinkingWithCode";
+    tempKey: CryptoKeyPair;
+    principal: string;
+    publicKey: Uint8Array;
+    webAuthnKey?: WebAuthnKeyFull;
 };
 
 /**
@@ -1751,7 +1768,9 @@ export type WorkerResponseInner =
     | BotCommandResponse
     | PayForStreakInsuranceResponse
     | FullWebhookDetails
-    | AccountLinkingCode;
+    | AccountLinkingCode
+    | VerifyAccountLinkingCodeResponse
+    | FinaliseAccountLinkingResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 

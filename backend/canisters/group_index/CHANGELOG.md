@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1859](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1859-group_index)] - 2025-08-05
+
+### Fixed
+
+- Maintain event ordering when retrying failed c2c calls ([#8429](https://github.com/open-chat-labs/open-chat/pull/8429))
+
+## [[2.0.1850](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1850-group_index)] - 2025-08-04
+
+### Changed
+
+- Add "total chit earned" access gate ([#8422](https://github.com/open-chat-labs/open-chat/pull/8422))
+
+## [[2.0.1843](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1843-group_index)] - 2025-07-29
+
 ### Added
 
 - Introduce `Encrypted` message type ([8294](https://github.com/open-chat-labs/open-chat/pull/8294))

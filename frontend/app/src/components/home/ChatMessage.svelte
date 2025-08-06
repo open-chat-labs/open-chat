@@ -189,6 +189,7 @@
     let confirmedReadByThem = $derived(client.messageIsReadByThem(chatId, msg.messageIndex));
     let readByThem = $derived(confirmedReadByThem || $unconfirmedReadByThem.has(msg.messageId));
     let streak = $derived(sender?.streak ?? 0);
+    let chitEarned = $derived(sender?.totalChitEarned ?? 0);
     let hasAchievedMaxStreak = $derived((sender?.maxStreak ?? 0) >= 365);
 
     trackedEffect("read-by-them", () => {
@@ -485,7 +486,13 @@
         (!inert || canRevealDeleted || canRevealBlocked) && !readonly && !ephemeral,
     );
     let canUndelete = $derived(msg.deleted && msg.content.kind !== "deleted_content");
-    let senderDisplayName = $derived(client.getDisplayName(msg.sender, $selectedCommunityMembersStore, $selectedChatWebhooksStore));
+    let senderDisplayName = $derived(
+        client.getDisplayName(
+            msg.sender,
+            $selectedCommunityMembersStore,
+            $selectedChatWebhooksStore,
+        ),
+    );
     let tips = $derived(msg.tips ? Object.entries(msg.tips) : []);
     let canBlockUser = $derived(canBlockUsers && !$selectedChatBlockedUsersStore.has(msg.sender));
     let edited = $derived(
@@ -620,10 +627,12 @@
                                         <h4 class="username" class:fill class:crypto>
                                             {senderDisplayName}
                                         </h4>
+
                                         <Badges
                                             uniquePerson={sender?.isUniquePerson}
                                             diamondStatus={sender?.diamondStatus}
-                                            {streak} />
+                                            {streak}
+                                            {chitEarned} />
                                         <BotBadge
                                             bot={senderContext?.kind === "bot"}
                                             webhook={senderContext?.kind === "webhook"} />
@@ -1120,7 +1129,7 @@
         }
 
         &.focused {
-            box-shadow: 0 0 0 4px var(--notificationBar-bg);
+            box-shadow: 0 0 0 4px var(--currentChat-msg-focus);
             transition:
                 background-color ease-in-out 200ms,
                 border ease-in-out 300ms,
@@ -1128,7 +1137,7 @@
         }
 
         &.editing {
-            box-shadow: 0 0 0 4px var(--notificationBar-bg);
+            box-shadow: 0 0 0 4px var(--currentChat-msg-focus);
         }
 
         &.inert {

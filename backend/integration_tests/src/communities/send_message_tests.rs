@@ -122,10 +122,12 @@ fn send_crypto_in_channel(with_c2c_error: bool) {
     let user2_balance = balance_of(env, canister_ids.icp_ledger, user2.user_id);
     assert_eq!(user2_balance, 10000);
 
+    tick_many(env, 3);
+
     if with_c2c_error {
         env.advance_time(Duration::from_secs(10));
         start_canister(env, canister_ids.local_user_index(env, community_id), community_id.into());
-        env.tick();
+        tick_many(env, 3);
     }
 
     let event = client::community::happy_path::events(env, &user2, community_id, channel_id, 0.into(), true, 10, 10)
@@ -192,6 +194,7 @@ fn send_prize_in_channel() {
                 unique_person_only: false,
                 streak_only: 0,
                 requires_captcha: false,
+                min_chit_earned: 0,
             }),
             sender_name: user1.username(),
             sender_display_name: None,

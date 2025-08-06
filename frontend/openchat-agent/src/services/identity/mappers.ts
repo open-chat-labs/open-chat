@@ -8,7 +8,7 @@ import type {
     IdentityPrepareDelegationResponse,
     IdentityRemoveIdentityLinkResponse,
     IdentityWebAuthnKey,
-    SignedDelegation
+    SignedDelegation,
 } from "../../typebox";
 import type {
     AuthenticationPrincipalsResponse,
@@ -27,7 +27,9 @@ import { consolidateBytes, mapOptional, principalBytesToString } from "../../uti
 import type { Signature } from "@dfinity/agent";
 import { Delegation } from "@dfinity/identity";
 
-export function createIdentityResponse(value: IdentityCreateIdentityResponse): CreateIdentityResponse {
+export function createIdentityResponse(
+    value: IdentityCreateIdentityResponse,
+): CreateIdentityResponse {
     if (value === "AlreadyRegistered") {
         return { kind: "already_registered" };
     }
@@ -79,13 +81,12 @@ export function prepareDelegationResponse(
     if ("Success" in value) {
         return prepareDelegationSuccess(value.Success);
     }
-    throw new UnsupportedValueError(
-        "Unexpected ApiPrepareDelegationResponse type received",
-        value,
-    );
+    throw new UnsupportedValueError("Unexpected ApiPrepareDelegationResponse type received", value);
 }
 
-export function getDelegationResponse(value: IdentityGetDelegationResponse | { NotFound: null }): GetDelegationResponse {
+export function getDelegationResponse(
+    value: IdentityGetDelegationResponse | { NotFound: null },
+): GetDelegationResponse {
     if (value === "NotFound" || "NotFound" in value) {
         return { kind: "not_found" };
     }
@@ -133,10 +134,7 @@ export function generateChallengeResponse(
             pngBase64: value.Success.png_base64,
         };
     }
-    throw new UnsupportedValueError(
-        "Unexpected ApiGenerateChallengeResponse type received",
-        value,
-    );
+    throw new UnsupportedValueError("Unexpected ApiGenerateChallengeResponse type received", value);
 }
 
 export function initiateIdentityLinkResponse(
@@ -227,7 +225,22 @@ export function apiWebAuthnKey(key: WebAuthnKeyFull): IdentityWebAuthnKey {
         origin: key.origin,
         cross_platform: key.crossPlatform,
         aaguid: [...key.aaguid.values()] as [
-            number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
         ],
     };
 }

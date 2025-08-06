@@ -26,6 +26,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Generalise Escrow so it can be used by 3rd parties ([#8356](https://github.com/open-chat-labs/open-chat/pull/8356))
 - `token:Cryptocurrency` -> `token_symbol:String` ([#8368](https://github.com/open-chat-labs/open-chat/pull/8368))
 - Use full names for bot event notification fields ([#8389](https://github.com/open-chat-labs/open-chat/pull/8389))
+- Add 'min_chit_earned' prize message criterion ([#8413](https://github.com/open-chat-labs/open-chat/pull/8413))
+- Sync `total_chit_earned` to UserIndex ([#8434](https://github.com/open-chat-labs/open-chat/pull/8434))
 
 ### Removed
 
@@ -35,6 +37,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Work around fcm_data issue ([#8272](https://github.com/open-chat-labs/open-chat/pull/8272))
 - Fix video calls in direct chats being marked as read by them immediately ([#8327](https://github.com/open-chat-labs/open-chat/pull/8327))
+- Maintain event ordering when retrying failed c2c calls ([#8429](https://github.com/open-chat-labs/open-chat/pull/8429))
+- Fix case where disappearing messages TTL wouldn't be set for new DMs ([#8432](https://github.com/open-chat-labs/open-chat/pull/8432))
 
 ## [[2.0.1799-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1799-user)] - 2025-06-20
 

@@ -72,6 +72,7 @@ fn c2c_create_proposals_channel_impl(args: Args, state: &mut RuntimeState) -> Re
             diamond_membership_expires_at: None,
             verified_credential_args: None,
             unique_person_proof: None,
+            total_chit_earned: 0,
         },
         Vec::new(),
         state,

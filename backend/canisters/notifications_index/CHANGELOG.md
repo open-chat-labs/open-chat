@@ -6,10 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1858](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1858-notifications_index)] - 2025-08-05
+
 ### Changed
 
 - Expose `liquid_cycles_balance` in metrics ([#8350](https://github.com/open-chat-labs/open-chat/pull/8350))
 - Add delay before retrying c2c call under certain error conditions ([#8355](https://github.com/open-chat-labs/open-chat/pull/8355))
+
+### Fixed
+
+- Maintain event ordering when retrying failed c2c calls ([#8429](https://github.com/open-chat-labs/open-chat/pull/8429))
 
 ## [[2.0.1783](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1783-notifications_index)] - 2025-06-10
 

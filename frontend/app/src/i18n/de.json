@@ -9,6 +9,8 @@
         "approvePaymentTitle": "Zahlung genehmigen",
         "bypassWarning": "Benutzer, die ausdrücklich zu diesem {level} eingeladen werden, müssen die Zugangstore nicht passieren.",
         "cannotMakePublic": "Sie können ein privates {level} nicht öffentlich machen, da dies die Privatsphäre der bestehenden Mitglieder gefährden würde.",
+        "chitEarnedGate": "Mindestens verdienter CHIT",
+        "chitEarnedGateInfo": "Benutzer können nur beitreten, wenn sie genügend CHIT verdient haben",
         "chooseGate": "Wählen Sie ein Zugangstor",
         "chooseNervousSystem": "Wählen Sie das Nervensystem",
         "chooseOneGate": "Wählen Sie ein Tor",
@@ -67,6 +69,7 @@
         "minimumBalanceInfo": "Benutzer können nur beitreten, wenn sie über ein Mindestguthaben an Token verfügen",
         "minimumBalanceInfo2": "Benutzer können nur beitreten, wenn sie mindestens {n} {token} Token in ihrer Wallet haben",
         "minimumBalanceN": "Mindestguthaben von {n} Token",
+        "minimumChitEarned": "Mindestens verdientes CHIT",
         "minimumTokenBalance": "Mindestguthaben {token}",
         "minStake": "Mindesteinsatz (Token)",
         "minStakeN": "Mindesteinsatz {n} Token",
@@ -1109,7 +1112,15 @@
     "native": {
         "auth": {
             "createAccount": "Neues Konto erstellen",
-            "error": "Authentifizierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+            "errors": {
+                "alreadyRegistered": "Die Authentifizierungsmethode wurde bereits verknüpft. Versuchen Sie, sich anzumelden!",
+                "codeInvalid": "Ihr Kontoverknüpfungscode scheint ungültig zu sein!",
+                "createPasskeyFail": "Das Erstellen des Passkeys ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
+                "default": "Authentifizierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+                "linkingCodeNotFound": "Bitte überprüfen Sie, ob Ihr Verknüpfungscode korrekt ist!",
+                "maxLinkedIdentitiesLimitReached": "Sie haben das Limit für die maximale Anzahl verknüpfter Identitäten erreicht.",
+                "noProviders": "Auf Ihrem Telefon sind keine Anmeldeinformationsmanager verfügbar! Sie müssen mindestens einen aktivieren oder installieren."
+            },
             "existingAccount": "Ich bin ein bestehender Benutzer",
             "linkAccount": {
                 "cta": "Konto verknüpfen",
@@ -1373,8 +1384,11 @@
         "lifetimeDiamondMembership": "Lebenslange Diamant-Mitgliedschaft",
         "live": "Gewinnnachricht live! Andere können klicken, um Anspruch zu erheben 🎁",
         "maxPrize": "Was ist der Höchstgewinn?",
+        "minChitEarned": "Mindestens verdienter CHIT",
+        "minChitEarnedValue": "Mindestens {n} CHIT verdient",
         "minPrize": "Was ist der Mindestpreis?",
         "numberOfWinners": "Anzahl der Gewinner",
+        "onlyChit": "Nur Benutzer mit CHIT",
         "onlyDiamond": "Nur Diamond-Benutzer",
         "onlyStreak": "Nur Benutzer mit einem Streak",
         "onlyUniquePerson": "Nur einzigartige Menschen",

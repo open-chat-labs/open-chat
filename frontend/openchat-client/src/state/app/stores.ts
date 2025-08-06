@@ -6,6 +6,7 @@ import {
     applyOptionUpdate,
     AuthProvider,
     chatIdentifiersEqual,
+    ChatListScopeMap,
     ChatMap,
     ChatSet,
     CommunityMap,
@@ -20,6 +21,7 @@ import {
     SafeMap,
     videoCallsInProgressForChats,
     type ChatEvent,
+    type ChatIdentifier,
     type ChatSummary,
     type ChitState,
     type CombinedUnreadCounts,
@@ -55,6 +57,7 @@ import {
     type WalletConfig,
     type WebhookDetails,
 } from "openchat-shared";
+import { createSetStore } from "../../stores/setStore";
 import {
     getMessagePermissionsForSelectedChat,
     mergeChatMetrics,
@@ -80,7 +83,6 @@ import { SnsFunctions } from "../snsFunctions.svelte";
 import { messagesRead } from "../unread/markRead";
 import { blockedUsersStore, suspendedUsersStore } from "../users/stores";
 import { notEq } from "../utils";
-import { createSetStore } from "../../stores/setStore";
 
 export const ONE_MB = 1024 * 1024;
 export const ONE_GB = ONE_MB * 1024;
@@ -101,6 +103,12 @@ type GovernanceCanister = string;
 export const hideMessagesFromDirectBlocked = new LocalStorageBoolStore(
     "openchat_hideblocked",
     false,
+);
+
+export const lastSelectedChatByScopeStore = writable<ChatListScopeMap<ChatIdentifier>>(
+    new ChatListScopeMap(),
+    undefined,
+    notEq,
 );
 
 export const cryptoLookup = writable<ReadonlyMap<LedgerCanister, CryptocurrencyDetails>>(
@@ -533,30 +541,22 @@ export const nextCommunityIndexStore = derived(
     (sortedCommunitiesStore) => (sortedCommunitiesStore[0]?.membership?.index ?? -1) + 1,
 );
 
-export const userGroupSummariesStore = derived(communitiesStore, (communities) => {
-    return [...communities.values()].reduce((map, community) => {
-        community.userGroups.forEach((ug) => map.set(ug.id, ug));
-        return map;
-    }, new Map<number, UserGroupSummary>());
-});
+export const userGroupSummariesStore = derived(
+    communitiesStore,
+    (communities) => {
+        return [...communities.values()].reduce((map, community) => {
+            community.userGroups.forEach((ug) => map.set(ug.id, ug));
+            return map;
+        }, new Map<number, UserGroupSummary>());
+    },
+    notEq,
+);
 
 export const serverEventsStore = writable<EventWrapper<ChatEvent>[]>([], undefined, notEq);
-export const serverThreadEventsStore = writable<EventWrapper<ChatEvent>[]>(
-    [],
-    undefined,
-    notEq,
-);
+export const serverThreadEventsStore = writable<EventWrapper<ChatEvent>[]>([], undefined, notEq);
 export const expiredServerEventRanges = writable<DRange>(new DRange(), undefined, notEq);
-export const selectedChatUserIdsStore = writable<Set<string>>(
-    new Set(),
-    undefined,
-    notEq,
-);
-export const selectedChatUserGroupKeysStore = writable<Set<string>>(
-    new Set(),
-    undefined,
-    notEq,
-);
+export const selectedChatUserIdsStore = writable<Set<string>>(new Set(), undefined, notEq);
+export const selectedChatUserGroupKeysStore = writable<Set<string>>(new Set(), undefined, notEq);
 export const selectedChatExpandedDeletedMessageStore = writable<Set<number>>(
     new Set(),
     undefined,
@@ -621,6 +621,7 @@ export const selectedCommunityMembersStore = derived(
         if (updates === undefined) return community.members;
         return updates.apply(community.members);
     },
+    notEq,
 );
 
 export const selectedCommunityBotsStore = derived(
@@ -686,6 +687,7 @@ export const selectedCommunitySummaryStore = derived(
     [selectedCommunityIdStore, communitiesStore],
     ([selectedCommunityId, communities]) =>
         selectedCommunityId ? communities.get(selectedCommunityId) : undefined,
+    notEq,
 );
 
 export const selectedServerChatStore = writable<ChatDetailsState | undefined>(
@@ -699,6 +701,7 @@ export const selectedChatMembersStore = derived(
         if (chat === undefined) return new Map() as ReadonlyMap<string, Member>;
         return members.get(chat.chatId)?.apply(chat.members) ?? chat.members;
     },
+    notEq,
 );
 export const selectedChatBlockedUsersStore = derived(
     [selectedServerChatStore, chatDetailsLocalUpdates.blockedUsers],
@@ -708,9 +711,11 @@ export const selectedChatBlockedUsersStore = derived(
     },
     notEq,
 );
-export const selectedChatLapsedMembersStore = derived(selectedServerChatStore, (chat) => {
-    return chat?.lapsedMembers ?? (new Set() as ReadonlySet<string>);
-});
+export const selectedChatLapsedMembersStore = derived(
+    selectedServerChatStore,
+    (chat) => chat?.lapsedMembers ?? (new Set() as ReadonlySet<string>),
+    notEq,
+);
 export const selectedChatPinnedMessagesStore = derived(
     [selectedServerChatStore, chatDetailsLocalUpdates.pinnedMessages],
     ([chat, pinnedMessages]) => {

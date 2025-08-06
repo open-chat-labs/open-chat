@@ -27,7 +27,7 @@
     .menu {
         width: toRem(250);
         background-color: var(--menu-bg);
-        border-radius: var(--rd);
+        border-radius: var(--menu-rd);
         border: var(--bw) solid var(--menu-bd);
         max-height: 80vh;
         height: var(--override-height);

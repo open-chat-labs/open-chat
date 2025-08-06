@@ -113,7 +113,7 @@ impl TryFrom<SubnetInProgress> for Subnet {
     }
 }
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum ExpandOntoSubnetStep {
     CreateLocalIndex,
     UpdateControllers(CanisterId),

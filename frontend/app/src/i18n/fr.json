@@ -9,6 +9,8 @@
         "approvePaymentTitle": "Approuver le paiement",
         "bypassWarning": "Les utilisateurs explicitement invités à ce {level} ne seront pas tenus de franchir les portes d'accès.",
         "cannotMakePublic": "Vous ne pouvez pas rendre public un {level} privé car cela mettrait en danger la vie privée des membres existants.",
+        "chitEarnedGate": "CHIT minimum gagné",
+        "chitEarnedGateInfo": "Les utilisateurs ne peuvent adhérer que s'ils ont gagné suffisamment de CHIT",
         "chooseGate": "Choisissez une porte d'accès",
         "chooseNervousSystem": "Choisissez le système nerveux",
         "chooseOneGate": "Choisissez un portail",
@@ -67,6 +69,7 @@
         "minimumBalanceInfo": "Les utilisateurs ne peuvent adhérer que s'ils disposent d'un solde minimum de jetons",
         "minimumBalanceInfo2": "Les utilisateurs ne peuvent s'inscrire que s'ils ont au moins {n} {token} jetons dans leur portefeuille.",
         "minimumBalanceN": "Solde minimum de {n} jetons",
+        "minimumChitEarned": "CHIT minimum gagné",
         "minimumTokenBalance": "Solde minimum de {token}",
         "minStake": "Mise minimale (jetons)",
         "minStakeN": "Mise minimale {n} jetons",
@@ -1109,7 +1112,15 @@
     "native": {
         "auth": {
             "createAccount": "Créer un nouveau compte",
-            "error": "L'authentification a échoué. Veuillez réessayer.",
+            "errors": {
+                "alreadyRegistered": "La méthode d'authentification a déjà été associée. Essayez de vous connecter !",
+                "codeInvalid": "Votre code de liaison de compte semble être invalide !",
+                "createPasskeyFail": "La création de la clé d'accès a échoué, veuillez réessayer.",
+                "default": "Échec de l'authentification. Veuillez réessayer.",
+                "linkingCodeNotFound": "Veuillez vérifier que votre code de liaison est correct !",
+                "maxLinkedIdentitiesLimitReached": "Vous avez atteint la limite du nombre maximal d'identités liées.",
+                "noProviders": "Aucun gestionnaire d'identifiants n'est disponible sur votre téléphone ! Vous devrez en activer ou en installer au moins un."
+            },
             "existingAccount": "Je suis un utilisateur existant",
             "linkAccount": {
                 "cta": "Lier le compte",
@@ -1373,8 +1384,11 @@
         "lifetimeDiamondMembership": "Adhésion diamant à vie",
         "live": "Message de récompense en direct ! Les autres peuvent cliquer pour réclamer 🎁",
         "maxPrize": "Quel est le prix maximum ?",
+        "minChitEarned": "CHIT minimum gagné",
+        "minChitEarnedValue": "Au moins {n} CHIT gagné",
         "minPrize": "Quel est le prix minimum ?",
         "numberOfWinners": "Nombre de gagnants",
+        "onlyChit": "Seuls les utilisateurs avec CHIT",
         "onlyDiamond": "Uniquement les utilisateurs Diamond",
         "onlyStreak": "Seuls les utilisateurs avec une séquence",
         "onlyUniquePerson": "Seuls les humains uniques",
