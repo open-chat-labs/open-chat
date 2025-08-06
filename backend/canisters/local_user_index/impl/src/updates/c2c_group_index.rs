@@ -9,7 +9,7 @@ use community_canister::VerifiedChanged as CommunityVerifiedChanged;
 use group_canister::NameChanged as GroupNameChanged;
 use group_canister::VerifiedChanged as GroupVerifiedChanged;
 use local_user_index_canister::GroupIndexEvent;
-use local_user_index_canister::c2c_group_index::{Response::*, *};
+use local_user_index_canister::c2c_group_index::*;
 use std::cell::LazyCell;
 use types::TimestampMillis;
 
@@ -30,7 +30,7 @@ fn c2c_group_index_impl(args: Args, state: &mut RuntimeState) -> Response {
             handle_event(event.value, &now, state);
         }
     }
-    Success
+    Response::Success
 }
 
 fn handle_event<F: FnOnce() -> TimestampMillis>(

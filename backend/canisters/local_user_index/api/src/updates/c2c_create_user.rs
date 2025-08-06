@@ -14,8 +14,5 @@ pub struct Args {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(UserId),
-    AlreadyRegistered,
-    CyclesBalanceTooLow,
-    InternalError(String),
     Error(OCError),
 }
