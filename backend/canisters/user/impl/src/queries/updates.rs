@@ -204,7 +204,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         achievements,
         achievements_last_seen,
         total_chit_earned: state.data.chit_events.total_chit_earned(),
-        chit_balance: state.data.chit_events.balance_for_month_by_timestamp(now),
+        chit_balance: state.data.chit_events.chit_balance(),
         streak: state.data.streak.days(now),
         streak_ends: state.data.streak.ends(),
         max_streak: state.data.streak.max_streak(),

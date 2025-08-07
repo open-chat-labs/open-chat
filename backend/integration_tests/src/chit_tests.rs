@@ -41,7 +41,6 @@ fn claim_daily_chit_reflected_in_user_index() {
 
     let user1_summary = result.users[0].volatile.as_ref().unwrap();
 
-    assert_eq!(user1_summary.chit_balance, 200);
     assert_eq!(user1_summary.streak, 1);
     assert_eq!(user1_summary.max_streak, 1);
 }

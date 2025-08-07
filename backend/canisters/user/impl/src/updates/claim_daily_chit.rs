@@ -81,7 +81,7 @@ fn claim_daily_chit_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     Success(SuccessResult {
         chit_earned,
-        chit_balance: state.data.chit_events.balance_for_month_by_timestamp(now),
+        chit_balance: state.data.chit_events.chit_balance(),
         streak,
         max_streak: state.data.streak.max_streak(),
         next_claim: state.data.streak.next_claim(),

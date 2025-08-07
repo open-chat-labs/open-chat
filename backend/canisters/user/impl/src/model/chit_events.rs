@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::ops::Range;
 use types::{ChitEvent, ChitEventType, TimestampMillis};
-use utils::time::MonthKey;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct ChitEvents {
@@ -56,16 +55,6 @@ impl ChitEvents {
 
     pub fn chit_balance(&self) -> i32 {
         self.total_chit_earned - self.total_chit_spent
-    }
-
-    pub fn balance_for_month_by_timestamp(&self, ts: TimestampMillis) -> i32 {
-        self.balance_for_month(MonthKey::from_timestamp(ts))
-    }
-
-    pub fn balance_for_month(&self, month: MonthKey) -> i32 {
-        let timestamp_range = month.timestamp_range();
-        let range = self.range(timestamp_range);
-        range.iter().map(|e| e.amount).sum()
     }
 
     pub fn achievements(&self, since: Option<TimestampMillis>) -> Vec<ChitEvent> {
