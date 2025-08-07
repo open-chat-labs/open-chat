@@ -164,6 +164,7 @@ impl User {
             username: self.username.clone(),
             display_name: self.display_name.clone(),
             avatar_id: self.avatar_id,
+            profile_background_id: self.profile_background_id,
             is_bot: self.user_type.is_bot(),
             suspended: self.suspension_details.is_some(),
             diamond_membership_status: self.diamond_membership_details.status(now),

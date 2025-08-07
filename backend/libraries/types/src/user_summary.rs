@@ -35,6 +35,7 @@ pub struct UserSummaryStable {
     pub username: String,
     pub display_name: Option<String>,
     pub avatar_id: Option<u128>,
+    pub profile_background_id: Option<u128>,
     pub is_bot: bool,
     pub suspended: bool,
     pub diamond_membership_status: DiamondMembershipStatus,
