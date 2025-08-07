@@ -6259,6 +6259,7 @@ export class OpenChat {
                 pinNumberRequiredStore.set(chatsResponse.pinNumberSettings !== "set_to_none");
             }
 
+            console.log("ChitState: ", chatsResponse.chitState);
             OpenChat.setGlobalStateStores(
                 chatsResponse.directChatsAddedUpdated,
                 chatsResponse.groupsAddedUpdated,

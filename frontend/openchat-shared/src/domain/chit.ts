@@ -190,7 +190,7 @@ export enum PremiumItem {
     CustomProfileBackground = 3,
 }
 export const premiumPrices: Record<PremiumItem, number> = {
-    [PremiumItem.CustomProfileBackground]: 10_000,
-    [PremiumItem.PopularEmojis]: 50_000,
     [PremiumItem.BotEmojis]: 10_000,
+    [PremiumItem.PopularEmojis]: 50_000,
+    [PremiumItem.CustomProfileBackground]: 50_000,
 };

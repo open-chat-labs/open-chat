@@ -749,7 +749,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.inviteUsers(payload.id, payload.userIds, payload.callerUsername),
+                    agent.inviteUsers(payload.id, payload.userIds),
                 );
                 break;
 
@@ -2149,7 +2149,7 @@ async function verifyAccountLinkingCode(
     code: string,
     tempKey: CryptoKeyPair,
 ): Promise<VerifyAccountLinkingCodeResponse> {
-    let ecdsaIdentity = await ECDSAKeyIdentity.fromKeyPair(tempKey);
+    const ecdsaIdentity = await ECDSAKeyIdentity.fromKeyPair(tempKey);
     const identityAgent = await IdentityAgent.create(ecdsaIdentity, identityCanister, icUrl, false);
 
     return await identityAgent.verifyAccountLinkingCode(code);

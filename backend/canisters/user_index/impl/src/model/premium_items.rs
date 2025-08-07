@@ -11,7 +11,9 @@ pub struct PremiumItems {
 impl PremiumItems {
     pub fn cost_in_chit(item_id: u32) -> Option<u32> {
         match item_id {
-            1 => Some(10_000),
+            0 => Some(10_000),
+            1 => Some(50_000),
+            2 => Some(50_000),
             _ => None,
         }
     }

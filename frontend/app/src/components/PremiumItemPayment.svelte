@@ -9,6 +9,7 @@
         type ResourceKey,
     } from "openchat-client";
     import { getContext } from "svelte";
+    import AlertBox from "./AlertBox.svelte";
     import Button from "./Button.svelte";
     import ButtonGroup from "./ButtonGroup.svelte";
     import ModalContent from "./ModalContent.svelte";
@@ -57,22 +58,24 @@
 
         {#snippet body()}
             <div class="body">
-                <div class="icon"></div>
-                <div class="message">
-                    {#if insufficient}
+                {#if insufficient}
+                    <AlertBox>
                         <Translatable
                             resourceKey={i18nKey("premiumItem.insufficientChit", {
                                 price: premiumPrices[item].toLocaleString(),
                                 balance: $currentUserStore.chitBalance.toLocaleString(),
                             })}></Translatable>
-                    {:else}
+                    </AlertBox>
+                {:else}
+                    <div class="message">
+                        <div class="icon"></div>
                         <Translatable
                             resourceKey={i18nKey("premiumItem.priceMessage", {
                                 price: premiumPrices[item].toLocaleString(),
                                 balance: $currentUserStore.chitBalance.toLocaleString(),
                             })}></Translatable>
-                    {/if}
-                </div>
+                    </div>
+                {/if}
             </div>
         {/snippet}
 
@@ -87,7 +90,7 @@
 </Overlay>
 
 <style lang="scss">
-    .body {
+    .message {
         display: flex;
         gap: $sp4;
         align-items: flex-start;

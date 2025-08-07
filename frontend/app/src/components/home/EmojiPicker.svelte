@@ -56,8 +56,12 @@
 
     function createCustomCss(): string {
         const rules: string[] = [];
-        rules.push(lockedCategoryCss(0, premiumPrices[PremiumItem.BotEmojis]));
-        rules.push(lockedCategoryCss(1, premiumPrices[PremiumItem.PopularEmojis]));
+        if (!$currentUserStore.premiumItems.has(PremiumItem.BotEmojis)) {
+            rules.push(lockedCategoryCss(0, premiumPrices[PremiumItem.BotEmojis]));
+        }
+        if (!$currentUserStore.premiumItems.has(PremiumItem.PopularEmojis)) {
+            rules.push(lockedCategoryCss(1, premiumPrices[PremiumItem.PopularEmojis]));
+        }
         return rules.join("\n");
     }
 
