@@ -1,15 +1,12 @@
 use serde::{Deserialize, Serialize};
-use types::UserId;
+use types::{SuccessOnly, UserId};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub messages: Vec<Message>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-}
+pub type Response = SuccessOnly;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Message {

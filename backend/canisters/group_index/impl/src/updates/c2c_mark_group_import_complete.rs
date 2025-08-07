@@ -5,7 +5,7 @@ use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;
-use group_index_canister::c2c_mark_group_import_complete::{Response::*, *};
+use group_index_canister::c2c_mark_group_import_complete::*;
 use types::{CommunityId, CommunityImportedInto};
 
 #[update(guard = "caller_is_community_canister", msgpack = true)]
@@ -34,5 +34,5 @@ fn c2c_mark_group_import_complete_impl(args: Args, state: &mut RuntimeState) -> 
         state,
     );
 
-    Success
+    Response::Success
 }

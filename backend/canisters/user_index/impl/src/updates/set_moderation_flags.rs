@@ -2,7 +2,7 @@ use crate::guards::caller_is_openchat_user;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use user_index_canister::set_moderation_flags::{Response::*, *};
+use user_index_canister::set_moderation_flags::*;
 
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
@@ -17,5 +17,5 @@ fn set_moderation_flags_impl(args: Args, state: &mut RuntimeState) -> Response {
         .users
         .set_moderation_flags_enabled(&caller, args.moderation_flags_enabled);
 
-    Success
+    Response::Success
 }

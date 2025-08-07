@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use types::{Milliseconds, PublicCommunityActivity};
+use types::{Milliseconds, PublicCommunityActivity, SuccessOnly};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -7,7 +7,4 @@ pub struct Args {
     pub public_community_activity: Option<PublicCommunityActivity>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-}
+pub type Response = SuccessOnly;

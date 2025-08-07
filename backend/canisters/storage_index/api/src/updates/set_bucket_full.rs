@@ -1,7 +1,7 @@
 use candid::CandidType;
 use human_readable::{HumanReadablePrincipal, ToHumanReadable};
 use serde::{Deserialize, Serialize};
-use types::CanisterId;
+use types::{CanisterId, SuccessOnly};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -9,10 +9,7 @@ pub struct Args {
     pub full: bool,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-}
+pub type Response = SuccessOnly;
 
 #[derive(Serialize)]
 pub struct HumanReadableArgs {

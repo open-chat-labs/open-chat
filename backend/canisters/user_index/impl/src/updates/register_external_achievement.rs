@@ -8,7 +8,7 @@ use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use tracing::error;
 use types::{CanisterId, TimestampNanos};
 use user_index_canister::ExternalAchievementInitial;
-use user_index_canister::register_external_achievement::{Response::*, *};
+use user_index_canister::register_external_achievement::*;
 
 const CHAT_FEE_PER_CHIT_AWARD: u128 = 20_000; // 1/5000th of a CHAT
 const MIN_REWARD: u32 = 5000;
@@ -19,7 +19,7 @@ const MIN_AWARDS: u32 = 200;
 async fn register_external_achievement(args: Args) -> Response {
     let result = match read_state(|state| prepare(&args, state)) {
         Ok(r) => r,
-        Err(_) => return Success, // Exit early
+        Err(_) => return Response::Success, // Exit early
     };
 
     let chit_budget = args.max_awards * args.chit_reward;
@@ -42,7 +42,7 @@ async fn register_external_achievement(args: Args) -> Response {
             Ok(block_index) => Some(block_index),
             Err(message) => {
                 error!(message);
-                return Success; // Exit early
+                return Response::Success; // Exit early
             }
         }
     } else {
@@ -72,7 +72,7 @@ async fn register_external_achievement(args: Args) -> Response {
         // 2. Clear the awarded users HashSet
     });
 
-    Success
+    Response::Success
 }
 
 struct PrepareResult {

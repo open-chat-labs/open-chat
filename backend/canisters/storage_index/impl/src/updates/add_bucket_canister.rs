@@ -9,7 +9,7 @@ use constants::NANOS_PER_MILLISECOND;
 use cycles_minting_canister::notify_create_canister::{Subnet, SubnetSelection};
 use ic_cdk::call::RejectCode;
 use ic_ledger_types::{AccountIdentifier, DEFAULT_FEE, Memo, Subaccount, Timestamp, Tokens, TransferArgs};
-use storage_index_canister::add_bucket_canister::{Response::*, *};
+use storage_index_canister::add_bucket_canister::*;
 use types::{C2CError, CanisterId, CanisterWasm, TimestampMillis};
 use utils::canister::install_basic;
 
@@ -29,17 +29,17 @@ async fn add_bucket_canister(args: Args) -> Response {
 
     let canister_id = match create_canister(ledger, cmc, args.subnet_id, this_canister_id, now).await {
         Ok(id) => id,
-        Err(error) => return Error(error.into()),
+        Err(error) => return Response::Error(error.into()),
     };
 
     let wasm_version = wasm.version;
     if let Err(error) = install_basic(canister_id, wasm, init_args).await {
-        return Error(error.into());
+        return Response::Error(error.into());
     }
 
     let bucket = BucketRecord::new(canister_id, wasm_version);
     mutate_state(|state| state.data.add_bucket(bucket));
-    Success
+    Response::Success
 }
 
 struct PrepareResult {

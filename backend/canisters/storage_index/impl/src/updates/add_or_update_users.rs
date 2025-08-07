@@ -3,7 +3,7 @@ use crate::model::bucket_event_batch::EventToSync;
 use crate::{RuntimeState, UserRecordInternal, mutate_state};
 use canister_tracing_macros::trace;
 use ic_cdk::update;
-use storage_index_canister::add_or_update_users::{Response::*, *};
+use storage_index_canister::add_or_update_users::*;
 
 #[update(guard = "caller_is_user_controller")]
 #[trace]
@@ -28,5 +28,5 @@ fn add_or_update_users_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
     }
 
-    Success
+    Response::Success
 }

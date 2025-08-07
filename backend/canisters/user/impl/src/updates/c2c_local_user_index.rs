@@ -3,7 +3,7 @@ use crate::{RuntimeState, execute_update, openchat_bot};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use types::{Achievement, DiamondMembershipPlanDuration, MessageContentInitial, ReferralStatus, Timestamped};
-use user_canister::c2c_local_user_index::{Response::*, *};
+use user_canister::c2c_local_user_index::*;
 use user_canister::mark_read::ChannelMessagesRead;
 use user_canister::{LocalUserIndexEvent, UserCanisterEvent};
 
@@ -23,7 +23,7 @@ fn c2c_local_user_index_impl(args: Args, state: &mut RuntimeState) -> Response {
             process_event(event.value, state);
         }
     }
-    Success
+    Response::Success
 }
 
 fn process_event(event: LocalUserIndexEvent, state: &mut RuntimeState) {

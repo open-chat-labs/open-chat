@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Switch some endpoints over to using common response types ([#8450](https://github.com/open-chat-labs/open-chat/pull/8450))
+
 ## [[2.0.1859](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1859-group_index)] - 2025-08-05
 
 ### Fixed

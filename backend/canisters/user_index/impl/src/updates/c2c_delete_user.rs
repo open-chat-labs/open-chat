@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::{DeleteUser, UserIndexEvent};
 use oc_error_codes::OCErrorCode;
-use user_index_canister::c2c_delete_user::{Response::*, *};
+use user_index_canister::c2c_delete_user::*;
 
 #[update(guard = "caller_is_identity_canister", msgpack = true)]
 #[trace]
@@ -21,8 +21,8 @@ fn c2c_delete_user_impl(args: Args, state: &mut RuntimeState) -> Response {
             }),
             None,
         );
-        Success
+        Response::Success
     } else {
-        Error(OCErrorCode::TargetUserNotFound.into())
+        Response::Error(OCErrorCode::TargetUserNotFound.into())
     }
 }
