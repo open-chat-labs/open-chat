@@ -91,6 +91,12 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             state.data.blocked_users.remove(&(unblocked, user_id));
             state.push_event_to_user_index(UserIndexEvent::UserUnblocked(user_id, unblocked), **now);
         }
+        UserEvent::UserSetProfileBackground(profile_background_id) => {
+            state.push_event_to_user_index(
+                UserIndexEvent::UserSetProfileBackground(Box::new((user_id, profile_background_id))),
+                **now,
+            );
+        }
         UserEvent::SetMaxStreak(max_streak) => {
             state.push_event_to_user_index(UserIndexEvent::SetMaxStreak(user_id, max_streak), **now);
         }

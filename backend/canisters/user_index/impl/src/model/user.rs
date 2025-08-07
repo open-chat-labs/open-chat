@@ -29,6 +29,8 @@ pub struct User {
     pub cycle_top_ups: Vec<CyclesTopUpInternal>,
     #[serde(rename = "av", skip_serializing_if = "Option::is_none")]
     pub avatar_id: Option<u128>,
+    #[serde(rename = "pb", skip_serializing_if = "Option::is_none")]
+    pub profile_background_id: Option<u128>,
     #[serde(rename = "rf", skip_serializing_if = "Option::is_none")]
     pub registration_fee: Option<RegistrationFee>,
     #[serde(rename = "ab", default, skip_serializing_if = "AccountBilling::is_empty")]
@@ -105,6 +107,7 @@ impl User {
             date_updated: now,
             cycle_top_ups: Vec::new(),
             avatar_id,
+            profile_background_id: None,
             registration_fee: None,
             account_billing: AccountBilling::default(),
             phone_status: PhoneStatus::None,
@@ -158,6 +161,7 @@ impl User {
             username: self.username.clone(),
             display_name: self.display_name.clone(),
             avatar_id: self.avatar_id,
+            profile_background_id: self.profile_background_id,
             is_bot: self.user_type.is_bot(),
             suspended: self.suspension_details.is_some(),
             diamond_membership_status: self.diamond_membership_details.status(now),
@@ -180,6 +184,11 @@ impl User {
 
     pub fn set_avatar_id(&mut self, avatar_id: Option<u128>, now: TimestampMillis) {
         self.avatar_id = avatar_id;
+        self.date_updated = now;
+    }
+
+    pub fn set_profile_background_id(&mut self, profile_background_id: Option<u128>, now: TimestampMillis) {
+        self.profile_background_id = profile_background_id;
         self.date_updated = now;
     }
 
@@ -232,6 +241,7 @@ impl Default for User {
             date_updated: 0,
             cycle_top_ups: Vec::new(),
             avatar_id: None,
+            profile_background_id: None,
             registration_fee: None,
             account_billing: AccountBilling::default(),
             phone_status: PhoneStatus::None,
