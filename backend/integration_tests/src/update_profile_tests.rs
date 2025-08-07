@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
-use crate::{TestEnv, client, env};
+use crate::{TestEnv, client};
 use rand::random;
 use std::ops::Deref;
 use std::time::Duration;
