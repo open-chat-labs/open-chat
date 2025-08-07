@@ -22,6 +22,7 @@ pub enum LocalUserIndexEvent {
     OpenChatBotMessage(Box<OpenChatBotMessage>),
     OpenChatBotMessageV2(Box<OpenChatBotMessageV2>),
     UserDeleted(Box<UserDeleted>),
+    UserSetProfileBackground(Box<(UserId, Option<u128>)>),
     NotifyUniquePersonProof(Box<(UserId, UniquePersonProof)>),
     NotifyChit(Box<(UserId, NotifyChit)>),
     NotifyStreakInsurancePayment(Box<StreakInsurancePayment>),

@@ -105,6 +105,13 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 Some(caller),
             );
         }
+        LocalUserIndexEvent::UserSetProfileBackground(ev) => {
+            let (user_id, profile_background_id) = *ev;
+            state
+                .data
+                .users
+                .set_profile_background_id(&user_id, profile_background_id, **now);
+        }
         LocalUserIndexEvent::NotifyUniquePersonProof(ev) => {
             let (user_id, proof) = *ev;
             state

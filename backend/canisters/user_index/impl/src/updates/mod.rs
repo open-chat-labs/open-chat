@@ -10,7 +10,6 @@ pub mod c2c_notify_low_balance;
 pub mod c2c_report_message;
 pub mod c2c_send_openchat_bot_messages;
 pub mod c2c_set_avatar;
-pub mod c2c_set_profile_background;
 pub mod c2c_suspend_users;
 pub mod delete_user;
 pub mod mark_local_user_index_full;
