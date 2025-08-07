@@ -194,6 +194,12 @@ pub enum UnitResult {
     Error(OCError),
 }
 
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum SuccessOnly {
+    Success,
+}
+
 impl From<OCErrorCode> for UnitResult {
     fn from(value: OCErrorCode) -> Self {
         Self::Error(value.into())

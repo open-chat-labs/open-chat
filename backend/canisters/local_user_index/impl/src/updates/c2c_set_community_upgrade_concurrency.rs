@@ -2,7 +2,7 @@ use crate::guards::caller_is_group_index;
 use crate::mutate_state;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use local_user_index_canister::c2c_set_community_upgrade_concurrency::{Response::*, *};
+use local_user_index_canister::c2c_set_community_upgrade_concurrency::*;
 use std::cmp::min;
 use tracing::info;
 
@@ -16,6 +16,6 @@ fn c2c_set_community_upgrade_concurrency(args: Args) -> Response {
             crate::jobs::upgrade_communities::start_job_if_required(state);
         }
         info!(state.data.community_upgrade_concurrency, "Community upgrade concurrency set");
-        if args.value > max { Capped(max) } else { Success }
+        if args.value > max { Response::Capped(max) } else { Response::Success }
     })
 }

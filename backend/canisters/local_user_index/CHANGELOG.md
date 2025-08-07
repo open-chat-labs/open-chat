@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Sync `total_chit_earned` to UserIndex ([#8434](https://github.com/open-chat-labs/open-chat/pull/8434))
 - Remove candid versions of a few endpoints ([#8445](https://github.com/open-chat-labs/open-chat/pull/8445))
+- Switch some endpoints over to using common response types ([#8447](https://github.com/open-chat-labs/open-chat/pull/8447))
 
 ### Fixed
 

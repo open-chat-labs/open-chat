@@ -2,7 +2,7 @@ use crate::{UserIndexEvent, guards::caller_is_openchat_user, mutate_state, read_
 use canister_api_macros::update;
 use canister_client::generate_c2c_call;
 use canister_tracing_macros::trace;
-use local_user_index_canister::uninstall_bot::{Response::*, *};
+use local_user_index_canister::uninstall_bot::*;
 use types::c2c_uninstall_bot;
 
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
@@ -23,9 +23,9 @@ async fn uninstall_bot(args: Args) -> Response {
     )
     .await
     {
-        Ok(c2c_uninstall_bot::Response::Success) => (),
-        Ok(other) => return other.into(),
-        Err(error) => return InternalError(format!("{error:?}")),
+        Ok(Response::Success) => (),
+        Ok(error) => return error,
+        Err(error) => return Response::Error(error.into()),
     }
 
     mutate_state(|state| {
@@ -39,7 +39,7 @@ async fn uninstall_bot(args: Args) -> Response {
         );
     });
 
-    Success
+    Response::Success
 }
 
 generate_c2c_call!(c2c_uninstall_bot);
