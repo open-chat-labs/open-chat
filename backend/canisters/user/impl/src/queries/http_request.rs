@@ -11,6 +11,10 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         get_document(route.blob_id, state.data.avatar.as_ref(), "avatar")
     }
 
+    fn get_profile_background_impl(id: Option<u128>, state: &RuntimeState) -> HttpResponse {
+        get_document(id, state.data.profile_background.as_ref(), "profile_background")
+    }
+
     fn get_errors_impl(since: Option<TimestampMillis>) -> HttpResponse {
         encode_logs(canister_logger::export_errors(), since.unwrap_or(0))
     }
@@ -54,6 +58,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
 
     match extract_route(&request.url) {
         Route::Avatar(route) => read_state(|state| get_avatar_impl(route, state)),
+        Route::ProfileBackground(id) => read_state(|state| get_profile_background_impl(id, state)),
         Route::Errors(since) => get_errors_impl(since),
         Route::Logs(since) => get_logs_impl(since),
         Route::Traces(since) => get_traces_impl(since),
