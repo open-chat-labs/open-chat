@@ -11,7 +11,7 @@ use constants::{HOUR_IN_MS, MINUTE_IN_MS};
 use ledger_utils::format_crypto_amount_with_symbol;
 use rand::Rng;
 use types::{
-    Achievement, Chat, ChitEarned, ChitEarnedReason, DirectMessageTipped, DirectReactionAddedNotification, EventIndex, FcmData,
+    Achievement, Chat, ChitEvent, ChitEventType, DirectMessageTipped, DirectReactionAddedNotification, EventIndex, FcmData,
     MessageContentInitial, P2PSwapStatus, UserId, UserNotificationPayload, UserType, VideoCallPresence,
 };
 use user_canister::c2c_user_canister::{Response::*, *};
@@ -125,10 +125,10 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
             let mut rewarded = false;
 
             if chit_reward > 0 {
-                state.data.chit_events.push(ChitEarned {
+                state.data.chit_events.push(ChitEvent {
                     amount: chit_reward as i32,
                     timestamp: now,
-                    reason: ChitEarnedReason::Referral(*status),
+                    reason: ChitEventType::Referral(*status),
                 });
 
                 rewarded = true;

@@ -36,10 +36,9 @@ fn current_user_impl(state: &RuntimeState) -> Response {
             moderation_flags_enabled: u.moderation_flags_enabled,
             is_unique_person: u.unique_person_proof.is_some(),
             total_chit_earned: u.total_chit_earned,
-            chit_balance: u.total_chit_earned - u.total_chit_spent,
+            chit_balance: u.chit_balance,
             streak: u.streak,
             max_streak: u.max_streak,
-            premium_items: u.premium_items.iter().copied().collect(),
         })
     } else {
         UserNotFound

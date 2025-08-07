@@ -9,16 +9,9 @@ pub struct PremiumItems {
 }
 
 impl PremiumItems {
-    pub fn cost_in_chit(item_id: u32) -> Option<u32> {
-        match item_id {
-            1 => Some(10_000),
-            _ => None,
-        }
-    }
-
-    pub fn log_purchase(&mut self, user_id: UserId, item_id: u32, paid_in_chat: bool, cost: u32, now: TimestampMillis) {
+    pub fn log_purchase(&mut self, user_id: UserId, item_id: u32, paid_in_chat: bool, cost: u32, timestamp: TimestampMillis) {
         self.purchase_log.push(PremiumItemPurchase {
-            timestamp: now,
+            timestamp,
             user_id,
             item_id,
             paid_in_chat,

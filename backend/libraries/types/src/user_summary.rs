@@ -70,5 +70,4 @@ pub struct CurrentUserSummary {
     pub chit_balance: i32,
     pub streak: u16,
     pub max_streak: u16,
-    pub premium_items: Vec<u32>,
 }
