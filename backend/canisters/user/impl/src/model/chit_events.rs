@@ -211,6 +211,7 @@ mod tests {
         ChitEvents {
             events,
             total_chit_earned,
+            total_chit_spent: 0,
         }
     }
 }

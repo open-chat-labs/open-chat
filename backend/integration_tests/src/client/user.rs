@@ -51,7 +51,6 @@ generate_msgpack_update_call!(update_chat_settings);
 pub mod happy_path {
     use crate::User;
     use crate::env::VIDEO_CALL_OPERATOR;
-    use candid::Principal;
     use pocket_ic::PocketIc;
     use testing::rng::random_from_u128;
     use types::{
