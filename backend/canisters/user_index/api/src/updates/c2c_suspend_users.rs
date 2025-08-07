@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{Milliseconds, UserId};
+use types::{Milliseconds, SuccessOnly, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -10,7 +10,4 @@ pub struct Args {
     pub suspended_by: UserId,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-}
+pub type Response = SuccessOnly;

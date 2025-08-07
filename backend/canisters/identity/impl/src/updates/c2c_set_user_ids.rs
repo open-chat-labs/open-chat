@@ -2,7 +2,7 @@ use crate::guards::caller_is_user_index_canister;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use identity_canister::c2c_set_user_ids::{Response::*, *};
+use identity_canister::c2c_set_user_ids::*;
 
 #[update(guard = "caller_is_user_index_canister", msgpack = true)]
 #[trace]
@@ -19,5 +19,5 @@ fn c2c_set_user_ids_impl(args: Args, state: &mut RuntimeState) -> Response {
         state.data.user_principals.set_user_id(principal, user_id);
     }
 
-    Success
+    Response::Success
 }

@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{ChannelId, ChatId, CommunityId, MessageIndex, TimestampMillis};
+use types::{ChannelId, ChatId, CommunityId, MessageIndex, SuccessOnly, TimestampMillis};
 
 #[ts_export(user, mark_read)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -42,8 +42,4 @@ pub struct ChannelMessagesRead {
     pub date_read_pinned: Option<TimestampMillis>,
 }
 
-#[ts_export(user, mark_read)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-}
+pub type Response = SuccessOnly;

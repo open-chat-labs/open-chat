@@ -4,7 +4,7 @@ use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use local_user_index_canister::{MaxConcurrentCanisterUpgradesChanged, UserIndexEvent};
 use tracing::info;
-use user_index_canister::set_max_concurrent_user_canister_upgrades::{Response::*, *};
+use user_index_canister::set_max_concurrent_user_canister_upgrades::*;
 
 // dfx --identity openchat canister --network ic call user_index set_max_concurrent_user_canister_upgrades '(record { value=N:nat32 })'
 #[proposal(guard = "caller_is_governance_principal")]
@@ -20,5 +20,5 @@ fn set_max_concurrent_user_canister_upgrades_impl(args: Args, state: &mut Runtim
     );
 
     info!("Max concurrent canister upgrades set to {}", args.value);
-    Success
+    Response::Success
 }

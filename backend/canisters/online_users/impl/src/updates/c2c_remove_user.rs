@@ -2,7 +2,7 @@ use crate::guards::caller_is_user_index_canister;
 use crate::{RuntimeState, mutate_state};
 use canister_tracing_macros::trace;
 use ic_cdk::update;
-use online_users_canister::c2c_remove_user::{Response::*, *};
+use online_users_canister::c2c_remove_user::*;
 use stable_memory_map::StableMemoryMap;
 
 #[update(guard = "caller_is_user_index_canister")]
@@ -20,5 +20,5 @@ fn c2c_remove_user_impl(args: Args, state: &mut RuntimeState) -> Response {
     {
         state.data.last_online_dates.remove(user_id);
     }
-    Success
+    Response::Success
 }

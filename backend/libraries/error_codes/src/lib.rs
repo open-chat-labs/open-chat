@@ -186,6 +186,7 @@ pub enum OCErrorCode {
     LinkingCodeNotFound = 342,
     MaxLinkedIdentitiesLimitReached = 343,
     ItemNotFound = 344,
+    AmountNotSpecified = 345,
 
     // InternalError
     C2CError = 500,

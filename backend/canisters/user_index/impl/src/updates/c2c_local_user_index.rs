@@ -17,7 +17,7 @@ use std::cell::LazyCell;
 use storage_index_canister::add_or_update_users::UserConfig;
 use types::{CanisterId, IdempotentEnvelope, MessageContent, TextContent, TimestampMillis, UserId, UserType};
 use user_index_canister::LocalUserIndexEvent;
-use user_index_canister::c2c_local_user_index::{Response::*, *};
+use user_index_canister::c2c_local_user_index::*;
 
 #[update(guard = "caller_is_local_user_index_canister", msgpack = true)]
 #[trace]
@@ -38,7 +38,7 @@ fn c2c_local_user_index_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
     }
 
-    Success
+    Response::Success
 }
 
 fn handle_event<F: FnOnce() -> TimestampMillis>(
