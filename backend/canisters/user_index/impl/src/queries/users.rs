@@ -33,6 +33,7 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
             username: u.username.clone(),
             display_name: u.display_name.clone(),
             avatar_id: u.avatar_id,
+            profile_background_id: u.profile_background_id,
             is_bot: u.user_type.is_bot(),
             is_platform_moderator: state.data.platform_moderators.contains(&u.user_id),
             is_platform_operator: state.data.platform_operators.contains(&u.user_id),

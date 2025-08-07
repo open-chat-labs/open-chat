@@ -59,6 +59,7 @@ pub mod set_community_indexes;
 pub mod set_contact;
 pub mod set_message_reminder;
 pub mod set_pin_number;
+pub mod set_profile_background;
 pub mod start_video_call;
 pub mod swap_tokens;
 pub mod tip_message;

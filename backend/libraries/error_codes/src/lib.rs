@@ -187,6 +187,7 @@ pub enum OCErrorCode {
     MaxLinkedIdentitiesLimitReached = 343,
     ItemNotFound = 344,
     AmountNotSpecified = 345,
+    ProfileBackgroundTooBig = 346,
 
     // InternalError
     C2CError = 500,
