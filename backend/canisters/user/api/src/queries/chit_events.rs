@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{ChitEarned, TimestampMillis};
+use types::{ChitEvent, TimestampMillis};
 
 #[ts_export(user, chit_events)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -22,6 +22,6 @@ pub enum Response {
 #[ts_export(user, chit_events)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
-    pub events: Vec<ChitEarned>,
+    pub events: Vec<ChitEvent>,
     pub total: u32,
 }

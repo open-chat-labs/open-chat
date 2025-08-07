@@ -33,6 +33,7 @@ generate_msgpack_update_call!(leave_group);
 generate_msgpack_update_call!(mark_message_activity_feed_read);
 generate_msgpack_update_call!(mark_read);
 generate_msgpack_update_call!(mute_notifications);
+generate_msgpack_update_call!(pay_for_premium_item);
 generate_msgpack_update_call!(pay_for_streak_insurance);
 generate_msgpack_update_call!(remove_reaction);
 generate_msgpack_update_call!(save_crypto_account);
@@ -50,6 +51,7 @@ generate_msgpack_update_call!(update_chat_settings);
 pub mod happy_path {
     use crate::User;
     use crate::env::VIDEO_CALL_OPERATOR;
+    use candid::Principal;
     use pocket_ic::PocketIc;
     use testing::rng::random_from_u128;
     use types::{
@@ -572,6 +574,29 @@ pub mod happy_path {
         );
 
         assert!(matches!(response, user_canister::unblock_user::Response::Success));
+    }
+
+    pub fn pay_for_premium_item(
+        env: &mut PocketIc,
+        user: &User,
+        item_id: u32,
+        expected_cost: u32,
+    ) -> user_canister::pay_for_premium_item::SuccessResult {
+        let response = super::pay_for_premium_item(
+            env,
+            user.principal,
+            user.canister(),
+            &user_canister::pay_for_premium_item::Args {
+                item_id,
+                pay_in_chat: false,
+                expected_cost,
+            },
+        );
+
+        match response {
+            user_canister::pay_for_premium_item::Response::Success(result) => result,
+            response => panic!("'pay_for_premium_item' error: {response:?}"),
+        }
     }
 
     pub fn pay_for_streak_insurance(env: &mut PocketIc, user: &User, additional_days: u8, expected_price: u128) {

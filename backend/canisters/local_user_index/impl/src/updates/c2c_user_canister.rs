@@ -56,6 +56,9 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             // state.data.global_users.insert_chit_record(user_id, ..);
             state.push_event_to_user_index(UserIndexEvent::NotifyChit(Box::new((user_id, ev))), **now);
         }
+        UserEvent::NotifyPremiumItemPurchased(ev) => {
+            state.push_event_to_user_index(UserIndexEvent::NotifyPremiumItemPurchased(Box::new((user_id, ev))), **now);
+        }
         UserEvent::NotifyStreakInsurancePayment(payment) => {
             state.push_event_to_user_index(
                 UserIndexEvent::NotifyStreakInsurancePayment(Box::new(StreakInsurancePayment {

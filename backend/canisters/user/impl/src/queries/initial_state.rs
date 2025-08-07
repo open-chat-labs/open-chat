@@ -72,5 +72,6 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
         message_activity_summary: state.data.message_activity_events.summary(),
         bots,
         btc_address: state.data.btc_address.as_ref().map(|a| a.value.clone()),
+        premium_items: state.data.premium_items.item_ids(),
     })
 }

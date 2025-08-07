@@ -8,7 +8,7 @@ use std::cmp::max;
 use std::ops::Deref;
 use std::time::{Duration, SystemTime};
 use test_case::test_case;
-use types::{ChitEarnedReason, OptionUpdate, TimestampMillis};
+use types::{ChitEventType, OptionUpdate, TimestampMillis};
 
 const DAY_ZERO: TimestampMillis = 1704067200000; // Mon Jan 01 2024 00:00:00 GMT+0000
 const ONE_CHAT: u128 = 100_000_000;
@@ -31,7 +31,7 @@ fn claim_daily_chit_reflected_in_user_index() {
     assert_eq!(events.total, 1);
     assert_eq!(events.events.len(), 1);
     assert_eq!(events.events[0].amount, 200);
-    assert!(matches!(events.events[0].reason, ChitEarnedReason::DailyClaim));
+    assert!(matches!(events.events[0].reason, ChitEventType::DailyClaim));
 
     tick_many(env, 3);
 
@@ -175,7 +175,7 @@ fn chit_streak_maintained_if_insured(days_insured: u8) {
     assert_eq!(
         chit_events
             .iter()
-            .filter(|e| matches!(e.reason, ChitEarnedReason::StreakInsuranceClaim))
+            .filter(|e| matches!(e.reason, ChitEventType::StreakInsuranceClaim))
             .count(),
         days_insured as usize
     );
@@ -183,10 +183,7 @@ fn chit_streak_maintained_if_insured(days_insured: u8) {
     assert!(
         chit_events
             .iter()
-            .filter(|e| matches!(
-                e.reason,
-                ChitEarnedReason::DailyClaim | ChitEarnedReason::StreakInsuranceClaim
-            ))
+            .filter(|e| matches!(e.reason, ChitEventType::DailyClaim | ChitEventType::StreakInsuranceClaim))
             .map(|e| timestamp_to_day(e.timestamp))
             .all_unique()
     );
@@ -319,18 +316,17 @@ fn pay_for_premium_item_succeeds() {
 
     tick_many(env, 3);
 
-    let pay_for_premium_item_result =
-        client::user_index::happy_path::pay_for_premium_item(env, user.principal, canister_ids.user_index, 1, 10_000);
+    let pay_for_premium_item_result = client::user::happy_path::pay_for_premium_item(env, &user, 1, 10_000);
 
     assert_eq!(
         pay_for_premium_item_result.total_chit_earned - pay_for_premium_item_result.chit_balance,
         10_000
     );
 
-    let current_user = client::user_index::happy_path::current_user(env, user.principal, canister_ids.user_index);
+    let initial_state = client::user::happy_path::initial_state(env, &user);
 
-    assert_eq!(current_user.premium_items, vec![1]);
-    assert_eq!(current_user.total_chit_earned - current_user.chit_balance, 10_000)
+    assert_eq!(initial_state.premium_items, vec![1]);
+    assert_eq!(initial_state.total_chit_earned - initial_state.chit_balance, 10_000)
 }
 
 fn ensure_time_at_least_day0(env: &mut PocketIc) {
