@@ -1,7 +1,8 @@
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use local_user_index_canister::c2c_trigger_upgrade::{Response::*, *};
+use local_user_index_canister::c2c_trigger_upgrade::*;
+use oc_error_codes::OCErrorCode;
 
 #[update(msgpack = true)]
 #[trace]
@@ -14,11 +15,11 @@ fn c2c_trigger_upgrade_impl(state: &mut RuntimeState) -> Response {
 
     if state.data.local_groups.get(&canister_id.into()).is_some() {
         state.data.groups_requiring_upgrade.enqueue(canister_id, true);
-        Success
+        Response::Success
     } else if state.data.local_communities.get(&canister_id.into()).is_some() {
         state.data.communities_requiring_upgrade.enqueue(canister_id, true);
-        Success
+        Response::Success
     } else {
-        CallerNotRecognised
+        Response::Error(OCErrorCode::InitiatorNotFound.into())
     }
 }

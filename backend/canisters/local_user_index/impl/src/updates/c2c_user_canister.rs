@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_time::now_millis;
 use canister_tracing_macros::trace;
 use local_user_index_canister::UserEvent;
-use local_user_index_canister::c2c_user_canister::{Response::*, *};
+use local_user_index_canister::c2c_user_canister::*;
 use stable_memory_map::StableMemoryMap;
 use std::cell::LazyCell;
 use types::{StreakInsuranceClaim, StreakInsurancePayment, TimestampMillis, UserId};
@@ -41,7 +41,7 @@ fn c2c_notify_user_events_impl(args: Args, state: &mut RuntimeState) -> Response
             handle_event(user_id, event.value, &now, state);
         }
     }
-    Success
+    Response::Success
 }
 
 fn handle_event<F: FnOnce() -> TimestampMillis>(

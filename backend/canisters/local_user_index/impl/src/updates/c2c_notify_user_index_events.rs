@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_time::now_millis;
 use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;
-use local_user_index_canister::c2c_notify_user_index_events::{Response::*, *};
+use local_user_index_canister::c2c_notify_user_index_events::*;
 use local_user_index_canister::{UserIndexEvent, UserRegistered};
 use msgpack::serialize_then_unwrap;
 use p256_key_pair::P256KeyPair;
@@ -30,7 +30,7 @@ fn c2c_notify_user_index_events_impl(args: Args, state: &mut RuntimeState) -> Re
     for event in args.events {
         handle_event(event, &now, state);
     }
-    Success
+    Response::Success
 }
 
 fn handle_event<F: FnOnce() -> TimestampMillis>(

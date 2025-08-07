@@ -5,13 +5,13 @@ use ts_export::ts_export;
 use types::{ChannelId, ChatId, CommunityId, EventIndex, MessageIndex, TimestampMillis, UserId};
 
 #[ts_export(local_user_index, chat_events)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub requests: Vec<EventsArgs>,
 }
 
 #[ts_export(local_user_index, chat_events)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct EventsArgs {
     pub context: EventsContext,
     pub args: EventsSelectionCriteria,
@@ -19,7 +19,7 @@ pub struct EventsArgs {
 }
 
 #[ts_export(local_user_index, chat_events)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum EventsContext {
     Direct(UserId),
     Group(ChatId, Option<MessageIndex>),
@@ -58,20 +58,20 @@ pub struct EventsWindowArgs {
 }
 
 #[ts_export(local_user_index, chat_events)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
 }
 
 #[ts_export(local_user_index, chat_events)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub responses: Vec<EventsResponse>,
     pub timestamp: TimestampMillis,
 }
 
 #[ts_export(local_user_index, chat_events)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum EventsResponse {
     Success(types::EventsResponse),
     Error(OCError),

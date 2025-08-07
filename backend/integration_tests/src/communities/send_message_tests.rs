@@ -125,8 +125,8 @@ fn send_crypto_in_channel(with_c2c_error: bool) {
     tick_many(env, 3);
 
     if with_c2c_error {
-        env.advance_time(Duration::from_secs(10));
         start_canister(env, canister_ids.local_user_index(env, community_id), community_id.into());
+        env.advance_time(Duration::from_secs(10));
         tick_many(env, 3);
     }
 
