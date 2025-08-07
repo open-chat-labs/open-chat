@@ -5,7 +5,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::ChatInternal;
 use types::{ChannelId, Chat, ChatId, CommunityId, CommunityImportedInto, TimestampMillis};
-use user_canister::c2c_notify_group_deleted::{Response::*, *};
+use user_canister::c2c_notify_group_deleted::*;
 use user_canister::mark_read::ChannelMessagesRead;
 
 #[update(guard = "caller_is_group_index", msgpack = true)]
@@ -84,7 +84,7 @@ fn c2c_notify_group_deleted_impl(args: Args, state: &mut RuntimeState) -> Respon
             state,
         );
     }
-    Success
+    Response::Success
 }
 
 fn migrate_group_references_to_channel_references(

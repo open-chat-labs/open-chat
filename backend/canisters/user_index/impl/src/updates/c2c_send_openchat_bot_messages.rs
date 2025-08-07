@@ -3,7 +3,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::{OpenChatBotMessage, UserIndexEvent};
 use types::{MessageContent, TextContent};
-use user_index_canister::c2c_send_openchat_bot_messages::{Response::*, *};
+use user_index_canister::c2c_send_openchat_bot_messages::*;
 
 #[update(guard = "caller_is_translations_canister", msgpack = true)]
 #[trace]
@@ -22,5 +22,5 @@ fn c2c_send_openchat_bot_messages_impl(args: Args, state: &mut RuntimeState) -> 
         );
     }
 
-    Success
+    Response::Success
 }

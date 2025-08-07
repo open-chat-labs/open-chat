@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use types::{IdempotentEnvelope, UserId};
+use types::{IdempotentEnvelope, SuccessOnly, UserId};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -19,7 +19,4 @@ pub struct OnlineForMinutes {
     pub minutes_online: u16,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-}
+pub type Response = SuccessOnly;

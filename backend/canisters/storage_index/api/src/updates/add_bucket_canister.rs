@@ -1,18 +1,14 @@
 use candid::{CandidType, Principal};
 use human_readable::{HumanReadablePrincipal, ToHumanReadable};
-use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
+use types::UnitResult;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub subnet_id: Option<Principal>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    Error(OCError),
-}
+pub type Response = UnitResult;
 
 #[derive(Serialize)]
 pub struct HumanReadableArgs {

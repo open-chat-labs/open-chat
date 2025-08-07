@@ -4,7 +4,7 @@ use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;
-use user_canister::cancel_message_reminder::{Response::*, *};
+use user_canister::cancel_message_reminder::*;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
@@ -29,5 +29,5 @@ fn cancel_message_reminder_impl(reminder_id: u64, state: &mut RuntimeState) -> R
         }
     }
 
-    Success
+    Response::Success
 }
