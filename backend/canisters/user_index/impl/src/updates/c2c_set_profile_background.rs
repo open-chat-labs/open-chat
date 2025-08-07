@@ -14,7 +14,11 @@ fn c2c_set_profile_background_impl(args: Args, state: &mut RuntimeState) -> Resp
     let caller = state.env.caller();
     let now = state.env.now();
 
-    match state.data.users.set_profile_background_id(&caller.into(), args.profile_background_id, now) {
+    match state
+        .data
+        .users
+        .set_profile_background_id(&caller.into(), args.profile_background_id, now)
+    {
         true => Success,
         false => UserNotFound,
     }
