@@ -147,13 +147,23 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                             user_id,
                             ChitBalance {
                                 total_earned: total_chit_earned,
-                                curr_balance: total_chit_earned - user.total_chit_spent,
+                                curr_balance: user.chit_balance,
                             },
                         ),
                         None,
                     );
                 }
             }
+        }
+        LocalUserIndexEvent::NotifyPremiumItemPurchased(ev) => {
+            let (user_id, purchase) = *ev;
+            state.data.premium_items.log_purchase(
+                user_id,
+                purchase.item_id,
+                purchase.paid_in_chat,
+                purchase.cost,
+                purchase.timestamp,
+            );
         }
         LocalUserIndexEvent::NotifyStreakInsurancePayment(payment) => state.data.streak_insurance_logs.mark_payment(*payment),
         LocalUserIndexEvent::NotifyStreakInsuranceClaim(claim) => state.data.streak_insurance_logs.mark_claim(*claim),

@@ -46,6 +46,7 @@ pub mod mark_achievements_seen;
 pub mod mark_message_activity_feed_read;
 pub mod mark_read;
 pub mod mute_notifications;
+pub mod pay_for_premium_item;
 pub mod pay_for_streak_insurance;
 pub mod pin_chat_v2;
 pub mod remove_reaction;

@@ -110,7 +110,7 @@ export function changeDimensions(
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
-     
+
     const context = canvas.getContext("2d")!;
     context.drawImage(original, 0, 0, canvas.width, canvas.height);
     const resultMimeType = mimeType === "image/jpeg" ? "image/jpeg" : "image/png";
@@ -287,6 +287,9 @@ export const twitterLinkRegex = (): RegExp =>
  */
 export const youtubeRegex = (): RegExp =>
     /https:\/\/(?:www.youtube.com\/watch\?v=([^/\s]*)|youtu.be\/([^/\s]*)|(?:www\.)?youtube.com\/shorts\/([^/\s]*))/i;
+
+export const instagramRegex = (): RegExp =>
+    /(?:https?:\/\/)?(?:www\.|m\.)?(?:instagram\.com|instagr\.am)\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/;
 
 export const spotifyRegex = (): RegExp => /\/(album|artist|show|episode|track|playlist)\/(\w+)/i;
 

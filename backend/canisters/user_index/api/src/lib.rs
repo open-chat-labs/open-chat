@@ -2,8 +2,8 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
     BotInstallationLocation, CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, MessageContent, MessageContentInitial,
-    MessageId, MessageIndex, NotifyChit, StreakInsuranceClaim, StreakInsurancePayment, TimestampMillis, UniquePersonProof,
-    User, UserId,
+    MessageId, MessageIndex, NotifyChit, PremiumItemPurchase, StreakInsuranceClaim, StreakInsurancePayment, TimestampMillis,
+    UniquePersonProof, User, UserId,
 };
 
 mod lifecycle;
@@ -25,6 +25,7 @@ pub enum LocalUserIndexEvent {
     UserSetProfileBackground(Box<(UserId, Option<u128>)>),
     NotifyUniquePersonProof(Box<(UserId, UniquePersonProof)>),
     NotifyChit(Box<(UserId, NotifyChit)>),
+    NotifyPremiumItemPurchased(Box<(UserId, PremiumItemPurchase)>),
     NotifyStreakInsurancePayment(Box<StreakInsurancePayment>),
     NotifyStreakInsuranceClaim(Box<StreakInsuranceClaim>),
     BotInstalled(Box<BotInstalled>),
