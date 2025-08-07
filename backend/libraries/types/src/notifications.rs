@@ -21,17 +21,38 @@ pub enum Notification {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
+#[serde(from = "UserNotificationCombined")]
 pub struct UserNotification {
     #[serde(rename = "s")]
     pub sender: Option<UserId>,
     #[serde(rename = "r")]
     pub recipients: Vec<UserId>,
-    // This will be removed once all canisters have been switched to the new field
-    #[deprecated]
+    #[serde(rename = "n2")]
+    pub notification: UserNotificationPayload,
+}
+
+#[derive(Deserialize)]
+pub struct UserNotificationCombined {
+    #[serde(rename = "s")]
+    pub sender: Option<UserId>,
+    #[serde(rename = "r")]
+    pub recipients: Vec<UserId>,
     #[serde(rename = "n")]
     pub notification_bytes: Option<ByteBuf>,
     #[serde(rename = "n2")]
     pub notification: Option<UserNotificationPayload>,
+}
+
+impl From<UserNotificationCombined> for UserNotification {
+    fn from(value: UserNotificationCombined) -> Self {
+        UserNotification {
+            sender: value.sender,
+            recipients: value.recipients,
+            notification: value
+                .notification
+                .unwrap_or_else(|| msgpack::deserialize_then_unwrap(&value.notification_bytes.unwrap())),
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

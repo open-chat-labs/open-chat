@@ -258,10 +258,6 @@ pub fn is_default<T: Default + PartialEq>(value: &T) -> bool {
     *value == Default::default()
 }
 
-pub trait Fallback: Sized {
-    type FallbackType: Into<Self>;
-}
-
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum CommunityOrGroup {

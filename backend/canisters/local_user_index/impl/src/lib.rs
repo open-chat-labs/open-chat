@@ -573,17 +573,6 @@ impl Data {
     pub fn handle_notification(&mut self, notification: Notification, this_canister_id: CanisterId, now: TimestampMillis) {
         match notification {
             Notification::User(user_notification) => {
-                #[expect(deprecated)]
-                let Some(notification_bytes) = user_notification.notification_bytes.or_else(|| {
-                    user_notification
-                        .notification
-                        .as_ref()
-                        .map(msgpack::serialize_then_unwrap)
-                        .map(ByteBuf::from)
-                }) else {
-                    return;
-                };
-
                 let users_who_have_blocked_sender: HashSet<_> = user_notification
                     .sender
                     .map(|s| self.blocked_users.all_linked_users(s))
@@ -601,9 +590,9 @@ impl Data {
                 if !filtered_recipients.is_empty() {
                     self.notifications.add(NotificationEnvelope::User(UserNotificationEnvelope {
                         recipients: filtered_recipients,
-                        notification_bytes,
+                        notification_bytes: ByteBuf::from(msgpack::serialize_then_unwrap(&user_notification.notification)),
                         timestamp: now,
-                        fcm_data: user_notification.notification.map(|n| n.to_fcm_data()),
+                        fcm_data: Some(user_notification.notification.to_fcm_data()),
                     }));
                 }
             }

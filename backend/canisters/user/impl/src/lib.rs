@@ -115,15 +115,13 @@ impl RuntimeState {
     }
 
     pub fn push_notification(&mut self, sender: Option<UserId>, recipient: UserId, notification: UserNotificationPayload) {
-        #[expect(deprecated)]
         self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
             created_at: self.env.now(),
             idempotency_id: self.env.rng().next_u64(),
             value: local_user_index_canister::UserEvent::Notification(Box::new(Notification::User(UserNotification {
                 sender,
                 recipients: vec![recipient],
-                notification: Some(notification),
-                notification_bytes: None,
+                notification,
             }))),
         })
     }

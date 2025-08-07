@@ -6332,7 +6332,6 @@ version = "0.1.0"
 dependencies = [
  "rmp-serde",
  "serde",
- "types",
 ]
 
 [[package]]
@@ -11102,6 +11101,7 @@ dependencies = [
  "ic-cdk",
  "ic-ledger-types",
  "icrc-ledger-types",
+ "msgpack",
  "oc_error_codes",
  "rand 0.8.5",
  "range-set",
@@ -11301,7 +11301,6 @@ dependencies = [
  "async-trait",
  "candid",
  "canister_api_macros",
- "canister_client",
  "canister_logger",
  "canister_state_macros",
  "canister_timer_jobs",
