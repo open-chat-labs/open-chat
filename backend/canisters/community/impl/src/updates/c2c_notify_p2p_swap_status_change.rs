@@ -19,82 +19,82 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
 
     let mut result = None;
 
-    if let Chat::Channel(_, channel_id) = m.chat {
-        if let Some(channel) = state.data.channels.get_mut(&channel_id) {
-            match args.status {
-                SwapStatus::Expired(e) => {
-                    if let Some(content) =
-                        channel
-                            .chat
-                            .events
-                            .get_p2p_swap(m.thread_root_message_index, m.message_id, EventIndex::default())
-                    {
-                        let token0_txn_out = e
-                            .refunds
-                            .into_iter()
-                            .find(|t| t.ledger == content.token0.ledger)
-                            .map(|t| t.block_index);
+    if let Chat::Channel(_, channel_id) = m.chat
+        && let Some(channel) = state.data.channels.get_mut(&channel_id)
+    {
+        match args.status {
+            SwapStatus::Expired(e) => {
+                if let Some(content) =
+                    channel
+                        .chat
+                        .events
+                        .get_p2p_swap(m.thread_root_message_index, m.message_id, EventIndex::default())
+                {
+                    let token0_txn_out = e
+                        .refunds
+                        .into_iter()
+                        .find(|t| t.ledger == content.token0.ledger)
+                        .map(|t| t.block_index);
 
-                        result = channel
-                            .chat
-                            .events
-                            .set_p2p_swap_status(
-                                m.thread_root_message_index,
-                                m.message_id,
-                                P2PSwapStatus::Expired(P2PSwapExpired { token0_txn_out }),
-                                state.env.now(),
-                            )
-                            .ok();
-                    }
-                }
-                SwapStatus::Cancelled(c) => {
-                    if let Some(content) =
-                        channel
-                            .chat
-                            .events
-                            .get_p2p_swap(m.thread_root_message_index, m.message_id, EventIndex::default())
-                    {
-                        let token0_txn_out = c
-                            .refunds
-                            .into_iter()
-                            .find(|t| t.ledger == content.token0.ledger)
-                            .map(|t| t.block_index);
-
-                        result = channel
-                            .chat
-                            .events
-                            .set_p2p_swap_status(
-                                m.thread_root_message_index,
-                                m.message_id,
-                                P2PSwapStatus::Cancelled(P2PSwapCancelled { token0_txn_out }),
-                                state.env.now(),
-                            )
-                            .ok();
-                    }
-                }
-                SwapStatus::Completed(c) => {
-                    let now = state.env.now();
                     result = channel
                         .chat
                         .events
-                        .complete_p2p_swap(
-                            c.accepted_by.into(),
+                        .set_p2p_swap_status(
                             m.thread_root_message_index,
                             m.message_id,
-                            c.token0_transfer_out.block_index,
-                            c.token1_transfer_out.block_index,
-                            now,
-                            CommunityEventPusher {
-                                now,
-                                rng: state.env.rng(),
-                                queue: &mut state.data.local_user_index_event_sync_queue,
-                            },
+                            P2PSwapStatus::Expired(P2PSwapExpired { token0_txn_out }),
+                            state.env.now(),
                         )
-                        .map(|result| result.drop_value())
                         .ok();
                 }
-                _ => {}
             }
+            SwapStatus::Cancelled(c) => {
+                if let Some(content) =
+                    channel
+                        .chat
+                        .events
+                        .get_p2p_swap(m.thread_root_message_index, m.message_id, EventIndex::default())
+                {
+                    let token0_txn_out = c
+                        .refunds
+                        .into_iter()
+                        .find(|t| t.ledger == content.token0.ledger)
+                        .map(|t| t.block_index);
+
+                    result = channel
+                        .chat
+                        .events
+                        .set_p2p_swap_status(
+                            m.thread_root_message_index,
+                            m.message_id,
+                            P2PSwapStatus::Cancelled(P2PSwapCancelled { token0_txn_out }),
+                            state.env.now(),
+                        )
+                        .ok();
+                }
+            }
+            SwapStatus::Completed(c) => {
+                let now = state.env.now();
+                result = channel
+                    .chat
+                    .events
+                    .complete_p2p_swap(
+                        c.accepted_by.into(),
+                        m.thread_root_message_index,
+                        m.message_id,
+                        c.token0_transfer_out.block_index,
+                        c.token1_transfer_out.block_index,
+                        now,
+                        CommunityEventPusher {
+                            now,
+                            rng: state.env.rng(),
+                            queue: &mut state.data.local_user_index_event_sync_queue,
+                        },
+                    )
+                    .map(|result| result.drop_value())
+                    .ok();
+            }
+            _ => {}
         }
     }
 

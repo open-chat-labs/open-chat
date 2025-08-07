@@ -142,10 +142,10 @@ impl RuntimeState {
         let mut files_to_delete = Vec::new();
         for chat in self.data.direct_chats.iter_mut() {
             let result = chat.events.remove_expired_events(now);
-            if let Some(expiry) = chat.events.next_event_expiry() {
-                if next_event_expiry.is_none_or(|current| expiry < current) {
-                    next_event_expiry = Some(expiry);
-                }
+            if let Some(expiry) = chat.events.next_event_expiry()
+                && next_event_expiry.is_none_or(|current| expiry < current)
+            {
+                next_event_expiry = Some(expiry);
             }
             files_to_delete.extend(result.files);
         }
@@ -256,13 +256,13 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
     }
 
     pub fn push_bot_notification(&mut self, notification: Option<BotNotification>) {
-        if let Some(notification) = notification {
-            if !notification.recipients.is_empty() {
-                self.push_local_user_index_canister_event(
-                    LocalUserIndexEvent::Notification(Box::new(Notification::Bot(notification))),
-                    self.env.now(),
-                );
-            }
+        if let Some(notification) = notification
+            && !notification.recipients.is_empty()
+        {
+            self.push_local_user_index_canister_event(
+                LocalUserIndexEvent::Notification(Box::new(Notification::Bot(notification))),
+                self.env.now(),
+            );
         }
     }
 

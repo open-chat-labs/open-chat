@@ -71,16 +71,16 @@ impl NervousSystems {
         payment_amount: u128,
     ) -> Result<SnsNeuronId, ValidateSubmitProposalPaymentError> {
         use ValidateSubmitProposalPaymentError::*;
-        if let Some(ns) = self.nervous_systems.get(governance_canister_id) {
-            if let Some(neuron_id) = ns.neuron_id_for_submitting_proposals {
-                return if payment_ledger != ns.ledger_canister_id {
-                    Err(IncorrectLedger)
-                } else if u64::try_from(payment_amount).unwrap() < ns.proposal_rejection_fee {
-                    Err(InsufficientPayment(ns.proposal_rejection_fee + ns.transaction_fee))
-                } else {
-                    Ok(neuron_id)
-                };
-            }
+        if let Some(ns) = self.nervous_systems.get(governance_canister_id)
+            && let Some(neuron_id) = ns.neuron_id_for_submitting_proposals
+        {
+            return if payment_ledger != ns.ledger_canister_id {
+                Err(IncorrectLedger)
+            } else if u64::try_from(payment_amount).unwrap() < ns.proposal_rejection_fee {
+                Err(InsufficientPayment(ns.proposal_rejection_fee + ns.transaction_fee))
+            } else {
+                Ok(neuron_id)
+            };
         }
         Err(GovernanceCanisterNotSupported)
     }
@@ -147,19 +147,18 @@ impl NervousSystems {
 
     pub fn get_neuron_in_need_of_dissolve_delay_increase(&self) -> Option<NeuronInNeedOfDissolveDelayIncrease> {
         for ns in self.nervous_systems.values() {
-            if let Some(neuron_id) = ns.neuron_id_for_submitting_proposals {
-                if let Some(additional_dissolve_delay_seconds) = ns
+            if let Some(neuron_id) = ns.neuron_id_for_submitting_proposals
+                && let Some(additional_dissolve_delay_seconds) = ns
                     .min_dissolve_delay_to_vote
                     .checked_sub(ns.neuron_for_submitting_proposals_dissolve_delay)
                     .filter(|dd| *dd > 0)
                     .map(|dd| ((dd / 1000) + 1) as u32)
-                {
-                    return Some(NeuronInNeedOfDissolveDelayIncrease {
-                        governance_canister_id: ns.governance_canister_id,
-                        neuron_id,
-                        additional_dissolve_delay_seconds,
-                    });
-                }
+            {
+                return Some(NeuronInNeedOfDissolveDelayIncrease {
+                    governance_canister_id: ns.governance_canister_id,
+                    neuron_id,
+                    additional_dissolve_delay_seconds,
+                });
             }
         }
         None
@@ -397,21 +396,21 @@ impl NervousSystem {
     pub fn process_proposal(&mut self, proposal: Proposal, finished: bool) {
         let proposal_id = proposal.id();
 
-        if let Some(user_id) = self.active_user_submitted_proposals.get(&proposal_id).copied() {
-            if let Some(adopted) = match proposal.status() {
+        if let Some(user_id) = self.active_user_submitted_proposals.get(&proposal_id).copied()
+            && let Some(adopted) = match proposal.status() {
                 ProposalDecisionStatus::Unspecified | ProposalDecisionStatus::Open => None,
                 ProposalDecisionStatus::Adopted | ProposalDecisionStatus::Executed | ProposalDecisionStatus::Failed => {
                     Some(true)
                 }
                 ProposalDecisionStatus::Rejected => Some(false),
-            } {
-                self.active_user_submitted_proposals.remove(&proposal_id);
-                self.decided_user_submitted_proposals.push(UserSubmittedProposalResult {
-                    proposal_id,
-                    user_id,
-                    adopted,
-                });
             }
+        {
+            self.active_user_submitted_proposals.remove(&proposal_id);
+            self.decided_user_submitted_proposals.push(UserSubmittedProposalResult {
+                proposal_id,
+                user_id,
+                adopted,
+            });
         }
 
         if finished {

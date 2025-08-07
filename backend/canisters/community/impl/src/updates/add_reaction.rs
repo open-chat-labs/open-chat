@@ -79,68 +79,69 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
             .events
             .message_internal(EventIndex::default(), args.thread_root_message_index, args.message_id.into())
     {
-        if let Some(sender) = channel.chat.members.get(&message.sender) {
-            if message.sender != agent && !sender.user_type().is_bot() {
-                let community_id: CommunityId = state.env.canister_id().into();
+        if let Some(sender) = channel.chat.members.get(&message.sender)
+            && message.sender != agent
+            && !sender.user_type().is_bot()
+        {
+            let community_id: CommunityId = state.env.canister_id().into();
 
-                let notifications_muted = channel
-                    .chat
+            let notifications_muted = channel
+                .chat
+                .members
+                .get(&message.sender)
+                .is_none_or(|m| m.notifications_muted().value || m.suspended().value);
+
+            if !notifications_muted {
+                let display_name = state
+                    .data
                     .members
-                    .get(&message.sender)
-                    .is_none_or(|m| m.notifications_muted().value || m.suspended().value);
+                    .get_by_user_id(&agent)
+                    .and_then(|m| m.display_name().value.clone())
+                    .or(args.display_name);
+                let channel_avatar_id = channel.chat.avatar.as_ref().map(|d| d.id);
 
-                if !notifications_muted {
-                    let display_name = state
-                        .data
-                        .members
-                        .get_by_user_id(&agent)
-                        .and_then(|m| m.display_name().value.clone())
-                        .or(args.display_name);
-                    let channel_avatar_id = channel.chat.avatar.as_ref().map(|d| d.id);
+                // TODO i18n
+                let fcm_body = format!("Reacted {} to your message", args.reaction.clone().0);
+                let fcm_data = FcmData::for_channel(community_id, args.channel_id)
+                    .set_body(fcm_body)
+                    .set_sender_name_with_alt(&display_name, &args.username)
+                    .set_avatar_id(channel_avatar_id);
 
-                    // TODO i18n
-                    let fcm_body = format!("Reacted {} to your message", args.reaction.clone().0);
-                    let fcm_data = FcmData::for_channel(community_id, args.channel_id)
-                        .set_body(fcm_body)
-                        .set_sender_name_with_alt(&display_name, &args.username)
-                        .set_avatar_id(channel_avatar_id);
+                let notification = UserNotificationPayload::ChannelReactionAdded(ChannelReactionAddedNotification {
+                    community_id,
+                    channel_id: args.channel_id,
+                    thread_root_message_index: args.thread_root_message_index,
+                    message_index: message.message_index,
+                    message_event_index: event_index,
+                    community_name: state.data.name.value.clone(),
+                    channel_name: channel.chat.name.value.clone(),
+                    added_by: agent,
+                    added_by_name: args.username,
+                    added_by_display_name: display_name,
+                    reaction: args.reaction,
+                    community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
+                    channel_avatar_id,
+                });
 
-                    let notification = UserNotificationPayload::ChannelReactionAdded(ChannelReactionAddedNotification {
-                        community_id,
-                        channel_id: args.channel_id,
-                        thread_root_message_index: args.thread_root_message_index,
-                        message_index: message.message_index,
-                        message_event_index: event_index,
-                        community_name: state.data.name.value.clone(),
-                        channel_name: channel.chat.name.value.clone(),
-                        added_by: agent,
-                        added_by_name: args.username,
-                        added_by_display_name: display_name,
-                        reaction: args.reaction,
-                        community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
-                        channel_avatar_id,
-                    });
-
-                    state.push_notification(Some(agent), vec![message.sender], notification, fcm_data);
-                }
-
-                state.push_event_to_user(
-                    message.sender,
-                    CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
-                        chat: Chat::Channel(community_id, args.channel_id),
-                        thread_root_message_index: args.thread_root_message_index,
-                        message_index: message.message_index,
-                        message_id: message.message_id,
-                        event_index,
-                        activity: MessageActivity::Reaction,
-                        timestamp: now,
-                        user_id: Some(agent),
-                    }),
-                    now,
-                );
-
-                state.notify_user_of_achievement(message.sender, Achievement::HadMessageReactedTo, now);
+                state.push_notification(Some(agent), vec![message.sender], notification, fcm_data);
             }
+
+            state.push_event_to_user(
+                message.sender,
+                CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
+                    chat: Chat::Channel(community_id, args.channel_id),
+                    thread_root_message_index: args.thread_root_message_index,
+                    message_index: message.message_index,
+                    message_id: message.message_id,
+                    event_index,
+                    activity: MessageActivity::Reaction,
+                    timestamp: now,
+                    user_id: Some(agent),
+                }),
+                now,
+            );
+
+            state.notify_user_of_achievement(message.sender, Achievement::HadMessageReactedTo, now);
         }
 
         if new_achievement {

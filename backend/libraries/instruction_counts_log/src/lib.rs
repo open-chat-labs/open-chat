@@ -60,7 +60,7 @@ fn init_log(index_memory: Memory, data_memory: Memory) -> StableLog<InstructionC
 }
 
 impl Storable for InstructionCountEntry {
-    fn to_bytes(&self) -> Cow<[u8]> {
+    fn to_bytes(&self) -> Cow<'_, [u8]> {
         Cow::Owned(self.to_vec())
     }
 

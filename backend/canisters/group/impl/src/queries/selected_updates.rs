@@ -28,15 +28,15 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> OCResult<Response>
     for (user_id, update) in bots.iter_latest_updates(args.updates_since) {
         match update {
             BotUpdate::Added | BotUpdate::Updated => {
-                if bots_changed.insert(user_id) {
-                    if let Some(bot) = bots.get(&user_id) {
-                        results.bots_added_or_updated.push(InstalledBotDetails {
-                            user_id,
-                            added_by: bot.added_by,
-                            permissions: bot.permissions.clone(),
-                            autonomous_permissions: bot.autonomous_permissions.clone(),
-                        });
-                    }
+                if bots_changed.insert(user_id)
+                    && let Some(bot) = bots.get(&user_id)
+                {
+                    results.bots_added_or_updated.push(InstalledBotDetails {
+                        user_id,
+                        added_by: bot.added_by,
+                        permissions: bot.permissions.clone(),
+                        autonomous_permissions: bot.autonomous_permissions.clone(),
+                    });
                 }
             }
             BotUpdate::Removed => {

@@ -82,18 +82,18 @@ impl Processor {
         &self,
         notification: &UserNotification,
     ) -> Result<WebPushMessage, ProcessNotificationError> {
-        if let Ok(map) = self.invalid_subscriptions.read() {
-            if map.contains_key(&notification.subscription_info.endpoint) {
-                return Err(ProcessNotificationError::SubscriptionInvalid);
-            }
+        if let Ok(map) = self.invalid_subscriptions.read()
+            && map.contains_key(&notification.subscription_info.endpoint)
+        {
+            return Err(ProcessNotificationError::SubscriptionInvalid);
         }
-        if let Ok(map) = self.throttled_subscriptions.read() {
-            if let Some(until) = map.get(&notification.subscription_info.endpoint) {
-                let timestamp = timestamp();
-                if *until > timestamp {
-                    info!("Notification skipped due to subscription being throttled");
-                    return Err(ProcessNotificationError::SubscriptionThrottled);
-                }
+        if let Ok(map) = self.throttled_subscriptions.read()
+            && let Some(until) = map.get(&notification.subscription_info.endpoint)
+        {
+            let timestamp = timestamp();
+            if *until > timestamp {
+                info!("Notification skipped due to subscription being throttled");
+                return Err(ProcessNotificationError::SubscriptionThrottled);
             }
         }
         let payload_bytes = notification.payload.as_ref();

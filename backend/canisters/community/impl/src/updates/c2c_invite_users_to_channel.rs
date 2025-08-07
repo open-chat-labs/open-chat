@@ -42,15 +42,15 @@ fn c2c_invite_users_to_channel_impl(
 ) -> OCResult<Response> {
     state.data.verify_not_frozen()?;
 
-    if let Caller::BotV2(bot_caller) = &ext_caller {
-        if !state.data.is_bot_permitted(
+    if let Caller::BotV2(bot_caller) = &ext_caller
+        && !state.data.is_bot_permitted(
             &bot_caller.bot,
             Some(channel_id),
             &bot_caller.initiator,
             &BotPermissions::from_chat_permission(ChatPermission::InviteUsers),
-        ) {
-            return Err(OCErrorCode::InitiatorNotAuthorized.into());
-        }
+        )
+    {
+        return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
     let mut users_to_invite_to_channel = Vec::new();

@@ -26,11 +26,11 @@ fn run() {
     trace!("'push_community_deleted_notifications' job running");
     TIMER_ID.set(None);
 
-    if let Some(batch) = mutate_state(next_batch) {
-        if !batch.is_empty() {
-            ic_cdk::futures::spawn(push_notifications(batch));
-            read_state(start_job_if_required);
-        }
+    if let Some(batch) = mutate_state(next_batch)
+        && !batch.is_empty()
+    {
+        ic_cdk::futures::spawn(push_notifications(batch));
+        read_state(start_job_if_required);
     }
 }
 

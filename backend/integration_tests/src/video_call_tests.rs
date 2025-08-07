@@ -157,13 +157,13 @@ fn start_join_end_video_call_in_group_chat_succeeds(manually_end_video_call: boo
 }
 
 fn assert_is_video_message<F: FnOnce(&VideoCallContent) -> bool>(event: ChatEvent, predicate: F) {
-    if let ChatEvent::Message(m) = &event {
-        if let MessageContent::VideoCall(v) = &m.content {
-            if predicate(v) {
-                return;
-            } else {
-                panic!("Event is a video call but does not satisfy predicate. Content: {v:?}");
-            }
+    if let ChatEvent::Message(m) = &event
+        && let MessageContent::VideoCall(v) = &m.content
+    {
+        if predicate(v) {
+            return;
+        } else {
+            panic!("Event is a video call but does not satisfy predicate. Content: {v:?}");
         }
     }
     panic!("Event is not a video call. Event: {event:?}");

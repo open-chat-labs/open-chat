@@ -100,10 +100,10 @@ fn create_channel_impl(
 ) -> OCResult<SuccessResult> {
     state.data.verify_not_frozen()?;
 
-    if let Some(external_url) = &args.external_url {
-        if Url::parse(external_url).is_err() {
-            return Err(OCErrorCode::InvalidExternalUrl.into());
-        }
+    if let Some(external_url) = &args.external_url
+        && Url::parse(external_url).is_err()
+    {
+        return Err(OCErrorCode::InvalidExternalUrl.into());
     }
 
     let caller = state.verified_caller(ext_caller)?;

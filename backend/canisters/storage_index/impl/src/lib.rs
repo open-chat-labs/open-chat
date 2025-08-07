@@ -211,12 +211,11 @@ impl Data {
 
     pub fn remove_file_reference(&mut self, bucket: CanisterId, file: FileRemoved) {
         let user_id = file.meta_data.owner;
-        if let Ok(result) = self.files.remove(file, bucket) {
-            if !self.files.user_owns_blob(user_id, result.hash) {
-                if let Some(user) = self.users.get_mut(&user_id) {
-                    user.bytes_used = user.bytes_used.saturating_sub(result.size);
-                }
-            }
+        if let Ok(result) = self.files.remove(file, bucket)
+            && !self.files.user_owns_blob(user_id, result.hash)
+            && let Some(user) = self.users.get_mut(&user_id)
+        {
+            user.bytes_used = user.bytes_used.saturating_sub(result.size);
         }
     }
 

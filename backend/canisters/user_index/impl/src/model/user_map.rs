@@ -207,13 +207,11 @@ impl UserMap {
             let username = &user.username;
             let username_case_insensitive_changed = !previous_username.eq_ignore_ascii_case(username);
 
-            if principal_changed {
-                if let Some(other) = self.principal_to_user_id.get(&principal) {
-                    if !ignore_principal_clash {
-                        return UpdateUserResult::PrincipalTaken;
-                    }
-                    info!(user_id1 = %user_id, user_id2 = %other, "Principal clash");
+            if principal_changed && let Some(other) = self.principal_to_user_id.get(&principal) {
+                if !ignore_principal_clash {
+                    return UpdateUserResult::PrincipalTaken;
                 }
+                info!(user_id1 = %user_id, user_id2 = %other, "Principal clash");
             }
 
             if username_case_insensitive_changed && self.does_username_exist(username, bot.is_some()) {

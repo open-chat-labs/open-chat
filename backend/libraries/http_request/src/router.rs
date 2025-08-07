@@ -53,15 +53,15 @@ pub fn extract_route(path: &str) -> Route {
             }
         }
         "channel" => {
-            if let Some(channel_id) = parts.pop_front().and_then(|p| u128::from_str(p).ok()) {
-                if let Some(sub_route) = parts.pop_front() {
-                    if sub_route == "avatar" {
-                        return parse_avatar(&mut parts, Some(channel_id.into()));
-                    } else if sub_route == "webhook" {
-                        if let Some(route) = parse_webhook(&mut parts, Some(channel_id.into())) {
-                            return route;
-                        }
-                    }
+            if let Some(channel_id) = parts.pop_front().and_then(|p| u128::from_str(p).ok())
+                && let Some(sub_route) = parts.pop_front()
+            {
+                if sub_route == "avatar" {
+                    return parse_avatar(&mut parts, Some(channel_id.into()));
+                } else if sub_route == "webhook"
+                    && let Some(route) = parse_webhook(&mut parts, Some(channel_id.into()))
+                {
+                    return route;
                 }
             }
         }

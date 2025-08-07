@@ -14,10 +14,10 @@ impl ChitEvents {
     pub fn push(&mut self, event: ChitEvent) {
         let mut sort = false;
 
-        if let Some(latest) = self.events.last() {
-            if latest.timestamp > event.timestamp {
-                sort = true;
-            }
+        if let Some(latest) = self.events.last()
+            && latest.timestamp > event.timestamp
+        {
+            sort = true;
         }
 
         if event.amount >= 0 {

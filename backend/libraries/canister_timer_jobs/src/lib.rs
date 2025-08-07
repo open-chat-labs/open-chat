@@ -39,10 +39,10 @@ impl<J> TimerJobs<J> {
             .map(|(timer_id, _)| *timer_id)?;
 
         ic_cdk_timers::clear_timer(timer_id);
-        if let Some((_, wrapper)) = self.jobs.remove(&timer_id) {
-            if let Some(job) = wrapper.take() {
-                return Some(job);
-            }
+        if let Some((_, wrapper)) = self.jobs.remove(&timer_id)
+            && let Some(job) = wrapper.take()
+        {
+            return Some(job);
         }
         None
     }
@@ -59,10 +59,10 @@ impl<J> TimerJobs<J> {
         let mut removed = Vec::new();
         for timer_id in to_remove {
             ic_cdk_timers::clear_timer(timer_id);
-            if let Some((_, wrapper)) = self.jobs.remove(&timer_id) {
-                if let Some(job) = wrapper.take() {
-                    removed.push(job);
-                }
+            if let Some((_, wrapper)) = self.jobs.remove(&timer_id)
+                && let Some(job) = wrapper.take()
+            {
+                removed.push(job);
             }
         }
         removed

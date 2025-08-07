@@ -118,12 +118,13 @@ fn extract_message_access_context(
 ) -> Result<MessageAccessContext, OCError> {
     let (chat, thread, message_id, user_message_id) = match context.scope {
         BotActionScope::Chat(details) => {
-            if let Some(message_id) = message_id {
-                if matches!(context.initiator, BotInitiator::Command(_)) && message_id != details.message_id {
-                    return Err(
-                        OCErrorCode::InvalidRequest.with_message("Message id is already specified in the command access token")
-                    );
-                }
+            if let Some(message_id) = message_id
+                && matches!(context.initiator, BotInitiator::Command(_))
+                && message_id != details.message_id
+            {
+                return Err(
+                    OCErrorCode::InvalidRequest.with_message("Message id is already specified in the command access token")
+                );
             }
             let message_id = message_id.unwrap_or(details.message_id);
             (details.chat, details.thread.or(thread), message_id, details.user_message_id)

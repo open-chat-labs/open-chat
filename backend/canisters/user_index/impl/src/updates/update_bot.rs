@@ -95,10 +95,10 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
 }
 
 fn validate(args: &Args, state: &RuntimeState) -> Result<(), Response> {
-    if let Some(principal) = args.principal {
-        if principal == Principal::anonymous() {
-            return Err(PrincipalInvalid);
-        }
+    if let Some(principal) = args.principal
+        && principal == Principal::anonymous()
+    {
+        return Err(PrincipalInvalid);
     }
 
     if let OptionUpdate::SetToSome(avatar) = args.avatar.as_ref() {
@@ -111,10 +111,11 @@ fn validate(args: &Args, state: &RuntimeState) -> Result<(), Response> {
         }
     }
 
-    if let Some(endpoint) = args.endpoint.as_ref() {
-        if Principal::from_text(endpoint).is_err() && Url::parse(endpoint).is_err() {
-            return Err(EndpointInvalid);
-        }
+    if let Some(endpoint) = args.endpoint.as_ref()
+        && Principal::from_text(endpoint).is_err()
+        && Url::parse(endpoint).is_err()
+    {
+        return Err(EndpointInvalid);
     }
 
     if let Some(new_owner) = args.owner.as_ref() {

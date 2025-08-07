@@ -48,88 +48,88 @@ fn http_request_streaming_callback(token: Token) -> StreamingCallbackHttpRespons
 }
 
 fn start_streaming_file(file_id: FileId, request_headers: &[(String, String)], state: &RuntimeState) -> HttpResponse {
-    if let Some(file) = state.data.files.get(&file_id) {
-        if let Some(file_bytes) = state.data.files.blob_bytes(&file.hash) {
-            let file_bytes_len = file_bytes.len();
-            let mut response_headers = vec![
-                HeaderField("Content-Type".to_string(), file.mime_type.clone()),
-                HeaderField("Cache-Control".to_string(), CACHE_HEADER_VALUE.to_string()),
-                HeaderField("X-Cacheable-Resource".to_string(), "true".to_string()),
-                HeaderField("Access-Control-Allow-Origin".to_string(), "*".to_string()),
-                HeaderField(
-                    "Content-Security-Policy".to_string(),
-                    "default-src 'none'; img-src *; media-src *; style-src 'unsafe-inline'".to_string(),
-                ),
-            ];
+    if let Some(file) = state.data.files.get(&file_id)
+        && let Some(file_bytes) = state.data.files.blob_bytes(&file.hash)
+    {
+        let file_bytes_len = file_bytes.len();
+        let mut response_headers = vec![
+            HeaderField("Content-Type".to_string(), file.mime_type.clone()),
+            HeaderField("Cache-Control".to_string(), CACHE_HEADER_VALUE.to_string()),
+            HeaderField("X-Cacheable-Resource".to_string(), "true".to_string()),
+            HeaderField("Access-Control-Allow-Origin".to_string(), "*".to_string()),
+            HeaderField(
+                "Content-Security-Policy".to_string(),
+                "default-src 'none'; img-src *; media-src *; style-src 'unsafe-inline'".to_string(),
+            ),
+        ];
 
-            return if let Some(range) = extract_range_from_headers(request_headers) {
-                let (start, end) = match range {
-                    BytesRange::From(start, end) => {
-                        let end = [
-                            start + MAX_RESPONSE_SIZE_BYTES,
-                            file_bytes_len,
-                            end.unwrap_or(start + DEFAULT_RANGE_RESPONSE_CHUNK_SIZE),
-                        ]
-                        .into_iter()
-                        .min()
-                        .unwrap();
+        return if let Some(range) = extract_range_from_headers(request_headers) {
+            let (start, end) = match range {
+                BytesRange::From(start, end) => {
+                    let end = [
+                        start + MAX_RESPONSE_SIZE_BYTES,
+                        file_bytes_len,
+                        end.unwrap_or(start + DEFAULT_RANGE_RESPONSE_CHUNK_SIZE),
+                    ]
+                    .into_iter()
+                    .min()
+                    .unwrap();
 
-                        if start > end {
-                            return HttpResponse::range_not_satisfiable();
-                        } else {
-                            (start, end)
-                        }
+                    if start > end {
+                        return HttpResponse::range_not_satisfiable();
+                    } else {
+                        (start, end)
                     }
-                    BytesRange::Suffix(len) => {
-                        let Some(start) = file_bytes_len.checked_sub(len) else {
-                            return HttpResponse::range_not_satisfiable();
-                        };
-
-                        (start, file_bytes_len)
-                    }
-                };
-
-                let range_bytes = file_bytes[start..end].to_vec();
-                response_headers.push(HeaderField("Content-Length".to_string(), range_bytes.len().to_string()));
-
-                let last_byte = end - 1;
-                response_headers.push(HeaderField(
-                    "Content-Range".to_string(),
-                    format!("bytes {start}-{last_byte}/{file_bytes_len}"),
-                ));
-
-                HttpResponse {
-                    status_code: 206,
-                    headers: response_headers,
-                    body: range_bytes,
-                    streaming_strategy: None,
-                    upgrade: None,
                 }
-            } else {
-                let canister_id = state.env.canister_id();
+                BytesRange::Suffix(len) => {
+                    let Some(start) = file_bytes_len.checked_sub(len) else {
+                        return HttpResponse::range_not_satisfiable();
+                    };
 
-                let (chunk_bytes, stream_next_chunk) = chunk_bytes(file_bytes, 0);
-
-                let streaming_strategy = if stream_next_chunk {
-                    Some(StreamingStrategy::Callback {
-                        callback: CallbackFunc::new(canister_id, "http_request_streaming_callback".to_string()),
-                        token: build_token(file_id, 1),
-                    })
-                } else {
-                    None
-                };
-
-                response_headers.push(HeaderField("Content-Length".to_string(), file_bytes_len.to_string()));
-
-                HttpResponse {
-                    status_code: 200,
-                    headers: response_headers,
-                    body: chunk_bytes,
-                    streaming_strategy,
-                    upgrade: None,
+                    (start, file_bytes_len)
                 }
             };
-        }
+
+            let range_bytes = file_bytes[start..end].to_vec();
+            response_headers.push(HeaderField("Content-Length".to_string(), range_bytes.len().to_string()));
+
+            let last_byte = end - 1;
+            response_headers.push(HeaderField(
+                "Content-Range".to_string(),
+                format!("bytes {start}-{last_byte}/{file_bytes_len}"),
+            ));
+
+            HttpResponse {
+                status_code: 206,
+                headers: response_headers,
+                body: range_bytes,
+                streaming_strategy: None,
+                upgrade: None,
+            }
+        } else {
+            let canister_id = state.env.canister_id();
+
+            let (chunk_bytes, stream_next_chunk) = chunk_bytes(file_bytes, 0);
+
+            let streaming_strategy = if stream_next_chunk {
+                Some(StreamingStrategy::Callback {
+                    callback: CallbackFunc::new(canister_id, "http_request_streaming_callback".to_string()),
+                    token: build_token(file_id, 1),
+                })
+            } else {
+                None
+            };
+
+            response_headers.push(HeaderField("Content-Length".to_string(), file_bytes_len.to_string()));
+
+            HttpResponse {
+                status_code: 200,
+                headers: response_headers,
+                body: chunk_bytes,
+                streaming_strategy,
+                upgrade: None,
+            }
+        };
     }
 
     HttpResponse::not_found()

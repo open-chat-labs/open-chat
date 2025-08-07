@@ -183,10 +183,10 @@ pub(crate) async fn process_token_swap(
                 mutate_state(|state| {
                     let now = state.env.now();
                     token_swap.swap_result = Some(Timestamped::new(Ok(r.clone()), now));
-                    if let Ok(swap_success) = &r {
-                        if matches!(swap_success.withdrawal_success, Some(true)) {
-                            token_swap.withdrawn_from_dex_at = Some(Timestamped::new(Ok(swap_success.amount_out), now));
-                        }
+                    if let Ok(swap_success) = &r
+                        && matches!(swap_success.withdrawal_success, Some(true))
+                    {
+                        token_swap.withdrawn_from_dex_at = Some(Timestamped::new(Ok(swap_success.amount_out), now));
                     }
                     state.data.token_swaps.upsert(token_swap.clone());
                 });
