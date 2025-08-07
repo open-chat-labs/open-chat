@@ -61,6 +61,7 @@ fn main() {
     generate_ts_method!(user, send_message_with_transfer_to_group);
     generate_ts_method!(user, send_message_v2);
     generate_ts_method!(user, set_avatar);
+    generate_ts_method!(user, set_profile_background);
     generate_ts_method!(user, set_bio);
     generate_ts_method!(user, set_community_indexes);
     generate_ts_method!(user, set_contact);

@@ -29,6 +29,8 @@ pub struct User {
     pub cycle_top_ups: Vec<CyclesTopUpInternal>,
     #[serde(rename = "av", skip_serializing_if = "Option::is_none")]
     pub avatar_id: Option<u128>,
+    #[serde(rename = "pb", skip_serializing_if = "Option::is_none")]
+    pub profile_background_id: Option<u128>,
     #[serde(rename = "rf", skip_serializing_if = "Option::is_none")]
     pub registration_fee: Option<RegistrationFee>,
     #[serde(rename = "ab", default, skip_serializing_if = "AccountBilling::is_empty")]
@@ -107,6 +109,7 @@ impl User {
             date_updated: now,
             cycle_top_ups: Vec::new(),
             avatar_id,
+            profile_background_id: None,
             registration_fee: None,
             account_billing: AccountBilling::default(),
             phone_status: PhoneStatus::None,
@@ -186,6 +189,11 @@ impl User {
         self.date_updated = now;
     }
 
+    pub fn set_profile_background_id(&mut self, profile_background_id: Option<u128>, now: TimestampMillis) {
+        self.profile_background_id = profile_background_id;
+        self.date_updated = now;
+    }
+
     pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
         self.cycle_top_ups.push(top_up.into())
     }
@@ -245,6 +253,7 @@ impl Default for User {
             date_updated: 0,
             cycle_top_ups: Vec::new(),
             avatar_id: None,
+            profile_background_id: None,
             registration_fee: None,
             account_billing: AccountBilling::default(),
             phone_status: PhoneStatus::None,

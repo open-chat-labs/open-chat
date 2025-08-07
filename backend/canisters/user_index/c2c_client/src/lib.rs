@@ -17,6 +17,7 @@ generate_c2c_call!(c2c_mark_user_canister_empty);
 generate_c2c_call!(c2c_report_message);
 generate_c2c_call!(c2c_send_openchat_bot_messages);
 generate_c2c_call!(c2c_set_avatar);
+generate_c2c_call!(c2c_set_profile_background);
 generate_c2c_call!(c2c_suspend_users);
 
 pub async fn lookup_user(

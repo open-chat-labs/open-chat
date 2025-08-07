@@ -55,6 +55,7 @@ pub mod send_message_v2;
 pub mod send_message_with_transfer_to_channel;
 pub mod send_message_with_transfer_to_group;
 pub mod set_avatar;
+pub mod set_profile_background;
 pub mod set_bio;
 pub mod set_community_indexes;
 pub mod set_contact;

@@ -387,6 +387,15 @@ impl UserMap {
         }
     }
 
+    pub fn set_profile_background_id(&mut self, user_id: &UserId, profile_background_id: Option<u128>, now: TimestampMillis) -> bool {
+        if let Some(user) = self.users.get_mut(user_id) {
+            user.set_profile_background_id(profile_background_id, now);
+            true
+        } else {
+            false
+        }
+    }
+
     #[allow(clippy::too_many_arguments)]
     pub fn set_chit(
         &mut self,
