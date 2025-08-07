@@ -36,7 +36,7 @@ export function generateCspForScripts(inlineScripts, development) {
         base-uri 'self';
         form-action 'self';
         upgrade-insecure-requests;
-        script-src 'self' https://scripts.wobbl3.com/ https://api.rollbar.com/api/ https://platform.twitter.com/ https://www.googletagmanager.com/ ${cspHashValues.join(
+        script-src 'self' https://www.instagram.com https://scripts.wobbl3.com/ https://api.rollbar.com/api/ https://platform.twitter.com/ https://www.googletagmanager.com/ ${cspHashValues.join(
             " ",
         )}` +
         (development ? " http://localhost:* http://127.0.0.1:*;\n" : ";") +
