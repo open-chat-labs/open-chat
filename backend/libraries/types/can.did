@@ -1998,6 +1998,7 @@ type UserSummaryStable = record {
     username : text;
     display_name : opt text;
     avatar_id : opt nat;
+    profile_background_id : opt nat;
     is_bot : bool;
     suspended : bool;
     diamond_membership_status : DiamondMembershipStatus;
@@ -2016,6 +2017,7 @@ type CurrentUserSummary = record {
     username : text;
     display_name : opt text;
     avatar_id : opt nat;
+    profile_background_id : opt nat;
     is_bot : bool;
     is_platform_moderator : bool;
     is_platform_operator : bool;
@@ -2089,7 +2091,7 @@ type Achievement = variant {
     ReceivedCrypto;
     HadMessageReactedTo;
     HadMessageTipped;
-    JoinedCall; 
+    JoinedCall;
     ProvedUniquePersonhood;
     SetCommunityDisplayName;
     ChangedTheme;

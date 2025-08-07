@@ -58,6 +58,7 @@ pub struct CurrentUserSummary {
     pub username: String,
     pub display_name: Option<String>,
     pub avatar_id: Option<u128>,
+    pub profile_background_id: Option<u128>,
     pub is_bot: bool,
     pub is_platform_moderator: bool,
     pub is_platform_operator: bool,
