@@ -194,12 +194,14 @@ import {
     parseBigInt,
     type PartitionedUserIds,
     type PayForDiamondMembershipResponse,
+    type PayForPremiumItemResponse,
     type PayForStreakInsuranceResponse,
     type PaymentGateApproval,
     type PaymentGateApprovals,
     type PendingCryptocurrencyTransfer,
     type PendingCryptocurrencyWithdrawal,
     pinNumberFailureFromError,
+    PremiumItem,
     type PreprocessedGate,
     type ProposalVoteDetails,
     type ProposeResponse,
@@ -284,6 +286,7 @@ import {
     type UserSummary,
     type Verification,
     type VerifiedCredentialArgs,
+    type VerifyAccountLinkingCodeResponse,
     type VersionedRules,
     type VideoCallParticipant,
     type VideoCallPresence,
@@ -301,12 +304,12 @@ import {
     type WorkerRequest,
     type WorkerResponse,
     type WorkerResult,
-    type VerifyAccountLinkingCodeResponse,
 } from "openchat-shared";
 import page from "page";
 import { tick } from "svelte";
 import { locale } from "svelte-i18n";
 import { get } from "svelte/store";
+import { AndroidWebAuthnErrorCode } from "tauri-plugin-oc-api";
 import type { OpenChatConfig } from "./config";
 import { snapshot } from "./snapshot.svelte";
 import {
@@ -590,7 +593,6 @@ import {
 } from "./utils/user";
 import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 import { createWebAuthnIdentity, MultiWebAuthnIdentity } from "./utils/webAuthn";
-import { AndroidWebAuthnErrorCode } from "tauri-plugin-oc-api";
 
 export const DEFAULT_WORKER_TIMEOUT = 1000 * 90;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -3733,7 +3735,7 @@ export class OpenChat {
             // now a new latest message and if so, mark it as a local chat summary update.
             let latestMessageIndex =
                 threadRootMessageIndex === undefined
-                    ? (allServerChatsStore.value.get(chatId)?.latestMessageIndex ?? -1)
+                    ? allServerChatsStore.value.get(chatId)?.latestMessageIndex ?? -1
                     : undefined;
             let newLatestMessage: EventWrapper<Message> | undefined = undefined;
 
@@ -8517,7 +8519,7 @@ export class OpenChat {
     }
 
     getStreak(userId: string | undefined) {
-        return userId ? (userStore.get(userId)?.streak ?? 0) : 0;
+        return userId ? userStore.get(userId)?.streak ?? 0 : 0;
     }
 
     getBotDefinition(endpoint: string): Promise<BotDefinitionResponse> {
@@ -9466,6 +9468,35 @@ export class OpenChat {
             total += 2n ** BigInt(daysInsured + i) * 100_000_000n;
         }
         return total;
+    }
+
+    payForPremiumItem(item: PremiumItem): Promise<PayForPremiumItemResponse> {
+        return this.#sendRequest({
+            kind: "payForPremiumItem",
+            item,
+        })
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    chitStateStore.update((chit) => {
+                        chit.chitBalance = resp.chitBalance;
+                        chit.totalChitEarned = resp.totalChitEarned;
+                        return chit;
+                    });
+                    currentUserStore.update((user) => {
+                        user.chitBalance = resp.chitBalance;
+                        user.totalChitEarned = resp.totalChitEarned;
+                        user.premiumItems.add(item);
+                        return user;
+                    });
+                } else {
+                    console.log("Failed to pay for premium", resp);
+                }
+                return resp;
+            })
+            .catch((err) => {
+                console.log("Failed to pay for premium item", err);
+                return CommonResponses.unknownError(JSON.stringify(err));
+            });
     }
 
     async payForStreakInsurance(

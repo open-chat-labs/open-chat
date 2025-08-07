@@ -183,3 +183,14 @@ export function findClosestChitBand(earned: number): number {
 export type PayForPremiumItemResponse = PayForPremiumItemSuccess | OCError;
 
 export type PayForPremiumItemSuccess = Success & { totalChitEarned: number; chitBalance: number };
+
+export enum PremiumItem {
+    BotEmojis = 0,
+    PopularEmojis = 1,
+    CustomProfileBackground = 3,
+}
+export const premiumPrices: Record<PremiumItem, number> = {
+    [PremiumItem.CustomProfileBackground]: 10_000,
+    [PremiumItem.PopularEmojis]: 50_000,
+    [PremiumItem.BotEmojis]: 10_000,
+};

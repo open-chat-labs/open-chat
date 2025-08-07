@@ -247,17 +247,6 @@ export const ANON_USERNAME = "guest_user";
 export const ANON_DISPLAY_NAME = "Guest user";
 export const ANON_AVATAR_URL = "/assets/anon.svg";
 
-export enum PremiumItem {
-    BotEmojis = 0,
-    PopularEmojis = 1,
-    CustomProfileBackground = 3,
-}
-export const premiumPrices: Record<PremiumItem, number> = {
-    [PremiumItem.CustomProfileBackground]: 50_000,
-    [PremiumItem.PopularEmojis]: 50_000,
-    [PremiumItem.BotEmojis]: 10_000,
-};
-
 type CurrentUserCommon = DataContent & {
     username: string;
     isPlatformOperator: boolean;
@@ -276,7 +265,7 @@ type CurrentUserCommon = DataContent & {
     chitBalance: number;
     streak: number;
     maxStreak: number;
-    paidFeatures: Set<number>;
+    premiumItems: Set<number>;
 };
 
 export type CurrentUserSummary = CurrentUserCommon & {
@@ -310,7 +299,7 @@ export function anonymousUser(): CreatedUser {
         chitBalance: 0,
         streak: 0,
         maxStreak: 0,
-        paidFeatures: new Set(),
+        premiumItems: new Set(),
     };
 }
 

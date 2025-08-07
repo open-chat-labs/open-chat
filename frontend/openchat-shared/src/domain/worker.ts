@@ -94,7 +94,9 @@ import type {
     ChitLeaderboardResponse,
     ClaimDailyChitResponse,
     ExternalAchievement,
+    PayForPremiumItemResponse,
     PayForStreakInsuranceResponse,
+    PremiumItem,
 } from "./chit";
 import type {
     AddMembersToChannelResponse,
@@ -149,6 +151,7 @@ import type {
     AuthenticationPrincipalsResponse,
     ChallengeAttempt,
     CreateOpenChatIdentityResponse,
+    FinaliseAccountLinkingResponse,
     GenerateChallengeResponse,
     GetDelegationResponse,
     GetOpenChatIdentityResponse,
@@ -157,10 +160,9 @@ import type {
     RemoveIdentityLinkResponse,
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
+    VerifyAccountLinkingCodeResponse,
     WebAuthnKey,
     WebAuthnKeyFull,
-    VerifyAccountLinkingCodeResponse,
-    FinaliseAccountLinkingResponse,
 } from "./identity";
 import type { CommunityInvite, GroupInvite } from "./inviteCodes";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -458,7 +460,13 @@ export type WorkerRequest =
     | AddFcmToken
     | CreateAccountLinkingCode
     | VerifyAccountLinkingCode
-    | FinaliseAccountLinkingWithCode;
+    | FinaliseAccountLinkingWithCode
+    | PayForPremiumItem;
+
+type PayForPremiumItem = {
+    kind: "payForPremiumItem";
+    item: PremiumItem;
+};
 
 type SetMinLogLevel = {
     kind: "setMinLogLevel";
@@ -1764,7 +1772,8 @@ export type WorkerResponseInner =
     | FullWebhookDetails
     | AccountLinkingCode
     | VerifyAccountLinkingCodeResponse
-    | FinaliseAccountLinkingResponse;
+    | FinaliseAccountLinkingResponse
+    | PayForPremiumItemResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -2520,4 +2529,6 @@ export type WorkerResult<T> = T extends Init
     ? boolean
     : T extends UpdateProposalTallies
     ? EventWrapper<Message>[]
+    : T extends PayForPremiumItem
+    ? PayForPremiumItemResponse
     : never;

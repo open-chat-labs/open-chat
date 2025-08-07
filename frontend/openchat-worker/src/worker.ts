@@ -2132,6 +2132,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "payForPremiumItem":
+                executeThenReply(payload, correlationId, agent.payForPremiumItem(payload.item));
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }

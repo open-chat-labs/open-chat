@@ -326,7 +326,7 @@ export const storageInGBStore = derived(storageStore, (storage) => ({
 export const messageFiltersStore = writable<MessageFilter[]>([], undefined, notEq);
 export const translationsStore = writable<MessageMap<string>>(new MessageMap(), undefined, notEq);
 export const snsFunctionsStore = writable<SnsFunctions>(new SnsFunctions(), undefined, notEq);
-export const currentUserStore = writable<CreatedUser>(anonymousUser(), undefined, dequal);
+export const currentUserStore = writable<CreatedUser>(anonymousUser(), undefined, notEq);
 export const currentUserIdStore = derived(currentUserStore, ({ userId }) => userId);
 export const anonUserStore = derived(currentUserIdStore, (id) => id === ANON_USER_ID);
 export const suspendedUserStore = derived(

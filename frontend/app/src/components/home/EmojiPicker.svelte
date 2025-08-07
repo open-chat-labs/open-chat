@@ -5,9 +5,17 @@
         SkinTone,
         SkinToneChangeEvent,
     } from "emoji-picker-element/shared";
-    import { emojiGroupNames, type CustomEmoji, type SelectedEmoji } from "openchat-client";
+    import {
+        currentUserStore,
+        emojiGroupNames,
+        PremiumItem,
+        premiumPrices,
+        type CustomEmoji,
+        type SelectedEmoji,
+    } from "openchat-client";
     import { onMount } from "svelte";
     import { currentTheme } from "../../theme/themes";
+    import PremiumItemPayment from "../PremiumItemPayment.svelte";
 
     interface Props {
         mode?: "message" | "reaction" | "thread";
@@ -17,6 +25,7 @@
     }
 
     let { mode = "message", onEmojiSelected, onSkintoneChanged, customEmojis }: Props = $props();
+    let showPayGate = $state<CustomEmoji>();
 
     function lockedCategoryCss(groupId: number, price: number) {
         return `
@@ -47,8 +56,8 @@
 
     function createCustomCss(): string {
         const rules: string[] = [];
-        rules.push(lockedCategoryCss(0, 10_000));
-        rules.push(lockedCategoryCss(1, 50_000));
+        rules.push(lockedCategoryCss(0, premiumPrices[PremiumItem.BotEmojis]));
+        rules.push(lockedCategoryCss(1, premiumPrices[PremiumItem.PopularEmojis]));
         return rules.join("\n");
     }
 
@@ -62,7 +71,7 @@
                         name: emoji.code,
                         shortcodes: [emoji.code],
                         url: emoji.url,
-                        category: emojiGroupNames[emoji.groupId],
+                        category: emojiGroupNames[emoji.premiumItem],
                     };
                 }),
             ];
@@ -89,11 +98,29 @@
         } else if (ev.detail.name !== undefined) {
             const custom = customEmojis?.get(ev.detail.name);
             if (custom !== undefined) {
-                onEmojiSelected(custom);
+                if (!$currentUserStore.premiumItems.has(custom.premiumItem)) {
+                    showPayGate = custom;
+                } else {
+                    onEmojiSelected(custom);
+                }
             }
         }
     }
+
+    function paidForItem() {
+        if (showPayGate) {
+            onEmojiSelected(showPayGate);
+            showPayGate = undefined;
+        }
+    }
 </script>
+
+{#if showPayGate}
+    <PremiumItemPayment
+        item={showPayGate.premiumItem}
+        onSuccess={paidForItem}
+        onCancel={() => (showPayGate = undefined)}></PremiumItemPayment>
+{/if}
 
 <emoji-picker
     class:message={mode === "message"}

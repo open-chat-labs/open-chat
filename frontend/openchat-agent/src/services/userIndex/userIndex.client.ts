@@ -117,6 +117,7 @@ import {
     exploreBotsResponse,
     externalAchievementsResponse,
     payForDiamondMembershipResponse,
+    payForPremiumItemResponse,
     setDisplayNameResponse,
     setUsernameResponse,
     submitProofOfUniquePersonhoodResponse,
@@ -742,7 +743,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
                 pay_in_chat: false,
                 expected_cost: premiumPrices[item],
             },
-            (_) => ({ kind: "success", totalChitEarned: 0, chitBalance: 0 }),
+            payForPremiumItemResponse,
             UserIndexPayForPremiumItemArgs,
             UserIndexPayForPremiumItemResponse,
         );

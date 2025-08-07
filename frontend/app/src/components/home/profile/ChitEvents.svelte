@@ -95,10 +95,7 @@
                         day streak!
                     </div>
                 {/if}
-                <ChitBalance
-                    size={"large"}
-                    me
-                    totalEarned={$chitStateStore.totalChitEarned} />
+                <ChitBalance size={"large"} me chitBalance={$chitStateStore.chitBalance} />
             </div>
             {#if streak > 0}
                 <CollapsibleCard headerText={i18nKey("streakInsurance.title")}>

@@ -2061,5 +2061,15 @@
     "yourAccountIsSuspended": "Your account is suspended",
     "yourChats": "Your chats",
     "youreBlocked": "Sorry - you have been blocked from this group",
-    "yourRoleChanged": "{changedBy} changed your role to {newRole}"
+    "yourRoleChanged": "{changedBy} changed your role to {newRole}",
+    "premiumItem": {
+        "priceTooltip": "{price} CHIT",
+        "paymentFailure": "Sorry but we were unable to take payment.",
+        "insufficientChit": "This feature uses {price} CHIT and you only have {balance} at the moment. Keep collecting!",
+        "priceMessage": "Do you want to use {price} of your current CHIT balance of {balance} for this feature?",
+        "title": "Premium Item",
+        "botEmojis": "Bot emoji pack",
+        "popularEmojis": "Popular emoji pack",
+        "customProfileBackground": "Custom profile background"
+    }
 }

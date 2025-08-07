@@ -112,11 +112,13 @@ import type {
     OptionalChatPermissions,
     OptionUpdate,
     PayForDiamondMembershipResponse,
+    PayForPremiumItemResponse,
     PayForStreakInsuranceResponse,
     PendingCryptocurrencyWithdrawal,
     PinChatResponse,
     PinMessageResponse,
     PinNumberSettings,
+    PremiumItem,
     PrepareDelegationResponse,
     ProposalVoteDetails,
     PublicGroupSummaryResponse,
@@ -4566,6 +4568,10 @@ export class OpenChatAgent extends EventTarget {
         for (const [chatId, tallies] of response) {
             await updateCachedProposalTallies(this.db, chatId, tallies);
         }
+    }
+
+    payForPremiumItem(item: PremiumItem): Promise<PayForPremiumItemResponse> {
+        return this._userIndexClient.payForPremiumItem(item);
     }
 }
 
