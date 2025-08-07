@@ -2,7 +2,7 @@ use crate::token_swaps::swap_client::SwapSuccess;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::icrc1::Account;
-use types::{CanisterId, ExchangeId, TimestampMillis, Timestamped};
+use types::{TimestampMillis, Timestamped};
 use user_canister::token_swap_status::TokenSwapStatus;
 
 #[derive(Serialize, Deserialize, Default)]
