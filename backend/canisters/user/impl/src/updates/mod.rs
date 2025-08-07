@@ -47,7 +47,6 @@ pub mod mark_read;
 pub mod mute_notifications;
 pub mod pay_for_streak_insurance;
 pub mod pin_chat_v2;
-pub mod reclaim_swap_tokens;
 pub mod remove_reaction;
 pub mod report_message;
 pub mod save_crypto_account;
