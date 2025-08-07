@@ -213,12 +213,13 @@ fn send_message_with_transfer_to_group_succeeds(with_c2c_error: bool, icrc2: boo
     let user2_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
     assert_eq!(user2_balance, amount);
 
+    tick_many(env, 3);
+
     if with_c2c_error {
         start_canister(env, local_user_index, group_id.into());
         env.advance_time(Duration::from_secs(10));
+        tick_many(env, 3);
     }
-
-    tick_many(env, 3);
 
     let event = client::group::happy_path::events(env, &user2, group_id, 0.into(), true, 10, 10)
         .events

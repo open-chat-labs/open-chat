@@ -1,4 +1,3 @@
-use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
@@ -8,14 +7,14 @@ use types::{
 };
 
 #[ts_export(local_user_index, group_and_community_summary_updates_v2)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub requests: Vec<SummaryUpdatesArgs>,
     pub max_c2c_calls: usize,
 }
 
 #[ts_export(local_user_index, group_and_community_summary_updates_v2)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SummaryUpdatesArgs {
     pub canister_id: CanisterId,
     pub is_community: bool,
@@ -24,13 +23,13 @@ pub struct SummaryUpdatesArgs {
 }
 
 #[ts_export(local_user_index, group_and_community_summary_updates_v2)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
 }
 
 #[ts_export(local_user_index, group_and_community_summary_updates_v2)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub timestamp: TimestampMillis,
     pub updates: Vec<SummaryUpdatesResponse>,
@@ -43,7 +42,7 @@ pub struct SuccessResult {
 }
 
 #[ts_export(local_user_index, group_and_community_summary_updates_v2)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum SummaryUpdatesResponse {
     SuccessGroup(GroupCanisterGroupChatSummary),
     SuccessCommunity(CommunityCanisterCommunitySummary),

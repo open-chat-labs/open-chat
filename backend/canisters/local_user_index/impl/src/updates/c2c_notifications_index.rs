@@ -2,7 +2,7 @@ use crate::guards::caller_is_notifications_index;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use local_user_index_canister::c2c_notifications_index::{Response::*, *};
+use local_user_index_canister::c2c_notifications_index::*;
 use notifications_index_canister::NotificationsIndexEvent;
 
 #[update(guard = "caller_is_notifications_index", msgpack = true)]
@@ -44,5 +44,5 @@ fn c2c_notifications_index_impl(args: Args, state: &mut RuntimeState) -> Respons
             }
         }
     }
-    Success
+    Response::Success
 }

@@ -1,11 +1,4 @@
-use serde::{Deserialize, Serialize};
+use types::SuccessOnly;
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Args {
-    pub value: u32,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-}
+pub type Args = crate::c2c_set_group_upgrade_concurrency::Args;
+pub type Response = SuccessOnly;
