@@ -191,7 +191,6 @@ struct Data {
     webauthn_keys: WebAuthnKeys,
     #[serde(skip)]
     signature_map: SignatureMap,
-    #[serde(default)]
     encryption_key_requests: EncryptionKeyRequests,
     #[serde(with = "serde_bytes")]
     ic_root_key: Vec<u8>,
@@ -199,7 +198,6 @@ struct Data {
     rng_seed: [u8; 32],
     challenges: Challenges,
     test_mode: bool,
-    #[serde(default)]
     account_linking_codes: AccountLinkingCodes,
 }
 
