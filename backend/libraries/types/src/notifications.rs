@@ -225,9 +225,10 @@ impl UserNotificationPayload {
     pub fn to_fcm_data(self) -> FcmData {
         match self {
             UserNotificationPayload::AddedToChannel(n) => FcmData::for_channel(n.community_id, n.channel_id)
-                .set_body(format!("Added you to the channel '{}'", n.channel_name))
+                .set_sender_id(n.added_by)
                 .set_sender_name_with_alt(n.added_by_display_name, n.added_by_name)
-                .set_avatar_id(n.community_avatar_id),
+                .set_body(format!("Added you to the channel '{}'", n.channel_name))
+                .set_avatar_id(n.channel_avatar_id.or(n.community_avatar_id)),
             UserNotificationPayload::DirectMessage(n) => FcmData::for_direct_chat(n.sender)
                 .set_sender_name_with_alt(n.sender_display_name, n.sender_name)
                 .set_optional_thread(n.thread_root_message_index)
