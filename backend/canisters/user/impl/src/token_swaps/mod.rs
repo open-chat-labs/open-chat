@@ -5,7 +5,6 @@ use types::{C2CError, CanisterId};
 
 pub mod icpswap;
 pub mod kongswap;
-pub mod sonic;
 pub mod swap_client;
 
 fn nat_to_u128(value: Nat) -> u128 {
