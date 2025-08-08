@@ -26,7 +26,7 @@ pub fn verify_signature(
         })
 }
 
-pub fn extract_certificate(signature: &[u8]) -> Result<Certificate, String> {
+fn extract_certificate(signature: &[u8]) -> Result<Certificate, String> {
     let Ok(cbor) = parse_cbor(signature) else {
         return Err("Unable to parse signature as CBOR".to_string());
     };
