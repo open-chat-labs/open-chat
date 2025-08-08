@@ -323,10 +323,10 @@ impl GroupChatCore {
         for (user_id, update) in self.members.iter_latest_updates(since) {
             match update {
                 MemberUpdate::Added | MemberUpdate::RoleChanged | MemberUpdate::Lapsed | MemberUpdate::Unlapsed => {
-                    if users_added_updated_or_removed.insert(user_id) {
-                        if let Some(member) = self.members.get(&user_id) {
-                            result.members_added_or_updated.push(GroupMember::from(&member));
-                        }
+                    if users_added_updated_or_removed.insert(user_id)
+                        && let Some(member) = self.members.get(&user_id)
+                    {
+                        result.members_added_or_updated.push(GroupMember::from(&member));
                     }
                 }
                 MemberUpdate::Removed => {
@@ -470,22 +470,21 @@ impl GroupChatCore {
             if let Some(events_reader) = self
                 .events
                 .events_reader(min_visible_event_index, thread_root_message_index, None)
+                && let Some(message) = events_reader.message_internal(message_id.into())
             {
-                if let Some(message) = events_reader.message_internal(message_id.into()) {
-                    return if let Some(deleted_by) = &message.deleted_by {
-                        if matches!(message.content, MessageContentInternal::Deleted(_)) {
-                            Err(OCErrorCode::MessageHardDeleted.into())
-                        } else if user_id == message.sender
-                            || (deleted_by.deleted_by != message.sender && member.role().can_delete_messages(&self.permissions))
-                        {
-                            Ok(message.content.hydrate(Some(user_id)))
-                        } else {
-                            Err(OCErrorCode::InitiatorNotAuthorized.into())
-                        }
-                    } else {
+                return if let Some(deleted_by) = &message.deleted_by {
+                    if matches!(message.content, MessageContentInternal::Deleted(_)) {
+                        Err(OCErrorCode::MessageHardDeleted.into())
+                    } else if user_id == message.sender
+                        || (deleted_by.deleted_by != message.sender && member.role().can_delete_messages(&self.permissions))
+                    {
                         Ok(message.content.hydrate(Some(user_id)))
-                    };
-                }
+                    } else {
+                        Err(OCErrorCode::InitiatorNotAuthorized.into())
+                    }
+                } else {
+                    Ok(message.content.hydrate(Some(user_id)))
+                };
             }
 
             Err(OCErrorCode::MessageNotFound.into())
@@ -567,28 +566,26 @@ impl GroupChatCore {
             self.events
                 .message_internal(EventIndex::default(), thread_root_message_index, message_id.into())
         {
-            if let Caller::BotV2(bot_now) = &caller {
-                if let Some(bot_message) = message.bot_context() {
-                    if bot_now.bot == message.sender
-                        && bot_now.initiator.user() == bot_message.command.as_ref().map(|c| c.initiator)
-                        && bot_now.initiator.command() == bot_message.command.as_ref()
-                        && !bot_message.finalised
-                    {
-                        return self.update_bot_message(
-                            caller,
-                            finalised,
-                            thread_root_message_index,
-                            message_id,
-                            content,
-                            replies_to,
-                            mentioned,
-                            rules_accepted,
-                            suppressed,
-                            block_level_markdown,
-                            now,
-                        );
-                    }
-                }
+            if let Caller::BotV2(bot_now) = &caller
+                && let Some(bot_message) = message.bot_context()
+                && bot_now.bot == message.sender
+                && bot_now.initiator.user() == bot_message.command.as_ref().map(|c| c.initiator)
+                && bot_now.initiator.command() == bot_message.command.as_ref()
+                && !bot_message.finalised
+            {
+                return self.update_bot_message(
+                    caller,
+                    finalised,
+                    thread_root_message_index,
+                    message_id,
+                    content,
+                    replies_to,
+                    mentioned,
+                    rules_accepted,
+                    suppressed,
+                    block_level_markdown,
+                    now,
+                );
             }
 
             return Err(OCErrorCode::MessageIdAlreadyExists.into());
@@ -599,13 +596,12 @@ impl GroupChatCore {
             everyone_mentioned,
         } = self.prepare_send_message(caller, thread_root_message_index, &content, rules_accepted, now)?;
 
-        if let Some(root_message_index) = thread_root_message_index {
-            if !self
+        if let Some(root_message_index) = thread_root_message_index
+            && !self
                 .events
                 .is_accessible(min_visible_event_index, None, root_message_index.into())
-            {
-                return Err(OCErrorCode::ThreadNotFound.into());
-            }
+        {
+            return Err(OCErrorCode::ThreadNotFound.into());
         }
 
         let sender = caller.agent();
@@ -882,14 +878,14 @@ impl GroupChatCore {
 
         let mut min_visible_event_index = EventIndex::default();
 
-        if matches!(caller, Caller::User(_) | Caller::BotV2(_)) {
-            if let Some(initiator) = caller.initiator() {
-                let member = self.members.get_verified_member(initiator)?;
-                if !member.role().can_react_to_messages(&self.permissions) {
-                    return Err(OCErrorCode::InitiatorNotAuthorized.into());
-                }
-                min_visible_event_index = member.min_visible_event_index()
+        if matches!(caller, Caller::User(_) | Caller::BotV2(_))
+            && let Some(initiator) = caller.initiator()
+        {
+            let member = self.members.get_verified_member(initiator)?;
+            if !member.role().can_react_to_messages(&self.permissions) {
+                return Err(OCErrorCode::InitiatorNotAuthorized.into());
             }
+            min_visible_event_index = member.min_visible_event_index()
         }
 
         self.events.add_reaction(
@@ -1451,16 +1447,16 @@ impl GroupChatCore {
             }
         }
 
-        if let Some(description) = description {
-            if let Err(error) = validate_description(description) {
-                return Err(OCErrorCode::DescriptionTooLong.with_json(&error));
-            }
+        if let Some(description) = description
+            && let Err(error) = validate_description(description)
+        {
+            return Err(OCErrorCode::DescriptionTooLong.with_json(&error));
         }
 
-        if let Some(rules) = rules {
-            if let Err(error) = validate_rules(rules.enabled, &rules.text) {
-                return Err(error.into());
-            }
+        if let Some(rules) = rules
+            && let Err(error) = validate_rules(rules.enabled, &rules.text)
+        {
+            return Err(error.into());
         }
 
         if let Err(error) = avatar_update.map_or(Ok(()), validate_avatar) {
@@ -1504,36 +1500,36 @@ impl GroupChatCore {
 
         let events = &mut self.events;
 
-        if let Some(name) = name {
-            if self.name.value != name {
-                let push_result = events.push_main_event(
-                    ChatEventInternal::GroupNameChanged(Box::new(GroupNameChanged {
-                        new_name: name.clone(),
-                        previous_name: self.name.value.clone(),
-                        changed_by: user_id,
-                    })),
-                    now,
-                );
-                result.bot_notifications.push(push_result.bot_notification);
+        if let Some(name) = name
+            && self.name.value != name
+        {
+            let push_result = events.push_main_event(
+                ChatEventInternal::GroupNameChanged(Box::new(GroupNameChanged {
+                    new_name: name.clone(),
+                    previous_name: self.name.value.clone(),
+                    changed_by: user_id,
+                })),
+                now,
+            );
+            result.bot_notifications.push(push_result.bot_notification);
 
-                self.name = Timestamped::new(name, now);
-            }
+            self.name = Timestamped::new(name, now);
         }
 
-        if let Some(description) = description {
-            if self.description.value != description {
-                let push_result = events.push_main_event(
-                    ChatEventInternal::GroupDescriptionChanged(Box::new(GroupDescriptionChanged {
-                        new_description: description.clone(),
-                        previous_description: self.description.value.clone(),
-                        changed_by: user_id,
-                    })),
-                    now,
-                );
-                result.bot_notifications.push(push_result.bot_notification);
+        if let Some(description) = description
+            && self.description.value != description
+        {
+            let push_result = events.push_main_event(
+                ChatEventInternal::GroupDescriptionChanged(Box::new(GroupDescriptionChanged {
+                    new_description: description.clone(),
+                    previous_description: self.description.value.clone(),
+                    changed_by: user_id,
+                })),
+                now,
+            );
+            result.bot_notifications.push(push_result.bot_notification);
 
-                self.description = Timestamped::new(description, now);
-            }
+            self.description = Timestamped::new(description, now);
         }
 
         if let Some(rules) = rules {
@@ -1595,58 +1591,59 @@ impl GroupChatCore {
             result.bot_notifications.push(push_result.bot_notification);
         }
 
-        if let Some(gate_config) = gate_config.expand() {
-            if self.gate_config.value != gate_config {
-                self.gate_config = Timestamped::new(gate_config.clone(), now);
-                result.gate_config_update = OptionUpdate::from_update(gate_config.clone());
+        if let Some(gate_config) = gate_config.expand()
+            && self.gate_config.value != gate_config
+        {
+            self.gate_config = Timestamped::new(gate_config.clone(), now);
+            result.gate_config_update = OptionUpdate::from_update(gate_config.clone());
 
-                let push_result = events.push_main_event(
-                    ChatEventInternal::GroupGateUpdated(Box::new(GroupGateUpdatedInternal {
-                        updated_by: user_id,
-                        new_gate_config: gate_config,
-                    })),
-                    now,
-                );
-                result.bot_notifications.push(push_result.bot_notification);
-            }
+            let push_result = events.push_main_event(
+                ChatEventInternal::GroupGateUpdated(Box::new(GroupGateUpdatedInternal {
+                    updated_by: user_id,
+                    new_gate_config: gate_config,
+                })),
+                now,
+            );
+            result.bot_notifications.push(push_result.bot_notification);
         }
 
-        if let Some(external_url) = external_url.expand() {
-            if self.external_url.value != external_url {
-                self.external_url = Timestamped::new(external_url.clone(), now);
+        if let Some(external_url) = external_url.expand()
+            && self.external_url.value != external_url
+        {
+            self.external_url = Timestamped::new(external_url.clone(), now);
 
-                let push_result = events.push_main_event(
-                    ChatEventInternal::ExternalUrlUpdated(Box::new(ExternalUrlUpdated {
-                        updated_by: user_id,
-                        new_url: external_url,
-                    })),
-                    now,
-                );
-                result.bot_notifications.push(push_result.bot_notification);
-            }
+            let push_result = events.push_main_event(
+                ChatEventInternal::ExternalUrlUpdated(Box::new(ExternalUrlUpdated {
+                    updated_by: user_id,
+                    new_url: external_url,
+                })),
+                now,
+            );
+            result.bot_notifications.push(push_result.bot_notification);
         }
 
         let mut public_changed = false;
         let mut message_visbility_changed = false;
 
-        if let Some(public) = public {
-            if self.is_public.value != public {
-                self.is_public = Timestamped::new(public, now);
+        if let Some(public) = public
+            && self.is_public.value != public
+        {
+            self.is_public = Timestamped::new(public, now);
 
-                public_changed = true;
+            public_changed = true;
 
-                if !public && self.messages_visible_to_non_members.value {
-                    self.messages_visible_to_non_members = Timestamped::new(false, now);
-                    message_visbility_changed = true;
-                }
+            if !public && self.messages_visible_to_non_members.value {
+                self.messages_visible_to_non_members = Timestamped::new(false, now);
+                message_visbility_changed = true;
             }
         }
 
-        if let Some(messages_visible_to_non_members) = messages_visible_to_non_members {
-            if self.is_public.value && self.messages_visible_to_non_members.value != messages_visible_to_non_members {
-                self.messages_visible_to_non_members = Timestamped::new(messages_visible_to_non_members, now);
-                message_visbility_changed = true;
-            }
+        if let Some(messages_visible_to_non_members) = messages_visible_to_non_members
+            && self.is_public.value
+            && self.messages_visible_to_non_members.value != messages_visible_to_non_members
+        {
+            self.messages_visible_to_non_members = Timestamped::new(messages_visible_to_non_members, now);
+            message_visbility_changed = true;
         }
 
         if public_changed || message_visbility_changed {
@@ -1668,11 +1665,11 @@ impl GroupChatCore {
             }
         }
 
-        if let Some(new_events_ttl) = events_ttl.expand() {
-            if new_events_ttl != events.get_events_time_to_live().value {
-                let push_result = events.set_events_time_to_live(user_id, new_events_ttl, now);
-                result.bot_notifications.push(push_result.and_then(|r| r.bot_notification));
-            }
+        if let Some(new_events_ttl) = events_ttl.expand()
+            && new_events_ttl != events.get_events_time_to_live().value
+        {
+            let push_result = events.set_events_time_to_live(user_id, new_events_ttl, now);
+            result.bot_notifications.push(push_result.and_then(|r| r.bot_notification));
         }
 
         result
@@ -1853,7 +1850,7 @@ impl GroupChatCore {
         &self,
         caller: &EventsCaller,
         thread_root_message_index: Option<MessageIndex>,
-    ) -> OCResult<ChatEventsListReader> {
+    ) -> OCResult<ChatEventsListReader<'_>> {
         let min_visible_event_index = match caller {
             EventsCaller::Unknown => self.min_visible_event_index(None),
             EventsCaller::User(user_id) => self.min_visible_event_index(Some(*user_id)),

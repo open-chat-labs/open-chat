@@ -31,14 +31,13 @@ fn run() {
 }
 
 fn run_impl(state: &mut RuntimeState) {
-    if let Some((governance_canister_id, proposal_id)) = state.data.finished_proposals_to_process.pop_front() {
-        if let Some(ns) = state.data.nervous_systems.get(&governance_canister_id) {
-            if !ns.disabled() {
-                let is_nns = governance_canister_id == state.data.nns_governance_canister_id;
+    if let Some((governance_canister_id, proposal_id)) = state.data.finished_proposals_to_process.pop_front()
+        && let Some(ns) = state.data.nervous_systems.get(&governance_canister_id)
+        && !ns.disabled()
+    {
+        let is_nns = governance_canister_id == state.data.nns_governance_canister_id;
 
-                ic_cdk::futures::spawn(process_proposal(governance_canister_id, proposal_id, is_nns));
-            }
-        }
+        ic_cdk::futures::spawn(process_proposal(governance_canister_id, proposal_id, is_nns));
     }
     start_job_if_required(state);
 }

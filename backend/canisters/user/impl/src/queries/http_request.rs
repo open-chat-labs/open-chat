@@ -3,12 +3,16 @@ use crate::{RuntimeState, read_state};
 use http_request::{AvatarRoute, Route, build_json_response, encode_logs, extract_route, get_document};
 use ic_cdk::query;
 use itertools::Itertools;
-use types::{ChitEarnedReason, HttpRequest, HttpResponse, TimestampMillis};
+use types::{ChitEventType, HttpRequest, HttpResponse, TimestampMillis};
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
     fn get_avatar_impl(route: AvatarRoute, state: &RuntimeState) -> HttpResponse {
         get_document(route.blob_id, state.data.avatar.as_ref(), "avatar")
+    }
+
+    fn get_profile_background_impl(id: Option<u128>, state: &RuntimeState) -> HttpResponse {
+        get_document(id, state.data.profile_background.as_ref(), "profile_background")
     }
 
     fn get_errors_impl(since: Option<TimestampMillis>) -> HttpResponse {
@@ -38,9 +42,9 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         let claims: Vec<_> = chit_events
             .into_iter()
             .filter_map(|e| match e.reason {
-                ChitEarnedReason::DailyClaim => Some((e.timestamp, 0)),
-                ChitEarnedReason::DailyClaimReinstated => Some((e.timestamp, 1)),
-                ChitEarnedReason::StreakInsuranceClaim => Some((e.timestamp, 2)),
+                ChitEventType::DailyClaim => Some((e.timestamp, 0)),
+                ChitEventType::DailyClaimReinstated => Some((e.timestamp, 1)),
+                ChitEventType::StreakInsuranceClaim => Some((e.timestamp, 2)),
                 _ => None,
             })
             .map(|(ts, manual_claim)| {
@@ -54,6 +58,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
 
     match extract_route(&request.url) {
         Route::Avatar(route) => read_state(|state| get_avatar_impl(route, state)),
+        Route::ProfileBackground(id) => read_state(|state| get_profile_background_impl(id, state)),
         Route::Errors(since) => get_errors_impl(since),
         Route::Logs(since) => get_logs_impl(since),
         Route::Traces(since) => get_traces_impl(since),

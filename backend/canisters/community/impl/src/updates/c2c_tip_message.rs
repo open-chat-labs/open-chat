@@ -46,9 +46,8 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             .chat
             .events
             .message_internal(EventIndex::default(), args.thread_root_message_index, args.message_id.into())
-    {
-        if let Some(sender) = channel.chat.members.get(&message.sender) {
-            if message.sender != user_id && !sender.user_type().is_bot() {
+        && let Some(sender) = channel.chat.members.get(&message.sender)
+            && message.sender != user_id && !sender.user_type().is_bot() {
                 let community_id = state.env.canister_id().into();
                 let event = CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
                     chat: Chat::Channel(community_id, channel.id),
@@ -83,8 +82,6 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
                 state.push_event_to_user(message.sender, event, now);
                 state.notify_user_of_achievement(message.sender, Achievement::HadMessageTipped, now);
             }
-        }
-    }
 
     state.push_bot_notification(result.bot_notification);
     handle_activity_notification(state);

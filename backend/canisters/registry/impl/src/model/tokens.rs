@@ -153,12 +153,12 @@ impl Tokens {
         update_fn: F,
         now: TimestampMillis,
     ) -> bool {
-        if let Some(token) = self.tokens.iter_mut().find(|t| t.ledger_canister_id == ledger_canister_id) {
-            if update_fn(token) {
-                token.last_updated = now;
-                self.last_updated = now;
-                return true;
-            }
+        if let Some(token) = self.tokens.iter_mut().find(|t| t.ledger_canister_id == ledger_canister_id)
+            && update_fn(token)
+        {
+            token.last_updated = now;
+            self.last_updated = now;
+            return true;
         }
         false
     }

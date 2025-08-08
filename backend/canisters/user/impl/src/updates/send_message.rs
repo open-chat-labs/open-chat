@@ -202,15 +202,15 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
     };
 
     // Check if a message with the same id already exists
-    if let Some(chat) = state.data.direct_chats.get_mut(&bot_id.into()) {
-        if let Some((message, _)) =
+    if let Some(chat) = state.data.direct_chats.get_mut(&bot_id.into())
+        && let Some((message, _)) =
             chat.events
                 .message_internal(EventIndex::default(), args.thread_root_message_index, args.message_id.into())
         {
             // If the message id of a bot message matches an existing unfinalised bot message
             // then edit this message instead of pushing a new one
-            if let Some(bot_message) = message.bot_context() {
-                if bot_caller.bot == message.sender
+            if let Some(bot_message) = message.bot_context()
+                && bot_caller.bot == message.sender
                     && bot_caller.initiator.user() == bot_message.command.as_ref().map(|c| c.initiator)
                     && bot_caller.initiator.command() == bot_message.command.as_ref()
                     && !bot_message.finalised
@@ -263,18 +263,16 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
                         timestamp: now,
                     });
                 }
-            }
 
             return c2c_bot_send_message::Response::Error(OCErrorCode::MessageAlreadyFinalized.into());
         }
-    }
 
     // If the user_message_id is set, then the user is sending a direct message to the bot.
     // In which case rather than just posting the bot's message, we should first post the user's message.
     // This allows the user to have a more natural conversation with the bot rather than using a /command.
     let mut user_message = false;
-    if let Some(command) = bot_caller.initiator.command() {
-        if let (Some(text), Some(message_id)) = (
+    if let Some(command) = bot_caller.initiator.command()
+        && let (Some(text), Some(message_id)) = (
             command.args.first().and_then(|a| a.value.as_string().map(String::from)),
             user_message_id,
         ) {
@@ -303,7 +301,6 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
 
             user_message = true;
         }
-    }
 
     let event_wrapper = handle_message_impl(
         HandleMessageArgs {
@@ -597,15 +594,14 @@ pub(crate) fn register_timer_jobs(
     now: TimestampMillis,
     data: &mut Data,
 ) {
-    if !file_references.is_empty() {
-        if let Some(expiry) = message_event.expires_at {
+    if !file_references.is_empty()
+        && let Some(expiry) = message_event.expires_at {
             data.timer_jobs.enqueue_job(
                 TimerJob::DeleteFileReferences(DeleteFileReferencesJob { files: file_references }),
                 expiry,
                 now,
             );
         }
-    }
 
     if let Some(expiry) = message_event.expires_at {
         data.handle_event_expiry(expiry, now);

@@ -56,6 +56,9 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             // state.data.global_users.insert_chit_record(user_id, ..);
             state.push_event_to_user_index(UserIndexEvent::NotifyChit(Box::new((user_id, ev))), **now);
         }
+        UserEvent::NotifyPremiumItemPurchased(ev) => {
+            state.push_event_to_user_index(UserIndexEvent::NotifyPremiumItemPurchased(Box::new((user_id, ev))), **now);
+        }
         UserEvent::NotifyStreakInsurancePayment(payment) => {
             state.push_event_to_user_index(
                 UserIndexEvent::NotifyStreakInsurancePayment(Box::new(StreakInsurancePayment {
@@ -87,6 +90,12 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         UserEvent::UserUnblocked(unblocked) => {
             state.data.blocked_users.remove(&(unblocked, user_id));
             state.push_event_to_user_index(UserIndexEvent::UserUnblocked(user_id, unblocked), **now);
+        }
+        UserEvent::UserSetProfileBackground(profile_background_id) => {
+            state.push_event_to_user_index(
+                UserIndexEvent::UserSetProfileBackground(Box::new((user_id, profile_background_id))),
+                **now,
+            );
         }
         UserEvent::SetMaxStreak(max_streak) => {
             state.push_event_to_user_index(UserIndexEvent::SetMaxStreak(user_id, max_streak), **now);

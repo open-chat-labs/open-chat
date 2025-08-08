@@ -46,9 +46,8 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
             .chat
             .events
             .message_internal(EventIndex::default(), args.thread_root_message_index, args.message_id.into())
-    {
-        if let Some(sender) = state.data.chat.members.get(&message.sender) {
-            if message.sender != user_id && !sender.user_type().is_bot() {
+        && let Some(sender) = state.data.chat.members.get(&message.sender)
+            && message.sender != user_id && !sender.user_type().is_bot() {
                 let chat_id: ChatId = state.env.canister_id().into();
                 let tip = format_crypto_amount_with_symbol(args.amount, args.decimals, &args.token_symbol);
                 let user_notification_payload = UserNotificationPayload::GroupMessageTipped(GroupMessageTipped {
@@ -83,8 +82,6 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
                 state.notify_user_of_achievement(message.sender, Achievement::HadMessageTipped, now);
             }
-        }
-    }
 
     state.push_bot_notification(result.bot_notification);
     handle_activity_notification(state);

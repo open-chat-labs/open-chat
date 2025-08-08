@@ -2,7 +2,7 @@ use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
 use crate::{TIME_UNTIL_SUSPENDED_ACCOUNT_IS_DELETED_MILLIS, model::account_billing::AccountBilling};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 use types::{
     CyclesTopUp, CyclesTopUpInternal, PhoneNumber, RegistrationFee, SuspensionAction, SuspensionDuration, TimestampMillis,
     UniquePersonProof, UserId, UserSummary, UserSummaryStable, UserSummaryV2, UserSummaryVolatile, UserType, is_default,
@@ -29,6 +29,8 @@ pub struct User {
     pub cycle_top_ups: Vec<CyclesTopUpInternal>,
     #[serde(rename = "av", skip_serializing_if = "Option::is_none")]
     pub avatar_id: Option<u128>,
+    #[serde(rename = "pb", skip_serializing_if = "Option::is_none")]
+    pub profile_background_id: Option<u128>,
     #[serde(rename = "rf", skip_serializing_if = "Option::is_none")]
     pub registration_fee: Option<RegistrationFee>,
     #[serde(rename = "ab", default, skip_serializing_if = "AccountBilling::is_empty")]
@@ -69,10 +71,8 @@ pub struct User {
     pub unique_person_proof: Option<UniquePersonProof>,
     #[serde(rename = "ce", default, skip_serializing_if = "is_default")]
     pub total_chit_earned: i32,
-    #[serde(rename = "cs", default, skip_serializing_if = "is_default")]
-    pub total_chit_spent: i32,
-    #[serde(rename = "pi", default, skip_serializing_if = "BTreeSet::is_empty")]
-    pub premium_items: BTreeSet<u32>,
+    #[serde(rename = "cb", default, skip_serializing_if = "is_default")]
+    pub chit_balance: i32,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, Eq, PartialEq)]
@@ -107,6 +107,7 @@ impl User {
             date_updated: now,
             cycle_top_ups: Vec::new(),
             avatar_id,
+            profile_background_id: None,
             registration_fee: None,
             account_billing: AccountBilling::default(),
             phone_status: PhoneStatus::None,
@@ -125,8 +126,7 @@ impl User {
             latest_chit_event_previous_month: 0,
             unique_person_proof: None,
             total_chit_earned: 0,
-            total_chit_spent: 0,
-            premium_items: BTreeSet::new(),
+            chit_balance: 0,
         }
     }
 
@@ -141,7 +141,7 @@ impl User {
             diamond_member: self.diamond_membership_details.is_active(now),
             diamond_membership_status: self.diamond_membership_details.status(now),
             total_chit_earned: self.total_chit_earned,
-            chit_balance: self.total_chit_earned - self.total_chit_spent,
+            chit_balance: self.chit_balance,
             streak: self.streak(now),
             max_streak: self.max_streak,
             is_unique_person: self.unique_person_proof.is_some(),
@@ -161,6 +161,7 @@ impl User {
             username: self.username.clone(),
             display_name: self.display_name.clone(),
             avatar_id: self.avatar_id,
+            profile_background_id: self.profile_background_id,
             is_bot: self.user_type.is_bot(),
             suspended: self.suspension_details.is_some(),
             diamond_membership_status: self.diamond_membership_details.status(now),
@@ -171,7 +172,7 @@ impl User {
     pub fn to_summary_volatile(&self, now: TimestampMillis) -> UserSummaryVolatile {
         UserSummaryVolatile {
             total_chit_earned: self.total_chit_earned,
-            chit_balance: self.total_chit_earned - self.total_chit_spent,
+            chit_balance: self.chit_balance,
             streak: self.streak(now),
             max_streak: self.max_streak,
         }
@@ -186,18 +187,13 @@ impl User {
         self.date_updated = now;
     }
 
-    pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
-        self.cycle_top_ups.push(top_up.into())
+    pub fn set_profile_background_id(&mut self, profile_background_id: Option<u128>, now: TimestampMillis) {
+        self.profile_background_id = profile_background_id;
+        self.date_updated = now;
     }
 
-    pub fn pay_for_premium_item(&mut self, item_id: u32, cost: u32, now: TimestampMillis) -> bool {
-        if self.premium_items.insert(item_id) {
-            self.total_chit_spent += cost as i32;
-            self.date_updated = now;
-            true
-        } else {
-            false
-        }
+    pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
+        self.cycle_top_ups.push(top_up.into())
     }
 }
 
@@ -245,6 +241,7 @@ impl Default for User {
             date_updated: 0,
             cycle_top_ups: Vec::new(),
             avatar_id: None,
+            profile_background_id: None,
             registration_fee: None,
             account_billing: AccountBilling::default(),
             phone_status: PhoneStatus::None,
@@ -263,8 +260,7 @@ impl Default for User {
             latest_chit_event_previous_month: 0,
             unique_person_proof: None,
             total_chit_earned: 0,
-            total_chit_spent: 0,
-            premium_items: BTreeSet::new(),
+            chit_balance: 0,
         }
     }
 }

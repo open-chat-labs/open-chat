@@ -133,10 +133,10 @@ where
             let count = items.len();
             i.in_progress = i.in_progress.saturating_add(count);
 
-            if i.queue.is_empty() {
-                if let Some(timer_id) = i.timer_id.take() {
-                    ic_cdk_timers::clear_timer(timer_id);
-                }
+            if i.queue.is_empty()
+                && let Some(timer_id) = i.timer_id.take()
+            {
+                ic_cdk_timers::clear_timer(timer_id);
             }
         });
 

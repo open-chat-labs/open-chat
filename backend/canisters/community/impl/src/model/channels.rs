@@ -355,13 +355,13 @@ impl Channel {
         let is_community_member = user_id.is_some_and(|user_id| community_members.contains(&user_id));
         let member = user_id.and_then(|id| chat.members.get(&id));
 
-        if let Some(m) = &member {
-            if m.date_added() > since {
-                return ChannelUpdates::Added(
-                    self.summary(user_id, is_public_community, community_members)
-                        .expect("Channel should be accessible"),
-                );
-            }
+        if let Some(m) = &member
+            && m.date_added() > since
+        {
+            return ChannelUpdates::Added(
+                self.summary(user_id, is_public_community, community_members)
+                    .expect("Channel should be accessible"),
+            );
         }
 
         let can_view_latest_message = self.can_view_latest_message(member.is_some(), is_community_member, is_public_community);

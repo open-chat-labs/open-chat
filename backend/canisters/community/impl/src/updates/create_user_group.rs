@@ -24,11 +24,11 @@ fn create_user_group_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
     if !member.role().can_manage_user_groups(&state.data.permissions) {
         Err(OCErrorCode::InitiatorNotAuthorized.into())
     } else if let Err(error) = validate_user_group_name(&args.name) {
-        return Err(match error {
+        Err(match error {
             UsernameValidationError::TooShort(s) => OCErrorCode::NameTooShort.with_json(&s),
             UsernameValidationError::TooLong(l) => OCErrorCode::NameTooLong.with_json(&l),
             UsernameValidationError::Invalid => OCErrorCode::InvalidName.into(),
-        });
+        })
     } else {
         let now = state.env.now();
         let rng = state.env.rng();

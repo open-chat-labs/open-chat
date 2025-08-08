@@ -8,7 +8,7 @@ use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use types::{
-    Achievement, ChitEarnedReason, DiamondMembershipDetails, DiamondMembershipFees, DiamondMembershipPlanDuration,
+    Achievement, ChitEventType, DiamondMembershipDetails, DiamondMembershipFees, DiamondMembershipPlanDuration,
     DiamondMembershipSubscription, ReferralStatus,
 };
 
@@ -199,7 +199,7 @@ fn referrer_awarded_chit_when_referred_gets_diamond() {
         user_state
             .achievements
             .iter()
-            .any(|ev| if let ChitEarnedReason::Achievement(a) = &ev.reason {
+            .any(|ev| if let ChitEventType::Achievement(a) = &ev.reason {
                 matches!(a, Achievement::Referred1stUser)
             } else {
                 false

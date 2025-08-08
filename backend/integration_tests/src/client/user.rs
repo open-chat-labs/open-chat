@@ -33,6 +33,7 @@ generate_msgpack_update_call!(leave_group);
 generate_msgpack_update_call!(mark_message_activity_feed_read);
 generate_msgpack_update_call!(mark_read);
 generate_msgpack_update_call!(mute_notifications);
+generate_msgpack_update_call!(pay_for_premium_item);
 generate_msgpack_update_call!(pay_for_streak_insurance);
 generate_msgpack_update_call!(remove_reaction);
 generate_msgpack_update_call!(save_crypto_account);
@@ -41,6 +42,7 @@ generate_msgpack_update_call!(send_message_with_transfer_to_channel);
 generate_msgpack_update_call!(send_message_with_transfer_to_group);
 generate_msgpack_update_call!(set_message_reminder_v2);
 generate_msgpack_update_call!(set_pin_number);
+generate_msgpack_update_call!(set_profile_background);
 generate_update_call!(start_video_call_v2);
 generate_msgpack_update_call!(tip_message);
 generate_msgpack_update_call!(unblock_user);
@@ -574,6 +576,29 @@ pub mod happy_path {
         assert!(matches!(response, user_canister::unblock_user::Response::Success));
     }
 
+    pub fn pay_for_premium_item(
+        env: &mut PocketIc,
+        user: &User,
+        item_id: u32,
+        expected_cost: u32,
+    ) -> user_canister::pay_for_premium_item::SuccessResult {
+        let response = super::pay_for_premium_item(
+            env,
+            user.principal,
+            user.canister(),
+            &user_canister::pay_for_premium_item::Args {
+                item_id,
+                pay_in_chat: false,
+                expected_cost,
+            },
+        );
+
+        match response {
+            user_canister::pay_for_premium_item::Response::Success(result) => result,
+            response => panic!("'pay_for_premium_item' error: {response:?}"),
+        }
+    }
+
     pub fn pay_for_streak_insurance(env: &mut PocketIc, user: &User, additional_days: u8, expected_price: u128) {
         let pay_for_insurance_response = super::pay_for_streak_insurance(
             env,
@@ -597,5 +622,11 @@ pub mod happy_path {
     pub fn update_chat_settings(env: &mut PocketIc, user: &User, args: &user_canister::update_chat_settings::Args) {
         let response = super::update_chat_settings(env, user.principal, user.canister(), args);
         assert!(matches!(response, user_canister::update_chat_settings::Response::Success));
+    }
+
+    pub fn set_profile_background(env: &mut PocketIc, user: &User, args: &user_canister::set_profile_background::Args) {
+        let response = super::set_profile_background(env, user.principal, user.canister(), args);
+
+        assert!(matches!(response, user_canister::set_profile_background::Response::Success));
     }
 }

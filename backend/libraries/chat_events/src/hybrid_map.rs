@@ -216,12 +216,12 @@ impl<MSlow: EventsMap> DoubleEndedIterator for Iter<'_, MSlow> {
             }
             self.slow_backward_iter.as_mut().unwrap().next_back()
         };
-        if let Some(event) = &next {
-            if event.index > EventIndex::default() {
-                self.next_back = event.index.decr();
-                if self.next <= self.next_back {
-                    return next;
-                }
+        if let Some(event) = &next
+            && event.index > EventIndex::default()
+        {
+            self.next_back = event.index.decr();
+            if self.next <= self.next_back {
+                return next;
             }
         }
         self.finished = true;

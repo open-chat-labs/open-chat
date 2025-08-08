@@ -101,10 +101,10 @@ fn migrate_group_references_to_channel_references(
     );
 
     for (_, job) in data.timer_jobs.iter() {
-        if let Some(TimerJob::MessageReminder(mr)) = job.borrow_mut().as_mut() {
-            if mr.chat == Chat::Group(group_id) {
-                mr.chat = Chat::Channel(community_id, channel_id);
-            }
+        if let Some(TimerJob::MessageReminder(mr)) = job.borrow_mut().as_mut()
+            && mr.chat == Chat::Group(group_id)
+        {
+            mr.chat = Chat::Channel(community_id, channel_id);
         }
     }
 }

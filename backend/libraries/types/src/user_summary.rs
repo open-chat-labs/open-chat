@@ -35,6 +35,7 @@ pub struct UserSummaryStable {
     pub username: String,
     pub display_name: Option<String>,
     pub avatar_id: Option<u128>,
+    pub profile_background_id: Option<u128>,
     pub is_bot: bool,
     pub suspended: bool,
     pub diamond_membership_status: DiamondMembershipStatus,
@@ -57,6 +58,7 @@ pub struct CurrentUserSummary {
     pub username: String,
     pub display_name: Option<String>,
     pub avatar_id: Option<u128>,
+    pub profile_background_id: Option<u128>,
     pub is_bot: bool,
     pub is_platform_moderator: bool,
     pub is_platform_operator: bool,
@@ -70,5 +72,4 @@ pub struct CurrentUserSummary {
     pub chit_balance: i32,
     pub streak: u16,
     pub max_streak: u16,
-    pub premium_items: Vec<u32>,
 }

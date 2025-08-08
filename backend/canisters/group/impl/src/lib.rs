@@ -146,10 +146,10 @@ impl RuntimeState {
     }
 
     pub fn push_bot_notification(&mut self, notification: Option<BotNotification>) {
-        if let Some(notification) = notification {
-            if !notification.recipients.is_empty() {
-                self.push_notification_inner(Notification::Bot(notification));
-            }
+        if let Some(notification) = notification
+            && !notification.recipients.is_empty()
+        {
+            self.push_notification_inner(Notification::Bot(notification));
         }
     }
 
@@ -715,12 +715,11 @@ impl Data {
     }
 
     fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {
-        if self.invite_code_enabled {
-            if let Some(provided_code) = invite_code {
-                if let Some(stored_code) = self.invite_code {
-                    return provided_code == stored_code;
-                }
-            }
+        if self.invite_code_enabled
+            && let Some(provided_code) = invite_code
+            && let Some(stored_code) = self.invite_code
+        {
+            return provided_code == stored_code;
         }
 
         false

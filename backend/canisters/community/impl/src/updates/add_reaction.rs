@@ -79,8 +79,8 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
             .events
             .message_internal(EventIndex::default(), args.thread_root_message_index, args.message_id.into())
     {
-        if let Some(sender) = channel.chat.members.get(&message.sender) {
-            if message.sender != agent && !sender.user_type().is_bot() {
+        if let Some(sender) = channel.chat.members.get(&message.sender)
+            && message.sender != agent && !sender.user_type().is_bot() {
                 let community_id: CommunityId = state.env.canister_id().into();
 
                 let notifications_muted = channel
@@ -134,7 +134,6 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
 
                 state.notify_user_of_achievement(message.sender, Achievement::HadMessageReactedTo, now);
             }
-        }
 
         if new_achievement {
             state.notify_user_of_achievement(agent, Achievement::ReactedToMessage, now);

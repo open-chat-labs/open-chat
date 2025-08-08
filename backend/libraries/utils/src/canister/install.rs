@@ -137,10 +137,10 @@ fn should_deposit_cycles_and_retry(
         return ShouldDepositAndRetry::No;
     }
 
-    if let Err(error) = response {
-        if is_out_of_cycles_error(error.reject_code(), error.message()) {
-            return ShouldDepositAndRetry::Yes(CYCLES_REQUIRED_FOR_UPGRADE / 2);
-        }
+    if let Err(error) = response
+        && is_out_of_cycles_error(error.reject_code(), error.message())
+    {
+        return ShouldDepositAndRetry::Yes(CYCLES_REQUIRED_FOR_UPGRADE / 2);
     }
     ShouldDepositAndRetry::No
 }

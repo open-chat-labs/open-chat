@@ -354,10 +354,10 @@ impl ChatEvents {
                 let already_edited = message.last_edited.is_some();
                 message.last_edited = Some(args.now);
 
-                if args.finalise_bot_message {
-                    if let Some(bot_context) = message.bot_context_mut() {
-                        bot_context.finalised = true;
-                    }
+                if args.finalise_bot_message
+                    && let Some(bot_context) = message.bot_context_mut()
+                {
+                    bot_context.finalised = true;
                 }
 
                 if let Some(event_pusher) = event_pusher.as_mut() {
@@ -787,11 +787,11 @@ impl ChatEvents {
         update: ProposalUpdate,
         now: TimestampMillis,
     ) -> Result<ProposalRewardStatus, UpdateEventError> {
-        if message.sender == user_id {
-            if let MessageContentInternal::GovernanceProposal(p) = &mut message.content {
-                p.proposal.update_status(update.into(), now);
-                return Ok(p.proposal.reward_status());
-            }
+        if message.sender == user_id
+            && let MessageContentInternal::GovernanceProposal(p) = &mut message.content
+        {
+            p.proposal.update_status(update.into(), now);
+            return Ok(p.proposal.reward_status());
         }
         Err(UpdateEventError::NotFound)
     }
@@ -1455,15 +1455,15 @@ impl ChatEvents {
     }
 
     fn cancel_p2p_swap_inner(message: &mut MessageInternal, user_id: UserId) -> Result<u32, UpdateEventError<OCErrorCode>> {
-        if message.sender == user_id {
-            if let MessageContentInternal::P2PSwap(content) = &mut message.content {
-                return if content.cancel() {
-                    let swap_id = content.swap_id;
-                    Ok(swap_id)
-                } else {
-                    Err(UpdateEventError::NoChange(content.status.error_code()))
-                };
-            }
+        if message.sender == user_id
+            && let MessageContentInternal::P2PSwap(content) = &mut message.content
+        {
+            return if content.cancel() {
+                let swap_id = content.swap_id;
+                Ok(swap_id)
+            } else {
+                Err(UpdateEventError::NoChange(content.status.error_code()))
+            };
         }
         Err(UpdateEventError::NotFound)
     }
@@ -1531,13 +1531,12 @@ impl ChatEvents {
                 true,
                 ChatEventType::MessageOther,
                 |message, _| {
-                    if let Some(r) = message.replies_to.as_mut() {
-                        if let Some((chat, _)) = r.chat_if_other.as_mut() {
-                            if *chat == old {
-                                *chat = new;
-                                return Ok(());
-                            }
-                        }
+                    if let Some(r) = message.replies_to.as_mut()
+                        && let Some((chat, _)) = r.chat_if_other.as_mut()
+                        && *chat == old
+                    {
+                        *chat = new;
+                        return Ok(());
                     }
                     Err(UpdateEventError::NoChange(()))
                 },
@@ -1859,8 +1858,8 @@ impl ChatEvents {
             return None;
         }
 
-        if let Some(last_event_index) = self.latest_event_index() {
-            if self
+        if let Some(last_event_index) = self.latest_event_index()
+            && self
                 .update_event(None, last_event_index.into(), EventIndex::default(), Some(now), |event| {
                     // If the last event is of type `MembersAddedToPublicChannel` then add this user_id to that
                     // event and mark the event as updated, else push a new event
@@ -1873,10 +1872,9 @@ impl ChatEvents {
                     }
                 })
                 .is_ok()
-            {
-                return None;
-            };
-        }
+        {
+            return None;
+        };
 
         self.push_main_event(
             ChatEventInternal::MembersAddedToPublicChannel(Box::new(MembersAddedToPublicChannelInternal { user_ids })),
@@ -1916,11 +1914,11 @@ impl ChatEvents {
         result
     }
 
-    pub fn main_events_reader(&self) -> ChatEventsListReader {
+    pub fn main_events_reader(&self) -> ChatEventsListReader<'_> {
         ChatEventsListReader::new(&self.main, &self.last_updated_timestamps)
     }
 
-    pub fn visible_main_events_reader(&self, min_visible_event_index: EventIndex) -> ChatEventsListReader {
+    pub fn visible_main_events_reader(&self, min_visible_event_index: EventIndex) -> ChatEventsListReader<'_> {
         ChatEventsListReader::with_min_visible_event_index(
             &self.main,
             &self.last_updated_timestamps,
@@ -1934,7 +1932,7 @@ impl ChatEvents {
         min_visible_event_index: EventIndex,
         thread_root_message_index: Option<MessageIndex>,
         bot_permitted_event_types: Option<HashSet<ChatEventCategory>>,
-    ) -> Option<ChatEventsListReader> {
+    ) -> Option<ChatEventsListReader<'_>> {
         let events_list = self.events_list(min_visible_event_index, thread_root_message_index)?;
 
         if thread_root_message_index.is_some() {
@@ -2293,11 +2291,11 @@ impl ChatEvents {
         let result = event_list.update_event(event_key, update_event_fn);
         let latest_event_index = event_list.latest_event_index().unwrap_or_default();
 
-        if let Some(now) = now_if_should_mark_updated {
-            if let Ok(success) = &result {
-                self.last_updated_timestamps
-                    .mark_updated(thread_root_message_index, success.event_index, now);
-            }
+        if let Some(now) = now_if_should_mark_updated
+            && let Ok(success) = &result
+        {
+            self.last_updated_timestamps
+                .mark_updated(thread_root_message_index, success.event_index, now);
         }
 
         result.map(|success| UpdateEventSuccess {

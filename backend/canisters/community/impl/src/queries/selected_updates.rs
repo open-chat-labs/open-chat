@@ -97,15 +97,15 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
     for (user_id, update) in state.data.bots.iter_latest_updates(args.updates_since) {
         match update {
             BotUpdate::Added | BotUpdate::Updated => {
-                if bots_changed.insert(user_id) {
-                    if let Some(bot) = state.data.bots.get(&user_id) {
-                        result.bots_added_or_updated.push(InstalledBotDetails {
-                            user_id,
-                            added_by: bot.added_by,
-                            permissions: bot.permissions.clone(),
-                            autonomous_permissions: bot.autonomous_permissions.clone(),
-                        });
-                    }
+                if bots_changed.insert(user_id)
+                    && let Some(bot) = state.data.bots.get(&user_id)
+                {
+                    result.bots_added_or_updated.push(InstalledBotDetails {
+                        user_id,
+                        added_by: bot.added_by,
+                        permissions: bot.permissions.clone(),
+                        autonomous_permissions: bot.autonomous_permissions.clone(),
+                    });
                 }
             }
             BotUpdate::Removed => {

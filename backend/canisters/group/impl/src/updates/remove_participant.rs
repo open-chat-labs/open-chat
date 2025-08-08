@@ -102,14 +102,14 @@ fn prepare(
             }
         };
 
-        if let Caller::BotV2(bot_caller) = &caller {
-            if !state.data.is_bot_permitted(
+        if let Caller::BotV2(bot_caller) = &caller
+            && !state.data.is_bot_permitted(
                 &bot_caller.bot,
                 &bot_caller.initiator,
                 &BotPermissions::from_chat_permission(ChatPermission::RemoveMembers),
-            ) {
-                return Err(OCErrorCode::InitiatorNotAuthorized.into());
-            }
+            )
+        {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }
 
         if let Some(initiator) = caller.initiator() {

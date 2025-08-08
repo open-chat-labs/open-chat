@@ -1,3 +1,4 @@
+use crate::model::chit_events::ChitEvents;
 use crate::model::communities::Communities;
 use crate::model::community::Community;
 use crate::model::direct_chats::DirectChats;
@@ -7,6 +8,7 @@ use crate::model::hot_group_exclusions::HotGroupExclusions;
 use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use crate::model::p2p_swaps::P2PSwaps;
 use crate::model::pin_number::PinNumber;
+use crate::model::premium_items::PremiumItems;
 use crate::model::token_swaps::TokenSwaps;
 use crate::model::user_canister_event_batch::UserCanisterEventBatch;
 use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, DeleteFileReferencesJob, RemoveExpiredEventsJob, TimerJob};
@@ -19,7 +21,6 @@ use event_store_types::{Event, EventBuilder};
 use fire_and_forget_handler::FireAndForgetHandler;
 use installed_bots::InstalledBots;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
-use model::chit_earned_events::ChitEarnedEvents;
 use model::contacts::Contacts;
 use model::favourite_chats::FavouriteChats;
 use model::message_activity_events::MessageActivityEvents;
@@ -35,10 +36,10 @@ use std::collections::{BTreeMap, HashSet};
 use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
-    Achievement, BotInitiator, BotNotification, BotPermissions, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics,
-    ChitEarned, ChitEarnedReason, CommunityId, Cycles, Document, IdempotentEnvelope, Milliseconds, Notification, NotifyChit,
-    TimestampMillis, Timestamped, UniquePersonProof, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment,
-    UserId, UserNotification, UserNotificationPayload,
+    Achievement, BotInitiator, BotNotification, BotPermissions, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEvent,
+    ChitEventType, CommunityId, Cycles, Document, IdempotentEnvelope, Milliseconds, Notification, NotifyChit, TimestampMillis,
+    Timestamped, UniquePersonProof, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
+    UserNotification, UserNotificationPayload,
 };
 use user_canister::{MessageActivityEvent, NamedAccount, UserCanisterEvent, WalletConfig};
 use utils::env::Environment;
@@ -132,11 +133,10 @@ impl RuntimeState {
         let mut files_to_delete = Vec::new();
         for chat in self.data.direct_chats.iter_mut() {
             let result = chat.events.remove_expired_events(now);
-            if let Some(expiry) = chat.events.next_event_expiry() {
-                if next_event_expiry.is_none_or(|current| expiry < current) {
+            if let Some(expiry) = chat.events.next_event_expiry()
+                && next_event_expiry.is_none_or(|current| expiry < current) {
                     next_event_expiry = Some(expiry);
                 }
-            }
             files_to_delete.extend(result.files);
         }
 
@@ -183,10 +183,10 @@ impl RuntimeState {
     }
 
     pub fn mark_streak_insurance_claim(&mut self, claim: UserCanisterStreakInsuranceClaim) {
-        self.data.chit_events.push(ChitEarned {
+        self.data.chit_events.push(ChitEvent {
             amount: 0,
             timestamp: claim.timestamp,
-            reason: ChitEarnedReason::StreakInsuranceClaim,
+            reason: ChitEventType::StreakInsuranceClaim,
         });
         let user_id: UserId = self.env.canister_id().into();
         let new_streak = claim.streak_length;
@@ -246,14 +246,13 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
     }
 
     pub fn push_bot_notification(&mut self, notification: Option<BotNotification>) {
-        if let Some(notification) = notification {
-            if !notification.recipients.is_empty() {
+        if let Some(notification) = notification
+            && !notification.recipients.is_empty() {
                 self.push_local_user_index_canister_event(
                     LocalUserIndexEvent::Notification(Box::new(Notification::Bot(notification))),
                     self.env.now(),
                 );
             }
-        }
     }
 
     pub fn push_local_user_index_canister_event(&mut self, event: LocalUserIndexEvent, now: TimestampMillis) {
@@ -297,10 +296,10 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
 
     pub fn award_external_achievement(&mut self, name: String, chit_reward: u32, now: TimestampMillis) -> bool {
         if self.data.external_achievements.insert(name.clone()) {
-            self.data.chit_events.push(ChitEarned {
+            self.data.chit_events.push(ChitEvent {
                 amount: chit_reward as i32,
                 timestamp: now,
-                reason: ChitEarnedReason::ExternalAchievement(name),
+                reason: ChitEventType::ExternalAchievement(name),
             });
 
             self.notify_user_index_of_chit(now);
@@ -316,7 +315,7 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
             LocalUserIndexEvent::NotifyChit(NotifyChit {
                 timestamp: now,
                 total_chit_earned: self.data.chit_events.total_chit_earned(),
-                chit_balance: self.data.chit_events.balance_for_month_by_timestamp(now),
+                chit_balance: self.data.chit_events.chit_balance(),
                 streak: self.data.streak.days(now),
                 streak_ends: self.data.streak.ends(),
             }),
@@ -359,7 +358,8 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
             timer_jobs: self.data.timer_jobs.len() as u32,
             queued_user_events: self.data.user_canister_events_queue.len() as u32,
             queued_local_index_events: self.data.local_user_index_event_sync_queue.len() as u32,
-            chit_balance: self.data.chit_events.balance_for_month_by_timestamp(now),
+            total_chit_earned: self.data.chit_events.total_chit_earned(),
+            chit_balance: self.data.chit_events.chit_balance(),
             streak: self.data.streak.days(now),
             streak_ends: self.data.streak.ends(),
             max_streak: self.data.streak.max_streak(),
@@ -418,6 +418,8 @@ struct Data {
     pub identity_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
     pub avatar: Timestamped<Option<Document>>,
+    #[serde(default)]
+    pub profile_background: Timestamped<Option<Document>>,
     pub test_mode: bool,
     pub is_platform_moderator: bool,
     pub hot_group_exclusions: HotGroupExclusions,
@@ -440,7 +442,7 @@ struct Data {
     pub video_call_operators: Vec<Principal>,
     pub pin_number: PinNumber,
     pub btc_address: Option<Timestamped<String>>,
-    pub chit_events: ChitEarnedEvents,
+    pub chit_events: ChitEvents,
     pub streak: Streak,
     pub achievements: HashSet<Achievement>,
     pub external_achievements: HashSet<String>,
@@ -455,6 +457,8 @@ struct Data {
     pub local_user_index_event_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
     pub idempotency_checker: IdempotencyChecker,
     pub bots: InstalledBots,
+    #[serde(default)]
+    pub premium_items: PremiumItems,
 }
 
 impl Data {
@@ -485,6 +489,7 @@ impl Data {
             identity_canister_id,
             escrow_canister_id,
             avatar: Timestamped::default(),
+            profile_background: Timestamped::default(),
             test_mode,
             is_platform_moderator: false,
             hot_group_exclusions: HotGroupExclusions::default(),
@@ -507,7 +512,7 @@ impl Data {
             video_call_operators,
             pin_number: PinNumber::default(),
             btc_address: None,
-            chit_events: ChitEarnedEvents::default(),
+            chit_events: ChitEvents::default(),
             streak: Streak::default(),
             achievements: HashSet::new(),
             external_achievements: HashSet::new(),
@@ -522,6 +527,7 @@ impl Data {
             local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, true),
             idempotency_checker: IdempotencyChecker::default(),
             bots: InstalledBots::default(),
+            premium_items: PremiumItems::default(),
         }
     }
 
@@ -564,10 +570,10 @@ impl Data {
     pub fn award_achievement(&mut self, achievement: Achievement, now: TimestampMillis) -> bool {
         if self.achievements.insert(achievement) {
             let amount = achievement.chit_reward() as i32;
-            self.chit_events.push(ChitEarned {
+            self.chit_events.push(ChitEvent {
                 amount,
                 timestamp: now,
-                reason: ChitEarnedReason::Achievement(achievement),
+                reason: ChitEventType::Achievement(achievement),
             });
             true
         } else {
@@ -642,6 +648,7 @@ pub struct Metrics {
     pub timer_jobs: u32,
     pub queued_user_events: u32,
     pub queued_local_index_events: u32,
+    pub total_chit_earned: i32,
     pub chit_balance: i32,
     pub streak: u16,
     pub streak_ends: TimestampMillis,

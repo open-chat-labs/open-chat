@@ -66,12 +66,12 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let message_index = result.message_event.event.message_index;
     let expires_at = result.message_event.expires_at;
 
-    if let Some(expiry) = expires_at {
-        if state.data.next_event_expiry.is_none_or(|ex| expiry < ex) {
-            let timer_jobs = &mut state.data.timer_jobs;
-            timer_jobs.cancel_jobs(|j| matches!(j, TimerJob::RemoveExpiredEvents(_)));
-            timer_jobs.enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
-        }
+    if let Some(expiry) = expires_at
+        && state.data.next_event_expiry.is_none_or(|ex| expiry < ex)
+    {
+        let timer_jobs = &mut state.data.timer_jobs;
+        timer_jobs.cancel_jobs(|j| matches!(j, TimerJob::RemoveExpiredEvents(_)));
+        timer_jobs.enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
     }
 
     let notification = UserNotificationPayload::GroupMessage(GroupMessageNotification {
