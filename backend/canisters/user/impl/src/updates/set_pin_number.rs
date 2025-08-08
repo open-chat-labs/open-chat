@@ -2,9 +2,9 @@ use crate::guards::caller_is_owner;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use constants::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
-use ic_certificate_verification::VerifyCertificate;
-use identity_utils::extract_certificate;
+// use constants::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
+// use ic_certificate_verification::VerifyCertificate;
+// use identity_utils::extract_certificate;
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, FieldTooLongResult, FieldTooShortResult, OCResult};
 use user_canister::set_pin_number::*;
@@ -29,26 +29,26 @@ fn set_pin_number_impl(args: Args, state: &mut RuntimeState) -> OCResult {
                     return Err(error.into());
                 }
             }
-            PinNumberVerification::Delegation(delegation) => {
-                let certificate = match extract_certificate(&delegation.signature) {
-                    Ok(c) => c,
-                    Err(e) => return Err(OCErrorCode::MalformedSignature.with_message(e)),
-                };
-
-                let now_nanos = (now * NANOS_PER_MILLISECOND) as u128;
-                let five_minutes = (5 * MINUTE_IN_MS * NANOS_PER_MILLISECOND) as u128;
-
-                if certificate
-                    .verify(
-                        state.data.identity_canister_id.as_slice(),
-                        &ic_cdk::api::root_key(),
-                        &now_nanos,
-                        &five_minutes,
-                    )
-                    .is_err()
-                {
-                    return Err(OCErrorCode::DelegationTooOld.into());
-                };
+            PinNumberVerification::Delegation(_delegation) => {
+                // let certificate = match extract_certificate(&delegation.signature) {
+                //     Ok(c) => c,
+                //     Err(e) => return Err(OCErrorCode::MalformedSignature.with_message(e)),
+                // };
+                //
+                // let now_nanos = (now * NANOS_PER_MILLISECOND) as u128;
+                // let five_minutes = (5 * MINUTE_IN_MS * NANOS_PER_MILLISECOND) as u128;
+                //
+                // if certificate
+                //     .verify(
+                //         state.data.identity_canister_id.as_slice(),
+                //         &ic_cdk::api::root_key(),
+                //         &now_nanos,
+                //         &five_minutes,
+                //     )
+                //     .is_err()
+                // {
+                //     return Err(OCErrorCode::DelegationTooOld.into());
+                // };
             }
         }
     }
