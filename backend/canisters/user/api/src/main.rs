@@ -53,6 +53,7 @@ fn main() {
     generate_ts_method!(user, mark_read);
     generate_ts_method!(user, mute_notifications);
     generate_ts_method!(user, pay_for_streak_insurance);
+    generate_ts_method!(user, pay_for_premium_item);
     generate_ts_method!(user, pin_chat_v2);
     generate_ts_method!(user, remove_reaction);
     generate_ts_method!(user, report_message);

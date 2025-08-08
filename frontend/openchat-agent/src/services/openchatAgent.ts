@@ -28,7 +28,7 @@ import type {
     ChatStateFull,
     ChatSummary,
     CheckUsernameResponse,
-    ChitEarned,
+    ChitEvent,
     ChitEventsRequest,
     ChitEventsResponse,
     ChitLeaderboardResponse,
@@ -1713,7 +1713,7 @@ export class OpenChatAgent extends EventTarget {
         let favouriteChats: Updatable<ChatIdentifier[]>;
         let pinNumberSettings: UpdatableOption<PinNumberSettings>;
         let achievements: Updatable<Set<string>>;
-        let newAchievements: Updatable<ChitEarned[]>;
+        let newAchievements: Updatable<ChitEvent[]>;
         let achievementsLastSeen: bigint;
         let chitState: Updatable<ChitState>;
         let referrals: Updatable<Referral[]>;
@@ -1722,12 +1722,13 @@ export class OpenChatAgent extends EventTarget {
         let installedBots: Updatable<Map<string, GrantedBotPermissions>>;
         let bitcoinAddress: Updatable<string | undefined>;
         let streakInsurance: UpdatableOption<StreakInsurance>;
+        let premiumItems: Updatable<Set<PremiumItem>>;
 
         let suspensionChanged: boolean | undefined = undefined;
         let latestUserCanisterUpdates: bigint;
         let anyUpdates = false;
 
-        const processAchievementsResponse = (achievementsResponse: ChitEarned[]) => {
+        const processAchievementsResponse = (achievementsResponse: ChitEvent[]) => {
             if (achievementsResponse.length > 0) {
                 achievementsResponse.forEach((a) => {
                     if (a.timestamp > achievementsLastSeen) {
@@ -1790,6 +1791,7 @@ export class OpenChatAgent extends EventTarget {
             installedBots = new Updatable(userResponse.bots, true);
             bitcoinAddress = new Updatable(userResponse.bitcoinAddress, true);
             streakInsurance = new UpdatableOption(userResponse.streakInsurance, true);
+            premiumItems = new Updatable(userResponse.premiumItems, true);
         } else {
             userCanisterLocalUserIndex = current.userCanisterLocalUserIndex;
             latestUserCanisterUpdates = current.latestUserCanisterUpdates;
@@ -1816,6 +1818,7 @@ export class OpenChatAgent extends EventTarget {
             installedBots = new Updatable(current.installedBots);
             bitcoinAddress = new Updatable(current.bitcoinAddress);
             streakInsurance = new UpdatableOption(current.streakInsurance);
+            premiumItems = new Updatable(current.premiumItems);
 
             try {
                 totalQueryCount++;
@@ -1898,6 +1901,7 @@ export class OpenChatAgent extends EventTarget {
                     );
                     bitcoinAddress.updateIfNotUndefined(userResponse.bitcoinAddress);
                     streakInsurance.applyOptionUpdate(userResponse.streakInsurance);
+                    premiumItems.updateIfNotUndefined(userResponse.premiumItems);
                 }
             } catch (error) {
                 console.error("Failed to get updates from User canister", error);
@@ -2061,6 +2065,7 @@ export class OpenChatAgent extends EventTarget {
             installedBots: installedBots.value,
             bitcoinAddress: bitcoinAddress.value,
             streakInsurance: streakInsurance.value,
+            premiumItems: premiumItems.value,
         };
 
         const updatedEvents = getUpdatedEvents(directChatUpdates, groupUpdates, communityUpdates);
@@ -2146,6 +2151,7 @@ export class OpenChatAgent extends EventTarget {
             bitcoinAddress: bitcoinAddress.valueIfUpdated(),
             streakInsurance: streakInsurance.toOptionUpdate(),
             suspensionChanged,
+            premiumItems: premiumItems.valueIfUpdated(),
         };
     }
 
@@ -4571,7 +4577,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     payForPremiumItem(item: PremiumItem): Promise<PayForPremiumItemResponse> {
-        return this._userIndexClient.payForPremiumItem(item);
+        return this.userClient.payForPremiumItem(item);
     }
 }
 

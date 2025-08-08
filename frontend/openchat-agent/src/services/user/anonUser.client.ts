@@ -43,10 +43,12 @@ import type {
     MessageContext,
     NamedAccount,
     OptionUpdate,
+    PayForPremiumItemResponse,
     PayForStreakInsuranceResponse,
     PendingCryptocurrencyTransfer,
     PendingCryptocurrencyWithdrawal,
     PinChatResponse,
+    PremiumItem,
     PublicProfile,
     Rules,
     SaveCryptoAccountResponse,
@@ -130,6 +132,7 @@ export class AnonUserClient {
             },
             bots: new Map(),
             bitcoinAddress: undefined,
+            premiumItems: new Set(),
         });
     }
 
@@ -525,10 +528,11 @@ export class AnonUserClient {
         throw new AnonymousOperationError();
     }
 
-    updateChatSettings(
-        _userId: string,
-        _eventsTtl: OptionUpdate<bigint>
-    ): Promise<boolean> {
+    updateChatSettings(_userId: string, _eventsTtl: OptionUpdate<bigint>): Promise<boolean> {
+        throw new AnonymousOperationError();
+    }
+
+    payForPremiumItem(_item: PremiumItem): Promise<PayForPremiumItemResponse> {
         throw new AnonymousOperationError();
     }
 }

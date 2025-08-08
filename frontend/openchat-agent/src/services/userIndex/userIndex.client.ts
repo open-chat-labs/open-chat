@@ -12,8 +12,6 @@ import type {
     ExternalAchievementsResponse,
     ExternalBot,
     PayForDiamondMembershipResponse,
-    PayForPremiumItemResponse,
-    PremiumItem,
     SetDisplayNameResponse,
     SetUsernameResponse,
     SetUserUpgradeConcurrencyResponse,
@@ -29,12 +27,12 @@ import type {
 import {
     mergeUserSummaryWithUpdates,
     offline,
-    premiumPrices,
     Stream,
     userSummaryFromCurrentUserSummary,
 } from "openchat-shared";
 import {
     Empty,
+    SuccessOnly,
     UserIndexBotUpdatesArgs,
     UserIndexBotUpdatesResponse,
     UserIndexCheckUsernameArgs,
@@ -48,8 +46,6 @@ import {
     UserIndexExternalAchievementsResponse,
     UserIndexPayForDiamondMembershipArgs,
     UserIndexPayForDiamondMembershipResponse,
-    UserIndexPayForPremiumItemArgs,
-    UserIndexPayForPremiumItemResponse,
     UserIndexPlatformModeratorsGroupResponse,
     UserIndexRegisterBotArgs,
     UserIndexRegisterBotResponse,
@@ -64,11 +60,9 @@ import {
     UserIndexSetDisplayNameArgs,
     UserIndexSetDisplayNameResponse,
     UserIndexSetModerationFlagsArgs,
-    UserIndexSetModerationFlagsResponse,
     UserIndexSetUsernameArgs,
     UserIndexSetUsernameResponse,
     UserIndexSetUserUpgradeConcurrencyArgs,
-    UserIndexSetUserUpgradeConcurrencyResponse,
     UserIndexSubmitProofOfUniquePersonhoodArgs,
     UserIndexSubmitProofOfUniquePersonhoodResponse,
     UserIndexSuspendUserArgs,
@@ -117,7 +111,6 @@ import {
     exploreBotsResponse,
     externalAchievementsResponse,
     payForDiamondMembershipResponse,
-    payForPremiumItemResponse,
     setDisplayNameResponse,
     setUsernameResponse,
     submitProofOfUniquePersonhoodResponse,
@@ -177,7 +170,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
             },
             (_) => true,
             UserIndexSetModerationFlagsArgs,
-            UserIndexSetModerationFlagsResponse,
+            SuccessOnly,
         );
     }
 
@@ -526,7 +519,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
             { value },
             () => "success",
             UserIndexSetUserUpgradeConcurrencyArgs,
-            UserIndexSetUserUpgradeConcurrencyResponse,
+            SuccessOnly,
         );
     }
 
@@ -732,20 +725,6 @@ export class UserIndexClient extends MsgpackCanisterAgent {
             (resp) => botUpdatesResponse(resp, current, this.blobUrlPattern, this.canisterId),
             UserIndexBotUpdatesArgs,
             UserIndexBotUpdatesResponse,
-        );
-    }
-
-    payForPremiumItem(item: PremiumItem): Promise<PayForPremiumItemResponse> {
-        return this.executeMsgpackUpdate(
-            "pay_for_premium_item",
-            {
-                item_id: item,
-                pay_in_chat: false,
-                expected_cost: premiumPrices[item],
-            },
-            payForPremiumItemResponse,
-            UserIndexPayForPremiumItemArgs,
-            UserIndexPayForPremiumItemResponse,
         );
     }
 }

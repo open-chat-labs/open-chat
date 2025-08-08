@@ -22,8 +22,6 @@ import type {
     ExternalAchievementsResponse,
     ExternalBot,
     PayForDiamondMembershipResponse,
-    PayForPremiumItemResponse,
-    PayForPremiumItemSuccess,
     SetDisplayNameResponse,
     SetUsernameResponse,
     SubmitProofOfUniquePersonhoodResponse,
@@ -67,8 +65,6 @@ import type {
     UserIndexExternalAchievementsExternalAchievement,
     UserIndexExternalAchievementsResponse,
     UserIndexPayForDiamondMembershipResponse,
-    UserIndexPayForPremiumItemResponse,
-    UserIndexPayForPremiumItemSuccessResult,
     UserIndexSearchResponse,
     UserIndexSetDisplayNameResponse,
     UserIndexSetUsernameResponse,
@@ -86,12 +82,7 @@ import {
     principalBytesToString,
     principalStringToBytes,
 } from "../../utils/mapping";
-import {
-    apiExternalBotPermissions,
-    externalBotDefinition,
-    mapResult,
-    ocError,
-} from "../common/chatMappersV2";
+import { apiExternalBotPermissions, externalBotDefinition, ocError } from "../common/chatMappersV2";
 import { apiMemberRole } from "../community/mappersV2";
 
 export function apiBotInstallLocation(domain: BotInstallationLocation): ApiBotInstallationLocation {
@@ -103,23 +94,6 @@ export function apiBotInstallLocation(domain: BotInstallationLocation): ApiBotIn
         case "direct_chat":
             return { User: principalStringToBytes(domain.userId) };
     }
-}
-
-export function payForPremiumItemResponse(
-    value: UserIndexPayForPremiumItemResponse,
-): PayForPremiumItemResponse {
-    console.log("PayForPremiumItem response: ", value);
-    return mapResult(value, payForPremiumItemSuccess);
-}
-
-export function payForPremiumItemSuccess(
-    value: UserIndexPayForPremiumItemSuccessResult,
-): PayForPremiumItemSuccess {
-    return {
-        kind: "success",
-        totalChitEarned: value.total_chit_earned,
-        chitBalance: value.chit_balance,
-    };
 }
 
 export function botUpdatesResponse(
@@ -245,7 +219,6 @@ export function currentUserSummary(
         chitBalance: value.chit_balance,
         streak: value.streak,
         maxStreak: value.max_streak,
-        premiumItems: new Set(value.premium_items),
     };
 }
 
@@ -345,7 +318,6 @@ export function currentUserResponse(value: UserIndexCurrentUserResponse): Curren
             chitBalance: value.Success.chit_balance,
             streak: value.Success.streak,
             maxStreak: value.Success.max_streak,
-            premiumItems: new Set(value.Success.premium_items),
         };
     }
 

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { currentUserStore, PremiumItem, premiumPrices } from "openchat-client";
+    import { PremiumItem, premiumItemsStore, premiumPrices } from "openchat-client";
     import { type Snippet } from "svelte";
     import Lock from "svelte-material-icons/Lock.svelte";
     import PremiumItemPayment from "./PremiumItemPayment.svelte";
@@ -17,7 +17,7 @@
 
     let { onClick, children, item }: Props = $props();
     let showPayGate = $state(false);
-    let hasFeature = $derived($currentUserStore.premiumItems.has(item));
+    let hasFeature = $derived($premiumItemsStore.has(item));
 
     let wrappedClick = $derived.by(() => {
         return () => {

@@ -48,9 +48,8 @@ import {
     LocalUserIndexRegisterUserArgs,
     LocalUserIndexRegisterUserResponse,
     LocalUserIndexUninstallBotArgs,
-    LocalUserIndexUninstallBotResponse,
     LocalUserIndexWithdrawFromIcpswapArgs,
-    LocalUserIndexWithdrawFromIcpswapResponse,
+    SuccessOnly,
     MultiUserChat as TMultiUserChat,
     UnitResult,
 } from "../../typebox";
@@ -437,7 +436,7 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
                 return resp === "Success";
             },
             LocalUserIndexUninstallBotArgs,
-            LocalUserIndexUninstallBotResponse,
+            SuccessOnly,
         );
     }
 
@@ -469,7 +468,7 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
             },
             withdrawFromIcpSwapResponse,
             LocalUserIndexWithdrawFromIcpswapArgs,
-            LocalUserIndexWithdrawFromIcpswapResponse,
+            SuccessOnly,
         );
     }
 }

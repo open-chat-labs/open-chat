@@ -43,7 +43,7 @@ import type {
     LocalUserIndexJoinChannelResponse,
     LocalUserIndexJoinCommunityResponse,
     LocalUserIndexRegisterUserResponse,
-    LocalUserIndexWithdrawFromIcpswapResponse,
+    SuccessOnly,
     VerifiedCredentialGateArgs as TVerifiedCredentialGateArgs,
     VideoCallType as TVideoCallType,
 } from "../../typebox";
@@ -315,7 +315,10 @@ export async function chatEventsBatchResponse(
     };
 }
 
-export function activeProposalTalliesResponse(chatIds: MultiUserChatIdentifier[], value: LocalUserIndexActiveProposalTalliesResponse): Map<MultiUserChatIdentifier, [number, Tally][]> {
+export function activeProposalTalliesResponse(
+    chatIds: MultiUserChatIdentifier[],
+    value: LocalUserIndexActiveProposalTalliesResponse,
+): Map<MultiUserChatIdentifier, [number, Tally][]> {
     const responses = value.Success.responses;
     if (chatIds.length !== responses.length) {
         console.error("Invalid activeProposalTalliesResponse", chatIds, responses.length);
@@ -465,9 +468,7 @@ export function apiVerifiedCredentialArgs(
     };
 }
 
-export function withdrawFromIcpSwapResponse(
-    value: LocalUserIndexWithdrawFromIcpswapResponse,
-): boolean {
+export function withdrawFromIcpSwapResponse(value: SuccessOnly): boolean {
     console.log("Withdraw from ICPSwap response", value);
     return value === "Success";
 }

@@ -45,10 +45,12 @@ import type {
     MessageContext,
     NamedAccount,
     OptionUpdate,
+    PayForPremiumItemResponse,
     PayForStreakInsuranceResponse,
     PendingCryptocurrencyTransfer,
     PendingCryptocurrencyWithdrawal,
     PinChatResponse,
+    PremiumItem,
     PublicProfile,
     Rules,
     SaveCryptoAccountResponse,
@@ -76,17 +78,18 @@ import {
     MAX_EVENTS,
     MAX_MESSAGES,
     MAX_MISSING,
+    premiumPrices,
     ResponseTooLargeError,
     toBigInt32,
 } from "openchat-shared";
 import type { AgentConfig } from "../../config";
 import {
+    SuccessOnly,
     Empty as TEmpty,
     UnitResult,
     UserAcceptP2pSwapArgs,
     UserAcceptP2pSwapResponse,
     UserAddHotGroupExclusionsArgs,
-    UserAddHotGroupExclusionsResponse,
     UserAddReactionArgs,
     UserApproveTransferArgs,
     UserArchiveUnarchiveChatsArgs,
@@ -94,7 +97,6 @@ import {
     UserBioResponse,
     UserBlockUserArgs,
     UserCancelMessageReminderArgs,
-    UserCancelMessageReminderResponse,
     UserCancelP2pSwapArgs,
     UserChatInList,
     UserChitEventsArgs,
@@ -102,7 +104,6 @@ import {
     UserClaimDailyChitArgs,
     UserClaimDailyChitResponse,
     UserConfigureWalletArgs,
-    UserConfigureWalletResponse,
     UserCreateCommunityArgs,
     UserCreateCommunityResponse,
     UserCreateGroupArgs,
@@ -126,17 +127,16 @@ import {
     UserLocalUserIndexResponse,
     UserManageFavouriteChatsArgs,
     UserMarkAchievementsSeenArgs,
-    UserMarkAchievementsSeenResponse,
     UserMarkMessageActivityFeedReadArgs,
-    UserMarkMessageActivityFeedReadResponse,
     UserMarkReadArgs,
     UserMarkReadChannelMessagesRead,
     UserMarkReadChatMessagesRead,
-    UserMarkReadResponse,
     UserMessageActivityFeedArgs,
     UserMessageActivityFeedResponse,
     UserMuteNotificationsArgs,
     UserNamedAccount,
+    UserPayForPremiumItemArgs,
+    UserPayForPremiumItemResponse,
     UserPayForStreakInsuranceArgs,
     UserPinChatArgs,
     UserPublicProfileResponse,
@@ -154,7 +154,6 @@ import {
     UserSetAvatarArgs,
     UserSetBioArgs,
     UserSetCommunityIndexesArgs,
-    UserSetCommunityIndexesResponse,
     UserSetMessageReminderArgs,
     UserSetMessageReminderResponse,
     UserSetPinNumberArgs,
@@ -232,6 +231,7 @@ import {
     getUpdatesResponse,
     initialStateResponse,
     messageActivityFeedResponse,
+    payForPremiumItemResponse,
     publicProfileResponse,
     savedCryptoAccountsResponse,
     searchDirectChatSuccess,
@@ -1032,7 +1032,7 @@ export class UserClient extends MsgpackCanisterAgent {
             this.markMessageArgs(request),
             (_) => "success",
             UserMarkReadArgs,
-            UserMarkReadResponse,
+            SuccessOnly,
         );
     }
 
@@ -1183,7 +1183,7 @@ export class UserClient extends MsgpackCanisterAgent {
             },
             toVoid,
             UserAddHotGroupExclusionsArgs,
-            UserAddHotGroupExclusionsResponse,
+            SuccessOnly,
         );
     }
 
@@ -1346,7 +1346,7 @@ export class UserClient extends MsgpackCanisterAgent {
             },
             (_) => true,
             UserCancelMessageReminderArgs,
-            UserCancelMessageReminderResponse,
+            SuccessOnly,
         );
     }
 
@@ -1359,7 +1359,7 @@ export class UserClient extends MsgpackCanisterAgent {
             { indexes },
             (_) => true,
             UserSetCommunityIndexesArgs,
-            UserSetCommunityIndexesResponse,
+            SuccessOnly,
         );
     }
 
@@ -1568,7 +1568,7 @@ export class UserClient extends MsgpackCanisterAgent {
                 console.log("Set Achievements Last seen", lastSeen, res);
             },
             UserMarkAchievementsSeenArgs,
-            UserMarkAchievementsSeenResponse,
+            SuccessOnly,
         );
     }
 
@@ -1598,7 +1598,7 @@ export class UserClient extends MsgpackCanisterAgent {
             },
             toVoid,
             UserConfigureWalletArgs,
-            UserConfigureWalletResponse,
+            SuccessOnly,
         );
     }
 
@@ -1608,7 +1608,7 @@ export class UserClient extends MsgpackCanisterAgent {
             { read_up_to: readUpTo },
             toVoid,
             UserMarkMessageActivityFeedReadArgs,
-            UserMarkMessageActivityFeedReadResponse,
+            SuccessOnly,
         );
     }
 
@@ -1705,6 +1705,20 @@ export class UserClient extends MsgpackCanisterAgent {
             isSuccess,
             UserUpdateChatSettingsArgs,
             UnitResult,
-        )
+        );
+    }
+
+    payForPremiumItem(item: PremiumItem): Promise<PayForPremiumItemResponse> {
+        return this.executeMsgpackUpdate(
+            "pay_for_premium_item",
+            {
+                item_id: item,
+                pay_in_chat: false,
+                expected_cost: premiumPrices[item],
+            },
+            payForPremiumItemResponse,
+            UserPayForPremiumItemArgs,
+            UserPayForPremiumItemResponse,
+        );
     }
 }

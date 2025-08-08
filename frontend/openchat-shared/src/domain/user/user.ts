@@ -265,7 +265,6 @@ type CurrentUserCommon = DataContent & {
     chitBalance: number;
     streak: number;
     maxStreak: number;
-    premiumItems: Set<number>;
 };
 
 export type CurrentUserSummary = CurrentUserCommon & {
@@ -299,7 +298,6 @@ export function anonymousUser(): CreatedUser {
         chitBalance: 0,
         streak: 0,
         maxStreak: 0,
-        premiumItems: new Set(),
     };
 }
 

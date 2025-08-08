@@ -6,9 +6,9 @@
         SkinToneChangeEvent,
     } from "emoji-picker-element/shared";
     import {
-        currentUserStore,
         emojiGroupNames,
         PremiumItem,
+        premiumItemsStore,
         premiumPrices,
         type CustomEmoji,
         type SelectedEmoji,
@@ -56,10 +56,10 @@
 
     function createCustomCss(): string {
         const rules: string[] = [];
-        if (!$currentUserStore.premiumItems.has(PremiumItem.BotEmojis)) {
+        if (!$premiumItemsStore.has(PremiumItem.BotEmojis)) {
             rules.push(lockedCategoryCss(0, premiumPrices[PremiumItem.BotEmojis]));
         }
-        if (!$currentUserStore.premiumItems.has(PremiumItem.PopularEmojis)) {
+        if (!$premiumItemsStore.has(PremiumItem.PopularEmojis)) {
             rules.push(lockedCategoryCss(1, premiumPrices[PremiumItem.PopularEmojis]));
         }
         return rules.join("\n");
@@ -102,7 +102,7 @@
         } else if (ev.detail.name !== undefined) {
             const custom = customEmojis?.get(ev.detail.name);
             if (custom !== undefined) {
-                if (!$currentUserStore.premiumItems.has(custom.premiumItem)) {
+                if (!$premiumItemsStore.has(custom.premiumItem)) {
                     showPayGate = custom;
                 } else {
                     onEmojiSelected(custom);

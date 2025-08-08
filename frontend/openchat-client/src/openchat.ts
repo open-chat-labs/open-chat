@@ -364,6 +364,7 @@ import {
     pinNumberRequiredStore,
     pinNumberResolverStore,
     platformOperatorStore,
+    premiumItemsStore,
     querystringCodeStore,
     querystringReferralCodeStore,
     querystringStore,
@@ -6281,6 +6282,7 @@ export class OpenChat {
                 chatsResponse.messageActivitySummary,
                 chatsResponse.installedBots,
                 chatsResponse.streakInsurance,
+                chatsResponse.premiumItems,
             );
         });
 
@@ -6365,6 +6367,7 @@ export class OpenChat {
         messageActivitySummary: MessageActivitySummary | undefined,
         installedBots: Map<string, GrantedBotPermissions> | undefined,
         streakInsurance: OptionUpdate<StreakInsurance>,
+        premiumItems: Set<PremiumItem> | undefined,
     ): void {
         if (directChatsAddedUpdated.length > 0 || directChatsRemoved.length > 0) {
             serverDirectChatsStore.update((map) => {
@@ -6435,6 +6438,9 @@ export class OpenChat {
                     ? { daysInsured: 0, daysMissed: 0 }
                     : streakInsurance.value,
             );
+        }
+        if (premiumItems !== undefined) {
+            premiumItemsStore.set(premiumItems);
         }
         if (chitState !== undefined && chitState.streakEnds >= chitStateStore.value.streakEnds) {
             chitStateStore.set(chitState);
@@ -9488,9 +9494,9 @@ export class OpenChat {
                     currentUserStore.update((user) => {
                         user.chitBalance = resp.chitBalance;
                         user.totalChitEarned = resp.totalChitEarned;
-                        user.premiumItems.add(item);
                         return user;
                     });
+                    premiumItemsStore.add(item);
                 } else {
                     console.log("Failed to pay for premium", resp);
                 }
@@ -9689,7 +9695,7 @@ export class OpenChat {
     ): Promise<PushSubscription | null> {
         const subscribeOptions = {
             userVisibleOnly: true,
-            applicationServerKey: this.#toUint8Array(this.#vapidPublicKey),
+            applicationServerKey: this.#toUint8Array(this.#vapidPublicKey) as BufferSource,
         };
 
         try {

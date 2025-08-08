@@ -18,6 +18,7 @@ import {
     messageContextsEqual,
     MessageMap,
     ModerationFlags,
+    PremiumItem,
     SafeMap,
     videoCallsInProgressForChats,
     type ChatEvent,
@@ -470,6 +471,7 @@ export const selectedAuthProviderStore = new LocalStorageStore(
     (a) => enumFromStringValue(AuthProvider, a, AuthProvider.PASSKEY),
 );
 export const achievementsStore = createSetStore<string>();
+export const premiumItemsStore = createSetStore<PremiumItem>();
 export const chitStateStore = writable<ChitState>(
     {
         chitBalance: 0,

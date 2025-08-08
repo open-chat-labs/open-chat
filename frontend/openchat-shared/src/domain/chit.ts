@@ -116,23 +116,29 @@ export type ReferralType = {
     type: ReferralStatus;
 };
 
-export type ChitEarnedReason =
+export type ChitEventType =
     | DailyClaim
     | DailyClaimReinstated
     | StreakInsuranceClaim
     | MemeContestWinner
     | AchievementUnlocked
     | ReferralType
+    | PurchasedPremiumItem
     | ExternalAchievementUnlocked;
 
-export type ChitEarned = {
+export type PurchasedPremiumItem = {
+    kind: "purchased_premium_item";
+    item: PremiumItem;
+};
+
+export type ChitEvent = {
     amount: number;
     timestamp: bigint;
-    reason: ChitEarnedReason;
+    reason: ChitEventType;
 };
 
 export type ChitEventsResponse = {
-    events: ChitEarned[];
+    events: ChitEvent[];
     total: number;
 };
 
