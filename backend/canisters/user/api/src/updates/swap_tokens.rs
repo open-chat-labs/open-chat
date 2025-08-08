@@ -5,7 +5,7 @@ use ts_export::ts_export;
 use types::{CanisterId, ExchangeId, PinNumberWrapper, TokenInfo};
 
 #[ts_export(user, swap_tokens)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
     pub swap_id: u128,
     pub input_token: TokenInfo,
@@ -17,10 +17,9 @@ pub struct Args {
 }
 
 #[ts_export(user, swap_tokens)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum ExchangeArgs {
     ICPSwap(ICPSwapArgs),
-    Sonic(SonicArgs),
     KongSwap(KongSwapArgs),
 }
 
@@ -28,7 +27,6 @@ impl ExchangeArgs {
     pub fn exchange_id(&self) -> ExchangeId {
         match self {
             ExchangeArgs::ICPSwap(_) => ExchangeId::ICPSwap,
-            ExchangeArgs::Sonic(_) => ExchangeId::Sonic,
             ExchangeArgs::KongSwap(_) => ExchangeId::KongSwap,
         }
     }
@@ -36,24 +34,23 @@ impl ExchangeArgs {
     pub fn swap_canister_id(&self) -> CanisterId {
         match self {
             ExchangeArgs::ICPSwap(a) => a.swap_canister_id,
-            ExchangeArgs::Sonic(a) => a.swap_canister_id,
             ExchangeArgs::KongSwap(a) => a.swap_canister_id,
         }
     }
 }
 
 #[ts_export(user, swap_tokens)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct ICPSwapArgs {
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ExchangeSwapArgs {
     pub swap_canister_id: CanisterId,
     pub zero_for_one: bool,
 }
 
-pub type SonicArgs = ICPSwapArgs;
-pub type KongSwapArgs = ICPSwapArgs;
+pub type ICPSwapArgs = ExchangeSwapArgs;
+pub type KongSwapArgs = ExchangeSwapArgs;
 
 #[ts_export(user, swap_tokens)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
     Error(OCError),
