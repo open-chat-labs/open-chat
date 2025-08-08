@@ -2,6 +2,7 @@ use crate::model::community_event_batch::CommunityEventBatch;
 use crate::model::group_event_batch::GroupEventBatch;
 use crate::model::local_community_map::LocalCommunityMap;
 use crate::model::local_group_map::LocalGroupMap;
+use crate::model::premium_items::PremiumItems;
 use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use crate::model::user_event_batch::UserEventBatch;
 use crate::model::user_index_event_batch::UserIndexEventBatch;
@@ -476,6 +477,8 @@ struct Data {
     pub notifications: EventStream<NotificationEnvelope>,
     pub blocked_users: UserIdsSet,
     pub fcm_token_store: FcmTokenStore,
+    #[serde(default)]
+    pub premium_items: PremiumItems,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -566,6 +569,7 @@ impl Data {
             notifications: EventStream::default(),
             blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
             fcm_token_store: FcmTokenStore::default(),
+            premium_items: PremiumItems::default(),
         }
     }
 

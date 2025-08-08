@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Implement ability for platform operators to set cost of premium items ([#8458](https://github.com/open-chat-labs/open-chat/pull/8458))
+
 ### Changed
 
 - Sync `total_chit_earned` to UserIndex ([#8434](https://github.com/open-chat-labs/open-chat/pull/8434))

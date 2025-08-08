@@ -311,6 +311,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         UserIndexEvent::UserUnblocked(user_id, unblocked) => {
             state.data.blocked_users.remove(&(unblocked, user_id));
         }
+        UserIndexEvent::SetPremiumItemCost(ev) => state.data.premium_items.set(ev.item_id, ev.chit_cost),
     }
 }
 

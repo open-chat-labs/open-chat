@@ -17,10 +17,6 @@ struct PremiumItem {
 }
 
 impl PremiumItems {
-    pub fn contains(&self, item_id: &u32) -> bool {
-        self.items.contains_key(item_id)
-    }
-
     pub fn item_ids(&self) -> Vec<u32> {
         self.items.keys().copied().collect()
     }
@@ -39,15 +35,6 @@ impl PremiumItems {
             true
         } else {
             false
-        }
-    }
-
-    pub fn cost_in_chit(item_id: u32) -> Option<u32> {
-        match item_id {
-            0 => Some(10_000),
-            1 => Some(50_000),
-            2 => Some(50_000),
-            _ => None,
         }
     }
 }

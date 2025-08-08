@@ -26,6 +26,7 @@ pub mod set_diamond_membership_fees;
 pub mod set_display_name;
 pub mod set_max_concurrent_user_canister_upgrades;
 pub mod set_moderation_flags;
+mod set_premium_item_cost;
 pub mod set_user_upgrade_concurrency;
 pub mod set_username;
 pub mod submit_proof_of_unique_personhood;
