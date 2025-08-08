@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Implement ability to pay for premium items using CHIT ([#8439](https://github.com/open-chat-labs/open-chat/pull/8439))
+- Implement ability for platform operators to set cost of premium items ([#8458](https://github.com/open-chat-labs/open-chat/pull/8458))
 
 ### Changed
 

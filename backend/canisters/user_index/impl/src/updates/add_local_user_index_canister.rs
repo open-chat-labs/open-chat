@@ -4,7 +4,7 @@ use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ic_cdk::management_canister::{CanisterInfoArgs, CanisterInstallMode};
-use local_user_index_canister::{UserDetailsFull, UserIndexEvent};
+use local_user_index_canister::{SetPremiumItemCost, UserDetailsFull, UserIndexEvent};
 use tracing::info;
 use types::{BuildVersion, CanisterId, CanisterWasm, Hash};
 use user_index_canister::ChildCanisterType;
@@ -150,6 +150,12 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
                     diamond_membership_expires_at: user.diamond_membership_details.expires_at(),
                     unique_person_proof: user.unique_person_proof.clone(),
                 }),
+            )
+        }
+        for (item_id, chit_cost) in state.data.premium_items.chit_costs() {
+            state.data.user_index_event_sync_queue.push(
+                canister_id,
+                UserIndexEvent::SetPremiumItemCost(SetPremiumItemCost { item_id, chit_cost }),
             )
         }
         crate::jobs::sync_events_to_local_user_index_canisters::try_run_now(state);

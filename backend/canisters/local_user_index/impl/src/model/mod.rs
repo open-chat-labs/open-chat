@@ -5,6 +5,7 @@ pub mod group_event_batch;
 pub mod local_community_map;
 pub mod local_group_map;
 pub mod local_user_map;
+pub mod premium_items;
 pub mod referral_codes;
 pub mod user_event_batch;
 pub mod user_index_event_batch;
