@@ -466,6 +466,7 @@ export type WorkerRequest =
 type PayForPremiumItem = {
     kind: "payForPremiumItem";
     item: PremiumItem;
+    userId: string;
 };
 
 type SetMinLogLevel = {

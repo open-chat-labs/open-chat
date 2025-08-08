@@ -2133,7 +2133,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "payForPremiumItem":
-                executeThenReply(payload, correlationId, agent.payForPremiumItem(payload.item));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.payForPremiumItem(payload.userId, payload.item),
+                );
                 break;
 
             default:

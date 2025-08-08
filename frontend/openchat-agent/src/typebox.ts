@@ -451,19 +451,6 @@ export const UserAutoWallet = Type.Object({
     min_cents_visible: Type.Number(),
 });
 
-export type UserPayForPremiumItemSuccessResult = Static<typeof UserPayForPremiumItemSuccessResult>;
-export const UserPayForPremiumItemSuccessResult = Type.Object({
-    total_chit_earned: Type.Number(),
-    chit_balance: Type.Number(),
-});
-
-export type UserPayForPremiumItemArgs = Static<typeof UserPayForPremiumItemArgs>;
-export const UserPayForPremiumItemArgs = Type.Object({
-    item_id: Type.Number(),
-    pay_in_chat: Type.Boolean(),
-    expected_cost: Type.Number(),
-});
-
 export type UserMarkMessageActivityFeedReadArgs = Static<
     typeof UserMarkMessageActivityFeedReadArgs
 >;
@@ -2600,6 +2587,23 @@ export const LocalUserIndexBotSendMessageSuccessResult = Type.Object({
     expires_at: Type.Optional(Type.BigInt()),
 });
 
+export type LocalUserIndexPayForPremiumItemArgs = Static<
+    typeof LocalUserIndexPayForPremiumItemArgs
+>;
+export const LocalUserIndexPayForPremiumItemArgs = Type.Object({
+    item_id: Type.Number(),
+    pay_in_chat: Type.Boolean(),
+    expected_cost: Type.Number(),
+});
+
+export type LocalUserIndexPayForPremiumItemSuccessResult = Static<
+    typeof LocalUserIndexPayForPremiumItemSuccessResult
+>;
+export const LocalUserIndexPayForPremiumItemSuccessResult = Type.Object({
+    total_chit_earned: Type.Number(),
+    chit_balance: Type.Number(),
+});
+
 export type CommunitySummaryUpdatesArgs = Static<typeof CommunitySummaryUpdatesArgs>;
 export const CommunitySummaryUpdatesArgs = Type.Object({
     invite_code: Type.Optional(Type.BigInt()),
@@ -4174,8 +4178,8 @@ export const UserCancelP2pSwapArgs = Type.Object({
     message_id: MessageId,
 });
 
-export type UserSwapTokensICPSwapArgs = Static<typeof UserSwapTokensICPSwapArgs>;
-export const UserSwapTokensICPSwapArgs = Type.Object({
+export type UserSwapTokensExchangeSwapArgs = Static<typeof UserSwapTokensExchangeSwapArgs>;
+export const UserSwapTokensExchangeSwapArgs = Type.Object({
     swap_canister_id: TSPrincipal,
     zero_for_one: Type.Boolean(),
 });
@@ -4472,16 +4476,6 @@ export const UserReportMessageArgs = Type.Object({
     message_id: MessageId,
     delete: Type.Boolean(),
 });
-
-export type UserPayForPremiumItemResponse = Static<typeof UserPayForPremiumItemResponse>;
-export const UserPayForPremiumItemResponse = Type.Union([
-    Type.Object({
-        Success: UserPayForPremiumItemSuccessResult,
-    }),
-    Type.Object({
-        Error: OCError,
-    }),
-]);
 
 export type UserConfigureWalletArgs = Static<typeof UserConfigureWalletArgs>;
 export const UserConfigureWalletArgs = Type.Object({
@@ -6172,6 +6166,18 @@ export const LocalUserIndexBotSendMessageResponse = Type.Union([
     }),
 ]);
 
+export type LocalUserIndexPayForPremiumItemResponse = Static<
+    typeof LocalUserIndexPayForPremiumItemResponse
+>;
+export const LocalUserIndexPayForPremiumItemResponse = Type.Union([
+    Type.Object({
+        Success: LocalUserIndexPayForPremiumItemSuccessResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
 export type CommunitySelectedChannelUpdatesResponse = Static<
     typeof CommunitySelectedChannelUpdatesResponse
 >;
@@ -6524,13 +6530,10 @@ export const UserSetProfileBackgroundArgs = Type.Object({
 export type UserSwapTokensExchangeArgs = Static<typeof UserSwapTokensExchangeArgs>;
 export const UserSwapTokensExchangeArgs = Type.Union([
     Type.Object({
-        ICPSwap: UserSwapTokensICPSwapArgs,
+        ICPSwap: UserSwapTokensExchangeSwapArgs,
     }),
     Type.Object({
-        Sonic: UserSwapTokensICPSwapArgs,
-    }),
-    Type.Object({
-        KongSwap: UserSwapTokensICPSwapArgs,
+        KongSwap: UserSwapTokensExchangeSwapArgs,
     }),
 ]);
 

@@ -45,12 +45,10 @@ import type {
     MessageContext,
     NamedAccount,
     OptionUpdate,
-    PayForPremiumItemResponse,
     PayForStreakInsuranceResponse,
     PendingCryptocurrencyTransfer,
     PendingCryptocurrencyWithdrawal,
     PinChatResponse,
-    PremiumItem,
     PublicProfile,
     Rules,
     SaveCryptoAccountResponse,
@@ -78,7 +76,6 @@ import {
     MAX_EVENTS,
     MAX_MESSAGES,
     MAX_MISSING,
-    premiumPrices,
     ResponseTooLargeError,
     toBigInt32,
 } from "openchat-shared";
@@ -135,8 +132,6 @@ import {
     UserMessageActivityFeedResponse,
     UserMuteNotificationsArgs,
     UserNamedAccount,
-    UserPayForPremiumItemArgs,
-    UserPayForPremiumItemResponse,
     UserPayForStreakInsuranceArgs,
     UserPinChatArgs,
     UserPublicProfileResponse,
@@ -231,7 +226,6 @@ import {
     getUpdatesResponse,
     initialStateResponse,
     messageActivityFeedResponse,
-    payForPremiumItemResponse,
     publicProfileResponse,
     savedCryptoAccountsResponse,
     searchDirectChatSuccess,
@@ -1705,20 +1699,6 @@ export class UserClient extends MsgpackCanisterAgent {
             isSuccess,
             UserUpdateChatSettingsArgs,
             UnitResult,
-        );
-    }
-
-    payForPremiumItem(item: PremiumItem): Promise<PayForPremiumItemResponse> {
-        return this.executeMsgpackUpdate(
-            "pay_for_premium_item",
-            {
-                item_id: item,
-                pay_in_chat: false,
-                expected_cost: premiumPrices[item],
-            },
-            payForPremiumItemResponse,
-            UserPayForPremiumItemArgs,
-            UserPayForPremiumItemResponse,
         );
     }
 }

@@ -17,11 +17,19 @@ import type {
     JoinGroupResponse,
     MessageContext,
     MultiUserChatIdentifier,
+    PayForPremiumItemResponse,
+    PremiumItem,
     RegisterUserResponse,
     Tally,
     VerifiedCredentialArgs,
 } from "openchat-shared";
-import { MAX_MISSING, textToCode, toBigInt32, UnsupportedValueError } from "openchat-shared";
+import {
+    MAX_MISSING,
+    premiumPrices,
+    textToCode,
+    toBigInt32,
+    UnsupportedValueError,
+} from "openchat-shared";
 import {
     BotInstallationLocation as ApiBotInstallationLocation,
     LocalUserIndexAccessTokenV2Args,
@@ -45,6 +53,8 @@ import {
     LocalUserIndexJoinCommunityResponse,
     LocalUserIndexJoinGroupArgs,
     LocalUserIndexJoinGroupResponse,
+    LocalUserIndexPayForPremiumItemArgs,
+    LocalUserIndexPayForPremiumItemResponse,
     LocalUserIndexRegisterUserArgs,
     LocalUserIndexRegisterUserResponse,
     LocalUserIndexUninstallBotArgs,
@@ -83,6 +93,7 @@ import {
     inviteUsersResponse,
     joinChannelResponse,
     joinCommunityResponse,
+    payForPremiumItemResponse,
     registerUserResponse,
     withdrawFromIcpSwapResponse,
 } from "./mappers";
@@ -469,6 +480,20 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
             withdrawFromIcpSwapResponse,
             LocalUserIndexWithdrawFromIcpswapArgs,
             SuccessOnly,
+        );
+    }
+
+    payForPremiumItem(item: PremiumItem): Promise<PayForPremiumItemResponse> {
+        return this.executeMsgpackUpdate(
+            "pay_for_premium_item",
+            {
+                item_id: item,
+                pay_in_chat: false,
+                expected_cost: premiumPrices[item],
+            },
+            payForPremiumItemResponse,
+            LocalUserIndexPayForPremiumItemArgs,
+            LocalUserIndexPayForPremiumItemResponse,
         );
     }
 }

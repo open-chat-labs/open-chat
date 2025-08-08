@@ -4576,8 +4576,9 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    payForPremiumItem(item: PremiumItem): Promise<PayForPremiumItemResponse> {
-        return this.userClient.payForPremiumItem(item);
+    async payForPremiumItem(userId: string, item: PremiumItem): Promise<PayForPremiumItemResponse> {
+        const localUserIndex = await this.getLocalUserIndexForUser(userId);
+        return this.getLocalUserIndexClient(localUserIndex).payForPremiumItem(item);
     }
 }
 

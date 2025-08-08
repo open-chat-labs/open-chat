@@ -9482,6 +9482,7 @@ export class OpenChat {
         return this.#sendRequest({
             kind: "payForPremiumItem",
             item,
+            userId: currentUserIdStore.value,
         })
             .then((resp) => {
                 if (resp.kind === "success") {

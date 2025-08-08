@@ -30,8 +30,6 @@ import type {
     MessageActivitySummary,
     MessageContext,
     NamedAccount,
-    PayForPremiumItemResponse,
-    PayForPremiumItemSuccess,
     PinNumberSettings,
     PremiumItem,
     PublicProfile,
@@ -96,8 +94,6 @@ import type {
     UserMessageActivityEvent,
     UserMessageActivityFeedResponse,
     UserMessageActivitySummary,
-    UserPayForPremiumItemResponse,
-    UserPayForPremiumItemSuccessResult,
     UserPublicProfileResponse,
     UserReferral,
     UserSavedCryptoAccountsResponse,
@@ -140,23 +136,6 @@ import {
     unitResult,
     videoCallInProgress,
 } from "../common/chatMappersV2";
-
-export function payForPremiumItemResponse(
-    value: UserPayForPremiumItemResponse,
-): PayForPremiumItemResponse {
-    console.log("PayForPremiumItem response: ", value);
-    return mapResult(value, payForPremiumItemSuccess);
-}
-
-export function payForPremiumItemSuccess(
-    value: UserPayForPremiumItemSuccessResult,
-): PayForPremiumItemSuccess {
-    return {
-        kind: "success",
-        totalChitEarned: value.total_chit_earned,
-        chitBalance: value.chit_balance,
-    };
-}
 
 export function messageActivityFeedResponse(
     value: UserMessageActivityFeedResponse,
