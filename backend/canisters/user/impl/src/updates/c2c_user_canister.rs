@@ -372,23 +372,23 @@ fn p2p_swap_change_status(args: P2PSwapStatusChange, caller_user_id: UserId, sta
             .events
             .main_events_reader()
             .message_event_internal(args.message_id.into())
-        {
-            let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
+    {
+        let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
 
-            state.data.push_message_activity(
-                MessageActivityEvent {
-                    chat: Chat::Direct(caller_user_id.into()),
-                    thread_root_message_index,
-                    message_index: message_event.event.message_index,
-                    message_id: message_event.event.message_id,
-                    event_index: message_event.index,
-                    activity: MessageActivity::P2PSwapAccepted,
-                    timestamp: now,
-                    user_id: Some(caller_user_id),
-                },
-                now,
-            );
-        }
+        state.data.push_message_activity(
+            MessageActivityEvent {
+                chat: Chat::Direct(caller_user_id.into()),
+                thread_root_message_index,
+                message_index: message_event.event.message_index,
+                message_id: message_event.event.message_id,
+                event_index: message_event.index,
+                activity: MessageActivity::P2PSwapAccepted,
+                timestamp: now,
+                user_id: Some(caller_user_id),
+            },
+            now,
+        );
+    }
 }
 
 fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, state: &mut RuntimeState) {

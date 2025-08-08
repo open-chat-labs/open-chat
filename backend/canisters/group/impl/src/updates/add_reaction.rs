@@ -78,51 +78,52 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
             .message_internal(EventIndex::default(), thread_root_message_index, args.message_id.into())
     {
         if let Some(sender) = state.data.chat.members.get(&message.sender)
-            && message.sender != agent && !sender.user_type().is_bot() {
-                let chat_id: ChatId = state.env.canister_id().into();
+            && message.sender != agent
+            && !sender.user_type().is_bot()
+        {
+            let chat_id: ChatId = state.env.canister_id().into();
 
-                let notifications_muted = state
-                    .data
-                    .chat
-                    .members
-                    .get(&message.sender)
-                    .is_none_or(|p| p.notifications_muted().value || p.suspended().value);
+            let notifications_muted = state
+                .data
+                .chat
+                .members
+                .get(&message.sender)
+                .is_none_or(|p| p.notifications_muted().value || p.suspended().value);
 
-                if !notifications_muted {
-                    let user_notification_payload =
-                        UserNotificationPayload::GroupReactionAdded(GroupReactionAddedNotification {
-                            chat_id,
-                            thread_root_message_index,
-                            message_index: message.message_index,
-                            message_event_index: event_index,
-                            group_name: state.data.chat.name.value.clone(),
-                            added_by: agent,
-                            added_by_name: args.username,
-                            added_by_display_name: args.display_name,
-                            reaction: args.reaction,
-                            group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
-                        });
+            if !notifications_muted {
+                let user_notification_payload = UserNotificationPayload::GroupReactionAdded(GroupReactionAddedNotification {
+                    chat_id,
+                    thread_root_message_index,
+                    message_index: message.message_index,
+                    message_event_index: event_index,
+                    group_name: state.data.chat.name.value.clone(),
+                    added_by: agent,
+                    added_by_name: args.username,
+                    added_by_display_name: args.display_name,
+                    reaction: args.reaction,
+                    group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
+                });
 
-                    state.push_notification(Some(agent), vec![message.sender], user_notification_payload);
-                }
-
-                state.push_event_to_user(
-                    message.sender,
-                    GroupCanisterEvent::MessageActivity(MessageActivityEvent {
-                        chat: Chat::Group(chat_id),
-                        thread_root_message_index,
-                        message_index: message.message_index,
-                        message_id: message.message_id,
-                        event_index,
-                        activity: MessageActivity::Reaction,
-                        timestamp: state.env.now(),
-                        user_id: Some(agent),
-                    }),
-                    now,
-                );
-
-                state.notify_user_of_achievement(message.sender, Achievement::HadMessageReactedTo, now);
+                state.push_notification(Some(agent), vec![message.sender], user_notification_payload);
             }
+
+            state.push_event_to_user(
+                message.sender,
+                GroupCanisterEvent::MessageActivity(MessageActivityEvent {
+                    chat: Chat::Group(chat_id),
+                    thread_root_message_index,
+                    message_index: message.message_index,
+                    message_id: message.message_id,
+                    event_index,
+                    activity: MessageActivity::Reaction,
+                    timestamp: state.env.now(),
+                    user_id: Some(agent),
+                }),
+                now,
+            );
+
+            state.notify_user_of_achievement(message.sender, Achievement::HadMessageReactedTo, now);
+        }
 
         if args.new_achievement {
             state.notify_user_of_achievement(agent, Achievement::ReactedToMessage, now);
