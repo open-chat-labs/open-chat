@@ -158,8 +158,3 @@ async fn install_canister<A: CandidType>(args: InstallCanisterArgs<A>, wasm_vers
 
     Ok(())
 }
-
-#[derive(CandidType)]
-struct UpgradeArgs {
-    wasm_version: BuildVersion,
-}

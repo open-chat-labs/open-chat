@@ -66,6 +66,7 @@ fn main() {
     generate_ts_method!(user, set_contact);
     generate_ts_method!(user, set_message_reminder_v2);
     generate_ts_method!(user, set_pin_number);
+    generate_ts_method!(user, set_profile_background);
     generate_ts_method!(user, swap_tokens);
     generate_ts_method!(user, tip_message);
     generate_ts_method!(user, unblock_user);

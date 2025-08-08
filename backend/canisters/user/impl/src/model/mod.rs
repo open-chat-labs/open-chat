@@ -1,4 +1,4 @@
-pub mod chit_earned_events;
+pub mod chit_events;
 pub mod communities;
 pub mod community;
 pub mod contacts;
@@ -12,6 +12,7 @@ pub mod local_user_index_event_batch;
 pub mod message_activity_events;
 pub mod p2p_swaps;
 pub mod pin_number;
+pub mod premium_items;
 pub mod referrals;
 pub mod streak;
 pub mod token_swaps;

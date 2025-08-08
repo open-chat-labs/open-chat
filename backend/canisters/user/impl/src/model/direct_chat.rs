@@ -6,7 +6,6 @@ use types::{
     DirectChatSummary, DirectChatSummaryUpdates, EventWrapper, Message, MessageId, MessageIndex, Milliseconds, OptionUpdate,
     TimestampMillis, Timestamped, UserId, UserType,
 };
-use user_canister::SendMessageArgs;
 
 #[derive(Serialize, Deserialize)]
 pub struct DirectChat {
@@ -19,7 +18,6 @@ pub struct DirectChat {
     pub notifications_muted: Timestamped<bool>,
     pub archived: Timestamped<bool>,
     pub user_type: UserType,
-    pub unconfirmed: Vec<SendMessageArgs>,
 }
 
 impl DirectChat {
@@ -40,7 +38,6 @@ impl DirectChat {
             notifications_muted: Timestamped::new(false, now),
             archived: Timestamped::new(false, now),
             user_type,
-            unconfirmed: Vec::new(),
         }
     }
 
@@ -91,16 +88,6 @@ impl DirectChat {
             }
         }
         false
-    }
-
-    // TODO (maybe?)
-    // This should only return up to N messages so that we never exceed the c2c size limit
-    pub fn get_pending_messages(&self) -> Vec<SendMessageArgs> {
-        self.unconfirmed.clone()
-    }
-
-    pub fn mark_message_confirmed(&mut self, message_id: MessageId) {
-        self.unconfirmed.retain(|m| m.message_id != message_id);
     }
 
     pub fn to_summary(&self, my_user_id: UserId) -> DirectChatSummary {

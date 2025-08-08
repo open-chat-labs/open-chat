@@ -49,15 +49,14 @@ async fn run_async() {
             if launched_snses.contains(&root_canister_id) {
                 if let Ok((metadata, parameters)) =
                     get_nervous_system_metadata_and_parameters(sns.governance_canister_id.unwrap()).await
-                {
-                    if mutate_state(|state| {
+                    && mutate_state(|state| {
                         state
                             .data
                             .nervous_systems
                             .update(root_canister_id, metadata, parameters, state.env.now())
-                    }) {
-                        info!(%root_canister_id, "SNS details updated");
-                    }
+                    })
+                {
+                    info!(%root_canister_id, "SNS details updated");
                 }
             } else {
                 info!(%root_canister_id, "Getting details of unknown SNS");

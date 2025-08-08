@@ -52,20 +52,19 @@ fn build_c2c_args(args: &Args, state: &RuntimeState) -> OCResult<(c2c_report_mes
     if let Some(events_reader) =
         chat.events
             .events_reader(member.min_visible_event_index(), args.thread_root_message_index, None)
+        && let Some(message) = events_reader.message(args.message_id.into(), Some(user_id))
     {
-        if let Some(message) = events_reader.message(args.message_id.into(), Some(user_id)) {
-            return Ok((
-                c2c_report_message::Args {
-                    reporter: user_id,
-                    chat_id: MultiUserChat::Group(state.env.canister_id().into()),
-                    thread_root_message_index: args.thread_root_message_index,
-                    message,
-                    already_deleted: args.delete,
-                    is_public: state.data.chat.is_public.value,
-                },
-                state.data.group_index_canister_id,
-            ));
-        }
+        return Ok((
+            c2c_report_message::Args {
+                reporter: user_id,
+                chat_id: MultiUserChat::Group(state.env.canister_id().into()),
+                thread_root_message_index: args.thread_root_message_index,
+                message,
+                already_deleted: args.delete,
+                is_public: state.data.chat.is_public.value,
+            },
+            state.data.group_index_canister_id,
+        ));
     }
     Err(OCErrorCode::MessageNotFound.into())
 }
@@ -77,9 +76,8 @@ fn delete_message(args: &Args, reporter: UserId, state: &mut RuntimeState) {
         vec![args.message_id],
         false,
         state.env.now(),
-    ) {
-        if results.iter().any(|(_, r)| r.is_ok()) {
-            handle_activity_notification(state);
-        }
+    ) && results.iter().any(|(_, r)| r.is_ok())
+    {
+        handle_activity_notification(state);
     }
 }

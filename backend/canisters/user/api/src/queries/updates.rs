@@ -3,7 +3,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
-    Chat, ChatId, ChitEarned, CommunityId, DirectChatSummary, DirectChatSummaryUpdates, InstalledBotDetails, OptionUpdate,
+    Chat, ChatId, ChitEvent, CommunityId, DirectChatSummary, DirectChatSummaryUpdates, InstalledBotDetails, OptionUpdate,
     PinNumberSettings, StreakInsurance, TimestampMillis, UserId,
 };
 
@@ -38,7 +38,7 @@ pub struct SuccessResult {
     pub suspended: Option<bool>,
     #[ts(as = "types::OptionUpdatePinNumberSettings")]
     pub pin_number_settings: OptionUpdate<PinNumberSettings>,
-    pub achievements: Vec<ChitEarned>,
+    pub achievements: Vec<ChitEvent>,
     pub achievements_last_seen: Option<TimestampMillis>,
     pub total_chit_earned: i32,
     pub chit_balance: i32,
@@ -55,6 +55,7 @@ pub struct SuccessResult {
     pub bots_added_or_updated: Vec<InstalledBotDetails>,
     pub bots_removed: Vec<UserId>,
     pub btc_address: Option<String>,
+    pub premium_items: Option<Vec<u32>>,
 }
 
 #[ts_export(user, updates)]

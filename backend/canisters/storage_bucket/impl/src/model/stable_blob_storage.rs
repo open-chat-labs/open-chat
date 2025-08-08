@@ -124,7 +124,7 @@ impl Key {
 }
 
 impl Storable for Key {
-    fn to_bytes(&self) -> Cow<[u8]> {
+    fn to_bytes(&self) -> Cow<'_, [u8]> {
         Cow::from(self.to_vec())
     }
 
@@ -165,7 +165,7 @@ impl Chunk {
 }
 
 impl Storable for Chunk {
-    fn to_bytes(&self) -> Cow<[u8]> {
+    fn to_bytes(&self) -> Cow<'_, [u8]> {
         Cow::Borrowed(&self.bytes)
     }
 

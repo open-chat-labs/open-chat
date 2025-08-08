@@ -10,10 +10,10 @@ fn check_username(args: Args) -> Response {
 
 fn check_username_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
-    if let Some(user) = state.data.users.get(&caller) {
-        if user.username.eq_ignore_ascii_case(&args.username) {
-            return Success;
-        }
+    if let Some(user) = state.data.users.get(&caller)
+        && user.username.eq_ignore_ascii_case(&args.username)
+    {
+        return Success;
     }
 
     match validate_username(&args.username) {

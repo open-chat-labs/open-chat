@@ -96,40 +96,41 @@ fn insert_container_attributes(attrs: &mut Vec<Attribute>, ident: &Ident, export
 const PRINCIPAL_ALIASES: [&str; 3] = ["Principal", "CanisterId", "AccessorId"];
 
 fn insert_field_attributes(field: &mut Field, is_tuple: bool, derives_serde: bool) {
-    if let Type::Path(type_path) = &field.ty {
-        if type_path.qself.is_none() && type_path.path.leading_colon.is_none() && type_path.path.segments.len() == 1 {
-            if PRINCIPAL_ALIASES.iter().any(|a| type_path.path.segments[0].ident == a) {
-                field.attrs.push(parse_quote!( #[ts(as = "ts_export::TSPrincipal")] ));
-            } else if field.attrs.iter().any(is_using_serde_bytes) {
-                field.attrs.push(parse_quote!( #[ts(as = "ts_export::TSBytes")] ));
-            } else if !is_tuple {
-                if type_path.path.segments[0].ident == "Option" {
-                    field.attrs.push(parse_quote!( #[ts(optional)] ));
-                    if derives_serde {
-                        field
-                            .attrs
-                            .push(parse_quote!( #[serde(skip_serializing_if = "Option::is_none")] ));
-                    }
-                } else if let Some(Defaults {
-                    func: _,
-                    default_override: _,
-                    type_override: _,
-                }) = skip_serializing_if_default(&type_path.path.segments[0])
-                {
-                    if derives_serde {
-                        field.attrs.push(parse_quote!( #[serde(default)] ));
-                    }
-                    // field.attrs.push(parse_quote!( #[serde(skip_serializing_if = #func)]));
-                    //
-                    // if let Some(default_override) = default_override {
-                    //     let doc_comment = format!(" @default {default_override}");
-                    //     field.attrs.push(parse_quote!( #[doc = #doc_comment]));
-                    // }
-                    // if let Some(type_override) = type_override {
-                    //     field.attrs.push(parse_quote!( #[ts(as = #type_override)]));
-                    // }
+    if let Type::Path(type_path) = &field.ty
+        && type_path.qself.is_none()
+        && type_path.path.leading_colon.is_none()
+        && type_path.path.segments.len() == 1
+    {
+        if PRINCIPAL_ALIASES.iter().any(|a| type_path.path.segments[0].ident == a) {
+            field.attrs.push(parse_quote!( #[ts(as = "ts_export::TSPrincipal")] ));
+        } else if field.attrs.iter().any(is_using_serde_bytes) {
+            field.attrs.push(parse_quote!( #[ts(as = "ts_export::TSBytes")] ));
+        } else if !is_tuple {
+            if type_path.path.segments[0].ident == "Option" {
+                field.attrs.push(parse_quote!( #[ts(optional)] ));
+                if derives_serde {
+                    field
+                        .attrs
+                        .push(parse_quote!( #[serde(skip_serializing_if = "Option::is_none")] ));
                 }
+            } else if let Some(Defaults {
+                func: _,
+                default_override: _,
+                type_override: _,
+            }) = skip_serializing_if_default(&type_path.path.segments[0])
+                && derives_serde
+            {
+                field.attrs.push(parse_quote!( #[serde(default)] ));
             }
+            // field.attrs.push(parse_quote!( #[serde(skip_serializing_if = #func)]));
+            //
+            // if let Some(default_override) = default_override {
+            //     let doc_comment = format!(" @default {default_override}");
+            //     field.attrs.push(parse_quote!( #[doc = #doc_comment]));
+            // }
+            // if let Some(type_override) = type_override {
+            //     field.attrs.push(parse_quote!( #[ts(as = #type_override)]));
+            // }
         }
     }
 }

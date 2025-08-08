@@ -38,10 +38,10 @@ fn active_groups_impl(args: Args, state: &RuntimeState) -> Response {
             if active_since.map(|t| g.has_been_active_since(t)).unwrap_or_default() {
                 active_groups.push(g.id());
             }
-        } else if let Some(g) = state.data.public_groups.get(&chat_id) {
-            if active_since.map(|t| g.has_been_active_since(t)).unwrap_or_default() {
-                active_groups.push(g.id());
-            }
+        } else if let Some(g) = state.data.public_groups.get(&chat_id)
+            && active_since.map(|t| g.has_been_active_since(t)).unwrap_or_default()
+        {
+            active_groups.push(g.id());
         }
     }
 
@@ -51,10 +51,10 @@ fn active_groups_impl(args: Args, state: &RuntimeState) -> Response {
             if active_since.map(|t| g.has_been_active_since(t)).unwrap_or_default() {
                 active_communities.push(g.id());
             }
-        } else if let Some(g) = state.data.public_communities.get(&community_id) {
-            if active_since.map(|t| g.has_been_active_since(t)).unwrap_or_default() {
-                active_communities.push(g.id());
-            }
+        } else if let Some(g) = state.data.public_communities.get(&community_id)
+            && active_since.map(|t| g.has_been_active_since(t)).unwrap_or_default()
+        {
+            active_communities.push(g.id());
         }
     }
 

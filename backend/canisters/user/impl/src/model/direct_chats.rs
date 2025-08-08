@@ -95,12 +95,12 @@ impl DirectChats {
     }
 
     pub fn migrate_replies(&mut self, old: ChatInternal, new: ChatInternal, now: TimestampMillis) {
-        if let ChatInternal::Group(chat_id) = old {
-            if let Some(replies) = self.private_replies_to_groups.remove(&chat_id) {
-                for (user_id, message_index) in replies {
-                    if let Some(chat) = self.direct_chats.get_mut(&user_id.into()) {
-                        chat.events.migrate_reply(message_index, old, new, now);
-                    }
+        if let ChatInternal::Group(chat_id) = old
+            && let Some(replies) = self.private_replies_to_groups.remove(&chat_id)
+        {
+            for (user_id, message_index) in replies {
+                if let Some(chat) = self.direct_chats.get_mut(&user_id.into()) {
+                    chat.events.migrate_reply(message_index, old, new, now);
                 }
             }
         }

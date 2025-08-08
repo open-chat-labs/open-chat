@@ -294,10 +294,10 @@ impl AccessGateConfig {
 
 impl AccessGate {
     pub fn validate(&self) -> bool {
-        if let AccessGate::Composite(g) = self {
-            if g.inner.is_empty() || g.inner.len() > 10 {
-                return false;
-            }
+        if let AccessGate::Composite(g) = self
+            && (g.inner.is_empty() || g.inner.len() > 10)
+        {
+            return false;
         }
         true
     }

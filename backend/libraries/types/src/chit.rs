@@ -5,10 +5,10 @@ use ts_export::ts_export;
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct ChitEarned {
+pub struct ChitEvent {
     pub amount: i32,
     pub timestamp: TimestampMillis,
-    pub reason: ChitEarnedReason,
+    pub reason: ChitEventType,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -23,7 +23,7 @@ pub struct NotifyChit {
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum ChitEarnedReason {
+pub enum ChitEventType {
     DailyClaim,
     Achievement(Achievement),
     ExternalAchievement(String),
@@ -31,6 +31,7 @@ pub enum ChitEarnedReason {
     MemeContestWinner,
     DailyClaimReinstated,
     StreakInsuranceClaim,
+    PurchasedPremiumItem(u32),
 }
 
 #[ts_export]

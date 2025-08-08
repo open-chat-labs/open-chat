@@ -8,6 +8,7 @@ use types::{ChannelId, FileId, TimestampMillis, UserId};
 pub enum Route {
     Avatar(AvatarRoute),
     Banner(Option<u128>),
+    ProfileBackground(Option<u128>),
     File(u128),
     Logs(Option<TimestampMillis>),
     Errors(Option<TimestampMillis>),
@@ -53,15 +54,15 @@ pub fn extract_route(path: &str) -> Route {
             }
         }
         "channel" => {
-            if let Some(channel_id) = parts.pop_front().and_then(|p| u128::from_str(p).ok()) {
-                if let Some(sub_route) = parts.pop_front() {
-                    if sub_route == "avatar" {
-                        return parse_avatar(&mut parts, Some(channel_id.into()));
-                    } else if sub_route == "webhook" {
-                        if let Some(route) = parse_webhook(&mut parts, Some(channel_id.into())) {
-                            return route;
-                        }
-                    }
+            if let Some(channel_id) = parts.pop_front().and_then(|p| u128::from_str(p).ok())
+                && let Some(sub_route) = parts.pop_front()
+            {
+                if sub_route == "avatar" {
+                    return parse_avatar(&mut parts, Some(channel_id.into()));
+                } else if sub_route == "webhook"
+                    && let Some(route) = parse_webhook(&mut parts, Some(channel_id.into()))
+                {
+                    return route;
                 }
             }
         }
@@ -74,6 +75,10 @@ pub fn extract_route(path: &str) -> Route {
             return Route::Logs(since);
         }
         "metrics" => return Route::Metrics,
+        "profile_background" => {
+            let blob_id = parts.pop_front().and_then(|p| u128::from_str(p).ok());
+            return Route::ProfileBackground(blob_id);
+        }
         "trace" => {
             let since = parts.pop_front().and_then(|p| u64::from_str(p).ok());
             return Route::Traces(since);

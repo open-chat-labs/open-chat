@@ -62,10 +62,10 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         match parts[0] {
             "usermetrics" => {
                 let user_id: Option<UserId> = parts.get(1).and_then(|p| Principal::from_text(*p).ok()).map(|p| p.into());
-                if let Some(user_id) = user_id {
-                    if let Some(metrics) = state.user_metrics(user_id) {
-                        return build_json_response(&metrics);
-                    }
+                if let Some(user_id) = user_id
+                    && let Some(metrics) = state.user_metrics(user_id)
+                {
+                    return build_json_response(&metrics);
                 }
             }
             "bots" => return get_bot_users(state),

@@ -20,10 +20,10 @@ impl ExpiringMembers {
     }
 
     pub fn pop_if_expires_before(&mut self, expires_before: TimestampMillis) -> Option<ExpiringMember> {
-        if let Some(member) = self.heap.peek() {
-            if member.expires < expires_before {
-                return self.heap.pop();
-            }
+        if let Some(member) = self.heap.peek()
+            && member.expires < expires_before
+        {
+            return self.heap.pop();
         }
 
         None

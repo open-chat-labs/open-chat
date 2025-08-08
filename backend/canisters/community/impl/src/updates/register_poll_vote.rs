@@ -39,24 +39,23 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> OCResult<Pol
                 .members
                 .get(&result.value.poll_creator)
                 .is_some_and(|m| !m.user_type().is_bot())
-            {
-                if let Some((message, event_index)) = channel.chat.events.message_internal(
+                && let Some((message, event_index)) = channel.chat.events.message_internal(
                     EventIndex::default(),
                     args.thread_root_message_index,
                     args.message_index.into(),
-                ) {
-                    let event = CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
-                        chat: Chat::Channel(state.env.canister_id().into(), channel.id),
-                        thread_root_message_index: args.thread_root_message_index,
-                        message_index: message.message_index,
-                        message_id: message.message_id,
-                        event_index,
-                        activity: MessageActivity::PollVote,
-                        timestamp: now,
-                        user_id: matches!(result.value.votes.total, TotalVotes::Visible(_)).then_some(user_id),
-                    });
-                    state.push_event_to_user(result.value.poll_creator, event, now);
-                }
+                )
+            {
+                let event = CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
+                    chat: Chat::Channel(state.env.canister_id().into(), channel.id),
+                    thread_root_message_index: args.thread_root_message_index,
+                    message_index: message.message_index,
+                    message_id: message.message_id,
+                    event_index,
+                    activity: MessageActivity::PollVote,
+                    timestamp: now,
+                    user_id: matches!(result.value.votes.total, TotalVotes::Visible(_)).then_some(user_id),
+                });
+                state.push_event_to_user(result.value.poll_creator, event, now);
             }
 
             if args.new_achievement {

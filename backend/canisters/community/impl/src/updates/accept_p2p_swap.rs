@@ -43,36 +43,34 @@ async fn accept_p2p_swap_impl(args: Args) -> Response {
                     state.notify_user_of_achievement(user_id, Achievement::AcceptedP2PSwapOffer, now);
                 }
 
-                if let Some(channel) = state.data.channels.get(&channel_id) {
-                    if let Some((message, event_index)) = channel.chat.events.message_internal(
+                if let Some(channel) = state.data.channels.get(&channel_id)
+                    && let Some((message, event_index)) = channel.chat.events.message_internal(
                         EventIndex::default(),
                         thread_root_message_index,
                         message_id.into(),
-                    ) {
-                        if channel
-                            .chat
-                            .members
-                            .get(&message.sender)
-                            .is_some_and(|m| !m.user_type().is_bot())
-                        {
-                            let community_id = state.env.canister_id().into();
+                    )
+                    && channel
+                        .chat
+                        .members
+                        .get(&message.sender)
+                        .is_some_and(|m| !m.user_type().is_bot())
+                {
+                    let community_id = state.env.canister_id().into();
 
-                            state.push_event_to_user(
-                                message.sender,
-                                CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
-                                    chat: Chat::Channel(community_id, channel.id),
-                                    thread_root_message_index,
-                                    message_index: message.message_index,
-                                    message_id: message.message_id,
-                                    event_index,
-                                    activity: MessageActivity::P2PSwapAccepted,
-                                    timestamp: now,
-                                    user_id: Some(user_id),
-                                }),
-                                now,
-                            );
-                        }
-                    }
+                    state.push_event_to_user(
+                        message.sender,
+                        CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
+                            chat: Chat::Channel(community_id, channel.id),
+                            thread_root_message_index,
+                            message_index: message.message_index,
+                            message_id: message.message_id,
+                            event_index,
+                            activity: MessageActivity::P2PSwapAccepted,
+                            timestamp: now,
+                            user_id: Some(user_id),
+                        }),
+                        now,
+                    );
                 }
 
                 handle_activity_notification(state);

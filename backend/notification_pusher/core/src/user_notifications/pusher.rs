@@ -154,11 +154,11 @@ fn prune_invalid_subscriptions(map: &mut HashMap<String, TimestampMillis>) {
     }
 
     for (subscription, timestamp) in iter {
-        if let Some((greatest_timestamp, _)) = heap.peek() {
-            if *timestamp < *greatest_timestamp {
-                heap.pop();
-                heap.push((*timestamp, subscription.clone()));
-            }
+        if let Some((greatest_timestamp, _)) = heap.peek()
+            && *timestamp < *greatest_timestamp
+        {
+            heap.pop();
+            heap.push((*timestamp, subscription.clone()));
         }
     }
 

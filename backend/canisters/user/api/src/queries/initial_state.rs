@@ -3,7 +3,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
-    CanisterId, Chat, ChatId, ChitEarned, DirectChatSummary, Empty, GroupChatSummary, InstalledBotDetails, PinNumberSettings,
+    CanisterId, Chat, ChatId, ChitEvent, DirectChatSummary, Empty, GroupChatSummary, InstalledBotDetails, PinNumberSettings,
     StreakInsurance, TimestampMillis, UserId,
 };
 
@@ -28,7 +28,7 @@ pub struct SuccessResult {
     pub suspended: bool,
     pub pin_number_settings: Option<PinNumberSettings>,
     pub local_user_index_canister_id: CanisterId,
-    pub achievements: Vec<ChitEarned>,
+    pub achievements: Vec<ChitEvent>,
     pub achievements_last_seen: TimestampMillis,
     pub total_chit_earned: i32,
     pub chit_balance: i32,
@@ -43,6 +43,7 @@ pub struct SuccessResult {
     pub message_activity_summary: MessageActivitySummary,
     pub bots: Vec<InstalledBotDetails>,
     pub btc_address: Option<String>,
+    pub premium_items: Vec<u32>,
 }
 
 #[ts_export(user, initial_state)]

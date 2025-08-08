@@ -24,10 +24,10 @@ pub struct Streak {
 
 impl Streak {
     pub fn days(&self, now: TimestampMillis) -> u16 {
-        if let Some(today) = self.timestamp_to_day(now) {
-            if !self.is_new_streak(today) {
-                return 1 + self.end_day - self.start_day;
-            }
+        if let Some(today) = self.timestamp_to_day(now)
+            && !self.is_new_streak(today)
+        {
+            return 1 + self.end_day - self.start_day;
         }
 
         0
@@ -38,21 +38,21 @@ impl Streak {
     }
 
     pub fn claim(&mut self, now: TimestampMillis) -> Result<Option<UserCanisterStreakInsuranceClaim>, TimestampMillis> {
-        if let Some(today) = self.timestamp_to_day(now) {
-            if today > self.end_day {
-                if self.is_new_streak(today) {
-                    if let Some(insurance_claim) = self.claim_via_insurance(now) {
-                        // This can happen if the user claims just after midnight, before the timer job runs
-                        self.set_end_day(today);
-                        return Ok(Some(insurance_claim));
-                    }
-                    self.start_day = today;
-                    self.reset_streak_insurance(now);
+        if let Some(today) = self.timestamp_to_day(now)
+            && today > self.end_day
+        {
+            if self.is_new_streak(today) {
+                if let Some(insurance_claim) = self.claim_via_insurance(now) {
+                    // This can happen if the user claims just after midnight, before the timer job runs
+                    self.set_end_day(today);
+                    return Ok(Some(insurance_claim));
                 }
-
-                self.set_end_day(today);
-                return Ok(None);
+                self.start_day = today;
+                self.reset_streak_insurance(now);
             }
+
+            self.set_end_day(today);
+            return Ok(None);
         }
 
         Err(self.next_claim())
@@ -63,23 +63,23 @@ impl Streak {
             return None;
         }
 
-        if let Some(today) = self.timestamp_to_day(now) {
-            if today == self.end_day + 2 {
-                self.set_end_day(self.end_day + 1);
-                self.days_missed += 1;
-                self.insurance_last_updated = now;
+        if let Some(today) = self.timestamp_to_day(now)
+            && today == self.end_day + 2
+        {
+            self.set_end_day(self.end_day + 1);
+            self.days_missed += 1;
+            self.insurance_last_updated = now;
 
-                let claim = UserCanisterStreakInsuranceClaim {
-                    // The timestamp of the end of the day for which the claim applied
-                    timestamp: self.final_timestamp_of_day(today - 1),
-                    streak_length: self.end_day - self.start_day,
-                    new_days_claimed: self.days_missed,
-                    insured_days_remaining: self.days_insured.saturating_sub(self.days_missed),
-                };
-                self.claims.push(claim.clone());
-                info!(day = today, "Streak insurance used");
-                return Some(claim);
-            }
+            let claim = UserCanisterStreakInsuranceClaim {
+                // The timestamp of the end of the day for which the claim applied
+                timestamp: self.final_timestamp_of_day(today - 1),
+                streak_length: self.end_day - self.start_day,
+                new_days_claimed: self.days_missed,
+                insured_days_remaining: self.days_insured.saturating_sub(self.days_missed),
+            };
+            self.claims.push(claim.clone());
+            info!(day = today, "Streak insurance used");
+            return Some(claim);
         }
         None
     }

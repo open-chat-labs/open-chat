@@ -60,24 +60,24 @@ pub async fn make_transfer(
 
     if retry_if_bad_fee {
         // If the ledger returns an error saying the fee is too high, reduce the fee and try again
-        if let Err(TransferError::BadFee { expected_fee }) = &response {
-            if let Some(fee) = args.fee.clone() {
-                let expected_fee = expected_fee.clone();
-                let mut updated_args = args.clone();
-                updated_args.fee = Some(expected_fee.clone());
+        if let Err(TransferError::BadFee { expected_fee }) = &response
+            && let Some(fee) = args.fee.clone()
+        {
+            let expected_fee = expected_fee.clone();
+            let mut updated_args = args.clone();
+            updated_args.fee = Some(expected_fee.clone());
 
-                if fee > expected_fee {
-                    let diff = fee - expected_fee;
-                    updated_args.amount += diff;
-                } else {
-                    let diff = expected_fee - fee;
-                    if updated_args.amount < diff {
-                        return Ok(Err("Transfer amount too low to cover fee".to_string()));
-                    }
-                    updated_args.amount -= diff;
+            if fee > expected_fee {
+                let diff = fee - expected_fee;
+                updated_args.amount += diff;
+            } else {
+                let diff = expected_fee - fee;
+                if updated_args.amount < diff {
+                    return Ok(Err("Transfer amount too low to cover fee".to_string()));
                 }
-                response = icrc_ledger_canister_c2c_client::icrc1_transfer(ledger_canister_id, &updated_args).await?;
+                updated_args.amount -= diff;
             }
+            response = icrc_ledger_canister_c2c_client::icrc1_transfer(ledger_canister_id, &updated_args).await?;
         }
     }
 
