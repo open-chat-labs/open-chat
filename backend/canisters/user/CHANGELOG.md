@@ -29,6 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add 'min_chit_earned' prize message criterion ([#8413](https://github.com/open-chat-labs/open-chat/pull/8413))
 - Sync `total_chit_earned` to UserIndex ([#8434](https://github.com/open-chat-labs/open-chat/pull/8434))
 - Switch some endpoints over to using common response types ([#8450](https://github.com/open-chat-labs/open-chat/pull/8450))
+- Move signature verification to LocalUserIndex ([#8460](https://github.com/open-chat-labs/open-chat/pull/8460))
 
 ### Removed
 
