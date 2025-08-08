@@ -9,6 +9,7 @@ pub mod c2c_diamond_membership_expiry_dates;
 pub mod c2c_lookup_user;
 pub mod c2c_lookup_users;
 pub mod c2c_user_principals;
+mod c2c_verify_signature;
 pub mod chat_events;
 pub mod group_and_community_summary_updates_v2;
 pub mod http_request;

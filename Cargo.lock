@@ -5269,8 +5269,12 @@ dependencies = [
 name = "identity_utils"
 version = "0.1.0"
 dependencies = [
+ "constants",
  "ic-cbor",
+ "ic-certificate-verification",
  "ic-certification 2.6.0",
+ "oc_error_codes",
+ "types",
 ]
 
 [[package]]
@@ -6026,7 +6030,9 @@ dependencies = [
  "http_request",
  "ic-cdk",
  "ic-cdk-timers",
+ "ic-certificate-verification",
  "ic-stable-structures 0.7.0",
+ "identity_utils",
  "itertools 0.14.0",
  "json",
  "jwt",
@@ -11351,8 +11357,6 @@ dependencies = [
  "sha256",
  "sns_governance_canister",
  "sns_governance_canister_c2c_client",
- "sonic_canister",
- "sonic_canister_c2c_client",
  "stable_memory",
  "stable_memory_map",
  "storage_bucket_client",

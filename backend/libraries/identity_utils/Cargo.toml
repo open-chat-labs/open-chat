@@ -4,5 +4,9 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
+constants = { path = "../constants" }
 ic-cbor = { workspace = true }
+ic-certificate-verification = { workspace = true }
 ic-certification = { workspace = true }
+oc_error_codes = { path = "../error_codes" }
+types = { path = "../types" }
