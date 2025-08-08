@@ -48,6 +48,10 @@ impl PremiumItems {
             });
     }
 
+    pub fn chit_costs(&self) -> impl Iterator<Item = (u32, u32)> {
+        self.items.iter().map(|(item_id, item)| (*item_id, item.chit_cost))
+    }
+
     pub fn metrics(&self) -> PremiumItemMetrics {
         PremiumItemMetrics {
             purchase_counts: self.items.iter().map(|(id, i)| (*id, i.purchase_count)).collect(),
