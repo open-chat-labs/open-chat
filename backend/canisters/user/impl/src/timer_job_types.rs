@@ -8,11 +8,10 @@ use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, SECOND_IN_MS};
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{BlobReference, Chat, ChatId, CommunityId, EventIndex, MessageId, MessageIndex, P2PSwapStatus, UserId};
-use user_canister::{C2CReplyContext, UserCanisterEvent};
+use user_canister::C2CReplyContext;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
-    RetrySendingFailedMessages(Box<RetrySendingFailedMessagesJob>),
     HardDeleteMessageContent(Box<HardDeleteMessageContentJob>),
     DeleteFileReferences(DeleteFileReferencesJob),
     MessageReminder(Box<MessageReminderJob>),
@@ -128,7 +127,6 @@ impl Job for TimerJob {
         }
 
         match self {
-            TimerJob::RetrySendingFailedMessages(job) => job.execute(),
             TimerJob::HardDeleteMessageContent(job) => job.execute(),
             TimerJob::DeleteFileReferences(job) => job.execute(),
             TimerJob::MessageReminder(job) => job.execute(),
@@ -145,41 +143,6 @@ impl Job for TimerJob {
 
         if can_borrow_state {
             flush_pending_events();
-        }
-    }
-}
-
-impl Job for RetrySendingFailedMessagesJob {
-    fn execute(self) {
-        let (pending_messages, sender_name, sender_display_name, sender_avatar_id) = read_state(|state| {
-            (
-                state
-                    .data
-                    .direct_chats
-                    .get(&self.recipient.into())
-                    .map(|c| c.get_pending_messages())
-                    .unwrap_or_default(),
-                state.data.username.value.clone(),
-                state.data.display_name.value.clone(),
-                state.data.avatar.value.as_ref().map(|d| d.id),
-            )
-        });
-
-        if !pending_messages.is_empty() {
-            let args = user_canister::SendMessagesArgs {
-                messages: pending_messages,
-                sender_name,
-                sender_display_name,
-                sender_avatar_id,
-            };
-            mutate_state(|state| {
-                if let Some(chat) = state.data.direct_chats.get_mut(&self.recipient.into()) {
-                    for message_id in args.messages.iter().map(|a| a.message_id) {
-                        chat.mark_message_confirmed(message_id);
-                    }
-                }
-                state.push_user_canister_event(self.recipient.into(), UserCanisterEvent::SendMessages(Box::new(args)));
-            });
         }
     }
 }
