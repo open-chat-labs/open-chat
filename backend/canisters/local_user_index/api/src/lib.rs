@@ -7,9 +7,9 @@ use types::nns::CryptoAmount;
 use types::{
     AutonomousConfig, BotCommandDefinition, BotDataEncoding, BotDefinition, BotInstallationLocation, BotSubscriptions,
     BuildVersion, CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, CyclesTopUp, DiamondMembershipPlanDuration,
-    MessageContent, MessageContentInitial, MessageId, MessageIndex, Notification, NotifyChit, PhoneNumber, PremiumItemPurchase,
-    ReferralType, SuspensionDuration, TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User,
-    UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserType, is_default,
+    MessageContent, MessageContentInitial, MessageId, MessageIndex, Notification, NotifyChit, PhoneNumber, ReferralType,
+    SuspensionDuration, TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User, UserCanisterStreakInsuranceClaim,
+    UserCanisterStreakInsurancePayment, UserId, UserType, is_default,
 };
 
 mod lifecycle;
@@ -308,7 +308,6 @@ pub struct UserDetailsFull {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum UserEvent {
     NotifyChit(NotifyChit),
-    NotifyPremiumItemPurchased(PremiumItemPurchase),
     NotifyStreakInsurancePayment(UserCanisterStreakInsurancePayment),
     NotifyStreakInsuranceClaim(UserCanisterStreakInsuranceClaim),
     UserBlocked(UserId),

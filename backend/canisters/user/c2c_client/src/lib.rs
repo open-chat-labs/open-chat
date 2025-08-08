@@ -20,6 +20,7 @@ generate_c2c_call!(c2c_install_bot);
 generate_c2c_call!(c2c_notify_community_deleted);
 generate_c2c_call!(c2c_local_user_index, 300);
 generate_c2c_call!(c2c_notify_group_deleted);
+generate_c2c_call!(c2c_pay_for_premium_item);
 generate_c2c_call!(c2c_remove_from_community);
 generate_c2c_call!(c2c_remove_from_group);
 generate_c2c_call!(c2c_revoke_super_admin);

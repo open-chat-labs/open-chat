@@ -303,9 +303,16 @@ fn streak_utc_offset_can_be_updated() {
 #[test]
 fn pay_for_premium_item_succeeds() {
     let mut wrapper = ENV.deref().get();
-    let TestEnv { env, canister_ids, .. } = wrapper.env();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
 
     let user = client::register_user(env, canister_ids);
+    client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, user.user_id);
+    client::user_index::happy_path::set_premium_item_cost(env, user.principal, canister_ids.user_index, 1, 10_000);
+
     ensure_time_at_least_day0(env);
 
     for _ in 0..30 {
@@ -315,7 +322,7 @@ fn pay_for_premium_item_succeeds() {
 
     tick_many(env, 3);
 
-    let pay_for_premium_item_result = client::user::happy_path::pay_for_premium_item(env, &user, 1, 10_000);
+    let pay_for_premium_item_result = client::local_user_index::happy_path::pay_for_premium_item(env, &user, 1, 10_000);
 
     assert_eq!(
         pay_for_premium_item_result.total_chit_earned - pay_for_premium_item_result.chit_balance,
