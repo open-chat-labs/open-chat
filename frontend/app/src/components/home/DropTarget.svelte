@@ -6,6 +6,7 @@
     import { getContext, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import PlusCircle from "svelte-material-icons/PlusCircle.svelte";
+    import { fade } from "svelte/transition";
     import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -63,7 +64,7 @@
     {@render children()}
 
     {#if dragging}
-        <div class="overlay">
+        <div transition:fade={{ duration: 200 }} class="overlay">
             <Translatable resourceKey={i18nKey("dropFile")}></Translatable>
             <PlusCircle size={"2em"} color={"white"} />
         </div>
