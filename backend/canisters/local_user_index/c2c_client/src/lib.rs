@@ -10,7 +10,6 @@ generate_c2c_call!(c2c_diamond_membership_expiry_dates);
 generate_c2c_call!(c2c_lookup_user);
 generate_c2c_call!(c2c_lookup_users);
 generate_c2c_call!(c2c_user_principals);
-generate_c2c_call!(c2c_verify_signature);
 generate_c2c_call!(chat_events);
 
 // Updates
@@ -34,6 +33,7 @@ generate_c2c_call!(c2c_upgrade_community_canister_wasm);
 generate_c2c_call!(c2c_upgrade_group_canister_wasm);
 generate_c2c_call!(c2c_upgrade_user_canister_wasm);
 generate_c2c_call!(c2c_user_canister, 300);
+generate_c2c_call!(c2c_verify_signature, 300);
 generate_c2c_call!(join_channel);
 generate_c2c_call!(join_group);
 
