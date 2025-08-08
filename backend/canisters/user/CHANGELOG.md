@@ -35,6 +35,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove the now unused `c2c_mark_group/community_updated_for_user` ([#8310](https://github.com/open-chat-labs/open-chat/pull/8310))
 - Remove `reclaim_swap_tokens` which is unused ([#8449](https://github.com/open-chat-labs/open-chat/pull/8449))
+- Remove unused integration with Sonic exchange ([#8456](https://github.com/open-chat-labs/open-chat/pull/8456))
+- Remove old job to retry failed messages ([#8457](https://github.com/open-chat-labs/open-chat/pull/8457))
 
 ### Fixed
 

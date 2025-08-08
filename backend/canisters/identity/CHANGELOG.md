@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Switch some endpoints over to using common response types ([#8450](https://github.com/open-chat-labs/open-chat/pull/8450))
+
+## [[2.0.1860](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1860-identity)] - 2025-08-06
+
 ### Added
 
 - Implement `get_encryption_key` for getting e2e encryption keys ([#8248](https://github.com/open-chat-labs/open-chat/pull/8248))
@@ -17,7 +23,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Expose `liquid_cycles_balance` in metrics ([#8350](https://github.com/open-chat-labs/open-chat/pull/8350))
 - Ensure new account linking codes are always unique ([#8393](https://github.com/open-chat-labs/open-chat/pull/8393))
-- Switch some endpoints over to using common response types ([#8450](https://github.com/open-chat-labs/open-chat/pull/8450))
 
 ### Fixed
 
