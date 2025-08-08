@@ -33,7 +33,7 @@ generate_msgpack_update_call!(leave_group);
 generate_msgpack_update_call!(mark_message_activity_feed_read);
 generate_msgpack_update_call!(mark_read);
 generate_msgpack_update_call!(mute_notifications);
-generate_msgpack_update_call!(pay_for_premium_item);
+generate_msgpack_update_call!(c2c_pay_for_premium_item);
 generate_msgpack_update_call!(pay_for_streak_insurance);
 generate_msgpack_update_call!(remove_reaction);
 generate_msgpack_update_call!(save_crypto_account);
@@ -581,12 +581,12 @@ pub mod happy_path {
         user: &User,
         item_id: u32,
         expected_cost: u32,
-    ) -> user_canister::pay_for_premium_item::SuccessResult {
+    ) -> user_canister::c2c_pay_for_premium_item::SuccessResult {
         let response = super::pay_for_premium_item(
             env,
             user.principal,
             user.canister(),
-            &user_canister::pay_for_premium_item::Args {
+            &user_canister::c2c_pay_for_premium_item::Args {
                 item_id,
                 pay_in_chat: false,
                 expected_cost,
@@ -594,7 +594,7 @@ pub mod happy_path {
         );
 
         match response {
-            user_canister::pay_for_premium_item::Response::Success(result) => result,
+            user_canister::c2c_pay_for_premium_item::Response::Success(result) => result,
             response => panic!("'pay_for_premium_item' error: {response:?}"),
         }
     }
