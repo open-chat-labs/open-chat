@@ -65,10 +65,10 @@ impl BotActionScope {
     }
 
     pub fn user_id(&self) -> Option<UserId> {
-        if let Self::Chat(chat) = self {
-            if let Chat::Direct(chat_id) = chat.chat {
-                return Some((*chat_id).into());
-            }
+        if let Self::Chat(chat) = self
+            && let Chat::Direct(chat_id) = chat.chat
+        {
+            return Some((*chat_id).into());
         }
 
         None

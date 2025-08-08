@@ -317,16 +317,16 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
 fn handle_user_registered(user: UserRegistered, now: TimestampMillis, state: &mut RuntimeState) {
     state.data.global_users.add(user.user_principal, user.user_id, user.user_type);
 
-    if let Some(referred_by) = user.referred_by {
-        if state.data.local_users.get(&referred_by).is_some() {
-            state.push_event_to_user(
-                referred_by,
-                UserEvent::ReferredUserRegistered(Box::new(ReferredUserRegistered {
-                    user_id: user.user_id,
-                    username: user.username,
-                })),
-                now,
-            );
-        }
+    if let Some(referred_by) = user.referred_by
+        && state.data.local_users.get(&referred_by).is_some()
+    {
+        state.push_event_to_user(
+            referred_by,
+            UserEvent::ReferredUserRegistered(Box::new(ReferredUserRegistered {
+                user_id: user.user_id,
+                username: user.username,
+            })),
+            now,
+        );
     }
 }

@@ -98,10 +98,10 @@ struct PrepareResult {
 fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareResult> {
     state.data.verify_not_frozen()?;
 
-    if let OptionUpdate::SetToSome(gate_config) = &args.gate_config {
-        if !gate_config.validate(state.data.test_mode) {
-            return Err(OCErrorCode::InvalidAccessGate.into());
-        }
+    if let OptionUpdate::SetToSome(gate_config) = &args.gate_config
+        && !gate_config.validate(state.data.test_mode)
+    {
+        return Err(OCErrorCode::InvalidAccessGate.into());
     }
 
     let gate_config = args
@@ -145,16 +145,17 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
     if state.data.verified.value {
         let mut revoke = false;
 
-        if let Some(new_name) = args.name.as_ref() {
-            if !new_name.eq_ignore_ascii_case(&state.data.chat.name.value) {
-                revoke = true;
-            }
+        if let Some(new_name) = args.name.as_ref()
+            && !new_name.eq_ignore_ascii_case(&state.data.chat.name.value)
+        {
+            revoke = true;
         }
 
-        if let Some(new_public) = args.public {
-            if (new_public != state.data.chat.is_public.value) && !new_public {
-                revoke = true;
-            }
+        if let Some(new_public) = args.public
+            && (new_public != state.data.chat.is_public.value)
+            && !new_public
+        {
+            revoke = true;
         }
 
         if revoke {

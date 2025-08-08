@@ -191,7 +191,7 @@ impl GroupMembers {
         self.blocked.iter().copied().collect()
     }
 
-    pub fn get_verified_member(&self, user_id: UserId) -> Result<VerifiedGroupMember, OCErrorCode> {
+    pub fn get_verified_member(&self, user_id: UserId) -> Result<VerifiedGroupMember<'_>, OCErrorCode> {
         if !self.member_ids.contains(&user_id) {
             Err(OCErrorCode::InitiatorNotFound)
         } else if self.suspended.contains(&user_id) {

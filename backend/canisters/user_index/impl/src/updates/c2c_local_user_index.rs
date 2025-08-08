@@ -131,28 +131,27 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 chit.streak,
                 chit.streak_ends,
                 **now,
-            ) {
-                if let Some(user) = state.data.users.get_by_user_id(&user_id) {
-                    let total_chit_earned = user.total_chit_earned;
-                    state.data.chit_leaderboard.update_position(
-                        user_id,
-                        total_chit_earned,
-                        chit.chit_balance,
-                        chit.timestamp,
-                        **now,
-                    );
+            ) && let Some(user) = state.data.users.get_by_user_id(&user_id)
+            {
+                let total_chit_earned = user.total_chit_earned;
+                state.data.chit_leaderboard.update_position(
+                    user_id,
+                    total_chit_earned,
+                    chit.chit_balance,
+                    chit.timestamp,
+                    **now,
+                );
 
-                    state.push_event_to_all_local_user_indexes(
-                        UserIndexEvent::UpdateChitBalance(
-                            user_id,
-                            ChitBalance {
-                                total_earned: total_chit_earned,
-                                curr_balance: user.chit_balance,
-                            },
-                        ),
-                        None,
-                    );
-                }
+                state.push_event_to_all_local_user_indexes(
+                    UserIndexEvent::UpdateChitBalance(
+                        user_id,
+                        ChitBalance {
+                            total_earned: total_chit_earned,
+                            curr_balance: user.chit_balance,
+                        },
+                    ),
+                    None,
+                );
             }
         }
         LocalUserIndexEvent::NotifyPremiumItemPurchased(ev) => {

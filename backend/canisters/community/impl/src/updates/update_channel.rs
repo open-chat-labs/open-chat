@@ -22,22 +22,22 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> OCResult<Suc
 
     clean_args(&mut args);
 
-    if let OptionUpdate::SetToSome(external_url) = &args.external_url {
-        if Url::parse(external_url).is_err() {
-            return Err(OCErrorCode::InvalidExternalUrl.into());
-        }
+    if let OptionUpdate::SetToSome(external_url) = &args.external_url
+        && Url::parse(external_url).is_err()
+    {
+        return Err(OCErrorCode::InvalidExternalUrl.into());
     }
 
-    if let OptionUpdate::SetToSome(gate_config) = &args.gate_config {
-        if !gate_config.validate(state.data.test_mode) {
-            return Err(OCErrorCode::InvalidAccessGate.into());
-        }
+    if let OptionUpdate::SetToSome(gate_config) = &args.gate_config
+        && !gate_config.validate(state.data.test_mode)
+    {
+        return Err(OCErrorCode::InvalidAccessGate.into());
     }
 
-    if let Some(name) = &args.name {
-        if state.data.channels.is_name_taken(name, Some(args.channel_id)) {
-            return Err(OCErrorCode::NameTaken.into());
-        }
+    if let Some(name) = &args.name
+        && state.data.channels.is_name_taken(name, Some(args.channel_id))
+    {
+        return Err(OCErrorCode::NameTaken.into());
     }
 
     let member = state.get_calling_member(true)?;

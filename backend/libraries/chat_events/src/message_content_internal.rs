@@ -722,11 +722,11 @@ impl PollContentInternal {
                     RegisterVoteResult::Success(existing_vote_removed)
                 }
                 VoteOperation::DeleteVote => {
-                    if let Some(votes) = self.votes.get_mut(&option_index) {
-                        if let Some((index, _)) = votes.iter().enumerate().find(|(_, u)| **u == user_id) {
-                            votes.remove(index);
-                            return RegisterVoteResult::Success(true);
-                        }
+                    if let Some(votes) = self.votes.get_mut(&option_index)
+                        && let Some((index, _)) = votes.iter().enumerate().find(|(_, u)| **u == user_id)
+                    {
+                        votes.remove(index);
+                        return RegisterVoteResult::Success(true);
                     }
                     RegisterVoteResult::SuccessNoChange
                 }
@@ -1775,40 +1775,40 @@ impl P2PSwapContentInternal {
     }
 
     pub fn unreserve(&mut self, user_id: UserId) -> bool {
-        if let P2PSwapStatus::Reserved(r) = &self.status {
-            if r.reserved_by == user_id {
-                self.status = P2PSwapStatus::Open;
-                return true;
-            }
+        if let P2PSwapStatus::Reserved(r) = &self.status
+            && r.reserved_by == user_id
+        {
+            self.status = P2PSwapStatus::Open;
+            return true;
         }
         false
     }
 
     pub fn accept(&mut self, user_id: UserId, token1_txn_in: u64) -> bool {
-        if let P2PSwapStatus::Reserved(a) = &self.status {
-            if a.reserved_by == user_id {
-                self.status = P2PSwapStatus::Accepted(P2PSwapAccepted {
-                    accepted_by: user_id,
-                    token1_txn_in,
-                });
-                return true;
-            }
+        if let P2PSwapStatus::Reserved(a) = &self.status
+            && a.reserved_by == user_id
+        {
+            self.status = P2PSwapStatus::Accepted(P2PSwapAccepted {
+                accepted_by: user_id,
+                token1_txn_in,
+            });
+            return true;
         }
         false
     }
 
     pub fn complete(&mut self, user_id: UserId, token0_txn_out: u64, token1_txn_out: u64) -> Option<P2PSwapCompleted> {
-        if let P2PSwapStatus::Accepted(a) = &self.status {
-            if a.accepted_by == user_id {
-                let status = P2PSwapCompleted {
-                    accepted_by: user_id,
-                    token1_txn_in: a.token1_txn_in,
-                    token0_txn_out,
-                    token1_txn_out,
-                };
-                self.status = P2PSwapStatus::Completed(status.clone());
-                return Some(status);
-            }
+        if let P2PSwapStatus::Accepted(a) = &self.status
+            && a.accepted_by == user_id
+        {
+            let status = P2PSwapCompleted {
+                accepted_by: user_id,
+                token1_txn_in: a.token1_txn_in,
+                token0_txn_out,
+                token1_txn_out,
+            };
+            self.status = P2PSwapStatus::Completed(status.clone());
+            return Some(status);
         }
         None
     }

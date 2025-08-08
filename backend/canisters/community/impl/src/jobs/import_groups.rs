@@ -292,19 +292,19 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
                             let user_type = state.data.members.bots().get(&user_id).copied().unwrap_or_default();
 
                             for channel_id in public_channel_ids.iter().filter(|&c| *c != channel_id) {
-                                if let Some(channel) = state.data.channels.get_mut(channel_id) {
-                                    if channel.chat.gate_config.is_none() {
-                                        join_channel_unchecked(
-                                            user_id,
-                                            user_type,
-                                            channel,
-                                            &mut state.data.members,
-                                            state.data.is_public.value,
-                                            true,
-                                            false,
-                                            now,
-                                        );
-                                    }
+                                if let Some(channel) = state.data.channels.get_mut(channel_id)
+                                    && channel.chat.gate_config.is_none()
+                                {
+                                    join_channel_unchecked(
+                                        user_id,
+                                        user_type,
+                                        channel,
+                                        &mut state.data.members,
+                                        state.data.is_public.value,
+                                        true,
+                                        false,
+                                        now,
+                                    );
                                 }
                             }
 

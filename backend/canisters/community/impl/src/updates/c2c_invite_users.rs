@@ -29,15 +29,15 @@ pub(crate) fn invite_users_to_community_impl(
 ) -> OCResult<SuccessResult> {
     state.data.verify_not_frozen()?;
 
-    if let Caller::BotV2(bot_caller) = &caller {
-        if !state.data.is_bot_permitted(
+    if let Caller::BotV2(bot_caller) = &caller
+        && !state.data.is_bot_permitted(
             &bot_caller.bot,
             None,
             &bot_caller.initiator,
             &BotPermissions::from_community_permission(CommunityPermission::InviteUsers),
-        ) {
-            return Err(OCErrorCode::InitiatorNotAuthorized.into());
-        }
+        )
+    {
+        return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
     let invited_by = if let Some(initiator) = caller.initiator() {

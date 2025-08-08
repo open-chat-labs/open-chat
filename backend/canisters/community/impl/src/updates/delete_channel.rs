@@ -53,17 +53,15 @@ fn delete_channel_impl(channel_id: ChannelId, ext_caller: Option<Caller>, state:
     }
 
     // If the agent is a bot and the initiator is a user (by command), then also check the user has permission
-    if let Caller::BotV2(bot_caller) = &caller {
-        if let Some(initiator) = bot_caller.initiator.user() {
-            if !channel
-                .chat
-                .members
-                .get(&initiator)
-                .is_some_and(|member| member.role().can_delete_group())
-            {
-                return Err(OCErrorCode::InitiatorNotAuthorized.into());
-            }
-        }
+    if let Caller::BotV2(bot_caller) = &caller
+        && let Some(initiator) = bot_caller.initiator.user()
+        && !channel
+            .chat
+            .members
+            .get(&initiator)
+            .is_some_and(|member| member.role().can_delete_group())
+    {
+        return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
     let now = state.env.now();

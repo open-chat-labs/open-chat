@@ -142,12 +142,11 @@ fn messages_arrive_in_order_even_if_some_fail_originally() {
 }
 
 fn validate_event_is_message_with_text(event: &ChatEvent, text: &str) {
-    if let ChatEvent::Message(m) = &event {
-        if let MessageContent::Text(t) = &m.content {
-            if t.text == text {
-                return;
-            }
-        }
+    if let ChatEvent::Message(m) = &event
+        && let MessageContent::Text(t) = &m.content
+        && t.text == text
+    {
+        return;
     }
     panic!("Event does not match. {event:?}. {text}");
 }

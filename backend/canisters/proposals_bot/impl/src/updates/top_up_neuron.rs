@@ -43,15 +43,15 @@ struct PrepareResult {
 }
 
 fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Response> {
-    if let Some(ns) = state.data.nervous_systems.get(&args.governance_canister_id) {
-        if let Some(sns_neuron_id) = ns.neuron_for_submitting_proposals() {
-            return Ok(PrepareResult {
-                caller: state.env.caller(),
-                user_index_canister_id: state.data.user_index_canister_id,
-                ledger_canister_id: ns.ledger_canister_id(),
-                sns_neuron_id,
-            });
-        }
+    if let Some(ns) = state.data.nervous_systems.get(&args.governance_canister_id)
+        && let Some(sns_neuron_id) = ns.neuron_for_submitting_proposals()
+    {
+        return Ok(PrepareResult {
+            caller: state.env.caller(),
+            user_index_canister_id: state.data.user_index_canister_id,
+            ledger_canister_id: ns.ledger_canister_id(),
+            sns_neuron_id,
+        });
     }
     Err(GovernanceCanisterNotSupported)
 }

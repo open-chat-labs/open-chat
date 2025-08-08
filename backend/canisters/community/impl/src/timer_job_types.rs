@@ -180,59 +180,57 @@ impl Job for HardDeleteMessageContentJob {
     fn execute(self) {
         let mut follow_on_jobs = Vec::new();
         mutate_state(|state| {
-            if let Some(channel) = state.data.channels.get_mut(&self.channel_id) {
-                if let Some((content, sender)) = channel.chat.events.remove_deleted_message_content(
+            if let Some(channel) = state.data.channels.get_mut(&self.channel_id)
+                && let Some((content, sender)) = channel.chat.events.remove_deleted_message_content(
                     self.thread_root_message_index,
                     self.message_id,
                     state.env.now(),
-                ) {
-                    let files_to_delete = content.blob_references();
-                    if !files_to_delete.is_empty() {
-                        let delete_files_job = DeleteFileReferencesJob { files: files_to_delete };
-                        delete_files_job.execute();
-                    }
-                    match content {
-                        MessageContentInternal::Prize(mut prize) => {
-                            if let Some(message_index) = channel
-                                .chat
-                                .events
-                                .message_ids(self.thread_root_message_index, self.message_id.into())
-                                .map(|(_, m, _)| m)
-                            {
-                                // If there was already a job queued up to refund the prize, cancel it, and make the refund
-                                if state
-                                    .data
-                                    .timer_jobs
-                                    .cancel_job(|job| {
-                                        if let TimerJob::FinalPrizePayments(j) = job {
-                                            j.channel_id == self.channel_id && j.message_index == message_index
-                                        } else {
-                                            false
-                                        }
-                                    })
-                                    .is_some()
-                                {
-                                    for pending_transaction in prize.final_payments(sender, state.env.now_nanos()) {
-                                        follow_on_jobs.push(TimerJob::MakeTransfer(Box::new(MakeTransferJob {
-                                            pending_transaction,
-                                            attempt: 0,
-                                        })));
+                )
+            {
+                let files_to_delete = content.blob_references();
+                if !files_to_delete.is_empty() {
+                    let delete_files_job = DeleteFileReferencesJob { files: files_to_delete };
+                    delete_files_job.execute();
+                }
+                match content {
+                    MessageContentInternal::Prize(mut prize) => {
+                        if let Some(message_index) = channel
+                            .chat
+                            .events
+                            .message_ids(self.thread_root_message_index, self.message_id.into())
+                            .map(|(_, m, _)| m)
+                        {
+                            // If there was already a job queued up to refund the prize, cancel it, and make the refund
+                            if state
+                                .data
+                                .timer_jobs
+                                .cancel_job(|job| {
+                                    if let TimerJob::FinalPrizePayments(j) = job {
+                                        j.channel_id == self.channel_id && j.message_index == message_index
+                                    } else {
+                                        false
                                     }
+                                })
+                                .is_some()
+                            {
+                                for pending_transaction in prize.final_payments(sender, state.env.now_nanos()) {
+                                    follow_on_jobs.push(TimerJob::MakeTransfer(Box::new(MakeTransferJob {
+                                        pending_transaction,
+                                        attempt: 0,
+                                    })));
                                 }
                             }
                         }
-                        MessageContentInternal::P2PSwap(swap) => {
-                            if matches!(swap.status, P2PSwapStatus::Open) {
-                                follow_on_jobs.push(TimerJob::CancelP2PSwapInEscrowCanister(
-                                    CancelP2PSwapInEscrowCanisterJob {
-                                        swap_id: swap.swap_id,
-                                        attempt: 0,
-                                    },
-                                ));
-                            }
-                        }
-                        _ => {}
                     }
+                    MessageContentInternal::P2PSwap(swap) => {
+                        if matches!(swap.status, P2PSwapStatus::Open) {
+                            follow_on_jobs.push(TimerJob::CancelP2PSwapInEscrowCanister(CancelP2PSwapInEscrowCanisterJob {
+                                swap_id: swap.swap_id,
+                                attempt: 0,
+                            }));
+                        }
+                    }
+                    _ => {}
                 }
             }
         });
@@ -266,16 +264,15 @@ impl Job for EndPollJob {
     fn execute(self) {
         mutate_state(|state| {
             let now = state.env.now();
-            if let Some(channel) = state.data.channels.get_mut(&self.channel_id) {
-                if let EndPollResult::Success(result) =
+            if let Some(channel) = state.data.channels.get_mut(&self.channel_id)
+                && let EndPollResult::Success(result) =
                     channel
                         .chat
                         .events
                         .end_poll(self.thread_root_message_index, self.message_index, now)
-                {
-                    state.push_bot_notification(result.bot_notification);
-                    handle_activity_notification(state);
-                }
+            {
+                state.push_bot_notification(result.bot_notification);
+                handle_activity_notification(state);
             }
         });
     }
@@ -453,15 +450,14 @@ impl Job for CancelP2PSwapInEscrowCanisterJob {
 impl Job for MarkP2PSwapExpiredJob {
     fn execute(self) {
         mutate_state(|state| {
-            if let Some(channel) = state.data.channels.get_mut(&self.channel_id) {
-                if let Ok(result) =
+            if let Some(channel) = state.data.channels.get_mut(&self.channel_id)
+                && let Ok(result) =
                     channel
                         .chat
                         .events
                         .mark_p2p_swap_expired(self.thread_root_message_index, self.message_id, state.env.now())
-                {
-                    state.push_bot_notification(result.bot_notification);
-                }
+            {
+                state.push_bot_notification(result.bot_notification);
             }
         });
     }

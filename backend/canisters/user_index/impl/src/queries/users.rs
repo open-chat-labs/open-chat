@@ -18,38 +18,36 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
     let mut deleted = Vec::new();
     let mut current_user: Option<CurrentUserSummary> = None;
 
-    if let Some(u) = state.data.users.get_by_principal(&caller) {
-        if let Some(updated_since) = args
+    if let Some(u) = state.data.users.get_by_principal(&caller)
+        && let Some(updated_since) = args
             .user_groups
             .iter()
             .find(|g| g.users.contains(&u.user_id))
             .map(|g| g.updated_since)
-        {
-            if u.date_updated > updated_since || u.chit_updated > updated_since {
-                let suspension_details = u.suspension_details.as_ref().map(|d| d.into());
+        && (u.date_updated > updated_since || u.chit_updated > updated_since)
+    {
+        let suspension_details = u.suspension_details.as_ref().map(|d| d.into());
 
-                current_user = Some(CurrentUserSummary {
-                    user_id: u.user_id,
-                    username: u.username.clone(),
-                    display_name: u.display_name.clone(),
-                    avatar_id: u.avatar_id,
-                    profile_background_id: u.profile_background_id,
-                    is_bot: u.user_type.is_bot(),
-                    is_platform_moderator: state.data.platform_moderators.contains(&u.user_id),
-                    is_platform_operator: state.data.platform_operators.contains(&u.user_id),
-                    suspension_details,
-                    is_suspected_bot: state.data.users.is_suspected_bot(&u.user_id),
-                    diamond_membership_details: u.diamond_membership_details.hydrate(now),
-                    diamond_membership_status: u.diamond_membership_details.status_full(now),
-                    moderation_flags_enabled: u.moderation_flags_enabled,
-                    is_unique_person: u.unique_person_proof.is_some(),
-                    total_chit_earned: u.total_chit_earned,
-                    chit_balance: u.chit_balance,
-                    streak: u.streak(now),
-                    max_streak: u.max_streak,
-                });
-            }
-        }
+        current_user = Some(CurrentUserSummary {
+            user_id: u.user_id,
+            username: u.username.clone(),
+            display_name: u.display_name.clone(),
+            avatar_id: u.avatar_id,
+            profile_background_id: u.profile_background_id,
+            is_bot: u.user_type.is_bot(),
+            is_platform_moderator: state.data.platform_moderators.contains(&u.user_id),
+            is_platform_operator: state.data.platform_operators.contains(&u.user_id),
+            suspension_details,
+            is_suspected_bot: state.data.users.is_suspected_bot(&u.user_id),
+            diamond_membership_details: u.diamond_membership_details.hydrate(now),
+            diamond_membership_status: u.diamond_membership_details.status_full(now),
+            moderation_flags_enabled: u.moderation_flags_enabled,
+            is_unique_person: u.unique_person_proof.is_some(),
+            total_chit_earned: u.total_chit_earned,
+            chit_balance: u.chit_balance,
+            streak: u.streak(now),
+            max_streak: u.max_streak,
+        });
     }
 
     for group in args.user_groups {

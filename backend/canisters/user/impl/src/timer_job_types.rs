@@ -199,10 +199,10 @@ impl Job for HardDeleteMessageContentJob {
                         let delete_files_job = DeleteFileReferencesJob { files: files_to_delete };
                         delete_files_job.execute();
                     }
-                    if let MessageContentInternal::P2PSwap(s) = content {
-                        if matches!(s.status, P2PSwapStatus::Open) {
-                            p2p_swap_to_cancel = Some(s.swap_id);
-                        }
+                    if let MessageContentInternal::P2PSwap(s) = content
+                        && matches!(s.status, P2PSwapStatus::Open)
+                    {
+                        p2p_swap_to_cancel = Some(s.swap_id);
                     }
                 }
             }

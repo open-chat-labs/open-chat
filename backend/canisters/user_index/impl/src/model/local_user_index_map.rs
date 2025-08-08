@@ -34,11 +34,11 @@ impl LocalUserIndexMap {
     }
 
     pub fn add_user(&mut self, index_id: CanisterId, user_id: UserId) -> bool {
-        if let Some(index) = self.index_map.get_mut(&index_id) {
-            if self.user_to_index.insert(user_id, index_id).is_none() {
-                index.user_count += 1;
-                return true;
-            }
+        if let Some(index) = self.index_map.get_mut(&index_id)
+            && self.user_to_index.insert(user_id, index_id).is_none()
+        {
+            index.user_count += 1;
+            return true;
         }
 
         false
