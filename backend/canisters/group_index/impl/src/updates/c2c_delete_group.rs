@@ -2,7 +2,7 @@ use crate::guards::caller_is_group_canister;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use group_index_canister::c2c_delete_group::{Response::*, *};
+use group_index_canister::c2c_delete_group::*;
 use tracing::info;
 use types::{ChatId, CommunityImportedInto, DeletedGroupInfoInternal, UserId};
 use utils::cycles::accept_cycles;
@@ -66,5 +66,5 @@ pub(crate) fn delete_group(
     );
     crate::jobs::push_group_deleted_notifications::start_job_if_required(state);
 
-    Success
+    Response::Success
 }

@@ -43,7 +43,7 @@ fn delete_user_succeeds_if_signed_in_recently(delay: Milliseconds, should_delete
         ));
     }
 
-    tick_many(env, 3);
+    tick_many(env, 5);
 
     let current_user_response = client::user_index::current_user(env, user.principal, canister_ids.user_index, &Empty {});
 

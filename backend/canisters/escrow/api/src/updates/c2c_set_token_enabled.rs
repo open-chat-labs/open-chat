@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use types::CanisterId;
+use types::{CanisterId, SuccessOnly};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -7,7 +7,4 @@ pub struct Args {
     pub enabled: bool,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-}
+pub type Response = SuccessOnly;

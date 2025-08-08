@@ -75,10 +75,10 @@ impl Airdrops {
             return SetNextResult::ChannelUsed;
         }
 
-        if let Some(previous) = self.past.last() {
-            if MonthKey::from_timestamp(previous.config.start) == MonthKey::from_timestamp(config.start) {
-                return SetNextResult::ClashesWithPrevious;
-            }
+        if let Some(previous) = self.past.last()
+            && MonthKey::from_timestamp(previous.config.start) == MonthKey::from_timestamp(config.start)
+        {
+            return SetNextResult::ClashesWithPrevious;
         }
 
         self.next = Some(config);
@@ -104,38 +104,35 @@ impl Airdrops {
     }
 
     pub fn set_main_transaction(&mut self, user_id: &UserId, block_index: u64) -> bool {
-        if let Some(last) = self.past.last_mut() {
-            if let Some(participant) = last.outcome.participants.get_mut(user_id) {
-                if let Some(prize) = &mut participant.prize {
-                    if prize.block_index.is_none() {
-                        prize.block_index = Some(block_index);
-                        return true;
-                    }
-                }
-            }
+        if let Some(last) = self.past.last_mut()
+            && let Some(participant) = last.outcome.participants.get_mut(user_id)
+            && let Some(prize) = &mut participant.prize
+            && prize.block_index.is_none()
+        {
+            prize.block_index = Some(block_index);
+            return true;
         }
 
         false
     }
 
     pub fn set_lottery_transaction(&mut self, winning_index: usize, block_index: u64) -> bool {
-        if let Some(last) = self.past.last_mut() {
-            if let Some((_, prize)) = last.outcome.lottery_winners.get_mut(winning_index) {
-                if prize.block_index.is_none() {
-                    prize.block_index = Some(block_index);
-                    return true;
-                }
-            }
+        if let Some(last) = self.past.last_mut()
+            && let Some((_, prize)) = last.outcome.lottery_winners.get_mut(winning_index)
+            && prize.block_index.is_none()
+        {
+            prize.block_index = Some(block_index);
+            return true;
         }
 
         false
     }
 
     pub fn current(&self, now: TimestampMillis) -> Option<&AirdropConfig> {
-        if let Some(last) = self.past.last() {
-            if MonthKey::from_timestamp(now) == MonthKey::from_timestamp(last.config.start) {
-                return Some(&last.config);
-            }
+        if let Some(last) = self.past.last()
+            && MonthKey::from_timestamp(now) == MonthKey::from_timestamp(last.config.start)
+        {
+            return Some(&last.config);
         }
 
         None

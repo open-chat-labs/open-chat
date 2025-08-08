@@ -1,6 +1,6 @@
 use crate::guards::caller_is_online_users_canister;
 use crate::{RuntimeState, mutate_state};
-use airdrop_bot_canister::c2c_online_users::{Response::*, *};
+use airdrop_bot_canister::c2c_online_users::*;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use utils::time::MonthKey;
@@ -29,5 +29,5 @@ fn c2c_online_users_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
     }
 
-    Success
+    Response::Success
 }

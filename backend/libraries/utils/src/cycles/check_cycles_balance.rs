@@ -14,10 +14,10 @@ pub fn check_cycles_balance(top_up_canister_id: CanisterId) {
 
 pub async fn send_low_balance_notification(canister_id: CanisterId) {
     let args = c2c_notify_low_balance::Args {};
-    if let Ok(response) = c2c_notify_low_balance(canister_id, &args).await {
-        if !matches!(response, c2c_notify_low_balance::Response::Success(_)) {
-            error!(?response, "Failed to notify low balance");
-        }
+    if let Ok(response) = c2c_notify_low_balance(canister_id, &args).await
+        && !matches!(response, c2c_notify_low_balance::Response::Success(_))
+    {
+        error!(?response, "Failed to notify low balance");
     }
 }
 

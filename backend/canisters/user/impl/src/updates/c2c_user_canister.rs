@@ -11,7 +11,7 @@ use constants::{HOUR_IN_MS, MINUTE_IN_MS};
 use ledger_utils::format_crypto_amount_with_symbol;
 use rand::Rng;
 use types::{
-    Achievement, Chat, ChitEarned, ChitEarnedReason, DirectMessageTipped, DirectReactionAddedNotification, EventIndex, FcmData,
+    Achievement, Chat, ChitEvent, ChitEventType, DirectMessageTipped, DirectReactionAddedNotification, EventIndex, FcmData,
     MessageContentInitial, P2PSwapStatus, UserId, UserNotificationPayload, UserType, VideoCallPresence,
 };
 use user_canister::c2c_user_canister::{Response::*, *};
@@ -125,10 +125,10 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
             let mut rewarded = false;
 
             if chit_reward > 0 {
-                state.data.chit_events.push(ChitEarned {
+                state.data.chit_events.push(ChitEvent {
                     amount: chit_reward as i32,
                     timestamp: now,
-                    reason: ChitEarnedReason::Referral(*status),
+                    reason: ChitEventType::Referral(*status),
                 });
 
                 rewarded = true;
@@ -375,28 +375,26 @@ fn p2p_swap_change_status(args: P2PSwapStatusChange, caller_user_id: UserId, sta
         .set_p2p_swap_status(None, args.message_id, args.status, now)
         .is_ok()
         && completed
-    {
-        if let Some(message_event) = chat
+        && let Some(message_event) = chat
             .events
             .main_events_reader()
             .message_event_internal(args.message_id.into())
-        {
-            let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
+    {
+        let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
 
-            state.data.push_message_activity(
-                MessageActivityEvent {
-                    chat: Chat::Direct(caller_user_id.into()),
-                    thread_root_message_index,
-                    message_index: message_event.event.message_index,
-                    message_id: message_event.event.message_id,
-                    event_index: message_event.index,
-                    activity: MessageActivity::P2PSwapAccepted,
-                    timestamp: now,
-                    user_id: Some(caller_user_id),
-                },
-                now,
-            );
-        }
+        state.data.push_message_activity(
+            MessageActivityEvent {
+                chat: Chat::Direct(caller_user_id.into()),
+                thread_root_message_index,
+                message_index: message_event.event.message_index,
+                message_id: message_event.event.message_id,
+                event_index: message_event.index,
+                activity: MessageActivity::P2PSwapAccepted,
+                timestamp: now,
+                user_id: Some(caller_user_id),
+            },
+            now,
+        );
     }
 }
 

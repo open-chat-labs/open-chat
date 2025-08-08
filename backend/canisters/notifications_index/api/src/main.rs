@@ -1,5 +1,6 @@
 use std::env;
 use ts_export::generate_ts_method;
+use types::UserNotificationPayload;
 
 fn main() {
     let directory = env::current_dir().unwrap().join("tsBindings/notificationsIndex");
@@ -14,4 +15,6 @@ fn main() {
     generate_ts_method!(notifications_index, push_subscription);
     generate_ts_method!(notifications_index, remove_subscription);
     generate_ts_method!(notifications_index, remove_subscriptions_for_user);
+
+    <UserNotificationPayload as ::ts_rs::TS>::export_all_to("tsBindings").unwrap();
 }

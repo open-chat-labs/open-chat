@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_time::now_millis;
 use canister_tracing_macros::trace;
 use group_index_canister::UserIndexEvent;
-use group_index_canister::c2c_user_index::{Response::*, *};
+use group_index_canister::c2c_user_index::*;
 use local_user_index_canister::GroupIndexEvent;
 use std::cell::LazyCell;
 use types::TimestampMillis;
@@ -26,7 +26,7 @@ fn c2c_user_index_impl(args: Args, state: &mut RuntimeState) -> Response {
             handle_event(event.value, &now, state);
         }
     }
-    Success
+    Response::Success
 }
 
 fn handle_event<F: FnOnce() -> TimestampMillis>(

@@ -123,12 +123,11 @@ impl RuntimeState {
                         .insert_unique_person_proof(user_id, unique_person_proof);
                 } else if let Ok(claims) =
                     verify_and_decode::<Claims<DiamondMembershipDetails>>(jwt, self.data.oc_key_pair.public_key_pem())
+                    && claims.claim_type() == "diamond_membership"
                 {
-                    if claims.claim_type() == "diamond_membership" {
-                        let expires_at = claims.custom().expires_at;
-                        user_details.diamond_membership_expires_at = Some(expires_at);
-                        self.data.global_users.set_diamond_membership_expiry_date(user_id, expires_at);
-                    }
+                    let expires_at = claims.custom().expires_at;
+                    user_details.diamond_membership_expires_at = Some(expires_at);
+                    self.data.global_users.set_diamond_membership_expiry_date(user_id, expires_at);
                 }
             }
         }

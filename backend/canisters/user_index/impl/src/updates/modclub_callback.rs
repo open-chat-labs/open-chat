@@ -128,10 +128,10 @@ fn delete_group_message(
 
 fn should_suspend_sender(sender: UserId, outcome: &ReportOutcome, state: &RuntimeState) -> Option<SuspensionDetails> {
     if let Some(user) = state.data.users.get_by_user_id(&sender) {
-        if let Some(current_suspension_details) = user.suspension_details.as_ref() {
-            if matches!(current_suspension_details.duration, SuspensionDuration::Indefinitely) {
-                return None;
-            }
+        if let Some(current_suspension_details) = user.suspension_details.as_ref()
+            && matches!(current_suspension_details.duration, SuspensionDuration::Indefinitely)
+        {
+            return None;
         }
 
         let (duration, reason) = if outcome.unanimous_rejection_decision(Some(1)) {

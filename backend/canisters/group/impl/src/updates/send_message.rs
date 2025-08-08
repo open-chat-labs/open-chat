@@ -226,17 +226,16 @@ fn process_send_message_result(
 
         let mut activity_events = Vec::new();
 
-        if let MessageContent::Crypto(c) = content {
-            if state
+        if let MessageContent::Crypto(c) = content
+            && state
                 .data
                 .chat
                 .members
                 .get(&c.recipient)
                 .is_some_and(|m| !m.user_type().is_bot())
-            {
-                state.notify_user_of_achievement(c.recipient, Achievement::ReceivedCrypto, now);
-                activity_events.push((c.recipient, MessageActivity::Crypto));
-            }
+        {
+            state.notify_user_of_achievement(c.recipient, Achievement::ReceivedCrypto, now);
+            activity_events.push((c.recipient, MessageActivity::Crypto));
         }
 
         for user in mentioned {
@@ -258,23 +257,20 @@ fn process_send_message_result(
             .as_ref()
             .filter(|r| r.chat_if_other.is_none())
             .map(|r| r.event_index)
-        {
-            if let Some((message, _)) = state.data.chat.events.message_internal(
+            && let Some((message, _)) = state.data.chat.events.message_internal(
                 EventIndex::default(),
                 thread_root_message_index,
                 replying_to_event_index.into(),
-            ) {
-                if caller.initiator().map(|i| i != message.sender).unwrap_or_default()
-                    && state
-                        .data
-                        .chat
-                        .members
-                        .get(&message.sender)
-                        .is_some_and(|m| !m.user_type().is_bot())
-                {
-                    activity_events.push((message.sender, MessageActivity::QuoteReply));
-                }
-            }
+            )
+            && caller.initiator().map(|i| i != message.sender).unwrap_or_default()
+            && state
+                .data
+                .chat
+                .members
+                .get(&message.sender)
+                .is_some_and(|m| !m.user_type().is_bot())
+        {
+            activity_events.push((message.sender, MessageActivity::QuoteReply));
         }
 
         for (user_id, activity) in activity_events {
@@ -313,11 +309,11 @@ fn register_timer_jobs(
     data: &mut Data,
 ) {
     let files = message_event.event.content.blob_references();
-    if !files.is_empty() {
-        if let Some(expiry) = message_event.expires_at {
-            data.timer_jobs
-                .enqueue_job(TimerJob::DeleteFileReferences(DeleteFileReferencesJob { files }), expiry, now);
-        }
+    if !files.is_empty()
+        && let Some(expiry) = message_event.expires_at
+    {
+        data.timer_jobs
+            .enqueue_job(TimerJob::DeleteFileReferences(DeleteFileReferencesJob { files }), expiry, now);
     }
 
     if let Some(expiry) = message_event.expires_at {

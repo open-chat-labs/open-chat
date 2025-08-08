@@ -550,6 +550,7 @@ import {
     DIAMOND_MAX_SIZES,
     fillMessage,
     FREE_MAX_SIZES,
+    instagramRegex,
     isSocialVideoLink,
     type MaxMediaSizes,
     messageContentFromFile,
@@ -2642,6 +2643,7 @@ export class OpenChat {
     trackEvent = trackEvent;
     twitterLinkRegex = twitterLinkRegex;
     youtubeRegex = youtubeRegex;
+    instagramRegex = instagramRegex;
     spotifyRegex = spotifyRegex;
     metricsEqual = metricsEqual;
     getMembersString = getMembersString;

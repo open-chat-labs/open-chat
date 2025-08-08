@@ -58,10 +58,10 @@ async fn check_for_token_updates(ledger_canister_id: CanisterId) -> Result<(), C
                 args.symbol = Some(metadata_helper.symbol().to_string());
             }
 
-            if let Some(logo) = metadata_helper.logo().cloned() {
-                if logo != token.logo {
-                    args.logo = Some(logo);
-                }
+            if let Some(logo) = metadata_helper.logo().cloned()
+                && logo != token.logo
+            {
+                args.logo = Some(logo);
             }
 
             let fee = metadata_helper.fee();

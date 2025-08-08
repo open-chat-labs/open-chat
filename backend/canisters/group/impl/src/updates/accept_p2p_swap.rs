@@ -44,29 +44,27 @@ async fn accept_p2p_swap_impl(args: Args) -> Response {
                         EventIndex::default(),
                         thread_root_message_index,
                         message_id.into(),
-                    ) {
-                        if state
-                            .data
-                            .chat
-                            .members
-                            .get(&message.sender)
-                            .is_some_and(|m| !m.user_type().is_bot())
-                        {
-                            state.push_event_to_user(
-                                message.sender,
-                                GroupCanisterEvent::MessageActivity(MessageActivityEvent {
-                                    chat: Chat::Group(state.env.canister_id().into()),
-                                    thread_root_message_index,
-                                    message_index: message.message_index,
-                                    message_id: message.message_id,
-                                    event_index,
-                                    activity: MessageActivity::P2PSwapAccepted,
-                                    timestamp: now,
-                                    user_id: Some(user_id),
-                                }),
-                                now,
-                            );
-                        }
+                    ) && state
+                        .data
+                        .chat
+                        .members
+                        .get(&message.sender)
+                        .is_some_and(|m| !m.user_type().is_bot())
+                    {
+                        state.push_event_to_user(
+                            message.sender,
+                            GroupCanisterEvent::MessageActivity(MessageActivityEvent {
+                                chat: Chat::Group(state.env.canister_id().into()),
+                                thread_root_message_index,
+                                message_index: message.message_index,
+                                message_id: message.message_id,
+                                event_index,
+                                activity: MessageActivity::P2PSwapAccepted,
+                                timestamp: now,
+                                user_id: Some(user_id),
+                            }),
+                            now,
+                        );
                     }
 
                     handle_activity_notification(state);

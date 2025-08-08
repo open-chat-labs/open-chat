@@ -168,10 +168,10 @@ impl RuntimeState {
     }
 
     pub fn push_bot_notification(&mut self, notification: Option<BotNotification>) {
-        if let Some(notification) = notification {
-            if !notification.recipients.is_empty() {
-                self.push_notification_inner(Notification::Bot(notification));
-            }
+        if let Some(notification) = notification
+            && !notification.recipients.is_empty()
+        {
+            self.push_notification_inner(Notification::Bot(notification));
         }
     }
 
@@ -281,10 +281,10 @@ impl RuntimeState {
         let mut final_prize_payments = Vec::new();
         for channel in self.data.channels.iter_mut() {
             let result = channel.chat.remove_expired_events(now);
-            if let Some(expiry) = channel.chat.events.next_event_expiry() {
-                if next_event_expiry.is_none_or(|current| expiry < current) {
-                    next_event_expiry = Some(expiry);
-                }
+            if let Some(expiry) = channel.chat.events.next_event_expiry()
+                && next_event_expiry.is_none_or(|current| expiry < current)
+            {
+                next_event_expiry = Some(expiry);
             }
             files_to_delete.extend(result.files);
             final_prize_payments.extend(result.final_prize_payments);
@@ -678,12 +678,11 @@ impl Data {
     }
 
     pub fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {
-        if self.invite_code_enabled.value {
-            if let Some(provided_code) = invite_code {
-                if let Some(stored_code) = self.invite_code.value {
-                    return provided_code == stored_code;
-                }
-            }
+        if self.invite_code_enabled.value
+            && let Some(provided_code) = invite_code
+            && let Some(stored_code) = self.invite_code.value
+        {
+            return provided_code == stored_code;
         }
 
         false
@@ -873,14 +872,14 @@ impl Data {
                             users_added.push(user_id);
                         }
 
-                        if !user_type.is_bot() {
-                            if let Some(gate_expiry) = gate_expiry {
-                                self.expiring_members.push(ExpiringMember {
-                                    expires: now + gate_expiry,
-                                    channel_id: Some(channel.id),
-                                    user_id,
-                                });
-                            }
+                        if !user_type.is_bot()
+                            && let Some(gate_expiry) = gate_expiry
+                        {
+                            self.expiring_members.push(ExpiringMember {
+                                expires: now + gate_expiry,
+                                channel_id: Some(channel.id),
+                                user_id,
+                            });
                         }
                     }
                     AddResult::AlreadyInGroup => users_already_in_channel.push(user_id),

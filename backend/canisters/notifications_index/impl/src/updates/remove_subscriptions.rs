@@ -2,7 +2,7 @@ use crate::guards::caller_is_push_service;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use notifications_index_canister::remove_subscriptions::{Response::*, *};
+use notifications_index_canister::remove_subscriptions::*;
 
 #[update(guard = "caller_is_push_service", candid = true, msgpack = true)]
 #[trace]
@@ -17,5 +17,5 @@ fn remove_subscriptions_impl(args: Args, state: &mut RuntimeState) -> Response {
             state.remove_subscription(user.user_id, key, now);
         }
     }
-    Success
+    Response::Success
 }

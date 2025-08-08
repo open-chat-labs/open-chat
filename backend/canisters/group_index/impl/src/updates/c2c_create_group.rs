@@ -62,13 +62,11 @@ async fn c2c_create_group(args: Args) -> Response {
             })
         }
         Ok(local_user_index_canister::c2c_create_group::Response::Error(error)) => Error(error),
-        Ok(local_user_index_canister::c2c_create_group::Response::CyclesBalanceTooLow) => CyclesBalanceTooLow,
-        Ok(local_user_index_canister::c2c_create_group::Response::InternalError(_)) => InternalError,
-        Err(_) => {
+        Err(error) => {
             if args.is_public {
                 mutate_state(|state| state.data.public_group_and_community_names.unreserve_name(&args.name));
             }
-            InternalError
+            Error(error.into())
         }
     }
 }

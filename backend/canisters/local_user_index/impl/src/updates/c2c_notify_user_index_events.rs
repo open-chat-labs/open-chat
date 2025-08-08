@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_time::now_millis;
 use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;
-use local_user_index_canister::c2c_notify_user_index_events::{Response::*, *};
+use local_user_index_canister::c2c_notify_user_index_events::*;
 use local_user_index_canister::{UserIndexEvent, UserRegistered};
 use msgpack::serialize_then_unwrap;
 use p256_key_pair::P256KeyPair;
@@ -30,7 +30,7 @@ fn c2c_notify_user_index_events_impl(args: Args, state: &mut RuntimeState) -> Re
     for event in args.events {
         handle_event(event, &now, state);
     }
-    Success
+    Response::Success
 }
 
 fn handle_event<F: FnOnce() -> TimestampMillis>(
@@ -317,16 +317,16 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
 fn handle_user_registered(user: UserRegistered, now: TimestampMillis, state: &mut RuntimeState) {
     state.data.global_users.add(user.user_principal, user.user_id, user.user_type);
 
-    if let Some(referred_by) = user.referred_by {
-        if state.data.local_users.get(&referred_by).is_some() {
-            state.push_event_to_user(
-                referred_by,
-                UserEvent::ReferredUserRegistered(Box::new(ReferredUserRegistered {
-                    user_id: user.user_id,
-                    username: user.username,
-                })),
-                now,
-            );
-        }
+    if let Some(referred_by) = user.referred_by
+        && state.data.local_users.get(&referred_by).is_some()
+    {
+        state.push_event_to_user(
+            referred_by,
+            UserEvent::ReferredUserRegistered(Box::new(ReferredUserRegistered {
+                user_id: user.user_id,
+                username: user.username,
+            })),
+            now,
+        );
     }
 }

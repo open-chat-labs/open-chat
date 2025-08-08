@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_time::now_millis;
 use canister_tracing_macros::trace;
 use local_user_index_canister::UserEvent;
-use local_user_index_canister::c2c_user_canister::{Response::*, *};
+use local_user_index_canister::c2c_user_canister::*;
 use stable_memory_map::StableMemoryMap;
 use std::cell::LazyCell;
 use types::{StreakInsuranceClaim, StreakInsurancePayment, TimestampMillis, UserId};
@@ -41,7 +41,7 @@ fn c2c_notify_user_events_impl(args: Args, state: &mut RuntimeState) -> Response
             handle_event(user_id, event.value, &now, state);
         }
     }
-    Success
+    Response::Success
 }
 
 fn handle_event<F: FnOnce() -> TimestampMillis>(
@@ -55,6 +55,9 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             // TODO set CHIT record here
             // state.data.global_users.insert_chit_record(user_id, ..);
             state.push_event_to_user_index(UserIndexEvent::NotifyChit(Box::new((user_id, ev))), **now);
+        }
+        UserEvent::NotifyPremiumItemPurchased(ev) => {
+            state.push_event_to_user_index(UserIndexEvent::NotifyPremiumItemPurchased(Box::new((user_id, ev))), **now);
         }
         UserEvent::NotifyStreakInsurancePayment(payment) => {
             state.push_event_to_user_index(
@@ -87,6 +90,12 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         UserEvent::UserUnblocked(unblocked) => {
             state.data.blocked_users.remove(&(unblocked, user_id));
             state.push_event_to_user_index(UserIndexEvent::UserUnblocked(user_id, unblocked), **now);
+        }
+        UserEvent::UserSetProfileBackground(profile_background_id) => {
+            state.push_event_to_user_index(
+                UserIndexEvent::UserSetProfileBackground(Box::new((user_id, profile_background_id))),
+                **now,
+            );
         }
         UserEvent::SetMaxStreak(max_streak) => {
             state.push_event_to_user_index(UserIndexEvent::SetMaxStreak(user_id, max_streak), **now);

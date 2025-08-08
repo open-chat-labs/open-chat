@@ -318,22 +318,19 @@ fn process_send_message_result(
                 .as_ref()
                 .filter(|r| r.chat_if_other.is_none())
                 .map(|r| r.event_index)
-            {
-                if let Some((message, _)) = channel.chat.events.message_internal(
+                && let Some((message, _)) = channel.chat.events.message_internal(
                     EventIndex::default(),
                     thread_root_message_index,
                     replying_to_event_index.into(),
-                ) {
-                    if caller.initiator().map(|i| i != message.sender).unwrap_or_default()
-                        && channel
-                            .chat
-                            .members
-                            .get(&message.sender)
-                            .is_some_and(|m| !m.user_type().is_bot())
-                    {
-                        activity_events.push((message.sender, MessageActivity::QuoteReply));
-                    }
-                }
+                )
+                && caller.initiator().map(|i| i != message.sender).unwrap_or_default()
+                && channel
+                    .chat
+                    .members
+                    .get(&message.sender)
+                    .is_some_and(|m| !m.user_type().is_bot())
+            {
+                activity_events.push((message.sender, MessageActivity::QuoteReply));
             }
         }
 
@@ -378,11 +375,11 @@ fn register_timer_jobs(
     data: &mut Data,
 ) {
     let files = message_event.event.content.blob_references();
-    if !files.is_empty() {
-        if let Some(expiry) = message_event.expires_at {
-            data.timer_jobs
-                .enqueue_job(TimerJob::DeleteFileReferences(DeleteFileReferencesJob { files }), expiry, now);
-        }
+    if !files.is_empty()
+        && let Some(expiry) = message_event.expires_at
+    {
+        data.timer_jobs
+            .enqueue_job(TimerJob::DeleteFileReferences(DeleteFileReferencesJob { files }), expiry, now);
     }
 
     if let Some(expiry) = message_event.expires_at {
@@ -458,15 +455,15 @@ fn extract_users_mentioned(mentioned: Vec<User>, text: Option<&str>, members: &C
 }
 
 fn extract_user_groups_mentioned<'a>(text: Option<&'a str>, members: &'a CommunityMembers) -> Vec<&'a UserGroup> {
-    if let Some(text) = text {
-        if text.contains("@UserGroup") {
-            return USER_GROUP_REGEX
-                .captures_iter(text)
-                .filter_map(|c| c.get(1))
-                .filter_map(|m| u32::from_str(m.as_str()).ok())
-                .filter_map(|id| members.get_user_group(id))
-                .collect();
-        }
+    if let Some(text) = text
+        && text.contains("@UserGroup")
+    {
+        return USER_GROUP_REGEX
+            .captures_iter(text)
+            .filter_map(|c| c.get(1))
+            .filter_map(|m| u32::from_str(m.as_str()).ok())
+            .filter_map(|id| members.get_user_group(id))
+            .collect();
     }
 
     Vec::new()

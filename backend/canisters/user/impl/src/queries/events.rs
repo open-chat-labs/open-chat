@@ -66,7 +66,7 @@ fn prepare(
     user_id: UserId,
     thread_root_message_index: Option<MessageIndex>,
     state: &RuntimeState,
-) -> OCResult<PrepareResult> {
+) -> OCResult<PrepareResult<'_>> {
     if let Err(now) = check_replica_up_to_date(latest_known_update, state) {
         return Err(OCErrorCode::ReplicaNotUpToDate.with_message(now));
     }

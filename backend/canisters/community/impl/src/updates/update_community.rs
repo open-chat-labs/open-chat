@@ -127,10 +127,10 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareResult> {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
-    if let OptionUpdate::SetToSome(gate_config) = &args.gate_config {
-        if !gate_config.validate(state.data.test_mode) {
-            return Err(OCErrorCode::InvalidAccessGate.into());
-        }
+    if let OptionUpdate::SetToSome(gate_config) = &args.gate_config
+        && !gate_config.validate(state.data.test_mode)
+    {
+        return Err(OCErrorCode::InvalidAccessGate.into());
     }
 
     let avatar_update = args.avatar.as_ref().expand();
@@ -141,29 +141,29 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareResult> {
         .map(|gc| gc.into())
         .apply_to(state.data.gate_config.value.clone());
 
-    if let Some(name) = &args.name {
-        if let Err(error) = validate_community_name(name, state.data.is_public.value) {
-            return Err(match error {
-                NameValidationError::TooShort(s) => OCErrorCode::NameTooShort.with_json(&s),
-                NameValidationError::TooLong(l) => OCErrorCode::NameTooLong.with_json(&l),
-                NameValidationError::Reserved => OCErrorCode::NameReserved.into(),
-            });
-        }
+    if let Some(name) = &args.name
+        && let Err(error) = validate_community_name(name, state.data.is_public.value)
+    {
+        return Err(match error {
+            NameValidationError::TooShort(s) => OCErrorCode::NameTooShort.with_json(&s),
+            NameValidationError::TooLong(l) => OCErrorCode::NameTooLong.with_json(&l),
+            NameValidationError::Reserved => OCErrorCode::NameReserved.into(),
+        });
     }
 
-    if let Some(description) = &args.description {
-        if let Err(error) = validate_description(description) {
-            return Err(OCErrorCode::DescriptionTooLong.with_json(&error));
-        }
+    if let Some(description) = &args.description
+        && let Err(error) = validate_description(description)
+    {
+        return Err(OCErrorCode::DescriptionTooLong.with_json(&error));
     }
 
-    if let Some(rules) = &args.rules {
-        if let Err(error) = validate_rules(rules.enabled, &rules.text) {
-            return Err(match error {
-                RulesValidationError::TooShort(s) => OCErrorCode::RulesTooShort.with_json(&s),
-                RulesValidationError::TooLong(l) => OCErrorCode::RulesTooLong.with_json(&l),
-            });
-        }
+    if let Some(rules) = &args.rules
+        && let Err(error) = validate_rules(rules.enabled, &rules.text)
+    {
+        return Err(match error {
+            RulesValidationError::TooShort(s) => OCErrorCode::RulesTooShort.with_json(&s),
+            RulesValidationError::TooLong(l) => OCErrorCode::RulesTooLong.with_json(&l),
+        });
     }
 
     if let Err(error) = avatar_update.map_or(Ok(()), validate_avatar) {
@@ -174,10 +174,10 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareResult> {
         return Err(OCErrorCode::BannerTooBig.with_json(&error));
     }
 
-    if let Some(lang) = &args.primary_language {
-        if lang.len() != 2 {
-            return Err(OCErrorCode::InvalidLanguage.into());
-        }
+    if let Some(lang) = &args.primary_language
+        && lang.len() != 2
+    {
+        return Err(OCErrorCode::InvalidLanguage.into());
     }
 
     Ok(PrepareResult {
@@ -204,16 +204,17 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
     if state.data.verified.value {
         let mut revoke = false;
 
-        if let Some(new_name) = args.name.as_ref() {
-            if !new_name.eq_ignore_ascii_case(&state.data.name.value) {
-                revoke = true;
-            }
+        if let Some(new_name) = args.name.as_ref()
+            && !new_name.eq_ignore_ascii_case(&state.data.name.value)
+        {
+            revoke = true;
         }
 
-        if let Some(new_public) = args.public {
-            if (new_public != state.data.is_public.value) && !new_public {
-                revoke = true;
-            }
+        if let Some(new_public) = args.public
+            && (new_public != state.data.is_public.value)
+            && !new_public
+        {
+            revoke = true;
         }
 
         if revoke {
@@ -221,30 +222,30 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
         }
     }
 
-    if let Some(name) = args.name {
-        if state.data.name.value != name {
-            state.push_community_event(CommunityEventInternal::NameChanged(Box::new(GroupNameChanged {
-                new_name: name.clone(),
-                previous_name: state.data.name.value.clone(),
-                changed_by: my_user_id,
-            })));
+    if let Some(name) = args.name
+        && state.data.name.value != name
+    {
+        state.push_community_event(CommunityEventInternal::NameChanged(Box::new(GroupNameChanged {
+            new_name: name.clone(),
+            previous_name: state.data.name.value.clone(),
+            changed_by: my_user_id,
+        })));
 
-            state.data.name = Timestamped::new(name, now);
-        }
+        state.data.name = Timestamped::new(name, now);
     }
 
-    if let Some(description) = args.description {
-        if state.data.description.value != description {
-            state.push_community_event(CommunityEventInternal::DescriptionChanged(Box::new(
-                GroupDescriptionChanged {
-                    new_description: description.clone(),
-                    previous_description: state.data.description.value.clone(),
-                    changed_by: my_user_id,
-                },
-            )));
+    if let Some(description) = args.description
+        && state.data.description.value != description
+    {
+        state.push_community_event(CommunityEventInternal::DescriptionChanged(Box::new(
+            GroupDescriptionChanged {
+                new_description: description.clone(),
+                previous_description: state.data.description.value.clone(),
+                changed_by: my_user_id,
+            },
+        )));
 
-            state.data.description = Timestamped::new(description, now);
-        }
+        state.data.description = Timestamped::new(description, now);
     }
 
     if let Some(new_rules) = args.rules {
@@ -315,32 +316,32 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
         )));
     }
 
-    if let Some(gate_config) = args.gate_config.clone().map(|g| g.into()).expand() {
-        if state.data.gate_config.value != gate_config {
-            let prev_gate_config = state.data.gate_config.clone();
+    if let Some(gate_config) = args.gate_config.clone().map(|g| g.into()).expand()
+        && state.data.gate_config.value != gate_config
+    {
+        let prev_gate_config = state.data.gate_config.clone();
 
-            state.data.gate_config = Timestamped::new(gate_config.clone(), now);
+        state.data.gate_config = Timestamped::new(gate_config.clone(), now);
 
-            state.data.update_member_expiry(None, &prev_gate_config, now);
+        state.data.update_member_expiry(None, &prev_gate_config, now);
 
-            state.push_community_event(CommunityEventInternal::GateUpdated(Box::new(GroupGateUpdatedInternal {
-                updated_by: my_user_id,
-                new_gate_config: gate_config,
-            })));
-        }
+        state.push_community_event(CommunityEventInternal::GateUpdated(Box::new(GroupGateUpdatedInternal {
+            updated_by: my_user_id,
+            new_gate_config: gate_config,
+        })));
     }
 
-    if let Some(public) = args.public {
-        if state.data.is_public.value != public {
-            state.data.is_public = Timestamped::new(public, now);
+    if let Some(public) = args.public
+        && state.data.is_public.value != public
+    {
+        state.data.is_public = Timestamped::new(public, now);
 
-            let event = CommunityVisibilityChanged {
-                now_public: public,
-                changed_by: my_user_id,
-            };
+        let event = CommunityVisibilityChanged {
+            now_public: public,
+            changed_by: my_user_id,
+        };
 
-            state.push_community_event(CommunityEventInternal::VisibilityChanged(Box::new(event)));
-        }
+        state.push_community_event(CommunityEventInternal::VisibilityChanged(Box::new(event)));
     }
     if let Some(new) = args.primary_language {
         let previous = state.data.primary_language.value.clone();

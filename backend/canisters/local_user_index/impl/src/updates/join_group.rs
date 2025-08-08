@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use local_user_index_canister::join_group::{Response::*, *};
 use types::{ChatId, MessageIndex, TimestampMillis, UserId};
 
-#[update(guard = "caller_is_openchat_user", candid = true, msgpack = true)]
+#[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
 async fn join_group(args: Args) -> Response {
     let user_details =

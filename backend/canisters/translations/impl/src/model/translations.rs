@@ -33,11 +33,12 @@ impl Translations {
         // If this user has a previous proposed translation for this record then mark it as `overidden`
         if let Some(indexes) = self.records.get(&tuple) {
             for index in indexes.iter().rev() {
-                if let Some(translation) = self.translations.get_mut(*index) {
-                    if translation.proposed.who == args.user_id && matches!(translation.status, TranslationStatus::Proposed) {
-                        translation.status = TranslationStatus::Overidden;
-                        break;
-                    }
+                if let Some(translation) = self.translations.get_mut(*index)
+                    && translation.proposed.who == args.user_id
+                    && matches!(translation.status, TranslationStatus::Proposed)
+                {
+                    translation.status = TranslationStatus::Overidden;
+                    break;
                 }
             }
         }
@@ -106,15 +107,14 @@ impl Translations {
 
     pub fn mark_deployed(&mut self, latest_approval: TimestampMillis, now: TimestampMillis) {
         for indexes in self.records.values() {
-            if let Some(t) = self.find_most_recent_approved_or_deployed(indexes) {
-                if let TranslationStatus::Approved(approved) = &t.status {
-                    if approved.attribution.when <= latest_approval {
-                        let index = t.id as usize;
-                        let approved = approved.clone();
-                        if let Some(translation) = self.translations.get_mut(index) {
-                            translation.status = TranslationStatus::Deployed(DeployedStatus { approved, deployed: now })
-                        }
-                    }
+            if let Some(t) = self.find_most_recent_approved_or_deployed(indexes)
+                && let TranslationStatus::Approved(approved) = &t.status
+                && approved.attribution.when <= latest_approval
+            {
+                let index = t.id as usize;
+                let approved = approved.clone();
+                if let Some(translation) = self.translations.get_mut(index) {
+                    translation.status = TranslationStatus::Deployed(DeployedStatus { approved, deployed: now })
                 }
             }
         }

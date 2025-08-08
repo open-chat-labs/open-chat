@@ -40,29 +40,27 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> OCResult<Pol
                 EventIndex::default(),
                 args.thread_root_message_index,
                 args.message_index.into(),
-            ) {
-                if state
-                    .data
-                    .chat
-                    .members
-                    .get(&result.value.poll_creator)
-                    .is_some_and(|m| !m.user_type().is_bot())
-                {
-                    state.push_event_to_user(
-                        result.value.poll_creator,
-                        GroupCanisterEvent::MessageActivity(MessageActivityEvent {
-                            chat: Chat::Group(state.env.canister_id().into()),
-                            thread_root_message_index: args.thread_root_message_index,
-                            message_index: message.message_index,
-                            message_id: message.message_id,
-                            event_index,
-                            activity: MessageActivity::PollVote,
-                            timestamp: now,
-                            user_id: matches!(result.value.votes.total, TotalVotes::Visible(_)).then_some(user_id),
-                        }),
-                        now,
-                    );
-                }
+            ) && state
+                .data
+                .chat
+                .members
+                .get(&result.value.poll_creator)
+                .is_some_and(|m| !m.user_type().is_bot())
+            {
+                state.push_event_to_user(
+                    result.value.poll_creator,
+                    GroupCanisterEvent::MessageActivity(MessageActivityEvent {
+                        chat: Chat::Group(state.env.canister_id().into()),
+                        thread_root_message_index: args.thread_root_message_index,
+                        message_index: message.message_index,
+                        message_id: message.message_id,
+                        event_index,
+                        activity: MessageActivity::PollVote,
+                        timestamp: now,
+                        user_id: matches!(result.value.votes.total, TotalVotes::Visible(_)).then_some(user_id),
+                    }),
+                    now,
+                );
             }
         }
 

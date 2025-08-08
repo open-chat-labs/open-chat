@@ -3990,6 +3990,7 @@ dependencies = [
  "local_user_index_canister",
  "local_user_index_canister_c2c_client",
  "msgpack",
+ "oc_error_codes",
  "rand 0.8.5",
  "search",
  "serde",

@@ -84,10 +84,10 @@ fn prepare(args: Args, state: &RuntimeState) -> OCResult<PrepareResult> {
     } else if let Err(error) = validate_description(&args.description) {
         Err(OCErrorCode::DescriptionTooLong.with_json(&error))
     } else if let Err(error) = validate_rules(args.rules.enabled, &args.rules.text) {
-        return Err(match error {
+        Err(match error {
             RulesValidationError::TooShort(s) => OCErrorCode::RulesTooShort.with_json(&s),
             RulesValidationError::TooLong(l) => OCErrorCode::RulesTooLong.with_json(&l),
-        });
+        })
     } else if let Err(error) = validate_avatar(args.avatar.as_ref()) {
         Err(OCErrorCode::AvatarTooBig.with_json(&error))
     } else if args
