@@ -2,7 +2,6 @@ use rmp_serde::{decode, encode};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::io::{Read, Write};
-use types::Fallback;
 
 pub fn serialize<T, W>(value: T, writer: W) -> Result<(), encode::Error>
 where
@@ -62,3 +61,7 @@ pub fn serialize_empty() -> Vec<u8> {
     Vec::new()
 }
 pub fn deserialize_empty(_bytes: Vec<u8>) {}
+
+pub trait Fallback: Sized {
+    type FallbackType: Into<Self>;
+}
