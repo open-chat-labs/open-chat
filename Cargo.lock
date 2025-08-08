@@ -5156,6 +5156,7 @@ dependencies = [
  "ic-captcha",
  "ic-cdk",
  "ic-cdk-timers",
+ "ic-certification 2.6.0",
  "ic-stable-structures 0.7.0",
  "identity_canister",
  "identity_utils",
