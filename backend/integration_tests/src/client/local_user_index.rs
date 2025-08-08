@@ -22,6 +22,7 @@ generate_msgpack_update_call!(invite_users_to_group);
 generate_msgpack_update_call!(join_channel);
 generate_msgpack_update_call!(join_community);
 generate_msgpack_update_call!(join_group);
+generate_msgpack_update_call!(pay_for_premium_item);
 generate_msgpack_update_call!(register_user);
 generate_msgpack_update_call!(uninstall_bot);
 
@@ -304,6 +305,29 @@ pub mod happy_path {
         match response {
             uninstall_bot::Response::Success => {}
             response => panic!("'update_bot' error: {response:?}"),
+        }
+    }
+
+    pub fn pay_for_premium_item(
+        env: &mut PocketIc,
+        user: &User,
+        item_id: u32,
+        expected_cost: u32,
+    ) -> local_user_index_canister::pay_for_premium_item::SuccessResult {
+        let response = super::pay_for_premium_item(
+            env,
+            user.principal,
+            user.local_user_index,
+            &local_user_index_canister::pay_for_premium_item::Args {
+                item_id,
+                pay_in_chat: false,
+                expected_cost,
+            },
+        );
+
+        match response {
+            local_user_index_canister::pay_for_premium_item::Response::Success(result) => result,
+            response => panic!("'pay_for_premium_item' error: {response:?}"),
         }
     }
 

@@ -1,9 +1,8 @@
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use constants::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
-use ic_certificate_verification::VerifyCertificate;
-use identity_utils::extract_certificate;
+use constants::MINUTE_IN_MS;
+use identity_utils::verify_signature;
 use local_user_index_canister::{DeleteUser, UserIndexEvent};
 use user_index_canister::delete_user::{Response::*, *};
 
@@ -23,25 +22,15 @@ fn delete_user_impl(args: Args, state: &mut RuntimeState) -> Response {
         return NotAuthorized;
     }
 
-    let certificate = match extract_certificate(&args.delegation.signature) {
-        Ok(c) => c,
-        Err(e) => return MalformedSignature(e),
-    };
-
-    let now_nanos = state.env.now_nanos() as u128;
-    let five_minutes = (5 * MINUTE_IN_MS * NANOS_PER_MILLISECOND) as u128;
-
-    if certificate
-        .verify(
-            state.data.identity_canister_id.as_slice(),
-            &state.data.ic_root_key,
-            &now_nanos,
-            &five_minutes,
-        )
-        .is_err()
-    {
-        return DelegationTooOld;
-    };
+    if let Err(error) = verify_signature(
+        &args.delegation.signature,
+        state.data.identity_canister_id,
+        5 * MINUTE_IN_MS,
+        &state.data.ic_root_key,
+        state.env.now(),
+    ) {
+        return Error(error);
+    }
 
     state.delete_user(args.user_id, true);
     state.push_event_to_all_local_user_indexes(

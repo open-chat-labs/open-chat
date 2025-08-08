@@ -21,7 +21,6 @@ ic-canister-sig-creation = { workspace = true }
 ic-captcha = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
-ic-certificate-verification = { workspace = true }
 ic-certification = { workspace = true }
 ic-stable-structures = { workspace = true }
 identity_canister = { path = "../api" }
