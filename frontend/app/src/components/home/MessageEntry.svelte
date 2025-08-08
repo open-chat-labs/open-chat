@@ -76,7 +76,6 @@
         onFileSelected: (content: AttachmentContent) => void;
         onPaste: (e: ClipboardEvent) => void;
         onSetTextContent: (txt?: string) => void;
-        onDrop: (e: DragEvent) => void;
         onStartTyping: () => void;
         onStopTyping: () => void;
         onCancelEdit: () => void;
@@ -106,7 +105,6 @@
         messageContext,
         onFileSelected,
         onPaste,
-        onDrop,
         onSetTextContent,
         onStartTyping,
         onStopTyping,
@@ -129,7 +127,6 @@
     let inp: HTMLDivElement | undefined = $state();
     let audioMimeType = client.audioRecordingMimeType();
     let selectedRange: Range | undefined = $state();
-    let dragging: boolean = $state(false);
     let recording: boolean = $state(false);
     let percentRecorded: number = $state(0);
     let previousEditingEvent: EventWrapper<Message> | undefined = $state();
@@ -452,11 +449,6 @@
         sel?.addRange(range);
     }
 
-    function drop(e: DragEvent) {
-        dragging = false;
-        onDrop(e);
-    }
-
     function replaceTextWith(replacement: string) {
         if (rangeToReplace === undefined) return;
 
@@ -590,11 +582,9 @@
             ? i18nKey("sendTextDisabled")
             : attachment !== undefined
               ? i18nKey("enterCaption")
-              : dragging
-                ? i18nKey("dropFile")
-                : directChatBotId
-                  ? i18nKey("bots.direct.placeholder")
-                  : i18nKey("enterMessage"),
+              : directChatBotId
+                ? i18nKey("bots.direct.placeholder")
+                : i18nKey("enterMessage"),
     );
 </script>
 
@@ -693,7 +683,6 @@
                         onblur={saveSelection}
                         class="textbox"
                         class:recording
-                        class:dragging
                         class:empty={messageIsEmpty}
                         contenteditable
                         onpaste={onPaste}
@@ -705,10 +694,6 @@
                             top: 12,
                         }}
                         spellcheck
-                        ondragover={() => (dragging = true)}
-                        ondragenter={() => (dragging = true)}
-                        ondragleave={() => (dragging = false)}
-                        ondrop={drop}
                         oninput={onInput}
                         onkeypress={keyPress}>
                     </div>
@@ -831,10 +816,6 @@
             pointer-events: none;
             display: block; /* For Firefox */
             position: absolute;
-        }
-
-        &.dragging {
-            border: var(--bw) dashed var(--txt);
         }
 
         &.recording {

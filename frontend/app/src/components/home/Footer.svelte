@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { fileFromDataTransferItems } from "@src/utils/datatransfer";
     import {
         iconSize,
         messageContextsEqual,
@@ -115,15 +116,6 @@
         ephemeralMessageEvent = ev;
     }
 
-    function fileFromDataTransferItems(items: DataTransferItem[]): File | undefined {
-        return items.reduce<File | undefined>((res, item) => {
-            if (item.kind === "file") {
-                return item.getAsFile() || undefined;
-            }
-            return res;
-        }, undefined);
-    }
-
     function messageContentFromDataTransferItemList(items: DataTransferItem[]) {
         const file = fileFromDataTransferItems(items);
         if (file) {
@@ -150,13 +142,6 @@
             messageEntry.replaceSelection(text);
         }
         messageContentFromDataTransferItemList([...data.items]);
-    }
-
-    function onDrop(e: DragEvent) {
-        if (e.dataTransfer) {
-            onDataTransfer(e.dataTransfer);
-            e.preventDefault();
-        }
     }
 
     function onPaste(e: ClipboardEvent) {
@@ -227,7 +212,6 @@
         bind:this={messageEntry}
         bind:messageAction
         {onPaste}
-        {onDrop}
         {externalContent}
         {mode}
         {preview}
