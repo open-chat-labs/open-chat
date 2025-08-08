@@ -576,29 +576,6 @@ pub mod happy_path {
         assert!(matches!(response, user_canister::unblock_user::Response::Success));
     }
 
-    pub fn pay_for_premium_item(
-        env: &mut PocketIc,
-        user: &User,
-        item_id: u32,
-        expected_cost: u32,
-    ) -> user_canister::c2c_pay_for_premium_item::SuccessResult {
-        let response = super::pay_for_premium_item(
-            env,
-            user.principal,
-            user.canister(),
-            &user_canister::c2c_pay_for_premium_item::Args {
-                item_id,
-                pay_in_chat: false,
-                expected_cost,
-            },
-        );
-
-        match response {
-            user_canister::c2c_pay_for_premium_item::Response::Success(result) => result,
-            response => panic!("'pay_for_premium_item' error: {response:?}"),
-        }
-    }
-
     pub fn pay_for_streak_insurance(env: &mut PocketIc, user: &User, additional_days: u8, expected_price: u128) {
         let pay_for_insurance_response = super::pay_for_streak_insurance(
             env,
