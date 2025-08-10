@@ -595,7 +595,7 @@ impl Data {
                         recipients: filtered_recipients,
                         notification_bytes: ByteBuf::from(msgpack::serialize_then_unwrap(&user_notification.notification)),
                         timestamp: now,
-                        fcm_data: Some(user_notification.notification.to_fcm_data()),
+                        fcm_data: Some(user_notification.notification.into()),
                     }));
                 }
             }
