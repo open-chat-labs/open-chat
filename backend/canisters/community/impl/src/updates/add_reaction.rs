@@ -6,8 +6,8 @@ use canister_tracing_macros::trace;
 use community_canister::{add_reaction::*, c2c_bot_add_reaction};
 use oc_error_codes::OCErrorCode;
 use types::{
-    Achievement, BotCaller, BotPermissions, Caller, ChannelReactionAddedNotification, Chat, ChatPermission, CommunityId,
-    EventIndex, OCResult, UserNotificationPayload,
+    Achievement, BotCaller, BotPermissions, Caller, ChannelReactionAddedNotification, ChannelUserNotificationPayload, Chat,
+    ChatPermission, CommunityId, EventIndex, OCResult,
 };
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -100,7 +100,7 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
                     .or(args.display_name);
                 let channel_avatar_id = channel.chat.avatar.as_ref().map(|d| d.id);
 
-                let notification = UserNotificationPayload::ChannelReactionAdded(ChannelReactionAddedNotification {
+                let notification = ChannelUserNotificationPayload::ChannelReactionAdded(ChannelReactionAddedNotification {
                     community_id,
                     channel_id: args.channel_id,
                     thread_root_message_index: args.thread_root_message_index,

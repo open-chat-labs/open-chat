@@ -18,9 +18,9 @@ use rand::RngCore;
 use regex_lite::Regex;
 use std::str::FromStr;
 use types::{
-    Achievement, BotCaller, BotPermissions, Caller, ChannelId, ChannelMessageNotification, Chat, CommunityId, EventIndex,
-    EventWrapper, IdempotentEnvelope, Message, MessageContent, MessageIndex, OCResult, TimestampMillis, User, UserId,
-    UserNotificationPayload, Version,
+    Achievement, BotCaller, BotPermissions, Caller, ChannelId, ChannelMessageNotification, ChannelUserNotificationPayload,
+    Chat, CommunityId, EventIndex, EventWrapper, IdempotentEnvelope, Message, MessageContent, MessageIndex, OCResult,
+    TimestampMillis, User, UserId, Version,
 };
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -248,7 +248,7 @@ fn process_send_message_result(
         let message_text =
             content.notification_text(&users_mentioned.mentioned_directly, &users_mentioned.user_groups_mentioned);
 
-        let notification = UserNotificationPayload::ChannelMessage(ChannelMessageNotification {
+        let notification = ChannelUserNotificationPayload::ChannelMessage(ChannelMessageNotification {
             community_id,
             channel_id,
             thread_root_message_index,

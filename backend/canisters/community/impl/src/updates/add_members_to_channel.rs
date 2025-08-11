@@ -5,7 +5,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::add_members_to_channel::{Response::*, *};
 use oc_error_codes::OCErrorCode;
-use types::{AddedToChannelNotification, ChannelId, OCResult, UserId, UserNotificationPayload, UserType};
+use types::{AddedToChannelNotification, ChannelId, ChannelUserNotificationPayload, OCResult, UserId, UserType};
 
 #[update(msgpack = true)]
 #[trace]
@@ -106,7 +106,7 @@ fn commit(
         });
     }
 
-    let notification = UserNotificationPayload::AddedToChannel(AddedToChannelNotification {
+    let notification = ChannelUserNotificationPayload::AddedToChannel(AddedToChannelNotification {
         community_id: state.env.canister_id().into(),
         community_name: state.data.name.value.clone(),
         channel_id,

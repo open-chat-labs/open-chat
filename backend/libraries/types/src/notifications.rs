@@ -10,6 +10,7 @@ use std::{
     collections::HashMap,
     fmt::{Debug, Formatter},
 };
+use subenum::subenum;
 use ts_export::ts_export;
 
 #[allow(clippy::large_enum_variant)]
@@ -231,111 +232,43 @@ impl BotNotificationEnvelope {
 }
 
 #[ts_export]
-#[derive(Serialize, Deserialize, Clone)]
+#[subenum(
+    DirectChatUserNotificationPayload,
+    GroupChatUserNotificationPayload,
+    ChannelUserNotificationPayload
+)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum UserNotificationPayload {
+    #[subenum(ChannelUserNotificationPayload)]
     #[serde(rename = "ac")]
     AddedToChannel(AddedToChannelNotification),
+    #[subenum(DirectChatUserNotificationPayload)]
     #[serde(rename = "dm")]
     DirectMessage(DirectMessageNotification),
+    #[subenum(GroupChatUserNotificationPayload)]
     #[serde(rename = "gm")]
     GroupMessage(GroupMessageNotification),
+    #[subenum(ChannelUserNotificationPayload)]
     #[serde(rename = "cm")]
     ChannelMessage(ChannelMessageNotification),
+    #[subenum(DirectChatUserNotificationPayload)]
     #[serde(rename = "dr")]
     DirectReactionAdded(DirectReactionAddedNotification),
+    #[subenum(GroupChatUserNotificationPayload)]
     #[serde(rename = "gr")]
     GroupReactionAdded(GroupReactionAddedNotification),
+    #[subenum(ChannelUserNotificationPayload)]
     #[serde(rename = "cr")]
     ChannelReactionAdded(ChannelReactionAddedNotification),
+    #[subenum(DirectChatUserNotificationPayload)]
     #[serde(rename = "dt")]
     DirectMessageTipped(DirectMessageTipped),
+    #[subenum(GroupChatUserNotificationPayload)]
     #[serde(rename = "gt")]
     GroupMessageTipped(GroupMessageTipped),
+    #[subenum(ChannelUserNotificationPayload)]
     #[serde(rename = "ct")]
     ChannelMessageTipped(ChannelMessageTipped),
-}
-
-#[ts_export]
-#[derive(Serialize, Deserialize, Clone)]
-pub enum DirectChatUserNotificationPayload {
-    #[serde(rename = "dm")]
-    DirectMessage(DirectMessageNotification),
-    #[serde(rename = "dr")]
-    DirectReactionAdded(DirectReactionAddedNotification),
-    #[serde(rename = "dt")]
-    DirectMessageTipped(DirectMessageTipped),
-}
-
-#[ts_export]
-#[derive(Serialize, Deserialize, Clone)]
-pub enum GroupChatUserNotificationPayload {
-    #[serde(rename = "gm")]
-    GroupMessage(GroupMessageNotification),
-    #[serde(rename = "gr")]
-    GroupReactionAdded(GroupReactionAddedNotification),
-    #[serde(rename = "gt")]
-    GroupMessageTipped(GroupMessageTipped),
-}
-
-#[ts_export]
-#[derive(Serialize, Deserialize, Clone)]
-pub enum ChannelUserNotificationPayload {
-    #[serde(rename = "ac")]
-    AddedToChannel(AddedToChannelNotification),
-    #[serde(rename = "cm")]
-    ChannelMessage(ChannelMessageNotification),
-    #[serde(rename = "cr")]
-    ChannelReactionAdded(ChannelReactionAddedNotification),
-    #[serde(rename = "ct")]
-    ChannelMessageTipped(ChannelMessageTipped),
-}
-
-impl From<DirectChatUserNotificationPayload> for UserNotificationPayload {
-    fn from(value: DirectChatUserNotificationPayload) -> Self {
-        match value {
-            DirectChatUserNotificationPayload::DirectMessage(n) => UserNotificationPayload::DirectMessage(n),
-            DirectChatUserNotificationPayload::DirectReactionAdded(n) => UserNotificationPayload::DirectReactionAdded(n),
-            DirectChatUserNotificationPayload::DirectMessageTipped(n) => UserNotificationPayload::DirectMessageTipped(n),
-        }
-    }
-}
-
-impl From<GroupChatUserNotificationPayload> for UserNotificationPayload {
-    fn from(value: GroupChatUserNotificationPayload) -> Self {
-        match value {
-            GroupChatUserNotificationPayload::GroupMessage(n) => UserNotificationPayload::GroupMessage(n),
-            GroupChatUserNotificationPayload::GroupReactionAdded(n) => UserNotificationPayload::GroupReactionAdded(n),
-            GroupChatUserNotificationPayload::GroupMessageTipped(n) => UserNotificationPayload::GroupMessageTipped(n),
-        }
-    }
-}
-
-impl From<ChannelUserNotificationPayload> for UserNotificationPayload {
-    fn from(value: ChannelUserNotificationPayload) -> Self {
-        match value {
-            ChannelUserNotificationPayload::AddedToChannel(n) => UserNotificationPayload::AddedToChannel(n),
-            ChannelUserNotificationPayload::ChannelMessage(n) => UserNotificationPayload::ChannelMessage(n),
-            ChannelUserNotificationPayload::ChannelReactionAdded(n) => UserNotificationPayload::ChannelReactionAdded(n),
-            ChannelUserNotificationPayload::ChannelMessageTipped(n) => UserNotificationPayload::ChannelMessageTipped(n),
-        }
-    }
-}
-
-impl<T: Into<UserNotificationPayload>> Notification<T> {
-    pub fn erase_generic(self) -> Notification {
-        match self {
-            Notification::User(user) => Notification::User(UserNotification {
-                sender: user.sender,
-                recipients: user.recipients,
-                notification: user.notification.into(),
-            }),
-            Notification::Bot(bot) => Notification::Bot(BotNotification {
-                event: bot.event,
-                recipients: bot.recipients,
-                timestamp: bot.timestamp,
-            }),
-        }
-    }
 }
 
 #[ts_export]

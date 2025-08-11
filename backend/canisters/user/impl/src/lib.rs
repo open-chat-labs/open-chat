@@ -262,7 +262,11 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
         }
     }
 
-    pub fn push_local_user_index_canister_event(&mut self, event: LocalUserIndexEvent, now: TimestampMillis) {
+    pub fn push_local_user_index_canister_event(
+        &mut self,
+        event: LocalUserIndexEvent<DirectChatUserNotificationPayload>,
+        now: TimestampMillis,
+    ) {
         self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
             created_at: now,
             idempotency_id: self.env.rng().next_u64(),
@@ -270,7 +274,11 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
         });
     }
 
-    pub fn push_local_user_index_canister_events(&mut self, events: Vec<LocalUserIndexEvent>, now: TimestampMillis) {
+    pub fn push_local_user_index_canister_events(
+        &mut self,
+        events: Vec<LocalUserIndexEvent<DirectChatUserNotificationPayload>>,
+        now: TimestampMillis,
+    ) {
         self.data.local_user_index_event_sync_queue.push_many(
             events
                 .into_iter()

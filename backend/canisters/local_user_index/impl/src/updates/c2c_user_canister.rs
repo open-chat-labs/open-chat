@@ -11,24 +11,11 @@ use types::{StreakInsuranceClaim, StreakInsurancePayment, TimestampMillis, UserI
 
 #[update(guard = "caller_is_local_user_canister", msgpack = true)]
 #[trace]
-fn c2c_notify_user_events(args: local_user_index_canister::c2c_notify_user_events::Args) -> Response {
-    mutate_state(|state| {
-        c2c_notify_user_events_impl(
-            Args {
-                events: args.events.into_iter().map(|e| e.into()).collect(),
-            },
-            state,
-        )
-    })
+fn c2c_user_canister(args: ArgsInternal) -> Response {
+    mutate_state(|state| c2c_user_canister_impl(args, state))
 }
 
-#[update(guard = "caller_is_local_user_canister", msgpack = true)]
-#[trace]
-fn c2c_user_canister(args: Args) -> Response {
-    mutate_state(|state| c2c_notify_user_events_impl(args, state))
-}
-
-fn c2c_notify_user_events_impl(args: Args, state: &mut RuntimeState) -> Response {
+fn c2c_user_canister_impl(args: ArgsInternal, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
     let user_id = caller.into();
     let now = LazyCell::new(now_millis);
@@ -99,9 +86,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         }
         UserEvent::EventStoreEvent(event) => state.data.event_store_client.push(event),
         UserEvent::Notification(notification) => {
-            state
-                .data
-                .handle_notification((*notification).erase_generic(), state.env.canister_id(), **now);
+            state.data.handle_notification(*notification, state.env.canister_id(), **now);
         }
     }
 }

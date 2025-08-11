@@ -8,7 +8,7 @@ use chat_events::{CallParticipantInternal, MessageContentInternal, VideoCallCont
 use constants::HOUR_IN_MS;
 use group_canister::start_video_call_v2::*;
 use oc_error_codes::OCErrorCode;
-use types::{Caller, GroupMessageNotification, OCResult, UserNotificationPayload, VideoCallPresence, VideoCallType};
+use types::{Caller, GroupChatUserNotificationPayload, GroupMessageNotification, OCResult, VideoCallPresence, VideoCallType};
 
 #[update(guard = "caller_is_video_call_operator", candid = true, msgpack = true)]
 #[trace]
@@ -74,7 +74,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         timer_jobs.enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
     }
 
-    let notification = UserNotificationPayload::GroupMessage(GroupMessageNotification {
+    let notification = GroupChatUserNotificationPayload::GroupMessage(GroupMessageNotification {
         chat_id: state.env.canister_id().into(),
         thread_root_message_index: None,
         message_index,

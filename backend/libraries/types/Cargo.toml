@@ -19,5 +19,6 @@ range-set = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 sha2.workspace = true
+subenum = { workspace = true }
 ts_export = { path = "../ts_export" }
 ts-rs.workspace = true

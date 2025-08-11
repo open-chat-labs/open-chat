@@ -35,11 +35,11 @@ use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     AccessGate, AccessGateConfigInternal, Achievement, BotCommunityEvent, BotEventsCaller, BotInitiator, BotNotification,
-    BotPermissions, BuildVersion, Caller, CanisterId, ChannelCreated, ChannelId, ChatEventCategory, ChatEventType, ChatMetrics,
-    ChatPermission, CommunityCanisterCommunitySummary, CommunityEvent, CommunityEventCategory, CommunityEventType,
-    CommunityMembership, CommunityPermissions, Cycles, Document, EventIndex, EventsCaller, FrozenGroupInfo, GroupRole,
-    IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId,
-    UserNotification, UserNotificationPayload, UserType,
+    BotPermissions, BuildVersion, Caller, CanisterId, ChannelCreated, ChannelId, ChannelUserNotificationPayload,
+    ChatEventCategory, ChatEventType, ChatMetrics, ChatPermission, CommunityCanisterCommunitySummary, CommunityEvent,
+    CommunityEventCategory, CommunityEventType, CommunityMembership, CommunityPermissions, Cycles, Document, EventIndex,
+    EventsCaller, FrozenGroupInfo, GroupRole, IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules,
+    TimestampMillis, Timestamped, UserId, UserNotification, UserType,
 };
 use types::{BotSubscriptions, CommunityId};
 use user_canister::CommunityCanisterEvent;
@@ -125,7 +125,7 @@ impl RuntimeState {
         &mut self,
         sender: Option<UserId>,
         recipients: Vec<UserId>,
-        notification: UserNotificationPayload,
+        notification: ChannelUserNotificationPayload,
     ) {
         if !recipients.is_empty() {
             let notification = Notification::User(UserNotification {
@@ -177,7 +177,7 @@ impl RuntimeState {
         }
     }
 
-    fn push_notification_inner(&mut self, notification: Notification) {
+    fn push_notification_inner(&mut self, notification: Notification<ChannelUserNotificationPayload>) {
         self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
             created_at: self.env.now(),
             idempotency_id: self.env.rng().next_u64(),

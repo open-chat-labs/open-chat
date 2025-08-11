@@ -9,7 +9,7 @@ use community_canister::start_video_call_v2::*;
 use constants::HOUR_IN_MS;
 use oc_error_codes::OCErrorCode;
 use types::{
-    Caller, ChannelMessageNotification, CommunityId, OCResult, UserId, UserNotificationPayload, VideoCallPresence,
+    Caller, ChannelMessageNotification, ChannelUserNotificationPayload, CommunityId, OCResult, UserId, VideoCallPresence,
     VideoCallType,
 };
 
@@ -81,7 +81,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let community_id: CommunityId = state.env.canister_id().into();
     let channel_avatar_id = channel.chat.avatar.as_ref().map(|d| d.id);
 
-    let notification = UserNotificationPayload::ChannelMessage(ChannelMessageNotification {
+    let notification = ChannelUserNotificationPayload::ChannelMessage(ChannelMessageNotification {
         community_id,
         channel_id: args.channel_id,
         thread_root_message_index: None,

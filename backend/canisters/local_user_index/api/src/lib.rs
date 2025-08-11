@@ -1,15 +1,17 @@
 use candid::{CandidType, Principal};
 use event_store_types::Event;
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use std::collections::HashMap;
 use types::nns::CryptoAmount;
 use types::{
     AutonomousConfig, BotCommandDefinition, BotDataEncoding, BotDefinition, BotInstallationLocation, BotSubscriptions,
-    BuildVersion, CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, CyclesTopUp, DiamondMembershipPlanDuration,
-    DirectChatUserNotificationPayload, MessageContent, MessageContentInitial, MessageId, MessageIndex, Notification,
-    NotifyChit, PhoneNumber, ReferralType, SuspensionDuration, TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs,
-    User, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserType, is_default,
+    BuildVersion, CanisterId, ChannelLatestMessageIndex, ChannelUserNotificationPayload, ChatId, CommunityId, CyclesTopUp,
+    DiamondMembershipPlanDuration, GroupChatUserNotificationPayload, MessageContent, MessageContentInitial, MessageId,
+    MessageIndex, Notification, NotifyChit, PhoneNumber, ReferralType, SuspensionDuration, TimestampMillis, UniquePersonProof,
+    UpdateUserPrincipalArgs, User, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
+    UserNotificationPayload, UserType, is_default,
 };
 
 mod lifecycle;
@@ -66,14 +68,16 @@ pub enum GroupIndexEvent {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum GroupEvent {
+#[serde(bound = "T: Serialize + DeserializeOwned")]
+pub enum GroupOrCommunityEvent<T = UserNotificationPayload> {
     MarkActivity(TimestampMillis),
     MarkActivityForUser(TimestampMillis, UserId),
     EventStoreEvent(Event),
-    Notification(Box<Notification>),
+    Notification(Box<Notification<T>>),
 }
 
-pub type CommunityEvent = GroupEvent;
+pub type GroupEvent = GroupOrCommunityEvent<GroupChatUserNotificationPayload>;
+pub type CommunityEvent = GroupOrCommunityEvent<ChannelUserNotificationPayload>;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct NameChanged {
@@ -306,7 +310,8 @@ pub struct UserDetailsFull {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum UserEvent {
+#[serde(bound = "T: Serialize + DeserializeOwned")]
+pub enum UserEvent<T = UserNotificationPayload> {
     NotifyChit(NotifyChit),
     NotifyStreakInsurancePayment(UserCanisterStreakInsurancePayment),
     NotifyStreakInsuranceClaim(UserCanisterStreakInsuranceClaim),
@@ -315,7 +320,7 @@ pub enum UserEvent {
     UserSetProfileBackground(Option<u128>),
     SetMaxStreak(u16),
     EventStoreEvent(Event),
-    Notification(Box<Notification<DirectChatUserNotificationPayload>>),
+    Notification(Box<Notification<T>>),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
