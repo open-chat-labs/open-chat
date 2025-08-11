@@ -1,3 +1,25 @@
+<script lang="ts" module>
+    type Duration = "oneHour" | "oneDay" | "oneWeek";
+    type PrizeConfig = {
+        minChitEarned?: number;
+        diamond: "none" | "standard" | "lifetime";
+        uniquePersonOnly: boolean;
+        minStreak: number;
+        requiresCaptcha: boolean;
+        distribution: "equal" | "random";
+        duration: Duration;
+    };
+    const defaultPrizeRestrictions: PrizeConfig = {
+        minChitEarned: undefined,
+        diamond: "none",
+        uniquePersonOnly: false,
+        minStreak: 0,
+        requiresCaptcha: false,
+        distribution: "random",
+        duration: "oneDay",
+    };
+</script>
+
 <script lang="ts">
     import type {
         ChatSummary,
@@ -10,6 +32,7 @@
         chitBands,
         cryptoBalanceStore,
         cryptoLookup,
+        LocalStorageStore,
         mobileWidth,
     } from "openchat-client";
     import { getContext } from "svelte";
@@ -59,18 +82,27 @@
         onClose,
     }: Props = $props();
 
+    const prizeConfig = new LocalStorageStore(
+        "openchat_prize_config",
+        defaultPrizeRestrictions,
+        JSON.stringify,
+        (s) => JSON.parse(s),
+        (_a, _b) => false,
+    );
+
+    console.log("Is this happening?");
+
     let numberOfWinners = $state(20);
-    let distribution: "equal" | "random" = $state("random");
+    let distribution: "equal" | "random" = $state($prizeConfig.distribution);
     const durations: Duration[] = ["oneHour", "oneDay", "oneWeek"];
-    type Duration = "oneHour" | "oneDay" | "oneWeek";
-    let selectedDuration: Duration = $state("oneDay");
-    let diamondOnly = $state(false);
-    let diamondType: "standard" | "lifetime" = $state("standard");
-    let uniquePersonOnly = $state(false);
-    let streakOnly = $state(false);
-    let chitOnly = $state(false);
-    let streakValue = $state("3");
-    let minChitEarned = $state<number>();
+    let selectedDuration: Duration = $state($prizeConfig.duration);
+    let diamondOnly = $state($prizeConfig.diamond !== "none");
+    let diamondType: "none" | "standard" | "lifetime" = $state($prizeConfig.diamond);
+    let uniquePersonOnly = $state($prizeConfig.uniquePersonOnly);
+    let streakOnly = $state($prizeConfig.minStreak > 0);
+    let chitOnly = $state($prizeConfig.minChitEarned > 0);
+    let streakValue = $state($prizeConfig.minStreak.toString());
+    let minChitEarned = $state<number>($prizeConfig.minChitEarned);
     let refreshing = false;
     let error: string | undefined = $state(undefined);
     let message = $state("");
@@ -79,7 +111,7 @@
     let balanceWithRefresh: BalanceWithRefresh;
     let tokenInputState: "ok" | "zero" | "too_low" | "too_high" = $state("ok");
     let sending = $state(false);
-    let requiresCaptcha = $state(true);
+    let requiresCaptcha = $state($prizeConfig.requiresCaptcha);
 
     let anyUser = $state(true);
     $effect(() => {
@@ -148,7 +180,6 @@
         const prizes = generatePrizes();
         const amountE8s = prizes.reduce((total, p) => total + p) + prizeFees;
 
-        console.log(`Prize amount: ${amountE8s}`);
         const content: PrizeContentInitial = {
             kind: "prize_content_initial",
             caption: message === "" ? undefined : message,
@@ -170,6 +201,16 @@
             prizes,
             requiresCaptcha,
         };
+
+        prizeConfig.set({
+            minChitEarned: chitOnly ? minChitEarned : undefined,
+            diamond: diamondOnly ? diamondType : "none",
+            uniquePersonOnly: uniquePersonOnly,
+            minStreak: content.streakOnly,
+            requiresCaptcha: requiresCaptcha,
+            distribution: distribution,
+            duration: selectedDuration,
+        });
 
         sending = true;
         error = undefined;
