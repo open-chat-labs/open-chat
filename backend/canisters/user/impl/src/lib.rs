@@ -330,7 +330,8 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
             LocalUserIndexEvent::NotifyChit(NotifyChit {
                 timestamp: now,
                 total_chit_earned: self.data.chit_events.total_chit_earned(),
-                chit_balance: self.data.chit_events.chit_balance(),
+                chit_balance: self.data.chit_events.balance_for_month_by_timestamp(now),
+                chit_balance_v2: self.data.chit_events.chit_balance(),
                 streak: self.data.streak.days(now),
                 streak_ends: self.data.streak.ends(),
             }),

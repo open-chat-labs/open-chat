@@ -128,6 +128,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 chit.total_chit_earned,
                 chit.timestamp,
                 chit.chit_balance,
+                chit.chit_balance_v2,
                 chit.streak,
                 chit.streak_ends,
                 **now,
