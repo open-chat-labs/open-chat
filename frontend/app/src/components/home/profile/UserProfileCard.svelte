@@ -53,8 +53,6 @@
     }: Props = $props();
 
     let lastOnline: number | undefined = $state();
-    let hasCustomBackground = $derived(profile?.background?.blobUrl !== undefined);
-    let txtColour = $derived(hasCustomBackground ? "#fff" : "var(--txt)");
 
     onMount(async () => {
         try {
@@ -91,6 +89,17 @@
               )
             : "/assets/unknownUserAvatar.svg",
     );
+    let backgroundUrl = $derived(
+        profile !== undefined
+            ? client.buildUserBackgroundUrl(
+                  import.meta.env.OC_BLOB_URL_PATTERN!,
+                  user.userId,
+                  profile.backgroundId,
+              )
+            : undefined,
+    );
+    let hasCustomBackground = $derived(backgroundUrl !== undefined);
+    let txtColour = $derived(hasCustomBackground ? "#fff" : "var(--txt)");
     let joined = $derived(
         profile !== undefined ? `${$_("joined")} ${formatDate(profile.created)}` : undefined,
     );
@@ -111,15 +120,13 @@
     }
 
     function onBackgroundImageSelected(args: { url: string; data: Uint8Array }) {
-        client.setUserProfileBackground(args.data, args.url).then((success) => {
-            profile = {
-                ...profile,
-                background: {
-                    blobData: args.data,
-                    blobUrl: args.url,
-                },
-            };
-            if (!success) {
+        client.setUserProfileBackground(args.data).then((blobId) => {
+            if (blobId !== undefined) {
+                profile = {
+                    ...profile,
+                    backgroundId: blobId,
+                };
+            } else {
                 toastStore.showFailureToast(i18nKey("avatarUpdateFailed"));
             }
         });
@@ -128,7 +135,7 @@
 
 {#if profile !== undefined}
     <EditableImageWrapper
-        image={profile.background?.blobUrl}
+        image={backgroundUrl}
         mode={"profile"}
         onImageSelected={onBackgroundImageSelected}>
         {#snippet children(choosePhoto: () => void)}
@@ -136,8 +143,8 @@
                 class="profile_card"
                 class:userProfileMode
                 class:hasCustomBackground
-                style={userProfileMode && profile.background
-                    ? `background-image: url(${profile.background.blobUrl})`
+                style={userProfileMode && backgroundUrl
+                    ? `background-image: url(${backgroundUrl})`
                     : ""}>
                 <div class="header" class:hasCustomBackground>
                     <div class="handle">

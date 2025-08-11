@@ -2345,6 +2345,12 @@ export const UserIndexUserRegistrationCanisterResponse = Type.Union([
     }),
 ]);
 
+export type UserIndexSetPremiumItemCostArgs = Static<typeof UserIndexSetPremiumItemCostArgs>;
+export const UserIndexSetPremiumItemCostArgs = Type.Object({
+    item_id: Type.Number(),
+    chit_cost: Type.Number(),
+});
+
 export type LocalUserIndexInviteUsersToCommunityArgs = Static<
     typeof LocalUserIndexInviteUsersToCommunityArgs
 >;

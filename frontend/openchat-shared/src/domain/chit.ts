@@ -193,10 +193,10 @@ export type PayForPremiumItemSuccess = Success & { totalChitEarned: number; chit
 export enum PremiumItem {
     BotEmojis = 0,
     PopularEmojis = 1,
-    CustomProfileBackground = 3,
+    CustomProfileBackground = 2,
 }
 export const premiumPrices: Record<PremiumItem, number> = {
     [PremiumItem.BotEmojis]: 10_000,
-    [PremiumItem.PopularEmojis]: 50_000,
-    [PremiumItem.CustomProfileBackground]: 50_000,
+    [PremiumItem.PopularEmojis]: 1_000,
+    [PremiumItem.CustomProfileBackground]: 2_000,
 };

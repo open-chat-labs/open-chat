@@ -30,6 +30,7 @@
         type DexId,
         type DiamondMembershipFees,
         OpenChat,
+        PremiumItem,
         type UpdateMarketMakerConfigArgs,
         type VideoCallType,
         anonUserStore,
@@ -197,6 +198,7 @@
             topUpNeuronForSubmittingProposals,
             updateMarketMakerConfig,
             withdrawFromIcpSwap,
+            setPremiumItemCost,
             pauseEventLoop: () => client.pauseEventLoop(),
             resumeEventLoop: () => client.resumeEventLoop(),
         };
@@ -537,6 +539,10 @@
         fee: bigint | undefined,
     ): void {
         client.withdrawFromIcpSwap(userId, swapId, inputToken, amount, fee);
+    }
+
+    function setPremiumItemCost(item: PremiumItem, chitCost: number): void {
+        client.setPremiumItemCost(item, chitCost);
     }
 
     function calculateHeight() {

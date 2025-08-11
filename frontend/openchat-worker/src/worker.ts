@@ -504,6 +504,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.setUserAvatar(payload.data));
                 break;
 
+            case "setProfileBackground":
+                executeThenReply(payload, correlationId, agent.setProfileBackground(payload.data));
+                break;
+
             case "deleteGroup":
                 executeThenReply(payload, correlationId, agent.deleteGroup(payload.chatId));
                 break;
@@ -2137,6 +2141,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     payload,
                     correlationId,
                     agent.payForPremiumItem(payload.userId, payload.item),
+                );
+                break;
+
+            case "setPremiumItemCost":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setPremiumItemCost(payload.item, payload.chitCost),
                 );
                 break;
 

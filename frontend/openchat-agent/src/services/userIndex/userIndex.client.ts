@@ -12,6 +12,7 @@ import type {
     ExternalAchievementsResponse,
     ExternalBot,
     PayForDiamondMembershipResponse,
+    PremiumItem,
     SetDisplayNameResponse,
     SetUsernameResponse,
     SetUserUpgradeConcurrencyResponse,
@@ -33,6 +34,7 @@ import {
 import {
     Empty,
     SuccessOnly,
+    UnitResult,
     UserIndexBotUpdatesArgs,
     UserIndexBotUpdatesResponse,
     UserIndexCheckUsernameArgs,
@@ -60,6 +62,7 @@ import {
     UserIndexSetDisplayNameArgs,
     UserIndexSetDisplayNameResponse,
     UserIndexSetModerationFlagsArgs,
+    UserIndexSetPremiumItemCostArgs,
     UserIndexSetUsernameArgs,
     UserIndexSetUsernameResponse,
     UserIndexSetUserUpgradeConcurrencyArgs,
@@ -87,6 +90,7 @@ import {
     mapOptional,
     principalBytesToString,
     principalStringToBytes,
+    toVoid,
 } from "../../utils/mapping";
 import {
     getCachedUsers,
@@ -725,6 +729,19 @@ export class UserIndexClient extends MsgpackCanisterAgent {
             (resp) => botUpdatesResponse(resp, current, this.blobUrlPattern, this.canisterId),
             UserIndexBotUpdatesArgs,
             UserIndexBotUpdatesResponse,
+        );
+    }
+
+    setPremiumItemCost(item: PremiumItem, chitCost: number): Promise<void> {
+        return this.executeMsgpackUpdate(
+            "set_premium_item_cost",
+            {
+                item_id: item,
+                chit_cost: chitCost,
+            },
+            toVoid,
+            UserIndexSetPremiumItemCostArgs,
+            UnitResult,
         );
     }
 }

@@ -25,7 +25,7 @@
         underReviewEnabledStore,
         userMetricsStore,
     } from "openchat-client";
-    import { type DataContent, ErrorCode, type PublicProfile } from "openchat-shared";
+    import { ErrorCode, type PublicProfile } from "openchat-shared";
     import { getContext, onMount } from "svelte";
     import { _, locale } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -104,7 +104,6 @@
 
     let originalBio = $state("");
     let userbio = $state("");
-    let backgroundImage = $state<DataContent>();
     let selectedLocale = $state(($locale as string).substring(0, 2));
     let usernameError: string | undefined = $state(undefined);
     let displayNameError: string | undefined = $state(undefined);
@@ -153,26 +152,29 @@
     let canEditTranslations = $derived(!$locale?.startsWith("en"));
     let referredUserIds = $derived(new Set($referralsStore.map((r) => r.userId)));
 
+    let originalProfile = $state<PublicProfile>({
+        username: "",
+        displayName: undefined,
+        bio: "",
+        isPremium: false,
+        phoneIsVerified: false,
+        created: 0n,
+    });
     let candidateProfile: PublicProfile = $derived.by(() => {
         return {
+            ...originalProfile,
             username: username,
             displayName: displayName,
-            avatarId: 0n,
             bio: userbio,
-            isPremium: false,
-            phoneIsVerified: false,
-            created: 0n,
-            background: backgroundImage,
         };
     });
 
     onMount(() => {
         if (!$anonUserStore) {
-            client.getBio().then((bio) => {
-                originalBio = userbio = bio;
-            });
-            client.getProfileBackgroundImage().then((image) => {
-                backgroundImage = image;
+            client.getPublicProfile(user.userId).then((profile) => {
+                if (profile) {
+                    originalProfile = profile;
+                }
             });
         }
     });

@@ -175,7 +175,7 @@ export type PublicProfile = {
     isPremium: boolean;
     phoneIsVerified: boolean;
     created: bigint;
-    background?: DataContent;
+    backgroundId?: bigint;
 };
 
 export type UsersArgs = {
@@ -265,6 +265,7 @@ type CurrentUserCommon = DataContent & {
     chitBalance: number;
     streak: number;
     maxStreak: number;
+    backgroundId?: bigint;
 };
 
 export type CurrentUserSummary = CurrentUserCommon & {

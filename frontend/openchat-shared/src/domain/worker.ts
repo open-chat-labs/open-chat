@@ -263,6 +263,7 @@ export type WorkerRequest =
     | LeaveGroup
     | DeleteGroup
     | SetUserAvatar
+    | SetProfileBackground
     | UnblockUserFromDirectChat
     | BlockUserFromDirectChat
     | UnpinChat
@@ -461,7 +462,14 @@ export type WorkerRequest =
     | CreateAccountLinkingCode
     | VerifyAccountLinkingCode
     | FinaliseAccountLinkingWithCode
-    | PayForPremiumItem;
+    | PayForPremiumItem
+    | SetPremiumItemCost;
+
+type SetPremiumItemCost = {
+    kind: "setPremiumItemCost";
+    item: PremiumItem;
+    chitCost: number;
+};
 
 type PayForPremiumItem = {
     kind: "payForPremiumItem";
@@ -1159,6 +1167,11 @@ type DeleteGroup = {
 type SetUserAvatar = {
     data: Uint8Array;
     kind: "setUserAvatar";
+};
+
+type SetProfileBackground = {
+    data: Uint8Array;
+    kind: "setProfileBackground";
 };
 
 type UnblockUserFromDirectChat = {
@@ -2162,6 +2175,8 @@ export type WorkerResult<T> = T extends Init
     ? UnblockUserResponse
     : T extends SetUserAvatar
     ? BlobReference
+    : T extends SetProfileBackground
+    ? BlobReference
     : T extends DeleteGroup
     ? DeleteGroupResponse
     : T extends LeaveGroup
@@ -2532,4 +2547,6 @@ export type WorkerResult<T> = T extends Init
     ? EventWrapper<Message>[]
     : T extends PayForPremiumItem
     ? PayForPremiumItemResponse
+    : T extends SetPremiumItemCost
+    ? void
     : never;

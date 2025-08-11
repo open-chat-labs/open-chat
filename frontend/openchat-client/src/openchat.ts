@@ -27,7 +27,6 @@ import {
     type AttachmentContent,
     type AuthenticationPrincipal,
     AuthProvider,
-    type BlobReference,
     type BlogRoute,
     type BotActionScope,
     type BotClientConfigData,
@@ -455,6 +454,7 @@ import {
     buildTransactionLink,
     buildTransactionUrlByIndex,
     buildUserAvatarUrl,
+    buildUserBackgroundUrl,
     canAddMembers,
     canBlockUsers,
     canChangePermissions,
@@ -1457,8 +1457,10 @@ export class OpenChat {
             .catch(() => false);
     }
 
-    setUserProfileBackground(_data: Uint8Array, _url: string): Promise<boolean> {
-        return Promise.resolve(true);
+    setUserProfileBackground(data: Uint8Array): Promise<bigint | undefined> {
+        return this.#sendRequest({ kind: "setProfileBackground", data })
+            .then((resp) => resp.blobId)
+            .catch(() => undefined);
     }
 
     deleteGroup(chatId: MultiUserChatIdentifier): Promise<boolean> {
@@ -2763,6 +2765,7 @@ export class OpenChat {
     formatTimeRemaining = formatTimeRemaining;
     formatLastOnlineDate = formatLastOnlineDate;
     buildUserAvatarUrl = buildUserAvatarUrl;
+    buildUserBackgroundUrl = buildUserBackgroundUrl;
     buildUsernameList = buildUsernameList;
     groupMessagesByDate = groupMessagesByDate;
     fillMessage = fillMessage;
@@ -5729,15 +5732,7 @@ export class OpenChat {
     }
 
     getProfileBackgroundImage(_userId?: string): Promise<DataContent | undefined> {
-        const ref: BlobReference = {
-            // blobId: 229924665492313186523778746799989525230n,
-            blobId: 229924665561690190197629442160783703621n,
-            canisterId: "w7lou-c7777-77774-qaamq-cai",
-        };
-        return Promise.resolve({
-            blobReference: ref,
-            blobUrl: buildBlobUrl(this.config.blobUrlPattern, ref.canisterId, ref.blobId, "blobs"),
-        });
+        return Promise.resolve(undefined);
     }
 
     async withdrawCryptocurrency(
@@ -9476,6 +9471,14 @@ export class OpenChat {
             total += 2n ** BigInt(daysInsured + i) * 100_000_000n;
         }
         return total;
+    }
+
+    setPremiumItemCost(item: PremiumItem, chitCost: number): Promise<void> {
+        return this.#sendRequest({
+            kind: "setPremiumItemCost",
+            item,
+            chitCost,
+        });
     }
 
     payForPremiumItem(item: PremiumItem): Promise<PayForPremiumItemResponse> {

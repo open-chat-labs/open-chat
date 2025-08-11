@@ -152,6 +152,7 @@ import {
     UserSetMessageReminderArgs,
     UserSetMessageReminderResponse,
     UserSetPinNumberArgs,
+    UserSetProfileBackgroundArgs,
     UserSwapTokensArgs,
     UserSwapTokensResponse,
     UserTipMessageArgs,
@@ -664,6 +665,31 @@ export class UserClient extends MsgpackCanisterAgent {
                 };
             }
             throw new Error("Unable to set avatar");
+        });
+    }
+
+    setProfileBackground(bytes: Uint8Array): Promise<BlobReference> {
+        const blobId = DataClient.newBlobId();
+        return this.executeMsgpackUpdate(
+            "set_profile_background",
+            {
+                profile_background: {
+                    id: blobId,
+                    data: bytes,
+                    mime_type: "image/jpg",
+                },
+            },
+            isSuccess,
+            UserSetProfileBackgroundArgs,
+            UnitResult,
+        ).then((success) => {
+            if (success) {
+                return {
+                    blobId,
+                    canisterId: this.userId,
+                };
+            }
+            throw new Error("Unable to set profile background");
         });
     }
 

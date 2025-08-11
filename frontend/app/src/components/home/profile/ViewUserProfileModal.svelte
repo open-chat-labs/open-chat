@@ -51,7 +51,16 @@
 
     let profile: PublicProfile | undefined = $state();
     let user: UserSummary | undefined = $state();
-    let hasCustomBackground = $derived(profile?.background?.blobUrl !== undefined);
+    let backgroundUrl = $derived(
+        profile !== undefined
+            ? client.buildUserBackgroundUrl(
+                  import.meta.env.OC_BLOB_URL_PATTERN!,
+                  userId,
+                  profile.backgroundId,
+              )
+            : undefined,
+    );
+    let hasCustomBackground = $derived(backgroundUrl !== undefined);
 
     onMount(async () => {
         try {
@@ -243,7 +252,7 @@
         <ModalContent
             fill
             compactFooter
-            backgroundImage={profile.background?.blobUrl}
+            backgroundImage={backgroundUrl}
             hideFooter={!me && !chatButton && !canBlock && !canUnblock}
             hideHeader
             fixedWidth={false}

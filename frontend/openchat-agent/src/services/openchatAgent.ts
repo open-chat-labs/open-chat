@@ -2527,6 +2527,10 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.setAvatar(data);
     }
 
+    setProfileBackground(data: Uint8Array): Promise<BlobReference> {
+        return this.userClient.setProfileBackground(data);
+    }
+
     addReaction(
         chatId: ChatIdentifier,
         messageId: bigint,
@@ -2822,16 +2826,6 @@ export class OpenChatAgent extends EventTarget {
         return userClient.getBio();
     }
 
-    #rehydratePublicProfile(p: PublicProfile): PublicProfile {
-        if (p.background !== undefined) {
-            return {
-                ...p,
-                background: this.rehydrateDataContent(p.background),
-            };
-        }
-        return p;
-    }
-
     getPublicProfile(userId?: string): Promise<PublicProfile | undefined> {
         if (userId) {
             return isUserIdDeleted(userId).then((deleted) => {
@@ -2843,10 +2837,10 @@ export class OpenChatAgent extends EventTarget {
                     this.config,
                     this.db,
                 );
-                return userClient.getPublicProfile().then((p) => this.#rehydratePublicProfile(p));
+                return userClient.getPublicProfile();
             });
         } else {
-            return this.userClient.getPublicProfile().then((p) => this.#rehydratePublicProfile(p));
+            return this.userClient.getPublicProfile();
         }
     }
 
@@ -4579,6 +4573,10 @@ export class OpenChatAgent extends EventTarget {
     async payForPremiumItem(userId: string, item: PremiumItem): Promise<PayForPremiumItemResponse> {
         const localUserIndex = await this.getLocalUserIndexForUser(userId);
         return this.getLocalUserIndexClient(localUserIndex).payForPremiumItem(item);
+    }
+
+    async setPremiumItemCost(item: PremiumItem, chitCost: number): Promise<void> {
+        return this._userIndexClient.setPremiumItemCost(item, chitCost);
     }
 }
 

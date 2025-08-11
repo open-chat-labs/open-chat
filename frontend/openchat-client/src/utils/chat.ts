@@ -384,7 +384,11 @@ export function mergeUnconfirmedIntoSummary(
     let anyUpdates = false;
 
     if (unconfirmedMessages != undefined && unconfirmedMessages.length > 0) {
-        const incomingMentions = mentionsFromMessages(formatter, currentUserId, unconfirmedMessages);
+        const incomingMentions = mentionsFromMessages(
+            formatter,
+            currentUserId,
+            unconfirmedMessages,
+        );
         if (incomingMentions.length > 0) {
             anyUpdates = true;
         }
@@ -760,7 +764,10 @@ export function mergeServerEvents(
     return merged;
 }
 
-export function updateExistingMessages(events: EventWrapper<ChatEvent>[], updatedMessages: EventWrapper<Message>[]) {
+export function updateExistingMessages(
+    events: EventWrapper<ChatEvent>[],
+    updatedMessages: EventWrapper<Message>[],
+) {
     const updatedMessagesMap = new Map(updatedMessages.map((m) => [m.event.messageIndex, m.event]));
     for (const event of events) {
         if (event.event.kind === "message") {
@@ -1315,11 +1322,21 @@ export function buildUserAvatarUrl(pattern: string, userId: string, avatarId?: b
             : buildIdenticonUrl(userId);
 }
 
+export function buildUserBackgroundUrl(
+    pattern: string,
+    userId: string,
+    backgroundId?: bigint,
+): string | undefined {
+    return backgroundId !== undefined
+        ? buildBlobUrl(pattern, userId, backgroundId, "profile_background")
+        : undefined;
+}
+
 export function buildBlobUrl(
     pattern: string,
     canisterId: string,
     blobId: bigint,
-    blobType: "blobs" | "avatar",
+    blobType: "blobs" | "avatar" | "profile_background",
 ): string {
     return `${pattern
         .replace("{canisterId}", canisterId)
@@ -1650,7 +1667,7 @@ function mergeLocalUpdates(
             ...message.content,
             proposal: {
                 ...message.content.proposal,
-                tally: tallyUpdate
+                tally: tallyUpdate,
             },
         };
     }

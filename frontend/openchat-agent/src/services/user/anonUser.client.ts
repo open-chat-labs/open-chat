@@ -202,6 +202,10 @@ export class AnonUserClient {
         throw new AnonymousOperationError();
     }
 
+    setProfileBackground(_bytes: Uint8Array): Promise<BlobReference> {
+        throw new AnonymousOperationError();
+    }
+
     editMessage(
         _recipientId: string,
         _message: Message,
