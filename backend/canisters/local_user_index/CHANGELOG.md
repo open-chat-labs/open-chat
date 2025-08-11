@@ -16,10 +16,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove candid versions of a few endpoints ([#8445](https://github.com/open-chat-labs/open-chat/pull/8445))
 - Switch some endpoints over to using common response types ([#8447](https://github.com/open-chat-labs/open-chat/pull/8447))
 - Switch more endpoints over to using common response types ([#8450](https://github.com/open-chat-labs/open-chat/pull/8450))
+- Move signature verification to LocalUserIndex ([#8460](https://github.com/open-chat-labs/open-chat/pull/8460))
 
 ### Fixed
 
 - Fix rare scenario where notification could be skipped incorrectly ([#8441](https://github.com/open-chat-labs/open-chat/pull/8441))
+- Fix `chit_balance` being 0 in UserIndex ([#8461](https://github.com/open-chat-labs/open-chat/pull/8461))
 
 ## [[2.0.1854](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1854-local_user_index)] - 2025-08-05
 

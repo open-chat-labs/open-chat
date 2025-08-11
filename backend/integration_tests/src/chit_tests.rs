@@ -43,6 +43,8 @@ fn claim_daily_chit_reflected_in_user_index() {
 
     assert_eq!(user1_summary.streak, 1);
     assert_eq!(user1_summary.max_streak, 1);
+    assert!(user1_summary.total_chit_earned > 0);
+    assert_eq!(user1_summary.total_chit_earned, user1_summary.chit_balance);
 }
 
 #[test]
