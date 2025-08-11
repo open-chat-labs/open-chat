@@ -4,26 +4,26 @@ use candid::Principal;
 use canister_api_macros::update;
 use canister_time::now_millis;
 use canister_tracing_macros::trace;
-use local_user_index_canister::GroupEvent;
+use local_user_index_canister::GroupOrCommunityEvent;
 use local_user_index_canister::c2c_group_canister::*;
 use std::cell::LazyCell;
 use types::TimestampMillis;
 
 #[update(guard = "caller_is_local_group_canister", msgpack = true)]
 #[trace]
-fn c2c_group_canister(args: Args) -> Response {
+fn c2c_group_canister(args: ArgsInternal) -> Response {
     mutate_state(|state| c2c_group_or_community_canister_impl(args, true, state))
 }
 
 #[update(guard = "caller_is_local_community_canister", msgpack = true)]
 #[trace]
 fn c2c_community_canister(
-    args: local_user_index_canister::c2c_community_canister::Args,
+    args: local_user_index_canister::c2c_community_canister::ArgsInternal,
 ) -> local_user_index_canister::c2c_community_canister::Response {
     mutate_state(|state| c2c_group_or_community_canister_impl(args, false, state))
 }
 
-fn c2c_group_or_community_canister_impl(args: Args, is_group: bool, state: &mut RuntimeState) -> Response {
+fn c2c_group_or_community_canister_impl(args: ArgsInternal, is_group: bool, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
     let now = LazyCell::new(now_millis);
     for event in args.events {
@@ -41,19 +41,19 @@ fn c2c_group_or_community_canister_impl(args: Args, is_group: bool, state: &mut 
 fn handle_event<F: FnOnce() -> TimestampMillis>(
     caller: Principal,
     is_group: bool,
-    event: GroupEvent,
+    event: GroupOrCommunityEvent,
     now: &LazyCell<TimestampMillis, F>,
     state: &mut RuntimeState,
 ) {
     match event {
-        GroupEvent::MarkActivity(timestamp) => {
+        GroupOrCommunityEvent::MarkActivity(timestamp) => {
             if is_group {
                 state.data.local_groups.mark_activity(&caller.into(), timestamp);
             } else {
                 state.data.local_communities.mark_activity(&caller.into(), timestamp);
             }
         }
-        GroupEvent::MarkActivityForUser(timestamp, user_id) => {
+        GroupOrCommunityEvent::MarkActivityForUser(timestamp, user_id) => {
             if is_group {
                 state
                     .data
@@ -66,7 +66,9 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                     .mark_activity_for_user(&caller.into(), user_id, timestamp);
             }
         }
-        GroupEvent::EventStoreEvent(event) => state.data.event_store_client.push(event),
-        GroupEvent::Notification(notification) => state.data.handle_notification(*notification, state.env.canister_id(), **now),
+        GroupOrCommunityEvent::EventStoreEvent(event) => state.data.event_store_client.push(event),
+        GroupOrCommunityEvent::Notification(notification) => {
+            state.data.handle_notification(*notification, state.env.canister_id(), **now)
+        }
     }
 }

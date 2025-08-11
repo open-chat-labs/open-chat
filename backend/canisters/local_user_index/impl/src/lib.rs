@@ -593,9 +593,9 @@ impl Data {
                 if !filtered_recipients.is_empty() {
                     self.notifications.add(NotificationEnvelope::User(UserNotificationEnvelope {
                         recipients: filtered_recipients,
-                        notification_bytes: user_notification.notification_bytes.clone(),
+                        notification_bytes: ByteBuf::from(msgpack::serialize_then_unwrap(&user_notification.notification)),
                         timestamp: now,
-                        fcm_data: user_notification.fcm_data,
+                        fcm_data: Some(user_notification.notification.into()),
                     }));
                 }
             }

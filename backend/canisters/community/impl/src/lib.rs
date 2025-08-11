@@ -24,12 +24,10 @@ use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, 
 use model::events::CommunityEventInternal;
 use model::user_event_batch::UserEventBatch;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
-use msgpack::serialize_then_unwrap;
 use oc_error_codes::OCErrorCode;
 use rand::RngCore;
 use rand::rngs::StdRng;
 use serde::{Deserialize, Serialize};
-use serde_bytes::ByteBuf;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
@@ -37,11 +35,11 @@ use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     AccessGate, AccessGateConfigInternal, Achievement, BotCommunityEvent, BotEventsCaller, BotInitiator, BotNotification,
-    BotPermissions, BuildVersion, Caller, CanisterId, ChannelCreated, ChannelId, ChatEventCategory, ChatEventType, ChatMetrics,
-    ChatPermission, CommunityCanisterCommunitySummary, CommunityEvent, CommunityEventCategory, CommunityEventType,
-    CommunityMembership, CommunityPermissions, Cycles, Document, EventIndex, EventsCaller, FcmData, FrozenGroupInfo, GroupRole,
-    IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId,
-    UserNotification, UserNotificationPayload, UserType,
+    BotPermissions, BuildVersion, Caller, CanisterId, ChannelCreated, ChannelId, ChannelUserNotificationPayload,
+    ChatEventCategory, ChatEventType, ChatMetrics, ChatPermission, CommunityCanisterCommunitySummary, CommunityEvent,
+    CommunityEventCategory, CommunityEventType, CommunityMembership, CommunityPermissions, Cycles, Document, EventIndex,
+    EventsCaller, FrozenGroupInfo, GroupRole, IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules,
+    TimestampMillis, Timestamped, UserId, UserNotification, UserType,
 };
 use types::{BotSubscriptions, CommunityId};
 use user_canister::CommunityCanisterEvent;
@@ -127,15 +125,13 @@ impl RuntimeState {
         &mut self,
         sender: Option<UserId>,
         recipients: Vec<UserId>,
-        notification: UserNotificationPayload,
-        fcm_data: FcmData,
+        notification: ChannelUserNotificationPayload,
     ) {
         if !recipients.is_empty() {
             let notification = Notification::User(UserNotification {
                 sender,
                 recipients,
-                notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
-                fcm_data: Some(fcm_data),
+                notification,
             });
             self.push_notification_inner(notification);
         }
@@ -181,7 +177,7 @@ impl RuntimeState {
         }
     }
 
-    fn push_notification_inner(&mut self, notification: Notification) {
+    fn push_notification_inner(&mut self, notification: Notification<ChannelUserNotificationPayload>) {
         self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
             created_at: self.env.now(),
             idempotency_id: self.env.rng().next_u64(),

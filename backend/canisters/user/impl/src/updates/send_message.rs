@@ -17,8 +17,8 @@ use rand::Rng;
 use std::ops::Not;
 use types::{
     BlobReference, BotCaller, BotPermissions, CanisterId, Chat, ChatId, CompletedCryptoTransaction, CryptoTransaction,
-    DirectMessageNotification, EventIndex, EventWrapper, FcmData, Message, MessageContent, MessageContentInitial, MessageId,
-    MessageIndex, OCResult, P2PSwapLocation, ReplyContext, TimestampMillis, UserId, UserNotificationPayload, UserType,
+    DirectChatUserNotificationPayload, DirectMessageNotification, EventIndex, EventWrapper, Message, MessageContent,
+    MessageContentInitial, MessageId, MessageIndex, OCResult, P2PSwapLocation, ReplyContext, TimestampMillis, UserId, UserType,
 };
 use user_canister::send_message_v2::{Response::*, *};
 use user_canister::{C2CReplyContext, SendMessageArgs, SendMessagesArgs, UserCanisterEvent, c2c_bot_send_message};
@@ -239,12 +239,7 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
                 let message_text = message_content.notification_text(&[], &[]);
                 let image_url = message_content.notification_image_url();
 
-                let fcm_data = FcmData::for_direct_chat(bot_id)
-                    .set_body_with_alt(&message_text, &message_type)
-                    .set_optional_image(image_url.clone())
-                    .set_sender_name(bot_name.clone());
-
-                let notification = UserNotificationPayload::DirectMessage(DirectMessageNotification {
+                let notification = DirectChatUserNotificationPayload::DirectMessage(DirectMessageNotification {
                     sender: bot_id,
                     thread_root_message_index: args.thread_root_message_index,
                     message_index,
@@ -257,7 +252,7 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
                     sender_avatar_id: None,
                     crypto_transfer: message_content.notification_crypto_transfer_details(&[]),
                 });
-                state.push_notification(Some(bot_id), my_user_id, notification, fcm_data);
+                state.push_notification(Some(bot_id), my_user_id, notification);
             }
 
             return c2c_bot_send_message::Response::Success(SuccessResult {
