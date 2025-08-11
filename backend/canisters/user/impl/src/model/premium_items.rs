@@ -32,6 +32,7 @@ impl PremiumItems {
                 paid_in_chat: false,
                 cost,
             });
+            self.last_updated = now;
             true
         } else {
             false

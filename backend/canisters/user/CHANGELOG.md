@@ -45,6 +45,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix video calls in direct chats being marked as read by them immediately ([#8327](https://github.com/open-chat-labs/open-chat/pull/8327))
 - Maintain event ordering when retrying failed c2c calls ([#8429](https://github.com/open-chat-labs/open-chat/pull/8429))
 - Fix case where disappearing messages TTL wouldn't be set for new DMs ([#8432](https://github.com/open-chat-labs/open-chat/pull/8432))
+- Fix premium items not being returned in updates responses ([#8462](https://github.com/open-chat-labs/open-chat/pull/8462))
 
 ## [[2.0.1799-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1799-user)] - 2025-06-20
 
