@@ -396,6 +396,7 @@ impl UserMap {
         total_chit_earned: i32,
         chit_event_timestamp: TimestampMillis,
         chit_earned_in_month: i32,
+        chit_balance: i32,
         streak: u16,
         streak_ends: TimestampMillis,
         now: TimestampMillis,
@@ -427,6 +428,7 @@ impl UserMap {
 
         // TODO remove the if condition once User canisters are upgraded
         user.total_chit_earned = if total_chit_earned != 0 { total_chit_earned } else { user.chit_per_month.values().sum() };
+        user.chit_balance = chit_balance;
         user.chit_updated = now;
         user.chit_per_month.insert(chit_event_month, chit_earned_in_month);
         true

@@ -17,6 +17,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Initialise `total_chit_earned` from the monthly CHIT amounts ([#8437](https://github.com/open-chat-labs/open-chat/pull/8437))
 - Switch some endpoints over to using common response types ([#8450](https://github.com/open-chat-labs/open-chat/pull/8450))
 
+### Fixed
+
+- Fix `chit_balance` being 0 in UserIndex ([#8461](https://github.com/open-chat-labs/open-chat/pull/8461))
+
 ## [[2.0.1855](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1855-user_index)] - 2025-08-05
 
 ### Fixed
