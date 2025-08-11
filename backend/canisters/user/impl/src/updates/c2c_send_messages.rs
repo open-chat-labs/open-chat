@@ -6,8 +6,9 @@ use ic_cdk::update;
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use types::{
-    BotCaller, BotMessageContext, CanisterId, Chat, ContentValidationError, DirectMessageNotification, EventWrapper, Message,
-    MessageContent, MessageId, MessageIndex, SenderContext, TimestampMillis, User, UserId, UserNotificationPayload, UserType,
+    BotCaller, BotMessageContext, CanisterId, Chat, ContentValidationError, DirectChatUserNotificationPayload,
+    DirectMessageNotification, EventWrapper, Message, MessageContent, MessageId, MessageIndex, SenderContext, TimestampMillis,
+    User, UserId, UserType,
 };
 use user_canister::{C2CReplyContext, MessageActivity, MessageActivityEvent};
 
@@ -200,7 +201,7 @@ pub(crate) fn handle_message_impl(
         let message_text = content.notification_text(&args.mentioned, &[]);
         let image_url = content.notification_image_url();
 
-        let notification = UserNotificationPayload::DirectMessage(DirectMessageNotification {
+        let notification = DirectChatUserNotificationPayload::DirectMessage(DirectMessageNotification {
             sender: args.sender,
             thread_root_message_index,
             message_index: message_event.event.message_index,

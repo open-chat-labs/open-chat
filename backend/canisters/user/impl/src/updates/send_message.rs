@@ -17,8 +17,8 @@ use rand::Rng;
 use std::ops::Not;
 use types::{
     BlobReference, BotCaller, BotPermissions, CanisterId, Chat, ChatId, CompletedCryptoTransaction, CryptoTransaction,
-    DirectMessageNotification, EventIndex, EventWrapper, Message, MessageContent, MessageContentInitial, MessageId,
-    MessageIndex, OCResult, P2PSwapLocation, ReplyContext, TimestampMillis, UserId, UserNotificationPayload, UserType,
+    DirectChatUserNotificationPayload, DirectMessageNotification, EventIndex, EventWrapper, Message, MessageContent,
+    MessageContentInitial, MessageId, MessageIndex, OCResult, P2PSwapLocation, ReplyContext, TimestampMillis, UserId, UserType,
 };
 use user_canister::send_message_v2::{Response::*, *};
 use user_canister::{C2CReplyContext, SendMessageArgs, SendMessagesArgs, UserCanisterEvent, c2c_bot_send_message};
@@ -239,7 +239,7 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
                 let message_text = message_content.notification_text(&[], &[]);
                 let image_url = message_content.notification_image_url();
 
-                let notification = UserNotificationPayload::DirectMessage(DirectMessageNotification {
+                let notification = DirectChatUserNotificationPayload::DirectMessage(DirectMessageNotification {
                     sender: bot_id,
                     thread_root_message_index: args.thread_root_message_index,
                     message_index,

@@ -37,9 +37,9 @@ use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     Achievement, BotInitiator, BotNotification, BotPermissions, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEvent,
-    ChitEventType, CommunityId, Cycles, Document, IdempotentEnvelope, Milliseconds, Notification, NotifyChit, TimestampMillis,
-    Timestamped, UniquePersonProof, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
-    UserNotification, UserNotificationPayload,
+    ChitEventType, CommunityId, Cycles, DirectChatUserNotificationPayload, Document, IdempotentEnvelope, Milliseconds,
+    Notification, NotifyChit, TimestampMillis, Timestamped, UniquePersonProof, UserCanisterStreakInsuranceClaim,
+    UserCanisterStreakInsurancePayment, UserId, UserNotification,
 };
 use user_canister::{MessageActivityEvent, NamedAccount, UserCanisterEvent, WalletConfig};
 use utils::env::Environment;
@@ -115,7 +115,12 @@ impl RuntimeState {
         self.data.video_call_operators.contains(&caller)
     }
 
-    pub fn push_notification(&mut self, sender: Option<UserId>, recipient: UserId, notification: UserNotificationPayload) {
+    pub fn push_notification(
+        &mut self,
+        sender: Option<UserId>,
+        recipient: UserId,
+        notification: DirectChatUserNotificationPayload,
+    ) {
         self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
             created_at: self.env.now(),
             idempotency_id: self.env.rng().next_u64(),

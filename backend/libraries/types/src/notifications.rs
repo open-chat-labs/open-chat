@@ -3,6 +3,7 @@ use crate::{
     CommunityId, EventIndex, FcmData, MessageIndex, Reaction, TimestampMillis, UserId,
 };
 use candid::{CandidType, Principal};
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::{
@@ -12,27 +13,39 @@ use std::{
 use ts_export::ts_export;
 
 #[allow(clippy::large_enum_variant)]
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum Notification {
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(bound = "T: Serialize + DeserializeOwned")]
+pub enum Notification<T = UserNotificationPayload> {
     #[serde(rename = "u")]
-    User(UserNotification),
+    User(UserNotification<T>),
     #[serde(rename = "b")]
     Bot(BotNotification),
 }
 
+impl<T> Debug for Notification<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Notification::User(u) => Formatter::debug_tuple(f, "User").field(u).finish(),
+            Notification::Bot(b) => Formatter::debug_tuple(f, "Bot").field(b).finish(),
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone)]
-#[serde(from = "UserNotificationCombined")]
-pub struct UserNotification {
+#[serde(from = "UserNotificationCombined::<T>")]
+#[serde(bound = "T: Serialize + DeserializeOwned")]
+pub struct UserNotification<T = UserNotificationPayload> {
     #[serde(rename = "s")]
     pub sender: Option<UserId>,
     #[serde(rename = "r")]
     pub recipients: Vec<UserId>,
     #[serde(rename = "n2")]
-    pub notification: UserNotificationPayload,
+    pub notification: T,
 }
 
 #[derive(Deserialize)]
-pub struct UserNotificationCombined {
+#[serde(bound = "T: DeserializeOwned")]
+pub struct UserNotificationCombined<T = UserNotificationPayload> {
     #[serde(rename = "s")]
     pub sender: Option<UserId>,
     #[serde(rename = "r")]
@@ -40,11 +53,11 @@ pub struct UserNotificationCombined {
     #[serde(rename = "n")]
     pub notification_bytes: Option<ByteBuf>,
     #[serde(rename = "n2")]
-    pub notification: Option<UserNotificationPayload>,
+    pub notification: Option<T>,
 }
 
-impl From<UserNotificationCombined> for UserNotification {
-    fn from(value: UserNotificationCombined) -> Self {
+impl<T: DeserializeOwned> From<UserNotificationCombined<T>> for UserNotification<T> {
+    fn from(value: UserNotificationCombined<T>) -> Self {
         UserNotification {
             sender: value.sender,
             recipients: value.recipients,
@@ -157,7 +170,7 @@ pub struct BotRegisteredEvent {
     pub bot_name: String,
 }
 
-impl Debug for UserNotification {
+impl<T> Debug for UserNotification<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("UserNotification")
             .field("sender", &self.sender)
@@ -240,6 +253,89 @@ pub enum UserNotificationPayload {
     GroupMessageTipped(GroupMessageTipped),
     #[serde(rename = "ct")]
     ChannelMessageTipped(ChannelMessageTipped),
+}
+
+#[ts_export]
+#[derive(Serialize, Deserialize, Clone)]
+pub enum DirectChatUserNotificationPayload {
+    #[serde(rename = "dm")]
+    DirectMessage(DirectMessageNotification),
+    #[serde(rename = "dr")]
+    DirectReactionAdded(DirectReactionAddedNotification),
+    #[serde(rename = "dt")]
+    DirectMessageTipped(DirectMessageTipped),
+}
+
+#[ts_export]
+#[derive(Serialize, Deserialize, Clone)]
+pub enum GroupChatUserNotificationPayload {
+    #[serde(rename = "gm")]
+    GroupMessage(GroupMessageNotification),
+    #[serde(rename = "gr")]
+    GroupReactionAdded(GroupReactionAddedNotification),
+    #[serde(rename = "gt")]
+    GroupMessageTipped(GroupMessageTipped),
+}
+
+#[ts_export]
+#[derive(Serialize, Deserialize, Clone)]
+pub enum ChannelUserNotificationPayload {
+    #[serde(rename = "ac")]
+    AddedToChannel(AddedToChannelNotification),
+    #[serde(rename = "cm")]
+    ChannelMessage(ChannelMessageNotification),
+    #[serde(rename = "cr")]
+    ChannelReactionAdded(ChannelReactionAddedNotification),
+    #[serde(rename = "ct")]
+    ChannelMessageTipped(ChannelMessageTipped),
+}
+
+impl From<DirectChatUserNotificationPayload> for UserNotificationPayload {
+    fn from(value: DirectChatUserNotificationPayload) -> Self {
+        match value {
+            DirectChatUserNotificationPayload::DirectMessage(n) => UserNotificationPayload::DirectMessage(n),
+            DirectChatUserNotificationPayload::DirectReactionAdded(n) => UserNotificationPayload::DirectReactionAdded(n),
+            DirectChatUserNotificationPayload::DirectMessageTipped(n) => UserNotificationPayload::DirectMessageTipped(n),
+        }
+    }
+}
+
+impl From<GroupChatUserNotificationPayload> for UserNotificationPayload {
+    fn from(value: GroupChatUserNotificationPayload) -> Self {
+        match value {
+            GroupChatUserNotificationPayload::GroupMessage(n) => UserNotificationPayload::GroupMessage(n),
+            GroupChatUserNotificationPayload::GroupReactionAdded(n) => UserNotificationPayload::GroupReactionAdded(n),
+            GroupChatUserNotificationPayload::GroupMessageTipped(n) => UserNotificationPayload::GroupMessageTipped(n),
+        }
+    }
+}
+
+impl From<ChannelUserNotificationPayload> for UserNotificationPayload {
+    fn from(value: ChannelUserNotificationPayload) -> Self {
+        match value {
+            ChannelUserNotificationPayload::AddedToChannel(n) => UserNotificationPayload::AddedToChannel(n),
+            ChannelUserNotificationPayload::ChannelMessage(n) => UserNotificationPayload::ChannelMessage(n),
+            ChannelUserNotificationPayload::ChannelReactionAdded(n) => UserNotificationPayload::ChannelReactionAdded(n),
+            ChannelUserNotificationPayload::ChannelMessageTipped(n) => UserNotificationPayload::ChannelMessageTipped(n),
+        }
+    }
+}
+
+impl<T: Into<UserNotificationPayload>> Notification<T> {
+    pub fn erase_generic(self) -> Notification {
+        match self {
+            Notification::User(user) => Notification::User(UserNotification {
+                sender: user.sender,
+                recipients: user.recipients,
+                notification: user.notification.into(),
+            }),
+            Notification::Bot(bot) => Notification::Bot(BotNotification {
+                event: bot.event,
+                recipients: bot.recipients,
+                timestamp: bot.timestamp,
+            }),
+        }
+    }
 }
 
 #[ts_export]

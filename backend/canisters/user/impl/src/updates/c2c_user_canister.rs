@@ -11,8 +11,8 @@ use constants::{HOUR_IN_MS, MINUTE_IN_MS};
 use ledger_utils::format_crypto_amount_with_symbol;
 use rand::Rng;
 use types::{
-    Achievement, Chat, ChitEvent, ChitEventType, DirectMessageTipped, DirectReactionAddedNotification, EventIndex,
-    MessageContentInitial, P2PSwapStatus, UserId, UserNotificationPayload, UserType, VideoCallPresence,
+    Achievement, Chat, ChitEvent, ChitEventType, DirectChatUserNotificationPayload, DirectMessageTipped,
+    DirectReactionAddedNotification, EventIndex, MessageContentInitial, P2PSwapStatus, UserId, UserType, VideoCallPresence,
 };
 use user_canister::c2c_user_canister::{Response::*, *};
 use user_canister::{
@@ -318,16 +318,17 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
                         && !args.username.is_empty()
                         && !chat.notifications_muted.value
                     {
-                        let notification = UserNotificationPayload::DirectReactionAdded(DirectReactionAddedNotification {
-                            them: chat.them,
-                            thread_root_message_index,
-                            message_index: message_event.event.message_index,
-                            message_event_index: message_event.index,
-                            username: args.username,
-                            display_name: args.display_name,
-                            reaction: args.reaction,
-                            user_avatar_id: args.user_avatar_id,
-                        });
+                        let notification =
+                            DirectChatUserNotificationPayload::DirectReactionAdded(DirectReactionAddedNotification {
+                                them: chat.them,
+                                thread_root_message_index,
+                                message_index: message_event.event.message_index,
+                                message_event_index: message_event.index,
+                                username: args.username,
+                                display_name: args.display_name,
+                                reaction: args.reaction,
+                                user_avatar_id: args.user_avatar_id,
+                            });
 
                         state.push_notification(Some(caller_user_id), message_event.event.sender, notification);
                     }
@@ -419,7 +420,7 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
                 .message_event_internal(args.message_id.into())
             {
                 let tip = format_crypto_amount_with_symbol(args.amount, args.decimals, &args.token_symbol);
-                let notification = UserNotificationPayload::DirectMessageTipped(DirectMessageTipped {
+                let notification = DirectChatUserNotificationPayload::DirectMessageTipped(DirectMessageTipped {
                     them: caller_user_id,
                     thread_root_message_index,
                     message_index: message_event.event.message_index,
