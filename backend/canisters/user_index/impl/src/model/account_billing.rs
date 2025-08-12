@@ -5,7 +5,7 @@ use types::{ICP, TimestampMillis};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, Eq, PartialEq)]
 pub struct AccountBilling {
-    #[serde(rename = "c", alias = "charges")]
+    #[serde(rename = "c")]
     charges: Vec<AccountCharge>,
 }
 
