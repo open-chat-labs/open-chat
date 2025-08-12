@@ -460,11 +460,9 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
-    #[serde(default = "CanisterId::anonymous")]
     pub identity_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
     pub avatar: Timestamped<Option<Document>>,
-    #[serde(default)]
     pub profile_background: Timestamped<Option<Document>>,
     pub test_mode: bool,
     pub is_platform_moderator: bool,
@@ -503,7 +501,6 @@ struct Data {
     pub local_user_index_event_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
     pub idempotency_checker: IdempotencyChecker,
     pub bots: InstalledBots,
-    #[serde(default)]
     pub premium_items: PremiumItems,
 }
 
