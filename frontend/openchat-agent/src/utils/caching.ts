@@ -919,11 +919,13 @@ export async function updateCachedProposalTallies(
         return eventStore
             .get(cacheKey)
             .then((event) => {
-                if (event?.kind === "event"
-                    && event.event.kind === "message"
-                    && event.event.content.kind === "proposal_content")
-                {
-                    const updateCache = tally.timestamp > event.event.content.proposal.tally.timestamp;
+                if (
+                    event?.kind === "event" &&
+                    event.event.kind === "message" &&
+                    event.event.content.kind === "proposal_content"
+                ) {
+                    const updateCache =
+                        tally.timestamp > event.event.content.proposal.tally.timestamp;
                     event.event.content.proposal.tally = tally;
                     messages.push(event as EventWrapper<Message>);
 
@@ -1017,7 +1019,7 @@ function messageToEvent(
                     lifetimeDiamondOnly: message.content.lifetimeDiamondOnly,
                     uniquePersonOnly: message.content.uniquePersonOnly,
                     streakOnly: message.content.streakOnly,
-                    requiresCaptcha: message.content.requiresCaptcha,
+                    requiresAuth: message.content.requiresAuth,
                 } as PrizeContent;
                 break;
             case "p2p_swap_content_initial":

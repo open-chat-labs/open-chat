@@ -92,7 +92,7 @@ export interface PrizeContentInitial {
     caption?: string;
     transfer: PendingCryptocurrencyTransfer;
     prizes: bigint[];
-    requiresAuth: boolean;
+    requiresCaptcha: boolean;
 }
 
 export interface P2PSwapContentInitial {
@@ -357,7 +357,7 @@ export interface PrizeContent {
     token: string;
     endDate: bigint;
     caption?: string;
-    requiresAuth: boolean;
+    requiresCaptcha: boolean;
     minChitEarned: number;
 }
 

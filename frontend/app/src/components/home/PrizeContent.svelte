@@ -52,7 +52,7 @@
     let mouseEvent = $state<MouseEvent>();
 
     function claim(e: MouseEvent, authenticated: boolean) {
-        if (content.requiresAuth && !authenticated) {
+        if (content.requiresCaptcha && !authenticated) {
             mouseEvent = e;
             showAuthentication = true;
             return;
@@ -118,7 +118,7 @@
             content.lifetimeDiamondOnly ||
             content.uniquePersonOnly ||
             content.streakOnly > 0 ||
-            content.requiresAuth ||
+            content.requiresCaptcha ||
             content.minChitEarned > 0,
     );
     let showAuthentication = $state(false);
@@ -179,7 +179,7 @@
             {#if restrictedPrize}
                 <div class="restricted">
                     <Translatable resourceKey={i18nKey("prizes.restrictedMessage")} />
-                    {#if content.requiresAuth}
+                    {#if content.requiresCaptcha}
                         <div class="captcha">
                             <span class="fingerprint-icon">
                                 <Fingerprint
