@@ -460,6 +460,7 @@ export type WorkerRequest =
     | FcmTokenExists
     | AddFcmToken
     | CreateAccountLinkingCode
+    | ReinstateMissedDailyClaims
     | VerifyAccountLinkingCode
     | FinaliseAccountLinkingWithCode
     | PayForPremiumItem
@@ -1601,6 +1602,12 @@ type CreateAccountLinkingCode = {
     kind: "createAccountLinkingCode";
 };
 
+type ReinstateMissedDailyClaims = {
+    kind: "reinstateMissedDailyClaims";
+    userId: string;
+    days: number[];
+};
+
 type VerifyAccountLinkingCode = {
     kind: "verifyAccountLinkingCode";
     code: string;
@@ -2549,4 +2556,8 @@ export type WorkerResult<T> = T extends Init
     ? PayForPremiumItemResponse
     : T extends SetPremiumItemCost
     ? void
+    : T extends CreateAccountLinkingCode
+    ? AccountLinkingCode | undefined
+    : T extends ReinstateMissedDailyClaims
+    ? boolean
     : never;

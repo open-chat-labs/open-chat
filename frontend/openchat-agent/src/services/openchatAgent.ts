@@ -4578,6 +4578,14 @@ export class OpenChatAgent extends EventTarget {
     async setPremiumItemCost(item: PremiumItem, chitCost: number): Promise<void> {
         return this._userIndexClient.setPremiumItemCost(item, chitCost);
     }
+
+    async reinstateMissedDailyClaims(userId: string, days: number[]): Promise<boolean> {
+        const localUserIndex = await this.getLocalUserIndexForUser(userId);
+        return this.getLocalUserIndexClient(localUserIndex).reinstateMissedDailyClaims(
+            userId,
+            days,
+        );
+    }
 }
 
 export interface ExchangeRateClient {

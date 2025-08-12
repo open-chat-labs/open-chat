@@ -57,6 +57,7 @@ import {
     LocalUserIndexPayForPremiumItemResponse,
     LocalUserIndexRegisterUserArgs,
     LocalUserIndexRegisterUserResponse,
+    LocalUserIndexReinstateMissedDailyClaimsArgs,
     LocalUserIndexUninstallBotArgs,
     LocalUserIndexWithdrawFromIcpswapArgs,
     SuccessOnly,
@@ -80,6 +81,7 @@ import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
 import {
     apiChatIdentifier,
     apiExternalBotPermissions,
+    isSuccess,
     joinGroupResponse,
 } from "../common/chatMappersV2";
 import {
@@ -494,6 +496,19 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
             payForPremiumItemResponse,
             LocalUserIndexPayForPremiumItemArgs,
             LocalUserIndexPayForPremiumItemResponse,
+        );
+    }
+
+    reinstateMissedDailyClaims(userId: string, days: number[]): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "reinstate_missed_daily_claims",
+            {
+                user_id: principalStringToBytes(userId),
+                days,
+            },
+            isSuccess,
+            LocalUserIndexReinstateMissedDailyClaimsArgs,
+            UnitResult,
         );
     }
 }

@@ -9966,6 +9966,14 @@ export class OpenChat {
             });
         }
     }
+
+    reinstateMissedDailyClaims(userId: string, days: number[]): Promise<boolean> {
+        return this.#sendRequest({
+            kind: "reinstateMissedDailyClaims",
+            userId,
+            days,
+        });
+    }
 }
 
 type UserIndexMetrics = {

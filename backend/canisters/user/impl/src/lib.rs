@@ -353,6 +353,36 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
         }
     }
 
+    pub fn reinstate_missed_daily_claims(&mut self, days_to_reinstate: Vec<u16>) {
+        let now = self.env.now();
+
+        let daily_claims = self.data.chit_events.iter_daily_claims().collect();
+
+        let new_events = self
+            .data
+            .streak
+            .reinstate_missed_daily_claims(days_to_reinstate, daily_claims, now);
+
+        let count = new_events.len();
+        for event in new_events {
+            self.data.chit_events.push(event);
+        }
+        let new_streak = self.data.streak.days(now);
+
+        let first_line = if count == 1 {
+            "missed daily claim has been reinstated."
+        } else {
+            "missed daily claims have been reinstated."
+        };
+        let message = format!(
+            "{count} {first_line}
+Your streak is now {new_streak} days!"
+        );
+
+        openchat_bot::send_text_message(message, Vec::new(), false, self);
+        self.notify_user_index_of_chit(now);
+    }
+
     pub fn metrics(&self) -> Metrics {
         let now = self.env.now();
         Metrics {
