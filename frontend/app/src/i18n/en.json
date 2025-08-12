@@ -1361,6 +1361,17 @@
         "votersPublic": "Voters will be public"
     },
     "preferredLanguage": "Preferred language",
+    "premiumItem": {
+        "botEmojis": "Bot emoji pack",
+        "customProfileBackground": "Custom profile background",
+        "insufficientChit": "This feature uses {price} CHIT and you only have {balance} at the moment. Keep collecting!",
+        "paymentFailure": "Sorry but we were unable to take payment.",
+        "popularEmojis": "Popular emoji pack",
+        "priceMessage": "Do you want to use {price} of your current CHIT balance of {balance} for this feature?",
+        "priceTooltip": "{price} CHIT",
+        "purchased": "Premium item",
+        "title": "Premium Item"
+    },
     "preview": "Preview",
     "previewing": "previewing group",
     "privateGroupInfo": "This {level} will be limited to the people that you invite.",
@@ -2061,16 +2072,5 @@
     "yourAccountIsSuspended": "Your account is suspended",
     "yourChats": "Your chats",
     "youreBlocked": "Sorry - you have been blocked from this group",
-    "yourRoleChanged": "{changedBy} changed your role to {newRole}",
-    "premiumItem": {
-        "priceTooltip": "{price} CHIT",
-        "paymentFailure": "Sorry but we were unable to take payment.",
-        "insufficientChit": "This feature uses {price} CHIT and you only have {balance} at the moment. Keep collecting!",
-        "priceMessage": "Do you want to use {price} of your current CHIT balance of {balance} for this feature?",
-        "title": "Premium Item",
-        "botEmojis": "Bot emoji pack",
-        "popularEmojis": "Popular emoji pack",
-        "customProfileBackground": "Custom profile background",
-        "purchased": "Premium item"
-    }
+    "yourRoleChanged": "{changedBy} changed your role to {newRole}"
 }

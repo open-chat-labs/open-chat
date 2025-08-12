@@ -1361,6 +1361,17 @@
         "votersPublic": "الناخبون سيكونون علنيين"
     },
     "preferredLanguage": "اللغة المفضلة",
+    "premiumItem": {
+        "botEmojis": "حزمة رموز تعبيرية للروبوت",
+        "customProfileBackground": "خلفية الملف الشخصي المخصصة",
+        "insufficientChit": "تستخدم هذه الميزة {price} CHIT، ولديك {balance} فقط حاليًا. استمر في التجميع!",
+        "paymentFailure": "نأسف ولكن لم نتمكن من أخذ الدفع.",
+        "popularEmojis": "مجموعة الرموز التعبيرية الشهيرة",
+        "priceMessage": "هل تريد استخدام {price} من رصيد CHIT الحالي الخاص بك وهو {balance} لهذه الميزة؟",
+        "priceTooltip": "{price} شيت",
+        "purchased": "عنصر مميز",
+        "title": "عنصر مميز"
+    },
     "preview": "معاينة",
     "previewing": "مجموعة المعاينة",
     "privateGroupInfo": "سيتم تقييد هذا {level} على الأشخاص الذين تقوم بدعوتهم.",

@@ -1361,6 +1361,17 @@
         "votersPublic": "Wyborcy będą jawni"
     },
     "preferredLanguage": "Preferowany język",
+    "premiumItem": {
+        "botEmojis": "Pakiet emoji bota",
+        "customProfileBackground": "Niestandardowe tło profilu",
+        "insufficientChit": "Ta funkcja wykorzystuje {price} CHIT, a w tej chwili masz tylko {balance}. Zbieraj dalej!",
+        "paymentFailure": "Przepraszamy, ale nie mogliśmy przyjąć płatności.",
+        "popularEmojis": "Popularny pakiet emoji",
+        "priceMessage": "Czy chcesz wykorzystać {price} swojego bieżącego salda CHIT w wysokości {balance} na potrzeby tej funkcji?",
+        "priceTooltip": "{price} KARTA",
+        "purchased": "Przedmiot premium",
+        "title": "Przedmiot premium"
+    },
     "preview": "Zapowiedź",
     "previewing": "grupa podglądu",
     "privateGroupInfo": "To {level} będzie ograniczone do zaproszonych przez Ciebie osób.",

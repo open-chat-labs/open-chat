@@ -1361,6 +1361,17 @@
         "votersPublic": "Виборці будуть публічними"
     },
     "preferredLanguage": "Бажана мова",
+    "premiumItem": {
+        "botEmojis": "Набір емодзі бота",
+        "customProfileBackground": "Фон профілю на замовлення",
+        "insufficientChit": "Ця функція використовує {price} CHIT, а у вас наразі є лише {balance}. Продовжуйте колекціонувати!",
+        "paymentFailure": "Вибачте, але ми не змогли прийняти оплату.",
+        "popularEmojis": "Популярний набір емодзі",
+        "priceMessage": "Ви хочете використати {price} вашого поточного балансу CHIT у розмірі {balance} для цієї функції?",
+        "priceTooltip": "{price} ЧІТ",
+        "purchased": "Преміум-товар",
+        "title": "Преміум-предмет"
+    },
     "preview": "Попередній перегляд",
     "previewing": "група попереднього перегляду",
     "privateGroupInfo": "Цей {level} буде обмежено людьми, яких ви запросите.",

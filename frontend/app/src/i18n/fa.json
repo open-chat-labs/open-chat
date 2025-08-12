@@ -1361,6 +1361,17 @@
         "votersPublic": "رای دهندگان عمومی خواهند بود"
     },
     "preferredLanguage": "زبان ترجیحی",
+    "premiumItem": {
+        "botEmojis": "بسته ایموجی ربات",
+        "customProfileBackground": "پس‌زمینه پروفایل سفارشی",
+        "insufficientChit": "این ویژگی از {price} CHIT استفاده می‌کند و شما در حال حاضر فقط {balance} دارید. به جمع‌آوری ادامه دهید!",
+        "paymentFailure": "ببخشید، اما ما نتوانستیم پرداخت را قبول کنیم.",
+        "popularEmojis": "بسته ایموجی محبوب",
+        "priceMessage": "آیا می‌خواهید از {price} موجودی فعلی CHIT خود یعنی {balance} برای این ویژگی استفاده کنید؟",
+        "priceTooltip": "{price} چیت",
+        "purchased": "کالای ممتاز",
+        "title": "کالای ممتاز"
+    },
     "preview": "پیش نمایش",
     "previewing": "پیش نمایش گروه",
     "privateGroupInfo": "این {level} به افرادی که دعوت می کنید محدود می شود.",

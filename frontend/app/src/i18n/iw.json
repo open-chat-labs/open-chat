@@ -1361,6 +1361,17 @@
         "votersPublic": "המצביעים יהיו פומביים"
     },
     "preferredLanguage": "שפה מועדפת",
+    "premiumItem": {
+        "botEmojis": "חבילת אימוג'י של בוט",
+        "customProfileBackground": "רקע פרופיל מותאם אישית",
+        "insufficientChit": "תכונה זו משתמשת בצ'יט של {price} ויש לך כרגע רק את {balance}. המשך לאסוף!",
+        "paymentFailure": "מצטערים, אך לא הצלחנו לקבל תשלום.",
+        "popularEmojis": "חבילת אימוג'י פופולרית",
+        "priceMessage": "האם ברצונך להשתמש ב-{price} מיתרת ה-CHIT הנוכחית שלך בסך {balance} עבור תכונה זו?",
+        "priceTooltip": "צ'יט",
+        "purchased": "פריט פרימיום",
+        "title": "פריט פרימיום"
+    },
     "preview": "תצוגה מקדימה",
     "previewing": "קבוצת תצוגה מקדימה",
     "privateGroupInfo": "{level} זה יהיה מוגבל לאנשים שאתה מזמין.",

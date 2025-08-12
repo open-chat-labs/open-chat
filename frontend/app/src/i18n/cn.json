@@ -1361,6 +1361,17 @@
         "votersPublic": "选民将公开"
     },
     "preferredLanguage": "首选语言",
+    "premiumItem": {
+        "botEmojis": "机器人表情符号包",
+        "customProfileBackground": "自定义个人资料背景",
+        "insufficientChit": "此功能使用 {price} CHIT，而您目前只有 {balance} 个。继续收集！",
+        "paymentFailure": "抱歉，我们无法接受付款。",
+        "popularEmojis": "热门表情包",
+        "priceMessage": "您是否想使用当前 CHIT 余额 {price} 中的 {balance} 来实现此功能？",
+        "priceTooltip": "{price} CHIT",
+        "purchased": "高级商品",
+        "title": "高级商品"
+    },
     "preview": "预览",
     "previewing": "预览群聊",
     "privateGroupInfo": "此 {level} 将仅限于您邀请的人员。",
