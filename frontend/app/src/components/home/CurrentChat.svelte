@@ -343,6 +343,18 @@
     function onGoToMessageIndex(args: { index: number; preserveFocus: boolean }) {
         currentChatMessages?.scrollToMessageIndex(args.index, args.preserveFocus);
     }
+
+    function stopTyping() {
+        if (chat !== undefined) {
+            client.stopTyping(chat.id, $currentUserIdStore);
+        }
+    }
+
+    function startTyping() {
+        if (chat !== undefined) {
+            client.startTyping(chat.id, $currentUserIdStore);
+        }
+    }
 </script>
 
 <svelte:window onfocus={onWindowFocus} />
@@ -457,8 +469,8 @@
                     localUpdates.draftMessages.setAttachment({ chatId: chat.id }, undefined)}
                 onCancelEdit={() => localUpdates.draftMessages.delete({ chatId: chat.id })}
                 {onSetTextContent}
-                onStartTyping={() => client.startTyping(chat, $currentUserIdStore)}
-                onStopTyping={() => client.stopTyping(chat, $currentUserIdStore)}
+                onStartTyping={startTyping}
+                onStopTyping={stopTyping}
                 {onFileSelected}
                 {onSendMessage}
                 onAttachGif={attachGif}

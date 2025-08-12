@@ -2070,6 +2070,7 @@
         "title": "Premium Item",
         "botEmojis": "Bot emoji pack",
         "popularEmojis": "Popular emoji pack",
-        "customProfileBackground": "Custom profile background"
+        "customProfileBackground": "Custom profile background",
+        "purchased": "Premium item"
     }
 }

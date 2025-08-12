@@ -1852,7 +1852,7 @@ export function buildCryptoTransferText(
 }
 
 export function stopTyping(
-    { id }: ChatSummary,
+    id: ChatIdentifier,
     userId: string,
     threadRootMessageIndex?: number,
 ): void {
@@ -1865,7 +1865,7 @@ export function stopTyping(
 }
 
 export function startTyping(
-    { id }: ChatSummary,
+    id: ChatIdentifier,
     userId: string,
     threadRootMessageIndex?: number,
 ): void {

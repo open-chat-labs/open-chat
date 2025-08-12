@@ -31,6 +31,10 @@
                                 🥳 <Translatable
                                     resourceKey={i18nKey(`learnToEarn.${event.reason.type}`)} />: {event.amount.toLocaleString()}
                             </p>
+                        {:else if event.reason.kind === "purchased_premium_item"}
+                            <p>
+                                🤑 <Translatable resourceKey={i18nKey("premiumItem.purchased")} />: {event.amount.toLocaleString()}
+                            </p>
                         {:else if event.reason.kind === "referral"}
                             <p>
                                 🤝 <Translatable

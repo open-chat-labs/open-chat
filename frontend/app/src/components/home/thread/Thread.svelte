@@ -212,13 +212,15 @@
     }
 
     function onStartTyping() {
-        client.startTyping(chat, $currentUserIdStore, threadRootMessageIndex);
+        if (chat !== undefined) {
+            client.startTyping(chat, $currentUserIdStore, threadRootMessageIndex);
+        }
     }
 
     function onStopTyping() {
-        // TODO - this is called on a timeout and by the time it runs, we might have closed the thread and that
-        // can cause an null ref error
-        client.stopTyping(chat, $currentUserIdStore, threadRootMessageIndex);
+        if (chat !== undefined) {
+            client.stopTyping(chat.id, $currentUserIdStore, threadRootMessageIndex);
+        }
     }
 
     function onFileSelected(content: AttachmentContent) {

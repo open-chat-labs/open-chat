@@ -56,7 +56,7 @@ import {
     updateCreatedUser,
 } from "openchat-shared";
 
-const CACHE_VERSION = 140;
+const CACHE_VERSION = 141;
 const EARLIEST_SUPPORTED_MIGRATION = 138;
 const MAX_INDEX = 9999999999;
 
@@ -178,13 +178,13 @@ type MigrationFunction<T> = (
 //     db.createObjectStore("activityFeed");
 // }
 //
-// async function clearChatsStore(
-//     _db: IDBPDatabase<ChatSchema>,
-//     _principal: Principal,
-//     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-// ) {
-//     await tx.objectStore("chats").clear();
-// }
+async function clearChatsStore(
+    _db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
+    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    await tx.objectStore("chats").clear();
+}
 //
 // async function clearGroupDetailsStore(
 //     _db: IDBPDatabase<ChatSchema>,
@@ -238,6 +238,7 @@ async function clearEvents(
 const migrations: Record<number, MigrationFunction<ChatSchema>> = {
     139: clearCommunityDetailsStore,
     140: clearEvents,
+    141: clearChatsStore,
 };
 
 async function migrate(
@@ -919,11 +920,13 @@ export async function updateCachedProposalTallies(
         return eventStore
             .get(cacheKey)
             .then((event) => {
-                if (event?.kind === "event"
-                    && event.event.kind === "message"
-                    && event.event.content.kind === "proposal_content")
-                {
-                    const updateCache = tally.timestamp > event.event.content.proposal.tally.timestamp;
+                if (
+                    event?.kind === "event" &&
+                    event.event.kind === "message" &&
+                    event.event.content.kind === "proposal_content"
+                ) {
+                    const updateCache =
+                        tally.timestamp > event.event.content.proposal.tally.timestamp;
                     event.event.content.proposal.tally = tally;
                     messages.push(event as EventWrapper<Message>);
 

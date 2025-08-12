@@ -174,6 +174,7 @@
             client.getPublicProfile(user.userId).then((profile) => {
                 if (profile) {
                     originalProfile = profile;
+                    userbio = profile.bio;
                 }
             });
         }

@@ -8,9 +8,8 @@ export type NativeEmoji = {
 };
 
 export const emojiGroupNames: Record<number, string> = {
-    0: "Cheap",
-    1: "Worth it",
-    2: "Ultimate flex",
+    0: "OC Bots",
+    1: "Popular",
 };
 
 export type CustomEmoji = {

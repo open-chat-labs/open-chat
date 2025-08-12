@@ -9489,17 +9489,24 @@ export class OpenChat {
         })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    chitStateStore.update((chit) => {
-                        chit.chitBalance = resp.chitBalance;
-                        chit.totalChitEarned = resp.totalChitEarned;
-                        return chit;
+                    withPausedStores(() => {
+                        chitStateStore.update((chit) => {
+                            chit.chitBalance = resp.chitBalance;
+                            chit.totalChitEarned = resp.totalChitEarned;
+                            return chit;
+                        });
+                        currentUserStore.update((user) => {
+                            user.chitBalance = resp.chitBalance;
+                            user.totalChitEarned = resp.totalChitEarned;
+                            return user;
+                        });
+                        userStore.updateUser(currentUserIdStore.value, (u) => ({
+                            ...u,
+                            chitBalance: resp.chitBalance,
+                            totalChitEarned: resp.totalChitEarned,
+                        }));
+                        premiumItemsStore.add(item);
                     });
-                    currentUserStore.update((user) => {
-                        user.chitBalance = resp.chitBalance;
-                        user.totalChitEarned = resp.totalChitEarned;
-                        return user;
-                    });
-                    premiumItemsStore.add(item);
                 } else {
                     console.log("Failed to pay for premium", resp);
                 }

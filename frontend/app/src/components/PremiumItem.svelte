@@ -22,6 +22,7 @@
     let wrappedClick = $derived.by(() => {
         return () => {
             if (hasFeature) {
+                showPayGate = false;
                 return onClick();
             } else {
                 showPayGate = true;
