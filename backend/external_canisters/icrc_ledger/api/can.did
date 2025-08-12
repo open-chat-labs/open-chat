@@ -1,5 +1,6 @@
 // Copied from https://github.com/dfinity/ICRC-1/blob/main/standards/ICRC-1/ICRC-1.did
-// and from https://github.com/dfinity/ICRC-1/blob/main/standards/ICRC-2/ICRC-2.did
+// and https://github.com/dfinity/ICRC-1/blob/main/standards/ICRC-2/ICRC-2.did
+// and https://github.com/dfinity/ICRC/blob/main/ICRCs/ICRC-106/ICRC-106.md
 
 // Number of nanoseconds since the UNIX epoch in UTC timezone.
 type Timestamp = nat64;
@@ -86,6 +87,21 @@ type ICRC2_TransferFromError = variant {
     GenericError : record { error_code : nat; message : text };
 };
 
+type GetIndexPrincipalResult = variant {
+    Ok : principal;
+    Err : GetIndexPrincipalError;
+};
+
+type GetIndexPrincipalError = variant {
+    IndexPrincipalNotSet;
+
+    // Any error not covered by the above variants.
+    GenericError: record {
+       error_code: nat;
+       description: text;
+   };
+};
+
 service : {
     icrc1_metadata : () -> (vec record { text; Value }) query;
     icrc1_name : () -> (text) query;
@@ -98,4 +114,6 @@ service : {
 
     icrc2_approve : (ICRC2_ApproveArgs) -> (variant { Ok : nat; Err : ICRC2_ApproveError });
     icrc2_transfer_from : (ICRC2_TransferFromArgs) -> (variant { Ok : nat; Err : ICRC2_TransferFromError });
+
+    icrc106_get_index_principal : () -> GetIndexPrincipalsResult query;
 };

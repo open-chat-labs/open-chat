@@ -1,3 +1,4 @@
+pub mod icrc106_index_canister_principal;
 pub mod icrc1_balance_of;
 pub mod icrc1_decimals;
 pub mod icrc1_fee;

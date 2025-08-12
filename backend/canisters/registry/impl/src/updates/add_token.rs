@@ -123,6 +123,7 @@ pub(crate) async fn add_token_impl(
     mutate_state(|state| {
         let now = state.env.now();
         let standards = standards.into_iter().map(|r| r.name).collect();
+        let index_canister_id = nervous_system.as_ref().map(|ns| ns.index_canister_id);
 
         if let Some(ns) = nervous_system {
             state.data.nervous_systems.add(ns, now);
@@ -131,6 +132,7 @@ pub(crate) async fn add_token_impl(
         let name = metadata_helper.name().to_string();
         state.data.tokens.add(
             ledger_canister_id,
+            index_canister_id,
             name.clone(),
             metadata_helper.symbol().to_string(),
             metadata_helper.decimals(),

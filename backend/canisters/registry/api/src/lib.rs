@@ -19,6 +19,8 @@ use ts_export::ts_export;
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct TokenDetails {
     pub ledger_canister_id: CanisterId,
+    #[ts(as = "Option::<ts_export::TSPrincipal>")]
+    pub index_canister_id: Option<CanisterId>,
     pub name: String,
     pub symbol: String,
     pub decimals: u8,

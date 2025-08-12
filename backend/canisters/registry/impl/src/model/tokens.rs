@@ -16,6 +16,7 @@ impl Tokens {
     pub fn add(
         &mut self,
         ledger_canister_id: CanisterId,
+        index_canister_id: Option<CanisterId>,
         name: String,
         symbol: String,
         decimals: u8,
@@ -40,6 +41,7 @@ impl Tokens {
             let logo_id = logo_id(&logo);
             self.tokens.push(TokenDetails {
                 ledger_canister_id,
+                index_canister_id,
                 name,
                 symbol,
                 decimals,
@@ -115,6 +117,17 @@ impl Tokens {
                 } else {
                     false
                 }
+            },
+            now,
+        );
+    }
+
+    pub fn set_index_canister(&mut self, ledger_canister_id: CanisterId, index_canister_id: CanisterId, now: TimestampMillis) {
+        self.apply_update(
+            ledger_canister_id,
+            |t| {
+                t.index_canister_id = Some(index_canister_id);
+                true
             },
             now,
         );
