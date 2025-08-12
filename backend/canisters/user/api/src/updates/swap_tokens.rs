@@ -21,6 +21,7 @@ pub struct Args {
 pub enum ExchangeArgs {
     ICPSwap(ICPSwapArgs),
     KongSwap(KongSwapArgs),
+    Sonic(SonicArgs),
 }
 
 impl ExchangeArgs {
@@ -28,6 +29,7 @@ impl ExchangeArgs {
         match self {
             ExchangeArgs::ICPSwap(_) => ExchangeId::ICPSwap,
             ExchangeArgs::KongSwap(_) => ExchangeId::KongSwap,
+            ExchangeArgs::Sonic(_) => ExchangeId::Sonic,
         }
     }
 
@@ -35,6 +37,7 @@ impl ExchangeArgs {
         match self {
             ExchangeArgs::ICPSwap(a) => a.swap_canister_id,
             ExchangeArgs::KongSwap(a) => a.swap_canister_id,
+            ExchangeArgs::Sonic(a) => a.swap_canister_id,
         }
     }
 }
@@ -48,6 +51,7 @@ pub struct ExchangeSwapArgs {
 
 pub type ICPSwapArgs = ExchangeSwapArgs;
 pub type KongSwapArgs = ExchangeSwapArgs;
+pub type SonicArgs = ExchangeSwapArgs;
 
 #[ts_export(user, swap_tokens)]
 #[derive(Serialize, Deserialize, Debug)]
