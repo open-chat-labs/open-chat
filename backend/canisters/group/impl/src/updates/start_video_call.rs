@@ -8,9 +8,7 @@ use chat_events::{CallParticipantInternal, MessageContentInternal, VideoCallCont
 use constants::HOUR_IN_MS;
 use group_canister::start_video_call_v2::*;
 use oc_error_codes::OCErrorCode;
-use types::{
-    Caller, ChatId, FcmData, GroupMessageNotification, OCResult, UserNotificationPayload, VideoCallPresence, VideoCallType,
-};
+use types::{Caller, GroupChatUserNotificationPayload, GroupMessageNotification, OCResult, VideoCallPresence, VideoCallType};
 
 #[update(guard = "caller_is_video_call_operator", candid = true, msgpack = true)]
 #[trace]
@@ -68,43 +66,30 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let message_index = result.message_event.event.message_index;
     let expires_at = result.message_event.expires_at;
 
-    if let Some(expiry) = expires_at {
-        if state.data.next_event_expiry.is_none_or(|ex| expiry < ex) {
-            let timer_jobs = &mut state.data.timer_jobs;
-            timer_jobs.cancel_jobs(|j| matches!(j, TimerJob::RemoveExpiredEvents(_)));
-            timer_jobs.enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
-        }
+    if let Some(expiry) = expires_at
+        && state.data.next_event_expiry.is_none_or(|ex| expiry < ex)
+    {
+        let timer_jobs = &mut state.data.timer_jobs;
+        timer_jobs.cancel_jobs(|j| matches!(j, TimerJob::RemoveExpiredEvents(_)));
+        timer_jobs.enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
     }
 
-    let chat_id: ChatId = state.env.canister_id().into();
-    let sender_name = args.initiator_username;
-    let sender_display_name = args.initiator_display_name;
-    let group_avatar_id = state.data.chat.avatar.as_ref().map(|d| d.id);
-
-    // TODO i18n
-    // TODO video call notifications could display decline and answer buttons
-    let fcm_body = "Video call incoming...".to_string();
-    let fcm_data = FcmData::for_group(chat_id)
-        .set_body(fcm_body)
-        .set_body_with_alt(&sender_display_name, &sender_name)
-        .set_avatar_id(group_avatar_id);
-
-    let notification = UserNotificationPayload::GroupMessage(GroupMessageNotification {
-        chat_id,
+    let notification = GroupChatUserNotificationPayload::GroupMessage(GroupMessageNotification {
+        chat_id: state.env.canister_id().into(),
         thread_root_message_index: None,
         message_index,
         event_index,
         group_name: state.data.chat.name.value.clone(),
         sender,
-        sender_name,
-        sender_display_name,
+        sender_name: args.initiator_username,
+        sender_display_name: args.initiator_display_name,
         message_type: result.message_event.event.content.content_type().to_string(),
         message_text: None,
         image_url: None,
         group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
         crypto_transfer: None,
     });
-    state.push_notification(Some(sender), result.users_to_notify, notification, fcm_data);
+    state.push_notification(Some(sender), result.users_to_notify, notification);
     handle_activity_notification(state);
 
     let max_duration = args.max_duration.unwrap_or(HOUR_IN_MS);

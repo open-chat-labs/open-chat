@@ -212,7 +212,7 @@ impl From<&FileRemoved> for FileIdByUserThenCreated {
 }
 
 impl Storable for FileIdByUserThenCreated {
-    fn to_bytes(&self) -> Cow<[u8]> {
+    fn to_bytes(&self) -> Cow<'_, [u8]> {
         Cow::Owned(self.to_vec())
     }
 
@@ -265,7 +265,7 @@ impl HashAndBucket {
 }
 
 impl Storable for HashAndBucket {
-    fn to_bytes(&self) -> Cow<[u8]> {
+    fn to_bytes(&self) -> Cow<'_, [u8]> {
         Cow::Owned(self.to_vec())
     }
 
@@ -314,7 +314,7 @@ impl BlobReference {
 }
 
 impl Storable for BlobReference {
-    fn to_bytes(&self) -> Cow<[u8]> {
+    fn to_bytes(&self) -> Cow<'_, [u8]> {
         Cow::Owned(self.to_vec())
     }
 

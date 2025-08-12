@@ -10,14 +10,14 @@ fn file_info(args: Args) -> Response {
 }
 
 fn file_info_impl(args: Args, state: &RuntimeState) -> Response {
-    if let Some(file) = state.data.files.get(&args.file_id) {
-        if let Some(file_size) = state.data.files.data_size(&file.hash) {
-            return Success(SuccessResult {
-                is_owner: file.owner == state.env.caller(),
-                file_hash: file.hash,
-                file_size,
-            });
-        }
+    if let Some(file) = state.data.files.get(&args.file_id)
+        && let Some(file_size) = state.data.files.data_size(&file.hash)
+    {
+        return Success(SuccessResult {
+            is_owner: file.owner == state.env.caller(),
+            file_hash: file.hash,
+            file_size,
+        });
     }
 
     NotFound

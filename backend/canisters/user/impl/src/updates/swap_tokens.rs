@@ -3,7 +3,6 @@ use crate::model::token_swaps::TokenSwap;
 use crate::timer_job_types::{ProcessTokenSwapJob, TimerJob};
 use crate::token_swaps::icpswap::ICPSwapClient;
 use crate::token_swaps::kongswap::KongSwapClient;
-use crate::token_swaps::sonic::SonicClient;
 use crate::token_swaps::swap_client::SwapClient;
 use crate::{Data, RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
@@ -183,10 +182,10 @@ pub(crate) async fn process_token_swap(
                 mutate_state(|state| {
                     let now = state.env.now();
                     token_swap.swap_result = Some(Timestamped::new(Ok(r.clone()), now));
-                    if let Ok(swap_success) = &r {
-                        if matches!(swap_success.withdrawal_success, Some(true)) {
-                            token_swap.withdrawn_from_dex_at = Some(Timestamped::new(Ok(swap_success.amount_out), now));
-                        }
+                    if let Ok(swap_success) = &r
+                        && matches!(swap_success.withdrawal_success, Some(true))
+                    {
+                        token_swap.withdrawn_from_dex_at = Some(Timestamped::new(Ok(swap_success.amount_out), now));
                     }
                     state.data.token_swaps.upsert(token_swap.clone());
                 });
@@ -256,16 +255,6 @@ fn build_swap_client(args: &Args, state: &RuntimeState) -> Box<dyn SwapClient> {
                 token0,
                 token1,
                 icpswap.zero_for_one,
-            ))
-        }
-        ExchangeArgs::Sonic(sonic) => {
-            let (token0, token1) = if sonic.zero_for_one { (input_token, output_token) } else { (output_token, input_token) };
-            Box::new(SonicClient::new(
-                this_canister_id,
-                sonic.swap_canister_id,
-                token0,
-                token1,
-                sonic.zero_for_one,
             ))
         }
         ExchangeArgs::KongSwap(kongswap) => Box::new(KongSwapClient::new(kongswap.swap_canister_id, input_token, output_token)),

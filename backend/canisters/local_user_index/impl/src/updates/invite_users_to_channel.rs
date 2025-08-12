@@ -6,7 +6,7 @@ use community_canister::c2c_invite_users_to_channel;
 use local_user_index_canister::invite_users_to_channel::{Response::*, *};
 use types::{ChannelId, CommunityId, MessageContent, TextContent, UserId};
 
-#[update(guard = "caller_is_openchat_user", candid = true, msgpack = true)]
+#[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
 async fn invite_users_to_channel(args: Args) -> Response {
     let (invited_by, users) = read_state(|state| {

@@ -1,25 +1,31 @@
 use serde::{Deserialize, Serialize};
 use std::ops::Range;
-use types::{ChitEarned, ChitEarnedReason, TimestampMillis};
+use types::{ChitEvent, ChitEventType, TimestampMillis};
 use utils::time::MonthKey;
 
 #[derive(Serialize, Deserialize, Default)]
-pub struct ChitEarnedEvents {
-    events: Vec<ChitEarned>,
+pub struct ChitEvents {
+    events: Vec<ChitEvent>,
     total_chit_earned: i32,
+    #[serde(default)]
+    total_chit_spent: i32,
 }
 
-impl ChitEarnedEvents {
-    pub fn push(&mut self, event: ChitEarned) {
+impl ChitEvents {
+    pub fn push(&mut self, event: ChitEvent) {
         let mut sort = false;
 
-        if let Some(latest) = self.events.last() {
-            if latest.timestamp > event.timestamp {
-                sort = true;
-            }
+        if let Some(latest) = self.events.last()
+            && latest.timestamp > event.timestamp
+        {
+            sort = true;
         }
 
-        self.total_chit_earned += event.amount;
+        if event.amount >= 0 {
+            self.total_chit_earned += event.amount;
+        } else {
+            self.total_chit_spent += event.amount.abs();
+        }
         self.events.push(event);
 
         if sort {
@@ -34,7 +40,7 @@ impl ChitEarnedEvents {
         skip: usize,
         max: usize,
         ascending: bool,
-    ) -> (Vec<ChitEarned>, u32) {
+    ) -> (Vec<ChitEvent>, u32) {
         if ascending {
             let range = self.range(from.unwrap_or_default()..to.unwrap_or(TimestampMillis::MAX));
             (range.iter().skip(skip).take(max).cloned().collect(), range.len() as u32)
@@ -48,6 +54,10 @@ impl ChitEarnedEvents {
         self.total_chit_earned
     }
 
+    pub fn chit_balance(&self) -> i32 {
+        self.total_chit_earned - self.total_chit_spent
+    }
+
     pub fn balance_for_month_by_timestamp(&self, ts: TimestampMillis) -> i32 {
         self.balance_for_month(MonthKey::from_timestamp(ts))
     }
@@ -58,7 +68,7 @@ impl ChitEarnedEvents {
         range.iter().map(|e| e.amount).sum()
     }
 
-    pub fn achievements(&self, since: Option<TimestampMillis>) -> Vec<ChitEarned> {
+    pub fn achievements(&self, since: Option<TimestampMillis>) -> Vec<ChitEvent> {
         self.events
             .iter()
             .rev()
@@ -66,7 +76,7 @@ impl ChitEarnedEvents {
             .filter(|e| {
                 matches!(
                     e.reason,
-                    ChitEarnedReason::Achievement(_) | ChitEarnedReason::ExternalAchievement(_)
+                    ChitEventType::Achievement(_) | ChitEventType::ExternalAchievement(_)
                 )
             })
             .cloned()
@@ -91,7 +101,7 @@ impl ChitEarnedEvents {
         self.events.last().map(|e| e.timestamp).unwrap_or_default()
     }
 
-    fn range(&self, range: Range<TimestampMillis>) -> &[ChitEarned] {
+    fn range(&self, range: Range<TimestampMillis>) -> &[ChitEvent] {
         let start = self.events.partition_point(|e| e.timestamp < range.start);
         let end = self.events.partition_point(|e| e.timestamp <= range.end);
 
@@ -101,7 +111,7 @@ impl ChitEarnedEvents {
 
 #[cfg(test)]
 mod tests {
-    use types::{Achievement, ChitEarnedReason};
+    use types::{Achievement, ChitEventType};
 
     use super::*;
 
@@ -172,49 +182,50 @@ mod tests {
         assert_eq!(events[3].timestamp, 11);
     }
 
-    fn init_test_data() -> ChitEarnedEvents {
+    fn init_test_data() -> ChitEvents {
         let events = vec![
-            ChitEarned {
+            ChitEvent {
                 amount: 200,
                 timestamp: 10,
-                reason: ChitEarnedReason::DailyClaim,
+                reason: ChitEventType::DailyClaim,
             },
-            ChitEarned {
+            ChitEvent {
                 amount: 200,
                 timestamp: 11,
-                reason: ChitEarnedReason::DailyClaim,
+                reason: ChitEventType::DailyClaim,
             },
-            ChitEarned {
+            ChitEvent {
                 amount: 300,
                 timestamp: 12,
-                reason: ChitEarnedReason::DailyClaim,
+                reason: ChitEventType::DailyClaim,
             },
-            ChitEarned {
+            ChitEvent {
                 amount: 500,
                 timestamp: 13,
-                reason: ChitEarnedReason::Achievement(Achievement::SetBio),
+                reason: ChitEventType::Achievement(Achievement::SetBio),
             },
-            ChitEarned {
+            ChitEvent {
                 amount: 300,
                 timestamp: 14,
-                reason: ChitEarnedReason::DailyClaim,
+                reason: ChitEventType::DailyClaim,
             },
-            ChitEarned {
+            ChitEvent {
                 amount: 500,
                 timestamp: 15,
-                reason: ChitEarnedReason::Achievement(Achievement::SetAvatar),
+                reason: ChitEventType::Achievement(Achievement::SetAvatar),
             },
-            ChitEarned {
+            ChitEvent {
                 amount: 500,
                 timestamp: 16,
-                reason: ChitEarnedReason::Achievement(Achievement::SentDirectMessage),
+                reason: ChitEventType::Achievement(Achievement::SentDirectMessage),
             },
         ];
         let total_chit_earned = events.iter().map(|e| e.amount).sum();
 
-        ChitEarnedEvents {
+        ChitEvents {
             events,
             total_chit_earned,
+            total_chit_spent: 0,
         }
     }
 }

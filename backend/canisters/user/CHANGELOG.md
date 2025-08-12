@@ -28,10 +28,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Use full names for bot event notification fields ([#8389](https://github.com/open-chat-labs/open-chat/pull/8389))
 - Add 'min_chit_earned' prize message criterion ([#8413](https://github.com/open-chat-labs/open-chat/pull/8413))
 - Sync `total_chit_earned` to UserIndex ([#8434](https://github.com/open-chat-labs/open-chat/pull/8434))
+- Send strongly typed notifications to LocalUserIndex ([#8444](https://github.com/open-chat-labs/open-chat/pull/8444))
+- Switch some endpoints over to using common response types ([#8450](https://github.com/open-chat-labs/open-chat/pull/8450))
+- Move signature verification to LocalUserIndex ([#8460](https://github.com/open-chat-labs/open-chat/pull/8460))
 
 ### Removed
 
 - Remove the now unused `c2c_mark_group/community_updated_for_user` ([#8310](https://github.com/open-chat-labs/open-chat/pull/8310))
+- Remove `reclaim_swap_tokens` which is unused ([#8449](https://github.com/open-chat-labs/open-chat/pull/8449))
+- Remove unused integration with Sonic exchange ([#8456](https://github.com/open-chat-labs/open-chat/pull/8456))
+- Remove old job to retry failed messages ([#8457](https://github.com/open-chat-labs/open-chat/pull/8457))
 
 ### Fixed
 
@@ -39,6 +45,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix video calls in direct chats being marked as read by them immediately ([#8327](https://github.com/open-chat-labs/open-chat/pull/8327))
 - Maintain event ordering when retrying failed c2c calls ([#8429](https://github.com/open-chat-labs/open-chat/pull/8429))
 - Fix case where disappearing messages TTL wouldn't be set for new DMs ([#8432](https://github.com/open-chat-labs/open-chat/pull/8432))
+- Fix premium items not being returned in updates responses ([#8462](https://github.com/open-chat-labs/open-chat/pull/8462))
 
 ## [[2.0.1799-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1799-user)] - 2025-06-20
 

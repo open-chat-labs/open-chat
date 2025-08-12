@@ -1,6 +1,6 @@
-use crate::GroupEvent;
+use crate::{GroupEvent, GroupOrCommunityEvent};
 use serde::{Deserialize, Serialize};
-use types::IdempotentEnvelope;
+use types::{IdempotentEnvelope, SuccessOnly};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
@@ -8,6 +8,8 @@ pub struct Args {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum Response {
-    Success,
+pub struct ArgsInternal {
+    pub events: Vec<IdempotentEnvelope<GroupOrCommunityEvent>>,
 }
+
+pub type Response = SuccessOnly;

@@ -4,31 +4,18 @@ use canister_api_macros::update;
 use canister_time::now_millis;
 use canister_tracing_macros::trace;
 use local_user_index_canister::UserEvent;
-use local_user_index_canister::c2c_user_canister::{Response::*, *};
+use local_user_index_canister::c2c_user_canister::*;
 use stable_memory_map::StableMemoryMap;
 use std::cell::LazyCell;
 use types::{StreakInsuranceClaim, StreakInsurancePayment, TimestampMillis, UserId};
 
 #[update(guard = "caller_is_local_user_canister", msgpack = true)]
 #[trace]
-fn c2c_notify_user_events(args: local_user_index_canister::c2c_notify_user_events::Args) -> Response {
-    mutate_state(|state| {
-        c2c_notify_user_events_impl(
-            Args {
-                events: args.events.into_iter().map(|e| e.into()).collect(),
-            },
-            state,
-        )
-    })
+fn c2c_user_canister(args: ArgsInternal) -> Response {
+    mutate_state(|state| c2c_user_canister_impl(args, state))
 }
 
-#[update(guard = "caller_is_local_user_canister", msgpack = true)]
-#[trace]
-fn c2c_user_canister(args: Args) -> Response {
-    mutate_state(|state| c2c_notify_user_events_impl(args, state))
-}
-
-fn c2c_notify_user_events_impl(args: Args, state: &mut RuntimeState) -> Response {
+fn c2c_user_canister_impl(args: ArgsInternal, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
     let user_id = caller.into();
     let now = LazyCell::new(now_millis);
@@ -41,7 +28,7 @@ fn c2c_notify_user_events_impl(args: Args, state: &mut RuntimeState) -> Response
             handle_event(user_id, event.value, &now, state);
         }
     }
-    Success
+    Response::Success
 }
 
 fn handle_event<F: FnOnce() -> TimestampMillis>(
@@ -87,6 +74,12 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         UserEvent::UserUnblocked(unblocked) => {
             state.data.blocked_users.remove(&(unblocked, user_id));
             state.push_event_to_user_index(UserIndexEvent::UserUnblocked(user_id, unblocked), **now);
+        }
+        UserEvent::UserSetProfileBackground(profile_background_id) => {
+            state.push_event_to_user_index(
+                UserIndexEvent::UserSetProfileBackground(Box::new((user_id, profile_background_id))),
+                **now,
+            );
         }
         UserEvent::SetMaxStreak(max_streak) => {
             state.push_event_to_user_index(UserIndexEvent::SetMaxStreak(user_id, max_streak), **now);

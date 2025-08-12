@@ -15,7 +15,7 @@ use utils::canister;
 use utils::text_validation::{UsernameValidationError, validate_username};
 use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn register_user(args: Args) -> Response {
     // Check the principal is derived from Internet Identity + check the username is valid
@@ -218,14 +218,14 @@ fn commit(
         now,
     );
 
-    if let Some(referred_by) = referred_by {
-        if state.data.local_users.contains(&referred_by) {
-            state.push_event_to_user(
-                referred_by,
-                UserEvent::ReferredUserRegistered(Box::new(ReferredUserRegistered { user_id, username })),
-                now,
-            );
-        }
+    if let Some(referred_by) = referred_by
+        && state.data.local_users.contains(&referred_by)
+    {
+        state.push_event_to_user(
+            referred_by,
+            UserEvent::ReferredUserRegistered(Box::new(ReferredUserRegistered { user_id, username })),
+            now,
+        );
     }
 }
 

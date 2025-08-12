@@ -22,10 +22,10 @@ generate_update_call!(add_platform_operator);
 generate_update_call!(assign_platform_moderators_group);
 generate_msgpack_update_call!(delete_user);
 generate_msgpack_update_call!(pay_for_diamond_membership);
-generate_msgpack_update_call!(pay_for_premium_item);
 generate_msgpack_update_call!(remove_bot);
 generate_update_call!(remove_platform_moderator);
 generate_msgpack_update_call!(set_display_name);
+generate_msgpack_update_call!(set_premium_item_cost);
 generate_msgpack_update_call!(set_username);
 generate_msgpack_update_call!(suspend_user);
 generate_msgpack_update_call!(update_diamond_membership_subscription);
@@ -117,30 +117,6 @@ pub mod happy_path {
         match response {
             user_index_canister::pay_for_diamond_membership::Response::Success(result) => result,
             response => panic!("'pay_for_diamond_membership' error: {response:?}"),
-        }
-    }
-
-    pub fn pay_for_premium_item(
-        env: &mut PocketIc,
-        sender: Principal,
-        canister_id: CanisterId,
-        item_id: u32,
-        expected_cost: u32,
-    ) -> user_index_canister::pay_for_premium_item::SuccessResult {
-        let response = super::pay_for_premium_item(
-            env,
-            sender,
-            canister_id,
-            &user_index_canister::pay_for_premium_item::Args {
-                item_id,
-                pay_in_chat: false,
-                expected_cost,
-            },
-        );
-
-        match response {
-            user_index_canister::pay_for_premium_item::Response::Success(result) => result,
-            response => panic!("'pay_for_premium_item' error: {response:?}"),
         }
     }
 
@@ -254,7 +230,9 @@ pub mod happy_path {
         );
 
         match response {
-            user_index_canister::add_platform_operator::Response::Success => {}
+            user_index_canister::add_platform_operator::Response::Success => {
+                tick_many(env, 5);
+            }
         }
     }
 
@@ -438,6 +416,26 @@ pub mod happy_path {
         match response {
             user_index_canister::delete_user::Response::Success => {}
             response => panic!("'delete_user' error: {response:?}"),
+        }
+    }
+
+    pub fn set_premium_item_cost(
+        env: &mut PocketIc,
+        sender: Principal,
+        user_index_canister_id: CanisterId,
+        item_id: u32,
+        chit_cost: u32,
+    ) {
+        let response = super::set_premium_item_cost(
+            env,
+            sender,
+            user_index_canister_id,
+            &user_index_canister::set_premium_item_cost::Args { item_id, chit_cost },
+        );
+
+        match response {
+            user_index_canister::set_premium_item_cost::Response::Success => {}
+            response => panic!("'set_premium_item_cost' error: {response:?}"),
         }
     }
 

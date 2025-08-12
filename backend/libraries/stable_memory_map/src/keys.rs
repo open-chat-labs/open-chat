@@ -31,7 +31,7 @@ impl BaseKey {
 }
 
 impl Storable for BaseKey {
-    fn to_bytes(&self) -> Cow<[u8]> {
+    fn to_bytes(&self) -> Cow<'_, [u8]> {
         Cow::Borrowed(&self.0)
     }
 

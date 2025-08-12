@@ -24,12 +24,10 @@ use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, 
 use model::events::CommunityEventInternal;
 use model::user_event_batch::UserEventBatch;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
-use msgpack::serialize_then_unwrap;
 use oc_error_codes::OCErrorCode;
 use rand::RngCore;
 use rand::rngs::StdRng;
 use serde::{Deserialize, Serialize};
-use serde_bytes::ByteBuf;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
@@ -37,11 +35,11 @@ use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     AccessGate, AccessGateConfigInternal, Achievement, BotCommunityEvent, BotEventsCaller, BotInitiator, BotNotification,
-    BotPermissions, BuildVersion, Caller, CanisterId, ChannelCreated, ChannelId, ChatEventCategory, ChatEventType, ChatMetrics,
-    ChatPermission, CommunityCanisterCommunitySummary, CommunityEvent, CommunityEventCategory, CommunityEventType,
-    CommunityMembership, CommunityPermissions, Cycles, Document, EventIndex, EventsCaller, FcmData, FrozenGroupInfo, GroupRole,
-    IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId,
-    UserNotification, UserNotificationPayload, UserType,
+    BotPermissions, BuildVersion, Caller, CanisterId, ChannelCreated, ChannelId, ChannelUserNotificationPayload,
+    ChatEventCategory, ChatEventType, ChatMetrics, ChatPermission, CommunityCanisterCommunitySummary, CommunityEvent,
+    CommunityEventCategory, CommunityEventType, CommunityMembership, CommunityPermissions, Cycles, Document, EventIndex,
+    EventsCaller, FrozenGroupInfo, GroupRole, IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules,
+    TimestampMillis, Timestamped, UserId, UserNotification, UserType,
 };
 use types::{BotSubscriptions, CommunityId};
 use user_canister::CommunityCanisterEvent;
@@ -127,15 +125,13 @@ impl RuntimeState {
         &mut self,
         sender: Option<UserId>,
         recipients: Vec<UserId>,
-        notification: UserNotificationPayload,
-        fcm_data: FcmData,
+        notification: ChannelUserNotificationPayload,
     ) {
         if !recipients.is_empty() {
             let notification = Notification::User(UserNotification {
                 sender,
                 recipients,
-                notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
-                fcm_data: Some(fcm_data),
+                notification,
             });
             self.push_notification_inner(notification);
         }
@@ -168,10 +164,10 @@ impl RuntimeState {
     }
 
     pub fn push_bot_notification(&mut self, notification: Option<BotNotification>) {
-        if let Some(notification) = notification {
-            if !notification.recipients.is_empty() {
-                self.push_notification_inner(Notification::Bot(notification));
-            }
+        if let Some(notification) = notification
+            && !notification.recipients.is_empty()
+        {
+            self.push_notification_inner(Notification::Bot(notification));
         }
     }
 
@@ -181,7 +177,7 @@ impl RuntimeState {
         }
     }
 
-    fn push_notification_inner(&mut self, notification: Notification) {
+    fn push_notification_inner(&mut self, notification: Notification<ChannelUserNotificationPayload>) {
         self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
             created_at: self.env.now(),
             idempotency_id: self.env.rng().next_u64(),
@@ -281,10 +277,10 @@ impl RuntimeState {
         let mut final_prize_payments = Vec::new();
         for channel in self.data.channels.iter_mut() {
             let result = channel.chat.remove_expired_events(now);
-            if let Some(expiry) = channel.chat.events.next_event_expiry() {
-                if next_event_expiry.is_none_or(|current| expiry < current) {
-                    next_event_expiry = Some(expiry);
-                }
+            if let Some(expiry) = channel.chat.events.next_event_expiry()
+                && next_event_expiry.is_none_or(|current| expiry < current)
+            {
+                next_event_expiry = Some(expiry);
             }
             files_to_delete.extend(result.files);
             final_prize_payments.extend(result.final_prize_payments);
@@ -678,12 +674,11 @@ impl Data {
     }
 
     pub fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {
-        if self.invite_code_enabled.value {
-            if let Some(provided_code) = invite_code {
-                if let Some(stored_code) = self.invite_code.value {
-                    return provided_code == stored_code;
-                }
-            }
+        if self.invite_code_enabled.value
+            && let Some(provided_code) = invite_code
+            && let Some(stored_code) = self.invite_code.value
+        {
+            return provided_code == stored_code;
         }
 
         false
@@ -873,14 +868,14 @@ impl Data {
                             users_added.push(user_id);
                         }
 
-                        if !user_type.is_bot() {
-                            if let Some(gate_expiry) = gate_expiry {
-                                self.expiring_members.push(ExpiringMember {
-                                    expires: now + gate_expiry,
-                                    channel_id: Some(channel.id),
-                                    user_id,
-                                });
-                            }
+                        if !user_type.is_bot()
+                            && let Some(gate_expiry) = gate_expiry
+                        {
+                            self.expiring_members.push(ExpiringMember {
+                                expires: now + gate_expiry,
+                                channel_id: Some(channel.id),
+                                user_id,
+                            });
                         }
                     }
                     AddResult::AlreadyInGroup => users_already_in_channel.push(user_id),

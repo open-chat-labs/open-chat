@@ -8,14 +8,11 @@ use crate::model::user_principals::{AuthPrincipal, UserPrincipals};
 use crate::model::webauthn_keys::WebAuthnKeys;
 use candid::Principal;
 use canister_state_macros::canister_state;
-use constants::NANOS_PER_MILLISECOND;
 use ic_canister_sig_creation::CanisterSigPublicKey;
 use ic_canister_sig_creation::signature_map::{LABEL_SIG, SignatureMap};
 use ic_cdk::api::certified_data_set;
-use ic_certificate_verification::{CertificateVerificationError, VerifyCertificate};
 use identity_canister::{WEBAUTHN_ORIGINATING_CANISTER, WebAuthnKey};
-use identity_utils::extract_certificate;
-use oc_error_codes::OCErrorCode;
+use identity_utils::verify_signature;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use sha256::sha256;
@@ -191,7 +188,6 @@ struct Data {
     webauthn_keys: WebAuthnKeys,
     #[serde(skip)]
     signature_map: SignatureMap,
-    #[serde(default)]
     encryption_key_requests: EncryptionKeyRequests,
     #[serde(with = "serde_bytes")]
     ic_root_key: Vec<u8>,
@@ -199,7 +195,6 @@ struct Data {
     rng_seed: [u8; 32],
     challenges: Challenges,
     test_mode: bool,
-    #[serde(default)]
     account_linking_codes: AccountLinkingCodes,
 }
 
@@ -266,25 +261,17 @@ impl Data {
         max_offset: Milliseconds,
     ) -> OCResult {
         if auth_principal.originating_canister != WEBAUTHN_ORIGINATING_CANISTER {
-            let certificate = extract_certificate(signature).map_err(|e| OCErrorCode::MalformedSignature.with_message(e))?;
-            let now_nanos = (now * NANOS_PER_MILLISECOND) as u128;
-            let max_offset_nanos = (max_offset * NANOS_PER_MILLISECOND) as u128;
-            certificate
-                .verify(
-                    auth_principal.originating_canister.as_slice(),
-                    self.ic_root_key.as_slice(),
-                    &now_nanos,
-                    &max_offset_nanos,
-                )
-                .map_err(|error| match error {
-                    CertificateVerificationError::TimeTooFarInThePast { .. } => OCErrorCode::DelegationTooOld,
-                    _ => OCErrorCode::InvalidSignature,
-                })?;
+            verify_signature(
+                signature,
+                auth_principal.originating_canister,
+                max_offset,
+                self.ic_root_key.as_slice(),
+                now,
+            )
         } else {
             // TODO verify WebAuthn signatures somehow
+            Ok(())
         }
-
-        Ok(())
     }
 }
 

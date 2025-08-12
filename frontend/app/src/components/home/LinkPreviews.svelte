@@ -1,15 +1,21 @@
 <script lang="ts">
+    import { previewDimensionsObserver } from "@utils/previewDimensionsObserver";
     import { eventListScrolling, iconSize, offlineStore, type OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import { rtlStore } from "../../stores/rtl";
     import GenericPreviewComponent from "./GenericPreview.svelte";
+    import InstagramPreviewComponent from "./InstagramPreview.svelte";
     import SpotifyPreviewComponent from "./SpotifyPreview.svelte";
     import Tweet from "./Tweet.svelte";
     import YouTubePreview from "./YouTubePreview.svelte";
-    import { previewDimensionsObserver } from "@utils/previewDimensionsObserver";
 
-    type Preview = SpotifyPreview | YoutubePreview | TwitterPreview | GenericPreview;
+    type Preview =
+        | SpotifyPreview
+        | YoutubePreview
+        | TwitterPreview
+        | InstagramPreview
+        | GenericPreview;
 
     type PreviewBase = {
         url: string;
@@ -18,6 +24,11 @@
 
     type YoutubePreview = PreviewBase & {
         kind: "youtube";
+        regexMatch: RegExpMatchArray;
+    };
+
+    type InstagramPreview = PreviewBase & {
+        kind: "instagram";
         regexMatch: RegExpMatchArray;
     };
 
@@ -70,6 +81,15 @@
         if (regexMatch) {
             return {
                 kind: "youtube",
+                url,
+                regexMatch,
+            };
+        }
+
+        regexMatch = url.match(client.instagramRegex());
+        if (regexMatch) {
+            return {
+                kind: "instagram",
                 url,
                 regexMatch,
             };
@@ -173,6 +193,8 @@
                         {pinned}
                         fill={fill && previews.length === 1}
                         youtubeMatch={preview.regexMatch} />
+                {:else if preview.kind === "instagram"}
+                    <InstagramPreviewComponent instagramMatch={preview.regexMatch} />
                 {:else if preview.kind === "spotify"}
                     <SpotifyPreviewComponent
                         {pinned}

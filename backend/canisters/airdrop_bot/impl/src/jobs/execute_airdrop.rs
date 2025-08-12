@@ -116,10 +116,10 @@ async fn prepare_airdrop(config: AirdropConfig, user_index_canister_id: Canister
         .map(|m| m.user_id)
         .collect();
 
-    if let AirdropAlgorithm::V2(v2) = &config.algorithm {
-        if v2.min_minutes_online > 0 {
-            read_state(|state| users.retain(|u| state.data.user_minutes_online.get(u, &mk) >= v2.min_minutes_online));
-        }
+    if let AirdropAlgorithm::V2(v2) = &config.algorithm
+        && v2.min_minutes_online > 0
+    {
+        read_state(|state| users.retain(|u| state.data.user_minutes_online.get(u, &mk) >= v2.min_minutes_online));
     }
 
     let chit = match user_index_canister_c2c_client::users_chit(
@@ -161,16 +161,16 @@ fn execute_airdrop(participants: Vec<(UserId, Chit)>, state: &mut RuntimeState) 
         let mut actions = Vec::new();
 
         for (user_id, participant) in airdrop.outcome.participants.iter() {
-            if actions.len() % 500 == 0 {
-                if let Some((user_id, prize)) = lottery_winners.pop() {
-                    actions.push(Action::Transfer(Box::new(AirdropTransfer {
-                        recipient: user_id,
-                        amount: prize.chat_won,
-                        airdrop_type: AirdropType::Lottery(LotteryAirdrop {
-                            position: lottery_winners.len(),
-                        }),
-                    })))
-                }
+            if actions.len() % 500 == 0
+                && let Some((user_id, prize)) = lottery_winners.pop()
+            {
+                actions.push(Action::Transfer(Box::new(AirdropTransfer {
+                    recipient: user_id,
+                    amount: prize.chat_won,
+                    airdrop_type: AirdropType::Lottery(LotteryAirdrop {
+                        position: lottery_winners.len(),
+                    }),
+                })))
             }
 
             if let Some(prize) = &participant.prize {

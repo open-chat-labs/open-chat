@@ -6,8 +6,8 @@ use canister_tracing_macros::trace;
 use group_canister::{add_reaction::*, c2c_bot_add_reaction};
 use oc_error_codes::{OCError, OCErrorCode};
 use types::{
-    Achievement, BotCaller, BotPermissions, Caller, Chat, ChatId, ChatPermission, EventIndex, FcmData,
-    GroupReactionAddedNotification, OCResult, UserNotificationPayload,
+    Achievement, BotCaller, BotPermissions, Caller, Chat, ChatId, ChatPermission, EventIndex, GroupChatUserNotificationPayload,
+    GroupReactionAddedNotification, OCResult,
 };
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -77,63 +77,53 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
             .events
             .message_internal(EventIndex::default(), thread_root_message_index, args.message_id.into())
     {
-        if let Some(sender) = state.data.chat.members.get(&message.sender) {
-            if message.sender != agent && !sender.user_type().is_bot() {
-                let chat_id: ChatId = state.env.canister_id().into();
+        if let Some(sender) = state.data.chat.members.get(&message.sender)
+            && message.sender != agent
+            && !sender.user_type().is_bot()
+        {
+            let chat_id: ChatId = state.env.canister_id().into();
 
-                let notifications_muted = state
-                    .data
-                    .chat
-                    .members
-                    .get(&message.sender)
-                    .is_none_or(|p| p.notifications_muted().value || p.suspended().value);
+            let notifications_muted = state
+                .data
+                .chat
+                .members
+                .get(&message.sender)
+                .is_none_or(|p| p.notifications_muted().value || p.suspended().value);
 
-                if !notifications_muted {
-                    let added_by_name = args.username;
-                    let added_by_display_name = args.display_name;
-                    let group_avatar_id = state.data.chat.avatar.as_ref().map(|d| d.id);
-
-                    // TODO i18n
-                    // TODO create alternative channels for notifications that we consider to be low priority
-                    let fcm_data = FcmData::for_group(chat_id)
-                        .set_body(format!("Reacted {} to your message", args.reaction.clone().0))
-                        .set_sender_name_with_alt(&added_by_display_name, &added_by_name)
-                        .set_avatar_id(group_avatar_id);
-
-                    let user_notification_payload =
-                        UserNotificationPayload::GroupReactionAdded(GroupReactionAddedNotification {
-                            chat_id,
-                            thread_root_message_index,
-                            message_index: message.message_index,
-                            message_event_index: event_index,
-                            group_name: state.data.chat.name.value.clone(),
-                            added_by: agent,
-                            added_by_name,
-                            added_by_display_name,
-                            reaction: args.reaction,
-                            group_avatar_id,
-                        });
-
-                    state.push_notification(Some(agent), vec![message.sender], user_notification_payload, fcm_data);
-                }
-
-                state.push_event_to_user(
-                    message.sender,
-                    GroupCanisterEvent::MessageActivity(MessageActivityEvent {
-                        chat: Chat::Group(chat_id),
+            if !notifications_muted {
+                let user_notification_payload =
+                    GroupChatUserNotificationPayload::GroupReactionAdded(GroupReactionAddedNotification {
+                        chat_id,
                         thread_root_message_index,
                         message_index: message.message_index,
-                        message_id: message.message_id,
-                        event_index,
-                        activity: MessageActivity::Reaction,
-                        timestamp: state.env.now(),
-                        user_id: Some(agent),
-                    }),
-                    now,
-                );
+                        message_event_index: event_index,
+                        group_name: state.data.chat.name.value.clone(),
+                        added_by: agent,
+                        added_by_name: args.username,
+                        added_by_display_name: args.display_name,
+                        reaction: args.reaction,
+                        group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
+                    });
 
-                state.notify_user_of_achievement(message.sender, Achievement::HadMessageReactedTo, now);
+                state.push_notification(Some(agent), vec![message.sender], user_notification_payload);
             }
+
+            state.push_event_to_user(
+                message.sender,
+                GroupCanisterEvent::MessageActivity(MessageActivityEvent {
+                    chat: Chat::Group(chat_id),
+                    thread_root_message_index,
+                    message_index: message.message_index,
+                    message_id: message.message_id,
+                    event_index,
+                    activity: MessageActivity::Reaction,
+                    timestamp: state.env.now(),
+                    user_id: Some(agent),
+                }),
+                now,
+            );
+
+            state.notify_user_of_achievement(message.sender, Achievement::HadMessageReactedTo, now);
         }
 
         if args.new_achievement {

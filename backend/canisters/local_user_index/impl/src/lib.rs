@@ -2,6 +2,7 @@ use crate::model::community_event_batch::CommunityEventBatch;
 use crate::model::group_event_batch::GroupEventBatch;
 use crate::model::local_community_map::LocalCommunityMap;
 use crate::model::local_group_map::LocalGroupMap;
+use crate::model::premium_items::PremiumItems;
 use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use crate::model::user_event_batch::UserEventBatch;
 use crate::model::user_index_event_batch::UserIndexEventBatch;
@@ -123,12 +124,11 @@ impl RuntimeState {
                         .insert_unique_person_proof(user_id, unique_person_proof);
                 } else if let Ok(claims) =
                     verify_and_decode::<Claims<DiamondMembershipDetails>>(jwt, self.data.oc_key_pair.public_key_pem())
+                    && claims.claim_type() == "diamond_membership"
                 {
-                    if claims.claim_type() == "diamond_membership" {
-                        let expires_at = claims.custom().expires_at;
-                        user_details.diamond_membership_expires_at = Some(expires_at);
-                        self.data.global_users.set_diamond_membership_expiry_date(user_id, expires_at);
-                    }
+                    let expires_at = claims.custom().expires_at;
+                    user_details.diamond_membership_expires_at = Some(expires_at);
+                    self.data.global_users.set_diamond_membership_expiry_date(user_id, expires_at);
                 }
             }
         }
@@ -482,6 +482,8 @@ struct Data {
     pub notifications: EventStream<NotificationEnvelope>,
     pub blocked_users: UserIdsSet,
     pub fcm_token_store: FcmTokenStore,
+    #[serde(default)]
+    pub premium_items: PremiumItems,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -572,6 +574,7 @@ impl Data {
             notifications: EventStream::default(),
             blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
             fcm_token_store: FcmTokenStore::default(),
+            premium_items: PremiumItems::default(),
         }
     }
 
@@ -595,9 +598,9 @@ impl Data {
                 if !filtered_recipients.is_empty() {
                     self.notifications.add(NotificationEnvelope::User(UserNotificationEnvelope {
                         recipients: filtered_recipients,
-                        notification_bytes: user_notification.notification_bytes.clone(),
+                        notification_bytes: ByteBuf::from(msgpack::serialize_then_unwrap(&user_notification.notification)),
                         timestamp: now,
-                        fcm_data: user_notification.fcm_data,
+                        fcm_data: Some(user_notification.notification.into()),
                     }));
                 }
             }

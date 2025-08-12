@@ -68,10 +68,11 @@ impl ChitLeaderboard {
         let full = leaderboard.len() >= MAX_LEADERS;
         let chit = chit as u32;
 
-        if let Some(last) = leaderboard.last() {
-            if full && chit <= last.balance {
-                return;
-            }
+        if let Some(last) = leaderboard.last()
+            && full
+            && chit <= last.balance
+        {
+            return;
         }
 
         if let Some(my) = leaderboard.iter_mut().find(|i| i.user_id == user_id) {

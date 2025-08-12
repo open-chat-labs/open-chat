@@ -4,9 +4,14 @@ use types::{Document, FieldTooLongResult};
 
 const MAX_AVATAR_SIZE: u32 = 1024 * 800; // 800KB
 const MAX_BANNER_SIZE: u32 = 1024 * 1024; // 1MB
+const MAX_PROFILE_BACKGROUND_SIZE: u32 = 1024 * 1024; // 1MB
 
 pub fn validate_avatar(avatar: Option<&Document>) -> Result<(), FieldTooLongResult> {
     validate_document(avatar, MAX_AVATAR_SIZE)
+}
+
+pub fn validate_profile_background(profile_background: Option<&Document>) -> Result<(), FieldTooLongResult> {
+    validate_document(profile_background, MAX_PROFILE_BACKGROUND_SIZE)
 }
 
 pub fn validate_banner(avatar: Option<&Document>) -> Result<(), FieldTooLongResult> {

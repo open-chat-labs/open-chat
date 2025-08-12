@@ -31,21 +31,19 @@ async fn run_async() {
                     .map(|ds| if let DissolveState::DissolveDelaySeconds(dd) = ds { *dd } else { 0 })
             })
             .map(|n| (state.data.nns_governance_canister_id, n.id.clone()))
-    }) {
-        if nns_governance_canister_c2c_client::manage_neuron(
-            nns_governance_canister_id,
-            &nns_governance_canister::manage_neuron::Args {
-                id: neuron_id.clone(),
-                neuron_id_or_subaccount: None,
-                command: Some(Command::ClaimOrRefresh(ClaimOrRefresh {
-                    by: Some(By::NeuronIdOrSubaccount(Empty {})),
-                })),
-            },
-        )
-        .await
-        .is_ok()
-        {
-            info!(?neuron_id, "Refreshed neuron");
-        }
+    }) && nns_governance_canister_c2c_client::manage_neuron(
+        nns_governance_canister_id,
+        &nns_governance_canister::manage_neuron::Args {
+            id: neuron_id.clone(),
+            neuron_id_or_subaccount: None,
+            command: Some(Command::ClaimOrRefresh(ClaimOrRefresh {
+                by: Some(By::NeuronIdOrSubaccount(Empty {})),
+            })),
+        },
+    )
+    .await
+    .is_ok()
+    {
+        info!(?neuron_id, "Refreshed neuron");
     }
 }

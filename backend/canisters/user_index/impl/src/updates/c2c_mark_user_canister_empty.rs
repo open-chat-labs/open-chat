@@ -2,7 +2,7 @@ use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::{DeleteUser, UserIndexEvent};
-use user_index_canister::c2c_mark_user_canister_empty::{Response::*, *};
+use user_index_canister::c2c_mark_user_canister_empty::*;
 
 #[update(msgpack = true)]
 #[trace]
@@ -22,5 +22,5 @@ fn c2c_mark_user_canister_empty_impl(state: &mut RuntimeState) -> Response {
             None,
         );
     }
-    Success
+    Response::Success
 }

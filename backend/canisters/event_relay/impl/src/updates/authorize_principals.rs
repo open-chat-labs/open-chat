@@ -2,7 +2,7 @@ use crate::guards::caller_is_registry_canister;
 use crate::{RuntimeState, mutate_state};
 use candid::Principal;
 use canister_tracing_macros::trace;
-use event_relay_canister::authorize_principals::{Response::*, *};
+use event_relay_canister::authorize_principals::*;
 use ic_cdk::update;
 use tracing::info;
 
@@ -18,5 +18,5 @@ fn authorize_principals_impl(principal: Vec<Principal>, state: &mut RuntimeState
             info!(%principal, "Principal authorized to push events");
         }
     }
-    Success
+    Response::Success
 }

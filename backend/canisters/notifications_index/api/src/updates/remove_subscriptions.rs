@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::UserId;
+use types::{SuccessOnly, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -13,7 +13,4 @@ pub struct UserSubscriptions {
     pub p256dh_keys: Vec<String>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-}
+pub type Response = SuccessOnly;

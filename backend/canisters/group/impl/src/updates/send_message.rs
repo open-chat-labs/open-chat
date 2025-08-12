@@ -11,8 +11,8 @@ use group_canister::send_message_v2::{Response::*, *};
 use group_chat_core::SendMessageSuccess;
 use oc_error_codes::OCErrorCode;
 use types::{
-    Achievement, BotCaller, BotPermissions, Caller, Chat, ChatId, EventIndex, EventWrapper, FcmData, GroupMessageNotification,
-    Message, MessageContent, MessageIndex, OCResult, TimestampMillis, User, UserNotificationPayload,
+    Achievement, BotCaller, BotPermissions, Caller, Chat, ChatId, EventIndex, EventWrapper, GroupChatUserNotificationPayload,
+    GroupMessageNotification, Message, MessageContent, MessageIndex, OCResult, TimestampMillis, User,
 };
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -187,21 +187,10 @@ fn process_send_message_result(
     register_timer_jobs(thread_root_message_index, message_event, now, &mut state.data);
 
     if !result.unfinalised_bot_message {
+        let chat_id: ChatId = state.env.canister_id().into();
         let sender = caller.agent();
         let content = &message_event.event.content;
-        let chat_id: ChatId = state.env.canister_id().into();
-        let message_type = content.content_type().to_string();
-        let message_text = content.notification_text(&mentioned, &[]);
-        let group_avatar_id = state.data.chat.avatar.as_ref().map(|d| d.id);
-
-        // TODO i18n
-        let fcm_body = message_text.clone().unwrap_or(message_type.clone());
-        let fcm_data = FcmData::for_group(chat_id)
-            .set_body(fcm_body)
-            .set_sender_name_with_alt(&sender_display_name, &sender_username)
-            .set_avatar_id(group_avatar_id);
-
-        let notification = UserNotificationPayload::GroupMessage(GroupMessageNotification {
+        let notification = GroupChatUserNotificationPayload::GroupMessage(GroupMessageNotification {
             chat_id,
             thread_root_message_index,
             message_index,
@@ -210,13 +199,13 @@ fn process_send_message_result(
             sender,
             sender_name: sender_username,
             sender_display_name,
-            message_type,
-            message_text,
+            message_type: content.content_type().to_string(),
+            message_text: content.notification_text(&mentioned, &[]),
             image_url: content.notification_image_url(),
             group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
             crypto_transfer: content.notification_crypto_transfer_details(&mentioned),
         });
-        state.push_notification(Some(sender), result.users_to_notify, notification, fcm_data);
+        state.push_notification(Some(sender), result.users_to_notify, notification);
 
         if new_achievement && !caller.is_bot() {
             for a in message_event.event.achievements(false, thread_root_message_index.is_some()) {
@@ -226,17 +215,16 @@ fn process_send_message_result(
 
         let mut activity_events = Vec::new();
 
-        if let MessageContent::Crypto(c) = content {
-            if state
+        if let MessageContent::Crypto(c) = content
+            && state
                 .data
                 .chat
                 .members
                 .get(&c.recipient)
                 .is_some_and(|m| !m.user_type().is_bot())
-            {
-                state.notify_user_of_achievement(c.recipient, Achievement::ReceivedCrypto, now);
-                activity_events.push((c.recipient, MessageActivity::Crypto));
-            }
+        {
+            state.notify_user_of_achievement(c.recipient, Achievement::ReceivedCrypto, now);
+            activity_events.push((c.recipient, MessageActivity::Crypto));
         }
 
         for user in mentioned {
@@ -258,23 +246,20 @@ fn process_send_message_result(
             .as_ref()
             .filter(|r| r.chat_if_other.is_none())
             .map(|r| r.event_index)
-        {
-            if let Some((message, _)) = state.data.chat.events.message_internal(
+            && let Some((message, _)) = state.data.chat.events.message_internal(
                 EventIndex::default(),
                 thread_root_message_index,
                 replying_to_event_index.into(),
-            ) {
-                if caller.initiator().map(|i| i != message.sender).unwrap_or_default()
-                    && state
-                        .data
-                        .chat
-                        .members
-                        .get(&message.sender)
-                        .is_some_and(|m| !m.user_type().is_bot())
-                {
-                    activity_events.push((message.sender, MessageActivity::QuoteReply));
-                }
-            }
+            )
+            && caller.initiator().map(|i| i != message.sender).unwrap_or_default()
+            && state
+                .data
+                .chat
+                .members
+                .get(&message.sender)
+                .is_some_and(|m| !m.user_type().is_bot())
+        {
+            activity_events.push((message.sender, MessageActivity::QuoteReply));
         }
 
         for (user_id, activity) in activity_events {
@@ -313,11 +298,11 @@ fn register_timer_jobs(
     data: &mut Data,
 ) {
     let files = message_event.event.content.blob_references();
-    if !files.is_empty() {
-        if let Some(expiry) = message_event.expires_at {
-            data.timer_jobs
-                .enqueue_job(TimerJob::DeleteFileReferences(DeleteFileReferencesJob { files }), expiry, now);
-        }
+    if !files.is_empty()
+        && let Some(expiry) = message_event.expires_at
+    {
+        data.timer_jobs
+            .enqueue_job(TimerJob::DeleteFileReferences(DeleteFileReferencesJob { files }), expiry, now);
     }
 
     if let Some(expiry) = message_event.expires_at {

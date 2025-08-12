@@ -52,10 +52,10 @@ impl IdentityLinkRequests {
     ) -> Option<IdentityLinkRequest> {
         self.prune_expired(now);
 
-        if let Occupied(e) = self.map.entry(link_initiated_by) {
-            if e.get().link_to_principal == caller {
-                return Some(e.remove());
-            }
+        if let Occupied(e) = self.map.entry(link_initiated_by)
+            && e.get().link_to_principal == caller
+        {
+            return Some(e.remove());
         }
 
         None

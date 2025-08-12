@@ -6,9 +6,9 @@ use ic_cdk::update;
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use types::{
-    BotCaller, BotMessageContext, CanisterId, Chat, ContentValidationError, DirectMessageNotification, EventWrapper, FcmData,
-    Message, MessageContent, MessageId, MessageIndex, SenderContext, TimestampMillis, User, UserId, UserNotificationPayload,
-    UserType,
+    BotCaller, BotMessageContext, CanisterId, Chat, ContentValidationError, DirectChatUserNotificationPayload,
+    DirectMessageNotification, EventWrapper, Message, MessageContent, MessageId, MessageIndex, SenderContext, TimestampMillis,
+    User, UserId, UserType,
 };
 use user_canister::{C2CReplyContext, MessageActivity, MessageActivityEvent};
 
@@ -201,13 +201,7 @@ pub(crate) fn handle_message_impl(
         let message_text = content.notification_text(&args.mentioned, &[]);
         let image_url = content.notification_image_url();
 
-        let fcm_data = FcmData::for_direct_chat(args.sender)
-            .set_body_with_alt(&message_text, &message_type)
-            .set_optional_image(image_url.clone())
-            .set_sender_name_with_alt(&args.sender_display_name, &args.sender_name)
-            .set_avatar_id(args.sender_avatar_id);
-
-        let notification = UserNotificationPayload::DirectMessage(DirectMessageNotification {
+        let notification = DirectChatUserNotificationPayload::DirectMessage(DirectMessageNotification {
             sender: args.sender,
             thread_root_message_index,
             message_index: message_event.event.message_index,
@@ -222,7 +216,7 @@ pub(crate) fn handle_message_impl(
         });
         let recipient = state.env.canister_id().into();
 
-        state.push_notification(Some(args.sender), recipient, notification, fcm_data);
+        state.push_notification(Some(args.sender), recipient, notification);
     }
 
     if matches!(content, MessageContent::Crypto(_)) {

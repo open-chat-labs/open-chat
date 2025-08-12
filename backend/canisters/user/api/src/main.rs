@@ -55,7 +55,6 @@ fn main() {
     generate_ts_method!(user, pay_for_streak_insurance);
     generate_ts_method!(user, pin_chat_v2);
     generate_ts_method!(user, remove_reaction);
-    generate_ts_method!(user, reclaim_swap_tokens);
     generate_ts_method!(user, report_message);
     generate_ts_method!(user, save_crypto_account);
     generate_ts_method!(user, send_message_with_transfer_to_channel);
@@ -67,6 +66,7 @@ fn main() {
     generate_ts_method!(user, set_contact);
     generate_ts_method!(user, set_message_reminder_v2);
     generate_ts_method!(user, set_pin_number);
+    generate_ts_method!(user, set_profile_background);
     generate_ts_method!(user, swap_tokens);
     generate_ts_method!(user, tip_message);
     generate_ts_method!(user, unblock_user);

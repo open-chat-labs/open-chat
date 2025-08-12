@@ -25,17 +25,17 @@ impl PendingPaymentsQueue {
                 reason: PendingPaymentReason::Refund,
             });
         }
-        if swap.token1_received {
-            if let Some((accepted_by, _)) = swap.accepted_by {
-                self.push(PendingPayment {
-                    principal: accepted_by,
-                    timestamp: now,
-                    token_info: swap.token1.clone(),
-                    amount: swap.amount1,
-                    swap_id: swap.id,
-                    reason: PendingPaymentReason::Refund,
-                });
-            }
+        if swap.token1_received
+            && let Some((accepted_by, _)) = swap.accepted_by
+        {
+            self.push(PendingPayment {
+                principal: accepted_by,
+                timestamp: now,
+                token_info: swap.token1.clone(),
+                amount: swap.amount1,
+                swap_id: swap.id,
+                reason: PendingPaymentReason::Refund,
+            });
         }
     }
 

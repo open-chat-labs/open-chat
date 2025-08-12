@@ -1,10 +1,4 @@
-use candid::CandidType;
-use serde::{Deserialize, Serialize};
-use types::Empty;
+use types::{Empty, SuccessOnly};
 
 pub type Args = Empty;
-
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-}
+pub type Response = SuccessOnly;

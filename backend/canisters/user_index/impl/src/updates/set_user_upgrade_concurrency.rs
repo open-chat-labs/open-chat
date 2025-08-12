@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::{UserIndexEvent, UserUpgradeConcurrencyChanged};
 use tracing::info;
-use user_index_canister::set_user_upgrade_concurrency::{Response::*, *};
+use user_index_canister::set_user_upgrade_concurrency::*;
 
 #[update(guard = "caller_is_platform_operator", msgpack = true)]
 #[trace]
@@ -19,5 +19,5 @@ fn set_user_upgrade_concurrency_impl(args: Args, state: &mut RuntimeState) -> Re
     );
 
     info!("User upgrade concurrency set to {}", args.value);
-    Success
+    Response::Success
 }

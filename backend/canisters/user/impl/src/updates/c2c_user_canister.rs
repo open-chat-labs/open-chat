@@ -11,8 +11,8 @@ use constants::{HOUR_IN_MS, MINUTE_IN_MS};
 use ledger_utils::format_crypto_amount_with_symbol;
 use rand::Rng;
 use types::{
-    Achievement, Chat, ChitEarned, ChitEarnedReason, DirectMessageTipped, DirectReactionAddedNotification, EventIndex, FcmData,
-    MessageContentInitial, P2PSwapStatus, UserId, UserNotificationPayload, UserType, VideoCallPresence,
+    Achievement, Chat, ChitEvent, ChitEventType, DirectChatUserNotificationPayload, DirectMessageTipped,
+    DirectReactionAddedNotification, EventIndex, MessageContentInitial, P2PSwapStatus, UserId, UserType, VideoCallPresence,
 };
 use user_canister::c2c_user_canister::{Response::*, *};
 use user_canister::{
@@ -125,10 +125,10 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
             let mut rewarded = false;
 
             if chit_reward > 0 {
-                state.data.chit_events.push(ChitEarned {
+                state.data.chit_events.push(ChitEvent {
                     amount: chit_reward as i32,
                     timestamp: now,
-                    reason: ChitEarnedReason::Referral(*status),
+                    reason: ChitEventType::Referral(*status),
                 });
 
                 rewarded = true;
@@ -318,25 +318,19 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
                         && !args.username.is_empty()
                         && !chat.notifications_muted.value
                     {
-                        // TODO i18n
-                        let fcm_body = format!("Reacted {} to your message", args.reaction.clone().0);
-                        let fcm_data = FcmData::for_direct_chat(caller_user_id)
-                            .set_body(fcm_body)
-                            .set_sender_name_with_alt(&args.display_name, &args.username)
-                            .set_avatar_id(args.user_avatar_id);
+                        let notification =
+                            DirectChatUserNotificationPayload::DirectReactionAdded(DirectReactionAddedNotification {
+                                them: chat.them,
+                                thread_root_message_index,
+                                message_index: message_event.event.message_index,
+                                message_event_index: message_event.index,
+                                username: args.username,
+                                display_name: args.display_name,
+                                reaction: args.reaction,
+                                user_avatar_id: args.user_avatar_id,
+                            });
 
-                        let notification = UserNotificationPayload::DirectReactionAdded(DirectReactionAddedNotification {
-                            them: chat.them,
-                            thread_root_message_index,
-                            message_index: message_event.event.message_index,
-                            message_event_index: message_event.index,
-                            username: args.username,
-                            display_name: args.display_name,
-                            reaction: args.reaction,
-                            user_avatar_id: args.user_avatar_id,
-                        });
-
-                        state.push_notification(Some(caller_user_id), message_event.event.sender, notification, fcm_data);
+                        state.push_notification(Some(caller_user_id), message_event.event.sender, notification);
                     }
 
                     state.data.push_message_activity(
@@ -375,28 +369,26 @@ fn p2p_swap_change_status(args: P2PSwapStatusChange, caller_user_id: UserId, sta
         .set_p2p_swap_status(None, args.message_id, args.status, now)
         .is_ok()
         && completed
-    {
-        if let Some(message_event) = chat
+        && let Some(message_event) = chat
             .events
             .main_events_reader()
             .message_event_internal(args.message_id.into())
-        {
-            let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
+    {
+        let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
 
-            state.data.push_message_activity(
-                MessageActivityEvent {
-                    chat: Chat::Direct(caller_user_id.into()),
-                    thread_root_message_index,
-                    message_index: message_event.event.message_index,
-                    message_id: message_event.event.message_id,
-                    event_index: message_event.index,
-                    activity: MessageActivity::P2PSwapAccepted,
-                    timestamp: now,
-                    user_id: Some(caller_user_id),
-                },
-                now,
-            );
-        }
+        state.data.push_message_activity(
+            MessageActivityEvent {
+                chat: Chat::Direct(caller_user_id.into()),
+                thread_root_message_index,
+                message_index: message_event.event.message_index,
+                message_id: message_event.event.message_id,
+                event_index: message_event.index,
+                activity: MessageActivity::P2PSwapAccepted,
+                timestamp: now,
+                user_id: Some(caller_user_id),
+            },
+            now,
+        );
     }
 }
 
@@ -428,15 +420,7 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
                 .message_event_internal(args.message_id.into())
             {
                 let tip = format_crypto_amount_with_symbol(args.amount, args.decimals, &args.token_symbol);
-
-                // TODO i18n
-                let fcm_body = format!("Tipped your message {tip}");
-                let fcm_data = FcmData::for_direct_chat(caller_user_id)
-                    .set_body(fcm_body)
-                    .set_sender_name_with_alt(&args.display_name, &args.username)
-                    .set_avatar_id(args.user_avatar_id);
-
-                let notification = UserNotificationPayload::DirectMessageTipped(DirectMessageTipped {
+                let notification = DirectChatUserNotificationPayload::DirectMessageTipped(DirectMessageTipped {
                     them: caller_user_id,
                     thread_root_message_index,
                     message_index: message_event.event.message_index,
@@ -446,7 +430,7 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
                     tip,
                     user_avatar_id: args.user_avatar_id,
                 });
-                state.push_notification(Some(caller_user_id), my_user_id, notification, fcm_data);
+                state.push_notification(Some(caller_user_id), my_user_id, notification);
 
                 state.data.push_message_activity(
                     MessageActivityEvent {

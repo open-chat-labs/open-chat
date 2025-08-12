@@ -7,9 +7,11 @@ use constants::{CREATE_CANISTER_CYCLES_FEE, min_cycles_balance};
 use event_store_producer::EventBuilder;
 use local_user_index_canister::ChildCanisterType;
 use local_user_index_canister::c2c_create_community::{Response::*, *};
+use oc_error_codes::OCErrorCode;
 use rand::RngCore;
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, ChannelId, CommunityCreatedEventPayload, CommunityId, Cycles, UserId, UserType,
+    BuildVersion, CanisterId, CanisterWasm, ChannelId, CommunityCreatedEventPayload, CommunityId, Cycles, OCResult, UserId,
+    UserType,
 };
 use utils::canister;
 
@@ -17,7 +19,7 @@ use utils::canister;
 #[trace]
 async fn c2c_create_community(args: Args) -> Response {
     let prepare_ok = match mutate_state(|state| prepare(args, state)) {
-        Err(response) => return response,
+        Err(error) => return Error(error),
         Ok(ok) => ok,
     };
 
@@ -66,7 +68,7 @@ async fn c2c_create_community(args: Args) -> Response {
         }
         Err((canister_id, error)) => {
             mutate_state(|state| rollback(canister_id, state));
-            InternalError(format!("{error:?}"))
+            Error(error.into())
         }
     }
 }
@@ -80,11 +82,11 @@ struct PrepareOk {
     init_canister_args: InitCommunityCanisterArgs,
 }
 
-fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> {
+fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
     let cycles_to_use = if state.data.canister_pool.is_empty() {
         let cycles_required = CHILD_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
         if !utils::cycles::can_spend_cycles(cycles_required, min_cycles_balance(state.data.test_mode)) {
-            return Err(InternalError("Cycles balance too low".to_string()));
+            return Err(OCErrorCode::CyclesBalanceTooLow.into());
         }
         cycles_required
     } else {

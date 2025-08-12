@@ -123,16 +123,16 @@ impl CommunityMembers {
             self.members_map.insert(member.user_id, member.clone());
             self.prune_then_insert_member_update(user_id, MemberUpdate::Added, now);
 
-            if let Some(referrer) = referred_by {
-                if matches!(
+            if let Some(referrer) = referred_by
+                && matches!(
                     self.update_member(&referrer, |m| {
                         m.add_referral(user_id);
                         true
                     }),
                     Some(true)
-                ) {
-                    self.members_with_referrals.insert(referrer);
-                }
+                )
+            {
+                self.members_with_referrals.insert(referrer);
             }
             AddResult::Success(Box::new(member))
         } else {

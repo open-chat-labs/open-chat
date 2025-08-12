@@ -92,8 +92,8 @@ async fn perform_upgrade(canister_to_upgrade: NextCanisterToUpgrade) {
     let from_version = canister_to_upgrade.current_wasm_version;
     let to_version = canister_to_upgrade.new_wasm.version;
 
-    if let Ok(chunks) = upload_wasm_in_chunks(&canister_to_upgrade.new_wasm.module, canister_id).await {
-        if install(CanisterToInstall {
+    if let Ok(chunks) = upload_wasm_in_chunks(&canister_to_upgrade.new_wasm.module, canister_id).await
+        && install(CanisterToInstall {
             canister_id,
             current_wasm_version: canister_to_upgrade.current_wasm_version,
             new_wasm_version: to_version,
@@ -112,10 +112,9 @@ async fn perform_upgrade(canister_to_upgrade: NextCanisterToUpgrade) {
         })
         .await
         .is_ok()
-        {
-            mutate_state(|state| on_success(canister_id, to_version, state));
-            return;
-        }
+    {
+        mutate_state(|state| on_success(canister_id, to_version, state));
+        return;
     }
 
     mutate_state(|state| on_failure(canister_id, from_version, to_version, state));

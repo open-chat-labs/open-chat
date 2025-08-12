@@ -67,6 +67,7 @@ mod p2p_swaps;
 mod phone_number;
 mod pin_number;
 mod polls;
+mod premium_items;
 mod proof_of_uniqueness;
 mod proposals;
 mod range_set;
@@ -150,6 +151,7 @@ pub use p2p_swaps::*;
 pub use phone_number::*;
 pub use pin_number::*;
 pub use polls::*;
+pub use premium_items::*;
 pub use proof_of_uniqueness::*;
 pub use proposals::*;
 pub use range_set::*;
@@ -192,6 +194,12 @@ pub type OCResult<T = ()> = Result<T, OCError>;
 pub enum UnitResult {
     Success,
     Error(OCError),
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum SuccessOnly {
+    Success,
 }
 
 impl From<OCErrorCode> for UnitResult {
@@ -250,10 +258,6 @@ pub enum ResultLowercase<T, E> {
 
 pub fn is_default<T: Default + PartialEq>(value: &T) -> bool {
     *value == Default::default()
-}
-
-pub trait Fallback: Sized {
-    type FallbackType: Into<Self>;
 }
 
 #[ts_export]

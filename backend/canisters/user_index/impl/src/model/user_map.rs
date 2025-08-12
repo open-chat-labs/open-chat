@@ -207,13 +207,11 @@ impl UserMap {
             let username = &user.username;
             let username_case_insensitive_changed = !previous_username.eq_ignore_ascii_case(username);
 
-            if principal_changed {
-                if let Some(other) = self.principal_to_user_id.get(&principal) {
-                    if !ignore_principal_clash {
-                        return UpdateUserResult::PrincipalTaken;
-                    }
-                    info!(user_id1 = %user_id, user_id2 = %other, "Principal clash");
+            if principal_changed && let Some(other) = self.principal_to_user_id.get(&principal) {
+                if !ignore_principal_clash {
+                    return UpdateUserResult::PrincipalTaken;
                 }
+                info!(user_id1 = %user_id, user_id2 = %other, "Principal clash");
             }
 
             if username_case_insensitive_changed && self.does_username_exist(username, bot.is_some()) {
@@ -289,16 +287,6 @@ impl UserMap {
 
     pub fn get_by_username(&self, username: &str) -> Option<&User> {
         self.username_to_user_id.get(username).and_then(|u| self.users.get(u))
-    }
-
-    pub fn get_mut(&mut self, user_id_or_principal: &Principal) -> Option<&mut User> {
-        let user_id = self
-            .principal_to_user_id
-            .get(user_id_or_principal)
-            .copied()
-            .unwrap_or_else(|| UserId::from(*user_id_or_principal));
-
-        self.users.get_mut(&user_id)
     }
 
     pub fn get_bot(&self, user_id: &UserId) -> Option<&Bot> {
@@ -387,6 +375,20 @@ impl UserMap {
         }
     }
 
+    pub fn set_profile_background_id(
+        &mut self,
+        user_id: &UserId,
+        profile_background_id: Option<u128>,
+        now: TimestampMillis,
+    ) -> bool {
+        if let Some(user) = self.users.get_mut(user_id) {
+            user.set_profile_background_id(profile_background_id, now);
+            true
+        } else {
+            false
+        }
+    }
+
     #[allow(clippy::too_many_arguments)]
     pub fn set_chit(
         &mut self,
@@ -394,6 +396,7 @@ impl UserMap {
         total_chit_earned: i32,
         chit_event_timestamp: TimestampMillis,
         chit_earned_in_month: i32,
+        chit_balance: i32,
         streak: u16,
         streak_ends: TimestampMillis,
         now: TimestampMillis,
@@ -425,6 +428,7 @@ impl UserMap {
 
         // TODO remove the if condition once User canisters are upgraded
         user.total_chit_earned = if total_chit_earned != 0 { total_chit_earned } else { user.chit_per_month.values().sum() };
+        user.chit_balance = chit_balance;
         user.chit_updated = now;
         user.chit_per_month.insert(chit_event_month, chit_earned_in_month);
         true

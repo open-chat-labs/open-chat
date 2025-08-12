@@ -17,6 +17,7 @@ pub struct PublicProfile {
     pub username: String,
     pub display_name: Option<String>,
     pub avatar_id: Option<u128>,
+    pub profile_background_id: Option<u128>,
     pub bio: String,
     pub is_premium: bool,
     pub phone_is_verified: bool,

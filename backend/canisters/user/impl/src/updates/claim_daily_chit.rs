@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use event_store_types::EventBuilder;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
 use serde::Serialize;
-use types::{Achievement, ChitEarned, ChitEarnedReason, UserId};
+use types::{Achievement, ChitEvent, ChitEventType, UserId};
 use user_canister::claim_daily_chit::{Response::*, *};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
@@ -36,10 +36,10 @@ fn claim_daily_chit_impl(args: Args, state: &mut RuntimeState) -> Response {
     let streak = state.data.streak.days(now);
     let chit_earned = chit_for_streak(streak);
 
-    state.data.chit_events.push(ChitEarned {
+    state.data.chit_events.push(ChitEvent {
         amount: chit_earned as i32,
         timestamp: now,
-        reason: ChitEarnedReason::DailyClaim,
+        reason: ChitEventType::DailyClaim,
     });
 
     if streak >= 3 {
@@ -81,7 +81,7 @@ fn claim_daily_chit_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     Success(SuccessResult {
         chit_earned,
-        chit_balance: state.data.chit_events.balance_for_month_by_timestamp(now),
+        chit_balance: state.data.chit_events.chit_balance(),
         streak,
         max_streak: state.data.streak.max_streak(),
         next_claim: state.data.streak.next_claim(),

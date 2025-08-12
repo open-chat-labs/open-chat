@@ -2,7 +2,7 @@ use crate::guards::caller_is_owner;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use user_canister::add_hot_group_exclusions::{Response::*, *};
+use user_canister::add_hot_group_exclusions::*;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
@@ -21,5 +21,5 @@ fn add_hot_group_exclusions_impl(args: Args, state: &mut RuntimeState) -> Respon
     for group in args.groups {
         state.data.hot_group_exclusions.add(group, args.duration, now);
     }
-    Success
+    user_index_canister::set_moderation_flags::Response::Success
 }

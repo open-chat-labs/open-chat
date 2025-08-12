@@ -259,12 +259,12 @@ impl Files {
     pub fn update_accessor_id(&mut self, old_accessor_id: AccessorId, new_accessor_id: AccessorId) {
         let files = self.accessors_map.remove(old_accessor_id);
         for file_id in files.iter() {
-            if let Some(mut file) = self.get(file_id) {
-                if file.accessors.remove(&old_accessor_id) {
-                    file.accessors.insert(new_accessor_id);
-                    self.files.insert(*file_id, file);
-                    self.accessors_map.link(new_accessor_id, *file_id);
-                }
+            if let Some(mut file) = self.get(file_id)
+                && file.accessors.remove(&old_accessor_id)
+            {
+                file.accessors.insert(new_accessor_id);
+                self.files.insert(*file_id, file);
+                self.accessors_map.link(new_accessor_id, *file_id);
             }
         }
     }

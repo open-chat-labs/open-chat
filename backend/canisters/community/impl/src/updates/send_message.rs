@@ -18,9 +18,9 @@ use rand::RngCore;
 use regex_lite::Regex;
 use std::str::FromStr;
 use types::{
-    Achievement, BotCaller, BotPermissions, Caller, ChannelId, ChannelMessageNotification, Chat, CommunityId, EventIndex,
-    EventWrapper, FcmData, IdempotentEnvelope, Message, MessageContent, MessageIndex, OCResult, TimestampMillis, User, UserId,
-    UserNotificationPayload, Version,
+    Achievement, BotCaller, BotPermissions, Caller, ChannelId, ChannelMessageNotification, ChannelUserNotificationPayload,
+    Chat, CommunityId, EventIndex, EventWrapper, IdempotentEnvelope, Message, MessageContent, MessageIndex, OCResult,
+    TimestampMillis, User, UserId, Version,
 };
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -245,19 +245,10 @@ fn process_send_message_result(
 
     if !result.unfinalised_bot_message {
         let sender = caller.agent();
-
-        let message_type = content.content_type().to_string();
         let message_text =
             content.notification_text(&users_mentioned.mentioned_directly, &users_mentioned.user_groups_mentioned);
 
-        // TODO i18n
-        let fcm_data = FcmData::for_channel(community_id, channel_id)
-            .set_body_with_alt(&message_text, &message_type)
-            .set_sender_id(sender)
-            .set_sender_name_with_alt(&sender_display_name, &sender_username)
-            .set_avatar_id(channel_avatar_id);
-
-        let notification = UserNotificationPayload::ChannelMessage(ChannelMessageNotification {
+        let notification = ChannelUserNotificationPayload::ChannelMessage(ChannelMessageNotification {
             community_id,
             channel_id,
             thread_root_message_index,
@@ -268,14 +259,14 @@ fn process_send_message_result(
             sender,
             sender_name: sender_username,
             sender_display_name,
-            message_type,
+            message_type: content.content_type().to_string(),
             message_text,
             image_url: content.notification_image_url(),
             community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
             channel_avatar_id,
             crypto_transfer: content.notification_crypto_transfer_details(&users_mentioned.mentioned_directly),
         });
-        state.push_notification(Some(sender), result.users_to_notify, notification, fcm_data);
+        state.push_notification(Some(sender), result.users_to_notify, notification);
 
         if new_achievement && !caller.is_bot() {
             for a in result
@@ -318,22 +309,19 @@ fn process_send_message_result(
                 .as_ref()
                 .filter(|r| r.chat_if_other.is_none())
                 .map(|r| r.event_index)
-            {
-                if let Some((message, _)) = channel.chat.events.message_internal(
+                && let Some((message, _)) = channel.chat.events.message_internal(
                     EventIndex::default(),
                     thread_root_message_index,
                     replying_to_event_index.into(),
-                ) {
-                    if caller.initiator().map(|i| i != message.sender).unwrap_or_default()
-                        && channel
-                            .chat
-                            .members
-                            .get(&message.sender)
-                            .is_some_and(|m| !m.user_type().is_bot())
-                    {
-                        activity_events.push((message.sender, MessageActivity::QuoteReply));
-                    }
-                }
+                )
+                && caller.initiator().map(|i| i != message.sender).unwrap_or_default()
+                && channel
+                    .chat
+                    .members
+                    .get(&message.sender)
+                    .is_some_and(|m| !m.user_type().is_bot())
+            {
+                activity_events.push((message.sender, MessageActivity::QuoteReply));
             }
         }
 
@@ -378,11 +366,11 @@ fn register_timer_jobs(
     data: &mut Data,
 ) {
     let files = message_event.event.content.blob_references();
-    if !files.is_empty() {
-        if let Some(expiry) = message_event.expires_at {
-            data.timer_jobs
-                .enqueue_job(TimerJob::DeleteFileReferences(DeleteFileReferencesJob { files }), expiry, now);
-        }
+    if !files.is_empty()
+        && let Some(expiry) = message_event.expires_at
+    {
+        data.timer_jobs
+            .enqueue_job(TimerJob::DeleteFileReferences(DeleteFileReferencesJob { files }), expiry, now);
     }
 
     if let Some(expiry) = message_event.expires_at {
@@ -458,15 +446,15 @@ fn extract_users_mentioned(mentioned: Vec<User>, text: Option<&str>, members: &C
 }
 
 fn extract_user_groups_mentioned<'a>(text: Option<&'a str>, members: &'a CommunityMembers) -> Vec<&'a UserGroup> {
-    if let Some(text) = text {
-        if text.contains("@UserGroup") {
-            return USER_GROUP_REGEX
-                .captures_iter(text)
-                .filter_map(|c| c.get(1))
-                .filter_map(|m| u32::from_str(m.as_str()).ok())
-                .filter_map(|id| members.get_user_group(id))
-                .collect();
-        }
+    if let Some(text) = text
+        && text.contains("@UserGroup")
+    {
+        return USER_GROUP_REGEX
+            .captures_iter(text)
+            .filter_map(|c| c.get(1))
+            .filter_map(|m| u32::from_str(m.as_str()).ok())
+            .filter_map(|id| members.get_user_group(id))
+            .collect();
     }
 
     Vec::new()

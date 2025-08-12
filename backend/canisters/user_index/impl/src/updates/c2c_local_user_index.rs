@@ -17,7 +17,7 @@ use std::cell::LazyCell;
 use storage_index_canister::add_or_update_users::UserConfig;
 use types::{CanisterId, IdempotentEnvelope, MessageContent, TextContent, TimestampMillis, UserId, UserType};
 use user_index_canister::LocalUserIndexEvent;
-use user_index_canister::c2c_local_user_index::{Response::*, *};
+use user_index_canister::c2c_local_user_index::*;
 
 #[update(guard = "caller_is_local_user_index_canister", msgpack = true)]
 #[trace]
@@ -38,7 +38,7 @@ fn c2c_local_user_index_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
     }
 
-    Success
+    Response::Success
 }
 
 fn handle_event<F: FnOnce() -> TimestampMillis>(
@@ -105,6 +105,13 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 Some(caller),
             );
         }
+        LocalUserIndexEvent::UserSetProfileBackground(ev) => {
+            let (user_id, profile_background_id) = *ev;
+            state
+                .data
+                .users
+                .set_profile_background_id(&user_id, profile_background_id, **now);
+        }
         LocalUserIndexEvent::NotifyUniquePersonProof(ev) => {
             let (user_id, proof) = *ev;
             state
@@ -121,32 +128,42 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 chit.total_chit_earned,
                 chit.timestamp,
                 chit.chit_balance,
+                chit.chit_balance_v2,
                 chit.streak,
                 chit.streak_ends,
                 **now,
-            ) {
-                if let Some(user) = state.data.users.get_by_user_id(&user_id) {
-                    let total_chit_earned = user.total_chit_earned;
-                    state.data.chit_leaderboard.update_position(
-                        user_id,
-                        total_chit_earned,
-                        chit.chit_balance,
-                        chit.timestamp,
-                        **now,
-                    );
+            ) && let Some(user) = state.data.users.get_by_user_id(&user_id)
+            {
+                let total_chit_earned = user.total_chit_earned;
+                state.data.chit_leaderboard.update_position(
+                    user_id,
+                    total_chit_earned,
+                    chit.chit_balance,
+                    chit.timestamp,
+                    **now,
+                );
 
-                    state.push_event_to_all_local_user_indexes(
-                        UserIndexEvent::UpdateChitBalance(
-                            user_id,
-                            ChitBalance {
-                                total_earned: total_chit_earned,
-                                curr_balance: total_chit_earned - user.total_chit_spent,
-                            },
-                        ),
-                        None,
-                    );
-                }
+                state.push_event_to_all_local_user_indexes(
+                    UserIndexEvent::UpdateChitBalance(
+                        user_id,
+                        ChitBalance {
+                            total_earned: total_chit_earned,
+                            curr_balance: user.chit_balance,
+                        },
+                    ),
+                    None,
+                );
             }
+        }
+        LocalUserIndexEvent::NotifyPremiumItemPurchased(ev) => {
+            let (user_id, purchase) = *ev;
+            state.data.premium_items.log_purchase(
+                user_id,
+                purchase.item_id,
+                purchase.paid_in_chat,
+                purchase.cost,
+                purchase.timestamp,
+            );
         }
         LocalUserIndexEvent::NotifyStreakInsurancePayment(payment) => state.data.streak_insurance_logs.mark_payment(*payment),
         LocalUserIndexEvent::NotifyStreakInsuranceClaim(claim) => state.data.streak_insurance_logs.mark_claim(*claim),
