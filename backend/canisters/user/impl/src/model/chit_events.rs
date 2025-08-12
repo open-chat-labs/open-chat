@@ -89,9 +89,7 @@ impl ChitEvents {
             .filter(|e| {
                 matches!(
                     e.reason,
-                    ChitEarnedReason::DailyClaim
-                        | ChitEarnedReason::DailyClaimReinstated
-                        | ChitEarnedReason::StreakInsuranceClaim
+                    ChitEventType::DailyClaim | ChitEventType::DailyClaimReinstated | ChitEventType::StreakInsuranceClaim
                 )
             })
             .map(|e| e.timestamp)

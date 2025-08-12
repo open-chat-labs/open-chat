@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use tracing::info;
 use types::{
-    ChitEarned, ChitEarnedReason, StreakInsurance, TimestampMillis, UserCanisterStreakInsuranceClaim,
+    ChitEvent, ChitEventType, StreakInsurance, TimestampMillis, UserCanisterStreakInsuranceClaim,
     UserCanisterStreakInsurancePayment,
 };
 
@@ -220,7 +220,7 @@ impl Streak {
         mut days_to_reinstate: Vec<u16>,
         daily_claims: Vec<TimestampMillis>,
         now: TimestampMillis,
-    ) -> Vec<ChitEarned> {
+    ) -> Vec<ChitEvent> {
         let now_day = self.timestamp_to_day(now).unwrap();
         let previous_streak = self.days(now);
 
@@ -248,9 +248,9 @@ impl Streak {
 
             // Calculate the timestamp of the end of the day
             let timestamp = self.day_to_timestamp_with_offset(day, utc_offset_mins) + DAY_IN_MS - 1;
-            new_events.push(ChitEarned {
+            new_events.push(ChitEvent {
                 timestamp,
-                reason: ChitEarnedReason::DailyClaimReinstated,
+                reason: ChitEventType::DailyClaimReinstated,
                 amount: 0,
             });
             daily_claims_map.insert(day, timestamp);
