@@ -38,7 +38,7 @@ async fn get_supported_standards(ledger: CanisterId) -> Result<(), C2CError> {
     });
 
     if should_fetch_index
-        && let Ok(Ok(index_canister_id)) = icrc_ledger_canister_c2c_client::icrc106_index_canister_principal(ledger).await
+        && let Ok(Ok(index_canister_id)) = icrc_ledger_canister_c2c_client::icrc106_get_index_principal(ledger).await
     {
         mutate_state(|state| {
             state

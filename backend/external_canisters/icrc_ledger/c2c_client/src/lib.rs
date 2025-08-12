@@ -10,7 +10,7 @@ generate_candid_c2c_call_no_args!(icrc1_name);
 generate_candid_c2c_call_no_args!(icrc1_supported_standards);
 generate_candid_c2c_call_no_args!(icrc1_symbol);
 generate_candid_c2c_call_no_args!(icrc1_total_supply);
-generate_candid_c2c_call_no_args!(icrc106_index_canister_principal);
+generate_candid_c2c_call_no_args!(icrc106_get_index_principal);
 
 // Updates
 generate_candid_c2c_call!(icrc2_approve);
