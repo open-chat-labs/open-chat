@@ -186,6 +186,7 @@ fn logo_id(logo: &str) -> Option<u128> {
 #[derive(Serialize)]
 pub struct TokenMetrics {
     ledger_canister_id: CanisterId,
+    index_canister_id: Option<CanisterId>,
     name: String,
     symbol: String,
     decimals: u8,
@@ -206,6 +207,7 @@ impl From<&TokenDetails> for TokenMetrics {
     fn from(value: &TokenDetails) -> Self {
         TokenMetrics {
             ledger_canister_id: value.ledger_canister_id,
+            index_canister_id: value.index_canister_id,
             name: value.name.clone(),
             symbol: value.symbol.clone(),
             decimals: value.decimals,
