@@ -3,34 +3,70 @@ use crate::{
     CommunityId, EventIndex, FcmData, MessageIndex, Reaction, TimestampMillis, UserId,
 };
 use candid::{CandidType, Principal};
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::{
     collections::HashMap,
     fmt::{Debug, Formatter},
 };
+use subenum::subenum;
 use ts_export::ts_export;
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum Notification {
+#[allow(clippy::large_enum_variant)]
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(bound = "T: Serialize + DeserializeOwned")]
+pub enum Notification<T = UserNotificationPayload> {
     #[serde(rename = "u")]
-    User(UserNotification),
+    User(UserNotification<T>),
     #[serde(rename = "b")]
     Bot(BotNotification),
 }
 
+impl<T> Debug for Notification<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Notification::User(u) => Formatter::debug_tuple(f, "User").field(u).finish(),
+            Notification::Bot(b) => Formatter::debug_tuple(f, "Bot").field(b).finish(),
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone)]
-pub struct UserNotification {
+#[serde(from = "UserNotificationCombined::<T>")]
+#[serde(bound = "T: Serialize + DeserializeOwned")]
+pub struct UserNotification<T = UserNotificationPayload> {
+    #[serde(rename = "s")]
+    pub sender: Option<UserId>,
+    #[serde(rename = "r")]
+    pub recipients: Vec<UserId>,
+    #[serde(rename = "n2")]
+    pub notification: T,
+}
+
+#[derive(Deserialize)]
+#[serde(bound = "T: DeserializeOwned")]
+pub struct UserNotificationCombined<T = UserNotificationPayload> {
     #[serde(rename = "s")]
     pub sender: Option<UserId>,
     #[serde(rename = "r")]
     pub recipients: Vec<UserId>,
     #[serde(rename = "n")]
-    pub notification_bytes: ByteBuf,
+    pub notification_bytes: Option<ByteBuf>,
+    #[serde(rename = "n2")]
+    pub notification: Option<T>,
+}
 
-    // Values relevant for the FCM notifications
-    #[serde(rename = "f", skip_deserializing)]
-    pub fcm_data: Option<FcmData>,
+impl<T: DeserializeOwned> From<UserNotificationCombined<T>> for UserNotification<T> {
+    fn from(value: UserNotificationCombined<T>) -> Self {
+        UserNotification {
+            sender: value.sender,
+            recipients: value.recipients,
+            notification: value
+                .notification
+                .unwrap_or_else(|| msgpack::deserialize_then_unwrap(&value.notification_bytes.unwrap())),
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -135,12 +171,11 @@ pub struct BotRegisteredEvent {
     pub bot_name: String,
 }
 
-impl Debug for UserNotification {
+impl<T> Debug for UserNotification<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("UserNotification")
             .field("sender", &self.sender)
             .field("recipients", &self.recipients)
-            .field("notification_bytes_length", &self.notification_bytes.len())
             .finish()
     }
 }
@@ -159,7 +194,7 @@ pub struct UserNotificationEnvelope {
     pub notification_bytes: ByteBuf,
     #[serde(rename = "t")]
     pub timestamp: TimestampMillis,
-    #[serde(rename = "f", skip_deserializing)]
+    #[serde(rename = "f")]
     pub fcm_data: Option<FcmData>,
 }
 
@@ -197,26 +232,41 @@ impl BotNotificationEnvelope {
 }
 
 #[ts_export]
-#[derive(Serialize)]
+#[subenum(
+    DirectChatUserNotificationPayload,
+    GroupChatUserNotificationPayload,
+    ChannelUserNotificationPayload
+)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum UserNotificationPayload {
+    #[subenum(ChannelUserNotificationPayload)]
     #[serde(rename = "ac")]
     AddedToChannel(AddedToChannelNotification),
+    #[subenum(DirectChatUserNotificationPayload)]
     #[serde(rename = "dm")]
     DirectMessage(DirectMessageNotification),
+    #[subenum(GroupChatUserNotificationPayload)]
     #[serde(rename = "gm")]
     GroupMessage(GroupMessageNotification),
+    #[subenum(ChannelUserNotificationPayload)]
     #[serde(rename = "cm")]
     ChannelMessage(ChannelMessageNotification),
+    #[subenum(DirectChatUserNotificationPayload)]
     #[serde(rename = "dr")]
     DirectReactionAdded(DirectReactionAddedNotification),
+    #[subenum(GroupChatUserNotificationPayload)]
     #[serde(rename = "gr")]
     GroupReactionAdded(GroupReactionAddedNotification),
+    #[subenum(ChannelUserNotificationPayload)]
     #[serde(rename = "cr")]
     ChannelReactionAdded(ChannelReactionAddedNotification),
+    #[subenum(DirectChatUserNotificationPayload)]
     #[serde(rename = "dt")]
     DirectMessageTipped(DirectMessageTipped),
+    #[subenum(GroupChatUserNotificationPayload)]
     #[serde(rename = "gt")]
     GroupMessageTipped(GroupMessageTipped),
+    #[subenum(ChannelUserNotificationPayload)]
     #[serde(rename = "ct")]
     ChannelMessageTipped(ChannelMessageTipped),
 }

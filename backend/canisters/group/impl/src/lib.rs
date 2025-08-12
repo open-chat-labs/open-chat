@@ -35,10 +35,10 @@ use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     AccessGateConfigInternal, Achievement, BotAdded, BotEventsCaller, BotInitiator, BotNotification, BotPermissions,
     BotRemoved, BotSubscriptions, BotUpdated, BuildVersion, Caller, CanisterId, ChatEventCategory, ChatId, ChatMetrics,
-    CommunityId, Cycles, Document, EventIndex, EventsCaller, FcmData, FrozenGroupInfo, GroupCanisterGroupChatSummary,
-    GroupMembership, GroupPermissions, GroupSubtype, IdempotentEnvelope, MAX_THREADS_IN_SUMMARY, MessageIndex, Milliseconds,
-    MultiUserChat, Notification, OCResult, Rules, TimestampMillis, Timestamped, UserId, UserNotification,
-    UserNotificationPayload, UserType,
+    CommunityId, Cycles, Document, EventIndex, EventsCaller, FrozenGroupInfo, GroupCanisterGroupChatSummary,
+    GroupChatUserNotificationPayload, GroupMembership, GroupPermissions, GroupSubtype, IdempotentEnvelope,
+    MAX_THREADS_IN_SUMMARY, MessageIndex, Milliseconds, MultiUserChat, Notification, OCResult, Rules, TimestampMillis,
+    Timestamped, UserId, UserNotification, UserType,
 };
 use user_canister::GroupCanisterEvent;
 use utils::env::Environment;
@@ -128,15 +128,13 @@ impl RuntimeState {
         &mut self,
         sender: Option<UserId>,
         recipients: Vec<UserId>,
-        notification: UserNotificationPayload,
-        fcm_data: FcmData,
+        notification: GroupChatUserNotificationPayload,
     ) {
         if !recipients.is_empty() {
             let notification = Notification::User(UserNotification {
                 sender,
                 recipients,
-                notification_bytes: ByteBuf::from(serialize_then_unwrap(notification)),
-                fcm_data: Some(fcm_data),
+                notification,
             });
             self.push_notification_inner(notification);
         }
@@ -156,7 +154,7 @@ impl RuntimeState {
         }
     }
 
-    fn push_notification_inner(&mut self, notification: Notification) {
+    fn push_notification_inner(&mut self, notification: Notification<GroupChatUserNotificationPayload>) {
         self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
             created_at: self.env.now(),
             idempotency_id: self.env.rng().next_u64(),
