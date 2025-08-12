@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Switch some endpoints over to using common response types ([#8447](https://github.com/open-chat-labs/open-chat/pull/8447))
 - Switch more endpoints over to using common response types ([#8450](https://github.com/open-chat-labs/open-chat/pull/8450))
 - Move signature verification to LocalUserIndex ([#8460](https://github.com/open-chat-labs/open-chat/pull/8460))
+- Return error if attempting to pay for premium item in CHAT ([#8466](https://github.com/open-chat-labs/open-chat/pull/8466))
 
 ### Fixed
 
