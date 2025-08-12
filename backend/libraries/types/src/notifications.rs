@@ -33,7 +33,6 @@ impl<T> Debug for Notification<T> {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-#[serde(from = "UserNotificationCombined::<T>")]
 #[serde(bound = "T: Serialize + DeserializeOwned")]
 pub struct UserNotification<T = UserNotificationPayload> {
     #[serde(rename = "s")]
@@ -42,31 +41,6 @@ pub struct UserNotification<T = UserNotificationPayload> {
     pub recipients: Vec<UserId>,
     #[serde(rename = "n2")]
     pub notification: T,
-}
-
-#[derive(Deserialize)]
-#[serde(bound = "T: DeserializeOwned")]
-pub struct UserNotificationCombined<T = UserNotificationPayload> {
-    #[serde(rename = "s")]
-    pub sender: Option<UserId>,
-    #[serde(rename = "r")]
-    pub recipients: Vec<UserId>,
-    #[serde(rename = "n")]
-    pub notification_bytes: Option<ByteBuf>,
-    #[serde(rename = "n2")]
-    pub notification: Option<T>,
-}
-
-impl<T: DeserializeOwned> From<UserNotificationCombined<T>> for UserNotification<T> {
-    fn from(value: UserNotificationCombined<T>) -> Self {
-        UserNotification {
-            sender: value.sender,
-            recipients: value.recipients,
-            notification: value
-                .notification
-                .unwrap_or_else(|| msgpack::deserialize_then_unwrap(&value.notification_bytes.unwrap())),
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
