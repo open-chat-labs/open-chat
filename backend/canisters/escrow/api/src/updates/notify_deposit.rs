@@ -5,7 +5,6 @@ use serde::{Deserialize, Serialize};
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub swap_id: u32,
-    #[serde(alias = "user_id")]
     pub deposited_by: Option<Principal>,
 }
 

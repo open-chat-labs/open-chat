@@ -509,10 +509,6 @@ impl UserMap {
         self.users.values()
     }
 
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut User> {
-        self.users.values_mut()
-    }
-
     pub fn len(&self) -> usize {
         self.users.len()
     }
