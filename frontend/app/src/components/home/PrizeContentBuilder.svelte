@@ -79,7 +79,7 @@
     let balanceWithRefresh: BalanceWithRefresh;
     let tokenInputState: "ok" | "zero" | "too_low" | "too_high" = $state("ok");
     let sending = $state(false);
-    let requiresCaptcha = $state(true);
+    let requiresAuth = $state(true);
 
     let anyUser = $state(true);
     $effect(() => {
@@ -168,7 +168,7 @@
                 createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
             },
             prizes,
-            requiresCaptcha,
+            requiresCaptcha: requiresAuth,
         };
 
         sending = true;
@@ -413,8 +413,8 @@
                                 <Legend label={i18nKey("prizes.restrictions")} />
                                 <Checkbox
                                     id="captcha"
-                                    label={i18nKey(`prizes.requiresCaptcha`)}
-                                    bind:checked={requiresCaptcha} />
+                                    label={i18nKey(`prizes.authRequiredLabel`)}
+                                    bind:checked={requiresAuth} />
                                 <Checkbox
                                     id="any_user"
                                     label={i18nKey(`prizes.anyone`)}

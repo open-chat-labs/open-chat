@@ -1,5 +1,7 @@
 <script lang="ts">
+    import type { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
     import {
+        AuthProvider,
         chitBands,
         chitStateStore,
         cryptoLookup,
@@ -17,6 +19,7 @@
     import { Confetti } from "svelte-confetti";
     import { _ } from "svelte-i18n";
     import Clock from "svelte-material-icons/Clock.svelte";
+    import Fingerprint from "svelte-material-icons/Fingerprint.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { claimsStore } from "../../stores/claims";
     import { rtlStore } from "../../stores/rtl";
@@ -26,11 +29,11 @@
     import Diamond from "../icons/Diamond.svelte";
     import SpinningToken from "../icons/SpinningToken.svelte";
     import Verified from "../icons/Verified.svelte";
-    import RotationChallenge from "../RotationChallenge.svelte";
     import SecureButton from "../SecureButton.svelte";
     import Translatable from "../Translatable.svelte";
     import Badges from "./profile/Badges.svelte";
     import ChitEarnedBadge from "./profile/ChitEarnedBadge.svelte";
+    import ReAuthenticateModal from "./profile/ReAuthenticateModal.svelte";
     import Streak from "./profile/Streak.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -46,12 +49,19 @@
     let { content, chatId, messageId, me, intersecting }: Props = $props();
 
     let progressWidth = $state(0);
+    let mouseEvent = $state<MouseEvent>();
 
     function claim(e: MouseEvent, passedChallenge: boolean) {
         if (content.requiresCaptcha && !passedChallenge) {
+            mouseEvent = e;
             showChallenge = true;
             return;
         }
+
+        // if (content.requiresCaptcha && !passedChallenge) {
+        //     showChallenge = true;
+        //     return;
+        // }
 
         showChallenge = false;
         if (e.isTrusted && chatId.kind !== "direct_chat" && !me && userEligible) {
@@ -120,18 +130,23 @@
     let spin = $derived(intersecting && !finished && !allClaimed);
     let mirror = $derived(intersecting && !$mobileWidth);
 
-    function onChallengeResult(e: MouseEvent, success: boolean) {
-        if (success) {
-            claim(e, success);
-        } else {
-            toastStore.showFailureToast(i18nKey("Sorry you failed the challenge!"));
-            showChallenge = false;
+    function reauthenticated(_detail: {
+        key: ECDSAKeyIdentity;
+        delegation: DelegationChain;
+        provider: AuthProvider;
+    }) {
+        if (mouseEvent !== undefined) {
+            claim(mouseEvent, true);
         }
     }
 </script>
 
 {#if showChallenge}
-    <RotationChallenge onClose={() => (showChallenge = false)} onResult={onChallengeResult} />
+    <ReAuthenticateModal
+        onCancel={() => (showChallenge = false)}
+        onSuccess={reauthenticated}
+        title={i18nKey("prizes.authRequiredTitle")}
+        message={i18nKey("prizes.authRequiredMessage")} />
 {/if}
 
 <div class={`prize ${content.token}`}>
@@ -171,9 +186,14 @@
                     <Translatable resourceKey={i18nKey("prizes.restrictedMessage")} />
                     {#if content.requiresCaptcha}
                         <div class="captcha">
-                            <span class="captcha-icon">🤪</span>
+                            <span class="fingerprint-icon">
+                                <Fingerprint
+                                    viewBox={"0 -1 24 24"}
+                                    size={"1.2em"}
+                                    color={"var(--accent)"} />
+                            </span>
                             <Translatable
-                                resourceKey={i18nKey("prizes.requiresCaptcha", {
+                                resourceKey={i18nKey("prizes.authRequiredLabel", {
                                     n: content.streakOnly,
                                 })} />
                         </div>
@@ -420,6 +440,7 @@
             display: flex;
             flex-direction: row;
             gap: $sp3;
+            align-items: center;
             cursor: pointer;
 
             :first-child {
@@ -428,8 +449,7 @@
         }
     }
 
-    .captcha-icon {
-        @include font-size(fs-110);
+    .fingerprint-icon {
         text-align: center;
     }
 
