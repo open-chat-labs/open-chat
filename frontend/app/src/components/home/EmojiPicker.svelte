@@ -69,16 +69,14 @@
         const emojiPicker = document.querySelector("emoji-picker");
 
         if (emojiPicker && customEmojis) {
-            emojiPicker.customEmoji = [
-                ...customEmojis.entries().map(([_, emoji]) => {
-                    return {
-                        name: emoji.code,
-                        shortcodes: [emoji.code],
-                        url: emoji.url,
-                        category: emojiGroupNames[emoji.premiumItem],
-                    };
-                }),
-            ];
+            emojiPicker.customEmoji = [...customEmojis.entries()].map(([_, emoji]) => {
+                return {
+                    name: emoji.code,
+                    shortcodes: [emoji.code],
+                    url: emoji.url,
+                    category: emojiGroupNames[emoji.premiumItem],
+                };
+            });
         }
         emojiPicker?.addEventListener("emoji-click", onClick);
         emojiPicker?.addEventListener("skin-tone-change", skinToneChanged);

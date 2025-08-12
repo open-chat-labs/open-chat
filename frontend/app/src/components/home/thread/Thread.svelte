@@ -213,7 +213,7 @@
 
     function onStartTyping() {
         if (chat !== undefined) {
-            client.startTyping(chat, $currentUserIdStore, threadRootMessageIndex);
+            client.startTyping(chat.id, $currentUserIdStore, threadRootMessageIndex);
         }
     }
 
