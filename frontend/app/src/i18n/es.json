@@ -1369,6 +1369,9 @@
     "prizes": {
         "allClaimed": "Completamente reclamado",
         "anyone": "cualquier usuario",
+        "authRequiredLabel": "Requiere autenticación",
+        "authRequiredMessage": "Para reclamar este premio primero debes volver a autenticarte.",
+        "authRequiredTitle": "Inicia sesión para reclamar",
         "claim": "Reclamar",
         "claimed": "¡Éxito!",
         "claimFailed": "¡Lo sentimos, su reclamo no tuvo éxito! Mejor suerte la próxima vez.",

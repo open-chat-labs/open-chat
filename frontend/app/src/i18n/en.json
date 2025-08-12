@@ -1369,6 +1369,9 @@
     "prizes": {
         "allClaimed": "Fully claimed",
         "anyone": "Any user",
+        "authRequiredLabel": "Requires authentication",
+        "authRequiredMessage": "To claim this prize you must first re-authenticate.",
+        "authRequiredTitle": "Sign in to claim",
         "claim": "Claim",
         "claimed": "Success!",
         "claimFailed": "Sorry your claim was unsuccessfull! Better luck next time. ",
