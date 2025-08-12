@@ -10,7 +10,7 @@ use user_index_canister::LocalUserIndexEvent;
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
 async fn pay_for_premium_item(args: Args) -> Response {
-    match read_state(|state| prepare(args.item_id, args.expected_cost, state)) {
+    match read_state(|state| prepare(&args, state)) {
         Ok(PrepareResult { user_id }) => {
             match user_canister_c2c_client::c2c_pay_for_premium_item(
                 user_id.into(),
@@ -55,17 +55,21 @@ struct PrepareResult {
     user_id: UserId,
 }
 
-fn prepare(item_id: u32, expected_cost: u32, state: &RuntimeState) -> OCResult<PrepareResult> {
+fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareResult> {
     let user_id = state.calling_user_id();
     if !state.data.local_users.contains(&user_id) {
         return Err(OCErrorCode::InitiatorNotFound.into());
     }
 
-    let Some(cost) = state.data.premium_items.chit_cost(&item_id) else {
+    let Some(cost) = state.data.premium_items.chit_cost(&args.item_id) else {
         return Err(OCErrorCode::ItemNotFound.into());
     };
 
-    if cost != expected_cost {
+    if args.pay_in_chat {
+        return Err(OCErrorCode::CurrencyNotSupported.into());
+    }
+
+    if cost != args.expected_cost {
         Err(OCErrorCode::PriceMismatch.into())
     } else {
         Ok(PrepareResult { user_id })

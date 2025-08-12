@@ -258,6 +258,7 @@ fn build_swap_client(args: &Args, state: &RuntimeState) -> Box<dyn SwapClient> {
             ))
         }
         ExchangeArgs::KongSwap(kongswap) => Box::new(KongSwapClient::new(kongswap.swap_canister_id, input_token, output_token)),
+        ExchangeArgs::Sonic(_) => unimplemented!(),
     }
 }
 
