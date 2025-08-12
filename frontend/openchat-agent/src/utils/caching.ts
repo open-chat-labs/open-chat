@@ -1019,7 +1019,7 @@ function messageToEvent(
                     lifetimeDiamondOnly: message.content.lifetimeDiamondOnly,
                     uniquePersonOnly: message.content.uniquePersonOnly,
                     streakOnly: message.content.streakOnly,
-                    requiresAuth: message.content.requiresAuth,
+                    requiresCaptcha: message.content.requiresCaptcha,
                 } as PrizeContent;
                 break;
             case "p2p_swap_content_initial":
