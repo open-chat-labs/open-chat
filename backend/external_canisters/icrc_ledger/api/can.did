@@ -115,5 +115,5 @@ service : {
     icrc2_approve : (ICRC2_ApproveArgs) -> (variant { Ok : nat; Err : ICRC2_ApproveError });
     icrc2_transfer_from : (ICRC2_TransferFromArgs) -> (variant { Ok : nat; Err : ICRC2_TransferFromError });
 
-    icrc106_get_index_principal : () -> GetIndexPrincipalsResult query;
+    icrc106_get_index_principal : () -> (GetIndexPrincipalsResult) query;
 };

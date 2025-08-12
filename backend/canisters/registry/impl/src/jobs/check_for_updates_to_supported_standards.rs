@@ -37,15 +37,15 @@ async fn get_supported_standards(ledger: CanisterId) -> Result<(), C2CError> {
         supports_icrc106 && state.data.tokens.get(ledger).is_some_and(|t| t.index_canister_id.is_none())
     });
 
-    if should_fetch_index {
-        if let Ok(Ok(index_canister_id)) = icrc_ledger_canister_c2c_client::icrc106_index_canister_principal(ledger).await {
-            mutate_state(|state| {
-                state
-                    .data
-                    .tokens
-                    .set_index_canister(ledger, index_canister_id, state.env.now())
-            });
-        }
+    if should_fetch_index
+        && let Ok(Ok(index_canister_id)) = icrc_ledger_canister_c2c_client::icrc106_index_canister_principal(ledger).await
+    {
+        mutate_state(|state| {
+            state
+                .data
+                .tokens
+                .set_index_canister(ledger, index_canister_id, state.env.now())
+        });
     }
 
     Ok(())
