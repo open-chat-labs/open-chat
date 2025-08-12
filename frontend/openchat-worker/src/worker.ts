@@ -2114,7 +2114,9 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.reinstateMissedDailyClaims(payload.userId, payload.days)
+                    agent.reinstateMissedDailyClaims(payload.userId, payload.days),
+                );
+                break;
 
             case "verifyAccountLinkingCode":
                 executeThenReply(

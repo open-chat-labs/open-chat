@@ -1584,6 +1584,7 @@ type ReinstateMissedDailyClaims = {
     kind: "reinstateMissedDailyClaims";
     userId: string;
     days: number[];
+};
 
 type VerifyAccountLinkingCode = {
     kind: "verifyAccountLinkingCode";
