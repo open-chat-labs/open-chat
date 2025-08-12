@@ -482,7 +482,6 @@ struct Data {
     pub notifications: EventStream<NotificationEnvelope>,
     pub blocked_users: UserIdsSet,
     pub fcm_token_store: FcmTokenStore,
-    #[serde(default)]
     pub premium_items: PremiumItems,
 }
 
