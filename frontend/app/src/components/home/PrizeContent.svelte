@@ -51,19 +51,14 @@
     let progressWidth = $state(0);
     let mouseEvent = $state<MouseEvent>();
 
-    function claim(e: MouseEvent, passedChallenge: boolean) {
-        if (content.requiresCaptcha && !passedChallenge) {
+    function claim(e: MouseEvent, authenticated: boolean) {
+        if (content.requiresAuth && !authenticated) {
             mouseEvent = e;
-            showChallenge = true;
+            showAuthentication = true;
             return;
         }
 
-        // if (content.requiresCaptcha && !passedChallenge) {
-        //     showChallenge = true;
-        //     return;
-        // }
-
-        showChallenge = false;
+        showAuthentication = false;
         if (e.isTrusted && chatId.kind !== "direct_chat" && !me && userEligible) {
             claimsStore.add(messageId);
             client
@@ -123,10 +118,10 @@
             content.lifetimeDiamondOnly ||
             content.uniquePersonOnly ||
             content.streakOnly > 0 ||
-            content.requiresCaptcha ||
+            content.requiresAuth ||
             content.minChitEarned > 0,
     );
-    let showChallenge = $state(false);
+    let showAuthentication = $state(false);
     let spin = $derived(intersecting && !finished && !allClaimed);
     let mirror = $derived(intersecting && !$mobileWidth);
 
@@ -141,9 +136,9 @@
     }
 </script>
 
-{#if showChallenge}
+{#if showAuthentication}
     <ReAuthenticateModal
-        onCancel={() => (showChallenge = false)}
+        onCancel={() => (showAuthentication = false)}
         onSuccess={reauthenticated}
         title={i18nKey("prizes.authRequiredTitle")}
         message={i18nKey("prizes.authRequiredMessage")} />
@@ -184,7 +179,7 @@
             {#if restrictedPrize}
                 <div class="restricted">
                     <Translatable resourceKey={i18nKey("prizes.restrictedMessage")} />
-                    {#if content.requiresCaptcha}
+                    {#if content.requiresAuth}
                         <div class="captcha">
                             <span class="fingerprint-icon">
                                 <Fingerprint

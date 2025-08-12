@@ -168,7 +168,7 @@
                 createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
             },
             prizes,
-            requiresCaptcha: requiresAuth,
+            requiresAuth,
         };
 
         sending = true;

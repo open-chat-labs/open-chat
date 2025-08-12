@@ -772,7 +772,7 @@ function prizeContent(value: TPrizeContent): PrizeContent {
         token: value.token_symbol,
         endDate: value.end_date,
         caption: value.caption,
-        requiresCaptcha: value.requires_captcha,
+        requiresAuth: value.requires_captcha,
         minChitEarned: value.min_chit_earned,
     };
 }
@@ -1938,7 +1938,7 @@ export function apiPrizeContentInitial(domain: PrizeContentInitial): TPrizeConte
         streak_only: domain.streakOnly,
         min_chit_earned: domain.minChitEarned,
         prizes_v2: domain.prizes,
-        requires_captcha: domain.requiresCaptcha,
+        requires_captcha: domain.requiresAuth,
     };
 }
 
