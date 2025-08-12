@@ -1,6 +1,6 @@
 <script lang="ts">
     import { shakeElements } from "@src/utils/shake";
-    import { subscribe, type ChitEarned, type OpenChat } from "openchat-client";
+    import { subscribe, type ChitEvent, type OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { Confetti } from "svelte-confetti";
     import { _ } from "svelte-i18n";
@@ -26,7 +26,7 @@
     let imageUrl = $state("/assets/chit.svg");
     let maxStreak = $state(false);
 
-    function trigger(events: ChitEarned[]) {
+    function trigger(events: ChitEvent[]) {
         maxStreak = false;
         amount = events.reduce((total, chit) => total + chit.amount, 0);
         labels = events.reduce((labels, c) => {
