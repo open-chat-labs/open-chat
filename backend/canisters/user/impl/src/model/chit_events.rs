@@ -83,6 +83,18 @@ impl ChitEvents {
             .collect()
     }
 
+    pub fn iter_daily_claims(&self) -> impl DoubleEndedIterator<Item = TimestampMillis> + '_ {
+        self.events
+            .iter()
+            .filter(|e| {
+                matches!(
+                    e.reason,
+                    ChitEventType::DailyClaim | ChitEventType::DailyClaimReinstated | ChitEventType::StreakInsuranceClaim
+                )
+            })
+            .map(|e| e.timestamp)
+    }
+
     pub fn last_updated(&self) -> TimestampMillis {
         self.events.last().map(|e| e.timestamp).unwrap_or_default()
     }

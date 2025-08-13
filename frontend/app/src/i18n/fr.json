@@ -1369,6 +1369,9 @@
     "prizes": {
         "allClaimed": "Entièrement revendiqué",
         "anyone": "Tout utilisateur",
+        "authRequiredLabel": "Nécessite une authentification",
+        "authRequiredMessage": "Pour réclamer ce prix, vous devez d’abord vous réauthentifier.",
+        "authRequiredTitle": "Connectez-vous pour réclamer",
         "claim": "Prétendre",
         "claimed": "Succès!",
         "claimFailed": "Désolé, votre réclamation n'a pas abouti ! Plus de chance la prochaine fois.",

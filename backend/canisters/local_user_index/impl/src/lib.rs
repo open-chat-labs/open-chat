@@ -199,15 +199,20 @@ impl RuntimeState {
         });
     }
 
-    pub fn push_event_to_user(&mut self, user_id: UserId, event: UserEvent, now: TimestampMillis) {
-        self.data.user_event_sync_queue.push(
-            user_id,
-            IdempotentEnvelope {
-                created_at: now,
-                idempotency_id: self.env.rng().next_u64(),
-                value: event,
-            },
-        );
+    pub fn push_event_to_user(&mut self, user_id: UserId, event: UserEvent, now: TimestampMillis) -> bool {
+        if self.data.local_users.contains(&user_id) {
+            self.data.user_event_sync_queue.push(
+                user_id,
+                IdempotentEnvelope {
+                    created_at: now,
+                    idempotency_id: self.env.rng().next_u64(),
+                    value: event,
+                },
+            );
+            true
+        } else {
+            false
+        }
     }
 
     pub fn push_event_to_group(&mut self, canister_id: CanisterId, event: GroupEvent, now: TimestampMillis) {
@@ -477,7 +482,6 @@ struct Data {
     pub notifications: EventStream<NotificationEnvelope>,
     pub blocked_users: UserIdsSet,
     pub fcm_token_store: FcmTokenStore,
-    #[serde(default)]
     pub premium_items: PremiumItems,
 }
 

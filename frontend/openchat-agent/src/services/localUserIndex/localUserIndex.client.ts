@@ -47,6 +47,7 @@ import {
     LocalUserIndexJoinGroupResponse,
     LocalUserIndexRegisterUserArgs,
     LocalUserIndexRegisterUserResponse,
+    LocalUserIndexReinstateMissedDailyClaimsArgs,
     LocalUserIndexUninstallBotArgs,
     LocalUserIndexUninstallBotResponse,
     LocalUserIndexWithdrawFromIcpswapArgs,
@@ -68,7 +69,12 @@ import {
     principalStringToBytes,
 } from "../../utils/mapping";
 import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
-import { apiChatIdentifier, apiExternalBotPermissions, joinGroupResponse } from "../common/chatMappersV2";
+import {
+    apiChatIdentifier,
+    apiExternalBotPermissions,
+    isSuccess,
+    joinGroupResponse,
+} from "../common/chatMappersV2";
 import {
     accessTokenResponse,
     activeProposalTalliesResponse,
@@ -476,6 +482,22 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
             withdrawFromIcpSwapResponse,
             LocalUserIndexWithdrawFromIcpswapArgs,
             LocalUserIndexWithdrawFromIcpswapResponse,
+        );
+    }
+
+    reinstateMissedDailyClaims(
+        userId: string,
+        days: number[],
+    ): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "reinstate_missed_daily_claims",
+            {
+                user_id: principalStringToBytes(userId),
+                days,
+            },
+            isSuccess,
+            LocalUserIndexReinstateMissedDailyClaimsArgs,
+            UnitResult,
         );
     }
 }

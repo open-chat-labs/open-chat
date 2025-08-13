@@ -62,7 +62,8 @@ impl Pusher {
             .body(payload.data.into_vec())
             .send()
             .await
-            .unwrap();
+            .map_err(|e| e.to_string())?;
+
         Ok(())
     }
 }

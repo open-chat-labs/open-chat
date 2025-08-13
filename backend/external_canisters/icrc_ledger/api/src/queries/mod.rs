@@ -1,3 +1,4 @@
+pub mod icrc106_get_index_principal;
 pub mod icrc1_balance_of;
 pub mod icrc1_decimals;
 pub mod icrc1_fee;

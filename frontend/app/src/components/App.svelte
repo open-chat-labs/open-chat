@@ -188,6 +188,7 @@
             setCommunityUpgradeConcurrency,
             setUserUpgradeConcurrency,
             markLocalGroupIndexFull,
+            reinstateMissedDailyClaims,
             setAirdropConfig,
             setDiamondMembershipFees,
             setTokenEnabled,
@@ -455,6 +456,16 @@
                 console.log("LocalGroupIndex marked as full", full);
             } else {
                 console.log("Failed to mark LocalGroupIndex as full", full);
+            }
+        });
+    }
+
+    function reinstateMissedDailyClaims(userId: string, days: number[]): void {
+        client.reinstateMissedDailyClaims(userId, days).then((success) => {
+            if (success) {
+                console.log("Reinstated missed daily claims");
+            } else {
+                console.log("Failed to reinstate missed daily claims");
             }
         });
     }

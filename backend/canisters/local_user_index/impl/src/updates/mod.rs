@@ -36,6 +36,7 @@ pub mod join_group;
 pub mod pay_for_premium_item;
 pub mod push_events;
 pub mod register_user;
+pub mod reinstate_missed_daily_claims;
 pub mod remove_notifications;
 pub mod uninstall_bot;
 pub mod withdraw_from_icpswap;
