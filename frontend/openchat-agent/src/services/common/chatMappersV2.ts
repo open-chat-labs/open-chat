@@ -1978,37 +1978,19 @@ export function apiPendingCryptoContent(domain: CryptocurrencyContent): TCryptoC
 
 export function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): TCryptoTransaction {
     if (domain.kind === "pending") {
-        if (domain.token === "ICP") {
-            return {
-                Pending: {
-                    NNS: {
-                        ledger: principalStringToBytes(domain.ledger),
-                        token_symbol: domain.token,
-                        to: {
-                            User: principalStringToBytes(domain.recipient),
-                        },
-                        amount: apiICP(domain.amountE8s),
-                        fee: undefined,
-                        memo: domain.memo,
-                        created: domain.createdAtNanos,
-                    },
+        return {
+            Pending: {
+                ICRC1: {
+                    ledger: principalStringToBytes(domain.ledger),
+                    token_symbol: domain.token,
+                    to: principalToIcrcAccount(domain.recipient),
+                    amount: domain.amountE8s,
+                    fee: domain.feeE8s ?? BigInt(0),
+                    memo: mapOptional(domain.memo, bigintToBytes),
+                    created: domain.createdAtNanos,
                 },
-            };
-        } else {
-            return {
-                Pending: {
-                    ICRC1: {
-                        ledger: principalStringToBytes(domain.ledger),
-                        token_symbol: domain.token,
-                        to: principalToIcrcAccount(domain.recipient),
-                        amount: domain.amountE8s,
-                        fee: domain.feeE8s ?? BigInt(0),
-                        memo: mapOptional(domain.memo, bigintToBytes),
-                        created: domain.createdAtNanos,
-                    },
-                },
-            };
-        }
+            },
+        };
     }
     throw new Error("Transaction is not of type 'Pending': " + JSON.stringify(domain));
 }
