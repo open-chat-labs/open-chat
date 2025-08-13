@@ -238,7 +238,7 @@
 
 <style lang="scss">
     .profile_card:not(.userProfileMode) {
-        width: 320px;
+        width: 350px;
         @include mobile() {
             width: 100%;
         }
