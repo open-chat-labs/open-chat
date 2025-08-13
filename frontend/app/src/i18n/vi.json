@@ -1380,6 +1380,9 @@
     "prizes": {
         "allClaimed": "Yêu cầu đầy đủ",
         "anyone": "Bất kỳ người dùng nào",
+        "authRequiredLabel": "Yêu cầu xác thực",
+        "authRequiredMessage": "Để nhận giải thưởng này, trước tiên bạn phải xác thực lại.",
+        "authRequiredTitle": "Đăng nhập để yêu cầu",
         "claim": "Yêu cầu",
         "claimed": "Sự thành công!",
         "claimFailed": "Rất tiếc, khiếu nại của bạn không thành công! Chúc may mắn lần sau.",

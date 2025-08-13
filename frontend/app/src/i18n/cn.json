@@ -1380,6 +1380,9 @@
     "prizes": {
         "allClaimed": "已被领完",
         "anyone": "任何用户",
+        "authRequiredLabel": "需要身份验证",
+        "authRequiredMessage": "要领取此奖品，您必须先重新验证身份。",
+        "authRequiredTitle": "登录领取",
         "claim": "领取",
         "claimed": "已领取！",
         "claimFailed": "抱歉，您未领取成功！祝你下次好运。",

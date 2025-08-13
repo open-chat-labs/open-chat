@@ -1380,6 +1380,9 @@
     "prizes": {
         "allClaimed": "Całość odebrana",
         "anyone": "Dowolny użytkownik",
+        "authRequiredLabel": "Wymaga uwierzytelnienia",
+        "authRequiredMessage": "Aby odebrać nagrodę musisz się najpierw ponownie uwierzytelnić.",
+        "authRequiredTitle": "Zaloguj się, aby złożyć wniosek",
         "claim": "Prawo",
         "claimed": "Odebrano",
         "claimFailed": "Przykro nam, że Twoja reklamacja zakończyła się niepowodzeniem! Więcej szczęścia następnym razem. ",

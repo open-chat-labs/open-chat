@@ -24,6 +24,7 @@
     const client = getContext<OpenChat>("client");
 
     interface Props {
+        autoSelect?: boolean;
         message: ResourceKey;
         onSuccess: (args: {
             key: ECDSAKeyIdentity;
@@ -32,7 +33,7 @@
         }) => void;
     }
 
-    let { message, onSuccess }: Props = $props();
+    let { message, onSuccess, autoSelect = false }: Props = $props();
 
     let error: string | undefined = $state();
     let emailSigninHandler = new EmailSigninHandler(client, "account_linking", false);
@@ -47,6 +48,9 @@
 
     onMount(() => {
         emailSigninHandler.addEventListener("email_signin_event", emailEvent);
+        if (autoSelect) {
+            login($selectedAuthProviderStore);
+        }
         return () => {
             emailSigninHandler.removeEventListener("email_signin_event", emailEvent);
             emailSigninHandler.destroy();
@@ -74,12 +78,16 @@
         error = undefined;
 
         if (provider === AuthProvider.PASSKEY) {
-            const [key, delegation] = await client.reSignInWithCurrentWebAuthnIdentity();
-            onSuccess({
-                key,
-                delegation,
-                provider,
-            });
+            try {
+                const [key, delegation] = await client.reSignInWithCurrentWebAuthnIdentity();
+                onSuccess({
+                    key,
+                    delegation,
+                    provider,
+                });
+            } catch (err) {
+                error = "identity.failure.loginApprover";
+            }
         } else if (provider === AuthProvider.EMAIL) {
             authStep = "signing_in_with_email";
             emailSigninHandler.generateMagicLink(email).then((resp) => {

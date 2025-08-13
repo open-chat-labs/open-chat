@@ -410,7 +410,6 @@ struct Data {
     pub streak_insurance_logs: StreakInsuranceLogs,
     pub idempotency_checker: IdempotencyChecker,
     pub blocked_users: UserIdsSet,
-    #[serde(default)]
     pub premium_items: PremiumItems,
 }
 

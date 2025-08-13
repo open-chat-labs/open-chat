@@ -44,15 +44,11 @@ impl TokenSwaps {
 pub struct TokenSwap {
     pub args: user_canister::swap_tokens::Args,
     pub started: TimestampMillis,
-    #[serde(default)]
     pub icrc2: bool,
-    #[serde(default)]
     pub auto_withdrawals: bool,
     pub deposit_account: SwapSubtask<Account>,
-    #[serde(alias = "transfer")]
     pub transfer_or_approval: SwapSubtask<u64>, // Block Index
     pub notified_dex_at: SwapSubtask,
-    #[serde(alias = "amount_swapped")]
     pub swap_result: SwapSubtask<Result<SwapSuccess, String>>,
     pub withdrawn_from_dex_at: SwapSubtask<u128>,
     pub success: Option<Timestamped<bool>>,

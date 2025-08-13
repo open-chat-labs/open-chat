@@ -1380,6 +1380,9 @@
     "prizes": {
         "allClaimed": "全て請求済み",
         "anyone": "すべてのユーザー",
+        "authRequiredLabel": "認証が必要です",
+        "authRequiredMessage": "この賞品を受け取るには、まず再認証する必要があります。",
+        "authRequiredTitle": "請求するにはサインインしてください",
         "claim": "請求",
         "claimed": "成功！",
         "claimFailed": "申し訳ありませんが、あなたの請求は失敗しました!次回は頑張ってください。",

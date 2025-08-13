@@ -1380,6 +1380,9 @@
     "prizes": {
         "allClaimed": "נתבע במלואו",
         "anyone": "כל משתמש",
+        "authRequiredLabel": "דורש אימות",
+        "authRequiredMessage": "כדי לתבוע פרס זה עליך תחילה לאמת מחדש.",
+        "authRequiredTitle": "היכנס כדי לתבוע",
         "claim": "תְבִיעָה",
         "claimed": "הַצלָחָה!",
         "claimFailed": "מצטער שהטענה שלך לא צלחה! בהצלחה בפעם הבאה.",

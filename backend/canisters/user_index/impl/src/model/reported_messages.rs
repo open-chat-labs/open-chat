@@ -185,7 +185,6 @@ impl ReportOutcome {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ViolatedRules {
-    #[serde(alias = "rule_id")]
     pub rule_index: usize,
     pub rejected: u32,
 }

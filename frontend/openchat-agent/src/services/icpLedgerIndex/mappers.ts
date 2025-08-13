@@ -11,6 +11,7 @@ import {
     CommonResponses,
     UnsupportedValueError,
 } from "openchat-shared";
+import { memoBytesToString } from "../ledgerIndex/mappers";
 
 export function accountTransactions(candid: ApiGetTransactionsResult): AccountTransactionResult {
     if ("Err" in candid) {
@@ -37,8 +38,11 @@ function timestampToDate(ts: ApiTimeStamp): Date {
 function transaction(candid: ApiTransactionWithId): AccountTransaction {
     // the candid types are quite fuzzy here - the old "product type when it should be sum type" thing
     const timestamp = optional(candid.transaction.timestamp, timestampToDate) ?? new Date();
-    const memo =
-        optional(candid.transaction.icrc1_memo, convertMemo) ?? candid.transaction.memo.toString();
+    const memoBytes =
+        optional(candid.transaction.icrc1_memo, identity) ??
+        toBigEndianBytes(candid.transaction.memo);
+    const memo = memoBytesToString(memoBytes);
+
     const createdAt = optional(candid.transaction.created_at_time, timestampToDate);
 
     if ("Transfer" in candid.transaction.operation) {
@@ -101,6 +105,15 @@ function transaction(candid: ApiTransactionWithId): AccountTransaction {
     throw new Error(`Unexpected transaction type received: ${candid.transaction}`);
 }
 
-function convertMemo(candid: Uint8Array | number[]): string {
-    return [...candid].map((n) => String.fromCharCode(n)).join("");
+function toBigEndianBytes(value: bigint): number[] {
+    const buffer = new ArrayBuffer(8);
+    const view = new DataView(buffer);
+    view.setBigUint64(0, value, false);
+    const bytes = [...new Uint8Array(buffer)];
+    const start = bytes.findIndex((x) => x > 0);
+    if (start === -1) {
+        return [];
+    } else {
+        return bytes.slice(start);
+    }
 }

@@ -7,7 +7,6 @@ use types::{FileId, RejectedReason};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Users {
-    #[serde(alias = "users_stable")]
     users: UsersMap,
 }
 
