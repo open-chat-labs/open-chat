@@ -87,6 +87,8 @@ members = [
     "backend/external_canisters/modclub/c2c_client",
     "backend/external_canisters/nns_governance/api",
     "backend/external_canisters/nns_governance/c2c_client",
+    "backend/external_canisters/one_sec_minter/api",
+    "backend/external_canisters/one_sec_minter/c2c_client",
     "backend/external_canisters/sns_archive/api",
     "backend/external_canisters/sns_archive/c2c_client",
     "backend/external_canisters/sns_governance/api",

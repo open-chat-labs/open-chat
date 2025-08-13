@@ -7067,6 +7067,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a4895175b425cb1f87721b59f0f286c2092bd4af812243672510e1ac53e2e0ad"
 
 [[package]]
+name = "one_sec_minter_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "icrc-ledger-types",
+ "serde",
+]
+
+[[package]]
+name = "one_sec_minter_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "ic-cdk",
+ "one_sec_minter_canister",
+ "types",
+]
+
+[[package]]
 name = "online_users_canister"
 version = "0.1.0"
 dependencies = [
