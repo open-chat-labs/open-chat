@@ -333,6 +333,10 @@
     function onStreakChanged() {
         minStreak = streakOnly ? 3 : 0;
     }
+
+    function onChitChanged() {
+        minChitEarned = chitOnly ? 10_000 : 0;
+    }
 </script>
 
 <Overlay dismissible>
@@ -510,6 +514,7 @@
                                 <Checkbox
                                     id="chit_only"
                                     label={i18nKey(`prizes.onlyChit`)}
+                                    onChange={onChitChanged}
                                     bind:checked={chitOnly} />
                                 {#if chitOnly}
                                     <Select bind:value={minChitEarned}>
