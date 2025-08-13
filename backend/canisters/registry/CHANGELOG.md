@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Expose `liquid_cycles_balance` in metrics ([#8350](https://github.com/open-chat-labs/open-chat/pull/8350))
 - Switch some endpoints over to using common response types ([#8450](https://github.com/open-chat-labs/open-chat/pull/8450))
+- Remove `token_standard` from token details ([#8479](https://github.com/open-chat-labs/open-chat/pull/8479))
 
 ## [[2.0.1781](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1781-registry)] - 2025-06-09
 
