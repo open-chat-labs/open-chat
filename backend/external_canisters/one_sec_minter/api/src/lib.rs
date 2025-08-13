@@ -1,0 +1,52 @@
+use candid::{CandidType, Deserialize};
+use icrc_ledger_types::icrc1::account::Account as IcrcAccount;
+use serde::Serialize;
+
+mod updates;
+
+pub use updates::*;
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct EvmAccount {
+    pub address: String,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug)]
+pub enum EvmChain {
+    Ethereum,
+    Arbitrum,
+    Base,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum IcpAccount {
+    ICRC(IcrcAccount),
+    AccountId(String),
+}
+
+#[allow(non_camel_case_types)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug)]
+pub enum Token {
+    ICP,
+    USDC,
+    USDT,
+    cbBTC,
+    ckBTC,
+    BOB,
+    GLDT,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug)]
+pub struct TransferId {
+    id: u64,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug)]
+pub struct FetchedBlock {
+    block_height: u64,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ErrorMessage {
+    error: String,
+}

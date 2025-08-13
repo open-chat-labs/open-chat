@@ -1,0 +1,11 @@
+[package]
+name = "one_sec_minter_canister"
+version.workspace = true
+edition.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+candid = { workspace = true }
+icrc-ledger-types = { workspace = true }
+serde = { workspace = true }
