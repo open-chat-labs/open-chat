@@ -52,10 +52,10 @@ async fn withdraw_via_one_sec_impl(args: Args) -> OCResult {
         let now = state.env.now();
         state.push_local_user_index_canister_event(
             LocalUserIndexEvent::EventStoreEvent(
-                EventBuilder::new("one_sec_withdrawal", now)
+                EventBuilder::new("withdrawal_via_one_sec", now)
                     .with_user(user_id_string.clone(), true)
                     .with_source(user_id_string, true)
-                    .with_json_payload(&OneSecWithdrawalEventPayload {
+                    .with_json_payload(&WithdrawalViaOneSecEventPayload {
                         token_symbol: args.token_symbol,
                         evm_chain: args.evm_chain,
                         amount: args.amount,
@@ -70,7 +70,7 @@ async fn withdraw_via_one_sec_impl(args: Args) -> OCResult {
 }
 
 #[derive(Serialize)]
-struct OneSecWithdrawalEventPayload {
+struct WithdrawalViaOneSecEventPayload {
     pub token_symbol: String,
     pub evm_chain: EvmChain,
     pub amount: u64,
