@@ -72,3 +72,4 @@ pub mod update_chat_settings;
 pub mod wallet_receive;
 pub mod withdraw_btc;
 pub mod withdraw_crypto;
+pub mod withdraw_via_one_sec;

@@ -78,6 +78,7 @@ fn main() {
     generate_ts_method!(user, update_chat_settings);
     generate_ts_method!(user, withdraw_btc);
     generate_ts_method!(user, withdraw_crypto_v2);
+    generate_ts_method!(user, withdraw_via_one_sec);
 
     candid::export_service!();
     std::print!("{}", __export_service());

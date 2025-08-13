@@ -11,13 +11,6 @@ pub struct EvmAccount {
     pub address: String,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug)]
-pub enum EvmChain {
-    Ethereum,
-    Arbitrum,
-    Base,
-}
-
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum IcpAccount {
     ICRC(IcrcAccount),
@@ -38,15 +31,15 @@ pub enum Token {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug)]
 pub struct TransferId {
-    id: u64,
+    pub id: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug)]
 pub struct FetchedBlock {
-    block_height: u64,
+    pub block_height: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ErrorMessage {
-    error: String,
+    pub error: String,
 }
