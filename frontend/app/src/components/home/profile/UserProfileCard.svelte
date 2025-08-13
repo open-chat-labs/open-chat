@@ -71,6 +71,7 @@
         });
     }
 
+    let readonly = $derived(user.userId !== $currentUserIdStore);
     let diamondStatus = $derived(user?.diamondStatus);
     let me = $derived(user.userId === $currentUserIdStore);
     let isSuspended = $derived(user?.suspended ?? false);
@@ -179,15 +180,17 @@
                         </div>
                     </div>
                     {#if userProfileMode}
-                        <PremiumItemComponent
-                            item={PremiumItem.CustomProfileBackground}
-                            onClick={choosePhoto}>
-                            {#snippet children(click)}
-                                <HoverIcon onclick={click}>
-                                    <ChooseImage size={"1.5em"} color={txtColour} />
-                                </HoverIcon>
-                            {/snippet}
-                        </PremiumItemComponent>
+                        {#if !readonly}
+                            <PremiumItemComponent
+                                item={PremiumItem.CustomProfileBackground}
+                                onClick={choosePhoto}>
+                                {#snippet children(click)}
+                                    <HoverIcon onclick={click}>
+                                        <ChooseImage size={"1.5em"} color={txtColour} />
+                                    </HoverIcon>
+                                {/snippet}
+                            </PremiumItemComponent>
+                        {/if}
                     {:else}
                         <HoverIcon onclick={onClose}>
                             <Close size={"1em"} color={txtColour} />
@@ -196,7 +199,7 @@
                 </div>
                 <div class="body" class:modal>
                     <div class="avatar">
-                        {#if userProfileMode}
+                        {#if userProfileMode && !readonly}
                             <EditableAvatar
                                 overlayIcon
                                 size={"medium"}
