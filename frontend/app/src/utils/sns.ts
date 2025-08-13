@@ -1,4 +1,3 @@
- 
 import { IDL } from "@dfinity/candid";
 import { Principal } from "@dfinity/principal";
 import { type ExternalBot } from "openchat-client";
@@ -17,7 +16,6 @@ export function createAddTokenPayload(
                 IDL.Record({
                     info_url: IDL.Text,
                     payer: IDL.Opt(IDL.Principal),
-                    token_standard: IDL.Variant({ icrc1: IDL.Null }),
                     ledger_canister_id: IDL.Principal,
                     transaction_url_format: IDL.Text,
                 }),
@@ -26,7 +24,6 @@ export function createAddTokenPayload(
                 {
                     info_url: infoUrl,
                     payer: [Principal.fromText(userId)],
-                    token_standard: { icrc1: null },
                     ledger_canister_id: Principal.fromText(ledgerCanisterId),
                     transaction_url_format: transactionUrlFormat,
                 },
