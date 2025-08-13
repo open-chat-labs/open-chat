@@ -3,6 +3,7 @@ package com.ocplugin.app
 import android.app.Activity
 import android.util.Log
 import android.webkit.WebView
+import androidx.annotation.DrawableRes
 import app.tauri.annotation.Command
 import app.tauri.annotation.TauriPlugin
 import app.tauri.plugin.Invoke
@@ -34,6 +35,7 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
         var eventQueue = mutableListOf<Pair<String, String>>()
         var fcmToken: String? = null
         var svelteReady: Boolean = false
+        @DrawableRes var icNotificationSmall: Int = android.R.drawable.ic_dialog_info
     }
 
     override fun load(webView: WebView) {
