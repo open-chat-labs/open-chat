@@ -16,6 +16,7 @@ impl Tokens {
     pub fn add(
         &mut self,
         ledger_canister_id: CanisterId,
+        index_canister_id: Option<CanisterId>,
         name: String,
         symbol: String,
         decimals: u8,
@@ -40,6 +41,7 @@ impl Tokens {
             let logo_id = logo_id(&logo);
             self.tokens.push(TokenDetails {
                 ledger_canister_id,
+                index_canister_id,
                 name,
                 symbol,
                 decimals,
@@ -120,6 +122,17 @@ impl Tokens {
         );
     }
 
+    pub fn set_index_canister(&mut self, ledger_canister_id: CanisterId, index_canister_id: CanisterId, now: TimestampMillis) {
+        self.apply_update(
+            ledger_canister_id,
+            |t| {
+                t.index_canister_id = Some(index_canister_id);
+                true
+            },
+            now,
+        );
+    }
+
     pub fn mark_uninstalled(&mut self, ledger_canister_id: CanisterId, now: TimestampMillis) {
         self.apply_update(
             ledger_canister_id,
@@ -173,6 +186,7 @@ fn logo_id(logo: &str) -> Option<u128> {
 #[derive(Serialize)]
 pub struct TokenMetrics {
     ledger_canister_id: CanisterId,
+    index_canister_id: Option<CanisterId>,
     name: String,
     symbol: String,
     decimals: u8,
@@ -193,6 +207,7 @@ impl From<&TokenDetails> for TokenMetrics {
     fn from(value: &TokenDetails) -> Self {
         TokenMetrics {
             ledger_canister_id: value.ledger_canister_id,
+            index_canister_id: value.index_canister_id,
             name: value.name.clone(),
             symbol: value.symbol.clone(),
             decimals: value.decimals,

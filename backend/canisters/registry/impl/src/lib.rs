@@ -186,6 +186,7 @@ impl Data {
         );
         self.tokens.add(
             ledger_canister_id,
+            Some(index_canister_id),
             "Internet Computer".to_string(),
             "ICP".to_string(),
             8,
