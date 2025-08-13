@@ -2153,7 +2153,7 @@ async function verifyAccountLinkingCode(
     code: string,
     tempKey: CryptoKeyPair,
 ): Promise<VerifyAccountLinkingCodeResponse> {
-    let ecdsaIdentity = await ECDSAKeyIdentity.fromKeyPair(tempKey);
+    const ecdsaIdentity = await ECDSAKeyIdentity.fromKeyPair(tempKey);
     const identityAgent = await IdentityAgent.create(ecdsaIdentity, identityCanister, icUrl, false);
 
     return await identityAgent.verifyAccountLinkingCode(code);
