@@ -47,9 +47,9 @@ fn http_request(request: HttpRequest) -> HttpResponse {
                 ChitEventType::StreakInsuranceClaim => Some((e.timestamp, 2)),
                 _ => None,
             })
-            .map(|(ts, manual_claim)| {
+            .map(|(ts, claim_type)| {
                 let offset = state.data.streak.utc_offset_mins_at_ts(ts);
-                (Streak::timestamp_to_offset_day(ts, offset), manual_claim, ts, offset)
+                (Streak::timestamp_to_offset_day(ts, offset), claim_type, ts, offset)
             })
             .collect();
 
