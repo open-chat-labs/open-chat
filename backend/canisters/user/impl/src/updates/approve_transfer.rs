@@ -11,14 +11,11 @@ use user_canister::approve_transfer::*;
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 async fn approve_transfer(args: Args) -> Response {
-    execute_update_async(|| approve_transfer_impl(args)).await
+    execute_update_async(|| approve_transfer_impl(args)).await.into()
 }
 
-async fn approve_transfer_impl(args: Args) -> Response {
-    let now_nanos = match mutate_state(|state| prepare(&args, state)) {
-        Ok(ts) => ts,
-        Err(error) => return Response::Error(error),
-    };
+pub(crate) async fn approve_transfer_impl(args: Args) -> OCResult {
+    let now_nanos = mutate_state(|state| prepare(&args, state))?;
 
     match icrc_ledger_canister_c2c_client::icrc2_approve(
         args.ledger_canister_id,
@@ -35,11 +32,10 @@ async fn approve_transfer_impl(args: Args) -> Response {
             created_at_time: Some(now_nanos),
         },
     )
-    .await
+    .await?
     {
-        Ok(Ok(_)) => Response::Success,
-        Ok(Err(error)) => Response::Error(OCErrorCode::ApprovalFailed.with_json(&error)),
-        Err(error) => Response::Error(error.into()),
+        Ok(_) => Ok(()),
+        Err(error) => Err(OCErrorCode::ApprovalFailed.with_json(&error)),
     }
 }
 

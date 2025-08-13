@@ -1,13 +1,15 @@
 use crate::guards::caller_is_owner;
+use crate::updates::approve_transfer::approve_transfer_impl;
 use crate::{execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use constants::ONE_SEC_MINTER_CANISTER_ID;
+use constants::{MINUTE_IN_MS, ONE_SEC_MINTER_CANISTER_ID};
 use event_store_types::EventBuilder;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
 use oc_error_codes::OCErrorCode;
 use one_sec_minter_canister::{EvmAccount, IcpAccount, Token};
 use serde::Serialize;
+use types::icrc1::Account;
 use types::{EvmChain, OCResult};
 use user_canister::withdraw_via_one_sec::*;
 
@@ -18,16 +20,25 @@ async fn withdraw_via_one_sec(args: Args) -> Response {
 }
 
 async fn withdraw_via_one_sec_impl(args: Args) -> OCResult {
-    mutate_state(|state| state.data.pin_number.verify(args.pin.as_deref(), state.env.now()))?;
-
     let token = match args.token_symbol.to_lowercase().as_str() {
         "usdc" => Token::USDC,
         "usdt" => Token::USDT,
         _ => return Err(OCErrorCode::CurrencyNotSupported.into()),
     };
 
+    // Approve the OneSec minter to transfer the funds
+    approve_transfer_impl(user_canister::approve_transfer::Args {
+        spender: ONE_SEC_MINTER_CANISTER_ID.into(),
+        ledger_canister_id: args.ledger_canister_id,
+        amount: args.amount,
+        expires_in: Some(5 * MINUTE_IN_MS),
+        pin: args.pin,
+    })
+    .await?;
+
     let canister_id = read_state(|state| state.env.canister_id());
 
+    // Instruct the OneSec minter to make the transfer
     match one_sec_minter_canister_c2c_client::transfer_icp_to_evm(
         ONE_SEC_MINTER_CANISTER_ID,
         &one_sec_minter_canister::transfer_icp_to_evm::Args {
@@ -73,5 +84,5 @@ async fn withdraw_via_one_sec_impl(args: Args) -> OCResult {
 struct WithdrawalViaOneSecEventPayload {
     pub token_symbol: String,
     pub evm_chain: EvmChain,
-    pub amount: u64,
+    pub amount: u128,
 }
