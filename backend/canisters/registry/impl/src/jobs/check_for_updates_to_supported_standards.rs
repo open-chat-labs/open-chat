@@ -5,7 +5,7 @@ use types::{C2CError, CanisterId};
 use utils::canister_timers::run_now_then_interval;
 
 pub fn start_job() {
-    run_now_then_interval(Duration::from_millis(13 * HOUR_IN_MS), run);
+    run_now_then_interval(Duration::from_millis(23 * HOUR_IN_MS), run);
 }
 
 fn run() {
