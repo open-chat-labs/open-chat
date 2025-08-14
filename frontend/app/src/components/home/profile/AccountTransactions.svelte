@@ -8,7 +8,6 @@
         cryptoLookup,
         currentUserStore,
         mobileWidth,
-        nervousSystemLookup,
         toRecord,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
@@ -92,10 +91,7 @@
     }
 
     function loadTransactions() {
-        const nervousSystem = [...$nervousSystemLookup.values()].find(
-            (n) => n.ledgerCanisterId === ledger,
-        );
-        const ledgerIndex = nervousSystem?.indexCanisterId;
+        const ledgerIndex = $cryptoLookup.get(ledger)?.index;
         if (ledgerIndex !== undefined) {
             let start = undefined;
             if (transactionData.kind === "success") {
@@ -144,16 +140,16 @@
         } else {
             toastStore.showFailureToast(i18nKey("cryptoAccount.transactionError"));
             transactionData = { kind: "idle" };
-            console.warn("Could not find ledger index for ledger", ledger, $nervousSystemLookup);
+            console.warn("Could not find ledger index for ledger", ledger);
         }
     }
     let accountLookup = $derived(toRecord(accounts, (a) => a.account));
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
-    let snsLedgers = $derived(
+    let tokensWithIndexes = $derived(
         new Set<string>(
-            [...$nervousSystemLookup.values()]
-                .filter((ns) => !ns.isNns)
-                .map((ns) => ns.ledgerCanisterId),
+            [...$cryptoLookup.values()]
+                .filter((t) => t.index !== undefined)
+                .map((t) => t.ledger),
         ),
     );
     let moreAvailable = $derived(moreTransactionsAvailable(transactionData));
@@ -169,7 +165,7 @@
                 <div><Translatable resourceKey={i18nKey("cryptoAccount.transactions")} /></div>
                 <div>
                     <CryptoSelector
-                        filter={(t) => snsLedgers.has(t.ledger)}
+                        filter={(t) => tokensWithIndexes.has(t.ledger)}
                         onSelect={ledgerSelected}
                         {ledger} />
                 </div>
