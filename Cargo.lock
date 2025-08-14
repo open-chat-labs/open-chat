@@ -7073,6 +7073,7 @@ dependencies = [
  "candid",
  "icrc-ledger-types",
  "serde",
+ "types",
 ]
 
 [[package]]
@@ -11381,6 +11382,8 @@ dependencies = [
  "nns_governance_canister",
  "nns_governance_canister_c2c_client",
  "oc_error_codes",
+ "one_sec_minter_canister",
+ "one_sec_minter_canister_c2c_client",
  "rand 0.8.5",
  "search",
  "serde",
