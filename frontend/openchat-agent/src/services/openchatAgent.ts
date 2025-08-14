@@ -2875,11 +2875,11 @@ export class OpenChatAgent extends EventTarget {
         principal: string,
         fromId?: bigint,
     ): Promise<AccountTransactionResult> {
-        const icpLedgerIndex = this._registryValue?.nervousSystemSummary.find(
-            (ns) => ns.isNns,
-        )?.indexCanisterId;
+        const isNns = this._registryValue?.nervousSystemSummary.some(
+            (ns) => ns.isNns && ns.indexCanisterId === ledgerIndex,
+        );
 
-        if (ledgerIndex === icpLedgerIndex) {
+        if (isNns) {
             return new IcpLedgerIndexClient(
                 this.identity,
                 this._agent,

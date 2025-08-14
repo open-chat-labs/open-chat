@@ -1899,6 +1899,7 @@ export const RegistrySetTokenEnabledArgs = Type.Object({
 export type RegistryTokenDetails = Static<typeof RegistryTokenDetails>;
 export const RegistryTokenDetails = Type.Object({
     ledger_canister_id: TSPrincipal,
+    index_canister_id: Type.Optional(TSPrincipal),
     name: Type.String(),
     symbol: Type.String(),
     decimals: Type.Number(),
@@ -1912,6 +1913,7 @@ export const RegistryTokenDetails = Type.Object({
     enabled: Type.Boolean(),
     last_updated: Type.BigInt(),
     payments: Type.Array(RegistryPayment),
+    one_sec_enabled: Type.Boolean(),
 });
 
 export type UserIndexDiamondMembershipFeesDiamondMembershipFees = Static<
