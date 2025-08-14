@@ -2869,11 +2869,11 @@ export class OpenChatAgent extends EventTarget {
         principal: string,
         fromId?: bigint,
     ): Promise<AccountTransactionResult> {
-        const icpLedgerIndex = this._registryValue?.nervousSystemSummary.find(
-            (ns) => ns.isNns,
-        )?.indexCanisterId;
+        const isNns = this._registryValue?.nervousSystemSummary.some(
+            (ns) => ns.isNns && ns.indexCanisterId === ledgerIndex,
+        );
 
-        if (ledgerIndex === icpLedgerIndex) {
+        if (isNns) {
             return new IcpLedgerIndexClient(
                 this.identity,
                 this._agent,
@@ -4566,7 +4566,10 @@ export class OpenChatAgent extends EventTarget {
 
     async reinstateMissedDailyClaims(userId: string, days: number[]): Promise<boolean> {
         const localUserIndex = await this.getLocalUserIndexForUser(userId);
-        return this.getLocalUserIndexClient(localUserIndex).reinstateMissedDailyClaims(userId, days);
+        return this.getLocalUserIndexClient(localUserIndex).reinstateMissedDailyClaims(
+            userId,
+            days,
+        );
     }
 }
 
