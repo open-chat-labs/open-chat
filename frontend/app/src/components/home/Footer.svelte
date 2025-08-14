@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { fileFromDataTransferItems } from "@src/utils/datatransfer";
     import {
         iconSize,
         messageContextsEqual,
@@ -14,6 +15,7 @@
         type MessageContext,
         type MultiUserChat,
         type OpenChat,
+        type SelectedEmoji,
         type User,
     } from "openchat-client";
     import { getContext, onMount, tick } from "svelte";
@@ -26,7 +28,7 @@
     import ModalContent from "../ModalContent.svelte";
     import Translatable from "../Translatable.svelte";
     import DraftMediaMessage from "./DraftMediaMessage.svelte";
-    import EmojiPicker from "./EmojiPicker.svelte";
+    import EmojiPicker from "./EmojiPickerWrapper.svelte";
     import MessageEntry from "./MessageEntry.svelte";
     import ReplyingTo from "./ReplyingTo.svelte";
 
@@ -114,15 +116,6 @@
         ephemeralMessageEvent = ev;
     }
 
-    function fileFromDataTransferItems(items: DataTransferItem[]): File | undefined {
-        return items.reduce<File | undefined>((res, item) => {
-            if (item.kind === "file") {
-                return item.getAsFile() || undefined;
-            }
-            return res;
-        }, undefined);
-    }
-
     function messageContentFromDataTransferItemList(items: DataTransferItem[]) {
         const file = fileFromDataTransferItems(items);
         if (file) {
@@ -151,13 +144,6 @@
         messageContentFromDataTransferItemList([...data.items]);
     }
 
-    function onDrop(e: DragEvent) {
-        if (e.dataTransfer) {
-            onDataTransfer(e.dataTransfer);
-            e.preventDefault();
-        }
-    }
-
     function onPaste(e: ClipboardEvent) {
         if (e.clipboardData) {
             messageEntry.saveSelection();
@@ -166,10 +152,8 @@
         }
     }
 
-    function emojiSelected(code?: string) {
-        if (code) {
-            messageEntry?.replaceSelection(code);
-        }
+    function emojiSelected(selected: SelectedEmoji) {
+        messageEntry?.insertEmoji(selected);
     }
 
     $effect(() => {
@@ -196,7 +180,7 @@
                             </HoverIcon>
                         </span>
                     </div>
-                    <EmojiPicker onEmojiSelected={emojiSelected} {mode} />
+                    <EmojiPicker onEmojiSelected={emojiSelected} {mode} supportCustom={false} />
                 </span>
             {/snippet}
             {#snippet footer()}
@@ -228,7 +212,6 @@
         bind:this={messageEntry}
         bind:messageAction
         {onPaste}
-        {onDrop}
         {externalContent}
         {mode}
         {preview}

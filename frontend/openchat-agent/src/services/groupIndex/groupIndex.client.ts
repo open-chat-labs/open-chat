@@ -1,37 +1,21 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import type {
     AddHotGroupExclusionResponse,
+    ChannelIdentifier,
+    CommunityIdentifier,
     DeleteFrozenGroupResponse,
+    ExploreCommunitiesResponse,
+    FreezeCommunityResponse,
     FreezeGroupResponse,
+    GroupChatIdentifier,
     GroupChatSummary,
+    GroupSearchResponse,
     RemoveHotGroupExclusionResponse,
     SetCommunityModerationFlagsResponse,
     SetGroupUpgradeConcurrencyResponse,
-    UnfreezeGroupResponse,
-    GroupSearchResponse,
-    CommunityIdentifier,
-    GroupChatIdentifier,
-    ExploreCommunitiesResponse,
-    ChannelIdentifier,
-    FreezeCommunityResponse,
     UnfreezeCommunityResponse,
+    UnfreezeGroupResponse,
 } from "openchat-shared";
-import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
-import {
-    addHotGroupExclusionResponse,
-    deleteFrozenGroupResponse,
-    freezeGroupResponse,
-    recommendedGroupsResponse,
-    removeHotGroupExclusionResponse,
-    setCommunityModerationFlagsResponse,
-    setUpgradeConcurrencyResponse,
-    unfreezeGroupResponse,
-    exploreCommunitiesResponse,
-    lookupChannelResponse,
-    exploreGroupsResponse,
-    freezeCommunityResponse,
-    unfreezeCommunityResponse,
-} from "./mappers";
 import {
     GroupIndexAddHotGroupExclusionArgs,
     GroupIndexAddHotGroupExclusionResponse,
@@ -47,8 +31,8 @@ import {
     GroupIndexFreezeGroupResponse,
     GroupIndexLookupChannelByGroupIdArgs,
     GroupIndexLookupChannelByGroupIdResponse,
-    GroupIndexMarkLocalGroupIndexFullArgs,
-    GroupIndexMarkLocalGroupIndexFullResponse,
+    GroupIndexMarkLocalIndexFullArgs,
+    GroupIndexMarkLocalIndexFullResponse,
     GroupIndexRecommendedGroupsArgs,
     GroupIndexRecommendedGroupsResponse,
     GroupIndexRemoveHotGroupExclusionArgs,
@@ -65,6 +49,22 @@ import {
     GroupIndexUnfreezeGroupResponse,
 } from "../../typebox";
 import { principalStringToBytes } from "../../utils/mapping";
+import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
+import {
+    addHotGroupExclusionResponse,
+    deleteFrozenGroupResponse,
+    exploreCommunitiesResponse,
+    exploreGroupsResponse,
+    freezeCommunityResponse,
+    freezeGroupResponse,
+    lookupChannelResponse,
+    recommendedGroupsResponse,
+    removeHotGroupExclusionResponse,
+    setCommunityModerationFlagsResponse,
+    setUpgradeConcurrencyResponse,
+    unfreezeCommunityResponse,
+    unfreezeGroupResponse,
+} from "./mappers";
 
 export class GroupIndexClient extends MsgpackCanisterAgent {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
@@ -260,8 +260,8 @@ export class GroupIndexClient extends MsgpackCanisterAgent {
                 full,
             },
             (resp) => resp === "Success",
-            GroupIndexMarkLocalGroupIndexFullArgs,
-            GroupIndexMarkLocalGroupIndexFullResponse,
+            GroupIndexMarkLocalIndexFullArgs,
+            GroupIndexMarkLocalIndexFullResponse,
         );
     }
 }

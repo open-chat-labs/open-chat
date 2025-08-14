@@ -5,7 +5,13 @@ import type {
     DexId,
 } from "openchat-shared";
 import { mapOptional, optionUpdateV2, principalBytesToString } from "../../utils/mapping";
-import { BTC_SYMBOL, CKBTC_SYMBOL, UnsupportedValueError } from "openchat-shared";
+import {
+    BTC_SYMBOL,
+    CKBTC_SYMBOL,
+    INDEX_CANISTER_ICP,
+    LEDGER_CANISTER_ICP,
+    UnsupportedValueError,
+} from "openchat-shared";
 import { buildTokenLogoUrl } from "../../utils/chat";
 import type {
     ExchangeId as TExchangeId,
@@ -49,7 +55,7 @@ export function updatesResponse(
                     },
                     channelName: cfg.channel_name,
                     communityName: cfg.community_name,
-                    url: `/community/${communityId}/channel/${channelId}`
+                    url: `/community/${communityId}/channel/${channelId}`,
                 };
             }),
         };
@@ -65,8 +71,15 @@ function tokenDetails(
 ): CryptocurrencyDetails {
     const ledger = principalBytesToString(value.ledger_canister_id);
 
+    // TODO remove this special handling once the ICP ledger supports ICRC-106
+    const index =
+        ledger === LEDGER_CANISTER_ICP
+            ? INDEX_CANISTER_ICP
+            : mapOptional(value.index_canister_id, principalBytesToString);
+
     const tokenDetails = {
         ledger,
+        index,
         name: value.name,
         symbol: value.symbol,
         decimals: value.decimals,
@@ -85,6 +98,7 @@ function tokenDetails(
         supportedStandards: value.supported_standards,
         added: value.added,
         enabled: value.enabled,
+        oneSecEnabled: value.one_sec_enabled,
         lastUpdated: value.last_updated,
     };
 

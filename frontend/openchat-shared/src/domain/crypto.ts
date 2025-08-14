@@ -12,6 +12,7 @@ export const HOTORNOT_SYMBOL = "HOT";
 export const GHOST_SYMBOL = "GHOST";
 
 export const LEDGER_CANISTER_ICP = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+export const INDEX_CANISTER_ICP = "qhbym-qaaaa-aaaaa-aaafq-cai";
 export const LEDGER_CANISTER_CHAT = "2ouva-viaaa-aaaaq-aaamq-cai";
 
 export const DEFAULT_TOKENS = ["CHAT", "ICP", "ckUSDC", "ckBTC", "ckETH"];
@@ -20,6 +21,7 @@ export type CryptocurrencyDetails = {
     name: string;
     symbol: string;
     ledger: string;
+    index: string | undefined;
     decimals: number;
     transferFee: bigint;
     logo: string;
@@ -28,6 +30,7 @@ export type CryptocurrencyDetails = {
     supportedStandards: string[];
     added: bigint;
     enabled: boolean;
+    oneSecEnabled: boolean;
     lastUpdated: bigint;
 };
 

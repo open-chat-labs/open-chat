@@ -10,6 +10,7 @@ export * from "./data";
 export * from "./dexes";
 export * from "./email";
 export * from "./embed";
+export * from "./emoji/emoji";
 export * from "./error";
 export * from "./events";
 export * from "./faq";

@@ -1,3 +1,25 @@
+<script lang="ts" module>
+    type Duration = "oneHour" | "oneDay" | "oneWeek";
+    type PrizeConfig = {
+        minChitEarned: number;
+        diamond: "none" | "standard" | "lifetime";
+        uniquePersonOnly: boolean;
+        minStreak: number;
+        requiresAuth: boolean;
+        distribution: "equal" | "random";
+        duration: Duration;
+    };
+    const defaultPrizeRestrictions: PrizeConfig = {
+        minChitEarned: 0,
+        diamond: "none",
+        uniquePersonOnly: false,
+        minStreak: 0,
+        requiresAuth: false,
+        distribution: "random",
+        duration: "oneDay",
+    };
+</script>
+
 <script lang="ts">
     import type {
         ChatSummary,
@@ -10,6 +32,7 @@
         chitBands,
         cryptoBalanceStore,
         cryptoLookup,
+        LocalStorageStore,
         mobileWidth,
     } from "openchat-client";
     import { getContext } from "svelte";
@@ -41,7 +64,7 @@
     const ONE_WEEK = ONE_DAY * 7;
     const OC_FEE_PERCENTAGE = 5n;
     const client = getContext<OpenChat>("client");
-    const streaks = ["3", "7", "14", "30", "100", "365"];
+    const streaks = [3, 7, 14, 30, 100, 365];
 
     interface Props {
         draftAmount: bigint;
@@ -59,18 +82,25 @@
         onClose,
     }: Props = $props();
 
+    const prizeConfig = new LocalStorageStore(
+        "openchat_prize_config",
+        defaultPrizeRestrictions,
+        JSON.stringify,
+        (s) => JSON.parse(s),
+        (_a, _b) => false,
+    );
+
     let numberOfWinners = $state(20);
-    let distribution: "equal" | "random" = $state("random");
+    let distribution: "equal" | "random" = $state($prizeConfig.distribution);
     const durations: Duration[] = ["oneHour", "oneDay", "oneWeek"];
-    type Duration = "oneHour" | "oneDay" | "oneWeek";
-    let selectedDuration: Duration = $state("oneDay");
-    let diamondOnly = $state(false);
-    let diamondType: "standard" | "lifetime" = $state("standard");
-    let uniquePersonOnly = $state(false);
-    let streakOnly = $state(false);
-    let chitOnly = $state(false);
-    let streakValue = $state("3");
-    let minChitEarned = $state<number>();
+    let selectedDuration: Duration = $state($prizeConfig.duration);
+    let diamondType: "none" | "standard" | "lifetime" = $state($prizeConfig.diamond);
+    let diamondOnly = $derived(diamondType !== "none");
+    let uniquePersonOnly = $state($prizeConfig.uniquePersonOnly);
+    let minStreak = $state<number>($prizeConfig.minStreak);
+    let minChitEarned = $state<number>($prizeConfig.minChitEarned);
+    let streakOnly = $derived(minStreak > 0);
+    let chitOnly = $derived(minChitEarned > 0);
     let refreshing = false;
     let error: string | undefined = $state(undefined);
     let message = $state("");
@@ -79,12 +109,8 @@
     let balanceWithRefresh: BalanceWithRefresh;
     let tokenInputState: "ok" | "zero" | "too_low" | "too_high" = $state("ok");
     let sending = $state(false);
-    let requiresAuth = $state(true);
-
-    let anyUser = $state(true);
-    $effect(() => {
-        anyUser = !diamondOnly && !uniquePersonOnly && !streakOnly && !chitOnly;
-    });
+    let requiresAuth = $state($prizeConfig.requiresAuth);
+    let anyUser = $derived(!diamondOnly && !uniquePersonOnly && !streakOnly && !chitOnly);
     let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? 0n);
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let symbol = $derived(tokenDetails.symbol);
@@ -121,6 +147,10 @@
         balanceWithRefresh.refresh();
     }
 
+    function onDiamondChanged() {
+        diamondType = diamondOnly ? "standard" : "none";
+    }
+
     function recipientFromContext({ chatId }: MessageContext) {
         switch (chatId.kind) {
             case "channel":
@@ -148,16 +178,15 @@
         const prizes = generatePrizes();
         const amountE8s = prizes.reduce((total, p) => total + p) + prizeFees;
 
-        console.log(`Prize amount: ${amountE8s}`);
         const content: PrizeContentInitial = {
             kind: "prize_content_initial",
             caption: message === "" ? undefined : message,
             endDate: getEndDate(),
-            diamondOnly: diamondOnly && diamondType === "standard",
-            lifetimeDiamondOnly: diamondOnly && diamondType === "lifetime",
+            diamondOnly: diamondType === "standard",
+            lifetimeDiamondOnly: diamondType === "lifetime",
             uniquePersonOnly,
-            streakOnly: streakOnly ? parseInt(streakValue, 10) : 0,
-            minChitEarned: chitOnly ? minChitEarned ?? 0 : 0,
+            streakOnly: minStreak,
+            minChitEarned: minChitEarned,
             transfer: {
                 kind: "pending",
                 ledger,
@@ -170,6 +199,16 @@
             prizes,
             requiresCaptcha: requiresAuth,
         };
+
+        prizeConfig.set({
+            minChitEarned,
+            diamond: diamondType,
+            uniquePersonOnly,
+            minStreak,
+            requiresAuth,
+            distribution,
+            duration: selectedDuration,
+        });
 
         sending = true;
         error = undefined;
@@ -285,10 +324,18 @@
 
     function onAnyUserChecked() {
         anyUser = true;
-        diamondOnly = false;
+        diamondType = "none";
         uniquePersonOnly = false;
         streakOnly = false;
         chitOnly = false;
+    }
+
+    function onStreakChanged() {
+        minStreak = streakOnly ? 3 : 0;
+    }
+
+    function onChitChanged() {
+        minChitEarned = chitOnly ? 10_000 : 0;
     }
 </script>
 
@@ -369,6 +416,7 @@
                         </div>
                         <Legend label={i18nKey("prizes.distribution")} />
                         <div class="distributions">
+                            <!-- svelte-ignore a11y_click_events_have_key_events -->
                             <div
                                 role="button"
                                 tabindex="0"
@@ -382,6 +430,7 @@
                                         resourceKey={i18nKey("prizes.randomDistribution")} />
                                 </div>
                             </div>
+                            <!-- svelte-ignore a11y_click_events_have_key_events -->
                             <div
                                 role="button"
                                 tabindex="0"
@@ -423,6 +472,7 @@
                                 <Checkbox
                                     id="diamond_only"
                                     label={i18nKey(`prizes.onlyDiamond`)}
+                                    onChange={onDiamondChanged}
                                     bind:checked={diamondOnly} />
                                 {#if diamondOnly}
                                     <div class="diamond-choice">
@@ -447,14 +497,15 @@
                                 <Checkbox
                                     id="streak_only"
                                     label={i18nKey(`prizes.onlyStreak`)}
+                                    onChange={onStreakChanged}
                                     bind:checked={streakOnly} />
                                 {#if streakOnly}
-                                    <Select bind:value={streakValue}>
+                                    <Select bind:value={minStreak}>
                                         {#each streaks as streak}
                                             <option value={streak}>
                                                 <Translatable
                                                     resourceKey={i18nKey("prizes.streakValue", {
-                                                        n: streak,
+                                                        n: streak.toString(),
                                                     })}></Translatable>
                                             </option>
                                         {/each}
@@ -463,6 +514,7 @@
                                 <Checkbox
                                     id="chit_only"
                                     label={i18nKey(`prizes.onlyChit`)}
+                                    onChange={onChitChanged}
                                     bind:checked={chitOnly} />
                                 {#if chitOnly}
                                     <Select bind:value={minChitEarned}>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg viewBox="0 0 361 361" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:bx="https://boxy-svg.com">
+  <defs>
+    <linearGradient id="b" bx:pinned="true">
+      <stop offset="0" stop-color="#fbb03b"/>
+      <stop offset="1" stop-color="#f05a24"/>
+    </linearGradient>
+    <linearGradient id="a" bx:pinned="true">
+      <stop offset="0" stop-color="#5f2583"/>
+      <stop offset="1" stop-color="#ed1e79"/>
+    </linearGradient>
+    <linearGradient id="d" x1="973.216" x2="973.216" y1="100.665" y2="388.077" gradientTransform="matrix(.97413 -.22842 .31045 1.35247 -95.3 85.515)" gradientUnits="userSpaceOnUse" xlink:href="#a"/>
+    <linearGradient id="c" x1="188.919" x2="188.919" y1="1.638" y2="361.638" gradientTransform="matrix(-1 .0016 -.00202 -1.25907 376.78 357.265)" gradientUnits="userSpaceOnUse" xlink:href="#b"/>
+  </defs>
+  <g transform="translate(-69.987 -69.986)">
+    <path fill="url(#c)" d="M8.919 181.638a180 180 0 1 0 360 0 180 180 0 1 0-360 0Zm80 0a100 100 0 0 1 200 0 100 100 0 0 1-200 0Z" transform="translate(61.094 68.348)"/>
+    <path fill="url(#d)" d="M958.327 100.665a175.433 175.433 0 0 1 0 287.412l-45.03-64.31a96.924 96.924 0 0 0 0-158.791Z" paint-order="stroke" transform="matrix(1.03173 0 0 1.0208 -634.597 .545)"/>
+    <circle cx="250" cy="250" r="100" style="fill: rgb(51, 51, 51);"/>
+  </g>
+  <path style="stroke: rgb(0, 0, 0); fill: rgb(51, 51, 51); stroke-width: 0px;" d="M 141.482 217.444 H 219.17 A 15 15 0 0 1 234.17 232.444 V 263.693 A 20 20 0 0 1 214.17 283.693 H 141.482 A 15 15 0 0 1 126.482 268.693 V 232.444 A 15 15 0 0 1 141.482 217.444 Z" bx:shape="rect 126.482 217.444 107.688 66.249 15 15 20 15 1@5179be3d"/>
+  <path d="M 179.024 17.441 C 192.582 17.441 203.574 28.724 203.574 42.644 C 203.574 51.968 198.665 60.158 191.3 64.442 L 191.3 80.445 L 203.574 80.445 C 251.029 80.445 289.5 119.937 289.5 168.653 L 301.773 168.653 C 308.552 168.653 314.049 174.294 314.049 181.252 L 314.049 219.056 C 314.049 226.016 308.552 231.658 301.773 231.658 L 289.5 231.658 L 289.5 244.259 C 289.5 258.176 278.507 269.461 264.95 269.461 L 93.1 269.461 C 79.54 269.461 68.551 258.176 68.551 244.259 L 68.551 231.658 L 56.275 231.658 C 49.495 231.658 44 226.016 44 219.056 L 44 181.252 C 44 174.294 49.495 168.653 56.275 168.653 L 68.551 168.653 C 68.551 119.937 107.02 80.445 154.475 80.445 L 166.749 80.445 L 166.749 64.442 C 159.384 60.158 154.475 51.968 154.475 42.644 C 154.475 28.724 165.465 17.441 179.024 17.441 M 123.788 156.051 C 106.839 156.051 93.1 170.155 93.1 187.554 C 93.1 204.952 106.839 219.056 123.788 219.056 C 140.735 219.056 154.475 204.952 154.475 187.554 C 154.475 170.155 140.735 156.051 123.788 156.051 M 234.261 156.051 C 217.313 156.051 203.574 170.155 203.574 187.554 C 203.574 204.952 217.313 219.056 234.261 219.056 C 251.211 219.056 264.95 204.952 264.95 187.554 C 264.95 170.155 251.211 156.051 234.261 156.051 Z" style="fill: rgb(51, 51, 51);"/>
+  <circle cx="124.376" cy="185.526" r="29.221" style="fill: rgb(255, 255, 255);"/>
+  <circle cx="233.844" cy="185.5" r="29.2" style="fill: rgb(255, 255, 255);"/>
+  <g transform="matrix(1, 0, 0, 1, -287.45224, -8.763936)">
+    <rect x="435.597" y="236.208" width="64.756" height="12.783" style="stroke: rgb(0, 0, 0); fill: rgb(255, 255, 255);"/>
+    <line style="fill: rgb(216, 216, 216); stroke: rgb(0, 0, 0);" x1="451.754" y1="236.522" x2="451.758" y2="248.991"/>
+    <line style="fill: rgb(216, 216, 216); stroke: rgb(0, 0, 0);" x1="467.819" y1="236.306" x2="467.823" y2="248.775"/>
+    <line style="fill: rgb(216, 216, 216); stroke: rgb(0, 0, 0);" x1="483.848" y1="236.516" x2="483.852" y2="248.985"/>
+    <rect x="435.597" y="248.985" width="64.756" height="12.783" style="stroke: rgb(0, 0, 0); fill: rgb(255, 255, 255);"/>
+    <line style="fill: rgb(216, 216, 216); stroke: rgb(0, 0, 0);" x1="451.75" y1="249.509" x2="451.754" y2="261.978"/>
+    <line style="fill: rgb(216, 216, 216); stroke: rgb(0, 0, 0);" x1="467.823" y1="249.299" x2="467.827" y2="261.768"/>
+    <line style="fill: rgb(216, 216, 216); stroke: rgb(0, 0, 0);" x1="483.852" y1="249.509" x2="483.856" y2="261.978"/>
+  </g>
+  <rect x="232.17" y="173.025" width="15.579" height="15.579" style="stroke: rgb(0, 0, 0); fill: rgb(25, 25, 25);"/>
+  <rect x="120.853" y="172.966" width="15.579" height="15.579" style="stroke: rgb(0, 0, 0); fill: rgb(25, 25, 25);"/>
+  <g transform="matrix(1.939825, 0, 0, 1.939825, 132.066116, -2.022232)" style="">
+    <g>
+      <path id="XMLID_12638_" class="st7" d="M20.8,5.6c1,0,1.8,0.8,1.8,1.8V11h-2.3l-1.2-2.9C18.7,6.9,19.6,5.6,20.8,5.6z" style="fill: rgb(255, 135, 175); stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <path id="XMLID_12637_" class="st7" d="M27.2,5.6c1.3,0,2.2,1.3,1.7,2.5L27.6,11h-2.3V7.4C25.4,6.4,26.2,5.6,27.2,5.6z" style="fill: rgb(255, 135, 175); stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <path id="XMLID_12636_" class="st7" d="M24,5.1c1.4,0,2.5,1.3,2.3,2.7l-0.5,2.7h-3.6l-0.5-2.7C21.5,6.4,22.6,5.1,24,5.1z" style="fill: rgb(255, 135, 175); stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <path id="XMLID_12635_" class="st58" d="M12.2,26.4c0.1-0.5,0.1-1.1,0-1.6c-0.5-2.4-2.9-4-5.3-3.5c-2.4,0.5-4,2.9-3.5,5.3 c0.7,3.1,3,6,7.1,7c8.8,2.1,8.1,0.9,8.1,0.9L12.2,26.4z" style="fill: rgb(109, 214, 39);"/>
+      <g id="XMLID_12633_">
+        <path id="XMLID_12634_" class="st67" d="M3.5,27.2c0.5-1.6,2-2.8,3.9-3.2c1.9-0.4,3.8,0.2,4.9,1.4c0-0.2,0-0.4-0.1-0.7 c-0.5-2.4-2.9-4-5.3-3.5c-2.4,0.5-4,2.9-3.5,5.3C3.4,26.8,3.5,27,3.5,27.2z" style="fill: rgb(156, 235, 96);"/>
+      </g>
+      <path id="XMLID_12632_" class="st3" d="M12.2,26.4c0.1-0.5,0.1-1.1,0-1.6c-0.5-2.4-2.9-4-5.3-3.5c-2.4,0.5-4,2.9-3.5,5.3 c0.7,3.1,3,6,7.1,7c8.8,2.1,8.1,0.9,8.1,0.9L12.2,26.4z" style="fill: none; stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <path id="XMLID_12631_" class="st58" d="M41.1,17.8c-2.6-0.2-4.8,1.7-5,4.3c0,0.1,0,0.2,0,0.4l0,0l-3.1,7c0,0,1.9,1.7,5.7,1.1 c4.3-0.6,6.5-5,6.7-7.8C45.7,20.2,43.7,17.9,41.1,17.8z" style="fill: rgb(109, 214, 39);"/>
+      <path id="XMLID_12630_" class="st67" d="M40.5,20.5c2.2,0.2,4.1,1.5,4.8,3.1c0.1-0.3,0.1-0.6,0.1-0.8c0.2-2.6-1.7-4.8-4.3-5 c-2.5-0.2-4.7,1.6-5,4.1C37.2,20.9,38.8,20.3,40.5,20.5z" style="fill: rgb(156, 235, 96);"/>
+      <path id="XMLID_12629_" class="st3" d="M41.1,17.8c-2.6-0.2-4.8,1.7-5,4.3c0,0.1,0,0.2,0,0.4l0,0l-3.1,7c0,0,1.9,1.7,5.7,1.1 c4.3-0.6,6.5-5,6.7-7.8C45.7,20.2,43.7,17.9,41.1,17.8z" style="fill: none; stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <ellipse id="XMLID_12628_" class="st0" cx="24" cy="45.5" rx="11.5" ry="1.5" style="fill: rgb(69, 65, 60); opacity: 0.15;"/>
+      <path class="st58" d="M24,9.6c-7.3,0-13.1,6-13.1,13.5c0,5.1,2.2,11.6,3.7,15.4c1.5,3.9,5.2,6.4,9.4,6.4s7.9-2.5,9.4-6.4 c1.5-3.8,3.7-10.4,3.7-15.4C37.1,15.6,31.3,9.6,24,9.6z" style="fill: rgb(109, 214, 39);"/>
+      <path id="XMLID_12627_" class="st67" d="M24,14.3c6.6,0,11.9,4.9,12.9,11.4c0.1-0.9,0.2-1.7,0.2-2.5c0-7.5-5.7-13.5-13.1-13.5 s-13.1,6-13.1,13.5c0,0.8,0.1,1.6,0.2,2.5C12.1,19.1,17.4,14.3,24,14.3z" style="fill: rgb(156, 235, 96);"/>
+      <path class="st3" d="M24,9.6c-7.3,0-13.1,6-13.1,13.5c0,5.1,2.2,11.6,3.7,15.4c1.5,3.9,5.2,6.4,9.4,6.4s7.9-2.5,9.4-6.4 c1.5-3.8,3.7-10.4,3.7-15.4C37.1,15.6,31.3,9.6,24,9.6z" style="fill: none; stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <path id="XMLID_12626_" class="st76" d="M24,32.2L24,32.2c-1,0-1.9-0.8-2-1.8l-0.2-2.7c0-0.3,0.2-0.5,0.4-0.5h3.5 c0.3,0,0.5,0.2,0.4,0.5L26,30.4C25.9,31.4,25,32.2,24,32.2z" style="fill: rgb(255, 134, 110); stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <circle id="XMLID_12625_" class="st77" cx="18.3" cy="22.2" r="1.4" style="fill: rgb(69, 65, 60); stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <circle id="XMLID_12624_" class="st77" cx="29.7" cy="22.2" r="1.4" style="fill: rgb(69, 65, 60); stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <ellipse id="XMLID_12623_" class="st65" cx="16.6" cy="27" rx="1.6" ry="1" style="fill: rgb(200, 255, 161);"/>
+      <ellipse id="XMLID_12622_" class="st65" cx="31.4" cy="27" rx="1.6" ry="1" style="fill: rgb(200, 255, 161);"/>
+      <line id="XMLID_12621_" class="st3" x1="23.2" y1="5.3" x2="22.6" y2="3.8" style="fill: none; stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <line id="XMLID_12620_" class="st3" x1="24.8" y1="5.3" x2="25.4" y2="3.8" style="fill: none; stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <line id="XMLID_12619_" class="st3" x1="16" y1="12.4" x2="14.5" y2="11" style="fill: none; stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <line id="XMLID_12618_" class="st3" x1="12.2" y1="17.3" x2="10.5" y2="16.8" style="fill: none; stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <line id="XMLID_12617_" class="st3" x1="31.7" y1="12.2" x2="33" y2="10.5" style="fill: none; stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <line id="XMLID_12616_" class="st3" x1="35.1" y1="16" x2="36.6" y2="15" style="fill: none; stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <line id="XMLID_12615_" class="st3" x1="42" y1="17.9" x2="42.5" y2="16.4" style="fill: none; stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <line id="XMLID_12614_" class="st3" x1="45.5" y1="22.4" x2="47.4" y2="21.8" style="fill: none; stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <line id="XMLID_12613_" class="st3" x1="43.7" y1="27.5" x2="45.2" y2="29" style="fill: none; stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <line id="XMLID_12612_" class="st3" x1="37.8" y1="30.7" x2="38.4" y2="32.6" style="fill: none; stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <line id="XMLID_12611_" class="st3" x1="7.4" y1="21.2" x2="6.9" y2="19.1" style="fill: none; stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <line id="XMLID_12610_" class="st3" x1="3.4" y1="24.6" x2="1.9" y2="23.6" style="fill: none; stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <line id="XMLID_12609_" class="st3" x1="6" y1="31.3" x2="4.6" y2="32.6" style="fill: none; stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <line id="XMLID_12608_" class="st3" x1="10.9" y1="33.7" x2="10.5" y2="35.3" style="fill: none; stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <line id="XMLID_12607_" class="st3" x1="14.6" y1="38.5" x2="13.2" y2="38.9" style="fill: none; stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <line id="XMLID_12606_" class="st3" x1="34.3" y1="36.1" x2="35.7" y2="37.1" style="fill: none; stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <line id="XMLID_12605_" class="st3" x1="40.2" y1="22.7" x2="41.1" y2="21.3" style="fill: none; stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <line id="XMLID_12604_" class="st3" x1="39.8" y1="26.3" x2="41.1" y2="25.9" style="fill: none; stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <line id="XMLID_12603_" class="st3" x1="9.1" y1="28.1" x2="7.3" y2="27.2" style="fill: none; stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <line id="XMLID_12602_" class="st3" x1="28.5" y1="15.5" x2="29" y2="13.7" style="fill: none; stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <line id="XMLID_12601_" class="st3" x1="20.4" y1="15" x2="19.9" y2="13.7" style="fill: none; stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <line id="XMLID_12600_" class="st3" x1="31.2" y1="35.3" x2="32.6" y2="34.4" style="fill: none; stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <line id="XMLID_12599_" class="st3" x1="17.7" y1="34.9" x2="16.3" y2="34" style="fill: none; stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+      <line id="XMLID_12598_" class="st3" x1="27.6" y1="37.1" x2="28.1" y2="35.8" style="fill: none; stroke: rgb(69, 65, 60); stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 10;"/>
+    </g>
+  </g>
+</svg>

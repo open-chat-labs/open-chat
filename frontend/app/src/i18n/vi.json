@@ -1361,6 +1361,17 @@
         "votersPublic": "Người bỏ phiếu sẽ được công khai"
     },
     "preferredLanguage": "ngôn ngữ ưa thích",
+    "premiumItem": {
+        "botEmojis": "Gói biểu tượng cảm xúc bot",
+        "customProfileBackground": "Nền hồ sơ tùy chỉnh",
+        "insufficientChit": "Tính năng này sử dụng {price} CHIT và hiện tại bạn chỉ có {balance}. Hãy tiếp tục thu thập nhé!",
+        "paymentFailure": "Rất tiếc nhưng chúng tôi không thể chấp nhận thanh toán.",
+        "popularEmojis": "Gói biểu tượng cảm xúc phổ biến",
+        "priceMessage": "Bạn có muốn sử dụng {price} trong số dư CHIT hiện tại của mình là {balance} cho tính năng này không?",
+        "priceTooltip": "{price} CHIT",
+        "purchased": "Mặt hàng cao cấp",
+        "title": "Mặt hàng cao cấp"
+    },
     "preview": "Duyệt trước",
     "previewing": "Xem qua nhóm",
     "privateGroupInfo": "{level} này sẽ được giới hạn cho những người mà bạn mời.",
