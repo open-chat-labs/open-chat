@@ -26,6 +26,7 @@ impl Tokens {
         transaction_url_format: String,
         supported_standards: Vec<String>,
         payment: Option<Payment>,
+        one_sec_enabled: bool,
         now: TimestampMillis,
     ) -> bool {
         if self.exists(ledger_canister_id) {
@@ -55,6 +56,7 @@ impl Tokens {
                 enabled: true,
                 last_updated: now,
                 payments: payment.into_iter().collect(),
+                one_sec_enabled,
                 uninstalled: false,
             });
             self.last_updated = now;
@@ -201,6 +203,7 @@ pub struct TokenMetrics {
     uninstalled: bool,
     last_updated: TimestampMillis,
     payments: Vec<Payment>,
+    one_sec_enabled: bool,
 }
 
 impl From<&TokenDetails> for TokenMetrics {
@@ -222,6 +225,7 @@ impl From<&TokenDetails> for TokenMetrics {
             uninstalled: value.uninstalled,
             last_updated: value.last_updated,
             payments: value.payments.clone(),
+            one_sec_enabled: value.one_sec_enabled,
         }
     }
 }

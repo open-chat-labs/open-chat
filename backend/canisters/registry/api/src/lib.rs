@@ -34,6 +34,7 @@ pub struct TokenDetails {
     pub enabled: bool,
     pub last_updated: TimestampMillis,
     pub payments: Vec<Payment>,
+    pub one_sec_enabled: bool,
     #[ts(skip)]
     pub uninstalled: bool,
 }
