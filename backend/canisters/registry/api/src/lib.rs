@@ -1,6 +1,5 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use std::fmt::{Display, Formatter};
 use types::{CanisterId, Milliseconds, TimestampMillis, UserId};
 
 mod lifecycle;
@@ -34,6 +33,7 @@ pub struct TokenDetails {
     pub enabled: bool,
     pub last_updated: TimestampMillis,
     pub payments: Vec<Payment>,
+    pub one_sec_enabled: bool,
     #[ts(skip)]
     pub uninstalled: bool,
 }
@@ -108,20 +108,4 @@ impl From<&NervousSystemDetails> for NervousSystemSummary {
 pub struct MessageFilterSummary {
     pub id: u64,
     pub regex: String,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-// TODO uncomment the line below once candid is aware of the `rename_all` attribute
-// #[serde(rename_all = "lowercase")]
-pub enum TokenStandard {
-    #[serde(rename = "icrc1")]
-    ICRC1,
-}
-
-impl Display for TokenStandard {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::ICRC1 => f.write_str("icrc1"),
-        }
-    }
 }

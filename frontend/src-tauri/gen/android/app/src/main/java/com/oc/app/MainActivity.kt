@@ -10,10 +10,7 @@ import com.ocplugin.app.OpenChatPlugin
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebView
-import android.os.Build
-import android.view.WindowManager
 import android.view.ViewTreeObserver
-import android.widget.FrameLayout
 
 class MainActivity : TauriActivity() {
 
@@ -27,6 +24,7 @@ class MainActivity : TauriActivity() {
             // Cache FCM token, and create notification channel
             NotificationsHelper.cacheFCMToken()
             NotificationsHelper.createNotificationChannel(this)
+            NotificationsHelper.setNotificationIconSmall(R.drawable.ic_notification_small)
             handleNotificationIntent(intent)
         } catch (e: Exception) {
             Log.e("OC_APP", "Error occurred $e")
@@ -112,5 +110,4 @@ class MainActivity : TauriActivity() {
         }
         return null
     }
-
 }
