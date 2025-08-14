@@ -38,7 +38,6 @@ dfx --identity $IDENTITY canister install test_chat_ledger --wasm ./wasms/icrc_l
 dfx --identity $IDENTITY canister call registry add_token "(record {
     ledger_canister_id = principal \"2ouva-viaaa-aaaaq-aaamq-cai\";
     payer = null;
-    token_standard = variant { icrc1 };
     info_url = \"https://dashboard.internetcomputer.org/sns/3e3x2-xyaaa-aaaaq-aaalq-cai\";
     transaction_url_format = \"https://dashboard.internetcomputer.org/sns/3e3x2-xyaaa-aaaaq-aaalq-cai/transactions/{transaction_index}\";
 })"
