@@ -2,7 +2,7 @@ import type { Readable } from "svelte/store";
 import type {
     ChannelIdentifier,
     ChatIdentifier,
-    ChitEarned,
+    ChitEvent,
     CommunityIdentifier,
     CommunitySummary,
     DirectChatIdentifier,
@@ -88,7 +88,7 @@ export type PubSubEvents = {
     reactionSelected: { messageId: bigint; kind: "add" | "remove" };
     userSuspensionChanged: undefined;
     selectedChatInvalid: undefined;
-    chitEarned: ChitEarned[];
+    chitEarned: ChitEvent[];
     sendMessageFailed: boolean;
     summonWitch: undefined;
     registerBot: undefined;

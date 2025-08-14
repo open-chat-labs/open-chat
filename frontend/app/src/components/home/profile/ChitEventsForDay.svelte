@@ -1,11 +1,11 @@
 <script lang="ts">
-    import { mobileWidth, type ChitEarned } from "openchat-client";
+    import { mobileWidth, type ChitEvent } from "openchat-client";
     import Tooltip from "../../../components/tooltip/Tooltip.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
 
     interface Props {
-        events: ChitEarned[];
+        events: ChitEvent[];
         day: Date;
         selectedMonth: number;
     }
@@ -30,6 +30,10 @@
                             <p>
                                 🥳 <Translatable
                                     resourceKey={i18nKey(`learnToEarn.${event.reason.type}`)} />: {event.amount.toLocaleString()}
+                            </p>
+                        {:else if event.reason.kind === "purchased_premium_item"}
+                            <p>
+                                🤑 <Translatable resourceKey={i18nKey("premiumItem.purchased")} />: {event.amount.toLocaleString()}
                             </p>
                         {:else if event.reason.kind === "referral"}
                             <p>

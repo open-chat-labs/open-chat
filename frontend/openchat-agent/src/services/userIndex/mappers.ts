@@ -219,6 +219,7 @@ export function currentUserSummary(
         chitBalance: value.chit_balance,
         streak: value.streak,
         maxStreak: value.max_streak,
+        backgroundId: value.profile_background_id,
     };
 }
 
@@ -236,6 +237,7 @@ export function userSummaryUpdate(value: TUserSummaryV2): UserSummaryUpdate {
             })),
             suspended: s.suspended,
             isUniquePerson: s.is_unique_person,
+            backgroundId: s.profile_background_id,
         })),
         volatile: mapOptional(value.volatile, (v) => ({
             chitBalance: v.chit_balance,

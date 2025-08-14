@@ -94,7 +94,9 @@ import type {
     ChitLeaderboardResponse,
     ClaimDailyChitResponse,
     ExternalAchievement,
+    PayForPremiumItemResponse,
     PayForStreakInsuranceResponse,
+    PremiumItem,
 } from "./chit";
 import type {
     AddMembersToChannelResponse,
@@ -149,6 +151,7 @@ import type {
     AuthenticationPrincipalsResponse,
     ChallengeAttempt,
     CreateOpenChatIdentityResponse,
+    FinaliseAccountLinkingResponse,
     GenerateChallengeResponse,
     GetDelegationResponse,
     GetOpenChatIdentityResponse,
@@ -157,10 +160,9 @@ import type {
     RemoveIdentityLinkResponse,
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
+    VerifyAccountLinkingCodeResponse,
     WebAuthnKey,
     WebAuthnKeyFull,
-    VerifyAccountLinkingCodeResponse,
-    FinaliseAccountLinkingResponse,
 } from "./identity";
 import type { CommunityInvite, GroupInvite } from "./inviteCodes";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -261,6 +263,7 @@ export type WorkerRequest =
     | LeaveGroup
     | DeleteGroup
     | SetUserAvatar
+    | SetProfileBackground
     | UnblockUserFromDirectChat
     | BlockUserFromDirectChat
     | UnpinChat
@@ -459,7 +462,21 @@ export type WorkerRequest =
     | CreateAccountLinkingCode
     | ReinstateMissedDailyClaims
     | VerifyAccountLinkingCode
-    | FinaliseAccountLinkingWithCode;
+    | FinaliseAccountLinkingWithCode
+    | PayForPremiumItem
+    | SetPremiumItemCost;
+
+type SetPremiumItemCost = {
+    kind: "setPremiumItemCost";
+    item: PremiumItem;
+    chitCost: number;
+};
+
+type PayForPremiumItem = {
+    kind: "payForPremiumItem";
+    item: PremiumItem;
+    userId: string;
+};
 
 type SetMinLogLevel = {
     kind: "setMinLogLevel";
@@ -1153,6 +1170,11 @@ type SetUserAvatar = {
     kind: "setUserAvatar";
 };
 
+type SetProfileBackground = {
+    data: Uint8Array;
+    kind: "setProfileBackground";
+};
+
 type UnblockUserFromDirectChat = {
     userId: string;
     kind: "unblockUserFromDirectChat";
@@ -1771,7 +1793,8 @@ export type WorkerResponseInner =
     | FullWebhookDetails
     | AccountLinkingCode
     | VerifyAccountLinkingCodeResponse
-    | FinaliseAccountLinkingResponse;
+    | FinaliseAccountLinkingResponse
+    | PayForPremiumItemResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -2159,6 +2182,8 @@ export type WorkerResult<T> = T extends Init
     ? UnblockUserResponse
     : T extends SetUserAvatar
     ? BlobReference
+    : T extends SetProfileBackground
+    ? BlobReference
     : T extends DeleteGroup
     ? DeleteGroupResponse
     : T extends LeaveGroup
@@ -2527,6 +2552,10 @@ export type WorkerResult<T> = T extends Init
     ? boolean
     : T extends UpdateProposalTallies
     ? EventWrapper<Message>[]
+    : T extends PayForPremiumItem
+    ? PayForPremiumItemResponse
+    : T extends SetPremiumItemCost
+    ? void
     : T extends CreateAccountLinkingCode
     ? AccountLinkingCode | undefined
     : T extends ReinstateMissedDailyClaims

@@ -237,6 +237,7 @@ export enum ErrorCode {
     ProposalNotAcceptingVotes = 336,
     LinkingCodeNotFound = 342,
     MaxLinkedIdentitiesLimitReached = 343,
+    ItemNotFound = 344,
 
     // InternalError
     C2CError = 500,
