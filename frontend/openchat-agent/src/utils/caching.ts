@@ -235,10 +235,19 @@ async function clearEvents(
 //     await tx.objectStore("externalAchievements").clear();
 // }
 
+async function clearChatsAndCurrentUser(
+    _db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
+    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    await clearChatsStore(_db, _principal, tx);
+    await tx.objectStore("currentUser").clear();
+}
+
 const migrations: Record<number, MigrationFunction<ChatSchema>> = {
     139: clearCommunityDetailsStore,
     140: clearEvents,
-    141: clearChatsStore,
+    141: clearChatsAndCurrentUser,
 };
 
 async function migrate(
