@@ -1,5 +1,5 @@
 import { AuthClient } from "@dfinity/auth-client";
-import { disableLeftNav, routerReadyStore } from "openchat-client";
+import { routerReadyStore, xframeOverrides, type XFrameOverrides } from "openchat-client";
 import page from "page";
 import { get } from "svelte/store";
 import { setModifiedTheme } from "../theme/themes";
@@ -59,9 +59,7 @@ type UserLoggedIn = {
 
 type OverrideSettings = {
     kind: "override_settings";
-    settings: {
-        disableLeftNav: boolean;
-    };
+    settings: XFrameOverrides;
 };
 
 type Logout = {
@@ -134,11 +132,8 @@ function externalMessage(ev: MessageEvent) {
             const payload = ev.data as InboundXFrameMessage;
             switch (payload.kind) {
                 case "override_settings":
-                    console.debug(
-                        "XFRAME_TARGET: overriding settings",
-                        payload.settings.disableLeftNav,
-                    );
-                    disableLeftNav.set(Boolean(payload.settings.disableLeftNav));
+                    console.debug("XFRAME_TARGET: overriding settings", payload.settings);
+                    xframeOverrides.set(payload.settings);
                     break;
                 case "change_route":
                     pageWhenReady(payload.path);

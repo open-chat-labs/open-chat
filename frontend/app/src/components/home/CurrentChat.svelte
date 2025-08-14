@@ -24,12 +24,10 @@
         type MessageContext,
         messageContextsEqual,
         messagesRead,
-        mobileWidth,
         type MultiUserChat,
         type OpenChat,
         type ReadonlySet,
         ROLE_OWNER,
-        runningInIframe,
         selectedChatDraftMessageStore,
         selectedChatPinnedMessagesStore,
         selectedCommunitySummaryStore,
@@ -304,7 +302,6 @@
     function onSendMessageWithContent(content: MessageContent) {
         client.sendMessageWithContent(messageContext, content, false);
     }
-    let showChatHeader = $derived(!$mobileWidth || !$runningInIframe);
     let messageContext = $derived({ chatId: chat.id });
 
     trackedEffect("current-chat", () => {
@@ -413,18 +410,16 @@
                 bind:searchTerm
                 {onGoToMessageIndex}
                 onClose={() => (showSearchHeader = false)} />
-        {:else if showChatHeader}
-            {#if bot !== undefined && chat.kind === "direct_chat"}
-                <DirectChatHeader {bot} {chat} {onSearchChat}></DirectChatHeader>
-            {:else}
-                <CurrentChatHeader
-                    onSearchChat={searchChat}
-                    onImportToCommunity={importToCommunity}
-                    {blocked}
-                    {readonly}
-                    selectedChatSummary={chat}
-                    hasPinned={$selectedChatPinnedMessagesStore.size > 0} />
-            {/if}
+        {:else if bot !== undefined && chat.kind === "direct_chat"}
+            <DirectChatHeader {bot} {chat} {onSearchChat}></DirectChatHeader>
+        {:else}
+            <CurrentChatHeader
+                onSearchChat={searchChat}
+                onImportToCommunity={importToCommunity}
+                {blocked}
+                {readonly}
+                selectedChatSummary={chat}
+                hasPinned={$selectedChatPinnedMessagesStore.size > 0} />
         {/if}
         {#if externalUrl !== undefined}
             <ExternalContent {privateChatPreview} {frozen} {externalUrl} />

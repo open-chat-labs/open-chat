@@ -8,6 +8,7 @@
         iconSize,
         mobileWidth,
         publish,
+        restrictToSelectedChat,
         routeForChatIdentifier,
         selectedChatIdStore,
         selectedCommunitySummaryStore,
@@ -160,7 +161,7 @@
 </script>
 
 <SectionHeader shadow flush>
-    {#if $mobileWidth}
+    {#if $mobileWidth && !$restrictToSelectedChat}
         <div class="back" class:rtl={$rtlStore} onclick={clearSelection}>
             <HoverIcon>
                 {#if $rtlStore}
