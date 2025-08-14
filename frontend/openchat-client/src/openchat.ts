@@ -193,12 +193,14 @@ import {
     parseBigInt,
     type PartitionedUserIds,
     type PayForDiamondMembershipResponse,
+    type PayForPremiumItemResponse,
     type PayForStreakInsuranceResponse,
     type PaymentGateApproval,
     type PaymentGateApprovals,
     type PendingCryptocurrencyTransfer,
     type PendingCryptocurrencyWithdrawal,
     pinNumberFailureFromError,
+    PremiumItem,
     type PreprocessedGate,
     type ProposalVoteDetails,
     type ProposeResponse,
@@ -361,6 +363,7 @@ import {
     pinNumberRequiredStore,
     pinNumberResolverStore,
     platformOperatorStore,
+    premiumItemsStore,
     querystringCodeStore,
     querystringReferralCodeStore,
     querystringStore,
@@ -451,6 +454,7 @@ import {
     buildTransactionLink,
     buildTransactionUrlByIndex,
     buildUserAvatarUrl,
+    buildUserBackgroundUrl,
     canAddMembers,
     canBlockUsers,
     canChangePermissions,
@@ -1451,6 +1455,12 @@ export class OpenChat {
         return this.#sendRequest({ kind: "setUserAvatar", data })
             .then((_resp) => true)
             .catch(() => false);
+    }
+
+    setUserProfileBackground(data: Uint8Array): Promise<bigint | undefined> {
+        return this.#sendRequest({ kind: "setProfileBackground", data })
+            .then((resp) => resp.blobId)
+            .catch(() => undefined);
     }
 
     deleteGroup(chatId: MultiUserChatIdentifier): Promise<boolean> {
@@ -2755,6 +2765,7 @@ export class OpenChat {
     formatTimeRemaining = formatTimeRemaining;
     formatLastOnlineDate = formatLastOnlineDate;
     buildUserAvatarUrl = buildUserAvatarUrl;
+    buildUserBackgroundUrl = buildUserBackgroundUrl;
     buildUsernameList = buildUsernameList;
     groupMessagesByDate = groupMessagesByDate;
     fillMessage = fillMessage;
@@ -5720,6 +5731,10 @@ export class OpenChat {
         return this.#sendRequest({ kind: "getBio", userId });
     }
 
+    getProfileBackgroundImage(_userId?: string): Promise<DataContent | undefined> {
+        return Promise.resolve(undefined);
+    }
+
     async withdrawCryptocurrency(
         domain: PendingCryptocurrencyWithdrawal,
     ): Promise<WithdrawCryptocurrencyResponse> {
@@ -6261,6 +6276,7 @@ export class OpenChat {
                 chatsResponse.messageActivitySummary,
                 chatsResponse.installedBots,
                 chatsResponse.streakInsurance,
+                chatsResponse.premiumItems,
             );
         });
 
@@ -6345,6 +6361,7 @@ export class OpenChat {
         messageActivitySummary: MessageActivitySummary | undefined,
         installedBots: Map<string, GrantedBotPermissions> | undefined,
         streakInsurance: OptionUpdate<StreakInsurance>,
+        premiumItems: Set<PremiumItem> | undefined,
     ): void {
         if (directChatsAddedUpdated.length > 0 || directChatsRemoved.length > 0) {
             serverDirectChatsStore.update((map) => {
@@ -6415,6 +6432,9 @@ export class OpenChat {
                     ? { daysInsured: 0, daysMissed: 0 }
                     : streakInsurance.value,
             );
+        }
+        if (premiumItems !== undefined) {
+            premiumItemsStore.set(premiumItems);
         }
         if (chitState !== undefined && chitState.streakEnds >= chitStateStore.value.streakEnds) {
             chitStateStore.set(chitState);
@@ -9453,6 +9473,51 @@ export class OpenChat {
         return total;
     }
 
+    setPremiumItemCost(item: PremiumItem, chitCost: number): Promise<void> {
+        return this.#sendRequest({
+            kind: "setPremiumItemCost",
+            item,
+            chitCost,
+        });
+    }
+
+    payForPremiumItem(item: PremiumItem): Promise<PayForPremiumItemResponse> {
+        return this.#sendRequest({
+            kind: "payForPremiumItem",
+            item,
+            userId: currentUserIdStore.value,
+        })
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    withPausedStores(() => {
+                        chitStateStore.update((chit) => {
+                            chit.chitBalance = resp.chitBalance;
+                            chit.totalChitEarned = resp.totalChitEarned;
+                            return chit;
+                        });
+                        currentUserStore.update((user) => {
+                            user.chitBalance = resp.chitBalance;
+                            user.totalChitEarned = resp.totalChitEarned;
+                            return user;
+                        });
+                        userStore.updateUser(currentUserIdStore.value, (u) => ({
+                            ...u,
+                            chitBalance: resp.chitBalance,
+                            totalChitEarned: resp.totalChitEarned,
+                        }));
+                        premiumItemsStore.add(item);
+                    });
+                } else {
+                    console.log("Failed to pay for premium", resp);
+                }
+                return resp;
+            })
+            .catch((err) => {
+                console.log("Failed to pay for premium item", err);
+                return CommonResponses.unknownError(JSON.stringify(err));
+            });
+    }
+
     async payForStreakInsurance(
         additionalDays: number,
         expectedPrice: bigint,
@@ -9640,7 +9705,7 @@ export class OpenChat {
     ): Promise<PushSubscription | null> {
         const subscribeOptions = {
             userVisibleOnly: true,
-            applicationServerKey: this.#toUint8Array(this.#vapidPublicKey),
+            applicationServerKey: this.#toUint8Array(this.#vapidPublicKey) as BufferSource,
         };
 
         try {

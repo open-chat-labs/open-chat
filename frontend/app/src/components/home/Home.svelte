@@ -82,10 +82,10 @@
     import BotBuilderModal from "../bots/BotBuilderModal.svelte";
     import WebhookModal from "../bots/WebhookModal.svelte";
     import EditLabel from "../EditLabel.svelte";
+    import NativeOnboardModal from "../mobile/NativeOnboardModal.svelte";
     import NotFound from "../NotFound.svelte";
     import OfflineFooter from "../OfflineFooter.svelte";
     import OnboardModal from "../onboard/OnboardModal.svelte";
-    import NativeOnboardModal from "../mobile/NativeOnboardModal.svelte";
     import Overlay from "../Overlay.svelte";
     import SelectChatModal from "../SelectChatModal.svelte";
     import SuspendedModal from "../SuspendedModal.svelte";
@@ -110,7 +110,7 @@
     import AccountsModal from "./profile/AccountsModal.svelte";
     import SetPinNumberModal from "./profile/SetPinNumberModal.svelte";
     import VerifyHumanity from "./profile/VerifyHumanity.svelte";
-    import ViewUserProfile from "./profile/ViewUserProfile.svelte";
+    import ViewUserProfile from "./profile/ViewUserProfileModal.svelte";
     import MakeProposalModal from "./proposal/MakeProposalModal.svelte";
     import RightPanel from "./RightPanelWrapper.svelte";
     import SuspendModal from "./SuspendModal.svelte";

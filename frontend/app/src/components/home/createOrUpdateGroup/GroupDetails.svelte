@@ -1,11 +1,10 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
+    import EditableAvatar from "@src/components/EditableAvatar.svelte";
     import type { CandidateGroupChat } from "openchat-client";
-    import EditableAvatar from "../../EditableAvatar.svelte";
-    import Input from "../../Input.svelte";
-    import TextArea from "../../TextArea.svelte";
-    import Legend from "../../Legend.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import Input from "../../Input.svelte";
+    import Legend from "../../Legend.svelte";
+    import TextArea from "../../TextArea.svelte";
     import Translatable from "../../Translatable.svelte";
 
     const MIN_LENGTH = 3;

@@ -1361,6 +1361,17 @@
         "votersPublic": "Voters will be public"
     },
     "preferredLanguage": "Preferred language",
+    "premiumItem": {
+        "botEmojis": "Bot emoji pack",
+        "customProfileBackground": "Custom profile background",
+        "insufficientChit": "This feature uses {price} CHIT and you only have {balance} at the moment. Keep collecting!",
+        "paymentFailure": "Sorry but we were unable to take payment.",
+        "popularEmojis": "Popular emoji pack",
+        "priceMessage": "Do you want to use {price} of your current CHIT balance of {balance} for this feature?",
+        "priceTooltip": "{price} CHIT",
+        "purchased": "Premium item",
+        "title": "Premium Item"
+    },
     "preview": "Preview",
     "previewing": "previewing group",
     "privateGroupInfo": "This {level} will be limited to the people that you invite.",
