@@ -24,12 +24,10 @@
         type MessageContext,
         messageContextsEqual,
         messagesRead,
-        mobileWidth,
         type MultiUserChat,
         type OpenChat,
         type ReadonlySet,
         ROLE_OWNER,
-        runningInIframe,
         selectedChatDraftMessageStore,
         selectedChatPinnedMessagesStore,
         selectedCommunitySummaryStore,
@@ -50,6 +48,7 @@
     import CurrentChatHeader from "./CurrentChatHeader.svelte";
     import CurrentChatMessages from "./CurrentChatMessages.svelte";
     import CurrentChatSearchHeader from "./CurrentChatSearchHeader.svelte";
+    import DropTarget from "./DropTarget.svelte";
     import ExternalContent from "./ExternalContent.svelte";
     import Footer from "./Footer.svelte";
     import GiphySelector from "./GiphySelector.svelte";
@@ -303,7 +302,6 @@
     function onSendMessageWithContent(content: MessageContent) {
         client.sendMessageWithContent(messageContext, content, false);
     }
-    let showChatHeader = $derived(!$mobileWidth || !$runningInIframe);
     let messageContext = $derived({ chatId: chat.id });
 
     trackedEffect("current-chat", () => {
@@ -341,6 +339,18 @@
 
     function onGoToMessageIndex(args: { index: number; preserveFocus: boolean }) {
         currentChatMessages?.scrollToMessageIndex(args.index, args.preserveFocus);
+    }
+
+    function stopTyping() {
+        if (chat !== undefined) {
+            client.stopTyping(chat.id, $currentUserIdStore);
+        }
+    }
+
+    function startTyping() {
+        if (chat !== undefined) {
+            client.startTyping(chat.id, $currentUserIdStore);
+        }
     }
 </script>
 
@@ -392,15 +402,15 @@
 
 <MemeBuilder onSend={onSendMessageWithContent} bind:this={memeBuilder} bind:open={buildingMeme} />
 
-<div class="wrapper">
-    {#if showSearchHeader}
-        <CurrentChatSearchHeader
-            {chat}
-            bind:searchTerm
-            {onGoToMessageIndex}
-            onClose={() => (showSearchHeader = false)} />
-    {:else if showChatHeader}
-        {#if bot !== undefined && chat.kind === "direct_chat"}
+<DropTarget {chat} mode={"message"} {onFileSelected}>
+    <div class="wrapper">
+        {#if showSearchHeader}
+            <CurrentChatSearchHeader
+                {chat}
+                bind:searchTerm
+                {onGoToMessageIndex}
+                onClose={() => (showSearchHeader = false)} />
+        {:else if bot !== undefined && chat.kind === "direct_chat"}
             <DirectChatHeader {bot} {chat} {onSearchChat}></DirectChatHeader>
         {:else}
             <CurrentChatHeader
@@ -411,62 +421,62 @@
                 selectedChatSummary={chat}
                 hasPinned={$selectedChatPinnedMessagesStore.size > 0} />
         {/if}
-    {/if}
-    {#if externalUrl !== undefined}
-        <ExternalContent {privateChatPreview} {frozen} {externalUrl} />
-    {:else}
-        <CurrentChatMessages
-            bind:this={currentChatMessages}
-            onReplyTo={replyTo}
-            {onRemovePreview}
-            {privateChatPreview}
-            {chat}
-            {filteredProposals}
-            {canPin}
-            {canBlockUsers}
-            {canDelete}
-            {canReplyInThread}
-            {canSendAny}
-            {canReact}
-            {canInvite}
-            {readonly}
-            {firstUnreadMention}
-            footer={showFooter}
-            {unreadMessages} />
-    {/if}
-    {#if showFooter}
-        <Footer
-            {chat}
-            attachment={$selectedChatDraftMessageStore?.attachment}
-            editingEvent={$selectedChatDraftMessageStore?.editingEvent}
-            replyingTo={$selectedChatDraftMessageStore?.replyingTo}
-            textContent={$selectedChatDraftMessageStore?.textContent}
-            user={$currentUserStore}
-            mode={"message"}
-            {joining}
-            {preview}
-            {lapsed}
-            {blocked}
-            {messageContext}
-            externalContent={externalUrl !== undefined}
-            onCancelReply={() =>
-                localUpdates.draftMessages.setReplyingTo({ chatId: chat.id }, undefined)}
-            onClearAttachment={() =>
-                localUpdates.draftMessages.setAttachment({ chatId: chat.id }, undefined)}
-            onCancelEdit={() => localUpdates.draftMessages.delete({ chatId: chat.id })}
-            {onSetTextContent}
-            onStartTyping={() => client.startTyping(chat, $currentUserIdStore)}
-            onStopTyping={() => client.stopTyping(chat, $currentUserIdStore)}
-            {onFileSelected}
-            {onSendMessage}
-            onAttachGif={attachGif}
-            onMakeMeme={makeMeme}
-            onTokenTransfer={tokenTransfer}
-            onCreatePrizeMessage={createPrizeMessage}
-            onCreateP2PSwapMessage={createP2PSwapMessage}
-            onCreatePoll={createPoll} />
-    {/if}
-</div>
+        {#if externalUrl !== undefined}
+            <ExternalContent {privateChatPreview} {frozen} {externalUrl} />
+        {:else}
+            <CurrentChatMessages
+                bind:this={currentChatMessages}
+                onReplyTo={replyTo}
+                {onRemovePreview}
+                {privateChatPreview}
+                {chat}
+                {filteredProposals}
+                {canPin}
+                {canBlockUsers}
+                {canDelete}
+                {canReplyInThread}
+                {canSendAny}
+                {canReact}
+                {canInvite}
+                {readonly}
+                {firstUnreadMention}
+                footer={showFooter}
+                {unreadMessages} />
+        {/if}
+        {#if showFooter}
+            <Footer
+                {chat}
+                attachment={$selectedChatDraftMessageStore?.attachment}
+                editingEvent={$selectedChatDraftMessageStore?.editingEvent}
+                replyingTo={$selectedChatDraftMessageStore?.replyingTo}
+                textContent={$selectedChatDraftMessageStore?.textContent}
+                user={$currentUserStore}
+                mode={"message"}
+                {joining}
+                {preview}
+                {lapsed}
+                {blocked}
+                {messageContext}
+                externalContent={externalUrl !== undefined}
+                onCancelReply={() =>
+                    localUpdates.draftMessages.setReplyingTo({ chatId: chat.id }, undefined)}
+                onClearAttachment={() =>
+                    localUpdates.draftMessages.setAttachment({ chatId: chat.id }, undefined)}
+                onCancelEdit={() => localUpdates.draftMessages.delete({ chatId: chat.id })}
+                {onSetTextContent}
+                onStartTyping={startTyping}
+                onStopTyping={stopTyping}
+                {onFileSelected}
+                {onSendMessage}
+                onAttachGif={attachGif}
+                onMakeMeme={makeMeme}
+                onTokenTransfer={tokenTransfer}
+                onCreatePrizeMessage={createPrizeMessage}
+                onCreateP2PSwapMessage={createP2PSwapMessage}
+                onCreatePoll={createPoll} />
+        {/if}
+    </div>
+</DropTarget>
 
 <style lang="scss">
     .wrapper {

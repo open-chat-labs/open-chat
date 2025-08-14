@@ -12,6 +12,8 @@ import type {
     JoinGroupResponse,
     MessageContext,
     MultiUserChatIdentifier,
+    PayForPremiumItemResponse,
+    PayForPremiumItemSuccess,
     RegisterUserResponse,
     Tally,
     VerifiedCredentialArgs,
@@ -42,8 +44,10 @@ import type {
     LocalUserIndexInviteUsersToGroupResponse,
     LocalUserIndexJoinChannelResponse,
     LocalUserIndexJoinCommunityResponse,
+    LocalUserIndexPayForPremiumItemResponse,
+    LocalUserIndexPayForPremiumItemSuccessResult,
     LocalUserIndexRegisterUserResponse,
-    LocalUserIndexWithdrawFromIcpswapResponse,
+    SuccessOnly,
     VerifiedCredentialGateArgs as TVerifiedCredentialGateArgs,
     VideoCallType as TVideoCallType,
 } from "../../typebox";
@@ -58,11 +62,29 @@ import {
     communitySummary,
     gateCheckFailedReason,
     getEventsSuccess,
+    mapResult,
     ocError,
     proposalTallies,
 } from "../common/chatMappersV2";
 import { communitySummaryUpdates } from "../community/mappersV2";
 import { groupChatSummary, groupChatSummaryUpdates } from "../group/mappersV2";
+
+export function payForPremiumItemResponse(
+    value: LocalUserIndexPayForPremiumItemResponse,
+): PayForPremiumItemResponse {
+    console.log("PayForPremiumItem response: ", value);
+    return mapResult(value, payForPremiumItemSuccess);
+}
+
+export function payForPremiumItemSuccess(
+    value: LocalUserIndexPayForPremiumItemSuccessResult,
+): PayForPremiumItemSuccess {
+    return {
+        kind: "success",
+        totalChitEarned: value.total_chit_earned,
+        chitBalance: value.chit_balance,
+    };
+}
 
 export function apiAccessTokenType(domain: AccessTokenType): LocalUserIndexAccessTokenV2Args {
     switch (domain.kind) {
@@ -315,7 +337,10 @@ export async function chatEventsBatchResponse(
     };
 }
 
-export function activeProposalTalliesResponse(chatIds: MultiUserChatIdentifier[], value: LocalUserIndexActiveProposalTalliesResponse): Map<MultiUserChatIdentifier, [number, Tally][]> {
+export function activeProposalTalliesResponse(
+    chatIds: MultiUserChatIdentifier[],
+    value: LocalUserIndexActiveProposalTalliesResponse,
+): Map<MultiUserChatIdentifier, [number, Tally][]> {
     const responses = value.Success.responses;
     if (chatIds.length !== responses.length) {
         console.error("Invalid activeProposalTalliesResponse", chatIds, responses.length);
@@ -465,9 +490,7 @@ export function apiVerifiedCredentialArgs(
     };
 }
 
-export function withdrawFromIcpSwapResponse(
-    value: LocalUserIndexWithdrawFromIcpswapResponse,
-): boolean {
+export function withdrawFromIcpSwapResponse(value: SuccessOnly): boolean {
     console.log("Withdraw from ICPSwap response", value);
     return value === "Success";
 }

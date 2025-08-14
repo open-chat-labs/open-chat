@@ -654,6 +654,7 @@ function initialiseGlobalState() {
             ],
         ]),
         undefined,
+        new Set(),
     );
 }
 

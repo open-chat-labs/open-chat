@@ -160,64 +160,97 @@ impl FcmData {
 impl From<UserNotificationPayload> for FcmData {
     fn from(value: UserNotificationPayload) -> Self {
         match value {
-            UserNotificationPayload::AddedToChannel(n) => FcmData::for_channel(n.community_id, n.channel_id)
-                .set_sender_id(n.added_by)
-                .set_sender_name_with_alt(n.added_by_display_name, n.added_by_name)
-                .set_body(format!("Added you to the channel '{}'", n.channel_name))
-                .set_avatar_id(n.channel_avatar_id.or(n.community_avatar_id)),
+            // Direct Notifications
             UserNotificationPayload::DirectMessage(n) => FcmData::for_direct_chat(n.sender)
                 .set_sender_name_with_alt(n.sender_display_name, n.sender_name)
                 .set_optional_thread(n.thread_root_message_index)
                 .set_body_with_alt(n.message_text, n.message_type)
                 .set_optional_image(n.image_url)
                 .set_avatar_id(n.sender_avatar_id),
-            UserNotificationPayload::GroupMessage(n) => FcmData::for_group(n.chat_id)
-                .set_sender_id(n.sender)
-                .set_sender_name_with_alt(n.sender_display_name, n.sender_name)
-                .set_optional_thread(n.thread_root_message_index)
-                .set_body_with_alt(n.message_text, n.message_type)
-                .set_optional_image(n.image_url)
-                .set_avatar_id(n.group_avatar_id),
-            UserNotificationPayload::ChannelMessage(n) => FcmData::for_channel(n.community_id, n.channel_id)
-                .set_sender_id(n.sender)
-                .set_sender_name_with_alt(n.sender_display_name, n.sender_name)
-                .set_optional_thread(n.thread_root_message_index)
-                .set_body_with_alt(n.message_text, n.message_type)
-                .set_optional_image(n.image_url)
-                .set_avatar_id(n.channel_avatar_id.or(n.community_avatar_id)),
             UserNotificationPayload::DirectReactionAdded(n) => FcmData::for_direct_chat(n.them)
                 .set_sender_name_with_alt(n.display_name, n.username)
                 .set_optional_thread(n.thread_root_message_index)
                 .set_body(format!("Reacted {} to your message", n.reaction.0))
                 .set_avatar_id(n.user_avatar_id),
-            UserNotificationPayload::GroupReactionAdded(n) => FcmData::for_group(n.chat_id)
-                .set_sender_id(n.added_by)
-                .set_sender_name_with_alt(n.added_by_display_name, n.added_by_name)
-                .set_optional_thread(n.thread_root_message_index)
-                .set_body(format!("Reacted {} to your message", n.reaction.0))
-                .set_avatar_id(n.group_avatar_id),
-            UserNotificationPayload::ChannelReactionAdded(n) => FcmData::for_channel(n.community_id, n.channel_id)
-                .set_sender_id(n.added_by)
-                .set_sender_name_with_alt(n.added_by_display_name, n.added_by_name)
-                .set_optional_thread(n.thread_root_message_index)
-                .set_body(format!("Reacted {} to your message", n.reaction.0))
-                .set_avatar_id(n.channel_avatar_id.or(n.community_avatar_id)),
             UserNotificationPayload::DirectMessageTipped(n) => FcmData::for_direct_chat(n.them)
                 .set_sender_name_with_alt(n.display_name, n.username)
                 .set_optional_thread(n.thread_root_message_index)
                 .set_body(format!("Tipped your message {}", n.tip))
                 .set_avatar_id(n.user_avatar_id),
+
+            // Group notifications
+            UserNotificationPayload::GroupMessage(n) => FcmData::for_group(n.chat_id)
+                .set_sender_id(n.sender)
+                .set_sender_name(n.group_name)
+                .set_optional_thread(n.thread_root_message_index)
+                .set_body(format!(
+                    "{}: {}",
+                    n.sender_display_name.unwrap_or(n.sender_name),
+                    n.message_text.unwrap_or(n.message_type),
+                ))
+                .set_optional_image(n.image_url)
+                .set_avatar_id(n.group_avatar_id),
+            UserNotificationPayload::GroupReactionAdded(n) => FcmData::for_group(n.chat_id)
+                .set_sender_id(n.added_by)
+                .set_sender_name(n.group_name)
+                .set_optional_thread(n.thread_root_message_index)
+                .set_body(format!(
+                    "{} reacted {} to your message",
+                    n.added_by_display_name.unwrap_or(n.added_by_name),
+                    n.reaction.0
+                ))
+                .set_avatar_id(n.group_avatar_id),
             UserNotificationPayload::GroupMessageTipped(n) => FcmData::for_group(n.chat_id)
                 .set_sender_id(n.tipped_by)
-                .set_sender_name_with_alt(n.tipped_by_display_name, n.tipped_by_name)
+                .set_sender_name(n.group_name)
                 .set_optional_thread(n.thread_root_message_index)
-                .set_body(format!("Tipped your message {}", n.tip))
+                .set_body(format!(
+                    "{} tipped your message {}",
+                    n.tipped_by_display_name.unwrap_or(n.tipped_by_name),
+                    n.tip
+                ))
                 .set_avatar_id(n.group_avatar_id),
+
+            // Community / channel notifications
+            UserNotificationPayload::ChannelMessage(n) => FcmData::for_channel(n.community_id, n.channel_id)
+                .set_sender_id(n.sender)
+                .set_sender_name(format!("{} / {}", n.community_name, n.channel_name))
+                .set_optional_thread(n.thread_root_message_index)
+                .set_body(format!(
+                    "{}: {}",
+                    n.sender_display_name.unwrap_or(n.sender_name),
+                    n.message_text.unwrap_or(n.message_type)
+                ))
+                .set_optional_image(n.image_url)
+                .set_avatar_id(n.channel_avatar_id.or(n.community_avatar_id)),
+            UserNotificationPayload::AddedToChannel(n) => FcmData::for_channel(n.community_id, n.channel_id)
+                .set_sender_id(n.added_by)
+                .set_sender_name(format!("{} / {}", n.community_name, n.channel_name))
+                .set_body(format!(
+                    "{} added you to the channel '{}'",
+                    n.added_by_display_name.unwrap_or(n.added_by_name),
+                    n.channel_name
+                ))
+                .set_avatar_id(n.channel_avatar_id.or(n.community_avatar_id)),
+            UserNotificationPayload::ChannelReactionAdded(n) => FcmData::for_channel(n.community_id, n.channel_id)
+                .set_sender_id(n.added_by)
+                .set_sender_name(format!("{} / {}", n.community_name, n.channel_name))
+                .set_optional_thread(n.thread_root_message_index)
+                .set_body(format!(
+                    "{} reacted {} to your message",
+                    n.added_by_display_name.unwrap_or(n.added_by_name),
+                    n.reaction.0
+                ))
+                .set_avatar_id(n.channel_avatar_id.or(n.community_avatar_id)),
             UserNotificationPayload::ChannelMessageTipped(n) => FcmData::for_channel(n.community_id, n.channel_id)
                 .set_sender_id(n.tipped_by)
-                .set_sender_name_with_alt(n.tipped_by_display_name, n.tipped_by_name)
+                .set_sender_name(format!("{} / {}", n.community_name, n.channel_name))
                 .set_optional_thread(n.thread_root_message_index)
-                .set_body(format!("Tipped your message {}", n.tip))
+                .set_body(format!(
+                    "{} tipped your message {}",
+                    n.tipped_by_display_name.unwrap_or(n.tipped_by_name),
+                    n.tip
+                ))
                 .set_avatar_id(n.channel_avatar_id.or(n.community_avatar_id)),
         }
     }

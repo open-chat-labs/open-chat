@@ -12,6 +12,7 @@ import type {
     ExternalAchievementsResponse,
     ExternalBot,
     PayForDiamondMembershipResponse,
+    PremiumItem,
     SetDisplayNameResponse,
     SetUsernameResponse,
     SetUserUpgradeConcurrencyResponse,
@@ -32,6 +33,8 @@ import {
 } from "openchat-shared";
 import {
     Empty,
+    SuccessOnly,
+    UnitResult,
     UserIndexBotUpdatesArgs,
     UserIndexBotUpdatesResponse,
     UserIndexCheckUsernameArgs,
@@ -59,11 +62,10 @@ import {
     UserIndexSetDisplayNameArgs,
     UserIndexSetDisplayNameResponse,
     UserIndexSetModerationFlagsArgs,
-    UserIndexSetModerationFlagsResponse,
+    UserIndexSetPremiumItemCostArgs,
     UserIndexSetUsernameArgs,
     UserIndexSetUsernameResponse,
     UserIndexSetUserUpgradeConcurrencyArgs,
-    UserIndexSetUserUpgradeConcurrencyResponse,
     UserIndexSubmitProofOfUniquePersonhoodArgs,
     UserIndexSubmitProofOfUniquePersonhoodResponse,
     UserIndexSuspendUserArgs,
@@ -88,6 +90,7 @@ import {
     mapOptional,
     principalBytesToString,
     principalStringToBytes,
+    toVoid,
 } from "../../utils/mapping";
 import {
     getCachedUsers,
@@ -171,7 +174,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
             },
             (_) => true,
             UserIndexSetModerationFlagsArgs,
-            UserIndexSetModerationFlagsResponse,
+            SuccessOnly,
         );
     }
 
@@ -199,10 +202,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
         );
     }
 
-    async getUsers(
-        users: UsersArgs,
-        allowStale: boolean,
-    ): Promise<UsersResponse> {
+    async getUsers(users: UsersArgs, allowStale: boolean): Promise<UsersResponse> {
         const allUsers = users.userGroups.flatMap((g) => g.users);
 
         const fromCache = await getCachedUsers(allUsers);
@@ -261,8 +261,8 @@ export class UserIndexClient extends MsgpackCanisterAgent {
                     userId: user.userId,
                     ...user.stable,
                     ...user.volatile,
-                    updated: apiResponse.serverTimestamp
-                })
+                    updated: apiResponse.serverTimestamp,
+                });
             }
         }
 
@@ -376,7 +376,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
                         // our cached copy is up to date.
                         users.push({
                             ...cached,
-                             
+
                             updated: apiResponse.serverTimestamp!,
                         });
                     } else {
@@ -523,7 +523,7 @@ export class UserIndexClient extends MsgpackCanisterAgent {
             { value },
             () => "success",
             UserIndexSetUserUpgradeConcurrencyArgs,
-            UserIndexSetUserUpgradeConcurrencyResponse,
+            SuccessOnly,
         );
     }
 
@@ -729,6 +729,19 @@ export class UserIndexClient extends MsgpackCanisterAgent {
             (resp) => botUpdatesResponse(resp, current, this.blobUrlPattern, this.canisterId),
             UserIndexBotUpdatesArgs,
             UserIndexBotUpdatesResponse,
+        );
+    }
+
+    setPremiumItemCost(item: PremiumItem, chitCost: number): Promise<void> {
+        return this.executeMsgpackUpdate(
+            "set_premium_item_cost",
+            {
+                item_id: item,
+                chit_cost: chitCost,
+            },
+            toVoid,
+            UserIndexSetPremiumItemCostArgs,
+            UnitResult,
         );
     }
 }

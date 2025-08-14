@@ -1,5 +1,5 @@
 import type { GateCheckFailed } from "./chat";
-import type { OCError } from "./error";
+import { ErrorCode, type OCError } from "./error";
 import type { UserNotFound } from "./user";
 
 export type UserNotInChannel = { kind: "user_not_in_channel" };
@@ -84,6 +84,11 @@ export const CommonResponses = {
     offline: (): Offline => ({ kind: "offline" }) as Offline,
     blocked: (): Blocked => ({ kind: "blocked" }) as Blocked,
     userNotFound: (): UserNotFound => ({ kind: "unknown_user" }),
+    unknownError: (msg: string | undefined): OCError => ({
+        kind: "error",
+        code: ErrorCode.Unknown,
+        message: msg,
+    }),
 };
 
 export type Blocked = {
@@ -100,4 +105,9 @@ export type ClientJoinGroupResponse =
     | Failure
     | InternalError;
 
-export type ClientJoinCommunityResponse = Success | OCError | GateCheckFailed | Failure | InternalError;
+export type ClientJoinCommunityResponse =
+    | Success
+    | OCError
+    | GateCheckFailed
+    | Failure
+    | InternalError;

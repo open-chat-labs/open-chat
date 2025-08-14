@@ -153,7 +153,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Partitione
     return {
         userIds,
         webhooks,
-    }
+    };
 }
 
 export function getContentAsFormattedText(
@@ -209,6 +209,8 @@ export function getContentAsFormattedText(
         text = "Meme Fighter message";
     } else if (content.kind === "video_call_content") {
         text = "Video call";
+    } else if (content.kind === "encrypted_content") {
+        text = "Encrypted message";
     } else {
         throw new UnsupportedValueError("Unrecognised content type", content);
     }

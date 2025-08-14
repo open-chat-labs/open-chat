@@ -1,4 +1,3 @@
- 
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import type {
     AcceptP2PSwapResponse,
@@ -964,7 +963,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
         communityLastUpdated: bigint,
     ): Promise<CommunityDetailsResponse> {
         const fromCache = await getCachedCommunityDetails(this.db, id.communityId);
-        if (fromCache !== undefined) {
+        if (fromCache != null) {
             if (fromCache.lastUpdated >= communityLastUpdated || offline()) {
                 return fromCache;
             } else {
@@ -1024,10 +1023,13 @@ export class CommunityClient extends MsgpackCanisterAgent {
         }
 
         if (updatesResponse.kind === "success_no_updates") {
-            return [{
-                ...previous,
-                lastUpdated: updatesResponse.lastUpdated,
-            }, false];
+            return [
+                {
+                    ...previous,
+                    lastUpdated: updatesResponse.lastUpdated,
+                },
+                false,
+            ];
         }
 
         return [mergeCommunityDetails(previous, updatesResponse), true];
@@ -1819,6 +1821,6 @@ export class CommunityClient extends MsgpackCanisterAgent {
             (resp) => mapResult(resp, (value) => proposalTallies(value.tallies)),
             CommunityActiveProposalTalliesArgs,
             ActiveProposalTalliesResponse,
-        )
+        );
     }
 }

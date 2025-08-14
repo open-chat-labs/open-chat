@@ -4,9 +4,9 @@ import type {
     ArchiveChatResponse,
     ChannelIdentifier,
     ChatIdentifier,
-    ChitEarned,
-    ChitEarnedReason,
+    ChitEvent,
     ChitEventsResponse,
+    ChitEventType,
     ClaimDailyChitResponse,
     CommunitiesInitial,
     CommunitiesUpdates,
@@ -31,6 +31,7 @@ import type {
     MessageContext,
     NamedAccount,
     PinNumberSettings,
+    PremiumItem,
     PublicProfile,
     Referral,
     ReferralStatus,
@@ -68,8 +69,8 @@ import type {
     CompletedCryptoTransactionNNS,
     Achievement as TAchievement,
     Chat as TChat,
-    ChitEarned as TChitEarned,
-    ChitEarnedReason as TChitEarnedReason,
+    ChitEvent as TChitEvent,
+    ChitEventType as TChitEventType,
     DirectChatSummary as TDirectChatSummary,
     DirectChatSummaryUpdates as TDirectChatSummaryUpdates,
     PinNumberSettings as TPinNumberSettings,
@@ -217,15 +218,15 @@ export function chitEventsResponse(value: UserChitEventsResponse): ChitEventsRes
     }
 }
 
-export function chitEarned(value: TChitEarned): ChitEarned {
+export function chitEarned(value: TChitEvent): ChitEvent {
     return {
         amount: value.amount,
         timestamp: value.timestamp,
-        reason: chitEarnedReason(value.reason),
+        reason: chitEventType(value.reason),
     };
 }
 
-export function chitEarnedReason(value: TChitEarnedReason): ChitEarnedReason {
+export function chitEventType(value: TChitEventType): ChitEventType {
     if (value === "DailyClaim") {
         return { kind: "daily_claim" };
     }
@@ -247,6 +248,12 @@ export function chitEarnedReason(value: TChitEarnedReason): ChitEarnedReason {
         }
         if ("ExternalAchievement" in value) {
             return { kind: "external_achievement_unlocked", name: value.ExternalAchievement };
+        }
+        if ("PurchasedPremiumItem" in value) {
+            return {
+                kind: "purchased_premium_item",
+                item: value.PurchasedPremiumItem as PremiumItem,
+            };
         }
     }
 
@@ -412,6 +419,7 @@ export function publicProfileResponse(value: UserPublicProfileResponse): PublicP
         isPremium: profile.is_premium,
         phoneIsVerified: profile.phone_is_verified,
         created: profile.created,
+        backgroundId: profile.profile_background_id,
     };
 }
 
@@ -643,6 +651,7 @@ export function initialStateResponse(value: UserInitialStateResponse): InitialSt
             }, new Map<string, GrantedBotPermissions>()),
             bitcoinAddress: result.btc_address,
             streakInsurance: mapOptional(result.streak_insurance, streakInsurance),
+            premiumItems: new Set(result.premium_items),
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${value}`);
@@ -812,6 +821,7 @@ export function getUpdatesResponse(value: UserUpdatesResponse): UpdatesResponse 
             botsRemoved: value.Success.bots_removed.map(principalBytesToString),
             bitcoinAddress: value.Success.btc_address,
             streakInsurance: optionUpdateV2(result.streak_insurance, streakInsurance),
+            premiumItems: mapOptional(result.premium_items, (items) => new Set(items)),
         };
     }
 

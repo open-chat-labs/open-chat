@@ -130,6 +130,7 @@ export class AnonUserClient {
             },
             bots: new Map(),
             bitcoinAddress: undefined,
+            premiumItems: new Set(),
         });
     }
 
@@ -198,6 +199,10 @@ export class AnonUserClient {
     }
 
     setAvatar(_bytes: Uint8Array): Promise<BlobReference> {
+        throw new AnonymousOperationError();
+    }
+
+    setProfileBackground(_bytes: Uint8Array): Promise<BlobReference> {
         throw new AnonymousOperationError();
     }
 
@@ -525,10 +530,7 @@ export class AnonUserClient {
         throw new AnonymousOperationError();
     }
 
-    updateChatSettings(
-        _userId: string,
-        _eventsTtl: OptionUpdate<bigint>
-    ): Promise<boolean> {
+    updateChatSettings(_userId: string, _eventsTtl: OptionUpdate<bigint>): Promise<boolean> {
         throw new AnonymousOperationError();
     }
 }

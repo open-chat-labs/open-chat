@@ -1361,6 +1361,17 @@
         "votersPublic": "मतदाता सार्वजनिक होंगे"
     },
     "preferredLanguage": "पसंदीदा भाषा",
+    "premiumItem": {
+        "botEmojis": "बॉट इमोजी पैक",
+        "customProfileBackground": "कस्टम प्रोफ़ाइल पृष्ठभूमि",
+        "insufficientChit": "यह सुविधा {price} CHIT का उपयोग करती है और आपके पास इस समय केवल {balance} ही है। संग्रह करते रहें!",
+        "paymentFailure": "क्षमा करें, लेकिन हम भुगतान लेने में असमर्थ थे।",
+        "popularEmojis": "लोकप्रिय इमोजी पैक",
+        "priceMessage": "क्या आप इस सुविधा के लिए अपने वर्तमान CHIT शेष {price} में से {balance} का उपयोग करना चाहते हैं?",
+        "priceTooltip": "{price} चिट",
+        "purchased": "प्रीमियम आइटम",
+        "title": "प्रीमियम आइटम"
+    },
     "preview": "पूर्व दर्शन",
     "previewing": "पूर्वावलोकन समूह",
     "privateGroupInfo": "यह {level} उन लोगों तक सीमित होगा जिन्हें आप आमंत्रित करते हैं।",
