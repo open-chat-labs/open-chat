@@ -6,7 +6,6 @@ use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use constants::{CHAT_LEDGER_CANISTER_ID, CHAT_TRANSFER_FEE};
 use pocket_ic::PocketIc;
-use registry_canister::TokenStandard;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_principal, random_string};
@@ -34,7 +33,6 @@ fn add_token_succeeds() {
         &registry_canister::add_token::Args {
             ledger_canister_id: test_data.ledger_canister_id,
             payer: Some(test_data.user.user_id),
-            token_standard: TokenStandard::ICRC1,
             info_url: info_url.clone(),
             transaction_url_format: transaction_url_format.clone(),
         },
@@ -111,7 +109,6 @@ fn update_token_succeeds() {
         &registry_canister::add_token::Args {
             ledger_canister_id: test_data.ledger_canister_id,
             payer: Some(test_data.user.user_id),
-            token_standard: TokenStandard::ICRC1,
             info_url: info_url.clone(),
             transaction_url_format: transaction_url_format.clone(),
         },

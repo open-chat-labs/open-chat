@@ -3,7 +3,6 @@ import "../../../libraries/types/can.did";
 type AddTokenArgs = record {
     ledger_canister_id : CanisterId;
     payer : opt UserId;
-    token_standard : TokenStandard;
     info_url : text;
     transaction_url_format : text;
 };

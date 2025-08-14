@@ -9,6 +9,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Build
 import android.util.Log
+import androidx.annotation.DrawableRes
 import androidx.core.app.NotificationCompat
 import androidx.core.app.Person
 import androidx.core.graphics.drawable.IconCompat
@@ -32,13 +33,15 @@ object NotificationsHelper {
     private const val MESSAGES_GROUP_ID = "oc_messages_group"
 
     fun showNotification(context: Context, data: Map<String, String>) {
+        Log.d("TEST_OC", data.toString());
+
         // TODO replace with actual default
-        val defaultAvatar = "https://oc.app/assets/ckbtc_nobackground.png"
+        val userAvatarUrl = if (data["senderId"] != null) "https://${data["senderId"]}.raw.icp0.io/avatar" else "https://oc.app/icon.png"
 
         CoroutineScope(Dispatchers.Main).launch {
             // Coil will cache the images in memory and using disk LRU cache.
             // TODO add support for loading circular avatars / or make circular bitmap once image is loaded
-            val avatarBitmap = loadBitmapFromUrl(context, data["sender_avatar_id"] ?: defaultAvatar)
+            val avatarBitmap = loadBitmapFromUrl(context, userAvatarUrl)
 
             showNotificationWithAvatar(context, data, avatarBitmap)
         }
@@ -75,17 +78,21 @@ object NotificationsHelper {
 
         val style = NotificationCompat
             .MessagingStyle(sender)
-            .addMessage(data["body"] ?: "", System.currentTimeMillis(), sender)
+            .addMessage(data["body"] ?: "<No content>", System.currentTimeMillis(), sender)
+
+        val notificationId = data["senderId"].hashCode()
+        val messageGroupId = "${notificationId}_group"
 
         val notification = NotificationCompat.Builder(context, MESSAGES_CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(OpenChatPlugin.icNotificationSmall)
             .setStyle(style)
             // Auto cancel removes the notification when the user taps it
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
+            .setGroup(messageGroupId)
             .build()
 
-        manager.notify(System.currentTimeMillis().toInt(), notification)
+        manager.notify(notificationId, notification)
     }
 
     fun buildChatNotificationSender(senderName: String?, avatar: Bitmap?): Person {
@@ -151,6 +158,13 @@ object NotificationsHelper {
             // Cache token locally so that we can query it!
             OpenChatPlugin.fcmToken = token
         }
+    }
+
+    // Status bar notification icon
+    //
+    // Sets the drawable resource for the notification icon that appears in the status bar!
+    fun setNotificationIconSmall(@DrawableRes smallIconRes: Int) {
+        OpenChatPlugin.icNotificationSmall = smallIconRes
     }
 
     // A coroutine based function for loading avatars off main thread, uses lightweight Coil

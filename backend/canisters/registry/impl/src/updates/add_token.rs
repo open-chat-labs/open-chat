@@ -142,6 +142,7 @@ pub(crate) async fn add_token_impl(
             transaction_url_format,
             standards,
             payment,
+            false,
             now,
         );
         info!(name, %ledger_canister_id, "Token added");
