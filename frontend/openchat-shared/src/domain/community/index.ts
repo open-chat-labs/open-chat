@@ -220,6 +220,7 @@ export type ChannelMatch = {
     avatar: DataContent;
     memberCount: number;
     public: boolean;
+    invited: boolean;
 };
 
 export type CommunityDetailsResponse =
