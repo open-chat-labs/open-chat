@@ -33,7 +33,7 @@
 
     interface Props {
         userId: string;
-        alignTo?: DOMRect | undefined;
+        alignTo?: HTMLElement | undefined;
         chatButton?: boolean;
         inGlobalContext?: boolean;
         onOpenDirectChat: () => void;
@@ -62,17 +62,23 @@
     );
     let hasCustomBackground = $derived(backgroundUrl !== undefined);
 
+    let rendering = $state<Promise<void>>();
+
     onMount(async () => {
         try {
-            client.getPublicProfile(userId).subscribe({
-                onResult: (result) => {
-                    profile = result;
-                    if (profile === undefined) {
-                        onClose();
-                    }
-                },
+            rendering = new Promise(async (resolve) => {
+                user = await client.getUser(userId);
+                client.getPublicProfile(userId).subscribe({
+                    onResult: (result) => {
+                        profile = result;
+                        if (profile === undefined) {
+                            onClose();
+                        } else {
+                            resolve();
+                        }
+                    },
+                });
             });
-            user = await client.getUser(userId);
         } catch (e: any) {
             client.logError("Failed to load user profile", e);
             onClose();
@@ -253,6 +259,7 @@
     <Overlay dismissible {onClose}>
         <ModalContent
             fill
+            {rendering}
             compactFooter
             backgroundImage={backgroundUrl}
             hideFooter={!me && !chatButton && !canBlock && !canUnblock}
