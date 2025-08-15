@@ -8559,6 +8559,7 @@ export const ChannelMatch = Type.Object({
     gate_config: Type.Optional(AccessGateConfig),
     subtype: Type.Optional(GroupSubtype),
     is_public: Type.Boolean(),
+    is_invited: Type.Boolean(),
 });
 
 export type Message = Static<typeof Message>;

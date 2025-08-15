@@ -44,4 +44,5 @@ pub struct ChannelMatch {
     pub gate_config: Option<AccessGateConfig>,
     pub subtype: Option<GroupSubtype>,
     pub is_public: bool,
+    pub is_invited: bool,
 }
