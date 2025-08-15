@@ -13,13 +13,13 @@
     let { children, ...rest }: Props = $props();
 </script>
 
-<div class="wrapper">
+<div class="with_verified">
     {@render children()}
     <Verified {...rest}></Verified>
 </div>
 
 <style lang="scss">
-    .wrapper {
+    .with_verified {
         display: flex;
         align-items: center;
         gap: $sp3;

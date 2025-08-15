@@ -63,8 +63,12 @@
         videoCallInProgress ? (inCall ? i18nKey("Leave") : i18nKey("Join")) : i18nKey("Start"),
     );
 
-    onMount(async () => {
-        profile = await client.getPublicProfile(chat.them.userId);
+    onMount(() => {
+        client.getPublicProfile(chat.them.userId).subscribe({
+            onResult: (res) => {
+                profile = res;
+            },
+        });
     });
 
     $effect(() => {

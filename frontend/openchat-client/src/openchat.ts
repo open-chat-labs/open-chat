@@ -5690,8 +5690,8 @@ export class OpenChat {
         }
     }
 
-    getPublicProfile(userId?: string): Promise<PublicProfile | undefined> {
-        return this.#sendRequest({ kind: "getPublicProfile", userId });
+    getPublicProfile(userId?: string): Stream<PublicProfile | undefined> {
+        return this.#sendStreamRequest({ kind: "getPublicProfile", userId });
     }
 
     setUsername(userId: string, username: string): Promise<SetUsernameResponse> {

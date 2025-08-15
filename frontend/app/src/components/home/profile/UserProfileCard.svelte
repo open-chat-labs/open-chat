@@ -42,14 +42,16 @@
         userProfileMode?: boolean;
         profile: PublicProfile;
         user: UserSummary;
+        onBackgroundImageUpdated?: (blobId: bigint) => void;
     }
 
     let {
         inGlobalContext = false,
         onClose,
         userProfileMode = false,
-        profile = $bindable(),
+        profile,
         user,
+        onBackgroundImageUpdated,
     }: Props = $props();
 
     let lastOnline: number | undefined = $state();
@@ -123,10 +125,7 @@
     function onBackgroundImageSelected(args: { url: string; data: Uint8Array }) {
         client.setUserProfileBackground(args.data).then((blobId) => {
             if (blobId !== undefined) {
-                profile = {
-                    ...profile,
-                    backgroundId: blobId,
-                };
+                onBackgroundImageUpdated?.(blobId);
             } else {
                 toastStore.showFailureToast(i18nKey("avatarUpdateFailed"));
             }
