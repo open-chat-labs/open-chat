@@ -56,6 +56,7 @@ import type {
     SetMessageReminderResponse,
     SetPinNumberResponse,
     SetVideoCallPresenceResponse,
+    Stream,
     SwapTokensResponse,
     TipMessageResponse,
     ToggleMuteNotificationResponse,
@@ -351,7 +352,7 @@ export class AnonUserClient {
         throw new AnonymousOperationError();
     }
 
-    getPublicProfile(): Promise<PublicProfile> {
+    getPublicProfile(): Stream<PublicProfile> {
         throw new AnonymousOperationError();
     }
 

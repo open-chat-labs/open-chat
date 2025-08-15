@@ -928,7 +928,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "getPublicProfile":
-                executeThenReply(payload, correlationId, agent.getPublicProfile(payload.userId));
+                streamReplies(payload, correlationId, agent.getPublicProfile(payload.userId));
                 break;
 
             case "setUsername":

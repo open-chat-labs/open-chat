@@ -102,7 +102,6 @@
 
     let { user, onCloseProfile, onUnsubscribeNotifications }: Props = $props();
 
-    let originalBio = $state("");
     let userbio = $state("");
     let selectedLocale = $state(($locale as string).substring(0, 2));
     let usernameError: string | undefined = $state(undefined);
@@ -138,20 +137,6 @@
         setLocale(selectedLocale);
     });
 
-    let bioDirty = $derived(userbio !== originalBio);
-    let usernameDirty = $derived(username !== originalUsername);
-    let displayNameDirty = $derived(displayName !== originalDisplayName);
-    let buttonEnabled = $derived(
-        usernameValid &&
-            displayNameValid &&
-            bioError === undefined &&
-            (bioDirty || usernameDirty || displayNameDirty) &&
-            !saving &&
-            !readonly,
-    );
-    let canEditTranslations = $derived(!$locale?.startsWith("en"));
-    let referredUserIds = $derived(new Set($referralsStore.map((r) => r.userId)));
-
     let originalProfile = $state<PublicProfile>({
         username: "",
         displayName: undefined,
@@ -168,17 +153,36 @@
             bio: userbio,
         };
     });
+    let bioDirty = $derived(userbio !== originalProfile.bio);
+    let usernameDirty = $derived(username !== originalUsername);
+    let displayNameDirty = $derived(displayName !== originalDisplayName);
+    let buttonEnabled = $derived(
+        usernameValid &&
+            displayNameValid &&
+            bioError === undefined &&
+            (bioDirty || usernameDirty || displayNameDirty) &&
+            !saving &&
+            !readonly,
+    );
+    let canEditTranslations = $derived(!$locale?.startsWith("en"));
+    let referredUserIds = $derived(new Set($referralsStore.map((r) => r.userId)));
 
     onMount(() => {
         if (!$anonUserStore) {
-            client.getPublicProfile(user.userId).then((profile) => {
-                if (profile) {
-                    originalProfile = profile;
-                    userbio = profile.bio;
-                }
+            client.getPublicProfile(user.userId).subscribe({
+                onResult: (profile) => {
+                    if (profile) {
+                        originalProfile = profile;
+                        userbio = profile.bio;
+                    }
+                },
             });
         }
     });
+
+    function onBackgroundImageUpdated(blobId: bigint) {
+        originalProfile.backgroundId = blobId;
+    }
 
     function toggleModerationFlag(flag: ModerationFlag) {
         client.setModerationFlags($moderationFlagsEnabledStore ^ flag);
@@ -202,7 +206,7 @@
                         if (resp.kind === "error" && resp.code === ErrorCode.TextTooLong) {
                             bioError = "register.bioTooLong";
                         } else {
-                            originalBio = userbio;
+                            originalProfile.bio = userbio;
                         }
                     })
                     .catch((err) => {
@@ -343,8 +347,11 @@
                 open={$userInfoOpen}
                 headerText={i18nKey("userInfoHeader")}>
                 <div class="profile-card">
-                    <UserProfileCard bind:profile={candidateProfile} {user} userProfileMode
-                    ></UserProfileCard>
+                    <UserProfileCard
+                        {onBackgroundImageUpdated}
+                        profile={candidateProfile}
+                        {user}
+                        userProfileMode></UserProfileCard>
                 </div>
                 {#if $anonUserStore}
                     <div class="guest">

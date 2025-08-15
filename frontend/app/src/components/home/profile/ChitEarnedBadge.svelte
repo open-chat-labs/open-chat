@@ -49,7 +49,7 @@
 
 <style lang="scss">
     .icon {
-        $size: 18px;
+        $size: 17px;
         background-repeat: no-repeat;
         width: $size;
         height: $size;

@@ -5,34 +5,34 @@ import {
     typeboxValidate,
 } from "openchat-agent";
 import type {
-    Notification,
+    AddedToChannelNotification,
     ChannelIdentifier,
-    CryptoTransferDetails,
-    DirectNotification,
-    DirectReaction,
-    DirectMessageTipped,
-    GroupNotification,
-    GroupReaction,
-    GroupMessageTipped,
+    ChannelMessageTipped,
     ChannelNotification,
     ChannelReaction,
-    ChannelMessageTipped,
-    AddedToChannelNotification,
+    CryptoTransferDetails,
+    DirectMessageTipped,
+    DirectNotification,
+    DirectReaction,
+    GroupMessageTipped,
+    GroupNotification,
+    GroupReaction,
+    Notification,
 } from "openchat-shared";
 import {
-    UnsupportedValueError,
     isMessageNotification,
+    routeForChatIdentifier,
     routeForMessage,
     routeForMessageContext,
-    routeForChatIdentifier,
     toTitleCase,
+    UnsupportedValueError,
 } from "openchat-shared";
+import { CacheableResponsePlugin } from "workbox-cacheable-response";
 import { ExpirationPlugin } from "workbox-expiration";
 import { staticResourceCache } from "workbox-recipes";
-import { CustomCachePlugin } from "./cache_plugin";
 import { registerRoute } from "workbox-routing";
 import { NetworkFirst } from "workbox-strategies";
-import { CacheableResponsePlugin } from "workbox-cacheable-response";
+import { CustomCachePlugin } from "./cache_plugin";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-expect-error
@@ -186,8 +186,7 @@ function decodeWebPushNotification(bytes: Uint8Array, timestamp: bigint): Notifi
         const deserialized = deserializeFromMsgPack(bytes);
         const validated = typeboxValidate(deserialized, TNotification);
         return toNotification(validated, timestamp);
-    }
-    catch {
+    } catch {
         // Failed to decode using MsgPack
     }
 }
@@ -299,7 +298,9 @@ function messageText(
     cryptoTransfer: CryptoTransferDetails | undefined,
 ): string {
     if (messageText !== undefined && messageText.length > 0) {
-        return messageText;
+        return messageText.replace(/@CustomEmoji\(([^)]+)\)/g, (_, p1) => {
+            return `:${p1}:`;
+        });
     }
 
     if (cryptoTransfer !== undefined) {
@@ -412,7 +413,7 @@ function channelAvatarUrl(channel: ChannelIdentifier, avatarId: bigint): string 
 }
 
 function delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 type TimestampedNotification = {

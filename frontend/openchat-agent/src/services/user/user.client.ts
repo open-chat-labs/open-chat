@@ -1,83 +1,83 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
-import type {
-    AcceptP2PSwapResponse,
-    AddRemoveReactionResponse,
-    ApproveTransferResponse,
-    ArchiveChatResponse,
-    BlobReference,
-    BlockUserResponse,
-    CancelP2PSwapResponse,
-    CandidateGroupChat,
-    ChannelIdentifier,
-    ChatEvent,
-    ChatIdentifier,
-    ChitEventsRequest,
-    ChitEventsResponse,
-    ClaimDailyChitResponse,
-    CommunityIdentifier,
-    CommunitySummary,
-    CreateCommunityResponse,
-    CreatedUser,
-    CreateGroupResponse,
-    CryptocurrencyDetails,
-    DeleteCommunityResponse,
-    DeletedDirectMessageResponse,
-    DeleteGroupResponse,
-    DeleteMessageResponse,
-    DirectChatIdentifier,
-    EditMessageResponse,
-    EventsResponse,
-    EventsSuccessResult,
-    EventWrapper,
-    ExchangeTokenSwapArgs,
-    GrantedBotPermissions,
-    GroupChatIdentifier,
-    IndexRange,
-    InitialStateResponse,
-    JoinVideoCallResponse,
-    LeaveCommunityResponse,
-    LeaveGroupResponse,
-    ManageFavouritesResponse,
-    MarkReadRequest,
-    MarkReadResponse,
-    Message,
-    MessageActivityFeedResponse,
-    MessageContext,
-    NamedAccount,
-    OptionUpdate,
-    PayForStreakInsuranceResponse,
-    PendingCryptocurrencyTransfer,
-    PendingCryptocurrencyWithdrawal,
-    PinChatResponse,
-    PublicProfile,
-    Rules,
-    SaveCryptoAccountResponse,
-    SearchDirectChatResponse,
-    SendMessageResponse,
-    SetBioResponse,
-    SetMessageReminderResponse,
-    SetPinNumberResponse,
-    SwapTokensResponse,
-    ThreadRead,
-    TipMessageResponse,
-    ToggleMuteNotificationResponse,
-    TokenSwapStatusResponse,
-    UnblockUserResponse,
-    UndeleteMessageResponse,
-    UnpinChatResponse,
-    UpdatesResponse,
-    Verification,
-    WalletConfig,
-    WithdrawBtcResponse,
-    WithdrawCryptocurrencyResponse,
-} from "openchat-shared";
 import {
     isSuccessfulEventsResponse,
     MAX_EVENTS,
     MAX_MESSAGES,
     MAX_MISSING,
+    offline,
     ResponseTooLargeError,
+    Stream,
     toBigInt32,
+    type AcceptP2PSwapResponse,
+    type AddRemoveReactionResponse,
+    type ApproveTransferResponse,
+    type ArchiveChatResponse,
+    type BlobReference,
+    type BlockUserResponse,
+    type CancelP2PSwapResponse,
+    type CandidateGroupChat,
+    type ChannelIdentifier,
+    type ChatEvent,
+    type ChatIdentifier,
+    type ChitEventsRequest,
+    type ChitEventsResponse,
+    type ClaimDailyChitResponse,
+    type CommunityIdentifier,
+    type CommunitySummary,
+    type CreateCommunityResponse,
+    type CreatedUser,
+    type CreateGroupResponse,
+    type CryptocurrencyDetails,
+    type DeleteCommunityResponse,
+    type DeletedDirectMessageResponse,
+    type DeleteGroupResponse,
+    type DeleteMessageResponse,
+    type DirectChatIdentifier,
+    type EditMessageResponse,
+    type EventsResponse,
+    type EventsSuccessResult,
+    type EventWrapper,
+    type ExchangeTokenSwapArgs,
+    type GrantedBotPermissions,
+    type GroupChatIdentifier,
+    type IndexRange,
+    type InitialStateResponse,
+    type JoinVideoCallResponse,
+    type LeaveCommunityResponse,
+    type LeaveGroupResponse,
+    type ManageFavouritesResponse,
+    type MarkReadRequest,
+    type MarkReadResponse,
+    type Message,
+    type MessageActivityFeedResponse,
+    type MessageContext,
+    type NamedAccount,
+    type OptionUpdate,
+    type PayForStreakInsuranceResponse,
+    type PendingCryptocurrencyTransfer,
+    type PendingCryptocurrencyWithdrawal,
+    type PinChatResponse,
+    type PublicProfile,
+    type Rules,
+    type SaveCryptoAccountResponse,
+    type SearchDirectChatResponse,
+    type SendMessageResponse,
+    type SetBioResponse,
+    type SetMessageReminderResponse,
+    type SetPinNumberResponse,
+    type SwapTokensResponse,
+    type ThreadRead,
+    type TipMessageResponse,
+    type ToggleMuteNotificationResponse,
+    type TokenSwapStatusResponse,
+    type UnblockUserResponse,
+    type UndeleteMessageResponse,
+    type UnpinChatResponse,
+    type UpdatesResponse,
+    type Verification,
+    type WalletConfig,
+    type WithdrawBtcResponse,
+    type WithdrawCryptocurrencyResponse,
 } from "openchat-shared";
 import type { AgentConfig } from "../../config";
 import {
@@ -173,15 +173,17 @@ import {
     UserWithdrawCryptoResponse,
 } from "../../typebox";
 import {
-    type Database,
     getCachedEvents,
     getCachedEventsByIndex,
     getCachedEventsWindowByMessageIndex,
+    getCachedPublicProfile,
     mergeSuccessResponses,
     recordFailedMessage,
     removeFailedMessage,
     setCachedEvents,
     setCachedMessageFromSendResponse,
+    setCachedPublicProfile,
+    type Database,
 } from "../../utils/caching";
 import {
     apiOptionUpdateV2,
@@ -1217,14 +1219,32 @@ export class UserClient extends MsgpackCanisterAgent {
         );
     }
 
-    getPublicProfile(): Promise<PublicProfile> {
-        return this.executeMsgpackQuery(
-            "public_profile",
-            {},
-            publicProfileResponse,
-            TEmpty,
-            UserPublicProfileResponse,
-        );
+    getPublicProfile(): Stream<PublicProfile> {
+        return new Stream(async (resolve, reject) => {
+            try {
+                const cachedProfile = await getCachedPublicProfile(this.userId);
+
+                const isOffline = offline();
+
+                if (cachedProfile !== undefined) {
+                    resolve(cachedProfile, isOffline);
+                }
+
+                if (!isOffline) {
+                    const liveProfile = await this.executeMsgpackQuery(
+                        "public_profile",
+                        {},
+                        publicProfileResponse,
+                        TEmpty,
+                        UserPublicProfileResponse,
+                    );
+                    setCachedPublicProfile(this.userId, liveProfile);
+                    resolve(liveProfile, true);
+                }
+            } catch (err) {
+                reject(err);
+            }
+        });
     }
 
     setBio(bio: string): Promise<SetBioResponse> {

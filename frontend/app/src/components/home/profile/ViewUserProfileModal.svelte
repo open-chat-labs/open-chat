@@ -64,13 +64,15 @@
 
     onMount(async () => {
         try {
-            const task1 = client.getPublicProfile(userId);
-            const task2 = client.getUser(userId);
-            user = await task2;
-            profile = await task1;
-            if (profile === undefined) {
-                onClose();
-            }
+            client.getPublicProfile(userId).subscribe({
+                onResult: (result) => {
+                    profile = result;
+                    if (profile === undefined) {
+                        onClose();
+                    }
+                },
+            });
+            user = await client.getUser(userId);
         } catch (e: any) {
             client.logError("Failed to load user profile", e);
             onClose();
