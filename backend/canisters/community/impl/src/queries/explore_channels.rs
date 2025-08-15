@@ -30,13 +30,19 @@ fn explore_channels_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessRe
     let caller = state.env.caller();
     state.data.verify_is_accessible(caller, args.invite_code)?;
 
-    let is_caller_community_owner = state.data.members.get(caller).is_some_and(|m| m.role().is_owner());
+    let (user_id, is_caller_community_owner) = state
+        .data
+        .members
+        .get(caller)
+        .map_or((None, false), |m| (Some(m.user_id), m.role().is_owner()));
 
-    let (matches, total) =
-        state
-            .data
-            .channels
-            .search(args.search_term, args.page_index, args.page_size, is_caller_community_owner);
+    let (matches, total) = state.data.channels.search(
+        user_id,
+        args.search_term,
+        args.page_index,
+        args.page_size,
+        is_caller_community_owner,
+    );
 
     Ok(SuccessResult {
         timestamp: state.env.now(),

@@ -37,7 +37,7 @@
 
     function selectChannel(match: ChannelMatch) {
         if ($selectedCommunitySummaryStore === undefined) return;
-        if (!match.public) return;
+        if (!match.public && !match.invited) return;
         if ($mobileWidth) {
             client.popRightPanelHistory();
         }
@@ -47,7 +47,10 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class:clickable={channel.public} class="details" onclick={() => selectChannel(channel)}>
+<div
+    class:clickable={channel.public || channel.invited}
+    class="details"
+    onclick={() => selectChannel(channel)}>
     <div class="avatar">
         <Avatar
             url={client.groupAvatarUrl(

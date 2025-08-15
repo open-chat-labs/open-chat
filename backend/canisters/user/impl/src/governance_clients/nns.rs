@@ -1,5 +1,7 @@
 use super::nns::manage_neuron::RegisterVote;
-use nns_governance_canister::types::{GovernanceError, ListProposalInfo, ManageNeuron, manage_neuron, manage_neuron_response};
+use nns_governance_canister::types::{
+    GovernanceError, ListProposalInfo, ManageNeuronRegisterVoteOnly, manage_neuron, manage_neuron_response,
+};
 use tracing::error;
 use types::{C2CError, CanisterId, NnsNeuronId, ProposalId};
 
@@ -16,7 +18,7 @@ pub async fn get_ballots(governance_canister_id: CanisterId, proposal_id: Propos
         omit_large_fields: Some(true),
     };
 
-    let response = nns_governance_canister_c2c_client::list_proposals(governance_canister_id, &args).await;
+    let response = nns_governance_canister_c2c_client::get_ballots(governance_canister_id, &args).await;
 
     let result = response?
         .proposal_info
@@ -58,21 +60,20 @@ pub async fn register_vote(
     proposal_id: ProposalId,
     adopt: bool,
 ) -> Result<Result<(), GovernanceError>, C2CError> {
-    let args = ManageNeuron {
+    let args = ManageNeuronRegisterVoteOnly {
         id: Some(neuron_id.into()),
         neuron_id_or_subaccount: None,
-        command: Some(manage_neuron::Command::RegisterVote(RegisterVote {
+        command: Some(manage_neuron::CommandRegisterVoteOnly::RegisterVote(RegisterVote {
             proposal: Some(proposal_id.into()),
             vote: if adopt { 1 } else { 2 },
         })),
     };
 
-    let response = nns_governance_canister_c2c_client::manage_neuron(governance_canister_id, &args).await?;
+    let response = nns_governance_canister_c2c_client::register_vote(governance_canister_id, &args).await?;
 
     Ok(match response.command {
-        Some(manage_neuron_response::Command::RegisterVote(_)) => Ok(()),
-        Some(manage_neuron_response::Command::Error(error)) => Err(error),
-        Some(_) => unreachable!(),
+        Some(manage_neuron_response::CommandRegisterVoteOnly::RegisterVote(_)) => Ok(()),
+        Some(manage_neuron_response::CommandRegisterVoteOnly::Error(error)) => Err(error),
         None => {
             // This will be reached if we fail to deserialize the response
             // TODO remove this arm once candid is fixed (if ever).
