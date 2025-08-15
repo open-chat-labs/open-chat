@@ -27,7 +27,6 @@ const MAX_MEMBERS_PER_GROUP: u32 = 100_000;
 
 #[derive(Serialize, Deserialize)]
 pub struct GroupMembers {
-    #[serde(alias = "stable_memory_members_map")]
     members_map: MembersStableStorage,
     member_ids: BTreeSet<UserId>,
     owners: BTreeSet<UserId>,
@@ -35,6 +34,7 @@ pub struct GroupMembers {
     moderators: BTreeSet<UserId>,
     bots: BTreeMap<UserId, UserType>,
     notifications_unmuted: BTreeSet<UserId>,
+    #[serde(default)]
     at_everyone_muted: BTreeSet<UserId>,
     lapsed: BTreeSet<UserId>,
     blocked: BTreeSet<UserId>,
@@ -850,11 +850,7 @@ pub struct GroupMemberStableStorage {
         skip_serializing_if = "is_default_notifications_muted"
     )]
     notifications_muted: Timestamped<bool>,
-    #[serde(
-        rename = "em",
-        default = "default_at_everyone_muted",
-        skip_serializing_if = "is_default_at_everyone_muted"
-    )]
+    #[serde(rename = "em", default, skip_serializing_if = "is_default")]
     pub at_everyone_muted: Timestamped<bool>,
     #[serde(rename = "m", default, skip_serializing_if = "Mentions::is_empty")]
     pub mentions: Mentions,
@@ -933,14 +929,6 @@ fn is_default_notifications_muted(value: &Timestamped<bool>) -> bool {
     value.value && value.timestamp == 0
 }
 
-fn default_at_everyone_muted() -> Timestamped<bool> {
-    Timestamped::new(false, 0)
-}
-
-fn is_default_at_everyone_muted(value: &Timestamped<bool>) -> bool {
-    !value.value && value.timestamp == 0
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -957,7 +945,7 @@ mod tests {
             date_added: 1732874138000,
             role: Timestamped::default(),
             notifications_muted: default_notifications_muted(),
-            at_everyone_muted: default_at_everyone_muted(),
+            at_everyone_muted: Timestamped::default(),
             mentions: Mentions::default(),
             followed_threads: TimestampedSet::default(),
             unfollowed_threads: TimestampedSet::default(),
