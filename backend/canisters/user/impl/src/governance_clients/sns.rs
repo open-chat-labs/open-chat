@@ -1,7 +1,7 @@
 use crate::governance_clients::sns::manage_neuron::RegisterVote;
 use candid::Principal;
 use sns_governance_canister::types::neuron::DissolveState;
-use sns_governance_canister::types::{GovernanceError, manage_neuron, manage_neuron_response};
+use sns_governance_canister::types::{GovernanceError, ManageNeuronRegisterVoteOnly, manage_neuron, manage_neuron_response};
 use tracing::error;
 use types::{C2CError, CanisterId, ProposalId, SnsNeuronId, TimestampMillis};
 
@@ -17,7 +17,7 @@ pub async fn list_neurons(
         of_principal: Some(of_principal),
     };
 
-    let response = sns_governance_canister_c2c_client::list_neurons(governance_canister_id, &args).await?;
+    let response = sns_governance_canister_c2c_client::list_neuron_ids(governance_canister_id, &args).await?;
 
     let neuron_ids = response
         .neurons
@@ -36,23 +36,21 @@ pub async fn register_vote(
     proposal_id: ProposalId,
     adopt: bool,
 ) -> Result<Result<(), GovernanceError>, C2CError> {
-    let args = sns_governance_canister::manage_neuron::Args {
+    let args = ManageNeuronRegisterVoteOnly {
         subaccount: neuron_id.to_vec(),
-        command: Some(manage_neuron::Command::RegisterVote(RegisterVote {
+        command: Some(manage_neuron::CommandRegisterVoteOnly::RegisterVote(RegisterVote {
             proposal: Some(sns_governance_canister::types::ProposalId { id: proposal_id }),
             vote: if adopt { 1 } else { 2 },
         })),
     };
 
-    let response = sns_governance_canister_c2c_client::manage_neuron(governance_canister_id, &args).await?;
+    let response = sns_governance_canister_c2c_client::register_vote(governance_canister_id, &args).await?;
 
     Ok(match response.command {
-        Some(manage_neuron_response::Command::RegisterVote(_)) => Ok(()),
-        Some(manage_neuron_response::Command::Error(error)) => Err(error),
-        Some(_) => unreachable!(),
+        Some(manage_neuron_response::CommandRegisterVoteOnly::RegisterVote(_)) => Ok(()),
+        Some(manage_neuron_response::CommandRegisterVoteOnly::Error(error)) => Err(error),
         None => {
             // This will be reached if we fail to deserialize the response
-            // TODO remove this arm once candid is fixed (if ever).
             error!(%governance_canister_id, "Failed to deserialize SNS manage_neuron response");
             Ok(())
         }
