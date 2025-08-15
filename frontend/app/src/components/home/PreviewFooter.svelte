@@ -55,9 +55,7 @@
                 client.declineInvitation(chat.id);
             }
             client.removePreviewedChat(chat.id);
-            if ($mobileWidth) {
-                page(routeForScope($chatListScopeStore));
-            } else if (!client.selectDefaultChat(false)) {
+            if ($mobileWidth || !client.selectDefaultChat(false)) {
                 page(routeForScope($chatListScopeStore));
             }
         }
