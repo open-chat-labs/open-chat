@@ -3,15 +3,38 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+#[derive(CandidType, Serialize, Deserialize, Clone, Default, Debug)]
+pub enum BodyType {
+    #[default]
+    Message,
+    Reaction,
+    Tip,
+    Invite,
+}
+
 // Values relevant for the FCM notifications
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct FcmData {
     #[serde(rename = "c")]
     pub chat_id: Chat,
+    #[serde(rename = "gn", default)]
+    pub group_name: Option<String>,
+    #[serde(rename = "ga", default)]
+    pub group_avatar_id: Option<u128>,
+    #[serde(rename = "cn", default)]
+    pub community_name: Option<String>,
+    #[serde(rename = "hn", default)]
+    pub channel_name: Option<String>,
+    #[serde(rename = "ca", default)]
+    pub channel_avatar_id: Option<u128>,
+    #[serde(rename = "ha", default)]
+    pub community_avatar_id: Option<u128>,
     #[serde(rename = "t")]
     pub thread_root_message_index: Option<MessageIndex>,
     #[serde(rename = "b")]
     pub body: Option<String>,
+    #[serde(rename = "mt", default)]
+    pub body_type: BodyType,
     #[serde(rename = "i")]
     pub image: Option<String>,
     #[serde(rename = "s")]
@@ -19,19 +42,26 @@ pub struct FcmData {
     #[serde(rename = "n")]
     pub sender_name: Option<String>,
     #[serde(rename = "a")]
-    pub avatar_id: Option<u128>,
+    pub sender_avatar_id: Option<u128>,
 }
 
 impl FcmData {
     fn default(chat_id: Chat) -> Self {
         Self {
             chat_id,
+            group_name: None,
+            group_avatar_id: None,
+            community_name: None,
+            channel_name: None,
+            channel_avatar_id: None,
+            community_avatar_id: None,
             thread_root_message_index: None,
             body: None,
+            body_type: BodyType::Message,
             image: None,
             sender_id: None,
             sender_name: None,
-            avatar_id: None,
+            sender_avatar_id: None,
         }
     }
 
@@ -46,39 +76,84 @@ impl FcmData {
         Self::default(Chat::Group(group_chat_id))
     }
 
-    pub fn for_channel(community_id: CommunityId, channel_id: ChannelId) -> Self {
-        Self::default(Chat::Channel(community_id, channel_id))
-    }
-
-    pub fn set_thread(self, thread_root_message_index: MessageIndex) -> Self {
+    pub fn set_group_name(self, group_name: String) -> Self {
         Self {
-            thread_root_message_index: Some(thread_root_message_index),
+            group_name: Some(group_name),
             ..self
         }
     }
 
-    pub fn set_optional_thread(self, thread_root_message_index: Option<MessageIndex>) -> Self {
+    pub fn set_group_avatar_id(self, group_avatar_id: Option<u128>) -> Self {
+        Self { group_avatar_id, ..self }
+    }
+
+    pub fn for_channel(community_id: CommunityId, channel_id: ChannelId) -> Self {
+        Self::default(Chat::Channel(community_id, channel_id))
+    }
+
+    pub fn set_community_name(self, community_name: String) -> Self {
+        Self {
+            community_name: Some(community_name),
+            ..self
+        }
+    }
+
+    pub fn set_channel_name(self, channel_name: String) -> Self {
+        Self {
+            channel_name: Some(channel_name),
+            ..self
+        }
+    }
+
+    pub fn set_channel_avatar_id(self, channel_avatar_id: Option<u128>) -> Self {
+        Self {
+            channel_avatar_id,
+            ..self
+        }
+    }
+
+    pub fn set_community_avatar_id(self, community_avatar_id: Option<u128>) -> Self {
+        Self {
+            community_avatar_id,
+            ..self
+        }
+    }
+
+    pub fn set_thread(self, thread_root_message_index: Option<MessageIndex>) -> Self {
         Self {
             thread_root_message_index,
             ..self
         }
     }
 
-    pub fn set_body(self, body: String) -> Self {
+    pub fn set_message(self, message: Option<String>) -> Self {
+        Self { body: message, ..self }
+    }
+
+    pub fn set_reaction(self, reaction: String) -> Self {
         Self {
-            body: Some(body),
+            body: Some(reaction),
+            body_type: BodyType::Reaction,
             ..self
         }
     }
 
-    pub fn set_body_with_alt(self, body: Option<String>, alt_body: String) -> Self {
+    pub fn set_tip(self, tip: String) -> Self {
         Self {
-            body: Some(body.unwrap_or(alt_body)),
+            body: Some(tip),
+            body_type: BodyType::Tip,
             ..self
         }
     }
 
-    pub fn set_optional_image(self, image: Option<String>) -> Self {
+    pub fn set_invite(self) -> Self {
+        Self {
+            body_type: BodyType::Invite,
+            ..self
+        }
+    }
+
+    pub fn set_image(self, image: Option<String>) -> Self {
         Self { image, ..self }
     }
 
@@ -89,69 +164,71 @@ impl FcmData {
         }
     }
 
-    pub fn set_sender_name(self, sender_name: String) -> Self {
+    pub fn set_sender_name(self, display_name: Option<String>, name: String) -> Self {
         Self {
-            sender_name: Some(sender_name),
+            sender_name: display_name.or(Some(name)),
             ..self
         }
     }
 
-    pub fn set_sender_name_with_alt(self, sender_name: Option<String>, alt_sender_name: String) -> Self {
+    pub fn set_sender_avatar_id(self, sender_avatar_id: Option<u128>) -> Self {
         Self {
-            sender_name: Some(sender_name.unwrap_or(alt_sender_name)),
+            sender_avatar_id,
             ..self
         }
     }
 
-    pub fn set_avatar_id(self, avatar_id: Option<u128>) -> Self {
-        Self { avatar_id, ..self }
-    }
-
-    pub fn as_data(&self) -> HashMap<String, String> {
+    pub fn as_data(self) -> HashMap<String, String> {
         let mut map = HashMap::new();
+        let mut add_to_map = |key: &str, value: Option<String>| {
+            if let Some(value) = value {
+                map.insert(key.into(), value);
+            }
+        };
 
         match self.chat_id {
+            Chat::Direct(sender_id) => {
+                add_to_map("type", Some("direct".into()));
+                // This may be redundant, but it helps to ensure the sender_id is always present
+                add_to_map("senderId", Some(sender_id.to_string()));
+            }
+            Chat::Group(group_id) => {
+                add_to_map("type", Some("group".into()));
+                add_to_map("group_id", Some(group_id.to_string()));
+            }
             Chat::Channel(community_id, channel_id) => {
-                map.insert("type".into(), "community".into());
-                map.insert("communityId".into(), community_id.to_string());
-                map.insert("channelId".into(), channel_id.to_string());
-            }
-            // Sender id is already initialised with the same value, so we
-            // ignore it here (only for direct chats).
-            Chat::Direct(_) => {
-                map.insert("type".into(), "direct".into());
-            }
-            Chat::Group(chat_id) => {
-                map.insert("type".into(), "group".into());
-                map.insert("chatId".into(), chat_id.to_string());
+                add_to_map("type", Some("channel".into()));
+                add_to_map("channelId", Some(channel_id.to_string()));
+                add_to_map("communityId", Some(community_id.to_string()));
             }
         }
 
-        if let Some(thread) = self.thread_root_message_index {
-            map.insert("thread".into(), thread.to_string());
-        }
+        add_to_map("groupName", self.group_name);
+        add_to_map("groupAvatarId", self.group_avatar_id.map(|v| v.to_string()));
+        add_to_map("communityName", self.community_name);
+        add_to_map("channelName", self.channel_name);
+        add_to_map("channelAvatarId", self.channel_avatar_id.map(|v| v.to_string()));
+        add_to_map("communityAvatarId", self.community_avatar_id.map(|v| v.to_string()));
 
-        if let Some(body) = &self.body {
-            map.insert("body".into(), body.clone());
-        }
+        add_to_map("senderId", self.sender_id.map(|v| v.to_string()));
+        add_to_map("senderName", self.sender_name);
+        add_to_map("senderAvatarId", self.sender_avatar_id.map(|v| v.to_string()));
 
-        if let Some(image) = &self.image {
-            map.insert("image".into(), image.clone());
-        }
-
-        // Initialised by default for direct chats, while can be set for
-        // group and community chats.
-        if let Some(sender_id) = &self.sender_id {
-            map.insert("senderId".into(), sender_id.to_string());
-        }
-
-        if let Some(sender_name) = &self.sender_name {
-            map.insert("senderName".into(), sender_name.clone());
-        }
-
-        if let Some(avatar_id) = self.avatar_id {
-            map.insert("avatarId".into(), avatar_id.to_string());
-        }
+        add_to_map("thread", self.thread_root_message_index.map(|t| t.to_string()));
+        add_to_map("image", self.image);
+        add_to_map("body", self.body);
+        add_to_map(
+            "bodyType",
+            Some(
+                match self.body_type {
+                    BodyType::Message => "message",
+                    BodyType::Reaction => "reaction",
+                    BodyType::Tip => "tip",
+                    BodyType::Invite => "invite",
+                }
+                .into(),
+            ),
+        );
 
         map
     }
@@ -162,96 +239,84 @@ impl From<UserNotificationPayload> for FcmData {
         match value {
             // Direct Notifications
             UserNotificationPayload::DirectMessage(n) => FcmData::for_direct_chat(n.sender)
-                .set_sender_name_with_alt(n.sender_display_name, n.sender_name)
-                .set_optional_thread(n.thread_root_message_index)
-                .set_body_with_alt(n.message_text, n.message_type)
-                .set_optional_image(n.image_url)
-                .set_avatar_id(n.sender_avatar_id),
+                .set_sender_name(n.sender_display_name, n.sender_name)
+                .set_sender_avatar_id(n.sender_avatar_id)
+                .set_thread(n.thread_root_message_index)
+                .set_message(n.message_text)
+                .set_image(n.image_url),
             UserNotificationPayload::DirectReactionAdded(n) => FcmData::for_direct_chat(n.them)
-                .set_sender_name_with_alt(n.display_name, n.username)
-                .set_optional_thread(n.thread_root_message_index)
-                .set_body(format!("Reacted {} to your message", n.reaction.0))
-                .set_avatar_id(n.user_avatar_id),
+                .set_sender_name(n.display_name, n.username)
+                .set_sender_avatar_id(n.user_avatar_id)
+                .set_thread(n.thread_root_message_index)
+                .set_reaction(n.reaction.0),
             UserNotificationPayload::DirectMessageTipped(n) => FcmData::for_direct_chat(n.them)
-                .set_sender_name_with_alt(n.display_name, n.username)
-                .set_optional_thread(n.thread_root_message_index)
-                .set_body(format!("Tipped your message {}", n.tip))
-                .set_avatar_id(n.user_avatar_id),
+                .set_sender_name(n.display_name, n.username)
+                .set_sender_avatar_id(n.user_avatar_id)
+                .set_thread(n.thread_root_message_index)
+                .set_tip(n.tip),
 
             // Group notifications
             UserNotificationPayload::GroupMessage(n) => FcmData::for_group(n.chat_id)
+                .set_group_name(n.group_name)
+                .set_group_avatar_id(n.group_avatar_id)
                 .set_sender_id(n.sender)
-                .set_sender_name(n.group_name)
-                .set_optional_thread(n.thread_root_message_index)
-                .set_body(format!(
-                    "{}: {}",
-                    n.sender_display_name.unwrap_or(n.sender_name),
-                    n.message_text.unwrap_or(n.message_type),
-                ))
-                .set_optional_image(n.image_url)
-                .set_avatar_id(n.group_avatar_id),
+                .set_sender_name(n.sender_display_name, n.sender_name)
+                .set_sender_avatar_id(n.group_avatar_id)
+                .set_thread(n.thread_root_message_index)
+                .set_message(n.message_text)
+                .set_image(n.image_url),
             UserNotificationPayload::GroupReactionAdded(n) => FcmData::for_group(n.chat_id)
+                .set_group_name(n.group_name)
+                .set_group_avatar_id(n.group_avatar_id)
                 .set_sender_id(n.added_by)
-                .set_sender_name(n.group_name)
-                .set_optional_thread(n.thread_root_message_index)
-                .set_body(format!(
-                    "{} reacted {} to your message",
-                    n.added_by_display_name.unwrap_or(n.added_by_name),
-                    n.reaction.0
-                ))
-                .set_avatar_id(n.group_avatar_id),
+                .set_sender_name(n.added_by_display_name, n.added_by_name)
+                .set_thread(n.thread_root_message_index)
+                .set_reaction(n.reaction.0),
             UserNotificationPayload::GroupMessageTipped(n) => FcmData::for_group(n.chat_id)
+                .set_group_name(n.group_name)
+                .set_group_avatar_id(n.group_avatar_id)
                 .set_sender_id(n.tipped_by)
-                .set_sender_name(n.group_name)
-                .set_optional_thread(n.thread_root_message_index)
-                .set_body(format!(
-                    "{} tipped your message {}",
-                    n.tipped_by_display_name.unwrap_or(n.tipped_by_name),
-                    n.tip
-                ))
-                .set_avatar_id(n.group_avatar_id),
+                .set_sender_name(n.tipped_by_display_name, n.tipped_by_name)
+                .set_thread(n.thread_root_message_index)
+                .set_tip(n.tip),
 
             // Community / channel notifications
             UserNotificationPayload::ChannelMessage(n) => FcmData::for_channel(n.community_id, n.channel_id)
+                .set_community_name(n.community_name)
+                .set_channel_name(n.channel_name)
+                .set_channel_avatar_id(n.channel_avatar_id)
+                .set_community_avatar_id(n.community_avatar_id)
                 .set_sender_id(n.sender)
-                .set_sender_name(format!("{} / {}", n.community_name, n.channel_name))
-                .set_optional_thread(n.thread_root_message_index)
-                .set_body(format!(
-                    "{}: {}",
-                    n.sender_display_name.unwrap_or(n.sender_name),
-                    n.message_text.unwrap_or(n.message_type)
-                ))
-                .set_optional_image(n.image_url)
-                .set_avatar_id(n.channel_avatar_id.or(n.community_avatar_id)),
+                .set_sender_name(n.sender_display_name, n.sender_name)
+                .set_thread(n.thread_root_message_index)
+                .set_message(n.message_text)
+                .set_image(n.image_url),
             UserNotificationPayload::AddedToChannel(n) => FcmData::for_channel(n.community_id, n.channel_id)
+                .set_community_name(n.community_name)
+                .set_channel_name(n.channel_name)
+                .set_channel_avatar_id(n.channel_avatar_id)
+                .set_community_avatar_id(n.community_avatar_id)
                 .set_sender_id(n.added_by)
-                .set_sender_name(format!("{} / {}", n.community_name, n.channel_name))
-                .set_body(format!(
-                    "{} added you to the channel '{}'",
-                    n.added_by_display_name.unwrap_or(n.added_by_name),
-                    n.channel_name
-                ))
-                .set_avatar_id(n.channel_avatar_id.or(n.community_avatar_id)),
+                .set_sender_name(n.added_by_display_name, n.added_by_name)
+                .set_invite(),
             UserNotificationPayload::ChannelReactionAdded(n) => FcmData::for_channel(n.community_id, n.channel_id)
+                .set_community_name(n.community_name)
+                .set_channel_name(n.channel_name)
+                .set_channel_avatar_id(n.channel_avatar_id)
+                .set_community_avatar_id(n.community_avatar_id)
                 .set_sender_id(n.added_by)
-                .set_sender_name(format!("{} / {}", n.community_name, n.channel_name))
-                .set_optional_thread(n.thread_root_message_index)
-                .set_body(format!(
-                    "{} reacted {} to your message",
-                    n.added_by_display_name.unwrap_or(n.added_by_name),
-                    n.reaction.0
-                ))
-                .set_avatar_id(n.channel_avatar_id.or(n.community_avatar_id)),
+                .set_sender_name(n.added_by_display_name, n.added_by_name)
+                .set_thread(n.thread_root_message_index)
+                .set_reaction(n.reaction.0),
             UserNotificationPayload::ChannelMessageTipped(n) => FcmData::for_channel(n.community_id, n.channel_id)
+                .set_community_name(n.community_name)
+                .set_channel_name(n.channel_name)
+                .set_channel_avatar_id(n.channel_avatar_id)
+                .set_community_avatar_id(n.community_avatar_id)
                 .set_sender_id(n.tipped_by)
-                .set_sender_name(format!("{} / {}", n.community_name, n.channel_name))
-                .set_optional_thread(n.thread_root_message_index)
-                .set_body(format!(
-                    "{} tipped your message {}",
-                    n.tipped_by_display_name.unwrap_or(n.tipped_by_name),
-                    n.tip
-                ))
-                .set_avatar_id(n.channel_avatar_id.or(n.community_avatar_id)),
+                .set_sender_name(n.tipped_by_display_name, n.tipped_by_name)
+                .set_thread(n.thread_root_message_index)
+                .set_tip(n.tip),
         }
     }
 }

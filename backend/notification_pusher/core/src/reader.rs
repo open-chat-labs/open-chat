@@ -111,11 +111,11 @@ impl<I: IndexStore> Reader<I> {
                                         })
                                     }
                                     types::NotificationSubscription::FcmPush(fcm_token) => {
-                                        PushNotification::FcmNotification(FcmNotification {
+                                        PushNotification::FcmNotification(Box::new(FcmNotification {
                                             fcm_data: notification.fcm_data.clone(),
                                             fcm_token,
                                             metadata,
-                                        })
+                                        }))
                                     }
                                 };
 
