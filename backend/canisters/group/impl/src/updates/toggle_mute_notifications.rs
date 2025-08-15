@@ -14,7 +14,11 @@ fn toggle_mute_notifications_impl(args: Args, state: &mut RuntimeState) -> OCRes
     let user_id = state.get_caller_user_id()?;
     let now = state.env.now();
     if matches!(
-        state.data.chat.members.toggle_notifications_muted(user_id, args.mute, now),
+        state
+            .data
+            .chat
+            .members
+            .toggle_notifications_muted(user_id, args.mute, args.mute_at_everyone, now),
         Some(true)
     ) {
         state.mark_activity_for_user(user_id);

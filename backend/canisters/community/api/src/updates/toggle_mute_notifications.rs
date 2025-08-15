@@ -6,7 +6,8 @@ use types::{ChannelId, UnitResult};
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub channel_id: Option<ChannelId>,
-    pub mute: bool,
+    pub mute: Option<bool>,
+    pub mute_at_everyone: Option<bool>,
 }
 
 pub type Response = UnitResult;
