@@ -26,6 +26,7 @@ export type AgentConfig = {
     signInWithEmailCanister: string;
     signInWithEthereumCanister: string;
     signInWithSolanaCanister: string;
+    oneSecMinterCanister: string;
     logger: {
         error(message?: unknown, ...optionalParams: unknown[]): void;
     };

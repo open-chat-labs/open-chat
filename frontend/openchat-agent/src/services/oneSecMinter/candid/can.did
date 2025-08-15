@@ -1,0 +1,229 @@
+/// Supported blockchains.
+type Chain = variant {
+    ICP;
+    Base;
+    Arbitrum;
+    Ethereum
+};
+
+/// Supported EVM-compatible blockchains.
+type EvmChain = variant { Base; Arbitrum; Ethereum };
+
+/// Supported tokens.
+type Token = variant {
+    ICP;
+    USDC;
+    USDT;
+    cbBTC;
+    ckBTC;
+    BOB;
+    GLDT
+};
+
+/// An EVM address represented as a hex-string.
+type EvmAccount = record { address : text };
+
+/// An ICP address that is either an ICRC2 account or a legacy ICP ledger
+/// specific account identifier.
+type IcpAccount = variant {
+    ICRC : record { owner : principal; subaccount : opt blob };
+    AccountId : text
+};
+
+/// A general address that can be either an EVM address or an ICP address.
+type Account = variant {
+    Evm : EvmAccount;
+    Icp : IcpAccount
+};
+
+/// An EVM transaction hash with an optional log index.
+type EvmTx = record {
+    hash : text;
+    log_index : opt nat64
+};
+
+/// An ICRC2 ledger transaction.
+type IcpTx = record {
+    ledger : principal;
+    block_index : nat64
+};
+
+/// A general transaction that can be either an EVM transaction or an ICP
+/// transaction.
+type Tx = variant {
+    Evm : EvmTx;
+    Icp : IcpTx
+};
+
+/// The argument of the `forward_evm_to_icp` endpoint.
+/// Specifies that the given tokens have been transferred to the given
+/// forwarding address and are ready to be transferred from EVM To ICP.
+type ForwardEvmToIcpArg = record {
+    /// The token being transferred.
+    token : Token;
+    /// The source EVM chain.
+    chain : EvmChain;
+    /// The source forwarding address on the EVM side.
+    address : text;
+    /// The receiver on the ICP side.
+    receiver : IcpAccount
+};
+
+/// The status of forwarding tokens from the forwarding address to bridging.
+type ForwardingStatus = variant {
+    /// The forwarding request has been received, but the balance of the
+    /// forwarding address hasn't been checked yet.
+    CheckingBalance;
+    /// The balance has been checked, but it is lower than the minimum amount.
+    LowBalance : record {
+        balance : nat;
+        min_amount : nat
+    };
+    /// The tokens are being forwarded for bridging.
+    Forwarding;
+    /// The tokens have been forwarded and the given transaction has initiated
+    /// the EVM to ICP transfer.
+    Forwarded : EvmTx;
+};
+
+/// A result of the `forward_evm_to_icp` endpoint.
+type ForwardingResponse = record {
+    /// The result of the last completed forwarding operation.
+    /// It is the id of the transfer initiated by forwarding.
+    done : opt TransferId;
+    /// The status of the new forwarding operation.
+    /// This field is marked as optional for backwards compatibility when adding
+    /// new status cases.
+    status : opt ForwardingStatus
+};
+
+/// A general representation of tokens being transferred.
+type AssetInfo = record {
+    /// The source chain.
+    /// This field is marked as optional for backwards compatibility when adding
+    /// new account chains.
+    chain : opt Chain;
+    /// The sender.
+    /// This field is marked as optional for backwards compatibility when adding
+    /// new account types.
+    account : opt Account;
+    /// This field is marked as optional for backwards compatibility when adding
+    /// new tokens.
+    token : opt Token;
+    /// The amount of tokens represented in the smallest units of the token.
+    amount : nat;
+    /// If token are sent from EVM, then this contains the lock or burn
+    /// transaction and the log index of the corresponding event log.
+    tx : opt Tx
+};
+
+/// The unique identifier of an accepted transfer.
+type TransferId = record {
+    id : nat64
+};
+
+/// General information about a transfer.
+type Transfer = record {
+    source : AssetInfo;
+    destination : AssetInfo;
+    /// This field is marked as optional for backwards compatibility when adding
+    /// new status cases.
+    status : opt Status;
+    trace : Trace;
+    queue_position : opt nat64;
+    start : opt nat64;
+    end : opt nat64
+};
+
+/// Transfer status.
+type Status = variant {
+    PendingSourceTx;
+    PendingDestinationTx;
+    PendingRefundTx;
+    Succeeded;
+    Failed : ErrorMessage;
+    Refunded : Tx
+};
+
+type TransferFee = record {
+    /// This field is marked as optional for backwards compatibility when adding
+    /// new chains.
+    source_chain : opt Chain;
+    /// This field is marked as optional for backwards compatibility when adding
+    /// new tokens.
+    source_token : opt Token;
+    /// This field is marked as optional for backwards compatibility when adding
+    /// new chain.
+    destination_chain : opt Chain;
+    /// This field is marked as optional for backwards compatibility when adding
+    /// new tokens.
+    destination_token : opt Token;
+    min_amount : nat;
+    max_amount : nat;
+    available : opt nat;
+    latest_transfer_fee_in_tokens : nat;
+    average_transfer_fee_in_tokens : nat;
+    protocol_fee_in_percent : float64
+};
+
+type TraceEvent = variant {
+    FetchTx;
+    SignTx;
+    SendTx;
+    PendingConfirmTx;
+    ConfirmTx
+};
+
+type TraceEntry = record {
+    /// This field is marked as optional for backwards compatibility when adding
+    /// new chains.
+    chain : opt Chain;
+    /// This field is marked as optional for backwards compatibility when adding
+    /// new trace events.
+    event : opt TraceEvent;
+    start : nat64;
+    end : opt nat64;
+    tx : opt Tx;
+    block_number : opt nat64;
+    result : opt Result
+};
+
+type Trace = record {
+    entries : vec TraceEntry
+};
+
+type ErrorMessage = record {
+    error : text
+};
+
+type Result = variant {
+    Ok;
+    Err : text
+};
+
+service : {
+    /////////////////////////////////////////////////////
+    /// Cross-chain token transfer (bridging) operations
+    /////////////////////////////////////////////////////
+
+    /// Starts a transfer of tokens from EVM to ICP using a forwarding address.
+    /// To get the lowest latency, call this endpoint after tokens have been
+    /// transferred to the forwarding address.
+    ///
+    /// See comments of `ForwardEvmToIcpArg` for more details.
+    forward_evm_to_icp : (ForwardEvmToIcpArg) -> (variant { Ok : ForwardingResponse; Err : text });
+
+    /// Returns the current transfer fees and additional information such as the
+    /// minimum and maximum supported amounts per chain and token.
+    get_transfer_fees : () -> (vec TransferFee) query;
+
+    /// Returns information about a transfer by its id.
+    get_transfer : (TransferId) -> (variant { Ok : Transfer; Err : text }) query;
+
+    /////////////////////////////////////////////////////
+    /// Forwarder endpoints
+    /////////////////////////////////////////////////////
+
+    get_forwarding_address : (receiver : IcpAccount) -> (variant { Ok : text; Err : text }) query;
+    get_forwarding_status: (arg: ForwardEvmToIcpArg) -> (variant { Ok : ForwardingResponse; Err : text }) query;
+}
