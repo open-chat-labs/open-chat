@@ -681,6 +681,10 @@
 {/if}
 
 <style lang="scss">
+    :global(.chat-name .with_verified) {
+        gap: $sp2;
+    }
+
     .delete-chat {
         background-color: var(--chatSummary-del);
         padding: $sp3;
