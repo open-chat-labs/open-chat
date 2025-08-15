@@ -595,12 +595,13 @@ impl Data {
                     .collect();
 
                 if !filtered_recipients.is_empty() {
-                    self.notifications.add(NotificationEnvelope::User(UserNotificationEnvelope {
-                        recipients: filtered_recipients,
-                        notification_bytes: ByteBuf::from(msgpack::serialize_then_unwrap(&user_notification.notification)),
-                        timestamp: now,
-                        fcm_data: Some(user_notification.notification.into()),
-                    }));
+                    self.notifications
+                        .add(NotificationEnvelope::User(Box::new(UserNotificationEnvelope {
+                            recipients: filtered_recipients,
+                            notification_bytes: ByteBuf::from(msgpack::serialize_then_unwrap(&user_notification.notification)),
+                            timestamp: now,
+                            fcm_data: Some(user_notification.notification.into()),
+                        })));
                 }
             }
             Notification::Bot(bot_notification) => self.push_bot_notification(bot_notification, this_canister_id, now),
