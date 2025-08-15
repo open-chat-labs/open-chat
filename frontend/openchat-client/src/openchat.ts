@@ -9269,6 +9269,7 @@ export class OpenChat {
                     signInWithEmailCanister: this.config.signInWithEmailCanister,
                     signInWithEthereumCanister: this.config.signInWithEthereumCanister,
                     signInWithSolanaCanister: this.config.signInWithSolanaCanister,
+                    oneSecMinterCanister: this.config.oneSecMinterCanister,
                     websiteVersion: this.config.websiteVersion,
                     rollbarApiKey: this.config.rollbarApiKey,
                     env: this.config.env,
