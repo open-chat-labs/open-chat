@@ -1,6 +1,8 @@
 <script lang="ts">
     import {
+        chatListScopeStore,
         isLocked,
+        mobileWidth,
         type MultiUserChat,
         type OpenChat,
         platformModeratorStore,
@@ -47,13 +49,16 @@
     function cancelPreview() {
         if (previewingCommunity && $selectedCommunitySummaryStore) {
             client.removeCommunity($selectedCommunitySummaryStore.id);
+            page(routeForScope(client.getDefaultScope()));
         } else {
             if (!chat.public) {
                 client.declineInvitation(chat.id);
             }
-            client.removeChat(chat.id);
+            client.removePreviewedChat(chat.id);
+            if ($mobileWidth || !client.selectDefaultChat(false)) {
+                page(routeForScope($chatListScopeStore));
+            }
         }
-        page(routeForScope(client.getDefaultScope()));
     }
 
     function freeze() {

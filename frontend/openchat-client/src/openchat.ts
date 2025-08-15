@@ -8068,8 +8068,8 @@ export class OpenChat {
         return false;
     }
 
-    selectDefaultChat(): boolean {
-        if (!get(mobileWidth)) {
+    selectDefaultChat(desktopOnly: boolean = true): boolean {
+        if (!desktopOnly || !get(mobileWidth)) {
             if (!this.#selectLastSelectedChat()) {
                 return this.#selectFirstChat();
             }
