@@ -21,12 +21,12 @@ import type {
 } from "openchat-shared";
 import {
     CommonResponses,
-    toBigInt32,
     ROLE_ADMIN,
     ROLE_MEMBER,
     ROLE_MODERATOR,
     ROLE_OWNER,
-    UnsupportedValueError
+    toBigInt32,
+    UnsupportedValueError,
 } from "openchat-shared";
 import type {
     CommunityAddMembersToChannelFailedResult,
@@ -148,6 +148,7 @@ export function channelMatch(value: TChannelMatch, communityId: string): Channel
         description: value.description,
         memberCount: value.member_count,
         public: value.is_public,
+        invited: value.is_invited,
         avatar: {
             blobReference: mapOptional(value.avatar_id, (blobId) => ({
                 blobId,

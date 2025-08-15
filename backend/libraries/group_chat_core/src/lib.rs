@@ -1986,6 +1986,10 @@ impl GroupChatCore {
             })
             .collect()
     }
+
+    pub fn is_invited(&self, user_id: Option<UserId>) -> bool {
+        user_id.is_some_and(|id| self.invited_users.contains(&id))
+    }
 }
 
 pub struct SendMessageSuccess {
