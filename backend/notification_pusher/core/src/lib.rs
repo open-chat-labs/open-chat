@@ -69,7 +69,7 @@ pub fn write_metrics<W: Write>(w: &mut W) {
 // Used by reader and processor
 pub enum PushNotification {
     UserNotification(UserNotification),
-    FcmNotification(FcmNotification),
+    FcmNotification(Box<FcmNotification>),
 }
 
 #[derive(Debug)]
