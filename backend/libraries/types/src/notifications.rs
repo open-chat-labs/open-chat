@@ -156,7 +156,7 @@ impl<T> Debug for UserNotification<T> {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum NotificationEnvelope {
-    User(UserNotificationEnvelope),
+    User(Box<UserNotificationEnvelope>),
     Bot(BotNotificationEnvelope),
 }
 

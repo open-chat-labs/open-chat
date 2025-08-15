@@ -62,7 +62,7 @@ impl Processor {
                 PushNotification::FcmNotification(fcm_notification) => {
                     let metadata = fcm_notification.metadata.clone();
                     self.sender
-                        .send(NotificationToPush::FcmNotificationToPush(Box::new(fcm_notification)))
+                        .send(NotificationToPush::FcmNotificationToPush(fcm_notification))
                         .await
                         .unwrap();
                     (metadata, false)
