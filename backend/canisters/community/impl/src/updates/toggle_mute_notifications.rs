@@ -19,7 +19,7 @@ fn toggle_mute_notifications_impl(args: Args, state: &mut RuntimeState) -> OCRes
 
     let updated = if let Some(channel_id) = args.channel_id {
         let channel = state.data.channels.get_mut_or_err(&channel_id)?;
-        match channel.mute_notifications(args.mute, user_id, now) {
+        match channel.mute_notifications(args.mute, args.mute_at_everyone, user_id, now) {
             MuteChannelResult::Success => true,
             MuteChannelResult::Unchanged => false,
             MuteChannelResult::UserNotFound => return Err(OCErrorCode::InitiatorNotInChat.into()),
@@ -28,7 +28,7 @@ fn toggle_mute_notifications_impl(args: Args, state: &mut RuntimeState) -> OCRes
         // Mute (or unmute) all channels
         let mut updated = false;
         for channel in state.data.channels.iter_mut() {
-            let result = channel.mute_notifications(args.mute, user_id, now);
+            let result = channel.mute_notifications(args.mute, args.mute_at_everyone, user_id, now);
             if matches!(result, MuteChannelResult::Success) {
                 updated = true;
             }

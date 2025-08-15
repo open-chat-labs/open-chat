@@ -786,8 +786,13 @@ impl GroupChatCore {
                         now,
                         AtEveryoneMention::new(initiator, message_event.event.message_id, message_event.event.message_index),
                     );
-                    // Notify everyone
-                    users_to_notify.extend(self.members.member_ids().iter().copied());
+                    // Notify everyone who has not muted @everyone mentions
+                    users_to_notify.extend(
+                        self.members
+                            .member_ids()
+                            .difference(self.members.at_everyone_muted())
+                            .copied(),
+                    );
                 } else {
                     // Notify everyone who has notifications unmuted
                     users_to_notify.extend(self.members.notifications_unmuted().iter().copied());

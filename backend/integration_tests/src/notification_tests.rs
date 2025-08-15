@@ -151,7 +151,10 @@ fn group_message_notification_muted(case: u32) {
         env,
         user2.principal,
         group_id.into(),
-        &group_canister::toggle_mute_notifications::Args { mute: true },
+        &group_canister::toggle_mute_notifications::Args {
+            mute: Some(true),
+            mute_at_everyone: None,
+        },
     );
 
     let latest_notification_index =

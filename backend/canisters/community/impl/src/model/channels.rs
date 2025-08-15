@@ -433,10 +433,20 @@ impl Channel {
         })
     }
 
-    pub fn mute_notifications(&mut self, mute: bool, user_id: UserId, now: TimestampMillis) -> MuteChannelResult {
+    pub fn mute_notifications(
+        &mut self,
+        mute: Option<bool>,
+        mute_at_everyone: Option<bool>,
+        user_id: UserId,
+        now: TimestampMillis,
+    ) -> MuteChannelResult {
         use MuteChannelResult::*;
 
-        match self.chat.members.toggle_notifications_muted(user_id, mute, now) {
+        match self
+            .chat
+            .members
+            .toggle_notifications_muted(user_id, mute, mute_at_everyone, now)
+        {
             Some(true) => Success,
             Some(false) => Unchanged,
             None => UserNotFound,
