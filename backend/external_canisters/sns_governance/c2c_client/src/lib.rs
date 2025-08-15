@@ -12,10 +12,12 @@ generate_candid_c2c_call!(get_metadata);
 generate_candid_c2c_call!(get_proposal);
 generate_candid_c2c_call!(get_nervous_system_parameters);
 generate_candid_c2c_call!(list_neurons);
+generate_candid_c2c_call!(list_neuron_ids, list_neurons);
 generate_candid_c2c_call!(list_proposals);
 
 // Updates
 generate_candid_c2c_call!(manage_neuron);
+generate_candid_c2c_call!(register_vote, manage_neuron);
 
 pub async fn configure_neuron(
     governance_canister_id: CanisterId,
@@ -41,4 +43,18 @@ pub async fn configure_neuron(
         )),
         _ => unreachable!(),
     }
+}
+
+pub mod list_neuron_ids {
+    use sns_governance_canister::types::{ListNeurons, ListNeuronsIdsOnlyResponse};
+
+    pub type Args = ListNeurons;
+    pub type Response = ListNeuronsIdsOnlyResponse;
+}
+
+pub mod register_vote {
+    use sns_governance_canister::types::{ManageNeuronRegisterVoteOnly, ManageNeuronResponseRegisterVoteOnly};
+
+    pub type Args = ManageNeuronRegisterVoteOnly;
+    pub type Response = ManageNeuronResponseRegisterVoteOnly;
 }
