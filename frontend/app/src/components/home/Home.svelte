@@ -119,7 +119,7 @@
     type ViewProfileConfig = {
         userId: string;
         chatButton: boolean;
-        alignTo?: DOMRect;
+        alignTo?: HTMLElement;
         inGlobalContext: boolean;
     };
 
@@ -873,7 +873,7 @@
             userId: ev.detail.userId,
             chatButton: ev.detail.chatButton,
             inGlobalContext: ev.detail.inGlobalContext,
-            alignTo: ev.target ? (ev.target as HTMLElement).getBoundingClientRect() : undefined,
+            alignTo: ev.target ? (ev.target as HTMLElement) : undefined,
         };
     }
 

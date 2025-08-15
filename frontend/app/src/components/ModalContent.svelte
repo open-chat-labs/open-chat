@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { reposition, type NanoPopPosition } from "@src/utils/position";
     import { mobileWidth } from "openchat-client";
     import { onMount, tick, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
@@ -26,7 +27,7 @@
         fadeDelay?: number;
         fixedWidth?: boolean;
         fitToContent?: boolean;
-        alignTo?: DOMRect | undefined;
+        alignTo?: HTMLElement | undefined;
         actualWidth?: number;
         closeIcon?: boolean;
         backIcon?: boolean;
@@ -42,6 +43,7 @@
         onClose?: OnClose;
         onBack?: OnClose;
         footerClass?: string;
+        rendering?: Promise<void>;
     }
 
     let {
@@ -69,6 +71,7 @@
         onClose,
         onBack,
         footerClass,
+        rendering,
     }: Props = $props();
 
     actualWidth;
@@ -77,12 +80,7 @@
 
     let useAlignTo = $derived(alignTo !== undefined && !$mobileWidth);
     let bgStyle = $derived(backgroundImage ? `--custom-bg: url(${backgroundImage});` : "");
-    let position = $state("");
-    let style = $derived(
-        useAlignTo
-            ? `${bgStyle} visibility: hidden; ${position}`
-            : `${bgStyle} visibility: visible; ${position}`,
-    );
+    let style = $derived(`${bgStyle}`);
 
     function closeMenus() {
         portalState.close();
@@ -91,7 +89,11 @@
     onMount(() => {
         try {
             if (useAlignTo) {
-                tick().then(calculatePosition);
+                if (rendering !== undefined) {
+                    rendering.finally(calculatePosition);
+                } else {
+                    tick().then(calculatePosition);
+                }
             }
             tick().then(() => (actualWidth = divElement?.clientWidth));
             divElement.addEventListener("click", closeMenus);
@@ -106,21 +108,9 @@
 
     function calculatePosition() {
         if (alignTo !== undefined) {
-            let modalRect = divElement.getBoundingClientRect();
-            let top = Math.min(alignTo.top - 8, window.innerHeight - (modalRect.height + 10));
-
-            position = `position: absolute; visibility: visible; top: ${top}px; `;
-
-            if ($rtlStore) {
-                let right = Math.min(
-                    window.innerWidth - alignTo.left + 8,
-                    window.innerWidth - modalRect.width - 10,
-                );
-                position += `right: ${right}px;`;
-            } else {
-                let left = Math.min(alignTo.right + 8, window.innerWidth - (modalRect.width + 10));
-                position += `left: ${left}px;`;
-            }
+            reposition(alignTo, divElement, {
+                position: `bottom-middle` as NanoPopPosition,
+            });
         }
     }
 </script>
