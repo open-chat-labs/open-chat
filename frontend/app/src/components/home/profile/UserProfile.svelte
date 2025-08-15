@@ -171,11 +171,13 @@
 
     onMount(() => {
         if (!$anonUserStore) {
-            client.getPublicProfile(user.userId).then((profile) => {
-                if (profile) {
-                    originalProfile = profile;
-                    userbio = profile.bio;
-                }
+            client.getPublicProfile(user.userId).subscribe({
+                onResult: (profile) => {
+                    if (profile) {
+                        originalProfile = profile;
+                        userbio = profile.bio;
+                    }
+                },
             });
         }
     });

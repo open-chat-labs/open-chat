@@ -2826,10 +2826,13 @@ export class OpenChatAgent extends EventTarget {
         return userClient.getBio();
     }
 
-    getPublicProfile(userId?: string): Promise<PublicProfile | undefined> {
+    getPublicProfile(userId?: string): Stream<PublicProfile | undefined> {
         if (userId) {
-            return isUserIdDeleted(userId).then((deleted) => {
-                if (deleted) return undefined;
+            return new Stream(async (resolve, reject) => {
+                const deleted = await isUserIdDeleted(userId);
+                if (deleted) {
+                    resolve(undefined, true);
+                }
                 const userClient = new UserClient(
                     userId,
                     this.identity,
@@ -2837,7 +2840,15 @@ export class OpenChatAgent extends EventTarget {
                     this.config,
                     this.db,
                 );
-                return userClient.getPublicProfile();
+                const result = userClient.getPublicProfile();
+                result.subscribe({
+                    onResult: (res, final) => {
+                        resolve(res, final);
+                    },
+                    onError: (err) => {
+                        reject(err);
+                    },
+                });
             });
         } else {
             return this.userClient.getPublicProfile();
