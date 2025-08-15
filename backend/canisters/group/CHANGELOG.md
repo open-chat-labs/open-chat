@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Support toggle of mute @everyone notifications ([#8496](https://github.com/open-chat-labs/open-chat/pull/8496))
+- Support muting of @everyone notifications ([#8496](https://github.com/open-chat-labs/open-chat/pull/8496))
 
 ## [[2.0.1864](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1864-group)] - 2025-08-12
 
