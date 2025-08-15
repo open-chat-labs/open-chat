@@ -842,6 +842,7 @@
                             <MessageReaction
                                 onClick={() => toggleReaction(false, reaction)}
                                 {reaction}
+                                {intersecting}
                                 {userIds} />
                         {/each}
                     </div>

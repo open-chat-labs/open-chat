@@ -14,10 +14,11 @@
     interface Props {
         reaction: string;
         userIds: Set<string>;
+        intersecting?: boolean;
         onClick?: () => void;
     }
 
-    let { reaction, userIds, onClick }: Props = $props();
+    let { reaction, userIds, onClick, intersecting = true }: Props = $props();
 
     let reactionCode = $state("unknown");
     let longPressed: boolean = $state(false);
@@ -75,9 +76,15 @@
     bind:longPressed
     position={"top"}
     align={"start"}>
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div onclick={click} class:selected class="message-reaction">
         {#if customEmoji !== undefined}
-            <custom-emoji data-id={customEmoji.code}></custom-emoji>
+            {#if intersecting}
+                <custom-emoji data-id={customEmoji.code}></custom-emoji>
+            {:else}
+                ...
+            {/if}
         {:else}
             {reaction}
         {/if}
