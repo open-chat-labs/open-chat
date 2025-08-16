@@ -4,6 +4,11 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.Index
 import com.ocplugin.app.models.ReceivedNotification
+import com.ocplugin.app.models.SenderId
+import com.ocplugin.app.models.GroupId
+import com.ocplugin.app.models.ChannelId
+import com.ocplugin.app.models.ThreadId
+
 
 enum class NotificationType {
     DM,
@@ -25,10 +30,10 @@ data class Notification(
     val type: NotificationType = NotificationType.DM,
 
     // This data is required to query exactly what we're looking for.
-    val senderId: String,
-    val groupId: String?,
-    val channelId: String?,
-    val threadId: String?,
+    val senderId: SenderId,
+    val groupId: GroupId?,
+    val channelId: ChannelId?,
+    val threadId: ThreadId?,
 
     // Sender info required to reconstruct the notification
     val name: String,

@@ -11,28 +11,41 @@ enum class BodyType {
     Invite,
 }
 
+@JvmInline
+value class SenderId(val value: String)
+
+@JvmInline
+value class GroupId(val value: String)
+
+@JvmInline
+value class ChannelId(val value: String)
+
+@JvmInline
+value class CommunityId(val value: String)
+
+@JvmInline
+value class ThreadId(val value: String)
+
 // It's easier to repeat fields in Kotlin than to use base classes
 // TODO look into using kotlinx.serialization library for data decoding
 // TODO return result in the decoding function
 // TODO perhaps make some decoding a bit more robust by normalizing values? e.g. str to lower and trim for notification type
 // TODO could we use dedicated types for the various IDs we have to avoid incorrect assignments?
 sealed class ReceivedNotification(
-    val notificationThreadId: String?
+    val notificationThreadId: ThreadId?
 ) {
     abstract fun getConversationTitle(): String
 
     abstract fun getNotificationId(): Int
 
-//    abstract fun getThreadId(): String?
-
     data class Direct(
-        val senderId: String,
+        val senderId: SenderId,
         val senderName: String,
         val senderAvatarId: String?,
         val body: String,
         val bodyType: BodyType,
         val image: String?,
-        val threadId: String?,
+        val threadId: ThreadId?,
     ) : ReceivedNotification(threadId) {
         override fun getConversationTitle(): String {
             return senderName
@@ -45,15 +58,15 @@ sealed class ReceivedNotification(
     }
 
     data class Group(
-        val groupId: String,
+        val groupId: GroupId,
         val groupName: String,
         val groupAvatarId: String?,
 
         // Same as direct
-        val senderId: String,
+        val senderId: SenderId,
         val senderName: String,
         val senderAvatarId: String?,
-        val threadId: String?,
+        val threadId: ThreadId?,
         val body: String,
         val bodyType: BodyType,
         val image: String?
@@ -68,16 +81,16 @@ sealed class ReceivedNotification(
     }
 
     data class Channel(
-        val channelId: String,
-        val communityId: String,
+        val channelId: ChannelId,
+        val communityId: CommunityId,
         val channelName: String,
         val communityName: String,
 
         // Same as direct
-        val senderId: String,
+        val senderId: SenderId,
         val senderName: String,
         val senderAvatarId: String?,
-        val threadId: String?,
+        val threadId: ThreadId?,
         val body: String,
         val bodyType: BodyType,
         val image: String?,
@@ -107,26 +120,29 @@ fun decodeNotificationData(data: Map<String, String>): ReceivedNotification? {
 }
 
 fun decodeDirectData(data: Map<String, String>): ReceivedNotification.Direct? {
-    if (data["senderId"] == null) {
+    val senderId = data["senderId"]
+    if (senderId == null) {
         Log.e(LOG_TAG, "Invalid DM notification data!")
         return null
     }
 
     val bodyType = decodeBodyType(data["bodyType"])
+    val body = decodeBody(data["body"], bodyType)
     return ReceivedNotification.Direct(
-        senderId = data["senderId"] ?: "",
+        senderId = SenderId(senderId),
         senderName = data["senderName"] ?: "###",
         senderAvatarId = data["senderAvatarId"],
-        threadId = data["threadId"],
-        body = decodeBody(data["body"] ?: "", bodyType),
+        threadId = decodeThreadId(data),
+        body = body,
         image = data["image"],
         bodyType = bodyType,
     )
 }
 
 fun decodeGroupData(data: Map<String, String>): ReceivedNotification.Group? {
-    val isValid = data["groupId"] != null
-            && data["senderId"] != null
+    val senderId = data["senderId"]
+    val groupId = data["groupId"]
+    val isValid = groupId != null && senderId != null
 
     if (!isValid) {
         Log.e(LOG_TAG, "Invalid group notification data!")
@@ -134,24 +150,26 @@ fun decodeGroupData(data: Map<String, String>): ReceivedNotification.Group? {
     }
 
     val bodyType = decodeBodyType(data["bodyType"])
+    val body = decodeBody(data["body"], bodyType)
     return ReceivedNotification.Group(
-        groupId = data["groupId"] ?: "",
+        groupId = GroupId(groupId),
         groupName = data["groupName"] ?: "///",
         groupAvatarId = data["groupAvatarId"],
-        senderId = data["senderId"] ?: "",
+        senderId = SenderId(senderId),
         senderName = data["senderName"] ?: "###",
         senderAvatarId = data["senderAvatarId"],
-        threadId = data["threadId"],
-        body = decodeBody(data["body"] ?: "", bodyType),
+        threadId = decodeThreadId(data),
+        body = body,
         image = data["image"],
         bodyType = decodeBodyType(data["bodyType"]),
     )
 }
 
 fun decodeChannelData(data: Map<String, String>): ReceivedNotification.Channel? {
-    val isValid = data["communityId"] != null
-            && data["channelId"] != null
-            && data["senderId"] != null
+    val communityId = data["communityId"]
+    val channelId = data["channelId"]
+    val senderId = data["senderId"]
+    val isValid = communityId != null && channelId != null && senderId != null
 
     if (!isValid) {
         Log.e(LOG_TAG, "Invalid channel notification data!")
@@ -159,19 +177,25 @@ fun decodeChannelData(data: Map<String, String>): ReceivedNotification.Channel? 
     }
 
     val bodyType = decodeBodyType(data["bodyType"])
+    val body = decodeBody(data["body"], bodyType)
     return ReceivedNotification.Channel(
-        channelId = data["channelId"] ?: "",
-        communityId = data["communityId"] ?: "",
+        channelId = ChannelId(channelId),
+        communityId = CommunityId(communityId),
         channelName = data["channelName"] ?: "---",
         communityName = data["communityName"] ?: "+++",
-        senderId = data["senderId"] ?: "",
+        senderId = SenderId(senderId),
         senderName = data["senderName"] ?: "###",
         senderAvatarId = data["senderAvatarId"],
-        threadId = data["threadId"],
-        body = decodeBody(data["body"] ?: "", bodyType),
+        threadId = decodeThreadId(data),
+        body = body,
         image = data["image"],
         bodyType = decodeBodyType(data["bodyType"]),
     )
+}
+
+fun decodeThreadId(data: Map<String, String>): ThreadId? {
+    val threadId = data["threadId"]
+    return if (threadId != null) ThreadId(threadId) else null
 }
 
 fun decodeBodyType(bodyType: String?): BodyType {
@@ -184,11 +208,15 @@ fun decodeBodyType(bodyType: String?): BodyType {
 }
 
 // TODO i18n!!!!!!
-fun decodeBody(body: String, bodyType: BodyType): String {
+fun decodeBody(body: String?, bodyType: BodyType): String {
+    if (body == null) {
+        Log.e(LOG_TAG, "Invalid notification body for body type: $bodyType!")
+    }
+
     return when (bodyType) {
-        BodyType.Reaction -> "Reacted with $body"
-        BodyType.Tip -> "Sent a tip of $body"
-        BodyType.Invite -> "Invited you to $body"
-        else -> body
+        BodyType.Reaction -> "Reacted with ${body ?: "?"}"
+        BodyType.Tip -> "Sent a tip of ${body ?: "?"}"
+        BodyType.Invite -> "Invited you to ${body ?: "?"}"
+        else -> body ?: ""
     }
 }
