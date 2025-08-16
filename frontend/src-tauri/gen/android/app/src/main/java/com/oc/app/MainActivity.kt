@@ -46,10 +46,16 @@ class MainActivity : TauriActivity() {
         
         if (notificationPayload != null) {
             try {
+                // Send notification data to Svelte code, which will then determine where to navigate.
+                // Notification auto cancels!
                 OpenChatPlugin.triggerRef(
                     "notification-tap",
                     JSObject(notificationPayload)
                 )
+
+                // Release associated notifications from the local db.
+                NotificationsHelper.releaseNotificationsAfterTap(this, notificationPayload)
+                
             } catch (e: Exception) {
                 Log.e("OC_APP", "Error occurred $e")
             }
