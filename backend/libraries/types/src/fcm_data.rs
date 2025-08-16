@@ -194,7 +194,7 @@ impl FcmData {
             }
             Chat::Group(group_id) => {
                 add_to_map("type", Some("group".into()));
-                add_to_map("group_id", Some(group_id.to_string()));
+                add_to_map("groupId", Some(group_id.to_string()));
             }
             Chat::Channel(community_id, channel_id) => {
                 add_to_map("type", Some("channel".into()));

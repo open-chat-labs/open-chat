@@ -42,7 +42,7 @@ class OpenChatNotificationService : FirebaseMessagingService() {
                 // If the app is closed, we will need to set the small notification icon that
                 // appears in the status bar.
                 NotificationsHelper.setNotificationIconSmall(R.drawable.ic_notification_small)
-                NotificationsHelper.showNotification(this, it)
+                NotificationsHelper.processNewNotification(this, it)
             }
         }
     }
