@@ -7,6 +7,7 @@ const COMMANDS: &[&str] = &[
     "get_fcm_token",
     "show_notification",
     "svelte_ready",
+    "release_notifications",
 ];
 
 fn main() {

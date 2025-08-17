@@ -9,4 +9,5 @@ permissions = [
     "allow-get-fcm-token",
     "allow-show-notification",
     "allow-svelte-ready",
+    "allow-release-notifications",
 ]

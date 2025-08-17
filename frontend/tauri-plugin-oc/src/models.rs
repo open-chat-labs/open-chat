@@ -45,3 +45,13 @@ pub struct ShowNotificationRequest {
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct SvelteReadyRequest;
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReleaseNotificationsRequest {
+    pub sender_id: Option<String>,
+    pub group_id: Option<String>,
+    pub community_id: Option<String>,
+    pub channel_id: Option<u32>,
+    pub thread_index: Option<u32>,
+}

@@ -9,10 +9,7 @@ import app.tauri.annotation.TauriPlugin
 import app.tauri.plugin.Invoke
 import app.tauri.plugin.JSObject
 import app.tauri.plugin.Plugin
-import com.ocplugin.app.commands.OpenUrl
-import com.ocplugin.app.commands.PasskeyAuth
-import com.ocplugin.app.commands.ShowNotification
-import com.ocplugin.app.commands.SvelteReady
+import com.ocplugin.app.commands.*
 
 @Suppress("UNUSED")
 @TauriPlugin
@@ -78,5 +75,10 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
     fun svelteReady(invoke: Invoke) {
         SvelteReady(activity).handler(invoke)
         flushQueuedEvents()
+    }
+
+    @Command
+    fun releaseNotifications(invoke: Invoke) {
+        ReleaseNotifications(activity).handler(invoke)
     }
 }

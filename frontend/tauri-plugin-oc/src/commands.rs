@@ -40,3 +40,11 @@ pub(crate) async fn show_notification<R: Runtime>(
 pub(crate) async fn svelte_ready<R: Runtime>(app: AppHandle<R>) {
     app.oc().svelte_ready()
 }
+
+#[command]
+pub(crate) async fn release_notifications<R: Runtime>(
+    app: AppHandle<R>,
+    payload: ReleaseNotificationsRequest,
+) {
+    app.oc().release_notifications(payload)
+}

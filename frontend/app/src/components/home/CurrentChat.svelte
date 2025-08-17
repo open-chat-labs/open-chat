@@ -56,6 +56,7 @@
     import P2PSwapContentBuilder from "./P2PSwapContentBuilder.svelte";
     import PollBuilder from "./PollBuilder.svelte";
     import PrizeContentBuilder from "./PrizeContentBuilder.svelte";
+    import { releaseNotifications } from "tauri-plugin-oc-api";
 
     interface Props {
         joining: MultiUserChat | undefined;
@@ -91,6 +92,30 @@
         $state(undefined);
 
     onMount(() => {
+        // Release any active notifications for the current chat when the component mounts
+        if (client.isNativeAndroid()) {
+            switch (chat.id.kind) {
+                case "direct_chat":
+                    releaseNotifications({
+                        kind: "dms",
+                        senderId: chat.id.userId,
+                    });
+                    break;
+                case "group_chat":
+                    releaseNotifications({
+                        kind: "group",
+                        groupId: chat.id.groupId,
+                    });
+                    break;
+                case "channel":
+                    releaseNotifications({
+                        kind: "channel",
+                        communityId: chat.id.communityId,
+                        channelId: chat.id.channelId,
+                    });
+            }
+        }
+
         const unsubs = [
             messagesRead.subscribe(() => {
                 unreadMessages = getUnreadMessageCount(chat);

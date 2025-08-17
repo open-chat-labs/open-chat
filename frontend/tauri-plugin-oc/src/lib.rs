@@ -41,6 +41,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             commands::sign_in,
             commands::show_notification,
             commands::svelte_ready,
+            commands::release_notifications,
         ])
         .setup(|app, api| {
             #[cfg(mobile)]
