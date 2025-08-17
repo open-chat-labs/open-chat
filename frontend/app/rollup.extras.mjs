@@ -76,6 +76,7 @@ export function initEnv() {
             process.env.OC_SIGN_IN_WITH_ETHEREUM_CANISTER =
                 canisters.sign_in_with_ethereum[dfxNetwork];
             process.env.OC_SIGN_IN_WITH_SOLANA_CANISTER = canisters.sign_in_with_solana[dfxNetwork];
+            process.env.OC_ONE_SEC_MINTER_CANISTER = "5okwm-giaaa-aaaar-qbn6a-cai";
 
             console.log("TranslationsCanisterId: ", process.env.OC_TRANSLATIONS_CANISTER);
             console.log("UserIndexCanisterId: ", process.env.OC_USER_INDEX_CANISTER);
@@ -91,6 +92,7 @@ export function initEnv() {
             console.log("SignInWithEmail: ", process.env.OC_SIGN_IN_WITH_EMAIL_CANISTER);
             console.log("SignInWithEthereum: ", process.env.OC_SIGN_IN_WITH_ETHEREUM_CANISTER);
             console.log("SignInWithSolana: ", process.env.OC_SIGN_IN_WITH_SOLANA_CANISTER);
+            console.log("OneSecMinter: ", process.env.OC_ONE_SEC_MINTER_CANISTER);
         } else {
             console.log(
                 "Couldn't find canisters JSON at: ",

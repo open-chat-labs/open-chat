@@ -182,6 +182,9 @@ export default {
             "import.meta.env.OC_SIGN_IN_WITH_SOLANA_CANISTER": JSON.stringify(
                 process.env.OC_SIGN_IN_WITH_SOLANA_CANISTER,
             ),
+            "import.meta.env.OC_ONE_SEC_MINTER_CANISTER": JSON.stringify(
+                process.env.OC_ONE_SEC_MINTER_CANISTER,
+            ),
             "import.meta.env.OC_BLOB_URL_PATTERN": JSON.stringify(process.env.OC_BLOB_URL_PATTERN),
             "import.meta.env.OC_CANISTER_URL_PATH": JSON.stringify(
                 process.env.OC_CANISTER_URL_PATH,
