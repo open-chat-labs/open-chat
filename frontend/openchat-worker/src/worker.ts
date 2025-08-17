@@ -2160,6 +2160,36 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "oneSecGetTransferFees":
+                executeThenReply(payload, correlationId, agent.oneSecGetTransferFees());
+                break;
+
+            case "oneSecForwardEvmToIcp":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.oneSecForwardEvmToIcp(
+                        payload.tokenSymbol,
+                        payload.chain,
+                        payload.address,
+                        payload.receiver,
+                    ),
+                );
+                break;
+
+            case "oneSecGetForwardingStatus":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.oneSecGetForwardingStatus(
+                        payload.tokenSymbol,
+                        payload.chain,
+                        payload.address,
+                        payload.receiver,
+                    ),
+                );
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }

@@ -186,6 +186,7 @@ import {
     ONE_DAY,
     ONE_HOUR,
     ONE_MINUTE_MILLIS,
+    type OneSecTransferFees,
     OPENCHAT_BOT_USER_ID,
     OPENCHAT_VIDEO_CALL_USER_ID,
     type OptionalChatPermissions,
@@ -7610,6 +7611,10 @@ export class OpenChat {
             kind: "ckbtcMinterWithdrawalInfo",
             amount,
         });
+    }
+
+    oneSecGetTransferFees(): Promise<OneSecTransferFees[]> {
+        return this.#sendRequest({ kind: "oneSecGetTransferFees" });
     }
 
     async signUpWithWebAuthn(

@@ -130,6 +130,7 @@ import type { AgentConfig } from "./config";
 import type {
     AccountTransactionResult,
     CryptocurrencyDetails,
+    EvmChain,
     TokenExchangeRates,
     WalletConfig,
 } from "./crypto";
@@ -222,6 +223,7 @@ import type {
     UserSummary,
 } from "./user";
 import type { Verification } from "./wallet";
+import type { OneSecForwardingStatus, OneSecTransferFees } from "./oneSec";
 
 /**
  * Worker request types
@@ -464,7 +466,30 @@ export type WorkerRequest =
     | VerifyAccountLinkingCode
     | FinaliseAccountLinkingWithCode
     | PayForPremiumItem
-    | SetPremiumItemCost;
+    | SetPremiumItemCost
+    | OneSecGetTransferFees
+    | OneSecForwardEvmToIcp
+    | OneSecGetForwardingStatus;
+
+type OneSecGetTransferFees = {
+    kind: "oneSecGetTransferFees";
+};
+
+type OneSecForwardEvmToIcp = {
+    kind: "oneSecForwardEvmToIcp";
+    tokenSymbol: string;
+    chain: EvmChain;
+    address: string;
+    receiver: string;
+};
+
+type OneSecGetForwardingStatus = {
+    kind: "oneSecGetForwardingStatus";
+    tokenSymbol: string;
+    chain: EvmChain;
+    address: string;
+    receiver: string;
+};
 
 type SetPremiumItemCost = {
     kind: "setPremiumItemCost";
@@ -1794,7 +1819,9 @@ export type WorkerResponseInner =
     | AccountLinkingCode
     | VerifyAccountLinkingCodeResponse
     | FinaliseAccountLinkingResponse
-    | PayForPremiumItemResponse;
+    | PayForPremiumItemResponse
+    | OneSecTransferFees[]
+    | OneSecForwardingStatus;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -2560,4 +2587,10 @@ export type WorkerResult<T> = T extends Init
     ? AccountLinkingCode | undefined
     : T extends ReinstateMissedDailyClaims
     ? boolean
+    : T extends OneSecGetTransferFees
+    ? OneSecTransferFees[]
+    : T extends OneSecForwardEvmToIcp
+    ? OneSecForwardingStatus
+    : T extends OneSecGetForwardingStatus
+    ? OneSecForwardingStatus
     : never;
