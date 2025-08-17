@@ -55,23 +55,22 @@ interface NotificationDao {
 
 
     @Query("UPDATE notifications SET isReleased = 1 WHERE type = 'DM' AND senderId = :senderId AND threadId IS NULL")
-    suspend fun markDmAsReleased(senderId: SenderId)
+    suspend fun markDmAsReleased(senderId: SenderId): Int
 
     @Query("UPDATE notifications SET isReleased = 1 WHERE type = 'GROUP' AND groupId = :groupId AND threadId IS NULL")
-    suspend fun markGroupNotificationAsReleased(groupId: GroupId)
+    suspend fun markGroupNotificationAsReleased(groupId: GroupId): Int
 
     @Query("UPDATE notifications SET isReleased = 1 WHERE type = 'CHANNEL' AND channelId = :channelId AND threadId IS NULL")
-    suspend fun markChannelNotificationAsReleased(channelId: ChannelId)
+    suspend fun markChannelNotificationAsReleased(channelId: ChannelId): Int
 
     // TODO Do we want to mark threads as released when the user views the parent conversation?
     @Query("UPDATE notifications SET isReleased = 1 WHERE threadId = :threadId")
-    suspend fun markThreadNotificationAsReleased(threadId: ThreadId)
+    suspend fun markThreadNotificationAsReleased(threadId: ThreadId): Int
 
 
     @Query("SELECT COUNT(*) FROM notifications WHERE isReleased = 0")
     suspend fun activeCount(): Int
 
     @Query("DELETE FROM notifications WHERE isReleased = 1")
-    suspend fun cleanup()
-
+    suspend fun cleanup(): Int
 }
