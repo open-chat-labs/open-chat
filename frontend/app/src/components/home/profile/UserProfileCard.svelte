@@ -209,7 +209,11 @@
                         {/if}
                     </div>
                     {#if user !== undefined && !$disableChit}
-                        <ChitBalance size={"small"} {me} chitBalance={user.chitBalance} />
+                        <ChitBalance
+                            size={"small"}
+                            {me}
+                            chitBalance={user.chitBalance}
+                            totalEarned={user.totalChitEarned} />
                     {/if}
                     <CustomBackgroundOverlay {userProfileMode} {hasCustomBackground}>
                         {#if profile!.bio.length > 0}

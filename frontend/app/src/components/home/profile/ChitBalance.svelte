@@ -6,11 +6,12 @@
 
     interface Props {
         chitBalance: number;
+        totalEarned: number;
         me: boolean;
         size?: "small" | "large";
     }
 
-    let { chitBalance, me, size = "small" }: Props = $props();
+    let { chitBalance, totalEarned, me, size = "small" }: Props = $props();
 
     let learnToEarn = $state(false);
 
@@ -34,9 +35,15 @@
         <div class="chit"></div>
         <div class="balances">
             <Tooltip position="top" align="middle">
-                <div>{`${chitBalance.toLocaleString()} CHIT`}</div>
+                <div class="current">{`${chitBalance.toLocaleString()} CHIT`}</div>
                 {#snippet popupTemplate()}
                     <Translatable resourceKey={i18nKey("chitBalance")} />
+                {/snippet}
+            </Tooltip>
+            <Tooltip position="top" align="middle">
+                <div class="total">{`${totalEarned.toLocaleString()} CHIT`}</div>
+                {#snippet popupTemplate()}
+                    <Translatable resourceKey={i18nKey("totalChitEarned")} />
                 {/snippet}
             </Tooltip>
         </div>
@@ -69,6 +76,10 @@
         .balances {
             display: flex;
             flex-direction: column;
+            .total {
+                text-align: start;
+                @include font(light, normal, fs-60);
+            }
         }
 
         .chit {

@@ -141,6 +141,7 @@
                 <div class="current">
                     <ChitBalance
                         chitBalance={$chitStateStore.chitBalance}
+                        totalEarned={$chitStateStore.totalChitEarned}
                         me={false}
                         size={"large"} />
                 </div>
