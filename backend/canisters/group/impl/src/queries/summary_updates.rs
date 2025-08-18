@@ -46,6 +46,7 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
         role: updates.role_changed.then_some(member.role().value.into()),
         mentions: updates.mentions,
         notifications_muted: member.notifications_muted().if_set_after(updates_since).cloned(),
+        at_everyone_muted: member.at_everyone_muted().if_set_after(updates_since).cloned(),
         my_metrics: state
             .data
             .chat

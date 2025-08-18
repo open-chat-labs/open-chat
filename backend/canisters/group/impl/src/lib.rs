@@ -182,6 +182,7 @@ impl RuntimeState {
             role: member.role().value.into(),
             mentions: chat.most_recent_mentions(member, None),
             notifications_muted: member.notifications_muted().value,
+            at_everyone_muted: member.at_everyone_muted().value,
             my_metrics: chat
                 .events
                 .user_metrics(&member.user_id(), None)
