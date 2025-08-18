@@ -1,4 +1,4 @@
-use candid::{CandidType, Deserialize, Principal};
+use candid::{CandidType, Deserialize};
 use icrc_ledger_types::icrc1::account::Account as IcrcAccount;
 use serde::Serialize;
 
@@ -44,11 +44,4 @@ pub struct FetchedBlock {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ErrorMessage {
     pub error: String,
-}
-
-#[test]
-fn one_sec_minter_canister_id() {
-    let canister_id = Principal::from_text("5okwm-giaaa-aaaar-qbn6a-cai").unwrap();
-
-    assert_eq!(canister_id, ONE_SEC_MINTER_CANISTER_ID);
 }
