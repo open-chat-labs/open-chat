@@ -1323,8 +1323,8 @@ export class OpenChat {
             return Promise.resolve(false);
         }
 
-        let mute = atEveryOne ? undefined : true;
-        let muteAtEveryone = atEveryOne ? true : undefined;
+        const mute = atEveryOne ? undefined : true;
+        const muteAtEveryone = atEveryOne ? true : undefined;
 
         const undos = community.channels.map((c) =>
             localUpdates.updateNotificationsMuted(c.id, mute, muteAtEveryone),
