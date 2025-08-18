@@ -372,7 +372,10 @@ export function mergeGroupChats(
                     [],
                     u?.threadsRead ?? {},
                 ),
-                readByMeUpTo: u?.readByMeUpTo,
+                readByMeUpTo:
+                    u?.readByMeUpTo !== undefined && g.latestMessage !== undefined
+                        ? Math.min(u?.readByMeUpTo, g.latestMessage.event.messageIndex)
+                        : u?.readByMeUpTo,
                 archived: u?.archived ?? false,
             },
             localUserIndex: g.localUserIndex,
