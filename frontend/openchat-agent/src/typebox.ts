@@ -4493,6 +4493,16 @@ export const UserReportMessageArgs = Type.Object({
     delete: Type.Boolean(),
 });
 
+export type UserGenerateOneSecAddressResponse = Static<typeof UserGenerateOneSecAddressResponse>;
+export const UserGenerateOneSecAddressResponse = Type.Union([
+    Type.Object({
+        Success: Type.String(),
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
 export type UserConfigureWalletArgs = Static<typeof UserConfigureWalletArgs>;
 export const UserConfigureWalletArgs = Type.Object({
     config: UserWalletConfig,
@@ -9582,6 +9592,7 @@ export const UserInitialStateSuccessResult = Type.Object({
     message_activity_summary: UserMessageActivitySummary,
     bots: Type.Array(InstalledBotDetails),
     btc_address: Type.Optional(Type.String()),
+    one_sec_address: Type.Optional(Type.String()),
     premium_items: Type.Array(Type.Number()),
 });
 
@@ -9619,6 +9630,7 @@ export const UserUpdatesSuccessResult = Type.Object({
     bots_added_or_updated: Type.Array(InstalledBotDetails),
     bots_removed: Type.Array(UserId),
     btc_address: Type.Optional(Type.String()),
+    one_sec_address: Type.Optional(Type.String()),
     premium_items: Type.Optional(Type.Array(Type.Number())),
 });
 

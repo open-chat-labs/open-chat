@@ -45,7 +45,18 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
     let wallet_config = state.data.wallet_config.if_set_after(updates_since).cloned();
     let referrals = state.data.referrals.updated_since(updates_since);
     let streak_insurance_updated = state.data.streak.insurance_last_updated() > updates_since;
-    let btc_address_updated = state.data.btc_address.as_ref().is_some_and(|a| a.timestamp > updates_since);
+    let btc_address_if_updated = state
+        .data
+        .btc_address
+        .as_ref()
+        .filter(|a| a.timestamp > updates_since)
+        .map(|a| a.value.clone());
+    let one_sec_address_if_updated = state
+        .data
+        .btc_address
+        .as_ref()
+        .filter(|a| a.timestamp > updates_since)
+        .map(|a| a.value.clone());
     let premium_items_updated = state.data.premium_items.last_updated() > updates_since;
 
     let has_any_updates = username.is_some()
@@ -59,7 +70,8 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         || is_unique_person_updated
         || !referrals.is_empty()
         || streak_insurance_updated
-        || btc_address_updated
+        || btc_address_if_updated.is_some()
+        || one_sec_address_if_updated.is_some()
         || premium_items_updated
         || state.data.direct_chats.any_updated(updates_since)
         || state.data.group_chats.any_updated(updates_since)
@@ -160,7 +172,6 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
     } else {
         OptionUpdate::NoChange
     };
-    let btc_address = if btc_address_updated { state.data.btc_address.as_ref().map(|a| a.value.clone()) } else { None };
     let premium_items = premium_items_updated.then(|| state.data.premium_items.item_ids());
 
     let mut bots_changed = HashSet::new();
@@ -216,7 +227,8 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         message_activity_summary,
         bots_added_or_updated,
         bots_removed,
-        btc_address,
+        btc_address: btc_address_if_updated,
+        one_sec_address: one_sec_address_if_updated,
         premium_items,
     })
 }

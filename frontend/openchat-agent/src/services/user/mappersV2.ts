@@ -650,6 +650,7 @@ export function initialStateResponse(value: UserInitialStateResponse): InitialSt
                 return m;
             }, new Map<string, GrantedBotPermissions>()),
             bitcoinAddress: result.btc_address,
+            oneSecAddress: result.one_sec_address,
             streakInsurance: mapOptional(result.streak_insurance, streakInsurance),
             premiumItems: new Set(result.premium_items),
         };
@@ -820,6 +821,7 @@ export function getUpdatesResponse(value: UserUpdatesResponse): UpdatesResponse 
             botsAddedOrUpdated: value.Success.bots_added_or_updated.map(installedBotDetails),
             botsRemoved: value.Success.bots_removed.map(principalBytesToString),
             bitcoinAddress: value.Success.btc_address,
+            oneSecAddress: value.Success.one_sec_address,
             streakInsurance: optionUpdateV2(result.streak_insurance, streakInsurance),
             premiumItems: mapOptional(result.premium_items, (items) => new Set(items)),
         };
