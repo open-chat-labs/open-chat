@@ -1235,7 +1235,8 @@ type ArchiveChat = {
 
 type ToggleMuteNotifications = {
     id: ChatIdentifier | CommunityIdentifier;
-    muted: boolean;
+    mute: boolean | undefined;
+    muteAtEveryone: boolean | undefined;
     kind: "toggleMuteNotifications";
 };
 

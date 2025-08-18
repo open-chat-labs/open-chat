@@ -2758,24 +2758,30 @@ export class OpenChatAgent extends EventTarget {
 
     toggleMuteNotifications(
         id: ChatIdentifier | CommunityIdentifier,
-        muted: boolean,
+        mute: boolean | undefined,
+        muteAtEveryone: boolean | undefined,
     ): Promise<ToggleMuteNotificationResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (id.kind) {
             case "group_chat":
-                return this.getGroupClient(id.groupId).toggleMuteNotifications(muted);
+                return this.getGroupClient(id.groupId).toggleMuteNotifications(
+                    mute,
+                    muteAtEveryone,
+                );
             case "direct_chat":
-                return this.userClient.toggleMuteNotifications(id.userId, muted);
+                return this.userClient.toggleMuteNotifications(id.userId, mute!);
             case "channel":
                 return this.communityClient(id.communityId).toggleMuteChannelNotifications(
                     id,
-                    muted,
+                    mute,
+                    muteAtEveryone,
                 );
             case "community":
                 return this.communityClient(id.communityId).toggleMuteChannelNotifications(
                     undefined,
-                    muted,
+                    mute,
+                    muteAtEveryone,
                 );
         }
     }

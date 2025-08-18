@@ -2159,6 +2159,7 @@ function mapGroupMembership(
         latestThreads: value.latest_threads.map(threadSyncDetails),
         myMetrics: chatMetrics(value.my_metrics),
         notificationsMuted: value.notifications_muted,
+        atEveryoneMuted: value.at_everyone_muted,
         readByMeUpTo: latestMessage?.event.messageIndex,
         archived: false,
         rulesAccepted: value.rules_accepted,

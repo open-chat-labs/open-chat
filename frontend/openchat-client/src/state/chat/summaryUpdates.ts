@@ -11,6 +11,7 @@ import { notEq } from "../utils";
 
 export class ChatSummaryUpdates {
     notificationsMuted?: boolean;
+    atEveryoneMuted?: boolean;
     archived?: boolean;
     rulesAccepted?: boolean;
     latestMessage?: EventWrapper<Message>;

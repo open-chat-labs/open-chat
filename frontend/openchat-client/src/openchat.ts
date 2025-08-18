@@ -1293,9 +1293,18 @@ export class OpenChat {
         }
     }
 
-    toggleMuteNotifications(chatId: ChatIdentifier, muted: boolean): Promise<boolean> {
-        const undo = localUpdates.updateNotificationsMuted(chatId, muted);
-        return this.#sendRequest({ kind: "toggleMuteNotifications", id: chatId, muted })
+    toggleMuteNotifications(
+        chatId: ChatIdentifier,
+        mute: boolean | undefined,
+        muteAtEveryone: boolean | undefined,
+    ): Promise<boolean> {
+        const undo = localUpdates.updateNotificationsMuted(chatId, mute, muteAtEveryone);
+        return this.#sendRequest({
+            kind: "toggleMuteNotifications",
+            id: chatId,
+            mute,
+            muteAtEveryone,
+        })
             .then((resp) => {
                 if (resp.kind !== "success") {
                     undo();
@@ -1308,17 +1317,25 @@ export class OpenChat {
             });
     }
 
-    muteAllChannels(communityId: CommunityIdentifier): Promise<boolean> {
+    muteAllChannels(communityId: CommunityIdentifier, atEveryOne: boolean): Promise<boolean> {
         const community = communitiesStore.value.get(communityId);
         if (community === undefined) {
             return Promise.resolve(false);
         }
 
+        let mute = atEveryOne ? undefined : true;
+        let muteAtEveryone = atEveryOne ? true : undefined;
+
         const undos = community.channels.map((c) =>
-            localUpdates.updateNotificationsMuted(c.id, true),
+            localUpdates.updateNotificationsMuted(c.id, mute, muteAtEveryone),
         );
 
-        return this.#sendRequest({ kind: "toggleMuteNotifications", id: communityId, muted: true })
+        return this.#sendRequest({
+            kind: "toggleMuteNotifications",
+            id: communityId,
+            mute,
+            muteAtEveryone,
+        })
             .then((resp) => {
                 if (resp.kind !== "success") {
                     undos.forEach((undo) => undo());
