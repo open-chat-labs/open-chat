@@ -224,6 +224,5 @@ service : {
     /// Forwarder endpoints
     /////////////////////////////////////////////////////
 
-    get_forwarding_address : (receiver : IcpAccount) -> (variant { Ok : text; Err : text }) query;
     get_forwarding_status: (arg: ForwardEvmToIcpArg) -> (variant { Ok : ForwardingResponse; Err : text }) query;
 }

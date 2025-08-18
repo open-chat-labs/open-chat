@@ -105,11 +105,6 @@ export interface _SERVICE {
     { 'Ok' : ForwardingResponse } |
       { 'Err' : string }
   >,
-  'get_forwarding_address' : ActorMethod<
-    [IcpAccount],
-    { 'Ok' : string } |
-      { 'Err' : string }
-  >,
   'get_forwarding_status' : ActorMethod<
     [ForwardEvmToIcpArg],
     { 'Ok' : ForwardingResponse } |
