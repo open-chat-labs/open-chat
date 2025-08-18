@@ -22,10 +22,10 @@ async fn generate_one_sec_address_impl() -> Response {
 
     match one_sec_minter_canister_c2c_client::get_forwarding_address(
         ONE_SEC_MINTER_CANISTER_ID,
-        &icrc_ledger_types::icrc1::account::Account {
+        &one_sec_minter_canister::IcpAccount::ICRC(icrc_ledger_types::icrc1::account::Account {
             owner: canister_id,
             subaccount: None,
-        },
+        }),
     )
     .await
     {
