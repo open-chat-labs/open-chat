@@ -13,7 +13,7 @@ impl Reaction {
 
     pub fn is_valid(&self) -> bool {
         let len = self.0.len();
-        let max_length = if self.0.starts_with("@CustomEmoji(") { 100 } else { 40 };
+        let max_length = if self.0.starts_with("@CE(") { 100 } else { 40 };
         (1..=max_length).contains(&len)
     }
 }
