@@ -8,8 +8,6 @@ mod updates;
 pub use queries::*;
 pub use updates::*;
 
-pub const ONE_SEC_MINTER_CANISTER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 2, 48, 11, 124, 1, 1]);
-
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct EvmAccount {
     pub address: String,
