@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Support muting of @everyone notifications ([#8496](https://github.com/open-chat-labs/open-chat/pull/8496))
 - Support muted=false && @everyone_muted=true ([#8502](https://github.com/open-chat-labs/open-chat/pull/8502))
 
+### Fixed
+
+- Handle custom emojis with long names ([#8504](https://github.com/open-chat-labs/open-chat/pull/8504))
+
 ## [[2.0.1864](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1864-group)] - 2025-08-12
 
 ### Changed

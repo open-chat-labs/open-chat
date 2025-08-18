@@ -15,6 +15,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Reduce wasm size by using trimmed down types for voting on proposals ([8490](https://github.com/open-chat-labs/open-chat/pull/8490))
 
+### Fixed
+
+- Handle custom emojis with long names ([#8504](https://github.com/open-chat-labs/open-chat/pull/8504))
+
 ## [[2.0.1865-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1865-user)] - 2025-08-12
 
 ### Added
