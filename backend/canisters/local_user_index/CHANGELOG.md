@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Temporarily remove check that user has recently signed in ([#8497](https://github.com/open-chat-labs/open-chat/pull/8497))
 - Support muting of @everyone notifications ([#8502](https://github.com/open-chat-labs/open-chat/pull/8502))
+- Remove legacy group membership fields from backend ([#8508](https://github.com/open-chat-labs/open-chat/pull/8508))
 
 ## [[2.0.1862](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1862-local_user_index)] - 2025-08-12
 
