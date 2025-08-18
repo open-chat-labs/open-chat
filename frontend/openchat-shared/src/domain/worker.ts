@@ -412,6 +412,7 @@ export type WorkerRequest =
     | GetAccessToken
     | GetLocalUserIndexForUser
     | GenerateBtcAddress
+    | GenerateOneSecAddress
     | UpdateBtcBalance
     | WithdrawBtc
     | GetCkbtcMinterDepositInfo
@@ -1518,6 +1519,10 @@ type GenerateBtcAddress = {
     kind: "generateBtcAddress";
 };
 
+type GenerateOneSecAddress = {
+    kind: "generateOneSecAddress";
+};
+
 type UpdateBtcBalance = {
     userId: string;
     bitcoinAddress: string;
@@ -2490,6 +2495,8 @@ export type WorkerResult<T> = T extends Init
     : T extends GetLocalUserIndexForUser
     ? string
     : T extends GenerateBtcAddress
+    ? string
+    : T extends GenerateOneSecAddress
     ? string
     : T extends UpdateBtcBalance
     ? boolean

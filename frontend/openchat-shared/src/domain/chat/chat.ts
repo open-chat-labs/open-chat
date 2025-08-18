@@ -1063,6 +1063,7 @@ export type UpdatesResult = {
     messageActivitySummary: MessageActivitySummary | undefined;
     installedBots: Map<string, GrantedBotPermissions> | undefined;
     bitcoinAddress: string | undefined;
+    oneSecAddress: string | undefined;
     streakInsurance: OptionUpdate<StreakInsurance>;
     updatedEvents: Map<string, UpdatedEvent[]>;
     suspensionChanged: boolean | undefined;
@@ -1092,6 +1093,7 @@ export type ChatStateFull = {
     messageActivitySummary: MessageActivitySummary;
     installedBots: Map<string, GrantedBotPermissions>;
     bitcoinAddress: string | undefined;
+    oneSecAddress: string | undefined;
     streakInsurance: StreakInsurance | undefined;
     premiumItems: Set<PremiumItem>;
 };
@@ -1263,6 +1265,7 @@ export type InitialStateResponse = {
     messageActivitySummary: MessageActivitySummary;
     bots: Map<string, GrantedBotPermissions>;
     bitcoinAddress: string | undefined;
+    oneSecAddress: string | undefined;
     streakInsurance?: StreakInsurance;
     premiumItems: Set<PremiumItem>;
 };
@@ -1350,6 +1353,7 @@ export type UpdatesSuccessResponse = {
     botsAddedOrUpdated: InstalledBotDetails[];
     botsRemoved: string[];
     bitcoinAddress: string | undefined;
+    oneSecAddress: string | undefined;
     streakInsurance: OptionUpdate<StreakInsurance>;
     premiumItems: Set<PremiumItem> | undefined;
 };

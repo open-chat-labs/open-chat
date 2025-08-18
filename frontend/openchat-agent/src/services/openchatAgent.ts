@@ -1729,6 +1729,7 @@ export class OpenChatAgent extends EventTarget {
         let messageActivitySummary: Updatable<MessageActivitySummary>;
         let installedBots: Updatable<Map<string, GrantedBotPermissions>>;
         let bitcoinAddress: Updatable<string | undefined>;
+        let oneSecAddress: Updatable<string | undefined>;
         let streakInsurance: UpdatableOption<StreakInsurance>;
         let premiumItems: Updatable<Set<PremiumItem>>;
 
@@ -1798,6 +1799,7 @@ export class OpenChatAgent extends EventTarget {
             messageActivitySummary = new Updatable(userResponse.messageActivitySummary, true);
             installedBots = new Updatable(userResponse.bots, true);
             bitcoinAddress = new Updatable(userResponse.bitcoinAddress, true);
+            oneSecAddress = new Updatable(userResponse.oneSecAddress, true);
             streakInsurance = new UpdatableOption(userResponse.streakInsurance, true);
             premiumItems = new Updatable(userResponse.premiumItems, true);
         } else {
@@ -1825,6 +1827,7 @@ export class OpenChatAgent extends EventTarget {
             messageActivitySummary = new Updatable(current.messageActivitySummary);
             installedBots = new Updatable(current.installedBots);
             bitcoinAddress = new Updatable(current.bitcoinAddress);
+            oneSecAddress = new Updatable(current.oneSecAddress);
             streakInsurance = new UpdatableOption(current.streakInsurance);
             premiumItems = new Updatable(current.premiumItems);
 
@@ -1908,6 +1911,7 @@ export class OpenChatAgent extends EventTarget {
                         userResponse.messageActivitySummary,
                     );
                     bitcoinAddress.updateIfNotUndefined(userResponse.bitcoinAddress);
+                    oneSecAddress.updateIfNotUndefined(userResponse.oneSecAddress);
                     streakInsurance.applyOptionUpdate(userResponse.streakInsurance);
                     premiumItems.updateIfNotUndefined(userResponse.premiumItems);
                 }
@@ -2072,6 +2076,7 @@ export class OpenChatAgent extends EventTarget {
             messageActivitySummary: messageActivitySummary.value,
             installedBots: installedBots.value,
             bitcoinAddress: bitcoinAddress.value,
+            oneSecAddress: oneSecAddress.value,
             streakInsurance: streakInsurance.value,
             premiumItems: premiumItems.value,
         };
@@ -2157,6 +2162,7 @@ export class OpenChatAgent extends EventTarget {
             messageActivitySummary: messageActivitySummary.valueIfUpdated(),
             installedBots: installedBots.valueIfUpdated(),
             bitcoinAddress: bitcoinAddress.valueIfUpdated(),
+            oneSecAddress: oneSecAddress.valueIfUpdated(),
             streakInsurance: streakInsurance.toOptionUpdate(),
             suspensionChanged,
             premiumItems: premiumItems.valueIfUpdated(),
@@ -3985,6 +3991,10 @@ export class OpenChatAgent extends EventTarget {
 
     generateBtcAddress(): Promise<string> {
         return this.userClient.generateBtcAddress();
+    }
+
+    generateOneSecAddress(): Promise<string> {
+        return this.userClient.generateOneSecAddress();
     }
 
     // Query the Bitcoin canister to check for any new UTXOs for this user, if there are any, then also query the ckBTC

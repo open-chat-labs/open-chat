@@ -117,6 +117,7 @@ import {
     UserEventsResponse,
     UserEventsWindowArgs,
     UserGenerateBtcAddressResponse,
+    UserGenerateOneSecAddressResponse,
     UserInitialStateResponse,
     UserJoinVideoCallArgs,
     UserLeaveCommunityArgs,
@@ -1692,6 +1693,22 @@ export class UserClient extends MsgpackCanisterAgent {
             },
             TEmpty,
             UserGenerateBtcAddressResponse,
+        );
+    }
+
+    generateOneSecAddress(): Promise<string> {
+        return this.executeMsgpackUpdate(
+            "generate_one_sec_address",
+            {},
+            (resp) => {
+                if ("Success" in resp) {
+                    return resp.Success;
+                } else {
+                    throw new Error(`Failed to generate OneSec address: ${resp}`);
+                }
+            },
+            TEmpty,
+            UserGenerateOneSecAddressResponse,
         );
     }
 
