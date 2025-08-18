@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        BTC_SYMBOL,
         cryptoLookup,
         currentUserIdStore,
         currentUserStore,
@@ -9,6 +10,7 @@
     import QRCode from "../QRCode.svelte";
     import Translatable from "../Translatable.svelte";
     import TruncatedAccount from "./TruncatedAccount.svelte";
+    import BitcoinAccountInfo from "@components/home/BitcoinAccountInfo.svelte";
 
     interface Props {
         qrSize?: "default" | "smaller" | "larger";
@@ -33,13 +35,17 @@
     let symbol = $derived(tokenDetails.symbol);
 </script>
 
-<div class="account-info">
-    <QRCode {fullWidthOnMobile} text={account} size={qrSize} logo={tokenDetails.logo} {border} />
-    <p class="your-account" class:centered>
-        <Translatable resourceKey={i18nKey("tokenTransfer.yourAccount", { token: symbol })} />
-    </p>
-    <TruncatedAccount {centered} {account} />
-</div>
+{#if symbol === BTC_SYMBOL}
+    <BitcoinAccountInfo {qrSize} {centered} {border} {fullWidthOnMobile} />
+{:else}
+    <div class="account-info">
+        <QRCode {fullWidthOnMobile} text={account} size={qrSize} logo={tokenDetails.logo} {border} />
+        <p class="your-account" class:centered>
+            <Translatable resourceKey={i18nKey("tokenTransfer.yourAccount", { token: symbol })} />
+        </p>
+        <TruncatedAccount {centered} {account} />
+    </div>
+{/if}
 
 <style lang="scss">
     .centered {

@@ -1,6 +1,6 @@
 <script lang="ts">
     import QRCode from "../QRCode.svelte";
-    import { BTC_SYMBOL, OpenChat } from "openchat-client";
+    import { BTC_SYMBOL, currentUserIdStore, OpenChat } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
@@ -9,7 +9,6 @@
     import { getContext } from "svelte";
 
     type Props = {
-        userId: string;
         qrSize?: "default" | "smaller" | "larger",
         centered?: boolean;
         border?: boolean;
@@ -17,7 +16,6 @@
     }
 
     let {
-        userId,
         qrSize = "default",
         centered = false,
         border = true,
@@ -30,7 +28,7 @@
     let selectedNetwork = $state(BTC_SYMBOL);
     let error = $state();
 
-    const account = $derived(selectedNetwork === BTC_SYMBOL ? btcAddress : userId);
+    const account = $derived(selectedNetwork === BTC_SYMBOL ? btcAddress : $currentUserIdStore);
     const logo = $derived(selectedNetwork === BTC_SYMBOL
         ? "/assets/btc_logo.svg"
         : "/assets/ckbtc_nobackground.svg");
