@@ -781,22 +781,23 @@ impl GroupChatCore {
                     });
                     users_to_notify.insert(mentioned);
                 }
+
+                // Notify everyone who has not muted @everyone mentions
                 if everyone_mentioned {
                     self.at_everyone_mentions.insert(
                         now,
                         AtEveryoneMention::new(initiator, message_event.event.message_id, message_event.event.message_index),
                     );
-                    // Notify everyone who has not muted @everyone mentions
                     users_to_notify.extend(
                         self.members
                             .member_ids()
                             .difference(self.members.at_everyone_muted())
                             .copied(),
                     );
-                } else {
-                    // Notify everyone who has notifications unmuted
-                    users_to_notify.extend(self.members.notifications_unmuted().iter().copied());
                 }
+
+                // Notify everyone who has notifications unmuted
+                users_to_notify.extend(self.members.notifications_unmuted().iter().copied());
             }
         }
 
@@ -1812,7 +1813,7 @@ impl GroupChatCore {
     pub fn most_recent_mentions(&self, member: &GroupMemberInternal, since: Option<TimestampMillis>) -> Vec<HydratedMention> {
         let min_visible_event_index = member.min_visible_event_index();
 
-        self.at_everyone_mentions_since(since, member.user_id(), member.min_visible_message_index())
+        self.at_everyone_mentions_since(since, member)
             .chain(
                 member
                     .mentions
@@ -1828,27 +1829,35 @@ impl GroupChatCore {
     fn at_everyone_mentions_since(
         &self,
         since: Option<TimestampMillis>,
-        user_id: UserId,
-        min_visible_message_index: MessageIndex,
-    ) -> impl Iterator<Item = HydratedMention> + '_ {
-        self.at_everyone_mentions
-            .iter()
-            .rev()
-            .take_while(move |(ts, m)| {
-                since.as_ref().is_none_or(|s| **ts > *s) && m.message_index() >= min_visible_message_index
-            })
-            .filter(move |(_, m)| m.sender() != user_id)
-            .filter_map(|(_, m)| {
-                self.events
-                    .main_events_list()
-                    .event_index(m.message_index().into())
-                    .map(|event_index| HydratedMention {
-                        thread_root_message_index: None,
-                        message_id: m.message_id(),
-                        message_index: m.message_index(),
-                        event_index,
-                    })
-            })
+        member: &GroupMemberInternal,
+    ) -> Box<dyn Iterator<Item = HydratedMention> + '_> {
+        if member.at_everyone_muted().value {
+            return Box::new(std::iter::empty());
+        }
+
+        let user_id = member.user_id();
+        let min_visible_message_index = member.min_visible_message_index();
+
+        Box::new(
+            self.at_everyone_mentions
+                .iter()
+                .rev()
+                .take_while(move |(ts, m)| {
+                    since.as_ref().is_none_or(|s| **ts > *s) && m.message_index() >= min_visible_message_index
+                })
+                .filter(move |(_, m)| m.sender() != user_id)
+                .filter_map(|(_, m)| {
+                    self.events
+                        .main_events_list()
+                        .event_index(m.message_index().into())
+                        .map(|event_index| HydratedMention {
+                            thread_root_message_index: None,
+                            message_id: m.message_id(),
+                            message_index: m.message_index(),
+                            event_index,
+                        })
+                }),
+        )
     }
 
     fn events_reader(

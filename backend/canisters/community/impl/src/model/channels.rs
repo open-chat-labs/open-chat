@@ -295,6 +295,7 @@ impl Channel {
             role: m.role().value.into(),
             mentions: chat.most_recent_mentions(m, None),
             notifications_muted: m.notifications_muted().value,
+            at_everyone_muted: m.at_everyone_muted().value,
             my_metrics: chat
                 .events
                 .user_metrics(&m.user_id(), None)
@@ -389,6 +390,7 @@ impl Channel {
             role: updates.role_changed.then_some(m.role().value.into()),
             mentions: updates.mentions,
             notifications_muted: m.notifications_muted().if_set_after(since).cloned(),
+            at_everyone_muted: m.at_everyone_muted().if_set_after(since).cloned(),
             my_metrics: self.chat.events.user_metrics(&m.user_id(), Some(since)).map(|m| m.hydrate()),
             latest_threads: m
                 .followed_threads
