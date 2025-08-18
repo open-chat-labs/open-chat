@@ -106,6 +106,7 @@ import {
     ErrorCode,
     type EventsResponse,
     type EventWrapper,
+    type EvmChain,
     type ExpiredEventsRange,
     type ExploreBotsResponse,
     type ExploreChannelsResponse,
@@ -186,6 +187,7 @@ import {
     ONE_DAY,
     ONE_HOUR,
     ONE_MINUTE_MILLIS,
+    type OneSecForwardingStatus,
     type OneSecTransferFees,
     OPENCHAT_BOT_USER_ID,
     OPENCHAT_VIDEO_CALL_USER_ID,
@@ -7615,6 +7617,34 @@ export class OpenChat {
 
     oneSecGetTransferFees(): Promise<OneSecTransferFees[]> {
         return this.#sendRequest({ kind: "oneSecGetTransferFees" });
+    }
+
+    oneSecForwardEvmToIcp(
+        tokenSymbol: string,
+        chain: EvmChain,
+        address: string,
+    ): Promise<OneSecForwardingStatus> {
+        return this.#sendRequest({
+            kind: "oneSecForwardEvmToIcp",
+            tokenSymbol,
+            chain,
+            address,
+            receiver: currentUserIdStore.value,
+        });
+    }
+
+    oneSecForwardingStatus(
+        tokenSymbol: string,
+        chain: EvmChain,
+        address: string,
+    ): Promise<OneSecForwardingStatus> {
+        return this.#sendRequest({
+            kind: "oneSecGetForwardingStatus",
+            tokenSymbol,
+            chain,
+            address,
+            receiver: currentUserIdStore.value,
+        });
     }
 
     async signUpWithWebAuthn(
