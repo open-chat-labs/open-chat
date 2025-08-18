@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Implement withdrawing tokens to EVM chains via OneSec ([8477](https://github.com/open-chat-labs/open-chat/pull/8477))
 - Implement `generate_one_sec_address` ([8501](https://github.com/open-chat-labs/open-chat/pull/8501))
 
 ### Changed

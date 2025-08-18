@@ -1,6 +1,7 @@
-use crate::{ErrorMessage, EvmAccount, EvmChain, FetchedBlock, IcpAccount, Token, TransferId};
+use crate::{ErrorMessage, EvmAccount, FetchedBlock, IcpAccount, Token, TransferId};
 use candid::{CandidType, Nat};
 use serde::{Deserialize, Serialize};
+use types::EvmChain;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Args {

@@ -75,3 +75,4 @@ pub mod update_btc_balance;
 pub mod update_chat_settings;
 pub mod withdraw_btc;
 pub mod withdraw_crypto_v2;
+pub mod withdraw_via_one_sec;
