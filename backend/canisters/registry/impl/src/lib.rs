@@ -196,6 +196,7 @@ impl Data {
             "https://dashboard.internetcomputer.org/transaction/{transaction_index}".to_string(),
             ["ICRC-1".to_string(), "ICRC-2".to_string()].to_vec(),
             None,
+            false,
             now,
         );
     }

@@ -1,11 +1,12 @@
+import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
-import type { Principal } from '@dfinity/principal';
 
 export interface AcceptSwapSuccess { 'token1_txn_in' : bigint }
 export type AccessGate = { 'UniquePerson' : null } |
   { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'ReferredByMember' : null } |
+  { 'TotalChitEarned' : ChitEarnedGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
   { 'Locked' : null } |
   { 'TokenBalance' : TokenBalanceGate } |
@@ -25,6 +26,7 @@ export type AccessGateConfigUpdate = { 'NoChange' : null } |
 export type AccessGateNonComposite = { 'UniquePerson' : null } |
   { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'ReferredByMember' : null } |
+  { 'TotalChitEarned' : ChitEarnedGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
   { 'Locked' : null } |
   { 'TokenBalance' : TokenBalanceGate } |
@@ -176,6 +178,8 @@ export interface BotConfig {
   'is_oc_controlled' : boolean,
   'supports_direct_messages' : boolean,
 }
+export type BotDataEncoding = { 'Json' : null } |
+  { 'Candid' : null };
 export interface BotGroupConfig { 'permissions' : BotPermissions }
 export type BotInstallationLocation = { 'Group' : CanisterId } |
   { 'User' : UserId } |
@@ -220,7 +224,6 @@ export interface ChannelMatch {
   'is_public' : boolean,
   'gate_config' : [] | [AccessGateConfig],
   'subtype' : [] | [GroupSubtype],
-  'gate' : [] | [AccessGate],
   'name' : string,
   'description' : string,
   'avatar_id' : [] | [bigint],
@@ -308,14 +311,47 @@ export type ChatEvent = { 'Empty' : null } |
   { 'DirectChatCreated' : DirectChatCreated } |
   { 'AvatarChanged' : AvatarChanged } |
   { 'ParticipantsAdded' : ParticipantsAdded };
-export type ChatEventType = { 'MembershipUpdate' : null } |
+export type ChatEventType = { 'NameChanged' : null } |
+  { 'MessageVideoCall' : null } |
+  { 'DisappearingMessagesUpdated' : null } |
+  { 'GateUpdated' : null } |
+  { 'MessageP2pSwapCancelled' : null } |
+  { 'MessagePinned' : null } |
+  { 'UsersInvited' : null } |
+  { 'UsersBlocked' : null } |
+  { 'MessageUnpinned' : null } |
+  { 'MessageOther' : null } |
+  { 'BotUpdated' : null } |
+  { 'MessageP2pSwapCompleted' : null } |
+  { 'MessagePollVote' : null } |
   { 'Message' : null } |
-  { 'ChatDetailsUpdate' : null };
+  { 'PermissionsChanged' : null } |
+  { 'MembersJoined' : null } |
+  { 'MessagePollEnded' : null } |
+  { 'UsersUnblocked' : null } |
+  { 'Unfrozen' : null } |
+  { 'VisibilityChanged' : null } |
+  { 'RulesChanged' : null } |
+  { 'DescriptionChanged' : null } |
+  { 'MessagePrizeClaim' : null } |
+  { 'ExternalUrlUpdated' : null } |
+  { 'InviteCodeChanged' : null } |
+  { 'MessageDeleted' : null } |
+  { 'BotRemoved' : null } |
+  { 'MessageReaction' : null } |
+  { 'MembersLeft' : null } |
+  { 'MessageUndeleted' : null } |
+  { 'RoleChanged' : null } |
+  { 'BotAdded' : null } |
+  { 'Created' : null } |
+  { 'MessageTipped' : null } |
+  { 'Frozen' : null } |
+  { 'MessageEdited' : null } |
+  { 'AvatarChanged' : null };
 export interface ChatEventWrapper {
   'event' : ChatEvent,
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
-  'correlation_id' : bigint,
   'expires_at' : [] | [TimestampMillis],
 }
 export type ChatId = CanisterId;
@@ -352,6 +388,7 @@ export interface ChitEarned {
   'amount' : number,
   'reason' : ChitEarnedReason,
 }
+export interface ChitEarnedGate { 'min_chit_earned' : number }
 export type ChitEarnedReason = { 'DailyClaim' : null } |
   { 'Achievement' : Achievement } |
   { 'ExternalAchievement' : string } |
@@ -370,7 +407,6 @@ export interface CommunityCanisterChannelSummary {
   'date_last_pinned' : [] | [TimestampMillis],
   'external_url' : [] | [string],
   'min_visible_event_index' : EventIndex,
-  'gate' : [] | [AccessGate],
   'name' : string,
   'latest_message_index' : [] | [MessageIndex],
   'description' : string,
@@ -397,7 +433,6 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'permissions_v2' : [] | [GroupPermissions],
   'date_last_pinned' : [] | [TimestampMillis],
   'external_url' : TextUpdate,
-  'gate' : AccessGateUpdate,
   'name' : [] | [string],
   'latest_message_index' : [] | [MessageIndex],
   'description' : [] | [string],
@@ -421,7 +456,6 @@ export interface CommunityCanisterCommunitySummary {
   'community_id' : CommunityId,
   'is_invited' : [] | [boolean],
   'metrics' : ChatMetrics,
-  'gate' : [] | [AccessGate],
   'name' : string,
   'description' : string,
   'last_updated' : TimestampMillis,
@@ -445,7 +479,6 @@ export interface CommunityCanisterCommunitySummaryUpdates {
   'channels_updated' : Array<CommunityCanisterChannelSummaryUpdates>,
   'metrics' : [] | [ChatMetrics],
   'user_groups_deleted' : Uint32Array | number[],
-  'gate' : AccessGateUpdate,
   'name' : [] | [string],
   'description' : [] | [string],
   'last_updated' : TimestampMillis,
@@ -460,13 +493,41 @@ export interface CommunityCanisterCommunitySummaryUpdates {
   'member_count' : [] | [number],
   'primary_language' : [] | [string],
 }
+export type CommunityEventType = { 'MemberJoined' : null } |
+  { 'NameChanged' : null } |
+  { 'GateUpdated' : null } |
+  { 'BannerChanged' : null } |
+  { 'PrimaryLanguageChanged' : null } |
+  { 'MessagePinned' : null } |
+  { 'UsersInvited' : null } |
+  { 'UsersBlocked' : null } |
+  { 'MessageUnpinned' : null } |
+  { 'BotUpdated' : null } |
+  { 'ChannelCreated' : null } |
+  { 'ChannelDeleted' : null } |
+  { 'PermissionsChanged' : null } |
+  { 'EventsTTLUpdated' : null } |
+  { 'MemberLeft' : null } |
+  { 'UsersUnblocked' : null } |
+  { 'Unfrozen' : null } |
+  { 'VisibilityChanged' : null } |
+  { 'RulesChanged' : null } |
+  { 'DescriptionChanged' : null } |
+  { 'MembersRemoved' : null } |
+  { 'InviteCodeChanged' : null } |
+  { 'GroupImported' : null } |
+  { 'BotRemoved' : null } |
+  { 'RoleChanged' : null } |
+  { 'BotAdded' : null } |
+  { 'Created' : null } |
+  { 'Frozen' : null } |
+  { 'AvatarChanged' : null };
 export type CommunityId = CanisterId;
 export interface CommunityMatch {
   'id' : CommunityId,
   'gate_config' : [] | [AccessGateConfig],
   'verified' : boolean,
   'channel_count' : number,
-  'gate' : [] | [AccessGate],
   'name' : string,
   'description' : string,
   'moderation_flags' : number,
@@ -539,7 +600,11 @@ export type Cryptocurrency = { 'InternetComputer' : null } |
   { 'CKBTC' : null } |
   { 'Other' : string };
 export interface CurrentUserSummary {
+  'streak' : number,
+  'max_streak' : number,
   'username' : string,
+  'total_chit_earned' : number,
+  'profile_background_id' : [] | [bigint],
   'is_platform_operator' : boolean,
   'diamond_membership_status' : DiamondMembershipStatusFull,
   'is_unique_person' : boolean,
@@ -548,6 +613,7 @@ export interface CurrentUserSummary {
   'display_name' : [] | [string],
   'avatar_id' : [] | [bigint],
   'moderation_flags_enabled' : number,
+  'chit_balance' : number,
   'is_suspected_bot' : boolean,
   'suspension_details' : [] | [SuspensionDetails],
   'is_platform_moderator' : boolean,
@@ -678,6 +744,21 @@ export type DocumentUpdate = { 'NoChange' : null } |
   { 'SetToSome' : Document };
 export type Duration = bigint;
 export type EmptyArgs = {};
+export interface EncryptedContent {
+  'encrypted_data' : Uint8Array | number[],
+  'public_key' : Uint8Array | number[],
+  'encrypted_message_key' : Uint8Array | number[],
+  'content_type' : EncryptedMessageContentType,
+  'version' : number,
+}
+export type EncryptedMessageContentType = { 'Giphy' : null } |
+  { 'File' : null } |
+  { 'Text' : null } |
+  { 'Image' : null } |
+  { 'Custom' : string } |
+  { 'Audio' : null } |
+  { 'Crypto' : null } |
+  { 'Video' : null };
 export type EventIndex = number;
 export interface EventsSuccessResult {
   'expired_message_ranges' : Array<[MessageIndex, MessageIndex]>,
@@ -739,6 +820,10 @@ export type GateCheckFailedReason = { 'NotLifetimeDiamondMember' : null } |
   { 'NoUniquePersonProof' : null } |
   { 'FailedVerifiedCredentialCheck' : string } |
   { 'NoSnsNeuronsWithRequiredStakeFound' : null };
+export type GetIndexPrincipalError = {
+    'GenericError' : { 'description' : string, 'error_code' : bigint }
+  } |
+  { 'IndexPrincipalNotSet' : null };
 export interface GiphyContent {
   'title' : string,
   'desktop' : GiphyImageVariant,
@@ -765,7 +850,6 @@ export interface GroupCanisterGroupChatSummary {
   'permissions_v2' : GroupPermissions,
   'date_last_pinned' : [] | [TimestampMillis],
   'min_visible_event_index' : EventIndex,
-  'gate' : [] | [AccessGate],
   'name' : string,
   'role' : GroupRole,
   'wasm_version' : BuildVersion,
@@ -801,7 +885,6 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'subtype' : GroupSubtypeUpdate,
   'permissions_v2' : [] | [GroupPermissions],
   'date_last_pinned' : [] | [TimestampMillis],
-  'gate' : AccessGateUpdate,
   'name' : [] | [string],
   'role' : [] | [GroupRole],
   'wasm_version' : [] | [BuildVersion],
@@ -847,7 +930,6 @@ export interface GroupChatSummary {
   'permissions_v2' : GroupPermissions,
   'date_last_pinned' : [] | [TimestampMillis],
   'min_visible_event_index' : EventIndex,
-  'gate' : [] | [AccessGate],
   'name' : string,
   'role' : GroupRole,
   'wasm_version' : BuildVersion,
@@ -884,7 +966,6 @@ export interface GroupDescriptionChanged {
 export interface GroupFrozen { 'frozen_by' : UserId, 'reason' : [] | [string] }
 export interface GroupGateUpdated {
   'updated_by' : UserId,
-  'new_gate' : [] | [AccessGate],
   'new_gate_config' : [] | [AccessGateConfig],
 }
 export type GroupInviteCodeChange = { 'Enabled' : null } |
@@ -1093,8 +1174,8 @@ export interface Icrc1CompletedCryptoTransaction {
   'to' : Icrc1AccountOrMint,
   'fee' : bigint,
   'created' : TimestampNanos,
-  'token' : Cryptocurrency,
   'block_index' : BlockIndex,
+  'token_symbol' : string,
   'from' : Icrc1AccountOrMint,
   'memo' : [] | [Memo],
   'ledger' : CanisterId,
@@ -1104,7 +1185,7 @@ export interface Icrc1FailedCryptoTransaction {
   'to' : Icrc1AccountOrMint,
   'fee' : bigint,
   'created' : TimestampNanos,
-  'token' : Cryptocurrency,
+  'token_symbol' : string,
   'from' : Icrc1AccountOrMint,
   'memo' : [] | [Memo],
   'error_message' : string,
@@ -1124,8 +1205,8 @@ export interface Icrc2CompletedCryptoTransaction {
   'to' : Icrc1AccountOrMint,
   'fee' : bigint,
   'created' : TimestampNanos,
-  'token' : Cryptocurrency,
   'block_index' : BlockIndex,
+  'token_symbol' : string,
   'from' : Icrc1AccountOrMint,
   'memo' : [] | [Memo],
   'ledger' : CanisterId,
@@ -1136,7 +1217,7 @@ export interface Icrc2FailedCryptoTransaction {
   'to' : Icrc1AccountOrMint,
   'fee' : bigint,
   'created' : TimestampNanos,
-  'token' : Cryptocurrency,
+  'token_symbol' : string,
   'from' : Icrc1AccountOrMint,
   'memo' : [] | [Memo],
   'error_message' : string,
@@ -1167,6 +1248,7 @@ export interface IndexedNotification {
   'index' : bigint,
 }
 export interface InstalledBotDetails {
+  'autonomous_permissions' : [] | [BotPermissions],
   'permissions' : BotPermissions,
   'added_by' : UserId,
   'user_id' : UserId,
@@ -1200,8 +1282,8 @@ export interface Message {
   'block_level_markdown' : boolean,
   'tips' : Array<[CanisterId, Array<[UserId, bigint]>]>,
   'sender' : UserId,
-  'bot_context' : [] | [BotMessageContext],
   'thread_summary' : [] | [ThreadSummary],
+  'sender_context' : [] | [SenderContext],
   'message_id' : MessageId,
   'replies_to' : [] | [ReplyContext],
   'reactions' : Array<[string, Array<UserId>]>,
@@ -1209,6 +1291,7 @@ export interface Message {
 }
 export type MessageContent = { 'VideoCall' : VideoCallContent } |
   { 'ReportedMessage' : ReportedMessage } |
+  { 'Encrypted' : EncryptedContent } |
   { 'Giphy' : GiphyContent } |
   { 'File' : FileContent } |
   { 'Poll' : PollContent } |
@@ -1225,7 +1308,8 @@ export type MessageContent = { 'VideoCall' : VideoCallContent } |
   { 'Deleted' : DeletedContent } |
   { 'MessageReminderCreated' : MessageReminderCreated } |
   { 'MessageReminder' : MessageReminder };
-export type MessageContentInitial = { 'Giphy' : GiphyContent } |
+export type MessageContentInitial = { 'Encrypted' : EncryptedContent } |
+  { 'Giphy' : GiphyContent } |
   { 'File' : FileContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
@@ -1244,7 +1328,6 @@ export interface MessageEventWrapper {
   'event' : Message,
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
-  'correlation_id' : bigint,
   'expires_at' : [] | [TimestampMillis],
 }
 export type MessageId = bigint;
@@ -1320,9 +1403,9 @@ export interface NnsCompletedCryptoTransaction {
   'to' : NnsCryptoAccount,
   'fee' : Tokens,
   'created' : TimestampNanos,
-  'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
+  'token_symbol' : string,
   'from' : NnsCryptoAccount,
   'memo' : bigint,
   'ledger' : CanisterId,
@@ -1334,8 +1417,8 @@ export interface NnsFailedCryptoTransaction {
   'to' : NnsCryptoAccount,
   'fee' : Tokens,
   'created' : TimestampNanos,
-  'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
+  'token_symbol' : string,
   'from' : NnsCryptoAccount,
   'memo' : bigint,
   'error_message' : string,
@@ -1544,8 +1627,10 @@ export interface PollVotes {
   'user' : Uint32Array | number[],
 }
 export interface PrizeContent {
+  'min_chit_earned' : number,
   'winner_count' : number,
   'streak_only' : number,
+  'requires_captcha' : boolean,
   'token_symbol' : string,
   'lifetime_diamond_only' : boolean,
   'end_date' : TimestampMillis,
@@ -1561,6 +1646,7 @@ export interface PrizeContent {
 export interface PrizeContentInitial {
   'prizes_v2' : Array<bigint>,
   'streak_only' : number,
+  'requires_captcha' : boolean,
   'lifetime_diamond_only' : boolean,
   'end_date' : TimestampMillis,
   'caption' : [] | [string],
@@ -1609,7 +1695,6 @@ export interface PublicGroupSummary {
   'is_public' : boolean,
   'gate_config' : [] | [AccessGateConfig],
   'subtype' : [] | [GroupSubtype],
-  'gate' : [] | [AccessGate],
   'name' : string,
   'wasm_version' : BuildVersion,
   'latest_message_index' : [] | [MessageIndex],
@@ -1681,6 +1766,7 @@ export interface SelectedGroupUpdates {
   'bots_removed' : Array<UserId>,
   'pinned_messages_removed' : Uint32Array | number[],
   'invited_users' : [] | [Array<UserId>],
+  'webhooks' : [] | [Array<WebhookDetails>],
   'last_updated' : TimestampMillis,
   'members_added_or_updated' : Array<Participant>,
   'bots_added_or_updated' : Array<InstalledBotDetails>,
@@ -1691,6 +1777,8 @@ export interface SelectedGroupUpdates {
   'latest_event_index' : EventIndex,
   'blocked_users_added' : Array<UserId>,
 }
+export type SenderContext = { 'Bot' : BotMessageContext } |
+  { 'Webhook' : null };
 export interface SnsNeuronGate {
   'min_stake_e8s' : [] | [bigint],
   'min_dissolve_delay' : [] | [Milliseconds],
@@ -1840,6 +1928,7 @@ export interface UserSummary {
 }
 export interface UserSummaryStable {
   'username' : string,
+  'profile_background_id' : [] | [bigint],
   'diamond_membership_status' : DiamondMembershipStatus,
   'is_unique_person' : boolean,
   'is_bot' : boolean,
@@ -1896,6 +1985,11 @@ export interface VersionedRules {
   'enabled' : boolean,
 }
 export interface VideoCall {
+  'started' : TimestampMillis,
+  'message_id' : MessageId,
+  'event_index' : EventIndex,
+  'started_by' : UserId,
+  'joined_by_current_user' : boolean,
   'call_type' : VideoCallType,
   'message_index' : MessageIndex,
 }
@@ -1930,6 +2024,11 @@ export interface VideoContent {
 }
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
+export interface WebhookDetails {
+  'id' : UserId,
+  'name' : string,
+  'avatar_id' : [] | [bigint],
+}
 export interface _SERVICE {
   'approve' : ActorMethod<[ApproveArgs], ApproveResponse>,
   'mark_deployed' : ActorMethod<[MarkDeployedArgs], MarkDeployedResponse>,

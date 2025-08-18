@@ -118,6 +118,12 @@ pub struct Neuron {
     /// (b) `when_dissolved_timestamp_seconds` is set to zero, (c) neither value is set.
     pub dissolve_state: Option<neuron::DissolveState>,
 }
+#[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
+pub struct NeuronIdOnly {
+    /// The unique id of this neuron.
+    pub id: Option<NeuronId>,
+    pub dissolve_state: Option<neuron::DissolveState>,
+}
 /// Nested message and enum types in `Neuron`.
 pub mod neuron {
     /// A list of a neuron's followees for a specific function.
@@ -1278,6 +1284,12 @@ pub struct ManageNeuron {
     pub subaccount: Vec<u8>,
     pub command: Option<manage_neuron::Command>,
 }
+#[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
+pub struct ManageNeuronRegisterVoteOnly {
+    /// The modified neuron's subaccount which also serves as the neuron's ID.
+    pub subaccount: Vec<u8>,
+    pub command: Option<manage_neuron::CommandRegisterVoteOnly>,
+}
 /// Nested message and enum types in `ManageNeuron`.
 pub mod manage_neuron {
     /// The operation that increases a neuron's dissolve delay. It can be
@@ -1517,12 +1529,21 @@ pub mod manage_neuron {
         RemoveNeuronPermissions(RemoveNeuronPermissions),
         StakeMaturity(StakeMaturity),
     }
+
+    #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
+    pub enum CommandRegisterVoteOnly {
+        RegisterVote(RegisterVote),
+    }
 }
 /// The response of a ManageNeuron command.
 /// There is a dedicated response type for each `ManageNeuron.command` field.
 #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
 pub struct ManageNeuronResponse {
     pub command: Option<manage_neuron_response::Command>,
+}
+#[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
+pub struct ManageNeuronResponseRegisterVoteOnly {
+    pub command: Option<manage_neuron_response::CommandRegisterVoteOnly>,
 }
 /// Nested message and enum types in `ManageNeuronResponse`.
 pub mod manage_neuron_response {
@@ -1606,6 +1627,11 @@ pub mod manage_neuron_response {
         AddNeuronPermission(AddNeuronPermissionsResponse),
         RemoveNeuronPermission(RemoveNeuronPermissionsResponse),
         StakeMaturity(StakeMaturityResponse),
+    }
+    #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
+    pub enum CommandRegisterVoteOnly {
+        Error(super::GovernanceError),
+        RegisterVote(RegisterVoteResponse),
     }
 }
 /// An operation that attempts to get a neuron by a given neuron ID.
@@ -1724,6 +1750,11 @@ pub struct ListNeurons {
 pub struct ListNeuronsResponse {
     /// The returned list of neurons.
     pub neurons: Vec<Neuron>,
+}
+#[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
+pub struct ListNeuronsIdsOnlyResponse {
+    /// The returned list of neurons.
+    pub neurons: Vec<NeuronIdOnly>,
 }
 /// The response to the list_nervous_system_functions query.
 #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]

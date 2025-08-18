@@ -18,6 +18,7 @@ import {
     messageContextsEqual,
     MessageMap,
     ModerationFlags,
+    PremiumItem,
     SafeMap,
     videoCallsInProgressForChats,
     type ChatEvent,
@@ -153,6 +154,7 @@ export const cryptoBalanceStore = createCryptoBalanceStore();
 const cryptoBalancesLastUpdated = new Map<string, number>();
 
 export const bitcoinAddress = writable<string | undefined>(undefined);
+export const oneSecAddress = writable<string | undefined>(undefined);
 
 export const lastCryptoSent = new LocalStorageStore<string | undefined>(
     configKeys.lastCryptoSent,
@@ -326,7 +328,7 @@ export const storageInGBStore = derived(storageStore, (storage) => ({
 export const messageFiltersStore = writable<MessageFilter[]>([], undefined, notEq);
 export const translationsStore = writable<MessageMap<string>>(new MessageMap(), undefined, notEq);
 export const snsFunctionsStore = writable<SnsFunctions>(new SnsFunctions(), undefined, notEq);
-export const currentUserStore = writable<CreatedUser>(anonymousUser(), undefined, dequal);
+export const currentUserStore = writable<CreatedUser>(anonymousUser(), undefined, notEq);
 export const currentUserIdStore = derived(currentUserStore, ({ userId }) => userId);
 export const anonUserStore = derived(currentUserIdStore, (id) => id === ANON_USER_ID);
 export const suspendedUserStore = derived(
@@ -470,6 +472,7 @@ export const selectedAuthProviderStore = new LocalStorageStore(
     (a) => enumFromStringValue(AuthProvider, a, AuthProvider.PASSKEY),
 );
 export const achievementsStore = createSetStore<string>();
+export const premiumItemsStore = createSetStore<PremiumItem>();
 export const chitStateStore = writable<ChitState>(
     {
         chitBalance: 0,

@@ -9,6 +9,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Implement withdrawing tokens to EVM chains via OneSec ([8477](https://github.com/open-chat-labs/open-chat/pull/8477))
+- Implement `generate_one_sec_address` ([8501](https://github.com/open-chat-labs/open-chat/pull/8501))
+
+### Changed
+
+- Reduce wasm size by using trimmed down types for voting on proposals ([8490](https://github.com/open-chat-labs/open-chat/pull/8490))
 
 ## [[2.0.1865-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1865-user)] - 2025-08-12
 

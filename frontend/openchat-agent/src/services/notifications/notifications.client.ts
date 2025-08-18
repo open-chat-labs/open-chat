@@ -1,20 +1,19 @@
- 
 import type { HttpAgent, Identity } from "@dfinity/agent";
-import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
-import { subscriptionExistsResponse } from "./mappers";
-import { toVoid } from "../../utils/mapping";
 import {
+    NotificationsIndexAddFcmTokenArgs,
+    NotificationsIndexFcmTokenExistsArgs,
+    NotificationsIndexFcmTokenExistsResponse,
     NotificationsIndexPushSubscriptionArgs,
     NotificationsIndexPushSubscriptionResponse,
     NotificationsIndexRemoveSubscriptionArgs,
-    NotificationsIndexRemoveSubscriptionResponse,
     NotificationsIndexSubscriptionExistsArgs,
     NotificationsIndexSubscriptionExistsResponse,
-    NotificationsIndexFcmTokenExistsArgs,
-    NotificationsIndexFcmTokenExistsResponse,
-    NotificationsIndexAddFcmTokenArgs,
+    SuccessOnly,
     UnitResult,
 } from "../../typebox";
+import { toVoid } from "../../utils/mapping";
+import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
+import { subscriptionExistsResponse } from "./mappers";
 
 export class NotificationsClient extends MsgpackCanisterAgent {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
@@ -60,7 +59,7 @@ export class NotificationsClient extends MsgpackCanisterAgent {
             },
             toVoid,
             NotificationsIndexRemoveSubscriptionArgs,
-            NotificationsIndexRemoveSubscriptionResponse,
+            SuccessOnly,
         );
     }
 

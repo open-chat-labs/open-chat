@@ -1,16 +1,17 @@
 <script lang="ts">
-    import { i18nKey } from "../../../i18n/i18n";
     import Tooltip from "../../../components/tooltip/Tooltip.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import LearnToEarn from "./LearnToEarn.svelte";
 
     interface Props {
+        chitBalance: number;
         totalEarned: number;
         me: boolean;
         size?: "small" | "large";
     }
 
-    let { totalEarned, me, size = "small" }: Props = $props();
+    let { chitBalance, totalEarned, me, size = "small" }: Props = $props();
 
     let learnToEarn = $state(false);
 
@@ -27,14 +28,20 @@
     <LearnToEarn onClose={() => (learnToEarn = false)} />
 {/if}
 
-{#if totalEarned > 0}
+{#if chitBalance > 0}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div onclick={click} class={`balance ${size}`} class:me>
         <div class="chit"></div>
         <div class="balances">
             <Tooltip position="top" align="middle">
-                <div>{`${totalEarned.toLocaleString()} CHIT`}</div>
+                <div class="current">{`${chitBalance.toLocaleString()} CHIT`}</div>
+                {#snippet popupTemplate()}
+                    <Translatable resourceKey={i18nKey("chitBalance")} />
+                {/snippet}
+            </Tooltip>
+            <Tooltip position="top" align="middle">
+                <div class="total">{`${totalEarned.toLocaleString()} CHIT`}</div>
                 {#snippet popupTemplate()}
                     <Translatable resourceKey={i18nKey("totalChitEarned")} />
                 {/snippet}
@@ -69,6 +76,10 @@
         .balances {
             display: flex;
             flex-direction: column;
+            .total {
+                text-align: start;
+                @include font(light, normal, fs-60);
+            }
         }
 
         .chit {

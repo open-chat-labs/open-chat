@@ -1,16 +1,18 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-    readonly OC_CANISTER_URL_PATH: string;
+    readonly OC_ACCOUNT_LINKING_CODES_ENABLED: string;
     readonly OC_AIRDROP_BOT_CANISTER: string;
     readonly OC_APP_TYPE: "android" | "ios" | "web" | undefined;
+    readonly OC_BITCOIN_MAINNET_ENABLED: string;
     readonly OC_BLOB_URL_PATTERN: string;
     readonly OC_BUILD_ENV: string;
+    readonly OC_CANISTER_URL_PATH: string;
     readonly OC_DFX_NETWORK: string;
     readonly OC_GROUP_INDEX_CANISTER: string;
     readonly OC_IC_URL: string;
-    readonly OC_II_DERIVATION_ORIGIN: string;
     readonly OC_IDENTITY_CANISTER: string;
+    readonly OC_II_DERIVATION_ORIGIN: string;
     readonly OC_INTERNET_IDENTITY_CANISTER_ID: string;
     readonly OC_INTERNET_IDENTITY_URL: string;
     readonly OC_MARKET_MAKER_CANISTER: string;
@@ -18,8 +20,8 @@ interface ImportMetaEnv {
     readonly OC_NFID_URL: string;
     readonly OC_NODE_ENV: string;
     readonly OC_NOTIFICATIONS_CANISTER: string;
+    readonly OC_ONE_SEC_MINTER_CANISTER: string;
     readonly OC_ONLINE_CANISTER: string;
-    readonly OC_WEBSITE_VERSION: string;
     readonly OC_PREVIEW_PROXY_URL: string;
     readonly OC_PROPOSALS_BOT_CANISTER: string;
     readonly OC_PUBLIC_TRANSLATE_API_KEY: string;
@@ -37,8 +39,7 @@ interface ImportMetaEnv {
     readonly OC_VIDEO_BRIDGE_URL: string;
     readonly OC_WALLET_CONNECT_PROJECT_ID: string;
     readonly OC_WEBAUTHN_ORIGIN: string;
-    readonly OC_BITCOIN_MAINNET_ENABLED: string;
-    readonly OC_ACCOUNT_LINKING_CODES_ENABLED: string;
+    readonly OC_WEBSITE_VERSION: string;
 }
 
 interface ImportMeta {

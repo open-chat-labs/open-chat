@@ -1361,6 +1361,17 @@
         "votersPublic": "有権者は公開されます"
     },
     "preferredLanguage": "優先言語",
+    "premiumItem": {
+        "botEmojis": "ボット絵文字パック",
+        "customProfileBackground": "カスタムプロフィール背景",
+        "insufficientChit": "この機能は{price}のCHITを使用しますが、現在お持ちのCHITは{balance}のみです。集め続けましょう！",
+        "paymentFailure": "申し訳ございませんが、お支払いいただくことができませんでした。",
+        "popularEmojis": "人気の絵文字パック",
+        "priceMessage": "この機能のために、現在の CHIT 残高 {price} のうち {balance} を使用しますか?",
+        "priceTooltip": "{price} チット",
+        "purchased": "プレミアムアイテム",
+        "title": "プレミアムアイテム"
+    },
     "preview": "プレビュー",
     "previewing": "グループのプレビュー",
     "privateGroupInfo": "この{level}は、あなたが招待した人だけ参加できます。",

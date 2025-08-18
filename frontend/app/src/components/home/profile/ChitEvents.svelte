@@ -1,6 +1,6 @@
 <script lang="ts">
     import CollapsibleCard from "@src/components/CollapsibleCard.svelte";
-    import { chitStateStore, OpenChat, type ChitEarned } from "openchat-client";
+    import { chitStateStore, OpenChat, type ChitEvent } from "openchat-client";
     import { getContext } from "svelte";
     import { menuCloser } from "../../../actions/closeMenu";
     import { i18nKey } from "../../../i18n/i18n";
@@ -16,7 +16,7 @@
     import ChitEventsForDay from "./ChitEventsForDay.svelte";
 
     const client = getContext<OpenChat>("client");
-    let events = $state<ChitEarned[]>([]);
+    let events = $state<ChitEvent[]>([]);
 
     let streak = $derived($chitStateStore.streakEnds < $now500 ? 0 : $chitStateStore.streak);
     let totalEarned = $derived(
@@ -42,7 +42,7 @@
         return new Date(date.getTime() - offset(date));
     }
 
-    function chitEventsForDay(events: ChitEarned[], date: Date): ChitEarned[] {
+    function chitEventsForDay(events: ChitEvent[], date: Date): ChitEvent[] {
         return events.filter((e) => {
             const eventDate = new Date(Number(e.timestamp));
             return isSameDay(date, eventDate);
@@ -98,6 +98,7 @@
                 <ChitBalance
                     size={"large"}
                     me
+                    chitBalance={$chitStateStore.chitBalance}
                     totalEarned={$chitStateStore.totalChitEarned} />
             </div>
             {#if streak > 0}

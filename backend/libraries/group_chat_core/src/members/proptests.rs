@@ -24,7 +24,8 @@ enum Operation {
     },
     ToggleMuteNotifications {
         user_index: usize,
-        mute: bool,
+        mute: Option<bool>,
+        at_everyone_mute: Option<bool>,
     },
     Block {
         user_index: usize,
@@ -50,7 +51,8 @@ fn operation_strategy() -> impl Strategy<Value = Operation> {
         50 => any::<usize>().prop_map(|user_index| Operation::Add { user_id: user_id(user_index) }),
         20 => (any::<usize>(), any::<usize>(), any::<usize>())
             .prop_map(|(owner_index, user_index, role_index)| Operation::ChangeRole { owner_index, user_index, role: role(role_index) }),
-        10 => (any::<usize>(), any::<bool>()).prop_map(|(user_index, mute)| Operation::ToggleMuteNotifications { user_index, mute }),
+        10 => (any::<usize>(), any::<Option<bool>>(), any::<Option<bool>>())
+            .prop_map(|(user_index, mute, at_everyone_mute)| Operation::ToggleMuteNotifications { user_index, mute, at_everyone_mute }),
         10 => any::<usize>().prop_map(|user_index| Operation::Remove { user_index}),
         5 => any::<usize>().prop_map(|user_index| Operation::Block { user_index}),
         3 => any::<usize>().prop_map(|user_index| Operation::Unblock { user_index}),
@@ -104,9 +106,13 @@ fn execute_operation(members: &mut GroupMembers, op: Operation, timestamp: Times
             let user_id = get(&members.member_ids, user_index);
             let _ = members.change_role(owner, user_id, role, &GroupPermissions::default(), false, false, timestamp);
         }
-        Operation::ToggleMuteNotifications { user_index, mute } => {
+        Operation::ToggleMuteNotifications {
+            user_index,
+            mute,
+            at_everyone_mute,
+        } => {
             let user_id = get(&members.member_ids, user_index);
-            members.toggle_notifications_muted(user_id, mute, timestamp);
+            members.toggle_notifications_muted(user_id, mute, at_everyone_mute, timestamp);
         }
         Operation::Remove { user_index } => {
             let user_id = get(&members.member_ids, user_index);

@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Support muting of @everyone notifications ([#8496](https://github.com/open-chat-labs/open-chat/pull/8496))
+
+## [[2.0.1870](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1870-community)] - 2025-08-15
+
+### Changed
+
+- Include channels invited to in `explore_channels` response ([#8492](https://github.com/open-chat-labs/open-chat/pull/8492))
+
 ## [[2.0.1863](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1863-community)] - 2025-08-12
 
 ### Changed

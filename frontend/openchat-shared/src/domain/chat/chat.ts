@@ -7,7 +7,7 @@ import type {
     InstalledBotDetails,
     WebhookDetails,
 } from "../bots";
-import type { ChitEarned } from "../chit";
+import type { ChitEvent, PremiumItem } from "../chit";
 import type {
     CommunityCanisterCommunitySummaryUpdates,
     CommunityIdentifier,
@@ -65,11 +65,16 @@ export type MessageContent =
     | ReportedMessageContent
     | UserReferralCard
     | MemeFighterContent
-    | VideoCallContent;
+    | VideoCallContent
+    | EncryptedContent;
 
 export type VideoCallParticipant = {
     userId: string;
     joined: bigint;
+};
+
+export type EncryptedContent = {
+    kind: "encrypted_content";
 };
 
 export type VideoCallContent = {
@@ -1058,10 +1063,12 @@ export type UpdatesResult = {
     messageActivitySummary: MessageActivitySummary | undefined;
     installedBots: Map<string, GrantedBotPermissions> | undefined;
     bitcoinAddress: string | undefined;
+    oneSecAddress: string | undefined;
     streakInsurance: OptionUpdate<StreakInsurance>;
     updatedEvents: Map<string, UpdatedEvent[]>;
     suspensionChanged: boolean | undefined;
-    newAchievements: ChitEarned[];
+    newAchievements: ChitEvent[];
+    premiumItems: Set<PremiumItem> | undefined;
 };
 
 export type ChatStateFull = {
@@ -1086,7 +1093,9 @@ export type ChatStateFull = {
     messageActivitySummary: MessageActivitySummary;
     installedBots: Map<string, GrantedBotPermissions>;
     bitcoinAddress: string | undefined;
+    oneSecAddress: string | undefined;
     streakInsurance: StreakInsurance | undefined;
+    premiumItems: Set<PremiumItem>;
 };
 
 export type ChitState = {
@@ -1243,7 +1252,7 @@ export type InitialStateResponse = {
     suspended: boolean;
     pinNumberSettings: PinNumberSettings | undefined;
     localUserIndex: string;
-    achievements: ChitEarned[];
+    achievements: ChitEvent[];
     achievementsLastSeen: bigint;
     streakEnds: bigint;
     streak: number;
@@ -1256,7 +1265,9 @@ export type InitialStateResponse = {
     messageActivitySummary: MessageActivitySummary;
     bots: Map<string, GrantedBotPermissions>;
     bitcoinAddress: string | undefined;
+    oneSecAddress: string | undefined;
     streakInsurance?: StreakInsurance;
+    premiumItems: Set<PremiumItem>;
 };
 
 export type StreakInsurance = {
@@ -1328,7 +1339,7 @@ export type UpdatesSuccessResponse = {
     directChats: DirectChatsUpdates;
     suspended: boolean | undefined;
     pinNumberSettings: OptionUpdate<PinNumberSettings>;
-    achievements: ChitEarned[];
+    achievements: ChitEvent[];
     achievementsLastSeen: bigint | undefined;
     chitBalance: number;
     streakEnds: bigint;
@@ -1342,7 +1353,9 @@ export type UpdatesSuccessResponse = {
     botsAddedOrUpdated: InstalledBotDetails[];
     botsRemoved: string[];
     bitcoinAddress: string | undefined;
+    oneSecAddress: string | undefined;
     streakInsurance: OptionUpdate<StreakInsurance>;
+    premiumItems: Set<PremiumItem> | undefined;
 };
 
 export type DirectChatsUpdates = {

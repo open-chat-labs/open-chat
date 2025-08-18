@@ -182,6 +182,9 @@ export default {
             "import.meta.env.OC_SIGN_IN_WITH_SOLANA_CANISTER": JSON.stringify(
                 process.env.OC_SIGN_IN_WITH_SOLANA_CANISTER,
             ),
+            "import.meta.env.OC_ONE_SEC_MINTER_CANISTER": JSON.stringify(
+                process.env.OC_ONE_SEC_MINTER_CANISTER,
+            ),
             "import.meta.env.OC_BLOB_URL_PATTERN": JSON.stringify(process.env.OC_BLOB_URL_PATTERN),
             "import.meta.env.OC_CANISTER_URL_PATH": JSON.stringify(
                 process.env.OC_CANISTER_URL_PATH,
@@ -207,7 +210,9 @@ export default {
                 process.env.OC_BITCOIN_MAINNET_ENABLED,
             ),
             "import.meta.env.OC_VAPID_PUBLIC_KEY": JSON.stringify(process.env.OC_VAPID_PUBLIC_KEY),
-            "import.meta.env.OC_ACCOUNT_LINKING_CODES_ENABLED": JSON.stringify(process.env.OC_ACCOUNT_LINKING_CODES_ENABLED),
+            "import.meta.env.OC_ACCOUNT_LINKING_CODES_ENABLED": JSON.stringify(
+                process.env.OC_ACCOUNT_LINKING_CODES_ENABLED,
+            ),
         }),
 
         html({

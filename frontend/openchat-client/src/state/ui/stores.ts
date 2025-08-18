@@ -6,6 +6,7 @@ import {
     type RightPanelContent,
     type RightPanelMode,
     type RouteParams,
+    type XFrameOverrides,
 } from "openchat-shared";
 import { type Readable } from "svelte/store";
 import { pageReplace } from "../../utils/routes";
@@ -110,14 +111,29 @@ export function setRightPanelHistory(history: RightPanelContent[]) {
     rightPanelHistory.set(history);
 }
 
-export const disableLeftNav = writable<boolean>(false);
+export const xframeOverrides = writable<XFrameOverrides>({
+    disableLeftNav: false,
+    restrictTo: undefined,
+});
+
+export const restrictToSelectedCommunity = derived(xframeOverrides, ({ restrictTo }) => {
+    return restrictTo !== undefined;
+});
+
+export const restrictToSelectedChat = derived(xframeOverrides, ({ restrictTo }) => {
+    return restrictTo === "selected_chat";
+});
+
 export const layout = derived(
-    [mobileWidth, fullWidth, rightPanelHistory, disableLeftNav, routeStore],
-    ([mobileWidth, fullWidth, rightPanelHistory, disableLeftNav, route]) => {
+    [mobileWidth, fullWidth, rightPanelHistory, xframeOverrides, routeStore],
+    ([mobileWidth, fullWidth, rightPanelHistory, xframeOverrides, route]) => {
+        const disableLeftNav =
+            xframeOverrides.restrictTo !== undefined || xframeOverrides.disableLeftNav;
+        const disableLeft = xframeOverrides.restrictTo === "selected_chat";
         if (mobileWidth) {
             const showRight = rightPanelHistory.length > 0;
             const showMiddle = !someHomeRoute(route.kind) && !showRight;
-            const showLeft = !showMiddle && !showRight;
+            const showLeft = !showMiddle && !showRight && !disableLeft;
             const showNav =
                 !disableLeftNav &&
                 (showLeft ||
@@ -132,7 +148,8 @@ export const layout = derived(
         } else {
             const showRight = rightPanelHistory.length > 0 || fullWidth;
             const floatRight = !fullWidth;
-            const showLeft = route.kind !== "communities_route" && route.kind !== "admin_route";
+            const showLeft =
+                route.kind !== "communities_route" && route.kind !== "admin_route" && !disableLeft;
 
             return {
                 showNav: !disableLeftNav,

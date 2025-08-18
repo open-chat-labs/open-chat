@@ -38,7 +38,10 @@ class OpenChatNotificationService : FirebaseMessagingService() {
                 // Push notification to the UI if the app is in foreground!
                 OpenChatPlugin.triggerRef("push-notification", notificationPayload)
             } else {
-                // If the app is in the background, or closed, show the notification
+                // If the app is in the background, or closed, show the notification!
+                // If the app is closed, we will need to set the small notification icon that
+                // appears in the status bar.
+                NotificationsHelper.setNotificationIconSmall(R.drawable.ic_notification_small)
                 NotificationsHelper.showNotification(this, it)
             }
         }

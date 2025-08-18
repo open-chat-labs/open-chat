@@ -56,6 +56,7 @@ import type {
     SetMessageReminderResponse,
     SetPinNumberResponse,
     SetVideoCallPresenceResponse,
+    Stream,
     SwapTokensResponse,
     TipMessageResponse,
     ToggleMuteNotificationResponse,
@@ -130,6 +131,8 @@ export class AnonUserClient {
             },
             bots: new Map(),
             bitcoinAddress: undefined,
+            oneSecAddress: undefined,
+            premiumItems: new Set(),
         });
     }
 
@@ -198,6 +201,10 @@ export class AnonUserClient {
     }
 
     setAvatar(_bytes: Uint8Array): Promise<BlobReference> {
+        throw new AnonymousOperationError();
+    }
+
+    setProfileBackground(_bytes: Uint8Array): Promise<BlobReference> {
         throw new AnonymousOperationError();
     }
 
@@ -346,7 +353,7 @@ export class AnonUserClient {
         throw new AnonymousOperationError();
     }
 
-    getPublicProfile(): Promise<PublicProfile> {
+    getPublicProfile(): Stream<PublicProfile> {
         throw new AnonymousOperationError();
     }
 
@@ -505,6 +512,10 @@ export class AnonUserClient {
         throw new AnonymousOperationError();
     }
 
+    generateOneSecAddress(): Promise<string> {
+        throw new AnonymousOperationError();
+    }
+
     updateBtcBalance(): Promise<boolean> {
         throw new AnonymousOperationError();
     }
@@ -525,10 +536,7 @@ export class AnonUserClient {
         throw new AnonymousOperationError();
     }
 
-    updateChatSettings(
-        _userId: string,
-        _eventsTtl: OptionUpdate<bigint>
-    ): Promise<boolean> {
+    updateChatSettings(_userId: string, _eventsTtl: OptionUpdate<bigint>): Promise<boolean> {
         throw new AnonymousOperationError();
     }
 }

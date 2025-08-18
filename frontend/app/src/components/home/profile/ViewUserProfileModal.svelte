@@ -1,7 +1,5 @@
 <script lang="ts">
-    import { disableChit } from "@src/stores/settings";
     import {
-        AvatarSize,
         type ChatSummary,
         type CommunitySummary,
         type OpenChat,
@@ -15,37 +13,27 @@
         platformModeratorStore,
         publish,
         selectedChatBlockedUsersStore,
-        selectedChatMembersStore,
         selectedChatSummaryStore,
-        selectedChatWebhooksStore,
         selectedCommunityBlockedUsersStore,
-        selectedCommunityMembersStore,
         selectedCommunitySummaryStore,
         setRightPanelHistory,
     } from "openchat-client";
 
     import { getContext, onMount } from "svelte";
-    import { _ } from "svelte-i18n";
-    import ClockOutline from "svelte-material-icons/ClockOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
-    import Avatar from "../../Avatar.svelte";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
     import Translatable from "../../Translatable.svelte";
-    import Markdown from "../Markdown.svelte";
-    import Badges from "./Badges.svelte";
-    import ChitBalance from "./ChitBalance.svelte";
-    import RoleIcon from "./RoleIcon.svelte";
-    import WithRole from "./WithRole.svelte";
+    import UserProfileCard from "./UserProfileCard.svelte";
 
     const client = getContext<OpenChat>("client");
 
     interface Props {
         userId: string;
-        alignTo?: DOMRect | undefined;
+        alignTo?: HTMLElement | undefined;
         chatButton?: boolean;
         inGlobalContext?: boolean;
         onOpenDirectChat: () => void;
@@ -63,18 +51,34 @@
 
     let profile: PublicProfile | undefined = $state();
     let user: UserSummary | undefined = $state();
-    let lastOnline: number | undefined = $state();
+    let backgroundUrl = $derived(
+        profile !== undefined
+            ? client.buildUserBackgroundUrl(
+                  import.meta.env.OC_BLOB_URL_PATTERN!,
+                  userId,
+                  profile.backgroundId,
+              )
+            : undefined,
+    );
+    let hasCustomBackground = $derived(backgroundUrl !== undefined);
+
+    let rendering = $state<Promise<void>>();
 
     onMount(async () => {
         try {
-            const task1 = client.getPublicProfile(userId);
-            const task2 = client.getUser(userId);
-            lastOnline = await client.getLastOnlineDate(userId, Date.now());
-            user = await task2;
-            profile = await task1;
-            if (profile === undefined) {
-                onClose();
-            }
+            rendering = new Promise(async (resolve) => {
+                user = await client.getUser(userId);
+                client.getPublicProfile(userId).subscribe({
+                    onResult: (result) => {
+                        profile = result;
+                        if (profile === undefined) {
+                            onClose();
+                        } else {
+                            resolve();
+                        }
+                    },
+                });
+            });
         } catch (e: any) {
             client.logError("Failed to load user profile", e);
             onClose();
@@ -211,14 +215,6 @@
         }
     }
 
-    function formatDate(timestamp: bigint): string {
-        const date = new Date(Number(timestamp));
-        return date.toLocaleDateString(undefined, {
-            month: "short",
-            year: "numeric",
-        });
-    }
-
     function unsuspendUser() {
         client.unsuspendUser(userId).then((success) => {
             if (success) {
@@ -234,34 +230,9 @@
         publish("suspendUser", userId);
         onClose();
     }
-    let diamondStatus = $derived(user?.diamondStatus);
     let me = $derived(userId === $currentUserIdStore);
     let isSuspended = $derived(user?.suspended ?? false);
     let modal = $derived($mobileWidth);
-    let [status, online] = $derived(
-        lastOnline !== undefined && lastOnline !== 0
-            ? client.formatLastOnlineDate($_, Date.now(), lastOnline)
-            : ["", false],
-    );
-    let avatarUrl = $derived(
-        profile !== undefined
-            ? client.buildUserAvatarUrl(
-                  import.meta.env.OC_BLOB_URL_PATTERN!,
-                  userId,
-                  profile.avatarId,
-              )
-            : "/assets/unknownUserAvatar.svg",
-    );
-    let joined = $derived(
-        profile !== undefined ? `${$_("joined")} ${formatDate(profile.created)}` : undefined,
-    );
-    let displayName = $derived(
-        client.getDisplayName(
-            userId,
-            inGlobalContext ? undefined : $selectedCommunityMembersStore,
-            inGlobalContext ? undefined : $selectedChatWebhooksStore,
-        ),
-    );
     let canBlock = $derived(
         canBlockUser(
             $selectedChatSummaryStore,
@@ -287,81 +258,24 @@
 {#if profile !== undefined}
     <Overlay dismissible {onClose}>
         <ModalContent
-            closeIcon
             fill
-            square
+            {rendering}
             compactFooter
+            backgroundImage={backgroundUrl}
             hideFooter={!me && !chatButton && !canBlock && !canUnblock}
+            hideHeader
             fixedWidth={false}
             large={modal}
+            footerClass={hasCustomBackground ? "mask-footer" : ""}
             {alignTo}
             {onClose}>
-            {#snippet header()}
-                <div class="header">
-                    <div class="handle">
-                        <div class="display_name">
-                            {displayName}
-                        </div>
-                        <div class="name_and_badges">
-                            <div class="username">
-                                @{profile!.username}
-                            </div>
-                            <Badges
-                                uniquePerson={user?.isUniquePerson}
-                                {diamondStatus}
-                                streak={user?.streak}
-                                chitEarned={user?.totalChitEarned} />
-                            {#if user !== undefined && $selectedChatSummaryStore !== undefined && $selectedChatSummaryStore.kind !== "direct_chat"}
-                                <WithRole
-                                    userId={user.userId}
-                                    chatMembers={$selectedChatMembersStore}
-                                    communityMembers={$selectedCommunityMembersStore}>
-                                    {#snippet children(communityRole, chatRole)}
-                                        <RoleIcon level="community" popup role={communityRole} />
-                                        <RoleIcon
-                                            level={$selectedChatSummaryStore?.kind === "channel"
-                                                ? "channel"
-                                                : "group"}
-                                            popup
-                                            role={chatRole} />
-                                    {/snippet}
-                                </WithRole>
-                            {/if}
-                        </div>
-                    </div>
-                </div>
-            {/snippet}
             {#snippet body()}
-                <div class="body" class:modal>
-                    <div class="avatar">
-                        <Avatar url={avatarUrl} {userId} size={AvatarSize.Large} />
-                    </div>
-                    {#if user !== undefined && !$disableChit}
-                        <ChitBalance size={"small"} {me} totalEarned={user.totalChitEarned} />
-                    {/if}
-                    {#if profile!.bio.length > 0}
-                        <p class="bio"><Markdown inline={false} text={profile!.bio} /></p>
-                    {/if}
-                    <div class="meta">
-                        <div class="left" class:suspended={isSuspended}>
-                            {#if isSuspended}
-                                <Translatable resourceKey={i18nKey("accountSuspended")} />
-                            {:else}
-                                {#if online}
-                                    <div class="online"></div>
-                                {/if}
-                                {status === "" ? "..." : status}
-                            {/if}
-                        </div>
-                        <div class="right">
-                            <ClockOutline size={"12px"} color={"var(--txt)"} />
-                            {joined}
-                        </div>
-                    </div>
-                </div>
+                {#if profile !== undefined && user !== undefined}
+                    <UserProfileCard {user} {profile} {inGlobalContext} {onClose}></UserProfileCard>
+                {/if}
             {/snippet}
             {#snippet footer()}
-                <div class="footer">
+                <div class="footer" class:hasCustomBackground>
                     <ButtonGroup align={"fill"}>
                         {#if chatButton && !me}
                             <Button onClick={handleOpenDirectChat} small
@@ -402,105 +316,15 @@
 {/if}
 
 <style lang="scss">
-    .body {
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        @include font-size(fs-90);
-        word-wrap: break-word;
-        width: 320px;
-        padding: 0 $sp5 0 $sp5;
-
-        .avatar {
-            padding: 0 0 $sp4 0;
-            -webkit-box-reflect: below -24px linear-gradient(hsla(0, 0%, 100%, 0), hsla(
-                            0,
-                            0%,
-                            100%,
-                            0
-                        )
-                        45%, hsla(0, 0%, 100%, 0.2));
-        }
-
-        .bio {
-            max-height: 180px;
-            overflow-y: auto;
-            @include font(book, normal, fs-80, 20);
-            @include nice-scrollbar();
-            color: var(--txt-light);
-            margin-bottom: $sp3;
-            width: 100%;
-        }
-
-        &.modal {
-            width: 100%;
-        }
-
-        .meta {
-            @include font(light, normal, fs-60);
-            padding: 12px 0;
-            margin-top: $sp2;
-            border-top: 1px solid var(--bd);
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            column-gap: $sp3;
-
-            .left,
-            .right {
-                display: flex;
-                align-items: center;
-                gap: $sp2;
-            }
-
-            .left {
-                justify-self: flex-start;
-            }
-
-            .right {
-                justify-self: flex-end;
-            }
-
-            @include mobile() {
-                .left,
-                .right {
-                    @include font(light, normal, fs-90);
-                }
-            }
-
-            .suspended {
-                color: var(--menu-warn);
-            }
-
-            .online {
-                width: 10px;
-                height: 10px;
-                border-radius: 50%;
-                background-color: green;
-            }
-        }
-    }
-
-    .header {
-        @include font(bold, normal, fs-100, 21);
-        width: 250px;
-
-        .handle {
-            overflow-wrap: anywhere;
-
-            .username {
-                font-weight: 200;
-                color: var(--txt-light);
-            }
-        }
-
-        .name_and_badges {
-            display: inline-flex;
-            gap: $sp2;
-            align-items: center;
-        }
-    }
-
     .suspend {
         margin-top: $sp3;
+    }
+
+    :global(.modal-content .footer.mask-footer) {
+        background-color: rgba(0, 0, 0, 0.45);
+
+        @include not-mobile() {
+            border-radius: 0 0 var(--modal-rd) var(--modal-rd);
+        }
     }
 </style>

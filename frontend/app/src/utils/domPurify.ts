@@ -8,7 +8,7 @@ function createDefault(): DOMPurify.DOMPurify {
     domPurify.setConfig({
         ALLOWED_ATTR: ["target", "href", "class", "user-id", "suppress-links", "src", "alt"],
         CUSTOM_ELEMENT_HANDLING: {
-            tagNameCheck: (tag) => tag === "profile-link",
+            tagNameCheck: (tag) => tag === "profile-link" || tag === "custom-emoji",
             attributeNameCheck: (attr) => ["text", "userId"].includes(attr),
             allowCustomizedBuiltInElements: true,
         },
@@ -22,7 +22,7 @@ function createOneLine(): DOMPurify.DOMPurify {
         ALLOWED_ATTR: ["target", "href", "class", "user-id", "suppress-links", "src", "alt"],
         FORBID_TAGS: ["br"],
         CUSTOM_ELEMENT_HANDLING: {
-            tagNameCheck: (tag) => tag === "profile-link",
+            tagNameCheck: (tag) => tag === "profile-link" || tag === "custom-emoji",
             attributeNameCheck: (attr) => ["text", "userId"].includes(attr),
             allowCustomizedBuiltInElements: true,
         },

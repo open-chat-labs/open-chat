@@ -1,12 +1,10 @@
 <script lang="ts">
-    import Avatar from "@src/components/Avatar.svelte";
     import Button from "@src/components/Button.svelte";
     import ButtonGroup from "@src/components/ButtonGroup.svelte";
     import Checkbox from "@src/components/Checkbox.svelte";
     import HoverIcon from "@src/components/HoverIcon.svelte";
     import HeartMinus from "@src/components/icons/HeartMinus.svelte";
     import HeartPlus from "@src/components/icons/HeartPlus.svelte";
-    import Verified from "@src/components/icons/Verified.svelte";
     import SectionHeader from "@src/components/SectionHeader.svelte";
     import Translatable from "@src/components/Translatable.svelte";
     import { i18nKey } from "@src/i18n/i18n";
@@ -17,7 +15,6 @@
     import type { DirectChatSummary, OptionUpdate, PublicProfile } from "openchat-client";
     import {
         allUsersStore,
-        AvatarSize,
         blockedUsersStore,
         chatIdentifiersEqual,
         favouritesStore,
@@ -34,6 +31,7 @@
     import PhoneHangup from "svelte-material-icons/PhoneHangup.svelte";
     import DurationPicker from "../DurationPicker.svelte";
     import Markdown from "../Markdown.svelte";
+    import UserProfileCard from "../profile/UserProfileCard.svelte";
 
     const client = getContext<OpenChat>("client");
     const ONE_WEEK = 604800000n;
@@ -47,7 +45,6 @@
 
     let blocked = $derived($blockedUsersStore.has(chat.them.userId));
     let user = $derived($allUsersStore.get(chat.them.userId));
-    let verified = $derived(user?.isUniquePerson ?? false);
     let profile = $state<PublicProfile | undefined>();
     let disappearingMessages = $state(chat.eventsTTL !== undefined);
     let eventsTTL = $state(chat.eventsTTL);
@@ -66,8 +63,12 @@
         videoCallInProgress ? (inCall ? i18nKey("Leave") : i18nKey("Join")) : i18nKey("Start"),
     );
 
-    onMount(async () => {
-        profile = await client.getPublicProfile(chat.them.userId);
+    onMount(() => {
+        client.getPublicProfile(chat.them.userId).subscribe({
+            onResult: (res) => {
+                profile = res;
+            },
+        });
     });
 
     $effect(() => {
@@ -173,7 +174,8 @@
         </HoverIcon>
     {/if}
     <h4>
-        <Translatable resourceKey={i18nKey(`Direct chat with ${client.getDisplayName(chat.them.userId)}`)} />
+        <Translatable
+            resourceKey={i18nKey(`Direct chat with ${client.getDisplayName(chat.them.userId)}`)} />
     </h4>
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -187,15 +189,11 @@
 {#if user !== undefined}
     <div class="wrapper">
         <div class="user-form">
-            <div class="avatar">
-                <Avatar
-                    url={client.userAvatarUrl(user)}
-                    userId={user.userId}
-                    size={AvatarSize.Large} />
-                <div class="human">
-                    <Verified size={"large"} {verified} tooltip={i18nKey("human.verified")} />
+            {#if profile}
+                <div class="profile-card">
+                    <UserProfileCard {profile} {user} userProfileMode></UserProfileCard>
                 </div>
-            </div>
+            {/if}
             {#if profile && profile.bio.length > 0}
                 <p class="bio"><Markdown inline={false} text={profile.bio} /></p>
             {/if}
@@ -273,19 +271,6 @@
         flex: 0 0 30px;
     }
 
-    .avatar {
-        position: relative;
-        padding: 0 0 $sp4 0;
-        -webkit-box-reflect: below -24px linear-gradient(hsla(0, 0%, 100%, 0), hsla(0, 0%, 100%, 0)
-                    45%, hsla(0, 0%, 100%, 0.2));
-    }
-
-    .human {
-        position: absolute;
-        bottom: 0;
-        left: calc(50% + 32px);
-    }
-
     .bio {
         overflow-wrap: anywhere;
     }
@@ -318,6 +303,11 @@
             justify-content: center;
             align-items: center;
             gap: $sp4;
+        }
+
+        .profile-card {
+            width: 100%;
+            margin-bottom: $sp4;
         }
 
         :global(button.call-user) {

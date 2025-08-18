@@ -36,6 +36,7 @@ import type {
     MessageContext,
     P2PSwapContent,
     PrizeContent,
+    PublicProfile,
     ReplyContext,
     SendMessageResponse,
     SendMessageSuccess,
@@ -56,7 +57,7 @@ import {
     updateCreatedUser,
 } from "openchat-shared";
 
-const CACHE_VERSION = 140;
+const CACHE_VERSION = 142;
 const EARLIEST_SUPPORTED_MIGRATION = 138;
 const MAX_INDEX = 9999999999;
 
@@ -131,6 +132,11 @@ export interface ChatSchema extends DBSchema {
         value: CreatedUser;
     };
 
+    publicProfile: {
+        key: string;
+        value: PublicProfile;
+    };
+
     localUserIndex: {
         key: string;
         value: string;
@@ -178,13 +184,13 @@ type MigrationFunction<T> = (
 //     db.createObjectStore("activityFeed");
 // }
 //
-// async function clearChatsStore(
-//     _db: IDBPDatabase<ChatSchema>,
-//     _principal: Principal,
-//     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-// ) {
-//     await tx.objectStore("chats").clear();
-// }
+async function clearChatsStore(
+    _db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
+    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    await tx.objectStore("chats").clear();
+}
 //
 // async function clearGroupDetailsStore(
 //     _db: IDBPDatabase<ChatSchema>,
@@ -235,9 +241,31 @@ async function clearEvents(
 //     await tx.objectStore("externalAchievements").clear();
 // }
 
+async function clearChatsAndCurrentUser(
+    _db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
+    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    await clearChatsStore(_db, _principal, tx);
+    await tx.objectStore("currentUser").clear();
+}
+
+async function createPublicProfileStore(
+    db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
+    _tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    if (db.objectStoreNames.contains("publicProfile")) {
+        db.deleteObjectStore("publicProfile");
+    }
+    db.createObjectStore("publicProfile");
+}
+
 const migrations: Record<number, MigrationFunction<ChatSchema>> = {
     139: clearCommunityDetailsStore,
     140: clearEvents,
+    141: clearChatsAndCurrentUser,
+    142: createPublicProfileStore,
 };
 
 async function migrate(
@@ -289,6 +317,9 @@ function nuke(db: IDBPDatabase<ChatSchema>) {
     if (db.objectStoreNames.contains("currentUser")) {
         db.deleteObjectStore("currentUser");
     }
+    if (db.objectStoreNames.contains("publicProfile")) {
+        db.deleteObjectStore("publicProfile");
+    }
     if (db.objectStoreNames.contains("localUserIndex")) {
         db.deleteObjectStore("localUserIndex");
     }
@@ -310,6 +341,7 @@ function nuke(db: IDBPDatabase<ChatSchema>) {
     db.createObjectStore("failed_thread_messages");
     db.createObjectStore("cachePrimer");
     db.createObjectStore("currentUser");
+    db.createObjectStore("publicProfile");
     db.createObjectStore("localUserIndex");
     db.createObjectStore("externalAchievements");
     db.createObjectStore("activityFeed");
@@ -1438,6 +1470,19 @@ async function runExpiredEventSweeper() {
     if (expiredKeys.length === batchSize) {
         tryStartExpiredEventSweeper();
     }
+}
+
+export async function getCachedPublicProfile(userId: string): Promise<PublicProfile | undefined> {
+    if (db === undefined) return;
+    return (await db).get("publicProfile", userId);
+}
+
+export async function setCachedPublicProfile(
+    userId: string,
+    profile: PublicProfile,
+): Promise<void> {
+    if (db === undefined) return;
+    (await db).put("publicProfile", profile, userId);
 }
 
 export async function getCachedCurrentUser(principal: string): Promise<CreatedUser | undefined> {

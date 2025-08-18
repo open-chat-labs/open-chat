@@ -25,6 +25,7 @@
         selectedChatBlockedUsersStore,
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
+        type SelectedEmoji,
         type SenderContext,
         translationsStore,
         unconfirmedReadByThem,
@@ -59,7 +60,7 @@
     import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
     import ChatMessageContent from "./ChatMessageContent.svelte";
     import ChatMessageMenu from "./ChatMessageMenu.svelte";
-    import EmojiPicker from "./EmojiPicker.svelte";
+    import EmojiPicker from "./EmojiPickerWrapper.svelte";
     import EphemeralNote from "./EphemeralNote.svelte";
     import IntersectionObserverComponent from "./IntersectionObserver.svelte";
     import MessageReaction from "./MessageReaction.svelte";
@@ -291,9 +292,11 @@
         tipping = ledger;
     }
 
-    function selectReaction(code?: string) {
-        if (code) {
-            toggleReaction(false, code);
+    function selectReaction(selected: SelectedEmoji) {
+        if (selected.kind === "native") {
+            toggleReaction(false, selected.unicode);
+        } else {
+            toggleReaction(false, `@CustomEmoji(${selected.code})`);
         }
     }
 
@@ -531,6 +534,7 @@
                 <EmojiPicker
                     onEmojiSelected={selectReaction}
                     onSkintoneChanged={(tone) => quickReactions.reload(tone)}
+                    supportCustom={true}
                     mode={"reaction"} />
             {/snippet}
         </ModalContent>
@@ -838,6 +842,7 @@
                             <MessageReaction
                                 onClick={() => toggleReaction(false, reaction)}
                                 {reaction}
+                                {intersecting}
                                 {userIds} />
                         {/each}
                     </div>

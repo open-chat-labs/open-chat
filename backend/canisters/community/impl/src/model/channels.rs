@@ -139,6 +139,7 @@ impl Channels {
 
     pub fn search(
         &self,
+        user_id: Option<UserId>,
         search_term: Option<String>,
         page_index: u32,
         page_size: u8,
@@ -149,7 +150,7 @@ impl Channels {
         let mut matches: Vec<_> = self
             .channels
             .values()
-            .filter(|c| c.chat.is_public.value || include_private)
+            .filter(|c| c.chat.is_public.value || include_private || c.chat.is_invited(user_id))
             .map(|c| {
                 let score = if let Some(query) = &query {
                     let document: Document = c.into();
@@ -172,7 +173,17 @@ impl Channels {
 
         let matches = matches
             .into_iter()
-            .map(|(_, c)| c.into())
+            .map(|(_, c)| ChannelMatch {
+                id: c.id,
+                name: c.chat.name.value.clone(),
+                description: c.chat.description.value.clone(),
+                avatar_id: types::Document::id(&c.chat.avatar),
+                member_count: c.chat.members.len(),
+                gate_config: c.chat.gate_config.value.clone().map(|gc| gc.into()),
+                subtype: c.chat.subtype.value.clone(),
+                is_public: c.chat.is_public.value,
+                is_invited: c.chat.is_invited(user_id),
+            })
             .skip(page_index as usize * page_size as usize)
             .take(page_size as usize)
             .collect();
@@ -422,10 +433,20 @@ impl Channel {
         })
     }
 
-    pub fn mute_notifications(&mut self, mute: bool, user_id: UserId, now: TimestampMillis) -> MuteChannelResult {
+    pub fn mute_notifications(
+        &mut self,
+        mute: Option<bool>,
+        mute_at_everyone: Option<bool>,
+        user_id: UserId,
+        now: TimestampMillis,
+    ) -> MuteChannelResult {
         use MuteChannelResult::*;
 
-        match self.chat.members.toggle_notifications_muted(user_id, mute, now) {
+        match self
+            .chat
+            .members
+            .toggle_notifications_muted(user_id, mute, mute_at_everyone, now)
+        {
             Some(true) => Success,
             Some(false) => Unchanged,
             None => UserNotFound,
@@ -440,21 +461,6 @@ impl Channel {
 pub enum ChannelUpdates {
     Added(CommunityCanisterChannelSummary),
     Updated(CommunityCanisterChannelSummaryUpdates),
-}
-
-impl From<&Channel> for ChannelMatch {
-    fn from(channel: &Channel) -> Self {
-        ChannelMatch {
-            id: channel.id,
-            name: channel.chat.name.value.clone(),
-            description: channel.chat.description.value.clone(),
-            avatar_id: types::Document::id(&channel.chat.avatar),
-            member_count: channel.chat.members.len(),
-            gate_config: channel.chat.gate_config.value.clone().map(|gc| gc.into()),
-            subtype: channel.chat.subtype.value.clone(),
-            is_public: channel.chat.is_public.value,
-        }
-    }
 }
 
 impl From<&Channel> for Document {

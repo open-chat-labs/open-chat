@@ -116,23 +116,29 @@ export type ReferralType = {
     type: ReferralStatus;
 };
 
-export type ChitEarnedReason =
+export type ChitEventType =
     | DailyClaim
     | DailyClaimReinstated
     | StreakInsuranceClaim
     | MemeContestWinner
     | AchievementUnlocked
     | ReferralType
+    | PurchasedPremiumItem
     | ExternalAchievementUnlocked;
 
-export type ChitEarned = {
+export type PurchasedPremiumItem = {
+    kind: "purchased_premium_item";
+    item: PremiumItem;
+};
+
+export type ChitEvent = {
     amount: number;
     timestamp: bigint;
-    reason: ChitEarnedReason;
+    reason: ChitEventType;
 };
 
 export type ChitEventsResponse = {
-    events: ChitEarned[];
+    events: ChitEvent[];
     total: number;
 };
 
@@ -179,3 +185,18 @@ export function findClosestChitBand(earned: number): number {
     const keys = [...chitBands.keys()].sort((a, b) => b - a);
     return keys.find((k) => k <= earned) ?? 0;
 }
+
+export type PayForPremiumItemResponse = PayForPremiumItemSuccess | OCError;
+
+export type PayForPremiumItemSuccess = Success & { totalChitEarned: number; chitBalance: number };
+
+export enum PremiumItem {
+    BotEmojis = 0,
+    PopularEmojis = 1,
+    CustomProfileBackground = 2,
+}
+export const premiumPrices: Record<PremiumItem, number> = {
+    [PremiumItem.BotEmojis]: 10_000,
+    [PremiumItem.PopularEmojis]: 50_000,
+    [PremiumItem.CustomProfileBackground]: 50_000,
+};

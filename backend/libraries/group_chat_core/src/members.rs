@@ -27,7 +27,6 @@ const MAX_MEMBERS_PER_GROUP: u32 = 100_000;
 
 #[derive(Serialize, Deserialize)]
 pub struct GroupMembers {
-    #[serde(alias = "stable_memory_members_map")]
     members_map: MembersStableStorage,
     member_ids: BTreeSet<UserId>,
     owners: BTreeSet<UserId>,
@@ -35,6 +34,8 @@ pub struct GroupMembers {
     moderators: BTreeSet<UserId>,
     bots: BTreeMap<UserId, UserType>,
     notifications_unmuted: BTreeSet<UserId>,
+    #[serde(default)]
+    at_everyone_muted: BTreeSet<UserId>,
     lapsed: BTreeSet<UserId>,
     blocked: BTreeSet<UserId>,
     suspended: BTreeSet<UserId>,
@@ -52,6 +53,7 @@ impl GroupMembers {
             min_visible_event_index: EventIndex::default(),
             min_visible_message_index: MessageIndex::default(),
             notifications_muted: Timestamped::new(false, now),
+            at_everyone_muted: Timestamped::new(false, now),
             mentions: Mentions::default(),
             followed_threads: TimestampedSet::new(),
             unfollowed_threads: TimestampedSet::new(),
@@ -76,6 +78,7 @@ impl GroupMembers {
                 BTreeMap::new()
             },
             notifications_unmuted: [creator_user_id].into_iter().collect(),
+            at_everyone_muted: BTreeSet::new(),
             lapsed: BTreeSet::new(),
             suspended: BTreeSet::new(),
             updates: BTreeSet::new(),
@@ -116,6 +119,7 @@ impl GroupMembers {
                 min_visible_event_index,
                 min_visible_message_index,
                 notifications_muted: Timestamped::new(notifications_muted, 0),
+                at_everyone_muted: Timestamped::new(false, 0),
                 mentions: Mentions::default(),
                 followed_threads: TimestampedSet::default(),
                 unfollowed_threads: TimestampedSet::default(),
@@ -157,6 +161,9 @@ impl GroupMembers {
         }
         if !member.notifications_muted.value {
             self.notifications_unmuted.remove(&user_id);
+        }
+        if member.at_everyone_muted.value {
+            self.at_everyone_muted.remove(&user_id);
         }
         if member.lapsed.value {
             self.lapsed.remove(&user_id);
@@ -332,23 +339,47 @@ impl GroupMembers {
     pub fn toggle_notifications_muted(
         &mut self,
         user_id: UserId,
-        notifications_muted: bool,
+        notifications_muted: Option<bool>,
+        at_everyone_muted: Option<bool>,
         now: TimestampMillis,
     ) -> Option<bool> {
         if !self.member_ids.contains(&user_id) {
             None
         } else {
-            let updated = if notifications_muted {
-                self.notifications_unmuted.remove(&user_id)
+            let notifications_muted_updated = if let Some(notifications_muted) = notifications_muted {
+                if notifications_muted {
+                    self.notifications_unmuted.remove(&user_id)
+                } else {
+                    self.notifications_unmuted.insert(user_id)
+                }
             } else {
-                self.notifications_unmuted.insert(user_id)
+                false
             };
+
+            let at_everyone_muted_updated = if let Some(at_everyone_muted) = at_everyone_muted {
+                if at_everyone_muted {
+                    self.at_everyone_muted.insert(user_id)
+                } else {
+                    self.at_everyone_muted.remove(&user_id)
+                }
+            } else {
+                false
+            };
+
+            let updated = notifications_muted_updated || at_everyone_muted_updated;
+
             if updated {
                 self.update_member(&user_id, |m| {
-                    m.notifications_muted = Timestamped::new(notifications_muted, now);
+                    if notifications_muted_updated {
+                        m.notifications_muted = Timestamped::new(notifications_muted.unwrap(), now);
+                    }
+                    if at_everyone_muted_updated {
+                        m.at_everyone_muted = Timestamped::new(at_everyone_muted.unwrap(), now);
+                    }
                     true
                 });
             }
+
             Some(updated)
         }
     }
@@ -441,6 +472,10 @@ impl GroupMembers {
         &self.notifications_unmuted
     }
 
+    pub fn at_everyone_muted(&self) -> &BTreeSet<UserId> {
+        &self.at_everyone_muted
+    }
+
     pub fn lapsed(&self) -> &BTreeSet<UserId> {
         &self.lapsed
     }
@@ -497,6 +532,7 @@ impl GroupMembers {
         let mut admins = BTreeSet::new();
         let mut moderators = BTreeSet::new();
         let mut notifications_unmuted = BTreeSet::new();
+        let mut at_everyone_muted = BTreeSet::new();
         let mut lapsed = BTreeSet::new();
         let mut suspended = BTreeSet::new();
 
@@ -516,6 +552,10 @@ impl GroupMembers {
                 notifications_unmuted.insert(member.user_id);
             }
 
+            if member.at_everyone_muted.value {
+                at_everyone_muted.insert(member.user_id);
+            }
+
             if member.lapsed.value {
                 lapsed.insert(member.user_id);
             }
@@ -530,6 +570,7 @@ impl GroupMembers {
         assert_eq!(admins, self.admins);
         assert_eq!(moderators, self.moderators);
         assert_eq!(notifications_unmuted, self.notifications_unmuted);
+        assert_eq!(at_everyone_muted, self.at_everyone_muted);
         assert_eq!(lapsed, self.lapsed);
         assert_eq!(suspended, self.suspended);
     }
@@ -580,6 +621,7 @@ pub struct GroupMemberInternal {
     date_added: TimestampMillis,
     role: Timestamped<GroupRoleInternal>,
     notifications_muted: Timestamped<bool>,
+    at_everyone_muted: Timestamped<bool>,
     pub mentions: Mentions,
     pub followed_threads: TimestampedSet<MessageIndex>,
     pub unfollowed_threads: TimestampedSet<MessageIndex>,
@@ -614,6 +656,10 @@ impl GroupMemberInternal {
         &self.notifications_muted
     }
 
+    pub fn at_everyone_muted(&self) -> &Timestamped<bool> {
+        &self.at_everyone_muted
+    }
+
     pub fn lapsed(&self) -> &Timestamped<bool> {
         &self.lapsed
     }
@@ -627,6 +673,7 @@ impl GroupMemberInternal {
             self.date_added,
             self.role.timestamp,
             self.notifications_muted.timestamp,
+            self.at_everyone_muted.timestamp,
             self.suspended.timestamp,
             self.rules_accepted.as_ref().map(|r| r.timestamp).unwrap_or_default(),
             self.lapsed.timestamp,
@@ -803,6 +850,8 @@ pub struct GroupMemberStableStorage {
         skip_serializing_if = "is_default_notifications_muted"
     )]
     notifications_muted: Timestamped<bool>,
+    #[serde(rename = "em", default, skip_serializing_if = "is_default")]
+    pub at_everyone_muted: Timestamped<bool>,
     #[serde(rename = "m", default, skip_serializing_if = "Mentions::is_empty")]
     pub mentions: Mentions,
     #[serde(rename = "tf", default, skip_serializing_if = "TimestampedSet::is_empty")]
@@ -834,6 +883,7 @@ impl GroupMemberStableStorage {
             date_added: self.date_added,
             role: self.role,
             notifications_muted: self.notifications_muted,
+            at_everyone_muted: self.at_everyone_muted,
             mentions: self.mentions,
             followed_threads: self.followed_threads,
             unfollowed_threads: self.unfollowed_threads,
@@ -855,6 +905,7 @@ impl From<GroupMemberInternal> for GroupMemberStableStorage {
             date_added: value.date_added,
             role: value.role,
             notifications_muted: value.notifications_muted,
+            at_everyone_muted: value.at_everyone_muted,
             mentions: value.mentions,
             followed_threads: value.followed_threads,
             unfollowed_threads: value.unfollowed_threads,
@@ -894,6 +945,7 @@ mod tests {
             date_added: 1732874138000,
             role: Timestamped::default(),
             notifications_muted: default_notifications_muted(),
+            at_everyone_muted: Timestamped::default(),
             mentions: Mentions::default(),
             followed_threads: TimestampedSet::default(),
             unfollowed_threads: TimestampedSet::default(),
@@ -929,6 +981,7 @@ mod tests {
             date_added: 1732874138000,
             role: Timestamped::new(GroupRoleInternal::Owner, 1),
             notifications_muted: Timestamped::new(true, 1),
+            at_everyone_muted: Timestamped::new(true, 1),
             mentions,
             followed_threads: [(1.into(), 1)].into_iter().collect(),
             unfollowed_threads: [(1.into(), 1)].into_iter().collect(),
@@ -945,7 +998,7 @@ mod tests {
         let member_bytes = msgpack::serialize_then_unwrap(&member);
         let member_bytes_len = member_bytes.len();
 
-        assert_eq!(member_bytes_len, 157);
+        assert_eq!(member_bytes_len, 167);
 
         let _deserialized: GroupMemberStableStorage = msgpack::deserialize_then_unwrap(&member_bytes);
     }

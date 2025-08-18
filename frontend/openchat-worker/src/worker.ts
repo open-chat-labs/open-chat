@@ -504,6 +504,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.setUserAvatar(payload.data));
                 break;
 
+            case "setProfileBackground":
+                executeThenReply(payload, correlationId, agent.setProfileBackground(payload.data));
+                break;
+
             case "deleteGroup":
                 executeThenReply(payload, correlationId, agent.deleteGroup(payload.chatId));
                 break;
@@ -749,7 +753,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.inviteUsers(payload.id, payload.userIds, payload.callerUsername),
+                    agent.inviteUsers(payload.id, payload.userIds),
                 );
                 break;
 
@@ -924,7 +928,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "getPublicProfile":
-                executeThenReply(payload, correlationId, agent.getPublicProfile(payload.userId));
+                streamReplies(payload, correlationId, agent.getPublicProfile(payload.userId));
                 break;
 
             case "setUsername":
@@ -1796,6 +1800,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.generateBtcAddress());
                 break;
 
+            case "generateOneSecAddress":
+                executeThenReply(payload, correlationId, agent.generateOneSecAddress());
+                break;
+
             case "updateBtcBalance":
                 executeThenReply(
                     payload,
@@ -2137,6 +2145,52 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.publicKey,
                         payload.webAuthnKey,
                     ) ?? Promise.resolve(undefined),
+                );
+                break;
+
+            case "payForPremiumItem":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.payForPremiumItem(payload.userId, payload.item),
+                );
+                break;
+
+            case "setPremiumItemCost":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setPremiumItemCost(payload.item, payload.chitCost),
+                );
+                break;
+
+            case "oneSecGetTransferFees":
+                executeThenReply(payload, correlationId, agent.oneSecGetTransferFees());
+                break;
+
+            case "oneSecForwardEvmToIcp":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.oneSecForwardEvmToIcp(
+                        payload.tokenSymbol,
+                        payload.chain,
+                        payload.address,
+                        payload.receiver,
+                    ),
+                );
+                break;
+
+            case "oneSecGetForwardingStatus":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.oneSecGetForwardingStatus(
+                        payload.tokenSymbol,
+                        payload.chain,
+                        payload.address,
+                        payload.receiver,
+                    ),
                 );
                 break;
 

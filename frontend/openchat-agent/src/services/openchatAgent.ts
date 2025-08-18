@@ -28,7 +28,7 @@ import type {
     ChatStateFull,
     ChatSummary,
     CheckUsernameResponse,
-    ChitEarned,
+    ChitEvent,
     ChitEventsRequest,
     ChitEventsResponse,
     ChitLeaderboardResponse,
@@ -67,6 +67,7 @@ import type {
     EnableInviteCodeResponse,
     EventsResponse,
     EventWrapper,
+    EvmChain,
     ExchangeTokenSwapArgs,
     ExploreBotsResponse,
     ExploreChannelsResponse,
@@ -109,14 +110,18 @@ import type {
     MessageContext,
     MinutesOnline,
     MultiUserChatIdentifier,
+    OneSecForwardingStatus,
+    OneSecTransferFees,
     OptionalChatPermissions,
     OptionUpdate,
     PayForDiamondMembershipResponse,
+    PayForPremiumItemResponse,
     PayForStreakInsuranceResponse,
     PendingCryptocurrencyWithdrawal,
     PinChatResponse,
     PinMessageResponse,
     PinNumberSettings,
+    PremiumItem,
     PrepareDelegationResponse,
     ProposalVoteDetails,
     PublicGroupSummaryResponse,
@@ -287,6 +292,7 @@ import { LocalUserIndexClient } from "./localUserIndex/localUserIndex.client";
 import { MarketMakerClient } from "./marketMaker/marketMaker.client";
 import { NnsGovernanceClient } from "./nnsGovernance/nns.governance.client";
 import { NotificationsClient } from "./notifications/notifications.client";
+import { OneSecMinterClient } from "./oneSecMinter/oneSecMinter.client";
 import { OnlineClient } from "./online/online.client";
 import { ProposalsBotClient } from "./proposalsBot/proposalsBot.client";
 import { RegistryClient } from "./registry/registry.client";
@@ -331,6 +337,7 @@ export class OpenChatAgent extends EventTarget {
     private _signInWithEthereumClient: Lazy<SignInWithEthereumClient>;
     private _signInWithSolanaClient: Lazy<SignInWithSolanaClient>;
     private _translationsClient: Lazy<TranslationsClient>;
+    private _oneSecMinterClient: Lazy<OneSecMinterClient>;
 
     constructor(private identity: Identity, private config: AgentConfig) {
         super();
@@ -407,6 +414,9 @@ export class OpenChatAgent extends EventTarget {
         );
         this._translationsClient = new Lazy(
             () => new TranslationsClient(identity, this._agent, config.translationsCanister),
+        );
+        this._oneSecMinterClient = new Lazy(
+            () => new OneSecMinterClient(identity, this._agent, config.oneSecMinterCanister),
         );
     }
 
@@ -863,7 +873,6 @@ export class OpenChatAgent extends EventTarget {
     async inviteUsers(
         id: MultiUserChatIdentifier | CommunityIdentifier,
         userIds: string[],
-        callerUsername: string,
     ): Promise<boolean> {
         if (!userIds.length) {
             return Promise.resolve(true);
@@ -875,16 +884,12 @@ export class OpenChatAgent extends EventTarget {
             case "community": {
                 const localUserIndex = await this.communityClient(id.communityId).localUserIndex();
                 const localUserIndexClient = this.getLocalUserIndexClient(localUserIndex);
-                return localUserIndexClient.inviteUsersToCommunity(
-                    id.communityId,
-                    userIds,
-                    callerUsername,
-                );
+                return localUserIndexClient.inviteUsersToCommunity(id.communityId, userIds);
             }
             case "group_chat": {
                 const localUserIndex = await this.getGroupClient(id.groupId).localUserIndex();
                 const localUserIndexClient = this.getLocalUserIndexClient(localUserIndex);
-                return localUserIndexClient.inviteUsersToGroup(id.groupId, userIds, callerUsername);
+                return localUserIndexClient.inviteUsersToGroup(id.groupId, userIds);
             }
             case "channel": {
                 const localUserIndex = await this.communityClient(id.communityId).localUserIndex();
@@ -893,7 +898,6 @@ export class OpenChatAgent extends EventTarget {
                     id.communityId,
                     id.channelId,
                     userIds,
-                    callerUsername,
                 );
             }
         }
@@ -1717,7 +1721,7 @@ export class OpenChatAgent extends EventTarget {
         let favouriteChats: Updatable<ChatIdentifier[]>;
         let pinNumberSettings: UpdatableOption<PinNumberSettings>;
         let achievements: Updatable<Set<string>>;
-        let newAchievements: Updatable<ChitEarned[]>;
+        let newAchievements: Updatable<ChitEvent[]>;
         let achievementsLastSeen: bigint;
         let chitState: Updatable<ChitState>;
         let referrals: Updatable<Referral[]>;
@@ -1725,13 +1729,15 @@ export class OpenChatAgent extends EventTarget {
         let messageActivitySummary: Updatable<MessageActivitySummary>;
         let installedBots: Updatable<Map<string, GrantedBotPermissions>>;
         let bitcoinAddress: Updatable<string | undefined>;
+        let oneSecAddress: Updatable<string | undefined>;
         let streakInsurance: UpdatableOption<StreakInsurance>;
+        let premiumItems: Updatable<Set<PremiumItem>>;
 
         let suspensionChanged: boolean | undefined = undefined;
         let latestUserCanisterUpdates: bigint;
         let anyUpdates = false;
 
-        const processAchievementsResponse = (achievementsResponse: ChitEarned[]) => {
+        const processAchievementsResponse = (achievementsResponse: ChitEvent[]) => {
             if (achievementsResponse.length > 0) {
                 achievementsResponse.forEach((a) => {
                     if (a.timestamp > achievementsLastSeen) {
@@ -1793,7 +1799,9 @@ export class OpenChatAgent extends EventTarget {
             messageActivitySummary = new Updatable(userResponse.messageActivitySummary, true);
             installedBots = new Updatable(userResponse.bots, true);
             bitcoinAddress = new Updatable(userResponse.bitcoinAddress, true);
+            oneSecAddress = new Updatable(userResponse.oneSecAddress, true);
             streakInsurance = new UpdatableOption(userResponse.streakInsurance, true);
+            premiumItems = new Updatable(userResponse.premiumItems, true);
         } else {
             userCanisterLocalUserIndex = current.userCanisterLocalUserIndex;
             latestUserCanisterUpdates = current.latestUserCanisterUpdates;
@@ -1819,7 +1827,9 @@ export class OpenChatAgent extends EventTarget {
             messageActivitySummary = new Updatable(current.messageActivitySummary);
             installedBots = new Updatable(current.installedBots);
             bitcoinAddress = new Updatable(current.bitcoinAddress);
+            oneSecAddress = new Updatable(current.oneSecAddress);
             streakInsurance = new UpdatableOption(current.streakInsurance);
+            premiumItems = new Updatable(current.premiumItems);
 
             try {
                 totalQueryCount++;
@@ -1901,7 +1911,9 @@ export class OpenChatAgent extends EventTarget {
                         userResponse.messageActivitySummary,
                     );
                     bitcoinAddress.updateIfNotUndefined(userResponse.bitcoinAddress);
+                    oneSecAddress.updateIfNotUndefined(userResponse.oneSecAddress);
                     streakInsurance.applyOptionUpdate(userResponse.streakInsurance);
+                    premiumItems.updateIfNotUndefined(userResponse.premiumItems);
                 }
             } catch (error) {
                 console.error("Failed to get updates from User canister", error);
@@ -2064,7 +2076,9 @@ export class OpenChatAgent extends EventTarget {
             messageActivitySummary: messageActivitySummary.value,
             installedBots: installedBots.value,
             bitcoinAddress: bitcoinAddress.value,
+            oneSecAddress: oneSecAddress.value,
             streakInsurance: streakInsurance.value,
+            premiumItems: premiumItems.value,
         };
 
         const updatedEvents = getUpdatedEvents(directChatUpdates, groupUpdates, communityUpdates);
@@ -2148,8 +2162,10 @@ export class OpenChatAgent extends EventTarget {
             messageActivitySummary: messageActivitySummary.valueIfUpdated(),
             installedBots: installedBots.valueIfUpdated(),
             bitcoinAddress: bitcoinAddress.valueIfUpdated(),
+            oneSecAddress: oneSecAddress.valueIfUpdated(),
             streakInsurance: streakInsurance.toOptionUpdate(),
             suspensionChanged,
+            premiumItems: premiumItems.valueIfUpdated(),
         };
     }
 
@@ -2525,6 +2541,10 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.setAvatar(data);
     }
 
+    setProfileBackground(data: Uint8Array): Promise<BlobReference> {
+        return this.userClient.setProfileBackground(data);
+    }
+
     addReaction(
         chatId: ChatIdentifier,
         messageId: bigint,
@@ -2820,10 +2840,13 @@ export class OpenChatAgent extends EventTarget {
         return userClient.getBio();
     }
 
-    getPublicProfile(userId?: string): Promise<PublicProfile | undefined> {
+    getPublicProfile(userId?: string): Stream<PublicProfile | undefined> {
         if (userId) {
-            return isUserIdDeleted(userId).then((deleted) => {
-                if (deleted) return undefined;
+            return new Stream(async (resolve, reject) => {
+                const deleted = await isUserIdDeleted(userId);
+                if (deleted) {
+                    resolve(undefined, true);
+                }
                 const userClient = new UserClient(
                     userId,
                     this.identity,
@@ -2831,7 +2854,15 @@ export class OpenChatAgent extends EventTarget {
                     this.config,
                     this.db,
                 );
-                return userClient.getPublicProfile();
+                const result = userClient.getPublicProfile();
+                result.subscribe({
+                    onResult: (res, final) => {
+                        resolve(res, final);
+                    },
+                    onError: (err) => {
+                        reject(err);
+                    },
+                });
             });
         } else {
             return this.userClient.getPublicProfile();
@@ -2869,11 +2900,11 @@ export class OpenChatAgent extends EventTarget {
         principal: string,
         fromId?: bigint,
     ): Promise<AccountTransactionResult> {
-        const icpLedgerIndex = this._registryValue?.nervousSystemSummary.find(
-            (ns) => ns.isNns,
-        )?.indexCanisterId;
+        const isNns = this._registryValue?.nervousSystemSummary.some(
+            (ns) => ns.isNns && ns.indexCanisterId === ledgerIndex,
+        );
 
-        if (ledgerIndex === icpLedgerIndex) {
+        if (isNns) {
             return new IcpLedgerIndexClient(
                 this.identity,
                 this._agent,
@@ -3962,6 +3993,10 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.generateBtcAddress();
     }
 
+    generateOneSecAddress(): Promise<string> {
+        return this.userClient.generateOneSecAddress();
+    }
+
     // Query the Bitcoin canister to check for any new UTXOs for this user, if there are any, then also query the ckBTC
     // minter to check that it has processed them, if it has not, call `update_btc_balance` on the user canister which
     // will then call into `update_balance` on the ckBTC minter to pull in the new UTXOs.
@@ -3996,6 +4031,32 @@ export class OpenChatAgent extends EventTarget {
 
     getCkbtcMinterWithdrawalInfo(amount: bigint): Promise<CkbtcMinterWithdrawalInfo> {
         return this._ckbtcMinterClient.get().getWithdrawalInfo(amount);
+    }
+
+    oneSecGetTransferFees(): Promise<OneSecTransferFees[]> {
+        return this._oneSecMinterClient.get().getTransferFees();
+    }
+
+    oneSecForwardEvmToIcp(
+        tokenSymbol: string,
+        chain: EvmChain,
+        address: string,
+        receiver: string,
+    ): Promise<OneSecForwardingStatus> {
+        return this._oneSecMinterClient
+            .get()
+            .forwardEvmToIcp(tokenSymbol, chain, address, receiver);
+    }
+
+    oneSecGetForwardingStatus(
+        tokenSymbol: string,
+        chain: EvmChain,
+        address: string,
+        receiver: string,
+    ): Promise<OneSecForwardingStatus> {
+        return this._oneSecMinterClient
+            .get()
+            .getForwardingStatus(tokenSymbol, chain, address, receiver);
     }
 
     generateMagicLink(email: string, sessionKey: Uint8Array): Promise<GenerateMagicLinkResponse> {
@@ -4564,9 +4625,21 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
+    async payForPremiumItem(userId: string, item: PremiumItem): Promise<PayForPremiumItemResponse> {
+        const localUserIndex = await this.getLocalUserIndexForUser(userId);
+        return this.getLocalUserIndexClient(localUserIndex).payForPremiumItem(item);
+    }
+
+    async setPremiumItemCost(item: PremiumItem, chitCost: number): Promise<void> {
+        return this._userIndexClient.setPremiumItemCost(item, chitCost);
+    }
+
     async reinstateMissedDailyClaims(userId: string, days: number[]): Promise<boolean> {
         const localUserIndex = await this.getLocalUserIndexForUser(userId);
-        return this.getLocalUserIndexClient(localUserIndex).reinstateMissedDailyClaims(userId, days);
+        return this.getLocalUserIndexClient(localUserIndex).reinstateMissedDailyClaims(
+            userId,
+            days,
+        );
     }
 }
 

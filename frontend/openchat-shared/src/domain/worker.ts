@@ -94,7 +94,9 @@ import type {
     ChitLeaderboardResponse,
     ClaimDailyChitResponse,
     ExternalAchievement,
+    PayForPremiumItemResponse,
     PayForStreakInsuranceResponse,
+    PremiumItem,
 } from "./chit";
 import type {
     AddMembersToChannelResponse,
@@ -128,6 +130,7 @@ import type { AgentConfig } from "./config";
 import type {
     AccountTransactionResult,
     CryptocurrencyDetails,
+    EvmChain,
     TokenExchangeRates,
     WalletConfig,
 } from "./crypto";
@@ -149,6 +152,7 @@ import type {
     AuthenticationPrincipalsResponse,
     ChallengeAttempt,
     CreateOpenChatIdentityResponse,
+    FinaliseAccountLinkingResponse,
     GenerateChallengeResponse,
     GetDelegationResponse,
     GetOpenChatIdentityResponse,
@@ -157,10 +161,9 @@ import type {
     RemoveIdentityLinkResponse,
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
+    VerifyAccountLinkingCodeResponse,
     WebAuthnKey,
     WebAuthnKeyFull,
-    VerifyAccountLinkingCodeResponse,
-    FinaliseAccountLinkingResponse,
 } from "./identity";
 import type { CommunityInvite, GroupInvite } from "./inviteCodes";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -220,6 +223,7 @@ import type {
     UserSummary,
 } from "./user";
 import type { Verification } from "./wallet";
+import type { OneSecForwardingStatus, OneSecTransferFees } from "./oneSec";
 
 /**
  * Worker request types
@@ -261,6 +265,7 @@ export type WorkerRequest =
     | LeaveGroup
     | DeleteGroup
     | SetUserAvatar
+    | SetProfileBackground
     | UnblockUserFromDirectChat
     | BlockUserFromDirectChat
     | UnpinChat
@@ -407,6 +412,7 @@ export type WorkerRequest =
     | GetAccessToken
     | GetLocalUserIndexForUser
     | GenerateBtcAddress
+    | GenerateOneSecAddress
     | UpdateBtcBalance
     | WithdrawBtc
     | GetCkbtcMinterDepositInfo
@@ -459,7 +465,44 @@ export type WorkerRequest =
     | CreateAccountLinkingCode
     | ReinstateMissedDailyClaims
     | VerifyAccountLinkingCode
-    | FinaliseAccountLinkingWithCode;
+    | FinaliseAccountLinkingWithCode
+    | PayForPremiumItem
+    | SetPremiumItemCost
+    | OneSecGetTransferFees
+    | OneSecForwardEvmToIcp
+    | OneSecGetForwardingStatus;
+
+type OneSecGetTransferFees = {
+    kind: "oneSecGetTransferFees";
+};
+
+type OneSecForwardEvmToIcp = {
+    kind: "oneSecForwardEvmToIcp";
+    tokenSymbol: string;
+    chain: EvmChain;
+    address: string;
+    receiver: string;
+};
+
+type OneSecGetForwardingStatus = {
+    kind: "oneSecGetForwardingStatus";
+    tokenSymbol: string;
+    chain: EvmChain;
+    address: string;
+    receiver: string;
+};
+
+type SetPremiumItemCost = {
+    kind: "setPremiumItemCost";
+    item: PremiumItem;
+    chitCost: number;
+};
+
+type PayForPremiumItem = {
+    kind: "payForPremiumItem";
+    item: PremiumItem;
+    userId: string;
+};
 
 type SetMinLogLevel = {
     kind: "setMinLogLevel";
@@ -1153,6 +1196,11 @@ type SetUserAvatar = {
     kind: "setUserAvatar";
 };
 
+type SetProfileBackground = {
+    data: Uint8Array;
+    kind: "setProfileBackground";
+};
+
 type UnblockUserFromDirectChat = {
     userId: string;
     kind: "unblockUserFromDirectChat";
@@ -1471,6 +1519,10 @@ type GenerateBtcAddress = {
     kind: "generateBtcAddress";
 };
 
+type GenerateOneSecAddress = {
+    kind: "generateOneSecAddress";
+};
+
 type UpdateBtcBalance = {
     userId: string;
     bitcoinAddress: string;
@@ -1771,7 +1823,10 @@ export type WorkerResponseInner =
     | FullWebhookDetails
     | AccountLinkingCode
     | VerifyAccountLinkingCodeResponse
-    | FinaliseAccountLinkingResponse;
+    | FinaliseAccountLinkingResponse
+    | PayForPremiumItemResponse
+    | OneSecTransferFees[]
+    | OneSecForwardingStatus;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -2159,6 +2214,8 @@ export type WorkerResult<T> = T extends Init
     ? UnblockUserResponse
     : T extends SetUserAvatar
     ? BlobReference
+    : T extends SetProfileBackground
+    ? BlobReference
     : T extends DeleteGroup
     ? DeleteGroupResponse
     : T extends LeaveGroup
@@ -2439,6 +2496,8 @@ export type WorkerResult<T> = T extends Init
     ? string
     : T extends GenerateBtcAddress
     ? string
+    : T extends GenerateOneSecAddress
+    ? string
     : T extends UpdateBtcBalance
     ? boolean
     : T extends WithdrawBtc
@@ -2527,8 +2586,18 @@ export type WorkerResult<T> = T extends Init
     ? boolean
     : T extends UpdateProposalTallies
     ? EventWrapper<Message>[]
+    : T extends PayForPremiumItem
+    ? PayForPremiumItemResponse
+    : T extends SetPremiumItemCost
+    ? void
     : T extends CreateAccountLinkingCode
     ? AccountLinkingCode | undefined
     : T extends ReinstateMissedDailyClaims
     ? boolean
+    : T extends OneSecGetTransferFees
+    ? OneSecTransferFees[]
+    : T extends OneSecForwardEvmToIcp
+    ? OneSecForwardingStatus
+    : T extends OneSecGetForwardingStatus
+    ? OneSecForwardingStatus
     : never;
