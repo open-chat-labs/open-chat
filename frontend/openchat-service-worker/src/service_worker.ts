@@ -298,7 +298,7 @@ function messageText(
     cryptoTransfer: CryptoTransferDetails | undefined,
 ): string {
     if (messageText !== undefined && messageText.length > 0) {
-        return messageText.replace(/@CustomEmoji\(([^)]+)\)/g, (_, p1) => {
+        return messageText.replace(/@(?:CustomEmoji|CE)\(([^)]+)\)/g, (_, p1) => {
             return `:${p1}:`;
         });
     }
