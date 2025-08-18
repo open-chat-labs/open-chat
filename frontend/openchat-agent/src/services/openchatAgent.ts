@@ -67,6 +67,7 @@ import type {
     EnableInviteCodeResponse,
     EventsResponse,
     EventWrapper,
+    EvmChain,
     ExchangeTokenSwapArgs,
     ExploreBotsResponse,
     ExploreChannelsResponse,
@@ -109,6 +110,8 @@ import type {
     MessageContext,
     MinutesOnline,
     MultiUserChatIdentifier,
+    OneSecForwardingStatus,
+    OneSecTransferFees,
     OptionalChatPermissions,
     OptionUpdate,
     PayForDiamondMembershipResponse,
@@ -289,6 +292,7 @@ import { LocalUserIndexClient } from "./localUserIndex/localUserIndex.client";
 import { MarketMakerClient } from "./marketMaker/marketMaker.client";
 import { NnsGovernanceClient } from "./nnsGovernance/nns.governance.client";
 import { NotificationsClient } from "./notifications/notifications.client";
+import { OneSecMinterClient } from "./oneSecMinter/oneSecMinter.client";
 import { OnlineClient } from "./online/online.client";
 import { ProposalsBotClient } from "./proposalsBot/proposalsBot.client";
 import { RegistryClient } from "./registry/registry.client";
@@ -333,6 +337,7 @@ export class OpenChatAgent extends EventTarget {
     private _signInWithEthereumClient: Lazy<SignInWithEthereumClient>;
     private _signInWithSolanaClient: Lazy<SignInWithSolanaClient>;
     private _translationsClient: Lazy<TranslationsClient>;
+    private _oneSecMinterClient: Lazy<OneSecMinterClient>;
 
     constructor(private identity: Identity, private config: AgentConfig) {
         super();
@@ -409,6 +414,9 @@ export class OpenChatAgent extends EventTarget {
         );
         this._translationsClient = new Lazy(
             () => new TranslationsClient(identity, this._agent, config.translationsCanister),
+        );
+        this._oneSecMinterClient = new Lazy(
+            () => new OneSecMinterClient(identity, this._agent, config.oneSecMinterCanister),
         );
     }
 
@@ -4013,6 +4021,32 @@ export class OpenChatAgent extends EventTarget {
 
     getCkbtcMinterWithdrawalInfo(amount: bigint): Promise<CkbtcMinterWithdrawalInfo> {
         return this._ckbtcMinterClient.get().getWithdrawalInfo(amount);
+    }
+
+    oneSecGetTransferFees(): Promise<OneSecTransferFees[]> {
+        return this._oneSecMinterClient.get().getTransferFees();
+    }
+
+    oneSecForwardEvmToIcp(
+        tokenSymbol: string,
+        chain: EvmChain,
+        address: string,
+        receiver: string,
+    ): Promise<OneSecForwardingStatus> {
+        return this._oneSecMinterClient
+            .get()
+            .forwardEvmToIcp(tokenSymbol, chain, address, receiver);
+    }
+
+    oneSecGetForwardingStatus(
+        tokenSymbol: string,
+        chain: EvmChain,
+        address: string,
+        receiver: string,
+    ): Promise<OneSecForwardingStatus> {
+        return this._oneSecMinterClient
+            .get()
+            .getForwardingStatus(tokenSymbol, chain, address, receiver);
     }
 
     generateMagicLink(email: string, sessionKey: Uint8Array): Promise<GenerateMagicLinkResponse> {

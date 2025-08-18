@@ -50,6 +50,9 @@ didc bind ./src/services/ledgerIndex/candid/can.did -t js > ./src/services/ledge
 didc bind ./src/services/nnsGovernance/candid/can.did -t ts > ./src/services/nnsGovernance/candid/types.d.ts
 didc bind ./src/services/nnsGovernance/candid/can.did -t js > ./src/services/nnsGovernance/candid/idl.js
 
+didc bind ./src/services/oneSecMinter/candid/can.did -t ts > ./src/services/oneSecMinter/candid/types.d.ts
+didc bind ./src/services/oneSecMinter/candid/can.did -t js > ./src/services/oneSecMinter/candid/idl.js
+
 didc bind ./src/services/signInWithEmail/candid/can.did -t ts > ./src/services/signInWithEmail/candid/types.d.ts
 didc bind ./src/services/signInWithEmail/candid/can.did -t js > ./src/services/signInWithEmail/candid/idl.js
 
