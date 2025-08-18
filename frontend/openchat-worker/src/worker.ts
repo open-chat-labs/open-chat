@@ -1800,6 +1800,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.generateBtcAddress());
                 break;
 
+            case "generateOneSecAddress":
+                executeThenReply(payload, correlationId, agent.generateOneSecAddress());
+                break;
+
             case "updateBtcBalance":
                 executeThenReply(
                     payload,

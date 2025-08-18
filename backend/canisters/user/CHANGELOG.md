@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Implement `generate_one_sec_address` ([8501](https://github.com/open-chat-labs/open-chat/pull/8501))
+
 ### Changed
 
 - Reduce wasm size by using trimmed down types for voting on proposals ([8490](https://github.com/open-chat-labs/open-chat/pull/8490))

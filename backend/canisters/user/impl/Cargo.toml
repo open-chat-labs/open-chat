@@ -55,6 +55,7 @@ msgpack = { path = "../../../libraries/msgpack" }
 nns_governance_canister = { path = "../../../external_canisters/nns_governance/api" }
 nns_governance_canister_c2c_client = { path = "../../../external_canisters/nns_governance/c2c_client" }
 oc_error_codes = { path = "../../../libraries/error_codes" }
+one_sec_minter_canister_c2c_client = { path = "../../../external_canisters/one_sec_minter/c2c_client" }
 rand = { workspace = true }
 search = { path = "../../../libraries/search" }
 serde = { workspace = true }

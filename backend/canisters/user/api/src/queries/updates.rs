@@ -55,6 +55,7 @@ pub struct SuccessResult {
     pub bots_added_or_updated: Vec<InstalledBotDetails>,
     pub bots_removed: Vec<UserId>,
     pub btc_address: Option<String>,
+    pub one_sec_address: Option<String>,
     pub premium_items: Option<Vec<u32>>,
 }
 

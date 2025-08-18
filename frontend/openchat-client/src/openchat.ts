@@ -360,6 +360,7 @@ import {
     notFoundStore,
     notificationsSupported,
     notificationStatus,
+    oneSecAddress,
     pathContextStore,
     pinnedChatsStore,
     pinNumberFailureStore,
@@ -6343,6 +6344,9 @@ export class OpenChat {
         if (chatsResponse.bitcoinAddress !== undefined) {
             bitcoinAddress.set(chatsResponse.bitcoinAddress);
         }
+        if (chatsResponse.oneSecAddress !== undefined) {
+            oneSecAddress.set(chatsResponse.oneSecAddress);
+        }
     }
 
     static setGlobalStateStores(
@@ -7568,6 +7572,18 @@ export class OpenChat {
             kind: "generateBtcAddress",
         });
         bitcoinAddress.set(address);
+        return address;
+    }
+
+    async getOneSecAddress(): Promise<string> {
+        const storeValue = get(oneSecAddress);
+        if (storeValue !== undefined) {
+            return Promise.resolve(storeValue);
+        }
+        const address = await this.#sendRequest({
+            kind: "generateOneSecAddress",
+        });
+        oneSecAddress.set(address);
         return address;
     }
 

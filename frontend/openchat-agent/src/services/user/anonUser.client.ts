@@ -131,6 +131,7 @@ export class AnonUserClient {
             },
             bots: new Map(),
             bitcoinAddress: undefined,
+            oneSecAddress: undefined,
             premiumItems: new Set(),
         });
     }
@@ -508,6 +509,10 @@ export class AnonUserClient {
     }
 
     generateBtcAddress(): Promise<string> {
+        throw new AnonymousOperationError();
+    }
+
+    generateOneSecAddress(): Promise<string> {
         throw new AnonymousOperationError();
     }
 
