@@ -29,7 +29,7 @@
     });
 
     function getCustomEmoji(reaction: string): CustomEmoji | undefined {
-        const match = reaction.match(/^@CustomEmoji\(([\w-]+)\)$/);
+        const match = reaction.match(/^@(?:CustomEmoji|CE)\(([\w-]+)\)$/);
         const code = match ? match[1] : undefined;
         return code ? customEmojis.get(code) : undefined;
     }
