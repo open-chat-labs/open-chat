@@ -43,6 +43,7 @@ pub struct SuccessResult {
     pub message_activity_summary: MessageActivitySummary,
     pub bots: Vec<InstalledBotDetails>,
     pub btc_address: Option<String>,
+    pub one_sec_address: Option<String>,
     pub premium_items: Vec<u32>,
 }
 

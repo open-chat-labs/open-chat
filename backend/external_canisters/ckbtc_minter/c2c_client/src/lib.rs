@@ -1,6 +1,8 @@
 use canister_client::generate_candid_c2c_call;
 use ckbtc_minter_canister::*;
 
+pub use ckbtc_minter_canister::CKBTC_MINTER_CANISTER_ID;
+
 // Queries
 
 // Updates
