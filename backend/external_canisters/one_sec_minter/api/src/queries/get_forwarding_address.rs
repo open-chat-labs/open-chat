@@ -1,2 +1,4 @@
-pub type Args = icrc_ledger_types::icrc1::account::Account;
+use crate::IcpAccount;
+
+pub type Args = IcpAccount;
 pub type Response = Result<String, String>;

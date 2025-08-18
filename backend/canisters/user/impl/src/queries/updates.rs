@@ -53,7 +53,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         .map(|a| a.value.clone());
     let one_sec_address_if_updated = state
         .data
-        .btc_address
+        .one_sec_address
         .as_ref()
         .filter(|a| a.timestamp > updates_since)
         .map(|a| a.value.clone());
