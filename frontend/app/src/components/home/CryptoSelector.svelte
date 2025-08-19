@@ -78,21 +78,28 @@
 
         {#snippet menuItems()}
             <div>
-                <Menu centered>
+                <div onclick={searchClicked} class="search">
+                    <Search
+                        placeholder={i18nKey("search")}
+                        fill
+                        autofocus
+                        bind:searching
+                        bind:searchTerm></Search>
+                </div>
+                <Menu cls="crypto_selector" centered>
                     <!-- svelte-ignore a11y_click_events_have_key_events -->
                     <!-- svelte-ignore a11y_no_static_element_interactions -->
-                    <div onclick={searchClicked} class="search">
+                    <!-- <div onclick={searchClicked} class="search">
                         <Search
                             placeholder={i18nKey("search")}
                             fill
                             autofocus
                             bind:searching
                             bind:searchTerm></Search>
-                    </div>
+                    </div> -->
                     {#if filteredTokens.length === 0}
                         <div class="no_match">
-                            <Translatable resourceKey={i18nKey("No matching tokens")}
-                            ></Translatable>
+                            <Translatable resourceKey={i18nKey("noMatchingTokens")}></Translatable>
                         </div>
                     {:else}
                         {#each filteredTokens as token}
@@ -131,6 +138,12 @@
         transform-origin: 50%;
     }
 
+    :global(.crypto_selector.menu) {
+        border-top: none;
+        border-radius: 0 0 var(--menu-rd) var(--menu-rd);
+        max-height: calc(var(--override-height, 80vh) - 67px);
+    }
+
     .token-selector-trigger {
         display: flex;
         cursor: pointer;
@@ -158,11 +171,20 @@
     }
 
     .no_match {
-        padding: $sp3;
+        padding: $sp3 $sp4;
         color: var(--txt-light);
     }
 
     .search {
+        background-color: var(--menu-bg);
+        border: var(--bw) solid var(--menu-bd);
+        border-radius: var(--menu-rd) var(--menu-rd) 0 0;
+        border-bottom: none;
         padding: $sp3;
+        width: toRem(250);
+
+        @include mobile() {
+            width: 70vw;
+        }
     }
 </style>
