@@ -7,6 +7,7 @@
     } from "openchat-client";
     import {
         BTC_SYMBOL,
+        CKBTC_SYMBOL,
         cryptoBalanceStore,
         cryptoLookup,
         currentUserIdStore,
@@ -29,7 +30,7 @@
     import ModalContent from "../../ModalContent.svelte";
     import Translatable from "../../Translatable.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
-    import BitcoinNetworkSelector from "../BitcoinNetworkSelector.svelte";
+    import NetworkSelector from "../NetworkSelector.svelte";
     import TokenInput from "../TokenInput.svelte";
     import AccountSelector from "./AccountSelector.svelte";
     import SaveAccount from "./SaveAccount.svelte";
@@ -237,7 +238,7 @@
                 <Scanner onData={(data) => (targetAccount = data)} bind:this={scanner} />
 
                 {#if isBtc}
-                    <BitcoinNetworkSelector bind:selectedNetwork={selectedBtcNetwork} />
+                    <NetworkSelector networks={[BTC_SYMBOL, CKBTC_SYMBOL]} bind:selectedNetwork={selectedBtcNetwork} />
                 {/if}
 
                 <div class="token-input">

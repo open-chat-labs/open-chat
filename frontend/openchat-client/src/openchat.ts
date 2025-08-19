@@ -663,6 +663,7 @@ export class OpenChat {
     #serverVideoCallsInProgress: ChatMap<bigint> = new ChatMap();
     #locale!: string;
     #vapidPublicKey: string;
+    #getBtcAddressPromise: Promise<string> | undefined = undefined;
 
     currentAirdropChannel: AirdropChannelDetails | undefined = undefined;
 
@@ -7585,9 +7586,15 @@ export class OpenChat {
         if (storeValue !== undefined) {
             return Promise.resolve(storeValue);
         }
-        const address = await this.#sendRequest({
+        if (this.#getBtcAddressPromise !== undefined) {
+            return this.#getBtcAddressPromise;
+        }
+        this.#getBtcAddressPromise = this.#sendRequest({
             kind: "generateBtcAddress",
         });
+        const address = await this.#getBtcAddressPromise.finally(
+            () => (this.#getBtcAddressPromise = undefined),
+        );
         bitcoinAddress.set(address);
         return address;
     }
