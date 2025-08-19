@@ -1,6 +1,5 @@
 <script lang="ts">
     import {
-        bitcoinAddress,
         BTC_SYMBOL,
         CKBTC_SYMBOL,
         cryptoLookup,
@@ -45,6 +44,9 @@
             return [];
         }
     });
+    let btcAddress = $state<string | undefined>();
+
+    // Whenever the networks list changes, autoselect the first one
     $effect(() => {
         selectedNetwork = networks[0];
     });
@@ -53,20 +55,20 @@
         if (tokenDetails.symbol === ICP_SYMBOL) {
             return $currentUserStore.cryptoAccount;
         } else if (tokenDetails.symbol === BTC_SYMBOL && selectedNetwork === BTC_SYMBOL) {
-            return $bitcoinAddress;
+            return btcAddress;
         } else {
             return $currentUserIdStore;
         }
     });
 
-    // Internally, this will fetch the BTC address then update the `btcAddress` store
+    // We use `Lazy` to ensure this is only called once
     const btcAddressPromise = new Lazy(() => client.getBtcAddress());
 
     let error = $state();
     $effect(() => {
         if (account === undefined) {
             if (selectedNetwork === BTC_SYMBOL) {
-                btcAddressPromise.get().catch((e) => error = e);
+                btcAddressPromise.get().then((addr) => btcAddress = addr).catch((e) => error = e);
             }
         }
     });
