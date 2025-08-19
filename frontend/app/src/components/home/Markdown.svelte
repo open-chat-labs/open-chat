@@ -73,7 +73,7 @@
     }
 
     function replaceEmojis(text: string): string {
-        return text.replace(/@CustomEmoji\(([^)]+)\)/g, (match, p1) => {
+        return text.replace(/@(?:CustomEmoji|CE)\(([^)]+)\)/g, (match, p1) => {
             const emoji = customEmojis.get(p1);
             if (emoji !== undefined) {
                 return `<custom-emoji data-id="${emoji.code}"></custom-emoji>`;

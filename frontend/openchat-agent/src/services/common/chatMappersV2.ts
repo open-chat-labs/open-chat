@@ -11,6 +11,7 @@ import type {
     ChannelSummary,
     ChatEvent,
     ChatIdentifier,
+    ChatMembership,
     ChatPermissions,
     ClaimPrizeResponse,
     CommandArg,
@@ -124,9 +125,9 @@ import {
     botCommunityPermissionList,
     chatIdentifiersEqual,
     codeToText,
-    emptyChatMetrics,
     isAccountIdentifierValid,
     messagePermissionsList,
+    nullMembership,
     toBigInt32,
     toBigInt64,
 } from "openchat-shared";
@@ -199,6 +200,7 @@ import type {
     GroupCanisterGroupChatSummary as TGroupCanisterGroupChatSummary,
     GroupCanisterThreadDetails as TGroupCanisterThreadDetails,
     GroupMember as TGroupMember,
+    GroupMembership as TGroupMembership,
     GroupPermissionRole as TGroupPermissionRole,
     GroupPermissions as TGroupPermissions,
     GroupRole as TGroupRole,
@@ -2134,22 +2136,33 @@ export function groupChatSummary(value: TGroupCanisterGroupChatSummary): GroupCh
         level: "group",
         eventsTTL: value.events_ttl,
         eventsTtlLastUpdated: value.events_ttl_last_updated,
-        membership: {
-            joined: value.joined,
-            role: memberRole(value.role),
-            mentions: [],
-            latestThreads: [],
-            myMetrics: chatMetrics(value.my_metrics),
-            notificationsMuted: value.notifications_muted,
-            readByMeUpTo: latestMessage?.event.messageIndex,
-            archived: false,
-            rulesAccepted: value.rules_accepted,
-            lapsed: value.membership?.lapsed ?? false,
-        },
+        membership: mapGroupMembership(value.membership, latestMessage),
         localUserIndex: principalBytesToString(value.local_user_index_canister_id),
         isInvited: false, // this is only applicable when we are not a member
         messagesVisibleToNonMembers: value.messages_visible_to_non_members,
         verified: value.verified,
+    };
+}
+
+function mapGroupMembership(
+    value: TGroupMembership | undefined,
+    latestMessage: EventWrapper<Message> | undefined,
+): ChatMembership {
+    if (value === undefined) {
+        return nullMembership();
+    }
+
+    return {
+        joined: value.joined,
+        role: memberRole(value.role),
+        mentions: mentions(value.mentions),
+        latestThreads: value.latest_threads.map(threadSyncDetails),
+        myMetrics: chatMetrics(value.my_metrics),
+        notificationsMuted: value.notifications_muted,
+        readByMeUpTo: latestMessage?.event.messageIndex,
+        archived: false,
+        rulesAccepted: value.rules_accepted,
+        lapsed: value.lapsed ?? false,
     };
 }
 
@@ -2254,22 +2267,7 @@ export function communityChannelSummary(
         eventsTTL: value.events_ttl,
         eventsTtlLastUpdated: value.events_ttl_last_updated,
         videoCallInProgress: mapOptional(value.video_call_in_progress, videoCallInProgress),
-        membership: {
-            joined: mapOptional(value.membership, (m) => m.joined) ?? BigInt(0),
-            notificationsMuted:
-                mapOptional(value.membership, (m) => m.notifications_muted) ?? false,
-            role: mapOptional(value.membership, (m) => memberRole(m.role)) ?? ROLE_NONE,
-            myMetrics:
-                mapOptional(value.membership, (m) => chatMetrics(m.my_metrics)) ??
-                emptyChatMetrics(),
-            readByMeUpTo: latestMessage?.event.messageIndex,
-            latestThreads:
-                mapOptional(value.membership, (m) => m.latest_threads.map(threadSyncDetails)) ?? [],
-            mentions: mapOptional(value.membership, (m) => mentions(m.mentions)) ?? [],
-            archived: false,
-            rulesAccepted: mapOptional(value.membership, (m) => m.rules_accepted) ?? false,
-            lapsed: mapOptional(value.membership, (m) => m.lapsed) ?? false,
-        },
+        membership: mapGroupMembership(value.membership, latestMessage),
         isInvited: value.is_invited ?? false,
         messagesVisibleToNonMembers: value.messages_visible_to_non_members,
         externalUrl: value.external_url,

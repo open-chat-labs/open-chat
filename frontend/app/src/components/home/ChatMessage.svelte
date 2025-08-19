@@ -296,7 +296,7 @@
         if (selected.kind === "native") {
             toggleReaction(false, selected.unicode);
         } else {
-            toggleReaction(false, `@CustomEmoji(${selected.code})`);
+            toggleReaction(false, `@CE(${selected.code})`);
         }
     }
 
