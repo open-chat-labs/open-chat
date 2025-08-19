@@ -78,6 +78,8 @@
 
         {#snippet menuItems()}
             <div>
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div onclick={searchClicked} class="search">
                     <Search
                         placeholder={i18nKey("search")}
@@ -87,16 +89,6 @@
                         bind:searchTerm></Search>
                 </div>
                 <Menu cls="crypto_selector" centered>
-                    <!-- svelte-ignore a11y_click_events_have_key_events -->
-                    <!-- svelte-ignore a11y_no_static_element_interactions -->
-                    <!-- <div onclick={searchClicked} class="search">
-                        <Search
-                            placeholder={i18nKey("search")}
-                            fill
-                            autofocus
-                            bind:searching
-                            bind:searchTerm></Search>
-                    </div> -->
                     {#if filteredTokens.length === 0}
                         <div class="no_match">
                             <Translatable resourceKey={i18nKey("noMatchingTokens")}></Translatable>
