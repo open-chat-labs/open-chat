@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Reduce wasm size by using trimmed down types for voting on proposals ([8490](https://github.com/open-chat-labs/open-chat/pull/8490))
+- Skip approval because OneSec minter canister is the minting account ([8515](https://github.com/open-chat-labs/open-chat/pull/8515))
 
 ### Fixed
 
