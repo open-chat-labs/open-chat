@@ -74,16 +74,6 @@
     });
 
     let networkName = $derived(selectedNetwork ?? tokenDetails.symbol);
-    let logo = $derived.by(() => {
-        switch (selectedNetwork) {
-            case BTC_SYMBOL:
-                return "/assets/btc_logo.svg";
-            case CKBTC_SYMBOL:
-                return "/assets/ckbtc_nobackground.svg";
-            default:
-                return tokenDetails.logo;
-        }
-    });
 
     const btcDepositFeePromise = new Lazy(() => client.getCkbtcMinterDepositInfo()
         .then((depositInfo) => `${client.formatTokens(depositInfo.depositFee, 8)} BTC`));
@@ -103,7 +93,7 @@
             {/if}
         </div>
     {:else}
-        <QRCode {fullWidthOnMobile} text={account} size={qrSize} {logo} {border} />
+        <QRCode {fullWidthOnMobile} text={account} size={qrSize} logo={tokenDetails.logo} {border} />
     {/if}
     <p class="your-account" class:centered>
         <Translatable resourceKey={i18nKey("tokenTransfer.yourAccount", { token: networkName })} />
