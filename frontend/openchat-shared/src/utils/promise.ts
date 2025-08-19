@@ -1,7 +1,7 @@
 export type WaitAllResult<T> = {
-    success: T[],
-    errors: unknown[],
-}
+    success: T[];
+    errors: unknown[];
+};
 
 export async function waitAll<T>(promises: Promise<T>[]): Promise<WaitAllResult<T>> {
     const results = await Promise.allSettled(promises);
@@ -19,5 +19,5 @@ export async function waitAll<T>(promises: Promise<T>[]): Promise<WaitAllResult<
     return {
         success,
         errors,
-    }
+    };
 }

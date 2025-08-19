@@ -1,16 +1,16 @@
 <script lang="ts">
-    import { BTC_SYMBOL, CKBTC_SYMBOL } from "openchat-client";
     import MultiToggle from "@components/MultiToggle.svelte";
     import Translatable from "@components/Translatable.svelte";
     import { i18nKey } from "@i18n/i18n";
 
     type Props = {
+        networks: string[];
         selectedNetwork: string;
     };
 
-    let { selectedNetwork = $bindable(BTC_SYMBOL) }: Props = $props();
+    let { networks, selectedNetwork = $bindable() }: Props = $props();
 
-    const networkOptions = [BTC_SYMBOL, CKBTC_SYMBOL].map((n) => ({ id: n, label: n }));
+    const networkOptions = networks.map((n) => ({ id: n, label: n }));
 </script>
 
 <div class="network-selector">
