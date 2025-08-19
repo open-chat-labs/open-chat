@@ -59,6 +59,7 @@
         }
     });
 
+    // Internally, this will fetch the BTC address then update the `btcAddress` store
     const btcAddressPromise = new Lazy(() => client.getBtcAddress());
 
     let error = $state();
