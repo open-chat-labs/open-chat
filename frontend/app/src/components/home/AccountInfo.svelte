@@ -70,7 +70,7 @@
         }
     });
 
-    let addressName = $derived(selectedNetwork ?? tokenDetails.symbol);
+    let networkName = $derived(selectedNetwork ?? tokenDetails.symbol);
     let logo = $derived.by(() => {
         switch (selectedNetwork) {
             case BTC_SYMBOL:
@@ -103,7 +103,7 @@
         <QRCode {fullWidthOnMobile} text={account} size={qrSize} {logo} {border} />
     {/if}
     <p class="your-account" class:centered>
-        <Translatable resourceKey={i18nKey("tokenTransfer.yourAccount", { token: addressName })} />
+        <Translatable resourceKey={i18nKey("tokenTransfer.yourAccount", { token: networkName })} />
     </p>
     {#if account === undefined}
         {#if error !== undefined}
