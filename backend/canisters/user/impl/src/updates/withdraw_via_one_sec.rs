@@ -1,9 +1,8 @@
 use crate::guards::caller_is_owner;
-use crate::updates::approve_transfer::approve_transfer_impl;
 use crate::{execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use constants::{MINUTE_IN_MS, ONE_SEC_MINTER_CANISTER_ID};
+use constants::ONE_SEC_MINTER_CANISTER_ID;
 use event_store_types::EventBuilder;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
 use oc_error_codes::OCErrorCode;
@@ -25,19 +24,8 @@ async fn withdraw_via_one_sec_impl(args: Args) -> OCResult {
         _ => return Err(OCErrorCode::CurrencyNotSupported.into()),
     };
 
-    // Approve the OneSec minter to transfer the funds
-    approve_transfer_impl(user_canister::approve_transfer::Args {
-        spender: ONE_SEC_MINTER_CANISTER_ID.into(),
-        ledger_canister_id: args.ledger_canister_id,
-        amount: args.amount,
-        expires_in: Some(5 * MINUTE_IN_MS),
-        pin: args.pin,
-    })
-    .await?;
-
     let canister_id = read_state(|state| state.env.canister_id());
 
-    // Instruct the OneSec minter to make the transfer
     match one_sec_minter_canister_c2c_client::transfer_icp_to_evm(
         ONE_SEC_MINTER_CANISTER_ID,
         &one_sec_minter_canister::transfer_icp_to_evm::Args {
@@ -52,8 +40,7 @@ async fn withdraw_via_one_sec_impl(args: Args) -> OCResult {
     .await?
     {
         one_sec_minter_canister::transfer_icp_to_evm::Response::Accepted(_) => {}
-        // TODO find out what this means
-        one_sec_minter_canister::transfer_icp_to_evm::Response::Fetching(_) => {}
+        one_sec_minter_canister::transfer_icp_to_evm::Response::Fetching(_) => unreachable!(),
         one_sec_minter_canister::transfer_icp_to_evm::Response::Failed(failed) => {
             return Err(OCErrorCode::TransferFailed.with_message(&failed.error));
         }
