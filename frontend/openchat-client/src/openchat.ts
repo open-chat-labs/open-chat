@@ -124,7 +124,6 @@ import {
     getContentAsFormattedText,
     getDisplayDate,
     getEmailSignInSession,
-    getOrStartPromise,
     getTimeUntilSessionExpiryMs,
     type GlobalSelectedChatRoute,
     type GrantedBotPermissions,
