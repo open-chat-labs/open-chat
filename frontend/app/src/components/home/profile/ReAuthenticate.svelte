@@ -86,6 +86,7 @@
                     provider,
                 });
             } catch (err) {
+                console.error("An error occurred doing passkey auth: ", err);
                 error = "identity.failure.loginApprover";
             }
         } else if (provider === AuthProvider.EMAIL) {
