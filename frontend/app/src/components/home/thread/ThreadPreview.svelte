@@ -1,4 +1,7 @@
 <script lang="ts">
+    import Spinner from "@src/components/icons/Spinner.svelte";
+    import Tooltip from "@src/components/tooltip/Tooltip.svelte";
+    import { toastStore } from "@src/stores/toast";
     import {
         allUsersStore,
         AvatarSize,
@@ -17,6 +20,7 @@
     import page from "page";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
+    import EyeOffIcon from "svelte-material-icons/EyeOff.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { pop } from "../../../utils/transition";
     import Avatar from "../../Avatar.svelte";
@@ -36,6 +40,7 @@
 
     let { thread, observer }: Props = $props();
 
+    let unfollowing = $state(false);
     let missingMessages = $derived(thread.totalReplies - thread.latestReplies.length);
     let threadRootMessageIndex = $derived(thread.rootMessage.event.messageIndex);
     let chat = $derived($chatSummariesStore.get(thread.chatId) as MultiUserChat | undefined);
@@ -102,6 +107,21 @@
             }?open=true`,
         );
     }
+
+    function unfollow(e: Event) {
+        e.preventDefault();
+        e.stopPropagation();
+        unfollowing = true;
+        client
+            .followThread(thread.chatId, thread.rootMessage.event, false)
+            .then((success) => {
+                if (!success) {
+                    toastStore.showFailureToast(i18nKey("unfollowThreadFailed"));
+                    unfollowing = false;
+                }
+            })
+            .catch(() => (unfollowing = false));
+    }
 </script>
 
 {#if chat !== undefined}
@@ -132,6 +152,22 @@
                                 suppressLinks />
                         </div>
                     </div>
+                    <Tooltip position={"bottom"} align={"middle"}>
+                        <!-- svelte-ignore a11y_no_static_element_interactions -->
+                        <!-- svelte-ignore a11y_click_events_have_key_events -->
+                        <div onclick={unfollow} class="unfollow">
+                            {#if !unfollowing}
+                                <EyeOffIcon size={"1.2em"} color={"var(--icon-inverted-txt)"} />
+                            {:else}
+                                <Spinner
+                                    backgroundColour={"rgba(0,0,0,0.3)"}
+                                    foregroundColour={"var(--button-spinner)"} />
+                            {/if}
+                        </div>
+                        {#snippet popupTemplate()}
+                            <Translatable resourceKey={i18nKey("unfollowThread")}></Translatable>
+                        {/snippet}
+                    </Tooltip>
                     {#if unreadCount > 0}
                         <div
                             in:pop={{ duration: 1500 }}
@@ -304,5 +340,9 @@
             background-color: var(--unread-mute);
             text-shadow: none;
         }
+    }
+
+    .unfollow {
+        padding: 0 $sp2;
     }
 </style>
