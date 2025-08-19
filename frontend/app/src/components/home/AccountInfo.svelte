@@ -61,14 +61,11 @@
         }
     });
 
-    // We use `Lazy` to ensure this is only called once
-    const btcAddressPromise = new Lazy(() => client.getBtcAddress());
-
     let error = $state();
     $effect(() => {
         if (account === undefined) {
             if (selectedNetwork === BTC_SYMBOL) {
-                btcAddressPromise.get().then((addr) => btcAddress = addr).catch((e) => error = e);
+                client.getBtcAddress().then((addr) => btcAddress = addr).catch((e) => error = e);
             }
         }
     });

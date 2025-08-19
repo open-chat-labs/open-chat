@@ -124,6 +124,7 @@ import {
     getContentAsFormattedText,
     getDisplayDate,
     getEmailSignInSession,
+    getOrStartPromise,
     getTimeUntilSessionExpiryMs,
     type GlobalSelectedChatRoute,
     type GrantedBotPermissions,
@@ -7563,16 +7564,19 @@ export class OpenChat {
         });
     }
 
-    async getBtcAddress(): Promise<string> {
+    getBtcAddress(): Promise<string> {
         const storeValue = get(bitcoinAddress);
         if (storeValue !== undefined) {
             return Promise.resolve(storeValue);
         }
-        const address = await this.#sendRequest({
-            kind: "generateBtcAddress",
-        });
-        bitcoinAddress.set(address);
-        return address;
+        const func = () =>
+            this.#sendRequest({
+                kind: "generateBtcAddress",
+            }).then((address) => {
+                bitcoinAddress.set(address);
+                return address;
+            });
+        return getOrStartPromise(func, "getBtcAddress");
     }
 
     async getOneSecAddress(): Promise<string> {
