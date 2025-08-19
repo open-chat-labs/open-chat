@@ -664,6 +664,7 @@ export class OpenChat {
     #serverVideoCallsInProgress: ChatMap<bigint> = new ChatMap();
     #locale!: string;
     #vapidPublicKey: string;
+    #getBtcAddressPromise: Promise<string> | undefined = undefined;
 
     currentAirdropChannel: AirdropChannelDetails | undefined = undefined;
 
@@ -7564,19 +7565,22 @@ export class OpenChat {
         });
     }
 
-    getBtcAddress(): Promise<string> {
+    async getBtcAddress(): Promise<string> {
         const storeValue = get(bitcoinAddress);
         if (storeValue !== undefined) {
             return Promise.resolve(storeValue);
         }
-        const func = () =>
-            this.#sendRequest({
-                kind: "generateBtcAddress",
-            }).then((address) => {
-                bitcoinAddress.set(address);
-                return address;
-            });
-        return getOrStartPromise(func, "getBtcAddress");
+        if (this.#getBtcAddressPromise !== undefined) {
+            return this.#getBtcAddressPromise;
+        }
+        this.#getBtcAddressPromise = this.#sendRequest({
+            kind: "generateBtcAddress",
+        });
+        const address = await this.#getBtcAddressPromise.finally(
+            () => (this.#getBtcAddressPromise = undefined),
+        );
+        bitcoinAddress.set(address);
+        return address;
     }
 
     async getOneSecAddress(): Promise<string> {
