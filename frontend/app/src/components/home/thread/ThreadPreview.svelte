@@ -1,5 +1,6 @@
 <script lang="ts">
     import Spinner from "@src/components/icons/Spinner.svelte";
+    import Tooltip from "@src/components/tooltip/Tooltip.svelte";
     import { toastStore } from "@src/stores/toast";
     import {
         allUsersStore,
@@ -151,17 +152,22 @@
                                 suppressLinks />
                         </div>
                     </div>
-                    <!-- svelte-ignore a11y_click_events_have_key_events -->
-                    <!-- svelte-ignore a11y_no_static_element_interactions -->
-                    <div onclick={unfollow} class="unfollow">
-                        {#if !unfollowing}
-                            <EyeOffIcon size={"1.2em"} color={"var(--icon-inverted-txt)"} />
-                        {:else}
-                            <Spinner
-                                backgroundColour={"rgba(0,0,0,0.3)"}
-                                foregroundColour={"var(--button-spinner)"} />
-                        {/if}
-                    </div>
+                    <Tooltip position={"bottom"} align={"middle"}>
+                        <!-- svelte-ignore a11y_no_static_element_interactions -->
+                        <!-- svelte-ignore a11y_click_events_have_key_events -->
+                        <div onclick={unfollow} class="unfollow">
+                            {#if !unfollowing}
+                                <EyeOffIcon size={"1.2em"} color={"var(--icon-inverted-txt)"} />
+                            {:else}
+                                <Spinner
+                                    backgroundColour={"rgba(0,0,0,0.3)"}
+                                    foregroundColour={"var(--button-spinner)"} />
+                            {/if}
+                        </div>
+                        {#snippet popupTemplate()}
+                            <Translatable resourceKey={i18nKey("unfollowThread")}></Translatable>
+                        {/snippet}
+                    </Tooltip>
                     {#if unreadCount > 0}
                         <div
                             in:pop={{ duration: 1500 }}
