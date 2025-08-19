@@ -86,7 +86,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         }
         UserEvent::EventStoreEvent(event) => state.data.event_store_client.push(event),
         UserEvent::Notification(notification) => {
-            state.data.handle_notification(*notification, state.env.canister_id(), **now);
+            state.handle_notification(*notification, state.env.canister_id(), **now);
         }
     }
 }

@@ -107,7 +107,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             let this_canister_id = state.env.canister_id();
             if ev.notification_canister == this_canister_id {
                 // This local_user_index canister has been nominated to notify the bot
-                state.data.push_bot_notification(
+                state.push_bot_notification(
                     BotNotification {
                         event: BotEvent::Lifecycle(BotLifecycleEvent::Registered(BotRegisteredEvent {
                             bot_id: ev.bot_id,
