@@ -7617,6 +7617,38 @@ export class OpenChat {
         return response;
     }
 
+    async withdrawViaOneSec(
+        ledger: string,
+        tokenSymbol: string,
+        chain: EvmChain,
+        address: string,
+        amount: bigint,
+    ): Promise<WithdrawBtcResponse> {
+        let pin: string | undefined = undefined;
+
+        if (pinNumberRequiredStore.value) {
+            pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
+        }
+
+        const response = await this.#sendRequest({
+            kind: "withdrawViaOneSec",
+            ledger,
+            tokenSymbol,
+            chain,
+            address,
+            amount,
+            pin,
+        });
+
+        if (response.kind === "error") {
+            const pinNumberFailure = pinNumberFailureFromError(response);
+            if (pinNumberFailure !== undefined) {
+                pinNumberFailureStore.set(pinNumberFailure);
+            }
+        }
+        return response;
+    }
+
     async #updateBtcBalance(address: string): Promise<void> {
         await this.#sendRequest({
             kind: "updateBtcBalance",
