@@ -52,8 +52,7 @@ async fn withdraw_via_one_sec_impl(args: Args) -> OCResult {
     .await?
     {
         one_sec_minter_canister::transfer_icp_to_evm::Response::Accepted(_) => {}
-        // TODO find out what this means
-        one_sec_minter_canister::transfer_icp_to_evm::Response::Fetching(_) => {}
+        one_sec_minter_canister::transfer_icp_to_evm::Response::Fetching(_) => unreachable!(),
         one_sec_minter_canister::transfer_icp_to_evm::Response::Failed(failed) => {
             return Err(OCErrorCode::TransferFailed.with_message(&failed.error));
         }
