@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1872](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1872-local_user_index)] - 2025-08-20
+
 ### Changed
 
 - Updated formatting for the native notifications pushed for group/community/channel events ([8485](https://github.com/open-chat-labs/open-chat/pull/8485))
