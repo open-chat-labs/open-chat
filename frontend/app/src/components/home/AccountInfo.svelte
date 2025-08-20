@@ -85,7 +85,7 @@
     });
 
     let tokenName = $derived.by(() => {
-        if (selectedNetwork === CKBTC_SYMBOL) return CKBTC_SYMBOL;
+        if (isBtc) return selectedNetwork;
         if (selectedNetwork !== undefined) {
             return $rtlStore
                 ? `(${selectedNetwork}) ${tokenDetails.symbol}`
