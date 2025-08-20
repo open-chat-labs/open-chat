@@ -1,0 +1,29 @@
+{
+    "name": "component-lib",
+    "version": "1.0.0",
+    "main": "./src/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "import": "./src/index.ts",
+            "types": "./dist/index.d.ts"
+        }
+    },
+    "type": "module",
+    "files": [
+        "src",
+        "dist"
+    ],
+    "scripts": {
+        "build": "tsc --emitDeclarationOnly"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "description": "",
+    "devDependencies": {
+        "@tsconfig/svelte": "^5.0.4",
+        "svelte": "^5.38.1",
+        "typescript": "^5.9.2"
+    }
+}

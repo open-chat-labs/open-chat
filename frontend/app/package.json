@@ -84,6 +84,7 @@
         "md5": "^2.3.0",
         "openchat-client": "*",
         "openchat-worker": "*",
+        "component-lib": "*",
         "page": "^1.11.6",
         "peerjs": "^1.4.7",
         "rollbar": "^2.26.2",

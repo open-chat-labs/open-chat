@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Button } from "component-lib";
     import { onMount } from "svelte";
     import { currentTheme } from "../theme/themes";
     import { darkenHexColour } from "../theme/utils";
@@ -44,6 +45,8 @@
         }
     }
 </script>
+
+<Button>This is from another project</Button>
 
 <button
     style={`--height: ${height}; --width: ${width}; --darkened-danger: ${darkenedDanger}`}
