@@ -1,10 +1,13 @@
 <script lang="ts">
     import {
+        ARBITRUM_NETWORK,
+        BASE_NETWORK,
         BTC_SYMBOL,
         CKBTC_SYMBOL,
         cryptoLookup,
         currentUserIdStore,
         currentUserStore,
+        ETHEREUM_NETWORK,
         ICP_SYMBOL,
         Lazy,
         OpenChat,
@@ -36,15 +39,20 @@
     const client = getContext<OpenChat>("client");
 
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
-    let selectedNetwork = $state<string | undefined>(undefined);
+    let selectedNetwork = $state<string | undefined>();
+    let isBtcNetwork = $derived(selectedNetwork === BTC_SYMBOL);
+    let isOneSec = $derived(tokenDetails.oneSecEnabled);
     let networks = $derived.by(() => {
-        if (tokenDetails.symbol === BTC_SYMBOL) {
+        if (isBtcNetwork) {
             return [BTC_SYMBOL, CKBTC_SYMBOL];
+        } else if (isOneSec) {
+            return [ETHEREUM_NETWORK, ARBITRUM_NETWORK, BASE_NETWORK];
         } else {
             return [];
         }
     });
     let btcAddress = $state<string | undefined>();
+    let oneSecAddress = $state<string | undefined>();
 
     // Whenever the networks list changes, autoselect the first one
     $effect(() => {
@@ -54,8 +62,10 @@
     let account = $derived.by(() => {
         if (tokenDetails.symbol === ICP_SYMBOL) {
             return $currentUserStore.cryptoAccount;
-        } else if (tokenDetails.symbol === BTC_SYMBOL && selectedNetwork === BTC_SYMBOL) {
+        } else if (isBtcNetwork) {
             return btcAddress;
+        } else if (isOneSec) {
+            return oneSecAddress;
         } else {
             return $currentUserIdStore;
         }
@@ -64,8 +74,10 @@
     let error = $state();
     $effect(() => {
         if (account === undefined) {
-            if (selectedNetwork === BTC_SYMBOL) {
+            if (isBtcNetwork) {
                 client.getBtcAddress().then((addr) => btcAddress = addr).catch((e) => error = e);
+            } else if (isOneSec) {
+                client.getOneSecAddress().then((addr) => oneSecAddress = addr).catch(e => error = e);
             }
         }
     });

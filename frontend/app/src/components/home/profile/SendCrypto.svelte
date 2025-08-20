@@ -1,17 +1,21 @@
 <script lang="ts">
     import type {
         CkbtcMinterWithdrawalInfo,
+        EvmChain,
         NamedAccount,
         OpenChat,
         ResourceKey,
     } from "openchat-client";
     import {
+        ARBITRUM_NETWORK,
+        BASE_NETWORK,
         BTC_SYMBOL,
         CKBTC_SYMBOL,
         cryptoBalanceStore,
         cryptoLookup,
         currentUserIdStore,
         currentUserStore,
+        ETHEREUM_NETWORK,
         iconSize,
         ICP_SYMBOL,
         mobileWidth,
@@ -66,16 +70,28 @@
         tokenDetails?.symbol === ICP_SYMBOL ? $currentUserStore.cryptoAccount : $currentUserIdStore,
     );
     let symbol = $derived(tokenDetails.symbol);
-    let selectedBtcNetwork = $state(BTC_SYMBOL);
+    let selectedNetwork = $state<string | undefined>();
     let isBtc = $derived(symbol === BTC_SYMBOL);
-    let isBtcNetwork = $derived(isBtc && selectedBtcNetwork === BTC_SYMBOL);
+    let isBtcNetwork = $derived(selectedNetwork === BTC_SYMBOL);
+    let isOneSec = $derived(tokenDetails.oneSecEnabled);
+    let networks = $derived.by(() => {
+        if (isBtcNetwork) {
+            return [BTC_SYMBOL, CKBTC_SYMBOL];
+        } else if (isOneSec) {
+            return [ETHEREUM_NETWORK, ARBITRUM_NETWORK, BASE_NETWORK];
+        } else {
+            return [];
+        }
+    });
     let transferFees = $derived(tokenDetails?.transferFee ?? 0n);
-    let targetAccountValid = $derived(
-        targetAccount.length > 0 && targetAccount !== account && isBtcNetwork
-            ? targetAccount.length >= 14
-            : isPrincipalValid(targetAccount) ||
-                  (symbol === ICP_SYMBOL && isAccountIdentifierValid(targetAccount)),
-    );
+    let targetAccountValid = $derived.by(() => {
+        if (targetAccount.length === 0 || targetAccount === account) return false;
+        if (isBtc) return targetAccount.length >= 14;
+        if (isOneSec) return targetAccount.length === 42;
+        if (isPrincipalValid(targetAccount)) return true;
+        if (symbol === ICP_SYMBOL && isAccountIdentifierValid(targetAccount)) return true;
+        return false;
+    });
     let minAmount = $derived(
         isBtcNetwork && ckbtcMinterWithdrawalInfo !== undefined
             ? ckbtcMinterWithdrawalInfo.minWithdrawalAmount
@@ -107,6 +123,11 @@
         if (isBtc) {
             getCkbtcMinterWithdrawalInfo(BigInt(0));
         }
+    });
+
+    // Whenever the networks list changes, autoselect the first one
+    $effect(() => {
+        selectedNetwork = networks[0];
     });
 
     $effect(() => {
@@ -154,15 +175,17 @@
 
         const withdrawTokensPromise = isBtcNetwork
             ? client.withdrawBtc(targetAccount, amountToSend)
-            : client.withdrawCryptocurrency({
-                  kind: "pending",
-                  ledger,
-                  token: symbol,
-                  to: targetAccount,
-                  amountE8s: amountToSend,
-                  feeE8s: transferFees,
-                  createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
-              });
+            : isOneSec
+                ? client.withdrawViaOneSec(ledger, symbol, selectedNetwork as EvmChain, targetAccount, amountToSend)
+                : client.withdrawCryptocurrency({
+                      kind: "pending",
+                      ledger,
+                      token: symbol,
+                      to: targetAccount,
+                      amountE8s: amountToSend,
+                      feeE8s: transferFees,
+                      createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
+                  });
 
         withdrawTokensPromise
             .then((resp) => {
@@ -237,8 +260,8 @@
             {:else}
                 <Scanner onData={(data) => (targetAccount = data)} bind:this={scanner} />
 
-                {#if isBtc}
-                    <NetworkSelector networks={[BTC_SYMBOL, CKBTC_SYMBOL]} bind:selectedNetwork={selectedBtcNetwork} />
+                {#if networks.length > 0 && selectedNetwork !== undefined}
+                    <NetworkSelector {networks} bind:selectedNetwork={selectedNetwork} />
                 {/if}
 
                 <div class="token-input">
