@@ -19,6 +19,7 @@
     import Translatable from "../Translatable.svelte";
     import TruncatedAccount from "./TruncatedAccount.svelte";
     import NetworkSelector from "./NetworkSelector.svelte";
+    import { rtlStore } from "../../stores/rtl";
 
     interface Props {
         qrSize?: "default" | "smaller" | "larger";
@@ -40,10 +41,11 @@
 
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let selectedNetwork = $state<string | undefined>();
+    let isBtc = $derived(tokenDetails.symbol === BTC_SYMBOL);
     let isBtcNetwork = $derived(selectedNetwork === BTC_SYMBOL);
     let isOneSec = $derived(tokenDetails.oneSecEnabled);
     let networks = $derived.by(() => {
-        if (isBtcNetwork) {
+        if (isBtc) {
             return [BTC_SYMBOL, CKBTC_SYMBOL];
         } else if (isOneSec) {
             return [ETHEREUM_NETWORK, ARBITRUM_NETWORK, BASE_NETWORK];
@@ -82,7 +84,15 @@
         }
     });
 
-    let networkName = $derived(selectedNetwork ?? tokenDetails.symbol);
+    let tokenName = $derived.by(() => {
+        if (selectedNetwork === CKBTC_SYMBOL) return CKBTC_SYMBOL;
+        if (selectedNetwork !== undefined) {
+            return $rtlStore
+                ? `(${selectedNetwork}) ${tokenDetails.symbol}`
+                : `${tokenDetails.symbol} (${selectedNetwork})`;
+        }
+        return tokenDetails.symbol;
+    });
 
     const btcDepositFeePromise = new Lazy(() => client.getCkbtcMinterDepositInfo()
         .then((depositInfo) => `${client.formatTokens(depositInfo.depositFee, 8)} BTC`));
@@ -105,7 +115,7 @@
         <QRCode {fullWidthOnMobile} text={account} size={qrSize} logo={tokenDetails.logo} {border} />
     {/if}
     <p class="your-account" class:centered>
-        <Translatable resourceKey={i18nKey("tokenTransfer.yourAccount", { token: networkName })} />
+        <Translatable resourceKey={i18nKey("tokenTransfer.yourAccount", { token: tokenName })} />
     </p>
     {#if account === undefined}
         {#if error !== undefined}

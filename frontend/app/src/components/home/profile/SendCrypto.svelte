@@ -75,7 +75,7 @@
     let isBtcNetwork = $derived(selectedNetwork === BTC_SYMBOL);
     let isOneSec = $derived(tokenDetails.oneSecEnabled);
     let networks = $derived.by(() => {
-        if (isBtcNetwork) {
+        if (isBtc) {
             return [BTC_SYMBOL, CKBTC_SYMBOL];
         } else if (isOneSec) {
             return [ETHEREUM_NETWORK, ARBITRUM_NETWORK, BASE_NETWORK];
