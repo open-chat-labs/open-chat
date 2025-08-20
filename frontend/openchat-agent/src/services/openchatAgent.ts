@@ -4031,6 +4031,17 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.withdrawBtc(address, amount, pin);
     }
 
+    withdrawViaOneSec(
+        ledger: string,
+        tokenSymbol: string,
+        chain: EvmChain,
+        address: string,
+        amount: bigint,
+        pin: string | undefined,
+    ) {
+        return this.userClient.withdrawViaOneSec(ledger, tokenSymbol, chain, address, amount, pin);
+    }
+
     getCkbtcMinterDepositInfo(): Promise<CkbtcMinterDepositInfo> {
         return this._ckbtcMinterClient.get().getDepositInfo();
     }

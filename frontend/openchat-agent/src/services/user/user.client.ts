@@ -78,6 +78,8 @@ import {
     type WalletConfig,
     type WithdrawBtcResponse,
     type WithdrawCryptocurrencyResponse,
+    type EvmChain,
+    type WithdrawViaOneSecResponse,
 } from "openchat-shared";
 import type { AgentConfig } from "../../config";
 import {
@@ -172,6 +174,7 @@ import {
     UserWithdrawBtcResponse,
     UserWithdrawCryptoArgs,
     UserWithdrawCryptoResponse,
+    UserWithdrawViaOneSecArgs,
 } from "../../typebox";
 import {
     getCachedEvents,
@@ -1731,6 +1734,30 @@ export class UserClient extends MsgpackCanisterAgent {
             unitResult,
             UserWithdrawBtcArgs,
             UserWithdrawBtcResponse,
+        );
+    }
+
+    withdrawViaOneSec(
+        ledger: string,
+        tokenSymbol: string,
+        chain: EvmChain,
+        address: string,
+        amount: bigint,
+        pin: string | undefined,
+    ): Promise<WithdrawViaOneSecResponse> {
+        return this.executeMsgpackUpdate(
+            "withdraw_via_one_sec",
+            {
+                ledger_canister_id: principalStringToBytes(ledger),
+                token_symbol: tokenSymbol,
+                evm_chain: chain,
+                address,
+                amount,
+                pin,
+            },
+            unitResult,
+            UserWithdrawViaOneSecArgs,
+            UnitResult,
         );
     }
 

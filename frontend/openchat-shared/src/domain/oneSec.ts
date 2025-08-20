@@ -1,4 +1,6 @@
 import type { EvmChain } from "./crypto";
+import type { Success } from "./response";
+import type { OCError } from "./error";
 
 export type OneSecForwardingStatus =
     | {
@@ -30,3 +32,5 @@ export type OneSecTransferFees = {
     destinationToken: string;
     destinationChain: EvmChain | "ICP";
 };
+
+export type WithdrawViaOneSecResponse = Success | OCError;

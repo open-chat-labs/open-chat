@@ -1439,6 +1439,13 @@ export const DiamondMembershipFeesByDuration = Type.Object({
     lifetime: Type.BigInt(),
 });
 
+export type EvmChain = Static<typeof EvmChain>;
+export const EvmChain = Type.Union([
+    Type.Literal("Ethereum"),
+    Type.Literal("Arbitrum"),
+    Type.Literal("Base"),
+]);
+
 export type UserGroupSummary = Static<typeof UserGroupSummary>;
 export const UserGroupSummary = Type.Object({
     user_group_id: Type.Number(),
@@ -4369,6 +4376,16 @@ export const UserAddReactionArgs = Type.Object({
     thread_root_message_index: Type.Optional(MessageIndex),
     message_id: MessageId,
     reaction: Reaction,
+});
+
+export type UserWithdrawViaOneSecArgs = Static<typeof UserWithdrawViaOneSecArgs>;
+export const UserWithdrawViaOneSecArgs = Type.Object({
+    ledger_canister_id: TSPrincipal,
+    token_symbol: Type.String(),
+    amount: Type.BigInt(),
+    address: Type.String(),
+    evm_chain: EvmChain,
+    pin: Type.Optional(PinNumberWrapper),
 });
 
 export type UserReferral = Static<typeof UserReferral>;

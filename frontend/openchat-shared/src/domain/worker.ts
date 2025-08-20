@@ -168,6 +168,7 @@ import type {
 import type { CommunityInvite, GroupInvite } from "./inviteCodes";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
 import type { ToggleMuteNotificationResponse } from "./notifications";
+import type { WithdrawViaOneSecResponse } from "./oneSec";
 import type { MinutesOnline } from "./online";
 import type { OptionUpdate } from "./optionUpdate";
 import type {
@@ -415,6 +416,7 @@ export type WorkerRequest =
     | GenerateOneSecAddress
     | UpdateBtcBalance
     | WithdrawBtc
+    | WithdrawViaOneSec
     | GetCkbtcMinterDepositInfo
     | GetCkbtcMinterWithdrawalInfo
     | CurrentUserWebAuthnKey
@@ -1537,6 +1539,16 @@ type WithdrawBtc = {
     kind: "withdrawBtc";
 };
 
+type WithdrawViaOneSec = {
+    kind: "withdrawViaOneSec";
+    ledger: string;
+    tokenSymbol: string;
+    chain: EvmChain;
+    address: string;
+    amount: bigint;
+    pin: string | undefined;
+};
+
 type GetCkbtcMinterDepositInfo = {
     kind: "ckbtcMinterDepositInfo";
 };
@@ -2503,6 +2515,8 @@ export type WorkerResult<T> = T extends Init
     ? boolean
     : T extends WithdrawBtc
     ? WithdrawBtcResponse
+    : T extends WithdrawViaOneSec
+    ? WithdrawViaOneSecResponse
     : T extends GetCkbtcMinterDepositInfo
     ? CkbtcMinterDepositInfo
     : T extends GetCkbtcMinterWithdrawalInfo
