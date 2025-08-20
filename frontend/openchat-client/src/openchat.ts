@@ -664,6 +664,7 @@ export class OpenChat {
     #locale!: string;
     #vapidPublicKey: string;
     #getBtcAddressPromise: Promise<string> | undefined = undefined;
+    #getOneSecAddressPromise: Promise<string> | undefined = undefined;
 
     currentAirdropChannel: AirdropChannelDetails | undefined = undefined;
 
@@ -7587,9 +7588,15 @@ export class OpenChat {
         if (storeValue !== undefined) {
             return Promise.resolve(storeValue);
         }
-        const address = await this.#sendRequest({
+        if (this.#getOneSecAddressPromise !== undefined) {
+            return this.#getOneSecAddressPromise;
+        }
+        this.#getOneSecAddressPromise = this.#sendRequest({
             kind: "generateOneSecAddress",
         });
+        const address = await this.#getOneSecAddressPromise.finally(
+            () => (this.#getOneSecAddressPromise = undefined),
+        );
         oneSecAddress.set(address);
         return address;
     }
