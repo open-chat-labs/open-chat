@@ -10,6 +10,7 @@
         ETHEREUM_NETWORK,
         ICP_SYMBOL,
         Lazy,
+        type OneSecTransferFees,
         OpenChat,
     } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
@@ -40,7 +41,7 @@
     const client = getContext<OpenChat>("client");
 
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
-    let selectedNetwork = $state<string | undefined>();
+    let selectedNetwork = $state<string>();
     let isBtc = $derived(tokenDetails.symbol === BTC_SYMBOL);
     let isBtcNetwork = $derived(selectedNetwork === BTC_SYMBOL);
     let isOneSec = $derived(tokenDetails.oneSecEnabled);
@@ -53,8 +54,8 @@
             return [];
         }
     });
-    let btcAddress = $state<string | undefined>();
-    let oneSecAddress = $state<string | undefined>();
+    let btcAddress = $state<string>();
+    let oneSecAddress = $state<string>();
 
     // Whenever the networks list changes, autoselect the first one
     $effect(() => {
@@ -96,6 +97,25 @@
 
     const btcDepositFeePromise = new Lazy(() => client.getCkbtcMinterDepositInfo()
         .then((depositInfo) => `${client.formatTokens(depositInfo.depositFee, 8)} BTC`));
+
+    const oneSecFeesPromise = new Lazy(() => client.oneSecGetTransferFees().then((fees) => oneSecFees = fees));
+    let oneSecFees = $state<OneSecTransferFees[]>();
+    let oneSecFeesForToken = $derived.by(() => {
+        if (!isOneSec || oneSecFees === undefined) return undefined;
+        return oneSecFees.find((f) => {
+            return f.sourceChain === selectedNetwork
+                && f.sourceToken === tokenDetails.symbol
+                && f.destinationChain === ICP_SYMBOL
+                && f.destinationToken === tokenDetails.symbol;
+        });
+    });
+    let oneSecDepositFee = $derived.by(() => {
+        if (oneSecFeesForToken === undefined) return undefined;
+        const protocolFee = `${oneSecFeesForToken.protocolFeePercent}%`;
+        return oneSecFeesForToken.latestTransferFee > 0n
+            ? `${protocolFee} + ${client.formatTokens(oneSecFeesForToken.latestTransferFee, tokenDetails.decimals)} ${tokenDetails.symbol}`
+            : protocolFee;
+    });
 </script>
 
 <div class="account-info">
@@ -132,6 +152,18 @@
             <span class="label">{$_("cryptoAccount.fetchingDepositFee")}</span>
         {:then amount}
             <span class="label">{$_("cryptoAccount.depositFee", { values: { amount }})}</span>
+        {:catch}
+            <span class="error-label">{$_("cryptoAccount.failedToFetchDepositFee")}</span>
+        {/await}
+    {:else if isOneSec}
+        {#await oneSecFeesPromise.get()}
+            <span class="label">{$_("cryptoAccount.fetchingDepositFee")}</span>
+        {:then}
+            {#if oneSecDepositFee !== undefined}
+                <span class="label">{$_("cryptoAccount.depositFee", { values: { amount: oneSecDepositFee }})}</span>
+            {:else}
+                <span class="error-label">{$_("cryptoAccount.failedToFetchDepositFee")}</span>
+            {/if}
         {:catch}
             <span class="error-label">{$_("cryptoAccount.failedToFetchDepositFee")}</span>
         {/await}
