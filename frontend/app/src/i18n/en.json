@@ -606,6 +606,7 @@
         "manualInfo": "Organise your wallet manually by selected exactly the tokens that you want to see",
         "minDollarPlaceholder": "Minimum dollar balance",
         "network": "Network:",
+        "networkFee": "Network fee: ~{amount} {token}",
         "receive": "Receive",
         "receiveToken": "Receive {symbol}",
         "remove": "Remove from wallet",

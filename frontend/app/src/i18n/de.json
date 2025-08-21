@@ -606,6 +606,7 @@
         "manualInfo": "Organisieren Sie Ihr Wallet manuell, indem Sie genau die Token auswählen, die Sie sehen möchten",
         "minDollarPlaceholder": "Mindestdollarguthaben",
         "network": "Netzwerk:",
+        "networkFee": "Netzwerkgebühr: ~{amount} {token}",
         "receive": "Anfordern",
         "receiveToken": "Erhalte {symbol}",
         "remove": "Aus der Brieftasche entfernen",

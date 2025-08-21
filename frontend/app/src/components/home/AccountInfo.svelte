@@ -117,7 +117,7 @@
     });
     let oneSecTotalFee = $derived.by(() => {
         if (oneSecProtocolFee === undefined || oneSecTransferFee === undefined) return undefined;
-        return `${oneSecProtocolFee}% + ${client.formatTokens(oneSecTransferFee, tokenDetails.decimals)} ${tokenDetails.symbol})`;
+        return `${oneSecProtocolFee}% + ~${client.formatTokens(oneSecTransferFee, tokenDetails.decimals)} ${tokenDetails.symbol})`;
     });
 </script>
 

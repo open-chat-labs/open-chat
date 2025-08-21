@@ -606,6 +606,7 @@
         "manualInfo": "ארגן את הארנק שלך באופן ידני על ידי בחר בדיוק את האסימונים שאתה רוצה לראות",
         "minDollarPlaceholder": "יתרה מינימלית בדולר",
         "network": "רֶשֶׁת:",
+        "networkFee": "דמי רשת: ~{amount} {token}",
         "receive": "לְקַבֵּל",
         "receiveToken": "קבל {symbol}",
         "remove": "הסר מהארנק",

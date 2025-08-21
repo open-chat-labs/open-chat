@@ -606,6 +606,7 @@
         "manualInfo": "قم بتنظيم محفظتك يدويًا من خلال تحديد الرموز التي تريد رؤيتها بالضبط",
         "minDollarPlaceholder": "الحد الأدنى لرصيد الدولار",
         "network": "شبكة:",
+        "networkFee": "رسوم الشبكة: ~{amount} {token}",
         "receive": "يستلم",
         "receiveToken": "استقبل {symbol}",
         "remove": "إزالة من المحفظة",

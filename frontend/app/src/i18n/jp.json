@@ -606,6 +606,7 @@
         "manualInfo": "表示したいトークンを正確に選択してウォレットを手動で整理します",
         "minDollarPlaceholder": "最低ドル残高",
         "network": "ネットワーク：",
+        "networkFee": "ネットワーク料金: ~{amount} {token}",
         "receive": "受け取る",
         "receiveToken": "{symbol}を受け取る",
         "remove": "ウォレットから削除",
