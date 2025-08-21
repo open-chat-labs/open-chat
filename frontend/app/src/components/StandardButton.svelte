@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { Button } from "component-lib";
     import { onMount } from "svelte";
     import { currentTheme } from "../theme/themes";
     import { darkenHexColour } from "../theme/utils";
@@ -45,8 +44,6 @@
         }
     }
 </script>
-
-<Button onClick={() => alert("click")}>Storybook is an utter piece of shit</Button>
 
 <button
     style={`--height: ${height}; --width: ${width}; --darkened-danger: ${darkenedDanger}`}

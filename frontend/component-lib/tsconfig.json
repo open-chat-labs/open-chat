@@ -4,7 +4,12 @@
         "composite": true,
         "declaration": true,
         "declarationMap": true,
-        "outDir": "dist"
+        "outDir": "dist",
+        "paths": {
+            "@components/*": ["./src/components/*"],
+            "@src/*": ["./src/*"],
+            "lib": ["./src"]
+        }
     },
     "include": ["src/**/*"]
 }

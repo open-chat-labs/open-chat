@@ -15,15 +15,18 @@
         "dist"
     ],
     "scripts": {
-        "build": "tsc --emitDeclarationOnly"
+        "build": "tsc --emitDeclarationOnly",
+        "dev": "vite --config playground/vite.config.ts"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "description": "",
     "devDependencies": {
+        "@sveltejs/vite-plugin-svelte": "^5.1.1",
         "@tsconfig/svelte": "^5.0.4",
         "svelte": "^5.38.1",
-        "typescript": "^5.9.2"
+        "typescript": "^5.9.2",
+        "vite": "^6.3.5"
     }
 }
