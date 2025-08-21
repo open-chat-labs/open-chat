@@ -98,23 +98,26 @@
     const btcDepositFeePromise = new Lazy(() => client.getCkbtcMinterDepositInfo()
         .then((depositInfo) => `${client.formatTokens(depositInfo.depositFee, 8)} BTC`));
 
-    const oneSecFeesPromise = new Lazy(() => client.oneSecGetTransferFees().then((fees) => oneSecFees = fees));
+    const oneSecFeesPromise = new Lazy(() => client.oneSecGetTransferFees()
+        // Filter to where source token equals destination token since we're dealing with cross-chain deposits
+        .then((fees) => oneSecFees = fees.filter((f) => f.sourceToken === f.destinationToken)));
+
     let oneSecFees = $state<OneSecTransferFees[]>();
     let oneSecFeesForToken = $derived.by(() => {
         if (!isOneSec || oneSecFees === undefined) return undefined;
-        return oneSecFees.find((f) => {
-            return f.sourceChain === selectedNetwork
-                && f.sourceToken === tokenDetails.symbol
-                && f.destinationChain === ICP_SYMBOL
-                && f.destinationToken === tokenDetails.symbol;
-        });
+        return oneSecFees.filter((f) => f.sourceToken === tokenDetails.symbol);
     });
-    let oneSecDepositFee = $derived.by(() => {
+    let oneSecProtocolFee = $derived.by(() => {
         if (oneSecFeesForToken === undefined) return undefined;
-        const protocolFee = `${oneSecFeesForToken.protocolFeePercent}%`;
-        return oneSecFeesForToken.latestTransferFee > 0n
-            ? `${protocolFee} + ${client.formatTokens(oneSecFeesForToken.latestTransferFee, tokenDetails.decimals)} ${tokenDetails.symbol}`
-            : protocolFee;
+        return oneSecFeesForToken.find((f) => f.sourceChain === selectedNetwork && f.destinationChain === ICP_SYMBOL)?.protocolFeePercent;
+    });
+    let oneSecTransferFee = $derived.by(() => {
+        if (oneSecFeesForToken === undefined) return undefined;
+        return oneSecFeesForToken.find((f) => f.sourceChain === ICP_SYMBOL && f.destinationChain === selectedNetwork)?.latestTransferFee;
+    });
+    let oneSecTotalFee = $derived.by(() => {
+        if (oneSecProtocolFee === undefined || oneSecTransferFee === undefined) return undefined;
+        return `${oneSecProtocolFee}% + ${client.formatTokens(oneSecTransferFee, tokenDetails.decimals)} ${tokenDetails.symbol})`;
     });
 </script>
 
@@ -159,8 +162,8 @@
         {#await oneSecFeesPromise.get()}
             <span class="label">{$_("cryptoAccount.fetchingDepositFee")}</span>
         {:then}
-            {#if oneSecDepositFee !== undefined}
-                <span class="label">{$_("cryptoAccount.depositFee", { values: { amount: oneSecDepositFee }})}</span>
+            {#if oneSecTotalFee !== undefined}
+                <span class="label">{$_("cryptoAccount.depositFee", { values: { amount: oneSecTotalFee }})}</span>
             {:else}
                 <span class="error-label">{$_("cryptoAccount.failedToFetchDepositFee")}</span>
             {/if}
