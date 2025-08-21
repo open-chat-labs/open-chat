@@ -590,11 +590,9 @@
     "cryptoAccount": {
         "auto": "Automatisch",
         "autoInfo": "Organisieren Sie Ihr Portemonnaie automatisch. Alle Token mit einem Token-Guthaben ungleich Null oder einem Dollarwert, der über dem unten eingegebenen Mindestdollarwert liegt, werden angezeigt.",
-        "btcNetworkFee": "Bitcoin-Netzwerkgebühr: ~{amount} BTC",
         "comingSoon": "(kommt bald)",
         "configureWallet": "Konfigurieren Sie Ihr Wallet",
         "configureWalletFailure": "Leider konnten wir Ihre Wallet-Konfiguration nicht speichern",
-        "depositFee": "Einzahlungsgebühr: {amount}",
         "failedToFetchDepositFee": "Die Einzahlungsgebühr konnte nicht abgerufen werden",
         "failedToGenerateAddress": "Adresse konnte nicht generiert werden",
         "fetchingDepositFee": "Kautionsgebühr wird abgerufen …",

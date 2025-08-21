@@ -590,11 +590,9 @@
     "cryptoAccount": {
         "auto": "自动的",
         "autoInfo": "自动整理您的钱包。任何代币余额不为零或美元价值大于下面输入的最低美元价值的代币都将显示",
-        "btcNetworkFee": "比特币网络费用：~{amount} BTC",
         "comingSoon": "（快来了）",
         "configureWallet": "配置你的钱包",
         "configureWalletFailure": "抱歉，我们无法保存您的钱包配置",
-        "depositFee": "存款费用：{amount}",
         "failedToFetchDepositFee": "提取存款费用失败",
         "failedToGenerateAddress": "生成地址失败",
         "fetchingDepositFee": "正在获取存款费用...",

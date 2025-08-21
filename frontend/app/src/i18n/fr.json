@@ -590,11 +590,9 @@
     "cryptoAccount": {
         "auto": "Automatique",
         "autoInfo": "Organisez votre portefeuille automatiquement. Tout jeton avec un solde différent de zéro ou avec une valeur en dollars supérieure à la valeur minimale en dollars saisie ci-dessous sera affiché",
-        "btcNetworkFee": "Frais de réseau Bitcoin : ~{amount} BTC",
         "comingSoon": "(Bientôt disponible)",
         "configureWallet": "Configurez votre portefeuille",
         "configureWalletFailure": "Désolé, nous n'avons pas pu enregistrer la configuration de votre portefeuille",
-        "depositFee": "Frais de dépôt : {amount}",
         "failedToFetchDepositFee": "Échec de la récupération des frais de dépôt",
         "failedToGenerateAddress": "Échec de la génération de l'adresse",
         "fetchingDepositFee": "Récupération des frais de dépôt...",

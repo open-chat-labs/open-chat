@@ -590,11 +590,9 @@
     "cryptoAccount": {
         "auto": "اوتوماتيكي",
         "autoInfo": "قم بتنظيم محفظتك تلقائيًا. سيتم عرض أي رمز به رصيد رمزي غير صفري أو بقيمة دولارية أكبر من الحد الأدنى لقيمة الدولار المدخلة أدناه",
-        "btcNetworkFee": "رسوم شبكة البيتكوين: ~{amount} BTC",
         "comingSoon": "(قريباً)",
         "configureWallet": "قم بتكوين محفظتك",
         "configureWalletFailure": "نأسف لأننا لم نتمكن من حفظ تكوين محفظتك",
-        "depositFee": "رسوم الإيداع: {amount}",
         "failedToFetchDepositFee": "فشل في جلب رسوم الإيداع",
         "failedToGenerateAddress": "فشل في إنشاء العنوان",
         "fetchingDepositFee": "جاري جلب رسوم الإيداع...",

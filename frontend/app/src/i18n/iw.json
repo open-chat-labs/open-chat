@@ -590,11 +590,9 @@
     "cryptoAccount": {
         "auto": "אוֹטוֹמָטִי",
         "autoInfo": "ארגן את הארנק שלך באופן אוטומטי. כל אסימון עם יתרת אסימון שאינה אפס או עם ערך דולר גבוה מהערך המינימלי של דולר שהוזן למטה יוצג",
-        "btcNetworkFee": "עמלת רשת ביטקוין: ~{amount} BTC",
         "comingSoon": "(בקרוב)",
         "configureWallet": "תגדיר את הארנק שלך",
         "configureWalletFailure": "מצטערים שלא הצלחנו לשמור את תצורת הארנק שלך",
-        "depositFee": "עמלת הפקדה: {amount}",
         "failedToFetchDepositFee": "שליפת עמלת הפיקדון נכשלה",
         "failedToGenerateAddress": "יצירת הכתובת נכשלה",
         "fetchingDepositFee": "מביא עמלת פיקדון...",

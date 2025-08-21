@@ -96,7 +96,7 @@
     });
 
     const btcDepositFeePromise = new Lazy(() => client.getCkbtcMinterDepositInfo()
-        .then((depositInfo) => `${client.formatTokens(depositInfo.depositFee, 8)} BTC`));
+        .then((depositInfo) => client.formatTokens(depositInfo.depositFee, 8)));
 
     const oneSecFeesPromise = new Lazy(() => client.oneSecGetTransferFees()
         // Filter to where source token equals destination token since we're dealing with cross-chain deposits
@@ -117,7 +117,7 @@
     });
     let oneSecTotalFee = $derived.by(() => {
         if (oneSecProtocolFee === undefined || oneSecTransferFee === undefined) return undefined;
-        return `${oneSecProtocolFee}% + ~${client.formatTokens(oneSecTransferFee, tokenDetails.decimals)} ${tokenDetails.symbol})`;
+        return `${oneSecProtocolFee}% + ~${client.formatTokens(oneSecTransferFee, tokenDetails.decimals)}`;
     });
 </script>
 
@@ -154,7 +154,7 @@
         {#await btcDepositFeePromise.get()}
             <span class="label">{$_("cryptoAccount.fetchingDepositFee")}</span>
         {:then amount}
-            <span class="label">{$_("cryptoAccount.depositFee", { values: { amount }})}</span>
+            <span class="label">{$_("cryptoAccount.networkFee", { values: { amount, token: tokenDetails.symbol }})}</span>
         {:catch}
             <span class="error-label">{$_("cryptoAccount.failedToFetchDepositFee")}</span>
         {/await}
@@ -163,7 +163,7 @@
             <span class="label">{$_("cryptoAccount.fetchingDepositFee")}</span>
         {:then}
             {#if oneSecTotalFee !== undefined}
-                <span class="label">{$_("cryptoAccount.depositFee", { values: { amount: oneSecTotalFee }})}</span>
+                <span class="label">{$_("cryptoAccount.networkFee", { values: { amount: oneSecTotalFee, token: tokenDetails.symbol }})}</span>
             {:else}
                 <span class="error-label">{$_("cryptoAccount.failedToFetchDepositFee")}</span>
             {/if}

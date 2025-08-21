@@ -317,16 +317,10 @@
 
                         {#if networkFeeFormatted !== undefined}
                             <div class="network-fee">
-                                {#if isBtcNetwork}
-                                    <Translatable resourceKey={i18nKey("cryptoAccount.btcNetworkFee", {
-                                       amount: networkFeeFormatted,
-                                    })} />
-                                {:else}
-                                    <Translatable resourceKey={i18nKey("cryptoAccount.networkFee", {
-                                        amount: networkFeeFormatted,
-                                        token: symbol,
-                                    })} />
-                                {/if}
+                                <Translatable resourceKey={i18nKey("cryptoAccount.networkFee", {
+                                    amount: networkFeeFormatted,
+                                    token: symbol,
+                                })} />
                             </div>
                         {/if}
                     </div>

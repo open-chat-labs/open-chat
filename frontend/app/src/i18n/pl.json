@@ -590,11 +590,9 @@
     "cryptoAccount": {
         "auto": "Automatyczny",
         "autoInfo": "Zorganizuj swój portfel automatycznie. Każdy token z saldem tokenów innym niż zero lub z wartością w dolarach większą niż minimalna wartość w dolarach wprowadzona poniżej zostanie wyświetlony",
-        "btcNetworkFee": "Opłata za sieć Bitcoin: ~{amount} BTC",
         "comingSoon": "(wkrótce)",
         "configureWallet": "Skonfiguruj swój portfel",
         "configureWalletFailure": "Przepraszamy, nie udało nam się zapisać konfiguracji Twojego portfela",
-        "depositFee": "Opłata depozytowa: {amount}",
         "failedToFetchDepositFee": "Nie udało się pobrać opłaty za depozyt",
         "failedToGenerateAddress": "Nie udało się wygenerować adresu",
         "fetchingDepositFee": "Pobieranie opłaty depozytowej...",

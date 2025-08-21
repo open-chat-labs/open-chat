@@ -590,11 +590,9 @@
     "cryptoAccount": {
         "auto": "自動",
         "autoInfo": "ウォレットを自動的に整理します。トークン残高がゼロでないトークン、または以下に入力した最小ドル値を超えるドル値のトークンが表示されます。",
-        "btcNetworkFee": "ビットコインネットワーク手数料: ~{amount} BTC",
         "comingSoon": "（近日公開）",
         "configureWallet": "ウォレットを設定する",
         "configureWalletFailure": "申し訳ありませんが、ウォレットの設定を保存できませんでした",
-        "depositFee": "入金手数料: {amount}",
         "failedToFetchDepositFee": "入金手数料の取得に失敗しました",
         "failedToGenerateAddress": "アドレスの生成に失敗しました",
         "fetchingDepositFee": "デポジット手数料を取得しています...",

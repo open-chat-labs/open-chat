@@ -590,11 +590,9 @@
     "cryptoAccount": {
         "auto": "Tự động",
         "autoInfo": "Tự động sắp xếp ví của bạn. Bất kỳ mã thông báo nào có số dư mã thông báo khác không hoặc có giá trị đô la lớn hơn giá trị đô la tối thiểu được nhập bên dưới sẽ được hiển thị",
-        "btcNetworkFee": "Phí mạng Bitcoin: ~{amount} BTC",
         "comingSoon": "(Sắp có)",
         "configureWallet": "Cấu hình ví của bạn",
         "configureWalletFailure": "Xin lỗi, chúng tôi không thể lưu cấu hình ví của bạn",
-        "depositFee": "Phí đặt cọc: {amount}",
         "failedToFetchDepositFee": "Không thể lấy phí gửi tiền",
         "failedToGenerateAddress": "Không tạo được địa chỉ",
         "fetchingDepositFee": "Đang lấy phí đặt cọc...",
