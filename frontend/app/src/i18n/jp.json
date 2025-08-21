@@ -1147,6 +1147,7 @@
     "noChatsAvailable": "チャットはありません！",
     "noChatSelected": "現在選択されているチャットはありません",
     "noGroupsFound": "グループが見つかりません 😭",
+    "noMatchingTokens": "一致するトークンがありません",
     "noThanks": "いいえ",
     "notificationsDisabled": "通知が無効になりました",
     "notificationsEnabled": "通知機能を有効にする",
