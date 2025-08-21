@@ -131,7 +131,7 @@
             return undefined;
         }
     });
-    let networkFeeFormatted = $derived(networkFee === undefined ? undefined : client.formatTokens(networkFee, tokenDetails.decimals));
+    let networkFeeFormatted = $derived(networkFee === undefined ? undefined : `~${client.formatTokens(networkFee, tokenDetails.decimals)}`);
 
     onMount(async () => {
         accounts = await client.loadSavedCryptoAccounts();

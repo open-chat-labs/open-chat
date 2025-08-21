@@ -604,7 +604,7 @@
         "manualInfo": "通过选择您想要查看的代币来手动组织您的钱包",
         "minDollarPlaceholder": "最低美元余额",
         "network": "网络：",
-        "networkFee": "网络费用：~{amount} {token}",
+        "networkFee": "网络费用：{amount} {token}",
         "receive": "接收",
         "receiveToken": "接收 {symbol}",
         "remove": "从钱包中移除",

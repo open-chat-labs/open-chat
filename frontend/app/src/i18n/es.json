@@ -604,7 +604,7 @@
         "manualInfo": "Organiza tu billetera manualmente seleccionando exactamente los tokens que deseas ver",
         "minDollarPlaceholder": "Saldo mínimo en dólares",
         "network": "Red:",
-        "networkFee": "Tarifa de red: ~{amount} {token}",
+        "networkFee": "Tarifa de red: {amount} {token}",
         "receive": "Recibir",
         "receiveToken": "Recibir {symbol}",
         "remove": "Quitar de la billetera",

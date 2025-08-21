@@ -604,7 +604,7 @@
         "manualInfo": "Organizza manualmente il tuo portafoglio selezionando esattamente i token che vuoi vedere",
         "minDollarPlaceholder": "Saldo minimo in dollari",
         "network": "Rete:",
-        "networkFee": "Costo della rete: ~{amount} {token}",
+        "networkFee": "Costo della rete: {amount} {token}",
         "receive": "Ricevere",
         "receiveToken": "Ricevi {symbol}",
         "remove": "Rimuovi dal portafoglio",

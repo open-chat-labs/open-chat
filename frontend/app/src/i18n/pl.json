@@ -604,7 +604,7 @@
         "manualInfo": "Zorganizuj swój portfel ręcznie, wybierając dokładnie te tokeny, które chcesz zobaczyć",
         "minDollarPlaceholder": "Minimalne saldo w dolarach",
         "network": "Sieć:",
-        "networkFee": "Opłata sieciowa: ~{amount} {token}",
+        "networkFee": "Opłata sieciowa: {amount} {token}",
         "receive": "Odbierać",
         "receiveToken": "Odbierz {symbol}",
         "remove": "Usuń z portfela",

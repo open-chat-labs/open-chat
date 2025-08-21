@@ -604,7 +604,7 @@
         "manualInfo": "अपने वॉलेट को मैन्युअल रूप से व्यवस्थित करें, ठीक वही टोकन चुनें जिन्हें आप देखना चाहते हैं",
         "minDollarPlaceholder": "न्यूनतम डॉलर शेष",
         "network": "नेटवर्क:",
-        "networkFee": "नेटवर्क शुल्क: ~{amount} {token}",
+        "networkFee": "नेटवर्क शुल्क: {amount} {token}",
         "receive": "प्राप्त करें",
         "receiveToken": "{symbol} प्राप्त करें",
         "remove": "वॉलेट से निकालें",

@@ -96,7 +96,7 @@
     });
 
     const btcDepositFeePromise = new Lazy(() => client.getCkbtcMinterDepositInfo()
-        .then((depositInfo) => client.formatTokens(depositInfo.depositFee, 8)));
+        .then((depositInfo) => `~${client.formatTokens(depositInfo.depositFee, 8)}`));
 
     const oneSecFeesPromise = new Lazy(() => client.oneSecGetTransferFees()
         // Filter to where source token equals destination token since we're dealing with cross-chain deposits

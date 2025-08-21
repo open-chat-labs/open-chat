@@ -604,7 +604,7 @@
         "manualInfo": "Tổ chức ví của bạn theo cách thủ công bằng cách chọn chính xác các mã thông báo mà bạn muốn xem",
         "minDollarPlaceholder": "Số dư đô la tối thiểu",
         "network": "Mạng:",
-        "networkFee": "Phí mạng: ~{amount} {token}",
+        "networkFee": "Phí mạng: {amount} {token}",
         "receive": "Nhận được",
         "receiveToken": "Nhận {symbol}",
         "remove": "Xóa khỏi ví",
