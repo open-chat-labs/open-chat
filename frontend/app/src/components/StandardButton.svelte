@@ -46,7 +46,7 @@
     }
 </script>
 
-<Button>This is from another project</Button>
+<Button onClick={() => alert("click")}>Storybook is an utter piece of shit</Button>
 
 <button
     style={`--height: ${height}; --width: ${width}; --darkened-danger: ${darkenedDanger}`}
