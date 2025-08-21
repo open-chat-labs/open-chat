@@ -3,10 +3,12 @@
 
     interface Props {
         children: Snippet;
+        disabled?: boolean;
+        onClick?: (e: MouseEvent) => void;
     }
-    let { children }: Props = $props();
+    let { children, disabled = false, onClick }: Props = $props();
 </script>
 
-<button>
+<button onclick={onClick} {disabled}>
     {@render children()}
 </button>
