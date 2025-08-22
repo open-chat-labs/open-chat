@@ -28,17 +28,20 @@
         onClick,
         verified = false,
     }: Props = $props();
+
+    let labelText = $derived($_(label.key, label.params));
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <div
     role="button"
+    aria-label={labelText}
     tabindex="0"
     class:separator
     class:selected
     class="left-nav-item"
     onclick={onClick}>
-    <div class="icon" title={$_(label.key, label.params)}>
+    <div class="icon" title={labelText}>
         {@render children?.()}
         <UnreadCount {unread} />
         <VideoCallIcon {video} />

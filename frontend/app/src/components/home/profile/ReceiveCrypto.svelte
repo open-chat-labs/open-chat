@@ -1,10 +1,7 @@
 <script lang="ts">
-    import BitcoinAccountInfo from "@components/home/BitcoinAccountInfo.svelte";
     import {
-        BTC_SYMBOL,
         cryptoBalanceStore,
         cryptoLookup,
-        currentUserIdStore,
         mobileWidth,
     } from "openchat-client";
     import { _ } from "svelte-i18n";
@@ -54,11 +51,7 @@
     {/snippet}
     {#snippet body()}
         <form class="body">
-            {#if symbol === BTC_SYMBOL}
-                <BitcoinAccountInfo qrSize={"larger"} centered userId={$currentUserIdStore} />
-            {:else}
-                <AccountInfo qrSize={"larger"} centered {ledger} />
-            {/if}
+            <AccountInfo qrSize={"larger"} centered {ledger} />
             {#if error}
                 <ErrorMessage>{error}</ErrorMessage>
             {/if}

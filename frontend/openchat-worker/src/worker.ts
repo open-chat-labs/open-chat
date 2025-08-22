@@ -1820,6 +1820,21 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "withdrawViaOneSec":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.withdrawViaOneSec(
+                        payload.ledger,
+                        payload.tokenSymbol,
+                        payload.chain,
+                        payload.address,
+                        payload.amount,
+                        payload.pin,
+                    ),
+                );
+                break;
+
             case "ckbtcMinterDepositInfo":
                 executeThenReply(payload, correlationId, agent.getCkbtcMinterDepositInfo());
                 break;

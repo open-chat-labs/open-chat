@@ -663,6 +663,7 @@ export class OpenChat {
     #serverVideoCallsInProgress: ChatMap<bigint> = new ChatMap();
     #locale!: string;
     #vapidPublicKey: string;
+    #getBtcAddressPromise: Promise<string> | undefined = undefined;
 
     currentAirdropChannel: AirdropChannelDetails | undefined = undefined;
 
@@ -7568,9 +7569,15 @@ export class OpenChat {
         if (storeValue !== undefined) {
             return Promise.resolve(storeValue);
         }
-        const address = await this.#sendRequest({
+        if (this.#getBtcAddressPromise !== undefined) {
+            return this.#getBtcAddressPromise;
+        }
+        this.#getBtcAddressPromise = this.#sendRequest({
             kind: "generateBtcAddress",
         });
+        const address = await this.#getBtcAddressPromise.finally(
+            () => (this.#getBtcAddressPromise = undefined),
+        );
         bitcoinAddress.set(address);
         return address;
     }
@@ -7596,6 +7603,38 @@ export class OpenChat {
 
         const response = await this.#sendRequest({
             kind: "withdrawBtc",
+            address,
+            amount,
+            pin,
+        });
+
+        if (response.kind === "error") {
+            const pinNumberFailure = pinNumberFailureFromError(response);
+            if (pinNumberFailure !== undefined) {
+                pinNumberFailureStore.set(pinNumberFailure);
+            }
+        }
+        return response;
+    }
+
+    async withdrawViaOneSec(
+        ledger: string,
+        tokenSymbol: string,
+        chain: EvmChain,
+        address: string,
+        amount: bigint,
+    ): Promise<WithdrawBtcResponse> {
+        let pin: string | undefined = undefined;
+
+        if (pinNumberRequiredStore.value) {
+            pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
+        }
+
+        const response = await this.#sendRequest({
+            kind: "withdrawViaOneSec",
+            ledger,
+            tokenSymbol,
+            chain,
             address,
             amount,
             pin,

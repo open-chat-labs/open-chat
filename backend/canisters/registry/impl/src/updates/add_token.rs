@@ -6,10 +6,11 @@ use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use constants::{CHAT_LEDGER_CANISTER_ID, MEMO_LIST_TOKEN, SNS_GOVERNANCE_CANISTER_ID};
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
-use registry_canister::add_token::{Response::*, *};
+use oc_error_codes::OCErrorCode;
+use registry_canister::add_token::*;
 use registry_canister::{NervousSystemDetails, Payment};
 use tracing::{error, info};
-use types::{CanisterId, UserId};
+use types::{CanisterId, EvmContractAddress, OCResult, UserId};
 
 const TOKEN_LISTING_FEE_E8S: u128 = 50_000_000_000; // 500 CHAT
 
@@ -22,12 +23,24 @@ async fn add_token(args: Args) -> Response {
         None,
         Some(args.info_url),
         Some(args.transaction_url_format),
+        false,
+        Vec::new(),
     )
     .await
+    .into()
 }
 
 pub(crate) async fn add_sns_token(nervous_system: NervousSystemDetails) {
-    add_token_impl(nervous_system.ledger_canister_id, None, Some(nervous_system), None, None).await;
+    let _ = add_token_impl(
+        nervous_system.ledger_canister_id,
+        None,
+        Some(nervous_system),
+        None,
+        None,
+        false,
+        Vec::new(),
+    )
+    .await;
 }
 
 pub(crate) async fn add_token_impl(
@@ -36,19 +49,16 @@ pub(crate) async fn add_token_impl(
     nervous_system: Option<NervousSystemDetails>,
     info_url: Option<String>,
     transaction_url_format: Option<String>,
-) -> Response {
-    let metadata = match icrc_ledger_canister_c2c_client::icrc1_metadata(ledger_canister_id).await {
-        Ok(r) => r,
-        Err(error) => return InternalError(format!("{error:?}")),
-    };
+    one_sec_enabled: bool,
+    evm_contract_addresses: Vec<EvmContractAddress>,
+) -> OCResult {
+    let metadata = icrc_ledger_canister_c2c_client::icrc1_metadata(ledger_canister_id).await?;
 
-    let metadata_helper = match MetadataHelper::try_parse(metadata) {
-        Ok(h) => h,
-        Err(reason) => return InvalidRequest(format!("Token metadata is incomplete: {reason}")),
-    };
+    let metadata_helper = MetadataHelper::try_parse(metadata)
+        .map_err(|reason| OCErrorCode::InvalidRequest.with_message(format!("Token metadata is incomplete: {reason}")))?;
 
     if !metadata_helper.is_icrc1_compatible() {
-        return InvalidRequest("Token is not compatible with the ICRC1 standard".to_string());
+        return Err(OCErrorCode::InvalidRequest.with_message("Token is not compatible with the ICRC1 standard"));
     }
 
     let Urls {
@@ -58,7 +68,7 @@ pub(crate) async fn add_token_impl(
         Ok(urls) => urls,
         Err(error) => {
             error!(%ledger_canister_id, error);
-            return InvalidRequest(error.to_string());
+            return Err(OCErrorCode::InvalidRequest.with_message(error));
         }
     };
 
@@ -69,13 +79,10 @@ pub(crate) async fn add_token_impl(
     else {
         let error = "Failed to find logo for token";
         error!(%ledger_canister_id, error);
-        return InternalError(error.to_string());
+        return Err(OCErrorCode::InvalidRequest.with_message(error));
     };
 
-    let standards = match icrc_ledger_canister_c2c_client::icrc1_supported_standards(ledger_canister_id).await {
-        Ok(standards) => standards,
-        Err(error) => return InternalError(format!("{error:?}")),
-    };
+    let standards = icrc_ledger_canister_c2c_client::icrc1_supported_standards(ledger_canister_id).await?;
 
     let (test_mode, now_nanos, exists) = read_state(|state| {
         (
@@ -86,7 +93,7 @@ pub(crate) async fn add_token_impl(
     });
 
     if exists {
-        return AlreadyAdded;
+        return Err(OCErrorCode::AlreadyAdded.into());
     }
 
     // Transfer the listing fee from the payer to the BURN address
@@ -115,7 +122,7 @@ pub(crate) async fn add_token_impl(
             }
             Err(message) => {
                 error!(%user_id, ?message, "Error transferring listing fee");
-                return PaymentFailed(message.to_string());
+                return Err(OCErrorCode::TransferFailed.with_message(message));
             }
         }
     }
@@ -142,13 +149,14 @@ pub(crate) async fn add_token_impl(
             transaction_url_format,
             standards,
             payment,
-            false,
+            one_sec_enabled,
+            evm_contract_addresses,
             now,
         );
         info!(name, %ledger_canister_id, "Token added");
     });
 
-    Success
+    Ok(())
 }
 
 struct Urls {

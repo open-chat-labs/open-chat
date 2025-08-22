@@ -7,16 +7,17 @@
         fit?: boolean;
         children?: Snippet;
         shadow?: boolean;
+        cls?: string;
     }
 
-    let { centered = false, fit = false, children, shadow = true }: Props = $props();
+    let { centered = false, fit = false, children, shadow = true, cls }: Props = $props();
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
     oncontextmenu={(e) => e.preventDefault()}
     in:fade={{ duration: 100 }}
-    class="menu"
+    class={`menu ${cls}`}
     class:fit
     class:shadow
     class:centered>
@@ -30,7 +31,7 @@
         border-radius: var(--menu-rd);
         border: var(--bw) solid var(--menu-bd);
         max-height: 80vh;
-        height: var(--override-height);
+        max-height: var(--override-height, 80vh);
         @include nice-scrollbar();
 
         @include mobile() {

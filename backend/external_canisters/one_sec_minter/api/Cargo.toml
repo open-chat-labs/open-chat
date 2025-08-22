@@ -9,4 +9,5 @@ edition.workspace = true
 candid = { workspace = true }
 icrc-ledger-types = { workspace = true }
 serde = { workspace = true }
+serde_bytes = { workspace = true }
 types = { path = "../../../libraries/types" }
