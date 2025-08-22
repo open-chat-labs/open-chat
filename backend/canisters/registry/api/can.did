@@ -13,10 +13,7 @@ type TokenStandard = variant {
 
 type AddTokenResponse = variant {
     Success;
-    AlreadyAdded;
-    InvalidRequest : text;
-    PaymentFailed : text;
-    InternalError : text;
+    Error : OCError;
 };
 
 service : {

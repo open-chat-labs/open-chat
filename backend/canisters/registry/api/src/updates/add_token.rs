@@ -1,7 +1,7 @@
 use candid::{CandidType, Principal};
 use human_readable::{HumanReadablePrincipal, ToHumanReadable};
 use serde::{Deserialize, Serialize};
-use types::{CanisterId, UserId};
+use types::{CanisterId, UnitResult, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -11,14 +11,7 @@ pub struct Args {
     pub transaction_url_format: String,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    AlreadyAdded,
-    InvalidRequest(String),
-    PaymentFailed(String),
-    InternalError(String),
-}
+pub type Response = UnitResult;
 
 #[derive(Serialize)]
 pub struct HumanReadableArgs {

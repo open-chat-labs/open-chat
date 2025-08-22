@@ -1293,13 +1293,15 @@ export class CommunityClient extends MsgpackCanisterAgent {
 
     toggleMuteChannelNotifications(
         chatId: ChannelIdentifier | undefined,
-        mute: boolean,
+        mute: boolean | undefined,
+        muteAtEveryone: boolean | undefined,
     ): Promise<ToggleMuteNotificationResponse> {
         return this.executeMsgpackUpdate(
             "toggle_mute_notifications",
             {
                 channel_id: chatId ? toBigInt32(chatId.channelId) : undefined,
                 mute,
+                mute_at_everyone: muteAtEveryone,
             },
             unitResult,
             CommunityToggleMuteNotificationsArgs,

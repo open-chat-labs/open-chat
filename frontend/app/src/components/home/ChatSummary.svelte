@@ -106,6 +106,7 @@
             ?.find((id) => chatIdentifiersEqual(id, chatSummary.id)) !== undefined,
     );
     let muted = $derived(chatSummary.membership.notificationsMuted);
+    let atEveryoneMuted = $derived(chatSummary.membership.atEveryoneMuted);
     const maxDelOffset = -60;
     let delOffset = $state(maxDelOffset);
     let swiped = $state(false);
@@ -327,8 +328,11 @@
         });
     }
 
-    function toggleMuteNotifications(mute: boolean) {
-        publish("toggleMuteNotifications", { chatId: chatSummary.id, mute });
+    function toggleMuteNotifications(
+        mute: boolean | undefined,
+        muteAtEveryone: boolean | undefined,
+    ) {
+        publish("toggleMuteNotifications", { chatId: chatSummary.id, mute, muteAtEveryone });
     }
 
     function archiveChat() {
@@ -564,7 +568,8 @@
                                     {#if notificationsSupported && !externalContent}
                                         {#if muted}
                                             <MenuItem
-                                                onclick={() => toggleMuteNotifications(false)}>
+                                                onclick={() =>
+                                                    toggleMuteNotifications(false, undefined)}>
                                                 {#snippet icon()}
                                                     <BellIcon
                                                         size={$iconSize}
@@ -578,7 +583,9 @@
                                                 {/snippet}
                                             </MenuItem>
                                         {:else}
-                                            <MenuItem onclick={() => toggleMuteNotifications(true)}>
+                                            <MenuItem
+                                                onclick={() =>
+                                                    toggleMuteNotifications(true, undefined)}>
                                                 {#snippet icon()}
                                                     <MutedIcon
                                                         size={$iconSize}
@@ -589,6 +596,35 @@
                                                         resourceKey={i18nKey(
                                                             "muteNotifications",
                                                         )} />
+                                                {/snippet}
+                                            </MenuItem>
+                                        {/if}
+                                        {#if atEveryoneMuted}
+                                            <MenuItem
+                                                onclick={() =>
+                                                    toggleMuteNotifications(undefined, false)}>
+                                                {#snippet icon()}
+                                                    <MutedIcon
+                                                        size={$iconSize}
+                                                        color={"var(--icon-inverted-txt)"} />
+                                                {/snippet}
+                                                {#snippet text()}
+                                                    <Translatable
+                                                        resourceKey={i18nKey("unmuteAtEveryone")} />
+                                                {/snippet}
+                                            </MenuItem>
+                                        {:else}
+                                            <MenuItem
+                                                onclick={() =>
+                                                    toggleMuteNotifications(undefined, true)}>
+                                                {#snippet icon()}
+                                                    <MutedIcon
+                                                        size={$iconSize}
+                                                        color={"var(--icon-inverted-txt)"} />
+                                                {/snippet}
+                                                {#snippet text()}
+                                                    <Translatable
+                                                        resourceKey={i18nKey("muteAtEveryone")} />
                                                 {/snippet}
                                             </MenuItem>
                                         {/if}

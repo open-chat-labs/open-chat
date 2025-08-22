@@ -1,5 +1,6 @@
 <script lang="ts">
     import { iconSize, type ResourceKey } from "openchat-client";
+    import { onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
     import Magnify from "svelte-material-icons/Magnify.svelte";
@@ -12,6 +13,7 @@
         placeholder?: ResourceKey;
         fill?: boolean;
         inputStyle?: boolean;
+        autofocus?: boolean;
         onPerformSearch?: (term: string) => void;
         onFocus?: () => void;
         onBlur?: () => void;
@@ -26,9 +28,11 @@
         onPerformSearch,
         onFocus,
         onBlur,
+        autofocus = false,
     }: Props = $props();
 
     let timer: number | undefined;
+    let inp: HTMLInputElement;
 
     function performSearch(e: Event) {
         e.preventDefault();
@@ -55,10 +59,17 @@
             }
         }, 300);
     }
+
+    onMount(() => {
+        if (autofocus) {
+            inp.focus();
+        }
+    });
 </script>
 
 <form onsubmit={performSearch} class="wrapper" class:fill class:input-style={inputStyle}>
     <input
+        bind:this={inp}
         onkeydown={keydown}
         spellcheck="false"
         bind:value={searchTerm}
