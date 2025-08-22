@@ -1,6 +1,7 @@
 use candid::{CandidType, Deserialize};
 use icrc_ledger_types::icrc1::account::Account as IcrcAccount;
 use serde::Serialize;
+use std::str::FromStr;
 
 mod queries;
 mod updates;
@@ -20,7 +21,7 @@ pub enum IcpAccount {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Token {
     ICP,
     USDC,
@@ -29,6 +30,23 @@ pub enum Token {
     ckBTC,
     BOB,
     GLDT,
+}
+
+impl FromStr for Token {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_ascii_uppercase().as_str() {
+            "ICP" => Ok(Self::ICP),
+            "USDC" => Ok(Self::USDC),
+            "USDT" => Ok(Self::USDT),
+            "CBBTC" => Ok(Self::cbBTC),
+            "CKBTC" => Ok(Self::ckBTC),
+            "BOB" => Ok(Self::BOB),
+            "GLDT" => Ok(Self::GLDT),
+            _ => Err(()),
+        }
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug)]

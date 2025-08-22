@@ -188,6 +188,7 @@ pub enum OCErrorCode {
     ItemNotFound = 344,
     AmountNotSpecified = 345,
     ProfileBackgroundTooBig = 346,
+    LedgerNotFound = 347,
 
     // InternalError
     C2CError = 500,

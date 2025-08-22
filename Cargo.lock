@@ -7129,6 +7129,7 @@ dependencies = [
  "candid",
  "icrc-ledger-types",
  "serde",
+ "serde_bytes",
  "types",
 ]
 
@@ -8499,6 +8500,7 @@ dependencies = [
  "candid",
  "candid_gen",
  "human_readable",
+ "oc_error_codes",
  "serde",
  "ts-rs",
  "ts_export",
@@ -8565,6 +8567,9 @@ dependencies = [
  "msgpack",
  "notifications_index_canister",
  "notifications_index_canister_c2c_client",
+ "oc_error_codes",
+ "one_sec_minter_canister",
+ "one_sec_minter_canister_c2c_client",
  "rand 0.8.5",
  "registry_canister",
  "serde",
