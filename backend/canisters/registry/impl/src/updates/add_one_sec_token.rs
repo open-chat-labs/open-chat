@@ -7,7 +7,7 @@ use oc_error_codes::OCErrorCode;
 use one_sec_minter_canister::Token;
 use registry_canister::add_one_sec_token::*;
 use std::str::FromStr;
-use types::{CanisterId, Chain, EvmContractAddress, OCResult};
+use types::{CanisterId, Chain, EvmChain, EvmContractAddress, OCResult};
 
 #[update(msgpack = true)]
 #[trace]
@@ -48,11 +48,9 @@ async fn add_one_sec_token_impl(args: Args) -> OCResult {
     let evm_contract_addresses: Vec<_> = token_metadata
         .into_iter()
         .filter_map(|tm| {
-            tm.chain.and_then(|c| match c {
-                Chain::Ethereum => Some(EvmContractAddress::Ethereum(tm.contract)),
-                Chain::Arbitrum => Some(EvmContractAddress::Arbitrum(tm.contract)),
-                Chain::Base => Some(EvmContractAddress::Base(tm.contract)),
-                _ => None,
+            tm.chain.and_then(|c| EvmChain::try_from(c).ok()).map(|c| EvmContractAddress {
+                chain: c,
+                address: tm.contract,
             })
         })
         .collect();
