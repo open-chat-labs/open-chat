@@ -3,8 +3,8 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
-    CanisterId, Chat, ChatId, ChitEvent, DirectChatSummary, Empty, GroupChatSummary, InstalledBotDetails, PinNumberSettings,
-    StreakInsurance, TimestampMillis, UserId,
+    CanisterId, Chat, ChatId, ChitEvent, DirectChatSummary, Empty, InstalledBotDetails, PinNumberSettings, StreakInsurance,
+    TimestampMillis, UserId,
 };
 
 pub type Args = Empty;
@@ -59,13 +59,6 @@ pub struct DirectChatsInitial {
 pub struct GroupChatsInitial {
     pub summaries: Vec<crate::GroupChatSummary>,
     pub pinned: Vec<ChatId>,
-}
-
-#[ts_export(user, initial_state)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct CachedGroupChatSummaries {
-    pub summaries: Vec<GroupChatSummary>,
-    pub timestamp: TimestampMillis,
 }
 
 #[ts_export(user, initial_state)]
