@@ -176,8 +176,8 @@ pub struct UserNotificationEnvelope {
 pub struct BotNotificationEnvelope {
     #[serde(rename = "r")]
     pub recipients: HashMap<UserId, BotDataEncoding>,
-    #[serde(rename = "n")]
-    pub notification_bytes: HashMap<BotDataEncoding, ByteBuf>,
+    #[serde(rename = "e")]
+    pub event_map: HashMap<BotDataEncoding, String>,
     #[serde(rename = "t")]
     pub timestamp: TimestampMillis,
 }
@@ -549,20 +549,5 @@ impl Debug for UserNotificationEnvelope {
             .field("notification_bytes", &self.notification_bytes.len())
             .field("timestamp", &self.timestamp)
             .finish()
-    }
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct Payload {
-    pub data: ByteBuf,
-    pub mime_type: String,
-}
-
-impl Payload {
-    pub fn new(data: ByteBuf, mime_type: &str) -> Self {
-        Self {
-            data,
-            mime_type: mime_type.to_string(),
-        }
     }
 }
