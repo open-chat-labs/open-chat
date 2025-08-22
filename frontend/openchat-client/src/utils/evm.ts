@@ -52,6 +52,8 @@ export async function getErc20TokenBalances(
     }, [] as Erc20TokenBalance[]);
 }
 
+// Return the non-zero balances of tokens contained in the `contractAddresses` array, any other
+// tokens can be ignored
 function mapTokenBalance(
     value: TokenBalanceResponse,
     contractAddresses: EvmContractAddress[],
