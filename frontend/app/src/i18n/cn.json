@@ -1149,6 +1149,7 @@
     "noChatsAvailable": "没有可用的聊天！",
     "noChatSelected": "没有聊天被选中",
     "noGroupsFound": "没有找到群组😭",
+    "noMatchingTokens": "没有匹配的令牌",
     "noThanks": "不用了",
     "notificationsDisabled": "推送通知已关闭",
     "notificationsEnabled": "推送开启",

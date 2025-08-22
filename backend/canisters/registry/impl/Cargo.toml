@@ -43,6 +43,9 @@ icrc-ledger-types = { workspace = true }
 msgpack = { path = "../../../libraries/msgpack" }
 notifications_index_canister = { path = "../../../canisters/notifications_index/api" }
 notifications_index_canister_c2c_client = { path = "../../../canisters/notifications_index/c2c_client" }
+oc_error_codes = { path = "../../../libraries/error_codes" }
+one_sec_minter_canister = { path = "../../../external_canisters/one_sec_minter/api" }
+one_sec_minter_canister_c2c_client = { path = "../../../external_canisters/one_sec_minter/c2c_client" }
 rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }

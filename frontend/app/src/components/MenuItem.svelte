@@ -6,7 +6,7 @@
         warning?: boolean;
         separator?: boolean;
         unpadded?: boolean;
-        onclick?: () => void;
+        onclick?: (e?: Event) => void;
     }
 </script>
 

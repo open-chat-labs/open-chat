@@ -1,10 +1,13 @@
 <script lang="ts">
+    import { i18nKey } from "@src/i18n/i18n";
     import type { EnhancedTokenDetails } from "openchat-client";
     import { cryptoLookup, cryptoTokensSorted, iconSize } from "openchat-client";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Menu from "../Menu.svelte";
     import MenuIcon from "../MenuIcon.svelte";
     import MenuItem from "../MenuItem.svelte";
+    import Search from "../Search.svelte";
+    import Translatable from "../Translatable.svelte";
 
     interface Props {
         ledger: string | undefined;
@@ -17,13 +20,22 @@
     let selecting = false;
     let ignoreClick = false;
 
-    let cryptoTokensFiltered = $derived($cryptoTokensSorted.filter((t) => t.enabled && filter(t)));
+    let allAvailableTokens = $derived($cryptoTokensSorted.filter((t) => t.enabled && filter(t)));
+    let filteredTokens = $derived(allAvailableTokens.filter(matchesSearch));
 
     $effect(() => {
-        if (ledger === undefined && cryptoTokensFiltered.length > 0) {
-            ledger = cryptoTokensFiltered[0].ledger;
+        if (ledger === undefined && allAvailableTokens.length > 0) {
+            ledger = allAvailableTokens[0].ledger;
         }
     });
+
+    function matchesSearch(details: EnhancedTokenDetails): boolean {
+        return (
+            searchTerm === "" ||
+            details.name.toLowerCase().includes(searchTermLower) ||
+            details.symbol.toLowerCase().includes(searchTermLower)
+        );
+    }
 
     function selectToken(selectedLedger: string, urlFormat: string) {
         selecting = false;
@@ -43,9 +55,17 @@
         }
         ignoreClick = false;
     }
+
+    let searching = $state(false);
+    let searchTerm = $state("");
+    let searchTermLower = $derived(searchTerm.toLowerCase());
+    function searchClicked(e?: Event) {
+        e?.preventDefault();
+        e?.stopPropagation();
+    }
 </script>
 
-{#if cryptoTokensFiltered.length > 0 && ledger !== undefined}
+{#if allAvailableTokens.length > 0 && ledger !== undefined}
     <MenuIcon centered position={"bottom"} align={"start"}>
         {#snippet menuIcon()}
             <div class="token-selector-trigger">
@@ -58,24 +78,40 @@
 
         {#snippet menuItems()}
             <div>
-                <Menu centered>
-                    {#each cryptoTokensFiltered as token}
-                        <MenuItem onclick={() => selectToken(token.ledger, token.urlFormat)}>
-                            {#snippet icon()}
-                                <img class="token-icon" src={token.logo} />
-                            {/snippet}
-                            {#snippet text()}
-                                <div class="token-text">
-                                    <div class="name">
-                                        {token.name}
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <!-- svelte-ignore a11y_no_static_element_interactions -->
+                <div onclick={searchClicked} class="search">
+                    <Search
+                        placeholder={i18nKey("search")}
+                        fill
+                        autofocus
+                        bind:searching
+                        bind:searchTerm></Search>
+                </div>
+                <Menu cls="crypto_selector" centered>
+                    {#if filteredTokens.length === 0}
+                        <div class="no_match">
+                            <Translatable resourceKey={i18nKey("noMatchingTokens")}></Translatable>
+                        </div>
+                    {:else}
+                        {#each filteredTokens as token}
+                            <MenuItem onclick={() => selectToken(token.ledger, token.urlFormat)}>
+                                {#snippet icon()}
+                                    <img alt={token.symbol} class="token-icon" src={token.logo} />
+                                {/snippet}
+                                {#snippet text()}
+                                    <div class="token-text">
+                                        <div class="name">
+                                            {token.name}
+                                        </div>
+                                        <div class="symbol">
+                                            {token.symbol}
+                                        </div>
                                     </div>
-                                    <div class="symbol">
-                                        {token.symbol}
-                                    </div>
-                                </div>
-                            {/snippet}
-                        </MenuItem>
-                    {/each}
+                                {/snippet}
+                            </MenuItem>
+                        {/each}
+                    {/if}
                 </Menu>
             </div>
         {/snippet}
@@ -92,6 +128,12 @@
     :global(.token-selector-trigger .menu-icon) {
         transition: transform 250ms ease-in-out;
         transform-origin: 50%;
+    }
+
+    :global(.crypto_selector.menu) {
+        border-top: none;
+        border-radius: 0 0 var(--menu-rd) var(--menu-rd);
+        max-height: calc(var(--override-height, 80vh) - 67px);
     }
 
     .token-selector-trigger {
@@ -118,5 +160,23 @@
 
     .symbol {
         color: var(--primary);
+    }
+
+    .no_match {
+        padding: $sp3 $sp4;
+        color: var(--txt-light);
+    }
+
+    .search {
+        background-color: var(--menu-bg);
+        border: var(--bw) solid var(--menu-bd);
+        border-radius: var(--menu-rd) var(--menu-rd) 0 0;
+        border-bottom: none;
+        padding: $sp3;
+        width: toRem(250);
+
+        @include mobile() {
+            width: 70vw;
+        }
     }
 </style>

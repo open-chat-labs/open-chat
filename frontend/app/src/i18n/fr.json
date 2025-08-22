@@ -1149,6 +1149,7 @@
     "noChatsAvailable": "Aucun chat disponible !",
     "noChatSelected": "Aucun chat actuellement sélectionné",
     "noGroupsFound": "Aucun groupe trouvé 😭",
+    "noMatchingTokens": "Aucun jeton correspondant",
     "noThanks": "Non merci",
     "notificationsDisabled": "Notifications désactivées",
     "notificationsEnabled": "Notifications activées",
