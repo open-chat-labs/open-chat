@@ -154,6 +154,10 @@ export class Gradient {
     toString(): string {
         return this.#from.toLinearGradient(this.#to);
     }
+
+    summarise(): string {
+        return `${this.#from.toString()} / ${this.#to.toString()}`;
+    }
 }
 
 export class Colours {

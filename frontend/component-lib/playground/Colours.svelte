@@ -31,17 +31,7 @@
         { name: "Primary Muted", key: "primaryMuted" },
     ];
 
-    const gradients: ColourCard[] = [
-        { name: "Primary", key: "primaryGradient" },
-        { name: "Inverted", key: "primaryGradientInverted" },
-    ];
-
-    const allColours: ColourCard[][] = [
-        mainColours,
-        typographyColours,
-        backgroundColours,
-        gradients,
-    ];
+    const allColours: ColourCard[][] = [mainColours, typographyColours, backgroundColours];
 </script>
 
 <h3>Colours / <span class="neon">Neon</span> theme</h3>
@@ -49,7 +39,8 @@
     {#each allColours as colours}
         <div class="section">
             {#each colours as { name, key }}
-                {@const code = neon.colours[key].toString()}
+                {@const colour = neon.colours[key]}
+                {@const code = colour.toString()}
                 <div class={`${key} card`}>
                     <div class="name">{name}</div>
                     <div class="circle" style={`background: ${code};`}></div>
@@ -58,6 +49,23 @@
             {/each}
         </div>
     {/each}
+
+    <div class="section">
+        <div class={`card`}>
+            <div class="name">{"Primary Gradient"}</div>
+            <div class="circle" style={`background: ${neon.colours.primaryGradient.toString()};`}>
+            </div>
+            <div class="code">{neon.colours.primaryGradient.summarise()}</div>
+        </div>
+        <div class={`card`}>
+            <div class="name">{"Primary Gradient Inverted"}</div>
+            <div
+                class="circle"
+                style={`background: ${neon.colours.primaryGradientInverted.toString()};`}>
+            </div>
+            <div class="code">{neon.colours.primaryGradientInverted.summarise()}</div>
+        </div>
+    </div>
 </div>
 
 <style lang="scss">
