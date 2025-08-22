@@ -290,6 +290,7 @@ export function groupMembershipUpdates(value: TGroupMembershipUpdates): GroupMem
     return {
         myRole: mapOptional(value.role, memberRole),
         notificationsMuted: value.notifications_muted,
+        atEveryoneMuted: value.at_everyone_muted,
         latestThreads: value.latest_threads.map(threadSyncDetails),
         unfollowedThreads: Array.from(value.unfollowed_threads),
         mentions: mentions(value.mentions),

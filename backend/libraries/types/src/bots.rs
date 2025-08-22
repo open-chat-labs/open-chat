@@ -556,3 +556,8 @@ pub enum BotDataEncoding {
     Json,
     Candid,
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct CandidPayload {
+    pub payload: String,
+}

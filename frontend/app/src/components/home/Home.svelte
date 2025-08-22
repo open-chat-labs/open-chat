@@ -803,17 +803,23 @@
         };
     }
 
-    function toggleMuteNotifications(detail: { chatId: ChatIdentifier; mute: boolean }) {
+    function toggleMuteNotifications(detail: {
+        chatId: ChatIdentifier;
+        mute: boolean | undefined;
+        muteAtEveryone: boolean | undefined;
+    }) {
         const op = detail.mute ? "muted" : "unmuted";
-        client.toggleMuteNotifications(detail.chatId, detail.mute).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast(
-                    i18nKey("toggleMuteNotificationsFailed", {
-                        operation: $_(op),
-                    }),
-                );
-            }
-        });
+        client
+            .toggleMuteNotifications(detail.chatId, detail.mute, detail.muteAtEveryone)
+            .then((success) => {
+                if (!success) {
+                    toastStore.showFailureToast(
+                        i18nKey("toggleMuteNotificationsFailed", {
+                            operation: $_(op),
+                        }),
+                    );
+                }
+            });
     }
 
     function copyUrl() {

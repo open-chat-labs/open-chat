@@ -897,6 +897,7 @@ function applyLocalUpdatesToChat(chat: Immutable<ChatSummary>, updates?: ChatSum
     chat.update((c) => {
         c.membership.notificationsMuted =
             updates.notificationsMuted ?? c.membership.notificationsMuted;
+        c.membership.atEveryoneMuted = updates.atEveryoneMuted ?? c.membership.atEveryoneMuted;
         c.membership.archived = updates.archived ?? c.membership.archived;
         c.membership.rulesAccepted = updates.rulesAccepted ?? c.membership.rulesAccepted;
         const latestMessage =

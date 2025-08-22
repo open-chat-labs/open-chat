@@ -201,7 +201,8 @@ export const GroupSummaryUpdatesArgs = Type.Object({
 
 export type GroupToggleMuteNotificationsArgs = Static<typeof GroupToggleMuteNotificationsArgs>;
 export const GroupToggleMuteNotificationsArgs = Type.Object({
-    mute: Type.Boolean(),
+    mute: Type.Optional(Type.Boolean()),
+    mute_at_everyone: Type.Optional(Type.Boolean()),
 });
 
 export type GroupRegenerateWebhookSuccessResult = Static<
@@ -2706,7 +2707,8 @@ export type CommunityToggleMuteNotificationsArgs = Static<
 >;
 export const CommunityToggleMuteNotificationsArgs = Type.Object({
     channel_id: Type.Optional(ChannelId),
-    mute: Type.Boolean(),
+    mute: Type.Optional(Type.Boolean()),
+    mute_at_everyone: Type.Optional(Type.Boolean()),
 });
 
 export type CommunityClaimPrizeArgs = Static<typeof CommunityClaimPrizeArgs>;
@@ -5562,6 +5564,7 @@ export const GroupMembership = Type.Object({
     role: GroupRole,
     mentions: Type.Array(HydratedMention),
     notifications_muted: Type.Boolean(),
+    at_everyone_muted: Type.Boolean(),
     my_metrics: ChatMetrics,
     latest_threads: Type.Array(GroupCanisterThreadDetails),
     rules_accepted: Type.Boolean(),
@@ -5650,6 +5653,7 @@ export const GroupMembershipUpdates = Type.Object({
     role: Type.Optional(GroupRole),
     mentions: Type.Array(HydratedMention),
     notifications_muted: Type.Optional(Type.Boolean()),
+    at_everyone_muted: Type.Optional(Type.Boolean()),
     my_metrics: Type.Optional(ChatMetrics),
     latest_threads: Type.Array(GroupCanisterThreadDetails),
     unfollowed_threads: Type.Array(MessageIndex),
