@@ -148,7 +148,11 @@ export class Gradient {
     }
 
     cssVariable(name: string): CssVariable {
-        return new CssVariable(name, this.#from.toLinearGradient(this.#to));
+        return new CssVariable(name, this.toString());
+    }
+
+    toString(): string {
+        return this.#from.toLinearGradient(this.#to);
     }
 }
 
