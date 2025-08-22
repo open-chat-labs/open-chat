@@ -7,6 +7,7 @@ use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use crate::model::user_event_batch::UserEventBatch;
 use crate::model::user_index_event_batch::UserIndexEventBatch;
 use crate::model::web_push_subscriptions::WebPushSubscriptions;
+use base64::Engine;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use community_canister::LocalIndexEvent as CommunityEvent;
@@ -16,7 +17,7 @@ use event_store_producer_cdk_runtime::CdkRuntime;
 use event_store_utils::EventDeduper;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_canister::LocalIndexEvent as GroupEvent;
-use jwt::{Claims, verify_and_decode};
+use jwt::{Claims, sign_and_encode_token, verify_and_decode};
 use local_user_index_canister::{ChildCanisterType, GlobalUser};
 use model::bots_map::BotsMap;
 use model::global_user_map::GlobalUserMap;
@@ -32,7 +33,7 @@ use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
-    BotDataEncoding, BotEventWrapper, BotNotification, BotNotificationEnvelope, BuildVersion, CanisterId,
+    BotDataEncoding, BotEventWrapper, BotNotification, BotNotificationEnvelope, BuildVersion, CandidPayload, CanisterId,
     ChannelLatestMessageIndex, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
     CommunityId, Cycles, DiamondMembershipDetails, IdempotentEnvelope, MessageContent, Milliseconds, Notification,
     NotificationEnvelope, ReferralType, TimestampMillis, Timestamped, UserId, UserNotificationEnvelope,
@@ -322,6 +323,95 @@ impl RuntimeState {
         }
     }
 
+    pub fn handle_notification(&mut self, notification: Notification, this_canister_id: CanisterId, now: TimestampMillis) {
+        match notification {
+            Notification::User(user_notification) => {
+                let users_who_have_blocked_sender: HashSet<_> = user_notification
+                    .sender
+                    .map(|s| self.data.blocked_users.all_linked_users(s))
+                    .unwrap_or_default();
+
+                let filtered_recipients: Vec<_> = user_notification
+                    .recipients
+                    .into_iter()
+                    .filter(|u| {
+                        (self.data.web_push_subscriptions.any_for_user(u)
+                            || !self.data.fcm_token_store.get_for_user(u).is_empty())
+                            && !users_who_have_blocked_sender.contains(u)
+                    })
+                    .collect();
+
+                if !filtered_recipients.is_empty() {
+                    self.data
+                        .notifications
+                        .add(NotificationEnvelope::User(Box::new(UserNotificationEnvelope {
+                            recipients: filtered_recipients,
+                            notification_bytes: ByteBuf::from(msgpack::serialize_then_unwrap(&user_notification.notification)),
+                            timestamp: now,
+                            fcm_data: Some(user_notification.notification.into()),
+                        })));
+                }
+            }
+            Notification::Bot(bot_notification) => self.push_bot_notification(bot_notification, this_canister_id, now),
+        }
+    }
+
+    pub fn push_bot_notification(
+        &mut self,
+        bot_notification: BotNotification,
+        this_canister_id: CanisterId,
+        now: TimestampMillis,
+    ) {
+        let recipients: HashMap<UserId, BotDataEncoding> = bot_notification
+            .recipients
+            .into_iter()
+            .filter_map(|bot_id| self.data.bots.get(&bot_id).map(|bot| (bot_id, bot.data_encoding)))
+            .collect();
+
+        if recipients.is_empty() {
+            return;
+        }
+
+        let encodings: HashSet<BotDataEncoding> = recipients.values().cloned().collect();
+
+        let event_wrapper = BotEventWrapper {
+            api_gateway: this_canister_id,
+            event: bot_notification.event,
+            timestamp: bot_notification.timestamp,
+        };
+
+        let expiry = now + 300_000; // Token valid for 5 mins from now
+
+        let event_map = encodings
+            .into_iter()
+            .map(|encoding| {
+                let secret_key_der = self.data.oc_key_pair.secret_key_der();
+                let jwt = match encoding {
+                    BotDataEncoding::Json => {
+                        let claims = Claims::new(expiry, "BotEventJson".to_string(), event_wrapper.clone());
+                        sign_and_encode_token(secret_key_der, claims, self.env.rng()).unwrap_or_default()
+                    }
+                    BotDataEncoding::Candid => {
+                        let payload =
+                            base64::engine::general_purpose::STANDARD.encode(candid::encode_one(&event_wrapper).unwrap());
+
+                        let claims = Claims::new(expiry, "BotEventCandid".to_string(), CandidPayload { payload });
+                        sign_and_encode_token(secret_key_der, claims, self.env.rng()).unwrap_or_default()
+                    }
+                };
+                (encoding, jwt)
+            })
+            .collect();
+
+        self.data
+            .notifications
+            .add(NotificationEnvelope::Bot(BotNotificationEnvelope {
+                recipients,
+                timestamp: now,
+                event_map,
+            }));
+    }
+
     pub fn metrics(&self) -> Metrics {
         let now = self.env.now();
         let user_upgrades_metrics = self.data.users_requiring_upgrade.metrics();
@@ -575,79 +665,6 @@ impl Data {
             fcm_token_store: FcmTokenStore::default(),
             premium_items: PremiumItems::default(),
         }
-    }
-
-    pub fn handle_notification(&mut self, notification: Notification, this_canister_id: CanisterId, now: TimestampMillis) {
-        match notification {
-            Notification::User(user_notification) => {
-                let users_who_have_blocked_sender: HashSet<_> = user_notification
-                    .sender
-                    .map(|s| self.blocked_users.all_linked_users(s))
-                    .unwrap_or_default();
-
-                let filtered_recipients: Vec<_> = user_notification
-                    .recipients
-                    .into_iter()
-                    .filter(|u| {
-                        (self.web_push_subscriptions.any_for_user(u) || !self.fcm_token_store.get_for_user(u).is_empty())
-                            && !users_who_have_blocked_sender.contains(u)
-                    })
-                    .collect();
-
-                if !filtered_recipients.is_empty() {
-                    self.notifications
-                        .add(NotificationEnvelope::User(Box::new(UserNotificationEnvelope {
-                            recipients: filtered_recipients,
-                            notification_bytes: ByteBuf::from(msgpack::serialize_then_unwrap(&user_notification.notification)),
-                            timestamp: now,
-                            fcm_data: Some(user_notification.notification.into()),
-                        })));
-                }
-            }
-            Notification::Bot(bot_notification) => self.push_bot_notification(bot_notification, this_canister_id, now),
-        }
-    }
-
-    pub fn push_bot_notification(
-        &mut self,
-        bot_notification: BotNotification,
-        this_canister_id: CanisterId,
-        now: TimestampMillis,
-    ) {
-        let recipients: HashMap<UserId, BotDataEncoding> = bot_notification
-            .recipients
-            .into_iter()
-            .filter_map(|bot_id| self.bots.get(&bot_id).map(|bot| (bot_id, bot.data_encoding)))
-            .collect();
-
-        if recipients.is_empty() {
-            return;
-        }
-
-        let encodings: HashSet<BotDataEncoding> = recipients.values().cloned().collect();
-
-        let event_wrapper = BotEventWrapper {
-            api_gateway: this_canister_id,
-            event: bot_notification.event,
-            timestamp: bot_notification.timestamp,
-        };
-
-        let notification_bytes = encodings
-            .into_iter()
-            .map(|encoding| {
-                let bytes = match encoding {
-                    BotDataEncoding::Json => serde_json::to_vec(&event_wrapper).unwrap(),
-                    BotDataEncoding::Candid => candid::encode_one(&event_wrapper).unwrap(),
-                };
-                (encoding, ByteBuf::from(bytes))
-            })
-            .collect();
-
-        self.notifications.add(NotificationEnvelope::Bot(BotNotificationEnvelope {
-            recipients,
-            timestamp: now,
-            notification_bytes,
-        }));
     }
 }
 
