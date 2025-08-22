@@ -1,5 +1,5 @@
 import { Colour, Colours, Gradient } from "./colour";
-import { Theme } from "./type";
+import { Theme } from "./theme";
 
 export const theme = new Theme(
     new Colours(

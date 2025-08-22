@@ -2,6 +2,11 @@
     import type { Colours } from "../src/theme/colour";
     import { theme as neon } from "../src/theme/neon";
 
+    type Section = {
+        name: string;
+        colours: ColourCard[];
+    };
+
     type ColourCard = {
         name: string;
         key: keyof Colours;
@@ -31,12 +36,20 @@
         { name: "Primary Muted", key: "primaryMuted" },
     ];
 
-    const allColours: ColourCard[][] = [mainColours, typographyColours, backgroundColours];
+    const allColours: Section[] = [
+        {
+            name: "Main",
+            colours: mainColours,
+        },
+        { name: "Typography", colours: typographyColours },
+        { name: "Backgrounds", colours: backgroundColours },
+    ];
 </script>
 
 <h3>Colours / <span class="neon">Neon</span> theme</h3>
 <div class="grid">
-    {#each allColours as colours}
+    {#each allColours as { name, colours }}
+        <h3>{name}</h3>
         <div class="section">
             {#each colours as { name, key }}
                 {@const colour = neon.colours[key]}
@@ -50,6 +63,7 @@
         </div>
     {/each}
 
+    <h3>{"Gradients"}</h3>
     <div class="section">
         <div class={`card`}>
             <div class="name">{"Primary Gradient"}</div>
