@@ -1,23 +1,23 @@
 import type {
+    ChannelSummary,
+    CommunityCanisterChannelSummaryUpdates,
     CommunityCanisterCommunitySummaryUpdates,
-    UserCanisterCommunitySummaryUpdates,
     CommunitySummary,
     CommunitySummaryResponse,
-    UserCanisterCommunitySummary,
-    ChannelSummary,
-    UserCanisterChannelSummaryUpdates,
-    CommunityCanisterChannelSummaryUpdates,
-    ThreadSyncDetails,
     GroupCanisterThreadDetails,
+    ThreadSyncDetails,
     UserCanisterChannelSummary,
+    UserCanisterChannelSummaryUpdates,
+    UserCanisterCommunitySummary,
+    UserCanisterCommunitySummaryUpdates,
     UserGroupSummary,
 } from "openchat-shared";
 import {
-    CommunityMap,
-    ChatMap,
-    mapOptionUpdate,
     applyOptionUpdate,
     bigIntMax,
+    ChatMap,
+    CommunityMap,
+    mapOptionUpdate,
 } from "openchat-shared";
 import { toRecord } from "./list";
 
@@ -75,7 +75,8 @@ export function mergeCommunityUpdates(
     userCanisterUpdates: UserCanisterCommunitySummaryUpdates[],
     communityCanisterUpdates: CommunityCanisterCommunitySummaryUpdates[],
 ): CommunitySummary[] {
-    if (userCanisterUpdates.length === 0 && communityCanisterUpdates.length === 0) return communities;
+    if (userCanisterUpdates.length === 0 && communityCanisterUpdates.length === 0)
+        return communities;
 
     const userLookup = CommunityMap.fromList(userCanisterUpdates);
     const communityLookup = CommunityMap.fromList(communityCanisterUpdates);
@@ -248,6 +249,8 @@ function mergeChannelUpdates(
                         : readByMeUpTo,
                 notificationsMuted:
                     c?.membership?.notificationsMuted ?? channel.membership.notificationsMuted,
+                atEveryoneMuted:
+                    c?.membership?.atEveryoneMuted ?? channel.membership.atEveryoneMuted,
                 myMetrics: c?.membership?.myMetrics ?? channel.membership.myMetrics,
                 archived: u?.archived ?? channel.membership.archived,
                 rulesAccepted: c?.membership?.rulesAccepted ?? channel.membership.rulesAccepted,

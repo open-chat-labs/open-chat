@@ -52,6 +52,9 @@
     let isCommunityMuted = $derived(
         $chatSummariesListStore.every((c) => c.membership.notificationsMuted),
     );
+    let isAtEveryoneMutedForCommunity = $derived(
+        $chatSummariesListStore.every((c) => c.membership.atEveryoneMuted),
+    );
 
     function leaveCommunity() {
         publish("leaveCommunity", {
@@ -105,8 +108,8 @@
         canEdit && publish("editCommunity", community);
     }
 
-    function muteAllChannels() {
-        client.muteAllChannels(community.id);
+    function muteAllChannels(muteAtEveryone: boolean) {
+        client.muteAllChannels(community.id, muteAtEveryone);
     }
 
     function freezeCommunity() {
@@ -218,17 +221,33 @@
                     <span><Translatable resourceKey={i18nKey("markAllRead")} /></span>
                 {/snippet}
             </MenuItem>
-            {#if notificationsSupported && !isCommunityMuted}
-                <MenuItem onclick={muteAllChannels}>
-                    {#snippet icon()}
-                        <BellOff size={$iconSize} color={"var(--icon-inverted-txt)"} />
-                    {/snippet}
-                    {#snippet text()}
-                        <span
-                            ><Translatable
-                                resourceKey={i18nKey("communities.muteAllChannels")} /></span>
-                    {/snippet}
-                </MenuItem>
+            {#if notificationsSupported}
+                {#if !isCommunityMuted}
+                    <MenuItem onclick={() => muteAllChannels(false)}>
+                        {#snippet icon()}
+                            <BellOff size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        {/snippet}
+                        {#snippet text()}
+                            <span
+                                ><Translatable
+                                    resourceKey={i18nKey("communities.muteAllChannels")} /></span>
+                        {/snippet}
+                    </MenuItem>
+                {/if}
+                {#if !isAtEveryoneMutedForCommunity}
+                    <MenuItem onclick={() => muteAllChannels(true)}>
+                        {#snippet icon()}
+                            <BellOff size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        {/snippet}
+                        {#snippet text()}
+                            <span
+                                ><Translatable
+                                    resourceKey={i18nKey(
+                                        "communities.muteAllChannelsAtEveryone",
+                                    )} /></span>
+                        {/snippet}
+                    </MenuItem>
+                {/if}
             {/if}
             {#if member}
                 <MenuItem separator />

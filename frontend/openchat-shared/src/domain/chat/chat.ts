@@ -1574,6 +1574,7 @@ export function nullMembership(): ChatMembership {
         latestThreads: [],
         myMetrics: emptyChatMetrics(),
         notificationsMuted: false,
+        atEveryoneMuted: false,
         readByMeUpTo: undefined,
         archived: false,
         rulesAccepted: false,
@@ -1588,6 +1589,7 @@ export type ChatMembership = {
     latestThreads: ThreadSyncDetails[];
     myMetrics: Metrics;
     notificationsMuted: boolean;
+    atEveryoneMuted: boolean;
     readByMeUpTo: number | undefined;
     archived: boolean;
     rulesAccepted: boolean;
@@ -1634,6 +1636,7 @@ export type GroupCanisterGroupChatSummary = AccessControlled &
 export type GroupCanisterGroupMembership = {
     role: ChatPermissionRole;
     notificationsMuted: boolean;
+    atEveryoneMuted: boolean;
     lapsed: boolean;
     joined: bigint;
     rulesAccepted: boolean;
@@ -1677,6 +1680,7 @@ export type GroupCanisterGroupChatSummaryUpdates = {
 export type GroupMembershipUpdates = {
     myRole: MemberRole | undefined;
     notificationsMuted: boolean | undefined;
+    atEveryoneMuted: boolean | undefined;
     lapsed: boolean | undefined;
     unfollowedThreads: number[];
     rulesAccepted: boolean | undefined;

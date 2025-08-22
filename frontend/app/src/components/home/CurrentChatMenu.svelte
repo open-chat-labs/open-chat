@@ -144,8 +144,15 @@
             client.unreadPinned(chat.id, chat.dateLastPinned);
     }
 
-    function toggleMuteNotifications(mute: boolean) {
-        publish("toggleMuteNotifications", { chatId: selectedChatSummary.id, mute });
+    function toggleMuteNotifications(
+        mute: boolean | undefined,
+        muteAtEveryone: boolean | undefined,
+    ) {
+        publish("toggleMuteNotifications", {
+            chatId: selectedChatSummary.id,
+            mute,
+            muteAtEveryone,
+        });
     }
 
     function addToFavourites() {
@@ -494,7 +501,7 @@
 
                     {#if notificationsSupported}
                         {#if selectedChatSummary.membership.notificationsMuted === true}
-                            <MenuItem onclick={() => toggleMuteNotifications(false)}>
+                            <MenuItem onclick={() => toggleMuteNotifications(false, undefined)}>
                                 {#snippet icon()}
                                     <Bell size={$iconSize} color={"var(--icon-inverted-txt)"} />
                                 {/snippet}
@@ -503,12 +510,31 @@
                                 {/snippet}
                             </MenuItem>
                         {:else}
-                            <MenuItem onclick={() => toggleMuteNotifications(true)}>
+                            <MenuItem onclick={() => toggleMuteNotifications(true, undefined)}>
                                 {#snippet icon()}
                                     <BellOff size={$iconSize} color={"var(--icon-inverted-txt)"} />
                                 {/snippet}
                                 {#snippet text()}
                                     <Translatable resourceKey={i18nKey("muteNotifications")} />
+                                {/snippet}
+                            </MenuItem>
+                        {/if}
+                        {#if selectedChatSummary.membership.atEveryoneMuted === true}
+                            <MenuItem onclick={() => toggleMuteNotifications(undefined, false)}>
+                                {#snippet icon()}
+                                    <Bell size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                                {/snippet}
+                                {#snippet text()}
+                                    <Translatable resourceKey={i18nKey("unmuteAtEveryone")} />
+                                {/snippet}
+                            </MenuItem>
+                        {:else}
+                            <MenuItem onclick={() => toggleMuteNotifications(undefined, true)}>
+                                {#snippet icon()}
+                                    <BellOff size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                                {/snippet}
+                                {#snippet text()}
+                                    <Translatable resourceKey={i18nKey("muteAtEveryone")} />
                                 {/snippet}
                             </MenuItem>
                         {/if}
@@ -610,7 +636,7 @@
                     {/if}
                     {#if notificationsSupported}
                         {#if selectedChatSummary.membership.notificationsMuted === true}
-                            <MenuItem onclick={() => toggleMuteNotifications(false)}>
+                            <MenuItem onclick={() => toggleMuteNotifications(false, undefined)}>
                                 {#snippet icon()}
                                     <Bell size={$iconSize} color={"var(--icon-inverted-txt)"} />
                                 {/snippet}
@@ -619,7 +645,7 @@
                                 {/snippet}
                             </MenuItem>
                         {:else}
-                            <MenuItem onclick={() => toggleMuteNotifications(true)}>
+                            <MenuItem onclick={() => toggleMuteNotifications(true, undefined)}>
                                 {#snippet icon()}
                                     <BellOff size={$iconSize} color={"var(--icon-inverted-txt)"} />
                                 {/snippet}

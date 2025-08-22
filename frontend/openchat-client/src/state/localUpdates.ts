@@ -727,13 +727,19 @@ export class GlobalLocalState {
         );
     }
 
-    updateNotificationsMuted(id: ChatIdentifier, muted: boolean): UndoLocalUpdate {
+    updateNotificationsMuted(
+        id: ChatIdentifier,
+        muted: boolean | undefined,
+        atEveryoneMuted: boolean | undefined,
+    ): UndoLocalUpdate {
         return this.#modifyChatSummaryUpdates(
             id,
             (upd) => {
                 upd.notificationsMuted = muted;
+                upd.atEveryoneMuted = atEveryoneMuted;
                 return (upd) => {
                     upd.notificationsMuted = undefined;
+                    upd.atEveryoneMuted = undefined;
                     return upd;
                 };
             },
