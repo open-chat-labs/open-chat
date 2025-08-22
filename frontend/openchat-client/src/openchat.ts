@@ -107,6 +107,7 @@ import {
     type EventsResponse,
     type EventWrapper,
     type EvmChain,
+    type EvmContractAddress,
     type ExpiredEventsRange,
     type ExploreBotsResponse,
     type ExploreChannelsResponse,
@@ -599,6 +600,7 @@ import {
 } from "./utils/user";
 import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 import { createWebAuthnIdentity, MultiWebAuthnIdentity } from "./utils/webAuthn";
+import { getErc20TokenBalances } from "./utils/evm";
 
 export const DEFAULT_WORKER_TIMEOUT = 1000 * 90;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -664,6 +666,7 @@ export class OpenChat {
     #locale!: string;
     #vapidPublicKey: string;
     #getBtcAddressPromise: Promise<string> | undefined = undefined;
+    #evmContractAddresses: EvmContractAddress[] = [];
 
     currentAirdropChannel: AirdropChannelDetails | undefined = undefined;
 
@@ -1079,6 +1082,7 @@ export class OpenChat {
         if (!anonUserStore.value) {
             this.#startOnlinePoller();
             this.#startBtcBalanceUpdateJob();
+            this.#startOneSecBalanceUpdateJob();
             this.#sendRequest({ kind: "getUserStorageLimits" })
                 .then((storage) => {
                     storageStore.set(storage);
@@ -7082,6 +7086,10 @@ export class OpenChat {
                                 })
                                 .filter((f) => f !== undefined) as MessageFilter[],
                         );
+
+                        this.#evmContractAddresses = registry.tokenDetails.flatMap(
+                            (t) => t.evmContractAddresses,
+                        );
                     }
 
                     // make sure we only resolve once so that we don't end up waiting for the downstream fetch
@@ -7572,6 +7580,20 @@ export class OpenChat {
             if (addr !== undefined) {
                 const poller = new Poller(
                     () => this.#updateBtcBalance(addr),
+                    ONE_MINUTE_MILLIS,
+                    5 * ONE_MINUTE_MILLIS,
+                    true,
+                );
+                return () => poller.stop();
+            }
+        });
+    }
+
+    #startOneSecBalanceUpdateJob() {
+        oneSecAddress.subscribe((addr) => {
+            if (addr !== undefined) {
+                const poller = new Poller(
+                    () => getErc20TokenBalances(addr, this.#evmContractAddresses).then((_) => {}),
                     ONE_MINUTE_MILLIS,
                     5 * ONE_MINUTE_MILLIS,
                     true,
