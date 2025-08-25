@@ -1,17 +1,21 @@
 <script lang="ts">
-    import type {
-        CkbtcMinterWithdrawalInfo,
-        NamedAccount,
-        OpenChat,
-        ResourceKey,
+    import {
+        type CkbtcMinterWithdrawalInfo,
+        type EvmChain, Lazy,
+        type NamedAccount, type OneSecTransferFees,
+        type OpenChat,
+        type ResourceKey,
     } from "openchat-client";
     import {
+        ARBITRUM_NETWORK,
+        BASE_NETWORK,
         BTC_SYMBOL,
         CKBTC_SYMBOL,
         cryptoBalanceStore,
         cryptoLookup,
         currentUserIdStore,
         currentUserStore,
+        ETHEREUM_NETWORK,
         iconSize,
         ICP_SYMBOL,
         mobileWidth,
@@ -45,9 +49,9 @@
 
     const client = getContext<OpenChat>("client");
 
-    let error: ResourceKey | undefined = $state(undefined);
+    let error: ResourceKey | undefined = $state();
     let amountToSend: bigint = $state(0n);
-    let ckbtcMinterWithdrawalInfo = $state<CkbtcMinterWithdrawalInfo | undefined>(undefined);
+    let ckbtcMinterWithdrawalInfo = $state<CkbtcMinterWithdrawalInfo>();
     let busy = $state(false);
     let valid = $state(false);
     let validAccountName = $state(false);
@@ -66,21 +70,44 @@
         tokenDetails?.symbol === ICP_SYMBOL ? $currentUserStore.cryptoAccount : $currentUserIdStore,
     );
     let symbol = $derived(tokenDetails.symbol);
-    let selectedBtcNetwork = $state(BTC_SYMBOL);
+    let selectedNetwork = $state<string>();
     let isBtc = $derived(symbol === BTC_SYMBOL);
-    let isBtcNetwork = $derived(isBtc && selectedBtcNetwork === BTC_SYMBOL);
+    let isBtcNetwork = $derived(selectedNetwork === BTC_SYMBOL);
+    let isOneSec = $derived(tokenDetails.oneSecEnabled);
+    let networks = $derived.by(() => {
+        if (isBtc) {
+            return [BTC_SYMBOL, CKBTC_SYMBOL];
+        } else if (isOneSec) {
+            return [ETHEREUM_NETWORK, ARBITRUM_NETWORK, BASE_NETWORK];
+        } else {
+            return [];
+        }
+    });
     let transferFees = $derived(tokenDetails?.transferFee ?? 0n);
-    let targetAccountValid = $derived(
-        targetAccount.length > 0 && targetAccount !== account && isBtcNetwork
-            ? targetAccount.length >= 14
-            : isPrincipalValid(targetAccount) ||
-                  (symbol === ICP_SYMBOL && isAccountIdentifierValid(targetAccount)),
-    );
-    let minAmount = $derived(
-        isBtcNetwork && ckbtcMinterWithdrawalInfo !== undefined
-            ? ckbtcMinterWithdrawalInfo.minWithdrawalAmount
-            : BigInt(0),
-    );
+    let targetAccountValid = $derived.by(() => {
+        if (targetAccount.length === 0 || targetAccount === account) return false;
+        if (isBtc) return targetAccount.length >= 14;
+        if (isOneSec) return targetAccount.length === 42;
+        if (isPrincipalValid(targetAccount)) return true;
+        if (symbol === ICP_SYMBOL && isAccountIdentifierValid(targetAccount)) return true;
+        return false;
+    });
+
+    let oneSecFees = $state<OneSecTransferFees[]>();
+    let oneSecFeesForToken = $derived.by(() => {
+        if (!isOneSec || oneSecFees === undefined) return undefined;
+        return oneSecFees.find((f) => f.sourceToken === tokenDetails.symbol && f.destinationChain === selectedNetwork);
+    });
+
+    let minAmount = $derived.by(() => {
+        if (isBtcNetwork && ckbtcMinterWithdrawalInfo !== undefined) {
+            return ckbtcMinterWithdrawalInfo.minWithdrawalAmount;
+        }
+        if (isOneSec && oneSecFeesForToken !== undefined) {
+            return oneSecFeesForToken.minAmount;
+        }
+        return BigInt(0);
+    });
     let validSend = $derived(validAmount && targetAccountValid);
     $effect(() => {
         // If sending via the BTC network we must wait until the ckbtc minter info is loaded to correctly apply the min amount
@@ -95,11 +122,16 @@
     );
 
     let errorMessage = $derived(error !== undefined ? error : $pinNumberErrorMessageStore);
-    let btcNetworkFee = $derived(
-        isBtcNetwork && ckbtcMinterWithdrawalInfo !== undefined
-            ? client.formatTokens(ckbtcMinterWithdrawalInfo.feeEstimate, 8)
-            : undefined,
-    );
+    let networkFee = $derived.by(() => {
+        if (isBtcNetwork && ckbtcMinterWithdrawalInfo !== undefined) {
+            return ckbtcMinterWithdrawalInfo.feeEstimate;
+        } else if (isOneSec && oneSecFeesForToken !== undefined) {
+            return oneSecFeesForToken.latestTransferFee + (amountToSend * BigInt(100 * oneSecFeesForToken.protocolFeePercent) / BigInt(10000));
+        } else {
+            return undefined;
+        }
+    });
+    let networkFeeFormatted = $derived(networkFee === undefined ? undefined : `~${client.formatTokens(networkFee, tokenDetails.decimals)}`);
 
     onMount(async () => {
         accounts = await client.loadSavedCryptoAccounts();
@@ -109,9 +141,19 @@
         }
     });
 
+    // Whenever the networks list changes, autoselect the first one
     $effect(() => {
-        if (isBtcNetwork && amountToSend > 0) {
+        selectedNetwork = networks[0];
+    });
+
+    const oneSecFeesPromise = new Lazy(() => client.oneSecGetTransferFees());
+    $effect(() => {
+        if (isBtcNetwork) {
             ckbtcMinterInfoDebouncer.execute(amountToSend);
+        } else if (isOneSec) {
+            // Filter to where source token equals destination token since we're dealing with cross-chain withdrawals
+            oneSecFeesPromise.get().then((fees) =>
+                oneSecFees = fees.filter((f) => f.sourceToken === f.destinationToken && f.sourceChain === ICP_SYMBOL));
         }
     });
 
@@ -154,15 +196,17 @@
 
         const withdrawTokensPromise = isBtcNetwork
             ? client.withdrawBtc(targetAccount, amountToSend)
-            : client.withdrawCryptocurrency({
-                  kind: "pending",
-                  ledger,
-                  token: symbol,
-                  to: targetAccount,
-                  amountE8s: amountToSend,
-                  feeE8s: transferFees,
-                  createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
-              });
+            : isOneSec
+                ? client.withdrawViaOneSec(ledger, symbol, selectedNetwork as EvmChain, targetAccount, amountToSend)
+                : client.withdrawCryptocurrency({
+                      kind: "pending",
+                      ledger,
+                      token: symbol,
+                      to: targetAccount,
+                      amountE8s: amountToSend,
+                      feeE8s: transferFees,
+                      createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
+                  });
 
         withdrawTokensPromise
             .then((resp) => {
@@ -237,8 +281,8 @@
             {:else}
                 <Scanner onData={(data) => (targetAccount = data)} bind:this={scanner} />
 
-                {#if isBtc}
-                    <NetworkSelector networks={[BTC_SYMBOL, CKBTC_SYMBOL]} bind:selectedNetwork={selectedBtcNetwork} />
+                {#if networks.length > 0 && selectedNetwork !== undefined}
+                    <NetworkSelector {networks} bind:selectedNetwork={selectedNetwork} />
                 {/if}
 
                 <div class="token-input">
@@ -263,7 +307,7 @@
                     </div>
                 </div>
 
-                {#if accounts.length > 0 || btcNetworkFee !== undefined}
+                {#if accounts.length > 0 || networkFee !== undefined}
                     <div class="lower-container">
                         {#if accounts.length > 0}
                             <div class="accounts">
@@ -271,12 +315,12 @@
                             </div>
                         {/if}
 
-                        {#if btcNetworkFee !== undefined}
-                            <div class="btc-network-fee">
-                                <Translatable
-                                    resourceKey={i18nKey("cryptoAccount.btcNetworkFee", {
-                                        amount: btcNetworkFee,
-                                    })} />
+                        {#if networkFeeFormatted !== undefined}
+                            <div class="network-fee">
+                                <Translatable resourceKey={i18nKey("cryptoAccount.networkFee", {
+                                    amount: networkFeeFormatted,
+                                    token: symbol,
+                                })} />
                             </div>
                         {/if}
                     </div>
@@ -349,7 +393,7 @@
         justify-content: space-between;
     }
 
-    .btc-network-fee {
+    .network-fee {
         @include font(book, normal, fs-60);
         margin-left: auto;
     }

@@ -104,6 +104,10 @@ function transferFees(candid: ApiTransferFee): OneSecTransferFees | undefined {
         sourceChain,
         destinationToken,
         destinationChain,
+        minAmount: candid.min_amount,
+        maxAmount: candid.max_amount,
+        latestTransferFee: candid.latest_transfer_fee_in_tokens,
+        protocolFeePercent: candid.protocol_fee_in_percent * 100,
     };
 }
 

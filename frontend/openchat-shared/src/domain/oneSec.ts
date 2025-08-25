@@ -31,6 +31,10 @@ export type OneSecTransferFees = {
     sourceChain: EvmChain | "ICP";
     destinationToken: string;
     destinationChain: EvmChain | "ICP";
+    minAmount: bigint;
+    maxAmount: bigint;
+    latestTransferFee: bigint;
+    protocolFeePercent: number;
 };
 
 export type WithdrawViaOneSecResponse = Success | OCError;
