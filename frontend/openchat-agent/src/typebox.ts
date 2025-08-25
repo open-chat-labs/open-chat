@@ -1904,26 +1904,6 @@ export const RegistrySetTokenEnabledArgs = Type.Object({
     enabled: Type.Boolean(),
 });
 
-export type RegistryTokenDetails = Static<typeof RegistryTokenDetails>;
-export const RegistryTokenDetails = Type.Object({
-    ledger_canister_id: TSPrincipal,
-    index_canister_id: Type.Optional(TSPrincipal),
-    name: Type.String(),
-    symbol: Type.String(),
-    decimals: Type.Number(),
-    fee: Type.BigInt(),
-    logo: Type.String(),
-    logo_id: Type.Optional(Type.BigInt()),
-    info_url: Type.String(),
-    transaction_url_format: Type.String(),
-    supported_standards: Type.Array(Type.String()),
-    added: Type.BigInt(),
-    enabled: Type.Boolean(),
-    last_updated: Type.BigInt(),
-    payments: Type.Array(RegistryPayment),
-    one_sec_enabled: Type.Boolean(),
-});
-
 export type UserIndexDiamondMembershipFeesDiamondMembershipFees = Static<
     typeof UserIndexDiamondMembershipFeesDiamondMembershipFees
 >;
@@ -4714,6 +4694,12 @@ export const CommunityPermissionsChanged = Type.Object({
 export type ChatId = Static<typeof ChatId>;
 export const ChatId = TSPrincipal;
 
+export type EvmContractAddress = Static<typeof EvmContractAddress>;
+export const EvmContractAddress = Type.Object({
+    chain: EvmChain,
+    address: Type.String(),
+});
+
 export type ChitEventType = Static<typeof ChitEventType>;
 export const ChitEventType = Type.Union([
     Type.Literal("DailyClaim"),
@@ -5909,25 +5895,26 @@ export const StorageIndexCanForwardResponse = Type.Union([
     Type.Literal("UserNotFound"),
 ]);
 
-export type RegistryUpdatesSuccessResult = Static<typeof RegistryUpdatesSuccessResult>;
-export const RegistryUpdatesSuccessResult = Type.Object({
+export type RegistryTokenDetails = Static<typeof RegistryTokenDetails>;
+export const RegistryTokenDetails = Type.Object({
+    ledger_canister_id: TSPrincipal,
+    index_canister_id: Type.Optional(TSPrincipal),
+    name: Type.String(),
+    symbol: Type.String(),
+    decimals: Type.Number(),
+    fee: Type.BigInt(),
+    logo: Type.String(),
+    logo_id: Type.Optional(Type.BigInt()),
+    info_url: Type.String(),
+    transaction_url_format: Type.String(),
+    supported_standards: Type.Array(Type.String()),
+    added: Type.BigInt(),
+    enabled: Type.Boolean(),
     last_updated: Type.BigInt(),
-    token_details: Type.Optional(Type.Array(RegistryTokenDetails)),
-    tokens_uninstalled: Type.Optional(Type.Array(TSPrincipal)),
-    nervous_system_details: Type.Array(RegistryNervousSystemSummary),
-    message_filters_added: Type.Array(RegistryMessageFilterSummary),
-    message_filters_removed: Type.Array(Type.BigInt()),
-    swap_providers: Type.Optional(Type.Array(ExchangeId)),
-    airdrop_config: OptionUpdateAirdropConfig,
+    payments: Type.Array(RegistryPayment),
+    one_sec_enabled: Type.Boolean(),
+    evm_contract_addresses: Type.Array(EvmContractAddress),
 });
-
-export type RegistryUpdatesResponse = Static<typeof RegistryUpdatesResponse>;
-export const RegistryUpdatesResponse = Type.Union([
-    Type.Object({
-        Success: RegistryUpdatesSuccessResult,
-    }),
-    Type.Literal("SuccessNoUpdates"),
-]);
 
 export type UserIndexDiamondMembershipFeesResponse = Static<
     typeof UserIndexDiamondMembershipFeesResponse
@@ -7268,6 +7255,26 @@ export const GroupIndexUnfreezeGroupResponse = Type.Union([
     Type.Object({
         Error: OCError,
     }),
+]);
+
+export type RegistryUpdatesSuccessResult = Static<typeof RegistryUpdatesSuccessResult>;
+export const RegistryUpdatesSuccessResult = Type.Object({
+    last_updated: Type.BigInt(),
+    token_details: Type.Optional(Type.Array(RegistryTokenDetails)),
+    tokens_uninstalled: Type.Optional(Type.Array(TSPrincipal)),
+    nervous_system_details: Type.Array(RegistryNervousSystemSummary),
+    message_filters_added: Type.Array(RegistryMessageFilterSummary),
+    message_filters_removed: Type.Array(Type.BigInt()),
+    swap_providers: Type.Optional(Type.Array(ExchangeId)),
+    airdrop_config: OptionUpdateAirdropConfig,
+});
+
+export type RegistryUpdatesResponse = Static<typeof RegistryUpdatesResponse>;
+export const RegistryUpdatesResponse = Type.Union([
+    Type.Object({
+        Success: RegistryUpdatesSuccessResult,
+    }),
+    Type.Literal("SuccessNoUpdates"),
 ]);
 
 export type UserIndexDeleteUserArgs = Static<typeof UserIndexDeleteUserArgs>;

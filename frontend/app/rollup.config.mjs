@@ -213,6 +213,7 @@ export default {
             "import.meta.env.OC_ACCOUNT_LINKING_CODES_ENABLED": JSON.stringify(
                 process.env.OC_ACCOUNT_LINKING_CODES_ENABLED,
             ),
+            "import.meta.env.OC_ALCHEMY_API_KEY": JSON.stringify(process.env.OC_ALCHEMY_API_KEY),
         }),
 
         html({

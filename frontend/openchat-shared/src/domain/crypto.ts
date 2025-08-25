@@ -41,6 +41,7 @@ export type CryptocurrencyDetails = {
     added: bigint;
     enabled: boolean;
     oneSecEnabled: boolean;
+    evmContractAddresses: EvmContractAddress[];
     lastUpdated: bigint;
 };
 
@@ -135,4 +136,10 @@ export type AutoWallet = {
 export type ManualWallet = {
     kind: "manual_wallet";
     tokens: Set<string>;
+};
+
+export type EvmContractAddress = {
+    token: string;
+    chain: EvmChain;
+    address: string;
 };
