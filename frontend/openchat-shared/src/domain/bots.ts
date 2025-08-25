@@ -1,4 +1,4 @@
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import * as chrono from "chrono-node";
 import { ROLE_MEMBER } from "../constants";
 import { parseBigInt, random64, type InterpolationValues, type ResourceKey } from "../utils";

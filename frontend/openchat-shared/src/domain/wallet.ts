@@ -1,4 +1,4 @@
-import type { JsonnableDelegationChain } from "@dfinity/identity";
+import type { JsonnableDelegationChain } from "@icp-sdk/core/identity";
 
 export type Verification = NoVerification | PinVerification | DelegationVerification;
 

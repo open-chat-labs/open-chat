@@ -1,4 +1,4 @@
-import type { HttpAgent, Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import { idlFactory, type SignInWithSolanaService } from "./candid/idl";
 import { CandidCanisterAgent } from "../canisterAgent/candid";
 import type {

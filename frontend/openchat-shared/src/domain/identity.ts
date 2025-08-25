@@ -1,5 +1,5 @@
-import { Delegation } from "@dfinity/identity";
-import type { Identity, Signature } from "@dfinity/agent";
+import { Delegation } from "@icp-sdk/core/identity";
+import type { Identity, Signature } from "@icp-sdk/core/agent";
 import type { Address } from "openchat-agent/src/services/signInWithSolana/candid/types";
 import type { OCError } from "./error";
 import type { Success } from "./response";

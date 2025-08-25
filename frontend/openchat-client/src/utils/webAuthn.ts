@@ -4,8 +4,8 @@ import {
     type Signature,
     SignIdentity,
     unwrapDER,
-} from "@dfinity/agent";
-import { WebAuthnIdentity } from "@dfinity/identity";
+} from "@icp-sdk/core/agent";
+import { WebAuthnIdentity } from "@icp-sdk/core/identity";
 import borc from "borc";
 import type { WebAuthnKeyFull } from "openchat-shared";
 
@@ -111,7 +111,7 @@ export class MultiWebAuthnIdentity extends SignIdentity {
                 signature: new Uint8Array(response.signature),
             }),
         );
-         
+
         if (!cbor) {
             throw new Error("failed to encode cbor");
         }

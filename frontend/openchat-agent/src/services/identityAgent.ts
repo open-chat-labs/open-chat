@@ -1,6 +1,6 @@
 import { IdentityClient } from "./identity/identity.client";
-import { HttpAgent, type Identity, type SignIdentity } from "@dfinity/agent";
-import { DelegationIdentity } from "@dfinity/identity";
+import { HttpAgent, type Identity, type SignIdentity } from "@icp-sdk/core/agent";
+import { DelegationIdentity } from "@icp-sdk/core/identity";
 import type {
     ApproveIdentityLinkResponse,
     AuthenticationPrincipalsResponse,

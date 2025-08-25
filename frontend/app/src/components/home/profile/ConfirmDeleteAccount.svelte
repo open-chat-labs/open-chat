@@ -11,7 +11,7 @@
     import { getContext } from "svelte";
     import { toastStore } from "../../../stores/toast";
     import ReAuthenticate from "./ReAuthenticate.svelte";
-    import type { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
+    import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
 
     const client = getContext<OpenChat>("client");
 

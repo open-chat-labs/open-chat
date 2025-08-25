@@ -1,4 +1,4 @@
-import { WebAuthnIdentity } from "@dfinity/identity";
+import { WebAuthnIdentity } from "@icp-sdk/core/identity";
 import type { WebAuthnKeyFull } from "openchat-shared";
 import borc from "borc";
 import {
@@ -7,7 +7,7 @@ import {
     SignIdentity,
     type PublicKey,
     type Signature,
-} from "@dfinity/agent";
+} from "@icp-sdk/core/agent";
 import {
     AndroidWebAuthnErrorCode,
     signUp,

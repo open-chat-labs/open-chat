@@ -1,4 +1,4 @@
-import type { HttpAgent, Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import type { DexId, RegistryUpdatesResponse } from "openchat-shared";
 import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
 import { updatesResponse } from "./mappers";
@@ -81,7 +81,12 @@ export class RegistryClient extends MsgpackCanisterAgent {
         );
     }
 
-    setAirdropConfig(channelId: number, channelName: string, communityId?: string, communityName?: string): Promise<boolean> {
+    setAirdropConfig(
+        channelId: number,
+        channelName: string,
+        communityId?: string,
+        communityName?: string,
+    ): Promise<boolean> {
         return this.executeMsgpackUpdate(
             "set_airdrop_config",
             {
@@ -94,7 +99,7 @@ export class RegistryClient extends MsgpackCanisterAgent {
             (resp) => resp === "Success",
             RegistrySetAirdropConfigArgs,
             RegistrySetAirdropConfigResponse,
-        )
+        );
     }
 
     setTokenEnabled(ledger: string, enabled: boolean): Promise<boolean> {

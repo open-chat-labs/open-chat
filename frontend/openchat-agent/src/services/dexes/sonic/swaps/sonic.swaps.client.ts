@@ -1,14 +1,17 @@
-import type { HttpAgent, Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import { idlFactory, type SonicSwapsService } from "./candid/idl";
 import { CandidCanisterAgent } from "../../../canisterAgent/candid";
 import type { TokenSwapPool } from "openchat-shared";
 import { getAllPairsResponse, getPairResponse } from "./mappers";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import type { SwapIndexClient, SwapPoolClient } from "../..";
 
 const SONIC_INDEX_CANISTER_ID = "3xwpq-ziaaa-aaaah-qcn4a-cai";
 
-export class SonicSwapsClient extends CandidCanisterAgent<SonicSwapsService> implements SwapIndexClient, SwapPoolClient {
+export class SonicSwapsClient
+    extends CandidCanisterAgent<SonicSwapsService>
+    implements SwapIndexClient, SwapPoolClient
+{
     constructor(identity: Identity, agent: HttpAgent) {
         super(identity, agent, SONIC_INDEX_CANISTER_ID, idlFactory, "Sonic");
     }

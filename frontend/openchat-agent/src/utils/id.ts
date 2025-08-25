@@ -1,4 +1,4 @@
-import type { DelegationChain } from "@dfinity/identity";
+import type { DelegationChain } from "@icp-sdk/core/identity";
 import { SignedDelegation as TSignedDelegation } from "../typebox";
 
 export function signedDelegation(chain: DelegationChain): TSignedDelegation {

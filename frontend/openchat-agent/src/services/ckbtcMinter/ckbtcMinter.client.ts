@@ -1,5 +1,5 @@
-import type { HttpAgent, Identity } from "@dfinity/agent";
-import { Principal } from "@dfinity/principal";
+import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
+import { Principal } from "@icp-sdk/core/principal";
 import { CandidCanisterAgent } from "../canisterAgent/candid";
 import { idlFactory, type CkbtcMinterService } from "./candid/idl";
 import { utxo } from "../bitcoin/mappers";
@@ -18,16 +18,17 @@ export class CkbtcMinterClient extends CandidCanisterAgent<CkbtcMinterService> {
             agent,
             mainnetEnabled ? MAINNET_CKBTC_MINTER_CANISTER_ID : TESTNET_CKBTC_MINTER_CANISTER_ID,
             idlFactory,
-            "CkbtcMinter"
+            "CkbtcMinter",
         );
     }
 
     getKnownUtxos(userId: string): Promise<Utxo[]> {
         return this.handleQueryResponse(
-            () => this.service.get_known_utxos({
-                owner: [Principal.fromText(userId)],
-                subaccount: [],
-            }),
+            () =>
+                this.service.get_known_utxos({
+                    owner: [Principal.fromText(userId)],
+                    subaccount: [],
+                }),
             (resp) => resp.map(utxo),
         );
     }
@@ -36,34 +37,42 @@ export class CkbtcMinterClient extends CandidCanisterAgent<CkbtcMinterService> {
         const minConfirmationsPromise = this.getMinterInfoCached().then((i) => i.minConfirmations);
         const depositFeePromise = this.handleQueryResponse(
             () => this.service.get_deposit_fee(),
-            identity
+            identity,
         );
 
-        const [minConfirmations, depositFee] = await Promise.all([minConfirmationsPromise, depositFeePromise]);
+        const [minConfirmations, depositFee] = await Promise.all([
+            minConfirmationsPromise,
+            depositFeePromise,
+        ]);
 
         return {
             minConfirmations,
             depositFee,
-        }
+        };
     }
 
     async getWithdrawalInfo(amount: bigint): Promise<CkbtcMinterWithdrawalInfo> {
-        const minWithdrawalAmountPromise = this.getMinterInfoCached().then((i) => i.minWithdrawalAmount);
+        const minWithdrawalAmountPromise = this.getMinterInfoCached().then(
+            (i) => i.minWithdrawalAmount,
+        );
         const feeEstimatePromise = this.handleQueryResponse(
             () => this.service.estimate_withdrawal_fee({ amount: [amount] }),
             (resp) => resp.minter_fee + resp.bitcoin_fee,
         );
 
-        const [minWithdrawalAmount, feeEstimate] = await Promise.all([minWithdrawalAmountPromise, feeEstimatePromise]);
+        const [minWithdrawalAmount, feeEstimate] = await Promise.all([
+            minWithdrawalAmountPromise,
+            feeEstimatePromise,
+        ]);
 
         return {
             minWithdrawalAmount,
             feeEstimate,
-        }
+        };
     }
 
     private async getMinterInfoCached(): Promise<CkbtcMinterInfo> {
-        return this.#cachedMinterInfo ??= await this.getMinterInfo();
+        return (this.#cachedMinterInfo ??= await this.getMinterInfo());
     }
 
     private getMinterInfo(): Promise<CkbtcMinterInfo> {
@@ -72,7 +81,7 @@ export class CkbtcMinterClient extends CandidCanisterAgent<CkbtcMinterService> {
             (resp) => ({
                 minConfirmations: resp.min_confirmations,
                 minWithdrawalAmount: resp.retrieve_btc_min_amount,
-            })
+            }),
         );
     }
 }
@@ -80,4 +89,4 @@ export class CkbtcMinterClient extends CandidCanisterAgent<CkbtcMinterService> {
 type CkbtcMinterInfo = {
     minConfirmations: number;
     minWithdrawalAmount: bigint;
-}
+};

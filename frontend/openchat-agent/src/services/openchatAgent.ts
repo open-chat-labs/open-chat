@@ -1,6 +1,6 @@
 /* eslint-disable no-case-declarations */
-import { HttpAgent, type Identity } from "@dfinity/agent";
-import type { Principal } from "@dfinity/principal";
+import { HttpAgent, type Identity } from "@icp-sdk/core/agent";
+import type { Principal } from "@icp-sdk/core/principal";
 import type {
     AcceptedRules,
     AcceptP2PSwapResponse,
