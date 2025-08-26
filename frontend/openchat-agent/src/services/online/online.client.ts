@@ -1,4 +1,4 @@
-import type { HttpAgent, Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
 import { principalStringToBytes } from "../../utils/mapping";
 import { lastOnlineResponse, markAsOnlineResponse } from "./mappers";

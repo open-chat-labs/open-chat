@@ -1,5 +1,5 @@
-import type { HttpAgent, Identity } from "@dfinity/agent";
-import { Principal } from "@dfinity/principal";
+import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
+import { Principal } from "@icp-sdk/core/principal";
 import { sha3_256 } from "js-sha3";
 import type { AgentConfig } from "../../config";
 import { buildBlobUrl } from "../../utils/chat";
@@ -20,11 +20,7 @@ import { StorageBucketClient } from "../storageBucket/storageBucket.client";
 export class DataClient extends EventTarget {
     private storageIndexClient: StorageIndexClient;
 
-    constructor(
-        private identity: Identity,
-        private agent: HttpAgent,
-        private config: AgentConfig,
-    ) {
+    constructor(private identity: Identity, private agent: HttpAgent, private config: AgentConfig) {
         super();
         this.storageIndexClient = new StorageIndexClient(
             identity,

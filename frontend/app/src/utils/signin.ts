@@ -1,4 +1,4 @@
-import { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
+import { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
 import {
     Poller,
     type GenerateMagicLinkResponse,

@@ -1,4 +1,4 @@
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 
 export const HEX_REGEX = new RegExp("^[A-Fa-f0-9]+$");
 

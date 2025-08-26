@@ -1,4 +1,4 @@
-import type { HttpAgent, Identity, SignIdentity } from "@dfinity/agent";
+import type { HttpAgent, Identity, SignIdentity } from "@icp-sdk/core/agent";
 import type {
     AccessTokenType,
     BotInstallationLocation,

@@ -1,4 +1,4 @@
-import type { HttpAgent, Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import { idlFactory, type TranslationsService } from "./candid/idl";
 import { CandidCanisterAgent } from "../canisterAgent/candid";
 import type {
@@ -65,10 +65,7 @@ export class TranslationsClient extends CandidCanisterAgent<TranslationsService>
     }
 
     proposed(): Promise<ProposedResponse> {
-        return this.handleQueryResponse(
-            () => this.service.proposed({}),
-            proposedResponse,
-        );
+        return this.handleQueryResponse(() => this.service.proposed({}), proposedResponse);
     }
 
     pendingDeployment(): Promise<PendingDeploymentResponse> {

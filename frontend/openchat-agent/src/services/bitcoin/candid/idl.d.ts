@@ -1,4 +1,4 @@
-import type { IDL } from "@dfinity/candid";
+import type { IDL } from "@icp-sdk/core/candid";
 import { get_utxos_request, get_utxos_response, utxo, _SERVICE } from "./types";
 export {
     get_utxos_request as ApiGetUtxosRequest,

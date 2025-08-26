@@ -20,7 +20,7 @@ import {
     USDT_SYMBOL,
 } from "openchat-shared";
 import { identity, optional } from "../../utils/mapping";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 
 export function forwardingResponse(
     candid: { Ok: ApiForwardingResponse } | { Err: string },

@@ -5,7 +5,7 @@
     import { OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import Button from "../Button.svelte";
-    import type { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
+    import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
 
     const client = getContext<OpenChat>("client");
 

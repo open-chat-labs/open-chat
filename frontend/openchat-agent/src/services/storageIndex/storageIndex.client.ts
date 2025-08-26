@@ -1,4 +1,4 @@
-import type { HttpAgent, Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import { idlFactory, type StorageIndexService } from "./candid/idl";
 import { CandidCanisterAgent } from "../canisterAgent/candid";
 import { allocatedBucketResponse, canForwardResponse, userResponse } from "./mappers";
@@ -23,11 +23,12 @@ export class StorageIndexClient extends CandidCanisterAgent<StorageIndexService>
         fileIdSeed: bigint | undefined,
     ): Promise<AllocatedBucketResponse> {
         return this.handleQueryResponse(
-            () => this.service.allocated_bucket_v2({
-                file_hash: fileHash,
-                file_size: fileSize,
-                file_id_seed: fileIdSeed === undefined ? [] : [fileIdSeed],
-            }),
+            () =>
+                this.service.allocated_bucket_v2({
+                    file_hash: fileHash,
+                    file_size: fileSize,
+                    file_id_seed: fileIdSeed === undefined ? [] : [fileIdSeed],
+                }),
             allocatedBucketResponse,
         );
     }
