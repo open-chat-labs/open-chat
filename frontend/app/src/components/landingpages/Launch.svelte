@@ -1,18 +1,25 @@
 <script lang="ts">
-    import type { OpenChat } from "openchat-client";
+    import { identityStateStore, routeForScope, type OpenChat } from "openchat-client";
     import { getContext } from "svelte";
-    import { _ } from "svelte-i18n";
-    import { routeForScope } from "../../routes";
 
     const client = getContext<OpenChat>("client");
 
-    export let rootPath = routeForScope(client.getDefaultScope());
-    export let text = "Launch app";
-    export let login = false;
+    interface Props {
+        rootPath?: any;
+        text?: string;
+        login?: boolean;
+    }
 
-    $: identityState = client.identityState;
-    $: url = $identityState.kind === "logged_in" ? rootPath : "/communities";
-    $: busy = $identityState.kind === "logging_in" || $identityState.kind === "loading_user";
+    let {
+        rootPath = routeForScope(client.getDefaultScope()),
+        text = "Launch app",
+        login = false,
+    }: Props = $props();
+
+    let url = $derived($identityStateStore.kind === "logged_in" ? rootPath : "/communities");
+    let busy = $derived(
+        $identityStateStore.kind === "logging_in" || $identityStateStore.kind === "loading_user",
+    );
 </script>
 
 {#if login}
@@ -20,7 +27,7 @@
         class:loading={busy}
         role="button"
         tabindex="0"
-        on:click={() => client.login()}
+        onclick={() => client.login()}
         class="launch">
         {#if !busy}
             {text}
@@ -33,9 +40,9 @@
 <style lang="scss">
     .launch {
         display: inline-block;
-        transition: background-color ease-in-out 200ms;
+        transition: background ease-in-out 200ms;
         color: var(--button-txt);
-        background-color: var(--button-bg);
+        background: var(--button-bg);
         border: none;
         border-radius: toRem(4);
         cursor: pointer;

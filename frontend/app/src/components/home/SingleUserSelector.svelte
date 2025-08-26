@@ -1,29 +1,63 @@
 <script lang="ts">
     import MentionPicker from "./MentionPicker.svelte";
     import { _ } from "svelte-i18n";
-    import type { OpenChat, UserOrUserGroup } from "openchat-client";
+    import {
+        i18nKey,
+        type OpenChat,
+        type ResourceKey,
+        type UserOrUserGroup,
+        type UserSummary,
+    } from "openchat-client";
     import { getContext } from "svelte";
     import UserPill from "../UserPill.svelte";
+    import ValidatingInput from "../bots/ValidatingInput.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    export let autofocus: boolean;
-    export let selectedReceiver: UserOrUserGroup | undefined = undefined;
-
-    let showMentionPicker = false;
-    let textValue: string = "";
-    let inputHeight: number;
-
-    function selectReceiver(ev: CustomEvent<UserOrUserGroup>) {
-        selectedReceiver = ev.detail;
-        showMentionPicker = false;
-        textValue = "";
+    interface Props {
+        autofocus: boolean;
+        selectedReceiver?: UserOrUserGroup | undefined;
+        direction?: "up" | "down";
+        placeholder?: string;
+        border?: boolean;
+        mentionSelf?: boolean;
+        error?: ResourceKey[];
+        invalid?: boolean;
+        onUserSelected?: (user: UserSummary) => void;
+        onUserRemoved?: () => void;
     }
 
-    function removeReceiver() {
+    let {
+        autofocus,
+        selectedReceiver = $bindable(undefined),
+        direction = "down",
+        placeholder = "tokenTransfer.chooseReceiver",
+        border = true,
+        mentionSelf = false,
+        error = [],
+        invalid = false,
+        onUserSelected,
+        onUserRemoved,
+    }: Props = $props();
+
+    let showMentionPicker = $state(false);
+    let textValue: string = $state("");
+    let inputHeight: number = $state(0);
+
+    function selectReceiver(userOrGroup: UserOrUserGroup) {
+        selectedReceiver = userOrGroup;
+        showMentionPicker = false;
+        textValue = "";
+        if (userOrGroup.kind === "user") {
+            onUserSelected?.(userOrGroup);
+        }
+    }
+
+    function removeReceiver(_: UserOrUserGroup) {
         selectedReceiver = undefined;
         showMentionPicker = true;
         textValue = "";
+        onUserRemoved?.();
     }
 
     function blur() {
@@ -41,25 +75,28 @@
     {#if showMentionPicker}
         <MentionPicker
             offset={inputHeight}
-            direction={"down"}
-            on:mention={selectReceiver}
-            border
+            {direction}
+            {mentionSelf}
+            onMention={selectReceiver}
+            onClose={() => (showMentionPicker = false)}
+            {border}
             usersOnly
             prefix={textValue.startsWith("@") ? textValue.substring(1) : textValue} />
     {/if}
     {#if selectedReceiver !== undefined}
-        <UserPill on:deleteUser={removeReceiver} userOrGroup={selectedReceiver} />
+        <UserPill onDeleteUser={removeReceiver} userOrGroup={selectedReceiver} />
     {:else}
         <div class="wrapper" bind:clientHeight={inputHeight}>
-            <input
-                on:focus={() => (showMentionPicker = true)}
-                on:blur={blur}
-                class:showing-picker={showMentionPicker}
-                class="text-box"
-                maxlength="100"
+            <ValidatingInput
+                onFocus={() => (showMentionPicker = true)}
+                onBlur={blur}
+                {invalid}
+                {error}
                 {autofocus}
                 bind:value={textValue}
-                placeholder={$_("tokenTransfer.chooseReceiver")} />
+                maxlength={100}
+                placeholder={i18nKey(placeholder)}>
+            </ValidatingInput>
         </div>
     {/if}
 </div>
@@ -68,17 +105,5 @@
     .selector {
         position: relative;
         margin-bottom: $sp4;
-    }
-
-    .text-box {
-        transition: border ease-in-out 300ms;
-        display: block;
-        width: 100%;
-
-        @include input();
-
-        &::placeholder {
-            color: var(--placeholder);
-        }
     }
 </style>

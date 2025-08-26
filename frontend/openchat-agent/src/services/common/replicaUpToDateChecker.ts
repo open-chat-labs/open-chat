@@ -1,38 +1,35 @@
-import type { Principal } from "@dfinity/principal";
+import type { Principal } from "@icp-sdk/core/principal";
 import { openDbAndGetCachedChats } from "../../utils/caching";
 import { ReplicaNotUpToDateError } from "../error";
-import { chatIdentifiersEqual, type ChatIdentifier, type ChatSummary } from "openchat-shared";
-
-const DATE_FIXED = BigInt(1699800000000);
+import {
+    chatIdentifiersEqual,
+    type ChatIdentifier,
+    type ChatSummary,
+    type ReplicaNotUpToDate,
+} from "openchat-shared";
 
 export async function ensureReplicaIsUpToDate(
     principal: Principal,
     chatId: ChatIdentifier,
     replicaChatLastUpdated: bigint,
-): Promise<void> {
+    suppressError = false,
+): Promise<undefined | ReplicaNotUpToDate> {
     const clientChat = await getChat(principal, chatId);
 
-    if (
-        clientChat !== undefined &&
-        replicaChatLastUpdated < clientChat.lastUpdated &&
-        clientChat.lastUpdated > DATE_FIXED
-    ) {
+    if (clientChat !== undefined && replicaChatLastUpdated < clientChat.lastUpdated) {
+        if (suppressError) {
+            return {
+                kind: "replica_not_up_to_date",
+                replicaTimestamp: replicaChatLastUpdated,
+                clientTimestamp: clientChat.lastUpdated,
+            };
+        }
         throw ReplicaNotUpToDateError.byTimestamp(
             replicaChatLastUpdated,
             clientChat.lastUpdated,
             true,
         );
     }
-}
-
-export function excludeLatestKnownUpdateIfBeforeFix(
-    latestKnownUpdate: bigint | undefined,
-): bigint | undefined {
-    if (latestKnownUpdate !== undefined && latestKnownUpdate < DATE_FIXED) {
-        return undefined;
-    }
-
-    return latestKnownUpdate;
 }
 
 async function getChat(

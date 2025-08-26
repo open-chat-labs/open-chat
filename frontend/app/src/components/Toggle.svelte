@@ -1,20 +1,36 @@
 <script lang="ts">
-    import type { ResourceKey } from "../i18n/i18n";
+    import type { ResourceKey } from "openchat-client";
     import Checkbox from "./Checkbox.svelte";
     import Translatable from "./Translatable.svelte";
 
-    export let checked: boolean = false;
-    export let disabled: boolean = false;
-    export let waiting: boolean = false;
-    export let label: ResourceKey | undefined = undefined;
-    export let id: string;
-    export let small: boolean = false;
-    export let bigGap: boolean = false;
+    interface Props {
+        checked?: boolean;
+        disabled?: boolean;
+        waiting?: boolean;
+        label?: ResourceKey | undefined;
+        id: string;
+        small?: boolean;
+        bigGap?: boolean;
+        bottomMargin?: boolean;
+        onChange?: () => void;
+    }
+
+    let {
+        checked = $bindable(false),
+        disabled = false,
+        waiting = false,
+        label = undefined,
+        id,
+        small = false,
+        bigGap = false,
+        bottomMargin = true,
+        onChange,
+    }: Props = $props();
 </script>
 
-<div class="toggle-wrapper" class:big-gap={bigGap}>
+<div class="toggle-wrapper" class:big-gap={bigGap} class:bottomMargin>
     <div class="toggle">
-        <Checkbox {small} {disabled} {waiting} {id} toggle on:change {label} bind:checked />
+        <Checkbox {small} {disabled} {waiting} {id} toggle {onChange} {label} bind:checked />
     </div>
     {#if label !== undefined}
         <div class="label" class:disabled>
@@ -28,7 +44,9 @@
         display: flex;
         align-items: center;
         gap: $sp3;
-        margin-bottom: $sp4;
+        &.bottomMargin {
+            margin-bottom: $sp4;
+        }
         .toggle {
             flex: 0 0 40px;
         }

@@ -1,7 +1,7 @@
 [package]
 name = "user_index_canister_impl"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -12,24 +12,29 @@ crate-type = ["cdylib"]
 [dependencies]
 candid = { workspace = true }
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }
-canister_client = { path = "../../../libraries/canister_client" }
 canister_logger = { path = "../../../libraries/canister_logger" }
 canister_state_macros = { path = "../../../libraries/canister_state_macros" }
+canister_time = { path = "../../../libraries/canister_time" }
 canister_timer_jobs = { path = "../../../libraries/canister_timer_jobs" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 chat_events = { path = "../../../libraries/chat_events" }
 community_canister = { path = "../../community/api" }
 community_canister_c2c_client = { path = "../../community/c2c_client" }
+constants = { path = "../../../libraries/constants" }
+cycles_dispenser_canister = { path = "../../cycles_dispenser/api" }
+dataurl = { workspace = true }
 event_store_producer = { workspace = true, features = ["json"] }
 event_store_producer_cdk_runtime = { workspace = true }
+fire_and_forget_handler = { path = "../../../libraries/fire_and_forget_handler" }
 futures = { workspace = true }
 group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }
-fire_and_forget_handler = { path = "../../../libraries/fire_and_forget_handler" }
+group_index_canister = { path = "../../group_index/api" }
+group_index_canister_c2c_client = { path = "../../group_index/c2c_client" }
+hex = { workspace = true }
 http_request = { path = "../../../libraries/http_request" }
 human_readable = { path = "../../../libraries/human_readable" }
-ic-cdk = { workspace = true }
-ic-cdk-macros = { workspace = true }
+ic-cdk = { workspace = true, features = ["transform-closure"] }
 ic-cdk-timers = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
@@ -37,32 +42,40 @@ icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_led
 icrc-ledger-types = { workspace = true }
 identity_canister = { path = "../../identity/api" }
 identity_canister_c2c_client = { path = "../../identity/c2c_client" }
+identity_utils = { path = "../../../libraries/identity_utils" }
 itertools = { workspace = true }
+jwt = { path = "../../../libraries/jwt" }
 local_user_index_canister = { path = "../../local_user_index/api" }
 local_user_index_canister_c2c_client = { path = "../../local_user_index/c2c_client" }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
+oc_error_codes = { path = "../../../libraries/error_codes" }
 p256_key_pair = { path = "../../../libraries/p256_key_pair" }
 modclub_canister = { path = "../../../external_canisters/modclub/api" }
 modclub_canister_c2c_client = { path = "../../../external_canisters/modclub/c2c_client" }
 msgpack = { path = "../../../libraries/msgpack" }
-nns_governance_canister = { path = "../../../external_canisters/nns_governance/api" }
-nns_governance_canister_c2c_client = { path = "../../../external_canisters/nns_governance/c2c_client" }
-notifications_index_canister = { path = "../../notifications_index/api" }
-notifications_index_canister_c2c_client = { path = "../../notifications_index/c2c_client" }
+online_users_canister = { path = "../../online_users/api" }
+online_users_canister_c2c_client = { path = "../../online_users/c2c_client" }
+proof_of_unique_personhood = { path = "../../../libraries/proof_of_unique_personhood" }
 pulldown-cmark = { workspace = true }
 rand = { workspace = true }
+search = { path = "../../../libraries/search" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serde_json = { workspace = true }
-serializer = { path = "../../../libraries/serializer" }
-sha2 = { workspace = true }
 stable_memory = { path = "../../../libraries/stable_memory" }
+stable_memory_map = { path = "../../../libraries/stable_memory_map" }
 storage_index_canister = { path = "../../storage_index/api" }
 storage_index_canister_c2c_client = { path = "../../storage_index/c2c_client" }
 time = { workspace = true }
+timer_job_queues = { path = "../../../libraries/timer_job_queues" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
+url = { workspace = true }
 user_canister = { path = "../../user/api" }
 user_canister_c2c_client = { path = "../../user/c2c_client" }
+user_ids_set = { path = "../../../libraries/user_ids_set" }
 user_index_canister = { path = "../api" }
 utils = { path = "../../../libraries/utils" }
+
+[dev-dependencies]
+testing = { path = "../../../libraries/testing" }

@@ -1,56 +1,105 @@
 <script lang="ts">
-    import { createEventDispatcher, onMount, tick } from "svelte";
-    import { fade } from "svelte/transition";
-    import Button from "./Button.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
+    import { reposition, type NanoPopPosition } from "@src/utils/position";
+    import { mobileWidth } from "openchat-client";
+    import { onMount, tick, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
-    import HoverIcon from "./HoverIcon.svelte";
-    import { rtlStore } from "../stores/rtl";
-    import { mobileWidth } from "../stores/screenDimensions";
-    import { menuStore } from "../stores/menu";
-    import { currentTheme } from "../theme/themes";
-    import Translatable from "./Translatable.svelte";
+    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
+    import { fade } from "svelte/transition";
     import { i18nKey } from "../i18n/i18n";
+    import { rtlStore } from "../stores/rtl";
+    import { currentTheme } from "../theme/themes";
+    import Button from "./Button.svelte";
+    import HoverIcon from "./HoverIcon.svelte";
+    import Translatable from "./Translatable.svelte";
+    import { portalState } from "./portalState.svelte";
 
-    const dispatch = createEventDispatcher();
+    type OnClose = (() => void) | undefined;
 
-    export let fill: boolean = false;
-    export let large: boolean = false;
-    export let hideHeader: boolean = false;
-    export let hideBody: boolean = false;
-    export let hideFooter: boolean = false;
-    export let compactFooter: boolean = false;
-    export let fadeDuration = 100;
-    export let fadeDelay = 200;
-    export let fixedWidth: boolean = true;
-    export let fitToContent: boolean = false;
-    export let alignTo: DOMRect | undefined = undefined;
-    export let actualWidth: number = 0;
-    export let closeIcon: boolean = false;
-    export let square: boolean = false;
+    interface Props {
+        fill?: boolean;
+        large?: boolean;
+        hideHeader?: boolean;
+        hideBody?: boolean;
+        hideFooter?: boolean;
+        compactFooter?: boolean;
+        fadeDuration?: number;
+        fadeDelay?: number;
+        fixedWidth?: boolean;
+        fitToContent?: boolean;
+        alignTo?: HTMLElement | undefined;
+        actualWidth?: number;
+        closeIcon?: boolean;
+        backIcon?: boolean;
+        square?: boolean;
+        backgroundImage?: string | undefined;
+        // if your modal *definitely* overflows on mobile you might need to set height explicitly
+        overflows?: boolean;
+        // It will probably overflow if you have a datetime picker in the modal!
+        overflowVisible?: boolean;
+        header?: Snippet<[OnClose]>;
+        body?: Snippet<[OnClose]>;
+        footer?: Snippet<[OnClose]>;
+        onClose?: OnClose;
+        onBack?: OnClose;
+        footerClass?: string;
+        rendering?: Promise<void>;
+    }
 
-    // if your modal *definitely* overflows on mobile you might need to set height explicitly
-    export let overflows: boolean = false;
+    let {
+        fill = false,
+        large = false,
+        hideHeader = false,
+        hideBody = false,
+        hideFooter = false,
+        compactFooter = false,
+        fadeDuration = 100,
+        fadeDelay = 200,
+        fixedWidth = true,
+        fitToContent = false,
+        alignTo = undefined,
+        actualWidth = $bindable(0),
+        closeIcon = false,
+        backIcon = false,
+        square = false,
+        backgroundImage = undefined,
+        overflows = false,
+        overflowVisible = false,
+        header,
+        body,
+        footer,
+        onClose,
+        onBack,
+        footerClass,
+        rendering,
+    }: Props = $props();
+
+    actualWidth;
 
     let divElement: HTMLElement;
 
-    $: useAlignTo = alignTo !== undefined && !$mobileWidth;
-    $: style = useAlignTo ? "visibility: hidden;" : "visibility: visible;";
+    let useAlignTo = $derived(alignTo !== undefined && !$mobileWidth);
+    let bgStyle = $derived(backgroundImage ? `--custom-bg: url(${backgroundImage});` : "");
+    let style = $derived(`${bgStyle}`);
 
     function closeMenus() {
-        menuStore.hideMenu();
+        portalState.close();
     }
 
     onMount(() => {
         try {
             if (useAlignTo) {
-                tick().then(calculatePosition);
+                if (rendering !== undefined) {
+                    rendering.finally(calculatePosition);
+                } else {
+                    tick().then(calculatePosition);
+                }
             }
             tick().then(() => (actualWidth = divElement?.clientWidth));
             divElement.addEventListener("click", closeMenus);
         } catch (e: any) {
             console.error("Failed to open modal", e);
-            onClose();
+            onClose?.();
         }
         return () => {
             divElement.removeEventListener("click", closeMenus);
@@ -59,33 +108,18 @@
 
     function calculatePosition() {
         if (alignTo !== undefined) {
-            let modalRect = divElement.getBoundingClientRect();
-            let top = Math.min(alignTo.top - 8, window.innerHeight - (modalRect.height + 10));
-
-            style = `position: absolute; visibility: visible; top: ${top}px; `;
-
-            if ($rtlStore) {
-                let right = Math.min(
-                    window.innerWidth - alignTo.left + 8,
-                    window.innerWidth - modalRect.width - 10,
-                );
-                style += `right: ${right}px;`;
-            } else {
-                let left = Math.min(alignTo.right + 8, window.innerWidth - (modalRect.width + 10));
-                style += `left: ${left}px;`;
-            }
+            reposition(alignTo, divElement, {
+                position: `bottom-middle` as NanoPopPosition,
+            });
         }
-    }
-
-    function onClose() {
-        dispatch("close");
     }
 </script>
 
-<!-- svelte-ignore a11y-no-static-element-interactions -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
     bind:this={divElement}
     {style}
+    class:custom-bg={backgroundImage !== undefined}
     class="modal-content"
     class:square
     class:large
@@ -98,34 +132,69 @@
     {#if !hideHeader}
         <div class="header">
             <h4>
-                <slot name="header" />
+                {@render header?.(onClose)}
             </h4>
             {#if closeIcon}
-                <span title={$_("close")} class="close" class:rtl={$rtlStore} on:click={onClose}>
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <span title={$_("close")} class="close" class:rtl={$rtlStore} onclick={onClose}>
                     <HoverIcon>
                         <Close size={"1em"} color={"var(--icon-txt)"} />
+                    </HoverIcon>
+                </span>
+            {:else if backIcon}
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <span title={$_("back")} class="back" class:rtl={$rtlStore} onclick={onBack}>
+                    <HoverIcon>
+                        <ArrowLeft size={"1em"} color={"var(--icon-txt)"} />
                     </HoverIcon>
                 </span>
             {/if}
         </div>
     {/if}
     {#if !hideBody}
-        <div class="body" class:fill>
-            <slot name="body" />
+        <div class="body" class:fill class:overflow-visible={overflowVisible}>
+            {@render body?.(onClose)}
         </div>
     {/if}
     {#if !hideFooter}
-        <div class="footer" class:rtl={$rtlStore} class:compact={compactFooter}>
-            <slot name="footer">
-                <Button on:click={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
+        <div class={`footer ${footerClass}`} class:rtl={$rtlStore} class:compact={compactFooter}>
+            {#if footer}{@render footer(onClose)}{:else}
+                <Button onClick={() => onClose?.()} small={!$mobileWidth} tiny={$mobileWidth}>
                     <Translatable resourceKey={i18nKey("close")} />
                 </Button>
-            </slot>
+            {/if}
         </div>
     {/if}
 </div>
 
 <style lang="scss">
+    .modal-content.custom-bg::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: var(--custom-bg);
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        filter: saturate(0.6);
+        z-index: -1;
+        border-radius: var(--modal-rd);
+
+        @include mobile() {
+            border-radius: var(--modal-rd) var(--modal-rd) 0 0;
+        }
+    }
+
+    .modal-content.custom-bg.square::before {
+        border-radius: $sp3;
+        @include mobile() {
+            border-radius: $sp3 $sp3 0 0;
+        }
+    }
+
     .modal-content {
         @include font-size(fs-100);
         display: flex;
@@ -137,6 +206,9 @@
         position: relative;
         max-height: 100%;
         box-shadow: var(--modal-sh);
+        background-repeat: no-repeat;
+        background-size: cover;
+        z-index: 1;
 
         &.halloween::after {
             @include cobweb();
@@ -197,6 +269,10 @@
         @include mobile() {
             padding: $sp3 $sp4;
         }
+
+        &.overflow-visible {
+            overflow-y: visible;
+        }
     }
     .footer {
         padding: $sp4 $sp5 $sp5 $sp5;
@@ -213,7 +289,8 @@
         }
     }
 
-    .close {
+    .close,
+    .back {
         position: absolute;
         top: $sp3;
         &:not(.rtl) {

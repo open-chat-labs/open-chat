@@ -1,23 +1,19 @@
-use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{CompletedCryptoTransaction, FailedCryptoTransaction, MessageId};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(group, claim_prize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub message_id: MessageId,
-    pub correlation_id: u64,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(group, claim_prize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
-    CallerNotInGroup,
-    UserSuspended,
-    ChatFrozen,
-    MessageNotFound,
-    AlreadyClaimed,
-    PrizeFullyClaimed,
-    PrizeEnded,
     TransferFailed(String, FailedCryptoTransaction),
     FailedAfterTransfer(String, CompletedCryptoTransaction),
+    Error(OCError),
 }

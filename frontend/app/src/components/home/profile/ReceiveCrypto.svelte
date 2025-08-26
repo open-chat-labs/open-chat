@@ -1,67 +1,70 @@
 <script lang="ts">
+    import {
+        cryptoBalanceStore,
+        cryptoLookup,
+        mobileWidth,
+    } from "openchat-client";
+    import { _ } from "svelte-i18n";
+    import { i18nKey } from "../../../i18n/i18n";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import ModalContent from "../../ModalContent.svelte";
-    import { _ } from "svelte-i18n";
-    import { createEventDispatcher, getContext } from "svelte";
-    import AccountInfo from "../AccountInfo.svelte";
-    import { mobileWidth } from "../../../stores/screenDimensions";
-    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
-    import type { OpenChat } from "openchat-client";
-    import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
+    import AccountInfo from "../AccountInfo.svelte";
+    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
 
-    export let ledger: string;
+    interface Props {
+        ledger: string;
+        onClose: () => void;
+    }
 
-    const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
+    let { ledger, onClose }: Props = $props();
 
-    let error: string | undefined = undefined;
+    let error: string | undefined = $state(undefined);
 
-    $: user = client.user;
-    $: cryptoLookup = client.cryptoLookup;
-    $: tokenDetails = $cryptoLookup[ledger];
-    $: symbol = tokenDetails.symbol;
-    $: howToBuyUrl = tokenDetails.howToBuyUrl;
-    $: title = i18nKey(`cryptoAccount.receiveToken`, { symbol });
-    $: cryptoBalance = client.cryptoBalance;
+    let tokenDetails = $derived($cryptoLookup.get(ledger)!);
+    let symbol = $derived(tokenDetails.symbol);
+    let title = $derived(i18nKey(`cryptoAccount.receiveToken`, { symbol }));
 
     function onBalanceRefreshed() {
         error = undefined;
     }
 
-    function onBalanceRefreshError(ev: CustomEvent<string>) {
-        error = $_(ev.detail);
+    function onBalanceRefreshError(err: string) {
+        error = $_(err);
     }
 </script>
 
 <ModalContent>
-    <span class="header" slot="header">
-        <div class="main-title"><Translatable resourceKey={title} /></div>
-        <BalanceWithRefresh
-            {ledger}
-            value={$cryptoBalance[ledger]}
-            label={i18nKey("cryptoAccount.shortBalanceLabel")}
-            bold
-            on:refreshed={onBalanceRefreshed}
-            on:error={onBalanceRefreshError} />
-    </span>
-    <form class="body" slot="body">
-        <AccountInfo qrSize={"larger"} centered {ledger} user={$user} />
-        <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
-            <Translatable resourceKey={i18nKey("howToBuyToken", { token: symbol })} />
-        </a>
-        {#if error}
-            <ErrorMessage>{error}</ErrorMessage>
-        {/if}
-    </form>
-    <span slot="footer">
-        <ButtonGroup>
-            <Button tiny={$mobileWidth} on:click={() => dispatch("close")}
-                ><Translatable resourceKey={i18nKey("close")} /></Button>
-        </ButtonGroup>
-    </span>
+    {#snippet header()}
+        <span class="header">
+            <div class="main-title"><Translatable resourceKey={title} /></div>
+            <BalanceWithRefresh
+                {ledger}
+                value={$cryptoBalanceStore.get(ledger) ?? 0n}
+                label={i18nKey("cryptoAccount.shortBalanceLabel")}
+                bold
+                onRefreshed={onBalanceRefreshed}
+                onError={onBalanceRefreshError} />
+        </span>
+    {/snippet}
+    {#snippet body()}
+        <form class="body">
+            <AccountInfo qrSize={"larger"} centered {ledger} />
+            {#if error}
+                <ErrorMessage>{error}</ErrorMessage>
+            {/if}
+        </form>
+    {/snippet}
+    {#snippet footer()}
+        <span>
+            <ButtonGroup>
+                <Button tiny={$mobileWidth} onClick={onClose}
+                    ><Translatable resourceKey={i18nKey("close")} /></Button>
+            </ButtonGroup>
+        </span>
+    {/snippet}
 </ModalContent>
 
 <style lang="scss">

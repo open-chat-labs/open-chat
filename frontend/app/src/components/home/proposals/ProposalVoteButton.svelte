@@ -1,29 +1,36 @@
 <script lang="ts">
+    import { iconSize } from "openchat-client";
     import { _ } from "svelte-i18n";
-    import ThumbUp from "svelte-material-icons/ThumbUp.svelte";
     import ThumbDown from "svelte-material-icons/ThumbDown.svelte";
-    import { iconSize } from "../../../stores/iconSize";
+    import ThumbUp from "svelte-material-icons/ThumbUp.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
 
-    export let mode: "yes" | "no";
-    export let percentage: number;
-    export let disabled: boolean;
-    export let voting: boolean;
-    export let voted: boolean;
+    interface Props {
+        mode: "yes" | "no";
+        percentage: number;
+        disabled: boolean;
+        voting: boolean;
+        voted: boolean;
+        onClick: () => void;
+    }
 
-    $: label = mode === "yes" ? i18nKey("proposal.adopt") : i18nKey("proposal.reject");
-    $: iconColor = disabled && !voted ? "var(--vote-maybe-color)" : "var(--txt)";
-    $: title = voted
-        ? mode === "yes"
-            ? $_("proposal.youVotedAdopt")
-            : $_("proposal.youVotedReject")
-        : "";
+    let { mode, percentage, disabled, voting, voted, onClick }: Props = $props();
+
+    let label = $derived(mode === "yes" ? i18nKey("proposal.adopt") : i18nKey("proposal.reject"));
+    let iconColor = $derived(disabled && !voted ? "var(--vote-maybe-color)" : "var(--txt)");
+    let title = $derived(
+        voted
+            ? mode === "yes"
+                ? $_("proposal.youVotedAdopt")
+                : $_("proposal.youVotedReject")
+            : "",
+    );
 </script>
 
 <div class="vote-button" {title}>
     <div class="label"><Translatable resourceKey={label} /></div>
-    <div on:click class:voting class:voted class:disabled class={`icon ${mode}`}>
+    <div onclick={onClick} class:voting class:voted class:disabled class={`icon ${mode}`}>
         {#if !voting}
             {#if mode === "yes"}
                 <ThumbUp size={$iconSize} color={iconColor} />

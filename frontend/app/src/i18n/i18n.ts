@@ -1,7 +1,12 @@
-import { register, init, locale, getLocaleFromNavigator, _ } from "svelte-i18n";
+import {
+    type InterpolationValues,
+    type Level,
+    type MessageFormatter,
+    type ResourceKey,
+} from "openchat-client";
+import { _, getLocaleFromNavigator, init, locale, register } from "svelte-i18n";
 import { get, writable } from "svelte/store";
 import { configKeys } from "../utils/config";
-import { type InterpolationValues, type Level, type MessageFormatter } from "openchat-client";
 
 export const translationCodes: Record<string, string> = {
     cn: "zh-cn",
@@ -16,6 +21,9 @@ export const translationCodes: Record<string, string> = {
     ru: "ru",
     uk: "uk",
     vi: "vi",
+    pl: "pl",
+    fa: "fa",
+    ar: "ar",
 };
 
 export const supportedLanguages = [
@@ -67,6 +75,18 @@ export const supportedLanguages = [
         name: "Yкраїнська",
         code: "uk",
     },
+    {
+        name: "Polski",
+        code: "pl",
+    },
+    {
+        name: "فارسی",
+        code: "fa",
+    },
+    {
+        name: "عربي",
+        code: "ar",
+    },
 ];
 
 export const supportedLanguagesByCode = supportedLanguages.reduce(
@@ -90,6 +110,9 @@ register("jp", () => import("./jp.json"));
 register("ru", () => import("./ru.json"));
 register("uk", () => import("./uk.json"));
 register("vi", () => import("./vi.json"));
+register("pl", () => import("./pl.json"));
+register("fa", () => import("./fa.json"));
+register("ar", () => import("./ar.json"));
 
 export function getStoredLocale(): string {
     const fromStorage = localStorage.getItem(configKeys.locale);
@@ -143,20 +166,17 @@ export function interpolate(
             values: { ...p, level: lowercase ? levelTxt.toLowerCase() : levelTxt },
         });
     } else {
-        return formatter(key, { values: params });
+        const result = formatter(key, { values: params });
+        if (typeof result !== "string") {
+            return key;
+        }
+        return result;
     }
 }
 
 export const editmode = writable<boolean>(false);
 export const editingLabel = writable<ResourceKey | undefined>(undefined);
-
-export type ResourceKey = {
-    kind: "resource_key";
-    key: string;
-    level?: Level;
-    lowercase: boolean;
-    params?: InterpolationValues;
-};
+export const reviewingTranslations = writable<boolean>(false);
 
 export function i18nKey(
     key: string,

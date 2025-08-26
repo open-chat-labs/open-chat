@@ -1,71 +1,64 @@
 <script lang="ts">
-    import { AvatarSize, type OpenChat } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
-    import TooltipWrapper from "../TooltipWrapper.svelte";
-    import TooltipPopup from "../TooltipPopup.svelte";
+    import { allUsersStore, AvatarSize, cryptoLookup, type OpenChat } from "openchat-client";
+    import { getContext } from "svelte";
     import Avatar from "../Avatar.svelte";
+    import Tooltip from "../tooltip/Tooltip.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let ledger: string;
-    export let userTips: Record<string, bigint>;
-    export let canTip: boolean;
+    interface Props {
+        ledger: string;
+        userTips: Record<string, bigint>;
+        canTip: boolean;
+        onClick?: (ledger: string) => void;
+    }
 
-    let longPressed: boolean = false;
+    let { ledger, userTips, canTip, onClick }: Props = $props();
 
-    $: userTipsList = Object.entries(userTips);
-    $: cryptoLookup = client.cryptoLookup;
-    $: tokenDetails = $cryptoLookup[ledger];
-    $: userStore = client.userStore;
-    $: totalAmount = userTipsList.reduce((n, [_, amount]) => n + amount, BigInt(0));
+    let longPressed: boolean = $state(false);
 
-    function onClick() {
+    let userTipsList = $derived(Object.entries(userTips));
+    let tokenDetails = $derived($cryptoLookup.get(ledger)!);
+    let totalAmount = $derived(userTipsList.reduce((n, [_, amount]) => n + amount, BigInt(0)));
+
+    function click() {
         if (!longPressed && canTip) {
-            dispatch("click", ledger);
+            onClick?.(ledger);
         }
     }
 </script>
 
-<TooltipWrapper bind:longPressed position={"bottom"} align={"start"}>
-    <div
-        role="button"
-        tabindex="0"
-        slot="target"
-        on:click={onClick}
-        class="tip-wrapper"
-        class:canTip>
+<Tooltip autoWidth bind:longPressed position={"bottom"} align={"start"}>
+    <div role="button" tabindex="0" onclick={click} class="tip-wrapper" class:canTip>
         <img class="tip-icon" src={tokenDetails.logo} />
         <span class="tip-count">
             {userTipsList.length > 999 ? "999+" : userTipsList.length}
         </span>
     </div>
-    <div let:position let:align slot="tooltip">
-        <TooltipPopup autoWidth {align} {position}>
-            <div class="user-tips">
-                {#each userTipsList as [userId, amount]}
-                    <div class="avatar">
-                        <Avatar
-                            url={client.userAvatarUrl($userStore[userId])}
-                            {userId}
-                            size={AvatarSize.Tiny} />
-                    </div>
-                    <div class="username">
-                        @{$userStore[userId]?.username}
-                    </div>
-                    <div class="amount">
-                        {client.formatTokens(amount, tokenDetails.decimals)}
-                    </div>
-                {/each}
-                {#if userTipsList.length > 1}
-                    <div class="total">
-                        {client.formatTokens(totalAmount, tokenDetails.decimals)}
-                    </div>
-                {/if}
-            </div>
-        </TooltipPopup>
-    </div>
-</TooltipWrapper>
+    {#snippet popupTemplate()}
+        <div class="user-tips">
+            {#each userTipsList as [userId, amount]}
+                <div class="avatar">
+                    <Avatar
+                        url={client.userAvatarUrl($allUsersStore.get(userId))}
+                        {userId}
+                        size={AvatarSize.Tiny} />
+                </div>
+                <div class="username">
+                    @{$allUsersStore.get(userId)?.username}
+                </div>
+                <div class="amount">
+                    {client.formatTokens(amount, tokenDetails.decimals)}
+                </div>
+            {/each}
+            {#if userTipsList.length > 1}
+                <div class="total">
+                    {client.formatTokens(totalAmount, tokenDetails.decimals)}
+                </div>
+            {/if}
+        </div>
+    {/snippet}
+</Tooltip>
 
 <style lang="scss">
     .user-tips {

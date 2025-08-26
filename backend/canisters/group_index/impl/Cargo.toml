@@ -1,7 +1,7 @@
 [package]
 name = "group_index_canister_impl"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -16,27 +16,31 @@ canister_api_macros = { path = "../../../libraries/canister_api_macros" }
 canister_logger = { path = "../../../libraries/canister_logger" }
 canister_state_macros = { path = "../../../libraries/canister_state_macros" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
+canister_time = { path = "../../../libraries/canister_time" }
 community_canister = { path = "../../community/api" }
 community_canister_c2c_client = { path = "../../community/c2c_client" }
+constants = { path = "../../../libraries/constants" }
+cycles_dispenser_canister = { path = "../../cycles_dispenser/api" }
 fire_and_forget_handler = { path = "../../../libraries/fire_and_forget_handler" }
 futures = { workspace = true }
 group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }
 group_index_canister = { path = "../api" }
+hex = { workspace = true }
 http_request = { path = "../../../libraries/http_request" }
 human_readable = { path = "../../../libraries/human_readable" }
 ic-cdk = { workspace = true }
-ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
-local_group_index_canister = { path = "../../local_group_index/api" }
-local_group_index_canister_c2c_client = { path = "../../local_group_index/c2c_client" }
+local_user_index_canister = { path = "../../local_user_index/api" }
+local_user_index_canister_c2c_client = { path = "../../local_user_index/c2c_client" }
 msgpack = { path = "../../../libraries/msgpack" }
+oc_error_codes = { path = "../../../libraries/error_codes" }
 rand = { workspace = true }
 search = { path = "../../../libraries/search" }
 serde = { workspace = true }
-serializer = { path = "../../../libraries/serializer" }
 stable_memory = { path = "../../../libraries/stable_memory" }
+timer_job_queues = { path = "../../../libraries/timer_job_queues" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_canister = { path = "../../user/api" }

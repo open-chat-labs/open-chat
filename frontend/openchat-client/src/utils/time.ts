@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import type { MessageFormatter } from "./i18n";
+
+import type { MessageFormatter } from "openchat-shared";
 
 type DurationData = {
     total: number;
@@ -40,7 +41,7 @@ export function durationFromMilliseconds(total: number): DurationData {
     const seconds = Math.floor((total / 1000) % 60);
     const minutes = Math.floor((total / 1000 / 60) % 60);
     const hours = Math.floor((total / (1000 * 60 * 60)) % 24);
-    const days = Math.floor(total / (1000 * 60 * 60 * 24));
+    const days = Math.floor((total / (1000 * 60 * 60 * 24)));
     return {
         total,
         days,
@@ -72,9 +73,20 @@ export function formatDuration(ms: number): string {
     return result;
 }
 
-export function formatTimeRemaining(now: number, deadline: number): string {
+export function formatTimeRemaining(
+    now: number,
+    deadline: number,
+    excludeDays: boolean = false,
+): string {
     const { days, hours, minutes, seconds } = startsIn(now, deadline);
-    return `${pad(days)}:${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+
+    let text = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+
+    if (!excludeDays) {
+        text = `${pad(days)}:` + text;
+    }
+
+    return text;
 }
 
 const defaultFormatter = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
@@ -87,9 +99,7 @@ const timeDivisions = [
     { amount: 60, name: "seconds" },
     { amount: 60, name: "minutes" },
     { amount: 24, name: "hours" },
-    { amount: 7, name: "days" },
-    { amount: 4.34524, name: "weeks" },
-    { amount: 12, name: "months" },
+    { amount: 365.25, name: "days" },
     { amount: Number.POSITIVE_INFINITY, name: "years" },
 ];
 

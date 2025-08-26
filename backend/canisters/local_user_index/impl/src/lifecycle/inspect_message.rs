@@ -1,5 +1,5 @@
-use crate::{read_state, RuntimeState};
-use ic_cdk_macros::inspect_message;
+use crate::{RuntimeState, read_state};
+use ic_cdk::inspect_message;
 
 #[inspect_message]
 fn inspect_message() {
@@ -7,27 +7,25 @@ fn inspect_message() {
 }
 
 fn accept_if_valid(state: &RuntimeState) {
-    let method_name = ic_cdk::api::call::method_name();
-
-    // 'inspect_message' only applies to ingress messages so calls to c2c methods should be rejected
-    let is_c2c_method = method_name.starts_with("c2c") || method_name == "push_event" || method_name == "wallet_receive";
-    if is_c2c_method {
-        return;
-    }
+    let method_name = ic_cdk::api::msg_method_name().trim_end_matches("_msgpack").to_string();
 
     let is_valid = match method_name.as_str() {
-        "invite_users_to_channel"
+        "install_bot"
+        | "invite_users_to_channel"
         | "invite_users_to_community"
         | "invite_users_to_group"
         | "join_channel"
         | "join_community"
         | "join_group"
-        | "report_message_v2" => state.is_caller_openchat_user(),
+        | "pay_for_premium_item"
+        | "uninstall_bot" => state.is_caller_openchat_user(),
+        "reinstate_missed_daily_claims" | "withdraw_from_icpswap" => state.is_caller_platform_operator(),
         "register_user" => true,
+        "remove_notifications" => state.is_caller_notification_pusher(),
         _ => false,
-    };
+    } || method_name.starts_with("bot_");
 
     if is_valid {
-        ic_cdk::api::call::accept_message();
+        ic_cdk::api::accept_message();
     }
 }

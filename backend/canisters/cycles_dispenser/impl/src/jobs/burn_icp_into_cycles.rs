@@ -1,4 +1,5 @@
-use crate::{mutate_state, State};
+use crate::{State, mutate_state};
+use constants::NANOS_PER_MILLISECOND;
 use ic_ledger_types::{AccountIdentifier, BlockIndex, Memo, Subaccount, Timestamp, Tokens, TransferArgs};
 use std::time::Duration;
 use tracing::{error, info};
@@ -14,8 +15,8 @@ pub fn start_job() {
 
 fn run() {
     match mutate_state(get_next_action) {
-        Action::BurnIcp(burn) => ic_cdk::spawn(burn_icp(burn)),
-        Action::NotifyTopUp(notify) => ic_cdk::spawn(notify_cmc(notify)),
+        Action::BurnIcp(burn) => ic_cdk::futures::spawn(burn_icp(burn)),
+        Action::NotifyTopUp(notify) => ic_cdk::futures::spawn(notify_cmc(notify)),
         Action::None => {}
     }
 }
@@ -50,9 +51,8 @@ fn get_next_action(state: &mut State) -> Action {
     } else {
         let cycles_balance = state.env.cycles_balance();
 
-        // Burn ICP into cycles whenever the cycles balance is < 2 * min_cycles_balance, this prevents
-        // the balance from ever falling below `min_cycles_balance`
-        if cycles_balance < 2 * state.data.min_cycles_balance {
+        // Burn ICP into cycles whenever the cycles balance is < 10 * min_cycles_balance
+        if cycles_balance < 10 * state.data.min_cycles_balance {
             Action::BurnIcp(BurnIcpDetails {
                 amount: state.data.icp_burn_amount,
                 this_canister_id: state.env.canister_id(),
@@ -78,7 +78,7 @@ async fn burn_icp(burn_details: BurnIcpDetails) {
             from_subaccount: None,
             to: AccountIdentifier::new(&burn_details.cmc, &Subaccount::from(burn_details.this_canister_id)),
             created_at_time: Some(Timestamp {
-                timestamp_nanos: burn_details.now * 1_000_000,
+                timestamp_nanos: burn_details.now * NANOS_PER_MILLISECOND,
             }),
         },
     )
@@ -96,8 +96,8 @@ async fn burn_icp(burn_details: BurnIcpDetails) {
         Ok(Err(err)) => {
             error!(?err, "Failed to burn ICP into cycles");
         }
-        Err((code, message)) => {
-            error!(?code, message, "Failed to burn ICP into cycles");
+        Err(error) => {
+            error!(?error, "Failed to burn ICP into cycles");
         }
     }
 }

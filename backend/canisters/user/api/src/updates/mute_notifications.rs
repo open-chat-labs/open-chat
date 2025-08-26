@@ -1,15 +1,12 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::ChatId;
+use ts_export::ts_export;
+use types::{ChatId, SuccessOnly};
 
+#[ts_export(user, mute_notifications)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub chat_id: ChatId,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    ChatNotFound,
-    InternalError(String),
-}
+pub type Response = SuccessOnly;

@@ -1,20 +1,37 @@
-import type { MemberRole, PermissionRole } from "openchat-shared";
+import {
+    type MemberRole,
+    type PermissionRole,
+    ROLE_ADMIN,
+    ROLE_MEMBER,
+    ROLE_MODERATOR,
+    ROLE_NONE,
+    ROLE_OWNER,
+} from "openchat-shared";
 
 export function hasOwnerRights(role: MemberRole): boolean {
-    return role === "owner";
+    return role === ROLE_OWNER;
 }
 
 export function isPermitted(role: MemberRole, permissionRole: PermissionRole): boolean {
-    if (role === "none") return false;
-    switch (permissionRole) {
-        case "owner":
-            return hasOwnerRights(role);
-        case "admin":
-            return role !== "member" && role !== "moderator";
-        case "moderator":
-            return role !== "member";
-        case "member":
-            return true;
+    if (role === ROLE_NONE || permissionRole === ROLE_NONE) return false;
+    return role >= permissionRole;
+}
+
+export function roleAsText(role: MemberRole): string {
+    switch (role) {
+        case ROLE_OWNER:
+            return "owner";
+
+        case ROLE_ADMIN:
+            return "admin";
+
+        case ROLE_MODERATOR:
+            return "moderator";
+
+        case ROLE_MEMBER:
+            return "member";
+
+        default:
+            return "none";
     }
-    return false;
 }

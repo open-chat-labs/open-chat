@@ -1,29 +1,40 @@
 <script lang="ts">
-    import Avatar from "../../Avatar.svelte";
-    import { rtlStore } from "../../../stores/rtl";
-    import { AvatarSize, type CommunitySummary, type OpenChat } from "openchat-client";
-    import SectionHeader from "../../SectionHeader.svelte";
-    import CommunityMenu from "./CommunityMenu.svelte";
+    import {
+        AvatarSize,
+        setRightPanelHistory,
+        type CommunitySummary,
+        type OpenChat,
+    } from "openchat-client";
     import { getContext } from "svelte";
-    import VisibilityLabel from "../VisibilityLabel.svelte";
-    import { pushRightPanelHistory } from "../../../stores/rightPanel";
-    import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import { rtlStore } from "../../../stores/rtl";
+    import Avatar from "../../Avatar.svelte";
+    import WithVerifiedBadge from "../../icons/WithVerifiedBadge.svelte";
+    import SectionHeader from "../../SectionHeader.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import VisibilityLabel from "../VisibilityLabel.svelte";
+    import CommunityMenu from "./CommunityMenu.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    export let community: CommunitySummary;
+    interface Props {
+        community: CommunitySummary;
+        canMarkAllRead: boolean;
+    }
+
+    let { community, canMarkAllRead }: Props = $props();
 
     function showCommunityMembers() {
-        pushRightPanelHistory({ kind: "show_community_members" });
+        setRightPanelHistory([{ kind: "show_community_members" }]);
     }
 </script>
 
 <SectionHeader border={false}>
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div
         role="button"
         tabindex="0"
-        on:click={showCommunityMembers}
+        onclick={showCommunityMembers}
         class="current-selection"
         class:rtl={$rtlStore}>
         <div class="avatar">
@@ -33,7 +44,11 @@
                 size={AvatarSize.Default} />
         </div>
         <div class="details">
-            <h4 class="name">{community.name}</h4>
+            <WithVerifiedBadge verified={community.verified} size={"small"}>
+                <h4 class="name">
+                    {community.name}
+                </h4>
+            </WithVerifiedBadge>
             <div class="wrapper">
                 <VisibilityLabel isPublic={community.public} />
                 <div class="members">
@@ -44,13 +59,7 @@
         </div>
     </div>
     <span class="menu">
-        <CommunityMenu
-            on:newChannel
-            on:communityDetails
-            on:leaveCommunity
-            on:editCommunity
-            on:deleteCommunity
-            {community} />
+        <CommunityMenu {canMarkAllRead} {community} />
     </span>
 </SectionHeader>
 

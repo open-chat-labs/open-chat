@@ -1,8 +1,9 @@
-use crate::{CanisterId, Cryptocurrency};
+use crate::CanisterId;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fmt::{Display, Formatter};
+use ts_export::ts_export;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct MakeOrderRequest {
@@ -16,25 +17,13 @@ pub struct CancelOrderRequest {
     pub id: String,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct TokenInfo {
-    pub token: Cryptocurrency,
+    pub symbol: String,
     pub ledger: CanisterId,
     pub decimals: u8,
     pub fee: u128,
-}
-
-impl TryFrom<Cryptocurrency> for TokenInfo {
-    type Error = ();
-
-    fn try_from(value: Cryptocurrency) -> Result<Self, Self::Error> {
-        Ok(TokenInfo {
-            ledger: value.ledger_canister_id().ok_or(())?,
-            decimals: value.decimals().ok_or(())?,
-            fee: value.fee().ok_or(())?,
-            token: value,
-        })
-    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq)]

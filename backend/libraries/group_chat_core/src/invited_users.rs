@@ -34,8 +34,8 @@ impl InvitedUsers {
         self.users.get(user_id)
     }
 
-    pub fn users(&self) -> Vec<UserId> {
-        self.users.keys().copied().collect()
+    pub fn user_ids(&self) -> impl Iterator<Item = &UserId> {
+        self.users.keys()
     }
 
     pub fn last_updated(&self) -> TimestampMillis {

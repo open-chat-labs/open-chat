@@ -1,12 +1,28 @@
 <script lang="ts">
-    export let compact: boolean = false;
-    export let title: string | undefined = undefined;
-    export let disabled: boolean = false;
-    export let tabindex = 0;
+    import type { Snippet } from "svelte";
+
+    interface Props {
+        compact?: boolean;
+        title?: string | undefined;
+        disabled?: boolean;
+        tabindex?: number;
+        children?: Snippet;
+        onclick?: () => void;
+    }
+
+    let {
+        compact = false,
+        title = undefined,
+        disabled = false,
+        tabindex = 0,
+        children,
+        onclick,
+    }: Props = $props();
 </script>
 
-<div on:click {tabindex} class="wrapper" class:compact class:disabled role="button" {title}>
-    <slot />
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<div {onclick} {tabindex} class="wrapper" class:compact class:disabled role="button" {title}>
+    {@render children?.()}
 </div>
 
 <style lang="scss">
@@ -19,6 +35,7 @@
         background-color: transparent;
         transition: background-color ease-in-out 100ms;
         cursor: pointer;
+        aspect-ratio: 1 / 1;
 
         &.compact {
             padding: $sp2;

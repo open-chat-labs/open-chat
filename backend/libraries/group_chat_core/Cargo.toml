@@ -1,21 +1,32 @@
 [package]
 name = "group_chat_core"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 candid = { workspace = true }
 chat_events = { path = "../chat_events" }
-event_store_producer = { workspace = true }
+constants = { path = "../constants" }
+event_store_types = { workspace = true }
+group_community_common = { path = "../group_community_common" }
+itertools = { workspace = true }
+hex = { workspace = true }
 lazy_static = { workspace = true }
+msgpack = { path = "../msgpack" }
+oc_error_codes = { path = "../error_codes" }
+rand = { workspace = true }
 regex-lite = { workspace = true }
 search = { path = "../search" }
 serde = { workspace = true }
-serde_repr = { workspace = true }
+serde_bytes = { workspace = true }
+stable_memory_map = { path = "../stable_memory_map" }
 types = { path = "../types" }
 utils = { path = "../utils" }
 
 [dev-dependencies]
+ic-stable-structures = { workspace = true }
 msgpack = { path = "../msgpack" }
+proptest = { workspace = true }
+test-strategy = { workspace = true }

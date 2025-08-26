@@ -1,65 +1,85 @@
 <script lang="ts">
+    import type { ChatSummary, OpenChat, UserSummary } from "openchat-client";
+    import {
+        allUsersStore,
+        cryptoBalanceStore,
+        enhancedCryptoLookup as cryptoLookup,
+        currentUserIdStore,
+        iconSize,
+        mobileWidth,
+    } from "openchat-client";
+    import { type CryptocurrencyContent, type MessageContext, nowNanos } from "openchat-shared";
+    import { getContext, onMount } from "svelte";
+    import Alert from "svelte-material-icons/Alert.svelte";
+    import { i18nKey } from "../../i18n/i18n";
+    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import type { ChatSummary, OpenChat, UserSummary } from "openchat-client";
-    import type { CryptocurrencyContent } from "openchat-shared";
-    import TokenInput from "./TokenInput.svelte";
-    import Overlay from "../Overlay.svelte";
-    import AccountInfo from "./AccountInfo.svelte";
-    import ModalContent from "../ModalContent.svelte";
-    import Alert from "svelte-material-icons/Alert.svelte";
-    import Legend from "../Legend.svelte";
-    import { _ } from "svelte-i18n";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import { iconSize } from "../../stores/iconSize";
-    import SingleUserSelector from "./SingleUserSelector.svelte";
-    import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
+    import Legend from "../Legend.svelte";
+    import ModalContent from "../ModalContent.svelte";
+    import Overlay from "../Overlay.svelte";
     import TextArea from "../TextArea.svelte";
-    import CryptoSelector from "./CryptoSelector.svelte";
-    import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
+    import AccountInfo from "./AccountInfo.svelte";
+    import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
+    import CryptoSelector from "./CryptoSelector.svelte";
+    import SingleUserSelector from "./SingleUserSelector.svelte";
+    import TokenInput from "./TokenInput.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let draftAmount: bigint;
-    export let ledger: string;
-    export let chat: ChatSummary;
-    export let defaultReceiver: string | undefined;
+    interface Props {
+        draftAmount: bigint;
+        ledger: string;
+        chat: ChatSummary;
+        defaultReceiver: string | undefined;
+        messageContext: MessageContext;
+        onClose: () => void;
+    }
 
-    $: user = client.user;
-    $: lastCryptoSent = client.lastCryptoSent;
-    $: cryptoBalanceStore = client.cryptoBalance;
-    $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
-    $: userStore = client.userStore;
+    let {
+        draftAmount = $bindable(),
+        ledger = $bindable(),
+        chat,
+        defaultReceiver,
+        messageContext,
+        onClose,
+    }: Props = $props();
+
     let refreshing = false;
-    let error: string | undefined = undefined;
-    let message = "";
-    let confirming = false;
-    let toppingUp = false;
-    let tokenChanging = true;
+    let error: string | undefined = $state(undefined);
+    let message = $state("");
+    let confirming = $state(false);
+    let toppingUp = $state(false);
+    let tokenChanging = $state(true);
     let balanceWithRefresh: BalanceWithRefresh;
-    let receiver: UserSummary | undefined = undefined;
-    let validAmount: boolean = false;
-    $: cryptoLookup = client.enhancedCryptoLookup;
-    $: tokenDetails = $cryptoLookup[ledger];
-    $: symbol = tokenDetails.symbol;
-    $: howToBuyUrl = tokenDetails.howToBuyUrl;
-    $: transferFees = tokenDetails.transferFee;
-    $: multiUserChat = chat.kind === "group_chat" || chat.kind === "channel";
-    $: remainingBalance =
-        draftAmount > BigInt(0) ? cryptoBalance - draftAmount - transferFees : cryptoBalance;
-    $: valid = error === undefined && validAmount && receiver !== undefined && !tokenChanging;
-    $: zero = cryptoBalance <= transferFees && !tokenChanging;
+    let receiver: UserSummary | undefined = $state(undefined);
+    let validAmount: boolean = $state(false);
+    let sending = $state(false);
+
+    let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? 0n);
+    let tokenDetails = $derived($cryptoLookup.get(ledger)!);
+    let symbol = $derived(tokenDetails.symbol);
+    let transferFees = $derived(tokenDetails.transferFee);
+    let multiUserChat = $derived(chat.kind === "group_chat" || chat.kind === "channel");
+    let remainingBalance = $state(0n);
+    $effect(() => {
+        remainingBalance =
+            draftAmount > BigInt(0) ? cryptoBalance - draftAmount - transferFees : cryptoBalance;
+    });
+    let valid = $derived(
+        error === undefined && validAmount && receiver !== undefined && !tokenChanging,
+    );
+    let zero = $derived(cryptoBalance <= transferFees && !tokenChanging);
+    let errorMessage = $derived(error !== undefined ? i18nKey(error) : $pinNumberErrorMessageStore);
 
     onMount(() => {
         // default the receiver to the other user in a direct chat
         if (chat.kind === "direct_chat") {
-            receiver = $userStore[chat.them.userId];
-        } else if (defaultReceiver !== undefined && defaultReceiver !== $user.userId) {
-            receiver = $userStore[defaultReceiver];
+            receiver = $allUsersStore.get(chat.them.userId);
+        } else if (defaultReceiver !== undefined && defaultReceiver !== $currentUserIdStore) {
+            receiver = $allUsersStore.get(defaultReceiver);
         }
     });
 
@@ -90,17 +110,28 @@
                 recipient: receiver.userId,
                 amountE8s: draftAmount,
                 feeE8s: transferFees,
-                createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
+                createdAtNanos: nowNanos(),
             },
         };
-        dispatch("sendMessageWithContent", { content });
-        lastCryptoSent.set(ledger);
-        dispatch("close");
+
+        sending = true;
+        error = undefined;
+
+        client
+            .sendMessageWithContent(messageContext, content, false)
+            .then((resp) => {
+                if (resp.kind === "success" || resp.kind === "transfer_success") {
+                    onClose();
+                } else if ($pinNumberErrorMessageStore === undefined) {
+                    error = "errorSendingMessage";
+                }
+            })
+            .finally(() => (sending = false));
     }
 
     function cancel() {
         toppingUp = false;
-        dispatch("close");
+        onClose();
     }
 
     function onBalanceRefreshed() {
@@ -108,9 +139,9 @@
         error = undefined;
     }
 
-    function onBalanceRefreshError(ev: CustomEvent<string>) {
+    function onBalanceRefreshError(err: string) {
         onBalanceRefreshFinished();
-        error = ev.detail;
+        error = err;
     }
 
     function onBalanceRefreshFinished() {
@@ -128,113 +159,121 @@
 
 <Overlay dismissible>
     <ModalContent>
-        <span class="header" slot="header">
-            <div class="left">
-                <div class="main-title">
-                    <div><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></div>
-                    <div>
-                        <CryptoSelector bind:ledger />
+        {#snippet header()}
+            <span class="header">
+                <div class="left">
+                    <div class="main-title">
+                        <div><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></div>
+                        <div>
+                            <CryptoSelector bind:ledger />
+                        </div>
                     </div>
                 </div>
-            </div>
-            <BalanceWithRefresh
-                bind:toppingUp
-                bind:this={balanceWithRefresh}
-                {ledger}
-                value={remainingBalance}
-                label={i18nKey("cryptoAccount.shortBalanceLabel")}
-                bold
-                showTopUp
-                on:click={() => (confirming = false)}
-                on:refreshed={onBalanceRefreshed}
-                on:error={onBalanceRefreshError} />
-        </span>
-        <form slot="body">
-            <div class="body" class:zero={zero || toppingUp}>
-                {#if zero || toppingUp}
-                    <AccountInfo {ledger} user={$user} />
-                    {#if zero}
-                        <p>
-                            <Translatable
-                                resourceKey={i18nKey("tokenTransfer.zeroBalance", {
-                                    token: symbol,
-                                })} />
-                        </p>
-                    {/if}
-                    <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
-                    <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
-                        <Translatable resourceKey={i18nKey("howToBuyToken", { token: symbol })} />
-                    </a>
-                {:else}
-                    {#if multiUserChat}
-                        <div class="receiver">
-                            <Legend label={i18nKey("tokenTransfer.receiver")} />
-                            <SingleUserSelector
-                                bind:selectedReceiver={receiver}
-                                autofocus={multiUserChat} />
-                        </div>
-                    {/if}
-                    <div class="transfer">
-                        <TokenInput
-                            {ledger}
-                            {transferFees}
-                            autofocus={!multiUserChat}
-                            bind:valid={validAmount}
-                            maxAmount={maxAmount(cryptoBalance)}
-                            bind:amount={draftAmount} />
-                    </div>
-                    <div class="message">
-                        <Legend label={i18nKey("tokenTransfer.message")} />
-                        <TextArea
-                            maxlength={200}
-                            rows={3}
-                            autofocus={false}
-                            placeholder={i18nKey("tokenTransfer.messagePlaceholder")}
-                            bind:value={message} />
-                    </div>
-                    {#if error}
-                        <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
-                    {/if}
-                    {#if confirming}
-                        <div class="confirming">
-                            <div class="alert">
-                                <Alert size={$iconSize} color={"var(--warn"} />
-                            </div>
-                            <div class="alert-txt">
+                <BalanceWithRefresh
+                    bind:toppingUp
+                    bind:this={balanceWithRefresh}
+                    {ledger}
+                    value={remainingBalance}
+                    label={i18nKey("cryptoAccount.shortBalanceLabel")}
+                    bold
+                    showTopUp
+                    onClick={() => (confirming = false)}
+                    onRefreshed={onBalanceRefreshed}
+                    onError={onBalanceRefreshError} />
+            </span>
+        {/snippet}
+        {#snippet body()}
+            <form>
+                <div class="body" class:zero={zero || toppingUp}>
+                    {#if zero || toppingUp}
+                        <AccountInfo {ledger} />
+                        {#if zero}
+                            <p>
                                 <Translatable
-                                    resourceKey={i18nKey("tokenTransfer.warning", {
+                                    resourceKey={i18nKey("tokenTransfer.zeroBalance", {
                                         token: symbol,
                                     })} />
+                            </p>
+                        {/if}
+                        <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
+                    {:else}
+                        {#if multiUserChat}
+                            <div class="receiver">
+                                <Legend label={i18nKey("tokenTransfer.receiver")} />
+                                <SingleUserSelector
+                                    bind:selectedReceiver={receiver}
+                                    autofocus={multiUserChat} />
                             </div>
+                        {/if}
+                        <div class="transfer">
+                            <TokenInput
+                                {ledger}
+                                {transferFees}
+                                autofocus={!multiUserChat}
+                                bind:valid={validAmount}
+                                maxAmount={maxAmount(cryptoBalance)}
+                                bind:amount={draftAmount} />
                         </div>
+                        <div class="message">
+                            <Legend label={i18nKey("tokenTransfer.message")} />
+                            <TextArea
+                                maxlength={200}
+                                rows={3}
+                                autofocus={false}
+                                placeholder={i18nKey("tokenTransfer.messagePlaceholder")}
+                                bind:value={message} />
+                        </div>
+                        {#if confirming}
+                            <div class="confirming">
+                                <div class="alert">
+                                    <Alert size={$iconSize} color={"var(--warn"} />
+                                </div>
+                                <div class="alert-txt">
+                                    <Translatable
+                                        resourceKey={i18nKey("tokenTransfer.warning", {
+                                            token: symbol,
+                                        })} />
+                                </div>
+                            </div>
+                        {/if}
+                        {#if errorMessage !== undefined}
+                            <div class="error">
+                                <ErrorMessage
+                                    ><Translatable resourceKey={errorMessage} /></ErrorMessage>
+                            </div>
+                        {/if}
                     {/if}
-                {/if}
-            </div>
-        </form>
-        <span slot="footer">
-            <ButtonGroup>
-                <Button small={!$mobileWidth} tiny={$mobileWidth} secondary on:click={cancel}
-                    ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-                {#if toppingUp || zero}
-                    <Button
-                        small={!$mobileWidth}
-                        disabled={refreshing}
-                        loading={refreshing}
-                        tiny={$mobileWidth}
-                        on:click={reset}><Translatable resourceKey={i18nKey("refresh")} /></Button>
-                {:else}
-                    <Button
-                        small={!$mobileWidth}
-                        disabled={!valid}
-                        tiny={$mobileWidth}
-                        on:click={send}
-                        ><Translatable
-                            resourceKey={i18nKey(
-                                confirming ? "tokenTransfer.confirm" : "tokenTransfer.send",
-                            )} /></Button>
-                {/if}
-            </ButtonGroup>
-        </span>
+                </div>
+            </form>
+        {/snippet}
+        {#snippet footer()}
+            <span>
+                <ButtonGroup>
+                    <Button small={!$mobileWidth} tiny={$mobileWidth} secondary onClick={cancel}
+                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
+                    {#if toppingUp || zero}
+                        <Button
+                            small={!$mobileWidth}
+                            disabled={refreshing}
+                            loading={refreshing}
+                            tiny={$mobileWidth}
+                            onClick={reset}
+                            ><Translatable resourceKey={i18nKey("refresh")} /></Button>
+                    {:else}
+                        <Button
+                            small={!$mobileWidth}
+                            disabled={!valid || sending}
+                            loading={sending}
+                            tiny={$mobileWidth}
+                            onClick={send}
+                            ><Translatable
+                                resourceKey={i18nKey(
+                                    confirming ? "tokenTransfer.confirm" : "tokenTransfer.send",
+                                )} /></Button>
+                    {/if}
+                </ButtonGroup>
+            </span>
+        {/snippet}
     </ModalContent>
 </Overlay>
 
@@ -288,6 +327,10 @@
     }
 
     .how-to {
+        margin-top: $sp4;
+    }
+
+    .error {
         margin-top: $sp4;
     }
 </style>

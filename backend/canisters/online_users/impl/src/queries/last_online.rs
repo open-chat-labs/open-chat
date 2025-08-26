@@ -1,9 +1,9 @@
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
+use canister_api_macros::query;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::query;
 use online_users_canister::last_online::{Response::*, *};
 
-#[query]
+#[query(candid = true, msgpack = true)]
 #[trace]
 fn last_online(args: Args) -> Response {
     read_state(|state| last_online_impl(args, state))

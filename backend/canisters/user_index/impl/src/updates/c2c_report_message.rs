@@ -1,19 +1,20 @@
 use crate::{
+    RuntimeState,
     guards::caller_is_user_canister_or_group_index,
     model::{
         pending_modclub_submissions_queue::PendingModclubSubmission,
-        reported_messages::{build_message_to_reporter, AddReportArgs, AddReportResult},
+        reported_messages::{AddReportArgs, AddReportResult, build_message_to_reporter},
     },
-    mutate_state, RuntimeState,
+    mutate_state,
 };
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::deep_message_links;
 use modclub_canister::submitHtmlContent::Level;
 use types::{Chat, Message, MessageContent, MessageIndex};
 use user_index_canister::c2c_report_message::{Response::*, *};
 
-#[update_msgpack(guard = "caller_is_user_canister_or_group_index")]
+#[update(guard = "caller_is_user_canister_or_group_index", msgpack = true)]
 #[trace]
 fn c2c_report_message(args: Args) -> Response {
     mutate_state(|state| c2c_report_message_impl(args, state))
@@ -119,7 +120,7 @@ fn construct_html_report(
     // 3. Message link
     if is_public {
         let message_link = deep_message_links::build_message_link(chat_id, thread_root_message_index, message.message_index);
-        html.push_str(&format!("<a href=\"{}\">link to message</a>\n", message_link));
+        html.push_str(&format!("<a href=\"{message_link}\">link to message</a>\n"));
     }
 
     html
@@ -145,7 +146,7 @@ fn extract_text(content: &MessageContent) -> String {
 
     if let MessageContent::Poll(p) = content {
         for o in p.config.options.iter() {
-            text.push_str(&format!("- {}\n", o));
+            text.push_str(&format!("- {o}\n"));
         }
     }
 
@@ -183,7 +184,7 @@ https://github.com/open-chat-labs/open-chat/commit/e93865ea29b5bab8a9f0b01052938
 
         let message = Message {
             message_index: 27461.into(),
-            message_id: 188960262885472233086330058967164649472.into(),
+            message_id: 188960262885472233086330058967164649472u128.into(),
             sender: Principal::from_text("3skqk-iqaaa-aaaaf-aaa3q-cai").unwrap().into(),
             content: types::MessageContent::Text(TextContent { text }),
             replies_to: None,
@@ -192,23 +193,25 @@ https://github.com/open-chat-labs/open-chat/commit/e93865ea29b5bab8a9f0b01052938
             thread_summary: None,
             edited: false,
             forwarded: false,
+            block_level_markdown: false,
+            sender_context: None,
         };
 
         let report = construct_html_report(Chat::Group(chat_id), None, &message, true);
 
-        print!("{}", report);
+        print!("{report}");
     }
 
     #[test]
     fn create_report_from_image_message() {
         let chat = Chat::Channel(
             Principal::from_text("wowos-hyaaa-aaaar-ar4ca-cai").unwrap().into(),
-            259630963639405604007172212966027535235,
+            259630963639405604007172212966027535235u128.into(),
         );
 
         let message = Message {
             message_index: 72805.into(),
-            message_id: 123356442671309293004896491442800689152.into(),
+            message_id: 123356442671309293004896491442800689152u128.into(),
             sender: Principal::from_text("6oehr-mqaaa-aaaaf-ahlaa-cai").unwrap().into(),
             content: types::MessageContent::Image(ImageContent {
                 width: 100,
@@ -227,23 +230,25 @@ https://github.com/open-chat-labs/open-chat/commit/e93865ea29b5bab8a9f0b01052938
             thread_summary: None,
             edited: false,
             forwarded: false,
+            block_level_markdown: false,
+            sender_context: None,
         };
 
         let report = construct_html_report(chat, None, &message, true);
 
-        print!("{}", report);
+        print!("{report}");
     }
 
     #[test]
     fn create_report_from_video_message() {
         let chat = Chat::Channel(
             Principal::from_text("wowos-hyaaa-aaaar-ar4ca-cai").unwrap().into(),
-            259630963639405604007172212966027535235,
+            259630963639405604007172212966027535235u128.into(),
         );
 
         let message = Message {
             message_index: 72805.into(),
-            message_id: 123356442671309293004896491442800689152.into(),
+            message_id: 123356442671309293004896491442800689152u128.into(),
             sender: Principal::from_text("6oehr-mqaaa-aaaaf-ahlaa-cai").unwrap().into(),
             content: types::MessageContent::Video(VideoContent {
                 width: 200,
@@ -266,10 +271,12 @@ https://github.com/open-chat-labs/open-chat/commit/e93865ea29b5bab8a9f0b01052938
             thread_summary: None,
             edited: false,
             forwarded: false,
+            block_level_markdown: false,
+            sender_context: None,
         };
 
         let report = construct_html_report(chat, None, &message, true);
 
-        print!("{}", report);
+        print!("{report}");
     }
 }

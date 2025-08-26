@@ -1,31 +1,22 @@
 <script lang="ts">
-    import ChatList from "./ChatList.svelte";
+    import { activityFeedShowing, showLeft, showNav } from "openchat-client";
     import { rtlStore } from "../../stores/rtl";
     import { currentTheme } from "../../theme/themes";
-    import { layoutStore } from "../../stores/layout";
+    import ActivityFeed from "./activity/ActivityFeed.svelte";
+    import ChatList from "./ChatList.svelte";
 </script>
 
 <section
-    class:offset={$layoutStore.showNav}
+    class:visible={$showLeft}
+    class:offset={$showNav}
     class:rtl={$rtlStore}
     class:halloween={$currentTheme.name === "halloween"}>
     <div class="chat-list">
-        <ChatList
-            on:chatWith
-            on:halloffame
-            on:newGroup
-            on:profile
-            on:logout
-            on:unarchiveChat
-            on:wallet
-            on:upgrade
-            on:toggleMuteNotifications
-            on:communityDetails
-            on:leaveCommunity
-            on:deleteCommunity
-            on:editCommunity
-            on:leaveGroup
-            on:newChannel />
+        {#if $activityFeedShowing}
+            <ActivityFeed />
+        {:else}
+            <ChatList />
+        {/if}
     </div>
 </section>
 
@@ -40,7 +31,7 @@
         overflow: auto;
         overflow-x: hidden;
         max-width: 500px;
-        min-width: 400px;
+        min-width: 300px;
         flex: 7;
         position: relative;
         border-right: var(--bw) solid var(--bd);
@@ -72,6 +63,10 @@
             bottom: 0;
             right: 0;
             transform: scaleY(-1);
+        }
+
+        &:not(.visible) {
+            display: none;
         }
     }
 </style>

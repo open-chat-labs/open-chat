@@ -1,40 +1,51 @@
 <script lang="ts">
-    import Markdown from "./Markdown.svelte";
     import type { OpenChat, PrizeWinnerContent } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { allUsersStore, cryptoLookup, currentUserIdStore } from "openchat-client";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import SpinningToken from "../icons/SpinningToken.svelte";
+    import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
+    import Markdown from "./Markdown.svelte";
 
-    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
-    export let content: PrizeWinnerContent;
+    interface Props {
+        content: PrizeWinnerContent;
+    }
 
-    $: user = client.user;
-    $: userStore = client.userStore;
-    $: cryptoLookup = client.cryptoLookup;
-    $: logo = $cryptoLookup[content.transaction.ledger]?.logo ?? "";
-    $: tokenDetails = $cryptoLookup[content.transaction.ledger];
-    $: symbol = tokenDetails.symbol;
-    $: amount = client.formatTokens(content.transaction.amountE8s, tokenDetails.decimals);
-    $: winner = `${username(content.transaction.recipient)}`;
-    $: me = $user.userId === content.transaction.recipient;
-    $: transactionLinkText = client.buildTransactionLink($_, content.transaction);
+    let { content }: Props = $props();
 
     function username(userId: string): string {
-        return userId === $user.userId
+        return userId === $currentUserIdStore
             ? $_("you")
-            : `${$userStore[userId]?.username ?? $_("unknown")}`;
+            : `${$allUsersStore.get(userId)?.username ?? $_("unknown")}`;
     }
 
-    function zoomToMessage() {
-        dispatch("goToMessageIndex", {
-            index: content.prizeMessageIndex,
-        });
+    function openUserProfile(ev: Event) {
+        ev.target?.dispatchEvent(
+            new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
+                detail: {
+                    userId: content.transaction.recipient,
+                    chatButton: false,
+                    inGlobalContext: false,
+                },
+                bubbles: true,
+            }),
+        );
+        ev.stopPropagation();
     }
+    let logo = $derived($cryptoLookup.get(content.transaction.ledger)?.logo ?? "");
+    let tokenDetails = $derived($cryptoLookup.get(content.transaction.ledger)!);
+    let symbol = $derived(tokenDetails.symbol);
+    let amount = $derived(
+        client.formatTokens(content.transaction.amountE8s, tokenDetails.decimals),
+    );
+    let winner = $derived(`${username(content.transaction.recipient)}`);
+    let me = $derived($currentUserIdStore === content.transaction.recipient);
+    let transactionLinkText = $derived(client.buildTransactionLink($_, content.transaction));
 </script>
 
-<div role="button" tabindex="0" class="msg" on:click={zoomToMessage}>
+<div class="msg">
     <div class="wrapper" class:other={!me}>
         <div class="graphic" class:tiny={!me}>
             {#if me}
@@ -48,7 +59,7 @@
             {/if}
         </div>
         <div class="txt" class:other={!me}>
-            <div class="label">
+            <div class="label" onclick={openUserProfile}>
                 <Markdown
                     text={$_("prizes.winner", {
                         values: { recipient: winner, amount, token: symbol },
@@ -65,7 +76,6 @@
 
 <style lang="scss">
     .msg {
-        cursor: pointer;
         text-align: center;
         padding-top: $sp2;
     }
@@ -81,6 +91,7 @@
     }
 
     .label {
+        cursor: pointer;
         @include font(book, normal, fs-100);
     }
 

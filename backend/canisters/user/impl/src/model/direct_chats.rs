@@ -1,9 +1,9 @@
 use crate::model::direct_chat::DirectChat;
 use chat_events::{ChatInternal, ChatMetricsInternal};
+use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
-use std::collections::hash_map::Entry::Vacant;
-use std::collections::{BTreeSet, HashMap};
-use types::{ChatId, TimestampMillis, Timestamped, UserId};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
+use types::{ChatId, MessageIndex, TimestampMillis, Timestamped, UserId, UserType};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct DirectChats {
@@ -11,6 +11,10 @@ pub struct DirectChats {
     pinned: Timestamped<Vec<ChatId>>,
     metrics: ChatMetricsInternal,
     chats_removed: BTreeSet<(TimestampMillis, ChatId)>,
+    // This is needed so that when a group is imported into a community we can quickly update the
+    // replies to point to the community
+    #[serde(default)]
+    private_replies_to_groups: BTreeMap<ChatId, Vec<(UserId, MessageIndex)>>,
 }
 
 impl DirectChats {
@@ -18,22 +22,28 @@ impl DirectChats {
         self.direct_chats.get(chat_id)
     }
 
+    pub fn get_or_err(&self, chat_id: &ChatId) -> Result<&DirectChat, OCErrorCode> {
+        self.get(chat_id).ok_or(OCErrorCode::ChatNotFound)
+    }
+
     pub fn get_mut(&mut self, chat_id: &ChatId) -> Option<&mut DirectChat> {
         self.direct_chats.get_mut(chat_id)
     }
 
-    pub fn create(
+    pub fn get_mut_or_err(&mut self, chat_id: &ChatId) -> Result<&mut DirectChat, OCErrorCode> {
+        self.get_mut(chat_id).ok_or(OCErrorCode::ChatNotFound)
+    }
+
+    pub fn get_or_create<F: FnOnce() -> u128>(
         &mut self,
         their_user_id: UserId,
-        is_bot: bool,
-        anonymized_id: u128,
+        their_user_type: UserType,
+        anonymized_id: F,
         now: TimestampMillis,
     ) -> &mut DirectChat {
-        if let Vacant(e) = self.direct_chats.entry(their_user_id.into()) {
-            e.insert(DirectChat::new(their_user_id, is_bot, None, anonymized_id, now))
-        } else {
-            unreachable!()
-        }
+        self.direct_chats
+            .entry(their_user_id.into())
+            .or_insert_with(|| DirectChat::new(their_user_id, their_user_type, None, anonymized_id(), now))
     }
 
     pub fn updated_since(&self, since: TimestampMillis) -> impl Iterator<Item = &DirectChat> {
@@ -60,7 +70,7 @@ impl DirectChats {
     pub fn any_updated(&self, since: TimestampMillis) -> bool {
         self.direct_chats.values().any(|c| c.has_updates_since(since))
             || self.pinned.timestamp > since
-            || self.chats_removed.last().map_or(false, |(ts, _)| *ts > since)
+            || self.chats_removed.last().is_some_and(|(ts, _)| *ts > since)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &DirectChat> {
@@ -75,9 +85,24 @@ impl DirectChats {
         self.direct_chats.len()
     }
 
+    pub fn mark_private_reply(&mut self, user_id: UserId, chat: ChatInternal, message_index: MessageIndex) {
+        if let ChatInternal::Group(chat_id) = chat {
+            self.private_replies_to_groups
+                .entry(chat_id)
+                .or_default()
+                .push((user_id, message_index));
+        }
+    }
+
     pub fn migrate_replies(&mut self, old: ChatInternal, new: ChatInternal, now: TimestampMillis) {
-        for chat in self.direct_chats.values_mut() {
-            chat.events.migrate_replies(old, new, now);
+        if let ChatInternal::Group(chat_id) = old
+            && let Some(replies) = self.private_replies_to_groups.remove(&chat_id)
+        {
+            for (user_id, message_index) in replies {
+                if let Some(chat) = self.direct_chats.get_mut(&user_id.into()) {
+                    chat.events.migrate_reply(message_index, old, new, now);
+                }
+            }
         }
     }
 

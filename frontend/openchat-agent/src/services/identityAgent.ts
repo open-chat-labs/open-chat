@@ -1,54 +1,221 @@
 import { IdentityClient } from "./identity/identity.client";
-import type { DerEncodedPublicKey, SignIdentity } from "@dfinity/agent";
-import { DelegationChain, DelegationIdentity } from "@dfinity/identity";
-import type { CheckAuthPrincipalResponse, MigrateLegacyPrincipalResponse } from "openchat-shared";
+import { HttpAgent, type Identity, type SignIdentity } from "@icp-sdk/core/agent";
+import { DelegationIdentity } from "@icp-sdk/core/identity";
+import type {
+    ApproveIdentityLinkResponse,
+    AuthenticationPrincipalsResponse,
+    ChallengeAttempt,
+    CheckAuthPrincipalResponse,
+    CreateOpenChatIdentityError,
+    GenerateChallengeResponse,
+    InitiateIdentityLinkResponse,
+    OCError,
+    RemoveIdentityLinkResponse,
+    Success,
+    WebAuthnKeyFull,
+    AccountLinkingCode,
+    VerifyAccountLinkingCodeResponse,
+} from "openchat-shared";
+import { buildDelegationIdentity, toDer, ErrorCode } from "openchat-shared";
+import { createHttpAgent } from "../utils/httpAgent";
+import { getCachedWebAuthnKey } from "../utils/webAuthnKeyCache";
+import { consolidateBytes } from "../utils/mapping";
 
 export class IdentityAgent {
-    private _identityClient: IdentityClient;
+    private readonly _identityClient: IdentityClient;
+    private readonly _isIIPrincipal: boolean | undefined;
 
-    constructor(
-        private identity: SignIdentity,
+    private constructor(
+        identity: Identity,
+        agent: HttpAgent,
+        identityCanister: string,
+        isIIPrincipal: boolean | undefined,
+    ) {
+        this._identityClient = new IdentityClient(identity, agent, identityCanister);
+        this._isIIPrincipal = isIIPrincipal;
+    }
+
+    static async create(
+        identity: Identity,
         identityCanister: string,
         icUrl: string,
-    ) {
-        this._identityClient = IdentityClient.create(identity, identityCanister, icUrl);
+        isIIPrincipal: boolean | undefined,
+    ): Promise<IdentityAgent> {
+        const agent = await createHttpAgent(identity, icUrl);
+        return new IdentityAgent(identity, agent, identityCanister, isIIPrincipal);
+    }
+
+    checkOpenChatIdentityExists(): Promise<boolean> {
+        return this._identityClient.checkAuthPrincipal().then((resp) => resp.kind === "success");
     }
 
     checkAuthPrincipal(): Promise<CheckAuthPrincipalResponse> {
         return this._identityClient.checkAuthPrincipal();
     }
 
-    migrateLegacyPrincipal(): Promise<MigrateLegacyPrincipalResponse> {
-        return this._identityClient.migrateLegacyPrincipal();
+    async createOpenChatIdentity(
+        sessionKey: SignIdentity,
+        webAuthnCredentialId: Uint8Array | undefined,
+        challengeAttempt: ChallengeAttempt | undefined,
+    ): Promise<DelegationIdentity | CreateOpenChatIdentityError> {
+        const webAuthnKey =
+            webAuthnCredentialId !== undefined
+                ? await this.hydrateWebAuthnKey(webAuthnCredentialId)
+                : undefined;
+
+        const sessionKeyDer = toDer(sessionKey);
+        const createIdentityResponse = await this._identityClient.createIdentity(
+            sessionKeyDer,
+            webAuthnKey,
+            this._isIIPrincipal,
+            challengeAttempt,
+        );
+
+        if (createIdentityResponse.kind === "success") {
+            const delegation = await this.getDelegation(
+                createIdentityResponse.userKey,
+                sessionKey,
+                sessionKeyDer,
+                createIdentityResponse.expiration,
+            );
+            if (delegation === undefined) {
+                throw new Error("Delegation not found, this should never happen");
+            }
+            return delegation;
+        }
+        return createIdentityResponse.kind;
     }
 
-    async getOpenChatIdentity(sessionKey: Uint8Array): Promise<DelegationIdentity | undefined> {
-        const prepareDelegationResponse = await this._identityClient.prepareDelegation(sessionKey);
-        if (prepareDelegationResponse.kind === "not_found") {
-            return undefined;
-        }
+    async getOpenChatIdentity(sessionKey: SignIdentity): Promise<DelegationIdentity | undefined> {
+        const sessionKeyDer = toDer(sessionKey);
+        const prepareDelegationResponse = await this._identityClient.prepareDelegation(
+            sessionKeyDer,
+            this._isIIPrincipal,
+        );
 
+        return prepareDelegationResponse.kind === "success"
+            ? this.getDelegation(
+                  prepareDelegationResponse.userKey,
+                  sessionKey,
+                  sessionKeyDer,
+                  prepareDelegationResponse.expiration,
+              )
+            : undefined;
+    }
+
+    generateChallenge(): Promise<GenerateChallengeResponse> {
+        return this._identityClient.generateChallenge();
+    }
+
+    async initiateIdentityLink(
+        linkToPrincipal: string,
+        webAuthnCredentialId: Uint8Array | undefined,
+    ): Promise<InitiateIdentityLinkResponse> {
+        const webAuthnKey =
+            webAuthnCredentialId !== undefined
+                ? await this.hydrateWebAuthnKey(webAuthnCredentialId)
+                : undefined;
+
+        return this._identityClient.initiateIdentityLink(
+            linkToPrincipal,
+            webAuthnKey,
+            this._isIIPrincipal,
+        );
+    }
+
+    approveIdentityLink(linkInitiatedBy: string): Promise<ApproveIdentityLinkResponse> {
+        return this._identityClient.approveIdentityLink(linkInitiatedBy);
+    }
+
+    removeIdentityLink(linked_principal: string): Promise<RemoveIdentityLinkResponse> {
+        return this._identityClient.removeIdentityLink(linked_principal);
+    }
+
+    deleteUser(): Promise<Success | OCError> {
+        return this._identityClient.deleteUser();
+    }
+
+    getAuthenticationPrincipals(): Promise<AuthenticationPrincipalsResponse> {
+        return this._identityClient.getAuthenticationPrincipals();
+    }
+
+    async lookupWebAuthnPubKey(credentialId: Uint8Array): Promise<Uint8Array | undefined> {
+        const cached = await getCachedWebAuthnKey(credentialId);
+        return cached !== undefined
+            ? cached.publicKey
+            : this._identityClient.lookupWebAuthnPubKey(credentialId);
+    }
+
+    private async getDelegation(
+        userKey: Uint8Array,
+        sessionKey: SignIdentity,
+        sessionKeyDer: Uint8Array,
+        expiration: bigint,
+    ): Promise<DelegationIdentity | undefined> {
         const getDelegationResponse = await this._identityClient.getDelegation(
-            sessionKey,
-            prepareDelegationResponse.expiration,
+            sessionKeyDer,
+            expiration,
         );
 
-        if (getDelegationResponse.kind === "not_found") {
+        if (getDelegationResponse.kind !== "success") {
             return undefined;
         }
 
-        const delegations = [
-            {
-                delegation: getDelegationResponse.delegation,
-                signature: getDelegationResponse.signature,
-            },
-        ];
+        return buildDelegationIdentity(
+            userKey,
+            sessionKey,
+            getDelegationResponse.delegation,
+            getDelegationResponse.signature,
+        );
+    }
 
-        const delegationChain = DelegationChain.fromDelegations(
-            delegations,
-            prepareDelegationResponse.userKey.buffer as DerEncodedPublicKey,
+    private async hydrateWebAuthnKey(credentialId: Uint8Array): Promise<WebAuthnKeyFull> {
+        const key = await getCachedWebAuthnKey(credentialId);
+        if (key === undefined) throw new Error("Failed to find WebAuthnKey details");
+        return key;
+    }
+
+    createAccountLinkingCode(): Promise<AccountLinkingCode | undefined> {
+        return this._identityClient.createAccountLinkingCode();
+    }
+
+    verifyAccountLinkingCode(code: string): Promise<VerifyAccountLinkingCodeResponse> {
+        return this._identityClient.verifyAccountLinkingCode(code);
+    }
+
+    async finaliseAccountLinkingWithCode(
+        principal: string,
+        publicKey: Uint8Array,
+        sessionKey: SignIdentity,
+        webAuthnKey?: WebAuthnKeyFull,
+    ): Promise<DelegationIdentity> {
+        const sessionKeyDer = toDer(sessionKey);
+        const finaliseRes = await this._identityClient.finaliseAccountLinkingWithCode(
+            principal,
+            publicKey,
+            sessionKeyDer,
+            webAuthnKey,
         );
 
-        return DelegationIdentity.fromDelegation(this.identity, delegationChain);
+        if ("Error" in finaliseRes) {
+            return Promise.reject({
+                kind: "error",
+                code: finaliseRes.Error[0],
+            });
+        }
+
+        const userKey = consolidateBytes(finaliseRes.Success.user_key);
+        const expiration = finaliseRes.Success.expiration;
+        const delegation = await this.getDelegation(userKey, sessionKey, sessionKeyDer, expiration);
+
+        if (delegation === undefined) {
+            return Promise.reject({
+                kind: "error",
+                code: ErrorCode.Unknown,
+                msg: "Delegation not found, this should never happen",
+            });
+        }
+
+        return delegation;
     }
 }

@@ -1,2 +1,223 @@
+type AccountIdentifier = blob;
+type CanisterId = principal;
+type ChannelId = nat32;
+type ChatId = CanisterId;
+type CommunityId = CanisterId;
+type Memo = blob;
+type MessageId = nat64;
+type MessageIndex = nat32;
+type TimestampMillis = nat64;
+type TimestampNanos = nat64;
+
+type OCError = record { nat16; opt text; };
+
+type Chat = variant {
+    Direct : ChatId;
+    Group : ChatId;
+    Channel : record { CommunityId; ChannelId };
+};
+
+type TokenInfo = record {
+    symbol : text;
+    ledger : CanisterId;
+    decimals : nat8;
+    fee : nat;
+};
+
+type P2PSwapLocation = variant {
+    Message : Message;
+    External;
+};
+
+type Message = record {
+    chat : Chat;
+    thread_root_message_index : opt MessageIndex;
+    message_id : MessageId;
+};
+
+type CreateSwapArgs = record {
+    // Specifies whether the swap is associated with an OpenChat message or is External.
+    location : P2PSwapLocation;
+
+    // The token to be deposited by the offerer of the swap.
+    token0 : TokenInfo;
+
+    // The amount of token0 to be deposited. When making the deposit it is necessary to add the fee to this amount to cover the transaction fee for the swap or refund.
+    token0_amount : nat;
+
+    // The principal of the offering account. This is where token1 will be sent if the swap completes or where token0 is refunded to. If this is not specified then the caller's principal is used.
+    token0_principal : opt principal;
+
+    // The token to be deposited by the accepter of the swap.
+    token1 : TokenInfo;
+
+    // The amount of token1 to be deposited. When making the deposit it is necessary to add the fee to this amount to cover the transaction fee for the swap or refund.
+    token1_amount : nat;
+
+    // The principal of the accepting account. This is where token0 will be sent if the swap completes or where token1 is refunded to. If this is not specified then anyone can accept the swap.
+    token1_principal : opt principal;
+
+    // The swap will expire after this timestamp.
+    expires_at : TimestampMillis;
+
+    // The principals of callers other than the offerer who can cancel the swap and lookup the swap details (if the swap is private).
+    additional_admins : vec principal;
+
+    // If specified, this canister will be notified when the status of the swap has changed.
+    canister_to_notify : opt CanisterId;
+
+    // Determines whether anyone can call lookup_swap to see the details of the swap or whether only the creator and admins can see the details.
+    is_public : bool;
+};
+
+type CreateSwapResponse = variant {
+    Success : record {
+        id : nat32;
+        // These addresses use the standard text encoding for ICRC-1 accounts:
+        // https://github.com/dfinity/ICRC-1/blob/main/standards/ICRC-1/TextualEncoding.md#textual-encoding-of-icrc-1-accounts        
+        token0_deposit_address : text;
+        token1_deposit_address : opt text;
+    };
+    InvalidSwap : text;
+    Error : OCError;
+};
+
+type CancelSwapArgs = record {
+    swap_id : nat32;
+};
+
+type CancelSwapResponse = variant {
+    Success;
+    SwapAlreadyAccepted;
+    SwapExpired;
+    SwapNotFound;
+    NotAuthorized;
+    Error : OCError;
+};
+
+type NotifyDepositArgs = record {
+    swap_id : nat32;
+
+    // The principal of the party whose tokens have been deposited
+    deposited_by : opt principal;
+};
+
+type NotifyDepositResponse = variant {
+    Success : record {
+        complete : bool;
+    };
+    BalanceTooLow : record {
+        balance : nat;
+        balance_required : nat;
+    };
+    SwapAlreadyAccepted;
+    SwapCancelled;
+    SwapExpired;
+    SwapNotFound;
+    NotAuthorized;
+    InternalError : text;
+    Error : OCError;
+};
+
+type LookupSwapArgs = record {
+    swap_id : nat32;
+
+    // The principal of the accepting party or the caller if not specified
+    accepting_principal : opt principal;
+};
+
+// The deposit addresses uses the standard text encoding for ICRC-1 accounts:
+// https://github.com/dfinity/ICRC-1/blob/main/standards/ICRC-1/TextualEncoding.md#textual-encoding-of-icrc-1-accounts
+
+type LookupSwapResponse = variant {
+    Success: record {
+        id : nat32;
+        location : P2PSwapLocation;
+        is_public : bool;
+        created_at : TimestampMillis;
+        created_by : principal;
+        offered_by : principal;
+        restricted_to : opt principal;
+        token0 : TokenInfo;
+        amount0 : nat;
+        token0_deposit_address : text;
+        token1 : TokenInfo;
+        amount1 : nat;
+        token1_deposit_address : opt text;
+        expires_at : TimestampMillis;
+        additional_admins : vec principal;
+        canister_to_notify : opt CanisterId;
+        status : SwapStatus;
+    };
+    SwapNotFound;
+    SwapIsPrivate;
+    Error : OCError;
+};
+
+type SwapStatus = variant {
+    Open;
+    Cancelled : SwapStatusCancelled;
+    Expired : SwapStatusExpired;
+    Accepted : SwapStatusAccepted;
+    Completed : SwapStatusCompleted;
+};
+
+type SwapStatusCancelled = record {
+    cancelled_at : TimestampMillis;
+    refunds : vec CompletedCryptoTransaction;
+};
+
+type SwapStatusExpired = record {
+    refunds : vec CompletedCryptoTransaction;
+};
+
+type SwapStatusAccepted = record {
+    accepted_by : principal;
+    accepted_at : TimestampMillis;
+};
+
+type SwapStatusCompleted = record {
+    accepted_by : principal;
+    accepted_at : TimestampMillis;
+    token0_transfer_out : CompletedCryptoTransaction;
+    token1_transfer_out : CompletedCryptoTransaction;
+    refunds : vec CompletedCryptoTransaction;
+};
+
+type CompletedCryptoTransaction = record {
+    ledger : CanisterId;
+    token_symbol : text;
+    amount : nat;
+    from : CryptoAccount;
+    to : CryptoAccount;
+    fee : nat;
+    memo : opt Memo;
+    created : TimestampNanos;
+    block_index : nat64;
+};
+
+type Cryptocurrency = variant {
+    InternetComputer;
+    SNS1;
+    CKBTC;
+    CHAT;
+    KINIC;
+    Other : text;
+};
+
+type CryptoAccount = variant {
+    Mint;
+    Account : Account;
+};
+
+type Account = record {
+    owner: principal;
+    subaccount: opt blob;
+};
+
 service : {
-}
+    lookup_swap : (LookupSwapArgs) -> (LookupSwapResponse) query;    
+    create_swap : (CreateSwapArgs) -> (CreateSwapResponse);
+    cancel_swap : (CancelSwapArgs) -> (CancelSwapResponse);
+    notify_deposit : (NotifyDepositArgs) -> (NotifyDepositResponse);
+};

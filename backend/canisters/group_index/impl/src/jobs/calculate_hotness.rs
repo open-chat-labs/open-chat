@@ -1,9 +1,9 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
+use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
 use rand::RngCore;
 use std::time::Duration;
 use types::{Activity, Milliseconds, TimestampMillis};
 use utils::canister_timers::run_now_then_interval;
-use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
 
 const INTERVAL: Milliseconds = 30 * MINUTE_IN_MS;
 
@@ -99,7 +99,7 @@ pub fn calculate_hotness(
     let hotness = 0.5 * calculate_activity_score(activity_last_day, 100_000.0, DAY_IN_MS as f64, time_since_activity)
         + 0.5 * calculate_activity_score(activity_last_hour, 10_000.0, HOUR_IN_MS as f64, time_since_activity);
 
-    // A random number beteen 0 and 1
+    // A random number between 0 and 1
     let random = random as f64 / u32::MAX as f64;
 
     // Weighted sum of new, popular, hot and random

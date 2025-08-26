@@ -1,23 +1,27 @@
 /* eslint-disable no-case-declarations */
 import {
     chatIdentifiersEqual,
+    toBigInt64,
     type ChatIdentifier,
     type ChatSummary,
-    type MessageContent,
-    type WebRtcMessage,
     type CommunityIdentifier,
+    type MessageContent,
     type RemoteVideoCallStarted,
+    type WebRtcMessage,
 } from "openchat-shared";
-import { selectedChatStore } from "../stores/chat";
 import { get } from "svelte/store";
-import { blockedUsers } from "../stores/blockedUsers";
-import { globalStateStore } from "../stores/global";
-import { RemoteVideoCallStartedEvent } from "../events";
+import {
+    blockedUsersStore,
+    selectedChatSummaryStore,
+    serverCommunitiesStore,
+    serverDirectChatsStore,
+    serverGroupChatsStore,
+} from "../state";
 
 export function messageIsForSelectedChat(msg: WebRtcMessage): boolean {
     const chat = findChatByChatType(msg);
     if (chat === undefined) return false;
-    const selectedChat = get(selectedChatStore);
+    const selectedChat = get(selectedChatSummaryStore);
     if (selectedChat === undefined) return false;
     if (chat.id !== selectedChat.id) return false;
     return true;
@@ -26,23 +30,29 @@ export function messageIsForSelectedChat(msg: WebRtcMessage): boolean {
 export function createRemoteVideoStartedEvent(msg: RemoteVideoCallStarted) {
     const chat = findChatByChatType(msg);
     if (chat) {
-        return new RemoteVideoCallStartedEvent(chat.id, msg.userId);
+        return {
+            chatId: chat.id,
+            userId: msg.userId,
+            messageId: msg.messageId,
+            currentUserIsParticipant: false,
+            callType: msg.callType,
+            timestamp: BigInt(Date.now()),
+        };
     }
 }
 
 function findChatByChatType(msg: WebRtcMessage): ChatSummary | undefined {
-    const state = get(globalStateStore);
     switch (msg.id.kind) {
         case "direct_chat":
-            return state.directChats.get({ kind: "direct_chat", userId: msg.userId });
+            return get(serverDirectChatsStore).get({ kind: "direct_chat", userId: msg.userId });
         case "group_chat":
-            return state.groupChats.get(msg.id);
+            return get(serverGroupChatsStore).get(msg.id);
         case "channel":
             const communityId: CommunityIdentifier = {
                 kind: "community",
                 communityId: msg.id.communityId,
             };
-            const channels = state.communities.get(communityId)?.channels ?? [];
+            const channels = get(serverCommunitiesStore).get(communityId)?.channels ?? [];
             const channelId = msg.id.channelId;
             return channels.find((c) => c.id.channelId === channelId);
     }
@@ -53,12 +63,12 @@ function isDirectChatWith(chat: ChatSummary, userId: string): boolean {
 }
 
 function isBlockedUser(chat: ChatSummary): boolean {
-    return chat.kind === "direct_chat" && get(blockedUsers).has(chat.them.userId);
+    return chat.kind === "direct_chat" && get(blockedUsersStore).has(chat.them.userId);
 }
 
 export function filterWebRtcMessage(msg: WebRtcMessage): ChatIdentifier | undefined {
     const fromChat = findChatByChatType(msg);
-    const selectedChat = get(selectedChatStore);
+    const selectedChat = get(selectedChatSummaryStore);
 
     // if the chat can't be found - ignore
     if (fromChat === undefined || selectedChat === undefined) {
@@ -120,27 +130,24 @@ export function parseWebRtcMessage(chatId: ChatIdentifier, msg: WebRtcMessage): 
         return {
             ...msg,
             id: chatId,
-            messageId: BigInt(msg.messageId),
+            messageId: toBigInt64(msg.messageId),
         };
     }
     if (msg.kind === "remote_user_sent_message") {
-        msg.messageEvent.event.content = hydrateBigIntsInContent(msg.messageEvent.event.content);
-        if (msg.messageEvent.event.repliesTo?.kind === "rehydrated_reply_context") {
-            msg.messageEvent.event.repliesTo = {
-                ...msg.messageEvent.event.repliesTo,
-                messageId: BigInt(msg.messageEvent.event.messageId),
-                content: hydrateBigIntsInContent(msg.messageEvent.event.repliesTo.content),
+        msg.message.content = hydrateBigIntsInContent(msg.message.content);
+        if (msg.message.repliesTo?.kind === "rehydrated_reply_context") {
+            msg.message.repliesTo = {
+                ...msg.message.repliesTo,
+                messageId: toBigInt64(msg.message.repliesTo.messageId),
+                content: hydrateBigIntsInContent(msg.message.repliesTo.content),
             };
         }
         return {
             ...msg,
             id: chatId,
-            messageEvent: {
-                ...msg.messageEvent,
-                event: {
-                    ...msg.messageEvent.event,
-                    messageId: BigInt(msg.messageEvent.event.messageId),
-                },
+            message: {
+                ...msg.message,
+                messageId: toBigInt64(msg.message.messageId),
                 timestamp: BigInt(Date.now()),
             },
         };

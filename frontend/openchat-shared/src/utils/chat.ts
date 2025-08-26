@@ -1,25 +1,26 @@
 import type {
+    AccountTransaction,
+    AttachmentContent,
     ChatEvent,
-    Metrics,
+    ChatIdentifier,
+    ChatListScope,
     ChatSummary,
+    CryptocurrencyDetails,
     EventWrapper,
+    GovernanceProposalsSubtype,
     IndexRange,
     MemberRole,
     MessageContent,
-    ChatIdentifier,
     MessageContext,
-    ChatListScope,
-    CryptocurrencyDetails,
-    VersionedRules,
-    AccountTransaction,
-    AttachmentContent,
     MessagePermission,
-    P2PSwapStatus,
-    AcceptP2PSwapResponse,
-    CancelP2PSwapResponse,
+    Metrics,
+    MultiUserChat,
+    PartitionedUserIds,
+    VersionedRules,
 } from "../domain";
 import { extractUserIdsFromMentions, UnsupportedValueError } from "../domain";
 import type { MessageFormatter } from "./i18n";
+import type { ReadonlyMap } from "./map";
 
 export function userIdsFromTransactions(transactions: AccountTransaction[]): Set<string> {
     return transactions.reduce<Set<string>>((userIds, t) => {
@@ -34,29 +35,49 @@ export function userIdsFromTransactions(transactions: AccountTransaction[]): Set
     }, new Set<string>());
 }
 
-export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string> {
+export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): PartitionedUserIds {
+    const userIds = new Set<string>();
+    const webhooks = new Set<string>();
     const fakeFormatter = (k: string) => k;
-    return events.reduce<Set<string>>((userIds, e) => {
+    for (const e of events) {
         if ("userIds" in e.event) {
             e.event.userIds.forEach((u) => userIds.add(u));
         }
         switch (e.event.kind) {
             case "message":
                 userIds.add(e.event.sender);
+                if (e.event.senderContext?.kind === "webhook") {
+                    webhooks.add(e.event.sender);
+                }
                 if (
                     e.event.repliesTo !== undefined &&
                     e.event.repliesTo.kind === "rehydrated_reply_context"
                 ) {
                     userIds.add(e.event.repliesTo.senderId);
                     extractUserIdsFromMentions(
-                        getContentAsFormattedText(fakeFormatter, e.event.repliesTo.content, {}),
+                        getContentAsFormattedText(fakeFormatter, e.event.repliesTo.content),
                     ).forEach((id) => userIds.add(id));
                 }
-                if (e.event.content.kind === "reported_message_content") {
+                if (e.event.content.kind === "crypto_content") {
+                    userIds.add(e.event.content.transfer.recipient);
+                } else if (e.event.content.kind === "reported_message_content") {
                     e.event.content.reports.forEach((r) => userIds.add(r.reportedBy));
+                } else if (e.event.content.kind === "prize_winner_content") {
+                    userIds.add(e.event.content.transaction.recipient);
+                } else if (
+                    e.event.content.kind === "p2p_swap_content" &&
+                    e.event.content.status.kind === "p2p_swap_accepted"
+                ) {
+                    userIds.add(e.event.content.status.acceptedBy);
+                } else if (
+                    e.event.content.kind === "p2p_swap_content" &&
+                    e.event.content.status.kind === "p2p_swap_reserved"
+                ) {
+                    userIds.add(e.event.content.status.reservedBy);
                 }
+                e.event.reactions.forEach((r) => r.userIds.forEach((u) => userIds.add(u)));
                 extractUserIdsFromMentions(
-                    getContentAsFormattedText(fakeFormatter, e.event.content, {}),
+                    getContentAsFormattedText(fakeFormatter, e.event.content),
                 ).forEach((id) => userIds.add(id));
                 break;
             case "member_joined":
@@ -95,28 +116,50 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
                 userIds.add(e.event.unpinnedBy);
                 break;
             case "events_ttl_updated":
+            case "external_url_updated":
             case "gate_updated":
                 userIds.add(e.event.updatedBy);
                 break;
-            case "aggregate_common_events":
+            case "users_invited":
+                userIds.add(e.event.invitedBy);
+                e.event.userIds.forEach((id) => userIds.add(id));
+                break;
             case "chat_frozen":
+                userIds.add(e.event.frozenBy);
+                break;
             case "chat_unfrozen":
+                userIds.add(e.event.unfrozenBy);
+                break;
+            case "bot_added":
+                userIds.add(e.event.userId);
+                userIds.add(e.event.addedBy);
+                break;
+            case "bot_removed":
+                userIds.add(e.event.removedBy);
+                break;
+            case "bot_updated":
+                userIds.add(e.event.userId);
+                userIds.add(e.event.updatedBy);
+                break;
+            case "aggregate_common_events":
             case "direct_chat_created":
             case "empty":
             case "members_added_to_default_channel":
-            case "users_invited":
                 break;
             default:
                 console.warn("Unexpected ChatEvent type received", e.event);
         }
-        return userIds;
-    }, new Set<string>());
+    }
+    return {
+        userIds,
+        webhooks,
+    };
 }
 
 export function getContentAsFormattedText(
     formatter: MessageFormatter,
     content: MessageContent,
-    cryptoLookup: Record<string, CryptocurrencyDetails>,
+    cryptoLookup: ReadonlyMap<string, CryptocurrencyDetails> = new Map(),
 ): string {
     let text;
     if (content.kind === "text_content") {
@@ -132,7 +175,7 @@ export function getContentAsFormattedText(
     } else if (content.kind === "crypto_content") {
         text = captionedContent(
             formatter("tokenTransfer.transfer", {
-                values: { token: cryptoLookup[content.transfer.ledger]?.symbol ?? "Unknown" },
+                values: { token: cryptoLookup.get(content.transfer.ledger)?.symbol ?? "Unknown" },
             }),
             content.caption,
         );
@@ -140,6 +183,8 @@ export function getContentAsFormattedText(
         text = "deleted message";
     } else if (content.kind === "placeholder_content") {
         text = "placeholder content";
+    } else if (content.kind === "bot_placeholder_content") {
+        text = "Bot working ...";
     } else if (content.kind === "poll_content") {
         text = content.config.text ?? "poll";
     } else if (content.kind === "proposal_content") {
@@ -164,6 +209,8 @@ export function getContentAsFormattedText(
         text = "Meme Fighter message";
     } else if (content.kind === "video_call_content") {
         text = "Video call";
+    } else if (content.kind === "encrypted_content") {
+        text = "Encrypted message";
     } else {
         throw new UnsupportedValueError("Unrecognised content type", content);
     }
@@ -257,15 +304,7 @@ export function emptyRules(): VersionedRules {
 }
 
 export function compareRoles(a: MemberRole, b: MemberRole): number {
-    if (a === b) return 0;
-    if (a === "owner") return 1;
-    if (b === "owner") return -1;
-    if (a === "admin") return 1;
-    if (b === "admin") return -1;
-    if (a === "moderator") return 1;
-    if (b === "moderator") return -1;
-    if (a === "member") return 1;
-    return -1;
+    return a - b;
 }
 
 export function routeForMessage(
@@ -281,10 +320,13 @@ export function routeForMessage(
 export function routeForMessageContext(
     scope: ChatListScope["kind"],
     { chatId, threadRootMessageIndex }: MessageContext,
+    open = false,
 ): string {
     return threadRootMessageIndex === undefined
         ? routeForChatIdentifier(scope, chatId)
-        : `${routeForChatIdentifier(scope, chatId)}/${threadRootMessageIndex}`;
+        : `${routeForChatIdentifier(scope, chatId)}/${threadRootMessageIndex}${
+              open ? "?open=true" : ""
+          }`;
 }
 
 export function routeForChatIdentifier(scope: ChatListScope["kind"], id: ChatIdentifier): string {
@@ -327,91 +369,8 @@ export function contentTypeToPermission(contentType: AttachmentContent["kind"]):
     }
 }
 
-export function mapAcceptP2PSwapResponseToStatus(
-    response: AcceptP2PSwapResponse,
-    userId: string,
-): P2PSwapStatus {
-    switch (response.kind) {
-        case "success":
-            return {
-                kind: "p2p_swap_accepted",
-                acceptedBy: userId,
-                token1TxnIn: response.token1TxnIn,
-            };
-        case "already_reserved":
-            return {
-                kind: "p2p_swap_reserved",
-                reservedBy: response.reservedBy,
-            };
-        case "already_accepted":
-            return {
-                kind: "p2p_swap_accepted",
-                acceptedBy: response.acceptedBy,
-                token1TxnIn: response.token1TxnIn,
-            };
-        case "already_completed":
-            return {
-                kind: "p2p_swap_completed",
-                acceptedBy: response.acceptedBy,
-                token1TxnIn: response.token1TxnIn,
-                token0TxnOut: response.token0TxnOut,
-                token1TxnOut: response.token1TxnOut,
-            };
-        case "swap_cancelled":
-            return {
-                kind: "p2p_swap_cancelled",
-                token0TxnOut: response.token0TxnOut,
-            };
-        case "swap_expired":
-            return {
-                kind: "p2p_swap_expired",
-                token0TxnOut: response.token0TxnOut,
-            };
-        default:
-            return {
-                kind: "p2p_swap_open",
-            };
-    }
-}
-
-export function mapCancelP2PSwapResponseToStatus(response: CancelP2PSwapResponse): P2PSwapStatus {
-    switch (response.kind) {
-        case "success":
-            return {
-                kind: "p2p_swap_cancelled",
-            };
-        case "already_reserved":
-            return {
-                kind: "p2p_swap_reserved",
-                reservedBy: response.reservedBy,
-            };
-        case "already_accepted":
-            return {
-                kind: "p2p_swap_accepted",
-                acceptedBy: response.acceptedBy,
-                token1TxnIn: response.token1TxnIn,
-            };
-        case "already_completed":
-            return {
-                kind: "p2p_swap_completed",
-                acceptedBy: response.acceptedBy,
-                token1TxnIn: response.token1TxnIn,
-                token0TxnOut: response.token0TxnOut,
-                token1TxnOut: response.token1TxnOut,
-            };
-        case "swap_cancelled":
-            return {
-                kind: "p2p_swap_cancelled",
-                token0TxnOut: response.token0TxnOut,
-            };
-        case "swap_expired":
-            return {
-                kind: "p2p_swap_expired",
-                token0TxnOut: response.token0TxnOut,
-            };
-        default:
-            return {
-                kind: "p2p_swap_open",
-            };
-    }
+export function isProposalsChat(chat: ChatSummary): chat is MultiUserChat & {
+    subtype: GovernanceProposalsSubtype;
+} {
+    return chat.kind !== "direct_chat" && chat.subtype?.kind === "governance_proposals";
 }

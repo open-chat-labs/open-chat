@@ -1,0 +1,19 @@
+type TokenReply = variant {
+    LP : LPTokenReply;
+    IC : ICTokenReply;
+};
+type LPTokenReply = record {};
+type ICTokenReply = record {
+    canister_id : text;
+    is_removed : bool;
+};
+type TokensResult = variant { Ok : vec TokenReply; Err : text };
+type SwapAmountsReply = record {
+    receive_amount : nat;
+};
+type SwapAmountsResult = variant { Ok : SwapAmountsReply; Err : text };
+
+service : {
+    tokens : (opt text) -> (TokensResult) query;
+    swap_amounts : (text, nat, text) -> (SwapAmountsResult) query;
+}

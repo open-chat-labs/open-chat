@@ -1,17 +1,42 @@
-import type { AgentConfig } from "./config";
+import type { JsonnableDelegationChain } from "@icp-sdk/core/identity";
+import type { AccessGateConfig, Rules, UpdatedRules, VerifiedCredentialArgs } from "./access";
 import type {
+    CkbtcMinterDepositInfo,
+    CkbtcMinterWithdrawalInfo,
+    WithdrawBtcResponse,
+} from "./bitcoin";
+import type {
+    BotCommandResponse,
+    BotDefinition,
+    BotDefinitionResponse,
+    BotInstallationLocation,
+    BotsResponse,
+    ExternalBot,
+    FullWebhookDetails,
+    GrantedBotPermissions,
+} from "./bots";
+import type {
+    AcceptedRules,
+    AcceptP2PSwapResponse,
+    AddHotGroupExclusionResponse,
     AddRemoveReactionResponse,
     BlockUserResponse,
+    CancelP2PSwapResponse,
     CandidateGroupChat,
     ChangeRoleResponse,
+    ChannelIdentifier,
     ChatEvent,
+    ChatEventsResponse,
+    ChatIdentifier,
     ClaimPrizeResponse,
     CreateGroupResponse,
+    DeclineInvitationResponse,
     DeletedDirectMessageResponse,
     DeletedGroupMessageResponse,
     DeleteFrozenGroupResponse,
     DeleteGroupResponse,
     DeleteMessageResponse,
+    DirectChatIdentifier,
     DisableInviteCodeResponse,
     EditMessageResponse,
     EnableInviteCodeResponse,
@@ -20,146 +45,187 @@ import type {
     FreezeGroupResponse,
     GroupChatDetails,
     GroupChatDetailsResponse,
+    GroupChatIdentifier,
     GroupChatSummary,
     IndexRange,
     InviteCodeResponse,
     JoinGroupResponse,
+    JoinVideoCallResponse,
     LeaveGroupResponse,
     ListNervousSystemFunctionsResponse,
     MarkReadRequest,
     MarkReadResponse,
     Message,
+    MessageActivityFeedResponse,
+    MessageContext,
+    MultiUserChatIdentifier,
+    PendingCryptocurrencyTransfer,
     PendingCryptocurrencyWithdrawal,
     PinMessageResponse,
+    ProposalVoteDetails,
+    PublicGroupSummaryResponse,
     RegisterPollVoteResponse,
     RegisterProposalVoteResponse,
+    RemoveHotGroupExclusionResponse,
     RemoveMemberResponse,
+    ResetInviteCodeResponse,
     SendMessageResponse,
-    ProposalVoteDetails,
+    SetCommunityModerationFlagsResponse,
+    SetGroupUpgradeConcurrencyResponse,
+    SetPinNumberResponse,
+    SetVideoCallPresenceResponse,
     ThreadPreview,
     ThreadRead,
     ThreadSyncDetails,
+    TipMessageResponse,
     UnblockUserResponse,
     UndeleteMessageResponse,
     UnfreezeGroupResponse,
     UnpinMessageResponse,
     UpdateGroupResponse,
     UpdatesResult,
+    VideoCallParticipantsResponse,
+    VideoCallPresence,
     WithdrawCryptocurrencyResponse,
-    InviteUsersResponse,
-    ResetInviteCodeResponse,
-    AddHotGroupExclusionResponse,
-    RemoveHotGroupExclusionResponse,
-    SetCommunityModerationFlagsResponse,
-    SetGroupUpgradeConcurrencyResponse,
-    DeclineInvitationResponse,
-    ChatIdentifier,
-    GroupChatIdentifier,
-    DirectChatIdentifier,
-    ChannelIdentifier,
-    MultiUserChatIdentifier,
-    PublicGroupSummaryResponse,
-    MessageContext,
-    PendingCryptocurrencyTransfer,
-    TipMessageResponse,
-    AcceptP2PSwapResponse,
-    CancelP2PSwapResponse,
-    JoinVideoCallResponse,
 } from "./chat";
+import type {
+    ChitEventsRequest,
+    ChitEventsResponse,
+    ChitLeaderboardResponse,
+    ClaimDailyChitResponse,
+    ExternalAchievement,
+    PayForPremiumItemResponse,
+    PayForStreakInsuranceResponse,
+    PremiumItem,
+} from "./chit";
+import type {
+    AddMembersToChannelResponse,
+    BlockCommunityUserResponse,
+    ChangeCommunityRoleResponse,
+    ChannelMatch,
+    ChannelSummaryResponse,
+    CommunityDetails,
+    CommunityDetailsResponse,
+    CommunityIdentifier,
+    CommunitySummary,
+    CommunitySummaryResponse,
+    ConvertToCommunityResponse,
+    CreateCommunityResponse,
+    CreateUserGroupResponse,
+    DeleteCommunityResponse,
+    DeleteUserGroupsResponse,
+    FollowThreadResponse,
+    FreezeCommunityResponse,
+    ImportGroupResponse,
+    JoinCommunityResponse,
+    LeaveCommunityResponse,
+    SetMemberDisplayNameResponse,
+    ToggleMuteCommunityNotificationsResponse,
+    UnblockCommunityUserResponse,
+    UnfreezeCommunityResponse,
+    UpdateCommunityResponse,
+    UpdateUserGroupResponse,
+} from "./community";
+import type { AgentConfig } from "./config";
+import type {
+    AccountTransactionResult,
+    CryptocurrencyDetails,
+    EvmChain,
+    TokenExchangeRates,
+    WalletConfig,
+} from "./crypto";
 import type { BlobReference, StorageStatus } from "./data/data";
+import type { DexId } from "./dexes";
+import type { GenerateMagicLinkResponse } from "./email";
+import type {
+    ApproveResponse,
+    MarkDeployedResponse,
+    PendingDeploymentResponse,
+    ProposedResponse,
+    ProposeResponse,
+    RejectReason,
+    RejectResponse,
+    TranslationCorrections,
+} from "./i18n";
+import type {
+    AccountLinkingCode,
+    AuthenticationPrincipalsResponse,
+    ChallengeAttempt,
+    CreateOpenChatIdentityResponse,
+    FinaliseAccountLinkingResponse,
+    GenerateChallengeResponse,
+    GetDelegationResponse,
+    GetOpenChatIdentityResponse,
+    LinkIdentitiesResponse,
+    PrepareDelegationResponse,
+    RemoveIdentityLinkResponse,
+    SiwePrepareLoginResponse,
+    SiwsPrepareLoginResponse,
+    VerifyAccountLinkingCodeResponse,
+    WebAuthnKey,
+    WebAuthnKeyFull,
+} from "./identity";
+import type { CommunityInvite, GroupInvite } from "./inviteCodes";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
 import type { ToggleMuteNotificationResponse } from "./notifications";
-import type {
-    ArchiveChatResponse,
-    CheckUsernameResponse,
-    CreatedUser,
-    CurrentUserResponse,
-    PinChatResponse,
-    PublicProfile,
-    RegisterUserResponse,
-    SetBioResponse,
-    SetUsernameResponse,
-    SuspendUserResponse,
-    UnpinChatResponse,
-    User,
-    UserLookup,
-    UsersArgs,
-    UsersResponse,
-    UserSummary,
-    UnsuspendUserResponse,
-    DiamondMembershipDuration,
-    DiamondMembershipFees,
-    PayForDiamondMembershipResponse,
-    SetMessageReminderResponse,
-    ReferralLeaderboardRange,
-    ReferralLeaderboardResponse,
-    SetUserUpgradeConcurrencyResponse,
-    ManageFavouritesResponse,
-    SetDisplayNameResponse,
-    NamedAccount,
-    SaveCryptoAccountResponse,
-    SubmitProposalResponse,
-    SwapTokensResponse,
-    TokenSwapStatusResponse,
-    ApproveTransferResponse,
-} from "./user";
-import type {
-    SearchDirectChatResponse,
-    SearchGroupChatResponse,
-    GroupSearchResponse,
-    ExploreCommunitiesResponse,
-    ExploreChannelsResponse,
-} from "./search/search";
-import type { GroupInvite, CommunityInvite } from "./inviteCodes";
+import type { WithdrawViaOneSecResponse } from "./oneSec";
+import type { MinutesOnline } from "./online";
+import type { OptionUpdate } from "./optionUpdate";
 import type {
     AccessTokenType,
     CommunityPermissions,
     MemberRole,
     OptionalChatPermissions,
 } from "./permission";
-import type { AccessGate, Rules, UpdatedRules } from "./access";
-import type {
-    AddMembersToChannelResponse,
-    BlockCommunityUserResponse,
-    ChangeCommunityRoleResponse,
-    CommunitySummary,
-    CreateCommunityResponse,
-    JoinCommunityResponse,
-    ToggleMuteCommunityNotificationsResponse,
-    UnblockCommunityUserResponse,
-    UpdateCommunityResponse,
-    CommunityIdentifier,
-    CommunitySummaryResponse,
-    ChannelMatch,
-    CommunityDetailsResponse,
-    CommunityDetails,
-    ChannelSummaryResponse,
-    LeaveCommunityResponse,
-    DeleteCommunityResponse,
-    ConvertToCommunityResponse,
-    ImportGroupResponse,
-    CreateUserGroupResponse,
-    UpdateUserGroupResponse,
-    DeleteUserGroupsResponse,
-    SetMemberDisplayNameResponse,
-    FollowThreadResponse,
-} from "./community";
-import type { RegistryValue } from "./registry";
-import type { StakeNeuronForSubmittingProposalsResponse } from "./proposalsBot";
 import type { CandidateProposal } from "./proposals";
-import type { OptionUpdate } from "./optionUpdate";
-import type { AccountTransactionResult, CryptocurrencyDetails, TokenExchangeRates } from "./crypto";
-import type { DexId } from "./dexes";
 import type {
-    ApproveResponse,
-    MarkDeployedResponse,
-    PendingDeploymentResponse,
-    ProposeResponse,
-    ProposedResponse,
-    RejectReason,
-    RejectResponse,
-    TranslationCorrections,
-} from "./i18n";
+    StakeNeuronForSubmittingProposalsResponse,
+    TopUpNeuronResponse,
+} from "./proposalsBot";
+import type { RegistryValue } from "./registry";
+import type {
+    ExploreBotsResponse,
+    ExploreChannelsResponse,
+    ExploreCommunitiesResponse,
+    GroupSearchResponse,
+    SearchDirectChatResponse,
+    SearchGroupChatResponse,
+} from "./search/search";
+import type {
+    ApproveTransferResponse,
+    ArchiveChatResponse,
+    CheckUsernameResponse,
+    CreatedUser,
+    CurrentUserResponse,
+    DiamondMembershipDuration,
+    DiamondMembershipFees,
+    ManageFavouritesResponse,
+    NamedAccount,
+    PayForDiamondMembershipResponse,
+    PinChatResponse,
+    PublicProfile,
+    RegisterUserResponse,
+    SaveCryptoAccountResponse,
+    SetBioResponse,
+    SetDisplayNameResponse,
+    SetMessageReminderResponse,
+    SetUsernameResponse,
+    SetUserUpgradeConcurrencyResponse,
+    SubmitProofOfUniquePersonhoodResponse,
+    SubmitProposalResponse,
+    SuspendUserResponse,
+    SwapTokensResponse,
+    TokenSwapStatusResponse,
+    UnpinChatResponse,
+    UnsuspendUserResponse,
+    User,
+    UsersArgs,
+    UsersResponse,
+    UserSummary,
+} from "./user";
+import type { Verification } from "./wallet";
+import type { OneSecForwardingStatus, OneSecTransferFees } from "./oneSec";
+
 /**
  * Worker request types
  */
@@ -169,6 +235,7 @@ export type CorrelatedWorkerRequest = WorkerRequest & {
 };
 
 export type WorkerRequest =
+    | SetMinLogLevel
     | DismissRecommendations
     | SearchGroups
     | GetRecommendedGroups
@@ -176,7 +243,6 @@ export type WorkerRequest =
     | ChangeRole
     | RemoveMember
     | InviteUsers
-    | InviteUsersToCommunity
     | PushSub
     | RemoveSub
     | SubscriptionExists
@@ -200,6 +266,7 @@ export type WorkerRequest =
     | LeaveGroup
     | DeleteGroup
     | SetUserAvatar
+    | SetProfileBackground
     | UnblockUserFromDirectChat
     | BlockUserFromDirectChat
     | UnpinChat
@@ -223,6 +290,8 @@ export type WorkerRequest =
     | ChatEvents
     | CreateUserClient
     | Init
+    | GenerateIdentityChallenge
+    | CreateOpenChatIdentity
     | CurrentUser
     | SetGroupInvite
     | SetCommunityInvite
@@ -247,14 +316,20 @@ export type WorkerRequest =
     | SetCachedMessageFromNotification
     | FreezeGroup
     | UnfreezeGroup
+    | FreezeCommunity
+    | UnfreezeCommunity
     | DeleteFrozenGroup
     | AddHotGroupExclusion
     | RemoveHotGroupExclusion
+    | AddRemoveSwapProvider
     | AddMessageFilter
     | RemoveMessageFilter
+    | SetAirdropConfig
+    | SetTokenEnabled
     | SuspendUser
     | UnsuspendUser
     | GetUpdates
+    | GetBots
     | GetDeletedGroupMessage
     | GetDeletedDirectMessage
     | LoadFailedMessages
@@ -265,12 +340,13 @@ export type WorkerRequest =
     | SetGroupUpgradeConcurrency
     | SetCommunityUpgradeConcurrency
     | SetUserUpgradeConcurrency
+    | MarkLocalGroupIndexFull
     | SetDiamondMembershipFees
     | StakeNeuronForSubmittingProposals
+    | TopUpNeuronForSubmittingProposals
     | UpdateMarketMakerConfig
     | SetMessageReminder
     | CancelMessageReminder
-    | ReferralLeaderboard
     | ReportMessage
     | DeclineInvitation
     | AddMembersToChannel
@@ -289,6 +365,9 @@ export type WorkerRequest =
     | UpdateCommunity
     | CreateCommunity
     | ExploreCommunities
+    | ExploreBots
+    | RegisterBot
+    | RemoveBot
     | GetCommunitySummary
     | ExploreChannels
     | GetCommunityDetails
@@ -307,8 +386,6 @@ export type WorkerRequest =
     | UpdateUserGroup
     | DeleteUserGroups
     | SetMemberDisplayName
-    | GetCachePrimerTimestamps
-    | SetCachePrimerTimestamp
     | FollowThread
     | LoadSavedCryptoAccounts
     | SaveCryptoAccount
@@ -334,7 +411,254 @@ export type WorkerRequest =
     | GetTranslationsPendingDeployment
     | JoinVideoCall
     | GetAccessToken
-    | GetLocalUserIndexForUser;
+    | GetLocalUserIndexForUser
+    | GenerateBtcAddress
+    | GenerateOneSecAddress
+    | UpdateBtcBalance
+    | WithdrawBtc
+    | WithdrawViaOneSec
+    | GetCkbtcMinterDepositInfo
+    | GetCkbtcMinterWithdrawalInfo
+    | CurrentUserWebAuthnKey
+    | LookupWebAuthnPubKey
+    | SetCachedWebAuthnKey
+    | GenerateMagicLink
+    | GetSignInWithEmailDelegation
+    | SiwePrepareLogin
+    | SiwsPrepareLogin
+    | LoginWithWallet
+    | GetDelegationWithWallet
+    | SetVideoCallPresence
+    | VideoCallParticipants
+    | SetPinNumber
+    | ClaimDailyChit
+    | ChitLeaderboard
+    | ChitEventsRequest
+    | MarkAchievementsSeen
+    | SubmitProofOfUniquePersonhood
+    | LinkIdentities
+    | RemoveIdentityLink
+    | GetAuthenticationPrincipals
+    | ConfigureWallet
+    | ClearCachedData
+    | SetCommunityReferral
+    | GetExternalAchievements
+    | CancelInvites
+    | MessageActivityFeed
+    | MarkActivityFeedRead
+    | DeleteUser
+    | InstallBot
+    | UninstallBot
+    | UpdateInstalledBot
+    | UpdateRegisteredBot
+    | GetBotDefinition
+    | CallBotCommandEndpoint
+    | WithdrawFromIcpSwap
+    | RegisterWebhook
+    | UpdateWebhook
+    | RegenerateWebhook
+    | DeleteWebhook
+    | GetWebhook
+    | PayForStreakInsurance
+    | UpdateDirectChatSettings
+    | UpdateProposalTallies
+    | FcmTokenExists
+    | AddFcmToken
+    | CreateAccountLinkingCode
+    | ReinstateMissedDailyClaims
+    | VerifyAccountLinkingCode
+    | FinaliseAccountLinkingWithCode
+    | PayForPremiumItem
+    | SetPremiumItemCost
+    | OneSecGetTransferFees
+    | OneSecForwardEvmToIcp
+    | OneSecGetForwardingStatus;
+
+type OneSecGetTransferFees = {
+    kind: "oneSecGetTransferFees";
+};
+
+type OneSecForwardEvmToIcp = {
+    kind: "oneSecForwardEvmToIcp";
+    tokenSymbol: string;
+    chain: EvmChain;
+    address: string;
+    receiver: string;
+};
+
+type OneSecGetForwardingStatus = {
+    kind: "oneSecGetForwardingStatus";
+    tokenSymbol: string;
+    chain: EvmChain;
+    address: string;
+    receiver: string;
+};
+
+type SetPremiumItemCost = {
+    kind: "setPremiumItemCost";
+    item: PremiumItem;
+    chitCost: number;
+};
+
+type PayForPremiumItem = {
+    kind: "payForPremiumItem";
+    item: PremiumItem;
+    userId: string;
+};
+
+type SetMinLogLevel = {
+    kind: "setMinLogLevel";
+    minLogLevel: "debug" | "log" | "warn" | "error";
+};
+
+type PayForStreakInsurance = {
+    kind: "payForStreakInsurance";
+    additionalDays: number;
+    expectedPrice: bigint;
+    pin: string | undefined;
+};
+
+type UpdateDirectChatSettings = {
+    kind: "updateDirectChatSettings";
+    userId: string;
+    eventsTtl: OptionUpdate<bigint>;
+};
+
+type UpdateProposalTallies = {
+    kind: "updateProposalTallies";
+    chatId: MultiUserChatIdentifier;
+};
+
+type RegisterWebhook = {
+    kind: "registerWebhook";
+    chatId: MultiUserChatIdentifier;
+    name: string;
+    avatar: string | undefined;
+};
+
+type UpdateWebhook = {
+    kind: "updateWebhook";
+    chatId: MultiUserChatIdentifier;
+    id: string;
+    name: string | undefined;
+    avatar: OptionUpdate<string>;
+};
+
+type RegenerateWebhook = {
+    kind: "regenerateWebhook";
+    chatId: MultiUserChatIdentifier;
+    id: string;
+};
+
+type DeleteWebhook = {
+    kind: "deleteWebhook";
+    chatId: MultiUserChatIdentifier;
+    id: string;
+};
+
+type GetWebhook = {
+    kind: "getWebhook";
+    chatId: MultiUserChatIdentifier;
+    id: string;
+};
+
+type CallBotCommandEndpoint = {
+    kind: "callBotCommandEndpoint";
+    endpoint: string;
+    token: string;
+};
+
+type GetBotDefinition = {
+    kind: "getBotDefinition";
+    endpoint: string;
+};
+
+type UpdateRegisteredBot = {
+    kind: "updateRegisteredBot";
+    id: string;
+    principal?: string;
+    ownerId?: string;
+    avatarUrl?: string;
+    endpoint?: string;
+    definition?: BotDefinition;
+};
+
+type InstallBot = {
+    kind: "installBot";
+    id: BotInstallationLocation;
+    botId: string;
+    grantedPermissions: GrantedBotPermissions;
+};
+
+type UpdateInstalledBot = {
+    kind: "updateInstalledBot";
+    id: BotInstallationLocation;
+    botId: string;
+    grantedPermissions: GrantedBotPermissions;
+};
+
+type UninstallBot = {
+    kind: "uninstallBot";
+    id: BotInstallationLocation;
+    botId: string;
+};
+
+type MarkActivityFeedRead = {
+    kind: "markActivityFeedRead";
+    readUpTo: bigint;
+};
+
+type MessageActivityFeed = {
+    kind: "messageActivityFeed";
+};
+
+type GetExternalAchievements = {
+    kind: "getExternalAchievements";
+};
+
+type SetCommunityReferral = {
+    kind: "setCommunityReferral";
+    communityId: CommunityIdentifier;
+    referredBy: string;
+};
+
+type ClearCachedData = {
+    kind: "clearCachedData";
+};
+
+type ConfigureWallet = {
+    kind: "configureWallet";
+    config: WalletConfig;
+};
+
+type GetAuthenticationPrincipals = {
+    kind: "getAuthenticationPrincipals";
+};
+
+type SubmitProofOfUniquePersonhood = {
+    kind: "submitProofOfUniquePersonhood";
+    iiPrincipal: string;
+    credential: string;
+};
+
+type MarkAchievementsSeen = {
+    kind: "markAchievementsSeen";
+};
+
+type VideoCallParticipants = {
+    kind: "videoCallParticipants";
+    chatId: MultiUserChatIdentifier;
+    messageId: bigint;
+    updatesSince?: bigint;
+};
+
+type SetVideoCallPresence = {
+    kind: "setVideoCallPresence";
+    chatId: MultiUserChatIdentifier;
+    messageId: bigint;
+    presence: VideoCallPresence;
+    newAchievement: boolean;
+};
 
 type GetLocalUserIndexForUser = {
     kind: "getLocalUserIndexForUser";
@@ -343,7 +667,6 @@ type GetLocalUserIndexForUser = {
 
 type GetAccessToken = {
     kind: "getAccessToken";
-    chatId: ChatIdentifier;
     accessTokenType: AccessTokenType;
     localUserIndex: string;
 };
@@ -352,6 +675,7 @@ type JoinVideoCall = {
     kind: "joinVideoCall";
     chatId: ChatIdentifier;
     messageId: bigint;
+    newAchievement: boolean;
 };
 
 type ProposeTranslation = {
@@ -399,6 +723,7 @@ type TipMessage = {
     messageId: bigint;
     transfer: PendingCryptocurrencyTransfer;
     decimals: number;
+    pin: string | undefined;
 };
 
 type CanSwap = {
@@ -427,6 +752,7 @@ type SwapTokens = {
     amountIn: bigint;
     minAmountOut: bigint;
     dex: DexId;
+    pin: string | undefined;
 };
 
 type TokenSwapStatus = {
@@ -501,11 +827,6 @@ type GetCommunitySummary = {
     kind: "getCommunitySummary";
 };
 
-type ReferralLeaderboard = {
-    args?: ReferralLeaderboardRange;
-    kind: "getReferralLeaderboard";
-};
-
 type SetCachedMessageFromNotification = {
     chatId: ChatIdentifier;
     threadRootMessageIndex: number | undefined;
@@ -547,6 +868,7 @@ type GroupMessagesByMessageIndex = {
 
 type WithdrawCrypto = {
     domain: PendingCryptocurrencyWithdrawal;
+    pin: string | undefined;
     kind: "withdrawCryptocurrency";
 };
 
@@ -640,6 +962,26 @@ type ExploreCommunities = {
     kind: "exploreCommunities";
 };
 
+type RegisterBot = {
+    kind: "registerBot";
+    principal: string;
+    bot: ExternalBot;
+};
+
+type RemoveBot = {
+    kind: "removeBot";
+    botId: string;
+};
+
+type ExploreBots = {
+    searchTerm: string | undefined;
+    pageIndex: number;
+    pageSize: number;
+    location: BotInstallationLocation | undefined;
+    excludeInstalled: boolean;
+    kind: "exploreBots";
+};
+
 type SearchGroups = {
     searchTerm: string;
     maxResults: number;
@@ -672,19 +1014,10 @@ type RemoveMember = {
 };
 
 type InviteUsers = {
-    chatId: MultiUserChatIdentifier;
-    localUserIndex: string;
+    id: MultiUserChatIdentifier | CommunityIdentifier;
     userIds: string[];
     callerUsername: string;
     kind: "inviteUsers";
-};
-
-type InviteUsersToCommunity = {
-    id: CommunityIdentifier;
-    localUserIndex: string;
-    userIds: string[];
-    callerUsername: string;
-    kind: "inviteUsersToCommunity";
 };
 
 type RemoveSub = {
@@ -702,6 +1035,17 @@ type SubscriptionExists = {
     kind: "subscriptionExists";
 };
 
+type FcmTokenExists = {
+    kind: "fcmTokenExists";
+    fcmToken: string;
+};
+
+type AddFcmToken = {
+    kind: "addFcmToken";
+    fcmToken: string;
+    onResponseError?: (error: string | null) => void;
+};
+
 type RegisterUser = {
     username: string;
     referralCode: string | undefined;
@@ -712,6 +1056,8 @@ type EditMessage = {
     chatId: ChatIdentifier;
     msg: Message;
     threadRootMessageIndex?: number;
+    blockLevelMarkdown?: boolean;
+    newAchievement: boolean;
     kind: "editMessage";
 };
 
@@ -720,9 +1066,10 @@ type SendMessage = {
     user: CreatedUser;
     mentioned: User[];
     event: EventWrapper<Message>;
-    rulesAccepted: number | undefined;
-    communityRulesAccepted: number | undefined;
+    acceptedRules: AcceptedRules | undefined;
     messageFilterFailed: bigint | undefined;
+    pin: string | undefined;
+    newAchievement: boolean;
     kind: "sendMessage";
 };
 
@@ -777,6 +1124,7 @@ type AddReaction = {
     username: string;
     displayName: string | undefined;
     threadRootMessageIndex?: number;
+    newAchievement: boolean;
     kind: "addReaction";
 };
 
@@ -785,6 +1133,7 @@ type DeleteMessage = {
     messageId: bigint;
     threadRootMessageIndex?: number;
     asPlatformModerator?: boolean;
+    newAchievement: boolean;
     kind: "deleteMessage";
 };
 
@@ -800,7 +1149,8 @@ type RegisterPollVote = {
     messageIdx: number;
     answerIdx: number;
     voteType: "register" | "delete";
-    threadRootMessageIndex?: number;
+    threadRootMessageIndex: number | undefined;
+    newAchievement: boolean;
     kind: "registerPollVote";
 };
 
@@ -812,23 +1162,25 @@ type UpdateGroup = {
     permissions?: OptionalChatPermissions;
     avatar?: Uint8Array;
     eventsTimeToLive?: OptionUpdate<bigint>;
-    gate?: AccessGate;
+    gateConfig?: AccessGateConfig;
     isPublic?: boolean;
     kind: "updateGroup";
+    messagesVisibleToNonMembers?: boolean;
+    externalUrl?: string;
 };
 
 type JoinGroup = {
     chatId: MultiUserChatIdentifier;
-    localUserIndex: string;
+    credentialArgs: VerifiedCredentialArgs | undefined;
     kind: "joinGroup";
-    credential?: string;
+    referredBy?: string;
 };
 
 type JoinCommunity = {
     id: CommunityIdentifier;
-    localUserIndex: string;
+    credentialArgs: VerifiedCredentialArgs | undefined;
     kind: "joinCommunity";
-    credential?: string;
+    referredBy?: string;
 };
 
 type LeaveGroup = {
@@ -844,6 +1196,11 @@ type DeleteGroup = {
 type SetUserAvatar = {
     data: Uint8Array;
     kind: "setUserAvatar";
+};
+
+type SetProfileBackground = {
+    data: Uint8Array;
+    kind: "setProfileBackground";
 };
 
 type UnblockUserFromDirectChat = {
@@ -879,8 +1236,9 @@ type ArchiveChat = {
 };
 
 type ToggleMuteNotifications = {
-    chatId: ChatIdentifier;
-    muted: boolean;
+    id: ChatIdentifier | CommunityIdentifier;
+    mute: boolean | undefined;
+    muteAtEveryone: boolean | undefined;
     kind: "toggleMuteNotifications";
 };
 
@@ -896,6 +1254,7 @@ type GetUserStorageLimits = {
 type CheckUsername = {
     username: string;
     kind: "checkUsername";
+    isBot: boolean;
 };
 
 type SearchUsers = {
@@ -929,8 +1288,18 @@ export type RehydrateMessage = {
     kind: "rehydrateMessage";
 };
 
-type Init = Omit<AgentConfig, "logger"> & {
+export type Init = Omit<AgentConfig, "logger"> & {
     kind: "init";
+};
+
+type GenerateIdentityChallenge = {
+    kind: "generateIdentityChallenge";
+};
+
+type CreateOpenChatIdentity = {
+    kind: "createOpenChatIdentity";
+    webAuthnCredentialId: Uint8Array | undefined;
+    challengeAttempt: ChallengeAttempt | undefined;
 };
 
 type CurrentUser = {
@@ -972,6 +1341,17 @@ type UnfreezeGroup = {
     kind: "unfreezeGroup";
 };
 
+type FreezeCommunity = {
+    id: CommunityIdentifier;
+    reason: string | undefined;
+    kind: "freezeCommunity";
+};
+
+type UnfreezeCommunity = {
+    id: CommunityIdentifier;
+    kind: "unfreezeCommunity";
+};
+
 type DeleteFrozenGroup = {
     chatId: GroupChatIdentifier;
     kind: "deleteFrozenGroup";
@@ -987,6 +1367,12 @@ type RemoveHotGroupExclusion = {
     kind: "removeHotGroupExclusion";
 };
 
+type AddRemoveSwapProvider = {
+    swapProvider: DexId;
+    add: boolean;
+    kind: "addRemoveSwapProvider";
+};
+
 type AddMessageFilter = {
     regex: string;
     kind: "addMessageFilter";
@@ -995,6 +1381,20 @@ type AddMessageFilter = {
 type RemoveMessageFilter = {
     id: bigint;
     kind: "removeMessageFilter";
+};
+
+type SetAirdropConfig = {
+    channelId: number;
+    channelName: string;
+    communityId?: string;
+    communityName?: string;
+    kind: "setAirdropConfig";
+};
+
+type SetTokenEnabled = {
+    ledger: string;
+    enabled: boolean;
+    kind: "setTokenEnabled";
 };
 
 type SuspendUser = {
@@ -1029,6 +1429,12 @@ type SetUserUpgradeConcurrency = {
     kind: "setUserUpgradeConcurrency";
 };
 
+type MarkLocalGroupIndexFull = {
+    canisterId: string;
+    full: boolean;
+    kind: "markLocalGroupIndexFull";
+};
+
 type SetDiamondMembershipFees = {
     fees: DiamondMembershipFees[];
     kind: "setDiamondMembershipFees";
@@ -1038,6 +1444,12 @@ type StakeNeuronForSubmittingProposals = {
     governanceCanisterId: string;
     stake: bigint;
     kind: "stakeNeuronForSubmittingProposals";
+};
+
+type TopUpNeuronForSubmittingProposals = {
+    governanceCanisterId: string;
+    amount: bigint;
+    kind: "topUpNeuronForSubmittingProposals";
 };
 
 type GetUsers = {
@@ -1063,6 +1475,11 @@ type CreateUserClient = {
 
 type GetUpdates = {
     kind: "getUpdates";
+    initialLoad: boolean;
+};
+
+type GetBots = {
+    kind: "getBots";
     initialLoad: boolean;
 };
 
@@ -1101,14 +1518,151 @@ type DeleteUserGroups = {
     kind: "deleteUserGroups";
 };
 
-type GetCachePrimerTimestamps = {
-    kind: "getCachePrimerTimestamps";
+type GenerateBtcAddress = {
+    kind: "generateBtcAddress";
 };
 
-type SetCachePrimerTimestamp = {
-    chatIdentifierString: string;
-    timestamp: bigint;
-    kind: "setCachePrimerTimestamp";
+type GenerateOneSecAddress = {
+    kind: "generateOneSecAddress";
+};
+
+type UpdateBtcBalance = {
+    userId: string;
+    bitcoinAddress: string;
+    kind: "updateBtcBalance";
+};
+
+type WithdrawBtc = {
+    address: string;
+    amount: bigint;
+    pin: string | undefined;
+    kind: "withdrawBtc";
+};
+
+type WithdrawViaOneSec = {
+    kind: "withdrawViaOneSec";
+    ledger: string;
+    tokenSymbol: string;
+    chain: EvmChain;
+    address: string;
+    amount: bigint;
+    pin: string | undefined;
+};
+
+type GetCkbtcMinterDepositInfo = {
+    kind: "ckbtcMinterDepositInfo";
+};
+
+type GetCkbtcMinterWithdrawalInfo = {
+    amount: bigint;
+    kind: "ckbtcMinterWithdrawalInfo";
+};
+
+type CurrentUserWebAuthnKey = {
+    kind: "currentUserWebAuthnKey";
+};
+
+type LookupWebAuthnPubKey = {
+    credentialId: Uint8Array;
+    kind: "lookupWebAuthnPubKey";
+};
+
+type SetCachedWebAuthnKey = {
+    key: WebAuthnKeyFull;
+    kind: "setCachedWebAuthnKey";
+};
+
+type GenerateMagicLink = {
+    email: string;
+    sessionKey: Uint8Array;
+    kind: "generateMagicLink";
+};
+
+type GetSignInWithEmailDelegation = {
+    email: string;
+    sessionKey: Uint8Array;
+    expiration: bigint;
+    kind: "getSignInWithEmailDelegation";
+};
+
+type SiwePrepareLogin = {
+    address: string;
+    kind: "siwePrepareLogin";
+};
+
+type SiwsPrepareLogin = {
+    address: string;
+    kind: "siwsPrepareLogin";
+};
+
+type LoginWithWallet = {
+    token: "eth" | "sol";
+    address: string;
+    signature: string;
+    sessionKey: Uint8Array;
+    kind: "loginWithWallet";
+};
+
+type GetDelegationWithWallet = {
+    token: "eth" | "sol";
+    address: string;
+    sessionKey: Uint8Array;
+    expiration: bigint;
+    kind: "getDelegationWithWallet";
+};
+
+type LinkIdentities = {
+    kind: "linkIdentities";
+    initiatorKey: CryptoKeyPair;
+    initiatorDelegation: JsonnableDelegationChain;
+    initiatorIsIIPrincipal: boolean;
+    initiatorWebAuthnKey: WebAuthnKey | undefined;
+    approverKey: CryptoKeyPair;
+    approverDelegation: JsonnableDelegationChain;
+};
+
+type RemoveIdentityLink = {
+    kind: "removeIdentityLink";
+    linked_principal: string;
+};
+
+type DeleteUser = {
+    kind: "deleteUser";
+    identityKey: CryptoKeyPair;
+    delegation: JsonnableDelegationChain;
+};
+
+type WithdrawFromIcpSwap = {
+    kind: "withdrawFromIcpSwap";
+    userId: string;
+    swapId: bigint;
+    inputToken: boolean;
+    amount: bigint | undefined;
+    fee: bigint | undefined;
+};
+
+type CreateAccountLinkingCode = {
+    kind: "createAccountLinkingCode";
+};
+
+type ReinstateMissedDailyClaims = {
+    kind: "reinstateMissedDailyClaims";
+    userId: string;
+    days: number[];
+};
+
+type VerifyAccountLinkingCode = {
+    kind: "verifyAccountLinkingCode";
+    code: string;
+    tempKey: CryptoKeyPair;
+};
+
+type FinaliseAccountLinkingWithCode = {
+    kind: "finaliseAccountLinkingWithCode";
+    tempKey: CryptoKeyPair;
+    principal: string;
+    publicKey: Uint8Array;
+    webAuthnKey?: WebAuthnKeyFull;
 };
 
 /**
@@ -1124,11 +1678,17 @@ export type WorkerError = {
  * Worker response types
  */
 export type WorkerResponseInner =
+    | void
     | bigint
     | boolean
+    | number
     | string
-    | string[]
     | undefined
+    | string[]
+    | Uint8Array
+    | [number, number]
+    | GenerateChallengeResponse
+    | CreateOpenChatIdentityResponse
     | CreateGroupResponse
     | DisableInviteCodeResponse
     | EnableInviteCodeResponse
@@ -1147,7 +1707,6 @@ export type WorkerResponseInner =
     | GroupChatSummary[]
     | RegisterProposalVoteResponse
     | ChangeRoleResponse
-    | InviteUsersResponse
     | RemoveMemberResponse
     | RegisterUserResponse
     | EditMessageResponse
@@ -1170,24 +1729,25 @@ export type WorkerResponseInner =
     | UnpinChatResponse
     | PinChatResponse
     | ArchiveChatResponse
-    | ArchiveChatResponse
     | ToggleMuteNotificationResponse
     | GroupChatSummary
     | StorageStatus
     | UserSummary[]
     | CheckUsernameResponse
     | EventWrapper<Message>
+    | EventWrapper<Message>[]
+    | ChatEventsResponse[]
     | EventsResponse<ChatEvent>
     | Record<string, number>
     | GroupChatDetailsResponse
     | GroupChatDetails
     | MarkReadResponse
-    | UserLookup
     | UsersResponse
     | CurrentUserResponse
-    | EventsResponse<ChatEvent>
     | FreezeGroupResponse
     | UnfreezeGroupResponse
+    | FreezeCommunityResponse
+    | UnfreezeCommunityResponse
     | DeleteFrozenGroupResponse
     | AddHotGroupExclusion
     | RemoveHotGroupExclusion
@@ -1196,15 +1756,16 @@ export type WorkerResponseInner =
     | SuspendUserResponse
     | UnsuspendUserResponse
     | UpdatesResult
+    | BotsResponse
     | DeletedDirectMessageResponse
     | DeletedGroupMessageResponse
     | StakeNeuronForSubmittingProposalsResponse
+    | TopUpNeuronResponse
     | Map<string, Record<number, EventWrapper<Message>>>
     | PayForDiamondMembershipResponse
     | ClaimPrizeResponse
     | UpdateMarketMakerConfigResponse
     | SetMessageReminderResponse
-    | ReferralLeaderboardResponse
     | BlockCommunityUserResponse
     | ChangeCommunityRoleResponse
     | ToggleMuteCommunityNotificationsResponse
@@ -1252,7 +1813,33 @@ export type WorkerResponseInner =
     | MarkDeployedResponse
     | ProposedResponse
     | PendingDeploymentResponse
-    | JoinVideoCallResponse;
+    | JoinVideoCallResponse
+    | CkbtcMinterDepositInfo
+    | WebAuthnKeyFull
+    | GenerateMagicLinkResponse
+    | SiwePrepareLoginResponse
+    | SiwsPrepareLoginResponse
+    | SetVideoCallPresenceResponse
+    | VideoCallParticipantsResponse
+    | SetPinNumberResponse
+    | ClaimDailyChitResponse
+    | ChitLeaderboardResponse
+    | ChitEventsResponse
+    | SubmitProofOfUniquePersonhoodResponse
+    | AuthenticationPrincipalsResponse
+    | ExternalAchievement[]
+    | MessageActivityFeedResponse
+    | ExploreBotsResponse
+    | BotDefinitionResponse
+    | BotCommandResponse
+    | PayForStreakInsuranceResponse
+    | FullWebhookDetails
+    | AccountLinkingCode
+    | VerifyAccountLinkingCodeResponse
+    | FinaliseAccountLinkingResponse
+    | PayForPremiumItemResponse
+    | OneSecTransferFees[]
+    | OneSecForwardingStatus;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -1311,7 +1898,7 @@ type ClaimPrize = {
 
 type PayForDiamondMembership = {
     userId: string;
-    token: string;
+    ledger: string;
     duration: DiamondMembershipDuration;
     recurring: boolean;
     expectedPriceE8s: bigint;
@@ -1349,6 +1936,7 @@ type ApproveTransfer = {
     ledger: string;
     amount: bigint;
     expiresIn: bigint | undefined;
+    pin: string | undefined;
     kind: "approveTransfer";
 };
 
@@ -1454,7 +2042,7 @@ type UpdateCommunity = {
     permissions?: Partial<CommunityPermissions>;
     avatar?: Uint8Array;
     banner?: Uint8Array;
-    gate?: AccessGate;
+    gateConfig?: AccessGateConfig;
     isPublic?: boolean;
     primaryLanguage?: string;
 };
@@ -1481,6 +2069,7 @@ type UpdateRegistry = {
 type SetMemberDisplayName = {
     communityId: string;
     displayName: string | undefined;
+    newAchievement: boolean;
     kind: "setMemberDisplayName";
 };
 
@@ -1488,10 +2077,12 @@ type FollowThread = {
     chatId: ChatIdentifier;
     threadRootMessageIndex: number;
     follow: boolean;
+    newAchievement: boolean;
     kind: "followThread";
 };
 
 type SubmitProposal = {
+    currentUserId: string;
     governanceCanisterId: string;
     proposal: CandidateProposal;
     ledger: string;
@@ -1524,6 +2115,8 @@ type AcceptP2PSwap = {
     chatId: ChatIdentifier;
     threadRootMessageIndex: number | undefined;
     messageId: bigint;
+    pin: string | undefined;
+    newAchievement: boolean;
     kind: "acceptP2PSwap";
 };
 
@@ -1534,8 +2127,39 @@ type CancelP2PSwap = {
     kind: "cancelP2PSwap";
 };
 
+type SetPinNumber = {
+    verification: Verification;
+    newPin: string | undefined;
+    kind: "setPinNumber";
+};
+
+type ClaimDailyChit = {
+    kind: "claimDailyChit";
+    utcOffsetMins: number | undefined;
+};
+
+type ChitLeaderboard = {
+    kind: "chitLeaderboard";
+};
+
+type CancelInvites = {
+    kind: "cancelInvites";
+    id: MultiUserChatIdentifier | CommunityIdentifier;
+    userIds: string[];
+};
+
+export type ConnectToWorkerResponse = GetOpenChatIdentityResponse["kind"];
+
 // prettier-ignore
-export type WorkerResult<T> = T extends PinMessage
+export type WorkerResult<T> = T extends Init
+    ? ConnectToWorkerResponse
+    : T extends SetMinLogLevel
+    ? void
+    : T extends GenerateIdentityChallenge
+    ? GenerateChallengeResponse
+    : T extends CreateOpenChatIdentity
+    ? CreateOpenChatIdentityResponse
+    : T extends PinMessage
     ? PinMessageResponse
     : T extends LoadSavedCryptoAccounts
     ? NamedAccount[]
@@ -1546,7 +2170,9 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends UnpinMessage
     ? UnpinMessageResponse
     : T extends GetUpdates
-    ? UpdatesResult
+    ? UpdatesResult | undefined
+    : T extends GetBots
+    ? BotsResponse
     : T extends GetDeletedDirectMessage
     ? DeletedDirectMessageResponse
     : T extends GetDeletedGroupMessage
@@ -1566,11 +2192,11 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends CreateUserClient
     ? void
     : T extends GetAllCachedUsers
-    ? UserLookup
+    ? UserSummary[]
     : T extends LastOnline
     ? Record<string, number>
     : T extends MarkAsOnline
-    ? void
+    ? MinutesOnline
     : T extends ChatEventsWindow
     ? EventsResponse<ChatEvent>
     : T extends ChatEventsByEventIndex
@@ -1601,6 +2227,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? UnblockUserResponse
     : T extends SetUserAvatar
     ? BlobReference
+    : T extends SetProfileBackground
+    ? BlobReference
     : T extends DeleteGroup
     ? DeleteGroupResponse
     : T extends LeaveGroup
@@ -1628,7 +2256,7 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends ListNervousSystemFunctions
     ? ListNervousSystemFunctionsResponse
     : T extends SendMessage
-    ? [ SendMessageResponse, Message ]
+    ? "accepted" | [ SendMessageResponse, Message ]
     : T extends EditMessage
     ? EditMessageResponse
     : T extends RegisterUser
@@ -1640,9 +2268,7 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends RemoveSub
     ? void
     : T extends InviteUsers
-    ? InviteUsersResponse
-    : T extends InviteUsersToCommunity
-    ? InviteUsersResponse
+    ? boolean
     : T extends RemoveMember
     ? RemoveMemberResponse
     : T extends ChangeRole
@@ -1653,6 +2279,14 @@ export type WorkerResult<T> = T extends PinMessage
     ? GroupChatSummary[]
     : T extends ExploreCommunities
     ? ExploreCommunitiesResponse
+    : T extends ExploreBots
+    ? ExploreBotsResponse
+    : T extends RegisterBot
+    ? boolean
+    : T extends RemoveBot
+    ? boolean
+    : T extends UpdateRegisteredBot
+    ? boolean
     : T extends DismissRecommendations
     ? void
     : T extends GroupInvite
@@ -1672,7 +2306,7 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends GetUser
     ? UserSummary | undefined
     : T extends GetPublicProfile
-    ? PublicProfile
+    ? PublicProfile | undefined
     : T extends SetUsername
     ? SetUsernameResponse
     : T extends SetDisplayName
@@ -1701,13 +2335,23 @@ export type WorkerResult<T> = T extends PinMessage
     ? FreezeGroupResponse
     : T extends UnfreezeGroup
     ? UnfreezeGroupResponse
+    : T extends FreezeCommunity
+    ? FreezeCommunityResponse
+    : T extends UnfreezeCommunity
+    ? UnfreezeCommunityResponse
     : T extends AddHotGroupExclusion
     ? AddHotGroupExclusionResponse
     : T extends RemoveHotGroupExclusion
     ? RemoveHotGroupExclusionResponse
+    : T extends AddRemoveSwapProvider
+    ? boolean
     : T extends AddMessageFilter
     ? boolean
     : T extends RemoveMessageFilter
+    ? boolean
+    : T extends SetAirdropConfig
+    ? boolean
+    : T extends SetTokenEnabled
     ? boolean
     : T extends DeleteFrozenGroup
     ? DeleteFrozenGroupResponse
@@ -1723,12 +2367,16 @@ export type WorkerResult<T> = T extends PinMessage
     ? SetGroupUpgradeConcurrencyResponse
     : T extends SetUserUpgradeConcurrency
     ? SetUserUpgradeConcurrencyResponse
+    : T extends MarkLocalGroupIndexFull
+    ? boolean
     : T extends SetDiamondMembershipFees
     ? boolean
     : T extends StakeNeuronForSubmittingProposals
     ? StakeNeuronForSubmittingProposalsResponse
+    : T extends TopUpNeuronForSubmittingProposals
+    ? TopUpNeuronResponse
     : T extends LoadFailedMessages
-    ? Map< string, Record< number, EventWrapper<Message>>>
+    ? Map< string, Record< string, EventWrapper<Message>>>
     : T extends DeleteFailedMessage
     ? void
     : T extends ClaimPrize
@@ -1741,8 +2389,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? SetMessageReminderResponse
     : T extends CancelMessageReminder
     ? boolean
-    : T extends ReferralLeaderboard
-    ? ReferralLeaderboardResponse
     : T extends ReportMessage
     ? boolean
     : T extends ApproveTransfer
@@ -1817,10 +2463,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? SubmitProposalResponse
     : T extends FollowThread
     ? FollowThreadResponse
-    : T extends GetCachePrimerTimestamps
-    ? Record< string, bigint >
-    : T extends SetCachePrimerTimestamp
-    ? void
     : T extends GetTokenSwaps
     ? Record<string, DexId[]>
     : T extends CanSwap
@@ -1857,8 +2499,120 @@ export type WorkerResult<T> = T extends PinMessage
     ? CancelP2PSwapResponse
     : T extends JoinVideoCall
     ? JoinVideoCallResponse
+    : T extends SetVideoCallPresence
+    ? SetVideoCallPresenceResponse
+    : T extends VideoCallParticipants
+    ? VideoCallParticipantsResponse
     : T extends GetAccessToken
     ? string | undefined
     : T extends GetLocalUserIndexForUser
     ? string
+    : T extends GenerateBtcAddress
+    ? string
+    : T extends GenerateOneSecAddress
+    ? string
+    : T extends UpdateBtcBalance
+    ? boolean
+    : T extends WithdrawBtc
+    ? WithdrawBtcResponse
+    : T extends WithdrawViaOneSec
+    ? WithdrawViaOneSecResponse
+    : T extends GetCkbtcMinterDepositInfo
+    ? CkbtcMinterDepositInfo
+    : T extends GetCkbtcMinterWithdrawalInfo
+    ? CkbtcMinterWithdrawalInfo
+    : T extends CurrentUserWebAuthnKey
+    ? WebAuthnKeyFull | undefined
+    : T extends LookupWebAuthnPubKey
+    ? Uint8Array | undefined
+    : T extends SetCachedWebAuthnKey
+    ? void
+    : T extends GenerateMagicLink
+    ? GenerateMagicLinkResponse
+    : T extends GetSignInWithEmailDelegation
+    ? GetDelegationResponse
+    : T extends SiwePrepareLogin
+    ? SiwePrepareLoginResponse
+    : T extends SiwsPrepareLogin
+    ? SiwsPrepareLoginResponse
+    : T extends LoginWithWallet
+    ? PrepareDelegationResponse
+    : T extends GetDelegationWithWallet
+    ? GetDelegationResponse
+    : T extends SetPinNumber
+    ? SetPinNumberResponse
+    : T extends ClaimDailyChit
+    ? ClaimDailyChitResponse
+    : T extends ChitLeaderboard
+    ? ChitLeaderboardResponse
+    : T extends ChitEventsRequest
+    ? ChitEventsResponse
+    : T extends MarkAchievementsSeen
+    ? void
+    : T extends SubmitProofOfUniquePersonhood
+    ? SubmitProofOfUniquePersonhoodResponse
+    : T extends LinkIdentities
+    ? LinkIdentitiesResponse
+    : T extends RemoveIdentityLink
+    ? RemoveIdentityLinkResponse
+    : T extends GetAuthenticationPrincipals
+    ? AuthenticationPrincipalsResponse
+    : T extends ConfigureWallet
+    ? void
+    : T extends ClearCachedData
+    ? void
+    : T extends SetCommunityReferral
+    ? void
+    : T extends GetExternalAchievements
+    ? ExternalAchievement[]
+    : T extends CancelInvites
+    ? boolean
+    : T extends MessageActivityFeed
+    ? MessageActivityFeedResponse
+    : T extends MarkActivityFeedRead
+    ? void
+    : T extends DeleteUser
+    ? boolean
+    : T extends InstallBot
+    ? boolean
+    : T extends GetBotDefinition
+    ? BotDefinitionResponse
+    : T extends CallBotCommandEndpoint
+    ? BotCommandResponse
+    : T extends UninstallBot
+    ? boolean
+    : T extends UpdateInstalledBot
+    ? boolean
+    : T extends WithdrawFromIcpSwap
+    ? boolean
+    : T extends RegisterWebhook
+    ? FullWebhookDetails | undefined
+    : T extends UpdateWebhook
+    ? boolean
+    : T extends RegenerateWebhook
+    ? string | undefined
+    : T extends DeleteWebhook
+    ? boolean
+    : T extends GetWebhook
+    ? string | undefined
+    : T extends PayForStreakInsurance
+    ? PayForStreakInsuranceResponse
+    : T extends UpdateDirectChatSettings
+    ? boolean
+    : T extends UpdateProposalTallies
+    ? EventWrapper<Message>[]
+    : T extends PayForPremiumItem
+    ? PayForPremiumItemResponse
+    : T extends SetPremiumItemCost
+    ? void
+    : T extends CreateAccountLinkingCode
+    ? AccountLinkingCode | undefined
+    : T extends ReinstateMissedDailyClaims
+    ? boolean
+    : T extends OneSecGetTransferFees
+    ? OneSecTransferFees[]
+    : T extends OneSecForwardEvmToIcp
+    ? OneSecForwardingStatus
+    : T extends OneSecGetForwardingStatus
+    ? OneSecForwardingStatus
     : never;

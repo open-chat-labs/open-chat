@@ -1,19 +1,14 @@
-use ic_cdk::api::call::CallResult;
-use ic_cdk::api::management_canister;
-use ic_cdk::api::management_canister::main::CanisterIdRecord;
+use crate::canister::convert_cdk_error;
+use ic_cdk::management_canister::StartCanisterArgs;
 use tracing::error;
-use types::CanisterId;
+use types::{C2CError, CanisterId};
 
-pub async fn start(canister_id: CanisterId) -> CallResult<()> {
-    management_canister::main::start_canister(CanisterIdRecord { canister_id })
+pub async fn start(canister_id: CanisterId) -> Result<(), C2CError> {
+    ic_cdk::management_canister::start_canister(&StartCanisterArgs { canister_id })
         .await
-        .map_err(|(code, msg)| {
-            error!(
-                %canister_id,
-                error_code = code as u8,
-                error_message = msg.as_str(),
-                "Error calling start_canister"
-            );
-            (code, msg)
+        .map_err(|e| {
+            let error = convert_cdk_error(canister_id, "start_canister", e);
+            error!(?error, "Error calling start_canister");
+            error
         })
 }

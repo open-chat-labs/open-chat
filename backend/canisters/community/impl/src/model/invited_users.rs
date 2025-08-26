@@ -1,5 +1,4 @@
-use candid::Deserialize;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{ChannelId, EventIndex, MessageIndex, TimestampMillis, UserId};
 
@@ -52,5 +51,9 @@ impl InvitedUsers {
 
     pub fn len(&self) -> usize {
         self.users.len()
+    }
+
+    pub fn user_ids(&self) -> impl Iterator<Item = &UserId> {
+        self.users.keys()
     }
 }

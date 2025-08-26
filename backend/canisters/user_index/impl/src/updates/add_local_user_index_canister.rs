@@ -1,38 +1,83 @@
-use crate::guards::caller_is_governance_principal;
-use crate::{mutate_state, read_state, RuntimeState};
-use canister_api_macros::proposal;
+use crate::guards::caller_is_registry_canister;
+use crate::updates::upgrade_user_canister_wasm::upgrade_user_wasm_in_local_user_index;
+use crate::{RuntimeState, mutate_state, read_state};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::api::management_canister::main::CanisterInstallMode;
-use local_user_index_canister::{Event, UserRegistered};
+use ic_cdk::management_canister::{CanisterInfoArgs, CanisterInstallMode};
+use local_user_index_canister::{SetPremiumItemCost, UserDetailsFull, UserIndexEvent};
 use tracing::info;
-use types::{BuildVersion, CanisterId, CanisterWasm};
+use types::{BuildVersion, CanisterId, CanisterWasm, Hash};
+use user_index_canister::ChildCanisterType;
 use user_index_canister::add_local_user_index_canister::{Response::*, *};
-use utils::canister::{install, CanisterToInstall, WasmToInstall};
+use utils::canister::{
+    CanisterToInstall, ChunkedWasmToInstall, WasmToInstall, install, set_controllers, upload_wasm_in_chunks,
+};
 
-#[proposal(guard = "caller_is_governance_principal")]
+#[update(guard = "caller_is_registry_canister", msgpack = true)]
 #[trace]
 async fn add_local_user_index_canister(args: Args) -> Response {
     match read_state(|state| prepare(&args, state)) {
         Ok(result) => {
             let wasm_version = result.canister_wasm.version;
-            match install(CanisterToInstall {
+
+            let canister_info = match ic_cdk::management_canister::canister_info(&CanisterInfoArgs {
                 canister_id: args.canister_id,
-                current_wasm_version: BuildVersion::default(),
-                new_wasm_version: result.canister_wasm.version,
-                new_wasm: WasmToInstall::Default(result.canister_wasm.module),
-                deposit_cycles_if_needed: true,
-                args: result.init_args,
-                mode: CanisterInstallMode::Install,
-                stop_start_canister: false,
+                num_requested_changes: None,
             })
             .await
             {
-                Ok(_) => {
-                    let response = mutate_state(|state| commit(args.canister_id, wasm_version, state));
-                    info!(canister_id = %args.canister_id, "local user index canister added");
-                    response
+                Ok(info) => info,
+                Err(error) => return InternalError(format!("Failed to get canister info: {error:?}")),
+            };
+
+            let controllers = vec![result.this_canister_id];
+            if canister_info.controllers != controllers {
+                if let Err(error) = set_controllers(args.canister_id, controllers).await {
+                    return InternalError(format!("Failed to set controller: {error:?}"));
                 }
-                Err(error) => InternalError(format!("{error:?}")),
+                info!("Updated controllers");
+            }
+
+            if canister_info.module_hash != Some(result.canister_wasm_hash.to_vec()) {
+                let chunks = match upload_wasm_in_chunks(&result.canister_wasm.module, args.canister_id).await {
+                    Ok(chunks) => chunks,
+                    Err(error) => return InternalError(format!("Failed to upload wasm to chunks: {error:?}")),
+                };
+
+                if let Err(error) = install(CanisterToInstall {
+                    canister_id: args.canister_id,
+                    current_wasm_version: BuildVersion::default(),
+                    new_wasm_version: result.canister_wasm.version,
+                    new_wasm: WasmToInstall::Chunked(ChunkedWasmToInstall {
+                        chunks,
+                        wasm_hash: result.canister_wasm_hash,
+                        store_canister_id: args.canister_id,
+                    }),
+                    deposit_cycles_if_needed: true,
+                    args: candid::encode_one(&result.init_args).unwrap(),
+                    mode: CanisterInstallMode::Reinstall,
+                    stop_start_canister: false,
+                })
+                .await
+                {
+                    return InternalError(format!("Failed to install canister: {error:?}"));
+                }
+                info!("Installed wasm");
+            }
+
+            if let Err(error) = upgrade_user_wasm_in_local_user_index(
+                args.canister_id,
+                &result.user_canister_wasm,
+                result.user_canister_wasm_hash,
+                None,
+            )
+            .await
+            {
+                InternalError(format!("Failed to install user canister wasm: {error:?}"))
+            } else {
+                let response = mutate_state(|state| commit(args.canister_id, wasm_version, state));
+                info!(canister_id = %args.canister_id, "local user index canister added");
+                response
             }
         }
         Err(response) => response,
@@ -40,32 +85,46 @@ async fn add_local_user_index_canister(args: Args) -> Response {
 }
 
 struct PrepareResult {
+    this_canister_id: CanisterId,
     canister_wasm: CanisterWasm,
+    canister_wasm_hash: Hash,
+    user_canister_wasm: CanisterWasm,
+    user_canister_wasm_hash: Hash,
     init_args: local_user_index_canister::init::Args,
 }
 
 fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
     if !state.data.local_index_map.contains_key(&args.canister_id) {
+        let canister_wasm = state.data.child_canister_wasms.get(ChildCanisterType::LocalUserIndex);
+
+        let user_canister_wasm = state.data.child_canister_wasms.get(ChildCanisterType::User);
+
         Ok(PrepareResult {
-            canister_wasm: state.data.local_user_index_canister_wasm_for_new_canisters.clone(),
+            this_canister_id: state.env.canister_id(),
+            canister_wasm: canister_wasm.wasm.clone(),
+            canister_wasm_hash: canister_wasm.wasm_hash,
+            user_canister_wasm: user_canister_wasm.wasm.clone(),
+            user_canister_wasm_hash: user_canister_wasm.wasm_hash,
             init_args: local_user_index_canister::init::Args {
-                user_canister_wasm: state.data.user_canister_wasm.clone(),
-                wasm_version: state.data.local_user_index_canister_wasm_for_new_canisters.version,
+                wasm_version: canister_wasm.wasm.version,
                 user_index_canister_id: state.env.canister_id(),
                 group_index_canister_id: state.data.group_index_canister_id,
+                notifications_index_canister_id: state.data.notifications_index_canister_id,
                 identity_canister_id: state.data.identity_canister_id,
-                notifications_canister_id: args.notifications_canister_id,
                 proposals_bot_canister_id: state.data.proposals_bot_canister_id,
                 cycles_dispenser_canister_id: state.data.cycles_dispenser_canister_id,
                 escrow_canister_id: state.data.escrow_canister_id,
                 event_relay_canister_id: state.data.event_store_client.info().event_store_canister_id,
+                online_users_canister_id: state.data.online_users_canister_id,
                 internet_identity_canister_id: state.data.internet_identity_canister_id,
+                website_canister_id: state.data.website_canister_id,
                 video_call_operators: state.data.video_call_operators.clone(),
                 oc_secret_key_der: state
                     .data
                     .oc_key_pair
                     .is_initialised()
                     .then_some(state.data.oc_key_pair.secret_key_der().to_vec()),
+                ic_root_key: state.data.ic_root_key.clone(),
                 test_mode: state.data.test_mode,
             },
         })
@@ -76,21 +135,30 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
 
 fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut RuntimeState) -> Response {
     if state.data.local_index_map.add_index(canister_id, wasm_version) {
-        // We need to initialize the new local user index with all of the existing users
+        // We need to initialize the new local user index with all the existing users
         for user in state.data.users.iter() {
             state.data.user_index_event_sync_queue.push(
                 canister_id,
-                Event::UserRegistered(UserRegistered {
+                UserIndexEvent::SyncExistingUser(UserDetailsFull {
                     user_id: user.user_id,
                     user_principal: user.principal,
                     username: user.username.clone(),
-                    is_bot: user.is_bot,
+                    user_type: user.user_type,
                     referred_by: user.referred_by,
+                    is_platform_moderator: state.data.platform_moderators.contains(&user.user_id),
+                    is_platform_operator: state.data.platform_operators.contains(&user.user_id),
+                    diamond_membership_expires_at: user.diamond_membership_details.expires_at(),
+                    unique_person_proof: user.unique_person_proof.clone(),
                 }),
             )
         }
+        for (item_id, chit_cost) in state.data.premium_items.chit_costs() {
+            state.data.user_index_event_sync_queue.push(
+                canister_id,
+                UserIndexEvent::SetPremiumItemCost(SetPremiumItemCost { item_id, chit_cost }),
+            )
+        }
         crate::jobs::sync_events_to_local_user_index_canisters::try_run_now(state);
-
         Success
     } else {
         AlreadyAdded

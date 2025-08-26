@@ -1,7 +1,7 @@
 [package]
 name = "market_maker_canister_impl"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -12,15 +12,14 @@ crate-type = ["cdylib"]
 [dependencies]
 async-trait = { workspace = true }
 candid = { workspace = true }
-canister_client = { path = "../../../libraries/canister_client" }
 canister_logger = { path = "../../../libraries/canister_logger" }
 canister_state_macros = { path = "../../../libraries/canister_state_macros" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
+constants = { path = "../../../libraries/constants" }
 futures = { workspace = true }
 hex = { workspace = true }
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }
-ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
 icdex_canister = { path = "../../../external_canisters/icdex/api" }
@@ -33,8 +32,6 @@ market_maker_canister = { path = "../api" }
 msgpack = { path = "../../../libraries/msgpack" }
 rand = { workspace = true }
 serde = { workspace = true }
-serde_bytes = { workspace = true }
-serializer = { path = "../../../libraries/serializer" }
 stable_memory = { path = "../../../libraries/stable_memory" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }

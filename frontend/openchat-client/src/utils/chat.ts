@@ -1,98 +1,121 @@
-import { compareUsername, nullUser } from "./user";
-import type {
-    ChatSummary,
-    EventWrapper,
-    GroupChatSummary,
-    MessageContent,
-    ChatEvent,
-    ReplyContext,
-    Reaction,
-    Message,
-    Mention,
-    CandidateGroupChat,
-    PollVotes,
-    PollContent,
-    MemberRole,
-    CryptocurrencyContent,
-    AggregateCommonEvents,
-    Metrics,
-    SendMessageSuccess,
-    TransferSuccess,
-    UserLookup,
-    UserSummary,
-    LocalChatSummaryUpdates,
-    LocalMessageUpdates,
-    LocalReaction,
-    LocalPollVote,
-    CryptocurrencyTransfer,
-    Tally,
-    AccessControlled,
-    HasMembershipRole,
-    MessageContext,
-    MultiUserChatIdentifier,
-    MultiUserChat,
-    ChatListScope,
-    CryptocurrencyDetails,
-    TimelineItem,
-    TipsReceived,
-    ThreadSummary,
-    MessagePermission,
-    ChatPermissions,
-    OptionalChatPermissions,
-    MessagePermissions,
-    OptionalMessagePermissions,
-    OptionUpdate,
-    GovernanceProposalsSubtype,
-} from "openchat-shared";
-import {
-    emptyChatMetrics,
-    nullMembership,
-    ChatMap,
-    MessageMap,
-    isAttachmentContent,
-    applyOptionUpdate,
-    updateFromOptions,
-    defaultOptionalMessagePermissions,
-    defaultOptionalChatPermissions,
-    getContentAsFormattedText,
-    getContentAsText,
-    messageContextsEqual,
-    OPENCHAT_VIDEO_CALL_AVATAR_URL,
-    OPENCHAT_VIDEO_CALL_USER_ID,
-} from "openchat-shared";
-import { distinctBy, groupWhile, toRecordFiltered } from "../utils/list";
-import { areOnSameDay } from "../utils/date";
-import { v1 as uuidv1 } from "uuid";
 import DRange from "drange";
-import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID, userStore } from "../stores/user";
 import Identicon from "identicon.js";
 import md5 from "md5";
-import { rtcConnectionsManager } from "../utils/rtcConnectionsManager";
-import type { UnconfirmedMessages } from "../stores/unconfirmed";
-import type { MessageFormatter } from "./i18n";
-import { get } from "svelte/store";
-import { formatTokens } from "./cryptoFormatter";
-import { currentChatUserIds } from "../stores/chat";
+import type {
+    AccessControlled,
+    AggregateCommonEvents,
+    CandidateGroupChat,
+    ChannelIdentifier,
+    ChannelSummary,
+    ChatEvent,
+    ChatIdentifier,
+    ChatPermissions,
+    ChatSummary,
+    CreatedUser,
+    CryptocurrencyContent,
+    CryptocurrencyDetails,
+    CryptocurrencyTransfer,
+    EventWrapper,
+    ExpiredEventsRange,
+    GroupChatSummary,
+    HasMembershipRole,
+    Immutable,
+    LocalPollVote,
+    LocalReaction,
+    MemberRole,
+    Mention,
+    Message,
+    MessageContent,
+    MessageContext,
+    MessageContextMap,
+    MessageFilter,
+    MessageFormatter,
+    MessagePermission,
+    MessagePermissions,
+    Metrics,
+    MultiUserChat,
+    MultiUserChatIdentifier,
+    NewUnconfirmedMessage,
+    OptionalChatPermissions,
+    OptionalMessagePermissions,
+    OptionUpdate,
+    PollContent,
+    PollVotes,
+    Reaction,
+    ReadonlyMap,
+    SendMessageSuccess,
+    Tally,
+    ThreadIdentifier,
+    ThreadSummary,
+    TimelineItem,
+    TipsReceived,
+    TransferSuccess,
+    UnconfirmedState,
+    UserLookup,
+    UserSummary,
+} from "openchat-shared";
+import {
+    applyOptionUpdate,
+    bigIntMax,
+    chatIdentifiersEqual,
+    defaultChatPermissions,
+    defaultOptionalChatPermissions,
+    defaultOptionalMessagePermissions,
+    emptyChatMetrics,
+    getContentAsFormattedText,
+    getContentAsText,
+    isAttachmentContent,
+    messageContextsEqual,
+    MessageMap,
+    messagePermissionsList,
+    nullMembership,
+    OPENCHAT_BOT_AVATAR_URL,
+    OPENCHAT_BOT_USER_ID,
+    OPENCHAT_VIDEO_CALL_AVATAR_URL,
+    OPENCHAT_VIDEO_CALL_USER_ID,
+    ROLE_MEMBER,
+    ROLE_NONE,
+    ROLE_OWNER,
+    updateFromOptions,
+    type ReadonlySet,
+} from "openchat-shared";
+import {
+    allServerChatsStore,
+    cryptoLookup,
+    currentUserIdStore,
+    currentUserStore,
+    eventIndexesLoadedStore,
+    eventsStore,
+    localUpdates,
+    selectedChatIdStore,
+    selectedChatUserIdsStore,
+    selectedThreadIdStore,
+    threadEventIndexesLoadedStore,
+    threadEventsStore,
+} from "../state";
+import type { LocalTipsReceived, MessageLocalUpdates } from "../state/message/localUpdates";
+import { userStore } from "../state/users/state";
 import type { TypersByKey } from "../stores/typing";
-import { tallyKey } from "../stores/proposalTallies";
+import { areOnSameDay } from "../utils/date";
+import { distinctBy, groupWhile, toRecordFiltered } from "../utils/list";
+import { rtcConnectionsManager } from "../utils/rtcConnectionsManager";
+import { formatTokens } from "./cryptoFormatter";
 import { hasOwnerRights, isPermitted } from "./permissions";
-import { cryptoLookup } from "../stores/crypto";
-import { bigIntMax, messagePermissionsList } from "openchat-shared";
-import type { MessageFilter } from "../stores/messageFilters";
+import { compareUsername, nullUser } from "./user";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 
 export function isPreviewing(chat: ChatSummary): boolean {
-    return chat.membership.role === "none";
+    return chat.membership.role === ROLE_NONE;
+}
+
+export function isLapsed(chat: ChatSummary): boolean {
+    return chat.membership.lapsed;
 }
 
 export function isFrozen(thing: AccessControlled): boolean {
     return thing.frozen;
-}
-
-export function newMessageId(): bigint {
-    return BigInt(parseInt(uuidv1().replace(/-/g, ""), 16));
 }
 
 export function isUpToDate(chat: ChatSummary, events: EventWrapper<ChatEvent>[]): boolean {
@@ -131,13 +154,16 @@ export function getUsersToMakeRtcConnectionsWith(
     myUserId: string,
     chat: ChatSummary,
     events: EventWrapper<ChatEvent>[],
+    blocked: ReadonlySet<string>,
 ): string[] {
     if (chat.kind === "direct_chat") {
-        return [chat.id.userId];
+        return blocked.has(chat.id.userId) ? [] : [chat.id.userId];
     }
 
     const activeUsers = getRecentlyActiveUsers(chat, events, MAX_RTC_CONNECTIONS_PER_CHAT);
-    return activeUsers.has(myUserId) ? Array.from(activeUsers).filter((u) => u !== myUserId) : [];
+    return activeUsers.has(myUserId)
+        ? Array.from(activeUsers).filter((u) => u !== myUserId && !blocked.has(u))
+        : [];
 }
 
 export function makeRtcConnections(
@@ -145,15 +171,19 @@ export function makeRtcConnections(
     chat: ChatSummary,
     events: EventWrapper<ChatEvent>[],
     lookup: UserLookup,
+    blocked: ReadonlySet<string>,
     meteredApiKey: string,
 ): void {
-    const userIds = getUsersToMakeRtcConnectionsWith(myUserId, chat, events);
+    const userIds = getUsersToMakeRtcConnectionsWith(myUserId, chat, events, blocked);
     if (userIds.length === 0) return;
 
     userIds
-        .map((u) => lookup[u])
-        .filter((user) => user.kind === "user" && !rtcConnectionsManager.exists(user.userId))
-        .map((user) => user.userId)
+        .reduce((ids, id) => {
+            if (lookup.get(id)?.kind === "user") {
+                ids.push(id);
+            }
+            return ids;
+        }, [] as string[])
         .forEach((userId) => {
             rtcConnectionsManager.create(myUserId, userId, meteredApiKey);
         });
@@ -178,8 +208,10 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
         case "group_chat_created":
             return event.created_by;
         case "members_added":
+        case "bot_added":
             return event.addedBy;
         case "members_removed":
+        case "bot_removed":
             return event.removedBy;
         case "users_blocked":
             return event.blockedBy;
@@ -190,8 +222,9 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
         case "message_unpinned":
             return event.unpinnedBy;
         case "events_ttl_updated":
-            return event.updatedBy;
+        case "external_url_updated":
         case "gate_updated":
+        case "bot_updated":
             return event.updatedBy;
         case "users_invited":
             return event.invitedBy;
@@ -232,7 +265,7 @@ export function getMembersString(
         return `${memberIds.length} members`;
     }
     const sorted = memberIds
-        .map((id) => userLookup[id] ?? nullUser(unknownUser))
+        .map((id) => userLookup.get(id) ?? nullUser(unknownUser))
         .sort(compareUsersFn ?? compareUsername)
         .map((p) => `**${p.userId === user.userId ? you : p.displayName ?? p.username}**`);
 
@@ -243,24 +276,29 @@ export function getMembersString(
 }
 
 export function createMessage(
-    userId: string,
-    messageIndex: number,
-    content: MessageContent,
-    replyingTo: ReplyContext | undefined,
-    forwarded: boolean,
-): Message {
+    context: MessageContext,
+    message: NewUnconfirmedMessage,
+): EventWrapper<Message> {
+    const [eventIndex, messageIndex] = nextEventAndMessageIndex(context);
     return {
-        kind: "message",
-        content,
-        sender: userId,
-        repliesTo: replyingTo,
-        messageId: newMessageId(),
-        messageIndex,
-        reactions: [],
-        tips: {},
-        edited: false,
-        forwarded,
-        deleted: false,
+        event: {
+            kind: "message",
+            messageId: message.messageId,
+            messageIndex,
+            sender: message.sender,
+            content: message.content,
+            repliesTo: message.repliesTo,
+            reactions: [],
+            tips: {},
+            edited: false,
+            forwarded: message.forwarded,
+            deleted: false,
+            blockLevelMarkdown: message.blockLevelMarkdown,
+            senderContext: message.senderContext,
+        },
+        timestamp: message.timestamp,
+        index: eventIndex,
+        expiresAt: message.expiresAt,
     };
 }
 
@@ -269,7 +307,8 @@ function messageMentionsUser(
     userId: string,
     msg: EventWrapper<Message>,
 ): boolean {
-    const txt = getContentAsFormattedText(formatter, msg.event.content, get(cryptoLookup));
+    if (msg.event.sender === userId) return false;
+    const txt = getContentAsFormattedText(formatter, msg.event.content, cryptoLookup.value);
     return txt.indexOf(`@UserId(${userId})`) >= 0;
 }
 
@@ -284,160 +323,75 @@ function mentionsFromMessages(
                 messageId: msg.event.messageId,
                 messageIndex: msg.event.messageIndex,
                 eventIndex: msg.index,
-                mentionedBy: msg.event.sender,
             });
         }
         return mentions;
     }, [] as Mention[]);
 }
 
-export function mergeUnconfirmedThreadsIntoSummary(
-    chat: GroupChatSummary,
-    unconfirmed: UnconfirmedMessages,
-): GroupChatSummary {
+export function mergeUnconfirmedThreadsIntoSummary<T extends GroupChatSummary | ChannelSummary>(
+    chat: T,
+) {
     if (chat.membership === undefined) return chat;
-    return {
-        ...chat,
-        membership: {
-            ...chat.membership,
-            latestThreads: chat.membership.latestThreads.map((t) => {
-                const context = {
-                    chatId: chat.id,
-                    threadRootMessageIndex: t.threadRootMessageIndex,
-                };
-                const unconfirmedMsgs = unconfirmed.get(context)?.messages ?? [];
-                if (unconfirmedMsgs.length > 0) {
-                    let msgIdx = t.latestMessageIndex;
-                    let evtIdx = t.latestEventIndex;
-                    const latestUnconfirmedMessage = unconfirmedMsgs[unconfirmedMsgs.length - 1];
-                    if (latestUnconfirmedMessage.event.messageIndex > msgIdx) {
-                        msgIdx = latestUnconfirmedMessage.event.messageIndex;
-                    }
-                    if (latestUnconfirmedMessage.index > evtIdx) {
-                        evtIdx = latestUnconfirmedMessage.index;
-                    }
-                    return {
-                        ...t,
-                        latestEventIndex: evtIdx,
-                        latestMessageIndex: msgIdx,
-                    };
+    chat.membership = {
+        ...chat.membership,
+        latestThreads: chat.membership.latestThreads.map((t) => {
+            const context = {
+                chatId: chat.id,
+                threadRootMessageIndex: t.threadRootMessageIndex,
+            };
+            const unconfirmedMsgs = localUpdates.unconfirmedMessages(context);
+            if (unconfirmedMsgs.length > 0) {
+                let msgIdx = t.latestMessageIndex;
+                let evtIdx = t.latestEventIndex;
+                const latestUnconfirmedMessage = unconfirmedMsgs[unconfirmedMsgs.length - 1];
+                if (latestUnconfirmedMessage.event.messageIndex > msgIdx) {
+                    msgIdx = latestUnconfirmedMessage.event.messageIndex;
                 }
-                return t;
-            }),
-        },
+                if (latestUnconfirmedMessage.index > evtIdx) {
+                    evtIdx = latestUnconfirmedMessage.index;
+                }
+                return {
+                    ...t,
+                    latestEventIndex: evtIdx,
+                    latestMessageIndex: msgIdx,
+                };
+            }
+            return t;
+        }),
     };
 }
 
-function scopeMatchesChat(scope: ChatListScope, chat: ChatSummary): boolean {
-    switch (scope.kind) {
-        case "community":
-            return chat.kind === "channel" && chat.id.communityId === scope.id.communityId;
-        case "group_chat":
-            return chat.kind === "group_chat";
-        case "direct_chat":
-            return chat.kind === "direct_chat";
-        case "favourite":
-            return false;
-        default:
-            return true;
-    }
-}
-
-export function mergeLocalSummaryUpdates(
-    scope: ChatListScope,
-    server: ChatMap<ChatSummary>,
-    localUpdates: ChatMap<LocalChatSummaryUpdates>,
-): ChatMap<ChatSummary> {
-    if (Object.keys(localUpdates).length === 0) return server;
-
-    const merged = server.clone();
-
-    for (const [chatId, localUpdate] of localUpdates.entries()) {
-        if (localUpdate.added !== undefined && scopeMatchesChat(scope, localUpdate.added)) {
-            const current = merged.get(chatId);
-            if (current === undefined || (current.kind === "group_chat" && isPreviewing(current))) {
-                merged.set(chatId, localUpdate.added);
-            }
-        }
-        if (localUpdate.updated !== undefined) {
-            const current = merged.get(chatId);
-            const updated = localUpdate.updated;
-            if (current !== undefined) {
-                if (updated.kind === undefined) {
-                    merged.set(chatId, {
-                        ...current,
-                        membership: {
-                            ...current.membership,
-                            notificationsMuted:
-                                updated.notificationsMuted ?? current.membership.notificationsMuted,
-                            archived: updated.archived ?? current.membership.archived,
-                            rulesAccepted:
-                                updated.rulesAccepted ?? current.membership.rulesAccepted,
-                        },
-                    });
-                } else if (current.kind === "group_chat" && updated.kind === "group_chat") {
-                    merged.set(chatId, {
-                        ...current,
-                        name: updated.name ?? current.name,
-                        description: updated.description ?? current.description,
-                        public: updated.public ?? current.public,
-                        permissions: mergePermissions(current.permissions, updated.permissions),
-                        gate: {
-                            ...current.gate,
-                            ...updated.gate,
-                        },
-                        membership: {
-                            ...current.membership,
-                            notificationsMuted:
-                                updated.notificationsMuted ?? current.membership.notificationsMuted,
-                            archived: updated.archived ?? current.membership.archived,
-                        },
-                        eventsTTL: updated.eventsTTL
-                            ? updated.eventsTTL === "set_to_none"
-                                ? undefined
-                                : updated.eventsTTL.value
-                            : current.eventsTTL,
-                    });
-                }
-            }
-        }
-        if (localUpdate.removedAtTimestamp) {
-            const chat = merged.get(chatId);
-            if (
-                chat !== undefined &&
-                ((chat.kind === "direct_chat" &&
-                    chat.dateCreated < localUpdate.removedAtTimestamp) ||
-                    ((chat.kind === "group_chat" || chat.kind === "channel") &&
-                        (chat.membership?.joined ?? BigInt(0)) < localUpdate.removedAtTimestamp))
-            ) {
-                merged.delete(chatId);
-            }
-        }
-    }
-
-    return merged;
-}
-
 export function mergeUnconfirmedIntoSummary(
+    chatSummary: Immutable<ChatSummary>,
     formatter: MessageFormatter,
-    userId: string,
-    chatSummary: ChatSummary,
-    unconfirmed: UnconfirmedMessages,
-    localUpdates: MessageMap<LocalMessageUpdates>,
-    translations: MessageMap<string>,
-    blockedUsers: Set<string>,
     currentUserId: string,
+    localMessageUpdates: MessageMap<MessageLocalUpdates>,
+    blockedUsers: Set<string>,
     messageFilters: MessageFilter[],
-): ChatSummary {
-    if (chatSummary.membership === undefined) return chatSummary;
+    unconfirmed: MessageContextMap<UnconfirmedState>,
+) {
+    const chatSummaryReadonly = chatSummary.value();
+    if (chatSummaryReadonly.membership === undefined) return;
 
-    const unconfirmedMessages = unconfirmed.get({ chatId: chatSummary.id })?.messages;
+    // const unconfirmedMessages = localUpdates.unconfirmedMessages({ chatId: chatSummary.id });
+    const unconfirmedState = unconfirmed.get({ chatId: chatSummaryReadonly.id });
+    const unconfirmedMessages = unconfirmedState ? [...unconfirmedState.values()] : [];
 
-    let latestMessage = chatSummary.latestMessage;
-    let latestEventIndex = chatSummary.latestEventIndex;
-    let mentions = chatSummary.membership.mentions ?? [];
+    let latestMessage = chatSummaryReadonly.latestMessage;
+    let latestEventIndex = chatSummaryReadonly.latestEventIndex;
+    let mentions = chatSummaryReadonly.membership.mentions ?? [];
+    let anyUpdates = false;
+
     if (unconfirmedMessages != undefined && unconfirmedMessages.length > 0) {
-        const incomingMentions = mentionsFromMessages(formatter, userId, unconfirmedMessages);
+        const incomingMentions = mentionsFromMessages(
+            formatter,
+            currentUserId,
+            unconfirmedMessages,
+        );
+        if (incomingMentions.length > 0) {
+            anyUpdates = true;
+        }
         mentions = mergeMentions(mentions, incomingMentions);
         const latestUnconfirmedMessage = unconfirmedMessages[unconfirmedMessages.length - 1];
         if (
@@ -445,69 +399,57 @@ export function mergeUnconfirmedIntoSummary(
             latestUnconfirmedMessage.timestamp > latestMessage.timestamp
         ) {
             latestMessage = latestUnconfirmedMessage;
+            anyUpdates = true;
         }
         if (latestUnconfirmedMessage.index > latestEventIndex) {
             latestEventIndex = latestUnconfirmedMessage.index;
+            anyUpdates = true;
         }
     }
     if (latestMessage !== undefined) {
-        const updates = localUpdates.get(latestMessage.event.messageId);
-        const translation = translations.get(latestMessage.event.messageId);
+        const updates = localMessageUpdates.get(latestMessage.event.messageId);
         const senderBlocked = blockedUsers.has(latestMessage.event.sender);
 
         // Don't hide the sender's own messages
         const failedMessageFilter =
             latestMessage.event.sender !== currentUserId
-                ? doesMessageFailFilter(latestMessage.event, messageFilters) !== undefined
+                ? doesMessageFailFilter(latestMessage.event.content, messageFilters) !== undefined
                 : false;
 
-        if (
-            updates !== undefined ||
-            translation !== undefined ||
-            senderBlocked ||
-            failedMessageFilter
-        ) {
+        if (updates !== undefined || senderBlocked || failedMessageFilter) {
             latestMessage = {
                 ...latestMessage,
                 event: mergeLocalUpdates(
-                    latestMessage.event,
+                    { ...latestMessage.event },
                     updates,
                     undefined,
                     undefined,
-                    translation,
+                    undefined,
                     undefined,
                     senderBlocked,
                     false,
                     failedMessageFilter,
                 ),
             };
+            anyUpdates = true;
         }
     }
 
-    if (chatSummary.kind === "group_chat") {
-        if (unconfirmedMessages !== undefined) {
-            chatSummary = mergeUnconfirmedThreadsIntoSummary(chatSummary, unconfirmed);
-        }
-        return {
-            ...chatSummary,
-            latestMessage,
-            latestEventIndex,
-            membership: {
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                ...chatSummary.membership!,
-                mentions,
-            },
-        };
-    } else {
-        return {
-            ...chatSummary,
-            latestMessage,
-            latestEventIndex,
-        };
+    if (anyUpdates) {
+        chatSummary.update((c) => {
+            if (c.kind !== "direct_chat") {
+                if (unconfirmedMessages !== undefined) {
+                    mergeUnconfirmedThreadsIntoSummary(c);
+                }
+                c.membership.mentions = mentions;
+            }
+            c.latestMessage = latestMessage;
+            c.latestEventIndex = latestEventIndex;
+        });
     }
 }
 
-function mergePermissions(
+export function mergePermissions(
     current: ChatPermissions,
     updated?: OptionalChatPermissions,
 ): ChatPermissions {
@@ -519,6 +461,7 @@ function mergePermissions(
         changeRoles: updated.changeRoles ?? current.changeRoles,
         updateGroup: updated.updateGroup ?? current.updateGroup,
         inviteUsers: updated.inviteUsers ?? current.inviteUsers,
+        addMembers: updated.addMembers ?? current.addMembers,
         removeMembers: updated.removeMembers ?? current.removeMembers,
         deleteMessages: updated.deleteMessages ?? current.deleteMessages,
         pinMessages: updated.pinMessages ?? current.pinMessages,
@@ -530,7 +473,7 @@ function mergePermissions(
             updated.messagePermissions,
         ),
         threadPermissions: mergeThreadPermissions(
-            current.threadPermissions ?? { default: "member" },
+            current.threadPermissions ?? { default: ROLE_MEMBER },
             updated.threadPermissions,
         ),
     };
@@ -602,25 +545,21 @@ export function groupBySender<T extends ChatEvent>(events: EventWrapper<T>[]): E
 export function groupEvents(
     events: EventWrapper<ChatEvent>[],
     myUserId: string,
-    expandedDeletedMessages: Set<number>,
-    reverse: boolean,
+    isPublicChannel: boolean,
+    expandedDeletedMessages: ReadonlySet<number>,
     groupInner?: (events: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[][],
 ): TimelineItem<ChatEvent>[] {
     return flattenTimeline(
         groupWhile(
             sameDate,
-            events.filter((e) => !isEventKindHidden(e.event.kind)),
+            events.filter((e) => !isEventKindHidden(e.event.kind, isPublicChannel)),
         )
-            .map((e) => reduceJoinedOrLeft(e, myUserId, expandedDeletedMessages))
+            .map((e) => reduceJoinedOrLeft(e, myUserId, isPublicChannel, expandedDeletedMessages))
             .map(groupInner ?? groupBySender),
-        reverse,
     );
 }
 
-export function flattenTimeline(
-    grouped: EventWrapper<ChatEvent>[][][],
-    reverse: boolean,
-): TimelineItem<ChatEvent>[] {
+export function flattenTimeline(grouped: EventWrapper<ChatEvent>[][][]): TimelineItem<ChatEvent>[] {
     const timeline: TimelineItem<ChatEvent>[] = [];
     grouped.forEach((dayGroup) => {
         const date: TimelineItem<ChatEvent> = {
@@ -631,16 +570,12 @@ export function flattenTimeline(
             kind: "timeline_event_group",
             group: dayGroup,
         };
-        if (reverse) {
-            timeline.push(group, date);
-        } else {
-            timeline.push(date, group);
-        }
+        timeline.push(group, date);
     });
     return timeline;
 }
 
-export function isEventKindHidden(kind: ChatEvent["kind"]): boolean {
+export function isEventKindHidden(kind: ChatEvent["kind"], isPublicChannel: boolean): boolean {
     switch (kind) {
         case "empty":
         case "message_pinned":
@@ -648,6 +583,9 @@ export function isEventKindHidden(kind: ChatEvent["kind"]): boolean {
         case "member_left":
         case "members_added_to_default_channel":
             return true;
+
+        case "member_joined":
+            return isPublicChannel;
 
         default:
             return false;
@@ -657,7 +595,8 @@ export function isEventKindHidden(kind: ChatEvent["kind"]): boolean {
 function reduceJoinedOrLeft(
     events: EventWrapper<ChatEvent>[],
     myUserId: string,
-    expandedDeletedMessages: Set<number>,
+    isPublicChannel: boolean,
+    expandedDeletedMessages: ReadonlySet<number>,
 ): EventWrapper<ChatEvent>[] {
     function getLatestAggregateEventIfExists(
         events: EventWrapper<ChatEvent>[],
@@ -668,9 +607,12 @@ function reduceJoinedOrLeft(
     }
 
     return events.reduce((previous: EventWrapper<ChatEvent>[], e: EventWrapper<ChatEvent>) => {
+        let newEvent = e;
+
         if (
-            isEventKindHidden(e.event.kind) ||
+            isEventKindHidden(e.event.kind, isPublicChannel) ||
             e.event.kind === "member_joined" ||
+            e.event.kind === "role_changed" ||
             (e.event.kind === "message" &&
                 messageIsHidden(e.event, myUserId, expandedDeletedMessages))
         ) {
@@ -680,6 +622,7 @@ function reduceJoinedOrLeft(
                     kind: "aggregate_common_events",
                     usersJoined: new Set(),
                     usersLeft: new Set(),
+                    rolesChanged: new Map(),
                     messagesDeleted: [],
                 };
             } else {
@@ -700,22 +643,54 @@ function reduceJoinedOrLeft(
                 }
             } else if (e.event.kind === "message") {
                 agg.messagesDeleted.push(e.event.messageIndex);
+            } else if (e.event.kind === "role_changed") {
+                let changedByMap = agg.rolesChanged.get(e.event.changedBy);
+
+                if (changedByMap === undefined) {
+                    changedByMap = new Map();
+                    agg.rolesChanged.set(e.event.changedBy, changedByMap);
+                }
+
+                // Build the set of users that have already had their role changed
+                const alreadyChanged = new Set(
+                    [...changedByMap.values()].flatMap((users) => Array.from(users)),
+                );
+
+                // Only add users who have not already had their role changed
+                const usersToAdd = e.event.userIds.filter((userId) => !alreadyChanged.has(userId));
+
+                if (usersToAdd.length > 0) {
+                    let newRoleSet = changedByMap.get(e.event.newRole);
+
+                    if (newRoleSet === undefined) {
+                        newRoleSet = new Set();
+                        changedByMap.set(e.event.newRole, newRoleSet);
+                    }
+
+                    for (const userId of usersToAdd) {
+                        newRoleSet.add(userId);
+                    }
+                }
             }
 
-            previous.push({
+            newEvent = {
                 event: agg,
                 timestamp: e.timestamp,
                 index: e.index,
-            });
-        } else {
-            previous.push(e);
+            };
         }
+
+        previous.push(newEvent);
 
         return previous;
     }, []);
 }
 
-function messageIsHidden(message: Message, myUserId: string, expandedDeletedMessages: Set<number>) {
+function messageIsHidden(
+    message: Message,
+    myUserId: string,
+    expandedDeletedMessages: ReadonlySet<number>,
+) {
     if (message.content.kind === "message_reminder_created_content" && message.content.hidden) {
         return true;
     }
@@ -730,10 +705,7 @@ function messageIsHidden(message: Message, myUserId: string, expandedDeletedMess
 }
 
 export function groupMessagesByDate(events: EventWrapper<Message>[]): EventWrapper<Message>[][] {
-    return groupWhile(
-        sameDate,
-        events.filter((e) => !isEventKindHidden(e.event.kind)),
-    );
+    return groupWhile(sameDate, events);
 }
 
 export function getNextEventAndMessageIndexes(
@@ -792,6 +764,22 @@ export function mergeServerEvents(
     return merged;
 }
 
+export function updateExistingMessages(
+    events: EventWrapper<ChatEvent>[],
+    updatedMessages: EventWrapper<Message>[],
+) {
+    const updatedMessagesMap = new Map(updatedMessages.map((m) => [m.event.messageIndex, m.event]));
+    for (const event of events) {
+        if (event.event.kind === "message") {
+            const updatedMessage = updatedMessagesMap.get(event.event.messageIndex);
+            if (updatedMessage) {
+                event.event = updatedMessage;
+            }
+        }
+    }
+    return events;
+}
+
 function updateReplyContexts(
     events: EventWrapper<ChatEvent>[],
     newEvents: EventWrapper<ChatEvent>[],
@@ -832,6 +820,28 @@ function updateReplyContexts(
     }
 }
 
+function createMessageSortFunction(
+    unconfirmed: Set<bigint>,
+    recentlySent: MessageMap<bigint>,
+): (a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>) => number {
+    return (a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): number => {
+        // If either message is still unconfirmed, and both were sent recently, use both of their local timestamps,
+        // otherwise we will be comparing the local timestamp of one with the server timestamp of the other
+        if (a.event.kind === "message" && b.event.kind === "message") {
+            if (unconfirmed.has(a.event.messageId) || unconfirmed.has(b.event.messageId)) {
+                const aTimestampOverride = recentlySent.get(a.event.messageId);
+                const bTimestampOverride = recentlySent.get(b.event.messageId);
+
+                if (aTimestampOverride && bTimestampOverride) {
+                    return aTimestampOverride > bTimestampOverride ? 1 : -1;
+                }
+            }
+        }
+
+        return sortByTimestampThenEventIndex(a, b);
+    };
+}
+
 function sortByTimestampThenEventIndex(
     a: EventWrapper<ChatEvent>,
     b: EventWrapper<ChatEvent>,
@@ -840,26 +850,23 @@ function sortByTimestampThenEventIndex(
     return Number(a.timestamp - b.timestamp);
 }
 
-export function serialiseMessageForRtc(messageEvent: EventWrapper<Message>): EventWrapper<Message> {
-    if (isAttachmentContent(messageEvent.event.content)) {
+export function serialiseMessageForRtc(message: NewUnconfirmedMessage): NewUnconfirmedMessage {
+    if (isAttachmentContent(message.content)) {
         return {
-            ...messageEvent,
-            event: {
-                ...messageEvent.event,
-                content: {
-                    kind: "placeholder_content",
-                },
+            ...message,
+            content: {
+                kind: "placeholder_content",
             },
         };
     }
-    return messageEvent;
+    return message;
 }
 
 export function groupChatFromCandidate(
     chatId: MultiUserChatIdentifier,
     candidate: CandidateGroupChat,
 ): MultiUserChat {
-    return {
+    const chat = {
         kind: chatId.kind,
         id: chatId,
         latestEventIndex: 0,
@@ -871,7 +878,7 @@ export function groupChatFromCandidate(
         minVisibleEventIndex: 0,
         minVisibleMessageIndex: 0,
         lastUpdated: BigInt(0),
-        memberCount: candidate.members.length + 1, // +1 to include us
+        memberCount: 1,
         ...candidate.avatar,
         permissions: candidate.permissions,
         metrics: emptyChatMetrics(),
@@ -880,15 +887,21 @@ export function groupChatFromCandidate(
         frozen: false,
         dateLastPinned: undefined,
         dateReadPinned: undefined,
-        gate: candidate.gate,
+        gateConfig: candidate.gateConfig,
         level: "group",
         membership: {
             ...nullMembership(),
             joined: BigInt(Date.now()),
-            role: "owner",
+            role: ROLE_OWNER,
         },
         eventsTTL: candidate.eventsTTL,
     } as MultiUserChat;
+
+    if (chat.kind === "channel") {
+        chat.externalUrl = candidate.externalUrl;
+    }
+
+    return chat;
 }
 
 function updatePollContent(content: PollContent, votes: LocalPollVote[]): PollContent {
@@ -995,7 +1008,7 @@ export function canChangeRoles(
     }
 
     switch (newRole) {
-        case "owner":
+        case ROLE_OWNER:
             return hasOwnerRights(chat.membership.role);
         default:
             return isPermitted(chat.membership.role, chat.permissions.changeRoles);
@@ -1004,11 +1017,7 @@ export function canChangeRoles(
 
 export function canRemoveMembers(chat: ChatSummary): boolean {
     if (chat.kind !== "direct_chat") {
-        return (
-            !chat.public &&
-            !chat.frozen &&
-            isPermitted(chat.membership.role, chat.permissions.removeMembers)
-        );
+        return !chat.frozen && isPermitted(chat.membership.role, chat.permissions.removeMembers);
     } else {
         return false;
     }
@@ -1054,14 +1063,12 @@ export function canEditGroupDetails(chat: ChatSummary): boolean {
     }
 }
 
-export function canStartVideoCalls(chat: ChatSummary): boolean {
-    if (chat.kind !== "direct_chat") {
-        return (
-            !chat.frozen &&
-            isPermitted(chat.membership.role, chat.permissions.startVideoCall)
-        );
+export function canStartVideoCalls(chat: ChatSummary, userLookup: UserLookup): boolean {
+    if (chat.kind === "direct_chat") {
+        const user = userLookup.get(chat.them.userId);
+        return user !== undefined && user.kind === "user";
     } else {
-        return true;
+        return !chat.frozen && isPermitted(chat.membership.role, chat.permissions.startVideoCall);
     }
 }
 
@@ -1077,37 +1084,55 @@ export function canInviteUsers(chat: ChatSummary): boolean {
     return (
         chat.kind !== "direct_chat" &&
         !chat.frozen &&
-        (chat.public || isPermitted(chat.membership.role, chat.permissions.inviteUsers))
+        isPermitted(chat.membership.role, chat.permissions.inviteUsers)
+    );
+}
+
+export function canAddMembers(chat: ChatSummary): boolean {
+    return (
+        chat.kind === "channel" &&
+        !chat.frozen &&
+        isPermitted(chat.membership.role, chat.permissions.addMembers)
     );
 }
 
 export function permittedMessagesInGroup(
+    user: CreatedUser,
     chat: MultiUserChat,
     mode: "message" | "thread",
 ): Map<MessagePermission, boolean> {
     return new Map(
         messagePermissionsList.map((m: MessagePermission) => [
             m,
-            canSendGroupMessage(chat, mode, m),
+            canSendGroupMessage(user, chat, mode, m),
         ]),
     );
 }
 
+const PERMISSIONS_BLOCKED_FOR_NEW_USERS: MessagePermission[] = [
+    "audio",
+    "file",
+    "giphy",
+    "image",
+    "video",
+];
+
 export function canSendGroupMessage(
+    user: CreatedUser,
     chat: MultiUserChat,
     mode: "message" | "thread" | "any",
     permission?: MessagePermission,
 ): boolean {
     if (mode === "any") {
         return (
-            canSendGroupMessage(chat, "message", permission) ||
-            canSendGroupMessage(chat, "thread", permission)
+            canSendGroupMessage(user, chat, "message", permission) ||
+            canSendGroupMessage(user, chat, "thread", permission)
         );
     }
 
     if (permission === undefined) {
         return messagePermissionsList.some((mp: MessagePermission) =>
-            canSendGroupMessage(chat, mode, mp as MessagePermission),
+            canSendGroupMessage(user, chat, mode, mp as MessagePermission),
         );
     }
 
@@ -1120,6 +1145,17 @@ export function canSendGroupMessage(
         return false;
     }
 
+    if (
+        chat.public &&
+        user.diamondStatus.kind === "inactive" &&
+        PERMISSIONS_BLOCKED_FOR_NEW_USERS.includes(permission)
+    ) {
+        const isNewUser = Date.now() - Number(user.dateCreated) < 24 * 60 * 60 * 1000; // 1 day
+        if (isNewUser) {
+            return false;
+        }
+    }
+
     return (
         !chat.frozen &&
         isPermitted(
@@ -1127,6 +1163,38 @@ export function canSendGroupMessage(
             messagePermissions[permission] ?? messagePermissions.default,
         )
     );
+}
+
+function toSet(map: Map<MessagePermission, boolean>): Set<MessagePermission> {
+    return [...map.entries()].reduce((s, [k, v]) => {
+        if (v) {
+            s.add(k);
+        }
+        return s;
+    }, new Set<MessagePermission>());
+}
+
+export function getMessagePermissionsForSelectedChat(
+    chat: ChatSummary | undefined,
+    mode: "thread" | "message",
+): Set<MessagePermission> {
+    if (chat !== undefined) {
+        if (chat.kind === "direct_chat") {
+            const recipient = userStore.get(chat.them.userId);
+            if (recipient !== undefined) {
+                return toSet(
+                    permittedMessagesInDirectChat(
+                        recipient,
+                        mode,
+                        import.meta.env.OC_PROPOSALS_BOT_CANISTER!,
+                    ),
+                );
+            }
+        } else {
+            return toSet(permittedMessagesInGroup(currentUserStore.value, chat, mode));
+        }
+    }
+    return new Set();
 }
 
 export function permittedMessagesInDirectChat(
@@ -1185,7 +1253,7 @@ export function canMentionAllMembers(chat: ChatSummary): boolean {
 export function canLeaveGroup(thing: AccessControlled & HasMembershipRole): boolean {
     if (!thing.frozen) {
         // TODO - this is not really correct - you should be able to leave if you are not the *only* owner
-        return thing.membership.role !== "owner";
+        return thing.membership.role !== ROLE_OWNER;
     } else {
         return false;
     }
@@ -1233,11 +1301,14 @@ export function metricsEqual(a: Metrics, b: Metrics): boolean {
 
 export function canForward(content: MessageContent): boolean {
     return (
+        content.kind !== "bot_placeholder_content" &&
         content.kind !== "crypto_content" &&
-        content.kind !== "poll_content" &&
         content.kind !== "deleted_content" &&
+        content.kind !== "poll_content" &&
+        content.kind !== "placeholder_content" &&
+        content.kind !== "prize_content" &&
         content.kind !== "proposal_content" &&
-        content.kind !== "placeholder_content"
+        content.kind !== "video_call_content"
     );
 }
 
@@ -1251,15 +1322,25 @@ export function buildUserAvatarUrl(pattern: string, userId: string, avatarId?: b
             : buildIdenticonUrl(userId);
 }
 
+export function buildUserBackgroundUrl(
+    pattern: string,
+    userId: string,
+    backgroundId?: bigint,
+): string | undefined {
+    return backgroundId !== undefined
+        ? buildBlobUrl(pattern, userId, backgroundId, "profile_background")
+        : undefined;
+}
+
 export function buildBlobUrl(
     pattern: string,
     canisterId: string,
     blobId: bigint,
-    blobType: "blobs" | "avatar",
+    blobType: "blobs" | "avatar" | "profile_background",
 ): string {
     return `${pattern
         .replace("{canisterId}", canisterId)
-        .replace("{blobType}", blobType)}${blobId}`;
+        .replace("{blobType}", blobType)}/${blobId}`;
 }
 
 export function buildIdenticonUrl(id: string): string {
@@ -1275,12 +1356,21 @@ export function mergeSendMessageResponse(
     msg: Message,
     resp: SendMessageSuccess | TransferSuccess,
 ): EventWrapper<Message> {
+    const content =
+        resp.kind === "transfer_success" && msg.content.kind === "crypto_content"
+            ? {
+                  ...msg.content,
+                  transfer: resp.transfer,
+              }
+            : msg.content;
+
     return {
         index: resp.eventIndex,
         timestamp: resp.timestamp,
         expiresAt: resp.expiresAt,
         event: {
             ...msg,
+            content,
             messageIndex: resp.messageIndex,
         },
     };
@@ -1289,12 +1379,11 @@ export function mergeSendMessageResponse(
 export function mergeEventsAndLocalUpdates(
     events: EventWrapper<ChatEvent>[],
     unconfirmed: EventWrapper<Message>[],
-    localUpdates: MessageMap<LocalMessageUpdates>,
     expiredEventRanges: DRange,
-    proposalTallies: Record<string, Tally>,
     translations: MessageMap<string>,
-    blockedUsers: Set<string>,
-    currentUserId: string,
+    selectedChatBlockedOrSuspendedUsers: Set<string>,
+    messageLocalUpdates: MessageMap<MessageLocalUpdates>,
+    recentlySentMessages: MessageMap<bigint>,
     messageFilters: MessageFilter[],
 ): EventWrapper<ChatEvent>[] {
     const eventIndexes = new DRange();
@@ -1306,7 +1395,7 @@ export function mergeEventsAndLocalUpdates(
 
         if (e.event.kind === "message") {
             confirmedMessageIds.add(e.event.messageId);
-            const updates = localUpdates.get(e.event.messageId);
+            const updates = messageLocalUpdates.get(e.event.messageId);
             const translation = translations.get(e.event.messageId);
 
             const repliesTo =
@@ -1316,28 +1405,21 @@ export function mergeEventsAndLocalUpdates(
 
             const [replyContextUpdates, replyTranslation] =
                 repliesTo !== undefined
-                    ? [localUpdates.get(repliesTo), translations.get(repliesTo)]
+                    ? [messageLocalUpdates.get(repliesTo), translations.get(repliesTo)]
                     : [undefined, undefined];
 
             const tallyUpdate =
-                e.event.content.kind === "proposal_content"
-                    ? proposalTallies[
-                          tallyKey(
-                              e.event.content.governanceCanisterId,
-                              e.event.content.proposal.id,
-                          )
-                      ]
-                    : undefined;
+                e.event.content.kind === "proposal_content" ? updates?.proposalTally : undefined;
 
-            const senderBlocked = blockedUsers.has(e.event.sender);
+            const senderBlocked = selectedChatBlockedOrSuspendedUsers.has(e.event.sender);
             const repliesToSenderBlocked =
                 e.event.repliesTo?.kind === "rehydrated_reply_context" &&
-                blockedUsers.has(e.event.repliesTo.senderId);
+                selectedChatBlockedOrSuspendedUsers.has(e.event.repliesTo.senderId);
 
             // Don't hide the sender's own messages
             const failedMessageFilter =
-                e.event.sender !== currentUserId
-                    ? doesMessageFailFilter(e.event, messageFilters) !== undefined
+                e.event.sender !== currentUserIdStore.value
+                    ? doesMessageFailFilter(e.event.content, messageFilters) !== undefined
                     : false;
 
             if (
@@ -1353,7 +1435,7 @@ export function mergeEventsAndLocalUpdates(
                 return {
                     ...e,
                     event: mergeLocalUpdates(
-                        e.event,
+                        { ...e.event },
                         updates,
                         replyContextUpdates,
                         tallyUpdate,
@@ -1373,7 +1455,7 @@ export function mergeEventsAndLocalUpdates(
     if (unconfirmed.length > 0) {
         unconfirmed.sort(sortByTimestampThenEventIndex);
 
-        let anyAdded = false;
+        const unconfirmedAdded = new Set<bigint>();
         for (const message of unconfirmed) {
             // Only include unconfirmed events that are either contiguous with the loaded confirmed events, or are the
             // first events in a new chat
@@ -1385,11 +1467,12 @@ export function mergeEventsAndLocalUpdates(
                         .some((s) => s.low - 1 <= message.index && message.index <= s.high + 1))
             ) {
                 merged.push(processEvent(message));
-                anyAdded = true;
+                unconfirmedAdded.add(message.event.messageId);
             }
         }
-        if (anyAdded) {
-            merged.sort(sortByTimestampThenEventIndex);
+        if (unconfirmedAdded.size > 0) {
+            const sortFn = createMessageSortFunction(unconfirmedAdded, recentlySentMessages);
+            merged.sort(sortFn);
         }
     }
 
@@ -1397,10 +1480,10 @@ export function mergeEventsAndLocalUpdates(
 }
 
 export function doesMessageFailFilter(
-    message: Message,
+    messageContent: MessageContent,
     filters: MessageFilter[],
 ): bigint | undefined {
-    const text = getContentAsText(message.content);
+    const text = getContentAsText(messageContent);
 
     if (text !== undefined) {
         for (const f of filters) {
@@ -1413,8 +1496,8 @@ export function doesMessageFailFilter(
 
 function mergeLocalUpdates(
     message: Message,
-    localUpdates: LocalMessageUpdates | undefined,
-    replyContextLocalUpdates: LocalMessageUpdates | undefined,
+    localUpdates: MessageLocalUpdates | undefined,
+    replyContextLocalUpdates: MessageLocalUpdates | undefined,
     tallyUpdate: Tally | undefined,
     translation: string | undefined,
     replyTranslation: string | undefined,
@@ -1423,15 +1506,13 @@ function mergeLocalUpdates(
     failedMessageFilter: boolean,
 ): Message {
     if (localUpdates?.deleted !== undefined) {
-        return {
-            ...message,
-            deleted: true,
-            content: {
-                kind: "deleted_content",
-                deletedBy: localUpdates.deleted.deletedBy,
-                timestamp: localUpdates.deleted.timestamp,
-            },
+        message.deleted = true;
+        message.content = {
+            kind: "deleted_content",
+            deletedBy: localUpdates.deleted.deletedBy,
+            timestamp: localUpdates.deleted.timestamp,
         };
+        return message;
     }
 
     if (
@@ -1439,15 +1520,11 @@ function mergeLocalUpdates(
         message.content.kind !== "deleted_content" &&
         (senderBlocked || failedMessageFilter)
     ) {
-        return {
-            ...message,
-            content: {
-                kind: "blocked_content",
-            },
+        message.content = {
+            kind: "blocked_content",
         };
+        return message;
     }
-
-    message = { ...message };
 
     if (localUpdates?.cancelledReminder !== undefined) {
         message.content = localUpdates.cancelledReminder;
@@ -1467,17 +1544,26 @@ function mergeLocalUpdates(
 
     if (localUpdates?.revealedContent !== undefined) {
         message.content = localUpdates.revealedContent;
+        message.deleted = true;
     }
 
-    if (localUpdates?.prizeClaimed !== undefined) {
-        if (message.content.kind === "prize_content") {
-            if (!message.content.winners.includes(localUpdates.prizeClaimed)) {
-                message.content = { ...message.content };
-                message.content.winners.push(localUpdates.prizeClaimed);
+    if (localUpdates?.prizeClaimed) {
+        if (message.content.kind === "prize_content" && !message.content.userIsWinner) {
+            message.content = { ...message.content };
+            message.content.userIsWinner = true;
+            // We can't tell for sure if this user's claim was contained within the `prizesPending` count or not,
+            // but it doesn't actually matter, so if any were pending, then decrement `prizesPending`, else
+            // decrement `prizesRemaining`
+            if (message.content.prizesPending > 0) {
+                message.content.prizesPending -= 1;
+            } else {
                 message.content.prizesRemaining -= 1;
-                message.content.prizesPending += 1;
             }
         }
+    }
+
+    if (localUpdates?.blockLevelMarkdown !== undefined) {
+        message.blockLevelMarkdown = localUpdates.blockLevelMarkdown;
     }
 
     if (localUpdates?.p2pSwapStatus !== undefined && message.content.kind === "p2p_swap_content") {
@@ -1488,7 +1574,7 @@ function mergeLocalUpdates(
     }
 
     if (localUpdates?.reactions !== undefined) {
-        let reactions = [...message.reactions];
+        let reactions = message.reactions.map((r) => ({ ...r }));
         for (const localReaction of localUpdates.reactions) {
             reactions = applyLocalReaction(localReaction, reactions);
         }
@@ -1535,27 +1621,19 @@ function mergeLocalUpdates(
             repliesToSenderBlocked)
     ) {
         if (replyContextLocalUpdates?.deleted !== undefined) {
-            message.repliesTo = {
-                ...message.repliesTo,
-                content: {
-                    kind: "deleted_content",
-                    deletedBy: replyContextLocalUpdates.deleted.deletedBy,
-                    timestamp: replyContextLocalUpdates.deleted.timestamp,
-                },
+            message.repliesTo.content = {
+                kind: "deleted_content",
+                deletedBy: replyContextLocalUpdates.deleted.deletedBy,
+                timestamp: replyContextLocalUpdates.deleted.timestamp,
             };
         } else if (
             repliesToSenderBlocked &&
             replyContextLocalUpdates?.hiddenMessageRevealed !== true
         ) {
-            message.repliesTo = {
-                ...message.repliesTo,
-                content: {
-                    kind: "blocked_content",
-                },
+            message.repliesTo.content = {
+                kind: "blocked_content",
             };
         } else {
-            message.repliesTo = { ...message.repliesTo };
-
             if (replyContextLocalUpdates?.editedContent !== undefined) {
                 message.repliesTo.content = replyContextLocalUpdates.editedContent;
             }
@@ -1600,17 +1678,23 @@ function mergeLocalUpdates(
     return message;
 }
 
-export function mergeLocalTips(existing?: TipsReceived, local?: TipsReceived): TipsReceived {
+export function mergeLocalTips(existing?: TipsReceived, local?: LocalTipsReceived): TipsReceived {
     const merged: TipsReceived = {};
     for (const ledger in existing) {
         merged[ledger] = { ...existing[ledger] };
     }
-    for (const ledger in local) {
-        if (!merged[ledger]) {
-            merged[ledger] = {};
-        }
-        for (const userId in local[ledger]) {
-            merged[ledger][userId] = local[ledger][userId];
+
+    if (local !== undefined) {
+        for (const [ledger] of local) {
+            if (!merged[ledger]) {
+                merged[ledger] = {};
+            }
+            const users = local.get(ledger);
+            if (users !== undefined) {
+                for (const [userId] of users) {
+                    merged[ledger][userId] = local.get(ledger)?.get(userId) ?? 0n;
+                }
+            }
         }
     }
     return merged;
@@ -1626,7 +1710,7 @@ function defaultThreadSummary(): ThreadSummary {
     };
 }
 
-function applyTranslation(content: MessageContent, translation: string): MessageContent {
+export function applyTranslation(content: MessageContent, translation: string): MessageContent {
     switch (content.kind) {
         case "text_content": {
             return {
@@ -1704,7 +1788,7 @@ export function findMessageById(
 export function buildTransactionLink(
     formatter: MessageFormatter,
     transfer: CryptocurrencyTransfer,
-    cryptoLookup: Record<string, CryptocurrencyDetails>,
+    cryptoLookup: ReadonlyMap<string, CryptocurrencyDetails>,
 ): string | undefined {
     const url = buildTransactionUrl(transfer, cryptoLookup);
     return url !== undefined
@@ -1714,7 +1798,7 @@ export function buildTransactionLink(
 
 export function buildTransactionUrl(
     transfer: CryptocurrencyTransfer,
-    cryptoLookup: Record<string, CryptocurrencyDetails>,
+    cryptoLookup: ReadonlyMap<string, CryptocurrencyDetails>,
 ): string | undefined {
     if (transfer.kind === "completed") {
         return buildTransactionUrlByIndex(transfer.blockIndex, transfer.ledger, cryptoLookup);
@@ -1724,12 +1808,11 @@ export function buildTransactionUrl(
 export function buildTransactionUrlByIndex(
     transactionIndex: bigint,
     ledger: string,
-    cryptoLookup: Record<string, CryptocurrencyDetails>,
+    cryptoLookup: ReadonlyMap<string, CryptocurrencyDetails>,
 ): string | undefined {
-    return cryptoLookup[ledger].transactionUrlFormat.replace(
-        "{transaction_index}",
-        transactionIndex.toString(),
-    );
+    return cryptoLookup
+        .get(ledger)
+        ?.transactionUrlFormat.replace("{transaction_index}", transactionIndex.toString());
 }
 
 export function buildCryptoTransferText(
@@ -1738,21 +1821,18 @@ export function buildCryptoTransferText(
     senderId: string,
     content: CryptocurrencyContent,
     me: boolean,
-    cryptoLookup: Record<string, CryptocurrencyDetails>,
+    cryptoLookup: ReadonlyMap<string, CryptocurrencyDetails>,
 ): string | undefined {
     if (content.transfer.kind !== "completed" && content.transfer.kind !== "pending") {
         return undefined;
     }
 
     function username(userId: string): string {
-        const lookup = get(userStore);
-
-        return userId === myUserId
-            ? formatter("you")
-            : `${lookup[userId]?.username ?? formatter("unknown")}`;
+        return userId === myUserId ? formatter("you") : `@UserId(${userId})`;
     }
 
-    const tokenDetails = cryptoLookup[content.transfer.ledger];
+    const tokenDetails = cryptoLookup.get(content.transfer.ledger);
+    if (tokenDetails === undefined) return undefined;
 
     const values = {
         amount: formatTokens(content.transfer.amountE8s, tokenDetails.decimals),
@@ -1772,11 +1852,11 @@ export function buildCryptoTransferText(
 }
 
 export function stopTyping(
-    { id }: ChatSummary,
+    id: ChatIdentifier,
     userId: string,
     threadRootMessageIndex?: number,
 ): void {
-    rtcConnectionsManager.sendMessage([...get(currentChatUserIds)], {
+    rtcConnectionsManager.sendMessage([...selectedChatUserIdsStore.value], {
         kind: "remote_user_stopped_typing",
         id,
         userId,
@@ -1785,11 +1865,11 @@ export function stopTyping(
 }
 
 export function startTyping(
-    { id }: ChatSummary,
+    id: ChatIdentifier,
     userId: string,
     threadRootMessageIndex?: number,
 ): void {
-    rtcConnectionsManager.sendMessage([...get(currentChatUserIds)], {
+    rtcConnectionsManager.sendMessage([...selectedChatUserIdsStore.value], {
         kind: "remote_user_typing",
         id,
         userId,
@@ -1810,7 +1890,7 @@ export function getTypingString(
         return formatter("membersAreTyping", { values: { number: typers.size } });
     } else {
         const userIds = [...typers];
-        const username = users[userIds[0]]?.username ?? formatter("unknown");
+        const username = users.get(userIds[0])?.username ?? formatter("unknown");
         return formatter("memberIsTyping", { values: { username } });
     }
 }
@@ -1857,6 +1937,9 @@ export function diffGroupPermissions(
     if (original.inviteUsers !== updated.inviteUsers) {
         diff.inviteUsers = updated.inviteUsers;
     }
+    if (original.addMembers !== updated.addMembers) {
+        diff.addMembers = updated.addMembers;
+    }
     if (original.removeMembers !== updated.removeMembers) {
         diff.removeMembers = updated.removeMembers;
     }
@@ -1887,7 +1970,7 @@ export function diffGroupPermissions(
         diff.threadPermissions = "set_to_none";
     } else {
         const threadPermissionsDiff = diffMessagePermissions(
-            original.threadPermissions ?? { default: "member" },
+            original.threadPermissions ?? { default: ROLE_MEMBER },
             updated.threadPermissions,
         );
         diff.threadPermissions =
@@ -1923,8 +2006,180 @@ function diffMessagePermissions(
     return diff;
 }
 
-export function isProposalsChat(chat: ChatSummary): chat is ChatSummary & {
-    subtype: GovernanceProposalsSubtype;
-} {
-    return chat.kind !== "direct_chat" && chat.subtype?.kind === "governance_proposals";
+export function eventIndexesLoaded(chatId: ChatIdentifier): DRange {
+    const selected = selectedChatIdStore.value;
+    return selected !== undefined && chatIdentifiersEqual(selected, chatId)
+        ? eventIndexesLoadedStore.value
+        : new DRange();
+}
+
+function isContiguousInternal(
+    range: DRange,
+    events: EventWrapper<ChatEvent>[],
+    expiredEventRanges: ExpiredEventsRange[],
+): boolean {
+    if (range.length === 0 || events.length === 0) return true;
+
+    const indexes = [events[0].index, events[events.length - 1].index];
+    const minIndex = Math.min(...indexes, ...expiredEventRanges.map((e) => e.start));
+    const maxIndex = Math.max(...indexes, ...expiredEventRanges.map((e) => e.end));
+    const contiguousCheck = new DRange(minIndex - 1, maxIndex + 1);
+
+    const isContiguous = range.clone().intersect(contiguousCheck).length > 0;
+
+    if (!isContiguous) {
+        console.log(
+            "Events in response are not contiguous with the loaded events",
+            range,
+            minIndex,
+            maxIndex,
+        );
+    }
+
+    return isContiguous;
+}
+
+export function isContiguousInThread(
+    threadId: ThreadIdentifier,
+    events: EventWrapper<ChatEvent>[],
+): boolean {
+    return (
+        messageContextsEqual(threadId, selectedThreadIdStore.value) &&
+        isContiguousInternal(threadEventIndexesLoadedStore.value, events, [])
+    );
+}
+
+export function isContiguous(
+    chatId: ChatIdentifier,
+    events: EventWrapper<ChatEvent>[],
+    expiredEventRanges: ExpiredEventsRange[],
+): boolean {
+    return (
+        chatIdentifiersEqual(chatId, selectedChatIdStore.value) &&
+        isContiguousInternal(eventIndexesLoaded(chatId), events, expiredEventRanges)
+    );
+}
+
+export function newDefaultChannel(id: ChannelIdentifier, name: string): ChannelSummary {
+    return {
+        kind: "channel",
+        id,
+        name,
+        description: "",
+        public: true,
+        historyVisible: true,
+        minVisibleEventIndex: 0,
+        minVisibleMessageIndex: 0,
+        latestMessage: undefined,
+        latestEventIndex: 0,
+        latestMessageIndex: 0,
+        lastUpdated: BigInt(0),
+        blobReference: undefined,
+        memberCount: 1,
+        permissions: defaultChatPermissions(),
+        metrics: emptyChatMetrics(),
+        subtype: undefined,
+        frozen: false,
+        dateLastPinned: undefined,
+        dateReadPinned: undefined,
+        gateConfig: { gate: { kind: "no_gate" }, expiry: undefined },
+        level: "channel",
+        eventsTTL: undefined,
+        eventsTtlLastUpdated: BigInt(0),
+        videoCallInProgress: undefined,
+        membership: {
+            ...nullMembership(),
+            role: ROLE_OWNER,
+        },
+        isInvited: false,
+        messagesVisibleToNonMembers: true,
+        externalUrl: undefined,
+    };
+}
+
+function nextEventAndMessageIndex(context: MessageContext): [number, number] {
+    const chat = allServerChatsStore.value.get(context.chatId);
+    const unconfirmedMessages = localUpdates.unconfirmedMessages(context);
+
+    let [eventIndex, messageIndex] = [0, 0];
+
+    if (unconfirmedMessages !== undefined) {
+        for (const event of unconfirmedMessages.values()) {
+            if (event.index >= eventIndex) {
+                eventIndex = event.index + 1;
+            }
+            if (event.event.messageIndex >= messageIndex) {
+                messageIndex = event.event.messageIndex + 1;
+            }
+        }
+    }
+
+    let summary: { latestEventIndex: number; latestMessageIndex: number | undefined } | undefined =
+        undefined;
+    let events: EventWrapper<ChatEvent>[] = [];
+    if (chat !== undefined) {
+        if (context.threadRootMessageIndex === undefined) {
+            summary = chat;
+
+            if (chatIdentifiersEqual(context.chatId, selectedChatIdStore.value)) {
+                events = eventsStore.value;
+            }
+        } else {
+            const thread = chat.membership.latestThreads.find(
+                (t) => t.threadRootMessageIndex === context.threadRootMessageIndex,
+            );
+
+            if (thread) {
+                summary = thread;
+
+                if (messageContextsEqual(context, selectedThreadIdStore.value)) {
+                    events = threadEventsStore.value;
+                }
+            }
+        }
+    }
+
+    if (summary) {
+        if (summary.latestEventIndex >= eventIndex) {
+            eventIndex = summary.latestEventIndex + 1;
+        }
+        if (
+            summary.latestMessageIndex !== undefined &&
+            summary.latestMessageIndex >= messageIndex
+        ) {
+            messageIndex = summary.latestMessageIndex + 1;
+        }
+    }
+
+    const [eventIndexFromEvents, messageIndexFromEvents] =
+        latestEventAndMessageIndexesFromEvents(events);
+
+    if (eventIndexFromEvents !== undefined && eventIndexFromEvents >= eventIndex) {
+        eventIndex = eventIndexFromEvents + 1;
+    }
+    if (messageIndexFromEvents !== undefined && messageIndexFromEvents >= messageIndex) {
+        messageIndex = messageIndexFromEvents + 1;
+    }
+
+    return [eventIndex, messageIndex];
+}
+
+function latestEventAndMessageIndexesFromEvents(
+    events: EventWrapper<ChatEvent>[],
+): [number | undefined, number | undefined] {
+    let eventIndex: number | undefined = undefined;
+    let messageIndex: number | undefined = undefined;
+
+    for (let i = events.length - 1; i >= 0; i--) {
+        const event = events[i];
+        if (eventIndex === undefined) {
+            eventIndex = event.index;
+        }
+        if (event.event.kind === "message") {
+            messageIndex = event.event.messageIndex;
+            break;
+        }
+    }
+
+    return [eventIndex, messageIndex];
 }

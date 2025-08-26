@@ -1,11 +1,10 @@
 use crate::exchanges::Exchange;
-use crate::{mutate_state, read_state, CanisterBalances, RuntimeState};
-use ic_cdk::api::call::CallResult;
+use crate::{CanisterBalances, RuntimeState, mutate_state, read_state};
+use constants::HOUR_IN_MS;
 use std::collections::BTreeMap;
 use std::time::Duration;
-use types::{CanisterId, Milliseconds, TimestampMillis};
+use types::{C2CError, CanisterId, Milliseconds, TimestampMillis};
 use utils::canister_timers::run_now_then_interval;
-use utils::time::HOUR_IN_MS;
 
 const CALCULATE_BALANCES_INTERVAL: Milliseconds = HOUR_IN_MS;
 
@@ -16,7 +15,7 @@ pub fn start_job() {
 fn run() {
     let PrepareResult { exchange_clients, now } = read_state(prepare);
     if !exchange_clients.is_empty() {
-        ic_cdk::spawn(run_async(exchange_clients, now));
+        ic_cdk::futures::spawn(run_async(exchange_clients, now));
     }
 }
 
@@ -62,6 +61,6 @@ async fn run_async(exchange_clients: Vec<Box<dyn Exchange>>, now: TimestampMilli
     }
 }
 
-async fn get_exchange_balances(exchange_client: Box<dyn Exchange>) -> CallResult<Vec<(CanisterId, u128)>> {
+async fn get_exchange_balances(exchange_client: Box<dyn Exchange>) -> Result<Vec<(CanisterId, u128)>, C2CError> {
     exchange_client.account_balances().await
 }

@@ -1,22 +1,27 @@
 <script lang="ts">
-    import PlayCircleOutline from "svelte-material-icons/PlayCircleOutline.svelte";
+    import { iconSize } from "openchat-client";
+    import { onMount } from "svelte";
     import PauseCircleOutline from "svelte-material-icons/PauseCircleOutline.svelte";
-    import Radio from "../../Radio.svelte";
-    import { iconSize } from "../../../stores/iconSize";
-    import { createEventDispatcher, onMount } from "svelte";
-    import { Ringtone, selectedRingtone } from "../../../stores/video";
+    import PlayCircleOutline from "svelte-material-icons/PlayCircleOutline.svelte";
     import WaveSurfer from "wavesurfer.js";
+    import { Ringtone, selectedRingtone } from "../../../stores/video";
     import { currentTheme } from "../../../theme/themes";
+    import Radio from "../../Radio.svelte";
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        ringtone: Ringtone;
+        onTogglePlay: (ringtone: Ringtone) => void;
+    }
 
-    export let ringtone: Ringtone;
+    let { ringtone, onTogglePlay }: Props = $props();
 
-    let waveform: HTMLDivElement;
+    let waveform: HTMLDivElement | undefined = $state();
 
-    $: checked = $selectedRingtone === ringtone.key;
+    let checked = $derived($selectedRingtone === ringtone.key);
 
     onMount(() => {
+        if (!waveform) return;
+
         const wavesurfer = WaveSurfer.create({
             height: 30,
             cursorWidth: 0,
@@ -36,8 +41,9 @@
         });
     });
 
-    function togglePlay() {
-        dispatch("togglePlay", ringtone);
+    function togglePlay(e?: Event) {
+        e?.preventDefault();
+        onTogglePlay(ringtone);
     }
 
     function selectRingtone() {
@@ -46,10 +52,10 @@
 </script>
 
 <div class="wrapper">
-    <Radio on:change={selectRingtone} {checked} id={ringtone.name} group="video-ringtone">
+    <Radio onChange={selectRingtone} {checked} id={ringtone.name} group="video-ringtone">
         <div class="ringtone">
             <div class="name">{ringtone.name}</div>
-            <div on:click|preventDefault={togglePlay} class="play">
+            <div onclick={togglePlay} class="play">
                 {#if ringtone.playing}
                     <PauseCircleOutline size={$iconSize} color={"var(--icon-selected)"} />
                 {:else}

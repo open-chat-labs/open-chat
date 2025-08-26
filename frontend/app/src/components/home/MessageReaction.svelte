@@ -1,31 +1,38 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import type { NativeEmoji } from "emoji-picker-element/shared";
-    import type { OpenChat, UserLookup } from "openchat-client";
-    import { getContext, onMount, createEventDispatcher } from "svelte";
-    import { emojiDatabase } from "../../utils/emojis";
-    import TooltipWrapper from "../TooltipWrapper.svelte";
-    import TooltipPopup from "../TooltipPopup.svelte";
-    import Translatable from "../Translatable.svelte";
+    import type { CustomEmoji, OpenChat, UserLookup } from "openchat-client";
+    import { allUsersStore, currentUserIdStore, customEmojis } from "openchat-client";
+    import { getContext, onMount } from "svelte";
+    import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
+    import { emojiDatabase } from "../../utils/emojis";
+    import Tooltip from "../tooltip/Tooltip.svelte";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let reaction: string;
-    export let userIds: Set<string>;
-    export let myUserId: string | undefined;
+    interface Props {
+        reaction: string;
+        userIds: Set<string>;
+        intersecting?: boolean;
+        onClick?: () => void;
+    }
 
-    let reactionCode = "unknown";
-    let longPressed: boolean = false;
+    let { reaction, userIds, onClick, intersecting = true }: Props = $props();
 
-    $: userStore = client.userStore;
-    $: selected = myUserId !== undefined ? userIds.has(myUserId) : false;
-    $: usernames = buildReactionUsernames($userStore, userIds, myUserId);
+    let reactionCode = $state("unknown");
+    let longPressed: boolean = $state(false);
+    let customEmoji = $state(getCustomEmoji(reaction));
 
     onMount(async () => {
         reactionCode = (await buildReactionCode(reaction)) ?? "unknown";
     });
+
+    function getCustomEmoji(reaction: string): CustomEmoji | undefined {
+        const match = reaction.match(/^@(?:CustomEmoji|CE)\(([\w-]+)\)$/);
+        const code = match ? match[1] : undefined;
+        return code ? customEmojis.get(code) : undefined;
+    }
 
     function buildReactionUsernames(
         userStore: UserLookup,
@@ -40,9 +47,13 @@
     }
 
     async function buildReactionCode(reaction: string): Promise<string | undefined> {
+        if (customEmoji !== undefined) {
+            return `:${customEmoji.code}:`;
+        }
         const emoji = (await emojiDatabase.getEmojiByUnicodeOrName(reaction)) as
             | NativeEmoji
             | undefined;
+        if (!emoji) return reaction;
         let code =
             emoji?.shortcodes !== undefined
                 ? `:${emoji.shortcodes[emoji.shortcodes.length - 1]}:`
@@ -50,37 +61,54 @@
         return code ?? ":unknown:";
     }
 
-    function onClick() {
+    function click() {
         if (!longPressed) {
-            dispatch("click");
+            onClick?.();
         }
     }
+    let selected = $derived(userIds.has($currentUserIdStore));
+    let usernames = $derived(buildReactionUsernames($allUsersStore, userIds, $currentUserIdStore));
 </script>
 
-<TooltipWrapper bind:longPressed position={"top"} align={"start"}>
-    <div slot="target" on:click={onClick} class:selected class="message-reaction">
-        {reaction}
+<Tooltip
+    textLength={usernames.length + reactionCode.length}
+    longestWord={reactionCode.length}
+    bind:longPressed
+    position={"top"}
+    align={"start"}>
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div onclick={click} class:selected class="message-reaction">
+        {#if customEmoji !== undefined}
+            {#if intersecting}
+                <custom-emoji data-id={customEmoji.code}></custom-emoji>
+            {:else}
+                ...
+            {/if}
+        {:else}
+            {reaction}
+        {/if}
         <span class="reaction-count">
             {userIds.size > 999 ? "999+" : userIds.size}
         </span>
     </div>
-    <div let:position let:align slot="tooltip">
-        <TooltipPopup
-            {align}
-            {position}
-            textLength={usernames.length + reactionCode.length}
-            longestWord={reactionCode.length}>
-            <div class="reaction-tooltip-emoji">{reaction}</div>
-            <div>
-                <span class="reaction_usernames">{usernames}</span>
-                <Translatable resourceKey={i18nKey("reactions.reactedWith")} />
-                <span class="reaction_code">
-                    {reactionCode}
-                </span>
-            </div>
-        </TooltipPopup>
-    </div>
-</TooltipWrapper>
+    {#snippet popupTemplate()}
+        <div class="reaction-tooltip-emoji">
+            {#if customEmoji !== undefined}
+                <custom-emoji data-id={customEmoji.code} big></custom-emoji>
+            {:else}
+                {reaction}
+            {/if}
+        </div>
+        <div>
+            <span class="reaction_usernames">{usernames}</span>
+            <Translatable resourceKey={i18nKey("reactions.reactedWith")} />
+            <span class="reaction_code">
+                {reactionCode}
+            </span>
+        </div>
+    {/snippet}
+</Tooltip>
 
 <style lang="scss">
     .message-reaction {

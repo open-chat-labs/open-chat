@@ -1,20 +1,22 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
-use types::{FieldTooLongResult, FieldTooShortResult, Milliseconds};
+use ts_export::ts_export;
+use types::{PinNumberWrapper, SignedDelegation, UnitResult};
 
+#[ts_export(user, set_pin_number)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub current: Option<String>,
-    pub new: Option<String>,
+    pub new: Option<PinNumberWrapper>,
+    pub verification: PinNumberVerification,
 }
 
+#[ts_export(user, set_pin_number)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    TooShort(FieldTooShortResult),
-    TooLong(FieldTooLongResult),
-    PinRequired,
-    PinIncorrect(Milliseconds),
-    TooManyFailedPinAttempts(Milliseconds),
+pub enum PinNumberVerification {
+    None,
+    PIN(PinNumberWrapper),
+    Delegation(SignedDelegation),
 }
+
+pub type Response = UnitResult;

@@ -4,4 +4,4 @@ use notifications_index_canister::*;
 // Queries
 
 // Updates
-generate_c2c_call!(c2c_update_user_principal);
+generate_c2c_call!(notify_local_index_added);

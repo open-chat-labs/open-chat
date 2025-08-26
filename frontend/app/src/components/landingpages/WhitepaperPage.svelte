@@ -1,53 +1,51 @@
 <script lang="ts">
-    import { mobileWidth, toPixel } from "../../stores/screenDimensions";
-    import CollapsibleCard from "../CollapsibleCard.svelte";
+    import { locationStore, mobileWidth, querystringStore, toPixel } from "openchat-client";
     import Copy from "svelte-material-icons/ContentCopy.svelte";
-    import Headline from "./Headline.svelte";
-    import Link from "./Link.svelte";
-    import HashLink from "./HashLink.svelte";
+    import { copyToClipboard, scrollToSection } from "../../utils/urls";
+    import CollapsibleCard from "../CollapsibleCard.svelte";
     import ExternalLink from "./ExternalLink.svelte";
     import GoogleChart from "./GoogleChart.svelte";
+    import HashLink from "./HashLink.svelte";
     import HashLinkTarget from "./HashLinkTarget.svelte";
-    import { copyToClipboard, scrollToSection } from "../../utils/urls";
-    import { location, querystring } from "../../routes";
+    import Headline from "./Headline.svelte";
+    import Link from "./Link.svelte";
 
-    let width = 0;
-    let linked: number | undefined = undefined;
+    let width = $state(0);
+    let linked: number | undefined = $state(undefined);
 
-    $: padding = $mobileWidth ? 3 : 20;
-    $: widthRatio = $mobileWidth ? 1 : 0.7;
-    $: totalWidth = (width - toPixel(padding)) * widthRatio; // 160px * 2 = 320px of padding which is 20rems
-    $: copySize = $mobileWidth ? "14px" : "16px";
+    let padding = $derived($mobileWidth ? 3 : 20);
+    let widthRatio = $derived($mobileWidth ? 1 : 0.7);
+    let totalWidth = $derived((width - toPixel(padding)) * widthRatio); // 160px * 2 = 320px of padding which is 20rems
+    let copySize = $derived($mobileWidth ? "14px" : "16px");
 
-    function onCopyUrl(ev: CustomEvent<string>): void {
-        copyUrl(ev.detail);
+    function onCopyUrl(e: Event, section: string): void {
+        e.stopPropagation();
+        copyToClipboard(`${window.location.origin}${$locationStore}?section=${section}`);
     }
 
-    function copyUrl(section: string): void {
-        copyToClipboard(`${window.location.origin}${$location}?section=${section}`);
-    }
-
-    $: {
-        const section = $querystring.get("section");
+    $effect(() => {
+        const section = $querystringStore.get("section");
         if (section) {
             linked = scrollToSection(section);
         }
-    }
+    });
 </script>
 
 <div class="whitepaper" bind:clientWidth={width}>
     <Headline>OpenChat SNS Whitepaper</Headline>
 
     <CollapsibleCard transition={false} first open={linked === 1}>
-        <div class="header" slot="titleSlot">
-            <span class="subtitle">1</span>
-            <div class="title">
-                Product / Service Overview
-                <div class="copy" on:click|stopPropagation={() => copyUrl("1")}>
-                    <Copy size={copySize} color={"var(--landing-txt)"} />
+        {#snippet titleSlot()}
+            <div class="header">
+                <span class="subtitle">1</span>
+                <div class="title">
+                    Product / Service Overview
+                    <div class="copy" onclick={(e) => onCopyUrl(e, "1")}>
+                        <Copy size={copySize} color={"var(--landing-txt)"} />
+                    </div>
                 </div>
             </div>
-        </div>
+        {/snippet}
         <div class="body">
             <p>
                 OpenChat is a fully featured chat application running on the <HashLink id={"2"}
@@ -81,8 +79,8 @@
                 >.
             </p>
             <p>
-                OpenChat users can send messages to each other containing tokens such as ICP and
-                ckBTC and so can be used for global remittance.
+                OpenChat users can send messages to each other containing tokens such as BTC and
+                ICP and so can be used for global remittance.
             </p>
             <p>
                 However, the ground-breaking difference between OpenChat and other similar apps, is
@@ -104,15 +102,17 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={linked === 2}>
-        <div class="header" slot="titleSlot">
-            <span class="subtitle">2</span>
-            <div class="title">
-                Internet Computer Overview
-                <div class="copy" on:click|stopPropagation={() => copyUrl("2")}>
-                    <Copy size={copySize} color={"var(--landing-txt)"} />
+        {#snippet titleSlot()}
+            <div class="header">
+                <span class="subtitle">2</span>
+                <div class="title">
+                    Internet Computer Overview
+                    <div class="copy" onclick={(e) => onCopyUrl(e, "2")}>
+                        <Copy size={copySize} color={"var(--landing-txt)"} />
+                    </div>
                 </div>
             </div>
-        </div>
+        {/snippet}
         <div class="body">
             <p>
                 The <ExternalLink
@@ -129,8 +129,7 @@
                 computation and storage costs are paid by the app/service providers rather than
                 users.
             </p>
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="2-1"
-                >Canister smart-contracts</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="2-1">Canister smart-contracts</HashLinkTarget>
             <p>
                 Applications on the IC are composed of canister smart-contracts organized into
                 subnets. A subnet can contain 100,000s of canisters and is composed of (typically
@@ -160,8 +159,7 @@
                 the need for a database and is one of the reasons writing and running applications on
                 the IC is simplified compared to traditional IT stacks.
             </p>
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="2-2"
-                >Network Nervous System (NNS)</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="2-2">Network Nervous System (NNS)</HashLinkTarget>
             <p>
                 A key feature of the Internet Computer blockchain is the Network Nervous System
                 (NNS), an open algorithmic governance system that oversees the network and the token
@@ -182,17 +180,19 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={linked === 3}>
-        <div class="header" slot="titleSlot">
-            <span class="subtitle">3</span>
-            <div class="title">
-                OpenChat DAO
-                <div class="copy" on:click|stopPropagation={() => copyUrl("3")}>
-                    <Copy size={copySize} color={"var(--landing-txt)"} />
+        {#snippet titleSlot()}
+            <div class="header">
+                <span class="subtitle">3</span>
+                <div class="title">
+                    OpenChat DAO
+                    <div class="copy" onclick={(e) => onCopyUrl(e, "3")}>
+                        <Copy size={copySize} color={"var(--landing-txt)"} />
+                    </div>
                 </div>
             </div>
-        </div>
+        {/snippet}
         <div class="body">
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="3-1">Summary</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="3-1">Summary</HashLinkTarget>
             <ul class="list">
                 <li>
                     The OpenChat DAO is being formed to operate and steer the direction of OpenChat
@@ -210,7 +210,7 @@
                     this DAO and associated public good.
                 </li>
             </ul>
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="3-2">Creation of the DAO</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="3-2">Creation of the DAO</HashLinkTarget>
             <p>
                 The OpenChat SNS will be created from the latest NNS blessed SNS canisters by the
                 founding dev team. Its <HashLink id="5-2">initial configuration</HashLink> will be held
@@ -236,7 +236,7 @@
                 At this point the DAO creation is completed and the running OpenChat service can be
                 considered a public good.
             </p>
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="3-3">Control of the DAO</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="3-3">Control of the DAO</HashLinkTarget>
             <p>
                 After the decentralization sale the SNS will be in control of the dapp including its
                 treasury of CHAT and ICP. In other words, only the SNS will be able to upgrade the
@@ -251,8 +251,8 @@
                 an SNS by stopping an SNS canister(s). One example could be if an IC app were to
                 copy the source code of another IC app, breaking its licensing terms.
             </p>
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="3-4">Governance of the DAO</HashLinkTarget>
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="3-4-1">Proposals</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="3-4">Governance of the DAO</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="3-4-1">Proposals</HashLinkTarget>
             <p>SNS proposals have the following types.</p>
             <ul class="list">
                 <li>
@@ -329,8 +329,7 @@
                     a <HashLink id="4-2">user reward system</HashLink>.
                 </li>
             </ul>
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="3-4-2"
-                >Voting and voting rewards</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="3-4-2">Voting and voting rewards</HashLinkTarget>
             <p>
                 Proposals are used to govern all aspects of the OpenChat dapp. Token holders are
                 rewarded for participating in votes on proposals so that decisions are decentralized
@@ -400,7 +399,7 @@
                     href="https://internetcomputer.org/docs/current/tokenomics/sns/rewards#voting-rewards"
                     >this document</ExternalLink> for a full description of SNS voting and rewards.
             </p>
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="3-5">The power of the DAO</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="3-5">The power of the DAO</HashLinkTarget>
             <p>
                 There are many factors which will influence the success of OpenChat. It must have a
                 great development team building an app with a great user experience. It must have
@@ -409,7 +408,7 @@
                 hard to break into a market with such established players. A crucial ingredient
                 available to OpenChat to help it succeed is <em>tokenization</em>.
             </p>
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="3-5-1">Growth</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="3-5-1">Growth</HashLinkTarget>
             <p>
                 The OpenChat system will automatically reward users with CHAT tokens for using the
                 app positively and for inviting friends and family to join if they also go on to use
@@ -418,7 +417,7 @@
                 tokens are invested in the future success of OpenChat and so a powerful team of
                 100,000s of advocates is created helping drive growth further.
             </p>
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="3-5-2">Trust</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="3-5-2">Trust</HashLinkTarget>
             <p>
                 An essential condition for tokenization to be viable in the first place is <em
                     >trust</em
@@ -433,15 +432,17 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={linked === 4}>
-        <div class="header" slot="titleSlot">
-            <span class="subtitle">4</span>
-            <div class="title">
-                Purpose of the CHAT utility token
-                <div class="copy" on:click|stopPropagation={() => copyUrl("4")}>
-                    <Copy size={copySize} color={"var(--landing-txt)"} />
+        {#snippet titleSlot()}
+            <div class="header">
+                <span class="subtitle">4</span>
+                <div class="title">
+                    Purpose of the CHAT utility token
+                    <div class="copy" onclick={(e) => onCopyUrl(e, "4")}>
+                        <Copy size={copySize} color={"var(--landing-txt)"} />
+                    </div>
                 </div>
             </div>
-        </div>
+        {/snippet}
         <div class="body">
             <ul class="list">
                 <li>
@@ -462,7 +463,7 @@
                         >user rewards</HashLink> or by SNS proposal.
                 </li>
             </ul>
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="4-1">Premium features</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="4-1">Premium features</HashLinkTarget>
             <p>
                 There are many ways OpenChat could evolve to allow users to spend their CHAT tokens
                 for premium features within the dapp. To pay for a feature a user would need to have
@@ -470,8 +471,7 @@
                 OpenChat will transfer the payment from the user’s canister to the SNS treasury
                 account and then grant the feature.
             </p>
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="4-1-1"
-                >Current premium features</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="4-1-1">Current premium features</HashLinkTarget>
             <p>
                 There are already some premium features that OpenChat offers which for the time
                 being can be obtained either by paying with ICP or verifying a phone number.
@@ -483,7 +483,7 @@
                 <li>On demand message translation</li>
                 <li>Increased group creation limit from 10 to 25</li>
             </ul>
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="4-1-2">Communities</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="4-1-2">Communities</HashLinkTarget>
             <p>
                 A key feature we are planning to build soon is called “communities”. These will be
                 like Slack workspaces or Discord servers and consist of a set of users, groups, and
@@ -495,7 +495,7 @@
                 monetise their communities and revenue share with OpenChat by, for example, charging
                 for admittance to a community.
             </p>
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="4-1-3"
+            <HashLinkTarget {onCopyUrl} id="4-1-3"
                 >Other possible future premium features</HashLinkTarget>
             <p>
                 Here are some more features that OpenChat could offer and charge for in the future.
@@ -511,13 +511,12 @@
                     messages)
                 </li>
             </ul>
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="4-1-4"
-                >Additional potential revenue</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="4-1-4">Additional potential revenue</HashLinkTarget>
             <ul class="list">
                 <li>Provide chat functionality to other IC apps with an OpenChat integration</li>
                 <li>Transaction charge on sending tokens as messages</li>
             </ul>
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="4-2">User rewards</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="4-2">User rewards</HashLinkTarget>
             <p>
                 The design of the user reward system has not been confirmed yet and we will consult
                 with the OpenChat community before finalizing the design and making a proposal to
@@ -535,7 +534,7 @@
                 challenge is made harder still because any system designed to reward users will,
                 like all OpenChat code, be open source and visible to anyone.
             </p>
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="4-2-1">User reputation</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="4-2-1">User reputation</HashLinkTarget>
             <p>
                 We think a reward system should be based on reputation. Each user would have a
                 reputation score taking into account positive and negative activity on the dapp.
@@ -550,7 +549,7 @@
                 We can also derive a positive signal for a user if they hold tokens (ICP, CHAT,
                 ckBTC) in their OpenChat account, or even better, neurons.
             </p>
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="4-2-2">Rewards</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="4-2-2">Rewards</HashLinkTarget>
             <p>
                 The reward algorithm can use reputation to determine which users are rewarded and
                 the value of the reward. We could either give a small reward to lots of users or
@@ -571,18 +570,19 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={linked === 5}>
-        <div class="header" slot="titleSlot">
-            <span class="subtitle">5</span>
-            <div class="title">
-                Token allocation at SNS genesis
-                <div class="copy" on:click|stopPropagation={() => copyUrl("5")}>
-                    <Copy size={copySize} color={"var(--landing-txt)"} />
+        {#snippet titleSlot()}
+            <div class="header">
+                <span class="subtitle">5</span>
+                <div class="title">
+                    Token allocation at SNS genesis
+                    <div class="copy" onclick={(e) => onCopyUrl(e, "5")}>
+                        <Copy size={copySize} color={"var(--landing-txt)"} />
+                    </div>
                 </div>
             </div>
-        </div>
+        {/snippet}
         <div class="body">
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="5-1"
-                >Initial token allocation</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="5-1">Initial token allocation</HashLinkTarget>
             <p>
                 The SNS will be initialized with 100 million CHAT tokens allocated in the following
                 proportions.
@@ -593,8 +593,7 @@
                 originalWidth={719}
                 originalHeight={371}
                 src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQHVsuUj8dXoL4nm2IOpy71_I-JPhprdlkdKiztWFyN4kLxXhhaFZMfG6dY5zGzwW_bQiP5OyDN2wU_/pubchart?oid=193426735&format=interactive" />
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="5-1-1"
-                >Decentralization sale (yellow)</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="5-1-1">Decentralization sale (yellow)</HashLinkTarget>
             <p>
                 25% of the total supply will be put up for sale to decentralize the governance and
                 raise funds for the SNS. The maximum that can be raised will be configured to
@@ -616,8 +615,7 @@
                 Each Community Fund participant will also receive their share of tokens as a basket
                 of 5 neurons with the same configuration.
             </p>
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="5-1-2"
-                >Founders and funders (purple)</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="5-1-2">Founders and funders (purple)</HashLinkTarget>
             <p>
                 OpenChat has been built by a team of 3 developers since January 2021 and has
                 received seed funding from the <ExternalLink href="https://dfinity.org/"
@@ -651,7 +649,7 @@
                 originalWidth={685}
                 originalHeight={371}
                 src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQHVsuUj8dXoL4nm2IOpy71_I-JPhprdlkdKiztWFyN4kLxXhhaFZMfG6dY5zGzwW_bQiP5OyDN2wU_/pubchart?oid=1082043399&format=interactive" />
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="5-1-3">SNS treasury (blue)</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="5-1-3">SNS treasury (blue)</HashLinkTarget>
             <p>
                 After the decentralization sale the SNS will be left with a treasury of the
                 remaining 52% of CHAT tokens. The bulk is likely to be used over time to
@@ -672,8 +670,7 @@
                 be necessary to create a proposal to transfer some CHAT from the SNS to the DEX, and
                 another proposal to transfer an equal value of ICP from the SNS to the DEX.
             </p>
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="5-2"
-                >Initial SNS configuration</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="5-2">Initial SNS configuration</HashLinkTarget>
             <p>
                 The SNS will initially be configured with the values shown in the tables below which
                 can all subsequently be changed by proposal.
@@ -702,7 +699,7 @@
                 <div>Percentage of total supply that will be generated annually for rewards</div>
                 <div>2.5%</div>
             </div>
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="5-3"
+            <HashLinkTarget {onCopyUrl} id="5-3"
                 >SNS decentralization sale configuration</HashLinkTarget>
             <p>The decentralization sale will be configured with the values shown below.</p>
             <div class="tab">
@@ -724,7 +721,7 @@
                 <div>100,000</div>
             </div>
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="5-3-1">Valuation range</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="5-3-1">Valuation range</HashLinkTarget>
 
             <p>
                 The reason to impose a maximum target is to give participants a minimum bound on the
@@ -737,15 +734,17 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={linked === 6}>
-        <div class="header" slot="titleSlot">
-            <span class="subtitle">6</span>
-            <div class="title">
-                OpenChat SNS treasury
-                <div class="copy" on:click|stopPropagation={() => copyUrl("6")}>
-                    <Copy size={copySize} color={"var(--landing-txt)"} />
+        {#snippet titleSlot()}
+            <div class="header">
+                <span class="subtitle">6</span>
+                <div class="title">
+                    OpenChat SNS treasury
+                    <div class="copy" onclick={(e) => onCopyUrl(e, "6")}>
+                        <Copy size={copySize} color={"var(--landing-txt)"} />
+                    </div>
                 </div>
             </div>
-        </div>
+        {/snippet}
         <div class="body">
             <p>The SNS will hold a treasury of ICP tokens and CHAT tokens.</p>
             <p>
@@ -774,8 +773,7 @@
                     >3rd party services</HashLink
                 >, and later for <HashLink id="6-3">paying the development team</HashLink>.
             </p>
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="6-1"
-                >ICP for cycles to fund hosting</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="6-1">ICP for cycles to fund hosting</HashLinkTarget>
             <p>
                 OpenChat has a "cycles dispenser" canister which keeps all the other OpenChat
                 canisters topped up with cycles. It has a treasury of cycles and ICP. When it is
@@ -783,7 +781,7 @@
                 NNS cycles minting canister. There will be infrequent proposals to transfer a
                 portion of ICP from the SNS treasury to the "cycles dispenser".
             </p>
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="6-2">3rd party services</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="6-2">3rd party services</HashLinkTarget>
             <p>
                 The intention is for OpenChat to have no off-chain dependencies so that it is not
                 necessary to trust any human agent, for example to transact in FIAT currencies. At
@@ -810,8 +808,7 @@
                     Long before this we expect the IC to have an alternative solution.
                 </li>
             </ul>
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="6-3"
-                >Pay the development team</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="6-3">Pay the development team</HashLinkTarget>
             <p>
                 For some short initial period DFINITY will continue to fund the OpenChat development
                 team and thus remain a core contributor to the OpenChat open source project. Once
@@ -821,8 +818,7 @@
                 development plan and a request for funds.
             </p>
 
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="6-4"
-                >Mitigation against a 51% Attack</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="6-4">Mitigation against a 51% Attack</HashLinkTarget>
             <p>
                 There is a danger that the OpenChat SNS treasury could be the target of an attack.
                 One possible scenario is for an attacker to buy a large proportion of the CHAT
@@ -859,17 +855,19 @@
     </CollapsibleCard>
 
     <CollapsibleCard transition={false} open={linked === 7}>
-        <div class="header" slot="titleSlot">
-            <span class="subtitle">7</span>
-            <div class="title">
-                Tokenomics
-                <div class="copy" on:click|stopPropagation={() => copyUrl("7")}>
-                    <Copy size={copySize} color={"var(--landing-txt)"} />
+        {#snippet titleSlot()}
+            <div class="header">
+                <span class="subtitle">7</span>
+                <div class="title">
+                    Tokenomics
+                    <div class="copy" onclick={(e) => onCopyUrl(e, "7")}>
+                        <Copy size={copySize} color={"var(--landing-txt)"} />
+                    </div>
                 </div>
             </div>
-        </div>
+        {/snippet}
         <div class="body">
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="7-1">Total supply levers</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="7-1">Total supply levers</HashLinkTarget>
             <p>
                 At genesis the total supply of CHAT tokens will be 100M. The supply will increase if
                 more tokens are minted and decrease if tokens are burned.
@@ -885,7 +883,7 @@
                 DAO will elect to do this.
             </p>
             <p>The only way the SNS can burn tokens is by proposal.</p>
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="7-2">Income and outgoings</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="7-2">Income and outgoings</HashLinkTarget>
             <p>
                 At genesis the SNS will have a treasury of ICP from the decentralization sale and
                 52M CHAT tokens.
@@ -925,7 +923,7 @@
                 originalWidth={741}
                 originalHeight={458}
                 src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQHVsuUj8dXoL4nm2IOpy71_I-JPhprdlkdKiztWFyN4kLxXhhaFZMfG6dY5zGzwW_bQiP5OyDN2wU_/pubchart?oid=16731292&format=interactive" />
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="7-3">Token price</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="7-3">Token price</HashLinkTarget>
             <p>There are various factors that will influence the price of CHAT tokens such as</p>
             <ul class="list">
                 <li>Total supply</li>
@@ -970,7 +968,7 @@
                 higher to encourage more user growth but in the short term that could negatively
                 impact price by increasing the liquid supply.
             </p>
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="7-4">Model</HashLinkTarget>
+            <HashLinkTarget {onCopyUrl} id="7-4">Model</HashLinkTarget>
             <p>
                 You can <ExternalLink
                     href="https://docs.google.com/spreadsheets/d/17iPPf3BgI2QKEXwK0lJYHlJmgPZtNvBxO8cgZfjZz8o"

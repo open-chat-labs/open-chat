@@ -1,25 +1,26 @@
-use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
+use ts_export::ts_export;
 use types::{MessageMatch, UserId};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(group, search_messages)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub search_term: String,
     pub max_results: u8,
-    pub users: Option<Vec<UserId>>,
+    pub users: Option<HashSet<UserId>>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(group, search_messages)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    InvalidTerm,
-    TermTooLong(u8),
-    TermTooShort(u8),
-    TooManyUsers(u8),
-    CallerNotInGroup,
+    Error(OCError),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(group, search_messages)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub matches: Vec<MessageMatch>,
 }

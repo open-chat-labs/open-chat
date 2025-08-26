@@ -1,6 +1,9 @@
-use chat_events::MessageContentInternal;
+use std::collections::HashSet;
+
 use serde::{Deserialize, Serialize};
-use types::{GroupPermissionRole, GroupPermissions, GroupRole};
+use types::{
+    ChatPermission, GroupPermissionRole, GroupPermissions, GroupRole, MessageContentType, MessagePermission, MessagePermissions,
+};
 
 #[derive(Serialize, Deserialize, Copy, Clone, Debug, Default, Eq, PartialEq)]
 pub enum GroupRoleInternal {
@@ -94,37 +97,37 @@ impl GroupRoleInternal {
         self.is_permitted(permissions.pin_messages)
     }
 
-    pub fn can_send_message(&self, message: &MessageContentInternal, is_thread: bool, permissions: &GroupPermissions) -> bool {
+    pub fn can_send_message(&self, message_type: MessageContentType, is_thread: bool, permissions: &GroupPermissions) -> bool {
         let ps = if is_thread && permissions.thread_permissions.is_some() {
             permissions.thread_permissions.as_ref().unwrap()
         } else {
             &permissions.message_permissions
         };
 
-        let sender_role = match message {
-            MessageContentInternal::Text(_) => ps.text.unwrap_or(ps.default),
-            MessageContentInternal::Image(_) => ps.image.unwrap_or(ps.default),
-            MessageContentInternal::Video(_) => ps.video.unwrap_or(ps.default),
-            MessageContentInternal::Audio(_) => ps.audio.unwrap_or(ps.default),
-            MessageContentInternal::File(_) => ps.file.unwrap_or(ps.default),
-            MessageContentInternal::Poll(_) => ps.poll.unwrap_or(ps.default),
-            MessageContentInternal::Crypto(_) => ps.crypto.unwrap_or(ps.default),
-            MessageContentInternal::Giphy(_) => ps.giphy.unwrap_or(ps.default),
-            MessageContentInternal::Prize(_) => ps.prize.unwrap_or(ps.default),
-            MessageContentInternal::P2PSwap(_) => ps.p2p_swap.unwrap_or(ps.default),
-            MessageContentInternal::VideoCall(_) => permissions.start_video_call,
-            MessageContentInternal::Custom(mc) => ps
+        let sender_role = match message_type {
+            MessageContentType::Text => ps.text.unwrap_or(ps.default),
+            MessageContentType::Image => ps.image.unwrap_or(ps.default),
+            MessageContentType::Video => ps.video.unwrap_or(ps.default),
+            MessageContentType::Audio => ps.audio.unwrap_or(ps.default),
+            MessageContentType::File => ps.file.unwrap_or(ps.default),
+            MessageContentType::Poll => ps.poll.unwrap_or(ps.default),
+            MessageContentType::Crypto => ps.crypto.unwrap_or(ps.default),
+            MessageContentType::Giphy => ps.giphy.unwrap_or(ps.default),
+            MessageContentType::Prize => ps.prize.unwrap_or(ps.default),
+            MessageContentType::P2PSwap => ps.p2p_swap.unwrap_or(ps.default),
+            MessageContentType::VideoCall => permissions.start_video_call,
+            MessageContentType::Custom(c) => ps
                 .custom
                 .iter()
-                .find(|cp| cp.subtype == mc.kind)
+                .find(|cp| cp.subtype == c)
                 .map(|cp| cp.role)
                 .unwrap_or(ps.default),
-            MessageContentInternal::Deleted(_)
-            | MessageContentInternal::GovernanceProposal(_)
-            | MessageContentInternal::MessageReminderCreated(_)
-            | MessageContentInternal::MessageReminder(_)
-            | MessageContentInternal::PrizeWinner(_)
-            | MessageContentInternal::ReportedMessage(_) => GroupPermissionRole::None,
+            MessageContentType::Deleted
+            | MessageContentType::GovernanceProposal
+            | MessageContentType::MessageReminderCreated
+            | MessageContentType::MessageReminder
+            | MessageContentType::PrizeWinner
+            | MessageContentType::ReportedMessage => GroupPermissionRole::None,
         };
 
         self.is_permitted(sender_role)
@@ -179,5 +182,52 @@ impl GroupRoleInternal {
 
     fn has_admin_rights(&self) -> bool {
         self.is_admin() || self.is_owner()
+    }
+
+    pub fn chat_permissions(&self, role_permissions: &GroupPermissions) -> HashSet<ChatPermission> {
+        let permissions = [
+            (role_permissions.add_members, ChatPermission::AddMembers),
+            (role_permissions.change_roles, ChatPermission::ChangeRoles),
+            (role_permissions.delete_messages, ChatPermission::DeleteMessages),
+            (role_permissions.invite_users, ChatPermission::InviteUsers),
+            (role_permissions.mention_all_members, ChatPermission::MentionAllMembers),
+            (role_permissions.pin_messages, ChatPermission::PinMessages),
+            (role_permissions.react_to_messages, ChatPermission::ReactToMessages),
+            (role_permissions.remove_members, ChatPermission::RemoveMembers),
+            (role_permissions.start_video_call, ChatPermission::StartVideoCall),
+            (role_permissions.update_group, ChatPermission::UpdateGroup),
+        ];
+
+        let mut permissions: HashSet<_> = permissions
+            .into_iter()
+            .filter_map(|(rp, p)| self.is_permitted(rp).then_some(p))
+            .collect();
+
+        permissions.insert(ChatPermission::ReadSummary);
+        permissions.insert(ChatPermission::ReadMembership);
+        permissions.insert(ChatPermission::ReadMessages);
+        permissions
+    }
+
+    pub fn message_permissions(&self, role_permissions: &MessagePermissions) -> HashSet<MessagePermission> {
+        let permissions = [
+            (role_permissions.audio, MessagePermission::Audio),
+            (role_permissions.crypto, MessagePermission::Crypto),
+            (role_permissions.file, MessagePermission::File),
+            (role_permissions.giphy, MessagePermission::Giphy),
+            (role_permissions.image, MessagePermission::Image),
+            (role_permissions.p2p_swap, MessagePermission::P2pSwap),
+            (role_permissions.poll, MessagePermission::Poll),
+            (role_permissions.prize, MessagePermission::Prize),
+            (role_permissions.text, MessagePermission::Text),
+            (role_permissions.video, MessagePermission::Video),
+        ];
+
+        let default_permitted = self.is_permitted(role_permissions.default);
+
+        permissions
+            .into_iter()
+            .filter_map(|(orp, p)| orp.map_or(default_permitted, |rp| self.is_permitted(rp)).then_some(p))
+            .collect()
     }
 }

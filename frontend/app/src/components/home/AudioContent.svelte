@@ -1,5 +1,3 @@
-<svelte:options immutable />
-
 <script lang="ts">
     import type { AudioContent } from "openchat-client";
     import ContentCaption from "./ContentCaption.svelte";
@@ -7,39 +5,50 @@
     import Pause from "svelte-material-icons/Pause.svelte";
     import { setPlayingMedia } from "../../utils/media";
 
-    export let content: AudioContent;
-    export let edited: boolean;
+    interface Props {
+        content: AudioContent;
+        edited: boolean;
+        blockLevelMarkdown?: boolean;
+        me: boolean;
+    }
 
-    let audioPlayer: HTMLAudioElement;
-    let playing: boolean = false;
-    let percPlayed: number = 0;
+    let { content, edited, blockLevelMarkdown = false, me }: Props = $props();
+
+    let inner = $derived(`var(--audio${me ? "-me" : ""}-inner)`);
+    let note = $derived(`var(--audio${me ? "-me" : ""}-note)`);
+
+    let audioPlayer: HTMLAudioElement | undefined = $state();
+    let playing: boolean = $state(false);
+    let percPlayed: number = $state(0);
     const circum = 471.24;
 
     function timeupdate() {
+        if (!audioPlayer) return;
         const fractionPlayed = Math.min(audioPlayer.currentTime / audioPlayer.duration, 1);
         percPlayed = fractionPlayed * 100;
     }
 
     function togglePlay() {
         if (playing) {
-            audioPlayer.pause();
+            audioPlayer?.pause();
         } else {
-            audioPlayer.play();
+            audioPlayer?.play();
         }
     }
 
     function onPlay() {
+        if (!audioPlayer) return;
         playing = true;
         setPlayingMedia(audioPlayer);
     }
 </script>
 
 <audio
-    on:timeupdate={timeupdate}
+    ontimeupdate={timeupdate}
     preload="metadata"
-    on:ended={() => (playing = false)}
-    on:play={onPlay}
-    on:pause={() => (playing = false)}
+    onended={() => (playing = false)}
+    onplay={onPlay}
+    onpause={() => (playing = false)}
     bind:this={audioPlayer}>
     <track kind="captions" />
     {#if content.blobUrl}
@@ -47,23 +56,29 @@
     {/if}
 </audio>
 
-<div class="circular" role="button" on:click={togglePlay}>
+<div class="circular" role="button" onclick={togglePlay}>
     <div class="circle">
         <div class="number">
             {#if playing}
-                <Pause size={"2.5em"} color={"#fff"} />
+                <Pause size={"2.5em"} color={note} />
             {:else}
-                <MusicNote size={"2.5em"} color={"#fff"} />
+                <MusicNote size={"2.5em"} color={note} />
             {/if}
         </div>
         <svg class="pie" viewBox="0 0 320 320">
             <clipPath id="hollow">
                 <path
                     d="M 160 160 m -160 0 a 160 160 0 1 0 320 0 a 160 160 0 1 0 -320 0 Z M 160 160 m -100 0 a 100 100 0 0 1 200 0 a 100 100 0 0 1 -200 0 Z"
-                    style="fill: rgb(216, 216, 216); stroke: rgb(0, 0, 0);" />
+                    style={`fill: rgb(216, 216, 216); stroke: rgb(0, 0, 0);`} />
             </clipPath>
 
-            <circle class="background" cx={160} cy={160} r={150} clip-path="url(#hollow)" />
+            <circle
+                class:me
+                class="background"
+                cx={160}
+                cy={160}
+                r={150}
+                clip-path="url(#hollow)" />
 
             {#if percPlayed > 0}
                 <circle
@@ -71,7 +86,7 @@
                     cx={160}
                     cy={160}
                     r={75}
-                    stroke={"var(--accent)"}
+                    stroke={inner}
                     clip-path="url(#hollow)"
                     transform={`rotate(${-90})`}
                     stroke-dasharray={`${(percPlayed * circum) / 100} ${circum}`} />
@@ -80,7 +95,7 @@
     </div>
 </div>
 
-<ContentCaption caption={content.caption} {edited} />
+<ContentCaption caption={content.caption} {edited} {blockLevelMarkdown} />
 
 <style lang="scss">
     $size: 120px;
@@ -100,7 +115,11 @@
         }
 
         .background {
-            fill: var(--primary);
+            fill: var(--audio-outer);
+
+            &.me {
+                fill: var(--audio-me-outer);
+            }
         }
     }
 

@@ -1,22 +1,26 @@
 <script lang="ts">
-    import Monitor from "svelte-material-icons/Monitor.svelte";
+    import { mobileWidth } from "openchat-client";
     import Cellphone from "svelte-material-icons/Cellphone.svelte";
-    import { mobileWidth } from "../../../stores/screenDimensions";
+    import Monitor from "svelte-material-icons/Monitor.svelte";
 
-    export let caption: string;
-    export let desktopUrl: string;
-    export let mobileUrl: string;
+    interface Props {
+        caption: string;
+        desktopUrl: string;
+        mobileUrl: string;
+    }
 
-    let mode: "desktop" | "mobile" = $mobileWidth ? "mobile" : "desktop";
+    let { caption, desktopUrl, mobileUrl }: Props = $props();
+
+    let mode: "desktop" | "mobile" = $state($mobileWidth ? "mobile" : "desktop");
 </script>
 
 <div class="blog-image">
     <div class="switch">
-        <div class="mode" class:selected={mode === "desktop"} on:click={() => (mode = "desktop")}>
+        <div class="mode" class:selected={mode === "desktop"} onclick={() => (mode = "desktop")}>
             <Monitor />
             <span>Desktop</span>
         </div>
-        <div class="mode" class:selected={mode === "mobile"} on:click={() => (mode = "mobile")}>
+        <div class="mode" class:selected={mode === "mobile"} onclick={() => (mode = "mobile")}>
             <Cellphone />
             <span>Mobile</span>
         </div>

@@ -1,5 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use std::cmp::Reverse;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BinaryHeap, HashMap};
 use types::{CanisterId, Cycles, TimestampMillis};
@@ -67,14 +68,17 @@ impl Canisters {
             })
         }) {
             if heap.len() < count {
-                heap.push(top_up);
-            } else if top_up > *heap.peek().unwrap() {
+                heap.push(Reverse(top_up));
+            } else if top_up > heap.peek().unwrap().0 {
                 heap.pop();
-                heap.push(top_up);
+                heap.push(Reverse(top_up));
             }
         }
 
-        let mut vec = heap.into_sorted_vec();
+        let mut vec = Vec::with_capacity(heap.len());
+        while let Some(Reverse(top_up)) = heap.pop() {
+            vec.push(top_up);
+        }
         vec.reverse();
         vec
     }

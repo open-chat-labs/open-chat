@@ -1,29 +1,34 @@
 <script lang="ts">
-    import { allQuestions, type Questions } from "openchat-client";
+    import {
+        allQuestions,
+        locationStore,
+        mobileWidth,
+        querystringStore,
+        type Questions,
+    } from "openchat-client";
+    import { _ } from "svelte-i18n";
+    import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
+    import { i18nKey } from "../../i18n/i18n";
+    import { copyToClipboard } from "../../utils/urls";
     import CollapsibleCard from "../CollapsibleCard.svelte";
     import Markdown from "../home/Markdown.svelte";
-    import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
-    import Headline from "./Headline.svelte";
-    import { querystring, location } from "../../routes";
-    import { copyToClipboard } from "../../utils/urls";
-    import { _ } from "svelte-i18n";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
+    import Headline from "./Headline.svelte";
 
-    let question: Questions | undefined = undefined;
+    let question: Questions | undefined = $state(undefined);
 
-    $: {
-        const q = $querystring.get("q");
+    $effect(() => {
+        const q = $querystringStore.get("q");
         if (q) {
             question = q as Questions;
         }
-    }
+    });
 
-    $: copySize = $mobileWidth ? "14px" : "16px";
+    let copySize = $derived($mobileWidth ? "14px" : "16px");
 
-    function copyUrl(q: string): void {
-        copyToClipboard(`${window.location.origin}${$location}?q=${q}`);
+    function copyUrl(e: Event, q: string): void {
+        e.stopPropagation();
+        copyToClipboard(`${window.location.origin}${$locationStore}?q=${q}`);
     }
 </script>
 
@@ -34,16 +39,18 @@
         <CollapsibleCard
             open={question === q}
             transition={false}
-            on:opened={() => (question = q)}
+            onOpened={() => (question = q)}
             headerText={i18nKey(`faq.${q}_q`)}>
-            <div class="header" slot="titleSlot">
-                <div class="title">
-                    <Translatable resourceKey={i18nKey(`faq.${q}_q`)} />
-                    <div class="copy" on:click|stopPropagation={() => copyUrl(q)}>
-                        <ContentCopy size={copySize} color={"var(--landing-txt)"} />
+            {#snippet titleSlot()}
+                <div class="header">
+                    <div class="title">
+                        <Translatable resourceKey={i18nKey(`faq.${q}_q`)} />
+                        <div class="copy" onclick={(e) => copyUrl(e, q)}>
+                            <ContentCopy size={copySize} color={"var(--landing-txt)"} />
+                        </div>
                     </div>
                 </div>
-            </div>
+            {/snippet}
             <div class="body">
                 <Markdown text={$_(`faq.${q}_a`)} />
                 {#if q === "translation"}
@@ -57,6 +64,16 @@
 </div>
 
 <style lang="scss">
+    :global(.faq .body th) {
+        @include font(bold);
+        padding: 0;
+        padding-bottom: $sp3;
+    }
+
+    :global(.faq .body td) {
+        padding: 0;
+    }
+
     .translation {
         display: block;
         margin-top: $sp3;
@@ -81,15 +98,6 @@
             padding: 0 0 toRem(24) 0;
             max-width: 100%;
         }
-    }
-
-    .body p,
-    .body li {
-        @include font(book, normal, fs-100, 28);
-    }
-
-    .body p {
-        margin-bottom: toRem(24);
     }
 
     .header {

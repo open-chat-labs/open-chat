@@ -1,74 +1,59 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
-    import ModalContent from "../../../ModalContent.svelte";
-    import Button from "../../../Button.svelte";
-    import { menuCloser } from "../../../../actions/closeMenu";
-    import ChooseMembers from "../../ChooseMembers.svelte";
-    import { mobileWidth } from "../../../../stores/screenDimensions";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
-    import type {
-        CandidateMember,
-        CommunitySummary,
-        DefaultChannel,
-        OpenChat,
-        Rules,
-        UserSummary,
+    import {
+        mobileWidth,
+        type CandidateMember,
+        type CommunitySummary,
+        type DefaultChannel,
+        type OpenChat,
+        type Rules,
+        type UserSummary,
     } from "openchat-client";
-    import StageHeader from "../../StageHeader.svelte";
-    import PermissionsEditor from "./PermissionsEditor.svelte";
-    import PermissionsViewer from "../PermissionsViewer.svelte";
-    import RulesEditor from "../../RulesEditor.svelte";
-    import Details from "./Details.svelte";
-    import { createCandidateCommunity } from "../../../../stores/community";
-    import VisibilityControl from "../../VisibilityControl.svelte";
-    import ChooseChannels from "./ChooseChannels.svelte";
-    import { toastStore } from "../../../../stores/toast";
     import page from "page";
-    import AreYouSure from "../../../AreYouSure.svelte";
+    import { getContext, onMount } from "svelte";
+    import { _ } from "svelte-i18n";
+    import { menuCloser } from "../../../../actions/closeMenu";
     import { i18nKey } from "../../../../i18n/i18n";
+    import { createCandidateCommunity } from "../../../../stores/community";
+    import { toastStore } from "../../../../stores/toast";
+    import AreYouSure from "../../../AreYouSure.svelte";
+    import Button from "../../../Button.svelte";
+    import ModalContent from "../../../ModalContent.svelte";
     import Translatable from "../../../Translatable.svelte";
+    import ChooseMembers from "../../ChooseMembers.svelte";
+    import RulesEditor from "../../RulesEditor.svelte";
+    import StageHeader from "../../StageHeader.svelte";
+    import VisibilityControl from "../../VisibilityControl.svelte";
+    import PermissionsViewer from "../PermissionsViewer.svelte";
+    import ChooseChannels from "./ChooseChannels.svelte";
+    import Details from "./Details.svelte";
+    import PermissionsEditor from "./PermissionsEditor.svelte";
 
-    export let original: CommunitySummary = createCandidateCommunity("", 0);
-    export let originalRules: Rules;
+    interface Props {
+        original?: CommunitySummary;
+        originalRules: Rules;
+        onClose: () => void;
+    }
+
+    let { original = createCandidateCommunity("", 0), originalRules, onClose }: Props = $props();
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    let actualWidth = 0;
+    let actualWidth = $state(0);
     let editing = original.id.communityId !== "";
-    let step = 0;
-    let busy = false;
-    let confirming = false;
-    let candidate = structuredClone(original);
-    let candidateRules = { ...originalRules, newVersion: false };
-    let members: CandidateMember[] = [];
-    let channels: DefaultChannel[] = [{ name: $_("communities.general"), createdAt: Date.now() }];
-    let channelsValid = true;
-    let detailsValid = true;
-    let rulesValid = true;
-    let visibilityValid = true;
-    $: steps = getSteps(editing, detailsValid, visibilityValid, channelsValid, rulesValid);
-    $: canEditPermissions = !editing || client.canChangeCommunityPermissions(candidate.id);
-    $: permissionsDirty = client.haveCommunityPermissionsChanged(
-        original.permissions,
-        candidate.permissions,
-    );
-    $: rulesDirty =
-        editing &&
-        (candidateRules.enabled !== originalRules.enabled ||
-            candidateRules.text !== originalRules.text);
-    $: nameDirty = editing && candidate.name !== original.name;
-    $: descDirty = editing && candidate.description !== original.description;
-    $: languageDirty = editing && candidate.primaryLanguage !== original.primaryLanguage;
-    $: avatarDirty = editing && candidate.avatar?.blobUrl !== original.avatar?.blobUrl;
-    $: bannerDirty = editing && candidate.banner.blobUrl !== original.banner.blobUrl;
-    $: visDirty = editing && candidate.public !== original.public;
-    $: infoDirty = nameDirty || descDirty || avatarDirty || bannerDirty || languageDirty;
-    $: gateDirty = client.hasAccessGateChanged(candidate.gate, original.gate);
-    $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty;
-    $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
-    $: left = step * (actualWidth - padding);
-    $: valid = detailsValid && channelsValid && rulesValid && visibilityValid;
+    let step = $state("details");
+    let busy = $state(false);
+    let confirming = $state(false);
+    let showingVerificationWarning = $state(false);
+    let candidate = $state<CommunitySummary>($state.snapshot(original));
+    let candidateRules = $state({ ...originalRules, newVersion: false });
+    let members: CandidateMember[] = $state([]);
+    let channels: DefaultChannel[] = $state([
+        { name: $_("communities.general"), createdAt: Date.now() },
+    ]);
+    let channelsValid = $state(true);
+    let detailsValid = $state(true);
+    let rulesValid = $state(true);
+    let visibilityValid = $state(true);
 
     function getSteps(
         editing: boolean,
@@ -78,15 +63,15 @@
         rulesValid: boolean,
     ) {
         let steps = [
-            { labelKey: "communities.details", valid: detailsValid },
-            { labelKey: "communities.visibility", valid: visibilityValid },
-            { labelKey: "communities.rules", valid: rulesValid },
-            { labelKey: "permissions.permissions", valid: true },
+            { key: "details", labelKey: "communities.details", valid: detailsValid },
+            { key: "visibility", labelKey: "communities.visibility", valid: visibilityValid },
+            { key: "rules", labelKey: "communities.rules", valid: rulesValid },
+            { key: "permissions", labelKey: "permissions.permissions", valid: true },
         ];
 
         if (!editing) {
-            steps.push({ labelKey: "communities.channels", valid: channelsValid });
-            steps.push({ labelKey: "communities.invite", valid: true });
+            steps.push({ key: "channels", labelKey: "communities.channels", valid: channelsValid });
+            steps.push({ key: "invite", labelKey: "communities.invite", valid: true });
         }
         return steps;
     }
@@ -95,16 +80,15 @@
         candidate = {
             ...original,
             permissions: { ...original.permissions },
-            gate: { ...original.gate },
+            gateConfig: {
+                gate: { ...original.gateConfig.gate },
+                expiry: original.gateConfig.expiry,
+            },
         };
         candidateRules = { ...originalRules, newVersion: false };
     });
 
-    function changeStep(ev: CustomEvent<number>) {
-        step = ev.detail;
-    }
-
-    function searchUsers(term: string): Promise<UserSummary[]> {
+    function searchUsers(term: string): Promise<[UserSummary[], UserSummary[]]> {
         return client.searchUsersForInvite(term, 20, "community", !editing, true);
     }
 
@@ -113,12 +97,12 @@
             return Promise.resolve();
         }
         return client
-            .inviteUsersToCommunity(
+            .inviteUsers(
                 { kind: "community", communityId },
                 members.map((m) => m.user.userId),
             )
             .then((resp) => {
-                if (resp !== "success") {
+                if (!resp) {
                     Promise.reject("Unable to invite users to the new community");
                 }
             });
@@ -129,8 +113,20 @@
         if (editing) {
             const makePrivate = visDirty && !candidate.public && original.public;
 
+            if (verificationWarning && !showingVerificationWarning) {
+                showingVerificationWarning = true;
+                return Promise.resolve();
+            }
+
             if (makePrivate && !confirming) {
                 confirming = true;
+                return Promise.resolve();
+            }
+
+            if (verificationWarning && showingVerificationWarning && !yes) {
+                showingVerificationWarning = false;
+                busy = false;
+                candidate.name = original.name;
                 return Promise.resolve();
             }
 
@@ -142,50 +138,51 @@
             }
 
             confirming = false;
+            showingVerificationWarning = false;
 
+            const community = $state.snapshot(candidate);
+            const communityRules = $state.snapshot(candidateRules);
             return client
                 .saveCommunity(
-                    candidate,
-                    candidate.name !== original.name ? candidate.name : undefined,
-                    candidate.description !== original.description
-                        ? candidate.description
+                    community,
+                    community.name !== original.name ? community.name : undefined,
+                    community.description !== original.description
+                        ? community.description
                         : undefined,
-                    rulesDirty ? candidateRules : undefined,
-                    permissionsDirty ? candidate.permissions : undefined,
-                    avatarDirty ? candidate.avatar.blobData : undefined,
-                    bannerDirty ? candidate.banner.blobData : undefined,
-                    gateDirty ? candidate.gate : undefined,
-                    candidate.public !== original.public ? candidate.public : undefined,
-                    languageDirty ? candidate.primaryLanguage : undefined,
+                    rulesDirty ? communityRules : undefined,
+                    permissionsDirty ? community.permissions : undefined,
+                    avatarDirty ? community.avatar.blobData : undefined,
+                    bannerDirty ? community.banner.blobData : undefined,
+                    gateDirty ? community.gateConfig : undefined,
+                    community.public !== original.public ? community.public : undefined,
+                    languageDirty ? community.primaryLanguage : undefined,
                 )
                 .then((success: boolean) => {
                     if (success) {
                         toastStore.showSuccessToast(i18nKey("communities.saved"));
-                        dispatch("close");
+                        onClose();
                     } else {
                         toastStore.showFailureToast(i18nKey("communities.errors.saveFailed"));
                     }
                 })
                 .finally(() => (busy = false));
         } else {
+            const community = $state.snapshot(candidate);
+            const communityRules = $state.snapshot(candidateRules);
             return client
                 .createCommunity(
-                    candidate,
-                    candidateRules,
+                    community,
+                    communityRules,
                     channels.map((c) => c.name),
                 )
                 .then((response) => {
                     if (response.kind === "success") {
-                        return optionallyInviteUsers(response.id)
-                            .then(() => {
-                                toastStore.showSuccessToast(i18nKey("communities.created"));
-                                dispatch("close");
-                                page(`/community/${response.id}`);
-                            })
-                            .catch((_err) => {
-                                toastStore.showFailureToast(i18nKey("inviteUsersFailed"));
-                                step = 0;
-                            });
+                        toastStore.showSuccessToast(i18nKey("communities.created"));
+                        onClose();
+                        page(`/community/${response.id}`);
+                        optionallyInviteUsers(response.id).catch((_err) => {
+                            toastStore.showFailureToast(i18nKey("inviteUsersFailed"));
+                        });
                     } else {
                         toastStore.showFailureToast(i18nKey(`communities.errors.${response.kind}`));
                     }
@@ -193,6 +190,34 @@
                 .finally(() => (busy = false));
         }
     }
+    let steps = $derived(
+        getSteps(editing, detailsValid, visibilityValid, channelsValid, rulesValid),
+    );
+    let canEditPermissions = $derived(
+        !editing || client.canChangeCommunityPermissions(candidate.id),
+    );
+    let permissionsDirty = $derived(
+        client.haveCommunityPermissionsChanged(original.permissions, candidate.permissions),
+    );
+    let rulesDirty = $derived(
+        editing &&
+            (candidateRules.enabled !== originalRules.enabled ||
+                candidateRules.text !== originalRules.text),
+    );
+    let nameDirty = $derived(editing && candidate.name !== original.name);
+    let descDirty = $derived(editing && candidate.description !== original.description);
+    let languageDirty = $derived(editing && candidate.primaryLanguage !== original.primaryLanguage);
+    let avatarDirty = $derived(editing && candidate.avatar?.blobUrl !== original.avatar?.blobUrl);
+    let bannerDirty = $derived(editing && candidate.banner.blobUrl !== original.banner.blobUrl);
+    let visDirty = $derived(editing && candidate.public !== original.public);
+    let infoDirty = $derived(nameDirty || descDirty || avatarDirty || bannerDirty || languageDirty);
+    let gateDirty = $derived(
+        client.hasAccessGateChanged(candidate.gateConfig, original.gateConfig),
+    );
+    let dirty = $derived(infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty);
+    let stepIndex = $derived(steps.findIndex((s) => s.key === step) ?? 0);
+    let valid = $derived(detailsValid && channelsValid && rulesValid && visibilityValid);
+    let verificationWarning = $derived(nameDirty && editing && original.verified);
 </script>
 
 {#if confirming}
@@ -201,114 +226,135 @@
         action={save} />
 {/if}
 
-<ModalContent bind:actualWidth closeIcon on:close>
-    <div class="header" slot="header">
-        <Translatable resourceKey={i18nKey(editing ? "communities.edit" : "communities.create")} />
-    </div>
-    <div class="body" slot="body">
-        <StageHeader {steps} enabled on:step={changeStep} {step} />
-        <div class="wrapper">
-            <div class="sections" style={`left: -${left}px`}>
-                <div class="details" class:visible={step === 0}>
-                    <Details bind:valid={detailsValid} bind:busy bind:candidate />
-                </div>
-                <div class="visibility" class:visible={step === 1}>
-                    <VisibilityControl
-                        canEditDisappearingMessages={false}
-                        bind:candidate
-                        bind:valid={visibilityValid}
-                        {original}
-                        {editing}
-                        history={false} />
-                </div>
-                <div class="rules" class:visible={step === 2}>
-                    <RulesEditor
-                        bind:valid={rulesValid}
-                        level={candidate.level}
-                        bind:rules={candidateRules}
-                        {editing} />
-                </div>
-                <div use:menuCloser class="permissions" class:visible={step === 3}>
-                    {#if canEditPermissions}
-                        <PermissionsEditor
-                            isPublic={candidate.public}
-                            bind:permissions={candidate.permissions} />
-                    {:else}
-                        <PermissionsViewer
-                            isPublic={candidate.public}
-                            permissions={candidate.permissions} />
+{#if showingVerificationWarning}
+    <AreYouSure
+        message={i18nKey("verified.nameChangeWarning", undefined, candidate.level, true)}
+        action={save} />
+{/if}
+
+<ModalContent bind:actualWidth closeIcon {onClose}>
+    {#snippet header()}
+        <div class="header">
+            <Translatable
+                resourceKey={i18nKey(editing ? "communities.edit" : "communities.create")} />
+        </div>
+    {/snippet}
+    {#snippet body()}
+        <div class="body">
+            <StageHeader {steps} enabled onStep={(s) => (step = s)} {step} />
+            <div use:menuCloser class="wrapper">
+                {#if step === "details"}
+                    <div class="details">
+                        <Details bind:valid={detailsValid} bind:busy bind:candidate />
+                    </div>
+                {/if}
+                {#if step === "visibility"}
+                    <div class="visibility">
+                        <VisibilityControl
+                            canEditDisappearingMessages={false}
+                            bind:candidate
+                            bind:valid={visibilityValid}
+                            {editing}
+                            {gateDirty}
+                            history={false} />
+                    </div>
+                {/if}
+                {#if step === "rules"}
+                    <div class="rules">
+                        <RulesEditor
+                            bind:valid={rulesValid}
+                            level={candidate.level}
+                            bind:rules={candidateRules}
+                            {editing} />
+                    </div>
+                {/if}
+                {#if step === "permissions"}
+                    <div class="permissions">
+                        {#if canEditPermissions}
+                            <PermissionsEditor bind:permissions={candidate.permissions} />
+                        {:else}
+                            <PermissionsViewer
+                                isPublic={candidate.public}
+                                permissions={candidate.permissions} />
+                        {/if}
+                    </div>
+                {/if}
+                {#if !editing}
+                    {#if step === "channels"}
+                        <div class="channels">
+                            <ChooseChannels bind:valid={channelsValid} bind:channels />
+                        </div>
+                    {/if}
+                    {#if step === "invite"}
+                        <div class="members">
+                            <ChooseMembers userLookup={searchUsers} bind:members {busy} />
+                        </div>
+                    {/if}
+                {/if}
+            </div>
+        </div>
+    {/snippet}
+    {#snippet footer()}
+        <span class="footer">
+            <div class="community-buttons">
+                <div class="back">
+                    {#if !editing && stepIndex > 0}
+                        <Button
+                            disabled={busy}
+                            small={!$mobileWidth}
+                            tiny={$mobileWidth}
+                            onClick={() => (step = steps[stepIndex - 1].key)}
+                            ><Translatable resourceKey={i18nKey("communities.back")} /></Button>
                     {/if}
                 </div>
-                {#if !editing}
-                    <div class="channels" class:visible={step === 4}>
-                        <ChooseChannels bind:valid={channelsValid} bind:channels />
-                    </div>
-                    <div class="members" class:visible={step === 5}>
-                        <ChooseMembers userLookup={searchUsers} bind:members {busy} />
-                    </div>
-                {/if}
-            </div>
-        </div>
-    </div>
-    <span class="footer" slot="footer">
-        <div class="community-buttons">
-            <div class="back">
-                {#if !editing && step > 0}
+                <div class="actions">
                     <Button
-                        disabled={busy}
+                        disabled={false}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        on:click={() => (step = step - 1)}
-                        ><Translatable resourceKey={i18nKey("communities.back")} /></Button>
-                {/if}
-            </div>
-            <div class="actions">
-                <Button
-                    disabled={false}
-                    small={!$mobileWidth}
-                    tiny={$mobileWidth}
-                    on:click={() => dispatch("close")}
-                    secondary><Translatable resourceKey={i18nKey("cancel")} /></Button>
+                        onClick={onClose}
+                        secondary><Translatable resourceKey={i18nKey("cancel")} /></Button>
 
-                {#if editing}
-                    <Button
-                        disabled={!dirty || busy || !valid}
-                        loading={busy}
-                        small={!$mobileWidth}
-                        tiny={$mobileWidth}
-                        on:click={() => save()}
-                        ><Translatable
-                            resourceKey={i18nKey(
-                                "group.update",
-                                undefined,
-                                "community",
-                                true,
-                            )} /></Button>
-                {:else if step < steps.length - 1}
-                    <Button
-                        small={!$mobileWidth}
-                        tiny={$mobileWidth}
-                        on:click={() => (step = step + 1)}>
-                        <Translatable resourceKey={i18nKey("communities.next")} />
-                    </Button>
-                {:else}
-                    <Button
-                        disabled={busy || !valid}
-                        loading={busy}
-                        small={!$mobileWidth}
-                        tiny={$mobileWidth}
-                        on:click={() => save()}
-                        ><Translatable
-                            resourceKey={i18nKey(
-                                "group.create",
-                                undefined,
-                                "community",
-                                true,
-                            )} /></Button>
-                {/if}
+                    {#if editing}
+                        <Button
+                            disabled={!dirty || busy || !valid}
+                            loading={busy}
+                            small={!$mobileWidth}
+                            tiny={$mobileWidth}
+                            onClick={() => save()}
+                            ><Translatable
+                                resourceKey={i18nKey(
+                                    "group.update",
+                                    undefined,
+                                    "community",
+                                    true,
+                                )} /></Button>
+                    {:else if stepIndex < steps.length - 1}
+                        <Button
+                            small={!$mobileWidth}
+                            tiny={$mobileWidth}
+                            onClick={() => (step = steps[stepIndex + 1].key)}>
+                            <Translatable resourceKey={i18nKey("communities.next")} />
+                        </Button>
+                    {:else}
+                        <Button
+                            disabled={busy || !valid}
+                            loading={busy}
+                            small={!$mobileWidth}
+                            tiny={$mobileWidth}
+                            onClick={() => save()}
+                            ><Translatable
+                                resourceKey={i18nKey(
+                                    "group.create",
+                                    undefined,
+                                    "community",
+                                    true,
+                                )} /></Button>
+                    {/if}
+                </div>
             </div>
-        </div>
-    </span>
+        </span>
+    {/snippet}
 </ModalContent>
 
 <style lang="scss">
@@ -350,20 +396,11 @@
         overflow: hidden;
         height: 600px;
         position: relative;
+        display: flex;
+        @include nice-scrollbar();
 
         @include mobile() {
             height: 400px;
-        }
-    }
-
-    .sections {
-        display: flex;
-        transition: left 250ms ease-in-out;
-        position: relative;
-        gap: $sp5;
-        height: 100%;
-        @include mobile() {
-            gap: $sp4;
         }
     }
 
@@ -373,13 +410,6 @@
     .members,
     .channels,
     .permissions {
-        flex: 0 0 100%;
-        visibility: hidden;
-        transition: visibility 250ms ease-in-out;
-        @include nice-scrollbar();
-
-        &.visible {
-            visibility: visible;
-        }
+        width: 100%;
     }
 </style>

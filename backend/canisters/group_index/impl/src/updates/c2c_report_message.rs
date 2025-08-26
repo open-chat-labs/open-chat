@@ -1,10 +1,10 @@
 use crate::guards::caller_is_group_or_community_canister;
 use crate::read_state;
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_report_message::{Response::*, *};
 
-#[update_msgpack(guard = "caller_is_group_or_community_canister")]
+#[update(guard = "caller_is_group_or_community_canister", msgpack = true)]
 #[trace]
 async fn c2c_report_message(args: Args) -> Response {
     let user_index_canister_id = read_state(|state| state.data.user_index_canister_id);

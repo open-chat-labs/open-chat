@@ -1,8 +1,8 @@
-use crate::lifecycle::{init_env, init_state};
 use crate::Data;
+use crate::lifecycle::{init_env, init_state};
 use canister_tracing_macros::trace;
 use escrow_canister::init::Args;
-use ic_cdk_macros::init;
+use ic_cdk::init;
 use tracing::info;
 use utils::cycles::init_cycles_dispenser_client;
 
@@ -13,7 +13,7 @@ fn init(args: Args) {
     init_cycles_dispenser_client(args.cycles_dispenser_canister_id, args.test_mode);
 
     let env = init_env([0; 32]);
-    let data = Data::new(args.cycles_dispenser_canister_id, args.test_mode);
+    let data = Data::new(args.registry_canister_id, args.cycles_dispenser_canister_id, args.test_mode);
 
     init_state(env, data, args.wasm_version);
 

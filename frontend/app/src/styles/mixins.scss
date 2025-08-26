@@ -1,3 +1,6 @@
+@use "sass:math";
+@use "sass:map";
+
 @function toRem($value: 16) {
     $remValue: math.div($value, 16) + rem;
     @return $remValue;
@@ -119,6 +122,11 @@ $sp9: 96px;
 $sp10: 144px;
 $sp11: 192px;
 
+$avatar-mod: toRem(22);
+$avatar-mod-small: toRem(18);
+$avatar-mod-offset: toRem(-4);
+$avatar-mod-offset-small: toRem(-3);
+
 @mixin fullScreenImg($img) {
     background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.5)), url($img);
     background-position: center;
@@ -133,16 +141,11 @@ $sp11: 192px;
     text-overflow: ellipsis;
 }
 
-@mixin fullHeight() {
-    height: 100vh;
-    height: calc(var(--vh, 1vh) * 100);
-}
-
 /* Media query stuff */
 
 @mixin size-above($breakpoint) {
-    @if map-has-key($breakpoints, $breakpoint) {
-        $breakpoint-value: map-get($breakpoints, $breakpoint);
+    @if map.has-key($breakpoints, $breakpoint) {
+        $breakpoint-value: map.get($breakpoints, $breakpoint);
         @media (min-width: $breakpoint-value) {
             @content;
         }
@@ -157,6 +160,12 @@ $sp11: 192px;
     }
 }
 
+@mixin not-mobile() {
+    @include size-above(sm) {
+        @content;
+    }
+}
+
 @mixin size-below-n($n) {
     @media (max-width: ($n - 1)) {
         @content;
@@ -164,8 +173,8 @@ $sp11: 192px;
 }
 
 @mixin size-below($breakpoint) {
-    @if map-has-key($breakpoints, $breakpoint) {
-        $breakpoint-value: map-get($breakpoints, $breakpoint);
+    @if map.has-key($breakpoints, $breakpoint) {
+        $breakpoint-value: map.get($breakpoints, $breakpoint);
         @media (max-width: ($breakpoint-value - 1)) {
             @content;
         }
@@ -244,43 +253,17 @@ $sp11: 192px;
     }
 }
 
-@mixin gold() {
-    color: #ffffff;
-    border: none;
-    background: linear-gradient(
-        to bottom,
-        #cfc09f 22%,
-        #ffecb3 30%,
-        #cfc09f 40%,
-        #cfc09f 50%,
-        #634f2c 78%
-    );
-    animation: shimmer 15s ease-in-out infinite;
-    background-size: 120% 120%;
-}
-
-@keyframes shimmer {
-    0% {
-        background-position: 0 0%;
-    }
-    50% {
-        background-position: 0 75%;
-    }
-    100% {
-        background-position: 0 0%;
-    }
-}
-
 /* z-index stuff */
 
-/* 
-    Add items to this map in the order that they need to stack in the UI 
-    then apply z-index using the z-index mixin and the real z-indexes will 
+/*
+    Add items to this map in the order that they need to stack in the UI
+    then apply z-index using the z-index mixin and the real z-indexes will
     be sorted out magically
 */
 $z-indexed-items: (
     "global": (
         "login",
+        "error",
         "bubble-stem",
         "left-panel",
         "current-user",
@@ -309,6 +292,8 @@ $z-indexed-items: (
         "upgrade-banner",
         "profiler",
         "dollar",
+        "coin",
+        "chit",
     ),
 );
 
@@ -318,7 +303,7 @@ $z-index-map: ();
     $counter: 1;
     $group-map: ();
     @each $item in $group-list {
-        $group-map: map-merge(
+        $group-map: map.merge(
             $group-map,
             (
                 $item: $counter,
@@ -326,7 +311,7 @@ $z-index-map: ();
         );
         $counter: $counter + 1;
     }
-    $z-index-map: map-merge(
+    $z-index-map: map.merge(
         $z-index-map,
         (
             $group-name: $group-map,
@@ -335,9 +320,9 @@ $z-index-map: ();
 }
 
 @mixin z-index($key, $group: "global") {
-    @if map-has-key($z-index-map, $group) {
-        @if map-has-key(map-get($z-index-map, $group), $key) {
-            z-index: map-get(map-get($z-index-map, $group), $key);
+    @if map.has-key($z-index-map, $group) {
+        @if map.has-key(map.get($z-index-map, $group), $key) {
+            z-index: map.get(map.get($z-index-map, $group), $key);
         } @else {
             @error ('@include z-index() expects $key to be found in map z-indexed-items #{$group}, given `#{$key}`');
         }
@@ -364,20 +349,20 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
 
 @mixin font-size($type: fs-100, $line-height: null) {
     // Generating mixins below: Do not change
-    $type: map-get($font-sizes, $type);
+    $type: map.get($font-sizes, $type);
 
     // LINE-HEIGHTS
-    @if map-has-key($type, line-height) {
+    @if map.has-key($type, line-height) {
         @if $line-height {
             line-height: toRem($line-height);
         } @else {
-            line-height: map-get($type, line-height);
+            line-height: map.get($type, line-height);
         }
     }
 
     // FONT-SIZES
-    @if map-has-key($type, font-size) {
-        font-size: map-get($type, font-size);
+    @if map.has-key($type, font-size) {
+        font-size: map.get($type, font-size);
     }
 }
 
@@ -401,8 +386,8 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
 
 @mixin font($weight: book, $style: null, $size: null, $line-height: null) {
     // Error handling
-    @if map-has-key($font-weights, $weight) {
-        font-weight: map-get($font-weights, $weight);
+    @if map.has-key($font-weights, $weight) {
+        font-weight: map.get($font-weights, $weight);
         @include font-family($weight);
     } @else {
         @error ('@include font() expects $weight to be found in map font, given `#{$weight}`');
@@ -441,25 +426,25 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: var(--accent);
-    text-shadow: 1px 1px 1px var(--accentDarker);
-    border-radius: 12px;
+    background-color: var(--unread-bg);
+    text-shadow: 1px 1px 1px var(--unread-txt-sh);
+    border-radius: toRem(12);
     @include font(bold, normal, fs-50);
-    color: #ffffff;
-    min-width: $sp5;
+    color: var(--unread-txt);
+    min-width: toRem(24);
     padding: 0 $sp2;
-    height: $sp5;
+    height: toRem(24);
 
     @include mobile() {
-        min-width: 18px;
-        height: 18px;
+        min-width: toRem(18);
+        height: toRem(18);
     }
 }
 
 @mixin message-list() {
     flex: auto;
     background-color: var(--panel-bg);
-    padding: $sp3 $sp4;
+    padding: $sp3 $sp4 0 $sp4;
     overflow-x: hidden;
     overscroll-behavior-y: contain;
     position: relative;
@@ -542,8 +527,12 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
         display: flex;
     }
 
-    .details h4 {
-        @include font(book, normal, fs-120);
+    .details {
+        flex: auto;
+
+        h4 {
+            @include font(book, normal, fs-120);
+        }
     }
 }
 
@@ -571,8 +560,27 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     padding: 2px;
     border-radius: 50%;
     backdrop-filter: blur(1px);
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.3);
     position: absolute;
     bottom: -2px;
     right: 2px;
+}
+
+@mixin clamp($lines: 2) {
+    display: -webkit-box;
+    -webkit-line-clamp: $lines;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@mixin locked() {
+    filter: saturate(0);
+
+    &::before {
+        content: "";
+        width: 12px;
+        height: 12px;
+        background-image: url(/assets/locked.svg);
+    }
 }

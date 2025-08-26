@@ -1,11 +1,15 @@
-use crate::nns::UserOrAccount;
+#![expect(deprecated)]
+use crate::nns::{Tokens, UserOrAccount};
 use crate::{CanisterId, TimestampNanos, UserId};
 use candid::{CandidType, Principal};
-use ic_ledger_types::{AccountIdentifier, Subaccount, Tokens};
-use serde::{Deserialize, Serialize};
+use ic_ledger_types::{AccountIdentifier, Subaccount};
+use serde::{Deserialize, Deserializer, Serialize};
+use ts_export::ts_export;
 
 const ICP_FEE: u128 = 10_000;
 
+#[deprecated]
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Hash)]
 pub enum Cryptocurrency {
     InternetComputer,
@@ -27,43 +31,24 @@ impl Cryptocurrency {
             Cryptocurrency::Other(symbol) => symbol,
         }
     }
+}
 
-    pub fn decimals(&self) -> Option<u8> {
-        match self {
-            Cryptocurrency::InternetComputer => Some(8),
-            Cryptocurrency::SNS1 => Some(8),
-            Cryptocurrency::CKBTC => Some(8),
-            Cryptocurrency::CHAT => Some(8),
-            Cryptocurrency::KINIC => Some(8),
-            Cryptocurrency::Other(_) => None,
-        }
-    }
-
-    pub fn fee(&self) -> Option<u128> {
-        match self {
-            Cryptocurrency::InternetComputer => Some(ICP_FEE),
-            Cryptocurrency::SNS1 => Some(1_000),
-            Cryptocurrency::CKBTC => Some(10),
-            Cryptocurrency::CHAT => Some(100_000),
-            Cryptocurrency::KINIC => Some(100_000),
-            Cryptocurrency::Other(_) => None,
-        }
-    }
-
-    pub fn ledger_canister_id(&self) -> Option<CanisterId> {
-        match self {
-            Cryptocurrency::InternetComputer => Some(Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap()),
-            Cryptocurrency::SNS1 => Some(Principal::from_text("zfcdd-tqaaa-aaaaq-aaaga-cai").unwrap()),
-            Cryptocurrency::CKBTC => Some(Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap()),
-            Cryptocurrency::CHAT => Some(Principal::from_text("2ouva-viaaa-aaaaq-aaamq-cai").unwrap()),
-            Cryptocurrency::KINIC => Some(Principal::from_text("73mez-iiaaa-aaaaq-aaasq-cai").unwrap()),
-            Cryptocurrency::Other(_) => None,
+#[expect(deprecated)]
+impl From<String> for Cryptocurrency {
+    fn from(value: String) -> Self {
+        match value.as_str() {
+            "ICP" => Cryptocurrency::InternetComputer,
+            "ckBTC" => Cryptocurrency::CKBTC,
+            "CHAT" => Cryptocurrency::CHAT,
+            "KINIC" => Cryptocurrency::KINIC,
+            _ => Cryptocurrency::Other(value),
         }
     }
 }
 
 pub type TransactionHash = [u8; 32];
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum CryptoTransaction {
     Pending(PendingCryptoTransaction),
@@ -71,22 +56,28 @@ pub enum CryptoTransaction {
     Failed(FailedCryptoTransaction),
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum PendingCryptoTransaction {
     NNS(nns::PendingCryptoTransaction),
     ICRC1(icrc1::PendingCryptoTransaction),
+    ICRC2(icrc2::PendingCryptoTransaction),
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum CompletedCryptoTransaction {
     NNS(nns::CompletedCryptoTransaction),
     ICRC1(icrc1::CompletedCryptoTransaction),
+    ICRC2(icrc2::CompletedCryptoTransaction),
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum FailedCryptoTransaction {
     NNS(nns::FailedCryptoTransaction),
     ICRC1(icrc1::FailedCryptoTransaction),
+    ICRC2(icrc2::FailedCryptoTransaction),
 }
 
 impl CryptoTransaction {
@@ -98,11 +89,11 @@ impl CryptoTransaction {
         }
     }
 
-    pub fn token(&self) -> Cryptocurrency {
+    pub fn token_symbol(&self) -> &str {
         match self {
-            CryptoTransaction::Pending(p) => p.token(),
-            CryptoTransaction::Completed(c) => c.token(),
-            CryptoTransaction::Failed(f) => f.token(),
+            CryptoTransaction::Pending(p) => p.token_symbol(),
+            CryptoTransaction::Completed(c) => c.token_symbol(),
+            CryptoTransaction::Failed(f) => f.token_symbol(),
         }
     }
 
@@ -132,13 +123,15 @@ impl PendingCryptoTransaction {
         match self {
             PendingCryptoTransaction::NNS(t) => t.ledger,
             PendingCryptoTransaction::ICRC1(t) => t.ledger,
+            PendingCryptoTransaction::ICRC2(t) => t.ledger,
         }
     }
 
-    pub fn token(&self) -> Cryptocurrency {
+    pub fn token_symbol(&self) -> &str {
         match self {
-            PendingCryptoTransaction::NNS(t) => t.token.clone(),
-            PendingCryptoTransaction::ICRC1(t) => t.token.clone(),
+            PendingCryptoTransaction::NNS(t) => t.token_symbol.as_str(),
+            PendingCryptoTransaction::ICRC1(t) => t.token_symbol.as_str(),
+            PendingCryptoTransaction::ICRC2(t) => t.token_symbol.as_str(),
         }
     }
 
@@ -150,6 +143,7 @@ impl PendingCryptoTransaction {
         match self {
             PendingCryptoTransaction::NNS(t) => t.amount.e8s().into(),
             PendingCryptoTransaction::ICRC1(t) => t.amount,
+            PendingCryptoTransaction::ICRC2(t) => t.amount,
         }
     }
 
@@ -157,6 +151,7 @@ impl PendingCryptoTransaction {
         match self {
             PendingCryptoTransaction::NNS(_) => ICP_FEE,
             PendingCryptoTransaction::ICRC1(t) => t.fee,
+            PendingCryptoTransaction::ICRC2(t) => t.fee,
         }
     }
 
@@ -170,6 +165,13 @@ impl PendingCryptoTransaction {
                 }
             }
             PendingCryptoTransaction::ICRC1(t) => {
+                if t.to.subaccount.unwrap_or_default() == [0; 32] {
+                    Some(t.to.owner.into())
+                } else {
+                    None
+                }
+            }
+            PendingCryptoTransaction::ICRC2(t) => {
                 if t.to.subaccount.unwrap_or_default() == ic_ledger_types::DEFAULT_SUBACCOUNT.0 {
                     Some(t.to.owner.into())
                 } else {
@@ -188,6 +190,7 @@ impl PendingCryptoTransaction {
                 UserOrAccount::User(u) => u == recipient,
             },
             PendingCryptoTransaction::ICRC1(t) => t.to.owner == recipient.into(),
+            PendingCryptoTransaction::ICRC2(t) => t.to.owner == recipient.into(),
         }
     }
 
@@ -198,15 +201,39 @@ impl PendingCryptoTransaction {
                 t.to.owner = owner;
                 t.to.subaccount = Some(subaccount.0)
             }
+            PendingCryptoTransaction::ICRC2(t) => {
+                t.to.owner = owner;
+                t.to.subaccount = Some(subaccount.0)
+            }
+        }
+    }
+
+    pub fn created(&self) -> TimestampNanos {
+        match self {
+            PendingCryptoTransaction::NNS(t) => t.created,
+            PendingCryptoTransaction::ICRC1(t) => t.created,
+            PendingCryptoTransaction::ICRC2(t) => t.created,
+        }
+    }
+
+    pub fn set_created(&mut self, created: TimestampNanos) {
+        match self {
+            PendingCryptoTransaction::NNS(t) => t.created = created,
+            PendingCryptoTransaction::ICRC1(t) => t.created = created,
+            PendingCryptoTransaction::ICRC2(t) => t.created = created,
         }
     }
 
     pub fn set_memo(mut self, memo: &[u8]) -> Self {
         match &mut self {
             PendingCryptoTransaction::NNS(t) => {
-                t.memo = Some(ic_ledger_types::Memo(u64_from_bytes(memo)));
+                t.memo = Some(u64_from_bytes(memo));
             }
             PendingCryptoTransaction::ICRC1(t) => {
+                assert!(memo.len() <= 32);
+                t.memo = Some(memo.to_vec().into());
+            }
+            PendingCryptoTransaction::ICRC2(t) => {
                 assert!(memo.len() <= 32);
                 t.memo = Some(memo.to_vec().into());
             }
@@ -220,13 +247,15 @@ impl CompletedCryptoTransaction {
         match self {
             CompletedCryptoTransaction::NNS(t) => t.ledger,
             CompletedCryptoTransaction::ICRC1(t) => t.ledger,
+            CompletedCryptoTransaction::ICRC2(t) => t.ledger,
         }
     }
 
-    pub fn token(&self) -> Cryptocurrency {
+    pub fn token_symbol(&self) -> &str {
         match self {
-            CompletedCryptoTransaction::NNS(t) => t.token.clone(),
-            CompletedCryptoTransaction::ICRC1(t) => t.token.clone(),
+            CompletedCryptoTransaction::NNS(t) => t.token_symbol.as_str(),
+            CompletedCryptoTransaction::ICRC1(t) => t.token_symbol.as_str(),
+            CompletedCryptoTransaction::ICRC2(t) => t.token_symbol.as_str(),
         }
     }
 
@@ -234,6 +263,7 @@ impl CompletedCryptoTransaction {
         match self {
             CompletedCryptoTransaction::NNS(t) => t.amount.e8s().into(),
             CompletedCryptoTransaction::ICRC1(t) => t.amount,
+            CompletedCryptoTransaction::ICRC2(t) => t.amount,
         }
     }
 
@@ -241,6 +271,7 @@ impl CompletedCryptoTransaction {
         match self {
             CompletedCryptoTransaction::NNS(_) => ICP_FEE,
             CompletedCryptoTransaction::ICRC1(t) => t.fee,
+            CompletedCryptoTransaction::ICRC2(t) => t.fee,
         }
     }
 
@@ -248,6 +279,7 @@ impl CompletedCryptoTransaction {
         match self {
             CompletedCryptoTransaction::NNS(t) => t.block_index,
             CompletedCryptoTransaction::ICRC1(t) => t.block_index,
+            CompletedCryptoTransaction::ICRC2(t) => t.block_index,
         }
     }
 }
@@ -257,13 +289,15 @@ impl FailedCryptoTransaction {
         match self {
             FailedCryptoTransaction::NNS(t) => t.ledger,
             FailedCryptoTransaction::ICRC1(t) => t.ledger,
+            FailedCryptoTransaction::ICRC2(t) => t.ledger,
         }
     }
 
-    pub fn token(&self) -> Cryptocurrency {
+    pub fn token_symbol(&self) -> &str {
         match self {
-            FailedCryptoTransaction::NNS(t) => t.token.clone(),
-            FailedCryptoTransaction::ICRC1(t) => t.token.clone(),
+            FailedCryptoTransaction::NNS(t) => t.token_symbol.as_str(),
+            FailedCryptoTransaction::ICRC1(t) => t.token_symbol.as_str(),
+            FailedCryptoTransaction::ICRC2(t) => t.token_symbol.as_str(),
         }
     }
 
@@ -271,6 +305,7 @@ impl FailedCryptoTransaction {
         match self {
             FailedCryptoTransaction::NNS(t) => &t.error_message,
             FailedCryptoTransaction::ICRC1(t) => &t.error_message,
+            FailedCryptoTransaction::ICRC2(t) => &t.error_message,
         }
     }
 
@@ -278,6 +313,7 @@ impl FailedCryptoTransaction {
         match self {
             FailedCryptoTransaction::NNS(t) => t.amount.e8s().into(),
             FailedCryptoTransaction::ICRC1(t) => t.amount,
+            FailedCryptoTransaction::ICRC2(t) => t.amount,
         }
     }
 
@@ -285,119 +321,379 @@ impl FailedCryptoTransaction {
         match self {
             FailedCryptoTransaction::NNS(_) => ICP_FEE,
             FailedCryptoTransaction::ICRC1(t) => t.fee,
+            FailedCryptoTransaction::ICRC2(t) => t.fee,
         }
     }
 }
 
 pub mod nns {
     use super::*;
-    use ic_ledger_types::{AccountIdentifier, BlockIndex, Memo, Tokens};
+    use ic_ledger_types::AccountIdentifier;
 
+    #[ts_export]
+    #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+    pub struct Tokens {
+        e8s: u64,
+    }
+
+    impl Tokens {
+        pub const fn from_e8s(e8s: u64) -> Self {
+            Self { e8s }
+        }
+
+        pub const fn e8s(&self) -> u64 {
+            self.e8s
+        }
+
+        pub const DEFAULT_FEE: Tokens = Tokens { e8s: 10_000 };
+    }
+
+    impl From<Tokens> for ic_ledger_types::Tokens {
+        fn from(value: Tokens) -> Self {
+            ic_ledger_types::Tokens::from_e8s(value.e8s)
+        }
+    }
+
+    impl From<ic_ledger_types::Tokens> for Tokens {
+        fn from(value: ic_ledger_types::Tokens) -> Self {
+            Tokens::from_e8s(value.e8s())
+        }
+    }
+
+    #[ts_export]
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    #[ts(rename = "AccountNNS")]
+    pub struct Account {
+        pub owner: Principal,
+        #[ts(as = "Option<[u8; 32]>")]
+        pub subaccount: Option<Subaccount>,
+    }
+
+    #[ts_export]
+    #[derive(CandidType, Serialize, Clone, Debug)]
     pub struct CryptoAmount {
-        pub token: Cryptocurrency,
+        pub token_symbol: String,
         pub amount: Tokens,
     }
 
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-    pub enum CryptoAccount {
-        Mint,
-        Account(AccountIdentifier),
+    impl<'de> Deserialize<'de> for CryptoAmount {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            #[derive(Deserialize)]
+            struct Inner {
+                token: Option<Cryptocurrency>,
+                token_symbol: Option<String>,
+                amount: Tokens,
+            }
+
+            let inner = Inner::deserialize(deserializer)?;
+            Ok(CryptoAmount {
+                token_symbol: inner
+                    .token_symbol
+                    .unwrap_or_else(|| inner.token.unwrap().token_symbol().to_string()),
+                amount: inner.amount,
+            })
+        }
     }
 
+    #[ts_export]
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    #[ts(rename = "CryptoAccountNNS")]
+    pub enum CryptoAccount {
+        Mint,
+        Account(#[ts(as = "[u8; 32]")] AccountIdentifier),
+    }
+
+    #[ts_export]
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
     pub enum UserOrAccount {
         User(UserId),
-        Account(AccountIdentifier),
+        Account(#[ts(as = "[u8; 32]")] AccountIdentifier),
     }
 
+    #[ts_export]
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    #[ts(rename = "PendingCryptoTransactionNNS")]
     pub struct PendingCryptoTransaction {
         pub ledger: CanisterId,
-        pub token: Cryptocurrency,
+        pub token_symbol: String,
         pub amount: Tokens,
         pub to: UserOrAccount,
         pub fee: Option<Tokens>,
-        pub memo: Option<Memo>,
+        pub memo: Option<u64>,
         pub created: TimestampNanos,
     }
 
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    #[ts_export]
+    #[derive(CandidType, Serialize, Clone, Debug)]
+    #[ts(rename = "CompletedCryptoTransactionNNS")]
     pub struct CompletedCryptoTransaction {
         pub ledger: CanisterId,
-        pub token: Cryptocurrency,
+        pub token_symbol: String,
         pub amount: Tokens,
         pub fee: Tokens,
         pub from: CryptoAccount,
         pub to: CryptoAccount,
-        pub memo: Memo,
+        pub memo: u64,
         pub created: TimestampNanos,
         #[serde(default)]
         pub transaction_hash: TransactionHash,
-        pub block_index: BlockIndex,
+        pub block_index: u64,
     }
 
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    impl<'de> Deserialize<'de> for CompletedCryptoTransaction {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            #[derive(Deserialize)]
+            struct Inner {
+                ledger: CanisterId,
+                token: Option<Cryptocurrency>,
+                token_symbol: Option<String>,
+                amount: Tokens,
+                from: CryptoAccount,
+                to: CryptoAccount,
+                fee: Tokens,
+                memo: u64,
+                created: TimestampNanos,
+                transaction_hash: TransactionHash,
+                block_index: u64,
+            }
+
+            let inner = Inner::deserialize(deserializer)?;
+            Ok(CompletedCryptoTransaction {
+                ledger: inner.ledger,
+                token_symbol: inner
+                    .token_symbol
+                    .unwrap_or_else(|| inner.token.unwrap().token_symbol().to_string()),
+                amount: inner.amount,
+                from: inner.from,
+                to: inner.to,
+                fee: inner.fee,
+                memo: inner.memo,
+                created: inner.created,
+                block_index: inner.block_index,
+                transaction_hash: inner.transaction_hash,
+            })
+        }
+    }
+
+    #[ts_export]
+    #[derive(CandidType, Serialize, Clone, Debug)]
+    #[ts(rename = "FailedCryptoTransactionNNS")]
     pub struct FailedCryptoTransaction {
         pub ledger: CanisterId,
-        pub token: Cryptocurrency,
+        pub token_symbol: String,
         pub amount: Tokens,
         pub fee: Tokens,
         pub from: CryptoAccount,
         pub to: CryptoAccount,
-        pub memo: Memo,
+        pub memo: u64,
         pub created: TimestampNanos,
         #[serde(default)]
         pub transaction_hash: TransactionHash,
         pub error_message: String,
+    }
+
+    impl<'de> Deserialize<'de> for FailedCryptoTransaction {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            #[derive(Deserialize)]
+            struct Inner {
+                ledger: CanisterId,
+                token: Option<Cryptocurrency>,
+                token_symbol: Option<String>,
+                amount: Tokens,
+                fee: Tokens,
+                from: CryptoAccount,
+                to: CryptoAccount,
+                memo: u64,
+                created: TimestampNanos,
+                transaction_hash: TransactionHash,
+                error_message: String,
+            }
+
+            let inner = Inner::deserialize(deserializer)?;
+            Ok(FailedCryptoTransaction {
+                ledger: inner.ledger,
+                token_symbol: inner
+                    .token_symbol
+                    .unwrap_or_else(|| inner.token.unwrap().token_symbol().to_string()),
+                amount: inner.amount,
+                fee: inner.fee,
+                from: inner.from,
+                to: inner.to,
+                memo: inner.memo,
+                created: inner.created,
+                transaction_hash: inner.transaction_hash,
+                error_message: inner.error_message,
+            })
+        }
     }
 }
 
 pub mod icrc1 {
     use super::*;
-    use icrc_ledger_types::icrc1::{account::Account, transfer::Memo};
+    use icrc_ledger_types::icrc1::transfer::Memo;
 
+    #[ts_export]
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Copy)]
+    #[ts(rename = "AccountICRC1")]
+    pub struct Account {
+        pub owner: Principal,
+        pub subaccount: Option<[u8; 32]>,
+    }
+
+    impl<T: Into<Principal>> From<T> for Account {
+        fn from(value: T) -> Self {
+            Account {
+                owner: value.into(),
+                subaccount: None,
+            }
+        }
+    }
+
+    impl From<Account> for icrc_ledger_types::icrc1::account::Account {
+        fn from(value: Account) -> Self {
+            icrc_ledger_types::icrc1::account::Account {
+                owner: value.owner,
+                subaccount: value.subaccount,
+            }
+        }
+    }
+
+    #[ts_export]
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    #[ts(rename = "CryptoAccountICRC1")]
     pub enum CryptoAccount {
         Mint,
         Account(Account),
     }
 
+    #[ts_export]
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    #[ts(rename = "PendingCryptoTransactionICRC1")]
     pub struct PendingCryptoTransaction {
         pub ledger: CanisterId,
-        pub token: Cryptocurrency,
+        pub token_symbol: String,
         pub amount: u128,
         pub to: Account,
         pub fee: u128,
+        #[ts(as = "Option::<ts_export::TSBytes>")]
         pub memo: Option<Memo>,
         pub created: TimestampNanos,
     }
 
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    #[ts_export]
+    #[derive(CandidType, Serialize, Clone, Debug)]
+    #[ts(rename = "CompletedCryptoTransactionICRC1")]
     pub struct CompletedCryptoTransaction {
         pub ledger: CanisterId,
-        pub token: Cryptocurrency,
+        pub token_symbol: String,
         pub amount: u128,
         pub from: CryptoAccount,
         pub to: CryptoAccount,
         pub fee: u128,
+        #[ts(as = "Option::<ts_export::TSBytes>")]
         pub memo: Option<Memo>,
         pub created: TimestampNanos,
         pub block_index: u64,
     }
 
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    impl<'de> Deserialize<'de> for CompletedCryptoTransaction {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            #[derive(Deserialize)]
+            struct Inner {
+                ledger: CanisterId,
+                token: Option<Cryptocurrency>,
+                #[serde(default)]
+                token_symbol: String,
+                amount: u128,
+                from: CryptoAccount,
+                to: CryptoAccount,
+                fee: u128,
+                memo: Option<Memo>,
+                created: TimestampNanos,
+                block_index: u64,
+            }
+
+            let inner = Inner::deserialize(deserializer)?;
+            Ok(CompletedCryptoTransaction {
+                ledger: inner.ledger,
+                token_symbol: if inner.token_symbol.is_empty() {
+                    inner.token.unwrap().token_symbol().to_string()
+                } else {
+                    inner.token_symbol
+                },
+                amount: inner.amount,
+                from: inner.from,
+                to: inner.to,
+                fee: inner.fee,
+                memo: inner.memo,
+                created: inner.created,
+                block_index: inner.block_index,
+            })
+        }
+    }
+
+    #[ts_export]
+    #[derive(CandidType, Serialize, Clone, Debug)]
+    #[ts(rename = "FailedCryptoTransactionICRC1")]
     pub struct FailedCryptoTransaction {
         pub ledger: CanisterId,
-        pub token: Cryptocurrency,
+        pub token_symbol: String,
         pub amount: u128,
         pub fee: u128,
         pub from: CryptoAccount,
         pub to: CryptoAccount,
+        #[ts(as = "Option::<ts_export::TSBytes>")]
         pub memo: Option<Memo>,
         pub created: TimestampNanos,
         pub error_message: String,
+    }
+
+    impl<'de> Deserialize<'de> for FailedCryptoTransaction {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            #[derive(Deserialize)]
+            struct Inner {
+                pub ledger: CanisterId,
+                pub token: Option<Cryptocurrency>,
+                pub token_symbol: Option<String>,
+                pub amount: u128,
+                pub fee: u128,
+                pub from: CryptoAccount,
+                pub to: CryptoAccount,
+                pub memo: Option<Memo>,
+                pub created: TimestampNanos,
+                pub error_message: String,
+            }
+
+            let inner = Inner::deserialize(deserializer)?;
+            Ok(FailedCryptoTransaction {
+                ledger: inner.ledger,
+                token_symbol: inner
+                    .token_symbol
+                    .unwrap_or_else(|| inner.token.unwrap().token_symbol().to_string()),
+                amount: inner.amount,
+                fee: inner.fee,
+                from: inner.from,
+                to: inner.to,
+                memo: inner.memo,
+                created: inner.created,
+                error_message: inner.error_message,
+            })
+        }
     }
 
     impl From<CompletedCryptoTransaction> for super::CompletedCryptoTransaction {
@@ -419,18 +715,195 @@ pub mod icrc1 {
     }
 }
 
+pub mod icrc2 {
+    use super::*;
+    use icrc_ledger_types::icrc1::transfer::Memo;
+    use icrc1::Account;
+
+    #[ts_export]
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    #[ts(rename = "PendingCryptoTransactionICRC2")]
+    pub struct PendingCryptoTransaction {
+        pub ledger: CanisterId,
+        pub token_symbol: String,
+        pub amount: u128,
+        pub from: Account,
+        pub to: Account,
+        pub fee: u128,
+        #[ts(as = "Option::<ts_export::TSBytes>")]
+        pub memo: Option<Memo>,
+        pub created: TimestampNanos,
+    }
+
+    #[ts_export]
+    #[derive(CandidType, Serialize, Clone, Debug)]
+    #[ts(rename = "CompletedCryptoTransactionICRC2")]
+    pub struct CompletedCryptoTransaction {
+        pub ledger: CanisterId,
+        pub token_symbol: String,
+        pub amount: u128,
+        pub spender: UserId,
+        pub from: icrc1::CryptoAccount,
+        pub to: icrc1::CryptoAccount,
+        pub fee: u128,
+        #[ts(as = "Option::<ts_export::TSBytes>")]
+        pub memo: Option<Memo>,
+        pub created: TimestampNanos,
+        pub block_index: u64,
+    }
+
+    impl<'de> Deserialize<'de> for CompletedCryptoTransaction {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            #[derive(Deserialize)]
+            struct Inner {
+                ledger: CanisterId,
+                token: Option<Cryptocurrency>,
+                token_symbol: Option<String>,
+                amount: u128,
+                spender: UserId,
+                from: icrc1::CryptoAccount,
+                to: icrc1::CryptoAccount,
+                fee: u128,
+                memo: Option<Memo>,
+                created: TimestampNanos,
+                block_index: u64,
+            }
+
+            let inner = Inner::deserialize(deserializer)?;
+            Ok(CompletedCryptoTransaction {
+                ledger: inner.ledger,
+                token_symbol: inner
+                    .token_symbol
+                    .unwrap_or_else(|| inner.token.unwrap().token_symbol().to_string()),
+                amount: inner.amount,
+                spender: inner.spender,
+                from: inner.from,
+                to: inner.to,
+                fee: inner.fee,
+                memo: inner.memo,
+                created: inner.created,
+                block_index: inner.block_index,
+            })
+        }
+    }
+
+    #[ts_export]
+    #[derive(CandidType, Serialize, Clone, Debug)]
+    #[ts(rename = "FailedCryptoTransactionICRC2")]
+    pub struct FailedCryptoTransaction {
+        pub ledger: CanisterId,
+        pub token_symbol: String,
+        pub amount: u128,
+        pub fee: u128,
+        pub spender: UserId,
+        pub from: icrc1::CryptoAccount,
+        pub to: icrc1::CryptoAccount,
+        #[ts(as = "Option::<ts_export::TSBytes>")]
+        pub memo: Option<Memo>,
+        pub created: TimestampNanos,
+        pub error_message: String,
+    }
+
+    impl<'de> Deserialize<'de> for FailedCryptoTransaction {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            #[derive(Deserialize)]
+            struct Inner {
+                ledger: CanisterId,
+                token: Option<Cryptocurrency>,
+                token_symbol: Option<String>,
+                amount: u128,
+                fee: u128,
+                spender: UserId,
+                from: icrc1::CryptoAccount,
+                to: icrc1::CryptoAccount,
+                memo: Option<Memo>,
+                created: TimestampNanos,
+                error_message: String,
+            }
+
+            let inner = Inner::deserialize(deserializer)?;
+            Ok(FailedCryptoTransaction {
+                ledger: inner.ledger,
+                token_symbol: inner
+                    .token_symbol
+                    .unwrap_or_else(|| inner.token.unwrap().token_symbol().to_string()),
+                amount: inner.amount,
+                fee: inner.fee,
+                spender: inner.spender,
+                from: inner.from,
+                to: inner.to,
+                memo: inner.memo,
+                created: inner.created,
+                error_message: inner.error_message,
+            })
+        }
+    }
+
+    impl From<CompletedCryptoTransaction> for super::CompletedCryptoTransaction {
+        fn from(value: CompletedCryptoTransaction) -> Self {
+            super::CompletedCryptoTransaction::ICRC2(value)
+        }
+    }
+
+    impl From<FailedCryptoTransaction> for super::FailedCryptoTransaction {
+        fn from(value: FailedCryptoTransaction) -> Self {
+            super::FailedCryptoTransaction::ICRC2(value)
+        }
+    }
+
+    #[ts_export]
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    pub enum ApproveError {
+        BadFee { expected_fee: u128 },
+        // The caller does not have enough funds to pay the approval fee.
+        InsufficientFunds { balance: u128 },
+        // The caller specified the [expected_allowance] field, and the current
+        // allowance did not match the given value.
+        AllowanceChanged { current_allowance: u128 },
+        // The approval request expired before the ledger had a chance to apply it.
+        Expired { ledger_time: u64 },
+        TooOld,
+        CreatedInFuture { ledger_time: u64 },
+        Duplicate { duplicate_of: u128 },
+        TemporarilyUnavailable,
+        GenericError { error_code: u128, message: String },
+    }
+
+    #[ts_export]
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    pub enum TransferFromError {
+        BadFee { expected_fee: u128 },
+        BadBurn { min_burn_amount: u128 },
+        // The [from] account does not hold enough funds for the transfer.
+        InsufficientFunds { balance: u128 },
+        // The caller exceeded its allowance.
+        InsufficientAllowance { allowance: u128 },
+        TooOld,
+        CreatedInFuture { ledger_time: u64 },
+        Duplicate { duplicate_of: u128 },
+        TemporarilyUnavailable,
+        GenericError { error_code: u128, message: String },
+    }
+}
+
 impl From<icrc1::PendingCryptoTransaction> for nns::PendingCryptoTransaction {
     fn from(value: icrc1::PendingCryptoTransaction) -> Self {
         nns::PendingCryptoTransaction {
             ledger: value.ledger,
-            token: value.token,
+            token_symbol: value.token_symbol,
             amount: Tokens::from_e8s(value.amount.try_into().unwrap()),
             to: UserOrAccount::Account(AccountIdentifier::new(
                 &value.to.owner,
-                &ic_ledger_types::Subaccount(value.to.subaccount.unwrap_or_default()),
+                &Subaccount(value.to.subaccount.unwrap_or_default()),
             )),
             fee: Some(Tokens::from_e8s(value.fee.try_into().unwrap())),
-            memo: value.memo.map(|m| ic_ledger_types::Memo(u64_from_bytes(m.0.as_slice()))),
+            memo: value.memo.map(|m| u64_from_bytes(m.0.as_slice())),
             created: value.created,
         }
     }

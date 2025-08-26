@@ -6,25 +6,35 @@ export class RtcConnectionsManager {
 
     private _peer: Peer | undefined;
 
+    private _mobile: boolean;
+
+    constructor() {
+        this._mobile = this.isMobileDevice();
+    }
+
     private onMessage?: (message: unknown) => void;
 
-    private cacheConnection(me: string, them: string, conn: DataConnection): Promise<boolean> {
+    private cacheConnection(
+        myConnectionId: string,
+        theirConnectionId: string,
+        conn: DataConnection,
+    ): Promise<boolean> {
         return new Promise<boolean>((resolve) => {
             conn.on("open", () => {
-                this.connections.set(them, conn);
-                console.log("c: connection open: ", me, " and ", them);
+                this.connections.set(theirConnectionId, conn);
+                console.debug("RTC: connection open: ", myConnectionId, " and ", theirConnectionId);
                 resolve(true);
             });
 
             conn.on("data", (data) => {
-                console.log("c: connection received data: ", data);
+                console.debug("RTC: connection received data: ", data);
                 if (this.onMessage) {
                     this.onMessage(data);
                 }
             });
 
             conn.on("error", (err) => {
-                console.log("c: connection error: ", err);
+                console.debug("RTC: connection error: ", err);
             });
         });
     }
@@ -35,13 +45,27 @@ export class RtcConnectionsManager {
         ).then((resp) => resp.json());
     }
 
+    private isMobileDevice(): boolean {
+        return /android|webos|iphone|ipad|ipod|blackberry|windows phone/i.test(navigator.userAgent);
+    }
+
+    private getMyConnectionId(userId: string) {
+        const prefix = this._mobile ? "m" : "d";
+        return `${prefix}_${userId}`;
+    }
+
     public async init(me: string, meteredApiKey: string): Promise<Peer> {
         if (this._peer) return Promise.resolve(this._peer);
 
         const iceServers = await this.getIceServers(meteredApiKey);
 
         return new Promise((resolve) => {
-            this._peer = new Peer(me, {
+            const connectionId = this.getMyConnectionId(me);
+
+            this._peer = new Peer(connectionId, {
+                // host: "localhost",
+                // port: 4000,
+                // secure: false,
                 config: {
                     iceServers,
                 },
@@ -54,12 +78,12 @@ export class RtcConnectionsManager {
             });
 
             this._peer.on("connection", (conn) => {
-                console.log("p: connection received on the peer: ", conn.peer);
-                this.cacheConnection(me, conn.peer, conn);
+                console.debug("RTC: connection received on the peer: ", conn.peer);
+                this.cacheConnection(connectionId, conn.peer, conn);
             });
 
             this._peer.on("disconnected", () => {
-                console.log("p: peer lost connection will try to reconnect");
+                console.debug("RTC: peer lost connection will try to reconnect");
 
                 if (this._peer) {
                     this._peer.reconnect();
@@ -67,11 +91,11 @@ export class RtcConnectionsManager {
             });
 
             this._peer.on("close", () => {
-                console.log("p: peer connection closed");
+                console.debug("RTC: peer connection closed");
             });
 
             this._peer.on("error", (err) => {
-                console.log("p: peer connection error: ", err);
+                console.debug("RTC: peer connection error: ", err);
             });
         });
     }
@@ -84,30 +108,33 @@ export class RtcConnectionsManager {
         this.onMessage = undefined;
     }
 
-    public exists(user: string): boolean {
-        return this.connections.has(user);
+    private exists(connectionId: string): boolean {
+        return this.connections.has(connectionId);
     }
 
-    public create(me: string, them: string, meteredApiKey: string): Promise<boolean> {
-        return this.init(me, meteredApiKey).then((peer) => {
-            return this.cacheConnection(
-                me,
-                them,
-                peer.connect(them, {
-                    serialization: "json",
-                }),
-            );
+    public create(me: string, them: string, meteredApiKey: string): void {
+        this.init(me, meteredApiKey).then((peer) => {
+            [`m_${them}`, `d_${them}`]
+                .filter((c) => !this.exists(c))
+                .forEach((c) => {
+                    this.cacheConnection(peer.id, c, peer.connect(c, { serialization: "json" }));
+                });
         });
     }
 
+    public disconnectFromUser(them: string): void {
+        [`m_${them}`, `d_${them}`].forEach((c) => this.connections.delete(c));
+    }
+
     public sendMessage = (userIds: string[], message: WebRtcMessage): void => {
-        userIds.forEach((userId) => {
-            const conn = this.connections.get(userId);
+        const connectionIds = userIds.flatMap((u) => [`m_${u}`, `d_${u}`]);
+        connectionIds.forEach((connectionId) => {
+            const conn = this.connections.get(connectionId);
             if (conn && conn.open) {
                 try {
                     conn.send(message);
                 } catch (e) {
-                    console.debug("Error sending WebRTC message to " + userId, e);
+                    console.debug("Error sending WebRTC message to " + connectionId, e);
                 }
             }
         });

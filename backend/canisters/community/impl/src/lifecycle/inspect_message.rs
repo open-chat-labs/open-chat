@@ -1,5 +1,5 @@
-use crate::{read_state, RuntimeState};
-use ic_cdk_macros::inspect_message;
+use crate::{RuntimeState, read_state};
+use ic_cdk::inspect_message;
 
 #[inspect_message]
 fn inspect_message() {
@@ -7,23 +7,25 @@ fn inspect_message() {
 }
 
 fn accept_if_valid(state: &RuntimeState) {
-    let method_name = ic_cdk::api::call::method_name();
+    let method_name = ic_cdk::api::msg_method_name()
+        .trim_end_matches("_msgpack")
+        .trim_end_matches("_v2")
+        .to_string();
 
     // 'inspect_message' only applies to ingress messages so calls to c2c methods should be rejected
     let is_c2c_method = method_name.starts_with("c2c") || method_name == "wallet_receive";
-    let is_frozen = state.data.frozen.value.is_some();
-
-    if is_c2c_method || is_frozen {
+    if is_c2c_method {
         return;
     }
 
     let caller = state.env.caller();
     let is_valid = state.data.members.get(caller).is_some()
+        || method_name == "http_request_update"
         // `lookup_user_id` will return true if they are invited to the community
         || (state.data.members.lookup_user_id(caller).is_some() && method_name == "decline_invitation")
         || ((method_name == "start_video_call" || method_name == "end_video_call") && state.is_caller_video_call_operator());
 
     if is_valid {
-        ic_cdk::api::call::accept_message();
+        ic_cdk::api::accept_message();
     }
 }

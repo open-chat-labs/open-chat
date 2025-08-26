@@ -42,8 +42,8 @@ export function getTheme(base: Theme): Theme {
     base.panel.right.modal = offBlack1;
     base.modal.bd = base.bd;
     base.modal.bg = base.panel.right.modal;
-    base.chatSummary["bg-selected"] = "rgb(24,24,24 / 40%)";
-    base.chatSummary.hv = "rgb(24,24,24 / 80%)";
+    base.chatSummary["bg-selected"] = "rgba(24,24,24,0.4)";
+    base.chatSummary.hv = "rgba(24,24,24,0.8)";
     base.chatSummary.del = base.button.bg;
     base.members.hv = base.chatSummary.hv;
     base.placeholder = txtLight;
@@ -71,7 +71,16 @@ export function getTheme(base: Theme): Theme {
     base.link.underline = base.primary;
     base.scrollbar.bg = base.button.hv;
     base.toast.success.bg = base.notificationBar.bg;
-    base.code = gold;
+    base.code = {
+        txt: gold,
+        bg: "rgba(255,255,255,0.1)",
+    };
+    base.audio.outer = gold;
+    base.audio.me.outer = gold;
+    base.audio.inner = txt;
+    base.audio.me.inner = txt;
+    base.audio.note = txt;
+    base.audio.me.note = txt;
 
     return base;
 }

@@ -1,12 +1,14 @@
 use crate::model::files::RemoveFileResult;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, check_cycles_balance, mutate_state};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
 use storage_bucket_canister::delete_files::*;
 
-#[update]
+#[update(candid = true, json = true, msgpack = true)]
 #[trace]
 fn delete_files(args: Args) -> Response {
+    check_cycles_balance();
+
     mutate_state(|state| delete_files_impl(args, state))
 }
 
@@ -32,6 +34,10 @@ fn delete_files_impl(args: Args, state: &mut RuntimeState) -> Response {
                 });
             }
         }
+    }
+
+    if !success.is_empty() {
+        crate::jobs::remove_expired_files::start_job_if_required(state);
     }
 
     Response { success, failures }

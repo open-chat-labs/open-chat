@@ -1,6 +1,6 @@
 {
-    "background_color": "#22A7F2",
-    "theme_color": "#22A7F2",
+    "background_color": "#000000",
+    "theme_color": "#000000",
     "description": "Chat application running end-to-end on the Internet Computer",
     "display": "standalone",
     "icons": [

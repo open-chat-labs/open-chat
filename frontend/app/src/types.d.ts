@@ -2,10 +2,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 declare module "remount/es5";
 
-declare module "uuid" {
-    export function v1(): string;
-}
-
 declare module "svelte-easy-crop" {
     import { SvelteComponentTyped } from "svelte";
 
@@ -49,11 +45,11 @@ declare namespace svelteHTML {
     interface HTMLAttributes<T> {
         "on:consider"?: (event: CustomEvent) => void;
         "on:finalize"?: (event: CustomEvent) => void;
-        "on:swiping"?: (event: CustomEvent) => void;
-        "on:leftswipe"?: (event: CustomEvent) => void;
-        "on:rightswipe"?: (event: CustomEvent) => void;
+        onswiping?: (event: CustomEvent) => void;
+        onleftswipe?: (event: CustomEvent) => void;
+        onrightswipe?: (event: CustomEvent) => void;
         "on:profile-clicked"?: (event: CustomEvent) => void;
     }
 }
 
-declare function gtag(command: "event", name: "page_view", options?: any): void;
+declare function gtag(command: "event", name: string, options?: any): void;

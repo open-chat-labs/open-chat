@@ -1,14 +1,13 @@
-use crate::{read_state, RuntimeState};
-use canister_api_macros::query_msgpack;
+use crate::{RuntimeState, read_state};
+use canister_api_macros::query;
 use group_index_canister::active_groups::{Response::*, *};
-use ic_cdk_macros::query;
 
-#[query]
+#[query(candid = true, msgpack = true)]
 fn active_groups(args: Args) -> Response {
     read_state(|state| active_groups_impl(args, state))
 }
 
-#[query_msgpack]
+#[query(msgpack = true)]
 fn c2c_active_groups(args: group_index_canister::c2c_active_groups::Args) -> group_index_canister::c2c_active_groups::Response {
     read_state(|state| active_groups_impl(args, state))
 }
@@ -39,10 +38,10 @@ fn active_groups_impl(args: Args, state: &RuntimeState) -> Response {
             if active_since.map(|t| g.has_been_active_since(t)).unwrap_or_default() {
                 active_groups.push(g.id());
             }
-        } else if let Some(g) = state.data.public_groups.get(&chat_id) {
-            if active_since.map(|t| g.has_been_active_since(t)).unwrap_or_default() {
-                active_groups.push(g.id());
-            }
+        } else if let Some(g) = state.data.public_groups.get(&chat_id)
+            && active_since.map(|t| g.has_been_active_since(t)).unwrap_or_default()
+        {
+            active_groups.push(g.id());
         }
     }
 
@@ -52,10 +51,10 @@ fn active_groups_impl(args: Args, state: &RuntimeState) -> Response {
             if active_since.map(|t| g.has_been_active_since(t)).unwrap_or_default() {
                 active_communities.push(g.id());
             }
-        } else if let Some(g) = state.data.public_communities.get(&community_id) {
-            if active_since.map(|t| g.has_been_active_since(t)).unwrap_or_default() {
-                active_communities.push(g.id());
-            }
+        } else if let Some(g) = state.data.public_communities.get(&community_id)
+            && active_since.map(|t| g.has_been_active_since(t)).unwrap_or_default()
+        {
+            active_communities.push(g.id());
         }
     }
 

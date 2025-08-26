@@ -6,7 +6,7 @@ export function clamp(min: number, max: number, val: number): number {
 
 export const swipe: Action<HTMLElement, { threshold: number }> = (
     node,
-    param = { threshold: 20 }
+    param: { threshold: number } = { threshold: 20 },
 ): ActionReturn<{ threshold: number }> => {
     let start = 0;
     let end = 0;
@@ -31,7 +31,7 @@ export const swipe: Action<HTMLElement, { threshold: number }> = (
                 bubbles: true,
                 cancelable: true,
                 detail: { diffx },
-            })
+            }),
         );
     }
 
@@ -46,9 +46,14 @@ export const swipe: Action<HTMLElement, { threshold: number }> = (
         handleGesture();
     }
 
-    node.addEventListener("touchstart", touchStart, true);
-    node.addEventListener("touchend", touchEnd, true);
-    node.addEventListener("touchmove", touchMove, true);
+    const options: AddEventListenerOptions = {
+        capture: true,
+        passive: true,
+    };
+
+    node.addEventListener("touchstart", touchStart, options);
+    node.addEventListener("touchend", touchEnd, options);
+    node.addEventListener("touchmove", touchMove, options);
 
     return {
         destroy() {

@@ -1,4 +1,5 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
@@ -7,7 +8,847 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Remove legacy group membership fields from backend ([#8508](https://github.com/open-chat-labs/open-chat/pull/8508))
+- Post events to bots as JWTs ([#8514](https://github.com/open-chat-labs/open-chat/pull/8514))
+
+## [[2.0.1872](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1872-local_user_index)] - 2025-08-20
+
+### Changed
+
+- Updated formatting for the native notifications pushed for group/community/channel events ([8485](https://github.com/open-chat-labs/open-chat/pull/8485))
+- Added additional data to the notifications pushed to the native app ([8491](https://github.com/open-chat-labs/open-chat/pull/8491))
+- Temporarily remove check that user has recently signed in ([#8497](https://github.com/open-chat-labs/open-chat/pull/8497))
+- Support muting of @everyone notifications ([#8502](https://github.com/open-chat-labs/open-chat/pull/8502))
+
+## [[2.0.1862](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1862-local_user_index)] - 2025-08-12
+
+### Added
+
+- Implement ability for platform operators to set cost of premium items ([#8458](https://github.com/open-chat-labs/open-chat/pull/8458))
+
+### Changed
+
+- Sync `total_chit_earned` to UserIndex ([#8434](https://github.com/open-chat-labs/open-chat/pull/8434))
+- Send strongly typed notifications to LocalUserIndex ([#8444](https://github.com/open-chat-labs/open-chat/pull/8444))
+- Remove candid versions of a few endpoints ([#8445](https://github.com/open-chat-labs/open-chat/pull/8445))
+- Switch some endpoints over to using common response types ([#8447](https://github.com/open-chat-labs/open-chat/pull/8447))
+- Switch more endpoints over to using common response types ([#8450](https://github.com/open-chat-labs/open-chat/pull/8450))
+- Move signature verification to LocalUserIndex ([#8460](https://github.com/open-chat-labs/open-chat/pull/8460))
+- Return error if attempting to pay for premium item in CHAT ([#8466](https://github.com/open-chat-labs/open-chat/pull/8466))
+
+### Fixed
+
+- Fix rare scenario where notification could be skipped incorrectly ([#8441](https://github.com/open-chat-labs/open-chat/pull/8441))
+- Fix `chit_balance` being 0 in UserIndex ([#8461](https://github.com/open-chat-labs/open-chat/pull/8461))
+
+## [[2.0.1854](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1854-local_user_index)] - 2025-08-05
+
+### Fixed
+
+- Maintain event ordering when retrying failed c2c calls ([#8429](https://github.com/open-chat-labs/open-chat/pull/8429))
+- Invert the map of blocked users ([#8431](https://github.com/open-chat-labs/open-chat/pull/8431))
+
+## [[2.0.1848](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1848-local_user_index)] - 2025-08-04
+
+### Changed
+
+- Maintain chit balance for all users ([#8422](https://github.com/open-chat-labs/open-chat/pull/8422))
+
+## [[2.0.1844](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1844-local_user_index)] - 2025-07-29
+
+### Changed
+
+- Add 'min_chit_earned' prize message criterion ([#8413](https://github.com/open-chat-labs/open-chat/pull/8413))
+
+## [[2.0.1844](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1844-local_user_index)] - 2025-07-29
+
+### Changed
+
+- `token:Cryptocurrency` -> `token_symbol:String` ([#8368](https://github.com/open-chat-labs/open-chat/pull/8368))
+- Use full names for bot event notification fields ([#8389](https://github.com/open-chat-labs/open-chat/pull/8389))
+
+## [[2.0.1837](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1837-local_user_index)] - 2025-07-21
+
+### Changed
+
+- Increase max username length from 15 to 20 ([#8340](https://github.com/open-chat-labs/open-chat/pull/8340))
+- Expose `liquid_cycles_balance` in metrics ([#8350](https://github.com/open-chat-labs/open-chat/pull/8350))
+- Add delay before retrying c2c call under certain error conditions ([#8355](https://github.com/open-chat-labs/open-chat/pull/8355))
+
+## [[2.0.1832](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1832-local_user_index)] - 2025-07-11
+
+### Fixed
+
+- Add `serde(default)` to field which doesn't yet exist in User canisters ([#8333](https://github.com/open-chat-labs/open-chat/pull/8333))
+
+## [[2.0.1831](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1831-local_user_index)] - 2025-07-11
+
+### Changed
+
+- When a bot invites a user also send an invitation ([#8320](https://github.com/open-chat-labs/open-chat/pull/8320))
+
+### Fixed
+
+- Skip deserializing FcmData until User canisters are upgraded ([#8331](https://github.com/open-chat-labs/open-chat/pull/8331))
+
+## [[2.0.1827](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1827-local_user_index)] - 2025-07-09
+
+### Added
+
+- Introduce `Encrypted` message type ([8294](https://github.com/open-chat-labs/open-chat/pull/8294))
+- Add timestamp to BotEventWrapper and MembersResult ([8300](https://github.com/open-chat-labs/open-chat/pull/8300))
+
+### Changed
+
+- Re-enabled fcm_data ([8298](https://github.com/open-chat-labs/open-chat/pull/8298))
+- Deprecate `winners` field on prize messages ([#8302](https://github.com/open-chat-labs/open-chat/pull/8302))
+- Handle deserializing FcmData from canisters on older versions ([#8313](https://github.com/open-chat-labs/open-chat/pull/8313))
+
+### Removed
+
+- Removed unused fields from BotChatEvent (must go ahead of groups/communities) ([#8291](https://github.com/open-chat-labs/open-chat/pull/8291))
+- Remove the now unused `group_and_community_summary_updates` ([#8311](https://github.com/open-chat-labs/open-chat/pull/8311))
+- Remove the now unused `notifications_v2` ([#8312](https://github.com/open-chat-labs/open-chat/pull/8312))
+
+### Fixed
+
+- Fix proposal vote updates not propagating to frontend ([#8310](https://github.com/open-chat-labs/open-chat/pull/8310))
+
+## [[2.0.1822](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1822-local_user_index)] - 2025-07-03
+
+### Changed
+
+- Introduce and backdate MemberJoined/Left events ([#8280](https://github.com/open-chat-labs/open-chat/pull/8280))
+
+## [[2.0.1818](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1818-local_user_index)] - 2025-07-02
+
+### Added
+
+- Implement getting proposal tallies for a batch of chats in a single query ([#8275](https://github.com/open-chat-labs/open-chat/pull/8275))
+
+### Changed
+
+- Use MessagePack to serialize upgrade args for Users/Group/Communities ([#8269](https://github.com/open-chat-labs/open-chat/pull/8269))
+
+## [[2.0.1813](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1813-local_user_index)] - 2025-07-01
+
+### Changed
+
+- Push full chat events to subscribed bots ([#8264](https://github.com/open-chat-labs/open-chat/pull/8264))
+
+### Fixed
+
+- Work around fcm_data issue ([#8272](https://github.com/open-chat-labs/open-chat/pull/8272))
+
+## [[2.0.1809](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1809-local_user_index)] - 2025-06-27
+
+### Changed
+
+- Introduce and backdate a ChannelCreated event ([#8234](https://github.com/open-chat-labs/open-chat/pull/8234))
+
+## [[2.0.1802](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1802-local_user_index)] - 2025-06-26
+
+### Added
+
+- Add `bot_community_events` endpoint ([#8194](https://github.com/open-chat-labs/open-chat/pull/8194))
+- Add `bot_remove_user` endpoint ([#8217](https://github.com/open-chat-labs/open-chat/pull/8217))
+- Add `bot_invite_users` endpoint ([#8218](https://github.com/open-chat-labs/open-chat/pull/8218))
+- Add `bot_members` endpoint ([#8225](https://github.com/open-chat-labs/open-chat/pull/8225))
+
+### Changed
+
+- Serialize bot notifications in LUI not pusher ([#8169](https://github.com/open-chat-labs/open-chat/pull/8169))
+- Use MessagePack to serialize Group/Community `init` args ([#8183](https://github.com/open-chat-labs/open-chat/pull/8183))
+- Changed how the notification recipients are filtered to include those with available Firebase tokens ([8229](https://github.com/open-chat-labs/open-chat/pull/8229))
+
+### Removed
+
+- Remove `gate` which is superseded by `gate_config` ([#8186](https://github.com/open-chat-labs/open-chat/pull/8186))
+
+## [[2.0.1794](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1794-local_user_index)] - 2025-06-13
+
+### Added
+
+- Add `bot_community_summary` endpoint ([#8135](https://github.com/open-chat-labs/open-chat/pull/8135))
+
+### Changed
+
+- Add optional thread to args of `bot_chat_events` ([#8128](https://github.com/open-chat-labs/open-chat/pull/8128))
+- Remove bot API Keys ([#8131](https://github.com/open-chat-labs/open-chat/pull/8131))
+- Remove _v2 suffix from bot_\* endpoints ([#8139](https://github.com/open-chat-labs/open-chat/pull/8139))
+- Support bot making inline replies ([#8146](https://github.com/open-chat-labs/open-chat/pull/8146))
+- Return newly created channel Ids after creating community ([#8156](https://github.com/open-chat-labs/open-chat/pull/8156))
+- Add `initiated_by` to bot event notifications ([#8160](https://github.com/open-chat-labs/open-chat/pull/8160))
+- Push a (lifecycle) registered event to bots ([#8163](https://github.com/open-chat-labs/open-chat/pull/8163))
+
+### Fixed
+
+- Add missing decoding for community read permissions ([#8141](https://github.com/open-chat-labs/open-chat/pull/8141))
+- Update default subscriptions when bot is updated ([#8155](https://github.com/open-chat-labs/open-chat/pull/8155))
+
+## [[2.0.1779](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1779-local_user_index)] - 2025-06-06
+
+### Changed
+
+- Remove all references to Notifications canisters ([#8087](https://github.com/open-chat-labs/open-chat/pull/8087))
+- Remove `correlation_id` ([#8097](https://github.com/open-chat-labs/open-chat/pull/8097))
+
+### Removed
+
+- Remove unused `report_message_v2` ([#8110](https://github.com/open-chat-labs/open-chat/pull/8110))
+
+### Fixed
+
+- Fix `bot_chat_events` for direct chats ([#8096](https://github.com/open-chat-labs/open-chat/pull/8096))
+
+## [[2.0.1778](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1778-local_user_index)] - 2025-06-02
+
+### Changed
+
+- Add `bot_chat_summary` including direct chat support ([#8076](https://github.com/open-chat-labs/open-chat/pull/8076))
+
+## [[2.0.1769](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1769-local_user_index)] - 2025-05-29
+
+### Changed
+
+- Remove all references to LocalGroupIndexes ([#8057](https://github.com/open-chat-labs/open-chat/pull/8057))
+- Add `timestamp` to `group_and_community_summary_updates_v2` responses ([#8062](https://github.com/open-chat-labs/open-chat/pull/8062))
+
+## [[2.0.1762](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1762-local_user_index)] - 2025-05-28
+
+### Added
+
+- Implement improved method of getting chat summary updates ([#8016](https://github.com/open-chat-labs/open-chat/pull/8016))
+
+### Fixed
+
+- Include `remove_notifications` in `inspect_message` ([#8030](https://github.com/open-chat-labs/open-chat/pull/8030))
+
+## [[2.0.1754](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1754-local_user_index)] - 2025-05-21
+
+### Added
+
+- Support serving notifications from LocalUserIndexes ([#7968](https://github.com/open-chat-labs/open-chat/pull/7968))
+- Implement handling events from Groups and Communities ([#7971](https://github.com/open-chat-labs/open-chat/pull/7971))
+- Implement handling events and notifications from User canisters ([#7972](https://github.com/open-chat-labs/open-chat/pull/7972))
+- Add `bot_chat_details_c2c_v2` and `bot_chat_events_c2c_v2` ([#7988](https://github.com/open-chat-labs/open-chat/pull/7988))
+
+### Changed
+
+- Store blocked user mappings in LocalUserIndexes ([#7960](https://github.com/open-chat-labs/open-chat/pull/7960))
+- Store notification subscriptions in LocalUserIndexes ([#7967](https://github.com/open-chat-labs/open-chat/pull/7967))
+- Support autonomous bots without API keys ([#7985](https://github.com/open-chat-labs/open-chat/pull/7985))
+- Increase scope of `bot_subscribe_to_events` ([#7996](https://github.com/open-chat-labs/open-chat/pull/7996))
+- Allow bot to specify data encoding format ([#8004](https://github.com/open-chat-labs/open-chat/pull/8004))
+- Include the api_gateway with bot notifications ([#8005](https://github.com/open-chat-labs/open-chat/pull/8005))
+
+### Fixed
+
+- Fix ordering of blocked user map ([#8003](https://github.com/open-chat-labs/open-chat/pull/8003))
+
+## [[2.0.1748](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1748-local_user_index)] - 2025-05-13
+
+### Changed
+
+- Store `notifications_index_canister_id` within LocalUserIndexes ([#7947](https://github.com/open-chat-labs/open-chat/pull/7947))
+- Store bot endpoints in LocalUserIndexes ([#7949](https://github.com/open-chat-labs/open-chat/pull/7949))
+- Add `started` and `joined_by_current_user` to video call details in summary responses ([#7950](https://github.com/open-chat-labs/open-chat/pull/7950))
+- Add more details to `video_call_in_progress` responses ([#7954](https://github.com/open-chat-labs/open-chat/pull/7954))
+
+## [[2.0.1739](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1739-local_user_index)] - 2025-05-09
+
+### Added
+
+- Support bots deleting messages ([#7941](https://github.com/open-chat-labs/open-chat/pull/7941))
+- Support bots adding reactions ([#7944](https://github.com/open-chat-labs/open-chat/pull/7944))
+
+### Fixed
+
+- Allow local Groups and Communities to request cycles + push events ([#7940](https://github.com/open-chat-labs/open-chat/pull/7940))
+
+## [[2.0.1731](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1731-local_user_index)] - 2025-05-08
+
+### Fixed
+
+- Fix pushing events to Group/Community canisters ([#7921](https://github.com/open-chat-labs/open-chat/pull/7921))
+
+## [[2.0.1728](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1728-local_user_index)] - 2025-05-07
+
+### Added
+
+- Enable notifying groups/communities of deleted users ([#7869](https://github.com/open-chat-labs/open-chat/pull/7869))
+- Sync Group and Community data from LocalGroupIndex ([#7878](https://github.com/open-chat-labs/open-chat/pull/7878))
+- Support creating/deleting/upgrading groups and communities ([#7880](https://github.com/open-chat-labs/open-chat/pull/7880))
+- Add missing endpoints to support upgrading Groups/Communities ([#7906](https://github.com/open-chat-labs/open-chat/pull/7906))
+- Support relaying GroupIndex events to Groups/Communities ([#7913](https://github.com/open-chat-labs/open-chat/pull/7913))
+
+### Changed
+
+- Store LocalGroupIndex canisterId in each LocalUserIndex ([#7868](https://github.com/open-chat-labs/open-chat/pull/7868))
+- Migrate pending canisters in canister pool to LocalUserIndex ([#7883](https://github.com/open-chat-labs/open-chat/pull/7883))
+- Clear chunk store once all pending upgrades are completed ([#7915](https://github.com/open-chat-labs/open-chat/pull/7915))
+
+## [[2.0.1713](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1713-local_user_index)] - 2025-04-23
+
+### Added
+
+- Notify Groups/Communities when user deleted (currently disabled) ([#7781](https://github.com/open-chat-labs/open-chat/pull/7781))
+- Allow bots to subscribe to chat events using ApiKeys ([#7836](https://github.com/open-chat-labs/open-chat/pull/7836))
+
+### Changed
+
+- Increase timeout of bounded-wait calls to 5 minutes ([#7730](https://github.com/open-chat-labs/open-chat/pull/7730))
+- Include more details in failed c2c call errors ([#7749](https://github.com/open-chat-labs/open-chat/pull/7749))
+
+## [[2.0.1678](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1678-local_user_index)] - 2025-04-02
+
+### Changed
+
+- Filter trace level events globally so they are dropped earlier ([#7678](https://github.com/open-chat-labs/open-chat/pull/7678))
+- Support passing common state to timer job batches ([#7705](https://github.com/open-chat-labs/open-chat/pull/7705))
+
+## [[2.0.1661](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1661-local_user_index)] - 2025-03-21
+
+### Added
+
+- Introduce standardised error codes ([#7599](https://github.com/open-chat-labs/open-chat/pull/7599))
+- Support only upgrading users who have been active since a chosen date ([#7642](https://github.com/open-chat-labs/open-chat/pull/7642))
+
+### Changed
+
+- Remove the `Cryptocurrency` type from public APIs (part 2) ([#7592](https://github.com/open-chat-labs/open-chat/pull/7592))
+- Support bot `direct message` scenario ([#7607](https://github.com/open-chat-labs/open-chat/pull/7607))
+- Parallelise uploading wasm chunks ([#7643](https://github.com/open-chat-labs/open-chat/pull/7643))
+
+### Removed
+
+- Remove the old `access_token` endpoint ([#7602](https://github.com/open-chat-labs/open-chat/pull/7602))
+
+## [[2.0.1641](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1641-local_user_index)] - 2025-03-12
+
+### Added
+
+- Add `DateTime` bot command parameter ([#7496](https://github.com/open-chat-labs/open-chat/pull/7496))
+- Add `bot_chat_details` ([#7499](https://github.com/open-chat-labs/open-chat/pull/7499))
+- Add c2c endpoints for canister bots read actions ([#7514](https://github.com/open-chat-labs/open-chat/pull/7514))
+- Add `versions` to upgrade filter to filter canisters to upgrade by version ([#7531](https://github.com/open-chat-labs/open-chat/pull/7531))
+
+### Changed
+
+- Limit message content types from `bot_chat_events` ([#7509](https://github.com/open-chat-labs/open-chat/pull/7509))
+- Remove the `Cryptocurrency` type from public APIs (part 1) ([#7510](https://github.com/open-chat-labs/open-chat/pull/7510))
+- Always encode `BotPermission`s as `u32`s ([#7519](https://github.com/open-chat-labs/open-chat/pull/7519))
+- Switch to using bounded-wait calls for idempotent c2c calls ([#7528](https://github.com/open-chat-labs/open-chat/pull/7528))
+- Log total instructions consumed at end of upgrade ([#7551](https://github.com/open-chat-labs/open-chat/pull/7551))
+- Use `unbounded_wait` when installing canisters ([#7558](https://github.com/open-chat-labs/open-chat/pull/7558))
+
+## [[2.0.1610](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1610-local_user_index)] - 2025-02-28
+
+### Added
+
+- Support `sync_api_key` cmd + min required cmd role ([#7439](https://github.com/open-chat-labs/open-chat/pull/7439))
+- Introduce `IdempotencyChecker` in preparation for using best-effort calls ([#7457](https://github.com/open-chat-labs/open-chat/pull/7457))
+- Introduce new idempotent endpoints for C2C calls ([#7492](https://github.com/open-chat-labs/open-chat/pull/7492))
+
+### Changed
+
+- Return `EncodedPermissions` in bot command JWTs ([#7462](https://github.com/open-chat-labs/open-chat/pull/7462))
+- Relay `SetMaxStreak` events to UserIndex ([#7488](https://github.com/open-chat-labs/open-chat/pull/7488))
+
+## [[2.0.1600](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1600-local_user_index)] - 2025-02-06
+
+### Added
+
+- Add `bot_create_channel` endpoint ([#7354](https://github.com/open-chat-labs/open-chat/pull/7354))
+- Add `bot_delete_channel` endpoint ([#7359](https://github.com/open-chat-labs/open-chat/pull/7359))
+
+### Changed
+
+- Restructure to handle autonomous bots ([#7318](https://github.com/open-chat-labs/open-chat/pull/7318))
+- Sync blocked users to UserIndex ([#7333](https://github.com/open-chat-labs/open-chat/pull/7333))
+- Expose each bot action as a separate endpoint ([#7345](https://github.com/open-chat-labs/open-chat/pull/7345))
+- Return requested permissions in bot access tokens ([#7366](https://github.com/open-chat-labs/open-chat/pull/7366))
+- Allow bots to execute actions using JSON ([#7367](https://github.com/open-chat-labs/open-chat/pull/7367))
+- Allow bots to execute actions using msgpack ([#7371](https://github.com/open-chat-labs/open-chat/pull/7371))
+
+### Fixed
+
+- Avoid retrying c2c call if recipient canister is uninstalled ([#7302](https://github.com/open-chat-labs/open-chat/pull/7302))
+
+## [[2.0.1583](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1583-local_user_index)] - 2025-01-24
+
+### Added
+
+- Sync bot installation with UserIndex ([#7291](https://github.com/open-chat-labs/open-chat/pull/7291))
+
+### Changed
+
+- Bump user limit to 300k ([#7270](https://github.com/open-chat-labs/open-chat/pull/7270))
+- Expose most recently upgraded canisters in metrics ([#7283](https://github.com/open-chat-labs/open-chat/pull/7283))
+- Introduce new `Integer` bot parameter type ([#7296](https://github.com/open-chat-labs/open-chat/pull/7296))
+
+### Fixed
+
+- Return `message_id` as a `String` in bot command access tokens ([#7282](https://github.com/open-chat-labs/open-chat/pull/7282))
+
+## [[2.0.1575](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1575-local_user_index)] - 2025-01-21
+
+### Changed
+
+- Reduce message Ids to 64 bits down from 128 bits ([#7232](https://github.com/open-chat-labs/open-chat/pull/7232))
+- Reduce channel Ids to 32 bits down from 128 bits ([#7233](https://github.com/open-chat-labs/open-chat/pull/7233))
+- Sync platform moderators/operators to LocalUserIndexes ([#7248](https://github.com/open-chat-labs/open-chat/pull/7248))
+- Support updating bot principal but not name ([#7253](https://github.com/open-chat-labs/open-chat/pull/7253))
+- Handle `RemoveBot` event ([#7254](https://github.com/open-chat-labs/open-chat/pull/7254))
+- Verified flag added to group/community summary updates ([#7240](https://github.com/open-chat-labs/open-chat/pull/7240))
+
+## [[2.0.1567](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1567-local_user_index)] - 2025-01-14
+
+### Changed
+
+- Withdraw from ICPSwap via LocalUserIndex so authentication happens first ([#7217](https://github.com/open-chat-labs/open-chat/pull/7217))
+- Use macro to create grouped timer job types ([#7224](https://github.com/open-chat-labs/open-chat/pull/7224))
+
+## [[2.0.1567](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1567-local_user_index)] - 2025-01-14
+
+### Changed
+
+- Add optional `placeholder` field to `SlashCommandSchema` ([#7172](https://github.com/open-chat-labs/open-chat/pull/7172))
+- Introduce `StableMemoryMap` trait to simplify storing in stable memory ([#7176](https://github.com/open-chat-labs/open-chat/pull/7176))
+- Use typed command in `BotCommandClaims` ([#7113](https://github.com/open-chat-labs/open-chat/pull/7113))
+- Sync platform operators to LocalUserIndexes ([#7210](https://github.com/open-chat-labs/open-chat/pull/7210))
+
+## [[2.0.1547](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1547-local_user_index)] - 2025-01-06
+
+### Changed
+
+- Change bot cmd number param values from u16 to f64 ([#7095](https://github.com/open-chat-labs/open-chat/pull/7095))
+- Rename access token `parameters` to `command_args` ([#7104](https://github.com/open-chat-labs/open-chat/pull/7104))
+- Use `StringChat` in `BotCommandClaims` ([#7133](https://github.com/open-chat-labs/open-chat/pull/7133))
+- Handle bot name/definition update ([#7135](https://github.com/open-chat-labs/open-chat/pull/7135))
+
+### Fixes
+
+- Fix unit of claims expiry ([#7106](https://github.com/open-chat-labs/open-chat/pull/7106))
+- Sync full user details to new LocalUserIndexes ([#7153](https://github.com/open-chat-labs/open-chat/pull/7153))
+
+## [[2.0.1530](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1530-local_user_index)] - 2024-12-19
+
+### Added
+
+- Implement streak insurance ([#7036](https://github.com/open-chat-labs/open-chat/pull/7036))
+
+### Changed
+
+- Rename fields in access token & c2c_handle_bot_action::Args ([#7060](https://github.com/open-chat-labs/open-chat/pull/7060))
+- Handle installing large wasms onto new subnets ([#7078](https://github.com/open-chat-labs/open-chat/pull/7078))
+
+### Removed
+
+- Remove bot thread permissions ([#7071](https://github.com/open-chat-labs/open-chat/pull/7071))
+
+## [[2.0.1513](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1513-local_user_index)] - 2024-12-13
+
+### Added
+
+- Expose the cycles top-ups of User canisters ([#7053](https://github.com/open-chat-labs/open-chat/pull/7053))
+
+### Changed
+
+- Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))
+- Use `summary` instead of `c2c_summary` so that `c2c_summary` can be removed ([#6988](https://github.com/open-chat-labs/open-chat/pull/6988))
+- Set the derivation origin when checking verifiable credentials ([#6703](https://github.com/open-chat-labs/open-chat/pull/6703))
+- Ensure bot has permission to execute given action ([#7014](https://github.com/open-chat-labs/open-chat/pull/7014))
+- Switch to using `PrincipalToStableMemoryMap` ([#7023](https://github.com/open-chat-labs/open-chat/pull/7023))
+- Make `MessageId` comparisons use their 64bit representation ([#7030](https://github.com/open-chat-labs/open-chat/pull/7030))
+- Notify CHIT updates via LocalUserIndex ([#7033](https://github.com/open-chat-labs/open-chat/pull/7033))
+- Include the total cycles topped up ([#7056](https://github.com/open-chat-labs/open-chat/pull/7056))
+
+### Fixes
+
+- Fixes to `access_token` and `execute_bot_command` ([#7031](https://github.com/open-chat-labs/open-chat/pull/7031))
+
+## [[2.0.1495](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1495-local_user_index)] - 2024-12-04
+
+### Added
+
+- Added `execute_bot_command` endpoint and bot registry ([#6944](https://github.com/open-chat-labs/open-chat/pull/6944))
+
+### Changed
+
+- Add chat + command text to bot command claims ([#6929](https://github.com/open-chat-labs/open-chat/pull/6929))
+- Enable job to check User canister cycles balances ([#6959](https://github.com/open-chat-labs/open-chat/pull/6959))
+- Re-notify User canister after attempting to join if already in channel ([#6964](https://github.com/open-chat-labs/open-chat/pull/6964))
+
+## [[2.0.1481](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1481-local_user_index)] - 2024-11-29
+
+### Changed
+
+- Make `ChannelId` comparisons use their 32bit representation ([#6885](https://github.com/open-chat-labs/open-chat/pull/6885))
+- Add `any_missed_updates` to summary updates responses ([#6907](https://github.com/open-chat-labs/open-chat/pull/6907))
+
+## [[2.0.1463](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1463-local_user_index)] - 2024-11-21
+
+### Changed
+
+- Avoid pushing events to bot users ([#6846](https://github.com/open-chat-labs/open-chat/pull/6846))
+- Simplify `inspect_message` ([#6847](https://github.com/open-chat-labs/open-chat/pull/6847))
+- Add the full command details when requesting a bot access token ([#6861](https://github.com/open-chat-labs/open-chat/pull/6861))
+- Stop upgrade job if concurrency set to 0 ([#6863](https://github.com/open-chat-labs/open-chat/pull/6863))
+
+### Removed
+
+- Remove all code to migrate events to stable memory ([#6858](https://github.com/open-chat-labs/open-chat/pull/6858))
+
+## [[2.0.1460](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1460-local_user_index)] - 2024-11-18
+
+### Changed
+
+- Pass in `bot_api_gateway` when installing User canisters ([#6842](https://github.com/open-chat-labs/open-chat/pull/6842))
+- Revert User canister cycles top-ups back to 0.2T ([#6843](https://github.com/open-chat-labs/open-chat/pull/6843))
+
+## [[2.0.1458](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1458-local_user_index)] - 2024-11-18
+
+### Changed
+
+- Modify upgrade job to top up, then migrate events, then upgrade ([#6834](https://github.com/open-chat-labs/open-chat/pull/6834))
+
+## [[2.0.1457](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1457-local_user_index)] - 2024-11-17
+
+### Changed
+
+- Add `BotApiCanister` to the canister state ([#6828](https://github.com/open-chat-labs/open-chat/pull/6828))
+- Add the `BotCommand` access token type ([#6830](https://github.com/open-chat-labs/open-chat/pull/6830))
+- Disable job to top up canisters until we have more cycles ([#6833](https://github.com/open-chat-labs/open-chat/pull/6833))
+
+## [[2.0.1454](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1454-local_user_index)] - 2024-11-14
+
+### Changed
+
+- Top up canisters which have fewer than `MIN_CYCLES_BALANCE` cycles ([#6819](https://github.com/open-chat-labs/open-chat/pull/6819))
+- Reduce top up amount to 0.02T ([#6821](https://github.com/open-chat-labs/open-chat/pull/6821))
+
+## [[2.0.1447](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1447-local_user_index)] - 2024-11-13
+
+### Changed
+
+- Skip check for canisters that have been topped up in the last 10 days ([#6802](https://github.com/open-chat-labs/open-chat/pull/6802))
+
+### Fixed
+
+- Fix calculation to determine if a canister needs a cycles top up ([#6799](https://github.com/open-chat-labs/open-chat/pull/6799))
+
+## [[2.0.1444](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1444-local_user_index)] - 2024-11-12
+
+### Added
+
+- Add job to check cycles balances of child canisters every week ([#6796](https://github.com/open-chat-labs/open-chat/pull/6796))
+
+## [[2.0.1441](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1441-local_user_index)] - 2024-11-12
+
+### Changed
+
+- Update the canister creation fee to 0.5T ([#6789](https://github.com/open-chat-labs/open-chat/pull/6789))
+
+## [[2.0.1439](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1439-local_user_index)] - 2024-11-11
+
+### Changed
+
+- Continue creating canisters after delay if cycles balance too low ([#6783](https://github.com/open-chat-labs/open-chat/pull/6783))
+- Top up User canisters if detected to be out of cycles ([#6785](https://github.com/open-chat-labs/open-chat/pull/6785))
+
+## [[2.0.1437](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1437-local_user_index)] - 2024-11-11
+
+### Changed
+
+- Increase the max cycles required during upgrades ([#6725](https://github.com/open-chat-labs/open-chat/pull/6725))
+- Increase size of cycles top-ups ([#6727](https://github.com/open-chat-labs/open-chat/pull/6727))
+- Expose which canisters are pending migration to stable memory in metrics ([#6742](https://github.com/open-chat-labs/open-chat/pull/6742))
+- Add more canisters to the pools before fee increases ([#6777](https://github.com/open-chat-labs/open-chat/pull/6777))
+
+## [[2.0.1422](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1422-local_user_index)] - 2024-11-05
+
+### Added
+
+- Trigger migrating User events to stable memory using canister timer job ([#6671](https://github.com/open-chat-labs/open-chat/pull/6671))
+
+### Changed
+
+- Expose `bot_user_count` and `oc_controlled_bots` in metrics ([#6709](https://github.com/open-chat-labs/open-chat/pull/6709))
+- Temporarily disable job to trigger migrating events to stable memory ([#6721](https://github.com/open-chat-labs/open-chat/pull/6721))
+
+## [[2.0.1411](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1411-local_user_index)] - 2024-10-24
+
+### Added
+
+- Add an error log with http endpoint ([#6608](https://github.com/open-chat-labs/open-chat/pull/6608))
+- Add more achievements ([#6631](https://github.com/open-chat-labs/open-chat/pull/6631))
+- Expose count of User canisters per build version ([#6659](https://github.com/open-chat-labs/open-chat/pull/6659))
+
+### Changed
+
+- Maintain set of which canisters have not yet migrated all events to stable memory ([#6603](https://github.com/open-chat-labs/open-chat/pull/6603))
+
+### Removed
+
+- Remove `is_bot` which has been supplanted by `user_type` ([#6650](https://github.com/open-chat-labs/open-chat/pull/6650))
+
+### Fixed
+
+- Determine whether c2c call should be retried based on response error ([#6640](https://github.com/open-chat-labs/open-chat/pull/6640))
+
+## [[2.0.1379](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1379-local_user_index)] - 2024-10-10
+
+### Added
+
+- Add support for expiring access gates ([#6401](https://github.com/open-chat-labs/open-chat/pull/6401))
+
+### Changed
+
+- Implement `GroupedTimerJobQueue` and use it for pushing user events ([#6528](https://github.com/open-chat-labs/open-chat/pull/6528))
+
+## [[2.0.1372](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1372-local_user_index)] - 2024-10-07
+
+### Changed
+
+- Add `CanisterWasmBytes` to reduce duplication ([#6480](https://github.com/open-chat-labs/open-chat/pull/6480))
+- Clear wasm chunks once new wasm version has been set ([#6524](https://github.com/open-chat-labs/open-chat/pull/6524))
+
+### Removed
+
+- Remove `push_events_v2` which is no longer used ([#6502](https://github.com/open-chat-labs/open-chat/pull/6502))
+
+## [[2.0.1362](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1362-local_user_index)] - 2024-09-30
+
+### Added
+
+- Support upgrading to large wasms by uploading in chunks ([#6453](https://github.com/open-chat-labs/open-chat/pull/6453))
+
+### Changed
+
+- Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
+- Simplify prize winner messages to reduce size (part 1) ([#6449](https://github.com/open-chat-labs/open-chat/pull/6449))
+- Add serde default attribute in preparation for skipping serialization if default ([#6475](https://github.com/open-chat-labs/open-chat/pull/6475))
+
+### Removed
+
+- Remove the unused `use_for_new_canisters` field from upgrade args ([#6452](https://github.com/open-chat-labs/open-chat/pull/6452))
+
+## [[2.0.1353](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1353-local_user_index)] - 2024-09-20
+
+### Changed
+
+- Add `winner_count` to prizes enabling us to stop sending all winners ([#6426](https://github.com/open-chat-labs/open-chat/pull/6426))
+
+## [[2.0.1342](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1342-local_user_index)] - 2024-09-10
+
+### Changed
+
+- Allow video calls started by diamond members to last 2 hours ([#6356](https://github.com/open-chat-labs/open-chat/pull/6356))
+- Allow paging failed user events ([#6360](https://github.com/open-chat-labs/open-chat/pull/6360))
+- Add `community_canister_timestamp` to `UserJoinedCommunityOrChannel` events ([#6361](https://github.com/open-chat-labs/open-chat/pull/6361))
+
+## [[2.0.1339](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1339-local_user_index)] - 2024-09-10
+
+### Fixed
+
+- Don't push events directly to users on other subnets ([#6355](https://github.com/open-chat-labs/open-chat/pull/6355))
+
+## [[2.0.1338](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1338-local_user_index)] - 2024-09-10
+
+### Added
+
+- Expose MessagePack versions of LocalUserIndex APIs ([#6318](https://github.com/open-chat-labs/open-chat/pull/6318))
+
+### Changed
+
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+- Support community referrals ([#6317](https://github.com/open-chat-labs/open-chat/pull/6317))
+
+## [[2.0.1310](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1310-local_user_index)] - 2024-08-29
+
+### Changed
+
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+
+### Fixed
+
+- Fix referrals sometimes not being recorded ([#6290](https://github.com/open-chat-labs/open-chat/pull/6290))
+
+## [[2.0.1299](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1299-local_user_index)] - 2024-08-20
+
+### Changed
+
+- Add OC dev team controller to 2 uninstalled canisters to recover funds ([#6247](https://github.com/open-chat-labs/open-chat/pull/6247))
+- Ensure referrer is known by user canister ([#6250](https://github.com/open-chat-labs/open-chat/pull/6250))
+
+## [[2.0.1288](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1288-local_user_index)] - 2024-08-13
+
+### Added
+
+- Add `external_url` property to channel ([#6226](https://github.com/open-chat-labs/open-chat/pull/6226))
+
+## [[2.0.1281](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1281-local_user_index)] - 2024-08-02
+
+### Changed
+
+- Remove canister which holds some tokens from the canister pool ([#6188](https://github.com/open-chat-labs/open-chat/pull/6188))
+
+## [[2.0.1278](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1278-local_user_index)] - 2024-08-01
+
+### Fixed
+
+- Store unique person proof if submitted to LocalUserIndex ([#6174](https://github.com/open-chat-labs/open-chat/pull/6174))
+
+## [[2.0.1277](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1277-local_user_index)] - 2024-08-01
+
+### Fixed
+
+- Fix submitting unique person proof via LocalUserIndex ([#6168](https://github.com/open-chat-labs/open-chat/pull/6168))
+- Use correct principal when verifying credentials ([#6170](https://github.com/open-chat-labs/open-chat/pull/6170))
+- Fix incorrect canister Id being used in place of Internet Identity canister Id ([#6171](https://github.com/open-chat-labs/open-chat/pull/6171))
+
+## [[2.0.1274](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1274-local_user_index)] - 2024-07-31
+
+### Changed
+
+- Configure message visibility to non-members of public channels/groups ([#6152](https://github.com/open-chat-labs/open-chat/pull/6152))
+
+## [[2.0.1268](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1268-local_user_index)] - 2024-07-30
+
+### Changed
+
+- Push unique person proofs to user canisters ([#6144](https://github.com/open-chat-labs/open-chat/pull/6144))
+
+## [[2.0.1267](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1267-local_user_index)] - 2024-07-29
+
+### Changed
+
+- Remove canister holding some ckBTC from canister pool ([#6137](https://github.com/open-chat-labs/open-chat/pull/6137))
+
+## [[2.0.1257](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1257-local_user_index)] - 2024-07-26
+
+### Added
+
+- Add `is_oc_controlled_bot` to `GlobalUser` ([#6115](https://github.com/open-chat-labs/open-chat/pull/6115))
+
+### Changed
+
+- Use `UserType` rather than `is_bot` and `is_oc_controlled_bot` ([#6116](https://github.com/open-chat-labs/open-chat/pull/6116))
+
+### Removed
+
+- Remove `Invited` gate ([#6112](https://github.com/open-chat-labs/open-chat/pull/6112))
+
+## [[2.0.1256](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1256-local_user_index)] - 2024-07-25
+
+### Added
+
+- Support submitting proof of uniqueness to LocalUserIndex ([#6068](https://github.com/open-chat-labs/open-chat/pull/6068))
+- Support submitting proof of diamond membership to LocalUserIndex ([#6084](https://github.com/open-chat-labs/open-chat/pull/6084))
+- Add `Locked` gate ([#6095](https://github.com/open-chat-labs/open-chat/pull/6095))
+- Add `Invited` gate ([#6106](https://github.com/open-chat-labs/open-chat/pull/6106))
+
+### Changed
+
+- Clear old data from the failed upgrades log ([#6062](https://github.com/open-chat-labs/open-chat/pull/6062))
+- Use `P256KeyPair` rather than just storing the secret key bytes ([#6083](https://github.com/open-chat-labs/open-chat/pull/6083))
+
+### Removed
+
+- Remove a load of unused code ([#6066](https://github.com/open-chat-labs/open-chat/pull/6066))
+
+## [[2.0.1247](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1247-local_user_index)] - 2024-07-18
+
+### Changed
+
+- Expire old BTC Miami referral codes ([#6053](https://github.com/open-chat-labs/open-chat/pull/6053))
+
+## [[2.0.1241](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1241-local_user_index)] - 2024-07-17
+
+### Added
+
+- Support gates with multiple verifiable credentials ([#6029](https://github.com/open-chat-labs/open-chat/pull/6029))
+- Reuse canisters of deleted empty and dormant users ([#6046](https://github.com/open-chat-labs/open-chat/pull/6046))
+
+### Changed
+
+- Store `unique_person_proof` in User canisters ([#6029](https://github.com/open-chat-labs/open-chat/pull/6029))
+- Reuse existing uninstalled user canisters ([#6047](https://github.com/open-chat-labs/open-chat/pull/6047))
+
+### Removed
+
+- Remove deprecated `ChitEarned` event ([#6041](https://github.com/open-chat-labs/open-chat/pull/6041))
+
+## [[2.0.1236](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1236-local_user_index)] - 2024-07-11
+
+### Changed
+
+- Added lots more achievements to enum ([#6020](https://github.com/open-chat-labs/open-chat/pull/6020))
+
+### Fixed
+
+- Fix `delete_users` job from stopping prematurely ([#6028](https://github.com/open-chat-labs/open-chat/pull/6028))
+
+## [[2.0.1229](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1229-local_user_index)] - 2024-07-08
+
+### Added
+
+- Add `LifetimeDiamondMembership` access gate ([#5986](https://github.com/open-chat-labs/open-chat/pull/5986))
+- Add `UniquePerson` access gate ([#5993](https://github.com/open-chat-labs/open-chat/pull/5993))
+- Support composite access gates ([#5988](https://github.com/open-chat-labs/open-chat/pull/5988))
+
+### Changed
+
+- In `ChitEarnedReason::Achievement` replaced `String` with `Achievement` ([#5962](https://github.com/open-chat-labs/open-chat/pull/5962))
+- Delete user accounts that are empty and dormant ([#5985](https://github.com/open-chat-labs/open-chat/pull/5985))
+
+## [[2.0.1198](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1198-local_user_index)] - 2024-06-07
+
+### Changed
+
+- Increase user limit from 150,000 to 200,000 ([#5916](https://github.com/open-chat-labs/open-chat/pull/5916))
+
+## [[2.0.1187](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1187-local_user_index)] - 2024-06-04
+
+### Changed
+
+- Add `credential_name` to verified credential access gates ([#5853](https://github.com/open-chat-labs/open-chat/pull/5853))
+- Detect canisters that need cycles topped up when pushing events ([#5891](https://github.com/open-chat-labs/open-chat/pull/5891))
+
+## [[2.0.1179](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1179-local_user_index)] - 2024-05-23
+
+### Added
+
+- Allow users to delete their accounts ([#5775](https://github.com/open-chat-labs/open-chat/pull/5775))
+- New user event `ChitEarned` ([#5817](https://github.com/open-chat-labs/open-chat/pull/5817))
+- Implement validation of verified credential gates ([#5825](https://github.com/open-chat-labs/open-chat/pull/5825))
+- Add `ChitEarnedReason::MemeContestWinner` ([#5842](https://github.com/open-chat-labs/open-chat/pull/5842))
+
+## [[2.0.1162](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1162-local_user_index)] - 2024-05-02
+
+### Changed
+
+- Ensure all new users register via the Identity canister ([#5748](https://github.com/open-chat-labs/open-chat/pull/5748))
+
+## [[2.0.1145](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1145-local_user_index)] - 2024-04-23
+
+### Changed
+
+- Add `block_level_markdown` flag to messages ([#5680](https://github.com/open-chat-labs/open-chat/pull/5680))
+- Update `event_store` packages to v0.1.0 ([#5715](https://github.com/open-chat-labs/open-chat/pull/5715))
+- Expose both heap and stable memory in metrics ([#5718](https://github.com/open-chat-labs/open-chat/pull/5718))
+
+## [[2.0.1137](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1137-local_user_index)] - 2024-04-10
+
+### Changed
+
 - Update `event_store` packages to latest version ([#5593](https://github.com/open-chat-labs/open-chat/pull/5593))
+- Include `call_type` in request to get video call access token ([#5662](https://github.com/open-chat-labs/open-chat/pull/5662))
+
+### Fixed
+
+- Prevent users registering twice with the same principal ([#5655](https://github.com/open-chat-labs/open-chat/pull/5655))
 
 ## [[2.0.1113](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1113-local_user_index)] - 2024-03-20
 
@@ -36,7 +877,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Include raw arg data in RNG seed used to sign access token ([#5465](https://github.com/open-chat-labs/open-chat/pull/5465))
-- Add `start_video_call` permission  ([#5488](https://github.com/open-chat-labs/open-chat/pull/5488))
+- Add `start_video_call` permission ([#5488](https://github.com/open-chat-labs/open-chat/pull/5488))
 - Use old OpenChat Bot message format until User canisters are upgraded ([#5492](https://github.com/open-chat-labs/open-chat/pull/5492))
 
 ### Fixed

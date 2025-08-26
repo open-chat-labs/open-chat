@@ -1,34 +1,34 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-import type { Identity } from "@dfinity/agent";
-import { idlFactory, type NotificationsService } from "./candid/idl";
-import { CandidService } from "../candidService";
-import { subscriptionExistsResponse } from "./mappers";
+import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
+import {
+    NotificationsIndexAddFcmTokenArgs,
+    NotificationsIndexFcmTokenExistsArgs,
+    NotificationsIndexFcmTokenExistsResponse,
+    NotificationsIndexPushSubscriptionArgs,
+    NotificationsIndexPushSubscriptionResponse,
+    NotificationsIndexRemoveSubscriptionArgs,
+    NotificationsIndexSubscriptionExistsArgs,
+    NotificationsIndexSubscriptionExistsResponse,
+    SuccessOnly,
+    UnitResult,
+} from "../../typebox";
 import { toVoid } from "../../utils/mapping";
-import type { AgentConfig } from "../../config";
+import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
+import { subscriptionExistsResponse } from "./mappers";
 
-export class NotificationsClient extends CandidService {
-    private service: NotificationsService;
-
-    private constructor(identity: Identity, config: AgentConfig) {
-        super(identity);
-
-        this.service = this.createServiceClient<NotificationsService>(
-            idlFactory,
-            config.notificationsCanister,
-            config
-        );
-    }
-
-    static create(identity: Identity, config: AgentConfig): NotificationsClient {
-        return new NotificationsClient(identity, config);
+export class NotificationsClient extends MsgpackCanisterAgent {
+    constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
+        super(identity, agent, canisterId, "Notifications");
     }
 
     subscriptionExists(p256dh_key: string): Promise<boolean> {
-        return this.handleResponse(
-            this.service.subscription_exists({
+        return this.executeMsgpackQuery(
+            "subscription_exists",
+            {
                 p256dh_key,
-            }),
-            subscriptionExistsResponse
+            },
+            subscriptionExistsResponse,
+            NotificationsIndexSubscriptionExistsArgs,
+            NotificationsIndexSubscriptionExistsResponse,
         );
     }
 
@@ -42,15 +42,51 @@ export class NotificationsClient extends CandidService {
                 },
             },
         };
-        return this.handleResponse(this.service.push_subscription(request), toVoid);
+        return this.executeMsgpackUpdate(
+            "push_subscription",
+            request,
+            toVoid,
+            NotificationsIndexPushSubscriptionArgs,
+            NotificationsIndexPushSubscriptionResponse,
+        );
     }
 
     removeSubscription(subscription: PushSubscriptionJSON): Promise<void> {
-        return this.handleResponse(
-            this.service.remove_subscription({
+        return this.executeMsgpackUpdate(
+            "remove_subscription",
+            {
                 p256dh_key: subscription.keys!["p256dh"],
-            }),
-            toVoid
+            },
+            toVoid,
+            NotificationsIndexRemoveSubscriptionArgs,
+            SuccessOnly,
+        );
+    }
+
+    fcmTokenExists(fcmToken: string): Promise<boolean> {
+        return this.executeMsgpackQuery(
+            "fcm_token_exists",
+            { fcm_token: fcmToken },
+            (response) => response as boolean,
+            NotificationsIndexFcmTokenExistsArgs,
+            NotificationsIndexFcmTokenExistsResponse,
+        );
+    }
+
+    addFcmToken(fcmToken: string, onResponseError?: (error: string | null) => void): Promise<void> {
+        return this.executeMsgpackUpdate(
+            "add_fcm_token",
+            { fcm_token: fcmToken },
+            (response) => {
+                if (response === "Success") {
+                    return;
+                } else {
+                    const [_, msg] = response.Error;
+                    onResponseError?.(msg);
+                }
+            },
+            NotificationsIndexAddFcmTokenArgs,
+            UnitResult,
         );
     }
 }

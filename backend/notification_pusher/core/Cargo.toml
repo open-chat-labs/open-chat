@@ -1,22 +1,26 @@
 [package]
 name = "notification_pusher_core"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 
 [dependencies]
-async-trait = { workspace = true }
 async-channel = { workspace = true }
 base64 = { workspace = true }
-futures = { workspace = true }
+candid = { workspace = true }
+dotenv = { workspace = true }
+envconfig = { workspace = true }
+fcm-service = { workspace = true }
 ic-agent = { workspace = true }
 index_store = { path = "../../libraries/index_store" }
-notifications_canister = { path = "../../canisters/notifications/api" }
-notifications_canister_client = { path = "../../canisters/notifications/client" }
+local_user_index_canister = { path = "../../canisters/local_user_index/api" }
+local_user_index_canister_client = { path = "../../canisters/local_user_index/client" }
 notifications_index_canister = { path = "../../canisters/notifications_index/api" }
 notifications_index_canister_client = { path = "../../canisters/notifications_index/client" }
 openssl = { workspace = true, features = ["vendored"] }
+prometheus = { workspace = true }
+reqwest = { workspace = true }
+rustls = { workspace = true }
 serde = { workspace = true }
-serde_bytes = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true, features = ["macros", "time"] }
 tracing = { workspace = true }

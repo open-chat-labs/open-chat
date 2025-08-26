@@ -1,7 +1,7 @@
 use crate::guards::caller_is_governance_principal;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use types::ChatId;
 use user_index_canister::assign_platform_moderators_group::{Response::*, *};
 

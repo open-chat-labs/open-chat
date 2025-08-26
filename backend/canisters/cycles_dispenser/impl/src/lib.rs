@@ -5,7 +5,7 @@ use ic_ledger_types::{BlockIndex, Tokens};
 use ledger_utils::default_ledger_account;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 use types::{BuildVersion, CanisterId, Cycles, Milliseconds, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
@@ -37,11 +37,17 @@ impl State {
         self.data.governance_principals.contains(&self.env.caller())
     }
 
+    pub fn is_caller_registry_canister(&self) -> bool {
+        self.env.caller() == self.data.registry_canister_id
+    }
+
     pub fn metrics(&self) -> Metrics {
         Metrics {
-            memory_used: utils::memory::used(),
+            heap_memory_used: utils::memory::heap(),
+            stable_memory_used: utils::memory::stable(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
+            liquid_cycles_balance: self.env.liquid_cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
             governance_principals: self.data.governance_principals.iter().copied().collect(),
@@ -52,8 +58,12 @@ impl State {
             min_interval: self.data.min_interval,
             min_cycles_balance: self.data.min_cycles_balance,
             icp_burn_amount: self.data.icp_burn_amount,
-            ledger_canister: self.data.ledger_canister,
-            cycles_minting_canister: self.data.cycles_minting_canister,
+            stable_memory_sizes: memory::memory_sizes(),
+            canister_ids: CanisterIds {
+                registry: self.data.registry_canister_id,
+                ledger: self.data.ledger_canister,
+                cmc: self.data.cycles_minting_canister,
+            },
         }
     }
 }
@@ -62,6 +72,7 @@ impl State {
 struct Data {
     pub governance_principals: HashSet<Principal>,
     pub canisters: Canisters,
+    pub registry_canister_id: CanisterId,
     pub sns_root_canister: Option<CanisterId>,
     pub max_top_up_amount: Cycles,
     pub min_interval: Milliseconds,
@@ -75,10 +86,11 @@ struct Data {
 }
 
 impl Data {
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn new(
         governance_principals: Vec<Principal>,
         canisters: Vec<CanisterId>,
+        registry_canister_id: CanisterId,
         max_top_up_amount: Cycles,
         min_interval: Milliseconds,
         min_cycles_balance: Cycles,
@@ -91,6 +103,7 @@ impl Data {
         Data {
             governance_principals: governance_principals.into_iter().collect(),
             canisters: Canisters::new(canisters, now),
+            registry_canister_id,
             sns_root_canister: None,
             max_top_up_amount,
             min_interval,
@@ -108,8 +121,10 @@ impl Data {
 #[derive(CandidType, Serialize, Debug)]
 pub struct Metrics {
     pub now: TimestampMillis,
-    pub memory_used: u64,
+    pub heap_memory_used: u64,
+    pub stable_memory_used: u64,
     pub cycles_balance: Cycles,
+    pub liquid_cycles_balance: Cycles,
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub governance_principals: Vec<Principal>,
@@ -120,6 +135,13 @@ pub struct Metrics {
     pub min_interval: Milliseconds,
     pub min_cycles_balance: Cycles,
     pub icp_burn_amount: Tokens,
-    pub ledger_canister: CanisterId,
-    pub cycles_minting_canister: CanisterId,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
+    pub canister_ids: CanisterIds,
+}
+
+#[derive(CandidType, Serialize, Debug)]
+pub struct CanisterIds {
+    registry: CanisterId,
+    ledger: CanisterId,
+    cmc: CanisterId,
 }

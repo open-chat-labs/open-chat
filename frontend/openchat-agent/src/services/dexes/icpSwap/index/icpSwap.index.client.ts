@@ -1,40 +1,26 @@
-import type { Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import { idlFactory, type IcpSwapIndexService } from "./candid/idl";
-import { CandidService } from "../../../candidService";
-import type { AgentConfig } from "../../../../config";
+import { CandidCanisterAgent } from "../../../canisterAgent/candid";
 import type { TokenSwapPool } from "openchat-shared";
 import { getPoolsResponse } from "./mappers";
+import type { SwapIndexClient, SwapPoolClient } from "../../index";
+import { IcpSwapPoolClient } from "../pool/icpSwap.pool.client";
 
 const ICPSWAP_INDEX_CANISTER_ID = "4mmnk-kiaaa-aaaag-qbllq-cai";
-const TEN_MINUTES = 10 * 60 * 1000;
 
-export class IcpSwapIndexClient extends CandidService {
-    private service: IcpSwapIndexService;
-    private pools: TokenSwapPool[] = []; // Cache the pools for 10 minutes
-    private poolsLastUpdated: number = 0;
-
-    private constructor(identity: Identity, config: AgentConfig) {
-        super(identity);
-
-        this.service = this.createServiceClient<IcpSwapIndexService>(
-            idlFactory,
-            ICPSWAP_INDEX_CANISTER_ID,
-            config,
-        );
+export class IcpSwapIndexClient
+    extends CandidCanisterAgent<IcpSwapIndexService>
+    implements SwapIndexClient
+{
+    constructor(identity: Identity, agent: HttpAgent) {
+        super(identity, agent, ICPSWAP_INDEX_CANISTER_ID, idlFactory, "IcpSwapIndex");
     }
 
-    static create(identity: Identity, config: AgentConfig): IcpSwapIndexClient {
-        return new IcpSwapIndexClient(identity, config);
+    getPoolClient(canisterId: string, token0: string, token1: string): SwapPoolClient {
+        return new IcpSwapPoolClient(this.identity, this.agent, canisterId, token0, token1);
     }
 
-    async getPools(): Promise<TokenSwapPool[]> {
-        const now = Date.now();
-        if (this.pools.length > 0 && now - this.poolsLastUpdated < TEN_MINUTES)
-            return Promise.resolve(this.pools);
-
-        const pools = await this.handleQueryResponse(this.service.getPools, getPoolsResponse);
-
-        this.poolsLastUpdated = now;
-        return (this.pools = pools);
+    getPools(): Promise<TokenSwapPool[]> {
+        return this.handleQueryResponse(this.service.getPools, getPoolsResponse);
     }
 }

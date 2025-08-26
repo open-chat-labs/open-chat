@@ -1,11 +1,11 @@
 use crate::guards::caller_is_group_index;
 use crate::timer_job_types::{SetUserSuspended, TimerJob};
-use crate::{mutate_state, RuntimeState};
-use canister_api_macros::update_msgpack;
+use crate::{RuntimeState, mutate_state};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use user_index_canister::c2c_suspend_users::{Response::*, *};
+use user_index_canister::c2c_suspend_users::*;
 
-#[update_msgpack(guard = "caller_is_group_index")]
+#[update(guard = "caller_is_group_index", msgpack = true)]
 #[trace]
 fn c2c_suspend_users(args: Args) -> Response {
     mutate_state(|state| c2c_suspend_users_impl(args, state))
@@ -27,5 +27,5 @@ fn c2c_suspend_users_impl(args: Args, state: &mut RuntimeState) -> Response {
             );
         }
     }
-    Success
+    Response::Success
 }

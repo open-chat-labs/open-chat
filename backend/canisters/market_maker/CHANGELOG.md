@@ -1,4 +1,5 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
@@ -7,7 +8,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Expose `liquid_cycles_balance` in metrics ([#8350](https://github.com/open-chat-labs/open-chat/pull/8350))
+
+## [[2.0.1652](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1652-market_maker)] - 2025-03-13
+
+### Changed
+
+- Remove the `Cryptocurrency` type from public APIs (part 1) ([#7510](https://github.com/open-chat-labs/open-chat/pull/7510))
+- Log total instructions consumed at end of upgrade ([#7551](https://github.com/open-chat-labs/open-chat/pull/7551))
+- Remove the `Cryptocurrency` type from public APIs (part 2) ([#7592](https://github.com/open-chat-labs/open-chat/pull/7592))
+
+## [[2.0.1625](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1625-market_maker)] - 2025-03-06
+
+### Added
+
+- Add an error log with http endpoint ([#6608](https://github.com/open-chat-labs/open-chat/pull/6608))
+
+### Changed
+
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+- Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
+- Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))
+
+## [[2.0.1319](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1319-market_maker)] - 2024-09-02
+
+### Changed
+
+- Expose both heap and stable memory in metrics ([#5718](https://github.com/open-chat-labs/open-chat/pull/5718))
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+- Limit balance history response to 5000 entries ([#6267](https://github.com/open-chat-labs/open-chat/pull/6267))
+
+## [[2.0.1128](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1128-market_maker)] - 2024-04-05
+
+### Changed
+
 - Seed rng with entropy before calling `raw_rand` to get randomness ([#5454](https://github.com/open-chat-labs/open-chat/pull/5454))
+- Persist latest bid and ask taken rather than dropping after each round ([#5624](https://github.com/open-chat-labs/open-chat/pull/5624))
 
 ## [[2.0.1048](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1048-market_maker)] - 2024-02-05
 

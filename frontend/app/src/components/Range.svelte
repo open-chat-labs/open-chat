@@ -1,8 +1,13 @@
 <script lang="ts">
-    export let value: number;
-    export let min: number;
-    export let max: number;
-    export let fat = false;
+    interface Props {
+        value: number;
+        min: number;
+        max: number;
+        fat?: boolean;
+        onChange?: () => void;
+    }
+
+    let { value = $bindable(), min, max, fat = false, onChange }: Props = $props();
 
     let trackHeight = fat ? 9 : 6;
     let thumbSize = fat ? 26 : 16;
@@ -15,7 +20,7 @@
     {min}
     {max}
     bind:value
-    on:change />
+    onchange={onChange} />
 
 <style lang="scss">
     $trackHeight: var(--track-height);
@@ -41,6 +46,7 @@
         width: $thumbSize;
         border-radius: 50%;
         background: #ffffff;
+        border: 1px solid var(--bd);
         cursor: pointer;
         -webkit-appearance: none;
         margin-top: calc(-1 * $trackHeight);
@@ -59,6 +65,7 @@
         width: $thumbSize;
         border-radius: 50%;
         background: #ffffff;
+        border: 1px solid var(--bd);
         cursor: pointer;
     }
     input[type="range"]::-ms-track {
@@ -75,6 +82,7 @@
         width: $thumbSize;
         border-radius: 50%;
         background: #ffffff;
+        border: 1px solid var(--bd);
         cursor: pointer;
     }
 </style>

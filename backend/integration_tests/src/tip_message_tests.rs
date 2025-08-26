@@ -1,11 +1,14 @@
+use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
-use crate::rng::{random_message_id, random_string};
-use crate::{client, CanisterIds, TestEnv, User};
+use crate::utils::tick_many;
+use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
+use constants::{ICP_SYMBOL, ICP_TRANSFER_FEE};
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
-use types::{Chat, ChatEvent, Cryptocurrency};
+use testing::rng::{random_from_u128, random_string};
+use types::{Chat, ChatEvent};
 
 #[test]
 fn tip_direct_message_succeeds() {
@@ -19,11 +22,13 @@ fn tip_direct_message_succeeds() {
 
     let TestData { user1, user2 } = init_test_data(env, canister_ids, *controller);
 
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
     let tip_amount = 1_0000_0000;
 
     let event_index =
         client::user::happy_path::send_text_message(env, &user2, user1.user_id, "TEXT", Some(message_id)).event_index;
+
+    tick_many(env, 3);
 
     client::user::happy_path::tip_message(
         env,
@@ -32,9 +37,12 @@ fn tip_direct_message_succeeds() {
         Chat::Direct(user2.user_id.into()),
         message_id,
         canister_ids.icp_ledger,
-        Cryptocurrency::InternetComputer,
+        ICP_SYMBOL.to_string(),
         tip_amount,
+        ICP_TRANSFER_FEE,
     );
+
+    tick_many(env, 3);
 
     let user1_message = client::user::happy_path::events_by_index(env, &user2, user1.user_id, vec![event_index])
         .events
@@ -60,7 +68,7 @@ fn tip_direct_message_succeeds() {
         (canister_ids.icp_ledger, vec![(user1.user_id, tip_amount)])
     );
 
-    let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
+    let user2_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
     assert_eq!(user2_balance, tip_amount);
 }
 
@@ -77,10 +85,10 @@ fn tip_group_message_succeeds() {
     let TestData { user1, user2 } = init_test_data(env, canister_ids, *controller);
 
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
     let tip_amount = 1_0000_0000;
 
-    client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
+    client::group::happy_path::join_group(env, user2.principal, group_id);
 
     let event_index =
         client::group::happy_path::send_text_message(env, &user2, group_id, None, random_string(), Some(message_id))
@@ -93,8 +101,9 @@ fn tip_group_message_succeeds() {
         Chat::Group(group_id),
         message_id,
         canister_ids.icp_ledger,
-        Cryptocurrency::InternetComputer,
+        ICP_SYMBOL.to_string(),
         tip_amount,
+        ICP_TRANSFER_FEE,
     );
 
     let message = client::group::happy_path::events_by_index(env, &user2, group_id, vec![event_index])
@@ -109,7 +118,7 @@ fn tip_group_message_succeeds() {
         (canister_ids.icp_ledger, vec![(user1.user_id, tip_amount)])
     );
 
-    let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
+    let user2_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
     assert_eq!(user2_balance, tip_amount);
 }
 
@@ -127,16 +136,10 @@ fn tip_channel_message_succeeds() {
 
     let community_id = client::user::happy_path::create_community(env, &user1, &random_string(), true, vec![random_string()]);
     let channel_id = client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string());
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
     let tip_amount = 1_0000_0000;
 
-    client::local_user_index::happy_path::join_channel(
-        env,
-        user2.principal,
-        canister_ids.local_user_index,
-        community_id,
-        channel_id,
-    );
+    client::community::happy_path::join_channel(env, user2.principal, community_id, channel_id);
 
     let event_index = client::community::happy_path::send_text_message(
         env,
@@ -156,8 +159,9 @@ fn tip_channel_message_succeeds() {
         Chat::Channel(community_id, channel_id),
         message_id,
         canister_ids.icp_ledger,
-        Cryptocurrency::InternetComputer,
+        ICP_SYMBOL.to_string(),
         tip_amount,
+        ICP_TRANSFER_FEE,
     );
 
     let message = client::community::happy_path::events_by_index(env, &user2, community_id, channel_id, vec![event_index])
@@ -172,7 +176,7 @@ fn tip_channel_message_succeeds() {
         (canister_ids.icp_ledger, vec![(user1.user_id, tip_amount)])
     );
 
-    let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
+    let user2_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
     assert_eq!(user2_balance, tip_amount);
 }
 
@@ -189,17 +193,17 @@ fn tip_group_message_retries_if_c2c_call_fails() {
     let TestData { user1, user2 } = init_test_data(env, canister_ids, *controller);
 
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
     let tip_amount = 1_0000_0000;
+    let local_user_index = canister_ids.local_user_index(env, group_id);
 
-    client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
+    client::group::happy_path::join_group(env, user2.principal, group_id);
 
     let event_index =
         client::group::happy_path::send_text_message(env, &user2, group_id, None, random_string(), Some(message_id))
             .event_index;
 
-    env.stop_canister(group_id.into(), Some(canister_ids.local_group_index))
-        .unwrap();
+    stop_canister(env, local_user_index, group_id.into());
 
     let tip_message_response = client::user::tip_message(
         env,
@@ -211,9 +215,9 @@ fn tip_group_message_retries_if_c2c_call_fails() {
             thread_root_message_index: None,
             message_id,
             ledger: canister_ids.icp_ledger,
-            token: Cryptocurrency::InternetComputer,
+            token_symbol: ICP_SYMBOL.to_string(),
             amount: tip_amount,
-            fee: Cryptocurrency::InternetComputer.fee().unwrap(),
+            fee: ICP_TRANSFER_FEE,
             decimals: 8,
             pin: None,
         },
@@ -225,10 +229,9 @@ fn tip_group_message_retries_if_c2c_call_fails() {
     ));
 
     env.tick();
-    env.start_canister(group_id.into(), Some(canister_ids.local_group_index))
-        .unwrap();
+    start_canister(env, local_user_index, group_id.into());
     env.advance_time(Duration::from_secs(10));
-    env.tick();
+    tick_many(env, 3);
 
     let message = client::group::happy_path::events_by_index(env, &user2, group_id, vec![event_index])
         .events
@@ -257,16 +260,11 @@ fn tip_channel_message_retries_if_c2c_call_fails() {
 
     let community_id = client::user::happy_path::create_community(env, &user1, &random_string(), true, vec![random_string()]);
     let channel_id = client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string());
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
     let tip_amount = 1_0000_0000;
+    let local_user_index = canister_ids.local_user_index(env, community_id);
 
-    client::local_user_index::happy_path::join_channel(
-        env,
-        user2.principal,
-        canister_ids.local_user_index,
-        community_id,
-        channel_id,
-    );
+    client::community::happy_path::join_channel(env, user2.principal, community_id, channel_id);
 
     let event_index = client::community::happy_path::send_text_message(
         env,
@@ -279,8 +277,7 @@ fn tip_channel_message_retries_if_c2c_call_fails() {
     )
     .event_index;
 
-    env.stop_canister(community_id.into(), Some(canister_ids.local_group_index))
-        .unwrap();
+    stop_canister(env, local_user_index, community_id.into());
 
     let tip_message_response = client::user::tip_message(
         env,
@@ -292,9 +289,9 @@ fn tip_channel_message_retries_if_c2c_call_fails() {
             thread_root_message_index: None,
             message_id,
             ledger: canister_ids.icp_ledger,
-            token: Cryptocurrency::InternetComputer,
+            token_symbol: ICP_SYMBOL.to_string(),
             amount: tip_amount,
-            fee: Cryptocurrency::InternetComputer.fee().unwrap(),
+            fee: ICP_TRANSFER_FEE,
             decimals: 8,
             pin: None,
         },
@@ -305,11 +302,10 @@ fn tip_channel_message_retries_if_c2c_call_fails() {
         user_canister::tip_message::Response::Retrying(_)
     ));
 
-    env.tick();
-    env.start_canister(community_id.into(), Some(canister_ids.local_group_index))
-        .unwrap();
+    tick_many(env, 3);
+    start_canister(env, local_user_index, community_id.into());
     env.advance_time(Duration::from_secs(10));
-    env.tick();
+    tick_many(env, 3);
 
     let message = client::community::happy_path::events_by_index(env, &user2, community_id, channel_id, vec![event_index])
         .events
@@ -326,9 +322,11 @@ fn tip_channel_message_retries_if_c2c_call_fails() {
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
 
-    client::icrc1::happy_path::transfer(env, controller, canister_ids.icp_ledger, user1.user_id, 10_000_000_000);
+    client::ledger::happy_path::transfer(env, controller, canister_ids.icp_ledger, user1.user_id, 10_000_000_000);
+
+    tick_many(env, 3);
 
     TestData { user1, user2 }
 }

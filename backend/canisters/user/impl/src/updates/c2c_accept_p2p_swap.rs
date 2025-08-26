@@ -1,26 +1,31 @@
 use crate::guards::caller_is_known_group_or_community_canister;
 use crate::model::p2p_swaps::P2PSwap;
-use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::update_msgpack;
+use crate::{RuntimeState, execute_update_async, mutate_state};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use constants::{MEMO_P2P_SWAP_ACCEPT, NANOS_PER_MILLISECOND};
 use escrow_canister::deposit_subaccount;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
-use types::{CanisterId, TimestampMillis, UserId};
+use oc_error_codes::OCErrorCode;
+use types::{CanisterId, OCResult, TimestampMillis, UserId};
 use user_canister::c2c_accept_p2p_swap::{Response::*, *};
-use utils::consts::MEMO_P2P_SWAP_ACCEPT;
-use utils::time::NANOS_PER_MILLISECOND;
 
-#[update_msgpack(guard = "caller_is_known_group_or_community_canister")]
+#[update(guard = "caller_is_known_group_or_community_canister", msgpack = true)]
 #[trace]
 async fn c2c_accept_p2p_swap(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(|| c2c_accept_p2p_swap_impl(args)).await
+}
 
+async fn c2c_accept_p2p_swap_impl(args: Args) -> Response {
     let PrepareResult {
         my_user_id,
         escrow_canister_id,
         now,
-    } = read_state(prepare);
+    } = match mutate_state(|state| prepare(&args, state)) {
+        Ok(ok) => ok,
+        Err(response) => return Error(response),
+    };
 
     match icrc_ledger_canister_c2c_client::icrc1_transfer(
         args.token1.ledger,
@@ -28,7 +33,7 @@ async fn c2c_accept_p2p_swap(args: Args) -> Response {
             from_subaccount: None,
             to: Account {
                 owner: escrow_canister_id,
-                subaccount: Some(deposit_subaccount(my_user_id, args.swap_id)),
+                subaccount: Some(deposit_subaccount(my_user_id.into(), args.swap_id)),
             },
             fee: Some(args.token1.fee.into()),
             created_at_time: Some(now * NANOS_PER_MILLISECOND),
@@ -54,8 +59,8 @@ async fn c2c_accept_p2p_swap(args: Args) -> Response {
             });
             Success(index_nat.0.try_into().unwrap())
         }
-        Ok(Err(error)) => TransferError(error),
-        Err(error) => InternalError(format!("{error:?}")),
+        Ok(Err(error)) => Error(OCErrorCode::TransferFailed.with_json(&error)),
+        Err(error) => Error(error.into()),
     }
 }
 
@@ -65,10 +70,13 @@ struct PrepareResult {
     now: TimestampMillis,
 }
 
-fn prepare(state: &RuntimeState) -> PrepareResult {
-    PrepareResult {
+fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
+    let now = state.env.now();
+    state.data.pin_number.verify(args.pin.as_deref(), now)?;
+
+    Ok(PrepareResult {
         my_user_id: state.env.canister_id().into(),
         escrow_canister_id: state.data.escrow_canister_id,
-        now: state.env.now(),
-    }
+        now,
+    })
 }

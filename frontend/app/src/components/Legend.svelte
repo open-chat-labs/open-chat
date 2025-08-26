@@ -1,14 +1,19 @@
 <script lang="ts">
-    import type { ResourceKey } from "../i18n/i18n";
     import Translatable from "./Translatable.svelte";
+    import type { ResourceKey } from "openchat-client";
 
-    export let label: ResourceKey;
-    export let rules: ResourceKey | undefined = undefined;
-    export let required = false;
+    interface Props {
+        label: ResourceKey;
+        rules?: ResourceKey | undefined;
+        required?: boolean;
+        large?: boolean;
+    }
+
+    let { label, rules = undefined, required = false, large = false }: Props = $props();
 </script>
 
 <div class="legend">
-    <span class="label"><Translatable resourceKey={label} /></span>
+    <span class="label" class:large><Translatable resourceKey={label} /></span>
     {#if rules}
         <span class="rules">(<Translatable resourceKey={rules} />)</span>
     {/if}
@@ -23,13 +28,17 @@
 
         .label {
             @include font(book, normal, fs-60);
+
+            &.large {
+                @include font(book, normal, fs-100);
+            }
         }
         .rules {
             @include font(light, normal, fs-60);
             color: var(--txt-light);
         }
         .required {
-            color: var(--accent);
+            color: var(--error);
         }
     }
 </style>

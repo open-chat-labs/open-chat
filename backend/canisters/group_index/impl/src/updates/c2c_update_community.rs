@@ -1,10 +1,10 @@
-use crate::{mutate_state, RuntimeState};
-use canister_api_macros::update_msgpack;
+use crate::{RuntimeState, mutate_state};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_update_community::{Response::*, *};
 use types::CommunityId;
 
-#[update_msgpack]
+#[update(msgpack = true)]
 #[trace]
 fn c2c_update_community(args: Args) -> Response {
     mutate_state(|state| c2c_update_community_impl(args, state))
@@ -12,22 +12,18 @@ fn c2c_update_community(args: Args) -> Response {
 
 fn c2c_update_community_impl(args: Args, state: &mut RuntimeState) -> Response {
     let community_id = CommunityId::from(state.env.caller());
+    let now = state.env.now();
 
     if let Some(community) = state.data.public_communities.get(&community_id) {
-        if community.name().to_uppercase() != args.name.to_uppercase() {
-            if state.data.public_group_and_community_names.is_name_taken(&args.name) {
+        if !community.name().eq_ignore_ascii_case(&args.name) {
+            if state.data.public_group_and_community_names.is_name_taken(&args.name, now) {
                 return NameTaken;
             }
 
             state
                 .data
                 .public_group_and_community_names
-                .remove(community.name(), community_id.into());
-
-            state
-                .data
-                .public_group_and_community_names
-                .insert(&args.name, community_id.into());
+                .rename(community.name(), &args.name, community_id.into());
         }
 
         state.data.public_communities.update_community(
@@ -36,11 +32,12 @@ fn c2c_update_community_impl(args: Args, state: &mut RuntimeState) -> Response {
             args.description,
             args.avatar_id,
             args.banner_id,
-            args.gate,
+            args.gate_config,
+            args.primary_language,
         );
         Success
     } else if let Some(community) = state.data.private_communities.get(&community_id) {
-        if state.data.public_group_and_community_names.is_name_taken(&args.name) {
+        if state.data.public_group_and_community_names.is_name_taken(&args.name, now) {
             return NameTaken;
         }
 
@@ -58,7 +55,7 @@ fn c2c_update_community_impl(args: Args, state: &mut RuntimeState) -> Response {
             args.description,
             args.avatar_id,
             args.banner_id,
-            args.gate,
+            args.gate_config,
             args.primary_language,
             args.channel_count,
             date_created,

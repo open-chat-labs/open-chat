@@ -1,0 +1,168 @@
+use crate::{
+    RuntimeState,
+    model::{MAX_AVATAR_SIZE, MAX_COMMANDS, MAX_DESCRIPTION_LEN, user_map::UpdateUserResult},
+    mutate_state,
+};
+use candid::Principal;
+use canister_api_macros::update;
+use canister_tracing_macros::trace;
+use local_user_index_canister::{BotUpdated, UserIndexEvent};
+use types::OptionUpdate;
+use url::Url;
+use user_index_canister::update_bot::{Response::*, *};
+use utils::document::try_parse_data_url;
+
+#[update(candid = true, msgpack = true)]
+#[trace]
+fn update_bot(args: Args) -> Response {
+    mutate_state(|state| update_bot_impl(args, state))
+}
+
+fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
+    if let Err(err_response) = validate(&args, state) {
+        return err_response;
+    }
+
+    let Some(bot) = state.data.users.get_bot(&args.bot_id) else {
+        return BotNotFound;
+    };
+
+    let Some(user) = state.data.users.get_by_user_id(&args.bot_id) else {
+        return BotNotFound;
+    };
+
+    let mut bot = bot.clone();
+    let mut user = user.clone();
+    let now = state.env.now();
+
+    if let Some(principal) = args.principal {
+        user.principal = principal;
+    }
+
+    if let Some(owner_id) = args.owner {
+        bot.owner = owner_id;
+    }
+
+    if let Some(endpoint) = args.endpoint {
+        bot.endpoint = endpoint;
+    }
+
+    match args.avatar {
+        OptionUpdate::NoChange => (),
+        OptionUpdate::SetToNone => {
+            bot.avatar = None;
+            user.avatar_id = None;
+        }
+        OptionUpdate::SetToSome(avatar) => {
+            bot.avatar = try_parse_data_url(&avatar).ok();
+            user.avatar_id = bot.avatar.as_ref().map(|a| a.id);
+        }
+    };
+
+    if let Some(definition) = args.definition.as_ref() {
+        bot.description = definition.description.clone();
+        bot.commands = definition.commands.clone();
+        bot.autonomous_config = definition.autonomous_config.clone();
+    }
+
+    let owner_id = bot.owner;
+    let endpoint = bot.endpoint.clone();
+
+    bot.last_updated = now;
+
+    match state.data.users.update(user, now, false, Some(bot)) {
+        UpdateUserResult::Success => (),
+        UpdateUserResult::UsernameTaken => unreachable!(),
+        UpdateUserResult::UserNotFound => return BotNotFound,
+        UpdateUserResult::PrincipalTaken => return PrincipalAlreadyUsed,
+    }
+
+    if let Some(definition) = args.definition {
+        state.push_event_to_all_local_user_indexes(
+            UserIndexEvent::BotUpdated(BotUpdated {
+                bot_id: args.bot_id,
+                owner_id,
+                endpoint,
+                definition,
+            }),
+            None,
+        );
+    }
+
+    // TODO: If there are any new commands or the required permissions have increased for any existing commands,
+    // then notify all the group/communities that have added this bot
+    Success
+}
+
+fn validate(args: &Args, state: &RuntimeState) -> Result<(), Response> {
+    if let Some(principal) = args.principal
+        && principal == Principal::anonymous()
+    {
+        return Err(PrincipalInvalid);
+    }
+
+    if let OptionUpdate::SetToSome(avatar) = args.avatar.as_ref() {
+        if avatar.len() > MAX_AVATAR_SIZE {
+            return Err(AvatarInvalid);
+        }
+
+        if try_parse_data_url(avatar).is_err() {
+            return Err(AvatarInvalid);
+        }
+    }
+
+    if let Some(endpoint) = args.endpoint.as_ref()
+        && Principal::from_text(endpoint).is_err()
+        && Url::parse(endpoint).is_err()
+    {
+        return Err(EndpointInvalid);
+    }
+
+    if let Some(new_owner) = args.owner.as_ref() {
+        let Some(owner) = state.data.users.get_by_user_id(new_owner) else {
+            return Err(NewOwnerNotFound);
+        };
+
+        if owner.suspension_details.is_some() {
+            return Err(NewOwnerSuspended);
+        }
+    }
+
+    let Some(bot) = state.data.users.get_bot(&args.bot_id) else {
+        return Err(BotNotFound);
+    };
+
+    let Some(bot_user) = state.data.users.get_by_user_id(&args.bot_id) else {
+        return Err(BotNotFound);
+    };
+
+    if bot_user.suspension_details.is_some() {
+        return Err(BotSuspended);
+    }
+
+    let caller = state.env.caller();
+
+    let Some(owner) = state.data.users.get_by_principal(&caller) else {
+        return Err(OwnerNotFound);
+    };
+
+    if owner.user_id != bot.owner {
+        return Err(NotAuthorised);
+    }
+
+    if owner.suspension_details.is_some() {
+        return Err(OwnerSuspended);
+    }
+
+    if let Some(definition) = args.definition.as_ref() {
+        if definition.description.len() > MAX_DESCRIPTION_LEN {
+            return Err(DescriptionTooLong);
+        }
+
+        if definition.commands.len() > MAX_COMMANDS {
+            return Err(TooManyCommands);
+        }
+    }
+
+    Ok(())
+}

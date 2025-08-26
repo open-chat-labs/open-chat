@@ -1,15 +1,9 @@
-use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::ProposalUpdate;
+use types::{ProposalUpdate, UnitResult};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub proposals: Vec<ProposalUpdate>,
-    pub correlation_id: u64,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    CallerNotInGroup,
-}
+pub type Response = UnitResult;

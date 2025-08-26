@@ -1,22 +1,18 @@
 // svelte.config.js
-const sveltePreprocess = require("svelte-preprocess");
-const path = require("path");
-
-const mixins = path.join(__dirname, "src", "styles", "mixins.scss");
+import sveltePreprocess from "svelte-preprocess";
+import path from "path";
+import { sassModulesAndMixins } from "./rollup.extras.mjs";
 
 // this file is only used by the svelte language server so don't worry about it too much
-
-const preprocessOptions = {
-    sourceMap: true,
-    scss: {
-        // prependData: `@import 'v2/frontend/src/styles/mixins.scss';`,
-        prependData: `@use 'sass:math'; @import '${mixins}';`,
-    },
+export default {
+    preprocess: sveltePreprocess({
+        sourceMap: true,
+        scss: {
+            prependData: sassModulesAndMixins,
+        },
+    }),
     onwarn: (warning, handler) => {
-        if (warning.code.startsWith("a11y-")) return;
+        if (warning.code.startsWith("a11y_")) return;
         handler(warning);
     },
-};
-module.exports = {
-    preprocess: sveltePreprocess(preprocessOptions),
 };

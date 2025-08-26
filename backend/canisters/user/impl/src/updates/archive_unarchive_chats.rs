@@ -1,40 +1,41 @@
 use crate::guards::caller_is_owner;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, execute_update};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use oc_error_codes::OCErrorCode;
 use types::{Chat, TimestampMillis, Timestamped};
 use user_canister::archive_unarchive_chats::{Response::*, *};
 
-#[update(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 fn archive_unarchive_chats(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update(|state| archive_unarchive_chats_impl(args, state))
+}
 
-    mutate_state(|state| {
-        let now = state.env.now();
-        let chats_to_update = args.to_archive.len() + args.to_unarchive.len();
-        let mut chats_not_found = Vec::new();
+fn archive_unarchive_chats_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let now = state.env.now();
+    let chats_to_update = args.to_archive.len() + args.to_unarchive.len();
+    let mut chats_not_found = Vec::new();
 
-        for chat in args.to_archive {
-            if !update_chat(&chat, true, now, state) {
-                chats_not_found.push(chat);
-            }
+    for chat in args.to_archive {
+        if !update_chat(&chat, true, now, state) {
+            chats_not_found.push(chat);
         }
+    }
 
-        for chat in args.to_unarchive {
-            if !update_chat(&chat, false, now, state) {
-                chats_not_found.push(chat);
-            }
+    for chat in args.to_unarchive {
+        if !update_chat(&chat, false, now, state) {
+            chats_not_found.push(chat);
         }
+    }
 
-        if chats_not_found.is_empty() {
-            Success
-        } else if chats_not_found.len() == chats_to_update {
-            Failure
-        } else {
-            PartialSuccess(PartialSuccessResult { chats_not_found })
-        }
-    })
+    if chats_not_found.is_empty() {
+        Success
+    } else if chats_not_found.len() == chats_to_update {
+        Error(OCErrorCode::NoChange.into())
+    } else {
+        PartialSuccess(PartialSuccessResult { chats_not_found })
+    }
 }
 
 fn update_chat(chat: &Chat, archive: bool, now: TimestampMillis, state: &mut RuntimeState) -> bool {

@@ -1,49 +1,39 @@
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, activity_notifications::handle_activity_notification, execute_update};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use community_canister::cancel_invites::{Response::*, *};
-use group_chat_core::CancelInvitesResult;
-use ic_cdk_macros::update;
+use community_canister::cancel_invites::*;
+use oc_error_codes::OCErrorCode;
+use types::OCResult;
 
-#[update]
+#[update(msgpack = true)]
 #[trace]
 fn cancel_invites(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| cancel_invites_impl(args, state))
+    execute_update(|state| cancel_invites_impl(args, state)).into()
 }
 
-fn cancel_invites_impl(args: Args, state: &mut RuntimeState) -> Response {
-    let caller = state.env.caller();
+fn cancel_invites_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+    state.data.verify_not_frozen()?;
 
-    if let Some(member) = state.data.members.get(caller) {
-        if member.suspended.value {
-            return UserSuspended;
-        }
+    let member = state.get_calling_member(true)?;
+    let now = state.env.now();
 
-        let now = state.env.now();
-        if let Some(channel_id) = args.channel_id {
-            if let Some(channel) = state.data.channels.get_mut(&channel_id) {
-                match channel.chat.cancel_invites(member.user_id, args.user_ids, now) {
-                    CancelInvitesResult::Success => Success,
-                    CancelInvitesResult::UserSuspended => UserSuspended,
-                    CancelInvitesResult::NotAuthorized | CancelInvitesResult::UserNotInGroup => NotAuthorized,
-                }
-            } else {
-                ChannelNotFound
-            }
-        } else if member.role.can_invite_users(&state.data.permissions) {
-            for user_id in args.user_ids {
-                if state.data.invited_users.remove(&user_id, now).is_some() {
-                    for channel in state.data.channels.iter_mut() {
-                        channel.chat.cancel_invite_unchecked(&user_id, now);
-                    }
-                }
-            }
-            Success
-        } else {
-            NotAuthorized
-        }
+    if let Some(channel_id) = args.channel_id {
+        let channel = state.data.channels.get_mut_or_err(&channel_id)?;
+        channel.chat.cancel_invites(member.user_id, args.user_ids, now)?;
     } else {
-        UserNotInCommunity
+        if !member.role().can_invite_users(&state.data.permissions) {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
+        }
+
+        for user_id in args.user_ids {
+            if state.data.invited_users.remove(&user_id, now).is_some() {
+                for channel in state.data.channels.iter_mut() {
+                    channel.chat.cancel_invite_unchecked(&user_id, now);
+                }
+            }
+        }
     }
+
+    handle_activity_notification(state);
+    Ok(())
 }

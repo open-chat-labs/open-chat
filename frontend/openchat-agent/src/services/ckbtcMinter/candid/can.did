@@ -1,0 +1,18 @@
+type Utxo = record {
+    outpoint : record { txid : vec nat8; vout : nat32 };
+    value : nat64;
+    height : nat32;
+};
+
+type MinterInfo = record {
+    min_confirmations : nat32;
+    retrieve_btc_min_amount : nat64;
+    kyt_fee : nat64;
+};
+
+service : {
+    get_known_utxos: (record { owner: opt principal; subaccount : opt blob }) -> (vec Utxo) query;
+    estimate_withdrawal_fee : (record { amount : opt nat64 }) -> (record { bitcoin_fee : nat64; minter_fee : nat64 }) query;
+    get_deposit_fee: () -> (nat64) query;
+    get_minter_info : () -> (MinterInfo) query;
+}

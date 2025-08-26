@@ -1,54 +1,42 @@
-import type { Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import { idlFactory, type StorageIndexService } from "./candid/idl";
-import { CandidService } from "../candidService";
+import { CandidCanisterAgent } from "../canisterAgent/candid";
 import { allocatedBucketResponse, canForwardResponse, userResponse } from "./mappers";
 import type {
     AllocatedBucketResponse,
     CanForwardResponse,
     StorageUserResponse,
 } from "openchat-shared";
-import type { AgentConfig } from "../../config";
 
-export class StorageIndexClient extends CandidService {
-    private service: StorageIndexService;
-
-    private constructor(identity: Identity, config: AgentConfig) {
-        super(identity);
-
-        this.service = this.createServiceClient<StorageIndexService>(
-            idlFactory,
-            config.openStorageIndexCanister,
-            config
-        );
-    }
-
-    static create(identity: Identity, config: AgentConfig): StorageIndexClient {
-        return new StorageIndexClient(identity, config);
+export class StorageIndexClient extends CandidCanisterAgent<StorageIndexService> {
+    constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
+        super(identity, agent, canisterId, idlFactory, "StorageIndex");
     }
 
     user(): Promise<StorageUserResponse> {
-        return this.handleResponse(this.service.user({}), userResponse);
+        return this.handleQueryResponse(() => this.service.user({}), userResponse);
     }
 
     allocatedBucket(
         fileHash: Uint8Array,
         fileSize: bigint,
-        fileIdSeed: bigint | undefined
+        fileIdSeed: bigint | undefined,
     ): Promise<AllocatedBucketResponse> {
-        return this.handleResponse(
-            this.service.allocated_bucket_v2({
-                file_hash: fileHash,
-                file_size: fileSize,
-                file_id_seed: fileIdSeed === undefined ? [] : [fileIdSeed],
-            }),
-            allocatedBucketResponse
+        return this.handleQueryResponse(
+            () =>
+                this.service.allocated_bucket_v2({
+                    file_hash: fileHash,
+                    file_size: fileSize,
+                    file_id_seed: fileIdSeed === undefined ? [] : [fileIdSeed],
+                }),
+            allocatedBucketResponse,
         );
     }
 
     canForward(fileHash: Uint8Array, fileSize: bigint): Promise<CanForwardResponse> {
         return this.handleResponse(
             this.service.can_forward({ file_hash: fileHash, file_size: fileSize }),
-            canForwardResponse
+            canForwardResponse,
         );
     }
 }

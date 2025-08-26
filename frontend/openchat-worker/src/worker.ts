@@ -1,17 +1,42 @@
-import type { Identity } from "@dfinity/agent";
-import { AuthClient, IdbStorage } from "@dfinity/auth-client";
-import { OpenChatAgent } from "openchat-agent";
+import { AnonymousIdentity, SignIdentity } from "@icp-sdk/core/agent";
 import {
-    type CorrelatedWorkerRequest,
-    type Logger,
-    MessagesReadFromServer,
-    StorageUpdated,
-    UsersLoaded,
-    type WorkerEvent,
+    DelegationChain,
+    DelegationIdentity,
+    ECDSAKeyIdentity,
+    type JsonnableDelegationChain,
+} from "@icp-sdk/core/identity";
+import { Principal } from "@icp-sdk/core/principal";
+import {
+    getBotDefinition,
+    IdentityAgent,
+    OpenChatAgent,
+    setCachedWebAuthnKey,
+    setCommunityReferral,
+} from "openchat-agent";
+import {
+    AuthProvider,
+    IdentityStorage,
     inititaliseLogger,
-    type WorkerResponseInner,
-    type WorkerRequest,
+    MessagesReadFromServer,
+    setMinLogLevel,
+    StorageUpdated,
     Stream,
+    UsersLoaded,
+    type ChallengeAttempt,
+    type CorrelatedWorkerRequest,
+    type CreateOpenChatIdentityError,
+    type FinaliseAccountLinkingResponse,
+    type GetOpenChatIdentityResponse,
+    type Init,
+    type LinkIdentitiesResponse,
+    type Logger,
+    type RemoveIdentityLinkResponse,
+    type VerifyAccountLinkingCodeResponse,
+    type WebAuthnKey,
+    type WebAuthnKeyFull,
+    type WorkerEvent,
+    type WorkerRequest,
+    type WorkerResponseInner,
 } from "openchat-shared";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -20,20 +45,82 @@ BigInt.prototype.toJSON = function () {
     return this.toString();
 };
 
+const authIdentityStorage = IdentityStorage.createForAuthIdentity();
+const ocIdentityStorage = IdentityStorage.createForOcIdentity();
+
+let initPayload: Init | undefined = undefined;
+let identityAgent: IdentityAgent | undefined = undefined;
+let authPrincipalString: string | undefined = undefined;
 let logger: Logger | undefined = undefined;
+let agent: OpenChatAgent | undefined = undefined;
+let identityCanister: string = "";
+let icUrl: string = "";
 
-const auth = AuthClient.create({
-    idleOptions: {
-        disableIdle: true,
-    },
-    storage: new IdbStorage(),
-});
+async function initialize(
+    expectedAuthPrincipal: string,
+    authProvider: AuthProvider | undefined,
+    _identityCanister: string,
+    _icUrl: string,
+): Promise<GetOpenChatIdentityResponse> {
+    identityCanister = _identityCanister;
+    icUrl = _icUrl;
 
-function getIdentity(): Promise<Identity> {
-    return auth.then((a) => a.getIdentity());
+    const authProviderIdentity = (await authIdentityStorage.get()) ?? new AnonymousIdentity();
+    const authPrincipal = authProviderIdentity.getPrincipal();
+    authPrincipalString = authPrincipal.toString();
+    identityAgent = await IdentityAgent.create(
+        authProviderIdentity as SignIdentity,
+        identityCanister,
+        icUrl,
+        authProvider === undefined ? undefined : authProvider === AuthProvider.II,
+    );
+
+    if (authPrincipal.isAnonymous() || authPrincipalString !== expectedAuthPrincipal) {
+        return { kind: "auth_identity_not_found" };
+    }
+
+    const ocIdentity = await ocIdentityStorage.get(authPrincipalString);
+    if (ocIdentity !== undefined) {
+        return { kind: "success", identity: ocIdentity };
+    }
+
+    const ocIdentityExists = await identityAgent.checkOpenChatIdentityExists();
+    if (ocIdentityExists) {
+        const sessionKey = await ECDSAKeyIdentity.generate();
+
+        const identity = await identityAgent.getOpenChatIdentity(sessionKey);
+
+        if (identity !== undefined && typeof identity !== "string") {
+            await ocIdentityStorage.set(sessionKey, identity.getDelegation(), authPrincipalString);
+            return { kind: "success", identity };
+        }
+    }
+
+    return { kind: "oc_identity_not_found" };
 }
 
-let agent: OpenChatAgent | undefined = undefined;
+async function createOpenChatIdentity(
+    webAuthnCredentialId: Uint8Array | undefined,
+    challengeAttempt: ChallengeAttempt | undefined,
+): Promise<DelegationIdentity | CreateOpenChatIdentityError> {
+    if (identityAgent === undefined || authPrincipalString === undefined) {
+        throw new Error("IdentityAgent not initialized");
+    }
+
+    const sessionKey = await ECDSAKeyIdentity.generate();
+
+    const response = await identityAgent.createOpenChatIdentity(
+        sessionKey,
+        webAuthnCredentialId,
+        challengeAttempt,
+    );
+
+    if (typeof response !== "string") {
+        await ocIdentityStorage.set(sessionKey, response.getDelegation(), authPrincipalString);
+    }
+
+    return response;
+}
 
 function handleAgentEvent(ev: Event): void {
     if (ev instanceof MessagesReadFromServer) {
@@ -82,8 +169,8 @@ function streamReplies(
     chain: Stream<WorkerResponseInner>,
 ) {
     const start = Date.now();
-    chain
-        .subscribe((value, final) => {
+    chain.subscribe({
+        onResult: (value, final) => {
             console.debug(
                 `WORKER: sending streamed reply ${Date.now() - start}ms after subscribing`,
                 correlationId,
@@ -92,8 +179,9 @@ function streamReplies(
                 final,
             );
             sendResponse(correlationId, value, final);
-        })
-        .catch(sendError(correlationId, payload));
+        },
+        onError: sendError(correlationId, payload),
+    });
 }
 
 function executeThenReply(
@@ -132,28 +220,73 @@ self.addEventListener("unhandledrejection", (err: PromiseRejectionEvent) => {
 });
 
 self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) => {
-    logger?.debug("WORKER: received ", msg.data.kind, msg.data.correlationId);
+    (logger ?? console).debug("WORKER: received ", msg.data.kind, msg.data.correlationId);
     const payload = msg.data;
     const kind = payload.kind;
     const correlationId = payload.correlationId;
 
     try {
         if (kind === "init") {
-            getIdentity().then((id) => {
-                console.debug("anon: init worker", id, id?.getPrincipal().isAnonymous());
-                logger = inititaliseLogger(
-                    payload.rollbarApiKey,
-                    payload.websiteVersion,
-                    payload.env,
-                );
-                logger?.debug("WORKER: constructing agent instance");
-                agent = new OpenChatAgent(id, {
-                    ...payload,
-                    logger,
-                });
-                agent.addEventListener("openchat_event", handleAgentEvent);
-                sendResponse(correlationId, undefined);
-            });
+            initPayload = payload;
+            const init = payload;
+            executeThenReply(
+                payload,
+                correlationId,
+                initialize(
+                    init.authPrincipal,
+                    init.authProvider,
+                    init.identityCanister,
+                    init.icUrl,
+                ).then((resp) => {
+                    const id = resp.kind === "success" ? resp.identity : new AnonymousIdentity();
+                    console.debug(
+                        "anon: init worker",
+                        id.getPrincipal().toString(),
+                        id?.getPrincipal().isAnonymous(),
+                    );
+                    logger = inititaliseLogger(init.rollbarApiKey, init.websiteVersion, init.env);
+                    logger?.debug("WORKER: constructing agent instance");
+                    agent = new OpenChatAgent(id, {
+                        ...init,
+                        logger,
+                    });
+                    agent.addEventListener("openchat_event", handleAgentEvent);
+                    return resp.kind;
+                }),
+            );
+            return;
+        }
+
+        if (initPayload === undefined) {
+            throw new Error("Worker not initialised");
+        }
+
+        if (payload.kind === "generateIdentityChallenge") {
+            if (identityAgent === undefined) {
+                throw new Error("IdentityAgent not initialized");
+            }
+
+            executeThenReply(payload, correlationId, identityAgent.generateChallenge());
+            return;
+        }
+
+        if (kind === "createOpenChatIdentity") {
+            executeThenReply(
+                payload,
+                correlationId,
+                createOpenChatIdentity(payload.webAuthnCredentialId, payload.challengeAttempt).then(
+                    (resp) => {
+                        const id = typeof resp !== "string" ? resp : new AnonymousIdentity();
+                        agent = new OpenChatAgent(id, {
+                            ...initPayload!,
+                            logger: logger!,
+                        });
+                        agent.addEventListener("openchat_event", handleAgentEvent);
+                        return typeof resp !== "string" ? "success" : resp;
+                    },
+                ),
+            );
+            return;
         }
 
         if (!agent) {
@@ -162,6 +295,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
         }
 
         switch (kind) {
+            case "setMinLogLevel":
+                setMinLogLevel(payload.minLogLevel);
+                sendResponse(correlationId, undefined);
+                break;
+
             case "getCurrentUser":
                 streamReplies(payload, correlationId, agent.getCurrentUser());
                 break;
@@ -188,6 +326,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "getUpdates":
                 streamReplies(payload, correlationId, agent.getUpdates(payload.initialLoad));
+                break;
+
+            case "getBots":
+                streamReplies(payload, correlationId, agent.getBots(payload.initialLoad));
                 break;
 
             case "createUserClient":
@@ -239,11 +381,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "markAsOnline":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent.markAsOnline().then(() => undefined),
-                );
+                executeThenReply(payload, correlationId, agent.markAsOnline());
                 break;
 
             case "chatEventsWindow":
@@ -287,7 +425,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "checkUsername":
-                executeThenReply(payload, correlationId, agent.checkUsername(payload.username));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.checkUsername(payload.username, payload.isBot),
+                );
                 break;
 
             case "searchUsers":
@@ -314,7 +456,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.toggleMuteNotifications(payload.chatId, payload.muted),
+                    agent.toggleMuteNotifications(payload.id, payload.mute, payload.muteAtEveryone),
                 );
                 break;
 
@@ -362,6 +504,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.setUserAvatar(payload.data));
                 break;
 
+            case "setProfileBackground":
+                executeThenReply(payload, correlationId, agent.setProfileBackground(payload.data));
+                break;
+
             case "deleteGroup":
                 executeThenReply(payload, correlationId, agent.deleteGroup(payload.chatId));
                 break;
@@ -374,7 +520,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.joinGroup(payload.chatId, payload.localUserIndex, payload.credential),
+                    agent.joinGroup(payload.chatId, payload.credentialArgs),
                 );
                 break;
 
@@ -382,7 +528,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.joinCommunity(payload.id, payload.localUserIndex, payload.credential),
+                    agent.joinCommunity(payload.id, payload.credentialArgs),
                 );
                 break;
 
@@ -398,8 +544,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.permissions,
                         payload.avatar,
                         payload.eventsTimeToLive,
-                        payload.gate,
+                        payload.gateConfig,
                         payload.isPublic,
+                        payload.messagesVisibleToNonMembers,
+                        payload.externalUrl,
                     ),
                 );
                 break;
@@ -414,6 +562,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.answerIdx,
                         payload.voteType,
                         payload.threadRootMessageIndex,
+                        payload.newAchievement,
                     ),
                 );
                 break;
@@ -427,6 +576,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.messageId,
                         payload.threadRootMessageIndex,
                         payload.asPlatformModerator,
+                        payload.newAchievement,
                     ),
                 );
                 break;
@@ -454,6 +604,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.username,
                         payload.displayName,
                         payload.threadRootMessageIndex,
+                        payload.newAchievement,
                     ),
                 );
                 break;
@@ -524,7 +675,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "sendMessage":
-                executeThenReply(
+                streamReplies(
                     payload,
                     correlationId,
                     agent.sendMessage(
@@ -532,9 +683,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.user,
                         payload.mentioned,
                         payload.event,
-                        payload.rulesAccepted,
-                        payload.communityRulesAccepted,
+                        payload.acceptedRules,
                         payload.messageFilterFailed,
+                        payload.pin,
+                        payload.newAchievement,
                     ),
                 );
                 break;
@@ -543,7 +695,13 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.editMessage(payload.chatId, payload.msg, payload.threadRootMessageIndex),
+                    agent.editMessage(
+                        payload.chatId,
+                        payload.msg,
+                        payload.threadRootMessageIndex,
+                        payload.blockLevelMarkdown,
+                        payload.newAchievement,
+                    ),
                 );
                 break;
 
@@ -579,29 +737,23 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "fcmTokenExists":
+                executeThenReply(payload, correlationId, agent.fcmTokenExists(payload.fcmToken));
+                break;
+
+            case "addFcmToken":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.addFcmToken(payload.fcmToken, payload.onResponseError),
+                );
+                break;
+
             case "inviteUsers":
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.inviteUsers(
-                        payload.chatId,
-                        payload.localUserIndex,
-                        payload.userIds,
-                        payload.callerUsername,
-                    ),
-                );
-                break;
-
-            case "inviteUsersToCommunity":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent.inviteUsersToCommunity(
-                        payload.id,
-                        payload.localUserIndex,
-                        payload.userIds,
-                        payload.callerUsername,
-                    ),
+                    agent.inviteUsers(payload.id, payload.userIds),
                 );
                 break;
 
@@ -647,6 +799,47 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.pageSize,
                         payload.flags,
                         payload.languages,
+                    ),
+                );
+                break;
+
+            case "exploreBots":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.exploreBots(
+                        payload.searchTerm,
+                        payload.pageIndex,
+                        payload.pageSize,
+                        payload.location,
+                        payload.excludeInstalled,
+                    ),
+                );
+                break;
+
+            case "registerBot":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.registerBot(payload.principal, payload.bot),
+                );
+                break;
+
+            case "removeBot":
+                executeThenReply(payload, correlationId, agent.removeBot(payload.botId));
+                break;
+
+            case "updateRegisteredBot":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.updateRegisteredBot(
+                        payload.id,
+                        payload.principal,
+                        payload.ownerId,
+                        payload.avatarUrl,
+                        payload.endpoint,
+                        payload.definition,
                     ),
                 );
                 break;
@@ -735,7 +928,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "getPublicProfile":
-                executeThenReply(payload, correlationId, agent.getPublicProfile(payload.userId));
+                streamReplies(payload, correlationId, agent.getPublicProfile(payload.userId));
                 break;
 
             case "setUsername":
@@ -766,7 +959,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.withdrawCryptocurrency(payload.domain),
+                    agent.withdrawCryptocurrency(payload.domain, payload.pin),
                 );
                 break;
 
@@ -828,6 +1021,18 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.unfreezeGroup(payload.chatId));
                 break;
 
+            case "freezeCommunity":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.freezeCommunity(payload.id, payload.reason),
+                );
+                break;
+
+            case "unfreezeCommunity":
+                executeThenReply(payload, correlationId, agent.unfreezeCommunity(payload.id));
+                break;
+
             case "deleteFrozenGroup":
                 executeThenReply(payload, correlationId, agent.deleteFrozenGroup(payload.chatId));
                 break;
@@ -848,12 +1053,41 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "addRemoveSwapProvider":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.addRemoveSwapProvider(payload.swapProvider, payload.add),
+                );
+                break;
+
             case "addMessageFilter":
                 executeThenReply(payload, correlationId, agent.addMessageFilter(payload.regex));
                 break;
 
             case "removeMessageFilter":
                 executeThenReply(payload, correlationId, agent.removeMessageFilter(payload.id));
+                break;
+
+            case "setAirdropConfig":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setAirdropConfig(
+                        payload.channelId,
+                        payload.channelName,
+                        payload.communityId,
+                        payload.communityName,
+                    ),
+                );
+                break;
+
+            case "setTokenEnabled":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setTokenEnabled(payload.ledger, payload.enabled),
+                );
                 break;
 
             case "suspendUser":
@@ -900,6 +1134,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "markLocalGroupIndexFull":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.markLocalGroupIndexFull(payload.canisterId, payload.full),
+                );
+                break;
+
             case "setDiamondMembershipFees":
                 executeThenReply(
                     payload,
@@ -915,6 +1157,17 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     agent.stakeNeuronForSubmittingProposals(
                         payload.governanceCanisterId,
                         payload.stake,
+                    ),
+                );
+                break;
+
+            case "topUpNeuronForSubmittingProposals":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.topUpNeuronForSubmittingProposals(
+                        payload.governanceCanisterId,
+                        payload.amount,
                     ),
                 );
                 break;
@@ -950,7 +1203,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     correlationId,
                     agent.payForDiamondMembership(
                         payload.userId,
-                        payload.token,
+                        payload.ledger,
                         payload.duration,
                         payload.recurring,
                         payload.expectedPriceE8s,
@@ -984,14 +1237,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
-            case "getReferralLeaderboard":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent.getReferralLeaderboard(payload.args),
-                );
-                break;
-
             case "reportMessage":
                 executeThenReply(
                     payload,
@@ -1014,6 +1259,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.ledger,
                         payload.amount,
                         payload.expiresIn,
+                        payload.pin,
                     ),
                 );
                 break;
@@ -1076,36 +1322,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
-            case "channelMessagesByMessageIndex":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent
-                        .communityClient(payload.chatId.communityId)
-                        .messagesByMessageIndex(
-                            payload.chatId,
-                            payload.messageIndexes,
-                            payload.threadRootMessageIndex,
-                            payload.latestKnownUpdate,
-                        ),
-                );
-                break;
-
             case "removeCommunityMember":
                 executeThenReply(
                     payload,
                     correlationId,
                     agent.communityClient(payload.id.communityId).removeMember(payload.userId),
-                );
-                break;
-
-            case "toggleMuteCommunityNotifications":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent
-                        .communityClient(payload.communityId)
-                        .toggleMuteNotifications(payload.mute),
                 );
                 break;
 
@@ -1130,7 +1351,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             payload.permissions,
                             payload.avatar,
                             payload.banner,
-                            payload.gate,
+                            payload.gateConfig,
                             payload.isPublic,
                             payload.primaryLanguage,
                         ),
@@ -1159,13 +1380,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "getChannelSummary":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent
-                        .communityClient(payload.chatId.communityId)
-                        .channelSummary(payload.chatId),
-                );
+                executeThenReply(payload, correlationId, agent.getChannelSummary(payload.chatId));
                 break;
 
             case "exploreChannels":
@@ -1195,7 +1410,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.userClient.addToFavourites(payload.chatId),
+                    agent.userClient.manageFavouriteChats([payload.chatId], []),
                 );
                 break;
 
@@ -1203,7 +1418,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.userClient.removeFromFavourites(payload.chatId),
+                    agent.userClient.manageFavouriteChats([], [payload.chatId]),
                 );
                 break;
 
@@ -1295,7 +1510,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.setMemberDisplayName(payload.communityId, payload.displayName),
+                    agent.setMemberDisplayName(
+                        payload.communityId,
+                        payload.displayName,
+                        payload.newAchievement,
+                    ),
                 );
                 break;
 
@@ -1307,6 +1526,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.chatId,
                         payload.threadRootMessageIndex,
                         payload.follow,
+                        payload.newAchievement,
                     ),
                 );
                 break;
@@ -1316,6 +1536,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     payload,
                     correlationId,
                     agent.submitProposal(
+                        payload.currentUserId,
                         payload.governanceCanisterId,
                         payload.proposal,
                         payload.ledger,
@@ -1323,20 +1544,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.proposalRejectionFee,
                         payload.transactionFee,
                     ),
-                );
-                break;
-
-            case "getCachePrimerTimestamps":
-                executeThenReply(payload, correlationId, agent.getCachePrimerTimestamps());
-                break;
-
-            case "setCachePrimerTimestamp":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent
-                        .setCachePrimerTimestamp(payload.chatIdentifierString, payload.timestamp)
-                        .then(() => undefined),
                 );
                 break;
 
@@ -1349,6 +1556,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.messageId,
                         payload.transfer,
                         payload.decimals,
+                        payload.pin,
                     ),
                 );
                 break;
@@ -1404,6 +1612,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.amountIn,
                         payload.minAmountOut,
                         payload.dex,
+                        payload.pin,
                     ),
                 );
                 break;
@@ -1436,7 +1645,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.translationsClient.propose(payload.locale, payload.key, payload.value),
+                    agent.translationsClient().propose(payload.locale, payload.key, payload.value),
                 );
                 break;
 
@@ -1444,7 +1653,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.translationsClient.approve(payload.id),
+                    agent.translationsClient().approve(payload.id),
                 );
                 break;
 
@@ -1452,23 +1661,23 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.translationsClient.reject(payload.id, payload.reason),
+                    agent.translationsClient().reject(payload.id, payload.reason),
                 );
                 break;
 
             case "getProposedTranslations":
-                executeThenReply(payload, correlationId, agent.translationsClient.proposed());
+                executeThenReply(payload, correlationId, agent.translationsClient().proposed());
                 break;
 
             case "markTranslationsDeployed":
-                executeThenReply(payload, correlationId, agent.translationsClient.markDeployed());
+                executeThenReply(payload, correlationId, agent.translationsClient().markDeployed());
                 break;
 
             case "getTranslationsPendingDeployment":
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.translationsClient.pendingDeployment(),
+                    agent.translationsClient().pendingDeployment(),
                 );
                 break;
 
@@ -1480,6 +1689,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.chatId,
                         payload.threadRootMessageIndex,
                         payload.messageId,
+                        payload.pin,
+                        payload.newAchievement,
                     ),
                 );
                 break;
@@ -1500,7 +1711,32 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.joinVideoCall(payload.chatId, payload.messageId),
+                    agent.joinVideoCall(payload.chatId, payload.messageId, payload.newAchievement),
+                );
+                break;
+
+            case "videoCallParticipants":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.videoCallParticipants(
+                        payload.chatId,
+                        payload.messageId,
+                        payload.updatesSince,
+                    ),
+                );
+                break;
+
+            case "setVideoCallPresence":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setVideoCallPresence(
+                        payload.chatId,
+                        payload.messageId,
+                        payload.presence,
+                        payload.newAchievement,
+                    ),
                 );
                 break;
 
@@ -1508,11 +1744,47 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.getAccessToken(
-                        payload.chatId,
-                        payload.accessTokenType,
-                        payload.localUserIndex,
-                    ),
+                    agent.getAccessToken(payload.accessTokenType, payload.localUserIndex),
+                );
+                break;
+
+            case "registerWebhook":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.registerWebhook(payload.chatId, payload.name, payload.avatar),
+                );
+                break;
+
+            case "updateWebhook":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.updateWebhook(payload.chatId, payload.id, payload.name, payload.avatar),
+                );
+                break;
+
+            case "regenerateWebhook":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.regenerateWebhook(payload.chatId, payload.id),
+                );
+                break;
+
+            case "deleteWebhook":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.deleteWebhook(payload.chatId, payload.id),
+                );
+                break;
+
+            case "getWebhook":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getWebhook(payload.chatId, payload.id),
                 );
                 break;
 
@@ -1524,6 +1796,419 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "generateBtcAddress":
+                executeThenReply(payload, correlationId, agent.generateBtcAddress());
+                break;
+
+            case "generateOneSecAddress":
+                executeThenReply(payload, correlationId, agent.generateOneSecAddress());
+                break;
+
+            case "updateBtcBalance":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.updateBtcBalance(payload.userId, payload.bitcoinAddress),
+                );
+                break;
+
+            case "withdrawBtc":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.withdrawBtc(payload.address, payload.amount, payload.pin),
+                );
+                break;
+
+            case "withdrawViaOneSec":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.withdrawViaOneSec(
+                        payload.ledger,
+                        payload.tokenSymbol,
+                        payload.chain,
+                        payload.address,
+                        payload.amount,
+                        payload.pin,
+                    ),
+                );
+                break;
+
+            case "ckbtcMinterDepositInfo":
+                executeThenReply(payload, correlationId, agent.getCkbtcMinterDepositInfo());
+                break;
+
+            case "ckbtcMinterWithdrawalInfo":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getCkbtcMinterWithdrawalInfo(payload.amount),
+                );
+                break;
+
+            case "currentUserWebAuthnKey":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    // TODO add type for the `res`
+                    identityAgent?.checkAuthPrincipal().then((res) => {
+                        return res.kind === "success" ? res.webAuthnKey : undefined;
+                    }) ?? Promise.resolve(undefined),
+                );
+                break;
+
+            case "lookupWebAuthnPubKey":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    identityAgent?.lookupWebAuthnPubKey(payload.credentialId) ??
+                        Promise.resolve(undefined),
+                );
+                break;
+
+            case "setCachedWebAuthnKey":
+                executeThenReply(payload, correlationId, setCachedWebAuthnKey(payload.key));
+                break;
+
+            case "generateMagicLink":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.generateMagicLink(payload.email, payload.sessionKey),
+                );
+                break;
+
+            case "getSignInWithEmailDelegation":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getSignInWithEmailDelegation(
+                        payload.email,
+                        payload.sessionKey,
+                        payload.expiration,
+                    ),
+                );
+                break;
+
+            case "siwePrepareLogin":
+                executeThenReply(payload, correlationId, agent.siwePrepareLogin(payload.address));
+                break;
+
+            case "siwsPrepareLogin":
+                executeThenReply(payload, correlationId, agent.siwsPrepareLogin(payload.address));
+                break;
+
+            case "loginWithWallet":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.loginWithWallet(
+                        payload.token,
+                        payload.address,
+                        payload.signature,
+                        payload.sessionKey,
+                    ),
+                );
+                break;
+
+            case "getDelegationWithWallet":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getDelegationWithWallet(
+                        payload.token,
+                        payload.address,
+                        payload.sessionKey,
+                        payload.expiration,
+                    ),
+                );
+                break;
+
+            case "setPinNumber":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setPinNumber(payload.verification, payload.newPin),
+                );
+                break;
+
+            case "claimDailyChit":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.claimDailyChit(payload.utcOffsetMins),
+                );
+                break;
+
+            case "chitLeaderboard":
+                executeThenReply(payload, correlationId, agent.chitLeaderboard());
+                break;
+
+            case "getChitEvents":
+                executeThenReply(payload, correlationId, agent.chitEvents(payload));
+                break;
+
+            case "markAchievementsSeen":
+                executeThenReply(payload, correlationId, agent.markAchievementsSeen());
+                break;
+
+            case "submitProofOfUniquePersonhood":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.submitProofOfUniquePersonhood(payload.iiPrincipal, payload.credential),
+                );
+                break;
+
+            case "linkIdentities":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    linkIdentities(
+                        payload.initiatorKey,
+                        payload.initiatorDelegation,
+                        payload.initiatorIsIIPrincipal,
+                        payload.initiatorWebAuthnKey,
+                        payload.approverKey,
+                        payload.approverDelegation,
+                    ),
+                );
+                break;
+
+            case "removeIdentityLink":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    removeIdentityLink(payload.linked_principal),
+                );
+                break;
+
+            case "getAuthenticationPrincipals":
+                if (identityAgent === undefined) {
+                    throw new Error("IdentityAgent not initialized");
+                }
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    identityAgent.getAuthenticationPrincipals(),
+                );
+                break;
+
+            case "configureWallet":
+                executeThenReply(payload, correlationId, agent.configureWallet(payload.config));
+                break;
+
+            case "clearCachedData":
+                executeThenReply(payload, correlationId, agent.clearCachedData());
+                break;
+
+            case "setCommunityReferral":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    setCommunityReferral(
+                        payload.communityId.communityId,
+                        payload.referredBy,
+                        Date.now(),
+                    ),
+                );
+                break;
+
+            case "getExternalAchievements":
+                executeThenReply(payload, correlationId, agent.getExternalAchievements());
+                break;
+
+            case "cancelInvites":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.cancelInvites(payload.id, payload.userIds),
+                );
+                break;
+
+            case "messageActivityFeed":
+                streamReplies(payload, correlationId, agent.messageActivityFeed());
+                break;
+
+            case "markActivityFeedRead":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.markActivityFeedRead(payload.readUpTo),
+                );
+                break;
+
+            case "deleteUser":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    deleteUser(payload.identityKey, payload.delegation),
+                );
+                break;
+
+            case "installBot":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.installBot(payload.id, payload.botId, payload.grantedPermissions),
+                );
+                break;
+
+            case "updateInstalledBot":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.updateInstalledBot(payload.id, payload.botId, payload.grantedPermissions),
+                );
+                break;
+
+            case "uninstallBot":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.uninstallBot(payload.id, payload.botId),
+                );
+                break;
+
+            case "getBotDefinition":
+                executeThenReply(payload, correlationId, getBotDefinition(payload.endpoint));
+                break;
+
+            case "callBotCommandEndpoint":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.callBotCommandEndpoint(payload.endpoint, payload.token),
+                );
+                break;
+
+            case "withdrawFromIcpSwap":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.withdrawFromIcpSwap(
+                        payload.userId,
+                        payload.swapId,
+                        payload.inputToken,
+                        payload.amount,
+                        payload.fee,
+                    ),
+                );
+                break;
+
+            case "payForStreakInsurance":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.payForStreakInsurance(
+                        payload.additionalDays,
+                        payload.expectedPrice,
+                        payload.pin,
+                    ),
+                );
+                break;
+
+            case "updateDirectChatSettings":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.updateDirectChatSettings(payload.userId, payload.eventsTtl),
+                );
+                break;
+
+            case "updateProposalTallies":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.updateProposalTallies(payload.chatId),
+                );
+                break;
+
+            case "createAccountLinkingCode":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    identityAgent?.createAccountLinkingCode() ?? Promise.resolve(undefined),
+                );
+                break;
+
+            case "reinstateMissedDailyClaims":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.reinstateMissedDailyClaims(payload.userId, payload.days),
+                );
+                break;
+
+            case "verifyAccountLinkingCode":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    verifyAccountLinkingCode(payload.code, payload.tempKey) ??
+                        Promise.resolve(undefined),
+                );
+                break;
+
+            case "finaliseAccountLinkingWithCode":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    finaliseAccountLinkingWithCode(
+                        payload.tempKey,
+                        payload.principal,
+                        payload.publicKey,
+                        payload.webAuthnKey,
+                    ) ?? Promise.resolve(undefined),
+                );
+                break;
+
+            case "payForPremiumItem":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.payForPremiumItem(payload.userId, payload.item),
+                );
+                break;
+
+            case "setPremiumItemCost":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setPremiumItemCost(payload.item, payload.chitCost),
+                );
+                break;
+
+            case "oneSecGetTransferFees":
+                executeThenReply(payload, correlationId, agent.oneSecGetTransferFees());
+                break;
+
+            case "oneSecForwardEvmToIcp":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.oneSecForwardEvmToIcp(
+                        payload.tokenSymbol,
+                        payload.chain,
+                        payload.address,
+                        payload.receiver,
+                    ),
+                );
+                break;
+
+            case "oneSecGetForwardingStatus":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.oneSecGetForwardingStatus(
+                        payload.tokenSymbol,
+                        payload.chain,
+                        payload.address,
+                        payload.receiver,
+                    ),
+                );
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }
@@ -1532,3 +2217,108 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
         sendError(correlationId)(err);
     }
 });
+
+async function verifyAccountLinkingCode(
+    code: string,
+    tempKey: CryptoKeyPair,
+): Promise<VerifyAccountLinkingCodeResponse> {
+    const ecdsaIdentity = await ECDSAKeyIdentity.fromKeyPair(tempKey);
+    const identityAgent = await IdentityAgent.create(ecdsaIdentity, identityCanister, icUrl, false);
+
+    return await identityAgent.verifyAccountLinkingCode(code);
+}
+
+async function finaliseAccountLinkingWithCode(
+    tempKey: CryptoKeyPair,
+    principal: string,
+    publicKey: Uint8Array,
+    webAuthnKey?: WebAuthnKeyFull,
+): Promise<FinaliseAccountLinkingResponse> {
+    const ecdsaIdentity = await ECDSAKeyIdentity.fromKeyPair(tempKey);
+    const identityAgent = await IdentityAgent.create(ecdsaIdentity, identityCanister, icUrl, false);
+
+    const delegationIdentity = await identityAgent.finaliseAccountLinkingWithCode(
+        principal,
+        publicKey,
+        ecdsaIdentity,
+        webAuthnKey,
+    );
+
+    const delegationChain = delegationIdentity.getDelegation();
+
+    await ocIdentityStorage.set(
+        ecdsaIdentity,
+        delegationChain,
+        ecdsaIdentity.getPrincipal().toString(),
+    );
+
+    return { kind: "success" };
+}
+
+async function linkIdentities(
+    initiatorKey: CryptoKeyPair,
+    initiatorDelegation: JsonnableDelegationChain,
+    initiatorIsIIPrincipal: boolean,
+    initiatorWebAuthnKey: WebAuthnKey | undefined,
+    approverKey: CryptoKeyPair,
+    approverDelegation: JsonnableDelegationChain,
+): Promise<LinkIdentitiesResponse> {
+    const initiatorIdentity = DelegationIdentity.fromDelegation(
+        await ECDSAKeyIdentity.fromKeyPair(initiatorKey),
+        DelegationChain.fromJSON(initiatorDelegation),
+    );
+    const initiatorAgent = await IdentityAgent.create(
+        initiatorIdentity,
+        identityCanister,
+        icUrl,
+        initiatorIsIIPrincipal,
+    );
+
+    const approverIdentity = DelegationIdentity.fromDelegation(
+        await ECDSAKeyIdentity.fromKeyPair(approverKey),
+        DelegationChain.fromJSON(approverDelegation),
+    );
+    const approverAgent = await IdentityAgent.create(
+        approverIdentity,
+        identityCanister,
+        icUrl,
+        undefined,
+    );
+
+    const approver = approverIdentity.getPrincipal().toString();
+    const initiateResponse = await initiatorAgent.initiateIdentityLink(
+        approver,
+        initiatorWebAuthnKey?.credentialId,
+    );
+    if (initiateResponse !== "success") {
+        return initiateResponse;
+    }
+
+    const initiatorPrincipal =
+        initiatorWebAuthnKey !== undefined
+            ? Principal.selfAuthenticating(initiatorWebAuthnKey.publicKey)
+            : initiatorIdentity.getPrincipal();
+
+    return await approverAgent.approveIdentityLink(initiatorPrincipal.toString());
+}
+
+async function removeIdentityLink(linked_principal: string): Promise<RemoveIdentityLinkResponse> {
+    if (identityAgent) {
+        return identityAgent.removeIdentityLink(linked_principal);
+    }
+
+    throw new Error("IdentityAgent not initialized");
+}
+
+async function deleteUser(
+    identityKey: CryptoKeyPair,
+    delegation: JsonnableDelegationChain,
+): Promise<boolean> {
+    const identity = DelegationIdentity.fromDelegation(
+        await ECDSAKeyIdentity.fromKeyPair(identityKey),
+        DelegationChain.fromJSON(delegation),
+    );
+    const identityAgent = await IdentityAgent.create(identity, identityCanister, icUrl, undefined);
+    const response = await identityAgent.deleteUser();
+    return response.kind === "success";
+}

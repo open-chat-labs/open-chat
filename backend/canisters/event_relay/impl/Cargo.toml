@@ -1,7 +1,7 @@
 [package]
 name = "event_relay_canister_impl"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -14,6 +14,7 @@ candid = { workspace = true }
 canister_logger = { path = "../../../libraries/canister_logger" }
 canister_state_macros = { path = "../../../libraries/canister_state_macros" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
+constants = { path = "../../../libraries/constants" }
 event_relay_canister = { path = "../api" }
 event_store_canister = { workspace = true }
 event_store_producer = { workspace = true, features = ["json"] }
@@ -21,13 +22,12 @@ event_store_producer_cdk_runtime = { workspace = true }
 event_store_utils = { workspace = true }
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }
-ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
 icrc-ledger-types = { workspace = true }
+msgpack = { path = "../../../libraries/msgpack" }
 rand = { workspace = true }
 serde = { workspace = true }
-serializer = { path = "../../../libraries/serializer" }
 sha256 = { path = "../../../libraries/sha256" }
 sns_archive_canister_c2c_client = { path = "../../../external_canisters/sns_archive/c2c_client" }
 sns_ledger_canister_c2c_client = { path = "../../../external_canisters/sns_ledger/c2c_client" }

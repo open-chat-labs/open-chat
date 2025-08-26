@@ -1,6 +1,6 @@
 use crate::guards::caller_is_platform_moderator;
-use crate::{read_state, RuntimeState};
-use ic_cdk_macros::query;
+use crate::{RuntimeState, read_state};
+use ic_cdk::query;
 use user_index_canister::suspected_bots::{Response::*, *};
 
 #[query(guard = "caller_is_platform_moderator")]

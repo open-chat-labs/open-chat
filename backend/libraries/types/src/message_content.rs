@@ -1,18 +1,20 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
-    CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, Cryptocurrency, MessageIndex,
-    Milliseconds, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapExpired, P2PSwapReserved, P2PSwapStatus,
-    ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId,
+    Achievement, CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, EncryptionKey, MessageIndex,
+    MessagePermission, Milliseconds, P2PSwapStatus, PendingCryptoTransaction, ProposalContent, TimestampMillis, TokenInfo,
+    TotalVotes, User, UserId, VideoCallType,
 };
 use candid::CandidType;
-use ic_ledger_types::Tokens;
+use oc_error_codes::{OCError, OCErrorCode};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fmt::{Debug, Formatter};
+use std::fmt::{Debug, Display, Formatter};
+use ts_export::ts_export;
 
 pub const MAX_TEXT_LENGTH: u32 = 10_000;
 pub const MAX_TEXT_LENGTH_USIZE: usize = MAX_TEXT_LENGTH as usize;
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum MessageContentInitial {
     Text(TextContent),
@@ -29,9 +31,11 @@ pub enum MessageContentInitial {
     MessageReminderCreated(MessageReminderCreatedContent),
     MessageReminder(MessageReminderContent),
     P2PSwap(P2PSwapContentInitial),
+    Encrypted(EncryptedContent),
     Custom(CustomContent),
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum MessageContent {
     Text(TextContent),
@@ -51,18 +55,78 @@ pub enum MessageContent {
     ReportedMessage(ReportedMessage),
     P2PSwap(P2PSwapContent),
     VideoCall(VideoCallContent),
+    Encrypted(EncryptedContent),
     Custom(CustomContent),
 }
 
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum MessageContentType {
+    Text,
+    Image,
+    Video,
+    Audio,
+    File,
+    Poll,
+    Crypto,
+    Deleted,
+    Giphy,
+    GovernanceProposal,
+    Prize,
+    PrizeWinner,
+    MessageReminderCreated,
+    MessageReminder,
+    ReportedMessage,
+    P2PSwap,
+    VideoCall,
+    Custom(String),
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum EncryptedMessageContentType {
+    Text,
+    Image,
+    Video,
+    Audio,
+    File,
+    Crypto,
+    Giphy,
+    Custom(String),
+}
+
+impl From<EncryptedMessageContentType> for MessageContentType {
+    fn from(value: EncryptedMessageContentType) -> Self {
+        match value {
+            EncryptedMessageContentType::Text => MessageContentType::Text,
+            EncryptedMessageContentType::Image => MessageContentType::Image,
+            EncryptedMessageContentType::Video => MessageContentType::Video,
+            EncryptedMessageContentType::Audio => MessageContentType::Audio,
+            EncryptedMessageContentType::File => MessageContentType::File,
+            EncryptedMessageContentType::Crypto => MessageContentType::Crypto,
+            EncryptedMessageContentType::Giphy => MessageContentType::Giphy,
+            EncryptedMessageContentType::Custom(c) => MessageContentType::Custom(c),
+        }
+    }
+}
+
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum ContentValidationError {
     Empty,
     TextTooLong(u32),
     InvalidPoll(InvalidPollReason),
     TransferCannotBeZero,
+    TransferMustBePending,
     InvalidTypeForForwarding,
     PrizeEndDateInThePast,
     Unauthorized,
+}
+
+impl From<ContentValidationError> for OCError {
+    fn from(value: ContentValidationError) -> Self {
+        OCErrorCode::InvalidMessageContent.with_json(&value)
+    }
 }
 
 impl MessageContent {
@@ -106,35 +170,11 @@ impl MessageContent {
             | MessageContent::ReportedMessage(_)
             | MessageContent::P2PSwap(_)
             | MessageContent::VideoCall(_)
+            | MessageContent::Encrypted(_)
             | MessageContent::Custom(_) => {}
         }
 
         references
-    }
-
-    pub fn message_type(&self) -> String {
-        let message_type = match self {
-            MessageContent::Text(_) => "Text",
-            MessageContent::Image(_) => "Image",
-            MessageContent::Video(_) => "Video",
-            MessageContent::Audio(_) => "Audio",
-            MessageContent::File(_) => "File",
-            MessageContent::Poll(_) => "Poll",
-            MessageContent::Crypto(_) => "Crypto",
-            MessageContent::Deleted(_) => "Deleted",
-            MessageContent::Giphy(_) => "Giphy",
-            MessageContent::GovernanceProposal(_) => "GovernanceProposal",
-            MessageContent::Prize(_) => "Prize",
-            MessageContent::PrizeWinner(_) => "PrizeWinner",
-            MessageContent::MessageReminderCreated(_) => "MessageReminderCreated",
-            MessageContent::MessageReminder(_) => "MessageReminder",
-            MessageContent::ReportedMessage(_) => "ReportedMessage",
-            MessageContent::P2PSwap(_) => "P2PSwap",
-            MessageContent::VideoCall(_) => "VideoCall",
-            MessageContent::Custom(c) => &c.kind,
-        };
-
-        message_type.to_string()
     }
 
     pub fn text(&self) -> Option<&str> {
@@ -156,6 +196,7 @@ impl MessageContent {
             | MessageContent::MessageReminder(_)
             | MessageContent::ReportedMessage(_)
             | MessageContent::VideoCall(_)
+            | MessageContent::Encrypted(_)
             | MessageContent::Custom(_) => None,
         }
     }
@@ -196,8 +237,13 @@ impl MessageContent {
             | MessageContent::ReportedMessage(_)
             | MessageContent::P2PSwap(_)
             | MessageContent::VideoCall(_)
+            | MessageContent::Encrypted(_)
             | MessageContent::Custom(_) => None,
         }
+    }
+
+    pub fn content_type(&self) -> MessageContentType {
+        self.into()
     }
 
     pub fn notification_crypto_transfer_details(&self, mentioned: &[User]) -> Option<CryptoTransferDetails> {
@@ -209,7 +255,7 @@ impl MessageContent {
                     .find(|u| u.user_id == c.recipient)
                     .map(|u| u.username.clone()),
                 ledger: c.transfer.ledger_canister_id(),
-                symbol: c.transfer.token().token_symbol().to_string(),
+                symbol: c.transfer.token_symbol().to_string(),
                 amount: c.transfer.units(),
             })
         } else {
@@ -219,79 +265,6 @@ impl MessageContent {
 }
 
 impl MessageContentInitial {
-    pub fn validate_for_new_message(
-        &self,
-        is_direct_chat: bool,
-        sender_is_bot: bool,
-        forwarding: bool,
-        now: TimestampMillis,
-    ) -> Result<(), ContentValidationError> {
-        if forwarding {
-            match self {
-                MessageContentInitial::Crypto(_) | MessageContentInitial::Poll(_) | MessageContentInitial::P2PSwap(_) => {
-                    return Err(ContentValidationError::InvalidTypeForForwarding);
-                }
-                _ => {}
-            };
-        }
-
-        match self {
-            MessageContentInitial::Poll(p) => {
-                if let Err(reason) = p.config.validate(is_direct_chat, now) {
-                    return Err(ContentValidationError::InvalidPoll(reason));
-                }
-            }
-            MessageContentInitial::Crypto(c) => {
-                if c.transfer.is_zero() {
-                    return Err(ContentValidationError::TransferCannotBeZero);
-                }
-            }
-            MessageContentInitial::Prize(p) => {
-                if p.end_date <= now {
-                    return Err(ContentValidationError::PrizeEndDateInThePast);
-                }
-            }
-            MessageContentInitial::P2PSwap(_) => {
-                if sender_is_bot {
-                    return Err(ContentValidationError::Unauthorized);
-                }
-            }
-            MessageContentInitial::GovernanceProposal(_)
-            | MessageContentInitial::MessageReminderCreated(_)
-            | MessageContentInitial::MessageReminder(_) => {
-                return Err(ContentValidationError::Unauthorized);
-            }
-            _ => {}
-        };
-
-        let is_empty = match self {
-            MessageContentInitial::Text(t) => t.text.is_empty(),
-            MessageContentInitial::Image(i) => i.blob_reference.is_none(),
-            MessageContentInitial::Video(v) => v.video_blob_reference.is_none(),
-            MessageContentInitial::Audio(a) => a.blob_reference.is_none(),
-            MessageContentInitial::File(f) => f.blob_reference.is_none(),
-            MessageContentInitial::Poll(p) => p.config.options.is_empty(),
-            MessageContentInitial::Prize(p) => p.prizes.is_empty(),
-            MessageContentInitial::Deleted(_) => true,
-            MessageContentInitial::Crypto(_)
-            | MessageContentInitial::Giphy(_)
-            | MessageContentInitial::GovernanceProposal(_)
-            | MessageContentInitial::MessageReminderCreated(_)
-            | MessageContentInitial::MessageReminder(_)
-            | MessageContentInitial::P2PSwap(_)
-            | MessageContentInitial::Custom(_) => false,
-        };
-
-        if is_empty {
-            Err(ContentValidationError::Empty)
-        // Allow GovernanceProposal messages to exceed the max length since they are collapsed on the UI
-        } else if self.text_length() > MAX_TEXT_LENGTH_USIZE && !matches!(self, MessageContentInitial::GovernanceProposal(_)) {
-            Err(ContentValidationError::TextTooLong(MAX_TEXT_LENGTH))
-        } else {
-            Ok(())
-        }
-    }
-
     pub fn text_length(&self) -> usize {
         self.text().map_or(0, |t| t.chars().count())
     }
@@ -311,7 +284,7 @@ impl MessageContentInitial {
             MessageContentInitial::MessageReminderCreated(r) => r.notes.as_deref(),
             MessageContentInitial::MessageReminder(r) => r.notes.as_deref(),
             MessageContentInitial::P2PSwap(p) => p.caption.as_deref(),
-            MessageContentInitial::Deleted(_) | MessageContentInitial::Custom(_) => None,
+            MessageContentInitial::Encrypted(_) | MessageContentInitial::Deleted(_) | MessageContentInitial::Custom(_) => None,
         }
     }
 
@@ -320,6 +293,34 @@ impl MessageContentInitial {
             self,
             MessageContentInitial::Crypto(_) | MessageContentInitial::Prize(_) | MessageContentInitial::P2PSwap(_)
         )
+    }
+
+    pub fn pending_crypto_transfer(&self) -> Option<&PendingCryptoTransaction> {
+        let transfer = match self {
+            MessageContentInitial::Crypto(c) => &c.transfer,
+            MessageContentInitial::Prize(c) => &c.transfer,
+            _ => return None,
+        };
+
+        if let CryptoTransaction::Pending(pending) = transfer { Some(pending) } else { None }
+    }
+}
+
+impl From<&MessageContentInitial> for MessagePermission {
+    fn from(value: &MessageContentInitial) -> Self {
+        match value {
+            MessageContentInitial::Text(_) => MessagePermission::Text,
+            MessageContentInitial::Image(_) => MessagePermission::Image,
+            MessageContentInitial::Video(_) => MessagePermission::Video,
+            MessageContentInitial::Audio(_) => MessagePermission::Audio,
+            MessageContentInitial::File(_) => MessagePermission::File,
+            MessageContentInitial::Poll(_) => MessagePermission::Poll,
+            MessageContentInitial::Crypto(_) => MessagePermission::Crypto,
+            MessageContentInitial::Giphy(_) => MessagePermission::Giphy,
+            MessageContentInitial::Prize(_) => MessagePermission::Prize,
+            MessageContentInitial::P2PSwap(_) => MessagePermission::P2pSwap,
+            _ => unreachable!(),
+        }
     }
 }
 
@@ -342,6 +343,7 @@ impl From<MessageContent> for MessageContentInitial {
             MessageContent::MessageReminderCreated(r) => MessageContentInitial::MessageReminderCreated(r),
             MessageContent::MessageReminder(r) => MessageContentInitial::MessageReminder(r),
             MessageContent::ReportedMessage(_) => panic!("Cannot send a 'reported message' message"),
+            MessageContent::Encrypted(e) => MessageContentInitial::Encrypted(e),
             MessageContent::Custom(c) => MessageContentInitial::Custom(c),
             MessageContent::P2PSwap(_) | MessageContent::VideoCall(_) => unimplemented!(),
         }
@@ -351,6 +353,7 @@ impl From<MessageContent> for MessageContentInitial {
 // TODO: We shouldn't need this
 impl From<MessageContentInitial> for MessageContent {
     fn from(content: MessageContentInitial) -> Self {
+        #[expect(deprecated)]
         match content {
             MessageContentInitial::Audio(c) => MessageContent::Audio(c),
             MessageContentInitial::Crypto(c) => MessageContent::Crypto(c),
@@ -363,22 +366,116 @@ impl From<MessageContentInitial> for MessageContent {
             MessageContentInitial::Text(c) => MessageContent::Text(c),
             MessageContentInitial::Video(c) => MessageContent::Video(c),
             MessageContentInitial::Prize(c) => MessageContent::Prize(PrizeContent {
-                prizes_remaining: c.prizes.len() as u32,
+                prizes_remaining: c.prizes_v2.len() as u32,
                 winners: Vec::new(),
-                token: c.transfer.token(),
+                winner_count: 0,
+                user_is_winner: false,
+                token_symbol: c.transfer.token_symbol().to_string(),
+                ledger: c.transfer.ledger_canister_id(),
                 end_date: c.end_date,
                 caption: c.caption,
                 prizes_pending: 0,
                 diamond_only: c.diamond_only,
+                lifetime_diamond_only: c.lifetime_diamond_only,
+                unique_person_only: c.unique_person_only,
+                streak_only: c.streak_only,
+                requires_captcha: c.requires_captcha,
+                min_chit_earned: c.min_chit_earned,
             }),
             MessageContentInitial::MessageReminderCreated(r) => MessageContent::MessageReminderCreated(r),
             MessageContentInitial::MessageReminder(r) => MessageContent::MessageReminder(r),
+            MessageContentInitial::Encrypted(e) => MessageContent::Encrypted(e),
             MessageContentInitial::Custom(c) => MessageContent::Custom(c),
             MessageContentInitial::P2PSwap(_) => unimplemented!(),
         }
     }
 }
 
+impl MessageContentType {
+    pub fn achievement(&self) -> Option<Achievement> {
+        match self {
+            MessageContentType::Text => Some(Achievement::SentText),
+            MessageContentType::Image => Some(Achievement::SentImage),
+            MessageContentType::Video => Some(Achievement::SentVideo),
+            MessageContentType::Audio => Some(Achievement::SentAudio),
+            MessageContentType::File => Some(Achievement::SentFile),
+            MessageContentType::Poll => Some(Achievement::SentPoll),
+            MessageContentType::Crypto => Some(Achievement::SentCrypto),
+            MessageContentType::Deleted => Some(Achievement::DeletedMessage),
+            MessageContentType::Giphy => Some(Achievement::SentGiphy),
+            MessageContentType::GovernanceProposal => None,
+            MessageContentType::Prize => Some(Achievement::SentPrize),
+            MessageContentType::PrizeWinner => None,
+            MessageContentType::MessageReminderCreated => Some(Achievement::SentReminder),
+            MessageContentType::MessageReminder => Some(Achievement::SentReminder),
+            MessageContentType::ReportedMessage => None,
+            MessageContentType::P2PSwap => Some(Achievement::SentP2PSwapOffer),
+            MessageContentType::VideoCall => Some(Achievement::StartedCall),
+            MessageContentType::Custom(c) => {
+                if c == "meme_fighter" {
+                    Some(Achievement::SentMeme)
+                } else {
+                    None
+                }
+            }
+        }
+    }
+}
+
+impl Display for MessageContentType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            MessageContentType::Text => "Text",
+            MessageContentType::Image => "Image",
+            MessageContentType::Video => "Video",
+            MessageContentType::Audio => "Audio",
+            MessageContentType::File => "File",
+            MessageContentType::Poll => "Poll",
+            MessageContentType::Crypto => "Crypto",
+            MessageContentType::Deleted => "Deleted",
+            MessageContentType::Giphy => "Giphy",
+            MessageContentType::GovernanceProposal => "GovernanceProposal",
+            MessageContentType::Prize => "Prize",
+            MessageContentType::PrizeWinner => "PrizeWinner",
+            MessageContentType::MessageReminderCreated => "MessageReminderCreated",
+            MessageContentType::MessageReminder => "MessageReminder",
+            MessageContentType::ReportedMessage => "ReportedMessage",
+            MessageContentType::P2PSwap => "P2PSwap",
+            MessageContentType::VideoCall => "VideoCall",
+            MessageContentType::Custom(c) => c,
+        };
+
+        f.write_str(s)
+    }
+}
+
+impl From<&MessageContent> for MessageContentType {
+    fn from(value: &MessageContent) -> Self {
+        match value {
+            MessageContent::Text(_) => MessageContentType::Text,
+            MessageContent::Image(_) => MessageContentType::Image,
+            MessageContent::Video(_) => MessageContentType::Video,
+            MessageContent::Audio(_) => MessageContentType::Audio,
+            MessageContent::File(_) => MessageContentType::File,
+            MessageContent::Poll(_) => MessageContentType::Poll,
+            MessageContent::Crypto(_) => MessageContentType::Crypto,
+            MessageContent::Deleted(_) => MessageContentType::Deleted,
+            MessageContent::Giphy(_) => MessageContentType::Giphy,
+            MessageContent::GovernanceProposal(_) => MessageContentType::GovernanceProposal,
+            MessageContent::Prize(_) => MessageContentType::Prize,
+            MessageContent::PrizeWinner(_) => MessageContentType::PrizeWinner,
+            MessageContent::MessageReminderCreated(_) => MessageContentType::MessageReminderCreated,
+            MessageContent::MessageReminder(_) => MessageContentType::MessageReminder,
+            MessageContent::ReportedMessage(_) => MessageContentType::ReportedMessage,
+            MessageContent::P2PSwap(_) => MessageContentType::P2PSwap,
+            MessageContent::VideoCall(_) => MessageContentType::VideoCall,
+            MessageContent::Encrypted(e) => e.content_type.clone().into(),
+            MessageContent::Custom(c) => MessageContentType::Custom(c.kind.clone()),
+        }
+    }
+}
+
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct TextContent {
     pub text: String,
@@ -390,6 +487,7 @@ impl From<String> for TextContent {
     }
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ImageContent {
     pub width: u32,
@@ -400,6 +498,7 @@ pub struct ImageContent {
     pub blob_reference: Option<BlobReference>,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GiphyImageVariant {
     pub width: u32,
@@ -408,6 +507,7 @@ pub struct GiphyImageVariant {
     pub mime_type: String,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GiphyContent {
     pub caption: Option<String>,
@@ -416,6 +516,7 @@ pub struct GiphyContent {
     pub mobile: GiphyImageVariant,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct VideoContent {
     pub width: u32,
@@ -427,6 +528,7 @@ pub struct VideoContent {
     pub video_blob_reference: Option<BlobReference>,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct AudioContent {
     pub caption: Option<String>,
@@ -434,6 +536,7 @@ pub struct AudioContent {
     pub blob_reference: Option<BlobReference>,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct FileContent {
     pub name: String,
@@ -443,6 +546,7 @@ pub struct FileContent {
     pub blob_reference: Option<BlobReference>,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PollContent {
     pub config: PollConfig,
@@ -476,6 +580,7 @@ pub enum RegisterVoteResult {
     OptionIndexOutOfRange,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CryptoContent {
     pub recipient: UserId,
@@ -483,26 +588,44 @@ pub struct CryptoContent {
     pub caption: Option<String>,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PrizeContentInitial {
-    pub prizes: Vec<Tokens>,
+    pub prizes_v2: Vec<u128>,
     pub transfer: CryptoTransaction,
     pub end_date: TimestampMillis,
     pub caption: Option<String>,
     pub diamond_only: bool,
+    pub lifetime_diamond_only: bool,
+    pub unique_person_only: bool,
+    pub streak_only: u16,
+    pub requires_captcha: bool,
+    pub min_chit_earned: u32,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PrizeContent {
     pub prizes_remaining: u32,
     pub prizes_pending: u32,
+    #[deprecated]
+    #[ts(skip)]
     pub winners: Vec<UserId>,
-    pub token: Cryptocurrency,
+    pub winner_count: u32,
+    pub user_is_winner: bool,
+    pub token_symbol: String,
+    pub ledger: CanisterId,
     pub end_date: TimestampMillis,
     pub caption: Option<String>,
     pub diamond_only: bool,
+    pub lifetime_diamond_only: bool,
+    pub unique_person_only: bool,
+    pub streak_only: u16,
+    pub requires_captcha: bool,
+    pub min_chit_earned: u32,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PrizeWinnerContent {
     pub winner: UserId,
@@ -510,6 +633,7 @@ pub struct PrizeWinnerContent {
     pub prize_message: MessageIndex,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MessageReminderCreatedContent {
     pub reminder_id: u64,
@@ -518,18 +642,21 @@ pub struct MessageReminderCreatedContent {
     pub hidden: bool,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MessageReminderContent {
     pub reminder_id: u64,
     pub notes: Option<String>,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ReportedMessage {
     pub reports: Vec<MessageReport>,
     pub count: u32,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MessageReport {
     pub reported_by: UserId,
@@ -538,6 +665,7 @@ pub struct MessageReport {
     pub notes: Option<String>,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct P2PSwapContentInitial {
     pub token0: TokenInfo,
@@ -548,6 +676,7 @@ pub struct P2PSwapContentInitial {
     pub caption: Option<String>,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct P2PSwapContent {
     pub swap_id: u32,
@@ -561,114 +690,40 @@ pub struct P2PSwapContent {
     pub status: P2PSwapStatus,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct VideoCallContentInitial {
     pub initiator: UserId,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct VideoCallContent {
+    pub call_type: VideoCallType,
     pub ended: Option<TimestampMillis>,
     pub participants: Vec<CallParticipant>,
+    pub hidden_participants: u32,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CallParticipant {
     pub user_id: UserId,
     pub joined: TimestampMillis,
 }
 
-impl P2PSwapContent {
-    pub fn new(
-        swap_id: u32,
-        content: P2PSwapContentInitial,
-        transfer: CompletedCryptoTransaction,
-        now: TimestampMillis,
-    ) -> P2PSwapContent {
-        P2PSwapContent {
-            swap_id,
-            token0: content.token0,
-            token0_amount: content.token0_amount,
-            token1: content.token1,
-            token1_amount: content.token1_amount,
-            expires_at: now + content.expires_in,
-            caption: content.caption,
-            token0_txn_in: transfer.index(),
-            status: P2PSwapStatus::Open,
-        }
-    }
-
-    pub fn reserve(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
-        if let P2PSwapStatus::Open = self.status {
-            if now < self.expires_at {
-                self.status = P2PSwapStatus::Reserved(P2PSwapReserved { reserved_by: user_id });
-                return true;
-            } else {
-                self.status = P2PSwapStatus::Expired(P2PSwapExpired { token0_txn_out: None });
-            }
-        }
-
-        false
-    }
-
-    pub fn unreserve(&mut self, user_id: UserId) -> bool {
-        if let P2PSwapStatus::Reserved(r) = &self.status {
-            if r.reserved_by == user_id {
-                self.status = P2PSwapStatus::Open;
-                return true;
-            }
-        }
-        false
-    }
-
-    pub fn accept(&mut self, user_id: UserId, token1_txn_in: u64) -> bool {
-        if let P2PSwapStatus::Reserved(a) = &self.status {
-            if a.reserved_by == user_id {
-                self.status = P2PSwapStatus::Accepted(P2PSwapAccepted {
-                    accepted_by: user_id,
-                    token1_txn_in,
-                });
-                return true;
-            }
-        }
-        false
-    }
-
-    pub fn complete(&mut self, user_id: UserId, token0_txn_out: u64, token1_txn_out: u64) -> Option<P2PSwapCompleted> {
-        if let P2PSwapStatus::Accepted(a) = &self.status {
-            if a.accepted_by == user_id {
-                let status = P2PSwapCompleted {
-                    accepted_by: user_id,
-                    token1_txn_in: a.token1_txn_in,
-                    token0_txn_out,
-                    token1_txn_out,
-                };
-                self.status = P2PSwapStatus::Completed(status.clone());
-                return Some(status);
-            }
-        }
-        None
-    }
-
-    pub fn cancel(&mut self) -> bool {
-        if matches!(self.status, P2PSwapStatus::Open) {
-            self.status = P2PSwapStatus::Cancelled(P2PSwapCancelled { token0_txn_out: None });
-            true
-        } else {
-            false
-        }
-    }
-
-    pub fn mark_expired(&mut self) -> bool {
-        if matches!(self.status, P2PSwapStatus::Open) {
-            self.status = P2PSwapStatus::Expired(P2PSwapExpired { token0_txn_out: None });
-            true
-        } else {
-            false
-        }
-    }
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct EncryptedContent {
+    pub content_type: EncryptedMessageContentType,
+    pub version: u32,
+    pub encrypted_message_key: EncryptionKey,
+    pub public_key: EncryptionKey,
+    #[serde(with = "serde_bytes")]
+    pub encrypted_data: Vec<u8>,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CustomContent {
     pub kind: String,
@@ -676,12 +731,14 @@ pub struct CustomContent {
     pub data: Vec<u8>,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct DeletedBy {
     pub deleted_by: UserId,
     pub timestamp: TimestampMillis,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct BlobReference {
     pub canister_id: CanisterId,
@@ -694,6 +751,7 @@ impl BlobReference {
     }
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone)]
 pub struct ThumbnailData(pub String);
 

@@ -1,17 +1,13 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{MessageId, SwapStatusError, UserId};
+use ts_export::ts_export;
+use types::{MessageId, UnitResult, UserId};
 
+#[ts_export(user, cancel_p2p_swap)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub user_id: UserId,
     pub message_id: MessageId,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    ChatNotFound,
-    StatusError(SwapStatusError),
-    SwapNotFound,
-}
+pub type Response = UnitResult;

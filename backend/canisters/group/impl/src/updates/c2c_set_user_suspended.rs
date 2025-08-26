@@ -1,26 +1,27 @@
 use crate::guards::caller_is_user_index;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::update_msgpack;
+use crate::{RuntimeState, execute_update};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use group_canister::c2c_set_user_suspended::{Response::*, *};
-use types::Timestamped;
+use group_canister::c2c_set_user_suspended::*;
+use oc_error_codes::OCErrorCode;
 
-#[update_msgpack(guard = "caller_is_user_index")]
+#[update(guard = "caller_is_user_index", msgpack = true)]
 #[trace]
 fn c2c_set_user_suspended(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| c2c_set_user_suspended_impl(args, state))
+    execute_update(|state| c2c_set_user_suspended_impl(args, state))
 }
 
 fn c2c_set_user_suspended_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if let Some(user) = state.data.chat.members.get_mut(&args.user_id) {
-        if user.suspended.value != args.suspended {
-            let now = state.env.now();
-            user.suspended = Timestamped::new(args.suspended, now);
-        }
-        Success
+    let now = state.env.now();
+    if state
+        .data
+        .chat
+        .members
+        .set_suspended(args.user_id, args.suspended, now)
+        .is_some()
+    {
+        Response::Success
     } else {
-        UserNotInGroup
+        Response::Error(OCErrorCode::TargetUserNotInChat.into())
     }
 }

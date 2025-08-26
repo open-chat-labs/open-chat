@@ -1,27 +1,56 @@
 <script lang="ts">
+    import type { ResourceKey, UnreadCounts, VideoCallCounts } from "openchat-client";
+    import { emptyUnreadCounts, navOpen } from "openchat-client";
     import { _ } from "svelte-i18n";
-    import { emptyUnreadCounts } from "openchat-client";
-    import UnreadCount from "../UnreadCount.svelte";
-    import type { ResourceKey } from "../../../i18n/i18n";
+    import WithVerifiedBadge from "../../icons/WithVerifiedBadge.svelte";
     import Translatable from "../../Translatable.svelte";
+    import UnreadCount from "../UnreadCount.svelte";
     import VideoCallIcon from "../video/VideoCallIcon.svelte";
 
-    export let label: ResourceKey;
-    export let selected: boolean = false;
-    export let separator: boolean = false;
-    export let unread = emptyUnreadCounts();
-    export let video = { muted: 0, unmuted: 0 };
-    export let disabled = false;
+    interface Props {
+        label: ResourceKey;
+        selected?: boolean;
+        separator?: boolean;
+        unread?: UnreadCounts;
+        video?: VideoCallCounts;
+        children?: import("svelte").Snippet;
+        onClick?: () => void;
+        verified?: boolean;
+    }
+
+    let {
+        label,
+        selected = false,
+        separator = false,
+        unread = emptyUnreadCounts(),
+        video = { muted: 0, unmuted: 0 },
+        children,
+        onClick,
+        verified = false,
+    }: Props = $props();
+
+    let labelText = $derived($_(label.key, label.params));
 </script>
 
-<div role="button" tabindex="0" class:separator class:selected class="left-nav-item" on:click>
-    <div class="icon" title={$_(label.key, label.params)}>
-        <slot />
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<div
+    role="button"
+    aria-label={labelText}
+    tabindex="0"
+    class:separator
+    class:selected
+    class="left-nav-item"
+    onclick={onClick}>
+    <div class="icon" title={labelText}>
+        {@render children?.()}
         <UnreadCount {unread} />
         <VideoCallIcon {video} />
     </div>
-    <div class="label"><Translatable resourceKey={label} /></div>
-    <div class="menu"><slot name="menu" /></div>
+    {#if $navOpen}
+        <WithVerifiedBadge {verified} size={"small"}>
+            <div class="label"><Translatable resourceKey={label} /></div>
+        </WithVerifiedBadge>
+    {/if}
 </div>
 
 <style lang="scss">
@@ -80,10 +109,6 @@
         .label {
             flex: auto;
             white-space: nowrap;
-        }
-
-        .menu {
-            flex: 0 0 toRem(30);
         }
     }
 </style>

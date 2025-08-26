@@ -1,0 +1,13 @@
+[package]
+name = "airdrop_bot_canister"
+version.workspace = true
+edition.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+legacy_bot_api = { path = "../../../legacy_bots/api" }
+candid = { workspace = true }
+candid_gen = { path = "../../../libraries/candid_gen" }
+serde = { workspace = true }
+types = { path = "../../../libraries/types" }

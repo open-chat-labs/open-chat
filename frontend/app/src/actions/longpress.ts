@@ -1,11 +1,27 @@
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import { isTouchDevice, mobileOperatingSystem } from "../utils/devices";
-import { eventListLastScrolled } from "../stores/scrollPos";
+ 
+import { eventListLastScrolled } from "openchat-client";
 import { get } from "svelte/store";
+import { isTouchDevice, mobileOperatingSystem } from "../utils/devices";
 
 const SCROLL_PROXIMITY = 750;
 
-export function longpress(node: HTMLElement, onlongpress: () => void) {
+function suppressNextClick() {
+    if (mobileOperatingSystem !== "iOS") return;
+
+    window.addEventListener(
+        "click",
+        (e: MouseEvent) => {
+            e.stopPropagation();
+            e.preventDefault();
+        },
+        {
+            capture: true,
+            once: true,
+        },
+    );
+}
+
+export function longpress(node: HTMLElement, onlongpress: (e: TouchEvent) => void) {
     let longPressTimer: number | undefined;
     let startX = 0;
     let startY = 0;
@@ -23,7 +39,8 @@ export function longpress(node: HTMLElement, onlongpress: () => void) {
             const lastScroll = get(eventListLastScrolled);
             const diff = Date.now() - lastScroll;
             if (mobileOperatingSystem === "iOS" || diff > SCROLL_PROXIMITY) {
-                onlongpress();
+                suppressNextClick();
+                onlongpress(e);
             }
         }, 500);
     }

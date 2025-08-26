@@ -1,8 +1,8 @@
-use crate::{read_state, RuntimeState};
-use canister_api_macros::query_candid_and_msgpack;
+use crate::{RuntimeState, read_state};
+use canister_api_macros::query;
 use user_index_canister::user::{Response::*, *};
 
-#[query_candid_and_msgpack]
+#[query(candid = true, msgpack = true)]
 fn user(args: Args) -> Response {
     read_state(|state| user_impl(args, state))
 }

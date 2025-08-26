@@ -1,55 +1,49 @@
 use crate::ChatEventInternal;
+use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::ops::RangeBounds;
-use types::{EventIndex, EventWrapperInternal};
+use types::{Chat, EventIndex, EventWrapperInternal, MessageIndex};
 
 pub trait EventsMap {
-    fn get_mut(&mut self, event_index: EventIndex) -> Option<&mut EventWrapperInternal<ChatEventInternal>>;
+    fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self;
+    fn get(&self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>>;
     fn insert(&mut self, event: EventWrapperInternal<ChatEventInternal>);
     fn remove(&mut self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>>;
     fn range<R: RangeBounds<EventIndex>>(
         &self,
         range: R,
-    ) -> Box<dyn DoubleEndedIterator<Item = (&EventIndex, &EventWrapperInternal<ChatEventInternal>)> + '_>;
-    fn values(&self) -> Box<dyn DoubleEndedIterator<Item = &EventWrapperInternal<ChatEventInternal>> + '_>;
-    fn values_mut(&mut self) -> Box<dyn DoubleEndedIterator<Item = &mut EventWrapperInternal<ChatEventInternal>> + '_>;
-    fn len(&self) -> usize;
-    fn is_empty(&self) -> bool;
+    ) -> Box<dyn DoubleEndedIterator<Item = EventWrapperInternal<ChatEventInternal>> + '_>;
+    fn iter(&self) -> Box<dyn DoubleEndedIterator<Item = EventWrapperInternal<ChatEventInternal>> + '_>;
 }
 
-impl EventsMap for BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>> {
-    fn get_mut(&mut self, event_index: EventIndex) -> Option<&mut EventWrapperInternal<ChatEventInternal>> {
-        self.get_mut(&event_index)
+#[derive(Serialize, Deserialize, Default)]
+pub struct ChatEventsMap(BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>>);
+
+impl EventsMap for ChatEventsMap {
+    fn new(_chat: Chat, _thread_root_message_index: Option<MessageIndex>) -> Self {
+        ChatEventsMap(BTreeMap::new())
+    }
+
+    fn get(&self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
+        self.0.get(&event_index).cloned()
     }
 
     fn insert(&mut self, event: EventWrapperInternal<ChatEventInternal>) {
-        self.insert(event.index, event);
+        self.0.insert(event.index, event);
     }
 
     fn remove(&mut self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
-        self.remove(&event_index)
+        self.0.remove(&event_index)
     }
 
     fn range<R: RangeBounds<EventIndex>>(
         &self,
         range: R,
-    ) -> Box<dyn DoubleEndedIterator<Item = (&EventIndex, &EventWrapperInternal<ChatEventInternal>)> + '_> {
-        Box::new(self.range(range))
+    ) -> Box<dyn DoubleEndedIterator<Item = EventWrapperInternal<ChatEventInternal>> + '_> {
+        Box::new(self.0.range(range).map(|(_, e)| e.clone()))
     }
 
-    fn values(&self) -> Box<dyn DoubleEndedIterator<Item = &EventWrapperInternal<ChatEventInternal>> + '_> {
-        Box::new(self.values())
-    }
-
-    fn values_mut(&mut self) -> Box<dyn DoubleEndedIterator<Item = &mut EventWrapperInternal<ChatEventInternal>> + '_> {
-        Box::new(self.values_mut())
-    }
-
-    fn len(&self) -> usize {
-        self.len()
-    }
-
-    fn is_empty(&self) -> bool {
-        self.is_empty()
+    fn iter(&self) -> Box<dyn DoubleEndedIterator<Item = EventWrapperInternal<ChatEventInternal>> + '_> {
+        Box::new(self.0.values().cloned())
     }
 }

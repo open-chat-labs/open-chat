@@ -1,23 +1,23 @@
 import type {
+    ChannelSummary,
+    CommunityCanisterChannelSummaryUpdates,
     CommunityCanisterCommunitySummaryUpdates,
-    UserCanisterCommunitySummaryUpdates,
     CommunitySummary,
     CommunitySummaryResponse,
-    UserCanisterCommunitySummary,
-    ChannelSummary,
-    UserCanisterChannelSummaryUpdates,
-    CommunityCanisterChannelSummaryUpdates,
-    ThreadSyncDetails,
     GroupCanisterThreadDetails,
+    ThreadSyncDetails,
     UserCanisterChannelSummary,
+    UserCanisterChannelSummaryUpdates,
+    UserCanisterCommunitySummary,
+    UserCanisterCommunitySummaryUpdates,
     UserGroupSummary,
 } from "openchat-shared";
 import {
-    CommunityMap,
-    ChatMap,
-    mapOptionUpdate,
     applyOptionUpdate,
     bigIntMax,
+    ChatMap,
+    CommunityMap,
+    mapOptionUpdate,
 } from "openchat-shared";
 import { toRecord } from "./list";
 
@@ -75,6 +75,9 @@ export function mergeCommunityUpdates(
     userCanisterUpdates: UserCanisterCommunitySummaryUpdates[],
     communityCanisterUpdates: CommunityCanisterCommunitySummaryUpdates[],
 ): CommunitySummary[] {
+    if (userCanisterUpdates.length === 0 && communityCanisterUpdates.length === 0)
+        return communities;
+
     const userLookup = CommunityMap.fromList(userCanisterUpdates);
     const communityLookup = CommunityMap.fromList(communityCanisterUpdates);
 
@@ -128,13 +131,17 @@ export function mergeCommunityUpdates(
                     c?.membership?.displayName,
                 ),
                 rulesAccepted: c?.membership?.rulesAccepted ?? community.membership.rulesAccepted,
+                lapsed: c?.membership?.lapsed ?? community.membership.lapsed,
             },
             channels: mergeChannelUpdates(
                 currentChannels,
                 u?.channels ?? [],
                 c?.channelsUpdated ?? [],
             ),
-            gate: applyOptionUpdate(community.gate, c?.gate) ?? { kind: "no_gate" },
+            gateConfig: applyOptionUpdate(community.gateConfig, c?.gateConfig) ?? {
+                gate: { kind: "no_gate" },
+                expiry: undefined,
+            },
             level: "community",
             public: c?.public ?? community.public,
             frozen: applyOptionUpdate(community.frozen, c?.frozen) ?? false,
@@ -147,6 +154,8 @@ export function mergeCommunityUpdates(
                 c?.userGroupsDeleted ?? new Set(),
             ),
             localUserIndex: community.localUserIndex,
+            isInvited: false,
+            verified: c?.verified ?? community.verified,
         };
     });
 }
@@ -183,11 +192,13 @@ function mergeChannelUpdates(
             canisterId: channel.id.communityId,
         }));
 
+        const description = c?.description ?? channel.description;
+
         return {
             kind: "channel",
             id: channel.id,
             name: c?.name ?? channel.name,
-            description: c?.description ?? channel.description,
+            description,
             minVisibleEventIndex: channel.minVisibleEventIndex,
             minVisibleMessageIndex: channel.minVisibleMessageIndex,
             lastUpdated: c?.lastUpdated ?? channel.lastUpdated,
@@ -205,7 +216,10 @@ function mergeChannelUpdates(
             blobReference: applyOptionUpdate(channel.blobReference, blobReferenceUpdate),
             dateLastPinned: c?.dateLastPinned ?? channel.dateLastPinned,
             dateReadPinned: u?.dateReadPinned ?? channel.dateReadPinned,
-            gate: applyOptionUpdate(channel.gate, c?.gate) ?? { kind: "no_gate" },
+            gateConfig: applyOptionUpdate(channel.gateConfig, c?.gateConfig) ?? {
+                gate: { kind: "no_gate" },
+                expiry: undefined,
+            },
             level: "channel",
             eventsTTL: applyOptionUpdate(channel.eventsTTL, c?.eventsTTL),
             eventsTtlLastUpdated: bigIntMax(
@@ -222,7 +236,7 @@ function mergeChannelUpdates(
                     c === undefined
                         ? channel.membership.mentions
                         : [...(c.membership?.mentions ?? []), ...channel.membership.mentions],
-                role: c?.membership?.role ?? channel.membership.role,
+                role: c?.membership?.myRole ?? channel.membership.role,
                 latestThreads: mergeThreads(
                     channel.membership.latestThreads,
                     c?.membership?.latestThreads ?? [],
@@ -235,10 +249,17 @@ function mergeChannelUpdates(
                         : readByMeUpTo,
                 notificationsMuted:
                     c?.membership?.notificationsMuted ?? channel.membership.notificationsMuted,
+                atEveryoneMuted:
+                    c?.membership?.atEveryoneMuted ?? channel.membership.atEveryoneMuted,
                 myMetrics: c?.membership?.myMetrics ?? channel.membership.myMetrics,
                 archived: u?.archived ?? channel.membership.archived,
                 rulesAccepted: c?.membership?.rulesAccepted ?? channel.membership.rulesAccepted,
+                lapsed: c?.membership?.lapsed ?? channel.membership.lapsed,
             },
+            isInvited: false,
+            messagesVisibleToNonMembers:
+                c?.messageVisibleToNonMembers ?? channel.messagesVisibleToNonMembers,
+            externalUrl: applyOptionUpdate(channel.externalUrl, c?.externalUrl),
         };
     });
 }

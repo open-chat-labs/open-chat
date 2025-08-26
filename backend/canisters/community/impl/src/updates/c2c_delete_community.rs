@@ -1,70 +1,67 @@
-use crate::{read_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::update_msgpack;
+use crate::{RuntimeState, execute_update_async, read_state};
+use canister_api_macros::update;
+use canister_client::make_c2c_call_raw;
 use canister_tracing_macros::trace;
-use community_canister::c2c_delete_community::{Response::*, *};
+use community_canister::c2c_delete_community::*;
 use group_index_canister::c2c_delete_community;
-use tracing::error;
-use types::{CanisterId, CommunityId, UserId};
+use oc_error_codes::OCErrorCode;
+use types::{CanisterId, OCResult, UserId};
 
-#[update_msgpack]
+#[update(msgpack = true)]
 #[trace]
 async fn c2c_delete_community(_args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(c2c_delete_community_impl).await
+}
 
+async fn c2c_delete_community_impl() -> Response {
     let prepare_result = match read_state(prepare) {
         Ok(ok) => ok,
-        Err(response) => return response,
+        Err(error) => return Response::Error(error),
     };
 
     let group_index_canister_id = prepare_result.group_index_canister_id;
     let c2c_delete_community_args = c2c_delete_community::Args {
         deleted_by: prepare_result.deleted_by,
-        community_name: prepare_result.communtiy_name,
+        community_name: prepare_result.community_name,
         members: prepare_result.members,
     };
 
-    match group_index_canister_c2c_client::c2c_delete_community(group_index_canister_id, &c2c_delete_community_args).await {
-        Ok(response) => match response {
-            c2c_delete_community::Response::CommunityNotFound => {
-                error!(community_id = %prepare_result.community_id, "Community not found in group index");
-                InternalError("Community not found in group index".to_string())
-            }
-            c2c_delete_community::Response::Success => Success,
-            c2c_delete_community::Response::InternalError(error) => InternalError(error),
-        },
-        Err(error) => InternalError(format!("{error:?}")),
-    }
+    delete_community(group_index_canister_id, &c2c_delete_community_args).await
 }
 
 struct PrepareResult {
     group_index_canister_id: CanisterId,
-    community_id: CommunityId,
     deleted_by: UserId,
-    communtiy_name: String,
+    community_name: String,
     members: Vec<UserId>,
 }
 
-fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if state.data.is_frozen() {
-        return Err(CommunityFrozen);
-    }
+fn prepare(state: &RuntimeState) -> OCResult<PrepareResult> {
+    state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
-    if let Some(member) = state.data.members.get(caller) {
-        if member.suspended.value {
-            Err(UserSuspended)
-        } else if !member.role.can_delete_community() {
-            Err(NotAuthorized)
-        } else {
-            Ok(PrepareResult {
-                group_index_canister_id: state.data.group_index_canister_id,
-                community_id: state.env.canister_id().into(),
-                deleted_by: member.user_id,
-                communtiy_name: state.data.name.clone(),
-                members: state.data.members.iter().map(|m| m.user_id).collect(),
-            })
-        }
+    let member = state.get_calling_member(true)?;
+    if !member.role().can_delete_community() {
+        Err(OCErrorCode::InitiatorNotAuthorized.into())
     } else {
-        Err(NotAuthorized)
+        Ok(PrepareResult {
+            group_index_canister_id: state.data.group_index_canister_id,
+            deleted_by: member.user_id,
+            community_name: state.data.name.value.clone(),
+            members: state.data.members.iter_member_ids().collect(),
+        })
+    }
+}
+
+async fn delete_community(group_index_canister_id: CanisterId, args: &c2c_delete_community::Args) -> Response {
+    let method_name = "c2c_delete_community_msgpack";
+    let payload = msgpack::serialize_then_unwrap(args);
+    let c2c_cost = ic_cdk::api::cost_call(method_name.len() as u64, payload.len() as u64);
+    let buffer = 1_000_000_000; // 1B
+    let cycles = ic_cdk::api::canister_liquid_cycle_balance().saturating_sub(c2c_cost + buffer);
+
+    if let Err(error) = make_c2c_call_raw(group_index_canister_id, method_name, &payload, cycles, None).await {
+        Response::Error(error.into())
+    } else {
+        Response::Success
     }
 }

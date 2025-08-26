@@ -1,19 +1,19 @@
 use crate::env::ENV;
-use crate::rng::random_string;
 use crate::utils::now_millis;
-use crate::{client, TestEnv};
+use crate::{TestEnv, client};
+use constants::OPENCHAT_BOT_USER_ID;
 use std::ops::Deref;
 use std::time::Duration;
+use testing::rng::random_string;
 use types::{Chat, ChatEvent, EventIndex, MessageContent};
-use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[test]
 fn set_message_reminder_succeeds() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
     let now = now_millis(env);
     let notes = random_string();
@@ -89,8 +89,8 @@ fn cancel_message_reminder_succeeds() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
     let now = now_millis(env);
 

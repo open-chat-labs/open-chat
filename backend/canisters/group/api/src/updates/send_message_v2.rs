@@ -1,11 +1,10 @@
-use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
-use types::{
-    EventIndex, GroupReplyContext, InvalidPollReason, MessageContentInitial, MessageId, MessageIndex, TimestampMillis, User,
-    Version,
-};
+use ts_export::ts_export;
+use types::{EventIndex, GroupReplyContext, MessageContentInitial, MessageId, MessageIndex, TimestampMillis, User, Version};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(group, send_message)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
@@ -15,27 +14,21 @@ pub struct Args {
     pub replies_to: Option<GroupReplyContext>,
     pub mentioned: Vec<User>,
     pub forwarding: bool,
+    pub block_level_markdown: bool,
     pub rules_accepted: Option<Version>,
     pub message_filter_failed: Option<u64>,
-    pub correlation_id: u64,
+    pub new_achievement: bool,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(group, send_message)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    ThreadMessageNotFound,
-    MessageEmpty,
-    TextTooLong(u32),
-    InvalidPoll(InvalidPollReason),
-    NotAuthorized,
-    CallerNotInGroup,
-    UserSuspended,
-    InvalidRequest(String),
-    ChatFrozen,
-    RulesNotAccepted,
+    Error(OCError),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(group, send_message)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub event_index: EventIndex,
     pub message_index: MessageIndex,

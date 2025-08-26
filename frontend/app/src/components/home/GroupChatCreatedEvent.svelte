@@ -1,28 +1,29 @@
-<svelte:options immutable />
-
 <script lang="ts">
-    import NonMessageEvent from "./NonMessageEvent.svelte";
+    import type { ChatType, GroupChatCreated } from "openchat-client";
+    import { allUsersStore } from "openchat-client";
     import { _ } from "svelte-i18n";
-    import { getContext } from "svelte";
-    import type { OpenChat, GroupChatCreated, ChatType } from "openchat-client";
     import { buildDisplayName } from "../../utils/user";
+    import NonMessageEvent from "./NonMessageEvent.svelte";
 
-    const client = getContext<OpenChat>("client");
+    interface Props {
+        me: boolean;
+        event: GroupChatCreated;
+        timestamp: bigint;
+        chatType: ChatType;
+    }
 
-    export let me: boolean;
-    export let event: GroupChatCreated;
-    export let timestamp: bigint;
-    export let chatType: ChatType;
+    let { me, event, timestamp, chatType }: Props = $props();
 
-    $: level = $_(`level.${chatType === "channel" ? "channel" : "group"}`).toLowerCase();
-    $: userStore = client.userStore;
-    $: username = buildDisplayName($userStore, event.created_by, me);
-    $: text = $_("groupCreatedBy", {
-        values: {
-            username,
-            level,
-        },
-    });
+    let level = $derived($_(`level.${chatType === "channel" ? "channel" : "group"}`).toLowerCase());
+    let username = $derived(buildDisplayName($allUsersStore, event.created_by, me ? "me" : "user"));
+    let text = $derived(
+        $_("groupCreatedBy", {
+            values: {
+                username,
+                level,
+            },
+        }),
+    );
 </script>
 
 <NonMessageEvent {text} {timestamp} />

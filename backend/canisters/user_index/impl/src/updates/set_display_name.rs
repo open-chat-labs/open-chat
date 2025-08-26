@@ -1,13 +1,13 @@
 use crate::guards::caller_is_openchat_user;
 use crate::model::user_map::UpdateUserResult;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
-use local_user_index_canister::{DisplayNameChanged, Event};
+use local_user_index_canister::{DisplayNameChanged, UserIndexEvent};
 use user_index_canister::set_display_name::{Response::*, *};
-use utils::text_validation::{validate_display_name, UsernameValidationError};
+use utils::text_validation::{UsernameValidationError, validate_display_name};
 
-#[update(guard = "caller_is_openchat_user")]
+#[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
 fn set_display_name(args: Args) -> Response {
     mutate_state(|state| set_display_name_impl(args, state))
@@ -26,18 +26,14 @@ fn set_display_name_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
 
         let now = state.env.now();
-        if !user.diamond_membership_details.is_active(now) && user.display_name.is_none() {
-            return Unauthorized;
-        }
-
         let mut user_to_update = user.clone();
-        user_to_update.display_name = args.display_name.clone();
+        user_to_update.display_name.clone_from(&args.display_name);
         let user_id = user.user_id;
-        match state.data.users.update(user_to_update, now) {
+        match state.data.users.update(user_to_update, now, false, None) {
             UpdateUserResult::Success => {
                 state.push_event_to_local_user_index(
                     user_id,
-                    Event::DisplayNameChanged(DisplayNameChanged {
+                    UserIndexEvent::DisplayNameChanged(DisplayNameChanged {
                         user_id,
                         display_name: args.display_name,
                     }),

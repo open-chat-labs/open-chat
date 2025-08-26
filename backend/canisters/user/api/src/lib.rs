@@ -1,11 +1,12 @@
+#![expect(deprecated)]
 use candid::CandidType;
 use chat_events::MessageContentInternal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
-    CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration,
+    Achievement, CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId, DiamondMembershipPlanDuration,
     EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds, P2PSwapStatus, PhoneNumber,
-    Reaction, SuspensionDuration, TimestampMillis, User, UserId,
+    Reaction, ReferralStatus, SuspensionDuration, TimestampMillis, UniquePersonProof, User, UserId,
 };
 
 mod lifecycle;
@@ -17,16 +18,18 @@ mod _updates;
 
 pub use _updates::*;
 pub use lifecycle::*;
+use oc_error_codes::OCError;
 pub use queries::*;
+use ts_export::ts_export;
 
+#[ts_export(user)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum EventsResponse {
     Success(types::EventsResponse),
-    ChatNotFound,
-    ThreadMessageNotFound,
-    ReplicaNotUpToDateV2(TimestampMillis),
+    Error(OCError),
 }
 
+#[ts_export(user)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupChatSummary {
     pub chat_id: ChatId,
@@ -37,6 +40,7 @@ pub struct GroupChatSummary {
     pub date_read_pinned: Option<TimestampMillis>,
 }
 
+#[ts_export(user)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupChatSummaryUpdates {
     pub chat_id: ChatId,
@@ -46,6 +50,7 @@ pub struct GroupChatSummaryUpdates {
     pub date_read_pinned: Option<TimestampMillis>,
 }
 
+#[ts_export(user)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CommunitySummary {
     pub community_id: CommunityId,
@@ -56,6 +61,7 @@ pub struct CommunitySummary {
     pub pinned: Vec<ChannelId>,
 }
 
+#[ts_export(user)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CommunitySummaryUpdates {
     pub community_id: CommunityId,
@@ -65,6 +71,7 @@ pub struct CommunitySummaryUpdates {
     pub pinned: Option<Vec<ChannelId>>,
 }
 
+#[ts_export(user)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ChannelSummary {
     pub channel_id: ChannelId,
@@ -74,6 +81,7 @@ pub struct ChannelSummary {
     pub date_read_pinned: Option<TimestampMillis>,
 }
 
+#[ts_export(user)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ChannelSummaryUpdates {
     pub channel_id: ChannelId,
@@ -84,7 +92,7 @@ pub struct ChannelSummaryUpdates {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum Event {
+pub enum LocalUserIndexEvent {
     UsernameChanged(Box<UsernameChanged>),
     DisplayNameChanged(Box<DisplayNameChanged>),
     PhoneNumberConfirmed(Box<PhoneNumberConfirmed>),
@@ -97,6 +105,9 @@ pub enum Event {
     UserJoinedGroup(Box<UserJoinedGroup>),
     UserJoinedCommunityOrChannel(Box<UserJoinedCommunityOrChannel>),
     DiamondMembershipPaymentReceived(Box<DiamondMembershipPaymentReceived>),
+    NotifyUniquePersonProof(Box<UniquePersonProof>),
+    ExternalAchievementAwarded(Box<ExternalAchievementAwarded>),
+    ReinstateMissedDailyClaims(Vec<u16>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -149,6 +160,7 @@ pub struct UserJoinedGroup {
     pub chat_id: ChatId,
     pub local_user_index_canister_id: CanisterId,
     pub latest_message_index: Option<MessageIndex>,
+    pub group_canister_timestamp: TimestampMillis,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -156,13 +168,16 @@ pub struct UserJoinedCommunityOrChannel {
     pub community_id: CommunityId,
     pub local_user_index_canister_id: CanisterId,
     pub channels: Vec<ChannelLatestMessageIndex>,
+    pub community_canister_timestamp: TimestampMillis,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct DiamondMembershipPaymentReceived {
     pub timestamp: TimestampMillis,
     pub expires_at: TimestampMillis,
-    pub token: Cryptocurrency,
+    pub ledger: CanisterId,
+    pub token_symbol: String,
+    pub token: Option<types::Cryptocurrency>,
     pub amount_e8s: u64,
     pub block_index: u64,
     pub duration: DiamondMembershipPlanDuration,
@@ -182,6 +197,8 @@ pub enum UserCanisterEvent {
     P2PSwapStatusChange(Box<P2PSwapStatusChange>),
     StartVideoCall(Box<StartVideoCallArgs>),
     JoinVideoCall(Box<JoinVideoCall>),
+    SetReferralStatus(Box<ReferralStatus>),
+    SetEventsTtl(Box<SetEventsTtl>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -200,6 +217,7 @@ pub struct SendMessageArgs {
     pub content: MessageContentInternal,
     pub replies_to: Option<C2CReplyContext>,
     pub forwarding: bool,
+    pub block_level_markdown: bool,
     pub message_filter_failed: Option<u64>,
 }
 
@@ -209,19 +227,23 @@ pub enum C2CReplyContext {
     OtherChat(Chat, Option<MessageIndex>, EventIndex),
 }
 
+#[ts_export(user)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct DeleteUndeleteMessagesArgs {
     pub thread_root_message_id: Option<MessageId>,
     pub message_ids: Vec<MessageId>,
 }
 
+#[ts_export(user)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct EditMessageArgs {
     pub thread_root_message_id: Option<MessageId>,
     pub message_id: MessageId,
     pub content: MessageContent,
+    pub block_level_markdown: Option<bool>,
 }
 
+#[ts_export(user)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ToggleReactionArgs {
     pub thread_root_message_id: Option<MessageId>,
@@ -233,12 +255,13 @@ pub struct ToggleReactionArgs {
     pub user_avatar_id: Option<u128>,
 }
 
+#[ts_export(user)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct TipMessageArgs {
     pub thread_root_message_id: Option<MessageId>,
     pub message_id: MessageId,
     pub ledger: CanisterId,
-    pub token: Cryptocurrency,
+    pub token_symbol: String,
     pub amount: u128,
     pub decimals: u8,
     pub username: String,
@@ -246,6 +269,7 @@ pub struct TipMessageArgs {
     pub user_avatar_id: Option<u128>,
 }
 
+#[ts_export(user)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MarkMessagesReadArgs {
     pub read_up_to: MessageIndex,
@@ -270,6 +294,12 @@ pub struct JoinVideoCall {
     pub message_id: MessageId,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SetEventsTtl {
+    pub events_ttl: Option<Milliseconds>,
+    pub timestamp: TimestampMillis,
+}
+
 pub fn map_chats_to_chat_ids(chats: Vec<Chat>) -> Vec<ChatId> {
     chats
         .into_iter()
@@ -281,6 +311,7 @@ pub fn map_chats_to_chat_ids(chats: Vec<Chat>) -> Vec<ChatId> {
         .collect()
 }
 
+#[ts_export(user)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum ChatInList {
     Direct(ChatId),
@@ -289,8 +320,108 @@ pub enum ChatInList {
     Community(CommunityId, ChannelId),
 }
 
+#[ts_export(user)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct NamedAccount {
     pub name: String,
     pub account: String,
+}
+
+#[ts_export(user)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum WalletConfig {
+    Auto(AutoWallet),
+    Manual(ManualWallet),
+}
+
+#[ts_export(user)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+pub struct AutoWallet {
+    pub min_cents_visible: u32,
+}
+
+#[ts_export(user)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+pub struct ManualWallet {
+    #[ts(as = "Vec<ts_export::TSPrincipal>")]
+    pub tokens: Vec<CanisterId>,
+}
+
+impl Default for WalletConfig {
+    fn default() -> Self {
+        WalletConfig::Auto(AutoWallet::default())
+    }
+}
+
+#[ts_export(user)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct Referral {
+    pub user_id: UserId,
+    pub status: ReferralStatus,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct Referrals {
+    pub referred_by: Option<UserId>,
+    pub referrals: Vec<Referral>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ExternalAchievementAwarded {
+    pub name: String,
+    pub chit_reward: u32,
+}
+
+#[ts_export(user)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct MessageActivityEvent {
+    pub chat: Chat,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_index: MessageIndex,
+    pub message_id: MessageId,
+    pub event_index: EventIndex,
+    pub activity: MessageActivity,
+    pub timestamp: TimestampMillis,
+    pub user_id: Option<UserId>,
+}
+
+impl MessageActivityEvent {
+    pub fn matches(&self, event: &MessageActivityEvent) -> bool {
+        self.chat == event.chat
+            && self.thread_root_message_index == event.thread_root_message_index
+            && self.message_index == event.message_index
+            && self.activity == event.activity
+    }
+}
+
+#[ts_export(user)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Eq, PartialEq, Debug)]
+pub enum MessageActivity {
+    Mention,
+    Reaction,
+    QuoteReply,
+    Tip,
+    Crypto,
+    PollVote,
+    P2PSwapAccepted,
+}
+
+#[ts_export(user)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct MessageActivitySummary {
+    pub read_up_to: TimestampMillis,
+    pub latest_event_timestamp: TimestampMillis,
+    pub unread_count: u32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum CommunityCanisterEvent {
+    MessageActivity(MessageActivityEvent),
+    Achievement(Achievement),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum GroupCanisterEvent {
+    MessageActivity(MessageActivityEvent),
+    Achievement(Achievement),
 }

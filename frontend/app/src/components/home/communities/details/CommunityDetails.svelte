@@ -1,5 +1,11 @@
 <script lang="ts">
-    import type { Rules, Metrics, CommunitySummary } from "openchat-client";
+    import {
+        type CommunitySummary,
+        type Metrics,
+        type ReadonlySet,
+        type Rules,
+    } from "openchat-client";
+    import { i18nKey } from "../../../../i18n/i18n";
     import {
         communityAdvancedOpen,
         communityInviteUsersOpen,
@@ -8,26 +14,39 @@
         communityStatsOpen,
         communityVisibilityOpen,
     } from "../../../../stores/settings";
+    import CollapsibleCard from "../../../CollapsibleCard.svelte";
+    import Translatable from "../../../Translatable.svelte";
+    import InviteUsersWithLink from "../../InviteUsersWithLink.svelte";
     import Markdown from "../../Markdown.svelte";
-    import AccessGateSummary from "../../AccessGateSummary.svelte";
+    import Stats from "../../Stats.svelte";
+    import AccessGateExpiry from "../../access/AccessGateExpiry.svelte";
+    import AccessGateSummary from "../../access/AccessGateSummary.svelte";
+    import ReferredUsersList from "../../profile/ReferredUsersList.svelte";
     import PermissionsViewer from "../PermissionsViewer.svelte";
     import AdvancedSection from "./AdvancedSection.svelte";
-    import CollapsibleCard from "../../../CollapsibleCard.svelte";
-    import Stats from "../../Stats.svelte";
-    import InviteUsersWithLink from "../../InviteUsersWithLink.svelte";
-    import { i18nKey } from "../../../../i18n/i18n";
-    import Translatable from "../../../Translatable.svelte";
 
-    export let community: CommunitySummary;
-    export let rules: Rules | undefined;
-    export let metrics: Metrics;
-    export let canDelete: boolean;
-    export let canInvite: boolean;
+    interface Props {
+        community: CommunitySummary;
+        rules: Rules | undefined;
+        metrics: Metrics;
+        canDelete: boolean;
+        canInvite: boolean;
+        referrals: ReadonlySet<string>;
+    }
+
+    let {
+        community = $bindable(),
+        rules,
+        metrics,
+        canDelete,
+        canInvite,
+        referrals,
+    }: Props = $props();
 </script>
 
 <div class="details">
     <CollapsibleCard
-        on:toggle={communityVisibilityOpen.toggle}
+        onToggle={communityVisibilityOpen.toggle}
         open={$communityVisibilityOpen}
         headerText={i18nKey("access.visibility")}>
         {#if community.public}
@@ -71,11 +90,19 @@
                 {/if}
             {/if}
         </div>
-        <AccessGateSummary gate={community.gate} />
+        <AccessGateSummary
+            editable={false}
+            level={community.level}
+            gateConfig={community.gateConfig} />
+        {#if community.gateConfig.expiry !== undefined}
+            <div class="expiry">
+                <AccessGateExpiry expiry={community.gateConfig.expiry} />
+            </div>
+        {/if}
     </CollapsibleCard>
     {#if rules !== undefined && rules.enabled}
         <CollapsibleCard
-            on:toggle={communityRulesOpen.toggle}
+            onToggle={communityRulesOpen.toggle}
             open={$communityRulesOpen}
             headerText={i18nKey("rules.levelRules", undefined, community.level)}>
             <Markdown inline={false} text={rules.text} />
@@ -83,30 +110,31 @@
     {/if}
     {#if canInvite}
         <CollapsibleCard
-            on:toggle={communityInviteUsersOpen.toggle}
+            onToggle={communityInviteUsersOpen.toggle}
             open={$communityInviteUsersOpen}
             headerText={i18nKey("invite.inviteWithLink", undefined, community.level, true)}>
             <InviteUsersWithLink container={community} />
         </CollapsibleCard>
     {/if}
+    <ReferredUsersList {referrals} />
     <CollapsibleCard
-        on:toggle={communityPermissionsOpen.toggle}
+        onToggle={communityPermissionsOpen.toggle}
         open={$communityPermissionsOpen}
         headerText={i18nKey("permissions.permissions")}>
-        <PermissionsViewer isPublic={community.public} bind:permissions={community.permissions} />
+        <PermissionsViewer isPublic={community.public} permissions={community.permissions} />
     </CollapsibleCard>
     <CollapsibleCard
-        on:toggle={communityStatsOpen.toggle}
+        onToggle={communityStatsOpen.toggle}
         open={$communityStatsOpen}
         headerText={i18nKey("stats.groupStats", undefined, community.level)}>
         <Stats showReported={false} stats={metrics} />
     </CollapsibleCard>
     {#if canDelete}
         <CollapsibleCard
-            on:toggle={communityAdvancedOpen.toggle}
+            onToggle={communityAdvancedOpen.toggle}
             open={$communityAdvancedOpen}
             headerText={i18nKey("group.advanced")}>
-            <AdvancedSection on:deleteCommunity {community} />
+            <AdvancedSection {community} />
         </CollapsibleCard>
     {/if}
 </div>
@@ -121,5 +149,11 @@
         @include mobile() {
             margin: 0 $sp3;
         }
+    }
+
+    .expiry {
+        color: var(--txt-light);
+        @include font(book, normal, fs-90);
+        margin-top: $sp3;
     }
 </style>

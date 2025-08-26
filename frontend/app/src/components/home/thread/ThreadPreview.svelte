@@ -1,58 +1,84 @@
 <script lang="ts">
+    import Spinner from "@src/components/icons/Spinner.svelte";
+    import Tooltip from "@src/components/tooltip/Tooltip.svelte";
+    import { toastStore } from "@src/stores/toast";
     import {
-        type ThreadPreview,
+        allUsersStore,
+        AvatarSize,
+        chatListScopeStore,
+        chatSummariesStore,
+        currentUserIdStore,
         type EventWrapper,
         type Message,
+        messagesRead,
+        type MultiUserChat,
         OpenChat,
         routeForChatIdentifier,
-        type MultiUserChat,
+        selectedCommunitySummaryStore,
+        type ThreadPreview,
     } from "openchat-client";
-    import { pop } from "../../../utils/transition";
-    import { _ } from "svelte-i18n";
     import page from "page";
+    import { getContext, onMount } from "svelte";
+    import { _ } from "svelte-i18n";
+    import EyeOffIcon from "svelte-material-icons/EyeOff.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
+    import { pop } from "../../../utils/transition";
+    import Avatar from "../../Avatar.svelte";
+    import CollapsibleCard from "../../CollapsibleCard.svelte";
+    import LinkButton from "../../LinkButton.svelte";
+    import Translatable from "../../Translatable.svelte";
     import ChatMessage from "../ChatMessage.svelte";
     import IntersectionObserverComponent from "../IntersectionObserver.svelte";
-    import CollapsibleCard from "../../CollapsibleCard.svelte";
-    import { getContext, onMount } from "svelte";
-    import { AvatarSize } from "openchat-client";
     import Markdown from "../Markdown.svelte";
-    import Avatar from "../../Avatar.svelte";
-    import LinkButton from "../../LinkButton.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    export let thread: ThreadPreview;
-    export let observer: IntersectionObserver;
+    interface Props {
+        thread: ThreadPreview;
+        observer: IntersectionObserver;
+    }
 
-    $: user = client.user;
-    $: chatListScope = client.chatListScope;
-    $: userStore = client.userStore;
-    $: chatSummariesStore = client.chatSummariesStore;
-    $: messagesRead = client.messagesRead;
-    $: missingMessages = thread.totalReplies - thread.latestReplies.length;
-    $: threadRootMessageIndex = thread.rootMessage.event.messageIndex;
-    $: chat = $chatSummariesStore.get(thread.chatId) as MultiUserChat | undefined;
-    $: muted = chat?.membership?.notificationsMuted || false;
-    $: syncDetails = chat?.membership?.latestThreads?.find(
-        (t) => t.threadRootMessageIndex === threadRootMessageIndex,
+    let { thread, observer }: Props = $props();
+
+    let unfollowing = $state(false);
+    let missingMessages = $derived(thread.totalReplies - thread.latestReplies.length);
+    let threadRootMessageIndex = $derived(thread.rootMessage.event.messageIndex);
+    let chat = $derived($chatSummariesStore.get(thread.chatId) as MultiUserChat | undefined);
+    let muted = $derived(chat?.membership?.notificationsMuted || false);
+    let syncDetails = $derived(
+        chat?.membership?.latestThreads?.find(
+            (t) => t.threadRootMessageIndex === threadRootMessageIndex,
+        ),
     );
-    $: unreadCount = syncDetails
-        ? client.unreadThreadMessageCount(
-              thread.chatId,
-              threadRootMessageIndex,
-              syncDetails.latestMessageIndex,
-          )
-        : 0;
-    $: chatData = {
+    let unreadCount = $derived(
+        syncDetails
+            ? client.unreadThreadMessageCount(
+                  thread.chatId,
+                  threadRootMessageIndex,
+                  syncDetails.latestMessageIndex,
+              )
+            : 0,
+    );
+    let chatData = $derived({
         name: chat?.name,
-        avatarUrl: client.groupAvatarUrl(chat),
-    };
+        avatarUrl: client.groupAvatarUrl(chat, $selectedCommunitySummaryStore),
+    });
 
-    $: grouped = client.groupBySender(thread.latestReplies);
+    onMount(() => {
+        return messagesRead.subscribe(() => {
+            if (syncDetails !== undefined) {
+                unreadCount = client.unreadThreadMessageCount(
+                    thread.chatId,
+                    threadRootMessageIndex,
+                    syncDetails.latestMessageIndex,
+                );
+            }
+        });
+    });
 
-    let open = false;
+    let grouped = $derived(client.groupBySender(thread.latestReplies));
+
+    let open = $state(false);
 
     function lastMessageIndex(events: EventWrapper<Message>[]): number | undefined {
         for (let i = events.length - 1; i >= 0; i--) {
@@ -74,81 +100,102 @@
         }
     }
 
-    onMount(() => {
-        return messagesRead.subscribe(() => {
-            if (syncDetails !== undefined) {
-                unreadCount = client.unreadThreadMessageCount(
-                    thread.chatId,
-                    threadRootMessageIndex,
-                    syncDetails.latestMessageIndex,
-                );
-            }
-        });
-    });
-
     function selectThread() {
         page(
-            `${routeForChatIdentifier($chatListScope.kind, thread.chatId)}/${
+            `${routeForChatIdentifier($chatListScopeStore.kind, thread.chatId)}/${
                 thread.rootMessage.event.messageIndex
             }?open=true`,
         );
+    }
+
+    function unfollow(e: Event) {
+        e.preventDefault();
+        e.stopPropagation();
+        unfollowing = true;
+        client
+            .followThread(thread.chatId, thread.rootMessage.event, false)
+            .then((success) => {
+                if (!success) {
+                    toastStore.showFailureToast(i18nKey("unfollowThreadFailed"));
+                    unfollowing = false;
+                }
+            })
+            .catch(() => (unfollowing = false));
     }
 </script>
 
 {#if chat !== undefined}
     <div class="wrapper">
         <CollapsibleCard
-            on:toggle={() => (open = !open)}
+            onToggle={() => (open = !open)}
             {open}
             headerText={i18nKey("userInfoHeader")}>
-            <div slot="titleSlot" class="header">
-                <div class="avatar">
-                    <Avatar url={chatData.avatarUrl} size={AvatarSize.Default} />
+            {#snippet titleSlot()}
+                <div class="header">
+                    <div class="avatar">
+                        <Avatar url={chatData.avatarUrl} size={AvatarSize.Default} />
+                    </div>
+                    <div class="details">
+                        <div class="title-and-link">
+                            <h4 class="title">
+                                {(chat.kind === "group_chat" || chat.kind === "channel") &&
+                                    chat.name}
+                            </h4>
+                            <LinkButton underline="hover" onClick={selectThread}
+                                ><Translatable
+                                    resourceKey={i18nKey("thread.open")} />&#8594;</LinkButton>
+                        </div>
+                        <div class="root-msg">
+                            <Markdown
+                                text={client.getContentAsText($_, thread.rootMessage.event.content)}
+                                oneLine
+                                suppressLinks />
+                        </div>
+                    </div>
+                    <Tooltip position={"bottom"} align={"middle"}>
+                        <!-- svelte-ignore a11y_no_static_element_interactions -->
+                        <!-- svelte-ignore a11y_click_events_have_key_events -->
+                        <div onclick={unfollow} class="unfollow">
+                            {#if !unfollowing}
+                                <EyeOffIcon size={"1.2em"} color={"var(--icon-inverted-txt)"} />
+                            {:else}
+                                <Spinner
+                                    backgroundColour={"rgba(0,0,0,0.3)"}
+                                    foregroundColour={"var(--button-spinner)"} />
+                            {/if}
+                        </div>
+                        {#snippet popupTemplate()}
+                            <Translatable resourceKey={i18nKey("unfollowThread")}></Translatable>
+                        {/snippet}
+                    </Tooltip>
+                    {#if unreadCount > 0}
+                        <div
+                            in:pop={{ duration: 1500 }}
+                            title={$_("chatSummary.unread", {
+                                values: { count: unreadCount.toString() },
+                            })}
+                            class:muted
+                            class="unread">
+                            {unreadCount > 999 ? "999+" : unreadCount}
+                        </div>
+                    {/if}
                 </div>
-                <div class="details">
-                    <div class="title-and-link">
-                        <h4 class="title">
-                            {(chat.kind === "group_chat" || chat.kind === "channel") && chat.name}
-                        </h4>
-                        <LinkButton underline="hover" on:click={selectThread}
-                            ><Translatable
-                                resourceKey={i18nKey("thread.open")} />&#8594;</LinkButton>
-                    </div>
-                    <div class="root-msg">
-                        <Markdown
-                            text={client.getContentAsText($_, thread.rootMessage.event.content)}
-                            oneLine
-                            suppressLinks />
-                    </div>
-                </div>
-                {#if unreadCount > 0}
-                    <div
-                        in:pop={{ duration: 1500 }}
-                        title={$_("chatSummary.unread", {
-                            values: { count: unreadCount.toString() },
-                        })}
-                        class:muted
-                        class="unread">
-                        {unreadCount > 999 ? "999+" : unreadCount}
-                    </div>
-                {/if}
-            </div>
-            <IntersectionObserverComponent on:intersecting={isIntersecting}>
+            {/snippet}
+            <IntersectionObserverComponent onIntersecting={isIntersecting}>
                 <div class="body">
                     <div class="root-msg">
                         <ChatMessage
-                            sender={$userStore[thread.rootMessage.event.sender]}
+                            sender={$allUsersStore.get(thread.rootMessage.event.sender)}
                             focused={false}
                             {observer}
+                            accepted
                             confirmed
                             failed={false}
                             senderTyping={false}
                             readByMe
-                            readByThem
                             chatId={thread.chatId}
                             chatType={chat.kind}
-                            user={$user}
-                            me={thread.rootMessage.event.sender === $user.userId}
+                            me={thread.rootMessage.event.sender === $currentUserIdStore}
                             first
                             last
                             readonly
@@ -168,7 +215,8 @@
                             timestamp={thread.rootMessage.timestamp}
                             expiresAt={thread.rootMessage.expiresAt}
                             dateFormatter={(date) => client.toDatetimeString(date)}
-                            msg={thread.rootMessage.event} />
+                            msg={thread.rootMessage.event}
+                            senderContext={thread.rootMessage.event.senderContext} />
                     </div>
                     {#if missingMessages > 0}
                         <div class="separator">
@@ -181,18 +229,17 @@
                     {#each grouped as userGroup}
                         {#each userGroup as evt, i (evt.event.messageId)}
                             <ChatMessage
-                                sender={$userStore[evt.event.sender]}
+                                sender={$allUsersStore.get(evt.event.sender)}
                                 focused={false}
                                 {observer}
+                                accepted
                                 confirmed
                                 failed={false}
                                 senderTyping={false}
                                 readByMe
-                                readByThem
                                 chatId={thread.chatId}
                                 chatType={chat.kind}
-                                user={$user}
-                                me={evt.event.sender === $user.userId}
+                                me={evt.event.sender === $currentUserIdStore}
                                 first={i === 0}
                                 last={i === userGroup.length - 1}
                                 readonly
@@ -212,10 +259,11 @@
                                 timestamp={evt.timestamp}
                                 expiresAt={evt.expiresAt}
                                 dateFormatter={(date) => client.toDatetimeString(date)}
-                                msg={evt.event} />
+                                msg={evt.event}
+                                senderContext={evt.event.senderContext} />
                         {/each}
                     {/each}
-                    <LinkButton underline="hover" on:click={selectThread}
+                    <LinkButton underline="hover" onClick={selectThread}
                         ><Translatable
                             resourceKey={i18nKey("thread.openThread")} />&#8594;</LinkButton>
                 </div>
@@ -292,5 +340,9 @@
             background-color: var(--unread-mute);
             text-shadow: none;
         }
+    }
+
+    .unfollow {
+        padding: 0 $sp2;
     }
 </style>

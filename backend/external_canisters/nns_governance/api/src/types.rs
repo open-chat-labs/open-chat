@@ -1,10 +1,7 @@
 use candid::{CandidType, Principal};
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::TimestampMillis;
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct Empty {}
+use types::{Empty, TimestampMillis};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BallotInfo {
@@ -32,6 +29,7 @@ pub struct Neuron {
     pub not_for_profit: bool,
     pub joined_community_fund_timestamp_seconds: Option<u64>,
     pub known_neuron_data: Option<KnownNeuronData>,
+    pub voting_power_refreshed_timestamp_seconds: Option<u64>,
     pub dissolve_state: Option<neuron::DissolveState>,
 }
 
@@ -75,6 +73,13 @@ impl ManageNeuron {
             command: Some(command),
         }
     }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ManageNeuronRegisterVoteOnly {
+    pub id: Option<NeuronId>,
+    pub neuron_id_or_subaccount: Option<manage_neuron::NeuronIdOrSubaccount>,
+    pub command: Option<manage_neuron::CommandRegisterVoteOnly>,
 }
 
 pub mod manage_neuron {
@@ -243,12 +248,23 @@ pub mod manage_neuron {
         MergeMaturity(MergeMaturity),
         Merge(Merge),
         StakeMaturity(StakeMaturity),
+        RefreshVotingPower(Empty),
+    }
+
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    pub enum CommandRegisterVoteOnly {
+        RegisterVote(RegisterVote),
     }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ManageNeuronResponse {
     pub command: Option<manage_neuron_response::Command>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ManageNeuronResponseRegisterVoteOnly {
+    pub command: Option<manage_neuron_response::CommandRegisterVoteOnly>,
 }
 
 pub mod manage_neuron_response {
@@ -274,6 +290,13 @@ pub mod manage_neuron_response {
         MergeMaturity(Empty),
         Merge(Empty),
         StakeMaturity(Empty),
+        RefreshVotingPower(Empty),
+    }
+
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    pub enum CommandRegisterVoteOnly {
+        Error(GovernanceError),
+        RegisterVote(Empty),
     }
 }
 
@@ -364,11 +387,22 @@ pub struct ProposalInfo {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ListProposalInfoBallotsOnlyResponse {
+    pub proposal_info: Vec<ProposalInfoBallotsOnly>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ProposalInfoBallotsOnly {
+    pub id: Option<ProposalId>,
+    pub ballots: HashMap<u64, Ballot>,
+    pub reward_status: i32,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Proposal {
     pub title: Option<String>,
     pub summary: String,
     pub url: String,
-    #[serde(deserialize_with = "ok_or_default")]
     pub action: Option<proposal::Action>,
 }
 
@@ -376,14 +410,6 @@ pub struct Proposal {
 pub struct Ballot {
     pub vote: i32,
     pub voting_power: u64,
-}
-
-fn ok_or_default<'de, T, D>(deserializer: D) -> Result<T, D::Error>
-where
-    T: Deserialize<'de> + Default,
-    D: Deserializer<'de>,
-{
-    Ok(T::deserialize(deserializer).unwrap_or_default())
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -698,7 +724,7 @@ impl TryFrom<ProposalInfo> for types::NnsProposal {
     type Error = String;
 
     fn try_from(p: ProposalInfo) -> Result<Self, Self::Error> {
-        let now = canister_time::timestamp_millis();
+        let now = canister_time::now_millis();
         let proposal = p.proposal.ok_or("proposal not set".to_string())?;
 
         Ok(types::NnsProposal {

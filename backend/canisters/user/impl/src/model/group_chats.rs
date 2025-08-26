@@ -1,7 +1,7 @@
 use crate::model::group_chat::GroupChat;
 use serde::{Deserialize, Serialize};
-use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
+use std::collections::hash_map::Entry::{Occupied, Vacant};
 use types::{CanisterId, ChatId, MessageIndex, TimestampMillis, Timestamped};
 
 #[derive(Serialize, Deserialize, Default)]
@@ -78,11 +78,9 @@ impl GroupChats {
     }
 
     pub fn remove(&mut self, chat_id: ChatId, now: TimestampMillis) -> Option<GroupChat> {
-        let group = self.group_chats.remove(&chat_id);
-        if group.is_some() {
-            self.removed.push(RemovedGroup { chat_id, timestamp: now });
-        }
-        group
+        self.removed.retain(|g| g.chat_id != chat_id);
+        self.removed.push(RemovedGroup { chat_id, timestamp: now });
+        self.group_chats.remove(&chat_id)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &GroupChat> {
@@ -95,6 +93,10 @@ impl GroupChats {
 
     pub fn len(&self) -> usize {
         self.group_chats.len()
+    }
+
+    pub fn removed_len(&self) -> usize {
+        self.removed.len()
     }
 
     pub fn pin(&mut self, chat_id: ChatId, now: TimestampMillis) {

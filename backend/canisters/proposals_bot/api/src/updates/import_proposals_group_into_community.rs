@@ -1,5 +1,6 @@
 use candid::{CandidType, Principal};
 use human_readable::{HumanReadablePrincipal, ToHumanReadable};
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{CanisterId, CommunityId};
 
@@ -14,6 +15,7 @@ pub enum Response {
     Success,
     NotFound,
     InternalError(String),
+    Error(OCError),
 }
 
 #[derive(Serialize)]

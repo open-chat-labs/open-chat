@@ -1,5 +1,5 @@
-import { derived, writable } from "svelte/store";
 import { MIN_DOWNLINK } from "openchat-shared";
+import { derived, writable } from "svelte/store";
 
 const networkInformation = writable<NetworkInformation | undefined>(undefined, (set) => {
     if ("connection" in navigator) {

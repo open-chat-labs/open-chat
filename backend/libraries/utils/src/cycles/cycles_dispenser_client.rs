@@ -1,5 +1,4 @@
-use crate::consts::min_cycles_balance;
-use crate::time::MINUTE_IN_MS;
+use constants::{MINUTE_IN_MS, min_cycles_balance};
 use types::CanisterId;
 
 pub fn init_cycles_dispenser_client(cycles_dispenser_canister_id: CanisterId, test_mode: bool) {

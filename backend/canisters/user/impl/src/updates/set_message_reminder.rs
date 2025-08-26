@@ -1,40 +1,40 @@
 use crate::guards::caller_is_owner;
 use crate::timer_job_types::{MessageReminderJob, TimerJob};
-use crate::{mutate_state, openchat_bot, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, execute_update, openchat_bot};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, MessageReminderCreatedContentInternal};
-use ic_cdk_macros::update;
+use oc_error_codes::OCErrorCode;
 use rand::RngCore;
-use types::FieldTooLongResult;
-use user_canister::set_message_reminder_v2::{Response::*, *};
+use types::{Achievement, FieldTooLongResult, OCResult};
 use user_canister::C2CReplyContext;
+use user_canister::set_message_reminder_v2::{Response::*, *};
 
 const MAX_NOTES_LENGTH: usize = 1000;
 
-#[update(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 fn set_message_reminder_v2(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| set_message_reminder_impl(args, state))
+    match execute_update(|state| set_message_reminder_impl(args, state)) {
+        Ok(reminder_id) => Success(reminder_id),
+        Err(error) => Error(error),
+    }
 }
 
-fn set_message_reminder_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if state.data.suspended.value {
-        return UserSuspended;
-    }
+fn set_message_reminder_impl(args: Args, state: &mut RuntimeState) -> OCResult<u64> {
+    state.data.verify_not_suspended()?;
 
     let now = state.env.now();
     if args.remind_at <= now {
-        return ReminderDateInThePast;
+        return Err(OCErrorCode::DateInThePast.into());
     }
 
     let notes_len = args.notes.as_ref().map(|n| n.chars().count()).unwrap_or_default();
     if notes_len > MAX_NOTES_LENGTH {
-        return NotesTooLong(FieldTooLongResult {
+        return Err(OCErrorCode::TextTooLong.with_json(&FieldTooLongResult {
             length_provided: notes_len as u32,
             max_length: MAX_NOTES_LENGTH as u32,
-        });
+        }));
     }
 
     let reminder_id = state.env.rng().next_u64();
@@ -71,5 +71,7 @@ fn set_message_reminder_impl(args: Args, state: &mut RuntimeState) -> Response {
         now,
     );
 
-    Success(reminder_id)
+    state.award_achievement_and_notify(Achievement::SentReminder, now);
+
+    Ok(reminder_id)
 }

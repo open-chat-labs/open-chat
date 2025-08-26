@@ -1,12 +1,12 @@
-use crate::{model::moderation_flags::ModerationFlags, mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, model::moderation_flags::ModerationFlags, mutate_state, read_state};
 use candid::Principal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::set_community_moderation_flags::{Response::*, *};
-use ic_cdk_macros::update;
 use types::CanisterId;
-use user_index_canister_c2c_client::{lookup_user, LookupUserError};
+use user_index_canister_c2c_client::lookup_user;
 
-#[update]
+#[update(msgpack = true)]
 #[trace]
 async fn set_community_moderation_flags(args: Args) -> Response {
     let PrepareResult {
@@ -18,9 +18,9 @@ async fn set_community_moderation_flags(args: Args) -> Response {
     };
 
     match lookup_user(caller, user_index_canister_id).await {
-        Ok(user) if user.is_platform_moderator => (),
-        Ok(_) | Err(LookupUserError::UserNotFound) => return NotAuthorized,
-        Err(LookupUserError::InternalError(error)) => return InternalError(error),
+        Ok(Some(user)) if user.is_platform_moderator => (),
+        Ok(_) => return NotAuthorized,
+        Err(error) => return InternalError(format!("{error:?}")),
     };
 
     mutate_state(|state| commit(&args, state))

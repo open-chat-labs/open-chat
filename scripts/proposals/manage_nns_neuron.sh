@@ -24,3 +24,9 @@ FUNCTION_ID=8001
 
 # Increase Dissolve Delay
 # ARGS="(record { neuron_id = 15574844586067538603:nat64; command = variant { Configure = record { operation = opt variant { IncreaseDissolveDelay = record { additional_dissolve_delay_seconds = 15778800:nat32 } } } } })"
+
+# Split
+# ARGS="(record { neuron_id = 15574844586067538603:nat64; command = variant { Split = record { amount_e8s = 10000000000000:nat64 } } })"
+
+# Start Dissolving
+# ARGS="(record { neuron_id = 1717119387734549084:nat64; command = variant { Configure = record { operation = opt variant { StartDissolving = record {} } } } })"

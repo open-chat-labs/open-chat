@@ -1,6 +1,6 @@
+<!-- svelte-ignore a11y_click_events_have_key_events -->
 <script lang="ts">
-    import { createEventDispatcher, getContext } from "svelte";
-    import { rtlStore } from "../stores/rtl";
+    import { trackedEffect } from "@src/utils/effects.svelte";
     import type {
         ChatIdentifier,
         ChatSummary,
@@ -8,31 +8,45 @@
         CommunitySummary,
         DiamondMembershipStatus,
         DirectChatSummary,
-        GlobalState,
         MultiUserChat,
         OpenChat,
     } from "openchat-client";
-    import Avatar from "./Avatar.svelte";
-    import CollapsibleCard from "./CollapsibleCard.svelte";
-    import { AvatarSize, chatIdentifiersEqual } from "openchat-client";
-    import { iconSize } from "../stores/iconSize";
-    import HoverIcon from "./HoverIcon.svelte";
+    import {
+        allUsersStore,
+        AvatarSize,
+        chatIdentifiersEqual,
+        communitiesStore,
+        favouritesStore,
+        iconSize,
+        selectedChatIdStore,
+        serverDirectChatsStore,
+        serverGroupChatsStore,
+    } from "openchat-client";
+    import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import SectionHeader from "./SectionHeader.svelte";
-    import { _ } from "svelte-i18n";
-    import { now } from "../stores/time";
-    import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
-    import Search from "./Search.svelte";
-    import { compareBigints } from "../utils/bigints";
-    import Diamond from "./icons/Diamond.svelte";
+    import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
     import { i18nKey } from "../i18n/i18n";
+    import { rtlStore } from "../stores/rtl";
+    import { now } from "../stores/time";
+    import { buildDisplayName } from "../utils/user";
+    import Avatar from "./Avatar.svelte";
+    import CollapsibleCard from "./CollapsibleCard.svelte";
+    import HoverIcon from "./HoverIcon.svelte";
+    import Search from "./Search.svelte";
+    import SectionHeader from "./SectionHeader.svelte";
     import Translatable from "./Translatable.svelte";
+    import Badges from "./home/profile/Badges.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
+
+    interface Props {
+        onSelect: (chatId: ChatIdentifier) => void;
+        onClose: () => void;
+    }
 
     type ShareTo = {
         directChats: ShareChat[];
@@ -46,10 +60,12 @@
         userId: string | undefined;
         name: string;
         diamondStatus: DiamondMembershipStatus["kind"];
+        streak: number;
         avatarUrl: string;
         description: string;
         username: string | undefined;
         lastUpdated: bigint;
+        uniquePerson: boolean;
     };
     type ShareCommunity = {
         kind: "community";
@@ -61,25 +77,20 @@
         channels: ShareChat[];
     };
 
-    let searchTerm = "";
-    let targets: ShareTo = {
+    let { onClose, onSelect }: Props = $props();
+    let searchTerm = $state("");
+    let searchTermLower = $derived(searchTerm.toLowerCase());
+    let targets = $state<ShareTo>({
         directChats: [],
         groupChats: [],
         favourites: [],
         communities: [],
-    };
+    });
 
-    $: searchTermLower = searchTerm.toLowerCase();
-    $: userStore = client.userStore;
-    $: selectedChatId = client.selectedChatId;
-    $: globalState = client.globalStateStore;
-
-    $: {
-        buildListOfTargets($globalState, $now, $selectedChatId, searchTermLower).then(
-            (t) => (targets = t),
-        );
-    }
-    $: noTargets = getNumberOfTargets(targets) === 0;
+    trackedEffect("select-chat-modal", () => {
+        buildListOfTargets($now, $selectedChatIdStore, searchTermLower).then((t) => (targets = t));
+    });
+    let noTargets = $derived(getNumberOfTargets(targets) === 0);
 
     function getNumberOfTargets(targets: ShareTo): number {
         return (
@@ -99,34 +110,40 @@
         );
     }
 
+    function matchesSearch(thing: ShareChat | ShareCommunity, searchTerm: string): boolean {
+        return (
+            (searchTerm === "" ||
+                thing.name.toLocaleLowerCase().includes(searchTerm) ||
+                (thing.kind === "chat" &&
+                    thing.username?.toLocaleLowerCase()?.includes(searchTerm))) ??
+            false
+        );
+    }
+
     function chatMatchesSearch(chats: ShareChat[], searchTerm: string): ShareChat[] {
-        return chats
-            .filter(
-                (c) =>
-                    searchTerm === "" ||
-                    c.name.toLowerCase().includes(searchTerm) ||
-                    c.username?.toLowerCase()?.includes(searchTerm),
-            )
-            .sort((a, b) => compareBigints(b.lastUpdated, a.lastUpdated));
+        return chats.filter((c) => matchesSearch(c, searchTerm)).sort(compare);
     }
 
     function communityMatchesSearch(communities: ShareCommunity[], searchTerm: string) {
         return communities
             .reduce((agg, c) => {
-                const filtered = chatMatchesSearch(c.channels, searchTerm);
-                if (filtered.length > 0) {
-                    agg.push({
-                        ...c,
-                        channels: filtered,
-                    });
+                if (matchesSearch(c, searchTerm)) {
+                    agg.push(c);
+                } else {
+                    const filtered = chatMatchesSearch(c.channels, searchTerm);
+                    if (filtered.length > 0) {
+                        agg.push({
+                            ...c,
+                            channels: filtered,
+                        });
+                    }
                 }
                 return agg;
             }, [] as ShareCommunity[])
-            .sort((a, b) => compareBigints(b.lastUpdated, a.lastUpdated));
+            .sort(compare);
     }
 
     async function buildListOfTargets(
-        global: GlobalState,
         now: number,
         selectedChatId: ChatIdentifier | undefined,
         searchTerm: string,
@@ -137,17 +154,23 @@
             favourites: [],
             communities: [],
         };
-        const direct = global.directChats.values();
-        const group = global.groupChats.values();
-        const channels = global.communities.values().flatMap((c) => c.channels);
+        const direct = [...$serverDirectChatsStore.values()].map((d) => ({
+            ...d,
+            name: buildDisplayName($allUsersStore, d.them.userId, "user"),
+        }));
+
+        const group = [...$serverGroupChatsStore.values()];
+        const channels = [...$communitiesStore.values()].flatMap((c) => c.channels);
         const all = [...group, ...direct, ...channels];
-        const favs = all.filter((c) => global.favourites.has(c.id));
+        const favs = all.filter((c) => $favouritesStore.has(c.id));
         try {
             const directChats = await targetsFromChatList(now, direct, selectedChatId);
             const groupChats = await targetsFromChatList(now, group, selectedChatId);
             const favourites = await targetsFromChatList(now, favs, selectedChatId);
             const communities = await Promise.all(
-                global.communities.values().map((c) => normaliseCommunity(now, selectedChatId, c)),
+                [...$communitiesStore.values()].map((c) =>
+                    normaliseCommunity(now, selectedChatId, c),
+                ),
             );
             return {
                 directChats: chatMatchesSearch(directChats, searchTerm),
@@ -182,17 +205,19 @@
         switch (chatSummary.kind) {
             case "direct_chat":
                 const description = await buildDirectChatDescription(chatSummary, now);
-                const them = $userStore[chatSummary.them.userId];
+                const them = $allUsersStore.get(chatSummary.them.userId);
                 return {
                     kind: "chat",
                     id: chatSummary.id,
                     userId: chatSummary.them.userId,
                     name: client.displayName(them),
-                    diamondStatus: them.diamondStatus,
+                    diamondStatus: them?.diamondStatus ?? "inactive",
+                    streak: client.getStreak(chatSummary.them.userId),
                     avatarUrl: client.userAvatarUrl(them),
                     description,
-                    username: "@" + them.username,
+                    username: them ? "@" + them.username : undefined,
                     lastUpdated: chatSummary.lastUpdated,
+                    uniquePerson: them?.isUniquePerson ?? false,
                 };
 
             default:
@@ -202,10 +227,12 @@
                     userId: undefined,
                     name: chatSummary.name,
                     diamondStatus: "inactive" as DiamondMembershipStatus["kind"],
+                    streak: 0,
                     avatarUrl: client.groupAvatarUrl(chatSummary),
                     description: buildGroupChatDescription(chatSummary),
                     username: undefined,
                     lastUpdated: chatSummary.lastUpdated,
+                    uniquePerson: false,
                 };
         }
     }
@@ -216,7 +243,7 @@
     ): Promise<string> {
         return client.getLastOnlineDate(chat.them.userId, now).then((lastOnline) => {
             if (lastOnline !== undefined && lastOnline !== 0) {
-                return client.formatLastOnlineDate($_, now, lastOnline);
+                return client.formatLastOnlineDate($_, now, lastOnline)[0];
             } else {
                 return $_("offline");
             }
@@ -246,8 +273,8 @@
         );
     }
 
-    function selectChat(chatId: ChatIdentifier) {
-        dispatch("select", chatId);
+    function compare(a: { name: string }, b: { name: string }): number {
+        return a.name.localeCompare(b.name);
     }
 </script>
 
@@ -257,12 +284,7 @@
             <AccountMultiple size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
         <h4><Translatable resourceKey={i18nKey("sendTo")} /></h4>
-        <span
-            role="button"
-            tabindex="0"
-            title={$_("close")}
-            class="close"
-            on:click={() => dispatch("close")}>
+        <span role="button" tabindex="0" title={$_("close")} class="close" onclick={onClose}>
             <HoverIcon>
                 <Close size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
@@ -281,23 +303,26 @@
                     first
                     transition={false}
                     headerText={i18nKey("communities.directChats")}>
-                    <div slot="titleSlot" class="card-header">
-                        <div class="avatar">
-                            <MessageOutline size={$iconSize} color={"var(--icon-txt)"} />
+                    {#snippet titleSlot()}
+                        <div class="card-header">
+                            <div class="avatar">
+                                <MessageOutline size={$iconSize} color={"var(--icon-txt)"} />
+                            </div>
+                            <div class="details">
+                                <h4 class="title">
+                                    <Translatable
+                                        resourceKey={i18nKey("communities.directChats")} />
+                                </h4>
+                            </div>
                         </div>
-                        <div class="details">
-                            <h4 class="title">
-                                <Translatable resourceKey={i18nKey("communities.directChats")} />
-                            </h4>
-                        </div>
-                    </div>
+                    {/snippet}
                     {#each targets.directChats as target}
                         <div
                             role="button"
                             tabindex="0"
                             class="row"
                             class:rtl={$rtlStore}
-                            on:click={() => selectChat(target.id)}>
+                            onclick={() => onSelect(target.id)}>
                             <div class="avatar">
                                 <Avatar url={target.avatarUrl} size={AvatarSize.Default} />
                             </div>
@@ -306,7 +331,10 @@
                                     <span class="display-name">
                                         {target.name}
                                     </span>
-                                    <Diamond status={target.diamondStatus} />
+                                    <Badges
+                                        uniquePerson={target.uniquePerson}
+                                        diamondStatus={target.diamondStatus}
+                                        streak={target.streak} />
                                     {#if target.username !== undefined}
                                         <span class="username">{target.username}</span>
                                     {/if}
@@ -322,23 +350,25 @@
                     transition={false}
                     open={searchTerm !== ""}
                     headerText={i18nKey("communities.groupChats")}>
-                    <div slot="titleSlot" class="card-header">
-                        <div class="avatar">
-                            <ForumOutline size={$iconSize} color={"var(--icon-txt)"} />
+                    {#snippet titleSlot()}
+                        <div class="card-header">
+                            <div class="avatar">
+                                <ForumOutline size={$iconSize} color={"var(--icon-txt)"} />
+                            </div>
+                            <div class="details">
+                                <h4 class="title">
+                                    <Translatable resourceKey={i18nKey("communities.groupChats")} />
+                                </h4>
+                            </div>
                         </div>
-                        <div class="details">
-                            <h4 class="title">
-                                <Translatable resourceKey={i18nKey("communities.groupChats")} />
-                            </h4>
-                        </div>
-                    </div>
+                    {/snippet}
                     {#each targets.groupChats as target}
                         <div
                             role="button"
                             tabindex="0"
                             class="row"
                             class:rtl={$rtlStore}
-                            on:click={() => selectChat(target.id)}>
+                            onclick={() => onSelect(target.id)}>
                             <div class="avatar">
                                 <Avatar url={target.avatarUrl} size={AvatarSize.Default} />
                             </div>
@@ -355,23 +385,25 @@
                     transition={false}
                     open={searchTerm !== ""}
                     headerText={i18nKey("communities.favourites")}>
-                    <div slot="titleSlot" class="card-header">
-                        <div class="avatar">
-                            <HeartOutline size={$iconSize} color={"var(--icon-txt)"} />
+                    {#snippet titleSlot()}
+                        <div class="card-header">
+                            <div class="avatar">
+                                <HeartOutline size={$iconSize} color={"var(--icon-txt)"} />
+                            </div>
+                            <div class="details">
+                                <h4 class="title">
+                                    <Translatable resourceKey={i18nKey("communities.favourites")} />
+                                </h4>
+                            </div>
                         </div>
-                        <div class="details">
-                            <h4 class="title">
-                                <Translatable resourceKey={i18nKey("communities.favourites")} />
-                            </h4>
-                        </div>
-                    </div>
+                    {/snippet}
                     {#each targets.favourites as target}
                         <div
                             role="button"
                             tabindex="0"
                             class="row"
                             class:rtl={$rtlStore}
-                            on:click={() => selectChat(target.id)}>
+                            onclick={() => onSelect(target.id)}>
                             <div class="avatar">
                                 <Avatar url={target.avatarUrl} size={AvatarSize.Default} />
                             </div>
@@ -389,23 +421,25 @@
                         transition={false}
                         open={searchTerm !== ""}
                         headerText={i18nKey(community.name)}>
-                        <div slot="titleSlot" class="card-header">
-                            <div class="avatar">
-                                <Avatar url={community.avatarUrl} size={AvatarSize.Default} />
+                        {#snippet titleSlot()}
+                            <div class="card-header">
+                                <div class="avatar">
+                                    <Avatar url={community.avatarUrl} size={AvatarSize.Default} />
+                                </div>
+                                <div class="details">
+                                    <h4 class="title">
+                                        {community.name}
+                                    </h4>
+                                </div>
                             </div>
-                            <div class="details">
-                                <h4 class="title">
-                                    {community.name}
-                                </h4>
-                            </div>
-                        </div>
+                        {/snippet}
                         {#each community.channels as target}
                             <div
                                 role="button"
                                 tabindex="0"
                                 class="row"
                                 class:rtl={$rtlStore}
-                                on:click={() => selectChat(target.id)}>
+                                onclick={() => onSelect(target.id)}>
                                 <div class="avatar">
                                     <Avatar url={target.avatarUrl} size={AvatarSize.Default} />
                                 </div>
@@ -444,6 +478,9 @@
         width: 500px;
         overflow: auto;
         overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
 
         @include mobile() {
             width: 100%;

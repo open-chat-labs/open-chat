@@ -1,8 +1,8 @@
 use crate::MARK_ACTIVE_DURATION;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
+use std::collections::hash_map::Entry::{Occupied, Vacant};
 use types::{ChatId, FrozenGroupInfo, TimestampMillis};
 
 #[derive(CandidType, Serialize, Deserialize, Default)]

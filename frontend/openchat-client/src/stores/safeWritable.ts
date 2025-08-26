@@ -11,7 +11,7 @@
  * This writable wrapper will allow us to provide our own equality function
  */
 
-import { type Updater, type Writable, writable } from "svelte/store";
+import { type Subscriber, type Updater, type Writable, writable } from "svelte/store";
 
 function referenceEqual<T>(a: T, b: T): boolean {
     return a === b;
@@ -41,7 +41,7 @@ export function safeWritable<T>(
         set(fn(currentValue));
     }
     return {
-        subscribe: store.subscribe,
+        subscribe: (subscriber: Subscriber<T>, invalidate?: () => void) => store.subscribe(subscriber, invalidate),
         set,
         update,
     };

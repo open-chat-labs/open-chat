@@ -1,47 +1,53 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import {
+        iconSize,
+        type ChatSummary,
+        type MessageMatch,
+        type OpenChat,
+        type UserOrUserGroup,
+    } from "openchat-client";
+    import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
-    import SectionHeader from "../SectionHeader.svelte";
-    import ChevronUp from "svelte-material-icons/ChevronUp.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
+    import ChevronUp from "svelte-material-icons/ChevronUp.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import type { MessageMatch, ChatSummary, OpenChat, UserOrUserGroup } from "openchat-client";
     import HoverIcon from "../HoverIcon.svelte";
-    import { iconSize } from "../../stores/iconSize";
+    import SectionHeader from "../SectionHeader.svelte";
     import MentionPicker from "./MentionPicker.svelte";
 
-    export let chat: ChatSummary;
-    export let searchTerm = "";
+    interface Props {
+        chat: ChatSummary;
+        searchTerm?: string;
+        onClose: () => void;
+        onGoToMessageIndex: (args: { index: number; preserveFocus: boolean }) => void;
+    }
 
-    const dispatch = createEventDispatcher();
+    let { chat, searchTerm = $bindable(""), onClose, onGoToMessageIndex }: Props = $props();
+
     const client = getContext<OpenChat>("client");
     const mentionRegex = /@(\w*)$/;
 
     let lastSearchTerm = "";
-    let matches: MessageMatch[] = [];
-    let currentMatch = 0;
-    let inputElement: HTMLInputElement;
-    let searching = false;
-    let showMentionPicker = false;
-    let mentionPrefix: string | undefined;
-    let searchBoxHeight: number | undefined;
+    let matches: MessageMatch[] = $state([]);
+    let currentMatch = $state(0);
+    let inputElement: HTMLInputElement | undefined = $state();
+    let searching = $state(false);
+    let showMentionPicker = $state(false);
+    let mentionPrefix: string | undefined = $state();
+    let searchBoxHeight: number = $state(80);
     let rangeToReplace: [number, number] | undefined = undefined;
     let timer: number | undefined;
 
-    $: count = matches.length > 0 ? `${currentMatch + 1}/${matches.length}` : "";
-    $: isGroup = chat.kind === "group_chat" || chat.kind === "channel";
+    let count = $derived(matches.length > 0 ? `${currentMatch + 1}/${matches.length}` : "");
+    let isGroup = $derived(chat.kind === "group_chat" || chat.kind === "channel");
 
     onMount(() => {
-        inputElement.focus();
+        inputElement?.focus();
         if (searchTerm.length > 0) {
             performSearch();
         }
         return () => clearMatches();
     });
-
-    function onClose() {
-        dispatch("close");
-    }
 
     function onNext() {
         currentMatch++;
@@ -64,7 +70,7 @@
             currentMatch = 0;
         }
 
-        dispatch("goToMessageIndex", {
+        onGoToMessageIndex({
             index: matches[currentMatch].messageIndex,
             preserveFocus: true,
         });
@@ -72,7 +78,7 @@
 
     function clearMatches() {
         matches = [];
-        dispatch("goToMessageIndex", {
+        onGoToMessageIndex({
             index: -1,
             preserveFocus: false,
         });
@@ -90,7 +96,7 @@
             searching = true;
             const lowercase = term.toLowerCase();
             try {
-                let response = await client.searchChat(chat.id, lowercase, mentions, 50);
+                let response = await client.searchChat(chat.id, lowercase, mentions, 200);
                 if (response.kind === "success") {
                     matches = filterAndSortMatches(response.matches);
                     if (matches.length > 0) {
@@ -125,6 +131,7 @@
     }
 
     function filterAndSortMatches(matches: MessageMatch[]): MessageMatch[] {
+        if (matches.length === 0) return matches;
         const topScore = matches[0].score;
         const keepThreshold = topScore * 0.2;
         console.log(
@@ -171,11 +178,11 @@
             return;
         }
 
-        const pos = inputElement.selectionEnd ?? 0;
-        const slice = inputElement.value.slice(0, pos);
-        const matches = slice.match(mentionRegex);
+        const pos = inputElement?.selectionEnd ?? 0;
+        const slice = inputElement?.value?.slice(0, pos);
+        const matches = slice?.match(mentionRegex);
 
-        if (matches !== null) {
+        if (matches != null) {
             if (matches.index !== undefined) {
                 rangeToReplace = [matches.index, pos];
                 mentionPrefix = matches[1].toLowerCase() || undefined;
@@ -207,19 +214,18 @@
     }
 
     function setCaretToEnd() {
-        inputElement.setSelectionRange(searchTerm.length, searchTerm.length);
+        inputElement?.setSelectionRange(searchTerm.length, searchTerm.length);
     }
 
     function replaceTextWith(replacement: string) {
         if (rangeToReplace === undefined) return;
 
-        inputElement.setRangeText(replacement, rangeToReplace[0], rangeToReplace[1], "end");
-        inputElement.focus();
-        searchTerm = inputElement.value;
+        inputElement?.setRangeText(replacement, rangeToReplace[0], rangeToReplace[1], "end");
+        inputElement?.focus();
+        searchTerm = inputElement?.value ?? "";
     }
 
-    function mention(ev: CustomEvent<UserOrUserGroup>): void {
-        const userOrGroup = ev.detail;
+    function mention(userOrGroup: UserOrUserGroup): void {
         const username = client.userOrUserGroupName(userOrGroup);
         const userLabel = `@${username}`;
 
@@ -235,21 +241,21 @@
     }
 </script>
 
-<svelte:window on:keydown={onWindowKeyDown} />
+<svelte:window onkeydown={onWindowKeyDown} />
 
 {#if showMentionPicker}
     <MentionPicker
-        offset={searchBoxHeight ?? 80}
+        offset={searchBoxHeight}
         direction={"down"}
         prefix={mentionPrefix}
         mentionSelf
         usersOnly
-        on:close={cancelMention}
-        on:mention={mention} />
+        onClose={cancelMention}
+        onMention={mention} />
 {/if}
 
 <SectionHeader shadow flush entry bind:height={searchBoxHeight}>
-    <div on:click={onClose}>
+    <div onclick={onClose}>
         <HoverIcon>
             <Close size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
@@ -257,26 +263,26 @@
     <div class="wrapper">
         <input
             bind:this={inputElement}
-            on:input={onInput}
-            on:keyup={onInputKeyup}
-            on:keypress={onKeyPress}
+            oninput={onInput}
+            onkeyup={onInputKeyup}
+            onkeypress={onKeyPress}
             spellcheck="false"
             bind:value={searchTerm}
             type="text"
             maxlength="30"
             placeholder={$_("search")} />
         {#if searching}
-            <div class="searching" />
+            <div class="searching"></div>
         {:else}
             <div class="count">{count}</div>
         {/if}
     </div>
-    <div on:click={onNext}>
+    <div onclick={onNext}>
         <HoverIcon compact>
             <ChevronUp size="1.8em" color={"var(--icon-txt)"} />
         </HoverIcon>
     </div>
-    <div on:click={onPrevious}>
+    <div onclick={onPrevious}>
         <HoverIcon compact>
             <ChevronDown size="1.8em" color={"var(--icon-txt)"} />
         </HoverIcon>

@@ -1,78 +1,66 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext } from "svelte";
-    import { eventListScrolling } from "../../stores/scrollPos";
-    import type { OpenChat } from "openchat-client";
+    import { trackedEffect } from "@src/utils/effects.svelte";
+    import { eventListScrolling } from "openchat-client";
 
     type LinkInfo = {
         url: string;
         title: string | null | undefined;
         description: string | null | undefined;
         image: string | null | undefined;
+        imageAlt: string | null | undefined;
     };
 
-    const dispatch = createEventDispatcher();
-    const client = getContext<OpenChat>("client");
+    interface Props {
+        url: string;
+        intersecting: boolean;
+        onRendered: (url: string) => void;
+    }
 
-    export let url: string;
-    export let intersecting: boolean;
-    export let rendered = false;
+    let { url, intersecting, onRendered }: Props = $props();
 
-    let previewWrapper: HTMLElement;
-    let previewPromise: Promise<LinkInfo> | undefined = undefined;
+    let previewPromise: Promise<LinkInfo | undefined> | undefined = $state();
+    let rendered = $state(false);
 
-    $: offlineStore = client.offlineStore;
+    async function loadPreview(url: string): Promise<LinkInfo | undefined> {
+        const response = await fetch(
+            `${import.meta.env.OC_PREVIEW_PROXY_URL}/preview?url=${encodeURIComponent(url)}`,
+        );
 
-    $: {
-        if (intersecting && !$eventListScrolling && !rendered && !$offlineStore) {
-            // make sure we only actually *load* the preview once
-            previewPromise = previewPromise ?? loadPreview(url);
-            previewPromise.then((preview) => {
-                if (
-                    preview.title !== undefined ||
-                    preview.description !== undefined ||
-                    preview.image !== undefined
-                ) {
-                    if (intersecting && !$eventListScrolling) {
-                        rendered = true;
-                        dispatch("rendered", url);
-                    }
-                }
-            });
+        const checkIfMetaEmpty = (meta: Omit<LinkInfo, "url">) =>
+            !meta.title && !meta.description && !meta.image && !meta.imageAlt;
+
+        if (response.ok) {
+            const meta = await response.json();
+            const metaIsEmpty = checkIfMetaEmpty(meta);
+
+            if (!metaIsEmpty) {
+                return {
+                    url,
+                    title: meta.title,
+                    description: meta.description,
+                    image: meta.image ? new URL(meta.image, url).toString() : undefined,
+                    imageAlt: meta.imageAlt,
+                };
+            }
         }
     }
 
-    async function loadPreview(url: string): Promise<LinkInfo> {
-        const response = await fetch(`https://proxy.cors.sh/${url}`, {
-            headers: {
-                "x-cors-api-key": process.env.CORS_APIKEY!,
-            },
+    trackedEffect("generic-preview", () => {
+        // make sure we only actually *load* the preview once
+        previewPromise = previewPromise ?? loadPreview(url);
+        previewPromise.then((preview) => {
+            if (preview && intersecting && !$eventListScrolling) {
+                rendered = true;
+                onRendered(url);
+            }
         });
-
-        const html = await response.text();
-        const doc = new DOMParser().parseFromString(html, "text/html");
-        const title = doc.querySelector('meta[property="og:title"]')?.getAttribute("content");
-        const description = doc
-            .querySelector('meta[property="og:description"]')
-            ?.getAttribute("content");
-        const image = doc.querySelector('meta[property="og:image"]')?.getAttribute("content");
-
-        return {
-            url,
-            title,
-            description,
-            image: image ? new URL(image, url).toString() : undefined,
-        };
-    }
-
-    function imageLoaded() {
-        dispatch("imageLoaded", previewWrapper);
-    }
+    });
 </script>
 
 {#if rendered}
     {#await previewPromise then preview}
-        {#if preview !== undefined}
-            <div bind:this={previewWrapper}>
+        {#if preview}
+            <div>
                 {#if preview.title}
                     <a class="title" href={preview.url} target="_blank">{preview.title}</a>
                 {/if}
@@ -82,11 +70,9 @@
                 {#if preview.image}
                     <a href={preview.url} target="_blank">
                         <img
-                            on:load={imageLoaded}
-                            on:error={imageLoaded}
                             class="image"
                             src={preview.image}
-                            alt="link preview image" />
+                            alt={preview.imageAlt ?? "link preview image"} />
                     </a>
                 {/if}
             </div>

@@ -1,9 +1,115 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
+
+## [[2.0.1875](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1875-online_users)] - 2025-08-20
+
+### Changed
+
+- Expose `liquid_cycles_balance` in metrics ([#8350](https://github.com/open-chat-labs/open-chat/pull/8350))
+- Add delay before retrying c2c call under certain error conditions ([#8355](https://github.com/open-chat-labs/open-chat/pull/8355))
+- Switch some endpoints over to using common response types ([#8450](https://github.com/open-chat-labs/open-chat/pull/8450))
+
+## [[2.0.1722](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1722-online_users)] - 2025-05-01
+
+### Changed
+
+- Increase timeout of bounded-wait calls to 5 minutes ([#7730](https://github.com/open-chat-labs/open-chat/pull/7730))
+- Include more details in failed c2c call errors ([#7749](https://github.com/open-chat-labs/open-chat/pull/7749))
+- Additionally include minutes online in the previous month ([#7884](https://github.com/open-chat-labs/open-chat/pull/7884))
+
+## [[2.0.1687](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1687-online_users)] - 2025-04-03
+
+### Changed
+
+- Filter trace level events globally so they are dropped earlier ([#7678](https://github.com/open-chat-labs/open-chat/pull/7678))
+- Support passing common state to timer job batches ([#7705](https://github.com/open-chat-labs/open-chat/pull/7705))
+
+## [[2.0.1664](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1664-online_users)] - 2025-03-26
+
+### Added
+
+- Expose minutes online via http request ([#7670](https://github.com/open-chat-labs/open-chat/pull/7670))
+
+## [[2.0.1648](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1648-online_users)] - 2025-03-12
+
+### Changed
+
+- Return `minutes_online` in `mark_online` response ([#7572](https://github.com/open-chat-labs/open-chat/pull/7572))
+
+## [[2.0.1638](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1638-online_users)] - 2025-03-11
+
+### Added
+
+- Sync user minutes online to AirdropBot ([#7563](https://github.com/open-chat-labs/open-chat/pull/7563))
+
+## [[2.0.1631](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1631-online_users)] - 2025-03-10
+
+### Added
+
+- Track user online minutes per month ([#7547](https://github.com/open-chat-labs/open-chat/pull/7547))
+
+### Changed
+
+- Introduce `StableMemoryMap` trait to simplify storing in stable memory ([#7176](https://github.com/open-chat-labs/open-chat/pull/7176))
+- Log total instructions consumed at end of upgrade ([#7551](https://github.com/open-chat-labs/open-chat/pull/7551))
+
+## [[2.0.1517](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1517-online_users)] - 2024-12-13
+
+### Added
+
+- Reinstate some candid endpoints ([#6468](https://github.com/open-chat-labs/open-chat/pull/6468))
+- Add an error log with http endpoint ([#6608](https://github.com/open-chat-labs/open-chat/pull/6608))
+
+### Changed
+
+- Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
+- Add serde default attribute in preparation for skipping serialization if default ([#6475](https://github.com/open-chat-labs/open-chat/pull/6475))
+- Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))
+- Switch to using `PrincipalToStableMemoryMap` ([#7023](https://github.com/open-chat-labs/open-chat/pull/7023))
+
+### Removed
+
+- Remove deprecated candid endpoints ([#6396](https://github.com/open-chat-labs/open-chat/pull/6396))
+
+## [[2.0.1335](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1335-online_users)] - 2024-09-06
+
+### Added
+
+- Expose MessagePack versions of OnlineUsers canister APIs ([#6318](https://github.com/open-chat-labs/open-chat/pull/6318))
+
+### Changed
+
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+
+## [[2.0.1322](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1322-online_users)] - 2024-09-02
+
+### Changed
+
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+
+## [[2.0.1283](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1283-online_users)] - 2024-08-02
+
+### Added
+
+- Added `c2c_remove_user` to be called by the UserIndex ([#6179](https://github.com/open-chat-labs/open-chat/pull/6179))
+
+### Changed
+
+- Clear the principal to userId map to ensure latest values are used ([#6184](https://github.com/open-chat-labs/open-chat/pull/6184))
+
+## [[2.0.1149](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1149-online_users)] - 2024-04-23
+
+### Changed
+
+- Update `event_store` packages to v0.1.0 ([#5715](https://github.com/open-chat-labs/open-chat/pull/5715))
+- Expose both heap and stable memory in metrics ([#5718](https://github.com/open-chat-labs/open-chat/pull/5718))
+
+## [[2.0.1138](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1138-online_users)] - 2024-04-10
 
 ### Changed
 
@@ -57,7 +163,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Adjust `MemoryManager` bucket size ([#4601](https://github.com/open-chat-labs/open-chat/pull/4601))
-- Maintain last online dates during `MemoryManager` reset ([#4622](https://github.com/open-chat-labs/open-chat/pull/4622)) 
+- Maintain last online dates during `MemoryManager` reset ([#4622](https://github.com/open-chat-labs/open-chat/pull/4622))
 
 ## [[2.0.652](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.652-online_users)] - 2023-03-30
 

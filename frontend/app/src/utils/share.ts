@@ -1,15 +1,16 @@
 import type {
+    ChatIdentifier,
+    CryptocurrencyDetails,
     Message,
     MessageContent,
     MessageFormatter,
-    ChatIdentifier,
-    CryptocurrencyDetails,
+    ReadonlyMap,
 } from "openchat-client";
 import { buildCryptoTransferText, buildTransactionUrl, routeForMessage } from "openchat-client";
-import { toastStore } from "../stores/toast";
-import { get } from "svelte/store";
 import { _ } from "svelte-i18n";
+import { get } from "svelte/store";
 import { i18nKey } from "../i18n/i18n";
+import { toastStore } from "../stores/toast";
 
 export type Share = {
     title: string | undefined;
@@ -72,7 +73,11 @@ export function canShareMessage(content: MessageContent): boolean {
         return false;
     }
 
-    if (content.kind === "placeholder_content" || content.kind === "deleted_content") {
+    if (
+        content.kind === "placeholder_content" ||
+        content.kind === "deleted_content" ||
+        content.kind === "bot_placeholder_content"
+    ) {
         return false;
     }
 
@@ -102,7 +107,7 @@ export function shareMessage(
     userId: string,
     me: boolean,
     msg: Message,
-    cryptoLookup: Record<string, CryptocurrencyDetails>,
+    cryptoLookup: ReadonlyMap<string, CryptocurrencyDetails>,
 ): void {
     buildShareFromMessage(formatter, userId, me, msg, cryptoLookup).then(
         (share) =>
@@ -136,10 +141,14 @@ async function buildShareFromMessage(
     userId: string,
     me: boolean,
     msg: Message,
-    cryptoLookup: Record<string, CryptocurrencyDetails>,
+    cryptoLookup: ReadonlyMap<string, CryptocurrencyDetails>,
 ): Promise<Share> {
     const content = msg.content;
-    if (content.kind === "deleted_content" || content.kind === "placeholder_content") {
+    if (
+        content.kind === "deleted_content" ||
+        content.kind === "placeholder_content" ||
+        content.kind === "bot_placeholder_content"
+    ) {
         return Promise.reject();
     }
 

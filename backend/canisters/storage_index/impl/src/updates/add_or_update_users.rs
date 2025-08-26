@@ -1,9 +1,9 @@
 use crate::guards::caller_is_user_controller;
-use crate::model::bucket_sync_state::EventToSync;
-use crate::{mutate_state, RuntimeState, UserRecordInternal};
+use crate::model::bucket_event_batch::EventToSync;
+use crate::{RuntimeState, UserRecordInternal, mutate_state};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
-use storage_index_canister::add_or_update_users::{Response::*, *};
+use ic_cdk::update;
+use storage_index_canister::add_or_update_users::*;
 
 #[update(guard = "caller_is_user_controller")]
 #[trace]
@@ -24,10 +24,9 @@ fn add_or_update_users_impl(args: Args, state: &mut RuntimeState) -> Response {
                     delete_oldest_if_limit_exceeded: true,
                 },
             );
-
-            state.data.buckets.sync_event(EventToSync::UserAdded(user_config.user_id));
+            state.push_event_to_buckets(EventToSync::UserAdded(user_config.user_id));
         }
     }
 
-    Success
+    Response::Success
 }

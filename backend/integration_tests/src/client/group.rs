@@ -1,51 +1,59 @@
-use crate::{generate_query_call, generate_update_call};
+use crate::{generate_msgpack_query_call, generate_msgpack_update_call, generate_update_call};
 use group_canister::*;
+use ic_stable_structures::memory_manager::MemoryId;
+
+pub const CHAT_EVENTS_MEMORY_ID: MemoryId = MemoryId::new(3);
 
 // Queries
-generate_query_call!(events);
-generate_query_call!(events_by_index);
-generate_query_call!(events_window);
-generate_query_call!(public_summary);
-generate_query_call!(selected_initial);
-generate_query_call!(selected_updates_v2);
-generate_query_call!(summary);
-generate_query_call!(summary_updates);
+generate_msgpack_query_call!(events);
+generate_msgpack_query_call!(events_by_index);
+generate_msgpack_query_call!(events_window);
+generate_msgpack_query_call!(local_user_index);
+generate_msgpack_query_call!(public_summary);
+generate_msgpack_query_call!(selected_initial);
+generate_msgpack_query_call!(selected_updates_v2);
+generate_msgpack_query_call!(summary);
+generate_msgpack_query_call!(summary_updates);
+generate_msgpack_query_call!(webhook);
 
 // Updates
-generate_update_call!(accept_p2p_swap);
-generate_update_call!(add_reaction);
-generate_update_call!(block_user);
-generate_update_call!(cancel_p2p_swap);
-generate_update_call!(change_role);
-generate_update_call!(claim_prize);
-generate_update_call!(convert_into_community);
-generate_update_call!(delete_messages);
-generate_update_call!(edit_message_v2);
-generate_update_call!(enable_invite_code);
-generate_update_call!(end_video_call);
-generate_update_call!(join_video_call);
-generate_update_call!(pin_message_v2);
-generate_update_call!(register_poll_vote);
-generate_update_call!(remove_participant);
-generate_update_call!(remove_reaction);
-generate_update_call!(send_message_v2);
-generate_update_call!(start_video_call);
-generate_update_call!(toggle_mute_notifications);
-generate_update_call!(unblock_user);
-generate_update_call!(undelete_messages);
-generate_update_call!(unpin_message);
-generate_update_call!(update_group_v2);
+generate_msgpack_update_call!(accept_p2p_swap);
+generate_msgpack_update_call!(add_reaction);
+generate_msgpack_update_call!(block_user);
+generate_msgpack_update_call!(cancel_p2p_swap);
+generate_msgpack_update_call!(change_role);
+generate_msgpack_update_call!(claim_prize);
+generate_msgpack_update_call!(convert_into_community);
+generate_msgpack_update_call!(delete_messages);
+generate_msgpack_update_call!(edit_message_v2);
+generate_msgpack_update_call!(enable_invite_code);
+generate_update_call!(end_video_call_v2);
+generate_msgpack_update_call!(join_video_call);
+generate_msgpack_update_call!(pin_message_v2);
+generate_msgpack_update_call!(register_poll_vote);
+generate_msgpack_update_call!(register_webhook);
+generate_msgpack_update_call!(remove_participant);
+generate_msgpack_update_call!(remove_reaction);
+generate_msgpack_update_call!(send_message_v2);
+generate_update_call!(start_video_call_v2);
+generate_msgpack_update_call!(toggle_mute_notifications);
+generate_msgpack_update_call!(unblock_user);
+generate_msgpack_update_call!(undelete_messages);
+generate_msgpack_update_call!(unpin_message);
+generate_msgpack_update_call!(update_bot);
+generate_msgpack_update_call!(update_group_v2);
 
 pub mod happy_path {
-    use crate::env::VIDEO_CALL_OPERATOR;
-    use crate::rng::random_message_id;
     use crate::User;
+    use crate::client::user;
+    use crate::env::VIDEO_CALL_OPERATOR;
     use candid::Principal;
     use pocket_ic::PocketIc;
+    use testing::rng::random_from_u128;
     use types::{
-        ChatId, EventIndex, EventsResponse, GroupCanisterGroupChatSummary, GroupCanisterGroupChatSummaryUpdates, GroupRole,
-        MessageContentInitial, MessageId, MessageIndex, Milliseconds, PollVotes, TextContent, TimestampMillis, UserId,
-        VoteOperation,
+        BotPermissions, CanisterId, ChatId, Empty, EventIndex, EventsResponse, GroupCanisterGroupChatSummary,
+        GroupCanisterGroupChatSummaryUpdates, GroupReplyContext, GroupRole, MessageContentInitial, MessageId, MessageIndex,
+        Milliseconds, PollVotes, Reaction, TextContent, TimestampMillis, UserId, VideoCallType, VoteOperation,
     };
 
     pub fn send_text_message(
@@ -62,16 +70,17 @@ pub mod happy_path {
             group_chat_id.into(),
             &group_canister::send_message_v2::Args {
                 thread_root_message_index,
-                message_id: message_id.unwrap_or_else(random_message_id),
+                message_id: message_id.unwrap_or_else(random_from_u128),
                 content: MessageContentInitial::Text(TextContent { text: text.to_string() }),
                 sender_name: sender.username(),
                 sender_display_name: None,
                 replies_to: None,
                 mentioned: Vec::new(),
                 forwarding: false,
+                block_level_markdown: false,
                 rules_accepted: None,
                 message_filter_failed: None,
-                correlation_id: 0,
+                new_achievement: false,
             },
         );
 
@@ -79,6 +88,80 @@ pub mod happy_path {
             group_canister::send_message_v2::Response::Success(result) => result,
             response => panic!("'send_message' error: {response:?}"),
         }
+    }
+
+    pub fn send_message(
+        env: &mut PocketIc,
+        sender: &User,
+        group_chat_id: ChatId,
+        thread_root_message_index: Option<MessageIndex>,
+        content: MessageContentInitial,
+        replies_to: Option<GroupReplyContext>,
+        message_id: Option<MessageId>,
+    ) -> group_canister::send_message_v2::SuccessResult {
+        let response = super::send_message_v2(
+            env,
+            sender.principal,
+            group_chat_id.into(),
+            &group_canister::send_message_v2::Args {
+                thread_root_message_index,
+                message_id: message_id.unwrap_or_else(random_from_u128),
+                content,
+                sender_name: sender.username(),
+                sender_display_name: None,
+                replies_to,
+                mentioned: Vec::new(),
+                forwarding: false,
+                block_level_markdown: false,
+                rules_accepted: None,
+                message_filter_failed: None,
+                new_achievement: false,
+            },
+        );
+
+        match response {
+            group_canister::send_message_v2::Response::Success(result) => result,
+            response => panic!("'send_message' error: {response:?}"),
+        }
+    }
+
+    pub fn send_message_with_transfer(
+        env: &mut PocketIc,
+        group_chat_id: ChatId,
+        sender: &User,
+        content: MessageContentInitial,
+        message_id: Option<MessageId>,
+    ) -> user_canister::send_message_with_transfer_to_group::SuccessResult {
+        let response = user::send_message_with_transfer_to_group(
+            env,
+            sender.principal,
+            sender.user_id.into(),
+            &user_canister::send_message_with_transfer_to_group::Args {
+                thread_root_message_index: None,
+                message_id: message_id.unwrap_or_else(random_from_u128),
+                content,
+                replies_to: None,
+                block_level_markdown: false,
+                message_filter_failed: None,
+
+                sender_name: sender.username(),
+                sender_display_name: None,
+                mentioned: Vec::new(),
+                rules_accepted: None,
+                group_id: group_chat_id,
+                pin: None,
+            },
+        );
+
+        match response {
+            user_canister::send_message_with_transfer_to_group::Response::Success(result) => result,
+            response => panic!("'send_message_with_transfer_to_group' error: {response:?}"),
+        }
+    }
+
+    pub fn join_group(env: &mut PocketIc, sender: Principal, group_chat_id: ChatId) {
+        let local_user_index = local_user_index(env, group_chat_id);
+        crate::client::local_user_index::happy_path::join_group(env, sender, local_user_index, group_chat_id);
     }
 
     pub fn update_group(
@@ -100,11 +183,7 @@ pub mod happy_path {
             env,
             sender,
             group_chat_id.into(),
-            &group_canister::change_role::Args {
-                user_id,
-                new_role,
-                correlation_id: 0,
-            },
+            &group_canister::change_role::Args { user_id, new_role },
         );
 
         match response {
@@ -129,7 +208,7 @@ pub mod happy_path {
                 message_index,
                 poll_option,
                 operation: VoteOperation::RegisterVote,
-                correlation_id: 0,
+                new_achievement: false,
             },
         );
 
@@ -168,7 +247,7 @@ pub mod happy_path {
         }
     }
 
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn thread_events(
         env: &PocketIc,
         sender: &User,
@@ -246,15 +325,10 @@ pub mod happy_path {
 
     pub fn selected_initial(
         env: &PocketIc,
-        sender: &User,
+        sender: Principal,
         group_chat_id: ChatId,
     ) -> group_canister::selected_initial::SuccessResult {
-        let response = super::selected_initial(
-            env,
-            sender.principal,
-            group_chat_id.into(),
-            &group_canister::selected_initial::Args {},
-        );
+        let response = super::selected_initial(env, sender, group_chat_id.into(), &group_canister::selected_initial::Args {});
 
         match response {
             group_canister::selected_initial::Response::Success(result) => result,
@@ -262,8 +336,33 @@ pub mod happy_path {
         }
     }
 
-    pub fn summary(env: &PocketIc, sender: &User, group_chat_id: ChatId) -> GroupCanisterGroupChatSummary {
-        let response = super::summary(env, sender.principal, group_chat_id.into(), &group_canister::summary::Args {});
+    pub fn selected_updates(
+        env: &PocketIc,
+        sender: Principal,
+        group_chat_id: ChatId,
+        updates_since: TimestampMillis,
+    ) -> Option<types::SelectedGroupUpdates> {
+        let response = super::selected_updates_v2(
+            env,
+            sender,
+            group_chat_id.into(),
+            &group_canister::selected_updates_v2::Args { updates_since },
+        );
+
+        match response {
+            group_canister::selected_updates_v2::Response::Success(result) => Some(result),
+            group_canister::selected_updates_v2::Response::SuccessNoUpdates(_) => None,
+            response => panic!("'selected_updates_v2' error: {response:?}"),
+        }
+    }
+
+    pub fn summary(env: &PocketIc, sender: Principal, group_chat_id: ChatId) -> GroupCanisterGroupChatSummary {
+        let response = super::summary(
+            env,
+            sender,
+            group_chat_id.into(),
+            &group_canister::summary::Args { on_behalf_of: None },
+        );
 
         match response {
             group_canister::summary::Response::Success(result) => result.summary,
@@ -273,15 +372,18 @@ pub mod happy_path {
 
     pub fn summary_updates(
         env: &PocketIc,
-        sender: &User,
+        sender: Principal,
         group_chat_id: ChatId,
         updates_since: TimestampMillis,
     ) -> Option<GroupCanisterGroupChatSummaryUpdates> {
         let response = super::summary_updates(
             env,
-            sender.principal,
+            sender,
             group_chat_id.into(),
-            &group_canister::summary_updates::Args { updates_since },
+            &group_canister::summary_updates::Args {
+                on_behalf_of: None,
+                updates_since,
+            },
         );
 
         match response {
@@ -306,7 +408,8 @@ pub mod happy_path {
                 thread_root_message_index,
                 message_ids,
                 as_platform_moderator: None,
-                correlation_id: 0,
+
+                new_achievement: false,
             },
         );
 
@@ -321,10 +424,7 @@ pub mod happy_path {
             env,
             sender,
             group_chat_id.into(),
-            &group_canister::claim_prize::Args {
-                message_id,
-                correlation_id: 0,
-            },
+            &group_canister::claim_prize::Args { message_id },
         );
 
         match response {
@@ -340,21 +440,22 @@ pub mod happy_path {
         message_id: MessageId,
         max_duration: Option<Milliseconds>,
     ) {
-        let response = super::start_video_call(
+        let response = super::start_video_call_v2(
             env,
             VIDEO_CALL_OPERATOR,
             group_chat_id.into(),
-            &group_canister::start_video_call::Args {
+            &group_canister::start_video_call_v2::Args {
                 message_id,
                 initiator: user.user_id,
                 initiator_username: user.username(),
                 initiator_display_name: None,
                 max_duration,
+                call_type: VideoCallType::Broadcast,
             },
         );
 
         match response {
-            group_canister::start_video_call::Response::Success => {}
+            group_canister::start_video_call_v2::Response::Success => {}
             response => panic!("'start_video_call' error: {response:?}"),
         }
     }
@@ -364,7 +465,10 @@ pub mod happy_path {
             env,
             sender,
             group_chat_id.into(),
-            &group_canister::join_video_call::Args { message_id },
+            &group_canister::join_video_call::Args {
+                message_id,
+                new_achievement: false,
+            },
         );
 
         match response {
@@ -374,15 +478,15 @@ pub mod happy_path {
     }
 
     pub fn end_video_call(env: &mut PocketIc, group_chat_id: ChatId, message_id: MessageId) {
-        let response = super::end_video_call(
+        let response = super::end_video_call_v2(
             env,
             VIDEO_CALL_OPERATOR,
             group_chat_id.into(),
-            &group_canister::end_video_call::Args { message_id },
+            &group_canister::end_video_call_v2::Args { message_id },
         );
 
         match response {
-            group_canister::end_video_call::Response::Success => {}
+            group_canister::end_video_call_v2::Response::Success => {}
             response => panic!("'end_video_call' error: {response:?}"),
         }
     }
@@ -392,15 +496,109 @@ pub mod happy_path {
             env,
             sender,
             group_chat_id.into(),
-            &group_canister::block_user::Args {
-                user_id,
-                correlation_id: 0,
-            },
+            &group_canister::block_user::Args { user_id },
         );
 
         match response {
             group_canister::block_user::Response::Success => {}
             response => panic!("'block_user' error: {response:?}"),
+        }
+    }
+
+    pub fn add_reaction(
+        env: &mut PocketIc,
+        sender: &User,
+        group_chat_id: ChatId,
+        reaction: impl ToString,
+        message_id: MessageId,
+    ) {
+        let response = super::add_reaction(
+            env,
+            sender.principal,
+            group_chat_id.into(),
+            &group_canister::add_reaction::Args {
+                thread_root_message_index: None,
+                message_id,
+                reaction: Reaction::new(reaction.to_string()),
+
+                username: sender.username(),
+                display_name: None,
+                new_achievement: false,
+            },
+        );
+        assert!(matches!(response, group_canister::add_reaction::Response::Success));
+    }
+
+    pub fn accept_p2p_swap(env: &mut PocketIc, sender: &User, group_id: ChatId, message_id: MessageId) {
+        let response = super::accept_p2p_swap(
+            env,
+            sender.principal,
+            group_id.into(),
+            &group_canister::accept_p2p_swap::Args {
+                thread_root_message_index: None,
+                message_id,
+                pin: None,
+                new_achievement: false,
+            },
+        );
+
+        match response {
+            group_canister::accept_p2p_swap::Response::Success(_) => {}
+            response => panic!("'accept_p2p_swap' error: {response:?}"),
+        }
+    }
+
+    pub fn update_bot(
+        env: &mut PocketIc,
+        sender: Principal,
+        group_id: ChatId,
+        bot_id: UserId,
+        granted_permissions: BotPermissions,
+    ) {
+        let response = super::update_bot(
+            env,
+            sender,
+            group_id.into(),
+            &group_canister::update_bot::Args {
+                bot_id,
+                granted_permissions,
+                granted_autonomous_permissions: None,
+            },
+        );
+
+        match response {
+            group_canister::update_bot::Response::Success => {}
+            response => panic!("'update_bot' error: {response:?}"),
+        }
+    }
+
+    pub fn local_user_index(env: &PocketIc, group_id: ChatId) -> CanisterId {
+        let group_canister::local_user_index::Response::Success(local_user_index) =
+            super::local_user_index(env, Principal::anonymous(), group_id.into(), &Empty {});
+
+        local_user_index
+    }
+
+    pub fn register_webhook(env: &mut PocketIc, caller: Principal, group_id: ChatId, name: String, avatar: Option<String>) {
+        let response = super::register_webhook(
+            env,
+            caller,
+            group_id.into(),
+            &group_canister::register_webhook::Args { name, avatar },
+        );
+
+        match response {
+            group_canister::register_webhook::Response::Success(_) => (),
+            response => panic!("'register_webhook' error: {response:?}"),
+        }
+    }
+
+    pub fn webhook(env: &mut PocketIc, caller: Principal, group_id: ChatId, id: UserId) -> String {
+        let response = super::webhook(env, caller, group_id.into(), &group_canister::webhook::Args { id });
+
+        match response {
+            group_canister::webhook::Response::Success(result) => result.secret,
+            response => panic!("'webhook' error: {response:?}"),
         }
     }
 }

@@ -1,4 +1,4 @@
-import type { ChatIdentifier, EventWrapper, Message } from "../chat/chat";
+import type { ChatIdentifier, NewUnconfirmedMessage, VideoCallType } from "../chat/chat";
 
 export type WebRtcMessage =
     | RemoteUserStoppedTyping
@@ -9,7 +9,8 @@ export type WebRtcMessage =
     | RemoteUserReadMessage
     | RemoteUserRemovedMessage
     | RemoteUserUndeletedMessage
-    | RemoteVideoCallStarted;
+    | RemoteVideoCallStarted
+    | RemoteVideoCallEnded;
 
 type WebRtcMessageCommon = {
     id: ChatIdentifier;
@@ -19,6 +20,13 @@ type WebRtcMessageCommon = {
 
 export type RemoteVideoCallStarted = WebRtcMessageCommon & {
     kind: "remote_video_call_started";
+    messageId: bigint;
+    callType: VideoCallType;
+};
+
+export type RemoteVideoCallEnded = WebRtcMessageCommon & {
+    kind: "remote_video_call_ended";
+    messageId: bigint;
 };
 
 export type CurrentUserTyping = WebRtcMessageCommon & {
@@ -66,5 +74,5 @@ export type RemoteUserReadMessage = WebRtcMessageCommon & {
 
 export type RemoteUserSentMessage = WebRtcMessageCommon & {
     kind: "remote_user_sent_message";
-    messageEvent: EventWrapper<Message>;
+    message: NewUnconfirmedMessage;
 };

@@ -1,25 +1,28 @@
-<svelte:options immutable />
-
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import type { CryptocurrencyContent, OpenChat } from "openchat-client";
-    import Markdown from "./Markdown.svelte";
+    import { cryptoLookup, currentUserIdStore } from "openchat-client";
     import { getContext } from "svelte";
-    import Translatable from "../Translatable.svelte";
+    import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
+    import Markdown from "./Markdown.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    export let content: CryptocurrencyContent;
-    export let me: boolean = false;
-    export let reply: boolean = false;
-    export let senderId: string;
+    interface Props {
+        content: CryptocurrencyContent;
+        me?: boolean;
+        reply?: boolean;
+        senderId: string;
+    }
 
-    $: user = client.user;
-    $: cryptoLookup = client.cryptoLookup;
-    $: logo = $cryptoLookup[content.transfer.ledger].logo;
-    $: transferText = client.buildCryptoTransferText($_, $user.userId, senderId, content, me);
-    $: transactionLinkText = client.buildTransactionLink($_, content.transfer);
+    let { content, me = false, reply = false, senderId }: Props = $props();
+
+    let logo = $derived($cryptoLookup.get(content.transfer.ledger)?.logo);
+    let transferText = $derived(
+        client.buildCryptoTransferText($_, $currentUserIdStore, senderId, content, me),
+    );
+    let transactionLinkText = $derived(client.buildTransactionLink($_, content.transfer));
 </script>
 
 {#if transferText !== undefined}
@@ -28,7 +31,9 @@
             <img class="logo" src={logo} />
         </div>
         <div class="details">
-            <div class="transfer-txt">{transferText}</div>
+            <div class="transfer-txt">
+                <Markdown text={transferText} inline={true} />
+            </div>
             <div class="links">
                 {#if transactionLinkText !== undefined}
                     <div class="link transaction">

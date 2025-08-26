@@ -1,10 +1,10 @@
-use crate::{mutate_state, Data, RuntimeState, WASM_VERSION};
+use crate::{Data, RuntimeState, WASM_VERSION, mutate_state};
 use std::time::Duration;
 use tracing::trace;
 use types::{BuildVersion, Timestamped};
 use utils::canister::get_random_seed;
-use utils::env::canister::CanisterEnv;
 use utils::env::Environment;
+use utils::env::canister::CanisterEnv;
 
 mod init;
 mod post_upgrade;
@@ -30,18 +30,13 @@ fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: BuildVersion)
 }
 
 fn reseed_rng() {
-    ic_cdk::spawn(reseed_rng_inner());
+    ic_cdk::futures::spawn(reseed_rng_inner());
 
     async fn reseed_rng_inner() {
         let seed = get_random_seed().await;
         mutate_state(|state| {
             state.data.rng_seed = seed;
             state.env = Box::new(CanisterEnv::new(seed));
-
-            // We only want to set the salt once
-            if !state.data.salt.is_initialized() {
-                state.data.salt.set(seed);
-            }
         });
         trace!("Successfully reseeded rng");
     }

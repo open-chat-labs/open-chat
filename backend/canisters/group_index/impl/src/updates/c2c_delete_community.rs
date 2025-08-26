@@ -1,15 +1,16 @@
-use crate::{mutate_state, read_state, RuntimeState};
-use canister_api_macros::update_msgpack;
+use crate::{RuntimeState, mutate_state, read_state};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_delete_community::{Response::*, *};
-use ic_cdk::api::call::CallResult;
-use types::{CanisterId, CommunityId, DeletedCommunityInfo, UserId};
+use tracing::info;
+use types::{C2CError, CanisterId, CommunityId, DeletedCommunityInfo, UserId};
+use utils::cycles::accept_cycles;
 
-#[update_msgpack]
+#[update(msgpack = true)]
 #[trace]
 async fn c2c_delete_community(args: Args) -> Response {
     let PrepareResult {
-        local_group_index_canister_id,
+        local_user_index_canister_id,
         community_id,
     } = match read_state(prepare) {
         Ok(ok) => ok,
@@ -18,21 +19,21 @@ async fn c2c_delete_community(args: Args) -> Response {
 
     match delete_community(
         community_id,
-        local_group_index_canister_id,
+        local_user_index_canister_id,
         args.deleted_by,
         args.community_name,
         args.members,
     )
     .await
     {
-        Ok(local_group_index_canister::c2c_delete_community::Response::Success) => Success,
-        Ok(local_group_index_canister::c2c_delete_community::Response::CommunityNotFound) => CommunityNotFound,
+        Ok(local_user_index_canister::c2c_delete_community::Response::Success) => Success,
+        Ok(local_user_index_canister::c2c_delete_community::Response::Error(error)) => Error(error),
         Err(error) => InternalError(format!("{error:?}")),
     }
 }
 
 struct PrepareResult {
-    pub local_group_index_canister_id: CanisterId,
+    pub local_user_index_canister_id: CanisterId,
     pub community_id: CommunityId,
 }
 
@@ -40,9 +41,14 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
     let caller = state.env.caller();
     let community_id = CommunityId::from(caller);
 
-    if let Some(local_group_index_canister_id) = state.data.local_index_map.get_index_canister_for_community(&community_id) {
+    if let Some(local_user_index_canister_id) = state.data.local_index_map.get_index_canister_for_community(&community_id) {
+        let cycles = accept_cycles();
+        if cycles > 0 {
+            info!(cycles, %community_id, "Community refunded cycles when being deleted");
+        }
+
         Ok(PrepareResult {
-            local_group_index_canister_id,
+            local_user_index_canister_id,
             community_id,
         })
     } else {
@@ -50,20 +56,20 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
     }
 }
 
-pub(crate) async fn delete_community(
+async fn delete_community(
     community_id: CommunityId,
-    local_group_index_canister_id: CanisterId,
+    local_user_index_canister_id: CanisterId,
     deleted_by: UserId,
     community_name: String,
     members: Vec<UserId>,
-) -> CallResult<local_group_index_canister::c2c_delete_community::Response> {
-    let response = local_group_index_canister_c2c_client::c2c_delete_community(
-        local_group_index_canister_id,
-        &local_group_index_canister::c2c_delete_community::Args { community_id },
+) -> Result<local_user_index_canister::c2c_delete_community::Response, C2CError> {
+    let response = local_user_index_canister_c2c_client::c2c_delete_community(
+        local_user_index_canister_id,
+        &local_user_index_canister::c2c_delete_community::Args { community_id },
     )
     .await?;
 
-    if matches!(response, local_group_index_canister::c2c_delete_community::Response::Success) {
+    if matches!(response, local_user_index_canister::c2c_delete_community::Response::Success) {
         mutate_state(|state| commit(community_id, deleted_by, community_name, members, state));
     }
 
@@ -84,6 +90,7 @@ fn commit(community_id: CommunityId, deleted_by: UserId, name: String, members: 
         false
     };
 
+    state.data.local_index_map.mark_community_deleted(&community_id);
     state.data.deleted_communities.insert(
         DeletedCommunityInfo {
             id: community_id,

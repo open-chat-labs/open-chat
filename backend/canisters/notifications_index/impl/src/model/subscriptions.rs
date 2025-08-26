@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
+use std::collections::hash_map::Entry::{Occupied, Vacant};
 use types::{SubscriptionInfo, TimestampMillis, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
@@ -17,7 +17,7 @@ impl Subscriptions {
         match self.subscriptions.entry(user_id) {
             Occupied(e) => {
                 let subscriptions = e.into_mut();
-                if subscriptions.iter().any(|s| *s == subscription) {
+                if subscriptions.contains(&subscription) {
                     return removed;
                 }
                 if subscriptions.len() >= 10 {

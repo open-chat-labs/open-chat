@@ -1,20 +1,22 @@
 import {
+    emptyChatMetrics,
+    ROLE_ADMIN,
+    ROLE_MEMBER,
+    ROLE_MODERATOR,
     type GroupChatSummary,
     type PollConfig,
-    type PollVotes,
     type PollContent,
+    type PollVotes,
     type UserLookup,
     type UserSummary,
-    emptyChatMetrics,
-    MessageContextMap,
 } from "openchat-shared";
+import { localUpdates } from "../state";
 import {
     addVoteToPoll,
     getMembersString,
     mergeChatMetrics,
     mergeUnconfirmedThreadsIntoSummary,
 } from "./chat";
-import type { UnconfirmedState } from "../stores/unconfirmed";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
@@ -37,17 +39,18 @@ const defaultGroupChat: GroupChatSummary = {
     latestMessageIndex: undefined,
     memberCount: 10,
     permissions: {
-        changeRoles: "admin",
-        removeMembers: "moderator",
-        deleteMessages: "moderator",
-        updateGroup: "admin",
-        pinMessages: "admin",
-        inviteUsers: "admin",
-        reactToMessages: "member",
-        mentionAllMembers: "member",
-        startVideoCall: "admin",
+        changeRoles: ROLE_ADMIN,
+        removeMembers: ROLE_MODERATOR,
+        deleteMessages: ROLE_MODERATOR,
+        updateGroup: ROLE_ADMIN,
+        pinMessages: ROLE_ADMIN,
+        inviteUsers: ROLE_ADMIN,
+        addMembers: ROLE_ADMIN,
+        reactToMessages: ROLE_MEMBER,
+        mentionAllMembers: ROLE_MEMBER,
+        startVideoCall: ROLE_ADMIN,
         messagePermissions: {
-            default: "member",
+            default: ROLE_MEMBER,
         },
         threadPermissions: undefined,
     },
@@ -57,15 +60,17 @@ const defaultGroupChat: GroupChatSummary = {
     frozen: false,
     dateLastPinned: undefined,
     dateReadPinned: undefined,
-    gate: { kind: "no_gate" },
+    gateConfig: { gate: { kind: "no_gate" }, expiry: undefined },
     level: "group",
     eventsTTL: undefined,
     eventsTtlLastUpdated: BigInt(0),
     membership: {
+        lapsed: false,
         archived: false,
         mentions: [],
         notificationsMuted: false,
-        role: "admin",
+        atEveryoneMuted: false,
+        role: ROLE_ADMIN,
         readByMeUpTo: undefined,
         joined: BigInt(0),
         myMetrics: emptyChatMetrics(),
@@ -80,6 +85,9 @@ const defaultGroupChat: GroupChatSummary = {
         ],
     },
     localUserIndex: "",
+    isInvited: false,
+    messagesVisibleToNonMembers: false,
+    verified: false,
 };
 
 function createUser(userId: string, username: string): UserSummary {
@@ -91,37 +99,39 @@ function createUser(userId: string, username: string): UserSummary {
         updated: BigInt(0),
         suspended: false,
         diamondStatus: "inactive",
+        chitBalance: 0,
+        streak: 0,
+        maxStreak: 0,
+        isUniquePerson: false,
+        totalChitEarned: 0,
     };
 }
 
 describe("thread utils", () => {
     test("merge unconfirmed thread message into summary", () => {
-        const unconf = new MessageContextMap<UnconfirmedState>();
-        unconf.set(
+        localUpdates.clearAll();
+        localUpdates.addUnconfirmed(
             { chatId: { kind: "group_chat", groupId: "abc" }, threadRootMessageIndex: 1 },
             {
-                messages: [
-                    {
-                        index: 4,
-                        timestamp: BigInt(0),
-                        event: {
-                            kind: "message",
-                            messageId: BigInt(0),
-                            messageIndex: 5,
-                            sender: "",
-                            content: { kind: "placeholder_content" },
-                            reactions: [],
-                            tips: {},
-                            edited: false,
-                            forwarded: false,
-                            deleted: false,
-                        },
-                    },
-                ],
-                messageIds: new Set(),
+                index: 4,
+                timestamp: BigInt(0),
+                event: {
+                    kind: "message",
+                    messageId: BigInt(0),
+                    messageIndex: 5,
+                    sender: "",
+                    content: { kind: "placeholder_content" },
+                    reactions: [],
+                    tips: {},
+                    edited: false,
+                    forwarded: false,
+                    deleted: false,
+                    blockLevelMarkdown: false,
+                },
             },
         );
-        const chat = mergeUnconfirmedThreadsIntoSummary(defaultGroupChat, unconf);
+        const chat = { ...defaultGroupChat };
+        mergeUnconfirmedThreadsIntoSummary(chat);
         expect(chat.membership.latestThreads[0].latestEventIndex).toEqual(4);
         expect(chat.membership.latestThreads[0].latestMessageIndex).toEqual(5);
     });
@@ -330,18 +340,18 @@ describe("get members string for group chat", () => {
     const withFewerThanSix = ["a", "b", "c", "d", "z"];
     const withUnknown = ["a", "b", "x", "d", "z"];
     const withMoreThanSix = ["a", "b", "c", "d", "e", "f", "g", "z"];
-    const lookup: UserLookup = {
-        a: createUser("a", "Mr A"),
-        b: createUser("b", "Mr B"),
-        c: createUser("c", "Mr C"),
-        d: createUser("d", "Mr D"),
-        e: createUser("e", "Mr E"),
-        f: createUser("f", "Mr F"),
-        g: createUser("g", "Mr G"),
-        z: createUser("z", "Mr Z"),
-    };
+    const lookup: UserLookup = new Map([
+        ["a", createUser("a", "Mr A")],
+        ["b", createUser("b", "Mr B")],
+        ["c", createUser("c", "Mr C")],
+        ["d", createUser("d", "Mr D")],
+        ["e", createUser("e", "Mr E")],
+        ["f", createUser("f", "Mr F")],
+        ["g", createUser("g", "Mr G")],
+        ["z", createUser("z", "Mr Z")],
+    ]);
 
-    const user = lookup.z as UserSummary;
+    const user = lookup.get("z") as UserSummary;
 
     test("up to five members get listed", () => {
         const members = getMembersString(user, lookup, withFewerThanSix, "Unknown User", "You");

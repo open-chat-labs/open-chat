@@ -1,9 +1,11 @@
 use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
-use crate::rng::random_message_id;
-use crate::{client, TestEnv};
+use crate::utils::tick_many;
+use crate::{TestEnv, client};
+use oc_error_codes::OCErrorCode;
 use std::ops::Deref;
 use std::time::Duration;
+use testing::rng::random_from_u128;
 use types::{ChatEvent, EventIndex, MessageContent, MessageContentInitial, TextContent};
 
 #[test]
@@ -11,10 +13,12 @@ fn send_message_succeeds() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
     let send_message_result = client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", None);
+
+    tick_many(env, 3);
 
     let events_response1 =
         client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![send_message_result.event_index]);
@@ -32,23 +36,24 @@ fn empty_message_fails() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
     let send_message_args = user_canister::send_message_v2::Args {
         recipient: user2.user_id,
         thread_root_message_index: None,
-        message_id: random_message_id(),
+        message_id: random_from_u128(),
         content: MessageContentInitial::Text(TextContent { text: String::default() }),
         replies_to: None,
         forwarding: false,
+        block_level_markdown: false,
         message_filter_failed: None,
         pin: None,
-        correlation_id: 0,
     };
     let response = client::user::send_message_v2(env, user1.principal, user1.canister(), &send_message_args);
-    if !matches!(response, user_canister::send_message_v2::Response::MessageEmpty) {
-        panic!("SendMessage was expected to return MessageEmpty but did not: {response:?}");
+    if !matches!(&response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::InvalidMessageContent))
+    {
+        panic!("SendMessage was expected to return InvalidMessageContent but did not: {response:?}");
     }
 }
 
@@ -57,25 +62,27 @@ fn text_too_long_fails() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
     let send_message_args = user_canister::send_message_v2::Args {
         recipient: user2.user_id,
         thread_root_message_index: None,
-        message_id: random_message_id(),
+        message_id: random_from_u128(),
         content: MessageContentInitial::Text(TextContent {
             text: (0..10001).map(|_| '1').collect(),
         }),
         replies_to: None,
         forwarding: false,
+        block_level_markdown: false,
         message_filter_failed: None,
         pin: None,
-        correlation_id: 0,
     };
     let response = client::user::send_message_v2(env, user1.principal, user1.canister(), &send_message_args);
-    if !matches!(response, user_canister::send_message_v2::Response::TextTooLong(10000)) {
-        panic!("SendMessage was expected to return TextTooLong(10000) but did not: {response:?}");
+    if !matches!(&response, user_canister::send_message_v2::Response::Error(e)
+        if e.matches_code(OCErrorCode::InvalidMessageContent) && e.message().is_some_and(|m| m.contains("10000")))
+    {
+        panic!("SendMessage was expected to return InvalidMessageContent but did not: {response:?}");
     }
 }
 
@@ -84,18 +91,18 @@ fn send_message_retries_if_fails() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
-    stop_canister(env, canister_ids.local_user_index, user2.user_id.into());
+    stop_canister(env, user2.local_user_index, user2.user_id.into());
 
     let send_message_result = client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", None);
-    env.tick();
+    tick_many(env, 3);
 
-    start_canister(env, canister_ids.local_user_index, user2.user_id.into());
+    start_canister(env, user2.local_user_index, user2.user_id.into());
 
     env.advance_time(Duration::from_secs(10));
-    env.tick();
+    tick_many(env, 3);
 
     let events_response =
         client::user::happy_path::events_by_index(env, &user2, user1.user_id, vec![send_message_result.event_index]);
@@ -109,17 +116,19 @@ fn messages_arrive_in_order_even_if_some_fail_originally() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
-    stop_canister(env, canister_ids.local_user_index, user2.user_id.into());
+    stop_canister(env, user2.local_user_index, user2.user_id.into());
 
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, "1", None);
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, "2", None);
 
-    start_canister(env, canister_ids.local_user_index, user2.user_id.into());
+    start_canister(env, user2.local_user_index, user2.user_id.into());
 
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, "3", None);
+
+    tick_many(env, 3);
 
     let events_response = client::user::happy_path::events(env, &user2, user1.user_id, EventIndex::default(), true, 100, 100);
 
@@ -133,12 +142,11 @@ fn messages_arrive_in_order_even_if_some_fail_originally() {
 }
 
 fn validate_event_is_message_with_text(event: &ChatEvent, text: &str) {
-    if let ChatEvent::Message(m) = &event {
-        if let MessageContent::Text(t) = &m.content {
-            if t.text == text {
-                return;
-            }
-        }
+    if let ChatEvent::Message(m) = &event
+        && let MessageContent::Text(t) = &m.content
+        && t.text == text
+    {
+        return;
     }
     panic!("Event does not match. {event:?}. {text}");
 }

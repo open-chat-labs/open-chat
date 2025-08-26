@@ -1,29 +1,59 @@
+<script module lang="ts">
+    export interface InputProps {
+        disabled?: boolean;
+        invalid?: boolean;
+        value?: string | number | bigint;
+        autofocus?: boolean;
+        placeholder?: ResourceKey | undefined;
+        type?: "text" | "number" | "password" | "bigint";
+        minlength?: number;
+        maxlength?: number;
+        fontSize?: "small" | "normal" | "large" | "huge";
+        align?: "left" | "right" | "center";
+        countdown?: boolean;
+        pattern?: string | undefined;
+        children?: Snippet;
+        onBlur?: () => void;
+        onFocus?: () => void;
+        onInput?: () => void;
+        onEnter?: () => void;
+        onChange?: (value: string | number | bigint) => void;
+    }
+</script>
+
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher } from "svelte";
-    import { onMount } from "svelte";
+    import { onMount, tick, type Snippet } from "svelte";
     import { translatable } from "../actions/translatable";
-    import { interpolate, type ResourceKey } from "../i18n/i18n";
+    import { interpolate } from "../i18n/i18n";
+    import { type ResourceKey, parseBigInt } from "openchat-client";
 
-    export let disabled: boolean = false;
-    export let invalid: boolean = false;
-    export let value: string | number = "";
-    export let autofocus: boolean = false;
-    export let placeholder: ResourceKey | undefined = undefined;
-    export let type: "text" | "number" = "text";
-    export let minlength: number = 0;
-    export let maxlength: number = Number.MAX_VALUE;
-    export let fontSize: "small" | "normal" | "large" | "huge" = "normal";
-    export let align: "left" | "right" | "center" = "left";
-    export let countdown: boolean = false;
+    let {
+        disabled = false,
+        invalid = false,
+        value = $bindable(""),
+        autofocus = false,
+        placeholder = undefined,
+        type = "text",
+        minlength = 0,
+        maxlength = 10000,
+        fontSize = "normal",
+        align = "left",
+        countdown = false,
+        pattern = undefined,
+        onBlur,
+        onFocus,
+        onInput,
+        onEnter,
+        onChange,
+        children,
+    }: InputProps = $props();
 
-    const dispatch = createEventDispatcher();
-
-    let inp: HTMLInputElement;
+    let inp: HTMLInputElement | undefined = $state();
 
     onMount(() => {
         if (autofocus) {
-            inp.focus();
+            tick().then(() => inp?.focus());
         }
     });
 
@@ -34,7 +64,11 @@
         if (type === "number") {
             value = parseInt(e.currentTarget.value, 10);
         }
-        dispatch("change", value);
+        if (type === "bigint") {
+            value = parseBigInt(e.currentTarget.value) ?? BigInt(0);
+        }
+        onInput?.();
+        onChange?.(value);
     };
 
     export function setValue(text: string) {
@@ -43,12 +77,12 @@
 
     function keyDown(e: KeyboardEvent) {
         if (e.key === "Enter") {
-            dispatch("enter");
+            onEnter?.();
         }
     }
 
-    $: remaining = typeof value === "string" ? maxlength - value.length : 0;
-    $: warn = remaining <= 5;
+    let remaining = $derived(typeof value === "string" ? maxlength - value.length : 0);
+    let warn = $derived(remaining <= 5);
 </script>
 
 <div class="input-wrapper">
@@ -56,6 +90,7 @@
         data-gram="false"
         data-gramm_editor="false"
         data-enable-grammarly="false"
+        data-lpignore="true"
         class:invalid
         class:hasCountdown={countdown}
         spellcheck="false"
@@ -65,10 +100,12 @@
         {maxlength}
         placeholder={placeholder !== undefined ? interpolate($_, placeholder) : ""}
         use:translatable={{ key: placeholder, position: "absolute", right: 30, top: 12 }}
-        on:input={handleInput}
-        on:keydown={keyDown}
-        on:blur
+        oninput={handleInput}
+        onkeydown={keyDown}
+        onblur={onBlur}
+        onfocus={onFocus}
         bind:this={inp}
+        {pattern}
         {value}
         class={`textbox ${fontSize} ${align}`} />
 
@@ -76,7 +113,7 @@
         <div class:warn class="countdown">{remaining}</div>
     {/if}
 
-    <slot />
+    {@render children?.()}
 </div>
 
 <style lang="scss">
@@ -133,8 +170,7 @@
         }
 
         &.invalid {
-            border: 1px solid var(--error);
-            box-shadow: 0 0 5px 1px var(--error);
+            border: var(--bw) solid var(--error);
         }
 
         &::placeholder {

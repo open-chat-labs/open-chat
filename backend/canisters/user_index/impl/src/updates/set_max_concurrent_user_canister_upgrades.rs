@@ -1,10 +1,10 @@
 use crate::guards::caller_is_governance_principal;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
-use local_user_index_canister::{Event, MaxConcurrentCanisterUpgradesChanged};
+use local_user_index_canister::{MaxConcurrentCanisterUpgradesChanged, UserIndexEvent};
 use tracing::info;
-use user_index_canister::set_max_concurrent_user_canister_upgrades::{Response::*, *};
+use user_index_canister::set_max_concurrent_user_canister_upgrades::*;
 
 // dfx --identity openchat canister --network ic call user_index set_max_concurrent_user_canister_upgrades '(record { value=N:nat32 })'
 #[proposal(guard = "caller_is_governance_principal")]
@@ -15,10 +15,10 @@ async fn set_max_concurrent_user_canister_upgrades(args: Args) -> Response {
 
 fn set_max_concurrent_user_canister_upgrades_impl(args: Args, state: &mut RuntimeState) -> Response {
     state.push_event_to_all_local_user_indexes(
-        Event::MaxConcurrentCanisterUpgradesChanged(MaxConcurrentCanisterUpgradesChanged { value: args.value }),
+        UserIndexEvent::MaxConcurrentCanisterUpgradesChanged(MaxConcurrentCanisterUpgradesChanged { value: args.value }),
         None,
     );
 
     info!("Max concurrent canister upgrades set to {}", args.value);
-    Success
+    Response::Success
 }

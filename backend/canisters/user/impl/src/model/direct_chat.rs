@@ -1,13 +1,11 @@
 use crate::model::unread_message_index_map::UnreadMessageIndexMap;
-use chat_events::{ChatEvents, PushMessageArgs, Reader};
-use event_store_producer::{EventStoreClient, Runtime};
+use chat_events::{ChatEvents, EventPusher, PushMessageArgs, Reader};
 use serde::{Deserialize, Serialize};
 use std::cmp::min;
 use types::{
     DirectChatSummary, DirectChatSummaryUpdates, EventWrapper, Message, MessageId, MessageIndex, Milliseconds, OptionUpdate,
-    TimestampMillis, Timestamped, UserId,
+    TimestampMillis, Timestamped, UserId, UserType,
 };
-use user_canister::SendMessageArgs;
 
 #[derive(Serialize, Deserialize)]
 pub struct DirectChat {
@@ -19,14 +17,13 @@ pub struct DirectChat {
     pub read_by_them_up_to: Timestamped<Option<MessageIndex>>,
     pub notifications_muted: Timestamped<bool>,
     pub archived: Timestamped<bool>,
-    pub is_bot: bool,
-    pub unconfirmed: Vec<SendMessageArgs>,
+    pub user_type: UserType,
 }
 
 impl DirectChat {
     pub fn new(
         them: UserId,
-        is_bot: bool,
+        user_type: UserType,
         events_ttl: Option<Milliseconds>,
         anonymized_chat_id: u128,
         now: TimestampMillis,
@@ -40,8 +37,7 @@ impl DirectChat {
             read_by_them_up_to: Timestamped::new(None, now),
             notifications_muted: Timestamped::new(false, now),
             archived: Timestamped::new(false, now),
-            is_bot,
-            unconfirmed: Vec::new(),
+            user_type,
         }
     }
 
@@ -62,23 +58,21 @@ impl DirectChat {
         .unwrap()
     }
 
-    pub fn push_message<R: Runtime + Send + 'static>(
+    pub fn push_message<P: EventPusher>(
         &mut self,
-        sent_by_me: bool,
         args: PushMessageArgs,
         their_message_index: Option<MessageIndex>,
-        event_store_client: Option<&mut EventStoreClient<R>>,
+        event_pusher: Option<P>,
     ) -> EventWrapper<Message> {
         let now = args.now;
-        let message_event = self.events.push_message(args, event_store_client);
+        let sent_by_me = args.sender != self.them;
+        let (message_event, _) = self.events.push_message(args, event_pusher);
 
         self.mark_read_up_to(message_event.event.message_index, sent_by_me, now);
 
-        if !sent_by_me {
-            if let Some(their_message_index) = their_message_index {
-                self.unread_message_index_map
-                    .add(message_event.event.message_index, their_message_index);
-            }
+        if let Some(their_message_index) = their_message_index {
+            self.unread_message_index_map
+                .add(message_event.event.message_index, their_message_index);
         }
 
         message_event
@@ -96,16 +90,6 @@ impl DirectChat {
         false
     }
 
-    // TODO (maybe?)
-    // This should only return up to N messages so that we never exceed the c2c size limit
-    pub fn get_pending_messages(&self) -> Vec<SendMessageArgs> {
-        self.unconfirmed.clone()
-    }
-
-    pub fn mark_message_confirmed(&mut self, message_id: MessageId) {
-        self.unconfirmed.retain(|m| m.message_id != message_id);
-    }
-
     pub fn to_summary(&self, my_user_id: UserId) -> DirectChatSummary {
         let events_reader = self.events.main_events_reader();
         let events_ttl = self.events.get_events_time_to_live();
@@ -113,9 +97,9 @@ impl DirectChat {
         DirectChatSummary {
             them: self.them,
             last_updated: self.last_updated(),
-            latest_message: events_reader.latest_message_event(Some(my_user_id)).unwrap(),
+            latest_message: events_reader.latest_message_event(Some(my_user_id)),
             latest_event_index: events_reader.latest_event_index().unwrap_or_default(),
-            latest_message_index: events_reader.latest_message_index().unwrap_or_default(),
+            latest_message_index: events_reader.latest_message_index(),
             date_created: self.date_created,
             read_by_me_up_to: self.read_by_me_up_to.value,
             read_by_them_up_to: self.read_by_them_up_to.value,
@@ -129,14 +113,14 @@ impl DirectChat {
             archived: self.archived.value,
             events_ttl: events_ttl.value,
             events_ttl_last_updated: events_ttl.timestamp,
-            video_call_in_progress: self.events.video_call_in_progress.value.clone(),
+            video_call_in_progress: self.events.video_call_in_progress(Some(my_user_id)),
         }
     }
 
     pub fn to_summary_updates(&self, updates_since: TimestampMillis, my_user_id: UserId) -> DirectChatSummaryUpdates {
         let events_reader = self.events.main_events_reader();
 
-        let has_new_events = events_reader.latest_event_timestamp().map_or(false, |ts| ts > updates_since);
+        let has_new_events = events_reader.latest_event_timestamp().is_some_and(|ts| ts > updates_since);
         let latest_message = events_reader.latest_message_event_if_updated(updates_since, Some(my_user_id));
         let latest_event_index = if has_new_events { events_reader.latest_event_index() } else { None };
         let latest_message_index = if has_new_events { events_reader.latest_message_index() } else { None };
@@ -171,12 +155,7 @@ impl DirectChat {
                 .copied()
                 .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
             events_ttl_last_updated: (events_ttl.timestamp > updates_since).then_some(events_ttl.timestamp),
-            video_call_in_progress: self
-                .events
-                .video_call_in_progress
-                .if_set_after(updates_since)
-                .cloned()
-                .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
+            video_call_in_progress: self.events.video_call_in_progress_updates(Some(my_user_id), updates_since),
         }
     }
 

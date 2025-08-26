@@ -1,7 +1,9 @@
 use crate::{FileRejectedReason, TimestampMillis};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum FileStatus {
     Completed(FileStatusCompleted),
@@ -9,6 +11,7 @@ pub enum FileStatus {
     Rejected(FileStatusRejected),
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug)]
 pub enum RejectedReason {
     UserNotFound,
@@ -17,6 +20,7 @@ pub enum RejectedReason {
     FileExpired,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct FileStatusCompleted {
     pub created: TimestampMillis,
@@ -25,6 +29,7 @@ pub struct FileStatusCompleted {
     pub size: u64,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct FileStatusUploading {
     pub created: TimestampMillis,
@@ -35,6 +40,7 @@ pub struct FileStatusUploading {
     pub chunks_remaining: Vec<u32>,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct FileStatusRejected {
     pub reason: RejectedReason,

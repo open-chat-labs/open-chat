@@ -1,35 +1,36 @@
 <script lang="ts">
-    import { afterUpdate, createEventDispatcher } from "svelte";
-    import { menuStore } from "../../stores/menu";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
-    const dispatch = createEventDispatcher();
 
     type Step = {
+        key: string;
         labelKey: string;
         valid: boolean;
     };
 
-    export let step: number;
-    export let enabled: boolean;
-    export let steps: Step[];
+    interface Props {
+        step: string;
+        enabled: boolean;
+        steps: Step[];
+        onStep: (key: string) => void;
+    }
 
-    afterUpdate(() => menuStore.hideMenu());
+    let { step, enabled, steps, onStep }: Props = $props();
 
-    function selectStep(n: number) {
+    function selectStep(key: string) {
         if (enabled) {
-            dispatch("step", n);
+            onStep(key);
         }
     }
 </script>
 
 <div class="steps" class:enabled>
-    {#each steps as s, i}
+    {#each steps as s}
         <div
             role="button"
             class:invalid={!s.valid}
-            on:click={() => selectStep(i)}
-            class:selected={step === i}
+            onclick={() => selectStep(s.key)}
+            class:selected={step === s.key}
             class="step">
             <Translatable resourceKey={i18nKey(s.labelKey)} />
         </div>
@@ -62,8 +63,8 @@
                 border-bottom: 4px solid var(--primary);
             }
             &.invalid::after {
-                content: "!";
-                color: var(--menu-warn);
+                content: " !";
+                color: var(--error);
             }
         }
 

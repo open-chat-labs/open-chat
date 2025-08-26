@@ -1,63 +1,87 @@
 <script lang="ts">
-    import FileAttacher from "./FileAttacher.svelte";
-    import Poll from "svelte-material-icons/Poll.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
+    import {
+        iconSize,
+        mobileWidth,
+        type AttachmentContent,
+        type MessageAction,
+        type MessagePermission,
+    } from "openchat-client";
     import { _ } from "svelte-i18n";
-    import Smiley from "./Smiley.svelte";
+    import TrayRemove from "svelte-material-icons/Close.svelte";
+    import TrayPlus from "svelte-material-icons/DotsVertical.svelte";
     import Gift from "svelte-material-icons/GiftOutline.svelte";
+    import Poll from "svelte-material-icons/Poll.svelte";
+    import StickerEmoji from "svelte-material-icons/StickerEmoji.svelte";
     import SwapIcon from "svelte-material-icons/SwapHorizontal.svelte";
+    import { rtlStore } from "../../stores/rtl";
+    import HoverIcon from "../HoverIcon.svelte";
     import Bitcoin from "../icons/Bitcoin.svelte";
     import MemeFighter from "../icons/MemeFighter.svelte";
-    import StickerEmoji from "svelte-material-icons/StickerEmoji.svelte";
-    import TrayPlus from "svelte-material-icons/DotsVertical.svelte";
-    import TrayRemove from "svelte-material-icons/Close.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import { rtlStore } from "../../stores/rtl";
-    import { createEventDispatcher } from "svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import type { AttachmentContent, MessageAction, MessagePermission } from "openchat-client";
+    import FileAttacher from "./FileAttacher.svelte";
+    import Smiley from "./Smiley.svelte";
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        permittedMessages: Map<MessagePermission, boolean>;
+        messageAction?: MessageAction;
+        editing: boolean; // are we in edit mode - if so we must restrict what's available
+        attachment: AttachmentContent | undefined;
+        mode?: "thread" | "message";
+        onClearAttachment: () => void;
+        onTokenTransfer: (args: { ledger?: string; amount?: bigint }) => void;
+        onCreatePrizeMessage?: () => void;
+        onCreateP2PSwapMessage: () => void;
+        onCreatePoll: () => void;
+        onAttachGif: (search: string) => void;
+        onMakeMeme: () => void;
+        onFileSelected: (content: AttachmentContent) => void;
+    }
 
-    export let permittedMessages: Map<MessagePermission, boolean>;
-    export let messageAction: MessageAction = undefined;
-    export let editing: boolean; // are we in edit mode - if so we must restrict what's available
-    export let attachment: AttachmentContent | undefined;
-    export let mode: "thread" | "message" = "message";
+    let {
+        permittedMessages,
+        messageAction = $bindable(undefined),
+        editing,
+        attachment,
+        mode = "message",
+        onClearAttachment,
+        onTokenTransfer,
+        onCreatePrizeMessage,
+        onCreateP2PSwapMessage,
+        onCreatePoll,
+        onAttachGif,
+        onMakeMeme,
+        onFileSelected,
+    }: Props = $props();
 
-    let drawOpen = false;
-
-    $: useDrawer = !editing;
-    $: narrow = mode == "thread" || $mobileWidth;
-    $: showActions = !useDrawer || drawOpen;
-    $: iconColour = editing ? "var(--button-txt)" : useDrawer ? "var(--txt)" : "var(--icon-txt)";
-    $: supportedActions = buildListOfActions(permittedMessages, messageAction, narrow);
-    $: showClose = drawOpen || attachment !== undefined || messageAction === "emoji";
+    let drawOpen = $state(false);
 
     export function close() {
         drawOpen = false;
         if (attachment !== undefined) {
-            dispatch("clearAttachment");
+            onClearAttachment();
         }
         messageAction = undefined;
     }
 
-    function createTokenTransfer() {
-        dispatch("tokenTransfer");
+    function createTokenTransfer(e: Event) {
+        e.stopPropagation();
+        onTokenTransfer({});
         drawOpen = false;
     }
 
-    function createPrizeMessage() {
-        dispatch("createPrizeMessage");
+    function createPrizeMessage(e: Event) {
+        e.stopPropagation();
+        onCreatePrizeMessage?.();
         drawOpen = false;
     }
 
-    function createP2PSwapMessage() {
-        dispatch("createP2PSwapMessage");
+    function createP2PSwapMessage(e: Event) {
+        e.stopPropagation();
+        onCreateP2PSwapMessage();
         drawOpen = false;
     }
 
-    function openEmojiPicker() {
+    function openEmojiPicker(e: Event) {
+        e.stopPropagation();
         messageAction = "emoji";
     }
 
@@ -65,7 +89,8 @@
         messageAction = "file";
     }
 
-    function toggleDraw() {
+    function toggleDraw(e: Event) {
+        e.stopPropagation();
         if (showClose) {
             close();
         } else {
@@ -73,18 +98,21 @@
         }
     }
 
-    function createPoll() {
-        dispatch("createPoll");
+    function createPoll(e: Event) {
+        e.stopPropagation();
+        onCreatePoll();
         drawOpen = false;
     }
 
-    function sendGif() {
-        dispatch("attachGif", "");
+    function sendGif(e: Event) {
+        e.stopPropagation();
+        onAttachGif("");
         drawOpen = false;
     }
 
-    function makeMeme() {
-        dispatch("makeMeme");
+    function makeMeme(e: Event) {
+        e.stopPropagation();
+        onMakeMeme();
         drawOpen = false;
     }
 
@@ -139,10 +167,18 @@
         const total = i * increment;
         return total - (i + 1) * increment;
     }
+    let useDrawer = $derived(!editing);
+    let narrow = $derived(mode == "thread" || $mobileWidth);
+    let showActions = $derived(!useDrawer || drawOpen);
+    let iconColour = $derived(
+        editing ? "var(--button-txt)" : useDrawer ? "var(--txt)" : "var(--icon-txt)",
+    );
+    let supportedActions = $derived(buildListOfActions(permittedMessages, messageAction, narrow));
+    let showClose = $derived(drawOpen || attachment !== undefined || messageAction === "emoji");
 </script>
 
 <svelte:body
-    on:click={() => {
+    onclick={() => {
         if (drawOpen && messageAction === undefined) {
             drawOpen = false;
         }
@@ -150,7 +186,7 @@
 
 {#if !narrow}
     {#if permittedMessages.get("text") || messageAction === "file"}
-        <div class="emoji" on:click|stopPropagation={openEmojiPicker}>
+        <div class="emoji" onclick={openEmojiPicker}>
             <HoverIcon title={$_("pickEmoji")}>
                 <Smiley color={"var(--icon-txt)"} />
             </HoverIcon>
@@ -159,13 +195,13 @@
 
     {#if !editing && (permittedMessages.get("file") || permittedMessages.get("image") || permittedMessages.get("video"))}
         <div class="attach">
-            <FileAttacher on:fileSelected on:open={openFilePicker} />
+            <FileAttacher {onFileSelected} onOpen={openFilePicker} />
         </div>
     {/if}
 {/if}
 
 {#if useDrawer}
-    <div class="open-draw" on:click|stopPropagation={toggleDraw}>
+    <div class="open-draw" onclick={toggleDraw}>
         {#if showClose}
             <HoverIcon>
                 <TrayRemove size={$iconSize} color={"var(--icon-txt)"} />
@@ -180,10 +216,7 @@
 
 <div class:visible={showActions} class="message-actions" class:useDrawer class:rtl={$rtlStore}>
     {#if supportedActions.has("emoji")}
-        <div
-            style={`${supportedActions.get("emoji")}`}
-            class="emoji"
-            on:click|stopPropagation={openEmojiPicker}>
+        <div style={`${supportedActions.get("emoji")}`} class="emoji" onclick={openEmojiPicker}>
             <HoverIcon title={$_("pickEmoji")}>
                 <Smiley color={iconColour} />
             </HoverIcon>
@@ -192,44 +225,35 @@
     {#if !editing}
         {#if supportedActions.has("attach")}
             <div style={`${supportedActions.get("attach")}`} class="attach">
-                <FileAttacher on:fileSelected on:open={openFilePicker} />
+                <FileAttacher {onFileSelected} onOpen={openFilePicker} />
             </div>
         {/if}
         {#if supportedActions.has("crypto")}
             <div
                 style={`${supportedActions.get("crypto")}`}
                 class="send-icp"
-                on:click|stopPropagation={createTokenTransfer}>
+                onclick={createTokenTransfer}>
                 <HoverIcon title={"Send Crypto"}>
-                    <Bitcoin size={$iconSize} color={iconColour} />
+                    <Bitcoin size={$iconSize} color={"var(--button-txt)"} />
                 </HoverIcon>
             </div>
         {/if}
         {#if supportedActions.has("giphy")}
-            <div
-                style={`${supportedActions.get("giphy")}`}
-                class="gif"
-                on:click|stopPropagation={sendGif}>
+            <div style={`${supportedActions.get("giphy")}`} class="gif" onclick={sendGif}>
                 <HoverIcon title={"Attach gif"}>
                     <StickerEmoji size={$iconSize} color={iconColour} />
                 </HoverIcon>
             </div>
         {/if}
         {#if supportedActions.has("meme")}
-            <div
-                style={`${supportedActions.get("meme")}`}
-                class="meme"
-                on:click|stopPropagation={makeMeme}>
+            <div style={`${supportedActions.get("meme")}`} class="meme" onclick={makeMeme}>
                 <HoverIcon title={"Meme Fighter"}>
                     <MemeFighter size={$iconSize} color={iconColour} />
                 </HoverIcon>
             </div>
         {/if}
         {#if supportedActions.has("poll")}
-            <div
-                style={`${supportedActions.get("poll")}`}
-                class="poll"
-                on:click|stopPropagation={createPoll}>
+            <div style={`${supportedActions.get("poll")}`} class="poll" onclick={createPoll}>
                 <HoverIcon title={$_("poll.create")}>
                     <Poll size={$iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
@@ -239,7 +263,7 @@
             <div
                 style={`${supportedActions.get("prize")}`}
                 class="prize"
-                on:click|stopPropagation={createPrizeMessage}>
+                onclick={createPrizeMessage}>
                 <HoverIcon title={"Create prize"}>
                     <Gift size={$iconSize} color={iconColour} />
                 </HoverIcon>
@@ -249,7 +273,7 @@
             <div
                 style={`${supportedActions.get("swap")}`}
                 class="swap"
-                on:click|stopPropagation={createP2PSwapMessage}>
+                onclick={createP2PSwapMessage}>
                 <HoverIcon title={$_("p2pSwap.builderTitle")}>
                     <SwapIcon size={$iconSize} color={iconColour} />
                 </HoverIcon>
@@ -260,7 +284,7 @@
 
 <style lang="scss">
     :global(.message-actions.useDrawer.visible .wrapper) {
-        background-color: var(--button-bg);
+        background: var(--button-bg);
         @include box-shadow(1);
 
         &:hover {
@@ -313,13 +337,17 @@
             .swap,
             .poll {
                 top: -18px;
-                left: toRem(-44);
+                left: toRem(-40);
                 opacity: 0;
                 position: absolute;
                 transition:
                     top 200ms ease-in,
                     opacity 200ms ease-in;
                 @include z-index("action-list");
+
+                @include mobile() {
+                    left: toRem(-44);
+                }
             }
 
             &.rtl {

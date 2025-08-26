@@ -2,7 +2,10 @@ use crate::{CanisterId, UserId};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
+use std::ops::Deref;
+use ts_export::ts_export;
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ChatId(CanisterId);
 
@@ -36,8 +39,10 @@ impl Display for ChatId {
     }
 }
 
-impl AsRef<[u8]> for ChatId {
-    fn as_ref(&self) -> &[u8] {
-        self.0.as_ref()
+impl Deref for ChatId {
+    type Target = CanisterId;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }

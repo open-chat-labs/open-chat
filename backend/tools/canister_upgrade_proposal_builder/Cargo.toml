@@ -1,0 +1,15 @@
+[package]
+name = "canister_upgrade_proposal_builder"
+version.workspace = true
+edition.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+candid = { workspace = true }
+canister_agent_utils = { path = "../../libraries/canister_agent_utils" }
+clap = { workspace = true, features = ["derive"] }
+sha256 = { path = "../../libraries/sha256" }
+openchat_installer_canister = { path = "../../canisters/openchat_installer/api" }
+sns_governance_canister = { path = "../../external_canisters/sns_governance/api" }
+types = { path = "../../libraries/types" }

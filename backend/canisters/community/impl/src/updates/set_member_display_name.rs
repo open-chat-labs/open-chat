@@ -1,42 +1,39 @@
-use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, activity_notifications::handle_activity_notification, execute_update};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use community_canister::set_member_display_name::{Response::*, *};
-use ic_cdk_macros::update;
-use utils::text_validation::{validate_display_name, UsernameValidationError};
+use community_canister::set_member_display_name::*;
+use oc_error_codes::OCErrorCode;
+use types::{Achievement, OCResult};
+use utils::text_validation::{UsernameValidationError, validate_display_name};
 
-#[update]
+#[update(msgpack = true)]
 #[trace]
 fn set_member_display_name(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| set_member_display_name_impl(args, state))
+    execute_update(|state| set_member_display_name_impl(args, state)).into()
 }
 
-fn set_member_display_name_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if state.data.is_frozen() {
-        return CommunityFrozen;
-    }
+fn set_member_display_name_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+    state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
-    let now = state.env.now();
+    let member = state.get_calling_member(true)?;
 
-    let user_id = match state.data.members.get(caller) {
-        Some(member) if member.suspended.value => return UserSuspended,
-        Some(member) => {
-            if let Some(display_name) = args.display_name.as_ref() {
-                match validate_display_name(display_name) {
-                    Ok(_) => {}
-                    Err(UsernameValidationError::TooShort(s)) => return DisplayNameTooShort(s.min_length as u16),
-                    Err(UsernameValidationError::TooLong(l)) => return DisplayNameTooLong(l.max_length as u16),
-                    Err(UsernameValidationError::Invalid) => return DisplayNameInvalid,
-                };
-            }
-            member.user_id
-        }
-        None => return UserNotInCommunity,
+    if let Some(display_name) = args.display_name.as_ref()
+        && let Err(error) = validate_display_name(display_name)
+    {
+        return Err(match error {
+            UsernameValidationError::TooShort(s) => OCErrorCode::DisplayNameTooShort.with_message(s.min_length),
+            UsernameValidationError::TooLong(l) => OCErrorCode::DisplayNameTooLong.with_message(l.max_length),
+            UsernameValidationError::Invalid => OCErrorCode::InvalidDisplayName.into(),
+        });
     };
 
-    state.data.members.set_display_name(user_id, args.display_name, now);
+    let now = state.env.now();
+    state.data.members.set_display_name(member.user_id, args.display_name, now);
+
+    if args.new_achievement {
+        state.notify_user_of_achievement(member.user_id, Achievement::SetCommunityDisplayName, now);
+    }
+
     handle_activity_notification(state);
-    Success
+    Ok(())
 }

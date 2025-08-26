@@ -1,18 +1,12 @@
-use crate::guards::caller_is_local_user_canister;
-use crate::{mutate_state, RuntimeState};
+use crate::guards::caller_is_local_child_canister;
+use crate::{RuntimeState, mutate_state};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use local_user_index_canister::push_events::Args;
 
-#[update(guard = "caller_is_local_user_canister")]
+#[update(guard = "caller_is_local_child_canister")]
 #[trace]
 fn push_events(args: Args) {
-    mutate_state(|state| push_events_impl(args, state))
-}
-
-#[update(guard = "caller_is_local_user_canister")]
-#[trace]
-fn push_events_v2(args: Args) {
     mutate_state(|state| push_events_impl(args, state))
 }
 

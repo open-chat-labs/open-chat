@@ -1,57 +1,75 @@
 <script lang="ts">
-    import { fade } from "svelte/transition";
-    import NoChatSelected from "./NoChatSelected.svelte";
-    import RecommendedGroups from "./RecommendedGroups.svelte";
-    import ExploreCommunities from "./communities/explore/Explore.svelte";
-    import type CurrentChatMessages from "./CurrentChatMessages.svelte";
-    import CurrentChat from "./CurrentChat.svelte";
+    import { trackedEffect } from "@src/utils/effects.svelte";
     import {
+        botState,
         chatIdentifiersEqual,
+        directChatBotsStore,
+        filteredProposalsStore,
+        rightPanelMode,
+        rightPanelWidth,
+        routeStore,
+        selectedChatIdStore,
+        selectedChatSummaryStore,
+        showLeft,
+        showMiddle,
+        showNav,
         type ChatIdentifier,
         type MultiUserChat,
-        type OpenChat,
     } from "openchat-client";
-    import { pathParams } from "../../routes";
-    import { getContext, tick } from "svelte";
-    import AcceptRulesWrapper from "./AcceptRulesWrapper.svelte";
-    import { currentTheme } from "../../theme/themes";
-    import { layoutStore, type Layout, rightPanelWidth } from "../../stores/layout";
-    import Loading from "../Loading.svelte";
+    import { tick } from "svelte";
+    import { fade } from "svelte/transition";
     import { activeVideoCall, type ActiveVideoCall } from "../../stores/video";
+    import { currentTheme } from "../../theme/themes";
+    import UninstalledDirectBot from "../bots/UninstalledDirectBot.svelte";
+    import Loading from "../Loading.svelte";
+    import ExploreCommunities from "./communities/explore/Explore.svelte";
+    import CurrentChat from "./CurrentChat.svelte";
+    import NoChatSelected from "./NoChatSelected.svelte";
+    import RecommendedGroups from "./RecommendedGroups.svelte";
 
-    const client = getContext<OpenChat>("client");
-
-    export let joining: MultiUserChat | undefined;
-    export let currentChatMessages: CurrentChatMessages | undefined;
-
-    let middlePanel: HTMLElement;
-
-    $: selectedChatStore = client.selectedChatStore;
-    $: selectedChatId = client.selectedChatId;
-    $: eventsStore = client.eventsStore;
-    $: filteredProposalsStore = client.filteredProposalsStore;
-    $: noChat = $pathParams.kind !== "global_chat_selected_route";
-
-    $: {
-        if (middlePanel) {
-            alignVideoCall($activeVideoCall, $selectedChatId, $layoutStore, $rightPanelWidth);
-        }
+    interface Props {
+        joining: MultiUserChat | undefined;
     }
+
+    let { joining }: Props = $props();
+
+    let middlePanel: HTMLElement | undefined;
+
+    let botId = $derived.by(() => {
+        if ($selectedChatSummaryStore === undefined) return undefined;
+        if ($selectedChatSummaryStore.kind !== "direct_chat") return undefined;
+        return botState.externalBots.get($selectedChatSummaryStore.them.userId)?.id;
+    });
+
+    let uninstalledBotId = $derived.by(() => {
+        return botId !== undefined && $directChatBotsStore.get(botId) === undefined
+            ? botId
+            : undefined;
+    });
+
+    let installingBot = $state(false);
+    trackedEffect("installing-bot", () => {
+        if (uninstalledBotId !== undefined) {
+            installingBot = true;
+        }
+    });
 
     function alignVideoCall(
         call: ActiveVideoCall | undefined,
         chatId: ChatIdentifier | undefined,
-        layout: Layout,
         rightPanelWidth: number | undefined,
         attempts: number = 0,
     ) {
-        if (call && chatIdentifiersEqual(call.chatId, chatId)) {
+        if (call && chatIdentifiersEqual(call.chatId, chatId) && middlePanel) {
             const callContainer = document.getElementById("video-call-container");
             const rect = middlePanel.getBoundingClientRect();
             if (callContainer) {
                 if (call.view === "fullscreen") {
                     let width = window.innerWidth;
-                    if (layout.rightPanel !== "floating" && call.threadOpen) {
+                    if (
+                        $rightPanelMode !== "floating" &&
+                        (call.threadOpen || call.participantsOpen)
+                    ) {
                         width = width - (rightPanelWidth ?? 500);
                     }
                     callContainer.style.setProperty("left", `0px`);
@@ -67,30 +85,35 @@
             } else {
                 // hack: there is a race condition here and it's possible we don't find the container on the first try
                 if (attempts === 0) {
-                    tick().then(() =>
-                        alignVideoCall(call, chatId, layout, rightPanelWidth, attempts + 1),
-                    );
+                    tick().then(() => alignVideoCall(call, chatId, attempts + 1));
                 }
             }
         }
     }
 
     function resize() {
-        alignVideoCall($activeVideoCall, $selectedChatId, $layoutStore, $rightPanelWidth);
+        alignVideoCall($activeVideoCall, $selectedChatIdStore, $rightPanelWidth);
     }
+    let noChat = $derived($routeStore.kind !== "global_chat_selected_route");
+    $effect(() => {
+        if (middlePanel) {
+            resize();
+        }
+    });
 </script>
 
-<svelte:window on:resize={resize} on:orientationchange={resize} />
+<svelte:window onresize={resize} onorientationchange={resize} />
 
 <section
     bind:this={middlePanel}
-    class:offset={$layoutStore.showNav && !$layoutStore.showLeft}
+    class:visible={$showMiddle}
+    class:offset={$showNav && !$showLeft}
     class:halloween={$currentTheme.name === "halloween"}>
-    {#if $pathParams.kind === "explore_groups_route"}
-        <RecommendedGroups {joining} on:joinGroup on:leaveGroup on:upgrade />
-    {:else if $pathParams.kind === "communities_route"}
-        <ExploreCommunities on:upgrade on:createCommunity />
-    {:else if $pathParams.kind === "admin_route"}
+    {#if $routeStore.kind === "explore_groups_route"}
+        <RecommendedGroups {joining} />
+    {:else if $routeStore.kind === "communities_route"}
+        <ExploreCommunities />
+    {:else if $routeStore.kind === "admin_route"}
         {#await import("./admin/Admin.svelte")}
             <div class="loading">
                 <Loading />
@@ -98,46 +121,22 @@
         {:then { default: Admin }}
             <Admin />
         {/await}
-    {:else if $selectedChatId === undefined}
+    {:else if $selectedChatIdStore === undefined}
         {#if noChat}
             <div class="no-chat" in:fade>
-                <NoChatSelected on:newchat />
+                <NoChatSelected />
             </div>
         {/if}
-    {:else if $selectedChatStore !== undefined}
-        <AcceptRulesWrapper
-            let:sendMessageWithAttachment
-            let:forwardMessage
-            let:retrySend
-            let:sendMessageWithContent
-            messageContext={{ chatId: $selectedChatStore.id }}>
-            <CurrentChat
-                bind:currentChatMessages
-                {joining}
-                chat={$selectedChatStore}
-                events={$eventsStore}
-                filteredProposals={$filteredProposalsStore}
-                on:startVideoCall
-                on:successfulImport
-                on:clearSelection
-                on:leaveGroup
-                on:replyPrivatelyTo
-                on:showInviteGroupUsers
-                on:showProposalFilters
-                on:makeProposal
-                on:showGroupMembers
-                on:chatWith
-                on:joinGroup
-                on:upgrade
-                on:toggleMuteNotifications
-                on:goToMessageIndex
-                on:convertGroupToCommunity
-                on:retrySend={retrySend}
-                on:sendMessageWithContent={sendMessageWithContent}
-                on:sendMessageWithAttachment={sendMessageWithAttachment}
-                on:forwardMessage={forwardMessage}
-                on:forward />
-        </AcceptRulesWrapper>
+    {:else if installingBot && botId && $selectedChatIdStore.kind === "direct_chat"}
+        <UninstalledDirectBot
+            onClose={() => (installingBot = false)}
+            chatId={$selectedChatIdStore}
+            {botId} />
+    {:else if $selectedChatSummaryStore !== undefined}
+        <CurrentChat
+            {joining}
+            chat={$selectedChatSummaryStore}
+            filteredProposals={$filteredProposalsStore} />
     {/if}
 </section>
 
@@ -147,7 +146,7 @@
     }
 
     section {
-        min-width: 400px;
+        min-width: 390px;
         overflow: auto;
         overflow-x: hidden;
         flex: 13;
@@ -170,6 +169,10 @@
             bottom: 0;
             right: 0;
             transform: scaleY(-1);
+        }
+
+        &:not(.visible) {
+            display: none;
         }
     }
 </style>

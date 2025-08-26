@@ -1,29 +1,50 @@
 <script lang="ts">
-    import Magnify from "svelte-material-icons/Magnify.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
+    import { iconSize, type ResourceKey } from "openchat-client";
+    import { onMount } from "svelte";
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher } from "svelte";
-    import { iconSize } from "../stores/iconSize";
+    import Close from "svelte-material-icons/Close.svelte";
+    import Magnify from "svelte-material-icons/Magnify.svelte";
     import { translatable } from "../actions/translatable";
-    import { i18nKey, interpolate, type ResourceKey } from "../i18n/i18n";
+    import { i18nKey, interpolate } from "../i18n/i18n";
 
-    const dispatch = createEventDispatcher();
-    export let searchTerm = "";
-    export let searching: boolean;
-    export let placeholder: ResourceKey = i18nKey("searchPlaceholder");
-    export let fill = false;
+    interface Props {
+        searchTerm?: string;
+        searching: boolean;
+        placeholder?: ResourceKey;
+        fill?: boolean;
+        inputStyle?: boolean;
+        autofocus?: boolean;
+        onPerformSearch?: (term: string) => void;
+        onFocus?: () => void;
+        onBlur?: () => void;
+    }
+
+    let {
+        searchTerm = $bindable(""),
+        searching = $bindable(false),
+        placeholder = i18nKey("searchPlaceholder"),
+        fill = false,
+        inputStyle = false,
+        onPerformSearch,
+        onFocus,
+        onBlur,
+        autofocus = false,
+    }: Props = $props();
 
     let timer: number | undefined;
+    let inp: HTMLInputElement;
 
-    function performSearch() {
-        dispatch("searchEntered", searchTerm);
+    function performSearch(e: Event) {
+        e.preventDefault();
+        window.clearTimeout(timer);
+        onPerformSearch?.(searchTerm);
     }
     function clearSearch() {
         searchTerm = "";
-        performSearch();
+        onPerformSearch?.(searchTerm);
     }
     function keydown(ev: KeyboardEvent) {
-        if (ev.key === "Tab") {
+        if (["Up", "Down", "Left", "Right", "Tab"].includes(ev.key)) {
             return;
         }
         if (ev.key === "Escape") {
@@ -34,27 +55,45 @@
         }
         timer = window.setTimeout(() => {
             if (searchTerm.length != 1) {
-                performSearch();
+                onPerformSearch?.(searchTerm);
             }
         }, 300);
     }
+
+    onMount(() => {
+        if (autofocus) {
+            inp.focus();
+        }
+    });
 </script>
 
-<form on:submit|preventDefault={performSearch} class="wrapper" class:fill>
+<form onsubmit={performSearch} class="wrapper" class:fill class:input-style={inputStyle}>
     <input
-        on:keydown={keydown}
+        bind:this={inp}
+        onkeydown={keydown}
         spellcheck="false"
         bind:value={searchTerm}
         type="text"
+        class:input-style={inputStyle}
         use:translatable={{ key: placeholder }}
-        placeholder={interpolate($_, placeholder)} />
+        placeholder={interpolate($_, placeholder)}
+        onfocus={onFocus}
+        onblur={onBlur} />
     {#if searchTerm !== ""}
-        <span on:click={clearSearch} class="icon close"
-            ><Close size={$iconSize} color={"var(--icon-txt)"} /></span>
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <span onclick={clearSearch} class="icon close" class:input-style={inputStyle}
+            ><Close
+                viewBox={inputStyle ? "0 -3 24 24" : "0 0 24 24"}
+                size={$iconSize}
+                color={"var(--icon-txt)"} /></span>
     {:else}
-        <span class="icon" class:searching>
+        <span class="icon" class:searching class:input-style={inputStyle}>
             {#if !searching}
-                <Magnify size={$iconSize} color={"var(--icon-txt)"} />
+                <Magnify
+                    viewBox={inputStyle ? "0 -3 24 24" : "0 0 24 24"}
+                    size={$iconSize}
+                    color={"var(--icon-txt)"} />
             {/if}
         </span>
     {/if}
@@ -81,10 +120,19 @@
         &.fill {
             margin: 0;
         }
+
+        &.input-style {
+            padding: $sp3 $sp4;
+            border-radius: var(--rd);
+        }
     }
     .icon {
         margin-top: $sp3;
         flex: 0 0 25px;
+
+        &.input-style {
+            margin-top: 0;
+        }
     }
     .close {
         cursor: pointer;
@@ -102,6 +150,10 @@
         border: none;
         width: 100%;
         @include font(book, normal, fs-100);
+
+        &.input-style {
+            padding: 0;
+        }
 
         &::placeholder {
             color: var(--placeholder);

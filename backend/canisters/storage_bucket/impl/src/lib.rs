@@ -1,10 +1,12 @@
 use crate::model::files::{Files, RemoveFileResult};
-use crate::model::index_sync_state::{EventToSync, IndexSyncState};
+use crate::model::index_event_batch::{EventToSync, IndexEventBatch};
 use crate::model::users::Users;
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
+use std::collections::BTreeMap;
+use timer_job_queues::BatchedTimerJobQueue;
 use types::{BuildVersion, CanisterId, Cycles, FileId, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
@@ -16,14 +18,8 @@ mod model;
 mod queries;
 mod updates;
 
-const DATA_LIMIT_BYTES: u64 = 1 << 36; // 64GB
 const MAX_BLOB_SIZE_BYTES: u64 = 100 * (1 << 20); // 100MB
 const MAX_EVENTS_TO_SYNC_PER_BATCH: usize = 1000;
-
-#[derive(CandidType, Serialize, Deserialize)]
-enum StateVersion {
-    V1,
-}
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
@@ -56,15 +52,20 @@ impl RuntimeState {
 
         Metrics {
             now: self.env.now(),
-            memory_used: utils::memory::used(),
+            heap_memory_used: utils::memory::heap(),
+            stable_memory_used: utils::memory::stable(),
             cycles_balance: self.env.cycles_balance(),
+            liquid_cycles_balance: self.env.liquid_cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
             user_count: self.data.users.len() as u64,
             file_count: file_metrics.file_count,
             blob_count: file_metrics.blob_count,
-            index_sync_queue_length: self.data.index_sync_state.queue_len(),
-            freezing_limit: self.data.freezing_limit.value.unwrap_or_default(),
+            pending_files: file_metrics.pending_files,
+            total_file_bytes: file_metrics.total_file_bytes,
+            index_sync_queue_length: self.data.index_event_sync_queue.len() as u32,
+            expiration_queue_length: file_metrics.expiration_queue_len,
+            stable_memory_sizes: memory::memory_sizes(),
         }
     }
 }
@@ -74,9 +75,8 @@ struct Data {
     storage_index_canister_id: CanisterId,
     users: Users,
     files: Files,
-    index_sync_state: IndexSyncState,
+    index_event_sync_queue: BatchedTimerJobQueue<IndexEventBatch>,
     created: TimestampMillis,
-    freezing_limit: Timestamped<Option<Cycles>>,
     rng_seed: [u8; 32],
     test_mode: bool,
 }
@@ -87,9 +87,8 @@ impl Data {
             storage_index_canister_id,
             users: Users::default(),
             files: Files::default(),
-            index_sync_state: IndexSyncState::default(),
+            index_event_sync_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
             created: now,
-            freezing_limit: Timestamped::default(),
             rng_seed: [0; 32],
             test_mode,
         }
@@ -99,27 +98,42 @@ impl Data {
         let result = self.files.remove(caller, file_id);
 
         if let RemoveFileResult::Success(f) = &result {
-            self.index_sync_state.enqueue(EventToSync::FileRemoved(f.clone()));
+            self.push_event_to_index(EventToSync::FileRemoved(f.clone()));
         }
 
         result
+    }
+
+    pub fn push_event_to_index(&mut self, event_to_sync: EventToSync) {
+        self.index_event_sync_queue
+            .push((event_to_sync, self.files.total_file_bytes()));
     }
 }
 
 #[derive(CandidType, Serialize, Debug)]
 pub struct Metrics {
     pub now: TimestampMillis,
-    pub memory_used: u64,
+    pub heap_memory_used: u64,
+    pub stable_memory_used: u64,
     pub cycles_balance: Cycles,
+    pub liquid_cycles_balance: Cycles,
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub user_count: u64,
     pub file_count: u64,
     pub blob_count: u64,
+    pub pending_files: u64,
+    pub total_file_bytes: u64,
     pub index_sync_queue_length: u32,
-    pub freezing_limit: Cycles,
+    pub expiration_queue_length: u64,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
 }
 
 pub fn calc_chunk_count(chunk_size: u32, total_size: u64) -> u32 {
     (((total_size - 1) / (chunk_size as u64)) + 1) as u32
+}
+
+fn check_cycles_balance() {
+    let storage_index_canister_id = read_state(|state| state.data.storage_index_canister_id);
+    utils::cycles::check_cycles_balance(storage_index_canister_id);
 }

@@ -1,30 +1,32 @@
+import Identicon from "identicon.js";
+import md5 from "md5";
 import type {
+    ChannelIdentifier,
     ChatEvent,
+    CommunityCanisterCommunitySummaryUpdates,
+    CommunityDetails,
+    CommunityDetailsUpdates,
     DirectChatSummary,
     DirectChatSummaryUpdates,
     EventWrapper,
+    GroupCanisterGroupChatSummary,
+    GroupCanisterGroupChatSummaryUpdates,
+    GroupCanisterThreadDetails,
     GroupChatDetails,
     GroupChatDetailsUpdates,
     GroupChatSummary,
     Member,
+    Metrics,
     ThreadSyncDetails,
-    GroupCanisterGroupChatSummary,
-    GroupCanisterGroupChatSummaryUpdates,
+    UpdatedEvent,
     UserCanisterGroupChatSummary,
     UserCanisterGroupChatSummaryUpdates,
-    GroupCanisterThreadDetails,
-    UpdatedEvent,
-    Metrics,
-    CommunityDetails,
-    CommunityDetailsUpdates,
-    CommunityCanisterCommunitySummaryUpdates,
-    ChannelIdentifier,
     UserGroupDetails,
 } from "openchat-shared";
 import {
-    ChatMap,
     applyOptionUpdate,
     bigIntMax,
+    ChatMap,
     mapOptionUpdate,
     OPENCHAT_BOT_AVATAR_URL,
     OPENCHAT_BOT_USER_ID,
@@ -33,8 +35,6 @@ import {
 } from "openchat-shared";
 import { toRecord } from "./list";
 import { identity } from "./mapping";
-import Identicon from "identicon.js";
-import md5 from "md5";
 
 // this is used to merge both the overall list of chats with updates and also the list of participants
 // within a group chat
@@ -74,8 +74,8 @@ export function mergeCommunityDetails(
     previous: CommunityDetails,
     updates: CommunityDetailsUpdates,
 ): CommunityDetails {
-    console.log("updates: ", updates, previous);
     return {
+        kind: "success",
         lastUpdated: updates.lastUpdated,
         members: mergeThings((p) => p.userId, mergeParticipants, previous.members, {
             added: [],
@@ -89,12 +89,29 @@ export function mergeCommunityDetails(
                 removed: updates.blockedUsersRemoved,
             }),
         ),
+        referrals: new Set<string>(
+            mergeThings(identity, identity, [...previous.referrals], {
+                added: [...updates.referralsAdded],
+                updated: [],
+                removed: updates.referralsRemoved,
+            }),
+        ),
         invitedUsers: updates.invitedUsers ?? previous.invitedUsers,
         rules: updates.rules ?? previous.rules,
         userGroups: mergeUserGroups(
             previous.userGroups,
             updates.userGroups,
             updates.userGroupsDeleted,
+        ),
+        bots: mergeThings(
+            (b) => b.id,
+            (_, updated) => updated,
+            previous.bots,
+            {
+                added: [],
+                updated: updates.botsAddedOrUpdated,
+                removed: updates.botsRemoved,
+            },
         ),
     };
 }
@@ -134,6 +151,17 @@ export function mergeGroupChatDetails(
             updates.pinnedMessagesRemoved,
         ),
         rules: updates.rules ?? previous.rules,
+        bots: mergeThings(
+            (b) => b.id,
+            (_, updated) => updated,
+            previous.bots,
+            {
+                added: [],
+                updated: updates.botsAddedOrUpdated,
+                removed: updates.botsRemoved,
+            },
+        ),
+        webhooks: updates.webhooks ?? previous.webhooks,
     };
 }
 
@@ -154,41 +182,51 @@ function mergeParticipants(_: Member | undefined, updated: Member) {
 export function mergeDirectChatUpdates(
     directChats: DirectChatSummary[],
     updates: DirectChatSummaryUpdates[],
+    removed: string[],
 ): DirectChatSummary[] {
+    if (updates.length === 0 && removed.length === 0) return directChats;
+
     const lookup = ChatMap.fromList(updates);
+    const toRemove = new Set<string>(removed);
 
-    return directChats.map((c) => {
-        const u = lookup.get(c.id);
+    return directChats
+        .filter((c) => !toRemove.has(c.them.userId))
+        .map((c) => {
+            const u = lookup.get(c.id);
 
-        if (u === undefined) return c;
+            if (u === undefined) return c;
 
-        return {
-            kind: "direct_chat",
-            id: c.id,
-            them: c.them,
-            readByThemUpTo: u.readByThemUpTo ?? c.readByThemUpTo,
-            dateCreated: c.dateCreated,
-            lastUpdated: u.lastUpdated,
-            latestEventIndex: u.latestEventIndex ?? c.latestEventIndex,
-            latestMessage: u.latestMessage ?? c.latestMessage,
-            latestMessageIndex: u.latestMessageIndex ?? c.latestMessageIndex,
-            metrics: u.metrics ?? c.metrics,
-            eventsTTL: applyOptionUpdate(c.eventsTTL, u.eventsTTL),
-            eventsTtlLastUpdated: bigIntMax(
-                c.eventsTtlLastUpdated ?? BigInt(0),
-                u.eventsTtlLastUpdated ?? BigInt(0),
-            ),
-            videoCallInProgress: applyOptionUpdate(c.videoCallInProgress, u.videoCallInProgress),
-            membership: {
-                ...c.membership,
-                readByMeUpTo: u.readByMeUpTo ?? c.membership.readByMeUpTo,
-                notificationsMuted: u.notificationsMuted ?? c.membership.notificationsMuted,
-                myMetrics: u.myMetrics ?? c.membership.myMetrics,
-                archived: u.archived ?? c.membership.archived,
-                rulesAccepted: false,
-            },
-        };
-    });
+            return {
+                kind: "direct_chat",
+                id: c.id,
+                them: c.them,
+                readByThemUpTo: u.readByThemUpTo ?? c.readByThemUpTo,
+                dateCreated: c.dateCreated,
+                lastUpdated: u.lastUpdated,
+                latestEventIndex: u.latestEventIndex ?? c.latestEventIndex,
+                latestMessage: u.latestMessage ?? c.latestMessage,
+                latestMessageIndex: u.latestMessageIndex ?? c.latestMessageIndex,
+                metrics: u.metrics ?? c.metrics,
+                eventsTTL: applyOptionUpdate(c.eventsTTL, u.eventsTTL),
+                eventsTtlLastUpdated: bigIntMax(
+                    c.eventsTtlLastUpdated ?? BigInt(0),
+                    u.eventsTtlLastUpdated ?? BigInt(0),
+                ),
+                videoCallInProgress: applyOptionUpdate(
+                    c.videoCallInProgress,
+                    u.videoCallInProgress,
+                ),
+                membership: {
+                    ...c.membership,
+                    readByMeUpTo: u.readByMeUpTo ?? c.membership.readByMeUpTo,
+                    notificationsMuted: u.notificationsMuted ?? c.membership.notificationsMuted,
+                    myMetrics: u.myMetrics ?? c.membership.myMetrics,
+                    archived: u.archived ?? c.membership.archived,
+                    rulesAccepted: false,
+                    lapsed: false,
+                },
+            };
+        });
 }
 
 export function mergeGroupChatUpdates(
@@ -196,6 +234,8 @@ export function mergeGroupChatUpdates(
     userCanisterUpdates: UserCanisterGroupChatSummaryUpdates[],
     groupCanisterUpdates: GroupCanisterGroupChatSummaryUpdates[],
 ): GroupChatSummary[] {
+    if (userCanisterUpdates.length === 0 && groupCanisterUpdates.length === 0) return groupChats;
+
     const userLookup = ChatMap.fromList(userCanisterUpdates);
     const groupLookup = ChatMap.fromList(groupCanisterUpdates);
 
@@ -242,7 +282,10 @@ export function mergeGroupChatUpdates(
             blobReference: applyOptionUpdate(c.blobReference, blobReferenceUpdate),
             dateLastPinned: g?.dateLastPinned ?? c.dateLastPinned,
             dateReadPinned: u?.dateReadPinned ?? c.dateReadPinned,
-            gate: applyOptionUpdate(c.gate, g?.gate) ?? { kind: "no_gate" },
+            gateConfig: applyOptionUpdate(c.gateConfig, g?.gateConfig) ?? {
+                gate: { kind: "no_gate" },
+                expiry: undefined,
+            },
             level: "group",
             eventsTTL: applyOptionUpdate(c.eventsTTL, g?.eventsTTL),
             eventsTtlLastUpdated: bigIntMax(
@@ -254,25 +297,32 @@ export function mergeGroupChatUpdates(
                 mentions:
                     g === undefined
                         ? c.membership.mentions
-                        : [...g.mentions, ...c.membership.mentions],
-                role: g?.myRole ?? c.membership.role,
+                        : [...(g?.membership?.mentions ?? []), ...c.membership.mentions],
+                role: g?.membership?.myRole ?? c.membership.role,
                 latestThreads: mergeThreads(
                     c.membership.latestThreads,
-                    g?.latestThreads ?? [],
-                    g?.unfollowedThreads ?? [],
+                    g?.membership?.latestThreads ?? [],
+                    g?.membership?.unfollowedThreads ?? [],
                     u?.threadsRead ?? {},
                 ),
                 readByMeUpTo:
                     readByMeUpTo !== undefined && latestMessage !== undefined
                         ? Math.min(readByMeUpTo, latestMessage.event.messageIndex)
                         : readByMeUpTo,
-                notificationsMuted: g?.notificationsMuted ?? c.membership.notificationsMuted,
-                myMetrics: g?.myMetrics ?? c.membership.myMetrics,
+                notificationsMuted:
+                    g?.membership?.notificationsMuted ?? c.membership.notificationsMuted,
+                atEveryoneMuted: g?.membership?.atEveryoneMuted ?? c.membership.atEveryoneMuted,
+                myMetrics: g?.membership?.myMetrics ?? c.membership.myMetrics,
                 archived: u?.archived ?? c.membership.archived,
-                rulesAccepted: g?.rulesAccepted ?? c.membership.rulesAccepted,
+                rulesAccepted: g?.membership?.rulesAccepted ?? c.membership.rulesAccepted,
+                lapsed: g?.membership?.lapsed ?? c.membership.lapsed,
             },
             localUserIndex: c.localUserIndex,
             videoCallInProgress: applyOptionUpdate(c.videoCallInProgress, g?.videoCallInProgress),
+            isInvited: false,
+            messagesVisibleToNonMembers:
+                g?.messagesVisibleToNonMembers ?? c.messagesVisibleToNonMembers,
+            verified: g?.verified ?? c.verified,
         };
     });
 }
@@ -311,23 +361,29 @@ export function mergeGroupChats(
                     : undefined,
             dateLastPinned: g.dateLastPinned,
             dateReadPinned: u?.dateReadPinned,
-            gate: g.gate,
+            gateConfig: g.gateConfig,
             level: "group",
             eventsTTL: g.eventsTTL,
             eventsTtlLastUpdated: g.eventsTtlLastUpdated,
             membership: {
-                joined: g.joined,
-                role: g.myRole,
-                mentions: g.mentions,
-                latestThreads: mergeThreads([], g.latestThreads, [], u?.threadsRead ?? {}),
-                myMetrics: g.myMetrics,
-                notificationsMuted: g.notificationsMuted,
-                readByMeUpTo: u?.readByMeUpTo,
+                ...g.membership,
+                latestThreads: mergeThreads(
+                    [],
+                    g.membership.latestThreads,
+                    [],
+                    u?.threadsRead ?? {},
+                ),
+                readByMeUpTo:
+                    u?.readByMeUpTo !== undefined && g.latestMessage !== undefined
+                        ? Math.min(u?.readByMeUpTo, g.latestMessage.event.messageIndex)
+                        : u?.readByMeUpTo,
                 archived: u?.archived ?? false,
-                rulesAccepted: g.rulesAccepted,
             },
             localUserIndex: g.localUserIndex,
             videoCallInProgress: g.videoCallInProgress,
+            isInvited: false,
+            messagesVisibleToNonMembers: g.messagesVisibleToNonMembers,
+            verified: g.verified,
         };
     });
 }
@@ -411,13 +467,13 @@ export function buildUserAvatarUrl(pattern: string, userId: string, avatarId?: b
     return avatarId !== undefined
         ? buildBlobUrl(pattern, userId, avatarId, "avatar")
         : userId === OPENCHAT_BOT_USER_ID
-          ? OPENCHAT_BOT_AVATAR_URL
-          : userId === OPENCHAT_VIDEO_CALL_USER_ID
-            ? OPENCHAT_VIDEO_CALL_AVATAR_URL
-            : buildIdenticonUrl(userId);
+        ? OPENCHAT_BOT_AVATAR_URL
+        : userId === OPENCHAT_VIDEO_CALL_USER_ID
+        ? OPENCHAT_VIDEO_CALL_AVATAR_URL
+        : buildIdenticonUrl(userId);
 }
 
-function buildIdenticonUrl(userId: string): string {
+export function buildIdenticonUrl(userId: string): string {
     const identicon = new Identicon(md5(userId), {
         margin: 0,
         format: "svg",

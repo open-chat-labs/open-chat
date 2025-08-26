@@ -1,9 +1,4 @@
-import type {
-    CommunityMap,
-    CommunitySummary,
-    LocalCommunitySummaryUpdates,
-    MemberRole,
-} from "openchat-shared";
+import { type CommunitySummary, type MemberRole, ROLE_OWNER } from "openchat-shared";
 import { hasOwnerRights, isPermitted } from "./permissions";
 
 export function canChangeRoles(
@@ -16,7 +11,7 @@ export function canChangeRoles(
     }
 
     switch (newRole) {
-        case "owner":
+        case ROLE_OWNER:
             return hasOwnerRights(membership.role);
         default:
             return isPermitted(membership.role, permissions.changeRoles);
@@ -47,6 +42,10 @@ export function canChangeCommunityPermissions({ membership }: CommunitySummary):
     return hasOwnerRights(membership.role);
 }
 
+export function isCommunityLapsed({ membership }: CommunitySummary): boolean {
+    return membership.lapsed;
+}
+
 export function canDeleteCommunity({ membership }: CommunitySummary): boolean {
     return hasOwnerRights(membership.role);
 }
@@ -66,83 +65,9 @@ export function canUnblockUsers(community: CommunitySummary): boolean {
 }
 
 export function canInviteUsers(community: CommunitySummary): boolean {
-    return (
-        community.public ||
-        isPermitted(community.membership.role, community.permissions.inviteUsers)
-    );
+    return isPermitted(community.membership.role, community.permissions.inviteUsers);
 }
 
 export function canRemoveMembers(community: CommunitySummary): boolean {
-    return (
-        !community.public &&
-        isPermitted(community.membership.role, community.permissions.removeMembers)
-    );
-}
-
-export function mergeLocalUpdates(
-    server: CommunityMap<CommunitySummary>,
-    localUpdates: CommunityMap<LocalCommunitySummaryUpdates>,
-): CommunityMap<CommunitySummary> {
-    if (Object.keys(localUpdates).length === 0) return server;
-
-    const merged = server.clone();
-
-    for (const [chatId, localUpdate] of localUpdates.entries()) {
-        if (localUpdate.added !== undefined) {
-            const current = merged.get(chatId);
-            if (current === undefined || current.membership.role === "none") {
-                merged.set(chatId, localUpdate.added);
-            }
-        }
-        if (localUpdate.removedAtTimestamp) {
-            const community = merged.get(chatId);
-            if (
-                community !== undefined &&
-                community.membership.joined < localUpdate.removedAtTimestamp
-            ) {
-                merged.delete(chatId);
-            }
-        }
-        if (localUpdate.index !== undefined) {
-            const community = merged.get(chatId);
-            if (community !== undefined) {
-                merged.set(chatId, {
-                    ...community,
-                    membership: {
-                        ...community.membership,
-                        index: localUpdate.index,
-                    },
-                });
-            }
-        }
-        if (localUpdate.displayName !== undefined) {
-            const community = merged.get(chatId);
-            if (community !== undefined) {
-                merged.set(chatId, {
-                    ...community,
-                    membership: {
-                        ...community.membership,
-                        displayName:
-                            localUpdate.displayName !== "set_to_none"
-                                ? localUpdate.displayName.value
-                                : undefined,
-                    },
-                });
-            }
-        }
-        if (localUpdate.rulesAccepted !== undefined) {
-            const community = merged.get(chatId);
-            if (community !== undefined) {
-                merged.set(chatId, {
-                    ...community,
-                    membership: {
-                        ...community.membership,
-                        rulesAccepted: localUpdate.rulesAccepted,
-                    },
-                });
-            }
-        }
-    }
-
-    return merged;
+    return isPermitted(community.membership.role, community.permissions.removeMembers);
 }

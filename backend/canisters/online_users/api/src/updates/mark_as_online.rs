@@ -1,12 +1,24 @@
-use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::Empty;
+use ts_export::ts_export;
+use types::{Empty, TimestampMillis};
 
 pub type Args = Empty;
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(online_users, mark_as_online)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
+    SuccessV2(SuccessResult),
     UserNotFound,
     InternalError(String),
+}
+
+#[ts_export(online_users, mark_as_online)]
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SuccessResult {
+    pub timestamp: TimestampMillis,
+    pub year: u32,
+    pub month: u8,
+    pub minutes_online: u16,
+    pub minutes_online_last_month: u16,
 }

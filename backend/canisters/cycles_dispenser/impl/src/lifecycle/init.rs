@@ -1,8 +1,8 @@
-use crate::lifecycle::{init_env, init_state};
 use crate::Data;
+use crate::lifecycle::{init_env, init_state};
 use canister_tracing_macros::trace;
 use cycles_dispenser_canister::init::Args;
-use ic_cdk_macros::init;
+use ic_cdk::init;
 use ic_ledger_types::Tokens;
 use tracing::info;
 use utils::env::Environment;
@@ -17,6 +17,7 @@ fn init(args: Args) {
     let data = Data::new(
         args.governance_principals,
         args.canisters,
+        args.registry_canister_id,
         args.max_top_up_amount,
         args.min_interval,
         args.min_cycles_balance,

@@ -1,17 +1,16 @@
 use crate::updates::add_token::add_sns_token;
 use crate::{mutate_state, read_state};
-use ic_cdk::api::call::{CallResult, RejectionCode};
-use ic_cdk::api::management_canister::main::CanisterId;
+use constants::HOUR_IN_MS;
+use ic_cdk::call::RejectCode;
 use registry_canister::NervousSystemDetails;
-use sns_governance_canister::types::governance::SnsMetadata;
 use sns_governance_canister::types::NervousSystemParameters;
+use sns_governance_canister::types::governance::SnsMetadata;
 use sns_wasm_canister::list_deployed_snses::DeployedSns;
 use std::collections::HashSet;
 use std::time::Duration;
 use tracing::{error, info};
-use types::{Empty, TimestampMillis};
+use types::{C2CError, CanisterId, Empty, TimestampMillis};
 use utils::canister_timers::run_now_then_interval;
-use utils::time::HOUR_IN_MS;
 
 const LIFECYCLE_COMMITTED: i32 = 3;
 const LIFECYCLE_ABORTED: i32 = 4;
@@ -21,7 +20,7 @@ pub fn start_job() {
 }
 
 fn run() {
-    ic_cdk::spawn(run_async());
+    ic_cdk::futures::spawn(run_async());
 }
 
 async fn run_async() {
@@ -50,15 +49,14 @@ async fn run_async() {
             if launched_snses.contains(&root_canister_id) {
                 if let Ok((metadata, parameters)) =
                     get_nervous_system_metadata_and_parameters(sns.governance_canister_id.unwrap()).await
-                {
-                    if mutate_state(|state| {
+                    && mutate_state(|state| {
                         state
                             .data
                             .nervous_systems
                             .update(root_canister_id, metadata, parameters, state.env.now())
-                    }) {
-                        info!(%root_canister_id, "SNS details updated");
-                    }
+                    })
+                {
+                    info!(%root_canister_id, "SNS details updated");
                 }
             } else {
                 info!(%root_canister_id, "Getting details of unknown SNS");
@@ -91,7 +89,7 @@ async fn is_successfully_launched(sns_swap_canister_id: CanisterId) -> Option<bo
 
 async fn get_nervous_system_metadata_and_parameters(
     governance_canister_id: CanisterId,
-) -> CallResult<(SnsMetadata, NervousSystemParameters)> {
+) -> Result<(SnsMetadata, NervousSystemParameters), C2CError> {
     futures::future::try_join(
         sns_governance_canister_c2c_client::get_metadata(governance_canister_id, &Empty {}),
         sns_governance_canister_c2c_client::get_nervous_system_parameters(governance_canister_id, &()),
@@ -99,8 +97,10 @@ async fn get_nervous_system_metadata_and_parameters(
     .await
 }
 
-async fn get_nervous_system_details(sns: DeployedSns) -> CallResult<NervousSystemDetails> {
-    let (metadata, parameters) = get_nervous_system_metadata_and_parameters(sns.governance_canister_id.unwrap()).await?;
+async fn get_nervous_system_details(sns: DeployedSns) -> Result<NervousSystemDetails, (RejectCode, String)> {
+    let (metadata, parameters) = get_nervous_system_metadata_and_parameters(sns.governance_canister_id.unwrap())
+        .await
+        .map_err(|e| (e.reject_code(), e.message().to_string()))?;
 
     let now = read_state(|state| state.env.now());
 
@@ -109,7 +109,7 @@ async fn get_nervous_system_details(sns: DeployedSns) -> CallResult<NervousSyste
         None => {
             error!(?sns, "Unable to build NervousSystemDetails due to missing data");
             Err((
-                RejectionCode::Unknown,
+                RejectCode::CanisterError,
                 "Unable to build NervousSystemDetails due to missing data".to_string(),
             ))
         }

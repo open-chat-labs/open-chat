@@ -1,5 +1,5 @@
-use crate::setup::setup_new_env;
 use crate::TestEnv;
+use crate::setup::setup_new_env;
 use candid::Principal;
 use lazy_static::lazy_static;
 use std::ops::Deref;
@@ -20,14 +20,10 @@ pub struct TestEnvManager {
 impl TestEnvManager {
     pub fn get(&self) -> TestEnvWrapper {
         let mut lock = self.envs.lock().unwrap();
-        if let Some(env) = lock.pop() {
-            TestEnvWrapper::new(env)
-        } else {
-            TestEnvWrapper::new(setup_new_env(None))
-        }
+        if let Some(env) = lock.pop() { TestEnvWrapper::new(env) } else { self.create_new() }
     }
 
-    pub fn get_new(&self) -> TestEnvWrapper {
+    pub fn create_new(&self) -> TestEnvWrapper {
         TestEnvWrapper::new(setup_new_env(None))
     }
 

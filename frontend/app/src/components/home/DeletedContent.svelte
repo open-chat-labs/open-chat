@@ -1,22 +1,33 @@
-<svelte:options immutable />
-
 <script lang="ts">
-    import { _ } from "svelte-i18n";
-    import { OPENCHAT_BOT_USER_ID, type DeletedContent, type OpenChat } from "openchat-client";
+    import {
+        OPENCHAT_BOT_USER_ID,
+        selectedChatWebhooksStore,
+        selectedCommunityMembersStore,
+        type DeletedContent,
+        type OpenChat,
+    } from "openchat-client";
     import { getContext } from "svelte";
-    import Markdown from "./Markdown.svelte";
-    import Translatable from "../Translatable.svelte";
+    import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
+    import Markdown from "./Markdown.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    export let content: DeletedContent;
-    export let undeleting: boolean;
+    interface Props {
+        content: DeletedContent;
+        undeleting: boolean;
+    }
 
-    $: date = new Date(Number(content.timestamp));
-    $: timestampStr = `${client.toLongDateString(date)} @ ${client.toShortTimeString(date)}`;
-    $: communityMembers = client.currentCommunityMembers;
-    $: username = client.getDisplayNameById(content.deletedBy, $communityMembers);
+    let { content, undeleting }: Props = $props();
+
+    let date = $derived(new Date(Number(content.timestamp)));
+    let timestampStr = $derived(
+        `${client.toLongDateString(date)} @ ${client.toShortTimeString(date)}`,
+    );
+    let username = $derived(
+        client.getDisplayName(content.deletedBy, $selectedCommunityMembersStore, $selectedChatWebhooksStore),
+    );
 </script>
 
 <div class="deleted">

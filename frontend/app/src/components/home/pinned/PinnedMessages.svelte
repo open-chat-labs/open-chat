@@ -1,47 +1,62 @@
 <script lang="ts">
-    import SectionHeader from "../../SectionHeader.svelte";
-    import HoverIcon from "../../HoverIcon.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
     import type {
-        DirectChatIdentifier,
         EventWrapper,
         Message,
         MultiUserChatIdentifier,
         OpenChat,
+        ReadonlySet,
     } from "openchat-client";
-    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
+    import {
+        currentUserStore,
+        iconSize,
+        messagesRead,
+        selectedChatPinnedMessagesStore,
+        subscribe,
+    } from "openchat-client";
+    import { isSuccessfulEventsResponse } from "openchat-shared";
+    import { getContext, onMount, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
-    import { iconSize } from "../../../stores/iconSize";
-    import type { RemoteData } from "../../../utils/remoteData";
-    import Loading from "../../Loading.svelte";
-    import PinnedMessage from "./PinnedMessage.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import type { RemoteData } from "../../../utils/remoteData";
+    import HoverIcon from "../../HoverIcon.svelte";
+    import Loading from "../../Loading.svelte";
+    import SectionHeader from "../../SectionHeader.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import PinnedMessage from "./PinnedMessage.svelte";
 
-    export let pinned: Set<number>;
-    export let chatId: MultiUserChatIdentifier;
-    export let dateLastPinned: bigint | undefined;
-
-    const client = getContext<OpenChat>("client");
-
-    let unread: boolean = false;
-    let messagesDiv: HTMLDivElement | undefined;
-
-    $: user = client.user;
-    $: messagesRead = client.messagesRead;
-
-    let messages: RemoteData<EventWrapper<Message>[][], string> = { kind: "idle" };
-
-    const dispatch = createEventDispatcher();
-
-    function close() {
-        dispatch("close");
-        messages = { kind: "idle" };
+    interface Props {
+        pinned: ReadonlySet<number>;
+        chatId: MultiUserChatIdentifier;
+        dateLastPinned: bigint | undefined;
+        onClose: () => void;
     }
 
-    function chatWith(ev: CustomEvent<DirectChatIdentifier>) {
-        dispatch("close");
-        dispatch("chatWith", ev.detail);
+    let { chatId, dateLastPinned, onClose }: Props = $props();
+
+    const client = getContext<OpenChat>("client");
+    let unread = $state<boolean>(false);
+    let pinnedMessages = $selectedChatPinnedMessagesStore;
+
+    onMount(() => {
+        const unsubs = [
+            subscribe("chatWith", onClose),
+            messagesRead.subscribe(() => {
+                unread = client.unreadPinned(chatId, dateLastPinned);
+            }),
+        ];
+        return () => {
+            unsubs.forEach((u) => u());
+        };
+    });
+
+    let messagesDiv: HTMLDivElement | undefined = $state();
+
+    let messages: RemoteData<EventWrapper<Message>[][], string> = $state({ kind: "idle" });
+
+    function close() {
+        onClose();
+        messages = { kind: "idle" };
     }
 
     function scrollBottom() {
@@ -53,60 +68,56 @@
         }
     }
 
-    function reloadPinned(pinned: Set<number>): void {
-        if (pinned.size > 0) {
-            if (messages.kind !== "success") {
-                messages = { kind: "loading" };
-            }
-            client
-                .getGroupMessagesByMessageIndex(chatId, pinned)
-                .then((resp) => {
-                    if (resp === "events_failed") {
-                        messages = { kind: "error", error: "Unable to load pinned messages" };
-                    } else {
-                        messages = {
-                            kind: "success",
-                            data: client.groupMessagesByDate(
-                                resp.events.sort((a, b) => a.index - b.index),
-                            ),
-                        };
+    function reloadPinned(pinned: ReadonlySet<number>): void {
+        untrack(() => {
+            if (pinned.size > 0) {
+                if (messages.kind !== "success") {
+                    messages = { kind: "loading" };
+                }
+                client
+                    .getGroupMessagesByMessageIndex(chatId, pinned)
+                    .then((resp) => {
+                        if (!isSuccessfulEventsResponse(resp)) {
+                            messages = { kind: "error", error: "Unable to load pinned messages" };
+                        } else {
+                            messages = {
+                                kind: "success",
+                                data: client.groupMessagesByDate(
+                                    resp.events.sort((a, b) => a.index - b.index),
+                                ),
+                            };
 
-                        if (unread) {
-                            client.markPinnedMessagesRead(chatId, dateLastPinned!);
+                            if (unread) {
+                                client.markPinnedMessagesRead(chatId, dateLastPinned!);
+                            }
+
+                            tick().then(scrollBottom);
                         }
-
-                        tick().then(scrollBottom);
-                    }
-                })
-                .catch((err) => {
-                    client.logError("Unable to load pinned messages: ", err);
-                    messages = { kind: "error", error: err.toString() };
-                });
-        } else {
-            messages = { kind: "success", data: [] };
-        }
+                    })
+                    .catch((err) => {
+                        client.logError("Unable to load pinned messages: ", err);
+                        messages = { kind: "error", error: err.toString() };
+                    });
+            } else {
+                messages = { kind: "success", data: [] };
+            }
+        });
     }
 
-    $: {
-        reloadPinned(pinned);
+    $effect(() => {
+        reloadPinned(pinnedMessages);
         unread = client.unreadPinned(chatId, dateLastPinned);
-    }
+    });
 
     function dateGroupKey(group: EventWrapper<Message>[]): string {
         const first = group[0] && group[0] && group[0].timestamp;
         return first ? new Date(Number(first)).toDateString() : "unknown";
     }
-
-    onMount(() => {
-        return messagesRead.subscribe(() => {
-            unread = client.unreadPinned(chatId, dateLastPinned);
-        });
-    });
 </script>
 
 <SectionHeader gap>
     <h4><Translatable resourceKey={i18nKey("pinnedMessages")} /></h4>
-    <span title={$_("close")} class="close" on:click={close}>
+    <span title={$_("close")} class="close" onclick={close}>
         <HoverIcon>
             <Close size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
@@ -125,11 +136,10 @@
                 {#each dayGroup as message (message.event.messageId)}
                     <PinnedMessage
                         {chatId}
-                        user={$user}
+                        timestamp={message.timestamp}
+                        user={$currentUserStore}
                         senderId={message.event.sender}
-                        msg={message.event}
-                        on:chatWith={chatWith}
-                        on:goToMessageIndex />
+                        msg={message.event} />
                 {/each}
             </div>
         {/each}

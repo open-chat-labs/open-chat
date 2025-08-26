@@ -52,7 +52,7 @@ describe("list utils", () => {
         });
     });
 
-    describe("distinctBy", () => {
+    test("distinctBy", () => {
         const things = [
             {
                 a: 1,

@@ -1,198 +1,250 @@
 use super::c2c_join_community::join_community_impl;
 use crate::activity_notifications::handle_activity_notification;
-use crate::guards::caller_is_proposals_bot;
+use crate::guards::{caller_is_local_user_index, caller_is_proposals_bot};
 use crate::model::channels::Channel;
-use crate::updates::c2c_join_channel::join_channel_unchecked;
-use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::update_msgpack;
+use crate::model::events::CommunityEventInternal;
+use crate::timer_job_types::JoinMembersToPublicChannelJob;
+use crate::{RuntimeState, execute_update};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use community_canister::c2c_join_community;
 use community_canister::create_channel::{Response::*, *};
+use community_canister::{c2c_bot_create_channel, c2c_join_community};
 use group_chat_core::GroupChatCore;
-use ic_cdk_macros::update;
+use oc_error_codes::OCErrorCode;
 use rand::Rng;
-use std::collections::HashMap;
-use types::{AccessGate, ChannelId, MultiUserChat, TimestampMillis, UserId};
-use utils::document_validation::validate_avatar;
-use utils::text_validation::{
-    validate_description, validate_group_name, validate_rules, NameValidationError, RulesValidationError,
+use std::collections::HashSet;
+use types::{
+    BotCaller, BotPermissions, Caller, ChannelCreated, ChatEventCategory, ChatEventType, CommunityPermission, MultiUserChat,
+    OCResult, UserType,
 };
+use url::Url;
+use utils::document::validate_avatar;
+use utils::text_validation::{StringLengthValidationError, validate_channel_name, validate_description, validate_rules};
 
-#[update]
+#[update(msgpack = true)]
 #[trace]
-async fn create_channel(args: Args) -> Response {
-    run_regular_jobs();
-
-    let diamond_membership_expiry_dates: HashMap<_, _> = match get_diamond_membership_expiry_dates_if_needed(&args).await {
-        Ok(expiry_dates) => expiry_dates,
-        Err(response) => return response,
-    };
-
-    mutate_state(|state| create_channel_impl(args, false, diamond_membership_expiry_dates, state))
+fn create_channel(args: Args) -> Response {
+    match execute_update(|state| create_channel_impl(args, false, None, state)) {
+        Ok(result) => Success(result),
+        Err(error) => Error(error),
+    }
 }
 
-#[update_msgpack(guard = "caller_is_proposals_bot")]
+#[update(guard = "caller_is_local_user_index", msgpack = true)]
+#[trace]
+fn c2c_bot_create_channel(args: c2c_bot_create_channel::Args) -> c2c_bot_create_channel::Response {
+    execute_update(|state| c2c_bot_create_channel_impl(args, state))
+}
+
+fn c2c_bot_create_channel_impl(
+    args: c2c_bot_create_channel::Args,
+    state: &mut RuntimeState,
+) -> c2c_bot_create_channel::Response {
+    let bot_caller = BotCaller {
+        bot: args.bot_id,
+        initiator: args.initiator.clone(),
+    };
+
+    match create_channel_impl(args.into(), false, Some(Caller::BotV2(bot_caller)), state) {
+        Ok(result) => Success(result),
+        Err(error) => Error(error),
+    }
+}
+
+#[update(guard = "caller_is_proposals_bot", msgpack = true)]
 #[trace]
 fn c2c_create_proposals_channel(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update(|state| c2c_create_proposals_channel_impl(args, state))
+}
 
-    mutate_state(|state| {
-        let caller = state.env.caller();
+fn c2c_create_proposals_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let caller = state.env.caller();
 
-        if let Some(response) = join_community_impl(
-            &c2c_join_community::Args {
-                user_id: caller.into(),
-                principal: caller,
-                invite_code: None,
-                is_platform_moderator: false,
-                is_bot: true,
-                diamond_membership_expires_at: None,
-            },
-            state,
-        )
-        .err()
-        {
-            match response {
-                c2c_join_community::Response::UserBlocked => return NotAuthorized,
-                c2c_join_community::Response::AlreadyInCommunity(_) => {}
-                _ => panic!("Unexpected response from c2c_join_community"),
-            }
+    if let Some(response) = join_community_impl(
+        &c2c_join_community::Args {
+            user_id: caller.into(),
+            principal: caller,
+            channel_id: None,
+            invite_code: None,
+            referred_by: None,
+            is_platform_moderator: false,
+            user_type: UserType::OcControlledBot,
+            diamond_membership_expires_at: None,
+            verified_credential_args: None,
+            unique_person_proof: None,
+            total_chit_earned: 0,
+        },
+        Vec::new(),
+        state,
+    )
+    .err()
+    {
+        match response {
+            c2c_join_community::Response::Error(error) => return Error(error),
+            c2c_join_community::Response::AlreadyInCommunity(_) => {}
+            _ => panic!("Unexpected response from c2c_join_community"),
         }
+    }
 
-        create_channel_impl(args, true, HashMap::new(), state)
-    })
+    match create_channel_impl(args, true, None, state) {
+        Ok(result) => Success(result),
+        Err(error) => Error(error),
+    }
 }
 
 fn create_channel_impl(
     args: Args,
     is_proposals_channel: bool,
-    diamond_membership_expiry_dates: HashMap<UserId, TimestampMillis>,
+    ext_caller: Option<Caller>,
     state: &mut RuntimeState,
-) -> Response {
-    if state.data.is_frozen() {
-        return CommunityFrozen;
+) -> OCResult<SuccessResult> {
+    state.data.verify_not_frozen()?;
+
+    if let Some(external_url) = &args.external_url
+        && Url::parse(external_url).is_err()
+    {
+        return Err(OCErrorCode::InvalidExternalUrl.into());
     }
 
-    let caller = state.env.caller();
-    if let Some(member) = state.data.members.get_mut(caller) {
-        if member.suspended.value {
-            return UserSuspended;
-        }
+    let caller = state.verified_caller(ext_caller)?;
 
-        let subtype = is_proposals_channel.then_some(args.subtype).flatten();
+    let messages_visible_to_non_members =
+        args.is_public && args.messages_visible_to_non_members.unwrap_or(args.gate_config.is_none());
 
-        if !is_proposals_channel {
-            let is_authorized = if args.is_public {
-                member.role.can_create_public_channel(&state.data.permissions)
-            } else {
-                member.role.can_create_private_channel(&state.data.permissions)
-            };
+    let channel_id = state.generate_channel_id();
+    let subtype = is_proposals_channel.then_some(args.subtype).flatten();
 
-            if !is_authorized {
-                return NotAuthorized;
-            } else if let Err(error) = validate_group_name(&args.name, args.is_public, subtype.as_ref()) {
-                return match error {
-                    NameValidationError::TooShort(s) => NameTooShort(s),
-                    NameValidationError::TooLong(l) => NameTooLong(l),
-                    NameValidationError::Reserved => NameReserved,
-                };
-            }
-        }
-
-        if let Err(error) = validate_description(&args.description) {
-            DescriptionTooLong(error)
-        } else if let Err(error) = validate_rules(args.rules.enabled, &args.rules.text) {
-            match error {
-                RulesValidationError::TooShort(s) => RulesTooShort(s),
-                RulesValidationError::TooLong(l) => RulesTooLong(l),
-            }
-        } else if let Err(error) = validate_avatar(args.avatar.as_ref()) {
-            AvatarTooBig(error)
-        } else if state.data.channels.is_name_taken(&args.name) {
-            NameTaken
-        } else {
-            let now = state.env.now();
-            let channel_id: ChannelId = state.env.rng().gen();
-            let permissions = args.permissions_v2.unwrap_or_default();
-
-            let chat = GroupChatCore::new(
-                MultiUserChat::Channel(state.env.canister_id().into(), channel_id),
-                member.user_id,
-                args.is_public,
-                args.name,
-                args.description,
-                args.rules,
-                subtype,
-                args.avatar,
-                args.history_visible_to_new_joiners,
-                permissions,
-                args.gate.clone(),
-                args.events_ttl,
-                member.is_bot,
-                state.env.rng().gen(),
-                now,
-            );
-
-            member.channels.insert(channel_id);
-
-            let mut channel = Channel {
-                id: channel_id,
-                chat,
-                date_imported: None,
-            };
-
-            if args.is_public {
-                match args.gate {
-                    Some(AccessGate::DiamondMember) => {
-                        for m in state
-                            .data
-                            .members
-                            .iter_mut()
-                            .filter(|m| diamond_membership_expiry_dates.get(&m.user_id).copied() > Some(now))
-                        {
-                            join_channel_unchecked(&mut channel, m, true, now);
-                        }
+    if !is_proposals_channel
+        && !match &caller {
+            Caller::BotV2(bot_caller) => state.data.is_bot_permitted(
+                &bot_caller.bot,
+                None,
+                &bot_caller.initiator,
+                &BotPermissions::from_community_permission(if args.is_public {
+                    CommunityPermission::CreatePublicChannel
+                } else {
+                    CommunityPermission::CreatePrivateChannel
+                }),
+            ),
+            _ => {
+                if let Some(member) = state.data.members.get_by_user_id(&caller.agent()) {
+                    if args.is_public {
+                        member.role().can_create_public_channel(&state.data.permissions)
+                    } else {
+                        member.role().can_create_private_channel(&state.data.permissions)
                     }
-                    None => {
-                        for m in state.data.members.iter_mut() {
-                            join_channel_unchecked(&mut channel, m, true, now);
-                        }
-                    }
-                    _ => {}
+                } else {
+                    false
                 }
             }
-
-            state.data.channels.add(channel);
-
-            handle_activity_notification(state);
-            Success(SuccessResult { channel_id })
         }
-    } else {
-        NotAuthorized
+    {
+        return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
+
+    if let Err(error) = validate_channel_name(&args.name) {
+        return Err(match error {
+            StringLengthValidationError::TooShort(s) => OCErrorCode::NameTooShort.with_json(&s),
+            StringLengthValidationError::TooLong(l) => OCErrorCode::NameTooLong.with_json(&l),
+        });
+    }
+
+    if let Err(error) = validate_description(&args.description) {
+        return Err(OCErrorCode::DescriptionTooLong.with_json(&error));
+    }
+
+    if let Err(error) = validate_rules(args.rules.enabled, &args.rules.text) {
+        return Err(error.into());
+    }
+
+    if let Err(error) = validate_avatar(args.avatar.as_ref()) {
+        return Err(OCErrorCode::AvatarTooBig.with_json(&error));
+    }
+
+    if args
+        .gate_config
+        .as_ref()
+        .map(|g| !g.validate(state.data.test_mode))
+        .unwrap_or_default()
+    {
+        return Err(OCErrorCode::InvalidAccessGate.into());
+    }
+
+    if state.data.channels.is_name_taken(&args.name, None) {
+        return Err(OCErrorCode::NameTaken.into());
+    }
+
+    let now = state.env.now();
+    let permissions = args.permissions_v2.unwrap_or_default();
+
+    let mut chat = GroupChatCore::new(
+        MultiUserChat::Channel(state.env.canister_id().into(), channel_id),
+        caller.agent(),
+        args.is_public,
+        args.name.clone(),
+        args.description,
+        args.rules,
+        subtype,
+        args.avatar,
+        args.history_visible_to_new_joiners,
+        messages_visible_to_non_members,
+        permissions,
+        args.gate_config.clone().map(|gc| gc.into()),
+        args.events_ttl,
+        (&caller).into(),
+        state.env.rng().r#gen(),
+        args.external_url,
+        now,
+    );
+
+    if args.is_public {
+        subscribe_bots_to_events(state, &mut chat);
+    }
+
+    state.data.members.mark_member_joined_channel(caller.agent(), channel_id);
+
+    state.data.channels.add(Channel {
+        id: channel_id,
+        chat,
+        date_imported: None,
+    });
+
+    if args.is_public {
+        state.data.public_channel_list_updated = now;
+
+        if args.gate_config.is_none() {
+            JoinMembersToPublicChannelJob {
+                channel_id,
+                members: state.data.members.iter_member_ids().collect(),
+            }
+            .execute_with_state(state);
+        }
+    }
+
+    state.push_community_event(CommunityEventInternal::ChannelCreated(Box::new(ChannelCreated {
+        channel_id,
+        is_public: args.is_public,
+        name: args.name,
+        created_by: caller.agent(),
+    })));
+
+    handle_activity_notification(state);
+    Ok(SuccessResult { channel_id })
 }
 
-async fn get_diamond_membership_expiry_dates_if_needed(args: &Args) -> Result<HashMap<UserId, TimestampMillis>, Response> {
-    if let Some(AccessGate::DiamondMember) = &args.gate {
-        let (local_user_index_canister_id, user_ids) = read_state(|state| {
-            (
-                state.data.local_user_index_canister_id,
-                state.data.members.iter().map(|u| u.user_id).collect(),
-            )
-        });
+fn subscribe_bots_to_events(state: &mut RuntimeState, chat: &mut GroupChatCore) {
+    for (bot_id, bot) in state.data.bots.iter() {
+        if let (Some(subscriptions), Some(permissions)) = (&bot.default_subscriptions, &bot.autonomous_permissions) {
+            let permitted_categories = permissions.permitted_chat_event_categories_to_read();
 
-        match local_user_index_canister_c2c_client::c2c_diamond_membership_expiry_dates(
-            local_user_index_canister_id,
-            &local_user_index_canister::c2c_diamond_membership_expiry_dates::Args { user_ids },
-        )
-        .await
-        {
-            Ok(local_user_index_canister::c2c_diamond_membership_expiry_dates::Response::Success(expiry_dates)) => {
-                Ok(expiry_dates)
-            }
-            Err(error) => Err(InternalError(format!("{error:?}"))),
+            let chat_events: HashSet<ChatEventType> = subscriptions
+                .chat
+                .iter()
+                .filter(|t| permitted_categories.contains(&ChatEventCategory::from(**t)))
+                .cloned()
+                .collect();
+
+            chat.events.subscribe_bot_to_events(*bot_id, chat_events.clone());
         }
-    } else {
-        Ok(HashMap::new())
     }
 }

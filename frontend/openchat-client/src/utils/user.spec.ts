@@ -1,7 +1,8 @@
 import type { UserLookup, UserSummary } from "openchat-shared";
-import { init, addMessages, _ } from "svelte-i18n";
-import { buildUsernameList, compareUsername } from "./user";
+import { _, addMessages, init } from "svelte-i18n";
 import { get } from "svelte/store";
+import { vi } from "vitest";
+import { buildUsernameList, compareUsername, missingUserIds } from "./user";
 
 addMessages("en", {
     you: "you",
@@ -12,53 +13,85 @@ addMessages("en", {
 });
 
 const now = Date.now();
-jest.setSystemTime(now);
+vi.setSystemTime(now);
 init({
     fallbackLocale: "en",
 });
 
-const lookup: UserLookup = {
-    a: {
-        kind: "user",
-        userId: "a",
-        username: "a",
-        displayName: undefined,
-        updated: BigInt(0),
-        suspended: false,
-        diamondStatus: "inactive",
-    },
-    b: {
-        kind: "user",
-        userId: "b",
-        username: "b",
-        displayName: undefined,
-        updated: BigInt(0),
-        suspended: false,
-        diamondStatus: "inactive",
-    },
-    xyz: {
-        kind: "user",
-        userId: "xyz",
-        username: "julian_jelfs",
-        displayName: undefined,
-        updated: BigInt(0),
-        suspended: false,
-        diamondStatus: "inactive",
-    },
-    alpha: {
-        kind: "user",
-        userId: "alpha",
-        username: "alpha",
-        displayName: undefined,
-        updated: BigInt(0),
-        suspended: false,
-        diamondStatus: "inactive",
-    },
-};
+const lookup: UserLookup = new Map([
+    [
+        "a",
+        {
+            kind: "user",
+            userId: "a",
+            username: "a",
+            displayName: undefined,
+            updated: BigInt(0),
+            suspended: false,
+            diamondStatus: "inactive",
+            chitBalance: 0,
+            streak: 0,
+            maxStreak: 0,
+            isUniquePerson: false,
+            totalChitEarned: 0,
+        },
+    ],
+    [
+        "b",
+        {
+            kind: "user",
+            userId: "b",
+            username: "b",
+            displayName: undefined,
+            updated: BigInt(0),
+            suspended: false,
+            diamondStatus: "inactive",
+            chitBalance: 0,
+            streak: 0,
+            maxStreak: 0,
+            isUniquePerson: false,
+            totalChitEarned: 0,
+        },
+    ],
+    [
+        "xyz",
+        {
+            kind: "user",
+            userId: "xyz",
+            username: "julian_jelfs",
+            displayName: undefined,
+            updated: BigInt(0),
+            suspended: false,
+            diamondStatus: "inactive",
+            chitBalance: 0,
+            streak: 0,
+            maxStreak: 0,
+            isUniquePerson: false,
+            totalChitEarned: 0,
+        },
+    ],
+    [
+        "alpha",
+        {
+            kind: "user",
+            userId: "alpha",
+            username: "alpha",
+            displayName: undefined,
+            updated: BigInt(0),
+            suspended: false,
+            diamondStatus: "inactive",
+            chitBalance: 0,
+            streak: 0,
+            maxStreak: 0,
+            isUniquePerson: false,
+            totalChitEarned: 0,
+        },
+    ],
+]);
 
 describe("build username list", () => {
-    test.skip("and you and more", () => {
-        const userIds = Object.entries(lookup).map(([k, _]) => k);
+    test("and you and more", () => {
+        const userIds = [...lookup.entries()].map(([k, _]) => k);
         userIds.push("beta");
 
         const result = buildUsernameList(get(_), new Set(userIds), "alpha", lookup, 2);
@@ -67,7 +100,7 @@ describe("build username list", () => {
     });
 
     test("show all", () => {
-        const userIds = Object.entries(lookup).map(([k, _]) => k);
+        const userIds = [...lookup.entries()].map(([k, _]) => k);
 
         const result = buildUsernameList(get(_), new Set(userIds), undefined, lookup);
 
@@ -75,15 +108,15 @@ describe("build username list", () => {
     });
 
     test("don't show 1 more", () => {
-        const userIds = Object.entries(lookup).map(([k, _]) => k);
+        const userIds = [...lookup.entries()].map(([k, _]) => k);
 
         const result = buildUsernameList(get(_), new Set(userIds), undefined, lookup, 3);
 
         expect(result).toEqual("a, b, julian_jelfs, alpha");
     });
 
-    test.skip("do show 1 more if missing", () => {
-        const userIds = Object.entries(lookup).map(([k, _]) => k);
+    test("do show 1 more if missing", () => {
+        const userIds = [...lookup.entries()].map(([k, _]) => k);
         userIds.push("beta");
 
         const result = buildUsernameList(get(_), new Set(userIds), undefined, lookup);
@@ -102,11 +135,23 @@ describe("compare username", () => {
             updated: BigInt(0),
             suspended: false,
             diamondStatus: "inactive",
+            chitBalance: 0,
+            streak: 0,
+            maxStreak: 0,
+            isUniquePerson: false,
+            totalChitEarned: 0,
         };
     }
     test("works with non-null usernames", () => {
         const users = ["zulu", "yanky", "foxtrot", "lima"].map(toUser);
         const sorted = users.sort(compareUsername);
         expect(sorted.map((u) => u.username)).toEqual(["foxtrot", "lima", "yanky", "zulu"]);
+    });
+});
+
+describe("missing userIds", () => {
+    test("should work", () => {
+        const missing = missingUserIds(lookup, new Set(), new Set(["a", "b", "c", "d", "e"]));
+        ["c", "d", "e"].forEach((u) => expect(missing.includes(u)).toBe(true));
     });
 });

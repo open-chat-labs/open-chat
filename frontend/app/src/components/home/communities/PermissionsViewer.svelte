@@ -3,24 +3,30 @@
     import {
         type CommunityPermissionRole,
         type CommunityPermissions,
+        type ResourceKey,
         communityRoles,
+        ROLE_ADMIN,
+        ROLE_MEMBER,
+        ROLE_OWNER,
     } from "openchat-client";
-    import { i18nKey, type ResourceKey } from "../../../i18n/i18n";
+    import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
 
-    export let permissions: CommunityPermissions;
-    export let isPublic: boolean;
+    interface Props {
+        permissions: CommunityPermissions;
+        isPublic: boolean;
+    }
+
+    let { permissions, isPublic }: Props = $props();
 
     type PermissionsByRole = Record<CommunityPermissionRole, Set<string>>;
     type PermissionsEntry = [keyof CommunityPermissions, CommunityPermissionRole];
 
     const roleLabels: Record<CommunityPermissionRole, ResourceKey> = {
-        owner: i18nKey("permissions.ownerOnly"),
-        admin: i18nKey("permissions.ownerAndAdmins"),
-        member: i18nKey("permissions.allMembers"),
+        [ROLE_OWNER]: i18nKey("permissions.ownerOnly"),
+        [ROLE_ADMIN]: i18nKey("permissions.ownerAndAdmins"),
+        [ROLE_MEMBER]: i18nKey("permissions.allMembers"),
     };
-
-    $: partitioned = partitionPermissions(permissions);
 
     function partitionPermissions(permissions: CommunityPermissions): PermissionsByRole {
         return (Object.entries(permissions) as PermissionsEntry[]).reduce(
@@ -31,12 +37,13 @@
                 return dict;
             },
             {
-                admin: new Set(),
-                member: new Set(),
-                owner: new Set(),
+                [ROLE_OWNER]: new Set(),
+                [ROLE_ADMIN]: new Set(),
+                [ROLE_MEMBER]: new Set(),
             } as PermissionsByRole,
         );
     }
+    let partitioned = $derived(partitionPermissions(permissions));
 </script>
 
 <ul>
@@ -47,7 +54,7 @@
                 <ul>
                     {#each [...partitioned[role]] as perm}
                         <li class="permission">
-                            <Check size={"1em"} color={"limegreen"} />
+                            <Check size={"1em"} color={"var(--success)"} />
                             <Translatable resourceKey={i18nKey(perm)} />
                         </li>
                     {/each}

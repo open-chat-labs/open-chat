@@ -1,49 +1,52 @@
 <script lang="ts">
-    import { onMount, getContext } from "svelte";
-    import RefreshIcon from "svelte-material-icons/Refresh.svelte";
-    import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
-    import QRCode from "../QRCode.svelte";
-    import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
-    import { _ } from "svelte-i18n";
-    import ErrorMessage from "../ErrorMessage.svelte";
-    import Toggle from "../Toggle.svelte";
-    import Link from "../Link.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import AreYouSure from "../AreYouSure.svelte";
-    import { toastStore } from "../../stores/toast";
     import {
-        type OpenChat,
-        routeForChatIdentifier,
-        type CommunitySummary,
         type CommunityIdentifier,
+        type CommunitySummary,
+        currentUserIdStore,
+        iconSize,
         type MultiUserChat,
         type MultiUserChatIdentifier,
+        type OpenChat,
+        type ResourceKey,
+        routeForChatIdentifier,
     } from "openchat-client";
+    import { ErrorCode } from "openchat-shared";
+    import { getContext, onMount } from "svelte";
+    import { _ } from "svelte-i18n";
+    import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
+    import RefreshIcon from "svelte-material-icons/Refresh.svelte";
+    import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
+    import { i18nKey, interpolate } from "../../i18n/i18n";
+    import { toastStore } from "../../stores/toast";
     import { canShare, shareLink } from "../../utils/share";
-    import Markdown from "./Markdown.svelte";
-    import { i18nKey, interpolate, type ResourceKey } from "../../i18n/i18n";
+    import AreYouSure from "../AreYouSure.svelte";
+    import ErrorMessage from "../ErrorMessage.svelte";
+    import Link from "../Link.svelte";
+    import QRCode from "../QRCode.svelte";
+    import Toggle from "../Toggle.svelte";
     import Translatable from "../Translatable.svelte";
+    import Markdown from "./Markdown.svelte";
 
-    export let container: MultiUserChat | CommunitySummary;
+    interface Props {
+        container: MultiUserChat | CommunitySummary;
+    }
+
+    let { container }: Props = $props();
 
     const client = getContext<OpenChat>("client");
     const unauthorized = i18nKey("permissions.notPermitted", {
         permission: $_("permissions.inviteUsers"),
     });
 
-    let ready = false;
-    let code: string | undefined = undefined;
-    let error: ResourceKey | undefined = undefined;
-    let checked = false;
-    let loading = false;
-    let confirmReset = false;
-
-    $: user = client.user;
-    $: link = getLink(container.id, code);
-    $: spinner = loading && code === undefined;
+    let ready = $state(false);
+    let code: string | undefined = $state(undefined);
+    let error: ResourceKey | undefined = $state(undefined);
+    let checked = $state(false);
+    let loading = $state(false);
+    let confirmReset = $state(false);
 
     function getLink(id: CommunityIdentifier | MultiUserChatIdentifier, code: string | undefined) {
-        const qs = `/?ref=${$user.userId}` + (!container.public ? `&code=${code}` : "");
+        const qs = `/?ref=${$currentUserIdStore}` + (!container.public ? `&code=${code}` : "");
         switch (id.kind) {
             case "community":
                 return `${window.location.origin}/community/${id.communityId}${qs}`;
@@ -68,7 +71,10 @@
                     ready = true;
                     checked = resp.code !== undefined;
                     code = resp.code;
-                } else if (resp.kind === "not_authorized") {
+                } else if (
+                    resp.kind === "error" &&
+                    resp.code === ErrorCode.InitiatorNotAuthorized
+                ) {
                     error = unauthorized;
                     client.logMessage("Unauthorized response calling getInviteCode");
                 } else {
@@ -169,6 +175,8 @@
     function onShare() {
         shareLink(link);
     }
+    let link = $derived(getLink(container.id, code));
+    let spinner = $derived(loading && code === undefined);
 </script>
 
 {#if !container.public}
@@ -176,13 +184,13 @@
         <Toggle
             id="enable-invite-link"
             small
-            on:change={toggleLink}
+            onChange={toggleLink}
             disabled={loading}
             waiting={loading}
             label={i18nKey("invite.enableLink")}
             bind:checked />
 
-        <div class:spinner />
+        <div class:spinner></div>
     </div>
 {/if}
 {#if ready}
@@ -199,14 +207,14 @@
             </div>
             <div class="action">
                 <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
-                <Link on:click={onCopy}>
+                <Link onClick={onCopy}>
                     <Translatable resourceKey={i18nKey("copy")} />
                 </Link>
             </div>
             {#if canShare()}
                 <div class="action">
                     <ShareIcon size={$iconSize} color={"var(--icon-txt)"} />
-                    <Link on:click={onShare}>
+                    <Link onClick={onShare}>
                         <Translatable resourceKey={i18nKey("share")} />
                     </Link>
                 </div>
@@ -215,7 +223,7 @@
                 <div class="action">
                     <RefreshIcon size={$iconSize} color={"var(--icon-txt)"} />
                     <Link
-                        on:click={() => {
+                        onClick={() => {
                             confirmReset = true;
                         }}>
                         <Translatable resourceKey={i18nKey("invite.resetLink")} />

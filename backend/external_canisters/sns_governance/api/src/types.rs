@@ -22,6 +22,7 @@ pub struct DisburseMaturityInProgress {
     pub amount_e8s: u64,
     pub timestamp_of_disbursement_seconds: u64,
     pub account_to_disburse_to: Option<Account>,
+    pub finalize_disbursement_timestamp_seconds: Option<u64>,
 }
 /// A neuron in the governance system.
 #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
@@ -115,6 +116,12 @@ pub struct Neuron {
     /// `Dissolved`. All other states represent the dissolved
     /// state. That is, (a) `when_dissolved_timestamp_seconds` is set and in the past,
     /// (b) `when_dissolved_timestamp_seconds` is set to zero, (c) neither value is set.
+    pub dissolve_state: Option<neuron::DissolveState>,
+}
+#[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
+pub struct NeuronIdOnly {
+    /// The unique id of this neuron.
+    pub id: Option<NeuronId>,
     pub dissolve_state: Option<neuron::DissolveState>,
 }
 /// Nested message and enum types in `Neuron`.
@@ -288,6 +295,28 @@ pub mod transfer_sns_treasury_funds {
         }
     }
 }
+/// A proposal function that changes the ledger's parameters.
+/// Fields with None values will remain unchanged.
+#[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
+pub struct ManageLedgerParameters {
+    pub transfer_fee: Option<u64>,
+    pub token_name: Option<String>,
+    pub token_symbol: Option<String>,
+    pub token_logo: Option<String>,
+}
+/// A proposal to mint SNS tokens to (optionally a Subaccount of) the
+/// target principal.
+#[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
+pub struct MintSnsTokens {
+    /// The amount to transfer, in e8s.
+    pub amount_e8s: Option<u64>,
+    /// An optional memo to use for the transfer.
+    pub memo: Option<u64>,
+    /// The principal to transfer the funds to.
+    pub to_principal: Option<candid::Principal>,
+    /// An (optional) Subaccount of the principal to transfer the funds to.
+    pub to_subaccount: Option<Subaccount>,
+}
 /// A proposal function to change the values of SNS metadata.
 /// Fields with None values will remain unchanged.
 #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
@@ -324,6 +353,45 @@ pub struct DeregisterDappCanisters {
     /// The new controllers for the deregistered canisters.
     pub new_controllers: Vec<candid::Principal>,
 }
+/// A proposal to manage the settings of one or more dapp canisters.
+#[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
+pub struct ManageDappCanisterSettings {
+    /// The canister IDs of the dapp canisters to be modified.
+    pub canister_ids: Vec<candid::Principal>,
+    /// Below are fields under CanisterSettings defined at
+    /// <https://internetcomputer.org/docs/current/references/ic-interface-spec/#ic-candid.>
+    pub compute_allocation: Option<u64>,
+    pub memory_allocation: Option<u64>,
+    pub freezing_threshold: Option<u64>,
+    pub reserved_cycles_limit: Option<u64>,
+    pub log_visibility: Option<i32>,
+    pub wasm_memory_limit: Option<u64>,
+    pub wasm_memory_threshold: Option<u64>,
+}
+/// Unlike `Governance.Version`, this message has optional fields and is the recommended one
+/// to use in APIs that can evolve. For example, the SNS Governance could eventually support
+/// a shorthand notation for SNS versions, enabling clients to specify SNS versions without having
+/// to set each individual SNS framework canister's WASM hash.
+#[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
+pub struct SnsVersion {
+    /// The hash of the Governance canister WASM.
+    pub governance_wasm_hash: Option<Vec<u8>>,
+    /// The hash of the Swap canister WASM.
+    pub swap_wasm_hash: Option<Vec<u8>>,
+    /// The hash of the Root canister WASM.
+    pub root_wasm_hash: Option<Vec<u8>>,
+    /// The hash of the Index canister WASM.
+    pub index_wasm_hash: Option<Vec<u8>>,
+    /// The hash of the Ledger canister WASM.
+    pub ledger_wasm_hash: Option<Vec<u8>>,
+    /// The hash of the Ledger Archive canister WASM.
+    pub archive_wasm_hash: Option<Vec<u8>>,
+}
+#[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
+pub struct AdvanceSnsTargetVersion {
+    /// If not specified, the target will advance to the latest SNS version known to this SNS.
+    pub new_target: Option<SnsVersion>,
+}
 /// A proposal is the immutable input of a proposal submission.
 #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
 pub struct Proposal {
@@ -358,9 +426,8 @@ pub mod proposal {
     ///
     /// See `impl From<&Action> for u64` in src/types.rs for the implementation
     /// of this mapping.
-    #[derive(candid::CandidType, candid::Deserialize)]
-    #[allow(clippy::large_enum_variant)]
-    #[derive(Clone, PartialEq)]
+    #[expect(clippy::large_enum_variant)]
+    #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
     pub enum Action {
         /// The `Unspecified` action is used as a fallback when
         /// following. That is, if no followees are specified for a given
@@ -419,6 +486,22 @@ pub mod proposal {
         ///
         /// Id = 11.
         DeregisterDappCanisters(super::DeregisterDappCanisters),
+        /// Mint SNS tokens to an account.
+        ///
+        /// Id = 12.
+        MintSnsTokens(super::MintSnsTokens),
+        /// Change some parameters on the ledger.
+        ///
+        /// Id = 13.
+        ManageLedgerParameters(super::ManageLedgerParameters),
+        /// Change canister settings for one or more dapp canister(s).
+        ///
+        /// Id = 14.
+        ManageDappCanisterSettings(super::ManageDappCanisterSettings),
+        /// Advance SNS target version.
+        ///
+        /// Id = 15.
+        AdvanceSnsTargetVersion(super::AdvanceSnsTargetVersion),
     }
 }
 #[derive(candid::CandidType, candid::Deserialize, Clone, Debug, PartialEq)]
@@ -748,7 +831,7 @@ pub struct NervousSystemParameters {
     /// The max number of proposals for which ballots are still stored, i.e.,
     /// unsettled proposals. If this number of proposals is reached, new proposals
     /// can only be added in exceptional cases (for few proposals it is defined
-    /// that they are allowed even if resoures are low to guarantee that the relevant
+    /// that they are allowed even if resources are low to guarantee that the relevant
     /// canisters can be upgraded).
     ///
     /// This number must be larger than zero and at most as large as the defined
@@ -896,11 +979,11 @@ pub struct RewardEvent {
     /// reasons that rewards might not be distributed in a given round.
     ///
     /// 1. "Missed" rounds: there was a long period when we did calculate rewards
-    ///     (longer than 1 round). (I.e. distribute_rewards was not called by
-    ///     heartbeat for whatever reason, most likely some kind of bug.)
+    ///    (longer than 1 round). (I.e. distribute_rewards was not called by
+    ///    heartbeat for whatever reason, most likely some kind of bug.)
     ///
     /// 2. Rollover: We tried to distribute rewards, but there were no proposals
-    ///     settled to distribute rewards for.
+    ///    settled to distribute rewards for.
     ///
     /// In both of these cases, the rewards purse rolls over into the next round.
     pub rounds_since_last_distribution: Option<u64>,
@@ -994,6 +1077,7 @@ pub mod governance {
         /// can generally be used in all sync cases.
         #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
         pub struct SyncCommand {}
+        #[expect(clippy::large_enum_variant)]
         #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
         pub enum Command {
             Disburse(super::super::manage_neuron::Disburse),
@@ -1200,6 +1284,12 @@ pub struct ManageNeuron {
     pub subaccount: Vec<u8>,
     pub command: Option<manage_neuron::Command>,
 }
+#[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
+pub struct ManageNeuronRegisterVoteOnly {
+    /// The modified neuron's subaccount which also serves as the neuron's ID.
+    pub subaccount: Vec<u8>,
+    pub command: Option<manage_neuron::CommandRegisterVoteOnly>,
+}
 /// Nested message and enum types in `ManageNeuron`.
 pub mod manage_neuron {
     /// The operation that increases a neuron's dissolve delay. It can be
@@ -1300,7 +1390,7 @@ pub mod manage_neuron {
         pub percentage_to_merge: u32,
     }
     /// Stake the maturity of a neuron.
-    /// The caller can choose a percentage of of the current maturity to stake.
+    /// The caller can choose a percentage of the current maturity to stake.
     /// If 'percentage_to_stake' is not provided, all of the neuron's current
     /// maturity will be staked.
     #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
@@ -1421,9 +1511,8 @@ pub mod manage_neuron {
         /// The set of permissions that will be revoked from the PrincipalId.
         pub permissions_to_remove: Option<super::NeuronPermissionList>,
     }
-    #[derive(candid::CandidType, candid::Deserialize)]
-    #[allow(clippy::large_enum_variant)]
-    #[derive(Clone, PartialEq)]
+    #[expect(clippy::large_enum_variant)]
+    #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
     pub enum Command {
         Configure(Configure),
         Disburse(Disburse),
@@ -1440,12 +1529,21 @@ pub mod manage_neuron {
         RemoveNeuronPermissions(RemoveNeuronPermissions),
         StakeMaturity(StakeMaturity),
     }
+
+    #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
+    pub enum CommandRegisterVoteOnly {
+        RegisterVote(RegisterVote),
+    }
 }
 /// The response of a ManageNeuron command.
 /// There is a dedicated response type for each `ManageNeuron.command` field.
 #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
 pub struct ManageNeuronResponse {
     pub command: Option<manage_neuron_response::Command>,
+}
+#[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
+pub struct ManageNeuronResponseRegisterVoteOnly {
+    pub command: Option<manage_neuron_response::CommandRegisterVoteOnly>,
 }
 /// Nested message and enum types in `ManageNeuronResponse`.
 pub mod manage_neuron_response {
@@ -1473,6 +1571,10 @@ pub mod manage_neuron_response {
     pub struct DisburseMaturityResponse {
         /// The amount disbursed in e8s of the governance token.
         pub amount_disbursed_e8s: u64,
+        /// The amount of maturity in e8s of the governance token deducted from the Neuron.
+        /// This amount will undergo maturity modulation if enabled, and may be increased or
+        /// decreased at the time of disbursement.
+        pub amount_deducted_e8s: Option<u64>,
     }
     #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
     pub struct StakeMaturityResponse {
@@ -1526,6 +1628,11 @@ pub mod manage_neuron_response {
         RemoveNeuronPermission(RemoveNeuronPermissionsResponse),
         StakeMaturity(StakeMaturityResponse),
     }
+    #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
+    pub enum CommandRegisterVoteOnly {
+        Error(super::GovernanceError),
+        RegisterVote(RegisterVoteResponse),
+    }
 }
 /// An operation that attempts to get a neuron by a given neuron ID.
 #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
@@ -1565,9 +1672,8 @@ pub struct GetProposalResponse {
 pub mod get_proposal_response {
     /// The response to a GetProposal command is either an error or
     /// the proposal data corresponding to the requested proposal.
-    #[derive(candid::CandidType, candid::Deserialize)]
-    #[allow(clippy::large_enum_variant)]
-    #[derive(Clone, PartialEq)]
+    #[expect(clippy::large_enum_variant)]
+    #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
     pub enum Result {
         Error(super::GovernanceError),
         Proposal(super::ProposalData),
@@ -1615,6 +1721,8 @@ pub struct ListProposals {
 pub struct ListProposalsResponse {
     /// The returned list of proposals' ProposalData.
     pub proposals: Vec<ProposalData>,
+    /// Whether ballots cast by the caller are included in the returned proposals.
+    pub include_ballots_by_caller: Option<bool>,
 }
 /// An operation that lists all neurons tracked in the Governance state in a
 /// paginated fashion.
@@ -1642,6 +1750,11 @@ pub struct ListNeurons {
 pub struct ListNeuronsResponse {
     /// The returned list of neurons.
     pub neurons: Vec<Neuron>,
+}
+#[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
+pub struct ListNeuronsIdsOnlyResponse {
+    /// The returned list of neurons.
+    pub neurons: Vec<NeuronIdOnly>,
 }
 /// The response to the list_nervous_system_functions query.
 #[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
@@ -2022,11 +2135,25 @@ impl ProposalData {
     }
 
     fn is_accepted(&self) -> bool {
-        // https://github.com/dfinity/ic/blob/17f0bb9bbbde697ebc3675c9d09e69b803d70bf9/rs/sns/governance/src/proposal.rs#L37
-        const MIN_NUMBER_VOTES_FOR_PROPOSAL_RATIO: f64 = 0.03;
+        const DEFAULT_MINIMUM_YES_PROPORTION_OF_TOTAL_BASIS_POINTS: u64 = 300;
+        const DEFAULT_MINIMUM_YES_PROPORTION_OF_EXERCISED_BASIS_POINTS: u64 = 5000;
 
         if let Some(tally) = self.latest_tally.as_ref() {
-            (tally.yes as f64 >= tally.total as f64 * MIN_NUMBER_VOTES_FOR_PROPOSAL_RATIO) && tally.yes > tally.no
+            let min_yes_proportion_of_total =
+                self.minimum_yes_proportion_of_total
+                    .and_then(|p| p.basis_points)
+                    .unwrap_or(DEFAULT_MINIMUM_YES_PROPORTION_OF_TOTAL_BASIS_POINTS) as u128;
+
+            let min_yes_proportion_of_exercised =
+                self.minimum_yes_proportion_of_exercised
+                    .and_then(|p| p.basis_points)
+                    .unwrap_or(DEFAULT_MINIMUM_YES_PROPORTION_OF_EXERCISED_BASIS_POINTS) as u128;
+
+            let yes = tally.yes as u128;
+            let no = tally.no as u128;
+            let total = tally.total as u128;
+
+            yes > total * min_yes_proportion_of_total / 10000 && yes > (yes + no) * min_yes_proportion_of_exercised / 10000
         } else {
             false
         }
@@ -2060,7 +2187,7 @@ impl TryFrom<ProposalData> for types::SnsProposal {
     type Error = &'static str;
 
     fn try_from(p: ProposalData) -> Result<Self, Self::Error> {
-        let now = canister_time::timestamp_millis();
+        let now = canister_time::now_millis();
         let now_seconds = now / 1000;
         let status = p.status();
         let reward_status = p.reward_status(now_seconds);

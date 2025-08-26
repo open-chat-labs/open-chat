@@ -11,9 +11,9 @@ fn appoint_admins(args: Args) -> Response {
     if let Some(chat_id) = read_state(|state| state.data.nervous_systems.get_chat_id(&args.governance_canister_id)) {
         for user_id in args.users {
             match chat_id {
-                MultiUserChat::Group(group_id) => ic_cdk::spawn(appoint_group_admin(group_id, user_id)),
+                MultiUserChat::Group(group_id) => ic_cdk::futures::spawn(appoint_group_admin(group_id, user_id)),
                 MultiUserChat::Channel(community_id, channel_id) => {
-                    ic_cdk::spawn(appoint_channel_admin(community_id, channel_id, user_id))
+                    ic_cdk::futures::spawn(appoint_channel_admin(community_id, channel_id, user_id))
                 }
             }
         }
@@ -27,7 +27,6 @@ async fn appoint_group_admin(group_id: ChatId, user_id: UserId) {
     let args = group_canister::change_role::Args {
         user_id,
         new_role: GroupRole::Admin,
-        correlation_id: 0,
     };
 
     let _ = group_canister_c2c_client::change_role(group_id.into(), &args).await;

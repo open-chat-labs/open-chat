@@ -1,7 +1,7 @@
-use crate::lifecycle::{init_env, init_state};
 use crate::Data;
+use crate::lifecycle::{init_env, init_state};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::init;
+use ic_cdk::init;
 use market_maker_canister::init::Args;
 use tracing::info;
 use utils::cycles::init_cycles_dispenser_client;

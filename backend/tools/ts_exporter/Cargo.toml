@@ -1,0 +1,7 @@
+[package]
+name = "ts_exporter"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+regex-lite = { workspace = true }

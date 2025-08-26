@@ -1,32 +1,25 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
-    import CogOutline from "svelte-material-icons/CogOutline.svelte";
-    import ReviewTranslationCorrections from "./ReviewTranslationCorrections.svelte";
-    import SectionHeader from "../../SectionHeader.svelte";
-    import { iconSize } from "../../../stores/iconSize";
-    import OperatorFunctions from "./OperatorFunctions.svelte";
-    import { getContext } from "svelte";
-    import type { OpenChat } from "openchat-client";
-    import Button from "../../Button.svelte";
+    import { iconSize, platformOperatorStore } from "openchat-client";
     import page from "page";
+    import CogOutline from "svelte-material-icons/CogOutline.svelte";
+    import Button from "../../Button.svelte";
+    import SectionHeader from "../../SectionHeader.svelte";
+    import OperatorFunctions from "./OperatorFunctions.svelte";
+    import ReviewTranslationCorrections from "./ReviewTranslationCorrections.svelte";
 
-    const client = getContext<OpenChat>("client");
-
-    $: platformOperator = client.platformOperator;
-
-    let selectedTab: "translations" | "operator" = "translations";
+    let selectedTab: "translations" | "operator" = $state("translations");
 
     function selectTab(tab: "translations" | "operator") {
         selectedTab = tab;
     }
 </script>
 
-{#if !$platformOperator}
+{#if !$platformOperatorStore}
     <div class="unauthorised">
         <img class="img" src={"/assets/evil-robot.svg"} alt="Unauthorised" />
         <h2>Unauthorised</h2>
         <p>Only platform operators can access the admin area</p>
-        <Button on:click={() => page("/")}>Back to safety</Button>
+        <Button onClick={() => page("/")}>Back to safety</Button>
     </div>
 {:else}
     <div class="admin">
@@ -44,7 +37,7 @@
             <div
                 tabindex="0"
                 role="button"
-                on:click={() => selectTab("translations")}
+                onclick={() => selectTab("translations")}
                 class:selected={selectedTab === "translations"}
                 class="tab">
                 Translation Corrections
@@ -52,7 +45,7 @@
             <div
                 tabindex="0"
                 role="button"
-                on:click={() => selectTab("operator")}
+                onclick={() => selectTab("operator")}
                 class:selected={selectedTab === "operator"}
                 class="tab">
                 Operator functions

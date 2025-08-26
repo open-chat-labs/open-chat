@@ -1,37 +1,41 @@
-<svelte:options immutable />
-
 <script lang="ts">
-    import NonMessageEvent from "./NonMessageEvent.svelte";
-    import type { Level, OpenChat, UserSummary } from "openchat-client";
+    import type { Level, UserSummary } from "openchat-client";
+    import { allUsersStore } from "openchat-client";
     import { _ } from "svelte-i18n";
-    import { getContext } from "svelte";
-    import { buildDisplayName } from "../../utils/user";
     import { i18nKey, interpolate } from "../../i18n/i18n";
+    import { buildDisplayName } from "../../utils/user";
+    import NonMessageEvent from "./NonMessageEvent.svelte";
 
-    const client = getContext<OpenChat>("client");
+    interface Props {
+        user: UserSummary | undefined;
+        isPublic: boolean | undefined;
+        messagesVisibleToNonMembers: boolean | undefined;
+        changedBy: string;
+        timestamp: bigint;
+        level: Level;
+    }
 
-    export let user: UserSummary | undefined;
-    export let nowPublic: boolean;
-    export let changedBy: string;
-    export let timestamp: bigint;
-    export let level: Level;
+    let { user, isPublic, messagesVisibleToNonMembers, changedBy, timestamp, level }: Props =
+        $props();
 
-    $: userStore = client.userStore;
-    $: me = changedBy === user?.userId;
-    $: changedByStr = buildDisplayName($userStore, changedBy, me);
-    $: visibility = (nowPublic ? $_("public") : $_("private")).toLowerCase();
-    $: text = interpolate(
-        $_,
-        i18nKey(
-            "groupVisibilityChangedBy",
-            {
-                changedBy: changedByStr,
-                visibility: visibility,
-            },
-            level,
-            true,
+    let showEvent = $derived(messagesVisibleToNonMembers !== undefined || isPublic !== undefined);
+    let me = $derived(changedBy === user?.userId);
+    let changedByStr = $derived(buildDisplayName($allUsersStore, changedBy, me ? "me" : "user"));
+    let text = $derived(
+        interpolate(
+            $_,
+            i18nKey(
+                "groupVisibilityChangedBy",
+                {
+                    changedBy: changedByStr,
+                },
+                level,
+                true,
+            ),
         ),
     );
 </script>
 
-<NonMessageEvent {text} {timestamp} />
+{#if showEvent}
+    <NonMessageEvent {text} {timestamp} />
+{/if}

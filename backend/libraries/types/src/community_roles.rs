@@ -1,13 +1,61 @@
+use std::collections::HashSet;
+
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 
-#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq)]
+use crate::GroupRole;
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Default, Eq, PartialEq)]
 pub enum CommunityRole {
     Owner,
     Admin,
+    #[default]
     Member,
 }
 
+#[ts_export]
+#[repr(u8)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum CommunityPermission {
+    ChangeRoles = 0,
+    UpdateDetails = 1,
+    InviteUsers = 2,
+    RemoveMembers = 3,
+    CreatePublicChannel = 4,
+    CreatePrivateChannel = 5,
+    ManageUserGroups = 6,
+    ReadMembership = 7,
+    ReadSummary = 8,
+}
+
+impl From<CommunityPermission> for u8 {
+    fn from(value: CommunityPermission) -> Self {
+        value as u8
+    }
+}
+
+impl TryFrom<u8> for CommunityPermission {
+    type Error = ();
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(CommunityPermission::ChangeRoles),
+            1 => Ok(CommunityPermission::UpdateDetails),
+            2 => Ok(CommunityPermission::InviteUsers),
+            3 => Ok(CommunityPermission::RemoveMembers),
+            4 => Ok(CommunityPermission::CreatePublicChannel),
+            5 => Ok(CommunityPermission::CreatePrivateChannel),
+            6 => Ok(CommunityPermission::ManageUserGroups),
+            7 => Ok(CommunityPermission::ReadMembership),
+            8 => Ok(CommunityPermission::ReadSummary),
+            _ => Err(()),
+        }
+    }
+}
+
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CommunityPermissions {
     pub change_roles: CommunityPermissionRole,
@@ -19,6 +67,7 @@ pub struct CommunityPermissions {
     pub manage_user_groups: CommunityPermissionRole,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct OptionalCommunityPermissions {
     pub change_roles: Option<CommunityPermissionRole>,
@@ -44,6 +93,7 @@ impl Default for CommunityPermissions {
     }
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug)]
 pub enum CommunityPermissionRole {
     Owners,
@@ -134,5 +184,36 @@ impl CommunityRole {
 
     fn has_owner_rights(&self) -> bool {
         self.is_owner()
+    }
+
+    pub fn permissions(&self, rps: &CommunityPermissions) -> HashSet<CommunityPermission> {
+        let permissions = [
+            (rps.change_roles, CommunityPermission::ChangeRoles),
+            (rps.create_private_channel, CommunityPermission::CreatePrivateChannel),
+            (rps.create_public_channel, CommunityPermission::CreatePublicChannel),
+            (rps.invite_users, CommunityPermission::InviteUsers),
+            (rps.manage_user_groups, CommunityPermission::ManageUserGroups),
+            (rps.remove_members, CommunityPermission::RemoveMembers),
+            (rps.update_details, CommunityPermission::UpdateDetails),
+        ];
+
+        let mut permissions: HashSet<_> = permissions
+            .into_iter()
+            .filter_map(|(rp, p)| self.is_permitted(rp).then_some(p))
+            .collect();
+
+        permissions.insert(CommunityPermission::ReadSummary);
+        permissions.insert(CommunityPermission::ReadMembership);
+        permissions
+    }
+}
+
+impl From<GroupRole> for CommunityRole {
+    fn from(value: GroupRole) -> Self {
+        match value {
+            GroupRole::Owner => CommunityRole::Owner,
+            GroupRole::Admin => CommunityRole::Admin,
+            _ => CommunityRole::Member,
+        }
     }
 }

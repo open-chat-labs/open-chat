@@ -2,7 +2,9 @@ use crate::{TimestampMillis, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
+use ts_export::ts_export;
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PollConfig {
     pub text: Option<String>,
@@ -14,6 +16,7 @@ pub struct PollConfig {
     pub allow_user_to_change_vote: bool,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PollVotes {
     pub total: TotalVotes,
@@ -46,6 +49,7 @@ impl PollConfig {
     }
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum TotalVotes {
     Visible(HashMap<u32, Vec<UserId>>),
@@ -53,6 +57,7 @@ pub enum TotalVotes {
     Hidden(u32),
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug)]
 pub enum VoteOperation {
     RegisterVote,
@@ -63,6 +68,7 @@ const MIN_POLL_OPTIONS: usize = 2;
 const MAX_POLL_OPTIONS: usize = 10;
 const MAX_POLL_OPTION_LENGTH: usize = 100;
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum InvalidPollReason {
     TooFewOptions(u32),

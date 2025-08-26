@@ -1,23 +1,42 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
+    import type { ResourceKey } from "openchat-client";
     import { onMount } from "svelte";
+    import { _ } from "svelte-i18n";
+    import { interpolate } from "../i18n/i18n";
 
-    export let disabled: boolean = false;
-    export let autofocus: boolean = false;
-    export let placeholder: string = "";
-    export let min: number = 0;
-    export let max: number = Number.MAX_VALUE;
-    export let defaultValue = Math.round(max - min / 2);
-    export let value: number = min;
-    export let align: "left" | "right" | "center" = "left";
+    interface Props {
+        disabled?: boolean;
+        autofocus?: boolean;
+        placeholder?: ResourceKey | undefined;
+        min?: number;
+        max?: number;
+        defaultValue?: any;
+        value?: number | null;
+        align?: "left" | "right" | "center";
+        shouldClamp?: boolean;
+        onChange?: () => void;
+        onEnter?: () => void;
+    }
 
-    const dispatch = createEventDispatcher();
+    let {
+        disabled = false,
+        autofocus = false,
+        placeholder = undefined,
+        min = 0,
+        max = Number.MAX_VALUE,
+        defaultValue = Math.round(max - min / 2),
+        value = $bindable(min),
+        align = "left",
+        shouldClamp = true,
+        onChange,
+        onEnter,
+    }: Props = $props();
 
-    let inp: HTMLInputElement;
+    let inp: HTMLInputElement | undefined = $state();
 
     onMount(() => {
         if (autofocus) {
-            inp.focus();
+            inp?.focus();
         }
     });
 
@@ -29,14 +48,20 @@
     }
 
     function handleInput(e: { currentTarget: { value: string } }) {
-        value = clamp(parseInt(e.currentTarget.value, 10));
-        inp.value = value.toString();
-        dispatch("change", value);
+        if (inp) {
+            if (shouldClamp) {
+                value = clamp(parseInt(e.currentTarget.value, 10));
+                if (value != null) {
+                    inp.value = value.toString();
+                }
+            }
+            onChange?.();
+        }
     }
 
     function keyDown(e: KeyboardEvent) {
         if (e.key === "Enter") {
-            dispatch("enter");
+            onEnter?.();
         }
     }
 </script>
@@ -51,12 +76,11 @@
         type="number"
         {min}
         {max}
-        {placeholder}
-        on:keydown={keyDown}
-        on:input={handleInput}
-        on:blur
+        placeholder={placeholder !== undefined ? interpolate($_, placeholder) : ""}
+        onkeydown={keyDown}
+        oninput={handleInput}
         bind:this={inp}
-        {value}
+        bind:value
         class={`textbox ${align}`} />
 </div>
 

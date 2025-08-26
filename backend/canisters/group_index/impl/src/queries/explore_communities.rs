@@ -1,11 +1,11 @@
-use crate::{model::moderation_flags::ModerationFlags, read_state, RuntimeState};
+use crate::{RuntimeState, model::moderation_flags::ModerationFlags, read_state};
+use canister_api_macros::query;
 use group_index_canister::explore_communities::{Response::*, *};
-use ic_cdk_macros::query;
 
 const MIN_TERM_LENGTH: u8 = 2;
 const MAX_TERM_LENGTH: u8 = 20;
 
-#[query]
+#[query(candid = true, msgpack = true)]
 fn explore_communities(args: Args) -> Response {
     read_state(|state| explore_communities_impl(args, state))
 }

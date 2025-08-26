@@ -1,12 +1,12 @@
 use crate::model::user::User;
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
+use canister_api_macros::query;
 use core::cmp::Ordering;
-use ic_cdk_macros::query;
 use user_index_canister::search::{Response::*, *};
 
 const MAX_SEARCH_TERM_LENGTH: usize = 25;
 
-#[query]
+#[query(candid = true, msgpack = true)]
 fn search(args: Args) -> Response {
     read_state(|state| search_impl(args, state))
 }
@@ -86,8 +86,8 @@ fn order_usernames(search_term: &str, u1: &str, u1_starts_ci: bool, u2: &str, u2
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::user::{PhoneStatus, User};
     use crate::Data;
+    use crate::model::user::{PhoneStatus, User};
     use candid::Principal;
     use types::PhoneNumber;
     use utils::env::test::TestEnv;

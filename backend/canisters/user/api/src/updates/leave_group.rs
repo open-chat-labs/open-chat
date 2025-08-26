@@ -1,21 +1,12 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::ChatId;
+use ts_export::ts_export;
+use types::{ChatId, UnitResult};
 
+#[ts_export(user, leave_group)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub chat_id: ChatId,
-    pub correlation_id: u64,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    GroupNotFound,
-    GroupNotPublic,
-    CallerNotInGroup,
-    OwnerCannotLeave,
-    UserSuspended,
-    ChatFrozen,
-    InternalError(String),
-}
+pub type Response = UnitResult;

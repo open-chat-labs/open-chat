@@ -1,20 +1,19 @@
-use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
+use types::Empty;
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct Args {
-    pub correlation_id: u64,
-}
+pub type Args = Empty;
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(group, enable_invite_code)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    NotAuthorized,
-    UserSuspended,
-    ChatFrozen,
+    Error(OCError),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(group, enable_invite_code)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub code: u64,
 }

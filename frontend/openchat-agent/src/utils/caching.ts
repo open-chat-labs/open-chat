@@ -1,51 +1,64 @@
+import type { Principal } from "@icp-sdk/core/principal";
 import {
+    deleteDB,
     openDB,
     type DBSchema,
     type IDBPCursorWithValue,
     type IDBPDatabase,
+    type IDBPTransaction,
     type StoreNames,
     type StoreValue,
 } from "idb";
 import type {
+    BotsResponse,
     ChatEvent,
     ChatIdentifier,
     ChatStateFull,
     ChatSummary,
+    CommunityDetails,
+    CommunitySummary,
+    CreatedUser,
+    CryptocurrencyContent,
+    CurrentUserSummary,
+    DataContent,
+    DiamondMembershipStatus,
     EventsResponse,
     EventsSuccessResult,
     EventWrapper,
     ExpiredEventsRange,
     ExpiredMessagesRange,
+    ExternalAchievement,
     GroupChatDetails,
     IndexRange,
     Message,
+    MessageActivityEvent,
     MessageContent,
+    MessageContext,
+    P2PSwapContent,
+    PrizeContent,
+    PublicProfile,
     ReplyContext,
     SendMessageResponse,
     SendMessageSuccess,
-    UpdatedEvent,
-    MessageContext,
-    CommunityDetails,
-    CommunitySummary,
-    DataContent,
-    CreatedUser,
-    DiamondMembershipStatus,
+    Tally,
     TransferSuccess,
+    UpdatedEvent,
 } from "openchat-shared";
 import {
+    canRetryMessage,
     chatIdentifiersEqual,
     chatIdentifierToString,
     ChatMap,
-    MessageContextMap,
+    isSuccessfulEventsResponse,
     MAX_EVENTS,
     MAX_MESSAGES,
+    MessageContextMap,
+    ONE_DAY,
+    updateCreatedUser,
 } from "openchat-shared";
-import type { Principal } from "@dfinity/principal";
-import type { CryptocurrencyContent } from "openchat-shared";
-import type { PrizeContent } from "openchat-shared";
-import type { P2PSwapContent } from "openchat-shared";
 
-const CACHE_VERSION = 99;
+const CACHE_VERSION = 142;
+const EARLIEST_SUPPORTED_MIGRATION = 138;
 const MAX_INDEX = 9999999999;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
@@ -60,6 +73,11 @@ export interface ChatSchema extends DBSchema {
     chats: {
         key: string;
         value: ChatStateFull;
+    };
+
+    bots: {
+        key: string;
+        value: BotsResponse;
     };
 
     chat_events: {
@@ -114,10 +132,220 @@ export interface ChatSchema extends DBSchema {
         value: CreatedUser;
     };
 
+    publicProfile: {
+        key: string;
+        value: PublicProfile;
+    };
+
     localUserIndex: {
         key: string;
         value: string;
     };
+
+    externalAchievements: {
+        key: string;
+        value: {
+            lastUpdated: bigint;
+            achievements: ExternalAchievement[];
+        };
+    };
+
+    activityFeed: {
+        key: string;
+        value: MessageActivityEvent[];
+    };
+}
+
+type MigrationFunction<T> = (
+    db: IDBPDatabase<T>,
+    principal: Principal,
+    transaction: IDBPTransaction<T, StoreNames<T>[], "versionchange">,
+) => Promise<void>;
+
+// async function createBotsStore(
+//     db: IDBPDatabase<ChatSchema>,
+//     _principal: Principal,
+//     _tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+// ) {
+//     if (db.objectStoreNames.contains("bots")) {
+//         db.deleteObjectStore("bots");
+//     }
+//     db.createObjectStore("bots");
+// }
+//
+// async function createActivityFeed(
+//     db: IDBPDatabase<ChatSchema>,
+//     _principal: Principal,
+//     _tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+// ) {
+//     if (db.objectStoreNames.contains("activityFeed")) {
+//         db.deleteObjectStore("activityFeed");
+//     }
+//     db.createObjectStore("activityFeed");
+// }
+//
+async function clearChatsStore(
+    _db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
+    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    await tx.objectStore("chats").clear();
+}
+//
+// async function clearGroupDetailsStore(
+//     _db: IDBPDatabase<ChatSchema>,
+//     _principal: Principal,
+//     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+// ) {
+//     await tx.objectStore("group_details").clear();
+// }
+
+async function clearCommunityDetailsStore(
+    _db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
+    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    await tx.objectStore("community_details").clear();
+}
+//
+// async function clearEverything(
+//     db: IDBPDatabase<ChatSchema>,
+//     _principal: Principal,
+//     _tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+// ) {
+//     nuke(db);
+// }
+//
+async function clearEvents(
+    _db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
+    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    await tx.objectStore("chat_events").clear();
+}
+
+// async function clearChatAndGroups(
+//     _db: IDBPDatabase<ChatSchema>,
+//     _principal: Principal,
+//     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+// ) {
+//     await clearChatsStore(_db, _principal, tx);
+//     await clearGroupDetailsStore(_db, _principal, tx);
+// }
+//
+// async function clearExternalAchievements(
+//     _db: IDBPDatabase<ChatSchema>,
+//     _principal: Principal,
+//     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+// ) {
+//     await tx.objectStore("externalAchievements").clear();
+// }
+
+async function clearChatsAndCurrentUser(
+    _db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
+    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    await clearChatsStore(_db, _principal, tx);
+    await tx.objectStore("currentUser").clear();
+}
+
+async function createPublicProfileStore(
+    db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
+    _tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    if (db.objectStoreNames.contains("publicProfile")) {
+        db.deleteObjectStore("publicProfile");
+    }
+    db.createObjectStore("publicProfile");
+}
+
+const migrations: Record<number, MigrationFunction<ChatSchema>> = {
+    139: clearCommunityDetailsStore,
+    140: clearEvents,
+    141: clearChatsAndCurrentUser,
+    142: createPublicProfileStore,
+};
+
+async function migrate(
+    db: IDBPDatabase<ChatSchema>,
+    principal: Principal,
+    from: number,
+    to: number,
+    transaction: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    for (let version = from + 1; version <= to; version++) {
+        if (migrations[version]) {
+            console.debug(`DB: applying migration for version ${version}`);
+            await migrations[version](db, principal, transaction);
+        }
+    }
+}
+
+function nuke(db: IDBPDatabase<ChatSchema>) {
+    if (db.objectStoreNames.contains("chat_events")) {
+        db.deleteObjectStore("chat_events");
+    }
+    if (db.objectStoreNames.contains("thread_events")) {
+        db.deleteObjectStore("thread_events");
+    }
+    if (db.objectStoreNames.contains("expiredMessageRanges")) {
+        db.deleteObjectStore("expiredMessageRanges");
+    }
+    if (db.objectStoreNames.contains("chats")) {
+        db.deleteObjectStore("chats");
+    }
+    if (db.objectStoreNames.contains("bots")) {
+        db.deleteObjectStore("bots");
+    }
+    if (db.objectStoreNames.contains("group_details")) {
+        db.deleteObjectStore("group_details");
+    }
+    if (db.objectStoreNames.contains("community_details")) {
+        db.deleteObjectStore("community_details");
+    }
+    if (db.objectStoreNames.contains("failed_chat_messages")) {
+        db.deleteObjectStore("failed_chat_messages");
+    }
+    if (db.objectStoreNames.contains("failed_thread_messages")) {
+        db.deleteObjectStore("failed_thread_messages");
+    }
+    if (db.objectStoreNames.contains("cachePrimer")) {
+        db.deleteObjectStore("cachePrimer");
+    }
+    if (db.objectStoreNames.contains("currentUser")) {
+        db.deleteObjectStore("currentUser");
+    }
+    if (db.objectStoreNames.contains("publicProfile")) {
+        db.deleteObjectStore("publicProfile");
+    }
+    if (db.objectStoreNames.contains("localUserIndex")) {
+        db.deleteObjectStore("localUserIndex");
+    }
+    if (db.objectStoreNames.contains("externalAchievements")) {
+        db.deleteObjectStore("externalAchievements");
+    }
+    if (db.objectStoreNames.contains("activityFeed")) {
+        db.deleteObjectStore("activityFeed");
+    }
+    const chatEvents = db.createObjectStore("chat_events");
+    chatEvents.createIndex("messageIdx", "messageKey");
+    chatEvents.createIndex("expiresAt", "expiresAt");
+    const threadEvents = db.createObjectStore("thread_events");
+    threadEvents.createIndex("messageIdx", "messageKey");
+    db.createObjectStore("chats");
+    db.createObjectStore("group_details");
+    db.createObjectStore("community_details");
+    db.createObjectStore("failed_chat_messages");
+    db.createObjectStore("failed_thread_messages");
+    db.createObjectStore("cachePrimer");
+    db.createObjectStore("currentUser");
+    db.createObjectStore("publicProfile");
+    db.createObjectStore("localUserIndex");
+    db.createObjectStore("externalAchievements");
+    db.createObjectStore("activityFeed");
+    db.createObjectStore("bots");
 }
 
 function padMessageIndex(i: number): string {
@@ -145,71 +373,55 @@ export function createCacheKey(context: MessageContext, index: number): string {
 
 export function openCache(principal: Principal): Database {
     return openDB<ChatSchema>(`openchat_db_${principal}`, CACHE_VERSION, {
-        upgrade(db, _oldVersion, _newVersion) {
-            if (db.objectStoreNames.contains("chat_events")) {
-                db.deleteObjectStore("chat_events");
+        upgrade(db, previousVersion, newVersion, transaction) {
+            if (
+                previousVersion == null ||
+                previousVersion < EARLIEST_SUPPORTED_MIGRATION ||
+                newVersion == null
+            ) {
+                nuke(db);
+            } else {
+                console.debug(`DB: migrating database from ${previousVersion} to ${newVersion}`);
+                migrate(db, principal, previousVersion, newVersion, transaction).then(() => {
+                    console.debug(
+                        `DB: migration from ${previousVersion} to ${newVersion} complete`,
+                    );
+                });
             }
-            if (db.objectStoreNames.contains("thread_events")) {
-                db.deleteObjectStore("thread_events");
-            }
-            if (db.objectStoreNames.contains("expiredMessageRanges")) {
-                db.deleteObjectStore("expiredMessageRanges");
-            }
-            if (db.objectStoreNames.contains("chats")) {
-                db.deleteObjectStore("chats");
-            }
-            if (db.objectStoreNames.contains("group_details")) {
-                db.deleteObjectStore("group_details");
-            }
-            if (db.objectStoreNames.contains("community_details")) {
-                db.deleteObjectStore("community_details");
-            }
-            if (db.objectStoreNames.contains("failed_chat_messages")) {
-                db.deleteObjectStore("failed_chat_messages");
-            }
-            if (db.objectStoreNames.contains("failed_thread_messages")) {
-                db.deleteObjectStore("failed_thread_messages");
-            }
-            if (db.objectStoreNames.contains("cachePrimer")) {
-                db.deleteObjectStore("cachePrimer");
-            }
-            if (db.objectStoreNames.contains("currentUser")) {
-                db.deleteObjectStore("currentUser");
-            }
-            if (db.objectStoreNames.contains("localUserIndex")) {
-                db.deleteObjectStore("localUserIndex");
-            }
-            const chatEvents = db.createObjectStore("chat_events");
-            chatEvents.createIndex("messageIdx", "messageKey");
-            chatEvents.createIndex("expiresAt", "expiresAt");
-            const threadEvents = db.createObjectStore("thread_events");
-            threadEvents.createIndex("messageIdx", "messageKey");
-            db.createObjectStore("chats");
-            db.createObjectStore("group_details");
-            db.createObjectStore("community_details");
-            db.createObjectStore("failed_chat_messages");
-            db.createObjectStore("failed_thread_messages");
-            db.createObjectStore("cachePrimer");
-            db.createObjectStore("currentUser");
-            db.createObjectStore("localUserIndex");
         },
     });
 }
 
-export async function openDbAndGetCachedChats(
+export async function getCachedBots(
+    db: Database,
     principal: Principal,
-): Promise<ChatStateFull | undefined> {
-    const db = openCache(principal);
-    if (db !== undefined) {
-        return getCachedChats(db, principal);
-    }
+): Promise<BotsResponse | undefined> {
+    return (await db).get("bots", principal.toString());
+}
+
+export async function setCachedBots(db: Database, principal: Principal, bots: BotsResponse) {
+    (await db).put("bots", bots, principal.toString());
 }
 
 export async function getCachedChats(
     db: Database,
     principal: Principal,
 ): Promise<ChatStateFull | undefined> {
-    return await (await db).get("chats", principal.toString());
+    const resolvedDb = await db;
+    const chats = await resolvedDb.get("chats", principal.toString());
+
+    if (
+        chats !== undefined &&
+        chats.latestUserCanisterUpdates < BigInt(Date.now() - 30 * ONE_DAY)
+    ) {
+        // If the cache was last updated more than 30 days ago, clear the cache and return undefined
+        const storeNames = resolvedDb.objectStoreNames;
+        for (let i = 0; i < storeNames.length; i++) {
+            await resolvedDb.clear(storeNames[i]);
+        }
+        return undefined;
+    }
+    return chats;
 }
 
 export async function setCachedChats(
@@ -234,7 +446,7 @@ export async function setCachedChats(
     const eventsStore = tx.objectStore("chat_events");
     const threadsStore = tx.objectStore("thread_events");
 
-    const deleteRequests = updatedEvents.entries().flatMap(([chatId, indexes]) => {
+    const deleteRequests = [...updatedEvents.entries()].flatMap(([chatId, indexes]) => {
         return indexes.map((i) => {
             const key = createCacheKey(
                 { chatId, threadRootMessageIndex: i.threadRootMessageIndex },
@@ -250,6 +462,23 @@ export async function setCachedChats(
 
     await Promise.all(promises);
     await tx.done;
+}
+
+export async function deleteEventsForChat(db: Database, chatId: string) {
+    try {
+        const tx = (await db).transaction("chat_events", "readwrite", { durability: "relaxed" });
+        const store = tx.objectStore("chat_events");
+        const cursor = await store.openCursor(IDBKeyRange.lowerBound(chatId));
+        while (cursor?.key !== undefined) {
+            if (cursor.key.startsWith(chatId)) {
+                await store.delete(cursor.key);
+            }
+            await cursor.continue();
+        }
+        await tx.done;
+    } catch (err) {
+        console.warn("Error deleting events for chat: ", err);
+    }
 }
 
 export async function getCachedEvents(
@@ -599,6 +828,10 @@ export async function recordFailedMessage<T extends Message>(
     event: EventWrapper<T>,
     threadRootMessageIndex?: number,
 ): Promise<void> {
+    if (!canRetryMessage(event.event.content)) {
+        return;
+    }
+
     const store =
         threadRootMessageIndex !== undefined ? "failed_thread_messages" : "failed_chat_messages";
     const key = createFailedCacheKey({ chatId, threadRootMessageIndex }, event.event.messageId);
@@ -634,7 +867,7 @@ function rebuildBlobUrls(content: MessageContent): MessageContent {
 
 export async function loadFailedMessages(
     db: Database,
-): Promise<MessageContextMap<Record<number, EventWrapper<Message>>>> {
+): Promise<MessageContextMap<Record<string, EventWrapper<Message>>>> {
     const chatMessages = await (await db).getAll("failed_chat_messages");
     const threadMessages = await (await db).getAll("failed_thread_messages");
     return [...chatMessages, ...threadMessages].reduce((res, ev) => {
@@ -646,10 +879,10 @@ export async function loadFailedMessages(
         };
         const val = res.get(context) ?? {};
         ev.event.content = rebuildBlobUrls(ev.event.content);
-        val[Number(ev.event.messageId)] = ev;
+        val[ev.event.messageId.toString()] = ev;
         res.set(context, val);
         return res;
-    }, new MessageContextMap<Record<number, EventWrapper<Message>>>());
+    }, new MessageContextMap<Record<string, EventWrapper<Message>>>());
 }
 
 export async function setCachedEvents(
@@ -658,7 +891,7 @@ export async function setCachedEvents(
     resp: EventsResponse<ChatEvent>,
     threadRootMessageIndex: number | undefined,
 ): Promise<void> {
-    if (resp === "events_failed") return;
+    if (!isSuccessfulEventsResponse(resp)) return;
     const store = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
 
     const tx = (await db).transaction([store], "readwrite", {
@@ -700,6 +933,44 @@ export async function setCachedEvents(
     }
     await Promise.all(promises);
     await tx.done;
+}
+
+export async function updateCachedProposalTallies(
+    db: Database,
+    chatId: ChatIdentifier,
+    tallies: [number, Tally][],
+): Promise<EventWrapper<Message>[]> {
+    const tx = (await db).transaction(["chat_events"], "readwrite", {
+        durability: "relaxed",
+    });
+    const eventStore = tx.objectStore("chat_events");
+
+    const messages: EventWrapper<Message>[] = [];
+    const promises: Promise<void>[] = tallies.map(([eventIndex, tally]) => {
+        const cacheKey = createCacheKey({ chatId }, eventIndex);
+        return eventStore
+            .get(cacheKey)
+            .then((event) => {
+                if (
+                    event?.kind === "event" &&
+                    event.event.kind === "message" &&
+                    event.event.content.kind === "proposal_content"
+                ) {
+                    const updateCache =
+                        tally.timestamp > event.event.content.proposal.tally.timestamp;
+                    event.event.content.proposal.tally = tally;
+                    messages.push(event as EventWrapper<Message>);
+
+                    if (updateCache) {
+                        return eventStore.put(event, cacheKey);
+                    }
+                }
+            })
+            .then((_) => {});
+    });
+    await Promise.all(promises);
+    await tx.done;
+    return messages;
 }
 
 export function setCachedMessageFromSendResponse(
@@ -749,10 +1020,10 @@ export function getCachePrimerTimestamps(db: Database): Promise<Record<string, b
 
 export async function setCachePrimerTimestamp(
     db: Database,
-    chatIdentifierString: string,
+    chatId: ChatIdentifier,
     timestamp: bigint,
 ): Promise<void> {
-    await (await db).put("cachePrimer", timestamp, chatIdentifierString);
+    await (await db).put("cachePrimer", timestamp, chatIdentifierToString(chatId));
 }
 
 function messageToEvent(
@@ -771,11 +1042,16 @@ function messageToEvent(
                     kind: "prize_content",
                     prizesRemaining: message.content.prizes.length,
                     prizesPending: 0,
-                    winners: [],
+                    winnerCount: 0,
+                    userIsWinner: false,
                     token: message.content.transfer.token,
                     endDate: message.content.endDate,
                     caption: message.content.caption,
                     diamondOnly: message.content.diamondOnly,
+                    lifetimeDiamondOnly: message.content.lifetimeDiamondOnly,
+                    uniquePersonOnly: message.content.uniquePersonOnly,
+                    streakOnly: message.content.streakOnly,
+                    requiresCaptcha: message.content.requiresCaptcha,
                 } as PrizeContent;
                 break;
             case "p2p_swap_content_initial":
@@ -851,6 +1127,15 @@ export function initDb(principal: Principal): Database {
 
 export function closeDb(): void {
     db = undefined;
+}
+
+export async function openDbAndGetCachedChats(
+    principal: Principal,
+): Promise<ChatStateFull | undefined> {
+    db ??= openCache(principal);
+    if (db !== undefined) {
+        return getCachedChats(db, principal);
+    }
 }
 
 // for now this is only used for loading pinned messages so we can ignore the idea of
@@ -1187,9 +1472,34 @@ async function runExpiredEventSweeper() {
     }
 }
 
+export async function getCachedPublicProfile(userId: string): Promise<PublicProfile | undefined> {
+    if (db === undefined) return;
+    return (await db).get("publicProfile", userId);
+}
+
+export async function setCachedPublicProfile(
+    userId: string,
+    profile: PublicProfile,
+): Promise<void> {
+    if (db === undefined) return;
+    (await db).put("publicProfile", profile, userId);
+}
+
 export async function getCachedCurrentUser(principal: string): Promise<CreatedUser | undefined> {
     if (db === undefined) return;
     return (await db).get("currentUser", principal);
+}
+
+export async function mergeCachedCurrentUser(
+    principal: string,
+    updated: CurrentUserSummary,
+): Promise<void> {
+    if (db === undefined) return;
+    const current = await getCachedCurrentUser(principal);
+    if (current) {
+        const merged = updateCreatedUser(current, updated);
+        (await db).put("currentUser", merged, principal);
+    }
 }
 
 export async function setCachedCurrentUser(principal: string, user: CreatedUser): Promise<void> {
@@ -1225,4 +1535,43 @@ export async function cacheLocalUserIndexForUser(
     if (db === undefined) return localUserIndex;
     (await db).put("localUserIndex", localUserIndex, userId);
     return localUserIndex;
+}
+
+export async function clearCache(principal: string): Promise<void> {
+    const name = `openchat_db_${principal}`;
+    try {
+        if (db !== undefined) {
+            (await db).close();
+        }
+        await deleteDB(name);
+        console.log("deleted db: ", name);
+    } catch (err) {
+        console.error("Unable to delete db: ", name, err);
+    }
+}
+
+export async function getCachedExternalAchievements(): Promise<
+    { lastUpdated: bigint; achievements: ExternalAchievement[] } | undefined
+> {
+    if (db === undefined) return undefined;
+    return (await db).get("externalAchievements", "value");
+}
+
+export async function setCachedExternalAchievements(
+    lastUpdated: bigint,
+    achievements: ExternalAchievement[],
+): Promise<void> {
+    if (db === undefined) return;
+    (await db).put("externalAchievements", { lastUpdated, achievements }, "value");
+}
+
+export async function getActivityFeedEvents(): Promise<MessageActivityEvent[]> {
+    if (db === undefined) return [];
+    const result = await (await db).get("activityFeed", "value");
+    return result ?? [];
+}
+
+export async function setActivityFeedEvents(activity: MessageActivityEvent[]): Promise<void> {
+    if (db === undefined) return;
+    (await db).put("activityFeed", activity, "value");
 }

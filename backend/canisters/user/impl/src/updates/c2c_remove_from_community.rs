@@ -1,14 +1,12 @@
-use crate::{mutate_state, openchat_bot, run_regular_jobs, RuntimeState};
-use canister_api_macros::update_msgpack;
+use crate::{RuntimeState, execute_update, openchat_bot};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use user_canister::c2c_remove_from_community::{Response::*, *};
+use user_canister::c2c_remove_from_community::*;
 
-#[update_msgpack]
+#[update(msgpack = true)]
 #[trace]
 fn c2c_remove_from_community(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| c2c_remove_from_community_impl(args, state))
+    execute_update(|state| c2c_remove_from_community_impl(args, state))
 }
 
 fn c2c_remove_from_community_impl(args: Args, state: &mut RuntimeState) -> Response {
@@ -25,5 +23,5 @@ fn c2c_remove_from_community_impl(args: Args, state: &mut RuntimeState) -> Respo
             state,
         );
     }
-    Success
+    Response::Success
 }

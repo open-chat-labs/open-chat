@@ -7,17 +7,28 @@
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
 
-    export let adoptPercent: number;
-    export let rejectPercent: number;
-    export let votingEnded: boolean;
-    export let deadline: number;
-    export let minYesPercentageOfTotal: number;
-    export let minYesPercentageOfExercised: number;
+    interface Props {
+        adoptPercent: number;
+        rejectPercent: number;
+        votingEnded: boolean;
+        deadline: number;
+        minYesPercentageOfTotal: number;
+        minYesPercentageOfExercised: number;
+    }
+
+    let {
+        adoptPercent,
+        rejectPercent,
+        votingEnded,
+        deadline,
+        minYesPercentageOfTotal,
+        minYesPercentageOfExercised,
+    }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
-    $: deadlineDate = new Date(Number(deadline));
-    $: rtl = $rtlStore ? "right" : "left";
+    let deadlineDate = $derived(new Date(Number(deadline)));
+    let rtl = $derived($rtlStore ? "right" : "left");
 </script>
 
 <div class="wrapper">
@@ -30,10 +41,10 @@
         </svg>
     </div>
     <div class="progress">
-        <div class="adopt" style="width: {adoptPercent}%" />
-        <div class="reject" style="width: {rejectPercent}%" />
-        <div class="vertical-line" style="{rtl}: {minYesPercentageOfTotal}%" />
-        <div class="vertical-line" style="{rtl}: {minYesPercentageOfExercised}%" />
+        <div class="adopt" style="transform: scaleX({adoptPercent}%)"></div>
+        <div class="reject" style="transform: scaleX({rejectPercent}%)"></div>
+        <div class="vertical-line" style="{rtl}: {minYesPercentageOfTotal}%"></div>
+        <div class="vertical-line" style="{rtl}: {minYesPercentageOfExercised}%"></div>
     </div>
 
     <div class="remaining">
@@ -79,22 +90,25 @@
             margin-top: 0;
         }
 
-        .adopt {
+        .adopt, .reject {
             position: absolute;
             top: 0;
-            left: 0;
             bottom: 0;
+            left: 0;
+            right: 0;
+            transition-duration: 1s;
+        }
+
+        .adopt {
             background: var(--vote-yes-color);
             border-radius: $sp3 0 0 $sp3;
+            transform-origin: left;
         }
 
         .reject {
-            position: absolute;
-            top: 0;
-            right: 0;
-            bottom: 0;
             background: var(--vote-no-color);
             border-radius: 0 $sp3 $sp3 0;
+            transform-origin: right;
         }
 
         .vertical-line {

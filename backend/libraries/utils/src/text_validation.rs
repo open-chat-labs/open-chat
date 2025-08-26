@@ -1,11 +1,12 @@
+use oc_error_codes::{OCError, OCErrorCode};
 use types::{FieldTooLongResult, FieldTooShortResult, GroupSubtype};
 
 const MIN_USERNAME_LENGTH: u32 = 5;
-const MAX_USERNAME_LENGTH: u32 = 15;
+const MAX_USERNAME_LENGTH: u32 = 20;
 const MIN_DISPLAY_NAME_LENGTH: u32 = 3;
 const MAX_DISPLAY_NAME_LENGTH: u32 = 25;
 const MIN_GROUP_NAME_LENGTH: u32 = 3;
-const MAX_GROUP_NAME_LENGTH: u32 = 25;
+const MAX_GROUP_NAME_LENGTH: u32 = 40;
 const MAX_GROUP_DESCRIPTION_LENGTH: u32 = 1024;
 const MAX_GROUP_RULES_LENGTH: u32 = 1024;
 const MIN_USER_GROUP_NAME_LENGTH: u32 = 3;
@@ -26,6 +27,16 @@ pub enum UsernameValidationError {
     TooLong(FieldTooLongResult),
     TooShort(FieldTooShortResult),
     Invalid,
+}
+
+impl From<UsernameValidationError> for OCError {
+    fn from(value: UsernameValidationError) -> Self {
+        match value {
+            UsernameValidationError::TooLong(f) => OCErrorCode::UsernameTooLong.with_json(&f),
+            UsernameValidationError::TooShort(f) => OCErrorCode::UsernameTooShort.with_json(&f),
+            UsernameValidationError::Invalid => OCErrorCode::InvalidUsername.into(),
+        }
+    }
 }
 
 pub fn validate_display_name(display_name: &str) -> Result<(), UsernameValidationError> {
@@ -49,7 +60,11 @@ pub fn validate_display_name(display_name: &str) -> Result<(), UsernameValidatio
 }
 
 pub fn validate_username(username: &str) -> Result<(), UsernameValidationError> {
-    match validate_string_length(username, MIN_USERNAME_LENGTH, MAX_USERNAME_LENGTH) {
+    validate_username_custom(username, MIN_USERNAME_LENGTH, MAX_USERNAME_LENGTH)
+}
+
+pub fn validate_username_custom(username: &str, min_length: u32, max_length: u32) -> Result<(), UsernameValidationError> {
+    match validate_string_length(username, min_length, max_length) {
         Ok(()) => {
             if username.starts_with('_')
                 || username.ends_with('_')
@@ -87,6 +102,10 @@ pub fn validate_community_name(name: &str, is_public: bool) -> Result<(), NameVa
     validate_group_name(name, is_public, None)
 }
 
+pub fn validate_channel_name(name: &str) -> Result<(), StringLengthValidationError> {
+    validate_string_length(name, MIN_GROUP_NAME_LENGTH, MAX_GROUP_NAME_LENGTH)
+}
+
 pub fn validate_group_name(name: &str, is_public: bool, subtype: Option<&GroupSubtype>) -> Result<(), NameValidationError> {
     match validate_string_length(name, MIN_GROUP_NAME_LENGTH, MAX_GROUP_NAME_LENGTH) {
         Ok(()) => {
@@ -94,7 +113,7 @@ pub fn validate_group_name(name: &str, is_public: bool, subtype: Option<&GroupSu
                 && !subtype
                     .map(|t| matches!(t, GroupSubtype::GovernanceProposals(_)))
                     .unwrap_or_default()
-                && name.to_lowercase().contains("proposals")
+                && name.to_lowercase().ends_with("proposals")
             {
                 Err(NameValidationError::Reserved)
             } else {
@@ -162,9 +181,28 @@ pub enum NameValidationError {
     Reserved,
 }
 
+impl From<NameValidationError> for OCError {
+    fn from(value: NameValidationError) -> Self {
+        match value {
+            NameValidationError::TooShort(s) => OCErrorCode::NameTooShort.with_json(&s),
+            NameValidationError::TooLong(l) => OCErrorCode::NameTooLong.with_json(&l),
+            NameValidationError::Reserved => OCErrorCode::NameReserved.into(),
+        }
+    }
+}
+
 pub enum RulesValidationError {
     TooShort(FieldTooShortResult),
     TooLong(FieldTooLongResult),
+}
+
+impl From<RulesValidationError> for OCError {
+    fn from(value: RulesValidationError) -> Self {
+        match value {
+            RulesValidationError::TooShort(s) => OCErrorCode::RulesTooShort.with_json(&s),
+            RulesValidationError::TooLong(l) => OCErrorCode::RulesTooLong.with_json(&l),
+        }
+    }
 }
 
 pub enum StringLengthValidationError {
@@ -181,7 +219,7 @@ mod tests {
         assert!(validate_username("abcde").is_ok());
         assert!(validate_username("12345").is_ok());
         assert!(validate_username("SNSABC").is_ok());
-        assert!(validate_username("1_2_3_4_5_6_7_8").is_ok());
+        assert!(validate_username("TwentyCharactersLong").is_ok());
     }
 
     #[test]

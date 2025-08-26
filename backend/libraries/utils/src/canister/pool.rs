@@ -10,6 +10,10 @@ pub struct Pool {
 }
 
 impl Pool {
+    pub fn iter(&self) -> impl Iterator<Item = &CanisterId> {
+        self.canister_ids.iter()
+    }
+
     pub fn new(target_size: u16) -> Pool {
         Pool {
             target_size,
@@ -29,11 +33,23 @@ impl Pool {
         self.canister_ids.len() >= self.target_size as usize
     }
 
+    pub fn contains(&self, canister_id: &CanisterId) -> bool {
+        self.canister_ids.contains(canister_id)
+    }
+
     pub fn push(&mut self, canister_id: CanisterId) {
         self.canister_ids.push_back(canister_id);
     }
 
+    pub fn remove(&mut self, canister_id: &CanisterId) {
+        self.canister_ids.retain(|c| c != canister_id);
+    }
+
     pub fn pop(&mut self) -> Option<CanisterId> {
         self.canister_ids.pop_front()
+    }
+
+    pub fn set_target_size(&mut self, target_size: u16) {
+        self.target_size = target_size;
     }
 }

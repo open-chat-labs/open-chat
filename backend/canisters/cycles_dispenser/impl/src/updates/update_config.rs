@@ -1,8 +1,8 @@
 use crate::guards::caller_is_governance_principal;
-use crate::{mutate_state, State};
+use crate::{State, mutate_state};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
-use cycles_dispenser_canister::update_config::{Response::*, *};
+use cycles_dispenser_canister::update_config::*;
 
 #[proposal(guard = "caller_is_governance_principal")]
 #[trace]
@@ -23,5 +23,5 @@ fn update_config_impl(args: Args, state: &mut State) -> Response {
     if let Some(icp_burn_amount) = args.icp_burn_amount {
         state.data.icp_burn_amount = icp_burn_amount;
     }
-    Success
+    Response::Success
 }

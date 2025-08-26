@@ -5,43 +5,47 @@
         type MultiUserChat,
         type OpenChat,
         chatIdentifiersEqual,
+        chatListScopeStore,
+        iconSize,
+        mobileWidth,
+        routeForScope,
     } from "openchat-client";
+    import page from "page";
+    import { getContext, onMount } from "svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
-    import SectionHeader from "../SectionHeader.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
-    import Loading from "../Loading.svelte";
+    import { i18nKey } from "../../i18n/i18n";
+    import { rtlStore } from "../../stores/rtl";
+    import { type RemoteData, mapRemoteData } from "../../utils/remoteData";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import { rtlStore } from "../../stores/rtl";
     import HoverIcon from "../HoverIcon.svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import { getContext, onMount } from "svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import RecommendedGroup from "./RecommendedGroup.svelte";
-    import { type RemoteData, mapRemoteData } from "../../utils/remoteData";
-    import page from "page";
-    import { routeForScope } from "../../routes";
+    import Loading from "../Loading.svelte";
+    import SectionHeader from "../SectionHeader.svelte";
     import Translatable from "../Translatable.svelte";
-    import { i18nKey } from "../../i18n/i18n";
+    import RecommendedGroup from "./RecommendedGroup.svelte";
 
-    export let joining: MultiUserChat | undefined;
+    interface Props {
+        joining: MultiUserChat | undefined;
+    }
+
+    let { joining }: Props = $props();
 
     const client = getContext<OpenChat>("client");
-    $: chatListScope = client.chatListScope;
 
-    let hotGroups: RemoteData<GroupChatSummary[], string> = { kind: "idle" };
+    let hotGroups: RemoteData<GroupChatSummary[], string> = $state({ kind: "idle" });
 
     onMount(loadData);
 
     function cancelRecommendations() {
-        page(routeForScope($chatListScope));
+        page(routeForScope($chatListScopeStore));
     }
 
-    function dismissRecommendation(ev: CustomEvent<GroupChatIdentifier>) {
+    function onDismissRecommendation(id: GroupChatIdentifier) {
         hotGroups = mapRemoteData(hotGroups, (data) =>
-            data.filter((g) => !chatIdentifiersEqual(g.id, ev.detail)),
+            data.filter((g) => !chatIdentifiersEqual(g.id, id)),
         );
-        client.dismissRecommendation(ev.detail);
+        client.dismissRecommendation(id);
     }
 
     function loadData() {
@@ -63,7 +67,7 @@
     <div class="wrapper">
         <SectionHeader>
             {#if $mobileWidth}
-                <div class="back" class:rtl={$rtlStore} on:click={cancelRecommendations}>
+                <div class="back" class:rtl={$rtlStore} onclick={cancelRecommendations}>
                     <HoverIcon>
                         {#if $rtlStore}
                             <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
@@ -81,13 +85,7 @@
 
         <div class="groups">
             {#each hotGroups.data as group (group.id.groupId)}
-                <RecommendedGroup
-                    on:upgrade
-                    on:dismissRecommendation={dismissRecommendation}
-                    on:joinGroup
-                    on:leaveGroup
-                    {group}
-                    {joining} />
+                <RecommendedGroup {onDismissRecommendation} {group} {joining} />
             {/each}
         </div>
     </div>
@@ -96,9 +94,9 @@
         <h3 class="title"><Translatable resourceKey={i18nKey("noGroupsFound")} /></h3>
         <p class="subtitle"><Translatable resourceKey={i18nKey("checkBackLater")} /></p>
         <ButtonGroup align={"fill"}>
-            <Button small on:click={cancelRecommendations}
+            <Button small onClick={cancelRecommendations}
                 ><Translatable resourceKey={i18nKey("close")} /></Button>
-            <Button secondary small on:click={loadData}
+            <Button secondary small onClick={loadData}
                 ><Translatable resourceKey={i18nKey("refresh")} /></Button>
         </ButtonGroup>
     </div>

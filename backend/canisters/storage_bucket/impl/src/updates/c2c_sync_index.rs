@@ -1,15 +1,17 @@
 use crate::guards::caller_is_storage_index_canister;
 use crate::model::files::RemoveFileResult;
-use crate::model::index_sync_state::EventToSync;
-use crate::{mutate_state, RuntimeState, MAX_EVENTS_TO_SYNC_PER_BATCH};
+use crate::model::index_event_batch::EventToSync;
+use crate::{MAX_EVENTS_TO_SYNC_PER_BATCH, RuntimeState, check_cycles_balance, mutate_state};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use storage_bucket_canister::c2c_sync_index::{Response::*, *};
 use types::FileRemoved;
 
 #[update(guard = "caller_is_storage_index_canister")]
 #[trace]
 fn c2c_sync_index(args: Args) -> Response {
+    check_cycles_balance();
+
     mutate_state(|state| c2c_sync_index_impl(args, state))
 }
 
@@ -46,7 +48,7 @@ fn c2c_sync_index_impl(args: Args, state: &mut RuntimeState) -> Response {
         let excess = files_removed.split_off(MAX_EVENTS_TO_SYNC_PER_BATCH);
 
         for removed in excess {
-            state.data.index_sync_state.enqueue(EventToSync::FileRemoved(removed));
+            state.data.push_event_to_index(EventToSync::FileRemoved(removed));
         }
     }
 
@@ -59,6 +61,8 @@ fn c2c_sync_index_impl(args: Args, state: &mut RuntimeState) -> Response {
             state.data.files.update_accessor_id(old_user_id, new_user_id);
         }
     }
+
+    crate::jobs::remove_expired_files::start_job_if_required(state);
 
     Success(SuccessResult { files_removed })
 }

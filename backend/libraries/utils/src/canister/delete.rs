@@ -1,19 +1,14 @@
-use ic_cdk::api::call::CallResult;
-use ic_cdk::api::management_canister;
-use ic_cdk::api::management_canister::main::CanisterIdRecord;
+use crate::canister::convert_cdk_error;
+use ic_cdk::management_canister::DeleteCanisterArgs;
 use tracing::error;
-use types::CanisterId;
+use types::{C2CError, CanisterId};
 
-pub async fn delete(canister_id: CanisterId) -> CallResult<()> {
-    management_canister::main::delete_canister(CanisterIdRecord { canister_id })
+pub async fn delete(canister_id: CanisterId) -> Result<(), C2CError> {
+    ic_cdk::management_canister::delete_canister(&DeleteCanisterArgs { canister_id })
         .await
-        .map_err(|(code, msg)| {
-            error!(
-                %canister_id,
-                error_code = code as u8,
-                error_message = msg.as_str(),
-                "Error calling delete_canister"
-            );
-            (code, msg)
+        .map_err(|e| {
+            let error = convert_cdk_error(canister_id, "delete_canister", e);
+            error!(?error, "Error calling delete_canister");
+            error
         })
 }

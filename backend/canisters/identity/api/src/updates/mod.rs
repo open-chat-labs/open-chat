@@ -1,5 +1,14 @@
-pub mod c2c_sync_legacy_user_principals;
+pub mod accept_identity_link_via_qr_code;
+pub mod approve_identity_link;
+pub mod c2c_set_user_ids;
+pub mod create_account_linking_code;
 pub mod create_identity;
-pub mod migrate_legacy_principal;
+pub mod delete_user;
+pub mod finalise_account_linking_with_code;
+pub mod generate_challenge;
+pub mod get_encryption_key;
+pub mod initiate_identity_link;
+pub mod initiate_identity_link_via_qr_code;
 pub mod prepare_delegation;
-pub mod set_principal_migration_job_enabled;
+pub mod remove_identity_link;
+pub mod verify_account_linking_code;

@@ -1,9 +1,77 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
+
+### Changed
+
+- Expose `liquid_cycles_balance` in metrics ([#8350](https://github.com/open-chat-labs/open-chat/pull/8350))
+- Switch some endpoints over to using common response types ([#8450](https://github.com/open-chat-labs/open-chat/pull/8450))
+
+## [[2.0.1826](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1826-cycles_dispenser)] - 2025-07-09
+
+### Changed
+
+- Log total instructions consumed at end of upgrade ([#7551](https://github.com/open-chat-labs/open-chat/pull/7551))
+- Filter trace level events globally so they are dropped earlier ([#7678](https://github.com/open-chat-labs/open-chat/pull/7678))
+- Include more details in failed c2c call errors ([#7749](https://github.com/open-chat-labs/open-chat/pull/7749))
+
+## [[2.0.1550](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1550-cycles_dispenser)] - 2025-01-06
+
+### Changed
+
+- Log message if an unauthorized canister tries to request cycles ([#7163](https://github.com/open-chat-labs/open-chat/pull/7163))
+
+## [[2.0.1527](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1527-cycles_dispenser)] - 2024-12-19
+
+### Changed
+
+- Allow Registry to add additional canisters to the allow list ([#7072](https://github.com/open-chat-labs/open-chat/pull/7072))
+
+## [[2.0.1511](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1511-cycles_dispenser)] - 2024-12-13
+
+### Changed
+
+- Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))
+
+### Fixed
+
+- Fix ordering of `latest_top_ups` ([#7046](https://github.com/open-chat-labs/open-chat/pull/7046))
+
+## [[2.0.1485](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1485-cycles_dispenser)] - 2024-11-29
+
+### Added
+
+- Add an error log with http endpoint ([#6608](https://github.com/open-chat-labs/open-chat/pull/6608))
+
+### Changed
+
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+- Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
+- Simplify `inspect_message` ([#6847](https://github.com/open-chat-labs/open-chat/pull/6847))
+- Increase cycles held by CyclesDispenser to handle large spikes in usage ([#6898](https://github.com/open-chat-labs/open-chat/pull/6898))
+- Record top-ups of all SNS canisters ([#6900](https://github.com/open-chat-labs/open-chat/pull/6900))
+
+## [[2.0.1315](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1315-cycles_dispenser)] - 2024-09-02
+
+### Changed
+
+- Remove duplicate code ([#5637](https://github.com/open-chat-labs/open-chat/pull/5637))
+- Expose both heap and stable memory in metrics ([#5718](https://github.com/open-chat-labs/open-chat/pull/5718))
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+
+## [[2.0.1126](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1126-cycles_dispenser)] - 2024-04-05
+
+### Added
+
+- Automatically add SNS controlled canisters to the whitelist ([#5625](https://github.com/open-chat-labs/open-chat/pull/5625))
+
+### Changed
+
+- Top up all canisters registered with the SNS ([#5621](https://github.com/open-chat-labs/open-chat/pull/5621))
 
 ## [[2.0.1092](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1092-cycles_dispenser)] - 2024-03-07
 

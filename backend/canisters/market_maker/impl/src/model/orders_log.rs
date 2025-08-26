@@ -1,4 +1,4 @@
-use crate::memory::{get_orders_log_data_memory, get_orders_log_index_memory, Memory};
+use crate::memory::{Memory, get_orders_log_data_memory, get_orders_log_index_memory};
 use ic_stable_structures::storable::Bound;
 use ic_stable_structures::{StableLog, Storable};
 use market_maker_canister::ExchangeId;
@@ -46,7 +46,7 @@ fn init_log() -> StableLog<LogEntry, Memory, Memory> {
     let index_memory = get_orders_log_index_memory();
     let data_memory = get_orders_log_data_memory();
 
-    StableLog::init(index_memory, data_memory).unwrap()
+    StableLog::init(index_memory, data_memory)
 }
 
 impl Default for OrdersLog {
@@ -69,8 +69,12 @@ enum Action {
 }
 
 impl Storable for LogEntry {
-    fn to_bytes(&self) -> Cow<[u8]> {
-        Cow::Owned(serialize_then_unwrap(self))
+    fn to_bytes(&self) -> Cow<'_, [u8]> {
+        Cow::Owned(self.to_vec())
+    }
+
+    fn into_bytes(self) -> Vec<u8> {
+        self.to_vec()
     }
 
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
@@ -78,6 +82,12 @@ impl Storable for LogEntry {
     }
 
     const BOUND: Bound = Bound::Unbounded;
+}
+
+impl LogEntry {
+    fn to_vec(&self) -> Vec<u8> {
+        serialize_then_unwrap(self)
+    }
 }
 
 impl Display for LogEntry {

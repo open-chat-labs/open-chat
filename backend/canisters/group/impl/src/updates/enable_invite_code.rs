@@ -1,24 +1,26 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
-use candid::Principal;
+use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::enable_invite_code::{Response::*, *};
 use group_canister::reset_invite_code;
-use ic_cdk_macros::update;
+use oc_error_codes::OCErrorCode;
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
-use types::{GroupInviteCodeChange, GroupInviteCodeChanged};
+use types::{GroupInviteCodeChange, GroupInviteCodeChanged, OCResult, UserId};
 use utils::canister;
 
-#[update]
+#[update(msgpack = true)]
 #[trace]
-async fn reset_invite_code(args: reset_invite_code::Args) -> reset_invite_code::Response {
-    run_regular_jobs();
+async fn reset_invite_code(_args: reset_invite_code::Args) -> reset_invite_code::Response {
+    execute_update_async(reset_invite_code_impl).await
+}
 
+async fn reset_invite_code_impl() -> reset_invite_code::Response {
     let initial_state = match read_state(prepare) {
         Ok(c) => c,
-        Err(response) => return response,
+        Err(error) => return Error(error),
     };
 
     let code = generate_code().await;
@@ -26,20 +28,22 @@ async fn reset_invite_code(args: reset_invite_code::Args) -> reset_invite_code::
     mutate_state(|state| {
         state.data.invite_code = Some(code);
         state.data.invite_code_enabled = true;
-        record_event(initial_state.caller, GroupInviteCodeChange::Reset, args.correlation_id, state);
+        record_event(initial_state.user_id, GroupInviteCodeChange::Reset, state);
     });
 
     Success(SuccessResult { code })
 }
 
-#[update]
+#[update(msgpack = true)]
 #[trace]
-async fn enable_invite_code(args: Args) -> Response {
-    run_regular_jobs();
+async fn enable_invite_code(_args: Args) -> Response {
+    execute_update_async(enable_invite_code_impl).await
+}
 
+async fn enable_invite_code_impl() -> Response {
     let initial_state = match read_state(prepare) {
         Ok(c) => c,
-        Err(response) => return response,
+        Err(error) => return Error(error),
     };
 
     let code = match initial_state.code {
@@ -51,12 +55,7 @@ async fn enable_invite_code(args: Args) -> Response {
         mutate_state(|state| {
             state.data.invite_code = Some(code);
             state.data.invite_code_enabled = true;
-            record_event(
-                initial_state.caller,
-                GroupInviteCodeChange::Enabled,
-                args.correlation_id,
-                state,
-            );
+            record_event(initial_state.user_id, GroupInviteCodeChange::Enabled, state);
         });
     }
 
@@ -69,48 +68,36 @@ async fn generate_code() -> u64 {
     rng.next_u64()
 }
 
-fn record_event(caller: Principal, change: GroupInviteCodeChange, correlation_id: u64, state: &mut RuntimeState) {
+fn record_event(user_id: UserId, change: GroupInviteCodeChange, state: &mut RuntimeState) {
     let now = state.env.now();
+    state.data.chat.events.push_main_event(
+        ChatEventInternal::GroupInviteCodeChanged(Box::new(GroupInviteCodeChanged {
+            change,
+            changed_by: user_id,
+        })),
+        now,
+    );
 
-    if let Some(member) = state.data.get_member(caller) {
-        state.data.chat.events.push_main_event(
-            ChatEventInternal::GroupInviteCodeChanged(Box::new(GroupInviteCodeChanged {
-                change,
-                changed_by: member.user_id,
-            })),
-            correlation_id,
-            now,
-        );
-
-        handle_activity_notification(state);
-    }
+    handle_activity_notification(state);
 }
 
 struct PrepareResult {
-    caller: Principal,
+    user_id: UserId,
     code: Option<u64>,
     enabled: bool,
 }
 
-fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if state.data.is_frozen() {
-        return Err(ChatFrozen);
+fn prepare(state: &RuntimeState) -> OCResult<PrepareResult> {
+    state.data.verify_not_frozen()?;
+
+    let member = state.get_calling_member(true)?;
+    if member.role().can_invite_users(&state.data.chat.permissions) {
+        Ok(PrepareResult {
+            user_id: member.user_id(),
+            code: state.data.invite_code,
+            enabled: state.data.invite_code_enabled,
+        })
+    } else {
+        Err(OCErrorCode::InitiatorNotAuthorized.into())
     }
-
-    let caller = state.env.caller();
-    if let Some(member) = state.data.get_member(caller) {
-        if member.suspended.value {
-            return Err(UserSuspended);
-        }
-
-        if member.role.can_invite_users(&state.data.chat.permissions) {
-            return Ok(PrepareResult {
-                caller,
-                code: state.data.invite_code,
-                enabled: state.data.invite_code_enabled,
-            });
-        }
-    }
-
-    Err(NotAuthorized)
 }

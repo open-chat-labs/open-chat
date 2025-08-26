@@ -5,6 +5,10 @@ import Governance from "./Governance.svelte";
 import WebsiteReleases from "./WebsiteReleases.svelte";
 import Translation from "./Translation.svelte";
 import Video from "./VideoCallsReleased.svelte";
+import Chit from "./Chit.svelte";
+import ICFootprint from "./ICFootprint.svelte";
+import SignIn from "./SignIn.svelte";
+import AccessGateExpiry from "./AccessGateExpiry.svelte";
 
 export type BlogPostInfo = {
     slug: string;
@@ -15,6 +19,34 @@ export type BlogPostInfo = {
 };
 
 export const postsBySlug: Record<string, BlogPostInfo> = {
+    access_gate_expiry: {
+        slug: "access_gate_expiry",
+        title: "Access gate expiry",
+        author: "@julian_jelfs",
+        date: new Date(2024, 9, 23),
+        component: AccessGateExpiry,
+    },
+    chit: {
+        slug: "chit",
+        title: "CHIT Rewards",
+        author: "@Matt",
+        date: new Date(2024, 6, 9),
+        component: Chit,
+    },
+    signin: {
+        slug: "signin",
+        title: "Sign-in / sign-up to OpenChat",
+        author: "@Matt",
+        date: new Date(2024, 4, 29),
+        component: SignIn,
+    },
+    ic_footprint: {
+        slug: "ic_footprint",
+        title: "OpenChat tracks carbon-emissions in real-time and commits to net-zero operations",
+        author: "@Steffen",
+        date: new Date(2024, 3, 22),
+        component: ICFootprint,
+    },
     video: {
         slug: "video",
         title: "Video calls released",

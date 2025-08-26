@@ -1,104 +1,182 @@
 <script lang="ts">
-    import Menu from "../Menu.svelte";
-    import MenuItem from "../MenuItem.svelte";
-    import MenuIcon from "../MenuIcon.svelte";
-    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
-    import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
-    import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
-    import Reply from "svelte-material-icons/Reply.svelte";
-    import Cancel from "svelte-material-icons/Cancel.svelte";
-    import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
-    import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
-    import Flag from "svelte-material-icons/Flag.svelte";
-    import Refresh from "svelte-material-icons/Refresh.svelte";
-    import DeleteOffOutline from "svelte-material-icons/DeleteOffOutline.svelte";
-    import TranslateIcon from "svelte-material-icons/Translate.svelte";
-    import EyeIcon from "svelte-material-icons/Eye.svelte";
-    import TranslateOff from "svelte-material-icons/TranslateOff.svelte";
-    import ForwardIcon from "svelte-material-icons/Share.svelte";
-    import Pin from "svelte-material-icons/Pin.svelte";
-    import PinOff from "svelte-material-icons/PinOff.svelte";
-    import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
-    import CollapseIcon from "svelte-material-icons/ArrowCollapseUp.svelte";
-    import EyeArrowRightIcon from "svelte-material-icons/EyeArrowRight.svelte";
-    import EyeOffIcon from "svelte-material-icons/EyeOff.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
-    import Bitcoin from "../icons/Bitcoin.svelte";
-    import { _, locale } from "svelte-i18n";
-    import { i18nKey, translationCodes } from "../../i18n/i18n";
-    import { rtlStore } from "../../stores/rtl";
-    import { iconSize } from "../../stores/iconSize";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { confirmMessageDeletion } from "@src/stores/settings";
     import {
+        chatListScopeStore,
+        cryptoLookup,
+        currentUserIdStore,
+        iconSize,
+        isDiamondStore,
+        lastCryptoSent,
         LEDGER_CANISTER_ICP,
+        publish,
+        routeForMessage,
+        threadsFollowedByMeStore,
         type ChatIdentifier,
         type Message,
+        type MessageReminderCreatedContent,
         type OpenChat,
     } from "openchat-client";
-    import { toastStore } from "../../stores/toast";
-    import * as shareFunctions from "../../utils/share";
+    import page from "page";
+    import { getContext } from "svelte";
+    import { _, locale } from "svelte-i18n";
+    import CollapseIcon from "svelte-material-icons/ArrowCollapseUp.svelte";
+    import Cancel from "svelte-material-icons/Cancel.svelte";
+    import ChatPlusOutline from "svelte-material-icons/ChatPlusOutline.svelte";
+    import ClockPlusOutline from "svelte-material-icons/ClockPlusOutline.svelte";
+    import ClockRemoveOutline from "svelte-material-icons/ClockRemoveOutline.svelte";
+    import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
+    import DeleteOffOutline from "svelte-material-icons/DeleteOffOutline.svelte";
+    import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
+    import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
+    import EmoticonOutline from "svelte-material-icons/EmoticonOutline.svelte";
+    import EyeIcon from "svelte-material-icons/Eye.svelte";
+    import EyeArrowRightIcon from "svelte-material-icons/EyeArrowRight.svelte";
+    import EyeOffIcon from "svelte-material-icons/EyeOff.svelte";
+    import Flag from "svelte-material-icons/Flag.svelte";
+    import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
+    import Pin from "svelte-material-icons/Pin.svelte";
+    import PinOff from "svelte-material-icons/PinOff.svelte";
+    import Refresh from "svelte-material-icons/Refresh.svelte";
+    import Reply from "svelte-material-icons/Reply.svelte";
+    import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
+    import ForwardIcon from "svelte-material-icons/Share.svelte";
+    import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
+    import TranslateIcon from "svelte-material-icons/Translate.svelte";
+    import TranslateOff from "svelte-material-icons/TranslateOff.svelte";
+    import { i18nKey, translationCodes } from "../../i18n/i18n";
+    import { quickReactions } from "../../stores/quickReactions";
+    import { rtlStore } from "../../stores/rtl";
     import { now } from "../../stores/time";
+    import { toastStore } from "../../stores/toast";
+    import { isTouchOnlyDevice } from "../../utils/devices";
+    import * as shareFunctions from "../../utils/share";
     import { copyToClipboard } from "../../utils/urls";
-    import { isTouchDevice } from "../../utils/devices";
+    import AreYouSure from "../AreYouSure.svelte";
+    import Checkbox from "../Checkbox.svelte";
+    import HoverIcon from "../HoverIcon.svelte";
+    import Bitcoin from "../icons/Bitcoin.svelte";
+    import Menu from "../Menu.svelte";
+    import MenuIcon from "../MenuIcon.svelte";
+    import MenuItem from "../MenuItem.svelte";
     import Translatable from "../Translatable.svelte";
 
-    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
-    export let chatId: ChatIdentifier;
-    export let isProposal: boolean;
-    export let inert: boolean;
-    export let publicGroup: boolean;
-    export let confirmed: boolean;
-    export let failed: boolean;
-    export let canShare: boolean;
-    export let me: boolean;
-    export let canPin: boolean;
-    export let pinned: boolean;
-    export let supportsReply: boolean;
-    export let canQuoteReply: boolean;
-    export let canStartThread: boolean;
-    export let multiUserChat: boolean;
-    export let canForward: boolean;
-    export let canBlockUser: boolean;
-    export let canEdit: boolean;
-    export let canDelete: boolean;
-    export let canUndelete: boolean;
-    export let canRevealDeleted: boolean;
-    export let canRevealBlocked: boolean;
-    export let translatable: boolean;
-    export let translated: boolean;
-    export let crypto: boolean;
-    export let msg: Message;
-    export let threadRootMessage: Message | undefined;
-    export let canTip: boolean;
+    interface Props {
+        chatId: ChatIdentifier;
+        isProposal: boolean;
+        inert: boolean;
+        publicGroup: boolean;
+        confirmed: boolean;
+        failed: boolean;
+        canShare: boolean;
+        me: boolean;
+        canPin: boolean;
+        pinned: boolean;
+        supportsReply: boolean;
+        canQuoteReply: boolean;
+        canStartThread: boolean;
+        multiUserChat: boolean;
+        canForward: boolean;
+        canBlockUser: boolean;
+        canEdit: boolean;
+        canDelete: boolean;
+        canUndelete: boolean;
+        canRevealDeleted: boolean;
+        canRevealBlocked: boolean;
+        canReact: boolean;
+        translatable: boolean;
+        translated: boolean;
+        msg: Message;
+        threadRootMessage: Message | undefined;
+        canTip: boolean;
+        selectQuickReaction: (unicode: string) => void;
+        showEmojiPicker: () => void;
+        onCollapseMessage?: () => void;
+        onRemindMe: () => void;
+        onCancelReminder: (content: MessageReminderCreatedContent) => void;
+        onRetrySend?: () => void;
+        onReportMessage: () => void;
+        onDeleteFailedMessage?: () => void;
+        onReply: () => void;
+        onEditMessage: () => void;
+        onReplyPrivately: () => void;
+        onTipMessage: (ledger: string) => void;
+    }
 
-    let menuIcon: MenuIcon;
+    let {
+        chatId,
+        isProposal,
+        inert,
+        publicGroup,
+        confirmed,
+        failed,
+        canShare,
+        me,
+        canPin,
+        pinned,
+        supportsReply,
+        canQuoteReply,
+        canStartThread,
+        multiUserChat,
+        canForward,
+        canBlockUser,
+        canEdit,
+        canDelete,
+        canUndelete,
+        canRevealDeleted,
+        canRevealBlocked,
+        canReact,
+        translatable,
+        translated,
+        msg,
+        threadRootMessage,
+        canTip,
+        selectQuickReaction,
+        showEmojiPicker,
+        onCollapseMessage,
+        onRemindMe,
+        onCancelReminder,
+        onRetrySend,
+        onReportMessage,
+        onDeleteFailedMessage,
+        onReply,
+        onEditMessage,
+        onReplyPrivately,
+        onTipMessage,
+    }: Props = $props();
 
-    $: lastCryptoSent = client.lastCryptoSent;
-    $: canRemind =
+    let menuIconEl: MenuIcon | undefined;
+    let quickReactionIconSize = "1.2rem";
+    let showConfirmDelete = $state(false);
+
+    let canRemind = $derived(
         msg.content.kind !== "message_reminder_content" &&
-        msg.content.kind !== "message_reminder_created_content";
-    $: canCancelRemind =
-        msg.content.kind === "message_reminder_created_content" && msg.content.remindAt > $now;
-    $: user = client.user;
-    $: inThread = threadRootMessage !== undefined;
-    $: translationStore = client.translationStore;
-    $: isDiamond = client.isDiamond;
-    $: cryptoLookup = client.cryptoLookup;
-    $: threadRootMessageIndex =
+            msg.content.kind !== "message_reminder_created_content",
+    );
+    let canCancelRemind = $derived(
+        msg.content.kind === "message_reminder_created_content" && msg.content.remindAt > $now,
+    );
+    let canDeleteMessage = $derived(
+        (canDelete || me) &&
+            !inert &&
+            !(msg.content.kind === "video_call_content" && msg.content.ended === undefined),
+    );
+    let inThread = $derived(threadRootMessage !== undefined);
+    let threadRootMessageIndex = $derived(
         msg.messageId === threadRootMessage?.messageId
             ? undefined
-            : threadRootMessage?.messageIndex;
-    $: threadsFollowedByMeStore = client.threadsFollowedByMeStore;
-    $: isFollowedByMe =
+            : threadRootMessage?.messageIndex,
+    );
+    let isFollowedByMe = $derived(
         threadRootMessage !== undefined &&
-        ($threadsFollowedByMeStore.get(chatId)?.has(threadRootMessage.messageIndex) ?? false);
-    $: canFollow = threadRootMessage !== undefined && !isFollowedByMe;
-    $: canUnfollow = isFollowedByMe;
+            ($threadsFollowedByMeStore.get(chatId)?.has(threadRootMessage.messageIndex) ?? false),
+    );
+    let canFollow = $derived(threadRootMessage !== undefined && !isFollowedByMe);
+    let canUnfollow = $derived(isFollowedByMe);
 
     export function showMenu() {
-        menuIcon?.showMenu();
+        menuIconEl?.showMenu();
     }
 
     function blockUser() {
@@ -112,25 +190,17 @@
         });
     }
 
-    function collapseMessage() {
-        dispatch("collapseMessage");
-    }
-
-    function remindMe() {
-        dispatch("remindMe");
-    }
-
     function cancelReminder() {
         if (msg.content.kind === "message_reminder_created_content") {
-            dispatch("cancelReminder", msg.content);
+            onCancelReminder(msg.content);
         }
     }
 
     function shareMessage() {
         shareFunctions.shareMessage(
             $_,
-            $user.userId,
-            msg.sender === $user.userId,
+            $currentUserIdStore,
+            msg.sender === $currentUserIdStore,
             msg,
             $cryptoLookup,
         );
@@ -162,30 +232,24 @@
         });
     }
 
-    // this is called if we are starting a new thread so we pass undefined as the threadSummary param
-    function initiateThread() {
-        dispatch("initiateThread");
-    }
-
     function forward() {
-        dispatch("forward", msg);
+        publish("forward", msg);
     }
 
-    function retrySend() {
-        dispatch("retrySend");
-    }
-
-    function reportMessage() {
-        dispatch("reportMessage");
-    }
-
-    function deleteMessage() {
+    async function deleteMessage(deletionConfirmed: boolean) {
         if (failed) {
-            dispatch("deleteFailedMessage");
+            onDeleteFailedMessage?.();
             return;
         }
-        if (!canDelete && $user.userId !== msg.sender) return;
-        client.deleteMessage(chatId, threadRootMessageIndex, msg.messageId);
+        if (!canDeleteMessage) return;
+
+        if (!deletionConfirmed) {
+            showConfirmDelete = !showConfirmDelete;
+            return;
+        }
+
+        showConfirmDelete = false;
+        await client.deleteMessage(chatId, threadRootMessageIndex, msg.messageId);
     }
 
     function undeleteMessage() {
@@ -206,12 +270,12 @@
     }
 
     function untranslateMessage() {
-        translationStore.untranslate(msg.messageId);
+        client.untranslate(msg.messageId);
     }
 
     function translateMessage() {
-        if (!$isDiamond) {
-            dispatch("upgrade");
+        if (!$isDiamondStore) {
+            publish("upgrade");
         } else {
             const text = client.getMessageText(msg.content);
             if (text !== undefined) {
@@ -225,14 +289,14 @@
         params.append("q", text);
         params.append("target", translationCodes[$locale || "en"] || "en");
         params.append("format", "text");
-        params.append("key", process.env.PUBLIC_TRANSLATE_API_KEY!);
+        params.append("key", import.meta.env.OC_PUBLIC_TRANSLATE_API_KEY!);
         fetch(`https://translation.googleapis.com/language/translate/v2?${params}`, {
             method: "POST",
         })
             .then((resp) => resp.json())
             .then(({ data: { translations } }) => {
                 if (Array.isArray(translations) && translations.length > 0) {
-                    translationStore.translate(messageId, translations[0].translatedText);
+                    client.translate(messageId, translations[0].translatedText);
                 }
             })
             .catch((_err) => {
@@ -256,276 +320,444 @@
             }
         });
     }
+
+    function initiateThread() {
+        page(
+            `${routeForMessage($chatListScopeStore.kind, { chatId }, msg.messageIndex)}?open=true`,
+        );
+    }
 </script>
 
-<div class="menu" class:rtl={$rtlStore}>
-    <MenuIcon bind:this={menuIcon} centered position={"right"} align={"end"}>
-        <div class="menu-icon" slot="icon">
-            <HoverIcon compact>
-                <ChevronDown size="1.6em" color={me ? "#fff" : "var(--icon-txt)"} />
-            </HoverIcon>
+{#if showConfirmDelete}
+    <AreYouSure action={deleteMessage}>
+        <div class="confirm">
+            <Translatable resourceKey={i18nKey("deleteMessageConfirm")}></Translatable>
+            <div class="dont-show">
+                <Checkbox
+                    id="dont_show"
+                    label={i18nKey("install.dontShow")}
+                    checked={!$confirmMessageDeletion}
+                    onChange={confirmMessageDeletion.toggle}>
+                </Checkbox>
+            </div>
         </div>
-        <div slot="menu">
+    </AreYouSure>
+{/if}
+
+<div class="menu" class:touch={isTouchOnlyDevice} class:inert class:rtl={$rtlStore}>
+    {#if !inert && !isTouchOnlyDevice}
+        {#each $quickReactions as reaction}
+            <HoverIcon compact onclick={() => selectQuickReaction(reaction)}>
+                <div class="quick-reaction">
+                    {reaction}
+                </div>
+            </HoverIcon>
+        {/each}
+        {#if canReact && !failed}
+            <HoverIcon compact onclick={() => showEmojiPicker()} title={$_("pickEmoji")}>
+                <div class="quick-reaction">
+                    <EmoticonOutline size={quickReactionIconSize} color={"var(--menu-txt)"} />
+                </div>
+            </HoverIcon>
+        {/if}
+        {#if confirmed && supportsReply && !failed}
+            {#if !inThread && canStartThread}
+                <HoverIcon compact onclick={initiateThread} title={$_("thread.menu")}>
+                    <div class="quick-reaction">
+                        <ChatPlusOutline size={quickReactionIconSize} color={"var(--menu-txt)"} />
+                    </div>
+                </HoverIcon>
+            {/if}
+            {#if canQuoteReply && !me}
+                <HoverIcon compact onclick={onReply} title={$_("quoteReply")}>
+                    <div class="quick-reaction">
+                        <Reply size={quickReactionIconSize} color={"var(--menu-txt)"} />
+                    </div>
+                </HoverIcon>
+            {/if}
+            {#if canEdit && !failed}
+                <HoverIcon compact onclick={onEditMessage} title={$_("editMessage")}>
+                    <div class="quick-reaction">
+                        <PencilOutline size={quickReactionIconSize} color={"var(--menu-txt)"} />
+                    </div>
+                </HoverIcon>
+            {/if}
+        {/if}
+    {/if}
+    <MenuIcon bind:this={menuIconEl} centered position={"right"} align={"end"}>
+        {#snippet menuIcon()}
+            <div class="quick-reaction">
+                <HoverIcon compact>
+                    <DotsVertical size="1.625em" color={"var(--menu-txt)"} />
+                </HoverIcon>
+            </div>
+        {/snippet}
+        {#snippet menuItems()}
             <Menu centered>
                 {#if isProposal && !inert}
-                    <MenuItem on:click={collapseMessage}>
-                        <CollapseIcon
-                            size={$iconSize}
-                            color={"var(--icon-inverted-txt)"}
-                            slot="icon" />
-                        <div slot="text">
-                            <Translatable resourceKey={i18nKey("proposal.collapse")} />
-                        </div>
+                    <MenuItem onclick={onCollapseMessage}>
+                        {#snippet icon()}
+                            <CollapseIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        {/snippet}
+                        {#snippet text()}
+                            <div>
+                                <Translatable resourceKey={i18nKey("proposal.collapse")} />
+                            </div>
+                        {/snippet}
                     </MenuItem>
                 {/if}
                 {#if confirmed && !inert && !failed}
                     {#if canFollow}
-                        <MenuItem on:click={() => followThread(true)}>
-                            <EyeArrowRightIcon
-                                size={$iconSize}
-                                color={"var(--icon-inverted-txt)"}
-                                slot="icon" />
-                            <div slot="text">
-                                <Translatable resourceKey={i18nKey("followThread")} />
-                            </div>
+                        <MenuItem onclick={() => followThread(true)}>
+                            {#snippet icon()}
+                                <EyeArrowRightIcon
+                                    size={$iconSize}
+                                    color={"var(--icon-inverted-txt)"} />
+                            {/snippet}
+                            {#snippet text()}
+                                <div>
+                                    <Translatable resourceKey={i18nKey("followThread")} />
+                                </div>
+                            {/snippet}
                         </MenuItem>
                     {:else if canUnfollow}
-                        <MenuItem on:click={() => followThread(false)}>
-                            <EyeOffIcon
-                                size={$iconSize}
-                                color={"var(--icon-inverted-txt)"}
-                                slot="icon" />
-                            <div slot="text">
-                                <Translatable resourceKey={i18nKey("unfollowThread")} />
-                            </div>
+                        <MenuItem onclick={() => followThread(false)}>
+                            {#snippet icon()}
+                                <EyeOffIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                            {/snippet}
+                            {#snippet text()}
+                                <div>
+                                    <Translatable resourceKey={i18nKey("unfollowThread")} />
+                                </div>
+                            {/snippet}
                         </MenuItem>
                     {/if}
                     {#if publicGroup && canShare}
-                        <MenuItem on:click={shareMessage}>
-                            <ShareIcon
-                                size={$iconSize}
-                                color={"var(--icon-inverted-txt)"}
-                                slot="icon" />
-                            <div slot="text"><Translatable resourceKey={i18nKey("share")} /></div>
+                        <MenuItem onclick={shareMessage}>
+                            {#snippet icon()}
+                                <ShareIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                            {/snippet}
+                            {#snippet text()}
+                                <div><Translatable resourceKey={i18nKey("share")} /></div>
+                            {/snippet}
                         </MenuItem>
                     {/if}
-                    <MenuItem on:click={copyMessageUrl}>
-                        <ContentCopy
-                            size={$iconSize}
-                            color={"var(--icon-inverted-txt)"}
-                            slot="icon" />
-                        <div slot="text">
-                            <Translatable resourceKey={i18nKey("copyMessageUrl")} />
-                        </div>
+                    <MenuItem onclick={copyMessageUrl}>
+                        {#snippet icon()}
+                            <ContentCopy size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        {/snippet}
+                        {#snippet text()}
+                            <div>
+                                <Translatable resourceKey={i18nKey("copyMessageUrl")} />
+                            </div>
+                        {/snippet}
                     </MenuItem>
                 {/if}
-                {#if isTouchDevice}
-                    <MenuItem on:click={copyMessage}>
-                        <ContentCopy
-                            size={$iconSize}
-                            color={"var(--icon-inverted-txt)"}
-                            slot="icon" />
-                        <div slot="text"><Translatable resourceKey={i18nKey("copy")} /></div>
-                    </MenuItem>
-                {/if}
+                <MenuItem onclick={copyMessage}>
+                    {#snippet icon()}
+                        <ContentCopy size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                    {/snippet}
+                    {#snippet text()}
+                        <div><Translatable resourceKey={i18nKey("copy")} /></div>
+                    {/snippet}
+                </MenuItem>
                 {#if canRemind && confirmed && !inert && !failed}
-                    <MenuItem on:click={remindMe}>
-                        <span class="emojicon" slot="icon">⏰</span>
-                        <div slot="text">
-                            <Translatable resourceKey={i18nKey("reminders.menu")} />
-                        </div>
+                    <MenuItem onclick={onRemindMe}>
+                        {#snippet icon()}
+                            <ClockPlusOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        {/snippet}
+                        {#snippet text()}
+                            <div>
+                                <Translatable resourceKey={i18nKey("reminders.menu")} />
+                            </div>
+                        {/snippet}
                     </MenuItem>
                 {/if}
                 {#if canCancelRemind && confirmed && !inert && !failed}
-                    <MenuItem on:click={cancelReminder}>
-                        <span class="emojicon" slot="icon">⏰</span>
-                        <div slot="text">
-                            <Translatable resourceKey={i18nKey("reminders.cancel")} />
-                        </div>
+                    <MenuItem onclick={cancelReminder}>
+                        {#snippet icon()}
+                            <ClockRemoveOutline
+                                size={$iconSize}
+                                color={"var(--icon-inverted-txt)"} />
+                        {/snippet}
+                        {#snippet text()}
+                            <div>
+                                <Translatable resourceKey={i18nKey("reminders.cancel")} />
+                            </div>
+                        {/snippet}
                     </MenuItem>
                 {/if}
                 {#if confirmed && canPin && !inThread && !inert && !failed}
                     {#if pinned}
-                        <MenuItem on:click={unpinMessage}>
-                            <PinOff
-                                size={$iconSize}
-                                color={"var(--icon-inverted-txt)"}
-                                slot="icon" />
-                            <div slot="text">
-                                <Translatable resourceKey={i18nKey("unpinMessage")} />
-                            </div>
+                        <MenuItem onclick={unpinMessage}>
+                            {#snippet icon()}
+                                <PinOff size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                            {/snippet}
+                            {#snippet text()}
+                                <div>
+                                    <Translatable resourceKey={i18nKey("unpinMessage")} />
+                                </div>
+                            {/snippet}
                         </MenuItem>
                     {:else}
-                        <MenuItem on:click={pinMessage}>
-                            <Pin size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                            <div slot="text">
-                                <Translatable resourceKey={i18nKey("pinMessage")} />
-                            </div>
+                        <MenuItem onclick={pinMessage}>
+                            {#snippet icon()}
+                                <Pin size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                            {/snippet}
+                            {#snippet text()}
+                                <div>
+                                    <Translatable resourceKey={i18nKey("pinMessage")} />
+                                </div>
+                            {/snippet}
                         </MenuItem>
                     {/if}
                 {/if}
                 {#if confirmed && supportsReply && !inert && !failed}
                     {#if canQuoteReply}
-                        <MenuItem on:click={() => dispatch("reply")}>
-                            <Reply
-                                size={$iconSize}
-                                color={"var(--icon-inverted-txt)"}
-                                slot="icon" />
-                            <div slot="text">
-                                <Translatable resourceKey={i18nKey("quoteReply")} />
-                            </div>
+                        <MenuItem onclick={onReply}>
+                            {#snippet icon()}
+                                <Reply size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                            {/snippet}
+                            {#snippet text()}
+                                <div>
+                                    <Translatable resourceKey={i18nKey("quoteReply")} />
+                                </div>
+                            {/snippet}
                         </MenuItem>
                     {/if}
                     {#if !inThread && canStartThread}
-                        <MenuItem on:click={initiateThread}>
-                            <span class="emojicon" slot="icon">🧵</span>
-                            <div slot="text">
-                                <Translatable resourceKey={i18nKey("thread.menu")} />
-                            </div>
+                        <MenuItem onclick={initiateThread}>
+                            {#snippet icon()}
+                                <ChatPlusOutline
+                                    size={$iconSize}
+                                    color={"var(--icon-inverted-txt)"} />
+                            {/snippet}
+                            {#snippet text()}
+                                <div>
+                                    <Translatable resourceKey={i18nKey("thread.menu")} />
+                                </div>
+                            {/snippet}
                         </MenuItem>
                     {/if}
                 {/if}
                 {#if canForward && !inThread && !inert && !failed}
-                    <MenuItem on:click={forward}>
-                        <ForwardIcon
-                            size={$iconSize}
-                            color={"var(--icon-inverted-txt)"}
-                            slot="icon" />
-                        <div slot="text"><Translatable resourceKey={i18nKey("forward")} /></div>
+                    <MenuItem onclick={forward}>
+                        {#snippet icon()}
+                            <ForwardIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        {/snippet}
+                        {#snippet text()}
+                            <div><Translatable resourceKey={i18nKey("forward")} /></div>
+                        {/snippet}
                     </MenuItem>
                 {/if}
                 {#if confirmed && multiUserChat && !inThread && !me && !isProposal && !inert && !failed}
-                    <MenuItem on:click={() => dispatch("replyPrivately")}>
-                        <ReplyOutline
-                            size={$iconSize}
-                            color={"var(--icon-inverted-txt)"}
-                            slot="icon" />
-                        <div slot="text">
-                            <Translatable resourceKey={i18nKey("replyPrivately")} />
-                        </div>
+                    <MenuItem onclick={onReplyPrivately}>
+                        {#snippet icon()}
+                            <ReplyOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        {/snippet}
+                        {#snippet text()}
+                            <div>
+                                <Translatable resourceKey={i18nKey("replyPrivately")} />
+                            </div>
+                        {/snippet}
                     </MenuItem>
                 {/if}
                 {#if !me && translatable && !failed}
                     {#if translated}
-                        <MenuItem on:click={untranslateMessage}>
-                            <TranslateOff
-                                size={$iconSize}
-                                color={"var(--icon-inverted-txt)"}
-                                slot="icon" />
-                            <div slot="text">
-                                <Translatable resourceKey={i18nKey("untranslateMessage")} />
-                            </div>
+                        <MenuItem onclick={untranslateMessage}>
+                            {#snippet icon()}
+                                <TranslateOff size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                            {/snippet}
+                            {#snippet text()}
+                                <div>
+                                    <Translatable resourceKey={i18nKey("untranslateMessage")} />
+                                </div>
+                            {/snippet}
                         </MenuItem>
                     {:else}
-                        <MenuItem on:click={translateMessage}>
-                            <TranslateIcon
-                                size={$iconSize}
-                                color={"var(--icon-inverted-txt)"}
-                                slot="icon" />
-                            <div slot="text">
-                                <Translatable resourceKey={i18nKey("translateMessage")} />
-                            </div>
+                        <MenuItem onclick={translateMessage}>
+                            {#snippet icon()}
+                                <TranslateIcon
+                                    size={$iconSize}
+                                    color={"var(--icon-inverted-txt)"} />
+                            {/snippet}
+                            {#snippet text()}
+                                <div>
+                                    <Translatable resourceKey={i18nKey("translateMessage")} />
+                                </div>
+                            {/snippet}
                         </MenuItem>
                     {/if}
                 {/if}
                 {#if canEdit && !inert && !failed}
-                    <MenuItem on:click={() => dispatch("editMessage")}>
-                        <PencilOutline
-                            size={$iconSize}
-                            color={"var(--icon-inverted-txt)"}
-                            slot="icon" />
-                        <div slot="text"><Translatable resourceKey={i18nKey("editMessage")} /></div>
+                    <MenuItem onclick={onEditMessage}>
+                        {#snippet icon()}
+                            <PencilOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        {/snippet}
+                        {#snippet text()}
+                            <div><Translatable resourceKey={i18nKey("editMessage")} /></div>
+                        {/snippet}
                     </MenuItem>
                 {/if}
                 {#if canTip}
-                    <MenuItem
-                        on:click={() =>
-                            dispatch("tipMessage", $lastCryptoSent ?? LEDGER_CANISTER_ICP)}>
-                        <Bitcoin size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                        <div slot="text"><Translatable resourceKey={i18nKey("tip.menu")} /></div>
+                    <MenuItem onclick={() => onTipMessage($lastCryptoSent ?? LEDGER_CANISTER_ICP)}>
+                        {#snippet icon()}
+                            <Bitcoin size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        {/snippet}
+                        {#snippet text()}
+                            <div><Translatable resourceKey={i18nKey("tip.menu")} /></div>
+                        {/snippet}
                     </MenuItem>
                 {/if}
                 <MenuItem separator />
                 {#if confirmed && multiUserChat && !me && canBlockUser && !failed}
-                    <MenuItem on:click={blockUser}>
-                        <Cancel size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                        <div slot="text"><Translatable resourceKey={i18nKey("blockUser")} /></div>
+                    <MenuItem onclick={blockUser}>
+                        {#snippet icon()}
+                            <Cancel size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        {/snippet}
+                        {#snippet text()}
+                            <div><Translatable resourceKey={i18nKey("blockUser")} /></div>
+                        {/snippet}
                     </MenuItem>
                 {/if}
-                {#if (canDelete || me) && !inert}
-                    <MenuItem on:click={deleteMessage}>
-                        <DeleteOutline
-                            size={$iconSize}
-                            color={"var(--icon-inverted-txt)"}
-                            slot="icon" />
-                        <div slot="text">
-                            {#if multiUserChat || me}
-                                <Translatable resourceKey={i18nKey("deleteMessage")} />
-                            {:else}
-                                <Translatable resourceKey={i18nKey("deleteMessageForMe")} />
-                            {/if}
-                        </div>
+                {#if canDeleteMessage}
+                    <MenuItem onclick={() => deleteMessage(!$confirmMessageDeletion)}>
+                        {#snippet icon()}
+                            <DeleteOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        {/snippet}
+                        {#snippet text()}
+                            <div>
+                                {#if multiUserChat || me}
+                                    <Translatable resourceKey={i18nKey("deleteMessage")} />
+                                {:else}
+                                    <Translatable resourceKey={i18nKey("deleteMessageForMe")} />
+                                {/if}
+                            </div>
+                        {/snippet}
                     </MenuItem>
                 {/if}
                 {#if confirmed && !me && !inert}
-                    <MenuItem on:click={reportMessage}>
-                        <Flag size={$iconSize} color={"var(--error)"} slot="icon" />
-                        <div slot="text">
-                            <Translatable resourceKey={i18nKey("report.menu")} />
-                        </div>
+                    <MenuItem onclick={onReportMessage}>
+                        {#snippet icon()}
+                            <Flag size={$iconSize} color={"var(--error)"} />
+                        {/snippet}
+                        {#snippet text()}
+                            <div>
+                                <Translatable resourceKey={i18nKey("report.menu")} />
+                            </div>
+                        {/snippet}
                     </MenuItem>
                 {/if}
                 {#if canRevealDeleted || canRevealBlocked}
-                    <MenuItem on:click={revealDeletedMessage}>
-                        <EyeIcon size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                        <div slot="text">
-                            <Translatable resourceKey={i18nKey("revealDeletedMessage")} />
-                        </div>
+                    <MenuItem onclick={revealDeletedMessage}>
+                        {#snippet icon()}
+                            <EyeIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        {/snippet}
+                        {#snippet text()}
+                            <div>
+                                <Translatable resourceKey={i18nKey("revealDeletedMessage")} />
+                            </div>
+                        {/snippet}
                     </MenuItem>
                 {/if}
                 {#if canUndelete}
-                    <MenuItem on:click={undeleteMessage}>
-                        <DeleteOffOutline
-                            size={$iconSize}
-                            color={"var(--icon-inverted-txt)"}
-                            slot="icon" />
-                        <div slot="text">
-                            <Translatable resourceKey={i18nKey("undeleteMessage")} />
-                        </div>
+                    <MenuItem onclick={undeleteMessage}>
+                        {#snippet icon()}
+                            <DeleteOffOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        {/snippet}
+                        {#snippet text()}
+                            <div>
+                                <Translatable resourceKey={i18nKey("undeleteMessage")} />
+                            </div>
+                        {/snippet}
                     </MenuItem>
                 {/if}
                 {#if failed}
-                    <MenuItem on:click={retrySend}>
-                        <Refresh size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                        <div slot="text">
-                            <Translatable resourceKey={i18nKey("retryMessage")} />
-                        </div>
+                    <MenuItem onclick={onRetrySend}>
+                        {#snippet icon()}
+                            <Refresh size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        {/snippet}
+                        {#snippet text()}
+                            <div>
+                                <Translatable resourceKey={i18nKey("retryMessage")} />
+                            </div>
+                        {/snippet}
                     </MenuItem>
                 {/if}
             </Menu>
-        </div>
+        {/snippet}
     </MenuIcon>
 </div>
 
 <style lang="scss">
-    .menu {
-        $offset: -2px;
-        position: absolute;
-        top: -4px;
-        right: $offset;
+    // This will align the menu relative to the selected side of the chat
+    // bubble with 0.75rem overflow, or align it to the opposite edge of the
+    // chat bubble if the menu width is larger than the chat bubble's.
+    @mixin calcMenuOffset($property, $menu-width) {
+        #{$property}: calc(100% - min(100%, calc($menu-width - 0.75rem)));
+    }
 
-        &.rtl {
-            left: $offset;
-            right: unset;
+    // We're expecting a number of menu items, plus one hidden item, hence the
+    // `$count + 1`
+    @mixin setMenuOffsetByMenuItemCount($count, $menu-width) {
+        :global(.bubble-wrapper > .menu:has(> :nth-child(#{$count + 1}):last-child)) {
+            &:not(.rtl) {
+                @include calcMenuOffset(left, $menu-width);
+            }
+            &.rtl {
+                @include calcMenuOffset(right, $menu-width);
+            }
         }
     }
 
-    .emojicon {
-        margin-left: $sp1;
+    .menu {
+        position: absolute;
     }
 
-    .menu-icon {
-        transition: opacity ease-in-out 200ms;
-        opacity: 0;
+    .menu:not(.touch) {
+        width: fit-content;
+        background-color: var(--menu-bg);
+        border: var(--bw) solid var(--menu-bd);
+
+        top: -1.5rem;
+        padding: 0.125rem;
+        border-radius: 0.375rem;
+
+        :global(.menu-icon) {
+            width: 2.125rem;
+            height: 2.125rem;
+            padding: 0.25rem;
+        }
+    }
+
+    .menu.touch {
+        height: 0;
+        overflow: hidden;
+    }
+
+    @include setMenuOffsetByMenuItemCount(1, 2.5rem);
+    @include setMenuOffsetByMenuItemCount(2, 4.625rem);
+    @include setMenuOffsetByMenuItemCount(3, 6.75rem);
+    @include setMenuOffsetByMenuItemCount(4, 8.875rem);
+    @include setMenuOffsetByMenuItemCount(5, 11rem);
+    @include setMenuOffsetByMenuItemCount(6, 13.125rem);
+    @include setMenuOffsetByMenuItemCount(7, 15.25rem);
+    @include setMenuOffsetByMenuItemCount(8, 17.375rem);
+
+    .quick-reaction {
+        width: 1.625rem;
+        height: 1.625rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .confirm {
+        display: flex;
+        flex-direction: column;
+        gap: $sp4;
+    }
+    .dont-show {
+        @include font(light, normal, fs-80);
     }
 </style>

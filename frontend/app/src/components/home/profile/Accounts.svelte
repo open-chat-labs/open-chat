@@ -1,70 +1,72 @@
 <script lang="ts">
-    import type { EnhancedTokenDetails, OpenChat } from "openchat-client";
-    import { getContext } from "svelte";
-    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
-    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
-    import ArrowRightBoldCircle from "svelte-material-icons/ArrowRightBoldCircle.svelte";
+    import {
+        walletTokensSorted as accountsSorted,
+        type EnhancedTokenDetails,
+        iconSize,
+        ICP_SYMBOL,
+        nervousSystemLookup,
+        type OpenChat,
+        swappableTokensStore,
+        walletConfigStore,
+    } from "openchat-client";
+    import { getContext, onMount } from "svelte";
     import ArrowLeftBoldCircle from "svelte-material-icons/ArrowLeftBoldCircle.svelte";
+    import ArrowRightBoldCircle from "svelte-material-icons/ArrowRightBoldCircle.svelte";
+    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
+    import HeartRemoveOutline from "svelte-material-icons/HeartRemoveOutline.svelte";
     import SwapIcon from "svelte-material-icons/SwapHorizontal.svelte";
     import ViewList from "svelte-material-icons/ViewList.svelte";
-    import { _ } from "svelte-i18n";
-    import ErrorMessage from "../../ErrorMessage.svelte";
-    import { iconSize } from "../../../stores/iconSize";
-    import MenuIcon from "../../MenuIcon.svelte";
-    import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItem.svelte";
-    import AccountTransactions from "./AccountTransactions.svelte";
-    import Overlay from "../../Overlay.svelte";
-    import SwapCrypto from "./SwapCrypto.svelte";
-    import SendCrypto from "./SendCrypto.svelte";
-    import ReceiveCrypto from "./ReceiveCrypto.svelte";
-    import MultiToggle from "../../MultiToggle.svelte";
-    import { sum } from "../../../utils/math";
-    import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import { sum } from "../../../utils/math";
+    import ErrorMessage from "../../ErrorMessage.svelte";
+    import Menu from "../../Menu.svelte";
+    import MenuIcon from "../../MenuIcon.svelte";
+    import MenuItem from "../../MenuItem.svelte";
+    import MultiToggle, { type Option } from "../../MultiToggle.svelte";
+    import Overlay from "../../Overlay.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
+    import AccountTransactions from "./AccountTransactions.svelte";
+    import ReceiveCrypto from "./ReceiveCrypto.svelte";
+    import RestrictedFeature from "./RestrictedFeature.svelte";
+    import SendCrypto from "./SendCrypto.svelte";
+    import SwapCrypto from "./SwapCrypto.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    export let showZeroBalance = false;
-    export let zeroCount = 0;
-
-    let balanceError: string | undefined;
-    let manageMode: "none" | "send" | "receive" | "swap" | "transactions";
-    let selectedLedger: string | undefined = undefined;
-    let transactionsFormat: string;
-    let conversionOptions = [
-        { id: "none", label: $_("cryptoAccount.tokens") },
-        { id: "usd", label: "USD" },
-        { id: "icp", label: "ICP" },
-        { id: "btc", label: "BTC" },
-        { id: "eth", label: "ETH" },
-    ];
-    let selectedConversion: "none" | "usd" | "icp" | "btc" | "eth" = "none";
-    let swappableTokensPromise = client.swappableTokens();
-
-    $: accountsSorted = client.cryptoTokensSorted;
-    $: nervousSystemLookup = client.nervousSystemLookup;
-    $: cryptoLookup = client.enhancedCryptoLookup;
-    $: snsLedgers = new Set<string>(
-        Object.values($nervousSystemLookup)
-            .filter((ns) => !ns.isNns)
-            .map((ns) => ns.ledgerCanisterId),
-    );
-    $: total =
-        selectedConversion === "none"
-            ? ""
-            : calculateTotal($cryptoLookup, selectedConversion)
-
-    $: {
-        zeroCount = $accountsSorted.filter((a) => a.zero).length;
+    interface Props {
+        conversionOptions: Option[];
+        selectedConversion?: "none" | "usd" | "icp" | "btc" | "eth";
+        hideTokenBalances?: boolean;
     }
 
-    function calculateTotal(lookup: Record<string, EnhancedTokenDetails>, conversion: "usd" | "icp" | "btc" | "eth"): string {
+    let {
+        conversionOptions,
+        selectedConversion = $bindable("none"),
+        hideTokenBalances = false,
+    }: Props = $props();
+
+    let balanceError: string | undefined = $state();
+    let actionMode: "none" | "send" | "receive" | "swap" | "transactions" | "restricted" =
+        $state("none");
+    let selectedLedger: string | undefined = $state(undefined);
+    let transactionsFormat: string = $state("");
+
+    onMount(() => client.refreshSwappableTokens());
+
+    function calculateTotal(
+        accounts: EnhancedTokenDetails[],
+        conversion: "usd" | "icp" | "btc" | "eth",
+    ): string {
         switch (conversion) {
-            case "usd": return sum(Object.values(lookup).map((c) => c.dollarBalance)).toFixed(2);
-            case "icp": return sum(Object.values(lookup).map((c) => c.icpBalance)).toFixed(3);
-            case "btc": return sum(Object.values(lookup).map((c) => c.btcBalance)).toFixed(6);
-            case "eth": return sum(Object.values(lookup).map((c) => c.ethBalance)).toFixed(6);
+            case "usd":
+                return sum(accounts.map((c) => c.dollarBalance ?? 0)).toFixed(2);
+            case "icp":
+                return sum(accounts.map((c) => c.icpBalance ?? 0)).toFixed(3);
+            case "btc":
+                return sum(accounts.map((c) => c.btcBalance ?? 0)).toFixed(6);
+            case "eth":
+                return sum(accounts.map((c) => c.ethBalance ?? 0)).toFixed(6);
         }
     }
 
@@ -72,67 +74,97 @@
         balanceError = undefined;
     }
 
-    function onBalanceRefreshError(ev: CustomEvent<string>) {
-        balanceError = ev.detail;
+    function onBalanceRefreshError(err: string) {
+        balanceError = err;
     }
 
     function hideManageModal() {
-        manageMode = "none";
+        actionMode = "none";
     }
 
     function showReceive(ledger: string) {
         selectedLedger = ledger;
-        manageMode = "receive";
+        actionMode = "receive";
     }
 
     function showSend(ledger: string) {
         selectedLedger = ledger;
-        manageMode = "send";
+        actionMode = "send";
     }
 
     function showSwap(ledger: string) {
         selectedLedger = ledger;
-        manageMode = "swap";
+        client.swapRestricted().then((restricted) => {
+            if (restricted) {
+                actionMode = "restricted";
+            } else {
+                actionMode = "swap";
+            }
+        });
     }
 
     function showTransactions(token: { ledger: string; urlFormat: string }) {
         selectedLedger = token.ledger;
         transactionsFormat = token.urlFormat;
-        manageMode = "transactions";
+        actionMode = "transactions";
     }
+
+    function removeFromWallet(ledger: string) {
+        client.removeTokenFromWallet(ledger);
+    }
+    let manualWalletConfig = $derived($walletConfigStore.kind === "manual_wallet");
+    let snsLedgers = $derived(
+        new Set<string>(
+            [...$nervousSystemLookup.values()]
+                .filter((ns) => !ns.isNns)
+                .map((ns) => ns.ledgerCanisterId),
+        ),
+    );
+    let total = $derived(
+        selectedConversion === "none" ? "" : calculateTotal($accountsSorted, selectedConversion),
+    );
 </script>
 
-{#if manageMode !== "none" && selectedLedger !== undefined}
+{#if actionMode !== "none" && selectedLedger !== undefined}
     <Overlay
-        dismissible={manageMode === "receive" || manageMode === "transactions"}
-        on:close={hideManageModal}>
-        {#if manageMode === "receive"}
-            <ReceiveCrypto ledger={selectedLedger} on:close={hideManageModal} />
-        {:else if manageMode === "send"}
-            <SendCrypto ledger={selectedLedger} on:close={hideManageModal} />
-        {:else if manageMode === "swap"}
-            <SwapCrypto bind:ledgerIn={selectedLedger} on:close={hideManageModal} />
-        {:else if manageMode === "transactions"}
+        dismissible={actionMode === "receive" || actionMode === "transactions"}
+        onClose={hideManageModal}>
+        {#if actionMode === "receive"}
+            <ReceiveCrypto ledger={selectedLedger} onClose={hideManageModal} />
+        {:else if actionMode === "send"}
+            <SendCrypto ledger={selectedLedger} onClose={hideManageModal} />
+        {:else if actionMode === "swap"}
+            <SwapCrypto bind:ledgerIn={selectedLedger} onClose={hideManageModal} />
+        {:else if actionMode === "transactions"}
             <AccountTransactions
                 ledger={selectedLedger}
-                on:close={hideManageModal}
+                onClose={hideManageModal}
                 urlFormat={transactionsFormat} />
+        {:else if actionMode === "restricted"}
+            <RestrictedFeature onClose={hideManageModal} feature="swap" />
         {/if}
     </Overlay>
 {/if}
 
 <table>
-    <tr>
-        <th class="token-header"><Translatable resourceKey={i18nKey("cryptoAccount.token")} /></th>
-        <th class="balance-header" colspan="2">
-            <MultiToggle options={conversionOptions} bind:selected={selectedConversion} />
-        </th>
-    </tr>
-    {#each $accountsSorted as token}
-        <tr class:hidden={token.zero && !showZeroBalance}>
+    <thead>
+        <tr>
+            <th class="token-header"
+                ><Translatable resourceKey={i18nKey("cryptoAccount.token")} /></th>
+            <th class="balance-header" colspan="2" class:hideTokenBalances>
+                <MultiToggle options={conversionOptions} bind:selected={selectedConversion} />
+            </th>
+        </tr>
+    </thead>
+    {#each $accountsSorted as token (token.ledger)}
+        <tr>
             <td width="99%">
                 <div class="token">
-                    <img class="icon" src={token.logo} />
+                    <img
+                        alt={token.name}
+                        class:disabled={!token.enabled}
+                        class="icon"
+                        src={token.logo} />
                     <div>
                         {token.symbol}
                     </div>
@@ -143,75 +175,111 @@
                     ledger={token.ledger}
                     value={token.balance}
                     conversion={selectedConversion}
-                    on:refreshed={onBalanceRefreshed}
-                    on:error={onBalanceRefreshError} />
+                    hideBalance={hideTokenBalances}
+                    allowCached={true}
+                    onRefreshed={onBalanceRefreshed}
+                    onError={onBalanceRefreshError} />
             </td>
             <td class="manage-col">
                 <div class="manage">
                     <MenuIcon position="bottom" align="end">
-                        <span slot="icon" class="wallet-menu">
-                            <ChevronDown
-                                viewBox={"0 -3 24 24"}
-                                size={$iconSize}
-                                color={"var(--txt)"} />
-                        </span>
-                        <span slot="menu">
+                        {#snippet menuIcon()}
+                            <span class="wallet-menu">
+                                <ChevronDown
+                                    viewBox={"0 -3 24 24"}
+                                    size={$iconSize}
+                                    color={"var(--txt)"} />
+                            </span>
+                        {/snippet}
+                        {#snippet menuItems()}
                             <Menu>
-                                <MenuItem on:click={() => showSend(token.ledger)}>
-                                    <ArrowRightBoldCircle
-                                        size={$iconSize}
-                                        color={"var(--icon-inverted-txt)"}
-                                        slot="icon" />
-                                    <div slot="text">
-                                        <Translatable resourceKey={i18nKey("cryptoAccount.send")} />
-                                    </div>
+                                <MenuItem onclick={() => showSend(token.ledger)}>
+                                    {#snippet icon()}
+                                        <ArrowRightBoldCircle
+                                            size={$iconSize}
+                                            color={"var(--icon-inverted-txt)"} />
+                                    {/snippet}
+                                    {#snippet text()}
+                                        <div>
+                                            <Translatable
+                                                resourceKey={i18nKey("cryptoAccount.send")} />
+                                        </div>
+                                    {/snippet}
                                 </MenuItem>
-                                <MenuItem on:click={() => showReceive(token.ledger)}>
-                                    <ArrowLeftBoldCircle
-                                        size={$iconSize}
-                                        color={"var(--icon-inverted-txt)"}
-                                        slot="icon" />
-                                    <div slot="text">
-                                        <Translatable
-                                            resourceKey={i18nKey("cryptoAccount.receive")} />
-                                    </div>
-                                </MenuItem>
-                                {#await swappableTokensPromise then swappableTokens}
-                                    {#if swappableTokens.has(token.ledger)}
-                                        <MenuItem on:click={() => showSwap(token.ledger)}>
-                                            <SwapIcon
+                                {#if token.enabled}
+                                    <MenuItem onclick={() => showReceive(token.ledger)}>
+                                        {#snippet icon()}
+                                            <ArrowLeftBoldCircle
                                                 size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"}
-                                                slot="icon" />
-                                            <div slot="text">
+                                                color={"var(--icon-inverted-txt)"} />
+                                        {/snippet}
+                                        {#snippet text()}
+                                            <div>
                                                 <Translatable
-                                                    resourceKey={i18nKey("cryptoAccount.swap")} />
+                                                    resourceKey={i18nKey(
+                                                        "cryptoAccount.receive",
+                                                    )} />
                                             </div>
+                                        {/snippet}
+                                    </MenuItem>
+                                    {#if $swappableTokensStore.has(token.ledger)}
+                                        <MenuItem onclick={() => showSwap(token.ledger)}>
+                                            {#snippet icon()}
+                                                <SwapIcon
+                                                    size={$iconSize}
+                                                    color={"var(--icon-inverted-txt)"} />
+                                            {/snippet}
+                                            {#snippet text()}
+                                                <div>
+                                                    <Translatable
+                                                        resourceKey={i18nKey(
+                                                            "cryptoAccount.swap",
+                                                        )} />
+                                                </div>
+                                            {/snippet}
                                         </MenuItem>
                                     {/if}
-                                {/await}
-                                {#if snsLedgers.has(token.ledger)}
-                                    <MenuItem on:click={() => showTransactions(token)}>
-                                        <ViewList
-                                            size={$iconSize}
-                                            color={"var(--icon-inverted-txt)"}
-                                            slot="icon" />
-                                        <div slot="text">
-                                            <Translatable
-                                                resourceKey={i18nKey(
-                                                    "cryptoAccount.transactions",
-                                                )} />
-                                        </div>
+                                {/if}
+                                {#if token.symbol === ICP_SYMBOL || snsLedgers.has(token.ledger)}
+                                    <MenuItem onclick={() => showTransactions(token)}>
+                                        {#snippet icon()}
+                                            <ViewList
+                                                size={$iconSize}
+                                                color={"var(--icon-inverted-txt)"} />
+                                        {/snippet}
+                                        {#snippet text()}
+                                            <div>
+                                                <Translatable
+                                                    resourceKey={i18nKey(
+                                                        "cryptoAccount.transactions",
+                                                    )} />
+                                            </div>
+                                        {/snippet}
+                                    </MenuItem>
+                                {/if}
+                                {#if manualWalletConfig}
+                                    <MenuItem onclick={() => removeFromWallet(token.ledger)}>
+                                        {#snippet icon()}
+                                            <HeartRemoveOutline
+                                                size={$iconSize}
+                                                color={"var(--icon-inverted-txt)"} />
+                                        {/snippet}
+                                        {#snippet text()}
+                                            <div>
+                                                <Translatable
+                                                    resourceKey={i18nKey("cryptoAccount.remove")} />
+                                            </div>
+                                        {/snippet}
                                     </MenuItem>
                                 {/if}
                             </Menu>
-                        </span>
+                        {/snippet}
                     </MenuIcon>
                 </div>
             </td>
         </tr>
     {/each}
-    {#if selectedConversion !== "none"}
+    {#if selectedConversion !== "none" && !hideTokenBalances}
         <tr class="total">
             <td>
                 <div class="token">
@@ -244,10 +312,6 @@
 
     table {
         width: 100%;
-
-        tr.hidden {
-            display: none;
-        }
 
         th {
             @include font(book, normal, fs-70);
@@ -308,6 +372,14 @@
             border-radius: 50%;
             background-repeat: no-repeat;
             background-position: top;
+
+            &.disabled {
+                filter: grayscale(1);
+            }
+        }
+
+        .hideTokenBalances {
+            visibility: hidden;
         }
     }
 </style>

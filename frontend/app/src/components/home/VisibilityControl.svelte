@@ -1,37 +1,73 @@
 <script lang="ts">
-    import Translatable from "../Translatable.svelte";
+    import {
+        type CandidateGroupChat,
+        type CommunitySummary,
+        isDiamondStore,
+        type OpenChat,
+        publish,
+    } from "openchat-client";
+    import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import Checkbox from "../Checkbox.svelte";
-    import { type OpenChat, type CandidateGroupChat, type CommunitySummary } from "openchat-client";
-    import Radio from "../Radio.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
     import Button from "../Button.svelte";
+    import Checkbox from "../Checkbox.svelte";
+    import Radio from "../Radio.svelte";
+    import Translatable from "../Translatable.svelte";
     import DurationPicker from "./DurationPicker.svelte";
-    import AccessGateControl from "./AccessGateControl.svelte";
-
-    type T = $$Generic;
+    import AccessGateControl from "./access/AccessGateControl.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let candidate: CandidateGroupChat | CommunitySummary;
-    export let original: CandidateGroupChat | CommunitySummary;
-    export let editing: boolean;
-    export let history: boolean;
-    export let canEditDisappearingMessages: boolean;
-    export let valid: boolean;
+    interface Props {
+        candidate: CandidateGroupChat | CommunitySummary;
+        editing: boolean;
+        history: boolean;
+        canEditDisappearingMessages: boolean;
+        valid: boolean;
+        gateDirty: boolean;
+        embeddedContent?: boolean;
+    }
 
-    let disappearingMessages =
-        candidate.kind === "candidate_group_chat" && candidate.eventsTTL !== undefined;
+    let {
+        candidate = $bindable(),
+        editing,
+        history,
+        canEditDisappearingMessages,
+        valid = $bindable(),
+        gateDirty,
+        embeddedContent = false,
+    }: Props = $props();
 
-    $: isDiamond = client.isDiamond;
-    $: requiresUpgrade = !editing && !$isDiamond && candidate.level !== "channel";
-    $: canChangeVisibility = !editing ? client.canChangeVisibility(candidate) : true;
+    let disappearingMessages = $state(
+        candidate.kind === "candidate_group_chat" && candidate.eventsTTL !== undefined,
+    );
+
+    let requiresUpgrade = $derived(!editing && !$isDiamondStore && candidate.level !== "channel");
+    let canChangeVisibility = $derived(!editing ? client.canChangeVisibility(candidate) : true);
+
+    function gateUpdated() {
+        if (
+            gateDirty &&
+            candidate.kind === "candidate_group_chat" &&
+            candidate.gateConfig.gate.kind !== "no_gate"
+        ) {
+            candidate.messagesVisibleToNonMembers = false;
+        }
+    }
 
     function toggleScope() {
         candidate.public = !candidate.public;
         if (candidate.public) {
             candidate.historyVisible = true;
+        }
+        if (candidate.kind === "candidate_group_chat") {
+            candidate.messagesVisibleToNonMembers =
+                candidate.public && candidate.gateConfig.gate.kind === "no_gate";
+        }
+    }
+
+    function toggleVisibleToNonMembers() {
+        if (candidate.kind === "candidate_group_chat") {
+            candidate.messagesVisibleToNonMembers = !candidate.messagesVisibleToNonMembers;
         }
     }
 
@@ -44,14 +80,14 @@
 
 <div class="section">
     <Radio
-        on:change={toggleScope}
+        onChange={toggleScope}
         checked={!candidate.public}
         id={"private"}
         disabled={!canChangeVisibility}
         align={"start"}
         group={"visibility"}>
         <div class="section-title">
-            <div class={"img private"} />
+            <div class={"img private"}></div>
             <p>
                 <Translatable
                     resourceKey={i18nKey("group.privateGroup", undefined, candidate.level, true)} />
@@ -68,14 +104,14 @@
 
 <div class="section">
     <Radio
-        on:change={toggleScope}
+        onChange={toggleScope}
         checked={candidate.public}
         id={"public"}
         disabled={!canChangeVisibility || requiresUpgrade}
         align={"start"}
         group={"visibility"}>
         <div class="section-title">
-            <div class={"img public"} />
+            <div class={"img public"}></div>
             <p>
                 <Translatable
                     resourceKey={i18nKey("group.publicGroup", undefined, candidate.level, true)} />
@@ -96,12 +132,12 @@
     </Radio>
 </div>
 
-{#if history}
+{#if history && !embeddedContent}
     <div class="section">
         <Checkbox
             id="history-visible"
             disabled={candidate.public || editing}
-            on:change={() => (candidate.historyVisible = !candidate.historyVisible)}
+            onChange={() => (candidate.historyVisible = !candidate.historyVisible)}
             label={i18nKey("historyVisible")}
             align={"start"}
             checked={candidate.historyVisible}>
@@ -119,12 +155,12 @@
     </div>
 {/if}
 
-{#if candidate.kind === "candidate_group_chat"}
+{#if candidate.kind === "candidate_group_chat" && !embeddedContent}
     <div class="section">
         <Checkbox
             id="disappearing-messages"
             disabled={!canEditDisappearingMessages}
-            on:change={toggleDisappearingMessages}
+            onChange={toggleDisappearingMessages}
             label={i18nKey("disappearingMessages.label")}
             align={"start"}
             checked={disappearingMessages}>
@@ -142,8 +178,27 @@
     </div>
 {/if}
 
+{#if candidate.public && candidate.kind === "candidate_group_chat"}
+    <div class="section">
+        <Checkbox
+            id="visible_to_non_members"
+            onChange={toggleVisibleToNonMembers}
+            label={i18nKey("access.messagesVisibleToNonMembers")}
+            align={"start"}
+            checked={candidate.messagesVisibleToNonMembers}>
+            <div class="section-title disappear">
+                <Translatable resourceKey={i18nKey("access.messagesVisibleToNonMembers")} />
+            </div>
+        </Checkbox>
+    </div>
+{/if}
+
 {#if !requiresUpgrade}
-    <AccessGateControl {original} bind:candidate bind:valid />
+    <AccessGateControl
+        onUpdated={gateUpdated}
+        bind:gateConfig={candidate.gateConfig}
+        level={candidate.level}
+        bind:valid />
 {/if}
 
 {#if requiresUpgrade}
@@ -153,7 +208,7 @@
         </div>
         <div class="upgrade info">
             <p><Translatable resourceKey={i18nKey("upgrade.groupMsg")} /></p>
-            <Button on:click={() => dispatch("upgrade")} tiny
+            <Button onClick={() => publish("upgrade")} tiny
                 ><Translatable resourceKey={i18nKey("upgrade.button")} /></Button>
         </div>
     </div>

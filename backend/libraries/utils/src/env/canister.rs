@@ -1,8 +1,8 @@
 use crate::env::Environment;
-use crate::time;
 use candid::Principal;
-use rand::rngs::StdRng;
 use rand::SeedableRng;
+use rand::rngs::StdRng;
+use std::cell::LazyCell;
 use types::{CanisterId, Cycles, TimestampNanos};
 
 pub struct CanisterEnv {
@@ -17,21 +17,29 @@ impl CanisterEnv {
     }
 }
 
+thread_local! {
+    static CANISTER_ID: LazyCell<CanisterId> = LazyCell::new(ic_cdk::api::canister_self);
+}
+
 impl Environment for CanisterEnv {
     fn now_nanos(&self) -> TimestampNanos {
-        time::now_nanos()
+        canister_time::now_nanos()
     }
 
     fn caller(&self) -> Principal {
-        ic_cdk::caller()
+        ic_cdk::api::msg_caller()
     }
 
     fn canister_id(&self) -> CanisterId {
-        ic_cdk::id()
+        CANISTER_ID.with(|c| **c)
     }
 
     fn cycles_balance(&self) -> Cycles {
-        ic_cdk::api::canister_balance().into()
+        ic_cdk::api::canister_cycle_balance()
+    }
+
+    fn liquid_cycles_balance(&self) -> Cycles {
+        ic_cdk::api::canister_liquid_cycle_balance()
     }
 
     fn rng(&mut self) -> &mut StdRng {
@@ -39,7 +47,7 @@ impl Environment for CanisterEnv {
     }
 
     fn arg_data_raw(&self) -> Vec<u8> {
-        ic_cdk::api::call::arg_data_raw()
+        ic_cdk::api::msg_arg_data()
     }
 }
 

@@ -1,8 +1,11 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
-use types::{CanisterId, ExchangeId, Milliseconds, TokenInfo};
+use ts_export::ts_export;
+use types::{CanisterId, ExchangeId, PinNumberWrapper, TokenInfo};
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export(user, swap_tokens)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
     pub swap_id: u128,
     pub input_token: TokenInfo,
@@ -10,38 +13,54 @@ pub struct Args {
     pub input_amount: u128,
     pub exchange_args: ExchangeArgs,
     pub min_output_amount: u128,
-    pub pin: Option<String>,
+    pub pin: Option<PinNumberWrapper>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export(user, swap_tokens)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum ExchangeArgs {
     ICPSwap(ICPSwapArgs),
+    KongSwap(KongSwapArgs),
+    Sonic(SonicArgs),
 }
 
 impl ExchangeArgs {
     pub fn exchange_id(&self) -> ExchangeId {
         match self {
             ExchangeArgs::ICPSwap(_) => ExchangeId::ICPSwap,
+            ExchangeArgs::KongSwap(_) => ExchangeId::KongSwap,
+            ExchangeArgs::Sonic(_) => ExchangeId::Sonic,
+        }
+    }
+
+    pub fn swap_canister_id(&self) -> CanisterId {
+        match self {
+            ExchangeArgs::ICPSwap(a) => a.swap_canister_id,
+            ExchangeArgs::KongSwap(a) => a.swap_canister_id,
+            ExchangeArgs::Sonic(a) => a.swap_canister_id,
         }
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct ICPSwapArgs {
+#[ts_export(user, swap_tokens)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ExchangeSwapArgs {
     pub swap_canister_id: CanisterId,
     pub zero_for_one: bool,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub type ICPSwapArgs = ExchangeSwapArgs;
+pub type KongSwapArgs = ExchangeSwapArgs;
+pub type SonicArgs = ExchangeSwapArgs;
+
+#[ts_export(user, swap_tokens)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    SwapFailed,
-    PinRequired,
-    PinIncorrect(Milliseconds),
-    TooManyFailedPinAttempts(Milliseconds),
-    InternalError(String),
+    Error(OCError),
 }
 
+#[ts_export(user, swap_tokens)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub amount_out: u128,

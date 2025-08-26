@@ -1,13 +1,12 @@
-use crate::{init_state as set_state, mutate_state, Data, RuntimeState, WASM_VERSION};
+use crate::{Data, RuntimeState, WASM_VERSION, mutate_state};
+use constants::MINUTE_IN_MS;
 use std::time::Duration;
 use tracing::{info, trace};
 use types::{BuildVersion, CanisterId, Cycles, Timestamped};
 use utils::canister::get_random_seed;
-use utils::env::canister::CanisterEnv;
 use utils::env::Environment;
-use utils::time::MINUTE_IN_MS;
+use utils::env::canister::CanisterEnv;
 
-mod heartbeat;
 mod init;
 mod post_upgrade;
 mod pre_upgrade;
@@ -26,7 +25,8 @@ fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: BuildVersion)
     let now = env.now();
     let state = RuntimeState::new(env, data);
 
-    set_state(state);
+    crate::jobs::start(&state);
+    crate::init_state(state);
     WASM_VERSION.set(Timestamped::new(wasm_version, now));
 }
 
@@ -41,7 +41,7 @@ fn init_cycles_dispenser_client(cycles_dispenser_canister_id: CanisterId, min_cy
 }
 
 fn reseed_rng() {
-    ic_cdk::spawn(reseed_rng_inner());
+    ic_cdk::futures::spawn(reseed_rng_inner());
 
     async fn reseed_rng_inner() {
         let seed = get_random_seed().await;

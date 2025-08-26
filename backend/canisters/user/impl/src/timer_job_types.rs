@@ -1,19 +1,17 @@
 use crate::model::token_swaps::TokenSwap;
 use crate::updates::end_video_call::end_video_call_impl;
 use crate::updates::swap_tokens::process_token_swap;
-use crate::{mutate_state, openchat_bot, read_state};
+use crate::{can_borrow_state, flush_pending_events, mutate_state, openchat_bot, read_state, run_regular_jobs};
 use canister_timer_jobs::Job;
 use chat_events::{MessageContentInternal, MessageReminderContentInternal};
+use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, SECOND_IN_MS};
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{BlobReference, Chat, ChatId, CommunityId, EventIndex, MessageId, MessageIndex, P2PSwapStatus, UserId};
-use user_canister::{C2CReplyContext, UserCanisterEvent};
-use utils::consts::OPENCHAT_BOT_USER_ID;
-use utils::time::SECOND_IN_MS;
+use user_canister::C2CReplyContext;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
-    RetrySendingFailedMessages(Box<RetrySendingFailedMessagesJob>),
     HardDeleteMessageContent(Box<HardDeleteMessageContentJob>),
     DeleteFileReferences(DeleteFileReferencesJob),
     MessageReminder(Box<MessageReminderJob>),
@@ -25,6 +23,7 @@ pub enum TimerJob {
     SendMessageToGroup(Box<SendMessageToGroupJob>),
     SendMessageToChannel(Box<SendMessageToChannelJob>),
     MarkVideoCallEnded(MarkVideoCallEndedJob),
+    ClaimOrResetStreakInsurance(ClaimOrResetStreakInsuranceJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -62,6 +61,7 @@ pub struct RemoveExpiredEventsJob;
 pub struct ProcessTokenSwapJob {
     pub token_swap: TokenSwap,
     pub attempt: u32,
+    pub debug: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -114,12 +114,19 @@ pub struct SendMessageToChannelJob {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct MarkVideoCallEndedJob(pub user_canister::end_video_call::Args);
+pub struct MarkVideoCallEndedJob(pub user_canister::end_video_call_v2::Args);
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct ClaimOrResetStreakInsuranceJob;
 
 impl Job for TimerJob {
     fn execute(self) {
+        let can_borrow_state = can_borrow_state();
+        if can_borrow_state {
+            run_regular_jobs();
+        }
+
         match self {
-            TimerJob::RetrySendingFailedMessages(job) => job.execute(),
             TimerJob::HardDeleteMessageContent(job) => job.execute(),
             TimerJob::DeleteFileReferences(job) => job.execute(),
             TimerJob::MessageReminder(job) => job.execute(),
@@ -131,41 +138,11 @@ impl Job for TimerJob {
             TimerJob::SendMessageToGroup(job) => job.execute(),
             TimerJob::SendMessageToChannel(job) => job.execute(),
             TimerJob::MarkVideoCallEnded(job) => job.execute(),
+            TimerJob::ClaimOrResetStreakInsurance(job) => job.execute(),
         }
-    }
-}
 
-impl Job for RetrySendingFailedMessagesJob {
-    fn execute(self) {
-        let (pending_messages, sender_name, sender_display_name, sender_avatar_id) = read_state(|state| {
-            (
-                state
-                    .data
-                    .direct_chats
-                    .get(&self.recipient.into())
-                    .map(|c| c.get_pending_messages())
-                    .unwrap_or_default(),
-                state.data.username.value.clone(),
-                state.data.display_name.value.clone(),
-                state.data.avatar.value.as_ref().map(|d| d.id),
-            )
-        });
-
-        if !pending_messages.is_empty() {
-            let args = user_canister::SendMessagesArgs {
-                messages: pending_messages,
-                sender_name,
-                sender_display_name,
-                sender_avatar_id,
-            };
-            mutate_state(|state| {
-                if let Some(chat) = state.data.direct_chats.get_mut(&self.recipient.into()) {
-                    for message_id in args.messages.iter().map(|a| a.message_id) {
-                        chat.mark_message_confirmed(message_id);
-                    }
-                }
-                state.push_user_canister_event(self.recipient.into(), UserCanisterEvent::SendMessages(Box::new(args)));
-            });
+        if can_borrow_state {
+            flush_pending_events();
         }
     }
 }
@@ -176,26 +153,19 @@ impl Job for HardDeleteMessageContentJob {
         mutate_state(|state| {
             if let Some((content, sender)) = state.data.direct_chats.get_mut(&self.chat_id).and_then(|chat| {
                 chat.events
-                    .remove_deleted_message_content(self.thread_root_message_index, self.message_id)
+                    .remove_deleted_message_content(self.thread_root_message_index, self.message_id, state.env.now())
             }) {
                 let my_user_id = state.env.canister_id().into();
                 if sender == my_user_id {
                     let files_to_delete = content.blob_references();
                     if !files_to_delete.is_empty() {
-                        // If there was already a job queued up to delete these files, cancel it
-                        state.data.timer_jobs.cancel_jobs(|job| {
-                            if let TimerJob::DeleteFileReferences(j) = job {
-                                j.files.iter().all(|f| files_to_delete.contains(f))
-                            } else {
-                                false
-                            }
-                        });
-                        ic_cdk::spawn(storage_bucket_client::delete_files(files_to_delete));
+                        let delete_files_job = DeleteFileReferencesJob { files: files_to_delete };
+                        delete_files_job.execute();
                     }
-                    if let MessageContentInternal::P2PSwap(s) = content {
-                        if matches!(s.status, P2PSwapStatus::Open) {
-                            p2p_swap_to_cancel = Some(s.swap_id);
-                        }
+                    if let MessageContentInternal::P2PSwap(s) = content
+                        && matches!(s.status, P2PSwapStatus::Open)
+                    {
+                        p2p_swap_to_cancel = Some(s.swap_id);
                     }
                 }
             }
@@ -209,7 +179,20 @@ impl Job for HardDeleteMessageContentJob {
 
 impl Job for DeleteFileReferencesJob {
     fn execute(self) {
-        ic_cdk::spawn(storage_bucket_client::delete_files(self.files.clone()));
+        ic_cdk::futures::spawn(async move {
+            let to_retry = storage_bucket_client::delete_files(self.files.clone()).await;
+
+            if !to_retry.is_empty() {
+                mutate_state(|state| {
+                    let now = state.env.now();
+                    state.data.timer_jobs.enqueue_job(
+                        TimerJob::DeleteFileReferences(DeleteFileReferencesJob { files: to_retry }),
+                        now + MINUTE_IN_MS,
+                        now,
+                    );
+                });
+            }
+        });
     }
 }
 
@@ -240,8 +223,8 @@ impl Job for RemoveExpiredEventsJob {
 
 impl Job for ProcessTokenSwapJob {
     fn execute(self) {
-        ic_cdk::spawn(async move {
-            process_token_swap(self.token_swap, self.attempt).await;
+        ic_cdk::futures::spawn(async move {
+            process_token_swap(self.token_swap, None, self.attempt, self.debug).await;
         });
     }
 }
@@ -250,12 +233,12 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
     fn execute(self) {
         let escrow_canister_id = read_state(|state| state.data.escrow_canister_id);
 
-        ic_cdk::spawn(async move {
+        ic_cdk::futures::spawn(async move {
             match escrow_canister_c2c_client::notify_deposit(
                 escrow_canister_id,
                 &escrow_canister::notify_deposit::Args {
                     swap_id: self.swap_id,
-                    user_id: None,
+                    deposited_by: None,
                 },
             )
             .await
@@ -284,7 +267,7 @@ impl Job for CancelP2PSwapInEscrowCanisterJob {
     fn execute(self) {
         let escrow_canister_id = read_state(|state| state.data.escrow_canister_id);
 
-        ic_cdk::spawn(async move {
+        ic_cdk::futures::spawn(async move {
             match escrow_canister_c2c_client::cancel_swap(
                 escrow_canister_id,
                 &escrow_canister::cancel_swap::Args { swap_id: self.swap_id },
@@ -317,7 +300,8 @@ impl Job for MarkP2PSwapExpiredJob {
     fn execute(self) {
         mutate_state(|state| {
             if let Some(chat) = state.data.direct_chats.get_mut(&self.chat_id) {
-                chat.events
+                let _ = chat
+                    .events
                     .mark_p2p_swap_expired(self.thread_root_message_index, self.message_id, state.env.now());
             }
         });
@@ -326,7 +310,7 @@ impl Job for MarkP2PSwapExpiredJob {
 
 impl Job for SendMessageToGroupJob {
     fn execute(self) {
-        ic_cdk::spawn(async move {
+        ic_cdk::futures::spawn(async move {
             match group_canister_c2c_client::c2c_send_message(self.chat_id.into(), &self.args).await {
                 Ok(group_canister::c2c_send_message::Response::Success(_)) => {}
                 Err(_) if self.attempt < 20 => {
@@ -352,7 +336,7 @@ impl Job for SendMessageToGroupJob {
 
 impl Job for SendMessageToChannelJob {
     fn execute(self) {
-        ic_cdk::spawn(async move {
+        ic_cdk::futures::spawn(async move {
             match community_canister_c2c_client::c2c_send_message(self.community_id.into(), &self.args).await {
                 Ok(community_canister::c2c_send_message::Response::Success(_)) => {}
                 Err(_) if self.attempt < 20 => {
@@ -378,6 +362,23 @@ impl Job for SendMessageToChannelJob {
 
 impl Job for MarkVideoCallEndedJob {
     fn execute(self) {
-        mutate_state(|state| end_video_call_impl(self.0, state));
+        if let Err(error) = mutate_state(|state| end_video_call_impl(self.0.clone(), state)) {
+            error!(?error, args = ?self.0, "Failed to mark video call ended");
+        }
+    }
+}
+
+impl Job for ClaimOrResetStreakInsuranceJob {
+    fn execute(self) {
+        mutate_state(|state| {
+            let now = state.env.now();
+            if let Some(insurance_claim) = state.data.streak.claim_via_insurance(now) {
+                state.mark_streak_insurance_claim(insurance_claim);
+                state.notify_user_index_of_chit(now);
+                state.set_up_streak_insurance_timer_job();
+            } else if state.data.streak.days(now) == 0 {
+                state.data.streak.reset_streak_insurance(now);
+            }
+        });
     }
 }

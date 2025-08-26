@@ -1,7 +1,7 @@
-use crate::lifecycle::{init_cycles_dispenser_client, init_env, init_state};
 use crate::Data;
+use crate::lifecycle::{init_cycles_dispenser_client, init_env, init_state};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::init;
+use ic_cdk::init;
 use storage_index_canister::init::Args;
 use tracing::info;
 
@@ -20,6 +20,8 @@ fn init(args: Args) {
         args.governance_principals,
         args.bucket_canister_wasm,
         args.cycles_dispenser_config,
+        args.icp_ledger_canister_id,
+        args.cmc_canister_id,
         args.test_mode,
     );
 

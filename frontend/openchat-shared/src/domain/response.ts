@@ -1,4 +1,9 @@
-export type UserNotInChat = { kind: "user_not_in_chat" };
+import type { GateCheckFailed } from "./chat";
+import { ErrorCode, type OCError } from "./error";
+import type { UserNotFound } from "./user";
+
+export type UserNotInChannel = { kind: "user_not_in_channel" };
+export type ChannelNotFound = { kind: "channel_not_found" };
 export type ChatNotFound = { kind: "chat_not_found" };
 export type UserLimitReached = { kind: "user_limit_reached" };
 export type Success = { kind: "success" };
@@ -7,6 +12,7 @@ export type UserNotInCommunity = { kind: "user_not_in_community" };
 export type CommunityFrozen = { kind: "community_frozen" };
 export type ChatFrozen = { kind: "chat_frozen" };
 export type CommunityNotPublic = { kind: "community_not_public" };
+export type CommunityPublic = { kind: "community_public" };
 export type MessageNotFound = {
     kind: "message_not_found";
 };
@@ -20,6 +26,7 @@ export type NotAuthorised = {
     kind: "not_authorized";
 };
 export type UserSuspended = { kind: "user_suspended" };
+export type UserLapsed = { kind: "user_lapsed" };
 export type NoChange = {
     kind: "no_change";
 };
@@ -49,7 +56,7 @@ export type TransferFailed = {
 };
 
 export const CommonResponses = {
-    userNotInChat: (): UserNotInChat => ({ kind: "user_not_in_chat" }) as UserNotInChat,
+    userNotInChannel: (): UserNotInChannel => ({ kind: "user_not_in_channel" }) as UserNotInChannel,
     chatNotFound: (): ChatNotFound => ({ kind: "chat_not_found" }) as ChatNotFound,
     userLimitReached: (): UserLimitReached => ({ kind: "user_limit_reached" }) as UserLimitReached,
     notAuthorized: (): NotAuthorised => ({ kind: "not_authorized" }) as NotAuthorised,
@@ -58,12 +65,15 @@ export const CommonResponses = {
     userNotInCommunity: (): UserNotInCommunity =>
         ({ kind: "user_not_in_community" }) as UserNotInCommunity,
     userSuspended: (): UserSuspended => ({ kind: "user_suspended" }) as UserSuspended,
+    userLapsed: (): UserLapsed => ({ kind: "user_lapsed" }) as UserLapsed,
     communityFrozen: (): CommunityFrozen => ({ kind: "community_frozen" }) as CommunityFrozen,
+    communityPublic: (): CommunityPublic => ({ kind: "community_public" }) as CommunityPublic,
     messageNotFound: (): MessageNotFound => ({ kind: "message_not_found" }) as MessageNotFound,
     noChange: (): NoChange => ({ kind: "no_change" }) as NoChange,
     communityNotPublic: (): CommunityNotPublic =>
         ({ kind: "community_not_public" }) as CommunityNotPublic,
-    internalError: (): InternalError => ({ kind: "internal_error" }) as InternalError,
+    internalError: (error?: string): InternalError =>
+        ({ kind: "internal_error", error }) as InternalError,
     invalid: (): Invalid => ({ kind: "invalid" }) as Invalid,
     targetUserNotInCommunity: (): TargetUserNotInCommunity =>
         ({ kind: "target_user_not_in_community" }) as TargetUserNotInCommunity,
@@ -72,4 +82,32 @@ export const CommonResponses = {
     userBlocked: (): UserBlocked => ({ kind: "user_blocked" }) as UserBlocked,
     failure: (): Failure => ({ kind: "failure" }) as Failure,
     offline: (): Offline => ({ kind: "offline" }) as Offline,
+    blocked: (): Blocked => ({ kind: "blocked" }) as Blocked,
+    userNotFound: (): UserNotFound => ({ kind: "unknown_user" }),
+    unknownError: (msg: string | undefined): OCError => ({
+        kind: "error",
+        code: ErrorCode.Unknown,
+        message: msg,
+    }),
 };
+
+export type Blocked = {
+    kind: "blocked";
+};
+
+export type ApproveAccessGatePaymentResponse = Success | OCError | Failure | InternalError;
+
+export type ClientJoinGroupResponse =
+    | Success
+    | GateCheckFailed
+    | OCError
+    | Blocked
+    | Failure
+    | InternalError;
+
+export type ClientJoinCommunityResponse =
+    | Success
+    | OCError
+    | GateCheckFailed
+    | Failure
+    | InternalError;

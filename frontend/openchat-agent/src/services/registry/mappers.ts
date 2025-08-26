@@ -1,76 +1,137 @@
-import type { ApiNervousSystemSummary, ApiTokenDetails, ApiUpdatesResponse } from "./candid/idl";
 import type {
     NervousSystemSummary,
     RegistryUpdatesResponse,
     CryptocurrencyDetails,
+    DexId,
 } from "openchat-shared";
-import { optional } from "../../utils/mapping";
-import { UnsupportedValueError } from "openchat-shared";
+import { mapOptional, optionUpdateV2, principalBytesToString } from "../../utils/mapping";
+import {
+    BTC_SYMBOL,
+    CKBTC_SYMBOL,
+    INDEX_CANISTER_ICP,
+    LEDGER_CANISTER_ICP,
+    UnsupportedValueError,
+} from "openchat-shared";
 import { buildTokenLogoUrl } from "../../utils/chat";
+import type {
+    ExchangeId as TExchangeId,
+    RegistryNervousSystemSummary,
+    RegistryTokenDetails,
+    RegistryUpdatesResponse as TRegistryUpdatesResponse,
+} from "../../typebox";
 
 export function updatesResponse(
-    candid: ApiUpdatesResponse,
+    value: TRegistryUpdatesResponse,
     blobUrlPattern: string,
     registryCanisterId: string,
 ): RegistryUpdatesResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            lastUpdated: candid.Success.last_updated,
-            tokenDetails:
-                optional(candid.Success.token_details, (tokens) =>
-                    tokens
-                        .filter((t) => t.enabled)
-                        .map((t) => tokenDetails(t, blobUrlPattern, registryCanisterId)),
-                ) ?? [],
-            nervousSystemSummary: candid.Success.nervous_system_details.map(nervousSystemSummary),
-            messageFiltersAdded: candid.Success.message_filters_added,
-            messageFiltersRemoved: Array.from(candid.Success.message_filters_removed),
-        };
-    }
-    if ("SuccessNoUpdates" in candid) {
+    if (value === "SuccessNoUpdates") {
         return {
             kind: "success_no_updates",
         };
     }
-    throw new UnsupportedValueError("Unexpected ApiUpdatesResponse type received", candid);
+    if ("Success" in value) {
+        return {
+            kind: "success",
+            lastUpdated: value.Success.last_updated,
+            tokenDetails:
+                mapOptional(value.Success.token_details, (tokens) =>
+                    tokens.map((t) => tokenDetails(t, blobUrlPattern, registryCanisterId)),
+                ) ?? [],
+            tokensUninstalled: value.Success.tokens_uninstalled?.map(principalBytesToString) ?? [],
+            nervousSystemSummary: value.Success.nervous_system_details.map(nervousSystemSummary),
+            swapProviders: mapOptional(value.Success.swap_providers, (r) => r.map(swapProvider)),
+            messageFiltersAdded: value.Success.message_filters_added,
+            messageFiltersRemoved: value.Success.message_filters_removed,
+            currentAirdropChannel: optionUpdateV2(value.Success.airdrop_config, (cfg) => {
+                const communityId = principalBytesToString(cfg.community_id);
+                const channelId = Number(cfg.channel_id);
+
+                return {
+                    id: {
+                        kind: "channel",
+                        communityId,
+                        channelId,
+                    },
+                    channelName: cfg.channel_name,
+                    communityName: cfg.community_name,
+                    url: `/community/${communityId}/channel/${channelId}`,
+                };
+            }),
+        };
+    }
+
+    throw new UnsupportedValueError("Unexpected ApiUpdatesResponse type received", value);
 }
 
 function tokenDetails(
-    candid: ApiTokenDetails,
+    value: RegistryTokenDetails,
     blobUrlPattern: string,
     registryCanisterId: string,
 ): CryptocurrencyDetails {
-    const ledger = candid.ledger_canister_id.toString();
-    const logoId = candid.logo_id[0];
+    const ledger = principalBytesToString(value.ledger_canister_id);
 
-    return {
+    // TODO remove this special handling once the ICP ledger supports ICRC-106
+    const index =
+        ledger === LEDGER_CANISTER_ICP
+            ? INDEX_CANISTER_ICP
+            : mapOptional(value.index_canister_id, principalBytesToString);
+
+    const tokenDetails = {
         ledger,
-        name: candid.name,
-        symbol: candid.symbol,
-        decimals: candid.decimals,
-        transferFee: candid.fee,
+        index,
+        name: value.name,
+        symbol: value.symbol,
+        decimals: value.decimals,
+        transferFee: value.fee,
         logo:
-            logoId !== undefined
-                ? buildTokenLogoUrl(blobUrlPattern, registryCanisterId, ledger, BigInt(logoId))
-                : candid.logo,
-        infoUrl: candid.info_url,
-        howToBuyUrl: candid.how_to_buy_url,
-        transactionUrlFormat: candid.transaction_url_format,
-        supportedStandards: candid.supported_standards,
-        added: candid.added,
-        lastUpdated: candid.last_updated,
+            value.logo_id !== undefined
+                ? buildTokenLogoUrl(
+                      blobUrlPattern,
+                      registryCanisterId,
+                      ledger,
+                      BigInt(value.logo_id),
+                  )
+                : value.logo,
+        infoUrl: value.info_url,
+        transactionUrlFormat: value.transaction_url_format,
+        supportedStandards: value.supported_standards,
+        added: value.added,
+        enabled: value.enabled,
+        oneSecEnabled: value.one_sec_enabled,
+        evmContractAddresses: value.evm_contract_addresses.map((a) => ({
+            token: value.symbol,
+            chain: a.chain,
+            address: a.address.toLowerCase(),
+        })),
+        lastUpdated: value.last_updated,
+    };
+
+    if (tokenDetails.symbol === CKBTC_SYMBOL) {
+        // Override ckBTC to BTC
+        tokenDetails.name = "Bitcoin";
+        tokenDetails.symbol = BTC_SYMBOL;
+        tokenDetails.logo = "/assets/btc_logo.svg";
+    }
+
+    return tokenDetails;
+}
+
+function nervousSystemSummary(value: RegistryNervousSystemSummary): NervousSystemSummary {
+    return {
+        rootCanisterId: principalBytesToString(value.root_canister_id),
+        governanceCanisterId: principalBytesToString(value.governance_canister_id),
+        ledgerCanisterId: principalBytesToString(value.ledger_canister_id),
+        indexCanisterId: principalBytesToString(value.index_canister_id),
+        isNns: value.is_nns,
+        proposalRejectionFee: value.proposal_rejection_fee,
+        submittingProposalsEnabled: value.submitting_proposals_enabled,
     };
 }
 
-function nervousSystemSummary(candid: ApiNervousSystemSummary): NervousSystemSummary {
-    return {
-        rootCanisterId: candid.root_canister_id.toString(),
-        governanceCanisterId: candid.governance_canister_id.toString(),
-        ledgerCanisterId: candid.ledger_canister_id.toString(),
-        indexCanisterId: candid.index_canister_id.toString(),
-        isNns: candid.is_nns,
-        proposalRejectionFee: candid.proposal_rejection_fee,
-        submittingProposalsEnabled: candid.submitting_proposals_enabled,
-    };
+function swapProvider(value: TExchangeId): DexId {
+    if (value === "ICPSwap") return "icpswap";
+    if (value === "Sonic") return "sonic";
+    if (value === "KongSwap") return "kongswap";
+    throw new UnsupportedValueError("Unexpected ApiSwapProvider type received", value);
 }

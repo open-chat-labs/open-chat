@@ -1,22 +1,35 @@
 <script lang="ts">
     import { QRCodeImage } from "svelte-qrcode-image";
 
-    export let text: string;
-    export let size: "default" | "smaller" | "larger" = "default";
-    export let border: boolean = false;
-    export let logo: string | undefined = undefined;
-    export let fullWidthOnMobile: boolean = false;
+    interface Props {
+        text: string;
+        size?: "default" | "smaller" | "larger";
+        border?: boolean;
+        logo?: string | undefined;
+        fullWidthOnMobile?: boolean;
+    }
+
+    let {
+        text,
+        size = "default",
+        border = false,
+        logo = undefined,
+        fullWidthOnMobile = false,
+    }: Props = $props();
 </script>
 
 <div class="qr-wrapper" class:border>
-    <div class="qr" class:smaller={size === "smaller"} class:larger={size === "larger"} class:full-width-on-mobile={fullWidthOnMobile}>
+    <div
+        class="qr"
+        class:smaller={size === "smaller"}
+        class:larger={size === "larger"}
+        class:full-width-on-mobile={fullWidthOnMobile}>
         <QRCodeImage {text} errorCorrectionLevel="Q" margin={2} displayClass="qr-code-image" />
         {#if logo !== undefined}
             <img class="icon" src={logo} />
         {/if}
     </div>
 </div>
-
 
 <style lang="scss">
     .qr-wrapper {

@@ -1,11 +1,11 @@
 use crate::guards::caller_is_platform_operator;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
 use types::{DiamondMembershipFees, DiamondMembershipFeesByDuration};
 use user_index_canister::set_diamond_membership_fees::{Response::*, *};
 
-#[update(guard = "caller_is_platform_operator")]
+#[update(guard = "caller_is_platform_operator", msgpack = true)]
 #[trace]
 fn set_diamond_membership_fees(args: Args) -> Response {
     mutate_state(|state| set_diamond_membership_fees_impl(args, state))

@@ -1,10 +1,10 @@
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
+use constants::MINUTE_IN_MS;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
 use types::{DeletedCommunityInfo, UserId};
-use utils::time::MINUTE_IN_MS;
 
 const MAX_BATCH_SIZE: usize = 100;
 
@@ -26,11 +26,11 @@ fn run() {
     trace!("'push_community_deleted_notifications' job running");
     TIMER_ID.set(None);
 
-    if let Some(batch) = mutate_state(next_batch) {
-        if !batch.is_empty() {
-            ic_cdk::spawn(push_notifications(batch));
-            read_state(start_job_if_required);
-        }
+    if let Some(batch) = mutate_state(next_batch)
+        && !batch.is_empty()
+    {
+        ic_cdk::futures::spawn(push_notifications(batch));
+        read_state(start_job_if_required);
     }
 }
 

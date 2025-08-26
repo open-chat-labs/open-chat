@@ -1,37 +1,31 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::update_msgpack;
+use crate::{RuntimeState, execute_update};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_leave_group::{Response::*, *};
-use group_chat_core::LeaveResult;
+use types::{Empty, OCResult};
 
 // Called via the user's user canister
-#[update_msgpack]
+#[update(msgpack = true)]
 #[trace]
-fn c2c_leave_group(_args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(c2c_leave_group_impl)
+fn c2c_leave_group(args: Args) -> Response {
+    if let Err(error) = execute_update(|state| c2c_leave_group_impl(args, state)) {
+        Error(error)
+    } else {
+        Success(Empty {})
+    }
 }
 
-fn c2c_leave_group_impl(state: &mut RuntimeState) -> Response {
-    if state.data.is_frozen() {
-        return ChatFrozen;
-    }
+fn c2c_leave_group_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+    state.data.verify_not_frozen()?;
 
     let caller = state.env.caller().into();
     let now = state.env.now();
 
-    match state.data.chat.leave(caller, now) {
-        LeaveResult::Success(_) => {
-            state.data.remove_principal(caller);
+    let result = state.data.chat.leave(caller, now)?;
+    state.data.remove_user(caller, Some(args.principal));
 
-            handle_activity_notification(state);
-
-            Success(SuccessResult {})
-        }
-        LeaveResult::UserSuspended => UserSuspended,
-        LeaveResult::LastOwnerCannotLeave => OwnerCannotLeave,
-        LeaveResult::UserNotInGroup => CallerNotInGroup,
-    }
+    state.push_bot_notification(result.bot_notification);
+    handle_activity_notification(state);
+    Ok(())
 }

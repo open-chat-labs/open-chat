@@ -1,9 +1,9 @@
 import { AuthClient } from "@dfinity/auth-client";
-import { writable } from "svelte/store";
-import type { Theme } from "../theme/types";
+import { routerReadyStore, xframeOverrides, type XFrameOverrides } from "openchat-client";
 import page from "page";
+import { get } from "svelte/store";
 import { setModifiedTheme } from "../theme/themes";
-import { routerReady } from "../routes";
+import type { Theme } from "../theme/types";
 
 const FRAME_ANCESTORS = [
     "http://localhost:5173",
@@ -22,6 +22,31 @@ const FRAME_ANCESTORS = [
     "https://xw4dq-4yaaa-aaaam-abeuq-cai.ic0.app", //Betbase live
     "https://kjfeq-waaaa-aaaan-qedva-cai.icp0.io", // vaultbet test
     "https://spyzr-gqaaa-aaaan-qd66q-cai.icp0.io", // vaultbet
+    "https://zkpoker.app", // ZKP
+    "https://panoramablock.com", // Panorama Block Live
+    "https://zdgud-kqaaa-aaaal-ajn4q-cai.icp0.io", // tendyzone test
+    "https://okowr-oqaaa-aaaag-qkedq-cai.icp0.io", // konecta pre-register
+    "https://pre.konecta.one", //konecta pre-register
+    "https://konecta.one", //konecta website/webapp
+    "https://y7mum-taaaa-aaaag-qklxq-cai.icp0.io", // konecta pre-register test env
+    "https://e4tvt-6yaaa-aaaao-a3sdq-cai.icp0.io", // dragon paladin wizard
+    "https://dragonwizards.club", // dragon paladin wizard web2 test
+    "https://ic-vc.com", // ICVC homepage
+    "https://mnc6b-aaaaa-aaaap-qhnrq-cai.icp0.io", // ICVC via canister ID
+    "https://platform.ic-vc.com", // ICVC platform
+    "https://mitchkurtzman.com", //Mitch's portfolio POC Domain
+    "https://wk3k3-vaaaa-aaaak-adtza-cai.icp0.io", //Mitch's portfilio POC canister ID
+    "https://fantasyextreme.org", //fantasyextreme prod
+    "https://snxxs-viaaa-aaaam-acuba-cai.icp0.io", //fantasyextreme staging
+    "https://e7bx6-iiaaa-aaaag-qm7oq-cai.icp0.io", // Partnrship
+    "https://pow-3.org", // pow-3 live
+    "https://power-3.org", // pow-3 live (alias),
+    "https://mimento.ai",
+    "https://gboec-sqaaa-aaaah-aredq-cai.icp0.io", //Mimento canister Id url
+    "https://lx7ws-diaaa-aaaag-aubda-cai.icp0.io", // TacoDAO Production ID URL
+    "https://tacodao.com", // TacoDAO Production Website URL
+    "https://wxunf-maaaa-aaaab-qbzga-cai.icp0.io", // TacoDAO Staging ID URL
+    "https://staging.tacodao.com", // TacoDAO Staging Website URL
 ];
 
 type InboundXFrameMessage = UpdateTheme | ChangeRoute | OverrideSettings | Logout;
@@ -34,9 +59,7 @@ type UserLoggedIn = {
 
 type OverrideSettings = {
     kind: "override_settings";
-    settings: {
-        disableLeftNav: boolean;
-    };
+    settings: XFrameOverrides;
 };
 
 type Logout = {
@@ -54,9 +77,6 @@ type ChangeRoute = {
     kind: "change_route";
     path: string;
 };
-
-export const framed = writable(false);
-export const disableLeftNav = writable(false);
 
 export function init() {
     if (window.self !== window.top) {
@@ -82,17 +102,24 @@ function broadcastMessage(msg: OutboundXFrameMessage) {
 
 init();
 
-let queuedRoute: string | undefined = undefined;
-let isRouterReady = false;
-
-routerReady.subscribe((ready) => {
-    console.debug("XFRAME_TARGET: routerReady changed to ", ready, queuedRoute);
-    if (ready && queuedRoute !== undefined) {
-        page(queuedRoute);
-        queuedRoute = undefined;
+function pageWhenReady(path: string, timeout = 50, attempts = 0) {
+    if (get(routerReadyStore)) {
+        console.debug("XFRAME_TARGET: changing path to ", path);
+        page(path);
+    } else {
+        if (attempts < 10) {
+            console.debug("XFRAME_TARGET: queueing route change ", path);
+            setTimeout(() => {
+                pageWhenReady(path, timeout * 2, attempts + 1);
+            }, timeout);
+        } else {
+            console.debug(
+                "XFRAME_TARGET: unable to change route because the router is not ready ",
+                path,
+            );
+        }
     }
-    isRouterReady = ready;
-});
+}
 
 function externalMessage(ev: MessageEvent) {
     if (!FRAME_ANCESTORS.includes(ev.origin)) {
@@ -105,20 +132,11 @@ function externalMessage(ev: MessageEvent) {
             const payload = ev.data as InboundXFrameMessage;
             switch (payload.kind) {
                 case "override_settings":
-                    console.debug(
-                        "XFRAME_TARGET: overriding settings",
-                        payload.settings.disableLeftNav,
-                    );
-                    disableLeftNav.set(Boolean(payload.settings.disableLeftNav));
+                    console.debug("XFRAME_TARGET: overriding settings", payload.settings);
+                    xframeOverrides.set(payload.settings);
                     break;
                 case "change_route":
-                    if (isRouterReady) {
-                        console.debug("XFRAME_TARGET: changing path to ", payload.path);
-                        page(payload.path);
-                    } else {
-                        console.debug("XFRAME_TARGET: queueing route change ", payload.path);
-                        queuedRoute = payload.path;
-                    }
+                    pageWhenReady(payload.path);
                     break;
                 case "update_theme":
                     setModifiedTheme(payload.base, payload.name, payload.overrides);

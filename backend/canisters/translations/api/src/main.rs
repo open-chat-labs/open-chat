@@ -1,6 +1,5 @@
 use candid_gen::generate_candid_method;
 
-#[allow(deprecated)]
 fn main() {
     generate_candid_method!(translations, pending_deployment, query);
     generate_candid_method!(translations, proposed, query);

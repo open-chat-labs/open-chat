@@ -1,62 +1,63 @@
 <script lang="ts">
-    import Launch from "./Launch.svelte";
+    import { availableHeight, mobileWidth } from "openchat-client";
     import { currentTheme } from "../../theme/themes";
-    import OnChain from "./OnChain.svelte";
-    import { availableHeight, mobileWidth } from "../../stores/screenDimensions";
-    import OnChainAlt from "./OnChainAlt.svelte";
     import FancyLoader from "../icons/FancyLoader.svelte";
+    import Launch from "./Launch.svelte";
+    import OnChain from "./OnChain.svelte";
+    import OnChainAlt from "./OnChainAlt.svelte";
 
-    $: imgUrl =
-        $currentTheme.mode === "light"
-            ? "/assets/screenshots/intro_light.png"
-            : "/assets/screenshots/intro_dark.png";
+    let chatImg = $derived(`/assets/screenshots/intro/${$currentTheme.mode}_chat.png`);
+    let videoImg = $derived(
+        $mobileWidth ? chatImg : `/assets/screenshots/intro/${$currentTheme.mode}_video.png`,
+    );
 
-    $: introStyle = $mobileWidth ? "" : `height: ${$availableHeight}px`;
+    let introStyle = $derived($mobileWidth ? "" : `height: ${$availableHeight}px`);
 </script>
 
 <div class="wrapper" style={introStyle}>
     <div class="intro">
-        <div class="name">
-            <div class="logo-img">
-                <FancyLoader loop={false} />
+        <div class="text-wrapper">
+            <div class="text">
+                <div class="name">
+                    <div class="logo-img">
+                        <FancyLoader loop={false} />
+                    </div>
+                    <h1>OpenChat</h1>
+                </div>
+                <h2 class="title">Fully featured. Fully secure.</h2>
+                <p class="blurb">
+                    OpenChat is a community-owned chat application built for privacy, security and
+                    anonymity. Start chatting today for free.
+                </p>
+                <div class="launch">
+                    <Launch />
+                </div>
             </div>
-            <h1>OpenChat</h1>
-        </div>
-        <h2 class="title">A decentralized chat app governed by the people for the people</h2>
-        <p class="blurb">
-            OpenChat is a fully featured chat application running end-to-end on the <a
-                href="https://internetcomputer.org/"
-                target="_blank">
-                Internet Computer
-            </a> blockchain.
-        </p>
-        <div class="launch">
-            <Launch />
-        </div>
-        <div class="powered-by">
-            {#if $mobileWidth}
-                <OnChainAlt />
-            {:else}
-                <OnChain />
+            {#if !$mobileWidth}
+                <div>
+                    <OnChain />
+                </div>
             {/if}
         </div>
-        <div class="image-wrapper-wrapper">
-            <div class="image-wrapper">
-                <img class="img" alt="Open chat list" src={imgUrl} />
-                {#if $mobileWidth}
-                    <div
-                        class:light={$currentTheme.mode === "light"}
-                        class:dark={$currentTheme.mode === "dark"}
-                        class="overlay" />
-                {/if}
-            </div>
-        </div>
+        <section class="mockups">
+            <img src={videoImg} alt="Video call screenshot" class="img video-call" />
+            {#if !$mobileWidth}
+                <img src={chatImg} alt="Chat screenshot" class="img chat" />
+            {/if}
+        </section>
     </div>
+    {#if $mobileWidth}
+        <div class="powered-by">
+            <OnChainAlt />
+        </div>
+    {/if}
 </div>
 
 <style lang="scss">
     .wrapper {
         display: flex;
+        flex-direction: column;
+        gap: $sp3;
         justify-content: center;
         align-items: center;
     }
@@ -70,39 +71,73 @@
         }
     }
     .intro {
-        position: relative;
-        display: grid;
-        grid-template-columns: 3fr 2fr;
+        display: flex;
         justify-content: center;
-        align-items: center;
-        column-gap: toRem(100);
-        row-gap: toRem(20);
+        align-items: stretch;
+        flex-direction: row;
+        gap: toRem(50);
 
-        grid-template-areas:
-            "name image"
-            "title image"
-            "blurb image"
-            "launch image"
-            "powered-by image";
+        .text-wrapper {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: toRem(20);
+            flex: 5;
+        }
+
+        .mockups {
+            position: relative;
+            flex-shrink: 0;
+            flex: 3;
+
+            .img {
+                box-shadow: 0px 4px 20px 0px #00000066;
+                width: 100%;
+                border: toRem(5) solid var(--landing-phone-bd);
+                border-radius: toRem(18);
+                transition: transform 0.2s ease;
+                animation: float 5s ease-in-out infinite;
+
+                @include mobile() {
+                    border: toRem(3) solid var(--landing-phone-bd);
+                }
+            }
+
+            .video-call {
+                width: 300px;
+
+                @include mobile() {
+                    width: 100%;
+                }
+            }
+
+            .chat {
+                position: absolute;
+                top: -80px;
+                left: 200px;
+                width: 280px;
+                animation-delay: 1.5s;
+            }
+        }
+
+        .text {
+            display: flex;
+            flex-direction: column;
+            gap: toRem(20);
+            @include mobile() {
+                margin-top: 0;
+                margin-bottom: $sp4;
+            }
+        }
 
         @include mobile() {
             margin-top: toRem(80);
             margin-bottom: 0;
-            grid-template-columns: 6fr 1fr;
-            column-gap: 0;
-
-            grid-template-areas:
-                "name name"
-                "title title"
-                "blurb ."
-                "launch launch"
-                "image image"
-                "powered-by .";
+            display: block;
         }
     }
 
     .name {
-        grid-area: name;
         display: flex;
         align-items: center;
         gap: toRem(8);
@@ -116,18 +151,16 @@
         }
     }
     .title {
-        grid-area: title;
-        @include font(medium, normal, fs-230, 68);
+        @include font(medium, normal, fs-180);
         margin-top: 0;
         margin-bottom: toRem(10);
 
         @include mobile() {
-            @include font(medium, normal, fs-180, 42);
+            @include font(medium, normal, fs-230);
         }
     }
 
     .blurb {
-        grid-area: blurb;
         color: var(--landing-txt-light);
         margin-bottom: toRem(24);
         @include font(book, normal, fs-120, 28);
@@ -137,20 +170,7 @@
         }
     }
 
-    .powered-by {
-        grid-area: powered-by;
-        position: absolute;
-        bottom: 0;
-        height: toRem(30);
-        @include z-index("powered-by");
-
-        @include mobile() {
-            bottom: toRem(50);
-        }
-    }
-
     .launch {
-        grid-area: launch;
         display: flex;
         gap: toRem(24);
         align-items: center;
@@ -159,58 +179,21 @@
         }
     }
 
-    .image-wrapper-wrapper {
-        grid-area: image;
-        @include mobile() {
-            border-radius: toRem(18);
-            height: toRem(420);
-            overflow: hidden;
+    @keyframes float {
+        0% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-4px);
+        }
+        100% {
+            transform: translateY(0);
         }
     }
 
-    .image-wrapper {
-        padding: toRem(40);
+    .powered-by {
         position: relative;
-
-        @include mobile() {
-            padding: 0;
-        }
-
-        .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-
-            &.dark {
-                background: linear-gradient(
-                    180deg,
-                    rgba(27, 28, 33, 0) 0%,
-                    #1b1c21 42.19%,
-                    #1b1c21 100%
-                );
-            }
-
-            &.light {
-                background: linear-gradient(
-                    180deg,
-                    rgba(231, 238, 247, 0) 0%,
-                    #ffffff 39.74%,
-                    #ffffff 100%
-                );
-            }
-        }
-    }
-
-    .img {
-        box-shadow: 8px 4px 16px 0px #00000066;
-        width: 100%;
-        border: toRem(5) solid var(--landing-phone-bd);
-        border-radius: toRem(18);
-
-        @include mobile() {
-            border: toRem(3) solid var(--landing-phone-bd);
-        }
+        align-self: flex-start;
+        margin-bottom: $sp4;
     }
 </style>

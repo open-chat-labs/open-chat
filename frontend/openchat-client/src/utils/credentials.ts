@@ -17,6 +17,7 @@ function getEventHandler(
     id: number,
     principal: string,
     issuerOrigin: string,
+    issuerCanisterId: string,
     credentialType: string,
     credentialArguments: unknown,
     derivationOrigin: string | undefined,
@@ -37,6 +38,7 @@ function getEventHandler(
                         params: {
                             issuer: {
                                 origin: issuerOrigin,
+                                canisterId: issuerCanisterId,
                             },
                             credentialSubject: principal,
                             credentialSpec: {
@@ -100,6 +102,7 @@ export function verifyCredential(
     iiUrl: string,
     principal: string,
     issuerOrigin: string,
+    issuerCanisterId: string,
     credentialType: string,
     credentialArguments: unknown,
     derivationOrigin: string | undefined,
@@ -112,6 +115,7 @@ export function verifyCredential(
             iiUrl,
             principal,
             issuerOrigin,
+            issuerCanisterId,
             credentialType,
         );
 
@@ -125,6 +129,7 @@ export function verifyCredential(
             reqId,
             principal,
             issuerOrigin,
+            issuerCanisterId,
             credentialType,
             credentialArguments,
             derivationOrigin,

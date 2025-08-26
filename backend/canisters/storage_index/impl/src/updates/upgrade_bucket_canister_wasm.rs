@@ -1,8 +1,9 @@
 use crate::guards::caller_is_governance_principal;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use storage_index_canister::upgrade_bucket_canister_wasm::{Response::*, *};
+use types::BuildVersion;
 
 #[proposal(guard = "caller_is_governance_principal")]
 #[trace]
@@ -11,11 +12,12 @@ fn upgrade_bucket_canister_wasm(args: Args) -> Response {
 }
 
 fn upgrade_bucket_canister_wasm_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let version = args.wasm.version;
     let canisters_to_upgrade: Vec<_> = state
         .data
         .buckets
         .iter()
-        .filter(|b| b.wasm_version < args.wasm.version)
+        .filter(|b| b.wasm_version < version)
         .map(|b| b.canister_id)
         .collect();
 
@@ -26,6 +28,12 @@ fn upgrade_bucket_canister_wasm_impl(args: Args, state: &mut RuntimeState) -> Re
         for canister_id in canisters_to_upgrade {
             state.data.canisters_requiring_upgrade.enqueue(canister_id, false);
         }
+        crate::jobs::upgrade_buckets::start_job_if_required(state);
+        state.data.canisters_requiring_upgrade.clear_failed(BuildVersion {
+            major: version.major,
+            minor: version.minor,
+            patch: version.patch.saturating_sub(100),
+        });
         Success
     }
 }

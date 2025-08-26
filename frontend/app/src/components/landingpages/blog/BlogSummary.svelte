@@ -1,17 +1,22 @@
 <script lang="ts">
-    import Link from "../Link.svelte";
+    import { mobileWidth } from "openchat-client";
     import Copy from "svelte-material-icons/ContentCopy.svelte";
-    import { mobileWidth } from "../../../stores/screenDimensions";
     import { copyToClipboard } from "../../../utils/urls";
+    import Link from "../Link.svelte";
 
-    export let title: string;
-    export let slug: string;
-    export let author: string;
-    export let posted: Date;
+    interface Props {
+        title: string;
+        slug: string;
+        author: string;
+        posted: Date;
+    }
 
-    $: copySize = $mobileWidth ? "14px" : "16px";
+    let { title, slug, author, posted }: Props = $props();
 
-    function copyUrl(): void {
+    let copySize = $derived($mobileWidth ? "14px" : "16px");
+
+    function copyUrl(e: Event): void {
+        e.stopPropagation();
         copyToClipboard(`${window.location.origin}/blog/${slug}`);
     }
 </script>
@@ -19,7 +24,7 @@
 <div class="blog-summary">
     <div class="title">
         <Link path={`blog/${slug}`}>{title}</Link>
-        <div class="copy" on:click|stopPropagation={copyUrl}>
+        <div class="copy" onclick={copyUrl}>
             <Copy size={copySize} color={"var(--landing-txt)"} />
         </div>
     </div>

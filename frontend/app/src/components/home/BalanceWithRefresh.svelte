@@ -1,54 +1,63 @@
 <script lang="ts">
-    import Refresh from "svelte-material-icons/Refresh.svelte";
-    import Plus from "svelte-material-icons/Plus.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import type { OpenChat, ResourceKey } from "openchat-client";
+    import { enhancedCryptoLookup as cryptoLookup } from "openchat-client";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import type { OpenChat } from "openchat-client";
-    import type { ResourceKey } from "../../i18n/i18n";
+    import Plus from "svelte-material-icons/Plus.svelte";
+    import Refresh from "svelte-material-icons/Refresh.svelte";
     import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let ledger: string;
-    export let value: bigint;
-    export let label: ResourceKey | undefined = undefined;
-    export let bold = false;
-    export let toppingUp = false;
-    export let showTopUp = false;
-    export let showRefresh = true;
-    export let refreshing = false;
-    export let conversion: "none" | "usd" | "icp" | "btc" | "eth" = "none";
-
-    $: cryptoLookup = client.enhancedCryptoLookup;
-    $: tokenDetails = $cryptoLookup[ledger];
-    $: symbol = tokenDetails.symbol;
-    $: formattedValue =
-        conversion === "none"
-            ? client.formatTokens(value, tokenDetails.decimals)
-            : convertValue(conversion, tokenDetails);
-
-    $: {
-        if (ledger) {
-            refresh();
-        }
+    interface Props {
+        ledger: string;
+        value: bigint;
+        label?: ResourceKey | undefined;
+        bold?: boolean;
+        toppingUp?: boolean;
+        showTopUp?: boolean;
+        showRefresh?: boolean;
+        refreshing?: boolean;
+        conversion?: "none" | "usd" | "icp" | "btc" | "eth";
+        hideBalance?: boolean;
+        allowCached?: boolean;
+        onClick?: () => void;
+        onRefreshed?: (val: bigint) => void;
+        onError?: (error: string) => void;
     }
 
-    export function refresh() {
-        dispatch("click");
+    let {
+        ledger,
+        value,
+        label = undefined,
+        bold = false,
+        toppingUp = $bindable(false),
+        showTopUp = false,
+        showRefresh = true,
+        refreshing = $bindable(false),
+        conversion = "none",
+        hideBalance = false,
+        allowCached = false,
+        onClick,
+        onRefreshed,
+        onError,
+    }: Props = $props();
+
+    export function refresh(allowCached: boolean = false) {
+        onClick?.();
         refreshing = true;
 
         return client
-            .refreshAccountBalance(ledger)
+            .refreshAccountBalance(ledger, allowCached)
             .then((val) => {
-                dispatch("refreshed", val);
+                onRefreshed?.(val);
             })
             .catch((err) => {
                 const errorMessage = $_("unableToRefreshAccountBalance", {
                     values: { token: symbol },
                 });
                 client.logError(`Failed to refresh ${symbol} account balance`, err);
-                dispatch("error", errorMessage);
+                onError?.(errorMessage);
             })
             .finally(() => (refreshing = false));
     }
@@ -59,12 +68,30 @@
 
     function convertValue(c: Exclude<typeof conversion, "none">, t: typeof tokenDetails): string {
         switch (c) {
-            case "usd": return t.dollarBalance.toFixed(2);
-            case "icp": return t.icpBalance.toFixed(3);
-            case "btc": return t.btcBalance.toFixed(6);
-            case "eth": return t.ethBalance.toFixed(6);
+            case "usd":
+                return t.dollarBalance?.toFixed(2) ?? "???";
+            case "icp":
+                return t.icpBalance?.toFixed(3) ?? "???";
+            case "btc":
+                return t.btcBalance?.toFixed(6) ?? "???";
+            case "eth":
+                return t.ethBalance?.toFixed(6) ?? "???";
         }
     }
+    let tokenDetails = $derived($cryptoLookup.get(ledger)!);
+    let symbol = $derived(tokenDetails.symbol);
+    let formattedValue = $derived(
+        hideBalance
+            ? "*****"
+            : conversion === "none"
+              ? client.formatTokens(value, tokenDetails.decimals)
+              : convertValue(conversion, tokenDetails),
+    );
+    $effect(() => {
+        if (ledger) {
+            refresh(allowCached);
+        }
+    });
 </script>
 
 <div class="container">
@@ -74,13 +101,13 @@
     <div class="amount" class:bold>
         {formattedValue}
     </div>
-    {#if showRefresh}
-        <div class="refresh" class:refreshing on:click={refresh}>
+    {#if showRefresh && !hideBalance}
+        <div class="refresh" class:refreshing onclick={() => refresh()}>
             <Refresh size={"1em"} color={"var(--icon-txt)"} />
         </div>
     {/if}
     {#if showTopUp}
-        <div class="top-up" on:click={topUp} title={$_("cryptoAccount.topUp")}>
+        <div class="top-up" onclick={topUp} title={$_("cryptoAccount.topUp")}>
             <Plus size={"1em"} color={toppingUp ? "var(--icon-selected)" : "var(--icon-txt)"} />
         </div>
     {/if}
@@ -106,6 +133,10 @@
             height: 21.59px;
             width: 21.59px;
         }
+    }
+
+    .hideBalance {
+        visibility: hidden;
     }
 
     .refresh {

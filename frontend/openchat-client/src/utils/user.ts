@@ -1,17 +1,16 @@
-import type { MessageFormatter } from "./i18n";
-import type { UserLookup, UserSummary } from "openchat-shared";
+import type { MessageFormatter, UserLookup, UserSummary } from "openchat-shared";
 
 export function formatLastOnlineDate(
     formatter: MessageFormatter,
     now: number,
     lastOnline: number,
-): string {
+): [string, boolean] {
     const secondsSinceLastOnline = (now - lastOnline) / 1000;
 
     const minutesSinceLastOnline = Math.floor(secondsSinceLastOnline / 60);
 
     if (minutesSinceLastOnline < 2) {
-        return formatter("onlineNow");
+        return [formatter("onlineNow"), true];
     }
 
     let durationText: string;
@@ -35,7 +34,7 @@ export function formatLastOnlineDate(
                     : formatter("durationDays", { values: { duration: daysSinceLastOnline } });
         }
     }
-    return formatter("lastOnline", { values: { duration: durationText } });
+    return [formatter("lastOnline", { values: { duration: durationText } }), false];
 }
 
 export function buildUsernameList(
@@ -49,7 +48,7 @@ export function buildUsernameList(
 
     let usernamesArray = Array.from(userIds)
         .slice(0, maxUsernames * 1.5)
-        .map((uid) => [uid, users[uid]?.username])
+        .map((uid) => [uid, users.get(uid)?.username])
         .filter(([uid, username]) => username !== undefined && uid !== myUserId)
         .map(([_, username]) => username);
 
@@ -87,11 +86,16 @@ export function nullUser(username: string): UserSummary {
         updated: BigInt(0),
         suspended: false,
         diamondStatus: "inactive",
+        chitBalance: 0,
+        streak: 0,
+        maxStreak: 0,
+        isUniquePerson: false,
+        totalChitEarned: 0,
     };
 }
 
 export function compareUsername(u1: UserSummary, u2: UserSummary): number {
-    return u1.username === u2.username ? 0 : u2.username < u1.username ? 1 : -1;
+    return u1.username.localeCompare(u2.username, undefined, { sensitivity: "accent" });
 }
 
 export function compareIsNotYouThenUsername(
@@ -103,10 +107,20 @@ export function compareIsNotYouThenUsername(
         if (u1IsYou !== u2IsYou) {
             return u1IsYou ? 1 : -1;
         }
-        return u1.username === u2.username ? 0 : u2.username < u1.username ? 1 : -1;
+        return compareUsername(u1, u2);
     };
 }
 
 export function userAvatarUrl<T extends { blobUrl?: string }>(dataContent?: T): string {
     return dataContent?.blobUrl ?? "/assets/unknownUserAvatar.svg";
+}
+
+export function missingUserIds(userLookup: UserLookup, webhookUserIds: Set<string>, userIds: Iterable<string>): string[] {
+    const missing: string[] = [];
+    for (const userId of userIds) {
+        if (!userLookup.has(userId) && !webhookUserIds.has(userId)) {
+            missing.push(userId);
+        }
+    }
+    return missing;
 }

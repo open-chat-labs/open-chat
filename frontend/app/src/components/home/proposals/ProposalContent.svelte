@@ -1,90 +1,65 @@
 <script lang="ts">
-    import { getContext } from "svelte";
-    import { _ } from "svelte-i18n";
-    import { rtlStore } from "../../../stores/rtl";
     import {
         type ChatIdentifier,
         type OpenChat,
         type ProposalContent,
         ProposalDecisionStatus,
         type RegisterProposalVoteResponse,
+        currentUserIdStore,
+        proposalTopicsStore,
     } from "openchat-client";
-    import Markdown from "../Markdown.svelte";
-    import { now } from "../../../stores/time";
+    import { ErrorCode, type ReadonlyMap } from "openchat-shared";
+    import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
     import ExpandIcon from "svelte-material-icons/ArrowExpandDown.svelte";
+    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Launch from "svelte-material-icons/Launch.svelte";
     import OpenInNew from "svelte-material-icons/OpenInNew.svelte";
-    import { toastStore } from "../../../stores/toast";
-    import Overlay from "../../Overlay.svelte";
-    import ModalContent from "../../ModalContent.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
     import { NamedNeurons } from "../../../stores/namedNeurons";
     import { proposalVotes } from "../../../stores/proposalVotes";
-    import { createEventDispatcher } from "svelte";
+    import { rtlStore } from "../../../stores/rtl";
+    import { now } from "../../../stores/time";
+    import { toastStore } from "../../../stores/toast";
+    import { round2 } from "../../../utils/math";
+    import ModalContent from "../../ModalContent.svelte";
+    import Overlay from "../../Overlay.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import Markdown from "../Markdown.svelte";
+    import ProposalProgressLayout from "./ProposalProgressLayout.svelte";
     import ProposalVoteButton from "./ProposalVoteButton.svelte";
     import ProposalVotingProgress from "./ProposalVotingProgress.svelte";
-    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
-    import ProposalProgressLayout from "./ProposalProgressLayout.svelte";
-    import { round2 } from "../../../utils/math";
-    import { i18nKey } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        content: ProposalContent;
+        chatId: ChatIdentifier;
+        messageIndex: number;
+        messageId: bigint;
+        collapsed: boolean;
+        readonly: boolean;
+        reply: boolean;
+        onExpandMessage?: () => void;
+    }
 
-    export let content: ProposalContent;
-    export let chatId: ChatIdentifier;
-    export let messageIndex: number;
-    export let messageId: bigint;
-    export let collapsed: boolean;
-    export let readonly: boolean;
-    export let reply: boolean;
+    let {
+        content,
+        chatId,
+        messageIndex,
+        messageId,
+        collapsed,
+        readonly,
+        reply,
+        onExpandMessage,
+    }: Props = $props();
 
     const client = getContext<OpenChat>("client");
     const EMPTY_MOTION_PAYLOAD = "# Motion Proposal:\n## Motion Text:\n\n";
 
     const dashboardUrl = "https://dashboard.internetcomputer.org";
 
-    let summaryExpanded = false;
-    let showNeuronInfo = false;
-    let showPayload = false;
-
-    $: user = client.user;
-    $: rootCanister =
-        client.tryGetNervousSystem(content.governanceCanisterId)?.rootCanisterId ?? "";
-    $: proposalTopicsStore = client.proposalTopicsStore;
-    $: isNns = content.proposal.kind === "nns";
-    $: voteStatus =
-        $proposalVotes.get(messageId) ??
-        (content.myVote !== undefined ? (content.myVote ? "adopted" : "rejected") : undefined);
-    $: proposal = content.proposal;
-    $: positive =
-        proposal.status == ProposalDecisionStatus.Adopted ||
-        proposal.status == ProposalDecisionStatus.Executed;
-    $: negative =
-        proposal.status == ProposalDecisionStatus.Failed ||
-        proposal.status == ProposalDecisionStatus.Rejected ||
-        proposal.status == ProposalDecisionStatus.Unspecified;
-    $: proposalUrl = isNns
-        ? `${dashboardUrl}/proposal/${proposal.id}`
-        : `${dashboardUrl}/sns/${rootCanister}/proposal/${proposal.id}`;
-    $: proposerUrl = isNns
-        ? `${dashboardUrl}/neuron/${proposal.proposer}`
-        : `${dashboardUrl}/sns/${rootCanister}/neuron/${proposal.proposer}`;
-    $: adoptPercent = round2((100 * proposal.tally.yes) / proposal.tally.total);
-    $: rejectPercent = round2((100 * proposal.tally.no) / proposal.tally.total);
-    $: votingEnded = proposal.deadline <= $now;
-    $: disable = readonly || reply || votingEnded;
-    $: votingDisabled = voteStatus !== undefined || disable;
-    $: typeValue = getProposalTopicLabel(content, $proposalTopicsStore);
-    $: showFullSummary = proposal.summary.length < 400;
-    $: payload = content.proposal.payloadTextRendering;
-    $: payloadEmpty =
-        payload === undefined || payload === EMPTY_MOTION_PAYLOAD || payload.length === 0;
-
-    $: {
-        if (collapsed) {
-            summaryExpanded = false;
-        }
-    }
+    let summaryExpanded = $state(false);
+    let showNeuronInfo = $state(false);
+    let showPayload = $state(false);
 
     function toggleSummary() {
         if (!showFullSummary) {
@@ -104,11 +79,11 @@
         client
             .registerProposalVote(chatId, messageIndex, adopt)
             .then((resp) => {
-                if (resp === "success") {
+                if (resp.kind === "success") {
                     success = true;
                     proposalVotes.insert(mId, adopt ? "adopted" : "rejected");
-                    client.getProposalVoteDetails(content.governanceCanisterId, proposal.id, isNns);
-                } else if (resp === "no_eligible_neurons") {
+                    client.getProposalVoteDetails(messageId, content.governanceCanisterId, proposal.id, isNns);
+                } else if (resp.kind === "error" && resp.code === ErrorCode.NoEligibleNeurons) {
                     showNeuronInfo = true;
                 } else {
                     const err = registerProposalVoteErrorMessage(resp);
@@ -129,14 +104,15 @@
     function registerProposalVoteErrorMessage(
         resp: RegisterProposalVoteResponse,
     ): string | undefined {
-        if (resp === "already_voted") return "alreadyVoted";
-        if (resp === "proposal_not_accepting_votes") return "proposalNotAcceptingVotes";
+        if (resp.kind === "error" && resp.code === ErrorCode.NoChange) return "alreadyVoted";
+        if (resp.kind === "error" && resp.code === ErrorCode.ProposalNotAcceptingVotes)
+            return "proposalNotAcceptingVotes";
         return "voteFailed";
     }
 
     function onClick() {
         if (collapsed) {
-            dispatch("expandMessage");
+            onExpandMessage?.();
         }
     }
 
@@ -156,7 +132,7 @@
 
     export function getProposalTopicLabel(
         content: ProposalContent,
-        proposalTopics: Map<number, string>,
+        proposalTopics: ReadonlyMap<number, string>,
     ): string {
         return (
             proposalTopics.get(
@@ -164,10 +140,54 @@
             ) ?? "unknown"
         );
     }
+    let rootCanister = $derived(
+        client.tryGetNervousSystem(content.governanceCanisterId)?.rootCanisterId ?? "",
+    );
+    let isNns = $derived(content.proposal.kind === "nns");
+    let voteStatus = $derived(
+        $proposalVotes.get(messageId) ??
+            (content.myVote !== undefined ? (content.myVote ? "adopted" : "rejected") : undefined),
+    );
+    let proposal = $derived(content.proposal);
+    let positive = $derived(
+        proposal.status == ProposalDecisionStatus.Adopted ||
+            proposal.status == ProposalDecisionStatus.Executed,
+    );
+    let negative = $derived(
+        proposal.status == ProposalDecisionStatus.Failed ||
+            proposal.status == ProposalDecisionStatus.Rejected ||
+            proposal.status == ProposalDecisionStatus.Unspecified,
+    );
+    let proposalUrl = $derived(
+        isNns
+            ? `${dashboardUrl}/proposal/${proposal.id}`
+            : `${dashboardUrl}/sns/${rootCanister}/proposal/${proposal.id}`,
+    );
+    let proposerUrl = $derived(
+        isNns
+            ? `${dashboardUrl}/neuron/${proposal.proposer}`
+            : `${dashboardUrl}/sns/${rootCanister}/neuron/${proposal.proposer}`,
+    );
+    let adoptPercent = $derived(round2((100 * proposal.tally.yes) / proposal.tally.total));
+    let rejectPercent = $derived(round2((100 * proposal.tally.no) / proposal.tally.total));
+    let votingEnded = $derived(proposal.deadline <= $now);
+    let disable = $derived(readonly || reply || votingEnded);
+    let votingDisabled = $derived(voteStatus !== undefined || disable);
+    let typeValue = $derived(getProposalTopicLabel(content, $proposalTopicsStore));
+    let showFullSummary = $derived(proposal.summary.length < 400);
+    let payload = $derived(content.proposal.payloadTextRendering);
+    let payloadEmpty = $derived(
+        payload === undefined || payload === EMPTY_MOTION_PAYLOAD || payload.length === 0,
+    );
+    $effect(() => {
+        if (collapsed) {
+            summaryExpanded = false;
+        }
+    });
 </script>
 
 {#if collapsed}
-    <div on:click={onClick}>
+    <div onclick={onClick}>
         <em>{proposal.title}</em>
         <ExpandIcon viewBox="0 -3 24 24" />
     </div>
@@ -196,7 +216,7 @@
         {/if}
         <div class="actions">
             {#if !showFullSummary}
-                <div class="expand" on:click={toggleSummary}>
+                <div class="expand" onclick={toggleSummary}>
                     <div class="label">
                         <Translatable
                             resourceKey={summaryExpanded
@@ -209,7 +229,7 @@
                 </div>
             {/if}
             {#if !payloadEmpty}
-                <div on:click={() => (showPayload = true)} class="payload">
+                <div onclick={() => (showPayload = true)} class="payload">
                     <span><Translatable resourceKey={i18nKey("proposal.details")} /></span>
                     <OpenInNew color="var(--icon-txt)" />
                 </div>
@@ -217,36 +237,41 @@
         </div>
 
         <ProposalProgressLayout>
-            <div slot="adopt" class="adopt">
-                <ProposalVoteButton
-                    voting={voteStatus === "adopting"}
-                    voted={voteStatus === "adopted"}
-                    disabled={votingDisabled}
-                    mode={"yes"}
-                    on:click={() => onVote(true)}
-                    percentage={adoptPercent} />
-            </div>
+            {#snippet adopt()}
+                <div class="adopt">
+                    <ProposalVoteButton
+                        voting={voteStatus === "adopting"}
+                        voted={voteStatus === "adopted"}
+                        disabled={votingDisabled}
+                        mode={"yes"}
+                        onClick={() => onVote(true)}
+                        percentage={adoptPercent} />
+                </div>
+            {/snippet}
 
-            <div slot="progress" class="progress">
-                <ProposalVotingProgress
-                    deadline={proposal.deadline}
-                    {votingEnded}
-                    {adoptPercent}
-                    {rejectPercent}
-                    minYesPercentageOfTotal={proposal.minYesPercentageOfTotal}
-                    minYesPercentageOfExercised={proposal.minYesPercentageOfExercised}
-                />
-            </div>
+            {#snippet progress()}
+                <div class="progress">
+                    <ProposalVotingProgress
+                        deadline={proposal.deadline}
+                        {votingEnded}
+                        {adoptPercent}
+                        {rejectPercent}
+                        minYesPercentageOfTotal={proposal.minYesPercentageOfTotal}
+                        minYesPercentageOfExercised={proposal.minYesPercentageOfExercised} />
+                </div>
+            {/snippet}
 
-            <div slot="reject" class="reject">
-                <ProposalVoteButton
-                    voting={voteStatus === "rejecting"}
-                    voted={voteStatus === "rejected"}
-                    disabled={votingDisabled}
-                    mode={"no"}
-                    on:click={() => onVote(false)}
-                    percentage={rejectPercent} />
-            </div>
+            {#snippet reject()}
+                <div class="reject">
+                    <ProposalVoteButton
+                        voting={voteStatus === "rejecting"}
+                        voted={voteStatus === "rejected"}
+                        disabled={votingDisabled}
+                        mode={"no"}
+                        onClick={() => onVote(false)}
+                        percentage={rejectPercent} />
+                </div>
+            {/snippet}
         </ProposalProgressLayout>
     </div>
     <div class="more" class:rtl={$rtlStore}>
@@ -261,28 +286,32 @@
 {/if}
 
 {#if showNeuronInfo}
-    <Overlay dismissible>
-        <ModalContent compactFooter on:close={() => (showNeuronInfo = false)}>
-            <div slot="header">
+    <Overlay dismissible onClose={() => (showNeuronInfo = false)}>
+        <ModalContent compactFooter onClose={() => (showNeuronInfo = false)}>
+            {#snippet header()}
                 <Translatable resourceKey={i18nKey("proposal.noEligibleNeurons")} />
-            </div>
-            <div slot="body">
+            {/snippet}
+            {#snippet body()}
                 <Markdown
                     text={$_("proposal.noEligibleNeuronsMessage", {
-                        values: { userId: $user.userId },
+                        values: { userId: $currentUserIdStore },
                     })} />
-            </div>
+            {/snippet}
         </ModalContent>
     </Overlay>
 {/if}
 
 {#if showPayload && !payloadEmpty}
-    <Overlay dismissible>
-        <ModalContent compactFooter on:close={() => (showPayload = false)}>
-            <div slot="header"><Translatable resourceKey={i18nKey("proposal.details")} /></div>
-            <div class="payload-body" slot="body">
-                <Markdown text={payload ?? ""} inline={false} />
-            </div>
+    <Overlay dismissible onClose={() => (showPayload = false)}>
+        <ModalContent compactFooter onClose={() => (showPayload = false)}>
+            {#snippet header()}
+                <div><Translatable resourceKey={i18nKey("proposal.details")} /></div>
+            {/snippet}
+            {#snippet body()}
+                <div class="payload-body">
+                    <Markdown text={payload ?? ""} inline={false} />
+                </div>
+            {/snippet}
         </ModalContent>
     </Overlay>
 {/if}
@@ -334,8 +363,8 @@
         cursor: pointer;
         position: relative;
         overflow-x: hidden;
-        color: var(--markdown-fg-color);
-        background-color: rgba(0, 0, 0, 0.1);
+        color: "inherit";
+        background-color: rgba(0, 0, 0, 0.05);
         padding: $sp3;
 
         &.expanded {

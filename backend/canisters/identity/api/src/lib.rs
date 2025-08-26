@@ -1,24 +1,45 @@
 use candid::{CandidType, Deserialize};
 use serde::Serialize;
-use serde_bytes::ByteBuf;
-use types::TimestampNanos;
 
 mod lifecycle;
+mod model;
 mod queries;
 mod updates;
 
 pub use lifecycle::*;
+pub use model::*;
 pub use queries::*;
+use ts_export::ts_export;
+use types::CanisterId;
 pub use updates::*;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct Delegation {
-    pub pubkey: ByteBuf,
-    pub expiration: TimestampNanos,
+// zzzxd-webau-thnke-yr7oc-cai
+pub const WEBAUTHN_ORIGINATING_CANISTER: CanisterId = CanisterId::from_slice(&[129, 5, 38, 118, 168, 152, 143, 220, 33, 1]);
+
+pub type ChallengeKey = u32;
+
+#[ts_export(identity)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct Challenge {
+    pub key: ChallengeKey,
+    pub png_base64: String,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct SignedDelegation {
-    pub delegation: Delegation,
-    pub signature: ByteBuf,
+#[ts_export(identity)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct ChallengeAttempt {
+    pub key: ChallengeKey,
+    pub chars: String,
+}
+
+#[ts_export(identity)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct WebAuthnKey {
+    #[serde(with = "serde_bytes")]
+    pub public_key: Vec<u8>,
+    #[serde(with = "serde_bytes")]
+    pub credential_id: Vec<u8>,
+    pub origin: String,
+    pub cross_platform: bool,
+    pub aaguid: [u8; 16],
 }

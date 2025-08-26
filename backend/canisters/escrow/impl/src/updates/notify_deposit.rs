@@ -1,17 +1,18 @@
 use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
-use crate::{mutate_state, RuntimeState};
-use canister_api_macros::update_candid_and_msgpack;
+use crate::{RuntimeState, mutate_state};
+use candid::Principal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use escrow_canister::deposit_subaccount;
 use escrow_canister::notify_deposit::{Response::*, *};
 use icrc_ledger_types::icrc1::account::Account;
-use types::{CanisterId, UserId};
+use types::CanisterId;
 
-#[update_candid_and_msgpack]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn notify_deposit(args: Args) -> Response {
     let PrepareResult {
-        user_id,
+        principal,
         ledger,
         account,
         balance_required,
@@ -33,17 +34,17 @@ async fn notify_deposit(args: Args) -> Response {
                 })
             } else {
                 let now = state.env.now();
-                if user_id == swap.created_by {
+                if principal == swap.offered_by {
                     swap.token0_received = true;
                 } else {
-                    swap.accepted_by = Some((user_id, now));
+                    swap.accepted_by = Some((principal, now));
                     swap.token1_received = true;
                 }
                 let complete = swap.token0_received && swap.token1_received;
                 if complete {
                     let accepted_by = swap.accepted_by.unwrap().0;
                     state.data.pending_payments_queue.push(PendingPayment {
-                        user_id: swap.created_by,
+                        principal: swap.offered_by,
                         timestamp: now,
                         token_info: swap.token1.clone(),
                         amount: swap.amount1,
@@ -51,12 +52,12 @@ async fn notify_deposit(args: Args) -> Response {
                         reason: PendingPaymentReason::Swap(accepted_by),
                     });
                     state.data.pending_payments_queue.push(PendingPayment {
-                        user_id: accepted_by,
+                        principal: accepted_by,
                         timestamp: now,
                         token_info: swap.token0.clone(),
                         amount: swap.amount0,
                         swap_id: swap.id,
-                        reason: PendingPaymentReason::Swap(swap.created_by),
+                        reason: PendingPaymentReason::Swap(swap.offered_by),
                     });
                     crate::jobs::make_pending_payments::start_job_if_required(state);
                 }
@@ -68,7 +69,7 @@ async fn notify_deposit(args: Args) -> Response {
 }
 
 struct PrepareResult {
-    user_id: UserId,
+    principal: Principal,
     ledger: CanisterId,
     account: Account,
     balance_required: u128,
@@ -82,42 +83,45 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Respo
         } else if swap.expires_at < now {
             Err(SwapExpired)
         } else {
-            let user_id = args.user_id.unwrap_or_else(|| state.env.caller().into());
+            let escrow_canister_id = state.env.canister_id();
+            let principal = args.deposited_by.unwrap_or_else(|| state.env.caller());
 
-            if swap.created_by == user_id {
+            if swap.offered_by == principal {
                 if swap.token0_received {
                     Err(Success(SuccessResult {
                         complete: swap.token1_received,
                     }))
                 } else {
                     Ok(PrepareResult {
-                        user_id,
+                        principal,
                         ledger: swap.token0.ledger,
                         account: Account {
-                            owner: state.env.canister_id(),
-                            subaccount: Some(deposit_subaccount(user_id, swap.id)),
+                            owner: escrow_canister_id,
+                            subaccount: Some(deposit_subaccount(principal, swap.id)),
                         },
                         balance_required: swap.amount0 + swap.token0.fee,
                     })
                 }
             } else if let Some((accepted_by, _)) = swap.accepted_by {
-                if accepted_by == user_id {
+                if accepted_by == principal {
                     Err(Success(SuccessResult {
                         complete: swap.token0_received,
                     }))
                 } else {
                     Err(SwapAlreadyAccepted)
                 }
-            } else {
+            } else if swap.restricted_to.is_none_or(|p| p == principal) {
                 Ok(PrepareResult {
-                    user_id,
+                    principal,
                     ledger: swap.token1.ledger,
                     account: Account {
-                        owner: state.env.canister_id(),
-                        subaccount: Some(deposit_subaccount(user_id, swap.id)),
+                        owner: escrow_canister_id,
+                        subaccount: Some(deposit_subaccount(principal, swap.id)),
                     },
                     balance_required: swap.amount1 + swap.token1.fee,
                 })
+            } else {
+                Err(NotAuthorized)
             }
         }
     } else {

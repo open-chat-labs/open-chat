@@ -1,26 +1,25 @@
 use crate::{
+    RuntimeState,
     guards::caller_is_modclub,
     model::{
-        reported_messages::{build_message_to_reporter, build_message_to_sender, RecordOutcomeResult, ReportOutcome},
-        user::{SuspensionDetails, SuspensionDuration},
+        reported_messages::{RecordOutcomeResult, ReportOutcome, build_message_to_reporter, build_message_to_sender},
+        user::SuspensionDetails,
     },
     mutate_state,
     timer_job_types::{SetUserSuspended, TimerJob},
-    RuntimeState,
 };
-use candid::Encode;
 use canister_tracing_macros::trace;
+use constants::OPENCHAT_BOT_USER_ID;
 use fire_and_forget_handler::FireAndForgetHandler;
-use ic_cdk_macros::update;
+use ic_cdk::update;
 use tracing::error;
-use types::{CanisterId, ChannelId, MessageId, MessageIndex, UserId};
+use types::{CanisterId, ChannelId, MessageId, MessageIndex, SuspensionDuration, UserId};
 use user_index_canister::modclub_callback::*;
-use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[update(guard = "caller_is_modclub")]
 #[trace]
 fn modclub_callback(args: Args) {
-    ic_cdk::spawn(handle_modclub_callback(args))
+    ic_cdk::futures::spawn(handle_modclub_callback(args))
 }
 
 async fn handle_modclub_callback(args: Args) {
@@ -99,9 +98,13 @@ fn delete_channel_message(
         thread_root_message_index,
         message_ids: vec![message_id],
         as_platform_moderator: Some(true),
+        new_achievement: false,
     };
-    // TODO: When user canisters are released this can be delete_messages_msgpack
-    fire_and_forget_handler.send(canister_id, "delete_messages".to_string(), Encode!(&args).unwrap());
+    fire_and_forget_handler.send(
+        canister_id,
+        "delete_messages_msgpack".to_string(),
+        msgpack::serialize_then_unwrap(&args),
+    );
 }
 
 fn delete_group_message(
@@ -114,18 +117,21 @@ fn delete_group_message(
         thread_root_message_index,
         message_ids: vec![message_id],
         as_platform_moderator: Some(true),
-        correlation_id: 0,
+        new_achievement: false,
     };
-    // TODO: When user canisters are released this can be delete_messages_msgpack
-    fire_and_forget_handler.send(canister_id, "delete_messages".to_string(), Encode!(&args).unwrap());
+    fire_and_forget_handler.send(
+        canister_id,
+        "delete_messages_msgpack".to_string(),
+        msgpack::serialize_then_unwrap(&args),
+    );
 }
 
 fn should_suspend_sender(sender: UserId, outcome: &ReportOutcome, state: &RuntimeState) -> Option<SuspensionDetails> {
     if let Some(user) = state.data.users.get_by_user_id(&sender) {
-        if let Some(current_suspension_details) = user.suspension_details.as_ref() {
-            if matches!(current_suspension_details.duration, SuspensionDuration::Indefinitely) {
-                return None;
-            }
+        if let Some(current_suspension_details) = user.suspension_details.as_ref()
+            && matches!(current_suspension_details.duration, SuspensionDuration::Indefinitely)
+        {
+            return None;
         }
 
         let (duration, reason) = if outcome.unanimous_rejection_decision(Some(1)) {

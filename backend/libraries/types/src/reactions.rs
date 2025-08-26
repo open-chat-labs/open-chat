@@ -1,10 +1,10 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 
-const MAX_REACTION_LENGTH_BYTES: usize = 40;
-
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct Reaction(String);
+pub struct Reaction(pub String);
 
 impl Reaction {
     pub fn new(s: String) -> Reaction {
@@ -13,8 +13,8 @@ impl Reaction {
 
     pub fn is_valid(&self) -> bool {
         let len = self.0.len();
-
-        (1..=MAX_REACTION_LENGTH_BYTES).contains(&len)
+        let max_length = if self.0.starts_with("@CE(") { 100 } else { 40 };
+        (1..=max_length).contains(&len)
     }
 }
 

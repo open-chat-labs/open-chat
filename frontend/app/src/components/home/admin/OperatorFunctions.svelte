@@ -1,72 +1,116 @@
 <script lang="ts">
-    import type { DiamondMembershipFees, OpenChat } from "openchat-client";
-    import { getContext } from "svelte";
-    import NumberInput from "../../NumberInput.svelte";
-    import Input from "../../Input.svelte";
-    import Button from "../../Button.svelte";
-    import ErrorMessage from "../../ErrorMessage.svelte";
+    import type {
+        DiamondMembershipFees,
+        OpenChat,
+        ResourceKey,
+        UpdateMarketMakerConfigArgs,
+    } from "openchat-client";
+    import { getContext, onMount } from "svelte";
+    import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
+    import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
+    import ErrorMessage from "../../ErrorMessage.svelte";
+    import Input from "../../Input.svelte";
     import Select from "../../Select.svelte";
     import Toggle from "../../Toggle.svelte";
-    import { i18nKey, type ResourceKey } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
+
+    type Fees = {
+        token: "CHAT" | "ICP";
+        oneMonth: string;
+        threeMonths: string;
+        oneYear: string;
+        lifetime: string;
+    };
 
     const client = getContext<OpenChat>("client");
 
-    let error: ResourceKey | undefined = undefined;
-    let groupUpgradeConcurrency = 10;
-    let communityUpgradeConcurrency = 10;
-    let userUpgradeConcurrency = 10;
-    let busy: Set<number> = new Set();
-    let feeToken = "ICP";
-    let oneMonthFees = 0;
-    let threeMonthFees = 0;
-    let oneYearFees = 0;
-    let lifetimeFees = 0;
-    let governanceCanisterId = "";
-    let stake = 0;
+    let error: ResourceKey | undefined = $state(undefined);
+    let groupUpgradeConcurrency = $state("10");
+    let communityUpgradeConcurrency = $state("10");
+    let userUpgradeConcurrency = $state("10");
+    let busy: Set<number> = $state(new Set());
+    let governanceCanisterId = $state("");
+    let stake = $state("0");
 
-    let exchangeId: number = 0;
-    let enabled: boolean = true;
-    let priceIncrement: string = "";
-    let orderSize: string = "";
-    let minOrderSize: string = "";
-    let maxBuyPrice: string = "";
-    let minSellPrice: string = "";
-    let spread: string = "";
-    let minOrdersPerDirection: string = "";
-    let maxOrdersPerDirection: string = "";
-    let maxOrdersToMakePerIteration: string = "";
-    let maxOrdersToCancelPerIteration: string = "";
+    let exchangeId: string = $state("");
+    let enabled: boolean = $state(true);
+    let priceIncrement: string = $state("");
+    let orderSize: string = $state("");
+    let minOrderSize: string = $state("");
+    let maxBuyPrice: string = $state("");
+    let minSellPrice: string = $state("");
+    let spread: string = $state("");
+    let minOrdersPerDirection: string = $state("");
+    let maxOrdersPerDirection: string = $state("");
+    let maxOrdersToMakePerIteration: string = $state("");
+    let maxOrdersToCancelPerIteration: string = $state("");
+    let currentFees: Record<"ICP" | "CHAT", Fees> | undefined = $state();
+    let originalFees: Record<"ICP" | "CHAT", DiamondMembershipFees>;
+    let feesTab: "ICP" | "CHAT" = $state("ICP");
+    let tokenLedger = $state("");
+    let tokenEnabled = $state(true);
 
-    $: markerMakerConfig = {
-        exchangeId: exchangeId,
-        enabled: enabled,
-        priceIncrement: priceIncrement === "" ? undefined : BigInt(priceIncrement),
-        orderSize: orderSize === "" ? undefined : BigInt(orderSize),
-        minOrderSize: minOrderSize === "" ? undefined : BigInt(minOrderSize),
-        maxBuyPrice: maxBuyPrice === "" ? undefined : BigInt(maxBuyPrice),
-        minSellPrice: minSellPrice === "" ? undefined : BigInt(minSellPrice),
-        spread: spread === "" ? undefined : BigInt(spread),
-        minOrdersPerDirection:
-            minOrdersPerDirection === "" ? undefined : Number(minOrdersPerDirection),
-        maxOrdersPerDirection:
-            maxOrdersPerDirection === "" ? undefined : Number(maxOrdersPerDirection),
-        maxOrdersToMakePerIteration:
-            maxOrdersToMakePerIteration === "" ? undefined : Number(maxOrdersToMakePerIteration),
-        maxOrdersToCancelPerIteration:
-            maxOrdersToCancelPerIteration === ""
-                ? undefined
-                : Number(maxOrdersToCancelPerIteration),
-    };
+    let groupUpgradeConcurrencyInvalid = $derived(isNaN(parseInt(groupUpgradeConcurrency, 0)));
+    let communityUpgradeConcurrencyInvalid = $derived(
+        isNaN(parseInt(communityUpgradeConcurrency, 0)),
+    );
+    let userUpgradeConcurrencyInvalid = $derived(isNaN(parseInt(userUpgradeConcurrency, 0)));
+    let exchangeIdInvalid = $derived(isNaN(parseInt(exchangeId, 0)));
+    let tokenLedgerValid = $derived(tokenLedger.length > 0);
 
-    $: fees = {
-        token: feeToken,
-        oneMonth: BigInt(oneMonthFees),
-        threeMonths: BigInt(threeMonthFees),
-        oneYear: BigInt(oneYearFees),
-        lifetime: BigInt(lifetimeFees),
-    } as DiamondMembershipFees;
+    onMount(() => {
+        client.diamondMembershipFees().then((fees) => {
+            originalFees = client.toRecord(fees, (f) => f.token);
+            currentFees = client.toRecord2(
+                fees,
+                (f) => f.token,
+                (f) => ({
+                    token: f.token,
+                    oneMonth: f.oneMonth.toString(),
+                    threeMonths: f.threeMonths.toString(),
+                    oneYear: f.oneYear.toString(),
+                    lifetime: f.lifetime.toString(),
+                }),
+            );
+        });
+    });
+
+    function buildMarketMakerConfig(): UpdateMarketMakerConfigArgs | undefined {
+        let config;
+        if (exchangeIdInvalid) return undefined;
+
+        try {
+            config = {
+                exchangeId: parseInt(exchangeId, 0),
+                enabled: enabled,
+                priceIncrement: priceIncrement === "" ? undefined : BigInt(priceIncrement),
+                orderSize: orderSize === "" ? undefined : BigInt(orderSize),
+                minOrderSize: minOrderSize === "" ? undefined : BigInt(minOrderSize),
+                maxBuyPrice: maxBuyPrice === "" ? undefined : BigInt(maxBuyPrice),
+                minSellPrice: minSellPrice === "" ? undefined : BigInt(minSellPrice),
+                spread: spread === "" ? undefined : BigInt(spread),
+                minOrdersPerDirection:
+                    minOrdersPerDirection === "" ? undefined : Number(minOrdersPerDirection),
+                maxOrdersPerDirection:
+                    maxOrdersPerDirection === "" ? undefined : Number(maxOrdersPerDirection),
+                maxOrdersToMakePerIteration:
+                    maxOrdersToMakePerIteration === ""
+                        ? undefined
+                        : Number(maxOrdersToMakePerIteration),
+                maxOrdersToCancelPerIteration:
+                    maxOrdersToCancelPerIteration === ""
+                        ? undefined
+                        : Number(maxOrdersToCancelPerIteration),
+            };
+        } catch (err) {
+            toastStore.showFailureToast(i18nKey("Failed to create market maker config"), err);
+            return undefined;
+        }
+
+        return config;
+    }
 
     function addBusy(n: number) {
         busy.add(n);
@@ -82,7 +126,7 @@
         error = undefined;
         addBusy(0);
         client
-            .setGroupUpgradeConcurrency(groupUpgradeConcurrency)
+            .setGroupUpgradeConcurrency(parseInt(groupUpgradeConcurrency, 0))
             .then((success) => {
                 if (success) {
                     toastStore.showSuccessToast(
@@ -104,7 +148,7 @@
         error = undefined;
         addBusy(1);
         client
-            .setCommunityUpgradeConcurrency(communityUpgradeConcurrency)
+            .setCommunityUpgradeConcurrency(parseInt(communityUpgradeConcurrency, 10))
             .then((success) => {
                 if (success) {
                     toastStore.showSuccessToast(
@@ -128,7 +172,7 @@
         error = undefined;
         addBusy(2);
         client
-            .setUserUpgradeConcurrency(userUpgradeConcurrency)
+            .setUserUpgradeConcurrency(parseInt(userUpgradeConcurrency, 10))
             .then((success) => {
                 if (success) {
                     toastStore.showSuccessToast(
@@ -146,18 +190,38 @@
             });
     }
 
+    function strToBigInt(str: string): bigint | undefined {
+        const n = Number(str);
+        return isNaN(n) ? undefined : BigInt(n);
+    }
+
+    function mapFees(): DiamondMembershipFees[] {
+        if (currentFees === undefined) return [];
+        const mapped = Object.values(currentFees).reduce((res, val) => {
+            res[val.token] = {
+                token: val.token,
+                oneMonth: strToBigInt(val.oneMonth) ?? res[val.token].oneMonth,
+                threeMonths: strToBigInt(val.threeMonths) ?? res[val.token].threeMonths,
+                oneYear: strToBigInt(val.oneYear) ?? res[val.token].oneYear,
+                lifetime: strToBigInt(val.lifetime) ?? res[val.token].lifetime,
+            };
+            return res;
+        }, originalFees);
+        return Object.values(mapped);
+    }
+
     function setDiamondMembershipFees(): void {
         error = undefined;
         addBusy(3);
+        const mappedFees = mapFees();
         client
-            .setDiamondMembershipFees([fees])
+            .setDiamondMembershipFees(mappedFees)
             .then((success) => {
                 if (success) {
-                    toastStore.showSuccessToast(i18nKey(`Diamond membership fees set ${fees}`));
+                    originalFees = client.toRecord(mappedFees, (f) => f.token);
+                    toastStore.showSuccessToast(i18nKey(`Diamond membership fees set`));
                 } else {
-                    error = i18nKey(
-                        `Failed to set diamond membership fees ${userUpgradeConcurrency}`,
-                    );
+                    error = i18nKey(`Failed to set diamond membership fees`);
                     toastStore.showFailureToast(error);
                 }
             })
@@ -168,37 +232,63 @@
 
     function stakeNeuronForSubmittingProposals(): void {
         error = undefined;
-        addBusy(4);
-        client
-            .stakeNeuronForSubmittingProposals(governanceCanisterId, BigInt(stake))
-            .then((success) => {
-                if (success) {
-                    toastStore.showSuccessToast(i18nKey("Neuron staked successfully"));
-                } else {
-                    error = i18nKey("Failed to stake neuron");
-                    toastStore.showFailureToast(error);
-                }
-            })
-            .finally(() => {
-                removeBusy(4);
-            });
+        const stakeVal = strToBigInt(stake);
+        if (stakeVal !== undefined) {
+            addBusy(4);
+            client
+                .stakeNeuronForSubmittingProposals(governanceCanisterId, stakeVal)
+                .then((success) => {
+                    if (success) {
+                        toastStore.showSuccessToast(i18nKey("Neuron staked successfully"));
+                    } else {
+                        error = i18nKey("Failed to stake neuron");
+                        toastStore.showFailureToast(error);
+                    }
+                })
+                .finally(() => {
+                    removeBusy(4);
+                });
+        }
     }
 
     function updateMarketMakerConfig(): void {
         error = undefined;
-        addBusy(5);
+        const config = buildMarketMakerConfig();
+        if (config !== undefined) {
+            addBusy(5);
+            client
+                .updateMarketMakerConfig(config)
+                .then((resp) => {
+                    if (resp === "success") {
+                        toastStore.showSuccessToast(i18nKey("Market maker config updated"));
+                    } else {
+                        error = i18nKey(`Failed to update market maker config: ${resp}`);
+                        toastStore.showFailureToast(error);
+                    }
+                })
+                .finally(() => {
+                    removeBusy(5);
+                });
+        }
+    }
+
+    function setTokenEnabled(): void {
+        error = undefined;
+        addBusy(6);
         client
-            .updateMarketMakerConfig(markerMakerConfig)
-            .then((resp) => {
-                if (resp === "success") {
-                    toastStore.showSuccessToast(i18nKey("Market maker config updated"));
+            .setTokenEnabled(tokenLedger, tokenEnabled)
+            .then((success) => {
+                if (success) {
+                    toastStore.showSuccessToast(
+                        i18nKey(`Token enabled set successfully: ${tokenLedger}, ${tokenEnabled}`),
+                    );
                 } else {
-                    error = i18nKey(`Failed to update market maker config: ${resp}`);
+                    error = i18nKey(`Failed to set token enabled: ${tokenLedger}, ${tokenEnabled}`);
                     toastStore.showFailureToast(error);
                 }
             })
             .finally(() => {
-                removeBusy(5);
+                removeBusy(6);
             });
     }
 </script>
@@ -207,80 +297,84 @@
     <section class="operator-function">
         <div class="title">Set group upgrade concurrency</div>
         <ButtonGroup align="fill">
-            <NumberInput bind:value={groupUpgradeConcurrency} />
+            <Input invalid={groupUpgradeConcurrencyInvalid} bind:value={groupUpgradeConcurrency} />
             <Button
                 tiny
-                disabled={busy.has(0)}
+                disabled={busy.has(0) || groupUpgradeConcurrencyInvalid}
                 loading={busy.has(0)}
-                on:click={setGroupUpgradeConcurrency}>Apply</Button>
+                onClick={setGroupUpgradeConcurrency}>Apply</Button>
         </ButtonGroup>
     </section>
 
     <section class="operator-function">
         <div class="title">Set community upgrade concurrency</div>
         <ButtonGroup align="fill">
-            <NumberInput bind:value={communityUpgradeConcurrency} />
+            <Input
+                invalid={communityUpgradeConcurrencyInvalid}
+                bind:value={communityUpgradeConcurrency} />
             <Button
                 tiny
-                disabled={busy.has(1)}
+                disabled={busy.has(1) || communityUpgradeConcurrencyInvalid}
                 loading={busy.has(1)}
-                on:click={setCommunityUpgradeConcurrency}>Apply</Button>
+                onClick={setCommunityUpgradeConcurrency}>Apply</Button>
         </ButtonGroup>
     </section>
 
     <section class="operator-function">
         <div class="title">Set user upgrade concurrency</div>
         <ButtonGroup align="fill">
-            <NumberInput bind:value={userUpgradeConcurrency} />
+            <Input invalid={userUpgradeConcurrencyInvalid} bind:value={userUpgradeConcurrency} />
             <Button
                 tiny
-                disabled={busy.has(2)}
+                disabled={busy.has(2) || userUpgradeConcurrencyInvalid}
                 loading={busy.has(2)}
-                on:click={setUserUpgradeConcurrency}>Apply</Button>
+                onClick={setUserUpgradeConcurrency}>Apply</Button>
         </ButtonGroup>
     </section>
 
-    <section class="operator-function">
-        <div class="title">Set Diamond membership fees</div>
-        <div class="name-value">
-            <div class="label">Token:</div>
-            <div class="value">
-                <Select bind:value={feeToken}>
-                    <option value="ICP">ICP</option>
-                    <option value="CHAT">CHAT</option>
-                </Select>
+    {#if currentFees !== undefined}
+        <section class="operator-function">
+            <div class="title">Set Diamond membership fees</div>
+            <div class="name-value">
+                <div class="label">Token:</div>
+                <div class="value">
+                    <Select bind:value={feesTab}>
+                        <option value="ICP">ICP</option>
+                        <option value="CHAT">CHAT</option>
+                    </Select>
+                </div>
             </div>
-        </div>
-        <div class="name-value">
-            <div class="label">One month:</div>
-            <div class="value">
-                <NumberInput bind:value={oneMonthFees} />
+            <div class="name-value">
+                <div class="label">One month:</div>
+                <div class="value">
+                    <Input bind:value={currentFees[feesTab].oneMonth} />
+                </div>
             </div>
-        </div>
-        <div class="name-value">
-            <div class="label">Three month:</div>
-            <div class="value">
-                <NumberInput bind:value={threeMonthFees} />
+            <div class="name-value">
+                <div class="label">Three month:</div>
+                <div class="value">
+                    <Input bind:value={currentFees[feesTab].threeMonths} />
+                </div>
             </div>
-        </div>
-        <div class="name-value">
-            <div class="label">One year:</div>
-            <div class="value">
-                <NumberInput bind:value={oneYearFees} />
+            <div class="name-value">
+                <div class="label">One year:</div>
+                <div class="value">
+                    <Input bind:value={currentFees[feesTab].oneYear} />
+                </div>
             </div>
-        </div>
-        <div class="name-value">
-            <div class="label">Lifetime:</div>
-            <div class="value">
-                <NumberInput bind:value={lifetimeFees} />
+            <div class="name-value">
+                <div class="label">Lifetime:</div>
+                <div class="value">
+                    <Input bind:value={currentFees[feesTab].lifetime} />
+                </div>
             </div>
-        </div>
-        <Button
-            tiny
-            disabled={busy.has(3)}
-            loading={busy.has(3)}
-            on:click={setDiamondMembershipFees}>Apply</Button>
-    </section>
+            <Button
+                tiny
+                disabled={busy.has(3)}
+                loading={busy.has(3)}
+                onClick={setDiamondMembershipFees}>Apply</Button>
+        </section>
+    {/if}
 
     <section class="operator-function">
         <div class="title">Stake neuron for submitting proposals</div>
@@ -293,14 +387,14 @@
         <div class="name-value">
             <div class="label">Stake:</div>
             <div class="value">
-                <NumberInput bind:value={stake} />
+                <Input bind:value={stake} />
             </div>
         </div>
         <Button
             tiny
             disabled={busy.has(4)}
             loading={busy.has(4)}
-            on:click={stakeNeuronForSubmittingProposals}>Apply</Button>
+            onClick={stakeNeuronForSubmittingProposals}>Apply</Button>
     </section>
 
     <section class="operator-function">
@@ -308,7 +402,7 @@
         <div class="name-value">
             <div class="label">Exchange Id:</div>
             <div class="value">
-                <NumberInput bind:value={exchangeId} />
+                <Input invalid={exchangeIdInvalid} bind:value={exchangeId} />
             </div>
         </div>
         <div class="name-value">
@@ -377,26 +471,44 @@
                 <Input bind:value={maxOrdersToCancelPerIteration} />
             </div>
         </div>
-        <Button tiny disabled={busy.has(5)} loading={busy.has(5)} on:click={updateMarketMakerConfig}
-            >Apply</Button>
+        <Button
+            tiny
+            disabled={busy.has(5) || exchangeIdInvalid}
+            loading={busy.has(5)}
+            onClick={updateMarketMakerConfig}>Apply</Button>
+    </section>
+
+    <section class="operator-function">
+        <div class="title">Set token enabled</div>
+        <ButtonGroup align="fill">
+            <Input invalid={!tokenLedgerValid} bind:value={tokenLedger} />
+            <Toggle small id="token-enabled" bind:checked={tokenEnabled} />
+            <Button
+                tiny
+                disabled={busy.has(6) || !tokenLedgerValid}
+                loading={busy.has(6)}
+                onClick={setTokenEnabled}>Apply</Button>
+        </ButtonGroup>
     </section>
 
     <section class="operator-function">
         <ButtonGroup align="fill">
             <h4>Pause event loop</h4>
-            <Button tiny on:click={() => client.pauseEventLoop()}>Pause</Button>
+            <Button tiny onClick={() => client.pauseEventLoop()}>Pause</Button>
         </ButtonGroup>
     </section>
 
     <section class="operator-function">
         <ButtonGroup align="fill">
             <h4>Resume event loop</h4>
-            <Button tiny on:click={() => client.resumeEventLoop()}>Resume</Button>
+            <Button tiny onClick={() => client.resumeEventLoop()}>Resume</Button>
         </ButtonGroup>
     </section>
 
     {#if error}
-        <ErrorMessage>{error}</ErrorMessage>
+        <ErrorMessage>
+            <Translatable resourceKey={error} />
+        </ErrorMessage>
     {/if}
 </div>
 

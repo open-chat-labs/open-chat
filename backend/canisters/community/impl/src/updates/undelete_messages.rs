@@ -1,61 +1,51 @@
-use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState, TimerJob};
+use crate::{RuntimeState, TimerJob, activity_notifications::handle_activity_notification, execute_update};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::undelete_messages::{Response::*, *};
-use group_chat_core::UndeleteMessagesResult;
-use ic_cdk_macros::update;
 use std::collections::HashSet;
+use types::OCResult;
 
-#[update]
+#[update(msgpack = true)]
 #[trace]
 fn undelete_messages(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| undelete_messages_impl(args, state))
+    match execute_update(|state| undelete_messages_impl(args, state)) {
+        Ok(result) => Success(result),
+        Err(error) => Error(error),
+    }
 }
 
-fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if state.data.is_frozen() {
-        return CommunityFrozen;
+fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<SuccessResult> {
+    state.data.verify_not_frozen()?;
+
+    let member = state.get_calling_member(true)?;
+    let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
+    let now = state.env.now();
+
+    let results = channel
+        .chat
+        .undelete_messages(member.user_id, args.thread_root_message_index, args.message_ids, now)?;
+
+    if results.is_empty() {
+        return Ok(SuccessResult { messages: vec![] });
     }
 
-    let caller = state.env.caller();
-    if let Some(member) = state.data.members.get(caller) {
-        if member.suspended.value {
-            return UserSuspended;
-        }
+    let (messages, bot_notifications): (Vec<_>, Vec<_>) = results
+        .into_iter()
+        .map(|success| (success.message, success.bot_notification))
+        .unzip();
 
-        let now = state.env.now();
-        if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-            match channel
-                .chat
-                .undelete_messages(member.user_id, args.thread_root_message_index, args.message_ids, now)
-            {
-                UndeleteMessagesResult::Success(messages) => {
-                    if !messages.is_empty() {
-                        let message_ids: HashSet<_> = messages.iter().map(|m| m.message_id).collect();
-                        state.data.timer_jobs.cancel_jobs(|job| {
-                            if let TimerJob::HardDeleteMessageContent(j) = job {
-                                j.channel_id == args.channel_id
-                                    && j.thread_root_message_index == args.thread_root_message_index
-                                    && message_ids.contains(&j.message_id)
-                            } else {
-                                false
-                            }
-                        });
-
-                        handle_activity_notification(state);
-                    }
-
-                    Success(SuccessResult { messages })
-                }
-                UndeleteMessagesResult::MessageNotFound => MessageNotFound,
-                UndeleteMessagesResult::UserNotInGroup => UserNotInChannel,
-                UndeleteMessagesResult::UserSuspended => UserSuspended,
-            }
+    let message_ids: HashSet<_> = messages.iter().map(|m| m.message_id).collect();
+    state.data.timer_jobs.cancel_jobs(|job| {
+        if let TimerJob::HardDeleteMessageContent(j) = job {
+            j.channel_id == args.channel_id
+                && j.thread_root_message_index == args.thread_root_message_index
+                && message_ids.contains(&j.message_id)
         } else {
-            UserNotInChannel
+            false
         }
-    } else {
-        UserNotInCommunity
-    }
+    });
+
+    state.push_bot_notifications(bot_notifications);
+    handle_activity_notification(state);
+    Ok(SuccessResult { messages })
 }

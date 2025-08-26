@@ -1,59 +1,66 @@
 <script lang="ts">
     import type {
+        ChatIdentifier,
         ChatSummary,
         EventWrapper,
         Message,
         OpenChat,
         TypersByKey,
     } from "openchat-client";
-    import { AvatarSize, UserStatus } from "openchat-client";
-    import Avatar from "../../Avatar.svelte";
-    import { iconSize } from "../../../stores/iconSize";
-    import { rtlStore } from "../../../stores/rtl";
-    import { now } from "../../../stores/time";
+    import {
+        allUsersStore,
+        AvatarSize,
+        byContext,
+        iconSize,
+        mobileWidth,
+        selectedCommunitySummaryStore,
+        UserStatus,
+    } from "openchat-client";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import Typing from "../../Typing.svelte";
-    import SectionHeader from "../../SectionHeader.svelte";
-    import HoverIcon from "../../HoverIcon.svelte";
-    import Markdown from "../../home/Markdown.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import { mobileWidth } from "../../../stores/screenDimensions";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { rtlStore } from "../../../stores/rtl";
+    import { now } from "../../../stores/time";
+    import Avatar from "../../Avatar.svelte";
+    import HoverIcon from "../../HoverIcon.svelte";
+    import SectionHeader from "../../SectionHeader.svelte";
+    import Typing from "../../Typing.svelte";
+    import Markdown from "../../home/Markdown.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let chatSummary: ChatSummary;
-    export let rootEvent: EventWrapper<Message>;
-    export let threadRootMessageIndex: number;
+    interface Props {
+        chatSummary: ChatSummary;
+        rootEvent: EventWrapper<Message>;
+        threadRootMessageIndex: number;
+        onCloseThread: (id: ChatIdentifier) => void;
+    }
 
-    $: byContext = client.typersByContext;
-    $: userStore = client.userStore;
-    $: chat = normaliseChatSummary($now, chatSummary, $byContext);
+    let { chatSummary, rootEvent, threadRootMessageIndex, onCloseThread }: Props = $props();
 
     function close() {
-        dispatch("closeThread", chatSummary.id);
+        onCloseThread(chatSummary.id);
     }
 
     function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
         const someoneTyping = client.getTypingString(
             $_,
-            $userStore,
+            $allUsersStore,
             { chatId: chatSummary.id, threadRootMessageIndex },
             typing,
         );
 
-        const msgTxt = client.getContentAsText($_, rootEvent.event.content);
+        const msgTxt = rootEvent ? client.getContentAsText($_, rootEvent.event.content) : "";
         const subtext =
             someoneTyping ?? ($mobileWidth ? `${$_("thread.title")}: ${msgTxt}` : msgTxt);
         if (chatSummary.kind === "direct_chat") {
             return {
                 title: $mobileWidth
-                    ? $userStore[chatSummary.them.userId]?.username
+                    ? $allUsersStore.get(chatSummary.them.userId)?.username
                     : $_("thread.title"),
-                avatarUrl: client.userAvatarUrl($userStore[chatSummary.them.userId]),
+                avatarUrl: client.userAvatarUrl($allUsersStore.get(chatSummary.them.userId)),
                 userId: chatSummary.them.userId,
                 subtext,
                 typing: someoneTyping !== undefined,
@@ -62,7 +69,7 @@
         return {
             title: $mobileWidth ? chatSummary.name : $_("thread.title"),
             userStatus: UserStatus.None,
-            avatarUrl: client.groupAvatarUrl(chatSummary),
+            avatarUrl: client.groupAvatarUrl(chatSummary, $selectedCommunitySummaryStore),
             userId: undefined,
             subtext,
             typing: someoneTyping !== undefined,
@@ -76,9 +83,10 @@
             }
         }
     }
+    let chat = $derived(normaliseChatSummary($now, chatSummary, $byContext));
 </script>
 
-<svelte:window on:keydown={onKeyDown} />
+<svelte:window onkeydown={onKeyDown} />
 
 <SectionHeader gap flush shadow>
     <div class="avatar">
@@ -101,7 +109,7 @@
             {/if}
         </div>
     </div>
-    <div class="close" on:click={close}>
+    <div class="close" onclick={close}>
         <HoverIcon>
             {#if $mobileWidth}
                 {#if $rtlStore}

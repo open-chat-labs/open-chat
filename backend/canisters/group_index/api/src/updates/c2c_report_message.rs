@@ -1,4 +1,5 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{Message, MessageIndex, MultiUserChat, UserId};
 
@@ -9,7 +10,6 @@ pub struct Args {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message: Message,
     pub already_deleted: bool,
-    #[serde(default)]
     pub is_public: bool,
 }
 
@@ -18,4 +18,5 @@ pub enum Response {
     Success,
     AlreadyReported,
     InternalError(String),
+    Error(OCError),
 }

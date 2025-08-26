@@ -1,21 +1,12 @@
-use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{ChannelId, MessageIndex};
+use ts_export::ts_export;
+use types::{ChannelId, MessageIndex, UnitResult};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(community, unfollow_thread)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub channel_id: ChannelId,
     pub thread_root_message_index: MessageIndex,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    NotFollowing,
-    ThreadNotFound,
-    ChannelNotFound,
-    UserNotInCommunity,
-    UserNotInChannel,
-    UserSuspended,
-    CommunityFrozen,
-}
+pub type Response = UnitResult;

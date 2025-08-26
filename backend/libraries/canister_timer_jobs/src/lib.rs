@@ -9,7 +9,7 @@ use std::time::Duration;
 type TimestampMillis = u64;
 
 pub struct TimerJobs<J> {
-    pub jobs: BTreeMap<TimerId, (TimestampMillis, JobWrapper<J>)>,
+    jobs: BTreeMap<TimerId, (TimestampMillis, JobWrapper<J>)>,
 }
 
 type JobWrapper<J> = Rc<RefCell<Option<J>>>;
@@ -31,41 +31,53 @@ impl<J: Job> TimerJobs<J> {
 
 impl<J> TimerJobs<J> {
     pub fn cancel_job<F: Fn(&J) -> bool>(&mut self, filter: F) -> Option<J> {
-        #[allow(clippy::redundant_closure)]
+        #[expect(clippy::redundant_closure)]
         let timer_id = self
             .jobs
             .iter()
-            .find(|(_, (_, wrapper))| wrapper.deref().borrow().as_ref().map_or(false, |j| filter(j)))
+            .find(|(_, (_, wrapper))| wrapper.deref().borrow().as_ref().is_some_and(|j| filter(j)))
             .map(|(timer_id, _)| *timer_id)?;
 
         ic_cdk_timers::clear_timer(timer_id);
-        if let Some((_, wrapper)) = self.jobs.remove(&timer_id) {
-            if let Some(job) = wrapper.take() {
-                return Some(job);
-            }
+        if let Some((_, wrapper)) = self.jobs.remove(&timer_id)
+            && let Some(job) = wrapper.take()
+        {
+            return Some(job);
         }
         None
     }
 
     pub fn cancel_jobs<F: Fn(&J) -> bool>(&mut self, filter: F) -> Vec<J> {
-        #[allow(clippy::redundant_closure)]
+        #[expect(clippy::redundant_closure)]
         let to_remove: Vec<_> = self
             .jobs
             .iter()
-            .filter(|(_, (_, wrapper))| wrapper.deref().borrow().as_ref().map_or(true, |j| filter(j)))
+            .filter(|(_, (_, wrapper))| wrapper.deref().borrow().as_ref().is_none_or(|j| filter(j)))
             .map(|(timer_id, _)| *timer_id)
             .collect();
 
         let mut removed = Vec::new();
         for timer_id in to_remove {
             ic_cdk_timers::clear_timer(timer_id);
-            if let Some((_, wrapper)) = self.jobs.remove(&timer_id) {
-                if let Some(job) = wrapper.take() {
-                    removed.push(job);
-                }
+            if let Some((_, wrapper)) = self.jobs.remove(&timer_id)
+                && let Some(job) = wrapper.take()
+            {
+                removed.push(job);
             }
         }
         removed
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &(TimestampMillis, JobWrapper<J>)> {
+        self.jobs.values()
+    }
+
+    pub fn len(&self) -> usize {
+        self.jobs.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.jobs.is_empty()
     }
 }
 
@@ -91,7 +103,7 @@ impl<J: Clone> From<&TimerJobs<J>> for Vec<(J, TimestampMillis)> {
 
 impl<J: Job> From<Vec<(J, TimestampMillis)>> for TimerJobs<J> {
     fn from(jobs: Vec<(J, TimestampMillis)>) -> Self {
-        let now = canister_time::timestamp_millis();
+        let now = canister_time::now_millis();
 
         let mut timer_jobs = TimerJobs::default();
         for (job, ts) in jobs {
@@ -120,7 +132,7 @@ impl<'de, J: Job + Deserialize<'de>> Deserialize<'de> for TimerJobs<J> {
     {
         let vec: Vec<(J, TimestampMillis)> = Vec::deserialize(deserializer)?;
 
-        let now = canister_time::timestamp_millis();
+        let now = canister_time::now_millis();
 
         let mut timer_jobs = TimerJobs::default();
         for (job, due) in vec {

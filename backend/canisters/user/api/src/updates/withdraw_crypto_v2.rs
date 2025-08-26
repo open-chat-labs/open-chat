@@ -1,19 +1,19 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
-use types::{CompletedCryptoTransaction, FailedCryptoTransaction, Milliseconds, PendingCryptoTransaction};
+use ts_export::ts_export;
+use types::{CompletedCryptoTransaction, PendingCryptoTransaction, PinNumberWrapper};
 
+#[ts_export(user, withdraw_crypto)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub withdrawal: PendingCryptoTransaction,
-    pub pin: Option<String>,
+    pub pin: Option<PinNumberWrapper>,
 }
 
+#[ts_export(user, withdraw_crypto)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success(CompletedCryptoTransaction),
-    TransactionFailed(FailedCryptoTransaction),
-    CurrencyNotSupported,
-    PinRequired,
-    PinIncorrect(Milliseconds),
-    TooManyFailedPinAttempts(Milliseconds),
+    Success(Box<CompletedCryptoTransaction>),
+    Error(OCError),
 }

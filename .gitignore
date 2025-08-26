@@ -1,9 +1,11 @@
 .dfx/
+.idea/
 .vscode/
 target/
 dist/
 node_modules/
 wasms/
+local/
 
 .DS_Store
 **/*.env
@@ -14,6 +16,13 @@ pocket-ic*
 msg.json
 notes.md
 notification.did
+pocket_ic_state
+proposal.candid
+metrics.md
 release_changelog.md
 summary.md
 temp.did
+tsBindings
+website_release.md
+frontend/app/src/stores/timeline.ts
+/Makefile

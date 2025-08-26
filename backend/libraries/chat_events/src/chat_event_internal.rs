@@ -1,17 +1,17 @@
-use crate::{incr, MessageContentInternal};
+use crate::MessageContentInternal;
+use crate::metrics::{ChatMetricsInternal, MetricKey};
 use serde::{Deserialize, Serialize};
-use std::cmp::max;
-use std::collections::hash_map::Entry::{Occupied, Vacant};
-use std::collections::{HashMap, HashSet};
-use std::ops::{Deref, DerefMut};
+use std::collections::BTreeSet;
+use std::ops::DerefMut;
 use types::{
-    is_default, is_empty_slice, AvatarChanged, ChannelId, Chat, ChatId, ChatMetrics, CommunityId, Cryptocurrency, DeletedBy,
-    DirectChatCreated, EventIndex, EventWrapperInternal, EventsTimeToLiveUpdated, GroupCreated, GroupDescriptionChanged,
-    GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged,
-    GroupUnfrozen, GroupVisibilityChanged, MemberJoined, MemberLeft, MembersAdded, MembersAddedToDefaultChannel,
-    MembersRemoved, Message, MessageContent, MessageId, MessageIndex, MessagePinned, MessageUnpinned, MultiUserChat,
-    PermissionsChanged, PushIfNotContains, Reaction, ReplyContext, RoleChanged, ThreadSummary, TimestampMillis, Timestamped,
-    Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked,
+    AccessGateConfigInternal, AvatarChanged, BotAdded, BotMessageContext, BotRemoved, BotUpdated, ChannelId, Chat, ChatEvent,
+    ChatEventCategory, ChatEventType, ChatId, CommunityId, DeletedBy, DirectChatCreated, EventIndex, EventWrapperInternal,
+    EventsTimeToLiveUpdated, ExternalUrlUpdated, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated,
+    GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged,
+    MemberJoinedInternal, MemberLeft, MembersAdded, MembersAddedToDefaultChannel, MembersRemoved, Message, MessageContent,
+    MessageContentType, MessageId, MessageIndex, MessagePinned, MessageUnpinned, MultiUserChat, PermissionsChanged,
+    PushIfNotContains, Reaction, ReplyContext, RoleChanged, SenderContext, ThreadSummary, TimestampMillis, Tips, UserId,
+    UsersBlocked, UsersInvited, UsersUnblocked, is_default,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -35,7 +35,7 @@ pub enum ChatEventInternal {
     #[serde(rename = "mr")]
     ParticipantsRemoved(Box<MembersRemoved>),
     #[serde(rename = "mj")]
-    ParticipantJoined(Box<MemberJoined>),
+    ParticipantJoined(Box<MemberJoinedInternal>),
     #[serde(rename = "ml")]
     ParticipantLeft(Box<MemberLeft>),
     #[serde(rename = "rc")]
@@ -61,13 +61,26 @@ pub enum ChatEventInternal {
     #[serde(rename = "ttl")]
     EventsTimeToLiveUpdated(Box<EventsTimeToLiveUpdated>),
     #[serde(rename = "gu")]
-    GroupGateUpdated(Box<GroupGateUpdated>),
+    GroupGateUpdated(Box<GroupGateUpdatedInternal>),
     #[serde(rename = "ui")]
     UsersInvited(Box<UsersInvited>),
     #[serde(rename = "adc")]
     MembersAddedToPublicChannel(Box<MembersAddedToPublicChannelInternal>),
+    #[serde(rename = "xu")]
+    ExternalUrlUpdated(Box<ExternalUrlUpdated>),
+    #[serde(rename = "ba")]
+    BotAdded(Box<BotAdded>),
+    #[serde(rename = "br")]
+    BotRemoved(Box<BotRemoved>),
+    #[serde(rename = "bu")]
+    BotUpdated(Box<BotUpdated>),
     #[serde(rename = "e")]
     Empty,
+    // This should never happen!
+    // But if it ever does, it's better to return the remaining events
+    // than to endlessly fail attempting to load the broken event(s)
+    #[serde(rename = "fd")]
+    FailedToDeserialize,
 }
 
 impl ChatEventInternal {
@@ -80,7 +93,7 @@ impl ChatEventInternal {
         )
     }
 
-    pub fn is_valid_for_group_chat(&self) -> bool {
+    pub fn is_valid_for_group(&self) -> bool {
         matches!(
             self,
             ChatEventInternal::Message(_)
@@ -107,6 +120,10 @@ impl ChatEventInternal {
                 | ChatEventInternal::GroupGateUpdated(_)
                 | ChatEventInternal::UsersInvited(_)
                 | ChatEventInternal::MembersAddedToPublicChannel(_)
+                | ChatEventInternal::ExternalUrlUpdated(_)
+                | ChatEventInternal::BotAdded(_)
+                | ChatEventInternal::BotRemoved(_)
+                | ChatEventInternal::BotUpdated(_)
         )
     }
 
@@ -118,43 +135,135 @@ impl ChatEventInternal {
         matches!(self, ChatEventInternal::Message(_))
     }
 
-    pub fn as_message(&self) -> Option<&MessageInternal> {
-        if let ChatEventInternal::Message(m) = self {
-            Some(m.deref())
-        } else {
-            None
-        }
-    }
-
     pub fn as_message_mut(&mut self) -> Option<&mut MessageInternal> {
-        if let ChatEventInternal::Message(m) = self {
-            Some(m.deref_mut())
-        } else {
-            None
+        if let ChatEventInternal::Message(m) = self { Some(m.deref_mut()) } else { None }
+    }
+
+    pub fn into_message(self) -> Option<MessageInternal> {
+        if let ChatEventInternal::Message(m) = self { Some(*m) } else { None }
+    }
+
+    pub fn chat_event(self, my_user_id: Option<UserId>) -> ChatEvent {
+        match self {
+            ChatEventInternal::DirectChatCreated(d) => ChatEvent::DirectChatCreated(d),
+            ChatEventInternal::Message(m) => ChatEvent::Message(Box::new(m.hydrate(my_user_id))),
+            ChatEventInternal::GroupChatCreated(g) => ChatEvent::GroupChatCreated(*g),
+            ChatEventInternal::GroupNameChanged(g) => ChatEvent::GroupNameChanged(*g),
+            ChatEventInternal::GroupDescriptionChanged(g) => ChatEvent::GroupDescriptionChanged(*g),
+            ChatEventInternal::GroupRulesChanged(g) => ChatEvent::GroupRulesChanged(*g),
+            ChatEventInternal::AvatarChanged(g) => ChatEvent::AvatarChanged(*g),
+            ChatEventInternal::ParticipantsAdded(p) => ChatEvent::ParticipantsAdded(*p),
+            ChatEventInternal::ParticipantsRemoved(p) => ChatEvent::ParticipantsRemoved(*p),
+            ChatEventInternal::ParticipantJoined(p) => ChatEvent::ParticipantJoined((*p).into()),
+            ChatEventInternal::ParticipantLeft(p) => ChatEvent::ParticipantLeft(*p),
+            ChatEventInternal::RoleChanged(r) => ChatEvent::RoleChanged(*r),
+            ChatEventInternal::UsersBlocked(u) => ChatEvent::UsersBlocked(*u),
+            ChatEventInternal::UsersUnblocked(u) => ChatEvent::UsersUnblocked(*u),
+            ChatEventInternal::MessagePinned(p) => ChatEvent::MessagePinned(*p),
+            ChatEventInternal::PermissionsChanged(p) => ChatEvent::PermissionsChanged(*p),
+            ChatEventInternal::MessageUnpinned(u) => ChatEvent::MessageUnpinned(*u),
+            ChatEventInternal::GroupVisibilityChanged(g) => ChatEvent::GroupVisibilityChanged(*g),
+            ChatEventInternal::GroupInviteCodeChanged(g) => ChatEvent::GroupInviteCodeChanged(*g),
+            ChatEventInternal::ChatFrozen(f) => ChatEvent::ChatFrozen(*f),
+            ChatEventInternal::ChatUnfrozen(u) => ChatEvent::ChatUnfrozen(*u),
+            ChatEventInternal::EventsTimeToLiveUpdated(u) => ChatEvent::EventsTimeToLiveUpdated(*u),
+            ChatEventInternal::GroupGateUpdated(g) => ChatEvent::GroupGateUpdated((*g).into()),
+            ChatEventInternal::UsersInvited(e) => ChatEvent::UsersInvited(*e),
+            ChatEventInternal::MembersAddedToPublicChannel(m) => ChatEvent::MembersAddedToDefaultChannel(m.as_ref().into()),
+            ChatEventInternal::ExternalUrlUpdated(u) => ChatEvent::ExternalUrlUpdated(*u),
+            ChatEventInternal::Empty => ChatEvent::Empty,
+            ChatEventInternal::FailedToDeserialize => ChatEvent::FailedToDeserialize,
+            ChatEventInternal::BotAdded(e) => ChatEvent::BotAdded(e),
+            ChatEventInternal::BotRemoved(e) => ChatEvent::BotRemoved(e),
+            ChatEventInternal::BotUpdated(e) => ChatEvent::BotUpdated(e),
+        }
+    }
+
+    pub fn event_category(&self) -> Option<ChatEventCategory> {
+        match self {
+            ChatEventInternal::Message(_) => Some(ChatEventCategory::Message),
+            ChatEventInternal::GroupChatCreated(_)
+            | ChatEventInternal::DirectChatCreated(_)
+            | ChatEventInternal::GroupNameChanged(_)
+            | ChatEventInternal::GroupDescriptionChanged(_)
+            | ChatEventInternal::GroupRulesChanged(_)
+            | ChatEventInternal::AvatarChanged(_)
+            | ChatEventInternal::MessagePinned(_)
+            | ChatEventInternal::MessageUnpinned(_)
+            | ChatEventInternal::PermissionsChanged(_)
+            | ChatEventInternal::GroupVisibilityChanged(_)
+            | ChatEventInternal::GroupInviteCodeChanged(_)
+            | ChatEventInternal::ChatFrozen(_)
+            | ChatEventInternal::ChatUnfrozen(_)
+            | ChatEventInternal::EventsTimeToLiveUpdated(_)
+            | ChatEventInternal::GroupGateUpdated(_)
+            | ChatEventInternal::ExternalUrlUpdated(_) => Some(ChatEventCategory::Details),
+            ChatEventInternal::ParticipantsAdded(_)
+            | ChatEventInternal::ParticipantsRemoved(_)
+            | ChatEventInternal::ParticipantJoined(_)
+            | ChatEventInternal::ParticipantLeft(_)
+            | ChatEventInternal::RoleChanged(_)
+            | ChatEventInternal::UsersBlocked(_)
+            | ChatEventInternal::UsersUnblocked(_)
+            | ChatEventInternal::UsersInvited(_)
+            | ChatEventInternal::MembersAddedToPublicChannel(_)
+            | ChatEventInternal::BotAdded(_)
+            | ChatEventInternal::BotRemoved(_)
+            | ChatEventInternal::BotUpdated(_) => Some(ChatEventCategory::Membership),
+            ChatEventInternal::Empty | ChatEventInternal::FailedToDeserialize => None,
+        }
+    }
+
+    pub fn event_type(&self) -> Option<ChatEventType> {
+        match self {
+            ChatEventInternal::Message(_) => Some(ChatEventType::Message),
+            ChatEventInternal::GroupChatCreated(_) => Some(ChatEventType::Created),
+            ChatEventInternal::DirectChatCreated(_) => Some(ChatEventType::Created),
+            ChatEventInternal::GroupNameChanged(_) => Some(ChatEventType::NameChanged),
+            ChatEventInternal::GroupDescriptionChanged(_) => Some(ChatEventType::DescriptionChanged),
+            ChatEventInternal::GroupRulesChanged(_) => Some(ChatEventType::RulesChanged),
+            ChatEventInternal::AvatarChanged(_) => Some(ChatEventType::AvatarChanged),
+            ChatEventInternal::ParticipantsAdded(_) => Some(ChatEventType::MembersJoined),
+            ChatEventInternal::ParticipantsRemoved(_) => Some(ChatEventType::MembersLeft),
+            ChatEventInternal::ParticipantJoined(_) => Some(ChatEventType::MembersJoined),
+            ChatEventInternal::ParticipantLeft(_) => Some(ChatEventType::MembersLeft),
+            ChatEventInternal::RoleChanged(_) => Some(ChatEventType::RoleChanged),
+            ChatEventInternal::UsersBlocked(_) => Some(ChatEventType::UsersBlocked),
+            ChatEventInternal::UsersUnblocked(_) => Some(ChatEventType::UsersUnblocked),
+            ChatEventInternal::MessagePinned(_) => Some(ChatEventType::MessagePinned),
+            ChatEventInternal::MessageUnpinned(_) => Some(ChatEventType::MessageUnpinned),
+            ChatEventInternal::PermissionsChanged(_) => Some(ChatEventType::PermissionsChanged),
+            ChatEventInternal::GroupVisibilityChanged(_) => Some(ChatEventType::VisibilityChanged),
+            ChatEventInternal::GroupInviteCodeChanged(_) => Some(ChatEventType::InviteCodeChanged),
+            ChatEventInternal::ChatFrozen(_) => Some(ChatEventType::Frozen),
+            ChatEventInternal::ChatUnfrozen(_) => Some(ChatEventType::Unfrozen),
+            ChatEventInternal::EventsTimeToLiveUpdated(_) => Some(ChatEventType::DisappearingMessagesUpdated),
+            ChatEventInternal::GroupGateUpdated(_) => Some(ChatEventType::GateUpdated),
+            ChatEventInternal::UsersInvited(_) => Some(ChatEventType::UsersInvited),
+            ChatEventInternal::MembersAddedToPublicChannel(_) => Some(ChatEventType::MembersJoined),
+            ChatEventInternal::ExternalUrlUpdated(_) => Some(ChatEventType::ExternalUrlUpdated),
+            ChatEventInternal::BotAdded(_) => Some(ChatEventType::BotAdded),
+            ChatEventInternal::BotRemoved(_) => Some(ChatEventType::BotRemoved),
+            ChatEventInternal::BotUpdated(_) => Some(ChatEventType::BotUpdated),
+            ChatEventInternal::FailedToDeserialize => None,
+            ChatEventInternal::Empty => None,
         }
     }
 }
 
-pub enum EventOrExpiredRangeInternal<'a> {
-    Event(&'a EventWrapperInternal<ChatEventInternal>),
+pub enum EventOrExpiredRangeInternal {
+    Event(EventWrapperInternal<ChatEventInternal>),
     ExpiredEventRange(EventIndex, EventIndex),
+    Unauthorized(EventIndex),
 }
 
-impl<'a> EventOrExpiredRangeInternal<'a> {
-    pub fn as_event(self) -> Option<&'a EventWrapperInternal<ChatEventInternal>> {
-        if let EventOrExpiredRangeInternal::Event(event) = self {
-            Some(event)
-        } else {
-            None
-        }
+impl EventOrExpiredRangeInternal {
+    pub fn into_event(self) -> Option<EventWrapperInternal<ChatEventInternal>> {
+        if let EventOrExpiredRangeInternal::Event(event) = self { Some(event) } else { None }
     }
 
     pub fn is_message(&self) -> bool {
-        if let EventOrExpiredRangeInternal::Event(event) = self {
-            event.event.is_message()
-        } else {
-            false
-        }
+        if let EventOrExpiredRangeInternal::Event(event) = self { event.event.is_message() } else { false }
     }
 }
 
@@ -168,11 +277,13 @@ pub struct MessageInternal {
     pub sender: UserId,
     #[serde(rename = "c")]
     pub content: MessageContentInternal,
+    #[serde(rename = "sc", default, skip_serializing_if = "Option::is_none")]
+    pub sender_context: Option<SenderContext>,
     #[serde(rename = "p", default, skip_serializing_if = "Option::is_none")]
     pub replies_to: Option<ReplyContextInternal>,
-    #[serde(rename = "r", default, skip_serializing_if = "is_empty_slice")]
-    pub reactions: Vec<(Reaction, HashSet<UserId>)>,
-    #[serde(rename = "ti", default, skip_serializing_if = "is_empty_slice")]
+    #[serde(rename = "r", default, skip_serializing_if = "Vec::is_empty")]
+    pub reactions: Vec<(Reaction, BTreeSet<UserId>)>,
+    #[serde(rename = "ti", default, skip_serializing_if = "Vec::is_empty")]
     pub tips: Tips,
     #[serde(rename = "e", default, skip_serializing_if = "Option::is_none")]
     pub last_edited: Option<TimestampMillis>,
@@ -182,19 +293,22 @@ pub struct MessageInternal {
     pub thread_summary: Option<ThreadSummaryInternal>,
     #[serde(rename = "f", default, skip_serializing_if = "is_default")]
     pub forwarded: bool,
+    #[serde(rename = "b", default, skip_serializing_if = "is_default")]
+    pub block_level_markdown: bool,
 }
 
 impl MessageInternal {
-    pub fn hydrate(&self, my_user_id: Option<UserId>) -> Message {
+    pub fn hydrate(self, my_user_id: Option<UserId>) -> Message {
         Message {
             message_index: self.message_index,
             message_id: self.message_id,
             sender: self.sender,
-            content: if let Some(deleted_by) = self.deleted_by.clone() {
+            content: if let Some(deleted_by) = self.deleted_by {
                 MessageContent::Deleted(deleted_by.hydrate())
             } else {
                 self.content.hydrate(my_user_id)
             },
+            sender_context: self.sender_context,
             replies_to: self.replies_to.as_ref().map(|r| r.hydrate()),
             reactions: self
                 .reactions
@@ -205,77 +319,73 @@ impl MessageInternal {
             edited: self.last_edited.is_some(),
             forwarded: self.forwarded,
             thread_summary: self.thread_summary.as_ref().map(|t| t.hydrate(my_user_id)),
+            block_level_markdown: self.block_level_markdown,
         }
     }
 
     pub fn add_to_metrics(&self, metrics: &mut ChatMetricsInternal) {
         if self.replies_to.is_some() {
-            incr(&mut metrics.replies);
+            metrics.incr(MetricKey::Replies, 1);
         }
 
-        match &self.content {
-            MessageContentInternal::Text(_) => {
-                incr(&mut metrics.text_messages);
+        match &self.content.content_type() {
+            MessageContentType::Text => {
+                metrics.incr(MetricKey::TextMessages, 1);
             }
-            MessageContentInternal::Image(_) => {
-                incr(&mut metrics.image_messages);
+            MessageContentType::Image => {
+                metrics.incr(MetricKey::ImageMessages, 1);
             }
-            MessageContentInternal::Video(_) => {
-                incr(&mut metrics.video_messages);
+            MessageContentType::Video => {
+                metrics.incr(MetricKey::VideoMessages, 1);
             }
-            MessageContentInternal::Audio(_) => {
-                incr(&mut metrics.audio_messages);
+            MessageContentType::Audio => {
+                metrics.incr(MetricKey::AudioMessages, 1);
             }
-            MessageContentInternal::File(_) => {
-                incr(&mut metrics.file_messages);
+            MessageContentType::File => {
+                metrics.incr(MetricKey::FileMessages, 1);
             }
-            MessageContentInternal::Poll(_) => {
-                incr(&mut metrics.polls);
+            MessageContentType::Poll => {
+                metrics.incr(MetricKey::Polls, 1);
             }
-            MessageContentInternal::Crypto(c) => match c.transfer.token() {
-                Cryptocurrency::InternetComputer => {
-                    incr(&mut metrics.icp_messages);
-                }
-                Cryptocurrency::SNS1 => {
-                    incr(&mut metrics.sns1_messages);
-                }
-                Cryptocurrency::CKBTC => {
-                    incr(&mut metrics.ckbtc_messages);
-                }
-                Cryptocurrency::CHAT => {
-                    incr(&mut metrics.chat_messages);
-                }
-                Cryptocurrency::KINIC => {
-                    incr(&mut metrics.kinic_messages);
-                }
-                Cryptocurrency::Other(_) => {
-                    incr(&mut metrics.other_crypto_messages);
-                }
-            },
-            MessageContentInternal::Deleted(_) => {}
-            MessageContentInternal::Giphy(_) => {
-                incr(&mut metrics.giphy_messages);
+            MessageContentType::Crypto => {
+                metrics.incr(MetricKey::CryptoMessages, 1);
             }
-            MessageContentInternal::GovernanceProposal(_) => {
-                incr(&mut metrics.proposals);
+            MessageContentType::Deleted => {}
+            MessageContentType::Giphy => {
+                metrics.incr(MetricKey::GiphyMessages, 1);
             }
-            MessageContentInternal::Prize(_) => {
-                incr(&mut metrics.prize_messages);
+            MessageContentType::GovernanceProposal => {
+                metrics.incr(MetricKey::Proposals, 1);
             }
-            MessageContentInternal::PrizeWinner(_) => {
-                incr(&mut metrics.prize_winner_messages);
+            MessageContentType::Prize => {
+                metrics.incr(MetricKey::PrizeMessages, 1);
             }
-            MessageContentInternal::MessageReminderCreated(_) => {}
-            MessageContentInternal::MessageReminder(_) => {
-                incr(&mut metrics.message_reminders);
+            MessageContentType::PrizeWinner => {
+                metrics.incr(MetricKey::PrizeWinnerMessages, 1);
             }
-            MessageContentInternal::ReportedMessage(_) => {}
-            MessageContentInternal::P2PSwap(_) => incr(&mut metrics.p2p_swaps),
-            MessageContentInternal::VideoCall(_) => incr(&mut metrics.video_calls),
-            MessageContentInternal::Custom(_) => {
-                incr(&mut metrics.custom_type_messages);
+            MessageContentType::MessageReminderCreated => {}
+            MessageContentType::MessageReminder => {
+                metrics.incr(MetricKey::MessageReminders, 1);
+            }
+            MessageContentType::ReportedMessage => {}
+            MessageContentType::P2PSwap => {
+                metrics.incr(MetricKey::P2pSwaps, 1);
+            }
+            MessageContentType::VideoCall => {
+                metrics.incr(MetricKey::VideoCalls, 1);
+            }
+            MessageContentType::Custom(_) => {
+                metrics.incr(MetricKey::CustomTypeMessages, 1);
             }
         }
+    }
+
+    pub fn bot_context_mut(&mut self) -> Option<&mut BotMessageContext> {
+        if let Some(SenderContext::Bot(bc)) = &mut self.sender_context { Some(bc) } else { None }
+    }
+
+    pub fn bot_context(&self) -> Option<&BotMessageContext> {
+        if let Some(SenderContext::Bot(bc)) = &self.sender_context { Some(bc) } else { None }
     }
 }
 
@@ -311,6 +421,21 @@ pub struct MembersAddedToPublicChannelInternal {
     pub user_ids: Vec<UserId>,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct GroupGateUpdatedInternal {
+    pub updated_by: UserId,
+    pub new_gate_config: Option<AccessGateConfigInternal>,
+}
+
+impl From<GroupGateUpdatedInternal> for GroupGateUpdated {
+    fn from(value: GroupGateUpdatedInternal) -> Self {
+        GroupGateUpdated {
+            updated_by: value.updated_by,
+            new_gate_config: value.new_gate_config.map(|gc| gc.into()),
+        }
+    }
+}
+
 impl From<&MembersAddedToPublicChannelInternal> for MembersAddedToDefaultChannel {
     fn from(value: &MembersAddedToPublicChannelInternal) -> MembersAddedToDefaultChannel {
         MembersAddedToDefaultChannel {
@@ -321,10 +446,10 @@ impl From<&MembersAddedToPublicChannelInternal> for MembersAddedToDefaultChannel
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct ThreadSummaryInternal {
-    #[serde(rename = "i")]
-    pub participant_ids: Vec<UserId>,
-    #[serde(default, rename = "f")]
-    pub follower_ids: HashMap<UserId, Timestamped<bool>>,
+    #[serde(rename = "p")]
+    pub participants: Vec<UserId>,
+    #[serde(rename = "f")]
+    pub followers: BTreeSet<UserId>,
     #[serde(rename = "r")]
     pub reply_count: u32,
     #[serde(rename = "e")]
@@ -336,8 +461,8 @@ pub struct ThreadSummaryInternal {
 impl ThreadSummaryInternal {
     pub fn hydrate(&self, my_user_id: Option<UserId>) -> ThreadSummary {
         ThreadSummary {
-            participant_ids: self.participant_ids.clone(),
-            followed_by_me: my_user_id.map_or(false, |u| self.follower_ids.get(&u).map_or(false, |t| t.value)),
+            participant_ids: self.participants.clone(),
+            followed_by_me: my_user_id.is_some_and(|u| self.followers.contains(&u)),
             reply_count: self.reply_count,
             latest_event_index: self.latest_event_index,
             latest_event_timestamp: self.latest_event_timestamp,
@@ -348,60 +473,25 @@ impl ThreadSummaryInternal {
         &mut self,
         sender: UserId,
         mentioned_users: &[UserId],
+        root_message_sender: UserId,
         latest_event_index: EventIndex,
         now: TimestampMillis,
     ) {
         self.latest_event_index = latest_event_index;
         self.latest_event_timestamp = now;
         self.reply_count += 1;
-        self.participant_ids.push_if_not_contains(sender);
-        self.follower_ids.remove(&sender);
+        self.participants.push_if_not_contains(sender);
+        self.followers.insert(sender);
 
         // If a user is mentioned in a thread they automatically become a follower
         for user_id in mentioned_users {
-            if !self.participant_ids.contains(user_id) {
-                self.set_follow(*user_id, now, true);
-            }
-        }
-    }
-
-    pub fn set_follow(&mut self, user_id: UserId, now: TimestampMillis, follow: bool) -> bool {
-        if self.participant_ids.contains(&user_id) {
-            return false;
+            self.followers.insert(*user_id);
         }
 
-        let new_entry = Timestamped::new(follow, now);
-        match self.follower_ids.entry(user_id) {
-            Occupied(mut e) => {
-                if e.get().value == follow {
-                    false
-                } else {
-                    e.insert(new_entry);
-                    true
-                }
-            }
-            Vacant(e) => {
-                e.insert(new_entry);
-                true
-            }
+        let is_first_message = self.reply_count == 1;
+        if is_first_message {
+            self.followers.insert(root_message_sender);
         }
-    }
-
-    pub fn participants_and_followers(&self, include_unfollowed: bool) -> Vec<UserId> {
-        self.participant_ids
-            .iter()
-            .copied()
-            .chain(
-                self.follower_ids
-                    .iter()
-                    .filter(|(_, t)| include_unfollowed || t.value)
-                    .map(|(user_id, _)| *user_id),
-            )
-            .collect()
-    }
-
-    pub fn get_follower(&self, user_id: UserId) -> Option<Timestamped<bool>> {
-        self.follower_ids.get(&user_id).cloned()
     }
 }
 
@@ -479,138 +569,20 @@ impl From<&ReplyContext> for ReplyContextInternal {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
-pub struct ChatMetricsInternal {
-    #[serde(rename = "t", default, skip_serializing_if = "is_default")]
-    pub text_messages: u64,
-    #[serde(rename = "i", default, skip_serializing_if = "is_default")]
-    pub image_messages: u64,
-    #[serde(rename = "v", default, skip_serializing_if = "is_default")]
-    pub video_messages: u64,
-    #[serde(rename = "a", default, skip_serializing_if = "is_default")]
-    pub audio_messages: u64,
-    #[serde(rename = "f", default, skip_serializing_if = "is_default")]
-    pub file_messages: u64,
-    #[serde(rename = "p", default, skip_serializing_if = "is_default")]
-    pub polls: u64,
-    #[serde(rename = "pv", default, skip_serializing_if = "is_default")]
-    pub poll_votes: u64,
-    #[serde(rename = "icp", default, skip_serializing_if = "is_default")]
-    pub icp_messages: u64,
-    #[serde(rename = "sns1", default, skip_serializing_if = "is_default")]
-    pub sns1_messages: u64,
-    #[serde(rename = "ckbtc", default, skip_serializing_if = "is_default")]
-    pub ckbtc_messages: u64,
-    #[serde(rename = "chat", default, skip_serializing_if = "is_default")]
-    pub chat_messages: u64,
-    #[serde(rename = "kinic", default, skip_serializing_if = "is_default")]
-    pub kinic_messages: u64,
-    #[serde(rename = "o", default, skip_serializing_if = "is_default")]
-    pub other_crypto_messages: u64,
-    #[serde(rename = "d", default, skip_serializing_if = "is_default")]
-    pub deleted_messages: u64,
-    #[serde(rename = "g", default, skip_serializing_if = "is_default")]
-    pub giphy_messages: u64,
-    #[serde(rename = "pz", default, skip_serializing_if = "is_default")]
-    pub prize_messages: u64,
-    #[serde(rename = "pzw", default, skip_serializing_if = "is_default")]
-    pub prize_winner_messages: u64,
-    #[serde(rename = "rp", default, skip_serializing_if = "is_default")]
-    pub replies: u64,
-    #[serde(rename = "e", default, skip_serializing_if = "is_default")]
-    pub edits: u64,
-    #[serde(rename = "rt", default, skip_serializing_if = "is_default")]
-    pub reactions: u64,
-    #[serde(rename = "ti", default, skip_serializing_if = "is_default")]
-    pub tips: u64,
-    #[serde(rename = "pr", default, skip_serializing_if = "is_default")]
-    pub proposals: u64,
-    #[serde(rename = "rpt", default, skip_serializing_if = "is_default")]
-    pub reported_messages: u64,
-    #[serde(rename = "mr", default, skip_serializing_if = "is_default")]
-    pub message_reminders: u64,
-    #[serde(rename = "p2p", default, skip_serializing_if = "is_default")]
-    pub p2p_swaps: u64,
-    #[serde(rename = "vc", default, skip_serializing_if = "is_default")]
-    pub video_calls: u64,
-    #[serde(rename = "cu", default, skip_serializing_if = "is_default")]
-    pub custom_type_messages: u64,
-    #[serde(rename = "la")]
-    pub last_active: TimestampMillis,
-}
-
-impl ChatMetricsInternal {
-    pub fn merge(&mut self, other: &ChatMetricsInternal) {
-        self.text_messages += other.text_messages;
-        self.image_messages += other.image_messages;
-        self.video_messages += other.video_messages;
-        self.audio_messages += other.audio_messages;
-        self.file_messages += other.file_messages;
-        self.polls += other.polls;
-        self.poll_votes += other.poll_votes;
-        self.icp_messages += other.icp_messages;
-        self.sns1_messages += other.sns1_messages;
-        self.ckbtc_messages += other.ckbtc_messages;
-        self.chat_messages += other.chat_messages;
-        self.kinic_messages += other.kinic_messages;
-        self.deleted_messages += other.deleted_messages;
-        self.giphy_messages += other.giphy_messages;
-        self.prize_messages += other.prize_messages;
-        self.prize_winner_messages += other.prize_winner_messages;
-        self.replies += other.replies;
-        self.edits += other.edits;
-        self.reactions += other.reactions;
-        self.proposals += other.proposals;
-        self.last_active = max(self.last_active, other.last_active);
-    }
-
-    pub fn hydrate(&self) -> ChatMetrics {
-        ChatMetrics {
-            text_messages: self.text_messages,
-            image_messages: self.image_messages,
-            video_messages: self.video_messages,
-            audio_messages: self.audio_messages,
-            file_messages: self.file_messages,
-            polls: self.polls,
-            poll_votes: self.poll_votes,
-            icp_messages: self.icp_messages,
-            sns1_messages: self.sns1_messages,
-            ckbtc_messages: self.ckbtc_messages,
-            chat_messages: self.chat_messages,
-            kinic_messages: self.kinic_messages,
-            deleted_messages: self.deleted_messages,
-            giphy_messages: self.giphy_messages,
-            prize_messages: self.prize_messages,
-            prize_winner_messages: self.prize_winner_messages,
-            replies: self.replies,
-            edits: self.edits,
-            reactions: self.reactions,
-            proposals: self.proposals,
-            reported_messages: self.reported_messages,
-            message_reminders: self.message_reminders,
-            custom_type_messages: self.custom_type_messages,
-            last_active: self.last_active,
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use crate::{
-        ChatEventInternal, ChatInternal, DeletedByInternal, MessageContentInternal, MessageInternal, ReplyContextInternal,
-        TextContentInternal, ThreadSummaryInternal,
-    };
+    use crate::{ChatEventInternal, MessageContentInternal, MessageInternal, TextContentInternal};
     use candid::Principal;
-    use std::collections::{HashMap, HashSet};
-    use types::{EventWrapperInternal, Reaction, Tips};
+    use types::{EventWrapperInternal, Tips};
 
     #[test]
     fn serialize_with_max_defaults() {
         let message = MessageInternal {
             message_index: 1.into(),
-            message_id: 1.into(),
+            message_id: 1u64.into(),
             sender: Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap().into(),
             content: MessageContentInternal::Text(TextContentInternal { text: "123".to_string() }),
+            sender_context: None,
             replies_to: None,
             reactions: Vec::new(),
             tips: Tips::default(),
@@ -618,6 +590,7 @@ mod tests {
             deleted_by: None,
             thread_summary: None,
             forwarded: false,
+            block_level_markdown: false,
         };
 
         let message_bytes_len = msgpack::serialize_then_unwrap(&message).len();
@@ -625,7 +598,6 @@ mod tests {
         let event = EventWrapperInternal {
             index: 1.into(),
             timestamp: 1,
-            correlation_id: 0,
             expires_at: None,
             event: ChatEventInternal::Message(Box::new(message)),
         };
@@ -633,58 +605,8 @@ mod tests {
         let event_bytes = msgpack::serialize_then_unwrap(&event);
         let event_bytes_len = event_bytes.len();
 
-        assert_eq!(message_bytes_len, 50);
+        assert_eq!(message_bytes_len, 33);
         assert_eq!(event_bytes_len, message_bytes_len + 12);
-
-        let _deserialized: EventWrapperInternal<ChatEventInternal> = msgpack::deserialize_then_unwrap(&event_bytes);
-    }
-
-    #[test]
-    fn serialize_with_no_defaults() {
-        let principal = Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap();
-        let mut tips = Tips::default();
-        tips.push(principal, principal.into(), 1);
-        let message = MessageInternal {
-            message_index: 1.into(),
-            message_id: 1.into(),
-            sender: principal.into(),
-            content: MessageContentInternal::Text(TextContentInternal { text: "123".to_string() }),
-            replies_to: Some(ReplyContextInternal {
-                chat_if_other: Some((ChatInternal::Group(principal.into()), Some(1.into()))),
-                event_index: 1.into(),
-            }),
-            reactions: vec![(Reaction::new("1".to_string()), HashSet::from([principal.into()]))],
-            tips,
-            last_edited: Some(1),
-            deleted_by: Some(DeletedByInternal {
-                deleted_by: principal.into(),
-                timestamp: 1,
-            }),
-            thread_summary: Some(ThreadSummaryInternal {
-                participant_ids: vec![principal.into()],
-                follower_ids: HashMap::new(),
-                reply_count: 1,
-                latest_event_index: 1.into(),
-                latest_event_timestamp: 1,
-            }),
-            forwarded: true,
-        };
-
-        let message_bytes_len = msgpack::serialize_then_unwrap(&message).len();
-
-        let event = EventWrapperInternal {
-            index: 1.into(),
-            timestamp: 1,
-            correlation_id: 1,
-            expires_at: Some(1),
-            event: ChatEventInternal::Message(Box::new(message)),
-        };
-
-        let event_bytes = msgpack::serialize_then_unwrap(&event);
-        let event_bytes_len = event_bytes.len();
-
-        assert_eq!(message_bytes_len, 199);
-        assert_eq!(event_bytes_len, message_bytes_len + 18);
 
         let _deserialized: EventWrapperInternal<ChatEventInternal> = msgpack::deserialize_then_unwrap(&event_bytes);
     }

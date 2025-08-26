@@ -1,26 +1,15 @@
 <script lang="ts">
-    import { getContext } from "svelte";
-    import type { OpenChat } from "openchat-client";
-    import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
+    import { currentUserIdStore, iconSize } from "openchat-client";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
-    import QRCode from "../../QRCode.svelte";
-    import Link from "../../Link.svelte";
-    import { iconSize } from "../../../stores/iconSize";
-    import { toastStore } from "../../../stores/toast";
-    import { AvatarSize } from "openchat-client";
-    import Avatar from "../../Avatar.svelte";
-    import LinkButton from "../../LinkButton.svelte";
-    import { canShare, shareLink } from "../../../utils/share";
-    import type { ProfileLinkClickedEvent } from "../../web-components/profileLink";
-    import Diamond from "../../icons/Diamond.svelte";
+    import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import { toastStore } from "../../../stores/toast";
+    import { canShare, shareLink } from "../../../utils/share";
+    import Link from "../../Link.svelte";
+    import QRCode from "../../QRCode.svelte";
     import Translatable from "../../Translatable.svelte";
 
-    const client = getContext<OpenChat>("client");
-
-    $: user = client.user;
-    $: userStore = client.userStore;
-    $: link = `${window.location.origin}/?ref=${$user.userId}`;
+    let link = $derived(`${window.location.origin}/?ref=${$currentUserIdStore}`);
 
     function onCopy() {
         navigator.clipboard.writeText(link).then(
@@ -36,15 +25,6 @@
     function onShare() {
         shareLink(link);
     }
-
-    function showUserProfile(ev: Event, userId: string) {
-        ev.target?.dispatchEvent(
-            new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
-                detail: { userId, chatButton: false, inGlobalContext: true },
-                bubbles: true,
-            }),
-        );
-    }
 </script>
 
 <div class="container">
@@ -55,37 +35,16 @@
     </div>
     <div class="action">
         <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
-        <Link on:click={onCopy}>
+        <Link onClick={onCopy}>
             <Translatable resourceKey={i18nKey("copy")} />
         </Link>
     </div>
     {#if canShare()}
         <div class="action">
             <ShareIcon size={$iconSize} color={"var(--icon-txt)"} />
-            <Link on:click={onShare}>
+            <Link onClick={onShare}>
                 <Translatable resourceKey={i18nKey("share")} />
             </Link>
-        </div>
-    {/if}
-    {#if $user.referrals.length > 0}
-        <div class="referrals-section">
-            <h4><Translatable resourceKey={i18nKey("invitedUsers")} /></h4>
-            <div class="referrals">
-                {#each $user.referrals as userId}
-                    <div class="referral" on:click={(ev) => showUserProfile(ev, userId)}>
-                        <div>
-                            <Avatar
-                                url={client.userAvatarUrl($userStore[userId])}
-                                {userId}
-                                size={AvatarSize.Default} />
-                        </div>
-                        <LinkButton underline="hover">
-                            {client.displayName($userStore[userId])}
-                            <Diamond status={$userStore[userId]?.diamondStatus} />
-                        </LinkButton>
-                    </div>
-                {/each}
-            </div>
         </div>
     {/if}
 </div>
@@ -114,24 +73,5 @@
         display: flex;
         gap: $sp4;
         align-items: center;
-    }
-
-    .referrals-section {
-        margin-top: $sp3;
-
-        .referrals {
-            display: flex;
-            flex-direction: column;
-            gap: $sp3;
-            margin-top: $sp4;
-            width: fit-content;
-
-            .referral {
-                cursor: pointer;
-                align-items: center;
-                display: flex;
-                gap: $sp3;
-            }
-        }
     }
 </style>

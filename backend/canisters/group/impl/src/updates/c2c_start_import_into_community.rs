@@ -1,33 +1,29 @@
-use crate::guards::caller_is_group_index_or_local_group_index;
-use crate::{mutate_state, run_regular_jobs, CommunityBeingImportedInto, RuntimeState, StartImportIntoCommunityResult};
-use canister_api_macros::update_msgpack;
+use crate::guards::caller_is_group_index_or_local_user_index;
+use crate::{CommunityBeingImportedInto, RuntimeState, execute_update};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_start_import_into_community::{Response::*, *};
+use oc_error_codes::OCErrorCode;
+use types::OCResult;
 
-#[update_msgpack(guard = "caller_is_group_index_or_local_group_index")]
+#[update(guard = "caller_is_group_index_or_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_start_import_into_community(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| c2c_start_import_into_community_impl(args, state))
+    match execute_update(|state| c2c_start_import_into_community_impl(args, state)) {
+        Ok(total_bytes) => Success(total_bytes),
+        Err(error) => Error(error),
+    }
 }
 
-fn c2c_start_import_into_community_impl(args: Args, state: &mut RuntimeState) -> Response {
+fn c2c_start_import_into_community_impl(args: Args, state: &mut RuntimeState) -> OCResult<u64> {
     if args.user_id != state.data.proposals_bot_user_id {
-        if let Some(member) = state.data.chat.members.get(&args.user_id) {
-            if member.suspended.value {
-                return UserSuspended;
-            } else if !member.role.is_owner() {
-                return NotAuthorized;
-            }
-        } else {
-            return UserNotInGroup;
+        let member = state.data.chat.members.get_verified_member(args.user_id)?;
+        if !member.role().is_owner() {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }
     }
 
-    match state.start_importing_into_community(CommunityBeingImportedInto::Existing(args.community_id)) {
-        StartImportIntoCommunityResult::Success(result) => Success(result.total_bytes),
-        StartImportIntoCommunityResult::AlreadyImportingToAnotherCommunity => AlreadyImportingToAnotherCommunity,
-        StartImportIntoCommunityResult::ChatFrozen => ChatFrozen,
-    }
+    state
+        .start_importing_into_community(CommunityBeingImportedInto::Existing(args.community_id))
+        .map(|result| result.total_bytes)
 }

@@ -1,205 +1,229 @@
 <script lang="ts">
-    import Avatar from "../../Avatar.svelte";
-    import MenuIcon from "../../MenuIcon.svelte";
-    import HoverIcon from "../../HoverIcon.svelte";
-    import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
-    import Compass from "svelte-material-icons/CompassOutline.svelte";
-    import Hamburger from "svelte-material-icons/Menu.svelte";
-    import ArrowRight from "svelte-material-icons/ArrowExpandRight.svelte";
-    import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
-    import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import {
         AvatarSize,
         type CommunitySummary,
+        ONE_MINUTE_MILLIS,
         type OpenChat,
-        type UserSummary,
+        activityFeedShowing,
+        allUsersStore,
+        anonUserStore,
+        chatListScopeStore,
+        chitStateStore,
+        communityChannelVideoCallCountsStore,
+        communityListScrollTop,
+        currentUserIdStore,
+        directVideoCallCountsStore,
         emptyCombinedUnreadCounts,
+        favouritesStore,
+        favouritesVideoCallCountsStore,
+        groupVideoCallCountsStore,
+        latestSuccessfulUpdatesLoop,
+        messageActivitySummaryStore,
+        mobileWidth,
+        navOpen,
+        publish,
+        routeStore,
+        selectedCommunitySummaryStore,
+        showNav,
+        sortedCommunitiesStore,
+        unreadCommunityChannelCountsStore,
+        unreadDirectCountsStore,
+        unreadFavouriteCountsStore,
+        unreadGroupCountsStore,
     } from "openchat-client";
-    import { mobileWidth } from "../../../stores/screenDimensions";
-    import { communityListScrollTop } from "../../../stores/scrollPos";
-    import { pathParams } from "../../../routes";
     import page from "page";
-    import { createEventDispatcher, getContext, onDestroy, onMount, tick } from "svelte";
-    import LeftNavItem from "./LeftNavItem.svelte";
-    import MainMenu from "./MainMenu.svelte";
-    import { navOpen } from "../../../stores/layout";
-    import { flip } from "svelte/animate";
+    import { getContext, onMount, tick } from "svelte";
     import { type DndEvent, dndzone } from "svelte-dnd-action";
-    import { isTouchDevice } from "../../../utils/devices";
-    import { rtlStore } from "../../../stores/rtl";
+    import ArrowRight from "svelte-material-icons/ArrowExpandRight.svelte";
+    import BellRingOutline from "svelte-material-icons/BellRingOutline.svelte";
+    import Compass from "svelte-material-icons/CompassOutline.svelte";
+    import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
+    import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
+    import Hamburger from "svelte-material-icons/Menu.svelte";
+    import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
+    import { flip } from "svelte/animate";
     import { i18nKey } from "../../../i18n/i18n";
+    import { rtlStore } from "../../../stores/rtl";
+    import { disableChit, hideChitIcon } from "../../../stores/settings";
+    import { now } from "../../../stores/time";
+    import { isTouchDevice } from "../../../utils/devices";
+    import Avatar from "../../Avatar.svelte";
+    import HoverIcon from "../../HoverIcon.svelte";
+    import MenuIcon from "../../MenuIcon.svelte";
+    import LeftNavItem from "./LeftNavItem.svelte";
+    import LighteningBolt from "./LighteningBolt.svelte";
+    import MainMenu from "./MainMenu.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
     const flipDurationMs = 300;
 
-    $: createdUser = client.user;
-    $: userStore = client.userStore;
-    $: user = $userStore[$createdUser.userId] as UserSummary | undefined; // annoying that this annotation is necessary
-    $: avatarSize = $mobileWidth ? AvatarSize.Small : AvatarSize.Default;
-    $: communities = client.communitiesList;
-    $: selectedCommunity = client.selectedCommunity;
-    $: chatListScope = client.chatListScope;
-    $: unreadDirectCounts = client.unreadDirectCounts;
-    $: directVideoCallCounts = client.directVideoCallCounts;
-    $: groupVideoCallCounts = client.groupVideoCallCounts;
-    $: favouritesVideoCallCounts = client.favouritesVideoCallCounts;
-    $: unreadGroupCounts = client.unreadGroupCounts;
-    $: unreadFavouriteCounts = client.unreadFavouriteCounts;
-    $: unreadCommunityChannelCounts = client.unreadCommunityChannelCounts;
-    $: communityChannelVideoCallCounts = client.communityChannelVideoCallCounts;
-    $: communityExplorer = $pathParams.kind === "communities_route";
-    $: anonUser = client.anonUser;
-    $: selectedCommunityId = $selectedCommunity?.id.communityId;
+    let user = $derived($allUsersStore.get($currentUserIdStore));
+    let avatarSize = $derived($mobileWidth ? AvatarSize.Small : AvatarSize.Default);
+    let communityExplorer = $derived($routeStore.kind === "communities_route");
+    let selectedCommunityId = $derived($selectedCommunitySummaryStore?.id.communityId);
+    let claimChitAvailable = $derived.by(() => {
+        return $chitStateStore.nextDailyChitClaim < $now && $latestSuccessfulUpdatesLoop > $now - 10 * ONE_MINUTE_MILLIS;
+    });
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
     let scrollingSection: HTMLElement;
 
     // we don't want drag n drop to monkey around with the key
     type CommunityItem = CommunitySummary & { _id: string };
-    let communityItems: CommunityItem[] = [];
-    let dragging = false;
+
+    let communityItems = $state<CommunityItem[]>([]);
+
+    $effect(() => {
+        communityItems = $sortedCommunitiesStore.map((c) => ({ ...c, _id: c.id.communityId }));
+    });
 
     onMount(() => {
-        const unsub = communities.subscribe(initCommunitiesList);
         tick().then(() => (scrollingSection.scrollTop = $communityListScrollTop ?? 0));
-        return unsub;
     });
 
-    onDestroy(() => {
-        communityListScrollTop.set(scrollingSection?.scrollTop);
-    });
-
-    function initCommunitiesList(communities: CommunitySummary[]) {
-        // we don't want to allow the list to update if we're in the middle of dragging
-        if (dragging) return;
-
-        communityItems = communities.map((c) => ({
-            ...c,
-            _id: c.id.communityId,
-        }));
-    }
-
-    function reindex(communities: CommunitySummary[]): CommunitySummary[] {
-        return communities.map((item, i) => ({
-            ...item,
-            membership: {
-                ...item.membership,
-                index: communities.length - i,
-            },
-        }));
+    function onScroll() {
+        communityListScrollTop.set(scrollingSection.scrollTop);
     }
 
     function handleDndConsider(e: CustomEvent<DndEvent<CommunityItem>>) {
-        dragging = true;
         communityItems = e.detail.items;
     }
 
     function handleDndFinalize(e: CustomEvent<DndEvent<CommunityItem>>) {
-        dragging = false;
-        communityItems = e.detail.items;
-        client.updateCommunityIndexes(reindex(e.detail.items));
+        client.updateCommunityIndexes(e.detail.items);
     }
 
-    function toggleNav() {
-        if ($navOpen) {
-            navOpen.set(false);
-        } else {
-            navOpen.set(true);
-        }
+    function toggleNav(e: Event) {
+        e.stopPropagation();
+        client.toggleNav();
     }
 
     function viewProfile() {
-        dispatch("profile");
+        activityFeedShowing.set(false);
+        publish("profile");
     }
 
     function exploreCommunities() {
+        activityFeedShowing.set(false);
         page("/communities");
     }
 
     function directChats() {
+        activityFeedShowing.set(false);
         page("/user");
     }
 
     function groupChats() {
+        activityFeedShowing.set(false);
         page("/group");
     }
 
     function favouriteChats() {
+        activityFeedShowing.set(false);
         page("/favourite");
     }
 
     function selectCommunity(community: CommunitySummary) {
+        activityFeedShowing.set(false);
         page(`/community/${community.id.communityId}`);
     }
 
     function closeIfOpen() {
-        if ($navOpen) {
-            navOpen.set(false);
+        client.closeNavIfOpen();
+    }
+
+    function showActivityFeed() {
+        if ($routeStore.kind === "communities_route") {
+            page("/");
         }
+        activityFeedShowing.set(true);
     }
 </script>
 
-<svelte:body on:click={closeIfOpen} />
+<svelte:body onclick={closeIfOpen} />
 
-<section class="nav" class:open={$navOpen} class:rtl={$rtlStore}>
+<section class:visible={$showNav} class="nav" class:open={$navOpen} class:rtl={$rtlStore}>
     <div class="top">
         <LeftNavItem separator label={i18nKey("communities.mainMenu")}>
             <div class="hover logo">
                 <MenuIcon position="right" align="start" gutter={20}>
-                    <span slot="icon">
+                    {#snippet menuIcon()}
                         <HoverIcon>
                             <Hamburger size={iconSize} color={"var(--icon-txt)"} />
                         </HoverIcon>
-                    </span>
-                    <span slot="menu">
-                        <MainMenu on:wallet on:halloffame on:upgrade on:profile />
-                    </span>
+                    {/snippet}
+                    {#snippet menuItems()}
+                        <MainMenu />
+                    {/snippet}
                 </MenuIcon>
             </div>
         </LeftNavItem>
-
         {#if user !== undefined}
-            <LeftNavItem label={i18nKey("profile.title")} on:click={viewProfile}>
+            <LeftNavItem label={i18nKey("profile.title")} onClick={viewProfile}>
                 <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={avatarSize} />
             </LeftNavItem>
         {/if}
-
         <LeftNavItem
-            selected={$chatListScope.kind === "direct_chat" && !communityExplorer}
+            selected={$chatListScopeStore.kind === "direct_chat" && !communityExplorer}
             label={i18nKey("communities.directChats")}
-            disabled={$anonUser}
-            unread={$unreadDirectCounts.chats}
-            video={$directVideoCallCounts}
-            on:click={directChats}>
+            unread={$unreadDirectCountsStore.chats}
+            video={$directVideoCallCountsStore}
+            onClick={directChats}>
             <div class="hover direct">
                 <MessageOutline size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
-
         <LeftNavItem
-            selected={$chatListScope.kind === "group_chat" && !communityExplorer}
+            selected={$chatListScopeStore.kind === "group_chat" && !communityExplorer}
             label={i18nKey("communities.groupChats")}
-            unread={client.mergeCombinedUnreadCounts($unreadGroupCounts)}
-            video={$groupVideoCallCounts}
-            on:click={groupChats}>
+            unread={client.mergeCombinedUnreadCounts($unreadGroupCountsStore)}
+            video={$groupVideoCallCountsStore}
+            onClick={groupChats}>
             <div class="hover direct">
                 <ForumOutline size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
-
-        <LeftNavItem
-            selected={$chatListScope.kind === "favourite" && !communityExplorer}
-            separator
-            disabled={$anonUser}
-            label={i18nKey("communities.favourites")}
-            unread={client.mergeCombinedUnreadCounts($unreadFavouriteCounts)}
-            video={$favouritesVideoCallCounts}
-            on:click={favouriteChats}>
-            <div class="hover favs">
-                <HeartOutline size={iconSize} color={"var(--icon-txt)"} />
-            </div>
-        </LeftNavItem>
+        {#if $favouritesStore.size > 0}
+            <LeftNavItem
+                selected={$chatListScopeStore.kind === "favourite" && !communityExplorer}
+                label={i18nKey("communities.favourites")}
+                unread={client.mergeCombinedUnreadCounts($unreadFavouriteCountsStore)}
+                video={$favouritesVideoCallCountsStore}
+                onClick={favouriteChats}>
+                <div class="hover favs">
+                    <HeartOutline size={iconSize} color={"var(--icon-txt)"} />
+                </div>
+            </LeftNavItem>
+        {/if}
+        {#if !$anonUserStore}
+            {#if !$disableChit && (claimChitAvailable || !$hideChitIcon)}
+                <LeftNavItem
+                    label={i18nKey(
+                        claimChitAvailable ? "dailyChit.extendStreak" : "dailyChit.viewStreak",
+                    )}
+                    onClick={() => publish("claimDailyChit")}>
+                    <div class="hover streak">
+                        <LighteningBolt enabled={claimChitAvailable} />
+                    </div>
+                </LeftNavItem>
+            {/if}
+            {#if $messageActivitySummaryStore.latestTimestamp > 0n}
+                <LeftNavItem
+                    separator
+                    selected={$activityFeedShowing}
+                    label={i18nKey("activity.navLabel")}
+                    unread={{
+                        muted: 0,
+                        unmuted: $messageActivitySummaryStore.unreadCount,
+                        mentions: false,
+                    }}
+                    onClick={showActivityFeed}>
+                    <div class="hover activity">
+                        <BellRingOutline size={iconSize} color={"var(--icon-txt)"} />
+                    </div>
+                </LeftNavItem>
+            {/if}
+        {/if}
     </div>
 
     <div
@@ -209,29 +233,31 @@
             dropTargetStyle: { outline: "var(--accent) solid 2px" },
             dragDisabled: isTouchDevice,
         }}
+        onscroll={onScroll}
         bind:this={scrollingSection}
-        on:consider={handleDndConsider}
-        on:finalize={handleDndFinalize}
+        onconsider={handleDndConsider}
+        onfinalize={handleDndFinalize}
         class="middle">
         {#each communityItems as community (community._id)}
             <div animate:flip={{ duration: flipDurationMs }}>
                 <LeftNavItem
                     selected={community.id.communityId === selectedCommunityId &&
-                        $chatListScope.kind !== "favourite" &&
+                        $chatListScopeStore.kind !== "favourite" &&
                         !communityExplorer}
-                    video={$communityChannelVideoCallCounts.get(community.id) ?? {
+                    video={$communityChannelVideoCallCountsStore.get(community.id) ?? {
                         muted: 0,
                         unmuted: 0,
                     }}
                     unread={client.mergeCombinedUnreadCounts(
-                        $unreadCommunityChannelCounts.get(community.id) ??
+                        $unreadCommunityChannelCountsStore.get(community.id) ??
                             emptyCombinedUnreadCounts(),
                     )}
                     label={i18nKey(community.name)}
-                    on:click={() => selectCommunity(community)}>
+                    verified={community.verified}
+                    onClick={() => selectCommunity(community)}>
                     <Avatar
                         selected={community.id.communityId === selectedCommunityId &&
-                            $chatListScope.kind !== "favourite" &&
+                            $chatListScopeStore.kind !== "favourite" &&
                             !communityExplorer}
                         url={client.communityAvatarUrl(community.id.communityId, community.avatar)}
                         size={avatarSize} />
@@ -244,13 +270,15 @@
         <LeftNavItem
             selected={communityExplorer}
             label={i18nKey("communities.explore")}
-            on:click={exploreCommunities}>
+            onClick={exploreCommunities}>
             <div class="explore hover">
                 <Compass size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
         <LeftNavItem label={$navOpen ? i18nKey("collapse") : i18nKey("expand")}>
-            <div class:open={$navOpen} on:click|stopPropagation={toggleNav} class="expand hover">
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <div class:open={$navOpen} onclick={toggleNav} class="expand hover">
                 <ArrowRight size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
@@ -323,6 +351,10 @@
                 width: toRem(300);
             }
         }
+
+        &:not(.visible) {
+            display: none;
+        }
     }
 
     .top,
@@ -345,7 +377,7 @@
     .middle {
         flex: auto;
         overflow-x: hidden;
-        @include nice-scrollbar();
+        scrollbar-width: none;
     }
 
     .hover {

@@ -1,5 +1,5 @@
 use crate::guards::caller_is_governance_principal;
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use candid::Principal;
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
@@ -9,7 +9,7 @@ use ledger_utils::compute_neuron_staking_subaccount_bytes;
 use neuron_controller_canister::stake_nns_neuron::{Response::*, *};
 use nns_governance_canister::types::manage_neuron::claim_or_refresh::{By, MemoAndController};
 use nns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command};
-use nns_governance_canister::types::{manage_neuron_response, ManageNeuron};
+use nns_governance_canister::types::{ManageNeuron, manage_neuron_response};
 use tracing::{error, info};
 use types::CanisterId;
 use utils::canister::get_random_seed;

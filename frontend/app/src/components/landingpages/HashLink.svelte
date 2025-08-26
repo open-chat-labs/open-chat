@@ -1,6 +1,12 @@
 <script lang="ts">
-    import { location } from "../../routes";
-    export let id: string;
+    import { locationStore } from "openchat-client";
+    import type { Snippet } from "svelte";
+    interface Props {
+        id: string;
+        children?: Snippet;
+    }
+
+    let { id, children }: Props = $props();
 </script>
 
-<a href={`${$location}?section=${id}`}><slot /></a>
+<a href={`${$locationStore}?section=${id}`}>{@render children?.()}</a>

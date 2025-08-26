@@ -1,36 +1,61 @@
 <script lang="ts">
-    import { cubicOut } from "svelte/easing";
-    import Flag from "svelte-material-icons/Flag.svelte";
-    import { tweened } from "svelte/motion";
     import type { Metrics, OpenChat } from "openchat-client";
+    import { iconSize, minutesOnlineStore } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import { writable } from "svelte/store";
-    import { iconSize } from "../../stores/iconSize";
-    import TooltipWrapper from "../TooltipWrapper.svelte";
-    import TooltipPopup from "../TooltipPopup.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Flag from "svelte-material-icons/Flag.svelte";
+    import { cubicOut } from "svelte/easing";
+    import { Tween } from "svelte/motion";
     import { i18nKey } from "../../i18n/i18n";
+    import Tooltip from "../tooltip/Tooltip.svelte";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
-    export let stats: Metrics;
-    export let showReported: boolean = false;
+    interface Props {
+        stats: Metrics;
+        showReported?: boolean;
+    }
 
-    let hoveredIndex: number | undefined;
-    let rendered = false;
-    let previousStats: Metrics | undefined = undefined;
-    let totalMessages = 0;
-    let textPerc = writable(12.5);
-    let imagePerc = writable(12.5);
-    let videoPerc = writable(12.5);
-    let audioPerc = writable(12.5);
-    let filePerc = writable(12.5);
-    let pollPerc = writable(12.5);
-    let cryptoPerc = writable(12.5);
-    let giphyPerc = writable(12.5);
+    let { stats, showReported = false }: Props = $props();
 
-    $: cryptoMessages = stats.icpMessages + stats.sns1Messages + stats.ckbtcMessages;
+    const tweenOptions = {
+        duration: 600,
+        easing: cubicOut,
+    };
+    let hoveredIndex: number | undefined = $state();
+    let rendered = $state(false);
+    let previousStats: Metrics | undefined = $state(undefined);
+    let totalMessages = $state(0);
+    let textPerc = new Tween(12.5, tweenOptions);
+    let imagePerc = new Tween(12.5, tweenOptions);
+    let videoPerc = new Tween(12.5, tweenOptions);
+    let audioPerc = new Tween(12.5, tweenOptions);
+    let filePerc = new Tween(12.5, tweenOptions);
+    let pollPerc = new Tween(12.5, tweenOptions);
+    let cryptoPerc = new Tween(12.5, tweenOptions);
+    let giphyPerc = new Tween(12.5, tweenOptions);
 
-    $: {
+    function percToDegree(perc: number): number {
+        return (perc / 100) * 360;
+    }
+
+    onMount(() => {
+        window.setTimeout(() => (rendered = true), 600);
+    });
+
+    function slice(val: number, tween: Tween<number>) {
+        const perc = totalMessages > 0 ? (val / totalMessages) * 100 : 12.5;
+        tween.set(0, { duration: 0 });
+        tween.target = perc;
+    }
+
+    const circum = 471.24;
+
+    function sumSlice(from: number, to: number): number {
+        return percentages.slice(from, to).reduce((total, n) => total + percToDegree(n), 0);
+    }
+
+    let cryptoMessages = $derived(stats.icpMessages + stats.sns1Messages + stats.ckbtcMessages);
+    $effect(() => {
         if (previousStats === undefined || !client.metricsEqual(stats, previousStats)) {
             totalMessages =
                 stats.textMessages +
@@ -42,95 +67,69 @@
                 cryptoMessages +
                 stats.giphyMessages;
 
-            textPerc = slice(stats.textMessages);
-            imagePerc = slice(stats.imageMessages);
-            videoPerc = slice(stats.videoMessages);
-            audioPerc = slice(stats.audioMessages);
-            filePerc = slice(stats.fileMessages);
-            pollPerc = slice(stats.polls);
-            cryptoPerc = slice(cryptoMessages);
-            giphyPerc = slice(stats.giphyMessages);
+            slice(stats.textMessages, textPerc);
+            slice(stats.imageMessages, imagePerc);
+            slice(stats.videoMessages, videoPerc);
+            slice(stats.audioMessages, audioPerc);
+            slice(stats.fileMessages, filePerc);
+            slice(stats.polls, pollPerc);
+            slice(cryptoMessages, cryptoPerc);
+            slice(stats.giphyMessages, giphyPerc);
             previousStats = stats;
         }
-    }
-
-    function percToDegree(perc: number): number {
-        return (perc / 100) * 360;
-    }
-
-    onMount(() => {
-        window.setTimeout(() => (rendered = true), 600);
     });
-
-    function slice(val: number) {
-        const perc = totalMessages > 0 ? (val / totalMessages) * 100 : 12.5;
-        const tween = tweened(0, {
-            duration: 600,
-            easing: cubicOut,
-        });
-        tween.set(perc);
-        return tween;
-    }
-
-    const circum = 471.24;
-
-    $: percentages = [
-        $textPerc,
-        $imagePerc,
-        $videoPerc,
-        $audioPerc,
-        $filePerc,
-        $pollPerc,
-        $cryptoPerc,
-        $giphyPerc,
-    ];
-
-    function sumSlice(from: number, to: number): number {
-        return percentages.slice(from, to).reduce((total, n) => total + percToDegree(n), 0);
-    }
-
-    $: data = [
+    let percentages = $derived([
+        textPerc.current,
+        imagePerc.current,
+        videoPerc.current,
+        audioPerc.current,
+        filePerc.current,
+        pollPerc.current,
+        cryptoPerc.current,
+        giphyPerc.current,
+    ]);
+    let data = $derived([
         {
             cls: "text",
-            perc: $textPerc,
+            perc: textPerc.current,
             rotate: 0,
         },
         {
             cls: "image",
-            perc: $imagePerc,
+            perc: imagePerc.current,
             rotate: sumSlice(0, 1),
         },
         {
             cls: "video",
-            perc: $videoPerc,
+            perc: videoPerc.current,
             rotate: sumSlice(0, 2),
         },
         {
             cls: "audio",
-            perc: $audioPerc,
+            perc: audioPerc.current,
             rotate: sumSlice(0, 3),
         },
         {
             cls: "file",
-            perc: $filePerc,
+            perc: filePerc.current,
             rotate: sumSlice(0, 4),
         },
         {
             cls: "poll",
-            perc: $pollPerc,
+            perc: pollPerc.current,
             rotate: sumSlice(0, 5),
         },
         {
             cls: "crypto",
-            perc: $cryptoPerc,
+            perc: cryptoPerc.current,
             rotate: sumSlice(0, 6),
         },
         {
             cls: "giphy",
-            perc: $giphyPerc,
+            perc: giphyPerc.current,
             rotate: sumSlice(0, 7),
         },
-    ];
+    ]);
 </script>
 
 <div class="message-stats">
@@ -145,8 +144,8 @@
 
         {#each data as slice, i}
             <circle
-                on:mouseenter={(_) => (hoveredIndex = i)}
-                on:mouseleave={(_) => (hoveredIndex = undefined)}
+                onmouseenter={(_) => (hoveredIndex = i)}
+                onmouseleave={(_) => (hoveredIndex = undefined)}
                 class={`slice ${slice.cls}`}
                 cx={160}
                 cy={160}
@@ -162,56 +161,56 @@
     </svg>
     <div class="numbers">
         <div class="text legend">
-            <div class="key" />
+            <div class="key"></div>
             <div class="label">
                 <span class="stat">{stats.textMessages.toLocaleString()}</span><Translatable
                     resourceKey={i18nKey("stats.textMessages")} />
             </div>
         </div>
         <div class="image legend">
-            <div class="key" />
+            <div class="key"></div>
             <div class="label">
                 <span class="stat">{stats.imageMessages.toLocaleString()}</span><Translatable
                     resourceKey={i18nKey("stats.imageMessages")} />
             </div>
         </div>
         <div class="video legend">
-            <div class="key" />
+            <div class="key"></div>
             <div class="label">
                 <span class="stat">{stats.videoMessages.toLocaleString()}</span><Translatable
                     resourceKey={i18nKey("stats.videoMessages")} />
             </div>
         </div>
         <div class="audio legend">
-            <div class="key" />
+            <div class="key"></div>
             <div class="label">
                 <span class="stat">{stats.audioMessages.toLocaleString()}</span><Translatable
                     resourceKey={i18nKey("stats.audioMessages")} />
             </div>
         </div>
         <div class="file legend">
-            <div class="key" />
+            <div class="key"></div>
             <div class="label">
                 <span class="stat">{stats.fileMessages.toLocaleString()}</span><Translatable
                     resourceKey={i18nKey("stats.fileMessages")} />
             </div>
         </div>
         <div class="poll legend">
-            <div class="key" />
+            <div class="key"></div>
             <div class="label">
                 <span class="stat">{stats.polls.toLocaleString()}</span><Translatable
                     resourceKey={i18nKey("stats.pollMessages")} />
             </div>
         </div>
         <div class="crypto legend">
-            <div class="key" />
+            <div class="key"></div>
             <div class="label">
                 <span class="stat">{cryptoMessages.toLocaleString()}</span><Translatable
                     resourceKey={i18nKey("stats.cryptoTransfers")} />
             </div>
         </div>
         <div class="giphy legend">
-            <div class="key" />
+            <div class="key"></div>
             <div class="label">
                 <span class="stat">{stats.giphyMessages.toLocaleString()}</span><Translatable
                     resourceKey={i18nKey("stats.giphyMessages")} />
@@ -237,9 +236,17 @@
         <span class="stat">{stats.deletedMessages.toLocaleString()}</span>
         <Translatable resourceKey={i18nKey("stats.deletedMessages")} />
     </div>
+    <div class="minutes-online">
+        <span class="stat">{$minutesOnlineStore.minutesOnlineThisMonth.toLocaleString()}</span>
+        <Translatable resourceKey={i18nKey("stats.minutesOnlineThisMonth")} />
+    </div>
+    <div class="minutes-online">
+        <span class="stat">{$minutesOnlineStore.minutesOnlineLastMonth.toLocaleString()}</span>
+        <Translatable resourceKey={i18nKey("stats.minutesOnlineLastMonth")} />
+    </div>
     {#if showReported}
-        <TooltipWrapper position={"top"} align="middle">
-            <div slot="target" class="reported-messages">
+        <Tooltip longestWord={20} position={"top"} align="middle">
+            <div class="reported-messages">
                 <span>
                     <span class="stat">{stats.reportedMessages.toLocaleString()}</span>
                     <Translatable resourceKey={i18nKey("stats.reportedMessages")} />
@@ -248,14 +255,10 @@
                     <Flag size={$iconSize} color={"var(--accent)"} />
                 </span>
             </div>
-            <div let:position let:align slot="tooltip">
-                <TooltipPopup {position} {align} textLength={100} longestWord={20}>
-                    <div>
-                        <Translatable resourceKey={i18nKey("stats.reportedMessagesInfo")} />
-                    </div>
-                </TooltipPopup>
-            </div>
-        </TooltipWrapper>
+            {#snippet popupTemplate()}
+                <Translatable resourceKey={i18nKey("stats.reportedMessagesInfo")} />
+            {/snippet}
+        </Tooltip>
     {/if}
 </div>
 

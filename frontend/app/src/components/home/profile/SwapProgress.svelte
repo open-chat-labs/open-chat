@@ -1,121 +1,167 @@
+<script lang="ts" module>
+    export type SwapOutcome = "success" | "rateChanged" | "insufficientFunds" | "error";
+</script>
+
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
     import { Poller } from "openchat-client";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
     import ProgressSteps, { type Result, type Step } from "../../ProgressSteps.svelte";
 
-    export let swapId: bigint;
-    export let tokenIn: string;
-    export let tokenOut: string;
-    export let amountIn: string;
-    export let decimalsOut: number;
-    export let dex: string;
+    interface Props {
+        swapId: bigint;
+        tokenIn: string;
+        tokenOut: string;
+        ledgerIn: string;
+        ledgerOut: string;
+        amountIn: string;
+        decimalsOut: number;
+        dex: string;
+        onFinished: (outcome: SwapOutcome, ledgerIn: string, ledgerOut: string) => void;
+    }
+
+    let {
+        swapId,
+        tokenIn,
+        tokenOut,
+        ledgerIn,
+        ledgerOut,
+        amountIn,
+        decimalsOut,
+        dex,
+        onFinished,
+    }: Props = $props();
+
+    ledgerOut;
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
     const POLL_INTERVAL = 1000;
     const labelPrefix = "tokenSwap.progress.";
 
-    let percent: number | undefined = 0;
-    let amountOut = "";
-    let steps: Step[] = [{ label: "get", status: "doing" }];
-    let result: Result = undefined;
+    let percent: number | undefined = $state(0);
+    let amountOut = $state("");
+    let steps = $state<Step[]>([{ label: "get", status: "doing" }]);
+    let result = $state<Result>(undefined);
+    let poller: Poller | undefined = undefined;
 
-    $: fullSteps = steps.map((step) => ({ label: labelPrefix + step.label, status: step.status }));
+    let fullSteps = $derived(
+        steps.map((step) => ({ label: labelPrefix + step.label, status: step.status })),
+    );
 
-    $: fullResult =
+    let fullResult = $derived(
         result !== undefined
             ? { label: labelPrefix + result.label, status: result.status }
-            : undefined;
+            : undefined,
+    );
 
-    $: labelValues = {
+    let labelValues = $derived({
         tokenIn,
         tokenOut,
         amountIn,
         amountOut,
         dex,
-    };
+    });
 
     onMount(() => {
-        const poller = new Poller(querySwapProgress, POLL_INTERVAL, POLL_INTERVAL, true);
+        poller = new Poller(querySwapProgress, POLL_INTERVAL, POLL_INTERVAL, true);
 
-        return () => poller.stop();
+        return () => poller?.stop();
     });
+
+    function notifyFinished(outcome: "success" | "rateChanged" | "insufficientFunds" | "error") {
+        onFinished(outcome, ledgerIn, ledgerIn);
+        poller?.stop();
+    }
+
+    function updateSteps(newSteps: Step[]) {
+        if (newSteps.length >= steps.length) {
+            steps = newSteps;
+        }
+    }
+
+    function updatePercent(newPercent: number) {
+        if (newPercent >= (percent ?? 0)) {
+            percent = newPercent;
+        }
+    }
 
     async function querySwapProgress() {
         let response = await client.tokenSwapStatus(swapId);
 
         if (response.kind === "success") {
+            if (
+                response.amountSwapped?.kind === "ok" &&
+                response.amountSwapped?.value.kind === "ok"
+            ) {
+                amountOut = client.formatTokens(response.amountSwapped.value.value, decimalsOut);
+            }
+
             if (response.withdrawnFromDex?.kind === "ok") {
                 const success =
                     response.amountSwapped?.kind === "ok" &&
                     response.amountSwapped.value.kind === "ok";
 
-                steps = [
+                updateSteps([
                     { label: "get", status: "done" },
                     { label: "deposit", status: "done" },
                     { label: "notify", status: "done" },
                     { label: "swap", status: "done" },
                     { label: success ? "withdraw" : "refund", status: "done" },
-                ];
+                ]);
                 result = { label: success ? "done" : "failed", status: "done" };
-                dispatch("finished", success ? "success" : "rateChanged");
+                notifyFinished(success ? "success" : "rateChanged");
             } else if (response.amountSwapped?.kind === "ok") {
                 if (response.amountSwapped.value.kind === "ok") {
-                    amountOut = client.formatTokens(
-                        response.amountSwapped.value.value,
-                        decimalsOut,
-                    );
-                    steps = [
+                    updateSteps([
                         { label: "get", status: "done" },
                         { label: "deposit", status: "done" },
                         { label: "notify", status: "done" },
                         { label: "swap", status: "done" },
                         { label: "withdraw", status: "doing" },
-                    ];
-                    percent = 80;
+                    ]);
+                    updatePercent(80);
                 } else {
-                    steps = [
+                    updateSteps([
                         { label: "get", status: "done" },
                         { label: "deposit", status: "done" },
                         { label: "notify", status: "done" },
                         { label: "swap", status: "failed" },
                         { label: "refund", status: "doing" },
-                    ];
+                    ]);
                     percent = undefined;
                 }
             } else if (response.notifyDex?.kind == "ok") {
-                steps = [
+                updateSteps([
                     { label: "get", status: "done" },
                     { label: "deposit", status: "done" },
                     { label: "notify", status: "done" },
                     { label: "swap", status: "doing" },
-                ];
-                percent = 60;
+                ]);
+                updatePercent(60);
             } else if (response.transfer?.kind == "ok") {
-                steps = [
+                updateSteps([
                     { label: "get", status: "done" },
                     { label: "deposit", status: "done" },
                     { label: "notify", status: "doing" },
-                ];
-                percent = 40;
+                ]);
+                updatePercent(40);
             } else if (response.transfer?.kind == "error") {
-                steps = [
+                updateSteps([
                     { label: "get", status: "done" },
                     { label: "deposit", status: "failed" },
-                ];
+                ]);
                 result = { label: "insufficientFunds", status: "failed" };
-                dispatch("finished", "insufficientFunds");
+                notifyFinished("insufficientFunds");
             } else if (response.depositAccount?.kind == "ok") {
-                steps = [
+                updateSteps([
                     { label: "get", status: "done" },
                     { label: "deposit", status: "doing" },
-                ];
-                percent = 20;
+                ]);
+                updatePercent(20);
             } else if (response.depositAccount?.kind == "error") {
-                steps = [{ label: "get", status: "failed" }];
+                updateSteps([{ label: "get", status: "failed" }]);
                 result = { label: "error", status: "failed" };
-                dispatch("finished", "error");
+                notifyFinished("error");
             }
         }
     }

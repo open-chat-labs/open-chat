@@ -33,7 +33,7 @@
     .team {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: toRem(80);
+        gap: toRem(50);
 
         @include mobile() {
             grid-template-columns: 1fr;

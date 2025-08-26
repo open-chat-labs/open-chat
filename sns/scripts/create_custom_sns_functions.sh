@@ -16,7 +16,7 @@ do
     IFS='.' read -ra ADDR <<< "$FILENAME"
     FUNCTION_ID=${ADDR[0]}
 
-    # Source FUNCTION_NAME, FUNCTION_DESC, URL from the file contents
+    # Source FUNCTION_NAME, FUNCTION_DESC, URL, TOPIC from the file contents
     source $file
 
     SUMMARY=$FUNCTION_DESC
@@ -29,13 +29,19 @@ do
         # Derive the remaining variables
         TITLE="Add a new custom SNS function to \\\"$FUNCTION_NAME\\\""
         TARGET_CANISTER_ID=$(dfx -qq canister --network $NETWORK id $TARGET_CANISTER)
-        VALIDATOR_CANISTER=$TARGET_CANISTER
-        VALIDATOR_CANISTER_ID=$(dfx -qq canister --network $NETWORK id $VALIDATOR_CANISTER)
-        VALIDATOR_NAME="${TARGET_NAME}_validate"
+
+        if [ -z $VALIDATOR_CANISTER_ID ]
+        then
+          VALIDATOR_CANISTER_ID=$(dfx -qq canister --network $NETWORK id $TARGET_CANISTER)
+        fi
+
+        if [ -z $VALIDATOR_NAME ]
+        then
+          VALIDATOR_NAME="${TARGET_NAME}_validate"
+        fi
     else
         SERVICE_NAME=${ADDR[1]}
         TARGET_NAME=${ADDR[2]}
-        TARGET_CANISTER_ID=${ADDR[3]}
 
         # Derive the remaining variables
         VALIDATOR_CANISTER_ID=$(dfx -qq canister --network $NETWORK id proposal_validation)
@@ -43,7 +49,7 @@ do
     fi
 
     # Make the proposal
-    ./proposals/create_custom_sns_function.sh "$TITLE" "$URL" "$SUMMARY" $FUNCTION_ID "$FUNCTION_NAME" "$FUNCTION_DESC" "$TARGET_CANISTER_ID" "$TARGET_NAME" "$VALIDATOR_CANISTER_ID" "$VALIDATOR_NAME"
+    ./proposals/create_custom_sns_function.sh "$TITLE" "$URL" "$SUMMARY" $FUNCTION_ID "$FUNCTION_NAME" "$FUNCTION_DESC" "$TOPIC" "$TARGET_CANISTER_ID" "$TARGET_NAME" "$VALIDATOR_CANISTER_ID" "$VALIDATOR_NAME"
 done
 
 ./utils/cleanup_env.sh

@@ -1,5 +1,5 @@
-use candid::types::Serializer;
 use candid::CandidType;
+use candid::types::Serializer;
 use serde::{Deserialize, Deserializer, Serialize};
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
@@ -47,7 +47,6 @@ impl<T> Default for RangeSet<T> {
 }
 
 impl<T: CandidType + Into<u32>> CandidType for RangeSet<T> {
-    #[allow(deprecated)]
     fn _ty() -> candid::types::Type {
         Vec::<Range>::_ty()
     }

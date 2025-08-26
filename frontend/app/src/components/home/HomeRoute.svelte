@@ -1,18 +1,29 @@
+<script module lang="ts">
+    export interface HomeProps {
+        showLandingPage: boolean;
+    }
+
+    export type HomeType = Component<HomeProps>;
+</script>
+
 <script lang="ts">
-    import Home from "./Home.svelte";
-    import { getContext } from "svelte";
-    import type { OpenChat } from "openchat-client";
+    import { chatsInitialisedStore, identityStateStore } from "openchat-client";
+    import { type Component } from "svelte";
     import FancyLoader from "../icons/FancyLoader.svelte";
     import LandingPage from "../landingpages/LandingPage.svelte";
+    import Home from "./Home.svelte";
 
-    export let showLandingPage: boolean;
+    let { showLandingPage }: HomeProps = $props();
 
-    const client = getContext<OpenChat>("client");
-    $: identityState = client.identityState;
-    $: chatsLoading = client.chatsLoading;
-    $: showLoader =
-        $identityState.kind !== "registering" &&
-        ($chatsLoading || $identityState.kind === "loading_user");
+    let registering = $derived(
+        $identityStateStore.kind === "registering" ||
+            $identityStateStore.kind === "challenging" ||
+            ($identityStateStore.kind === "loading_user" && $identityStateStore.registering),
+    );
+
+    let showLoader = $derived(
+        !registering && (!$chatsInitialisedStore || $identityStateStore.kind === "loading_user"),
+    );
 </script>
 
 {#if showLandingPage}
@@ -24,7 +35,7 @@
         </div>
     </div>
 {:else}
-    <Home on:startVideoCall />
+    <Home />
 {/if}
 
 <style lang="scss">

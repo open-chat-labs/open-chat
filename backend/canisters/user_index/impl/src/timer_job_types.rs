@@ -3,14 +3,14 @@ use crate::updates::suspend_user::suspend_user_impl;
 use crate::updates::unsuspend_user::unsuspend_user_impl;
 use crate::{mutate_state, read_state};
 use canister_timer_jobs::Job;
+use constants::{CHAT_LEDGER_CANISTER_ID, ICP_LEDGER_CANISTER_ID, MINUTE_IN_MS, SECOND_IN_MS};
 use ic_ledger_types::Tokens;
-use local_user_index_canister::{Event as LocalUserIndexEvent, OpenChatBotMessage, UserJoinedGroup};
+use local_user_index_canister::{OpenChatBotMessage, UserIndexEvent};
 use serde::{Deserialize, Serialize};
 use types::{
-    ChatId, CommunityId, Cryptocurrency, DiamondMembershipFees, DiamondMembershipPlanDuration, MessageContent, Milliseconds,
-    TextContent, UserId,
+    ChatId, CommunityId, DiamondMembershipFees, DiamondMembershipPlanDuration, MessageContent, Milliseconds, TextContent,
+    UserId,
 };
-use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -19,7 +19,6 @@ pub enum TimerJob {
     SetUserSuspendedInGroup(SetUserSuspendedInGroup),
     SetUserSuspendedInCommunity(SetUserSuspendedInCommunity),
     UnsuspendUser(UnsuspendUser),
-    JoinUserToGroup(JoinUserToGroup),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -71,7 +70,6 @@ impl Job for TimerJob {
             TimerJob::SetUserSuspendedInGroup(job) => job.execute(),
             TimerJob::SetUserSuspendedInCommunity(job) => job.execute(),
             TimerJob::UnsuspendUser(job) => job.execute(),
-            TimerJob::JoinUserToGroup(job) => job.execute(),
         }
     }
 }
@@ -93,7 +91,7 @@ impl Job for RecurringDiamondMembershipPayment {
                         .map(|duration| (duration, d.pay_in_chat(), fees))
                 })
         }) {
-            ic_cdk::spawn(pay_for_diamond_membership(self.user_id, duration, fees, pay_in_chat));
+            ic_cdk::futures::spawn(pay_for_diamond_membership(self.user_id, duration, fees, pay_in_chat));
         }
 
         async fn pay_for_diamond_membership(
@@ -108,7 +106,7 @@ impl Job for RecurringDiamondMembershipPayment {
 
             let args = Args {
                 duration,
-                token: if pay_in_chat { Cryptocurrency::CHAT } else { Cryptocurrency::InternetComputer },
+                ledger: if pay_in_chat { CHAT_LEDGER_CANISTER_ID } else { ICP_LEDGER_CANISTER_ID },
                 expected_price_e8s: price_e8s,
                 recurring: true,
             };
@@ -118,7 +116,7 @@ impl Job for RecurringDiamondMembershipPayment {
                     mutate_state(|state| {
                         state.push_event_to_local_user_index(
                             user_id,
-                            LocalUserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage {
+                            UserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage {
                                 user_id,
                                 message: MessageContent::Text(TextContent {
                                     text: format!(
@@ -157,7 +155,7 @@ If you would like to extend your Diamond membership you will need to top up your
 
 impl Job for SetUserSuspended {
     fn execute(self) {
-        ic_cdk::spawn(suspend_user(
+        ic_cdk::futures::spawn(suspend_user(
             self.user_id,
             self.duration,
             self.reason.clone(),
@@ -172,7 +170,7 @@ impl Job for SetUserSuspended {
 
 impl Job for SetUserSuspendedInGroup {
     fn execute(self) {
-        ic_cdk::spawn(set_user_suspended_in_group(
+        ic_cdk::futures::spawn(set_user_suspended_in_group(
             self.user_id,
             self.group,
             self.suspended,
@@ -206,7 +204,7 @@ impl Job for SetUserSuspendedInGroup {
 
 impl Job for SetUserSuspendedInCommunity {
     fn execute(self) {
-        ic_cdk::spawn(set_user_suspended_in_community(
+        ic_cdk::futures::spawn(set_user_suspended_in_community(
             self.user_id,
             self.community,
             self.suspended,
@@ -240,71 +238,10 @@ impl Job for SetUserSuspendedInCommunity {
 
 impl Job for UnsuspendUser {
     fn execute(self) {
-        ic_cdk::spawn(unsuspend_user(self.user_id));
+        ic_cdk::futures::spawn(unsuspend_user(self.user_id));
 
         async fn unsuspend_user(user_id: UserId) {
             unsuspend_user_impl(user_id).await;
-        }
-    }
-}
-
-impl Job for JoinUserToGroup {
-    fn execute(self) {
-        if let Some(args) = read_state(|state| {
-            state
-                .data
-                .users
-                .get_by_user_id(&self.user_id)
-                .map(|u| group_canister::c2c_join_group::Args {
-                    user_id: self.user_id,
-                    principal: u.principal,
-                    invite_code: None,
-                    correlation_id: 0,
-                    is_platform_moderator: state.data.platform_moderators.contains(&self.user_id),
-                    is_bot: u.is_bot,
-                    diamond_membership_expires_at: state
-                        .data
-                        .users
-                        .get_by_user_id(&self.user_id)
-                        .and_then(|u| u.diamond_membership_details.expires_at()),
-                })
-        }) {
-            ic_cdk::spawn(join_group(self.group_id, args, self.attempt));
-        }
-
-        async fn join_group(group_id: ChatId, args: group_canister::c2c_join_group::Args, attempt: usize) {
-            use group_canister::c2c_join_group::*;
-
-            match group_canister_c2c_client::c2c_join_group(group_id.into(), &args).await {
-                Ok(Response::Success(s) | Response::AlreadyInGroupV2(s)) => mutate_state(|state| {
-                    state.push_event_to_local_user_index(
-                        args.user_id,
-                        LocalUserIndexEvent::UserJoinedGroup(UserJoinedGroup {
-                            user_id: args.user_id,
-                            chat_id: group_id,
-                            local_user_index_canister_id: s.local_user_index_canister_id,
-                            latest_message_index: s.latest_message.map(|m| m.event.message_index),
-                        }),
-                    )
-                }),
-                Ok(Response::InternalError(_)) | Err(_) => {
-                    if attempt < 50 {
-                        mutate_state(|state| {
-                            let now = state.env.now();
-                            state.data.timer_jobs.enqueue_job(
-                                TimerJob::JoinUserToGroup(JoinUserToGroup {
-                                    user_id: args.user_id,
-                                    group_id,
-                                    attempt: attempt + 1,
-                                }),
-                                now + 10 * SECOND_IN_MS,
-                                now,
-                            );
-                        })
-                    }
-                }
-                _ => {}
-            }
         }
     }
 }

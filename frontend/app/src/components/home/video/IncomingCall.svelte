@@ -1,40 +1,52 @@
 <script lang="ts">
-    import ModalContent from "../../ModalContent.svelte";
+    import {
+        allUsersStore,
+        AvatarSize,
+        communitiesStore,
+        iconSize,
+        selectedCommunitySummaryStore,
+        type ChatIdentifier,
+        type OpenChat,
+        type VideoCallType,
+    } from "openchat-client";
+    import { getContext } from "svelte";
     import Phone from "svelte-material-icons/Phone.svelte";
     import PhoneHangup from "svelte-material-icons/PhoneHangup.svelte";
-    import Overlay from "../../Overlay.svelte";
-    import { _ } from "svelte-i18n";
+    import Tooltip from "../../../components/tooltip/Tooltip.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
-    import { AvatarSize, type OpenChat } from "openchat-client";
     import {
+        activeVideoCall,
         incomingVideoCall,
         ringtoneUrls,
-        type IncomingVideoCall,
         selectedRingtone,
+        type IncomingVideoCall,
         type RingtoneKey,
     } from "../../../stores/video";
     import Avatar from "../../Avatar.svelte";
-    import TooltipWrapper from "../../TooltipWrapper.svelte";
-    import TooltipPopup from "../../TooltipPopup.svelte";
-    import { iconSize } from "../../../stores/iconSize";
+    import ModalContent from "../../ModalContent.svelte";
+    import Overlay from "../../Overlay.svelte";
+    import Translatable from "../../Translatable.svelte";
+
+    interface Props {
+        onJoinVideoCall: (chatId: ChatIdentifier, callType: VideoCallType) => void;
+    }
+
+    let { onJoinVideoCall }: Props = $props();
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    $: userStore = client.userStore;
-    $: communities = client.communities;
-    $: chat = normaliseChatSummary($incomingVideoCall);
+    const chat = $derived(normaliseChatSummary($incomingVideoCall));
+    const ringtoneUrl = $derived(ringtoneUrls[$selectedRingtone as RingtoneKey]);
+    const isOnAnotherCall = $derived($activeVideoCall !== undefined);
 
     function normaliseChatSummary(call: IncomingVideoCall | undefined) {
         if (call) {
             const chat = client.lookupChatSummary(call.chatId);
-            const initiator = $userStore[call.userId];
-            if (chat) {
+            const initiator = $allUsersStore.get(call.userId);
+            if (chat && initiator) {
                 switch (chat.kind) {
                     case "direct_chat":
-                        const them = $userStore[chat.them.userId];
+                        const them = $allUsersStore.get(chat.them.userId);
                         return {
                             chatId: chat.id,
                             name: client.displayName(them),
@@ -52,12 +64,12 @@
                         return {
                             chatId: chat.id,
                             name: `${
-                                $communities.get({
+                                $communitiesStore.get({
                                     kind: "community",
                                     communityId: chat.id.communityId,
                                 })?.name
                             } > ${chat.name}`,
-                            avatarUrl: client.groupAvatarUrl(chat),
+                            avatarUrl: client.groupAvatarUrl(chat, $selectedCommunitySummaryStore),
                             initiator: initiator.username,
                         };
                 }
@@ -67,63 +79,61 @@
 
     function join() {
         if ($incomingVideoCall !== undefined) {
-            dispatch("joinVideoCall", $incomingVideoCall.chatId);
+            onJoinVideoCall($incomingVideoCall.chatId, $incomingVideoCall.callType);
         }
     }
 
     function cancel() {
         incomingVideoCall.set(undefined);
     }
-
-    $: ringtoneUrl = ringtoneUrls[$selectedRingtone as RingtoneKey];
 </script>
 
 {#if chat !== undefined}
-    <audio playsinline={true} autoplay={true} src={ringtoneUrl} muted={false} preload="auto"
-    ></audio>
+    {#if !isOnAnotherCall}
+        <audio playsinline={true} autoplay={true} src={ringtoneUrl} muted={false} preload="auto">
+        </audio>
+    {/if}
 
-    <Overlay on:close={() => dispatch("cancel")} dismissible>
+    <Overlay onClose={cancel} dismissible>
         <ModalContent hideHeader hideFooter closeIcon>
-            <span class="body" slot="body">
-                <div class="details">
-                    <div class="avatar">
-                        <Avatar url={chat.avatarUrl} size={AvatarSize.Default} />
+            {#snippet body()}
+                <span class="body">
+                    <div class="details">
+                        <div class="avatar">
+                            <Avatar url={chat.avatarUrl} size={AvatarSize.Default} />
+                        </div>
+                        <div class="txt">
+                            <div class="name">
+                                {chat.name}
+                            </div>
+                            <div class="msg">
+                                <Translatable
+                                    resourceKey={i18nKey("videoCall.remoteStart", {
+                                        name: chat.initiator,
+                                    })} />
+                            </div>
+                        </div>
                     </div>
-                    <div class="txt">
-                        <div class="name">
-                            {chat.name}
-                        </div>
-                        <div class="msg">
-                            <Translatable
-                                resourceKey={i18nKey("videoCall.remoteStart", {
-                                    name: chat.initiator,
-                                })} />
-                        </div>
-                    </div>
-                </div>
-                <div class="btns">
-                    <TooltipWrapper position={"top"} align={"middle"}>
-                        <div slot="target" on:click={cancel} class="btn ignore">
-                            <PhoneHangup size={$iconSize} color={"var(--txt)"} />
-                        </div>
-                        <div let:position let:align slot="tooltip">
-                            <TooltipPopup {position} {align}>
+                    <div class="btns">
+                        <Tooltip position={"top"} align={"middle"}>
+                            <div role="button" onclick={cancel} class="btn ignore">
+                                <PhoneHangup size={$iconSize} color={"var(--txt)"} />
+                            </div>
+                            {#snippet popupTemplate()}
                                 <Translatable resourceKey={i18nKey("videoCall.ignore")} />
-                            </TooltipPopup>
-                        </div>
-                    </TooltipWrapper>
-                    <TooltipWrapper position={"top"} align={"middle"}>
-                        <div slot="target" on:click={join} class="btn join">
-                            <Phone size={$iconSize} color={"var(--txt)"} />
-                        </div>
-                        <div let:position let:align slot="tooltip">
-                            <TooltipPopup {position} {align}>
+                            {/snippet}
+                        </Tooltip>
+                        <Tooltip position={"top"} align={"middle"}>
+                            <div role="button" onclick={join} class="btn join">
+                                <Phone size={$iconSize} color={"var(--txt)"} />
+                            </div>
+                            {#snippet popupTemplate()}
                                 <Translatable resourceKey={i18nKey("videoCall.join")} />
-                            </TooltipPopup>
-                        </div>
-                    </TooltipWrapper>
-                </div>
-            </span>
+                            {/snippet}
+                        </Tooltip>
+                    </div>
+                </span>
+            {/snippet}
         </ModalContent>
     </Overlay>
 {/if}

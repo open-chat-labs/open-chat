@@ -1,12 +1,13 @@
-use crate::{generate_message_id, NervousSystemMetrics};
+use crate::{NervousSystemMetrics, generate_message_id};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, HashMap};
 use std::mem;
+use tracing::info;
 use types::{
-    icrc1, CanisterId, MessageId, Milliseconds, MultiUserChat, Proposal, ProposalDecisionStatus, ProposalId,
+    CanisterId, MessageId, MessageIndex, Milliseconds, MultiUserChat, Proposal, ProposalDecisionStatus, ProposalId,
     ProposalRewardStatus, ProposalUpdate, SnsNeuronId, TimestampMillis, UserId,
 };
 
@@ -56,22 +57,30 @@ impl NervousSystems {
             .and_then(|ns| ns.neuron_id_for_submitting_proposals)
     }
 
+    pub fn mark_disabled(&mut self, governance_canister_id: &CanisterId) {
+        if let Some(ns) = self.nervous_systems.get_mut(governance_canister_id) {
+            info!(%governance_canister_id, "NervousSystem disabled");
+            ns.disabled = true;
+        }
+    }
+
     pub fn validate_submit_proposal_payment(
         &self,
         governance_canister_id: &CanisterId,
-        payment: &icrc1::CompletedCryptoTransaction,
+        payment_ledger: CanisterId,
+        payment_amount: u128,
     ) -> Result<SnsNeuronId, ValidateSubmitProposalPaymentError> {
         use ValidateSubmitProposalPaymentError::*;
-        if let Some(ns) = self.nervous_systems.get(governance_canister_id) {
-            if let Some(neuron_id) = ns.neuron_id_for_submitting_proposals {
-                return if payment.ledger != ns.ledger_canister_id {
-                    Err(IncorrectLedger)
-                } else if u64::try_from(payment.amount).unwrap() < ns.proposal_rejection_fee {
-                    Err(InsufficientPayment(ns.proposal_rejection_fee + ns.transaction_fee))
-                } else {
-                    Ok(neuron_id)
-                };
-            }
+        if let Some(ns) = self.nervous_systems.get(governance_canister_id)
+            && let Some(neuron_id) = ns.neuron_id_for_submitting_proposals
+        {
+            return if payment_ledger != ns.ledger_canister_id {
+                Err(IncorrectLedger)
+            } else if u64::try_from(payment_amount).unwrap() < ns.proposal_rejection_fee {
+                Err(InsufficientPayment(ns.proposal_rejection_fee + ns.transaction_fee))
+            } else {
+                Ok(neuron_id)
+            };
         }
         Err(GovernanceCanisterNotSupported)
     }
@@ -99,7 +108,10 @@ impl NervousSystems {
         self.nervous_systems
             .values_mut()
             .filter(|ns| {
-                ns.proposals_to_be_pushed.queue.is_empty() && !ns.proposals_to_be_pushed.in_progress && !ns.sync_in_progress
+                !ns.disabled
+                    && ns.proposals_to_be_pushed.queue.is_empty()
+                    && !ns.proposals_to_be_pushed.in_progress
+                    && !ns.sync_in_progress
             })
             .map(|ns| {
                 ns.sync_in_progress = true;
@@ -111,14 +123,15 @@ impl NervousSystems {
     pub fn any_proposals_to_push(&self) -> bool {
         self.nervous_systems
             .values()
-            .any(|ns| !ns.proposals_to_be_pushed.queue.is_empty())
+            .any(|ns| !ns.disabled && !ns.proposals_to_be_pushed.queue.is_empty())
     }
 
     pub fn dequeue_next_proposal_to_push(&mut self) -> Option<ProposalToPush> {
         for ns in self
             .nervous_systems
             .values_mut()
-            .filter(|n| !n.proposals_to_be_pushed.in_progress)
+            .filter(|ns| !ns.disabled && !ns.proposals_to_be_pushed.in_progress)
+            .sorted_by_key(|ns| ns.latest_failed_proposal_push)
         {
             if let Some((_, p)) = ns.proposals_to_be_pushed.queue.pop_first() {
                 ns.proposals_to_be_pushed.in_progress = true;
@@ -134,19 +147,18 @@ impl NervousSystems {
 
     pub fn get_neuron_in_need_of_dissolve_delay_increase(&self) -> Option<NeuronInNeedOfDissolveDelayIncrease> {
         for ns in self.nervous_systems.values() {
-            if let Some(neuron_id) = ns.neuron_id_for_submitting_proposals {
-                if let Some(additional_dissolve_delay_seconds) = ns
+            if let Some(neuron_id) = ns.neuron_id_for_submitting_proposals
+                && let Some(additional_dissolve_delay_seconds) = ns
                     .min_dissolve_delay_to_vote
                     .checked_sub(ns.neuron_for_submitting_proposals_dissolve_delay)
                     .filter(|dd| *dd > 0)
                     .map(|dd| ((dd / 1000) + 1) as u32)
-                {
-                    return Some(NeuronInNeedOfDissolveDelayIncrease {
-                        governance_canister_id: ns.governance_canister_id,
-                        neuron_id,
-                        additional_dissolve_delay_seconds,
-                    });
-                }
+            {
+                return Some(NeuronInNeedOfDissolveDelayIncrease {
+                    governance_canister_id: ns.governance_canister_id,
+                    neuron_id,
+                    additional_dissolve_delay_seconds,
+                });
             }
         }
         None
@@ -155,13 +167,16 @@ impl NervousSystems {
     pub fn any_proposals_to_update(&self) -> bool {
         self.nervous_systems
             .values()
-            .any(|ns| !ns.proposals_to_be_updated.pending.is_empty())
+            .any(|ns| !ns.disabled && !ns.proposals_to_be_updated.pending.is_empty())
     }
 
     pub fn dequeue_next_proposals_to_update(&mut self) -> Option<ProposalsToUpdate> {
         self.nervous_systems
             .values_mut()
-            .find(|ns| !ns.proposals_to_be_updated.pending.is_empty() && !ns.proposals_to_be_updated.in_progress)
+            .filter(|ns| {
+                !ns.disabled && !ns.proposals_to_be_updated.pending.is_empty() && !ns.proposals_to_be_updated.in_progress
+            })
+            .min_by_key(|ns| max(ns.latest_successful_proposals_update, ns.latest_failed_proposals_update))
             .map(|ns| {
                 ns.proposals_to_be_updated.in_progress = true;
                 let proposals = std::mem::take(&mut ns.proposals_to_be_updated.pending)
@@ -208,15 +223,9 @@ impl NervousSystems {
         &mut self,
         governance_canister_id: CanisterId,
     ) -> Vec<UserSubmittedProposalResult> {
-        if let Some(ns) = self
-            .nervous_systems
+        self.nervous_systems
             .get_mut(&governance_canister_id)
-            .filter(|ns| !ns.decided_user_submitted_proposals.is_empty())
-        {
-            mem::take(&mut ns.decided_user_submitted_proposals)
-        } else {
-            Vec::new()
-        }
+            .map_or(Vec::new(), |ns| mem::take(&mut ns.decided_user_submitted_proposals))
     }
 
     pub fn active_proposals(&self, governance_canister_id: &CanisterId) -> Vec<ProposalId> {
@@ -236,17 +245,29 @@ impl NervousSystems {
         }
     }
 
-    pub fn mark_proposal_pushed(&mut self, governance_canister_id: &CanisterId, proposal: Proposal, message_id: MessageId) {
+    pub fn mark_proposal_pushed(
+        &mut self,
+        governance_canister_id: &CanisterId,
+        proposal: Proposal,
+        message_id: MessageId,
+        message_index_if_known: Option<MessageIndex>,
+    ) {
         if let Some(ns) = self.nervous_systems.get_mut(governance_canister_id) {
-            ns.active_proposals.insert(proposal.id(), (proposal, message_id));
+            let proposal_id = proposal.id();
+            ns.active_proposals.insert(proposal_id, (proposal, message_id));
             ns.proposals_to_be_pushed.in_progress = false;
+
+            if let Some(message_index) = message_index_if_known {
+                ns.proposal_messages.insert(proposal_id, (message_index, message_id));
+            }
         }
     }
 
-    pub fn mark_proposal_push_failed(&mut self, governance_canister_id: &CanisterId, proposal: Proposal) {
+    pub fn mark_proposal_push_failed(&mut self, governance_canister_id: &CanisterId, proposal: Proposal, now: TimestampMillis) {
         if let Some(ns) = self.nervous_systems.get_mut(governance_canister_id) {
             ns.proposals_to_be_pushed.queue.insert(proposal.id(), proposal);
             ns.proposals_to_be_pushed.in_progress = false;
+            ns.latest_failed_proposal_push = Some(now);
         }
     }
 
@@ -307,6 +328,7 @@ pub struct NervousSystem {
     latest_failed_sync: Option<TimestampMillis>,
     latest_successful_proposals_update: Option<TimestampMillis>,
     latest_failed_proposals_update: Option<TimestampMillis>,
+    latest_failed_proposal_push: Option<TimestampMillis>,
     proposals_to_be_pushed: ProposalsToBePushed,
     proposals_to_be_updated: ProposalsToBeUpdated,
     active_proposals: BTreeMap<ProposalId, (Proposal, MessageId)>,
@@ -319,6 +341,8 @@ pub struct NervousSystem {
     min_neuron_stake: u64,
     min_dissolve_delay_to_vote: Milliseconds,
     proposal_rejection_fee: u64,
+    proposal_messages: BTreeMap<ProposalId, (MessageIndex, MessageId)>,
+    disabled: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -343,6 +367,7 @@ impl NervousSystem {
             latest_failed_sync: None,
             latest_successful_proposals_update: None,
             latest_failed_proposals_update: None,
+            latest_failed_proposal_push: None,
             proposals_to_be_pushed: ProposalsToBePushed::default(),
             proposals_to_be_updated: ProposalsToBeUpdated::default(),
             active_proposals: BTreeMap::default(),
@@ -355,32 +380,45 @@ impl NervousSystem {
             min_neuron_stake: nervous_system.min_neuron_stake,
             min_dissolve_delay_to_vote: nervous_system.min_dissolve_delay_to_vote,
             proposal_rejection_fee: nervous_system.proposal_rejection_fee,
+            proposal_messages: BTreeMap::new(),
+            disabled: false,
         }
+    }
+
+    pub fn chat_id(&self) -> MultiUserChat {
+        self.chat_id
+    }
+
+    pub fn disabled(&self) -> bool {
+        self.disabled
     }
 
     pub fn process_proposal(&mut self, proposal: Proposal, finished: bool) {
         let proposal_id = proposal.id();
 
-        if let Some(user_id) = self.active_user_submitted_proposals.get(&proposal_id).copied() {
-            if let Some(adopted) = match proposal.status() {
+        if let Some(user_id) = self.active_user_submitted_proposals.get(&proposal_id).copied()
+            && let Some(adopted) = match proposal.status() {
                 ProposalDecisionStatus::Unspecified | ProposalDecisionStatus::Open => None,
                 ProposalDecisionStatus::Adopted | ProposalDecisionStatus::Executed | ProposalDecisionStatus::Failed => {
                     Some(true)
                 }
                 ProposalDecisionStatus::Rejected => Some(false),
-            } {
-                self.active_user_submitted_proposals.remove(&proposal_id);
-                self.decided_user_submitted_proposals.push(UserSubmittedProposalResult {
-                    proposal_id,
-                    user_id,
-                    adopted,
-                });
             }
+        {
+            self.active_user_submitted_proposals.remove(&proposal_id);
+            self.decided_user_submitted_proposals.push(UserSubmittedProposalResult {
+                proposal_id,
+                user_id,
+                adopted,
+            });
         }
 
         if finished {
             let update = ProposalUpdate {
-                message_id: generate_message_id(self.governance_canister_id, proposal_id),
+                message_id: self
+                    .proposal_message(&proposal_id)
+                    .map(|(_, id)| id)
+                    .unwrap_or_else(|| generate_message_id(self.governance_canister_id, proposal_id)),
                 status: Some(proposal.status()),
                 reward_status: Some(proposal.reward_status()),
                 latest_tally: Some(proposal.tally()),
@@ -400,6 +438,7 @@ impl NervousSystem {
                 latest_tally: (latest_tally != previous.tally()).then_some(latest_tally),
                 deadline: (deadline != previous.deadline()).then_some(deadline),
             };
+            *previous = proposal;
             self.upsert_proposal_update(update);
         } else {
             self.proposals_to_be_pushed.queue.insert(proposal_id, proposal);
@@ -460,6 +499,14 @@ impl NervousSystem {
     pub fn proposal_rejection_fee(&self) -> u64 {
         self.proposal_rejection_fee
     }
+
+    pub fn neuron_for_submitting_proposals(&self) -> Option<SnsNeuronId> {
+        self.neuron_id_for_submitting_proposals
+    }
+
+    pub fn proposal_message(&self, proposal_id: &ProposalId) -> Option<(MessageIndex, MessageId)> {
+        self.proposal_messages.get(proposal_id).copied()
+    }
 }
 
 impl From<&NervousSystem> for NervousSystemMetrics {
@@ -472,6 +519,7 @@ impl From<&NervousSystem> for NervousSystemMetrics {
             latest_failed_sync: ns.latest_failed_sync,
             latest_successful_proposals_update: ns.latest_successful_proposals_update,
             latest_failed_proposals_update: ns.latest_failed_proposals_update,
+            latest_failed_proposal_push: ns.latest_failed_proposal_push,
             queued_proposals: ns.proposals_to_be_pushed.queue.keys().copied().collect(),
             active_proposals: ns.active_proposals.keys().copied().collect(),
             active_user_submitted_proposals: ns.active_user_submitted_proposals.keys().copied().collect(),
@@ -481,6 +529,7 @@ impl From<&NervousSystem> for NervousSystemMetrics {
             min_neuron_stake: ns.min_neuron_stake,
             min_dissolve_delay_to_vote: ns.min_dissolve_delay_to_vote,
             proposal_rejection_fee: ns.proposal_rejection_fee,
+            disabled: ns.disabled,
         }
     }
 }

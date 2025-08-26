@@ -8,11 +8,17 @@
         "build:prod": "npm ci && dotenv -- turbo run build:prod --cache-dir .turbo",
         "build:prod_test": "npm ci && dotenv -- turbo run build:prod_test --cache-dir .turbo",
         "build:testnet": "npm ci && dotenv -- turbo run build:testnet --cache-dir .turbo",
+        "build:docker": "npm ci && dotenv -- turbo run build:docker --cache-dir .turbo",
         "deploy:prod_test": "npm i && dotenv -- turbo run deploy:prod_test --cache-dir .turbo",
         "deploy:prod": "npm ci && dotenv -- turbo run deploy:prod --cache-dir .turbo",
         "deploy:testnet": "npm ci && dotenv -- turbo run deploy:testnet --cache-dir .turbo",
         "dev": "npm i && dotenv -- turbo run dev --cache-dir .turbo",
-        "changelog": "auto-changelog --tag-pattern '-website' --file-pattern '^frontend'"
+        "changelog": "auto-changelog --tag-pattern '-website' --file-pattern '^frontend'",
+        "verify": "dotenv -- turbo run verify --cache-dir .turbo",
+        "tauri": "tauri",
+        "mobile": "cargo tauri android dev --no-watch",
+        "android:release": "npm ci && dotenv -- turbo run android:release --cache-dir .turbo",
+        "dev:mobile": "npm ci && dotenv -- turbo run dev:mobile --cache-dir .turbo"
     },
     "author": "julian.jelfs@gmail.com",
     "workspaces": [
@@ -21,11 +27,10 @@
         "openchat-client",
         "openchat-service-worker",
         "openchat-shared",
-        "openchat-worker"
+        "openchat-worker",
+        "tauri-plugin-oc"
     ],
     "devDependencies": {
-        "@babel/core": "^7.22.10",
-        "@babel/preset-env": "^7.22.10",
         "@rollup/plugin-alias": "^5.0.0",
         "@rollup/plugin-commonjs": "^25.0.4",
         "@rollup/plugin-html": "^1.0.2",
@@ -35,36 +40,49 @@
         "@rollup/plugin-replace": "^5.0.5",
         "@rollup/plugin-terser": "^0.4.4",
         "@rollup/plugin-typescript": "^11.1.2",
-        "@typescript-eslint/eslint-plugin": "^6.4.0",
-        "@typescript-eslint/parser": "^6.4.0",
+        "@tauri-apps/api": "^2.7.0",
+        "@typescript-eslint/eslint-plugin": "^8.38.0",
+        "@typescript-eslint/parser": "^8.38.0",
         "auto-changelog": "open-chat-labs/auto-changelog#master",
-        "babel-jest": "^29.6.2",
-        "babel-loader": "^9.1.3",
         "dotenv-cli": "^7.2.1",
-        "eslint-config-prettier": "^9.0.0",
-        "eslint-plugin-prettier": "^5.0.0",
-        "rollup": "^4.4.0",
+        "eslint": "^9.32.0",
+        "eslint-config-prettier": "^10.1.8",
+        "eslint-plugin-prettier": "^5.5.3",
+        "eslint-plugin-svelte": "^3.11.0",
+        "prettier-plugin-svelte": "^3.3.2",
+        "rollup": "^4.22.4",
         "rollup-plugin-analyzer": "^4.0.0",
         "rollup-plugin-cleaner": "^1.0.0",
         "rollup-plugin-copy": "^3.4.0",
         "rollup-plugin-delete": "^2.0.0",
-        "rollup-plugin-dev": "^2.0.4",
         "rollup-plugin-filesize": "^10.0.0",
         "rollup-plugin-inject": "^3.0.2",
         "rollup-plugin-inject-process-env": "^1.3.1",
         "rollup-plugin-livereload": "^2.0.5",
-        "rollup-plugin-svelte": "^7.1.6",
         "rollup-styles": "^1.5.0",
-        "ts-jest": "^29.1.1",
-        "turbo": "^1.10.13"
+        "svelte": "^5.25.3",
+        "svelte-check": "^4.1.5",
+        "turbo": "^2.1.2"
     },
     "dependencies": {
-        "@daily-co/daily-js": "^0.57.2",
-        "wavesurfer.js": "^7.7.5",
-        "workbox-cacheable-response": "^7.0.0",
-        "workbox-expiration": "^7.0.0",
-        "workbox-recipes": "^7.0.0",
-        "workbox-routing": "^7.0.0",
-        "workbox-strategies": "^7.0.0"
+        "@dfinity/auth-client": "^3.2.2",
+        "@icp-sdk/core": "^4.0.0",
+        "chrono-node": "^2.7.8",
+        "svelte-dnd-action": "^0.9.52",
+        "svelte-i18n": "^4.0.1",
+        "workbox-core": "^7.1.0",
+        "workbox-expiration": "^7.1.0",
+        "workbox-recipes": "^7.1.0",
+        "workbox-routing": "^7.1.0",
+        "workbox-strategies": "^7.1.0"
+    },
+    "packageManager": "npm@10.8.2",
+    "overrides": {
+        "svelte-material-icons": {
+            "svelte": "^5.0.0"
+        },
+        "svelte-easy-crop": {
+            "svelte": "^5.0.0"
+        }
     }
 }

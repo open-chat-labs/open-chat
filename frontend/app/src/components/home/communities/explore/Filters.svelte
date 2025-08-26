@@ -1,27 +1,27 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
+    import { communityFiltersStore, iconSize, mobileWidth, OpenChat } from "openchat-client";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
-    import SectionHeader from "../../../SectionHeader.svelte";
-    import HoverIcon from "../../../HoverIcon.svelte";
-    import { iconSize } from "../../../../stores/iconSize";
-    import Checkbox from "../../../Checkbox.svelte";
-    import { mobileWidth } from "../../../../stores/screenDimensions";
-    import { communityFiltersStore } from "../../../../stores/communityFilters";
-    import CollapsibleCard from "../../../CollapsibleCard.svelte";
     import { i18nKey, supportedLanguages } from "../../../../i18n/i18n";
+    import Checkbox from "../../../Checkbox.svelte";
+    import CollapsibleCard from "../../../CollapsibleCard.svelte";
+    import HoverIcon from "../../../HoverIcon.svelte";
+    import SectionHeader from "../../../SectionHeader.svelte";
     import Translatable from "../../../Translatable.svelte";
 
-    const dispatch = createEventDispatcher();
+    const client = getContext<OpenChat>("client");
 
-    function close() {
-        dispatch("close");
+    interface Props {
+        onClose: () => void;
     }
+
+    let { onClose }: Props = $props();
 </script>
 
 <SectionHeader shadow flush={$mobileWidth}>
     <h4><Translatable resourceKey={i18nKey("communities.filters")} /></h4>
-    <span title={$_("close")} class="close" on:click={close}>
+    <span title={$_("close")} class="close" on:click={onClose}>
         <HoverIcon>
             <Close size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
@@ -34,9 +34,9 @@
             <div class="toggle">
                 <Checkbox
                     id={`language_${lang.code}`}
-                    on:change={() => communityFiltersStore.toggleLanguage(lang.code)}
+                    onChange={() => client.toggleCommunityFilterLanguage(lang.code)}
                     label={i18nKey(lang.name)}
-                    checked={$communityFiltersStore.languages.has(lang.code)} />
+                    checked={$communityFiltersStore.has(lang.code)} />
             </div>
         {/each}
     </CollapsibleCard>

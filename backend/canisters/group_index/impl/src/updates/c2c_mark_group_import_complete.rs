@@ -1,14 +1,14 @@
 use crate::guards::caller_is_community_canister;
 use crate::updates::c2c_delete_group::delete_group;
 use crate::updates::c2c_mark_community_active::c2c_mark_community_active_impl;
-use crate::{mutate_state, RuntimeState};
-use canister_api_macros::update_msgpack;
+use crate::{RuntimeState, mutate_state};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use group_index_canister::c2c_mark_group_import_complete::{Response::*, *};
+use constants::OPENCHAT_BOT_USER_ID;
+use group_index_canister::c2c_mark_group_import_complete::*;
 use types::{CommunityId, CommunityImportedInto};
-use utils::consts::OPENCHAT_BOT_USER_ID;
 
-#[update_msgpack(guard = "caller_is_community_canister")]
+#[update(guard = "caller_is_community_canister", msgpack = true)]
 #[trace]
 fn c2c_mark_group_import_complete(args: Args) -> Response {
     mutate_state(|state| c2c_mark_group_import_complete_impl(args, state))
@@ -34,5 +34,5 @@ fn c2c_mark_group_import_complete_impl(args: Args, state: &mut RuntimeState) -> 
         state,
     );
 
-    Success
+    Response::Success
 }

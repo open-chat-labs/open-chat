@@ -1,18 +1,22 @@
-use crate::model::notifications_canister::NotificationsCanister;
+use crate::model::local_index_event_batch::LocalIndexEventBatch;
 use crate::model::subscriptions::Subscriptions;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use notifications_index_canister::{NotificationsIndexEvent, SubscriptionAdded, SubscriptionRemoved};
+use principal_to_user_id_map::PrincipalToUserIdMap;
+use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
-use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, SubscriptionInfo, TimestampMillis, Timestamped, UserId};
-use utils::canister::CanistersRequiringUpgrade;
-use utils::canister_event_sync_queue::CanisterEventSyncQueue;
+use std::collections::{BTreeMap, BTreeSet, HashSet};
+use timer_job_queues::GroupedTimerJobQueue;
+use types::{
+    BuildVersion, CanisterId, Cycles, FcmToken, IdempotentEnvelope, SubscriptionInfo, TimestampMillis, Timestamped, UserId,
+};
 use utils::env::Environment;
+use utils::fcm_token_store::FcmTokenStore;
+use utils::idempotency_checker::IdempotencyChecker;
 
 mod guards;
-mod jobs;
 mod lifecycle;
 mod memory;
 mod model;
@@ -35,67 +39,74 @@ impl RuntimeState {
         RuntimeState { env, data }
     }
 
-    pub fn is_caller_governance_principal(&self) -> bool {
-        let caller = self.env.caller();
-        self.data.governance_principals.contains(&caller)
-    }
-
-    pub fn is_caller_user_index(&self) -> bool {
-        self.env.caller() == self.data.user_index_canister_id
+    pub fn is_caller_registry_canister(&self) -> bool {
+        self.env.caller() == self.data.registry_canister_id
     }
 
     pub fn is_caller_push_service(&self) -> bool {
         self.data.push_service_principals.contains(&self.env.caller())
     }
 
-    pub fn add_subscription(&mut self, user_id: UserId, subscription: SubscriptionInfo) {
+    pub fn add_subscription(&mut self, user_id: UserId, subscription: SubscriptionInfo, now: TimestampMillis) {
         let subscriptions_removed = self.data.subscriptions.push(user_id, subscription.clone());
 
         let event = NotificationsIndexEvent::SubscriptionAdded(SubscriptionAdded { user_id, subscription });
 
-        self.push_event_to_notifications_canisters(event);
+        self.push_event_to_local_indexes(event, now);
 
         for p256dh_key in subscriptions_removed {
             let event = NotificationsIndexEvent::SubscriptionRemoved(SubscriptionRemoved { user_id, p256dh_key });
 
-            self.push_event_to_notifications_canisters(event);
+            self.push_event_to_local_indexes(event, now);
         }
     }
 
-    pub fn remove_subscription(&mut self, user_id: UserId, p256dh_key: String) {
+    pub fn remove_subscription(&mut self, user_id: UserId, p256dh_key: String, now: TimestampMillis) {
         self.data.subscriptions.remove(user_id, &p256dh_key);
 
         let event = NotificationsIndexEvent::SubscriptionRemoved(SubscriptionRemoved { user_id, p256dh_key });
 
-        self.push_event_to_notifications_canisters(event);
+        self.push_event_to_local_indexes(event, now);
     }
 
-    pub fn remove_all_subscriptions(&mut self, user_id: UserId) {
+    pub fn remove_all_subscriptions(&mut self, user_id: UserId, now: TimestampMillis) {
         self.data.subscriptions.remove_all(user_id);
 
         let event = NotificationsIndexEvent::AllSubscriptionsRemoved(user_id);
 
-        self.push_event_to_notifications_canisters(event);
+        self.push_event_to_local_indexes(event, now);
+    }
+
+    pub fn add_fcm_token(&mut self, user_id: UserId, fcm_token: FcmToken) -> Result<(), String> {
+        // Add token locally
+        self.data.fcm_token_store.add(user_id, fcm_token.clone()).map(|_| {
+            self.push_event_to_local_indexes(NotificationsIndexEvent::FcmTokenAdded(user_id, fcm_token), self.env.now());
+        })
+    }
+
+    // TODO remove tokens when push to firebase fails
+    #[allow(dead_code)]
+    pub fn remove_fcm_token(&mut self, user_id: UserId, fcm_token: FcmToken) -> Result<(), String> {
+        self.data.fcm_token_store.remove(&user_id, &fcm_token).map(|_| {
+            self.push_event_to_local_indexes(NotificationsIndexEvent::FcmTokenRemoved(user_id, fcm_token), self.env.now());
+        })
     }
 
     pub fn metrics(&self) -> Metrics {
         Metrics {
-            memory_used: utils::memory::used(),
+            heap_memory_used: utils::memory::heap(),
+            stable_memory_used: utils::memory::stable(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
+            liquid_cycles_balance: self.env.liquid_cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
             subscriptions: self.data.subscriptions.total(),
-            users: self.data.principal_to_user_id.len() as u64,
+            users: self.data.principal_to_user_id_map.len() as u64,
             governance_principals: self.data.governance_principals.iter().copied().collect(),
             push_service_principals: self.data.push_service_principals.iter().copied().collect(),
-            notifications_canister_wasm_version: self.data.notifications_canister_wasm_for_new_canisters.version,
-            notifications_canisters: self
-                .data
-                .notifications_canisters
-                .iter()
-                .map(|(k, v)| (*k, v.clone()))
-                .collect(),
+            local_indexes: self.data.local_indexes.clone(),
+            stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
@@ -103,31 +114,35 @@ impl RuntimeState {
         }
     }
 
-    fn push_event_to_notifications_canisters(&mut self, event: NotificationsIndexEvent) {
-        for canister_id in self.data.notifications_canisters.keys().copied() {
-            self.data
-                .notifications_index_event_sync_queue
-                .push(canister_id, event.clone());
+    pub fn push_event_to_local_indexes(&mut self, event: NotificationsIndexEvent, now: TimestampMillis) {
+        for canister_id in self.data.local_indexes.iter() {
+            self.data.local_index_event_sync_queue.push(
+                *canister_id,
+                IdempotentEnvelope {
+                    created_at: now,
+                    idempotency_id: self.env.rng().next_u64(),
+                    value: event.clone(),
+                },
+            );
         }
-        jobs::sync_notifications_canisters::start_job_if_required(self);
     }
 }
 
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub governance_principals: HashSet<Principal>,
-    pub notifications_canisters: HashMap<CanisterId, NotificationsCanister>,
+    pub local_indexes: BTreeSet<CanisterId>,
     pub push_service_principals: HashSet<Principal>,
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
-    pub principal_to_user_id: HashMap<Principal, UserId>,
+    pub registry_canister_id: CanisterId,
+    pub principal_to_user_id_map: PrincipalToUserIdMap,
     pub subscriptions: Subscriptions,
-    pub notifications_canister_wasm_for_new_canisters: CanisterWasm,
-    pub notifications_canister_wasm_for_upgrades: CanisterWasm,
-    pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
-    pub notifications_index_event_sync_queue: CanisterEventSyncQueue<NotificationsIndexEvent>,
+    pub local_index_event_sync_queue: GroupedTimerJobQueue<LocalIndexEventBatch>,
+    pub idempotency_checker: IdempotencyChecker,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
+    pub fcm_token_store: FcmTokenStore,
 }
 
 impl Data {
@@ -136,23 +151,23 @@ impl Data {
         push_service_principals: Vec<Principal>,
         user_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
-        notifications_canister_wasm: CanisterWasm,
+        registry_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
         Data {
             governance_principals: governance_principals.into_iter().collect(),
-            notifications_canisters: HashMap::default(),
+            local_indexes: BTreeSet::default(),
             push_service_principals: push_service_principals.into_iter().collect(),
             user_index_canister_id,
             cycles_dispenser_canister_id,
-            principal_to_user_id: HashMap::default(),
+            registry_canister_id,
+            principal_to_user_id_map: PrincipalToUserIdMap::default(),
             subscriptions: Subscriptions::default(),
-            notifications_canister_wasm_for_new_canisters: notifications_canister_wasm.clone(),
-            notifications_canister_wasm_for_upgrades: notifications_canister_wasm,
-            canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
-            notifications_index_event_sync_queue: CanisterEventSyncQueue::default(),
+            local_index_event_sync_queue: GroupedTimerJobQueue::new(5, false),
+            idempotency_checker: IdempotencyChecker::default(),
             rng_seed: [0; 32],
             test_mode,
+            fcm_token_store: FcmTokenStore::default(),
         }
     }
 }
@@ -160,16 +175,18 @@ impl Data {
 #[derive(Serialize, Debug)]
 pub struct Metrics {
     pub now: TimestampMillis,
-    pub memory_used: u64,
+    pub heap_memory_used: u64,
+    pub stable_memory_used: u64,
     pub cycles_balance: Cycles,
+    pub liquid_cycles_balance: Cycles,
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub subscriptions: u64,
     pub users: u64,
     pub governance_principals: Vec<Principal>,
     pub push_service_principals: Vec<Principal>,
-    pub notifications_canister_wasm_version: BuildVersion,
-    pub notifications_canisters: Vec<(CanisterId, NotificationsCanister)>,
+    pub local_indexes: BTreeSet<CanisterId>,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }
 

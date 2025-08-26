@@ -1,19 +1,20 @@
-use crate::client::icrc1::happy_path::balance_of;
+use crate::client::ledger::happy_path::balance_of;
 use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
-use crate::rng::{random_message_id, random_string};
 use crate::utils::{now_millis, now_nanos, tick_many};
-use crate::{client, CanisterIds, TestEnv, User};
+use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
-use ic_ledger_types::Tokens;
+use constants::{ICP_SYMBOL, PRIZE_FEE_PERCENT};
 use ledger_utils::create_pending_transaction;
+use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
+use testing::rng::{random_from_u128, random_string};
 use types::{
-    CanisterId, ChannelId, ChatEvent, CommunityId, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContent,
-    MessageContentInitial, OptionUpdate, PrizeContentInitial, TextContent, UpdatedRules, Version,
+    CanisterId, ChannelId, ChatEvent, CommunityId, CryptoContent, CryptoTransaction, MessageContent, MessageContentInitial,
+    OptionUpdate, PrizeContentInitial, TextContent, UpdatedRules, Version,
 };
 
 #[test]
@@ -69,7 +70,7 @@ fn send_crypto_in_channel(with_c2c_error: bool) {
     } = init_test_data(env, canister_ids, *controller);
 
     if with_c2c_error {
-        stop_canister(env, canister_ids.local_group_index, community_id.into());
+        stop_canister(env, canister_ids.local_user_index(env, community_id), community_id.into());
     }
 
     let send_message_result = client::user::send_message_with_transfer_to_channel(
@@ -80,11 +81,11 @@ fn send_crypto_in_channel(with_c2c_error: bool) {
             community_id,
             channel_id,
             thread_root_message_index: None,
-            message_id: random_message_id(),
+            message_id: random_from_u128(),
             content: MessageContentInitial::Crypto(CryptoContent {
                 recipient: user2.user_id,
                 transfer: CryptoTransaction::Pending(create_pending_transaction(
-                    Cryptocurrency::InternetComputer,
+                    ICP_SYMBOL.to_string(),
                     canister_ids.icp_ledger,
                     10000,
                     10000,
@@ -98,6 +99,7 @@ fn send_crypto_in_channel(with_c2c_error: bool) {
             sender_display_name: None,
             replies_to: None,
             mentioned: Vec::new(),
+            block_level_markdown: false,
             community_rules_accepted: None,
             channel_rules_accepted: None,
             message_filter_failed: None,
@@ -120,10 +122,12 @@ fn send_crypto_in_channel(with_c2c_error: bool) {
     let user2_balance = balance_of(env, canister_ids.icp_ledger, user2.user_id);
     assert_eq!(user2_balance, 10000);
 
+    tick_many(env, 3);
+
     if with_c2c_error {
+        start_canister(env, canister_ids.local_user_index(env, community_id), community_id.into());
         env.advance_time(Duration::from_secs(10));
-        start_canister(env, canister_ids.local_group_index, community_id.into());
-        env.tick();
+        tick_many(env, 3);
     }
 
     let event = client::community::happy_path::events(env, &user2, community_id, channel_id, 0.into(), true, 10, 10)
@@ -158,8 +162,9 @@ fn send_prize_in_channel() {
 
     let initial_user1_balance = balance_of(env, canister_ids.icp_ledger, user1.canister());
     let fee = 10000;
-    let prizes = vec![Tokens::from_e8s(100000)];
-    let total = prizes.iter().map(|t| (t.e8s() as u128) + fee).sum::<u128>();
+    let prizes = vec![100000];
+    let total = prizes.iter().sum::<u128>();
+    let amount = total + (fee * prizes.len() as u128) + (total * PRIZE_FEE_PERCENT as u128 / 100);
 
     let transfer_to: CanisterId = community_id.into();
     let send_message_result = client::user::send_message_with_transfer_to_channel(
@@ -170,26 +175,32 @@ fn send_prize_in_channel() {
             community_id,
             channel_id,
             thread_root_message_index: None,
-            message_id: random_message_id(),
+            message_id: random_from_u128(),
             content: MessageContentInitial::Prize(PrizeContentInitial {
                 transfer: CryptoTransaction::Pending(create_pending_transaction(
-                    Cryptocurrency::InternetComputer,
+                    ICP_SYMBOL.to_string(),
                     canister_ids.icp_ledger,
-                    total,
+                    amount,
                     fee,
                     transfer_to.into(),
                     None,
                     now_nanos(env),
                 )),
                 caption: None,
-                prizes,
+                prizes_v2: prizes,
                 end_date: now_millis(env) + 1000,
                 diamond_only: false,
+                lifetime_diamond_only: false,
+                unique_person_only: false,
+                streak_only: 0,
+                requires_captcha: false,
+                min_chit_earned: 0,
             }),
             sender_name: user1.username(),
             sender_display_name: None,
             replies_to: None,
             mentioned: Vec::new(),
+            block_level_markdown: false,
             community_rules_accepted: None,
             channel_rules_accepted: None,
             message_filter_failed: None,
@@ -202,10 +213,10 @@ fn send_prize_in_channel() {
         user_canister::send_message_with_transfer_to_channel::Response::Success(_)
     ) {
         let user1_balance_after_sending_prize = balance_of(env, canister_ids.icp_ledger, user1.canister());
-        assert_eq!(user1_balance_after_sending_prize, initial_user1_balance - total - fee);
+        assert_eq!(user1_balance_after_sending_prize, initial_user1_balance - amount - fee);
 
         let community_balance_after_sending_prize = balance_of(env, canister_ids.icp_ledger, Principal::from(community_id));
-        assert_eq!(community_balance_after_sending_prize, total);
+        assert_eq!(community_balance_after_sending_prize, amount);
 
         env.advance_time(Duration::from_secs(2));
         tick_many(env, 5);
@@ -242,12 +253,13 @@ fn send_message_with_community_rules_not_accepted_fails() {
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, None, None);
 
-    if !matches!(
-        response,
-        community_canister::send_message::Response::CommunityRulesNotAccepted
-    ) {
-        panic!("{response:?}");
-    }
+    assert!(
+        matches!(
+            &response,
+            community_canister::send_message::Response::Error(e) if e.matches_code(OCErrorCode::CommunityRulesNotAccepted)
+        ),
+        "{response:?}"
+    );
 }
 
 #[test]
@@ -272,9 +284,10 @@ fn send_message_with_channel_rules_not_accepted_fails() {
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, None, None);
 
-    if !matches!(response, community_canister::send_message::Response::RulesNotAccepted) {
-        panic!("{response:?}");
-    }
+    assert!(
+        matches!(&response, community_canister::send_message::Response::Error(e) if e.matches_code(OCErrorCode::ChatRulesNotAccepted)),
+        "{response:?}"
+    );
 }
 
 #[test]
@@ -299,9 +312,10 @@ fn send_message_with_community_rules_accepted_succeeds() {
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, Some(Version::from(1)), None);
 
-    if !matches!(response, community_canister::send_message::Response::Success(_)) {
-        panic!("'send_message' error {response:?}");
-    }
+    assert!(
+        matches!(response, community_canister::send_message::Response::Success(_)),
+        "'send_message' error {response:?}"
+    );
 }
 
 #[test]
@@ -326,9 +340,10 @@ fn send_message_with_channel_rules_accepted_succeeds() {
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, None, Some(Version::from(1)));
 
-    if !matches!(response, community_canister::send_message::Response::Success(_)) {
-        panic!("'send_message' error {response:?}");
-    }
+    assert!(
+        matches!(response, community_canister::send_message::Response::Success(_)),
+        "'send_message' error {response:?}"
+    );
 }
 
 #[test]
@@ -354,9 +369,10 @@ fn send_message_with_community_rules_but_not_channel_rules_accepted_fails() {
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, Some(Version::from(1)), None);
 
-    if !matches!(response, community_canister::send_message::Response::RulesNotAccepted) {
-        panic!("{response:?}");
-    }
+    assert!(
+        matches!(&response, community_canister::send_message::Response::Error(e) if e.matches_code(OCErrorCode::ChatRulesNotAccepted)),
+        "{response:?}"
+    );
 }
 
 #[test]
@@ -382,12 +398,13 @@ fn send_message_with_channel_rules_but_not_community_rules_accepted_fails() {
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, None, Some(Version::from(1)));
 
-    if !matches!(
-        response,
-        community_canister::send_message::Response::CommunityRulesNotAccepted
-    ) {
-        panic!("{response:?}");
-    }
+    assert!(
+        matches!(
+            &response,
+            community_canister::send_message::Response::Error(e) if e.matches_code(OCErrorCode::CommunityRulesNotAccepted)
+        ),
+        "{response:?}"
+    );
 }
 
 #[test]
@@ -420,9 +437,10 @@ fn send_message_with_community_rules_and_channel_rules_accepted_succeeds() {
         Some(Version::from(1)),
     );
 
-    if !matches!(response, community_canister::send_message::Response::Success(_)) {
-        panic!("'send_message' error {response:?}");
-    }
+    assert!(
+        matches!(response, community_canister::send_message::Response::Success(_)),
+        "'send_message' error {response:?}"
+    );
 }
 
 #[test]
@@ -457,9 +475,10 @@ fn send_message_with_previously_accepted_rules_succeeds() {
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, None, None);
 
-    if !matches!(response, community_canister::send_message::Response::Success(_)) {
-        panic!("'send_message' error {response:?}");
-    }
+    assert!(
+        matches!(response, community_canister::send_message::Response::Success(_)),
+        "'send_message' error {response:?}"
+    );
 }
 
 #[test]
@@ -492,12 +511,13 @@ fn send_message_with_old_community_rules_accepted_fails() {
         Some(Version::from(1)),
     );
 
-    if !matches!(
-        response,
-        community_canister::send_message::Response::CommunityRulesNotAccepted
-    ) {
-        panic!("{response:?}");
-    }
+    assert!(
+        matches!(
+            &response,
+            community_canister::send_message::Response::Error(e) if e.matches_code(OCErrorCode::CommunityRulesNotAccepted)
+        ),
+        "{response:?}"
+    );
 }
 
 #[test]
@@ -529,9 +549,10 @@ fn send_message_with_old_channel_rules_accepted_fails() {
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, None, Some(Version::from(1)));
 
-    if !matches!(response, community_canister::send_message::Response::RulesNotAccepted) {
-        panic!("{response:?}");
-    }
+    assert!(
+        matches!(&response, community_canister::send_message::Response::Error(e) if e.matches_code(OCErrorCode::ChatRulesNotAccepted)),
+        "{response:?}"
+    );
 }
 
 #[test]
@@ -635,8 +656,8 @@ fn send_message_with_rules_leads_to_expected_summary_and_selected_states() {
 }
 
 fn get_community_rules(env: &mut PocketIc, user: &User, community_id: CommunityId) -> ChatRules {
-    let summary = client::community::happy_path::summary(env, user, community_id);
-    let selected = client::community::happy_path::selected_initial(env, user, community_id);
+    let summary = client::community::happy_path::summary(env, user.principal, community_id);
+    let selected = client::community::happy_path::selected_initial(env, user.principal, community_id);
 
     ChatRules {
         enabled: selected.chat_rules.enabled,
@@ -681,30 +702,32 @@ fn send_dummy_message_with_rules(
         &community_canister::send_message::Args {
             channel_id,
             thread_root_message_index: None,
-            message_id: random_message_id(),
+            message_id: random_from_u128(),
             content: MessageContentInitial::Text(TextContent { text: "123".to_string() }),
             sender_name: sender.username(),
             sender_display_name: None,
             replies_to: None,
             mentioned: Vec::new(),
             forwarding: false,
+            block_level_markdown: false,
             community_rules_accepted,
             channel_rules_accepted,
             message_filter_failed: None,
+            new_achievement: false,
         },
     )
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
     let community_id =
         client::user::happy_path::create_community(env, &user1, &random_string(), true, vec!["general".to_string()]);
-    client::local_user_index::happy_path::join_community(env, user2.principal, canister_ids.local_user_index, community_id);
+    client::community::happy_path::join_community(env, user2.principal, community_id);
 
     env.tick();
 
-    let summary = client::community::happy_path::summary(env, &user2, community_id);
+    let summary = client::community::happy_path::summary(env, user2.principal, community_id);
     let channel_id = summary.channels.iter().find(|c| c.name == "general").unwrap().channel_id;
 
     TestData {
@@ -727,7 +750,7 @@ fn set_community_rules(env: &mut PocketIc, sender: Principal, community_id: Comm
         avatar: OptionUpdate::NoChange,
         banner: OptionUpdate::NoChange,
         permissions: None,
-        gate: OptionUpdate::NoChange,
+        gate_config: OptionUpdate::NoChange,
         public: None,
         primary_language: None,
     };
@@ -747,9 +770,11 @@ fn set_channel_rules(env: &mut PocketIc, sender: Principal, community_id: Commun
         avatar: OptionUpdate::NoChange,
         permissions_v2: None,
         events_ttl: OptionUpdate::NoChange,
-        gate: OptionUpdate::NoChange,
+        gate_config: OptionUpdate::NoChange,
         public: None,
         channel_id,
+        messages_visible_to_non_members: None,
+        external_url: OptionUpdate::NoChange,
     };
 
     client::community::happy_path::update_channel(env, sender, community_id, &args);

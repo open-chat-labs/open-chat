@@ -7,7 +7,7 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::cell::RefCell;
-use std::collections::{HashSet, VecDeque};
+use std::collections::{BTreeMap, HashSet, VecDeque};
 use types::{
     BuildVersion, CanisterId, Cycles, MessageId, Milliseconds, MultiUserChat, NnsNeuronId, ProposalId, TimestampMillis,
     Timestamped,
@@ -47,15 +47,18 @@ impl RuntimeState {
 
     pub fn metrics(&self) -> Metrics {
         Metrics {
-            memory_used: utils::memory::used(),
+            heap_memory_used: utils::memory::heap(),
+            stable_memory_used: utils::memory::stable(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
+            liquid_cycles_balance: self.env.liquid_cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
             nervous_systems: self.data.nervous_systems.metrics(),
             governance_principals: self.data.governance_principals.iter().copied().collect(),
             finished_proposals_to_process: self.data.finished_proposals_to_process.iter().copied().collect(),
             registry_synced_up_to: self.data.registry_synced_up_to,
+            stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -120,14 +123,17 @@ impl Data {
 #[derive(Serialize, Debug)]
 pub struct Metrics {
     pub now: TimestampMillis,
-    pub memory_used: u64,
+    pub heap_memory_used: u64,
+    pub stable_memory_used: u64,
     pub cycles_balance: Cycles,
+    pub liquid_cycles_balance: Cycles,
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub nervous_systems: Vec<NervousSystemMetrics>,
     pub governance_principals: Vec<Principal>,
     pub finished_proposals_to_process: Vec<(CanisterId, ProposalId)>,
     pub registry_synced_up_to: TimestampMillis,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }
 
@@ -140,6 +146,7 @@ pub struct NervousSystemMetrics {
     pub latest_failed_sync: Option<TimestampMillis>,
     pub latest_successful_proposals_update: Option<TimestampMillis>,
     pub latest_failed_proposals_update: Option<TimestampMillis>,
+    pub latest_failed_proposal_push: Option<TimestampMillis>,
     pub queued_proposals: Vec<ProposalId>,
     pub active_proposals: Vec<ProposalId>,
     pub active_user_submitted_proposals: Vec<ProposalId>,
@@ -149,6 +156,7 @@ pub struct NervousSystemMetrics {
     pub min_neuron_stake: u64,
     pub min_dissolve_delay_to_vote: Milliseconds,
     pub proposal_rejection_fee: u64,
+    pub disabled: bool,
 }
 
 #[derive(Serialize, Debug)]
@@ -168,6 +176,6 @@ fn generate_message_id(governance_canister_id: CanisterId, proposal_id: Proposal
     hash.update(governance_canister_id.as_slice());
     hash.update(proposal_id.to_ne_bytes());
     let array32: [u8; 32] = hash.finalize().into();
-    let array16: [u8; 16] = array32[..16].try_into().unwrap();
-    u128::from_ne_bytes(array16).into()
+    let array8: [u8; 8] = array32[..8].try_into().unwrap();
+    u64::from_ne_bytes(array8).into()
 }

@@ -1,34 +1,36 @@
-<svelte:options immutable />
-
 <script lang="ts">
-    import NonMessageEvent from "./NonMessageEvent.svelte";
+    import type { GroupRulesChanged, UserSummary } from "openchat-client";
+    import { allUsersStore } from "openchat-client";
     import { _ } from "svelte-i18n";
-    import { getContext } from "svelte";
-    import type { OpenChat, UserSummary, GroupRulesChanged } from "openchat-client";
     import { buildDisplayName } from "../../utils/user";
+    import NonMessageEvent from "./NonMessageEvent.svelte";
 
-    const client = getContext<OpenChat>("client");
+    interface Props {
+        user: UserSummary | undefined;
+        event: GroupRulesChanged;
+        timestamp: bigint;
+    }
 
-    export let user: UserSummary | undefined;
-    export let event: GroupRulesChanged;
-    export let timestamp: bigint;
+    let { user, event, timestamp }: Props = $props();
 
-    $: userStore = client.userStore;
-    $: me = event.changedBy === user?.userId;
-    $: changedByStr = buildDisplayName($userStore, event.changedBy, me);
-    $: templateValues = {
+    let me = $derived(event.changedBy === user?.userId);
+    let changedByStr = $derived(
+        buildDisplayName($allUsersStore, event.changedBy, me ? "me" : "user"),
+    );
+    let templateValues = $derived({
         values: {
             changed: $_("groupRules"),
             changedBy: changedByStr,
         },
-    };
+    });
 
-    $: text =
+    let text = $derived(
         event.enabled && event.enabledPrev
             ? $_("groupChangedBy", templateValues)
             : event.enabled
-            ? $_("groupRulesEnabled", templateValues)
-            : $_("groupRulesDisabled", templateValues);
+              ? $_("groupRulesEnabled", templateValues)
+              : $_("groupRulesDisabled", templateValues),
+    );
 </script>
 
 {#if event.enabled || event.enabledPrev}

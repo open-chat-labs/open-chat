@@ -1,12 +1,13 @@
 use crate::env::ENV;
-use crate::rng::random_string;
 use crate::utils::tick_many;
-use crate::{client, CanisterIds, TestEnv, User};
+use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
+use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::collections::HashSet;
 use std::ops::Deref;
 use test_case::test_case;
+use testing::rng::random_string;
 use types::{AccessGate, CommunityId, Empty, MessageContent};
 
 #[test]
@@ -25,17 +26,19 @@ fn join_public_community_succeeds() {
         community_id,
     } = init_test_data(env, canister_ids, *controller, true);
 
-    client::local_user_index::happy_path::join_community(env, user2.principal, canister_ids.local_user_index, community_id);
+    client::community::happy_path::join_community(env, user2.principal, community_id);
 
-    env.tick();
+    tick_many(env, 3);
 
     let initial_state = client::user::happy_path::initial_state(env, &user2);
 
-    assert!(initial_state
-        .communities
-        .summaries
-        .iter()
-        .any(|c| c.community_id == community_id));
+    assert!(
+        initial_state
+            .communities
+            .summaries
+            .iter()
+            .any(|c| c.community_id == community_id)
+    );
 }
 
 #[test]
@@ -57,16 +60,18 @@ fn join_private_community_fails() {
     let response = client::local_user_index::join_community(
         env,
         user2.principal,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, community_id),
         &local_user_index_canister::join_community::Args {
             community_id,
             invite_code: None,
+            referred_by: None,
+            verified_credential_args: None,
         },
     );
 
     assert!(matches!(
         response,
-        local_user_index_canister::join_community::Response::NotInvited
+        local_user_index_canister::join_community::Response::Error(e) if e.matches_code(OCErrorCode::NotInvited)
     ));
 }
 
@@ -89,22 +94,24 @@ fn join_private_community_with_invitation_succeeds() {
     client::local_user_index::happy_path::invite_users_to_community(
         env,
         &user1,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, community_id),
         community_id,
         vec![user2.user_id],
     );
 
-    client::local_user_index::happy_path::join_community(env, user2.principal, canister_ids.local_user_index, community_id);
+    client::community::happy_path::join_community(env, user2.principal, community_id);
 
-    env.tick();
+    tick_many(env, 3);
 
     let initial_state = client::user::happy_path::initial_state(env, &user2);
 
-    assert!(initial_state
-        .communities
-        .summaries
-        .iter()
-        .any(|c| c.community_id == community_id));
+    assert!(
+        initial_state
+            .communities
+            .summaries
+            .iter()
+            .any(|c| c.community_id == community_id)
+    );
 }
 
 #[test]
@@ -134,10 +141,12 @@ fn join_private_community_using_invite_code_succeeds() {
     let response = client::local_user_index::join_community(
         env,
         user2.principal,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, community_id),
         &local_user_index_canister::join_community::Args {
             community_id,
             invite_code: Some(invite_code),
+            referred_by: None,
+            verified_credential_args: None,
         },
     );
 
@@ -146,15 +155,17 @@ fn join_private_community_using_invite_code_succeeds() {
         local_user_index_canister::join_community::Response::Success(_)
     ));
 
-    env.tick();
+    tick_many(env, 3);
 
     let initial_state = client::user::happy_path::initial_state(env, &user2);
 
-    assert!(initial_state
-        .communities
-        .summaries
-        .iter()
-        .any(|c| c.community_id == community_id));
+    assert!(
+        initial_state
+            .communities
+            .summaries
+            .iter()
+            .any(|c| c.community_id == community_id)
+    );
 }
 
 #[test]
@@ -176,7 +187,7 @@ fn invite_to_community_oc_bot_message_received() {
     client::local_user_index::happy_path::invite_users_to_community(
         env,
         &user1,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, community_id),
         community_id,
         vec![user2.user_id],
     );
@@ -186,7 +197,7 @@ fn invite_to_community_oc_bot_message_received() {
     let initial_state = client::user::happy_path::initial_state(env, &user2);
 
     assert!(initial_state.direct_chats.summaries.iter().any(|dc| {
-        if let MessageContent::Text(content) = &dc.latest_message.event.content {
+        if let MessageContent::Text(content) = &dc.latest_message.as_ref().unwrap().event.content {
             content.text.contains("You have been invited to the community") && content.text.contains(&community_id.to_string())
         } else {
             false
@@ -214,7 +225,7 @@ fn default_channels_marked_as_read_after_joining() {
     let default2 = client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string());
     let default3 = client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string());
 
-    let user3 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user3 = client::register_user(env, canister_ids);
 
     for i in 0..3 {
         if i < 1 {
@@ -228,7 +239,7 @@ fn default_channels_marked_as_read_after_joining() {
         client::community::happy_path::send_text_message(env, &user1, community_id, default3, None, random_string(), None);
     }
 
-    client::local_user_index::happy_path::join_community(env, user3.principal, canister_ids.local_user_index, community_id);
+    client::community::happy_path::join_community(env, user3.principal, community_id);
 
     tick_many(env, 3);
 
@@ -282,8 +293,7 @@ fn user_joined_to_all_public_channels(diamond_member: bool) {
         AccessGate::DiamondMember,
     );
 
-    let community_summary =
-        client::local_user_index::happy_path::join_community(env, user.principal, canister_ids.local_user_index, community_id);
+    let community_summary = client::community::happy_path::join_community(env, user.principal, community_id);
 
     let channel_ids: HashSet<_> = community_summary.channels.iter().map(|c| c.channel_id).collect();
 
@@ -295,7 +305,7 @@ fn user_joined_to_all_public_channels(diamond_member: bool) {
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal, public: bool) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
 
     let community_name = random_string();
 

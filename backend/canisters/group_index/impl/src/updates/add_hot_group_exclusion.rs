@@ -1,12 +1,12 @@
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
 use candid::Principal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::{add_hot_group_exclusion, remove_hot_group_exclusion};
-use ic_cdk_macros::update;
 use types::{CanisterId, ChatId};
-use user_index_canister_c2c_client::{lookup_user, LookupUserError};
+use user_index_canister_c2c_client::lookup_user;
 
-#[update]
+#[update(msgpack = true)]
 #[trace]
 async fn add_hot_group_exclusion(args: add_hot_group_exclusion::Args) -> add_hot_group_exclusion::Response {
     use group_index_canister::add_hot_group_exclusion::Response::*;
@@ -22,9 +22,9 @@ async fn add_hot_group_exclusion(args: add_hot_group_exclusion::Args) -> add_hot
     };
 
     match lookup_user(caller, user_index_canister_id).await {
-        Ok(user) if user.is_platform_moderator => (),
-        Ok(_) | Err(LookupUserError::UserNotFound) => return NotAuthorized,
-        Err(LookupUserError::InternalError(error)) => return InternalError(error),
+        Ok(Some(user)) if user.is_platform_moderator => (),
+        Ok(_) => return NotAuthorized,
+        Err(error) => return InternalError(format!("{error:?}")),
     };
 
     match mutate_state(|state| commit(&args.chat_id, true, state)) {
@@ -33,7 +33,7 @@ async fn add_hot_group_exclusion(args: add_hot_group_exclusion::Args) -> add_hot
     }
 }
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn remove_hot_group_exclusion(args: remove_hot_group_exclusion::Args) -> remove_hot_group_exclusion::Response {
     use group_index_canister::remove_hot_group_exclusion::Response::*;
@@ -49,9 +49,9 @@ async fn remove_hot_group_exclusion(args: remove_hot_group_exclusion::Args) -> r
     };
 
     match lookup_user(caller, user_index_canister_id).await {
-        Ok(user) if user.is_platform_moderator => (),
-        Ok(_) | Err(LookupUserError::UserNotFound) => return NotAuthorized,
-        Err(LookupUserError::InternalError(error)) => return InternalError(error),
+        Ok(Some(user)) if user.is_platform_moderator => (),
+        Ok(_) => return NotAuthorized,
+        Err(error) => return InternalError(format!("{error:?}")),
     };
 
     match mutate_state(|state| commit(&args.chat_id, false, state)) {

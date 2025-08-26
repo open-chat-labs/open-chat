@@ -1,7 +1,7 @@
 use crate::RuntimeState;
 
-pub(crate) mod push_user_canister_events;
+pub mod garbage_collect_stable_memory;
 
 pub(crate) fn start(state: &RuntimeState) {
-    push_user_canister_events::start_job_if_required(state);
+    garbage_collect_stable_memory::start_job_if_required(state);
 }

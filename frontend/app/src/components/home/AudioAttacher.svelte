@@ -1,24 +1,32 @@
 <script lang="ts">
-    import HoverIcon from "../HoverIcon.svelte";
+    import { iconSize, type AudioContent, type OpenChat } from "openchat-client";
+    import { getContext, onMount } from "svelte";
+    import { _ } from "svelte-i18n";
     import Microphone from "svelte-material-icons/Microphone.svelte";
     import RadioboxMarked from "svelte-material-icons/RadioboxMarked.svelte";
-    import { _ } from "svelte-i18n";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
-    import { toastStore } from "../../stores/toast";
-    import type { AudioContent, OpenChat } from "openchat-client";
-    import { iconSize } from "../../stores/iconSize";
     import { i18nKey } from "../../i18n/i18n";
+    import { toastStore } from "../../stores/toast";
+    import HoverIcon from "../HoverIcon.svelte";
 
     const client = getContext<OpenChat>("client");
-    type EventMap = {
-        audioCaptured: AudioContent;
-    };
-    const dispatch = createEventDispatcher<EventMap>();
 
-    export let recording: boolean = false;
-    export let percentRecorded: number = 0;
-    export let mimeType: string;
-    export let supported: boolean;
+    interface Props {
+        recording?: boolean;
+        percentRecorded?: number;
+        mimeType: string;
+        supported: boolean;
+        onAudioCaptured: (content: AudioContent) => void;
+    }
+
+    let {
+        recording = $bindable(false),
+        percentRecorded = $bindable(0),
+        mimeType,
+        supported = $bindable(),
+        onAudioCaptured,
+    }: Props = $props();
+
+    percentRecorded;
 
     let mediaRecorder: MediaRecorder | undefined;
 
@@ -90,7 +98,7 @@
                             // let the user know if we stopped recording prematurely
                             toastStore.showFailureToast(i18nKey("maxAudioSize"));
                         }
-                        dispatch("audioCaptured", {
+                        onAudioCaptured({
                             kind: "audio_content",
                             mimeType: mimeType,
                             blobData: new Uint8Array(data),
@@ -107,7 +115,7 @@
 </script>
 
 {#if supported}
-    <div on:click={toggle}>
+    <div onclick={toggle}>
         <HoverIcon title={recording ? $_("stopRecording") : $_("recordAudioMessage")}>
             {#if recording}
                 <RadioboxMarked size={$iconSize} color={"red"} />

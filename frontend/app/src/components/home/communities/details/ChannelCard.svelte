@@ -1,42 +1,73 @@
 <script lang="ts">
-    import Avatar from "../../../Avatar.svelte";
-    import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
+    import HoverIcon from "@src/components/HoverIcon.svelte";
+    import Menu from "@src/components/Menu.svelte";
+    import MenuIcon from "@src/components/MenuIcon.svelte";
+    import MenuItem from "@src/components/MenuItem.svelte";
+    import Translatable from "@src/components/Translatable.svelte";
+    import { i18nKey } from "@src/i18n/i18n";
     import {
         AvatarSize,
         type ChannelMatch,
+        chatListScopeStore,
+        iconSize,
+        mobileWidth,
         type OpenChat,
         routeForChatIdentifier,
+        selectedCommunitySummaryStore,
     } from "openchat-client";
-    import { mobileWidth } from "../../../../stores/screenDimensions";
-    import { getContext } from "svelte";
     import page from "page";
-    import AccessGateIcon from "../../AccessGateIcon.svelte";
-    import { popRightPanelHistory } from "../../../../stores/rightPanel";
+    import { getContext } from "svelte";
+    import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
+    import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
+    import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
+    import Avatar from "../../../Avatar.svelte";
+    import AccessGateIcon from "../../access/AccessGateIcon.svelte";
     import Markdown from "../../Markdown.svelte";
 
-    export let channel: ChannelMatch;
+    interface Props {
+        channel: ChannelMatch;
+        onDeleteChannel: () => void;
+    }
+
+    let { channel, onDeleteChannel }: Props = $props();
 
     const client = getContext<OpenChat>("client");
-    $: selectedCommunity = client.selectedCommunity;
-    $: chatListScope = client.chatListScope;
+
+    let canDeleteChannel = $derived(client.canDeleteChannel(channel.id));
 
     function selectChannel(match: ChannelMatch) {
-        if ($selectedCommunity === undefined) return;
+        if ($selectedCommunitySummaryStore === undefined) return;
+        if (!match.public && !match.invited) return;
         if ($mobileWidth) {
-            popRightPanelHistory();
+            client.popRightPanelHistory();
         }
-        page(routeForChatIdentifier($chatListScope.kind, match.id));
+        page(routeForChatIdentifier($chatListScopeStore.kind, match.id));
     }
 </script>
 
-<div class="details" on:click={() => selectChannel(channel)}>
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div
+    class:clickable={channel.public || channel.invited}
+    class="details"
+    onclick={() => selectChannel(channel)}>
     <div class="avatar">
-        <Avatar url={client.groupAvatarUrl(channel.avatar)} size={AvatarSize.Default} />
+        <Avatar
+            url={client.groupAvatarUrl(
+                { id: channel.id, ...channel.avatar },
+                $selectedCommunitySummaryStore,
+            )}
+            size={AvatarSize.Default} />
     </div>
     <div class="channel-text">
-        <h3 class="channel-name">
-            {channel.name}
-        </h3>
+        <div class="channel-name">
+            {#if !channel.public}
+                <div class="private"></div>
+            {/if}
+            <h3>
+                {channel.name}
+            </h3>
+        </div>
         {#if channel.description !== ""}
             <div class="desc">
                 <Markdown text={channel.description} oneLine suppressLinks />
@@ -51,15 +82,41 @@
                 </div>
                 <div class="gate">
                     <AccessGateIcon
+                        button
+                        clickable
+                        level={"channel"}
                         small
                         position={"bottom"}
                         align={"middle"}
-                        on:upgrade
-                        gate={channel.gate} />
+                        gateConfig={channel.gateConfig} />
                 </div>
             </div>
         </div>
     </div>
+    {#if canDeleteChannel}
+        <div class="menu">
+            <MenuIcon position={"bottom"} align={"end"}>
+                {#snippet menuIcon()}
+                    <HoverIcon>
+                        <DotsVertical size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                    </HoverIcon>
+                {/snippet}
+                {#snippet menuItems()}
+                    <Menu>
+                        <MenuItem warning onclick={onDeleteChannel}>
+                            {#snippet icon()}
+                                <DeleteOutline size={$iconSize} color={"var(--menu-warn)"} />
+                            {/snippet}
+                            {#snippet text()}
+                                <Translatable
+                                    resourceKey={i18nKey("deleteGroup", undefined, "channel")} />
+                            {/snippet}
+                        </MenuItem>
+                    </Menu>
+                {/snippet}
+            </MenuIcon>
+        </div>
+    {/if}
 </div>
 
 <style lang="scss">
@@ -71,16 +128,18 @@
         transition:
             background-color ease-in-out 100ms,
             border-color ease-in-out 100ms;
-        cursor: pointer;
+
+        &.clickable {
+            cursor: pointer;
+            @media (hover: hover) {
+                &:hover {
+                    background-color: var(--chatSummary-hv);
+                }
+            }
+        }
 
         @include mobile() {
             padding: 0 toRem(10);
-        }
-
-        @media (hover: hover) {
-            &:hover {
-                background-color: var(--chatSummary-hv);
-            }
         }
 
         .desc {
@@ -118,9 +177,28 @@
             width: 100%;
         }
 
+        .channel-name {
+            display: flex;
+            align-items: center;
+            gap: $sp2;
+            @include ellipsis();
+            h3 {
+                @include font(bold, normal, fs-100);
+            }
+        }
+
         .channel-name,
         .desc {
             margin-bottom: $sp2;
         }
+    }
+
+    .private {
+        background-repeat: no-repeat;
+        $size: 12px;
+        flex: 0 0 $size;
+        width: $size;
+        height: $size;
+        background-image: url("/assets/locked.svg");
     }
 </style>

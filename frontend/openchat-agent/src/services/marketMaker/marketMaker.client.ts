@@ -1,27 +1,14 @@
-import type { Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "openchat-shared";
 import { idlFactory, type MarketMakerService } from "./candid/idl";
-import { CandidService } from "../candidService";
+import { CandidCanisterAgent } from "../canisterAgent/candid";
 import { updateConfigResponse } from "./mappers";
-import type { AgentConfig } from "../../config";
 import { apiOptional } from "../common/chatMappers";
 import { identity } from "../../utils/mapping";
 
-export class MarketMakerClient extends CandidService {
-    private service: MarketMakerService;
-
-    private constructor(identity: Identity, config: AgentConfig) {
-        super(identity);
-
-        this.service = this.createServiceClient<MarketMakerService>(
-            idlFactory,
-            config.marketMakerCanister,
-            config
-        );
-    }
-
-    static create(identity: Identity, config: AgentConfig): MarketMakerClient {
-        return new MarketMakerClient(identity, config);
+export class MarketMakerClient extends CandidCanisterAgent<MarketMakerService> {
+    constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
+        super(identity, agent, canisterId, idlFactory, "MarketMaker");
     }
 
     updateConfig(config: UpdateMarketMakerConfigArgs): Promise<UpdateMarketMakerConfigResponse> {
@@ -38,11 +25,11 @@ export class MarketMakerClient extends CandidService {
             max_orders_per_direction: apiOptional(identity, config.maxOrdersPerDirection),
             max_orders_to_make_per_iteration: apiOptional(
                 identity,
-                config.maxOrdersToMakePerIteration
+                config.maxOrdersToMakePerIteration,
             ),
             max_orders_to_cancel_per_iteration: apiOptional(
                 identity,
-                config.maxOrdersToCancelPerIteration
+                config.maxOrdersToCancelPerIteration,
             ),
         };
         return this.handleResponse(this.service.update_config(args), updateConfigResponse);

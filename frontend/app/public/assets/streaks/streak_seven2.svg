@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg viewBox="0 0 189 145" xmlns="http://www.w3.org/2000/svg">
+  <defs/>
+  <ellipse style="fill: rgb(246, 28, 255);" cx="128.32" cy="84.531" rx="59.26" ry="59.26"/>
+  <ellipse style="fill: rgb(250, 158, 238);" cx="128.833" cy="85.885" rx="44.391" ry="44.391"/>
+  <g transform="matrix(-9.110413, -1.452074, -1.452074, 9.110413, 46.70071, 64.103409)" style="transform-origin: 8.46005px 8.53436px;">
+    <defs/>
+    <g id="layer1" transform="translate(0 -1036.4)">
+      <path id="path2996" style="stroke-linejoin: round; fill: rgb(255, 213, 0); stroke: rgb(247, 28, 255); stroke-width: 0.433585px;" d="M 3.514 1044.838 L 6.275 1038.396 L 12.602 1038.396 L 8.029 1043.026 L 11.797 1043.026 L 4.406 1051.308 L 6.304 1044.809 L 3.514 1044.838 Z"/>
+    </g>
+  </g>
+</svg>

@@ -1,7 +1,7 @@
-import { openDB, type DBSchema, type IDBPDatabase } from "idb";
-import type { DiamondMembershipStatus, UserSummary } from "openchat-shared";
+import { deleteDB, openDB, type DBSchema, type IDBPDatabase } from "idb";
+import { deletedUser, type DiamondMembershipStatus, type UserSummary } from "openchat-shared";
 
-const CACHE_VERSION = 5;
+const CACHE_VERSION = 12;
 
 let db: UserDatabase | undefined;
 
@@ -16,6 +16,11 @@ export interface UserSchema extends DBSchema {
     suspendedUsersSyncedUpTo: {
         key: "value";
         value: bigint;
+    };
+
+    deletedUserIds: {
+        key: string;
+        value: string;
     };
 }
 
@@ -35,8 +40,12 @@ function openUserCache(): UserDatabase {
             if (db.objectStoreNames.contains("suspendedUsersSyncedUpTo")) {
                 db.deleteObjectStore("suspendedUsersSyncedUpTo");
             }
+            if (db.objectStoreNames.contains("deletedUserIds")) {
+                db.deleteObjectStore("deletedUserIds");
+            }
             db.createObjectStore("users");
             db.createObjectStore("suspendedUsersSyncedUpTo");
+            db.createObjectStore("deletedUserIds");
         },
     });
 }
@@ -53,12 +62,42 @@ export async function getCachedUsers(userIds: string[]): Promise<UserSummary[]> 
 }
 
 export async function getAllUsers(): Promise<UserSummary[]> {
-    return (await lazyOpenUserCache()).getAll("users");
+    const users = await (await lazyOpenUserCache()).getAll("users");
+    const deleted = await getDeletedUserIdsList();
+    return [...users, ...deleted.map(deletedUser)];
+}
+
+async function getDeletedUserIdsList(): Promise<string[]> {
+    return (await lazyOpenUserCache()).getAll("deletedUserIds");
+}
+
+export async function isUserIdDeleted(userId: string): Promise<boolean> {
+    const user = await (await lazyOpenUserCache()).get("deletedUserIds", userId);
+    return user !== undefined;
 }
 
 export async function setCachedUsers(users: UserSummary[]): Promise<void> {
     if (users.length === 0) return;
     writeCachedUsersToDatabase(lazyOpenUserCache(), users);
+}
+
+export async function setCachedDeletedUserIds(deletedUserIds: Set<string>): Promise<void> {
+    if (deletedUserIds.size === 0) return;
+    const db = await lazyOpenUserCache();
+    const tx = (await db).transaction(["deletedUserIds", "users"], "readwrite", {
+        durability: "relaxed",
+    });
+    const deletedStore = tx.objectStore("deletedUserIds");
+    const userStore = tx.objectStore("users");
+
+    // insert all the deletedIds into the deletedUserIds store
+    const inserts = [...deletedUserIds].map((userId) => deletedStore.put(userId, userId));
+
+    // delete all the deletedIds from the main userStore
+    const deletes = [...deletedUserIds].map((userId) => userStore.delete(userId));
+
+    await Promise.all([...inserts, ...deletes]);
+    await tx.done;
 }
 
 export async function writeCachedUsersToDatabase(
@@ -127,4 +166,48 @@ export async function getSuspendedUsersSyncedUpTo(): Promise<bigint | undefined>
 export async function setSuspendedUsersSyncedUpTo(value: bigint): Promise<void> {
     const resolvedDb = await lazyOpenUserCache();
     await resolvedDb.put("suspendedUsersSyncedUpTo", value, "value");
+}
+
+export async function userSuspended(userId: string, suspended: boolean) {
+    const tx = (await lazyOpenUserCache()).transaction("users", "readwrite", {
+        durability: "relaxed",
+    });
+    const store = tx.objectStore("users");
+    const user = await store.get(userId);
+    if (user !== undefined) {
+        user.suspended = suspended;
+        await store.put(user, userId);
+    }
+    await tx.done;
+}
+
+export async function setChitInfoInCache(
+    userId: string,
+    chitBalance: number,
+    streak: number,
+): Promise<void> {
+    const tx = (await lazyOpenUserCache()).transaction("users", "readwrite", {
+        durability: "relaxed",
+    });
+    const store = tx.objectStore("users");
+    const user = await store.get(userId);
+    if (user !== undefined) {
+        user.chitBalance = chitBalance;
+        user.streak = streak;
+        await store.put(user, userId);
+    }
+    await tx.done;
+}
+
+export async function clearCache(): Promise<void> {
+    const name = `openchat_users`;
+    try {
+        if (db !== undefined) {
+            (await db).close();
+        }
+        await deleteDB(name);
+        console.log("deleted db: ", name);
+    } catch (err) {
+        console.error("Unable to delete db: ", name, err);
+    }
 }

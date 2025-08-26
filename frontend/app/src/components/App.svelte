@@ -1,110 +1,177 @@
 <script lang="ts">
-    import { onMount, setContext } from "svelte";
+    import "@styles/global.scss";
 
-    import "../i18n/i18n";
-    import "../utils/markdown";
-    import "../utils/scream";
-    import { rtlStore } from "../stores/rtl";
-    import { _, isLoading } from "svelte-i18n";
-    import Router from "./Router.svelte";
-    import { notFound, pathParams, routeForScope } from "../routes";
-    import SwitchDomain from "./SwitchDomain.svelte";
-    import Upgrading from "./upgrading/Upgrading.svelte";
-    import UpgradeBanner from "./UpgradeBanner.svelte";
-    import { currentTheme } from "../theme/themes";
-    import "../stores/fontSize";
-    import Profiler from "./Profiler.svelte";
+    import Router from "@components/Router.svelte";
+    import "@components/web-components/customEmoji";
+    import "@components/web-components/profileLink";
+    import "@i18n/i18n";
+    import { reviewingTranslations } from "@i18n/i18n";
+    import { trackedEffect } from "@src/utils/effects.svelte";
+    import { rtlStore } from "@stores/rtl";
+    import { snowing } from "@stores/snow";
+    import { incomingVideoCall } from "@stores/video";
+    import { broadcastLoggedInUser } from "@stores/xframe";
+    import { currentTheme } from "@theme/themes";
+    import "@utils/markdown";
     import {
-        OpenChat,
-        UserLoggedIn,
-        type DiamondMembershipFees,
-        type ChatSummary,
-        type ChatIdentifier,
-        routeForChatIdentifier,
-    } from "openchat-client";
-    import { type UpdateMarketMakerConfigArgs, inititaliseLogger } from "openchat-client";
+        expectNewFcmToken,
+        expectNotificationTap,
+        expectPushNotifications,
+    } from "@utils/native/notification_channels";
+    import "@utils/scream";
     import {
         isCanisterUrl,
         isLandingPageRoute,
         isScrollingRoute,
         redirectLandingPageLinksIfNecessary,
-        removeQueryStringParam,
-    } from "../utils/urls";
-    import "../components/web-components/profileLink";
+    } from "@utils/urls";
+    import {
+        type ChatIdentifier,
+        type DexId,
+        type DiamondMembershipFees,
+        OpenChat,
+        PremiumItem,
+        type UpdateMarketMakerConfigArgs,
+        type VideoCallType,
+        anonUserStore,
+        botState,
+        chatListScopeStore,
+        fontSize,
+        identityStateStore,
+        inititaliseLogger,
+        notFoundStore,
+        routeForChatIdentifier,
+        routeForScope,
+        routeStore,
+        subscribe,
+    } from "openchat-client";
     import page from "page";
-    import { menuStore } from "../stores/menu";
-    import { framed, broadcastLoggedInUser } from "../stores/xframe";
+    import { onMount, setContext } from "svelte";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
-    import Witch from "./Witch.svelte";
+    import { _, isLoading } from "svelte-i18n";
+    import { getFcmToken, svelteReady } from "tauri-plugin-oc-api";
     import Head from "./Head.svelte";
-    import { snowing } from "../stores/snow";
+    import Profiler from "./Profiler.svelte";
     import Snow from "./Snow.svelte";
+    import SwitchDomain from "./SwitchDomain.svelte";
+    import UpgradeBanner from "./UpgradeBanner.svelte";
+    import Witch from "./Witch.svelte";
+    import InstallPrompt from "./home/InstallPrompt.svelte";
+    import NotificationsBar from "./home/NotificationsBar.svelte";
     import ActiveCall from "./home/video/ActiveCall.svelte";
-    import { incomingVideoCall } from "../stores/video";
     import IncomingCall from "./home/video/IncomingCall.svelte";
+    import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
+    import { portalState } from "./portalState.svelte";
+    import Upgrading from "./upgrading/Upgrading.svelte";
+
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
     const logger = inititaliseLogger(
-        process.env.ROLLBAR_ACCESS_TOKEN!,
-        process.env.OPENCHAT_WEBSITE_VERSION!,
-        process.env.NODE_ENV!,
+        import.meta.env.OC_ROLLBAR_ACCESS_TOKEN!,
+        import.meta.env.OC_WEBSITE_VERSION!,
+        import.meta.env.OC_BUILD_ENV!,
     );
 
     function createOpenChatClient(): OpenChat {
         return new OpenChat({
-            icUrl: process.env.IC_URL,
-            iiDerivationOrigin: process.env.II_DERIVATION_ORIGIN,
-            openStorageIndexCanister: process.env.STORAGE_INDEX_CANISTER!,
-            groupIndexCanister: process.env.GROUP_INDEX_CANISTER!,
-            notificationsCanister: process.env.NOTIFICATIONS_CANISTER!,
-            identityCanister: process.env.IDENTITY_CANISTER!,
-            onlineCanister: process.env.ONLINE_CANISTER!,
-            userIndexCanister: process.env.USER_INDEX_CANISTER!,
-            translationsCanister: process.env.TRANSLATIONS_CANISTER!,
-            registryCanister: process.env.REGISTRY_CANISTER!,
-            internetIdentityUrl: process.env.INTERNET_IDENTITY_URL!,
-            nfidUrl: process.env.NFID_URL!,
-            userGeekApiKey: process.env.USERGEEK_APIKEY!,
-            videoBridgeUrl: process.env.VIDEO_BRIDGE_URL!,
-            meteredApiKey: process.env.METERED_APIKEY!,
-            blobUrlPattern: process.env.BLOB_URL_PATTERN!,
-            proposalBotCanister: process.env.PROPOSALS_BOT_CANISTER!,
-            marketMakerCanister: process.env.MARKET_MAKER_CANISTER!,
+            appType: import.meta.env.OC_APP_TYPE,
+            icUrl: import.meta.env.OC_IC_URL,
+            webAuthnOrigin: import.meta.env.OC_WEBAUTHN_ORIGIN,
+            iiDerivationOrigin: import.meta.env.OC_II_DERIVATION_ORIGIN,
+            openStorageIndexCanister: import.meta.env.OC_STORAGE_INDEX_CANISTER!,
+            groupIndexCanister: import.meta.env.OC_GROUP_INDEX_CANISTER!,
+            notificationsCanister: import.meta.env.OC_NOTIFICATIONS_CANISTER!,
+            identityCanister: import.meta.env.OC_IDENTITY_CANISTER!,
+            onlineCanister: import.meta.env.OC_ONLINE_CANISTER!,
+            userIndexCanister: import.meta.env.OC_USER_INDEX_CANISTER!,
+            translationsCanister: import.meta.env.OC_TRANSLATIONS_CANISTER!,
+            registryCanister: import.meta.env.OC_REGISTRY_CANISTER!,
+            internetIdentityUrl: import.meta.env.OC_INTERNET_IDENTITY_URL!,
+            nfidUrl: import.meta.env.OC_NFID_URL!,
+            userGeekApiKey: import.meta.env.OC_USERGEEK_APIKEY!,
+            videoBridgeUrl: import.meta.env.OC_VIDEO_BRIDGE_URL!,
+            meteredApiKey: import.meta.env.OC_METERED_APIKEY!,
+            blobUrlPattern: import.meta.env.OC_BLOB_URL_PATTERN!,
+            canisterUrlPath: import.meta.env.OC_CANISTER_URL_PATH!,
+            proposalBotCanister: import.meta.env.OC_PROPOSALS_BOT_CANISTER!,
+            marketMakerCanister: import.meta.env.OC_MARKET_MAKER_CANISTER!,
+            signInWithEmailCanister: import.meta.env.OC_SIGN_IN_WITH_EMAIL_CANISTER!,
+            signInWithEthereumCanister: import.meta.env.OC_SIGN_IN_WITH_ETHEREUM_CANISTER!,
+            signInWithSolanaCanister: import.meta.env.OC_SIGN_IN_WITH_SOLANA_CANISTER!,
+            oneSecMinterCanister: import.meta.env.OC_ONE_SEC_MINTER_CANISTER!,
             i18nFormatter: $_,
             logger,
-            websiteVersion: process.env.OPENCHAT_WEBSITE_VERSION!,
-            rollbarApiKey: process.env.ROLLBAR_ACCESS_TOKEN!,
-            env: process.env.NODE_ENV!,
+            websiteVersion: import.meta.env.OC_WEBSITE_VERSION!,
+            rollbarApiKey: import.meta.env.OC_ROLLBAR_ACCESS_TOKEN!,
+            env: import.meta.env.OC_BUILD_ENV!,
+            bitcoinMainnetEnabled: import.meta.env.OC_BITCOIN_MAINNET_ENABLED! === "true",
+            vapidPublicKey: import.meta.env.OC_VAPID_PUBLIC_KEY!,
+            accountLinkingCodesEnabled:
+                import.meta.env.OC_ACCOUNT_LINKING_CODES_ENABLED! === "true",
         });
     }
 
     let client: OpenChat = createOpenChatClient();
-
-    let profileTrace = client.showTrace();
-    let videoCallElement: ActiveCall;
-
     setContext<OpenChat>("client", client);
 
-    $: chatListScope = client.chatListScope;
-    $: identityState = client.identityState;
-    $: landingPageRoute = isLandingPageRoute($pathParams);
-    $: anonUser = client.anonUser;
-    $: homeRoute = $pathParams.kind === "home_route";
-    $: showLandingPage =
-        landingPageRoute ||
-        (homeRoute && $identityState.kind === "anon" && $anonUser) || // show landing page if the anon user hits "/"
-        (($identityState.kind === "anon" || $identityState.kind === "logging_in") && $framed); // show landing page if anon and running in a frame
+    let profileTrace = client.showTrace();
+    // I can't (yet) find a way to avoid using "any" here. Will try to improve but need to commit this crime for the time being
+    let videoCallElement: any;
+    let landingPageRoute = $derived(isLandingPageRoute($routeStore));
+    let homeRoute = $derived($routeStore.kind === "home_route");
+    let showLandingPage = $derived(
+        landingPageRoute || (homeRoute && $identityStateStore.kind === "anon" && $anonUserStore),
+    );
+    let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
+    let burstPath = $derived(
+        $currentTheme.mode === "dark" ? "/assets/burst_dark" : "/assets/burst_light",
+    );
+    let burstUrl = $derived(isFirefox ? `${burstPath}.png` : `${burstPath}.svg`);
+    let burstFixed = $derived(isScrollingRoute($routeStore));
+
+    let upgrading = $derived(
+        $identityStateStore.kind === "upgrading_user" ||
+            $identityStateStore.kind === "upgrade_user",
+    );
+
+    let lastScrollY = $state(window.scrollY);
+
+    trackedEffect("rtl", () => {
+        // subscribe to the rtl store so that we can set the overall page direction at the right time
+        document.dir = $rtlStore ? "rtl" : "ltr";
+    });
+
+    trackedEffect("landing-page", () => {
+        if (!$notFoundStore && showLandingPage) {
+            document.body.classList.add("landing-page");
+        } else {
+            document.body.classList.remove("landing-page");
+        }
+    });
+
+    trackedEffect("font-size", () => {
+        console.log("Setting font size to: ", $fontSize);
+        document.documentElement.style.setProperty("--font-size", `${$fontSize}px`);
+    });
+
+    trackedEffect("calculate-height", calculateHeight);
 
     onMount(() => {
-        redirectLandingPageLinksIfNecessary();
-        if (client.captureReferralCode()) {
-            page.replace(removeQueryStringParam("ref"));
-        }
-        calculateHeight();
-
+        const unsubs = [
+            subscribe("startVideoCall", startVideoCall),
+            subscribe("hangup", hangup),
+            subscribe("askToSpeak", askToSpeak),
+            subscribe("userLoggedIn", onUserLoggedIn),
+        ];
+        window.addEventListener("scroll", trackVirtualKeyboard);
+        window.addEventListener("resize", trackVirtualKeyboard);
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
-        (<any>window).platformModerator = {
+
+        redirectLandingPageLinksIfNecessary();
+
+        //@ts-ignore
+        window.platformModerator = {
             addHotGroupExclusion,
             deleteFrozenGroup,
             deleteMessage,
@@ -117,25 +184,102 @@
             removeMessageFilter,
             reportedMessages,
         };
-        (<any>window).platformOperator = {
+
+        //@ts-ignore
+        window.platformOperator = {
+            addRemoveSwapProvider,
             setGroupUpgradeConcurrency,
             setCommunityUpgradeConcurrency,
             setUserUpgradeConcurrency,
+            markLocalGroupIndexFull,
+            reinstateMissedDailyClaims,
+            setAirdropConfig,
             setDiamondMembershipFees,
+            setTokenEnabled,
             stakeNeuronForSubmittingProposals,
+            topUpNeuronForSubmittingProposals,
             updateMarketMakerConfig,
+            withdrawFromIcpSwap,
+            setPremiumItemCost,
             pauseEventLoop: () => client.pauseEventLoop(),
             resumeEventLoop: () => client.resumeEventLoop(),
         };
 
-        framed.set(window.self !== window.top);
-        client.addEventListener("openchat_event", onUserLoggedIn);
+        const unsub = _.subscribe((formatter) => {
+            botState.messageFormatter = formatter;
+        });
+
+        if (client.isNativeAndroid()) {
+            // Inform the native android app that svelte code is ready! SetTimeout
+            // delays the fn execution until the call stack is empty, just to
+            // make sure anything else non-async that needs to run is done.
+            //
+            // Once Svelte app is ready, native code can start pushing events.
+            setTimeout(svelteReady);
+        }
+
+        return () => {
+            window.removeEventListener("scroll", trackVirtualKeyboard);
+            window.removeEventListener("resize", trackVirtualKeyboard);
+            window.removeEventListener("orientationchange", calculateHeight);
+            window.removeEventListener("unhandledrejection", unhandledError);
+            unsubs.forEach((u) => u());
+            unsub();
+        };
     });
 
-    function onUserLoggedIn(ev: Event) {
-        if (ev instanceof UserLoggedIn) {
-            broadcastLoggedInUser(ev.detail);
+    // We will interpret a significant leap in window.scrollY to indicate the opening of the virtual keyboard
+    function trackVirtualKeyboard() {
+        const threshold = 100; // prevent accidental triggering
+        const delta = window.scrollY - lastScrollY;
+        const keyboardVisible = delta > threshold;
+        lastScrollY = window.scrollY;
+        if (keyboardVisible) {
+            document.body.classList.add("keyboard");
+        } else {
+            document.body.classList.remove("keyboard");
         }
+    }
+
+    if (client.isNativeApp()) {
+        // Listen for incoming push notifications from Firebase; also asks
+        // for permission to show notifications if not already granted.
+        expectPushNotifications().catch(console.error);
+
+        // Listen for notifications user has tapped on
+        expectNotificationTap().catch(console.error);
+    }
+
+    function addFcmToken(token: string) {
+        console.info("Updating FCM token");
+        client
+            .addFcmToken(token)
+            .then(() => console.info("FCM token updated successfully"))
+            .catch(console.error);
+    }
+
+    function onUserLoggedIn(userId: string) {
+        if (client.isNativeApp()) {
+            // Expect FCM token refreshes
+            expectNewFcmToken(addFcmToken);
+
+            // Ask for the current FCM token
+            getFcmToken().then((token) => {
+                if (!token) {
+                    // TODO do we handle this somehow? Debounce, try again?
+                    console.error("No FCM token received");
+                    return;
+                }
+
+                client.checkFcmTokenExists(token).then((exists) => {
+                    if (!exists) {
+                        addFcmToken(token);
+                    }
+                });
+            });
+        }
+
+        broadcastLoggedInUser(userId);
     }
 
     function addHotGroupExclusion(chatId: string): void {
@@ -212,7 +356,7 @@
 
     function deleteChannelMessage(
         communityId: string,
-        channelId: string,
+        channelId: number,
         messageId: bigint,
         threadRootMessageIndex?: number | undefined,
     ): void {
@@ -270,6 +414,17 @@
             });
     }
 
+    function addRemoveSwapProvider(swapProvider: DexId, add: boolean): void {
+        client.addRemoveSwapProvider(swapProvider, add).then((success) => {
+            if (success) {
+                const action = add ? "Added" : "Removed";
+                console.log(`${action} swap provider`, swapProvider);
+            } else {
+                console.log("Failed to add/remove swap provider");
+            }
+        });
+    }
+
     function setGroupUpgradeConcurrency(value: number): void {
         client.setGroupUpgradeConcurrency(value).then((success) => {
             if (success) {
@@ -300,12 +455,60 @@
         });
     }
 
+    function markLocalGroupIndexFull(canisterId: string, full: boolean): void {
+        client.markLocalGroupIndexFull(canisterId, full).then((success) => {
+            if (success) {
+                console.log("LocalGroupIndex marked as full", full);
+            } else {
+                console.log("Failed to mark LocalGroupIndex as full", full);
+            }
+        });
+    }
+
+    function reinstateMissedDailyClaims(userId: string, days: number[]): void {
+        client.reinstateMissedDailyClaims(userId, days).then((success) => {
+            if (success) {
+                console.log("Reinstated missed daily claims");
+            } else {
+                console.log("Failed to reinstate missed daily claims");
+            }
+        });
+    }
+
+    function setAirdropConfig(
+        channelId: number,
+        channelName: string,
+        communityId?: string,
+        communityName?: string,
+    ): void {
+        client
+            .setAirdropConfig(channelId, channelName, communityId, communityName)
+            .then((success) => {
+                if (success) {
+                    console.log("Airdrop config set");
+                } else {
+                    console.log("Failed to set airdrop config");
+                }
+            });
+    }
+
     function setDiamondMembershipFees(fees: DiamondMembershipFees[]): void {
         client.setDiamondMembershipFees(fees).then((success) => {
             if (success) {
                 console.log("Diamond membership fees set", fees);
             } else {
                 console.log("Failed to set diamond membership fees", fees);
+            }
+        });
+    }
+
+    function setTokenEnabled(ledger: string, enabled: boolean): void {
+        client.setTokenEnabled(ledger, enabled).then((success) => {
+            const status = enabled ? "enabled" : "disabled";
+            if (success) {
+                console.log(`Token ${status}`);
+            } else {
+                console.log(`Failed to set token ${status}`);
             }
         });
     }
@@ -320,6 +523,16 @@
         });
     }
 
+    function topUpNeuronForSubmittingProposals(governanceCanisterId: string, amount: bigint): void {
+        client.topUpNeuronForSubmittingProposals(governanceCanisterId, amount).then((success) => {
+            if (success) {
+                console.log("Neuron topped up successfully");
+            } else {
+                console.log("Failed to top up neuron");
+            }
+        });
+    }
+
     function updateMarketMakerConfig(config: UpdateMarketMakerConfigArgs): void {
         client.updateMarketMakerConfig(config).then((resp) => {
             if (resp === "success") {
@@ -330,12 +543,18 @@
         });
     }
 
-    $: {
-        if (!$notFound && showLandingPage) {
-            document.body.classList.add("landing-page");
-        } else {
-            document.body.classList.remove("landing-page");
-        }
+    function withdrawFromIcpSwap(
+        userId: string,
+        swapId: bigint,
+        inputToken: boolean,
+        amount: bigint | undefined,
+        fee: bigint | undefined,
+    ): void {
+        client.withdrawFromIcpSwap(userId, swapId, inputToken, amount, fee);
+    }
+
+    function setPremiumItemCost(item: PremiumItem, chitCost: number): void {
+        client.setPremiumItemCost(item, chitCost);
     }
 
     function calculateHeight() {
@@ -344,12 +563,15 @@
         document.documentElement.style.setProperty("--vh", `${vh}px`);
     }
 
-    $: {
-        // subscribe to the rtl store so that we can set the overall page direction at the right time
-        document.dir = $rtlStore ? "rtl" : "ltr";
-    }
-
     function unhandledError(ev: Event) {
+        if (
+            ev instanceof ErrorEvent &&
+            (ev.message.includes("ResizeObserver loop completed with undelivered notifications") ||
+                ev.message.includes("ResizeObserver loop limit exceeded"))
+        ) {
+            return;
+        }
+
         logger?.error("Unhandled error: ", ev);
         if (
             ev instanceof PromiseRejectionEvent &&
@@ -362,53 +584,71 @@
     }
 
     function resize() {
-        menuStore.hideMenu();
+        portalState.close();
         calculateHeight();
     }
 
-    function startVideoCall(ev: CustomEvent<{ chat: ChatSummary; join: boolean }>) {
-        videoCallElement?.startOrJoinVideoCall(ev.detail.chat, ev.detail.join);
+    function startVideoCall(payload: {
+        chatId: ChatIdentifier;
+        callType: VideoCallType;
+        join: boolean;
+    }) {
+        videoCallElement?.startOrJoinVideoCall(payload.chatId, payload.callType, payload.join);
     }
 
-    function joinVideoCall(ev: CustomEvent<ChatIdentifier>) {
+    function askToSpeak() {
+        videoCallElement?.askToSpeak();
+    }
+
+    function hangup() {
+        videoCallElement?.hangup();
+    }
+
+    function joinVideoCall(chatId: ChatIdentifier, callType: VideoCallType) {
         incomingVideoCall.set(undefined);
-        const chat = client.lookupChatSummary(ev.detail);
-        if (chat) {
-            page(routeForChatIdentifier("none", chat.id));
-            videoCallElement?.startOrJoinVideoCall(chat, true);
-        }
+        page(routeForChatIdentifier("none", chatId));
+        videoCallElement?.startOrJoinVideoCall(chatId, callType, true);
     }
 
-    let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
-    $: burstPath = $currentTheme.mode === "dark" ? "/assets/burst_dark" : "/assets/burst_light";
-    $: burstUrl = isFirefox ? `${burstPath}.png` : `${burstPath}.svg`;
-    $: burstFixed = isScrollingRoute($pathParams);
+    if (client.isNativeAndroid()) {
+        document.body.classList.add("native-android");
+    }
 </script>
 
-{#if $currentTheme.burst || landingPageRoute}
+{#if $currentTheme.burst}
     <div
         class:fixed={burstFixed}
         class="burst-wrapper"
-        style={`background-image: url(${burstUrl})`} />
+        style={`background-image: url(${burstUrl})`}>
+    </div>
 {/if}
 
 <Head />
 
 <ActiveCall
-    on:clearSelection={() => page(routeForScope($chatListScope))}
+    {showLandingPage}
+    onClearSelection={() => page(routeForScope($chatListScopeStore))}
     bind:this={videoCallElement} />
 
-<IncomingCall on:joinVideoCall={joinVideoCall} />
+<VideoCallAccessRequests />
+
+<IncomingCall onJoinVideoCall={joinVideoCall} />
 
 <Witch background />
 
+{#if !client.isNativeApp()}
+    <InstallPrompt />
+{/if}
+
+<NotificationsBar />
+
 {#if isCanisterUrl}
     <SwitchDomain />
-{:else if $identityState.kind === "upgrading_user" || $identityState.kind === "upgrade_user"}
+{:else if upgrading}
     <Upgrading />
-{:else if $identityState.kind === "anon" || $identityState.kind === "logging_in" || $identityState.kind === "registering" || $identityState.kind === "logged_in" || $identityState.kind === "loading_user"}
-    {#if !$isLoading}
-        <Router on:startVideoCall={startVideoCall} {showLandingPage} />
+{:else if $identityStateStore.kind === "anon" || $identityStateStore.kind === "logging_in" || $identityStateStore.kind === "registering" || $identityStateStore.kind === "logged_in" || $identityStateStore.kind === "loading_user" || $identityStateStore.kind === "challenging"}
+    {#if !$isLoading || $reviewingTranslations}
+        <Router {showLandingPage} />
     {/if}
 {/if}
 
@@ -422,294 +662,9 @@
     <Snow />
 {/if}
 
-<svelte:window on:resize={resize} on:error={unhandledError} on:orientationchange={resize} />
-<svelte:body on:click={() => menuStore.hideMenu()} />
+<svelte:window onresize={resize} onerror={unhandledError} onorientationchange={resize} />
 
 <style lang="scss">
-    :global {
-        html,
-        body,
-        div,
-        span,
-        object,
-        iframe,
-        h1,
-        h2,
-        h3,
-        h4,
-        h5,
-        h6,
-        p,
-        blockquote,
-        pre,
-        abbr,
-        address,
-        cite,
-        code,
-        del,
-        dfn,
-        em,
-        img,
-        ins,
-        kbd,
-        q,
-        samp,
-        small,
-        strong,
-        sub,
-        sup,
-        var,
-        b,
-        i,
-        dl,
-        dt,
-        dd,
-        ol,
-        ul,
-        li,
-        fieldset,
-        form,
-        label,
-        legend,
-        table,
-        caption,
-        tbody,
-        tfoot,
-        thead,
-        tr,
-        th,
-        td,
-        article,
-        aside,
-        canvas,
-        details,
-        figcaption,
-        figure,
-        footer,
-        header,
-        hgroup,
-        menu,
-        nav,
-        section,
-        summary,
-        time,
-        mark,
-        audio,
-        video {
-            margin: 0;
-            outline: 0;
-            border: 0;
-            background: transparent;
-            padding: 0;
-            vertical-align: baseline;
-            font-size: 100%;
-        }
-
-        article,
-        aside,
-        details,
-        figcaption,
-        figure,
-        footer,
-        header,
-        hgroup,
-        menu,
-        nav,
-        section {
-            display: block;
-        }
-
-        nav ul {
-            list-style: none;
-        }
-
-        blockquote,
-        q {
-            quotes: none;
-        }
-
-        blockquote::before,
-        blockquote::after,
-        q::before,
-        q::after {
-            content: "";
-        }
-
-        a {
-            margin: 0;
-            background: transparent;
-            cursor: pointer;
-            padding: 0;
-            vertical-align: baseline;
-            text-decoration: none;
-            color: inherit;
-            font-size: inherit;
-        }
-
-        ins {
-            background-color: none;
-            text-decoration: none;
-            color: currentColor;
-        }
-
-        mark {
-            background-color: none;
-            color: inherit;
-            font-weight: bold;
-        }
-
-        del {
-            text-decoration: line-through;
-        }
-
-        abbr[title],
-        dfn[title] {
-            border: none;
-            cursor: help;
-        }
-
-        table {
-            border-collapse: collapse;
-            border-spacing: 0;
-        }
-
-        hr {
-            display: block;
-            margin: 0;
-            border: 0;
-            border-top: 1px solid currentColor;
-            padding: 0;
-            height: 1px;
-        }
-
-        input,
-        select {
-            vertical-align: middle;
-        }
-
-        html,
-        body {
-            position: relative;
-            width: 100%;
-            height: 100%;
-        }
-
-        :root {
-            --font-size: 16px;
-        }
-
-        html {
-            box-sizing: border-box;
-            font-size: var(--font-size);
-        }
-        *,
-        *:before,
-        *:after {
-            box-sizing: inherit;
-        }
-
-        :root {
-            --bg: #121212;
-            --prize: #f79413;
-            --font-fallback: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans,
-                Ubuntu, Cantarell, "Helvetica Neue", sans-serif --font: "Roboto", sans-serif;
-            --font: "Roboto", sans-serif;
-            --font-bold: "Manrope", sans-serif;
-        }
-
-        body {
-            transition:
-                background ease-in-out 300ms,
-                color ease-in-out 150ms,
-                padding ease-in-out 150ms;
-            background: var(--bg);
-            color: var(--txt);
-            margin: 0;
-            box-sizing: border-box;
-            font-family: var(--font-fallback);
-            font-family: var(--font);
-            font-weight: 400;
-            font-size: toRem(16);
-            line-height: 135%;
-
-            display: flex;
-            height: 100vh;
-            height: calc(var(--vh, 1vh) * 100);
-            height: 100dvh; // firefox will ignore this
-            position: fixed;
-
-            @include size-below(lg) {
-                padding: $sp3;
-            }
-
-            @include mobile() {
-                padding: 0;
-            }
-
-            &.fill {
-                transition: none;
-                padding: 0;
-            }
-
-            &.landing-page {
-                display: block;
-                line-height: toRem(28);
-                background: var(--landing-bg);
-                color: var(--landing-txt);
-                min-height: 100vh;
-                height: unset;
-                position: unset;
-            }
-
-            @media (hover: none) {
-                @include no_user_select();
-            }
-        }
-
-        h1,
-        h2,
-        h3,
-        h4 {
-            font-family: var(--font-bold);
-            font-weight: 700;
-        }
-
-        textarea {
-            font-family: var(--font-fallback);
-            font-family: var(--font);
-        }
-
-        a {
-            color: #22a7f2;
-            color: var(--primary);
-        }
-
-        .iti__flag {
-            background-image: url("assets/flags.png") !important;
-        }
-
-        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-            .iti__flag {
-                background-image: url("assets/flags@2x.png") !important;
-            }
-        }
-
-        .tip-dollar {
-            @include font-size(fs-260);
-            position: absolute;
-            pointer-events: none;
-            transform-origin: 50% 50%;
-            top: -1000px;
-            left: -1000px;
-            @include z-index("dollar");
-        }
-
-        .is-translatable {
-            position: relative;
-            top: 4px;
-        }
-    }
-
     .burst-wrapper {
         overflow: hidden;
         max-width: 100%;

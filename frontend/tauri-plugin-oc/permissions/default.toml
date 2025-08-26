@@ -1,0 +1,12 @@
+[default]
+description = "Default permissions for the plugin"
+permissions = [
+    "allow-open-url",
+    "allow-sign-in",
+    "allow-sign-up",
+    "allow-registerListener",
+    "allow-removeListener",
+    "allow-get-fcm-token",
+    "allow-show-notification",
+    "allow-svelte-ready",
+]

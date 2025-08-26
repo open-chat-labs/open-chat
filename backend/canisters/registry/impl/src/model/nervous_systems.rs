@@ -1,7 +1,7 @@
 use registry_canister::NervousSystemDetails;
 use serde::{Deserialize, Serialize};
-use sns_governance_canister::types::governance::SnsMetadata;
 use sns_governance_canister::types::NervousSystemParameters;
+use sns_governance_canister::types::governance::SnsMetadata;
 use types::{CanisterId, Milliseconds, TimestampMillis};
 
 #[derive(Serialize, Deserialize, Default)]
@@ -70,7 +70,8 @@ impl NervousSystems {
                 ns.min_neuron_stake = min_neuron_stake;
                 any_updates = true;
             }
-            let min_dissolve_delay_to_vote = parameters.neuron_minimum_dissolve_delay_to_vote_seconds.unwrap_or_default();
+            let min_dissolve_delay_to_vote =
+                parameters.neuron_minimum_dissolve_delay_to_vote_seconds.unwrap_or_default() * 1000;
             if ns.min_dissolve_delay_to_vote != min_dissolve_delay_to_vote {
                 ns.min_dissolve_delay_to_vote = min_dissolve_delay_to_vote;
                 any_updates = true;

@@ -1,25 +1,25 @@
-use crate::read_state;
 use crate::RuntimeState;
+use crate::read_state;
+use canister_api_macros::query;
 use community_canister::invite_code::{Response::*, *};
-use ic_cdk_macros::query;
+use oc_error_codes::OCErrorCode;
+use types::OCResult;
 
-#[query]
+#[query(msgpack = true)]
 fn invite_code(_: Args) -> Response {
-    read_state(invite_code_impl)
+    match read_state(invite_code_impl) {
+        Ok(result) => Success(result),
+        Err(error) => Error(error),
+    }
 }
 
-fn invite_code_impl(state: &RuntimeState) -> Response {
-    let caller = state.env.caller();
-
-    if let Some(member) = state.data.members.get(caller) {
-        if member.role.can_invite_users(&state.data.permissions) {
-            Success(SuccessResult {
-                code: if state.data.invite_code_enabled { state.data.invite_code } else { None },
-            })
-        } else {
-            NotAuthorized
-        }
+fn invite_code_impl(state: &RuntimeState) -> OCResult<SuccessResult> {
+    let member = state.get_calling_member(true)?;
+    if member.role().can_invite_users(&state.data.permissions) {
+        Ok(SuccessResult {
+            code: if state.data.invite_code_enabled.value { state.data.invite_code.value } else { None },
+        })
     } else {
-        UserNotInCommunity
+        Err(OCErrorCode::InitiatorNotAuthorized.into())
     }
 }

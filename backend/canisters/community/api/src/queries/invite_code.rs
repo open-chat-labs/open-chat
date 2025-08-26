@@ -1,17 +1,19 @@
-use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::Empty;
 
 pub type Args = Empty;
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(community, invite_code)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    UserNotInCommunity,
-    NotAuthorized,
+    Error(OCError),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(community, invite_code)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub code: Option<u64>,
 }

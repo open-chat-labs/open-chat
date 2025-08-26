@@ -1,38 +1,46 @@
+use crate::model::group_index_event_batch::GroupIndexEventBatch;
 use crate::model::local_user_index_map::LocalUserIndex;
-use crate::model::storage_index_user_sync_queue::OpenStorageUserSyncQueue;
+use crate::model::premium_items::{PremiumItemMetrics, PremiumItems};
+use crate::model::storage_index_user_config_batch::StorageIndexUserConfigBatch;
+use crate::model::storage_index_users_to_remove_batch::StorageIndexUsersToRemoveBatch;
+use crate::model::streak_insurance_logs::StreakInsuranceLogs;
 use crate::model::user_map::UserMap;
-use crate::model::user_principal_updates_queue::UserPrincipalUpdatesQueue;
-use crate::model::user_referral_leaderboards::UserReferralLeaderboards;
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
+use constants::DAY_IN_MS;
+use event_store_producer::{EventBuilder, EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
-use local_user_index_canister::Event as LocalUserIndexEvent;
+use local_user_index_canister::UserIndexEvent as LocalUserIndexEvent;
+use model::chit_leaderboard::ChitLeaderboard;
+use model::external_achievements::{ExternalAchievementMetrics, ExternalAchievements};
 use model::local_user_index_map::LocalUserIndexMap;
 use model::pending_modclub_submissions_queue::{PendingModclubSubmission, PendingModclubSubmissionsQueue};
 use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
 use model::reported_messages::{ReportedMessages, ReportingMetrics};
-use nns_governance_canister::types::manage_neuron::claim_or_refresh::By;
-use nns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command};
-use nns_governance_canister::types::{Empty, ManageNeuron, NeuronId};
+use model::user::SuspensionDetails;
 use p256_key_pair::P256KeyPair;
+use rand::RngCore;
 use serde::{Deserialize, Serialize};
+use stable_memory_map::UserIdsKeyPrefix;
 use std::cell::RefCell;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
+use timer_job_queues::BatchedTimerJobQueue;
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, DiamondMembershipFees, Milliseconds,
-    TimestampMillis, Timestamped, UserId,
+    BuildVersion, CanisterId, ChatId, ChildCanisterWasms, Cycles, DiamondMembershipFees, Milliseconds, TimestampMillis,
+    Timestamped, UserId, UserType,
 };
+use user_ids_set::UserIdsSet;
+use user_index_canister::ChildCanisterType;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
-use utils::consts::DEV_TEAM_DFX_PRINCIPAL;
 use utils::env::Environment;
-use utils::time::DAY_IN_MS;
+use utils::idempotency_checker::IdempotencyChecker;
+use utils::time::MonthKey;
 
 mod guards;
 mod jobs;
@@ -43,12 +51,8 @@ mod queries;
 mod timer_job_types;
 mod updates;
 
-pub const USER_LIMIT: usize = 150_000;
-
 const USER_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
 const TIME_UNTIL_SUSPENDED_ACCOUNT_IS_DELETED_MILLIS: Milliseconds = DAY_IN_MS * 90; // 90 days
-const ONE_MB: u64 = 1024 * 1024;
-const ONE_GB: u64 = 1024 * ONE_MB;
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
@@ -81,6 +85,14 @@ impl RuntimeState {
         self.data.governance_principals.contains(&caller)
     }
 
+    pub fn is_caller_identity_canister(&self) -> bool {
+        self.env.caller() == self.data.identity_canister_id
+    }
+
+    pub fn is_caller_registry_canister(&self) -> bool {
+        self.env.caller() == self.data.registry_canister_id
+    }
+
     pub fn is_caller_local_user_index_canister(&self) -> bool {
         let caller = self.env.caller();
         self.data.local_index_map.get(&caller).is_some()
@@ -94,11 +106,6 @@ impl RuntimeState {
     pub fn is_caller_translations_canister(&self) -> bool {
         let caller = self.env.caller();
         caller == self.data.translations_canister_id
-    }
-
-    pub fn is_caller_identity_canister(&self) -> bool {
-        let caller = self.env.caller();
-        caller == self.data.identity_canister_id
     }
 
     pub fn is_caller_platform_moderator(&self) -> bool {
@@ -119,14 +126,14 @@ impl RuntimeState {
         }
     }
 
-    pub fn is_caller_dev_team_dfx_principal(&self) -> bool {
-        let caller = self.env.caller();
-        caller == DEV_TEAM_DFX_PRINCIPAL
-    }
-
     pub fn is_caller_modclub(&self) -> bool {
         let caller = self.env.caller();
         caller == self.modclub_canister_id()
+    }
+
+    pub fn can_caller_upload_wasm_chunks(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.governance_principals.contains(&caller) || self.data.upload_wasm_chunks_whitelist.contains(&caller)
     }
 
     pub fn modclub_canister_id(&self) -> CanisterId {
@@ -145,11 +152,17 @@ impl RuntimeState {
 
     pub fn push_event_to_all_local_user_indexes(&mut self, event: LocalUserIndexEvent, except: Option<CanisterId>) {
         for canister_id in self.data.local_index_map.canisters() {
-            if except.map_or(true, |id| id != *canister_id) {
+            if except != Some(*canister_id) {
                 self.data.user_index_event_sync_queue.push(*canister_id, event.clone());
             }
         }
         jobs::sync_events_to_local_user_index_canisters::try_run_now(self);
+    }
+
+    pub fn get_random_local_user_index_canister(&mut self) -> CanisterId {
+        let canisters: Vec<CanisterId> = self.data.local_index_map.canisters().copied().collect();
+        let index: usize = self.env.rng().next_u32() as usize % canisters.len();
+        canisters[index]
     }
 
     pub fn queue_payment(&mut self, pending_payment: PendingPayment) {
@@ -162,16 +175,82 @@ impl RuntimeState {
         jobs::submit_message_to_modclub::start_job_if_required(self);
     }
 
+    pub fn delete_user(&mut self, user_id: UserId, triggered_by_user: bool) -> bool {
+        let now = self.env.now();
+        if let Some(user) = self.data.users.delete_user(user_id, now) {
+            self.data.local_index_map.remove_user(&user_id);
+            self.data.empty_users.remove(&user_id);
+
+            #[derive(Serialize)]
+            struct EventPayload {
+                triggered_by_user: bool,
+            }
+
+            self.data.event_store_client.push(
+                EventBuilder::new("user_deleted", now)
+                    .with_user(user_id.to_string(), true)
+                    .with_source(self.env.canister_id().to_string(), false)
+                    .with_json_payload(&EventPayload { triggered_by_user })
+                    .build(),
+            );
+
+            self.data.deleted_users.push(DeletedUser {
+                user_id,
+                triggered_by_user,
+                timestamp: now,
+            });
+
+            // TODO remove this once the website switches to deleting accounts via the Identity canister
+            self.data.identity_canister_user_sync_queue.push_back((user.principal, None));
+            jobs::sync_users_to_identity_canister::try_run_now(self);
+
+            self.data.remove_from_online_users_queue.push_back(user.principal);
+            jobs::remove_from_online_users_canister::start_job_if_required(self);
+
+            self.data.storage_index_users_to_remove_queue.push(user.principal);
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn user_metrics(&self, user_id: UserId) -> Option<UserMetrics> {
+        self.data.users.get_by_user_id(&user_id).map(|user| {
+            let now = self.env.now();
+            UserMetrics {
+                now,
+                username: user.username.clone(),
+                date_created: user.date_created,
+                date_updated: user.date_updated,
+                is_bot: user.user_type.is_bot(),
+                suspension_details: user.suspension_details.clone(),
+                moderation_flags_enabled: user.moderation_flags_enabled,
+                chit_balance: user
+                    .chit_per_month
+                    .get(&MonthKey::from_timestamp(now))
+                    .copied()
+                    .unwrap_or_default(),
+                max_stream: user.max_streak,
+                streak: user.streak(now),
+                streak_ends: user.streak_ends,
+                chit_updated: user.chit_updated,
+            }
+        })
+    }
+
     pub fn metrics(&self) -> Metrics {
         let now = self.env.now();
+
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
         let event_store_client_info = self.data.event_store_client.info();
         let event_relay_canister_id = event_store_client_info.event_store_canister_id;
 
         Metrics {
-            memory_used: utils::memory::used(),
-            now: self.env.now(),
+            heap_memory_used: utils::memory::heap(),
+            stable_memory_used: utils::memory::stable(),
+            now,
             cycles_balance: self.env.cycles_balance(),
+            liquid_cycles_balance: self.env.liquid_cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
             total_cycles_spent_on_canisters: self.data.total_cycles_spent_on_canisters,
@@ -182,11 +261,16 @@ impl RuntimeState {
             },
             canister_upgrades_completed: canister_upgrades_metrics.completed,
             canister_upgrades_failed: canister_upgrades_metrics.failed,
-            canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
-            canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
+            canister_upgrades_pending: canister_upgrades_metrics.pending,
+            canister_upgrades_in_progress: canister_upgrades_metrics.in_progress,
             governance_principals: self.data.governance_principals.iter().copied().collect(),
-            user_wasm_version: self.data.user_canister_wasm.version,
-            local_user_index_wasm_version: self.data.local_user_index_canister_wasm_for_new_canisters.version,
+            user_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::User).wasm.version,
+            local_user_index_wasm_version: self
+                .data
+                .child_canister_wasms
+                .get(ChildCanisterType::LocalUserIndex)
+                .wasm
+                .version,
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
             platform_moderators: self.data.platform_moderators.len() as u8,
             platform_operators: self.data.platform_operators.len() as u8,
@@ -197,25 +281,75 @@ impl RuntimeState {
             event_store_client_info,
             pending_modclub_submissions: self.data.pending_modclub_submissions_queue.len(),
             pending_payments: self.data.pending_payments_queue.len(),
-            pending_user_principal_updates: self.data.user_principal_updates_queue.len(),
-            pending_legacy_principals_to_sync: self.data.legacy_principals_sync_queue.len(),
             pending_users_to_sync_to_storage_index: self.data.storage_index_user_sync_queue.len(),
             reporting_metrics: self.data.reported_messages.metrics(),
+            oc_public_key: self.data.oc_key_pair.public_key_pem().to_string(),
+            empty_users: self.data.empty_users.len(),
+            deleted_users: self.data.deleted_users.len(),
+            unique_person_proofs_submitted: self.data.users.unique_person_proofs_submitted(),
+            blocked_user_pairs: self.data.blocked_users.len() as u64,
+            july_airdrop_period: self.build_stats_for_cohort(1719792000000, 1723021200000),
+            august_airdrop_period: self.build_stats_for_cohort(1723021200000, 1725181200000),
+            streak_badges: self.data.users.streak_badge_metrics(now),
+            survey_messages_sent: self.data.survey_messages_sent,
+            external_achievements: self.data.external_achievements.metrics(),
+            upload_wasm_chunks_whitelist: self.data.upload_wasm_chunks_whitelist.clone(),
+            wasm_chunks_uploaded: self
+                .data
+                .child_canister_wasms
+                .chunk_hashes()
+                .into_iter()
+                .map(|(c, h)| (*c, hex::encode(h)))
+                .collect(),
+            stable_memory_sizes: memory::memory_sizes(),
+            streak_insurance_metrics: self.data.streak_insurance_logs.metrics(),
+            premium_item_metrics: self.data.premium_items.metrics(),
             canister_ids: CanisterIds {
                 group_index: self.data.group_index_canister_id,
                 notifications_index: self.data.notifications_index_canister_id,
                 identity: self.data.identity_canister_id,
                 proposals_bot: self.data.proposals_bot_canister_id,
+                airdrop_bot: self.data.airdrop_bot_canister_id,
+                online_users: self.data.online_users_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 storage_index: self.data.storage_index_canister_id,
                 escrow: self.data.escrow_canister_id,
                 translations: self.data.translations_canister_id,
                 event_relay: event_relay_canister_id,
+                registry: self.data.registry_canister_id,
                 internet_identity: self.data.internet_identity_canister_id,
+                website: self.data.website_canister_id,
             },
-            oc_public_key: self.data.oc_key_pair.public_key_pem().to_string(),
-            user_principal_updates_queue: self.data.user_principal_updates_queue.len() as u32,
         }
+    }
+
+    fn build_stats_for_cohort(&self, airdrop_from: TimestampMillis, airdrop_to: TimestampMillis) -> AirdropStats {
+        let mut stats = AirdropStats::default();
+
+        for user in self.data.users.iter() {
+            let diamond = user.diamond_membership_details.was_active(airdrop_from)
+                || user.diamond_membership_details.was_active(airdrop_to);
+
+            let lifetime_diamond = user.diamond_membership_details.is_lifetime_diamond_member();
+
+            if diamond {
+                stats.diamond += 1;
+            }
+
+            if lifetime_diamond {
+                stats.lifetime_diamond += 1;
+            }
+
+            if user.unique_person_proof.is_some() {
+                stats.proved_uniqueness += 1;
+            }
+
+            if (user.unique_person_proof.is_some() && diamond) || lifetime_diamond {
+                stats.qualify_for_airdrop += 1;
+            }
+        }
+
+        stats
     }
 }
 
@@ -223,24 +357,25 @@ impl RuntimeState {
 struct Data {
     pub users: UserMap,
     pub governance_principals: HashSet<Principal>,
-    pub user_canister_wasm: CanisterWasm,
-    pub local_user_index_canister_wasm_for_new_canisters: CanisterWasm,
-    pub local_user_index_canister_wasm_for_upgrades: CanisterWasm,
+    pub child_canister_wasms: ChildCanisterWasms<ChildCanisterType>,
     pub group_index_canister_id: CanisterId,
     pub notifications_index_canister_id: CanisterId,
     pub identity_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
+    pub airdrop_bot_canister_id: CanisterId,
+    pub online_users_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cycles_dispenser_canister_id: CanisterId,
     pub storage_index_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
     pub translations_canister_id: CanisterId,
+    pub registry_canister_id: CanisterId,
     pub event_store_client: EventStoreClient<CdkRuntime>,
-    pub storage_index_user_sync_queue: OpenStorageUserSyncQueue,
+    pub storage_index_user_sync_queue: BatchedTimerJobQueue<StorageIndexUserConfigBatch>,
+    pub storage_index_users_to_remove_queue: BatchedTimerJobQueue<StorageIndexUsersToRemoveBatch>,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
-    pub user_principal_updates_queue: UserPrincipalUpdatesQueue,
-    pub legacy_principals_sync_queue: VecDeque<Principal>,
+    pub group_index_event_sync_queue: BatchedTimerJobQueue<GroupIndexEventBatch>,
     pub pending_payments_queue: PendingPaymentsQueue,
     pub pending_modclub_submissions_queue: PendingModclubSubmissionsQueue,
     pub platform_moderators: HashSet<UserId>,
@@ -253,61 +388,79 @@ struct Data {
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
     pub nns_governance_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
-    pub user_referral_leaderboards: UserReferralLeaderboards,
+    pub website_canister_id: CanisterId,
     pub platform_moderators_group: Option<ChatId>,
     pub reported_messages: ReportedMessages,
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub nns_8_year_neuron: Option<NnsNeuron>,
     pub rng_seed: [u8; 32],
     pub diamond_membership_fees: DiamondMembershipFees,
-    pub legacy_principals_synced: bool,
     pub video_call_operators: Vec<Principal>,
     pub oc_key_pair: P256KeyPair,
+    pub empty_users: HashSet<UserId>,
+    pub chit_leaderboard: ChitLeaderboard,
+    pub deleted_users: Vec<DeletedUser>,
+    #[serde(with = "serde_bytes")]
+    pub ic_root_key: Vec<u8>,
+    pub identity_canister_user_sync_queue: VecDeque<(Principal, Option<UserId>)>,
+    pub remove_from_online_users_queue: VecDeque<Principal>,
+    pub survey_messages_sent: usize,
+    pub external_achievements: ExternalAchievements,
+    pub upload_wasm_chunks_whitelist: Vec<Principal>,
+    pub streak_insurance_logs: StreakInsuranceLogs,
+    pub idempotency_checker: IdempotencyChecker,
+    pub blocked_users: UserIdsSet,
+    pub premium_items: PremiumItems,
 }
 
 impl Data {
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn new(
         governance_principals: Vec<Principal>,
-        user_canister_wasm: CanisterWasm,
-        local_user_index_canister_wasm: CanisterWasm,
         group_index_canister_id: CanisterId,
         notifications_index_canister_id: CanisterId,
         identity_canister_id: CanisterId,
         proposals_bot_canister_id: CanisterId,
+        airdrop_bot_canister_id: CanisterId,
+        online_users_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         storage_index_canister_id: CanisterId,
         escrow_canister_id: CanisterId,
         event_relay_canister_id: CanisterId,
+        registry_canister_id: CanisterId,
         nns_governance_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
         translations_canister_id: CanisterId,
+        website_canister_id: CanisterId,
         video_call_operators: Vec<Principal>,
+        ic_root_key: Vec<u8>,
         test_mode: bool,
+        now: TimestampMillis,
     ) -> Self {
         let mut data = Data {
             users: UserMap::default(),
             governance_principals: governance_principals.into_iter().collect(),
-            user_canister_wasm,
-            local_user_index_canister_wasm_for_new_canisters: local_user_index_canister_wasm.clone(),
-            local_user_index_canister_wasm_for_upgrades: local_user_index_canister_wasm,
+            child_canister_wasms: ChildCanisterWasms::default(),
             group_index_canister_id,
             notifications_index_canister_id,
             identity_canister_id,
             proposals_bot_canister_id,
+            airdrop_bot_canister_id,
+            online_users_canister_id,
             cycles_dispenser_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             total_cycles_spent_on_canisters: 0,
             storage_index_canister_id,
             escrow_canister_id,
             translations_canister_id,
+            registry_canister_id,
             event_store_client: EventStoreClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_secs(60))
                 .build(),
-            storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
+            storage_index_user_sync_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
+            storage_index_users_to_remove_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
-            user_principal_updates_queue: UserPrincipalUpdatesQueue::default(),
-            legacy_principals_sync_queue: VecDeque::default(),
+            group_index_event_sync_queue: BatchedTimerJobQueue::new(group_index_canister_id, false),
             pending_payments_queue: PendingPaymentsQueue::default(),
             pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),
             platform_moderators: HashSet::new(),
@@ -320,16 +473,28 @@ impl Data {
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             nns_governance_canister_id,
             internet_identity_canister_id,
-            user_referral_leaderboards: UserReferralLeaderboards::default(),
+            website_canister_id,
             platform_moderators_group: None,
             nns_8_year_neuron: None,
             reported_messages: ReportedMessages::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             rng_seed: [0; 32],
             diamond_membership_fees: DiamondMembershipFees::default(),
-            legacy_principals_synced: false,
             video_call_operators,
             oc_key_pair: P256KeyPair::default(),
+            empty_users: HashSet::new(),
+            chit_leaderboard: ChitLeaderboard::new(now),
+            deleted_users: Vec::new(),
+            ic_root_key,
+            identity_canister_user_sync_queue: VecDeque::new(),
+            remove_from_online_users_queue: VecDeque::new(),
+            survey_messages_sent: 0,
+            external_achievements: ExternalAchievements::default(),
+            upload_wasm_chunks_whitelist: Vec::new(),
+            streak_insurance_logs: StreakInsuranceLogs::default(),
+            idempotency_checker: IdempotencyChecker::default(),
+            blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
+            premium_items: PremiumItems::default(),
         };
 
         // Register the ProposalsBot
@@ -337,9 +502,23 @@ impl Data {
             proposals_bot_canister_id,
             proposals_bot_canister_id.into(),
             "ProposalsBot".to_string(),
-            0,
             None,
-            true,
+            now,
+            None,
+            UserType::OcControlledBot,
+            None,
+        );
+
+        // Register the AirdropBot
+        data.users.register(
+            airdrop_bot_canister_id,
+            airdrop_bot_canister_id.into(),
+            "AirdropBot".to_string(),
+            None,
+            now,
+            None,
+            UserType::OcControlledBot,
+            None,
         );
 
         data
@@ -352,24 +531,24 @@ impl Data {
         })
     }
 
-    pub fn refresh_nns_neuron(&self) {
-        if let Some(neuron_id) = self.nns_8_year_neuron.as_ref().map(|n| n.neuron_id) {
-            ic_cdk::spawn(refresh_nns_neuron_inner(self.nns_governance_canister_id, neuron_id));
+    pub fn chit_bands(&self, size: u32, year: u32, month: u8) -> BTreeMap<u32, u32> {
+        let mut bands = BTreeMap::new();
+        let month_key = MonthKey::new(year, month);
+
+        for chit in self
+            .users
+            .iter()
+            .map(|u| u.chit_per_month.get(&month_key).copied().unwrap_or_default())
+            .filter(|c| *c > 0)
+            .map(|c| c as u32)
+        {
+            let band = (chit / size) * size;
+            let key = if band > 0 { (chit / band) * band } else { 0 };
+
+            bands.entry(key).and_modify(|e| *e += 1).or_insert(1);
         }
 
-        async fn refresh_nns_neuron_inner(nns_governance_canister_id: CanisterId, neuron_id: u64) {
-            let _ = nns_governance_canister_c2c_client::manage_neuron(
-                nns_governance_canister_id,
-                &ManageNeuron {
-                    id: Some(NeuronId { id: neuron_id }),
-                    neuron_id_or_subaccount: None,
-                    command: Some(Command::ClaimOrRefresh(ClaimOrRefresh {
-                        by: Some(By::NeuronIdOrSubaccount(Empty {})),
-                    })),
-                },
-            )
-            .await;
-        }
+        bands
     }
 }
 
@@ -379,24 +558,25 @@ impl Default for Data {
         Data {
             users: UserMap::default(),
             governance_principals: HashSet::new(),
-            user_canister_wasm: CanisterWasm::default(),
-            local_user_index_canister_wasm_for_new_canisters: CanisterWasm::default(),
-            local_user_index_canister_wasm_for_upgrades: CanisterWasm::default(),
+            child_canister_wasms: ChildCanisterWasms::default(),
             group_index_canister_id: Principal::anonymous(),
             notifications_index_canister_id: Principal::anonymous(),
             identity_canister_id: Principal::anonymous(),
             proposals_bot_canister_id: Principal::anonymous(),
+            airdrop_bot_canister_id: Principal::anonymous(),
+            online_users_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             cycles_dispenser_canister_id: Principal::anonymous(),
             total_cycles_spent_on_canisters: 0,
             storage_index_canister_id: Principal::anonymous(),
             escrow_canister_id: Principal::anonymous(),
             translations_canister_id: Principal::anonymous(),
+            registry_canister_id: Principal::anonymous(),
             event_store_client: EventStoreClientBuilder::new(Principal::anonymous(), CdkRuntime::default()).build(),
-            storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
+            storage_index_user_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
+            storage_index_users_to_remove_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
-            user_principal_updates_queue: UserPrincipalUpdatesQueue::default(),
-            legacy_principals_sync_queue: VecDeque::default(),
+            group_index_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             pending_payments_queue: PendingPaymentsQueue::default(),
             pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),
             platform_moderators: HashSet::new(),
@@ -409,25 +589,39 @@ impl Default for Data {
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             nns_governance_canister_id: Principal::anonymous(),
             internet_identity_canister_id: Principal::anonymous(),
-            user_referral_leaderboards: UserReferralLeaderboards::default(),
+            website_canister_id: Principal::anonymous(),
             platform_moderators_group: None,
             reported_messages: ReportedMessages::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             nns_8_year_neuron: None,
             rng_seed: [0; 32],
             diamond_membership_fees: DiamondMembershipFees::default(),
-            legacy_principals_synced: false,
             video_call_operators: Vec::default(),
             oc_key_pair: P256KeyPair::default(),
+            empty_users: HashSet::new(),
+            chit_leaderboard: ChitLeaderboard::new(0),
+            deleted_users: Vec::new(),
+            ic_root_key: Vec::new(),
+            identity_canister_user_sync_queue: VecDeque::new(),
+            remove_from_online_users_queue: VecDeque::new(),
+            survey_messages_sent: 0,
+            external_achievements: ExternalAchievements::default(),
+            upload_wasm_chunks_whitelist: Vec::new(),
+            streak_insurance_logs: StreakInsuranceLogs::default(),
+            idempotency_checker: IdempotencyChecker::default(),
+            blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
+            premium_items: PremiumItems::default(),
         }
     }
 }
 
 #[derive(Serialize, Debug)]
 pub struct Metrics {
-    pub memory_used: u64,
     pub now: TimestampMillis,
+    pub heap_memory_used: u64,
+    pub stable_memory_used: u64,
     pub cycles_balance: Cycles,
+    pub liquid_cycles_balance: Cycles,
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub total_cycles_spent_on_canisters: Cycles,
@@ -450,13 +644,48 @@ pub struct Metrics {
     pub event_store_client_info: EventStoreClientInfo,
     pub pending_modclub_submissions: usize,
     pub pending_payments: usize,
-    pub pending_user_principal_updates: usize,
-    pub pending_legacy_principals_to_sync: usize,
     pub pending_users_to_sync_to_storage_index: usize,
     pub reporting_metrics: ReportingMetrics,
-    pub canister_ids: CanisterIds,
     pub oc_public_key: String,
-    pub user_principal_updates_queue: u32,
+    pub empty_users: usize,
+    pub deleted_users: usize,
+    pub unique_person_proofs_submitted: u32,
+    pub blocked_user_pairs: u64,
+    pub july_airdrop_period: AirdropStats,
+    pub august_airdrop_period: AirdropStats,
+    pub streak_badges: BTreeMap<u16, u32>,
+    pub survey_messages_sent: usize,
+    pub external_achievements: Vec<ExternalAchievementMetrics>,
+    pub upload_wasm_chunks_whitelist: Vec<Principal>,
+    pub wasm_chunks_uploaded: Vec<(ChildCanisterType, String)>,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
+    pub streak_insurance_metrics: StreakInsuranceMetrics,
+    pub premium_item_metrics: PremiumItemMetrics,
+    pub canister_ids: CanisterIds,
+}
+
+#[derive(Serialize, Debug)]
+pub struct UserMetrics {
+    pub now: TimestampMillis,
+    pub username: String,
+    pub date_created: TimestampMillis,
+    pub date_updated: TimestampMillis,
+    pub is_bot: bool,
+    pub suspension_details: Option<SuspensionDetails>,
+    pub moderation_flags_enabled: u32,
+    pub chit_balance: i32,
+    pub chit_updated: TimestampMillis,
+    pub max_stream: u16,
+    pub streak: u16,
+    pub streak_ends: TimestampMillis,
+}
+
+#[derive(Serialize, Debug, Default)]
+pub struct AirdropStats {
+    pub diamond: u32,
+    pub lifetime_diamond: u32,
+    pub proved_uniqueness: u32,
+    pub qualify_for_airdrop: u32,
 }
 
 #[derive(Serialize, Debug, Default)]
@@ -474,7 +703,7 @@ pub struct DiamondMembershipUserMetrics {
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct DiamondMembershipPaymentMetrics {
-    pub amount_raised: Vec<(Cryptocurrency, u128)>,
+    pub amount_raised: Vec<(String, u128)>,
     pub manual_payments_taken: u64,
     pub recurring_payments_taken: u64,
     pub recurring_payments_failed_due_to_insufficient_funds: u64,
@@ -492,16 +721,36 @@ struct UserRegisteredEventPayload {
     is_bot: bool,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct DeletedUser {
+    pub user_id: UserId,
+    pub triggered_by_user: bool,
+    pub timestamp: TimestampMillis,
+}
+
+#[derive(Serialize, Debug, Default)]
+pub struct StreakInsuranceMetrics {
+    payments: u32,
+    payments_unique_users: u32,
+    claims: u32,
+    claims_unique_users: u32,
+    total_paid: u128,
+}
+
 #[derive(Serialize, Debug)]
 pub struct CanisterIds {
     pub group_index: CanisterId,
     pub notifications_index: CanisterId,
     pub identity: CanisterId,
     pub proposals_bot: CanisterId,
+    pub airdrop_bot: CanisterId,
+    pub online_users: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub storage_index: CanisterId,
     pub escrow: CanisterId,
     pub translations: CanisterId,
     pub event_relay: CanisterId,
+    pub registry: CanisterId,
     pub internet_identity: CanisterId,
+    pub website: CanisterId,
 }

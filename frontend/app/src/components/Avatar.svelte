@@ -1,22 +1,47 @@
 <script lang="ts">
+    import { trackedEffect } from "@src/utils/effects.svelte";
     import { AvatarSize, OpenChat, UserStatus } from "openchat-client";
-    import { rtlStore } from "../stores/rtl";
     import { getContext } from "svelte";
+    import { rtlStore } from "../stores/rtl";
     import { now } from "../stores/time";
+    import LighteningBolt from "./home/nav/LighteningBolt.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    export let url: string | undefined;
-    export let showStatus: boolean | undefined = false;
-    export let userId: string | undefined = undefined;
-    export let size: AvatarSize = AvatarSize.Default;
-    export let blocked: boolean = false;
-    export let statusBorder = "white";
-    export let selected = false;
+    type Specialisation = "none" | "max_streak";
 
-    let userStatus = UserStatus.None;
-    let userStatusUserId: string | undefined = undefined;
-    $: {
+    interface Props {
+        url: string | undefined;
+        showStatus?: boolean | undefined;
+        userId?: string | undefined;
+        size?: AvatarSize;
+        blocked?: boolean;
+        statusBorder?: string;
+        selected?: boolean;
+        maxStreak?: boolean;
+    }
+
+    let {
+        url,
+        showStatus = false,
+        userId = undefined,
+        size = AvatarSize.Default,
+        blocked = false,
+        statusBorder = "white",
+        selected = false,
+        maxStreak = false,
+    }: Props = $props();
+
+    let specialisation: Specialisation = $derived(getSpecialisation());
+    let userStatus = $state(UserStatus.None);
+    let userStatusUserId: string | undefined = $state(undefined);
+
+    function getSpecialisation(): Specialisation {
+        if (maxStreak) return "max_streak";
+        return "none";
+    }
+
+    trackedEffect("user-status", () => {
         if (!showStatus || userId !== userStatusUserId) {
             userStatus = UserStatus.None;
             userStatusUserId = userId;
@@ -28,7 +53,7 @@
                 }
             });
         }
-    }
+    });
 </script>
 
 <div
@@ -39,9 +64,17 @@
     class:default={size === AvatarSize.Default}
     class:large={size === AvatarSize.Large}
     class:blocked>
-    <img class="avatar-image" src={url} loading="lazy" />
+    <img alt="Avatar" class="avatar-image" src={url} loading="lazy" />
     {#if userStatus === UserStatus.Online}
-        <div class:rtl={$rtlStore} class="online" style={`box-shadow: ${statusBorder} 0 0 0 2px`} />
+        <div class:rtl={$rtlStore} class="online" style={`box-shadow: ${statusBorder} 0 0 0 2px`}>
+        </div>
+    {/if}
+    {#if specialisation !== "none"}
+        <div class="specialised" class:maxStreak class:rtl={$rtlStore}>
+            {#if specialisation === "max_streak"}
+                <LighteningBolt enabled />
+            {/if}
+        </div>
     {/if}
 </div>
 
@@ -71,6 +104,11 @@
         background-position: center;
         background-size: cover;
         border-radius: var(--avatar-rd);
+        transition: filter 300ms ease-in-out;
+
+        &:hover {
+            filter: saturate(2);
+        }
     }
 
     .avatar {
@@ -113,6 +151,37 @@
             top: 0;
             transform: rotate(45deg);
             transform-origin: 50% 50%;
+        }
+    }
+
+    .specialised {
+        position: absolute;
+        $offset: $avatar-mod-offset;
+        &.maxStreak {
+            $offset: calc($offset - 5px);
+            transform: scale(0.85);
+        }
+        top: $offset;
+
+        &:not(.rtl) {
+            left: $offset;
+        }
+        &.rtl {
+            right: $offset;
+        }
+
+        @include mobile() {
+            $offset: $avatar-mod-offset-small;
+            &.maxStreak {
+                $offset: calc($offset - 5px);
+            }
+            top: $offset;
+            &:not(.rtl) {
+                left: $offset;
+            }
+            &.rtl {
+                right: $offset;
+            }
         }
     }
 </style>

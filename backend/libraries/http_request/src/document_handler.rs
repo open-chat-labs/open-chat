@@ -2,7 +2,7 @@ use types::{Document, HeaderField, HttpResponse};
 
 const CACHE_HEADER_VALUE: &str = "public, max-age=100000000, immutable";
 
-pub fn get_document(requested_document_id: Option<u128>, document: &Option<Document>, path: &str) -> HttpResponse {
+pub fn get_document(requested_document_id: Option<u128>, document: Option<&Document>, path: &str) -> HttpResponse {
     if let Some(document) = document {
         if let Some(requested_document_id) = requested_document_id {
             if requested_document_id == document.id {
@@ -14,6 +14,7 @@ pub fn get_document(requested_document_id: Option<u128>, document: &Option<Docum
                     ],
                     body: document.data.clone(),
                     streaming_strategy: None,
+                    upgrade: None,
                 }
             } else {
                 let location = build_document_location(path, document.id);

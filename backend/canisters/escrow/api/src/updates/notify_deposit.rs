@@ -1,11 +1,11 @@
-use candid::CandidType;
+use candid::{CandidType, Principal};
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
-use types::UserId;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub swap_id: u32,
-    pub user_id: Option<UserId>,
+    pub deposited_by: Option<Principal>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -16,7 +16,9 @@ pub enum Response {
     SwapCancelled,
     SwapExpired,
     SwapNotFound,
+    NotAuthorized,
     InternalError(String),
+    Error(OCError),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

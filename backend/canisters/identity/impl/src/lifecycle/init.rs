@@ -1,7 +1,7 @@
-use crate::lifecycle::{init_env, init_state};
 use crate::Data;
+use crate::lifecycle::{init_env, init_state};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::init;
+use ic_cdk::init;
 use identity_canister::init::Args;
 use tracing::info;
 use utils::cycles::init_cycles_dispenser_client;
@@ -17,7 +17,9 @@ fn init(args: Args) {
         args.governance_principals.into_iter().collect(),
         args.user_index_canister_id,
         args.cycles_dispenser_canister_id,
-        args.internet_identity_canister_id,
+        args.originating_canisters,
+        args.skip_captcha_whitelist,
+        args.ic_root_key,
         args.test_mode,
     );
 

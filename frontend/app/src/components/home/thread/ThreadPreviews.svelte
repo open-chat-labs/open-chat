@@ -1,35 +1,31 @@
 <script lang="ts">
-    import Loading from "../../Loading.svelte";
-    import ThreadPreviewComponent from "./ThreadPreview.svelte";
+    import { i18nKey } from "@src/i18n/i18n";
+    import { toastStore } from "@src/stores/toast";
+    import { debouncedDerived, threadsByChatStore, type OpenChat } from "openchat-client";
     import { getContext } from "svelte";
-    import { toastStore } from "../../../stores/toast";
-    import type { OpenChat, ThreadPreview } from "openchat-client";
-    import { i18nKey } from "../../../i18n/i18n";
+    import Loading from "../../Loading.svelte";
+    import { default as ThreadPreviewComponent } from "./ThreadPreview.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    $: selectedChatId = client.selectedChatId;
-    $: threadsByChat = client.threadsByChatStore;
-    $: serverChatSummariesStore = client.serverChatSummariesStore;
-
-    let threads: ThreadPreview[] = [];
     let observer: IntersectionObserver = new IntersectionObserver(() => {});
-    let loading = false;
-    let initialised = false;
+    let loading = $state(false);
+    let initialised = $state(false);
 
-    $: {
+    let threads = $derived.by(
+        debouncedDerived(() => [$threadsByChatStore], loadThreadPreviews, 300, []),
+    );
+
+    async function loadThreadPreviews() {
         loading = true;
-        client
-            .threadPreviews($selectedChatId, $threadsByChat, $serverChatSummariesStore)
-            .then((t) => {
-                threads = t;
-                initialised = true;
-            })
-            .catch((err) => {
-                toastStore.showFailureToast(i18nKey("thread.previewFailure"));
-                client.logError("Unable to load thread previews: ", err);
-            })
-            .finally(() => (loading = false));
+        try {
+            return client.threadPreviews($threadsByChatStore);
+        } catch (_) {
+            toastStore.showFailureToast(i18nKey("thread.previewFailure"));
+            return [];
+        } finally {
+            loading = false;
+        }
     }
 </script>
 
@@ -37,7 +33,7 @@
     {#if loading && !initialised}
         <Loading />
     {:else}
-        {#each threads as thread (thread.rootMessage.event.messageId)}
+        {#each threads as thread (`${thread.rootMessage.index}_${thread.rootMessage.event.messageId}`)}
             <ThreadPreviewComponent {observer} {thread} />
         {/each}
     {/if}

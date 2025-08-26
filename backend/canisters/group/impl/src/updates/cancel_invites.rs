@@ -1,28 +1,23 @@
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::activity_notifications::handle_activity_notification;
+use crate::{RuntimeState, execute_update};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use group_canister::cancel_invites::{Response::*, *};
-use group_chat_core::CancelInvitesResult;
-use ic_cdk_macros::update;
+use group_canister::cancel_invites::*;
+use types::OCResult;
 
-#[update]
+#[update(msgpack = true)]
 #[trace]
 fn cancel_invites(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| cancel_invites_impl(args, state))
+    execute_update(|state| cancel_invites_impl(args, state)).into()
 }
 
-fn cancel_invites_impl(args: Args, state: &mut RuntimeState) -> Response {
-    let caller = state.env.caller();
+fn cancel_invites_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+    state.data.verify_not_frozen()?;
 
-    if let Some(user_id) = state.data.lookup_user_id(caller) {
-        let now = state.env.now();
-        match state.data.chat.cancel_invites(user_id, args.user_ids, now) {
-            CancelInvitesResult::Success => Success,
-            CancelInvitesResult::UserSuspended => UserSuspended,
-            CancelInvitesResult::NotAuthorized | CancelInvitesResult::UserNotInGroup => NotAuthorized,
-        }
-    } else {
-        UserNotInGroup
-    }
+    let user_id = state.get_caller_user_id()?;
+
+    state.data.chat.cancel_invites(user_id, args.user_ids, state.env.now())?;
+
+    handle_activity_notification(state);
+    Ok(())
 }

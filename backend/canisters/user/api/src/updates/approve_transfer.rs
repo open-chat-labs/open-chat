@@ -1,23 +1,16 @@
 use candid::CandidType;
-use icrc_ledger_types::{icrc1::account::Account, icrc2::approve::ApproveError};
 use serde::{Deserialize, Serialize};
-use types::{CanisterId, Milliseconds};
+use ts_export::ts_export;
+use types::{CanisterId, Milliseconds, PinNumberWrapper, UnitResult, icrc1::Account};
 
+#[ts_export(user, approve_transfer)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub spender: Account,
     pub ledger_canister_id: CanisterId,
     pub amount: u128,
     pub expires_in: Option<Milliseconds>,
-    pub pin: Option<String>,
+    pub pin: Option<PinNumberWrapper>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    ApproveError(ApproveError),
-    PinRequired,
-    PinIncorrect(Milliseconds),
-    TooManyFailedPinAttempts(Milliseconds),
-    InternalError(String),
-}
+pub type Response = UnitResult;

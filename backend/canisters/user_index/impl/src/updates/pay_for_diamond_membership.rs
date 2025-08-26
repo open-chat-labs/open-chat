@@ -1,25 +1,27 @@
 use crate::guards::caller_is_openchat_user;
 use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
 use crate::timer_job_types::{RecurringDiamondMembershipPayment, TimerJob};
-use crate::{mutate_state, read_state, RuntimeState, ONE_GB};
-use candid::Principal;
+use crate::{RuntimeState, mutate_state, read_state};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use constants::{
+    CHAT_LEDGER_CANISTER_ID, CHAT_SYMBOL, CHAT_TRANSFER_FEE, DAY_IN_MS, HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, ICP_SYMBOL,
+    ICP_TRANSFER_FEE, ONE_GB, SNS_GOVERNANCE_CANISTER_ID,
+};
 use event_store_producer::EventBuilder;
-use ic_cdk_macros::update;
 use ic_ledger_types::{BlockIndex, TransferError};
 use icrc_ledger_types::icrc1;
 use icrc_ledger_types::icrc1::account::Account;
-use local_user_index_canister::{DiamondMembershipPaymentReceived, Event};
+use jwt::{Claims, sign_and_encode_token};
+use local_user_index_canister::{DiamondMembershipPaymentReceived, UserIndexEvent};
 use rand::Rng;
 use serde::Serialize;
 use storage_index_canister::add_or_update_users::UserConfig;
 use tracing::error;
-use types::{Cryptocurrency, DiamondMembershipFees, DiamondMembershipPlanDuration, UserId, ICP};
+use types::{DiamondMembershipPlanDuration, ICP, UserId};
 use user_index_canister::pay_for_diamond_membership::{Response::*, *};
-use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
-use utils::time::DAY_IN_MS;
 
-#[update(guard = "caller_is_openchat_user")]
+#[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
 async fn pay_for_diamond_membership(args: Args) -> Response {
     let Some(user_id) = read_state(|state| {
@@ -37,9 +39,15 @@ pub(crate) async fn pay_for_diamond_membership_impl(args: Args, user_id: UserId,
         return response;
     };
 
+    let fee = match args.ledger {
+        CHAT_LEDGER_CANISTER_ID => CHAT_TRANSFER_FEE,
+        ICP_LEDGER_CANISTER_ID => ICP_TRANSFER_FEE,
+        _ => unreachable!(),
+    };
+
     let c2c_args = user_canister::c2c_charge_user_account::Args {
-        ledger_canister_id: args.token.ledger_canister_id().unwrap(),
-        amount: ICP::from_e8s(args.expected_price_e8s - args.token.fee().unwrap() as u64),
+        ledger_canister_id: args.ledger,
+        amount: ICP::from_e8s(args.expected_price_e8s - fee as u64),
     };
 
     let response = match user_canister_c2c_client::c2c_charge_user_account(user_id.into(), &c2c_args).await {
@@ -50,8 +58,9 @@ pub(crate) async fn pay_for_diamond_membership_impl(args: Args, user_id: UserId,
             user_canister::c2c_charge_user_account::Response::TransferError(error) => process_error(error),
             user_canister::c2c_charge_user_account::Response::TransferErrorV2(error) => process_error_v2(error),
             user_canister::c2c_charge_user_account::Response::InternalError(error) => InternalError(error),
+            user_canister::c2c_charge_user_account::Response::Error(error) => Error(error),
         },
-        Err(error) => InternalError(format!("{error:?}")),
+        Err(error) => Error(error.into()),
     };
     if !matches!(response, Success(_)) {
         mutate_state(|state| {
@@ -71,13 +80,13 @@ fn prepare(args: &Args, user_id: UserId, state: &mut RuntimeState) -> Result<(),
     } else if diamond_membership.is_lifetime_diamond_member() {
         Err(AlreadyLifetimeDiamondMember)
     } else {
-        match args.token {
-            Cryptocurrency::CHAT => {
+        match args.ledger {
+            CHAT_LEDGER_CANISTER_ID => {
                 if args.expected_price_e8s != fees.chat_price_e8s(args.duration) {
                     return Err(PriceMismatch);
                 }
             }
-            Cryptocurrency::InternetComputer => {
+            ICP_LEDGER_CANISTER_ID => {
                 if args.expected_price_e8s != fees.icp_price_e8s(args.duration) {
                     return Err(PriceMismatch);
                 }
@@ -97,16 +106,21 @@ fn process_charge(
     manual_payment: bool,
     state: &mut RuntimeState,
 ) -> Response {
-    let share_with = referrer_to_share_payment(user_id, state);
     let recurring = args.recurring && !args.duration.is_lifetime();
     let now = state.env.now();
+
+    let (token_symbol, transfer_fee) = match args.ledger {
+        CHAT_LEDGER_CANISTER_ID => (CHAT_SYMBOL, CHAT_TRANSFER_FEE),
+        ICP_LEDGER_CANISTER_ID => (ICP_SYMBOL, ICP_TRANSFER_FEE),
+        _ => unreachable!(),
+    };
 
     state.data.event_store_client.push(
         EventBuilder::new("diamond_membership_payment", now)
             .with_user(user_id.to_string(), true)
             .with_source(state.env.canister_id().to_string(), false)
             .with_json_payload(&PayForDiamondMembershipEventPayload {
-                token: args.token.token_symbol().to_string(),
+                token: token_symbol.to_string(),
                 amount: args.expected_price_e8s,
                 duration: args.duration.to_string(),
                 recurring: args.recurring,
@@ -116,10 +130,9 @@ fn process_charge(
     );
 
     if let Some(diamond_membership) = state.data.users.diamond_membership_details_mut(&user_id) {
-        let has_ever_been_diamond_member = diamond_membership.has_ever_been_diamond_member();
-
         diamond_membership.add_payment(
-            args.token.clone(),
+            args.ledger,
+            transfer_fee,
             args.expected_price_e8s,
             block_index,
             args.duration,
@@ -133,11 +146,12 @@ fn process_charge(
 
         state.data.users.mark_updated(&user_id, now);
         state.push_event_to_all_local_user_indexes(
-            Event::DiamondMembershipPaymentReceived(DiamondMembershipPaymentReceived {
+            UserIndexEvent::DiamondMembershipPaymentReceived(DiamondMembershipPaymentReceived {
                 user_id,
                 timestamp: now,
                 expires_at,
-                token: args.token.clone(),
+                ledger: args.ledger,
+                token_symbol: token_symbol.to_string(),
                 amount_e8s: args.expected_price_e8s,
                 block_index,
                 duration: args.duration,
@@ -152,7 +166,6 @@ fn process_charge(
                 user_id: user.principal,
                 byte_limit: ONE_GB,
             });
-            crate::jobs::sync_users_to_storage_index::try_run_now(state);
         }
 
         if recurring {
@@ -163,45 +176,17 @@ fn process_charge(
             );
         }
 
-        let transaction_fee = args.token.fee().unwrap() as u64;
-
-        let mut amount_to_treasury = args.expected_price_e8s - (2 * transaction_fee);
+        let amount_to_treasury = args.expected_price_e8s - (2 * transfer_fee as u64);
 
         let now_nanos = state.env.now_nanos();
 
-        if let Some(share_with) = share_with {
-            let fees = &state.data.diamond_membership_fees;
-
-            let amount_to_referrer = amount_to_referer(&args.token, args.duration, fees);
-            amount_to_treasury = amount_to_treasury.saturating_sub(amount_to_referrer + transaction_fee);
-
-            let referral_payment = PendingPayment {
-                amount: amount_to_referrer,
-                currency: args.token.clone(),
-                timestamp: now_nanos,
-                recipient_account: Account::from(Principal::from(share_with)),
-                memo: state.env.rng().gen(),
-                reason: PendingPaymentReason::ReferralReward,
-            };
-            state.queue_payment(referral_payment);
-
-            state.data.user_referral_leaderboards.add_reward(
-                share_with,
-                !has_ever_been_diamond_member,
-                amount_to_referrer,
-                now,
-            );
-        }
-
-        let (recipient_account, reason) = if let Some(neuron_account) = matches!(
-            (&args.token, args.duration),
-            (Cryptocurrency::InternetComputer, DiamondMembershipPlanDuration::Lifetime)
-        )
-        .then_some(state.data.nns_neuron_account())
-        .flatten()
+        let (recipient_account, reason) = if let Some(neuron_account) = (args.ledger == ICP_LEDGER_CANISTER_ID
+            && args.duration == DiamondMembershipPlanDuration::Lifetime)
+            .then_some(state.data.nns_neuron_account())
+            .flatten()
         {
             (neuron_account, PendingPaymentReason::TopUpNeuron)
-        } else if matches!(args.token, Cryptocurrency::CHAT) {
+        } else if args.ledger == CHAT_LEDGER_CANISTER_ID {
             (Account::from(SNS_GOVERNANCE_CANISTER_ID), PendingPaymentReason::Burn)
         } else {
             (Account::from(SNS_GOVERNANCE_CANISTER_ID), PendingPaymentReason::Treasury)
@@ -209,10 +194,12 @@ fn process_charge(
 
         let treasury_payment = PendingPayment {
             amount: amount_to_treasury,
-            currency: args.token.clone(),
+            token_symbol: token_symbol.to_string(),
+            ledger: args.ledger,
+            fee: transfer_fee,
             timestamp: now_nanos,
             recipient_account,
-            memo: state.env.rng().gen(),
+            memo: state.env.rng().r#gen(),
             reason,
         };
         state.queue_payment(treasury_payment);
@@ -227,7 +214,7 @@ fn process_charge(
             .diamond_membership_payment_metrics
             .amount_raised
             .iter_mut()
-            .find(|(t, _)| *t == args.token)
+            .find(|(t, _)| t == token_symbol)
             .map(|(_, amount)| amount)
         {
             *amount += args.expected_price_e8s as u128;
@@ -236,51 +223,22 @@ fn process_charge(
                 .data
                 .diamond_membership_payment_metrics
                 .amount_raised
-                .push((args.token, args.expected_price_e8s as u128));
+                .push((token_symbol.to_string(), args.expected_price_e8s as u128));
         }
 
-        Success(result)
+        let claims = Claims::new(now + HOUR_IN_MS, "diamond_membership".to_string(), result.clone());
+        let proof_jwt =
+            sign_and_encode_token(state.data.oc_key_pair.secret_key_der(), claims, state.env.rng()).unwrap_or_default();
+
+        Success(SuccessResult {
+            expires_at: result.expires_at,
+            pay_in_chat: result.pay_in_chat,
+            subscription: result.subscription,
+            proof_jwt,
+        })
     } else {
         error!(%user_id, "Diamond membership payment taken, but user no longer exists");
         UserNotFound
-    }
-}
-
-fn referrer_to_share_payment(user_id: UserId, state: &RuntimeState) -> Option<UserId> {
-    if let Some(user) = state.data.users.get_by_user_id(&user_id) {
-        let now = state.env.now();
-        let diamond_membership = &user.diamond_membership_details;
-        if let Some(referred_by) = user.referred_by {
-            if let Some(referrer) = state.data.users.get_by_user_id(&referred_by) {
-                if referrer.diamond_membership_details.is_active(now) {
-                    let one_year = DiamondMembershipPlanDuration::OneYear.as_millis();
-                    let year_from_joined = user.date_created + one_year;
-                    let threshold =
-                        if diamond_membership.is_active(now) { diamond_membership.expires_at().unwrap() } else { now };
-                    if threshold < year_from_joined {
-                        return Some(referred_by);
-                    }
-                }
-            }
-        }
-    }
-
-    None
-}
-
-fn amount_to_referer(token: &Cryptocurrency, duration: DiamondMembershipPlanDuration, fees: &DiamondMembershipFees) -> u64 {
-    // The referral reward is only for membership payments for the first year, so if a user pays for
-    // lifetime Diamond membership, the referer is rewarded as if they had paid for 1 year.
-    let reward_based_on_duration = if matches!(duration, DiamondMembershipPlanDuration::Lifetime) {
-        DiamondMembershipPlanDuration::OneYear
-    } else {
-        duration
-    };
-
-    if matches!(token, Cryptocurrency::CHAT) {
-        fees.chat_price_e8s(reward_based_on_duration) / 2
-    } else {
-        fees.icp_price_e8s(reward_based_on_duration) / 2
     }
 }
 

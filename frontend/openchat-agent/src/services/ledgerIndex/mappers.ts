@@ -2,7 +2,7 @@ import { identity, optional } from "../../utils/mapping";
 import type {
     ApiAccount,
     ApiGetTransactions,
-    ApiGetTransationsResult,
+    ApiGetTransactionsResult,
     ApiTransactionWithId,
 } from "./candid/idl";
 import {
@@ -12,7 +12,7 @@ import {
     UnsupportedValueError,
 } from "openchat-shared";
 
-export function accountTransactions(candid: ApiGetTransationsResult): AccountTransactionResult {
+export function accountTransactions(candid: ApiGetTransactionsResult): AccountTransactionResult {
     if ("Err" in candid) {
         return CommonResponses.failure();
     }
@@ -42,7 +42,7 @@ function transaction(candid: ApiTransactionWithId): AccountTransaction {
             id: candid.id,
             kind: "burn",
             timestamp: nanosToDate(candid.transaction.timestamp),
-            memo: optional(burn.memo, memo),
+            memo: optional(burn.memo, memoBytesToString),
             createdAt: optional(burn.created_at_time, nanosToDate),
             amount: burn.amount,
             from: account(burn.from),
@@ -56,7 +56,7 @@ function transaction(candid: ApiTransactionWithId): AccountTransaction {
             id: candid.id,
             kind: "mint",
             timestamp: nanosToDate(candid.transaction.timestamp),
-            memo: optional(mint.memo, memo),
+            memo: optional(mint.memo, memoBytesToString),
             createdAt: optional(mint.created_at_time, nanosToDate),
             amount: mint.amount,
             to: account(mint.to),
@@ -69,14 +69,14 @@ function transaction(candid: ApiTransactionWithId): AccountTransaction {
             id: candid.id,
             kind: "approve",
             timestamp: nanosToDate(candid.transaction.timestamp),
-            memo: optional(approve.memo, memo),
+            memo: optional(approve.memo, memoBytesToString),
             createdAt: optional(approve.created_at_time, nanosToDate),
             amount: approve.amount,
             fee: optional(approve.fee, identity),
             from: account(approve.from),
             expectedAllowance: optional(approve.expected_allowance, identity),
             expiredAt: optional(approve.expires_at, identity),
-            spender: optional(approve.spender, account),
+            spender: account(approve.spender),
         };
     }
 
@@ -86,7 +86,7 @@ function transaction(candid: ApiTransactionWithId): AccountTransaction {
             id: candid.id,
             kind: "transfer",
             timestamp: nanosToDate(candid.transaction.timestamp),
-            memo: optional(transfer.memo, memo),
+            memo: optional(transfer.memo, memoBytesToString),
             createdAt: optional(transfer.created_at_time, nanosToDate),
             amount: transfer.amount,
             fee: optional(transfer.fee, identity),
@@ -99,7 +99,7 @@ function transaction(candid: ApiTransactionWithId): AccountTransaction {
     throw new Error(`Unexpected transaction type received: ${candid.transaction}`);
 }
 
-function memo(candid: Uint8Array | number[]): string {
+export function memoBytesToString(candid: Uint8Array | number[]): string {
     return [...candid].map((n) => String.fromCharCode(n)).join("");
 }
 

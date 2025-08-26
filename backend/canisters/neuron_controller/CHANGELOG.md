@@ -1,4 +1,5 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
@@ -7,7 +8,86 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Expose `liquid_cycles_balance` in metrics ([#8350](https://github.com/open-chat-labs/open-chat/pull/8350))
+
+## [[2.0.1766](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1766-neuron_controller)] - 2025-05-28
+
+### Changed
+
+- Refresh neuron details after each call to `manage_neuron` ([#7732](https://github.com/open-chat-labs/open-chat/pull/7732))
+- Include more details in failed c2c call errors ([#7749](https://github.com/open-chat-labs/open-chat/pull/7749))
+- Simplify HTTP response transform by using `http_request_with_closure` ([#7898](https://github.com/open-chat-labs/open-chat/pull/7898))
+
+## [[2.0.1682](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1682-neuron_controller)] - 2025-04-02
+
+### Changed
+
+- Always disburse large neurons to the treasury ([#7697](https://github.com/open-chat-labs/open-chat/pull/7697))
+
+## [[2.0.1667](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1667-neuron_controller)] - 2025-03-28
+
+### Changed
+
+- Filter trace level events globally so they are dropped earlier ([#7678](https://github.com/open-chat-labs/open-chat/pull/7678))
+- Merge the `refresh_voting_power` job into `process_neurons` ([#7688](https://github.com/open-chat-labs/open-chat/pull/7688))
+
+## [[2.0.1656](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1656-neuron_controller)] - 2025-03-17
+
+### Added
+
+- Periodically refresh neuron voting power ([#7604](https://github.com/open-chat-labs/open-chat/pull/7604))
+
+### Changed
+
+- Log total instructions consumed at end of upgrade ([#7551](https://github.com/open-chat-labs/open-chat/pull/7551))
+
+## [[2.0.1523](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1523-neuron_controller)] - 2024-12-19
+
+### Changed
+
+- Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))
+- Have NeuronController refresh 8 year neuron rather than UserIndex ([#7080](https://github.com/open-chat-labs/open-chat/pull/7080))
+
+## [[2.0.1484](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1484-neuron_controller)] - 2024-11-29
+
+### Changed
+
+- Spawn maturity from neurons that are dissolving and can no longer vote ([#6920](https://github.com/open-chat-labs/open-chat/pull/6920))
+
+## [[2.0.1467](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1467-neuron_controller)] - 2024-11-24
+
+### Changed
+
+- Increase CyclesDispenser's minimum balance to 10k ICP ([#6870](https://github.com/open-chat-labs/open-chat/pull/6870))
+
+## [[2.0.1426](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1426-neuron_controller)] - 2024-11-06
+
+### Added
+
+- Add an error log with http endpoint ([#6608](https://github.com/open-chat-labs/open-chat/pull/6608))
+
+### Changed
+
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+- Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
+- Increase the CyclesDispenser's minimum ICP balance ([#6728](https://github.com/open-chat-labs/open-chat/pull/6728))
+
+## [[2.0.1303](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1303-neuron_controller)] - 2024-08-22
+
+### Changed
+
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+
+### Fixed
+
+- Prevent memory leak from build up of timer jobs ([#6190](https://github.com/open-chat-labs/open-chat/pull/6190))
+
+## [[2.0.1282](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1282-neuron_controller)] - 2024-08-02
+
+### Changed
+
 - Seed rng with entropy before calling `raw_rand` to get randomness ([#5454](https://github.com/open-chat-labs/open-chat/pull/5454))
+- Expose both heap and stable memory in metrics ([#5718](https://github.com/open-chat-labs/open-chat/pull/5718))
 
 ## [[2.0.1080](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1080-neuron_controller)] - 2024-02-27
 

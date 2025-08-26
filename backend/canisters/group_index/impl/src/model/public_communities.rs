@@ -1,10 +1,13 @@
+use crate::MARK_ACTIVE_DURATION;
 use crate::model::moderation_flags::ModerationFlags;
 use crate::model::private_communities::PrivateCommunityInfo;
-use crate::MARK_ACTIVE_DURATION;
-use search::{Document, Query};
+use search::weighted::{Document, Query};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{AccessGate, CommunityId, CommunityMatch, FrozenCommunityInfo, PublicCommunityActivity, TimestampMillis};
+use types::{
+    AccessGate, AccessGateConfig, AccessGateConfigInternal, CommunityId, CommunityMatch, FrozenCommunityInfo,
+    PublicCommunityActivity, TimestampMillis,
+};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct PublicCommunities {
@@ -24,7 +27,7 @@ impl PublicCommunities {
         self.communities.get_mut(community_id)
     }
 
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn add(
         &mut self,
         community_id: CommunityId,
@@ -32,7 +35,7 @@ impl PublicCommunities {
         description: String,
         avatar_id: Option<u128>,
         banner_id: Option<u128>,
-        gate: Option<AccessGate>,
+        gate_config: Option<AccessGateConfig>,
         primary_language: String,
         channel_count: u32,
         created: TimestampMillis,
@@ -45,7 +48,7 @@ impl PublicCommunities {
                 description,
                 avatar_id,
                 banner_id,
-                gate,
+                gate_config.map(|gc| gc.into()),
                 primary_language,
                 channel_count,
                 created,
@@ -97,6 +100,7 @@ impl PublicCommunities {
         (matches, total)
     }
 
+    #[expect(clippy::too_many_arguments)]
     pub fn update_community(
         &mut self,
         community_id: &CommunityId,
@@ -104,16 +108,21 @@ impl PublicCommunities {
         description: String,
         avatar_id: Option<u128>,
         banner_id: Option<u128>,
-        gate: Option<AccessGate>,
+        gate_config: Option<AccessGateConfig>,
+        primary_language: String,
     ) -> UpdateCommunityResult {
         match self.communities.get_mut(community_id) {
             None => UpdateCommunityResult::CommunityNotFound,
             Some(community) => {
+                if !name.eq_ignore_ascii_case(&community.name) {
+                    community.verified = false;
+                }
                 community.name = name;
                 community.description = description;
                 community.avatar_id = avatar_id;
                 community.banner_id = banner_id;
-                community.gate = gate;
+                community.gate_config = gate_config.map(|gc| gc.into());
+                community.primary_language = primary_language;
                 UpdateCommunityResult::Success
             }
         }
@@ -147,9 +156,11 @@ pub struct PublicCommunityInfo {
     banner_id: Option<u128>,
     activity: PublicCommunityActivity,
     hotness_score: u32,
-    gate: Option<AccessGate>,
+    #[serde(alias = "gate")]
+    gate_config: Option<AccessGateConfigInternal>,
     moderation_flags: ModerationFlags,
     primary_language: String,
+    verified: bool,
 }
 
 pub enum UpdateCommunityResult {
@@ -158,14 +169,14 @@ pub enum UpdateCommunityResult {
 }
 
 impl PublicCommunityInfo {
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn new(
         id: CommunityId,
         name: String,
         description: String,
         avatar_id: Option<u128>,
         banner_id: Option<u128>,
-        gate: Option<AccessGate>,
+        gate_config: Option<AccessGateConfigInternal>,
         primary_language: String,
         channel_count: u32,
         now: TimestampMillis,
@@ -176,7 +187,7 @@ impl PublicCommunityInfo {
             description,
             avatar_id,
             banner_id,
-            gate,
+            gate_config,
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
             activity: PublicCommunityActivity::new(channel_count, now),
@@ -184,6 +195,7 @@ impl PublicCommunityInfo {
             frozen: None,
             moderation_flags: ModerationFlags::default(),
             primary_language,
+            verified: false,
         }
     }
 
@@ -224,6 +236,18 @@ impl PublicCommunityInfo {
         self.frozen.as_ref()
     }
 
+    pub fn verified(&self) -> bool {
+        self.verified
+    }
+
+    pub fn set_name(&mut self, name: String) {
+        self.name = name;
+    }
+
+    pub fn set_verified(&mut self, verified: bool) {
+        self.verified = verified;
+    }
+
     pub fn set_frozen(&mut self, info: Option<FrozenCommunityInfo>) {
         self.frozen = info;
     }
@@ -241,7 +265,7 @@ impl PublicCommunityInfo {
     }
 
     pub fn gate(&self) -> Option<&AccessGate> {
-        self.gate.as_ref()
+        self.gate_config.as_ref().map(|gc| &gc.gate)
     }
 
     pub fn to_match(&self, score: u32) -> CommunityMatch {
@@ -254,9 +278,10 @@ impl PublicCommunityInfo {
             banner_id: self.banner_id,
             member_count: self.activity.member_count,
             channel_count: self.activity.channel_count,
-            gate: self.gate.clone(),
+            gate_config: self.gate_config.as_ref().map(|gc| gc.clone().into()),
             moderation_flags: self.moderation_flags.bits(),
             primary_language: self.primary_language.clone(),
+            verified: self.verified,
         }
     }
 }

@@ -1,0 +1,14 @@
+[package]
+name = "openchat_installer_canister_client"
+version.workspace = true
+edition.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+candid = { workspace = true }
+canister_client = { path = "../../../libraries/canister_client" }
+constants = { path = "../../../libraries/constants" }
+ic-agent = { workspace = true }
+openchat_installer_canister = { path = "../api" }
+types = { path = "../../../libraries/types" }

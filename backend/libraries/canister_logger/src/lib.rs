@@ -6,58 +6,62 @@ use std::cell::{Cell, RefCell};
 use std::collections::VecDeque;
 use std::io::Write;
 use tracing::Level;
-use tracing_subscriber::fmt::format::{FmtSpan, Writer};
+use tracing::level_filters::LevelFilter;
+use tracing_subscriber::fmt::format::Writer;
 use tracing_subscriber::fmt::time::FormatTime;
 use tracing_subscriber::fmt::writer::MakeWriterExt;
-use tracing_subscriber::fmt::Layer;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
-use tracing_subscriber::Registry;
+use tracing_subscriber::{Layer, Registry, fmt};
 
 thread_local! {
     static INITIALIZED: Cell<bool> = Cell::default();
+    static ERRORS: RefCell<LogBuffer> = RefCell::new(LogBuffer::default());
     static LOG: RefCell<LogBuffer> = RefCell::new(LogBuffer::default());
     static TRACE: RefCell<LogBuffer> = RefCell::new(LogBuffer::default());
 }
 
 pub fn init(enable_trace: bool) {
-    if INITIALIZED.with(|i| i.replace(true)) {
+    if INITIALIZED.replace(true) {
         panic!("Logger already initialized");
     }
 
-    let log_layer = Layer::default()
-        .with_writer((|| LogWriter::new(false)).with_max_level(Level::INFO))
-        .json()
-        .with_timer(Timer {})
-        .with_file(true)
-        .with_line_number(true)
-        .with_current_span(false)
-        .with_span_list(false);
+    let build_writer = |level, enabled| (move || LogWriter::new(level, enabled)).with_max_level(level);
 
-    if enable_trace {
-        let trace_layer = Layer::default()
-            .with_writer(|| LogWriter::new(true))
-            .json()
-            .with_timer(Timer {})
-            .with_file(true)
-            .with_line_number(true)
-            .with_current_span(false)
-            .with_span_events(FmtSpan::ENTER);
+    let writer = build_writer(Level::ERROR, true)
+        .and(build_writer(Level::INFO, true))
+        .and(build_writer(Level::TRACE, enable_trace));
 
-        Registry::default().with(log_layer).with(trace_layer).init();
-    } else {
-        Registry::default().with(log_layer).init();
-    }
+    let level_filter = if enable_trace { LevelFilter::TRACE } else { LevelFilter::INFO };
+
+    Registry::default()
+        .with(
+            fmt::Layer::default()
+                .with_writer(writer)
+                .json()
+                .with_timer(Timer {})
+                .with_file(true)
+                .with_line_number(true)
+                .with_current_span(false)
+                .with_span_list(false)
+                .with_filter(level_filter),
+        )
+        .init();
 }
 
-pub fn init_with_logs(enable_trace: bool, logs: Vec<LogEntry>, traces: Vec<LogEntry>) {
+pub fn init_with_logs(enable_trace: bool, errors: Vec<LogEntry>, logs: Vec<LogEntry>, traces: Vec<LogEntry>) {
     init(enable_trace);
 
+    for error in errors {
+        ERRORS.with_borrow_mut(|l| l.append(error));
+    }
     for log in logs {
         LOG.with_borrow_mut(|l| l.append(log));
     }
-    for trace in traces {
-        TRACE.with_borrow_mut(|t| t.append(trace));
+    if enable_trace {
+        for trace in traces {
+            TRACE.with_borrow_mut(|t| t.append(trace));
+        }
     }
 }
 
@@ -99,6 +103,10 @@ impl Default for LogBuffer {
     }
 }
 
+pub fn export_errors() -> Vec<LogEntry> {
+    ERRORS.with_borrow(|l| l.iter().cloned().collect())
+}
+
 pub fn export_logs() -> Vec<LogEntry> {
     LOG.with_borrow(|l| l.iter().cloned().collect())
 }
@@ -114,14 +122,16 @@ pub struct LogEntry {
 }
 
 struct LogWriter {
-    trace: bool,
+    level: Level,
+    enabled: bool,
     buffer: Vec<u8>,
 }
 
 impl LogWriter {
-    fn new(trace: bool) -> LogWriter {
+    fn new(level: Level, enabled: bool) -> LogWriter {
         LogWriter {
-            trace,
+            level,
+            enabled,
             buffer: Vec::new(),
         }
     }
@@ -129,21 +139,34 @@ impl LogWriter {
 
 impl Write for LogWriter {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        self.buffer.extend(buf);
-        Ok(buf.len())
+        if self.enabled {
+            self.buffer.extend(buf);
+            Ok(buf.len())
+        } else {
+            Ok(0)
+        }
     }
 
     fn flush(&mut self) -> std::io::Result<()> {
-        let buffer = std::mem::take(&mut self.buffer);
-        let json = String::from_utf8(buffer).unwrap();
+        if self.enabled {
+            let buffer = std::mem::take(&mut self.buffer);
+            let json = String::from_utf8(buffer).unwrap();
 
-        let log_entry = LogEntry {
-            timestamp: canister_time::timestamp_millis(),
-            message: json,
-        };
+            let log_entry = LogEntry {
+                timestamp: canister_time::now_millis(),
+                message: json,
+            };
 
-        let sink = if self.trace { &TRACE } else { &LOG };
-        sink.with_borrow_mut(|s| s.append(log_entry));
+            let sink = if self.level == Level::TRACE {
+                &TRACE
+            } else if self.level == Level::INFO {
+                &LOG
+            } else {
+                &ERRORS
+            };
+
+            sink.with_borrow_mut(|s| s.append(log_entry));
+        }
         Ok(())
     }
 
@@ -156,7 +179,7 @@ struct Timer;
 
 impl FormatTime for Timer {
     fn format_time(&self, w: &mut Writer) -> std::fmt::Result {
-        let now = canister_time::timestamp_millis();
+        let now = canister_time::now_millis();
 
         w.write_str(&format!("{now}"))
     }

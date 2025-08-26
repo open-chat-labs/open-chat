@@ -1,9 +1,7 @@
-<!-- svelte-ignore a11y-click-events-have-key-events -->
-
 <script lang="ts">
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import Pound from "svelte-material-icons/Pound.svelte";
-    import type { AccessGate, DataContent, OpenChat } from "openchat-client";
+    import type { AccessGateConfig, DataContent, OpenChat } from "openchat-client";
     import Avatar from "../../../Avatar.svelte";
     import IntersectionObserver from "../../IntersectionObserver.svelte";
     import { _ } from "svelte-i18n";
@@ -11,25 +9,44 @@
     import { AvatarSize, ModerationFlags } from "openchat-client";
     import { getContext } from "svelte";
     import CommunityBanner from "./CommunityBanner.svelte";
-    import AccessGateIcon from "../../AccessGateIcon.svelte";
+    import AccessGateIcon from "../../access/AccessGateIcon.svelte";
     import { i18nKey, supportedLanguagesByCode } from "../../../../i18n/i18n";
     import Translatable from "../../../Translatable.svelte";
+    import WithVerifiedBadge from "../../../icons/WithVerifiedBadge.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    export let id: string;
-    export let name: string;
-    export let description: string;
-    export let avatar: DataContent;
-    export let banner: DataContent;
-    export let memberCount: number;
-    export let channelCount: number;
-    export let header = false;
-    export let gate: AccessGate;
-    export let language: string;
-    export let flags: number;
+    interface Props {
+        id: string;
+        name: string;
+        description: string;
+        avatar: DataContent;
+        banner: DataContent;
+        memberCount: number;
+        channelCount: number;
+        header?: boolean;
+        gateConfig: AccessGateConfig;
+        language: string;
+        flags: number;
+        verified: boolean;
+    }
 
-    $: flagsArray = serialiseFlags(flags);
+    let {
+        id,
+        name,
+        description,
+        avatar,
+        banner,
+        memberCount,
+        channelCount,
+        header = false,
+        gateConfig,
+        language,
+        flags,
+        verified,
+    }: Props = $props();
+
+    let flagsArray = $derived(serialiseFlags(flags));
 
     function serialiseFlags(flags: number) {
         const f: string[] = [supportedLanguagesByCode[language]?.name];
@@ -46,22 +63,39 @@
     }
 </script>
 
-<div class:header on:click class="card">
-    <IntersectionObserver let:intersecting>
-        <CommunityBanner {intersecting} square={header} {banner}>
-            <div class="gate">
-                <AccessGateIcon position={"bottom"} align={"end"} on:upgrade {gate} />
-            </div>
-            <div class="avatar">
-                <Avatar
-                    url={client.communityAvatarUrl(id, avatar)}
-                    userId={undefined}
-                    size={AvatarSize.Default} />
-            </div>
-        </CommunityBanner>
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class:header class="card">
+    <IntersectionObserver>
+        {#snippet children(intersecting)}
+            <CommunityBanner {intersecting} square={header} {banner}>
+                <div class="gate">
+                    <AccessGateIcon
+                        clickable
+                        button
+                        level={"community"}
+                        position={"bottom"}
+                        align={"end"}
+                        {gateConfig} />
+                </div>
+                <div class="avatar">
+                    <Avatar
+                        url={client.communityAvatarUrl(id, avatar)}
+                        userId={undefined}
+                        size={AvatarSize.Default} />
+                </div>
+            </CommunityBanner>
+        {/snippet}
     </IntersectionObserver>
     <div class="content">
-        <div class="name">{name}</div>
+        <WithVerifiedBadge
+            {verified}
+            size={"small"}
+            tooltip={i18nKey("verified.verified", undefined, "community")}>
+            <div class="name">
+                {name}
+            </div>
+        </WithVerifiedBadge>
         <div class="desc" class:fixed={!header}>
             <Markdown inline={false} text={description} />
         </div>
@@ -121,7 +155,6 @@
 
             .name {
                 @include font(bold, normal, fs-130);
-                margin-bottom: $sp3;
             }
 
             .desc {
@@ -131,6 +164,10 @@
                 max-height: toRem(130);
                 @include nice-scrollbar();
                 overflow-wrap: anywhere;
+
+                :global(.markdown-wrapper pre) {
+                    text-wrap: auto;
+                }
 
                 &.fixed {
                     height: toRem(130);
@@ -171,7 +208,8 @@
                 flex-wrap: wrap;
 
                 .flag {
-                    background-color: var(--primary);
+                    background: var(--button-bg);
+                    color: var(--button-txt);
                     padding: $sp1 $sp3;
                     border-radius: var(--rd);
                 }

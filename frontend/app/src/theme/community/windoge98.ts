@@ -44,6 +44,11 @@ export function getTheme(base: Theme): Theme {
     base.time.me.icon = white;
     base.time.me.bg = "rgba(255,255,255,0.2)";
 
+    base.code = {
+        bg: "rgba(0,0,0,0.8)",
+        txt: "#38e838",
+    };
+
     base.input.bg = white;
     base.input.accent = msBlue;
     base.input.sh = "inset 0px 2px 4px rgba(0, 0, 0, 0.6)";
@@ -107,9 +112,6 @@ export function getTheme(base: Theme): Theme {
     base.icon.selected = white;
 
     base.recommended.bg = white;
-    base.markdown.fg.color = txt;
-    base.markdown.fg.bright = txt;
-    base.markdown.fg.muted = txt40;
 
     base.vote.yes.color = successGreen;
     base.vote.no.color = errorRed;
@@ -135,6 +137,13 @@ export function getTheme(base: Theme): Theme {
     base.daily.mainAreaBgAccent = silver;
     base.daily.mainAreaText = txt;
     base.daily.supportiveText = "#4e5670";
+
+    base.audio.outer = base.primary;
+    base.audio.me.outer = base.accent;
+    base.audio.inner = base.accent;
+    base.audio.me.inner = green;
+    base.audio.note = base.currentChat.msg.txt;
+    base.audio.me.note = base.currentChat.msg.me.txt;
 
     return base;
 }

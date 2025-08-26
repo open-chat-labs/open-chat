@@ -1,23 +1,32 @@
 [package]
 name = "utils"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+base64 = { workspace = true }
 candid = { workspace = true }
 canister_client = { path = "../canister_client" }
+canister_time = { path = "../canister_time" }
+constants = { path = "../constants" }
 cycles_dispenser_client = { path = "../cycles_dispenser_client" }
+dataurl = { workspace = true }
+futures = { workspace = true }
 getrandom = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
+ic-management-canister-types = { workspace = true }
 itertools = { workspace = true }
 msgpack = { path = "../msgpack" }
+oc_error_codes = { path = "../error_codes" }
 rand = { workspace = true }
 serde = { workspace = true }
-serde_bytes = { workspace = true }
+serde_json = { workspace = true }
 sha256 = { path = "../sha256" }
 sha3 = { workspace = true }
+time = { workspace = true }
 tracing = { workspace = true }
+twox-hash = { workspace = true }
 types = { path = "../types" }

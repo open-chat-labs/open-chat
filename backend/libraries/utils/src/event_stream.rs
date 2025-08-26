@@ -27,6 +27,15 @@ impl<T: CandidType + Clone> EventStream<T> {
         Box::new(std::iter::empty())
     }
 
+    pub fn init(events: Vec<IndexedEvent<T>>) -> Self {
+        let latest_event_index = events.last().map(|e| e.index).unwrap_or_default();
+
+        EventStream {
+            events: VecDeque::from(events),
+            latest_event_index,
+        }
+    }
+
     pub fn add(&mut self, event: T) -> u64 {
         self.latest_event_index += 1;
         self.events.push_back(IndexedEvent {
@@ -42,12 +51,12 @@ impl<T: CandidType + Clone> EventStream<T> {
     }
 
     pub fn remove(&mut self, up_to_event_index: u64) -> u32 {
-        if let Some(earliest_event_index) = self.events.front().map(|e| e.index) {
-            if earliest_event_index <= up_to_event_index {
-                let count_to_remove = (up_to_event_index + 1 - earliest_event_index) as usize;
+        if let Some(earliest_event_index) = self.events.front().map(|e| e.index)
+            && earliest_event_index <= up_to_event_index
+        {
+            let count_to_remove = (up_to_event_index + 1 - earliest_event_index) as usize;
 
-                return self.events.drain(0..count_to_remove).len() as u32;
-            }
+            return self.events.drain(0..count_to_remove).len() as u32;
         }
         0
     }

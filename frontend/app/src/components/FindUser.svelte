@@ -1,40 +1,52 @@
 <script lang="ts">
-    import Magnify from "svelte-material-icons/Magnify.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
-    import { AvatarSize } from "openchat-client";
-    import type { UserSummary } from "openchat-client";
-    import Avatar from "./Avatar.svelte";
-    import Loading from "./Loading.svelte";
+    import { iconSize, type UserSummary } from "openchat-client";
+    import { onMount } from "svelte";
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
-    import { toastStore } from "../stores/toast";
-    import { iconSize } from "../stores/iconSize";
-    import type { OpenChat } from "openchat-client";
-    import FilteredUsername from "./FilteredUsername.svelte";
-    import Diamond from "./icons/Diamond.svelte";
-    import { i18nKey } from "../i18n/i18n";
+    import Close from "svelte-material-icons/Close.svelte";
+    import Magnify from "svelte-material-icons/Magnify.svelte";
     import { translatable } from "../actions/translatable";
+    import { i18nKey } from "../i18n/i18n";
+    import { toastStore } from "../stores/toast";
+    import { Debouncer } from "../utils/debouncer";
+    import { trimLeadingAtSymbol } from "../utils/user";
+    import Loading from "./Loading.svelte";
+    import MatchingUser from "./MatchingUser.svelte";
+    import Translatable from "./Translatable.svelte";
 
-    const client = getContext<OpenChat>("client");
+    interface Props {
+        mode: "add" | "edit";
+        enabled?: boolean;
+        userLookup: (searchTerm: string) => Promise<[UserSummary[], UserSummary[]]>;
+        placeholderKey?: string;
+        compact?: boolean;
+        autofocus?: boolean;
+        onSelectUser?: (user: UserSummary) => void;
+    }
 
-    export let mode: "add" | "edit";
-    export let enabled = true;
-    export let userLookup: (searchTerm: string) => Promise<UserSummary[]>;
+    let {
+        mode,
+        enabled = true,
+        userLookup,
+        placeholderKey = "searchForUsername",
+        compact = false,
+        autofocus = true,
+        onSelectUser,
+    }: Props = $props();
 
-    const dispatch = createEventDispatcher();
-    let inp: HTMLInputElement;
-    let timer: number | undefined = undefined;
-    let searchTerm: string = "";
-    let users: UserSummary[] = [];
-    let searching: boolean = false;
-    let hovering = false;
-
-    $: createdUser = client.user;
+    let inp: HTMLInputElement | undefined;
+    let searchTerm: string = $state("");
+    let communityMembers: UserSummary[] = $state([]);
+    let users: UserSummary[] = $state([]);
+    let searching: boolean = $state(false);
+    let hovering = $state(false);
+    const debouncer = new Debouncer(searchUsers, 350);
 
     onMount(() => {
         // this focus seems to cause a problem with the animation of the right panel without
         // this setTimeout. Pretty horrible and who knows if 300 ms will be enough on other machines?
-        window.setTimeout(() => inp.focus(), 300);
+        if (autofocus) {
+            window.setTimeout(() => inp?.focus(), 300);
+        }
     });
 
     /**
@@ -42,29 +54,31 @@
      */
 
     function onSelect(user: UserSummary) {
-        dispatch("selectUser", user);
+        onSelectUser?.(user);
         searchTerm = "";
         users = [];
-        inp.focus();
+        inp?.focus();
     }
 
-    function debounce(value: string) {
-        if (timer) window.clearTimeout(timer);
-        timer = window.setTimeout(() => {
-            if (value === "") {
-                users = [];
-                return;
-            }
-            searching = true;
-            userLookup(value)
-                .then((u) => (users = u))
-                .catch((_err) => toastStore.showFailureToast(i18nKey("userSearchFailed")))
-                .finally(() => (searching = false));
-        }, 350);
+    function searchUsers(value: string) {
+        if (value === "") {
+            users = [];
+            return;
+        }
+        searching = true;
+        userLookup(value)
+            .then((p) => {
+                communityMembers = p[0];
+                users = p[1];
+            })
+            .catch((_err) => toastStore.showFailureToast(i18nKey("userSearchFailed")))
+            .finally(() => (searching = false));
     }
 
     function onInput() {
-        debounce(inp.value);
+        if (inp) {
+            debouncer.execute(trimLeadingAtSymbol(inp.value));
+        }
     }
 
     function clearFilter() {
@@ -80,47 +94,32 @@
         bind:value={searchTerm}
         disabled={!enabled}
         type="text"
-        on:input={onInput}
-        use:translatable={{ key: i18nKey("searchForUsername") }}
-        placeholder={$_("searchForUsername")} />
+        oninput={onInput}
+        use:translatable={{ key: i18nKey(placeholderKey) }}
+        placeholder={$_(placeholderKey)} />
     {#if searching}
-        <span class="loading" />
+        <span class="loading"></span>
     {:else if searchTerm !== ""}
-        <span on:click={clearFilter} class="icon close"><Close color={"#ccc"} /></span>
+        <span onclick={clearFilter} class="icon close"><Close color={"#ccc"} /></span>
     {/if}
 </div>
 <div class="results">
     {#if searching}
         <Loading />
     {:else}
-        {#each users as user (user.userId)}
-            <!-- svelte-ignore a11y-no-static-element-interactions -->
-            <div
-                class="user"
-                on:click={() => onSelect(user)}
-                on:mouseenter={() => (hovering = true)}
-                on:mouseleave={() => (hovering = false)}>
-                <span class="avatar">
-                    <Avatar
-                        statusBorder={hovering ? "var(--members-hv)" : "transparent"}
-                        showStatus
-                        userId={user.userId}
-                        url={client.userAvatarUrl(user)}
-                        size={AvatarSize.Default} />
-                </span>
-                <div class="details">
-                    <h4>
-                        <FilteredUsername
-                            {searchTerm}
-                            me={user.userId === $createdUser.userId}
-                            username={user.displayName ?? user.username} />
-                        <Diamond status={user.diamondStatus} />
-                    </h4>
-                    <div class="username">
-                        <FilteredUsername {searchTerm} username={"@" + user.username} />
-                    </div>
-                </div>
+        {#if communityMembers?.length > 0}
+            <div class="sub-heading">
+                <Translatable resourceKey={i18nKey("communityMembers")} />
             </div>
+            {#each communityMembers as user (user.userId)}
+                <MatchingUser {searchTerm} {user} bind:hovering {onSelect} />
+            {/each}
+        {/if}
+        {#if communityMembers?.length > 0 && users?.length > 0}
+            <div class="sub-heading"><Translatable resourceKey={i18nKey("otherUsers")} /></div>
+        {/if}
+        {#each users as user (user.userId)}
+            <MatchingUser {compact} {searchTerm} {user} bind:hovering {onSelect} />
         {/each}
     {/if}
 </div>
@@ -167,44 +166,6 @@
 
         &::placeholder {
             color: var(--placeholder);
-        }
-    }
-
-    .user {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        color: var(--txt);
-        padding: $sp4;
-        margin: 0 0 $sp3 0;
-        transition:
-            background-color ease-in-out 100ms,
-            border-color ease-in-out 100ms;
-        cursor: pointer;
-        gap: 12px;
-
-        @include mobile() {
-            padding: $sp3 toRem(10);
-        }
-
-        @media (hover: hover) {
-            &:hover {
-                background-color: var(--members-hv);
-            }
-        }
-    }
-    .avatar {
-        flex: 0 0 50px;
-    }
-    .details {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        padding: 0 5px;
-
-        .username {
-            font-weight: 200;
-            color: var(--txt-light);
         }
     }
 

@@ -4,11 +4,19 @@
     import Markdown from "./Markdown.svelte";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
+
+    interface Props {
+        onClose: () => void;
+    }
+
+    let { onClose }: Props = $props();
 </script>
 
-<ModalContent on:close>
-    <div slot="header"><Translatable resourceKey={i18nKey("noAccess")} /></div>
-    <div slot="body">
+<ModalContent {onClose}>
+    {#snippet header()}
+        <Translatable resourceKey={i18nKey("noAccess")} />
+    {/snippet}
+    {#snippet body()}
         <Markdown text={$_("noAccessText")} />
-    </div>
+    {/snippet}
 </ModalContent>

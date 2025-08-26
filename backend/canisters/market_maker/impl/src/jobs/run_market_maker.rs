@@ -1,15 +1,14 @@
 use crate::exchanges::Exchange;
-use crate::{mutate_state, read_state, Config, RuntimeState};
-use ic_cdk::api::call::CallResult;
+use crate::{Config, RuntimeState, mutate_state, read_state};
+use constants::MINUTE_IN_MS;
 use itertools::Itertools;
 use market_maker_canister::ExchangeId;
-use std::cmp::{max, min, Reverse};
-use std::collections::btree_map::Entry::Occupied;
+use std::cmp::{Reverse, max, min};
 use std::collections::BTreeMap;
+use std::collections::btree_map::Entry::Occupied;
 use std::time::Duration;
 use tracing::{error, trace};
-use types::{AggregatedOrders, CancelOrderRequest, MakeOrderRequest, Milliseconds, Order, OrderType};
-use utils::time::MINUTE_IN_MS;
+use types::{AggregatedOrders, C2CError, CancelOrderRequest, MakeOrderRequest, Milliseconds, Order, OrderType};
 
 const RUN_MARKET_MAKER_INTERVAL: Milliseconds = MINUTE_IN_MS;
 
@@ -20,7 +19,7 @@ pub fn start_job() {
 fn run() {
     let exchanges = read_state(get_active_exchanges);
     if !exchanges.is_empty() {
-        ic_cdk::spawn(run_async(exchanges));
+        ic_cdk::futures::spawn(run_async(exchanges));
     }
 }
 
@@ -34,12 +33,12 @@ fn get_active_exchanges(state: &RuntimeState) -> Vec<(ExchangeId, Box<dyn Exchan
         .filter(|(_, c)| c.enabled)
         // Exclude exchanges where there are orders in progress, unless those orders have been
         // pending for more than 10 minutes, since realistically that means they have failed.
-        .filter(|(&id, _)| {
+        .filter(|(id, _)| {
             state
                 .data
                 .market_makers_in_progress
-                .get(&id)
-                .map_or(true, |ts| now.saturating_sub(*ts) > 10 * MINUTE_IN_MS)
+                .get(id)
+                .is_none_or(|ts| now.saturating_sub(*ts) > 10 * MINUTE_IN_MS)
         })
         .filter_map(|(&id, c)| state.get_exchange_client(id).map(|e| (id, e, c.clone())))
         .collect()
@@ -55,12 +54,20 @@ async fn run_async(exchanges: Vec<(ExchangeId, Box<dyn Exchange>, Config)>) {
     .await;
 }
 
-async fn run_single(exchange_id: ExchangeId, exchange_client: Box<dyn Exchange>, config: Config) -> CallResult<()> {
+async fn run_single(exchange_id: ExchangeId, exchange_client: Box<dyn Exchange>, config: Config) -> Result<(), C2CError> {
     trace!(%exchange_id, "Running market maker");
 
-    let my_previous_open_orders = mutate_state(|state| {
+    let (my_previous_open_orders, previous_latest_bid_taken, previous_latest_ask_taken) = mutate_state(|state| {
         state.data.market_makers_in_progress.insert(exchange_id, state.env.now());
-        state.data.my_open_orders.get(&exchange_id).cloned()
+
+        let (latest_bid_taken, latest_ask_taken) =
+            state.data.latest_orders_taken.get(&exchange_id).copied().unwrap_or_default();
+
+        (
+            state.data.my_open_orders.get(&exchange_id).cloned(),
+            latest_bid_taken,
+            latest_ask_taken,
+        )
     });
 
     let market_state = exchange_client.market_state().await?;
@@ -75,8 +82,18 @@ async fn run_single(exchange_id: ExchangeId, exchange_client: Box<dyn Exchange>,
 
     let my_open_orders_aggregated: AggregatedOrders = market_state.my_open_orders.as_slice().into();
 
-    let (latest_bid_taken, latest_ask_taken) =
+    let (bid_taken_since_previous_round, ask_taken_since_previous_round) =
         calculate_orders_taken_since_previous_round(&my_open_orders_aggregated, my_previous_open_orders.as_ref());
+
+    let latest_bid_taken = bid_taken_since_previous_round.or(previous_latest_bid_taken);
+    let latest_ask_taken = ask_taken_since_previous_round.or(previous_latest_ask_taken);
+
+    mutate_state(|state| {
+        state
+            .data
+            .latest_orders_taken
+            .insert(exchange_id, (latest_bid_taken, latest_ask_taken));
+    });
 
     let (max_bid_price, min_ask_price) =
         calculate_price_limits(current_bid, current_ask, latest_bid_taken, latest_ask_taken, &config);
@@ -189,13 +206,13 @@ fn calculate_price_limits(
         if increase_required % 2 == 0 || latest_ask_taken.is_some() {
             max_bid_price = max_bid_price.saturating_sub((increase_required / 2) * config.price_increment);
         } else {
-            max_bid_price = max_bid_price.saturating_sub(((increase_required + 1) / 2) * config.price_increment);
+            max_bid_price = max_bid_price.saturating_sub(increase_required.div_ceil(2) * config.price_increment);
         }
 
         if increase_required % 2 == 0 || latest_ask_taken.is_none() {
             min_ask_price = min_ask_price.saturating_add((increase_required / 2) * config.price_increment);
         } else {
-            min_ask_price = min_ask_price.saturating_add(((increase_required + 1) / 2) * config.price_increment);
+            min_ask_price = min_ask_price.saturating_add(increase_required.div_ceil(2) * config.price_increment);
         }
     }
 
@@ -228,15 +245,15 @@ fn calculate_orders_to_make(
 
     // Don't top up the best bid and ask, otherwise someone can keep trading against that price and
     // the bot will keep topping it up
-    if let Occupied(e) = bids_to_make_map.entry(max_bid_price) {
-        if e.get().amount < config.order_size {
-            e.remove();
-        }
+    if let Occupied(e) = bids_to_make_map.entry(max_bid_price)
+        && e.get().amount < config.order_size
+    {
+        e.remove();
     }
-    if let Occupied(e) = asks_to_make_map.entry(min_ask_price) {
-        if e.get().amount < config.order_size {
-            e.remove();
-        }
+    if let Occupied(e) = asks_to_make_map.entry(min_ask_price)
+        && e.get().amount < config.order_size
+    {
+        e.remove();
     }
 
     bids_to_make_map

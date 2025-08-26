@@ -5,6 +5,7 @@ import resolve from "@rollup/plugin-node-resolve";
 import terser from "@rollup/plugin-terser";
 import typescript from "@rollup/plugin-typescript";
 import del from "rollup-plugin-delete";
+import { sourcemapNewline } from "../sourcemapNewline.mjs";
 
 export default {
     input: `./src/worker.ts`,
@@ -26,5 +27,6 @@ export default {
             preferBuiltins: false,
         }),
         terser(),
+        sourcemapNewline(),
     ],
 };

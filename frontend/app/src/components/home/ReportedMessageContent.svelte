@@ -1,19 +1,23 @@
 <script lang="ts">
+    import type { OpenChat, ReportedMessageContent } from "openchat-client";
+    import { allUsersStore } from "openchat-client";
+    import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
     import Legend from "../Legend.svelte";
     import TextArea from "../TextArea.svelte";
     import Markdown from "./Markdown.svelte";
-    import type { OpenChat, ReportedMessageContent } from "openchat-client";
-    import { getContext } from "svelte";
-    import { _ } from "svelte-i18n";
 
-    export let content: ReportedMessageContent;
+    interface Props {
+        content: ReportedMessageContent;
+    }
+
+    let { content }: Props = $props();
     const client = getContext<OpenChat>("client");
-    $: userStore = client.userStore;
 
-    let index = 0;
+    let index = $state(0);
 
-    $: report = content.reports[index];
+    let report = $derived(content.reports[index]);
     let reasons = [
         $_("report.threat"),
         $_("report.child"),
@@ -23,14 +27,17 @@
         $_("report.scam"),
         $_("report.other"),
     ];
-    $: message = $_("report.messageReport", {
-        values: {
-            username:
-                $userStore[report.reportedBy]?.username ?? `unknown user (${report.reportedBy}))`,
-            timestamp: client.toDatetimeString(new Date(report.timestamp)),
-            reason: reasons[report.reasonCode],
-        },
-    });
+    let message = $derived(
+        $_("report.messageReport", {
+            values: {
+                username:
+                    $allUsersStore.get(report.reportedBy)?.username ??
+                    `unknown user (${report.reportedBy}))`,
+                timestamp: client.toDatetimeString(new Date(report.timestamp)),
+                reason: reasons[report.reasonCode],
+            },
+        }),
+    );
 </script>
 
 <div class="report">
@@ -43,7 +50,7 @@
 
 <div class="report-selectors">
     {#each content.reports as r, i}
-        <div on:click={() => (index = i)} class="selector" class:selected={report === r}>
+        <div onclick={() => (index = i)} class="selector" class:selected={report === r}>
             {i + 1}
         </div>
     {/each}

@@ -1,8 +1,9 @@
-use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{ChannelId, MessageIndex, TimestampMillis};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(community, events_window)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub channel_id: ChannelId,
     pub thread_root_message_index: Option<MessageIndex>,

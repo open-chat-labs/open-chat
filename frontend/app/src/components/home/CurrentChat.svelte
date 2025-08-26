@@ -1,139 +1,154 @@
 <script lang="ts">
-    import CurrentChatHeader from "./CurrentChatHeader.svelte";
-    import CurrentChatMessages from "./CurrentChatMessages.svelte";
-    import Footer from "./Footer.svelte";
-    import { closeNotificationsForChat } from "../../utils/notifications";
-    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
+    import { trackedEffect } from "@src/utils/effects.svelte";
     import {
-        type ChatEvent,
-        type ChatSummary,
-        type EnhancedReplyContext,
-        type EventWrapper,
-        type Mention,
-        type Message,
-        type OpenChat,
-        type FilteredProposals,
-        type User,
+        type AttachmentContent,
+        blockedUsersStore,
+        botState,
         type ChatIdentifier,
         chatIdentifiersEqual,
-        type MultiUserChat,
+        type ChatSummary,
+        communitiesStore,
         CommunityMap,
         type CommunitySummary,
-        type AttachmentContent,
+        currentUserIdStore,
+        currentUserStore,
+        type EnhancedReplyContext,
+        type EventWrapper,
+        type FilteredProposals,
+        lastCryptoSent,
         LEDGER_CANISTER_ICP,
+        localUpdates,
+        type Mention,
+        type Message,
+        type MessageContent,
+        type MessageContext,
+        messageContextsEqual,
+        messagesRead,
+        type MultiUserChat,
+        type OpenChat,
+        type ReadonlySet,
+        ROLE_OWNER,
+        selectedChatDraftMessageStore,
+        selectedChatPinnedMessagesStore,
+        selectedCommunitySummaryStore,
+        setRightPanelHistory,
+        subscribe,
+        suspendedUserStore,
+        type User,
     } from "openchat-client";
-    import PollBuilder from "./PollBuilder.svelte";
-    import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
-    import CurrentChatSearchHeader from "./CurrentChatSearchHeader.svelte";
-    import GiphySelector from "./GiphySelector.svelte";
-    import MemeBuilder from "./MemeBuilder.svelte";
+    import { getContext, onMount, tick } from "svelte";
+    import { i18nKey } from "../../i18n/i18n";
     import { messageToForwardStore } from "../../stores/messageToForward";
     import { toastStore } from "../../stores/toast";
-    import ImportToCommunity from "./communities/Import.svelte";
     import { randomSentence } from "../../utils/randomMsg";
-    import { framed } from "../../stores/xframe";
-    import { rightPanelHistory } from "../../stores/rightPanel";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import PrizeContentBuilder from "./PrizeContentBuilder.svelte";
-    import P2PSwapContentBuilder from "./P2PSwapContentBuilder.svelte";
     import AreYouSure from "../AreYouSure.svelte";
-    import { i18nKey } from "../../i18n/i18n";
+    import DirectChatHeader from "../bots/DirectChatHeader.svelte";
+    import ImportToCommunity from "./communities/Import.svelte";
+    import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
+    import CurrentChatHeader from "./CurrentChatHeader.svelte";
+    import CurrentChatMessages from "./CurrentChatMessages.svelte";
+    import CurrentChatSearchHeader from "./CurrentChatSearchHeader.svelte";
+    import DropTarget from "./DropTarget.svelte";
+    import ExternalContent from "./ExternalContent.svelte";
+    import Footer from "./Footer.svelte";
+    import GiphySelector from "./GiphySelector.svelte";
+    import MemeBuilder from "./MemeBuilder.svelte";
+    import P2PSwapContentBuilder from "./P2PSwapContentBuilder.svelte";
+    import PollBuilder from "./PollBuilder.svelte";
+    import PrizeContentBuilder from "./PrizeContentBuilder.svelte";
 
-    export let joining: MultiUserChat | undefined;
-    export let chat: ChatSummary;
-    export let currentChatMessages: CurrentChatMessages | undefined;
-    export let events: EventWrapper<ChatEvent>[];
-    export let filteredProposals: FilteredProposals | undefined;
+    interface Props {
+        joining: MultiUserChat | undefined;
+        chat: ChatSummary;
+        filteredProposals: FilteredProposals | undefined;
+    }
 
-    const dispatch = createEventDispatcher();
+    let { joining, chat, filteredProposals }: Props = $props();
+
+    let currentChatMessages = $state<CurrentChatMessages>();
+
     const client = getContext<OpenChat>("client");
 
-    let previousChatId: ChatIdentifier | undefined = undefined;
-    let unreadMessages = 0;
-    let firstUnreadMention: Mention | undefined;
-    let creatingPoll = false;
-    let creatingCryptoTransfer: { ledger: string; amount: bigint } | undefined = undefined;
-    let creatingPrizeMessage = false;
-    let creatingP2PSwapMessage = false;
-    let selectingGif = false;
-    let buildingMeme = false;
-    let pollBuilder: PollBuilder;
-    let giphySelector: GiphySelector;
-    let memeBuilder: MemeBuilder;
-    let showSearchHeader = false;
-    let searchTerm = "";
-    let importToCommunities: CommunityMap<CommunitySummary> | undefined;
+    let previousChatId: ChatIdentifier | undefined = $state(undefined);
+    let unreadMessages = $state<number>(0);
+    let firstUnreadMention = $state<Mention | undefined>();
+    let creatingPoll = $state(false);
+    let creatingCryptoTransfer: { ledger: string; amount: bigint } | undefined = $state(undefined);
+    let creatingPrizeMessage = $state(false);
+    let creatingP2PSwapMessage = $state(false);
+    let selectingGif = $state(false);
+    let buildingMeme = $state(false);
+    //@ts-ignore
+    let pollBuilder: PollBuilder = $state();
+    //@ts-ignore
+    let giphySelector: GiphySelector = $state();
+    //@ts-ignore
+    let memeBuilder: MemeBuilder = $state();
+    let showSearchHeader = $state(false);
+    let searchTerm = $state("");
+    let importToCommunities: CommunityMap<CommunitySummary> | undefined = $state();
     let removeLinkPreviewDetails: { event: EventWrapper<Message>; url: string } | undefined =
-        undefined;
+        $state(undefined);
 
-    $: user = client.user;
-    $: suspendedUser = client.suspendedUser;
-    $: showChatHeader = !$mobileWidth || !$framed;
-    $: messageContext = { chatId: chat.id };
-    $: currentChatTextContent = client.currentChatTextContent;
-    $: currentChatReplyingTo = client.currentChatReplyingTo;
-    $: currentChatPinnedMessages = client.currentChatPinnedMessages;
-    $: currentChatAttachment = client.currentChatAttachment;
-    $: currentChatEditingEvent = client.currentChatEditingEvent;
-    $: draftMessagesStore = client.draftMessagesStore;
-    $: lastCryptoSent = client.lastCryptoSent;
-    $: messagesRead = client.messagesRead;
-    $: directlyBlockedUsers = client.blockedUsers;
-    $: showFooter = !showSearchHeader && !$suspendedUser;
-    $: blocked = isBlocked(chat, $directlyBlockedUsers);
-    $: communities = client.communities;
+    onMount(() => {
+        const unsubs = [
+            messagesRead.subscribe(() => {
+                unreadMessages = getUnreadMessageCount(chat);
+                firstUnreadMention = client.getFirstUnreadMention(chat);
+            }),
+            subscribe("createPoll", onCreatePoll),
+            subscribe("attachGif", onAttachGif),
+            subscribe("tokenTransfer", onTokenTransfer),
+            subscribe("createTestMessages", onCreateTestMessages),
+            subscribe("searchChat", onSearchChat),
+        ];
+        return () => {
+            unsubs.forEach((u) => u());
+        };
+    });
 
-    $: canSendAny = client.canSendMessage(chat.id, "message");
-    $: preview = client.isPreviewing(chat.id);
-    $: canPin = client.canPinMessages(chat.id);
-    $: canBlockUsers = client.canBlockUsers(chat.id);
-    $: canDelete = client.canDeleteOtherUsersMessages(chat.id);
-    $: canReplyInThread = client.canSendMessage(chat.id, "thread");
-    $: canReact = client.canReactToMessages(chat.id);
-    $: canInvite = client.canInviteUsers(chat.id);
-    $: readonly = client.isChatReadOnly(chat.id);
-
-    $: {
-        if (previousChatId === undefined || !chatIdentifiersEqual(chat.id, previousChatId)) {
-            previousChatId = chat.id;
-            showSearchHeader = false;
-            unreadMessages = getUnreadMessageCount(chat);
-            firstUnreadMention = client.getFirstUnreadMention(chat);
-
-            tick().then(() => {
-                if ($messageToForwardStore !== undefined) {
-                    forwardMessage($messageToForwardStore);
-                    messageToForwardStore.set(undefined);
-                }
-            });
+    function onCreatePoll(ctx: MessageContext) {
+        if (messageContextsEqual(ctx, messageContext)) {
+            createPoll();
         }
     }
 
-    onMount(() => {
-        return messagesRead.subscribe(() => {
-            unreadMessages = getUnreadMessageCount(chat);
-            firstUnreadMention = client.getFirstUnreadMention(chat);
-        });
-    });
+    function onAttachGif([evContext, search]: [MessageContext, string]) {
+        if (messageContextsEqual(messageContext, evContext)) {
+            attachGif(search);
+        }
+    }
+
+    function onTokenTransfer(args: { context: MessageContext; ledger?: string; amount?: bigint }) {
+        if (messageContextsEqual(messageContext, args.context)) {
+            tokenTransfer(args);
+        }
+    }
+
+    function onCreateTestMessages([ctx, num]: [MessageContext, number]) {
+        if (messageContextsEqual(ctx, messageContext)) {
+            createTestMessages(num);
+        }
+    }
 
     function importToCommunity() {
-        importToCommunities = $communities.filter((c) => c.membership.role === "owner");
+        importToCommunities = $communitiesStore.filter((c) => c.membership.role === ROLE_OWNER);
         if (importToCommunities.size === 0) {
             toastStore.showFailureToast(i18nKey("communities.noOwned"));
             importToCommunities = undefined;
         } else {
-            rightPanelHistory.set([]);
+            setRightPanelHistory([]);
         }
     }
 
     function getUnreadMessageCount(chat: ChatSummary): number {
-        if (client.isPreviewing(chat.id)) return 0;
+        if (client.isPreviewing(chat.id) || client.isLapsed(chat.id)) return 0;
 
         return messagesRead.unreadMessageCount(chat.id, chat.latestMessage?.event.messageIndex);
     }
 
     function onWindowFocus() {
-        closeNotificationsForChat(chat.id);
+        client.closeNotificationsForChat(chat.id);
     }
 
     function createPoll() {
@@ -145,10 +160,10 @@
         creatingPoll = true;
     }
 
-    function tokenTransfer(ev: CustomEvent<{ ledger: string; amount: bigint } | undefined>) {
-        creatingCryptoTransfer = ev.detail ?? {
-            ledger: $lastCryptoSent ?? LEDGER_CANISTER_ICP,
-            amount: BigInt(0),
+    function tokenTransfer(detail: { ledger?: string; amount?: bigint }) {
+        creatingCryptoTransfer = {
+            ledger: detail.ledger ?? $lastCryptoSent ?? LEDGER_CANISTER_ICP,
+            amount: detail.amount ?? BigInt(0),
         };
     }
 
@@ -160,14 +175,14 @@
         creatingP2PSwapMessage = true;
     }
 
-    function fileSelected(ev: CustomEvent<AttachmentContent>) {
-        draftMessagesStore.setAttachment({ chatId: chat.id }, ev.detail);
+    function onFileSelected(content: AttachmentContent) {
+        localUpdates.draftMessages.setAttachment({ chatId: chat.id }, content);
     }
 
-    function attachGif(ev: CustomEvent<string>) {
+    function attachGif(search: string) {
         selectingGif = true;
         if (giphySelector !== undefined) {
-            giphySelector.reset(ev.detail);
+            giphySelector.reset(search);
         }
     }
 
@@ -178,23 +193,25 @@
         }
     }
 
-    function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
+    function replyTo(ctx: EnhancedReplyContext) {
         showSearchHeader = false;
-        draftMessagesStore.setReplyingTo({ chatId: chat.id }, ev.detail);
+        localUpdates.draftMessages.setReplyingTo({ chatId: chat.id }, ctx);
     }
 
-    function searchChat(ev: CustomEvent<string>) {
+    function searchChat(search: string) {
+        onSearchChat(search);
+    }
+
+    function onSearchChat(term: string) {
         showSearchHeader = true;
-        searchTerm = ev.detail;
+        searchTerm = term;
     }
 
-    function createTestMessages(ev: CustomEvent<number>): void {
-        if (process.env.NODE_ENV === "production") return;
-
+    function createTestMessages(total: number): void {
         function send(n: number) {
-            if (n === ev.detail) return;
+            if (n === total) return;
 
-            sendMessageWithAttachment(randomSentence(), undefined);
+            sendMessageWithAttachment(randomSentence(), false, undefined);
 
             window.setTimeout(() => send(n + 1), 500);
         }
@@ -202,16 +219,17 @@
         send(0);
     }
 
-    function sendMessage(ev: CustomEvent<[string | undefined, User[]]>) {
+    function onSendMessage(detail: [string | undefined, User[], boolean]) {
         if (!canSendAny) return;
-        let [text, mentioned] = ev.detail;
-        if ($currentChatEditingEvent !== undefined) {
+        let [text, mentioned, blockLevelMarkdown] = detail;
+        if ($selectedChatDraftMessageStore?.editingEvent !== undefined) {
             client
                 .editMessageWithAttachment(
                     messageContext,
                     text,
-                    $currentChatAttachment,
-                    $currentChatEditingEvent,
+                    blockLevelMarkdown,
+                    $selectedChatDraftMessageStore.attachment,
+                    $selectedChatDraftMessageStore.editingEvent,
                 )
                 .then((success) => {
                     if (!success) {
@@ -219,28 +237,43 @@
                     }
                 });
         } else {
-            sendMessageWithAttachment(text, $currentChatAttachment, mentioned);
+            sendMessageWithAttachment(
+                text,
+                blockLevelMarkdown,
+                $selectedChatDraftMessageStore?.attachment,
+                mentioned,
+            );
         }
     }
 
     function sendMessageWithAttachment(
         textContent: string | undefined,
+        blockLevelMarkdown: boolean,
         attachment: AttachmentContent | undefined,
         mentioned: User[] = [],
     ) {
-        dispatch("sendMessageWithAttachment", { textContent, attachment, mentioned });
+        client.sendMessageWithAttachment(
+            messageContext,
+            textContent,
+            blockLevelMarkdown,
+            attachment,
+            mentioned,
+        );
     }
 
     function forwardMessage(msg: Message) {
-        dispatch("forwardMessage", msg);
+        client.forwardMessage(messageContext, msg);
     }
 
-    function setTextContent(ev: CustomEvent<string | undefined>): void {
-        draftMessagesStore.setTextContent({ chatId: chat.id }, ev.detail);
+    function onSetTextContent(txt?: string): void {
+        localUpdates.draftMessages.setTextContent({ chatId: chat.id }, txt);
     }
 
-    function onRemovePreview(ev: CustomEvent<{ event: EventWrapper<Message>; url: string }>): void {
-        removeLinkPreviewDetails = ev.detail;
+    function onRemovePreview(event: EventWrapper<Message>, url: string): void {
+        removeLinkPreviewDetails = {
+            event,
+            url,
+        };
     }
 
     function removePreview(yes: boolean): Promise<void> {
@@ -258,16 +291,70 @@
         return Promise.resolve();
     }
 
-    function isBlocked(chatSummary: ChatSummary, blockedUsers: Set<string>): boolean {
+    function isBlocked(chatSummary: ChatSummary, blockedUsers: ReadonlySet<string>): boolean {
         return chatSummary.kind === "direct_chat" && blockedUsers.has(chatSummary.them.userId);
     }
 
     function defaultCryptoTransferReceiver(): string | undefined {
-        return $currentChatReplyingTo?.sender?.userId;
+        return $selectedChatDraftMessageStore?.replyingTo?.sender?.userId;
+    }
+
+    function onSendMessageWithContent(content: MessageContent) {
+        client.sendMessageWithContent(messageContext, content, false);
+    }
+    let messageContext = $derived({ chatId: chat.id });
+
+    trackedEffect("current-chat", () => {
+        if (previousChatId === undefined || !chatIdentifiersEqual(chat.id, previousChatId)) {
+            previousChatId = chat.id;
+            showSearchHeader = false;
+            unreadMessages = getUnreadMessageCount(chat);
+            firstUnreadMention = client.getFirstUnreadMention(chat);
+            tick().then(() => {
+                if ($messageToForwardStore !== undefined) {
+                    forwardMessage($messageToForwardStore);
+                    messageToForwardStore.set(undefined);
+                }
+            });
+        }
+    });
+    let showFooter = $derived(!showSearchHeader && !$suspendedUserStore);
+    let blocked = $derived(isBlocked(chat, $blockedUsersStore));
+    let frozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore));
+    let canSendAny = $derived(client.canSendMessage(chat.id, "message"));
+    let preview = $derived(client.isPreviewing(chat.id));
+    let lapsed = $derived(client.isLapsed(chat.id));
+    let canPin = $derived(client.canPinMessages(chat.id));
+    let canBlockUsers = $derived(client.canBlockUsers(chat.id));
+    let canDelete = $derived(client.canDeleteOtherUsersMessages(chat.id));
+    let canReplyInThread = $derived(client.canSendMessage(chat.id, "thread"));
+    let canReact = $derived(client.canReactToMessages(chat.id));
+    let canInvite = $derived(client.canInviteUsers(chat.id));
+    let readonly = $derived(client.isChatReadOnly(chat.id));
+    let externalUrl = $derived(chat.kind === "channel" ? chat.externalUrl : undefined);
+    let privateChatPreview = $derived(client.maskChatMessages(chat));
+    let bot = $derived(
+        chat.kind === "direct_chat" ? botState.externalBots.get(chat.them.userId) : undefined,
+    );
+
+    function onGoToMessageIndex(args: { index: number; preserveFocus: boolean }) {
+        currentChatMessages?.scrollToMessageIndex(args.index, args.preserveFocus);
+    }
+
+    function stopTyping() {
+        if (chat !== undefined) {
+            client.stopTyping(chat.id, $currentUserIdStore);
+        }
+    }
+
+    function startTyping() {
+        if (chat !== undefined) {
+            client.startTyping(chat.id, $currentUserIdStore);
+        }
     }
 </script>
 
-<svelte:window on:focus={onWindowFocus} />
+<svelte:window onfocus={onWindowFocus} />
 
 {#if removeLinkPreviewDetails !== undefined}
     <AreYouSure title={i18nKey("removePreviewQuestion")} action={removePreview} />
@@ -275,13 +362,12 @@
 
 {#if importToCommunities !== undefined}
     <ImportToCommunity
-        on:successfulImport
         groupId={chat.id}
-        on:cancel={() => (importToCommunities = undefined)}
+        onCancel={() => (importToCommunities = undefined)}
         ownedCommunities={importToCommunities} />
 {/if}
 
-<PollBuilder on:sendMessageWithContent bind:this={pollBuilder} bind:open={creatingPoll} />
+<PollBuilder onSend={onSendMessageWithContent} bind:this={pollBuilder} bind:open={creatingPoll} />
 
 {#if creatingCryptoTransfer !== undefined}
     <CryptoTransferBuilder
@@ -289,9 +375,8 @@
         ledger={creatingCryptoTransfer.ledger}
         draftAmount={creatingCryptoTransfer.amount}
         defaultReceiver={defaultCryptoTransferReceiver()}
-        on:sendMessageWithContent
-        on:upgrade
-        on:close={() => (creatingCryptoTransfer = undefined)} />
+        {messageContext}
+        onClose={() => (creatingCryptoTransfer = undefined)} />
 {/if}
 
 {#if creatingPrizeMessage}
@@ -300,107 +385,98 @@
         {chat}
         ledger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
         draftAmount={0n}
-        on:sendMessageWithContent
-        on:close={() => (creatingPrizeMessage = false)} />
+        onClose={() => (creatingPrizeMessage = false)} />
 {/if}
 
 {#if creatingP2PSwapMessage}
     <P2PSwapContentBuilder
         fromLedger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
-        on:upgrade
-        on:sendMessageWithContent
-        on:close={() => (creatingP2PSwapMessage = false)} />
+        {messageContext}
+        onClose={() => (creatingP2PSwapMessage = false)} />
 {/if}
 
-<GiphySelector on:sendMessageWithContent bind:this={giphySelector} bind:open={selectingGif} />
+<GiphySelector
+    onSend={onSendMessageWithContent}
+    bind:this={giphySelector}
+    bind:open={selectingGif} />
 
-<MemeBuilder on:sendMessageWithContent bind:this={memeBuilder} bind:open={buildingMeme} />
+<MemeBuilder onSend={onSendMessageWithContent} bind:this={memeBuilder} bind:open={buildingMeme} />
 
-<div class="wrapper">
-    {#if showSearchHeader}
-        <CurrentChatSearchHeader
-            {chat}
-            bind:searchTerm
-            on:goToMessageIndex
-            on:close={() => (showSearchHeader = false)} />
-    {:else if showChatHeader}
-        <CurrentChatHeader
-            on:clearSelection
-            on:toggleMuteNotifications
-            on:showInviteGroupUsers
-            on:showProposalFilters
-            on:makeProposal
-            on:showGroupMembers
-            on:leaveGroup
-            on:upgrade
-            on:startVideoCall
-            on:createPoll={createPoll}
-            on:searchChat={searchChat}
-            on:convertGroupToCommunity
-            on:importToCommunity={importToCommunity}
-            {blocked}
-            {readonly}
-            selectedChatSummary={chat}
-            hasPinned={$currentChatPinnedMessages.size > 0} />
-    {/if}
-    <CurrentChatMessages
-        bind:this={currentChatMessages}
-        on:replyPrivatelyTo
-        on:replyTo={replyTo}
-        on:chatWith
-        on:upgrade
-        on:forward
-        on:retrySend
-        on:startVideoCall
-        on:removePreview={onRemovePreview}
-        {chat}
-        {events}
-        {filteredProposals}
-        {canPin}
-        {canBlockUsers}
-        {canDelete}
-        {canReplyInThread}
-        {canSendAny}
-        {canReact}
-        {canInvite}
-        {readonly}
-        {firstUnreadMention}
-        footer={showFooter}
-        {unreadMessages} />
-    {#if showFooter}
-        <Footer
-            {chat}
-            attachment={$currentChatAttachment}
-            editingEvent={$currentChatEditingEvent}
-            replyingTo={$currentChatReplyingTo}
-            textContent={$currentChatTextContent}
-            user={$user}
-            mode={"message"}
-            {joining}
-            {preview}
-            {blocked}
-            on:joinGroup
-            on:upgrade
-            on:cancelReply={() => draftMessagesStore.setReplyingTo({ chatId: chat.id }, undefined)}
-            on:clearAttachment={() =>
-                draftMessagesStore.setAttachment({ chatId: chat.id }, undefined)}
-            on:cancelEditEvent={() => draftMessagesStore.delete({ chatId: chat.id })}
-            on:setTextContent={setTextContent}
-            on:startTyping={() => client.startTyping(chat, $user.userId)}
-            on:stopTyping={() => client.stopTyping(chat, $user.userId)}
-            on:fileSelected={fileSelected}
-            on:audioCaptured={fileSelected}
-            on:sendMessage={sendMessage}
-            on:createTestMessages={createTestMessages}
-            on:attachGif={attachGif}
-            on:makeMeme={makeMeme}
-            on:tokenTransfer={tokenTransfer}
-            on:createPrizeMessage={createPrizeMessage}
-            on:createP2PSwapMessage={createP2PSwapMessage}
-            on:searchChat={searchChat}
-            on:createPoll={createPoll} />
-    {/if}
-</div>
+<DropTarget {chat} mode={"message"} {onFileSelected}>
+    <div class="wrapper">
+        {#if showSearchHeader}
+            <CurrentChatSearchHeader
+                {chat}
+                bind:searchTerm
+                {onGoToMessageIndex}
+                onClose={() => (showSearchHeader = false)} />
+        {:else if bot !== undefined && chat.kind === "direct_chat"}
+            <DirectChatHeader {bot} {chat} {onSearchChat}></DirectChatHeader>
+        {:else}
+            <CurrentChatHeader
+                onSearchChat={searchChat}
+                onImportToCommunity={importToCommunity}
+                {blocked}
+                {readonly}
+                selectedChatSummary={chat}
+                hasPinned={$selectedChatPinnedMessagesStore.size > 0} />
+        {/if}
+        {#if externalUrl !== undefined}
+            <ExternalContent {privateChatPreview} {frozen} {externalUrl} />
+        {:else}
+            <CurrentChatMessages
+                bind:this={currentChatMessages}
+                onReplyTo={replyTo}
+                {onRemovePreview}
+                {privateChatPreview}
+                {chat}
+                {filteredProposals}
+                {canPin}
+                {canBlockUsers}
+                {canDelete}
+                {canReplyInThread}
+                {canSendAny}
+                {canReact}
+                {canInvite}
+                {readonly}
+                {firstUnreadMention}
+                footer={showFooter}
+                {unreadMessages} />
+        {/if}
+        {#if showFooter}
+            <Footer
+                {chat}
+                attachment={$selectedChatDraftMessageStore?.attachment}
+                editingEvent={$selectedChatDraftMessageStore?.editingEvent}
+                replyingTo={$selectedChatDraftMessageStore?.replyingTo}
+                textContent={$selectedChatDraftMessageStore?.textContent}
+                user={$currentUserStore}
+                mode={"message"}
+                {joining}
+                {preview}
+                {lapsed}
+                {blocked}
+                {messageContext}
+                externalContent={externalUrl !== undefined}
+                onCancelReply={() =>
+                    localUpdates.draftMessages.setReplyingTo({ chatId: chat.id }, undefined)}
+                onClearAttachment={() =>
+                    localUpdates.draftMessages.setAttachment({ chatId: chat.id }, undefined)}
+                onCancelEdit={() => localUpdates.draftMessages.delete({ chatId: chat.id })}
+                {onSetTextContent}
+                onStartTyping={startTyping}
+                onStopTyping={stopTyping}
+                {onFileSelected}
+                {onSendMessage}
+                onAttachGif={attachGif}
+                onMakeMeme={makeMeme}
+                onTokenTransfer={tokenTransfer}
+                onCreatePrizeMessage={createPrizeMessage}
+                onCreateP2PSwapMessage={createP2PSwapMessage}
+                onCreatePoll={createPoll} />
+        {/if}
+    </div>
+</DropTarget>
 
 <style lang="scss">
     .wrapper {

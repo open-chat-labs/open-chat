@@ -1,11 +1,23 @@
 use serde::{Deserialize, Serialize};
-use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
-use types::{ChannelId, ChatId, TimestampMillis, Timestamped, UserId};
+use std::collections::hash_map::Entry::Vacant;
+use types::{ChannelId, ChatId, EventContext, TimestampMillis, Timestamped, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct GroupsBeingImported {
     groups: HashMap<ChatId, GroupBeingImported>,
+}
+
+pub struct GroupToImport {
+    pub group_id: ChatId,
+    pub action: GroupToImportAction,
+}
+
+#[derive(Debug)]
+pub enum GroupToImportAction {
+    Events(ChannelId, Option<EventContext>),
+    Members(ChannelId, Option<UserId>),
+    Core(u64),
 }
 
 impl GroupsBeingImported {
@@ -31,12 +43,22 @@ impl GroupsBeingImported {
         self.groups.contains_key(group_id)
     }
 
-    pub fn next_batch(&mut self, now: TimestampMillis) -> Vec<(ChatId, u64)> {
+    pub fn next_batch(&mut self, now: TimestampMillis) -> Vec<GroupToImport> {
         let mut batch = Vec::new();
         for (chat_id, group) in self.groups.iter_mut().filter(|(_, g)| !g.is_complete()) {
             if group.current_batch_started.is_none() {
                 group.current_batch_started = Some(now);
-                batch.push((*chat_id, group.bytes.len() as u64));
+                let action = if !group.events_imported {
+                    GroupToImportAction::Events(group.channel_id, group.events_imported_up_to.clone())
+                } else if !group.members_imported {
+                    GroupToImportAction::Members(group.channel_id, group.members_imported_up_to)
+                } else {
+                    GroupToImportAction::Core(group.bytes.len() as u64)
+                };
+                batch.push(GroupToImport {
+                    group_id: *chat_id,
+                    action,
+                });
             }
         }
         batch
@@ -51,6 +73,38 @@ impl GroupsBeingImported {
             group.is_complete()
         } else {
             false
+        }
+    }
+
+    pub fn mark_events_batch_complete(&mut self, group_id: &ChatId, up_to: EventContext) {
+        if let Some(group) = self.groups.get_mut(group_id) {
+            group.current_batch_started = None;
+            group.error_message = None;
+            group.events_imported_up_to = Some(up_to);
+        }
+    }
+
+    pub fn mark_events_import_complete(&mut self, group_id: &ChatId) {
+        if let Some(group) = self.groups.get_mut(group_id) {
+            group.current_batch_started = None;
+            group.error_message = None;
+            group.events_imported = true;
+        }
+    }
+
+    pub fn mark_members_batch_complete(&mut self, group_id: &ChatId, up_to: UserId) {
+        if let Some(group) = self.groups.get_mut(group_id) {
+            group.current_batch_started = None;
+            group.error_message = None;
+            group.members_imported_up_to = Some(up_to);
+        }
+    }
+
+    pub fn mark_members_import_complete(&mut self, group_id: &ChatId) {
+        if let Some(group) = self.groups.get_mut(group_id) {
+            group.current_batch_started = None;
+            group.error_message = None;
+            group.members_imported = true;
         }
     }
 
@@ -84,6 +138,10 @@ pub struct GroupBeingImported {
     imported_by: UserId,
     import_started: TimestampMillis,
     current_batch_started: Option<TimestampMillis>,
+    events_imported: bool,
+    events_imported_up_to: Option<EventContext>,
+    members_imported: bool,
+    members_imported_up_to: Option<UserId>,
     total_bytes: u64,
     #[serde(with = "serde_bytes")]
     bytes: Vec<u8>,
@@ -104,6 +162,10 @@ impl GroupBeingImported {
             imported_by,
             import_started: now,
             current_batch_started: None,
+            events_imported: false,
+            events_imported_up_to: None,
+            members_imported: false,
+            members_imported_up_to: None,
             total_bytes,
             bytes: Vec::with_capacity(total_bytes as usize),
             error_message: None,

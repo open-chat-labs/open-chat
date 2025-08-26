@@ -10,8 +10,17 @@ SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
 # Create and install the NNS canisters
-dfx extension install nns --version 0.2.1 >& /dev/null
-dfx --identity $IDENTITY nns install
+if ! dfx extension install nns --version 0.5.4 >& /dev/null
+then
+  echo "Updating the DFX NNS extension to version 0.5.4"
+  dfx extension uninstall nns
+  dfx extension install nns --version 0.5.4 >& /dev/null
+fi
+
+TEST_ICP_ACCOUNT=$(dfx --identity $IDENTITY ledger account-id)
+dfx --identity $IDENTITY nns install --ledger-accounts $TEST_ICP_ACCOUNT
+# Stop the SNS aggregator so that it doesn't spam the logs
+dfx --identity anonymous canister stop sgymv-uiaaa-aaaaa-aaaia-cai &
 
 NNS_ROOT_CANISTER_ID=r7inp-6aaaa-aaaaa-aaabq-cai
 NNS_GOVERNANCE_CANISTER_ID=rrkah-fqaaa-aaaaa-aaaaq-cai
@@ -21,24 +30,41 @@ NNS_CMC_CANISTER_ID=rkp4c-7iaaa-aaaaa-aaaca-cai
 NNS_SNS_WASM_CANISTER_ID=qaa6y-5yaaa-aaaaa-aaafa-cai
 NNS_INDEX_CANISTER_ID=qhbym-qaaaa-aaaaa-aaafq-cai
 
-# Create the OpenChat canisters
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 user_index
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 group_index
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 notifications_index
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 local_user_index
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 local_group_index
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 notifications
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 identity
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 online_users
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 proposals_bot
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000000 storage_index
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000000 cycles_dispenser
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 registry
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 market_maker
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 neuron_controller
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 escrow
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 translations
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 event_relay
+echo "Building local_canister_creator"
+cargo build --package local_canister_creator
+echo "Building completed"
+
+echo "Creating canisters"
+cargo run --package local_canister_creator -- \
+  --ic-url http://127.0.0.1:8080/ \
+  --pocket-ic-url http://127.0.0.1:$(dfx info pocketic-config-port) \
+  --controller $IDENTITY \
+  --cycles 1000000000000000 \
+  --canister-ids-json-dir .dfx/local \
+  --canister openchat_installer \
+  --canister user_index \
+  --canister group_index \
+  --canister notifications_index \
+  --canister local_user_index \
+  --canister identity \
+  --canister online_users \
+  --canister proposals_bot \
+  --canister airdrop_bot \
+  --canister storage_index \
+  --canister cycles_dispenser \
+  --canister registry \
+  --canister market_maker \
+  --canister neuron_controller \
+  --canister escrow \
+  --canister translations \
+  --canister event_relay \
+  --canister event_store \
+  --canister sign_in_with_email \
+  --canister sign_in_with_ethereum \
+  --canister sign_in_with_solana \
+  --canister website || exit 1
+
+echo "Canisters created"
 
 # Install the OpenChat canisters
 ./scripts/deploy.sh local \
@@ -54,5 +80,10 @@ dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000
     $NNS_INDEX_CANISTER_ID \
     true \
 
-./scripts/deploy-test-ledger.sh $IDENTITY
-./scripts/mint-test-tokens.sh "dccg7-xmaaa-aaaaa-qaamq-cai" $IDENTITY
+STORAGE_INDEX_CANISTER_ID=$(dfx canister id storage_index)
+./scripts/get-test-icp.sh $STORAGE_INDEX_CANISTER_ID $IDENTITY
+dfx --identity $IDENTITY canister call storage_index add_bucket_canister '(record { })'
+
+./scripts/deploy-test-chat-ledger.sh $IDENTITY
+./scripts/get-test-icp.sh "xsfk2-nx777-77774-qaala-cai" $IDENTITY
+./scripts/get-test-chat-tokens.sh "xsfk2-nx777-77774-qaala-cai" $IDENTITY

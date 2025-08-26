@@ -1,14 +1,10 @@
-use candid::CandidType;
+use ic_principal::Principal;
 use serde::{Deserialize, Serialize};
-use types::Empty;
+use types::UnitResult;
 
-pub type Args = Empty;
-
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    UserNotInCommunity,
-    LastOwnerCannotLeave,
-    UserSuspended,
-    CommunityFrozen,
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Args {
+    pub principal: Principal,
 }
+
+pub type Response = UnitResult;

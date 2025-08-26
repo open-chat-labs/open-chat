@@ -1,46 +1,42 @@
 <script lang="ts">
     import {
-        type AccountTransactions,
-        type OpenChat,
-        type NamedAccount,
-        toRecord,
         type AccountTransaction,
+        type AccountTransactions,
+        type NamedAccount,
+        type OpenChat,
+        type ResourceKey,
+        cryptoLookup,
+        currentUserStore,
+        mobileWidth,
+        toRecord,
     } from "openchat-client";
-    import type { RemoteData as RD } from "../../../utils/remoteData";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
+    import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
-    import ModalContent from "../../ModalContent.svelte";
+    import type { RemoteData as RD } from "../../../utils/remoteData";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
-    import { mobileWidth } from "../../../stores/screenDimensions";
-    import TransactionEndpoint from "./TransactionEndpoint.svelte";
     import FancyLoader from "../../icons/FancyLoader.svelte";
-    import CryptoSelector from "../CryptoSelector.svelte";
-    import { i18nKey, type ResourceKey } from "../../../i18n/i18n";
+    import ModalContent from "../../ModalContent.svelte";
     import Translatable from "../../Translatable.svelte";
+    import CryptoSelector from "../CryptoSelector.svelte";
+    import TransactionEndpoint from "./TransactionEndpoint.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let ledger: string;
-    export let urlFormat: string;
+    interface Props {
+        ledger: string;
+        urlFormat: string;
+        onClose: () => void;
+    }
+
+    let { ledger = $bindable(), urlFormat = $bindable(), onClose }: Props = $props();
 
     type LoadingMore<T> = { kind: "loading_more"; data: T };
     type RemoteData = RD<AccountTransactions, string> | LoadingMore<AccountTransactions>;
 
-    let transationData: RemoteData = { kind: "loading" };
-    let accounts: NamedAccount[] = [];
-    $: accountLookup = toRecord(accounts, (a) => a.account);
-    $: cryptoLookup = client.cryptoLookup;
-    $: tokenDetails = $cryptoLookup[ledger];
-    $: nervousSystemLookup = client.nervousSystemLookup;
-    $: snsLedgers = new Set<string>(
-        Object.values($nervousSystemLookup)
-            .filter((ns) => !ns.isNns)
-            .map((ns) => ns.ledgerCanisterId),
-    );
-    $: moreAvailable = moreTransactionsAvailable(transationData);
-    $: loading = transationData.kind === "loading" || transationData.kind === "loading_more";
+    let transactionData = $state<RemoteData>({ kind: "loading" });
+    let accounts: NamedAccount[] = $state([]);
 
     function moreTransactionsAvailable(trans: RemoteData): boolean {
         if (trans.kind !== "success") return false;
@@ -51,7 +47,7 @@
 
     onMount(async () => {
         accounts = await client.loadSavedCryptoAccounts();
-        loadTransations();
+        loadTransactions();
     });
 
     function url(id: bigint): string {
@@ -65,11 +61,11 @@
         window.open(url(id), "_blank");
     }
 
-    function ledgerSelected(ev: CustomEvent<{ ledger: string; urlFormat: string }>): void {
-        transationData = { kind: "idle" };
-        ledger = ev.detail.ledger;
-        urlFormat = ev.detail.urlFormat;
-        loadTransations();
+    function ledgerSelected(l: string, u: string): void {
+        transactionData = { kind: "idle" };
+        ledger = l;
+        urlFormat = u;
+        loadTransactions();
     }
 
     function translateMemo(trans: AccountTransaction): ResourceKey {
@@ -86,45 +82,50 @@
                 return i18nKey("PRIZE CLAIM");
             case "OC_PRZRF":
                 return i18nKey("PRIZE REFUND");
+            case "OC_INS":
+                return i18nKey("STREAK INSURANCE");
 
             default:
                 return i18nKey("cryptoAccount.unknownTransactionType");
         }
     }
 
-    function loadTransations() {
-        const nervousSystem = Object.values($nervousSystemLookup).find(
-            (n) => n.ledgerCanisterId === ledger,
-        );
-        const ledgerIndex = nervousSystem?.indexCanisterId;
+    function loadTransactions() {
+        const ledgerIndex = $cryptoLookup.get(ledger)?.index;
         if (ledgerIndex !== undefined) {
             let start = undefined;
-            if (transationData.kind === "success") {
+            if (transactionData.kind === "success") {
                 start =
-                    transationData.data.transactions[transationData.data.transactions.length - 1]
+                    transactionData.data.transactions[transactionData.data.transactions.length - 1]
                         .id - 1n;
-                transationData = { kind: "loading_more", data: transationData.data };
+                transactionData = { kind: "loading_more", data: transactionData.data };
             } else {
-                transationData = { kind: "loading" };
+                transactionData = { kind: "loading" };
             }
             client
                 .getAccountTransactions(ledgerIndex, start)
                 .then((result) => {
                     if (result.kind === "failure") {
-                        transationData = { kind: "idle" };
+                        transactionData = { kind: "idle" };
                         toastStore.showFailureToast(i18nKey("cryptoAccount.transactionError"));
                     } else {
-                        if (transationData.kind === "loading") {
-                            transationData = { kind: "success", data: result };
-                        }
-                        if (transationData.kind === "loading_more") {
-                            transationData = {
+                        // Filter out approvals
+                        const transactions = result.transactions.filter(
+                            (t) => t.kind !== "approve",
+                        );
+                        if (transactionData.kind === "loading") {
+                            transactionData = {
+                                kind: "success",
+                                data: { ...result, transactions },
+                            };
+                        } else if (transactionData.kind === "loading_more") {
+                            transactionData = {
                                 kind: "success",
                                 data: {
                                     oldestTransactionId: result.oldestTransactionId,
                                     transactions: [
-                                        ...transationData.data.transactions,
-                                        ...result.transactions,
+                                        ...transactionData.data.transactions,
+                                        ...transactions,
                                     ],
                                 },
                             };
@@ -133,117 +134,140 @@
                 })
                 .catch((err) => {
                     console.warn("Error loading transactions: ", err);
-                    transationData = { kind: "idle" };
+                    transactionData = { kind: "idle" };
                     toastStore.showFailureToast(i18nKey("cryptoAccount.transactionError"));
                 });
         } else {
             toastStore.showFailureToast(i18nKey("cryptoAccount.transactionError"));
-            transationData = { kind: "idle" };
-            console.warn("Could not find ledger index for ledger", ledger, $nervousSystemLookup);
+            transactionData = { kind: "idle" };
+            console.warn("Could not find ledger index for ledger", ledger);
         }
     }
+    let accountLookup = $derived(toRecord(accounts, (a) => a.account));
+    let tokenDetails = $derived($cryptoLookup.get(ledger)!);
+    let tokensWithIndexes = $derived(
+        new Set<string>(
+            [...$cryptoLookup.values()]
+                .filter((t) => t.index !== undefined)
+                .map((t) => t.ledger),
+        ),
+    );
+    let moreAvailable = $derived(moreTransactionsAvailable(transactionData));
+    let loading = $derived(
+        transactionData.kind === "loading" || transactionData.kind === "loading_more",
+    );
 </script>
 
-<ModalContent fitToContent={!$mobileWidth} closeIcon on:close>
-    <div class="header" slot="header">
-        <div class="main-title">
-            <div><Translatable resourceKey={i18nKey("cryptoAccount.transactions")} /></div>
-            <div>
-                <CryptoSelector
-                    filter={(t) => snsLedgers.has(t.ledger)}
-                    on:select={ledgerSelected}
-                    {ledger} />
+<ModalContent fitToContent={!$mobileWidth} closeIcon {onClose}>
+    {#snippet header()}
+        <div class="header">
+            <div class="main-title">
+                <div><Translatable resourceKey={i18nKey("cryptoAccount.transactions")} /></div>
+                <div>
+                    <CryptoSelector
+                        filter={(t) => tokensWithIndexes.has(t.ledger)}
+                        onSelect={ledgerSelected}
+                        {ledger} />
+                </div>
             </div>
         </div>
-    </div>
-    <div slot="body" class="table-container">
-        <div class="table-scroll">
-            <table class="data">
-                <thead>
-                    <tr>
-                        <th
-                            ><Translatable
-                                resourceKey={i18nKey("cryptoAccount.transactionHeaders.id")} /></th>
-                        <th
-                            ><Translatable
-                                resourceKey={i18nKey(
-                                    "cryptoAccount.transactionHeaders.amount",
-                                )} /></th>
-                        <th
-                            ><Translatable
-                                resourceKey={i18nKey(
-                                    "cryptoAccount.transactionHeaders.type",
-                                )} /></th>
-                        <th
-                            ><Translatable
-                                resourceKey={i18nKey(
-                                    "cryptoAccount.transactionHeaders.timestamp",
-                                )} /></th>
-                        <th
-                            ><Translatable
-                                resourceKey={i18nKey(
-                                    "cryptoAccount.transactionHeaders.from",
-                                )} /></th>
-                        <th
-                            ><Translatable
-                                resourceKey={i18nKey("cryptoAccount.transactionHeaders.to")} /></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {#if transationData.kind === "success" || transationData.kind === "loading_more"}
-                        {#each transationData.data.transactions as transaction (transaction.id)}
-                            <tr on:click={() => openDashboard(transaction.id)}>
-                                <td>{transaction.id}</td>
-                                <td
-                                    >{client.formatTokens(
-                                        transaction.amount,
-                                        tokenDetails.decimals,
-                                    )}</td>
-                                <td class="truncate"
-                                    ><Translatable resourceKey={translateMemo(transaction)} /></td>
-                                <td>{client.toDatetimeString(transaction.timestamp)}</td>
-                                <td class="truncate">
-                                    <TransactionEndpoint
-                                        accounts={accountLookup}
-                                        address={transaction.from} />
-                                </td>
-                                <td class="truncate">
-                                    <TransactionEndpoint
-                                        accounts={accountLookup}
-                                        address={transaction.to} />
-                                </td>
-                            </tr>
-                        {/each}
-                    {:else if transationData.kind === "loading"}
-                        <div class="loading">
-                            <FancyLoader />
-                        </div>
-                    {/if}
-                </tbody>
-            </table>
+    {/snippet}
+    {#snippet body()}
+        <div class="table-container">
+            <div class="table-scroll">
+                <table class="data">
+                    <thead>
+                        <tr>
+                            <th
+                                ><Translatable
+                                    resourceKey={i18nKey(
+                                        "cryptoAccount.transactionHeaders.id",
+                                    )} /></th>
+                            <th
+                                ><Translatable
+                                    resourceKey={i18nKey(
+                                        "cryptoAccount.transactionHeaders.amount",
+                                    )} /></th>
+                            <th
+                                ><Translatable
+                                    resourceKey={i18nKey(
+                                        "cryptoAccount.transactionHeaders.type",
+                                    )} /></th>
+                            <th
+                                ><Translatable
+                                    resourceKey={i18nKey(
+                                        "cryptoAccount.transactionHeaders.timestamp",
+                                    )} /></th>
+                            <th
+                                ><Translatable
+                                    resourceKey={i18nKey(
+                                        "cryptoAccount.transactionHeaders.from",
+                                    )} /></th>
+                            <th
+                                ><Translatable
+                                    resourceKey={i18nKey(
+                                        "cryptoAccount.transactionHeaders.to",
+                                    )} /></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {#if transactionData.kind === "success" || transactionData.kind === "loading_more"}
+                            {#each transactionData.data.transactions as transaction (transaction.id)}
+                                <tr onclick={() => openDashboard(transaction.id)}>
+                                    <td>{transaction.id}</td>
+                                    <td
+                                        >{client.formatTokens(
+                                            transaction.amount,
+                                            tokenDetails.decimals,
+                                        )}</td>
+                                    <td class="truncate"
+                                        ><Translatable
+                                            resourceKey={translateMemo(transaction)} /></td>
+                                    <td>{client.toDatetimeString(transaction.timestamp)}</td>
+                                    <td class="truncate">
+                                        <TransactionEndpoint
+                                            accounts={accountLookup}
+                                            address={transaction.from}
+                                            currentUser={$currentUserStore} />
+                                    </td>
+                                    <td class="truncate">
+                                        <TransactionEndpoint
+                                            accounts={accountLookup}
+                                            address={transaction.to}
+                                            currentUser={$currentUserStore} />
+                                    </td>
+                                </tr>
+                            {/each}
+                        {:else if transactionData.kind === "loading"}
+                            <div class="loading">
+                                <FancyLoader />
+                            </div>
+                        {/if}
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
-    <div slot="footer">
-        <div class="footer">
-            <ButtonGroup>
-                <Button
-                    secondary
-                    on:click={() => loadTransations()}
-                    disabled={!moreAvailable && !loading}
-                    {loading}
-                    small={!$mobileWidth}
-                    tiny={$mobileWidth}>
-                    <Translatable resourceKey={i18nKey("cryptoAccount.loadMoreTransactions")} />
-                </Button>
-                <Button
-                    on:click={() => dispatch("close")}
-                    small={!$mobileWidth}
-                    tiny={$mobileWidth}>
-                    <Translatable resourceKey={i18nKey("close")} />
-                </Button>
-            </ButtonGroup>
+    {/snippet}
+    {#snippet footer()}
+        <div>
+            <div class="footer">
+                <ButtonGroup>
+                    <Button
+                        secondary
+                        onClick={() => loadTransactions()}
+                        disabled={!moreAvailable && !loading}
+                        {loading}
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}>
+                        <Translatable resourceKey={i18nKey("cryptoAccount.loadMoreTransactions")} />
+                    </Button>
+                    <Button onClick={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
+                        <Translatable resourceKey={i18nKey("close")} />
+                    </Button>
+                </ButtonGroup>
+            </div>
         </div>
-    </div>
+    {/snippet}
 </ModalContent>
 
 <style lang="scss">
@@ -286,7 +310,7 @@
         text-align: left;
     }
     th {
-        background-color: var(--button-bg);
+        background: var(--button-bg);
         color: var(--button-txt);
     }
     tr {

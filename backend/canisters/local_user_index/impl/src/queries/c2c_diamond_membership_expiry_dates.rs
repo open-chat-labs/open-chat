@@ -1,8 +1,8 @@
-use crate::{read_state, RuntimeState};
-use canister_api_macros::query_msgpack;
+use crate::{RuntimeState, read_state};
+use canister_api_macros::query;
 use local_user_index_canister::c2c_diamond_membership_expiry_dates::{Response::*, *};
 
-#[query_msgpack]
+#[query(msgpack = true)]
 fn c2c_diamond_membership_expiry_dates(args: Args) -> Response {
     read_state(|state| c2c_diamond_membership_expiry_dates_impl(args, state))
 }

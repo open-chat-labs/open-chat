@@ -1,45 +1,52 @@
-<svelte:options immutable />
-
 <script lang="ts">
-    import NonMessageEvent from "./NonMessageEvent.svelte";
-    import type { Level, UserSummary } from "openchat-client";
-    import { _ } from "svelte-i18n";
+    import type { Level, OpenChat, UserSummary } from "openchat-client";
+    import { allUsersStore } from "openchat-client";
     import { getContext } from "svelte";
-    import type { OpenChat } from "openchat-client";
-    import { buildDisplayName } from "../../utils/user";
+    import { _ } from "svelte-i18n";
     import { i18nKey, interpolate } from "../../i18n/i18n";
+    import { buildDisplayName } from "../../utils/user";
+    import NonMessageEvent from "./NonMessageEvent.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    export let user: UserSummary | undefined;
-    export let changedBy: string;
-    export let changed: string[];
-    export let timestamp: bigint;
-    export let resourceKey: string;
-    export let level: Level;
+    interface Props {
+        user: UserSummary | undefined;
+        changedBy: string;
+        changed: string[];
+        timestamp: bigint;
+        resourceKey: string;
+        level: Level;
+    }
 
-    $: userStore = client.userStore;
-    $: me = changedBy === user?.userId;
-    $: changedByStr = `**${buildDisplayName($userStore, changedBy, me)}**`;
-    $: members = client.getMembersString(
-        user!,
-        $userStore,
-        changed,
-        $_("unknownUser"),
-        $_("you"),
-        user ? client.compareIsNotYouThenUsername(user.userId) : client.compareUsername,
+    let { user, changedBy, changed, timestamp, resourceKey, level }: Props = $props();
+
+    let me = $derived(changedBy === user?.userId);
+    let changedByStr = $derived(
+        `**${buildDisplayName($allUsersStore, changedBy, me ? "me" : "user")}**`,
+    );
+    let members = $derived(
+        client.getMembersString(
+            user!,
+            $allUsersStore,
+            changed,
+            $_("unknownUser"),
+            $_("you"),
+            user ? client.compareIsNotYouThenUsername(user.userId) : client.compareUsername,
+        ),
     );
 
-    $: text = interpolate(
-        $_,
-        i18nKey(
-            resourceKey,
-            {
-                changed: members,
-                changedBy: changedByStr,
-            },
-            level,
-            true,
+    let text = $derived(
+        interpolate(
+            $_,
+            i18nKey(
+                resourceKey,
+                {
+                    changed: members,
+                    changedBy: changedByStr,
+                },
+                level,
+                true,
+            ),
         ),
     );
 </script>

@@ -1,16 +1,13 @@
 [package]
 name = "notification_pusher_cli"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 
 [dependencies]
-async-trait = { workspace = true }
 candid = { workspace = true }
-dotenv = { workspace = true }
-futures = { workspace = true }
 index_store = { path = "../../libraries/index_store" }
 notification_pusher_core = { path = "../core" }
-tokio = { workspace = true, features = ["macros", "time"] }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "time"] }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 types = { path = "../../libraries/types" }

@@ -1,49 +1,48 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
-    import SectionHeader from "../../SectionHeader.svelte";
-    import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
-    import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
-    import HoverIcon from "../../HoverIcon.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
+    import { iconSize, mobileWidth, publish, type Level } from "openchat-client";
     import { _ } from "svelte-i18n";
-    import { iconSize } from "../../../stores/iconSize";
-    import { mobileWidth } from "../../../stores/screenDimensions";
-    import type { Level } from "openchat-client";
+    import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
+    import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import HoverIcon from "../../HoverIcon.svelte";
+    import SectionHeader from "../../SectionHeader.svelte";
     import Translatable from "../../Translatable.svelte";
 
-    export let canEdit: boolean;
-    export let level: Level;
-
-    const dispatch = createEventDispatcher();
-    function close() {
-        dispatch("close");
+    interface Props {
+        canEdit: boolean;
+        level: Level;
+        onEditGroup: () => void;
+        onClose: () => void;
     }
+
+    let { canEdit, level, onEditGroup, onClose }: Props = $props();
+
     function showGroupMembers() {
-        dispatch("showGroupMembers");
+        publish("showGroupMembers");
     }
     function editGroup() {
         if (canEdit) {
-            dispatch("editGroup");
+            onEditGroup();
         }
     }
 </script>
 
 <SectionHeader border={false} flush={!$mobileWidth} shadow>
-    <span title={$_("members")} class="members" on:click={showGroupMembers}>
+    <span title={$_("members")} class="members" onclick={showGroupMembers}>
         <HoverIcon>
             <AccountMultiple size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
     {#if canEdit}
-        <span title={$_("group.edit", { values: { level } })} class="edit" on:click={editGroup}>
+        <span title={$_("group.edit", { values: { level } })} class="edit" onclick={editGroup}>
             <HoverIcon>
                 <PencilOutline size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </span>
     {/if}
     <h4><Translatable resourceKey={i18nKey("groupDetails", undefined, level)} /></h4>
-    <span title={$_("close")} class="close" on:click={close}>
+    <span title={$_("close")} class="close" onclick={onClose}>
         <HoverIcon>
             <Close size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>

@@ -1,7 +1,7 @@
-use crate::lifecycle::{init_env, init_state};
 use crate::Data;
+use crate::lifecycle::{init_env, init_state};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::init;
+use ic_cdk::init;
 use registry_canister::init::Args;
 use tracing::info;
 use utils::cycles::init_cycles_dispenser_client;
@@ -18,8 +18,14 @@ fn init(args: Args) {
         args.governance_principals.into_iter().collect(),
         args.proposals_bot_canister_id,
         args.user_index_canister_id,
+        args.group_index_canister_id,
+        args.notifications_index_canister_id,
+        args.event_relay_canister_id,
         args.sns_wasm_canister_id,
+        args.escrow_canister_id,
         args.cycles_dispenser_canister_id,
+        args.nns_ledger_canister_id,
+        args.cycles_minting_canister_id,
         args.test_mode,
     );
 

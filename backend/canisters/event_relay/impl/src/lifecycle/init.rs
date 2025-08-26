@@ -1,8 +1,8 @@
-use crate::lifecycle::{init_env, init_state};
 use crate::Data;
+use crate::lifecycle::{init_env, init_state};
 use canister_tracing_macros::trace;
 use event_relay_canister::init::Args;
-use ic_cdk_macros::init;
+use ic_cdk::init;
 use tracing::info;
 use utils::cycles::init_cycles_dispenser_client;
 
@@ -17,6 +17,7 @@ fn init(args: Args) {
         args.push_events_whitelist.into_iter().collect(),
         args.event_store_canister_id,
         args.cycles_dispenser_canister_id,
+        args.registry_canister_id,
         args.chat_ledger_canister_id,
         args.chat_governance_canister_id,
         args.test_mode,

@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use tracing::trace;
 use types::{
-    AccessGate, CanisterId, ChatId, EventIndex, EventWrapper, Message, MessageIndex, Milliseconds, PublicGroupSummary,
+    AccessGateConfig, CanisterId, ChatId, EventIndex, EventWrapper, Message, MessageIndex, Milliseconds, PublicGroupSummary,
     TimestampMillis,
 };
 
@@ -47,7 +47,7 @@ pub struct CachedPublicGroupSummary {
     pub participant_count: u32,
     pub events_ttl: Option<Milliseconds>,
     pub events_ttl_last_updated: TimestampMillis,
-    pub gate: Option<AccessGate>,
+    pub gate_config: Option<AccessGateConfig>,
 }
 
 impl From<PublicGroupSummary> for CachedPublicGroupSummary {
@@ -62,7 +62,7 @@ impl From<PublicGroupSummary> for CachedPublicGroupSummary {
             participant_count: summary.participant_count,
             events_ttl: summary.events_ttl,
             events_ttl_last_updated: summary.events_ttl_last_updated,
-            gate: summary.gate,
+            gate_config: summary.gate_config,
         }
     }
 }

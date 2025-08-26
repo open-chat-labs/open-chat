@@ -1,50 +1,54 @@
-use crate::{model::events::CommunityEventInternal, read_state, Data, RuntimeState};
+use crate::{RuntimeState, model::members::CommunityMembers, read_state};
+use canister_api_macros::query;
 use community_canister::selected_updates_v2::{Response::*, *};
-use ic_cdk_macros::query;
+use group_community_common::MemberUpdate;
+use installed_bots::BotUpdate;
+use oc_error_codes::OCErrorCode;
+use std::cell::LazyCell;
 use std::collections::HashSet;
-use types::UserId;
+use types::{InstalledBotDetails, UserId};
 
-#[query]
-fn selected_updates(args: Args) -> community_canister::selected_updates::Response {
-    read_state(|state| selected_updates_impl(args, state)).into()
-}
-
-#[query]
+#[query(msgpack = true)]
 fn selected_updates_v2(args: Args) -> Response {
     read_state(|state| selected_updates_impl(args, state))
 }
 
 fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
-    // Don't call `ic0.caller()` if the community is public or the invite_code is valid to maximise query caching
-    if !state.data.is_public || !state.data.is_invite_code_valid(args.invite_code) {
-        let caller = state.env.caller();
-        if !state.data.is_accessible(caller, None) {
-            return PrivateCommunity;
-        }
+    // Only call `ic0.caller()` if we have to in order to maximise query caching
+    let caller = LazyCell::new(|| state.env.caller());
+
+    if !state.data.is_public.value
+        && !state.data.is_invite_code_valid(args.invite_code)
+        && !state.data.is_accessible(*caller, None)
+    {
+        return Error(OCErrorCode::InitiatorNotInCommunity.into());
     }
 
     let data = &state.data;
+    let now = state.env.now();
     let last_updated = data.details_last_updated();
 
     if last_updated <= args.updates_since {
-        return SuccessNoUpdates(args.updates_since);
+        return SuccessNoUpdates(now);
     }
 
-    let invited_users = if state.data.invited_users.last_updated() > args.updates_since {
+    let invited_users = if data.invited_users.last_updated() > args.updates_since {
         Some(data.invited_users.users())
     } else {
         None
     };
 
     let mut result = SuccessResult {
-        timestamp: last_updated,
+        timestamp: now,
         last_updated,
         members_added_or_updated: vec![],
         members_removed: vec![],
+        bots_added_or_updated: vec![],
+        bots_removed: vec![],
         blocked_users_added: vec![],
         blocked_users_removed: vec![],
         invited_users,
-        chat_rules: None,
+        chat_rules: data.rules.if_set_after(args.updates_since).map(|r| r.clone().into()),
         user_groups: data
             .members
             .iter_user_groups()
@@ -52,60 +56,63 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
             .map(|u| u.into())
             .collect(),
         user_groups_deleted: data.members.user_groups_deleted_since(args.updates_since),
+        referrals_added: vec![],
+        referrals_removed: vec![],
+        public_channel_list_updated: state.data.public_channel_list_updated,
     };
 
     let mut user_updates_handler = UserUpdatesHandler {
-        data,
+        members: &data.members,
         users_updated: HashSet::new(),
+        referrals_updated: HashSet::new(),
     };
 
-    // Iterate through the new events starting from most recent
-    for event_wrapper in data.events.iter(None, false).take_while(|e| e.timestamp > args.updates_since) {
-        match &event_wrapper.event {
-            CommunityEventInternal::MembersRemoved(p) => {
-                for user_id in p.user_ids.iter() {
-                    user_updates_handler.mark_member_updated(&mut result, *user_id, true);
-                }
+    let member = LazyCell::new(|| data.members.get(*caller));
+    for (user_id, update) in state.data.members.iter_latest_updates(args.updates_since) {
+        match update {
+            MemberUpdate::Added => {
+                let referral_added = member.as_ref().is_some_and(|m| m.referrals().contains(&user_id));
+                user_updates_handler.mark_member_updated(&mut result, user_id, referral_added, false);
             }
-            CommunityEventInternal::MemberJoined(p) => {
-                user_updates_handler.mark_member_updated(&mut result, p.user_id, false);
+            MemberUpdate::Removed => {
+                let referral_removed = member.as_ref().is_some_and(|m| m.referrals_removed().contains(&user_id));
+                user_updates_handler.mark_member_updated(&mut result, user_id, referral_removed, true);
             }
-            CommunityEventInternal::MemberLeft(p) => {
-                user_updates_handler.mark_member_updated(&mut result, p.user_id, true);
+            MemberUpdate::RoleChanged => {
+                user_updates_handler.mark_member_updated(&mut result, user_id, false, false);
             }
-            CommunityEventInternal::RoleChanged(rc) => {
-                for user_id in rc.user_ids.iter() {
-                    user_updates_handler.mark_member_updated(&mut result, *user_id, false);
-                }
+            MemberUpdate::Blocked => {
+                user_updates_handler.mark_user_blocked_updated(&mut result, user_id, true);
             }
-            CommunityEventInternal::UsersBlocked(ub) => {
-                for user_id in ub.user_ids.iter() {
-                    user_updates_handler.mark_user_blocked_updated(&mut result, *user_id, true);
-                    user_updates_handler.mark_member_updated(&mut result, *user_id, true);
-                }
+            MemberUpdate::Unblocked => {
+                user_updates_handler.mark_user_blocked_updated(&mut result, user_id, false);
             }
-            CommunityEventInternal::UsersUnblocked(ub) => {
-                for user_id in ub.user_ids.iter() {
-                    user_updates_handler.mark_user_blocked_updated(&mut result, *user_id, false);
-                }
+            MemberUpdate::Lapsed | MemberUpdate::Unlapsed | MemberUpdate::DisplayNameChanged => {
+                user_updates_handler.mark_member_updated(&mut result, user_id, false, false);
             }
-            CommunityEventInternal::RulesChanged(_) => {
-                if result.chat_rules.is_none() {
-                    result.chat_rules = Some(data.rules.clone().into());
-                }
-            }
-            CommunityEventInternal::GroupImported(g) => {
-                for user_id in g.members_added.iter() {
-                    user_updates_handler.mark_member_updated(&mut result, *user_id, false);
-                }
-            }
-            _ => {}
         }
     }
 
-    for member in data.members.iter() {
-        if member.display_name().timestamp > args.updates_since {
-            user_updates_handler.mark_member_updated(&mut result, member.user_id, false);
+    let mut bots_changed = HashSet::new();
+    for (user_id, update) in state.data.bots.iter_latest_updates(args.updates_since) {
+        match update {
+            BotUpdate::Added | BotUpdate::Updated => {
+                if bots_changed.insert(user_id)
+                    && let Some(bot) = state.data.bots.get(&user_id)
+                {
+                    result.bots_added_or_updated.push(InstalledBotDetails {
+                        user_id,
+                        added_by: bot.added_by,
+                        permissions: bot.permissions.clone(),
+                        autonomous_permissions: bot.autonomous_permissions.clone(),
+                    });
+                }
+            }
+            BotUpdate::Removed => {
+                if bots_changed.insert(user_id) {
+                    result.bots_removed.push(user_id);
+                }
+            }
         }
     }
 
@@ -113,17 +120,26 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
 }
 
 struct UserUpdatesHandler<'a> {
-    data: &'a Data,
+    members: &'a CommunityMembers,
     users_updated: HashSet<UserId>,
+    referrals_updated: HashSet<UserId>,
 }
 
-impl<'a> UserUpdatesHandler<'a> {
-    pub fn mark_member_updated(&mut self, result: &mut SuccessResult, user_id: UserId, removed: bool) {
+impl UserUpdatesHandler<'_> {
+    pub fn mark_member_updated(&mut self, result: &mut SuccessResult, user_id: UserId, referral: bool, removed: bool) {
         if self.users_updated.insert(user_id) {
             if removed {
                 result.members_removed.push(user_id);
-            } else if let Some(member) = self.data.members.get_by_user_id(&user_id) {
+            } else if let Some(member) = self.members.get_by_user_id(&user_id) {
                 result.members_added_or_updated.push(member.into());
+            }
+        }
+
+        if referral && self.referrals_updated.insert(user_id) {
+            if removed {
+                result.referrals_removed.push(user_id);
+            } else {
+                result.referrals_added.push(user_id);
             }
         }
     }

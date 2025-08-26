@@ -1,6 +1,5 @@
-import type { Message, MessageContent } from "openchat-shared";
+import type { AttachmentContent, Message, MessageContent } from "openchat-shared";
 import { dataToBlobUrl } from "./blob";
-import type { AttachmentContent } from "openchat-shared";
 
 const THUMBNAIL_DIMS = dimensions(30, 30);
 
@@ -9,15 +8,15 @@ export type MaxMediaSizes = {
     video: number;
     audio: number;
     file: number;
-    resize: number;
 };
+
+export const MAX_DIMENSIONS = dimensions(1500, 1500);
 
 export const FREE_MAX_SIZES: MaxMediaSizes = {
     image: 1024 * 1024,
     video: 1024 * 1024 * 5,
     audio: 1024 * 1024,
     file: 1024 * 1024,
-    resize: 800,
 };
 
 export const DIAMOND_MAX_SIZES: MaxMediaSizes = {
@@ -25,7 +24,6 @@ export const DIAMOND_MAX_SIZES: MaxMediaSizes = {
     video: 1024 * 1024 * 50,
     audio: 1024 * 1024 * 5,
     file: 1024 * 1024 * 5,
-    resize: 1000,
 };
 
 export type Dimensions = {
@@ -112,9 +110,10 @@ export function changeDimensions(
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
     const context = canvas.getContext("2d")!;
     context.drawImage(original, 0, 0, canvas.width, canvas.height);
+    const resultMimeType = mimeType === "image/jpeg" ? "image/jpeg" : "image/png";
 
     return new Promise((resolve) => {
         canvas.toBlob((blob) => {
@@ -129,7 +128,7 @@ export function changeDimensions(
                 });
                 reader.readAsArrayBuffer(blob);
             }
-        }, mimeType);
+        }, resultMimeType);
     });
 }
 
@@ -162,24 +161,14 @@ export function fillMessage(msg: Message): boolean {
     }
 }
 
-export function resizeImage(
-    blobUrl: string,
-    mimeType: string,
-    isDiamond: boolean,
-): Promise<MediaExtract> {
+export function stripMetaDataAndResize(blobUrl: string, mimeType: string): Promise<MediaExtract> {
     // if our image is too big, we'll just create a new version with fixed dimensions
     // there's no very easy way to reduce it to a specific file size
     return new Promise<MediaExtract>((resolve, _) => {
         const img = new Image();
         img.onload = () => {
-            const maxSizes = isDiamond ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
             resolve(
-                changeDimensions(
-                    img,
-                    mimeType,
-                    dimensions(img.width, img.height),
-                    dimensions(maxSizes.resize, maxSizes.resize),
-                ),
+                changeDimensions(img, mimeType, dimensions(img.width, img.height), MAX_DIMENSIONS),
             );
         };
         img.src = blobUrl;
@@ -208,6 +197,8 @@ export async function messageContentFromFile(
 
             const mimeType = file.type;
             const isImage = /^image/.test(mimeType);
+            const isSVG = mimeType === "image/svg+xml";
+            const isGif = isImage && /gif/.test(mimeType);
             const isVideo = /^video/.test(mimeType);
             const isAudio = /^audio/.test(mimeType);
             const isFile = !(isImage || isVideo);
@@ -231,13 +222,13 @@ export async function messageContentFromFile(
             if (isImage) {
                 const extract = await extractImageThumbnail(blobUrl, mimeType);
 
-                if (data.byteLength > maxSizes.image) {
-                    data = (await resizeImage(blobUrl, mimeType, isDiamond)).data;
+                if (!isGif || data.byteLength > maxSizes.image) {
+                    data = (await stripMetaDataAndResize(blobUrl, mimeType)).data;
                 }
 
                 content = {
                     kind: "image_content",
-                    mimeType: mimeType,
+                    mimeType: isSVG ? "image/png" : mimeType,
                     width: extract.dimensions.width,
                     height: extract.dimensions.height,
                     blobData: new Uint8Array(data),
@@ -296,6 +287,9 @@ export const twitterLinkRegex = (): RegExp =>
  */
 export const youtubeRegex = (): RegExp =>
     /https:\/\/(?:www.youtube.com\/watch\?v=([^/\s]*)|youtu.be\/([^/\s]*)|(?:www\.)?youtube.com\/shorts\/([^/\s]*))/i;
+
+export const instagramRegex = (): RegExp =>
+    /(?:https?:\/\/)?(?:www\.|m\.)?(?:instagram\.com|instagr\.am)\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/;
 
 export const spotifyRegex = (): RegExp => /\/(album|artist|show|episode|track|playlist)\/(\w+)/i;
 

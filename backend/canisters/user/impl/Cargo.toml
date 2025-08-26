@@ -1,7 +1,7 @@
 [package]
 name = "user_canister_impl"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -11,22 +11,23 @@ crate-type = ["cdylib"]
 
 [dependencies]
 async-trait = { workspace = true }
-bot_api = { path = "../../../bots/api" }
-bot_c2c_client = { path = "../../../bots/c2c_client" }
+legacy_bot_api = { path = "../../../legacy_bots/api" }
+legacy_bot_c2c_client = { path = "../../../legacy_bots/c2c_client" }
 candid = { workspace = true }
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }
-canister_client = { path = "../../../libraries/canister_client" }
 canister_logger = { path = "../../../libraries/canister_logger" }
 canister_state_macros = { path = "../../../libraries/canister_state_macros" }
 canister_timer_jobs = { path = "../../../libraries/canister_timer_jobs" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 chat_events = { path = "../../../libraries/chat_events" }
+ckbtc_minter_canister = { path = "../../../external_canisters/ckbtc_minter/api" }
+ckbtc_minter_canister_c2c_client = { path = "../../../external_canisters/ckbtc_minter/c2c_client" }
 community_canister = { path = "../../community/api" }
 community_canister_c2c_client = { path = "../../community/c2c_client" }
+constants = { path = "../../../libraries/constants" }
 escrow_canister = { path = "../../escrow/api" }
 escrow_canister_c2c_client = { path = "../../escrow/c2c_client" }
-event_store_producer = { workspace = true, features = ["json"] }
-event_store_producer_cdk_runtime = { workspace = true }
+event_store_types = { workspace = true, features = ["json"] }
 fire_and_forget_handler = { path = "../../../libraries/fire_and_forget_handler" }
 futures = { workspace = true }
 group_canister = { path = "../../group/api" }
@@ -35,36 +36,38 @@ group_index_canister = { path = "../../group_index/api" }
 group_index_canister_c2c_client = { path = "../../group_index/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }
-ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
-icpswap_client = { path = "../../../libraries/icpswap_client" }
+icpswap_swap_pool_canister = { path = "../../../external_canisters/icpswap_swap_pool/api" }
+icpswap_swap_pool_canister_c2c_client = { path = "../../../external_canisters/icpswap_swap_pool/c2c_client" }
 icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_ledger/c2c_client" }
 icrc_ledger_canister = { path = "../../../external_canisters/icrc_ledger/api" }
 icrc-ledger-types = { workspace = true }
+installed_bots = { path = "../../../libraries/installed_bots" }
 itertools = { workspace = true }
+kongswap_canister = { path = "../../../external_canisters/kongswap/api" }
+kongswap_canister_c2c_client = { path = "../../../external_canisters/kongswap/c2c_client" }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 local_user_index_canister = { path = "../../local_user_index/api" }
 local_user_index_canister_c2c_client = { path = "../../local_user_index/c2c_client" }
 msgpack = { path = "../../../libraries/msgpack" }
 nns_governance_canister = { path = "../../../external_canisters/nns_governance/api" }
 nns_governance_canister_c2c_client = { path = "../../../external_canisters/nns_governance/c2c_client" }
-notifications_canister = { path = "../../notifications/api" }
-notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
-num-traits = { workspace = true }
-proposals_bot_canister = { path = "../../proposals_bot/api" }
-proposals_bot_canister_c2c_client = { path = "../../proposals_bot/c2c_client" }
+oc_error_codes = { path = "../../../libraries/error_codes" }
+one_sec_minter_canister = { path = "../../../external_canisters/one_sec_minter/api" }
+one_sec_minter_canister_c2c_client = { path = "../../../external_canisters/one_sec_minter/c2c_client" }
 rand = { workspace = true }
 search = { path = "../../../libraries/search" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
-serializer = { path = "../../../libraries/serializer" }
+sha256 = { path = "../../../libraries/sha256" }
 sns_governance_canister = { path = "../../../external_canisters/sns_governance/api" }
 sns_governance_canister_c2c_client = { path = "../../../external_canisters/sns_governance/c2c_client" }
-sonic_client = { path = "../../../libraries/sonic_client" }
 stable_memory = { path = "../../../libraries/stable_memory" }
+stable_memory_map = { path = "../../../libraries/stable_memory_map" }
 storage_bucket_client = { path = "../../../libraries/storage_bucket_client" }
+timer_job_queues = { path = "../../../libraries/timer_job_queues" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 utils = { path = "../../../libraries/utils" }
@@ -72,3 +75,6 @@ user_canister = { path = "../api" }
 user_canister_c2c_client = { path = "../c2c_client" }
 user_index_canister = { path = "../../user_index/api" }
 user_index_canister_c2c_client = { path = "../../user_index/c2c_client" }
+
+[dev-dependencies]
+test-case = { workspace = true }

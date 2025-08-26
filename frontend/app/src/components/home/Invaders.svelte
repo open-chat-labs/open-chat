@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { mobileWidth } from "openchat-client";
     import { onMount, tick } from "svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
     import { _ } from "svelte-i18n";
     import { isTouchDevice } from "../../utils/devices";
     import Button from "../Button.svelte";
@@ -367,7 +367,7 @@
     class="invaders">
     <canvas height="500" width={containerWidth} bind:this={canvas} />
     {#if state === "not_started"}
-        <div class="start"><Button on:click={start}>{$_("halloffame.start")}</Button></div>
+        <div class="start"><Button onClick={start}>{$_("halloffame.start")}</Button></div>
     {/if}
 </div>
 

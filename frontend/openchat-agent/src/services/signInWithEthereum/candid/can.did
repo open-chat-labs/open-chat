@@ -1,0 +1,77 @@
+type Address = text;
+type CanisterPublicKey = PublicKey;
+type Principal = blob;
+type PublicKey = blob;
+type SessionKey = PublicKey;
+type SiweMessage = text;
+type SiweSignature = text;
+type Timestamp = nat64;
+
+type RuntimeFeature = variant { 
+  IncludeUriInSeed; 
+  DisableEthToPrincipalMapping; 
+  DisablePrincipalToEthMapping 
+};
+
+type SettingsInput = record {
+  domain : text;
+  uri : text;
+  salt : text;
+  chain_id : opt nat;
+  scheme : opt text;
+  statement : opt text;
+  sign_in_expires_in : opt nat64;
+  session_expires_in : opt nat64;
+  targets : opt vec text;
+  runtime_features: opt vec RuntimeFeature;
+};
+
+type GetAddressResponse = variant {
+  Ok : Address;
+  Err : text;
+};
+
+type GetDelegationResponse = variant {
+  Ok : SignedDelegation;
+  Err : text;
+};
+
+type SignedDelegation = record {
+  delegation : Delegation;
+  signature : blob;
+};
+
+type Delegation = record {
+  pubkey : PublicKey;
+  expiration : Timestamp;
+  targets : opt vec principal;
+};
+
+type GetPrincipalResponse = variant {
+  Ok : Principal;
+  Err : text;
+};
+
+type LoginResponse = variant {
+  Ok : LoginDetails;
+  Err : text;
+};
+
+type LoginDetails = record {
+  expiration : Timestamp;
+  user_canister_pubkey : CanisterPublicKey;
+};
+
+type PrepareLoginResponse = variant {
+  Ok : SiweMessage;
+  Err : text;
+};
+
+service : (settings_input : SettingsInput) -> {
+  "get_address" : (Principal) -> (GetAddressResponse) query;
+  "get_caller_address" : () -> (GetAddressResponse) query;
+  "get_principal" : (Address) -> (GetPrincipalResponse) query;
+  "siwe_prepare_login" : (Address) -> (PrepareLoginResponse);
+  "siwe_login" : (SiweSignature, Address, SessionKey) -> (LoginResponse);
+  "siwe_get_delegation" : (Address, SessionKey, Timestamp) -> (GetDelegationResponse) query;
+};

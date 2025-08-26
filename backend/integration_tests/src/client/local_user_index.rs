@@ -1,36 +1,53 @@
-use crate::{generate_query_call, generate_update_call};
+use crate::{generate_msgpack_query_call, generate_msgpack_update_call, generate_query_call, generate_update_call};
 use local_user_index_canister::*;
 
 // Queries
-generate_query_call!(access_token);
-generate_query_call!(chat_events);
-generate_query_call!(group_and_community_summary_updates);
+generate_msgpack_query_call!(access_token_v2);
+generate_query_call!(bot_chat_events);
+generate_query_call!(bot_community_events);
+generate_msgpack_query_call!(chat_events);
+generate_msgpack_query_call!(group_and_community_summary_updates_v2);
+generate_query_call!(latest_notification_index);
+generate_query_call!(notifications);
 
 // Updates
-generate_update_call!(invite_users_to_channel);
-generate_update_call!(invite_users_to_community);
-generate_update_call!(invite_users_to_group);
-generate_update_call!(join_channel);
-generate_update_call!(join_community);
-generate_update_call!(join_group);
-generate_update_call!(register_user);
-generate_update_call!(report_message_v2);
+generate_update_call!(bot_create_channel);
+generate_update_call!(bot_delete_channel);
+generate_update_call!(bot_send_message);
+generate_update_call!(bot_subscribe_to_events);
+generate_msgpack_update_call!(install_bot);
+generate_msgpack_update_call!(invite_users_to_channel);
+generate_msgpack_update_call!(invite_users_to_community);
+generate_msgpack_update_call!(invite_users_to_group);
+generate_msgpack_update_call!(join_channel);
+generate_msgpack_update_call!(join_community);
+generate_msgpack_update_call!(join_group);
+generate_msgpack_update_call!(pay_for_premium_item);
+generate_msgpack_update_call!(register_user);
+generate_msgpack_update_call!(uninstall_bot);
 
 pub mod happy_path {
-    use crate::rng::random_user_principal;
-    use crate::utils::principal_to_username;
     use crate::User;
+    use crate::utils::{principal_to_username, tick_many};
     use candid::Principal;
+    use local_user_index_canister::{install_bot, uninstall_bot};
     use pocket_ic::PocketIc;
-    use types::{AccessTokenType, CanisterId, ChannelId, Chat, ChatId, CommunityCanisterCommunitySummary, CommunityId, UserId};
+    use types::{
+        BotInstallationLocation, BotPermissions, CanisterId, ChannelId, ChatId, CommunityCanisterCommunitySummary, CommunityId,
+        Empty, UserId,
+    };
 
-    pub fn register_user(env: &mut PocketIc, canister_id: CanisterId) -> User {
-        register_user_with_referrer(env, canister_id, None)
+    pub fn register_user(env: &mut PocketIc, principal: Principal, canister_id: CanisterId, public_key: Vec<u8>) -> User {
+        register_user_with_referrer(env, principal, canister_id, public_key, None)
     }
 
-    pub fn register_user_with_referrer(env: &mut PocketIc, canister_id: CanisterId, referral_code: Option<String>) -> User {
-        let (principal, public_key) = random_user_principal();
-
+    pub fn register_user_with_referrer(
+        env: &mut PocketIc,
+        principal: Principal,
+        canister_id: CanisterId,
+        public_key: Vec<u8>,
+        referral_code: Option<String>,
+    ) -> User {
         let response = super::register_user(
             env,
             principal,
@@ -42,13 +59,14 @@ pub mod happy_path {
             },
         );
 
-        env.tick();
+        tick_many(env, 5);
 
         match response {
             local_user_index_canister::register_user::Response::Success(res) => User {
                 principal,
                 user_id: res.user_id,
                 public_key,
+                local_user_index: canister_id,
             },
             response => panic!("'register_user' error: {response:?}"),
         }
@@ -65,12 +83,7 @@ pub mod happy_path {
             env,
             user.principal,
             local_user_index_canister_id,
-            &local_user_index_canister::invite_users_to_group::Args {
-                group_id,
-                user_ids,
-                caller_username: user.username(),
-                correlation_id: 0,
-            },
+            &local_user_index_canister::invite_users_to_group::Args { group_id, user_ids },
         );
 
         match response {
@@ -87,7 +100,7 @@ pub mod happy_path {
             &local_user_index_canister::join_group::Args {
                 chat_id,
                 invite_code: None,
-                correlation_id: 0,
+                verified_credential_args: None,
             },
         );
 
@@ -116,7 +129,7 @@ pub mod happy_path {
             join_group(env, principal, local_user_index_canister_id, group_id);
         }
 
-        env.tick();
+        tick_many(env, 5);
     }
 
     pub fn invite_users_to_community(
@@ -130,11 +143,7 @@ pub mod happy_path {
             env,
             user.principal,
             local_user_index_canister_id,
-            &local_user_index_canister::invite_users_to_community::Args {
-                community_id,
-                user_ids,
-                caller_username: user.username(),
-            },
+            &local_user_index_canister::invite_users_to_community::Args { community_id, user_ids },
         );
 
         match response {
@@ -159,7 +168,6 @@ pub mod happy_path {
                 community_id,
                 channel_id,
                 user_ids,
-                caller_username: user.username(),
             },
         );
 
@@ -174,6 +182,7 @@ pub mod happy_path {
         sender: Principal,
         local_user_index_canister_id: CanisterId,
         community_id: CommunityId,
+        referred_by: Option<UserId>,
     ) -> CommunityCanisterCommunitySummary {
         let response = super::join_community(
             env,
@@ -182,6 +191,8 @@ pub mod happy_path {
             &local_user_index_canister::join_community::Args {
                 community_id,
                 invite_code: None,
+                referred_by,
+                verified_credential_args: None,
             },
         );
 
@@ -206,12 +217,15 @@ pub mod happy_path {
                 community_id,
                 channel_id,
                 invite_code: None,
+                referred_by: None,
+                verified_credential_args: None,
             },
         );
 
         match response {
             local_user_index_canister::join_channel::Response::Success(_)
-            | local_user_index_canister::join_channel::Response::SuccessJoinedCommunity(_) => {}
+            | local_user_index_canister::join_channel::Response::SuccessJoinedCommunity(_)
+            | local_user_index_canister::join_channel::Response::AlreadyInChannel(_) => {}
             response => panic!("'join_channel' error: {response:?}"),
         }
     }
@@ -232,7 +246,7 @@ pub mod happy_path {
         );
 
         for (_, principal) in users {
-            join_community(env, principal, local_user_index_canister_id, community_id);
+            join_community(env, principal, local_user_index_canister_id, community_id, None);
         }
 
         env.tick();
@@ -242,23 +256,103 @@ pub mod happy_path {
         env: &PocketIc,
         sender: &User,
         local_user_index_canister_id: CanisterId,
-        community_id: CommunityId,
-        channel_id: ChannelId,
-        token_type: AccessTokenType,
+        args: &local_user_index_canister::access_token_v2::Args,
     ) -> String {
-        let response = super::access_token(
+        let response = super::access_token_v2(env, sender.principal, local_user_index_canister_id, args);
+
+        match response {
+            local_user_index_canister::access_token_v2::Response::Success(token) => token,
+            response => panic!("'access_token' error: {response:?}"),
+        }
+    }
+
+    pub fn install_bot(
+        env: &mut PocketIc,
+        sender: Principal,
+        local_user_index: CanisterId,
+        location: BotInstallationLocation,
+        bot_id: UserId,
+        granted_permissions: BotPermissions,
+        granted_autonomous_permissions: Option<BotPermissions>,
+    ) {
+        let response = super::install_bot(
             env,
-            sender.principal,
-            local_user_index_canister_id,
-            &local_user_index_canister::access_token::Args {
-                token_type,
-                chat: Chat::Channel(community_id, channel_id),
+            sender,
+            local_user_index,
+            &install_bot::Args {
+                bot_id,
+                granted_permissions,
+                location,
+                granted_autonomous_permissions,
             },
         );
 
         match response {
-            local_user_index_canister::access_token::Response::Success(token) => token,
-            response => panic!("'access_token' error: {response:?}"),
+            install_bot::Response::Success => {}
+            response => panic!("'install_bot' error: {response:?}"),
         }
+    }
+
+    pub fn uninstall_bot(
+        env: &mut PocketIc,
+        sender: Principal,
+        local_user_index: CanisterId,
+        location: BotInstallationLocation,
+        bot_id: UserId,
+    ) {
+        let response = super::uninstall_bot(env, sender, local_user_index, &uninstall_bot::Args { bot_id, location });
+
+        match response {
+            uninstall_bot::Response::Success => {}
+            response => panic!("'update_bot' error: {response:?}"),
+        }
+    }
+
+    pub fn pay_for_premium_item(
+        env: &mut PocketIc,
+        user: &User,
+        item_id: u32,
+        expected_cost: u32,
+    ) -> local_user_index_canister::pay_for_premium_item::SuccessResult {
+        let response = super::pay_for_premium_item(
+            env,
+            user.principal,
+            user.local_user_index,
+            &local_user_index_canister::pay_for_premium_item::Args {
+                item_id,
+                pay_in_chat: false,
+                expected_cost,
+            },
+        );
+
+        match response {
+            local_user_index_canister::pay_for_premium_item::Response::Success(result) => result,
+            response => panic!("'pay_for_premium_item' error: {response:?}"),
+        }
+    }
+
+    pub fn notifications(
+        env: &PocketIc,
+        sender: Principal,
+        local_user_index: CanisterId,
+        from_index: u64,
+    ) -> local_user_index_canister::notifications::SuccessResult {
+        let response = super::notifications(
+            env,
+            sender,
+            local_user_index,
+            &local_user_index_canister::notifications::Args {
+                from_notification_index: from_index,
+            },
+        );
+
+        let local_user_index_canister::notifications::Response::Success(result) = response;
+        result
+    }
+
+    pub fn latest_notification_index(env: &PocketIc, sender: Principal, local_user_index: CanisterId) -> u64 {
+        let response = super::latest_notification_index(env, sender, local_user_index, &Empty {});
+        let local_user_index_canister::latest_notification_index::Response::Success(index) = response;
+        index
     }
 }

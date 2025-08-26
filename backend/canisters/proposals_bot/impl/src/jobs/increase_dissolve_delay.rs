@@ -1,7 +1,7 @@
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
 use ic_cdk_timers::TimerId;
-use sns_governance_canister::types::manage_neuron::configure::Operation;
 use sns_governance_canister::types::manage_neuron::IncreaseDissolveDelay;
+use sns_governance_canister::types::manage_neuron::configure::Operation;
 use sns_governance_canister_c2c_client::configure_neuron;
 use std::cell::Cell;
 use std::time::Duration;
@@ -33,7 +33,7 @@ pub fn run() {
     TIMER_ID.set(None);
 
     if let Some(neuron) = mutate_state(|state| state.data.nervous_systems.get_neuron_in_need_of_dissolve_delay_increase()) {
-        ic_cdk::spawn(increase_dissolve_delay(
+        ic_cdk::futures::spawn(increase_dissolve_delay(
             neuron.governance_canister_id,
             neuron.neuron_id,
             neuron.additional_dissolve_delay_seconds,

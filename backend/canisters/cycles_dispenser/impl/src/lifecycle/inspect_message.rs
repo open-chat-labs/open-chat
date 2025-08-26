@@ -1,18 +1,12 @@
-use crate::{read_state, State};
-use ic_cdk_macros::inspect_message;
+use crate::{State, read_state};
+use ic_cdk::inspect_message;
 
 #[inspect_message]
 fn inspect_message() {
-    let method_name = ic_cdk::api::call::method_name();
-
-    // 'inspect_message' only applies to ingress messages so calls to c2c methods should be rejected
-    let is_c2c_method = method_name.starts_with("c2c");
-    if is_c2c_method {
-        return;
-    }
+    let method_name = ic_cdk::api::msg_method_name();
 
     if read_state(|state| is_valid(&method_name, state)) {
-        ic_cdk::api::call::accept_message();
+        ic_cdk::api::accept_message();
     }
 }
 

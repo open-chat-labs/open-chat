@@ -4,6 +4,10 @@
     "ic_test": "pfs7b-iqaaa-aaaaf-abs7q-cai",
     "web_test": "xp7uu-xyaaa-aaaaf-aoa6a-cai"
   },
+  "airdrop_bot": {
+    "ic": "62rh2-kiaaa-aaaaf-bmy5q-cai",
+    "ic_test": "6pwwx-laaaa-aaaaf-bmy6a-cai"
+  },
   "cycles_dispenser": {
     "ic": "gonut-hqaaa-aaaaf-aby7a-cai",
     "ic_test": "mq2tp-baaaa-aaaaf-aucva-cai"
@@ -15,6 +19,10 @@
   "event_relay": {
     "ic": "6ofpc-2aaaa-aaaaf-biibq-cai",
     "ic_test": "6jejw-xyaaa-aaaaf-biiba-cai"
+  },
+  "event_store": {
+    "ic": "64dy3-wqaaa-aaaaf-biicq-cai",
+    "ic_test": "63c6p-3iaaa-aaaaf-biica-cai"
   },
   "group_index": {
     "ic": "4ijyc-kiaaa-aaaaf-aaaja-cai",
@@ -52,6 +60,10 @@
     "ic": "3vlw6-fiaaa-aaaaf-aaa3a-cai",
     "ic_test": "7dlom-nqaaa-aaaaf-ab2da-cai"
   },
+  "openchat_installer": {
+    "ic": "jodzs-iqaaa-aaaar-qamqa-cai",
+    "ic_test": "xeg2u-baaaa-aaaaf-bscyq-cai"
+  },
   "proposal_validation": {
     "ic": "wkype-7qaaa-aaaar-ajfyq-cai"
   },
@@ -62,6 +74,21 @@
   "registry": {
     "ic": "cpi5u-yiaaa-aaaar-aqw5a-cai",
     "ic_test": "cglwi-oaaaa-aaaar-aqw4q-cai"
+  },
+  "treasury": {
+    "ic": "nafek-diaaa-aaaar-qalxa-cai"
+  },
+  "sign_in_with_email": {
+    "ic": "zi2i7-nqaaa-aaaar-qaemq-cai",
+    "ic_test": "rubs2-eaaaa-aaaaf-bijfq-cai"
+  },
+  "sign_in_with_ethereum": {
+    "ic": "2notu-qyaaa-aaaar-qaeha-cai",
+    "ic_test": "4s357-zaaaa-aaaaf-bjz7q-cai"
+  },
+  "sign_in_with_solana": {
+    "ic": "2kpva-5aaaa-aaaar-qaehq-cai",
+    "ic_test": "lix6w-ciaaa-aaaaf-bj2aa-cai"
   },
   "sns_governance": {
     "ic": "2jvtu-yqaaa-aaaaq-aaama-cai",

@@ -1,21 +1,23 @@
-import type { AccessControlled, AccessGate, VersionedRules } from "../access";
+import type { AccessControlled, AccessGateConfig, VersionedRules } from "../access";
+import type { GrantedBotPermissions, InstalledBotDetails } from "../bots";
 import type {
+    CanisterNotFound,
+    ChannelIdentifier,
+    ChannelSummary,
+    EventWrapper,
     GateCheckFailed,
     GateCheckFailedReason,
+    GroupMembershipUpdates,
+    GroupSubtype,
     Member,
     Message,
     MessageContent,
-    ChannelSummary,
     Metrics,
-    ChannelIdentifier,
-    GroupSubtype,
-    EventWrapper,
-    GroupCanisterThreadDetails,
-    Mention,
     UpdatedEvent,
-    CanisterNotFound,
+    VideoCallInProgress,
 } from "../chat";
 import type { DataContent } from "../data";
+import type { OCError } from "../error";
 import type { OptionUpdate } from "../optionUpdate";
 import type {
     ChatPermissions,
@@ -24,20 +26,7 @@ import type {
     MemberRole,
     Permissioned,
 } from "../permission";
-import type {
-    ChatNotFound,
-    CommunityFrozen,
-    Failure,
-    InternalError,
-    NotAuthorised,
-    Offline,
-    Success,
-    SuccessNoUpdates,
-    UserLimitReached,
-    UserNotInChat,
-    UserNotInCommunity,
-    UserSuspended,
-} from "../response";
+import type { Failure, InternalError, Offline, Success, SuccessNoUpdates } from "../response";
 import type { HasLevel } from "../structure";
 import type { UserGroupDetails, UserGroupSummary } from "../user";
 
@@ -49,6 +38,7 @@ export type CommunityMembership = {
     index: number;
     displayName: string | undefined;
     rulesAccepted: boolean;
+    lapsed: boolean;
 };
 
 export type CommunityIdentifier = {
@@ -75,6 +65,8 @@ export type CommunitySummary = AccessControlled &
         primaryLanguage: string;
         userGroups: Map<number, UserGroupSummary>;
         localUserIndex: string;
+        isInvited: boolean;
+        verified: boolean;
     };
 
 export type DefaultChannel = {
@@ -86,8 +78,11 @@ export type CommunitySpecificState = {
     userGroups: Map<number, UserGroupDetails>;
     members: Map<string, Member>;
     blockedUsers: Set<string>;
+    lapsedMembers: Set<string>;
     invitedUsers: Set<string>;
+    referrals: Set<string>;
     rules?: VersionedRules;
+    bots: Map<string, GrantedBotPermissions>;
 };
 
 export interface UserFailedGateCheck {
@@ -103,45 +98,27 @@ export interface UserFailedError {
 export type AddMembersToChannelFailed = {
     kind: "add_to_channel_failed";
     usersLimitReached: string[];
-    usersFailedGateCheck: UserFailedGateCheck[];
     usersAlreadyInChannel: string[];
     usersFailedWithError: UserFailedError[];
 };
+
 export interface AddMembersToChannelPartialSuccess {
     kind: "add_to_channel_partial_success";
     usersLimitReached: string[];
-    usersFailedGateCheck: UserFailedGateCheck[];
     usersAlreadyInChannel: string[];
     usersFailedWithError: UserFailedError[];
     usersAdded: string[];
 }
 export type AddMembersToChannelResponse =
+    | Success
     | AddMembersToChannelFailed
     | AddMembersToChannelPartialSuccess
-    | UserNotInChat
-    | ChatNotFound
-    | UserLimitReached
-    | NotAuthorised
-    | Success
-    | UserNotInCommunity
-    | UserSuspended
-    | CommunityFrozen
     | InternalError
-    | Offline;
+    | OCError;
 
-export type BlockCommunityUserResponse = Success | Failure | Offline;
-
-export type ChangeCommunityRoleResponse = "success" | "failure" | "offline";
-
-export type DeleteChannelResponse =
-    | UserNotInChat
-    | ChatNotFound
-    | NotAuthorised
-    | Success
-    | UserNotInCommunity
-    | UserSuspended
-    | CommunityFrozen
-    | Offline;
+export type BlockCommunityUserResponse = Success | OCError | Offline;
+export type ChangeCommunityRoleResponse = Success | OCError | Offline;
+export type DeleteChannelResponse = Success | OCError | Offline;
 
 export type ChannelMessageMatch = {
     content: MessageContent;
@@ -150,20 +127,20 @@ export type ChannelMessageMatch = {
     messageIndex: number;
 };
 
-export type UnblockCommunityUserResponse = Failure | Success | Offline;
+export type UnblockCommunityUserResponse = Success | OCError | Offline;
 
 export type UpdateCommunityResponse =
-    | Failure
-    | Offline
-    | { kind: "success"; rulesVersion: number | undefined };
+    | { kind: "success"; rulesVersion: number | undefined }
+    | OCError
+    | Offline;
 
-export type ToggleMuteCommunityNotificationsResponse = Failure | Success | Offline;
+export type ToggleMuteCommunityNotificationsResponse = Success | OCError | Offline;
 
 export type CreateCommunityResponse =
     | Offline
     | Failure
-    | (Success & { id: string })
-    | { kind: "name_taken" };
+    | OCError
+    | (Success & { id: string; channels: [ChannelIdentifier, string][] });
 
 export type JoinCommunityResponse =
     | Failure
@@ -176,7 +153,8 @@ export type CommunitySummaryResponse = Failure | CommunitySummary;
 export type CommunitySummaryUpdatesResponse =
     | SuccessNoUpdates
     | Failure
-    | CommunityCanisterCommunitySummaryUpdates;
+    | CommunityCanisterCommunitySummaryUpdates
+    | OCError;
 
 export type CommunityCanisterCommunitySummaryUpdates = {
     id: CommunityIdentifier;
@@ -184,7 +162,7 @@ export type CommunityCanisterCommunitySummaryUpdates = {
     permissions: CommunityPermissions | undefined;
     channelsUpdated: CommunityCanisterChannelSummaryUpdates[];
     metrics: Metrics | undefined;
-    gate: OptionUpdate<AccessGate>;
+    gateConfig: OptionUpdate<AccessGateConfig>;
     name: string | undefined;
     description: string | undefined;
     lastUpdated: bigint;
@@ -199,6 +177,7 @@ export type CommunityCanisterCommunitySummaryUpdates = {
     primaryLanguage: string | undefined;
     userGroups: UserGroupSummary[];
     userGroupsDeleted: Set<number>;
+    verified?: boolean;
 };
 
 export type CommunityCanisterChannelSummaryUpdates = {
@@ -208,7 +187,7 @@ export type CommunityCanisterChannelSummaryUpdates = {
     metrics: Metrics | undefined;
     subtype: OptionUpdate<GroupSubtype>;
     dateLastPinned: bigint | undefined;
-    gate: OptionUpdate<AccessGate>;
+    gateConfig: OptionUpdate<AccessGateConfig>;
     name: string | undefined;
     description: string | undefined;
     lastUpdated: bigint;
@@ -221,35 +200,33 @@ export type CommunityCanisterChannelSummaryUpdates = {
     updatedEvents: UpdatedEvent[];
     eventsTTL: OptionUpdate<bigint>;
     eventsTtlLastUpdated: bigint | undefined;
-    videoCallInProgress: OptionUpdate<number>;
+    videoCallInProgress: OptionUpdate<VideoCallInProgress>;
+    messageVisibleToNonMembers?: boolean;
+    externalUrl: OptionUpdate<string>;
 };
 
 export type CommunityMembershipUpdates = {
     role: MemberRole | undefined;
     displayName: OptionUpdate<string>;
     rulesAccepted: boolean | undefined;
-};
-
-export type GroupMembershipUpdates = {
-    role: MemberRole | undefined;
-    notificationsMuted: boolean | undefined;
-    latestThreads: GroupCanisterThreadDetails[];
-    unfollowedThreads: number[];
-    mentions: Mention[];
-    myMetrics: Metrics | undefined;
-    rulesAccepted: boolean | undefined;
+    lapsed: boolean | undefined;
 };
 
 export type ChannelMatch = {
     id: ChannelIdentifier;
-    gate: AccessGate;
+    gateConfig: AccessGateConfig;
     name: string;
     description: string;
     avatar: DataContent;
     memberCount: number;
+    public: boolean;
+    invited: boolean;
 };
 
-export type CommunityDetailsResponse = "failure" | CommunityDetails;
+export type CommunityDetailsResponse =
+    | CommunityDetails
+    | { kind: "success_no_updates"; lastUpdated: bigint }
+    | Failure;
 
 export type CommunityDetailsUpdatesResponse =
     | ({
@@ -262,12 +239,15 @@ export type CommunityDetailsUpdatesResponse =
     | Failure;
 
 export type CommunityDetails = {
+    kind: "success";
     members: Member[];
     blockedUsers: Set<string>;
     invitedUsers: Set<string>;
     rules: VersionedRules;
     lastUpdated: bigint;
     userGroups: Map<number, UserGroupDetails>;
+    referrals: Set<string>;
+    bots: InstalledBotDetails[];
 };
 
 export type CommunityDetailsUpdates = {
@@ -280,13 +260,15 @@ export type CommunityDetailsUpdates = {
     lastUpdated: bigint;
     userGroups: UserGroupDetails[];
     userGroupsDeleted: Set<number>;
+    referralsRemoved: Set<string>;
+    referralsAdded: Set<string>;
+    botsAddedOrUpdated: InstalledBotDetails[];
+    botsRemoved: Set<string>;
 };
 
 export type ChannelSummaryResponse = Failure | ChannelSummary | CanisterNotFound;
-
-export type LeaveCommunityResponse = "success" | "failure" | "offline";
-
-export type DeleteCommunityResponse = "success" | "failure" | "offline";
+export type LeaveCommunityResponse = Success | OCError | Offline;
+export type DeleteCommunityResponse = Success | OCError | Offline;
 
 export type LocalCommunitySummaryUpdates = {
     added?: CommunitySummary;
@@ -297,26 +279,74 @@ export type LocalCommunitySummaryUpdates = {
     rulesAccepted?: boolean;
 };
 
-export type ConvertToCommunityResponse = (Success & { id: ChannelIdentifier }) | Failure | Offline;
-
-export type ImportGroupResponse = (Success & { channelId: ChannelIdentifier }) | Failure | Offline;
+export type ConvertToCommunityResponse = (Success & { id: ChannelIdentifier }) | OCError | Offline;
+export type ImportGroupResponse = (Success & { channelId: ChannelIdentifier }) | OCError | Offline;
 
 export type CreateUserGroupResponse =
     | { kind: "success"; userGroupId: number }
-    | { kind: "name_taken" }
+    | OCError
     | Failure
     | Offline;
-export type UpdateUserGroupResponse = Success | { kind: "name_taken" } | Failure | Offline;
-export type DeleteUserGroupsResponse = Success | Failure | Offline;
 
-export type SetMemberDisplayNameResponse =
+export type UpdateUserGroupResponse = Success | OCError | Offline | Failure;
+export type DeleteUserGroupsResponse = Success | OCError | Offline;
+export type SetMemberDisplayNameResponse = Success | OCError | Offline;
+export type FollowThreadResponse = Success | OCError | Offline;
+
+export type FreezeCommunityResponse =
     | "success"
-    | "user_not_in_community"
-    | "user_suspended"
-    | "community_frozen"
-    | "display_name_too_short"
-    | "display_name_too_long"
-    | "display_name_invalid"
+    | "community_already_frozen"
+    | "community_not_found"
+    | "not_authorized"
+    | "internal_error"
     | "offline";
 
-export type FollowThreadResponse = "success" | "unchanged" | "failed" | "offline";
+export type UnfreezeCommunityResponse =
+    | "success"
+    | "community_not_frozen"
+    | "community_not_found"
+    | "not_authorized"
+    | "internal_error"
+    | "offline";
+
+export function communityIdentifiersEqual(
+    a?: CommunityIdentifier,
+    b?: CommunityIdentifier,
+): boolean {
+    if (a === undefined && b === undefined) return true;
+    if (a === undefined || b === undefined) return false;
+    return a.communityId === b.communityId;
+}
+
+export type CommunityFilter = Set<string>;
+
+export type CommunityEventType =
+    | "Created"
+    | "NameChanged"
+    | "DescriptionChanged"
+    | "RulesChanged"
+    | "AvatarChanged"
+    | "BannerChanged"
+    | "PermissionsChanged"
+    | "VisibilityChanged"
+    | "InviteCodeChanged"
+    | "Frozen"
+    | "Unfrozen"
+    | "EventsTTLUpdated"
+    | "GateUpdated"
+    | "MessagePinned"
+    | "MessageUnpinned"
+    | "PrimaryLanguageChanged"
+    | "GroupImported"
+    | "ChannelCreated"
+    | "ChannelDeleted"
+    | "MemberJoined"
+    | "MemberLeft"
+    | "MembersRemoved"
+    | "RoleChanged"
+    | "UsersInvited"
+    | "BotAdded"
+    | "BotRemoved"
+    | "BotUpdated"
+    | "UsersBlocked"
+    | "UsersUnblocked";

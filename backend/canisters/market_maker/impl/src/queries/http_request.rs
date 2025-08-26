@@ -1,11 +1,15 @@
-use crate::{read_state, RuntimeState};
-use http_request::{build_json_response, build_response, encode_logs, extract_route, Route};
-use ic_cdk_macros::query;
+use crate::{RuntimeState, read_state};
+use http_request::{Route, build_json_response, build_response, encode_logs, extract_route};
+use ic_cdk::query;
 use std::io::Write;
 use types::{HttpRequest, HttpResponse, TimestampMillis};
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
+    fn get_errors_impl(since: Option<TimestampMillis>) -> HttpResponse {
+        encode_logs(canister_logger::export_errors(), since.unwrap_or(0))
+    }
+
     fn get_logs_impl(since: Option<TimestampMillis>) -> HttpResponse {
         encode_logs(canister_logger::export_logs(), since.unwrap_or(0))
     }
@@ -31,10 +35,11 @@ fn http_request(request: HttpRequest) -> HttpResponse {
     }
 
     fn get_balance_history(state: &RuntimeState) -> HttpResponse {
-        build_json_response(&state.data.balance_history)
+        build_json_response(&state.data.balance_history.iter().take(5000).collect::<Vec<_>>())
     }
 
     match extract_route(&request.url) {
+        Route::Errors(since) => get_errors_impl(since),
         Route::Logs(since) => get_logs_impl(since),
         Route::Traces(since) => get_traces_impl(since),
         Route::Metrics => read_state(get_metrics_impl),

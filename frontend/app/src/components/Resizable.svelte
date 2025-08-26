@@ -1,24 +1,42 @@
 <script lang="ts">
-    import { onMount } from "svelte";
-    import { rightPanelWidth } from "../stores/layout";
-    import { mobileWidth } from "../stores/screenDimensions";
+    import { mobileWidth, rightPanelWidth } from "openchat-client";
 
     const MIN_COL_WIDTH = 400;
     const MAX_COL_WIDTH = 900;
 
-    export let section: HTMLElement;
-    export let modal: boolean;
-    export let resizedWidth: string;
-    export let resized: boolean;
-    export let resizing = false;
+    interface Props {
+        section: HTMLElement;
+        modal: boolean;
+        resizedWidth: string;
+        resized: boolean;
+        resizing?: boolean;
+    }
+
+    let {
+        section,
+        modal,
+        resizedWidth = $bindable(),
+        resized = $bindable(),
+        resizing = $bindable(false),
+    }: Props = $props();
+
+    resizedWidth;
+    resized;
 
     let previous = 0;
 
-    onMount(() => {
-        return rightPanelWidth.subscribe((width) => {
-            resized = width !== undefined;
-            resizedWidth = getWidthVar(width);
-        });
+    $effect(() => {
+        const isResized = $rightPanelWidth !== undefined;
+        if (isResized !== resized) {
+            resized = isResized;
+        }
+    });
+
+    $effect(() => {
+        const widthVar = getWidthVar($rightPanelWidth);
+        if (widthVar !== resizedWidth) {
+            resizedWidth = widthVar;
+        }
     });
 
     function startResize(ev: MouseEvent) {
@@ -60,15 +78,15 @@
     }
 </script>
 
-<svelte:window on:mousemove={drag} on:mouseup={stopResize} />
+<svelte:window onmousemove={drag} onmouseup={stopResize} />
 
 {#if !$mobileWidth}
-    <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+    <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
     <div
         role="separator"
         class:resizing
-        on:mousedown={startResize}
-        on:dblclick={resetSize}
+        onmousedown={startResize}
+        ondblclick={resetSize}
         class="handle">
     </div>
 {/if}

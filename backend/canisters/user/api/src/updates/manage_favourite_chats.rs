@@ -1,15 +1,13 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::Chat;
+use ts_export::ts_export;
+use types::{Chat, UnitResult};
 
+#[ts_export(user, manage_favourite_chats)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub to_add: Vec<Chat>,
     pub to_remove: Vec<Chat>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    UserSuspended,
-}
+pub type Response = UnitResult;

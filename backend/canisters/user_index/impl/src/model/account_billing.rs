@@ -1,11 +1,18 @@
 use candid::CandidType;
 use ic_ledger_types::BlockIndex;
 use serde::{Deserialize, Serialize};
-use types::{TimestampMillis, ICP};
+use types::{ICP, TimestampMillis};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, Eq, PartialEq)]
 pub struct AccountBilling {
+    #[serde(rename = "c")]
     charges: Vec<AccountCharge>,
+}
+
+impl AccountBilling {
+    pub fn is_empty(&self) -> bool {
+        self.charges.is_empty()
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]

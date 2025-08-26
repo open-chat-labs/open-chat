@@ -4,7 +4,7 @@ type AccessorId = principal;
 type AccountIdentifier = blob;
 type BlockIndex = nat64;
 type CanisterId = principal;
-type ChannelId = nat;
+type ChannelId = nat32;
 type ChatId = CanisterId;
 type CommunityId = CanisterId;
 type Cycles = nat;
@@ -13,7 +13,7 @@ type FileId = nat;
 type Hash = blob;
 type ICP = Tokens;
 type Memo = blob;
-type MessageId = nat;
+type MessageId = nat64;
 type MessageIndex = nat32;
 type Milliseconds = nat64;
 type NnsNeuronId = nat64;
@@ -26,6 +26,8 @@ type Tokens = record { e8s : nat64 };
 type TransactionHash = blob;
 type UserId = CanisterId;
 type Version = nat32;
+
+type OCError = record { nat16; opt text; };
 
 type Chat = variant {
     Direct : ChatId;
@@ -86,6 +88,7 @@ type ChatMetrics = record {
     file_messages : nat64;
     polls : nat64;
     poll_votes : nat64;
+    crypto_messages : nat64;
     icp_messages : nat64;
     sns1_messages : nat64;
     ckbtc_messages : nat64;
@@ -241,12 +244,16 @@ type ChatEvent = variant {
     GroupGateUpdated : GroupGateUpdated;
     UsersInvited : UsersInvited;
     MembersAddedToDefaultChannel : MembersAddedToDefaultChannel;
+    ExternalUrlUpdated : ExternalUrlUpdated;
+    BotAdded : BotAdded;
+    BotRemoved : BotRemoved;
+    BotUpdated : BotUpdated;
+    FailedToDeserialize;
 };
 
 type ChatEventWrapper = record {
     index : EventIndex;
     timestamp : TimestampMillis;
-    correlation_id : nat64;
     expires_at : opt TimestampMillis;
     event : ChatEvent;
 };
@@ -261,6 +268,7 @@ type GroupChatSummary = record {
     avatar_id : opt nat;
     is_public : bool;
     history_visible_to_new_joiners : bool;
+    messages_visible_to_non_members: bool;
     min_visible_event_index : EventIndex;
     min_visible_message_index : MessageIndex;
     latest_message : opt MessageEventWrapper;
@@ -283,7 +291,7 @@ type GroupChatSummary = record {
     date_read_pinned : opt TimestampMillis;
     events_ttl : opt Milliseconds;
     events_ttl_last_updated : TimestampMillis;
-    gate : opt AccessGate;
+    gate_config : opt AccessGateConfig;
     rules_accepted : bool;
     video_call_in_progress : opt VideoCall;
 };
@@ -298,6 +306,7 @@ type GroupCanisterGroupChatSummary = record {
     avatar_id : opt nat;
     is_public : bool;
     history_visible_to_new_joiners : bool;
+    messages_visible_to_non_members: bool;
     min_visible_event_index : EventIndex;
     min_visible_message_index : MessageIndex;
     latest_message : opt MessageEventWrapper;
@@ -317,10 +326,11 @@ type GroupCanisterGroupChatSummary = record {
     date_last_pinned : opt TimestampMillis;
     events_ttl : opt Milliseconds;
     events_ttl_last_updated : TimestampMillis;
-    gate : opt AccessGate;
+    gate_config : opt AccessGateConfig;
     rules_accepted : bool;
     membership : opt GroupMembership;
     video_call_in_progress : opt VideoCall;
+    verified : bool;
 };
 
 type GroupCanisterGroupChatSummaryUpdates = record {
@@ -341,6 +351,7 @@ type GroupCanisterGroupChatSummaryUpdates = record {
     metrics : opt ChatMetrics;
     my_metrics : opt ChatMetrics;
     is_public : opt bool;
+    messages_visible_to_non_members: opt bool;
     latest_threads : vec GroupCanisterThreadDetails;
     unfollowed_threads : vec MessageIndex;
     notifications_muted : opt bool;
@@ -349,10 +360,12 @@ type GroupCanisterGroupChatSummaryUpdates = record {
     date_last_pinned : opt TimestampMillis;
     events_ttl : EventsTimeToLiveUpdate;
     events_ttl_last_updated : opt TimestampMillis;
-    gate : AccessGateUpdate;
+    gate_config : AccessGateConfigUpdate;
     rules_accepted : opt bool;
     membership : opt GroupMembershipUpdates;
     video_call_in_progress : VideoCallUpdates;
+    any_updates_missed : bool;
+    verified : opt bool;
 };
 
 type CommunityCanisterCommunitySummary = record {
@@ -366,14 +379,16 @@ type CommunityCanisterCommunitySummary = record {
     member_count : nat32;
     permissions : CommunityPermissions;
     frozen : opt FrozenGroupInfo;
-    gate : opt AccessGate;
+    gate_config : opt AccessGateConfig;
     primary_language : text;
     last_updated : TimestampMillis;
     latest_event_index : EventIndex;
     channels : vec CommunityCanisterChannelSummary;
     membership : opt CommunityMembership;
     user_groups : vec UserGroup;
+    is_invited : opt bool;
     metrics : ChatMetrics;
+    verified : bool;
 };
 
 type CommunityMembership = record {
@@ -381,6 +396,7 @@ type CommunityMembership = record {
     role : CommunityRole;
     rules_accepted : bool;
     display_name : opt text;
+    lapsed : bool;
 };
 
 type UserGroup = record {
@@ -398,6 +414,7 @@ type CommunityCanisterChannelSummary = record {
     avatar_id : opt nat;
     is_public : bool;
     history_visible_to_new_joiners : bool;
+    messages_visible_to_non_members: bool;
     min_visible_event_index : EventIndex;
     min_visible_message_index : MessageIndex;
     latest_message : opt MessageEventWrapper;
@@ -410,9 +427,11 @@ type CommunityCanisterChannelSummary = record {
     date_last_pinned : opt TimestampMillis;
     events_ttl : opt Milliseconds;
     events_ttl_last_updated : TimestampMillis;
-    gate : opt AccessGate;
+    gate_config : opt AccessGateConfig;
     membership : opt GroupMembership;
     video_call_in_progress : opt VideoCall;
+    is_invited : opt bool;
+    external_url : opt text;
 };
 
 type GroupMembership = record {
@@ -423,6 +442,7 @@ type GroupMembership = record {
     my_metrics : ChatMetrics;
     latest_threads : vec GroupCanisterThreadDetails;
     rules_accepted : bool;
+    lapsed : bool;
 };
 
 type CommunityCanisterCommunitySummaryUpdates = record {
@@ -436,7 +456,7 @@ type CommunityCanisterCommunitySummaryUpdates = record {
     member_count : opt nat32;
     permissions : opt CommunityPermissions;
     frozen : FrozenGroupUpdate;
-    gate : AccessGateUpdate;
+    gate_config : AccessGateConfigUpdate;
     primary_language : opt text;
     latest_event_index : opt EventIndex;
     channels_added : vec CommunityCanisterChannelSummary;
@@ -446,12 +466,14 @@ type CommunityCanisterCommunitySummaryUpdates = record {
     user_groups : vec UserGroup;
     user_groups_deleted : vec nat32;
     metrics : opt ChatMetrics;
+    verified : opt bool;
 };
 
 type CommunityMembershipUpdates = record {
     role : opt CommunityRole;
     rules_accepted : opt bool;
     display_name : TextUpdate;
+    lapsed : opt bool;
 };
 
 type CommunityCanisterChannelSummaryUpdates = record {
@@ -462,6 +484,7 @@ type CommunityCanisterChannelSummaryUpdates = record {
     subtype : GroupSubtypeUpdate;
     avatar_id : DocumentIdUpdate;
     is_public : opt bool;
+    messages_visible_to_non_members: opt bool;
     latest_message : opt MessageEventWrapper;
     latest_message_sender_display_name : opt text;
     latest_event_index : opt EventIndex;
@@ -473,9 +496,11 @@ type CommunityCanisterChannelSummaryUpdates = record {
     date_last_pinned : opt TimestampMillis;
     events_ttl : EventsTimeToLiveUpdate;
     events_ttl_last_updated : opt TimestampMillis;
-    gate : AccessGateUpdate;
+    gate_config : AccessGateConfigUpdate;
     membership : opt GroupMembershipUpdates;
     video_call_in_progress : VideoCallUpdates;
+    external_url : TextUpdate;
+    any_updates_missed : bool;
 };
 
 type GroupMembershipUpdates = record {
@@ -486,6 +511,7 @@ type GroupMembershipUpdates = record {
     latest_threads : vec GroupCanisterThreadDetails;
     unfollowed_threads : vec MessageIndex;
     rules_accepted : opt bool;
+    lapsed : opt bool;
 };
 
 type SelectedGroupUpdates = record {
@@ -494,6 +520,9 @@ type SelectedGroupUpdates = record {
     latest_event_index : EventIndex;
     members_added_or_updated : vec Participant;
     members_removed : vec UserId;
+    bots_added_or_updated : vec InstalledBotDetails;
+    bots_removed : vec UserId;
+    webhooks : opt vec WebhookDetails;
     blocked_users_added : vec UserId;
     blocked_users_removed : vec UserId;
     invited_users : opt vec UserId;
@@ -549,7 +578,6 @@ type Mention = record {
     message_id : MessageId;
     message_index : MessageIndex;
     event_index : EventIndex;
-    mentioned_by : UserId;
 };
 
 type Message = record {
@@ -557,18 +585,19 @@ type Message = record {
     message_id : MessageId;
     sender : UserId;
     content : MessageContent;
+    sender_context : opt SenderContext;
     replies_to : opt ReplyContext;
     reactions : vec record { text; vec UserId };
     tips : vec record { CanisterId; vec record { UserId; nat } };
     thread_summary : opt ThreadSummary;
     edited : bool;
     forwarded : bool;
+    block_level_markdown : bool;
 };
 
 type MessageEventWrapper = record {
     index : EventIndex;
     timestamp : TimestampMillis;
-    correlation_id : nat64;
     expires_at : opt TimestampMillis;
     event : Message;
 };
@@ -728,6 +757,7 @@ type PublicGroupSummary = record {
     description : text;
     subtype : opt GroupSubtype;
     history_visible_to_new_joiners : bool;
+    messages_visible_to_non_members: bool;
     avatar_id : opt nat;
     latest_message : opt MessageEventWrapper;
     latest_event_index : EventIndex;
@@ -737,7 +767,7 @@ type PublicGroupSummary = record {
     frozen : opt FrozenGroupInfo;
     events_ttl : opt Milliseconds;
     events_ttl_last_updated : TimestampMillis;
-    gate : opt AccessGate;
+    gate_config : opt AccessGateConfig;
     wasm_version : BuildVersion;
 };
 
@@ -798,6 +828,7 @@ type MessageContentInitial = variant {
     P2PSwap : P2PSwapContentInitial;
     MessageReminderCreated : MessageReminderCreated;
     MessageReminder : MessageReminder;
+    Encrypted : EncryptedContent;
     Custom : CustomMessageContent;
 };
 
@@ -818,14 +849,13 @@ type MessageContent = variant {
     MessageReminder : MessageReminder;
     P2PSwap : P2PSwapContent;
     VideoCall : VideoCallContent;
+    Encrypted : EncryptedContent;
     Custom : CustomMessageContent;
     ReportedMessage : ReportedMessage;
 };
 
 type MessageMatch = record {
     message_index : MessageIndex;
-    content : MessageContent;
-    sender : UserId;
     score : nat32;
 };
 
@@ -860,6 +890,7 @@ type Participant = record {
     user_id : UserId;
     date_added : TimestampMillis;
     role : GroupRole;
+    lapsed : bool;
 };
 
 type ParticipantJoined = record {
@@ -884,7 +915,8 @@ type PermissionsChanged = record {
 };
 
 type GroupVisibilityChanged = record {
-    now_public : bool;
+    public : opt bool;
+    messages_visible_to_non_members : opt bool;
     changed_by : UserId;
 };
 
@@ -1073,6 +1105,11 @@ type UserSummary = record {
     suspended : bool;
     diamond_member : bool;
     diamond_membership_status : DiamondMembershipStatus;
+    total_chit_earned : int32;
+    chit_balance : int32;
+    streak : nat16;
+    max_streak : nat16;
+    is_unique_person : bool;
 };
 
 type BuildVersion = record {
@@ -1099,21 +1136,24 @@ type CryptoTransaction = variant {
 type PendingCryptoTransaction = variant {
     NNS : NnsPendingCryptoTransaction;
     ICRC1 : Icrc1PendingCryptoTransaction;
+    ICRC2 : Icrc2PendingCryptoTransaction;
 };
 
 type CompletedCryptoTransaction = variant {
     NNS : NnsCompletedCryptoTransaction;
     ICRC1 : Icrc1CompletedCryptoTransaction;
+    ICRC2 : Icrc2CompletedCryptoTransaction;
 };
 
 type FailedCryptoTransaction = variant {
     NNS : NnsFailedCryptoTransaction;
     ICRC1 : Icrc1FailedCryptoTransaction;
+    ICRC2 : Icrc2FailedCryptoTransaction;
 };
 
 type NnsPendingCryptoTransaction = record {
     ledger : CanisterId;
-    token : Cryptocurrency;
+    token_symbol : text;
     amount : Tokens;
     to : NnsUserOrAccount;
     fee : opt Tokens;
@@ -1123,7 +1163,7 @@ type NnsPendingCryptoTransaction = record {
 
 type NnsCompletedCryptoTransaction = record {
     ledger : CanisterId;
-    token : Cryptocurrency;
+    token_symbol : text;
     amount : Tokens;
     fee : Tokens;
     from : NnsCryptoAccount;
@@ -1136,7 +1176,7 @@ type NnsCompletedCryptoTransaction = record {
 
 type NnsFailedCryptoTransaction = record {
     ledger : CanisterId;
-    token : Cryptocurrency;
+    token_symbol : text;
     amount : Tokens;
     fee : Tokens;
     from : NnsCryptoAccount;
@@ -1169,7 +1209,7 @@ type Icrc1Account = record {
 
 type Icrc1PendingCryptoTransaction = record {
     ledger : CanisterId;
-    token : Cryptocurrency;
+    token_symbol : text;
     amount : nat;
     fee : nat;
     to : Icrc1Account;
@@ -1179,7 +1219,7 @@ type Icrc1PendingCryptoTransaction = record {
 
 type Icrc1CompletedCryptoTransaction = record {
     ledger : CanisterId;
-    token : Cryptocurrency;
+    token_symbol : text;
     amount : nat;
     fee : nat;
     from : Icrc1AccountOrMint;
@@ -1191,9 +1231,46 @@ type Icrc1CompletedCryptoTransaction = record {
 
 type Icrc1FailedCryptoTransaction = record {
     ledger : CanisterId;
-    token : Cryptocurrency;
+    token_symbol : text;
     amount : nat;
     fee : nat;
+    from : Icrc1AccountOrMint;
+    to : Icrc1AccountOrMint;
+    memo : opt Memo;
+    created : TimestampNanos;
+    error_message : text;
+};
+
+type Icrc2PendingCryptoTransaction = record {
+    ledger : CanisterId;
+    token_symbol : text;
+    amount : nat;
+    fee : nat;
+    from : Icrc1Account;
+    to : Icrc1Account;
+    memo : opt Memo;
+    created : TimestampNanos;
+};
+
+type Icrc2CompletedCryptoTransaction = record {
+    ledger : CanisterId;
+    token_symbol : text;
+    amount : nat;
+    fee : nat;
+    spender : UserId;
+    from : Icrc1AccountOrMint;
+    to : Icrc1AccountOrMint;
+    memo : opt Memo;
+    created : TimestampNanos;
+    block_index : BlockIndex;
+};
+
+type Icrc2FailedCryptoTransaction = record {
+    ledger : CanisterId;
+    token_symbol : text;
+    amount : nat;
+    fee : nat;
+    spender : UserId;
     from : Icrc1AccountOrMint;
     to : Icrc1AccountOrMint;
     memo : opt Memo;
@@ -1218,12 +1295,12 @@ type User = record {
 
 type GroupPermissions = record {
     change_roles : PermissionRole;
-    add_members : PermissionRole;
     remove_members : PermissionRole;
     delete_messages : PermissionRole;
     update_group : PermissionRole;
     pin_messages : PermissionRole;
     invite_users : PermissionRole;
+    add_members : PermissionRole;
     react_to_messages : PermissionRole;
     mention_all_members : PermissionRole;
     start_video_call : PermissionRole;
@@ -1259,6 +1336,7 @@ type OptionalGroupPermissions = record {
     update_group : opt PermissionRole;
     pin_messages : opt PermissionRole;
     invite_users : opt PermissionRole;
+    add_members : opt PermissionRole;
     react_to_messages : opt PermissionRole;
     mention_all_members : opt PermissionRole;
     start_video_call : opt PermissionRole;
@@ -1397,6 +1475,7 @@ type PushEventResult = record {
 
 type EventsSuccessResult = record {
     events : vec ChatEventWrapper;
+    unauthorized : vec EventIndex;
     expired_event_ranges : vec record { EventIndex; EventIndex };
     expired_message_ranges : vec record { MessageIndex; MessageIndex };
     latest_event_index : nat32;
@@ -1415,21 +1494,33 @@ type MessageIndexRange = record {
 };
 
 type PrizeContentInitial = record {
-    prizes : vec Tokens;
+    prizes_v2 : vec nat;
     transfer : CryptoTransaction;
     end_date : TimestampMillis;
     caption : opt text;
     diamond_only : bool;
+    lifetime_diamond_only : bool;
+    unique_person_only : bool;
+    streak_only : nat16;
+    requires_captcha : bool;
 };
 
 type PrizeContent = record {
     prizes_remaining : nat32;
     prizes_pending : nat32;
     winners : vec UserId;
-    token : Cryptocurrency;
+    winner_count : nat32;
+    user_is_winner : bool;
+    token_symbol : text;
+    ledger : CanisterId;
     end_date : TimestampMillis;
     caption : opt text;
     diamond_only : bool;
+    lifetime_diamond_only : bool;
+    unique_person_only : bool;
+    streak_only : nat16;
+    requires_captcha : bool;
+    min_chit_earned : nat32;
 };
 
 type PrizeWinnerContent = record {
@@ -1440,7 +1531,6 @@ type PrizeWinnerContent = record {
 
 type DiamondMembershipDetails = record {
     expires_at : TimestampMillis;
-    recurring : opt DiamondMembershipSubscription;
     pay_in_chat : bool;
     subscription : DiamondMembershipSubscription;
 };
@@ -1471,12 +1561,39 @@ type DiamondMembershipStatusFull = variant {
     Lifetime;
 };
 
+type AccessGateConfig = record {
+    gate : AccessGate;
+    expiry : opt Milliseconds;
+};
+
 type AccessGate = variant {
     DiamondMember;
+    LifetimeDiamondMember;
+    UniquePerson;
     VerifiedCredential : VerifiedCredentialGate;
     SnsNeuron : SnsNeuronGate;
     Payment : PaymentGate;
     TokenBalance : TokenBalanceGate;
+    Composite : record {
+        inner : vec AccessGateNonComposite;
+        and : bool;
+    };
+    Locked;
+    ReferredByMember;
+    TotalChitEarned : ChitEarnedGate;
+};
+
+type AccessGateNonComposite = variant {
+    DiamondMember;
+    LifetimeDiamondMember;
+    UniquePerson;
+    VerifiedCredential : VerifiedCredentialGate;
+    SnsNeuron : SnsNeuronGate;
+    Payment : PaymentGate;
+    TokenBalance : TokenBalanceGate;
+    Locked;
+    ReferredByMember;
+    TotalChitEarned : ChitEarnedGate;
 };
 
 type AccessGateUpdate = variant {
@@ -1485,15 +1602,46 @@ type AccessGateUpdate = variant {
     SetToSome : AccessGate;
 };
 
+type AccessGateConfigUpdate = variant {
+    NoChange;
+    SetToNone;
+    SetToSome : AccessGateConfig;
+};
+
 type GroupGateUpdated = record {
     updated_by : UserId;
-    new_gate : opt AccessGate;
+    new_gate_config : opt AccessGateConfig;
+};
+
+type ExternalUrlUpdated = record {
+    updated_by : UserId;
+    new_url : opt text;
+};
+
+type BotAdded = record {
+    user_id : UserId;
+    added_by : UserId;
+};
+
+type BotRemoved = record {
+    user_id : UserId;
+    removed_by : UserId;
+};
+
+type BotUpdated = record {
+    user_id : UserId;
+    updated_by : UserId;
 };
 
 type VerifiedCredentialGate = record {
+    issuer_canister_id : CanisterId;
     issuer_origin : text;
     credential_type : text;
-    credential_arguments : opt blob;
+    credential_name : text;
+    credential_arguments : vec record {
+        text;
+        variant { String : text; Int : int32 };
+    };
 };
 
 type SnsNeuronGate = record {
@@ -1513,13 +1661,29 @@ type TokenBalanceGate = record {
     min_balance : nat;
 };
 
+type ChitEarnedGate = record {
+    min_chit_earned : nat32;
+};
+
 type GateCheckFailedReason = variant {
     NotDiamondMember;
+    NotLifetimeDiamondMember;
+    NoUniquePersonProof;
     NoSnsNeuronsFound;
     NoSnsNeuronsWithRequiredStakeFound;
     NoSnsNeuronsWithRequiredDissolveDelayFound;
     PaymentFailed : ICRC2_TransferFromError;
     InsufficientBalance : nat;
+    FailedVerifiedCredentialCheck : text;
+    Locked;
+    NotReferredByMember;
+};
+
+type VerifiedCredentialGateArgs = record {
+    user_ii_principal : principal;
+    credential_jwt : text;
+    credential_jwts : vec text;
+    ii_origin : text;
 };
 
 type MessageReminderCreated = record {
@@ -1534,9 +1698,28 @@ type MessageReminder = record {
     notes : opt text;
 };
 
+type EncryptedContent = record {
+    content_type : EncryptedMessageContentType;
+    version : nat32;
+    encrypted_message_key : blob;
+    public_key : blob;
+    encrypted_data : blob;
+};
+
 type CustomMessageContent = record {
     kind : text;
     data : blob;
+};
+
+type EncryptedMessageContentType = variant {
+    Text;
+    Image;
+    Video;
+    Audio;
+    File;
+    Crypto;
+    Giphy;
+    Custom : text;
 };
 
 type UsersInvited = record {
@@ -1629,8 +1812,10 @@ type VideoCallContentInitial = record {
 };
 
 type VideoCallContent = record {
+    call_type : VideoCallType;
     ended : opt TimestampMillis;
     participants : vec CallParticipant;
+    hidden_participants : nat32;
 };
 
 type CallParticipant = record {
@@ -1649,9 +1834,10 @@ type CommunityMatch = record {
     banner_id : opt nat;
     member_count : nat32;
     channel_count : nat32;
-    gate : opt AccessGate;
+    gate_config : opt AccessGateConfig;
     moderation_flags : nat32;
     primary_language : text;
+    verified : bool;
 };
 
 type GroupMatch = record {
@@ -1662,6 +1848,7 @@ type GroupMatch = record {
     member_count : nat32;
     gate : opt AccessGate;
     subtype : opt GroupSubtype;
+    verified : bool;
 };
 
 type ChannelMatch = record {
@@ -1670,8 +1857,9 @@ type ChannelMatch = record {
     description : text;
     avatar_id : opt nat;
     member_count : nat32;
-    gate : opt AccessGate;
+    gate_config : opt AccessGateConfig;
     subtype : opt GroupSubtype;
+    is_public : bool;
 };
 
 type ThreadPreview = record {
@@ -1685,6 +1873,8 @@ type CommunityMember = record {
     date_added : TimestampMillis;
     role : CommunityRole;
     display_name : opt text;
+    referred_by : opt UserId;
+    lapsed : bool;
 };
 
 type PermissionRoleUpdate = variant {
@@ -1700,7 +1890,7 @@ type OptionalMessagePermissionsUpdate = variant {
 };
 
 type TokenInfo = record {
-    token : Cryptocurrency;
+    symbol : text;
     ledger : CanisterId;
     decimals : nat8;
     fee : nat;
@@ -1743,7 +1933,13 @@ type SwapStatusErrorCancelled = record {
 };
 
 type VideoCall = record {
+    started : TimestampMillis;
+    started_by : UserId;
+    event_index : EventIndex;
     message_index : MessageIndex;
+    message_id : MessageId;
+    call_type : VideoCallType;
+    joined_by_current_user : bool;
 };
 
 type VideoCallUpdates = variant {
@@ -1752,7 +1948,427 @@ type VideoCallUpdates = variant {
     SetToSome : VideoCall;
 };
 
-type AccessTokenType = variant {
-    StartVideoCall;
-    JoinVideoCall;
+type VideoCallParticipants = record {
+    participants : vec CallParticipant;
+    hidden : vec CallParticipant;
+    last_updated : TimestampMillis;
 };
+
+type AccessTokenType = variant {
+    StartVideoCallV2 : record {
+        call_type : VideoCallType;
+    };
+    JoinVideoCall;
+    MarkVideoCallAsEnded;
+};
+
+type VideoCallType = variant {
+    Broadcast;
+    Default;
+};
+
+type VideoCallPresence = variant {
+    Default;
+    Owner;
+    Hidden;
+};
+
+type ChitEarned = record {
+    amount : int32;
+    timestamp : TimestampMillis;
+    reason : ChitEarnedReason;
+
+};
+
+type ChitEarnedReason = variant {
+    DailyClaim;
+    Achievement : Achievement;
+    ExternalAchievement : text;
+    Referral : ReferralStatus;
+    MemeContestWinner;
+};
+
+type UserSummaryV2 = record {
+    user_id : UserId;
+    stable : opt UserSummaryStable;
+    volatile : opt UserSummaryVolatile;
+};
+
+type UserSummaryStable = record {
+    username : text;
+    display_name : opt text;
+    avatar_id : opt nat;
+    profile_background_id : opt nat;
+    is_bot : bool;
+    suspended : bool;
+    diamond_membership_status : DiamondMembershipStatus;
+    is_unique_person : bool;
+};
+
+type UserSummaryVolatile = record {
+    total_chit_earned : int32;
+    chit_balance : int32;
+    streak : nat16;
+    max_streak : nat16;
+};
+
+type CurrentUserSummary = record {
+    user_id : UserId;
+    username : text;
+    display_name : opt text;
+    avatar_id : opt nat;
+    profile_background_id : opt nat;
+    is_bot : bool;
+    is_platform_moderator : bool;
+    is_platform_operator : bool;
+    suspension_details : opt SuspensionDetails;
+    is_suspected_bot : bool;
+    diamond_membership_details : opt DiamondMembershipDetails;
+    diamond_membership_status : DiamondMembershipStatusFull;
+    moderation_flags_enabled : nat32;
+    is_unique_person : bool;
+    total_chit_earned : int32;
+    chit_balance : int32;
+    streak : nat16;
+    max_streak : nat16;
+};
+
+type BotConfig = record {
+    is_oc_controlled : bool;
+    supports_direct_messages : bool;
+    can_be_added_to_groups : bool;
+};
+
+type SuspensionDetails = record {
+    reason : text;
+    action : SuspensionAction;
+    suspended_by : UserId;
+};
+
+type SuspensionAction = variant {
+    Unsuspend : TimestampMillis;
+    Delete : TimestampMillis;
+};
+
+type Achievement = variant {
+    JoinedGroup;
+    JoinedCommunity;
+    SentDirectMessage;
+    ReceivedDirectMessage;
+    SetAvatar;
+    SetBio;
+    SetDisplayName;
+    UpgradedToDiamond;
+    UpgradedToGoldDiamond;
+    Streak3;
+    Streak7;
+    Streak14;
+    Streak30;
+    Streak100;
+    Streak365;
+    SentPoll;
+    VotedOnPoll;
+    SentText;
+    SentImage;
+    SentVideo;
+    SentAudio;
+    SentFile;
+    SentGiphy;
+    SentPrize;
+    SentMeme;
+    SentReminder;
+    StartedCall;
+    SentCrypto;
+    SentP2PSwapOffer;
+    ReactedToMessage;
+    EditedMessage;
+    RepliedInThread;
+    QuoteReplied;
+    TippedMessage;
+    DeletedMessage;
+    ForwardedMessage;
+    ReceivedCrypto;
+    HadMessageReactedTo;
+    HadMessageTipped;
+    JoinedCall;
+    ProvedUniquePersonhood;
+    SetCommunityDisplayName;
+    ChangedTheme;
+    SwappedFromWallet;
+    AcceptedP2PSwapOffer;
+    FavouritedChat;
+    FollowedThread;
+    PinnedChat;
+    SetPin;
+    Referred1stUser;
+    Referred3rdUser;
+    Referred10thUser;
+    Referred20thUser;
+    Referred50thUser;
+};
+
+type Chit = record {
+    balance : int32;
+    streak : nat16;
+};
+
+type ReferralStatus = variant {
+    Diamond;
+    UniquePerson;
+    LifetimeDiamond;
+    Registered;
+};
+
+type ExchangeId = variant {
+    ICPSwap;
+    KongSwap;
+    Sonic;
+};
+
+type BotCommandDefinition = record {
+    name : text;
+    description : opt text;
+    placeholder : opt text;
+    params : vec BotCommandParam;
+    permissions : BotPermissions;
+    default_role : opt GroupRole;
+    direct_messages : opt bool;
+};
+
+type BotCommandParam = record {
+    name : text;
+    description : opt text;
+    placeholder : opt text;
+    required : bool;
+    param_type : BotCommandParamType;
+};
+
+type BotCommandParamType = variant {
+    UserParam;
+    BooleanParam;
+    StringParam : StringParam;
+    IntegerParam : IntegerParam;
+    DecimalParam : DecimalParam;
+    DateTimeParam : DateTimeParam;
+};
+
+type StringParam = record {
+    min_length : nat16;
+    max_length : nat16;
+    choices : vec StringParamChoice;
+    multi_line : bool;
+};
+
+type StringParamChoice = record {
+    name : text;
+    value : text;
+};
+
+type IntegerParam = record {
+    min_value : int;
+    max_value : int;
+    choices : vec IntegerParamChoice;
+};
+
+type IntegerParamChoice = record {
+    name : text;
+    value : int;
+};
+
+type DecimalParam = record {
+    min_value : float64;
+    max_value : float64;
+    choices : vec DecimalParamChoice;
+};
+
+type DecimalParamChoice = record {
+    name : text;
+    value : float64;
+};
+
+type DateTimeParam = record {
+    future_only : bool;
+};
+
+type BotPermissions = record {
+    community: nat32;
+    chat: nat32;
+    message: nat32;
+};
+
+type CommunityPermission = variant {
+    ChangeRoles;
+    UpdateDetails;
+    InviteUsers;
+    RemoveMembers;
+    CreatePublicChannel;
+    CreatePrivateChannel;
+    ManageUserGroups;
+};
+
+type GroupPermission = variant {
+    ChangeRoles;
+    UpdateGroup;
+    AddMembers;
+    InviteUsers;
+    RemoveMembers;
+    DeleteMessages;
+    PinMessages;
+    ReactToMessages;
+    MentionAllMembers;
+    StartVideoCall;
+    ReadMessages;
+    ReadMembership;
+    ReadChatDetails;
+};
+
+type MessagePermission = variant {
+    Text;
+    Image;
+    Video;
+    Audio;
+    File;
+    Poll;
+    Crypto;
+    Giphy;
+    Prize;
+    P2pSwap;
+    VideoCall;
+};
+
+type BotGroupConfig = record {
+    permissions : BotPermissions;
+};
+
+type InstalledBotDetails = record {
+    user_id : UserId;
+    added_by : UserId;
+    permissions : BotPermissions;
+    autonomous_permissions : opt BotPermissions;
+};
+
+type WebhookDetails = record {
+    id : UserId;
+    name : text;
+    avatar_id : opt nat;
+};
+
+type BotMessageContext = record {
+    command : opt BotCommand;
+    finalised : bool;
+};
+
+type SenderContext = variant {
+    Bot : BotMessageContext;
+    Webhook;
+};
+
+type BotCommand = record {
+    name : text;
+    args : vec BotCommandArg;
+    initiator : UserId;
+    meta : opt BotCommandMeta;
+};
+
+type BotCommandArg = record {
+    name : text;
+    value : BotCommandArgValue;
+};
+
+type BotCommandArgValue = variant {
+    String : text;
+    Integer : int64;
+    Decimal : float64;
+    Boolean : bool;
+    User : UserId;
+    DateTime : TimestampMillis;
+};
+
+type BotCommandMeta = record {
+    timezone : text;
+    language : text;
+};
+
+type BotInstallationLocation = variant {
+    Group : CanisterId;
+    Community : CanisterId;
+    User : UserId;
+};
+
+type CommunityEventType = variant {
+    NameChanged;
+    GateUpdated;
+    BannerChanged;
+    PrimaryLanguageChanged;
+    MessagePinned;
+    UsersInvited;
+    UsersBlocked;
+    MessageUnpinned;
+    BotUpdated;
+    ChannelCreated;
+    ChannelDeleted;
+    PermissionsChanged;
+    EventsTTLUpdated;
+    MemberJoined;
+    UsersUnblocked;
+    Unfrozen;
+    VisibilityChanged;
+    RulesChanged;
+    DescriptionChanged;
+    InviteCodeChanged;
+    GroupImported;
+    BotRemoved;
+    MemberLeft;
+    MembersRemoved;
+    RoleChanged;
+    BotAdded;
+    Created;
+    Frozen;
+    AvatarChanged;
+};
+
+type ChatEventType = variant {
+    Message;
+    MessageEdited;
+    MessageReaction;
+    MessageTipped;
+    MessageDeleted;
+    MessageUndeleted;
+    MessagePollVote;
+    MessagePollEnded;
+    MessagePrizeClaim;
+    MessageP2pSwapCompleted;
+    MessageP2pSwapCancelled;
+    MessageVideoCall;
+    MessageOther;
+
+    // Details category
+    Created;
+    NameChanged;
+    DescriptionChanged;
+    RulesChanged;
+    AvatarChanged;
+    ExternalUrlUpdated;
+    PermissionsChanged;
+    GateUpdated;
+    VisibilityChanged;
+    InviteCodeChanged;
+    Frozen;
+    Unfrozen;
+    DisappearingMessagesUpdated;
+    MessagePinned;
+    MessageUnpinned;
+
+    // Membership category
+    MembersJoined;
+    MembersLeft;
+    RoleChanged;
+    UsersInvited;
+    UsersBlocked;
+    UsersUnblocked;
+    BotAdded;
+    BotRemoved;
+    BotUpdated;
+};
+
+type BotDataEncoding = variant { Json; Candid };

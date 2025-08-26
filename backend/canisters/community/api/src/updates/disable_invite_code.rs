@@ -1,13 +1,4 @@
-use candid::CandidType;
-use serde::{Deserialize, Serialize};
-use types::Empty;
+use types::{Empty, UnitResult};
 
 pub type Args = Empty;
-
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    NotAuthorized,
-    UserSuspended,
-    CommunityFrozen,
-}
+pub type Response = UnitResult;

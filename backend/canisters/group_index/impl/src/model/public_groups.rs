@@ -1,16 +1,16 @@
 use crate::model::cached_hot_groups::CachedPublicGroupSummary;
 use crate::model::private_groups::PrivateGroupInfo;
 use crate::{CACHED_HOT_GROUPS_COUNT, MARK_ACTIVE_DURATION};
-use search::*;
+use constants::DAY_IN_MS;
+use search::weighted::*;
 use serde::{Deserialize, Serialize};
-use std::cmp::{self, Ordering};
+use std::cmp;
 use std::collections::HashMap;
 use types::{
-    AccessGate, BuildVersion, ChatId, FrozenGroupInfo, GroupMatch, GroupSubtype, PublicGroupActivity, PublicGroupSummary,
-    TimestampMillis,
+    AccessGate, AccessGateConfig, AccessGateConfigInternal, BuildVersion, ChatId, FrozenGroupInfo, GroupMatch, GroupSubtype,
+    PublicGroupActivity, PublicGroupSummary, TimestampMillis,
 };
 use utils::iterator_extensions::IteratorExtensions;
-use utils::time::DAY_IN_MS;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct PublicGroups {
@@ -30,7 +30,7 @@ impl PublicGroups {
         self.groups.get_mut(chat_id)
     }
 
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn add(
         &mut self,
         chat_id: ChatId,
@@ -38,12 +38,12 @@ impl PublicGroups {
         description: String,
         subtype: Option<GroupSubtype>,
         avatar_id: Option<u128>,
-        gate: Option<AccessGate>,
+        gate_config: Option<AccessGateConfig>,
         created: TimestampMillis,
     ) {
         self.groups.insert(
             chat_id,
-            PublicGroupInfo::new(chat_id, name, description, subtype, avatar_id, gate, created),
+            PublicGroupInfo::new(chat_id, name, description, subtype, avatar_id, gate_config, created),
         );
     }
 
@@ -97,10 +97,11 @@ impl PublicGroups {
             latest_message_index: summary.latest_message_index,
             participant_count: summary.participant_count,
             is_public: true,
+            messages_visible_to_non_members: false,
             frozen: None,
             events_ttl: summary.events_ttl,
             events_ttl_last_updated: summary.events_ttl_last_updated,
-            gate: summary.gate,
+            gate_config: summary.gate_config,
             wasm_version: BuildVersion::default(),
         })
     }
@@ -111,15 +112,18 @@ impl PublicGroups {
         name: String,
         description: String,
         avatar_id: Option<u128>,
-        gate: Option<AccessGate>,
+        gate_config: Option<AccessGateConfig>,
     ) -> UpdateGroupResult {
         match self.groups.get_mut(chat_id) {
             None => UpdateGroupResult::ChatNotFound,
             Some(group) => {
+                if !name.eq_ignore_ascii_case(&group.name) {
+                    group.verified = false;
+                }
                 group.name = name;
                 group.description = description;
                 group.avatar_id = avatar_id;
-                group.gate = gate;
+                group.gate_config = gate_config.map(|g| g.into());
                 UpdateGroupResult::Success
             }
         }
@@ -164,7 +168,8 @@ pub struct PublicGroupInfo {
     activity: PublicGroupActivity,
     hotness_score: u32,
     exclude_from_hotlist: bool,
-    gate: Option<AccessGate>,
+    gate_config: Option<AccessGateConfigInternal>,
+    verified: bool,
 }
 
 pub enum UpdateGroupResult {
@@ -173,14 +178,13 @@ pub enum UpdateGroupResult {
 }
 
 impl PublicGroupInfo {
-    #[allow(clippy::too_many_arguments)]
     pub fn new(
         id: ChatId,
         name: String,
         description: String,
         subtype: Option<GroupSubtype>,
         avatar_id: Option<u128>,
-        gate: Option<AccessGate>,
+        gate_config: Option<AccessGateConfig>,
         now: TimestampMillis,
     ) -> PublicGroupInfo {
         PublicGroupInfo {
@@ -189,13 +193,14 @@ impl PublicGroupInfo {
             description,
             subtype,
             avatar_id,
-            gate,
+            gate_config: gate_config.map(|gc| gc.into()),
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
             activity: PublicGroupActivity::new(now),
             hotness_score: 0,
             frozen: None,
             exclude_from_hotlist: false,
+            verified: false,
         }
     }
 
@@ -236,6 +241,18 @@ impl PublicGroupInfo {
         self.frozen.as_ref()
     }
 
+    pub fn verified(&self) -> bool {
+        self.verified
+    }
+
+    pub fn set_name(&mut self, name: String) {
+        self.name = name;
+    }
+
+    pub fn set_verified(&mut self, verified: bool) {
+        self.verified = verified;
+    }
+
     pub fn set_frozen(&mut self, info: Option<FrozenGroupInfo>) {
         self.frozen = info;
     }
@@ -253,7 +270,7 @@ impl PublicGroupInfo {
     }
 
     pub fn gate(&self) -> Option<&AccessGate> {
-        self.gate.as_ref()
+        self.gate_config.as_ref().map(|g| &g.gate)
     }
 }
 
@@ -265,8 +282,9 @@ impl From<&PublicGroupInfo> for GroupMatch {
             description: group.description.clone(),
             avatar_id: group.avatar_id,
             member_count: group.activity.member_count,
-            gate: group.gate.clone(),
+            gate: group.gate_config.as_ref().map(|g| g.gate.clone()),
             subtype: group.subtype.clone(),
+            verified: group.verified(),
         }
     }
 }
@@ -287,23 +305,5 @@ impl From<PublicGroupInfo> for PrivateGroupInfo {
         private_group_info.mark_active(public_group_info.marked_active_until);
         private_group_info.set_frozen(public_group_info.frozen);
         private_group_info
-    }
-}
-
-#[derive(PartialEq, Eq, Debug)]
-struct WeightedGroup {
-    chat_id: ChatId,
-    weighting: u64,
-}
-
-impl PartialOrd for WeightedGroup {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for WeightedGroup {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.weighting.cmp(&other.weighting)
     }
 }

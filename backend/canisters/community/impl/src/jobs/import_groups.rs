@@ -1,19 +1,25 @@
 use crate::activity_notifications::extract_activity;
 use crate::model::channels::Channel;
 use crate::model::events::{CommunityEventInternal, GroupImportedInternal};
+use crate::model::groups_being_imported::{GroupToImport, GroupToImportAction};
 use crate::model::members::AddResult;
-use crate::timer_job_types::{FinalizeGroupImportJob, ProcessGroupImportChannelMembersJob, TimerJob};
+use crate::timer_job_types::{
+    FinalizeGroupImportJob, JoinMembersToPublicChannelJob, ProcessGroupImportChannelMembersJob, TimerJob,
+};
 use crate::updates::c2c_join_channel::join_channel_unchecked;
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
+use chat_events::ChatEvents;
+use constants::OPENCHAT_BOT_USER_ID;
 use group_canister::c2c_export_group::{Args, Response};
-use group_chat_core::GroupChatCore;
+use group_chat_core::{GroupChatCore, GroupMembers};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::collections::HashMap;
 use std::time::Duration;
 use tracing::{info, trace};
-use types::{ChannelId, ChannelLatestMessageIndex, Chat, ChatId, Empty, UserId, UsersBlocked};
-use utils::consts::OPENCHAT_BOT_USER_ID;
+use types::{
+    Caller, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityUsersBlocked, Empty, MultiUserChat, UserId, UserType,
+};
 
 const PAGE_SIZE: u32 = 19 * 102 * 1024; // Roughly 1.9MB (1.9 * 1024 * 1024)
 
@@ -37,61 +43,136 @@ fn run() {
 
     let batch = mutate_state(next_batch);
     if !batch.is_empty() {
-        ic_cdk::spawn(import_groups(batch));
+        ic_cdk::futures::spawn(import_groups(batch));
     }
 }
 
-fn next_batch(state: &mut RuntimeState) -> Vec<(ChatId, u64)> {
+fn next_batch(state: &mut RuntimeState) -> Vec<GroupToImport> {
     let now = state.env.now();
     state.data.groups_being_imported.next_batch(now)
 }
 
-async fn import_groups(groups: Vec<(ChatId, u64)>) {
-    futures::future::join_all(groups.into_iter().map(|(g, i)| import_group(g, i))).await;
+async fn import_groups(groups: Vec<GroupToImport>) {
+    futures::future::join_all(groups.into_iter().map(import_group)).await;
     read_state(start_job_if_required);
 }
 
-async fn import_group(group_id: ChatId, from: u64) {
-    info!(%group_id, from, "'import_group' starting");
-    match group_canister_c2c_client::c2c_export_group(
-        group_id.into(),
-        &Args {
-            from,
-            page_size: PAGE_SIZE,
-        },
-    )
-    .await
-    {
-        Ok(Response::Success(bytes)) => {
-            mutate_state(|state| {
-                if state.data.groups_being_imported.mark_batch_complete(&group_id, &bytes) {
-                    let now = state.env.now();
+async fn import_group(group: GroupToImport) {
+    let group_id = group.group_id;
+    let action = group.action;
+    info!(%group_id, ?action, "'import_group' starting");
+    match action {
+        GroupToImportAction::Core(from) => {
+            match group_canister_c2c_client::c2c_export_group(
+                group_id.into(),
+                &Args {
+                    from,
+                    page_size: PAGE_SIZE,
+                },
+            )
+            .await
+            {
+                Ok(Response::Success(bytes)) => {
+                    mutate_state(|state| {
+                        if state.data.groups_being_imported.mark_batch_complete(&group_id, &bytes) {
+                            let now = state.env.now();
 
-                    state.data.timer_jobs.enqueue_job(
-                        TimerJob::FinalizeGroupImport(FinalizeGroupImportJob { group_id }),
-                        now,
-                        now,
-                    );
+                            state.data.timer_jobs.enqueue_job(
+                                TimerJob::FinalizeGroupImport(FinalizeGroupImportJob { group_id }),
+                                now,
+                                now,
+                            );
 
-                    // We set a timer to trigger an upgrade in case deserializing the group requires
-                    // more instructions than are allowed in a normal update call
-                    ic_cdk_timers::set_timer(Duration::from_secs(10), move || trigger_upgrade_to_finalize_import(group_id));
+                            // We set a timer to trigger an upgrade in case deserializing the group requires
+                            // more instructions than are allowed in a normal update call
+                            ic_cdk_timers::set_timer(Duration::from_secs(10), move || {
+                                trigger_upgrade_to_finalize_import(group_id)
+                            });
 
-                    info!(%group_id, "Group data imported");
+                            info!(%group_id, "Group data imported");
+                        }
+                    });
                 }
-            });
+                Err(error) => {
+                    mutate_state(|state| {
+                        if error.message().contains("violated contract") {
+                            state.data.groups_being_imported.take(&group_id);
+                        } else {
+                            state
+                                .data
+                                .groups_being_imported
+                                .mark_batch_failed(&group_id, format!("{error:?}"));
+                        }
+                    });
+                }
+            }
         }
-        Err(error) => {
-            mutate_state(|state| {
-                if error.1.contains("violated contract") {
-                    state.data.groups_being_imported.take(&group_id);
-                } else {
-                    state
-                        .data
-                        .groups_being_imported
-                        .mark_batch_failed(&group_id, format!("{error:?}"));
+        GroupToImportAction::Events(channel_id, after) => {
+            match group_canister_c2c_client::c2c_export_group_events(
+                group_id.into(),
+                &group_canister::c2c_export_group_events::Args { after },
+            )
+            .await
+            {
+                Ok(group_canister::c2c_export_group_events::Response::Success(result)) => {
+                    mutate_state(|state| {
+                        if let Some((up_to, _)) = result.events.last() {
+                            state
+                                .data
+                                .groups_being_imported
+                                .mark_events_batch_complete(&group_id, up_to.clone());
+                        }
+                        if result.finished {
+                            state.data.groups_being_imported.mark_events_import_complete(&group_id);
+                        }
+                        ChatEvents::import_events(Chat::Channel(state.env.canister_id().into(), channel_id), result.events);
+                        info!(%group_id, "Group events imported");
+                    });
                 }
-            });
+                Err(error) => {
+                    mutate_state(|state| {
+                        state
+                            .data
+                            .groups_being_imported
+                            .mark_batch_failed(&group_id, format!("{error:?}"));
+                    });
+                }
+            }
+        }
+        GroupToImportAction::Members(channel_id, after) => {
+            match group_canister_c2c_client::c2c_export_group_members(
+                group_id.into(),
+                &group_canister::c2c_export_group_members::Args { after },
+            )
+            .await
+            {
+                Ok(group_canister::c2c_export_group_members::Response::Success(result)) => {
+                    mutate_state(|state| {
+                        let up_to = GroupMembers::write_members_from_bytes_to_stable_memory(
+                            MultiUserChat::Channel(state.env.canister_id().into(), channel_id),
+                            result.members,
+                        );
+                        if let Some(user_id) = up_to {
+                            state
+                                .data
+                                .groups_being_imported
+                                .mark_members_batch_complete(&group_id, user_id);
+                        }
+                        if result.finished {
+                            state.data.groups_being_imported.mark_members_import_complete(&group_id);
+                        }
+                        info!(%group_id, "Group members imported");
+                    });
+                }
+                Err(error) => {
+                    mutate_state(|state| {
+                        state
+                            .data
+                            .groups_being_imported
+                            .mark_batch_failed(&group_id, format!("{error:?}"));
+                    });
+                }
+            }
         }
     }
 }
@@ -103,12 +184,14 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
     mutate_state(|state| {
         if let Some(group) = state.data.groups_being_imported.take(&group_id) {
             let now = state.env.now();
+            let community_id = state.env.canister_id().into();
             let channel_id = group.channel_id();
-            let mut chat: GroupChatCore = msgpack::deserialize_then_unwrap(group.bytes());
-            chat.events
-                .set_chat(Chat::Channel(state.env.canister_id().into(), channel_id));
 
-            let blocked: Vec<_> = chat.members.blocked.iter().copied().collect();
+            let mut chat: GroupChatCore = msgpack::deserialize_then_unwrap(group.bytes());
+            chat.events.set_chat(Chat::Channel(community_id, channel_id));
+            chat.members.set_chat(MultiUserChat::Channel(community_id, channel_id));
+
+            let blocked: Vec<_> = chat.members.blocked();
             if !blocked.is_empty() {
                 let mut blocked_from_community = Vec::new();
 
@@ -119,18 +202,16 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
                     chat.members.unblock(user_id, now);
 
                     // If the user is not already a member of the community, block them from the community
-                    if state.data.members.get_by_user_id(&user_id).is_none() && state.data.members.block(user_id) {
+                    if state.data.members.get_by_user_id(&user_id).is_none() && state.data.members.block(user_id, now) {
                         blocked_from_community.push(user_id);
                     }
                 }
                 if !blocked_from_community.is_empty() {
-                    state.data.events.push_event(
-                        CommunityEventInternal::UsersBlocked(Box::new(UsersBlocked {
-                            user_ids: blocked_from_community,
-                            blocked_by: OPENCHAT_BOT_USER_ID,
-                        })),
-                        now,
-                    );
+                    state.push_community_event(CommunityEventInternal::UsersBlocked(Box::new(CommunityUsersBlocked {
+                        user_ids: blocked_from_community,
+                        blocked_by: OPENCHAT_BOT_USER_ID,
+                        referred_by: HashMap::new(),
+                    })));
                 }
             }
 
@@ -166,12 +247,15 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
 
     let (members_to_add_to_community, local_user_index_canister_id) = mutate_state(|state| {
         let channel = state.data.channels.get(&channel_id).unwrap();
-        let mut to_add: HashMap<UserId, bool> = HashMap::new();
-        for (user_id, is_bot) in channel.chat.members.iter().map(|m| (m.user_id, m.is_bot)) {
-            if let Some(member) = state.data.members.get_by_user_id_mut(&user_id) {
-                member.channels.insert(channel_id);
+        let bots = channel.chat.members.bots();
+        let mut to_add: HashMap<UserId, UserType> = HashMap::new();
+
+        for user_id in channel.chat.members.member_ids().iter() {
+            if state.data.members.contains(user_id) {
+                state.data.members.mark_member_joined_channel(*user_id, channel_id);
             } else {
-                to_add.insert(user_id, is_bot);
+                let user_type = bots.get(user_id).copied().unwrap_or_default();
+                to_add.insert(*user_id, user_type);
             }
         }
 
@@ -199,26 +283,40 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
                         user_id,
                         principal,
                         members_to_add_to_community.get(&user_id).copied().unwrap_or_default(),
+                        None,
                         now,
                     ) {
                         AddResult::Success(_) => {
                             state.data.invited_users.remove(&user_id, now);
 
-                            let member = state.data.members.get_by_user_id_mut(&user_id).unwrap();
-                            for channel_id in public_channel_ids.iter() {
-                                if let Some(channel) = state.data.channels.get_mut(channel_id) {
-                                    if channel.chat.gate.is_none() {
-                                        join_channel_unchecked(channel, member, true, now);
-                                    }
+                            let user_type = state.data.members.bots().get(&user_id).copied().unwrap_or_default();
+
+                            for channel_id in public_channel_ids.iter().filter(|&c| *c != channel_id) {
+                                if let Some(channel) = state.data.channels.get_mut(channel_id)
+                                    && channel.chat.gate_config.is_none()
+                                {
+                                    join_channel_unchecked(
+                                        user_id,
+                                        user_type,
+                                        channel,
+                                        &mut state.data.members,
+                                        state.data.is_public.value,
+                                        true,
+                                        false,
+                                        now,
+                                    );
                                 }
                             }
-                            member.channels.insert(channel_id);
+
+                            state.data.members.mark_member_joined_channel(user_id, channel_id);
                             members_added.push(user_id);
                         }
                         AddResult::AlreadyInCommunity => {}
                         AddResult::Blocked => {
                             let channel = state.data.channels.get_mut(&channel_id).unwrap();
-                            channel.chat.remove_member(OPENCHAT_BOT_USER_ID, user_id, false, now);
+                            let _ = channel
+                                .chat
+                                .remove_member(Caller::OCBot(OPENCHAT_BOT_USER_ID), user_id, false, now);
                         }
                     }
                 }
@@ -244,14 +342,11 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
     }
 
     mutate_state(|state| {
-        state.data.events.push_event(
-            CommunityEventInternal::GroupImported(Box::new(GroupImportedInternal {
-                group_id,
-                channel_id,
-                members_added,
-            })),
-            state.env.now(),
-        );
+        state.push_community_event(CommunityEventInternal::GroupImported(Box::new(GroupImportedInternal {
+            group_id,
+            channel_id,
+            members_added,
+        })));
     });
 
     ic_cdk_timers::set_timer(Duration::ZERO, move || mark_import_complete(group_id, channel_id));
@@ -261,11 +356,12 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
 fn add_community_members_to_channel_if_public(channel_id: ChannelId, state: &mut RuntimeState) {
     if let Some(channel) = state.data.channels.get_mut(&channel_id) {
         // If this is a public channel, add all community members to it
-        if channel.chat.is_public.value && channel.chat.gate.value.is_none() {
-            let now = state.env.now();
-            for member in state.data.members.iter_mut() {
-                join_channel_unchecked(channel, member, true, now);
+        if channel.chat.is_public.value && channel.chat.gate_config.value.is_none() {
+            JoinMembersToPublicChannelJob {
+                channel_id,
+                members: state.data.members.iter_member_ids().collect(),
             }
+            .execute_with_state(state);
         }
     }
 }
@@ -283,7 +379,7 @@ pub(crate) fn mark_import_complete(group_id: ChatId, channel_id: ChannelId) {
             state.data.group_index_canister_id,
             "c2c_mark_group_import_complete_msgpack".to_string(),
             msgpack::serialize_then_unwrap(group_index_canister::c2c_mark_group_import_complete::Args {
-                community_name: state.data.name.clone(),
+                community_name: state.data.name.value.clone(),
                 local_user_index_canister_id: state.data.local_user_index_canister_id,
                 channel: ChannelLatestMessageIndex {
                     channel_id,
@@ -291,7 +387,7 @@ pub(crate) fn mark_import_complete(group_id: ChatId, channel_id: ChannelId) {
                 },
                 group_id,
                 group_name: channel.chat.name.value.clone(),
-                members: channel.chat.members.iter().map(|m| m.user_id).collect(),
+                members: channel.chat.members.member_ids().iter().copied().collect(),
                 other_public_channels: state
                     .data
                     .channels
@@ -316,7 +412,7 @@ fn trigger_upgrade_to_finalize_import(group_id: ChatId) {
     mutate_state(|state| {
         if state.data.groups_being_imported.contains(&group_id) {
             state.data.fire_and_forget_handler.send(
-                state.data.local_group_index_canister_id,
+                state.data.local_user_index_canister_id,
                 "c2c_trigger_upgrade_msgpack".to_string(),
                 msgpack::serialize_then_unwrap(Empty {}),
             );

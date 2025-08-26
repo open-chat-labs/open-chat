@@ -1,19 +1,65 @@
 import type { Level } from "./structure";
 
-export type AccessGate =
+export type EnhancedAccessGate = { level: Level; expiry: bigint | undefined } & AccessGate;
+
+export type AccessGate = LeafGate | CompositeGate;
+
+export type AccessGateConfig = {
+    gate: AccessGate;
+    expiry: bigint | undefined;
+};
+
+export type ActiveLeafGate = Exclude<LeafGate, NoGate>;
+
+export type PreprocessedGate = CredentialGate | PaymentGate | UniquePersonGate;
+
+export type MergeableAccessGate =
+    | DiamondGate
+    | LifetimeDiamondGate
+    | UniquePersonGate
+    | LockedGate
+    | ReferredByMemberGate;
+
+export type LeafGate =
     | NoGate
     | NeuronGate
     | PaymentGate
     | DiamondGate
+    | ChitEarnedGate
+    | LifetimeDiamondGate
     | NftGate
     | CredentialGate
-    | TokenBalanceGate;
+    | TokenBalanceGate
+    | UniquePersonGate
+    | LockedGate
+    | ReferredByMemberGate;
+
+export type ChitEarnedGate = {
+    kind: "chit_earned_gate";
+    minEarned: number;
+};
+
+export type ReferredByMemberGate = {
+    kind: "referred_by_member_gate";
+};
+
+export type LockedGate = {
+    kind: "locked_gate";
+};
+
+export type CompositeGate = {
+    kind: "composite_gate";
+    gates: LeafGate[];
+    operator: "and" | "or";
+};
 
 export type NoGate = { kind: "no_gate" };
 
 export type NftGate = { kind: "nft_gate" };
 
 export type Credential = {
+    credentialName: string;
+    issuerCanisterId: string;
     issuerOrigin: string;
     credentialType: string;
     credentialArguments?: Record<string, string | number>;
@@ -24,12 +70,22 @@ export type CredentialGate = {
     credential: Credential;
 };
 
+export type VerifiedCredentialArgs = {
+    userIIPrincipal: string;
+    iiOrigin: string;
+    credentialJwts: string[];
+};
+
 export type NeuronGate = {
     kind: "neuron_gate";
     governanceCanister: string;
     minStakeE8s?: number;
     minDissolveDelay?: number;
 };
+
+export type PaymentGateApproval = { amount: bigint; approvalFee: bigint };
+
+export type PaymentGateApprovals = Map<string, PaymentGateApproval>;
 
 export type PaymentGate = {
     kind: "payment_gate";
@@ -44,6 +100,42 @@ export type TokenBalanceGate = {
     minBalance: bigint;
 };
 
+export function isLeafGate(gate: AccessGate): gate is LeafGate {
+    return gate.kind !== "composite_gate";
+}
+
+export function shouldPreprocessGate(gate: AccessGate): gate is PreprocessedGate {
+    return [
+        "unique_person_gate",
+        "credential_gate",
+        "payment_gate",
+        "lifetime_diamond_gate",
+        "diamond_gate",
+    ].includes(gate.kind);
+}
+
+export function isLocked(gate: AccessGate | undefined): boolean {
+    if (gate === undefined) return false;
+    if (isCompositeGate(gate)) {
+        switch (gate.operator) {
+            case "and":
+                return gate.gates.some(isLockedGate);
+            case "or":
+                return gate.gates.every(isLockedGate);
+        }
+    } else {
+        return isLockedGate(gate);
+    }
+}
+
+function isLockedGate(gate: AccessGate): gate is LockedGate {
+    return gate.kind === "locked_gate";
+}
+
+export function isCompositeGate(gate: AccessGate): gate is CompositeGate {
+    return gate.kind === "composite_gate";
+}
+
 export function isNeuronGate(gate: AccessGate): gate is NeuronGate {
     return gate.kind === "neuron_gate";
 }
@@ -56,10 +148,34 @@ export function isBalanceGate(gate: AccessGate): gate is TokenBalanceGate {
     return gate.kind === "token_balance_gate";
 }
 
+export function isChitEarnedGate(gate: AccessGate): gate is ChitEarnedGate {
+    return gate.kind === "chit_earned_gate";
+}
+
+export function isCredentialGate(gate: AccessGate): gate is CredentialGate {
+    return gate.kind === "credential_gate";
+}
+
+export function isUniquePersonGate(gate: AccessGate): gate is UniquePersonGate {
+    return gate.kind === "unique_person_gate";
+}
+
+export function isLifetimeDiamondGate(gate: AccessGate): gate is LifetimeDiamondGate {
+    return gate.kind === "lifetime_diamond_gate";
+}
+
+export function isDiamondGate(gate: AccessGate): gate is DiamondGate {
+    return gate.kind === "diamond_gate";
+}
+
 export type DiamondGate = { kind: "diamond_gate" };
 
+export type LifetimeDiamondGate = { kind: "lifetime_diamond_gate" };
+
+export type UniquePersonGate = { kind: "unique_person_gate" };
+
 export type AccessControlled = {
-    gate: AccessGate;
+    gateConfig: AccessGateConfig;
     public: boolean;
     frozen: boolean;
     historyVisible: boolean;
@@ -95,3 +211,5 @@ If you break the rules you might be blocked and/or have your message(s) deleted.
         version: 0,
     };
 }
+
+export type GateCheckSucceeded = { credentials: string[]; paymentApprovals: PaymentGateApprovals };

@@ -1,33 +1,45 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
     let index = 0;
 </script>
 
 <script lang="ts">
     import { onMount } from "svelte";
+    import type { ButtonProps } from "./Button.svelte";
 
-    export let cls = "";
-    export let loading: boolean = false;
-    export let disabled: boolean = false;
-    export let secondary: boolean = false;
-    export let small: boolean = false;
-    export let tiny: boolean = false;
-    export let fill: boolean = false;
-    export let hollow: boolean = false;
-    export let title: string | undefined = undefined;
-    export let square: boolean = false;
+    let {
+        cls = "",
+        loading = false,
+        disabled = false,
+        secondary = false,
+        small = false,
+        tiny = false,
+        fill = false,
+        hollow = false,
+        title = undefined,
+        square = false,
+        children,
+        onClick,
+    }: ButtonProps = $props();
 
     let colors = ["rgb(248, 255, 131)", "rgb(56, 183, 240)", "rgb(227, 26, 62)"];
-    let color = "";
+    let color = $state("");
 
     onMount(() => {
         color = colors[index];
         index = (index + 1) % 3;
     });
+
+    function click(e: MouseEvent) {
+        if (onClick) {
+            e.stopPropagation();
+            onClick(e);
+        }
+    }
 </script>
 
 <button
     style={`--color: ${color}`}
-    on:click|stopPropagation
+    onclick={click}
     class={cls}
     class:loading
     class:disabled
@@ -42,7 +54,7 @@
     <div class:disabled class:loading class="fake-button">
         <div class="button-content">
             {#if !loading}
-                <slot />
+                {@render children?.()}
             {:else}
                 {"Working ..."}
             {/if}

@@ -1,33 +1,38 @@
-use crate::{delegation_signature_msg_hash, read_state, RuntimeState};
-use ic_cdk_macros::query;
+use crate::{RuntimeState, read_state};
+use canister_api_macros::query;
+use ic_canister_sig_creation::signature_map::CanisterSigInputs;
+use ic_canister_sig_creation::{DELEGATION_SIG_DOMAIN, delegation_signature_msg};
 use identity_canister::get_delegation::{Response::*, *};
-use identity_canister::{Delegation, SignedDelegation};
-use serde_bytes::ByteBuf;
+use types::{Delegation, SignedDelegation};
 
-#[query]
+#[query(msgpack = true, candid = true)]
 fn get_delegation(args: Args) -> Response {
     read_state(|state| get_delegation_impl(args, state))
 }
 
 fn get_delegation_impl(args: Args, state: &RuntimeState) -> Response {
-    let caller = state.env.caller();
+    let auth_principal = state.caller_auth_principal();
 
-    let Some(user) = state.data.user_principals.get_by_auth_principal(&caller) else {
+    let Some(user) = state.data.user_principals.get_by_auth_principal(&auth_principal) else {
         panic!("Caller not recognised");
     };
 
-    let delegation = Delegation {
-        pubkey: args.session_key,
-        expiration: args.expiration,
-    };
-    let message_hash = delegation_signature_msg_hash(&delegation);
     let seed = state.data.calculate_seed(user.index);
 
-    if let Ok(signature) = state.data.signature_map.get_signature_as_cbor(&seed, message_hash, None) {
-        Success(SignedDelegation {
-            delegation,
-            signature: ByteBuf::from(signature),
-        })
+    if let Ok(signature) = state.data.signature_map.get_signature_as_cbor(
+        &CanisterSigInputs {
+            domain: DELEGATION_SIG_DOMAIN,
+            seed: &seed,
+            message: &delegation_signature_msg(&args.session_key, args.expiration, None),
+        },
+        None,
+    ) {
+        let delegation = Delegation {
+            pubkey: args.session_key,
+            expiration: args.expiration,
+        };
+
+        Success(SignedDelegation { delegation, signature })
     } else {
         NotFound
     }

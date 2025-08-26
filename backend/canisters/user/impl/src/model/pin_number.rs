@@ -1,8 +1,8 @@
+use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
+use oc_error_codes::{OCError, OCErrorCode};
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
-use types::{Milliseconds, TimestampMillis, Timestamped};
-use user_canister::initial_state::PinNumberSettings;
-use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
+use types::{Milliseconds, PinNumberSettings, TimestampMillis, Timestamped};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct PinNumber {
@@ -73,4 +73,14 @@ pub enum VerifyPinError {
     PinRequired,
     PinIncorrect(Milliseconds),
     TooManyFailedAttempted(Milliseconds),
+}
+
+impl From<VerifyPinError> for OCError {
+    fn from(value: VerifyPinError) -> Self {
+        match value {
+            VerifyPinError::PinRequired => OCErrorCode::PinRequired.into(),
+            VerifyPinError::PinIncorrect(ms) => OCErrorCode::PinIncorrect.with_message(ms),
+            VerifyPinError::TooManyFailedAttempted(ms) => OCErrorCode::TooManyFailedPinAttempts.with_message(ms),
+        }
+    }
 }

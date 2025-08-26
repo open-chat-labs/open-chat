@@ -1,24 +1,26 @@
 <script lang="ts">
-    import Button from "../Button.svelte";
-    import ErrorMessage from "../ErrorMessage.svelte";
-    import Input from "../Input.svelte";
-    import Toggle from "../Toggle.svelte";
-    import ButtonGroup from "../ButtonGroup.svelte";
-    import Radio from "../Radio.svelte";
-    import Overlay from "../Overlay.svelte";
-    import ModalContent from "../ModalContent.svelte";
+    import {
+        iconSize,
+        mobileWidth,
+        type PollContent,
+        type ResourceKey,
+        type TotalPollVotes,
+    } from "openchat-client";
+    import { _ } from "svelte-i18n";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import PlusCircleOutline from "svelte-material-icons/PlusCircleOutline.svelte";
-    import { _ } from "svelte-i18n";
-    import { createEventDispatcher } from "svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import type { PollContent, TotalPollVotes } from "openchat-client";
+    import { i18nKey } from "../../i18n/i18n";
+    import Button from "../Button.svelte";
+    import ButtonGroup from "../ButtonGroup.svelte";
+    import ErrorMessage from "../ErrorMessage.svelte";
+    import Input from "../Input.svelte";
     import Legend from "../Legend.svelte";
-    import { i18nKey, type ResourceKey } from "../../i18n/i18n";
+    import ModalContent from "../ModalContent.svelte";
+    import Overlay from "../Overlay.svelte";
+    import Radio from "../Radio.svelte";
+    import Toggle from "../Toggle.svelte";
     import Translatable from "../Translatable.svelte";
 
-    const dispatch = createEventDispatcher();
     const MAX_QUESTION_LENGTH = 250;
     const MAX_ANSWER_LENGTH = 50;
     const MAX_ANSWERS = 10;
@@ -33,20 +35,21 @@
         showVotesBeforeEndDate: boolean;
         allowMultipleVotesPerUser: boolean;
         allowUserToChangeVote: boolean;
-        pollAnswers: Set<string>;
+        pollAnswers: Map<string, string>;
     };
 
-    export let open: boolean;
+    interface Props {
+        open: boolean;
+        onSend: (content: PollContent) => void;
+    }
 
-    let poll: CandidatePoll = emptyPoll();
-    let nextAnswer: string = "";
-    let answerError: ResourceKey | undefined = undefined;
-    let selectedDuration: Duration = "oneDay";
-    let showSettings = false;
+    let { open = $bindable(), onSend }: Props = $props();
 
-    $: valid =
-        poll.pollAnswers.size >= 2 ||
-        (poll.pollAnswers.size === 1 && nextAnswer.length > 0 && answerIsValid(nextAnswer));
+    let poll: CandidatePoll = $state(emptyPoll());
+    let nextAnswer: string = $state("");
+    let answerError: ResourceKey | undefined = $state(undefined);
+    let selectedDuration: Duration = $state("oneDay");
+    let showSettings = $state(false);
 
     export function resetPoll() {
         selectedDuration = "oneDay";
@@ -64,20 +67,25 @@
             showVotesBeforeEndDate: true,
             allowMultipleVotesPerUser: false,
             allowUserToChangeVote: true,
-            pollAnswers: new Set<string>(),
+            pollAnswers: new Map<string, string>(),
         };
     }
 
     function answerIsValid(answer: string): boolean {
-        if (answer === undefined) return false;
-        if (poll.pollAnswers.has(nextAnswer)) return false;
-        return answer.length > 0 && answer.length <= MAX_ANSWER_LENGTH;
+        const trimmed = answer?.trim();
+        return (
+            trimmed !== undefined &&
+            trimmed.length > 0 &&
+            trimmed.length <= MAX_ANSWER_LENGTH &&
+            !poll.pollAnswers.has(trimmed.toUpperCase())
+        );
     }
 
     function addAnswer() {
-        if (answerIsValid(nextAnswer)) {
+        const trimmed = nextAnswer?.trim();
+        if (answerIsValid(trimmed)) {
             answerError = undefined;
-            poll.pollAnswers = new Set(poll.pollAnswers.add(nextAnswer));
+            poll.pollAnswers = new Map(poll.pollAnswers.set(trimmed.toUpperCase(), trimmed));
             nextAnswer = "";
             return true;
         } else {
@@ -87,8 +95,8 @@
     }
 
     function deleteAnswer(answer: string) {
-        poll.pollAnswers.delete(answer);
-        poll.pollAnswers = new Set(poll.pollAnswers);
+        poll.pollAnswers.delete(answer.toUpperCase());
+        poll.pollAnswers = new Map(poll.pollAnswers);
     }
 
     function createPollVotes(): TotalPollVotes {
@@ -132,7 +140,7 @@
                 showVotesBeforeEndDate: poll.showVotesBeforeEndDate,
                 endDate: createPollEndDate(),
                 anonymous: poll.anonymous,
-                options: [...poll.pollAnswers],
+                options: [...poll.pollAnswers.values()],
             },
             ended: false,
         };
@@ -141,30 +149,36 @@
     function start() {
         const poll = createPollContent();
         if (poll) {
-            dispatch("sendMessageWithContent", { content: poll });
+            onSend(poll);
             open = false;
         }
     }
+    let valid = $derived(
+        poll.pollAnswers.size >= 2 ||
+            (poll.pollAnswers.size === 1 && nextAnswer.length > 0 && answerIsValid(nextAnswer)),
+    );
 </script>
 
 {#if open}
     <Overlay>
         <ModalContent>
-            <span slot="header"><Translatable resourceKey={i18nKey("poll.create")} /></span>
-            <span slot="body">
+            {#snippet header()}
+                <Translatable resourceKey={i18nKey("poll.create")} />
+            {/snippet}
+            {#snippet body()}
                 <div class="buttons">
                     <ButtonGroup align={"start"}>
                         <Button
                             small={!$mobileWidth}
                             tiny={$mobileWidth}
                             secondary={showSettings}
-                            on:click={() => (showSettings = false)}
+                            onClick={() => (showSettings = false)}
                             ><Translatable resourceKey={i18nKey("poll.poll")} /></Button>
                         <Button
                             small={!$mobileWidth}
                             secondary={!showSettings}
                             tiny={$mobileWidth}
-                            on:click={() => (showSettings = true)}
+                            onClick={() => (showSettings = true)}
                             ><Translatable resourceKey={i18nKey("poll.settings")} /></Button>
                     </ButtonGroup>
                 </div>
@@ -185,12 +199,12 @@
                             <Legend
                                 label={i18nKey("poll.answersLabel")}
                                 rules={i18nKey("poll.atLeastTwo")} />
-                            {#each [...poll.pollAnswers] as answer (answer)}
+                            {#each [...poll.pollAnswers.values()] as answer (answer)}
                                 <div class="answer">
                                     <div class="answer-text">
                                         {answer}
                                     </div>
-                                    <div class="delete" on:click={() => deleteAnswer(answer)}>
+                                    <div class="delete" onclick={() => deleteAnswer(answer)}>
                                         <DeleteOutline size={$iconSize} color={"var(--icon-txt)"} />
                                     </div>
                                 </div>
@@ -204,7 +218,7 @@
                                             minlength={1}
                                             maxlength={MAX_ANSWER_LENGTH}
                                             countdown
-                                            on:enter={addAnswer}
+                                            onEnter={addAnswer}
                                             placeholder={i18nKey(
                                                 poll.pollAnswers.size === MAX_ANSWERS
                                                     ? "poll.maxReached"
@@ -217,7 +231,7 @@
                                             {/if}
                                         </Input>
                                     </div>
-                                    <div class="add-btn" on:click={addAnswer}>
+                                    <div class="add-btn" onclick={addAnswer}>
                                         <PlusCircleOutline
                                             size={$iconSize}
                                             color={"var(--icon-txt)"} />
@@ -230,7 +244,7 @@
                     <Toggle
                         small
                         id={"anonymous"}
-                        on:change={() => (poll.anonymous = !poll.anonymous)}
+                        onChange={() => (poll.anonymous = !poll.anonymous)}
                         label={i18nKey("poll.anonymous")}
                         checked={poll.anonymous} />
 
@@ -238,7 +252,7 @@
                         small
                         id={"allow-multiple"}
                         label={i18nKey("poll.allowMultipleVotes")}
-                        on:change={() =>
+                        onChange={() =>
                             (poll.allowMultipleVotesPerUser = !poll.allowMultipleVotesPerUser)}
                         checked={poll.allowMultipleVotesPerUser} />
 
@@ -247,14 +261,14 @@
                         id={"allow-change"}
                         disabled={poll.allowMultipleVotesPerUser}
                         label={i18nKey("poll.allowChangeVotes")}
-                        on:change={() => (poll.allowUserToChangeVote = !poll.allowUserToChangeVote)}
+                        onChange={() => (poll.allowUserToChangeVote = !poll.allowUserToChangeVote)}
                         checked={!poll.allowMultipleVotesPerUser && poll.allowUserToChangeVote} />
 
                     <Toggle
                         small
                         id={"limited-duration"}
                         label={i18nKey("poll.limitedDuration")}
-                        on:change={() => (poll.limitedDuration = !poll.limitedDuration)}
+                        onChange={() => (poll.limitedDuration = !poll.limitedDuration)}
                         checked={poll.limitedDuration} />
 
                     {#if poll.limitedDuration}
@@ -262,14 +276,14 @@
                             small
                             id={"show-before-end"}
                             label={i18nKey("poll.showBeforeEnd")}
-                            on:change={() =>
+                            onChange={() =>
                                 (poll.showVotesBeforeEndDate = !poll.showVotesBeforeEndDate)}
                             checked={poll.showVotesBeforeEndDate} />
 
                         <Legend label={i18nKey("poll.pollDuration")} />
                         {#each durations as d}
                             <Radio
-                                on:change={() => (selectedDuration = d)}
+                                onChange={() => (selectedDuration = d)}
                                 value={d}
                                 checked={selectedDuration === d}
                                 id={`duration_${d}`}
@@ -278,21 +292,21 @@
                         {/each}
                     {/if}
                 {/if}
-            </span>
-            <span slot="footer">
+            {/snippet}
+            {#snippet footer()}
                 <ButtonGroup>
                     <Button
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
                         secondary
-                        on:click={() => (open = false)}>{$_("cancel")}</Button>
+                        onClick={() => (open = false)}>{$_("cancel")}</Button>
                     <Button
                         small={!$mobileWidth}
                         disabled={!valid}
                         tiny={$mobileWidth}
-                        on:click={start}>{$_("poll.start")}</Button>
+                        onClick={start}>{$_("poll.start")}</Button>
                 </ButtonGroup>
-            </span>
+            {/snippet}
         </ModalContent>
     </Overlay>
 {/if}

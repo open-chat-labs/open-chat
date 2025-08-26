@@ -1,4 +1,5 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
@@ -7,7 +8,755 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Remove legacy group membership fields from backend ([#8508](https://github.com/open-chat-labs/open-chat/pull/8508))
+
+## [[2.0.1874](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1874-group)] - 2025-08-20
+
+### Changed
+
+- Support muting of @everyone notifications ([#8496](https://github.com/open-chat-labs/open-chat/pull/8496))
+- Support muted=false && @everyone_muted=true ([#8502](https://github.com/open-chat-labs/open-chat/pull/8502))
+
+### Fixed
+
+- Handle custom emojis with long names ([#8504](https://github.com/open-chat-labs/open-chat/pull/8504))
+
+## [[2.0.1864](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1864-group)] - 2025-08-12
+
+### Changed
+
+- Send strongly typed notifications to LocalUserIndex ([#8444](https://github.com/open-chat-labs/open-chat/pull/8444))
+- Switch some endpoints over to using common response types ([#8450](https://github.com/open-chat-labs/open-chat/pull/8450))
+
+### Fixed
+
+- Maintain event ordering when retrying failed c2c calls ([#8429](https://github.com/open-chat-labs/open-chat/pull/8429))
+
+## [[2.0.1853](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1853-group)] - 2025-08-04
+
+### Changed
+
+- Add "total chit earned" access gate ([#8422](https://github.com/open-chat-labs/open-chat/pull/8422))
+
+## [[2.0.1846](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1846-group)] - 2025-07-29
+
+### Changed
+
+- Add 'min_chit_earned' prize message criterion ([#8413](https://github.com/open-chat-labs/open-chat/pull/8413))
+
+## [[2.0.1846](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1846-group)] - 2025-07-29
+
+### Changed
+
+- When a bot invites a user also send an invitation ([#8320](https://github.com/open-chat-labs/open-chat/pull/8320))
+- Expose `liquid_cycles_balance` in metrics ([#8350](https://github.com/open-chat-labs/open-chat/pull/8350))
+- Add delay before retrying c2c call under certain error conditions ([#8355](https://github.com/open-chat-labs/open-chat/pull/8355))
+- Generalise Escrow so it can be used by 3rd parties ([#8356](https://github.com/open-chat-labs/open-chat/pull/8356))
+- `token:Cryptocurrency` -> `token_symbol:String` ([#8368](https://github.com/open-chat-labs/open-chat/pull/8368))
+- Use full names for bot event notification fields ([#8389](https://github.com/open-chat-labs/open-chat/pull/8389))
+
+### Fixed
+
+- Call to remove member will also remove any invite ([#8332](https://github.com/open-chat-labs/open-chat/pull/8332))
+
+## [[2.0.1829](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1829-group)] - 2025-07-09
+
+### Added
+
+- Implement `c2c_active_proposal_tallies` to be called via composite query ([#8275](https://github.com/open-chat-labs/open-chat/pull/8275))
+- Introduce `Encrypted` message type ([8294](https://github.com/open-chat-labs/open-chat/pull/8294))
+- Add timestamp to BotNotification and MembersResult ([8300](https://github.com/open-chat-labs/open-chat/pull/8300))
+
+### Changed
+
+- Use MessagePack to serialize upgrade args ([#8269](https://github.com/open-chat-labs/open-chat/pull/8269))
+- Remove duplication by removing `MessageContent::message_type` function ([#8293](https://github.com/open-chat-labs/open-chat/pull/8293))
+- Deprecate `winners` field on prize messages ([#8302](https://github.com/open-chat-labs/open-chat/pull/8302))
+- Re-enabled fcm_data ([8298](https://github.com/open-chat-labs/open-chat/pull/8298))
+
+### Fixed
+
+- Fix proposal vote updates not propagating to frontend ([#8310](https://github.com/open-chat-labs/open-chat/pull/8310))
+
+## [[2.0.1814](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1814-group)] - 2025-07-02
+
+### Changed
+
+- Updated the `FcmData` interface ([8261](https://github.com/open-chat-labs/open-chat/pull/8261))
+- Push full chat events to subscribed bots ([#8264](https://github.com/open-chat-labs/open-chat/pull/8264))
+- Remove almost all usages of `Candid` from Group canisters ([#8270](https://github.com/open-chat-labs/open-chat/pull/8270))
+- Update video call endpoints to support both Candid and MessagePack ([#8273](https://github.com/open-chat-labs/open-chat/pull/8273))
+
+### Fixed
+
+- Work around fcm_data issue ([#8272](https://github.com/open-chat-labs/open-chat/pull/8272))
+
+## [[2.0.1804](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1804-group)] - 2025-06-26
+
+### Added
+
+- Implement `active_proposal_tallies` for retrieving only the tallies ([#8200](https://github.com/open-chat-labs/open-chat/pull/8200))
+- Add `c2c_bot_remove_user` endpoint ([#8217](https://github.com/open-chat-labs/open-chat/pull/8217))
+- Add `c2c_bot_invite_users` endpoint ([#8218](https://github.com/open-chat-labs/open-chat/pull/8218))
+- Add `c2c_bot_members` endpoint ([#8225](https://github.com/open-chat-labs/open-chat/pull/8225))
+
+### Changed
+
+- Use MessagePack to serialize `init` args ([#8183](https://github.com/open-chat-labs/open-chat/pull/8183))
+- Avoid marking chat as active if only proposal tally has been updated ([#8206](https://github.com/open-chat-labs/open-chat/pull/8206))
+
+### Removed
+
+- Remove `gate` which is superseded by `gate_config` ([#8186](https://github.com/open-chat-labs/open-chat/pull/8186))
+
+### Fixed
+
+- Send bot notification when a user joins a group ([#8208](https://github.com/open-chat-labs/open-chat/pull/8208))
+
+## [[2.0.1795](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1795-group)] - 2025-06-13
+
+### Changed
+
+- Remove bot API Keys ([#8131](https://github.com/open-chat-labs/open-chat/pull/8131))
+- Support bot making inline replies ([#8146](https://github.com/open-chat-labs/open-chat/pull/8146))
+- Add `initiated_by` to bot event notifications ([#8160](https://github.com/open-chat-labs/open-chat/pull/8160))
+
+### Fixed
+
+- Stop clearing subscriptions on upgrade ([#8150](https://github.com/open-chat-labs/open-chat/pull/8150))
+
+## [[2.0.1786](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1786-group)] - 2025-06-06
+
+### Added
+
+- Additional notification data for Firebase Cloud Messaging ([8113](https://github.com/open-chat-labs/open-chat/pull/8113))
+
+### Changed
+
+- Remove all references to LocalGroupIndexes ([#8057](https://github.com/open-chat-labs/open-chat/pull/8057))
+- Remove all references to Notifications canisters ([#8087](https://github.com/open-chat-labs/open-chat/pull/8087))
+- Remove `correlation_id` ([#8097](https://github.com/open-chat-labs/open-chat/pull/8097))
+- Push chat event notifications to bots ([#8109](https://github.com/open-chat-labs/open-chat/pull/8109))
+
+### Removed
+
+- Remove unused `c2c_report_message_v2` ([#8110](https://github.com/open-chat-labs/open-chat/pull/8110))
+
+## [[2.0.1764](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1764-group)] - 2025-05-28
+
+### Changed
+
+- Support autonomous bots without API keys ([#7985](https://github.com/open-chat-labs/open-chat/pull/7985))
+- Wire up pushing events to LocalUserIndex ([#8001](https://github.com/open-chat-labs/open-chat/pull/8001))
+- Push notifications to LocalUserIndex canisters ([#8002](https://github.com/open-chat-labs/open-chat/pull/8002))
+- Flush pending events at the end of each update call ([#8008](https://github.com/open-chat-labs/open-chat/pull/8008))
+- Notify LocalUserIndex when Group/Community has activity ([#8009](https://github.com/open-chat-labs/open-chat/pull/8009))
+- Use `EventPusher` rather than `EventStoreClient` to push events ([#8010](https://github.com/open-chat-labs/open-chat/pull/8010))
+- Deprecate `event_store_client` ([#8013](https://github.com/open-chat-labs/open-chat/pull/8013))
+- Publish bot lifecycle events ([#8026](https://github.com/open-chat-labs/open-chat/pull/8026))
+- Add autonomous permissions to `InstalledBotDetails` ([#8035](https://github.com/open-chat-labs/open-chat/pull/8035))
+
+## [[2.0.1746](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1746-group)] - 2025-05-12
+
+### Changed
+
+- Add more details to `video_call_in_progress` responses ([#7954](https://github.com/open-chat-labs/open-chat/pull/7954))
+
+## [[2.0.1742](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1742-group)] - 2025-05-12
+
+### Added
+
+- Support bots deleting messages ([#7941](https://github.com/open-chat-labs/open-chat/pull/7941))
+- Support bots adding reactions ([#7944](https://github.com/open-chat-labs/open-chat/pull/7944))
+
+### Changed
+
+- Add `started` and `joined_by_current_user` to video call details in summary responses ([#7950](https://github.com/open-chat-labs/open-chat/pull/7950))
+
+## [[2.0.1738](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1738-group)] - 2025-05-09
+
+### Changed
+
+- Avoid having to specify `authorizer` when pushing notifications ([#7861](https://github.com/open-chat-labs/open-chat/pull/7861))
+- Switch to using LocalUserIndex instead of LocalGroupIndex ([#7917](https://github.com/open-chat-labs/open-chat/pull/7917))
+- Add `requires_captcha` field to prize messages ([#7932](https://github.com/open-chat-labs/open-chat/pull/7932))
+
+## [[2.0.1727](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1727-group)] - 2025-05-07
+
+### Added
+
+- Allow bots to subscribe to chat events using ApiKeys ([#7836](https://github.com/open-chat-labs/open-chat/pull/7836))
+- Push chat event notifications to bots ([#7844](https://github.com/open-chat-labs/open-chat/pull/7844))
+- Add support for webhooks ([#7825](https://github.com/open-chat-labs/open-chat/pull/7825))
+
+### Changed
+
+- Introduce `UnitResult` type to reduce duplication ([#7800](https://github.com/open-chat-labs/open-chat/pull/7800))
+- Use more fine grained error codes for P2P swaps ([#7801](https://github.com/open-chat-labs/open-chat/pull/7801))
+- Migrate `bot_context` to `sender_context` ([#7870](https://github.com/open-chat-labs/open-chat/pull/7870))
+- Allow LocalUserIndex to push events to Groups ([#7908](https://github.com/open-chat-labs/open-chat/pull/7908))
+
+### Fixed
+
+- Avoid sending notification to initiator of bot command ([#7808](https://github.com/open-chat-labs/open-chat/pull/7808))
+
+## [[2.0.1704](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1704-group)] - 2025-04-15
+
+### Added
+
+- Notify Groups when user deleted ([#7781](https://github.com/open-chat-labs/open-chat/pull/7781))
+
+### Changed
+
+- Switch more canister endpoints over to the new `OCError` response type ([#7793](https://github.com/open-chat-labs/open-chat/pull/7793))
+- Migrate more endpoints to returning standardised error codes ([#7797](https://github.com/open-chat-labs/open-chat/pull/7797))
+
+### Removed
+
+- Remove response types that are no longer used ([#7788](https://github.com/open-chat-labs/open-chat/pull/7788))
+
+## [[2.0.1698](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1698-group)] - 2025-04-10
+
+### Changed
+
+- Increase timeout of bounded-wait calls to 5 minutes ([#7730](https://github.com/open-chat-labs/open-chat/pull/7730))
+- Switch to new `c2c_push_notifications` endpoint ([#7733](https://github.com/open-chat-labs/open-chat/pull/7733))
+- Include more details in failed c2c call errors ([#7749](https://github.com/open-chat-labs/open-chat/pull/7749))
+- Simplify responses and reduce mapping by using standardised error codes ([#7754](https://github.com/open-chat-labs/open-chat/pull/7754))
+- Transfer cycles to GroupIndex when deleting a Group ([#7768](https://github.com/open-chat-labs/open-chat/pull/7768))
+- Delete groups that have been dormant for over a year ([#7770](https://github.com/open-chat-labs/open-chat/pull/7770))
+- Use accurate freezing threshold rather than an approximation ([#7771](https://github.com/open-chat-labs/open-chat/pull/7771))
+
+### Fixed
+
+- Fix serializing empty MessagePack responses ([#7764](https://github.com/open-chat-labs/open-chat/pull/7764))
+- Mark Group active after P2P swap status is updated ([#7766](https://github.com/open-chat-labs/open-chat/pull/7766))
+
+## [[2.0.1684](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1684-group)] - 2025-04-02
+
+### Added
+
+- Introduce standardised error codes ([#7599](https://github.com/open-chat-labs/open-chat/pull/7599))
+
+### Changed
+
+- Remove the `Cryptocurrency` type from public APIs (part 2) ([#7592](https://github.com/open-chat-labs/open-chat/pull/7592))
+- Allow both VideoCalls and Broadcasts in public chats ([#7606](https://github.com/open-chat-labs/open-chat/pull/7606))
+- Filter trace level events globally so they are dropped earlier ([#7678](https://github.com/open-chat-labs/open-chat/pull/7678))
+- Support passing common state to timer job batches ([#7705](https://github.com/open-chat-labs/open-chat/pull/7705))
+
+### Removed
+
+- Remove the old `c2c_can_issue_access_token` endpoint ([#7602](https://github.com/open-chat-labs/open-chat/pull/7602))
+
+### Fixed
+
+- On bot uninstallation also delete any api key ([#7583](https://github.com/open-chat-labs/open-chat/pull/7583))
+- Fix small gate payments which were failing to be transferred to owner ([#7686](https://github.com/open-chat-labs/open-chat/pull/7686))
+
+## [[2.0.1645](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1645-group)] - 2025-03-12
+
+### Fixed
+
+- Fix upgrade for groups which ran into issue due to disappearing messages ([#7578](https://github.com/open-chat-labs/open-chat/pull/7578))
+
+## [[2.0.1634](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1634-group)] - 2025-03-11
+
+### Added
+
+- Post in dormant groups that they'll be deleted in 30 days if still inactive ([#7554](https://github.com/open-chat-labs/open-chat/pull/7554))
+
+### Changed
+
+- Remove the `Cryptocurrency` type from public APIs (part 1) ([#7510](https://github.com/open-chat-labs/open-chat/pull/7510))
+- Always encode `BotPermission`s as `u32`s ([#7519](https://github.com/open-chat-labs/open-chat/pull/7519))
+- Switch to using bounded-wait calls for idempotent c2c calls ([#7528](https://github.com/open-chat-labs/open-chat/pull/7528))
+- Log total instructions consumed at end of upgrade ([#7551](https://github.com/open-chat-labs/open-chat/pull/7551))
+- Expose `frozen_at` in metrics rather than just `frozen` (true/false) ([#7582](https://github.com/open-chat-labs/open-chat/pull/7582))
+
+### Removed
+
+- Remove deprecated c2c endpoints ([#7538](https://github.com/open-chat-labs/open-chat/pull/7538))
+
+### Fixed
+
+- Support using command JWT for reading ([#7512](https://github.com/open-chat-labs/open-chat/pull/7512))
+- Fix upgrade for groups which ran into issue due to disappearing messages ([#7578](https://github.com/open-chat-labs/open-chat/pull/7578))
+
+## [[2.0.1624](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1624-group)] - 2025-03-03
+
+### Fixed
+
+- Fix messageId deduplication for groups which used disappearing messages ([#7503](https://github.com/open-chat-labs/open-chat/pull/7503))
+
+## [[2.0.1619](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1619-group)] - 2025-02-28
+
+### Added
+
+- Add api_key query endpoint callable by owner(s) ([#7431](https://github.com/open-chat-labs/open-chat/pull/7431))
+- Support `sync_api_key` cmd + min required cmd role ([#7439](https://github.com/open-chat-labs/open-chat/pull/7439))
+- Introduce `IdempotencyChecker` in preparation for using best-effort calls ([#7457](https://github.com/open-chat-labs/open-chat/pull/7457))
+- Introduce new idempotent endpoints for C2C calls ([#7492](https://github.com/open-chat-labs/open-chat/pull/7492))
+- Add `c2c_bot_group_details` ([#7499](https://github.com/open-chat-labs/open-chat/pull/7499))
+
+### Changed
+
+- Serialize notifications using MessagePack rather than Candid ([#7445](https://github.com/open-chat-labs/open-chat/pull/7445))
+- Reduce the size of notifications when serialized ([#7448](https://github.com/open-chat-labs/open-chat/pull/7448))
+- Move new message validation to `MessageContentInternal` ([#7452](https://github.com/open-chat-labs/open-chat/pull/7452))
+- Encode permissions within bot API keys as bitflags ([#7456](https://github.com/open-chat-labs/open-chat/pull/7456))
+- Group summaries updated when api keys generated ([#7478](https://github.com/open-chat-labs/open-chat/pull/7478))
+
+### Removed
+
+- Remove the old `start_video_call` and `end_video_call` endpoints ([#7399](https://github.com/open-chat-labs/open-chat/pull/7399))
+
+## [[2.0.1604](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1604-group)] - 2025-02-10
+
+### Fixed
+
+- Fix messageId deduplication to cater for disappearing messages ([#7369](https://github.com/open-chat-labs/open-chat/pull/7369))
+
+## [[2.0.1602](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1602-group)] - 2025-02-06
+
+### Changed
+
+- Restructure to handle autonomous bots ([#7318](https://github.com/open-chat-labs/open-chat/pull/7318))
+- Add `sender` to notifications to support blocking notifications from blocked users ([#7330](https://github.com/open-chat-labs/open-chat/pull/7330))
+- Expose each bot action as a separate endpoint ([#7345](https://github.com/open-chat-labs/open-chat/pull/7345))
+- Send OC's share of access gate joining fees to the treasury canister ([#7353](https://github.com/open-chat-labs/open-chat/pull/7353))
+- Ensure message Ids have successfully been deduped ([#7355](https://github.com/open-chat-labs/open-chat/pull/7355))
+- Avoid storing achievements for users who leave the group ([#7356](https://github.com/open-chat-labs/open-chat/pull/7356))
+
+### Fixed
+
+- Avoid retrying c2c call if recipient canister is uninstalled ([#7302](https://github.com/open-chat-labs/open-chat/pull/7302))
+- Fix `c2c_can_issue_access_token` ([#7366](https://github.com/open-chat-labs/open-chat/pull/7366))
+
+## [[2.0.1581](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1581-group)] - 2025-01-24
+
+### Added
+
+- Add facility to set/revoke group verification via proposal ([#7240](https://github.com/open-chat-labs/open-chat/pull/7240))
+
+### Changed
+
+- Reduce message Ids to 64 bits down from 128 bits ([#7232](https://github.com/open-chat-labs/open-chat/pull/7232))
+- Reduce channel Ids to 32 bits down from 128 bits ([#7233](https://github.com/open-chat-labs/open-chat/pull/7233))
+- Add `start_video_call_v2` and `end_video_call_v2` with reduced arg sizes ([#7236](https://github.com/open-chat-labs/open-chat/pull/7236))
+- Disallow forwarding prize messages and governance proposal messages ([#7260](https://github.com/open-chat-labs/open-chat/pull/7260))
+- Move storage of group bots up a level ([#7265](https://github.com/open-chat-labs/open-chat/pull/7265))
+- Sync bot installation with UserIndex ([#7291](https://github.com/open-chat-labs/open-chat/pull/7291))
+- Introduce new `Integer` bot parameter type ([#7296](https://github.com/open-chat-labs/open-chat/pull/7296))
+
+### Fixed
+
+- De-duplicate messageIds using a timer job ([#7275](https://github.com/open-chat-labs/open-chat/pull/7275))
+- Fix message size limit being exceeded when importing group into community ([#7278](https://github.com/open-chat-labs/open-chat/pull/7278))
+
+## [[2.0.1569](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1569-group)] - 2025-01-14
+
+### Changed
+
+- Log error if end video call job fails ([#7066](https://github.com/open-chat-labs/open-chat/pull/7066))
+- 2-stage bot messages + bot context in messages ([#7060](https://github.com/open-chat-labs/open-chat/pull/7060))
+- Log error if tip fails due to recipient mismatch ([#7151](https://github.com/open-chat-labs/open-chat/pull/7151))
+- Introduce `StableMemoryMap` trait to simplify storing in stable memory ([#7176](https://github.com/open-chat-labs/open-chat/pull/7176))
+- When disappearing messages expire delete any linked files ([#7184](https://github.com/open-chat-labs/open-chat/pull/7184))
+- Use typed command in `BotCommandClaims` ([#7113](https://github.com/open-chat-labs/open-chat/pull/7113))
+- Use macro to create grouped timer job types ([#7224](https://github.com/open-chat-labs/open-chat/pull/7224))
+
+### Removed
+
+- Remove bot thread permissions ([#7071](https://github.com/open-chat-labs/open-chat/pull/7071))
+- Remove NewJoinerRewards which are no longer used ([#7074](https://github.com/open-chat-labs/open-chat/pull/7074))
+
+### Fixed
+
+- Fix any long-running video calls that failed to be marked as ended ([#7068](https://github.com/open-chat-labs/open-chat/pull/7068))
+- Avoid case where prize claims could result in "duplicate transfer" error ([#7079](https://github.com/open-chat-labs/open-chat/pull/7079))
+- Avoid exporting the final `ChatFrozen` event when importing a group ([#7206](https://github.com/open-chat-labs/open-chat/pull/7206))
+
+## [[2.0.1516](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1516-group)] - 2024-12-13
+
+### Added
+
+- Update group bot config ([#7018](https://github.com/open-chat-labs/open-chat/pull/7018))
+
+### Changed
+
+- Return bots in community/group selected updates ([#7009](https://github.com/open-chat-labs/open-chat/pull/7009))
+- Include the ledger canister Id in transfer failed error logs ([#7011](https://github.com/open-chat-labs/open-chat/pull/7011))
+- Ensure bot has permission to execute given action ([#7014](https://github.com/open-chat-labs/open-chat/pull/7014))
+- Allow bots to send a subset of message types ([#7016](https://github.com/open-chat-labs/open-chat/pull/7016))
+- Switch to using `PrincipalToStableMemoryMap` ([#7023](https://github.com/open-chat-labs/open-chat/pull/7023))
+- Implement new lightweight search index for searching messages ([#7029](https://github.com/open-chat-labs/open-chat/pull/7029))
+- Make `MessageId` comparisons use their 64bit representation ([#7030](https://github.com/open-chat-labs/open-chat/pull/7030))
+- Record user who added bot to community/group ([#7035](https://github.com/open-chat-labs/open-chat/pull/7035))
+- Bot message visibility tied to initiating user ([#7044](https://github.com/open-chat-labs/open-chat/pull/7044))
+
+## [[2.0.1501](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1501-group)] - 2024-12-06
+
+### Added
+
+- Add/remove bot to/from group ([#6998](https://github.com/open-chat-labs/open-chat/pull/6998))
+
+### Changed
+
+- Remove chat members from being stored on the heap ([#6942](https://github.com/open-chat-labs/open-chat/pull/6942))
+- Check bot + user permissions when issuing JWT ([#6970](https://github.com/open-chat-labs/open-chat/pull/6970))
+- Reduce size of search index when serialized ([#6973](https://github.com/open-chat-labs/open-chat/pull/6973))
+- Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))
+- Reduce size of the `UserCache` ([#6982](https://github.com/open-chat-labs/open-chat/pull/6982))
+
+## [[2.0.1494](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1494-group)] - 2024-12-04
+
+### Changed
+
+- Re-run member migration to stable memory using reduced size format ([#6965](https://github.com/open-chat-labs/open-chat/pull/6965))
+
+## [[2.0.1491](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1491-group)] - 2024-12-03
+
+### Changed
+
+- Remove UserId from member map values since it's already in the keys ([#6945](https://github.com/open-chat-labs/open-chat/pull/6945))
+- Disallow sending prize messages to threads ([#6960](https://github.com/open-chat-labs/open-chat/pull/6960))
+
+### Removed
+
+- Remove a load of unused candid endpoints ([#6947](https://github.com/open-chat-labs/open-chat/pull/6947))
+- Remove references to bot_api_gateway ([#6944](https://github.com/open-chat-labs/open-chat/pull/6944))
+
+### Fixed
+
+- Don't supply a fee when BURNing ([#6948](https://github.com/open-chat-labs/open-chat/pull/6948))
+
+## [[2.0.1487](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1487-group)] - 2024-12-02
+
+### Changed
+
+- Reduce size of chat members when serialized ([#6925](https://github.com/open-chat-labs/open-chat/pull/6925))
+- Consolidate member verification logic into `get_verified_member` ([#6926](https://github.com/open-chat-labs/open-chat/pull/6926))
+- Move members to `MembersMap` in prep for stable memory ([#6927](https://github.com/open-chat-labs/open-chat/pull/6927))
+- Only handle a single bot action ([#6929](https://github.com/open-chat-labs/open-chat/pull/6929))
+- Implement `MembersStableStorage` which stores members in stable memory ([#6931](https://github.com/open-chat-labs/open-chat/pull/6931))
+- Migrate chat members to stable memory using timer job ([#6933](https://github.com/open-chat-labs/open-chat/pull/6933))
+- Export members from stable memory when importing group into community ([#6935](https://github.com/open-chat-labs/open-chat/pull/6935))
+- Make `StableMemoryMap` use strongly typed keys ([#6937](https://github.com/open-chat-labs/open-chat/pull/6937))
+- Read from stable memory members map once migration is complete ([#6938](https://github.com/open-chat-labs/open-chat/pull/6938))
+
+## [[2.0.1480](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1480-group)] - 2024-11-28
+
+### Changed
+
+- Simplify how we store and query proposal votes ([#6906](https://github.com/open-chat-labs/open-chat/pull/6906))
+- Remove member updates after 31 days ([#6907](https://github.com/open-chat-labs/open-chat/pull/6907))
+- Consolidate member updates into a single enum ([#6915](https://github.com/open-chat-labs/open-chat/pull/6915))
+- Remove chat event updates after 31 days ([#6916](https://github.com/open-chat-labs/open-chat/pull/6916))
+
+### Removed
+
+- Remove code to migrate metrics to new reduced size format ([#6901](https://github.com/open-chat-labs/open-chat/pull/6901))
+- Remove code to deduplicate @everyone mentions ([#6901](https://github.com/open-chat-labs/open-chat/pull/6901))
+- Remove the old `gate` field which has been superseded by `gate_config` ([#6902](https://github.com/open-chat-labs/open-chat/pull/6902))
+
+## [[2.0.1476](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1476-group)] - 2024-11-26
+
+### Added
+
+- Add new prize message criteria ([#6831](https://github.com/open-chat-labs/open-chat/pull/6831))
+- Accept calls from the BotApiGateway ([#6846](https://github.com/open-chat-labs/open-chat/pull/6846))
+
+### Changed
+
+- Add cycles balance check to more timer jobs ([#6822](https://github.com/open-chat-labs/open-chat/pull/6822))
+- Add the `BotCommand` access token type ([#6830](https://github.com/open-chat-labs/open-chat/pull/6830))
+- Improve job to delete files after messages are deleted ([#6839](https://github.com/open-chat-labs/open-chat/pull/6839))
+- Add `bot_api_gateway` canisterId to the canister state ([#6842](https://github.com/open-chat-labs/open-chat/pull/6842))
+- Simplify `inspect_message` ([#6847](https://github.com/open-chat-labs/open-chat/pull/6847))
+- Avoid cases where we were iterating over the full chat members map ([#6853](https://github.com/open-chat-labs/open-chat/pull/6853))
+- Take a fee for prize messages and send to treasury ([#6854](https://github.com/open-chat-labs/open-chat/pull/6854))
+- Store @everyone mentions once rather than linking to each user ([#6856](https://github.com/open-chat-labs/open-chat/pull/6856))
+- Deduplicate existing @everyone mentions ([#6857](https://github.com/open-chat-labs/open-chat/pull/6857))
+- Disallow promoting bots to owners ([#6865](https://github.com/open-chat-labs/open-chat/pull/6865))
+- Reduce the number of events stored on the heap in the `HybridMap` ([#6867](https://github.com/open-chat-labs/open-chat/pull/6867))
+- Return `FailedToDeserialize` and log error if unable to read event ([#6873](https://github.com/open-chat-labs/open-chat/pull/6873))
+- Extract stable memory map so it can store additional datasets ([#6876](https://github.com/open-chat-labs/open-chat/pull/6876))
+- Avoid iterating all users when determining who to notify of new message ([#6877](https://github.com/open-chat-labs/open-chat/pull/6877))
+- Make `ChannelId` comparisons use their 32bit representation ([#6885](https://github.com/open-chat-labs/open-chat/pull/6885))
+
+### Removed
+
+- Remove code to migrate events to stable memory ([#6837](https://github.com/open-chat-labs/open-chat/pull/6837))
+- Remove code to migrate to the new thread summary format ([#6862](https://github.com/open-chat-labs/open-chat/pull/6862))
+- Remove any spurious video calls in progress ([#6872](https://github.com/open-chat-labs/open-chat/pull/6872))
+
+### Fixed
+
+- Fix a few upgrades that failed due to overflowing `u32::MAX` ([#6826](https://github.com/open-chat-labs/open-chat/pull/6826))
+
+## [[2.0.1453](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1453-group)] - 2024-11-14
+
+### Changed
+
+- Store events in `HybridMap` which caches latest events on the heap ([#6762](https://github.com/open-chat-labs/open-chat/pull/6762))
+- Reduce size of metrics in memory ([#6765](https://github.com/open-chat-labs/open-chat/pull/6765))
+- Run cycles check (+ other background tasks) when executing timer jobs ([#6815](https://github.com/open-chat-labs/open-chat/pull/6815))
+
+### Removed
+
+- Remove events from being stored on the heap ([#6758](https://github.com/open-chat-labs/open-chat/pull/6758))
+
+## [[2.0.1434](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1434-group)] - 2024-11-07
+
+### Changed
+
+- Consolidate `summary` and `c2c_summary` args ([#6723](https://github.com/open-chat-labs/open-chat/pull/6723))
+- Fix case where some thread messages were not updated in stable memory ([#6736](https://github.com/open-chat-labs/open-chat/pull/6736))
+- Restart migration job if threads need to be updated ([#6757](https://github.com/open-chat-labs/open-chat/pull/6757))
+- Perform cycles check when migrating events to stable memory ([#6757](https://github.com/open-chat-labs/open-chat/pull/6757))
+
+### Fixed
+
+- Fix migrating to stable memory for chats with disappearing messages ([#6746](https://github.com/open-chat-labs/open-chat/pull/6746))
+
+## [[2.0.1424](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1424-group)] - 2024-11-05
+
+### Changed
+
+- Avoid extra key lookup when iterating over events ([#6680](https://github.com/open-chat-labs/open-chat/pull/6680))
+- Read events in batches when performing stable memory garbage collection ([#6682](https://github.com/open-chat-labs/open-chat/pull/6682))
+- Improve efficiency of calculating latest threads per user ([#6687](https://github.com/open-chat-labs/open-chat/pull/6687))
+- Avoid iterating over chat events to load mentions ([#6690](https://github.com/open-chat-labs/open-chat/pull/6690))
+- Read events from stable memory once migration is complete ([#6722](https://github.com/open-chat-labs/open-chat/pull/6722))
+
+## [[2.0.1408](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1408-group)] - 2024-10-24
+
+### Added
+
+- Copy chat events into stable memory ([#6603](https://github.com/open-chat-labs/open-chat/pull/6603))
+- Add more achievements ([#6631](https://github.com/open-chat-labs/open-chat/pull/6631))
+
+### Changed
+
+- Make searching by user and term require matching both + make more efficient ([#6612](https://github.com/open-chat-labs/open-chat/pull/6612))
+- Add `message_id` and `event_index` to `MessageActivityEvent` ([#6623](https://github.com/open-chat-labs/open-chat/pull/6623))
+- Fixes to activity feed ([#6627](https://github.com/open-chat-labs/open-chat/pull/6627))
+- Allow LocalGroupIndex to trigger migration of chat events to stable memory ([#6642](https://github.com/open-chat-labs/open-chat/pull/6642))
+
+### Removed
+
+- Remove `is_bot` which has been supplanted by `user_type` ([#6650](https://github.com/open-chat-labs/open-chat/pull/6650))
+
+### Fixed
+
+- Fix removing link previews ([#6633](https://github.com/open-chat-labs/open-chat/pull/6633))
+- Determine whether c2c call should be retried based on response error ([#6640](https://github.com/open-chat-labs/open-chat/pull/6640))
+- Fix owners not receiving payments for composite payment gates ([#6652](https://github.com/open-chat-labs/open-chat/pull/6652))
+- Don't send notifications to bots ([#6648](https://github.com/open-chat-labs/open-chat/pull/6648))
+- Fix upgrade now that `Thread` message activity event has been deleted ([#6657](https://github.com/open-chat-labs/open-chat/pull/6657))
+
+## [[2.0.1401](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1401-group)] - 2024-10-18
+
+### Changed
+
+- Only deserialize from old log state ([#6616](https://github.com/open-chat-labs/open-chat/pull/6616))
+
+## [[2.0.1398](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1398-group)] - 2024-10-18
+
+### Added
+
+- Add an error log with http endpoint ([#6608](https://github.com/open-chat-labs/open-chat/pull/6608))
+
+### Changed
+
+- Ensure members marked as lapsed in updates queries ([#6573](https://github.com/open-chat-labs/open-chat/pull/6573))
+- Reduce size of responses by only returning UserIds for basic members ([#6577](https://github.com/open-chat-labs/open-chat/pull/6577))
+- Remove `transaction` from serialized PrizeWinner messages ([#6578](https://github.com/open-chat-labs/open-chat/pull/6578))
+- Push activity to users using `GroupedTimerJobQueue` ([#6552](https://github.com/open-chat-labs/open-chat/pull/6552))
+- Return `u128` rather than `Nat` for ICRC2 ledger errors ([#6597](https://github.com/open-chat-labs/open-chat/pull/6597))
+- Lapsed members don't need to be re-invited ([#6602](https://github.com/open-chat-labs/open-chat/pull/6602))
+
+### Fixed
+
+- Fix case where GroupIndex wasn't being notified about gate change ([#6581](https://github.com/open-chat-labs/open-chat/pull/6581))
+
+## [[2.0.1380](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1380-group)] - 2024-10-11
+
+### Added
+
+- Add support for expiring access gates ([#6401](https://github.com/open-chat-labs/open-chat/pull/6401))
+
+### Changed
+
+- Mark prize messages as having ledger error if transfers fail ([#6500](https://github.com/open-chat-labs/open-chat/pull/6500))
+- Add missing MessagePack endpoints ([#6547](https://github.com/open-chat-labs/open-chat/pull/6547))
+- Reduce size of some message types when serialized ([#6559](https://github.com/open-chat-labs/open-chat/pull/6559))
+- Log details whenever a prize claim results in a ledger error ([#6560](https://github.com/open-chat-labs/open-chat/pull/6560))
+
+## [[2.0.1366](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1366-group)] - 2024-10-02
+
+### Added
+
+- Add MessagePack versions of all endpoints ([#6463](https://github.com/open-chat-labs/open-chat/pull/6463))
+
+### Changed
+
+- Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
+- Simplify prize winner messages to reduce size (part 1) ([#6449](https://github.com/open-chat-labs/open-chat/pull/6449))
+- Simplify search logic and move it into `SearchIndex` struct ([#6465](https://github.com/open-chat-labs/open-chat/pull/6465))
+- Return owned values from `EventsMap` in prep for switch to stable memory ([#6469](https://github.com/open-chat-labs/open-chat/pull/6469))
+- Add serde default attribute in preparation for skipping serialization if default ([#6475](https://github.com/open-chat-labs/open-chat/pull/6475))
+
+## [[2.0.1352](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1352-group)] - 2024-09-20
+
+### Changed
+
+- Update `send_message` args to work with MessagePack ([#6425](https://github.com/open-chat-labs/open-chat/pull/6315))
+- Add `winner_count` to prizes enabling us to stop sending all winners ([#6426](https://github.com/open-chat-labs/open-chat/pull/6426))
+
+### Fixed
+
+- Refund prize messages that are removed due to disappearing messages ([#6427](https://github.com/open-chat-labs/open-chat/pull/6427))
+
+## [[2.0.1350](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1350-group)] - 2024-09-16
+
+### Changed
+
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+- Disallow sending messages to chats that have an external url set ([#6369](https://github.com/open-chat-labs/open-chat/pull/6369))
+- Change `cancel_invites` to mark group active ([#6390](https://github.com/open-chat-labs/open-chat/pull/6390))
+
+### Fixed
+
+- Ensure invited users can't contain duplicates ([#6333](https://github.com/open-chat-labs/open-chat/pull/6333))
+
+## [[2.0.1327](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1327-group)] - 2024-09-03
+
+### Changed
+
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+- Mark ProposalsBot as OC controlled bot ([#6287](https://github.com/open-chat-labs/open-chat/pull/6287))
+
+## [[2.0.1295](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1295-group)] - 2024-08-16
+
+### Changed
+
+- Support next batch of achievements ([#6230](https://github.com/open-chat-labs/open-chat/pull/6230))
+- Remove references to deleted users ([#6241](https://github.com/open-chat-labs/open-chat/pull/6241))
+
+## [[2.0.1273](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1273-group)] - 2024-07-31
+
+### Changed
+
+- Change max channel name length from 25 to 40 chars ([#6138](https://github.com/open-chat-labs/open-chat/pull/6138))
+- Configure message visibility to non-members of public groups ([#6152](https://github.com/open-chat-labs/open-chat/pull/6152))
+
+## [[2.0.1262](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1262-group)] - 2024-07-26
+
+### Added
+
+- Add `Locked` gate ([#6095](https://github.com/open-chat-labs/open-chat/pull/6095))
+
+### Changed
+
+- Fix fee then retry transfer if fee too high ([#6063](https://github.com/open-chat-labs/open-chat/pull/6063))
+- Handle transfer fee changing in either direction ([#6064](https://github.com/open-chat-labs/open-chat/pull/6064))
+- Bypass gates if user is invited ([#6110](https://github.com/open-chat-labs/open-chat/pull/6110))
+- Return `is_invited` when previewing a group ([#6113](https://github.com/open-chat-labs/open-chat/pull/6113))
+- Use `UserType` rather than `is_bot` and `is_oc_controlled_bot` ([#6116](https://github.com/open-chat-labs/open-chat/pull/6116))
+- Allow OC controlled bots to send crypto transfer messages ([#6117](https://github.com/open-chat-labs/open-chat/pull/6117))
+
+### Fixed
+
+- Avoid getting stuck in infinite loop trying to refund prizes ([#6080](https://github.com/open-chat-labs/open-chat/pull/6080))
+
+## [[2.0.1245](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1245-group)] - 2024-07-18
+
+### Added
+
+- Support gates with multiple verifiable credentials ([#6029](https://github.com/open-chat-labs/open-chat/pull/6029))
+- Allow UserIndex to send Group/Channel messages as the OpenChat Bot ([#6048](https://github.com/open-chat-labs/open-chat/pull/6048))
+
+### Changed
+
+- Added support for a bunch more achievements ([#6033](https://github.com/open-chat-labs/open-chat/pull/6033))
+
+## [[2.0.1234](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1234-group)] - 2024-07-09
+
+### Added
+
+- Add `LifetimeDiamondMembership` access gate ([#5986](https://github.com/open-chat-labs/open-chat/pull/5986))
+- Add `UniquePerson` access gate ([#5993](https://github.com/open-chat-labs/open-chat/pull/5993))
+- Support composite access gates ([#5988](https://github.com/open-chat-labs/open-chat/pull/5988))
+
+## [[2.0.1195](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1195-group)] - 2024-06-06
+
+### Added
+
+- Implement validation of verified credential gates ([#5825](https://github.com/open-chat-labs/open-chat/pull/5825))
+- Support sending transactions using ICRC2 ([#5854](https://github.com/open-chat-labs/open-chat/pull/5854))
+
+### Changed
+
+- Store IC root key in groups and communities ([#5816](https://github.com/open-chat-labs/open-chat/pull/5816))
+- Store `internet_identity_canister_id` in groups and communities ([#5823](https://github.com/open-chat-labs/open-chat/pull/5823))
+- Default video call max duration to 1 hour ([#5824](https://github.com/open-chat-labs/open-chat/pull/5824))
+- Add `credential_name` to verified credential access gates ([#5853](https://github.com/open-chat-labs/open-chat/pull/5853))
+
+### Removed
+
+- Remove old `prizes` field ([#5819](https://github.com/open-chat-labs/open-chat/pull/5819))
+
+### Fixed
+
+- Fix old failing transactions by updating `created` date ([#5799](https://github.com/open-chat-labs/open-chat/pull/5799))
+- One time job to mark old video calls as ended ([#5827](https://github.com/open-chat-labs/open-chat/pull/5827))
+
+## [[2.0.1171](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1171-group)] - 2024-05-13
+
+### Changed
+
+- Support prize messages with 128bit prize amounts ([#5729](https://github.com/open-chat-labs/open-chat/pull/5729))
+- Don't retry c2c calls after getting a `DestinationInvalid` error ([#5732](https://github.com/open-chat-labs/open-chat/pull/5732))
+- Expose count of timer jobs in metrics ([#5744](https://github.com/open-chat-labs/open-chat/pull/5744))
+- Don't retry c2c calls after getting a `CanisterMethodNotFound` error ([#5747](https://github.com/open-chat-labs/open-chat/pull/5747))
+
+## [[2.0.1153](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1153-group)] - 2024-04-23
+
+### Added
+
+- Add `video_call_participants` endpoint ([#5684](https://github.com/open-chat-labs/open-chat/pull/5684))
+
+### Changed
+
+- Add `block_level_markdown` flag to messages ([#5680](https://github.com/open-chat-labs/open-chat/pull/5680))
+- Store presence kind of each video call participant ([#5682](https://github.com/open-chat-labs/open-chat/pull/5682))
+- Add `block_level_markdown` to edit message args ([#5697](https://github.com/open-chat-labs/open-chat/pull/5697))
+- Allow non-Diamond members to start video calls ([#5706](https://github.com/open-chat-labs/open-chat/pull/5706))
+- Allow members to make video calls in existing private chats ([#5714](https://github.com/open-chat-labs/open-chat/pull/5714))
+- Update `event_store` packages to v0.1.0 ([#5715](https://github.com/open-chat-labs/open-chat/pull/5715))
+- Include both heap and stable memory in cycles balance check ([#5718](https://github.com/open-chat-labs/open-chat/pull/5718))
+
+### Fixed
+
+- Fix payments which are failing due to being too old ([#5681](https://github.com/open-chat-labs/open-chat/pull/5681))
+- One time job to mark video calls ended if message deleted ([#5714](https://github.com/open-chat-labs/open-chat/pull/5714))
+
+## [[2.0.1140](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1140-group)] - 2024-04-10
+
+### Changed
+
 - Update `event_store` packages to latest version ([#5593](https://github.com/open-chat-labs/open-chat/pull/5593))
+- Disallow deleting video call message if the call is still in progress ([#5607](https://github.com/open-chat-labs/open-chat/pull/5607))
+- Refactor `c2c_can_issue_access_token` ([#5613](https://github.com/open-chat-labs/open-chat/pull/5613))
+- Add `call_type` to `VideoCall` ([#5661](https://github.com/open-chat-labs/open-chat/pull/5661))
+- Include `call_type` in request to get video call access token ([#5662](https://github.com/open-chat-labs/open-chat/pull/5662))
+
+### Fixed
+
+- One time job to mark video calls ended if message deleted ([#5612](https://github.com/open-chat-labs/open-chat/pull/5612))
+- Fix DKP transfers which have the old fee ([#5614](https://github.com/open-chat-labs/open-chat/pull/5614))
 
 ## [[2.0.1121](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1121-group)] - 2024-03-21
 
@@ -59,7 +808,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Set `anonymized_id` in `post_upgrade` ([#5478](https://github.com/open-chat-labs/open-chat/pull/5478))
 - Simplify `start_video_call` responses ([#5479](https://github.com/open-chat-labs/open-chat/pull/5479))
 - Join video calls by `message_id` rather than `message_index` ([#5482](https://github.com/open-chat-labs/open-chat/pull/5482))
-- Add `start_video_call` permission  ([#5488](https://github.com/open-chat-labs/open-chat/pull/5488))
+- Add `start_video_call` permission ([#5488](https://github.com/open-chat-labs/open-chat/pull/5488))
 - Push message events from within `chat_events` ([#5494](https://github.com/open-chat-labs/open-chat/pull/5494))
 
 ## [[2.0.1076](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1076-group)] - 2024-02-22
@@ -372,7 +1121,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add language field to community ([#3923](https://github.com/open-chat-labs/open-chat/pull/3923))
-  
+
 ### Changed
 
 - Refactored `claim_prize` ([#3854](https://github.com/open-chat-labs/open-chat/pull/3854))
@@ -467,7 +1216,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Split common group logic into new `group_chat_core` library ([#3620](https://github.com/open-chat-labs/open-chat/pull/3620)), ([#3622](https://github.com/open-chat-labs/open-chat/pull/3622)), ([#3624](https://github.com/open-chat-labs/open-chat/pull/3624)), ([#3626](https://github.com/open-chat-labs/open-chat/pull/3626)), ([#3633](https://github.com/open-chat-labs/open-chat/pull/3633)), ([#3634](https://github.com/open-chat-labs/open-chat/pull/3634)), ([#3662](https://github.com/open-chat-labs/open-chat/pull/3662)),  ([#3665](https://github.com/open-chat-labs/open-chat/pull/3665)), ([#3667](https://github.com/open-chat-labs/open-chat/pull/3667)), ([#3668](https://github.com/open-chat-labs/open-chat/pull/3668))
+- Split common group logic into new `group_chat_core` library ([#3620](https://github.com/open-chat-labs/open-chat/pull/3620)), ([#3622](https://github.com/open-chat-labs/open-chat/pull/3622)), ([#3624](https://github.com/open-chat-labs/open-chat/pull/3624)), ([#3626](https://github.com/open-chat-labs/open-chat/pull/3626)), ([#3633](https://github.com/open-chat-labs/open-chat/pull/3633)), ([#3634](https://github.com/open-chat-labs/open-chat/pull/3634)), ([#3662](https://github.com/open-chat-labs/open-chat/pull/3662)), ([#3665](https://github.com/open-chat-labs/open-chat/pull/3665)), ([#3667](https://github.com/open-chat-labs/open-chat/pull/3667)), ([#3668](https://github.com/open-chat-labs/open-chat/pull/3668))
 - Simplify `c2c_update_proposals` ([#3621](https://github.com/open-chat-labs/open-chat/pull/3621))
 - Simplify `remove_participant` ([#3641](https://github.com/open-chat-labs/open-chat/pull/3641))
 - Avoid multi subnet calls when (un)muting group notifications ([#3685](https://github.com/open-chat-labs/open-chat/pull/3685))

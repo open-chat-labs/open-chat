@@ -33,7 +33,8 @@ pub struct PendingPayment {
 
 #[derive(Serialize, Deserialize)]
 pub enum PaymentRecipient {
-    Treasury,
+    SnsTreasury,
+    TreasuryCanister,
     Member(UserId),
     Account(Account),
 }

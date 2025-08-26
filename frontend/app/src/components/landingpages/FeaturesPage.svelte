@@ -1,28 +1,28 @@
 <script lang="ts">
-    import Feature from "./Feature.svelte";
     import { communityThemes, currentTheme, themes } from "../../theme/themes";
+    import Feature from "./Feature.svelte";
 
-    import { mobileWidth, toPixel, availableHeight } from "../../stores/screenDimensions";
-    import { menuStore } from "../../stores/menu";
+    import { availableHeight, mobileWidth, toPixel } from "openchat-client";
+    import { portalState } from "../portalState.svelte";
 
-    let scrollTop = 0;
+    let scrollTop = $state(0);
     let phoneBorder = 5;
-    let windowHeight = window.innerHeight;
+    let windowHeight = $state(window.innerHeight);
     let menuHeight = toPixel(5);
 
     // all the crazy calculations
-    $: sectionHeight = $availableHeight;
-    $: phoneHeight = $mobileWidth ? $availableHeight * 0.7 : 750;
-    $: phoneTop = (sectionHeight - phoneHeight) / 2 + menuHeight;
-    $: phoneWidth = phoneHeight * 0.5333;
-    $: cssHeight = phoneHeight + phoneBorder * 2;
-    $: cssWidth = phoneWidth + phoneBorder * 2;
-    $: scrollOffset = (sectionHeight - cssHeight) / 2;
+    let sectionHeight = $derived($availableHeight);
+    let phoneHeight = $derived($mobileWidth ? $availableHeight * 0.7 : 750);
+    let phoneTop = $derived((sectionHeight - phoneHeight) / 2 + menuHeight);
+    let phoneWidth = $derived(phoneHeight * 0.5333);
+    let cssHeight = $derived(phoneHeight + phoneBorder * 2);
+    let cssWidth = $derived(phoneWidth + phoneBorder * 2);
+    let scrollOffset = $derived((sectionHeight - cssHeight) / 2);
 
     const black = "#242834";
 
     function onScroll() {
-        menuStore.hideMenu();
+        portalState.close();
         scrollTop = window.scrollY;
     }
 
@@ -32,9 +32,9 @@
         return n;
     }
 
-    const screenshotMap: Record<string, { url: string; alt: string }[]> = {};
+    const screenshotMap: Record<string, { url: string; alt: string }[]> = $state({});
 
-    [...communityThemes, themes.dark, themes.light].forEach((theme) => {
+    [...communityThemes, themes.dark, themes.white].forEach((theme) => {
         screenshotMap[theme.name] = [
             {
                 url: `/assets/screenshots/features/communities_${theme.mode}.webp`,
@@ -63,10 +63,10 @@
         ];
     });
 
-    $: screenshots = screenshotMap[$currentTheme.name] ?? [];
+    let screenshots = $derived(screenshotMap[$currentTheme.name] ?? []);
 </script>
 
-<svelte:window bind:innerHeight={windowHeight} on:scroll={onScroll} />
+<svelte:window bind:innerHeight={windowHeight} onscroll={onScroll} />
 
 <div
     class="phone"

@@ -1,31 +1,38 @@
 <script lang="ts">
     import type { ChatIdentifier, OpenChat, ThreadSummary } from "openchat-client";
-    import { AvatarSize } from "openchat-client";
+    import {
+        allUsersStore,
+        AvatarSize,
+        messagesRead,
+        mobileWidth,
+        threadsFollowedByMeStore,
+    } from "openchat-client";
+    import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { pop } from "../../utils/transition";
-    import { mobileWidth } from "../../stores/screenDimensions";
     import Avatar from "../Avatar.svelte";
-    import { getContext, onMount } from "svelte";
 
     const client = getContext<OpenChat>("client");
 
-    export let threadSummary: ThreadSummary;
-    export let indent: boolean;
-    export let me: boolean;
-    export let selected: boolean;
-    export let url: string;
-    export let chatId: ChatIdentifier;
-    export let threadRootMessageIndex: number;
+    interface Props {
+        threadSummary: ThreadSummary;
+        indent: boolean;
+        me: boolean;
+        selected: boolean;
+        url: string;
+        chatId: ChatIdentifier;
+        threadRootMessageIndex: number;
+    }
 
-    $: messagesRead = client.messagesRead;
-    $: userStore = client.userStore;
-    $: threadsFollowedByMeStore = client.threadsFollowedByMeStore;
-    $: isFollowedByMe = $threadsFollowedByMeStore.get(chatId)?.has(threadRootMessageIndex) ?? false;
-    $: lastMessageIndex = threadSummary.numberOfReplies - 1; //using this as a surrogate for message index for now
-    $: unreadCount = client.unreadThreadMessageCount(
-        chatId,
-        threadRootMessageIndex,
-        lastMessageIndex,
+    let { threadSummary, indent, me, selected, url, chatId, threadRootMessageIndex }: Props =
+        $props();
+
+    let isFollowedByMe = $derived(
+        $threadsFollowedByMeStore.get(chatId)?.has(threadRootMessageIndex) ?? false,
+    );
+    let lastMessageIndex = $derived(threadSummary.numberOfReplies - 1); //using this as a surrogate for message index for now
+    let unreadCount = $derived(
+        client.unreadThreadMessageCount(chatId, threadRootMessageIndex, lastMessageIndex),
     );
 
     onMount(() => {
@@ -44,7 +51,7 @@
         <div class="thread-avatars">
             {#each [...threadSummary.participantIds].slice(0, 5) as participantId}
                 <Avatar
-                    url={client.userAvatarUrl($userStore[participantId])}
+                    url={client.userAvatarUrl($allUsersStore.get(participantId))}
                     userId={participantId}
                     size={AvatarSize.Tiny} />
             {/each}
@@ -145,6 +152,7 @@
         &.selected {
             background: var(--notificationBar-bg);
             color: var(--notificationBar-txt);
+            border: 1px solid transparent;
         }
 
         .thread-avatars {

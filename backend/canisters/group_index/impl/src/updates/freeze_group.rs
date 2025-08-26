@@ -1,12 +1,12 @@
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
 use candid::Principal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::{freeze_group, unfreeze_group};
-use ic_cdk_macros::update;
 use types::{CanisterId, ChatId, FrozenGroupInfo};
-use user_index_canister_c2c_client::{lookup_user, LookupUserError};
+use user_index_canister_c2c_client::lookup_user;
 
-#[update]
+#[update(msgpack = true)]
 #[trace]
 async fn freeze_group(args: freeze_group::Args) -> freeze_group::Response {
     use group_index_canister::freeze_group::Response::*;
@@ -22,9 +22,9 @@ async fn freeze_group(args: freeze_group::Args) -> freeze_group::Response {
     };
 
     let user_id = match lookup_user(caller, user_index_canister_id).await {
-        Ok(user) if user.is_platform_moderator => user.user_id,
-        Ok(_) | Err(LookupUserError::UserNotFound) => return NotAuthorized,
-        Err(LookupUserError::InternalError(error)) => return InternalError(error),
+        Ok(Some(user)) if user.is_platform_moderator => user.user_id,
+        Ok(_) => return NotAuthorized,
+        Err(error) => return InternalError(format!("{error:?}")),
     };
 
     let c2c_args = group_canister::c2c_freeze_group::Args {
@@ -72,7 +72,7 @@ async fn freeze_group(args: freeze_group::Args) -> freeze_group::Response {
     }
 }
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn unfreeze_group(args: unfreeze_group::Args) -> unfreeze_group::Response {
     use group_index_canister::unfreeze_group::Response::*;
@@ -87,9 +87,9 @@ async fn unfreeze_group(args: unfreeze_group::Args) -> unfreeze_group::Response 
     };
 
     let user_id = match lookup_user(caller, user_index_canister_id).await {
-        Ok(user) if user.is_platform_moderator => user.user_id,
-        Ok(_) | Err(LookupUserError::UserNotFound) => return NotAuthorized,
-        Err(LookupUserError::InternalError(error)) => return InternalError(error),
+        Ok(Some(user)) if user.is_platform_moderator => user.user_id,
+        Ok(_) => return NotAuthorized,
+        Err(error) => return InternalError(format!("{error:?}")),
     };
 
     let c2c_args = group_canister::c2c_unfreeze_group::Args { caller: user_id };

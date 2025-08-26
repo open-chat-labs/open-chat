@@ -1,136 +1,197 @@
 <script lang="ts">
-    import SectionHeader from "../../SectionHeader.svelte";
     import {
-        type UserSummary,
-        type OpenChat,
-        AvatarSize,
+        type BotClientConfigData,
         type ModerationFlag,
         ModerationFlags,
+        type OpenChat,
+        ROLE_NONE,
+        type UserSummary,
+        adultEnabledStore,
+        anonUserStore,
+        canExtendDiamondStore,
+        communitiesStore,
+        hideMessagesFromDirectBlocked,
+        iconSize,
+        isDiamondStore,
+        isLifetimeDiamondStore,
+        moderationFlagsEnabledStore,
+        notificationStatus,
+        notificationsSupported,
+        offensiveEnabledStore,
+        publish,
+        referralsStore,
+        sortedCommunitiesStore,
+        suspendedUserStore,
+        underReviewEnabledStore,
+        userMetricsStore,
     } from "openchat-client";
-    import { isTouchDevice } from "../../../utils/devices";
+    import { ErrorCode, type PublicProfile } from "openchat-shared";
+    import { getContext, onMount } from "svelte";
+    import { _, locale } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
-    import HoverIcon from "../../HoverIcon.svelte";
-    import StorageUsage from "../../StorageUsage.svelte";
-    import EditableAvatar from "../../EditableAvatar.svelte";
-    import UsernameInput from "../../UsernameInput.svelte";
-    import Avatar from "../../Avatar.svelte";
-    import Button from "../../Button.svelte";
-    import Legend from "../../Legend.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
-    import Select from "../../Select.svelte";
-    import TextArea from "../../TextArea.svelte";
-    import CollapsibleCard from "../../CollapsibleCard.svelte";
-    import FontSize from "./FontSize.svelte";
-    import Stats from "../Stats.svelte";
-    import { notificationsSupported } from "../../../utils/notifications";
-    import { _, locale } from "svelte-i18n";
-    import { iconSize } from "../../../stores/iconSize";
+    import { menuCloser } from "../../../actions/closeMenu";
     import {
+        editmode,
+        i18nKey,
+        interpolate,
+        setLocale,
+        supportedLanguages,
+    } from "../../../i18n/i18n";
+    import {
+        accountsSectionOpen,
         advancedSectionOpen,
         appearanceSectionOpen,
         chatsSectionOpen,
         dclickReply,
-        restrictedSectionOpen,
-        videoSectionOpen,
+        deleteAccountSectionOpen,
         enterSend,
+        linkDeviceSectionOpen,
         lowBandwidth,
         referralOpen,
+        renderPreviews,
+        restrictedSectionOpen,
         statsSectionOpen,
         storageSectionOpen,
         userInfoOpen,
-        renderPreviews,
+        verificationSectionOpen,
+        videoSectionOpen,
     } from "../../../stores/settings";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
-    import Toggle from "../../Toggle.svelte";
-    import { editmode, i18nKey, setLocale, supportedLanguages } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
-    import ErrorMessage from "../../ErrorMessage.svelte";
-    import ReferUsers from "./ReferUsers.svelte";
-    import Expiry from "../upgrade/Expiry.svelte";
+    import { uniquePersonGate } from "../../../utils/access";
+    import { isTouchDevice } from "../../../utils/devices";
+    import Button from "../../Button.svelte";
+    import ButtonGroup from "../../ButtonGroup.svelte";
+    import CollapsibleCard from "../../CollapsibleCard.svelte";
     import DisplayNameInput from "../../DisplayNameInput.svelte";
-    import CommunityProfile from "./CommunityProfile.svelte";
-    import ThemeSelector from "./ThemeSelector.svelte";
-    import { menuCloser } from "../../../actions/closeMenu";
+    import ErrorMessage from "../../ErrorMessage.svelte";
+    import HoverIcon from "../../HoverIcon.svelte";
+    import Verified from "../../icons/Verified.svelte";
+    import Legend from "../../Legend.svelte";
+    import SectionHeader from "../../SectionHeader.svelte";
+    import Select from "../../Select.svelte";
+    import StorageUsage from "../../StorageUsage.svelte";
+    import TextArea from "../../TextArea.svelte";
+    import Toggle from "../../Toggle.svelte";
     import Translatable from "../../Translatable.svelte";
+    import UsernameInput from "../../UsernameInput.svelte";
+    import Markdown from "../Markdown.svelte";
+    import Stats from "../Stats.svelte";
+    import Expiry from "../upgrade/Expiry.svelte";
+    import AccountLinkingCode from "./AccountLinkingCode.svelte";
+    import BotConfigData from "./BotConfigData.svelte";
+    import ChitEvents from "./ChitEvents.svelte";
+    import CommunityProfile from "./CommunityProfile.svelte";
+    import ConfirmDeleteAccount from "./ConfirmDeleteAccount.svelte";
+    import FontSize from "./FontSize.svelte";
+    import LinkedAuthAccounts from "./LinkedAuthAccounts.svelte";
+    import ReferredUsersList from "./ReferredUsersList.svelte";
+    import ReferUsers from "./ReferUsers.svelte";
+    import ThemeSelector from "./ThemeSelector.svelte";
+    import UserProfileCard from "./UserProfileCard.svelte";
     import VideoCallSettings from "./VideoCallSettings.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
     const MAX_BIO_LENGTH = 2000;
 
-    export let user: UserSummary;
-
-    let originalBio = "";
-    let userbio = "";
-    let selectedLocale = ($locale as string).substring(0, 2);
-    let usernameError: string | undefined = undefined;
-    let displayNameError: string | undefined = undefined;
-    let bioError: string | undefined = undefined;
-    let saving = false;
-    let username = "";
-    let usernameValid = true;
-    let displayName: string | undefined = undefined;
-    let displayNameValid = true;
-    let checkingUsername: boolean;
-    let view: "global" | "communities" = "global";
-    let selectedCommunityId = "";
-
-    $: identityState = client.identityState;
-    $: originalUsername = user?.username ?? "";
-    $: originalDisplayName = user?.displayName ?? undefined;
-    $: moderationFlags = client.moderationFlags;
-    $: adultEnabled = client.hasModerationFlag($moderationFlags, ModerationFlags.Adult);
-    $: offensiveEnabled = client.hasModerationFlag($moderationFlags, ModerationFlags.Offensive);
-    $: underReviewEnabled = client.hasModerationFlag($moderationFlags, ModerationFlags.UnderReview);
-    $: communities = client.communities;
-    $: communitiesList = client.communitiesList;
-    $: selectedCommunity = $communities.get({
-        kind: "community",
-        communityId: selectedCommunityId,
-    });
-    $: anonUser = client.anonUser;
-    $: suspendedUser = client.suspendedUser;
-    $: readonly = $suspendedUser || $anonUser;
-
-    //@ts-ignore
-    let version = window.OPENCHAT_WEBSITE_VERSION;
-
-    $: userMetrics = client.userMetrics;
-    $: notificationStatus = client.notificationStatus;
-    $: isDiamond = client.isDiamond;
-    $: isLifetimeDiamond = client.isLifetimeDiamond;
-    $: canExtendDiamond = client.canExtendDiamond;
-    $: {
-        setLocale(selectedLocale);
+    interface Props {
+        user: UserSummary;
+        onUnsubscribeNotifications: () => void;
+        onCloseProfile: () => void;
     }
 
-    $: bioDirty = userbio !== originalBio;
-    $: usernameDirty = username !== originalUsername;
-    $: displayNameDirty = displayName !== originalDisplayName;
-    $: buttonEnabled =
+    let { user, onCloseProfile, onUnsubscribeNotifications }: Props = $props();
+
+    let userbio = $state("");
+    let selectedLocale = $state(($locale as string).substring(0, 2));
+    let usernameError: string | undefined = $state(undefined);
+    let displayNameError: string | undefined = $state(undefined);
+    let bioError: string | undefined = $state(undefined);
+    let saving = $state(false);
+    let username = $state("");
+    let usernameValid = $state(true);
+    let displayName: string | undefined = $state(undefined);
+    let displayNameValid = $state(true);
+    let checkingUsername: boolean = $state(false);
+    let view: "global" | "communities" | "chit" = $state("global");
+    let selectedCommunityId = $state("");
+    let deleting = $state(false);
+    let confirmDelete = $state(false);
+    let botConfigData: BotClientConfigData | undefined = $state(undefined);
+
+    let originalUsername = $derived(user?.username ?? "");
+    let originalDisplayName = $derived(user?.displayName ?? undefined);
+    let selectedCommunity = $derived(
+        $communitiesStore.get({
+            kind: "community",
+            communityId: selectedCommunityId,
+        }),
+    );
+    let readonly = $derived($suspendedUserStore || $anonUserStore);
+    let verified = $derived(user.isUniquePerson);
+
+    //@ts-ignore
+    let version = window.OC_WEBSITE_VERSION;
+
+    $effect(() => {
+        setLocale(selectedLocale);
+    });
+
+    let originalProfile = $state<PublicProfile>({
+        username: "",
+        displayName: undefined,
+        bio: "",
+        isPremium: false,
+        phoneIsVerified: false,
+        created: 0n,
+    });
+    let candidateProfile: PublicProfile = $derived.by(() => {
+        return {
+            ...originalProfile,
+            username: username,
+            displayName: displayName,
+            bio: userbio,
+        };
+    });
+    let bioDirty = $derived(userbio !== originalProfile.bio);
+    let usernameDirty = $derived(username !== originalUsername);
+    let displayNameDirty = $derived(displayName !== originalDisplayName);
+    let buttonEnabled = $derived(
         usernameValid &&
-        displayNameValid &&
-        bioError === undefined &&
-        (bioDirty || usernameDirty || displayNameDirty) &&
-        !saving &&
-        !readonly;
-    $: canEditTranslations = !$locale?.startsWith("en");
+            displayNameValid &&
+            bioError === undefined &&
+            (bioDirty || usernameDirty || displayNameDirty) &&
+            !saving &&
+            !readonly,
+    );
+    let canEditTranslations = $derived(!$locale?.startsWith("en"));
+    let referredUserIds = $derived(new Set($referralsStore.map((r) => r.userId)));
 
     onMount(() => {
-        if (!$anonUser) {
-            client.getBio().then((bio) => {
-                originalBio = userbio = bio;
+        if (!$anonUserStore) {
+            client.getPublicProfile(user.userId).subscribe({
+                onResult: (profile) => {
+                    if (profile) {
+                        originalProfile = profile;
+                        userbio = profile.bio;
+                    }
+                },
             });
         }
     });
 
-    function toggleModerationFlag(flag: ModerationFlag) {
-        client.setModerationFlags($moderationFlags ^ flag);
+    function onBackgroundImageUpdated(blobId: bigint) {
+        originalProfile.backgroundId = blobId;
     }
 
-    function saveUser() {
-        if ($anonUser) return;
+    function toggleModerationFlag(flag: ModerationFlag) {
+        client.setModerationFlags($moderationFlagsEnabledStore ^ flag);
+    }
+
+    function saveUser(e: Event) {
+        e.preventDefault();
+
+        if ($anonUserStore) return;
 
         saving = true;
         usernameError = undefined;
@@ -142,10 +203,10 @@
                 client
                     .setBio(userbio)
                     .then((resp) => {
-                        if (resp === "bio_too_long") {
+                        if (resp.kind === "error" && resp.code === ErrorCode.TextTooLong) {
                             bioError = "register.bioTooLong";
                         } else {
-                            originalBio = userbio;
+                            originalProfile.bio = userbio;
                         }
                     })
                     .catch((err) => {
@@ -212,20 +273,8 @@
         if ($notificationStatus !== "granted") {
             client.askForNotificationPermission();
         } else {
-            dispatch("unsubscribeNotifications");
+            onUnsubscribeNotifications();
         }
-    }
-
-    function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
-        client.setUserAvatar(ev.detail.data, ev.detail.url).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast(i18nKey("avatarUpdateFailed"));
-            }
-        });
-    }
-
-    function closeProfile() {
-        dispatch("closeProfile");
     }
 
     function onCopy() {
@@ -233,23 +282,36 @@
             toastStore.showSuccessToast(i18nKey("userIdCopiedToClipboard"));
         });
     }
+
+    function getBotConfig() {
+        client
+            .getBotConfig()
+            .then((config) => (botConfigData = config))
+            .catch((err) => {
+                toastStore.showFailureToast(i18nKey("bots.config.failure"), err);
+            });
+    }
 </script>
+
+{#if confirmDelete}
+    <ConfirmDeleteAccount bind:deleting onClose={() => (confirmDelete = false)} />
+{/if}
 
 <SectionHeader border={false} flush shadow>
     <h4 class="title"><Translatable resourceKey={i18nKey("profile.title")} /></h4>
-    <span title={$_("close")} class="close" on:click={closeProfile}>
+    <span title={$_("close")} class="close" onclick={onCloseProfile}>
         <HoverIcon>
             <Close size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
     </span>
 </SectionHeader>
 
-{#if !$anonUser}
+{#if !$anonUserStore}
     <div class="tabs">
         <div
             tabindex="0"
             role="button"
-            on:click={() => (view = "global")}
+            onclick={() => (view = "global")}
             class:selected={view === "global"}
             class="tab">
             <Translatable resourceKey={i18nKey("profile.global")} />
@@ -257,38 +319,44 @@
         <div
             tabindex="0"
             role="button"
-            on:click={() => (view = "communities")}
+            onclick={() => (view = "communities")}
             class:selected={view === "communities"}
             class="tab">
             <Translatable resourceKey={i18nKey("communities.communityLabel")} />
         </div>
+        <div
+            tabindex="0"
+            role="button"
+            onclick={() => (view = "chit")}
+            class:selected={view === "chit"}
+            class="tab">
+            <Translatable resourceKey={i18nKey("CHIT")} />
+        </div>
     </div>
 {/if}
 
+{#if botConfigData !== undefined}
+    <BotConfigData data={botConfigData} onClose={() => (botConfigData = undefined)} />
+{/if}
+
 {#if view === "global"}
-    <form use:menuCloser class="user-form" on:submit|preventDefault={saveUser}>
+    <form use:menuCloser class="user-form" onsubmit={saveUser}>
         <div class="user">
             <CollapsibleCard
-                on:toggle={userInfoOpen.toggle}
+                onToggle={userInfoOpen.toggle}
                 open={$userInfoOpen}
                 headerText={i18nKey("userInfoHeader")}>
-                <div class="avatar">
-                    {#if readonly}
-                        <Avatar
-                            url={client.userAvatarUrl(user)}
-                            userId={user.userId}
-                            size={AvatarSize.Large} />
-                    {:else}
-                        <EditableAvatar
-                            overlayIcon
-                            image={client.userAvatarUrl(user)}
-                            on:imageSelected={userAvatarSelected} />
-                    {/if}
+                <div class="profile-card">
+                    <UserProfileCard
+                        {onBackgroundImageUpdated}
+                        profile={candidateProfile}
+                        {user}
+                        userProfileMode></UserProfileCard>
                 </div>
-                {#if $anonUser}
+                {#if $anonUserStore}
                     <div class="guest">
                         <p><Translatable resourceKey={i18nKey("guestUser")} /></p>
-                        <Button on:click={() => identityState.set({ kind: "logging_in" })}
+                        <Button onClick={() => client.updateIdentityState({ kind: "logging_in" })}
                             ><Translatable resourceKey={i18nKey("login")} /></Button>
                     </div>
                 {:else}
@@ -309,7 +377,6 @@
                     </UsernameInput>
                     <Legend label={i18nKey("displayName")} rules={i18nKey("displayNameRules")} />
                     <DisplayNameInput
-                        on:upgrade
                         {client}
                         {originalDisplayName}
                         disabled={readonly}
@@ -344,9 +411,48 @@
                 {/if}
             </CollapsibleCard>
         </div>
+        {#if !$anonUserStore && uniquePersonGate.enabled}
+            <div class="verification">
+                <CollapsibleCard
+                    onToggle={verificationSectionOpen.toggle}
+                    open={$verificationSectionOpen}
+                    headerText={i18nKey("human.verification")}>
+                    {#if verified}
+                        <div class="verified">
+                            <div class="icon">
+                                <Verified
+                                    size={"large"}
+                                    {verified}
+                                    tooltip={i18nKey("human.verified")} />
+                            </div>
+                            <div class="msg">
+                                <Translatable resourceKey={i18nKey("human.already")} />
+                            </div>
+                        </div>
+                    {:else}
+                        <Translatable resourceKey={i18nKey("human.notVerified")} />
+                        <div class="full-width-btn">
+                            <Button onClick={() => publish("verifyHumanity")} fill small>
+                                <Translatable resourceKey={i18nKey("human.verify")} />
+                            </Button>
+                        </div>
+                    {/if}
+                </CollapsibleCard>
+            </div>
+        {/if}
+        {#if !$anonUserStore}
+            <div class="linked-accounts">
+                <CollapsibleCard
+                    onToggle={accountsSectionOpen.toggle}
+                    open={$accountsSectionOpen}
+                    headerText={i18nKey("identity.linkedAccounts.section")}>
+                    <LinkedAuthAccounts />
+                </CollapsibleCard>
+            </div>
+        {/if}
         <div class="appearance">
             <CollapsibleCard
-                on:toggle={appearanceSectionOpen.toggle}
+                onToggle={appearanceSectionOpen.toggle}
                 open={$appearanceSectionOpen}
                 headerText={i18nKey("appearance")}>
                 <Legend label={i18nKey("preferredLanguage")} />
@@ -360,7 +466,7 @@
                     <Toggle
                         id={"translation-mode"}
                         small
-                        on:change={() => editmode.set(!$editmode)}
+                        onChange={() => editmode.set(!$editmode)}
                         label={i18nKey("toggleTranslationEditMode")}
                         checked={$editmode} />
                 {/if}
@@ -376,30 +482,31 @@
                 </div>
             </CollapsibleCard>
         </div>
-        {#if !$anonUser}
+        {#if !$anonUserStore}
             <div class="invite">
                 <CollapsibleCard
-                    on:toggle={referralOpen.toggle}
+                    onToggle={referralOpen.toggle}
                     open={$referralOpen}
                     headerText={i18nKey("referralHeader")}>
                     <ReferUsers />
                 </CollapsibleCard>
             </div>
+            <ReferredUsersList referrals={referredUserIds} />
             <div class="chats">
                 <CollapsibleCard
-                    on:toggle={chatsSectionOpen.toggle}
+                    onToggle={chatsSectionOpen.toggle}
                     open={$chatsSectionOpen}
                     headerText={i18nKey("chats")}>
                     <Toggle
                         id={"enter-send"}
                         small
-                        on:change={() => enterSend.toggle()}
+                        onChange={() => enterSend.toggle()}
                         label={i18nKey("enterToSend")}
                         checked={$enterSend} />
                     <Toggle
                         id={"dclick-reply"}
                         small
-                        on:change={() => dclickReply.toggle()}
+                        onChange={() => dclickReply.toggle()}
                         label={i18nKey(isTouchDevice ? "doubleTapReply" : "doubleClickReply")}
                         checked={$dclickReply} />
                     {#if notificationsSupported}
@@ -407,7 +514,7 @@
                             id={"notifications"}
                             small
                             disabled={$notificationStatus === "hard-denied"}
-                            on:change={toggleNotifications}
+                            onChange={toggleNotifications}
                             label={$notificationStatus === "hard-denied"
                                 ? i18nKey("notificationsDisabled")
                                 : i18nKey("enableNotificationsMenu")}
@@ -416,21 +523,27 @@
                     <Toggle
                         id={"low-bandwidth"}
                         small
-                        on:change={() => lowBandwidth.toggle()}
+                        onChange={() => lowBandwidth.toggle()}
                         label={i18nKey("lowBandwidth")}
                         checked={$lowBandwidth} />
                     <Toggle
                         id={"render-previews"}
                         disabled={$lowBandwidth}
                         small
-                        on:change={() => renderPreviews.toggle()}
+                        onChange={() => renderPreviews.toggle()}
                         label={i18nKey("renderPreviews")}
                         checked={$renderPreviews && !$lowBandwidth} />
+                    <Toggle
+                        id={"hide-blocked"}
+                        small
+                        onChange={() => hideMessagesFromDirectBlocked.toggle()}
+                        label={i18nKey("hideBlocked")}
+                        checked={$hideMessagesFromDirectBlocked} />
                 </CollapsibleCard>
             </div>
             <div class="video">
                 <CollapsibleCard
-                    on:toggle={videoSectionOpen.toggle}
+                    onToggle={videoSectionOpen.toggle}
                     open={$videoSectionOpen}
                     headerText={i18nKey("profile.videoSettings")}>
                     <VideoCallSettings />
@@ -438,7 +551,7 @@
             </div>
             <div class="restricted">
                 <CollapsibleCard
-                    on:toggle={restrictedSectionOpen.toggle}
+                    onToggle={restrictedSectionOpen.toggle}
                     open={$restrictedSectionOpen}
                     headerText={i18nKey("restrictedContent")}>
                     <p class="blurb">
@@ -447,48 +560,48 @@
                     <Toggle
                         id={"offensive"}
                         small
-                        on:change={() => toggleModerationFlag(ModerationFlags.Offensive)}
+                        onChange={() => toggleModerationFlag(ModerationFlags.Offensive)}
                         label={i18nKey("communities.offensive")}
-                        checked={offensiveEnabled} />
+                        checked={$offensiveEnabledStore} />
                     <Toggle
                         id={"adult"}
                         small
-                        on:change={() => toggleModerationFlag(ModerationFlags.Adult)}
+                        onChange={() => toggleModerationFlag(ModerationFlags.Adult)}
                         label={i18nKey("communities.adult")}
-                        checked={adultEnabled} />
+                        checked={$adultEnabledStore} />
                     <Toggle
                         id={"underReview"}
                         small
-                        on:change={() => toggleModerationFlag(ModerationFlags.UnderReview)}
+                        onChange={() => toggleModerationFlag(ModerationFlags.UnderReview)}
                         label={i18nKey("communities.underReview")}
-                        checked={underReviewEnabled} />
+                        checked={$underReviewEnabledStore} />
                 </CollapsibleCard>
             </div>
             {#if !readonly}
                 <div class="storage">
                     <CollapsibleCard
-                        on:toggle={storageSectionOpen.toggle}
+                        onToggle={storageSectionOpen.toggle}
                         open={$storageSectionOpen}
                         headerText={i18nKey("upgrade.membership")}>
                         <StorageUsage />
 
-                        {#if !$isDiamond}
+                        {#if !$isDiamondStore}
                             <ButtonGroup align={"fill"}>
-                                <Button on:click={() => dispatch("upgrade")} small
+                                <Button onClick={() => publish("upgrade")} small
                                     ><Translatable
                                         resourceKey={i18nKey("upgrade.button")} /></Button>
                             </ButtonGroup>
-                        {:else if $isLifetimeDiamond}
+                        {:else if $isLifetimeDiamondStore}
                             <Translatable resourceKey={i18nKey("upgrade.lifetimeMessage")} />
                         {:else}
                             <Expiry />
                             <ButtonGroup align={"fill"}>
                                 <Button
-                                    title={!$canExtendDiamond
+                                    title={!$canExtendDiamondStore
                                         ? $_("upgrade.cannotExtend")
                                         : undefined}
-                                    disabled={!$canExtendDiamond}
-                                    on:click={() => dispatch("upgrade")}
+                                    disabled={!$canExtendDiamondStore}
+                                    onClick={() => publish("upgrade")}
                                     small
                                     ><Translatable
                                         resourceKey={i18nKey("upgrade.extend")} /></Button>
@@ -499,48 +612,100 @@
             {/if}
             <div class="stats">
                 <CollapsibleCard
-                    on:toggle={statsSectionOpen.toggle}
+                    onToggle={statsSectionOpen.toggle}
                     open={$statsSectionOpen}
                     headerText={i18nKey("stats.userStats")}>
-                    <Stats showReported stats={$userMetrics} />
+                    <Stats showReported stats={$userMetricsStore} />
                 </CollapsibleCard>
             </div>
-            <div class="advanced">
-                <CollapsibleCard
-                    on:toggle={advancedSectionOpen.toggle}
-                    open={$advancedSectionOpen}
-                    headerText={i18nKey("advanced")}>
+        {/if}
+        <div class="advanced">
+            <CollapsibleCard
+                onToggle={advancedSectionOpen.toggle}
+                open={$advancedSectionOpen}
+                headerText={i18nKey("advanced")}>
+                {#if !$anonUserStore}
                     <div class="userid">
                         <Legend label={i18nKey("userId")} rules={i18nKey("alsoCanisterId")} />
                         <div class="userid-txt">
                             <div>{user.userId}</div>
-                            <div role="button" tabindex="0" on:click={onCopy} class="copy">
+                            <div role="button" tabindex="0" onclick={onCopy} class="copy">
                                 <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
                             </div>
                         </div>
                     </div>
-                    <div>
-                        <Legend label={i18nKey("version")} rules={i18nKey("websiteVersion")} />
-                        <div>{version}</div>
-                    </div>
+                {/if}
+                <div class="para">
+                    <Legend label={i18nKey("version")} rules={i18nKey("websiteVersion")} />
+                    <div>{version}</div>
+                </div>
+                <div class="para">
+                    <p class="para smallprint">
+                        <Translatable resourceKey={i18nKey("clearDataCacheInfo")} />
+                    </p>
+                    <Button
+                        onClick={() =>
+                            client.clearCachedData().then(() => window.location.reload())}>
+                        <Translatable resourceKey={i18nKey("clearDataCache")} />
+                    </Button>
+                </div>
+
+                <div class="para">
+                    <p class="para smallprint">
+                        <Markdown text={interpolate($_, i18nKey("bots.config.info"))}></Markdown>
+                    </p>
+                    <Button onClick={getBotConfig}>
+                        <Translatable resourceKey={i18nKey("bots.config.title")} />
+                    </Button>
+                </div>
+            </CollapsibleCard>
+        </div>
+        {#if !$anonUserStore}
+            {#if client.accountLinkingCodeEnabled()}
+                <div class="link-device">
+                    <CollapsibleCard
+                        onToggle={linkDeviceSectionOpen.toggle}
+                        open={$linkDeviceSectionOpen}
+                        headerText={i18nKey("accountLinkingCode.settingsMenu.title")}>
+                        <AccountLinkingCode />
+                    </CollapsibleCard>
+                </div>
+            {/if}
+            <div class="danger">
+                <CollapsibleCard
+                    onToggle={deleteAccountSectionOpen.toggle}
+                    open={$deleteAccountSectionOpen}
+                    headerText={i18nKey("danger.deleteAccount")}>
+                    <p class="para">
+                        <Translatable resourceKey={i18nKey("danger.deleteAccountInfo")} />
+                    </p>
+                    <Button
+                        danger
+                        disabled={deleting}
+                        loading={deleting}
+                        onClick={() => (confirmDelete = true)}>
+                        <Translatable resourceKey={i18nKey("danger.deleteAccount")} />
+                    </Button>
                 </CollapsibleCard>
             </div>
         {/if}
     </form>
-{:else}
+{:else if view === "communities"}
     <div class="community-selector">
         <Legend label={i18nKey("communities.communityLabel")} />
         <Select bind:value={selectedCommunityId}>
             <option disabled selected value={""}
                 ><Translatable resourceKey={i18nKey("profile.selectCommunity")} /></option>
-            {#each $communitiesList.filter((s) => s.membership?.role !== "none") as community}
+            {#each $sortedCommunitiesStore.filter((s) => s.membership?.role !== ROLE_NONE) as community}
                 <option value={community.id.communityId}>{community.name}</option>
             {/each}
         </Select>
     </div>
     {#if selectedCommunity !== undefined}
-        <CommunityProfile on:upgrade community={selectedCommunity} />
+        <CommunityProfile community={selectedCommunity} />
     {/if}
+{:else if view === "chit"}
+    <ChitEvents />
 {/if}
 
 <style lang="scss">
@@ -550,10 +715,6 @@
         display: flex;
         justify-content: center;
         margin-top: $sp4;
-    }
-
-    .avatar {
-        margin: $sp4 0 $sp5 0;
     }
 
     .userid {
@@ -571,6 +732,11 @@
 
     .para {
         margin-bottom: $sp4;
+    }
+
+    .smallprint {
+        @include font(light, normal, fs-70);
+        color: var(--txt-light);
     }
 
     .user-form {
@@ -643,5 +809,15 @@
         p {
             margin-bottom: $sp4;
         }
+    }
+
+    .verified {
+        display: flex;
+        gap: $sp4;
+        align-items: center;
+    }
+
+    .profile-card {
+        margin-bottom: $sp4;
     }
 </style>

@@ -1,15 +1,16 @@
 use crate::client::{local_user_index, user_index};
 use crate::env::ENV;
-use crate::rng::random_string;
 use crate::utils::{generate_seed, tick_many};
-use crate::{client, CanisterIds, TestEnv, User};
+use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use jwt_simple::algorithms::{ECDSAP256PublicKeyLike, ES256PublicKey};
+use local_user_index_canister::access_token_v2::StartVideoCallArgs;
 use pocket_ic::PocketIc;
 use std::error::Error;
 use std::ops::Deref;
 use std::time::SystemTime;
-use types::{AccessTokenType, ChannelId, CommunityId, VideoCallClaims};
+use testing::rng::random_string;
+use types::{ChannelId, Chat, CommunityId, StartVideoCallClaims, VideoCallType};
 
 #[test]
 fn access_token_valid() {
@@ -23,7 +24,7 @@ fn access_token_valid() {
         ..
     } = wrapper.env();
 
-    env.set_time(SystemTime::now());
+    env.set_time(SystemTime::now().into());
 
     let TestData {
         user1,
@@ -33,17 +34,18 @@ fn access_token_valid() {
 
     tick_many(env, 10);
 
-    let public_key = user_index::happy_path::public_key(env, user1.principal, canister_ids.user_index);
+    let public_key = user_index::happy_path::public_key(env, canister_ids.user_index);
 
     println!("{public_key}");
 
     let token = local_user_index::happy_path::access_token(
         env,
         &user1,
-        canister_ids.local_user_index,
-        community_id,
-        channel_id,
-        AccessTokenType::StartVideoCall,
+        canister_ids.local_user_index(env, community_id),
+        &local_user_index_canister::access_token_v2::Args::StartVideoCall(StartVideoCallArgs {
+            chat: Chat::Channel(community_id, channel_id),
+            call_type: VideoCallType::Broadcast,
+        }),
     );
 
     println!("{token}");
@@ -59,7 +61,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     let community_id =
         client::user::happy_path::create_community(env, &user1, &random_string(), true, vec!["general".to_string()]);
 
-    let summary = client::community::happy_path::summary(env, &user1, community_id);
+    let summary = client::community::happy_path::summary(env, user1.principal, community_id);
 
     TestData {
         user1,
@@ -68,7 +70,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     }
 }
 
-fn decode_and_verify_token(token: String, public_key_pem: String) -> Result<VideoCallClaims, Box<dyn Error>> {
+fn decode_and_verify_token(token: String, public_key_pem: String) -> Result<StartVideoCallClaims, Box<dyn Error>> {
     let public_key = ES256PublicKey::from_pem(&public_key_pem)?;
 
     let claims = public_key.verify_token(&token, None)?;

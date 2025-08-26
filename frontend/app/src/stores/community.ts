@@ -2,16 +2,18 @@ import {
     type CommunitySummary,
     type CommunityPermissions,
     emptyChatMetrics,
+    ROLE_ADMIN,
+    ROLE_OWNER,
 } from "openchat-client";
 
 const defaultPermissions: CommunityPermissions = {
-    changeRoles: "admin",
-    updateDetails: "admin",
-    inviteUsers: "admin",
-    removeMembers: "admin",
-    createPublicChannel: "admin",
-    createPrivateChannel: "admin",
-    manageUserGroups: "admin",
+    changeRoles: ROLE_ADMIN,
+    updateDetails: ROLE_ADMIN,
+    inviteUsers: ROLE_ADMIN,
+    removeMembers: ROLE_ADMIN,
+    createPublicChannel: ROLE_ADMIN,
+    createPrivateChannel: ROLE_ADMIN,
+    manageUserGroups: ROLE_ADMIN,
 };
 
 export function createCandidateCommunity(id: string, index: number): CommunitySummary {
@@ -20,10 +22,10 @@ export function createCandidateCommunity(id: string, index: number): CommunitySu
         id: { kind: "community", communityId: id },
         name: "",
         description: "",
-        memberCount: 0,
+        memberCount: 1,
         avatar: {},
         banner: {},
-        gate: { kind: "no_gate" },
+        gateConfig: { gate: { kind: "no_gate" }, expiry: undefined },
         public: true,
         permissions: defaultPermissions,
         historyVisible: true,
@@ -33,17 +35,20 @@ export function createCandidateCommunity(id: string, index: number): CommunitySu
         latestEventIndex: 0,
         channels: [],
         membership: {
-            role: "owner",
+            role: ROLE_OWNER,
             joined: BigInt(0),
             archived: false,
             pinned: [],
             index,
             displayName: undefined,
             rulesAccepted: false,
+            lapsed: false,
         },
         primaryLanguage: "en",
         metrics: emptyChatMetrics(),
         userGroups: new Map(),
         localUserIndex: "",
+        isInvited: false,
+        verified: false,
     };
 }

@@ -1,7 +1,9 @@
 use candid::CandidType;
-use ic_ledger_types::{BlockIndex, Tokens, TransferError};
+use ic_ledger_types::{BlockIndex, TransferError};
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::CanisterId;
+use types::nns::Tokens;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -15,4 +17,5 @@ pub enum Response {
     TransferError(TransferError),
     TransferErrorV2(icrc_ledger_types::icrc1::transfer::TransferError),
     InternalError(String),
+    Error(OCError),
 }

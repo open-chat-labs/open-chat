@@ -1,29 +1,37 @@
 use crate::ic_agent::IcAgent;
-use crate::Notification;
+use crate::metrics::write_metrics;
+use crate::{BotNotification, FcmNotification, NotificationMetadata, PushNotification, UserNotification};
 use async_channel::Sender;
 use base64::Engine;
 use index_store::IndexStore;
-use std::collections::HashMap;
 use std::sync::Arc;
+use std::time::Instant;
 use tokio::time;
 use tracing::{error, info};
-use types::{CanisterId, Error, Timestamped, UserId};
-use web_push::{SubscriptionInfo, SubscriptionKeys};
+use types::{CanisterId, Error, NotificationEnvelope, Timestamped};
 
 pub struct Reader<I: IndexStore> {
     ic_agent: IcAgent,
     notifications_canister_id: CanisterId,
     index_store: I,
-    sender: Sender<Notification>,
+    user_notification_sender: Sender<PushNotification>,
+    bot_notification_sender: Sender<BotNotification>,
 }
 
 impl<I: IndexStore> Reader<I> {
-    pub fn new(ic_agent: IcAgent, notifications_canister_id: CanisterId, index_store: I, sender: Sender<Notification>) -> Self {
+    pub fn new(
+        ic_agent: IcAgent,
+        notifications_canister_id: CanisterId,
+        index_store: I,
+        user_notification_sender: Sender<PushNotification>,
+        bot_notification_sender: Sender<BotNotification>,
+    ) -> Self {
         Self {
             ic_agent,
             notifications_canister_id,
             index_store,
-            sender,
+            user_notification_sender,
+            bot_notification_sender,
         }
     }
 
@@ -32,7 +40,7 @@ impl<I: IndexStore> Reader<I> {
 
         let mut interval = time::interval(time::Duration::from_secs(1));
         loop {
-            if self.sender.is_full() {
+            if self.user_notification_sender.is_full() {
                 error!("Notifications queue is full");
                 interval.tick().await;
             } else {
@@ -58,38 +66,93 @@ impl<I: IndexStore> Reader<I> {
             .notifications(&self.notifications_canister_id, from_notification_index)
             .await?;
 
-        if let Some(latest_notification_index) = ic_response.notifications.last().map(|e| e.index) {
-            let subscriptions_map: HashMap<UserId, Vec<SubscriptionInfo>> = ic_response
-                .subscriptions
-                .into_iter()
-                .map(|(k, v)| (k, v.into_iter().map(convert_subscription).collect()))
-                .collect();
+        let first_read_at = Instant::now();
 
-            for notification in ic_response.notifications.into_iter().map(|n| n.value) {
-                let base64 = base64::engine::general_purpose::STANDARD_NO_PAD.encode(notification.notification_bytes);
+        let mut latest_index_processed = None;
+        for indexed_notification in ic_response.notifications {
+            match indexed_notification.value {
+                NotificationEnvelope::User(notification) => {
+                    let available_capacity = self
+                        .user_notification_sender
+                        .capacity()
+                        .unwrap()
+                        .saturating_sub(self.user_notification_sender.len());
 
-                let payload = Arc::new(serde_json::to_vec(&Timestamped::new(base64, notification.timestamp)).unwrap());
+                    if available_capacity < notification.recipients.len() {
+                        error!(
+                            available_capacity,
+                            notifications = notification.recipients.len(),
+                            "Not enough available capacity to enqueue notifications",
+                        );
+                        break;
+                    }
 
-                for user_id in notification.recipients {
-                    if let Some(subscriptions) = subscriptions_map.get(&user_id) {
-                        for subscription_info in subscriptions.iter().cloned() {
-                            if self
-                                .sender
-                                .try_send(Notification {
+                    let base64 = base64::engine::general_purpose::STANDARD_NO_PAD.encode(notification.notification_bytes);
+                    let payload = Arc::new(serde_json::to_vec(&Timestamped::new(base64, notification.timestamp)).unwrap());
+
+                    for user_id in notification.recipients {
+                        if let Some(subscriptions) = ic_response.subscriptions.get(&user_id) {
+                            for subscription in subscriptions.iter().cloned() {
+                                let metadata = NotificationMetadata {
+                                    notifications_canister: self.notifications_canister_id,
+                                    index: indexed_notification.index,
                                     recipient: user_id,
-                                    payload: payload.clone(),
-                                    subscription_info,
-                                })
-                                .is_err()
-                            {
-                                return Err("Notifications queue is full".into());
+                                    timestamp: notification.timestamp,
+                                    first_read_at,
+                                };
+
+                                // Map to push notification based on subscription type
+                                let push_notification = match subscription {
+                                    types::NotificationSubscription::WebPush(subscription_info) => {
+                                        PushNotification::UserNotification(UserNotification {
+                                            payload: payload.clone(),
+                                            subscription_info,
+                                            metadata,
+                                        })
+                                    }
+                                    types::NotificationSubscription::FcmPush(fcm_token) => {
+                                        PushNotification::FcmNotification(Box::new(FcmNotification {
+                                            fcm_data: notification.fcm_data.clone(),
+                                            fcm_token,
+                                            metadata,
+                                        }))
+                                    }
+                                };
+
+                                // Wait here if needed to ensure the notification is pushed to all
+                                // subscriptions to avoid partially processed notifications
+                                self.user_notification_sender.send(push_notification).await.unwrap();
                             }
+                        }
+                    }
+                }
+                NotificationEnvelope::Bot(notification) => {
+                    for (bot_id, encoding) in notification.recipients {
+                        if let Some(endpoint) = ic_response.bot_endpoints.get(&bot_id) {
+                            let event_jwt = notification.event_map[&encoding].clone();
+
+                            self.bot_notification_sender
+                                .send(BotNotification {
+                                    notifications_canister: self.notifications_canister_id,
+                                    index: indexed_notification.index,
+                                    timestamp: notification.timestamp,
+                                    endpoint: endpoint.to_string(),
+                                    event_jwt,
+                                    first_read_at,
+                                })
+                                .await
+                                .unwrap();
                         }
                     }
                 }
             }
 
-            self.set_index_processed_up_to(latest_notification_index).await?;
+            latest_index_processed = Some(indexed_notification.index);
+        }
+
+        if let Some(latest_index) = latest_index_processed {
+            write_metrics(|m| m.set_latest_notification_index_read(latest_index, self.notifications_canister_id));
+            self.set_index_processed_up_to(latest_index).await?;
         }
 
         Ok(())
@@ -124,15 +187,5 @@ impl<I: IndexStore> Reader<I> {
         }
 
         Ok(())
-    }
-}
-
-fn convert_subscription(value: types::SubscriptionInfo) -> SubscriptionInfo {
-    SubscriptionInfo {
-        endpoint: value.endpoint,
-        keys: SubscriptionKeys {
-            p256dh: value.keys.p256dh,
-            auth: value.keys.auth,
-        },
     }
 }

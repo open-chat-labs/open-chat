@@ -1,12 +1,12 @@
 use crate::guards::caller_is_openchat_user;
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
 use candid::Principal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
 use local_user_index_canister::invite_users_to_community::{Response::*, *};
-use types::{CommunityId, MessageContent, TextContent, User, UserId};
+use types::{CommunityId, MessageContent, TextContent, UserId};
 
-#[update(guard = "caller_is_openchat_user")]
+#[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
 async fn invite_users_to_community(args: Args) -> Response {
     let PrepareResult { invited_by, users } = read_state(|state| prepare(&args, state));
@@ -20,24 +20,13 @@ async fn invite_users_to_community(args: Args) -> Response {
         Ok(response) => match response {
             community_canister::c2c_invite_users::Response::Success(s) => {
                 mutate_state(|state| {
-                    commit(
-                        invited_by,
-                        args.caller_username,
-                        args.community_id,
-                        s.community_name,
-                        s.invited_users,
-                        state,
-                    );
+                    commit(invited_by, args.community_id, s.community_name, s.invited_users, state);
                 });
                 Success
             }
-            community_canister::c2c_invite_users::Response::UserNotInCommunity => UserNotInCommunity,
-            community_canister::c2c_invite_users::Response::NotAuthorized => NotAuthorized,
-            community_canister::c2c_invite_users::Response::CommunityFrozen => CommunityFrozen,
-            community_canister::c2c_invite_users::Response::TooManyInvites(l) => TooManyInvites(l),
-            community_canister::c2c_invite_users::Response::UserSuspended => UserSuspended,
+            community_canister::c2c_invite_users::Response::Error(error) => Error(error),
         },
-        Err(error) => InternalError(format!("Failed to call 'community::c2c_invite_users': {error:?}")),
+        Err(error) => Error(error.into()),
     }
 }
 
@@ -47,7 +36,7 @@ struct PrepareResult {
 }
 
 fn prepare(args: &Args, state: &RuntimeState) -> PrepareResult {
-    let invited_by = state.calling_user().user_id;
+    let invited_by = state.calling_user_id();
     let users = args
         .user_ids
         .iter()
@@ -59,25 +48,18 @@ fn prepare(args: &Args, state: &RuntimeState) -> PrepareResult {
 
 fn commit(
     invited_by: UserId,
-    invited_by_username: String,
     community_id: CommunityId,
     community_name: String,
     invited_users: Vec<UserId>,
     state: &mut RuntimeState,
 ) {
+    let now = state.env.now();
     let text = format!(
         "You have been invited to the community [{community_name}](/community/{community_id}) by @UserId({invited_by})."
     );
     let message = MessageContent::Text(TextContent { text });
-    let mentioned = vec![User {
-        user_id: invited_by,
-        username: invited_by_username,
-    }];
 
     for user_id in invited_users {
-        state.push_oc_bot_message_to_user(user_id, message.clone(), mentioned.clone());
+        state.push_oc_bot_message_to_user(user_id, message.clone(), now);
     }
-
-    crate::jobs::sync_events_to_user_canisters::try_run_now(state);
-    crate::jobs::sync_events_to_user_index_canister::try_run_now(state);
 }

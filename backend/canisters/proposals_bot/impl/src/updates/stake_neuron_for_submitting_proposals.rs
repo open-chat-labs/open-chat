@@ -1,8 +1,8 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
 use candid::Principal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::api::call::{CallResult, RejectionCode};
-use ic_cdk_macros::update;
+use ic_cdk::call::RejectCode;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use ledger_utils::compute_neuron_staking_subaccount_bytes;
@@ -11,12 +11,11 @@ use rand::Rng;
 use sns_governance_canister::types::manage_neuron::claim_or_refresh::{By, MemoAndController};
 use sns_governance_canister::types::manage_neuron::configure::Operation;
 use sns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command, IncreaseDissolveDelay};
-use sns_governance_canister::types::{manage_neuron_response, ManageNeuron};
+use sns_governance_canister::types::{ManageNeuron, manage_neuron_response};
 use sns_governance_canister_c2c_client::configure_neuron;
-use types::{CanisterId, SnsNeuronId};
-use user_index_canister_c2c_client::LookupUserError;
+use types::{C2CError, CanisterId, SnsNeuronId};
 
-#[update]
+#[update(msgpack = true)]
 #[trace]
 async fn stake_neuron_for_submitting_proposals(args: Args) -> Response {
     let PrepareResult {
@@ -32,9 +31,9 @@ async fn stake_neuron_for_submitting_proposals(args: Args) -> Response {
     };
 
     match user_index_canister_c2c_client::lookup_user(caller, user_index_canister_id).await {
-        Ok(user) if user.is_platform_operator => {}
-        Err(LookupUserError::InternalError(error)) => return InternalError(error),
-        _ => return Unauthorized,
+        Ok(Some(user)) if user.is_platform_operator => {}
+        Ok(_) => return Unauthorized,
+        Err(error) => return InternalError(format!("{error:?}")),
     }
 
     match stake_neuron_impl(&args, this_canister_id, ledger_canister_id, nonce, dissolve_delay_seconds).await {
@@ -87,7 +86,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Respo
                 this_canister_id: state.env.canister_id(),
                 user_index_canister_id: state.data.user_index_canister_id,
                 ledger_canister_id: ns.ledger_canister_id(),
-                nonce: state.env.rng().gen(),
+                nonce: state.env.rng().r#gen(),
                 dissolve_delay_seconds: (ns.min_dissolve_delay_to_vote() / 1000) as u32 + 1,
             })
         }
@@ -102,7 +101,7 @@ async fn stake_neuron_impl(
     ledger_canister_id: CanisterId,
     nonce: u64,
     dissolve_delay_seconds: u32,
-) -> CallResult<Response> {
+) -> Result<Response, C2CError> {
     let subaccount = compute_neuron_staking_subaccount_bytes(this_canister_id, nonce);
 
     if let Err(transfer_error) = icrc_ledger_canister_c2c_client::icrc1_transfer(
@@ -138,7 +137,11 @@ async fn stake_neuron_impl(
     Ok(Success(neuron_id))
 }
 
-async fn claim_neuron(this_canister_id: CanisterId, governance_canister_id: CanisterId, nonce: u64) -> CallResult<SnsNeuronId> {
+async fn claim_neuron(
+    this_canister_id: CanisterId,
+    governance_canister_id: CanisterId,
+    nonce: u64,
+) -> Result<SnsNeuronId, C2CError> {
     let args = ManageNeuron {
         subaccount: vec![],
         command: Some(Command::ClaimOrRefresh(ClaimOrRefresh {
@@ -153,7 +156,12 @@ async fn claim_neuron(this_canister_id: CanisterId, governance_canister_id: Cani
 
     match response.command.unwrap() {
         manage_neuron_response::Command::ClaimOrRefresh(c) => Ok(c.refreshed_neuron_id.unwrap().id.try_into().unwrap()),
-        manage_neuron_response::Command::Error(e) => Err((RejectionCode::Unknown, format!("{e:?}"))),
+        manage_neuron_response::Command::Error(e) => Err(C2CError::new(
+            governance_canister_id,
+            "manage_neuron",
+            RejectCode::CanisterError,
+            format!("{e:?}"),
+        )),
         _ => unreachable!(),
     }
 }

@@ -1,39 +1,25 @@
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, execute_update};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use group_canister::unfollow_thread::{Response::*, *};
-use group_chat_core::UnfollowThreadResult;
-use ic_cdk_macros::update;
+use group_canister::unfollow_thread::*;
+use types::OCResult;
 
-#[update]
+#[update(msgpack = true)]
 #[trace]
 fn unfollow_thread(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| unfollow_thread_impl(args, state))
+    execute_update(|state| unfollow_thread_impl(args, state)).into()
 }
 
-fn unfollow_thread_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if state.data.is_frozen() {
-        return GroupFrozen;
-    }
+fn unfollow_thread_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+    state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
-
-    let user_id = match state.data.lookup_user_id(caller) {
-        Some(uid) => uid,
-        None => return UserNotInGroup,
-    };
-
+    let user_id = state.get_caller_user_id()?;
     let now = state.env.now();
+    state
+        .data
+        .chat
+        .unfollow_thread(user_id, args.thread_root_message_index, now)?;
 
-    match state.data.chat.unfollow_thread(user_id, args.thread_root_message_index, now) {
-        UnfollowThreadResult::Success => {
-            state.data.mark_group_updated_in_user_canister(user_id);
-            Success
-        }
-        UnfollowThreadResult::NotFollowing => NotFollowing,
-        UnfollowThreadResult::ThreadNotFound => ThreadNotFound,
-        UnfollowThreadResult::UserNotInGroup => UserNotInGroup,
-        UnfollowThreadResult::UserSuspended => UserSuspended,
-    }
+    state.mark_activity_for_user(user_id);
+    Ok(())
 }

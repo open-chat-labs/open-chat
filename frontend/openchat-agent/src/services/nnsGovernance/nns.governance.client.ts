@@ -1,37 +1,20 @@
-import type { Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import type { ManageNeuronResponse, ProposalVoteDetails } from "openchat-shared";
 import { idlFactory, type NnsGovernanceService } from "./candid/idl";
-import { CandidService } from "../candidService";
+import { CandidCanisterAgent } from "../canisterAgent/candid";
 import { getProposalVoteDetails, manageNeuronResponse } from "./mappers";
-import type { AgentConfig } from "../../config";
 import { apiOptional, apiProposalVote } from "../common/chatMappers";
 import { identity } from "../../utils/mapping";
 
-export class NnsGovernanceClient extends CandidService {
-    private service: NnsGovernanceService;
-
-    private constructor(identity: Identity, config: AgentConfig, canisterId: string) {
-        super(identity);
-
-        this.service = this.createServiceClient<NnsGovernanceService>(
-            idlFactory,
-            canisterId,
-            config
-        );
-    }
-
-    static create(
-        identity: Identity,
-        config: AgentConfig,
-        canisterId: string
-    ): NnsGovernanceClient {
-        return new NnsGovernanceClient(identity, config, canisterId);
+export class NnsGovernanceClient extends CandidCanisterAgent<NnsGovernanceService> {
+    constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
+        super(identity, agent, canisterId, idlFactory, "NnsGovernance");
     }
 
     registerVote(
         neuronId: string,
         proposalId: bigint,
-        vote: boolean
+        vote: boolean,
     ): Promise<ManageNeuronResponse> {
         const args = {
             id: apiOptional(identity, { id: BigInt(neuronId) }),
@@ -55,7 +38,7 @@ export class NnsGovernanceClient extends CandidService {
         };
         return this.handleQueryResponse(
             () => this.service.list_proposals(args),
-            getProposalVoteDetails
+            getProposalVoteDetails,
         );
     }
 }

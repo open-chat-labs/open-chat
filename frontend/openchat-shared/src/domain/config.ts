@@ -1,6 +1,10 @@
+import { AuthProvider } from "./auth";
 import type { GroupInvite } from "./inviteCodes";
 
 export type AgentConfig = {
+    appType?: "android" | "ios" | "web";
+    authPrincipal: string;
+    authProvider: AuthProvider | undefined;
     icUrl: string;
     iiDerivationOrigin?: string;
     openStorageIndexCanister: string;
@@ -16,13 +20,20 @@ export type AgentConfig = {
     userGeekApiKey: string;
     enableMultiCrypto?: boolean;
     blobUrlPattern: string;
+    canisterUrlPath: string;
     proposalBotCanister: string;
     marketMakerCanister: string;
+    signInWithEmailCanister: string;
+    signInWithEthereumCanister: string;
+    signInWithSolanaCanister: string;
+    oneSecMinterCanister: string;
     logger: {
         error(message?: unknown, ...optionalParams: unknown[]): void;
     };
     websiteVersion: string;
     rollbarApiKey: string;
     env: string;
+    bitcoinMainnetEnabled: boolean;
     groupInvite?: GroupInvite;
+    accountLinkingCodesEnabled: boolean;
 };

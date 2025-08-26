@@ -3,11 +3,15 @@
     import { pop } from "../../utils/transition";
     import { emptyUnreadCounts } from "openchat-client";
 
-    export let unread = emptyUnreadCounts();
-    export let solid = true;
+    interface Props {
+        unread?: any;
+        solid?: boolean;
+    }
 
-    $: muted = !unread.mentions && unread.unmuted <= 0;
-    $: count = muted ? unread.muted : unread.unmuted;
+    let { unread = emptyUnreadCounts(), solid = true }: Props = $props();
+
+    let muted = $derived(!unread.mentions && unread.unmuted <= 0);
+    let count = $derived(muted ? unread.muted : unread.unmuted);
 </script>
 
 {#if count > 0 || unread.mentions}
@@ -30,7 +34,7 @@
 <style lang="scss">
     .unread-count {
         position: absolute;
-        right: $sp3;
+        right: toRem(8);
         @include unread();
         top: 50%;
         transform: translateY(-50%);
@@ -38,15 +42,13 @@
         &.muted {
             background-color: var(--unread-mute);
             text-shadow: none;
+            backdrop-filter: blur(10px);
+            color: var(--unread-mute-txt);
 
             &.solid {
                 background-color: var(--unread-mute-solid);
                 border: 1px solid var(--bd);
             }
-        }
-
-        @include mobile() {
-            right: toRem(6);
         }
     }
 </style>

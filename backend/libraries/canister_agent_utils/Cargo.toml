@@ -1,15 +1,13 @@
 [package]
 name = "canister_agent_utils"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 candid = { workspace = true }
-dfx-core = { workspace = true }
 ic-agent = { workspace = true }
 ic-utils = { workspace = true }
 itertools = { workspace = true }
-slog = { workspace = true }
 types = { path = "../types" }

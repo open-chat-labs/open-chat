@@ -1,10 +1,13 @@
 use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{
-    ChatId, CompletedCryptoTransaction, Cryptocurrency, EventIndex, GroupReplyContext, MessageContentInitial, MessageId,
-    MessageIndex, Milliseconds, TimestampMillis, User, Version,
+    ChatId, CompletedCryptoTransaction, EventIndex, GroupReplyContext, MessageContentInitial, MessageId, MessageIndex,
+    PinNumberWrapper, TimestampMillis, User, Version,
 };
 
+#[ts_export(user, send_message_with_transfer_to_group)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub group_id: ChatId,
@@ -15,33 +18,22 @@ pub struct Args {
     pub sender_display_name: Option<String>,
     pub replies_to: Option<GroupReplyContext>,
     pub mentioned: Vec<User>,
-    pub correlation_id: u64,
+    pub block_level_markdown: bool,
     pub rules_accepted: Option<Version>,
     pub message_filter_failed: Option<u64>,
-    pub pin: Option<String>,
+    pub pin: Option<PinNumberWrapper>,
 }
 
+#[ts_export(user, send_message_with_transfer_to_group)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    TextTooLong(u32),
-    RecipientBlocked,
     CallerNotInGroup(Option<CompletedCryptoTransaction>),
-    CryptocurrencyNotSupported(Cryptocurrency),
-    InvalidRequest(String),
-    TransferFailed(String),
-    TransferCannotBeZero,
-    TransferCannotBeToSelf,
-    P2PSwapSetUpFailed(String),
-    UserSuspended,
-    ChatFrozen,
-    RulesNotAccepted,
     Retrying(String, CompletedCryptoTransaction),
-    PinRequired,
-    PinIncorrect(Milliseconds),
-    TooManyFailedPinAttempts(Milliseconds),
+    Error(OCError),
 }
 
+#[ts_export(user, send_message_with_transfer_to_group)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub event_index: EventIndex,

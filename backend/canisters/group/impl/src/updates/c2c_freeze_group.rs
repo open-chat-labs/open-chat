@@ -1,17 +1,15 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::guards::caller_is_group_index_or_local_group_index;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::update_msgpack;
+use crate::guards::caller_is_group_index_or_local_user_index;
+use crate::{RuntimeState, execute_update};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_freeze_group::{Response::*, *};
 use types::{EventWrapper, FrozenGroupInfo, GroupFrozen, Timestamped, UserId};
 
-#[update_msgpack(guard = "caller_is_group_index_or_local_group_index")]
+#[update(guard = "caller_is_group_index_or_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_freeze_group(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| freeze_group_impl(args.caller, args.reason, args.return_members, state))
+    execute_update(|state| freeze_group_impl(args.caller, args.reason, args.return_members, state))
 }
 
 pub(crate) fn freeze_group_impl(
@@ -37,7 +35,6 @@ pub(crate) fn freeze_group_impl(
         let event = EventWrapper {
             index: push_event_result.index,
             timestamp: now,
-            correlation_id: 0,
             expires_at: push_event_result.expires_at,
             event: GroupFrozen {
                 frozen_by: caller,
@@ -45,10 +42,11 @@ pub(crate) fn freeze_group_impl(
             },
         };
 
+        state.push_bot_notification(push_event_result.bot_notification);
         handle_activity_notification(state);
 
         if return_members {
-            SuccessWithMembers(event, state.data.chat.members.iter().map(|p| p.user_id).collect())
+            SuccessWithMembers(event, state.data.chat.members.member_ids().iter().cloned().collect())
         } else {
             Success(event)
         }

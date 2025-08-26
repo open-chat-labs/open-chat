@@ -1,25 +1,21 @@
-use crate::model::btc_miami_payments_queue::PendingPayment;
 use crate::model::referral_codes::{ReferralCode, ReferralCodeError};
-use crate::timer_job_types::{AddUserToSatoshiDice, TimerJob};
-use crate::{mutate_state, RuntimeState, USER_CANISTER_INITIAL_CYCLES_BALANCE};
+use crate::{CHILD_CANISTER_INITIAL_CYCLES_BALANCE, RuntimeState, UserEvent, UserIndexEvent, mutate_state};
 use candid::Principal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use constants::{CREATE_CANISTER_CYCLES_FEE, USER_LIMIT, min_cycles_balance};
 use ledger_utils::default_ledger_account;
+use local_user_index_canister::ChildCanisterType;
 use local_user_index_canister::register_user::{Response::*, *};
-use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, MessageContentInitial, TextContent, UserId};
+use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, MessageContentInitial, TextContent, UserId, UserType};
+use user_canister::ReferredUserRegistered;
 use user_canister::init::Args as InitUserCanisterArgs;
-use user_canister::{Event as UserEvent, ReferredUserRegistered};
-use user_index_canister::{Event as UserIndexEvent, JoinUserToGroup, UserRegistered};
+use user_index_canister::UserRegistered;
 use utils::canister;
-use utils::canister::CreateAndInstallError;
-use utils::consts::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
-use utils::text_validation::{validate_username, UsernameValidationError};
+use utils::text_validation::{UsernameValidationError, validate_username};
 use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
 
-pub const USER_LIMIT: usize = 150_000;
-
-#[update]
+#[update(msgpack = true)]
 #[trace]
 async fn register_user(args: Args) -> Response {
     // Check the principal is derived from Internet Identity + check the username is valid
@@ -28,7 +24,7 @@ async fn register_user(args: Args) -> Response {
         canister_id,
         canister_wasm,
         cycles_to_use,
-        referral_code,
+        referred_by,
         is_from_identity_canister,
         init_canister_args,
     } = match mutate_state(|state| prepare(&args, state)) {
@@ -40,8 +36,9 @@ async fn register_user(args: Args) -> Response {
 
     match canister::create_and_install(
         canister_id,
+        None,
         canister_wasm,
-        init_canister_args,
+        candid::encode_one(&init_canister_args).unwrap(),
         cycles_to_use,
         on_canister_created,
     )
@@ -55,7 +52,7 @@ async fn register_user(args: Args) -> Response {
                     user_id,
                     args.username,
                     wasm_version,
-                    referral_code,
+                    referred_by,
                     is_from_identity_canister,
                     state,
                 )
@@ -65,11 +62,14 @@ async fn register_user(args: Args) -> Response {
                 icp_account: default_ledger_account(user_id.into()),
             })
         }
-        Err(error) => {
-            if let CreateAndInstallError::InstallFailed(id, ..) = error {
-                mutate_state(|state| state.data.canister_pool.push(id));
-            }
-            InternalError(format!("{error:?}"))
+        Err((canister_id, error)) => {
+            mutate_state(|state| {
+                state.data.local_users.mark_registration_failed(&caller);
+                if let Some(id) = canister_id {
+                    state.data.canister_pool.push(id);
+                }
+            });
+            Error(error.into())
         }
     }
 }
@@ -79,33 +79,31 @@ struct PrepareOk {
     canister_id: Option<CanisterId>,
     canister_wasm: CanisterWasm,
     cycles_to_use: Cycles,
-    referral_code: Option<ReferralCode>,
+    referred_by: Option<UserId>,
     is_from_identity_canister: bool,
     init_canister_args: InitUserCanisterArgs,
 }
 
 fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> {
     let caller = state.env.caller();
-    let mut referral_code = None;
 
     if state.data.global_users.get_by_principal(&caller).is_some() {
         return Err(AlreadyRegistered);
     }
 
-    let is_from_identity_canister = validate_public_key(
-        caller,
-        &args.public_key,
-        state.data.identity_canister_id,
-        state.data.internet_identity_canister_id,
-    )
-    .map_err(PublicKeyInvalid)?;
+    let now = state.env.now();
+    if !state.data.local_users.mark_registration_in_progress(caller, now) {
+        return Err(RegistrationInProgress);
+    }
+
+    let is_from_identity_canister =
+        validate_public_key(caller, &args.public_key, state.data.identity_canister_id).map_err(PublicKeyInvalid)?;
 
     if state.data.global_users.len() >= USER_LIMIT {
         return Err(UserLimitReached);
     }
 
-    let now = state.env.now();
-
+    let mut referral_code = None;
     if let Some(code) = &args.referral_code {
         referral_code = match state.data.referral_codes.check(code, now) {
             Ok(r) => Some(r),
@@ -114,7 +112,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
                     ReferralCodeError::NotFound => ReferralCodeInvalid,
                     ReferralCodeError::AlreadyClaimed => ReferralCodeAlreadyClaimed,
                     ReferralCodeError::Expired => ReferralCodeExpired,
-                })
+                });
             }
         }
     }
@@ -147,7 +145,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
     };
 
     let cycles_to_use = if state.data.canister_pool.is_empty() {
-        let cycles_required = USER_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
+        let cycles_required = CHILD_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
         if !utils::cycles::can_spend_cycles(cycles_required, min_cycles_balance(state.data.test_mode)) {
             return Err(CyclesBalanceTooLow);
         }
@@ -157,30 +155,39 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
     };
 
     let canister_id = state.data.canister_pool.pop();
-    let canister_wasm = state.data.user_canister_wasm_for_new_canisters.wasm.clone();
+    let canister_wasm = state.data.child_canister_wasms.get(ChildCanisterType::User).wasm.clone();
+
+    let referred_by = referral_code
+        .and_then(|c| c.user())
+        .filter(|user_id| state.data.global_users.contains(user_id));
+
+    #[expect(deprecated)]
     let init_canister_args = InitUserCanisterArgs {
         owner: caller,
         group_index_canister_id: state.data.group_index_canister_id,
         user_index_canister_id: state.data.user_index_canister_id,
         local_user_index_canister_id: state.env.canister_id(),
-        notifications_canister_id: state.data.notifications_canister_id,
-        proposals_bot_canister_id: state.data.proposals_bot_canister_id,
+        identity_canister_id: state.data.identity_canister_id,
+        notifications_canister_id: CanisterId::anonymous(),
+        proposals_bot_canister_id: CanisterId::anonymous(),
         escrow_canister_id: state.data.escrow_canister_id,
         wasm_version: canister_wasm.version,
         username: args.username.clone(),
         openchat_bot_messages,
         video_call_operators: state.data.video_call_operators.clone(),
+        referred_by,
         test_mode: state.data.test_mode,
+        bot_api_gateway_canister_id: Principal::anonymous(),
     };
 
-    crate::jobs::topup_canister_pool::start_job_if_required(state);
+    crate::jobs::topup_canister_pool::start_job_if_required(state, None);
 
     Ok(PrepareOk {
         caller,
         canister_id,
         canister_wasm,
         cycles_to_use,
-        referral_code,
+        referred_by,
         is_from_identity_canister,
         init_canister_args,
     })
@@ -191,60 +198,34 @@ fn commit(
     user_id: UserId,
     username: String,
     wasm_version: BuildVersion,
-    referral_code: Option<ReferralCode>,
+    referred_by: Option<UserId>,
     is_from_identity_canister: bool,
     state: &mut RuntimeState,
 ) {
     let now = state.env.now();
-    state.data.local_users.add(user_id, wasm_version, now);
-    state.data.global_users.add(principal, user_id, false);
 
-    state.push_event_to_user_index(UserIndexEvent::UserRegistered(Box::new(UserRegistered {
-        principal,
-        user_id,
-        username: username.clone(),
-        referred_by: referral_code.as_ref().and_then(|r| r.user()),
-        is_from_identity_canister,
-    })));
+    state.data.local_users.add(user_id, principal, wasm_version, now);
+    state.data.global_users.add(principal, user_id, UserType::User);
 
-    match referral_code {
-        Some(ReferralCode::User(referred_by)) => {
-            if state.data.local_users.get(&referred_by).is_some() {
-                state.push_event_to_user(
-                    referred_by,
-                    UserEvent::ReferredUserRegistered(Box::new(ReferredUserRegistered { user_id, username })),
-                );
-            }
-        }
-        Some(ReferralCode::BtcMiami(code)) => {
-            let test_mode = state.data.test_mode;
+    state.push_event_to_user_index(
+        UserIndexEvent::UserRegistered(Box::new(UserRegistered {
+            principal,
+            user_id,
+            username: username.clone(),
+            referred_by,
+            is_from_identity_canister,
+        })),
+        now,
+    );
 
-            // This referral code can only be used once so claim it
-            state.data.referral_codes.claim(code, user_id, now);
-
-            state.data.btc_miami_payments_queue.push(PendingPayment {
-                amount: if test_mode { 50 } else { 50_000 }, // Approx $14
-                timestamp: state.env.now_nanos(),
-                recipient: user_id.into(),
-            });
-            crate::jobs::make_btc_miami_payments::start_job_if_required(state);
-
-            let btc_miami_group =
-                Principal::from_text(if test_mode { "ueyan-5iaaa-aaaaf-bifxa-cai" } else { "pbo6v-oiaaa-aaaar-ams6q-cai" })
-                    .unwrap()
-                    .into();
-
-            state.push_event_to_user_index(UserIndexEvent::JoinUserToGroup(Box::new(JoinUserToGroup {
-                user_id,
-                chat_id: btc_miami_group,
-            })));
-            state.data.timer_jobs.enqueue_job(
-                TimerJob::AddUserToSatoshiDice(AddUserToSatoshiDice { user_id, attempt: 0 }),
-                now,
-                now,
-            )
-        }
-        None => {}
+    if let Some(referred_by) = referred_by
+        && state.data.local_users.contains(&referred_by)
+    {
+        state.push_event_to_user(
+            referred_by,
+            UserEvent::ReferredUserRegistered(Box::new(ReferredUserRegistered { user_id, username })),
+            now,
+        );
     }
 }
 
@@ -262,18 +243,13 @@ fn welcome_messages() -> Vec<String> {
     WELCOME_MESSAGES.iter().map(|t| t.to_string()).collect()
 }
 
-fn validate_public_key(
-    caller: Principal,
-    public_key: &[u8],
-    identity_canister_id: CanisterId,
-    internet_identity_canister_id: CanisterId,
-) -> Result<bool, String> {
+fn validate_public_key(caller: Principal, public_key: &[u8], identity_canister_id: CanisterId) -> Result<bool, String> {
     let key_info = SubjectPublicKeyInfo::from_der(public_key).map_err(|e| format!("{e:?}"))?.1;
     let canister_id_length = key_info.subject_public_key.data[0];
 
     let canister_id = CanisterId::from_slice(&key_info.subject_public_key.data[1..=(canister_id_length as usize)]);
-    if canister_id != identity_canister_id && canister_id != internet_identity_canister_id {
-        return Err("PublicKey is not derived from the Identity canister or the InternetIdentity canister".to_string());
+    if canister_id != identity_canister_id {
+        return Err("PublicKey is not derived from the Identity canister".to_string());
     }
 
     let expected_caller = Principal::self_authenticating(public_key);

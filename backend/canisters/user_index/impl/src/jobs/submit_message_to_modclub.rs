@@ -1,5 +1,5 @@
 use crate::model::pending_modclub_submissions_queue::PendingModclubSubmission;
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
@@ -32,7 +32,7 @@ pub fn run() {
     });
 
     if let Some(pending_submission) = pending_submission {
-        ic_cdk::spawn(process_submission(modclub_canister_id, pending_submission));
+        ic_cdk::futures::spawn(process_submission(modclub_canister_id, pending_submission));
     }
 
     read_state(start_job_if_required);

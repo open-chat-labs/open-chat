@@ -1,25 +1,21 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::update_msgpack;
+use crate::{GroupEventPusher, RuntimeState, execute_update};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::{Reader, TipMessageArgs};
-use group_canister::c2c_tip_message::{Response::*, *};
-use group_chat_core::TipMessageResult;
+use chat_events::TipMessageArgs;
+use group_canister::c2c_tip_message::*;
 use ledger_utils::format_crypto_amount_with_symbol;
-use types::{EventIndex, GroupMessageTipped, Notification};
+use types::{Achievement, Chat, ChatId, EventIndex, GroupChatUserNotificationPayload, GroupMessageTipped, OCResult};
+use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
-#[update_msgpack]
+#[update(msgpack = true)]
 #[trace]
 fn c2c_tip_message(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| c2c_tip_message_impl(args, state))
+    execute_update(|state| c2c_tip_message_impl(args, state)).into()
 }
 
-fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if state.data.is_frozen() {
-        return GroupFrozen;
-    }
+fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+    state.data.verify_not_frozen()?;
 
     let user_id = state.env.caller().into();
     let now = state.env.now();
@@ -30,51 +26,66 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
         thread_root_message_index: args.thread_root_message_index,
         message_id: args.message_id,
         ledger: args.ledger,
-        token: args.token.clone(),
+        token_symbol: args.token_symbol.clone(),
         amount: args.amount,
         now,
     };
 
-    match state
-        .data
-        .chat
-        .tip_message(tip_message_args, &mut state.data.event_store_client)
+    let result = state.data.chat.tip_message(
+        tip_message_args,
+        GroupEventPusher {
+            now,
+            rng: state.env.rng(),
+            queue: &mut state.data.local_user_index_event_sync_queue,
+        },
+    )?;
+
+    if let Some((message, event_index)) =
+        state
+            .data
+            .chat
+            .events
+            .message_internal(EventIndex::default(), args.thread_root_message_index, args.message_id.into())
+        && let Some(sender) = state.data.chat.members.get(&message.sender)
+        && message.sender != user_id
+        && !sender.user_type().is_bot()
     {
-        TipMessageResult::Success => {
-            if let Some((message_index, message_event_index)) = state
-                .data
-                .chat
-                .events
-                .events_reader(EventIndex::default(), args.thread_root_message_index)
-                .and_then(|r| {
-                    r.message_event_internal(args.message_id.into())
-                        .map(|e| (e.event.message_index, e.index))
-                })
-            {
-                state.push_notification(
-                    vec![args.recipient],
-                    Notification::GroupMessageTipped(GroupMessageTipped {
-                        chat_id: state.env.canister_id().into(),
-                        thread_root_message_index: args.thread_root_message_index,
-                        message_index,
-                        message_event_index,
-                        group_name: state.data.chat.name.value.clone(),
-                        tipped_by: user_id,
-                        tipped_by_name: args.username,
-                        tipped_by_display_name: args.display_name,
-                        tip: format_crypto_amount_with_symbol(args.amount, args.decimals, args.token.token_symbol()),
-                        group_avatar_id: state.data.chat.avatar.as_ref().map(|a| a.id),
-                    }),
-                );
-            }
-            handle_activity_notification(state);
-            Success
-        }
-        TipMessageResult::MessageNotFound => MessageNotFound,
-        TipMessageResult::CannotTipSelf => CannotTipSelf,
-        TipMessageResult::RecipientMismatch => RecipientMismatch,
-        TipMessageResult::UserNotInGroup => UserNotInGroup,
-        TipMessageResult::NotAuthorized => NotAuthorized,
-        TipMessageResult::UserSuspended => UserSuspended,
+        let chat_id: ChatId = state.env.canister_id().into();
+        let tip = format_crypto_amount_with_symbol(args.amount, args.decimals, &args.token_symbol);
+        let user_notification_payload = GroupChatUserNotificationPayload::GroupMessageTipped(GroupMessageTipped {
+            chat_id,
+            thread_root_message_index: args.thread_root_message_index,
+            message_index: message.message_index,
+            message_event_index: event_index,
+            group_name: state.data.chat.name.value.clone(),
+            tipped_by: user_id,
+            tipped_by_name: args.username,
+            tipped_by_display_name: args.display_name,
+            tip,
+            group_avatar_id: state.data.chat.avatar.as_ref().map(|a| a.id),
+        });
+
+        state.push_notification(Some(user_id), vec![message.sender], user_notification_payload);
+
+        state.push_event_to_user(
+            message.sender,
+            GroupCanisterEvent::MessageActivity(MessageActivityEvent {
+                chat: Chat::Group(chat_id),
+                thread_root_message_index: args.thread_root_message_index,
+                message_index: message.message_index,
+                message_id: message.message_id,
+                event_index,
+                activity: MessageActivity::Tip,
+                timestamp: now,
+                user_id: Some(user_id),
+            }),
+            now,
+        );
+
+        state.notify_user_of_achievement(message.sender, Achievement::HadMessageTipped, now);
     }
+
+    state.push_bot_notification(result.bot_notification);
+    handle_activity_notification(state);
+    Ok(())
 }

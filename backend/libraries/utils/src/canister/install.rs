@@ -1,28 +1,24 @@
 use crate::canister;
-use crate::consts::CYCLES_REQUIRED_FOR_UPGRADE;
+use crate::canister::{convert_cdk_error, is_out_of_cycles_error};
 use candid::CandidType;
-use ic_cdk::api::call::{CallResult, RejectionCode};
-use ic_cdk::api::management_canister;
-use ic_cdk::api::management_canister::main::{
-    CanisterInstallMode, CanisterInstallModeV2, InstallChunkedCodeArgument, InstallCodeArgument,
-};
-use serde_bytes::ByteBuf;
+use constants::CYCLES_REQUIRED_FOR_UPGRADE;
+use ic_cdk::management_canister::{self, CanisterInstallMode, ChunkHash};
 use tracing::{error, trace};
-use types::{BuildVersion, CanisterId, Cycles, Hash};
+use types::{BuildVersion, C2CError, CanisterId, CanisterWasm, CanisterWasmBytes, Cycles, Hash};
 
-pub struct CanisterToInstall<A: CandidType> {
+pub struct CanisterToInstall {
     pub canister_id: CanisterId,
     pub current_wasm_version: BuildVersion,
     pub new_wasm_version: BuildVersion,
     pub new_wasm: WasmToInstall,
     pub deposit_cycles_if_needed: bool,
-    pub args: A,
+    pub args: Vec<u8>,
     pub mode: CanisterInstallMode,
     pub stop_start_canister: bool,
 }
 
 pub enum WasmToInstall {
-    Default(Vec<u8>),
+    Default(CanisterWasmBytes),
     Chunked(ChunkedWasmToInstall),
 }
 
@@ -32,7 +28,28 @@ pub struct ChunkedWasmToInstall {
     pub store_canister_id: CanisterId,
 }
 
-pub async fn install<A: CandidType>(canister_to_install: CanisterToInstall<A>) -> CallResult<Option<Cycles>> {
+pub async fn install_basic<A: CandidType>(canister_id: CanisterId, wasm: CanisterWasm, init_args: A) -> Result<(), C2CError> {
+    install_basic_raw(canister_id, wasm, candid::encode_one(init_args).unwrap())
+        .await
+        .map(|_| ())
+}
+
+pub async fn install_basic_raw(canister_id: CanisterId, wasm: CanisterWasm, init_args: Vec<u8>) -> Result<(), C2CError> {
+    install(CanisterToInstall {
+        canister_id,
+        current_wasm_version: BuildVersion::default(),
+        new_wasm_version: wasm.version,
+        new_wasm: WasmToInstall::Default(wasm.module),
+        deposit_cycles_if_needed: true,
+        args: init_args,
+        mode: CanisterInstallMode::Reinstall,
+        stop_start_canister: false,
+    })
+    .await
+    .map(|_| ())
+}
+
+pub async fn install(canister_to_install: CanisterToInstall) -> Result<Option<Cycles>, C2CError> {
     let canister_id = canister_to_install.canister_id;
     let mode = canister_to_install.mode;
 
@@ -43,29 +60,29 @@ pub async fn install<A: CandidType>(canister_to_install: CanisterToInstall<A>) -
     }
 
     let install_code_args = match canister_to_install.new_wasm {
-        WasmToInstall::Default(wasm_module) => InstallCodeArgs::Default(InstallCodeArgument {
+        WasmToInstall::Default(wasm_module) => InstallCodeArgs::Default(management_canister::InstallCodeArgs {
             mode,
             canister_id,
-            wasm_module,
-            arg: candid::encode_one(canister_to_install.args).unwrap(),
+            wasm_module: wasm_module.into(),
+            arg: canister_to_install.args,
         }),
-        WasmToInstall::Chunked(wasm) => InstallCodeArgs::Chunked(InstallChunkedCodeArgument {
-            mode: match mode {
-                CanisterInstallMode::Install => CanisterInstallModeV2::Install,
-                CanisterInstallMode::Reinstall => CanisterInstallModeV2::Reinstall,
-                CanisterInstallMode::Upgrade => CanisterInstallModeV2::Upgrade(None),
-            },
+        WasmToInstall::Chunked(wasm) => InstallCodeArgs::Chunked(management_canister::InstallChunkedCodeArgs {
+            mode,
             target_canister: canister_id,
             store_canister: Some(wasm.store_canister_id),
-            chunk_hashes_list: wasm.chunks.into_iter().map(ByteBuf::from).collect(),
+            chunk_hashes_list: wasm
+                .chunks
+                .into_iter()
+                .map(|hash| ChunkHash { hash: hash.to_vec() })
+                .collect(),
             wasm_module_hash: wasm.wasm_hash.to_vec(),
-            arg: candid::encode_one(canister_to_install.args).unwrap(),
+            arg: canister_to_install.args,
         }),
     };
 
     let mut install_code_response = install_code_args.clone().install().await;
     let mut cycles_used = None;
-    let mut error = None;
+    let mut install_error = None;
     let mut attempt = 0;
     while let ShouldDepositAndRetry::Yes(cycles) =
         should_deposit_cycles_and_retry(&install_code_response, canister_to_install.deposit_cycles_if_needed, attempt)
@@ -79,27 +96,25 @@ pub async fn install<A: CandidType>(canister_to_install: CanisterToInstall<A>) -
         attempt += 1;
     }
 
-    if let Err((code, msg)) = install_code_response {
+    if let Err(error) = install_code_response {
         error!(
-            %canister_id,
+            ?error,
             ?mode,
             from_wasm_version = %canister_to_install.current_wasm_version,
             to_wasm_version = %canister_to_install.new_wasm_version,
-            error_code = code as u8,
-            error_message = msg.as_str(),
             "Error calling 'install_code'"
         );
-        error = Some((code, msg));
+        install_error = Some(error);
     }
 
     if canister_to_install.stop_start_canister {
         // Call 'start canister' regardless of if 'install_code' succeeded or not.
-        if let Err((code, msg)) = canister::start(canister_id).await {
-            error = error.or(Some((code, msg)));
+        if let Err(e) = canister::start(canister_id).await {
+            install_error = install_error.or(Some(e));
         }
     }
 
-    if let Some(error) = error {
+    if let Some(error) = install_error {
         error!(%canister_id, ?mode, "Canister install failed");
         Err(error)
     } else {
@@ -114,7 +129,7 @@ enum ShouldDepositAndRetry {
 }
 
 fn should_deposit_cycles_and_retry(
-    response: &CallResult<()>,
+    response: &Result<(), C2CError>,
     deposit_cycles_if_needed: bool,
     attempt: usize,
 ) -> ShouldDepositAndRetry {
@@ -122,25 +137,27 @@ fn should_deposit_cycles_and_retry(
         return ShouldDepositAndRetry::No;
     }
 
-    if let Err((code, msg)) = response {
-        if matches!(code, RejectionCode::SysTransient) && msg.contains("out of cycles") {
-            return ShouldDepositAndRetry::Yes(CYCLES_REQUIRED_FOR_UPGRADE / 2);
-        }
+    if let Err(error) = response
+        && is_out_of_cycles_error(error.reject_code(), error.message())
+    {
+        return ShouldDepositAndRetry::Yes(CYCLES_REQUIRED_FOR_UPGRADE / 2);
     }
     ShouldDepositAndRetry::No
 }
 
 #[derive(Clone)]
 enum InstallCodeArgs {
-    Default(InstallCodeArgument),
-    Chunked(InstallChunkedCodeArgument),
+    Default(management_canister::InstallCodeArgs),
+    Chunked(management_canister::InstallChunkedCodeArgs),
 }
 
 impl InstallCodeArgs {
-    async fn install(self) -> CallResult<()> {
-        match self {
-            InstallCodeArgs::Default(args) => management_canister::main::install_code(args.clone()).await,
-            InstallCodeArgs::Chunked(args) => management_canister::main::install_chunked_code(args.clone()).await,
-        }
+    async fn install(&self) -> Result<(), C2CError> {
+        let (result, method_name) = match self {
+            InstallCodeArgs::Default(args) => (management_canister::install_code(args).await, "install_code"),
+            InstallCodeArgs::Chunked(args) => (management_canister::install_chunked_code(args).await, "install_chunked_code"),
+        };
+
+        result.map_err(|e| convert_cdk_error(CanisterId::management_canister(), method_name, e))
     }
 }

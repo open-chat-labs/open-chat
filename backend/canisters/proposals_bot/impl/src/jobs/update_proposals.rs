@@ -1,5 +1,6 @@
 use crate::model::nervous_systems::ProposalsToUpdate;
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{RuntimeState, mutate_state, read_state};
+use ic_cdk::call::RejectCode;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
@@ -25,7 +26,7 @@ pub fn run() {
     TIMER_ID.set(None);
 
     if let Some(proposals) = mutate_state(|state| state.data.nervous_systems.dequeue_next_proposals_to_update()) {
-        ic_cdk::spawn(update_proposals(proposals));
+        ic_cdk::futures::spawn(update_proposals(proposals));
     }
     read_state(start_job_if_required);
 }
@@ -50,14 +51,11 @@ async fn update_proposals(
 async fn update_group_proposals(governance_canister_id: CanisterId, group_id: ChatId, proposals: Vec<ProposalUpdate>) {
     let update_proposals_args = group_canister::c2c_update_proposals::Args {
         proposals: proposals.clone(),
-        correlation_id: 0,
     };
 
-    let failed = group_canister_c2c_client::c2c_update_proposals(group_id.into(), &update_proposals_args)
-        .await
-        .is_err();
+    let response = group_canister_c2c_client::c2c_update_proposals(group_id.into(), &update_proposals_args).await;
 
-    mark_proposals_updated(governance_canister_id, proposals, failed);
+    mark_proposals_updated(governance_canister_id, proposals, response.err().map(|e| e.reject_code()));
 }
 
 async fn update_channel_proposals(
@@ -71,21 +69,23 @@ async fn update_channel_proposals(
         proposals: proposals.clone(),
     };
 
-    let failed = community_canister_c2c_client::c2c_update_proposals(community_id.into(), &update_proposals_args)
-        .await
-        .is_err();
+    let response = community_canister_c2c_client::c2c_update_proposals(community_id.into(), &update_proposals_args).await;
 
-    mark_proposals_updated(governance_canister_id, proposals, failed);
+    mark_proposals_updated(governance_canister_id, proposals, response.err().map(|e| e.reject_code()));
 }
 
-fn mark_proposals_updated(governance_canister_id: CanisterId, proposals: Vec<ProposalUpdate>, failed: bool) {
+fn mark_proposals_updated(governance_canister_id: CanisterId, proposals: Vec<ProposalUpdate>, error_code: Option<RejectCode>) {
     mutate_state(|state| {
         let now = state.env.now();
-        if failed {
+        if let Some(code) = error_code {
             state
                 .data
                 .nervous_systems
                 .mark_proposals_update_failed(&governance_canister_id, proposals, now);
+
+            if code == RejectCode::DestinationInvalid {
+                state.data.nervous_systems.mark_disabled(&governance_canister_id);
+            }
         } else {
             state
                 .data

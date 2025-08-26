@@ -2,7 +2,7 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{AccessorId, FileId, FileRemoved};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Default)]
 pub struct Args {
     pub users_added: Vec<Principal>,
     pub users_removed: Vec<Principal>,

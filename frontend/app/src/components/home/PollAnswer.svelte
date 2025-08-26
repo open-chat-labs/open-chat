@@ -1,32 +1,43 @@
-<svelte:options immutable />
-
 <script lang="ts">
+    import type { OpenChat, UserLookup } from "openchat-client";
+    import { allUsersStore, currentUserIdStore } from "openchat-client";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
     import Progress from "../Progress.svelte";
-    import TooltipPopup from "../TooltipPopup.svelte";
-    import TooltipWrapper from "../TooltipWrapper.svelte";
-    import type { OpenChat, UserLookup } from "openchat-client";
-    import { getContext, createEventDispatcher } from "svelte";
+    import Tooltip from "../tooltip/Tooltip.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let finished: boolean;
-    export let readonly: boolean;
-    export let percent: number;
-    export let answer: string;
-    export let voted: boolean;
-    export let txtColor: string;
-    export let myUserId: string | undefined;
-    export let voters: string[] | undefined;
-    export let numVotes: number;
-    export let showVotes: boolean;
+    interface Props {
+        finished: boolean;
+        readonly: boolean;
+        percent: number;
+        answer: string;
+        voted: boolean;
+        txtColor: string;
+        voters: string[] | undefined;
+        numVotes: number;
+        showVotes: boolean;
+        me: boolean;
+        onClick?: () => void;
+    }
 
-    let longPressed: boolean = false;
+    let {
+        finished,
+        readonly,
+        percent,
+        answer,
+        voted,
+        txtColor,
+        voters,
+        numVotes,
+        showVotes,
+        me,
+        onClick,
+    }: Props = $props();
 
-    $: userStore = client.userStore;
-    $: usernames = buildPollUsernames($userStore, voters, myUserId);
+    let longPressed: boolean = $state(false);
 
     function buildPollUsernames(
         userStore: UserLookup,
@@ -61,16 +72,23 @@
         }
     }
 
-    function onClick() {
+    function click() {
         if (!longPressed) {
-            dispatch("click");
+            onClick?.();
         }
     }
+    let usernames = $derived(buildPollUsernames($allUsersStore, voters, $currentUserIdStore));
 </script>
 
-<TooltipWrapper bind:longPressed position={"right"} align={"middle"} enable={showVotes}>
-    <div slot="target" class:readonly class="answer-text" class:finished on:click={onClick}>
-        <Progress bg={"button"} {percent}>
+<Tooltip
+    textLength={usernames === undefined ? 10 : usernames.length + 16}
+    longestWord={30}
+    bind:longPressed
+    position={"right"}
+    align={"middle"}
+    enable={showVotes}>
+    <div class:readonly class="answer-text" class:finished onclick={click}>
+        <Progress bg={me ? "accent" : "button"} {percent}>
             <div class="label">
                 <span>{answer}</span>
                 {#if voted}
@@ -79,16 +97,10 @@
             </div>
         </Progress>
     </div>
-    <div let:position let:align slot="tooltip">
-        <TooltipPopup
-            {position}
-            {align}
-            textLength={usernames === undefined ? 10 : usernames.length + 16}
-            longestWord={30}>
-            {buildTooltipText()}
-        </TooltipPopup>
-    </div>
-</TooltipWrapper>
+    {#snippet popupTemplate()}
+        {buildTooltipText()}
+    {/snippet}
+</Tooltip>
 
 <style lang="scss">
     .label {

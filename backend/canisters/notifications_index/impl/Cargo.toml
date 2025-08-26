@@ -1,7 +1,7 @@
 [package]
 name = "notifications_index_canister_impl"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -14,22 +14,27 @@ candid = { workspace = true }
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }
 canister_logger = { path = "../../../libraries/canister_logger" }
 canister_state_macros = { path = "../../../libraries/canister_state_macros" }
+canister_time = { path = "../../../libraries/canister_time" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
+constants = { path = "../../../libraries/constants" }
+cycles_dispenser_canister = { path = "../../cycles_dispenser/api" }
 futures = { workspace = true }
 http_request = { path = "../../../libraries/http_request" }
 human_readable = { path = "../../../libraries/human_readable" }
 ic-cdk = { workspace = true }
-ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
 msgpack = { path = "../../../libraries/msgpack" }
-notifications_canister = { path = "../../notifications/api" }
-notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
+local_user_index_canister = { path = "../../local_user_index/api" }
+local_user_index_canister_c2c_client = { path = "../../local_user_index/c2c_client" }
 notifications_index_canister = { path = "../api" }
+oc_error_codes = { path = "../../../libraries/error_codes" }
+principal_to_user_id_map = { path = "../../../libraries/principal_to_user_id_map" }
 rand = { workspace = true }
 serde = { workspace = true }
-serializer = { path = "../../../libraries/serializer" }
 stable_memory = { path = "../../../libraries/stable_memory" }
+stable_memory_map = { path = "../../../libraries/stable_memory_map" }
+timer_job_queues = { path = "../../../libraries/timer_job_queues" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_index_canister = { path = "../../user_index/api" }

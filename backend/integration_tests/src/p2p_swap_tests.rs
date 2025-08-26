@@ -1,13 +1,13 @@
 use crate::env::ENV;
-use crate::rng::{random_message_id, random_string};
-use crate::utils::tick_many;
-use crate::{client, TestEnv};
+use crate::utils::{chat_token_info, icp_token_info, tick_many};
+use crate::{TestEnv, client};
 use candid::Principal;
+use constants::{CHAT_TRANSFER_FEE, DAY_IN_MS, MINUTE_IN_MS};
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
-use types::{ChatEvent, Cryptocurrency, MessageContent, MessageContentInitial, P2PSwapContentInitial, P2PSwapStatus};
-use utils::time::{DAY_IN_MS, MINUTE_IN_MS};
+use testing::rng::{random_from_u128, random_string};
+use types::{ChatEvent, MessageContent, MessageContentInitial, P2PSwapContentInitial, P2PSwapStatus};
 
 #[test]
 fn p2p_swap_in_direct_chat_succeeds() {
@@ -19,17 +19,17 @@ fn p2p_swap_in_direct_chat_succeeds() {
         ..
     } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
-    client::icrc1::happy_path::transfer(
+    client::ledger::happy_path::transfer(
         env,
         *controller,
         canister_ids.icp_ledger,
         Principal::from(user1.user_id),
         1_100_000_000,
     );
-    client::icrc1::happy_path::transfer(
+    client::ledger::happy_path::transfer(
         env,
         *controller,
         canister_ids.chat_ledger,
@@ -37,7 +37,7 @@ fn p2p_swap_in_direct_chat_succeeds() {
         11_000_000_000,
     );
 
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
 
     let send_message_response = client::user::send_message_v2(
         env,
@@ -48,18 +48,18 @@ fn p2p_swap_in_direct_chat_succeeds() {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::P2PSwap(P2PSwapContentInitial {
-                token0: Cryptocurrency::InternetComputer.try_into().unwrap(),
+                token0: icp_token_info(),
                 token0_amount: 1_000_000_000,
-                token1: Cryptocurrency::CHAT.try_into().unwrap(),
+                token1: chat_token_info(),
                 token1_amount: 10_000_000_000,
                 expires_in: DAY_IN_MS,
                 caption: None,
             }),
             replies_to: None,
             forwarding: false,
+            block_level_markdown: false,
             message_filter_failed: None,
             pin: None,
-            correlation_id: 0,
         },
     );
 
@@ -90,12 +90,12 @@ fn p2p_swap_in_direct_chat_succeeds() {
     tick_many(env, 10);
 
     assert_eq!(
-        client::icrc1::happy_path::balance_of(env, canister_ids.chat_ledger, Principal::from(user1.user_id)),
+        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, Principal::from(user1.user_id)),
         10_000_000_000
     );
 
     assert_eq!(
-        client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, Principal::from(user2.user_id)),
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, Principal::from(user2.user_id)),
         1_000_000_000
     );
 
@@ -133,19 +133,19 @@ fn p2p_swap_in_group_succeeds() {
     } = wrapper.env();
 
     let user1 = client::register_diamond_user(env, canister_ids, *controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
 
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
-    client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
+    client::group::happy_path::join_group(env, user2.principal, group_id);
 
-    client::icrc1::happy_path::transfer(
+    client::ledger::happy_path::transfer(
         env,
         *controller,
         canister_ids.icp_ledger,
         Principal::from(user1.user_id),
         1_100_000_000,
     );
-    client::icrc1::happy_path::transfer(
+    client::ledger::happy_path::transfer(
         env,
         *controller,
         canister_ids.chat_ledger,
@@ -153,7 +153,7 @@ fn p2p_swap_in_group_succeeds() {
         11_000_000_000,
     );
 
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
 
     let send_message_response = client::user::send_message_with_transfer_to_group(
         env,
@@ -164,9 +164,9 @@ fn p2p_swap_in_group_succeeds() {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::P2PSwap(P2PSwapContentInitial {
-                token0: Cryptocurrency::InternetComputer.try_into().unwrap(),
+                token0: icp_token_info(),
                 token0_amount: 1_000_000_000,
-                token1: Cryptocurrency::CHAT.try_into().unwrap(),
+                token1: chat_token_info(),
                 token1_amount: 10_000_000_000,
                 expires_in: DAY_IN_MS,
                 caption: None,
@@ -175,7 +175,7 @@ fn p2p_swap_in_group_succeeds() {
             sender_display_name: None,
             replies_to: None,
             mentioned: Vec::new(),
-            correlation_id: 0,
+            block_level_markdown: false,
             rules_accepted: None,
             message_filter_failed: None,
             pin: None,
@@ -195,6 +195,7 @@ fn p2p_swap_in_group_succeeds() {
             thread_root_message_index: None,
             message_id,
             pin: None,
+            new_achievement: false,
         },
     );
 
@@ -206,12 +207,12 @@ fn p2p_swap_in_group_succeeds() {
     tick_many(env, 10);
 
     assert_eq!(
-        client::icrc1::happy_path::balance_of(env, canister_ids.chat_ledger, Principal::from(user1.user_id)),
+        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, Principal::from(user1.user_id)),
         10_000_000_000
     );
 
     assert_eq!(
-        client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, Principal::from(user2.user_id)),
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, Principal::from(user2.user_id)),
         1_000_000_000
     );
 
@@ -238,12 +239,12 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
         ..
     } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
     let original_chat_balance = 11_000_000_000;
 
-    client::icrc1::happy_path::transfer(
+    client::ledger::happy_path::transfer(
         env,
         *controller,
         canister_ids.chat_ledger,
@@ -251,7 +252,7 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
         original_chat_balance,
     );
 
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
 
     let send_message_response = client::user::send_message_v2(
         env,
@@ -262,18 +263,18 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::P2PSwap(P2PSwapContentInitial {
-                token0: Cryptocurrency::CHAT.try_into().unwrap(),
+                token0: chat_token_info(),
                 token0_amount: 10_000_000_000,
-                token1: Cryptocurrency::InternetComputer.try_into().unwrap(),
+                token1: icp_token_info(),
                 token1_amount: 1_000_000_000,
                 expires_in: DAY_IN_MS,
                 caption: None,
             }),
             replies_to: None,
             forwarding: false,
+            block_level_markdown: false,
             message_filter_failed: None,
             pin: None,
-            correlation_id: 0,
         },
     );
 
@@ -281,6 +282,8 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
         send_message_response,
         user_canister::send_message_v2::Response::TransferSuccessV2(_)
     ));
+
+    tick_many(env, 3);
 
     if delete_message {
         let delete_message_response = client::user::delete_messages(
@@ -291,7 +294,6 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
                 user_id: user2.user_id,
                 thread_root_message_index: None,
                 message_ids: vec![message_id],
-                correlation_id: 0,
             },
         );
 
@@ -318,11 +320,11 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
         ));
     }
 
-    tick_many(env, 5);
+    tick_many(env, 10);
 
     assert_eq!(
-        client::icrc1::happy_path::balance_of(env, canister_ids.chat_ledger, Principal::from(user1.user_id)),
-        original_chat_balance - (2 * Cryptocurrency::CHAT.fee().unwrap())
+        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, Principal::from(user1.user_id)),
+        original_chat_balance - (2 * CHAT_TRANSFER_FEE)
     );
 
     if !delete_message {
@@ -362,14 +364,14 @@ fn cancel_p2p_swap_in_group_chat_succeeds(delete_message: bool) {
     } = wrapper.env();
 
     let user1 = client::register_diamond_user(env, canister_ids, *controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
 
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
-    client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
+    client::group::happy_path::join_group(env, user2.principal, group_id);
 
     let original_chat_balance = 11_000_000_000;
 
-    client::icrc1::happy_path::transfer(
+    client::ledger::happy_path::transfer(
         env,
         *controller,
         canister_ids.chat_ledger,
@@ -377,7 +379,7 @@ fn cancel_p2p_swap_in_group_chat_succeeds(delete_message: bool) {
         original_chat_balance,
     );
 
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
 
     let send_message_response = client::user::send_message_with_transfer_to_group(
         env,
@@ -388,9 +390,9 @@ fn cancel_p2p_swap_in_group_chat_succeeds(delete_message: bool) {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::P2PSwap(P2PSwapContentInitial {
-                token0: Cryptocurrency::CHAT.try_into().unwrap(),
+                token0: chat_token_info(),
                 token0_amount: 10_000_000_000,
-                token1: Cryptocurrency::InternetComputer.try_into().unwrap(),
+                token1: icp_token_info(),
                 token1_amount: 1_000_000_000,
                 expires_in: DAY_IN_MS,
                 caption: None,
@@ -399,7 +401,7 @@ fn cancel_p2p_swap_in_group_chat_succeeds(delete_message: bool) {
             sender_display_name: None,
             replies_to: None,
             mentioned: Vec::new(),
-            correlation_id: 0,
+            block_level_markdown: false,
             rules_accepted: None,
             message_filter_failed: None,
             pin: None,
@@ -411,6 +413,8 @@ fn cancel_p2p_swap_in_group_chat_succeeds(delete_message: bool) {
         user_canister::send_message_with_transfer_to_group::Response::Success(_)
     ));
 
+    tick_many(env, 3);
+
     if delete_message {
         let delete_message_response = client::group::delete_messages(
             env,
@@ -420,7 +424,7 @@ fn cancel_p2p_swap_in_group_chat_succeeds(delete_message: bool) {
                 thread_root_message_index: None,
                 message_ids: vec![message_id],
                 as_platform_moderator: None,
-                correlation_id: 0,
+                new_achievement: false,
             },
         );
 
@@ -447,11 +451,11 @@ fn cancel_p2p_swap_in_group_chat_succeeds(delete_message: bool) {
         ));
     }
 
-    tick_many(env, 5);
+    tick_many(env, 10);
 
     assert_eq!(
-        client::icrc1::happy_path::balance_of(env, canister_ids.chat_ledger, Principal::from(user1.user_id)),
-        original_chat_balance - (2 * Cryptocurrency::CHAT.fee().unwrap())
+        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, Principal::from(user1.user_id)),
+        original_chat_balance - (2 * CHAT_TRANSFER_FEE)
     );
 
     if !delete_message {
@@ -478,12 +482,12 @@ fn deposit_refunded_if_swap_expires() {
         ..
     } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
     let original_chat_balance = 11_000_000_000;
 
-    client::icrc1::happy_path::transfer(
+    client::ledger::happy_path::transfer(
         env,
         *controller,
         canister_ids.chat_ledger,
@@ -491,7 +495,7 @@ fn deposit_refunded_if_swap_expires() {
         original_chat_balance,
     );
 
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
 
     let send_message_response = client::user::send_message_v2(
         env,
@@ -502,18 +506,18 @@ fn deposit_refunded_if_swap_expires() {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::P2PSwap(P2PSwapContentInitial {
-                token0: Cryptocurrency::CHAT.try_into().unwrap(),
+                token0: chat_token_info(),
                 token0_amount: 10_000_000_000,
-                token1: Cryptocurrency::InternetComputer.try_into().unwrap(),
+                token1: icp_token_info(),
                 token1_amount: 1_000_000_000,
                 expires_in: DAY_IN_MS,
                 caption: None,
             }),
             replies_to: None,
             forwarding: false,
+            block_level_markdown: false,
             message_filter_failed: None,
             pin: None,
-            correlation_id: 0,
         },
     );
 
@@ -526,8 +530,8 @@ fn deposit_refunded_if_swap_expires() {
     tick_many(env, 10);
 
     assert_eq!(
-        client::icrc1::happy_path::balance_of(env, canister_ids.chat_ledger, Principal::from(user1.user_id)),
-        original_chat_balance - (2 * Cryptocurrency::CHAT.fee().unwrap())
+        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, Principal::from(user1.user_id)),
+        original_chat_balance - (2 * CHAT_TRANSFER_FEE)
     );
 
     let user1_event = client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![1.into()])
@@ -553,7 +557,92 @@ fn deposit_refunded_if_swap_expires() {
     );
 }
 
-fn verify_swap_status<F: FnOnce(&P2PSwapStatus) -> bool>(event: ChatEvent, predicate: F) {
+#[test_case(false)]
+#[test_case(true)]
+fn p2p_swap_blocked_if_token_disabled(input_token: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let user = client::register_diamond_user(env, canister_ids, *controller);
+    client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, user.user_id);
+
+    let group_id = client::user::happy_path::create_group(env, &user, &random_string(), true, true);
+
+    client::ledger::happy_path::transfer(
+        env,
+        *controller,
+        canister_ids.icp_ledger,
+        Principal::from(user.user_id),
+        1_100_000_000,
+    );
+
+    let message_id = random_from_u128();
+
+    client::registry::set_token_enabled(
+        env,
+        user.principal,
+        canister_ids.registry,
+        &registry_canister::set_token_enabled::Args {
+            ledger_canister_id: if input_token { canister_ids.icp_ledger } else { canister_ids.chat_ledger },
+            enabled: false,
+        },
+    );
+
+    let send_message_response = client::user::send_message_with_transfer_to_group(
+        env,
+        user.principal,
+        user.canister(),
+        &user_canister::send_message_with_transfer_to_group::Args {
+            group_id,
+            thread_root_message_index: None,
+            message_id,
+            content: MessageContentInitial::P2PSwap(P2PSwapContentInitial {
+                token0: icp_token_info(),
+                token0_amount: 1_000_000_000,
+                token1: chat_token_info(),
+                token1_amount: 10_000_000_000,
+                expires_in: DAY_IN_MS,
+                caption: None,
+            }),
+            sender_name: user.username(),
+            sender_display_name: None,
+            replies_to: None,
+            mentioned: Vec::new(),
+            block_level_markdown: false,
+            rules_accepted: None,
+            message_filter_failed: None,
+            pin: None,
+        },
+    );
+
+    // Re-enable token so that other tests aren't affected
+    client::registry::set_token_enabled(
+        env,
+        user.principal,
+        canister_ids.registry,
+        &registry_canister::set_token_enabled::Args {
+            ledger_canister_id: if input_token { canister_ids.icp_ledger } else { canister_ids.chat_ledger },
+            enabled: true,
+        },
+    );
+
+    if let user_canister::send_message_with_transfer_to_group::Response::Error(error) = send_message_response {
+        assert!(
+            error
+                .message()
+                .is_some_and(|m| m.contains(if input_token { "Input" } else { "Output" }))
+        );
+    } else {
+        panic!("Unexpected response: {send_message_response:?}");
+    }
+}
+
+pub(crate) fn verify_swap_status<F: FnOnce(&P2PSwapStatus) -> bool>(event: ChatEvent, predicate: F) {
     let ChatEvent::Message(m) = event else {
         panic!("Event is not a message. Event: {event:?}")
     };

@@ -1,10 +1,10 @@
 use crate::env::ENV;
-use crate::rng::random_principal;
 use crate::utils::{now_millis, tick_many};
-use crate::{client, TestEnv};
+use crate::{TestEnv, client};
 use std::ops::Deref;
 use std::time::Duration;
 use storage_index_canister::add_or_update_users::UserConfig;
+use testing::rng::random_principal;
 
 #[test]
 fn file_is_removed_after_expiry_date() {
@@ -31,7 +31,7 @@ fn file_is_removed_after_expiry_date() {
 
     let now = now_millis(env);
 
-    client::storage_bucket::happy_path::upload_file(env, user_id, bucket, file_id, file, Some(now + 1000));
+    client::storage_bucket::happy_path::upload_file(env, user_id, bucket, file_id, file, Vec::new(), Some(now + 1000));
 
     env.advance_time(Duration::from_millis(999));
     env.tick();

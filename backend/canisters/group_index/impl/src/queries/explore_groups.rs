@@ -1,11 +1,11 @@
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
+use canister_api_macros::query;
 use group_index_canister::explore_groups::{Response::*, *};
-use ic_cdk_macros::query;
 
 const MIN_TERM_LENGTH: u8 = 2;
 const MAX_TERM_LENGTH: u8 = 20;
 
-#[query]
+#[query(candid = true, msgpack = true)]
 fn explore_groups(args: Args) -> Response {
     read_state(|state| explore_groups_impl(args, state))
 }

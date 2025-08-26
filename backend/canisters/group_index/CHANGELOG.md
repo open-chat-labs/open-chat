@@ -1,9 +1,338 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
+
+### Changed
+
+- Switch some endpoints over to using common response types ([#8450](https://github.com/open-chat-labs/open-chat/pull/8450))
+
+## [[2.0.1859](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1859-group_index)] - 2025-08-05
+
+### Fixed
+
+- Maintain event ordering when retrying failed c2c calls ([#8429](https://github.com/open-chat-labs/open-chat/pull/8429))
+
+## [[2.0.1850](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1850-group_index)] - 2025-08-04
+
+### Changed
+
+- Add "total chit earned" access gate ([#8422](https://github.com/open-chat-labs/open-chat/pull/8422))
+
+## [[2.0.1843](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1843-group_index)] - 2025-07-29
+
+### Added
+
+- Introduce `Encrypted` message type ([8294](https://github.com/open-chat-labs/open-chat/pull/8294))
+
+### Changed
+
+- Deprecate `winners` field on prize messages ([#8302](https://github.com/open-chat-labs/open-chat/pull/8302))
+- Expose `liquid_cycles_balance` in metrics ([#8350](https://github.com/open-chat-labs/open-chat/pull/8350))
+- Add delay before retrying c2c call under certain error conditions ([#8355](https://github.com/open-chat-labs/open-chat/pull/8355))
+
+## [[2.0.1806](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1806-group_index)] - 2025-06-26
+
+### Changed
+
+- Retry upgrading Community/Group wasms ([#8242](https://github.com/open-chat-labs/open-chat/pull/8242))
+
+### Removed
+
+- Remove `gate` which is superseded by `gate_config` ([#8186](https://github.com/open-chat-labs/open-chat/pull/8186))
+
+## [[2.0.1790](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1790-group_index)] - 2025-06-13
+
+### Changed
+
+- Return newly created channel Ids after creating community ([#8156](https://github.com/open-chat-labs/open-chat/pull/8156))
+
+## [[2.0.1784](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1784-group_index)] - 2025-06-10
+
+### Changed
+
+- Remove all references to LocalGroupIndexes ([#8057](https://github.com/open-chat-labs/open-chat/pull/8057))
+- Remove all references to Notifications canisters ([#8087](https://github.com/open-chat-labs/open-chat/pull/8087))
+
+## [[2.0.1767](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1767-group_index)] - 2025-05-28
+
+### Changed
+
+- Remove all calls into LocalGroupIndexes ([#8014](https://github.com/open-chat-labs/open-chat/pull/8014))
+
+## [[2.0.1740](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1740-group_index)] - 2025-05-09
+
+### Fixed
+
+- Remove deleted Groups/Communities from IndexMap ([#7942](https://github.com/open-chat-labs/open-chat/pull/7942))
+- Bump Group/Community wasm versions to avoid `VersionNotHigher` error ([#7943](https://github.com/open-chat-labs/open-chat/pull/7943))
+
+## [[2.0.1736](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1736-group_index)] - 2025-05-09
+
+### Changed
+
+- Switch to using LocalUserIndexes instead of LocalGroupIndexes ([#7917](https://github.com/open-chat-labs/open-chat/pull/7917))
+- Switch to using LocalUserIndex after expanding to new subnet ([#7920](https://github.com/open-chat-labs/open-chat/pull/7920))
+- Install Group/Community canister wasms on LocalUserIndexes ([#7921](https://github.com/open-chat-labs/open-chat/pull/7921))
+
+## [[2.0.1720](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1720-group_index)] - 2025-04-29
+
+### Changed
+
+- Retry marking JADE 8 community as verified now that logs are visible ([#7858](https://github.com/open-chat-labs/open-chat/pull/7858))
+
+## [[2.0.1707](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1707-group_index)] - 2025-04-22
+
+### Changed
+
+- Log outcome after each call to set community as verified ([#7818](https://github.com/open-chat-labs/open-chat/pull/7818))
+- Trigger call to mark JADE 8 community verified ([#7820](https://github.com/open-chat-labs/open-chat/pull/7820))
+- Make GroupIndex canister logs public ([#7822](https://github.com/open-chat-labs/open-chat/pull/7822))
+
+## [[2.0.1703](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1703-group_index)] - 2025-04-15
+
+### Added
+
+- Notify Groups/Communities when user deleted ([#7781](https://github.com/open-chat-labs/open-chat/pull/7781))
+
+### Changed
+
+- Transfer excess cycles back to the CyclesDispenser ([#7780](https://github.com/open-chat-labs/open-chat/pull/7780))
+
+## [[2.0.1696](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1696-group_index)] - 2025-04-10
+
+### Changed
+
+- Transfer cycles to GroupIndex when deleting a Group or Community ([#7768](https://github.com/open-chat-labs/open-chat/pull/7768))
+
+## [[2.0.1693](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1693-group_index)] - 2025-04-08
+
+### Changed
+
+- Increase timeout of bounded-wait calls to 5 minutes ([#7730](https://github.com/open-chat-labs/open-chat/pull/7730))
+- Include more details in failed c2c call errors ([#7749](https://github.com/open-chat-labs/open-chat/pull/7749))
+
+### Fixed
+
+- Fix primary language not updating in GroupIndex ([#7752](https://github.com/open-chat-labs/open-chat/pull/7752))
+
+## [[2.0.1677](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1677-group_index)] - 2025-04-02
+
+### Added
+
+- Introduce standardised error codes ([#7599](https://github.com/open-chat-labs/open-chat/pull/7599))
+
+### Changed
+
+- Filter trace level events globally so they are dropped earlier ([#7678](https://github.com/open-chat-labs/open-chat/pull/7678))
+- Support passing common state to timer job batches ([#7705](https://github.com/open-chat-labs/open-chat/pull/7705))
+
+## [[2.0.1636](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1636-group_index)] - 2025-03-11
+
+### Changed
+
+- Log error response if any canister wasm upgrades are rejected ([#7566](https://github.com/open-chat-labs/open-chat/pull/7566))
+
+## [[2.0.1635](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1635-group_index)] - 2025-03-10
+
+### Changed
+
+- Use `unbounded_wait` when installing canisters ([#7558](https://github.com/open-chat-labs/open-chat/pull/7558))
+
+## [[2.0.1630](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1630-group_index)] - 2025-03-10
+
+### Added
+
+- Add `versions` to upgrade filter to filter canisters to upgrade by version ([#7531](https://github.com/open-chat-labs/open-chat/pull/7531))
+
+### Changed
+
+- Switch to using bounded-wait calls for idempotent c2c calls ([#7528](https://github.com/open-chat-labs/open-chat/pull/7528))
+- Log total instructions consumed at end of upgrade ([#7551](https://github.com/open-chat-labs/open-chat/pull/7551))
+- Log number of public and private groups active in the last year ([#7552](https://github.com/open-chat-labs/open-chat/pull/7552))
+
+### Fixed
+
+- Clear cached hot groups to fix deserialization during upgrade ([#7556](https://github.com/open-chat-labs/open-chat/pull/7556))
+
+## [[2.0.1613](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1613-group_index)] - 2025-02-28
+
+### Added
+
+- Introduce `IdempotencyChecker` in preparation for using best-effort calls ([#7457](https://github.com/open-chat-labs/open-chat/pull/7457))
+
+### Fixed
+
+- Avoid retrying c2c call if recipient canister is uninstalled ([#7302](https://github.com/open-chat-labs/open-chat/pull/7302))
+- Unreserve group/community name if fails to be created ([#7430](https://github.com/open-chat-labs/open-chat/pull/7430))
+
+## [[2.0.1584](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1584-group_index)] - 2025-01-24
+
+### Added
+
+- Add facility to set/revoke community/group verification via proposal ([#7240](https://github.com/open-chat-labs/open-chat/pull/7240))
+
+### Changed
+
+- Reduce message Ids to 64 bits down from 128 bits ([#7232](https://github.com/open-chat-labs/open-chat/pull/7232))
+
+### Fixed
+
+- Revoke Group/Community verified status if they change name ([#7277](https://github.com/open-chat-labs/open-chat/pull/7277))
+
+## [[2.0.1541](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1541-group_index)] - 2024-12-19
+
+### Changed
+
+- Handle retry attempts when adding a new LocalGroupIndex ([#7091](https://github.com/open-chat-labs/open-chat/pull/7091))
+- Add logging + skip steps that have already been completed ([#7093](https://github.com/open-chat-labs/open-chat/pull/7093))
+
+### Fixed
+
+- Set `wasm_hash` field which was previously empty ([#7097](https://github.com/open-chat-labs/open-chat/pull/7097))
+
+## [[2.0.1528](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1528-group_index)] - 2024-12-19
+
+### Changed
+
+- Allow Registry to add additional LocalGroupIndexes ([#7072](https://github.com/open-chat-labs/open-chat/pull/7072))
+- Handle installing large wasms onto new subnets ([#7078](https://github.com/open-chat-labs/open-chat/pull/7078))
+
+## [[2.0.1509](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1509-group_index)] - 2024-12-13
+
+### Changed
+
+- Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))
+- Make `MessageId` comparisons use their 64bit representation ([#7030](https://github.com/open-chat-labs/open-chat/pull/7030))
+
+### Removed
+
+- Remove the old `gate` field which has been superseded by `gate_config` ([#6902](https://github.com/open-chat-labs/open-chat/pull/6902))
+
+## [[2.0.1474](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1474-group_index)] - 2024-11-26
+
+### Changed
+
+- Revert temporary hacks to fix upgrade ([#6894](https://github.com/open-chat-labs/open-chat/pull/6894))
+- Store access gate expiry alongside each public group ([#6896](https://github.com/open-chat-labs/open-chat/pull/6896))
+
+## [[2.0.1472](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1472-group_index)] - 2024-11-26
+
+### Added
+
+- Add support for expiring access gates ([#6401](https://github.com/open-chat-labs/open-chat/pull/6401))
+- Add an error log with http endpoint ([#6608](https://github.com/open-chat-labs/open-chat/pull/6608))
+
+### Changed
+
+- Add `CanisterWasmBytes` to reduce duplication ([#6480](https://github.com/open-chat-labs/open-chat/pull/6480))
+- Log error if chunked Group/Community upgrade fails ([#6483](https://github.com/open-chat-labs/open-chat/pull/6483))
+- Clear wasm chunks once new wasm version has been set ([#6524](https://github.com/open-chat-labs/open-chat/pull/6524))
+- Simplify `inspect_message` ([#6847](https://github.com/open-chat-labs/open-chat/pull/6847))
+- Make `ChannelId` comparisons use their 32bit representation ([#6885](https://github.com/open-chat-labs/open-chat/pull/6885))
+
+### Fixed
+
+- Wire up `freeze_community` in `inspect_message` ([#6764](https://github.com/open-chat-labs/open-chat/pull/6764))
+- Fix GroupIndex upgrade ([#6890](https://github.com/open-chat-labs/open-chat/pull/6890))
+
+## [[2.0.1360](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1360-group_index)] - 2024-09-30
+
+### Added
+
+- Support upgrading to large wasms by uploading in chunks ([#6453](https://github.com/open-chat-labs/open-chat/pull/6453))
+- Reinstate some candid endpoints ([#6468](https://github.com/open-chat-labs/open-chat/pull/6468))
+
+### Changed
+
+- Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
+- Add serde default attribute in preparation for skipping serialization if default ([#6475](https://github.com/open-chat-labs/open-chat/pull/6475))
+
+### Removed
+
+- Remove the unused `use_for_new_canisters` field from upgrade args ([#6452](https://github.com/open-chat-labs/open-chat/pull/6452))
+
+## [[2.0.1355](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1355-group_index)] - 2024-09-20
+
+### Added
+
+- Add `ReferredByMember` access gate ([#6377](https://github.com/open-chat-labs/open-chat/pull/6377))
+
+### Removed
+
+- Remove deprecated candid endpoints ([#6396](https://github.com/open-chat-labs/open-chat/pull/6396))
+
+## [[2.0.1332](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1332-group_index)] - 2024-09-06
+
+### Added
+
+- Expose MessagePack versions of GroupIndex APIs ([#6318](https://github.com/open-chat-labs/open-chat/pull/6318))
+
+### Changed
+
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+
+## [[2.0.1318](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1318-group_index)] - 2024-09-02
+
+### Changed
+
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+
+## [[2.0.1270](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1270-group_index)] - 2024-07-31
+
+### Changed
+
+- Configure message visibility to non-members of public channels/groups ([#6152](https://github.com/open-chat-labs/open-chat/pull/6152))
+
+## [[2.0.1260](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1260-group_index)] - 2024-07-26
+
+### Removed
+
+- Remove `Invited` gate ([#6112](https://github.com/open-chat-labs/open-chat/pull/6112))
+
+## [[2.0.1253](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1253-group_index)] - 2024-07-25
+
+### Added
+
+- Add `Locked` gate ([#6095](https://github.com/open-chat-labs/open-chat/pull/6095))
+- Add `Invited` gate ([#6106](https://github.com/open-chat-labs/open-chat/pull/6106))
+
+### Changed
+
+- Clear old data from the failed upgrades log ([#6062](https://github.com/open-chat-labs/open-chat/pull/6062))
+- Ensure GroupIndex is only controller before installing LocalGroupIndex ([#6070](https://github.com/open-chat-labs/open-chat/pull/6070))
+
+## [[2.0.1240](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1240-group_index)] - 2024-07-17
+
+### Fixed
+
+- Handle `mark_local_group_index_full` in `inspect_message` ([#6010](https://github.com/open-chat-labs/open-chat/pull/6010))
+
+## [[2.0.1228](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1228-group_index)] - 2024-07-08
+
+### Added
+
+- Allow platform operators to mark LocalGroupIndexes full ([#6000](https://github.com/open-chat-labs/open-chat/pull/6000))
+
+## [[2.0.1188](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1188-group_index)] - 2024-06-04
+
+### Changed
+
+- Expose both heap and stable memory in metrics ([#5718](https://github.com/open-chat-labs/open-chat/pull/5718))
+- Don't retry c2c calls after getting a `DestinationInvalid` error ([#5732](https://github.com/open-chat-labs/open-chat/pull/5732))
+- Don't retry c2c calls after getting a `CanisterMethodNotFound` error ([#5747](https://github.com/open-chat-labs/open-chat/pull/5747))
+- Store IC root key in groups and communities ([#5816](https://github.com/open-chat-labs/open-chat/pull/5816))
+- Store `internet_identity_canister_id` in groups and communities ([#5823](https://github.com/open-chat-labs/open-chat/pull/5823))
+- Add `credential_name` to verified credential access gates ([#5853](https://github.com/open-chat-labs/open-chat/pull/5853))
+
+### Fixed
+
+- Add `serde(default)` attribute to fix upgrade ([#5857](https://github.com/open-chat-labs/open-chat/pull/5857))
+
+## [[2.0.1135](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1135-group_index)] - 2024-04-10
 
 ### Fixed
 
@@ -111,7 +440,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [[2.0.866](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.866-group_index)] - 2023-09-27
 
-### Changed 
+### Changed
 
 - Accept calls to `set_community_upgrade_concurrency` ([#4418](https://github.com/open-chat-labs/open-chat/pull/4418))
 
@@ -121,7 +450,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add `mention_all_members` group permission ([#4405](https://github.com/open-chat-labs/open-chat/pull/4405))
 
-### Changed 
+### Changed
 
 - Accept calls to `set_max_concurrent_community_canister_upgrades` ([#4391](https://github.com/open-chat-labs/open-chat/pull/4391))
 
@@ -251,7 +580,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Removed `search_v2` endpoint ([#3796](https://github.com/open-chat-labs/open-chat/pull/3796))
- 
+
 ### Fixed
 
 - Fix `c2c_create_community` ([#3777](https://github.com/open-chat-labs/open-chat/pull/3777))
@@ -296,7 +625,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Rename is_super_admin to is_platform_operator in c2c_lookup_user ([#3264](https://github.com/open-chat-labs/open-chat/pull/3264)) 
+- Rename is_super_admin to is_platform_operator in c2c_lookup_user ([#3264](https://github.com/open-chat-labs/open-chat/pull/3264))
 
 ### Removed
 

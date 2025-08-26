@@ -4,12 +4,13 @@ use crate::updates::c2c_submit_proposal::{
 };
 use candid::Principal;
 use canister_timer_jobs::Job;
+use constants::{MINUTE_IN_MS, SECOND_IN_MS};
 use icrc_ledger_types::icrc1::{account::Account, transfer::TransferArg};
 use proposals_bot_canister::ProposalToSubmit;
 use serde::{Deserialize, Serialize};
 use sns_governance_canister::types::manage_neuron::claim_or_refresh::By;
 use sns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command};
-use sns_governance_canister::types::{manage_neuron_response, Empty, ManageNeuron};
+use sns_governance_canister::types::{Empty, ManageNeuron, manage_neuron_response};
 use tracing::error;
 use types::{icrc1, CanisterId, MultiUserChat, NnsNeuronId, ProposalId, SnsNeuronId, UserId};
 use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
@@ -161,24 +162,26 @@ impl Job for ProcessUserRefundJob {
     fn execute(self) {
         let transfer_args = TransferArg {
             from_subaccount: None,
-            to: Account::from(Principal::from(self.user_id)),
+            to: self.user_id.into(),
             fee: Some(self.fee.into()),
             created_at_time: None,
             memo: None,
             amount: self.amount.into(),
         };
-        ic_cdk::spawn(async move {
-            if icrc_ledger_canister_c2c_client::icrc1_transfer(self.ledger_canister_id, &transfer_args)
-                .await
-                .is_err()
-            {
-                mutate_state(|state| {
+        ic_cdk::futures::spawn(async move {
+            match icrc_ledger_canister_c2c_client::icrc1_transfer(self.ledger_canister_id, &transfer_args).await {
+                Ok(Ok(_)) => {}
+                Ok(Err(error)) => {
+                    error!(user_id = %self.user_id, ledger = %self.ledger_canister_id, ?error, "Failed to refund user");
+                }
+                Err(error) => mutate_state(|state| {
+                    error!(user_id = %self.user_id, ledger = %self.ledger_canister_id, ?error, "Failed to refund user, retrying");
                     let now = state.env.now();
                     state
                         .data
                         .timer_jobs
                         .enqueue_job(TimerJob::ProcessUserRefund(self), now + (10 * SECOND_IN_MS), now)
-                })
+                }),
             }
         })
     }
@@ -197,7 +200,7 @@ impl Job for TopUpNeuronJob {
             memo: None,
             amount: self.amount.into(),
         };
-        ic_cdk::spawn(async move {
+        ic_cdk::futures::spawn(async move {
             match icrc_ledger_canister_c2c_client::icrc1_transfer(self.ledger_canister_id, &transfer_args).await {
                 Ok(Ok(_)) => {
                     let refresh_job = RefreshNeuronJob {
@@ -230,7 +233,7 @@ impl Job for RefreshNeuronJob {
             })),
         };
 
-        ic_cdk::spawn(async move {
+        ic_cdk::futures::spawn(async move {
             match sns_governance_canister_c2c_client::manage_neuron(self.governance_canister_id, &args).await {
                 Ok(response) => match response.command.unwrap() {
                     manage_neuron_response::Command::ClaimOrRefresh(_) => {}
@@ -265,7 +268,7 @@ impl Job for VoteOnNnsProposalJob {
             })),
         };
 
-        ic_cdk::spawn(async move {
+        ic_cdk::futures::spawn(async move {
             match nns_governance_canister_c2c_client::manage_neuron(self.nns_governance_canister_id, &args).await {
                 Ok(response) => match response.command.unwrap() {
                     manage_neuron_response::Command::RegisterVote(_) => {}

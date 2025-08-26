@@ -1,6 +1,6 @@
 // https://stackoverflow.com/questions/10687099/how-to-test-if-a-url-string-is-absolute-or-relative
 
-import type { RouteParams, RouteType } from "../routes";
+import type { RouteParams, RouteType } from "openchat-client";
 
 const regex = new RegExp("^(?:[a-z]+:)?//", "i");
 
@@ -9,7 +9,7 @@ export function isAbsoluteUrl(url: string): boolean {
 }
 
 export const openChatFriendlyUrl =
-    process.env.DFX_NETWORK === "ic_test" ? "https://test.oc.app" : "https://oc.app";
+    import.meta.env.OC_DFX_NETWORK === "ic_test" ? "https://test.oc.app" : "https://oc.app";
 export const synonymousUrlRegex = new RegExp(`^(${window.location.origin}|${openChatFriendlyUrl})`);
 
 // detect whether the user is on a canister based url of the form https://6hsbt-vqaaa-aaaaf-aaafq-cai.ic0.app/
@@ -34,15 +34,15 @@ export function removeQueryStringParam(name: string): string {
     return [...qs.keys()].length > 0 ? `${path}?${qs}` : path;
 }
 
-const nomenuRoutes: RouteType[] = ["miami_route"];
+const nomenuRoutes: RouteType[] = [];
 const scrollingRoutes: RouteType[] = [
     "features_route",
     "roadmap_route",
     "whitepaper_route",
     "architecture_route",
     "blog_route",
-    "miami_route",
     "guidelines_route",
+    "terms_route",
     "faq_route",
     "diamond_route",
 ];
@@ -81,7 +81,7 @@ export function copyToClipboard(txt: string): Promise<boolean> {
     return new Promise((resolve) => {
         navigator.clipboard.writeText(txt).then(
             () => resolve(true),
-            () => resolve(false)
+            () => resolve(false),
         );
     });
 }

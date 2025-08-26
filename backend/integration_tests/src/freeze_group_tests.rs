@@ -1,11 +1,11 @@
 use crate::env::ENV;
-use crate::rng::random_string;
 use crate::utils::tick_many;
-use crate::{client, CanisterIds, TestEnv, User};
+use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use group_index_canister::freeze_group::SuspensionDetails;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
+use testing::rng::random_string;
 use types::ChatId;
 
 #[test]
@@ -226,7 +226,7 @@ fn delete_frozen_group() {
         "{delete_group_response:?}"
     );
 
-    tick_many(env, 5);
+    tick_many(env, 10);
 
     assert!(!env.canister_exists(Principal::from(group_id).as_slice().try_into().unwrap()));
 }

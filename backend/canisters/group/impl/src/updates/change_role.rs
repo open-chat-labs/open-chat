@@ -1,18 +1,21 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::updates::change_role::Response::*;
-use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, execute_update_async, jobs, mutate_state, read_state};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::change_role::*;
-use group_chat_core::{ChangeRoleResult, GroupRoleInternal};
-use ic_cdk_macros::update;
-use types::{CanisterId, UserId};
-use user_index_canister_c2c_client::{lookup_user, LookupUserError};
+use group_chat_core::GroupRoleInternal;
+use group_community_common::ExpiringMember;
+use oc_error_codes::OCErrorCode;
+use types::{CanisterId, GroupRole, OCResult, UserId};
+use user_index_canister_c2c_client::lookup_user;
 
-#[update]
+#[update(msgpack = true)]
 #[trace]
 async fn change_role(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(|| change_role_impl(args)).await
+}
 
+async fn change_role_impl(args: Args) -> Response {
     let PrepareResult {
         caller_id,
         user_index_canister_id,
@@ -20,7 +23,7 @@ async fn change_role(args: Args) -> Response {
         is_user_owner,
     } = match read_state(|state| prepare(args.user_id, state)) {
         Ok(result) => result,
-        Err(response) => return response,
+        Err(response) => return Response::Error(response),
     };
 
     // Either lookup whether the caller is a platform moderator so they can promote themselves to owner
@@ -33,7 +36,7 @@ async fn change_role(args: Args) -> Response {
     if lookup_caller || lookup_target {
         let user_id = if lookup_caller { caller_id } else { args.user_id };
         match lookup_user(user_id.into(), user_index_canister_id).await {
-            Ok(user) => {
+            Ok(Some(user)) => {
                 if user.is_platform_moderator {
                     if lookup_caller {
                         is_caller_platform_moderator = true;
@@ -42,13 +45,13 @@ async fn change_role(args: Args) -> Response {
                     }
                 }
             }
-            Err(LookupUserError::UserNotFound) => return NotAuthorized,
-            Err(LookupUserError::InternalError(error)) => return InternalError(error),
+            Ok(_) => return Response::Error(OCErrorCode::InitiatorNotAuthorized.into()),
+            Err(error) => return Response::Error(error.into()),
         };
     }
 
     mutate_state(|state| {
-        change_role_impl(
+        commit(
             args,
             caller_id,
             is_caller_platform_moderator,
@@ -56,6 +59,7 @@ async fn change_role(args: Args) -> Response {
             state,
         )
     })
+    .into()
 }
 
 struct PrepareResult {
@@ -65,49 +69,52 @@ struct PrepareResult {
     is_user_owner: bool,
 }
 
-fn prepare(user_id: UserId, state: &RuntimeState) -> Result<PrepareResult, Response> {
-    let caller = state.env.caller();
-    if let Some(member) = state.data.get_member(caller) {
-        Ok(PrepareResult {
-            caller_id: member.user_id,
-            user_index_canister_id: state.data.user_index_canister_id,
-            is_caller_owner: member.role.is_owner(),
-            is_user_owner: state.data.chat.members.get(&user_id).map_or(false, |u| u.role.is_owner()),
-        })
-    } else {
-        Err(CallerNotInGroup)
-    }
+fn prepare(user_id: UserId, state: &RuntimeState) -> OCResult<PrepareResult> {
+    let member = state.get_calling_member(true)?;
+
+    Ok(PrepareResult {
+        caller_id: member.user_id(),
+        user_index_canister_id: state.data.user_index_canister_id,
+        is_caller_owner: member.role().is_owner(),
+        is_user_owner: state.data.chat.members.get(&user_id).is_some_and(|u| u.role().is_owner()),
+    })
 }
 
-fn change_role_impl(
+fn commit(
     args: Args,
     caller_id: UserId,
     is_caller_platform_moderator: bool,
     is_user_platform_moderator: bool,
     state: &mut RuntimeState,
-) -> Response {
-    if state.data.is_frozen() {
-        return ChatFrozen;
-    }
+) -> OCResult {
+    state.data.verify_not_frozen()?;
 
     let now = state.env.now();
-    match state.data.chat.change_role(
+    let result = state.data.chat.change_role(
         caller_id,
         args.user_id,
         args.new_role,
         is_caller_platform_moderator,
         is_user_platform_moderator,
         now,
-    ) {
-        ChangeRoleResult::Success(_) => {
-            handle_activity_notification(state);
-            Success
+    )?;
+
+    // Owners can't "lapse" so either add or remove user from expiry list if they lose or gain owner status
+    if let Some(gate_expiry) = state.data.chat.gate_config.value.as_ref().and_then(|gc| gc.expiry()) {
+        if matches!(args.new_role, GroupRole::Owner) {
+            state.data.expiring_members.remove_member(args.user_id, None);
+        } else if matches!(result.prev_role, GroupRoleInternal::Owner) {
+            state.data.expiring_members.push(ExpiringMember {
+                expires: now + gate_expiry,
+                channel_id: None,
+                user_id: args.user_id,
+            });
         }
-        ChangeRoleResult::UserNotInGroup => CallerNotInGroup,
-        ChangeRoleResult::NotAuthorized => NotAuthorized,
-        ChangeRoleResult::TargetUserNotInGroup => UserNotInGroup,
-        ChangeRoleResult::Unchanged => Success,
-        ChangeRoleResult::Invalid => Invalid,
-        ChangeRoleResult::UserSuspended => UserSuspended,
     }
+
+    jobs::expire_members::start_job_if_required(state);
+
+    state.push_bot_notification(result.bot_notification);
+    handle_activity_notification(state);
+    Ok(())
 }

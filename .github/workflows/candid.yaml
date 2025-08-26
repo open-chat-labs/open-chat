@@ -1,8 +1,12 @@
 on:
   pull_request:
-  merge_group:
     branches:
       - master
+
+# If two events are triggered within a short time in the same PR, cancel the run of the oldest event
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 name: Validate candid files
 
@@ -27,14 +31,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions-rs/toolchain@v1
+      - uses: ./.github/workflows/setup-rust
         with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: "build-debug"
+          cache: read
       - name: install didc 0.3.2
         uses: supplypike/setup-bin@v1
         with:

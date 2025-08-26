@@ -1,3 +1,4 @@
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{ChatId, UserId};
 
@@ -15,6 +16,8 @@ pub enum Response {
     UserNotInGroup,
     NotAuthorized,
     UserSuspended,
+    UserLapsed,
     ChatFrozen,
     InternalError(String),
+    Error(OCError),
 }

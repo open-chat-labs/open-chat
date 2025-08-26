@@ -1,20 +1,17 @@
 <script lang="ts">
-    import { fontSizeScale, setFontScale } from "../../../stores/fontSize";
+    import { fontScaleStore } from "openchat-client";
     import Range from "../../Range.svelte";
+    // onChange={() => (ui.fontScale = $fontScaleStore)} />
 </script>
 
 <div class="grid">
-    <div class="letter zero" on:click={() => setFontScale(0)}>A</div>
-    <div class="letter one" on:click={() => setFontScale(1)}>A</div>
-    <div class="letter two" on:click={() => setFontScale(2)}>A</div>
-    <div class="letter three" on:click={() => setFontScale(3)}>A</div>
-    <div class="letter four" on:click={() => setFontScale(4)}>A</div>
+    <div class="letter zero" onclick={() => fontScaleStore.set(0)}>A</div>
+    <div class="letter one" onclick={() => fontScaleStore.set(1)}>A</div>
+    <div class="letter two" onclick={() => fontScaleStore.set(2)}>A</div>
+    <div class="letter three" onclick={() => fontScaleStore.set(3)}>A</div>
+    <div class="letter four" onclick={() => fontScaleStore.set(4)}>A</div>
     <div class="slider">
-        <Range
-            min={0}
-            max={4}
-            bind:value={$fontSizeScale}
-            on:change={() => setFontScale($fontSizeScale)} />
+        <Range min={0} max={4} bind:value={$fontScaleStore} />
     </div>
 </div>
 

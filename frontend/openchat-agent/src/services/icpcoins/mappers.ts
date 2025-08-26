@@ -1,7 +1,14 @@
-import type { TokenExchangeRates } from "openchat-shared";
+import type { CryptocurrencyDetails, TokenExchangeRates } from "openchat-shared";
 import type { LatestTokenRow } from "./candid/types";
 
-export function getLatestResponse(candid: Array<LatestTokenRow>): Record<string, TokenExchangeRates> {
+export function getLatestResponse(
+    candid: Array<LatestTokenRow>,
+    supportedTokens: CryptocurrencyDetails[],
+): Record<string, TokenExchangeRates> {
+    const supportedSymbols = new Set<string>(supportedTokens.map((t) => t.symbol.toLowerCase()));
+    supportedSymbols.add("btc");
+    supportedSymbols.add("eth");
+
     const exchangeRates: Record<string, TokenExchangeRates> = {};
 
     for (const row of candid) {
@@ -9,10 +16,8 @@ export function getLatestResponse(candid: Array<LatestTokenRow>): Record<string,
         const [_pair, pairText, rate] = row;
         const [from, to] = parseSymbolPair(pairText);
 
-        if (to === "usd") {
-            exchangeRates[from] = { ...exchangeRates[from], toUSD: rate } ;
-        } else if (to === "icp") {
-            exchangeRates[from] = { ...exchangeRates[from], toICP: rate } ;
+        if (to === "usd" && supportedSymbols.has(from)) {
+            exchangeRates[from] = { toUSD: rate };
         }
     }
 

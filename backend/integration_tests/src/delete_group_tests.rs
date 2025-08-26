@@ -1,18 +1,19 @@
+use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
-use crate::rng::random_string;
 use crate::utils::tick_many;
-use crate::{client, TestEnv, User};
+use crate::{CanisterIds, TestEnv, User, client};
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
-use types::{CanisterId, ChatId};
+use testing::rng::random_string;
+use types::ChatId;
 
 #[test]
 fn delete_group_succeeds() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let TestData { user1, group_id, .. } = init_test_data(env, canister_ids.local_user_index);
+    let TestData { user1, group_id, .. } = init_test_data(env, canister_ids);
 
     let delete_group_response = client::user::delete_group(
         env,
@@ -41,13 +42,10 @@ fn user_canister_notified_of_group_deleted() {
         user2,
         user3,
         group_id,
-    } = init_test_data(env, canister_ids.local_user_index);
+    } = init_test_data(env, canister_ids);
 
-    env.stop_canister(user2.canister(), Some(canister_ids.local_user_index))
-        .unwrap();
-
-    env.stop_canister(user3.canister(), Some(canister_ids.local_user_index))
-        .unwrap();
+    stop_canister(env, user2.local_user_index, user2.canister());
+    stop_canister(env, user3.local_user_index, user3.canister());
 
     let delete_group_response = client::user::delete_group(
         env,
@@ -67,24 +65,16 @@ fn user_canister_notified_of_group_deleted() {
     assert!(!initial_state1.group_chats.summaries.iter().any(|c| c.chat_id == group_id));
 
     env.advance_time(Duration::from_secs(9 * 60));
-
     env.tick();
-
-    env.start_canister(user2.user_id.into(), Some(canister_ids.local_user_index))
-        .unwrap();
-
+    start_canister(env, user2.local_user_index, user2.user_id.into());
     env.tick();
 
     let initial_state2 = client::user::happy_path::initial_state(env, &user1);
     assert!(!initial_state2.group_chats.summaries.iter().any(|c| c.chat_id == group_id));
 
     env.advance_time(Duration::from_secs(2 * 60));
-
     env.tick();
-
-    env.start_canister(user3.user_id.into(), Some(canister_ids.local_user_index))
-        .unwrap();
-
+    start_canister(env, user3.local_user_index, user3.user_id.into());
     env.tick();
 
     // Only retry for 10 minutes so the notification shouldn't have made it to user3's canister
@@ -92,10 +82,10 @@ fn user_canister_notified_of_group_deleted() {
     assert!(initial_state3.group_chats.summaries.iter().any(|c| c.chat_id == group_id));
 }
 
-fn init_test_data(env: &mut PocketIc, local_user_index: CanisterId) -> TestData {
-    let user1 = client::local_user_index::happy_path::register_user(env, local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, local_user_index);
-    let user3 = client::local_user_index::happy_path::register_user(env, local_user_index);
+fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds) -> TestData {
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
+    let user3 = client::register_user(env, canister_ids);
 
     let group_name = random_string();
 
@@ -103,7 +93,7 @@ fn init_test_data(env: &mut PocketIc, local_user_index: CanisterId) -> TestData 
     client::local_user_index::happy_path::add_users_to_group(
         env,
         &user1,
-        local_user_index,
+        canister_ids.local_user_index(env, group_id),
         group_id,
         vec![(user2.user_id, user2.principal), (user3.user_id, user3.principal)],
     );

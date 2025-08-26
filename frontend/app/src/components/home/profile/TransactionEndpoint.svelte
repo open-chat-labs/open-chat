@@ -1,14 +1,30 @@
 <script lang="ts">
-    import { AvatarSize, OpenChat, type NamedAccount } from "openchat-client";
+    import {
+        allUsersStore,
+        AvatarSize,
+        OpenChat,
+        type CreatedUser,
+        type NamedAccount,
+    } from "openchat-client";
     import { getContext } from "svelte";
     import Avatar from "../../Avatar.svelte";
 
     const client = getContext<OpenChat>("client");
-    export let address: string | undefined;
-    export let accounts: Record<string, NamedAccount>;
+    interface Props {
+        address: string | undefined;
+        accounts: Record<string, NamedAccount>;
+        currentUser: CreatedUser;
+    }
 
-    $: userStore = client.userStore;
-    $: user = address ? $userStore[address] : undefined;
+    let { address, accounts, currentUser }: Props = $props();
+
+    let user = $derived(
+        address === currentUser.cryptoAccount
+            ? $allUsersStore.get(currentUser.userId)
+            : address
+              ? $allUsersStore.get(address)
+              : undefined,
+    );
 </script>
 
 {#if address !== undefined}
@@ -21,7 +37,7 @@
                     size={AvatarSize.Tiny} />
             </div>
             <div class="name">
-                {client.getDisplayName(user)}
+                {client.getDisplayName(user.userId)}
             </div>
         </div>
     {:else if accounts[address] !== undefined}

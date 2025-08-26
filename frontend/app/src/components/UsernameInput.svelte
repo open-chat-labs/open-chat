@@ -1,25 +1,42 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
-    import Input from "./Input.svelte";
     import { onMount } from "svelte";
-    import { _ } from "svelte-i18n";
     import { i18nKey } from "../i18n/i18n";
+    import Input from "./Input.svelte";
 
     const MIN_EXTANT_USERNAME_LENGTH = 3;
-    const MAX_USERNAME_LENGTH = 15;
+    const MAX_USERNAME_LENGTH = 20;
 
-    export let client: OpenChat;
-    export let originalUsername: string;
-    export let username: string;
-    export let usernameValid: boolean;
-    export let error: string | undefined = undefined;
-    export let checking = false;
-    export let disabled = false;
+    interface Props {
+        client: OpenChat;
+        originalUsername: string;
+        username: string;
+        usernameValid: boolean;
+        error?: string | undefined;
+        checking?: boolean;
+        disabled?: boolean;
+        autofocus?: boolean;
+        children?: import("svelte").Snippet;
+    }
+
+    let {
+        client,
+        originalUsername,
+        username = $bindable(),
+        usernameValid = $bindable(),
+        error = $bindable(undefined),
+        checking = $bindable(false),
+        disabled = false,
+        autofocus = false,
+        children,
+    }: Props = $props();
+
+    error;
 
     let timer: number | undefined = undefined;
     let currentPromise: Promise<unknown> | undefined;
 
-    $: invalid = originalUsername !== username && !usernameValid && !checking;
+    let invalid = $derived(originalUsername !== username && !usernameValid && !checking);
 
     onMount(() => {
         username = originalUsername;
@@ -28,7 +45,7 @@
 
     function checkUsername(value: string) {
         const promise = client
-            .checkUsername(value)
+            .checkUsername(value, false)
             .then((resp) => {
                 if (promise !== currentPromise) {
                     return;
@@ -55,8 +72,10 @@
         currentPromise = promise;
     }
 
-    function onChange(ev: CustomEvent<string>) {
-        username = ev.detail;
+    function onChange(val: string | number | bigint) {
+        if (typeof val !== "string") return;
+
+        username = val;
         usernameValid = false;
         error = undefined;
 
@@ -74,13 +93,14 @@
 </script>
 
 <Input
-    on:change={onChange}
+    {onChange}
     value={originalUsername}
     {disabled}
     {invalid}
+    {autofocus}
     minlength={MIN_EXTANT_USERNAME_LENGTH}
     maxlength={MAX_USERNAME_LENGTH}
     countdown
     placeholder={i18nKey("register.enterUsername")}>
-    <slot />
+    {@render children?.()}
 </Input>

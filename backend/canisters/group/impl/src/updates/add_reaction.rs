@@ -1,100 +1,137 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::guards::caller_is_local_user_index;
+use crate::{GroupEventPusher, RuntimeState, execute_update};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::Reader;
-use group_canister::add_reaction::{Response::*, *};
-use group_chat_core::AddRemoveReactionResult;
-use ic_cdk_macros::update;
-use types::{EventIndex, GroupReactionAddedNotification, Notification, UserId};
+use group_canister::{add_reaction::*, c2c_bot_add_reaction};
+use oc_error_codes::{OCError, OCErrorCode};
+use types::{
+    Achievement, BotCaller, BotPermissions, Caller, Chat, ChatId, ChatPermission, EventIndex, GroupChatUserNotificationPayload,
+    GroupReactionAddedNotification, OCResult,
+};
+use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
-#[update]
+#[update(msgpack = true)]
 #[trace]
 fn add_reaction(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| add_reaction_impl(args, state))
+    execute_update(|state| add_reaction_impl(args, None, state)).into()
 }
 
-fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if state.data.is_frozen() {
-        return ChatFrozen;
+#[update(guard = "caller_is_local_user_index", msgpack = true)]
+#[trace]
+fn c2c_bot_add_reaction(args: c2c_bot_add_reaction::Args) -> c2c_bot_add_reaction::Response {
+    execute_update(|state| c2c_bot_add_reaction_impl(args, state))
+}
+
+fn c2c_bot_add_reaction_impl(args: c2c_bot_add_reaction::Args, state: &mut RuntimeState) -> c2c_bot_add_reaction::Response {
+    let bot_caller = BotCaller {
+        bot: args.bot_id,
+        initiator: args.initiator.clone(),
+    };
+
+    let args = Args {
+        thread_root_message_index: args.thread,
+        message_id: args.message_id,
+        reaction: args.reaction,
+        username: args.bot_name,
+        display_name: None,
+        new_achievement: false,
+    };
+
+    if !state.data.is_bot_permitted(
+        &bot_caller.bot,
+        &bot_caller.initiator,
+        &BotPermissions::from_chat_permission(ChatPermission::ReactToMessages),
+    ) {
+        return OCError::from(OCErrorCode::InitiatorNotAuthorized).into();
     }
 
-    let caller = state.env.caller();
-    if let Some(user_id) = state.data.lookup_user_id(caller) {
-        let now = state.env.now();
+    add_reaction_impl(args, Some(Caller::BotV2(bot_caller)), state).into()
+}
 
-        match state.data.chat.add_reaction(
-            user_id,
-            args.thread_root_message_index,
-            args.message_id,
-            args.reaction.clone(),
+fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut RuntimeState) -> OCResult {
+    state.data.verify_not_frozen()?;
+
+    let caller = state.verified_caller(ext_caller)?;
+    let agent = caller.agent();
+    let now = state.env.now();
+    let thread_root_message_index = args.thread_root_message_index;
+
+    let result = state.data.chat.add_reaction(
+        caller,
+        args.thread_root_message_index,
+        args.message_id,
+        args.reaction.clone(),
+        now,
+        GroupEventPusher {
             now,
-            &mut state.data.event_store_client,
-        ) {
-            AddRemoveReactionResult::Success => {
-                handle_activity_notification(state);
-                handle_notification(args, user_id, state);
-                Success
-            }
-            AddRemoveReactionResult::NoChange => NoChange,
-            AddRemoveReactionResult::InvalidReaction => InvalidReaction,
-            AddRemoveReactionResult::MessageNotFound => MessageNotFound,
-            AddRemoveReactionResult::UserNotInGroup => CallerNotInGroup,
-            AddRemoveReactionResult::NotAuthorized => NotAuthorized,
-            AddRemoveReactionResult::UserSuspended => UserSuspended,
-        }
-    } else {
-        CallerNotInGroup
-    }
-}
+            rng: state.env.rng(),
+            queue: &mut state.data.local_user_index_event_sync_queue,
+        },
+    )?;
 
-fn handle_notification(
-    Args {
-        thread_root_message_index,
-        message_id,
-        reaction,
-        username,
-        display_name,
-        ..
-    }: Args,
-    user_id: UserId,
-    state: &mut RuntimeState,
-) {
-    if let Some(message_event) = state
-        .data
-        .chat
-        .events
-        .events_reader(EventIndex::default(), thread_root_message_index)
-        // We pass in `None` in place of `my_user_id` because we don't want to hydrate
-        // the notification with data for the current user (eg. their poll votes).
-        .and_then(|events_reader| events_reader.message_event(message_id.into(), None))
+    if let Some((message, event_index)) =
+        state
+            .data
+            .chat
+            .events
+            .message_internal(EventIndex::default(), thread_root_message_index, args.message_id.into())
     {
-        if message_event.event.sender != user_id {
+        if let Some(sender) = state.data.chat.members.get(&message.sender)
+            && message.sender != agent
+            && !sender.user_type().is_bot()
+        {
+            let chat_id: ChatId = state.env.canister_id().into();
+
             let notifications_muted = state
                 .data
                 .chat
                 .members
-                .get(&message_event.event.sender)
-                .map_or(true, |p| p.notifications_muted.value || p.suspended.value);
+                .get(&message.sender)
+                .is_none_or(|p| p.notifications_muted().value || p.suspended().value);
 
             if !notifications_muted {
-                state.push_notification(
-                    vec![message_event.event.sender],
-                    Notification::GroupReactionAdded(GroupReactionAddedNotification {
-                        chat_id: state.env.canister_id().into(),
+                let user_notification_payload =
+                    GroupChatUserNotificationPayload::GroupReactionAdded(GroupReactionAddedNotification {
+                        chat_id,
                         thread_root_message_index,
-                        message_index: message_event.event.message_index,
-                        message_event_index: message_event.index,
+                        message_index: message.message_index,
+                        message_event_index: event_index,
                         group_name: state.data.chat.name.value.clone(),
-                        added_by: user_id,
-                        added_by_name: username,
-                        added_by_display_name: display_name,
-                        reaction,
+                        added_by: agent,
+                        added_by_name: args.username,
+                        added_by_display_name: args.display_name,
+                        reaction: args.reaction,
                         group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
-                    }),
-                );
+                    });
+
+                state.push_notification(Some(agent), vec![message.sender], user_notification_payload);
             }
+
+            state.push_event_to_user(
+                message.sender,
+                GroupCanisterEvent::MessageActivity(MessageActivityEvent {
+                    chat: Chat::Group(chat_id),
+                    thread_root_message_index,
+                    message_index: message.message_index,
+                    message_id: message.message_id,
+                    event_index,
+                    activity: MessageActivity::Reaction,
+                    timestamp: state.env.now(),
+                    user_id: Some(agent),
+                }),
+                now,
+            );
+
+            state.notify_user_of_achievement(message.sender, Achievement::HadMessageReactedTo, now);
+        }
+
+        if args.new_achievement {
+            state.notify_user_of_achievement(agent, Achievement::ReactedToMessage, now);
         }
     }
+
+    state.push_bot_notification(result.bot_notification);
+    handle_activity_notification(state);
+    Ok(())
 }

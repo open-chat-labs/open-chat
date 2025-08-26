@@ -1,22 +1,24 @@
 use crate::guards::caller_is_group_canister;
-use crate::{mutate_state, RuntimeState};
-use canister_api_macros::update_msgpack;
+use crate::{RuntimeState, mutate_state};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use group_index_canister::c2c_delete_group::{Response::*, *};
+use group_index_canister::c2c_delete_group::*;
+use tracing::info;
 use types::{ChatId, CommunityImportedInto, DeletedGroupInfoInternal, UserId};
+use utils::cycles::accept_cycles;
 
-#[update_msgpack(guard = "caller_is_group_canister")]
+#[update(guard = "caller_is_group_canister", msgpack = true)]
 #[trace]
 fn c2c_delete_group(args: Args) -> Response {
     mutate_state(|state| {
-        delete_group(
-            state.env.caller().into(),
-            args.group_name,
-            args.deleted_by,
-            args.members,
-            None,
-            state,
-        )
+        let group_id = state.env.caller().into();
+
+        let cycles = accept_cycles();
+        if cycles > 0 {
+            info!(cycles, %group_id, "Group refunded cycles when being deleted");
+        }
+
+        delete_group(group_id, args.group_name, args.deleted_by, args.members, None, state)
     })
 }
 
@@ -28,11 +30,11 @@ pub(crate) fn delete_group(
     community_imported_into: Option<CommunityImportedInto>,
     state: &mut RuntimeState,
 ) -> Response {
-    if let Some(local_group_index_canister) = state.data.local_index_map.get_index_canister_for_group(&group_id) {
+    if let Some(local_user_index_canister) = state.data.local_index_map.get_index_canister_for_group(&group_id) {
         state.data.fire_and_forget_handler.send(
-            local_group_index_canister,
+            local_user_index_canister,
             "c2c_delete_group_msgpack".to_string(),
-            msgpack::serialize_then_unwrap(local_group_index_canister::c2c_delete_group::Args { chat_id: group_id }),
+            msgpack::serialize_then_unwrap(local_user_index_canister::c2c_delete_group::Args { chat_id: group_id }),
         );
     }
 
@@ -49,6 +51,7 @@ pub(crate) fn delete_group(
         false
     };
 
+    state.data.local_index_map.mark_group_deleted(&group_id);
     state.data.deleted_groups.insert(
         DeletedGroupInfoInternal {
             id: group_id,
@@ -63,5 +66,5 @@ pub(crate) fn delete_group(
     );
     crate::jobs::push_group_deleted_notifications::start_job_if_required(state);
 
-    Success
+    Response::Success
 }

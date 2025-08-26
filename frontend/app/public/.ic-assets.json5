@@ -1,8 +1,9 @@
 [
     {
-        match: "{*.gif,*.jpg,*.png,*.svg,*.webp,*.mp3}",
+        match: "{*.svg,*.jpg,*.jpeg,*.png,*.gif,*.webp,*.mp3}",
         headers: {
             "Cache-Control": "public, max-age=2592000",
+            "X-Cacheable-Resource": "true",
         },
     },
 ]

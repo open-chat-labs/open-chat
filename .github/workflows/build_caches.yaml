@@ -11,31 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions-rs/toolchain@v1
+      - uses: ./.github/workflows/setup-rust
         with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: "build-debug"
+          cache: write
       - uses: actions-rs/cargo@v1
         with:
           command: build
           args: --tests
-
-  build_canister_wasms:
-    name: Build canister wasms
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - run: rustup target add wasm32-unknown-unknown
-      - uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: "build-wasms"
-      - run: ./scripts/generate-all-canister-wasms.sh

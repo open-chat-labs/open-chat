@@ -1,11 +1,27 @@
-use crate::{read_state, RuntimeState};
-use http_request::{build_json_response, encode_logs, extract_route, Route};
-use ic_cdk_macros::query;
+use crate::{RuntimeState, read_state};
+use candid::Principal;
+use dataurl::DataUrl;
+use http_request::{AvatarRoute, Route, build_json_response, encode_logs, extract_route, get_document};
+use ic_cdk::query;
 use std::collections::BTreeMap;
-use types::{HttpRequest, HttpResponse, TimestampMillis};
+use types::{HeaderField, HttpRequest, HttpResponse, TimestampMillis, UserId};
+use utils::time::MonthKey;
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
+    fn get_avatar_impl(route: AvatarRoute, state: &RuntimeState) -> HttpResponse {
+        let Some(bot_id) = route.bot_id else {
+            return HttpResponse::not_found();
+        };
+
+        let avatar = state.data.users.get_bot(&bot_id).and_then(|u| u.avatar.as_ref());
+        get_document(route.blob_id, avatar, &format!("avatar/{bot_id}"))
+    }
+
+    fn get_errors_impl(since: Option<TimestampMillis>) -> HttpResponse {
+        encode_logs(canister_logger::export_errors(), since.unwrap_or(0))
+    }
+
     fn get_logs_impl(since: Option<TimestampMillis>) -> HttpResponse {
         encode_logs(canister_logger::export_logs(), since.unwrap_or(0))
     }
@@ -23,7 +39,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
             .data
             .users
             .iter()
-            .filter(|u| u.is_bot)
+            .filter(|u| u.user_type.is_bot())
             .map(|u| (u.user_id.to_string(), u.username.clone()))
             .collect();
 
@@ -40,12 +56,64 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         build_json_response(&grouped)
     }
 
+    fn handle_other_path(path: String, state: &RuntimeState) -> HttpResponse {
+        let parts: Vec<_> = path.split('/').collect();
+
+        match parts[0] {
+            "usermetrics" => {
+                let user_id: Option<UserId> = parts.get(1).and_then(|p| Principal::from_text(*p).ok()).map(|p| p.into());
+                if let Some(user_id) = user_id
+                    && let Some(metrics) = state.user_metrics(user_id)
+                {
+                    return build_json_response(&metrics);
+                }
+            }
+            "bots" => return get_bot_users(state),
+            "new_users_per_day" => return get_new_users_per_day(state),
+            "chitbands" => {
+                let size: u32 = parts.get(1).and_then(|s| (*s).parse::<u32>().ok()).unwrap_or(500);
+                let now = state.env.now();
+                let month_key = MonthKey::from_timestamp(now);
+
+                return build_json_response(&state.data.chit_bands(size, month_key.year(), month_key.month()));
+            }
+            "achievement_logo" => {
+                let id = parts.get(1).and_then(|s| (*s).parse::<u32>().ok());
+                let Some(logo) =
+                    id.and_then(|achievement_id| state.data.external_achievements.get(achievement_id).map(|a| a.logo.clone()))
+                else {
+                    return HttpResponse::not_found();
+                };
+
+                let url = DataUrl::parse(&logo).unwrap();
+
+                return HttpResponse {
+                    status_code: 200,
+                    headers: vec![
+                        HeaderField("Content-Type".to_string(), url.get_media_type().to_string()),
+                        HeaderField(
+                            "Cache-Control".to_string(),
+                            "public, max-age=100000000, immutable".to_string(),
+                        ),
+                    ],
+                    body: url.get_data().to_vec(),
+                    streaming_strategy: None,
+                    upgrade: None,
+                };
+            }
+            _ => (),
+        }
+
+        HttpResponse::not_found()
+    }
+
     match extract_route(&request.url) {
+        Route::Avatar(route) => read_state(|state| get_avatar_impl(route, state)),
+        Route::Errors(since) => get_errors_impl(since),
         Route::Logs(since) => get_logs_impl(since),
         Route::Traces(since) => get_traces_impl(since),
         Route::Metrics => read_state(get_metrics_impl),
-        Route::Other(path, _) if path == "bots" => read_state(get_bot_users),
-        Route::Other(path, _) if path == "new_users_per_day" => read_state(get_new_users_per_day),
+        Route::Other(path, _) => read_state(|state| handle_other_path(path, state)),
         _ => HttpResponse::not_found(),
     }
 }

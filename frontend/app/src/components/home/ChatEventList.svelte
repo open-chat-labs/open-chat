@@ -1,41 +1,44 @@
+<script lang="ts" module>
+    export type ChatEventListArgs = {
+        isAccepted: (_unconf: unknown, evt: EventWrapper<ChatEventType>) => boolean;
+        isConfirmed: (_unconf: unknown, evt: EventWrapper<ChatEventType>) => boolean;
+        isFailed: (_failed: unknown, evt: EventWrapper<ChatEventType>) => boolean;
+        isReadByMe: (_store: unknown, evt: EventWrapper<ChatEventType>) => boolean;
+        messageObserver: IntersectionObserver | undefined;
+        labelObserver: IntersectionObserver | undefined;
+        focusIndex: number | undefined;
+    };
+</script>
+
 <script lang="ts">
     import {
-        type ChatSummary,
-        type EventWrapper,
-        type Message,
-        type ChatEvent as ChatEventType,
-        type OpenChat,
-        type Mention,
-        type MessageContext,
         MessageContextMap,
-    } from "openchat-client";
-    import {
-        ChatUpdated,
-        LoadedMessageWindow,
-        LoadedNewMessages,
-        LoadedPreviousMessages,
-        ReactionSelected,
-        SendingMessage,
-        SentMessage,
-        messageContextsEqual,
-    } from "openchat-client";
-    import { menuStore } from "../../stores/menu";
-    import { tooltipStore } from "../../stores/tooltip";
-    import { rtlStore } from "../../stores/rtl";
-    import { afterUpdate, beforeUpdate, getContext, onMount, tick } from "svelte";
-    import { pathParams } from "../../routes";
-    import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
-    import ArrowUp from "svelte-material-icons/ArrowUp.svelte";
-    import Fab from "../Fab.svelte";
-    import { _ } from "svelte-i18n";
-    import { pop } from "../../utils/transition";
-    import { iconSize } from "../../stores/iconSize";
-    import {
+        currentUserIdStore,
         eventListLastScrolled,
         eventListScrollTop,
         eventListScrolling,
-        reverseScroll,
-    } from "../../stores/scrollPos";
+        iconSize,
+        localUpdates,
+        messageContextsEqual,
+        routeStore,
+        subscribe,
+        withEqCheck,
+        type ChatEvent as ChatEventType,
+        type ChatSummary,
+        type EventWrapper,
+        type Mention,
+        type Message,
+        type MessageContext,
+        type OpenChat,
+    } from "openchat-client";
+    import { getContext, onMount, tick, untrack, type Snippet } from "svelte";
+    import { _ } from "svelte-i18n";
+    import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
+    import ArrowUp from "svelte-material-icons/ArrowUp.svelte";
+    import { rtlStore } from "../../stores/rtl";
+    import { pop } from "../../utils/transition";
+    import Fab from "../Fab.svelte";
+    import { portalState } from "../portalState.svelte";
     import TimelineDate from "./TimelineDate.svelte";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
@@ -45,44 +48,68 @@
     const SCROLL_THRESHOLD = 500;
     const client = getContext<OpenChat>("client");
 
-    export let rootSelector: string;
-    export let unreadMessages: number;
-    export let chat: ChatSummary;
-    export let messagesDiv: HTMLDivElement | undefined;
-    export let messagesDivHeight: number;
-    export let initialised: boolean;
-    export let events: EventWrapper<ChatEventType>[];
-    export let readonly: boolean;
-    export let firstUnreadMention: Mention | undefined;
-    export let footer: boolean;
-    export let threadRootEvent: EventWrapper<Message> | undefined;
-    export let maintainScroll: boolean;
-    export let scrollTopButtonEnabled: boolean = false;
+    interface Props {
+        rootSelector: string;
+        unreadMessages: number;
+        chat: ChatSummary;
+        messagesDiv: HTMLDivElement | undefined;
+        messagesDivHeight: number;
+        initialised: boolean;
+        events: EventWrapper<ChatEventType>[];
+        readonly: boolean;
+        firstUnreadMention: Mention | undefined;
+        footer: boolean;
+        threadRootEvent: EventWrapper<Message> | undefined;
+        maintainScroll: boolean;
+        scrollTopButtonEnabled?: boolean;
+        children?: Snippet<[ChatEventListArgs]>;
+        visible: boolean;
+    }
 
-    let interrupt = false;
+    let {
+        rootSelector,
+        unreadMessages,
+        chat,
+        messagesDiv = $bindable(),
+        messagesDivHeight = $bindable(),
+        initialised = $bindable(),
+        events,
+        readonly,
+        firstUnreadMention,
+        footer,
+        threadRootEvent,
+        maintainScroll,
+        scrollTopButtonEnabled = false,
+        children,
+        visible,
+    }: Props = $props();
+
+    let focusIndex = $state<number | undefined>();
+    let interrupt = $state(false);
     let morePrevAvailable = false;
     let moreNewAvailable = false;
-    let loadingFromUserScroll = false;
+    let loadingFromUserScroll = $state(false);
     let previousScrollHeight: MessageContextMap<number> = new MessageContextMap();
     let previousScrollTopByHeight: MessageContextMap<Record<number, number>> =
         new MessageContextMap();
     let scrollingToMessage = false;
     let scrollToBottomOnSend = false;
     let destroyed = false;
-    let messageObserver: IntersectionObserver;
-    let labelObserver: IntersectionObserver;
+    let messageObserver: IntersectionObserver | undefined = $state();
+    let labelObserver: IntersectionObserver | undefined = $state();
     let heightObserver: MutationObserver;
     let messageReadTimers: Record<number, number> = {};
 
-    $: user = client.user;
-    $: userId = $user.userId;
-    $: unconfirmed = client.unconfirmed;
-    $: failedMessagesStore = client.failedMessagesStore;
-    $: threadSummary = threadRootEvent?.event.thread;
-    $: messageContext = {
-        chatId: chat.id,
-        threadRootMessageIndex: threadRootEvent?.event.messageIndex,
-    };
+    let threadSummary = $derived(threadRootEvent?.event.thread);
+    let messageContext = $derived.by(
+        withEqCheck(
+            () => ({
+                chatId: chat?.id,
+                threadRootMessageIndex: threadRootEvent?.event.messageIndex,
+            }),
+            messageContextsEqual,
+        ),
+    );
 
     // use this when it's critical that we get the live value from the dom and
     // not a potentially stale value from the captured variable
@@ -105,35 +132,16 @@
         eventCount: events.length,
     });
 
-    const bottom = () => {
-        if (messagesDiv) {
-            if (reverseScroll) {
-                return 0;
-            } else {
-                return messagesDiv.scrollHeight - messagesDiv.clientHeight;
-            }
-        }
-        return 0;
-    };
-
     const fromBottom = () => {
         if (messagesDiv) {
-            if (reverseScroll) {
-                return -messagesDiv.scrollTop;
-            } else {
-                return bottom() - messagesDiv.scrollTop;
-            }
+            return -messagesDiv.scrollTop;
         }
         return 0;
     };
 
     const fromTop = () => {
         if (messagesDiv) {
-            if (reverseScroll) {
-                return messagesDiv.scrollHeight - messagesDiv.clientHeight - fromBottom();
-            } else {
-                return messagesDiv.scrollTop;
-            }
+            return messagesDiv.scrollHeight - messagesDiv.clientHeight - fromBottom();
         }
         return 0;
     };
@@ -146,23 +154,60 @@
         return fromTop() < LOADING_THRESHOLD;
     };
 
-    let showGoToBottom = false;
-    let showGoToTop = false;
-    let floatingTimestamp: bigint | undefined = undefined;
+    let showGoToBottom = $state(false);
+    let showGoToTop = $state(false);
+    let floatingTimestamp: bigint | undefined = $state(undefined);
     let loadingNewMessages = false;
     let loadingPrevMessages = false;
 
-    beforeUpdate(() => {
-        withScrollableElement((el) => {
-            const scrollTopByHeight = previousScrollTopByHeight.get(messageContext) ?? {};
-            scrollTopByHeight[el.scrollHeight] = el.scrollTop;
-            previousScrollTopByHeight.set(messageContext, scrollTopByHeight);
-        });
+    let eventsLength = $derived(events.length);
+
+    $effect.pre(() => {
+        // HACK we only want to capture this one when the events length has changed and *before* the dom is updated
+        if (eventsLength > 0) {
+            withScrollableElement((el) => {
+                const scrollTopByHeight = previousScrollTopByHeight.get(messageContext) ?? {};
+                scrollTopByHeight[el.scrollHeight] = el.scrollTop;
+                previousScrollTopByHeight.set(messageContext, scrollTopByHeight);
+            });
+        }
     });
 
-    afterUpdate(() => {
+    $effect(() => {
         updateShowGoToBottom();
         updateShowGoToTop();
+    });
+
+    $effect(() => {
+        // previously the component would have been destroyed when not showing the middle panel meaning all of
+        // these variables would have been re-initialised
+        if (!visible) {
+            initialised = false;
+            destroyed = true;
+            morePrevAvailable = false;
+            moreNewAvailable = false;
+            loadingFromUserScroll = false;
+            previousScrollHeight = new MessageContextMap();
+            previousScrollTopByHeight = new MessageContextMap();
+            scrollingToMessage = false;
+            scrollToBottomOnSend = false;
+        }
+    });
+
+    $effect(() => {
+        if (visible && maintainScroll) {
+            untrack(() => {
+                if ($eventListScrollTop !== undefined && maintainScroll) {
+                    interruptScroll((el) => {
+                        if ($eventListScrollTop !== undefined) {
+                            initialised = true;
+                            destroyed = false;
+                            el.scrollTop = $eventListScrollTop;
+                        }
+                    });
+                }
+            });
+        }
     });
 
     function elementIsOffTheTop(el: Element): boolean {
@@ -187,9 +232,15 @@
         heightObserver = new MutationObserver((_: MutationRecord[]) => {
             withScrollableElement(async (el) => {
                 const previousScrollHeightVal = previousScrollHeight.get(messageContext);
+
+                if (el.scrollHeight > 0) {
+                    previousScrollHeight.set(messageContext, el.scrollHeight);
+                }
                 if (
-                    el.scrollHeight !== previousScrollHeightVal &&
-                    previousScrollHeightVal !== undefined
+                    visible &&
+                    previousScrollHeightVal !== undefined &&
+                    previousScrollHeightVal > 0 &&
+                    el.scrollHeight !== previousScrollHeightVal
                 ) {
                     const scrollHeightDiff = el.scrollHeight - previousScrollHeightVal;
                     const scrollTopByHeight = previousScrollTopByHeight.get(messageContext) ?? {};
@@ -213,17 +264,10 @@
                     }
 
                     if (needsAdjustment) {
-                        if (reverseScroll && loadingNewMessages && !loadingPrevMessages) {
+                        if (loadingNewMessages && !loadingPrevMessages) {
                             await interruptScroll((el) => {
                                 if (previousScrollTop !== undefined) {
                                     el.scrollTop = previousScrollTop - scrollHeightDiff;
-                                }
-                            });
-                        }
-                        if (!reverseScroll && loadingPrevMessages && !loadingNewMessages) {
-                            await interruptScroll((el) => {
-                                if (previousScrollTop !== undefined) {
-                                    el.scrollTop = previousScrollTop + scrollHeightDiff;
                                 }
                             });
                         }
@@ -233,7 +277,6 @@
                             scrollHeight: el.scrollHeight,
                             scrollHeightDiff,
                             scrollTopDiff,
-                            reverseRender: reverseScroll,
                         });
                     }
 
@@ -242,16 +285,17 @@
                         await loadMoreIfRequired(loadingFromUserScroll);
                     }
                 }
-                previousScrollHeight.set(messageContext, el.scrollHeight);
             });
         });
 
-        heightObserver.observe(messagesDiv!, {
-            attributes: true,
-            childList: true,
-            subtree: true,
-            attributeFilter: ["scrollHeight"],
-        });
+        if (messagesDiv) {
+            heightObserver.observe(messagesDiv!, {
+                attributes: true,
+                childList: true,
+                subtree: true,
+                attributeFilter: ["scrollHeight"],
+            });
+        }
 
         messageObserver = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
             entries.forEach((entry) => {
@@ -273,7 +317,7 @@
                         const timer = window.setTimeout(() => {
                             if (messageContextsEqual(context, messageContext)) {
                                 client.markMessageRead(messageContext, idx, id);
-                                messageObserver.unobserve(entry.target);
+                                messageObserver?.unobserve(entry.target);
                             }
                             delete messageReadTimers[idx];
                         }, MESSAGE_READ_THRESHOLD);
@@ -298,9 +342,6 @@
                 ...(messagesDiv?.querySelectorAll(".date-label[data-timestamp]:not(.floating)") ??
                     []),
             ];
-            if (!reverseScroll) {
-                labels.reverse();
-            }
             floatingTimestamp = undefined;
             for (const label of labels) {
                 const float = elementIsOffTheTop(label);
@@ -316,49 +357,58 @@
             }
         }, labelObserverOptions);
 
-        if ($eventListScrollTop !== undefined && maintainScroll) {
-            interruptScroll((el) => {
-                if ($eventListScrollTop !== undefined) {
-                    initialised = true;
-                    el.scrollTop = $eventListScrollTop;
-                }
-            });
-        }
-
-        client.addEventListener("openchat_event", clientEvent);
+        const unsubs = [
+            subscribe("chatUpdated", chatsUpdated),
+            subscribe("reactionSelected", afterReaction),
+            subscribe("sendingMessage", sendingMessage),
+            subscribe("sentMessage", sentMessage),
+            subscribe("loadedMessageWindow", onMessageWindowLoaded),
+            subscribe(
+                "loadedNewMessages",
+                (args) => !scrollingToMessage && onLoadedNewMessages(args),
+            ),
+            subscribe(
+                "loadedPreviousMessages",
+                (args) => !scrollingToMessage && onLoadedPreviousMessages(args),
+            ),
+        ];
         return () => {
             heightObserver.disconnect();
-            client.removeEventListener("openchat_event", clientEvent);
+            unsubs.forEach((u) => u());
             destroyed = true;
         };
     });
 
-    async function clientEvent(ev: Event): Promise<void> {
-        await tick();
-        if (ev instanceof LoadedNewMessages && !scrollingToMessage) {
-            onLoadedNewMessages(ev.detail);
-        }
-        if (ev instanceof LoadedPreviousMessages && !scrollingToMessage) {
-            onLoadedPreviousMessages(ev.detail.context, ev.detail.initializing);
-        }
-        if (ev instanceof LoadedMessageWindow) {
-            onMessageWindowLoaded(ev.detail.context, ev.detail.messageIndex, ev.detail.initialLoad);
-        }
-        if (ev instanceof ChatUpdated && messageContextsEqual(ev.detail, messageContext)) {
-            loadMoreIfRequired();
-        }
-        if (ev instanceof SentMessage && messageContextsEqual(ev.detail.context, messageContext)) {
-            afterSendMessage(ev.detail.context, ev.detail.event);
-        }
-        if (ev instanceof SendingMessage && messageContextsEqual(ev.detail, messageContext)) {
-            scrollToBottomOnSend = insideBottomThreshold();
-        }
-        if (ev instanceof ReactionSelected) {
-            afterReaction(ev.detail.messageId, ev.detail.kind);
+    function chatsUpdated(ctx: MessageContext) {
+        if (messageContextsEqual(ctx, messageContext)) {
+            // I *think* chatsUpdated is only going to be because there are new messages to load
+            // so there is no need to load more previous messages. It's better that we don't even check
+            // here because in certain race conditions we might ending up loading the previous messages twice.
+            loadNewMessagesIfRequired();
         }
     }
 
-    async function afterReaction(messageId: bigint, kind: "add" | "remove") {
+    function sendingMessage(ctx: MessageContext) {
+        if (messageContextsEqual(ctx, messageContext)) {
+            scrollToBottomOnSend = insideBottomThreshold();
+        }
+    }
+
+    function sentMessage(payload: { context: MessageContext; event: EventWrapper<Message> }) {
+        tick().then(() => {
+            if (messageContextsEqual(payload.context, messageContext)) {
+                afterSendMessage(payload.context, payload.event);
+            }
+        });
+    }
+
+    async function afterReaction({
+        messageId,
+        kind,
+    }: {
+        messageId: bigint;
+        kind: "add" | "remove";
+    }) {
         if (
             !client.moreNewMessagesAvailable(chat.id, threadRootEvent) &&
             kind === "add" &&
@@ -380,7 +430,7 @@
     async function afterSendMessage(context: MessageContext, event: EventWrapper<Message>) {
         if (context.threadRootMessageIndex !== undefined && threadRootEvent !== undefined) {
             const summary = {
-                participantIds: new Set<string>([userId]),
+                participantIds: new Set<string>([$currentUserIdStore]),
                 numberOfReplies: event.event.messageIndex + 1,
                 latestEventIndex: event.index,
                 latestEventTimestamp: event.timestamp,
@@ -389,7 +439,7 @@
         }
 
         if (!client.moreNewMessagesAvailable(chat.id, threadRootEvent) && scrollToBottomOnSend) {
-            await scrollBottom("smooth");
+            scrollBottom("smooth");
             scrollToBottomOnSend = false;
         }
     }
@@ -400,7 +450,7 @@
     ): Promise<void> {
         if (messagesDiv) {
             messagesDiv?.scrollTo({
-                top: bottom(),
+                top: 0,
                 behavior,
             });
         }
@@ -412,12 +462,26 @@
 
     function shouldLoadPreviousMessages() {
         morePrevAvailable = client.morePreviousMessagesAvailable(chat.id, threadRootEvent);
-        return insideTopThreshold() && morePrevAvailable;
+        return visible && insideTopThreshold() && morePrevAvailable;
     }
 
     function shouldLoadNewMessages() {
         moreNewAvailable = client.moreNewMessagesAvailable(chat.id, threadRootEvent);
-        return insideBottomThreshold() && moreNewAvailable;
+        return visible && insideBottomThreshold() && moreNewAvailable;
+    }
+
+    async function loadNewMessagesIfRequired(fromScroll = false): Promise<boolean> {
+        loadingNewMessages = shouldLoadNewMessages();
+        loadingFromUserScroll = loadingNewMessages && fromScroll;
+        const loadPromises = [];
+        if (loadingNewMessages) {
+            console.debug("SCROLL: about to load new message", fromScroll);
+            loadPromises.push(client.loadNewMessages(chat.id, threadRootEvent));
+        }
+        if (loadPromises.length > 0) {
+            await Promise.all(loadPromises);
+        }
+        return loadingNewMessages;
     }
 
     async function loadMoreIfRequired(fromScroll = false, initialLoad = false): Promise<boolean> {
@@ -426,7 +490,7 @@
         loadingFromUserScroll = (loadingPrevMessages || loadingNewMessages) && fromScroll;
         const loadPromises = [];
         if (loadingNewMessages) {
-            console.debug("SCROLL: about to load new message");
+            console.debug("SCROLL: about to load new message", fromScroll);
             loadPromises.push(client.loadNewMessages(chat.id, threadRootEvent));
         }
         if (loadingPrevMessages) {
@@ -456,7 +520,7 @@
 
     function scrollToElement(
         element: Element | null,
-        behavior: ScrollBehavior = "auto",
+        behavior: ScrollBehavior = "instant",
     ): Promise<void> {
         return interruptScroll(() => {
             element?.scrollIntoView({ behavior, block: "center" });
@@ -469,7 +533,7 @@
                 ev.event.kind === "message" &&
                 ev.event.messageIndex === index &&
                 (messageContext === undefined ||
-                    !failedMessagesStore.contains(messageContext, ev.event.messageId)),
+                    !localUpdates.isFailed(messageContext, ev.event.messageId)),
         ) as EventWrapper<Message> | undefined;
     }
 
@@ -477,22 +541,30 @@
         return document.querySelector(`.${rootSelector} [data-index~='${index}']`);
     }
 
-    function isConfirmed(_unconf: unknown, evt: EventWrapper<ChatEventType>): boolean {
+    function isAccepted(_: unknown, evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message" && messageContext) {
-            return !unconfirmed.contains(messageContext, evt.event.messageId);
+            return !localUpdates.isPendingAcceptance(messageContext, evt.event.messageId);
         }
         return true;
     }
 
-    function isFailed(_failed: unknown, evt: EventWrapper<ChatEventType>): boolean {
+    function isConfirmed(_: unknown, evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message" && messageContext) {
-            return failedMessagesStore.contains(messageContext, evt.event.messageId);
+            return !localUpdates.isUnconfirmed(messageContext, evt.event.messageId);
+        }
+        return true;
+    }
+
+    function isFailed(_: unknown, evt: EventWrapper<ChatEventType>): boolean {
+        if (evt.event.kind === "message" && messageContext) {
+            return localUpdates.isFailed(messageContext, evt.event.messageId);
         }
         return false;
     }
 
-    function isReadByMe(_store: unknown, evt: EventWrapper<ChatEventType>): boolean {
-        if (readonly || (evt.event.kind === "message" && evt.event.sender === userId)) return true;
+    function isReadByMe(_: unknown, evt: EventWrapper<ChatEventType>): boolean {
+        if (readonly || (evt.event.kind === "message" && evt.event.sender === $currentUserIdStore))
+            return true;
 
         if (evt.event.kind === "message" || evt.event.kind === "aggregate_common_events") {
             let messageIndex =
@@ -510,14 +582,11 @@
         if (msgEvent && threadRootEvent === undefined) {
             if (
                 msgEvent.event.thread !== undefined &&
-                ($pathParams.kind === "global_chat_selected_route" ||
-                    $pathParams.kind === "selected_channel_route") &&
-                ($pathParams.open || $pathParams.threadMessageIndex !== undefined)
+                ($routeStore.kind === "global_chat_selected_route" ||
+                    $routeStore.kind === "selected_channel_route") &&
+                ($routeStore.open || $routeStore.threadMessageIndex !== undefined)
             ) {
-                client.setFocusThreadMessageIndex(chat.id, $pathParams.threadMessageIndex);
-                client.openThread(msgEvent, false);
-            } else {
-                client.closeThread();
+                client.openThread(chat.id, msgEvent, false, $routeStore.threadMessageIndex);
             }
         }
     }
@@ -533,7 +602,7 @@
         if (!messageContextsEqual(context, messageContext)) return Promise.resolve();
 
         if (index < 0) {
-            setFocusMessageIndex(undefined);
+            focusIndex = undefined;
             return Promise.resolve();
         }
 
@@ -541,7 +610,7 @@
 
         const element = findElementWithMessageIndex(index);
         if (element) {
-            setFocusMessageIndex(index);
+            focusIndex = index;
             await scrollToElement(element);
             if (!messageContextsEqual(context, messageContext)) return Promise.resolve();
             if (!filling) {
@@ -554,9 +623,9 @@
                 if (!preserveFocus) {
                     window.setTimeout(() => {
                         if (messageContextsEqual(context, messageContext)) {
-                            setFocusMessageIndex(undefined);
+                            focusIndex = undefined;
                         }
-                    }, 200);
+                    }, 500);
                 }
                 scrollingToMessage = false;
                 return Promise.resolve();
@@ -584,11 +653,15 @@
         }
     }
 
-    export async function onMessageWindowLoaded(
-        context: MessageContext,
-        messageIndex: number | undefined,
-        initialLoad = false,
-    ) {
+    export async function onMessageWindowLoaded({
+        context,
+        messageIndex,
+        initialLoad,
+    }: {
+        context: MessageContext;
+        messageIndex: number | undefined;
+        initialLoad: boolean;
+    }) {
         if (messageIndex === undefined || initialLoad === false) return;
         await tick();
         if (!messageContextsEqual(context, messageContext)) return;
@@ -596,18 +669,26 @@
         await scrollToMessageIndex(context, messageIndex, false);
     }
 
-    async function onLoadedPreviousMessages(context: MessageContext, initialLoad: boolean) {
+    async function onLoadedPreviousMessages({
+        context,
+        initialLoad,
+    }: {
+        context: MessageContext;
+        initialLoad: boolean;
+    }) {
         if (!messageContextsEqual(context, messageContext)) return;
         await resetScroll(initialLoad);
         if (!messageContextsEqual(context, messageContext)) return;
-        if (reverseScroll) {
-            // Seems like we *must* interrupt the scroll to stop runaway loading
-            // even though we do not need to do any adjustment of the scrollTop in this direction.
-            // This seems to help on chrome but not on safari (God help us).
-            await interruptScroll(() => {
-                console.debug("SCROLL: onLoadedPrevious interrupt");
-            });
-        }
+        // Seems like we *must* interrupt the scroll to stop runaway loading
+        // even though we do not need to do any adjustment of the scrollTop in this direction.
+        // This seems to help on chrome but not on safari (God help us).
+        await interruptScroll(() => {
+            console.debug("SCROLL: onLoadedPrevious interrupt");
+        });
+
+        // It is possible the when we load previous messages, because of the filtering applied, we might not
+        // have enough events. To cover that case we will check if we need to load some more.
+        loadMoreIfRequired();
     }
 
     async function onLoadedNewMessages(context: MessageContext) {
@@ -641,15 +722,14 @@
     function onUserScroll() {
         trackScrollStop(SCROLL_THRESHOLD);
         if (maintainScroll) {
-            $eventListScrollTop = messagesDiv?.scrollTop;
+            eventListScrollTop.set(messagesDiv?.scrollTop);
         }
         updateShowGoToBottom();
         updateShowGoToTop();
-        menuStore.hideMenu();
-        tooltipStore.hide();
+        portalState.close();
         eventListLastScrolled.set(Date.now());
 
-        if (!initialised || interrupt || loadingFromUserScroll) return;
+        if (!initialised || interrupt || loadingFromUserScroll || !visible) return;
 
         loadMoreIfRequired(true);
     }
@@ -684,28 +764,27 @@
             eventListScrolling.set(false);
         }, delay);
     }
-
-    function setFocusMessageIndex(messageIndex: number | undefined) {
-        if (threadRootEvent === undefined) {
-            client.setFocusMessageIndex(chat.id, messageIndex);
-        } else {
-            client.setFocusThreadMessageIndex(chat.id, messageIndex);
-        }
-    }
 </script>
 
-{#if floatingTimestamp !== undefined}
+{#if floatingTimestamp !== undefined && labelObserver !== undefined}
     <TimelineDate observer={labelObserver} timestamp={BigInt(floatingTimestamp)} floating />
 {/if}
 <div
     id={`scrollable-list-${rootSelector}`}
     bind:this={messagesDiv}
     bind:clientHeight={messagesDivHeight}
-    on:scroll={onUserScroll}
+    onscroll={onUserScroll}
     class:interrupt
-    class:reverse={reverseScroll}
     class={`scrollable-list ${rootSelector}`}>
-    <slot {isConfirmed} {isFailed} {isReadByMe} {messageObserver} {labelObserver} />
+    {@render children?.({
+        isAccepted,
+        isConfirmed,
+        isFailed,
+        isReadByMe,
+        messageObserver,
+        labelObserver,
+        focusIndex,
+    })}
 </div>
 
 {#if scrollTopButtonEnabled}
@@ -741,7 +820,7 @@
     class:rtl={$rtlStore}>
     <Fab on:click={scrollToLast}>
         {#if loadingFromUserScroll}
-            <div class="spinner" />
+            <div class="spinner"></div>
         {:else if unreadMessages > 0}
             <div in:pop={{ duration: 1500 }} class="unread">
                 <div class="unread-count">{unreadMessages > 999 ? "999+" : unreadMessages}</div>
@@ -756,11 +835,8 @@
     .scrollable-list {
         @include message-list();
         background-color: var(--currentChat-msgs-bg);
-
-        &.reverse {
-            display: flex;
-            flex-direction: column-reverse;
-        }
+        display: flex;
+        flex-direction: column-reverse;
 
         &.interrupt {
             overflow-y: hidden;

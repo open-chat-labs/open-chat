@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { iconSize } from "../../stores/iconSize";
+    import { iconSize } from "openchat-client";
 </script>
 
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={$iconSize} height={$iconSize}>

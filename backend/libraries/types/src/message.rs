@@ -1,28 +1,71 @@
-use crate::{CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex, Reaction, ThreadSummary, UserId};
+use crate::{
+    Achievement, BotCaller, BotCommand, CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex, Reaction,
+    ThreadSummary, UserId,
+};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::ops::{Deref, DerefMut};
+use ts_export::{TSPrincipal, ts_export};
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Message {
     pub message_index: MessageIndex,
     pub message_id: MessageId,
     pub sender: UserId,
     pub content: MessageContent,
+    pub sender_context: Option<SenderContext>,
     pub replies_to: Option<ReplyContext>,
     pub reactions: Vec<(Reaction, Vec<UserId>)>,
     pub tips: Tips,
     pub thread_summary: Option<ThreadSummary>,
     pub edited: bool,
     pub forwarded: bool,
+    pub block_level_markdown: bool,
 }
 
+impl Message {
+    pub fn achievements(&self, direct: bool, is_thread: bool) -> Vec<Achievement> {
+        let mut achievements = Vec::new();
+
+        if let Some(achievement) = self.content.content_type().achievement() {
+            achievements.push(achievement);
+        }
+
+        if direct {
+            achievements.push(Achievement::SentDirectMessage);
+        }
+
+        if self.forwarded {
+            achievements.push(Achievement::ForwardedMessage);
+        }
+
+        if self.replies_to.is_some() {
+            achievements.push(Achievement::QuoteReplied);
+        } else if is_thread && self.message_index == MessageIndex::from(0) {
+            achievements.push(Achievement::RepliedInThread);
+        }
+
+        achievements
+    }
+
+    pub fn bot_context(&self) -> Option<&BotMessageContext> {
+        if let Some(SenderContext::Bot(bot_context)) = &self.sender_context {
+            Some(bot_context)
+        } else {
+            None
+        }
+    }
+}
+
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ReplyContext {
     pub chat_if_other: Option<(Chat, Option<MessageIndex>)>,
     pub event_index: EventIndex,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupReplyContext {
     pub event_index: EventIndex,
@@ -60,7 +103,9 @@ pub struct MessageEditedEventPayload {
     pub new_length: u32,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+#[ts(as = "TipsTS")]
 pub struct Tips(Vec<(CanisterId, Vec<(UserId, u128)>)>);
 
 impl Deref for Tips {
@@ -78,6 +123,10 @@ impl DerefMut for Tips {
 }
 
 impl Tips {
+    pub fn new(tips: Vec<(CanisterId, Vec<(UserId, u128)>)>) -> Tips {
+        Tips(tips)
+    }
+
     pub fn push(&mut self, ledger: CanisterId, user_id: UserId, amount: u128) {
         if let Some((_, tips)) = self.iter_mut().find(|(c, _)| *c == ledger) {
             if let Some((_, total)) = tips.iter_mut().find(|(u, _)| *u == user_id) {
@@ -90,6 +139,10 @@ impl Tips {
         }
     }
 }
+
+#[ts_export]
+#[derive(Serialize, Deserialize)]
+pub struct TipsTS(Vec<(TSPrincipal, Vec<(UserId, u128)>)>);
 
 #[derive(Serialize)]
 #[serde(untagged)]
@@ -110,6 +163,7 @@ pub enum MessageContentEventPayload {
     MessageReminder(MessageReminderContentEventPayload),
     ReportedMessage(ReportedMessageContentEventPayload),
     P2PSwap(P2PSwapContentEventPayload),
+    Encrypted(EncryptedContentEventPayload),
     Empty,
 }
 
@@ -165,6 +219,11 @@ pub struct PrizeContentEventPayload {
     pub token: String,
     pub amount: u128,
     pub diamond_only: bool,
+    pub lifetime_diamond_only: bool,
+    pub unique_person_only: bool,
+    pub streak_only: u16,
+    pub requires_captcha: bool,
+    pub min_chit_earned: u32,
 }
 
 #[derive(Serialize)]
@@ -185,6 +244,12 @@ pub struct ReportedMessageContentEventPayload {
 }
 
 #[derive(Serialize)]
+pub struct EncryptedContentEventPayload {
+    pub content_type: String,
+    pub encrypted_length: u32,
+}
+
+#[derive(Serialize)]
 pub struct P2PSwapContentEventPayload {
     pub token0: String,
     pub token0_amount: u128,
@@ -196,3 +261,32 @@ pub struct P2PSwapContentEventPayload {
 pub type DeletedContentEventPayload = ();
 pub type VideoCallContentEventPayload = ();
 pub type CustomContentEventPayload = ();
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum SenderContext {
+    Bot(BotMessageContext),
+    Webhook,
+}
+
+impl SenderContext {
+    pub fn bot_context(&self) -> Option<&BotMessageContext> {
+        if let SenderContext::Bot(bot_context) = self { Some(bot_context) } else { None }
+    }
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct BotMessageContext {
+    pub command: Option<BotCommand>,
+    pub finalised: bool,
+}
+
+impl BotMessageContext {
+    pub fn from(caller: &BotCaller, finalised: bool) -> Self {
+        BotMessageContext {
+            command: caller.initiator.command().cloned(),
+            finalised,
+        }
+    }
+}

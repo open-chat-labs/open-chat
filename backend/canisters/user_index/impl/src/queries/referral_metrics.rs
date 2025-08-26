@@ -1,10 +1,10 @@
-use crate::{read_state, RuntimeState};
-use ic_cdk_macros::query;
+use crate::{RuntimeState, read_state};
+use canister_api_macros::query;
 use std::{cmp::Reverse, collections::HashMap};
 use types::UserId;
 use user_index_canister::referral_metrics::{Response::*, *};
 
-#[query]
+#[query(candid = true, msgpack = true)]
 fn referral_metrics(_args: Args) -> Response {
     read_state(referral_metrics_impl)
 }
@@ -22,21 +22,20 @@ fn referral_metrics_impl(state: &RuntimeState) -> Response {
     let now = state.env.now();
 
     for user in state.data.users.iter() {
-        if let Some(referred_by) = user.referred_by {
-            if let Some(referrer) = state.data.users.get_by_user_id(&referred_by) {
-                if referrer.diamond_membership_details.is_active(now) {
-                    let data = user_referrals_map.entry(referred_by).or_default();
-                    let icp_raised_for_paid_diamond: u64 =
-                        user.diamond_membership_details.payments().iter().map(|p| p.amount_e8s).sum();
-                    if icp_raised_for_paid_diamond > 0 {
-                        data.paid_diamond += 1;
-                        data.icp_raised_for_paid_diamond_e8s += icp_raised_for_paid_diamond;
-                    } else if user.diamond_membership_details.is_active(now) {
-                        data.unpaid_diamond += 1;
-                    } else {
-                        data.other += 1;
-                    }
-                }
+        if let Some(referred_by) = user.referred_by
+            && let Some(referrer) = state.data.users.get_by_user_id(&referred_by)
+            && referrer.diamond_membership_details.is_active(now)
+        {
+            let data = user_referrals_map.entry(referred_by).or_default();
+            let icp_raised_for_paid_diamond: u64 =
+                user.diamond_membership_details.payments().iter().map(|p| p.amount_e8s).sum();
+            if icp_raised_for_paid_diamond > 0 {
+                data.paid_diamond += 1;
+                data.icp_raised_for_paid_diamond_e8s += icp_raised_for_paid_diamond;
+            } else if user.diamond_membership_details.is_active(now) {
+                data.unpaid_diamond += 1;
+            } else {
+                data.other += 1;
             }
         }
     }

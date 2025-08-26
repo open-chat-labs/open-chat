@@ -1,26 +1,37 @@
+use crate::canister::convert_cdk_error;
 use candid::Principal;
-use ic_cdk::api::call::CallResult;
-use ic_cdk::api::management_canister;
-use ic_cdk::api::management_canister::main::{CanisterSettings, UpdateSettingsArgument};
+use ic_cdk::management_canister::{self, CanisterSettings, UpdateSettingsArgs};
 use tracing::error;
-use types::CanisterId;
+use types::{C2CError, CanisterId, Cycles};
 
-pub async fn set_controllers(canister_id: CanisterId, controllers: Vec<Principal>) -> CallResult<()> {
-    management_canister::main::update_settings(UpdateSettingsArgument {
+pub async fn set_controllers(canister_id: CanisterId, controllers: Vec<Principal>) -> Result<(), C2CError> {
+    update_settings(
         canister_id,
-        settings: CanisterSettings {
+        CanisterSettings {
             controllers: Some(controllers),
             ..Default::default()
         },
-    })
+    )
     .await
-    .map_err(|(code, msg)| {
-        error!(
-            %canister_id,
-            error_code = code as u8,
-            error_message = msg.as_str(),
-            "Error calling update_settings"
-        );
-        (code, msg)
-    })
+}
+
+pub async fn set_reserved_cycles_limit(canister_id: CanisterId, cycles: Cycles) -> Result<(), C2CError> {
+    update_settings(
+        canister_id,
+        CanisterSettings {
+            reserved_cycles_limit: Some(cycles.into()),
+            ..Default::default()
+        },
+    )
+    .await
+}
+
+pub async fn update_settings(canister_id: CanisterId, settings: CanisterSettings) -> Result<(), C2CError> {
+    management_canister::update_settings(&UpdateSettingsArgs { canister_id, settings })
+        .await
+        .map_err(|e| {
+            let error = convert_cdk_error(canister_id, "update_settings", e);
+            error!(?error, "Error calling update_settings");
+            error
+        })
 }

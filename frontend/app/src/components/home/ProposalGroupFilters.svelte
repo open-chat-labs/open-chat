@@ -1,24 +1,33 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext } from "svelte";
+    import type { ChatSummary, OpenChat } from "openchat-client";
+    import {
+        filteredProposalsStore,
+        iconSize,
+        mobileWidth,
+        proposalTopicsStore,
+    } from "openchat-client";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
-    import SectionHeader from "../SectionHeader.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import type { ChatSummary, OpenChat } from "openchat-client";
-    import Checkbox from "../Checkbox.svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import LinkButton from "../LinkButton.svelte";
-    import CollapsibleCard from "../CollapsibleCard.svelte";
-    import { OC_GOVERNANCE_CANISTER_ID } from "../../utils/sns";
+    import { i18nKey } from "../../i18n/i18n";
     import {
         proposalActionCategories,
         type ProposalActionCategory,
     } from "../../stores/proposalSections";
-    import { i18nKey } from "../../i18n/i18n";
+    import { OC_GOVERNANCE_CANISTER_ID } from "../../utils/sns";
+    import Checkbox from "../Checkbox.svelte";
+    import CollapsibleCard from "../CollapsibleCard.svelte";
+    import HoverIcon from "../HoverIcon.svelte";
+    import LinkButton from "../LinkButton.svelte";
+    import SectionHeader from "../SectionHeader.svelte";
     import Translatable from "../Translatable.svelte";
 
-    export let selectedChat: ChatSummary;
+    interface Props {
+        selectedChat: ChatSummary;
+        onClose: () => void;
+    }
+
+    let { selectedChat, onClose }: Props = $props();
 
     type SectionLabels = Record<ProposalActionCategory, string>;
 
@@ -34,18 +43,17 @@
         cyclesDispenser: "proposal.cyclesDispenserAction",
         registry: "proposal.registryAction",
         neuronController: "proposal.neuronControllerAction",
+        openchatInstaller: "proposal.openchatInstallerAction",
     };
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
-    $: proposalTopicsStore = client.proposalTopicsStore;
-    $: filteredProposalsStore = client.filteredProposalsStore;
-    $: topics = [...$proposalTopicsStore];
-    $: groupTopics =
+    let topics = $derived([...$proposalTopicsStore]);
+    let groupTopics = $derived(
         selectedChat.kind !== "direct_chat" &&
-        selectedChat.subtype?.governanceCanisterId === OC_GOVERNANCE_CANISTER_ID;
+            selectedChat.subtype?.governanceCanisterId === OC_GOVERNANCE_CANISTER_ID,
+    );
 
-    $: grouped = [
+    let grouped = $derived([
         ...client.groupBy(topics, ([id, _]) => {
             if (!groupTopics) return "all";
 
@@ -67,15 +75,13 @@
                 return "registry";
             } else if (id < 9000) {
                 return "neuronController";
+            } else if (id < 10000) {
+                return "openchatInstaller";
             } else {
                 return "unknown";
             }
         }),
-    ];
-
-    function close() {
-        dispatch("close");
-    }
+    ]);
 
     function kebab(name: string): string {
         return `topic_${name.toLowerCase().split(" ").join("_")}`;
@@ -84,7 +90,7 @@
 
 <SectionHeader shadow flush={$mobileWidth}>
     <h4><Translatable resourceKey={i18nKey("proposal.filter")} /></h4>
-    <span title={$_("close")} class="close" on:click={close}>
+    <span title={$_("close")} class="close" onclick={onClose}>
         <HoverIcon>
             <Close size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
@@ -93,24 +99,24 @@
 
 <div class="proposal-filters">
     <div class="controls">
-        <LinkButton on:click={client.enableAllProposalFilters} underline={"hover"}
+        <LinkButton onClick={() => client.enableAllProposalFilters()} underline={"hover"}
             ><Translatable resourceKey={i18nKey("proposal.enableAll")} /></LinkButton>
         <LinkButton
-            on:click={() => client.disableAllProposalFilters(topics.map(([id]) => id))}
+            onClick={() => client.disableAllProposalFilters(topics.map(([id]) => id))}
             underline={"hover"}
             ><Translatable resourceKey={i18nKey("proposal.disableAll")} /></LinkButton>
     </div>
     {#each grouped as [category, topicsInCategory]}
         {#if groupTopics}
             <CollapsibleCard
-                on:toggle={() => proposalActionCategories.toggle(category)}
+                onToggle={() => proposalActionCategories.toggle(category)}
                 open={$proposalActionCategories[category]}
                 headerText={i18nKey(sectionLabels[category])}>
                 {#each topicsInCategory as [id, label]}
                     <div class="toggle">
                         <Checkbox
                             id={kebab(label)}
-                            on:change={() => client.toggleProposalFilter(id)}
+                            onChange={() => client.toggleProposalFilter(id)}
                             label={i18nKey(label)}
                             checked={!$filteredProposalsStore?.hasFilter(id)} />
                     </div>
@@ -121,7 +127,7 @@
                 <div class="toggle">
                     <Checkbox
                         id={kebab(label)}
-                        on:change={() => client.toggleProposalFilter(id)}
+                        onChange={() => client.toggleProposalFilter(id)}
                         label={i18nKey(label)}
                         checked={!$filteredProposalsStore?.hasFilter(id)} />
                 </div>

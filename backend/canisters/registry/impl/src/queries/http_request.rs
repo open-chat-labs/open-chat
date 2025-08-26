@@ -1,14 +1,18 @@
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
 use dataurl::DataUrl;
-use http_request::{build_json_response, encode_logs, extract_route, Route};
-use ic_cdk_macros::query;
-use serde_bytes::ByteBuf;
+use http_request::{Route, build_json_response, encode_logs, extract_route};
+use ic_cdk::query;
 use std::collections::HashMap;
 use std::str::FromStr;
 use types::{CanisterId, HeaderField, HttpRequest, HttpResponse, TimestampMillis};
+use utils::format::format_to_decimal_places;
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
+    fn get_errors_impl(since: Option<TimestampMillis>) -> HttpResponse {
+        encode_logs(canister_logger::export_errors(), since.unwrap_or(0))
+    }
+
     fn get_logs_impl(since: Option<TimestampMillis>) -> HttpResponse {
         encode_logs(canister_logger::export_logs(), since.unwrap_or(0))
     }
@@ -48,8 +52,9 @@ fn http_request(request: HttpRequest) -> HttpResponse {
                         "public, max-age=100000000, immutable".to_string(),
                     ),
                 ],
-                body: ByteBuf::from(url.get_data()),
+                body: url.get_data().to_vec(),
                 streaming_strategy: None,
+                upgrade: None,
             }
         } else {
             let ledger = token.ledger_canister_id;
@@ -59,11 +64,38 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         }
     }
 
+    fn get_total_supply(state: &RuntimeState) -> HttpResponse {
+        build_chat_amount_response(state.data.total_supply.value)
+    }
+
+    fn get_circulating_supply(state: &RuntimeState) -> HttpResponse {
+        build_chat_amount_response(state.data.circulating_supply.value)
+    }
+
+    fn build_chat_amount_response(e8s: u128) -> HttpResponse {
+        let formatted = format_to_decimal_places(e8s as f64 / 100_000_000.0, 8);
+        let body = formatted.into_bytes();
+
+        HttpResponse {
+            status_code: 200,
+            headers: vec![
+                HeaderField("content-type".to_string(), "application/json".to_string()),
+                HeaderField("content-length".to_string(), body.len().to_string()),
+            ],
+            body,
+            streaming_strategy: None,
+            upgrade: None,
+        }
+    }
+
     match extract_route(&request.url) {
+        Route::Errors(since) => get_errors_impl(since),
         Route::Logs(since) => get_logs_impl(since),
         Route::Traces(since) => get_traces_impl(since),
         Route::Metrics => read_state(get_metrics_impl),
         Route::Other(path, qs) if path == "logo" => read_state(|state| get_logo(qs, state)),
+        Route::Other(path, _) if path == "total_supply" => read_state(get_total_supply),
+        Route::Other(path, _) if path == "circulating_supply" => read_state(get_circulating_supply),
         _ => HttpResponse::not_found(),
     }
 }

@@ -1,19 +1,17 @@
 use crate::guards::caller_is_group_index;
 use crate::timer_job_types::TimerJob;
-use crate::{mutate_state, openchat_bot, run_regular_jobs, Data, RuntimeState};
-use canister_api_macros::update_msgpack;
+use crate::{Data, RuntimeState, execute_update, openchat_bot};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::ChatInternal;
 use types::{ChannelId, Chat, ChatId, CommunityId, CommunityImportedInto, TimestampMillis};
-use user_canister::c2c_notify_group_deleted::{Response::*, *};
+use user_canister::c2c_notify_group_deleted::*;
 use user_canister::mark_read::ChannelMessagesRead;
 
-#[update_msgpack(guard = "caller_is_group_index")]
+#[update(guard = "caller_is_group_index", msgpack = true)]
 #[trace]
 fn c2c_notify_group_deleted(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| c2c_notify_group_deleted_impl(args, state))
+    execute_update(|state| c2c_notify_group_deleted_impl(args, state))
 }
 
 fn c2c_notify_group_deleted_impl(args: Args, state: &mut RuntimeState) -> Response {
@@ -86,7 +84,7 @@ fn c2c_notify_group_deleted_impl(args: Args, state: &mut RuntimeState) -> Respon
             state,
         );
     }
-    Success
+    Response::Success
 }
 
 fn migrate_group_references_to_channel_references(
@@ -102,11 +100,11 @@ fn migrate_group_references_to_channel_references(
         now,
     );
 
-    for (_, job) in data.timer_jobs.jobs.values_mut() {
-        if let Some(TimerJob::MessageReminder(mr)) = job.borrow_mut().as_mut() {
-            if mr.chat == Chat::Group(group_id) {
-                mr.chat = Chat::Channel(community_id, channel_id);
-            }
+    for (_, job) in data.timer_jobs.iter() {
+        if let Some(TimerJob::MessageReminder(mr)) = job.borrow_mut().as_mut()
+            && mr.chat == Chat::Group(group_id)
+        {
+            mr.chat = Chat::Channel(community_id, channel_id);
         }
     }
 }

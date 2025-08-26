@@ -1,84 +1,104 @@
-use crate::updates::c2c_join_channel::join_channel_unchecked;
-use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
+use crate::jobs;
+use crate::timer_job_types::JoinMembersToPublicChannelJob;
+use crate::{RuntimeState, activity_notifications::handle_activity_notification, execute_update};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::update_channel::{Response::*, *};
-use group_chat_core::UpdateResult;
-use ic_cdk_macros::update;
-use types::OptionUpdate;
+use oc_error_codes::OCErrorCode;
+use types::{OCResult, OptionUpdate};
+use url::Url;
 
-#[update]
+#[update(msgpack = true)]
 #[trace]
 fn update_channel(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| update_channel_impl(args, state))
+    match execute_update(|state| update_channel_impl(args, state)) {
+        Ok(result) => SuccessV2(result),
+        Err(error) => Error(error),
+    }
 }
 
-fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
+fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> OCResult<SuccessResult> {
+    state.data.verify_not_frozen()?;
+
     clean_args(&mut args);
 
-    if state.data.is_frozen() {
-        return CommunityFrozen;
+    if let OptionUpdate::SetToSome(external_url) = &args.external_url
+        && Url::parse(external_url).is_err()
+    {
+        return Err(OCErrorCode::InvalidExternalUrl.into());
     }
 
-    if let Some(name) = &args.name {
-        if state.data.channels.is_name_taken(name) {
-            return NameTaken;
-        }
+    if let OptionUpdate::SetToSome(gate_config) = &args.gate_config
+        && !gate_config.validate(state.data.test_mode)
+    {
+        return Err(OCErrorCode::InvalidAccessGate.into());
     }
 
-    if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-        let caller = state.env.caller();
+    if let Some(name) = &args.name
+        && state.data.channels.is_name_taken(name, Some(args.channel_id))
+    {
+        return Err(OCErrorCode::NameTaken.into());
+    }
 
-        if let Some(member) = state.data.members.get(caller) {
-            let now = state.env.now();
-            match channel.chat.update(
-                member.user_id,
-                args.name,
-                args.description,
-                args.rules,
-                args.avatar,
-                args.permissions_v2,
-                args.gate,
-                args.public,
-                args.events_ttl,
-                now,
-            ) {
-                UpdateResult::Success(result) => {
-                    if channel.chat.is_public.value && channel.chat.gate.is_none() {
-                        // If the channel has just been made public or had its gate removed, join
-                        // existing community members to the channel
-                        if result.newly_public || matches!(result.gate_update, OptionUpdate::SetToNone) {
-                            for m in state.data.members.iter_mut() {
-                                if !m.channels_removed.iter().any(|c| c.value == channel.id) {
-                                    join_channel_unchecked(channel, m, true, now);
-                                }
-                            }
-                        }
-                    }
+    let member = state.get_calling_member(true)?;
+    let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
+    let now = state.env.now();
+    let has_gate_config_updates = args.gate_config.has_update();
+    let prev_gate_config = channel.chat.gate_config.value.clone();
 
-                    handle_activity_notification(state);
-                    SuccessV2(SuccessResult {
-                        rules_version: result.rules_version,
-                    })
-                }
-                UpdateResult::UserSuspended => UserSuspended,
-                UpdateResult::UserNotInGroup => UserNotInChannel,
-                UpdateResult::NotAuthorized => NotAuthorized,
-                UpdateResult::NameTooShort(v) => NameTooShort(v),
-                UpdateResult::NameTooLong(v) => NameTooLong(v),
-                UpdateResult::NameReserved => NameReserved,
-                UpdateResult::DescriptionTooLong(v) => DescriptionTooLong(v),
-                UpdateResult::RulesTooShort(v) => RulesTooShort(v),
-                UpdateResult::RulesTooLong(v) => RulesTooLong(v),
-                UpdateResult::AvatarTooBig(v) => AvatarTooBig(v),
+    let result = channel.chat.update(
+        member.user_id,
+        args.name,
+        args.description,
+        args.rules,
+        args.avatar,
+        args.permissions_v2,
+        args.gate_config.map(|gc| gc.into()),
+        args.public,
+        args.messages_visible_to_non_members,
+        args.events_ttl,
+        args.external_url,
+        now,
+    )?;
+
+    if channel.chat.is_public.value && channel.chat.gate_config.is_none() {
+        // If the channel has just been made public or had its gate removed, add
+        // all existing community members to the channel, except those who have
+        // been in the channel before and then left
+        if result.newly_public || matches!(result.gate_config_update, OptionUpdate::SetToNone) {
+            let channel_id = channel.id;
+            let mut user_ids = Vec::with_capacity(state.data.members.len());
+            user_ids.extend(
+                state
+                    .data
+                    .members
+                    .iter_member_ids()
+                    .filter(|user_id| !state.data.members.member_channel_links_removed_contains(*user_id, channel_id)),
+            );
+
+            JoinMembersToPublicChannelJob {
+                channel_id,
+                members: user_ids,
             }
-        } else {
-            UserNotInCommunity
+            .execute_with_state(state);
         }
-    } else {
-        ChannelNotFound
     }
+
+    if has_gate_config_updates {
+        state.data.update_member_expiry(Some(args.channel_id), &prev_gate_config, now);
+        jobs::expire_members::restart_job(state);
+    }
+
+    if args.public.is_some() {
+        state.data.public_channel_list_updated = now;
+    }
+
+    state.push_bot_notifications(result.bot_notifications);
+    handle_activity_notification(state);
+
+    Ok(SuccessResult {
+        rules_version: result.rules_version,
+    })
 }
 
 fn clean_args(args: &mut Args) {

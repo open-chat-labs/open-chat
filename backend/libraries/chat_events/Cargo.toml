@@ -1,23 +1,32 @@
 [package]
 name = "chat_events"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 candid = { workspace = true }
-event_store_producer = { workspace = true, features = ["json"] }
+constants = { path = "../constants" }
+event_store_types = { workspace = true, features = ["json"] }
 hex = { workspace = true }
+ic-cdk = { workspace = true }
 ic-ledger-types = { workspace = true }
+ic-stable-structures = { workspace = true }
 itertools = { workspace = true }
 ledger_utils = { path = "../ledger_utils" }
+msgpack = { path = "../msgpack" }
+oc_error_codes = { path = "../error_codes" }
 rand = { workspace = true }
 search = { path = "../search" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 sha2 = { workspace = true }
+stable_memory_map = { path = "../stable_memory_map" }
+tracing = { workspace = true }
 types = { path = "../types" }
 
 [dev-dependencies]
 msgpack = { path = "../msgpack" }
+test-case = { workspace = true }
+testing = { path = "../testing" }

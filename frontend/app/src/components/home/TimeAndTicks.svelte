@@ -1,39 +1,60 @@
-<svelte:options immutable />
-
 <script lang="ts">
-    import DeletedIcon from "svelte-material-icons/DeleteOutline.svelte";
-    import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
-    import AlertCircleOutline from "svelte-material-icons/AlertCircleOutline.svelte";
-    import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
-    import Pin from "svelte-material-icons/Pin.svelte";
-    import { rtlStore } from "../../stores/rtl";
     import type { ChatType, OpenChat } from "openchat-client";
     import { getContext } from "svelte";
+    import AlertCircleOutline from "svelte-material-icons/AlertCircleOutline.svelte";
+    import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
+    import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
+    import DeletedIcon from "svelte-material-icons/DeleteOutline.svelte";
+    import Pin from "svelte-material-icons/Pin.svelte";
+    import { rtlStore } from "../../stores/rtl";
     import { currentTheme } from "../../theme/themes";
     import DisappearsAt from "./DisappearsAt.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    export let timestamp: bigint;
-    export let expiresAt: number | undefined;
-    export let percentageExpired: number;
-    export let confirmed: boolean;
-    export let failed: boolean;
-    export let chatType: ChatType;
-    export let readByThem: boolean;
-    export let me: boolean;
-    export let fill: boolean;
-    export let pinned: boolean;
-    export let crypto: boolean;
-    export let dateFormatter: (date: Date) => string = (date) => client.toShortTimeString(date);
-    export let deleted: boolean;
-    export let undeleting: boolean;
+    interface Props {
+        timestamp: bigint;
+        expiresAt: number | undefined;
+        percentageExpired: number;
+        accepted: boolean;
+        failed: boolean;
+        chatType: ChatType;
+        readByThem: boolean;
+        me: boolean;
+        bot: boolean;
+        fill: boolean;
+        pinned: boolean;
+        crypto: boolean;
+        dateFormatter?: (date: Date) => string;
+        deleted: boolean;
+        undeleting: boolean;
+        prize: boolean;
+    }
+
+    let {
+        timestamp,
+        expiresAt,
+        percentageExpired,
+        accepted,
+        failed,
+        chatType,
+        readByThem,
+        me,
+        bot,
+        fill,
+        pinned,
+        crypto,
+        dateFormatter = (date) => client.toShortTimeString(date),
+        deleted,
+        undeleting,
+        prize,
+    }: Props = $props();
 
     let iconColor = me ? $currentTheme.time.me.icon : $currentTheme.time.icon;
     let pinnedColor = crypto || me || fill ? "#ffffff" : "var(--txt)";
 </script>
 
-<div class="time-and-ticks" class:me class:fill class:rtl={$rtlStore}>
+<div class="time-and-ticks" class:prize class:me class:fill class:rtl={$rtlStore}>
     <span class="time">
         {dateFormatter(new Date(Number(timestamp)))}
     </span>
@@ -42,27 +63,29 @@
     {:else if deleted}
         <DeletedIcon size={"0.9em"} color={iconColor} />
         {#if undeleting}
-            <div class="confirming" />
+            <div class="confirming"></div>
         {/if}
     {:else}
-        {#if me}
-            {#if confirmed}
-                <CheckCircle size={"0.9em"} color={iconColor} />
-            {:else}
-                <div class="confirming" />
-            {/if}
-            {#if chatType === "direct_chat"}
-                {#if readByThem}
+        {#if !bot}
+            {#if me}
+                {#if accepted}
                     <CheckCircle size={"0.9em"} color={iconColor} />
                 {:else}
-                    <CheckCircleOutline size={"0.9em"} color={iconColor} />
+                    <div class="confirming"></div>
                 {/if}
+                {#if chatType === "direct_chat"}
+                    {#if readByThem}
+                        <CheckCircle size={"0.9em"} color={iconColor} />
+                    {:else}
+                        <CheckCircleOutline size={"0.9em"} color={iconColor} />
+                    {/if}
+                {/if}
+            {:else if !accepted}
+                <div class="confirming"></div>
             {/if}
-        {:else if !confirmed}
-            <div class="confirming" />
-        {/if}
-        {#if expiresAt !== undefined}
-            <DisappearsAt {me} {percentageExpired} {expiresAt} />
+            {#if expiresAt !== undefined}
+                <DisappearsAt {me} {percentageExpired} {expiresAt} />
+            {/if}
         {/if}
         {#if pinned}
             <Pin size={"0.9em"} color={pinnedColor} />
@@ -120,6 +143,10 @@
                 right: unset;
                 border-radius: 0 $sp4 0 0;
             }
+        }
+
+        &.prize {
+            padding: $sp3;
         }
 
         .confirming {

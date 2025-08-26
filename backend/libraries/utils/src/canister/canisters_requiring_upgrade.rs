@@ -18,6 +18,7 @@ pub struct CanistersRequiringUpgrade {
     in_progress: HashSet<CanisterId>,
     failed: VecDeque<FailedUpgrade>,
     completed: u64,
+    recently_competed: VecDeque<CanisterId>,
 }
 
 impl CanistersRequiringUpgrade {
@@ -35,8 +36,16 @@ impl CanistersRequiringUpgrade {
         self.pending.clear();
     }
 
+    pub fn clear_failed(&mut self, older_than: BuildVersion) {
+        self.failed.retain(|f| f.to_version >= older_than);
+    }
+
     pub fn mark_success(&mut self, canister_id: &CanisterId) {
         self.mark_upgrade_no_longer_in_progress(canister_id);
+        while self.recently_competed.len() > 10 {
+            self.recently_competed.pop_front();
+        }
+        self.recently_competed.push_back(*canister_id);
         self.completed += 1;
     }
 
@@ -67,7 +76,7 @@ impl CanistersRequiringUpgrade {
 
     pub fn metrics(&self) -> Metrics {
         let mut failed = Vec::new();
-        for ((from_version, to_version), group) in &self.failed.iter().group_by(|f| (f.from_version, f.to_version)) {
+        for ((from_version, to_version), group) in &self.failed.iter().chunk_by(|f| (f.from_version, f.to_version)) {
             failed.push(FailedUpgradeCount {
                 from_version,
                 to_version,
@@ -77,10 +86,11 @@ impl CanistersRequiringUpgrade {
         failed.sort_unstable_by_key(|f| (f.from_version, f.to_version));
 
         Metrics {
-            pending: self.pending.len(),
-            in_progress: self.in_progress.len(),
+            pending: self.pending.len() as u64,
+            in_progress: self.in_progress.len() as u64,
             failed,
             completed: self.completed,
+            recently_competed: self.recently_competed.iter().copied().collect(),
         }
     }
 
@@ -94,8 +104,9 @@ impl CanistersRequiringUpgrade {
 pub struct Metrics {
     pub completed: u64,
     pub failed: Vec<FailedUpgradeCount>,
-    pub pending: usize,
-    pub in_progress: usize,
+    pub pending: u64,
+    pub in_progress: u64,
+    pub recently_competed: Vec<CanisterId>,
 }
 
 #[derive(CandidType, Serialize, Debug)]

@@ -1,12 +1,11 @@
-use crate::updates::c2c_send_messages::{handle_message_impl, HandleMessageArgs};
-use crate::{RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT};
+use crate::updates::c2c_send_messages::{HandleMessageArgs, handle_message_impl};
+use crate::{Membership, RuntimeState};
 use chat_events::{MessageContentInternal, TextContentInternal};
-use ic_ledger_types::Tokens;
-use types::{ChannelId, CommunityId, EventWrapper, Message, SuspensionDuration, User, UserId};
-use user_canister::{C2CReplyContext, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserSuspended};
-use utils::consts::{OPENCHAT_BOT_USERNAME, OPENCHAT_BOT_USER_ID};
+use constants::{DAY_IN_MS, HOUR_IN_MS, OPENCHAT_BOT_USER_ID, OPENCHAT_BOT_USERNAME};
+use types::nns::Tokens;
+use types::{ChannelId, CommunityId, EventWrapper, Message, SuspensionDuration, User, UserId, UserType};
+use user_canister::{C2CReplyContext, PhoneNumberConfirmed, StorageUpgraded, UserSuspended};
 use utils::format::format_to_decimal_places;
-use utils::time::{DAY_IN_MS, HOUR_IN_MS};
 
 pub(crate) fn send_community_deleted_message(deleted_by: UserId, name: String, public: bool, state: &mut RuntimeState) {
     let visibility = if public { "public" } else { "private" };
@@ -31,7 +30,9 @@ pub(crate) fn send_group_imported_into_community_message(
     state: &mut RuntimeState,
 ) {
     let visibility = if public { "public" } else { "private" };
-    let text = format!("The {visibility} group \"{group_name}\" was deleted because it was imported into the [\"{community_name}\"](/community/{community_id}/channel/{channel_id}) community");
+    let text = format!(
+        "The {visibility} group \"{group_name}\" was deleted because it was imported into the [\"{community_name}\"](/community/{community_id}/channel/{channel_id}) community"
+    );
 
     send_text_message(text, Vec::new(), false, state);
 }
@@ -56,44 +57,40 @@ pub(crate) fn send_removed_from_group_or_community_message(
 
 pub(crate) fn send_phone_number_confirmed_bot_message(event: &PhoneNumberConfirmed, state: &mut RuntimeState) {
     let storage_added = to_gb(event.storage_added);
-    let new_group_limit = PREMIUM_GROUP_CREATION_LIMIT.to_string();
-    let old_group_limit = BASIC_GROUP_CREATION_LIMIT.to_string();
-    let text = format!("Thank you for [verifying ownership of your phone number](/{OPENCHAT_BOT_USER_ID}?faq=sms_icp). This gives you {storage_added} GB of storage allowing you to send and store images, videos, audio and other files. It also entitles you to create {new_group_limit} groups (up from {old_group_limit}).");
+    let new_group_limit = Membership::Diamond.group_creation_limit().to_string();
+    let old_group_limit = Membership::Basic.group_creation_limit().to_string();
+    let text = format!(
+        "Thank you for [verifying ownership of your phone number](/{OPENCHAT_BOT_USER_ID}?faq=sms_icp). This gives you {storage_added} GB of storage allowing you to send and store images, videos, audio and other files. It also entitles you to create {new_group_limit} groups (up from {old_group_limit})."
+    );
 
     send_text_message(text, Vec::new(), false, state);
 }
 
 pub(crate) fn send_storage_ugraded_bot_message(event: &StorageUpgraded, state: &mut RuntimeState) {
     let amount_paid = to_tokens(event.cost.amount);
-    let token = event.cost.token.token_symbol();
+    let token = &event.cost.token_symbol;
     let storage_added = to_gb(event.storage_added);
     let storage_total = to_gb(event.new_storage_limit);
-    let new_group_limit = PREMIUM_GROUP_CREATION_LIMIT.to_string();
-    let old_group_limit = BASIC_GROUP_CREATION_LIMIT.to_string();
+    let new_group_limit = Membership::Diamond.group_creation_limit().to_string();
+    let old_group_limit = Membership::Basic.group_creation_limit().to_string();
 
     let text = if event.storage_added == event.new_storage_limit {
-        format!("Thank you for [buying storage](/{OPENCHAT_BOT_USER_ID}?faq=sms_icp). You paid {amount_paid} {token} for {storage_added} GB of storage. This will allow you to send and store images, videos, audio and other files. It also entitles you to create {new_group_limit} groups (up from {old_group_limit}).")
+        format!(
+            "Thank you for [buying storage](/{OPENCHAT_BOT_USER_ID}?faq=sms_icp). You paid {amount_paid} {token} for {storage_added} GB of storage. This will allow you to send and store images, videos, audio and other files. It also entitles you to create {new_group_limit} groups (up from {old_group_limit})."
+        )
     } else {
-        format!("Thank you for buying more storage. You paid {amount_paid} {token} for {storage_added} GB of storage giving you {storage_total} GB in total.")
+        format!(
+            "Thank you for buying more storage. You paid {amount_paid} {token} for {storage_added} GB of storage giving you {storage_total} GB in total."
+        )
     };
 
     send_text_message(text, Vec::new(), false, state);
 }
 
-pub(crate) fn send_referred_user_joined_message(event: &ReferredUserRegistered, state: &mut RuntimeState) {
-    let user_id = event.user_id;
-
+pub(crate) fn send_referred_user_joined_message(user_id: UserId, username: String, state: &mut RuntimeState) {
     let text = format!("User @UserId({user_id}) has just registered with your referral code!");
 
-    send_text_message(
-        text,
-        vec![User {
-            user_id,
-            username: event.username.clone(),
-        }],
-        false,
-        state,
-    );
+    send_text_message(text, vec![User { user_id, username }], false, state);
 }
 
 pub(crate) fn send_user_suspended_message(event: &UserSuspended, state: &mut RuntimeState) {
@@ -158,15 +155,16 @@ pub(crate) fn send_message_with_reply(
         content,
         replies_to,
         forwarding: false,
-        is_bot: true,
+        sender_user_type: UserType::OcControlledBot,
         sender_avatar_id: None,
         push_message_sent_event: true,
         mute_notification,
         mentioned,
+        block_level_markdown: false,
         now: state.env.now(),
     };
 
-    handle_message_impl(args, state)
+    handle_message_impl(args, None, false, state)
 }
 
 fn to_gb(bytes: u64) -> String {

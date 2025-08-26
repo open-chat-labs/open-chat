@@ -12,7 +12,7 @@ cd $SCRIPT_DIR/..
 TRANSLATIONS_CANISTER_ID=$(dfx canister --network ic id translations)
 
 cargo run \
-  --manifest-path backend/translation_tool/Cargo.toml -- \
+  --manifest-path backend/tools/translation_tool/Cargo.toml -- \
   --action mark-deployed \
   --translations-canister-id $TRANSLATIONS_CANISTER_ID \
   --url https://ic0.app/ \

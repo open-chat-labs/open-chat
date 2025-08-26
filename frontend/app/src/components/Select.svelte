@@ -2,19 +2,34 @@
     import { rtlStore } from "../stores/rtl";
     import MenuDown from "svelte-material-icons/MenuDown.svelte";
 
-    export let value: unknown;
-    export let invalid: boolean = false;
-    export let disabled: boolean = false;
-    export let margin: boolean = true;
+    interface Props {
+        value: unknown;
+        invalid?: boolean;
+        disabled?: boolean;
+        margin?: boolean;
+        children?: import("svelte").Snippet;
+        onchange?: () => void;
+    }
+
+    let {
+        value = $bindable(),
+        invalid = false,
+        disabled = false,
+        margin = true,
+        children,
+        onchange,
+    }: Props = $props();
 </script>
 
 <div class:rtl={$rtlStore} class="wrapper">
-    <select class:invalid class:margin {disabled} bind:value class={`select`} on:change>
-        <slot />
+    <select class:invalid class:margin {disabled} bind:value class={`select`} {onchange}>
+        {@render children?.()}
     </select>
-    <div class="icon">
-        <MenuDown color={"var(--primary)"} size="1.8em" />
-    </div>
+    {#if !disabled}
+        <div class="icon">
+            <MenuDown color={"var(--input-accent)"} size="1.8em" />
+        </div>
+    {/if}
 </div>
 
 <style lang="scss">
@@ -65,7 +80,6 @@
 
         &.invalid {
             border: var(--bw) solid var(--error);
-            box-shadow: 0 0 5px 1px var(--error);
         }
     }
 

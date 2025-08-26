@@ -1,49 +1,38 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, execute_update};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
-use group_canister::disable_invite_code::{Response::*, *};
-use ic_cdk_macros::update;
-use types::{GroupInviteCodeChange, GroupInviteCodeChanged};
+use group_canister::disable_invite_code::*;
+use oc_error_codes::OCErrorCode;
+use types::{GroupInviteCodeChange, GroupInviteCodeChanged, OCResult};
 
-#[update]
+#[update(msgpack = true)]
 #[trace]
-fn disable_invite_code(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| disable_invite_code_impl(args, state))
+fn disable_invite_code(_args: Args) -> Response {
+    execute_update(disable_invite_code_impl).into()
 }
 
-fn disable_invite_code_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if state.data.is_frozen() {
-        return ChatFrozen;
+fn disable_invite_code_impl(state: &mut RuntimeState) -> OCResult {
+    state.data.verify_not_frozen()?;
+
+    let member = state.get_calling_member(true)?;
+
+    if member.role().can_invite_users(&state.data.chat.permissions) {
+        state.data.invite_code_enabled = false;
+
+        let now = state.env.now();
+        state.data.chat.events.push_main_event(
+            ChatEventInternal::GroupInviteCodeChanged(Box::new(GroupInviteCodeChanged {
+                change: GroupInviteCodeChange::Disabled,
+                changed_by: member.user_id(),
+            })),
+            now,
+        );
+
+        handle_activity_notification(state);
+        Ok(())
+    } else {
+        Err(OCErrorCode::InitiatorNotAuthorized.into())
     }
-
-    let caller = state.env.caller();
-    if let Some(member) = state.data.get_member(caller) {
-        if member.suspended.value {
-            return UserSuspended;
-        }
-
-        if member.role.can_invite_users(&state.data.chat.permissions) {
-            let user_id = member.user_id;
-            state.data.invite_code_enabled = false;
-
-            let now = state.env.now();
-            state.data.chat.events.push_main_event(
-                ChatEventInternal::GroupInviteCodeChanged(Box::new(GroupInviteCodeChanged {
-                    change: GroupInviteCodeChange::Disabled,
-                    changed_by: user_id,
-                })),
-                args.correlation_id,
-                now,
-            );
-
-            handle_activity_notification(state);
-
-            return Success;
-        }
-    }
-
-    NotAuthorized
 }

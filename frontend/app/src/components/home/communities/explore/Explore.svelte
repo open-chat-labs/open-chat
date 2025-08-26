@@ -1,59 +1,41 @@
 <script lang="ts">
+    import type { OpenChat } from "openchat-client";
+    import {
+        anonUserStore,
+        exploreCommunitiesFiltersStore,
+        iconSize,
+        identityStateStore,
+        ipadWidth,
+        isDiamondStore,
+        mobileWidth,
+        offlineStore,
+        publish,
+        ScreenWidth,
+        screenWidth,
+    } from "openchat-client";
+    import { getContext, onMount, tick } from "svelte";
+    import { _ } from "svelte-i18n";
     import ArrowUp from "svelte-material-icons/ArrowUp.svelte";
     import CloudOffOutline from "svelte-material-icons/CloudOffOutline.svelte";
-    import Tune from "svelte-material-icons/Tune.svelte";
-    import { _ } from "svelte-i18n";
-    import Button from "../../../Button.svelte";
-    import HoverIcon from "../../../HoverIcon.svelte";
-    import CommunityCard from "./CommunityCard.svelte";
-    import Search from "../../..//Search.svelte";
-    import {
-        ipadWidth,
-        mobileWidth,
-        screenWidth,
-        ScreenWidth,
-    } from "../../../../stores/screenDimensions";
-    import { iconSize } from "../../../../stores/iconSize";
-    import type { OpenChat } from "openchat-client";
-    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
-    import FancyLoader from "../../../icons/FancyLoader.svelte";
-    import { pushRightPanelHistory } from "../../../../stores/rightPanel";
-    import { communityFiltersStore } from "../../../../stores/communityFilters";
     import Plus from "svelte-material-icons/Plus.svelte";
-    import { derived } from "svelte/store";
-    import CommunityCardLink from "./CommunityCardLink.svelte";
-    import Translatable from "../../../Translatable.svelte";
+    import Tune from "svelte-material-icons/Tune.svelte";
     import { i18nKey } from "../../../../i18n/i18n";
-    import {
-        communitySearchScrollPos,
-        communitySearchStore,
-        communitySearchTerm,
-    } from "../../../../stores/search";
+    import { communitySearchState } from "../../../../stores/search.svelte";
+    import Search from "../../..//Search.svelte";
+    import Button from "../../../Button.svelte";
     import Fab from "../../../Fab.svelte";
+    import HoverIcon from "../../../HoverIcon.svelte";
+    import FancyLoader from "../../../icons/FancyLoader.svelte";
+    import Translatable from "../../../Translatable.svelte";
+    import CommunityCard from "./CommunityCard.svelte";
+    import CommunityCardLink from "./CommunityCardLink.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    let searching = false;
-    let showFab = false;
+    let searching = $state(false);
+    let showFab = $state(false);
     let scrollableElement: HTMLElement | null;
-
-    $: anonUser = client.anonUser;
-    $: pageSize = calculatePageSize($screenWidth);
-    $: more = $communitySearchStore.total > $communitySearchStore.results.length;
-    $: isDiamond = client.isDiamond;
-    $: loading = searching && $communitySearchStore.results.length === 0;
-    $: offlineStore = client.offlineStore;
-
-    let filters = derived(
-        [communityFiltersStore, client.moderationFlags],
-        ([communityFilters, flags]) => {
-            return {
-                languages: Array.from(communityFilters.languages),
-                flags,
-            };
-        },
-    );
+    let initialised = $state(false);
 
     function calculatePageSize(width: ScreenWidth): number {
         // make sure we get even rows of results
@@ -67,62 +49,66 @@
     }
 
     function createCommunity() {
-        if ($anonUser) {
-            client.identityState.set({ kind: "logging_in" });
+        if ($anonUserStore) {
+            client.updateIdentityState({
+                kind: "logging_in",
+                postLogin: { kind: "create_community" },
+            });
             return;
         }
-        if (!$isDiamond) {
-            dispatch("upgrade");
+        if (!$isDiamondStore) {
+            publish("upgrade");
         } else {
-            dispatch("createCommunity");
+            publish("createCommunity");
         }
     }
 
-    function search(reset = false) {
+    function search(filters: { languages: string[]; flags: number }, reset = false) {
         searching = true;
         if (reset) {
-            communitySearchStore.reset();
+            communitySearchState.reset();
         } else {
-            communitySearchStore.nextPage();
+            communitySearchState.nextPage();
         }
 
         client
             .exploreCommunities(
-                $communitySearchTerm === "" ? undefined : $communitySearchTerm,
-                $communitySearchStore.index,
+                communitySearchState.term === "" ? undefined : communitySearchState.term,
+                communitySearchState.index,
                 pageSize,
-                $filters.flags ?? 0,
-                $filters.languages,
+                filters.flags ?? 0,
+                filters.languages,
             )
             .then((results) => {
                 if (results.kind === "success") {
                     if (reset) {
-                        communitySearchStore.setResults(results.matches);
+                        communitySearchState.results = results.matches;
                     } else {
-                        communitySearchStore.appendResults(results.matches);
+                        communitySearchState.appendResults(results.matches);
                     }
-                    communitySearchStore.setTotal(results.total);
+                    communitySearchState.total = results.total;
                 }
             })
             .finally(() => (searching = false));
     }
 
     function showFilters() {
-        pushRightPanelHistory({ kind: "community_filters" });
+        client.pushRightPanelHistory({ kind: "community_filters" });
     }
 
     onMount(() => {
         tick().then(() => {
             scrollableElement = document.getElementById("communities-wrapper");
             if (scrollableElement) {
-                scrollableElement.scrollTop = $communitySearchScrollPos;
+                scrollableElement.scrollTop = communitySearchState.scrollPos;
             }
             onScroll();
         });
-        return filters.subscribe((_) => {
-            if ($communitySearchStore.results.length === 0) {
-                search(true);
+        return exploreCommunitiesFiltersStore.subscribe((filters) => {
+            if (initialised || communitySearchState.results.length === 0) {
+                search(filters, true);
             }
+            initialised = true;
         });
     });
 
@@ -135,9 +121,22 @@
     function onScroll() {
         if (scrollableElement) {
             showFab = scrollableElement.scrollTop > 500;
-            communitySearchScrollPos.set(scrollableElement.scrollTop);
+            communitySearchState.scrollPos = scrollableElement.scrollTop;
         }
     }
+    let pageSize = $derived(calculatePageSize($screenWidth));
+    let more = $derived(communitySearchState.total > communitySearchState.results.length);
+    let loading = $derived(searching && communitySearchState.results.length === 0);
+
+    $effect(() => {
+        if (
+            $identityStateStore.kind === "logged_in" &&
+            $identityStateStore.postLogin?.kind === "create_community"
+        ) {
+            client.clearPostLoginState();
+            tick().then(() => createCommunity());
+        }
+    });
 </script>
 
 <div class="explore">
@@ -154,24 +153,24 @@
                 <div class="search">
                     <Search
                         fill
-                        bind:searchTerm={$communitySearchTerm}
+                        bind:searchTerm={communitySearchState.term}
                         searching={false}
-                        on:searchEntered={() => search(true)}
+                        onPerformSearch={() => search($exploreCommunitiesFiltersStore, true)}
                         placeholder={i18nKey("communities.search")} />
                 </div>
                 <div class="create">
-                    <Button on:click={createCommunity} hollow
+                    <Button onClick={createCommunity} hollow
                         ><Translatable resourceKey={i18nKey("communities.create")} /></Button>
                 </div>
             {/if}
             <div class="buttons">
                 {#if $ipadWidth}
-                    <HoverIcon on:click={createCommunity}>
+                    <HoverIcon onclick={createCommunity}>
                         <Plus size={$iconSize} color={"var(--icon-txt)"} />
                     </HoverIcon>
                 {/if}
 
-                <HoverIcon title={$_("showFilters")} on:click={showFilters}>
+                <HoverIcon title={$_("showFilters")} onclick={showFilters}>
                     <Tune size={$iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
             </div>
@@ -182,24 +181,24 @@
                     <Search
                         searching={false}
                         fill
-                        bind:searchTerm={$communitySearchTerm}
-                        on:searchEntered={() => search(true)}
+                        bind:searchTerm={communitySearchState.term}
+                        onPerformSearch={() => search($exploreCommunitiesFiltersStore, true)}
                         placeholder={i18nKey("communities.search")} />
                 </div>
             {/if}
         </div>
     </div>
 
-    <div on:scroll={onScroll} id="communities-wrapper" class="communities-wrapper">
+    <div onscroll={onScroll} id="communities-wrapper" class="communities-wrapper">
         <div
             class="communities"
             class:loading
-            class:empty={$communitySearchStore.results.length === 0}>
+            class:empty={communitySearchState.results.length === 0}>
             {#if loading}
                 <div class="loading">
                     <FancyLoader />
                 </div>
-            {:else if $communitySearchStore.results.length === 0}
+            {:else if communitySearchState.results.length === 0}
                 {#if $offlineStore}
                     <div class="no-match">
                         <CloudOffOutline size={"1.8em"} color={"var(--txt-light)"} />
@@ -218,7 +217,7 @@
                     </div>
                 {/if}
             {:else}
-                {#each $communitySearchStore.results as community (community.id.communityId)}
+                {#each communitySearchState.results as community (community.id.communityId)}
                     <CommunityCardLink url={`/community/${community.id.communityId}`}>
                         <CommunityCard
                             id={community.id.communityId}
@@ -228,16 +227,20 @@
                             banner={community.banner}
                             memberCount={community.memberCount}
                             channelCount={community.channelCount}
-                            gate={community.gate}
+                            gateConfig={community.gateConfig}
                             language={community.primaryLanguage}
-                            flags={community.flags} />
+                            flags={community.flags}
+                            verified={community.verified} />
                     </CommunityCardLink>
                 {/each}
             {/if}
         </div>
         {#if more}
             <div class="more">
-                <Button disabled={searching} loading={searching} on:click={() => search(false)}
+                <Button
+                    disabled={searching}
+                    loading={searching}
+                    onClick={() => search($exploreCommunitiesFiltersStore, false)}
                     ><Translatable resourceKey={i18nKey("communities.loadMore")} /></Button>
             </div>
         {/if}

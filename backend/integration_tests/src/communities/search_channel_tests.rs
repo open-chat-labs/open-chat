@@ -1,9 +1,9 @@
 use crate::env::ENV;
-use crate::rng::random_string;
-use crate::{client, CanisterIds, TestEnv, User};
+use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
+use testing::rng::random_string;
 use types::{ChannelId, CommunityId, MessageIndex};
 
 #[test]
@@ -46,14 +46,14 @@ fn search_channel_returns_expected_message() {
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
     let community_id =
         client::user::happy_path::create_community(env, &user1, &random_string(), true, vec!["general".to_string()]);
-    client::local_user_index::happy_path::join_community(env, user2.principal, canister_ids.local_user_index, community_id);
+    client::community::happy_path::join_community(env, user2.principal, community_id);
 
     env.tick();
 
-    let summary = client::community::happy_path::summary(env, &user2, community_id);
+    let summary = client::community::happy_path::summary(env, user2.principal, community_id);
     let channel_id = summary.channels.iter().find(|c| c.name == "general").unwrap().channel_id;
 
     client::community::happy_path::send_text_message(env, &user1, community_id, channel_id, None, "Hello, world!", None);
@@ -75,7 +75,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     }
 }
 
-#[allow(dead_code)]
+#[expect(dead_code)]
 struct TestData {
     user1: User,
     user2: User,

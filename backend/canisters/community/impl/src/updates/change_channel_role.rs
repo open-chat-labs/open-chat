@@ -1,50 +1,42 @@
-use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::update_candid_and_msgpack;
+use crate::{RuntimeState, activity_notifications::handle_activity_notification, execute_update};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use community_canister::change_channel_role::{Response::*, *};
-use group_chat_core::ChangeRoleResult;
+use community_canister::change_channel_role::*;
+use group_chat_core::GroupRoleInternal;
+use group_community_common::ExpiringMember;
+use types::{GroupRole, OCResult};
 
-#[update_candid_and_msgpack]
+#[update(msgpack = true)]
 #[trace]
 fn change_channel_role(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| change_channel_role_impl(args, state))
+    execute_update(|state| change_channel_role_impl(args, state)).into()
 }
 
-fn change_channel_role_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if state.data.is_frozen() {
-        return CommunityFrozen;
+fn change_channel_role_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+    state.data.verify_not_frozen()?;
+
+    let member = state.get_calling_member(true)?;
+    let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
+    let now = state.env.now();
+
+    let result = channel
+        .chat
+        .change_role(member.user_id, args.user_id, args.new_role, false, false, now)?;
+
+    // Owners can't "lapse" so either add or remove user from expiry list if they lose or gain owner status
+    if let Some(gate_expiry) = channel.chat.gate_config.value.as_ref().and_then(|gc| gc.expiry()) {
+        if matches!(args.new_role, GroupRole::Owner) {
+            state.data.expiring_members.remove_member(args.user_id, Some(args.channel_id));
+        } else if matches!(result.prev_role, GroupRoleInternal::Owner) {
+            state.data.expiring_members.push(ExpiringMember {
+                expires: now + gate_expiry,
+                channel_id: Some(args.channel_id),
+                user_id: args.user_id,
+            });
+        }
     }
 
-    let caller = state.env.caller();
-    if let Some(member) = state.data.members.get(caller) {
-        if member.suspended.value {
-            return UserSuspended;
-        }
-
-        if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-            let now = state.env.now();
-
-            match channel
-                .chat
-                .change_role(member.user_id, args.user_id, args.new_role, false, false, now)
-            {
-                ChangeRoleResult::Success(_) => {
-                    handle_activity_notification(state);
-                    Success
-                }
-                ChangeRoleResult::UserNotInGroup => UserNotInChannel,
-                ChangeRoleResult::NotAuthorized => NotAuthorized,
-                ChangeRoleResult::TargetUserNotInGroup => TargetUserNotInChannel,
-                ChangeRoleResult::Unchanged => Success,
-                ChangeRoleResult::Invalid => Invalid,
-                ChangeRoleResult::UserSuspended => UserSuspended,
-            }
-        } else {
-            ChannelNotFound
-        }
-    } else {
-        UserNotInCommunity
-    }
+    state.push_bot_notification(result.bot_notification);
+    handle_activity_notification(state);
+    Ok(())
 }

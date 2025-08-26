@@ -1,5 +1,5 @@
 use chat_events::deep_message_links;
-use local_user_index_canister::{Event as LocalUserIndexEvent, OpenChatBotMessage};
+use local_user_index_canister::{OpenChatBotMessage, UserIndexEvent};
 use modclub_canister::{getProviderRules::Rule, subscribe::ContentResult};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -13,11 +13,6 @@ pub struct ReportedMessages {
 }
 
 impl ReportedMessages {
-    #[allow(dead_code)]
-    pub fn set_rules(&mut self, rules: Vec<Rule>) {
-        self.rules = rules;
-    }
-
     pub fn add_report(&mut self, args: AddReportArgs) -> AddReportResult {
         let new_index = self.messages.len();
 
@@ -103,6 +98,11 @@ impl ReportedMessages {
     fn index_from_rule_id(&self, rule_id: String) -> usize {
         self.rules.iter().position(|r| r.id == rule_id).unwrap()
     }
+
+    #[cfg(test)]
+    pub fn set_rules(&mut self, rules: Vec<Rule>) {
+        self.rules = rules;
+    }
 }
 
 #[derive(Serialize, Debug)]
@@ -185,41 +185,42 @@ impl ReportOutcome {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ViolatedRules {
-    #[serde(alias = "rule_id")]
     pub rule_index: usize,
     pub rejected: u32,
 }
 
-pub fn build_message_to_reporter(reported_message: &ReportedMessage, reporter: UserId) -> LocalUserIndexEvent {
+pub fn build_message_to_reporter(reported_message: &ReportedMessage, reporter: UserId) -> UserIndexEvent {
     let outcome = reported_message.outcome.as_ref().unwrap();
     let rejected = reported_message.rejected();
 
-    let text = format!("You reported [this message]({}) for breaking [the platform rules](https://oc.app/guidelines?section=3) and it was referred to [Modclub](https://modclub.ai/) for external moderation. A group of {} moderators decided the message {} the platform rules {} - {}.",
+    let text = format!(
+        "You reported [this message]({}) for breaking [the platform rules](https://oc.app/guidelines?section=3) and it was referred to [Modclub](https://modclub.ai/) for external moderation. A group of {} moderators decided the message {} the platform rules {} - {}.",
         build_message_link(reported_message),
         outcome.rejected + outcome.approved,
-        if rejected {"broke"} else {"didn't break"},
-        if rejected {outcome.rejected} else {outcome.approved},
-        if rejected {outcome.approved} else {outcome.rejected},
+        if rejected { "broke" } else { "didn't break" },
+        if rejected { outcome.rejected } else { outcome.approved },
+        if rejected { outcome.approved } else { outcome.rejected },
     );
 
     build_oc_bot_message(text, reporter)
 }
 
-pub fn build_message_to_sender(reported_message: &ReportedMessage) -> LocalUserIndexEvent {
+pub fn build_message_to_sender(reported_message: &ReportedMessage) -> UserIndexEvent {
     let outcome = reported_message.outcome.as_ref().unwrap();
 
     let text = format!(
-        "Your [message]({}) was reported by another user for breaking [the platform rules](https://oc.app/guidelines?section=3) and it was referred to [Modclub](https://modclub.ai/) for external moderation. A group of {} moderators decided your message broke the platform rules {} - {}.", 
+        "Your [message]({}) was reported by another user for breaking [the platform rules](https://oc.app/guidelines?section=3) and it was referred to [Modclub](https://modclub.ai/) for external moderation. A group of {} moderators decided your message broke the platform rules {} - {}.",
         build_message_link(reported_message),
         outcome.rejected + outcome.approved,
         outcome.rejected,
-        outcome.approved);
+        outcome.approved
+    );
 
     build_oc_bot_message(text, reported_message.sender)
 }
 
-fn build_oc_bot_message(text: String, user_id: UserId) -> LocalUserIndexEvent {
-    LocalUserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage {
+fn build_oc_bot_message(text: String, user_id: UserId) -> UserIndexEvent {
+    UserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage {
         user_id,
         message: MessageContent::Text(TextContent { text }),
     }))
@@ -302,7 +303,7 @@ mod tests {
 
         reported_messages.add_report(args.clone());
         args.message_index = 2.into();
-        args.message_id = 123729212795234236487236419860990447789.into();
+        args.message_id = 123729212795234236487236419860990447789u128.into();
 
         if let AddReportResult::New(index) = reported_messages.add_report(args) {
             assert_eq!(index, 1)
@@ -316,7 +317,7 @@ mod tests {
             chat_id: Chat::Group(Principal::from_text("wowos-hyaaa-aaaar-ar4ca-cai").unwrap().into()),
             thread_root_message_index: None,
             message_index: 87884.into(),
-            message_id: 87672921279501061003607611986099044352.into(),
+            message_id: 87672921279501061003607611986099044352u128.into(),
             sender: Principal::from_text("3skqk-iqaaa-aaaaf-aaa3q-cai").unwrap().into(),
             reporter: Principal::from_text("27eue-hyaaa-aaaaf-aaa4a-cai").unwrap().into(),
             already_deleted: false,

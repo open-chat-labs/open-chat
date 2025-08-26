@@ -1,53 +1,63 @@
 <script lang="ts">
-    import Avatar from "../Avatar.svelte";
     import {
         AvatarSize,
+        chatListScopeStore,
+        chatSummariesStore,
+        type GroupChatIdentifier,
         type GroupChatSummary,
+        iconSize,
+        isLocked,
+        mobileWidth,
         type MultiUserChat,
         type OpenChat,
+        publish,
         routeForChatIdentifier,
+        selectedCommunitySummaryStore,
+        suspendedUserStore,
     } from "openchat-client";
-    import { _ } from "svelte-i18n";
-    import Markdown from "./Markdown.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
-    import Footer from "./upgrade/Footer.svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import { iconSize } from "../../stores/iconSize";
-    import { createEventDispatcher, getContext } from "svelte";
-    import Button from "../Button.svelte";
-    import AccessGateIcon from "./AccessGateIcon.svelte";
     import page from "page";
-    import Translatable from "../Translatable.svelte";
+    import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
+    import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import Avatar from "../Avatar.svelte";
+    import Button from "../Button.svelte";
+    import HoverIcon from "../HoverIcon.svelte";
+    import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
+    import Translatable from "../Translatable.svelte";
+    import AccessGateIcon from "./access/AccessGateIcon.svelte";
+    import Markdown from "./Markdown.svelte";
+    import Footer from "./upgrade/Footer.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let group: GroupChatSummary;
-    export let joining: MultiUserChat | undefined;
+    interface Props {
+        group: GroupChatSummary;
+        joining: MultiUserChat | undefined;
+        onDismissRecommendation: (id: GroupChatIdentifier) => void;
+    }
 
-    $: suspendedUser = client.suspendedUser;
-    $: chatListScope = client.chatListScope;
-    $: chatSummariesStore = client.chatSummariesStore;
-    $: member = $chatSummariesStore.has(group.id);
+    let { group, joining, onDismissRecommendation }: Props = $props();
+
+    let member = $derived($chatSummariesStore.has(group.id));
+    let locked = $derived(isLocked(group.gateConfig.gate));
 
     function dismiss({ id }: GroupChatSummary) {
-        dispatch("dismissRecommendation", id);
+        onDismissRecommendation(id);
     }
 
     function gotoGroup({ id }: GroupChatSummary) {
-        page(routeForChatIdentifier($chatListScope.kind, id));
+        page(routeForChatIdentifier($chatListScopeStore.kind, id));
     }
 
     function joinGroup(group: GroupChatSummary) {
-        dispatch("joinGroup", {
+        publish("joinGroup", {
             group,
             select: false,
         });
     }
     function leaveGroup(group: GroupChatSummary) {
-        dispatch("leaveGroup", { kind: "leave", chatId: group.id });
+        publish("leaveGroup", { kind: "leave", chatId: group.id, level: "group" });
     }
 </script>
 
@@ -56,13 +66,15 @@
         <div class="header">
             <div class="avatar">
                 <Avatar
-                    url={client.groupAvatarUrl(group)}
+                    url={client.groupAvatarUrl(group, $selectedCommunitySummaryStore)}
                     size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
             </div>
             <div class="group-title-line">
-                <h3 class="group-name">
-                    {group.name}
-                </h3>
+                <WithVerifiedBadge verified={group.verified} size={"small"}>
+                    <h3 class="group-name">
+                        {group.name}
+                    </h3>
+                </WithVerifiedBadge>
                 <p class="user-count">
                     <Translatable
                         resourceKey={i18nKey("groupWithN", {
@@ -70,7 +82,7 @@
                         })} />
                 </p>
             </div>
-            <div title={$_("notInterested")} class="close" on:click={() => dismiss(group)}>
+            <div title={$_("notInterested")} class="close" onclick={() => dismiss(group)}>
                 <HoverIcon>
                     <Close size={$iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
@@ -82,22 +94,25 @@
     </div>
     <Footer align="end">
         <div class="gate">
-            <AccessGateIcon on:upgrade gate={group.gate} />
+            <AccessGateIcon clickable level={group.level} gateConfig={group.gateConfig} />
         </div>
         {#if member}
-            <Button tiny on:click={() => leaveGroup(group)}
+            <Button tiny onClick={() => leaveGroup(group)}
                 ><Translatable resourceKey={i18nKey("leave")} /></Button>
         {:else}
-            {#if !$suspendedUser}
+            {#if !$suspendedUserStore}
                 <Button
-                    disabled={joining === group}
+                    disabled={locked || joining === group}
                     loading={joining === group}
                     tiny
                     hollow
-                    on:click={() => joinGroup(group)}
-                    ><Translatable resourceKey={i18nKey("join")} /></Button>
+                    onClick={() => joinGroup(group)}
+                    ><Translatable
+                        resourceKey={locked
+                            ? i18nKey("access.lockedGate", undefined, group.level, true)
+                            : i18nKey("join")} /></Button>
             {/if}
-            <Button disabled={joining === group} tiny on:click={() => gotoGroup(group)}
+            <Button disabled={joining === group} tiny onClick={() => gotoGroup(group)}
                 ><Translatable resourceKey={i18nKey("preview")} /></Button>
         {/if}
     </Footer>

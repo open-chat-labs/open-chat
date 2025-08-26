@@ -2,7 +2,7 @@ use candid::CandidType;
 use human_readable::HumanReadable;
 use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
-use types::{Cycles, Milliseconds};
+use types::{Cycles, Milliseconds, SuccessOnly};
 
 #[derive(CandidType, Serialize, Deserialize, HumanReadable, Clone, Debug, Default)]
 pub struct Args {
@@ -12,7 +12,4 @@ pub struct Args {
     pub icp_burn_amount: Option<Tokens>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-}
+pub type Response = SuccessOnly;

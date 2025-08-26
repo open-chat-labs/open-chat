@@ -1,43 +1,23 @@
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, execute_update};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use community_canister::unfollow_thread::{Response::*, *};
-use group_chat_core::UnfollowThreadResult;
-use ic_cdk_macros::update;
+use community_canister::unfollow_thread::*;
+use types::OCResult;
 
-#[update]
+#[update(msgpack = true)]
 #[trace]
 fn unfollow_thread(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| unfollow_thread_impl(args, state))
+    execute_update(|state| unfollow_thread_impl(args, state)).into()
 }
 
-fn unfollow_thread_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if state.data.is_frozen() {
-        return CommunityFrozen;
-    }
+fn unfollow_thread_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+    state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
+    let user_id = state.get_calling_member(false)?.user_id;
+    let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
     let now = state.env.now();
 
-    let user_id = match state.data.members.get(caller) {
-        Some(member) if member.suspended.value => return UserSuspended,
-        Some(member) => member.user_id,
-        None => return UserNotInCommunity,
-    };
-
-    if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-        match channel.chat.unfollow_thread(user_id, args.thread_root_message_index, now) {
-            UnfollowThreadResult::Success => {
-                state.data.mark_community_updated_in_user_canister(user_id);
-                Success
-            }
-            UnfollowThreadResult::NotFollowing => NotFollowing,
-            UnfollowThreadResult::ThreadNotFound => ThreadNotFound,
-            UnfollowThreadResult::UserNotInGroup => UserNotInChannel,
-            UnfollowThreadResult::UserSuspended => UserSuspended,
-        }
-    } else {
-        ChannelNotFound
-    }
+    channel.chat.unfollow_thread(user_id, args.thread_root_message_index, now)?;
+    state.mark_activity_for_user(user_id);
+    Ok(())
 }

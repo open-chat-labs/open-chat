@@ -8,7 +8,7 @@ export type CandidateProposal = {
 export type CandidateProposalAction =
     | Motion
     | TransferSnsFunds
-    | UpgradeSnsToNextVersion
+    | AdvanceSnsTargetVersion
     | ExecuteGenericNervousSystemFunction;
 
 export type Motion = {
@@ -29,8 +29,8 @@ export type Icrc1Account = {
 
 export type Treasury = "SNS" | "ICP";
 
-export type UpgradeSnsToNextVersion = {
-    kind: "upgrade_sns_to_next_version";
+export type AdvanceSnsTargetVersion = {
+    kind: "advance_sns_target_version";
 };
 
 export type ExecuteGenericNervousSystemFunction = {

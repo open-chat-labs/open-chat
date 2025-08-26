@@ -1,18 +1,9 @@
 [workspace]
 members = [
-    "backend/bots/api",
-    "backend/bots/c2c_client",
-    "backend/bots/examples/group_prize_bot/api",
-    "backend/bots/examples/group_prize_bot/impl",
-    "backend/bots/examples/icp_dispenser/api",
-    "backend/bots/examples/icp_dispenser/impl",
-    "backend/bots/examples/satoshi_dice/api",
-    "backend/bots/examples/satoshi_dice/impl",
-    "backend/bots/examples/sns1_airdrop/api",
-    "backend/bots/examples/sns1_airdrop/impl",
-    "backend/canister_installer",
-    "backend/canister_upgrade_proposal_builder",
-    "backend/canister_upgrader",
+    "backend/benchmarks",
+    "backend/canisters/airdrop_bot/api",
+    "backend/canisters/airdrop_bot/c2c_client",
+    "backend/canisters/airdrop_bot/impl",
     "backend/canisters/community/api",
     "backend/canisters/community/c2c_client",
     "backend/canisters/community/impl",
@@ -26,7 +17,6 @@ members = [
     "backend/canisters/event_relay/impl",
     "backend/canisters/group/api",
     "backend/canisters/group/c2c_client",
-    "backend/canisters/group/client",
     "backend/canisters/group/impl",
     "backend/canisters/group_index/api",
     "backend/canisters/group_index/c2c_client",
@@ -35,28 +25,25 @@ members = [
     "backend/canisters/identity/api",
     "backend/canisters/identity/c2c_client",
     "backend/canisters/identity/impl",
-    "backend/canisters/local_group_index/api",
-    "backend/canisters/local_group_index/c2c_client",
-    "backend/canisters/local_group_index/impl",
     "backend/canisters/local_user_index/api",
     "backend/canisters/local_user_index/c2c_client",
+    "backend/canisters/local_user_index/client",
     "backend/canisters/local_user_index/impl",
     "backend/canisters/market_maker/api",
     "backend/canisters/market_maker/client",
     "backend/canisters/market_maker/impl",
     "backend/canisters/neuron_controller/api",
     "backend/canisters/neuron_controller/impl",
-    "backend/canisters/notifications/api",
-    "backend/canisters/notifications/c2c_client",
-    "backend/canisters/notifications/client",
-    "backend/canisters/notifications/impl",
     "backend/canisters/notifications_index/api",
     "backend/canisters/notifications_index/c2c_client",
     "backend/canisters/notifications_index/client",
     "backend/canisters/notifications_index/impl",
     "backend/canisters/online_users/api",
-    "backend/canisters/online_users/client",
+    "backend/canisters/online_users/c2c_client",
     "backend/canisters/online_users/impl",
+    "backend/canisters/openchat_installer/api",
+    "backend/canisters/openchat_installer/client",
+    "backend/canisters/openchat_installer/impl",
     "backend/canisters/proposal_validation/api",
     "backend/canisters/proposal_validation/impl",
     "backend/canisters/proposals_bot/api",
@@ -82,6 +69,8 @@ members = [
     "backend/canisters/user_index/c2c_client",
     "backend/canisters/user_index/client",
     "backend/canisters/user_index/impl",
+    "backend/external_canisters/ckbtc_minter/api",
+    "backend/external_canisters/ckbtc_minter/c2c_client",
     "backend/external_canisters/cmc/api",
     "backend/external_canisters/cmc/c2c_client",
     "backend/external_canisters/icdex/api",
@@ -92,10 +81,14 @@ members = [
     "backend/external_canisters/icpswap_swap_pool/c2c_client",
     "backend/external_canisters/icrc_ledger/api",
     "backend/external_canisters/icrc_ledger/c2c_client",
+    "backend/external_canisters/kongswap/api",
+    "backend/external_canisters/kongswap/c2c_client",
     "backend/external_canisters/modclub/api",
     "backend/external_canisters/modclub/c2c_client",
     "backend/external_canisters/nns_governance/api",
     "backend/external_canisters/nns_governance/c2c_client",
+    "backend/external_canisters/one_sec_minter/api",
+    "backend/external_canisters/one_sec_minter/c2c_client",
     "backend/external_canisters/sns_archive/api",
     "backend/external_canisters/sns_archive/c2c_client",
     "backend/external_canisters/sns_governance/api",
@@ -109,7 +102,10 @@ members = [
     "backend/external_canisters/sonic/api",
     "backend/external_canisters/sonic/c2c_client",
     "backend/integration_tests",
+    "backend/legacy_bots/api",
+    "backend/legacy_bots/c2c_client",
     "backend/libraries/activity_notification_state",
+    "backend/libraries/candid_gen",
     "backend/libraries/canister_agent_utils",
     "backend/libraries/canister_api_macros",
     "backend/libraries/canister_client",
@@ -120,8 +116,10 @@ members = [
     "backend/libraries/canister_timer_jobs",
     "backend/libraries/canister_tracing_macros",
     "backend/libraries/chat_events",
+    "backend/libraries/constants",
     "backend/libraries/cycles_dispenser_client",
     "backend/libraries/dynamodb_index_store",
+    "backend/libraries/error_codes",
     "backend/libraries/fire_and_forget_handler",
     "backend/libraries/gated_groups",
     "backend/libraries/group_chat_core",
@@ -130,104 +128,147 @@ members = [
     "backend/libraries/human_readable",
     "backend/libraries/human_readable_derive",
     "backend/libraries/icdex_client",
-    "backend/libraries/icpswap_client",
+    "backend/libraries/identity_utils",
     "backend/libraries/index_store",
+    "backend/libraries/installed_bots",
     "backend/libraries/instruction_counts_log",
+    "backend/libraries/json",
     "backend/libraries/jwt",
     "backend/libraries/ledger_utils",
     "backend/libraries/msgpack",
     "backend/libraries/p256_key_pair",
+    "backend/libraries/principal_to_user_id_map",
+    "backend/libraries/proof_of_unique_personhood",
     "backend/libraries/storage_bucket_client",
     "backend/libraries/search",
-    "backend/libraries/serializer",
     "backend/libraries/sha256",
-    "backend/libraries/sonic_client",
     "backend/libraries/stable_memory",
+    "backend/libraries/stable_memory_map",
+    "backend/libraries/testing",
+    "backend/libraries/timer_job_queues",
+    "backend/libraries/ts_export",
+    "backend/libraries/ts_export_macros",
     "backend/libraries/types",
+    "backend/libraries/user_ids_set",
     "backend/libraries/utils",
     "backend/notification_pusher/aws",
     "backend/notification_pusher/cli",
     "backend/notification_pusher/core",
-    "backend/translation_tool",
+    "backend/tools/account_id",
+    "backend/tools/canister_installer",
+    "backend/tools/canister_upgrade_proposal_builder",
+    "backend/tools/canister_upgrader",
+    "backend/tools/canister_wasm_chunks_uploader",
+    "backend/tools/dupe_deps_detector",
+    "backend/tools/local_canister_creator",
+    "backend/tools/principal_generator",
+    "backend/tools/translation_tool",
+    "backend/tools/ts_exporter",
+    "frontend/src-tauri",
+    "frontend/tauri-plugin-oc",
 ]
 resolver = "2"
 
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+
 [workspace.dependencies]
-async-channel = "2.1.0"
-async-trait = "0.1.74"
-aws-config = "1.1.5"
-aws-sdk-dynamodb = "1.14.0"
-aws-types = "1.1.5"
-base64 = "0.21.5"
-bitflags = { version = "2.4.1", features = ["serde"] }
-candid = "0.10.3"
-canister_sig_util = { git = "https://github.com/dfinity/internet-identity", rev = "36621c439f3eef17ed4c2fba9b2f8160b656b95e" }
-ciborium = "0.2.1"
-clap = "4.4.8"
-ct-codecs = "1.1.1"
-dataurl = "0.1.2"
-dfx-core = { git = "https://github.com/dfinity/sdk", rev = "c7fa9267950836fb2e8af2f03a6531ead9289f81" }
-dirs = "5.0.1"
+async-channel = "2"
+async-trait = "0.1"
+aws-config = "1"
+aws-sdk-dynamodb = "1"
+aws-types = "1"
+base64 = "0.22"
+bitflags = { version = "2", features = ["serde"] }
+candid = "0.10"
+canbench-rs = "0.2"
+clap = "4"
+ct-codecs = "1"
+data-encoding = "2"
+dataurl = "0.1"
 dotenv = "0.15.0"
-event_store_canister = { git = "https://github.com/open-chat-labs/event-store", rev = "9dfa0b4e34cad599bf637d469c57632a90acf235" }
-event_store_producer = { git = "https://github.com/open-chat-labs/event-store", rev = "9dfa0b4e34cad599bf637d469c57632a90acf235" }
-event_store_producer_cdk_runtime = { git = "https://github.com/open-chat-labs/event-store", rev = "9dfa0b4e34cad599bf637d469c57632a90acf235" }
-event_store_utils = { git = "https://github.com/open-chat-labs/event-store", rev = "9dfa0b4e34cad599bf637d469c57632a90acf235" }
-futures = "0.3.29"
-getrandom = { version = "0.2.11", features = ["custom"] }
-hex = "0.4.3"
-hmac-sha256 = { version = "1.1.7", features = ["traits010"] }
-ic-agent = "0.33.0"
-ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "2e39ea5a8fb5ec7e09eb0fc20cfbc536d3ee5398" }
-ic-cdk-macros = "0.8.4"
-ic-cdk-timers = "0.6.0"
-ic-certification = "2.3.0"
-ic-ledger-types = "0.9.0"
-ic-stable-structures = "0.6.2"
-ic-transport-types = "0.33.0"
-ic-utils = "0.33.0"
-icrc-ledger-types = "0.1.5"
-ic0 = "0.21.1"
-itertools = "0.12.1"
-jwt-simple = { version = "0.12.9", default-features = false, features = [
+either = "1.15.0"
+enum-repr = "0.2"
+envconfig = "0.11"
+event_store_canister = { git = "https://github.com/open-chat-labs/event-store", tag = "v0.10.0" }
+event_store_producer = { git = "https://github.com/open-chat-labs/event-store", tag = "v0.10.0" }
+event_store_producer_cdk_runtime = { git = "https://github.com/open-chat-labs/event-store", tag = "v0.10.0" }
+event_store_types = { git = "https://github.com/open-chat-labs/event-store", tag = "v0.10.0" }
+event_store_utils = { git = "https://github.com/open-chat-labs/event-store", tag = "v0.10.0" }
+fcm-service = { git = "https://github.com/ivan-jukic/fcm-service", branch = "main" }
+futures = "0.3"
+getrandom = { version = "0.2", features = ["custom"] }
+hex = "0.4"
+hmac-sha256 = { version = "1", features = ["traits010"] }
+ic-agent = "0.40"
+ic-canister-sig-creation = "1"
+ic-captcha = "1"
+ic-cbor = "2"
+ic-cdk = "0.18"
+ic-cdk-timers = "0.12"
+ic-certificate-verification = "2"
+ic-certification = "2"
+ic-ledger-types = "0.15"
+ic-management-canister-types = "0.3"
+ic_principal = "0.1"
+ic-stable-structures = "0.7"
+ic-transport-types = "0.40"
+ic-utils = "0.40"
+ic-verifiable-credentials = "1"
+icrc-ledger-types = "0.1"
+ic0 = "1"
+itertools = "0.14"
+jwt-simple = { version = "0.12", default-features = false, features = [
     "pure-rust",
 ] }
-lazy_static = "1.4.0"
-num-traits = "0.2.17"
-openssl = "0.10.60"
-p256 = { version = "0.13.2" }
-pocket-ic = "2.1.0"
-proc-macro2 = "1.0.69"
-pulldown-cmark = { version = "0.10.0", default-features = false, features = [
+lazy_static = "1"
+num-traits = "0.2"
+openssl = "0.10"
+p256 = { version = "0.13" }
+pocket-ic = "9"
+proc-macro2 = "1"
+prometheus = "0.14"
+proptest = "1"
+pulldown-cmark = { version = "0.13", default-features = false, features = [
     "html",
 ] }
-quote = "1.0.33"
-rand = "0.8.5"
-rand_chacha = "0.3.1"
-rand_core = "0.6.4"
-range-set = "0.0.11"
-regex-lite = "0.1.5"
-rmp-serde = "1.1.2"
-serde = "1.0.192"
-serde_bytes = "0.11.12"
-serde_cbor = "0.11.2"
-serde_json = "1.0.114"
-serde_repr = "0.1.17"
-serde_tokenstream = "0.2.0"
-sha2 = "0.10.8"
-sha3 = "0.10.8"
-slog = "2.7.0"
-syn = "2.0.39"
-test-case = "3.2.1"
-time = "0.3.30"
-tokio = "1.34.0"
-tracing = "0.1.40"
-tracing-attributes = "0.1.27"
-tracing-subscriber = "0.3.18"
-web-push = { version = "0.10.0", default-features = false, features = [
+quote = "1"
+rand = "0.8"
+range-set = "0.1"
+regex-lite = "0.1"
+reqwest = "0.12"
+rmp-serde = "1"
+rustls = "0.23"
+serde = "1"
+serde_bytes = "0.11"
+serde_cbor = "0.11"
+serde_json = "1"
+serde_repr = "0.1"
+serde_tokenstream = "0.2"
+sha2 = "0.10"
+sha3 = "0.10"
+sign_in_with_email_canister = { git = "https://github.com/open-chat-labs/ic-sign-in-with-email", rev = "v0.13.0" }
+sign_in_with_email_canister_test_utils = { package = "test_utils", git = "https://github.com/open-chat-labs/ic-sign-in-with-email", rev = "v0.13.0" }
+subenum = "1.1.2"
+syn = "2"
+tauri = "2.7.0"
+test-case = "3"
+test-strategy = "0.4"
+thiserror = "2"
+time = "0.3"
+tokio = "1"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+ts-rs = { version = "10", features = ["no-serde-warnings"] }
+twox-hash = { version = "2", default-features = false, features = [
+    "xxhash3_128",
+] }
+url = "2"
+web-push = { version = "0.11", default-features = false, features = [
     "hyper-client",
 ] }
-x509-parser = "0.15.1"
+x509-parser = "0.17"
 
 [profile.release]
 lto = true
@@ -236,4 +277,5 @@ codegen-units = 1
 debug = false
 
 [patch.crates-io]
-ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "1833cb37ecfd6154cc9cc55b5de76329114e8c5f" }
+rmp-serde = { git = "https://github.com/hpeebles/msgpack-rust", rev = "832a3f48e67eea56c869715ae6e1045583dd011b" }
+ts-rs = { git = "https://github.com/hpeebles/ts-rs", rev = "c584e25ce28fa27b64964c208725b6bc100fbdac" }

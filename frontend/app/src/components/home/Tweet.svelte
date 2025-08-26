@@ -1,28 +1,24 @@
-<svelte:options immutable />
-
 <script lang="ts">
+    import { onMount } from "svelte";
     import { currentTheme } from "../../theme/themes";
-    import { createEventDispatcher, onMount } from "svelte";
-    import { eventListScrolling } from "../../stores/scrollPos";
 
-    const dispatch = createEventDispatcher();
+    interface Props {
+        tweetId: string;
+    }
 
-    export let intersecting: boolean;
-    export let tweetId: string;
+    let { tweetId }: Props = $props();
 
-    let tweetWrapper: HTMLDivElement | undefined;
-    let supported = false;
+    let tweetWrapper: HTMLDivElement | undefined = $state();
+    let supported = $state(false);
 
-    let rendering: Promise<any> | undefined = undefined;
+    let rendering: Promise<any> | undefined = $state(undefined);
 
     onMount(() => {
         supported = (<any>window).twttr !== undefined;
     });
 
-    $: {
+    $effect(() => {
         if (
-            intersecting &&
-            !$eventListScrolling &&
             tweetWrapper !== undefined &&
             !rendering &&
             supported
@@ -34,16 +30,12 @@
                 theme: $currentTheme.mode,
             }) as Promise<any>;
 
-            rendering
-                .then(() => {
-                    dispatch("rendered", tweetWrapper);
-                })
-                .catch((err: any) => {
-                    console.log("Failed to render tweet: ", err);
-                    rendering = undefined;
-                });
+            rendering.catch((err: any) => {
+                console.log("Failed to render tweet: ", err);
+                rendering = undefined;
+            });
         }
-    }
+    });
 </script>
 
-<div bind:this={tweetWrapper} />
+<div bind:this={tweetWrapper}></div>

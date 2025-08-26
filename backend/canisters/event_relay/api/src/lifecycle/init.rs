@@ -7,6 +7,7 @@ pub struct Args {
     pub push_events_whitelist: Vec<Principal>,
     pub event_store_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
+    pub registry_canister_id: CanisterId,
     pub chat_ledger_canister_id: CanisterId,
     pub chat_governance_canister_id: CanisterId,
     pub wasm_version: BuildVersion,

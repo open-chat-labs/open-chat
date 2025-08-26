@@ -1,4 +1,3 @@
-use crate::model::salt::Salt;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
@@ -8,7 +7,7 @@ use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
 use sha256::sha256;
 use std::cell::RefCell;
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 use std::time::Duration;
 use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
 use utils::env::Environment;
@@ -17,7 +16,6 @@ mod guards;
 mod jobs;
 mod lifecycle;
 mod memory;
-mod model;
 mod queries;
 mod updates;
 
@@ -42,22 +40,30 @@ impl RuntimeState {
         self.data.push_events_whitelist.contains(&caller)
     }
 
+    pub fn is_caller_registry_canister(&self) -> bool {
+        self.env.caller() == self.data.registry_canister_id
+    }
+
     pub fn metrics(&self) -> Metrics {
         let event_store_client_info = self.data.event_store_client.info();
         let event_store_canister_id = event_store_client_info.event_store_canister_id;
 
         Metrics {
-            memory_used: utils::memory::used(),
+            heap_memory_used: utils::memory::heap(),
+            stable_memory_used: utils::memory::stable(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
+            liquid_cycles_balance: self.env.liquid_cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
             push_events_whitelist: self.data.push_events_whitelist.iter().copied().collect(),
             event_store_client_info,
             ledger_transaction_processed_up_to: self.data.ledger_transaction_processed_up_to,
+            stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 event_sink: event_store_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
+                registry: self.data.registry_canister_id,
                 chat_ledger: self.data.chat_ledger_canister_id,
                 chat_governance: self.data.chat_governance_canister_id,
             },
@@ -68,15 +74,14 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub push_events_whitelist: HashSet<Principal>,
-    #[serde(alias = "events_sink_client")]
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
     pub cycles_dispenser_canister_id: CanisterId,
+    pub registry_canister_id: CanisterId,
     pub chat_ledger_canister_id: CanisterId,
     pub chat_governance_canister_id: CanisterId,
     pub chat_treasury_subaccount: [u8; 32],
     pub ledger_transaction_processed_up_to: Option<u64>,
-    pub salt: Salt,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -86,6 +91,7 @@ impl Data {
         push_events_whitelist: HashSet<Principal>,
         event_store_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
+        registry_canister_id: CanisterId,
         chat_ledger_canister_id: CanisterId,
         chat_governance_canister_id: CanisterId,
         test_mode: bool,
@@ -97,11 +103,11 @@ impl Data {
                 .build(),
             event_deduper: EventDeduper::default(),
             cycles_dispenser_canister_id,
+            registry_canister_id,
             chat_ledger_canister_id,
             chat_governance_canister_id,
             chat_treasury_subaccount: compute_distribution_subaccount_bytes(chat_governance_canister_id, 0),
             ledger_transaction_processed_up_to: None,
-            salt: Salt::default(),
             rng_seed: [0; 32],
             test_mode,
         }
@@ -118,13 +124,16 @@ impl Data {
 #[derive(Serialize, Debug)]
 pub struct Metrics {
     pub now: TimestampMillis,
-    pub memory_used: u64,
+    pub heap_memory_used: u64,
+    pub stable_memory_used: u64,
     pub cycles_balance: Cycles,
+    pub liquid_cycles_balance: Cycles,
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub push_events_whitelist: Vec<Principal>,
     pub event_store_client_info: EventStoreClientInfo,
     pub ledger_transaction_processed_up_to: Option<u64>,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }
 
@@ -132,6 +141,7 @@ pub struct Metrics {
 pub struct CanisterIds {
     pub event_sink: CanisterId,
     pub cycles_dispenser: CanisterId,
+    pub registry: CanisterId,
     pub chat_ledger: CanisterId,
     pub chat_governance: CanisterId,
 }

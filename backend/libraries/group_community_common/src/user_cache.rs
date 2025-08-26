@@ -1,0 +1,45 @@
+use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
+use types::{TimestampMillis, UserId, is_default};
+
+#[derive(Serialize, Deserialize, Default)]
+pub struct UserCache {
+    map: BTreeMap<UserId, CachedUser>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct CachedUser {
+    #[serde(rename = "d", skip_serializing_if = "Option::is_none")]
+    pub diamond_membership_expires_at: Option<TimestampMillis>,
+    #[serde(rename = "u", default, skip_serializing_if = "is_default")]
+    pub is_unique_person: bool,
+    #[serde(rename = "c", default, skip_serializing_if = "is_default")]
+    pub total_chit_earned: i32,
+}
+
+impl UserCache {
+    pub fn insert(
+        &mut self,
+        user_id: UserId,
+        diamond_membership_expires_at: Option<TimestampMillis>,
+        is_unique_person: bool,
+        total_chit_earned: i32,
+    ) {
+        self.map.insert(
+            user_id,
+            CachedUser {
+                diamond_membership_expires_at,
+                is_unique_person,
+                total_chit_earned,
+            },
+        );
+    }
+
+    pub fn delete(&mut self, user_id: UserId) {
+        self.map.remove(&user_id);
+    }
+
+    pub fn get(&self, user_id: &UserId) -> Option<&CachedUser> {
+        self.map.get(user_id)
+    }
+}

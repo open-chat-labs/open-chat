@@ -1,93 +1,137 @@
-<!-- svelte-ignore a11y-click-events-have-key-events -->
 <script lang="ts">
-    import Headphones from "svelte-material-icons/Headphones.svelte";
-    import CancelIcon from "svelte-material-icons/Cancel.svelte";
-    import TickIcon from "svelte-material-icons/Check.svelte";
-    import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
-    import Import from "svelte-material-icons/Import.svelte";
+    import {
+        allUsersStore,
+        chatIdentifiersEqual,
+        type ChatSummary,
+        currentUserIdStore,
+        directChatBotsStore,
+        favouritesStore,
+        type GroupChatSummary,
+        iconSize,
+        isDiamondStore,
+        isProposalGroupStore,
+        lastRightPanelState,
+        messagesRead,
+        mobileWidth,
+        notificationsSupported,
+        type OpenChat,
+        platformModeratorStore,
+        publish,
+        setRightPanelHistory,
+    } from "openchat-client";
+    import { getContext, onMount } from "svelte";
+    import { _ } from "svelte-i18n";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
-    import LocationExit from "svelte-material-icons/LocationExit.svelte";
-    import ConvertToCommunity from "../icons/ConvertToCommunity.svelte";
-    import Tune from "svelte-material-icons/Tune.svelte";
-    import Pin from "svelte-material-icons/Pin.svelte";
-    import Magnify from "svelte-material-icons/Magnify.svelte";
-    import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
+    import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import Bell from "svelte-material-icons/Bell.svelte";
     import BellOff from "svelte-material-icons/BellOff.svelte";
-    import FileDocument from "svelte-material-icons/FileDocument.svelte";
+    import CancelIcon from "svelte-material-icons/Cancel.svelte";
     import ChatQuestionIcon from "svelte-material-icons/ChatQuestion.svelte";
-    import MenuIcon from "../MenuIcon.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
-    import Menu from "../Menu.svelte";
-    import MenuItem from "../MenuItem.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import { _ } from "svelte-i18n";
-    import { chatIdentifiersEqual, type ChatSummary, type OpenChat } from "openchat-client";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
-    import { notificationsSupported } from "../../utils/notifications";
-    import { toastStore } from "../../stores/toast";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import { rightPanelHistory } from "../../stores/rightPanel";
+    import TickIcon from "svelte-material-icons/Check.svelte";
+    import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
+    import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
+    import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
+    import FileDocument from "svelte-material-icons/FileDocument.svelte";
+    import Headphones from "svelte-material-icons/Headphones.svelte";
+    import Import from "svelte-material-icons/Import.svelte";
+    import LocationExit from "svelte-material-icons/LocationExit.svelte";
+    import Magnify from "svelte-material-icons/Magnify.svelte";
+    import Pin from "svelte-material-icons/Pin.svelte";
+    import Tune from "svelte-material-icons/Tune.svelte";
+    import Webhook from "svelte-material-icons/Webhook.svelte";
+    import { i18nKey, interpolate } from "../../i18n/i18n";
     import { rtlStore } from "../../stores/rtl";
+    import { toastStore } from "../../stores/toast";
+    import { activeVideoCall } from "../../stores/video";
+    import HoverIcon from "../HoverIcon.svelte";
+    import ConvertToCommunity from "../icons/ConvertToCommunity.svelte";
     import HeartMinus from "../icons/HeartMinus.svelte";
     import HeartPlus from "../icons/HeartPlus.svelte";
-    import { i18nKey, interpolate } from "../../i18n/i18n";
+    import Menu from "../Menu.svelte";
+    import MenuIcon from "../MenuIcon.svelte";
+    import MenuItem from "../MenuItem.svelte";
     import Translatable from "../Translatable.svelte";
-    import { activeVideoCall } from "../../stores/video";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let selectedChatSummary: ChatSummary;
-    export let blocked: boolean;
-    export let showSuspendUserModal = false;
-    export let hasPinned: boolean;
-
-    $: platformModerator = client.platformModerator;
-    $: isDiamond = client.isDiamond;
-    $: favouritesStore = client.favouritesStore;
-    $: messagesRead = client.messagesRead;
-    $: isProposalGroup = client.isProposalGroup;
-    $: governanceCanisterId =
-        selectedChatSummary.kind !== "direct_chat" &&
-        selectedChatSummary.subtype?.kind === "governance_proposals"
-            ? selectedChatSummary.subtype.governanceCanisterId
-            : undefined;
-    $: canMakeProposals =
-        client.tryGetNervousSystem(governanceCanisterId)?.submittingProposalsEnabled ?? false;
-    $: userId = selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them.userId : "";
-    $: userStore = client.userStore;
-    $: isBot = $userStore[userId]?.kind === "bot";
-    $: isSuspended = $userStore[userId]?.suspended ?? false;
-    $: lastState = $rightPanelHistory[$rightPanelHistory.length - 1] ?? { kind: "no_panel" };
-    $: groupDetailsSelected = lastState.kind === "group_details";
-    $: pinnedSelected = lastState.kind === "show_pinned";
-    $: membersSelected = lastState.kind === "show_group_members";
-    $: inviteMembersSelected = lastState.kind === "invite_group_users";
-    $: desktop = !$mobileWidth;
-    $: canConvert =
-        selectedChatSummary.kind === "group_chat" &&
-        client.canConvertGroupToCommunity(selectedChatSummary.id);
-    $: canImportToCommunity = client.canImportToCommunity(selectedChatSummary.id);
-    $: canStartVideoCalls = !blocked && client.canStartVideoCalls(selectedChatSummary.id);
-    $: videoCallInProgress = selectedChatSummary.videoCallInProgress !== undefined;
-
-    $: incall =
-        $activeVideoCall !== undefined &&
-        videoCallInProgress &&
-        chatIdentifiersEqual($activeVideoCall.chatId, selectedChatSummary?.id);
-
-    $: videoMenuText = videoCallInProgress
-        ? i18nKey("videoCall.joinVideo")
-        : i18nKey("videoCall.startVideo");
-
-    $: canStartOrJoinVideoCall = !incall && (videoCallInProgress || canStartVideoCalls);
-
-    let hasUnreadPinned = false;
-
-    $: {
-        setUnreadPinned(hasPinned, selectedChatSummary);
+    interface Props {
+        selectedChatSummary: ChatSummary;
+        blocked: boolean;
+        hasPinned: boolean;
+        onShowGroupDetails: () => void;
+        onSearchChat: (search: string) => void;
+        onImportToCommunity: (group: GroupChatSummary) => void;
     }
+
+    let {
+        selectedChatSummary,
+        blocked,
+        hasPinned,
+        onShowGroupDetails,
+        onSearchChat,
+        onImportToCommunity,
+    }: Props = $props();
+
+    let botIdToUninstall = $derived(
+        selectedChatSummary.kind === "direct_chat" &&
+            $directChatBotsStore.has(selectedChatSummary.them.userId)
+            ? selectedChatSummary.them.userId
+            : undefined,
+    );
+    let governanceCanisterId = $derived(
+        selectedChatSummary.kind !== "direct_chat" &&
+            selectedChatSummary.subtype?.kind === "governance_proposals"
+            ? selectedChatSummary.subtype.governanceCanisterId
+            : undefined,
+    );
+    let canMakeProposals = $derived(
+        client.tryGetNervousSystem(governanceCanisterId)?.submittingProposalsEnabled ?? false,
+    );
+    let userId = $derived(
+        selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them.userId : "",
+    );
+    let isBot = $derived($allUsersStore.get(userId)?.kind === "bot");
+    let isSuspended = $derived($allUsersStore.get(userId)?.suspended ?? false);
+    let groupDetailsSelected = $derived($lastRightPanelState.kind === "group_details");
+    let pinnedSelected = $derived($lastRightPanelState.kind === "show_pinned");
+    let membersSelected = $derived($lastRightPanelState.kind === "show_group_members");
+    let inviteMembersSelected = $derived($lastRightPanelState.kind === "invite_group_users");
+    let desktop = $derived(!$mobileWidth);
+    let canConvert = $derived(
+        selectedChatSummary.kind === "group_chat" &&
+            client.canConvertGroupToCommunity(selectedChatSummary.id),
+    );
+    let canImportToCommunity = $derived(client.canImportToCommunity(selectedChatSummary.id));
+    let canStartVideoCalls = $derived(
+        !blocked && client.canStartVideoCalls(selectedChatSummary.id),
+    );
+
+    let videoCallInProgress = $derived(selectedChatSummary.videoCallInProgress !== undefined);
+    let isPublic = $derived(!client.isChatPrivate(selectedChatSummary));
+
+    let inCall = $derived(
+        $activeVideoCall !== undefined &&
+            videoCallInProgress &&
+            chatIdentifiersEqual($activeVideoCall.chatId, selectedChatSummary?.id),
+    );
+
+    let videoMenuText = $derived(
+        videoCallInProgress
+            ? i18nKey("videoCall.joinVideo")
+            : isPublic
+              ? i18nKey("videoCall.startBroadcast")
+              : i18nKey("videoCall.startVideo"),
+    );
+
+    let canRegisterWebhook = $derived(client.canRegisterWebhook(selectedChatSummary.id));
+
+    let canStartOrJoinVideoCall = $derived(!inCall && (videoCallInProgress || canStartVideoCalls));
+
+    let hasUnreadPinned = $state(false);
+
+    $effect(() => {
+        setUnreadPinned(hasPinned, selectedChatSummary);
+    });
 
     onMount(() => {
         return messagesRead.subscribe(() => setUnreadPinned(hasPinned, selectedChatSummary));
@@ -100,8 +144,15 @@
             client.unreadPinned(chat.id, chat.dateLastPinned);
     }
 
-    function toggleMuteNotifications(mute: boolean) {
-        dispatch("toggleMuteNotifications", { chatId: selectedChatSummary.id, mute });
+    function toggleMuteNotifications(
+        mute: boolean | undefined,
+        muteAtEveryone: boolean | undefined,
+    ) {
+        publish("toggleMuteNotifications", {
+            chatId: selectedChatSummary.id,
+            mute,
+            muteAtEveryone,
+        });
     }
 
     function addToFavourites() {
@@ -112,12 +163,16 @@
         client.removeFromFavourites(selectedChatSummary.id);
     }
 
+    function copyUrl() {
+        publish("copyUrl");
+    }
+
     function showGroupDetails() {
-        dispatch("showGroupDetails");
+        onShowGroupDetails();
     }
 
     function showPinned() {
-        rightPanelHistory.set([
+        setRightPanelHistory([
             {
                 kind: "show_pinned",
             },
@@ -125,15 +180,15 @@
     }
 
     function searchChat() {
-        dispatch("searchChat", "");
+        onSearchChat("");
     }
 
     function showProposalFilters() {
-        dispatch("showProposalFilters");
+        publish("showProposalFilters");
     }
 
     function showGroupMembers() {
-        dispatch("showGroupMembers", true);
+        publish("showGroupMembers");
     }
 
     function blockUser() {
@@ -161,12 +216,12 @@
     }
 
     function showInviteGroupUsers() {
-        dispatch("showInviteGroupUsers", true);
+        publish("showInviteGroupUsers", true);
     }
 
     function leaveGroup() {
         if (selectedChatSummary.kind === "direct_chat") return;
-        dispatch("leaveGroup", {
+        publish("leaveGroup", {
             kind: "leave",
             chatId: selectedChatSummary.id,
             level: selectedChatSummary.level,
@@ -174,18 +229,18 @@
     }
 
     function convertToCommunity() {
-        if (!$isDiamond) {
-            dispatch("upgrade");
+        if (!$isDiamondStore) {
+            publish("upgrade");
         } else {
             if (selectedChatSummary.kind === "group_chat") {
-                dispatch("convertGroupToCommunity", selectedChatSummary);
+                publish("convertGroupToCommunity", selectedChatSummary);
             }
         }
     }
 
     function importToCommunity() {
         if (selectedChatSummary.kind === "group_chat") {
-            dispatch("importToCommunity", selectedChatSummary);
+            onImportToCommunity(selectedChatSummary);
         }
     }
 
@@ -210,7 +265,7 @@
     }
 
     function onSuspendUser() {
-        showSuspendUserModal = true;
+        publish("suspendUser", userId);
     }
 
     function unsuspendUser() {
@@ -224,179 +279,214 @@
     }
 
     function makeProposal() {
-        dispatch("makeProposal");
+        publish("makeProposal");
+    }
+
+    function registerWebhook() {
+        publish("registerWebhook");
     }
 
     function startVideoCall() {
-        if ($isDiamond || videoCallInProgress) {
-            dispatch("startVideoCall", {
-                chat: selectedChatSummary,
-                join: videoCallInProgress,
+        publish("startVideoCall", {
+            chatId: selectedChatSummary.id,
+            callType: isPublic ? "broadcast" : "default",
+            join: videoCallInProgress,
+        });
+    }
+
+    function removeBot(botId: string) {
+        client
+            .uninstallBot({ kind: "direct_chat", userId: $currentUserIdStore }, botId)
+            .then((success) => {
+                if (!success) {
+                    toastStore.showFailureToast(i18nKey("bots.manage.removeFailed"));
+                }
             });
-        } else {
-            dispatch("upgrade");
-        }
     }
 </script>
 
 {#if desktop}
-    {#if $isProposalGroup}
-        <span on:click={showProposalFilters}>
-            <HoverIcon title={$_("showFilters")}>
-                <Tune size={$iconSize} color={"var(--icon-txt)"} />
-            </HoverIcon>
-        </span>
-    {/if}
-    <span on:click={searchChat}>
-        <HoverIcon title={$_("searchChat")}>
-            <Magnify size={$iconSize} color={"var(--icon-txt)"} />
+    {#if $isProposalGroupStore}
+        <HoverIcon onclick={showProposalFilters} title={$_("showFilters")}>
+            <Tune size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
-    </span>
+    {/if}
+    <HoverIcon onclick={searchChat} title={$_("searchChat")}>
+        <Magnify size={$iconSize} color={"var(--icon-txt)"} />
+    </HoverIcon>
 
     {#if hasPinned}
-        <span on:click={showPinned}>
-            <HoverIcon title={$_("showPinned")}>
-                <div
-                    class="pin"
-                    class:unread={!pinnedSelected && hasUnreadPinned}
-                    class:rtl={$rtlStore}>
-                    <Pin
-                        size={$iconSize}
-                        color={pinnedSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
-                </div>
-            </HoverIcon>
-        </span>
+        <HoverIcon onclick={showPinned} title={$_("showPinned")}>
+            <div
+                class="pin"
+                class:unread={!pinnedSelected && hasUnreadPinned}
+                class:rtl={$rtlStore}>
+                <Pin
+                    size={$iconSize}
+                    color={pinnedSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
+            </div>
+        </HoverIcon>
+    {/if}
+
+    {#if selectedChatSummary.kind === "direct_chat"}
+        <HoverIcon onclick={showGroupDetails}>
+            <FileDocument
+                size={$iconSize}
+                color={groupDetailsSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
+        </HoverIcon>
     {/if}
 
     {#if selectedChatSummary.kind === "group_chat" || selectedChatSummary.kind === "channel"}
-        <span on:click={showGroupDetails}>
+        <HoverIcon
+            onclick={showGroupDetails}
+            title={interpolate($_, i18nKey("groupDetails", undefined, selectedChatSummary.level))}>
+            <FileDocument
+                size={$iconSize}
+                color={groupDetailsSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
+        </HoverIcon>
+        <HoverIcon onclick={showGroupMembers} title={$_("members")}>
+            <AccountMultiple
+                size={$iconSize}
+                color={membersSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
+        </HoverIcon>
+        {#if selectedChatSummary.public || client.canInviteUsers(selectedChatSummary.id)}
             <HoverIcon
+                onclick={showInviteGroupUsers}
                 title={interpolate(
                     $_,
-                    i18nKey("groupDetails", undefined, selectedChatSummary.level),
+                    i18nKey("group.inviteUsers", undefined, selectedChatSummary.level, true),
                 )}>
-                <FileDocument
+                <AccountMultiplePlus
                     size={$iconSize}
-                    color={groupDetailsSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
+                    color={inviteMembersSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
             </HoverIcon>
-        </span>
-        <span on:click={showGroupMembers}>
-            <HoverIcon title={$_("members")}>
-                <AccountMultiple
-                    size={$iconSize}
-                    color={membersSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
-            </HoverIcon>
-        </span>
-        {#if client.canInviteUsers(selectedChatSummary.id)}
-            <span on:click={showInviteGroupUsers}>
-                <HoverIcon
-                    title={interpolate(
-                        $_,
-                        i18nKey("group.inviteUsers", undefined, selectedChatSummary.level, true),
-                    )}>
-                    <AccountMultiplePlus
-                        size={$iconSize}
-                        color={inviteMembersSelected
-                            ? "var(--icon-selected)"
-                            : "var(--icon-txt)"} />
-                </HoverIcon>
-            </span>
         {/if}
     {/if}
 {/if}
 <div class="menu">
     <MenuIcon position={"bottom"} align={"end"}>
-        <div slot="icon">
+        {#snippet menuIcon()}
             <HoverIcon title={$_("chatMenu")}>
                 <DotsVertical size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
-        </div>
-        <div slot="menu">
+        {/snippet}
+        {#snippet menuItems()}
             <Menu>
                 {#if canStartOrJoinVideoCall}
-                    <MenuItem on:click={startVideoCall}>
-                        <Headphones
-                            size={$iconSize}
-                            color={"var(--icon-inverted-txt)"}
-                            slot="icon" />
-                        <div slot="text">
+                    <MenuItem onclick={startVideoCall}>
+                        {#snippet icon()}
+                            <Headphones size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        {/snippet}
+                        {#snippet text()}
                             <Translatable resourceKey={videoMenuText} />
-                        </div>
+                        {/snippet}
                     </MenuItem>
                 {/if}
                 {#if !$favouritesStore.has(selectedChatSummary.id)}
-                    <MenuItem on:click={addToFavourites}>
-                        <HeartPlus size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
-                        <div slot="text">
+                    <MenuItem onclick={addToFavourites}>
+                        {#snippet icon()}
+                            <HeartPlus size={$iconSize} color={"var(--menu-warn)"} />
+                        {/snippet}
+                        {#snippet text()}
                             <Translatable resourceKey={i18nKey("communities.addToFavourites")} />
-                        </div>
+                        {/snippet}
                     </MenuItem>
                 {:else}
-                    <MenuItem on:click={removeFromFavourites}>
-                        <HeartMinus size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
-                        <div slot="text">
+                    <MenuItem onclick={removeFromFavourites}>
+                        {#snippet icon()}
+                            <HeartMinus size={$iconSize} color={"var(--menu-warn)"} />
+                        {/snippet}
+                        {#snippet text()}
                             <Translatable
                                 resourceKey={i18nKey("communities.removeFromFavourites")} />
-                        </div>
+                        {/snippet}
                     </MenuItem>
                 {/if}
+                <MenuItem onclick={copyUrl}>
+                    {#snippet icon()}
+                        <ContentCopy size={$iconSize} color={"var(--icon-txt)"} />
+                    {/snippet}
+                    {#snippet text()}
+                        <Translatable resourceKey={i18nKey("copyUrl")} />
+                    {/snippet}
+                </MenuItem>
                 {#if $mobileWidth}
-                    {#if $isProposalGroup}
-                        <MenuItem on:click={showProposalFilters}>
-                            <Tune size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                            <div slot="text">
-                                <Translatable resourceKey={i18nKey("proposal.filter")} />
-                            </div>
+                    {#if selectedChatSummary.kind === "direct_chat"}
+                        <MenuItem onclick={showGroupDetails}>
+                            {#snippet icon()}
+                                <FileDocument size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                            {/snippet}
+                            {#snippet text()}
+                                <Translatable resourceKey={i18nKey("chatDetails")} />
+                            {/snippet}
                         </MenuItem>
                     {/if}
-                    <MenuItem on:click={searchChat}>
-                        <Magnify size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                        <div slot="text"><Translatable resourceKey={i18nKey("searchChat")} /></div>
+                    {#if $isProposalGroupStore}
+                        <MenuItem onclick={showProposalFilters}>
+                            {#snippet icon()}
+                                <Tune size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                            {/snippet}
+                            {#snippet text()}
+                                <Translatable resourceKey={i18nKey("proposal.filter")} />
+                            {/snippet}
+                        </MenuItem>
+                    {/if}
+                    <MenuItem onclick={searchChat}>
+                        {#snippet icon()}
+                            <Magnify size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        {/snippet}
+                        {#snippet text()}
+                            <Translatable resourceKey={i18nKey("searchChat")} />
+                        {/snippet}
                     </MenuItem>
                 {/if}
                 {#if selectedChatSummary.kind === "group_chat" || selectedChatSummary.kind === "channel"}
                     {#if $mobileWidth}
                         {#if hasPinned}
-                            <MenuItem on:click={showPinned}>
-                                <Pin
-                                    size={$iconSize}
-                                    color={hasUnreadPinned
-                                        ? "var(--icon-selected)"
-                                        : "var(--icon-inverted-txt)"}
-                                    slot="icon" />
-                                <div slot="text">
+                            <MenuItem onclick={showPinned}>
+                                {#snippet icon()}
+                                    <Pin
+                                        size={$iconSize}
+                                        color={hasUnreadPinned
+                                            ? "var(--icon-selected)"
+                                            : "var(--icon-inverted-txt)"} />
+                                {/snippet}
+                                {#snippet text()}
                                     <Translatable resourceKey={i18nKey("showPinned")} />
-                                </div>
+                                {/snippet}
                             </MenuItem>
                         {/if}
-                        <MenuItem on:click={showGroupDetails}>
-                            <FileDocument
-                                size={$iconSize}
-                                color={"var(--icon-inverted-txt)"}
-                                slot="icon" />
-                            <div slot="text">
+                        <MenuItem onclick={showGroupDetails}>
+                            {#snippet icon()}
+                                <FileDocument size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                            {/snippet}
+                            {#snippet text()}
                                 <Translatable
                                     resourceKey={i18nKey(
                                         "groupDetails",
                                         undefined,
                                         selectedChatSummary.level,
                                     )} />
-                            </div>
+                            {/snippet}
                         </MenuItem>
-                        <MenuItem on:click={showGroupMembers}>
-                            <AccountMultiple
-                                size={$iconSize}
-                                color={"var(--icon-inverted-txt)"}
-                                slot="icon" />
-                            <div slot="text"><Translatable resourceKey={i18nKey("members")} /></div>
+                        <MenuItem onclick={showGroupMembers}>
+                            {#snippet icon()}
+                                <AccountMultiple
+                                    size={$iconSize}
+                                    color={"var(--icon-inverted-txt)"} />
+                            {/snippet}
+                            {#snippet text()}
+                                <Translatable resourceKey={i18nKey("members")} />
+                            {/snippet}
                         </MenuItem>
                         {#if client.canInviteUsers(selectedChatSummary.id)}
-                            <MenuItem on:click={showInviteGroupUsers}>
-                                <AccountMultiplePlus
-                                    size={$iconSize}
-                                    color={"var(--icon-inverted-txt)"}
-                                    slot="icon" />
-                                <div slot="text">
+                            <MenuItem onclick={showInviteGroupUsers}>
+                                {#snippet icon()}
+                                    <AccountMultiplePlus
+                                        size={$iconSize}
+                                        color={"var(--icon-inverted-txt)"} />
+                                {/snippet}
+                                {#snippet text()}
                                     <Translatable
                                         resourceKey={i18nKey(
                                             "group.inviteUsers",
@@ -404,72 +494,104 @@
                                             selectedChatSummary.level,
                                             true,
                                         )} />
-                                </div>
+                                {/snippet}
                             </MenuItem>
                         {/if}
                     {/if}
 
                     {#if notificationsSupported}
                         {#if selectedChatSummary.membership.notificationsMuted === true}
-                            <MenuItem on:click={() => toggleMuteNotifications(false)}>
-                                <Bell
-                                    size={$iconSize}
-                                    color={"var(--icon-inverted-txt)"}
-                                    slot="icon" />
-                                <div slot="text">
+                            <MenuItem onclick={() => toggleMuteNotifications(false, undefined)}>
+                                {#snippet icon()}
+                                    <Bell size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                                {/snippet}
+                                {#snippet text()}
                                     <Translatable resourceKey={i18nKey("unmuteNotifications")} />
-                                </div>
+                                {/snippet}
                             </MenuItem>
                         {:else}
-                            <MenuItem on:click={() => toggleMuteNotifications(true)}>
-                                <BellOff
-                                    size={$iconSize}
-                                    color={"var(--icon-inverted-txt)"}
-                                    slot="icon" />
-                                <div slot="text">
+                            <MenuItem onclick={() => toggleMuteNotifications(true, undefined)}>
+                                {#snippet icon()}
+                                    <BellOff size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                                {/snippet}
+                                {#snippet text()}
                                     <Translatable resourceKey={i18nKey("muteNotifications")} />
-                                </div>
+                                {/snippet}
+                            </MenuItem>
+                        {/if}
+                        {#if selectedChatSummary.membership.atEveryoneMuted === true}
+                            <MenuItem onclick={() => toggleMuteNotifications(undefined, false)}>
+                                {#snippet icon()}
+                                    <Bell size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                                {/snippet}
+                                {#snippet text()}
+                                    <Translatable resourceKey={i18nKey("unmuteAtEveryone")} />
+                                {/snippet}
+                            </MenuItem>
+                        {:else}
+                            <MenuItem onclick={() => toggleMuteNotifications(undefined, true)}>
+                                {#snippet icon()}
+                                    <BellOff size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                                {/snippet}
+                                {#snippet text()}
+                                    <Translatable resourceKey={i18nKey("muteAtEveryone")} />
+                                {/snippet}
                             </MenuItem>
                         {/if}
                     {/if}
 
                     {#if canMakeProposals}
-                        <MenuItem on:click={makeProposal}>
-                            <ChatQuestionIcon
-                                size={$iconSize}
-                                color={"var(--icon-inverted-txt)"}
-                                slot="icon" />
-                            <div slot="text">
+                        <MenuItem onclick={makeProposal}>
+                            {#snippet icon()}
+                                <ChatQuestionIcon
+                                    size={$iconSize}
+                                    color={"var(--icon-inverted-txt)"} />
+                            {/snippet}
+                            {#snippet text()}
                                 <Translatable resourceKey={i18nKey("proposal.makeProposal")} />
-                            </div>
+                            {/snippet}
                         </MenuItem>
                     {/if}
 
-                    {#if $platformModerator}
-                        {#if client.isFrozen(selectedChatSummary.id)}
-                            <MenuItem warning on:click={unfreezeGroup}>
-                                <TickIcon size={$iconSize} color={"var(--menu-warn"} slot="icon" />
-                                <div slot="text">
+                    {#if canRegisterWebhook}
+                        <MenuItem onclick={registerWebhook}>
+                            {#snippet icon()}
+                                <Webhook size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                            {/snippet}
+                            {#snippet text()}
+                                <Translatable resourceKey={i18nKey("webhook.registerTitle")} />
+                            {/snippet}
+                        </MenuItem>
+                    {/if}
+
+                    {#if $platformModeratorStore && selectedChatSummary.kind === "group_chat"}
+                        {#if client.isChatFrozen(selectedChatSummary.id)}
+                            <MenuItem warning onclick={unfreezeGroup}>
+                                {#snippet icon()}
+                                    <TickIcon size={$iconSize} color={"var(--menu-warn"} />
+                                {/snippet}
+                                {#snippet text()}
                                     <Translatable resourceKey={i18nKey("unfreezeGroup")} />
-                                </div>
+                                {/snippet}
                             </MenuItem>
                         {:else}
-                            <MenuItem warning on:click={freezeGroup}>
-                                <CancelIcon
-                                    size={$iconSize}
-                                    color={"var(--menu-warn"}
-                                    slot="icon" />
-                                <div slot="text">
+                            <MenuItem warning onclick={freezeGroup}>
+                                {#snippet icon()}
+                                    <CancelIcon size={$iconSize} color={"var(--menu-warn"} />
+                                {/snippet}
+                                {#snippet text()}
                                     <Translatable resourceKey={i18nKey("freezeGroup")} />
-                                </div>
+                                {/snippet}
                             </MenuItem>
                         {/if}
                     {/if}
 
                     {#if client.canLeaveGroup(selectedChatSummary.id)}
-                        <MenuItem warning on:click={leaveGroup}>
-                            <LocationExit size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
-                            <div slot="text">
+                        <MenuItem warning onclick={leaveGroup}>
+                            {#snippet icon()}
+                                <LocationExit size={$iconSize} color={"var(--menu-warn)"} />
+                            {/snippet}
+                            {#snippet text()}
                                 <Translatable
                                     resourceKey={i18nKey(
                                         "leaveGroup",
@@ -477,108 +599,117 @@
                                         selectedChatSummary.level,
                                         true,
                                     )} />
-                            </div>
+                            {/snippet}
                         </MenuItem>
                     {/if}
                     {#if canConvert}
-                        <MenuItem warning on:click={convertToCommunity}>
-                            <ConvertToCommunity
-                                size={$iconSize}
-                                color={"var(--menu-warn)"}
-                                slot="icon" />
-                            <div slot="text">
+                        <MenuItem warning onclick={convertToCommunity}>
+                            {#snippet icon()}
+                                <ConvertToCommunity size={$iconSize} color={"var(--menu-warn)"} />
+                            {/snippet}
+                            {#snippet text()}
                                 <Translatable resourceKey={i18nKey("communities.convert")} />
-                            </div>
+                            {/snippet}
                         </MenuItem>
                     {/if}
                     {#if canImportToCommunity}
-                        <MenuItem warning on:click={importToCommunity}>
-                            <Import size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
-                            <div slot="text">
+                        <MenuItem warning onclick={importToCommunity}>
+                            {#snippet icon()}
+                                <Import size={$iconSize} color={"var(--menu-warn)"} />
+                            {/snippet}
+                            {#snippet text()}
                                 <Translatable resourceKey={i18nKey("communities.import")} />
-                            </div>
+                            {/snippet}
                         </MenuItem>
                     {/if}
                 {/if}
                 {#if selectedChatSummary.kind === "direct_chat" && !isBot}
                     {#if hasPinned}
-                        <MenuItem on:click={showPinned}>
-                            <Pin size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                            <div slot="text">
+                        <MenuItem onclick={showPinned}>
+                            {#snippet icon()}
+                                <Pin size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                            {/snippet}
+                            {#snippet text()}
                                 <Translatable resourceKey={i18nKey("showPinned")} />
-                            </div>
+                            {/snippet}
                         </MenuItem>
                     {/if}
                     {#if notificationsSupported}
                         {#if selectedChatSummary.membership.notificationsMuted === true}
-                            <MenuItem on:click={() => toggleMuteNotifications(false)}>
-                                <Bell
-                                    size={$iconSize}
-                                    color={"var(--icon-inverted-txt)"}
-                                    slot="icon" />
-                                <div slot="text">
+                            <MenuItem onclick={() => toggleMuteNotifications(false, undefined)}>
+                                {#snippet icon()}
+                                    <Bell size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                                {/snippet}
+                                {#snippet text()}
                                     <Translatable resourceKey={i18nKey("unmuteNotifications")} />
-                                </div>
+                                {/snippet}
                             </MenuItem>
                         {:else}
-                            <MenuItem on:click={() => toggleMuteNotifications(true)}>
-                                <BellOff
-                                    size={$iconSize}
-                                    color={"var(--icon-inverted-txt)"}
-                                    slot="icon" />
-                                <div slot="text">
+                            <MenuItem onclick={() => toggleMuteNotifications(true, undefined)}>
+                                {#snippet icon()}
+                                    <BellOff size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                                {/snippet}
+                                {#snippet text()}
                                     <Translatable resourceKey={i18nKey("muteNotifications")} />
-                                </div>
+                                {/snippet}
                             </MenuItem>
                         {/if}
                     {/if}
                     {#if blocked}
-                        <MenuItem on:click={unblockUser}>
-                            <CancelIcon
-                                size={$iconSize}
-                                color={"var(--icon-inverted-txt)"}
-                                slot="icon" />
-                            <div slot="text">
+                        <MenuItem onclick={unblockUser}>
+                            {#snippet icon()}
+                                <CancelIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                            {/snippet}
+                            {#snippet text()}
                                 <Translatable resourceKey={i18nKey("unblockUser")} />
-                            </div>
+                            {/snippet}
                         </MenuItem>
                     {:else}
-                        <MenuItem on:click={blockUser}>
-                            <CancelIcon
-                                size={$iconSize}
-                                color={"var(--icon-inverted-txt)"}
-                                slot="icon" />
-                            <div slot="text">
+                        <MenuItem onclick={blockUser}>
+                            {#snippet icon()}
+                                <CancelIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                            {/snippet}
+                            {#snippet text()}
                                 <Translatable resourceKey={i18nKey("blockUser")} />
-                            </div>
+                            {/snippet}
                         </MenuItem>
                     {/if}
-                    {#if $platformModerator}
+                    {#if $platformModeratorStore}
                         {#if isSuspended}
-                            <MenuItem on:click={unsuspendUser}>
-                                <TickIcon
-                                    size={$iconSize}
-                                    color={"var(--icon-inverted-txt)"}
-                                    slot="icon" />
-                                <div slot="text">
+                            <MenuItem onclick={unsuspendUser}>
+                                {#snippet icon()}
+                                    <TickIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                                {/snippet}
+                                {#snippet text()}
                                     <Translatable resourceKey={i18nKey("unsuspendUser")} />
-                                </div>
+                                {/snippet}
                             </MenuItem>
                         {:else}
-                            <MenuItem on:click={onSuspendUser}>
-                                <CancelIcon
-                                    size={$iconSize}
-                                    color={"var(--icon-inverted-txt)"}
-                                    slot="icon" />
-                                <div slot="text">
+                            <MenuItem onclick={onSuspendUser}>
+                                {#snippet icon()}
+                                    <CancelIcon
+                                        size={$iconSize}
+                                        color={"var(--icon-inverted-txt)"} />
+                                {/snippet}
+                                {#snippet text()}
                                     <Translatable resourceKey={i18nKey("suspendUser")} />
-                                </div>
+                                {/snippet}
                             </MenuItem>
                         {/if}
                     {/if}
                 {/if}
+                {#if botIdToUninstall !== undefined}
+                    <MenuItem onclick={() => removeBot(botIdToUninstall)}>
+                        {#snippet icon()}
+                            <DeleteOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        {/snippet}
+                        {#snippet text()}
+                            <Translatable resourceKey={i18nKey("bots.manage.remove")} />
+                        {/snippet}
+                    </MenuItem>
+                {/if}
             </Menu>
-        </div>
+        {/snippet}
     </MenuIcon>
 </div>
 

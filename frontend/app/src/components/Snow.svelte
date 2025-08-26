@@ -4,7 +4,7 @@
     import { onMount } from "svelte";
     import { snowing } from "../stores/snow";
 
-    let flakes: number[] = [];
+    let flakes: number[] = $state([]);
 
     function reduce() {
         if (flakes.length > 10) {
@@ -24,7 +24,7 @@
 <div class="snow">
     {#each flakes as _}
         <div class="snowflake">
-            <span />
+            <span></span>
         </div>
     {/each}
 </div>

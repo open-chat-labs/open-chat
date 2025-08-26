@@ -1,4 +1,4 @@
-import { writable } from "svelte/store";
+import { type Subscriber, writable } from "svelte/store";
 
 const sectionStateKey = "openchat_proposal_sections";
 
@@ -13,7 +13,8 @@ export type ProposalActionCategory =
     | "storageIndex"
     | "cyclesDispenser"
     | "registry"
-    | "neuronController";
+    | "neuronController"
+    | "openchatInstaller";
 
 export type ProposalSectionState = Record<ProposalActionCategory, boolean>;
 
@@ -29,6 +30,7 @@ const defaultSectionState: ProposalSectionState = {
     cyclesDispenser: false,
     registry: false,
     neuronController: false,
+    openchatInstaller: false,
 };
 
 function initialise() {
@@ -39,7 +41,8 @@ function initialise() {
 const store = writable<ProposalSectionState>(initialise());
 
 export const proposalActionCategories = {
-    subscribe: store.subscribe,
+    subscribe: (subscriber: Subscriber<ProposalSectionState>, invalidate?: () => void) =>
+        store.subscribe(subscriber, invalidate),
     toggle: (category: ProposalActionCategory): void => {
         store.update((state) => {
             const updated = { ...state, [category]: !state[category] };

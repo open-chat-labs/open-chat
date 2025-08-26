@@ -1,45 +1,54 @@
 <script lang="ts">
-    import Overlay from "../../Overlay.svelte";
+    import {
+        LEDGER_CANISTER_CHAT,
+        LEDGER_CANISTER_ICP,
+        canExtendDiamondStore,
+        cryptoBalanceStore,
+        cryptoLookup,
+        isDiamondStore,
+    } from "openchat-client";
+    import { onMount } from "svelte";
+    import { i18nKey } from "../../../i18n/i18n";
+    import Diamond from "../../icons/Diamond.svelte";
     import ModalContent from "../../ModalContent.svelte";
+    import Overlay from "../../Overlay.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
+    import CryptoSelector from "../CryptoSelector.svelte";
     import Features from "./Features.svelte";
     import Payment from "./Payment.svelte";
-    import type { OpenChat } from "openchat-client";
-    import { LEDGER_CANISTER_ICP } from "openchat-client";
-    import { getContext, onMount } from "svelte";
-    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
-    import Diamond from "../../icons/Diamond.svelte";
-    import CryptoSelector from "../CryptoSelector.svelte";
-    import Translatable from "../../Translatable.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
 
-    const client = getContext<OpenChat>("client");
-    let ledger: string = LEDGER_CANISTER_ICP;
+    interface Props {
+        onCancel: () => void;
+    }
 
-    let step: "features" | "payment" = "features";
-    let error: string | undefined;
-    let confirming = false;
-    let confirmed = false;
-    let refreshingBalance = false;
+    let { onCancel }: Props = $props();
 
-    $: isDiamond = client.isDiamond;
-    $: canExtendDiamond = client.canExtendDiamond;
-    $: cryptoBalance = client.cryptoBalance;
-    $: cryptoLookup = client.cryptoLookup;
-    $: tokenDetails = {
-        symbol: $cryptoLookup[ledger],
-        balance: $cryptoBalance[ledger] ?? BigInt(0),
-    };
+    let ledger: string = $state(
+        import.meta.env.OC_NODE_ENV === "production" ? LEDGER_CANISTER_CHAT : LEDGER_CANISTER_ICP,
+    );
+
+    let step: "features" | "payment" = $state("features");
+    let error: string | undefined = $state();
+    let confirming = $state(false);
+    let confirmed = $state(false);
+    let refreshingBalance = $state(false);
+
+    let tokenDetails = $derived({
+        symbol: $cryptoLookup.get(ledger),
+        balance: $cryptoBalanceStore.get(ledger) ?? BigInt(0),
+    });
 
     function onBalanceRefreshed() {
         error = undefined;
     }
 
-    function onBalanceRefreshError(ev: CustomEvent<string>) {
-        error = ev.detail;
+    function onBalanceRefreshError(err: string) {
+        error = err;
     }
 
     onMount(() => {
-        if ($canExtendDiamond) {
+        if ($canExtendDiamondStore) {
             step = "payment";
         }
     });
@@ -47,58 +56,63 @@
 
 <Overlay>
     <ModalContent overflows={step === "features"} hideFooter fill>
-        <div class="header" slot="header">
-            {#if !confirming && !confirmed}
-                <div class="title">
-                    <Diamond size={"1em"} show={"blue"} />
-                    {#if step === "features"}
-                        {#if $canExtendDiamond}
-                            <Translatable resourceKey={i18nKey("upgrade.extend")} />
-                        {:else if $isDiamond}
-                            <Translatable resourceKey={i18nKey("upgrade.benefits")} />
-                        {:else}
-                            <Translatable resourceKey={i18nKey("upgrade.featuresTitle")} />
+        {#snippet header()}
+            <div class="header">
+                {#if !confirming && !confirmed}
+                    <div class="title">
+                        <Diamond size={"1em"} show={"blue"} />
+                        {#if step === "features"}
+                            {#if $canExtendDiamondStore}
+                                <Translatable resourceKey={i18nKey("upgrade.extend")} />
+                            {:else if $isDiamondStore}
+                                <Translatable resourceKey={i18nKey("upgrade.benefits")} />
+                            {:else}
+                                <Translatable resourceKey={i18nKey("upgrade.featuresTitle")} />
+                            {/if}
+                        {:else if step === "payment"}
+                            <div>
+                                <CryptoSelector
+                                    bind:ledger
+                                    filter={(t) =>
+                                        ["chat", "icp"].includes(t.symbol.toLowerCase())} />
+                            </div>
                         {/if}
-                    {:else if step === "payment"}
-                        <div>
-                            <CryptoSelector
-                                bind:ledger
-                                filter={(t) => ["chat", "icp"].includes(t.symbol.toLowerCase())} />
+                    </div>
+                    {#if step === "payment"}
+                        <div class="balance">
+                            <BalanceWithRefresh
+                                {ledger}
+                                value={tokenDetails.balance}
+                                bind:refreshing={refreshingBalance}
+                                onRefreshed={onBalanceRefreshed}
+                                onError={onBalanceRefreshError} />
                         </div>
                     {/if}
-                </div>
-                {#if step === "payment"}
-                    <div class="balance">
-                        <BalanceWithRefresh
-                            {ledger}
-                            value={tokenDetails.balance}
-                            bind:refreshing={refreshingBalance}
-                            on:refreshed={onBalanceRefreshed}
-                            on:error={onBalanceRefreshError} />
-                    </div>
                 {/if}
-            {/if}
-        </div>
-        <div class="body" slot="body">
-            {#if step === "features"}
-                <Features
-                    canExtend={$canExtendDiamond}
-                    isDiamond={$isDiamond}
-                    on:cancel
-                    on:upgrade={() => (step = "payment")} />
-            {/if}
-            {#if step === "payment"}
-                <Payment
-                    bind:confirmed
-                    bind:confirming
-                    bind:refreshingBalance
-                    {ledger}
-                    {error}
-                    accountBalance={Number(tokenDetails.balance)}
-                    on:cancel
-                    on:features={() => (step = "features")} />
-            {/if}
-        </div>
+            </div>
+        {/snippet}
+        {#snippet body()}
+            <div class="body">
+                {#if step === "features"}
+                    <Features
+                        canExtend={$canExtendDiamondStore}
+                        isDiamond={$isDiamondStore}
+                        {onCancel}
+                        onUpgrade={() => (step = "payment")} />
+                {/if}
+                {#if step === "payment"}
+                    <Payment
+                        bind:confirmed
+                        bind:confirming
+                        bind:refreshingBalance
+                        {ledger}
+                        {error}
+                        accountBalance={Number(tokenDetails.balance)}
+                        {onCancel}
+                        onFeatures={() => (step = "features")} />
+                {/if}
+            </div>
+        {/snippet}
     </ModalContent>
 </Overlay>
 

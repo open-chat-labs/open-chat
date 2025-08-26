@@ -1,0 +1,45 @@
+name: Daily Docker Build and Push
+
+on:
+  schedule:
+    - cron: '0 22 * * *'  # Runs every day at 22:00 UTC
+  workflow_dispatch:      # Allows manual triggering
+
+jobs:
+  check-merges:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    outputs:
+      merged: ${{ steps.check.outputs.merged }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check for merges in the last 24 hours
+        id: check
+        run: |
+          RECENT_MERGE=$(git rev-list --since="24 hours ago" master | wc -l)
+          if [ "$RECENT_MERGE" -gt 0 ]; then
+            echo "merged=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "merged=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  build-and-push:
+    needs: check-merges
+    if: needs.check-merges.outputs.merged == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t ${{ vars.DOCKER_HUB_USERNAME }}/open-chat:latest -f Dockerfile.oc .
+          docker push ${{ vars.DOCKER_HUB_USERNAME }}/open-chat:latest

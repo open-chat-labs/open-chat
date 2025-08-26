@@ -1,100 +1,130 @@
-<svelte:options immutable />
-
 <script lang="ts">
-    import Link from "../../Link.svelte";
+    import { findUser } from "@src/utils/user";
     import type { CreatedUser, Message, MultiUserChatIdentifier, OpenChat } from "openchat-client";
-    import ChatMessageContent from "../ChatMessageContent.svelte";
-    import RepliesTo from "../RepliesTo.svelte";
-    import Avatar from "../../Avatar.svelte";
-    import { AvatarSize } from "openchat-client";
-    import UnresolvedReply from "../UnresolvedReply.svelte";
+    import {
+        allUsersStore,
+        AvatarSize,
+        chatListScopeStore,
+        fullWidth,
+        mobileWidth,
+        routeForMessage,
+        selectedChatIdStore,
+        selectedChatWebhooksStore,
+        selectedCommunityMembersStore,
+    } from "openchat-client";
+    import page from "page";
+    import { getContext } from "svelte";
     import { rtlStore } from "../../../stores/rtl";
-    import { mobileWidth } from "../../../stores/screenDimensions";
-    import { createEventDispatcher, getContext } from "svelte";
+    import Avatar from "../../Avatar.svelte";
+    import Link from "../../Link.svelte";
     import type { ProfileLinkClickedEvent } from "../../web-components/profileLink";
+    import ChatMessageContent from "../ChatMessageContent.svelte";
     import IntersectionObserver from "../IntersectionObserver.svelte";
+    import RepliesTo from "../RepliesTo.svelte";
+    import UnresolvedReply from "../UnresolvedReply.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let chatId: MultiUserChatIdentifier;
-    export let user: CreatedUser;
-    export let senderId: string;
-    export let msg: Message;
+    interface Props {
+        chatId: MultiUserChatIdentifier;
+        user: CreatedUser;
+        senderId: string;
+        msg: Message;
+        timestamp: bigint;
+    }
+
+    let { chatId, user, senderId, msg, timestamp }: Props = $props();
 
     let crypto = msg.content.kind === "crypto_content";
 
-    $: sender = $userStore[senderId];
-    $: communityMembers = client.currentCommunityMembers;
-    $: username = client.getDisplayName(sender, $communityMembers);
-    $: userStore = client.userStore;
-    $: deleted = msg.content.kind === "deleted_content";
-    $: fill = client.fillMessage(msg);
-    $: me = user.userId === senderId;
+    let sender = $derived(findUser(msg.sender, $allUsersStore, $selectedChatWebhooksStore));
+    let username = $derived(client.getDisplayName(msg.sender, $selectedCommunityMembersStore, $selectedChatWebhooksStore));
+    let deleted = $derived(msg.content.kind === "deleted_content");
+    let fill = $derived(client.fillMessage(msg));
+    let me = $derived(user.userId === senderId);
+    let modal = $derived(!$fullWidth);
 
     function openUserProfile(e: Event) {
+        if (!sender) return;
+
         e.preventDefault();
         e.target?.dispatchEvent(
             new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
-                detail: { userId: sender.userId, chatButton: !me, inGlobalContext: false },
+                detail: {
+                    userId: sender.userId,
+                    chatButton: !me,
+                    inGlobalContext: false,
+                },
                 bubbles: true,
             }),
         );
     }
 
     function goToMessageIndex() {
-        dispatch("goToMessageIndex", {
-            index: msg.messageIndex,
-            preserveFocus: false,
-        });
+        if ($selectedChatIdStore !== undefined) {
+            if (modal) {
+                client.popRightPanelHistory();
+            }
+            page(
+                routeForMessage(
+                    $chatListScopeStore.kind,
+                    { chatId: $selectedChatIdStore },
+                    msg.messageIndex,
+                ),
+            );
+        }
     }
 </script>
 
-<div class="message-row" class:me on:click={goToMessageIndex}>
-    <div class="avatar" on:click={openUserProfile}>
+<div class="message-row" class:me onclick={goToMessageIndex}>
+    <div class="avatar" onclick={openUserProfile}>
         <Avatar
             url={client.userAvatarUrl(sender)}
-            userId={sender.userId}
+            userId={sender?.userId}
             size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
     </div>
-    <IntersectionObserver let:intersecting>
-        <div
-            class="message-bubble"
-            class:fill={fill && !deleted}
-            class:me
-            class:deleted
-            class:crypto
-            class:rtl={$rtlStore}>
-            {#if !deleted}
-                <div class="sender" class:fill class:rtl={$rtlStore}>
-                    <Link underline={"never"} on:click={openUserProfile}>
-                        <h4 class="username" class:fill class:crypto>{username}</h4>
-                    </Link>
-                </div>
-            {/if}
-            {#if msg.repliesTo !== undefined && !deleted}
-                {#if msg.repliesTo.kind === "rehydrated_reply_context"}
-                    <RepliesTo {intersecting} readonly {chatId} repliesTo={msg.repliesTo} />
-                {:else}
-                    <UnresolvedReply />
+    <IntersectionObserver>
+        {#snippet children(intersecting)}
+            <div
+                class="message-bubble"
+                class:fill={fill && !deleted}
+                class:me
+                class:deleted
+                class:crypto
+                class:rtl={$rtlStore}>
+                {#if !deleted}
+                    <div class="sender" class:fill class:rtl={$rtlStore}>
+                        <Link underline={"never"} onClick={openUserProfile}>
+                            <h4 class="username" class:fill class:crypto>{username}</h4>
+                        </Link>
+                    </div>
                 {/if}
-            {/if}
+                {#if msg.repliesTo !== undefined && !deleted}
+                    {#if msg.repliesTo.kind === "rehydrated_reply_context"}
+                        <RepliesTo {intersecting} readonly {chatId} repliesTo={msg.repliesTo} />
+                    {:else}
+                        <UnresolvedReply />
+                    {/if}
+                {/if}
 
-            <ChatMessageContent
-                readonly
-                pinned
-                {senderId}
-                {fill}
-                failed={false}
-                messageContext={{ chatId }}
-                edited={msg.edited}
-                messageIndex={msg.messageIndex}
-                messageId={msg.messageId}
-                {me}
-                {intersecting}
-                myUserId={user.userId}
-                content={msg.content} />
-        </div>
+                <ChatMessageContent
+                    showPreviews={false}
+                    readonly
+                    pinned
+                    {senderId}
+                    {fill}
+                    {timestamp}
+                    failed={false}
+                    messageContext={{ chatId }}
+                    edited={msg.edited}
+                    messageIndex={msg.messageIndex}
+                    messageId={msg.messageId}
+                    {me}
+                    {intersecting}
+                    content={msg.content}
+                    blockLevelMarkdown={msg.blockLevelMarkdown} />
+            </div>
+        {/snippet}
     </IntersectionObserver>
 </div>
 
@@ -170,10 +200,6 @@
         &.me {
             background-color: var(--currentChat-msg-me-bg);
             color: var(--currentChat-msg-me-txt);
-        }
-
-        &.crypto {
-            @include gold();
         }
 
         &.fill {

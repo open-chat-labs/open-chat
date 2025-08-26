@@ -1,45 +1,52 @@
 <script lang="ts">
-    import Link from "./Link.svelte";
+    import { identityStateStore, locationStore, OpenChat } from "openchat-client";
+    import { getContext } from "svelte";
     import Launch from "./Launch.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
-    import type { OpenChat } from "openchat-client";
-    import { location } from "../../routes";
-
-    export let showBlog: boolean;
+    import Link from "./Link.svelte";
 
     const client = getContext<OpenChat>("client");
-    $: identityState = client.identityState;
 
-    const dispatch = createEventDispatcher();
-    $: path = $location;
+    interface Props {
+        showBlog: boolean;
+    }
+
+    let { showBlog }: Props = $props();
 </script>
 
 <div class="menu-items">
     <div class="nav">
         <div class="menu-item">
-            <Link selected={path === "/features"} mode={"menu"} path="features">Features</Link>
+            <a href={"https://openchat.myspreadshop.com"} target="_blank" rel="noreferrer">
+                Shop
+            </a>
         </div>
         <div class="menu-item">
-            <Link selected={path === "/roadmap"} mode={"menu"} path="roadmap">Roadmap</Link>
+            <Link selected={$locationStore === "/features"} mode={"menu"} path="features"
+                >Features</Link>
         </div>
         <div class="menu-item">
-            <Link selected={path === "/whitepaper"} mode={"menu"} path="whitepaper"
+            <Link selected={$locationStore === "/roadmap"} mode={"menu"} path="roadmap"
+                >Roadmap</Link>
+        </div>
+        <div class="menu-item">
+            <Link selected={$locationStore === "/whitepaper"} mode={"menu"} path="whitepaper"
                 >Whitepaper</Link>
         </div>
         <div class="menu-item">
-            <Link selected={path === "/architecture"} mode={"menu"} path="architecture"
+            <Link selected={$locationStore === "/architecture"} mode={"menu"} path="architecture"
                 >Architecture</Link>
         </div>
         {#if showBlog}
             <div class="menu-item">
-                <Link selected={path.startsWith("/blog")} mode={"menu"} path="blog">Blog</Link>
+                <Link selected={$locationStore.startsWith("/blog")} mode={"menu"} path="blog"
+                    >Blog</Link>
             </div>
         {/if}
         <div class="menu-item">
-            <Link selected={path.startsWith("/faq")} mode={"menu"} path="faq">FAQs</Link>
+            <Link selected={$locationStore.startsWith("/faq")} mode={"menu"} path="faq">FAQs</Link>
         </div>
-        {#if $identityState.kind === "logged_in"}
-            <Link on:linkClicked={() => dispatch("logout")} mode={"menu"}>Logout</Link>
+        {#if $identityStateStore.kind === "logged_in"}
+            <Link onLinkClicked={() => client.logout()} mode={"menu"}>Logout</Link>
         {/if}
         <div class="menu-item">
             <Launch />
@@ -48,6 +55,10 @@
 </div>
 
 <style lang="scss">
+    a {
+        color: inherit;
+    }
+
     .menu-items {
         @include font(bold, normal, fs-100);
         display: flex;

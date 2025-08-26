@@ -1,12 +1,13 @@
 [package]
 name = "human_readable"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 candid = { workspace = true }
+hex = { workspace = true }
 human_readable_derive = { path = "../human_readable_derive" }
 serde = { workspace = true }
 serde_json = { workspace = true }

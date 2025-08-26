@@ -1,6 +1,12 @@
 {
-  "dfx": "0.17.0",
+  "dfx": "0.28.0",
   "canisters": {
+    "openchat_installer": {
+      "type": "custom",
+      "candid": "backend/canisters/openchat_installer/api/can.did",
+      "wasm": "wasms/openchat_installer.wasm.gz",
+      "build": "./scripts/generate-wasm.sh openchat_installer"
+    },
     "user_index": {
       "type": "custom",
       "candid": "backend/canisters/user_index/api/can.did",
@@ -24,12 +30,6 @@
       "candid": "backend/canisters/local_user_index/api/can.did",
       "wasm": "wasms/local_user_index.wasm.gz",
       "build": "./scripts/generate-wasm.sh local_user_index"
-    },
-    "local_group_index": {
-      "type": "custom",
-      "candid": "backend/canisters/local_group_index/api/can.did",
-      "wasm": "wasms/local_group_index.wasm.gz",
-      "build": "./scripts/generate-wasm.sh local_user_group"
     },
     "neuron_controller": {
       "type": "custom",
@@ -66,6 +66,12 @@
       "candid": "backend/canisters/proposals_bot/api/can.did",
       "wasm": "wasms/proposals_bot.wasm.gz",
       "build": "./scripts/generate-wasm.sh proposals_bot"
+    },
+    "airdrop_bot": {
+      "type": "custom",
+      "candid": "backend/canisters/airdrop_bot/api/can.did",
+      "wasm": "wasms/airdrop_bot.wasm.gz",
+      "build": "./scripts/generate-wasm.sh airdrop_bot"
     },
     "user": {
       "type": "custom",
@@ -121,6 +127,26 @@
       "wasm": "wasms/event_relay.wasm.gz",
       "build": "./scripts/generate-wasm.sh event_relay"
     },
+    "event_store": {
+      "type": "custom",
+      "candid": "https://github.com/open-chat-labs/event-store/releases/download/v0.10.0/can.did",
+      "wasm": "https://github.com/open-chat-labs/event-store/releases/download/v0.10.0/event_store.wasm.gz"
+    },
+    "sign_in_with_email": {
+      "type": "custom",
+      "candid": "https://github.com/open-chat-labs/ic-sign-in-with-email/releases/download/v0.13.0/can.did",
+      "wasm": "https://github.com/open-chat-labs/ic-sign-in-with-email/releases/download/v0.13.0/sign_in_with_email.wasm.gz"
+    },
+    "sign_in_with_ethereum": {
+      "type": "custom",
+      "candid": "https://github.com/kristoferlund/ic-siwe/releases/download/v0.0.6/ic_siwe_provider.did",
+      "wasm": "https://github.com/kristoferlund/ic-siwe/releases/download/v0.0.6/ic_siwe_provider.wasm.gz"
+    },
+    "sign_in_with_solana": {
+      "type": "custom",
+      "candid": "https://github.com/kristoferlund/ic-siws/releases/download/v0.0.1/ic_siws_provider.did",
+      "wasm": "https://github.com/kristoferlund/ic-siws/releases/download/v0.0.1/ic_siws_provider.wasm.gz"
+    },
     "website": {
       "build": "",
       "source": ["frontend/app/build", "frontend/app/public"],
@@ -156,17 +182,17 @@
       "type": "custom",
       "wasm": ""
     },
-    "test_ledger": {
+    "test_chat_ledger": {
       "build": "",
       "candid": "",
       "type": "custom",
-      "wasm": "./wasms/icrc_ledger.wasm.gz"
+      "wasm": "./wasms/icrc_ledger.wasm.gz",
+      "specified_id": "2ouva-viaaa-aaaaq-aaamq-cai"
     }
   },
   "networks": {
     "local": {
       "bind": "127.0.0.1:8080",
-      "type": "ephemeral",
       "replica": {
         "subnet_type": "system"
       }

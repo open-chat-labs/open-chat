@@ -1,13 +1,125 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1867](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1867-escrow)] - 2025-08-12
+
+### Changed
+
+- Extend admins to include offerer and accepter ([#8366](https://github.com/open-chat-labs/open-chat/pull/8366))
+- `token:Cryptocurrency` -> `token_symbol:String` ([#8368](https://github.com/open-chat-labs/open-chat/pull/8368))
+- Make `token1_deposit_address` optional in response ([#8423](https://github.com/open-chat-labs/open-chat/pull/8423))
+- Switch some endpoints over to using common response types ([#8450](https://github.com/open-chat-labs/open-chat/pull/8450))
+
+## [[2.0.1836](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1836-escrow)] - 2025-07-18
+
+### Changed
+
+- Only `admins` can call `lookup_swap` for private swaps ([#8364](https://github.com/open-chat-labs/open-chat/pull/8364))
+
+## [[2.0.1835](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1835-escrow)] - 2025-07-17
+
+### Changed
+
+- Allow caller of `create_swap` to call `cancel_swap` ([#8362](https://github.com/open-chat-labs/open-chat/pull/8362))
+
+## [[2.0.1834](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1834-escrow)] - 2025-07-17
+
+### Changed
+
+- Expose `liquid_cycles_balance` in metrics ([#8350](https://github.com/open-chat-labs/open-chat/pull/8350))
+- Add delay before retrying c2c call under certain error conditions ([#8355](https://github.com/open-chat-labs/open-chat/pull/8355))
+- Generalise Escrow so it can be used by 3rd parties ([#8356](https://github.com/open-chat-labs/open-chat/pull/8356))
+
+### Fixed
+
+- Fix call to `c2c_notify_p2p_swap_status_change` ([#8359](https://github.com/open-chat-labs/open-chat/pull/8359))
+
+## [[2.0.1694](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1694-escrow)] - 2025-04-09
+
+### Added
+
+- Introduce standardised error codes ([#7599](https://github.com/open-chat-labs/open-chat/pull/7599))
+
+### Changed
+
+- Filter trace level events globally so they are dropped earlier ([#7678](https://github.com/open-chat-labs/open-chat/pull/7678))
+- Include more details in failed c2c call errors ([#7749](https://github.com/open-chat-labs/open-chat/pull/7749))
+- Expose status notification queue length in metrics ([#7765](https://github.com/open-chat-labs/open-chat/pull/7765))
+
+### Fixed
+
+- Fix swap statuses not updating ([#7763](https://github.com/open-chat-labs/open-chat/pull/7763))
+
+## [[2.0.1650](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1650-escrow)] - 2025-03-13
+
+### Changed
+
+- Remove the `Cryptocurrency` type from public APIs (part 1) ([#7510](https://github.com/open-chat-labs/open-chat/pull/7510))
+- Log total instructions consumed at end of upgrade ([#7551](https://github.com/open-chat-labs/open-chat/pull/7551))
+- Remove the `Cryptocurrency` type from public APIs (part 2) ([#7592](https://github.com/open-chat-labs/open-chat/pull/7592))
+
+## [[2.0.1597](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1597-escrow)] - 2025-01-31
+
+### Changed
+
+- Reduce message Ids to 64 bits down from 128 bits ([#7232](https://github.com/open-chat-labs/open-chat/pull/7232))
+- Reduce channel Ids to 32 bits down from 128 bits ([#7233](https://github.com/open-chat-labs/open-chat/pull/7233))
+
+### Removed
+
+- Remove unused candid endpoints ([#7264](https://github.com/open-chat-labs/open-chat/pull/7264))
+
+### Fixed
+
+- Avoid retrying c2c call if recipient canister is uninstalled ([#7302](https://github.com/open-chat-labs/open-chat/pull/7302))
+
+## [[2.0.1526](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1526-escrow)] - 2024-12-19
+
+### Changed
+
+- Disallow P2P swaps of disabled tokens ([#7057](https://github.com/open-chat-labs/open-chat/pull/7057))
+
+## [[2.0.1512](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1512-escrow)] - 2024-12-13
+
+### Added
+
+- Add an error log with http endpoint ([#6608](https://github.com/open-chat-labs/open-chat/pull/6608))
+
+### Changed
+
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+- Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
+- Make `ChannelId` comparisons use their 32bit representation ([#6885](https://github.com/open-chat-labs/open-chat/pull/6885))
+- Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))
+- Include the ledger canister Id in transfer failed error logs ([#7011](https://github.com/open-chat-labs/open-chat/pull/7011))
+- Expose transfer errors that occur during swaps ([#7055](https://github.com/open-chat-labs/open-chat/pull/7055))
+
+## [[2.0.1316](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1316-escrow)] - 2024-09-02
+
+### Changed
+
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+
+## [[2.0.1252](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1252-escrow)] - 2024-07-25
+
+### Changed
+
+- Don't retry c2c calls after getting a `CanisterMethodNotFound` error ([#5747](https://github.com/open-chat-labs/open-chat/pull/5747))
+- Fix fee then retry transfer if fee too high ([#6063](https://github.com/open-chat-labs/open-chat/pull/6063))
+- Handle transfer fee changing in either direction ([#6064](https://github.com/open-chat-labs/open-chat/pull/6064))
+
+## [[2.0.1158](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1158-escrow)] - 2024-05-01
+
 ### Changed
 
 - Seed rng with entropy before calling `raw_rand` to get randomness ([#5454](https://github.com/open-chat-labs/open-chat/pull/5454))
+- Expose both heap and stable memory in metrics ([#5718](https://github.com/open-chat-labs/open-chat/pull/5718))
+- Don't retry c2c calls after getting a `DestinationInvalid` error ([#5732](https://github.com/open-chat-labs/open-chat/pull/5732))
 
 ## [[2.0.1063](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1063-escrow)] - 2024-02-15
 
@@ -47,7 +159,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Introduce the Escrow canister for supporting p2p trades ([#4903](https://github.com/open-chat-labs/open-chat/pull/4903))
-- Implement `create_offer` and `notify_deposit` ([#4904](https://github.com/open-chat-labs/open-chat/pull/4904)) 
+- Implement `create_offer` and `notify_deposit` ([#4904](https://github.com/open-chat-labs/open-chat/pull/4904))
 - Transfer out funds once trade is complete ([#4906](https://github.com/open-chat-labs/open-chat/pull/4906))
 - Implement `cancel_offer` ([#4907](https://github.com/open-chat-labs/open-chat/pull/4907))
 - Support notifying a chosen canister when trade is completed ([#5167](https://github.com/open-chat-labs/open-chat/pull/5167))

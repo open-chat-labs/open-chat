@@ -1,43 +1,50 @@
-<svelte:options immutable />
-
 <script lang="ts">
     import {
+        type ChatIdentifier,
         type RehydratedReplyContext,
+        chatIdentifiersEqual,
+        chatListScopeStore,
+        currentUserIdStore,
         OpenChat,
         routeForChatIdentifier,
-        chatIdentifiersEqual,
-        type ChatIdentifier,
+        selectedChatWebhooksStore,
+        selectedCommunityMembersStore,
     } from "openchat-client";
+    import page from "page";
+    import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import Link from "../Link.svelte";
-    import { _ } from "svelte-i18n";
     import ChatMessageContent from "./ChatMessageContent.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
-    const dispatch = createEventDispatcher();
-    import page from "page";
 
     const client = getContext<OpenChat>("client");
 
-    export let chatId: ChatIdentifier;
-    export let repliesTo: RehydratedReplyContext;
-    export let readonly: boolean;
-    export let intersecting: boolean;
+    interface Props {
+        chatId: ChatIdentifier;
+        repliesTo: RehydratedReplyContext;
+        readonly: boolean;
+        intersecting: boolean;
+        onGoToMessageIndex?: (args: { index: number }) => void;
+        onRemovePreview?: (url: string) => void;
+    }
+
+    let { chatId, repliesTo, readonly, intersecting, onGoToMessageIndex, onRemovePreview }: Props =
+        $props();
 
     let debug = false;
 
-    $: currentUser = client.user;
-    $: chatListScope = client.chatListScope;
-    $: me = repliesTo.senderId === $currentUser.userId;
-    $: isTextContent = repliesTo.content?.kind === "text_content";
-    $: isP2PSwap = repliesTo.content.kind === "p2p_swap_content";
-    $: communityMembers = client.currentCommunityMembers;
-    $: displayName = me
-        ? client.toTitleCase($_("you"))
-        : client.getDisplayNameById(repliesTo.senderId, $communityMembers);
+    let me = $derived(repliesTo.senderId === $currentUserIdStore);
+    let isTextContent = $derived(repliesTo.content?.kind === "text_content");
+    let isP2PSwap = $derived(repliesTo.content.kind === "p2p_swap_content");
+    let displayName = $derived(
+        me
+            ? client.toTitleCase($_("you"))
+            : client.getDisplayName(repliesTo.senderId, $selectedCommunityMembersStore, $selectedChatWebhooksStore),
+    );
 
     function getUrl() {
         const path = [
-            routeForChatIdentifier($chatListScope.kind, repliesTo.sourceContext.chatId),
+            routeForChatIdentifier($chatListScopeStore.kind, repliesTo.sourceContext.chatId),
             repliesTo.sourceContext.threadRootMessageIndex ?? repliesTo.messageIndex,
         ];
         if (repliesTo.sourceContext.threadRootMessageIndex !== undefined) {
@@ -48,7 +55,7 @@
 
     function zoomToMessage() {
         if (chatIdentifiersEqual(repliesTo.sourceContext.chatId, chatId)) {
-            dispatch("goToMessageIndex", {
+            onGoToMessageIndex?.({
                 index: repliesTo.messageIndex,
             });
         } else {
@@ -57,7 +64,7 @@
     }
 </script>
 
-<Link on:click={zoomToMessage}>
+<Link onClick={zoomToMessage}>
     <div
         class="reply-wrapper"
         class:me
@@ -70,6 +77,7 @@
         {#if repliesTo.content !== undefined}
             <div class="inert">
                 <ChatMessageContent
+                    showPreviews
                     {me}
                     {readonly}
                     messageContext={repliesTo.sourceContext}
@@ -80,9 +88,10 @@
                     edited={repliesTo.edited}
                     fill={false}
                     failed={false}
+                    blockLevelMarkdown={true}
                     truncate
                     reply
-                    myUserId={$currentUser.userId}
+                    {onRemovePreview}
                     content={repliesTo.content} />
             </div>
             {#if debug}
@@ -106,7 +115,7 @@
         padding: $sp3;
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
-        border: 2px solid var(--bd);
+        border: var(--bw) solid var(--replies-bd);
         cursor: pointer;
         margin-bottom: $sp3;
         overflow: hidden;
@@ -119,7 +128,7 @@
 
         &.me {
             background-color: var(--currentChat-msg-me-bg);
-            border: 2px solid var(--currentChat-msg-me-bd);
+            border: var(--bw) solid var(--currentChat-msg-me-bd);
             color: var(--currentChat-msg-me-txt);
         }
 
@@ -130,7 +139,7 @@
         }
 
         &.p2pSwap {
-            width: 350px;
+            max-width: 350px;
         }
     }
 

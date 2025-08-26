@@ -1,11 +1,15 @@
 <script lang="ts">
-    import { createEventDispatcher, onMount } from "svelte";
+    import { onMount, type Snippet } from "svelte";
 
-    export let unobserveOnIntersect = true;
+    interface Props {
+        unobserveOnIntersect?: boolean;
+        children?: Snippet<[boolean]>;
+        onIntersecting?: () => void;
+    }
 
-    const dispatch = createEventDispatcher();
+    let { unobserveOnIntersect = true, children, onIntersecting }: Props = $props();
 
-    let intersecting = false;
+    let intersecting = $state(false);
     let container: HTMLElement;
 
     onMount(() => {
@@ -14,7 +18,7 @@
                 entries.sort((a, b) => b.time - a.time);
                 intersecting = entries[0].isIntersecting;
                 if (intersecting) {
-                    dispatch("intersecting");
+                    onIntersecting?.();
                     if (unobserveOnIntersect) {
                         observer.unobserve(container);
                     }
@@ -22,11 +26,15 @@
             });
 
             observer.observe(container);
-            return () => observer.unobserve(container);
+            return () => {
+                if (container) {
+                    observer.unobserve(container);
+                }
+            };
         }
     });
 </script>
 
 <div bind:this={container}>
-    <slot {intersecting} />
+    {@render children?.(intersecting)}
 </div>

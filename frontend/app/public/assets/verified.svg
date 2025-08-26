@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg viewBox="0 0 362 362" xmlns="http://www.w3.org/2000/svg" xmlns:bx="https://boxy-svg.com">
+  <defs>
+    <linearGradient id="gradient-2" bx:pinned="true"/>
+    <linearGradient id="gradient-5" bx:pinned="true">
+      <stop style="stop-color: rgb(251, 176, 59);" offset="0"/>
+      <stop style="stop-color: rgb(240, 90, 36);" offset="1"/>
+    </linearGradient>
+    <linearGradient id="gradient-6" bx:pinned="true">
+      <stop style="stop-color: rgb(95, 37, 131);" offset="0"/>
+      <stop style="stop-color: rgb(237, 30, 121);" offset="1"/>
+    </linearGradient>
+    <filter id="drop-shadow-filter-1" color-interpolation-filters="sRGB" x="-50%" y="-50%" width="200%" height="200%" bx:preset="drop-shadow 1 4 4 3 0.17 #000">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+      <feOffset dx="4" dy="4"/>
+      <feComponentTransfer result="offsetblur">
+        <feFuncA id="spread-ctrl" type="linear" slope="0.34"/>
+      </feComponentTransfer>
+      <feFlood flood-color="#000"/>
+      <feComposite in2="offsetblur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <defs/>
+  <ellipse style="fill: rgb(35, 162, 238);" cx="180" cy="180" rx="180" ry="180"/>
+  <g transform="matrix(2.584001, 0, 0, 2.584001, 310.828735, -280.010101)" style="">
+    <g stroke-width=".616" transform="matrix(1, 0, 0, 1, 340.071259, 64.688324)" style="filter: url('#drop-shadow-filter-1');">
+      <path d="M -419.515 101.177 C -419.884 101.177 -420.489 101.399 -420.757 101.677 L -432.673 113.843 C -433.208 114.383 -433.207 115.048 -432.673 115.581 L -413.941 133.372 L -401.776 145.538 C -401.505 145.808 -401.151 146.031 -400.782 146.031 C -400.51 146.031 -400.251 145.745 -400.037 145.538 L -387.872 133.621 L -349.388 95.137 C -348.847 94.605 -348.849 93.685 -349.388 93.151 L -361.554 80.985 C -362.095 80.453 -362.759 80.445 -363.293 80.985 L -400.782 118.475 L -418.521 101.677 C -418.789 101.407 -419.146 101.177 -419.515 101.177 Z" style="fill: rgb(255, 255, 255);"/>
+    </g>
+  </g>
+</svg>

@@ -1,17 +1,20 @@
 <script lang="ts">
-    import { mobileWidth } from "../../stores/screenDimensions";
+    import { emptyUnreadCounts, mobileWidth, type ResourceKey } from "openchat-client";
     import Button from "../Button.svelte";
-    import UnreadCount from "./UnreadCount.svelte";
-    import { emptyUnreadCounts } from "openchat-client";
-    import type { ResourceKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
+    import UnreadCount from "./UnreadCount.svelte";
 
-    export let selected = false;
-    export let title: ResourceKey;
-    export let unread = emptyUnreadCounts();
+    interface Props {
+        selected?: boolean;
+        title: ResourceKey;
+        unread?: any;
+        onClick?: (e: MouseEvent) => void;
+    }
+
+    let { selected = false, title, unread = emptyUnreadCounts(), onClick }: Props = $props();
 </script>
 
-<Button fill={$mobileWidth} hollow={!selected} small={!$mobileWidth} tiny={$mobileWidth} on:click>
+<Button fill={$mobileWidth} hollow={!selected} small={!$mobileWidth} tiny={$mobileWidth} {onClick}>
     <h4 class="title">
         <Translatable resourceKey={title} />
     </h4>

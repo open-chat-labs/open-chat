@@ -1,33 +1,37 @@
 <script lang="ts">
-    import { ChatMap, type ChannelMatch, type OpenChat } from "openchat-client";
-    import Button from "../../../Button.svelte";
+    import {
+        chatSummariesStore,
+        publish,
+        selectedCommunitySummaryStore,
+        type ChannelMatch,
+        type OpenChat,
+    } from "openchat-client";
     import { getContext } from "svelte";
-    import ChannelCard from "./ChannelCard.svelte";
-    import CollapsibleCard from "../../../CollapsibleCard.svelte";
-    import { browseChannels } from "../../../../stores/settings";
     import { i18nKey } from "../../../../i18n/i18n";
+    import { browseChannels } from "../../../../stores/settings";
+    import Button from "../../../Button.svelte";
+    import CollapsibleCard from "../../../CollapsibleCard.svelte";
     import Translatable from "../../../Translatable.svelte";
+    import ChannelCard from "./ChannelCard.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    export let searchTerm: string;
+    interface Props {
+        searchTerm: string;
+    }
 
-    $: selectedCommunity = client.selectedCommunity;
-    $: chatSummariesListStore = client.chatSummariesListStore;
-    $: selectedCommunityId = $selectedCommunity?.id.communityId;
+    let { searchTerm }: Props = $props();
 
-    let searching = false;
+    let selectedCommunityId = $derived($selectedCommunitySummaryStore?.id.communityId);
+    let searching = $state(false);
     let pageIndex = 0;
     let pageSize = 100;
-    let searchResults: ChannelMatch[] = [];
-    let total = 0;
-    let autoOpen = false;
+    let searchResults: ChannelMatch[] = $state([]);
+    let total = $state(0);
+    let autoOpen = $state(false);
     let matchedCommunityId: string | undefined = undefined;
-    $: more = total > searchResults.length;
-
-    $: myChannels = ChatMap.fromList($chatSummariesListStore ?? []);
-
-    $: filteredResults = searchResults.filter((c) => !myChannels.has(c.id));
+    let more = $derived(total > searchResults.length);
+    let filteredResults = $derived(searchResults.filter((c) => !$chatSummariesStore.has(c.id)));
 
     function search(term: string, reset = false) {
         const communityId = selectedCommunityId;
@@ -68,40 +72,57 @@
             .finally(() => (searching = false));
     }
 
-    $: {
+    $effect(() => {
         if (selectedCommunityId !== undefined) {
             search(searchTerm, true);
         } else {
             searchResults = [];
         }
+    });
+
+    function deleteChannel(channel: ChannelMatch) {
+        publish("deleteGroup", {
+            kind: "delete",
+            chatId: channel.id,
+            level: "channel",
+            doubleCheck: {
+                challenge: i18nKey("typeGroupName", { name: channel.name }),
+                response: i18nKey(channel.name),
+            },
+            after: () => {
+                search(searchTerm, true);
+            },
+        });
     }
 </script>
 
 {#if filteredResults.length > 0}
     <div class="channels-section">
         <CollapsibleCard
-            fill
             first
-            on:toggle={browseChannels.toggle}
+            fill
+            onToggle={browseChannels.toggle}
             open={$browseChannels || autoOpen}
             headerText={i18nKey("communities.otherChannels")}>
-            <div slot="titleSlot" class="browse-channels">
-                <div class="disc">#</div>
-                <div class="label">
-                    <Translatable resourceKey={i18nKey("communities.otherChannels")} />
+            {#snippet titleSlot()}
+                <div class="browse-channels">
+                    <div class="disc">#</div>
+                    <div class="label">
+                        <Translatable resourceKey={i18nKey("communities.otherChannels")} />
+                    </div>
                 </div>
-            </div>
+            {/snippet}
 
             <div class="channels">
                 {#each filteredResults as channel}
-                    <ChannelCard {channel} />
+                    <ChannelCard onDeleteChannel={() => deleteChannel(channel)} {channel} />
                 {/each}
                 {#if more}
                     <div class="more">
                         <Button
                             disabled={searching}
                             loading={searching}
-                            on:click={() => search(searchTerm, false)}
+                            onClick={() => search(searchTerm, false)}
                             ><Translatable resourceKey={i18nKey("communities.loadMore")} /></Button>
                     </div>
                 {/if}
@@ -113,6 +134,13 @@
 <style lang="scss">
     :global(.channels-section .card.open) {
         border-bottom: none;
+    }
+
+    :global(.channels-section .card .header) {
+        @include mobile() {
+            padding-left: toRem(10);
+            padding-right: toRem(10);
+        }
     }
 
     .channels {

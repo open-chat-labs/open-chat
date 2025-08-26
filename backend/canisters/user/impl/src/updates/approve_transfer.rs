@@ -1,28 +1,27 @@
 use crate::guards::caller_is_owner;
-use crate::model::pin_number::VerifyPinError;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, execute_update_async, mutate_state};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
+use constants::NANOS_PER_MILLISECOND;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
-use types::TimestampNanos;
-use user_canister::approve_transfer::{Response::*, *};
-use utils::time::NANOS_PER_MILLISECOND;
+use oc_error_codes::OCErrorCode;
+use types::{OCResult, TimestampNanos};
+use user_canister::approve_transfer::*;
 
-#[update(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 async fn approve_transfer(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(|| approve_transfer_impl(args)).await.into()
+}
 
-    let now_nanos = match mutate_state(|state| prepare(&args, state)) {
-        Ok(ts) => ts,
-        Err(response) => return response,
-    };
+pub(crate) async fn approve_transfer_impl(args: Args) -> OCResult {
+    let now_nanos = mutate_state(|state| prepare(&args, state))?;
 
     match icrc_ledger_canister_c2c_client::icrc2_approve(
         args.ledger_canister_id,
         &ApproveArgs {
             from_subaccount: None,
-            spender: args.spender,
+            spender: args.spender.into(),
             amount: args.amount.into(),
             expected_allowance: None,
             expires_at: args
@@ -33,24 +32,17 @@ async fn approve_transfer(args: Args) -> Response {
             created_at_time: Some(now_nanos),
         },
     )
-    .await
+    .await?
     {
-        Ok(icrc_ledger_canister::icrc2_approve::Response::Ok(_)) => Success,
-        Ok(icrc_ledger_canister::icrc2_approve::Response::Err(err)) => ApproveError(err),
-        Err(error) => InternalError(format!("{error:?}")),
+        Ok(_) => Ok(()),
+        Err(error) => Err(OCErrorCode::ApprovalFailed.with_json(&error)),
     }
 }
 
-fn prepare(args: &Args, state: &mut RuntimeState) -> Result<TimestampNanos, Response> {
+fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<TimestampNanos> {
+    state.data.verify_not_suspended()?;
     let now = state.env.now();
-
-    if let Err(error) = state.data.pin_number.verify(args.pin.as_deref(), now) {
-        return Err(match error {
-            VerifyPinError::PinRequired => PinRequired,
-            VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),
-            VerifyPinError::TooManyFailedAttempted(delay) => TooManyFailedPinAttempts(delay),
-        });
-    }
+    state.data.pin_number.verify(args.pin.as_deref(), now)?;
 
     Ok(now * NANOS_PER_MILLISECOND)
 }

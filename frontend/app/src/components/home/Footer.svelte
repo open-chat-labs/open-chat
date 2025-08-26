@@ -1,54 +1,119 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
-    import ReplyingTo from "./ReplyingTo.svelte";
-    import MessageEntry from "./MessageEntry.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
-    import DraftMediaMessage from "./DraftMediaMessage.svelte";
-    import { toastStore } from "../../stores/toast";
-    import EmojiPicker from "./EmojiPicker.svelte";
-    import type {
-        ChatSummary,
-        EnhancedReplyContext,
-        EventWrapper,
-        Message,
-        MessageAction,
-        CreatedUser,
-        OpenChat,
-        MultiUserChat,
-        AttachmentContent,
+    import { fileFromDataTransferItems } from "@src/utils/datatransfer";
+    import {
+        iconSize,
+        messageContextsEqual,
+        subscribe,
+        type AttachmentContent,
+        type ChatSummary,
+        type CreatedUser,
+        type EnhancedReplyContext,
+        type EphemeralMessageEvent,
+        type EventWrapper,
+        type Message,
+        type MessageAction,
+        type MessageContext,
+        type MultiUserChat,
+        type OpenChat,
+        type SelectedEmoji,
+        type User,
     } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext, onMount, tick } from "svelte";
+    import { _ } from "svelte-i18n";
+    import Close from "svelte-material-icons/Close.svelte";
+    import { i18nKey } from "../../i18n/i18n";
+    import { toastStore } from "../../stores/toast";
+    import EphemeralMessage from "../bots/EphemeralMessage.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import ModalContent from "../ModalContent.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
+    import DraftMediaMessage from "./DraftMediaMessage.svelte";
+    import EmojiPicker from "./EmojiPickerWrapper.svelte";
+    import MessageEntry from "./MessageEntry.svelte";
+    import ReplyingTo from "./ReplyingTo.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    export let blocked: boolean;
-    export let preview: boolean;
-    export let joining: MultiUserChat | undefined;
-    export let chat: ChatSummary;
-    export let attachment: AttachmentContent | undefined;
-    export let editingEvent: EventWrapper<Message> | undefined;
-    export let replyingTo: EnhancedReplyContext | undefined;
-    export let textContent: string | undefined;
-    export let user: CreatedUser;
-    export let mode: "thread" | "message" = "message";
+    interface Props {
+        blocked: boolean;
+        preview: boolean;
+        lapsed: boolean;
+        joining: MultiUserChat | undefined;
+        chat: ChatSummary;
+        attachment: AttachmentContent | undefined;
+        editingEvent: EventWrapper<Message> | undefined;
+        replyingTo: EnhancedReplyContext | undefined;
+        textContent: string | undefined;
+        user: CreatedUser;
+        mode?: "thread" | "message";
+        externalContent?: boolean;
+        messageContext: MessageContext;
+        onFileSelected: (content: AttachmentContent) => void;
+        onCancelReply: () => void;
+        onSetTextContent: (txt?: string) => void;
+        onStartTyping: () => void;
+        onStopTyping: () => void;
+        onCancelEdit: () => void;
+        onSendMessage: (args: [string | undefined, User[], boolean]) => void;
+        onClearAttachment: () => void;
+        onTokenTransfer: (args: { ledger?: string; amount?: bigint }) => void;
+        onCreatePrizeMessage?: () => void;
+        onCreateP2PSwapMessage: () => void;
+        onCreatePoll: () => void;
+        onAttachGif: (search: string) => void;
+        onMakeMeme: () => void;
+    }
 
-    const dispatch = createEventDispatcher();
+    let {
+        blocked,
+        preview,
+        lapsed,
+        joining,
+        chat,
+        attachment,
+        editingEvent,
+        replyingTo,
+        textContent,
+        user,
+        mode = "message",
+        externalContent = false,
+        messageContext,
+        onFileSelected,
+        onCancelReply,
+        onSetTextContent,
+        onCancelEdit,
+        onStartTyping,
+        onStopTyping,
+        onSendMessage,
+        onClearAttachment,
+        onTokenTransfer,
+        onCreatePrizeMessage,
+        onCreateP2PSwapMessage,
+        onCreatePoll,
+        onAttachGif,
+        onMakeMeme,
+    }: Props = $props();
 
-    let messageAction: MessageAction = undefined;
+    let ephemeralMessageEvent = $state<EphemeralMessageEvent>();
+    let messageAction: MessageAction = $state(undefined);
+    //@ts-ignore
     let messageEntry: MessageEntry;
 
-    function fileFromDataTransferItems(items: DataTransferItem[]): File | undefined {
-        return items.reduce<File | undefined>((res, item) => {
-            if (item.kind === "file") {
-                return item.getAsFile() || undefined;
-            }
-            return res;
-        }, undefined);
+    onMount(() => {
+        const unsubs = [subscribe("ephemeralMessage", onEphemeralMessage)];
+        return () => {
+            unsubs.forEach((u) => u());
+        };
+    });
+
+    async function onEphemeralMessage(ev: EphemeralMessageEvent) {
+        if (ev.scope.kind !== "chat_scope") return;
+        if (!messageContextsEqual(messageContext, ev.scope)) return;
+        if (ephemeralMessageEvent !== undefined) {
+            ephemeralMessageEvent = undefined;
+            await tick();
+        }
+        ephemeralMessageEvent = ev;
     }
 
     function messageContentFromDataTransferItemList(items: DataTransferItem[]) {
@@ -59,7 +124,7 @@
                 .then((content) => {
                     let permission = client.contentTypeToPermission(content.kind);
                     if (client.canSendMessage(chat.id, mode, permission)) {
-                        dispatch("fileSelected", content);
+                        onFileSelected(content);
                     } else {
                         const errorMessage = i18nKey("permissions.notPermitted", {
                             permission: $_(`permissions.threadPermissions.${permission}`),
@@ -79,13 +144,6 @@
         messageContentFromDataTransferItemList([...data.items]);
     }
 
-    function onDrop(e: CustomEvent<DragEvent>) {
-        if (e.detail.dataTransfer) {
-            onDataTransfer(e.detail.dataTransfer);
-            e.detail.preventDefault();
-        }
-    }
-
     function onPaste(e: ClipboardEvent) {
         if (e.clipboardData) {
             messageEntry.saveSelection();
@@ -94,36 +152,55 @@
         }
     }
 
-    function emojiSelected(ev: CustomEvent<string>) {
-        messageEntry?.replaceSelection(ev.detail);
+    function emojiSelected(selected: SelectedEmoji) {
+        messageEntry?.insertEmoji(selected);
     }
+
+    $effect(() => {
+        if (
+            ephemeralMessageEvent !== undefined &&
+            ephemeralMessageEvent.scope.kind === "chat_scope" &&
+            !messageContextsEqual(messageContext, ephemeralMessageEvent.scope)
+        ) {
+            ephemeralMessageEvent = undefined;
+        }
+    });
 </script>
 
 {#if messageAction === "emoji"}
     <div class={`emoji-overlay ${mode}`}>
         <ModalContent hideFooter hideHeader fill>
-            <span slot="body">
-                <div class="emoji-header">
-                    <h4><Translatable resourceKey={i18nKey("pickEmoji")} /></h4>
-                    <span title={$_("close")} class="close-emoji">
-                        <HoverIcon on:click={() => (messageAction = undefined)}>
-                            <Close size={$iconSize} color={"var(--icon-txt)"} />
-                        </HoverIcon>
-                    </span>
-                </div>
-                <EmojiPicker on:emojiSelected={emojiSelected} {mode} />
-            </span>
-            <span slot="footer" />
+            {#snippet body()}
+                <span>
+                    <div class="emoji-header">
+                        <h4><Translatable resourceKey={i18nKey("pickEmoji")} /></h4>
+                        <span title={$_("close")} class="close-emoji">
+                            <HoverIcon onclick={() => (messageAction = undefined)}>
+                                <Close size={$iconSize} color={"var(--icon-txt)"} />
+                            </HoverIcon>
+                        </span>
+                    </div>
+                    <EmojiPicker onEmojiSelected={emojiSelected} {mode} supportCustom={false} />
+                </span>
+            {/snippet}
+            {#snippet footer()}
+                <span></span>
+            {/snippet}
         </ModalContent>
     </div>
 {/if}
 
 <div class="footer">
     <div class="footer-overlay">
+        {#if ephemeralMessageEvent !== undefined}
+            <EphemeralMessage
+                onClose={() => (ephemeralMessageEvent = undefined)}
+                event={ephemeralMessageEvent} />
+        {/if}
         {#if editingEvent === undefined && (replyingTo || attachment !== undefined)}
             <div class="draft-container">
                 {#if replyingTo}
-                    <ReplyingTo readonly on:cancelReply {user} {replyingTo} />
+                    <ReplyingTo readonly {onCancelReply} {user} {replyingTo} />
                 {/if}
                 {#if attachment !== undefined}
                     <DraftMediaMessage content={attachment} />
@@ -134,10 +211,11 @@
     <MessageEntry
         bind:this={messageEntry}
         bind:messageAction
-        on:paste={onPaste}
-        on:drop={onDrop}
+        {onPaste}
+        {externalContent}
         {mode}
         {preview}
+        {lapsed}
         {blocked}
         {joining}
         {attachment}
@@ -145,24 +223,20 @@
         {replyingTo}
         {textContent}
         {chat}
-        on:sendMessage
-        on:cancelEditEvent
-        on:setTextContent
-        on:startTyping
-        on:stopTyping
-        on:createPoll
-        on:searchChat
-        on:tokenTransfer
-        on:createPrizeMessage
-        on:createP2PSwapMessage
-        on:attachGif
-        on:makeMeme
-        on:clearAttachment
-        on:fileSelected
-        on:audioCaptured
-        on:joinGroup
-        on:upgrade
-        on:createTestMessages />
+        {messageContext}
+        {onSendMessage}
+        {onCancelEdit}
+        {onSetTextContent}
+        {onStartTyping}
+        {onStopTyping}
+        {onCreatePoll}
+        {onTokenTransfer}
+        {onCreatePrizeMessage}
+        {onCreateP2PSwapMessage}
+        {onAttachGif}
+        {onMakeMeme}
+        {onClearAttachment}
+        {onFileSelected} />
 </div>
 
 <style lang="scss">

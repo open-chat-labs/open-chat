@@ -1,24 +1,29 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::timer_job_types::NotifyEscrowCanisterOfDepositJob;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, execute_update_async, mutate_state};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::accept_p2p_swap::{Response::*, *};
-use ic_cdk_macros::update;
-use icrc_ledger_types::icrc1::transfer::TransferError;
-use types::{AcceptSwapSuccess, ChannelId, Chat, MessageId, MessageIndex, P2PSwapLocation, UserId};
+use types::{
+    AcceptSwapSuccess, Achievement, ChannelId, Chat, EventIndex, MessageId, MessageIndex, OCResult, P2PSwapLocation, UserId,
+};
+use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
-#[update]
+#[update(msgpack = true)]
 #[trace]
 async fn accept_p2p_swap(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(|| accept_p2p_swap_impl(args)).await
+}
 
+async fn accept_p2p_swap_impl(args: Args) -> Response {
     let channel_id = args.channel_id;
     let thread_root_message_index = args.thread_root_message_index;
     let message_id = args.message_id;
+    let new_achievement = args.new_achievement;
 
     let ReserveP2PSwapResult { user_id, c2c_args } = match mutate_state(|state| reserve_p2p_swap(args, state)) {
         Ok(result) => result,
-        Err(response) => return *response,
+        Err(response) => return Error(response),
     };
 
     let result = match user_canister_c2c_client::c2c_accept_p2p_swap(user_id.into(), &c2c_args).await {
@@ -31,18 +36,52 @@ async fn accept_p2p_swap(args: Args) -> Response {
                 message_id,
                 transaction_index,
             );
+
+            mutate_state(|state| {
+                let now = state.env.now();
+                if new_achievement {
+                    state.notify_user_of_achievement(user_id, Achievement::AcceptedP2PSwapOffer, now);
+                }
+
+                if let Some(channel) = state.data.channels.get(&channel_id)
+                    && let Some((message, event_index)) = channel.chat.events.message_internal(
+                        EventIndex::default(),
+                        thread_root_message_index,
+                        message_id.into(),
+                    )
+                    && channel
+                        .chat
+                        .members
+                        .get(&message.sender)
+                        .is_some_and(|m| !m.user_type().is_bot())
+                {
+                    let community_id = state.env.canister_id().into();
+
+                    state.push_event_to_user(
+                        message.sender,
+                        CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
+                            chat: Chat::Channel(community_id, channel.id),
+                            thread_root_message_index,
+                            message_index: message.message_index,
+                            message_id: message.message_id,
+                            event_index,
+                            activity: MessageActivity::P2PSwapAccepted,
+                            timestamp: now,
+                            user_id: Some(user_id),
+                        }),
+                        now,
+                    );
+                }
+
+                handle_activity_notification(state);
+            });
+
             Success(AcceptSwapSuccess {
                 token1_txn_in: transaction_index,
             })
         }
-        Ok(user_canister::c2c_accept_p2p_swap::Response::TransferError(TransferError::InsufficientFunds { .. })) => {
-            InsufficientFunds
-        }
-        Ok(user_canister::c2c_accept_p2p_swap::Response::PinRequired) => PinRequired,
-        Ok(user_canister::c2c_accept_p2p_swap::Response::PinIncorrect(delay)) => PinIncorrect(delay),
-        Ok(user_canister::c2c_accept_p2p_swap::Response::TooManyFailedPinAttempts(delay)) => TooManyFailedPinAttempts(delay),
-        Ok(response) => InternalError(format!("{response:?}")),
-        Err(error) => InternalError(format!("{error:?}")),
+        Ok(user_canister::c2c_accept_p2p_swap::Response::Error(error)) => Error(error),
+        Err(error) => Error(error.into()),
     };
 
     if !matches!(result, Success(_)) {
@@ -57,65 +96,40 @@ struct ReserveP2PSwapResult {
     c2c_args: user_canister::c2c_accept_p2p_swap::Args,
 }
 
-fn reserve_p2p_swap(args: Args, state: &mut RuntimeState) -> Result<ReserveP2PSwapResult, Box<Response>> {
-    if state.data.is_frozen() {
-        return Err(Box::new(ChatFrozen));
-    }
+fn reserve_p2p_swap(args: Args, state: &mut RuntimeState) -> OCResult<ReserveP2PSwapResult> {
+    state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
-    if let Some(member) = state.data.members.get(caller) {
-        if member.suspended.value {
-            return Err(Box::new(UserSuspended));
-        }
-        let user_id = member.user_id;
+    let member = state.get_calling_member(true)?;
+    let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
+    let user_id = member.user_id;
+    let now = state.env.now();
 
-        if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-            let channel_member = match channel.chat.members.get(&user_id) {
-                Some(m) => m,
-                _ => return Err(Box::new(UserNotInChannel)),
-            };
-            let now = state.env.now();
+    let result = channel
+        .chat
+        .reserve_p2p_swap(user_id, args.thread_root_message_index, args.message_id, now)?;
 
-            match channel.chat.events.reserve_p2p_swap(
-                user_id,
+    handle_activity_notification(state);
+
+    Ok(ReserveP2PSwapResult {
+        user_id,
+        c2c_args: user_canister::c2c_accept_p2p_swap::Args {
+            swap_id: result.content.swap_id,
+            location: P2PSwapLocation::from_message(
+                Chat::Channel(state.env.canister_id().into(), args.channel_id),
                 args.thread_root_message_index,
                 args.message_id,
-                channel_member.min_visible_event_index(),
-                now,
-            ) {
-                types::ReserveP2PSwapResult::Success(result) => {
-                    handle_activity_notification(state);
-
-                    Ok(ReserveP2PSwapResult {
-                        user_id,
-                        c2c_args: user_canister::c2c_accept_p2p_swap::Args {
-                            swap_id: result.content.swap_id,
-                            location: P2PSwapLocation::from_message(
-                                Chat::Channel(caller.into(), args.channel_id),
-                                args.thread_root_message_index,
-                                args.message_id,
-                            ),
-                            created: result.created,
-                            created_by: result.created_by,
-                            token0: result.content.token0,
-                            token0_amount: result.content.token0_amount,
-                            token0_txn_in: result.content.token0_txn_in,
-                            token1: result.content.token1,
-                            token1_amount: result.content.token1_amount,
-                            expires_at: result.content.expires_at,
-                            pin: args.pin,
-                        },
-                    })
-                }
-                types::ReserveP2PSwapResult::Failure(status) => Err(Box::new(StatusError(status.into()))),
-                types::ReserveP2PSwapResult::SwapNotFound => Err(Box::new(SwapNotFound)),
-            }
-        } else {
-            Err(Box::new(UserNotInChannel))
-        }
-    } else {
-        Err(Box::new(UserNotInCommunity))
-    }
+            ),
+            created: result.created,
+            created_by: result.created_by,
+            token0: result.content.token0,
+            token0_amount: result.content.token0_amount,
+            token0_txn_in: result.content.token0_txn_in,
+            token1: result.content.token1,
+            token1_amount: result.content.token1_amount,
+            expires_at: result.content.expires_at,
+            pin: args.pin,
+        },
+    })
 }
 
 fn rollback(

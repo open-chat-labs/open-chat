@@ -1,7 +1,7 @@
 [package]
 name = "proposals_bot_canister_impl"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -19,6 +19,7 @@ canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" 
 chat_events = { path = "../../../libraries/chat_events" }
 community_canister = { path = "../../community/api" }
 community_canister_c2c_client = { path = "../../community/c2c_client" }
+constants = { path = "../../../libraries/constants" }
 fire_and_forget_handler = { path = "../../../libraries/fire_and_forget_handler" }
 group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }
@@ -28,7 +29,6 @@ hex = { workspace = true }
 http_request = { path = "../../../libraries/http_request" }
 human_readable = { path = "../../../libraries/human_readable" }
 ic-cdk = { workspace = true }
-ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
 icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_ledger/c2c_client" }
@@ -43,7 +43,6 @@ rand = { workspace = true }
 registry_canister = { path = "../../registry/api" }
 registry_canister_c2c_client = { path = "../../registry/c2c_client" }
 serde = { workspace = true }
-serializer = { path = "../../../libraries/serializer" }
 sha2 = { workspace = true }
 sns_governance_canister = { path = "../../../external_canisters/sns_governance/api" }
 sns_governance_canister_c2c_client = { path = "../../../external_canisters/sns_governance/c2c_client" }

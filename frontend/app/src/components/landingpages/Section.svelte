@@ -1,10 +1,17 @@
 <script lang="ts">
-    export let id: string;
+    import type { Snippet } from "svelte";
+
+    interface Props {
+        id: string;
+        children?: Snippet;
+    }
+
+    let { id, children }: Props = $props();
 </script>
 
 <section {id}>
     <div class="container">
-        <slot />
+        {@render children?.()}
     </div>
 </section>
 

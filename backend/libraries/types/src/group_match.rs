@@ -1,7 +1,9 @@
-use crate::{AccessGate, ChannelId, ChatId, CommunityId, GroupSubtype};
+use crate::{AccessGate, AccessGateConfig, ChannelId, ChatId, CommunityId, GroupSubtype};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct GroupMatch {
     pub id: ChatId,
@@ -11,8 +13,10 @@ pub struct GroupMatch {
     pub member_count: u32,
     pub gate: Option<AccessGate>,
     pub subtype: Option<GroupSubtype>,
+    pub verified: bool,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct CommunityMatch {
     pub id: CommunityId,
@@ -23,11 +27,13 @@ pub struct CommunityMatch {
     pub banner_id: Option<u128>,
     pub member_count: u32,
     pub channel_count: u32,
-    pub gate: Option<AccessGate>,
+    pub gate_config: Option<AccessGateConfig>,
     pub moderation_flags: u32,
     pub primary_language: String,
+    pub verified: bool,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct ChannelMatch {
     pub id: ChannelId,
@@ -35,6 +41,8 @@ pub struct ChannelMatch {
     pub description: String,
     pub avatar_id: Option<u128>,
     pub member_count: u32,
-    pub gate: Option<AccessGate>,
+    pub gate_config: Option<AccessGateConfig>,
     pub subtype: Option<GroupSubtype>,
+    pub is_public: bool,
+    pub is_invited: bool,
 }

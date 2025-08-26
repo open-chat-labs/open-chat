@@ -1,38 +1,61 @@
+<script lang="ts" module>
+    export interface MenuItemProps {
+        href?: string;
+        disabled?: boolean;
+        selected?: boolean;
+        warning?: boolean;
+        separator?: boolean;
+        unpadded?: boolean;
+        onclick?: (e?: Event) => void;
+    }
+</script>
+
 <script lang="ts">
-    export let disabled: boolean = false;
-    export let selected: boolean = false;
-    export let warning: boolean = false;
-    export let separator: boolean = false;
-    export let unpadded: boolean = false;
+    import type { Snippet } from "svelte";
+
+    let {
+        href,
+        disabled = false,
+        selected = false,
+        warning = false,
+        separator = false,
+        unpadded = false,
+        icon,
+        text,
+        onclick,
+    }: MenuItemProps & { icon?: Snippet; text?: Snippet } = $props();
 </script>
 
 {#if disabled}
     <div class:unpadded class:disabled class="menu-item" role="menuitem">
         <span class="icon">
-            <slot name="icon" />
+            {@render icon?.()}
         </span>
-        <slot name="text" />
+        {@render text?.()}
     </div>
 {:else if separator}
-    <hr class="separator" />
+    <hr class="menu-item-separator" />
 {:else}
-    <div
+    <a
+        {href}
+        target="_blank"
+        rel="noreferrer"
         class:unpadded
         tabindex="0"
         class="menu-item"
-        on:click
+        {onclick}
         role="menuitem"
         class:selected
         class:warning>
         <span class="icon">
-            <slot name="icon" />
+            {@render icon?.()}
         </span>
-        <slot name="text" />
-    </div>
+        {@render text?.()}
+    </a>
 {/if}
 
 <style lang="scss">
-    .menu-item {
+    :global(.menu-item) {
         display: flex;
         cursor: pointer;
         color: var(--menu-txt);
@@ -76,7 +99,7 @@
         }
     }
 
-    .separator {
+    :global(.menu-item-separator) {
         border: 1px solid var(--menu-separator);
 
         &:last-child {

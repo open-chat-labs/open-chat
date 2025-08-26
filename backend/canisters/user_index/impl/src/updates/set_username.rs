@@ -1,13 +1,13 @@
 use crate::guards::caller_is_openchat_user;
 use crate::model::user_map::UpdateUserResult;
-use crate::{mutate_state, RuntimeState};
+use crate::{RuntimeState, mutate_state};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
-use local_user_index_canister::{Event, UsernameChanged};
+use local_user_index_canister::{UserIndexEvent, UsernameChanged};
 use user_index_canister::set_username::{Response::*, *};
-use utils::text_validation::{validate_username, UsernameValidationError};
+use utils::text_validation::{UsernameValidationError, validate_username};
 
-#[update(guard = "caller_is_openchat_user")]
+#[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
 fn set_username(args: Args) -> Response {
     mutate_state(|state| set_username_impl(args, state))
@@ -18,7 +18,7 @@ fn set_username_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     if let Some(user) = state.data.users.get_by_principal(&caller) {
         let username = args.username;
-        if username.to_lowercase() != user.username.to_lowercase() {
+        if !username.eq_ignore_ascii_case(&user.username) {
             match validate_username(&username) {
                 Ok(_) => {}
                 Err(UsernameValidationError::TooShort(s)) => return UsernameTooShort(s.min_length as u16),
@@ -28,12 +28,15 @@ fn set_username_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
 
         let mut user_to_update = user.clone();
-        user_to_update.username = username.clone();
+        user_to_update.username.clone_from(&username);
         let user_id = user.user_id;
         let now = state.env.now();
-        match state.data.users.update(user_to_update, now) {
+        match state.data.users.update(user_to_update, now, false, None) {
             UpdateUserResult::Success => {
-                state.push_event_to_local_user_index(user_id, Event::UsernameChanged(UsernameChanged { user_id, username }));
+                state.push_event_to_local_user_index(
+                    user_id,
+                    UserIndexEvent::UsernameChanged(UsernameChanged { user_id, username }),
+                );
 
                 Success
             }
@@ -49,8 +52,8 @@ fn set_username_impl(args: Args, state: &mut RuntimeState) -> Response {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::user::{PhoneStatus, User};
     use crate::Data;
+    use crate::model::user::{PhoneStatus, User};
     use candid::Principal;
     use types::PhoneNumber;
     use utils::env::test::TestEnv;

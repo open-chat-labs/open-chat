@@ -1,11 +1,13 @@
 use crate::env::ENV;
-use crate::rng::random_string;
-use crate::{client, CanisterIds, TestEnv, User};
+use crate::utils::now_millis;
+use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
+use std::time::Duration;
 use test_case::test_case;
-use types::{AccessGate, CommunityId, Rules};
+use testing::rng::random_string;
+use types::{CommunityId, Rules};
 
 #[test_case(true)]
 #[test_case(false)]
@@ -20,22 +22,34 @@ fn create_channel_succeeds(is_public: bool) {
 
     let TestData { user, community_id } = init_test_data(env, canister_ids, *controller, true);
 
+    env.advance_time(Duration::from_secs(60));
+
     let channel_name = random_string();
     let channel_id =
         client::community::happy_path::create_channel(env, user.principal, community_id, is_public, channel_name.clone());
 
-    let summary = client::community::happy_path::summary(env, &user, community_id);
+    let summary = client::community::happy_path::summary(env, user.principal, community_id);
 
     assert_eq!(summary.channels.len(), 2);
-    assert!(summary
-        .channels
-        .iter()
-        .any(|c| c.channel_id == channel_id && c.is_public == is_public && c.name == channel_name));
+    assert!(
+        summary
+            .channels
+            .iter()
+            .any(|c| c.channel_id == channel_id && c.is_public == is_public && c.name == channel_name)
+    );
+
+    let community_details = client::community::happy_path::selected_initial(env, user.principal, community_id);
+    let now = now_millis(env);
+
+    if is_public {
+        assert_eq!(community_details.public_channel_list_updated, now);
+    } else {
+        assert!(community_details.public_channel_list_updated < now);
+    }
 }
 
-#[test_case(true)]
-#[test_case(false)]
-fn existing_users_joined_to_new_public_channel(diamond_gate: bool) {
+#[test]
+fn existing_users_joined_to_new_public_channel() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -46,11 +60,11 @@ fn existing_users_joined_to_new_public_channel(diamond_gate: bool) {
 
     let TestData { user, community_id } = init_test_data(env, canister_ids, *controller, true);
 
-    let user2 = client::register_diamond_user(env, canister_ids, *controller);
-    let user3 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
+    let user3 = client::register_user(env, canister_ids);
 
-    client::local_user_index::happy_path::join_community(env, user2.principal, canister_ids.local_user_index, community_id);
-    client::local_user_index::happy_path::join_community(env, user3.principal, canister_ids.local_user_index, community_id);
+    client::community::happy_path::join_community(env, user2.principal, community_id);
+    client::community::happy_path::join_community(env, user3.principal, community_id);
 
     let create_channel_response = client::community::create_channel(
         env,
@@ -64,9 +78,11 @@ fn existing_users_joined_to_new_public_channel(diamond_gate: bool) {
             subtype: None,
             avatar: None,
             history_visible_to_new_joiners: true,
+            messages_visible_to_non_members: None,
             permissions_v2: None,
             events_ttl: None,
-            gate: diamond_gate.then_some(AccessGate::DiamondMember),
+            gate_config: None,
+            external_url: None,
         },
     );
 
@@ -76,15 +92,11 @@ fn existing_users_joined_to_new_public_channel(diamond_gate: bool) {
         panic!()
     };
 
-    let user2_summary = client::community::happy_path::summary(env, &user2, community_id);
-    let user3_summary = client::community::happy_path::summary(env, &user3, community_id);
+    let user2_summary = client::community::happy_path::summary(env, user2.principal, community_id);
+    let user3_summary = client::community::happy_path::summary(env, user3.principal, community_id);
 
     assert!(user2_summary.channels.iter().any(|c| c.channel_id == channel_id));
-
-    assert_eq!(
-        user3_summary.channels.iter().any(|c| c.channel_id == channel_id),
-        !diamond_gate
-    );
+    assert!(user3_summary.channels.iter().any(|c| c.channel_id == channel_id));
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal, public: bool) -> TestData {

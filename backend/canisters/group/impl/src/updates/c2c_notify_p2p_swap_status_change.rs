@@ -1,20 +1,23 @@
+use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_escrow_canister;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::update_msgpack;
+use crate::{GroupEventPusher, RuntimeState, execute_update};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use escrow_canister::{SwapStatus, SwapStatusChange as Args};
 use types::{EventIndex, P2PSwapCancelled, P2PSwapExpired, P2PSwapLocation, P2PSwapStatus};
 
-#[update_msgpack(guard = "caller_is_escrow_canister")]
+#[update(guard = "caller_is_escrow_canister", msgpack = true)]
 #[trace]
 fn c2c_notify_p2p_swap_status_change(args: Args) {
-    run_regular_jobs();
-
-    mutate_state(|state| c2c_notify_p2p_swap_status_change_impl(args, state))
+    execute_update(|state| c2c_notify_p2p_swap_status_change_impl(args, state))
 }
 
 fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) {
-    let P2PSwapLocation::Message(m) = args.location;
+    let P2PSwapLocation::Message(m) = args.location else {
+        return;
+    };
+
+    let mut result = None;
 
     match args.status {
         SwapStatus::Expired(e) => {
@@ -31,12 +34,17 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
                     .find(|t| t.ledger == content.token0.ledger)
                     .map(|t| t.block_index);
 
-                state.data.chat.events.set_p2p_swap_status(
-                    m.thread_root_message_index,
-                    m.message_id,
-                    P2PSwapStatus::Expired(P2PSwapExpired { token0_txn_out }),
-                    state.env.now(),
-                );
+                result = state
+                    .data
+                    .chat
+                    .events
+                    .set_p2p_swap_status(
+                        m.thread_root_message_index,
+                        m.message_id,
+                        P2PSwapStatus::Expired(P2PSwapExpired { token0_txn_out }),
+                        state.env.now(),
+                    )
+                    .ok();
             }
         }
         SwapStatus::Cancelled(c) => {
@@ -53,25 +61,46 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
                     .find(|t| t.ledger == content.token0.ledger)
                     .map(|t| t.block_index);
 
-                state.data.chat.events.set_p2p_swap_status(
-                    m.thread_root_message_index,
-                    m.message_id,
-                    P2PSwapStatus::Cancelled(P2PSwapCancelled { token0_txn_out }),
-                    state.env.now(),
-                );
+                result = state
+                    .data
+                    .chat
+                    .events
+                    .set_p2p_swap_status(
+                        m.thread_root_message_index,
+                        m.message_id,
+                        P2PSwapStatus::Cancelled(P2PSwapCancelled { token0_txn_out }),
+                        state.env.now(),
+                    )
+                    .ok();
             }
         }
         SwapStatus::Completed(c) => {
-            state.data.chat.events.complete_p2p_swap(
-                c.accepted_by,
-                m.thread_root_message_index,
-                m.message_id,
-                c.token0_transfer_out.block_index,
-                c.token1_transfer_out.block_index,
-                state.env.now(),
-                &mut state.data.event_store_client,
-            );
+            let now = state.env.now();
+            result = state
+                .data
+                .chat
+                .events
+                .complete_p2p_swap(
+                    c.accepted_by.into(),
+                    m.thread_root_message_index,
+                    m.message_id,
+                    c.token0_transfer_out.block_index,
+                    c.token1_transfer_out.block_index,
+                    now,
+                    GroupEventPusher {
+                        now,
+                        rng: state.env.rng(),
+                        queue: &mut state.data.local_user_index_event_sync_queue,
+                    },
+                )
+                .map(|result| result.drop_value())
+                .ok();
         }
         _ => {}
+    }
+
+    if let Some(success) = result {
+        state.push_bot_notification(success.bot_notification);
+        handle_activity_notification(state);
     }
 }

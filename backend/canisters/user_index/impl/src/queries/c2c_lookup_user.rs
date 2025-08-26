@@ -1,9 +1,9 @@
-use crate::{read_state, RuntimeState};
-use canister_api_macros::query_msgpack;
+use crate::{RuntimeState, read_state};
+use canister_api_macros::query;
 use types::UserDetails;
 use user_index_canister::c2c_lookup_user::{Response::*, *};
 
-#[query_msgpack]
+#[query(msgpack = true)]
 fn c2c_lookup_user(args: Args) -> Response {
     read_state(|state| c2c_lookup_user_impl(args, state))
 }
@@ -19,7 +19,7 @@ fn c2c_lookup_user_impl(args: Args, state: &RuntimeState) -> Response {
             principal: user.principal,
             user_id: user.user_id,
             username: user.username.clone(),
-            is_bot: user.is_bot,
+            is_bot: user.user_type.is_bot(),
             is_platform_moderator,
             is_platform_operator,
             is_diamond_member,

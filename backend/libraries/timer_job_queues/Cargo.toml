@@ -1,0 +1,11 @@
+[package]
+name = "timer_job_queues"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+futures = { workspace = true }
+ic-cdk = { workspace = true }
+ic-cdk-timers = { workspace = true }
+serde = { workspace = true }
+types = { path = "../types" }

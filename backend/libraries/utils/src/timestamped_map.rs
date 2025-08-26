@@ -22,12 +22,12 @@ impl<K: Eq + Hash + Clone, V> TimestampedMap<K, V> {
     }
 
     pub fn insert(&mut self, key: K, value: V, now: TimestampMillis) {
-        if let Some(previous) = self.map.remove(&key) {
-            if let Occupied(mut e) = self.by_last_updated.entry(previous.last_updated) {
-                let keys = e.get_mut();
-                if keys.remove(&key) && keys.is_empty() {
-                    e.remove();
-                }
+        if let Some(previous) = self.map.remove(&key)
+            && let Occupied(mut e) = self.by_last_updated.entry(previous.last_updated)
+        {
+            let keys = e.get_mut();
+            if keys.remove(&key) && keys.is_empty() {
+                e.remove();
             }
         }
 
@@ -46,7 +46,7 @@ impl<K: Eq + Hash + Clone, V> TimestampedMap<K, V> {
         self.by_last_updated
             .iter()
             .rev()
-            .take_while(move |(&k, _)| k > since)
+            .take_while(move |(k, _)| **k > since)
             .flat_map(|(_, v)| v.iter())
             .filter_map(|k| self.map.get(k).map(|v| (k, v)))
     }

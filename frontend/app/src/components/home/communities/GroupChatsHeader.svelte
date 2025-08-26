@@ -1,10 +1,16 @@
 <script lang="ts">
+    import { iconSize } from "openchat-client";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
-    import SectionHeader from "../../SectionHeader.svelte";
-    import { iconSize } from "../../../stores/iconSize";
-    import GroupChatsMenu from "./GroupChatsMenu.svelte";
-    import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import SectionHeader from "../../SectionHeader.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import GroupChatsMenu from "./GroupChatsMenu.svelte";
+
+    interface Props {
+        canMarkAllRead: boolean;
+    }
+
+    let props: Props = $props();
 </script>
 
 <SectionHeader slim border={false}>
@@ -19,7 +25,7 @@
         </div>
     </div>
     <span class="menu">
-        <GroupChatsMenu on:newGroup />
+        <GroupChatsMenu {...props} />
     </span>
 </SectionHeader>
 

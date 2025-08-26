@@ -1,16 +1,17 @@
-use crate::ecdsa::{get_key_id, CanisterEcdsaRequest};
+use crate::ecdsa::{CanisterEcdsaRequest, get_key_id};
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
+use constants::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 use ic_transport_types::EnvelopeContent;
-use k256::pkcs8::EncodePublicKey;
 use k256::PublicKey;
+use k256::pkcs8::EncodePublicKey;
 use nns_governance_canister::types::Neuron;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
+use std::collections::BTreeMap;
 use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
 use utils::env::Environment;
-use utils::time::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 
 mod ecdsa;
 mod guards;
@@ -49,7 +50,7 @@ impl RuntimeState {
         method_name: String,
         args: A,
     ) -> CanisterEcdsaRequest {
-        let nonce: [u8; 8] = self.env.rng().gen();
+        let nonce: [u8; 8] = self.env.rng().r#gen();
 
         let envelope_content = EnvelopeContent::Call {
             nonce: Some(nonce.to_vec()),
@@ -65,15 +66,16 @@ impl RuntimeState {
             request_url: format!("{IC_URL}/api/v2/canister/{canister_id}/call"),
             public_key: self.data.get_public_key_der(),
             key_id: get_key_id(false),
-            this_canister_id: self.env.canister_id(),
         }
     }
 
     pub fn metrics(&self) -> Metrics {
         Metrics {
-            memory_used: utils::memory::used(),
+            heap_memory_used: utils::memory::heap(),
+            stable_memory_used: utils::memory::stable(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
+            liquid_cycles_balance: self.env.liquid_cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
             public_key: hex::encode(&self.data.public_key),
@@ -95,6 +97,7 @@ impl RuntimeState {
                 .filter_map(|n| n.id.as_ref().map(|i| i.id))
                 .collect(),
             disbursed_neurons: self.data.neurons.disbursed_neurons.clone(),
+            stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 nns_governance_canister: self.data.nns_governance_canister_id,
                 nns_ledger_canister: self.data.nns_ledger_canister_id,
@@ -156,8 +159,10 @@ impl Data {
 #[derive(Serialize, Debug)]
 pub struct Metrics {
     pub now: TimestampMillis,
-    pub memory_used: u64,
+    pub heap_memory_used: u64,
+    pub stable_memory_used: u64,
     pub cycles_balance: Cycles,
+    pub liquid_cycles_balance: Cycles,
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub public_key: String,
@@ -167,6 +172,7 @@ pub struct Metrics {
     pub active_neurons: Vec<u64>,
     pub spawning_neurons: Vec<u64>,
     pub disbursed_neurons: Vec<u64>,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }
 

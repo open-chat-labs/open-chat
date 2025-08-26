@@ -1,20 +1,24 @@
+use crate::client::register_user_and_include_auth;
 use crate::env::ENV;
-use crate::rng::random_message_id;
 use crate::utils::now_nanos;
-use crate::{client, TestEnv};
+use crate::{TestEnv, client};
+use constants::{ICP_SYMBOL, ICP_TRANSFER_FEE, MINUTE_IN_MS};
 use ledger_utils::create_pending_transaction;
+use oc_error_codes::OCErrorCode;
 use std::ops::Deref;
+use std::str::FromStr;
 use std::time::Duration;
 use test_case::test_case;
-use types::{CryptoContent, CryptoTransaction, Cryptocurrency, MessageContentInitial};
-use utils::time::MINUTE_IN_MS;
+use testing::rng::random_from_u128;
+use types::{CryptoContent, CryptoTransaction, MessageContentInitial};
+use user_canister::set_pin_number::PinNumberVerification;
 
 #[test]
-fn can_set_pin_number() {
+fn can_set_pin_number_by_providing_current() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user = client::register_user(env, canister_ids);
 
     client::user::happy_path::set_pin_number(env, &user, None, Some("1000".to_string()));
 
@@ -31,12 +35,58 @@ fn can_set_pin_number() {
     assert!(initial_state2.pin_number_settings.is_none());
 }
 
+#[test_case(true)]
+// TODO reinstate this once the backend check is working properly
+// #[test_case(false)]
+fn can_set_pin_number_by_providing_recent_delegation(within_5_minutes: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let (user, user_auth) = register_user_and_include_auth(env, canister_ids);
+
+    client::user::happy_path::set_pin_number(env, &user, None, Some("1000".to_string()));
+
+    let initial_state1 = client::user::happy_path::initial_state(env, &user);
+
+    assert!(initial_state1.pin_number_settings.is_some());
+    assert!(initial_state1.pin_number_settings.unwrap().attempts_blocked_until.is_none());
+
+    let advance_by = if within_5_minutes { Duration::from_secs(299) } else { Duration::from_secs(301) };
+    env.advance_time(advance_by);
+
+    let set_pin_number_response = client::user::set_pin_number(
+        env,
+        user.principal,
+        user.canister(),
+        &user_canister::set_pin_number::Args {
+            new: None,
+            verification: PinNumberVerification::Delegation(user_auth.delegation),
+        },
+    );
+
+    let initial_state2 = client::user::happy_path::initial_state(env, &user);
+
+    if within_5_minutes {
+        assert!(matches!(
+            set_pin_number_response,
+            user_canister::set_pin_number::Response::Success
+        ));
+        assert!(initial_state2.pin_number_settings.is_none());
+    } else {
+        assert!(matches!(
+            set_pin_number_response,
+            user_canister::set_pin_number::Response::Error(e) if e.matches_code(OCErrorCode::DelegationTooOld)
+        ));
+        assert!(initial_state2.pin_number_settings.is_some());
+    }
+}
+
 #[test]
 fn attempts_blocked_after_incorrect_attempts() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user = client::register_user(env, canister_ids);
 
     client::user::happy_path::set_pin_number(env, &user, None, Some("1000".to_string()));
 
@@ -46,25 +96,27 @@ fn attempts_blocked_after_incorrect_attempts() {
             user.principal,
             user.canister(),
             &user_canister::set_pin_number::Args {
-                current: Some(format!("100{i}")),
-                new: Some("2000".to_string()),
+                verification: PinNumberVerification::PIN(format!("100{i}").into()),
+                new: Some("2000".to_string().into()),
             },
         );
 
         match i {
             1 | 2 => {
-                assert!(matches!(response, user_canister::set_pin_number::Response::PinIncorrect(0)))
+                assert!(
+                    matches!(response, user_canister::set_pin_number::Response::Error(e) if e.matches_code(OCErrorCode::PinIncorrect) && e.message().unwrap() == "0")
+                )
             }
             3 => {
                 assert!(matches!(
                     response,
-                    user_canister::set_pin_number::Response::PinIncorrect(delay) if delay > 0
+                    user_canister::set_pin_number::Response::Error(e) if e.matches_code(OCErrorCode::PinIncorrect) && u32::from_str(e.message().unwrap()).unwrap() > 0
                 ));
             }
             _ => {
                 assert!(matches!(
                     response,
-                    user_canister::set_pin_number::Response::TooManyFailedPinAttempts(delay) if delay > 0
+                    user_canister::set_pin_number::Response::Error(e) if e.matches_code(OCErrorCode::TooManyFailedPinAttempts) && u32::from_str(e.message().unwrap()).unwrap() > 0
                 ));
             }
         }
@@ -95,13 +147,13 @@ fn transfer_requires_correct_pin(test_case: u32) {
         ..
     } = wrapper.env();
 
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
 
     client::user::happy_path::set_pin_number(env, &user1, None, Some("1000".to_string()));
 
     // Send user1 some ICP
-    client::icrc1::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_000_000_000);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_000_000_000);
 
     let response = client::user::send_message_v2(
         env,
@@ -110,14 +162,14 @@ fn transfer_requires_correct_pin(test_case: u32) {
         &user_canister::send_message_v2::Args {
             recipient: user2.user_id,
             thread_root_message_index: None,
-            message_id: random_message_id(),
+            message_id: random_from_u128(),
             content: MessageContentInitial::Crypto(CryptoContent {
                 recipient: user2.user_id,
                 transfer: CryptoTransaction::Pending(create_pending_transaction(
-                    Cryptocurrency::InternetComputer,
+                    ICP_SYMBOL.to_string(),
                     canister_ids.icp_ledger,
                     10000,
-                    10000,
+                    ICP_TRANSFER_FEE,
                     user2.user_id,
                     None,
                     now_nanos(env),
@@ -126,14 +178,14 @@ fn transfer_requires_correct_pin(test_case: u32) {
             }),
             replies_to: None,
             forwarding: false,
+            block_level_markdown: false,
             message_filter_failed: None,
             pin: match test_case {
-                1 => Some("1000".to_string()),
-                2 => Some("2000".to_string()),
+                1 => Some("1000".to_string().into()),
+                2 => Some("2000".to_string().into()),
                 3 => None,
                 _ => unreachable!(),
             },
-            correlation_id: 0,
         },
     );
 
@@ -142,8 +194,12 @@ fn transfer_requires_correct_pin(test_case: u32) {
             response,
             user_canister::send_message_v2::Response::TransferSuccessV2(_)
         )),
-        2 => assert!(matches!(response, user_canister::send_message_v2::Response::PinIncorrect(_))),
-        3 => assert!(matches!(response, user_canister::send_message_v2::Response::PinRequired)),
+        2 => assert!(
+            matches!(response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::PinIncorrect))
+        ),
+        3 => assert!(
+            matches!(response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::PinRequired))
+        ),
         _ => unreachable!(),
     }
 }

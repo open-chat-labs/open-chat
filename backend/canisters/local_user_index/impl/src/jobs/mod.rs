@@ -1,15 +1,37 @@
-use crate::RuntimeState;
+use crate::{RuntimeState, read_state};
+use ic_cdk::management_canister::ClearChunkStoreArgs;
+use tracing::info;
 
-pub mod make_btc_miami_payments;
-pub mod sync_events_to_user_canisters;
-pub mod sync_events_to_user_index_canister;
+pub mod delete_users;
 pub mod topup_canister_pool;
-pub mod upgrade_canisters;
+pub mod topup_canisters;
+pub mod upgrade_communities;
+pub mod upgrade_groups;
+pub mod upgrade_users;
 
 pub(crate) fn start(state: &RuntimeState) {
-    make_btc_miami_payments::start_job_if_required(state);
-    sync_events_to_user_canisters::start_job_if_required(state);
-    sync_events_to_user_index_canister::start_job_if_required(state);
-    topup_canister_pool::start_job_if_required(state);
-    upgrade_canisters::start_job_if_required(state);
+    delete_users::start_job_if_required(state, None);
+    topup_canister_pool::start_job_if_required(state, None);
+    topup_canisters::start_job();
+    upgrade_communities::start_job_if_required(state);
+    upgrade_groups::start_job_if_required(state);
+    upgrade_users::start_job_if_required(state);
+}
+
+fn clear_chunk_store_if_no_pending_upgrades() {
+    if let Some(canister_id) = read_state(|state| {
+        let should_clear_chunk_store = state.data.users_requiring_upgrade.is_empty()
+            && state.data.groups_requiring_upgrade.is_empty()
+            && state.data.communities_requiring_upgrade.is_empty();
+
+        if should_clear_chunk_store { Some(state.env.canister_id()) } else { None }
+    }) {
+        ic_cdk::futures::spawn(async move {
+            ic_cdk::management_canister::clear_chunk_store(&ClearChunkStoreArgs { canister_id })
+                .await
+                .unwrap();
+
+            info!("Chunk store cleared");
+        });
+    }
 }

@@ -1,30 +1,32 @@
 <script lang="ts">
-    import type { EnhancedReplyContext, CreatedUser, OpenChat } from "openchat-client";
+    import type { CreatedUser, EnhancedReplyContext, OpenChat } from "openchat-client";
+    import { iconSize, selectedChatWebhooksStore, selectedCommunityMembersStore } from "openchat-client";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import { rtlStore } from "../../stores/rtl";
-    import { createEventDispatcher, getContext } from "svelte";
-    import HoverIcon from "../HoverIcon.svelte";
     import Close from "svelte-material-icons/Close.svelte";
+    import { rtlStore } from "../../stores/rtl";
+    import HoverIcon from "../HoverIcon.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
-    import { iconSize } from "../../stores/iconSize";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let replyingTo: EnhancedReplyContext;
-    export let user: CreatedUser;
-    export let readonly: boolean;
-
-    $: me = replyingTo.sender?.userId === user?.userId;
-
-    $: communityMembers = client.currentCommunityMembers;
-    $: displayName = me
-        ? client.toTitleCase($_("you"))
-        : client.getDisplayName(replyingTo.sender, $communityMembers);
-
-    function cancelReply() {
-        dispatch("cancelReply");
+    interface Props {
+        replyingTo: EnhancedReplyContext;
+        user: CreatedUser;
+        readonly: boolean;
+        timestamp?: bigint | undefined;
+        onCancelReply: () => void;
     }
+
+    let { replyingTo, user, readonly, timestamp = undefined, onCancelReply }: Props = $props();
+
+    let me = $derived(replyingTo.sender?.userId === user?.userId);
+
+    let displayName = $derived(
+        me
+            ? client.toTitleCase($_("you"))
+            : client.getDisplayName(replyingTo.sender?.userId, $selectedCommunityMembersStore, $selectedChatWebhooksStore),
+    );
 </script>
 
 <div
@@ -32,7 +34,7 @@
     class:me
     class:rtl={$rtlStore}
     class:crypto={replyingTo.content.kind === "crypto_content"}>
-    <div class="close-icon" on:click={cancelReply}>
+    <div class="close-icon" onclick={onCancelReply}>
         <HoverIcon compact>
             <Close size={$iconSize} color={me ? "#fff" : "#aaa"} />
         </HoverIcon>
@@ -42,10 +44,13 @@
     </h4>
     <div class="reply-content">
         <ChatMessageContent
+            showPreviews={false}
             {readonly}
+            {timestamp}
             messageContext={replyingTo.sourceContext}
             fill={false}
             failed={false}
+            blockLevelMarkdown={false}
             {me}
             intersecting={true}
             messageId={replyingTo.messageId}
@@ -54,7 +59,6 @@
             truncate
             edited={replyingTo.edited}
             content={replyingTo.content}
-            myUserId={user.userId}
             reply />
     </div>
 </div>

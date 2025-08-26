@@ -1,19 +1,28 @@
 <script lang="ts">
-    import Roadmap from "./RoadmapOverview.svelte";
-    import Intro from "./Intro.svelte";
-    import Team from "./Team.svelte";
-    import SellingPoints from "./SellingPoints.svelte";
-    import BragBox from "./BragBox.svelte";
+    import { querystringStore } from "openchat-client";
+    import { onMount } from "svelte";
     import ArrowLink from "../ArrowLink.svelte";
+    import Overlay from "../Overlay.svelte";
+    import SignInWithMagicLink from "../SignInWithMagicLink.svelte";
+    import BragBox from "./BragBox.svelte";
+    import Intro from "./Intro.svelte";
+    import Roadmap from "./RoadmapOverview.svelte";
+    import SellingPoints from "./SellingPoints.svelte";
+
+    let showSignInWithMagicLinkModal = false;
+
+    onMount(() => {
+        if ($querystringStore.has("auth")) {
+            showSignInWithMagicLinkModal = true;
+        }
+    });
 </script>
 
 <div class="content">
     <Intro />
 
     <div class="headline">
-        <h2>
-            OpenChat users can send messages to each other containing tokens like ICP and ckBTC.
-        </h2>
+        <h2>OpenChat users can send messages to each other containing tokens like BTC and ICP.</h2>
         <p>
             OpenChat is governed by its community as a DAO and has its own CHAT token. CHAT tokens
             are given as rewards to users to turbo-charge growth and to create a team of millions of
@@ -32,9 +41,11 @@
 
 <BragBox />
 
-<div class="content">
-    <Team />
-</div>
+{#if showSignInWithMagicLinkModal}
+    <Overlay>
+        <SignInWithMagicLink onClose={() => (showSignInWithMagicLinkModal = false)} />
+    </Overlay>
+{/if}
 
 <style lang="scss">
     .headline {

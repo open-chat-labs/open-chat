@@ -1,8 +1,20 @@
 {
-    "extends": "../tsconfig",
+    "extends": "../tsconfig.json",
     "compilerOptions": {
+        "outDir": "build/out",
         "isolatedModules": true,
-        "outDir": "build"
+        "tsBuildInfoFile": null,
+        "paths": {
+            "@src/*": ["./src/*"],
+            "@actions/*": ["./src/actions/*"],
+            "@components/*": ["./src/components/*"],
+            "@i18n/*": ["./src/i18n/*"],
+            "@stores/*": ["./src/stores/*"],
+            "@theme/*": ["./src/theme/*"],
+            "@utils/*": ["./src/utils/*"],
+            "@styles/*": ["./src/styles/*"]
+        }
     },
-    "include": ["./src/**/*"]
+    "include": ["./src/**/*", "../vite-env.d.ts"],
+    "exclude": ["build/**/*", "node_modules"]
 }

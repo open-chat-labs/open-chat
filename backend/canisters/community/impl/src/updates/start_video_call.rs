@@ -1,57 +1,71 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_video_call_operator;
 use crate::timer_job_types::{MarkVideoCallEndedJob, TimerJob};
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{CommunityEventPusher, RuntimeState, execute_update};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::MessageContentInternal;
-use community_canister::start_video_call::{Response::*, *};
-use group_chat_core::SendMessageResult;
-use ic_cdk_macros::update;
-use types::{CallParticipant, ChannelMessageNotification, Notification, UserId, VideoCallContent};
+use chat_events::{CallParticipantInternal, MessageContentInternal, VideoCallContentInternal};
+use community_canister::start_video_call_v2::*;
+use constants::HOUR_IN_MS;
+use oc_error_codes::OCErrorCode;
+use types::{
+    Caller, ChannelMessageNotification, ChannelUserNotificationPayload, CommunityId, OCResult, UserId, VideoCallPresence,
+    VideoCallType,
+};
 
-#[update(guard = "caller_is_video_call_operator")]
+#[update(guard = "caller_is_video_call_operator", candid = true, msgpack = true)]
 #[trace]
-fn start_video_call(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| start_video_call_impl(args, state))
+fn start_video_call_v2(args: Args) -> Response {
+    execute_update(|state| start_video_call_impl(args, state)).into()
 }
 
-fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if state.data.is_frozen() {
-        return NotAuthorized;
-    }
+fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+    state.data.verify_not_frozen()?;
 
-    let Some(channel) = state.data.channels.get_mut(&args.channel_id) else {
-        return NotAuthorized;
-    };
+    let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
+
+    if matches!(
+        (args.call_type, channel.chat.is_public.value, state.data.is_public.value),
+        (VideoCallType::Default, true, true)
+    ) {
+        return Err(OCErrorCode::InitiatorNotAuthorized.with_message("Video call type not allowed"));
+    }
 
     let sender = args.initiator;
     let now = state.env.now();
 
-    let result = match channel.chat.send_message(
-        sender,
+    let result = channel.chat.send_message(
+        &Caller::User(sender),
         None,
         args.message_id,
-        MessageContentInternal::VideoCall(VideoCallContent {
+        MessageContentInternal::VideoCall(VideoCallContentInternal {
+            call_type: args.call_type,
             ended: None,
-            participants: vec![CallParticipant {
-                user_id: sender,
-                joined: now,
-            }],
+            participants: [(
+                sender,
+                CallParticipantInternal {
+                    joined: now,
+                    last_updated: None,
+                    presence: VideoCallPresence::Owner,
+                },
+            )]
+            .into_iter()
+            .collect(),
         }),
         None,
-        Vec::new(),
+        &[],
         false,
         None,
         false,
-        state.data.proposals_bot_user_id,
-        &mut state.data.event_store_client,
+        false,
+        CommunityEventPusher {
+            now,
+            rng: state.env.rng(),
+            queue: &mut state.data.local_user_index_event_sync_queue,
+        },
+        true,
         now,
-    ) {
-        SendMessageResult::Success(r) => r,
-        _ => return NotAuthorized,
-    };
+    )?;
 
     let event_index = result.message_event.index;
     let message_index = result.message_event.event.message_index;
@@ -61,11 +75,14 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
     let users_to_notify: Vec<UserId> = result
         .users_to_notify
         .into_iter()
-        .filter(|u| state.data.members.get_by_user_id(u).map_or(false, |m| !m.suspended.value))
+        .filter(|u| state.data.members.get_by_user_id(u).is_some_and(|m| !m.suspended().value))
         .collect();
 
-    let notification = Notification::ChannelMessage(ChannelMessageNotification {
-        community_id: state.env.canister_id().into(),
+    let community_id: CommunityId = state.env.canister_id().into();
+    let channel_avatar_id = channel.chat.avatar.as_ref().map(|d| d.id);
+
+    let notification = ChannelUserNotificationPayload::ChannelMessage(ChannelMessageNotification {
+        community_id,
         channel_id: args.channel_id,
         thread_root_message_index: None,
         message_index,
@@ -73,33 +90,32 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         sender,
         sender_name: args.initiator_username,
         sender_display_name: args.initiator_display_name,
-        message_type: result.message_event.event.content.message_type(),
+        message_type: result.message_event.event.content.content_type().to_string(),
         message_text: None,
         image_url: None,
         crypto_transfer: None,
-        community_name: state.data.name.clone(),
+        community_name: state.data.name.value.clone(),
         channel_name: channel.chat.name.value.clone(),
         community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
-        channel_avatar_id: channel.chat.avatar.as_ref().map(|d| d.id),
+        channel_avatar_id,
     });
 
-    state.push_notification(users_to_notify, notification);
+    state.push_notification(Some(sender), users_to_notify, notification);
     handle_activity_notification(state);
 
     if let Some(expiry) = expires_at {
         state.data.handle_event_expiry(expiry, now);
     }
 
-    if let Some(duration) = args.max_duration {
-        state.data.timer_jobs.enqueue_job(
-            TimerJob::MarkVideoCallEnded(MarkVideoCallEndedJob(community_canister::end_video_call::Args {
-                channel_id: args.channel_id,
-                message_id: args.message_id,
-            })),
-            now + duration,
-            now,
-        );
-    }
+    let max_duration = args.max_duration.unwrap_or(HOUR_IN_MS);
+    state.data.timer_jobs.enqueue_job(
+        TimerJob::MarkVideoCallEnded(MarkVideoCallEndedJob(community_canister::end_video_call_v2::Args {
+            channel_id: args.channel_id,
+            message_id: args.message_id,
+        })),
+        now + max_duration,
+        now,
+    );
 
-    Success
+    Ok(())
 }

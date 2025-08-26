@@ -1,29 +1,47 @@
+use crate::hybrid_map::HybridMap;
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
-use crate::{ChatEventInternal, ChatInternal, EventKey, EventOrExpiredRangeInternal, EventsMap, MessageInternal};
+use crate::stable_memory::ChatEventsStableStorage;
+use crate::{
+    ChatEventInternal, EventKey, EventOrExpiredRangeInternal, EventsMap, MessageInternal, UpdateEventError,
+    UpdateEventInternalSuccess,
+};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 use types::{
-    ChatEvent, EventIndex, EventOrExpiredRange, EventWrapper, EventWrapperInternal, HydratedMention, Mention, Message,
-    MessageId, MessageIndex, TimestampMillis, UserId,
+    Chat, ChatEvent, ChatEventCategory, EventIndex, EventOrExpiredRange, EventWrapper, EventWrapperInternal, HydratedMention,
+    Mention, Message, MessageId, MessageIndex, TimestampMillis, UserId,
 };
 
-#[derive(Serialize, Deserialize, Default)]
-pub struct ChatEventsList<M = BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>>> {
-    events_map: M,
+#[derive(Serialize, Deserialize)]
+pub struct ChatEventsList {
+    events_map: HybridMap<ChatEventsStableStorage>,
     message_id_map: HashMap<MessageId, EventIndex>,
     message_event_indexes: Vec<EventIndex>,
     latest_event_index: Option<EventIndex>,
     latest_event_timestamp: Option<TimestampMillis>,
 }
 
-impl<M: EventsMap> ChatEventsList<M> {
+impl ChatEventsList {
+    pub fn set_stable_memory_prefix(&mut self, chat: Chat, thread_root_message_index: Option<MessageIndex>) {
+        self.events_map.set_stable_memory_prefix(chat, thread_root_message_index);
+    }
+
+    pub fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
+        ChatEventsList {
+            events_map: HybridMap::new(chat, thread_root_message_index),
+            message_id_map: HashMap::new(),
+            message_event_indexes: Vec::new(),
+            latest_event_index: None,
+            latest_event_timestamp: None,
+        }
+    }
+
     pub(crate) fn push_event(
         &mut self,
         event: ChatEventInternal,
-        correlation_id: u64,
         expires_at: Option<TimestampMillis>,
         now: TimestampMillis,
     ) -> EventIndex {
@@ -37,24 +55,36 @@ impl<M: EventsMap> ChatEventsList<M> {
             self.message_event_indexes.push(event_index);
         }
 
-        self.events_map.insert(EventWrapperInternal {
+        let event_wrapper = EventWrapperInternal {
             index: event_index,
             timestamp: now,
-            correlation_id,
             expires_at,
             event,
-        });
+        };
+        self.events_map.insert(event_wrapper);
+
         self.latest_event_index = Some(event_index);
         self.latest_event_timestamp = Some(now);
 
         event_index
     }
 
-    pub(crate) fn get(&self, event_key: EventKey, min_visible_event_index: EventIndex) -> Option<EventOrExpiredRangeInternal> {
+    pub(crate) fn get(
+        &self,
+        event_key: EventKey,
+        min_visible_event_index: EventIndex,
+        bot_permitted_event_types: Option<&HashSet<ChatEventCategory>>,
+    ) -> Option<EventOrExpiredRangeInternal> {
         let event_index = self.event_index(event_key).filter(|e| *e >= min_visible_event_index)?;
 
         match self.get_value_or_neighbours(event_index) {
-            Ok(event) => Some(EventOrExpiredRangeInternal::Event(event)),
+            Ok(event) => {
+                if bot_permitted_event_types.is_none_or(|pt| event.event.event_category().is_some_and(|t| pt.contains(&t))) {
+                    Some(EventOrExpiredRangeInternal::Event(event))
+                } else {
+                    Some(EventOrExpiredRangeInternal::Unauthorized(event.index))
+                }
+            }
             Err((prev, next)) => Some(EventOrExpiredRangeInternal::ExpiredEventRange(
                 prev.map_or(EventIndex::default(), |i| i.incr()),
                 next.map_or(self.latest_event_index.unwrap_or_default(), |i| i.decr()),
@@ -66,22 +96,37 @@ impl<M: EventsMap> ChatEventsList<M> {
         &self,
         event_key: EventKey,
         min_visible_event_index: EventIndex,
-    ) -> Option<&EventWrapperInternal<ChatEventInternal>> {
-        self.get(event_key, min_visible_event_index).and_then(|e| e.as_event())
+        bot_permitted_event_types: Option<&HashSet<ChatEventCategory>>,
+    ) -> Option<EventWrapperInternal<ChatEventInternal>> {
+        self.get(event_key, min_visible_event_index, bot_permitted_event_types)
+            .and_then(|e| e.into_event())
     }
 
-    pub(crate) fn get_event_mut(
+    pub(crate) fn update_event<
+        F: FnOnce(&mut EventWrapperInternal<ChatEventInternal>) -> Result<T, UpdateEventError<E>>,
+        T,
+        E,
+    >(
         &mut self,
         event_key: EventKey,
-        min_visible_event_index: EventIndex,
-    ) -> Option<&mut EventWrapperInternal<ChatEventInternal>> {
-        self.event_index(event_key)
-            .filter(|e| *e >= min_visible_event_index)
-            .and_then(|e| self.events_map.get_mut(e))
+        update_event_fn: F,
+    ) -> Result<UpdateEventInternalSuccess<T>, UpdateEventError<E>> {
+        if let Some(mut event) = self.get_event(event_key, EventIndex::default(), None) {
+            update_event_fn(&mut event).map(|result| {
+                self.events_map.insert(event.clone());
+                UpdateEventInternalSuccess {
+                    event_index: event.index,
+                    event: event.event,
+                    value: result,
+                }
+            })
+        } else {
+            Err(UpdateEventError::NotFound)
+        }
     }
 
     pub(crate) fn is_accessible(&self, event_key: EventKey, min_visible_event_index: EventIndex) -> bool {
-        self.get_event(event_key, min_visible_event_index).is_some()
+        self.event_index(event_key).is_some_and(|e| e >= min_visible_event_index)
     }
 
     pub(crate) fn iter(
@@ -89,30 +134,23 @@ impl<M: EventsMap> ChatEventsList<M> {
         start: Option<EventKey>,
         ascending: bool,
         min_visible_event_index: EventIndex,
+        bot_permitted_event_types: Option<HashSet<ChatEventCategory>>,
     ) -> Box<dyn Iterator<Item = EventOrExpiredRangeInternal> + '_> {
         let (min, max) = if let Some(start) = start {
-            match self.get(start, min_visible_event_index) {
-                Some(EventOrExpiredRangeInternal::Event(event_index)) => {
-                    if ascending {
-                        (event_index.index, self.latest_event_index.unwrap_or_default())
-                    } else {
-                        (min_visible_event_index, event_index.index)
-                    }
+            if let Some(index) = self.event_index(start) {
+                if ascending {
+                    (index, self.latest_event_index.unwrap_or_default())
+                } else {
+                    (min_visible_event_index, index)
                 }
-                Some(EventOrExpiredRangeInternal::ExpiredEventRange(from, to)) => {
-                    if ascending {
-                        (from, self.latest_event_index.unwrap_or_default())
-                    } else {
-                        (min_visible_event_index, to)
-                    }
-                }
-                None => return Box::new(std::iter::empty()),
+            } else {
+                return Box::new(std::iter::empty());
             }
         } else {
             (min_visible_event_index, self.latest_event_index.unwrap_or_default())
         };
 
-        let iter = self.events_map.range(min..=max).map(|(_, e)| e);
+        let iter = self.events_map.range(min..=max);
 
         if ascending {
             Box::new(ChatEventsListIterator {
@@ -121,6 +159,7 @@ impl<M: EventsMap> ChatEventsList<M> {
                 expected_next: min,
                 end: max,
                 complete: false,
+                bot_permitted_event_types,
             })
         } else {
             Box::new(ChatEventsListIterator {
@@ -129,6 +168,7 @@ impl<M: EventsMap> ChatEventsList<M> {
                 expected_next: max,
                 end: min,
                 complete: false,
+                bot_permitted_event_types,
             })
         }
     }
@@ -164,26 +204,9 @@ impl<M: EventsMap> ChatEventsList<M> {
         }
     }
 
-    pub fn migrate_replies(&mut self, old: ChatInternal, new: ChatInternal) -> Vec<EventIndex> {
-        let mut updated = Vec::new();
-        for event in self.events_map.values_mut() {
-            if let Some(message) = event.event.as_message_mut() {
-                if let Some(r) = message.replies_to.as_mut() {
-                    if let Some((chat, _)) = r.chat_if_other.as_mut() {
-                        if *chat == old {
-                            *chat = new;
-                            updated.push(event.index);
-                        }
-                    }
-                }
-            }
-        }
-        updated
-    }
-
     pub(crate) fn event_count_since<F: Fn(&ChatEventInternal) -> bool>(&self, since: TimestampMillis, filter: &F) -> usize {
         self.events_map
-            .values()
+            .iter()
             .rev()
             .take_while(|e| e.timestamp > since)
             .filter(|e| filter(&e.event))
@@ -218,27 +241,11 @@ impl<M: EventsMap> ChatEventsList<M> {
         MessageIndex::from(self.message_event_indexes.len() as u32)
     }
 
-    pub fn last(&self) -> Option<&EventWrapperInternal<ChatEventInternal>> {
-        self.events_map.values().next_back()
+    pub fn last(&self) -> Option<EventWrapperInternal<ChatEventInternal>> {
+        self.events_map.iter().next_back()
     }
 
-    pub fn last_mut(&mut self) -> Option<&mut EventWrapperInternal<ChatEventInternal>> {
-        self.events_map.values_mut().next_back()
-    }
-
-    pub fn len(&self) -> usize {
-        self.events_map.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.events_map.is_empty()
-    }
-
-    pub fn contains_message_id(&self, message_id: MessageId) -> bool {
-        self.message_id_map.contains_key(&message_id)
-    }
-
-    fn event_index(&self, event_key: EventKey) -> Option<EventIndex> {
+    pub fn event_index(&self, event_key: EventKey) -> Option<EventIndex> {
         match event_key {
             EventKey::EventIndex(e) => Some(e),
             EventKey::MessageIndex(m) => self.message_event_indexes.get(usize::from(m)).copied(),
@@ -249,50 +256,52 @@ impl<M: EventsMap> ChatEventsList<M> {
     fn get_value_or_neighbours(
         &self,
         event_index: EventIndex,
-    ) -> Result<&EventWrapperInternal<ChatEventInternal>, (Option<EventIndex>, Option<EventIndex>)> {
+    ) -> Result<EventWrapperInternal<ChatEventInternal>, (Option<EventIndex>, Option<EventIndex>)> {
         let next_key = match self.events_map.range(event_index..).next() {
-            Some((k, v)) if *k == event_index => return Ok(v),
-            Some((k, _)) => Some(*k),
+            Some(v) if v.index == event_index => return Ok(v),
+            Some(v) => Some(v.index),
             None => None,
         };
-
-        let previous_key = self.events_map.range(..event_index).next_back().map(|(k, _)| *k);
+        let previous_key = self.events_map.range(..event_index).next_back().map(|e| e.index);
 
         Err((previous_key, next_key))
     }
 }
 
-pub struct ChatEventsListReader<'r, M = BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>>> {
-    events_list: &'r ChatEventsList<M>,
+pub struct ChatEventsListReader<'r> {
+    events_list: &'r ChatEventsList,
     last_updated_timestamps: &'r LastUpdatedTimestamps,
     min_visible_event_index: EventIndex,
+    bot_permitted_event_types: Option<HashSet<ChatEventCategory>>,
 }
 
-impl<'r, M> Deref for ChatEventsListReader<'r, M> {
-    type Target = ChatEventsList<M>;
+impl Deref for ChatEventsListReader<'_> {
+    type Target = ChatEventsList;
 
     fn deref(&self) -> &Self::Target {
         self.events_list
     }
 }
 
-impl<'r, M: EventsMap + 'r> ChatEventsListReader<'r, M> {
+impl<'r> ChatEventsListReader<'r> {
     pub(crate) fn new(
-        events_list: &'r ChatEventsList<M>,
+        events_list: &'r ChatEventsList,
         last_updated_timestamps: &'r LastUpdatedTimestamps,
-    ) -> ChatEventsListReader<'r, M> {
-        Self::with_min_visible_event_index(events_list, last_updated_timestamps, EventIndex::default())
+    ) -> ChatEventsListReader<'r> {
+        Self::with_min_visible_event_index(events_list, last_updated_timestamps, EventIndex::default(), None)
     }
 
     pub(crate) fn with_min_visible_event_index(
-        events_list: &'r ChatEventsList<M>,
+        events_list: &'r ChatEventsList,
         last_updated_timestamps: &'r LastUpdatedTimestamps,
         min_visible_event_index: EventIndex,
-    ) -> ChatEventsListReader<'r, M> {
+        bot_permitted_event_types: Option<HashSet<ChatEventCategory>>,
+    ) -> ChatEventsListReader<'r> {
         ChatEventsListReader {
             events_list,
             last_updated_timestamps,
             min_visible_event_index,
+            bot_permitted_event_types,
         }
     }
 }
@@ -308,12 +317,12 @@ pub trait Reader {
         &self,
         start: Option<EventKey>,
         ascending: bool,
-    ) -> Box<dyn Iterator<Item = &EventWrapperInternal<ChatEventInternal>> + '_> {
-        Box::new(self.iter(start, ascending).filter_map(|e| e.as_event()))
+    ) -> Box<dyn Iterator<Item = EventWrapperInternal<ChatEventInternal>> + '_> {
+        Box::new(self.iter(start, ascending).filter_map(|e| e.into_event()))
     }
 
-    fn get_event(&self, event_key: EventKey) -> Option<&EventWrapperInternal<ChatEventInternal>> {
-        self.get(event_key).and_then(|e| e.as_event())
+    fn get_event(&self, event_key: EventKey) -> Option<EventWrapperInternal<ChatEventInternal>> {
+        self.get(event_key).and_then(|e| e.into_event())
     }
 
     fn get_by_indexes(&self, event_indexes: &[EventIndex], my_user_id: Option<UserId>) -> Vec<EventOrExpiredRange> {
@@ -365,24 +374,27 @@ pub trait Reader {
         self.cap_then_hydrate_events(combined, max_messages, max_events, my_user_id)
     }
 
-    fn message_internal(&self, event_key: EventKey) -> Option<&MessageInternal> {
-        self.get_event(event_key).and_then(|e| e.event.as_message())
+    fn message_internal(&self, event_key: EventKey) -> Option<MessageInternal> {
+        self.get_event(event_key).and_then(|e| e.event.into_message())
     }
 
     fn message(&self, event_key: EventKey, my_user_id: Option<UserId>) -> Option<Message> {
         self.message_internal(event_key).map(|m| m.hydrate(my_user_id))
     }
 
-    fn message_event_internal(&self, event_key: EventKey) -> Option<EventWrapper<&MessageInternal>> {
-        self.get_event(event_key)
-            .and_then(|e| e.event.as_message().map(|m| (e, m)))
-            .map(|(e, m)| EventWrapper {
-                index: e.index,
-                timestamp: e.timestamp,
-                correlation_id: e.correlation_id,
-                expires_at: e.expires_at,
-                event: m,
-            })
+    fn message_event_internal(&self, event_key: EventKey) -> Option<EventWrapper<MessageInternal>> {
+        self.get_event(event_key).and_then(|e| {
+            if let Some(m) = e.event.into_message() {
+                Some(EventWrapper {
+                    index: e.index,
+                    timestamp: e.timestamp,
+                    expires_at: e.expires_at,
+                    event: m,
+                })
+            } else {
+                None
+            }
+        })
     }
 
     fn message_event(&self, event_key: EventKey, my_user_id: Option<UserId>) -> Option<EventWrapper<Message>> {
@@ -403,66 +415,38 @@ pub trait Reader {
         match event_or_expired_range {
             EventOrExpiredRangeInternal::Event(event) => EventOrExpiredRange::Event(self.hydrate_event(event, my_user_id)),
             EventOrExpiredRangeInternal::ExpiredEventRange(from, to) => EventOrExpiredRange::ExpiredEventRange(from, to),
+            EventOrExpiredRangeInternal::Unauthorized(event) => EventOrExpiredRange::Unauthorized(event),
         }
     }
 
     fn hydrate_event(
         &self,
-        event: &EventWrapperInternal<ChatEventInternal>,
+        event: EventWrapperInternal<ChatEventInternal>,
         my_user_id: Option<UserId>,
     ) -> EventWrapper<ChatEvent> {
-        let event_data = match &event.event {
-            ChatEventInternal::DirectChatCreated(d) => ChatEvent::DirectChatCreated(*d),
-            ChatEventInternal::Message(m) => ChatEvent::Message(Box::new(m.hydrate(my_user_id))),
-            ChatEventInternal::GroupChatCreated(g) => ChatEvent::GroupChatCreated(*g.clone()),
-            ChatEventInternal::GroupNameChanged(g) => ChatEvent::GroupNameChanged(*g.clone()),
-            ChatEventInternal::GroupDescriptionChanged(g) => ChatEvent::GroupDescriptionChanged(*g.clone()),
-            ChatEventInternal::GroupRulesChanged(g) => ChatEvent::GroupRulesChanged(*g.clone()),
-            ChatEventInternal::AvatarChanged(g) => ChatEvent::AvatarChanged(*g.clone()),
-            ChatEventInternal::ParticipantsAdded(p) => ChatEvent::ParticipantsAdded(*p.clone()),
-            ChatEventInternal::ParticipantsRemoved(p) => ChatEvent::ParticipantsRemoved(*p.clone()),
-            ChatEventInternal::ParticipantJoined(p) => ChatEvent::ParticipantJoined(*p.clone()),
-            ChatEventInternal::ParticipantLeft(p) => ChatEvent::ParticipantLeft(*p.clone()),
-            ChatEventInternal::RoleChanged(r) => ChatEvent::RoleChanged(*r.clone()),
-            ChatEventInternal::UsersBlocked(u) => ChatEvent::UsersBlocked(*u.clone()),
-            ChatEventInternal::UsersUnblocked(u) => ChatEvent::UsersUnblocked(*u.clone()),
-            ChatEventInternal::MessagePinned(p) => ChatEvent::MessagePinned(*p.clone()),
-            ChatEventInternal::PermissionsChanged(p) => ChatEvent::PermissionsChanged(*p.clone()),
-            ChatEventInternal::MessageUnpinned(u) => ChatEvent::MessageUnpinned(*u.clone()),
-            ChatEventInternal::GroupVisibilityChanged(g) => ChatEvent::GroupVisibilityChanged(*g.clone()),
-            ChatEventInternal::GroupInviteCodeChanged(g) => ChatEvent::GroupInviteCodeChanged(*g.clone()),
-            ChatEventInternal::ChatFrozen(f) => ChatEvent::ChatFrozen(*f.clone()),
-            ChatEventInternal::ChatUnfrozen(u) => ChatEvent::ChatUnfrozen(*u.clone()),
-            ChatEventInternal::EventsTimeToLiveUpdated(u) => ChatEvent::EventsTimeToLiveUpdated(*u.clone()),
-            ChatEventInternal::GroupGateUpdated(g) => ChatEvent::GroupGateUpdated(*g.clone()),
-            ChatEventInternal::UsersInvited(e) => ChatEvent::UsersInvited(*e.clone()),
-            ChatEventInternal::MembersAddedToPublicChannel(m) => ChatEvent::MembersAddedToDefaultChannel(m.as_ref().into()),
-            ChatEventInternal::Empty => ChatEvent::Empty,
-        };
+        let event_data = event.event.chat_event(my_user_id);
 
         EventWrapper {
             index: event.index,
             timestamp: event.timestamp,
-            correlation_id: event.correlation_id,
             expires_at: event.expires_at,
             event: event_data,
         }
     }
 
     fn hydrate_mention(&self, mention: &Mention) -> Option<HydratedMention> {
-        self.message_event_internal(mention.message_index.into())
-            .map(|e| HydratedMention {
+        self.event_index(mention.message_index.into())
+            .map(|event_index| HydratedMention {
                 thread_root_message_index: mention.thread_root_message_index,
-                message_id: e.event.message_id,
-                message_index: e.event.message_index,
-                event_index: e.index,
-                mentioned_by: e.event.sender,
+                message_id: mention.message_id,
+                message_index: mention.message_index,
+                event_index,
             })
     }
 
-    fn cap_then_hydrate_events<'a>(
+    fn cap_then_hydrate_events(
         &self,
-        iterator: impl Iterator<Item = EventOrExpiredRangeInternal<'a>>,
+        iterator: impl Iterator<Item = EventOrExpiredRangeInternal>,
         max_messages: usize,
         max_events: usize,
         my_user_id: Option<UserId>,
@@ -485,9 +469,13 @@ pub trait Reader {
     }
 }
 
-impl<'r> Reader for ChatEventsListReader<'r> {
+impl Reader for ChatEventsListReader<'_> {
     fn get(&self, event_key: EventKey) -> Option<EventOrExpiredRangeInternal> {
-        self.events_list.get(event_key, self.min_visible_event_index)
+        self.events_list.get(
+            event_key,
+            self.min_visible_event_index,
+            self.bot_permitted_event_types.as_ref(),
+        )
     }
 
     fn event_index(&self, event_key: EventKey) -> Option<EventIndex> {
@@ -495,7 +483,12 @@ impl<'r> Reader for ChatEventsListReader<'r> {
     }
 
     fn iter(&self, start: Option<EventKey>, ascending: bool) -> Box<dyn Iterator<Item = EventOrExpiredRangeInternal> + '_> {
-        self.events_list.iter(start, ascending, self.min_visible_event_index)
+        self.events_list.iter(
+            start,
+            ascending,
+            self.min_visible_event_index,
+            self.bot_permitted_event_types.clone(),
+        )
     }
 
     fn iter_latest_messages(&self, my_user_id: Option<UserId>) -> Box<dyn Iterator<Item = EventWrapper<Message>> + '_> {
@@ -505,7 +498,7 @@ impl<'r> Reader for ChatEventsListReader<'r> {
                 .iter()
                 .rev()
                 .copied()
-                .map_while(|e| self.events_list.get_event(e.into(), self.min_visible_event_index))
+                .map_while(|e| self.events_list.get_event(e.into(), self.min_visible_event_index, None))
                 .filter_map(move |e| try_into_message_event(e, my_user_id)),
         )
     }
@@ -522,15 +515,14 @@ impl<'r> Reader for ChatEventsListReader<'r> {
 }
 
 fn try_into_message_event(
-    event: &EventWrapperInternal<ChatEventInternal>,
+    event: EventWrapperInternal<ChatEventInternal>,
     my_user_id: Option<UserId>,
 ) -> Option<EventWrapper<Message>> {
-    let message = event.event.as_message()?;
+    let message = event.event.into_message()?;
 
     Some(EventWrapper {
         index: event.index,
         timestamp: event.timestamp,
-        correlation_id: event.correlation_id,
         expires_at: event.expires_at,
         event: message.hydrate(my_user_id),
     })
@@ -542,10 +534,11 @@ struct ChatEventsListIterator<I> {
     expected_next: EventIndex,
     end: EventIndex,
     complete: bool,
+    bot_permitted_event_types: Option<HashSet<ChatEventCategory>>,
 }
 
-impl<'a, I: Iterator<Item = &'a EventWrapperInternal<ChatEventInternal>>> Iterator for ChatEventsListIterator<I> {
-    type Item = EventOrExpiredRangeInternal<'a>;
+impl<I: Iterator<Item = EventWrapperInternal<ChatEventInternal>>> Iterator for ChatEventsListIterator<I> {
+    type Item = EventOrExpiredRangeInternal;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.complete {
@@ -553,20 +546,29 @@ impl<'a, I: Iterator<Item = &'a EventWrapperInternal<ChatEventInternal>>> Iterat
         }
 
         let result = if let Some(next) = self.inner.next() {
+            let index = next.index;
             let result = if next.index == self.expected_next {
-                EventOrExpiredRangeInternal::Event(next)
+                if self
+                    .bot_permitted_event_types
+                    .as_ref()
+                    .is_none_or(|pt| next.event.event_category().is_some_and(|t| pt.contains(&t)))
+                {
+                    EventOrExpiredRangeInternal::Event(next)
+                } else {
+                    EventOrExpiredRangeInternal::Unauthorized(index)
+                }
             } else if self.ascending {
-                EventOrExpiredRangeInternal::ExpiredEventRange(self.expected_next, next.index.decr())
+                EventOrExpiredRangeInternal::ExpiredEventRange(self.expected_next, index.decr())
             } else {
-                EventOrExpiredRangeInternal::ExpiredEventRange(next.index.incr(), self.expected_next)
+                EventOrExpiredRangeInternal::ExpiredEventRange(index.incr(), self.expected_next)
             };
 
             if self.expected_next == self.end {
                 self.complete = true;
             } else if self.ascending {
-                self.expected_next = next.index.incr();
+                self.expected_next = index.incr();
             } else {
-                self.expected_next = next.index.decr();
+                self.expected_next = index.decr();
             }
 
             result
@@ -586,9 +588,10 @@ impl<'a, I: Iterator<Item = &'a EventWrapperInternal<ChatEventInternal>>> Iterat
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{ChatEvents, MessageContentInternal, PushMessageArgs, TextContentInternal};
+    use crate::{ChatEvents, MessageContentInternal, NullEventPusher, PushMessageArgs, TextContentInternal};
     use candid::Principal;
-    use event_store_producer::NullRuntime;
+    use ic_stable_structures::DefaultMemoryImpl;
+    use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use rand::random;
     use std::mem::size_of;
     use types::{EventsTimeToLiveUpdated, Milliseconds};
@@ -607,7 +610,7 @@ mod tests {
         let event_by_message_index = events_reader.get_event(EventKey::MessageIndex(10.into())).unwrap();
         let event_by_event_index = events_reader.get_event(event_by_message_index.index.into()).unwrap();
         let event_by_message_id = events_reader
-            .get_event(event_by_message_index.event.as_message().unwrap().message_id.into())
+            .get_event(event_by_message_index.event.into_message().unwrap().message_id.into())
             .unwrap();
 
         assert_eq!(event_by_message_index.index, event_by_event_index.index);
@@ -632,7 +635,10 @@ mod tests {
 
         let event_indexes: Vec<usize> = results.iter().map(|e| e.as_event().unwrap().index.into()).collect();
 
-        assert_eq!(event_indexes, (0..events_reader.len()).collect_vec());
+        assert_eq!(
+            event_indexes,
+            (0..=events_reader.latest_event_index().unwrap().into()).collect_vec()
+        );
     }
 
     #[test]
@@ -644,7 +650,10 @@ mod tests {
 
         let event_indexes: Vec<usize> = results.iter().map(|e| e.as_event().unwrap().index.into()).collect();
 
-        assert_eq!(event_indexes, (0..events_reader.len()).rev().collect_vec());
+        assert_eq!(
+            event_indexes,
+            (0..=events_reader.latest_event_index().unwrap().into()).rev().collect_vec()
+        );
     }
 
     #[test]
@@ -666,7 +675,10 @@ mod tests {
 
         let event_indexes: Vec<usize> = results.iter().map(|e| e.as_event().unwrap().index.into()).collect();
 
-        assert_eq!(event_indexes, (first.index.into()..events_reader.len()).collect_vec());
+        assert_eq!(
+            event_indexes,
+            (usize::from(first.index)..=events_reader.latest_event_index().unwrap().into()).collect_vec()
+        );
     }
 
     #[test]
@@ -738,6 +750,9 @@ mod tests {
     }
 
     fn setup_events(events_ttl: Option<Milliseconds>) -> ChatEvents {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(1)));
+
         let mut events = ChatEvents::new_direct_chat(Principal::from_slice(&[1]).into(), events_ttl, random(), 1);
 
         push_events(&mut events, 0);
@@ -750,7 +765,7 @@ mod tests {
 
         for i in 0..50 {
             let message_id = MessageId::from((now + i) as u128);
-            events.push_message::<NullRuntime>(
+            events.push_message::<NullEventPusher>(
                 PushMessageArgs {
                     sender: user_id,
                     thread_root_message_index: None,
@@ -758,12 +773,13 @@ mod tests {
                     content: MessageContentInternal::Text(TextContentInternal {
                         text: "hello".to_string(),
                     }),
+                    sender_context: None,
                     mentioned: Vec::new(),
                     replies_to: None,
                     now,
                     forwarded: false,
                     sender_is_bot: false,
-                    correlation_id: i,
+                    block_level_markdown: false,
                 },
                 None,
             );
@@ -772,7 +788,6 @@ mod tests {
                     updated_by: user_id,
                     new_ttl: Some(i),
                 })),
-                i,
                 now,
             );
         }

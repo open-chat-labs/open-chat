@@ -1,22 +1,20 @@
+use constants::{CHAT_LEDGER_CANISTER_ID, DAY_IN_MS, LIFETIME_DIAMOND_TIMESTAMP};
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use types::{
-    is_default, is_empty_slice, Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration,
-    DiamondMembershipStatus, DiamondMembershipStatusFull, DiamondMembershipSubscription, TimestampMillis,
+    CanisterId, DiamondMembershipDetails, DiamondMembershipPlanDuration, DiamondMembershipStatus, DiamondMembershipStatusFull,
+    DiamondMembershipSubscription, TimestampMillis, is_default,
 };
-use utils::time::DAY_IN_MS;
-
-const LIFETIME_TIMESTAMP: TimestampMillis = 30000000000000; // This timestamp is in the year 2920
 
 #[derive(Serialize, Deserialize, Clone, Default)]
 pub struct DiamondMembershipDetailsInternal {
-    #[serde(rename = "e", alias = "expires_at", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "e", default, skip_serializing_if = "Option::is_none")]
     expires_at: Option<TimestampMillis>,
-    #[serde(rename = "p", alias = "payments", default, skip_serializing_if = "is_empty_slice")]
+    #[serde(rename = "p", default, skip_serializing_if = "Vec::is_empty")]
     payments: Vec<DiamondMembershipPayment>,
-    #[serde(rename = "c", alias = "pay_in_chat", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "c", default, skip_serializing_if = "is_default")]
     pay_in_chat: bool,
-    #[serde(rename = "s", alias = "subscription", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "s", default, skip_serializing_if = "is_default")]
     subscription: DiamondMembershipSubscription,
     #[serde(skip)]
     payment_in_progress: bool,
@@ -25,7 +23,8 @@ pub struct DiamondMembershipDetailsInternal {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct DiamondMembershipPayment {
     pub timestamp: TimestampMillis,
-    pub token: Cryptocurrency,
+    pub ledger: CanisterId,
+    pub fee: u128,
     pub amount_e8s: u64,
     pub block_index: u64,
     pub duration: DiamondMembershipPlanDuration,
@@ -38,12 +37,29 @@ impl DiamondMembershipDetailsInternal {
     }
 
     pub fn is_active(&self, now: TimestampMillis) -> bool {
-        self.expires_at.map_or(false, |ts| now < ts)
+        self.expires_at.is_some_and(|ts| now < ts)
+    }
+
+    pub fn was_active(&self, timestamp: TimestampMillis) -> bool {
+        for p in self.payments.iter() {
+            if timestamp < p.timestamp {
+                return false;
+            }
+
+            if timestamp >= p.timestamp
+                && (timestamp < (p.timestamp + p.duration.as_millis())
+                    || matches!(p.duration, DiamondMembershipPlanDuration::Lifetime))
+            {
+                return true;
+            }
+        }
+
+        false
     }
 
     pub fn status(&self, now: TimestampMillis) -> DiamondMembershipStatus {
         match self.expires_at {
-            Some(ts) if ts > LIFETIME_TIMESTAMP => DiamondMembershipStatus::Lifetime,
+            Some(ts) if ts > LIFETIME_DIAMOND_TIMESTAMP => DiamondMembershipStatus::Lifetime,
             Some(ts) if ts > now => DiamondMembershipStatus::Active,
             _ => DiamondMembershipStatus::Inactive,
         }
@@ -61,38 +77,35 @@ impl DiamondMembershipDetailsInternal {
                 .unwrap_or_default()
     }
 
-    #[allow(deprecated)]
     pub fn status_full(&self, now: TimestampMillis) -> DiamondMembershipStatusFull {
         match self.expires_at {
-            Some(ts) if ts > LIFETIME_TIMESTAMP => DiamondMembershipStatusFull::Lifetime,
+            Some(ts) if ts > LIFETIME_DIAMOND_TIMESTAMP => DiamondMembershipStatusFull::Lifetime,
             Some(ts) if ts > now => DiamondMembershipStatusFull::Active(DiamondMembershipDetails {
                 expires_at: ts,
                 pay_in_chat: self.pay_in_chat,
-                recurring: Some(self.subscription),
                 subscription: self.subscription,
             }),
             _ => DiamondMembershipStatusFull::Inactive,
         }
     }
 
-    #[allow(deprecated)]
     pub fn hydrate(&self, now: TimestampMillis) -> Option<DiamondMembershipDetails> {
         self.expires_at.filter(|&ts| now < ts).map(|ts| DiamondMembershipDetails {
             expires_at: ts,
             pay_in_chat: self.pay_in_chat,
-            recurring: self.subscription.is_active().then_some(self.subscription),
             subscription: self.subscription,
         })
     }
 
     pub fn is_lifetime_diamond_member(&self) -> bool {
-        self.expires_at > Some(LIFETIME_TIMESTAMP)
+        self.expires_at > Some(LIFETIME_DIAMOND_TIMESTAMP)
     }
 
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn add_payment(
         &mut self,
-        token: Cryptocurrency,
+        ledger: CanisterId,
+        transfer_fee: u128,
         amount_e8s: u64,
         block_index: u64,
         duration: DiamondMembershipPlanDuration,
@@ -102,7 +115,8 @@ impl DiamondMembershipDetailsInternal {
     ) {
         let payment = DiamondMembershipPayment {
             timestamp: now,
-            token,
+            ledger,
+            fee: transfer_fee,
             amount_e8s,
             block_index,
             duration,
@@ -111,7 +125,7 @@ impl DiamondMembershipDetailsInternal {
 
         let duration_millis = duration.as_millis();
         self.expires_at = Some(max(now, self.expires_at.unwrap_or_default()) + duration_millis);
-        self.pay_in_chat = matches!(payment.token, Cryptocurrency::CHAT);
+        self.pay_in_chat = payment.ledger == CHAT_LEDGER_CANISTER_ID;
         self.payments.push(payment);
         self.subscription = if recurring { duration.into() } else { DiamondMembershipSubscription::Disabled };
         self.payment_in_progress = false;

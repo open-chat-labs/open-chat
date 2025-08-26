@@ -1,32 +1,21 @@
-import type { Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import { idlFactory, type IcpSwapPoolService } from "./candid/idl";
-import { CandidService } from "../../../candidService";
-import type { AgentConfig } from "../../../../config";
+import { CandidCanisterAgent } from "../../../canisterAgent/candid";
 import { quoteResponse } from "./mappers";
+import type { SwapPoolClient } from "../../index";
 
-export class IcpSwapPoolClient extends CandidService {
-    private service: IcpSwapPoolService;
-
-    private constructor(
+export class IcpSwapPoolClient
+    extends CandidCanisterAgent<IcpSwapPoolService>
+    implements SwapPoolClient
+{
+    constructor(
         identity: Identity,
-        config: AgentConfig,
+        agent: HttpAgent,
         canisterId: string,
         private token0: string,
         private token1: string,
     ) {
-        super(identity);
-
-        this.service = this.createServiceClient<IcpSwapPoolService>(idlFactory, canisterId, config);
-    }
-
-    static create(
-        identity: Identity,
-        config: AgentConfig,
-        canisterId: string,
-        token0: string,
-        token1: string,
-    ): IcpSwapPoolClient {
-        return new IcpSwapPoolClient(identity, config, canisterId, token0, token1);
+        super(identity, agent, canisterId, idlFactory, "IcpSwapPool");
     }
 
     quote(inputToken: string, outputToken: string, amountIn: bigint): Promise<bigint> {

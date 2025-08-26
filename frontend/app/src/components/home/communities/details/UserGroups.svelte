@@ -1,62 +1,62 @@
 <script lang="ts">
-    import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
-    import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
-    import AreYouSure from "../../../AreYouSure.svelte";
     import type {
         CommunitySummary,
         Member,
         OpenChat,
+        ReadonlyMap,
         UserGroupDetails,
         UserLookup,
         UserSummary,
     } from "openchat-client";
-    import Plus from "svelte-material-icons/Plus.svelte";
-    import { iconSize } from "../../../../stores/iconSize";
+    import {
+        allUsersStore,
+        iconSize,
+        selectedCommunityMembersStore,
+        selectedCommunityUserGroupsStore,
+    } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import Search from "../../../Search.svelte";
-    import HoverIcon from "../../../HoverIcon.svelte";
-    import UserGroup from "./UserGroup.svelte";
-    import { toastStore } from "../../../../stores/toast";
-    import CollapsibleCard from "../../../CollapsibleCard.svelte";
-    import User from "../../groupdetails/User.svelte";
+    import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
+    import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
+    import Plus from "svelte-material-icons/Plus.svelte";
+    import { SvelteSet } from "svelte/reactivity";
     import { i18nKey } from "../../../../i18n/i18n";
+    import { toastStore } from "../../../../stores/toast";
+    import AreYouSure from "../../../AreYouSure.svelte";
+    import CollapsibleCard from "../../../CollapsibleCard.svelte";
+    import HoverIcon from "../../../HoverIcon.svelte";
+    import Search from "../../../Search.svelte";
     import Translatable from "../../../Translatable.svelte";
+    import User from "../../groupdetails/User.svelte";
+    import UserGroup from "./UserGroup.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    export let community: CommunitySummary;
-    export let openedGroupId: number | undefined = undefined;
+    interface Props {
+        community: CommunitySummary;
+        openedGroupId?: number | undefined;
+    }
 
-    let searchTerm = "";
-    let selectedGroup: UserGroupDetails | undefined = undefined;
-    let confirmingDelete = false;
+    let { community, openedGroupId = $bindable(undefined) }: Props = $props();
+
+    let searchTerm = $state("");
+    let selectedGroup: UserGroupDetails | undefined = $state(undefined);
+    let confirmingDelete = $state(false);
     let groupToDelete: UserGroupDetails | undefined = undefined;
-    let communityUsers: Record<string, UserSummary> = {};
-    let communityUsersList: UserSummary[] = [];
-
-    $: searchTermLower = searchTerm.toLowerCase();
-    $: userStore = client.userStore;
-    $: communityMembers = client.currentCommunityMembers;
-    $: userGroupsMap = client.currentCommunityUserGroups;
-    $: userGroups = [...$userGroupsMap.values()];
-    $: canManageUserGroups = client.canManageUserGroups(community.id);
-    $: matchingGroups = userGroups.filter((ug) => matchesSearch(searchTermLower, ug));
+    let communityUsers: Record<string, UserSummary> = $state({});
+    let communityUsersList: UserSummary[] = $state([]);
 
     onMount(() => {
-        const start = Date.now();
-        communityUsers = createLookup($communityMembers, $userStore);
+        communityUsers = createLookup($selectedCommunityMembersStore, $allUsersStore);
         communityUsersList = Object.values(communityUsers);
-        const end = Date.now();
-        console.debug("PERF: Built community member lookup: ", end - start);
     });
 
     function createLookup(
-        members: Map<string, Member>,
+        members: ReadonlyMap<string, Member>,
         allUsers: UserLookup,
     ): Record<string, UserSummary> {
         return [...members.values()].reduce(
             (map, m) => {
-                const user = allUsers[m.userId];
+                const user = allUsers.get(m.userId);
                 if (user !== undefined) {
                     map[user.userId] = {
                         ...user,
@@ -80,7 +80,7 @@
             kind: "user_group",
             id: -1,
             name: "",
-            members: new Set<string>(),
+            members: new SvelteSet<string>(),
         };
     }
 
@@ -108,11 +108,13 @@
             .finally(() => (groupToDelete = undefined));
     }
 
-    function editUserGroup(userGroup: UserGroupDetails) {
+    function editUserGroup(e: Event, userGroup: UserGroupDetails) {
+        e.stopPropagation();
         selectedGroup = userGroup;
     }
 
-    function confirmDeleteUserGroup(userGroup: UserGroupDetails) {
+    function confirmDeleteUserGroup(e: Event, userGroup: UserGroupDetails) {
+        e.stopPropagation();
         groupToDelete = userGroup;
         confirmingDelete = true;
     }
@@ -121,6 +123,10 @@
         selectedGroup = undefined;
         openedGroupId = undefined;
     }
+    let searchTermLower = $derived(searchTerm.toLowerCase());
+    let userGroups = $derived([...$selectedCommunityUserGroupsStore.values()]);
+    let canManageUserGroups = $derived(client.canManageUserGroups(community.id));
+    let matchingGroups = $derived(userGroups.filter((ug) => matchesSearch(searchTermLower, ug)));
 </script>
 
 {#if confirmingDelete}
@@ -133,7 +139,7 @@
         {community}
         {communityUsers}
         {communityUsersList}
-        on:cancel={reset}
+        onCancel={reset}
         original={selectedGroup} />
 {:else}
     <div class="user-groups">
@@ -147,7 +153,7 @@
             </div>
             {#if canManageUserGroups}
                 <div class="add">
-                    <HoverIcon on:click={createUserGroup}>
+                    <HoverIcon onclick={createUserGroup}>
                         <Plus size={$iconSize} color={"var(--icon-txt)"} />
                     </HoverIcon>
                 </div>
@@ -164,37 +170,38 @@
                         <CollapsibleCard
                             open={userGroup.id === openedGroupId}
                             headerText={i18nKey(userGroup.name)}>
-                            <h4 slot="titleSlot" class="name">
-                                {#if canManageUserGroups}
-                                    <div
-                                        role="button"
-                                        tabindex="0"
-                                        on:click|stopPropagation={() => editUserGroup(userGroup)}
-                                        class="edit">
-                                        <PencilOutline
-                                            viewBox={"0 -3 24 24"}
-                                            size={"1.2em"}
-                                            color={"var(--icon-txt)"} />
-                                    </div>
-                                    <div
-                                        role="button"
-                                        tabindex="0"
-                                        on:click|stopPropagation={() =>
-                                            confirmDeleteUserGroup(userGroup)}
-                                        class="delete">
-                                        <DeleteOutline
-                                            viewBox={"0 -3 24 24"}
-                                            size={"1.2em"}
-                                            color={"var(--icon-txt)"} />
-                                    </div>
-                                {/if}
-                                <span class="name-text">{userGroup.name}</span>
-                                <span class="members">
-                                    <span class="num"
-                                        >{userGroup.members.size.toLocaleString()}</span>
-                                    <Translatable resourceKey={i18nKey("members")} />
-                                </span>
-                            </h4>
+                            {#snippet titleSlot()}
+                                <h4 class="name">
+                                    {#if canManageUserGroups}
+                                        <div
+                                            role="button"
+                                            tabindex="0"
+                                            onclick={(e) => editUserGroup(e, userGroup)}
+                                            class="edit">
+                                            <PencilOutline
+                                                viewBox={"0 -3 24 24"}
+                                                size={"1.2em"}
+                                                color={"var(--icon-txt)"} />
+                                        </div>
+                                        <div
+                                            role="button"
+                                            tabindex="0"
+                                            onclick={(e) => confirmDeleteUserGroup(e, userGroup)}
+                                            class="delete">
+                                            <DeleteOutline
+                                                viewBox={"0 -3 24 24"}
+                                                size={"1.2em"}
+                                                color={"var(--icon-txt)"} />
+                                        </div>
+                                    {/if}
+                                    <span class="name-text">{userGroup.name}</span>
+                                    <span class="members">
+                                        <span class="num"
+                                            >{userGroup.members.size.toLocaleString()}</span>
+                                        <Translatable resourceKey={i18nKey("members")} />
+                                    </span>
+                                </h4>
+                            {/snippet}
 
                             {#each userGroup.members as member}
                                 {#if communityUsers[member] !== undefined}

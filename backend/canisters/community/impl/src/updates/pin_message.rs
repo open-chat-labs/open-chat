@@ -1,62 +1,45 @@
-use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, activity_notifications::handle_activity_notification, execute_update};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::pin_message::{Response::*, *};
-use group_chat_core::PinUnpinMessageResult;
-use ic_cdk_macros::update;
+use types::{OCResult, PushEventResult};
 
-#[update]
+#[update(msgpack = true)]
 #[trace]
 fn pin_message(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| pin_message_impl(args, true, state))
+    match execute_update(|state| pin_message_impl(args, true, state)) {
+        Ok(result) => Success(result),
+        Err(error) => Error(error),
+    }
 }
 
-#[update]
+#[update(msgpack = true)]
 #[trace]
 fn unpin_message(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| pin_message_impl(args, false, state))
+    match execute_update(|state| pin_message_impl(args, false, state)) {
+        Ok(result) => Success(result),
+        Err(error) => Error(error),
+    }
 }
 
-fn pin_message_impl(args: Args, pin: bool, state: &mut RuntimeState) -> Response {
-    if state.data.is_frozen() {
-        return CommunityFrozen;
-    }
+fn pin_message_impl(args: Args, pin: bool, state: &mut RuntimeState) -> OCResult<PushEventResult> {
+    state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
-    if let Some(member) = state.data.members.get(caller) {
-        if member.suspended.value {
-            return UserSuspended;
-        }
+    let user_id = state.get_calling_member(true)?.user_id;
+    let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
+    let now = state.env.now();
 
-        let user_id = member.user_id;
-
-        if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-            let now = state.env.now();
-
-            let result = if pin {
-                channel.chat.pin_message(user_id, args.message_index, now)
-            } else {
-                channel.chat.unpin_message(user_id, args.message_index, now)
-            };
-
-            match result {
-                PinUnpinMessageResult::Success(r) => {
-                    handle_activity_notification(state);
-                    Success(r)
-                }
-                PinUnpinMessageResult::NoChange => NoChange,
-                PinUnpinMessageResult::NotAuthorized => NotAuthorized,
-                PinUnpinMessageResult::MessageNotFound => MessageNotFound,
-                PinUnpinMessageResult::UserSuspended => UserSuspended,
-                PinUnpinMessageResult::UserNotInGroup => UserNotInChannel,
-            }
-        } else {
-            ChannelNotFound
-        }
+    let result = if pin {
+        channel.chat.pin_message(user_id, args.message_index, now)?
     } else {
-        UserNotInCommunity
-    }
+        channel.chat.unpin_message(user_id, args.message_index, now)?
+    };
+
+    state.push_bot_notification(result.bot_notification);
+    handle_activity_notification(state);
+    Ok(PushEventResult {
+        index: result.index,
+        timestamp: now,
+        expires_at: result.expires_at,
+    })
 }

@@ -1,14 +1,14 @@
+use crate::RuntimeState;
 use crate::guards::caller_is_deployment_operator;
 use crate::model::translations::DecisionSummary;
 use crate::mutate_state;
-use crate::RuntimeState;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
-use translations_canister::mark_deployed::{Response::*, *};
+use translations_canister::mark_deployed::*;
 use user_index_canister::c2c_send_openchat_bot_messages;
 use user_index_canister::c2c_send_openchat_bot_messages::Message;
 
-#[update(guard = "caller_is_deployment_operator")]
+#[update(guard = "caller_is_deployment_operator", candid = true, msgpack = true)]
 #[trace]
 fn mark_deployed(args: Args) -> Response {
     mutate_state(|state| mark_deployed_impl(args, state))
@@ -19,7 +19,7 @@ fn mark_deployed_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     notify_translators_of_decisions(state);
 
-    Success
+    Response::Success
 }
 
 // The notifications are sent asynchronously. We assume the user notifications (OpenChatBot messages)

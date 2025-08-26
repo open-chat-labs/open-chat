@@ -1,7 +1,11 @@
+import { type ReadonlyMap } from "../../utils";
+import type { MultiUserChat, PinNumberFailures } from "../chat";
 import type { DataContent } from "../data/data";
+import type { OCError } from "../error";
 import type {
     Failure,
     InternalError,
+    Invalid,
     Offline,
     Retrying,
     Success,
@@ -19,7 +23,93 @@ export type UserSummary = DataContent & {
     updated: bigint;
     suspended: boolean;
     diamondStatus: DiamondMembershipStatus["kind"];
+    chitBalance: number;
+    totalChitEarned: number;
+    streak: number;
+    maxStreak: number;
+    isUniquePerson: boolean;
 };
+
+export type PartitionedUserIds = {
+    userIds: Set<string>;
+    webhooks: Set<string>;
+};
+
+export function deletedUser(userId: string): UserSummary {
+    return {
+        kind: "user",
+        userId,
+        blobUrl: "/assets/deletedUser.svg",
+        username: "Deleted User",
+        displayName: undefined,
+        updated: BigInt(Number.MAX_VALUE), // we want to *never* request updates for a deleted user
+        suspended: false,
+        diamondStatus: "inactive",
+        chitBalance: 0,
+        streak: 0,
+        maxStreak: 0,
+        isUniquePerson: false,
+        totalChitEarned: 0,
+    };
+}
+
+// Note this *has* to return UserSummary | undefined because of the types, but we would not expect it to ever do so in practice
+export function mergeUserSummaryWithUpdates(
+    cached: UserSummary | undefined,
+    updates: UserSummaryUpdate,
+    timestamp: bigint,
+): UserSummary | undefined {
+    if (cached === undefined) {
+        if (updates.stable === undefined || updates.volatile === undefined) {
+            // in this case we cannot construct a valid UserSummary - this should not happen
+            return undefined;
+        }
+        return {
+            kind: updates.stable.isBot ? "bot" : "user",
+            userId: updates.userId,
+            ...updates.stable,
+            ...updates.volatile,
+            updated: timestamp,
+        };
+    }
+    if (cached.userId !== updates.userId) {
+        return undefined;
+    }
+    return {
+        ...cached,
+        ...updates.stable,
+        ...updates.volatile,
+    };
+}
+
+// problem - we can no longer create a UserSummary from a CurrentUserSummary
+export function userSummaryFromCurrentUserSummary(currentSummary: CurrentUserSummary): UserSummary {
+    return {
+        kind: currentSummary.isBot ? "bot" : "user",
+        userId: currentSummary.userId,
+        username: currentSummary.username,
+        displayName: currentSummary.displayName,
+        updated: currentSummary.updated,
+        suspended: currentSummary.suspensionDetails !== undefined,
+        diamondStatus: currentSummary.diamondStatus.kind,
+        chitBalance: currentSummary.chitBalance,
+        totalChitEarned: currentSummary.totalChitEarned,
+        streak: currentSummary.streak,
+        maxStreak: currentSummary.maxStreak,
+        blobReference: currentSummary.blobReference,
+        blobData: currentSummary.blobData,
+        blobUrl: currentSummary.blobUrl,
+        isUniquePerson: currentSummary.isUniquePerson,
+    };
+}
+
+export function updateCreatedUser(created: CreatedUser, summary: CurrentUserSummary): CreatedUser {
+    return {
+        ...created,
+        ...summary,
+        kind: "created_user",
+    };
+}
 
 export type UserGroupSummary = {
     kind: "user_group";
@@ -39,16 +129,37 @@ export type UserGroupDetails = {
     name: string;
 };
 
-export type IdentityState =
-    | { kind: "anon" }
-    | { kind: "loading_user" }
-    | { kind: "logged_in" }
-    | { kind: "registering" }
-    | { kind: "logging_in" }
-    | { kind: "upgrading_user" }
-    | { kind: "upgrade_user" };
+export type PostLoginOperation = CreateCommunity | CreateGroup | JoinCommunity | JoinGroup;
 
-export type UserLookup = Record<string, UserSummary>;
+export type CreateCommunity = {
+    kind: "create_community";
+};
+
+export type CreateGroup = {
+    kind: "create_group";
+};
+
+export type JoinCommunity = {
+    kind: "join_community";
+};
+
+export type JoinGroup = {
+    kind: "join_group";
+    group: MultiUserChat;
+    select: boolean;
+};
+
+export type IdentityState =
+    | { kind: "anon"; postLogin?: PostLoginOperation }
+    | { kind: "loading_user"; postLogin?: PostLoginOperation; registering: boolean }
+    | { kind: "logged_in"; postLogin?: PostLoginOperation }
+    | { kind: "registering"; postLogin?: PostLoginOperation }
+    | { kind: "logging_in"; postLogin?: PostLoginOperation }
+    | { kind: "upgrading_user"; postLogin?: PostLoginOperation }
+    | { kind: "upgrade_user"; postLogin?: PostLoginOperation }
+    | { kind: "challenging"; postLogin?: PostLoginOperation };
+
+export type UserLookup = ReadonlyMap<string, UserSummary>;
 
 export type User = {
     userId: string;
@@ -64,6 +175,7 @@ export type PublicProfile = {
     isPremium: boolean;
     phoneIsVerified: boolean;
     created: bigint;
+    backgroundId?: bigint;
 };
 
 export type UsersArgs = {
@@ -76,6 +188,37 @@ export type UsersArgs = {
 export type UsersResponse = {
     serverTimestamp?: bigint;
     users: UserSummary[];
+    deletedUserIds: Set<string>;
+    currentUser?: CurrentUserSummary;
+};
+
+export type UserSummaryStable = DataContent & {
+    username: string;
+    diamondStatus: DiamondMembershipStatus["kind"];
+    isBot: boolean;
+    displayName: string | undefined;
+    suspended: boolean;
+    isUniquePerson: boolean;
+};
+
+export type UserSummaryVolatile = {
+    streak: number;
+    maxStreak: number;
+    chitBalance: number;
+    totalChitEarned: number;
+};
+
+export type UserSummaryUpdate = {
+    stable?: UserSummaryStable;
+    userId: string;
+    volatile?: UserSummaryVolatile;
+};
+
+export type UsersApiResponse = {
+    serverTimestamp: bigint;
+    deletedUserIds: Set<string>;
+    users: UserSummaryUpdate[];
+    currentUser?: CurrentUserSummary;
 };
 
 export enum UserStatus {
@@ -104,39 +247,60 @@ export const ANON_USERNAME = "guest_user";
 export const ANON_DISPLAY_NAME = "Guest user";
 export const ANON_AVATAR_URL = "/assets/anon.svg";
 
+type CurrentUserCommon = DataContent & {
+    username: string;
+    isPlatformOperator: boolean;
+    diamondStatus: DiamondMembershipStatus;
+    userId: string;
+    isBot: boolean;
+    displayName: string | undefined;
+    moderationFlagsEnabled: number;
+    isSuspectedBot: boolean;
+    suspensionDetails: SuspensionDetails | undefined;
+    isPlatformModerator: boolean;
+    diamondDetails?: DiamondMembershipDetails;
+    updated: bigint;
+    isUniquePerson: boolean;
+    totalChitEarned: number;
+    chitBalance: number;
+    streak: number;
+    maxStreak: number;
+    backgroundId?: bigint;
+};
+
+export type CurrentUserSummary = CurrentUserCommon & {
+    kind: "current_user_summary";
+};
+
+export type CreatedUser = CurrentUserCommon & {
+    kind: "created_user";
+    dateCreated: bigint;
+    cryptoAccount: string;
+};
+
 export function anonymousUser(): CreatedUser {
     return {
         kind: "created_user",
         username: ANON_USERNAME,
+        dateCreated: BigInt(0),
         displayName: ANON_DISPLAY_NAME, // TODO probably need to translate this
         cryptoAccount: "", // TODO - will this be a problem?
         userId: ANON_USER_ID,
-        canisterUpgradeStatus: "not_required",
-        referrals: [],
         isPlatformModerator: false,
         isPlatformOperator: false,
         suspensionDetails: undefined,
         isSuspectedBot: false,
         diamondStatus: { kind: "inactive" },
         moderationFlagsEnabled: 0,
+        isBot: false,
+        updated: 0n,
+        isUniquePerson: false,
+        totalChitEarned: 0,
+        chitBalance: 0,
+        streak: 0,
+        maxStreak: 0,
     };
 }
-
-export type CreatedUser = {
-    kind: "created_user";
-    username: string;
-    displayName: string | undefined;
-    cryptoAccount: string;
-    userId: string;
-    canisterUpgradeStatus: "required" | "not_required" | "in_progress";
-    referrals: string[];
-    isPlatformModerator: boolean;
-    isPlatformOperator: boolean;
-    suspensionDetails: SuspensionDetails | undefined;
-    isSuspectedBot: boolean;
-    diamondStatus: DiamondMembershipStatus;
-    moderationFlagsEnabled: number;
-};
 
 export type DiamondMembershipStatus =
     | { kind: "inactive" }
@@ -181,7 +345,8 @@ export type CheckUsernameResponse =
     | "username_too_short"
     | "username_too_long"
     | "username_invalid"
-    | "offline";
+    | "offline"
+    | OCError;
 
 export type SetUsernameResponse =
     | "success"
@@ -190,7 +355,8 @@ export type SetUsernameResponse =
     | "username_too_short"
     | "username_too_long"
     | "username_invalid"
-    | "offline";
+    | "offline"
+    | OCError;
 
 export type SetDisplayNameResponse =
     | "success"
@@ -199,11 +365,11 @@ export type SetDisplayNameResponse =
     | "display_name_too_long"
     | "display_name_invalid"
     | "offline"
-    | "unauthorized";
+    | OCError;
 
 export type InvalidCurrency = { kind: "invalid_currency" };
 
-export type SetBioResponse = "success" | "bio_too_long" | "user_suspended" | "offline";
+export type SetBioResponse = Success | OCError | Offline;
 
 export type RegisterUserResponse =
     | {
@@ -224,15 +390,14 @@ export type RegisterUserResponse =
     | { kind: "referral_code_invalid" }
     | { kind: "referral_code_already_claimed" }
     | { kind: "referral_code_expired" }
+    | { kind: "registration_in_progress" }
+    | OCError
     | Offline;
 
-export type PinChatResponse = "success" | "failure" | "offline";
-
-export type UnpinChatResponse = "success" | "failure" | "offline";
-
-export type ArchiveChatResponse = "failure" | "success" | "offline";
-
-export type ManageFavouritesResponse = "success" | "failure" | "offline";
+export type PinChatResponse = Success | OCError | Offline;
+export type UnpinChatResponse = Success | OCError | Offline;
+export type ArchiveChatResponse = Success | OCError | Offline | Failure;
+export type ManageFavouritesResponse = Success | OCError | Offline;
 
 export type SuspendUserResponse =
     | "success"
@@ -251,7 +416,7 @@ export type UnsuspendUserResponse =
 export type PayForDiamondMembershipResponse =
     | { kind: "payment_already_in_progress" }
     | { kind: "currency_not_supported" }
-    | { kind: "success"; status: DiamondMembershipStatus }
+    | { kind: "success"; status: DiamondMembershipStatus; proof: string }
     | { kind: "price_mismatch" }
     | { kind: "transfer_failed" }
     | { kind: "internal_error" }
@@ -259,35 +424,12 @@ export type PayForDiamondMembershipResponse =
     | { kind: "user_not_found" }
     | { kind: "insufficient_funds" }
     | { kind: "already_lifetime_diamond_member" }
+    | OCError
     | Offline;
 
 export type SetUserUpgradeConcurrencyResponse = "success" | "offline";
 
-export type SetMessageReminderResponse = "failure" | "success" | "offline";
-
-export type ReferralLeaderboardRange = { year: number; month: number };
-
-export type ReferralLeaderboardResponse = AllTimeReferralStats | MonthlyReferralStats;
-
-export type AllTimeReferralStats = {
-    kind: "all_time";
-    stats: ReferralStats[];
-};
-
-export type MonthlyReferralStats = {
-    kind: "monthly";
-    month: number;
-    year: number;
-    stats: ReferralStats[];
-};
-
-export type ReferralStats = {
-    username: string;
-    totalUsers: number;
-    userId: string;
-    diamondMembers: number;
-    totalRewardsE8s: bigint;
-};
+export type SetMessageReminderResponse = Success | OCError | Offline;
 
 export type ModerationFlag = 1 | 2 | 4;
 
@@ -302,7 +444,7 @@ export type NamedAccount = {
     account: string;
 };
 
-export type SaveCryptoAccountResponse = { kind: "name_taken" } | Success | Failure;
+export type SaveCryptoAccountResponse = Success | OCError | Failure;
 
 export type SubmitProposalResponse =
     | Success
@@ -330,7 +472,9 @@ export type SwapTokensResponse =
     | {
           kind: "swap_failed";
       }
-    | InternalError;
+    | PinNumberFailures
+    | InternalError
+    | OCError;
 
 export type Result<T> =
     | {
@@ -354,12 +498,10 @@ export type TokenSwapStatusResponse =
       }
     | {
           kind: "not_found";
-      };
+      }
+    | OCError;
 
-export type ApproveTransferResponse =
-    | Success
-    | { kind: "approve_error"; error: string }
-    | InternalError;
+export type ApproveTransferResponse = Success | OCError | InternalError;
 
 export type DiamondMembershipFees = {
     token: "CHAT" | "ICP";
@@ -367,4 +509,13 @@ export type DiamondMembershipFees = {
     threeMonths: bigint;
     oneYear: bigint;
     lifetime: bigint;
+};
+
+export type SubmitProofOfUniquePersonhoodResponse = Success | Invalid | UserNotFound | OCError;
+
+export type ReferralStatus = "registered" | "diamond" | "unique_person" | "lifetime_diamond";
+
+export type Referral = {
+    userId: string;
+    status: ReferralStatus;
 };

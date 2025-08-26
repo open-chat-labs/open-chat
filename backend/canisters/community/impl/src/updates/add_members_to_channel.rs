@@ -1,259 +1,138 @@
-use crate::{activity_notifications::handle_activity_notification, mutate_state, read_state, run_regular_jobs, RuntimeState};
-use canister_tracing_macros::trace;
-use chat_events::ChatEventInternal;
-use community_canister::add_members_to_channel::{Response::*, *};
-use gated_groups::{check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult};
-use group_chat_core::AddResult;
-use ic_cdk_macros::update;
-use std::collections::HashMap;
-use std::iter::zip;
-use types::{
-    AccessGate, AddedToChannelNotification, CanisterId, ChannelId, EventIndex, MembersAdded, MessageIndex, Notification,
-    TimestampNanos, UserId,
+use crate::{
+    AddUsersToChannelResult, RuntimeState, activity_notifications::handle_activity_notification, execute_update, jobs,
 };
+use canister_api_macros::update;
+use canister_tracing_macros::trace;
+use community_canister::add_members_to_channel::{Response::*, *};
+use oc_error_codes::OCErrorCode;
+use types::{AddedToChannelNotification, ChannelId, ChannelUserNotificationPayload, OCResult, UserId, UserType};
 
-#[update]
+#[update(msgpack = true)]
 #[trace]
-async fn add_members_to_channel(args: Args) -> Response {
-    run_regular_jobs();
+fn add_members_to_channel(args: Args) -> Response {
+    execute_update(|state| add_members_to_channel_impl(args, state))
+}
 
-    let prepare_result = match read_state(|state| prepare(&args, state)) {
+fn add_members_to_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let prepare_result = match prepare(&args, state) {
         Ok(ok) => ok,
-        Err(response) => return response,
+        Err(response) => return Error(response),
     };
 
-    let mut users_to_add: Vec<UserId> = Vec::new();
-    let mut users_failed_gate_check: Vec<UserFailedGateCheck> = Vec::new();
-    let mut users_failed_with_error: Vec<UserFailedError> = Vec::new();
-
-    if let Some(gate) = prepare_result.gate {
-        let diamond_membership_expiry_dates: HashMap<_, _> = if matches!(gate, AccessGate::DiamondMember) {
-            match local_user_index_canister_c2c_client::c2c_diamond_membership_expiry_dates(
-                prepare_result.local_user_index_canister_id,
-                &local_user_index_canister::c2c_diamond_membership_expiry_dates::Args {
-                    user_ids: prepare_result.users_to_add.clone(),
-                },
-            )
-            .await
-            {
-                Ok(local_user_index_canister::c2c_diamond_membership_expiry_dates::Response::Success(expiry_dates)) => {
-                    expiry_dates
-                }
-                Err(error) => return InternalError(format!("{error:?}")),
-            }
-        } else {
-            HashMap::new()
-        };
-
-        let futures: Vec<_> = prepare_result
-            .users_to_add
-            .iter()
-            .map(|user_id| {
-                check_if_passes_gate(CheckGateArgs {
-                    gate: gate.clone(),
-                    user_id: *user_id,
-                    diamond_membership_expires_at: diamond_membership_expiry_dates.get(user_id).copied(),
-                    this_canister: prepare_result.this_canister,
-                    now: prepare_result.now_nanos,
-                })
-            })
-            .collect();
-
-        let results = futures::future::join_all(futures).await;
-
-        for (user_id, result) in zip(prepare_result.users_to_add, results) {
-            match result {
-                CheckIfPassesGateResult::Success => users_to_add.push(user_id),
-                CheckIfPassesGateResult::Failed(reason) => {
-                    users_failed_gate_check.push(UserFailedGateCheck { user_id, reason })
-                }
-                CheckIfPassesGateResult::InternalError(error) => {
-                    users_failed_with_error.push(UserFailedError { user_id, error })
-                }
-            }
-        }
-    } else {
-        users_to_add = prepare_result.users_to_add;
-    }
-
-    mutate_state(|state| {
-        commit(
-            prepare_result.user_id,
-            args.added_by_name,
-            prepare_result.member_display_name.or(args.added_by_display_name),
-            args.channel_id,
-            users_to_add,
-            prepare_result.users_already_in_channel,
-            users_failed_gate_check,
-            users_failed_with_error,
-            prepare_result.is_bot,
-            state,
-        )
-    })
+    commit(
+        prepare_result.user_id,
+        args.added_by_name,
+        prepare_result.member_display_name.or(args.added_by_display_name),
+        args.channel_id,
+        prepare_result.users_to_add,
+        state,
+    )
 }
 
 struct PrepareResult {
     user_id: UserId,
-    users_to_add: Vec<UserId>,
-    users_already_in_channel: Vec<UserId>,
-    gate: Option<AccessGate>,
-    local_user_index_canister_id: CanisterId,
-    is_bot: bool,
+    users_to_add: Vec<(UserId, UserType)>,
     member_display_name: Option<String>,
-    this_canister: CanisterId,
-    now_nanos: TimestampNanos,
 }
 
-#[allow(clippy::result_large_err)]
-fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if state.data.is_frozen() {
-        return Err(CommunityFrozen);
+fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareResult> {
+    state.data.verify_not_frozen()?;
+
+    if state.data.is_public.value {
+        return Err(OCErrorCode::CommunityPublic.into());
     }
 
-    let caller = state.env.caller();
+    let member = state.get_calling_member(true)?;
+    let user_id = member.user_id;
+    let channel = state.data.channels.get_or_err(&args.channel_id)?;
 
-    if let Some(member) = state.data.members.get(caller) {
-        if member.suspended.value {
-            return Err(UserSuspended);
+    if let Some(limit) = channel.chat.members.user_limit_reached() {
+        Err(OCErrorCode::UserLimitReached.with_message(limit))
+    } else if let Some(channel_member) = channel.chat.members.get(&user_id) {
+        let permissions = &channel.chat.permissions;
+        if !channel_member.role().can_add_members(permissions) {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
+        } else if channel_member.lapsed().value {
+            return Err(OCErrorCode::InitiatorLapsed.into());
         }
 
-        let user_id = member.user_id;
+        // Only add users who are already community members
+        let users_to_add = args
+            .user_ids
+            .iter()
+            .filter(|user_id| state.data.members.contains(user_id))
+            .map(|user_id| (*user_id, state.data.members.bots().get(user_id).copied().unwrap_or_default()))
+            .collect();
 
-        if let Some(channel) = state.data.channels.get(&args.channel_id) {
-            if let Some(limit) = channel.chat.members.user_limit_reached() {
-                Err(UserLimitReached(limit))
-            } else if let Some(channel_member) = channel.chat.members.get(&user_id) {
-                let permissions = &channel.chat.permissions;
-                if !channel_member.role.can_add_members(permissions) {
-                    return Err(NotAuthorized);
-                }
-
-                let (users_already_in_channel, users_to_add): (Vec<_>, Vec<_>) = args
-                    .user_ids
-                    .iter()
-                    .copied()
-                    .partition(|id| channel.chat.members.contains(id));
-
-                Ok(PrepareResult {
-                    user_id,
-                    users_to_add,
-                    users_already_in_channel,
-                    gate: channel.chat.gate.as_ref().cloned(),
-                    local_user_index_canister_id: state.data.local_user_index_canister_id,
-                    is_bot: member.is_bot,
-                    member_display_name: member.display_name().value.clone(),
-                    this_canister: state.env.canister_id(),
-                    now_nanos: state.env.now_nanos(),
-                })
-            } else {
-                Err(UserNotInChannel)
-            }
-        } else {
-            Err(ChannelNotFound)
-        }
+        Ok(PrepareResult {
+            user_id,
+            users_to_add,
+            member_display_name: member.display_name().value.clone(),
+        })
     } else {
-        Err(UserNotInCommunity)
+        Err(OCErrorCode::InitiatorNotInChat.into())
     }
 }
 
-#[allow(clippy::too_many_arguments)]
 fn commit(
     added_by: UserId,
     added_by_name: String,
     added_by_display_name: Option<String>,
     channel_id: ChannelId,
-    users_to_add: Vec<UserId>,
-    mut users_already_in_channel: Vec<UserId>,
-    users_failed_gate_check: Vec<UserFailedGateCheck>,
-    mut users_failed_with_error: Vec<UserFailedError>,
-    is_bot: bool,
+    users_to_add: Vec<(UserId, UserType)>,
     state: &mut RuntimeState,
 ) -> Response {
-    if let Some(channel) = state.data.channels.get_mut(&channel_id) {
-        let mut min_visible_event_index = EventIndex::default();
-        let mut min_visible_message_index = MessageIndex::default();
+    let now = state.env.now();
 
-        if !channel.chat.history_visible_to_new_joiners {
-            let events_reader = channel.chat.events.main_events_reader();
-            min_visible_event_index = events_reader.next_event_index();
-            min_visible_message_index = events_reader.next_message_index();
-        }
+    let AddUsersToChannelResult {
+        channel_name,
+        channel_avatar_id,
+        users_added,
+        users_already_in_channel,
+        users_limit_reached,
+        users_failed_with_error,
+        bot_notification,
+    } = state.data.add_members_to_channel(&channel_id, users_to_add, added_by, now);
 
-        let now = state.env.now();
+    let Some(channel_name) = channel_name else {
+        return Error(OCErrorCode::ChatNotFound.into());
+    };
 
-        let mut users_added: Vec<UserId> = Vec::new();
-        let mut users_limit_reached: Vec<UserId> = Vec::new();
-
-        for user_id in users_to_add {
-            match channel.chat.members.add(
-                user_id,
-                now,
-                min_visible_event_index,
-                min_visible_message_index,
-                channel.chat.is_public.value,
-                is_bot,
-            ) {
-                AddResult::Success(_) => {
-                    users_added.push(user_id);
-                    state.data.members.mark_member_joined_channel(&user_id, channel_id);
-                }
-                AddResult::AlreadyInGroup => users_already_in_channel.push(user_id),
-                AddResult::MemberLimitReached(_) => users_limit_reached.push(user_id),
-                AddResult::Blocked => users_failed_with_error.push(UserFailedError {
-                    user_id,
-                    error: "User blocked".to_string(),
-                }),
-            }
-        }
-
-        if users_added.is_empty() {
-            return Failed(FailedResult {
-                users_already_in_channel,
-                users_limit_reached,
-                users_failed_gate_check,
-                users_failed_with_error,
-            });
-        }
-
-        let event = MembersAdded {
-            user_ids: users_added.clone(),
-            added_by,
-            unblocked: Vec::new(),
-        };
-
-        channel
-            .chat
-            .events
-            .push_main_event(ChatEventInternal::ParticipantsAdded(Box::new(event)), 0, now);
-
-        let notification = Notification::AddedToChannel(AddedToChannelNotification {
-            community_id: state.env.canister_id().into(),
-            community_name: state.data.name.clone(),
-            channel_id,
-            channel_name: channel.chat.name.value.clone(),
-            added_by,
-            added_by_name,
-            added_by_display_name,
-            community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
-            channel_avatar_id: channel.chat.avatar.as_ref().map(|d| d.id),
+    if users_added.is_empty() {
+        return Failed(FailedResult {
+            users_already_in_channel,
+            users_limit_reached,
+            users_failed_with_error,
         });
+    }
 
-        state.push_notification(users_added.clone(), notification);
+    let notification = ChannelUserNotificationPayload::AddedToChannel(AddedToChannelNotification {
+        community_id: state.env.canister_id().into(),
+        community_name: state.data.name.value.clone(),
+        channel_id,
+        channel_name,
+        added_by,
+        added_by_name,
+        added_by_display_name,
+        community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
+        channel_avatar_id,
+    });
 
-        handle_activity_notification(state);
+    state.push_notification(Some(added_by), users_added.clone(), notification);
+    state.push_bot_notification(bot_notification);
 
-        if !users_already_in_channel.is_empty() || !users_failed_gate_check.is_empty() || !users_failed_with_error.is_empty() {
-            PartialSuccess(PartialSuccessResult {
-                users_added,
-                users_limit_reached,
-                users_already_in_channel,
-                users_failed_gate_check,
-                users_failed_with_error,
-            })
-        } else {
-            Success
-        }
+    jobs::expire_members::start_job_if_required(state);
+
+    handle_activity_notification(state);
+
+    if !users_already_in_channel.is_empty() || !users_failed_with_error.is_empty() {
+        PartialSuccess(PartialSuccessResult {
+            users_added,
+            users_limit_reached,
+            users_already_in_channel,
+            users_failed_with_error,
+        })
     } else {
-        ChannelNotFound
+        Success
     }
 }

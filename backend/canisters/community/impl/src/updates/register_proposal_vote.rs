@@ -1,16 +1,18 @@
-use crate::activity_notifications::handle_activity_notification;
-use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::{MessageContentInternal, Reader, RecordProposalVoteResult};
-use community_canister::register_proposal_vote::{Response::*, *};
-use ic_cdk_macros::update;
-use types::{CanisterId, ChannelId, ProposalId, UserId};
+use chat_events::{MessageContentInternal, Reader};
+use community_canister::register_proposal_vote::*;
+use oc_error_codes::OCErrorCode;
+use types::{CanisterId, ChannelId, OCResult, ProposalId, UserId};
 
-#[update]
+#[update(msgpack = true)]
 #[trace]
 async fn register_proposal_vote(args: Args) -> Response {
-    run_regular_jobs();
+    execute_update_async(|| register_proposal_vote_impl(args)).await
+}
 
+async fn register_proposal_vote_impl(args: Args) -> Response {
     let PrepareResult {
         user_id,
         is_nns,
@@ -18,7 +20,7 @@ async fn register_proposal_vote(args: Args) -> Response {
         proposal_id,
     } = match read_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
-        Err(response) => return response,
+        Err(error) => return Response::Error(error),
     };
 
     let c2c_args = user_canister::c2c_vote_on_proposal::Args {
@@ -30,15 +32,16 @@ async fn register_proposal_vote(args: Args) -> Response {
     match user_canister_c2c_client::c2c_vote_on_proposal(user_id.into(), &c2c_args).await {
         Ok(response) => match response {
             user_canister::c2c_vote_on_proposal::Response::Success => {
-                mutate_state(|state| commit(args.channel_id, user_id, args, state));
-                Success
+                if let Err(error) = mutate_state(|state| commit(args.channel_id, user_id, args, state)) {
+                    Response::Error(error)
+                } else {
+                    Response::Success
+                }
             }
-            user_canister::c2c_vote_on_proposal::Response::NoEligibleNeurons => NoEligibleNeurons,
-            user_canister::c2c_vote_on_proposal::Response::ProposalNotFound => ProposalNotFound,
-            user_canister::c2c_vote_on_proposal::Response::ProposalNotAcceptingVotes => ProposalNotAcceptingVotes,
-            user_canister::c2c_vote_on_proposal::Response::InternalError(error) => InternalError(error),
+            user_canister::c2c_vote_on_proposal::Response::Error(error) => Response::Error(error),
+            response => Response::Error(OCErrorCode::Unknown.with_json(&response)),
         },
-        Err(error) => InternalError(format!("{error:?}")),
+        Err(error) => Response::Error(error.into()),
     }
 }
 
@@ -49,32 +52,12 @@ struct PrepareResult {
     proposal_id: ProposalId,
 }
 
-fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if state.data.is_frozen() {
-        return Err(CommunityFrozen);
-    }
+fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareResult> {
+    state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
-
-    let member = match state.data.members.get(caller) {
-        Some(m) => m,
-        None => return Err(UserNotInCommunity),
-    };
-
-    if member.suspended.value {
-        return Err(UserSuspended);
-    }
-
-    let channel = match state.data.channels.get(&args.channel_id) {
-        Some(c) => c,
-        None => return Err(ChannelNotFound),
-    };
-
-    let channel_member = match channel.chat.members.get(&member.user_id) {
-        Some(m) => m,
-        None => return Err(UserNotInChannel),
-    };
-
+    let member = state.get_calling_member(true)?;
+    let channel = state.data.channels.get_or_err(&args.channel_id)?;
+    let channel_member = channel.chat.members.get_verified_member(member.user_id)?;
     let min_visible_event_index = channel_member.min_visible_event_index();
 
     if let Some(proposal) = channel
@@ -82,10 +65,10 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         .events
         .visible_main_events_reader(min_visible_event_index)
         .message_internal(args.message_index.into())
-        .and_then(|m| if let MessageContentInternal::GovernanceProposal(p) = &m.content { Some(p) } else { None })
+        .and_then(|m| if let MessageContentInternal::GovernanceProposal(p) = m.content { Some(p) } else { None })
     {
-        if let Some(vote) = proposal.votes.get(&member.user_id) {
-            Err(AlreadyVoted(*vote))
+        if proposal.votes.contains_key(&member.user_id) {
+            Err(OCErrorCode::NoChange.into())
         } else {
             Ok(PrepareResult {
                 user_id: member.user_id,
@@ -95,39 +78,23 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
             })
         }
     } else {
-        Err(ProposalMessageNotFound)
+        Err(OCErrorCode::MessageNotFound.into())
     }
 }
 
-fn commit(channel_id: ChannelId, user_id: UserId, args: Args, state: &mut RuntimeState) -> Response {
-    let channel = match state.data.channels.get_mut(&channel_id) {
-        Some(c) => c,
-        None => return ChannelNotFound,
-    };
-
-    let member = match channel.chat.members.get_mut(&user_id) {
-        Some(m) => m,
-        None => return UserNotInChannel,
-    };
-
+fn commit(channel_id: ChannelId, user_id: UserId, args: Args, state: &mut RuntimeState) -> OCResult {
+    let channel = state.data.channels.get_mut_or_err(&channel_id)?;
+    let member = channel.chat.members.get_verified_member(user_id)?;
     let min_visible_event_index = member.min_visible_event_index();
+    let now = state.env.now();
 
-    match channel
+    channel
         .chat
         .events
-        .record_proposal_vote(user_id, min_visible_event_index, args.message_index, args.adopt)
-    {
-        RecordProposalVoteResult::Success => {
-            let now = state.env.now();
+        .record_proposal_vote(user_id, min_visible_event_index, args.message_index, args.adopt, now)?;
 
-            let votes = member.proposal_votes.entry(now).or_default();
-            if !votes.contains(&args.message_index) {
-                votes.push(args.message_index);
-            }
-            handle_activity_notification(state);
-            Success
-        }
-        RecordProposalVoteResult::AlreadyVoted(vote) => AlreadyVoted(vote),
-        RecordProposalVoteResult::ProposalNotFound => ProposalNotFound,
-    }
+    channel.chat.members.register_proposal_vote(&user_id, args.message_index, now);
+
+    state.mark_activity_for_user(user_id);
+    Ok(())
 }

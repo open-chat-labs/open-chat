@@ -1,9 +1,15 @@
 <script lang="ts">
+    import type { Snippet } from "svelte";
     import { rtlStore } from "../stores/rtl";
 
-    export let percent: number;
-    export let bg: "button" | "accent" = "button";
-    export let size = "40px";
+    interface Props {
+        percent: number;
+        bg?: "button" | "accent";
+        size?: string;
+        children?: Snippet;
+    }
+
+    let { percent, bg = "button", size = "40px", children }: Props = $props();
 </script>
 
 <div class="bar" style={`--size: ${size}`}>
@@ -11,10 +17,10 @@
         class="meter"
         class:rtl={$rtlStore}
         style={`width: ${percent}%; background-color: ${
-            bg === "button" ? "var(--primary)" : "var(--accent)"
-        }`} />
+            bg === "button" ? "var(--primary)" : "var(--progress-fill)"
+        }`}></span>
     <div class="label">
-        <slot />
+        {@render children?.()}
     </div>
 </div>
 
@@ -22,12 +28,10 @@
     $radius: calc(var(--size) / 2);
 
     .bar {
-        // border: 1px solid rgba(255, 255, 255, 0.2);
         border: 1px solid var(--progress-bd);
         width: 100%;
         height: var(--size);
         position: relative;
-        // border-radius: math.div($progress-bar-x-large, 2);
         border-radius: $radius;
         overflow: hidden;
     }

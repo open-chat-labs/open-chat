@@ -1,62 +1,71 @@
-import { IdbKeyVal } from "@dfinity/auth-client";
-import { DelegationChain, DelegationIdentity, ECDSAKeyIdentity } from "@dfinity/identity";
+import { SignIdentity } from "@icp-sdk/core/agent";
+import { IdbStorage } from "@dfinity/auth-client";
+import {
+    DelegationChain,
+    DelegationIdentity,
+    ECDSAKeyIdentity,
+    isDelegationValid,
+} from "@icp-sdk/core/identity";
 
-const DB_VERSION = 1;
+const KEY_STORAGE_AUTH_PRINCIPAL = "auth_principal";
 const KEY_STORAGE_KEY = "identity";
 const KEY_STORAGE_DELEGATION = "delegation";
 
-class IdbStorage {
-    // Initializes a KeyVal on first request
-    private initializedDb: IdbKeyVal | undefined = undefined;
-    get _db(): Promise<IdbKeyVal> {
-        return new Promise((resolve) => {
-            if (this.initializedDb) {
-                resolve(this.initializedDb);
-                return;
-            }
-            IdbKeyVal.create({ version: DB_VERSION, dbName: "oc-auth-db" }).then((db) => {
-                this.initializedDb = db;
-                resolve(db);
-            });
-        });
-    }
-
-    public async get<T = string>(key: string): Promise<T | null> {
-        const db = await this._db;
-        return await db.get(key);
-    }
-
-    public async set<T>(key: string, value: T): Promise<void> {
-        const db = await this._db;
-        await db.set(key, value);
-    }
-
-    public async remove(key: string): Promise<void> {
-        const db = await this._db;
-        await db.remove(key);
-    }
-}
-
 export class IdentityStorage {
-    private storage = new IdbStorage();
+    readonly storage: IdbStorage;
 
-    async get(): Promise<DelegationIdentity | undefined> {
+    private constructor(dbName: string) {
+        this.storage = new IdbStorage({ dbName });
+    }
+
+    static createForAuthIdentity(): IdentityStorage {
+        return new IdentityStorage("auth-client-db");
+    }
+
+    static createForOcIdentity(): IdentityStorage {
+        return new IdentityStorage("oc-auth-db");
+    }
+
+    async get(authPrincipal?: string): Promise<SignIdentity | undefined> {
+        if (authPrincipal !== undefined) {
+            const storedAuthPrincipal = await this.storage.get<string>(KEY_STORAGE_AUTH_PRINCIPAL);
+            if (storedAuthPrincipal == null) return undefined;
+            if (storedAuthPrincipal !== authPrincipal) {
+                this.remove();
+                return undefined;
+            }
+        }
+
         const key = await this.storage.get<CryptoKeyPair>(KEY_STORAGE_KEY);
         if (key == null) return undefined;
-        const chain = await this.storage.get(KEY_STORAGE_DELEGATION);
-        if (chain == null) return undefined;
+
+        const chainJson = await this.storage.get<string>(KEY_STORAGE_DELEGATION);
+        if (chainJson == null) return undefined;
+        const chain = DelegationChain.fromJSON(chainJson);
+
+        if (!isDelegationValid(chain)) {
+            this.remove();
+            return undefined;
+        }
 
         const id = await ECDSAKeyIdentity.fromKeyPair(key);
-
-        return DelegationIdentity.fromDelegation(id, DelegationChain.fromJSON(chain));
+        return DelegationIdentity.fromDelegation(id, chain);
     }
 
-    async set(key: ECDSAKeyIdentity, chain: DelegationChain): Promise<void> {
+    async set(
+        key: ECDSAKeyIdentity,
+        chain: DelegationChain,
+        authPrincipal?: string,
+    ): Promise<void> {
+        if (authPrincipal !== undefined) {
+            await this.storage.set(KEY_STORAGE_AUTH_PRINCIPAL, authPrincipal);
+        }
         await this.storage.set(KEY_STORAGE_KEY, key.getKeyPair());
-        await this.storage.set(KEY_STORAGE_DELEGATION, chain.toJSON());
+        await this.storage.set(KEY_STORAGE_DELEGATION, JSON.stringify(chain.toJSON()));
     }
 
     async remove(): Promise<void> {
+        await this.storage.remove(KEY_STORAGE_AUTH_PRINCIPAL);
         await this.storage.remove(KEY_STORAGE_KEY);
         await this.storage.remove(KEY_STORAGE_DELEGATION);
     }

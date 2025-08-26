@@ -10,4 +10,5 @@ export const NamedNeurons: Record<string, string> = {
     "eda6976220ea999ed4d5df28b217e4d452786b6c9dc8f3d892256eaca00017ce": "ICX Dev Team",
     "fd052a2a6648357c984cd8a04edcb9e34a48967a46f44db9264f5156d7e96c61": "Modclub Foundation",
     "90699f782a035b3e4510c1d27234cc05ef3cd96059972d60ffd506ffd8a63bfd": "Sonic Dev Team",
+    "0de364d62cf2a717e5ae867f0d17e9a0d29701b44a2d7087328d42a9ccaa423f": "the CTS-TEAM"
 };

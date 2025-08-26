@@ -1,4 +1,5 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
@@ -7,7 +8,107 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Switch some endpoints over to using common response types ([#8450](https://github.com/open-chat-labs/open-chat/pull/8450))
+
+## [[2.0.1856](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1856-storage_index)] - 2025-08-05
+
+### Fixed
+
+- Maintain event ordering when retrying failed c2c calls ([#8429](https://github.com/open-chat-labs/open-chat/pull/8429))
+
+## [[2.0.1839](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1839-storage_index)] - 2025-07-25
+
+### Added
+
+- Implement ability for StorageIndex to create buckets via the CMC ([#8370](https://github.com/open-chat-labs/open-chat/pull/8370))
+
+### Changed
+
+- Include more details in failed c2c call errors ([#7749](https://github.com/open-chat-labs/open-chat/pull/7749))
+- Expose `liquid_cycles_balance` in metrics ([#8350](https://github.com/open-chat-labs/open-chat/pull/8350))
+- Add delay before retrying c2c call under certain error conditions ([#8355](https://github.com/open-chat-labs/open-chat/pull/8355))
+- Mark buckets as full if they start having to pay reserved cycles ([#8372](https://github.com/open-chat-labs/open-chat/pull/8372))
+
+## [[2.0.1680](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1680-storage_index)] - 2025-04-02
+
+### Added
+
+- Add MessagePack versions of canister endpoints ([#7347](https://github.com/open-chat-labs/open-chat/pull/7347))
+- Add JSON versions of canister endpoints ([#7374](https://github.com/open-chat-labs/open-chat/pull/7374))
+
+### Changed
+
+- Log total instructions consumed at end of upgrade ([#7551](https://github.com/open-chat-labs/open-chat/pull/7551))
+- Filter trace level events globally so they are dropped earlier ([#7678](https://github.com/open-chat-labs/open-chat/pull/7678))
+- Support passing common state to timer job batches ([#7705](https://github.com/open-chat-labs/open-chat/pull/7705))
+
+## [[2.0.1574](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1574-storage_index)] - 2025-01-21
+
+### Changed
+
+- Sync StorageBucket heap and stable memory sizes to StorageIndex ([#7192](https://github.com/open-chat-labs/open-chat/pull/7192))
+- Use macro to create grouped timer job types ([#7224](https://github.com/open-chat-labs/open-chat/pull/7224))
+- Changed `remove_user` into `remove_users` ([#7261](https://github.com/open-chat-labs/open-chat/pull/7261))
+
+## [[2.0.1554](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1554-storage_index)] - 2025-01-07
+
+### Changed
+
+- Increase memory limit of another StorageBucket which has reached limit ([#7170](https://github.com/open-chat-labs/open-chat/pull/7170))
+
+## [[2.0.1552](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1552-storage_index)] - 2025-01-07
+
+### Changed
+
+- Increase reserved cycles limit of StorageBuckets ([#7147](https://github.com/open-chat-labs/open-chat/pull/7147))
+
+## [[2.0.1546](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1546-storage_index)] - 2025-01-03
+
+### Changed
+
+- Increase memory limit of StorageBucket which has reached limit ([#7142](https://github.com/open-chat-labs/open-chat/pull/7142))
+
+## [[2.0.1521](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1521-storage_index)] - 2024-12-16
+
+### Changed
+
+- Update the canister creation fee to 0.5T ([#6700](https://github.com/open-chat-labs/open-chat/pull/6700))
+- Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))
+- Use `GroupedTimerJobQueue` to sync events to storage buckets ([#7045](https://github.com/open-chat-labs/open-chat/pull/7045))
+- Include some entropy when choosing the storage bucket for a file ([#7048](https://github.com/open-chat-labs/open-chat/pull/7048))
+
+## [[2.0.1419](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1419-storage_index)] - 2024-10-28
+
+### Added
+
+- Expose MessagePack versions of StorageIndex APIs ([#6318](https://github.com/open-chat-labs/open-chat/pull/6318))
+- Add an error log with http endpoint ([#6608](https://github.com/open-chat-labs/open-chat/pull/6608))
+
+### Changed
+
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+- Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
+- Add serde default attribute in preparation for skipping serialization if default ([#6475](https://github.com/open-chat-labs/open-chat/pull/6475))
+- Avoid using `heartbeat` to ensure enough active StorageBucket canisters ([#6646](https://github.com/open-chat-labs/open-chat/pull/6646))
+- Avoid using `heartbeat` to upgrade StorageBucket canisters ([#6647](https://github.com/open-chat-labs/open-chat/pull/6647))
+- Avoid using `heartbeat` to sync events to StorageBucket canisters ([#6649](https://github.com/open-chat-labs/open-chat/pull/6649))
+
+## [[2.0.1324](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1324-storage_index)] - 2024-09-03
+
+### Changed
+
+- Clear old data from the failed upgrades log ([#6062](https://github.com/open-chat-labs/open-chat/pull/6062))
+- Ensure StorageIndex is only controller before installing StorageBucket ([#6070](https://github.com/open-chat-labs/open-chat/pull/6070))
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+- Top up buckets that are detected to be out of cycles ([#6311](https://github.com/open-chat-labs/open-chat/pull/6311))
+
+## [[2.0.1175](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1175-storage_index)] - 2024-05-16
+
+### Changed
+
 - Seed rng with entropy before calling `raw_rand` to get randomness ([#5454](https://github.com/open-chat-labs/open-chat/pull/5454))
+- Expose both heap and stable memory in metrics ([#5718](https://github.com/open-chat-labs/open-chat/pull/5718))
+- Enable rolling storage for all users ([#5802](https://github.com/open-chat-labs/open-chat/pull/5802))
 
 ### Fixed
 

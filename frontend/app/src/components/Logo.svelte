@@ -16,12 +16,12 @@
                 <stop offset="0" style="stop-color: #bada55" />
                 <stop offset="1" style="stop-color: #758d29" />
             </linearGradient>
-            <linearGradient id="gradient-2" bx:pinned="true" />
-            <linearGradient id="gradient-5" bx:pinned="true">
+            <linearGradient id="gradient-2" />
+            <linearGradient id="gradient-5">
                 <stop style="stop-color: rgb(251, 176, 59);" offset="0" />
                 <stop style="stop-color: rgb(240, 90, 36);" offset="1" />
             </linearGradient>
-            <linearGradient id="gradient-6" bx:pinned="true">
+            <linearGradient id="gradient-6">
                 <stop style="stop-color: rgb(95, 37, 131);" offset="0" />
                 <stop style="stop-color: rgb(237, 30, 121);" offset="1" />
             </linearGradient>
@@ -65,14 +65,12 @@
         <path
             d="M 188.919 181.638 m -180 0 a 180 180 0 1 0 360 0 a 180 180 0 1 0 -360 0 Z M 188.919 181.638 m -100 0 a 100 100 0 0 1 200 0 a 100 100 0 0 1 -200 0 Z"
             style="fill: url(#gradient-5-0);"
-            transform="matrix(1, 0.000074, -0.000074, 1, 61.094496, 68.347628)"
-            bx:shape="ring 188.919 181.638 100 100 180 180 1@55492482" />
+            transform="matrix(1, 0.000074, -0.000074, 1, 61.094496, 68.347628)" />
         <path
             class="right-arc"
             style="stroke-width: 0px; paint-order: stroke; fill: url(#gradient-6-1);"
             transform="matrix(1.031731, 0.000001, 0, 1.020801, -634.597412, 0.544884)"
-            d="M 958.327234958 100.664699414 A 175.433 175.433 0 0 1 958.327234958 388.077300586 L 913.296322517 323.766492741 A 96.924 96.924 0 0 0 913.296322517 164.975507259 Z"
-            bx:shape="pie 857.703 244.371 96.924 175.433 35 145 1@99003c38" />
+            d="M 958.327234958 100.664699414 A 175.433 175.433 0 0 1 958.327234958 388.077300586 L 913.296322517 323.766492741 A 96.924 96.924 0 0 0 913.296322517 164.975507259 Z" />
         <circle style="fill: rgb(25, 25, 25);" cx="250" cy="250" r="100" />
     </svg>
 </div>

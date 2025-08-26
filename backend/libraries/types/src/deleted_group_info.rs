@@ -1,7 +1,9 @@
 use crate::{CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, TimestampMillis, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct DeletedGroupInfo {
     pub id: ChatId,
@@ -23,6 +25,7 @@ pub struct DeletedGroupInfoInternal {
     pub community_imported_into: Option<CommunityImportedInto>,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct DeletedCommunityInfo {
     pub id: CommunityId,

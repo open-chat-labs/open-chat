@@ -1,179 +1,193 @@
 <script lang="ts">
-    import Send from "svelte-material-icons/Send.svelte";
-    import ContentSaveEditOutline from "svelte-material-icons/ContentSaveMoveOutline.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
-    import AudioAttacher from "./AudioAttacher.svelte";
-    import { createEventDispatcher, getContext, tick } from "svelte";
-    import { _ } from "svelte-i18n";
-    import Progress from "../Progress.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
-    import MentionPicker from "./MentionPicker.svelte";
-    import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
+    import { trackedEffect } from "@src/utils/effects.svelte";
     import type {
-        User,
+        AttachmentContent,
+        BotActionScope,
         ChatSummary,
         EnhancedReplyContext,
         EventWrapper,
+        ExternalBot,
         Message,
         MessageAction,
-        Questions,
-        OpenChat,
+        MessageContext,
         MultiUserChat,
+        OpenChat,
+        SelectedEmoji,
+        User,
         UserOrUserGroup,
-        AttachmentContent,
     } from "openchat-client";
-    import { allQuestions, chatIdentifiersEqual } from "openchat-client";
-    import { enterSend } from "../../stores/settings";
-    import MessageActions from "./MessageActions.svelte";
-    import { addQueryStringParam } from "../../utils/urls";
-    import PreviewFooter from "./PreviewFooter.svelte";
-    import { preferredDarkThemeName, themeType, currentThemeName } from "../../theme/themes";
-    import { scream } from "../../utils/scream";
-    import { snowing } from "../../stores/snow";
-    import Translatable from "../Translatable.svelte";
-    import { i18nKey, interpolate } from "../../i18n/i18n";
+    import {
+        allUsersStore,
+        anonUserStore,
+        botState,
+        chatIdentifiersEqual,
+        currentUserIdStore,
+        directMessageCommandInstance,
+        iconSize,
+        localUpdates,
+        messageContextsEqual,
+        random64,
+        screenWidth,
+        ScreenWidth,
+        selectedCommunitySummaryStore,
+        selectedCommunityUserGroupsStore,
+        throttleDeadline,
+    } from "openchat-client";
+    import { getContext, tick } from "svelte";
+    import { _ } from "svelte-i18n";
+    import Alert from "svelte-material-icons/Alert.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
+    import ContentSaveEditOutline from "svelte-material-icons/ContentSaveMoveOutline.svelte";
+    import Send from "svelte-material-icons/Send.svelte";
     import { translatable } from "../../actions/translatable";
+    import { i18nKey, interpolate } from "../../i18n/i18n";
+    import { enterSend, useBlockLevelMarkdown } from "../../stores/settings";
+    import { snowing } from "../../stores/snow";
+    import AlertBoxModal from "../AlertBoxModal.svelte";
+    import CommandBuilder from "../bots/CommandInstanceBuilder.svelte";
+    import CommandSelector from "../bots/CommandSelector.svelte";
+    import HoverIcon from "../HoverIcon.svelte";
+    import Progress from "../Progress.svelte";
+    import Translatable from "../Translatable.svelte";
+    import AudioAttacher from "./AudioAttacher.svelte";
+    import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
+    import MarkdownToggle from "./MarkdownToggle.svelte";
+    import MentionPicker from "./MentionPicker.svelte";
+    import MessageActions from "./MessageActions.svelte";
+    import PreviewFooter from "./PreviewFooter.svelte";
+    import ThrottleCountdown from "./ThrottleCountdown.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    export let chat: ChatSummary;
-    export let blocked: boolean;
-    export let preview: boolean;
-    export let messageAction: MessageAction = undefined;
-    export let joining: MultiUserChat | undefined;
-    export let attachment: AttachmentContent | undefined;
-    export let editingEvent: EventWrapper<Message> | undefined;
-    export let replyingTo: EnhancedReplyContext | undefined;
-    export let textContent: string | undefined;
-    export let mode: "thread" | "message" = "message";
+    interface Props {
+        chat: ChatSummary;
+        blocked: boolean;
+        preview: boolean;
+        lapsed: boolean;
+        messageAction?: MessageAction;
+        joining: MultiUserChat | undefined;
+        attachment: AttachmentContent | undefined;
+        editingEvent: EventWrapper<Message> | undefined;
+        replyingTo: EnhancedReplyContext | undefined;
+        textContent: string | undefined;
+        mode?: "thread" | "message";
+        externalContent: boolean;
+        messageContext: MessageContext;
+        onFileSelected: (content: AttachmentContent) => void;
+        onPaste: (e: ClipboardEvent) => void;
+        onSetTextContent: (txt?: string) => void;
+        onStartTyping: () => void;
+        onStopTyping: () => void;
+        onCancelEdit: () => void;
+        onSendMessage: (args: [string | undefined, User[], boolean]) => void;
+        onClearAttachment: () => void;
+        onTokenTransfer: (args: { ledger?: string; amount?: bigint }) => void;
+        onCreatePrizeMessage?: () => void;
+        onCreateP2PSwapMessage: () => void;
+        onCreatePoll: () => void;
+        onAttachGif: (search: string) => void;
+        onMakeMeme: () => void;
+    }
+
+    let {
+        chat,
+        blocked,
+        preview,
+        lapsed,
+        messageAction = $bindable(undefined),
+        joining,
+        attachment,
+        editingEvent,
+        replyingTo,
+        textContent,
+        mode = "message",
+        externalContent,
+        messageContext,
+        onFileSelected,
+        onPaste,
+        onSetTextContent,
+        onStartTyping,
+        onStopTyping,
+        onCancelEdit,
+        onSendMessage,
+        onClearAttachment,
+        onTokenTransfer,
+        onCreatePrizeMessage,
+        onCreateP2PSwapMessage,
+        onCreatePoll,
+        onAttachGif,
+        onMakeMeme,
+    }: Props = $props();
 
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
 
     const mentionRegex = /@(\w*)$/;
     const emojiRegex = /:(\w+):?$/;
-    const dispatch = createEventDispatcher();
-    let inp: HTMLDivElement;
+    let inp: HTMLDivElement | undefined = $state();
     let audioMimeType = client.audioRecordingMimeType();
-    let selectedRange: Range | undefined;
-    let dragging: boolean = false;
-    let recording: boolean = false;
-    let percentRecorded: number = 0;
-    let previousEditingEvent: EventWrapper<Message> | undefined;
+    let selectedRange: Range | undefined = $state();
+    let recording: boolean = $state(false);
+    let percentRecorded: number = $state(0);
+    let previousEditingEvent: EventWrapper<Message> | undefined = $state();
     let lastTypingUpdate: number = 0;
     let typingTimer: number | undefined = undefined;
-    let audioSupported: boolean = "mediaDevices" in navigator;
-    let showMentionPicker = false;
-    let showEmojiSearch = false;
-    let mentionPrefix: string | undefined;
-    let emojiQuery: string | undefined;
-    let messageEntryHeight: number;
-    let messageActions: MessageActions;
+    let audioSupported: boolean = $state("mediaDevices" in navigator);
+    let showMentionPicker = $state(false);
+    let showCommandSelector: boolean = $state(false);
+    let showEmojiSearch = $state(false);
+    let mentionPrefix: string | undefined = $state();
+    let emojiQuery: string | undefined = $state();
+    let messageEntryHeight: number = $state(0);
+    let messageActions: MessageActions | undefined = $state();
     let rangeToReplace: [Node, number, number] | undefined = undefined;
-    let previousChatId = chat.id;
+    let previousChatId = $state(chat.id);
+    let containsMarkdown = $state(false);
+    let showDirectBotChatWarning = $state(false);
+    let commandSent = false;
 
     // Update this to force a new textbox instance to be created
-    let textboxId = Symbol();
+    let textboxId = $state(Symbol());
 
-    $: userStore = client.userStore;
-    $: userGroups = client.currentCommunityUserGroups;
-    $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && attachment === undefined;
-    $: cryptoLookup = client.cryptoLookup;
-    $: tokens = Object.values($cryptoLookup)
-        .map((t) => t.symbol.toLowerCase())
-        .join("|");
-    $: tokenMatchRegex = new RegExp(`^\/(${tokens}) *(\\d*[.,]?\\d*)$`);
-
-    $: canSendAny = client.canSendMessage(chat.id, mode);
-    $: permittedMessages = client.permittedMessages(chat.id, mode);
-    $: canEnterText =
-        (permittedMessages.get("text") ?? false) ||
-        editingEvent !== undefined ||
-        attachment !== undefined;
-    $: excessiveLinks = client.extractEnabledLinks(textContent ?? "").length > 5;
-
-    $: {
-        if (inp) {
-            if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
-                if (editingEvent.event.content.kind === "text_content") {
-                    inp.textContent = formatUserGroupMentions(
-                        formatUserMentions(
-                            client.stripLinkDisabledMarker(editingEvent.event.content.text),
-                        ),
-                    );
-                    selectedRange = undefined;
-                    restoreSelection();
-                } else if ("caption" in editingEvent.event.content) {
-                    inp.textContent = editingEvent.event.content.caption ?? "";
-                    selectedRange = undefined;
-                    restoreSelection();
-                }
-                previousEditingEvent = editingEvent;
-            } else {
-                const text = textContent ?? "";
-                // Only set the textbox text when required rather than every time, because doing so sets the focus back to
-                // the start of the textbox on some devices.
-                if (inp.textContent !== text) {
-                    inp.textContent = text;
-                    // TODO - figure this out
-                    // setCaretToEnd();
-                }
-            }
-        }
-
-        if (editingEvent === undefined) {
-            previousEditingEvent = undefined;
+    // TODO - note that this is not actually going to work yet - there is a lot
+    // more to do to make the message entry component work with non-text elements
+    // But we will come back to this a bit later. Custom emoji reactions is a
+    // much easier place to start
+    export function insertEmoji(emoji: SelectedEmoji) {
+        if (emoji.kind === "native") {
+            replaceSelectionWithNode(document.createTextNode(emoji.unicode));
+        } else {
+            const el = document.createElement("custom-emoji");
+            el.dataset.id = emoji.code;
+            replaceSelectionWithNode(el);
         }
     }
 
-    $: {
-        // If the chat has changed, close the emoji picker or file selector
-        if (!chatIdentifiersEqual(chat.id, previousChatId)) {
-            messageAction = undefined;
-            previousChatId = chat.id;
-        }
-    }
-
-    $: {
-        if (attachment !== undefined || replyingTo !== undefined) {
-            inp?.focus();
-        }
-    }
-
-    $: {
-        if ($screenWidth === ScreenWidth.Large) {
-            inp?.focus();
-        }
-    }
-
-    $: placeholder = !canEnterText
-        ? i18nKey("sendTextDisabled")
-        : attachment !== undefined
-          ? i18nKey("enterCaption")
-          : dragging
-            ? i18nKey("dropFile")
-            : i18nKey("enterMessage");
-
-    export function replaceSelection(text: string) {
+    export function replaceSelectionWithNode(node: Node) {
         restoreSelection();
         let range = window.getSelection()?.getRangeAt(0);
         if (range !== undefined) {
             range.deleteContents();
-            range.insertNode(document.createTextNode(text));
+            range.insertNode(node);
             range.collapse(false);
-            const inputContent = inp.textContent ?? "";
-            dispatch("setTextContent", inputContent.trim().length === 0 ? undefined : inputContent);
+            const inputContent = inp?.textContent ?? "";
+            triggerCommandSelector(inputContent);
+            onSetTextContent(inputContent.trim().length === 0 ? undefined : inputContent);
         }
     }
 
+    export function replaceSelection(text: string) {
+        replaceSelectionWithNode(document.createTextNode(text));
+    }
+
     function onInput() {
-        const inputContent = inp.textContent ?? "";
-        dispatch("setTextContent", inputContent.trim().length === 0 ? undefined : inputContent);
+        const inputContent = inp?.textContent ?? "";
+        onSetTextContent(inputContent.trim().length === 0 ? undefined : inputContent);
+        triggerCommandSelector(inputContent);
         triggerMentionLookup(inputContent);
         triggerEmojiLookup(inputContent);
         triggerTypingTimer();
+        containsMarkdown = detectMarkdown(inputContent);
     }
 
     function uptoCaret(
@@ -225,36 +239,93 @@
         });
     }
 
+    function triggerCommandSelector(inputContent: string | null): void {
+        const commandMatch = inputContent?.match(/^\/.*/);
+        if (commandMatch) {
+            showCommandSelector = true;
+            botState.prefix = commandMatch[0];
+        } else {
+            showCommandSelector = false;
+            botState.cancel();
+        }
+    }
+
+    function cancelCommandSelector(sent: boolean) {
+        commandSent = sent;
+        showCommandSelector = false;
+        botState.cancel();
+        if (sent) {
+            onSetTextContent();
+        }
+    }
+
     function triggerTypingTimer() {
         requestAnimationFrame(() => {
             const now = Date.now();
             if (now - lastTypingUpdate > USER_TYPING_EVENT_MIN_INTERVAL_MS) {
                 lastTypingUpdate = now;
-                dispatch("startTyping");
+                onStartTyping();
             }
             if (typingTimer !== undefined) {
                 window.clearTimeout(typingTimer);
             }
 
-            typingTimer = window.setTimeout(
-                () => dispatch("stopTyping"),
-                MARK_TYPING_STOPPED_INTERVAL_MS,
-            );
+            typingTimer = window.setTimeout(onStopTyping, MARK_TYPING_STOPPED_INTERVAL_MS);
         });
     }
 
+    function sendADirectBotMessage(bot: ExternalBot) {
+        const txt = inp?.textContent?.trim() ?? "";
+        const userMessageId = random64();
+        const botMessageId = random64();
+
+        const commandInstance = directMessageCommandInstance(bot, txt);
+        if (commandInstance !== undefined) {
+            const scope: BotActionScope = {
+                kind: "chat_scope",
+                chatId: messageContext.chatId,
+                threadRootMessageIndex: messageContext.threadRootMessageIndex,
+                messageId: botMessageId,
+                userMessageId,
+            };
+            client.sendPlaceholderBotMessage(
+                scope,
+                undefined,
+                { kind: "text_content", text: txt },
+                userMessageId,
+                $currentUserIdStore,
+                $useBlockLevelMarkdown,
+            );
+            client.executeBotCommand(scope, commandInstance, true);
+            localUpdates.draftMessages.delete(messageContext);
+            afterSendMessage();
+        } else {
+            showDirectBotChatWarning = true;
+        }
+    }
+
     function keyPress(e: KeyboardEvent) {
-        if (e.key === "Enter" && $enterSend && !e.shiftKey) {
-            if (!messageIsEmpty) {
-                sendMessage();
+        if (e.key === "Enter" && !e.shiftKey) {
+            if (directBot) {
+                if (!showCommandSelector && !messageIsEmpty) {
+                    sendADirectBotMessage(directBot);
+                } else if (!commandSent && botState.selectedCommand === undefined) {
+                    showDirectBotChatWarning = true;
+                }
+                e.preventDefault();
+            } else {
+                if (!showCommandSelector && $enterSend) {
+                    e.preventDefault();
+                    sendMessage();
+                }
             }
-            e.preventDefault();
+            commandSent = false;
         }
     }
 
     function formatUserMentions(text: string): string {
         return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {
-            const u = $userStore[p1];
+            const u = $allUsersStore.get(p1);
             if (u?.username !== undefined) {
                 const username = u.username;
                 return `@${username}`;
@@ -265,7 +336,7 @@
 
     function formatUserGroupMentions(text: string): string {
         return text.replace(/@UserGroup\(([\d\w-]+)\)/g, (match, p1) => {
-            const u = $userGroups.get(Number(p1));
+            const u = $selectedCommunityUserGroupsStore.get(Number(p1));
             if (u !== undefined) {
                 return `@${u.name}`;
             }
@@ -276,7 +347,7 @@
     // replace anything of the form @username with @UserId(xyz) or @UserGroup(abc) where
     // xyz is the userId or abc is the user group id
     // if we can't find the user or user group just leave it as is
-    function expandMentions(text: string): [string | undefined, User[]] {
+    function expandMentions(text: string): [string | undefined, User[], boolean] {
         let mentionedMap = new Map<string, User>();
         let expandedText = text.replace(/@(\w+)/g, (match, p1) => {
             const userOrGroup = client.lookupUserForMention(p1, false);
@@ -297,122 +368,41 @@
 
         let mentioned = Array.from(mentionedMap, ([_, user]) => user);
 
-        return [expandedText, mentioned];
+        return [expandedText, mentioned, containsMarkdown && $useBlockLevelMarkdown];
     }
 
-    /**
-     * Check the message content for special commands
-     * * /poll - creates a poll
-     * * /icp [amount]
-     * * /search [term]
-     * * /pinned - opens pinned messages (not yet)
-     * * /details - opens group details (not yet)
-     * * /witch - summon the halloween witch
-     */
     function parseCommands(txt: string): boolean {
-        const summonWitch = txt.match(/^\/witch( *(.*))$/);
-        const isHalloweenTheme = $currentThemeName === "halloween";
-        if (summonWitch) {
-            if (!isHalloweenTheme) {
-                themeType.set("dark");
-                preferredDarkThemeName.set("halloween");
-            }
-            document.body.classList.add("witch");
-            scream.currentTime = 0;
-            scream.play();
-            window.setTimeout(() => {
-                document.body.classList.remove("witch");
-            }, 2000);
-            return false;
-        }
-
         if (/snow|xmas|christmas|noel/.test(txt)) {
             $snowing = true;
         }
-
-        if (permittedMessages.get("poll") && /^\/poll$/.test(txt)) {
-            dispatch("createPoll");
-            return true;
-        }
-
-        const testMsgMatch = txt.match(/^\/test-msg (\d+)/);
-        if (testMsgMatch && testMsgMatch[1] !== undefined) {
-            dispatch("createTestMessages", Number(testMsgMatch[1]));
-            return true;
-        }
-
-        const searchMatch = txt.match(/^\/search( *(.*))$/);
-        if (searchMatch && searchMatch[2] !== undefined) {
-            dispatch("searchChat", searchMatch[2]);
-            return true;
-        }
-
-        if (permittedMessages.get("giphy")) {
-            const gifMatch = txt.match(/^\/gif( *(.*))$/);
-            if (gifMatch && gifMatch[2] !== undefined) {
-                dispatch("attachGif", gifMatch[2]);
-                return true;
-            }
-        }
-
-        const faqMatch = txt.match(/^\/faq( *(.*))$/);
-        if (faqMatch && faqMatch[2] !== undefined) {
-            if (allQuestions.includes(faqMatch[2] as Questions)) {
-                const url = `/faq?q=${faqMatch[2]}`;
-                dispatch("sendMessage", [`[🤔 FAQ: ${$_(`faq.${faqMatch[2]}_q`)}](${url})`, []]);
-            } else {
-                dispatch("sendMessage", [`[🤔 FAQs](/faq)`, []]);
-            }
-            return true;
-        }
-
-        if (/^\/diamond$/.test(txt)) {
-            const url = addQueryStringParam("diamond", "");
-            dispatch("sendMessage", [`[${$_("upgrade.message")}](${url})`, []]);
-            return true;
-        }
-
-        if (permittedMessages.get("crypto")) {
-            const tokenMatch = txt.match(tokenMatchRegex);
-            if (tokenMatch && tokenMatch[2] !== undefined) {
-                const token = tokenMatch[1];
-                const tokenDetails = Object.values($cryptoLookup).find(
-                    (t) => t.symbol.toLowerCase() === token,
-                );
-                if (tokenDetails !== undefined) {
-                    dispatch("tokenTransfer", {
-                        ledger: tokenDetails.ledger,
-                        amount: client.validateTokenInput(tokenMatch[2], tokenDetails.decimals)
-                            .amount,
-                    });
-                }
-                return true;
-            }
-        }
-
         return false;
     }
 
-    function cancelEdit() {
-        dispatch("cancelEditEvent");
-    }
-
     function sendMessage() {
-        const txt = inp.innerText?.trim() ?? "";
+        if (showCommandSelector || messageIsEmpty) return;
+
+        const txt = inp?.innerText?.trim() ?? "";
 
         if (!parseCommands(txt)) {
-            dispatch("sendMessage", expandMentions(txt));
+            onSendMessage(expandMentions(txt));
         }
-        inp.textContent = "";
-        dispatch("setTextContent", undefined);
+
+        afterSendMessage();
+    }
+
+    function afterSendMessage() {
+        if (inp) {
+            inp.textContent = "";
+        }
+        onSetTextContent();
 
         messageActions?.close();
-        dispatch("stopTyping");
+        onStopTyping();
 
         // After sending a message we must force a new textbox instance to be created, otherwise on iPhone the
         // predictive text doesn't notice the text has been cleared so the suggestions don't make sense.
         textboxId = Symbol();
-        tick().then(() => inp.focus());
+        tick().then(() => inp?.focus());
     }
 
     export function saveSelection() {
@@ -423,7 +413,9 @@
     }
 
     function restoreSelection() {
-        inp.focus();
+        if (!inp) return;
+
+        inp?.focus();
         if (!selectedRange || !selectedRange.intersectsNode(inp)) {
             const range = new Range();
             range.selectNodeContents(inp);
@@ -437,6 +429,8 @@
     }
 
     function setCaretToEnd() {
+        if (!inp) return;
+
         const range = document.createRange();
         range.selectNodeContents(inp);
         range.collapse(false);
@@ -455,11 +449,6 @@
         sel?.addRange(range);
     }
 
-    function onDrop(e: DragEvent) {
-        dragging = false;
-        dispatch("drop", e);
-    }
-
     function replaceTextWith(replacement: string) {
         if (rangeToReplace === undefined) return;
 
@@ -471,7 +460,7 @@
         )}${replacement} ${node.textContent?.slice(end)}`;
         node.textContent = replaced;
 
-        dispatch("setTextContent", inp.textContent || undefined);
+        onSetTextContent(inp?.textContent || undefined);
 
         tick().then(() => {
             setCaretTo(node, start + replacement.length + 1);
@@ -480,8 +469,7 @@
         rangeToReplace = undefined;
     }
 
-    function mention(ev: CustomEvent<UserOrUserGroup>): void {
-        const userOrGroup = ev.detail;
+    function mention(userOrGroup: UserOrUserGroup): void {
         const username = client.userOrUserGroupName(userOrGroup);
         const userLabel = `@${username}`;
 
@@ -495,26 +483,150 @@
         setCaretToEnd();
     }
 
-    function completeEmoji(ev: CustomEvent<string>) {
-        replaceTextWith(ev.detail);
+    function completeEmoji(emoji: string) {
+        replaceTextWith(emoji);
         showEmojiSearch = false;
     }
+
+    function detectMarkdown(text: string | null) {
+        if (!text) return false;
+
+        // a few regexes to detect various block level markdown elements (possibly incomplete)
+        const headerRegex = /^(?:\#{1,6}\s+)/m;
+        const tableRegex = /(?:\|(?:[^\r\n\|\\]|\\.)*\|)+/;
+        const bulletedListRegex = /^(?:\s*[-\*+]\s+)/m;
+        const numberedListRegex = /^(?:\s*\d+\.\s+)/m;
+        const blockquoteRegex = /^(?:\s*>)/m;
+        const codeBlockRegex = /(?:^```[\s\S]*?^```)/m;
+        const regexList = [
+            headerRegex,
+            tableRegex,
+            bulletedListRegex,
+            numberedListRegex,
+            blockquoteRegex,
+            codeBlockRegex,
+        ];
+        const result = regexList.some((regex) => regex.test(text));
+        return result;
+    }
+    let directChatBotId = $derived(client.directChatWithBot(chat));
+    let directBot = $derived(
+        directChatBotId ? botState.externalBots.get(directChatBotId) : undefined,
+    );
+    let messageIsEmpty = $derived(
+        (textContent?.trim() ?? "").length === 0 && attachment === undefined,
+    );
+    let canSendAny = $derived(!$anonUserStore && client.canSendMessage(chat.id, mode));
+    let permittedMessages = $derived(client.permittedMessages(chat.id, mode));
+    let canEnterText = $derived(
+        (permittedMessages.get("text") ?? false) ||
+            editingEvent !== undefined ||
+            attachment !== undefined,
+    );
+    let excessiveLinks = $derived(client.extractEnabledLinks(textContent ?? "").length > 5);
+    let frozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore));
+    $effect(() => {
+        if (inp) {
+            if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
+                if (editingEvent.event.content.kind === "text_content") {
+                    inp.textContent = formatUserGroupMentions(
+                        formatUserMentions(
+                            client.stripLinkDisabledMarker(editingEvent.event.content.text),
+                        ),
+                    );
+                    selectedRange = undefined;
+                    restoreSelection();
+                } else if ("caption" in editingEvent.event.content) {
+                    inp.textContent = editingEvent.event.content.caption ?? "";
+                    selectedRange = undefined;
+                    restoreSelection();
+                }
+                previousEditingEvent = editingEvent;
+                containsMarkdown = detectMarkdown(inp.textContent);
+            } else {
+                const text = textContent ?? "";
+                // Only set the textbox text when required rather than every time, because doing so sets the focus back to
+                // the start of the textbox on some devices.
+                if (inp.textContent !== text) {
+                    inp.textContent = text;
+                    // TODO - figure this out
+                    // setCaretToEnd();
+                    containsMarkdown = detectMarkdown(text);
+                }
+            }
+        }
+
+        if (editingEvent === undefined) {
+            previousEditingEvent = undefined;
+        }
+    });
+    trackedEffect("clear-message-actions", () => {
+        // If the chat has changed, close the emoji picker or file selector
+        if (!chatIdentifiersEqual(chat.id, previousChatId)) {
+            messageAction = undefined;
+            previousChatId = chat.id;
+        }
+    });
+    trackedEffect("attachment-focus", () => {
+        if (attachment !== undefined || replyingTo !== undefined) {
+            inp?.focus();
+        }
+    });
+    trackedEffect("screen-width-focus", () => {
+        if ($screenWidth === ScreenWidth.Large) {
+            inp?.focus();
+        }
+    });
+    let placeholder = $derived(
+        !canEnterText
+            ? i18nKey("sendTextDisabled")
+            : attachment !== undefined
+              ? i18nKey("enterCaption")
+              : directChatBotId
+                ? i18nKey("bots.direct.placeholder")
+                : i18nKey("enterMessage"),
+    );
 </script>
+
+{#if showDirectBotChatWarning}
+    <AlertBoxModal
+        onClose={() => (showDirectBotChatWarning = false)}
+        title={i18nKey("bots.direct.warningTitle")}
+        warning={i18nKey("bots.direct.warning")} />
+{/if}
+
+{#if botState.selectedCommand && messageContextsEqual(botState.showingBuilder, messageContext)}
+    <CommandBuilder
+        {messageContext}
+        onCommandSent={() => cancelCommandSelector(true)}
+        onCancel={() => cancelCommandSelector(false)}
+        command={botState.selectedCommand} />
+{/if}
 
 {#if showMentionPicker}
     <MentionPicker
         supportsUserGroups
         offset={messageEntryHeight}
-        on:close={cancelMention}
-        on:mention={mention}
+        onClose={cancelMention}
+        onMention={mention}
         prefix={mentionPrefix} />
+{/if}
+
+{#if showCommandSelector}
+    <CommandSelector
+        selectedBotId={directChatBotId}
+        {messageContext}
+        {mode}
+        onCommandSent={() => cancelCommandSelector(true)}
+        onNoMatches={() => cancelCommandSelector(false)}
+        onCancel={() => cancelCommandSelector(false)} />
 {/if}
 
 {#if showEmojiSearch}
     <EmojiAutocompleter
         offset={messageEntryHeight}
-        on:close={() => (showEmojiSearch = false)}
-        on:select={completeEmoji}
+        onClose={() => (showEmojiSearch = false)}
+        onSelect={completeEmoji}
         query={emojiQuery} />
 {/if}
 
@@ -522,41 +634,58 @@
     class="message-entry"
     class:editing={editingEvent !== undefined}
     bind:clientHeight={messageEntryHeight}>
-    {#if blocked}
-        <div class="blocked">
-            {$_("userIsBlocked")}
+    {#if frozen}
+        <div class="frozen">
+            <Translatable resourceKey={i18nKey("chatFrozen")} />
         </div>
-    {:else if preview && chat.kind !== "direct_chat"}
-        <PreviewFooter {joining} {chat} on:joinGroup on:upgrade />
+    {:else if blocked}
+        <div class="blocked">
+            <Translatable resourceKey={i18nKey("userIsBlocked")} />
+        </div>
+    {:else if (preview || lapsed) && chat.kind !== "direct_chat"}
+        <PreviewFooter {lapsed} {joining} {chat} />
+    {:else if externalContent}
+        <div class="disclaimer">
+            <Alert size={$iconSize} color={"var(--warn"} />
+            <Translatable resourceKey={i18nKey("externalContent.disclaimer")} />
+        </div>
     {:else if !canSendAny}
         <div class="disabled">
             <Translatable
-                resourceKey={i18nKey(mode === "thread" ? "readOnlyThread" : "readOnlyChat")} />
+                resourceKey={i18nKey(
+                    $anonUserStore
+                        ? "sendMessageDisabledAnon"
+                        : mode === "thread"
+                          ? "readOnlyThread"
+                          : "readOnlyChat",
+                )} />
         </div>
+    {:else if $throttleDeadline > 0}
+        <ThrottleCountdown deadline={$throttleDeadline} />
     {:else}
         {#if recording}
             <div class="recording">
                 <Progress percent={percentRecorded} />
             </div>
-        {/if}
-        {#if canEnterText}
+        {:else if canEnterText}
             {#key textboxId}
                 <div class="container">
                     {#if excessiveLinks}
                         <div class="note">{$_("excessiveLinksNote")}</div>
                     {/if}
+                    <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_static_element_interactions -->
                     <div
                         data-gram="false"
                         data-gramm_editor="false"
                         data-enable-grammarly="false"
                         tabindex={0}
                         bind:this={inp}
-                        on:blur={saveSelection}
+                        onblur={saveSelection}
                         class="textbox"
                         class:recording
-                        class:dragging
+                        class:empty={messageIsEmpty}
                         contenteditable
-                        on:paste
+                        onpaste={onPaste}
                         placeholder={interpolate($_, placeholder)}
                         use:translatable={{
                             key: placeholder,
@@ -565,12 +694,13 @@
                             top: 12,
                         }}
                         spellcheck
-                        on:dragover={() => (dragging = true)}
-                        on:dragenter={() => (dragging = true)}
-                        on:dragleave={() => (dragging = false)}
-                        on:drop={onDrop}
-                        on:input={onInput}
-                        on:keypress={keyPress} />
+                        oninput={onInput}
+                        onkeypress={keyPress}>
+                    </div>
+
+                    {#if containsMarkdown}
+                        <MarkdownToggle {editingEvent} />
+                    {/if}
                 </div>
             {/key}
         {:else}
@@ -579,54 +709,58 @@
             </div>
         {/if}
 
-        <div class="icons">
-            {#if editingEvent === undefined}
-                {#if permittedMessages.get("audio") && messageIsEmpty && audioMimeType !== undefined && audioSupported}
-                    <div class="record">
-                        <AudioAttacher
-                            mimeType={audioMimeType}
-                            bind:percentRecorded
-                            bind:recording
-                            bind:supported={audioSupported}
-                            on:audioCaptured />
+        {#if directChatBotId === undefined}
+            <div class="icons">
+                {#if editingEvent === undefined}
+                    {#if permittedMessages.get("audio") && messageIsEmpty && audioMimeType !== undefined && audioSupported}
+                        <div class="record">
+                            <AudioAttacher
+                                mimeType={audioMimeType}
+                                bind:percentRecorded
+                                bind:recording
+                                bind:supported={audioSupported}
+                                onAudioCaptured={onFileSelected} />
+                        </div>
+                    {:else if canEnterText}
+                        <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
+                        <div class="send" onclick={sendMessage}>
+                            <HoverIcon title={$_("sendMessage")}>
+                                <Send size={$iconSize} color={"var(--icon-txt)"} />
+                            </HoverIcon>
+                        </div>
+                    {/if}
+                    <!-- we might need this if we are editing too -->
+                    <MessageActions
+                        bind:this={messageActions}
+                        bind:messageAction
+                        {permittedMessages}
+                        {attachment}
+                        {mode}
+                        editing={editingEvent !== undefined}
+                        {onTokenTransfer}
+                        {onCreatePrizeMessage}
+                        {onCreateP2PSwapMessage}
+                        {onAttachGif}
+                        {onMakeMeme}
+                        {onCreatePoll}
+                        {onClearAttachment}
+                        {onFileSelected} />
+                {:else}
+                    <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
+                    <div class="send" onclick={sendMessage}>
+                        <HoverIcon>
+                            <ContentSaveEditOutline size={$iconSize} color={"var(--button-txt)"} />
+                        </HoverIcon>
                     </div>
-                {:else if canEnterText}
-                    <div class="send" on:click={sendMessage}>
-                        <HoverIcon title={$_("sendMessage")}>
-                            <Send size={$iconSize} color={"var(--icon-txt)"} />
+                    <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
+                    <div class="send" onclick={onCancelEdit}>
+                        <HoverIcon>
+                            <Close size={$iconSize} color={"var(--button-txt)"} />
                         </HoverIcon>
                     </div>
                 {/if}
-                <!-- we might need this if we are editing too -->
-                <MessageActions
-                    bind:this={messageActions}
-                    bind:messageAction
-                    {permittedMessages}
-                    {attachment}
-                    {mode}
-                    editing={editingEvent !== undefined}
-                    on:tokenTransfer
-                    on:createPrizeMessage
-                    on:createP2PSwapMessage
-                    on:attachGif
-                    on:makeMeme
-                    on:createPoll
-                    on:upgrade
-                    on:clearAttachment
-                    on:fileSelected />
-            {:else}
-                <div class="send" on:click={sendMessage}>
-                    <HoverIcon>
-                        <ContentSaveEditOutline size={$iconSize} color={"var(--button-txt)"} />
-                    </HoverIcon>
-                </div>
-                <div class="send" on:click={cancelEdit}>
-                    <HoverIcon>
-                        <Close size={$iconSize} color={"var(--button-txt)"} />
-                    </HoverIcon>
-                </div>
-            {/if}
-        </div>
+            </div>
+        {/if}
     {/if}
 </div>
 
@@ -642,7 +776,7 @@
         min-height: toRem(60);
 
         &.editing {
-            background-color: var(--button-bg);
+            background: var(--button-bg);
         }
 
         .icons {
@@ -676,15 +810,12 @@
         border: var(--bw) solid var(--entry-input-bd);
         box-shadow: var(--entry-input-sh);
 
-        &:empty:before {
+        &.empty:before {
             content: attr(placeholder);
             color: var(--placeholder);
             pointer-events: none;
             display: block; /* For Firefox */
-        }
-
-        &.dragging {
-            border: var(--bw) dashed var(--txt);
+            position: absolute;
         }
 
         &.recording {
@@ -697,6 +828,7 @@
     }
 
     .blocked,
+    .frozen,
     .disabled {
         height: 42px;
         color: var(--txt);
@@ -715,5 +847,21 @@
     .note {
         @include font(book, normal, fs-70);
         margin-bottom: $sp2;
+    }
+
+    .disclaimer {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        gap: $sp4;
+    }
+
+    .prefix {
+        position: absolute;
+        top: 0;
+        right: 0;
+        z-index: 1000;
+        @include font(bold, normal, fs-200);
     }
 </style>

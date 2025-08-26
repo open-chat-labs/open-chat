@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg viewBox="0 0 189 145" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:bx="https://boxy-svg.com">
+  <defs>
+    <linearGradient id="color-0" bx:pinned="true">
+      <title>Silver</title>
+      <stop style="stop-color: #ada996;" offset="0"/>
+      <stop style="stop-color: #f2f2f2;" offset="0.33"/>
+      <stop style="stop-color: #dbdbdb;" offset="0.67"/>
+      <stop style="stop-color: #eaeaea;" offset="1"/>
+    </linearGradient>
+    <linearGradient id="color-1" bx:pinned="true">
+      <stop style="stop-color: rgb(255, 255, 255);" offset="0"/>
+      <stop style="stop-color: rgb(210, 171, 19);" offset="1"/>
+    </linearGradient>
+    <radialGradient id="color-1-0" gradientUnits="userSpaceOnUse" cx="264.116" cy="204.051" r="93.291" gradientTransform="matrix(0.827363, -0.561668, 0.6988, 1.029366, -86.554646, 127.432972)" xlink:href="#color-1"/>
+  </defs>
+  <g transform="matrix(1, 0, 0, 1, -105.884209, -92.226562)">
+    <g>
+      <path style="stroke: rgb(0, 0, 0); stroke-width: 0px; fill: url('#color-1-0'); filter: none;" d="M 105.688 101.956 L 186.068 212.782 C 229.483 260.064 274.964 223.067 281.175 212.48 C 296.682 195.386 300.95 143.31 259.391 123.54 C 257.231 121.098 152.786 94.115 152.786 94.115 L 189.501 138.101 L 105.688 101.956 Z"/>
+    </g>
+  </g>
+</svg>

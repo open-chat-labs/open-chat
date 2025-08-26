@@ -31,6 +31,7 @@ export function getTheme(base: Theme): Theme {
     base.disabledTxt = txt70;
     base.placeholder = txt60;
     base.progress.bd = "rgba(0,0,0,0.2)";
+    base.progress.fill = powderBlue;
     base.collapsible.closed.header.txt = txt70;
     base.timeline.txt = black;
     base.time.txt = txt60;
@@ -44,7 +45,7 @@ export function getTheme(base: Theme): Theme {
     base.entry.input.sh = "none";
     base.entry.input.bd = black;
     base.panel.bg = "transparent";
-    base.panel.nav.bg = "transparent";
+    base.panel.nav.bg = white;
     base.panel.left.bg = "transparent";
     base.panel.right.bg = "transparent";
     base.panel.right.modal = white;
@@ -84,9 +85,6 @@ export function getTheme(base: Theme): Theme {
     base.icon.inverted.txt = black;
     base.icon.selected = black;
     base.recommended.bg = white;
-    base.markdown.fg.color = txt;
-    base.markdown.fg.bright = txt;
-    base.markdown.fg.muted = txt70;
     base.members.hv = yellow;
     base.card.rd = "0";
     base.card.sh = `8px 8px 0 ${powderBlue}`;
@@ -101,6 +99,20 @@ export function getTheme(base: Theme): Theme {
     base.daily.mainAreaBgAccent = base.accent;
     base.daily.mainAreaText = txt;
     base.daily.supportiveText = "#4e5670";
+    base.code = {
+        bg: white,
+        txt: powderBlue,
+    };
+    base.unread.mute = "#dddddd";
+    base.unread["mute-solid"] = "#dddddd";
+    base.unread["mute-txt"] = "#999999";
+
+    base.audio.outer = powderBlue;
+    base.audio.me.outer = powderBlue;
+    base.audio.inner = yellow;
+    base.audio.me.inner = yellow;
+    base.audio.note = black;
+    base.audio.me.note = white;
 
     return base;
 }

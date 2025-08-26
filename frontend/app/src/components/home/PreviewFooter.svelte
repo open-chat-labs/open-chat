@@ -1,93 +1,174 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext } from "svelte";
-    import Button from "../Button.svelte";
-    import GroupGateIcon from "./AccessGateIcon.svelte";
-    import type { MultiUserChat, OpenChat } from "openchat-client";
-    import { toastStore } from "../../stores/toast";
+    import {
+        chatListScopeStore,
+        isLocked,
+        mobileWidth,
+        type MultiUserChat,
+        type OpenChat,
+        platformModeratorStore,
+        publish,
+        ROLE_NONE,
+        routeForScope,
+        selectedCommunitySummaryStore,
+    } from "openchat-client";
     import page from "page";
-    import { routeForScope } from "../../routes";
-    import Translatable from "../Translatable.svelte";
+    import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import { toastStore } from "../../stores/toast";
+    import Button from "../Button.svelte";
+    import Translatable from "../Translatable.svelte";
+    import AccessGateIconsForChat from "./access/AccessGateIconsForChat.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let chat: MultiUserChat;
-    export let joining: MultiUserChat | undefined;
+    interface Props {
+        chat: MultiUserChat;
+        joining: MultiUserChat | undefined;
+        lapsed: boolean;
+    }
 
-    $: platformModerator = client.platformModerator;
-    $: isFrozen = client.isFrozen(chat.id);
-    $: selectedCommunity = client.selectedCommunity;
-    $: previewingCommunity = $selectedCommunity?.membership.role === "none";
+    let { chat, joining, lapsed }: Props = $props();
 
-    let freezingInProgress = false;
+    let isFrozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore));
+    let previewingCommunity = $derived(
+        $selectedCommunitySummaryStore?.membership.role === ROLE_NONE ||
+            $selectedCommunitySummaryStore?.membership.lapsed,
+    );
+    let gates = $derived(client.accessGatesForChat(chat));
+    let locked = $derived(gates.some((g) => isLocked(g)));
+
+    let freezingInProgress = $state(false);
 
     function joinGroup() {
-        dispatch("joinGroup", {
+        publish("joinGroup", {
             group: chat,
-            select: true,
+            select: false,
         });
     }
 
     function cancelPreview() {
-        if (previewingCommunity && $selectedCommunity) {
-            client.removeCommunity($selectedCommunity.id);
+        if (previewingCommunity && $selectedCommunitySummaryStore) {
+            client.removeCommunity($selectedCommunitySummaryStore.id);
             page(routeForScope(client.getDefaultScope()));
         } else {
-            client.removeChat(chat.id);
             if (!chat.public) {
                 client.declineInvitation(chat.id);
+            }
+            client.removePreviewedChat(chat.id);
+            if ($mobileWidth || !client.selectDefaultChat(false)) {
+                page(routeForScope($chatListScopeStore));
             }
         }
     }
 
-    function freezeGroup() {
-        if (chat.id.kind !== "group_chat") return;
+    function freeze() {
         freezingInProgress = true;
-        client.freezeGroup(chat.id, undefined).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast(i18nKey("failedToFreezeGroup"));
-            }
-            freezingInProgress = false;
-        });
+        switch (chat.kind) {
+            case "group_chat":
+                client
+                    .freezeGroup(chat.id, undefined)
+                    .then((success) => {
+                        if (!success) {
+                            toastStore.showFailureToast(i18nKey("failedToFreezeGroup"));
+                        } else {
+                            toastStore.showSuccessToast(i18nKey("chatFrozen"));
+                        }
+                    })
+                    .finally(() => (freezingInProgress = false));
+                break;
+
+            case "channel":
+                if ($selectedCommunitySummaryStore) {
+                    client
+                        .freezeCommunity($selectedCommunitySummaryStore.id, undefined)
+                        .then((success) => {
+                            if (!success) {
+                                toastStore.showFailureToast(i18nKey("failedToFreezeCommunity"));
+                            } else {
+                                toastStore.showSuccessToast(i18nKey("communityFrozen"));
+                            }
+                        })
+                        .finally(() => (freezingInProgress = false));
+                }
+                break;
+        }
     }
 
-    function unfreezeGroup() {
-        if (chat.id.kind !== "group_chat") return;
+    function unfreeze() {
         freezingInProgress = true;
-        client.unfreezeGroup(chat.id).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast(i18nKey("failedToUnfreezeGroup"));
-            }
-            freezingInProgress = false;
-        });
+
+        switch (chat.kind) {
+            case "group_chat":
+                client
+                    .unfreezeGroup(chat.id)
+                    .then((success) => {
+                        if (!success) {
+                            toastStore.showFailureToast(i18nKey("failedToUnfreezeGroup"));
+                        } else {
+                            toastStore.showSuccessToast(i18nKey("Chat unfrozen"));
+                        }
+                    })
+                    .finally(() => (freezingInProgress = false));
+
+            case "channel":
+                if ($selectedCommunitySummaryStore) {
+                    client
+                        .unfreezeCommunity($selectedCommunitySummaryStore.id)
+                        .then((success) => {
+                            if (!success) {
+                                toastStore.showFailureToast(i18nKey("failedToUnfreezeCommunity"));
+                            } else {
+                                toastStore.showSuccessToast(i18nKey("communityUnfrozen"));
+                            }
+                        })
+                        .finally(() => (freezingInProgress = false));
+                }
+        }
     }
 </script>
 
 <div class="preview">
     <div class="gate">
-        <GroupGateIcon on:upgrade gate={chat.gate} />
+        <AccessGateIconsForChat {gates} />
     </div>
-    {#if $platformModerator}
+    {#if lapsed}
+        <div class="lapsed">
+            <Translatable resourceKey={i18nKey("access.lapsed.label")} />
+        </div>
+    {/if}
+    {#if $platformModeratorStore}
         {#if isFrozen}
-            <Button loading={freezingInProgress} secondary small on:click={unfreezeGroup}>
-                <Translatable resourceKey={i18nKey("unfreezeGroup")} />
+            <Button loading={freezingInProgress} secondary small onClick={unfreeze}>
+                <Translatable
+                    resourceKey={chat.kind === "group_chat"
+                        ? i18nKey("unfreezeGroup")
+                        : i18nKey("unfreezeCommunity")} />
             </Button>
         {:else}
-            <Button loading={freezingInProgress} secondary small on:click={freezeGroup}>
-                <Translatable resourceKey={i18nKey("freezeGroup")} />
+            <Button loading={freezingInProgress} secondary small onClick={freeze}>
+                <Translatable
+                    resourceKey={chat.kind === "group_chat"
+                        ? i18nKey("freezeGroup")
+                        : i18nKey("freezeCommunity")} />
             </Button>
         {/if}
     {/if}
-    <Button secondary small on:click={cancelPreview}>
-        <Translatable resourceKey={i18nKey("leave")} />
-    </Button>
+    {#if !lapsed}
+        <Button secondary small onClick={cancelPreview}>
+            <Translatable resourceKey={i18nKey("leave")} />
+        </Button>
+    {/if}
     <Button
         loading={joining !== undefined}
-        disabled={joining !== undefined}
+        disabled={locked || joining !== undefined}
         small
-        on:click={joinGroup}>
-        <Translatable resourceKey={i18nKey("joinGroup", undefined, chat.level, true)} />
+        onClick={joinGroup}>
+        <Translatable
+            resourceKey={locked
+                ? i18nKey("access.lockedGate", undefined, chat.level, true)
+                : lapsed
+                  ? i18nKey("access.lapsed.rejoin", undefined, chat.level, true)
+                  : i18nKey("joinGroup", undefined, chat.level, true)} />
     </Button>
 </div>
 
@@ -103,13 +184,14 @@
         position: relative;
         justify-content: flex-end;
         gap: $sp3;
-        @include mobile() {
-            justify-content: center;
-        }
 
         .gate {
             position: absolute;
             left: 0;
         }
+    }
+
+    .lapsed {
+        @include font(bold, normal, fs-100);
     }
 </style>

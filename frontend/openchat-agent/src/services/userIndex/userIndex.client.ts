@@ -1,70 +1,138 @@
-import { groupBy } from "../../utils/list";
-import type { Identity } from "@dfinity/agent";
-import { Principal } from "@dfinity/principal";
-import { idlFactory, type UserIndexService } from "./candid/idl";
+import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import type {
+    BotDefinition,
+    BotInstallationLocation,
+    BotsResponse,
     CheckUsernameResponse,
+    ChitLeaderboardResponse,
     CurrentUserResponse,
+    DiamondMembershipDuration,
+    DiamondMembershipFees,
+    ExploreBotsResponse,
+    ExternalAchievementsResponse,
+    ExternalBot,
+    PayForDiamondMembershipResponse,
+    PremiumItem,
+    SetDisplayNameResponse,
     SetUsernameResponse,
+    SetUserUpgradeConcurrencyResponse,
+    SubmitProofOfUniquePersonhoodResponse,
+    SuspendUserResponse,
+    UnsuspendUserResponse,
+    UsersApiResponse,
     UsersArgs,
     UsersResponse,
     UserSummary,
-    SuspendUserResponse,
-    UnsuspendUserResponse,
-    DiamondMembershipDuration,
-    PayForDiamondMembershipResponse,
-    SetUserUpgradeConcurrencyResponse,
-    ReferralLeaderboardRange,
-    ReferralLeaderboardResponse,
-    SetDisplayNameResponse,
-    DiamondMembershipFees,
+    UserSummaryUpdate,
 } from "openchat-shared";
-import { offline, Stream } from "openchat-shared";
-import { CandidService } from "../candidService";
 import {
-    checkUsernameResponse,
-    setUsernameResponse,
-    currentUserResponse,
-    usersResponse,
-    userSearchResponse,
-    suspendUserResponse,
-    unsuspendUserResponse,
-    apiDiamondDuration,
-    payForDiamondMembershipResponse,
-    referralLeaderboardResponse,
-    userRegistrationCanisterResponse,
-    setDisplayNameResponse,
-    diamondMembershipFeesResponse,
-} from "./mappers";
-import { apiOptional, apiToken } from "../common/chatMappers";
-import type { AgentConfig } from "../../config";
+    mergeUserSummaryWithUpdates,
+    offline,
+    Stream,
+    userSummaryFromCurrentUserSummary,
+} from "openchat-shared";
+import {
+    Empty,
+    SuccessOnly,
+    UnitResult,
+    UserIndexBotUpdatesArgs,
+    UserIndexBotUpdatesResponse,
+    UserIndexCheckUsernameArgs,
+    UserIndexCheckUsernameResponse,
+    UserIndexChitLeaderboardResponse,
+    UserIndexCurrentUserResponse,
+    UserIndexDiamondMembershipFeesResponse,
+    UserIndexExploreBotsArgs,
+    UserIndexExploreBotsResponse,
+    UserIndexExternalAchievementsArgs,
+    UserIndexExternalAchievementsResponse,
+    UserIndexPayForDiamondMembershipArgs,
+    UserIndexPayForDiamondMembershipResponse,
+    UserIndexPlatformModeratorsGroupResponse,
+    UserIndexRegisterBotArgs,
+    UserIndexRegisterBotResponse,
+    UserIndexRemoveBotArgs,
+    UserIndexRemoveBotResponse,
+    UserIndexReportedMessagesArgs,
+    UserIndexReportedMessagesResponse,
+    UserIndexSearchArgs,
+    UserIndexSearchResponse,
+    UserIndexSetDiamondMembershipFeesArgs,
+    UserIndexSetDiamondMembershipFeesResponse,
+    UserIndexSetDisplayNameArgs,
+    UserIndexSetDisplayNameResponse,
+    UserIndexSetModerationFlagsArgs,
+    UserIndexSetPremiumItemCostArgs,
+    UserIndexSetUsernameArgs,
+    UserIndexSetUsernameResponse,
+    UserIndexSetUserUpgradeConcurrencyArgs,
+    UserIndexSubmitProofOfUniquePersonhoodArgs,
+    UserIndexSubmitProofOfUniquePersonhoodResponse,
+    UserIndexSuspendUserArgs,
+    UserIndexSuspendUserResponse,
+    UserIndexUnsuspendUserArgs,
+    UserIndexUnsuspendUserResponse,
+    UserIndexUpdateBotArgs,
+    UserIndexUpdateBotResponse,
+    UserIndexUserRegistrationCanisterResponse,
+    UserIndexUsersArgs,
+    UserIndexUsersResponse,
+} from "../../typebox";
+import {
+    getCachedCurrentUser,
+    mergeCachedCurrentUser,
+    setCachedCurrentUser,
+    setCurrentUserDiamondStatusInCache,
+} from "../../utils/caching";
+import { groupBy } from "../../utils/list";
+import {
+    identity,
+    mapOptional,
+    principalBytesToString,
+    principalStringToBytes,
+    toVoid,
+} from "../../utils/mapping";
 import {
     getCachedUsers,
     getSuspendedUsersSyncedUpTo,
+    setCachedDeletedUserIds,
     setCachedUsers,
     setDisplayNameInCache,
     setSuspendedUsersSyncedUpTo,
     setUserDiamondStatusInCache,
     setUsernameInCache,
 } from "../../utils/userCache";
-import { identity } from "../../utils/mapping";
+import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
 import {
-    getCachedCurrentUser,
-    setCachedCurrentUser,
-    setCurrentUserDiamondStatusInCache,
-} from "../../utils/caching";
+    apiBotDefinition,
+    apiBotInstallLocation,
+    apiJsonDiamondDuration,
+    botUpdatesResponse,
+    checkUsernameResponse,
+    chitLeaderboardResponse,
+    currentUserResponse,
+    diamondMembershipFeesResponse,
+    exploreBotsResponse,
+    externalAchievementsResponse,
+    payForDiamondMembershipResponse,
+    setDisplayNameResponse,
+    setUsernameResponse,
+    submitProofOfUniquePersonhoodResponse,
+    suspendUserResponse,
+    unsuspendUserResponse,
+    userRegistrationCanisterResponse,
+    usersApiResponse,
+    userSearchResponse,
+} from "./mappers";
 
-export class UserIndexClient extends CandidService {
-    private userIndexService: UserIndexService;
-
-    constructor(identity: Identity, config: AgentConfig) {
-        super(identity);
-
-        this.userIndexService = this.createServiceClient<UserIndexService>(
-            idlFactory,
-            config.userIndexCanister,
-            config,
-        );
+export class UserIndexClient extends MsgpackCanisterAgent {
+    constructor(
+        identity: Identity,
+        agent: HttpAgent,
+        canisterId: string,
+        private blobUrlPattern: string,
+    ) {
+        super(identity, agent, canisterId, "UserIndex");
     }
 
     getCurrentUser(): Stream<CurrentUserResponse> {
@@ -80,9 +148,12 @@ export class UserIndexClient extends CandidService {
                 }
 
                 if (!isOffline) {
-                    const liveUser = await this.handleQueryResponse(
-                        () => this.userIndexService.current_user({}),
+                    const liveUser = await this.executeMsgpackQuery(
+                        "current_user",
+                        {},
                         currentUserResponse,
+                        Empty,
+                        UserIndexCurrentUserResponse,
                     );
                     if (liveUser.kind === "created_user") {
                         setCachedCurrentUser(principal, liveUser);
@@ -96,18 +167,24 @@ export class UserIndexClient extends CandidService {
     }
 
     setModerationFlags(flags: number): Promise<boolean> {
-        return this.handleResponse(
-            this.userIndexService.set_moderation_flags({
+        return this.executeMsgpackUpdate(
+            "set_moderation_flags",
+            {
                 moderation_flags_enabled: flags,
-            }),
+            },
             (_) => true,
+            UserIndexSetModerationFlagsArgs,
+            SuccessOnly,
         );
     }
 
     userRegistrationCanister(): Promise<string> {
-        return this.handleResponse(
-            this.userIndexService.user_registration_canister({}),
+        return this.executeMsgpackQuery(
+            "user_registration_canister",
+            {},
             userRegistrationCanisterResponse,
+            Empty,
+            UserIndexUserRegistrationCanisterResponse,
         );
     }
 
@@ -116,10 +193,12 @@ export class UserIndexClient extends CandidService {
             search_term: searchTerm,
             max_results: maxResults,
         };
-        return this.handleQueryResponse(
-            () => this.userIndexService.search(args),
-            userSearchResponse,
+        return this.executeMsgpackQuery(
+            "search",
             args,
+            userSearchResponse,
+            UserIndexSearchArgs,
+            UserIndexSearchResponse,
         );
     }
 
@@ -133,21 +212,27 @@ export class UserIndexClient extends CandidService {
         // ensures the cache is always correct and doesn't miss any updates
         const args = this.buildGetUsersArgs(allUsers, fromCache, allowStale);
 
-        const response = await this.getUsersFromBackend(users, suspendedUsersSyncedTo);
-
         const requestedFromServer = new Set<string>([...args.userGroups.flatMap((g) => g.users)]);
+
+        const apiResponse = await this.getUsersFromBackend(args, suspendedUsersSyncedTo);
 
         // We return the fully hydrated users so that it is not possible for the Svelte store to miss any updates
         const mergedResponse = this.mergeGetUsersResponse(
             allUsers,
             requestedFromServer,
-            response,
+            apiResponse,
             fromCache,
         );
+
+        setCachedDeletedUserIds(apiResponse.deletedUserIds);
 
         setCachedUsers(mergedResponse.users).catch((err) =>
             console.error("Failed to save users to the cache", err),
         );
+
+        if (mergedResponse.currentUser) {
+            mergeCachedCurrentUser(this.principal.toString(), mergedResponse.currentUser);
+        }
 
         if (mergedResponse.serverTimestamp !== undefined) {
             setSuspendedUsersSyncedUpTo(mergedResponse.serverTimestamp).catch((err) =>
@@ -158,28 +243,62 @@ export class UserIndexClient extends CandidService {
         return mergedResponse;
     }
 
+    async populateUserCache(userIds: string[]): Promise<void> {
+        const fromCache = await getCachedUsers(userIds);
+
+        if (fromCache.length === userIds.length) {
+            return;
+        }
+
+        const args = this.buildGetUsersArgs(userIds, fromCache, true);
+        const apiResponse = await this.getUsersFromBackend(args, undefined);
+
+        const users: UserSummary[] = [];
+        for (const user of apiResponse.users) {
+            if (user.stable !== undefined && user.volatile !== undefined) {
+                users.push({
+                    kind: user.stable?.isBot ? "bot" : "user",
+                    userId: user.userId,
+                    ...user.stable,
+                    ...user.volatile,
+                    updated: apiResponse.serverTimestamp,
+                });
+            }
+        }
+
+        setCachedUsers(users).catch((err) =>
+            console.error("Failed to save users to the cache", err),
+        );
+        setCachedDeletedUserIds(apiResponse.deletedUserIds);
+    }
+
     private getUsersFromBackend(
         users: UsersArgs,
         suspendedUsersSyncedUpTo: bigint | undefined,
-    ): Promise<UsersResponse> {
+    ): Promise<UsersApiResponse> {
         if (offline())
             return Promise.resolve({
+                serverTimestamp: 0n,
                 users: [],
+                deletedUserIds: new Set(),
             });
 
         const userGroups = users.userGroups.filter((g) => g.users.length > 0);
 
         const args = {
             user_groups: userGroups.map(({ users, updatedSince }) => ({
-                users: users.map((u) => Principal.fromText(u)),
+                users: users.map(principalStringToBytes),
                 updated_since: updatedSince,
             })),
-            users_suspended_since: apiOptional(identity, suspendedUsersSyncedUpTo),
+            users_suspended_since: suspendedUsersSyncedUpTo,
         };
-        return this.handleQueryResponse(
-            () => this.userIndexService.users_v2(args),
-            usersResponse,
+
+        return this.executeMsgpackQuery(
+            "users",
             args,
+            usersApiResponse,
+            UserIndexUsersArgs,
+            UserIndexUsersResponse,
         );
     }
 
@@ -196,7 +315,10 @@ export class UserIndexClient extends CandidService {
         };
 
         // Add the users not found in the cache and ask for all updates
-        const notFoundInCache = users.filter((u) => !fromCacheSet.has(u));
+        const notFoundInCache = users.filter(
+            // (u) => !fromCacheSet.has(u) && !cachedDeletedUserIds.has(u),
+            (u) => !fromCacheSet.has(u),
+        );
         if (notFoundInCache.length > 0) {
             args.userGroups.push({
                 users: notFoundInCache,
@@ -208,7 +330,9 @@ export class UserIndexClient extends CandidService {
             // Add the users found in the cache but only ask for updates since the date they were last updated in the cache
             for (const [updatedSince, users] of fromCacheGrouped) {
                 args.userGroups.push({
-                    users: users.map((u) => u.userId),
+                    users: users
+                        // .filter((u) => !cachedDeletedUserIds.has(u.userId))
+                        .map((u) => u.userId),
                     updatedSince,
                 });
             }
@@ -219,68 +343,99 @@ export class UserIndexClient extends CandidService {
 
     // Merges the cached values into the response
     private mergeGetUsersResponse(
-        allUsers: string[],
+        allUsersRequested: string[],
         requestedFromServer: Set<string>,
-        response: UsersResponse,
+        apiResponse: UsersApiResponse,
         fromCache: UserSummary[],
     ): UsersResponse {
-        if (fromCache.length === 0) {
-            return response;
-        }
-
         const fromCacheMap = new Map<string, UserSummary>(fromCache.map((u) => [u.userId, u]));
-        const responseMap = new Map<string, UserSummary>(response.users.map((u) => [u.userId, u]));
+        const apiResponseMap = new Map<string, UserSummaryUpdate>(
+            apiResponse.users.map((u) => [u.userId, u]),
+        );
 
         const users: UserSummary[] = [];
 
-        for (const userId of allUsers) {
+        for (const userId of allUsersRequested) {
             const cached = fromCacheMap.get(userId);
-            const fromServer = responseMap.get(userId);
+            const fromServer = apiResponseMap.get(userId);
 
             if (fromServer !== undefined) {
-                responseMap.delete(userId);
-                users.push(fromServer);
-            } else if (cached !== undefined) {
-                if (requestedFromServer.has(userId)) {
-                    // If this user was requested from the server but wasn't included in the response, then that means
-                    // our cached copy is up to date.
-                    users.push({
-                        ...cached,
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        updated: response.serverTimestamp!,
-                    });
-                } else {
-                    users.push(cached);
+                apiResponseMap.delete(userId);
+                const merged = mergeUserSummaryWithUpdates(
+                    cached,
+                    fromServer,
+                    apiResponse.serverTimestamp,
+                );
+                if (merged !== undefined) {
+                    users.push(merged);
                 }
+            } else if (cached !== undefined) {
+                if (cached.userId !== apiResponse.currentUser?.userId) {
+                    if (requestedFromServer.has(userId)) {
+                        // If this user was requested from the server but wasn't included in the response, then that means
+                        // our cached copy is up to date.
+                        users.push({
+                            ...cached,
+
+                            updated: apiResponse.serverTimestamp!,
+                        });
+                    } else {
+                        users.push(cached);
+                    }
+                }
+            } else {
+                // if we get here it means that for this user, nothing came back from the server
+                // & nothing was in the cache - this would be odd but worth knowing if this is happening
+                console.debug(
+                    "USERS: userId requested not in cache and not returned from server",
+                    userId,
+                );
             }
         }
 
         // This is needed because newly suspended users won't have been included in the `allUsers` array
-        for (const user of responseMap.values()) {
-            users.push(user);
+        for (const user of apiResponseMap.values()) {
+            const cached = fromCacheMap.get(user.userId);
+            const merged = mergeUserSummaryWithUpdates(cached, user, apiResponse.serverTimestamp);
+            if (merged !== undefined) {
+                users.push(merged);
+            }
+        }
+
+        // let's see if we got the current user back from the server
+        if (apiResponse.currentUser !== undefined) {
+            users.push(userSummaryFromCurrentUserSummary(apiResponse.currentUser));
         }
 
         return {
-            serverTimestamp: response.serverTimestamp,
+            serverTimestamp: apiResponse.serverTimestamp,
             users,
+            currentUser: apiResponse.currentUser,
+            deletedUserIds: apiResponse.deletedUserIds,
         };
     }
 
-    checkUsername(username: string): Promise<CheckUsernameResponse> {
+    checkUsername(username: string, isBot: boolean): Promise<CheckUsernameResponse> {
         const args = {
             username: username,
+            is_bot: isBot,
         };
-        return this.handleQueryResponse(
-            () => this.userIndexService.check_username(args),
-            checkUsernameResponse,
+        return this.executeMsgpackQuery(
+            "check_username",
             args,
+            checkUsernameResponse,
+            UserIndexCheckUsernameArgs,
+            UserIndexCheckUsernameResponse,
         );
     }
 
     setUsername(userId: string, username: string): Promise<SetUsernameResponse> {
-        return this.handleResponse(
-            this.userIndexService.set_username({ username }),
+        return this.executeMsgpackUpdate(
+            "set_username",
+            { username },
             setUsernameResponse,
+            UserIndexSetUsernameArgs,
+            UserIndexSetUsernameResponse,
         ).then((res) => {
             if (res === "success") {
                 setUsernameInCache(userId, username);
@@ -293,11 +448,14 @@ export class UserIndexClient extends CandidService {
         userId: string,
         displayName: string | undefined,
     ): Promise<SetDisplayNameResponse> {
-        return this.handleResponse(
-            this.userIndexService.set_display_name({
-                display_name: apiOptional(identity, displayName),
-            }),
+        return this.executeMsgpackUpdate(
+            "set_display_name",
+            {
+                display_name: displayName,
+            },
             setDisplayNameResponse,
+            UserIndexSetDisplayNameArgs,
+            UserIndexSetDisplayNameResponse,
         ).then((res) => {
             if (res === "success") {
                 setDisplayNameInCache(userId, displayName);
@@ -307,40 +465,48 @@ export class UserIndexClient extends CandidService {
     }
 
     suspendUser(userId: string, reason: string): Promise<SuspendUserResponse> {
-        return this.handleResponse(
-            this.userIndexService.suspend_user({
-                user_id: Principal.fromText(userId),
-                duration: [],
+        return this.executeMsgpackUpdate(
+            "suspend_user",
+            {
+                user_id: principalStringToBytes(userId),
                 reason,
-            }),
+            },
             suspendUserResponse,
+            UserIndexSuspendUserArgs,
+            UserIndexSuspendUserResponse,
         );
     }
 
     unsuspendUser(userId: string): Promise<UnsuspendUserResponse> {
-        return this.handleResponse(
-            this.userIndexService.unsuspend_user({
-                user_id: Principal.fromText(userId),
-            }),
+        return this.executeMsgpackUpdate(
+            "unsuspend_user",
+            {
+                user_id: principalStringToBytes(userId),
+            },
             unsuspendUserResponse,
+            UserIndexUnsuspendUserArgs,
+            UserIndexUnsuspendUserResponse,
         );
     }
 
     payForDiamondMembership(
         userId: string,
-        token: string,
+        ledger: string,
         duration: DiamondMembershipDuration,
         recurring: boolean,
         expectedPriceE8s: bigint,
     ): Promise<PayForDiamondMembershipResponse> {
-        return this.handleResponse(
-            this.userIndexService.pay_for_diamond_membership({
-                token: apiToken(token),
-                duration: apiDiamondDuration(duration),
+        return this.executeMsgpackUpdate(
+            "pay_for_diamond_membership",
+            {
+                ledger,
+                duration: apiJsonDiamondDuration(duration),
                 recurring,
                 expected_price_e8s: expectedPriceE8s,
-            }),
+            },
             (res) => payForDiamondMembershipResponse(duration, res),
+            UserIndexPayForDiamondMembershipArgs,
+            UserIndexPayForDiamondMembershipResponse,
         ).then((res) => {
             if (res.kind === "success") {
                 const principal = this.identity.getPrincipal().toString();
@@ -352,46 +518,39 @@ export class UserIndexClient extends CandidService {
     }
 
     setUserUpgradeConcurrency(value: number): Promise<SetUserUpgradeConcurrencyResponse> {
-        return this.handleResponse(
-            this.userIndexService.set_user_upgrade_concurrency({ value }),
+        return this.executeMsgpackUpdate(
+            "set_user_upgrade_concurrency",
+            { value },
             () => "success",
-        );
-    }
-
-    getReferralLeaderboard(req?: ReferralLeaderboardRange): Promise<ReferralLeaderboardResponse> {
-        return this.handleResponse(
-            this.userIndexService.referral_leaderboard({
-                count: 10,
-                filter: apiOptional((r) => {
-                    return {
-                        Month: {
-                            year: r.year,
-                            month: r.month,
-                        },
-                    };
-                }, req),
-            }),
-            referralLeaderboardResponse,
+            UserIndexSetUserUpgradeConcurrencyArgs,
+            SuccessOnly,
         );
     }
 
     getPlatformModeratorGroup(): Promise<string> {
-        return this.handleResponse(this.userIndexService.platform_moderators_group({}), (res) =>
-            res.Success.toString(),
+        return this.executeMsgpackQuery(
+            "platform_moderators_group",
+            {},
+            (res) => principalBytesToString(res.Success),
+            Empty,
+            UserIndexPlatformModeratorsGroupResponse,
         );
     }
 
     diamondMembershipFees(): Promise<DiamondMembershipFees[]> {
-        return this.handleQueryResponse(
-            () => this.userIndexService.diamond_membership_fees({}),
+        return this.executeMsgpackQuery(
+            "diamond_membership_fees",
+            {},
             diamondMembershipFeesResponse,
+            Empty,
+            UserIndexDiamondMembershipFeesResponse,
         );
     }
 
     setDiamondMembershipFees(fees: DiamondMembershipFees[]): Promise<boolean> {
         const chatFees = fees.find((f) => f.token === "CHAT");
         const icpFees = fees.find((f) => f.token === "ICP");
-        
+
         if (chatFees === undefined || icpFees === undefined) {
             return Promise.resolve(false);
         }
@@ -409,22 +568,180 @@ export class UserIndexClient extends CandidService {
                     three_months: icpFees.threeMonths,
                     one_year: icpFees.oneYear,
                     lifetime: icpFees.lifetime,
-                }
-            }
+                },
+            },
         };
 
-        return this.handleQueryResponse(
-            () => this.userIndexService.set_diamond_membership_fees(args),
-            (res) => "Success" in res,
+        return this.executeMsgpackUpdate(
+            "set_diamond_membership_fees",
+            args,
+            (res) => res === "Success",
+            UserIndexSetDiamondMembershipFeesArgs,
+            UserIndexSetDiamondMembershipFeesResponse,
         );
     }
 
     reportedMessages(userId: string | undefined): Promise<string> {
-        return this.handleQueryResponse(
-            () => this.userIndexService.reported_messages({
-                user_id: userId !== undefined ? [Principal.fromText(userId)] : []
-            }),
+        return this.executeMsgpackQuery(
+            "reported_messages",
+            {
+                user_id: mapOptional(userId, principalStringToBytes),
+            },
             (res) => res.Success.json,
+            UserIndexReportedMessagesArgs,
+            UserIndexReportedMessagesResponse,
+        );
+    }
+
+    chitLeaderboard(): Promise<ChitLeaderboardResponse> {
+        return this.executeMsgpackQuery(
+            "chit_leaderboard",
+            {},
+            chitLeaderboardResponse,
+            Empty,
+            UserIndexChitLeaderboardResponse,
+        );
+    }
+
+    submitProofOfUniquePersonhood(
+        iiPrincipal: string,
+        credential: string,
+    ): Promise<SubmitProofOfUniquePersonhoodResponse> {
+        const args = {
+            user_ii_principal: principalStringToBytes(iiPrincipal),
+            credential_jwt: credential,
+        };
+        return this.executeMsgpackUpdate(
+            "submit_proof_of_unique_personhood",
+            args,
+            submitProofOfUniquePersonhoodResponse,
+            UserIndexSubmitProofOfUniquePersonhoodArgs,
+            UserIndexSubmitProofOfUniquePersonhoodResponse,
+        );
+    }
+
+    getExternalAchievements(updatesSince: bigint): Promise<ExternalAchievementsResponse> {
+        return this.executeMsgpackQuery(
+            "external_achievements",
+            { updates_since: updatesSince },
+            externalAchievementsResponse,
+            UserIndexExternalAchievementsArgs,
+            UserIndexExternalAchievementsResponse,
+        );
+    }
+
+    exploreBots(
+        searchTerm: string | undefined,
+        pageIndex: number,
+        pageSize: number,
+        location: BotInstallationLocation | undefined,
+        excludeInstalled: boolean,
+    ): Promise<ExploreBotsResponse> {
+        return this.executeMsgpackQuery(
+            "explore_bots",
+            {
+                search_term: searchTerm,
+                page_index: pageIndex,
+                page_size: pageSize,
+                installation_location: mapOptional(location, apiBotInstallLocation),
+                exclude_installed: excludeInstalled,
+            },
+            (resp) => exploreBotsResponse(resp, this.blobUrlPattern, this.canisterId),
+            UserIndexExploreBotsArgs,
+            UserIndexExploreBotsResponse,
+        );
+    }
+
+    registerBot(principal: string, bot: ExternalBot): Promise<boolean> {
+        const location =
+            bot.registrationStatus.kind === "private" ? bot.registrationStatus.location : undefined;
+        return this.executeMsgpackUpdate(
+            "register_bot",
+            {
+                principal: principalStringToBytes(principal),
+                name: bot.name,
+                avatar: mapOptional(bot.avatarUrl, identity),
+                endpoint: bot.endpoint,
+                definition: apiBotDefinition(bot.definition),
+                permitted_install_location: mapOptional(location, apiBotInstallLocation),
+            },
+            (resp) => {
+                console.log("UserIndex register bot response: ", resp);
+
+                return typeof resp === "object" && "Success" in resp;
+            },
+            UserIndexRegisterBotArgs,
+            UserIndexRegisterBotResponse,
+        );
+    }
+
+    removeBot(botId: string): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "remove_bot",
+            {
+                bot_id: principalStringToBytes(botId),
+            },
+            (resp) => {
+                console.log("UserIndex remove bot response: ", resp);
+                return resp === "Success";
+            },
+            UserIndexRemoveBotArgs,
+            UserIndexRemoveBotResponse,
+        );
+    }
+
+    updateRegisteredBot(
+        id: string,
+        principal?: string,
+        ownerId?: string,
+        avatarUrl?: string,
+        endpoint?: string,
+        definition?: BotDefinition,
+    ): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "update_bot",
+            {
+                bot_id: principalStringToBytes(id),
+                owner: mapOptional(ownerId, principalStringToBytes),
+                principal: mapOptional(principal, principalStringToBytes),
+                avatar:
+                    mapOptional(avatarUrl, (url) => ({
+                        SetToSome: url,
+                    })) ?? "NoChange",
+                endpoint: mapOptional(endpoint, identity),
+                definition: mapOptional(definition, apiBotDefinition),
+            },
+            (resp) => {
+                console.log("UserIndex update bot response: ", resp);
+                return true;
+            },
+            UserIndexUpdateBotArgs,
+            UserIndexUpdateBotResponse,
+        );
+    }
+
+    getBots(current: BotsResponse | undefined): Promise<BotsResponse> {
+        return this.executeMsgpackQuery(
+            "bot_updates",
+            {
+                updated_since: current?.timestamp ?? 0n,
+            },
+            (resp) => botUpdatesResponse(resp, current, this.blobUrlPattern, this.canisterId),
+            UserIndexBotUpdatesArgs,
+            UserIndexBotUpdatesResponse,
+        );
+    }
+
+    setPremiumItemCost(item: PremiumItem, chitCost: number): Promise<void> {
+        return this.executeMsgpackUpdate(
+            "set_premium_item_cost",
+            {
+                item_id: item,
+                chit_cost: chitCost,
+            },
+            toVoid,
+            UserIndexSetPremiumItemCostArgs,
+            UnitResult,
         );
     }
 }

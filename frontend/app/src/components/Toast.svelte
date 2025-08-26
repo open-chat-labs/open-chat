@@ -1,60 +1,79 @@
 <script lang="ts">
-    import { sineIn } from "svelte/easing";
-    import { _ } from "svelte-i18n";
-    import Close from "svelte-material-icons/Close.svelte";
-    import Bug from "svelte-material-icons/Bug.svelte";
-    import { fly } from "svelte/transition";
-    import { toastStore, ToastType, type Toast } from "../stores/toast";
-    import { iconSize } from "../stores/iconSize";
-    import Translatable from "./Translatable.svelte";
-    import { OpenChat, type ChatIdentifier, routeForChatIdentifier } from "openchat-client";
-    import { getContext } from "svelte";
-    import { i18nKey, interpolate } from "../i18n/i18n";
+    import {
+        type ChatIdentifier,
+        iconSize,
+        localUpdates,
+        routeForChatIdentifier,
+        subscribe,
+    } from "openchat-client";
     import page from "page";
-    import TooltipWrapper from "./TooltipWrapper.svelte";
-    import TooltipPopup from "./TooltipPopup.svelte";
+    import { onMount } from "svelte";
+    import { _ } from "svelte-i18n";
+    import Bug from "svelte-material-icons/Bug.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
+    import { sineIn } from "svelte/easing";
+    import { fly } from "svelte/transition";
+    import { i18nKey, interpolate } from "../i18n/i18n";
+    import { toastStore } from "../stores/toast";
+    import Tooltip from "./tooltip/Tooltip.svelte";
+    import Translatable from "./Translatable.svelte";
 
-    const client = getContext<OpenChat>("client");
+    let reactiveResourceKey = $derived($toastStore?.resourceKey);
 
-    $: draftMessagesStore = client.draftMessagesStore;
-
-    function report(toast: Toast | undefined) {
-        if (toast && toast.type === ToastType.Failure && toast.err !== undefined) {
-            const msg = interpolate($_, toast.resourceKey);
-            const withDetail = `${msg} (${toast.err})`;
+    function report() {
+        if (
+            $toastStore &&
+            $toastStore.kind === "failure" &&
+            $toastStore.err !== undefined &&
+            $reactiveResourceKey !== undefined
+        ) {
+            const msg = interpolate($_, $reactiveResourceKey);
+            const withDetail = `${msg} (${$toastStore.err})`;
             const chatId = {
                 kind: "channel",
                 communityId: "dgegb-daaaa-aaaar-arlhq-cai",
-                channelId: "20429314036340368324663327710074551214",
+                channelId: 2235218862,
             } as ChatIdentifier;
             page(routeForChatIdentifier("community", chatId));
-            draftMessagesStore.setTextContent({ chatId }, withDetail);
+            localUpdates.draftMessages.setTextContent({ chatId }, withDetail);
             toastStore.hideToast();
         }
     }
+
+    onMount(() => {
+        const unsubs = [
+            subscribe("showFailureToast", ({ resourceKey, err }) =>
+                toastStore.showFailureToast(resourceKey, err),
+            ),
+            subscribe("showSuccessToast", (resourceKey) =>
+                toastStore.showSuccessToast(resourceKey),
+            ),
+        ];
+        return () => {
+            unsubs.forEach((u) => u());
+        };
+    });
 </script>
 
-{#if $toastStore}
+{#if $toastStore && $reactiveResourceKey}
     <div class="toast" transition:fly={{ y: 200, duration: 200, easing: sineIn }}>
         <div
             class="message"
-            class:failure={$toastStore.type === ToastType.Failure}
-            class:success={$toastStore.type === ToastType.Success}>
-            <div class="text"><Translatable resourceKey={$toastStore.resourceKey} /></div>
-            {#if $toastStore.type === ToastType.Failure}
+            class:failure={$toastStore.kind === "failure"}
+            class:success={$toastStore.kind === "success"}>
+            <div class="text"><Translatable resourceKey={$reactiveResourceKey} /></div>
+            {#if $toastStore.kind === "failure"}
                 {#if $toastStore.err !== undefined}
-                    <TooltipWrapper position="top" align="middle">
-                        <div slot="target" class="report" on:click={() => report($toastStore)}>
+                    <Tooltip position="top" align="middle">
+                        <div class="report" onclick={report}>
                             <Bug size={$iconSize} color={"var(--button-txt)"} />
                         </div>
-                        <div let:position let:align slot="tooltip">
-                            <TooltipPopup {align} {position}>
-                                <Translatable resourceKey={i18nKey("reportBug")} />
-                            </TooltipPopup>
-                        </div>
-                    </TooltipWrapper>
+                        {#snippet popupTemplate()}
+                            <Translatable resourceKey={i18nKey("reportBug")} />
+                        {/snippet}
+                    </Tooltip>
                 {/if}
-                <div class="close" on:click={toastStore.hideToast}>
+                <div class="close" onclick={toastStore.hideToast}>
                     <Close size={$iconSize} color={"var(--button-txt)"} />
                 </div>
             {/if}
@@ -74,8 +93,8 @@
     }
 
     .message {
-        transition: background-color 200ms ease-in-out;
-        background-color: var(--button-bg);
+        transition: background 200ms ease-in-out;
+        background: var(--button-bg);
         padding: $sp4;
         width: 75%;
         max-width: 800px;
@@ -91,12 +110,12 @@
 
         @media (hover: hover) {
             &:hover {
-                background-color: var(--button-hv);
+                background: var(--button-hv);
             }
         }
 
         &.failure {
-            background-color: var(--toast-failure-bg);
+            background: var(--toast-failure-bg);
             color: var(--toast-failure-txt);
         }
 
@@ -106,7 +125,7 @@
         }
 
         &.success {
-            background-color: var(--toast-success-bg);
+            background: var(--toast-success-bg);
             color: var(--toast-success-txt);
         }
 

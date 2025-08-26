@@ -1,8 +1,10 @@
-use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
-use types::{ChannelId, GateCheckFailedReason, UserId};
+use ts_export::ts_export;
+use types::{ChannelId, UserId};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(community, add_members_to_channel)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub channel_id: ChannelId,
     pub user_ids: Vec<UserId>,
@@ -10,45 +12,34 @@ pub struct Args {
     pub added_by_display_name: Option<String>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(community, add_members_to_channel)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
     PartialSuccess(PartialSuccessResult),
     Failed(FailedResult),
-    CommunityFrozen,
-    UserSuspended,
-    UserNotInCommunity,
-    UserNotInChannel,
-    ChannelNotFound,
-    UserLimitReached(u32),
-    NotAuthorized,
-    InternalError(String),
+    Error(OCError),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(community, add_members_to_channel)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct PartialSuccessResult {
     pub users_added: Vec<UserId>,
     pub users_already_in_channel: Vec<UserId>,
     pub users_limit_reached: Vec<UserId>,
-    pub users_failed_gate_check: Vec<UserFailedGateCheck>,
     pub users_failed_with_error: Vec<UserFailedError>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(community, add_members_to_channel)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct FailedResult {
     pub users_already_in_channel: Vec<UserId>,
     pub users_limit_reached: Vec<UserId>,
-    pub users_failed_gate_check: Vec<UserFailedGateCheck>,
     pub users_failed_with_error: Vec<UserFailedError>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct UserFailedGateCheck {
-    pub user_id: UserId,
-    pub reason: GateCheckFailedReason,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(community, add_members_to_channel)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct UserFailedError {
     pub user_id: UserId,
     pub error: String,

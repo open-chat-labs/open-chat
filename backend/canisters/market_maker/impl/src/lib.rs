@@ -1,14 +1,15 @@
 use crate::exchanges::Exchange;
 use crate::model::orders_log::OrdersLog;
 use canister_state_macros::canister_state;
+use constants::{CHAT_SYMBOL, ICP_SYMBOL};
 use icdex_client::ICDexClient;
 use market_maker_canister::{ExchangeId, ICDEX_EXCHANGE_ID, ICDEX_EXCHANGE_V2_ID};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, VecDeque};
 use types::{
-    AggregatedOrders, BuildVersion, CancelOrderRequest, CanisterId, Cryptocurrency, Cycles, MakeOrderRequest, TimestampMillis,
-    Timestamped, TokenInfo,
+    AggregatedOrders, BuildVersion, CancelOrderRequest, CanisterId, Cycles, MakeOrderRequest, TimestampMillis, Timestamped,
+    TokenInfo,
 };
 use utils::env::Environment;
 
@@ -52,14 +53,18 @@ impl RuntimeState {
 
     pub fn metrics(&self) -> Metrics {
         Metrics {
-            memory_used: utils::memory::used(),
+            heap_memory_used: utils::memory::heap(),
+            stable_memory_used: utils::memory::stable(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
+            liquid_cycles_balance: self.env.liquid_cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
             exchanges: self.data.exchange_config.clone(),
+            latest_orders_taken: self.data.latest_orders_taken.clone(),
             my_open_orders: self.data.my_open_orders.clone(),
             market_makers_in_progress: self.data.market_makers_in_progress.clone(),
+            stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
@@ -74,13 +79,13 @@ impl RuntimeState {
             self.env.canister_id(),
             dex_canister_id,
             TokenInfo {
-                token: Cryptocurrency::InternetComputer,
+                symbol: ICP_SYMBOL.to_string(),
                 ledger: self.data.icp_ledger_canister_id,
                 decimals: 8,
                 fee: 10_000,
             },
             TokenInfo {
-                token: Cryptocurrency::CHAT,
+                symbol: CHAT_SYMBOL.to_string(),
                 ledger: self.data.chat_ledger_canister_id,
                 decimals: 8,
                 fee: 100_000,
@@ -100,6 +105,7 @@ struct Data {
     pub icp_ledger_canister_id: CanisterId,
     pub chat_ledger_canister_id: CanisterId,
     pub orders_log: OrdersLog,
+    pub latest_orders_taken: HashMap<ExchangeId, (Option<u64>, Option<u64>)>,
     pub my_open_orders: HashMap<ExchangeId, AggregatedOrders>,
     pub market_makers_in_progress: HashMap<ExchangeId, TimestampMillis>,
     pub balance_history: VecDeque<CanisterBalances>,
@@ -122,6 +128,7 @@ impl Data {
             icp_ledger_canister_id,
             chat_ledger_canister_id,
             orders_log: OrdersLog::default(),
+            latest_orders_taken: HashMap::default(),
             my_open_orders: HashMap::new(),
             market_makers_in_progress: HashMap::new(),
             balance_history: VecDeque::new(),
@@ -134,13 +141,17 @@ impl Data {
 #[derive(Serialize, Debug)]
 pub struct Metrics {
     pub now: TimestampMillis,
-    pub memory_used: u64,
+    pub heap_memory_used: u64,
+    pub stable_memory_used: u64,
     pub cycles_balance: Cycles,
+    pub liquid_cycles_balance: Cycles,
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub exchanges: HashMap<ExchangeId, Config>,
+    pub latest_orders_taken: HashMap<ExchangeId, (Option<u64>, Option<u64>)>,
     pub my_open_orders: HashMap<ExchangeId, AggregatedOrders>,
     pub market_makers_in_progress: HashMap<ExchangeId, TimestampMillis>,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }
 

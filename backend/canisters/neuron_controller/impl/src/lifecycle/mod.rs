@@ -1,11 +1,11 @@
 use crate::ecdsa::{get_key_id, get_public_key};
-use crate::{mutate_state, Data, RuntimeState, WASM_VERSION};
+use crate::{Data, RuntimeState, WASM_VERSION, mutate_state};
 use std::time::Duration;
 use tracing::trace;
 use types::{BuildVersion, Timestamped};
 use utils::canister::get_random_seed;
-use utils::env::canister::CanisterEnv;
 use utils::env::Environment;
+use utils::env::canister::CanisterEnv;
 
 mod init;
 mod post_upgrade;
@@ -35,7 +35,7 @@ fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: BuildVersion)
 }
 
 fn reseed_rng() {
-    ic_cdk::spawn(reseed_rng_inner());
+    ic_cdk::futures::spawn(reseed_rng_inner());
 
     async fn reseed_rng_inner() {
         let seed = get_random_seed().await;
@@ -48,7 +48,7 @@ fn reseed_rng() {
 }
 
 fn init_public_key() {
-    ic_cdk::spawn(init_public_key_inner());
+    ic_cdk::futures::spawn(init_public_key_inner());
 
     async fn init_public_key_inner() {
         let key_id = get_key_id(false);

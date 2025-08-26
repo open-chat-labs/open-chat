@@ -1,49 +1,67 @@
 use crate::guards::caller_is_owner;
-use crate::model::pin_number::VerifyPinError;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{execute_update_async, mutate_state, read_state};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
-use types::{FieldTooLongResult, FieldTooShortResult};
-use user_canister::set_pin_number::{Response::*, *};
+use oc_error_codes::OCErrorCode;
+use types::{Achievement, FieldTooLongResult, FieldTooShortResult, UnitResult};
+use user_canister::set_pin_number::*;
 
 const MIN_LENGTH: usize = 4;
 const MAX_LENGTH: usize = 20;
 
-#[update(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
-fn set_pin_number(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| set_pin_number_impl(args, state))
+async fn set_pin_number(args: Args) -> Response {
+    execute_update_async(|| set_pin_number_impl(args)).await
 }
 
-fn set_pin_number_impl(args: Args, state: &mut RuntimeState) -> Response {
-    let now = state.env.now();
-
-    if let Err(error) = state.data.pin_number.verify(args.current.as_deref(), now) {
-        match error {
-            VerifyPinError::PinRequired => PinRequired,
-            VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),
-            VerifyPinError::TooManyFailedAttempted(delay) => TooManyFailedPinAttempts(delay),
-        }
-    } else {
-        if let Some(new) = args.new.as_ref() {
-            let length = new.len();
-            if length < MIN_LENGTH {
-                return TooShort(FieldTooShortResult {
-                    length_provided: length as u32,
-                    min_length: MIN_LENGTH as u32,
-                });
+async fn set_pin_number_impl(args: Args) -> Response {
+    if read_state(|state| state.data.pin_number.enabled()) {
+        match args.verification {
+            PinNumberVerification::None => return Response::Error(OCErrorCode::PinRequired.into()),
+            PinNumberVerification::PIN(attempt) => {
+                if let Err(error) = mutate_state(|state| state.data.pin_number.verify(Some(&attempt), state.env.now())) {
+                    return Response::Error(error.into());
+                }
             }
-            if length > MAX_LENGTH {
-                return TooLong(FieldTooLongResult {
-                    length_provided: length as u32,
-                    max_length: MAX_LENGTH as u32,
-                });
+            PinNumberVerification::Delegation(delegation) => {
+                let local_user_index_canister_id = read_state(|state| state.data.local_user_index_canister_id);
+                match local_user_index_canister_c2c_client::c2c_verify_signature(
+                    local_user_index_canister_id,
+                    &local_user_index_canister::c2c_verify_signature::Args {
+                        signature: delegation.signature,
+                    },
+                )
+                .await
+                {
+                    Ok(UnitResult::Success) => {}
+                    Ok(other) => return other,
+                    Err(error) => return Response::Error(error.into()),
+                }
             }
         }
-
-        state.data.pin_number.set(args.new, now);
-        Success
     }
+
+    if let Some(new) = args.new.as_ref() {
+        let length = new.len();
+        if length < MIN_LENGTH {
+            return Response::Error(OCErrorCode::PinTooShort.with_json(&FieldTooShortResult {
+                length_provided: length as u32,
+                min_length: MIN_LENGTH as u32,
+            }));
+        }
+        if length > MAX_LENGTH {
+            return Response::Error(OCErrorCode::PinTooLong.with_json(&FieldTooLongResult {
+                length_provided: length as u32,
+                max_length: MAX_LENGTH as u32,
+            }));
+        }
+    }
+
+    mutate_state(|state| {
+        let now = state.env.now();
+        state.data.pin_number.set(args.new.map(|p| p.into()), now);
+        state.award_achievement_and_notify(Achievement::SetPin, now);
+    });
+    Response::Success
 }

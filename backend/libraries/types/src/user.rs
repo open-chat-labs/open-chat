@@ -3,7 +3,10 @@ use candid::{CandidType, Principal};
 use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
+use std::ops::Deref;
+use ts_export::ts_export;
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct UserId(CanisterId);
 
@@ -46,6 +49,15 @@ impl Display for UserId {
     }
 }
 
+impl Deref for UserId {
+    type Target = Principal;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct User {
     pub user_id: UserId,
@@ -61,4 +73,28 @@ pub struct UserDetails {
     pub is_platform_moderator: bool,
     pub is_platform_operator: bool,
     pub is_diamond_member: bool,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum UserType {
+    #[default]
+    User,
+    BotV2,
+    Bot,
+    OcControlledBot,
+    Webhook,
+}
+
+impl UserType {
+    pub fn is_bot(&self) -> bool {
+        !matches!(self, UserType::User)
+    }
+
+    pub fn is_oc_controlled_bot(&self) -> bool {
+        matches!(self, UserType::OcControlledBot)
+    }
+
+    pub fn is_3rd_party_bot(&self) -> bool {
+        matches!(self, UserType::BotV2 | UserType::Bot)
+    }
 }

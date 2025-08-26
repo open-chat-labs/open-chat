@@ -1,34 +1,25 @@
 <script lang="ts">
     import {
+        type ChatListScope,
         type ChatSummary,
+        type CombinedUnreadCounts,
         type CommunitySummary,
         type OpenChat,
-        type CombinedUnreadCounts,
         type UserLookup,
+        allUsersStore,
+        chatListScopeStore,
+        globalUnreadCountStore,
+        locationStore,
         routeForChatIdentifier,
-        type ChatListScope,
+        selectedChatSummaryStore,
+        selectedCommunitySummaryStore,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { mobileOperatingSystem } from "../utils/devices";
-    import { location } from "../routes";
 
     const client = getContext<OpenChat>("client");
 
-    let viewPortContent = "width=device-width, initial-scale=1";
-
-    $: userStore = client.userStore;
-    $: chatListScope = client.chatListScope;
-    $: selectedChatStore = client.selectedChatStore;
-    $: selectedCommunity = client.selectedCommunity;
-    $: globalUnreadCount = client.globalUnreadCount;
-    $: details = getDetails(
-        $chatListScope,
-        $location,
-        $userStore,
-        $globalUnreadCount,
-        $selectedChatStore,
-        $selectedCommunity,
-    );
+    let viewPortContent = $state("width=device-width, initial-scale=1");
 
     type Details = {
         title: string;
@@ -66,8 +57,8 @@
             if (chat.kind === "direct_chat") {
                 title = `${title} - 
                     ${
-                        users[chat.them.userId]?.displayName ??
-                        users[chat.them.userId]?.username ??
+                        users.get(chat.them.userId)?.displayName ??
+                        users.get(chat.them.userId)?.username ??
                         "Direct chat"
                     }`;
             } else {
@@ -93,6 +84,17 @@
             viewPortContent += ", maximum-scale=1";
         }
     });
+
+    let details = $derived(
+        getDetails(
+            $chatListScopeStore,
+            $locationStore,
+            $allUsersStore,
+            $globalUnreadCountStore,
+            $selectedChatSummaryStore,
+            $selectedCommunitySummaryStore,
+        ),
+    );
 </script>
 
 <svelte:head>

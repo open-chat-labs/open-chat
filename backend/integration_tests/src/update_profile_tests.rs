@@ -1,17 +1,18 @@
 use crate::env::ENV;
-use crate::rng::random_string;
 use crate::utils::{now_millis, tick_many};
-use crate::{client, TestEnv};
+use crate::{TestEnv, client};
+use rand::random;
 use std::ops::Deref;
 use std::time::Duration;
-use types::OptionUpdate;
+use testing::rng::random_string;
+use types::{Document, OptionUpdate};
 
 #[test]
 fn update_username_succeeds() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user = client::register_user(env, canister_ids);
 
     env.advance_time(Duration::from_secs(10));
 
@@ -23,7 +24,7 @@ fn update_username_succeeds() {
 
     // Check that the user index is updated
     let user_summary = client::user_index::happy_path::users(env, user.principal, canister_ids.user_index, vec![user.user_id])
-        .pop()
+        .current_user
         .unwrap();
     assert_eq!(user_summary.username, username);
 
@@ -54,7 +55,7 @@ fn update_display_name_succeeds() {
 
     // Check that the user index is updated
     let user_summary = client::user_index::happy_path::users(env, user.principal, canister_ids.user_index, vec![user.user_id])
-        .pop()
+        .current_user
         .unwrap();
     assert_eq!(user_summary.display_name, Some(display_name.clone()));
 
@@ -65,27 +66,33 @@ fn update_display_name_succeeds() {
 }
 
 #[test]
-fn update_display_name_unauthorized_if_not_diamond_member() {
+fn update_profile_background_succeeds() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user = client::register_user(env, canister_ids);
 
     env.advance_time(Duration::from_secs(10));
 
-    let display_name = random_string();
+    let id: u128 = random();
 
-    let response = client::user_index::set_display_name(
+    client::user::happy_path::set_profile_background(
         env,
-        user.principal,
-        canister_ids.user_index,
-        &user_index_canister::set_display_name::Args {
-            display_name: Some(display_name.clone()),
+        &user,
+        &user_canister::set_profile_background::Args {
+            profile_background: Some(Document {
+                id,
+                data: vec![1; 1000],
+                mime_type: "image/jpg".to_string(),
+            }),
         },
     );
 
-    assert!(matches!(
-        response,
-        user_index_canister::set_display_name::Response::Unauthorized
-    ));
+    tick_many(env, 5);
+
+    // Check that the user index is updated
+    let user_summary = client::user_index::happy_path::users(env, user.principal, canister_ids.user_index, vec![user.user_id])
+        .current_user
+        .unwrap();
+    assert_eq!(user_summary.profile_background_id, Some(id));
 }

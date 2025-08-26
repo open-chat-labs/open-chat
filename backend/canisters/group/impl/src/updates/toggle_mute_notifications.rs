@@ -1,27 +1,27 @@
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, execute_update};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use group_canister::toggle_mute_notifications::{Response::*, *};
-use ic_cdk_macros::update;
-use types::Timestamped;
+use group_canister::toggle_mute_notifications::*;
+use types::OCResult;
 
-#[update]
+#[update(msgpack = true)]
 #[trace]
 fn toggle_mute_notifications(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| toggle_mute_notifications_impl(args, state))
+    execute_update(|state| toggle_mute_notifications_impl(args, state)).into()
 }
 
-fn toggle_mute_notifications_impl(args: Args, state: &mut RuntimeState) -> Response {
-    let caller = state.env.caller();
+fn toggle_mute_notifications_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+    let user_id = state.get_caller_user_id()?;
     let now = state.env.now();
-    match state.data.get_member_mut(caller) {
-        Some(member) => {
-            member.notifications_muted = Timestamped::new(args.mute, now);
-            let user_id = member.user_id;
-            state.data.mark_group_updated_in_user_canister(user_id);
-            Success
-        }
-        None => CallerNotInGroup,
+    if matches!(
+        state
+            .data
+            .chat
+            .members
+            .toggle_notifications_muted(user_id, args.mute, args.mute_at_everyone, now),
+        Some(true)
+    ) {
+        state.mark_activity_for_user(user_id);
     }
+    Ok(())
 }

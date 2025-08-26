@@ -7,19 +7,37 @@ generate_query_call!(can_forward);
 generate_query_call!(user);
 
 // Updates
+generate_update_call!(add_bucket_canister);
 generate_update_call!(add_or_update_users);
-generate_update_call!(remove_accessor);
-generate_update_call!(remove_user);
+generate_update_call!(remove_accessors);
+generate_update_call!(remove_users);
 generate_update_call!(upgrade_bucket_canister_wasm);
 
 pub mod happy_path {
     use crate::utils::tick_many;
     use candid::Principal;
     use pocket_ic::PocketIc;
+    use rand::{RngCore, thread_rng};
     use storage_index_canister::add_or_update_users::UserConfig;
     use storage_index_canister::user::UserRecord;
-    use types::{CanisterId, CanisterWasm};
+    use types::{AccessorId, BlobReference, CanisterId, CanisterWasm};
     use utils::hasher::hash_bytes;
+
+    pub fn add_bucket_canister(env: &mut PocketIc, sender: Principal, canister_id: CanisterId, subnet_id: Principal) {
+        let response = super::add_bucket_canister(
+            env,
+            sender,
+            canister_id,
+            &storage_index_canister::add_bucket_canister::Args {
+                subnet_id: Some(subnet_id),
+            },
+        );
+
+        assert!(matches!(
+            response,
+            storage_index_canister::add_bucket_canister::Response::Success
+        ));
+    }
 
     pub fn add_or_update_users(env: &mut PocketIc, sender: Principal, canister_id: CanisterId, users: Vec<UserConfig>) {
         let response = super::add_or_update_users(
@@ -75,7 +93,7 @@ pub mod happy_path {
         }
     }
 
-    pub fn upgrade_notifications_canister_wasm(
+    pub fn upgrade_bucket_canister_wasm(
         env: &mut PocketIc,
         sender: Principal,
         storage_index_canister_id: CanisterId,
@@ -85,16 +103,40 @@ pub mod happy_path {
             env,
             sender,
             storage_index_canister_id,
-            &storage_index_canister::upgrade_bucket_canister_wasm::Args {
-                wasm,
-                filter: None,
-                use_for_new_canisters: None,
-            },
+            &storage_index_canister::upgrade_bucket_canister_wasm::Args { wasm, filter: None },
         );
 
         assert!(matches!(
             response,
             storage_index_canister::upgrade_bucket_canister_wasm::Response::Success
         ));
+    }
+
+    pub fn upload_file(
+        env: &mut PocketIc,
+        sender: Principal,
+        storage_index_canister_id: CanisterId,
+        file_size: u32,
+        accessors: Vec<AccessorId>,
+    ) -> BlobReference {
+        let mut file = vec![0; file_size as usize];
+        thread_rng().fill_bytes(file.as_mut_slice());
+
+        let bucket_response = allocated_bucket(env, sender, storage_index_canister_id, &file);
+
+        crate::client::storage_bucket::happy_path::upload_file(
+            env,
+            sender,
+            bucket_response.canister_id,
+            bucket_response.file_id,
+            file,
+            accessors,
+            None,
+        );
+
+        BlobReference {
+            canister_id: bucket_response.canister_id,
+            blob_id: bucket_response.file_id,
+        }
     }
 }

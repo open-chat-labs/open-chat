@@ -1,117 +1,106 @@
 <script lang="ts">
+    import {
+        allUsersStore,
+        type BotMatch,
+        chatIdentifiersEqual,
+        chatIdentifierToString,
+        type ChatListScope,
+        chatListScopesEqual,
+        chatListScopeStore,
+        chatSummariesListStore,
+        type ChatSummary as ChatSummaryType,
+        type CombinedUnreadCounts,
+        currentUserIdStore,
+        emptyCombinedUnreadCounts,
+        type GroupMatch,
+        type GroupSearchResponse,
+        iconSize,
+        mobileWidth,
+        numberOfThreadsStore,
+        OpenChat,
+        publish,
+        ROLE_NONE,
+        routeForChatIdentifier,
+        routeForScope,
+        selectedChatIdStore,
+        selectedCommunitySummaryStore,
+        unreadCommunityChannelCountsStore,
+        unreadDirectCountsStore,
+        unreadFavouriteCountsStore,
+        unreadGroupCountsStore,
+        type UserSummary,
+    } from "openchat-client";
+    import page from "page";
+    import { getContext, tick } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import Compass from "svelte-material-icons/CompassOutline.svelte";
-    import SelectedCommunityHeader from "./communities/SelectedCommunityHeader.svelte";
-    import ChatListSearch from "./ChatListSearch.svelte";
-    import ChatSummary from "./ChatSummary.svelte";
-    import { _ } from "svelte-i18n";
-    import {
-        type ChatListScope,
-        type ChatSummary as ChatSummaryType,
-        type GroupMatch,
-        type UserSummary,
-        OpenChat,
-        type GroupSearchResponse,
-        routeForChatIdentifier,
-        chatIdentifiersEqual,
-        emptyCombinedUnreadCounts,
-        chatIdentifierToString,
-    } from "openchat-client";
-    import { afterUpdate, beforeUpdate, createEventDispatcher, getContext, tick } from "svelte";
-    import SearchResult from "./SearchResult.svelte";
-    import page from "page";
-    import NotificationsBar from "./NotificationsBar.svelte";
-    import Button from "../Button.svelte";
     import { menuCloser } from "../../actions/closeMenu";
-    import ThreadPreviews from "./thread/ThreadPreviews.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import { mobileWidth } from "../../stores/screenDimensions";
+    import { i18nKey } from "../../i18n/i18n";
+    import { chatListView } from "../../stores/chatListView";
     import { exploreGroupsDismissed } from "../../stores/settings";
-    import GroupChatsHeader from "./communities/GroupChatsHeader.svelte";
-    import DirectChatsHeader from "./communities/DirectChatsHeader.svelte";
-    import FavouriteChatsHeader from "./communities/FavouriteChatsHeader.svelte";
-    import PreviewWrapper from "./communities/PreviewWrapper.svelte";
-    import { routeForScope } from "../../routes";
+    import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import FilteredUsername from "../FilteredUsername.svelte";
-    import ChatListSectionButton from "./ChatListSectionButton.svelte";
-    import Diamond from "../icons/Diamond.svelte";
-    import BrowseChannels from "./communities/details/BrowseChannels.svelte";
     import Translatable from "../Translatable.svelte";
-    import { i18nKey } from "../../i18n/i18n";
+    import ChatListSearch from "./ChatListSearch.svelte";
+    import ChatListSectionButton from "./ChatListSectionButton.svelte";
+    import ChatSummary from "./ChatSummary.svelte";
+    import BrowseChannels from "./communities/details/BrowseChannels.svelte";
+    import DirectChatsHeader from "./communities/DirectChatsHeader.svelte";
+    import FavouriteChatsHeader from "./communities/FavouriteChatsHeader.svelte";
+    import GroupChatsHeader from "./communities/GroupChatsHeader.svelte";
+    import PreviewWrapper from "./communities/PreviewWrapper.svelte";
+    import SelectedCommunityHeader from "./communities/SelectedCommunityHeader.svelte";
+    import Badges from "./profile/Badges.svelte";
+    import SearchResult from "./SearchResult.svelte";
+    import ThreadPreviews from "./thread/ThreadPreviews.svelte";
     import ActiveCallSummary from "./video/ActiveCallSummary.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
-    let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
-    let searchTerm: string = "";
-    let searchResultsAvailable: boolean = false;
-    let chatsScrollTop: number = 0;
-    let previousScope: ChatListScope | undefined = undefined;
-    let previousView: "chats" | "threads" = "chats";
+    let groupSearchResults: Promise<GroupSearchResponse> | undefined = $state(undefined);
+    let userAndBotSearchResults: Promise<(UserSummary | BotMatch)[]> | undefined =
+        $state(undefined);
+    let searchTerm: string = $state("");
+    let searchResultsAvailable: boolean = $state(false);
+    let chatsScrollTop = $state<number | undefined>();
+    let previousScope: ChatListScope = $chatListScopeStore;
+    let previousView: "chats" | "threads" = $chatListView;
 
-    const dispatch = createEventDispatcher();
-
-    $: createdUser = client.user;
-    $: selectedChatId = client.selectedChatId;
-    $: chatListScope = client.chatListScope;
-    $: numberOfThreadsStore = client.numberOfThreadsStore;
-    $: selectedCommunity = client.selectedCommunity;
-    $: showPreview =
-        $mobileWidth &&
-        $selectedCommunity?.membership.role === "none" &&
-        $selectedChatId === undefined;
-    $: chatSummariesListStore = client.chatSummariesListStore;
-    $: userStore = client.userStore;
-    $: user = $userStore[$createdUser.userId];
-    $: lowercaseSearch = searchTerm.toLowerCase();
-    $: showExploreGroups =
-        ($chatListScope.kind === "none" || $chatListScope.kind === "group_chat") &&
-        !$exploreGroupsDismissed &&
-        !searchResultsAvailable;
-    $: showBrowseChannnels = $chatListScope.kind === "community";
-    $: unreadDirectCounts = client.unreadDirectCounts;
-    $: unreadGroupCounts = client.unreadGroupCounts;
-    $: unreadFavouriteCounts = client.unreadFavouriteCounts;
-    $: unreadCommunityChannelCounts = client.unreadCommunityChannelCounts;
-    $: view = "chats" as "chats" | "threads";
-
-    let unreadCounts = emptyCombinedUnreadCounts();
-    $: {
-        switch ($chatListScope.kind) {
-            case "group_chat": {
-                unreadCounts = $unreadGroupCounts;
-                break;
-            }
-            case "direct_chat": {
-                unreadCounts = $unreadDirectCounts;
-                break;
-            }
-            case "favourite": {
-                unreadCounts = $unreadFavouriteCounts;
-                break;
-            }
-            case "community": {
-                unreadCounts =
-                    $unreadCommunityChannelCounts.get($chatListScope.id) ??
-                    emptyCombinedUnreadCounts();
-                break;
-            }
-            default:
-                unreadCounts = emptyCombinedUnreadCounts();
+    // TODO this doesn't work properly and I think it's to do with the way
+    // effect dependencies are worked out when you have conditional code
+    // Probably can just be done in a more explicit way but it's not urgent
+    $effect.pre(() => {
+        if (
+            chatListScopesEqual(previousScope, $chatListScopeStore) &&
+            $chatListView !== "chats" &&
+            previousView === "chats"
+        ) {
+            chatsScrollTop = chatListElement?.scrollTop;
         }
-    }
+    });
 
-    $: {
-        if (view === "threads" && searchTerm !== "") {
-            view = "chats";
+    $effect(() => {
+        if (!chatListScopesEqual(previousScope, $chatListScopeStore)) {
+            onScopeChanged();
+        } else if (previousView !== $chatListView) {
+            onViewChanged();
         }
+    });
+
+    function anythingUnread(unread: CombinedUnreadCounts): boolean {
+        return (
+            unread.chats.muted +
+                unread.chats.unmuted +
+                unread.threads.muted +
+                unread.threads.unmuted >
+            0
+        );
     }
 
     function cancelPreview() {
-        if ($selectedCommunity) {
-            client.removeCommunity($selectedCommunity.id);
+        if ($selectedCommunitySummaryStore) {
+            client.removeCommunity($selectedCommunitySummaryStore.id);
             page(routeForScope(client.getDefaultScope()));
         }
     }
@@ -125,7 +114,7 @@
         }
 
         if (chat.kind === "direct_chat") {
-            const user = $userStore[chat.them.userId];
+            const user = $allUsersStore.get(chat.them.userId);
             if (user !== undefined) {
                 return (
                     user.username.toLowerCase().indexOf(lowercaseSearch) >= 0 ||
@@ -139,13 +128,8 @@
         return false;
     }
 
-    $: chats =
-        searchTerm !== ""
-            ? $chatSummariesListStore.filter(chatMatchesSearch)
-            : $chatSummariesListStore;
-
     function chatWith(userId: string): void {
-        dispatch("chatWith", { kind: "direct_chat", userId });
+        publish("chatWith", { kind: "direct_chat", userId });
     }
 
     /**
@@ -153,34 +137,20 @@
      * the routing will take care of the rest
      */
     function selectGroup({ chatId }: GroupMatch): void {
-        page(routeForChatIdentifier($chatListScope.kind, chatId));
+        page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
         searchTerm = "";
     }
 
-    function chatSelected(ev: CustomEvent<ChatSummaryType>): void {
-        const url = routeForChatIdentifier($chatListScope.kind, ev.detail.id);
+    function chatSelected({ id }: ChatSummaryType): void {
+        const url = routeForChatIdentifier($chatListScopeStore.kind, id);
         page(url);
         searchTerm = "";
     }
 
-    let chatListElement: HTMLElement;
+    let chatListElement: HTMLElement | undefined;
 
-    beforeUpdate(() => {
-        if (previousScope === $chatListScope && view !== "chats" && previousView === "chats") {
-            chatsScrollTop = chatListElement.scrollTop;
-        }
-    });
-
-    afterUpdate(() => {
-        if (previousScope !== $chatListScope) {
-            onScopeChanged();
-        } else if (previousView !== view) {
-            onViewChanged();
-        }
-    });
-
-    function setView(v: "chats" | "threads"): void {
-        view = v;
+    function setView(view: "chats" | "threads"): void {
+        chatListView.set(view);
 
         if (view === "threads") {
             searchTerm = "";
@@ -188,39 +158,97 @@
     }
 
     function onScopeChanged() {
-        previousScope = $chatListScope;
-        view = "chats";
+        previousScope = $chatListScopeStore;
+        chatListView.set("chats");
         chatsScrollTop = 0;
         onViewChanged();
     }
 
     function onViewChanged() {
-        previousView = view;
-        const scrollTop = view === "chats" ? chatsScrollTop : 0;
-        tick().then(() => (chatListElement.scrollTop = scrollTop));
+        previousView = $chatListView;
+        const scrollTop = previousView === "chats" ? chatsScrollTop ?? 0 : 0;
+        tick().then(() => {
+            if (chatListElement !== undefined) {
+                chatListElement.scrollTop = scrollTop;
+            }
+        });
     }
+
+    function userOrBotKey(match: UserSummary | BotMatch): string {
+        switch (match.kind) {
+            case "bot_match":
+                return match.id;
+            default:
+                return match.userId;
+        }
+    }
+
+    let showPreview = $derived(
+        $mobileWidth &&
+            $selectedCommunitySummaryStore?.membership.role === ROLE_NONE &&
+            $selectedChatIdStore === undefined,
+    );
+    let user = $derived($allUsersStore.get($currentUserIdStore));
+    let lowercaseSearch = $derived(searchTerm.toLowerCase());
+    let showExploreGroups = $derived(
+        ($chatListScopeStore.kind === "none" || $chatListScopeStore.kind === "group_chat") &&
+            !$exploreGroupsDismissed &&
+            !searchResultsAvailable,
+    );
+    let showBrowseChannnels = $derived($chatListScopeStore.kind === "community");
+    let unreadCounts = $derived.by(() => {
+        switch ($chatListScopeStore.kind) {
+            case "group_chat": {
+                return $unreadGroupCountsStore;
+            }
+            case "direct_chat": {
+                return $unreadDirectCountsStore;
+            }
+            case "favourite": {
+                return $unreadFavouriteCountsStore;
+            }
+            case "community": {
+                return (
+                    $unreadCommunityChannelCountsStore.get($chatListScopeStore.id) ??
+                    emptyCombinedUnreadCounts()
+                );
+            }
+            default:
+                return emptyCombinedUnreadCounts();
+        }
+    });
+    let canMarkAllRead = $derived(anythingUnread(unreadCounts));
+    $effect(() => {
+        if ($numberOfThreadsStore === 0) {
+            chatListView.set("chats");
+        }
+    });
+    $effect(() => {
+        if ($chatListView === "threads" && searchTerm !== "") {
+            chatListView.set("chats");
+        }
+    });
+    let chats = $derived(
+        searchTerm !== ""
+            ? $chatSummariesListStore.filter(chatMatchesSearch)
+            : $chatSummariesListStore,
+    );
 </script>
 
-<!-- svelte-ignore missing-declaration -->
+<!-- svelte-ignore missing_declaration -->
 {#if user}
-    {#if $chatListScope.kind === "favourite"}
-        <FavouriteChatsHeader />
-    {:else if $chatListScope.kind === "group_chat"}
-        <GroupChatsHeader on:newGroup />
-    {:else if $chatListScope.kind === "direct_chat"}
-        <DirectChatsHeader />
-    {:else if $selectedCommunity && $chatListScope.kind === "community"}
-        <SelectedCommunityHeader
-            community={$selectedCommunity}
-            on:leaveCommunity
-            on:deleteCommunity
-            on:editCommunity
-            on:communityDetails
-            on:newChannel />
+    {#if $chatListScopeStore.kind === "favourite"}
+        <FavouriteChatsHeader {canMarkAllRead} />
+    {:else if $chatListScopeStore.kind === "group_chat"}
+        <GroupChatsHeader {canMarkAllRead} />
+    {:else if $chatListScopeStore.kind === "direct_chat"}
+        <DirectChatsHeader {canMarkAllRead} />
+    {:else if $selectedCommunitySummaryStore && $chatListScopeStore.kind === "community"}
+        <SelectedCommunityHeader community={$selectedCommunitySummaryStore} {canMarkAllRead} />
     {/if}
 
     <ChatListSearch
-        bind:userSearchResults
+        bind:userAndBotsSearchResults={userAndBotSearchResults}
         bind:groupSearchResults
         bind:searchResultsAvailable
         bind:searchTerm />
@@ -228,20 +256,20 @@
     {#if $numberOfThreadsStore > 0}
         <div class="section-selector">
             <ChatListSectionButton
-                on:click={() => setView("chats")}
+                onClick={() => setView("chats")}
                 unread={unreadCounts.chats}
                 title={i18nKey("chats")}
-                selected={view === "chats"} />
+                selected={$chatListView === "chats"} />
             <ChatListSectionButton
                 unread={unreadCounts.threads}
-                on:click={() => setView("threads")}
+                onClick={() => setView("threads")}
                 title={i18nKey("thread.previewTitle")}
-                selected={view === "threads"} />
+                selected={$chatListView === "threads"} />
         </div>
     {/if}
 
     <div use:menuCloser bind:this={chatListElement} class="body">
-        {#if view === "threads"}
+        {#if $chatListView === "threads"}
             <ThreadPreviews />
         {:else}
             <div class="chat-summaries">
@@ -253,40 +281,60 @@
                 {#each chats as chatSummary (chatIdentifierToString(chatSummary.id))}
                     <ChatSummary
                         {chatSummary}
-                        selected={chatIdentifiersEqual($selectedChatId, chatSummary.id)}
+                        selected={chatIdentifiersEqual($selectedChatIdStore, chatSummary.id)}
                         visible={searchTerm !== "" || !chatSummary.membership.archived}
-                        on:chatSelected={chatSelected}
-                        on:leaveGroup
-                        on:unarchiveChat
-                        on:toggleMuteNotifications />
+                        onChatSelected={chatSelected} />
                 {/each}
 
-                {#if userSearchResults !== undefined}
+                {#if userAndBotSearchResults !== undefined}
                     <div class="search-matches">
-                        {#await userSearchResults then resp}
+                        {#await userAndBotSearchResults then resp}
                             {#if resp.length > 0}
                                 <h3 class="search-subtitle">
-                                    <Translatable resourceKey={i18nKey("users")} />
+                                    <Translatable resourceKey={i18nKey("usersAndBots")} />
                                 </h3>
-                                {#each resp as user, i (user.userId)}
-                                    <SearchResult
-                                        index={i}
-                                        avatarUrl={client.userAvatarUrl(user)}
-                                        on:click={() => chatWith(user.userId)}>
-                                        <div class="user-result">
-                                            <h4>
-                                                <FilteredUsername
-                                                    {searchTerm}
-                                                    username={user.displayName ?? user.username} />
-                                                <Diamond status={user.diamondStatus} />
-                                            </h4>
-                                            <div class="username">
-                                                <FilteredUsername
-                                                    {searchTerm}
-                                                    username={"@" + user.username} />
+                                {#each resp as match, i (userOrBotKey(match))}
+                                    {#if match.kind === "bot_match"}
+                                        <SearchResult
+                                            index={i}
+                                            avatarUrl={match.avatarUrl ?? "/assets/bot_avatar.svg"}
+                                            onclick={() => chatWith(match.id)}>
+                                            <div class="user-result">
+                                                <h4>
+                                                    <FilteredUsername
+                                                        {searchTerm}
+                                                        username={match.name} />
+                                                </h4>
+                                                <div class="username">
+                                                    {match.definition.description}
+                                                </div>
                                             </div>
-                                        </div>
-                                    </SearchResult>
+                                        </SearchResult>
+                                    {:else}
+                                        <SearchResult
+                                            index={i}
+                                            avatarUrl={client.userAvatarUrl(match)}
+                                            onclick={() => chatWith(match.userId)}>
+                                            <div class="user-result">
+                                                <h4>
+                                                    <FilteredUsername
+                                                        {searchTerm}
+                                                        username={match.displayName ??
+                                                            match.username} />
+
+                                                    <Badges
+                                                        uniquePerson={match.isUniquePerson}
+                                                        diamondStatus={match.diamondStatus}
+                                                        streak={match.streak} />
+                                                </h4>
+                                                <div class="username">
+                                                    <FilteredUsername
+                                                        {searchTerm}
+                                                        username={"@" + match.username} />
+                                                </div>
+                                            </div>
+                                        </SearchResult>
+                                    {/if}
                                 {/each}
                             {/if}
                         {/await}
@@ -302,8 +350,14 @@
                                 {#each resp.matches as group, i (group.chatId.groupId)}
                                     <SearchResult
                                         index={i}
-                                        avatarUrl={client.groupAvatarUrl(group)}
-                                        on:click={() => selectGroup(group)}>
+                                        avatarUrl={client.groupAvatarUrl(
+                                            {
+                                                ...group,
+                                                id: group.chatId,
+                                            },
+                                            $selectedCommunitySummaryStore,
+                                        )}
+                                        onclick={() => selectGroup(group)}>
                                         <h4 class="search-item-title">
                                             {group.name}
                                         </h4>
@@ -318,14 +372,14 @@
                 {/if}
             </div>
             {#if showExploreGroups}
-                <div class="explore-groups" on:click={() => page("/groups")}>
+                <div class="explore-groups" onclick={() => page("/groups?explore=true")}>
                     <div class="disc">
                         <Compass size={$iconSize} color={"var(--icon-txt)"} />
                     </div>
                     <div class="label">
                         <Translatable resourceKey={i18nKey("exploreGroups")} />
                     </div>
-                    <div on:click={() => exploreGroupsDismissed.set(true)} class="close">
+                    <div onclick={() => exploreGroupsDismissed.set(true)} class="close">
                         <Close viewBox="0 -3 24 24" size={$iconSize} color={"var(--button-txt)"} />
                     </div>
                 </div>
@@ -336,22 +390,23 @@
         {/if}
     </div>
     <ActiveCallSummary />
-    <NotificationsBar />
     {#if showPreview}
-        <PreviewWrapper let:joiningCommunity let:joinCommunity>
-            <div class="join">
-                <ButtonGroup align="center">
-                    <Button secondary small on:click={cancelPreview}>
-                        <Translatable resourceKey={i18nKey("leave")} />
-                    </Button>
-                    <Button
-                        loading={joiningCommunity}
-                        disabled={joiningCommunity}
-                        on:click={joinCommunity}
-                        ><Translatable
-                            resourceKey={i18nKey("communities.joinCommunity")} /></Button>
-                </ButtonGroup>
-            </div>
+        <PreviewWrapper>
+            {#snippet children(joiningCommunity, joinCommunity)}
+                <div class="join">
+                    <ButtonGroup align="center">
+                        <Button secondary small onClick={cancelPreview}>
+                            <Translatable resourceKey={i18nKey("leave")} />
+                        </Button>
+                        <Button
+                            loading={joiningCommunity}
+                            disabled={joiningCommunity}
+                            onClick={joinCommunity}
+                            ><Translatable
+                                resourceKey={i18nKey("communities.joinCommunity")} /></Button>
+                    </ButtonGroup>
+                </div>
+            {/snippet}
         </PreviewWrapper>
     {/if}
 {/if}
@@ -445,9 +500,16 @@
         display: flex;
         flex-direction: column;
 
+        h4 {
+            display: flex;
+            align-items: center;
+            gap: $sp2;
+        }
+
         .username {
             font-weight: 200;
             color: var(--txt-light);
+            @include clamp();
         }
     }
 </style>

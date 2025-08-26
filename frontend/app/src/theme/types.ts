@@ -1,5 +1,5 @@
 export type Themes = Record<string, Theme> & {
-    light: Theme;
+    white: Theme;
     dark: Theme;
 };
 
@@ -24,21 +24,30 @@ export interface Theme {
 
     error: string;
     warn: string;
+    success: string;
     accent: string;
     accentDarker: string;
     disabledTxt: string;
     primary: string;
-    code: string;
+    code: {
+        bg: string;
+        txt: string;
+    };
 
     placeholder: string;
 
     progress: {
         bd: string;
+        fill: string;
     };
 
     unread: {
+        txt: string;
+        bg: string;
+        "txt-sh": string;
         mute: string;
         "mute-solid": string;
+        "mute-txt": string;
     };
 
     collapsible: {
@@ -159,6 +168,7 @@ export interface Theme {
         "inverted-sh": string;
         bd: string;
         separator: string;
+        rd: string;
     };
 
     button: {
@@ -174,6 +184,18 @@ export interface Theme {
         rd: string;
         sh: string;
         "hv-sh": string;
+
+        hollow: {
+            bd: string;
+            txt: string;
+        };
+
+        secondary: {
+            bd: string;
+            "bd-hv": string;
+            txt: string;
+            "txt-hv": string;
+        };
     };
 
     link: {
@@ -196,6 +218,10 @@ export interface Theme {
         "txt-sh": string;
     };
 
+    replies: {
+        bd: string;
+    };
+
     currentChat: {
         msgs: {
             bg: string;
@@ -215,6 +241,7 @@ export interface Theme {
             r1: string;
             r2: string;
             separator: string;
+            focus: string;
 
             me: {
                 bg: string;
@@ -299,14 +326,6 @@ export interface Theme {
         };
     };
 
-    markdown: {
-        fg: {
-            color: string;
-            bright: string;
-            muted: string;
-        };
-    };
-
     card: {
         rd: string;
         sh: string;
@@ -315,6 +334,17 @@ export interface Theme {
     nav: {
         icon: {
             rd: string;
+        };
+    };
+
+    audio: {
+        outer: string;
+        inner: string;
+        note: string;
+        me: {
+            outer: string;
+            inner: string;
+            note: string;
         };
     };
 

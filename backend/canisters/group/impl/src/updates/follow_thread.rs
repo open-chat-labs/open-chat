@@ -1,39 +1,30 @@
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{RuntimeState, execute_update};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use group_canister::follow_thread::{Response::*, *};
-use group_chat_core::FollowThreadResult;
-use ic_cdk_macros::update;
+use group_canister::follow_thread::*;
+use types::{Achievement, OCResult};
 
-#[update]
+#[update(msgpack = true)]
 #[trace]
 fn follow_thread(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| follow_thread_impl(args, state))
+    execute_update(|state| follow_thread_impl(args, state)).into()
 }
 
-fn follow_thread_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if state.data.is_frozen() {
-        return GroupFrozen;
-    }
+fn follow_thread_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+    state.data.verify_not_frozen()?;
 
-    let caller = state.env.caller();
-
-    let user_id = match state.data.lookup_user_id(caller) {
-        Some(uid) => uid,
-        None => return UserNotInGroup,
-    };
-
+    let member = state.get_calling_member(true)?;
+    let user_id = member.user_id();
     let now = state.env.now();
 
-    match state.data.chat.follow_thread(user_id, args.thread_root_message_index, now) {
-        FollowThreadResult::Success => {
-            state.data.mark_group_updated_in_user_canister(user_id);
-            Success
+    state.data.chat.follow_thread(user_id, args.thread_root_message_index, now)?;
+
+    if !member.user_type().is_bot() {
+        if args.new_achievement {
+            state.notify_user_of_achievement(user_id, Achievement::FollowedThread, now);
         }
-        FollowThreadResult::AlreadyFollowing => AlreadyFollowing,
-        FollowThreadResult::ThreadNotFound => ThreadNotFound,
-        FollowThreadResult::UserNotInGroup => UserNotInGroup,
-        FollowThreadResult::UserSuspended => UserSuspended,
+
+        state.mark_activity_for_user(user_id);
     }
+    Ok(())
 }

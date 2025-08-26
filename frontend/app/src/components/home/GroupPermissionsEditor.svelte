@@ -1,43 +1,56 @@
 <script lang="ts">
     import SelectPermissionRole from "./SelectPermissionRole.svelte";
-    import { type ChatPermissions, chatRoles } from "openchat-client";
+    import { type ChatPermissions, chatRoles, ROLE_ADMIN, ROLE_MEMBER } from "openchat-client";
     import Toggle from "../Toggle.svelte";
     import TabHeader from "../TabHeader.svelte";
     import { i18nKey } from "../../i18n/i18n";
 
-    export let permissions: ChatPermissions;
-    export let isPublic: boolean;
-    export let isCommunityPublic: boolean;
-
-    let selectedTab = 0;
-    let roles = [...chatRoles];
-    let overrideChatMessages = permissions.threadPermissions !== undefined;
-
-    $: {
-        if (isPublic && isCommunityPublic) {
-            permissions.mentionAllMembers = "admin";
-        } else {
-            permissions.mentionAllMembers = "member";
-        }
+    interface Props {
+        editing: boolean;
+        permissions: ChatPermissions;
+        isPublic: boolean;
+        isCommunityPublic: boolean;
+        isChannel: boolean;
+        embeddedContent: boolean;
     }
+
+    let {
+        editing,
+        permissions = $bindable(),
+        isPublic,
+        isCommunityPublic,
+        isChannel,
+        embeddedContent,
+    }: Props = $props();
+
+    let items = embeddedContent
+        ? [i18nKey("permissions.general")]
+        : [
+              i18nKey("permissions.general"),
+              i18nKey("permissions.message"),
+              i18nKey("permissions.thread"),
+          ];
+    let selectedTab = $state(items[0].key);
+    let roles = [...chatRoles];
+    let overrideChatMessages = $state(permissions.threadPermissions !== undefined);
+
+    $effect(() => {
+        if (!editing) {
+            permissions.mentionAllMembers = isPublic && isCommunityPublic ? ROLE_ADMIN : ROLE_MEMBER;
+        }
+    });
 
     function onOverrideChatMessagesChanged() {
         permissions.threadPermissions = overrideChatMessages
-            ? structuredClone(permissions.messagePermissions)
+            ? structuredClone($state.snapshot(permissions.messagePermissions))
             : undefined;
     }
 </script>
 
-<TabHeader
-    bind:selected={selectedTab}
-    items={[
-        i18nKey("permissions.general"),
-        i18nKey("permissions.message"),
-        i18nKey("permissions.thread"),
-    ]} />
+<TabHeader bind:selected={selectedTab} {items} />
 
 <div class="permissions">
-    {#if selectedTab === 0}
+    {#if selectedTab === "permissions.general"}
         <SelectPermissionRole
             {roles}
             label={i18nKey("permissions.changeRoles")}
@@ -46,12 +59,16 @@
             {roles}
             label={i18nKey("permissions.updateGroup")}
             bind:rolePermission={permissions.updateGroup} />
-        {#if !isPublic}
+        {#if isChannel && !isCommunityPublic}
             <SelectPermissionRole
                 {roles}
-                label={i18nKey("permissions.inviteUsers")}
-                bind:rolePermission={permissions.inviteUsers} />
+                label={i18nKey("permissions.addMembers")}
+                bind:rolePermission={permissions.addMembers} />
         {/if}
+        <SelectPermissionRole
+            {roles}
+            label={i18nKey("permissions.inviteUsers")}
+            bind:rolePermission={permissions.inviteUsers} />
         <SelectPermissionRole
             {roles}
             label={i18nKey("permissions.removeMembers")}
@@ -76,7 +93,7 @@
             {roles}
             label={i18nKey("permissions.mentionAllMembers", { mention: "@everyone" })}
             bind:rolePermission={permissions.mentionAllMembers} />
-    {:else if selectedTab === 1}
+    {:else if selectedTab === "permissions.message"}
         <SelectPermissionRole
             {roles}
             label={i18nKey("permissions.messagePermissions.default")}
@@ -136,11 +153,11 @@
             defaultRole={permissions.messagePermissions.default}
             label={i18nKey("permissions.messagePermissions.p2pSwap")}
             bind:rolePermission={permissions.messagePermissions.p2pSwap} />
-    {:else if selectedTab === 2}
+    {:else if selectedTab === "permissions.thread"}
         <Toggle
             id="override-chat-messages"
             small
-            on:change={onOverrideChatMessagesChanged}
+            onChange={onOverrideChatMessagesChanged}
             label={i18nKey("permissions.overrideChatMessages")}
             bind:checked={overrideChatMessages} />
 

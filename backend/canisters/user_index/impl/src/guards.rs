@@ -16,11 +16,19 @@ pub fn caller_is_governance_principal() -> Result<(), String> {
     }
 }
 
-pub fn caller_is_dev_team_dfx_principal() -> Result<(), String> {
-    if read_state(|state| state.is_caller_dev_team_dfx_principal()) {
+pub fn caller_is_identity_canister() -> Result<(), String> {
+    if read_state(|state| state.is_caller_identity_canister()) {
         Ok(())
     } else {
-        Err("Caller is not a governance principal".to_string())
+        Err("Caller is not the Identity canister".to_string())
+    }
+}
+
+pub fn caller_is_registry_canister() -> Result<(), String> {
+    if read_state(|state| state.is_caller_registry_canister()) {
+        Ok(())
+    } else {
+        Err("Caller is not the Registry canister".to_string())
     }
 }
 
@@ -37,14 +45,6 @@ pub fn caller_is_group_index() -> Result<(), String> {
         Ok(())
     } else {
         Err("Caller is not the group index canister".to_string())
-    }
-}
-
-pub fn caller_is_identity_canister() -> Result<(), String> {
-    if read_state(|state| state.is_caller_identity_canister()) {
-        Ok(())
-    } else {
-        Err("Caller is not the identity canister".to_string())
     }
 }
 
@@ -85,5 +85,13 @@ pub fn caller_is_translations_canister() -> Result<(), String> {
         Ok(())
     } else {
         Err("Caller is not the translations canister".to_string())
+    }
+}
+
+pub fn caller_can_upload_wasm_chunks() -> Result<(), String> {
+    if read_state(|state| state.can_caller_upload_wasm_chunks()) {
+        Ok(())
+    } else {
+        Err("Caller is not permitted to upload wasm chunks".to_string())
     }
 }

@@ -1,11 +1,16 @@
+mod access_gate_expiry_tests;
 mod cancel_invites_tests;
 mod convert_group_into_community_tests;
 mod create_channel_tests;
+mod delete_channel_tests;
+mod delete_community_tests;
 mod disappearing_message_tests;
 mod import_group_tests;
 mod join_channel_tests;
 mod join_community_tests;
 mod leave_community_tests;
+mod p2p_swap_tests;
+mod promote_member_tests;
 mod remove_member_from_channel_tests;
 mod remove_member_tests;
 mod search_channel_tests;

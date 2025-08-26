@@ -1,11 +1,6 @@
-use candid::{CandidType, Nat};
-use icrc_ledger_types::icrc2::transfer_from::{TransferFromArgs, TransferFromError};
-use serde::Deserialize;
+use candid::Nat;
+use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
+use types::icrc2::TransferFromError;
 
 pub type Args = TransferFromArgs;
-
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq)]
-pub enum Response {
-    Ok(Nat),
-    Err(TransferFromError),
-}
+pub type Response = Result<Nat, TransferFromError>;

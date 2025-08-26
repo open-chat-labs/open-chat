@@ -4,38 +4,53 @@ export const E8S_PER_TOKEN = 100_000_000;
 
 export const CHAT_SYMBOL = "CHAT";
 export const ICP_SYMBOL = "ICP";
+export const BTC_SYMBOL = "BTC";
 export const CKBTC_SYMBOL = "ckBTC";
 export const SNS1_SYMBOL = "SNS1";
 export const KINIC_SYMBOL = "KINIC";
 export const HOTORNOT_SYMBOL = "HOT";
 export const GHOST_SYMBOL = "GHOST";
+export const USDC_SYMBOL = "USDC";
+export const USDT_SYMBOL = "USDT";
+
+export const ETHEREUM_NETWORK = "Ethereum";
+export const ARBITRUM_NETWORK = "Arbitrum";
+export const BASE_NETWORK = "Base";
+
+export const ONE_SEC_TOKENS = [USDC_SYMBOL, USDT_SYMBOL];
+export type EvmChain = typeof ETHEREUM_NETWORK | typeof ARBITRUM_NETWORK | typeof BASE_NETWORK;
+export type Chain = EvmChain | typeof ICP_SYMBOL;
 
 export const LEDGER_CANISTER_ICP = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+export const INDEX_CANISTER_ICP = "qhbym-qaaaa-aaaaa-aaafq-cai";
 export const LEDGER_CANISTER_CHAT = "2ouva-viaaa-aaaaq-aaamq-cai";
 
-export const DEFAULT_TOKENS = ["CHAT", "ICP", "ckBTC", "ckETH"];
+export const DEFAULT_TOKENS = ["CHAT", "ICP", "ckUSDC", "ckBTC", "ckETH"];
 
 export type CryptocurrencyDetails = {
     name: string;
     symbol: string;
     ledger: string;
+    index: string | undefined;
     decimals: number;
     transferFee: bigint;
     logo: string;
-    howToBuyUrl: string;
     infoUrl: string;
     transactionUrlFormat: string;
     supportedStandards: string[];
     added: bigint;
+    enabled: boolean;
+    oneSecEnabled: boolean;
+    evmContractAddresses: EvmContractAddress[];
     lastUpdated: bigint;
 };
 
 export type EnhancedTokenDetails = CryptocurrencyDetails & {
     balance: bigint;
-    dollarBalance: number;
-    icpBalance: number;
-    btcBalance: number;
-    ethBalance: number;
+    dollarBalance: number | undefined;
+    icpBalance: number | undefined;
+    btcBalance: number | undefined;
+    ethBalance: number | undefined;
     zero: boolean;
     urlFormat: string;
 };
@@ -108,6 +123,23 @@ export type AccountTransactions = {
 export type AccountTransactionResult = Failure | (Success & AccountTransactions);
 
 export type TokenExchangeRates = {
-    toICP: number | undefined;
     toUSD: number | undefined;
+};
+
+export type WalletConfig = AutoWallet | ManualWallet;
+
+export type AutoWallet = {
+    kind: "auto_wallet";
+    minDollarValue: number;
+};
+
+export type ManualWallet = {
+    kind: "manual_wallet";
+    tokens: Set<string>;
+};
+
+export type EvmContractAddress = {
+    token: string;
+    chain: EvmChain;
+    address: string;
 };

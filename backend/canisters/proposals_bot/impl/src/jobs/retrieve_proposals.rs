@@ -5,7 +5,7 @@ use crate::timer_job_types::{
 };
 use crate::{mutate_state, RuntimeState};
 use canister_timer_jobs::Job;
-use ic_cdk::api::call::CallResult;
+use constants::MINUTE_IN_MS;
 use nns_governance_canister::types::{ListProposalInfo, ProposalInfo};
 use sns_governance_canister::types::ProposalData;
 use std::collections::HashSet;
@@ -18,7 +18,6 @@ pub const NNS_TOPIC_NEURON_MANAGEMENT: i32 = 1;
 pub const NNS_TOPIC_EXCHANGE_RATE: i32 = 2;
 
 const BATCH_SIZE_LIMIT: u32 = 50;
-const RETRIEVE_PROPOSALS_INTERVAL: Milliseconds = MINUTE_IN_MS;
 
 const NNS_TOPIC_NETWORK_ECONOMICS: i32 = 3;
 const NNS_TOPIC_GOVERNANCE: i32 = 4;
@@ -29,16 +28,17 @@ const NNS_TOPICS_TO_PUSH_SNS_PROPOSALS_FOR: [i32; 3] = [
     NNS_TOPIC_SNS_AND_NEURON_FUND,
 ];
 
-pub fn start_job() {
-    ic_cdk_timers::set_timer_interval(Duration::from_millis(RETRIEVE_PROPOSALS_INTERVAL), run);
+pub fn start_job(state: &RuntimeState) {
+    let interval = Duration::from_millis(if state.data.test_mode { 30 * MINUTE_IN_MS } else { MINUTE_IN_MS });
+    ic_cdk_timers::set_timer_interval(interval, run);
 }
 
 pub fn run() {
     for (governance_canister_id, is_nns) in mutate_state(start_next_sync) {
         if is_nns {
-            ic_cdk::spawn(get_and_process_nns_proposals(governance_canister_id));
+            ic_cdk::futures::spawn(get_and_process_nns_proposals(governance_canister_id));
         } else {
-            ic_cdk::spawn(get_and_process_sns_proposals(governance_canister_id));
+            ic_cdk::futures::spawn(get_and_process_sns_proposals(governance_canister_id));
         }
     }
 }
@@ -58,7 +58,7 @@ async fn get_and_process_nns_proposals(governance_canister_id: CanisterId) {
     handle_proposals_response(governance_canister_id, response);
 }
 
-async fn get_nns_proposals(governance_canister_id: CanisterId) -> CallResult<Vec<ProposalInfo>> {
+async fn get_nns_proposals(governance_canister_id: CanisterId) -> Result<Vec<ProposalInfo>, C2CError> {
     let mut proposals: Vec<ProposalInfo> = Vec::new();
 
     loop {
@@ -91,7 +91,7 @@ async fn get_and_process_sns_proposals(governance_canister_id: CanisterId) {
     handle_proposals_response(governance_canister_id, response);
 }
 
-async fn get_sns_proposals(governance_canister_id: CanisterId) -> CallResult<Vec<ProposalData>> {
+async fn get_sns_proposals(governance_canister_id: CanisterId) -> Result<Vec<ProposalData>, C2CError> {
     let mut proposals: Vec<ProposalData> = Vec::new();
 
     loop {
@@ -117,7 +117,7 @@ async fn get_sns_proposals(governance_canister_id: CanisterId) -> CallResult<Vec
     Ok(proposals)
 }
 
-fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId, response: CallResult<Vec<R>>) {
+fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId, response: Result<Vec<R>, C2CError>) {
     match response {
         Ok(raw_proposals) => {
             let mut proposals: Vec<Proposal> = raw_proposals.into_iter().filter_map(|p| p.try_into().ok()).collect();
@@ -243,13 +243,17 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
                     .mark_sync_complete(&governance_canister_id, true, now);
             });
         }
-        Err(_) => {
+        Err(error) => {
             mutate_state(|state| {
                 let now = state.env.now();
                 state
                     .data
                     .nervous_systems
                     .mark_sync_complete(&governance_canister_id, false, now);
+
+                if delay_if_should_retry_failed_c2c_call(error.reject_code(), error.message()).is_none() {
+                    state.data.nervous_systems.mark_disabled(&governance_canister_id);
+                }
             });
         }
     }

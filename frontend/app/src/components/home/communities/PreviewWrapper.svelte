@@ -1,54 +1,84 @@
 <script lang="ts">
-    import GateCheckFailed from "../AccessGateCheckFailed.svelte";
-    import Overlay from "../../Overlay.svelte";
-    import { getContext } from "svelte";
-    import { toastStore } from "../../../stores/toast";
-    import type { OpenChat } from "openchat-client";
-    import InitiateCredentialCheck from "../InitiateCredentialCheck.svelte";
-    import ApproveJoiningPaymentModal from "../ApproveJoiningPaymentModal.svelte";
+    import type { EnhancedAccessGate, GateCheckSucceeded, OpenChat } from "openchat-client";
+    import {
+        anonUserStore,
+        identityStateStore,
+        ROLE_NONE,
+        selectedCommunitySummaryStore,
+    } from "openchat-client";
+    import { getContext, tick, type Snippet } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import { toastStore } from "../../../stores/toast";
+    import Overlay from "../../Overlay.svelte";
+    import GateCheckFailed from "../access/AccessGateCheckFailed.svelte";
+    import AccessGateEvaluator from "../access/AccessGateEvaluator.svelte";
+    interface Props {
+        children?: Snippet<[boolean, () => void]>;
+    }
+
+    let { children }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
-    $: anonUser = client.anonUser;
-    $: selectedCommunity = client.selectedCommunity;
-    $: previewingCommunity = $selectedCommunity?.membership.role === "none";
-    $: communityGate = $selectedCommunity?.gate;
-
-    let joiningCommunity = false;
-    let gateCheckFailed = false;
-    let checkingCredential = false;
-    let showPaymentModal = false;
-
-    function credentialReceived(ev: CustomEvent<string>) {
-        doJoinCommunity(ev.detail);
-    }
+    let joiningCommunity = $state(false);
+    let gateCheckFailed: EnhancedAccessGate | undefined = $state(undefined);
+    let checkingAccessGate: EnhancedAccessGate | undefined = $state(undefined);
 
     function joinCommunity() {
-        if ($anonUser) {
-            client.identityState.set({ kind: "logging_in" });
+        if ($anonUserStore) {
+            client.updateIdentityState({
+                kind: "logging_in",
+                postLogin: { kind: "join_community" },
+            });
             return;
         }
         doJoinCommunity(undefined);
     }
 
-    function doJoinCommunity(credential: string | undefined): Promise<void> {
-        if (previewingCommunity && $selectedCommunity) {
-            if ($selectedCommunity.gate.kind === "credential_gate" && credential === undefined) {
-                checkingCredential = true;
-                return Promise.resolve();
-            } else if ($selectedCommunity.gate.kind === "payment_gate") {
-                showPaymentModal = true;
-                return Promise.resolve();
+    function accessGatesEvaluated(success: GateCheckSucceeded) {
+        doJoinCommunity(success);
+    }
+
+    function doJoinCommunity(gateCheck: GateCheckSucceeded | undefined): Promise<void> {
+        if (previewingCommunity && $selectedCommunitySummaryStore) {
+            const credentials = gateCheck?.credentials ?? [];
+            const paymentApprovals = gateCheck?.paymentApprovals ?? new Map();
+            const gateConfigWithLevel: EnhancedAccessGate = {
+                ...$selectedCommunitySummaryStore.gateConfig.gate,
+                level: "community",
+                expiry: $selectedCommunitySummaryStore.gateConfig.expiry,
+            };
+
+            if (gateCheck === undefined) {
+                if (
+                    $selectedCommunitySummaryStore.gateConfig.gate.kind !== "no_gate" &&
+                    !$selectedCommunitySummaryStore.isInvited
+                ) {
+                    const gateConfigs = [$selectedCommunitySummaryStore.gateConfig];
+                    const gates = gateConfigs.map((gc) => gc.gate);
+                    const passed = client.doesUserMeetAccessGates(gates);
+                    if (!passed) {
+                        /**
+                         * If we cannot already tell that the user passes the access gate(s), check if there are any gates that require front end
+                         * pre-processing.
+                         */
+                        if (client.gatePreprocessingRequired(gates)) {
+                            checkingAccessGate = gateConfigWithLevel;
+                            return Promise.resolve();
+                        }
+                    }
+                }
             }
-            closeModals();
+
+            closeModal();
             joiningCommunity = true;
+
             return client
-                .joinCommunity($selectedCommunity)
+                .joinCommunity($selectedCommunitySummaryStore, credentials, paymentApprovals)
                 .then((resp) => {
-                    if (resp === "gate_check_failed") {
-                        gateCheckFailed = true;
-                    } else if (resp === "failure") {
+                    if (resp.kind === "gate_check_failed") {
+                        gateCheckFailed = gateConfigWithLevel;
+                    } else if (resp.kind !== "success") {
                         toastStore.showFailureToast(i18nKey("communities.errors.joinFailed"));
                     }
                 })
@@ -57,34 +87,38 @@
         return Promise.resolve();
     }
 
-    function closeModals() {
-        showPaymentModal = false;
-        checkingCredential = false;
+    function closeModal() {
+        checkingAccessGate = undefined;
+        gateCheckFailed = undefined;
     }
+    let previewingCommunity = $derived(
+        $selectedCommunitySummaryStore?.membership.role === ROLE_NONE ||
+            $selectedCommunitySummaryStore?.membership.lapsed,
+    );
+    $effect(() => {
+        if (
+            $identityStateStore.kind === "logged_in" &&
+            $identityStateStore.postLogin?.kind === "join_community"
+        ) {
+            client.clearPostLoginState();
+            tick().then(() => joinCommunity());
+        }
+    });
 </script>
 
-{#if checkingCredential && $selectedCommunity?.gate?.kind === "credential_gate"}
-    <Overlay dismissible on:close={() => (checkingCredential = false)}>
-        <InitiateCredentialCheck
-            level="community"
-            on:close={closeModals}
-            on:credentialReceived={credentialReceived}
-            gate={$selectedCommunity.gate} />
-    </Overlay>
-{:else if showPaymentModal && $selectedCommunity?.gate?.kind === "payment_gate"}
-    <Overlay dismissible on:close={() => (checkingCredential = false)}>
-        <ApproveJoiningPaymentModal
-            on:close={closeModals}
-            on:joined={closeModals}
-            group={$selectedCommunity}
-            gate={$selectedCommunity.gate} />
+{#if checkingAccessGate}
+    <Overlay dismissible onClose={closeModal}>
+        <AccessGateEvaluator
+            gates={[checkingAccessGate]}
+            onClose={closeModal}
+            onSuccess={accessGatesEvaluated} />
     </Overlay>
 {/if}
 
-{#if communityGate !== undefined && gateCheckFailed}
-    <Overlay dismissible on:close={() => (gateCheckFailed = false)}>
-        <GateCheckFailed on:close={() => (gateCheckFailed = false)} gate={communityGate} />
+{#if gateCheckFailed}
+    <Overlay dismissible onClose={closeModal}>
+        <GateCheckFailed onClose={closeModal} gates={[gateCheckFailed]} />
     </Overlay>
 {/if}
 
-<slot {joiningCommunity} {joinCommunity} />
+{@render children?.(joiningCommunity, joinCommunity)}

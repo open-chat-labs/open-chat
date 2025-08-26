@@ -5,24 +5,22 @@
     "main": "lib/service_worker.js",
     "scripts": {
         "build": "rollup -c",
+        "build:docker": "npm run build",
         "dev": "rollup -cw",
+        "dev:mobile": "npm run dev",
         "wait": "npm run clean && wait-on lib/service_worker.js",
+        "android:release": "npm run build",
         "clean": "rm -f lib/service_worker.js",
         "typecheck": "tsc --noEmit",
         "lint": "eslint ./src --fix"
     },
     "author": "julian.jelfs@gmail.com",
     "dependencies": {
-        "@dfinity/candid": "^1.0.1",
-        "@dfinity/principal": "^1.0.1",
         "openchat-agent": "*",
         "openchat-shared": "*"
     },
     "devDependencies": {
-        "@typescript-eslint/eslint-plugin": "^6.4.0",
-        "@typescript-eslint/parser": "^6.4.0",
-        "eslint-config-prettier": "^9.0.0",
-        "eslint-plugin-prettier": "^5.0.0",
+        "typescript": "=5.4.2",
         "wait-on": "^7.0.1"
     }
 }

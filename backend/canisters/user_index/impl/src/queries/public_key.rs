@@ -1,5 +1,5 @@
-use crate::{read_state, RuntimeState};
-use ic_cdk_macros::query;
+use crate::{RuntimeState, read_state};
+use ic_cdk::query;
 use user_index_canister::public_key::{Response::*, *};
 
 #[query]

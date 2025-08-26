@@ -1,0 +1,55 @@
+import "../../../libraries/types/can.did";
+
+type SetAvatarArgs = record {
+    avatar : opt Document;
+};
+
+type SetAvatarResponse = variant {
+    Success;
+    AvatarTooBig : FieldTooLongResult;
+};
+
+type SetAirdropArgs = record {
+    community_id : CommunityId;
+    channel_id : ChannelId;
+    start : TimestampMillis;
+    algorithm: AirdropAlgorithm;
+};
+
+type AirdropAlgorithm = variant {
+    V1 : V1Algorithm;
+    V2 : V2Algorithm;
+};
+
+type V1Algorithm = record {
+    main_chat_fund : nat;
+    main_chit_band : nat32;
+    lottery_prizes : vec nat;
+    lottery_chit_band : nat32;
+};
+
+type V2Algorithm = record {
+    main_chat_fund : nat;
+    main_chit_band : nat32;
+    lottery_prizes : vec nat;
+    lottery_min_chit : nat32;
+    lottery_min_streak : nat16;
+    min_minutes_online : nat16;
+};
+
+type CancelAirdropResponse = variant {
+    Success;
+};
+
+type SetAirdropResponse = variant {
+    Success;
+    ChannelUsed;
+    InThePast;
+    ClashesWithPrevious;
+};
+
+service : {
+    set_avatar : (SetAvatarArgs) -> (SetAvatarResponse);
+    set_airdrop : (SetAirdropArgs) -> (SetAirdropResponse);
+    cancel_airdrop : (EmptyArgs) -> (CancelAirdropResponse);
+};

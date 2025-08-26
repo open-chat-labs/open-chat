@@ -1,28 +1,43 @@
 <script lang="ts">
-    import ModalContent from "./ModalContent.svelte";
+    import type { ResourceKey } from "openchat-client";
+    import type { Snippet } from "svelte";
+    import { _ } from "svelte-i18n";
+    import { i18nKey, interpolate } from "../i18n/i18n";
     import Button from "./Button.svelte";
     import ButtonGroup from "./ButtonGroup.svelte";
-    import Overlay from "./Overlay.svelte";
-    import { _ } from "svelte-i18n";
-    import Input from "./Input.svelte";
     import Markdown from "./home/Markdown.svelte";
-    import { i18nKey, interpolate, type ResourceKey } from "../i18n/i18n";
+    import Input from "./Input.svelte";
+    import ModalContent from "./ModalContent.svelte";
+    import Overlay from "./Overlay.svelte";
     import Translatable from "./Translatable.svelte";
 
-    export let message: ResourceKey | undefined = undefined;
-    export let action: (yes: boolean) => Promise<void>;
-    export let doubleCheck: { challenge: ResourceKey; response: ResourceKey } | undefined =
-        undefined;
-    export let title: ResourceKey | undefined = i18nKey("areYouSure");
-    export let yesLabel: ResourceKey | undefined = i18nKey("yesPlease");
-    export let noLabel: ResourceKey | undefined = i18nKey("noThanks");
+    interface Props {
+        message?: ResourceKey | undefined;
+        action: (yes: boolean) => Promise<void>;
+        doubleCheck?: { challenge: ResourceKey; response: ResourceKey } | undefined;
+        title?: ResourceKey | undefined;
+        yesLabel?: ResourceKey | undefined;
+        noLabel?: ResourceKey | undefined;
+        children?: Snippet;
+    }
 
-    let inProgress = false;
-    let response = "";
+    let {
+        message,
+        action,
+        doubleCheck,
+        title = i18nKey("areYouSure"),
+        yesLabel = i18nKey("yesPlease"),
+        noLabel = i18nKey("noThanks"),
+        children,
+    }: Props = $props();
 
-    $: canConfirm =
+    let inProgress = $state(false);
+    let response = $state("");
+
+    let canConfirm = $derived(
         !inProgress &&
-        (doubleCheck === undefined || response === interpolate($_, doubleCheck.response));
+            (doubleCheck === undefined || response === interpolate($_, doubleCheck.response)),
+    );
 
     function onClick(yes: boolean) {
         if (yes) {
@@ -36,13 +51,14 @@
 </script>
 
 <Overlay>
-    <ModalContent hideBody={message === undefined}>
-        <span slot="header">
+    <ModalContent hideBody={message === undefined && children === undefined}>
+        {#snippet header()}
             {#if title !== undefined}
                 <Translatable resourceKey={title} />
             {/if}
-        </span>
-        <span slot="body">
+        {/snippet}
+        {#snippet body()}
+            {@render children?.()}
             {#if message !== undefined}
                 <Markdown inline={false} text={interpolate($_, message)} />
 
@@ -60,10 +76,10 @@
                         countdown={false} />
                 {/if}
             {/if}
-        </span>
-        <span slot="footer">
+        {/snippet}
+        {#snippet footer()}
             <ButtonGroup>
-                <Button disabled={inProgress} small on:click={() => onClick(false)} secondary>
+                <Button disabled={inProgress} small onClick={() => onClick(false)} secondary>
                     {#if noLabel !== undefined}
                         <Translatable resourceKey={noLabel} />
                     {/if}
@@ -72,13 +88,13 @@
                     loading={inProgress}
                     disabled={!canConfirm}
                     small
-                    on:click={() => onClick(true)}>
+                    onClick={() => onClick(true)}>
                     {#if yesLabel !== undefined}
                         <Translatable resourceKey={yesLabel} />
                     {/if}
                 </Button>
             </ButtonGroup>
-        </span>
+        {/snippet}
     </ModalContent>
 </Overlay>
 

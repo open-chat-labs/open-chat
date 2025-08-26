@@ -1,6 +1,6 @@
 use candid::{Deserialize, Principal};
 use serde::Serialize;
-use std::collections::{hash_map::Entry, HashMap};
+use std::collections::{HashMap, hash_map::Entry};
 use types::{ReferralType, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -40,6 +40,7 @@ pub struct ReferralCodeClaim {
 #[derive(Serialize, Debug, Default)]
 pub struct ReferralTypeMetrics {
     pub claimed: usize,
+    pub expired: usize,
     pub total: usize,
 }
 
@@ -71,6 +72,7 @@ impl ReferralCodes {
         }
     }
 
+    #[expect(dead_code)]
     pub fn claim(&mut self, code: String, user_id: UserId, now: TimestampMillis) -> bool {
         match self.codes.entry(code) {
             Entry::Occupied(mut e) => {
@@ -93,7 +95,7 @@ impl ReferralCodes {
         }
 
         if let Some(details) = self.codes.get(code) {
-            if details.expiry.as_ref().map_or(false, |ts| *ts < now) {
+            if details.expiry.as_ref().is_some_and(|ts| *ts < now) {
                 Err(ReferralCodeError::Expired)
             } else if details.claimed.is_some() {
                 Err(ReferralCodeError::AlreadyClaimed)
@@ -107,7 +109,7 @@ impl ReferralCodes {
         }
     }
 
-    pub fn metrics(&self) -> HashMap<ReferralType, ReferralTypeMetrics> {
+    pub fn metrics(&self, now: TimestampMillis) -> HashMap<ReferralType, ReferralTypeMetrics> {
         let mut metrics = HashMap::new();
 
         for details in self.codes.values() {
@@ -115,6 +117,8 @@ impl ReferralCodes {
             ms.total += 1;
             if details.claimed.is_some() {
                 ms.claimed += 1;
+            } else if details.expiry.is_some_and(|ts| ts < now) {
+                ms.expired += 1;
             }
         }
 

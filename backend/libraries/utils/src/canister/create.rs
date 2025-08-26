@@ -1,29 +1,23 @@
-use crate::canister::{install, CanisterToInstall, WasmToInstall};
-use candid::{CandidType, Principal};
-use ic_cdk::api::call::{CallResult, RejectionCode};
-use ic_cdk::api::management_canister;
-use ic_cdk::api::management_canister::main::{CanisterInstallMode, CanisterSettings, CreateCanisterArgument};
+use crate::canister::{convert_cdk_error, install_basic_raw};
+use candid::Principal;
+use ic_cdk::management_canister::{self, CanisterSettings, CreateCanisterArgs};
+use serde::Serialize;
 use tracing::error;
-use types::{BuildVersion, CanisterId, CanisterWasm, Cycles};
+use types::{C2CError, CanisterId, CanisterWasm, Cycles};
 
-#[derive(Debug)]
-pub enum CreateAndInstallError {
-    CreateFailed(RejectionCode, String),
-    InstallFailed(CanisterId, RejectionCode, String),
-}
-
-pub async fn create_and_install<A: CandidType>(
+pub async fn create_and_install(
     existing_canister_id: Option<CanisterId>,
+    additional_controller: Option<Principal>,
     wasm: CanisterWasm,
-    init_args: A,
+    init_args: Vec<u8>,
     cycles_to_use: Cycles,
     on_canister_created: fn(Cycles) -> (),
-) -> Result<CanisterId, CreateAndInstallError> {
+) -> Result<CanisterId, (Option<CanisterId>, C2CError)> {
     let canister_id = match existing_canister_id {
         Some(id) => id,
-        None => match create(cycles_to_use).await {
-            Err((code, msg)) => {
-                return Err(CreateAndInstallError::CreateFailed(code, msg));
+        None => match create(cycles_to_use, additional_controller).await {
+            Err(error) => {
+                return Err((None, error));
             }
             Ok(id) => {
                 on_canister_created(cycles_to_use);
@@ -32,44 +26,60 @@ pub async fn create_and_install<A: CandidType>(
         },
     };
 
-    match install(CanisterToInstall {
-        canister_id,
-        current_wasm_version: BuildVersion::default(),
-        new_wasm_version: wasm.version,
-        new_wasm: WasmToInstall::Default(wasm.module),
-        deposit_cycles_if_needed: true,
-        args: init_args,
-        mode: CanisterInstallMode::Install,
-        stop_start_canister: false,
-    })
-    .await
-    {
+    match install_basic_raw(canister_id, wasm, init_args).await {
         Ok(_) => Ok(canister_id),
-        Err((code, msg)) => Err(CreateAndInstallError::InstallFailed(canister_id, code, msg)),
+        Err(error) => Err((Some(canister_id), error)),
     }
 }
 
-pub async fn create(cycles_to_use: Cycles) -> CallResult<Principal> {
-    match management_canister::main::create_canister(
-        CreateCanisterArgument {
+pub async fn create_and_install_msgpack<A: Serialize>(
+    existing_canister_id: Option<CanisterId>,
+    additional_controller: Option<Principal>,
+    wasm: CanisterWasm,
+    init_args: A,
+    cycles_to_use: Cycles,
+    on_canister_created: fn(Cycles) -> (),
+) -> Result<CanisterId, (Option<CanisterId>, C2CError)> {
+    let canister_id = match existing_canister_id {
+        Some(id) => id,
+        None => match create(cycles_to_use, additional_controller).await {
+            Err(error) => {
+                return Err((None, error));
+            }
+            Ok(id) => {
+                on_canister_created(cycles_to_use);
+                id
+            }
+        },
+    };
+
+    match install_basic_raw(canister_id, wasm, msgpack::serialize_then_unwrap(&init_args)).await {
+        Ok(_) => Ok(canister_id),
+        Err(error) => Err((Some(canister_id), error)),
+    }
+}
+
+pub async fn create(cycles_to_use: Cycles, additional_controller: Option<Principal>) -> Result<Principal, C2CError> {
+    let mut controllers = vec![ic_cdk::api::canister_self()];
+    if let Some(controller) = additional_controller {
+        controllers.push(controller);
+    }
+    match management_canister::create_canister_with_extra_cycles(
+        &CreateCanisterArgs {
             settings: Some(CanisterSettings {
-                controllers: Some(vec![ic_cdk::id()]),
+                controllers: Some(controllers),
                 ..Default::default()
             }),
         },
-        cycles_to_use,
+        cycles_to_use.saturating_sub(ic_cdk::api::cost_create_canister()),
     )
     .await
     {
-        Ok((x,)) => Ok(x.canister_id),
-        Err((code, msg)) => {
-            error!(
-                error_code = code as u8,
-                error_message = msg.as_str(),
-                "Error calling create_canister"
-            );
-
-            Err((code, msg))
+        Ok(x) => Ok(x.canister_id),
+        Err(e) => {
+            let error = convert_cdk_error(CanisterId::management_canister(), "create_canister", e);
+            error!(?error, "Error calling create_canister");
+            Err(error)
         }
     }
 }

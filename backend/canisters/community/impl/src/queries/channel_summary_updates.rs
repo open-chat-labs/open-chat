@@ -1,45 +1,31 @@
+use crate::RuntimeState;
 use crate::model::channels::ChannelUpdates;
 use crate::read_state;
-use crate::RuntimeState;
+use canister_api_macros::query;
 use community_canister::channel_summary_updates::{Response::*, *};
-use ic_cdk_macros::query;
+use types::OCResult;
 
-#[query]
+#[query(msgpack = true)]
 fn channel_summary_updates(args: Args) -> Response {
-    read_state(|state| channel_summary_updates_impl(args, state))
+    read_state(|state| channel_summary_updates_impl(args, state)).unwrap_or_else(Error)
 }
 
-fn channel_summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
+fn channel_summary_updates_impl(args: Args, state: &RuntimeState) -> OCResult<Response> {
     let caller = state.env.caller();
+    let channel = state.data.channels.get_or_err(&args.channel_id)?;
+    let user_id = state.data.members.lookup_user_id(caller);
 
-    if !state.data.is_accessible(caller, args.invite_code) {
-        return PrivateCommunity;
+    state.data.verify_is_accessible(caller, args.invite_code)?;
+    channel.chat.verify_is_accessible(user_id)?;
+
+    if channel.last_updated(user_id) <= args.updates_since {
+        return Ok(SuccessNoUpdates);
     }
 
-    if let Some(channel) = state.data.channels.get(&args.channel_id) {
-        let user_id = state.data.members.lookup_user_id(caller);
-
-        if !channel.chat.is_accessible(user_id) {
-            return PrivateChannel;
-        }
-
-        if channel.last_updated(user_id) <= args.updates_since {
-            return SuccessNoUpdates;
-        }
-
-        let is_community_member = state.data.members.get(caller).is_some();
-
-        match channel.summary_updates(
-            user_id,
-            args.updates_since,
-            is_community_member,
-            state.data.is_public,
-            &state.data.members,
-        ) {
+    Ok(
+        match channel.summary_updates(user_id, args.updates_since, state.data.is_public.value, &state.data.members) {
             ChannelUpdates::Added(s) => SuccessAdded(s),
             ChannelUpdates::Updated(s) => SuccessUpdated(s),
-        }
-    } else {
-        ChannelNotFound
-    }
+        },
+    )
 }

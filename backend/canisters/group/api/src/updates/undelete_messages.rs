@@ -1,24 +1,24 @@
-use candid::CandidType;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{Message, MessageId, MessageIndex};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(group, undelete_messages)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_ids: Vec<MessageId>,
-    pub correlation_id: u64,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(group, undelete_messages)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    CallerNotInGroup,
-    MessageNotFound,
-    UserSuspended,
-    ChatFrozen,
+    Error(OCError),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(group, undelete_messages)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub messages: Vec<Message>,
 }

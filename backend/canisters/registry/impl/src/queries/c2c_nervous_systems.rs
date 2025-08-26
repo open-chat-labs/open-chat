@@ -1,9 +1,9 @@
-use crate::{read_state, RuntimeState};
-use canister_api_macros::query_msgpack;
+use crate::{RuntimeState, read_state};
+use canister_api_macros::query;
 use canister_tracing_macros::trace;
 use registry_canister::c2c_nervous_systems::{Response::*, *};
 
-#[query_msgpack]
+#[query(msgpack = true)]
 #[trace]
 fn c2c_nervous_systems(args: Args) -> Response {
     read_state(|state| c2c_nervous_systems_impl(args, state))

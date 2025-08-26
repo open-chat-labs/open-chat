@@ -1,4 +1,4 @@
-use rand::{Rng, RngCore};
+use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use std::collections::{BTreeMap, HashSet};
@@ -13,8 +13,7 @@ pub struct UserGroups {
 
 impl UserGroups {
     pub fn create<R: RngCore>(&mut self, name: String, users: Vec<UserId>, rng: &mut R, now: TimestampMillis) -> Option<u32> {
-        let name_upper = name.to_uppercase();
-        if self.groups.iter().any(|g| g.name.to_uppercase() == name_upper) {
+        if self.groups.iter().any(|g| g.name.eq_ignore_ascii_case(&name)) {
             None
         } else {
             let id = self.generate_id(rng);
@@ -93,7 +92,7 @@ impl UserGroups {
         self.deleted
             .iter()
             .rev()
-            .take_while(|(&k, _)| k > since)
+            .take_while(|(k, _)| **k > since)
             .flat_map(|(_, v)| v)
             .copied()
             .collect()
@@ -103,7 +102,7 @@ impl UserGroups {
         let ids: HashSet<_> = self.groups.iter().map(|g| g.id).collect();
 
         loop {
-            let id: u32 = rng.gen();
+            let id = rng.next_u32();
             if !ids.contains(&id) {
                 return id;
             }

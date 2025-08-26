@@ -1,33 +1,36 @@
-<svelte:options immutable />
-
 <script lang="ts">
-    import NonMessageEvent from "./NonMessageEvent.svelte";
-    import type { OpenChat, UserSummary, PermissionsChanged, Level } from "openchat-client";
+    import type { Level, PermissionsChanged, UserSummary } from "openchat-client";
+    import { allUsersStore } from "openchat-client";
     import { _ } from "svelte-i18n";
-    import { getContext } from "svelte";
-    import { buildDisplayName } from "../../utils/user";
     import { i18nKey, interpolate } from "../../i18n/i18n";
+    import { buildDisplayName } from "../../utils/user";
+    import NonMessageEvent from "./NonMessageEvent.svelte";
 
-    const client = getContext<OpenChat>("client");
+    interface Props {
+        event: PermissionsChanged;
+        user: UserSummary | undefined;
+        timestamp: bigint;
+        level: Level;
+    }
 
-    export let event: PermissionsChanged;
-    export let user: UserSummary | undefined;
-    export let timestamp: bigint;
-    export let level: Level;
+    let { event, user, timestamp, level }: Props = $props();
 
-    $: userStore = client.userStore;
-    $: me = event.changedBy === user?.userId;
-    $: changedByStr = buildDisplayName($userStore, event.changedBy, me);
+    let me = $derived(event.changedBy === user?.userId);
+    let changedByStr = $derived(
+        buildDisplayName($allUsersStore, event.changedBy, me ? "me" : "user"),
+    );
 
-    $: text = interpolate(
-        $_,
-        i18nKey(
-            "permissionsChangedBy",
-            {
-                changedBy: changedByStr,
-            },
-            level,
-            true,
+    let text = $derived(
+        interpolate(
+            $_,
+            i18nKey(
+                "permissionsChangedBy",
+                {
+                    changedBy: changedByStr,
+                },
+                level,
+                true,
+            ),
         ),
     );
 </script>

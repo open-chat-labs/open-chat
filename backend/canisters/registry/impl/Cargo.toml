@@ -1,7 +1,7 @@
 [package]
 name = "registry_canister_impl"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -14,23 +14,41 @@ candid = { workspace = true }
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }
 canister_logger = { path = "../../../libraries/canister_logger" }
 canister_state_macros = { path = "../../../libraries/canister_state_macros" }
+canister_timer_jobs = { path = "../../../libraries/canister_timer_jobs" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
+constants = { path = "../../../libraries/constants" }
+cycles_dispenser_canister = { path = "../../../canisters/cycles_dispenser/api" }
+cycles_dispenser_canister_c2c_client = { path = "../../../canisters/cycles_dispenser/c2c_client" }
+cycles_minting_canister = { path = "../../../external_canisters/cmc/api" }
+cycles_minting_canister_c2c_client = { path = "../../../external_canisters/cmc/c2c_client" }
 dataurl = { workspace = true }
+escrow_canister = { path = "../../escrow/api" }
+escrow_canister_c2c_client = { path = "../../escrow/c2c_client" }
+event_relay_canister = { path = "../../../canisters/event_relay/api" }
+event_relay_canister_c2c_client = { path = "../../../canisters/event_relay/c2c_client" }
 futures = { workspace = true }
+group_index_canister = { path = "../../../canisters/group_index/api" }
+group_index_canister_c2c_client = { path = "../../../canisters/group_index/c2c_client" }
+hex = { workspace = true }
 http_request = { path = "../../../libraries/http_request" }
 human_readable = { path = "../../../libraries/human_readable" }
 ic-cdk = { workspace = true }
-ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
+ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
+icp_ledger_canister_c2c_client = { path = "../../../external_canisters/icp_ledger/c2c_client" }
 icrc_ledger_canister = { path = "../../../external_canisters/icrc_ledger/api" }
 icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_ledger/c2c_client" }
 icrc-ledger-types = { workspace = true }
 msgpack = { path = "../../../libraries/msgpack" }
+notifications_index_canister = { path = "../../../canisters/notifications_index/api" }
+notifications_index_canister_c2c_client = { path = "../../../canisters/notifications_index/c2c_client" }
+oc_error_codes = { path = "../../../libraries/error_codes" }
+one_sec_minter_canister = { path = "../../../external_canisters/one_sec_minter/api" }
+one_sec_minter_canister_c2c_client = { path = "../../../external_canisters/one_sec_minter/c2c_client" }
 rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
-serializer = { path = "../../../libraries/serializer" }
 sha256 = { path = "../../../libraries/sha256" }
 sns_governance_canister = { path = "../../../external_canisters/sns_governance/api" }
 sns_governance_canister_c2c_client = { path = "../../../external_canisters/sns_governance/c2c_client" }

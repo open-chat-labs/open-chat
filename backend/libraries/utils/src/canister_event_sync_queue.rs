@@ -118,7 +118,7 @@ impl<T> CanisterEventSyncQueue<T> {
         self.sync_in_progress = false;
     }
 
-    pub fn mark_sync_failed_for_canister(&mut self, canister_id: CanisterId, events: Vec<T>) {
+    pub fn requeue_failed_events(&mut self, canister_id: CanisterId, events: Vec<T>) {
         let merged_events = match self.events.remove_entry(&canister_id) {
             Some((_, old_events)) => events.into_iter().chain(old_events).collect(),
             None => {
@@ -128,6 +128,10 @@ impl<T> CanisterEventSyncQueue<T> {
         };
 
         self.events.insert(canister_id, merged_events);
+    }
+
+    pub fn take_all(self) -> HashMap<CanisterId, Vec<T>> {
+        self.events
     }
 
     fn take_events(&mut self, canister_id: CanisterId) -> Option<(Vec<T>, bool)> {

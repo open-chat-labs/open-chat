@@ -1,20 +1,19 @@
-use crate::{read_state, RuntimeState};
-use candid::Principal;
-use canister_api_macros::query_msgpack;
-use group_canister::c2c_summary_updates::{Args as C2CArgs, Response as C2CResponse};
+use crate::{RuntimeState, read_state};
+use canister_api_macros::query;
 use group_canister::summary_updates::{Response::*, *};
-use ic_cdk_macros::query;
+use ic_principal::Principal;
+use oc_error_codes::OCErrorCode;
 use types::{
-    GroupCanisterGroupChatSummaryUpdates, GroupMembershipUpdates, OptionUpdate, TimestampMillis, MAX_THREADS_IN_SUMMARY,
+    GroupCanisterGroupChatSummaryUpdates, GroupMembershipUpdates, MAX_THREADS_IN_SUMMARY, OptionUpdate, TimestampMillis,
 };
 
-#[query]
+#[query(msgpack = true)]
 fn summary_updates(args: Args) -> Response {
-    read_state(|state| summary_updates_impl(args.updates_since, None, state))
+    read_state(|state| summary_updates_impl(args.updates_since, args.on_behalf_of, state))
 }
 
-#[query_msgpack]
-fn c2c_summary_updates(args: C2CArgs) -> C2CResponse {
+#[query(msgpack = true)]
+fn c2c_summary_updates(args: Args) -> Response {
     read_state(|state| summary_updates_impl(args.updates_since, args.on_behalf_of, state))
 }
 
@@ -27,46 +26,50 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
     };
 
     let member = match state.data.get_member(caller) {
-        None => return CallerNotInGroup,
+        None => return Error(OCErrorCode::InitiatorNotInChat.into()),
         Some(p) => p,
     };
 
     let chat = &state.data.chat;
-    let chat_last_updated = chat.last_updated(Some(member.user_id));
+    let chat_last_updated = [chat.last_updated(Some(member.user_id())), state.data.verified.timestamp]
+        .into_iter()
+        .max()
+        .unwrap();
 
     if chat_last_updated <= updates_since {
         return SuccessNoUpdates;
     }
 
-    let updates = chat.summary_updates(updates_since, Some(member.user_id));
+    let updates = chat.summary_updates(updates_since, Some(member.user_id()));
 
     let membership = GroupMembershipUpdates {
-        role: updates.role_changed.then_some(member.role.value.into()),
+        role: updates.role_changed.then_some(member.role().value.into()),
         mentions: updates.mentions,
-        notifications_muted: member.notifications_muted.if_set_after(updates_since).cloned(),
+        notifications_muted: member.notifications_muted().if_set_after(updates_since).cloned(),
+        at_everyone_muted: member.at_everyone_muted().if_set_after(updates_since).cloned(),
         my_metrics: state
             .data
             .chat
             .events
-            .user_metrics(&member.user_id, Some(updates_since))
+            .user_metrics(&member.user_id(), Some(updates_since))
             .map(|m| m.hydrate()),
-        latest_threads: chat.events.latest_threads(
-            member.min_visible_event_index(),
-            member.threads.iter(),
-            Some(updates_since),
-            MAX_THREADS_IN_SUMMARY,
-            member.user_id,
-        ),
-        unfollowed_threads: chat.events.unfollowed_threads_since(
-            member.unfollowed_threads.iter(),
-            updates_since,
-            member.user_id,
-        ),
+        latest_threads: member
+            .followed_threads
+            .updated_since(updates_since)
+            .filter_map(|(i, _)| state.data.chat.events.thread_details(i))
+            .take(MAX_THREADS_IN_SUMMARY)
+            .collect(),
+        unfollowed_threads: member
+            .unfollowed_threads
+            .updated_since(updates_since)
+            .map(|(i, _)| *i)
+            .collect(),
         rules_accepted: member
             .rules_accepted
             .as_ref()
             .filter(|accepted| updates.rules_changed || accepted.timestamp > updates_since)
             .map(|accepted| accepted.value >= chat.rules.text.version),
+        lapsed: member.lapsed().if_set_after(updates_since).copied(),
     };
 
     Success(SuccessResult {
@@ -81,16 +84,11 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
             latest_event_index: updates.latest_event_index,
             latest_message_index: updates.latest_message_index,
             participant_count: updates.member_count,
-            role: membership.role,
-            mentions: membership.mentions.clone(),
             permissions_v2: updates.permissions,
             updated_events: updates.updated_events,
             metrics: Some(chat.events.metrics().hydrate()),
-            my_metrics: membership.my_metrics.clone(),
             is_public: updates.is_public,
-            latest_threads: membership.latest_threads.clone(),
-            unfollowed_threads: membership.unfollowed_threads.clone(),
-            notifications_muted: membership.notifications_muted,
+            messages_visible_to_non_members: updates.messages_visible_to_non_members,
             frozen: state
                 .data
                 .frozen
@@ -101,10 +99,11 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
             date_last_pinned: updates.date_last_pinned,
             events_ttl: updates.events_ttl,
             events_ttl_last_updated: updates.events_ttl_last_updated,
-            gate: updates.gate,
-            rules_accepted: membership.rules_accepted,
+            gate_config: updates.gate_config,
             membership: Some(membership),
             video_call_in_progress: updates.video_call_in_progress,
+            any_updates_missed: updates.any_updates_missed,
+            verified: state.data.verified.if_set_after(updates_since).copied(),
         },
     })
 }

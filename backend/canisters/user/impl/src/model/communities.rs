@@ -1,8 +1,7 @@
-#![allow(dead_code)]
 use crate::model::community::Community;
 use serde::{Deserialize, Serialize};
-use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
+use std::collections::hash_map::Entry::{Occupied, Vacant};
 use types::{CanisterId, CommunityId, TimestampMillis};
 
 #[derive(Serialize, Deserialize, Default)]
@@ -63,14 +62,12 @@ impl Communities {
     }
 
     pub fn remove(&mut self, community_id: CommunityId, now: TimestampMillis) -> Option<Community> {
-        let community = self.communities.remove(&community_id);
-        if community.is_some() {
-            self.removed.push(RemovedCommunity {
-                community_id,
-                timestamp: now,
-            });
-        }
-        community
+        self.removed.retain(|c| c.community_id != community_id);
+        self.removed.push(RemovedCommunity {
+            community_id,
+            timestamp: now,
+        });
+        self.communities.remove(&community_id)
     }
 
     pub fn updated_since(&self, updated_since: TimestampMillis) -> impl Iterator<Item = &Community> {
@@ -96,6 +93,10 @@ impl Communities {
 
     pub fn len(&self) -> usize {
         self.communities.len()
+    }
+
+    pub fn removed_len(&self) -> usize {
+        self.removed.len()
     }
 
     fn next_index(&self) -> u32 {

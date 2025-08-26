@@ -1,13 +1,11 @@
 [package]
 name = "cycles_dispenser_client"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-candid = { workspace = true }
-canister_client = { path = "../canister_client" }
 cycles_dispenser_canister = { path = "../../canisters/cycles_dispenser/api" }
 cycles_dispenser_canister_c2c_client = { path = "../../canisters/cycles_dispenser/c2c_client" }
 ic-cdk = { workspace = true }

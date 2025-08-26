@@ -1,12 +1,12 @@
 use crate::env::ENV;
-use crate::rng::{random_message_id, random_string};
 use crate::utils::tick_many;
-use crate::{client, TestEnv};
+use crate::{TestEnv, client};
+use constants::HOUR_IN_MS;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
+use testing::rng::{random_from_u128, random_string};
 use types::{ChatEvent, MessageContent, VideoCallContent};
-use utils::time::HOUR_IN_MS;
 
 #[test_case(true)]
 #[test_case(false)]
@@ -20,8 +20,8 @@ fn start_join_end_video_call_in_direct_chat_succeeds(manually_end_video_call: bo
     } = wrapper.env();
 
     let user1 = client::register_diamond_user(env, canister_ids, *controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    let message_id = random_message_id();
+    let user2 = client::register_user(env, canister_ids);
+    let message_id = random_from_u128();
     let max_duration = HOUR_IN_MS;
 
     client::user::happy_path::start_video_call(env, &user1, user2.user_id, message_id, Some(max_duration));
@@ -35,6 +35,8 @@ fn start_join_end_video_call_in_direct_chat_succeeds(manually_end_video_call: bo
         .find(|c| c.them == user2.user_id)
         .unwrap();
     assert_eq!(user1_chat.video_call_in_progress.unwrap().message_index, 0.into());
+    assert_eq!(user1_chat.read_by_me_up_to, Some(0.into()));
+    assert!(user1_chat.read_by_them_up_to.is_none());
 
     let chat1_event = client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![1.into()])
         .events
@@ -50,6 +52,8 @@ fn start_join_end_video_call_in_direct_chat_succeeds(manually_end_video_call: bo
         .find(|c| c.them == user1.user_id)
         .unwrap();
     assert_eq!(user2_chat.video_call_in_progress.unwrap().message_index, 0.into());
+    assert_eq!(user2_chat.read_by_them_up_to, Some(0.into()));
+    assert!(user2_chat.read_by_me_up_to.is_none());
 
     let chat2_event = client::user::happy_path::events_by_index(env, &user2, user1.user_id, vec![1.into()])
         .events
@@ -113,16 +117,16 @@ fn start_join_end_video_call_in_group_chat_succeeds(manually_end_video_call: boo
     } = wrapper.env();
 
     let user1 = client::register_diamond_user(env, canister_ids, *controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
     let group = client::user::happy_path::create_group(env, &user1, random_string().as_str(), true, true);
-    client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group);
+    client::group::happy_path::join_group(env, user2.principal, group);
 
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
     let max_duration = HOUR_IN_MS;
 
     client::group::happy_path::start_video_call(env, &user1, group, message_id, Some(max_duration));
 
-    let summary = client::group::happy_path::summary(env, &user1, group);
+    let summary = client::group::happy_path::summary(env, user1.principal, group);
     assert!(summary.video_call_in_progress.is_some());
 
     let event = client::group::happy_path::events_by_index(env, &user1, group, vec![2.into()])
@@ -148,18 +152,18 @@ fn start_join_end_video_call_in_group_chat_succeeds(manually_end_video_call: boo
         env.tick();
     }
 
-    let summary = client::group::happy_path::summary(env, &user1, group);
+    let summary = client::group::happy_path::summary(env, user1.principal, group);
     assert!(summary.video_call_in_progress.is_none());
 }
 
 fn assert_is_video_message<F: FnOnce(&VideoCallContent) -> bool>(event: ChatEvent, predicate: F) {
-    if let ChatEvent::Message(m) = &event {
-        if let MessageContent::VideoCall(v) = &m.content {
-            if predicate(v) {
-                return;
-            } else {
-                panic!("Event is a video call but does not satify predicate. Content: {v:?}");
-            }
+    if let ChatEvent::Message(m) = &event
+        && let MessageContent::VideoCall(v) = &m.content
+    {
+        if predicate(v) {
+            return;
+        } else {
+            panic!("Event is a video call but does not satisfy predicate. Content: {v:?}");
         }
     }
     panic!("Event is not a video call. Event: {event:?}");

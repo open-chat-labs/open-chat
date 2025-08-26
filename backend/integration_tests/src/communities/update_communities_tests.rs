@@ -1,11 +1,11 @@
 use crate::env::ENV;
-use crate::rng::random_string;
 use crate::utils::tick_many;
-use crate::{client, CanisterIds, TestEnv, User};
+use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
+use testing::rng::random_string;
 use types::{CommunityId, CommunityPermissionRole, OptionUpdate, OptionalCommunityPermissions};
 
 #[test]
@@ -38,23 +38,25 @@ fn change_casing_of_community_name_succeeds() {
             avatar: OptionUpdate::NoChange,
             banner: OptionUpdate::NoChange,
             permissions: None,
-            gate: OptionUpdate::NoChange,
+            gate_config: OptionUpdate::NoChange,
             public: None,
             primary_language: None,
         },
     );
 
     // Check the name has changed
-    let summary = client::community::happy_path::summary(env, &user2, community_id);
+    let summary = client::community::happy_path::summary(env, user2.principal, community_id);
     assert_eq!(summary.name, new_community_name);
 
     tick_many(env, 3);
 
     // Find the community in the group_index and check that the name has changed
-    let communities = client::group_index::happy_path::explore_communities(env, &user2, canister_ids.group_index);
-    assert!(communities
-        .iter()
-        .any(|m| m.id == community_id && m.name == new_community_name));
+    let communities = client::group_index::happy_path::explore_communities(env, user2.principal, canister_ids.group_index);
+    assert!(
+        communities
+            .iter()
+            .any(|m| m.id == community_id && m.name == new_community_name)
+    );
 }
 
 #[test]
@@ -88,14 +90,14 @@ fn update_permissions_succeeds() {
             create_private_channel: None,
             manage_user_groups: None,
         }),
-        gate: OptionUpdate::NoChange,
+        gate_config: OptionUpdate::NoChange,
         public: None,
         primary_language: None,
     };
 
     client::community::happy_path::update_community(env, user1.principal, community_id, &args);
 
-    let result = client::community::happy_path::summary(env, &user2, community_id);
+    let result = client::community::happy_path::summary(env, user2.principal, community_id);
 
     assert_eq!(result.description, "New description");
     assert!(matches!(
@@ -120,7 +122,7 @@ fn update_permissions_summary_updates_succeeds() {
         community_id,
     } = init_test_data(env, canister_ids, *controller, &random_string());
 
-    let summary = client::community::happy_path::summary(env, &user2, community_id);
+    let summary = client::community::happy_path::summary(env, user2.principal, community_id);
 
     env.advance_time(Duration::from_millis(1000));
 
@@ -139,14 +141,15 @@ fn update_permissions_summary_updates_succeeds() {
             create_private_channel: None,
             manage_user_groups: None,
         }),
-        gate: OptionUpdate::NoChange,
+        gate_config: OptionUpdate::NoChange,
         public: None,
         primary_language: None,
     };
 
     client::community::happy_path::update_community(env, user1.principal, community_id, &args);
 
-    let result = match client::community::happy_path::summary_updates(env, &user2, community_id, summary.last_updated) {
+    let result = match client::community::happy_path::summary_updates(env, user2.principal, community_id, summary.last_updated)
+    {
         Some(r) => r,
         None => {
             panic!("Expected summary_updates")
@@ -184,19 +187,19 @@ fn make_private_community_public_succeeds() {
         avatar: OptionUpdate::NoChange,
         banner: OptionUpdate::NoChange,
         permissions: None,
-        gate: OptionUpdate::NoChange,
+        gate_config: OptionUpdate::NoChange,
         public: Some(true),
         primary_language: None,
     };
 
     client::community::happy_path::update_community(env, user.principal, community_id, &args);
 
-    let result = client::community::happy_path::summary(env, &user, community_id);
+    let result = client::community::happy_path::summary(env, user.principal, community_id);
 
     assert!(result.is_public);
 
     assert!(
-        client::group_index::happy_path::explore_communities(env, &user, canister_ids.group_index)
+        client::group_index::happy_path::explore_communities(env, user.principal, canister_ids.group_index)
             .into_iter()
             .any(|c| c.id == community_id)
     );
@@ -205,12 +208,12 @@ fn make_private_community_public_succeeds() {
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal, community_name: &str) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
 
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_user(env, canister_ids);
 
     let community_id =
         client::user::happy_path::create_community(env, &user1, community_name, true, vec!["general".to_string()]);
 
-    client::local_user_index::happy_path::join_community(env, user2.principal, canister_ids.local_user_index, community_id);
+    client::community::happy_path::join_community(env, user2.principal, community_id);
 
     TestData {
         user1,

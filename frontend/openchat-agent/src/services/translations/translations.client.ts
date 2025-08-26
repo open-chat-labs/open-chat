@@ -1,7 +1,6 @@
-import type { Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import { idlFactory, type TranslationsService } from "./candid/idl";
-import { CandidService } from "../candidService";
-import type { AgentConfig } from "../../config";
+import { CandidCanisterAgent } from "../canisterAgent/candid";
 import type {
     ApproveResponse,
     MarkDeployedResponse,
@@ -21,22 +20,14 @@ import {
     rejectResponse,
 } from "./mappers";
 
-export class TranslationsClient extends CandidService {
-    private translationService: TranslationsService;
-
-    constructor(identity: Identity, config: AgentConfig) {
-        super(identity);
-
-        this.translationService = this.createServiceClient<TranslationsService>(
-            idlFactory,
-            config.translationsCanister,
-            config,
-        );
+export class TranslationsClient extends CandidCanisterAgent<TranslationsService> {
+    constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
+        super(identity, agent, canisterId, idlFactory, "Translations");
     }
 
     propose(locale: string, key: string, value: string): Promise<ProposeResponse> {
         return this.handleResponse(
-            this.translationService.propose({
+            this.service.propose({
                 key,
                 locale,
                 value,
@@ -47,7 +38,7 @@ export class TranslationsClient extends CandidService {
 
     approve(id: bigint): Promise<ApproveResponse> {
         return this.handleResponse(
-            this.translationService.approve({
+            this.service.approve({
                 id,
             }),
             approveResponse,
@@ -56,7 +47,7 @@ export class TranslationsClient extends CandidService {
 
     reject(id: bigint, reason: RejectReason): Promise<RejectResponse> {
         return this.handleResponse(
-            this.translationService.reject({
+            this.service.reject({
                 id,
                 reason: apiRejectReason(reason),
             }),
@@ -66,7 +57,7 @@ export class TranslationsClient extends CandidService {
 
     markDeployed(): Promise<MarkDeployedResponse> {
         return this.handleResponse(
-            this.translationService.mark_deployed({
+            this.service.mark_deployed({
                 latest_approval: BigInt(Date.now()),
             }),
             markDeployedResponse,
@@ -74,15 +65,12 @@ export class TranslationsClient extends CandidService {
     }
 
     proposed(): Promise<ProposedResponse> {
-        return this.handleQueryResponse(
-            () => this.translationService.proposed({}),
-            proposedResponse,
-        );
+        return this.handleQueryResponse(() => this.service.proposed({}), proposedResponse);
     }
 
     pendingDeployment(): Promise<PendingDeploymentResponse> {
         return this.handleQueryResponse(
-            () => this.translationService.pending_deployment({}),
+            () => this.service.pending_deployment({}),
             pendingDeploymentResponse,
         );
     }

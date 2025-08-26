@@ -23,15 +23,16 @@ for l in $(ls ${CARGO_HOME}/registry/src/)
 do
   export RUSTFLAGS="--remap-path-prefix ${CARGO_HOME}/registry/src/${l}=/cargo/registry/src/github ${RUSTFLAGS}"
 done
-cargo build --locked --target wasm32-unknown-unknown --release --package $PACKAGE
+cargo build --locked --target wasm32-unknown-unknown --release --package $PACKAGE || exit 1
 
 echo Optimising wasm
-if ! cargo install --list | grep -Fxq "ic-wasm v0.7.0:"
+if ! cargo install --list | grep -Fxq "ic-wasm v0.9.0:"
 then
-  cargo install --version 0.7.0 ic-wasm
+  echo Installing ic-wasm
+  cargo install --version 0.9.0 ic-wasm || exit 1
 fi
 ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm shrink
 
 echo Compressing wasm
 mkdir -p wasms
-gzip -fckn target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm > ./wasms/$CANISTER_NAME.wasm.gz
+gzip -fckn9 target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm > ./wasms/$CANISTER_NAME.wasm.gz

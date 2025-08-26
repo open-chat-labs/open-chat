@@ -1,39 +1,49 @@
-<svelte:options immutable />
-
 <script lang="ts">
-    import { rtlStore } from "../../stores/rtl";
     import type { ImageContent, MemeFighterContent } from "openchat-client";
-    import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
     import ArrowCollapse from "svelte-material-icons/ArrowCollapse.svelte";
-    import ContentCaption from "./ContentCaption.svelte";
-    import Overlay from "../Overlay.svelte";
-    import ModalContent from "../ModalContent.svelte";
-    import { isTouchDevice } from "../../utils/devices";
-    import { lowBandwidth } from "../../stores/settings";
-    import Button from "../Button.svelte";
-    import Translatable from "../Translatable.svelte";
+    import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import { rtlStore } from "../../stores/rtl";
+    import { lowBandwidth } from "../../stores/settings";
+    import { isTouchDevice } from "../../utils/devices";
+    import Button from "../Button.svelte";
+    import ModalContent from "../ModalContent.svelte";
+    import Overlay from "../Overlay.svelte";
+    import Translatable from "../Translatable.svelte";
+    import ContentCaption from "./ContentCaption.svelte";
 
-    export let content: ImageContent | MemeFighterContent;
-    export let fill: boolean;
-    export let draft: boolean = false;
-    export let reply: boolean = false;
-    export let pinned: boolean = false;
-    export let height: number | undefined = undefined;
-    export let intersecting: boolean = true;
-    export let edited: boolean;
+    interface Props {
+        content: ImageContent | MemeFighterContent;
+        fill: boolean;
+        draft?: boolean;
+        reply?: boolean;
+        pinned?: boolean;
+        height?: number | undefined;
+        intersecting?: boolean;
+        edited: boolean;
+        blockLevelMarkdown?: boolean;
+    }
 
-    let imgElement: HTMLImageElement;
-    let zoom = false;
-    let withCaption =
-        content.kind === "image_content" && content.caption !== undefined && content.caption !== "";
-    let landscape = content.height < content.width;
-    let zoomedWidth: number;
-    let zoomedHeight: number;
+    let {
+        content,
+        fill,
+        draft = false,
+        reply = false,
+        pinned = false,
+        height = undefined,
+        intersecting = true,
+        edited,
+        blockLevelMarkdown = false,
+    }: Props = $props();
 
-    $: normalised = normaliseContent(content);
-    $: hidden = $lowBandwidth && !draft;
-    $: zoomable = !draft && !reply && !pinned;
+    let imgElement: HTMLImageElement | undefined = $state();
+    let zoom = $state(false);
+    let withCaption = $derived(
+        content.kind === "image_content" && content.caption !== undefined && content.caption !== "",
+    );
+    let landscape = $derived(content.height < content.width);
+    let zoomedWidth: number = $state(0);
+    let zoomedHeight: number = $state(0);
 
     function normaliseContent(content: ImageContent | MemeFighterContent) {
         switch (content.kind) {
@@ -60,7 +70,8 @@
         }
     }
 
-    function onDoubleClick() {
+    function onDoubleClick(e: Event) {
+        e.stopPropagation();
         if (isTouchDevice) {
             toggleZoom();
         }
@@ -95,11 +106,23 @@
         zoomedWidth = imageWidth;
         zoomedHeight = imageHeight;
     }
+    let normalised = $derived(normaliseContent(content));
+    let hidden = $state(false);
+    $effect(() => {
+        hidden = $lowBandwidth && !draft;
+    });
+    let zoomable = $derived(!draft && !reply && !pinned);
+
+    function onError() {
+        if (imgElement) {
+            imgElement.src = normalised.fallback;
+        }
+    }
 </script>
 
 <svelte:window
-    on:resize={recalculateZoomedDimensions}
-    on:orientationchange={recalculateZoomedDimensions} />
+    onresize={recalculateZoomedDimensions}
+    onorientationchange={recalculateZoomedDimensions} />
 
 {#if normalised.url !== undefined}
     <div class="img-wrapper">
@@ -107,7 +130,7 @@
             <div class="mask">
                 {#if !reply && !draft}
                     <div class="reveal">
-                        <Button on:click={() => (hidden = false)}
+                        <Button onClick={() => (hidden = false)}
                             ><Translatable resourceKey={i18nKey(normalised.loadMsg)} /></Button>
                     </div>
                 {/if}
@@ -115,9 +138,10 @@
         {/if}
         <img
             bind:this={imgElement}
-            on:click={onClick}
-            on:dblclick|stopPropagation={onDoubleClick}
-            on:error={() => (imgElement.src = normalised.fallback)}
+            onclick={onClick}
+            ondblclick={onDoubleClick}
+            onerror={onError}
+            class="unzoomed"
             class:landscape
             class:fill
             class:withCaption
@@ -130,33 +154,39 @@
             alt={normalised.caption} />
 
         {#if zoomable && !hidden}
-            <div class="expand" class:rtl={$rtlStore} class:zoomed={zoom} on:click={toggleZoom}>
+            <div class="expand" class:rtl={$rtlStore} class:zoomed={zoom} onclick={toggleZoom}>
                 <ArrowExpand size={"1em"} color={"#fff"} />
             </div>
         {/if}
     </div>
 {/if}
 
-<ContentCaption caption={normalised.caption} {edited} {reply} />
+<ContentCaption caption={normalised.caption} {edited} {blockLevelMarkdown} />
 
 {#if zoomable && zoom}
-    <Overlay on:close={() => (zoom = false)} dismissible alignBottomOnMobile={false}>
+    <Overlay onClose={() => (zoom = false)} dismissible alignBottomOnMobile={false}>
         <ModalContent hideHeader hideFooter fill fitToContent fixedWidth={false}>
-            <span class="body" slot="body">
-                <img
-                    class="zoomed"
-                    class:landscape
-                    width={zoomedWidth}
-                    height={zoomedHeight}
-                    on:click={onClick}
-                    on:dblclick={onDoubleClick}
-                    on:error={() => (imgElement.src = normalised.fallback)}
-                    src={normalised.url}
-                    alt={normalised.caption} />
-                <div class="expand" class:rtl={$rtlStore} class:zoomed={zoom} on:click={toggleZoom}>
-                    <ArrowCollapse size={"1em"} color={"#fff"} />
-                </div>
-            </span>
+            {#snippet body()}
+                <span class="body">
+                    <img
+                        class="zoomed"
+                        class:landscape
+                        width={zoomedWidth}
+                        height={zoomedHeight}
+                        onclick={onClick}
+                        ondblclick={onDoubleClick}
+                        onerror={onError}
+                        src={normalised.url}
+                        alt={normalised.caption} />
+                    <div
+                        class="expand"
+                        class:rtl={$rtlStore}
+                        class:zoomed={zoom}
+                        onclick={toggleZoom}>
+                        <ArrowCollapse size={"1em"} color={"#fff"} />
+                    </div>
+                </span>
+            {/snippet}
         </ModalContent>
     </Overlay>
 {/if}
@@ -197,7 +227,7 @@
         cursor: zoom-in;
         &.zoomed {
             cursor: zoom-out;
-            border-bottom-left-radius: 0;
+            border-bottom-left-radius: var(--modal-rd);
         }
 
         &.rtl {
@@ -205,7 +235,7 @@
             left: unset;
             border-radius: $radius 0 $radius 0;
             &.zoomed {
-                border-bottom-right-radius: 0;
+                border-bottom-right-radius: var(--modal-rd);
             }
         }
 
@@ -217,11 +247,15 @@
         color: #fff;
     }
 
-    img.zoomable:not(.zoomed) {
+    img.zoomable.unzoomed {
         cursor: zoom-in;
     }
 
-    img:not(.zoomed) {
+    img.zoomed {
+        border-radius: var(--modal-rd);
+    }
+
+    img.unzoomed {
         width: 100%;
         display: block;
 

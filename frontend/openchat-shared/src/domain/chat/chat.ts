@@ -1,42 +1,42 @@
-import type DRange from "drange";
-import type { DataContent } from "../data/data";
-import type { UserSummary } from "../user/user";
-import type { OptionUpdate } from "../optionUpdate";
-import type { AccessGate, AccessControlled, VersionedRules, UpdatedRules } from "../access";
-import type {
-    ChatPermissionRole,
-    ChatPermissions,
-    HasMembershipRole,
-    MemberRole,
-    OptionalChatPermissions,
-    Permissioned,
-} from "../permission";
-import type { ChatListScope, HasLevel } from "../structure";
-import type {
-    NotAuthorised,
-    Success,
-    SuccessNoUpdates,
-    UserSuspended,
-    ChatFrozen,
-    Failure,
-    CommunityFrozen,
-    NoChange,
-    UserBlocked,
-    TransferFailed,
-    InternalError,
-    Offline,
-} from "../response";
+import { ROLE_NONE } from "../../constants";
 import { emptyChatMetrics } from "../../utils";
+import type { AccessControlled, AccessGateConfig, UpdatedRules, VersionedRules } from "../access";
+import type {
+    CommandArg,
+    GrantedBotPermissions,
+    InstalledBotDetails,
+    WebhookDetails,
+} from "../bots";
+import type { ChitEvent, PremiumItem } from "../chit";
 import type {
     CommunityCanisterCommunitySummaryUpdates,
     CommunityIdentifier,
     CommunitySummary,
 } from "../community";
-
-export const Sns1GovernanceCanisterId = "zqfso-syaaa-aaaaq-aaafq-cai";
-export const OpenChatGovernanceCanisterId = "2jvtu-yqaaa-aaaaq-aaama-cai";
-export const HotOrNotGovernanceCanisterId = "6wcax-haaaa-aaaaq-aaava-cai";
-export const KinicGovernanceCanisterId = "74ncn-fqaaa-aaaaq-aaasa-cai";
+import type { WalletConfig } from "../crypto";
+import type { DataContent } from "../data/data";
+import type { OCError } from "../error";
+import type { OptionUpdate } from "../optionUpdate";
+import type {
+    ChatPermissionRole,
+    ChatPermissions,
+    HasMembershipRole,
+    MemberRole,
+    Permissioned,
+} from "../permission";
+import type {
+    ChatFrozen,
+    Failure,
+    InternalError,
+    NotAuthorised,
+    Offline,
+    Success,
+    SuccessNoUpdates,
+    UserLapsed,
+    UserSuspended,
+} from "../response";
+import type { ChatListScope, HasLevel } from "../structure";
+import type { Referral, UserSummary } from "../user/user";
 
 export type CallerNotInGroup = { kind: "caller_not_in_group" };
 export type CanisterNotFound = { kind: "canister_not_found" };
@@ -50,6 +50,7 @@ export type MessageContent =
     | DeletedContent
     | BlockedContent
     | PlaceholderContent
+    | BotPlaceholderContent
     | PollContent
     | CryptocurrencyContent
     | GiphyContent
@@ -64,26 +65,39 @@ export type MessageContent =
     | ReportedMessageContent
     | UserReferralCard
     | MemeFighterContent
-    | VideoCallContent;
+    | VideoCallContent
+    | EncryptedContent;
 
 export type VideoCallParticipant = {
     userId: string;
     joined: bigint;
 };
 
+export type EncryptedContent = {
+    kind: "encrypted_content";
+};
+
 export type VideoCallContent = {
     kind: "video_call_content";
     participants: VideoCallParticipant[];
     ended?: bigint;
+    callType: VideoCallType;
 };
+
+export type VideoCallType = "broadcast" | "default";
 
 export interface PrizeContentInitial {
     kind: "prize_content_initial";
     diamondOnly: boolean;
+    lifetimeDiamondOnly: boolean;
+    uniquePersonOnly: boolean;
+    streakOnly: number;
+    minChitEarned: number;
     endDate: bigint;
     caption?: string;
     transfer: PendingCryptocurrencyTransfer;
     prizes: bigint[];
+    requiresCaptcha: boolean;
 }
 
 export interface P2PSwapContentInitial {
@@ -123,6 +137,28 @@ export function isAttachmentContent(content: MessageContent): content is Attachm
     }
 }
 
+export type EditableContent =
+    | FileContent
+    | TextContent
+    | ImageContent
+    | VideoContent
+    | AudioContent
+    | GiphyContent;
+
+export function isEditableContent(kind: MessageContent["kind"]): kind is EditableContent["kind"] {
+    switch (kind) {
+        case "file_content":
+        case "text_content":
+        case "image_content":
+        case "video_content":
+        case "audio_content":
+        case "giphy_content":
+            return true;
+        default:
+            return false;
+    }
+}
+
 export function isCaptionedContent(content: MessageContent): content is CaptionedContent {
     switch (content.kind) {
         case "image_content":
@@ -139,10 +175,31 @@ export function isCaptionedContent(content: MessageContent): content is Captione
     }
 }
 
+export function isTransfer(content: MessageContent): boolean {
+    return (
+        content.kind === "crypto_content" ||
+        content.kind === "prize_content_initial" ||
+        content.kind === "p2p_swap_content_initial"
+    );
+}
+
+export function canRetryMessage(content: MessageContent): boolean {
+    return (
+        content.kind !== "poll_content" &&
+        content.kind !== "crypto_content" &&
+        content.kind !== "prize_content_initial" &&
+        content.kind !== "p2p_swap_content_initial"
+    );
+}
+
 export type IndexRange = [number, number];
 
 export interface PlaceholderContent {
     kind: "placeholder_content";
+}
+
+export interface BotPlaceholderContent {
+    kind: "bot_placeholder_content";
 }
 
 export type CryptocurrencyDeposit = {
@@ -187,9 +244,9 @@ export type FailedCryptocurrencyWithdrawal = {
 };
 
 export type WithdrawCryptocurrencyResponse =
-    | { kind: "currency_not_supported" }
     | FailedCryptocurrencyWithdrawal
     | CompletedCryptocurrencyWithdrawal
+    | OCError
     | Offline;
 
 export type CryptocurrencyWithdrawal =
@@ -297,10 +354,16 @@ export interface PrizeContent {
     prizesRemaining: number;
     prizesPending: number;
     diamondOnly: boolean;
-    winners: string[];
+    lifetimeDiamondOnly: boolean;
+    uniquePersonOnly: boolean;
+    streakOnly: number;
+    winnerCount: number;
+    userIsWinner: boolean;
     token: string;
     endDate: bigint;
     caption?: string;
+    requiresCaptcha: boolean;
+    minChitEarned: number;
 }
 
 export interface P2PSwapContent {
@@ -445,6 +508,10 @@ export enum NnsProposalTopic {
     SubnetReplicaVersionManagement,
     ReplicaVersionManagement,
     SnsAndCommunityFund,
+    ApiBoundaryNodeManagement,
+    SubnetRental,
+    ProtocolCanisterManagement,
+    ServiceNervousSystemManagement,
 }
 
 export interface SnsProposal extends ProposalCommon {
@@ -564,6 +631,20 @@ export function messageContextToString(ctx: MessageContext): string {
     return JSON.stringify(ctx);
 }
 
+export function messageContextToChatListScope(ctx: MessageContext): ChatListScope {
+    switch (ctx.chatId.kind) {
+        case "channel":
+            return {
+                kind: "community",
+                id: { kind: "community", communityId: ctx.chatId.communityId },
+            };
+        case "direct_chat":
+            return { kind: "direct_chat" };
+        case "group_chat":
+            return { kind: "group_chat" };
+    }
+}
+
 export type RawReplyContext = {
     kind: "raw_reply_context";
     eventIndex: number;
@@ -591,12 +672,12 @@ type LedgerId = string;
 type UserId = string;
 export type TipsReceived = Record<LedgerId, Record<UserId, bigint>>;
 
-export type Message = {
+export type Message<T extends MessageContent = MessageContent> = {
     kind: "message";
     messageId: bigint;
     messageIndex: number;
     sender: string;
-    content: MessageContent;
+    content: T;
     repliesTo?: ReplyContext;
     reactions: Reaction[];
     tips: TipsReceived;
@@ -604,7 +685,27 @@ export type Message = {
     forwarded: boolean;
     deleted: boolean;
     thread?: ThreadSummary;
+    blockLevelMarkdown: boolean;
+    senderContext?: SenderContext;
 };
+
+export type BotContextCommand = {
+    name: string;
+    args: CommandArg[];
+    initiator: string;
+};
+
+export type BotMessageContext = {
+    kind: "bot";
+    command?: BotContextCommand;
+    finalised: boolean;
+};
+
+export type WebhookContext = {
+    kind: "webhook";
+};
+
+export type SenderContext = BotMessageContext | WebhookContext;
 
 export type ThreadSummary = {
     participantIds: Set<string>;
@@ -631,31 +732,6 @@ export type LocalPollVote = {
     userId: string;
 };
 
-export type LocalChatSummaryUpdates = {
-    added?: ChatSummary;
-    updated?:
-        | {
-              kind?: undefined;
-              notificationsMuted?: boolean;
-              archived?: boolean;
-              rulesAccepted?: boolean;
-          }
-        | {
-              kind: "group_chat" | "channel";
-              name?: string;
-              description?: string;
-              public?: boolean;
-              permissions?: OptionalChatPermissions;
-              frozen?: boolean;
-              gate?: AccessGate;
-              notificationsMuted?: boolean;
-              archived?: boolean;
-              eventsTTL?: OptionUpdate<bigint>;
-          };
-    removedAtTimestamp?: bigint;
-    lastUpdated: number;
-};
-
 export type LocalMessageUpdates = {
     deleted?: {
         deletedBy: string;
@@ -673,10 +749,21 @@ export type LocalMessageUpdates = {
     threadSummary?: Partial<ThreadSummary>;
     tips?: TipsReceived;
     hiddenMessageRevealed?: boolean;
+    blockLevelMarkdown?: boolean;
     lastUpdated: number;
 };
 
-export type EventsResponse<T extends ChatEvent> = "events_failed" | EventsSuccessResult<T>;
+export type EventsResponse<T extends ChatEvent> =
+    | EventsSuccessResult<T>
+    | ReplicaNotUpToDate
+    | OCError
+    | Failure;
+
+export function isSuccessfulEventsResponse<T extends ChatEvent>(
+    response: EventsResponse<T> | undefined,
+): response is EventsSuccessResult<T> {
+    return response !== undefined && typeof response === "object" && "events" in response;
+}
 
 export type ChatEvent =
     | Message
@@ -705,7 +792,29 @@ export type ChatEvent =
     | EventsTimeToLiveUpdated
     | UsersInvitedEvent
     | MembersAddedToDefaultChannel
-    | EmptyEvent;
+    | EmptyEvent
+    | ExternalUrlUpdated
+    | BotAdded
+    | BotRemoved
+    | BotUpdated;
+
+export type BotAdded = {
+    kind: "bot_added";
+    userId: string;
+    addedBy: string;
+};
+
+export type BotRemoved = {
+    kind: "bot_removed";
+    userId: string;
+    removedBy: string;
+};
+
+export type BotUpdated = {
+    kind: "bot_updated";
+    userId: string;
+    updatedBy: string;
+};
 
 export type MembersAdded = {
     kind: "members_added";
@@ -717,6 +826,7 @@ export type AggregateCommonEvents = {
     kind: "aggregate_common_events";
     usersJoined: Set<string>;
     usersLeft: Set<string>;
+    rolesChanged: Map<string, Map<MemberRole, Set<string>>>;
     messagesDeleted: number[];
 };
 
@@ -855,7 +965,8 @@ export type PermissionsChanged = {
 
 export type GroupVisibilityChanged = {
     kind: "group_visibility_changed";
-    nowPublic: boolean;
+    public?: boolean;
+    messagesVisibleToNonMembers?: boolean;
     changedBy: string;
 };
 
@@ -931,15 +1042,37 @@ export type EventsSuccessResult<T extends ChatEvent> = {
 };
 
 export type UpdatesResult = {
-    state: ChatStateFull;
+    directChatsAddedUpdated: DirectChatSummary[];
+    directChatsRemoved: string[];
+    groupsAddedUpdated: GroupChatSummary[];
+    groupsRemoved: string[];
+    communitiesAddedUpdated: CommunitySummary[];
+    communitiesRemoved: string[];
+    avatarId: OptionUpdate<bigint>;
+    blockedUsers: string[] | undefined;
+    pinnedDirectChats: DirectChatIdentifier[] | undefined;
+    pinnedGroupChats: GroupChatIdentifier[] | undefined;
+    pinnedChannels: ChannelIdentifier[] | undefined;
+    pinnedFavouriteChats: ChatIdentifier[] | undefined;
+    favouriteChats: ChatIdentifier[] | undefined;
+    pinNumberSettings: OptionUpdate<PinNumberSettings>;
+    achievements: Set<string> | undefined;
+    chitState: ChitState | undefined;
+    referrals: Referral[] | undefined;
+    walletConfig: WalletConfig | undefined;
+    messageActivitySummary: MessageActivitySummary | undefined;
+    installedBots: Map<string, GrantedBotPermissions> | undefined;
+    bitcoinAddress: string | undefined;
+    oneSecAddress: string | undefined;
+    streakInsurance: OptionUpdate<StreakInsurance>;
     updatedEvents: Map<string, UpdatedEvent[]>;
-    anyUpdates: boolean;
     suspensionChanged: boolean | undefined;
+    newAchievements: ChitEvent[];
+    premiumItems: Set<PremiumItem> | undefined;
 };
 
 export type ChatStateFull = {
     latestUserCanisterUpdates: bigint;
-    latestActiveGroupsCheck: bigint;
     directChats: DirectChatSummary[];
     groupChats: GroupChatSummary[];
     communities: CommunitySummary[];
@@ -950,6 +1083,28 @@ export type ChatStateFull = {
     pinnedFavouriteChats: ChatIdentifier[];
     pinnedChannels: ChannelIdentifier[];
     favouriteChats: ChatIdentifier[];
+    pinNumberSettings: PinNumberSettings | undefined;
+    userCanisterLocalUserIndex: string;
+    achievements: Set<string>;
+    achievementsLastSeen: bigint;
+    chitState: ChitState;
+    referrals: Referral[];
+    walletConfig: WalletConfig;
+    messageActivitySummary: MessageActivitySummary;
+    installedBots: Map<string, GrantedBotPermissions>;
+    bitcoinAddress: string | undefined;
+    oneSecAddress: string | undefined;
+    streakInsurance: StreakInsurance | undefined;
+    premiumItems: Set<PremiumItem>;
+};
+
+export type ChitState = {
+    streak: number;
+    streakEnds: bigint;
+    maxStreak: number;
+    nextDailyChitClaim: bigint;
+    chitBalance: number;
+    totalChitEarned: number;
 };
 
 export type CurrentChatState = {
@@ -966,7 +1121,6 @@ export type CachedGroupChatSummaries = {
 export type GroupChatsInitial = {
     summaries: UserCanisterGroupChatSummary[];
     pinned: GroupChatIdentifier[];
-    cached?: CachedGroupChatSummaries;
 };
 
 export type DirectChatsInitial = {
@@ -1002,19 +1156,12 @@ export function chatIdentifierUnset(id: ChatIdentifier | undefined): boolean {
     if (id === undefined) return true;
     switch (id.kind) {
         case "channel":
-            return id.channelId === "";
+            return id.channelId === 0;
         case "direct_chat":
             return id.userId === "";
         case "group_chat":
             return id.groupId === "";
     }
-}
-
-export function chatScopesEqual(a: ChatListScope, b: ChatListScope): boolean {
-    if (a.kind === "community" && b.kind === "community")
-        return a.id.communityId === b.id.communityId;
-    if (a.kind === "favourite" && b.kind === "favourite") return a.communityId === b.communityId;
-    return a.kind === b.kind;
 }
 
 export function chatIdentifiersEqual(
@@ -1047,6 +1194,11 @@ export function chatIdentifiersEqual(
     }
 }
 
+export type ThreadIdentifier = {
+    chatId: ChatIdentifier;
+    threadRootMessageIndex: number;
+};
+
 export type DirectChatIdentifier = {
     kind: "direct_chat";
     userId: string;
@@ -1060,7 +1212,7 @@ export type GroupChatIdentifier = {
 export type ChannelIdentifier = {
     kind: "channel";
     communityId: string;
-    channelId: string;
+    channelId: number;
 };
 
 export type FavouriteChatsInitial = {
@@ -1098,6 +1250,80 @@ export type InitialStateResponse = {
     favouriteChats: FavouriteChatsInitial;
     timestamp: bigint;
     suspended: boolean;
+    pinNumberSettings: PinNumberSettings | undefined;
+    localUserIndex: string;
+    achievements: ChitEvent[];
+    achievementsLastSeen: bigint;
+    streakEnds: bigint;
+    streak: number;
+    maxStreak: number;
+    nextDailyClaim: bigint;
+    chitBalance: number;
+    totalChitEarned: number;
+    referrals: Referral[];
+    walletConfig: WalletConfig;
+    messageActivitySummary: MessageActivitySummary;
+    bots: Map<string, GrantedBotPermissions>;
+    bitcoinAddress: string | undefined;
+    oneSecAddress: string | undefined;
+    streakInsurance?: StreakInsurance;
+    premiumItems: Set<PremiumItem>;
+};
+
+export type StreakInsurance = {
+    daysInsured: number;
+    daysMissed: number;
+};
+
+export type MessageActivitySummary = {
+    readUpToTimestamp: bigint;
+    latestTimestamp: bigint;
+    unreadCount: number;
+};
+
+export type MessageActivityEvent = {
+    messageContext: MessageContext;
+    eventIndex: number;
+    messageId: bigint;
+    messageIndex: number;
+    activity: MessageActivity;
+    timestamp: bigint;
+    userId: string | undefined;
+    message: Message | undefined;
+};
+
+export type MessageActivity =
+    | "mention"
+    | "reaction"
+    | "quote_reply"
+    | "tip"
+    | "crypto"
+    | "poll_vote"
+    | "p2p_swap_accepted";
+
+export type MessageActivityFeedResponse = {
+    total: number;
+    events: MessageActivityEvent[];
+};
+
+export type PinNumberSettings = {
+    length: number;
+    attemptsBlockedUntil: bigint | undefined;
+};
+
+export type PinNumberResolver = {
+    resolve: (pin: string) => void;
+    reject: () => void;
+    message: string | undefined;
+};
+
+export type RulesAcceptanceResolver = {
+    resolve: (accepted: boolean) => void;
+};
+
+export type AcceptedRules = {
+    chat: number | undefined;
+    community: number | undefined;
 };
 
 export type UpdatesResponse = UpdatesSuccessResponse | SuccessNoUpdates;
@@ -1112,12 +1338,31 @@ export type UpdatesSuccessResponse = {
     avatarId: OptionUpdate<bigint>;
     directChats: DirectChatsUpdates;
     suspended: boolean | undefined;
+    pinNumberSettings: OptionUpdate<PinNumberSettings>;
+    achievements: ChitEvent[];
+    achievementsLastSeen: bigint | undefined;
+    chitBalance: number;
+    streakEnds: bigint;
+    streak: number;
+    maxStreak: number;
+    nextDailyClaim: bigint;
+    totalChitEarned: number;
+    referrals: Referral[];
+    walletConfig: WalletConfig | undefined;
+    messageActivitySummary: MessageActivitySummary | undefined;
+    botsAddedOrUpdated: InstalledBotDetails[];
+    botsRemoved: string[];
+    bitcoinAddress: string | undefined;
+    oneSecAddress: string | undefined;
+    streakInsurance: OptionUpdate<StreakInsurance>;
+    premiumItems: Set<PremiumItem> | undefined;
 };
 
 export type DirectChatsUpdates = {
     added: DirectChatSummary[];
     pinned?: DirectChatIdentifier[];
     updated: DirectChatSummaryUpdates[];
+    removed: string[];
 };
 
 export type GroupChatsUpdates = {
@@ -1187,7 +1432,7 @@ export type DirectChatSummaryUpdates = {
     metrics?: Metrics;
     myMetrics?: Metrics;
     archived?: boolean;
-    videoCallInProgress: OptionUpdate<number>;
+    videoCallInProgress: OptionUpdate<VideoCallInProgress>;
 };
 
 export type GroupSubtypeUpdate =
@@ -1215,11 +1460,12 @@ export type Member = {
     role: MemberRole;
     userId: string;
     displayName: string | undefined;
+    lapsed: boolean;
 };
 
 export type FullMember = Member & UserSummary;
 
-export type GroupChatDetailsResponse = "failure" | GroupChatDetails;
+export type GroupChatDetailsResponse = GroupChatDetails | OCError | Failure;
 
 export type GroupChatDetailsUpdatesResponse =
     | ({ kind: "success" } & GroupChatDetailsUpdates)
@@ -1233,26 +1479,8 @@ export type GroupChatDetails = {
     pinnedMessages: Set<number>;
     rules: VersionedRules;
     timestamp: bigint;
-};
-
-/**
- * This will hold all chat specific state
- * All properties are optional but individual derived stores can provide their own default values
- */
-export type ChatSpecificState = {
-    members: Member[];
-    blockedUsers: Set<string>;
-    invitedUsers: Set<string>;
-    pinnedMessages: Set<number>;
-    rules?: VersionedRules;
-    userIds: Set<string>;
-    focusMessageIndex?: number;
-    focusThreadMessageIndex?: number;
-    confirmedEventIndexesLoaded: DRange;
-    userGroupKeys: Set<string>;
-    serverEvents: EventWrapper<ChatEvent>[];
-    expandedDeletedMessages: Set<number>;
-    expiredEventRanges: DRange;
+    bots: InstalledBotDetails[];
+    webhooks: WebhookDetails[];
 };
 
 export type GroupChatDetailsUpdates = {
@@ -1265,6 +1493,9 @@ export type GroupChatDetailsUpdates = {
     rules?: VersionedRules;
     invitedUsers?: Set<string>;
     timestamp: bigint;
+    botsAddedOrUpdated: InstalledBotDetails[];
+    botsRemoved: Set<string>;
+    webhooks?: WebhookDetails[];
 };
 
 export type ChatSummary = DirectChatSummary | MultiUserChat;
@@ -1282,7 +1513,7 @@ type ChatSummaryCommon = HasMembershipRole & {
     membership: ChatMembership;
     eventsTTL: bigint | undefined;
     eventsTtlLastUpdated: bigint;
-    videoCallInProgress?: number;
+    videoCallInProgress?: VideoCallInProgress;
 };
 
 export type ChannelSummary = DataContent &
@@ -1300,6 +1531,9 @@ export type ChannelSummary = DataContent &
         memberCount: number;
         dateLastPinned: bigint | undefined;
         dateReadPinned: bigint | undefined;
+        isInvited: boolean;
+        messagesVisibleToNonMembers: boolean;
+        externalUrl?: string;
     };
 
 export type DirectChatSummary = ChatSummaryCommon & {
@@ -1327,19 +1561,24 @@ export type GroupChatSummary = DataContent &
         dateLastPinned: bigint | undefined;
         dateReadPinned: bigint | undefined;
         localUserIndex: string;
+        isInvited: boolean;
+        messagesVisibleToNonMembers: boolean;
+        verified: boolean;
     };
 
 export function nullMembership(): ChatMembership {
     return {
         joined: BigInt(0),
-        role: "none",
+        role: ROLE_NONE,
         mentions: [],
         latestThreads: [],
         myMetrics: emptyChatMetrics(),
         notificationsMuted: false,
+        atEveryoneMuted: false,
         readByMeUpTo: undefined,
         archived: false,
         rulesAccepted: false,
+        lapsed: false,
     };
 }
 
@@ -1350,20 +1589,24 @@ export type ChatMembership = {
     latestThreads: ThreadSyncDetails[];
     myMetrics: Metrics;
     notificationsMuted: boolean;
+    atEveryoneMuted: boolean;
     readByMeUpTo: number | undefined;
     archived: boolean;
     rulesAccepted: boolean;
+    lapsed: boolean;
 };
 
 export type GroupCanisterSummaryResponse =
     | GroupCanisterGroupChatSummary
     | CallerNotInGroup
-    | CanisterNotFound;
+    | CanisterNotFound
+    | OCError;
 
 export type GroupCanisterSummaryUpdatesResponse =
     | GroupCanisterGroupChatSummaryUpdates
     | { kind: "success_no_updates" }
-    | CallerNotInGroup;
+    | CallerNotInGroup
+    | OCError;
 
 export type GroupCanisterGroupChatSummary = AccessControlled &
     Permissioned<ChatPermissions> & {
@@ -1378,21 +1621,29 @@ export type GroupCanisterGroupChatSummary = AccessControlled &
         latestMessage: EventWrapper<Message> | undefined;
         latestEventIndex: number;
         latestMessageIndex: number | undefined;
-        joined: bigint;
-        myRole: MemberRole;
         memberCount: number;
-        mentions: Mention[];
-        notificationsMuted: boolean;
         metrics: Metrics;
-        myMetrics: Metrics;
-        latestThreads: GroupCanisterThreadDetails[];
         dateLastPinned: bigint | undefined;
-        rulesAccepted: boolean;
         eventsTTL?: bigint;
         eventsTtlLastUpdated: bigint;
         localUserIndex: string;
-        videoCallInProgress?: number;
+        videoCallInProgress?: VideoCallInProgress;
+        messagesVisibleToNonMembers: boolean;
+        membership: GroupCanisterGroupMembership;
+        verified: boolean;
     };
+
+export type GroupCanisterGroupMembership = {
+    role: ChatPermissionRole;
+    notificationsMuted: boolean;
+    atEveryoneMuted: boolean;
+    lapsed: boolean;
+    joined: bigint;
+    rulesAccepted: boolean;
+    latestThreads: ThreadSyncDetails[];
+    mentions: Mention[];
+    myMetrics: Metrics;
+};
 
 export type UpdatedEvent = {
     eventIndex: number;
@@ -1412,22 +1663,30 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     latestEventIndex: number | undefined;
     latestMessageIndex: number | undefined;
     memberCount: number | undefined;
-    myRole: MemberRole | undefined;
-    mentions: Mention[];
     permissions: ChatPermissions | undefined;
-    notificationsMuted: boolean | undefined;
     metrics: Metrics | undefined;
-    myMetrics: Metrics | undefined;
-    latestThreads: GroupCanisterThreadDetails[];
-    unfollowedThreads: number[];
     frozen: OptionUpdate<boolean>;
     updatedEvents: UpdatedEvent[];
     dateLastPinned: bigint | undefined;
-    gate: OptionUpdate<AccessGate>;
-    rulesAccepted: boolean | undefined;
+    gateConfig: OptionUpdate<AccessGateConfig>;
     eventsTTL: OptionUpdate<bigint>;
     eventsTtlLastUpdated?: bigint;
-    videoCallInProgress: OptionUpdate<number>;
+    videoCallInProgress: OptionUpdate<VideoCallInProgress>;
+    messagesVisibleToNonMembers?: boolean;
+    membership: GroupMembershipUpdates | undefined;
+    verified?: boolean;
+};
+
+export type GroupMembershipUpdates = {
+    myRole: MemberRole | undefined;
+    notificationsMuted: boolean | undefined;
+    atEveryoneMuted: boolean | undefined;
+    lapsed: boolean | undefined;
+    unfollowedThreads: number[];
+    rulesAccepted: boolean | undefined;
+    latestThreads: GroupCanisterThreadDetails[];
+    mentions: Mention[];
+    myMetrics: Metrics | undefined;
 };
 
 export type GroupCanisterThreadDetails = {
@@ -1448,7 +1707,6 @@ export type GovernanceProposalsSubtype = {
 export type Mention = {
     messageId: bigint;
     eventIndex: number;
-    mentionedBy: string;
     messageIndex: number;
 };
 
@@ -1469,30 +1727,14 @@ export type CandidateGroupChat = AccessControlled &
         members: CandidateMember[];
         avatar?: DataContent;
         eventsTTL?: bigint;
+        messagesVisibleToNonMembers?: boolean;
+        externalUrl?: string;
+        verified: boolean;
     };
 
 export type CandidateChannel = CandidateGroupChat;
 
-// todo - there are all sorts of error conditions here that we need to deal with but - later
-export type CreateGroupResponse =
-    | CreateGroupSuccess
-    | CreateGroupInternalError
-    | CreateGroupNameTooShort
-    | CreateGroupNameTooLong
-    | CreateGroupNameReserved
-    | CreateGroupDescriptionTooLong
-    | GroupNameTaken
-    | AvatarTooBig
-    | MaxGroupsCreated
-    | CreateGroupThrottled
-    | GroupRulesTooShort
-    | GroupRulesTooLong
-    | UnauthorizedToCreatePublicGroup
-    | NotAuthorised
-    | CommunityFrozen
-    | UserSuspended
-    | Offline
-    | DefaultMustBePublic;
+export type CreateGroupResponse = CreateGroupSuccess | OCError | Offline;
 
 export type CreateGroupSuccess = {
     kind: "success";
@@ -1553,11 +1795,7 @@ export type MemberLimitReached = {
     kind: "member_limit_reached";
 };
 
-export type DefaultMustBePublic = {
-    kind: "default_must_be_public";
-};
-
-export type EditMessageResponse = "success" | "failure";
+export type EditMessageResponse = Success | OCError | Offline;
 
 export type SendMessageResponse =
     | SendMessageSuccess
@@ -1568,7 +1806,6 @@ export type SendMessageResponse =
     | TransferCannotBeZero
     | TransferCannotBeToSelf
     | SendMessageRecipientNotFound
-    | TransferFailed
     | TransferLimitExceeded
     | TransferSuccess
     | InvalidPoll
@@ -1579,13 +1816,22 @@ export type SendMessageResponse =
     | NotAuthorised
     | ThreadMessageNotFound
     | UserSuspended
+    | UserLapsed
     | Failure
     | ChatFrozen
     | RulesNotAccepted
     | Offline
     | CommunityRulesNotAccepted
     | P2PSwapSetUpFailed
-    | DuplicateMessageId;
+    | DuplicateMessageId
+    | PinNumberFailures
+    | MessageThrottled
+    | MessageAlreadyExists
+    | OCError;
+
+export type MessageAlreadyExists = {
+    kind: "message_already_exists";
+};
 
 export type SendMessageSuccess = {
     kind: "success";
@@ -1664,7 +1910,13 @@ export type GateCheckFailedReason =
     | "dissolve_delay_not_met"
     | "min_stake_not_met"
     | "payment_failed"
-    | "insufficient_balance";
+    | "insufficient_balance"
+    | "failed_verified_credential_check"
+    | "no_unique_person_proof"
+    | "not_lifetime_diamond"
+    | "locked"
+    | "not_referred_by_member"
+    | "chit_earned_too_low";
 
 export type ChatFrozenEvent = {
     kind: "chat_frozen";
@@ -1687,6 +1939,24 @@ export type P2PSwapSetUpFailed = {
 
 export type DuplicateMessageId = {
     kind: "duplicate_message_id";
+};
+
+export type MessageThrottled = {
+    kind: "message_throttled";
+};
+
+export type PinRequired = {
+    kind: "pin_required";
+};
+
+export type PinIncorrect = {
+    kind: "pin_incorrect";
+    nextRetryAt: bigint;
+};
+
+export type TooManyFailedPinAttempts = {
+    kind: "too_main_failed_pin_attempts";
+    nextRetryAt: bigint;
 };
 
 export type GateUpdatedEvent = {
@@ -1720,53 +1990,32 @@ export type EmptyEvent = {
     kind: "empty";
 };
 
-export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error" | "user_suspended";
+export type ExternalUrlUpdated = {
+    kind: "external_url_updated";
+    newUrl?: string;
+    updatedBy: string;
+};
 
-export type ChangeRoleResponse = "failure" | "success" | "offline";
-
-export type DeleteGroupResponse = "success" | "failure" | "offline";
-
-export type RemoveMemberResponse = "success" | "failure" | "offline";
-
-export type BlockUserResponse =
-    | "success"
-    | "group_not_public"
-    | "user_not_in_group"
-    | "caller_not_in_group"
-    | "not_authorized"
-    | "internal_error"
-    | "cannot_block_self"
-    | "cannot_block_user"
-    | "user_suspended"
-    | "chat_frozen"
-    | "offline";
-
-export type UnblockUserResponse =
-    | "success"
-    | "group_not_public"
-    | "cannot_unblock_self"
-    | "caller_not_in_group"
-    | "not_authorized"
-    | "user_suspended"
-    | "chat_frozen"
-    | "offline";
-
-export type LeaveGroupResponse = "success" | "owner_cannot_leave" | "failure" | "offline";
+export type SetAvatarResponse = Success | OCError | Offline;
+export type ChangeRoleResponse = Success | OCError | Offline;
+export type DeleteGroupResponse = Success | OCError | Offline;
+export type RemoveMemberResponse = Success | OCError | Offline | Failure;
+export type BlockUserResponse = Success | OCError | Offline;
+export type UnblockUserResponse = Success | OCError | Offline;
+export type LeaveGroupResponse = Success | OCError | Offline;
 
 export type JoinGroupResponse =
     | (Success & { group: MultiUserChat })
     | SuccessJoinedCommunity
     | GateCheckFailed
-    | UserBlocked
     | Failure
-    | Offline;
+    | Offline
+    | OCError;
 
 export type SuccessJoinedCommunity = {
     kind: "success_joined_community";
     community: CommunitySummary;
 };
-
-export type InviteUsersResponse = "success" | "failure";
 
 export type MarkReadRequest = {
     readUpTo: number | undefined;
@@ -1799,22 +2048,25 @@ export type UpdateGroupResponse =
     | { kind: "rules_too_short" }
     | { kind: "rules_too_long" }
     | { kind: "user_suspended" }
+    | { kind: "user_lapsed" }
     | { kind: "chat_frozen" }
     | { kind: "internal_error" }
     | { kind: "failure" }
-    | Offline;
+    | { kind: "access_gate_invalid" }
+    | Offline
+    | OCError;
 
 export type UpdatePermissionsResponse =
     | "success"
     | "not_authorized"
     | "not_in_group"
     | "user_suspended"
+    | "user_lapsed"
     | "chat_frozen"
     | "offline";
 
-export type AddRemoveReactionResponse = Success | Failure | Offline;
-
-export type DeleteMessageResponse = "success" | "failure" | "offline";
+export type AddRemoveReactionResponse = Success | OCError | Offline;
+export type DeleteMessageResponse = Success | OCError | Offline;
 
 export type UndeleteMessageResponse =
     | {
@@ -1822,26 +2074,24 @@ export type UndeleteMessageResponse =
           message: Message;
       }
     | Failure
+    | OCError
     | Offline;
 
-export type UnpinMessageResponse = "failure" | "success" | "offline";
+export type PushEventSuccess = {
+    kind: "success";
+    eventIndex: number;
+    timestamp: bigint;
+};
 
-export type PinMessageResponse =
-    | {
-          kind: "success";
-          eventIndex: number;
-          timestamp: bigint;
-      }
-    | NoChange
-    | Failure
-    | Offline;
+export type UnpinMessageResponse = PushEventSuccess | OCError | Offline;
+export type PinMessageResponse = PushEventSuccess | OCError | Offline;
 
 export type DeletedGroupMessageResponse =
     | {
           kind: "success";
           content: MessageContent;
       }
-    | Failure
+    | OCError
     | Offline;
 
 export type DeletedDirectMessageResponse =
@@ -1849,39 +2099,33 @@ export type DeletedDirectMessageResponse =
           kind: "success";
           content: MessageContent;
       }
-    | { kind: "chat_not_found" }
-    | { kind: "not_authorized" }
-    | { kind: "message_not_found" }
-    | { kind: "message_not_deleted" }
-    | { kind: "message_hard_deleted" }
+    | OCError
     | Offline;
 
-export type RegisterPollVoteResponse = "success" | "failure" | "offline";
-
-export type InviteCodeResponse = InviteCodeSuccess | NotAuthorised | Failure | Offline;
+export type RegisterPollVoteResponse = Success | OCError | Offline;
+export type InviteCodeResponse = InviteCodeSuccess | OCError | Offline | Failure;
 
 export type InviteCodeSuccess = {
     kind: "success";
     code?: string;
 };
 
-export type EnableInviteCodeResponse = EnableInviteCodeSuccess | NotAuthorised | Failure | Offline;
+export type EnableInviteCodeResponse = EnableInviteCodeSuccess | OCError | Offline | Failure;
 
 export type EnableInviteCodeSuccess = {
     kind: "success";
     code: string;
 };
 
-export type DisableInviteCodeResponse = "not_authorized" | "failure" | "success" | "offline";
-
-export type ResetInviteCodeResponse = ResetInviteCodeSuccess | NotAuthorised | Failure | Offline;
+export type DisableInviteCodeResponse = Success | OCError | Offline | Failure;
+export type ResetInviteCodeResponse = ResetInviteCodeSuccess | OCError | Offline | Failure;
 
 export type ResetInviteCodeSuccess = {
     kind: "success";
     code: string;
 };
 
-export type ThreadPreviewsResponse = Failure | ThreadPreviewsSuccess | Offline;
+export type ThreadPreviewsResponse = ThreadPreviewsSuccess | OCError | Offline;
 
 export type ThreadPreviewsSuccess = {
     kind: "thread_previews_success";
@@ -1916,22 +2160,7 @@ export type Metrics = {
     reactions: number;
 };
 
-export type RegisterProposalVoteResponse =
-    | "success"
-    | "already_voted"
-    | "caller_not_in_group"
-    | "user_not_in_channel"
-    | "channel_not_found"
-    | "user_not_in_community"
-    | "community_frozen"
-    | "no_eligible_neurons"
-    | "proposal_message_not_found"
-    | "proposal_not_found"
-    | "proposal_not_accepting_votes"
-    | "chat_frozen"
-    | "user_suspended"
-    | "internal_error"
-    | "offline";
+export type RegisterProposalVoteResponse = Success | OCError | Offline | Failure;
 
 export type ListNervousSystemFunctionsResponse = {
     reservedIds: bigint[];
@@ -2019,26 +2248,34 @@ export type SetCommunityModerationFlagsResponse =
     | "internal_error"
     | "offline";
 
-export type MarkPinnedMessagesReadResponse = "success" | "chat_frozen" | "offline";
-
-export type ClaimPrizeResponse = Success | Failure | Offline;
-
-export type DeclineInvitationResponse = "success" | "failure" | "offline";
+export type MarkPinnedMessagesReadResponse = Success | OCError | Offline;
+export type ClaimPrizeResponse = Success | OCError | Failure | Offline;
+export type DeclineInvitationResponse = Success | OCError | Offline;
 
 export type PublicGroupSummaryResponse =
     | (Success & { group: GroupChatSummary })
+    | OCError
     | Failure
+    | Offline
     | GroupMoved;
 
 export type GroupMoved = { kind: "group_moved"; location: ChannelIdentifier };
 
-export type TipMessageResponse = Success | Failure;
+export type TipMessageResponse = Success | OCError | Failure;
 
 export type GroupAndCommunitySummaryUpdatesArgs = {
     canisterId: string;
     isCommunity: boolean;
     inviteCode: bigint | undefined;
     updatesSince: bigint | undefined;
+};
+
+export type GroupAndCommunitySummaryUpdatesResponseBatch = {
+    timestamp: bigint;
+    updates: GroupAndCommunitySummaryUpdatesResponse[];
+    excessUpdates: string[];
+    errors: [string, OCError][];
+    notFound: string[];
 };
 
 export type GroupAndCommunitySummaryUpdatesResponse =
@@ -2059,66 +2296,154 @@ export type GroupAndCommunitySummaryUpdatesResponse =
           value: CommunityCanisterCommunitySummaryUpdates;
       }
     | {
-          kind: "no_updates";
+          kind: "not_found";
+          canisterId: string;
+      }
+    | { kind: "error"; error: string; canisterId: string };
+
+export type ChatEventsArgs = {
+    context: MessageContext;
+    args: ChatEventsArgsInner;
+    latestKnownUpdate: bigint | undefined;
+};
+
+export type ChatEventsArgsInner =
+    | {
+          kind: "page";
+          ascending: boolean;
+          startIndex: number;
+          eventIndexRange: [number, number];
       }
     | {
-          kind: "not_found";
+          kind: "by_index";
+          events: number[];
       }
-    | { kind: "error"; error: string };
+    | {
+          kind: "window";
+          midPoint: number;
+          eventIndexRange: [number, number];
+      };
+
+export type ReplicaNotUpToDate = {
+    kind: "replica_not_up_to_date";
+    replicaTimestamp: bigint;
+    clientTimestamp: bigint;
+};
+
+export type ChatEventsBatchResponse = {
+    responses: ChatEventsResponse[];
+    timestamp: bigint;
+};
+
+export type ChatEventsResponse =
+    | {
+          kind: "success";
+          result: EventsSuccessResult<ChatEvent>;
+      }
+    | ReplicaNotUpToDate
+    | { kind: "not_found" }
+    | { kind: "internal_error"; error: string }
+    | Failure
+    | OCError;
 
 export type AcceptP2PSwapResponse =
     | { kind: "success"; token1TxnIn: TransactionId }
-    | { kind: "already_reserved"; reservedBy: string }
-    | {
-          kind: "already_accepted";
-          acceptedBy: string;
-          token1TxnIn: TransactionId;
-      }
-    | {
-          kind: "already_completed";
-          acceptedBy: string;
-          token1TxnIn: TransactionId;
-          token0TxnOut: TransactionId;
-          token1TxnOut: TransactionId;
-      }
-    | { kind: "swap_cancelled"; token0TxnOut?: TransactionId }
-    | { kind: "swap_expired"; token0TxnOut?: TransactionId }
-    | { kind: "swap_not_found" }
-    | { kind: "channel_not_found" }
-    | { kind: "chat_not_found" }
-    | { kind: "user_suspended" }
-    | { kind: "user_not_in_group" }
-    | { kind: "user_not_in_community" }
-    | { kind: "user_not_in_channel" }
-    | { kind: "chat_frozen" }
-    | { kind: "insufficient_funds" }
+    | OCError
     | { kind: "internal_error"; text: string };
 
-export type CancelP2PSwapResponse =
-    | { kind: "success" }
-    | { kind: "already_reserved"; reservedBy: string }
-    | {
-          kind: "already_accepted";
-          acceptedBy: string;
-          token1TxnIn: TransactionId;
-      }
-    | {
-          kind: "already_completed";
-          acceptedBy: string;
-          token1TxnIn: TransactionId;
-          token0TxnOut: TransactionId;
-          token1TxnOut: TransactionId;
-      }
-    | { kind: "swap_cancelled"; token0TxnOut?: TransactionId }
-    | { kind: "swap_expired"; token0TxnOut?: TransactionId }
-    | { kind: "swap_not_found" }
-    | { kind: "chat_not_found" }
-    | { kind: "channel_not_found" }
-    | { kind: "user_suspended" }
-    | { kind: "user_not_in_group" }
-    | { kind: "user_not_in_community" }
-    | { kind: "user_not_in_channel" }
-    | { kind: "chat_frozen" }
-    | { kind: "internal_error"; text: string };
+export type CancelP2PSwapResponse = Success | OCError | { kind: "internal_error"; text: string };
+export type JoinVideoCallResponse = Success | OCError | Offline;
 
-export type JoinVideoCallResponse = "success" | "failure" | "ended";
+export type VideoCallPresence = "default" | "owner" | "hidden";
+
+export type SetVideoCallPresenceResponse = Success | OCError | Offline;
+
+export type VideoCallParticipants = {
+    participants: VideoCallParticipant[];
+    hidden: VideoCallParticipant[];
+    lastUpdated: bigint;
+};
+
+export type VideoCallParticipantsResponse = (Success & VideoCallParticipants) | OCError | Offline;
+
+export type SetPinNumberResponse =
+    | Success
+    | PinNumberFailures
+    | { kind: "too_short"; minLength: number }
+    | { kind: "too_long"; maxLength: number }
+    | { kind: "delegation_too_old" }
+    | { kind: "malformed_signature" }
+    | OCError;
+
+export type PinNumberFailures = PinRequired | PinIncorrect | TooManyFailedPinAttempts;
+
+export type MessageFilter = {
+    id: bigint;
+    regex: RegExp;
+};
+
+export type UnconfirmedMessageEvent = EventWrapper<Message> & { accepted: boolean };
+
+export type UnconfirmedState = Map<bigint, UnconfirmedMessageEvent>;
+
+export type NewUnconfirmedMessage = {
+    timestamp: bigint;
+    expiresAt?: number;
+    messageId: bigint;
+    sender: string;
+    content: MessageContent;
+    repliesTo?: ReplyContext;
+    forwarded: boolean;
+    blockLevelMarkdown: boolean;
+    senderContext?: SenderContext;
+};
+
+export type VideoCallInProgress = {
+    started: bigint;
+    startedBy: string;
+    messageIndex: number;
+    messageId: bigint;
+    callType: "default" | "broadcast";
+    joinedByCurrentUser: boolean;
+};
+
+export type PinnedByScope = Map<ChatListScope["kind"], ChatIdentifier[]>;
+
+export type ChatEventType =
+    | "Message"
+    | "MessageEdited"
+    | "MessageReaction"
+    | "MessageTipped"
+    | "MessageDeleted"
+    | "MessageUndeleted"
+    | "MessagePollVote"
+    | "MessagePollEnded"
+    | "MessagePrizeClaim"
+    | "MessageP2pSwapCompleted"
+    | "MessageP2pSwapCancelled"
+    | "MessageVideoCall"
+    | "MessageOther"
+    | "Created"
+    | "NameChanged"
+    | "DescriptionChanged"
+    | "RulesChanged"
+    | "AvatarChanged"
+    | "ExternalUrlUpdated"
+    | "PermissionsChanged"
+    | "GateUpdated"
+    | "VisibilityChanged"
+    | "InviteCodeChanged"
+    | "Frozen"
+    | "Unfrozen"
+    | "DisappearingMessagesUpdated"
+    | "MessagePinned"
+    | "MessageUnpinned"
+    | "MembersJoined"
+    | "MembersLeft"
+    | "RoleChanged"
+    | "UsersInvited"
+    | "UsersBlocked"
+    | "UsersUnblocked"
+    | "BotAdded"
+    | "BotRemoved"
+    | "BotUpdated";

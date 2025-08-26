@@ -1,122 +1,148 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::update_candid_and_msgpack;
+use crate::guards::caller_is_local_user_index;
+use crate::{CommunityEventPusher, RuntimeState, execute_update};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::Reader;
-use community_canister::add_reaction::{Response::*, *};
-use group_chat_core::{AddRemoveReactionResult, GroupChatCore};
-use types::{ChannelReactionAddedNotification, EventIndex, EventWrapper, Message, Notification, UserId};
+use community_canister::{add_reaction::*, c2c_bot_add_reaction};
+use oc_error_codes::OCErrorCode;
+use types::{
+    Achievement, BotCaller, BotPermissions, Caller, ChannelReactionAddedNotification, ChannelUserNotificationPayload, Chat,
+    ChatPermission, CommunityId, EventIndex, OCResult,
+};
+use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
-#[update_candid_and_msgpack]
+#[update(msgpack = true)]
 #[trace]
 fn add_reaction(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| add_reaction_impl(args, state))
+    execute_update(|state| add_reaction_impl(args, None, state)).into()
 }
 
-fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if state.data.is_frozen() {
-        return CommunityFrozen;
-    }
-
-    let caller = state.env.caller();
-    if let Some(member) = state.data.members.get(caller) {
-        if member.suspended.value {
-            return UserSuspended;
-        }
-
-        let user_id = member.user_id;
-
-        if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-            let now = state.env.now();
-            match channel.chat.add_reaction(
-                user_id,
-                args.thread_root_message_index,
-                args.message_id,
-                args.reaction.clone(),
-                now,
-                &mut state.data.event_store_client,
-            ) {
-                AddRemoveReactionResult::Success => {
-                    if let Some(message) = should_push_notification(&args, user_id, &channel.chat) {
-                        push_notification(
-                            args,
-                            user_id,
-                            channel.chat.name.value.clone(),
-                            channel.chat.avatar.as_ref().map(|d| d.id),
-                            message,
-                            member.display_name().value.clone(),
-                            state,
-                        );
-                    }
-                    handle_activity_notification(state);
-                    Success
-                }
-                AddRemoveReactionResult::NoChange => NoChange,
-                AddRemoveReactionResult::InvalidReaction => InvalidReaction,
-                AddRemoveReactionResult::MessageNotFound => MessageNotFound,
-                AddRemoveReactionResult::UserNotInGroup => UserNotInChannel,
-                AddRemoveReactionResult::NotAuthorized => NotAuthorized,
-                AddRemoveReactionResult::UserSuspended => UserSuspended,
-            }
-        } else {
-            ChannelNotFound
-        }
-    } else {
-        UserNotInCommunity
-    }
+#[update(guard = "caller_is_local_user_index", msgpack = true)]
+#[trace]
+fn c2c_bot_add_reaction(args: c2c_bot_add_reaction::Args) -> c2c_bot_add_reaction::Response {
+    execute_update(|state| c2c_bot_add_reaction_impl(args, state).into())
 }
 
-fn should_push_notification(args: &Args, user_id: UserId, chat: &GroupChatCore) -> Option<EventWrapper<Message>> {
-    let message = chat
-        .events
-        .events_reader(EventIndex::default(), args.thread_root_message_index)
-        // We pass in `None` in place of `my_user_id` because we don't want to hydrate
-        // the notification with data for the current user (eg. their poll votes).
-        .and_then(|events_reader| events_reader.message_event(args.message_id.into(), None))?;
+fn c2c_bot_add_reaction_impl(args: c2c_bot_add_reaction::Args, state: &mut RuntimeState) -> OCResult {
+    let bot_caller = BotCaller {
+        bot: args.bot_id,
+        initiator: args.initiator.clone(),
+    };
 
-    let sender = message.event.sender;
-
-    if sender != user_id {
-        let notifications_muted = chat
-            .members
-            .get(&sender)
-            .map_or(true, |m| m.notifications_muted.value || m.suspended.value);
-
-        if !notifications_muted {
-            return Some(message);
-        }
-    }
-
-    None
-}
-
-fn push_notification(
-    args: Args,
-    user_id: UserId,
-    channel_name: String,
-    channel_avatar_id: Option<u128>,
-    message_event: EventWrapper<Message>,
-    member_display_name: Option<String>,
-    state: &mut RuntimeState,
-) {
-    let recipient = message_event.event.sender;
-    let notification = Notification::ChannelReactionAdded(ChannelReactionAddedNotification {
-        community_id: state.env.canister_id().into(),
+    let args = Args {
         channel_id: args.channel_id,
-        thread_root_message_index: args.thread_root_message_index,
-        message_index: message_event.event.message_index,
-        message_event_index: message_event.index,
-        community_name: state.data.name.clone(),
-        channel_name,
-        added_by: user_id,
-        added_by_name: args.username,
-        added_by_display_name: member_display_name.or(args.display_name),
+        thread_root_message_index: args.thread,
+        message_id: args.message_id,
         reaction: args.reaction,
-        community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
-        channel_avatar_id,
-    });
+        username: args.bot_name,
+        display_name: None,
+        new_achievement: false,
+    };
 
-    state.push_notification(vec![recipient], notification);
+    if !state.data.is_bot_permitted(
+        &bot_caller.bot,
+        Some(args.channel_id),
+        &bot_caller.initiator,
+        &BotPermissions::from_chat_permission(ChatPermission::ReactToMessages),
+    ) {
+        return Err(OCErrorCode::InitiatorNotAuthorized.into());
+    }
+
+    add_reaction_impl(args, Some(Caller::BotV2(bot_caller)), state)
+}
+
+fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut RuntimeState) -> OCResult {
+    state.data.verify_not_frozen()?;
+
+    let caller = state.verified_caller(ext_caller)?;
+    let new_achievement = args.new_achievement;
+    let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
+    let now = state.env.now();
+    let agent = caller.agent();
+
+    let result = channel.chat.add_reaction(
+        caller,
+        args.thread_root_message_index,
+        args.message_id,
+        args.reaction.clone(),
+        now,
+        CommunityEventPusher {
+            now,
+            rng: state.env.rng(),
+            queue: &mut state.data.local_user_index_event_sync_queue,
+        },
+    )?;
+
+    if let Some((message, event_index)) =
+        channel
+            .chat
+            .events
+            .message_internal(EventIndex::default(), args.thread_root_message_index, args.message_id.into())
+    {
+        if let Some(sender) = channel.chat.members.get(&message.sender)
+            && message.sender != agent
+            && !sender.user_type().is_bot()
+        {
+            let community_id: CommunityId = state.env.canister_id().into();
+
+            let notifications_muted = channel
+                .chat
+                .members
+                .get(&message.sender)
+                .is_none_or(|m| m.notifications_muted().value || m.suspended().value);
+
+            if !notifications_muted {
+                let display_name = state
+                    .data
+                    .members
+                    .get_by_user_id(&agent)
+                    .and_then(|m| m.display_name().value.clone())
+                    .or(args.display_name);
+                let channel_avatar_id = channel.chat.avatar.as_ref().map(|d| d.id);
+
+                let notification = ChannelUserNotificationPayload::ChannelReactionAdded(ChannelReactionAddedNotification {
+                    community_id,
+                    channel_id: args.channel_id,
+                    thread_root_message_index: args.thread_root_message_index,
+                    message_index: message.message_index,
+                    message_event_index: event_index,
+                    community_name: state.data.name.value.clone(),
+                    channel_name: channel.chat.name.value.clone(),
+                    added_by: agent,
+                    added_by_name: args.username,
+                    added_by_display_name: display_name,
+                    reaction: args.reaction,
+                    community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
+                    channel_avatar_id,
+                });
+
+                state.push_notification(Some(agent), vec![message.sender], notification);
+            }
+
+            state.push_event_to_user(
+                message.sender,
+                CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
+                    chat: Chat::Channel(community_id, args.channel_id),
+                    thread_root_message_index: args.thread_root_message_index,
+                    message_index: message.message_index,
+                    message_id: message.message_id,
+                    event_index,
+                    activity: MessageActivity::Reaction,
+                    timestamp: now,
+                    user_id: Some(agent),
+                }),
+                now,
+            );
+
+            state.notify_user_of_achievement(message.sender, Achievement::HadMessageReactedTo, now);
+        }
+
+        if new_achievement {
+            state.notify_user_of_achievement(agent, Achievement::ReactedToMessage, now);
+        }
+    }
+
+    state.push_bot_notification(result.bot_notification);
+    handle_activity_notification(state);
+    Ok(())
 }

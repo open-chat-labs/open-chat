@@ -1,26 +1,64 @@
-import type { Identity } from "@dfinity/agent";
-import { Principal } from "@dfinity/principal";
-import { idlFactory, type ProposalsBotService } from "./candid/idl";
-import { CandidService } from "../candidService";
-import type { AgentConfig } from "../../config";
-import type { StakeNeuronForSubmittingProposalsResponse } from "openchat-shared";
-import { stakeNeuronForSubmittingProposalsResponse } from "./mappers";
+import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
+import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
+import {
+    type CandidateProposal,
+    nowNanos,
+    type StakeNeuronForSubmittingProposalsResponse,
+    type SubmitProposalResponse,
+    type TopUpNeuronResponse,
+} from "openchat-shared";
+import {
+    proposalToSubmit,
+    stakeNeuronForSubmittingProposalsResponse,
+    submitProposalResponse,
+    topUpNeuronResponse,
+} from "./mappers";
+import { principalStringToBytes } from "../../utils/mapping";
+import {
+    ProposalsBotStakeNeuronForSubmittingProposalsArgs,
+    ProposalsBotStakeNeuronForSubmittingProposalsResponse,
+    ProposalsBotSubmitProposalArgs,
+    ProposalsBotSubmitProposalResponse,
+    ProposalsBotTopUpNeuronArgs,
+    ProposalsBotTopUpNeuronResponse,
+} from "../../typebox";
+import { principalToIcrcAccount } from "../common/chatMappersV2";
 
-export class ProposalsBotClient extends CandidService {
-    private service: ProposalsBotService;
-
-    private constructor(identity: Identity, config: AgentConfig) {
-        super(identity);
-
-        this.service = this.createServiceClient<ProposalsBotService>(
-            idlFactory,
-            config.proposalBotCanister,
-            config,
-        );
+export class ProposalsBotClient extends MsgpackCanisterAgent {
+    constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
+        super(identity, agent, canisterId, "ProposalsBot");
     }
 
-    static create(identity: Identity, config: AgentConfig): ProposalsBotClient {
-        return new ProposalsBotClient(identity, config);
+    submitProposal(
+        userId: string,
+        governanceCanisterId: string,
+        proposal: CandidateProposal,
+        ledger: string,
+        token: string,
+        proposalRejectionFee: bigint,
+        transactionFee: bigint,
+    ): Promise<SubmitProposalResponse> {
+        const args = {
+            governance_canister_id: principalStringToBytes(governanceCanisterId),
+            proposal: proposalToSubmit(proposal),
+            transaction: {
+                ledger: principalStringToBytes(ledger),
+                token_symbol: token,
+                amount: proposalRejectionFee + transactionFee,
+                from: principalToIcrcAccount(userId),
+                to: principalToIcrcAccount(this.canisterId),
+                fee: transactionFee,
+                memo: undefined,
+                created: nowNanos(),
+            },
+        };
+        return this.executeMsgpackUpdate(
+            "submit_proposal",
+            args,
+            submitProposalResponse,
+            ProposalsBotSubmitProposalArgs,
+            ProposalsBotSubmitProposalResponse,
+        );
     }
 
     stakeNeuronForSubmittingProposals(
@@ -28,13 +66,29 @@ export class ProposalsBotClient extends CandidService {
         stake: bigint,
     ): Promise<StakeNeuronForSubmittingProposalsResponse> {
         const args = {
-            governance_canister_id: Principal.fromText(governanceCanisterId),
+            governance_canister_id: principalStringToBytes(governanceCanisterId),
             stake,
         };
-        return this.handleResponse(
-            this.service.stake_neuron_for_submitting_proposals(args),
-            stakeNeuronForSubmittingProposalsResponse,
+        return this.executeMsgpackUpdate(
+            "stake_neuron_for_submitting_proposals",
             args,
+            stakeNeuronForSubmittingProposalsResponse,
+            ProposalsBotStakeNeuronForSubmittingProposalsArgs,
+            ProposalsBotStakeNeuronForSubmittingProposalsResponse,
+        );
+    }
+
+    topUpNeuron(governanceCanisterId: string, amount: bigint): Promise<TopUpNeuronResponse> {
+        const args = {
+            governance_canister_id: principalStringToBytes(governanceCanisterId),
+            amount,
+        };
+        return this.executeMsgpackUpdate(
+            "top_up_neuron",
+            args,
+            topUpNeuronResponse,
+            ProposalsBotTopUpNeuronArgs,
+            ProposalsBotTopUpNeuronResponse,
         );
     }
 }

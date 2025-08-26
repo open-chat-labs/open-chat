@@ -30,6 +30,7 @@ export function getTheme(base: Theme): Theme {
     base.collapsible.closed.header.txt = txt;
     base.collapsible.open.header.arrow = white;
     base.accent = raspberry;
+    base.progress.fill = lightPurple;
     base.panel.left.bg = veryDarkGray;
     base.panel.right.modal = lighterDarkGray;
     base.modal.bd = darkGray;
@@ -65,12 +66,22 @@ export function getTheme(base: Theme): Theme {
     base.link.underline = white;
     base.scrollbar.bg = raspberry;
     base.toast.success.bg = base.notificationBar.bg;
-    base.code = white;
+    base.code = {
+        txt: white,
+        bg: "black",
+    };
     base.entry.input.sh = "none";
     base.input.sh = "none";
     base.chatSearch.sh = "none";
     base.recommended.bg = raspberry;
     base.unread["mute-solid"] = raspberry;
+
+    base.audio.outer = lightPurple;
+    base.audio.me.outer = lightPurple;
+    base.audio.inner = silver;
+    base.audio.me.inner = silver;
+    base.audio.note = txt;
+    base.audio.me.note = txt;
 
     return base;
 }

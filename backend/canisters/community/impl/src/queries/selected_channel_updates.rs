@@ -1,37 +1,29 @@
-use crate::{read_state, RuntimeState};
+use crate::{RuntimeState, read_state};
+use canister_api_macros::query;
 use community_canister::selected_channel_updates_v2::{Response::*, *};
-use ic_cdk_macros::query;
+use types::OCResult;
 
-#[query]
-fn selected_channel_updates(args: Args) -> community_canister::selected_channel_updates::Response {
-    read_state(|state| selected_channel_updates_impl(args, state)).into()
-}
-
-#[query]
+#[query(msgpack = true)]
 fn selected_channel_updates_v2(args: Args) -> Response {
-    read_state(|state| selected_channel_updates_impl(args, state))
+    read_state(|state| selected_channel_updates_impl(args, state)).unwrap_or_else(Error)
 }
 
-fn selected_channel_updates_impl(args: Args, state: &RuntimeState) -> Response {
-    if let Some(channel) = state.data.channels.get(&args.channel_id) {
-        let last_updated = channel.chat.details_last_updated();
-        if last_updated <= args.updates_since {
-            return SuccessNoUpdates(last_updated);
-        }
+fn selected_channel_updates_impl(args: Args, state: &RuntimeState) -> OCResult<Response> {
+    let channel = state.data.channels.get_or_err(&args.channel_id)?;
+    let last_updated = channel.details_last_updated();
 
-        let caller = state.env.caller();
-        if !state.data.is_accessible(caller, None) {
-            return PrivateCommunity;
-        }
-
-        let user_id = state.data.members.lookup_user_id(caller);
-
-        match channel.chat.selected_group_updates(args.updates_since, user_id) {
-            Some(updates) if updates.has_updates() => Success(updates),
-            Some(_) => SuccessNoUpdates(last_updated),
-            None => PrivateChannel,
-        }
-    } else {
-        ChannelNotFound
+    if last_updated <= args.updates_since {
+        return Ok(SuccessNoUpdates(last_updated));
     }
+
+    let caller = state.env.caller();
+    state.data.verify_is_accessible(caller, None)?;
+
+    let user_id = state.data.members.lookup_user_id(caller);
+
+    let updates = channel
+        .chat
+        .selected_group_updates(args.updates_since, last_updated, user_id)?;
+
+    Ok(if updates.has_updates() { Success(updates) } else { SuccessNoUpdates(last_updated) })
 }

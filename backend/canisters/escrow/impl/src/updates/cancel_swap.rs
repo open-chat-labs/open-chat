@@ -1,9 +1,9 @@
-use crate::{mutate_state, RuntimeState};
-use canister_api_macros::update_candid_and_msgpack;
+use crate::{RuntimeState, mutate_state};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use escrow_canister::cancel_swap::{Response::*, *};
 
-#[update_candid_and_msgpack]
+#[update(candid = true, msgpack = true)]
 #[trace]
 fn cancel_swap(args: Args) -> Response {
     mutate_state(|state| cancel_swap_impl(args, state))

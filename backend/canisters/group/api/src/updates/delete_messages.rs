@@ -1,22 +1,14 @@
-use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{MessageId, MessageIndex};
+use ts_export::ts_export;
+use types::{MessageId, MessageIndex, UnitResult};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(group, delete_messages)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_ids: Vec<MessageId>,
     pub as_platform_moderator: Option<bool>,
-    pub correlation_id: u64,
+    pub new_achievement: bool,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    CallerNotInGroup,
-    MessageNotFound,
-    UserSuspended,
-    ChatFrozen,
-    NotPlatformModerator,
-    InternalError(String),
-}
+pub type Response = UnitResult;

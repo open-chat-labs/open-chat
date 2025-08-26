@@ -1,0 +1,10 @@
+[package]
+name = "principal_to_user_id_map"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+ic_principal = { workspace = true }
+stable_memory_map = { path = "../stable_memory_map" }
+types = { path = "../types" }
+serde = { workspace = true }

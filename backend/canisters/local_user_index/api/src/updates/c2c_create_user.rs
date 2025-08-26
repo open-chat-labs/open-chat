@@ -1,4 +1,5 @@
 use candid::Principal;
+use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{MessageContent, UserId};
 
@@ -13,7 +14,5 @@ pub struct Args {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(UserId),
-    AlreadyRegistered,
-    CyclesBalanceTooLow,
-    InternalError(String),
+    Error(OCError),
 }

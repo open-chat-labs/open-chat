@@ -1,8 +1,9 @@
-use candid::Principal;
+use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
-    CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, MessageContent, MessageContentInitial, MessageId, MessageIndex,
-    User, UserId,
+    BotInstallationLocation, CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, MessageContent, MessageContentInitial,
+    MessageId, MessageIndex, NotifyChit, PremiumItemPurchase, StreakInsuranceClaim, StreakInsurancePayment, TimestampMillis,
+    UniquePersonProof, User, UserId,
 };
 
 mod lifecycle;
@@ -14,13 +15,25 @@ pub use queries::*;
 pub use updates::*;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum Event {
+pub enum LocalUserIndexEvent {
     UserRegistered(Box<UserRegistered>),
     UserJoinedGroup(Box<UserJoinedGroup>),
     UserJoinedCommunityOrChannel(Box<UserJoinedCommunityOrChannel>),
-    JoinUserToGroup(Box<JoinUserToGroup>),
     OpenChatBotMessage(Box<OpenChatBotMessage>),
     OpenChatBotMessageV2(Box<OpenChatBotMessageV2>),
+    UserDeleted(Box<UserDeleted>),
+    UserSetProfileBackground(Box<(UserId, Option<u128>)>),
+    NotifyUniquePersonProof(Box<(UserId, UniquePersonProof)>),
+    NotifyChit(Box<(UserId, NotifyChit)>),
+    NotifyPremiumItemPurchased(Box<(UserId, PremiumItemPurchase)>),
+    NotifyStreakInsurancePayment(Box<StreakInsurancePayment>),
+    NotifyStreakInsuranceClaim(Box<StreakInsuranceClaim>),
+    BotInstalled(Box<BotInstalled>),
+    BotUninstalled(Box<BotUninstalled>),
+    UserBlocked(UserId, UserId),
+    UserUnblocked(UserId, UserId),
+    SetMaxStreak(UserId, u16),
+    NotifyOfUserDeleted(CanisterId, UserId),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -38,6 +51,7 @@ pub struct UserJoinedGroup {
     pub chat_id: ChatId,
     pub local_user_index_canister_id: CanisterId,
     pub latest_message_index: Option<MessageIndex>,
+    pub group_canister_timestamp: TimestampMillis,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -46,6 +60,7 @@ pub struct UserJoinedCommunityOrChannel {
     pub community_id: CommunityId,
     pub local_user_index_canister_id: CanisterId,
     pub channels: Vec<ChannelLatestMessageIndex>,
+    pub community_canister_timestamp: TimestampMillis,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -66,4 +81,43 @@ pub struct OpenChatBotMessageV2 {
     pub thread_root_message_id: Option<MessageId>,
     pub content: MessageContentInitial,
     pub mentioned: Vec<User>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct UserDeleted {
+    pub user_id: UserId,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ExternalAchievementInitial {
+    pub id: u32,
+    pub name: String,
+    pub logo: String,
+    pub url: String,
+    pub canister_id: CanisterId,
+    pub chit_reward: u32,
+    pub expires: TimestampMillis,
+    pub chit_budget: u32,
+    pub submitted_by: UserId,
+    pub payment_block_index: Option<u64>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum ChildCanisterType {
+    LocalUserIndex,
+    User,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BotInstalled {
+    pub bot_id: UserId,
+    pub location: BotInstallationLocation,
+    pub installed_by: UserId,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BotUninstalled {
+    pub bot_id: UserId,
+    pub location: BotInstallationLocation,
+    pub uninstalled_by: UserId,
 }

@@ -1,0 +1,8 @@
+[package]
+name = "principal_generator"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+data-encoding = { workspace = true }
+ic_principal = { workspace = true }

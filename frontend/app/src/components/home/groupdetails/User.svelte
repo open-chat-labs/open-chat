@@ -1,68 +1,96 @@
-<svelte:options immutable />
-
 <script lang="ts">
-    import Avatar from "../../Avatar.svelte";
-    // import { _ } from "svelte-i18n";
-    import { createEventDispatcher, getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
-    import { AvatarSize } from "openchat-client";
-    import FilteredUsername from "../../FilteredUsername.svelte";
+    import {
+        AvatarSize,
+        selectedChatWebhooksStore,
+        selectedCommunityMembersStore,
+    } from "openchat-client";
     import type { UserSummary } from "openchat-shared";
-    import type { ProfileLinkClickedEvent } from "../../web-components/profileLink";
-    import Diamond from "../../icons/Diamond.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import { getContext, type Snippet } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import Avatar from "../../Avatar.svelte";
+    import FilteredUsername from "../../FilteredUsername.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import type { ProfileLinkClickedEvent } from "../../web-components/profileLink";
+    import Badges from "../profile/Badges.svelte";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
-    export let user: UserSummary;
-    export let me: boolean = false;
-    export let searchTerm: string = "";
-    export let role: string | undefined = undefined;
-    export let profile = true;
+    interface Props {
+        user: UserSummary;
+        me?: boolean;
+        searchTerm?: string;
+        role?: string | undefined;
+        profile?: boolean;
+        children?: Snippet;
+        onClick?: () => void;
+    }
+
+    let {
+        user,
+        me = false,
+        searchTerm = "",
+        role = undefined,
+        profile = true,
+        children,
+        onClick,
+    }: Props = $props();
 
     // if search term is !== "", split the username into three parts [prefix, match, postfix]
 
-    let hovering = false;
+    let hovering = $state(false);
 
-    $: communityMembers = client.currentCommunityMembers;
-    $: displayName = client.getDisplayName(user, $communityMembers);
+    let displayName = $derived(
+        client.getDisplayName(
+            user.userId,
+            $selectedCommunityMembersStore,
+            $selectedChatWebhooksStore,
+        ),
+    );
 
-    function onClick(ev: Event) {
+    function click(ev: Event) {
         if (profile) {
             ev.target?.dispatchEvent(
                 new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
-                    detail: { userId: user.userId, chatButton: !me, inGlobalContext: false },
+                    detail: {
+                        userId: user.userId,
+                        chatButton: !me,
+                        inGlobalContext: false,
+                    },
                     bubbles: true,
                 }),
             );
         }
 
-        dispatch("click");
+        onClick?.();
     }
 </script>
 
-<!-- svelte-ignore a11y-interactive-supports-focus -->
+<!-- svelte-ignore a11y_interactive_supports_focus -->
 <div
     class="member"
     class:me
-    on:click={onClick}
+    onclick={click}
     role="button"
-    on:mouseenter={() => (hovering = true)}
-    on:mouseleave={() => (hovering = false)}>
+    onmouseenter={() => (hovering = true)}
+    onmouseleave={() => (hovering = false)}>
     <span class="avatar">
         <Avatar
             statusBorder={hovering && !me ? "var(--members-hv)" : "transparent"}
             userId={user.userId}
             url={client.userAvatarUrl(user)}
+            maxStreak={user.maxStreak >= 365}
             size={AvatarSize.Default} />
     </span>
     <div class="details">
         <div class="display-name">
             <h4>
                 <FilteredUsername {searchTerm} username={displayName} {me} />
-                <Diamond status={user.diamondStatus} />
+                <Badges
+                    uniquePerson={user.isUniquePerson}
+                    diamondStatus={user.diamondStatus}
+                    streak={user.streak}
+                    chitEarned={user.totalChitEarned} />
             </h4>
             {#if role !== undefined}
                 <span class="role">
@@ -74,7 +102,7 @@
             <FilteredUsername {searchTerm} username={"@" + user.username} />
         </div>
     </div>
-    <slot />
+    {@render children?.()}
 </div>
 
 <style lang="scss">

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg viewBox="0 0 130 120" xmlns="http://www.w3.org/2000/svg">
+  <defs/>
+  <rect style="stroke: rgb(0, 0, 0); stroke-width: 0px; fill: rgb(3, 176, 159);" width="130" height="120" rx="10" ry="10"/>
+  <rect x="15" y="20" width="100" height="20" style="stroke: rgb(0, 0, 0); stroke-width: 0px; fill: rgb(254, 192, 0);"/>
+  <rect x="15" y="50" width="100" height="20" style="stroke: rgb(0, 0, 0); stroke-width: 0px; fill: rgb(254, 192, 0);"/>
+  <rect x="15" y="80" width="100" height="20" style="stroke: rgb(0, 0, 0); stroke-width: 0px; fill: rgb(254, 192, 0);"/>
+</svg>

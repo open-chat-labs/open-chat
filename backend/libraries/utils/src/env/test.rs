@@ -1,7 +1,7 @@
 use crate::env::Environment;
 use candid::Principal;
-use rand::rngs::StdRng;
 use rand::SeedableRng;
+use rand::rngs::StdRng;
 use types::{CanisterId, Cycles, TimestampNanos};
 
 pub struct TestEnv {
@@ -9,6 +9,7 @@ pub struct TestEnv {
     pub caller: Principal,
     pub canister_id: Principal,
     pub cycles_balance: Cycles,
+    pub liquid_cycles_balance: Cycles,
     pub rng: StdRng,
 }
 
@@ -29,6 +30,10 @@ impl Environment for TestEnv {
         self.cycles_balance
     }
 
+    fn liquid_cycles_balance(&self) -> Cycles {
+        self.liquid_cycles_balance
+    }
+
     fn rng(&mut self) -> &mut StdRng {
         &mut self.rng
     }
@@ -45,6 +50,7 @@ impl Default for TestEnv {
             caller: Principal::from_slice(&[1]),
             canister_id: Principal::from_slice(&[1, 2, 3]),
             cycles_balance: 1_000_000_000_000,
+            liquid_cycles_balance: 500_000_000_000,
             rng: StdRng::seed_from_u64(0),
         }
     }

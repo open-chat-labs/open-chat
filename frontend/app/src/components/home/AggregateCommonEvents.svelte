@@ -1,32 +1,28 @@
-<svelte:options immutable />
-
 <script lang="ts">
-    import type { ChatIdentifier, Level, OpenChat, UserLookup, UserSummary } from "openchat-client";
+    import type { Level, MemberRole, OpenChat, UserLookup, UserSummary } from "openchat-client";
+    import { allUsersStore, roleAsText } from "openchat-client";
     import { getContext, onDestroy, onMount } from "svelte";
     import { _ } from "svelte-i18n";
-    import Markdown from "./Markdown.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
+    import { buildDisplayName } from "../../utils/user";
+    import Markdown from "./Markdown.svelte";
 
-    export let chatId: ChatIdentifier;
-    export let user: UserSummary | undefined;
-    export let joined: Set<string>;
-    export let messagesDeleted: number[];
-    export let observer: IntersectionObserver;
-    export let readByMe: boolean;
-    export let level: Level;
+    interface Props {
+        user: UserSummary | undefined;
+        joined: Set<string>;
+        messagesDeleted: number[];
+        rolesChanged: Map<string, Map<MemberRole, Set<string>>>;
+        observer?: IntersectionObserver;
+        readByMe: boolean;
+        level: Level;
+    }
 
-    let deletedMessagesElement: HTMLElement;
+    let { user, joined, messagesDeleted, rolesChanged, observer, readByMe, level }: Props =
+        $props();
+
+    let deletedMessagesElement: HTMLElement | undefined = $state();
 
     const client = getContext<OpenChat>("client");
-
-    $: userStore = client.userStore;
-    $: joinedText = buildJoinedText($userStore, joined);
-    $: deletedText =
-        messagesDeleted.length > 0
-            ? messagesDeleted.length === 1
-                ? $_("oneMessageDeleted")
-                : $_("nMessagesDeleted", { values: { number: messagesDeleted.length } })
-            : undefined;
 
     onMount(() => {
         if (!readByMe && deletedMessagesElement) {
@@ -59,7 +55,7 @@
                     i18nKey(
                         "userJoined",
                         {
-                            username: buildUserList(userStore, userIds),
+                            username: buildUserList(userStore, Array.from(userIds)),
                         },
                         level,
                         true,
@@ -68,11 +64,43 @@
               : undefined;
     }
 
-    function buildUserList(userStore: UserLookup, userIds: Set<string>): string {
+    function buildRoleChangedTextList(
+        userStore: UserLookup,
+        rolesChanged: Map<string, Map<MemberRole, Set<string>>>,
+    ): string[] {
+        return [...rolesChanged.entries()].flatMap(([changedBy, changedByMap]) => {
+            const me = changedBy === user?.userId;
+            const changedByStr = buildDisplayName(userStore, changedBy, me ? "me" : "user");
+
+            return [...changedByMap.entries()].flatMap(([newRole, userIds]) =>
+                buildRoleChangedText(userStore, changedByStr, newRole, Array.from(userIds)),
+            );
+        });
+    }
+
+    function buildRoleChangedText(
+        userStore: UserLookup,
+        changedBy: string,
+        newRole: MemberRole,
+        userIds: string[],
+    ): string {
+        const meChanged = userIds.length == 1 && userIds[0] === user?.userId;
+        const members = buildUserList(userStore, userIds);
+
+        return $_(meChanged ? "yourRoleChanged" : "roleChanged", {
+            values: {
+                changed: members,
+                changedBy,
+                newRole: $_(roleAsText(newRole)),
+            },
+        });
+    }
+
+    function buildUserList(userStore: UserLookup, userIds: string[]): string {
         return client.getMembersString(
             user!,
             userStore,
-            Array.from(userIds),
+            userIds,
             $_("unknownUser"),
             $_("you"),
             user ? client.compareIsNotYouThenUsername(user.userId) : client.compareUsername,
@@ -81,14 +109,25 @@
     }
 
     function expandDeletedMessages() {
-        client.expandDeletedMessages(chatId, new Set(messagesDeleted));
+        client.expandDeletedMessages(new Set(messagesDeleted));
     }
+    let joinedText = $derived(buildJoinedText($allUsersStore, joined));
+    let deletedText = $derived(
+        messagesDeleted.length > 0
+            ? messagesDeleted.length === 1
+                ? $_("oneMessageDeleted")
+                : $_("nMessagesDeleted", { values: { number: messagesDeleted.length } })
+            : undefined,
+    );
+    let roleChangedTextList = $derived(buildRoleChangedTextList($allUsersStore, rolesChanged));
 </script>
 
-{#if joinedText !== undefined || deletedText !== undefined}
+{#if joinedText !== undefined || deletedText !== undefined || roleChangedTextList?.length > 0}
     <div class="timeline-event">
         {#if joinedText !== undefined}
-            <Markdown oneLine suppressLinks text={joinedText} />
+            <p>
+                <Markdown oneLine suppressLinks text={joinedText} />
+            </p>
         {/if}
         {#if deletedText !== undefined}
             <p
@@ -96,10 +135,15 @@
                 title={$_("expandDeletedMessages")}
                 bind:this={deletedMessagesElement}
                 data-index={messagesDeleted.join(" ")}
-                on:click={expandDeletedMessages}>
+                onclick={expandDeletedMessages}>
                 {deletedText}
             </p>
         {/if}
+        {#each roleChangedTextList as text}
+            <p>
+                <Markdown suppressLinks {text} />
+            </p>
+        {/each}
     </div>
 {/if}
 
@@ -108,7 +152,7 @@
         max-width: 80%;
         padding: $sp2;
         background-color: var(--timeline-bg);
-        margin: $sp4 auto;
+        margin: 0 auto $sp4 auto;
         text-align: center;
         color: var(--timeline-txt);
         @include font(book, normal, fs-70);

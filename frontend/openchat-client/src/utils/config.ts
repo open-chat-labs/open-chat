@@ -24,6 +24,9 @@ export const configKeys = {
     theme: "openchat_theme",
     scrollStrategy: "openchat_scrollstrategy",
     selectedAuthProvider: "openchat_selected_auth_provider",
+    selectedAuthEmail: "openchat_selected_auth_email",
     userCreated: "openchat_user_created",
     softDisabled: "openchat_softdisabled",
+    hideBlocked: "openchat_hideblocked",
+    minLogLevel: "openchat_min_log_level",
 };

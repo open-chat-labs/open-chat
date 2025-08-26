@@ -1,6 +1,7 @@
 export const allQuestions = [
     "wallet",
     "buychat",
+    "buyicp",
     "send_tokens",
     "diamond",
     "referral_rewards",

@@ -1,18 +1,30 @@
 <script lang="ts">
-    import ModalPage from "../ModalPage.svelte";
-    import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import ModalContent from "../ModalContent.svelte";
+    import Overlay from "../Overlay.svelte";
+    import Translatable from "../Translatable.svelte";
 </script>
 
-<ModalPage bgClass="upgrade" minHeight="150px">
-    <div>
-        <h1 class="title"><Translatable resourceKey={i18nKey("performingUpgrade")} /></h1>
-        <p class="blurb"><Translatable resourceKey={i18nKey("pleaseWait")} /></p>
-    </div>
-    <div class="spinner" />
-</ModalPage>
+<Overlay>
+    <ModalContent hideHeader hideFooter>
+        {#snippet body()}
+            <div class="body">
+                <div>
+                    <h1 class="title">
+                        <Translatable resourceKey={i18nKey("performingUpgrade")} />
+                    </h1>
+                    <p class="blurb"><Translatable resourceKey={i18nKey("pleaseWait")} /></p>
+                </div>
+                <div class="spinner"></div>
+            </div>
+        {/snippet}
+    </ModalContent>
+</Overlay>
 
 <style lang="scss">
+    .body {
+        text-align: center;
+    }
     .blurb {
         @include font(light, normal, fs-120);
         margin-bottom: $sp6;

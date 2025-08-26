@@ -1,78 +1,38 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { cubicInOut } from "svelte/easing";
-    import { tweened } from "svelte/motion";
+    import { Tween } from "svelte/motion";
 
-    export let loop = true;
+    interface Props {
+        loop?: boolean;
+    }
 
-    let canvas: HTMLCanvasElement;
-    let ctx: CanvasRenderingContext2D | null;
+    let { loop = true }: Props = $props();
+
+    let canvas: HTMLCanvasElement | undefined = $state();
+    let ctx: CanvasRenderingContext2D | null | undefined;
     let speed = 800;
     let purpleTarget = 270;
-    let orangeTarget = 45;
+    let orangeTarget = $state(45);
 
-    let phase: 1 | 2 | 3 | 4 | 5 = 1;
+    let phase: 1 | 2 | 3 | 4 | 5 = $state(1);
 
     const options = { duration: speed, easing: cubicInOut };
 
-    const purpleEnd = tweened(-90, {
-        duration: speed,
-        easing: cubicInOut,
-    });
-
-    let orangeStart = tweened(-90, options);
-    let orangeEnd = tweened(-90, options);
+    const purpleEnd = new Tween(-90, options);
+    const orangeStart = new Tween(-90, options);
+    const orangeEnd = new Tween(-90, options);
 
     function resetOrange() {
         phase = 2;
         orangeTarget = 45;
-        orangeStart = tweened(-90, options);
-        orangeEnd = tweened(-90, options);
-        orangeStart.set(45);
-        orangeEnd.set(315);
-    }
-
-    $: {
-        if (phase === 1) {
-            if ($purpleEnd >= purpleTarget) {
-                phase = 2;
-                orangeStart.set(45);
-                orangeEnd.set(315);
-            }
-            plotPurple($purpleEnd);
-        }
-    }
-
-    $: {
-        plotOrange($orangeStart, $orangeEnd);
-        if (loop) {
-            if (phase === 2) {
-                if ($orangeStart >= orangeTarget) {
-                    phase = 3;
-                    orangeTarget = 270;
-                    orangeStart.set(270);
-                    orangeEnd.set(630);
-                }
-            }
-            if (phase === 3) {
-                if ($orangeStart >= orangeTarget) {
-                    phase = 4;
-                    orangeTarget = 630;
-                    orangeStart.set(630);
-                }
-            }
-            if (phase === 4) {
-                if ($orangeStart >= orangeTarget) {
-                    phase = 5;
-                    orangeEnd.set(630);
-                }
-            }
-            if (phase === 5) {
-                if ($orangeEnd >= orangeTarget) {
-                    resetOrange();
-                }
-            }
-        }
+        Promise.all([
+            orangeStart.set(-90, { duration: 0 }),
+            orangeEnd.set(-90, { duration: 0 }),
+        ]).then(() => {
+            orangeStart.target = 45;
+            orangeEnd.target = 315;
+        });
     }
 
     function plotPurple(end: number) {
@@ -134,13 +94,54 @@
     }
 
     onMount(() => {
-        ctx = canvas.getContext("2d");
+        ctx = canvas?.getContext("2d");
         if (!ctx) return;
         purpleEnd.set(270);
     });
+    $effect(() => {
+        if (phase === 1) {
+            if (purpleEnd.current >= purpleTarget) {
+                phase = 2;
+                orangeStart.target = 45;
+                orangeEnd.target = 315;
+            }
+            plotPurple(purpleEnd.current);
+        }
+    });
+    $effect(() => {
+        plotOrange(orangeStart.current, orangeEnd.current);
+        if (loop || phase > 2) {
+            if (phase === 2) {
+                if (orangeStart.current >= orangeTarget) {
+                    phase = 3;
+                    orangeTarget = 270;
+                    orangeStart.target = 270;
+                    orangeEnd.target = 630;
+                }
+            }
+            if (phase === 3) {
+                if (orangeStart.current >= orangeTarget) {
+                    phase = 4;
+                    orangeTarget = 630;
+                    orangeStart.target = 630;
+                }
+            }
+            if (phase === 4) {
+                if (orangeStart.current >= orangeTarget) {
+                    phase = 5;
+                    orangeEnd.target = 630;
+                }
+            }
+            if (phase === 5) {
+                if (orangeEnd.current >= orangeTarget) {
+                    resetOrange();
+                }
+            }
+        }
+    });
 </script>
 
-<canvas width="500" height="500" class="logo" bind:this={canvas} />
+<canvas width="500" height="500" class="logo" bind:this={canvas}></canvas>
 
 <style lang="scss">
     .logo {

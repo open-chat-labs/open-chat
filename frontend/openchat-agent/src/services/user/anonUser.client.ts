@@ -1,77 +1,95 @@
-import type { CancelP2PSwapResponse, JoinVideoCallResponse } from "openchat-shared";
-import type { AcceptP2PSwapResponse } from "openchat-shared";
 import type {
-    InitialStateResponse,
-    UpdatesResponse,
-    EventsResponse,
-    CandidateGroupChat,
-    CreateGroupResponse,
-    DeleteGroupResponse,
-    ChatEvent,
-    Message,
-    SendMessageResponse,
-    BlockUserResponse,
-    UnblockUserResponse,
-    LeaveGroupResponse,
-    MarkReadResponse,
-    IndexRange,
+    AcceptP2PSwapResponse,
     AddRemoveReactionResponse,
-    DeleteMessageResponse,
-    UndeleteMessageResponse,
-    EditMessageResponse,
-    MarkReadRequest,
-    WithdrawCryptocurrencyResponse,
-    PendingCryptocurrencyWithdrawal,
+    ApproveTransferResponse,
     ArchiveChatResponse,
     BlobReference,
-    CreatedUser,
-    PinChatResponse,
-    PublicProfile,
-    SearchDirectChatResponse,
-    SetBioResponse,
-    ToggleMuteNotificationResponse,
-    UnpinChatResponse,
-    DeletedDirectMessageResponse,
-    EventWrapper,
-    SetMessageReminderResponse,
+    BlockUserResponse,
+    CancelP2PSwapResponse,
+    CandidateGroupChat,
+    ChannelIdentifier,
+    ChatEvent,
+    ChatIdentifier,
+    ChitEventsRequest,
+    ChitEventsResponse,
+    ClaimDailyChitResponse,
+    CommunityIdentifier,
     CommunitySummary,
     CreateCommunityResponse,
-    ChatIdentifier,
-    DirectChatIdentifier,
-    GroupChatIdentifier,
-    ManageFavouritesResponse,
-    CommunityIdentifier,
-    LeaveCommunityResponse,
-    DeleteCommunityResponse,
-    ChannelIdentifier,
-    Rules,
-    TipMessageResponse,
-    NamedAccount,
-    SaveCryptoAccountResponse,
-    CandidateProposal,
-    SubmitProposalResponse,
-    MessageContext,
-    PendingCryptocurrencyTransfer,
+    CreatedUser,
+    CreateGroupResponse,
     CryptocurrencyDetails,
+    DeleteCommunityResponse,
+    DeletedDirectMessageResponse,
+    DeleteGroupResponse,
+    DeleteMessageResponse,
+    DirectChatIdentifier,
+    EditMessageResponse,
+    EventsResponse,
+    EventWrapper,
+    EvmChain,
     ExchangeTokenSwapArgs,
+    GrantedBotPermissions,
+    GroupChatIdentifier,
+    IndexRange,
+    InitialStateResponse,
+    JoinVideoCallResponse,
+    LeaveCommunityResponse,
+    LeaveGroupResponse,
+    ManageFavouritesResponse,
+    MarkReadRequest,
+    MarkReadResponse,
+    Message,
+    MessageActivityFeedResponse,
+    MessageContext,
+    NamedAccount,
+    OptionUpdate,
+    PayForStreakInsuranceResponse,
+    PendingCryptocurrencyTransfer,
+    PendingCryptocurrencyWithdrawal,
+    PinChatResponse,
+    PublicProfile,
+    Rules,
+    SaveCryptoAccountResponse,
+    SearchDirectChatResponse,
+    SendMessageResponse,
+    SetBioResponse,
+    SetMessageReminderResponse,
+    SetPinNumberResponse,
+    SetVideoCallPresenceResponse,
+    Stream,
     SwapTokensResponse,
+    TipMessageResponse,
+    ToggleMuteNotificationResponse,
     TokenSwapStatusResponse,
-    ApproveTransferResponse,
+    UnblockUserResponse,
+    UndeleteMessageResponse,
+    UnpinChatResponse,
+    UpdatesResponse,
+    Verification,
+    VideoCallPresence,
+    WalletConfig,
+    WithdrawBtcResponse,
+    WithdrawCryptocurrencyResponse,
+    WithdrawViaOneSecResponse,
 } from "openchat-shared";
-import { AnonymousOperationError } from "openchat-shared";
+import { ANON_USER_ID, AnonymousOperationError, CommonResponses } from "openchat-shared";
 
 export class AnonUserClient {
+    public get userId(): string {
+        return ANON_USER_ID;
+    }
+
     static create(): AnonUserClient {
         console.debug("ANON: creating anonymous user client");
         return new AnonUserClient();
     }
 
-    addToFavourites(_chatId: ChatIdentifier): Promise<ManageFavouritesResponse> {
-        return Promise.resolve("success");
-    }
-
-    removeFromFavourites(_chatId: ChatIdentifier): Promise<ManageFavouritesResponse> {
-        return Promise.resolve("success");
+    manageFavouriteChats(
+        _toAdd: ChatIdentifier[],
+        _toRemove: ChatIdentifier[],
+    ): Promise<ManageFavouritesResponse> {
+        return Promise.resolve(CommonResponses.success());
     }
 
     getInitialState(): Promise<InitialStateResponse> {
@@ -96,6 +114,27 @@ export class AnonUserClient {
             },
             timestamp: BigInt(Date.now()),
             suspended: false,
+            pinNumberSettings: undefined,
+            localUserIndex: "",
+            achievements: [],
+            achievementsLastSeen: 0n,
+            streakEnds: 0n,
+            streak: 0,
+            maxStreak: 0,
+            nextDailyClaim: 0n,
+            chitBalance: 0,
+            totalChitEarned: 0,
+            referrals: [],
+            walletConfig: { kind: "auto_wallet", minDollarValue: 1 },
+            messageActivitySummary: {
+                readUpToTimestamp: 0n,
+                latestTimestamp: 0n,
+                unreadCount: 0,
+            },
+            bots: new Map(),
+            bitcoinAddress: undefined,
+            oneSecAddress: undefined,
+            premiumItems: new Set(),
         });
     }
 
@@ -123,6 +162,14 @@ export class AnonUserClient {
     }
 
     deleteCommunity(_id: CommunityIdentifier): Promise<DeleteCommunityResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    getCachedEventsByIndex(
+        _eventIndexes: number[],
+        _chatId: DirectChatIdentifier,
+        _threadRootMessageIndex: number | undefined,
+    ): Promise<[EventsResponse<ChatEvent>, Set<number>]> {
         throw new AnonymousOperationError();
     }
 
@@ -159,6 +206,10 @@ export class AnonUserClient {
         throw new AnonymousOperationError();
     }
 
+    setProfileBackground(_bytes: Uint8Array): Promise<BlobReference> {
+        throw new AnonymousOperationError();
+    }
+
     editMessage(
         _recipientId: string,
         _message: Message,
@@ -171,7 +222,9 @@ export class AnonUserClient {
         _chatId: DirectChatIdentifier,
         _event: EventWrapper<Message>,
         _messageFilterFailed: bigint | undefined,
-        _threadRootMessageIndex?: number,
+        _threadRootMessageIndex: number | undefined,
+        _pin: string | undefined,
+        _onRequestAccepted: () => void,
     ): Promise<[SendMessageResponse, Message]> {
         throw new AnonymousOperationError();
     }
@@ -239,6 +292,8 @@ export class AnonUserClient {
         _messageContext: MessageContext,
         _messageId: bigint,
         _transfer: PendingCryptocurrencyTransfer,
+        _decimals: number,
+        _pin: string | undefined,
     ): Promise<TipMessageResponse> {
         throw new AnonymousOperationError();
     }
@@ -287,7 +342,7 @@ export class AnonUserClient {
 
     toggleMuteNotifications(
         _chatId: string,
-        _muted: boolean,
+        _mute: boolean,
     ): Promise<ToggleMuteNotificationResponse> {
         throw new AnonymousOperationError();
     }
@@ -300,7 +355,7 @@ export class AnonUserClient {
         throw new AnonymousOperationError();
     }
 
-    getPublicProfile(): Promise<PublicProfile> {
+    getPublicProfile(): Stream<PublicProfile> {
         throw new AnonymousOperationError();
     }
 
@@ -352,19 +407,9 @@ export class AnonUserClient {
         throw new AnonymousOperationError();
     }
 
-    submitProposal(
-        _governanceCanisterId: string,
-        _proposal: CandidateProposal,
-        _ledger: string,
-        _token: string,
-        _proposalRejectionFee: bigint,
-        _transactionFee: bigint,
-    ): Promise<SubmitProposalResponse> {
-        throw new AnonymousOperationError();
-    }
-
     reportMessage(
         _chatId: DirectChatIdentifier,
+        _threadRootMessageIndex: number | undefined,
         _messageId: bigint,
         _deleteMessage: boolean,
     ): Promise<boolean> {
@@ -399,7 +444,12 @@ export class AnonUserClient {
         throw new AnonymousOperationError();
     }
 
-    acceptP2PSwap(_userId: string, _messageId: bigint): Promise<AcceptP2PSwapResponse> {
+    acceptP2PSwap(
+        _userId: string,
+        _threadRootMessageIndex: number | undefined,
+        _messageId: bigint,
+        _pin: string | undefined,
+    ): Promise<AcceptP2PSwapResponse> {
         throw new AnonymousOperationError();
     }
 
@@ -411,7 +461,95 @@ export class AnonUserClient {
         throw new AnonymousOperationError();
     }
 
+    setVideoCallPresence(
+        _messageId: bigint,
+        _presence: VideoCallPresence,
+    ): Promise<SetVideoCallPresenceResponse> {
+        throw new AnonymousOperationError();
+    }
+
     localUserIndex(): Promise<string> {
+        throw new AnonymousOperationError();
+    }
+
+    setPinNumber(
+        _verification: Verification,
+        _newPin: string | undefined,
+    ): Promise<SetPinNumberResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    chitEvents(_req: ChitEventsRequest): Promise<ChitEventsResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    markAchievementsSeen(_lastSeen: bigint): Promise<void> {
+        throw new AnonymousOperationError();
+    }
+
+    claimDailyChit(_utcOffsetMins: number | undefined): Promise<ClaimDailyChitResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    configureWallet(_walletConfig: WalletConfig): Promise<void> {
+        throw new AnonymousOperationError();
+    }
+
+    markActivityFeedRead(_timestamp: bigint): Promise<void> {
+        throw new AnonymousOperationError();
+    }
+
+    messageActivityFeed(_since: bigint): Promise<MessageActivityFeedResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    updateInstalledBot(
+        _botId: string,
+        _grantedPermissions: GrantedBotPermissions,
+    ): Promise<boolean> {
+        throw new AnonymousOperationError();
+    }
+
+    generateBtcAddress(): Promise<string> {
+        throw new AnonymousOperationError();
+    }
+
+    generateOneSecAddress(): Promise<string> {
+        throw new AnonymousOperationError();
+    }
+
+    updateBtcBalance(): Promise<boolean> {
+        throw new AnonymousOperationError();
+    }
+
+    withdrawBtc(
+        _address: string,
+        _amount: bigint,
+        _pin: string | undefined,
+    ): Promise<WithdrawBtcResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    withdrawViaOneSec(
+        _ledger: string,
+        _tokenSymbol: string,
+        _chain: EvmChain,
+        _address: string,
+        _amount: bigint,
+        _pin: string | undefined,
+    ): Promise<WithdrawViaOneSecResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    payForStreakInsurance(
+        _additionalDays: number,
+        _expectedPrice: bigint,
+        _pin: string | undefined,
+    ): Promise<PayForStreakInsuranceResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    updateChatSettings(_userId: string, _eventsTtl: OptionUpdate<bigint>): Promise<boolean> {
         throw new AnonymousOperationError();
     }
 }

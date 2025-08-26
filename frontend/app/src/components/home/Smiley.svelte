@@ -1,12 +1,14 @@
 <script lang="ts">
+    import { iconSize, mobileWidth } from "openchat-client";
     import { onMount } from "svelte";
 
-    import { iconSize } from "../../stores/iconSize";
-    import { mobileWidth } from "../../stores/screenDimensions";
+    interface Props {
+        color: string;
+    }
 
-    export let color: string;
+    let { color }: Props = $props();
 
-    let open = true;
+    let open = $state(true);
 
     function rand(min: number, max: number) {
         return Math.floor(Math.random() * (max - min + 1) + min);

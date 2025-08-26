@@ -54,6 +54,7 @@ type SearchResponse = variant {
     TermTooShort : nat8;
     TermTooLong : nat8;
     InvalidTerm;
+    Error : OCError;
 };
 
 type SearchSuccessResult = record {
@@ -75,6 +76,7 @@ type ExploreCommunitiesResponse = variant {
     TermTooLong : nat8;
     InvalidTerm;
     InvalidFlags;
+    Error : OCError;
 };
 
 type ExploreCommunitiesSuccess = record {
@@ -93,6 +95,7 @@ type ExploreGroupsResponse = variant {
     TermTooShort : nat8;
     TermTooLong : nat8;
     InvalidTerm;
+    Error : OCError;
 };
 
 type ExploreGroupsSuccess = record {
@@ -110,169 +113,64 @@ type LookupChannelByGroupIdResponse = variant {
         channel_id : ChannelId;
     };
     NotFound;
+    Error : OCError;
 };
 
-type FreezeCommunityArgs = record {
-    community_id : ChatId;
-    reason : opt text;
-    suspend_members : opt record {
-        duration : opt Milliseconds;
-        reason : text;
-    };
-};
-
-type FreezeCommunityResponse = variant {
-    Success : record {
-        index : EventIndex;
-        timestamp : TimestampMillis;
-        expires_at : opt TimestampMillis;
-        correlation_id : nat64;
-        event : GroupFrozen;
-    };
-    CommunityAlreadyFrozen;
-    CommunityNotFound;
-    NotAuthorized;
-    InternalError : text;
-};
-
-type FreezeGroupArgs = record {
-    chat_id : ChatId;
-    reason : opt text;
-    suspend_members : opt record {
-        duration : opt Milliseconds;
-        reason : text;
-    };
-};
-
-type FreezeGroupResponse = variant {
-    Success : record {
-        index : EventIndex;
-        timestamp : TimestampMillis;
-        expires_at : opt TimestampMillis;
-        correlation_id : nat64;
-        event : GroupFrozen;
-    };
-    ChatAlreadyFrozen;
-    ChatNotFound;
-    NotAuthorized;
-    InternalError : text;
-};
-
-type UnfreezeCommunityArgs = record {
-    community_id : ChatId;
-};
-
-type UnfreezeCommunityResponse = variant {
-    Success : record {
-        index : EventIndex;
-        timestamp : TimestampMillis;
-        expires_at : opt TimestampMillis;
-        correlation_id : nat64;
-        event : GroupUnfrozen;
-    };
-    CommunityNotFrozen;
-    CommunityNotFound;
-    NotAuthorized;
-    InternalError : text;
-};
-
-type UnfreezeGroupArgs = record {
-    chat_id : ChatId;
-};
-
-type UnfreezeGroupResponse = variant {
-    Success : record {
-        index : EventIndex;
-        timestamp : TimestampMillis;
-        expires_at : opt TimestampMillis;
-        correlation_id : nat64;
-        event : GroupUnfrozen;
-    };
-    ChatNotFrozen;
-    ChatNotFound;
-    NotAuthorized;
-    InternalError : text;
-};
-
-type DeleteFrozenGroupArgs = record {
-    chat_id : ChatId;
-};
-
-type DeleteFrozenGroupResponse = variant {
-    Success;
-    ChatNotFrozen;
-    ChatNotFound;
-    NotAuthorized;
-    InternalError : text;
-};
-
-type AddHotGroupExclusionArgs = record {
-    chat_id : ChatId;
-};
-
-type AddHotGroupExclusionResponse = variant {
-    Success;
-    ChatAlreadyExcluded;
-    ChatNotFound;
-    NotAuthorized;
-    InternalError : text;
-};
-
-type RemoveHotGroupExclusionArgs = record {
-    chat_id : ChatId;
-};
-
-type RemoveHotGroupExclusionResponse = variant {
-    Success;
-    ChatNotExcluded;
-    ChatNotFound;
-    NotAuthorized;
-    InternalError : text;
-};
-
-type SetCommunityModerationFlagsArgs = record {
+type RevokeCommunityVerificationArgs = record {
     community_id : CommunityId;
-    flags : nat32;
 };
 
-type SetCommunityModerationFlagsResponse = variant {
+type RevokeCommunityVerificationResponse = variant {
     Success;
-    Unchanged;
-    CommunityNotFound;
-    InvalidFlags;
-    NotAuthorized;
+    NotFound;
+};
+
+type RevokeGroupVerificationArgs = record {
+    group_id : ChatId;
+};
+
+type RevokeGroupVerificationResponse = variant {
+    Success;
+    NotFound;
+};
+
+type SetCommunityVerificationArgs = record {
+    community_id : CommunityId;
+    name : text;
+};
+
+type SetCommunityVerificationResponse = variant {
+    Success;
+    NotFound;
+    NameReserved;
+    NameTaken;
+    AlreadyVerified;
     InternalError : text;
 };
 
-type SetUpgradeConcurrencyArgs = record {
-    value : nat32;
+type SetGroupVerificationArgs = record {
+    group_id : ChatId;
+    name : text;
 };
 
-type SetUpgradeConcurrencyResponse = variant {
+type SetGroupVerificationResponse = variant {
     Success;
-    NotAuthorized;
+    NotFound;
+    NameReserved;
+    NameTaken;
+    AlreadyVerified;
     InternalError : text;
 };
 
 service : {
     active_groups : (ActiveGroupsArgs) -> (ActiveGroupsResponse) query;
-    recommended_groups : (RecommendedGroupsArgs) -> (RecommendedGroupsResponse) query;
-    search : (SearchArgs) -> (SearchResponse) query;
     explore_communities : (ExploreCommunitiesArgs) -> (ExploreCommunitiesResponse) query;
     explore_groups : (ExploreGroupsArgs) -> (ExploreGroupsResponse) query;
     lookup_channel_by_group_id : (LookupChannelByGroupIdArgs) -> (LookupChannelByGroupIdResponse) query;
-
-    // Only callable by "platform moderators"
-    freeze_community : (FreezeCommunityArgs) -> (FreezeCommunityResponse);
-    freeze_group : (FreezeGroupArgs) -> (FreezeGroupResponse);
-    unfreeze_community : (UnfreezeCommunityArgs) -> (UnfreezeCommunityResponse);
-    unfreeze_group : (UnfreezeGroupArgs) -> (UnfreezeGroupResponse);
-    delete_frozen_group : (DeleteFrozenGroupArgs) -> (DeleteFrozenGroupResponse);
-    add_hot_group_exclusion : (AddHotGroupExclusionArgs) -> (AddHotGroupExclusionResponse);
-    remove_hot_group_exclusion : (RemoveHotGroupExclusionArgs) -> (RemoveHotGroupExclusionResponse);
-    set_community_moderation_flags : (SetCommunityModerationFlagsArgs) -> (SetCommunityModerationFlagsResponse);
-
-    // Only callable by "platform operators"
-    set_group_upgrade_concurrency : (SetUpgradeConcurrencyArgs) -> (SetUpgradeConcurrencyResponse);
-    set_community_upgrade_concurrency : (SetUpgradeConcurrencyArgs) -> (SetUpgradeConcurrencyResponse);
+    recommended_groups : (RecommendedGroupsArgs) -> (RecommendedGroupsResponse) query;
+    search : (SearchArgs) -> (SearchResponse) query;
+    revoke_community_verification : (RevokeCommunityVerificationArgs) -> (RevokeCommunityVerificationResponse);
+    revoke_group_verification : (RevokeGroupVerificationArgs) -> (RevokeGroupVerificationResponse);
+    set_community_verification : (SetCommunityVerificationArgs) -> (SetCommunityVerificationResponse);
+    set_group_verification : (SetGroupVerificationArgs) -> (SetGroupVerificationResponse);
 };

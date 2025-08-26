@@ -1,36 +1,53 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { currentTheme } from "../theme/themes";
+    import { darkenHexColour } from "../theme/utils";
+    import type { ButtonProps } from "./Button.svelte";
+    import Spinner from "./icons/Spinner.svelte";
 
-    export let cls = "";
-    export let loading: boolean = false;
-    export let disabled: boolean = false;
-    export let secondary: boolean = false;
-    export let small: boolean = false;
-    export let tiny: boolean = false;
-    export let fill: boolean = false;
-    export let hollow: boolean = false;
-    export let title: string | undefined = undefined;
-    export let square: boolean = false;
+    let {
+        cls = "",
+        loading = false,
+        disabled = false,
+        secondary = false,
+        small = false,
+        tiny = false,
+        fill = false,
+        hollow = false,
+        title = undefined,
+        square = false,
+        danger = false,
+        children,
+        onClick,
+    }: ButtonProps = $props();
 
     function rand(a: number, b: number) {
         const r = Math.random();
         return a + r * (b - a);
     }
 
-    let height = "100px";
-    let width = "50px";
+    let height = $state("100px");
+    let width = $state("50px");
 
     onMount(() => {
         const h = rand(50, 150);
         height = `${h}px`;
         width = `${h / 2}px`;
     });
+
+    let darkenedDanger = $derived(darkenHexColour($currentTheme.toast.failure.bg, 20));
+
+    function click(e: MouseEvent) {
+        if (onClick) {
+            e.stopPropagation();
+            onClick(e);
+        }
+    }
 </script>
 
 <button
-    style={`--height: ${height}; --width: ${width}`}
-    on:click|stopPropagation
+    style={`--height: ${height}; --width: ${width}; --darkened-danger: ${darkenedDanger}`}
+    onclick={click}
     class={cls}
     class:halloween={$currentTheme.name === "halloween"}
     class:loading
@@ -38,19 +55,23 @@
     class:small
     class:tiny
     class:hollow
+    class:danger
     {disabled}
     class:secondary
     class:square
     {title}
     class:fill>
     {#if !loading}
-        <slot />
+        {@render children?.()}
+    {:else}
+        <Spinner backgroundColour={"rgba(0,0,0,0.3)"} foregroundColour={"var(--button-spinner)"} />
     {/if}
 </button>
 
 <style lang="scss">
     button {
         transition:
+            border ease-in-out 200ms,
             background ease-in-out 200ms,
             color ease-in-out 200ms;
         background: var(--button-bg);
@@ -65,6 +86,12 @@
         @include font(book, normal, fs-100, 20);
         text-shadow: var(--button-txt-sh);
         box-shadow: var(--button-sh);
+
+        &.loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
         &:hover {
             box-shadow: var(--buton-hv-sh);
@@ -93,10 +120,20 @@
             }
         }
 
+        &.danger {
+            background: var(--toast-failure-bg);
+            color: var(--toast-failure-txt);
+            @media (hover: hover) {
+                &:hover {
+                    background: var(--darkened-danger);
+                }
+            }
+        }
+
         &.hollow {
-            background-color: transparent;
-            color: var(--txt);
-            border: var(--bw) solid var(--bd);
+            background: transparent;
+            color: var(--button-hollow-txt);
+            border: var(--bw) solid var(--button-hollow-bd);
         }
 
         &.disabled {
@@ -108,8 +145,15 @@
 
         &.secondary {
             background: none;
-            color: var(--txt-light);
-            border: var(--bw) solid var(--bd);
+            color: var(--button-secondary-txt);
+            border: var(--bw) solid var(--button-secondary-bd);
+
+            @media (hover: hover) {
+                &:hover {
+                    border: var(--bw) solid var(--button-secondary-bd-hv);
+                    color: var(--button-secondary-txt-hv);
+                }
+            }
         }
 
         &.fill {
@@ -132,15 +176,6 @@
             pointer-events: none;
             animation: pulse 3s linear infinite;
             transform-origin: top;
-        }
-
-        &.loading {
-            @include loading-spinner(
-                1em,
-                0.5em,
-                var(--button-spinner),
-                "/assets/plain-spinner.svg"
-            );
         }
     }
 

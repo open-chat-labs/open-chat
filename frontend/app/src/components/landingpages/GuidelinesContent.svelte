@@ -1,31 +1,45 @@
 <script lang="ts">
-    import CollapsibleCard from "../CollapsibleCard.svelte";
-    import { mobileWidth } from "../../stores/screenDimensions";
-    import { location } from "../../routes";
-    import { copyToClipboard } from "../../utils/urls";
+    import { locationStore, mobileWidth } from "openchat-client";
     import Copy from "svelte-material-icons/ContentCopy.svelte";
+    import { copyToClipboard } from "../../utils/urls";
+    import CollapsibleCard from "../CollapsibleCard.svelte";
 
-    export let linked: number | undefined = undefined;
-    export let modal: boolean = false;
-
-    function copyUrl(section: string): void {
-        copyToClipboard(`${window.location.origin}${$location}?section=${section}`);
+    interface Props {
+        linked?: number | undefined;
+        modal?: boolean;
     }
 
-    $: copySize = $mobileWidth ? "14px" : "16px";
-    $: color = modal ? "var(--txt)" : "var(--landing-txt)";
+    let { linked = undefined, modal = false }: Props = $props();
+
+    function copyUrl(e: Event, section: string): void {
+        e.stopPropagation();
+        copyToClipboard(getSectionUrl($locationStore, section));
+    }
+
+    function getSectionUrl(path: string, section: string): string {
+        return getUrl(path) + `?section=${section}`;
+    }
+
+    function getUrl(path: string): string {
+        return `${window.location.origin}${path}`;
+    }
+
+    let copySize = $derived($mobileWidth ? "14px" : "16px");
+    let color = $derived(modal ? "var(--txt)" : "var(--landing-txt)");
 </script>
 
 <CollapsibleCard transition={false} first open={linked === 1}>
-    <div class:modal class="header" slot="titleSlot">
-        <span class="subtitle">1</span>
-        <div class="title">
-            Introduction
-            <div class="copy" on:click|stopPropagation={() => copyUrl("1")}>
-                <Copy size={copySize} {color} />
+    {#snippet titleSlot()}
+        <div class:modal class="header">
+            <span class="subtitle">1</span>
+            <div class="title">
+                Introduction
+                <div class="copy" onclick={(e) => copyUrl(e, "1")}>
+                    <Copy size={copySize} {color} />
+                </div>
             </div>
         </div>
-    </div>
+    {/snippet}
     <div class:modal class="body">
         <p>
             OpenChat aims to be an open, productive, enjoyable and safe place for everyone to come
@@ -43,15 +57,17 @@
 </CollapsibleCard>
 
 <CollapsibleCard transition={false} open={linked === 2}>
-    <div class:modal class="header" slot="titleSlot">
-        <span class="subtitle">2</span>
-        <div class="title">
-            High level guidance
-            <div class="copy" on:click|stopPropagation={() => copyUrl("2")}>
-                <Copy size={copySize} {color} />
+    {#snippet titleSlot()}
+        <div class:modal class="header">
+            <span class="subtitle">2</span>
+            <div class="title">
+                High level guidance
+                <div class="copy" onclick={(e) => copyUrl(e, "2")}>
+                    <Copy size={copySize} {color} />
+                </div>
             </div>
         </div>
-    </div>
+    {/snippet}
     <div class:modal class="body">
         <p>
             OpenChat is not owned by anyone and does not operate in any particular jurisdiction and
@@ -71,29 +87,29 @@
 </CollapsibleCard>
 
 <CollapsibleCard transition={false} open={linked === 3}>
-    <div class:modal class="header" slot="titleSlot">
-        <span class="subtitle">3</span>
-        <div class="title">
-            Platform rules
-            <div class="copy" on:click|stopPropagation={() => copyUrl("3")}>
-                <Copy size={copySize} {color} />
+    {#snippet titleSlot()}
+        <div class:modal class="header">
+            <span class="subtitle">3</span>
+            <div class="title">
+                Content Standards
+                <div class="copy" onclick={(e) => copyUrl(e, "3")}>
+                    <Copy size={copySize} {color} />
+                </div>
             </div>
         </div>
-    </div>
+    {/snippet}
     <div class:modal class="body">
         <ul class="list">
             <li>
                 <strong>Do not threaten to harm another individual or group of people.</strong> This
                 includes direct, indirect, and suggestive threats.
             </li>
-
             <li>
                 <strong>
                     Do not solicit, share, or make attempts to distribute content that depicts,
                     promotes, or attempts to normalize child sexual abuse.
                 </strong> Also, do not post content that in any way sexualizes children.
             </li>
-
             <li>
                 <strong>
                     Do not share sexually explicit or sexually suggestive content of other people
@@ -102,7 +118,6 @@
                 This includes the non-consensual distribution of intimate media that was created either
                 with or without an individual’s consent.
             </li>
-
             <li>
                 <strong>
                     Do not share content that glorifies, promotes, or normalizes suicide or other
@@ -111,20 +126,17 @@
                 as well as content that normalizes eating disorders, such as anorexia and bulimia. Self-harm
                 acts or threats used as a form of emotional manipulation or coercion are also prohibited.
             </li>
-
             <li>
                 <strong>
                     Do not share real media depicting gore, excessive violence, or animal harm,
                     especially with the intention to harass or shock others.
                 </strong>
             </li>
-
             <li>
                 <strong
                     >Do not use OpenChat to promote, coordinate, or execute financial scams.</strong>
                 Promoting a particular crypto token or NFT does not break this rule in general.
             </li>
-
             <li>
                 <strong>Do not persistently send spam messages.</strong>
                 This includes repeatedly sending the same or meaningless messages, either in the same
@@ -135,21 +147,52 @@
 </CollapsibleCard>
 
 <CollapsibleCard transition={false} open={linked === 4}>
-    <div class:modal class="header" slot="titleSlot">
-        <span class="subtitle">4</span>
-        <div class="title">
-            Group rules
-            <div class="copy" on:click|stopPropagation={() => copyUrl("4")}>
-                <Copy size={copySize} {color} />
+    {#snippet titleSlot()}
+        <div class:modal class="header">
+            <span class="subtitle">4</span>
+            <div class="title">
+                Account creation and usage
+                <div class="copy" onclick={(e) => copyUrl(e, "4")}>
+                    <Copy size={copySize} {color} />
+                </div>
             </div>
         </div>
-    </div>
+    {/snippet}
     <div class:modal class="body">
         <p>
-            In addition to the platform rules, we urge group owners to enable group rules and make
-            it very clear what standards you expect to be upheld in your group. When you join a
-            group, please read those rules carefully and keep in mind that they will be consulted in
-            moderation decisions.
+            It is against the platform guidelines to buy or sell accounts, or to create multiple
+            accounts:
+        </p>
+        <ul class="list">
+            <li>that you aren't actively using</li>
+            <li>to squat on usernames with the intention of selling them</li>
+            <li>to farm tokens</li>
+            <li>to give the appearance of activity in a group/community</li>
+            <li>to DoS the platform or otherwise drain platform resources</li>
+            <li>any other nefarious purpose</li>
+        </ul>
+        <p>Breaking these rules will likely result in the multiple accounts being suspended.</p>
+    </div>
+</CollapsibleCard>
+
+<CollapsibleCard transition={false} open={linked === 5}>
+    {#snippet titleSlot()}
+        <div class:modal class="header">
+            <span class="subtitle">5</span>
+            <div class="title">
+                Group rules
+                <div class="copy" onclick={(e) => copyUrl(e, "5")}>
+                    <Copy size={copySize} {color} />
+                </div>
+            </div>
+        </div>
+    {/snippet}
+    <div class:modal class="body">
+        <p>
+            In addition to the platform content standards rules, we urge group owners to enable
+            group rules and make it very clear what standards you expect to be upheld in your group.
+            When you join a group, please read those rules carefully and keep in mind that they will
+            be consulted in moderation decisions.
         </p>
 
         <p>
@@ -160,7 +203,7 @@
         <p>
             While adult material is not against our platform guidelines, we feel it is important
             that such content is clearly labelled. We ask therefore that if you would like to post
-            adult material (that complies with the platform rules above) that <strong>
+            adult material (that complies with the content standards above) that <strong>
                 you must enable group rules and you must specify in the group rules that the group
                 contains adults only material.
             </strong> This ensures that a user joining the group can only do so having first been informed
@@ -175,29 +218,32 @@
     </div>
 </CollapsibleCard>
 
-<CollapsibleCard transition={false} open={linked === 5}>
-    <div class:modal class="header" slot="titleSlot">
-        <span class="subtitle">5</span>
-        <div class="title">
-            Content moderation process
-            <div class="copy" on:click|stopPropagation={() => copyUrl("5")}>
-                <Copy size={copySize} {color} />
+<CollapsibleCard transition={false} open={linked === 6}>
+    {#snippet titleSlot()}
+        <div class:modal class="header">
+            <span class="subtitle">6</span>
+            <div class="title">
+                Content moderation process
+                <div class="copy" onclick={(e) => copyUrl(e, "6")}>
+                    <Copy size={copySize} {color} />
+                </div>
             </div>
         </div>
-    </div>
+    {/snippet}
     <div class:modal class="body">
         <p>
             If you see content in a public group which you think violates the group's rules then
             your first option should be to appeal to the group owners. If you feel like content
-            violates the platform rules, you should report the content to the platform moderators
-            via the message’s context menu.
+            violates the platform's content standards, you should report the content to the platform
+            moderators via the message’s context menu.
         </p>
 
         <p>The message content will then be referred to the platform moderators for review.</p>
 
         <p>
-            The platform moderators will refer to the platform and group rules and make a decision
-            on the action to take as a group. The action taken may be one or more of the following:
+            The platform moderators will refer to the platform content standards and group rules and
+            make a decision on the action to take as a group. The action taken may be one or more of
+            the following:
         </p>
         <ul class="list">
             <li>Delete the content</li>
@@ -216,16 +262,18 @@
     </div>
 </CollapsibleCard>
 
-<CollapsibleCard transition={false} open={linked === 6}>
-    <div class:modal class="header" slot="titleSlot">
-        <span class="subtitle">6</span>
-        <div class="title">
-            Governance
-            <div class="copy" on:click|stopPropagation={() => copyUrl("6")}>
-                <Copy size={copySize} {color} />
+<CollapsibleCard transition={false} open={linked === 7}>
+    {#snippet titleSlot()}
+        <div class:modal class="header">
+            <span class="subtitle">7</span>
+            <div class="title">
+                Governance
+                <div class="copy" onclick={(e) => copyUrl(e, "7")}>
+                    <Copy size={copySize} {color} />
+                </div>
             </div>
         </div>
-    </div>
+    {/snippet}
     <div class:modal class="body">
         <p>
             An alternative view is that content moderation should only be done via SNS proposal. Our
@@ -241,6 +289,25 @@
             moderator and that is not a job that everyone wants or should be expected to perform. As
             such we believe that it is better to have a clear set of guidelines so that platform
             moderators can make quick and fair decisions.
+        </p>
+    </div>
+</CollapsibleCard>
+
+<CollapsibleCard transition={false} open={linked === 8}>
+    {#snippet titleSlot()}
+        <div class:modal class="header">
+            <span class="subtitle">8</span>
+            <div class="title">
+                Full terms
+                <div class="copy" onclick={(e) => copyUrl(e, "8")}>
+                    <Copy size={copySize} {color} />
+                </div>
+            </div>
+        </div>
+    {/snippet}
+    <div class:modal class="body">
+        <p>
+            You can view the full terms of use of OpenChat <a href={getUrl("/terms")}> here </a>.
         </p>
     </div>
 </CollapsibleCard>

@@ -1,4 +1,5 @@
 use crate::{jobs, mutate_state, read_state};
+use constants::HOUR_IN_MS;
 use registry_canister::NervousSystemDetails;
 use std::fmt::Write;
 use std::time::Duration;
@@ -8,14 +9,13 @@ use types::{
     MultiUserChat, Rules,
 };
 use utils::canister_timers::run_now_then_interval;
-use utils::time::HOUR_IN_MS;
 
 pub fn start_job() {
     run_now_then_interval(Duration::from_millis(HOUR_IN_MS), run);
 }
 
 fn run() {
-    ic_cdk::spawn(run_async());
+    ic_cdk::futures::spawn(run_async());
 }
 
 async fn run_async() {
@@ -39,7 +39,7 @@ async fn run_async() {
                         state.data.nervous_systems.update_from_registry(ns);
                     } else {
                         info!(%governance_canister_id, "Creating group for nervous system");
-                        ic_cdk::spawn(create_group(ns, state.data.group_index_canister_id));
+                        ic_cdk::futures::spawn(create_group(ns, state.data.group_index_canister_id));
                     }
                 }
                 state.data.registry_synced_up_to = result.last_updated;
@@ -60,7 +60,7 @@ async fn create_group(ns: NervousSystemDetails, group_index_canister_id: Caniste
 
     let create_group_args = group_index_canister::c2c_create_group::Args {
         is_public: true,
-        name: format!("{} Proposals", name),
+        name: format!("{name} Proposals"),
         description: default_description(&name),
         rules: Rules::default(),
         subtype: Some(GroupSubtype::GovernanceProposals(GovernanceProposalsSubtype {
@@ -69,6 +69,7 @@ async fn create_group(ns: NervousSystemDetails, group_index_canister_id: Caniste
         })),
         avatar: None,
         history_visible_to_new_joiners: true,
+        messages_visible_to_non_members: Some(true),
         permissions_v2: Some(GroupPermissions {
             message_permissions: MessagePermissions {
                 default: GroupPermissionRole::Admins,
@@ -81,7 +82,7 @@ async fn create_group(ns: NervousSystemDetails, group_index_canister_id: Caniste
             ..Default::default()
         }),
         events_ttl: None,
-        gate: None,
+        gate_config: None,
     };
 
     match group_index_canister_c2c_client::c2c_create_group(group_index_canister_id, &create_group_args).await {

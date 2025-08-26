@@ -1,38 +1,46 @@
 use crate::guards::caller_is_local_user_index;
 use crate::queries::check_replica_up_to_date;
-use crate::{read_state, RuntimeState};
-use candid::Principal;
-use canister_api_macros::query_msgpack;
+use crate::{RuntimeState, read_state};
+use canister_api_macros::query;
 use group_canister::c2c_events_by_index::Args as C2CArgs;
 use group_canister::events_by_index::{Response::*, *};
-use group_chat_core::EventsResult;
-use ic_cdk_macros::query;
+use ic_principal::Principal;
+use oc_error_codes::OCErrorCode;
+use types::{BotInitiator, EventsResponse, OCResult};
 
-#[query]
+#[query(msgpack = true)]
 fn events_by_index(args: Args) -> Response {
-    read_state(|state| events_by_index_impl(args, None, state))
+    match read_state(|state| events_by_index_impl(args, None, None, state)) {
+        Ok(result) => Success(result),
+        Err(error) => Error(error),
+    }
 }
 
-#[query_msgpack(guard = "caller_is_local_user_index")]
+#[query(guard = "caller_is_local_user_index", msgpack = true)]
 fn c2c_events_by_index(args: C2CArgs) -> Response {
-    read_state(|state| events_by_index_impl(args.args, Some(args.caller), state))
+    match read_state(|state| events_by_index_impl(args.args, Some(args.caller), args.bot_initiator, state)) {
+        Ok(result) => Success(result),
+        Err(error) => Error(error),
+    }
 }
 
-fn events_by_index_impl(args: Args, on_behalf_of: Option<Principal>, state: &RuntimeState) -> Response {
+fn events_by_index_impl(
+    args: Args,
+    on_behalf_of: Option<Principal>,
+    bot_initiator: Option<BotInitiator>,
+    state: &RuntimeState,
+) -> OCResult<EventsResponse> {
     if let Err(now) = check_replica_up_to_date(args.latest_known_update, state) {
-        return ReplicaNotUpToDateV2(now);
+        return Err(OCErrorCode::ReplicaNotUpToDate.with_message(now));
     }
 
     let caller = on_behalf_of.unwrap_or_else(|| state.env.caller());
-    let user_id = state.data.lookup_user_id(caller);
+    let Some(events_caller) = state.data.get_caller_for_events(caller, bot_initiator) else {
+        return Err(OCErrorCode::InitiatorNotInChat.into());
+    };
 
-    match state
+    state
         .data
         .chat
-        .events_by_index(user_id, args.thread_root_message_index, args.events)
-    {
-        EventsResult::Success(response) => Success(response),
-        EventsResult::UserNotInGroup => CallerNotInGroup,
-        EventsResult::ThreadNotFound => ThreadMessageNotFound,
-    }
+        .events_by_index(events_caller, args.thread_root_message_index, args.events)
 }

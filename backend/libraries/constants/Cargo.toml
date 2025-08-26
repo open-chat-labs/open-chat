@@ -1,0 +1,8 @@
+[package]
+name = "constants"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+candid = { workspace = true }
+types = { path = "../types" }

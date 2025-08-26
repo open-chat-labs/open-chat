@@ -7,7 +7,6 @@
         themes,
         themeType,
     } from "../../../theme/themes";
-    import { onMount } from "svelte";
     import type { Theme } from "../../../theme/types";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Button from "../../Button.svelte";
@@ -20,43 +19,44 @@
         dark: Theme[];
     };
 
-    let partitionedThemes: PartitionedThemes = {
-        light: [],
-        dark: [],
-    };
+    let partitionedThemes = $state<PartitionedThemes>(partition());
 
-    onMount(() => {
-        partitionedThemes = Object.values(themes).reduce((p, theme) => {
-            if (theme.hidden) return p;
+    function partition() {
+        const partitionedThemes = Object.values(themes).reduce(
+            (p, theme) => {
+                if (theme.hidden) return p;
 
-            if (theme.mode === "light") {
-                p.light.push(theme);
-            }
-            if (theme.mode === "dark") {
-                p.dark.push(theme);
-            }
-            return p;
-        }, partitionedThemes);
+                if (theme.mode === "light") {
+                    p.light.push(theme);
+                }
+                if (theme.mode === "dark") {
+                    p.dark.push(theme);
+                }
+                return p;
+            },
+            { light: [], dark: [] } as PartitionedThemes,
+        );
         partitionedThemes.light.sort((a, b) => a.label.localeCompare(b.label));
         partitionedThemes.dark.sort((a, b) => a.label.localeCompare(b.label));
-    });
-
-    function selectLightTheme(ev: CustomEvent<string>) {
-        preferredLightThemeName.set(ev.detail);
+        return partitionedThemes;
     }
 
-    function selectDarkTheme(ev: CustomEvent<string>) {
-        preferredDarkThemeName.set(ev.detail);
+    function selectLightTheme(name: string) {
+        preferredLightThemeName.set(name);
+    }
+
+    function selectDarkTheme(name: string) {
+        preferredDarkThemeName.set(name);
     }
 </script>
 
 <div class="theme-buttons">
     <ButtonGroup nowrap align="fill">
-        <Button on:click={() => themeType.set("system")} secondary={$themeType !== "system"}
+        <Button onClick={() => themeType.set("system")} secondary={$themeType !== "system"}
             ><Translatable resourceKey={i18nKey("theme.system")} /></Button>
-        <Button on:click={() => themeType.set("light")} secondary={$themeType !== "light"}
+        <Button onClick={() => themeType.set("light")} secondary={$themeType !== "light"}
             ><Translatable resourceKey={i18nKey("theme.light")} /></Button>
-        <Button on:click={() => themeType.set("dark")} secondary={$themeType !== "dark"}
+        <Button onClick={() => themeType.set("dark")} secondary={$themeType !== "dark"}
             ><Translatable resourceKey={i18nKey("theme.dark")} /></Button>
     </ButtonGroup>
 </div>
@@ -64,13 +64,13 @@
 <div class="theme-selection">
     <ThemeButton
         align={"start"}
-        on:select={selectLightTheme}
+        onSelect={selectLightTheme}
         label={i18nKey("theme.preferredLightTheme")}
         theme={$preferredLightTheme}
         otherThemes={partitionedThemes.light} />
     <ThemeButton
         align={"end"}
-        on:select={selectDarkTheme}
+        onSelect={selectDarkTheme}
         label={i18nKey("theme.preferredDarkTheme")}
         theme={$preferredDarkTheme}
         otherThemes={partitionedThemes.dark} />

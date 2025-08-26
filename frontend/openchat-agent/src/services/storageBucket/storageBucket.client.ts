@@ -1,7 +1,7 @@
-import type { Identity } from "@dfinity/agent";
-import type { Principal } from "@dfinity/principal";
+import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
+import type { Principal } from "@icp-sdk/core/principal";
 import { idlFactory, type StorageBucketService } from "./candid/idl";
-import { CandidService } from "../candidService";
+import { CandidCanisterAgent } from "../canisterAgent/candid";
 import {
     deleteFileResponse,
     fileInfoResponse,
@@ -14,27 +14,10 @@ import type {
     ForwardFileResponse,
     UploadChunkResponse,
 } from "openchat-shared";
-import type { AgentConfig } from "../../config";
 
-export class StorageBucketClient extends CandidService {
-    private service: StorageBucketService;
-
-    private constructor(identity: Identity, config: AgentConfig, canisterId: string) {
-        super(identity);
-
-        this.service = this.createServiceClient<StorageBucketService>(
-            idlFactory,
-            canisterId,
-            config
-        );
-    }
-
-    static create(
-        identity: Identity,
-        config: AgentConfig,
-        canisterId: string
-    ): StorageBucketClient {
-        return new StorageBucketClient(identity, config, canisterId);
+export class StorageBucketClient extends CandidCanisterAgent<StorageBucketService> {
+    constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
+        super(identity, agent, canisterId, idlFactory, "StorageBucket");
     }
 
     uploadChunk(
@@ -46,7 +29,7 @@ export class StorageBucketClient extends CandidService {
         chunkSize: number,
         chunkIndex: number,
         bytes: Uint8Array,
-        expiryTimestampMillis: bigint | undefined
+        expiryTimestampMillis: bigint | undefined,
     ): Promise<UploadChunkResponse> {
         return this.handleResponse(
             this.service.upload_chunk_v2({
@@ -60,21 +43,21 @@ export class StorageBucketClient extends CandidService {
                 chunk_size: chunkSize,
                 expiry: expiryTimestampMillis !== undefined ? [expiryTimestampMillis] : [],
             }),
-            uploadChunkResponse
+            uploadChunkResponse,
         );
     }
 
     forwardFile(fileId: bigint, accessors: Array<Principal>): Promise<ForwardFileResponse> {
         return this.handleResponse(
             this.service.forward_file({ file_id: fileId, accessors }),
-            forwardFileResponse
+            forwardFileResponse,
         );
     }
 
     deleteFile(fileId: bigint): Promise<DeleteFileResponse> {
         return this.handleResponse(
             this.service.delete_file({ file_id: fileId }),
-            deleteFileResponse
+            deleteFileResponse,
         );
     }
 

@@ -1,7 +1,7 @@
 [package]
 name = "identity_canister_impl"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -13,21 +13,23 @@ crate-type = ["cdylib"]
 candid = { workspace = true }
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }
 canister_logger = { path = "../../../libraries/canister_logger" }
-canister_sig_util = { workspace = true }
 canister_state_macros = { path = "../../../libraries/canister_state_macros" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
+constants = { path = "../../../libraries/constants" }
 http_request = { path = "../../../libraries/http_request" }
+ic-canister-sig-creation = { workspace = true }
+ic-captcha = { workspace = true }
 ic-cdk = { workspace = true }
-ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-certification = { workspace = true }
 ic-stable-structures = { workspace = true }
 identity_canister = { path = "../api" }
+identity_utils = { path = "../../../libraries/identity_utils" }
+msgpack = { path = "../../../libraries/msgpack" }
+oc_error_codes = { path = "../../../libraries/error_codes" }
 rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
-serializer = { path = "../../../libraries/serializer" }
-sha2 = { workspace = true }
 sha256 = { path = "../../../libraries/sha256" }
 stable_memory = { path = "../../../libraries/stable_memory" }
 tracing = { workspace = true }

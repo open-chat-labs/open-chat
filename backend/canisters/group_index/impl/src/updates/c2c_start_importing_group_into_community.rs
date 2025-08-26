@@ -1,11 +1,11 @@
 use crate::guards::caller_is_community_canister;
-use crate::{read_state, RuntimeState};
-use canister_api_macros::update_msgpack;
+use crate::{RuntimeState, read_state};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_start_importing_group_into_community::{Response::*, *};
 use types::CommunityId;
 
-#[update_msgpack(guard = "caller_is_community_canister")]
+#[update(guard = "caller_is_community_canister", msgpack = true)]
 #[trace]
 async fn c2c_start_importing_group_into_community(args: Args) -> Response {
     let community_id = match read_state(|state| prepare(&args, state)) {
@@ -23,14 +23,8 @@ async fn c2c_start_importing_group_into_community(args: Args) -> Response {
     .await
     {
         Ok(group_canister::c2c_start_import_into_community::Response::Success(total_bytes)) => Success(total_bytes),
-        Ok(group_canister::c2c_start_import_into_community::Response::AlreadyImportingToAnotherCommunity) => {
-            AlreadyImportingToAnotherCommunity
-        }
-        Ok(group_canister::c2c_start_import_into_community::Response::UserNotInGroup) => UserNotInGroup,
-        Ok(group_canister::c2c_start_import_into_community::Response::NotAuthorized) => NotAuthorized,
-        Ok(group_canister::c2c_start_import_into_community::Response::UserSuspended) => UserSuspended,
-        Ok(group_canister::c2c_start_import_into_community::Response::ChatFrozen) => ChatFrozen,
-        Err(error) => InternalError(format!("{error:?}")),
+        Ok(group_canister::c2c_start_import_into_community::Response::Error(error)) => Error(error),
+        Err(error) => Error(error.into()),
     }
 }
 

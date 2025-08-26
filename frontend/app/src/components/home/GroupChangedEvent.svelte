@@ -1,30 +1,31 @@
-<svelte:options immutable />
-
 <script lang="ts">
-    import NonMessageEvent from "./NonMessageEvent.svelte";
+    import type { UserSummary } from "openchat-client";
+    import { allUsersStore } from "openchat-client";
     import { _ } from "svelte-i18n";
-    import { getContext } from "svelte";
-    import type { OpenChat, UserSummary } from "openchat-client";
     import { buildDisplayName } from "../../utils/user";
+    import NonMessageEvent from "./NonMessageEvent.svelte";
 
-    const client = getContext<OpenChat>("client");
+    interface Props {
+        user: UserSummary | undefined;
+        changedBy: string;
+        property: string;
+        timestamp: bigint;
+        level: string;
+    }
 
-    export let user: UserSummary | undefined;
-    export let changedBy: string;
-    export let property: string;
-    export let timestamp: bigint;
-    export let level: string;
+    let { user, changedBy, property, timestamp, level }: Props = $props();
 
-    $: userStore = client.userStore;
-    $: me = changedBy === user?.userId;
-    $: changedByStr = buildDisplayName($userStore, changedBy, me);
-    $: text = $_("groupChangedBy", {
-        values: {
-            changed: property,
-            changedBy: changedByStr,
-            level,
-        },
-    });
+    let me = $derived(changedBy === user?.userId);
+    let changedByStr = $derived(buildDisplayName($allUsersStore, changedBy, me ? "me" : "user"));
+    let text = $derived(
+        $_("groupChangedBy", {
+            values: {
+                changed: property,
+                changedBy: changedByStr,
+                level,
+            },
+        }),
+    );
 </script>
 
 <NonMessageEvent {text} {timestamp} />
