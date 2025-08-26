@@ -8,7 +8,7 @@ use std::sync::Arc;
 use std::time::Instant;
 use tokio::time;
 use tracing::{error, info};
-use types::{BotDataEncoding, CanisterId, Error, NotificationEnvelope, Payload, Timestamped};
+use types::{CanisterId, Error, NotificationEnvelope, Timestamped};
 
 pub struct Reader<I: IndexStore> {
     ic_agent: IcAgent,
@@ -129,11 +129,7 @@ impl<I: IndexStore> Reader<I> {
                 NotificationEnvelope::Bot(notification) => {
                     for (bot_id, encoding) in notification.recipients {
                         if let Some(endpoint) = ic_response.bot_endpoints.get(&bot_id) {
-                            let bytes = notification.notification_bytes[&encoding].clone();
-                            let mime_type = match encoding {
-                                BotDataEncoding::Json => "application/json",
-                                BotDataEncoding::Candid => "application/candid",
-                            };
+                            let event_jwt = notification.event_map[&encoding].clone();
 
                             self.bot_notification_sender
                                 .send(BotNotification {
@@ -141,7 +137,7 @@ impl<I: IndexStore> Reader<I> {
                                     index: indexed_notification.index,
                                     timestamp: notification.timestamp,
                                     endpoint: endpoint.to_string(),
-                                    payload: Payload::new(bytes, mime_type),
+                                    event_jwt,
                                     first_read_at,
                                 })
                                 .await

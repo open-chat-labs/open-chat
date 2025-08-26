@@ -3,7 +3,7 @@ use registry_canister::{Payment, TokenDetails};
 use serde::{Deserialize, Serialize};
 use sha256::sha256;
 use tracing::info;
-use types::{CanisterId, TimestampMillis};
+use types::{CanisterId, EvmContractAddress, TimestampMillis};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Tokens {
@@ -27,6 +27,7 @@ impl Tokens {
         supported_standards: Vec<String>,
         payment: Option<Payment>,
         one_sec_enabled: bool,
+        evm_contract_addresses: Vec<EvmContractAddress>,
         now: TimestampMillis,
     ) -> bool {
         if self.exists(ledger_canister_id) {
@@ -57,6 +58,7 @@ impl Tokens {
                 last_updated: now,
                 payments: payment.into_iter().collect(),
                 one_sec_enabled,
+                evm_contract_addresses,
                 uninstalled: false,
             });
             self.last_updated = now;
@@ -204,6 +206,7 @@ pub struct TokenMetrics {
     last_updated: TimestampMillis,
     payments: Vec<Payment>,
     one_sec_enabled: bool,
+    evm_contract_addresses: Vec<EvmContractAddress>,
 }
 
 impl From<&TokenDetails> for TokenMetrics {
@@ -226,6 +229,7 @@ impl From<&TokenDetails> for TokenMetrics {
             last_updated: value.last_updated,
             payments: value.payments.clone(),
             one_sec_enabled: value.one_sec_enabled,
+            evm_contract_addresses: value.evm_contract_addresses.clone(),
         }
     }
 }

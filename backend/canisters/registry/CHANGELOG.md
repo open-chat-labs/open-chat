@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Support adding OneSec tokens to the Registry ([#8521](https://github.com/open-chat-labs/open-chat/pull/8521))
+
+### Changed
+
+- Change `EvmContractAddress` format ([#8522](https://github.com/open-chat-labs/open-chat/pull/8522))
+
 ## [[2.0.1869](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1869-registry)] - 2025-08-14
 
 ### Added

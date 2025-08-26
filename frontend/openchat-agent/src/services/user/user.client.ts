@@ -1186,13 +1186,13 @@ export class UserClient extends MsgpackCanisterAgent {
 
     toggleMuteNotifications(
         chatId: string,
-        muted: boolean,
+        mute: boolean,
     ): Promise<ToggleMuteNotificationResponse> {
         const args = {
             chat_id: principalStringToBytes(chatId),
         };
         return this.executeMsgpackUpdate(
-            muted ? "mute_notifications" : "unmute_notifications",
+            mute ? "mute_notifications" : "unmute_notifications",
             args,
             unitResult,
             UserMuteNotificationsArgs,

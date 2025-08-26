@@ -275,7 +275,7 @@ describe("app state", () => {
                     expect(get(allChatsStore).get(groupId)?.membership.notificationsMuted).toEqual(
                         false,
                     );
-                    localUpdates.updateNotificationsMuted(groupId, true);
+                    localUpdates.updateNotificationsMuted(groupId, true, undefined);
                     expect(get(allChatsStore).get(groupId)?.membership.notificationsMuted).toEqual(
                         true,
                     );

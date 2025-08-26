@@ -69,7 +69,8 @@ export type PubSubEvents = {
     forward: Message;
     toggleMuteNotifications: {
         chatId: ChatIdentifier;
-        mute: boolean;
+        mute: boolean | undefined;
+        muteAtEveryone: boolean | undefined;
     };
     newChannel: boolean;
     successfulImport: ChannelIdentifier;

@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{CanisterId, Milliseconds, TimestampMillis, UserId};
+use types::{CanisterId, EvmContractAddress, Milliseconds, TimestampMillis, UserId};
 
 mod lifecycle;
 mod queries;
@@ -34,6 +34,7 @@ pub struct TokenDetails {
     pub last_updated: TimestampMillis,
     pub payments: Vec<Payment>,
     pub one_sec_enabled: bool,
+    pub evm_contract_addresses: Vec<EvmContractAddress>,
     #[ts(skip)]
     pub uninstalled: bool,
 }
