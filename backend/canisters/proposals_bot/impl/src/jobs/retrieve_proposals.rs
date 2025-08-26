@@ -4,8 +4,9 @@ use crate::timer_job_types::{ProcessUserRefundJob, SubmitProposalJob, TimerJob, 
 use crate::{RuntimeState, mutate_state};
 use canister_timer_jobs::Job;
 use constants::{MINUTE_IN_MS, SNS_GOVERNANCE_CANISTER_ID};
-use nns_governance_canister::types::{ListProposalInfo, ProposalInfo};
-use proposals_bot_canister::ProposalToSubmit;
+use nns_governance_canister::types::manage_neuron::{Command, RegisterVote};
+use nns_governance_canister::types::{ListProposalInfo, ManageNeuron, ProposalInfo};
+use proposals_bot_canister::{ExecuteGenericNervousSystemFunction, ProposalToSubmit, ProposalToSubmitAction};
 use sns_governance_canister::types::ProposalData;
 use std::collections::HashSet;
 use std::time::Duration;
@@ -160,23 +161,13 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
                                 .nervous_systems
                                 .get_neuron_id_for_submitting_proposals(&SNS_GOVERNANCE_CANISTER_ID)
                             {
-                                let oc_proposal_for_nns_proposal = build_oc_proposal_for_nns_proposal(
+                                submit_oc_proposal_for_nns_proposal(
                                     nns.id,
                                     nns.title.clone(),
                                     nns.summary.clone(),
                                     neuron_id,
                                     oc_neuron_id,
-                                );
-
-                                state.data.timer_jobs.enqueue_job(
-                                    TimerJob::SubmitProposal(Box::new(SubmitProposalJob {
-                                        governance_canister_id: SNS_GOVERNANCE_CANISTER_ID,
-                                        neuron_id: oc_neuron_id,
-                                        proposal: oc_proposal_for_nns_proposal,
-                                        user_id_and_payment: None,
-                                    })),
-                                    now,
-                                    now,
+                                    state,
                                 );
                             }
                         }
@@ -263,13 +254,40 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
     }
 }
 
-#[allow(unused_variables)]
-fn build_oc_proposal_for_nns_proposal(
+fn submit_oc_proposal_for_nns_proposal(
     nns_proposal_id: ProposalId,
     nns_proposal_title: String,
     nns_proposal_summary: String,
     nns_neuron_id: NnsNeuronId,
     oc_neuron_id: SnsNeuronId,
-) -> ProposalToSubmit {
-    todo!()
+    state: &mut RuntimeState,
+) {
+    // If this proposal passes, the proposal will call `manage_neuron` on the NNS governance
+    // canister instructing it to vote to approve the NNS proposal
+    let manage_neuron_args = ManageNeuron {
+        id: Some(nns_neuron_id.into()),
+        neuron_id_or_subaccount: None,
+        command: Some(Command::RegisterVote(RegisterVote {
+            proposal: Some(nns_proposal_id.into()),
+            vote: 1,
+        })),
+    };
+    let payload = candid::encode_one(manage_neuron_args).unwrap();
+
+    let job = TimerJob::SubmitProposal(Box::new(SubmitProposalJob {
+        governance_canister_id: SNS_GOVERNANCE_CANISTER_ID,
+        neuron_id: oc_neuron_id,
+        proposal: ProposalToSubmit {
+            title: format!("Instruct the OpenChat NNS named neuron neuron to approve NNS proposal {nns_proposal_id}"),
+            summary: "".to_string(),
+            url: format!("https://dashboard.internetcomputer.org/proposal/{nns_proposal_id}"),
+            action: ProposalToSubmitAction::ExecuteGenericNervousSystemFunction(ExecuteGenericNervousSystemFunction {
+                function_id: 102000,
+                payload,
+            }),
+        },
+        user_id_and_payment: None,
+    }));
+
+    job.execute();
 }
