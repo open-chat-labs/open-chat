@@ -10,7 +10,7 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet, VecDeque};
 use types::{
     BuildVersion, CanisterId, Cycles, MessageId, Milliseconds, MultiUserChat, NnsNeuronId, ProposalId, TimestampMillis,
-    Timestamped,
+    Timestamped, UserId,
 };
 use utils::env::Environment;
 
@@ -178,4 +178,12 @@ fn generate_message_id(governance_canister_id: CanisterId, proposal_id: Proposal
     let array32: [u8; 32] = hash.finalize().into();
     let array8: [u8; 8] = array32[..8].try_into().unwrap();
     u64::from_ne_bytes(array8).into()
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct UserIdAndPayment {
+    pub user_id: UserId,
+    pub ledger_canister_id: CanisterId,
+    pub amount: u128,
+    pub fee: u128,
 }

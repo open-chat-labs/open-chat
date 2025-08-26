@@ -1,18 +1,19 @@
 use crate::model::nervous_systems::ValidateSubmitProposalPaymentError;
-use crate::timer_job_types::{LookupUserThenSubmitProposalJob, ProcessUserRefundJob, SubmitProposalJob, TimerJob};
-use crate::{RuntimeState, mutate_state, read_state};
+use crate::timer_job_types::{ProcessUserRefundJob, SubmitProposalJob, TimerJob};
+use crate::{RuntimeState, UserIdAndPayment, mutate_state, read_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_timer_jobs::Job;
 use canister_tracing_macros::trace;
-use ic_cdk::api::call::CallResult;
-use proposals_bot_canister::c2c_submit_proposal::{Response::*, *};
+use constants::SECOND_IN_MS;
+use ledger_utils::icrc2::process_transaction;
+use proposals_bot_canister::submit_proposal::{Response::*, *};
 use proposals_bot_canister::{ProposalToSubmit, ProposalToSubmitAction, Treasury};
 use sns_governance_canister::types::manage_neuron::Command;
 use sns_governance_canister::types::proposal::Action;
 use sns_governance_canister::types::{
-    ExecuteGenericNervousSystemFunction, ManageNeuronResponse, Motion, Proposal, Subaccount, TransferSnsTreasuryFunds,
-    UpgradeSnsControlledCanister, UpgradeSnsToNextVersion, manage_neuron_response,
+    AdvanceSnsTargetVersion, ExecuteGenericNervousSystemFunction, MintSnsTokens, Motion, Proposal, Subaccount,
+    TransferSnsTreasuryFunds, UpgradeSnsControlledCanister, UpgradeSnsToNextVersion, manage_neuron_response,
 };
 use tracing::{error, info};
 use types::{CanisterId, MultiUserChat, SnsNeuronId, UserDetails, UserId, icrc2};
@@ -60,13 +61,15 @@ async fn submit_proposal_impl(args: Args) -> Response {
     let proposal = prepare_proposal(args.proposal, user_id, username, chat);
 
     submit_proposal(
-        user_id,
+        Some(UserIdAndPayment {
+            user_id,
+            ledger_canister_id: args.transaction.ledger,
+            amount: args.transaction.amount,
+            fee: args.transaction.fee,
+        }),
         args.governance_canister_id,
         neuron_id,
         proposal,
-        args.transaction.ledger,
-        args.transaction.amount,
-        args.transaction.fee,
     )
     .await
 }
@@ -112,7 +115,12 @@ fn prepare_proposal(
     proposal.summary = proposal.summary.trim().to_string();
     proposal.url = proposal.url.trim().to_string();
 
-    let chat_url = chat.chat_url();
+    let chat_url = match chat {
+        MultiUserChat::Group(group_id) => format!("{OC_ROOT_URL}group/{group_id}"),
+        MultiUserChat::Channel(community_id, channel_id) => {
+            format!("{OC_ROOT_URL}community/{community_id}/channel/{channel_id}")
+        }
+    };
     let user_url = format!("{OC_ROOT_URL}user/{user_id}");
 
     let suffix = format!("\n\n> Submitted by [@{username}]({user_url}) on [OpenChat]({chat_url})");
@@ -121,98 +129,69 @@ fn prepare_proposal(
     proposal
 }
 
-pub(crate) async fn lookup_user_then_submit_proposal(
-    caller: Principal,
-    user_index_canister_id: CanisterId,
-    neuron_id: SnsNeuronId,
-    chat: MultiUserChat,
+pub(crate) async fn submit_proposal(
+    user_id_and_payment: Option<UserIdAndPayment>,
     governance_canister_id: CanisterId,
+    neuron_id: SnsNeuronId,
     proposal: ProposalToSubmit,
-    payment: icrc1::CompletedCryptoTransaction,
 ) -> Response {
-    let UserDetails { user_id, username, .. } = match lookup_user(caller, user_index_canister_id).await {
-        Ok(Some(u)) => u,
-        Err(LookupUserError::UserNotFound) => unreachable!(),
-        Err(LookupUserError::InternalError(error)) => {
-            error!(error = error.as_str(), %caller, "Failed to lookup user");
-            mutate_state(|state| {
-                enqueue_job(
-                    TimerJob::LookupUserThenSubmitProposal(LookupUserThenSubmitProposalJob {
-                        caller,
-                        user_index_canister_id,
-                        neuron_id,
-                        chat,
-                        governance_canister_id,
-                        proposal,
-                        payment,
-                    }),
-                    state,
-                )
-            });
-            return Retrying("Failed to lookup user".to_string());
-        }
+    let make_proposal_args = sns_governance_canister::manage_neuron::Args {
+        subaccount: neuron_id.to_vec(),
+        command: Some(Command::MakeProposal(Proposal {
+            title: proposal.title.clone(),
+            summary: proposal.summary.clone(),
+            url: proposal.url.clone(),
+            action: Some(convert_proposal_action(proposal.action.clone())),
+        })),
     };
-
-    let proposal = prepare_proposal(proposal, user_id, username, chat);
-
-    submit_user_proposal_and_handle_response(user_id, governance_canister_id, neuron_id, proposal, payment).await
-}
-
-pub(crate) async fn submit_user_proposal_and_handle_response(
-    user_id: UserId,
-    governance_canister_id: CanisterId,
-    neuron_id: SnsNeuronId,
-    proposal: ProposalToSubmit,
-    ledger_canister_id: CanisterId,
-    payment_amount: u128,
-    transaction_fee: u128,
-) -> Response {
-    match submit_proposal(governance_canister_id, neuron_id, proposal.clone()).await {
+    let user_id = user_id_and_payment.as_ref().map(|u| u.user_id);
+    let user_id_string = user_id.map_or("none".to_string(), |id| id.to_string());
+    match sns_governance_canister_c2c_client::manage_neuron(governance_canister_id, &make_proposal_args).await {
         Ok(response) => {
             if let Some(command) = response.command {
-                match command {
+                return match command {
                     manage_neuron_response::Command::MakeProposal(p) => {
                         let proposal_id = p.proposal_id.unwrap().id;
                         mutate_state(|state| {
-                            state.data.nervous_systems.record_user_submitted_proposal(
-                                governance_canister_id,
-                                user_id,
-                                proposal_id,
-                            )
+                            if let Some(user_id) = user_id {
+                                state.data.nervous_systems.record_user_submitted_proposal(
+                                    governance_canister_id,
+                                    user_id,
+                                    proposal_id,
+                                )
+                            }
                         });
-                        info!(proposal_id, %user_id, "Proposal submitted");
+                        info!(proposal_id, user_id = user_id_string, "Proposal submitted");
                         Success
                     }
                     manage_neuron_response::Command::Error(error) => {
-                        ProcessUserRefundJob {
-                            user_id,
-                            ledger_canister_id,
-                            amount: payment_amount.saturating_sub(transaction_fee),
-                            fee: transaction_fee,
-                        }
-                        .execute();
+                        if let Some(user_and_payment) = user_id_and_payment {
+                            ProcessUserRefundJob {
+                                user_id: user_and_payment.user_id,
+                                ledger_canister_id: user_and_payment.ledger_canister_id,
+                                amount: user_and_payment.amount.saturating_sub(user_and_payment.fee),
+                                fee: user_and_payment.fee,
+                            }
+                            .execute();
 
-                        error!(?error, %user_id, "Failed to submit proposal, refunding user");
+                            error!(?error, user_id = user_id_string, "Failed to submit proposal, refunding user");
+                        }
                         InternalError(format!("{error:?}"))
                     }
                     _ => unreachable!(),
-                }
-            } else {
-                error!(%user_id, "Failed to submit proposal, response was empty");
-                InternalError("Empty response from `manage_neuron`".to_string())
+                };
             }
+            error!(user_id = user_id_string, "Failed to submit proposal, response was empty");
+            InternalError("Empty response from `manage_neuron`".to_string())
         }
         Err(error) => {
             mutate_state(|state| {
                 enqueue_job(
                     TimerJob::SubmitProposal(Box::new(SubmitProposalJob {
-                        user_id,
                         governance_canister_id,
                         neuron_id,
                         proposal,
-                        ledger: ledger_canister_id,
-                        payment_amount,
-                        transaction_fee,
+                        user_id_and_payment,
                     })),
                     state,
                 )
@@ -220,24 +199,6 @@ pub(crate) async fn submit_user_proposal_and_handle_response(
             Retrying(format!("{error:?}"))
         }
     }
-}
-
-pub(crate) async fn submit_proposal(
-    governance_canister_id: CanisterId,
-    neuron_id: SnsNeuronId,
-    proposal: ProposalToSubmit,
-) -> CallResult<ManageNeuronResponse> {
-    let make_proposal_args = sns_governance_canister::manage_neuron::Args {
-        subaccount: neuron_id.to_vec(),
-        command: Some(Command::MakeProposal(Proposal {
-            title: proposal.title,
-            summary: proposal.summary,
-            url: proposal.url,
-            action: Some(convert_proposal_action(proposal.action)),
-        })),
-    };
-
-    sns_governance_canister_c2c_client::manage_neuron(governance_canister_id, &make_proposal_args).await
 }
 
 fn convert_proposal_action(action: ProposalToSubmitAction) -> Action {

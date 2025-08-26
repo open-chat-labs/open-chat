@@ -1,18 +1,16 @@
 use crate::jobs::{push_proposals, update_proposals};
-use crate::proposals::{RawProposal, REWARD_STATUS_ACCEPT_VOTES, REWARD_STATUS_READY_TO_SETTLE};
-use crate::timer_job_types::{
-    ProcessUserRefundJob, SubmitOCProposalForNnsProposalJob, TimerJob, TopUpNeuronJob, VoteOnNnsProposalJob,
-};
-use crate::{mutate_state, RuntimeState};
+use crate::proposals::{REWARD_STATUS_ACCEPT_VOTES, REWARD_STATUS_READY_TO_SETTLE, RawProposal};
+use crate::timer_job_types::{ProcessUserRefundJob, SubmitProposalJob, TimerJob, TopUpNeuronJob, VoteOnNnsProposalJob};
+use crate::{RuntimeState, mutate_state};
 use canister_timer_jobs::Job;
-use constants::MINUTE_IN_MS;
+use constants::{MINUTE_IN_MS, SNS_GOVERNANCE_CANISTER_ID};
 use nns_governance_canister::types::{ListProposalInfo, ProposalInfo};
+use proposals_bot_canister::ProposalToSubmit;
 use sns_governance_canister::types::ProposalData;
 use std::collections::HashSet;
 use std::time::Duration;
-use types::{CanisterId, Milliseconds, Proposal};
-use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
-use utils::time::MINUTE_IN_MS;
+use types::{C2CError, CanisterId, NnsNeuronId, Proposal, ProposalId, SnsNeuronId};
+use utils::canister::delay_if_should_retry_failed_c2c_call;
 
 pub const NNS_TOPIC_NEURON_MANAGEMENT: i32 = 1;
 pub const NNS_TOPIC_EXCHANGE_RATE: i32 = 2;
@@ -161,14 +159,21 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
                                         .nervous_systems
                                         .get_neuron_id_for_submitting_proposals(&SNS_GOVERNANCE_CANISTER_ID)
                                     {
+                                        let oc_proposal_for_nns_proposal = build_oc_proposal_for_nns_proposal(
+                                            nns.id,
+                                            nns.title.clone(),
+                                            nns.summary.clone(),
+                                            neuron_id,
+                                            oc_neuron_id,
+                                        );
+
                                         state.data.timer_jobs.enqueue_job(
-                                            TimerJob::SubmitOCProposalForNnsProposal(SubmitOCProposalForNnsProposalJob {
-                                                nns_proposal_id: nns.id,
-                                                nns_proposal_title: nns.title.clone(),
-                                                nns_proposal_summary: nns.summary.clone(),
-                                                nns_neuron_id: neuron_id,
-                                                oc_neuron_id,
-                                            }),
+                                            TimerJob::SubmitProposal(Box::new(SubmitProposalJob {
+                                                governance_canister_id: SNS_GOVERNANCE_CANISTER_ID,
+                                                neuron_id: oc_neuron_id,
+                                                proposal: oc_proposal_for_nns_proposal,
+                                                user_id_and_payment: None,
+                                            })),
                                             now,
                                             now,
                                         );
@@ -257,4 +262,15 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
             });
         }
     }
+}
+
+#[allow(unused_variables)]
+fn build_oc_proposal_for_nns_proposal(
+    nns_proposal_id: ProposalId,
+    nns_proposal_title: String,
+    nns_proposal_summary: String,
+    nns_neuron_id: NnsNeuronId,
+    oc_neuron_id: SnsNeuronId,
+) -> ProposalToSubmit {
+    todo!()
 }

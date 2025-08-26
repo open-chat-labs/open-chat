@@ -1,7 +1,5 @@
-use crate::mutate_state;
-use crate::updates::c2c_submit_proposal::{
-    lookup_user_then_submit_proposal, submit_proposal, submit_user_proposal_and_handle_response,
-};
+use crate::updates::submit_proposal::submit_proposal;
+use crate::{UserIdAndPayment, mutate_state};
 use candid::Principal;
 use canister_timer_jobs::Job;
 use constants::{MINUTE_IN_MS, SECOND_IN_MS};
@@ -12,15 +10,11 @@ use sns_governance_canister::types::manage_neuron::claim_or_refresh::By;
 use sns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command};
 use sns_governance_canister::types::{Empty, ManageNeuron, manage_neuron_response};
 use tracing::error;
-use types::{icrc1, CanisterId, MultiUserChat, NnsNeuronId, ProposalId, SnsNeuronId, UserId};
-use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
-use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
+use types::{CanisterId, MultiUserChat, NnsNeuronId, ProposalId, SnsNeuronId, UserId, icrc1};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
-    SubmitProposal(SubmitProposalJob),
-    SubmitOCProposalForNnsProposal(SubmitOCProposalForNnsProposalJob),
-    LookupUserThenSubmitProposal(LookupUserThenSubmitProposalJob),
+    SubmitProposal(Box<SubmitProposalJob>),
     ProcessUserRefund(ProcessUserRefundJob),
     TopUpNeuron(TopUpNeuronJob),
     RefreshNeuron(RefreshNeuronJob),
@@ -30,25 +24,9 @@ pub enum TimerJob {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct SubmitProposalJob {
     pub governance_canister_id: CanisterId,
-    pub user_id: UserId,
     pub neuron_id: SnsNeuronId,
     pub proposal: ProposalToSubmit,
-    pub payment: icrc1::CompletedCryptoTransaction,
-}
-
-#[derive(Serialize, Deserialize, Clone)]
-pub struct SubmitOCProposalForNnsProposalJob {
-    pub nns_proposal_id: ProposalId,
-    pub nns_proposal_title: String,
-    pub nns_proposal_summary: String,
-    pub nns_neuron_id: NnsNeuronId,
-    pub oc_neuron_id: SnsNeuronId,
-}
-
-impl SubmitOCProposalForNnsProposalJob {
-    fn build_proposal(&self) -> ProposalToSubmit {
-        todo!()
-    }
+    pub user_id_and_payment: Option<UserIdAndPayment>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -97,8 +75,6 @@ impl Job for TimerJob {
     fn execute(self) {
         match self {
             TimerJob::SubmitProposal(job) => job.execute(),
-            TimerJob::SubmitOCProposalForNnsProposal(job) => job.execute(),
-            TimerJob::LookupUserThenSubmitProposal(job) => job.execute(),
             TimerJob::ProcessUserRefund(job) => job.execute(),
             TimerJob::TopUpNeuron(job) => job.execute(),
             TimerJob::RefreshNeuron(job) => job.execute(),
@@ -109,49 +85,12 @@ impl Job for TimerJob {
 
 impl Job for SubmitProposalJob {
     fn execute(self) {
-        ic_cdk::spawn(async move {
-            submit_user_proposal_and_handle_response(
-                self.user_id,
+        ic_cdk::futures::spawn(async move {
+            submit_proposal(
+                self.user_id_and_payment,
                 self.governance_canister_id,
                 self.neuron_id,
                 self.proposal,
-                self.payment,
-            )
-            .await;
-        });
-    }
-}
-
-impl Job for SubmitOCProposalForNnsProposalJob {
-    fn execute(self) {
-        ic_cdk::spawn(async move {
-            if submit_proposal(SNS_GOVERNANCE_CANISTER_ID, self.oc_neuron_id, self.build_proposal())
-                .await
-                .is_err()
-            {
-                mutate_state(|state| {
-                    let now = state.env.now();
-                    state
-                        .data
-                        .timer_jobs
-                        .enqueue_job(TimerJob::SubmitOCProposalForNnsProposal(self), now + MINUTE_IN_MS, now);
-                });
-            }
-        });
-    }
-}
-
-impl Job for LookupUserThenSubmitProposalJob {
-    fn execute(self) {
-        ic_cdk::spawn(async move {
-            lookup_user_then_submit_proposal(
-                self.caller,
-                self.user_index_canister_id,
-                self.neuron_id,
-                self.chat,
-                self.governance_canister_id,
-                self.proposal,
-                self.payment,
             )
             .await;
         });
