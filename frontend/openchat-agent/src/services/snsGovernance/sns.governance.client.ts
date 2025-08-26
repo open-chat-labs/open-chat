@@ -1,4 +1,4 @@
-import type { HttpAgent, Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import type {
     ListNervousSystemFunctionsResponse,
     ManageNeuronResponse,

@@ -1,4 +1,4 @@
-import type { HttpAgent, Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import { idlFactory, type IcpSwapIndexService } from "./candid/idl";
 import { CandidCanisterAgent } from "../../../canisterAgent/candid";
 import type { TokenSwapPool } from "openchat-shared";
@@ -8,7 +8,10 @@ import { IcpSwapPoolClient } from "../pool/icpSwap.pool.client";
 
 const ICPSWAP_INDEX_CANISTER_ID = "4mmnk-kiaaa-aaaag-qbllq-cai";
 
-export class IcpSwapIndexClient extends CandidCanisterAgent<IcpSwapIndexService> implements SwapIndexClient {
+export class IcpSwapIndexClient
+    extends CandidCanisterAgent<IcpSwapIndexService>
+    implements SwapIndexClient
+{
     constructor(identity: Identity, agent: HttpAgent) {
         super(identity, agent, ICPSWAP_INDEX_CANISTER_ID, idlFactory, "IcpSwapIndex");
     }

@@ -1,6 +1,11 @@
-import { SignIdentity } from "@dfinity/agent";
+import { SignIdentity } from "@icp-sdk/core/agent";
 import { IdbStorage } from "@dfinity/auth-client";
-import { DelegationChain, DelegationIdentity, ECDSAKeyIdentity, isDelegationValid } from "@dfinity/identity";
+import {
+    DelegationChain,
+    DelegationIdentity,
+    ECDSAKeyIdentity,
+    isDelegationValid,
+} from "@icp-sdk/core/identity";
 
 const KEY_STORAGE_AUTH_PRINCIPAL = "auth_principal";
 const KEY_STORAGE_KEY = "identity";
@@ -10,7 +15,7 @@ export class IdentityStorage {
     readonly storage: IdbStorage;
 
     private constructor(dbName: string) {
-        this.storage = new IdbStorage({ dbName })
+        this.storage = new IdbStorage({ dbName });
     }
 
     static createForAuthIdentity(): IdentityStorage {
@@ -47,7 +52,11 @@ export class IdentityStorage {
         return DelegationIdentity.fromDelegation(id, chain);
     }
 
-    async set(key: ECDSAKeyIdentity, chain: DelegationChain, authPrincipal?: string): Promise<void> {
+    async set(
+        key: ECDSAKeyIdentity,
+        chain: DelegationChain,
+        authPrincipal?: string,
+    ): Promise<void> {
         if (authPrincipal !== undefined) {
             await this.storage.set(KEY_STORAGE_AUTH_PRINCIPAL, authPrincipal);
         }

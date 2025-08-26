@@ -1,4 +1,4 @@
-import { AnonymousIdentity, type HttpAgent, type Identity } from "@dfinity/agent";
+import { AnonymousIdentity, type HttpAgent, type Identity } from "@icp-sdk/core/agent";
 import type { DexId, TokenSwapPool } from "openchat-shared";
 import { IcpSwapIndexClient } from "./icpSwap/index/icpSwap.index.client";
 import { KongSwapClient } from "./kongswap/kongswap.client";

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { IDL } from "@dfinity/candid";
+    import { IDL } from "@icp-sdk/core/candid";
     import { _ } from "svelte-i18n";
     import Legend from "../../Legend.svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -7,7 +7,7 @@
         type ExecuteGenericNervousSystemFunction,
         type ExternalBotLike,
     } from "openchat-client";
-    import { Principal } from "@dfinity/principal";
+    import { Principal } from "@icp-sdk/core/principal";
     import BotExplorer from "../../bots/BotExplorer.svelte";
     import SelectedMatch from "./SelectedMatch.svelte";
 

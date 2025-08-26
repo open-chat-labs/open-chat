@@ -1,4 +1,4 @@
-import type { Principal } from "@dfinity/principal";
+import type { Principal } from "@icp-sdk/core/principal";
 
 export interface BlobReference {
     blobId: bigint;
@@ -31,21 +31,19 @@ export type UploadChunkResponse =
     | "full";
 
 export type ForwardFileResponse =
-    | { kind: "success", newFileId: bigint }
+    | { kind: "success"; newFileId: bigint }
     | { kind: "not_authorized" }
     | { kind: "file_not_found" };
 
 export type DeleteFileResponse = "success" | "not_authorized" | "file_not_found";
 
-export type FileInfoResponse =
-    | FileInfoSuccess
-    | { kind: "file_not_found" };
+export type FileInfoResponse = FileInfoSuccess | { kind: "file_not_found" };
 
 export type FileInfoSuccess = {
-    kind: "success",
-    isOwner: boolean,
-    fileSize: bigint,
-    fileHash: Uint8Array,
+    kind: "success";
+    isOwner: boolean;
+    fileSize: bigint;
+    fileHash: Uint8Array;
 };
 
 export type AllocatedBucketResponse =
@@ -59,28 +57,25 @@ export type AllocatedBucketSuccess = {
     canisterId: Principal;
     fileId: bigint;
     chunkSize: number;
-    projectedAllowance: ProjectedAllowance,
+    projectedAllowance: ProjectedAllowance;
 };
 
 export type AllocatedBucketBucketUnavailable = {
     kind: "bucket_unavailable";
 };
 
-export type CanForwardResponse =
-    | CanForwardSuccess
-    | AllowanceExceeded
-    | StorageUserNotFound;
+export type CanForwardResponse = CanForwardSuccess | AllowanceExceeded | StorageUserNotFound;
 
 export type CanForwardSuccess = {
-    kind: "success",
-    projectedAllowance: ProjectedAllowance
+    kind: "success";
+    projectedAllowance: ProjectedAllowance;
 };
 
 export interface UploadFileResponse {
     canisterId: string;
     fileId: bigint;
     pathPrefix: string;
-    projectedAllowance: ProjectedAllowance,
+    projectedAllowance: ProjectedAllowance;
 }
 
 export type StorageUserResponse = StorageUserRecord | StorageUserNotFound;
@@ -96,12 +91,12 @@ export type StorageUserNotFound = {
 };
 
 export type AllowanceExceeded = {
-    kind: "allowance_exceeded",
-    projectedAllowance: ProjectedAllowance
+    kind: "allowance_exceeded";
+    projectedAllowance: ProjectedAllowance;
 };
 
 export type ProjectedAllowance = {
-    byteLimit: bigint,
-    bytesUsed: bigint,
-    bytesUsedAfterOperation: bigint,
+    byteLimit: bigint;
+    bytesUsed: bigint;
+    bytesUsedAfterOperation: bigint;
 };

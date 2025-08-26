@@ -24,8 +24,8 @@ import type {
 } from "openchat-shared";
 import { UnsupportedValueError } from "openchat-shared";
 import { consolidateBytes, mapOptional, principalBytesToString } from "../../utils/mapping";
-import type { Signature } from "@dfinity/agent";
-import { Delegation } from "@dfinity/identity";
+import type { Signature } from "@icp-sdk/core/agent";
+import { Delegation } from "@icp-sdk/core/identity";
 
 export function createIdentityResponse(
     value: IdentityCreateIdentityResponse,

@@ -1,5 +1,5 @@
-import { type Delegation, DelegationChain, DelegationIdentity } from "@dfinity/identity";
-import { type Signature, SignIdentity } from "@dfinity/agent";
+import { type Delegation, DelegationChain, DelegationIdentity } from "@icp-sdk/core/identity";
+import { type Signature, SignIdentity } from "@icp-sdk/core/agent";
 
 export function buildDelegationIdentity(
     userKey: Uint8Array,

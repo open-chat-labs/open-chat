@@ -1,5 +1,5 @@
 /* eslint-disable no-case-declarations */
-import { DER_COSE_OID, type Identity, type SignIdentity, unwrapDER } from "@dfinity/agent";
+import { DER_COSE_OID, type Identity, type SignIdentity, unwrapDER } from "@icp-sdk/core/agent";
 import { AuthClient, type AuthClientLoginOptions } from "@dfinity/auth-client";
 import {
     DelegationChain,
@@ -7,7 +7,7 @@ import {
     ECDSAKeyIdentity,
     type JsonnableDelegationChain,
     WebAuthnIdentity,
-} from "@dfinity/identity";
+} from "@icp-sdk/core/identity";
 import DRange from "drange";
 import {
     type AcceptedRules,
