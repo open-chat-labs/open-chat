@@ -1,4 +1,4 @@
-import type { HttpAgent, Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import type {
     AcceptP2PSwapResponse,
     AccessGateConfig,
@@ -1075,10 +1075,13 @@ export class GroupClient extends MsgpackCanisterAgent {
         return this.executeMsgpackUpdate("decline_invitation", {}, unitResult, TEmpty, UnitResult);
     }
 
-    toggleMuteNotifications(mute: boolean): Promise<ToggleMuteNotificationResponse> {
+    toggleMuteNotifications(
+        mute: boolean | undefined,
+        muteAtEveryone: boolean | undefined,
+    ): Promise<ToggleMuteNotificationResponse> {
         return this.executeMsgpackUpdate(
             "toggle_mute_notifications",
-            { mute },
+            { mute, mute_at_everyone: muteAtEveryone },
             unitResult,
             GroupToggleMuteNotificationsArgs,
             UnitResult,
@@ -1355,6 +1358,6 @@ export class GroupClient extends MsgpackCanisterAgent {
             (resp) => mapResult(resp, (value) => proposalTallies(value.tallies)),
             GroupActiveProposalTalliesArgs,
             ActiveProposalTalliesResponse,
-        )
+        );
     }
 }

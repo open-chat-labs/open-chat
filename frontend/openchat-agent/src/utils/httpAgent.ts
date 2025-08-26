@@ -1,4 +1,4 @@
-import { HttpAgent, type Identity } from "@dfinity/agent";
+import { HttpAgent, type Identity } from "@icp-sdk/core/agent";
 import { isMainnet } from "./network";
 import { offline } from "openchat-shared";
 

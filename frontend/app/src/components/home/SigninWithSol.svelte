@@ -13,7 +13,7 @@
     import Button from "../Button.svelte";
     import type { OpenChat, SiwsMessage } from "openchat-client";
     import base58 from "bs58";
-    import type { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
+    import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
 
     const client = getContext<OpenChat>("client");
     const localStorageKey = "walletAdapter";

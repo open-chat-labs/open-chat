@@ -1,4 +1,4 @@
-import type { Principal } from "@dfinity/principal";
+import type { Principal } from "@icp-sdk/core/principal";
 import { openDbAndGetCachedChats } from "../../utils/caching";
 import { ReplicaNotUpToDateError } from "../error";
 import {
@@ -16,10 +16,7 @@ export async function ensureReplicaIsUpToDate(
 ): Promise<undefined | ReplicaNotUpToDate> {
     const clientChat = await getChat(principal, chatId);
 
-    if (
-        clientChat !== undefined &&
-        replicaChatLastUpdated < clientChat.lastUpdated
-    ) {
+    if (clientChat !== undefined && replicaChatLastUpdated < clientChat.lastUpdated) {
         if (suppressError) {
             return {
                 kind: "replica_not_up_to_date",

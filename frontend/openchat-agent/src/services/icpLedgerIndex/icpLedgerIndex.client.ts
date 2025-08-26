@@ -1,7 +1,7 @@
-import type { HttpAgent, Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import { idlFactory, type IcpLedgerIndexService } from "./candid/idl";
 import { CandidCanisterAgent } from "../canisterAgent/candid";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { accountTransactions } from "./mappers";
 import type { AccountTransactionResult } from "openchat-shared";
 import { apiOptional } from "../common/chatMappers";

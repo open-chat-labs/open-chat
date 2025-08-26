@@ -1,4 +1,4 @@
-import type { Principal } from "@dfinity/principal";
+import type { Principal } from "@icp-sdk/core/principal";
 import type {
     AcceptP2PSwapResponse,
     AccessGate,
@@ -2159,6 +2159,7 @@ function mapGroupMembership(
         latestThreads: value.latest_threads.map(threadSyncDetails),
         myMetrics: chatMetrics(value.my_metrics),
         notificationsMuted: value.notifications_muted,
+        atEveryoneMuted: value.at_everyone_muted,
         readByMeUpTo: latestMessage?.event.messageIndex,
         archived: false,
         rulesAccepted: value.rules_accepted,

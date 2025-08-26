@@ -1,4 +1,4 @@
-import type { IDL } from "@dfinity/candid";
+import type { IDL } from "@icp-sdk/core/candid";
 import {
     _SERVICE,
     GetAccountIdentifierTransactionsResult,

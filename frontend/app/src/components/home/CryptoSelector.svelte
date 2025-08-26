@@ -84,7 +84,6 @@
                     <Search
                         placeholder={i18nKey("search")}
                         fill
-                        autofocus
                         bind:searching
                         bind:searchTerm></Search>
                 </div>

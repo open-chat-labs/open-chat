@@ -311,6 +311,7 @@ export function mergeGroupChatUpdates(
                         : readByMeUpTo,
                 notificationsMuted:
                     g?.membership?.notificationsMuted ?? c.membership.notificationsMuted,
+                atEveryoneMuted: g?.membership?.atEveryoneMuted ?? c.membership.atEveryoneMuted,
                 myMetrics: g?.membership?.myMetrics ?? c.membership.myMetrics,
                 archived: u?.archived ?? c.membership.archived,
                 rulesAccepted: g?.membership?.rulesAccepted ?? c.membership.rulesAccepted,

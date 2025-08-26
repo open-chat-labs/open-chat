@@ -201,17 +201,14 @@ futures = "0.3"
 getrandom = { version = "0.2", features = ["custom"] }
 hex = "0.4"
 hmac-sha256 = { version = "1", features = ["traits010"] }
-http = "1"
 ic-agent = "0.40"
 ic-canister-sig-creation = "1"
 ic-captcha = "1"
 ic-cbor = "2"
 ic-cdk = "0.18"
-ic-cdk-macros = "0.18"
 ic-cdk-timers = "0.12"
 ic-certificate-verification = "2"
 ic-certification = "2"
-ic-http-certification = "2"
 ic-ledger-types = "0.15"
 ic-management-canister-types = "0.3"
 ic_principal = "0.1"
@@ -238,7 +235,7 @@ pulldown-cmark = { version = "0.13", default-features = false, features = [
 ] }
 quote = "1"
 rand = "0.8"
-range-set = "0.0.11"
+range-set = "0.1"
 regex-lite = "0.1"
 reqwest = "0.12"
 rmp-serde = "1"
@@ -268,7 +265,6 @@ twox-hash = { version = "2", default-features = false, features = [
     "xxhash3_128",
 ] }
 url = "2"
-urlencoding = "2"
 web-push = { version = "0.11", default-features = false, features = [
     "hyper-client",
 ] }

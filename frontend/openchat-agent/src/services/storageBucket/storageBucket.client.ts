@@ -1,5 +1,5 @@
-import type { HttpAgent, Identity } from "@dfinity/agent";
-import type { Principal } from "@dfinity/principal";
+import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
+import type { Principal } from "@icp-sdk/core/principal";
 import { idlFactory, type StorageBucketService } from "./candid/idl";
 import { CandidCanisterAgent } from "../canisterAgent/candid";
 import {

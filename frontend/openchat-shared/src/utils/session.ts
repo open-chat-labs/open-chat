@@ -1,5 +1,5 @@
-import type { Identity } from "@dfinity/agent";
-import type { DelegationIdentity } from "@dfinity/identity";
+import type { Identity } from "@icp-sdk/core/agent";
+import type { DelegationIdentity } from "@icp-sdk/core/identity";
 
 export function getTimeUntilSessionExpiryMs(identity: Identity): number {
     if (!("getDelegation" in identity)) {
@@ -10,7 +10,7 @@ export function getTimeUntilSessionExpiryMs(identity: Identity): number {
         (identity as DelegationIdentity)
             .getDelegation()
             .delegations.map((d) => d.delegation.expiration)
-            .reduce((current, next) => (next < current ? next : current)) / BigInt(1_000_000)
+            .reduce((current, next) => (next < current ? next : current)) / BigInt(1_000_000),
     );
 
     return expiryDateTimestampMs - Date.now();

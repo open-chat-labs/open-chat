@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
+    import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
     import {
         AuthProvider,
         mobileWidth,

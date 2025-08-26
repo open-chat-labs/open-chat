@@ -1,4 +1,4 @@
-import { HttpErrorCode, type Identity, ProtocolError } from "@dfinity/agent";
+import { HttpErrorCode, type Identity, ProtocolError } from "@icp-sdk/core/agent";
 import { ResponseTooLargeError } from "openchat-shared";
 import {
     getTimeUntilSessionExpiryMs,

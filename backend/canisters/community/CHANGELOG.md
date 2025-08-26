@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Remove legacy group membership fields from backend ([#8508](https://github.com/open-chat-labs/open-chat/pull/8508))
+
+## [[2.0.1873](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1873-community)] - 2025-08-20
+
+### Changed
+
 - Support muting of @everyone notifications ([#8496](https://github.com/open-chat-labs/open-chat/pull/8496))
 - Support muted=false && @everyone_muted=true ([#8502](https://github.com/open-chat-labs/open-chat/pull/8502))
 

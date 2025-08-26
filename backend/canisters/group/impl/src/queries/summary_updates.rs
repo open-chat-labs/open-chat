@@ -84,17 +84,11 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
             latest_event_index: updates.latest_event_index,
             latest_message_index: updates.latest_message_index,
             participant_count: updates.member_count,
-            role: membership.role,
-            mentions: membership.mentions.clone(),
             permissions_v2: updates.permissions,
             updated_events: updates.updated_events,
             metrics: Some(chat.events.metrics().hydrate()),
-            my_metrics: membership.my_metrics.clone(),
             is_public: updates.is_public,
             messages_visible_to_non_members: updates.messages_visible_to_non_members,
-            latest_threads: membership.latest_threads.clone(),
-            unfollowed_threads: membership.unfollowed_threads.clone(),
-            notifications_muted: membership.notifications_muted,
             frozen: state
                 .data
                 .frozen
@@ -106,7 +100,6 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
             events_ttl: updates.events_ttl,
             events_ttl_last_updated: updates.events_ttl_last_updated,
             gate_config: updates.gate_config,
-            rules_accepted: membership.rules_accepted,
             membership: Some(membership),
             video_call_in_progress: updates.video_call_in_progress,
             any_updates_missed: updates.any_updates_missed,

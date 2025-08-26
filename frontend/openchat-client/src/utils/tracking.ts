@@ -1,4 +1,4 @@
-import type { Identity } from "@dfinity/agent";
+import type { Identity } from "@icp-sdk/core/agent";
 import type { OpenChatConfig } from "../config";
 import { Usergeek } from "usergeek-ic-js";
 

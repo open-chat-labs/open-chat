@@ -1,4 +1,4 @@
-import { DelegationChain } from "@dfinity/identity";
+import { DelegationChain } from "@icp-sdk/core/identity";
 import type {
     Achievement,
     ArchiveChatResponse,

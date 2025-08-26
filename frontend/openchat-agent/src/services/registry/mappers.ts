@@ -99,6 +99,11 @@ function tokenDetails(
         added: value.added,
         enabled: value.enabled,
         oneSecEnabled: value.one_sec_enabled,
+        evmContractAddresses: value.evm_contract_addresses.map((a) => ({
+            token: value.symbol,
+            chain: a.chain,
+            address: a.address.toLowerCase(),
+        })),
         lastUpdated: value.last_updated,
     };
 

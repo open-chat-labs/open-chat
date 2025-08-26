@@ -1,4 +1,4 @@
-import type { HttpAgent, Identity, SignIdentity } from "@dfinity/agent";
+import type { HttpAgent, Identity, SignIdentity } from "@icp-sdk/core/agent";
 import {
     Empty,
     IdentityApproveIdentityLinkArgs,
@@ -54,7 +54,7 @@ import {
     removeIdentityLinkResponse,
 } from "./mappers";
 import { consolidateBytes, mapOptional, principalStringToBytes } from "../../utils/mapping";
-import type { DelegationIdentity } from "@dfinity/identity";
+import type { DelegationIdentity } from "@icp-sdk/core/identity";
 import { signedDelegation } from "../../utils/id";
 import { unitResult, mapResult } from "../common/chatMappersV2";
 import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";

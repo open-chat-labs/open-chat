@@ -1,34 +1,41 @@
 import type {
-    GroupCanisterGroupChatSummary as TGroupCanisterGroupChatSummary,
-    GroupCanisterGroupChatSummaryUpdates as TGroupCanisterGroupChatSummaryUpdates,
-    GroupRole,
-    GroupSummaryUpdatesResponse,
-    OptionalGroupPermissions as TOptionalGroupPermissions,
-    OptionalMessagePermissions as TOptionalMessagePermissions,
-    UpdatedRules as TUpdatedRules,
-    GroupMembershipUpdates as TGroupMembershipUpdates,
-    GroupConvertIntoCommunitySuccessResult,
-} from "../../typebox";
-import type {
-    MemberRole,
+    ConvertToCommunityResponse,
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
     GroupCanisterSummaryUpdatesResponse,
-    ConvertToCommunityResponse,
-    UpdatedRules,
+    GroupMembershipUpdates,
+    MemberRole,
     OptionalChatPermissions,
     OptionalMessagePermissions,
-    GroupMembershipUpdates,
+    UpdatedRules,
 } from "openchat-shared";
 import {
-    toBigInt32,
     emptyChatMetrics,
     ROLE_ADMIN,
     ROLE_MEMBER,
     ROLE_MODERATOR,
     ROLE_NONE,
-    ROLE_OWNER
+    ROLE_OWNER,
+    toBigInt32,
 } from "openchat-shared";
+import type {
+    GroupConvertIntoCommunitySuccessResult,
+    GroupRole,
+    GroupSummaryUpdatesResponse,
+    GroupCanisterGroupChatSummary as TGroupCanisterGroupChatSummary,
+    GroupCanisterGroupChatSummaryUpdates as TGroupCanisterGroupChatSummaryUpdates,
+    GroupMembershipUpdates as TGroupMembershipUpdates,
+    OptionalGroupPermissions as TOptionalGroupPermissions,
+    OptionalMessagePermissions as TOptionalMessagePermissions,
+    UpdatedRules as TUpdatedRules,
+} from "../../typebox";
+import {
+    apiOptionUpdateV2,
+    identity,
+    mapOptional,
+    optionUpdateV2,
+    principalBytesToString,
+} from "../../utils/mapping";
 import {
     accessGateConfig,
     apiPermissionRole,
@@ -43,13 +50,6 @@ import {
     updatedEvent,
     videoCallInProgress,
 } from "../common/chatMappersV2";
-import {
-    apiOptionUpdateV2,
-    identity,
-    mapOptional,
-    optionUpdateV2,
-    principalBytesToString,
-} from "../../utils/mapping";
 
 export function apiRole(role: MemberRole): GroupRole | undefined {
     switch (role) {
@@ -101,6 +101,7 @@ export function groupChatSummary(
             joined: m.joined,
             role: memberRole(m.role),
             notificationsMuted: m.notifications_muted,
+            atEveryoneMuted: m.at_everyone_muted,
             lapsed: m.lapsed,
             rulesAccepted: m.rules_accepted,
             latestThreads: m.latest_threads.map(threadSyncDetails),
@@ -113,6 +114,7 @@ export function groupChatSummary(
             latestThreads: [],
             myMetrics: emptyChatMetrics(),
             notificationsMuted: false,
+            atEveryoneMuted: false,
             rulesAccepted: false,
             lapsed: false,
         },
@@ -134,6 +136,7 @@ export function groupMembershipUpdates(value: TGroupMembershipUpdates): GroupMem
         myRole: mapOptional(value.role, memberRole),
         mentions: mentions(value.mentions),
         notificationsMuted: value.notifications_muted,
+        atEveryoneMuted: value.at_everyone_muted,
         myMetrics: mapOptional(value.my_metrics, chatMetrics),
         latestThreads: value.latest_threads.map(threadSyncDetails),
         unfollowedThreads: Array.from(value.unfollowed_threads),

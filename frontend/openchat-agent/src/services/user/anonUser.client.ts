@@ -342,7 +342,7 @@ export class AnonUserClient {
 
     toggleMuteNotifications(
         _chatId: string,
-        _muted: boolean,
+        _mute: boolean,
     ): Promise<ToggleMuteNotificationResponse> {
         throw new AnonymousOperationError();
     }

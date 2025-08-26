@@ -1,6 +1,6 @@
 /* eslint-disable no-case-declarations */
-import { HttpAgent, type Identity } from "@dfinity/agent";
-import type { Principal } from "@dfinity/principal";
+import { HttpAgent, type Identity } from "@icp-sdk/core/agent";
+import type { Principal } from "@icp-sdk/core/principal";
 import type {
     AcceptedRules,
     AcceptP2PSwapResponse,
@@ -2758,24 +2758,30 @@ export class OpenChatAgent extends EventTarget {
 
     toggleMuteNotifications(
         id: ChatIdentifier | CommunityIdentifier,
-        muted: boolean,
+        mute: boolean | undefined,
+        muteAtEveryone: boolean | undefined,
     ): Promise<ToggleMuteNotificationResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (id.kind) {
             case "group_chat":
-                return this.getGroupClient(id.groupId).toggleMuteNotifications(muted);
+                return this.getGroupClient(id.groupId).toggleMuteNotifications(
+                    mute,
+                    muteAtEveryone,
+                );
             case "direct_chat":
-                return this.userClient.toggleMuteNotifications(id.userId, muted);
+                return this.userClient.toggleMuteNotifications(id.userId, mute!);
             case "channel":
                 return this.communityClient(id.communityId).toggleMuteChannelNotifications(
                     id,
-                    muted,
+                    mute,
+                    muteAtEveryone,
                 );
             case "community":
                 return this.communityClient(id.communityId).toggleMuteChannelNotifications(
                     undefined,
-                    muted,
+                    mute,
+                    muteAtEveryone,
                 );
         }
     }

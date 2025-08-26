@@ -1,4 +1,4 @@
-import type { HttpAgent, Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import type {
     AcceptP2PSwapResponse,
     AccessGateConfig,
@@ -1293,13 +1293,15 @@ export class CommunityClient extends MsgpackCanisterAgent {
 
     toggleMuteChannelNotifications(
         chatId: ChannelIdentifier | undefined,
-        mute: boolean,
+        mute: boolean | undefined,
+        muteAtEveryone: boolean | undefined,
     ): Promise<ToggleMuteNotificationResponse> {
         return this.executeMsgpackUpdate(
             "toggle_mute_notifications",
             {
                 channel_id: chatId ? toBigInt32(chatId.channelId) : undefined,
                 mute,
+                mute_at_everyone: muteAtEveryone,
             },
             unitResult,
             CommunityToggleMuteNotificationsArgs,

@@ -69,6 +69,7 @@ const defaultGroupChat: GroupChatSummary = {
         archived: false,
         mentions: [],
         notificationsMuted: false,
+        atEveryoneMuted: false,
         role: ROLE_ADMIN,
         readByMeUpTo: undefined,
         joined: BigInt(0),

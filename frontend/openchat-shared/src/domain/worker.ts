@@ -1,4 +1,4 @@
-import type { JsonnableDelegationChain } from "@dfinity/identity";
+import type { JsonnableDelegationChain } from "@icp-sdk/core/identity";
 import type { AccessGateConfig, Rules, UpdatedRules, VerifiedCredentialArgs } from "./access";
 import type {
     CkbtcMinterDepositInfo,
@@ -1237,7 +1237,8 @@ type ArchiveChat = {
 
 type ToggleMuteNotifications = {
     id: ChatIdentifier | CommunityIdentifier;
-    muted: boolean;
+    mute: boolean | undefined;
+    muteAtEveryone: boolean | undefined;
     kind: "toggleMuteNotifications";
 };
 
