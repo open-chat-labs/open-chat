@@ -58,7 +58,7 @@ impl Pusher {
         url = url.join("notify").map_err(|e| e.to_string())?;
         self.http_client
             .post(url)
-            .header(CONTENT_TYPE, "application/json")
+            .header(CONTENT_TYPE, "text/plain")
             .body(event_jwt)
             .send()
             .await
