@@ -161,14 +161,7 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
                                 .nervous_systems
                                 .get_neuron_id_for_submitting_proposals(&SNS_GOVERNANCE_CANISTER_ID)
                             {
-                                submit_oc_proposal_for_nns_proposal(
-                                    nns.id,
-                                    nns.title.clone(),
-                                    nns.summary.clone(),
-                                    neuron_id,
-                                    oc_neuron_id,
-                                    state,
-                                );
+                                submit_oc_proposal_for_nns_proposal(nns.id, neuron_id, oc_neuron_id);
                             }
                         }
                     }
@@ -254,14 +247,7 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
     }
 }
 
-fn submit_oc_proposal_for_nns_proposal(
-    nns_proposal_id: ProposalId,
-    nns_proposal_title: String,
-    nns_proposal_summary: String,
-    nns_neuron_id: NnsNeuronId,
-    oc_neuron_id: SnsNeuronId,
-    state: &mut RuntimeState,
-) {
+fn submit_oc_proposal_for_nns_proposal(nns_proposal_id: ProposalId, nns_neuron_id: NnsNeuronId, oc_neuron_id: SnsNeuronId) {
     // If this proposal passes, the proposal will call `manage_neuron` on the NNS governance
     // canister instructing it to vote to approve the NNS proposal
     let manage_neuron_args = ManageNeuron {
@@ -274,7 +260,7 @@ fn submit_oc_proposal_for_nns_proposal(
     };
     let payload = candid::encode_one(manage_neuron_args).unwrap();
 
-    let job = TimerJob::SubmitProposal(Box::new(SubmitProposalJob {
+    let job = SubmitProposalJob {
         governance_canister_id: SNS_GOVERNANCE_CANISTER_ID,
         neuron_id: oc_neuron_id,
         proposal: ProposalToSubmit {
@@ -287,7 +273,7 @@ fn submit_oc_proposal_for_nns_proposal(
             }),
         },
         user_id_and_payment: None,
-    }));
+    };
 
     job.execute();
 }
