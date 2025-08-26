@@ -4,7 +4,7 @@ import {
     type OptionUpdate,
     UnsupportedValueError,
 } from "openchat-shared";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import type { ApiPrincipal } from "../services";
 
 // takes a type of the form [] | [A] and a mapper from A -> B and returns a B or undefined

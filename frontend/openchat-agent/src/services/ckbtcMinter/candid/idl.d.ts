@@ -1,4 +1,4 @@
-import type { IDL } from "@dfinity/candid";
+import type { IDL } from "@icp-sdk/core/candid";
 import { PendingUtxo, UpdateBalanceError, Utxo, UtxoStatus, _SERVICE } from "./types";
 export {
     PendingUtxo as ApiPendingUtxo,

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Principal } from "@dfinity/principal";
+    import { Principal } from "@icp-sdk/core/principal";
     import { iconSize, type Credential, type CredentialGate } from "openchat-client";
     import { onMount } from "svelte";
     import Delete from "svelte-material-icons/Delete.svelte";

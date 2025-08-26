@@ -74,7 +74,7 @@
         "@wagmi/core": "^2.13.5",
         "bs58": "^5.0.0",
         "dompurify": "^3.2.6",
-        "emoji-picker-element": "hpeebles/emoji-picker-element#8f049807539eaf7fb16c2f1febcb4a0d94b248ea",
+        "emoji-picker-element": "hpeebles/emoji-picker-element#7051894b8235ea7731ce0f50f2617fe13e8d5529",
         "highlight.js": "^11.11.1",
         "i18next": "^23.11.4",
         "idb": "^7.1.1",

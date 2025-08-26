@@ -20,7 +20,7 @@ import {
     USDT_SYMBOL,
 } from "openchat-shared";
 import { identity, optional } from "../../utils/mapping";
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 
 export function forwardingResponse(
     candid: { Ok: ApiForwardingResponse } | { Err: string },
@@ -113,9 +113,9 @@ function transferFees(candid: ApiTransferFee): OneSecTransferFees | undefined {
 
 export function apiToken(token: string): ApiToken {
     switch (token.toLowerCase()) {
-        case "USDC":
+        case "usdc":
             return { USDC: null };
-        case "USDT":
+        case "usdt":
             return { USDT: null };
         default:
             throw new Error("Token not supported: " + token);

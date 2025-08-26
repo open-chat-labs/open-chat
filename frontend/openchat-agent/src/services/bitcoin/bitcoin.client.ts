@@ -1,4 +1,4 @@
-import type { HttpAgent, Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import type { Utxo } from "openchat-shared";
 import { CandidCanisterAgent } from "../canisterAgent/candid";
 import { idlFactory, type BitcoinService } from "./candid/idl";
@@ -13,18 +13,17 @@ export class BitcoinClient extends CandidCanisterAgent<BitcoinService> {
     constructor(identity: Identity, agent: HttpAgent, mainnetEnabled: boolean) {
         super(identity, agent, BITCOIN_CANISTER_ID, idlFactory, "BitcoinCanister");
 
-        this.network = mainnetEnabled
-            ? { mainnet: null }
-            : { testnet: null };
+        this.network = mainnetEnabled ? { mainnet: null } : { testnet: null };
     }
 
     getUtxos(address: string): Promise<Utxo[]> {
         return this.handleQueryResponse(
-            () => this.service.bitcoin_get_utxos_query({
-                network: this.network,
-                address,
-                filter: [{ min_confirmations: CKBTC_MINTER_MIN_CONFIMRATIONS_REQUIRED }],
-            }),
+            () =>
+                this.service.bitcoin_get_utxos_query({
+                    network: this.network,
+                    address,
+                    filter: [{ min_confirmations: CKBTC_MINTER_MIN_CONFIMRATIONS_REQUIRED }],
+                }),
             getUtxosResponse,
         );
     }

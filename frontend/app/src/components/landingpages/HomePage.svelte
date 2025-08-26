@@ -8,7 +8,6 @@
     import Intro from "./Intro.svelte";
     import Roadmap from "./RoadmapOverview.svelte";
     import SellingPoints from "./SellingPoints.svelte";
-    import Team from "./Team.svelte";
 
     let showSignInWithMagicLinkModal = false;
 
@@ -23,9 +22,7 @@
     <Intro />
 
     <div class="headline">
-        <h2>
-            OpenChat users can send messages to each other containing tokens like BTC and ICP.
-        </h2>
+        <h2>OpenChat users can send messages to each other containing tokens like BTC and ICP.</h2>
         <p>
             OpenChat is governed by its community as a DAO and has its own CHAT token. CHAT tokens
             are given as rewards to users to turbo-charge growth and to create a team of millions of
@@ -43,10 +40,6 @@
 </div>
 
 <BragBox />
-
-<div class="content">
-    <Team />
-</div>
 
 {#if showSignInWithMagicLinkModal}
     <Overlay>

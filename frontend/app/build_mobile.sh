@@ -5,6 +5,7 @@ export NODE_ENV=development
 # I suppose we might have > web | desktop | android | ios < where desktop could be
 # further divider mac/windows/linux etc.
 export OC_APP_TYPE=android
+export OC_ALCHEMY_API_KEY=6pSBD1eOqwyGDI1xFfV-p
 export OC_BITCOIN_MAINNET_ENABLED=false
 export OC_ACCOUNT_LINKING_CODES_ENABLED=false
 export OC_ACHIEVEMENT_URL_PATH=http://{canisterId}.localhost:8080

@@ -1,5 +1,5 @@
-import { HttpAgent, type Identity } from "@dfinity/agent";
-import { Principal } from "@dfinity/principal";
+import { HttpAgent, type Identity } from "@icp-sdk/core/agent";
+import { Principal } from "@icp-sdk/core/principal";
 import {
     AuthError,
     DestinationInvalidError,

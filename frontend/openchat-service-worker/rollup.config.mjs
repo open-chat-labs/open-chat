@@ -25,7 +25,7 @@ export default {
         resolve({
             browser: true,
             preferBuiltins: false,
-            dedupe: ["@dfinity/candid"],
+            dedupe: ["@icp-sdk/core/candid"],
         }),
         terser(),
         sourcemapNewline(),

@@ -1,10 +1,6 @@
-import {
-    Actor, type ActorSubclass,
-    HttpAgent,
-    type Identity,
-} from "@dfinity/agent";
+import { Actor, type ActorSubclass, HttpAgent, type Identity } from "@icp-sdk/core/agent";
 import { toCanisterResponseError } from "../error";
-import type {IDL} from "@dfinity/candid";
+import type { IDL } from "@icp-sdk/core/candid";
 import { CanisterAgent } from "./base";
 
 export abstract class CandidCanisterAgent<T> extends CanisterAgent {
@@ -30,7 +26,7 @@ export abstract class CandidCanisterAgent<T> extends CanisterAgent {
         mapper: (from: From) => To | Promise<To>,
         args?: unknown,
     ): Promise<To> {
-        return this.executeQuery(() => serviceCall(), mapper, args, 0)
+        return this.executeQuery(() => serviceCall(), mapper, args, 0);
     }
 
     protected handleResponse<From, To>(
