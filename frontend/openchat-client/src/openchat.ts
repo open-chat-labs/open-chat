@@ -3267,12 +3267,7 @@ export class OpenChat {
             ascending,
             threadRootMessageIndex: undefined,
             latestKnownUpdate: serverChat.lastUpdated,
-        })
-            .then((resp) => {
-                console.log("EventsResp: ", resp);
-                return resp;
-            })
-            .catch(CommonResponses.failure);
+        }).catch(CommonResponses.failure);
     }
 
     #previousMessagesCriteria(serverChat: ChatSummary): [number, boolean] | undefined {
@@ -3332,8 +3327,6 @@ export class OpenChat {
             return;
         }
 
-        console.log("Loaded new messages: ", eventsResponse);
-
         await this.#handleEventsResponse(serverChat, eventsResponse);
 
         publish("loadedNewMessages", {
@@ -3372,15 +3365,6 @@ export class OpenChat {
             );
         }
         const serverChat = allServerChatsStore.value.get(chatId);
-
-        if (serverChat) {
-            console.trace(
-                "More messages: ",
-                this.#confirmedUpToEventIndex(serverChat?.id),
-                serverChat.latestEventIndex,
-            );
-        }
-
         return (
             serverChat !== undefined &&
             (this.#confirmedUpToEventIndex(serverChat.id) ?? -1) < serverChat.latestEventIndex
@@ -6524,7 +6508,6 @@ export class OpenChat {
             }).subscribe({
                 onResult: async (resp) => {
                     if (resp !== undefined) {
-                        console.log("Updates: ", resp);
                         await this.#handleChatsResponse(
                             updateRegistryTask,
                             !chatsInitialisedStore.value,
