@@ -136,49 +136,48 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
                     && let Some(neuron_id) = state.data.nns_neuron_to_vote_with
                 {
                     for proposal in proposals.iter() {
-                        if let Proposal::NNS(nns) = proposal {
-                            if NNS_TOPICS_TO_PUSH_SNS_PROPOSALS_FOR.contains(&nns.topic)
-                                && state.data.nns_proposals_requiring_manual_vote.insert(nns.id)
+                        if let Proposal::NNS(nns) = proposal
+                            && NNS_TOPICS_TO_PUSH_SNS_PROPOSALS_FOR.contains(&nns.topic)
+                            && state.data.nns_proposals_requiring_manual_vote.insert(nns.id)
+                        {
+                            // Set up a job to reject the proposal 10 minutes before its deadline.
+                            // In parallel, we will submit an SNS proposal instructing the SNS governance
+                            // canister to adopt the proposal. So the resulting vote on the NNS proposal will
+                            // depend on the outcome of the SNS proposal.
+                            state.data.timer_jobs.enqueue_job(
+                                TimerJob::VoteOnNnsProposal(VoteOnNnsProposalJob {
+                                    nns_governance_canister_id: governance_canister_id,
+                                    neuron_id,
+                                    proposal_id: nns.id,
+                                    vote: false,
+                                }),
+                                nns.deadline.saturating_sub(10 * MINUTE_IN_MS),
+                                now,
+                            );
+
+                            if let Some(oc_neuron_id) = state
+                                .data
+                                .nervous_systems
+                                .get_neuron_id_for_submitting_proposals(&SNS_GOVERNANCE_CANISTER_ID)
                             {
-                                // Set up a job to reject the proposal 10 minutes before its deadline.
-                                // In parallel, we will submit an SNS proposal instructing the SNS governance
-                                // canister to adopt the proposal. So the resulting vote on the NNS proposal will
-                                // depend on the outcome of the SNS proposal.
-                                state.data.timer_jobs.enqueue_job(
-                                    TimerJob::VoteOnNnsProposal(VoteOnNnsProposalJob {
-                                        nns_governance_canister_id: governance_canister_id,
-                                        neuron_id,
-                                        proposal_id: nns.id,
-                                        vote: false,
-                                    }),
-                                    nns.deadline.saturating_sub(10 * MINUTE_IN_MS),
-                                    now,
+                                let oc_proposal_for_nns_proposal = build_oc_proposal_for_nns_proposal(
+                                    nns.id,
+                                    nns.title.clone(),
+                                    nns.summary.clone(),
+                                    neuron_id,
+                                    oc_neuron_id,
                                 );
 
-                                if let Some(oc_neuron_id) = state
-                                    .data
-                                    .nervous_systems
-                                    .get_neuron_id_for_submitting_proposals(&SNS_GOVERNANCE_CANISTER_ID)
-                                {
-                                    let oc_proposal_for_nns_proposal = build_oc_proposal_for_nns_proposal(
-                                        nns.id,
-                                        nns.title.clone(),
-                                        nns.summary.clone(),
-                                        neuron_id,
-                                        oc_neuron_id,
-                                    );
-
-                                    state.data.timer_jobs.enqueue_job(
-                                        TimerJob::SubmitProposal(Box::new(SubmitProposalJob {
-                                            governance_canister_id: SNS_GOVERNANCE_CANISTER_ID,
-                                            neuron_id: oc_neuron_id,
-                                            proposal: oc_proposal_for_nns_proposal,
-                                            user_id_and_payment: None,
-                                        })),
-                                        now,
-                                        now,
-                                    );
-                                }
+                                state.data.timer_jobs.enqueue_job(
+                                    TimerJob::SubmitProposal(Box::new(SubmitProposalJob {
+                                        governance_canister_id: SNS_GOVERNANCE_CANISTER_ID,
+                                        neuron_id: oc_neuron_id,
+                                        proposal: oc_proposal_for_nns_proposal,
+                                        user_id_and_payment: None,
+                                    })),
+                                    now,
+                                    now,
+                                );
                             }
                         }
                     }
