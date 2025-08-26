@@ -1,4 +1,4 @@
-use crate::{CanisterId, ChannelId, ChatId, CommunityId};
+use crate::{CanisterId, ChannelId, ChatId, CommunityId, MessageIndex};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};

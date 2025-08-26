@@ -1,5 +1,5 @@
 use crate::model::nervous_systems::ValidateSubmitProposalPaymentError;
-use crate::timer_job_types::{ProcessUserRefundJob, SubmitProposalJob, TimerJob};
+use crate::timer_job_types::{LookupUserThenSubmitProposalJob, ProcessUserRefundJob, SubmitProposalJob, TimerJob};
 use crate::{RuntimeState, mutate_state, read_state};
 use candid::Principal;
 use canister_api_macros::update;
@@ -11,8 +11,8 @@ use proposals_bot_canister::{ProposalToSubmit, ProposalToSubmitAction, Treasury}
 use sns_governance_canister::types::manage_neuron::Command;
 use sns_governance_canister::types::proposal::Action;
 use sns_governance_canister::types::{
-    manage_neuron_response, ExecuteGenericNervousSystemFunction, ManageNeuronResponse, Motion, Proposal, Subaccount,
-    TransferSnsTreasuryFunds, UpgradeSnsControlledCanister, UpgradeSnsToNextVersion,
+    ExecuteGenericNervousSystemFunction, ManageNeuronResponse, Motion, Proposal, Subaccount, TransferSnsTreasuryFunds,
+    UpgradeSnsControlledCanister, UpgradeSnsToNextVersion, manage_neuron_response,
 };
 use tracing::{error, info};
 use types::{CanisterId, MultiUserChat, SnsNeuronId, UserDetails, UserId, icrc2};
@@ -131,7 +131,7 @@ pub(crate) async fn lookup_user_then_submit_proposal(
     payment: icrc1::CompletedCryptoTransaction,
 ) -> Response {
     let UserDetails { user_id, username, .. } = match lookup_user(caller, user_index_canister_id).await {
-        Ok(u) => u,
+        Ok(Some(u)) => u,
         Err(LookupUserError::UserNotFound) => unreachable!(),
         Err(LookupUserError::InternalError(error)) => {
             error!(error = error.as_str(), %caller, "Failed to lookup user");
