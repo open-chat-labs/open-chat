@@ -284,6 +284,8 @@ export async function getEventsSuccess(
         suppressError,
     );
 
+    console.trace("Events: ", value);
+
     return (
         error ?? {
             events: value.events.map(eventWrapper),

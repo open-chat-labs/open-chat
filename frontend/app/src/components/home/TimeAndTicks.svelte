@@ -69,8 +69,10 @@
         {#if !bot}
             {#if me}
                 {#if accepted}
+                    piss
                     <CheckCircle size={"0.9em"} color={iconColor} />
                 {:else}
+                    flaps
                     <div class="confirming"></div>
                 {/if}
                 {#if chatType === "direct_chat"}
