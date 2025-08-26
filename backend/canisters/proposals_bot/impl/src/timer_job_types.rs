@@ -1,6 +1,5 @@
 use crate::updates::submit_proposal::submit_proposal;
 use crate::{UserIdAndPayment, mutate_state};
-use candid::Principal;
 use canister_timer_jobs::Job;
 use constants::{MINUTE_IN_MS, SECOND_IN_MS};
 use icrc_ledger_types::icrc1::{account::Account, transfer::TransferArg};
@@ -10,7 +9,7 @@ use sns_governance_canister::types::manage_neuron::claim_or_refresh::By;
 use sns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command};
 use sns_governance_canister::types::{Empty, ManageNeuron, manage_neuron_response};
 use tracing::error;
-use types::{CanisterId, MultiUserChat, NnsNeuronId, ProposalId, SnsNeuronId, UserId, icrc1};
+use types::{CanisterId, NnsNeuronId, ProposalId, SnsNeuronId, UserId};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -27,17 +26,6 @@ pub struct SubmitProposalJob {
     pub neuron_id: SnsNeuronId,
     pub proposal: ProposalToSubmit,
     pub user_id_and_payment: Option<UserIdAndPayment>,
-}
-
-#[derive(Serialize, Deserialize, Clone)]
-pub struct LookupUserThenSubmitProposalJob {
-    pub caller: Principal,
-    pub user_index_canister_id: CanisterId,
-    pub governance_canister_id: CanisterId,
-    pub neuron_id: SnsNeuronId,
-    pub chat: MultiUserChat,
-    pub proposal: ProposalToSubmit,
-    pub payment: icrc1::CompletedCryptoTransaction,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
