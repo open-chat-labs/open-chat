@@ -13,7 +13,7 @@
         type CustomEmoji,
         type SelectedEmoji,
     } from "openchat-client";
-    import { onMount } from "svelte";
+    import { onMount, tick } from "svelte";
     import { currentTheme } from "../../theme/themes";
     import PremiumItemPayment from "../PremiumItemPayment.svelte";
 
@@ -62,6 +62,7 @@
         if (!$premiumItemsStore.has(PremiumItem.PopularEmojis)) {
             rules.push(lockedCategoryCss(1, premiumPrices[PremiumItem.PopularEmojis]));
         }
+        rules.push(".indicator { transition: none; }");
         return rules.join("\n");
     }
 
@@ -84,6 +85,12 @@
         const style = document.createElement("style");
         style.textContent = createCustomCss();
         emojiPicker?.shadowRoot?.appendChild(style);
+
+        tick().then(() => {
+            emojiPicker?.shadowRoot
+                ?.querySelector<HTMLButtonElement>("button.nav-button[data-group-id='0']")
+                ?.click();
+        });
 
         return () => {
             emojiPicker?.removeEventListener("emoji-click", onClick);
