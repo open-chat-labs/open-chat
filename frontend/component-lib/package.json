@@ -1,0 +1,35 @@
+{
+    "name": "component-lib",
+    "version": "1.0.0",
+    "main": "./src/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "import": "./src/index.ts",
+            "types": "./dist/index.d.ts"
+        }
+    },
+    "type": "module",
+    "files": [
+        "src",
+        "dist"
+    ],
+    "scripts": {
+        "build": "tsc --emitDeclarationOnly",
+        "dev": "vite --config playground/vite.config.ts"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "description": "",
+    "dependencies": {
+        "svelte-material-icons": "^3.0.5"
+    },
+    "devDependencies": {
+        "@sveltejs/vite-plugin-svelte": "^5.1.1",
+        "@tsconfig/svelte": "^5.0.4",
+        "svelte": "^5.38.1",
+        "typescript": "^5.9.2",
+        "vite": "^6.3.5"
+    }
+}
