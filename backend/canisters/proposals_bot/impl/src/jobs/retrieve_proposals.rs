@@ -161,7 +161,7 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
                                 .nervous_systems
                                 .get_neuron_id_for_submitting_proposals(&SNS_GOVERNANCE_CANISTER_ID)
                             {
-                                submit_oc_proposal_for_nns_proposal(nns.id, neuron_id, oc_neuron_id);
+                                submit_oc_proposal_for_nns_proposal(nns.id, neuron_id, nns.title.clone(), oc_neuron_id);
                             }
                         }
                     }
@@ -247,7 +247,12 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
     }
 }
 
-fn submit_oc_proposal_for_nns_proposal(nns_proposal_id: ProposalId, nns_neuron_id: NnsNeuronId, oc_neuron_id: SnsNeuronId) {
+fn submit_oc_proposal_for_nns_proposal(
+    nns_proposal_id: ProposalId,
+    nns_neuron_id: NnsNeuronId,
+    nns_proposal_title: String,
+    oc_neuron_id: SnsNeuronId,
+) {
     // If this proposal passes, the proposal will call `manage_neuron` on the NNS governance
     // canister instructing it to vote to approve the NNS proposal
     let manage_neuron_args = ManageNeuron {
@@ -258,15 +263,21 @@ fn submit_oc_proposal_for_nns_proposal(nns_proposal_id: ProposalId, nns_neuron_i
             vote: 1,
         })),
     };
+
     let payload = candid::encode_one(manage_neuron_args).unwrap();
+    let nns_proposal_url = format!("https://dashboard.internetcomputer.org/proposal/{nns_proposal_id}");
 
     let job = SubmitProposalJob {
         governance_canister_id: SNS_GOVERNANCE_CANISTER_ID,
         neuron_id: oc_neuron_id,
         proposal: ProposalToSubmit {
-            title: format!("Instruct the OpenChat NNS named neuron neuron to approve NNS proposal {nns_proposal_id}"),
-            summary: "".to_string(),
-            url: format!("https://dashboard.internetcomputer.org/proposal/{nns_proposal_id}"),
+            title: format!("Instruct the OpenChat NNS named neuron to approve NNS proposal {nns_proposal_id}"),
+            summary: format!(
+                "NNS proposal title: \"{nns_proposal_title}\"
+
+The [OpenChat named neuron](https://dashboard.internetcomputer.org/neuron/17682165960669268263) will vote to either approve or reject [NNS proposal {nns_proposal_id}]({nns_proposal_url}) based on the outcome of this proposal."
+            ),
+            url: nns_proposal_url,
             action: ProposalToSubmitAction::ExecuteGenericNervousSystemFunction(ExecuteGenericNervousSystemFunction {
                 function_id: 102000,
                 payload,
