@@ -5,6 +5,8 @@ import android.util.Log
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
+import com.ocplugin.app.data.AppDb
+import com.google.firebase.FirebaseApp
 
 class MyApplication: Application() {
     
@@ -17,6 +19,14 @@ class MyApplication: Application() {
     
     override fun onCreate() {
         super.onCreate()
+
+        // Manually init Firebase, allows us to make sure init was fine!
+        FirebaseApp.initializeApp(this)?.let {
+            Log.d("TEST_OC", "Firebase initialized: ${it.name}")
+        } ?: Log.e("TEST_OC", "Firebase failed to initialize!")
+        
+        // Initialise app db.
+        AppDb.init(this)
 
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStart(owner: LifecycleOwner) {

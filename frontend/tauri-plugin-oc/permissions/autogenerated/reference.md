@@ -12,6 +12,7 @@ Default permissions for the plugin
 - `allow-get-fcm-token`
 - `allow-show-notification`
 - `allow-svelte-ready`
+- `allow-release-notifications`
 
 ## Permission Table
 
@@ -96,6 +97,32 @@ Enables the registerListener command without any pre-configured scope.
 <td>
 
 Denies the registerListener command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:allow-release-notifications`
+
+</td>
+<td>
+
+Enables the release_notifications command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`oc:deny-release-notifications`
+
+</td>
+<td>
+
+Denies the release_notifications command without any pre-configured scope.
 
 </td>
 </tr>
