@@ -1,4 +1,4 @@
-use crate::{CanisterId, ChannelId, ChatId, CommunityId, MessageIndex};
+use crate::{CanisterId, ChannelId, ChatId, CommunityId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
@@ -67,22 +67,6 @@ impl MultiUserChat {
 
     pub fn group_id(&self) -> Option<ChatId> {
         if let MultiUserChat::Group(group_id) = self { Some(*group_id) } else { None }
-    }
-
-    pub fn chat_url(&self) -> String {
-        const OC_ROOT_URL: &str = "https://oc.app/";
-
-        match self {
-            MultiUserChat::Group(group_id) => format!("{OC_ROOT_URL}group/{group_id}"),
-            MultiUserChat::Channel(community_id, channel_id) => {
-                format!("{OC_ROOT_URL}community/{community_id}/channel/{channel_id}")
-            }
-        }
-    }
-
-    pub fn message_url(&self, message_index: MessageIndex) -> String {
-        let chat_url = self.chat_url();
-        format!("{chat_url}/{message_index}")
     }
 }
 
