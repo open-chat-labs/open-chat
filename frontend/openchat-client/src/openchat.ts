@@ -329,6 +329,7 @@ import {
     chitStateStore,
     communitiesStore,
     communityFiltersStore,
+    confirmedThreadEventIndexesLoadedStore,
     cryptoBalanceStore,
     cryptoLookup,
     currentUserIdStore,
@@ -481,6 +482,7 @@ import {
     canSendGroupMessage,
     canStartVideoCalls,
     canUnblockUsers,
+    confirmedEventIndexesLoaded,
     containsReaction,
     createMessage,
     diffGroupPermissions,
@@ -3369,7 +3371,6 @@ export class OpenChat {
             );
         }
         const serverChat = allServerChatsStore.value.get(chatId);
-
         return (
             serverChat !== undefined &&
             (this.#confirmedUpToEventIndex(serverChat.id) ?? -1) < serverChat.latestEventIndex
@@ -3656,7 +3657,7 @@ export class OpenChat {
     }
 
     #confirmedUpToEventIndex(chatId: ChatIdentifier): number | undefined {
-        const ranges = eventIndexesLoaded(chatId).subranges();
+        const ranges = confirmedEventIndexesLoaded(chatId).subranges();
         if (ranges.length > 0) {
             return ranges[0].high;
         }
@@ -3664,7 +3665,7 @@ export class OpenChat {
     }
 
     #confirmedThreadUpToEventIndex(): number | undefined {
-        const ranges = threadEventIndexesLoadedStore.value.subranges();
+        const ranges = confirmedThreadEventIndexesLoadedStore.value.subranges();
         if (ranges.length > 0) {
             return ranges[0].high;
         }
