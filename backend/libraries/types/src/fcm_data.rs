@@ -214,7 +214,7 @@ impl FcmData {
         add_to_map("senderName", self.sender_name);
         add_to_map("senderAvatarId", self.sender_avatar_id.map(|v| v.to_string()));
 
-        add_to_map("thread", self.thread_root_message_index.map(|t| t.to_string()));
+        add_to_map("threadIndex", self.thread_root_message_index.map(|t| t.to_string()));
         add_to_map("image", self.image);
         add_to_map("body", self.body);
         add_to_map(

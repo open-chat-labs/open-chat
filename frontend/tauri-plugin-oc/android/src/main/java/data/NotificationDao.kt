@@ -3,8 +3,9 @@ package com.ocplugin.app.data
 import androidx.room.*
 import com.ocplugin.app.models.SenderId
 import com.ocplugin.app.models.GroupId
+import com.ocplugin.app.models.CommunityId
 import com.ocplugin.app.models.ChannelId
-import com.ocplugin.app.models.ThreadId
+import com.ocplugin.app.models.ThreadIndex
 
 
 @Dao
@@ -20,53 +21,60 @@ interface NotificationDao {
         SELECT * FROM notifications
         WHERE type = 'DM'
         AND senderId = :senderId
-        AND threadId IS NULL
+        AND (:threadIndex IS NULL OR threadIndex = :threadIndex)
         ORDER BY receivedAt ASC
     """)
-    suspend fun getNotificationsForDm(senderId: SenderId): List<Notification>
+    suspend fun getNotificationsForDm(senderId: SenderId, threadIndex: ThreadIndex?): List<Notification>
 
     // For group conversations
     @Query("""
         SELECT * FROM notifications
         WHERE type = 'GROUP'
         AND groupId = :groupId
-        AND threadId IS NULL
+        AND (:threadIndex IS NULL OR threadIndex = :threadIndex)
         ORDER BY receivedAt ASC
     """)
-    suspend fun getNotificationsForGroup(groupId: GroupId): List<Notification>
+    suspend fun getNotificationsForGroup(groupId: GroupId, threadIndex: ThreadIndex?): List<Notification>
 
     // For channel conversations
     @Query("""
         SELECT * FROM notifications
         WHERE type = 'CHANNEL'
+        AND communityId = :communityId
         AND channelId = :channelId
-        AND threadId IS NULL
+        AND (:threadIndex IS NULL OR threadIndex = :threadIndex)
         ORDER BY receivedAt ASC
     """)
-    suspend fun getNotificationsForChannel(channelId: ChannelId): List<Notification>
+    suspend fun getNotificationsForChannel(communityId: CommunityId, channelId: ChannelId, threadIndex: ThreadIndex?): List<Notification>
 
-    // For thread conversations
+
     @Query("""
-        SELECT * FROM notifications
-        WHERE threadId = :threadId
-        ORDER BY receivedAt ASC
+        UPDATE notifications
+        SET isReleased = 1
+        WHERE type = 'DM'
+        AND senderId = :senderId
+        AND (:threadIndex IS NULL OR threadIndex = :threadIndex)
     """)
-    suspend fun getNotificationsForThread(threadId: ThreadId): List<Notification>
+    suspend fun markDmAsReleased(senderId: SenderId, threadIndex: ThreadIndex?): Int
 
+    @Query("""
+        UPDATE notifications
+        SET isReleased = 1
+        WHERE type = 'GROUP'
+        AND groupId = :groupId
+        AND (:threadIndex IS NULL OR threadIndex = :threadIndex)
+    """)
+    suspend fun markGroupNotificationAsReleased(groupId: GroupId, threadIndex: ThreadIndex?): Int
 
-    @Query("UPDATE notifications SET isReleased = 1 WHERE type = 'DM' AND senderId = :senderId AND threadId IS NULL")
-    suspend fun markDmAsReleased(senderId: SenderId): Int
-
-    @Query("UPDATE notifications SET isReleased = 1 WHERE type = 'GROUP' AND groupId = :groupId AND threadId IS NULL")
-    suspend fun markGroupNotificationAsReleased(groupId: GroupId): Int
-
-    @Query("UPDATE notifications SET isReleased = 1 WHERE type = 'CHANNEL' AND channelId = :channelId AND threadId IS NULL")
-    suspend fun markChannelNotificationAsReleased(channelId: ChannelId): Int
-
-    // TODO Do we want to mark threads as released when the user views the parent conversation?
-    @Query("UPDATE notifications SET isReleased = 1 WHERE threadId = :threadId")
-    suspend fun markThreadNotificationAsReleased(threadId: ThreadId): Int
-
+    @Query("""
+        UPDATE notifications
+        SET isReleased = 1
+        WHERE type = 'CHANNEL'
+        AND communityId = :communityId
+        AND channelId = :channelId
+        AND (:threadIndex IS NULL OR threadIndex = :threadIndex)
+    """)
+    suspend fun markChannelNotificationAsReleased(communityId: CommunityId, channelId: ChannelId, threadIndex: ThreadIndex?): Int
 
     @Query("SELECT COUNT(*) FROM notifications WHERE isReleased = 0")
     suspend fun activeCount(): Int

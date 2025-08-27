@@ -3,8 +3,9 @@ package com.ocplugin.app.data
 import androidx.room.TypeConverter
 import com.ocplugin.app.models.SenderId
 import com.ocplugin.app.models.GroupId
+import com.ocplugin.app.models.CommunityId
 import com.ocplugin.app.models.ChannelId
-import com.ocplugin.app.models.ThreadId
+import com.ocplugin.app.models.ThreadIndex
 
 class Converters {
     @TypeConverter
@@ -38,22 +39,42 @@ class Converters {
     }
 
     @TypeConverter
-    fun fromChannelId(channelId: ChannelId): String {
-        return channelId.value
+    fun fromCommunityId(communityId: CommunityId): String {
+        return communityId.value
     }
 
     @TypeConverter
-    fun toChannelId(value: String): ChannelId {
-        return ChannelId(value)
+    fun toCommunityId(value: String): CommunityId {
+        return CommunityId(value)
     }
 
     @TypeConverter
-    fun fromThreadId(threadId: ThreadId): String {
-        return threadId.value
+    fun fromChannelId(channelId: ChannelId): Long {
+        return channelId.value.toLong()
     }
 
     @TypeConverter
-    fun toThreadId(value: String): ThreadId {
-        return ThreadId(value)
+    fun toChannelId(value: Long): ChannelId {
+        return ChannelId(value.toUInt())
+    }
+
+    @TypeConverter
+    fun fromThreadIndex(threadIndex: ThreadIndex): Long {
+        return threadIndex.value.toLong()
+    }
+
+    @TypeConverter
+    fun toThreadIndex(value: Long): ThreadIndex {
+        return ThreadIndex(value.toUInt())
+    }
+
+    @TypeConverter
+    fun fromBodyType(bodyType: BodyType): String {
+        return bodyType.name
+    }
+
+    @TypeConverter
+    fun toBodyType(value: String): BodyType {
+        return BodyType.valueOf(value)
     }
 }

@@ -22,7 +22,7 @@ export type NotificationIdentifier = DmNotifications | GroupNotifications | Chan
 
 type ReleaseNotificationsRequest = {
     senderId?: string;
-    groupdId?: string;
+    groupId?: string;
     communityId?: string;
     channelId?: number;
     threadIndex?: number;
@@ -34,7 +34,7 @@ function identifierToPayload(identifier: NotificationIdentifier): ReleaseNotific
             return { senderId: identifier.senderId };
         case "group":
             return {
-                groupdId: identifier.groupId,
+                groupId: identifier.groupId,
                 threadIndex: identifier.threadIndex,
             };
         case "channel":
@@ -47,7 +47,7 @@ function identifierToPayload(identifier: NotificationIdentifier): ReleaseNotific
 }
 
 export async function releaseNotifications(identifier: NotificationIdentifier): Promise<void> {
-    return await invoke<void>("plugin:oc|releaseNotifications", {
+    return await invoke<void>("plugin:oc|release_notifications", {
         payload: identifierToPayload(identifier),
     });
 }

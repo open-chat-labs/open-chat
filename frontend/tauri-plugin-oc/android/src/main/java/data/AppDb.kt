@@ -18,12 +18,22 @@ abstract class AppDb: RoomDatabase() {
     companion object {
         @Volatile private var INSTANCE: AppDb? = null
 
-        fun get(context: Context): AppDb = INSTANCE ?: synchronized(this) {
-            INSTANCE ?: Room.databaseBuilder(
-                context.applicationContext,
-                AppDb::class.java,
-                "notifications.db"
-            ).build().also { INSTANCE = it }
+        fun init(context: Context) {
+            if (INSTANCE == null) {
+                synchronized(this) {
+                    if (INSTANCE == null) {
+                        INSTANCE = Room.databaseBuilder(
+                            context.applicationContext,
+                            AppDb::class.java,
+                            "app.db"
+                        ).build()
+                    }
+                }
+            }
+        }
+
+        fun get(): AppDb {
+            return INSTANCE ?: throw IllegalStateException("AppDb not initialized!")
         }
     }
 }

@@ -93,6 +93,7 @@
 
     onMount(() => {
         // Release any active notifications for the current chat when the component mounts
+        // TODO include thread index
         if (client.isNativeAndroid()) {
             switch (chat.id.kind) {
                 case "direct_chat":

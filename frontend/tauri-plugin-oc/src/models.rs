@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -40,7 +39,7 @@ pub struct SignInResponse {
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ShowNotificationRequest {
-    pub data: HashMap<String, String>,
+    pub notification_id: u32,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]

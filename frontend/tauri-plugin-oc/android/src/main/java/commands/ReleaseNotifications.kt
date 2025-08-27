@@ -5,56 +5,55 @@ import android.util.Log
 import app.tauri.annotation.InvokeArg
 import app.tauri.plugin.Invoke
 import com.ocplugin.app.LOG_TAG
-import com.ocplugin.app.data.AppDb
 import com.ocplugin.app.models.*
+import com.ocplugin.app.NotificationsHelper
+
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @InvokeArg
 class ReleaseNotificationsArgs {
-    var senderId: String? = null
-    var groupId: String? = null
-    var communityId: String? = null
-    var channelId: Int? = null
-    var threadIndex: Int? = null
+    val senderId: String? = null
+    val groupId: String? = null
+    val communityId: String? = null
+    val channelId: UInt? = null
+    val threadIndex: UInt? = null
 }
 
 @Suppress("UNUSED")
 class ReleaseNotifications(private val activity: Activity) {
 
+    private val job = SupervisorJob()
+    private val scope = CoroutineScope(Dispatchers.Main + job)
+
     fun handler(invoke: Invoke) {
         val args = invoke.parseArgs(ReleaseNotificationsArgs::class.java)
-        val dao = AppDb.get(activity).notificationDao()
 
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val senderId = args.senderId
-                val groupId = args.groupId
-                val communityId = args.communityId
-                val channelId = args.channelId
-                val threadIndex = args.threadIndex
+        val senderId = args.senderId?.let(::SenderId)
+        val groupId = args.groupId?.let(::GroupId)
+        val communityId = args.communityId?.let(::CommunityId)
+        val channelId = args.channelId?.let(::ChannelId)
+        val threadIndex = args.threadIndex?.let(::ThreadIndex)
 
-//                val (marked, requiresCleanup) = when {
-//                    senderIdArg != null -> true to (dao.markDmAsReleased(SenderId(senderIdArg)) > 0)
-//                    groupIdArg != null -> true to (dao.markGroupNotificationAsReleased(GroupId(groupIdArg)) > 0)
-//                    channelIdArg != null -> true to (dao.markChannelNotificationAsReleased(ChannelId(channelIdArg)) > 0)
-//                    threadIdArg != null -> true to (dao.markThreadNotificationAsReleased(ThreadId(threadIdArg)) > 0)
-//                    else -> {
-//                        // None of the if conditions were met!
-//                        Log.e(LOG_TAG, "ReleaseNotifications invalid args, no ids provided")
-//                        invoke.reject("INVALID_ARGS")
-//                        false to false
-//                    }
-//                }
-//
-//                if (marked) {
-//                    if (requiresCleanup) dao.cleanup()
-//                    invoke.resolve(null)
-//                }
-            } catch (e: Exception) {
-                Log.e(LOG_TAG, "Error releasing notifications", e)
-                invoke.reject("EXCEPTION")
+        scope.launch {
+            val success = withContext(Dispatchers.IO) {
+                runCatching {
+                    NotificationsHelper.releaseNotificationsAfterAccessedUiContext(
+                        activity, senderId, groupId, communityId, channelId, threadIndex
+                    )
+                }.getOrElse {
+                    Log.e(LOG_TAG, "Error releasing notifications", it)
+                    null
+                }
+            }
+
+            when (success) {
+                true  -> invoke.resolve(null)
+                false -> invoke.reject("FAILED")
+                null  -> invoke.reject("EXCEPTION")
             }
         }
     }
