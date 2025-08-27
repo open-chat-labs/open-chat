@@ -9,16 +9,13 @@ const NEW_FCM_TOKEN_EVENT = "fcm-token";
 const NOTIFICATION_TAP_EVENT = "notification-tap";
 
 type PushNotification = {
-    type: "direct" | "group" | "community";
-    body: string;
-    chatId?: string;
-    communityId?: string;
-    channelId?: string;
-    threadId?: string;
+    id: number;
+    type: "DM" | "GROUP" | "CHANNEL";
     senderId?: string;
-    senderName: string;
-    image?: string;
-    avatarId?: number;
+    groupId?: string;
+    communityId?: string;
+    channelId?: number;
+    threadIndex?: number;
 };
 
 /**
@@ -40,6 +37,8 @@ type PushNotification = {
  * @param handler - The function to call when a push notification is received.
  * @returns A promise that resolves to a PluginListener for the push, and
  * provides the unlisten method.
+ * 
+ * TODO handle favourite paths
  */
 export async function expectPushNotifications(): Promise<PluginListener> {
     // Make sure we have permission to receive notifications!
@@ -54,28 +53,43 @@ export async function expectPushNotifications(): Promise<PluginListener> {
         TAURI_PLUGIN_NAME,
         PUSH_NOTIFICATION_EVENT,
         (notification: PushNotification) => {
+            const pathname = window.location.pathname;
             switch (notification.type) {
-                case "direct": {
-                    console.warn(notification, window.location.pathname);
-                    if (!window.location.pathname.startsWith(`/user/${notification.senderId}`)) {
+                case "DM": {
+                    // TODO handle threads, eventually, once supported by dm's
+                    const expectedPath = `/user/${notification.senderId}`;
+                    if (!pathname.startsWith(expectedPath)) {
                         // We're not in the context of the user's chat, send
                         // notification back to native code to be displayed!
-                        showNotification({ data: notification });
+                        showNotification({ notificationId: notification.id });
                     }
                     break;
                 }
-                case "group": {
-                    // TODO handle threads
-                    if (!window.location.pathname.startsWith(`/group/${notification.chatId}`)) {
-                        showNotification({ data: notification });
+                case "GROUP": {
+                    const expectedPath = `/group/${notification.groupId}`;
+                    const inThreadContext =
+                        notification.threadIndex !== undefined &&
+                        pathname.startsWith(`${expectedPath}/${notification.threadIndex}`);
+                    const inGroupContext = pathname.startsWith(expectedPath);
+
+                    // We're not in the context of the group or thread, send
+                    // notification back to native code to be displayed!
+                    if (!(inGroupContext || inThreadContext)) {
+                        showNotification({ notificationId: notification.id });
                     }
                     break;
                 }
-                case "community": {
-                    // TODO handle threads
+                case "CHANNEL": {
                     const expectedPath = `/community/${notification.communityId}/channel/${notification.channelId}`;
-                    if (!window.location.pathname.startsWith(expectedPath)) {
-                        showNotification({ data: notification });
+                    const inThreadContext =
+                        notification.threadIndex !== undefined &&
+                        pathname.startsWith(`${expectedPath}/${notification.threadIndex}`);
+                    const inChannelContext = pathname.startsWith(expectedPath);
+
+                    // We're not in the context of the channel or thread, send
+                    // notification back to native code to be displayed!
+                    if (!(inChannelContext || inThreadContext)) {
+                        showNotification({ notificationId: notification.id });
                     }
                     break;
                 }
@@ -103,25 +117,24 @@ export async function expectNotificationTap(): Promise<PluginListener> {
         TAURI_PLUGIN_NAME,
         NOTIFICATION_TAP_EVENT,
         (notification: PushNotification) => {
+            const threadIndexPath = notification.threadIndex ? `/${notification.threadIndex}` : "";
             switch (notification.type) {
-                case "direct": {
+                case "DM": {
                     if (notification.senderId) {
                         page(`/user/${notification.senderId}`);
                     }
                     break;
                 }
-                case "group": {
-                    // TODO handle threads
-                    if (notification.chatId) {
-                        page(`/group/${notification.chatId}`);
+                case "GROUP": {
+                    if (notification.groupId) {
+                        page(`/group/${notification.groupId}${threadIndexPath}`);
                     }
                     break;
                 }
-                case "community": {
-                    // TODO handle threads
+                case "CHANNEL": {
                     if (notification.communityId && notification.channelId) {
                         page(
-                            `/community/${notification.communityId}/channel/${notification.channelId}`,
+                            `/community/${notification.communityId}/channel/${notification.channelId}${threadIndexPath}`,
                         );
                     }
                     break;

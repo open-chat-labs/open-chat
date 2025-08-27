@@ -241,25 +241,23 @@
         }
     }
 
-    if (client.isNativeApp()) {
-        // Listen for incoming push notifications from Firebase; also asks
-        // for permission to show notifications if not already granted.
-        expectPushNotifications().catch(console.error);
+    // Sets up push notifications and FCM token management for native apps
+    function setupNativeApp() {
+        const addFcmToken = (token: string) => {
+            client
+                .addFcmToken(token)
+                .then(() => console.info("FCM token updated successfully"))
+                .catch(console.error);
+        };
 
-        // Listen for notifications user has tapped on
-        expectNotificationTap().catch(console.error);
-    }
-
-    function addFcmToken(token: string) {
-        console.info("Updating FCM token");
-        client
-            .addFcmToken(token)
-            .then(() => console.info("FCM token updated successfully"))
-            .catch(console.error);
-    }
-
-    function onUserLoggedIn(userId: string) {
         if (client.isNativeApp()) {
+            // Listen for incoming push notifications from Firebase; also asks
+            // for permission to show notifications if not already granted.
+            expectPushNotifications().catch(console.error);
+
+            // Listen for notifications user has tapped on
+            expectNotificationTap().catch(console.error);
+
             // Expect FCM token refreshes
             expectNewFcmToken(addFcmToken);
 
@@ -273,12 +271,22 @@
 
                 client.checkFcmTokenExists(token).then((exists) => {
                     if (!exists) {
+                        console.log("Adding FCM token for the first time!");
                         addFcmToken(token);
+                    } else {
+                        console.log("FCM token already registered");
                     }
                 });
             });
         }
+    }
 
+    if ($identityStateStore.kind === "logged_in") {
+        setupNativeApp();
+    }
+
+    function onUserLoggedIn(userId: string) {
+        setupNativeApp();
         broadcastLoggedInUser(userId);
     }
 

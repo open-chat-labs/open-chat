@@ -54,4 +54,8 @@ impl<R: Runtime> Oc<R> {
             .0
             .run_mobile_plugin("svelteReady", SvelteReadyRequest::default());
     }
+
+    pub fn release_notifications(&self, payload: ReleaseNotificationsRequest) {
+        let _: Result<(), _> = self.0.run_mobile_plugin("releaseNotifications", payload);
+    }
 }

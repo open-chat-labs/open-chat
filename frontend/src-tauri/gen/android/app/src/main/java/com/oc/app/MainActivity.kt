@@ -3,10 +3,12 @@ package com.oc.app
 import android.content.Intent
 import android.util.Log
 import android.os.Bundle
-import app.tauri.plugin.JSObject
 import com.ocplugin.app.NotificationsHelper
 import com.ocplugin.app.OpenChatPlugin
-
+import com.ocplugin.app.data.notificationToJSObject
+import kotlinx.coroutines.launch
+import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebView
@@ -42,16 +44,22 @@ class MainActivity : TauriActivity() {
     
     private fun handleNotificationIntent(intent: Intent) {
         val notificationPayload = intent.getStringExtra("notificationPayload")
-        Log.d("TEST_OC", "NOTIFICATION CLICK: Received intent with extras ${notificationPayload}}")
+        val notificationId = notificationPayload?.toLongOrNull()
         
-        if (notificationPayload != null) {
-            try {
-                OpenChatPlugin.triggerRef(
-                    "notification-tap",
-                    JSObject(notificationPayload)
-                )
-            } catch (e: Exception) {
-                Log.e("OC_APP", "Error occurred $e")
+        if (notificationId != null) {
+            ProcessLifecycleOwner.get().lifecycleScope.launch {
+                // Release associated notifications from the local db.
+                val notification = NotificationsHelper.releaseNotificationsAfterTap(notificationId)
+                
+                Log.d("TEST_OC", "Released notification $notification")
+                
+                if (notification != null) {
+                    // Send notification data to Svelte code, which will then determine where to navigate
+                    OpenChatPlugin.triggerRef(
+                        "notification-tap",
+                        notificationToJSObject(notification)
+                    )
+                }
             }
         }
     }
