@@ -84,7 +84,7 @@
 
 <style lang="scss">
     .grid {
-        padding: 10px;
+        padding: var(--sp-md);
     }
 
     .neon {
@@ -93,20 +93,20 @@
 
     .section {
         display: flex;
-        gap: 30px;
-        margin-bottom: 50px;
+        gap: var(--sp-xxl);
+        margin-bottom: var(--sp-xxxl);
     }
 
     .card {
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: var(--sp-md);
         min-width: 100px;
         align-items: center;
         justify-content: center;
 
         .name {
-            color: var(--textSecondary);
+            color: var(--text-secondary);
         }
 
         .code {

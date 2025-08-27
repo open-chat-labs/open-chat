@@ -58,21 +58,21 @@
 
 <style lang="scss">
     h1 {
-        margin-bottom: 10px;
+        margin-bottom: var(--sp-md);
     }
 
     .blocks {
         display: flex;
-        gap: 20px;
+        gap: var(--sp-xl);
     }
 
     .block {
-        padding: 20px;
+        padding: var(--sp-xl);
         width: 300px;
         border: 1px dashed #9747ff;
-        border-radius: 10px;
+        border-radius: var(--sp-md);
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: var(--sp-md);
     }
 </style>

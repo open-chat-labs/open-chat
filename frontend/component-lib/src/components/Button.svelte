@@ -19,15 +19,15 @@
         secondary = false,
     }: Props = $props();
 
-    let spinnerColour = secondary ? "var(--primary)" : "var(--textOnPrimary)";
-    let iconColour = secondary ? "var(--primary)" : "var(--textOnPrimary)";
+    let spinnerColour = secondary ? "var(--primary)" : "var(--text-on-primary)";
+    let iconColour = secondary ? "var(--primary)" : "var(--text-on-primary)";
 </script>
 
 <button class:secondary class:disabled onclick={onClick} disabled={disabled || loading}>
     {#if loading}
         <Spinner
             size={"1.4rem"}
-            backgroundColour={"var(--textTertiary)"}
+            backgroundColour={"var(--text-tertiary)"}
             foregroundColour={spinnerColour} />
     {:else}
         <span class="content">{@render children?.()}</span>
@@ -40,26 +40,25 @@
 <style lang="scss">
     button {
         position: relative;
-        background: var(--primaryGradientInverted);
-        min-height: 2.75rem;
+        background: var(--primary-gradient-inverted);
+        min-height: var(--sp-xxxl);
         display: flex;
         justify-content: center;
         align-items: center;
         border: none;
         border-radius: 4px;
-        color: var(--textOnPrimary);
+        color: var(--text-on-primary);
         cursor: pointer;
 
         font-weight: 700;
         font-size: 14px;
-        line-height: 20px;
 
         .content {
             pointer-events: none;
         }
 
         &.disabled {
-            background: var(--disabledButton);
+            background: var(--disabled-button);
         }
 
         &:disabled {
@@ -80,8 +79,8 @@
             border: 1px solid var(--primary);
 
             &.disabled {
-                color: var(--disabledButton);
-                border-color: var(--disabledButton);
+                color: var(--disabled-button);
+                border-color: var(--disabled-button);
             }
         }
     }
