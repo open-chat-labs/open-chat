@@ -6,10 +6,15 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.ocplugin.app.NotificationsHelper
 import com.ocplugin.app.OpenChatPlugin
-import kotlin.collections.component1
-import kotlin.collections.component2
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class OpenChatNotificationService : FirebaseMessagingService() {
+
+    // A scope tied to this service
+    private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     override fun onNewToken(token: String) {
         Log.d("TEST_OC", "FCM token refreshed: $token")
@@ -24,25 +29,19 @@ class OpenChatNotificationService : FirebaseMessagingService() {
     // Handle new notification!
     //
     // This function will run if the app is in foreground, background or closed.
-    // If the app is in the background or closed, we simply show the notification.
-    // If the app is in foreground, we send it to the UI! UI will then decide
-    // if the app should be displayed, or not, depending on what the user is
-    // viewing.
+    // Notification data is handed off to the NotificationsHelper, which will then process it.
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        remoteMessage.data.let {
-            if (MyApplication.isAppInForeground) {
-                val notificationPayload = JSObject().apply {
-                    it.forEach { (key, value) -> put(key, value) }
+        remoteMessage.data.let { data ->
+            NotificationsHelper.setNotificationIconSmall(R.drawable.ic_notification_small)
+            
+            serviceScope.launch {
+                try {
+                    NotificationsHelper.processReceivedNotification(
+                        this@OpenChatNotificationService, data, MyApplication.isAppInForeground
+                    )
+                } catch (e: Exception) {
+                    Log.e("TEST_OC", "Error handling notification", e)
                 }
-
-                // Push notification to the UI if the app is in foreground!
-                OpenChatPlugin.triggerRef("push-notification", notificationPayload)
-            } else {
-                // If the app is in the background, or closed, show the notification!
-                // If the app is closed, we will need to set the small notification icon that
-                // appears in the status bar.
-                NotificationsHelper.setNotificationIconSmall(R.drawable.ic_notification_small)
-                NotificationsHelper.showNotification(this, it)
             }
         }
     }
