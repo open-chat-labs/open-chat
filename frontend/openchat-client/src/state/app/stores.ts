@@ -68,7 +68,7 @@ import {
 } from "../../utils/chat";
 import { configKeys } from "../../utils/config";
 import { enumFromStringValue } from "../../utils/enums";
-import { derived, writable, type Subscriber } from "../../utils/stores";
+import { derived, writable, type Readable, type Subscriber } from "../../utils/stores";
 import { chatDetailsLocalUpdates } from "../chat/detailsUpdates";
 import type { ChatDetailsState } from "../chat/serverDetails";
 import { chatSummaryLocalUpdates, ChatSummaryUpdates } from "../chat/summaryUpdates";
@@ -1208,15 +1208,18 @@ export const eventsStore = derived(
     },
 );
 
-export const eventIndexesLoadedStore = derived(
-    [eventsStore, expiredServerEventRanges],
-    ([events, expiredEventRanges]) => {
+function indexesLoadedStore(eventsStore: Readable<EventWrapper<ChatEvent>[]>) {
+    return derived([eventsStore, expiredServerEventRanges], ([events, expiredEventRanges]) => {
         const ranges = new DRange();
         events.forEach((e) => ranges.add(e.index));
         ranges.add(expiredEventRanges);
         return ranges;
-    },
-);
+    });
+}
+
+export const confirmedEventIndexesLoadedStore = indexesLoadedStore(serverEventsStore);
+
+export const eventIndexesLoadedStore = indexesLoadedStore(eventsStore);
 
 export const messageActivitySummaryStore = derived(
     [serverMessageActivitySummaryStore, localUpdates.messageActivityFeedReadUpTo],
@@ -1318,11 +1321,18 @@ export const threadEventsStore = derived(
     },
 );
 
-export const threadEventIndexesLoadedStore = derived(threadEventsStore, (events) => {
-    const ranges = new DRange();
-    events.forEach((e) => ranges.add(e.index));
-    return ranges;
-});
+function threadEventsLoadedStore(eventsStore: Readable<EventWrapper<ChatEvent>[]>) {
+    return derived(eventsStore, (events) => {
+        const ranges = new DRange();
+        events.forEach((e) => ranges.add(e.index));
+        return ranges;
+    });
+}
+
+export const confirmedThreadEventIndexesLoadedStore =
+    threadEventsLoadedStore(serverThreadEventsStore);
+
+export const threadEventIndexesLoadedStore = threadEventsLoadedStore(threadEventsStore);
 
 export const selectedThreadDraftMessageStore = derived(
     [selectedThreadIdStore, localUpdates.draftMessages],

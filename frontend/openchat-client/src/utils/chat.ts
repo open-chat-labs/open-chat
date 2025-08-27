@@ -81,6 +81,7 @@ import {
 } from "openchat-shared";
 import {
     allServerChatsStore,
+    confirmedEventIndexesLoadedStore,
     cryptoLookup,
     currentUserIdStore,
     currentUserStore,
@@ -2010,6 +2011,13 @@ export function eventIndexesLoaded(chatId: ChatIdentifier): DRange {
     const selected = selectedChatIdStore.value;
     return selected !== undefined && chatIdentifiersEqual(selected, chatId)
         ? eventIndexesLoadedStore.value
+        : new DRange();
+}
+
+export function confirmedEventIndexesLoaded(chatId: ChatIdentifier): DRange {
+    const selected = selectedChatIdStore.value;
+    return selected !== undefined && chatIdentifiersEqual(selected, chatId)
+        ? confirmedEventIndexesLoadedStore.value
         : new DRange();
 }
 
