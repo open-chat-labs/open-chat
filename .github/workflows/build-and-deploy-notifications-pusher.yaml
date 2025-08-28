@@ -39,25 +39,6 @@ jobs:
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Prepare release location
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.NP_EC2_HOST }}
-          username: ${{ secrets.NP_EC2_USER }}
-          key: ${{ secrets.NP_EC2_SSH_KEY }}
-          script_stop: true
-          script: |
-            set -euo pipefail
-            NEW_VERSION=${{ steps.version.outputs.version }}
-            NEW_VERSION_DIR=/home/${{ secrets.NP_EC2_USER }}/notification_pusher/$NEW_VERSION
-
-            if [ -d "$NEW_VERSION_DIR" ]; then
-              echo "❌ Version directory $NEW_VERSION_DIR already exists!"
-              exit 1
-            fi
-
-            mkdir -p "$NEW_VERSION_DIR"
-
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -70,88 +51,17 @@ jobs:
       - name: Add musl target
         run: rustup target add x86_64-unknown-linux-musl
 
-      - name: Build release binary
-        run: cargo build --package notification_pusher_aws --release --target=x86_64-unknown-linux-musl
+      - name: Build and deploy to EC2
+        run: |
+          KEY_PATH=$(mktemp)
+          echo "${{ secrets.NP_EC2_SSH_KEY }}" > "$KEY_PATH"
+          chmod 600 "$KEY_PATH"
 
-      - name: Upload binary to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.NP_EC2_HOST }}
-          username: ${{ secrets.NP_EC2_USER }}
-          key: ${{ secrets.NP_EC2_SSH_KEY }}
-          source: target/x86_64-unknown-linux-musl/release/notification_pusher_aws
-          target: /home/${{ secrets.NP_EC2_USER }}/notification_pusher/${{ steps.version.outputs.version }}/notification_pusher_aws
+          ./scripts/deploy-notification-pusher-prod.sh \
+            "${{ steps.version.outputs.version }}" \
+            "${{ secrets.NP_EC2_USER }}" \
+            "${{ secrets.NP_EC2_HOST }}" \
+            "$KEY_PATH"
 
-      - name: Run remote commands
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.NP_EC2_HOST }}
-          username: ${{ secrets.NP_EC2_USER }}
-          key: ${{ secrets.NP_EC2_SSH_KEY }}
-          script_stop: true
-          script: |
-            set -euo pipefail
-            SERVICE_DIR=/home/${{ secrets.NP_EC2_USER }}/notification_pusher
-
-            # Old and new version paths. We keep old version for rollback purposes.
-            LATEST_DIR=$SERVICE_DIR/latest
-            NEW_VERSION_DIR=$SERVICE_DIR/${{ steps.version.outputs.version }}
-            OLD_VERSION_DIR=$(readlink -f $LATEST_DIR || true)
-
-            # New binary should've been pushed in the previous step
-            if [ ! -f "$NEW_VERSION_DIR/notification_pusher_aws" ]; then
-              echo "❌ $NEW_VERSION_DIR/notification_pusher_aws binary does not exist!"
-              exit 1
-            fi
-
-            # Make sure the bin is executable
-            sudo chmod +x $NEW_VERSION_DIR/notification_pusher_aws
-
-            # Ensure we have an old version to copy .env from
-            if [ -z "$OLD_VERSION_DIR" ] || [ ! -e "$OLD_VERSION_DIR/.env" ]; then
-              echo "❌ Failed to copy, no .env file found in $OLD_VERSION_DIR!"
-              exit 1
-            fi
-
-            # Copy over .env file
-            # TODO fetch from a secrets manager instead?
-            cp $OLD_VERSION_DIR/.env $NEW_VERSION_DIR/.env
-
-            # Replace symlink to latest
-            ln -sfn $NEW_VERSION_DIR $LATEST_DIR
-
-            echo "Restarting notification-pusher service..."
-            if sudo systemctl restart notification-pusher; then
-              echo "Checking service status..."
-              if sudo systemctl is-active --quiet notification-pusher; then
-                echo "✅ Service deployed successfully and is running."
-                exit 0
-              else
-                echo "❌ Service not healthy, fetching logs..."
-                sudo systemctl status notification-pusher --no-pager
-                sudo journalctl -u notification-pusher --no-pager -n 20
-                echo "Rolling back..."
-              fi
-            else
-              echo "❌ Failed to restart service, fetching logs..."
-              sudo systemctl status notification-pusher --no-pager
-              sudo journalctl -u notification-pusher --no-pager -n 20
-              echo "Rolling back..."
-            fi
-
-            # Rollback!
-            if [ -n "$OLD_VERSION_DIR" ] && [ -e "$OLD_VERSION_DIR" ]; then
-              echo "Restoring previous version..."
-              ln -sfn $OLD_VERSION_DIR $LATEST_DIR
-              sudo systemctl restart notification-pusher
-
-              if sudo systemctl is-active --quiet notification-pusher; then
-                echo "⚠️ Service rolled back to the previous version."
-              else
-                echo "❌ Rollback failed, service is not running!"
-              fi
-            else
-              echo "⁉️ No old version to roll back to!"
-            fi
-
-            exit 1
+          # cleanup
+          rm -f "$KEY_PATH"
