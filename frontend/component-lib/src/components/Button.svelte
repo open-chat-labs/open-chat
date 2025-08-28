@@ -49,6 +49,11 @@
         border-radius: 4px;
         color: var(--text-on-primary);
         cursor: pointer;
+        width: 100%;
+        transition:
+            border ease-in-out 200ms,
+            background ease-in-out 200ms,
+            color ease-in-out 200ms;
 
         font-weight: 700;
         font-size: 14px;

@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { Colours } from "../src/theme/colour";
-    import { theme as neon } from "../src/theme/neon";
+    import type { Colours } from "component-lib";
+    import { theme as neon } from "component-lib";
 
     type Section = {
         name: string;
@@ -20,6 +20,13 @@
         { name: "Error", key: "error" },
     ];
 
+    const mutedColours: ColourCard[] = [
+        { name: "Primary Muted", key: "primaryMuted" },
+        { name: "Primary Light", key: "primaryLight" },
+        { name: "Secondary Muted", key: "secondaryMuted" },
+        { name: "Warning Muted", key: "warningMuted" },
+    ];
+
     const typographyColours: ColourCard[] = [
         { name: "Primary", key: "textPrimary" },
         { name: "Secondary", key: "textSecondary" },
@@ -33,7 +40,6 @@
         { name: "Level 1", key: "background1" },
         { name: "Level 2", key: "background2" },
         { name: "Disabled Button", key: "disabledButton" },
-        { name: "Primary Muted", key: "primaryMuted" },
     ];
 
     const allColours: Section[] = [
@@ -41,6 +47,7 @@
             name: "Main",
             colours: mainColours,
         },
+        { name: "Muted", colours: mutedColours },
         { name: "Typography", colours: typographyColours },
         { name: "Backgrounds", colours: backgroundColours },
     ];

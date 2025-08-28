@@ -1,7 +1,7 @@
 <script lang="ts">
+    import { Button } from "component-lib";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import { fade } from "svelte/transition";
-    import Button from "../src/components/Button.svelte";
 
     let filledMouseEvent = $state<MouseEvent>();
     let hollowMouseEvent = $state<MouseEvent>();
