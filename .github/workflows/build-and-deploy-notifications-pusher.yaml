@@ -1,0 +1,147 @@
+name: Deploy Notifications Pusher
+
+on:
+  workflow_dispatch: # Trigger manually!
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure on master
+        run: |
+          branch=$(git rev-parse --abbrev-ref HEAD)
+          if [ "$branch" != "master" ]; then
+            echo "Not on master branch!"
+            exit 1
+          fi
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Install musl tools
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+
+      - name: Add musl target
+        run: rustup target add x86_64-unknown-linux-musl
+
+      - name: Build release binary
+        run: cargo build --package notification_pusher_aws --release --target=x86_64-unknown-linux-musl
+
+      - name: Get latest tag and extract version
+        id: version
+        run: |
+          TAG=$(git tag --list "*-notification_pusher" "*-notifications_pusher" | sort -V | tail -1)
+
+          if [ -z "$TAG" ]; then
+            echo "No matching tag found for notification pusher!"
+            exit 1
+          fi
+
+          echo "Latest tag: $TAG"
+
+          VERSION=$(echo "$TAG" | sed -E 's/^v([0-9]+\.[0-9]+\.[0-9]+)-.*/\1/')
+          echo "Version extracted: $VERSION"
+
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Prepare release folder
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            VERSION=${{ steps.version.outputs.version }}
+            VERSION_PATH=/home/${{ secrets.EC2_USER }}/notification_pusher/$VERSION
+
+            if [ -d "$VERSION_PATH" ]; then
+              echo "Version directory $VERSION_PATH already exists!"
+              exit 1
+            fi
+
+            mkdir -p "$VERSION_PATH"
+
+      - name: Upload binary to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: target/x86_64-unknown-linux-musl/release/notification_pusher_aws
+          target: /home/${{ secrets.EC2_USER }}/notification_pusher/${{ steps.version.outputs.version }}/notification_pusher_aws
+
+      - name: Run remote commands
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            SERVICE_DIR=/home/${{ secrets.EC2_USER }}/notification_pusher
+
+            # Old and new version paths. We keep old version for rollback purposes.
+            LATEST_DIR=$SERVICE_DIR/latest
+            NEW_VERSION_DIR=$SERVICE_DIR/${{ steps.version.outputs.version }}
+            OLD_VERSION_DIR=$(readlink -f $LATEST_DIR || true)
+
+            # New binary should've been pushed in the previous step
+            if [ ! -f "$NEW_VERSION_DIR/notification_pusher_aws" ]; then
+              echo "❌ $NEW_VERSION_DIR/notification_pusher_aws binary does not exist!"
+              exit 1
+            fi
+
+            # Make sure the bin is executable
+            sudo chmod +x $NEW_VERSION_DIR/notification_pusher_aws
+
+            # Replace symlink to latest
+            ln -sfn $NEW_VERSION_DIR $LATEST_DIR
+
+            echo "Restarting notification-pusher service..."
+            if sudo systemctl restart notification-pusher; then
+              echo "Checking service status..."
+              if sudo systemctl is-active --quiet notification-pusher; then
+                echo "✅ Service deployed successfully and is running."
+                exit 0
+              else
+                echo "❌ Service not healthy, fetching logs..."
+                sudo systemctl status notification-pusher --no-pager
+                sudo journalctl -u notification-pusher --no-pager -n 20
+                echo "Rolling back..."
+              fi
+            else
+              echo "❌ Failed to restart service, fetching logs..."
+              sudo systemctl status notification-pusher --no-pager
+              sudo journalctl -u notification-pusher --no-pager -n 20
+              echo "Rolling back..."
+            fi
+
+            # Rollback!
+            if [ -n "$OLD_VERSION_DIR" ] && [ -e "$OLD_VERSION_DIR" ]; then
+              echo "Restoring previous version..."
+              ln -sfn $OLD_VERSION_DIR $LATEST_DIR
+              sudo systemctl restart notification-pusher
+
+              if sudo systemctl is-active --quiet notification-pusher; then
+                echo "⚠️ Service rolled back to the previous version."
+              else
+                echo "❌ Rollback failed, service is not running!"
+              fi
+            else
+              echo "⁉️ No old version to roll back to!"
+            fi
+
+            exit 1
