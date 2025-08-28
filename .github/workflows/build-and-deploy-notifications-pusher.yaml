@@ -42,14 +42,14 @@ jobs:
       - name: Prepare release location
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          host: ${{ secrets.NP_EC2_HOST }}
+          username: ${{ secrets.NP_EC2_USER }}
+          key: ${{ secrets.NP_EC2_SSH_KEY }}
           script_stop: true
           script: |
             set -euo pipefail
             NEW_VERSION=${{ steps.version.outputs.version }}
-            NEW_VERSION_DIR=/home/${{ secrets.EC2_USER }}/notification_pusher/$NEW_VERSION
+            NEW_VERSION_DIR=/home/${{ secrets.NP_EC2_USER }}/notification_pusher/$NEW_VERSION
 
             if [ -d "$NEW_VERSION_DIR" ]; then
               echo "❌ Version directory $NEW_VERSION_DIR already exists!"
@@ -76,22 +76,22 @@ jobs:
       - name: Upload binary to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          host: ${{ secrets.NP_EC2_HOST }}
+          username: ${{ secrets.NP_EC2_USER }}
+          key: ${{ secrets.NP_EC2_SSH_KEY }}
           source: target/x86_64-unknown-linux-musl/release/notification_pusher_aws
-          target: /home/${{ secrets.EC2_USER }}/notification_pusher/${{ steps.version.outputs.version }}/notification_pusher_aws
+          target: /home/${{ secrets.NP_EC2_USER }}/notification_pusher/${{ steps.version.outputs.version }}/notification_pusher_aws
 
       - name: Run remote commands
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          host: ${{ secrets.NP_EC2_HOST }}
+          username: ${{ secrets.NP_EC2_USER }}
+          key: ${{ secrets.NP_EC2_SSH_KEY }}
           script_stop: true
           script: |
             set -euo pipefail
-            SERVICE_DIR=/home/${{ secrets.EC2_USER }}/notification_pusher
+            SERVICE_DIR=/home/${{ secrets.NP_EC2_USER }}/notification_pusher
 
             # Old and new version paths. We keep old version for rollback purposes.
             LATEST_DIR=$SERVICE_DIR/latest
@@ -106,6 +106,16 @@ jobs:
 
             # Make sure the bin is executable
             sudo chmod +x $NEW_VERSION_DIR/notification_pusher_aws
+
+            # Ensure we have an old version to copy .env from
+            if [ -z "$OLD_VERSION_DIR" ] || [ ! -e "$OLD_VERSION_DIR/.env" ]; then
+              echo "❌ Failed to copy, no .env file found in $OLD_VERSION_DIR!"
+              exit 1
+            fi
+
+            # Copy over .env file
+            # TODO fetch from a secrets manager instead?
+            cp $OLD_VERSION_DIR/.env $NEW_VERSION_DIR/.env
 
             # Replace symlink to latest
             ln -sfn $NEW_VERSION_DIR $LATEST_DIR
