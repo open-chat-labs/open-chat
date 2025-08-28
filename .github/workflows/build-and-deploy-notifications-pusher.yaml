@@ -21,6 +21,43 @@ jobs:
             exit 1
           fi
 
+      - name: Get latest tag and extract version
+        id: version
+        run: |
+          TAG=$(git tag --list "*-notification_pusher" "*-notifications_pusher" | sort -V | tail -1)
+
+          if [ -z "$TAG" ]; then
+            echo "No matching tag found for notification pusher!"
+            exit 1
+          fi
+
+          echo "Latest tag: $TAG"
+
+          NEW_VERSION=$(echo "$TAG" | sed -E 's/^v([0-9]+\.[0-9]+\.[0-9]+)-.*/\1/')
+          echo "Version extracted: $NEW_VERSION"
+
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Prepare release location
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            NEW_VERSION=${{ steps.version.outputs.version }}
+            NEW_VERSION_DIR=/home/${{ secrets.EC2_USER }}/notification_pusher/$NEW_VERSION
+
+            if [ -d "$NEW_VERSION_DIR" ]; then
+              echo "❌ Version directory $NEW_VERSION_DIR already exists!"
+              exit 1
+            fi
+
+            mkdir -p "$NEW_VERSION_DIR"
+
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -35,43 +72,6 @@ jobs:
 
       - name: Build release binary
         run: cargo build --package notification_pusher_aws --release --target=x86_64-unknown-linux-musl
-
-      - name: Get latest tag and extract version
-        id: version
-        run: |
-          TAG=$(git tag --list "*-notification_pusher" "*-notifications_pusher" | sort -V | tail -1)
-
-          if [ -z "$TAG" ]; then
-            echo "No matching tag found for notification pusher!"
-            exit 1
-          fi
-
-          echo "Latest tag: $TAG"
-
-          VERSION=$(echo "$TAG" | sed -E 's/^v([0-9]+\.[0-9]+\.[0-9]+)-.*/\1/')
-          echo "Version extracted: $VERSION"
-
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Prepare release folder
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script_stop: true
-          script: |
-            set -euo pipefail
-            VERSION=${{ steps.version.outputs.version }}
-            VERSION_PATH=/home/${{ secrets.EC2_USER }}/notification_pusher/$VERSION
-
-            if [ -d "$VERSION_PATH" ]; then
-              echo "Version directory $VERSION_PATH already exists!"
-              exit 1
-            fi
-
-            mkdir -p "$VERSION_PATH"
 
       - name: Upload binary to EC2
         uses: appleboy/scp-action@v0.1.7
