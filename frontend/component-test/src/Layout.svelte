@@ -31,9 +31,9 @@
         borderRadius={"md"}
         mainAxisAlignment={"center"}
         crossAxisAlignment={"center"}
-        width={!fixed ? { kind: "fill" } : { kind: "fixed", size: "120px" }}
-        height={{ kind: "fixed", size: "120px" }}>
-        {name} - {fixed ? "fixed 120px" : "fill"}
+        width={!fixed ? { kind: "fill" } : { kind: "fixed", size: "140px" }}
+        height={{ kind: "fixed", size: "140px" }}>
+        {name} - {fixed ? "fixed 140px" : "fill"}
     </Container>
 {/snippet}
 
@@ -87,7 +87,53 @@
 
         <h3>Complex layout</h3>
 
-        <Container padding={["xl"]} borderRadius={"lg"} borderWidth={"thin"}>outer</Container>
+        <Container gap={"lg"} padding={["xl"]} borderRadius={"lg"} borderWidth={"thin"}>
+            <Container gap={"lg"} direction={"vertical"}>
+                {@render contentBlock("A", false)}
+                {@render contentBlock("B", false)}
+                {@render contentBlock("C", false)}
+            </Container>
+            <Container height={{ kind: "fill" }} gap={"lg"} direction={"vertical"}>
+                {@render contentBlock("A", false)}
+                <Container
+                    gap={"md"}
+                    colour={"var(--secondary-muted)"}
+                    borderWidth={"thick"}
+                    padding={["lg"]}
+                    borderColour={"var(--secondary)"}
+                    borderStyle={"dashed"}
+                    borderRadius={"md"}
+                    mainAxisAlignment={"center"}
+                    crossAxisAlignment={"end"}
+                    width={{ kind: "fill" }}
+                    height={{ kind: "fill" }}>
+                    <Container
+                        padding={["md"]}
+                        borderColour={"var(--secondary)"}
+                        borderStyle={"dashed"}
+                        mainAxisAlignment={"center"}
+                        crossAxisAlignment={"center"}
+                        borderRadius={"md"}
+                        borderWidth={"thin"}>A</Container>
+                    <Container
+                        padding={["md"]}
+                        borderColour={"var(--secondary)"}
+                        borderStyle={"dashed"}
+                        mainAxisAlignment={"center"}
+                        crossAxisAlignment={"center"}
+                        borderRadius={"md"}
+                        borderWidth={"thin"}>B</Container>
+                    <Container
+                        padding={["md"]}
+                        borderColour={"var(--secondary)"}
+                        borderStyle={"dashed"}
+                        mainAxisAlignment={"center"}
+                        crossAxisAlignment={"center"}
+                        borderRadius={"md"}
+                        borderWidth={"thin"}>C</Container>
+                </Container>
+            </Container>
+        </Container>
     </Container>
     <Container width={{ kind: "fixed", size: "300px" }} direction={"vertical"}>
         <h3>Spacing</h3>
