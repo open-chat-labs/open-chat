@@ -38,7 +38,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
     }
 
     fn daily_claims(state: &RuntimeState) -> HttpResponse {
-        let (chit_events, _) = state.data.chit_events.events(None, None, 0, 200, false);
+        let (chit_events, _) = state.data.chit_events.events(None, None, 0, 500, false);
         let claims: Vec<_> = chit_events
             .into_iter()
             .filter_map(|e| match e.reason {
