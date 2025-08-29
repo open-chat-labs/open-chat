@@ -7,72 +7,82 @@ EC2_HOST="$3"
 EC2_SSH_KEY_PATH="$4"
 
 remote_cmd() {
-    ssh -i "$EC2_SSH_KEY_PATH" -o StrictHostKeyChecking=no "$EC2_USER@$EC2_HOST" "$@" || {
-        echo "❌ SSH command failed: $*"
-        exit 1
-    }
+    ssh -i "$EC2_SSH_KEY_PATH" -o StrictHostKeyChecking=no "$EC2_USER@$EC2_HOST" "$@"
 }
 
-# Name of the service being deployed
+# Name of the package/service being deployed
+PACKAGE_NAME="notification_pusher_aws"
 SERVICE_NAME="notification-pusher"
 
 # Remote paths
-SERVICE_DIR="/home/$EC2_USER/notification_pusher"
-LATEST_DIR="$SERVICE_DIR/latest"
-NEW_VERSION_DIR="$SERVICE_DIR/$NEW_VERSION"
-OLD_VERSION_DIR=$(remote_cmd readlink -f "$LATEST_DIR" 2>/dev/null || echo "")
+REMOTE_SERVICE_DIR_NAME="notification_pusher"
+REMOTE_SERVICE_PATH="/home/$EC2_USER/$REMOTE_SERVICE_DIR_NAME"
+LATEST_VERSION_PATH="$REMOTE_SERVICE_PATH/latest"
+NEW_VERSION_PATH="$REMOTE_SERVICE_PATH/$NEW_VERSION"
+CURRENT_VERSION_PATH=$(remote_cmd readlink -f "$LATEST_VERSION_PATH" 2>/dev/null || echo "")
 
+# --- Pre-flight checks ---
 # Make sure version directory doesn't already exist
-if remote_cmd "[ -d '$NEW_VERSION_DIR' ]"; then
-    echo "❌ Version directory $NEW_VERSION_DIR already exists!"
+echo "Checking if version directory already exists..."
+if remote_cmd "[ -d \"$NEW_VERSION_PATH\" ]"; then
+    echo "❌ Version directory $NEW_VERSION_PATH already exists!"
     exit 1
 fi
 
+# --- Build the service ---
 # Assume Rust is all set up, just build!
 echo "Building new notification-pusher version $NEW_VERSION..."
-cargo build --package notification_pusher_aws --release --target=x86_64-unknown-linux-musl
+cargo build --package $PACKAGE_NAME --release --target=x86_64-unknown-linux-musl
 
-echo "Creating release folder..."
-remote_cmd mkdir -p "$NEW_VERSION_DIR"
+# --- Create remote directory for the binary ---
+echo "Creating release folder $NEW_VERSION_PATH..."
+remote_cmd mkdir -p "$NEW_VERSION_PATH"
 
+# --- Upload the binary ---
 echo "Uploading binary..."
 scp -i "$EC2_SSH_KEY_PATH" \
-    "target/x86_64-unknown-linux-musl/release/notification_pusher_aws" \
-    "$EC2_USER@$EC2_HOST:$NEW_VERSION_DIR/notification_pusher_aws"
+    "target/x86_64-unknown-linux-musl/release/$PACKAGE_NAME" \
+    "$EC2_USER@$EC2_HOST:$NEW_VERSION_PATH/$PACKAGE_NAME"
 
+# --- Make sure we have adequate permissions ---
 echo "Setting executable permission..."
-remote_cmd sudo chmod +x "$NEW_VERSION_DIR/notification_pusher_aws"
+remote_cmd sudo chmod +x "$NEW_VERSION_PATH/$PACKAGE_NAME"
 
+# --- Handle .env ---
 # Checks if .env exists in the old version directory
-if [[ -z "$OLD_VERSION_DIR" ]] || ! remote_cmd "[ -e '$OLD_VERSION_DIR/.env' ]"; then
-    echo "❌ No .env file found in previous version ($OLD_VERSION_DIR)!"
+if [[ -z "$CURRENT_VERSION_PATH" ]] || ! remote_cmd "[ -e \"$CURRENT_VERSION_PATH/.env\" ]"; then
+    echo "❌ No .env file found in previous version ($CURRENT_VERSION_PATH)!"
     exit 1
 fi
 
 echo "Copying .env from previous release..."
-remote_cmd cp "$OLD_VERSION_DIR/.env" "$NEW_VERSION_DIR/.env"
+remote_cmd cp "$CURRENT_VERSION_PATH/.env" "$NEW_VERSION_PATH/.env"
 
+# --- Update symlink ---
 echo "Updating latest symlink..."
-remote_cmd ln -sfn "$NEW_VERSION_DIR" "$LATEST_DIR"
+remote_cmd ln -sfn "$NEW_VERSION_PATH" "$LATEST_VERSION_PATH"
 
+# --- Restart the service ---
 # Sleep for a second to ensure the service has fully restarted before checking
 # its status again.
 echo "Restarting $SERVICE_NAME service..."
-remote_cmd sudo systemctl restart $SERVICE_NAME && sleep 1
+remote_cmd sudo systemctl restart $SERVICE_NAME
+sleep 1
 
+# --- Verify the service is running ---
 echo "Checking service status..."
 if remote_cmd sudo systemctl is-active --quiet $SERVICE_NAME; then
     echo "✅ Service deployed successfully and running."
 else
     echo "❌ Service failed to start, fetching logs..."
-    remote_cmd sudo systemctl status $SERVICE_NAME --no-pager
-    remote_cmd sudo journalctl -u $SERVICE_NAME --no-pager -n 20
+    remote_cmd sudo systemctl status $SERVICE_NAME --no-pager || true
+    remote_cmd sudo journalctl -u $SERVICE_NAME --no-pager -n 20 || true
     echo "Rolling back..."
 
-    if [[ -n "$OLD_VERSION_DIR" ]] && remote_cmd "[ -x '$OLD_VERSION_DIR/notification_pusher_aws' ]"; then
-        remote_cmd ln -sfn "$OLD_VERSION_DIR" "$LATEST_DIR" \
-            && remote_cmd sudo systemctl restart $SERVICE_NAME \
-            && sleep 1
+    if [[ -n "$CURRENT_VERSION_PATH" ]] && remote_cmd "[ -f \"$CURRENT_VERSION_PATH/$PACKAGE_NAME\" ]"; then
+        remote_cmd ln -sfn "$CURRENT_VERSION_PATH" "$LATEST_VERSION_PATH"
+        remote_cmd sudo systemctl restart $SERVICE_NAME
+        sleep 1
         
         if remote_cmd sudo systemctl is-active --quiet $SERVICE_NAME; then
             echo "⚠️ Rolled back to previous version."
