@@ -36,6 +36,26 @@ export class BorderWidth {
 
 export type BorderWidthSize = Exclude<keyof BorderWidth, keyof object | "cssVariables">;
 
+export function getBorderWidthCss(bw: BorderWidthSize): string {
+    return bw === "zero" ? "" : `border-width: var(--bw-${bw})`;
+}
+
+export function getBorderStyleCss(
+    bw: BorderWidthSize,
+    borderStyle: string,
+    borderColour: string,
+): string {
+    return bw === "zero" ? "" : `border-style: ${borderStyle}; border-color: ${borderColour}`;
+}
+
+export function getPaddingCss(padding: Padding): string {
+    return `padding: ${padding.map((p) => `var(--sp-${p})`).join(" ")}`;
+}
+
+export function getGapCss(sz: SpacingSize): string {
+    return sz === "zero" ? "" : `gap: var(--sp-${sz})`;
+}
+
 export class BorderRadius {
     constructor(
         public zero: Rem,
@@ -60,6 +80,10 @@ export class BorderRadius {
             this.circle.cssVariable("rad", "circle"),
         ];
     }
+}
+
+export function getBorderRadiusCss(rad: BorderRadiusSize): string {
+    return rad === "zero" ? "" : `border-radius: var(--rad-${rad})`;
 }
 
 export type BorderRadiusSize = Exclude<keyof BorderRadius, keyof object | "cssVariables">;
@@ -94,7 +118,74 @@ export class Spacings {
     }
 }
 
+export type SizeMode = { kind: "hug" } | { kind: "fill" } | { kind: "fixed"; size: string };
+
+export type MainAxisAlignment = "start" | "center" | "end" | "spaceBetween" | "spaceAround";
+
+export type CrossAxisAlignment = "start" | "center" | "end" | "stretch";
+
+export type Direction = "horizontal" | "vertical" | "unknown";
+
+const mainAxisToCss = {
+    start: "flex-start",
+    center: "center",
+    end: "flex-end",
+    spaceBetween: "space-between",
+    spaceAround: "space-around",
+};
+
+const crossAxisToCss = {
+    start: "flex-start",
+    center: "center",
+    end: "flex-end",
+    stretch: "stretch",
+};
+
+export function getAlignmentCss(
+    mainAxisAlignment: MainAxisAlignment,
+    crossAxisAlignment: CrossAxisAlignment,
+) {
+    return `justify-content: ${mainAxisToCss[mainAxisAlignment]}; align-items: ${crossAxisToCss[crossAxisAlignment]}`;
+}
+
+export function getFlexStyle(
+    axis: "width" | "height",
+    mode: SizeMode,
+    parentDirection: Direction,
+): string {
+    const isMainAxis =
+        (axis === "width" && parentDirection === "horizontal") ||
+        (axis === "height" && parentDirection === "vertical");
+
+    if (isMainAxis) {
+        if (mode.kind === "fixed") return `flex: 0 0 ${mode.size ?? "auto"}`;
+        if (mode.kind === "hug") return `flex: 0 0 auto`;
+        if (mode.kind === "fill") return `flex: 1 1 auto`;
+    }
+
+    if (!isMainAxis) {
+        if (mode.kind === "fixed") return `${axis}: ${mode.size ?? "auto"}`;
+        if (mode.kind === "hug") return `${axis}: fit-content`;
+        if (mode.kind === "fill") return `align-self: stretch`;
+    }
+
+    // Fallback for unknown or non-flex parent
+    if (parentDirection === "unknown") {
+        if (mode.kind === "fixed") return `${axis}: ${mode.size ?? "auto"}`;
+        if (mode.kind === "hug") return `${axis}: fit-content`;
+        if (mode.kind === "fill") return `${axis}: 100%`;
+    }
+
+    return "";
+}
+
 export type SpacingSize = "zero" | Exclude<keyof Spacings, keyof object | "cssVariables">;
+
+export type Padding =
+    | [SpacingSize]
+    | [SpacingSize, SpacingSize]
+    | [SpacingSize, SpacingSize, SpacingSize]
+    | [SpacingSize, SpacingSize, SpacingSize, SpacingSize];
 
 abstract class Unit {
     protected val: number;
