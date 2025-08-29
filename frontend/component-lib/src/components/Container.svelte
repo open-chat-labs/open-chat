@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Snippet } from "svelte";
+    import { getContext, setContext, type Snippet } from "svelte";
     import {
         getAlignmentCss,
         getBorderRadiusCss,
@@ -21,7 +21,6 @@
     interface Props {
         children: Snippet;
         direction?: Direction;
-        parentDirection?: Direction;
         gap?: SpacingSize;
         padding?: Padding;
         borderWidth?: BorderWidthSize;
@@ -38,7 +37,6 @@
     let {
         children,
         direction = "horizontal",
-        parentDirection = "unknown",
         gap = "zero",
         padding = ["zero"],
         borderWidth = "zero",
@@ -51,6 +49,11 @@
         mainAxisAlignment = "start",
         crossAxisAlignment = "start",
     }: Props = $props();
+
+    // you might expect this to be done inside onMount but
+    // that runs from the bottom of the tree up which is not what we need
+    let parentDirection = getContext<Direction>("direction");
+    setContext("direction", direction);
 
     let paddingCss = $derived(getPaddingCss(padding));
     let borderWidthCss = $derived(getBorderWidthCss(borderWidth));
@@ -72,6 +75,7 @@
 
 <style lang="scss">
     .container {
+        position: relative;
         transition:
             padding ease-in-out 200ms,
             gap ease-in-out 200ms;
@@ -85,5 +89,15 @@
             display: flex;
             flex-direction: column;
         }
+    }
+
+    .debug {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 10;
+        background-color: rgba(255, 255, 255, 0.3);
+        border: 1px solid #000;
+        border-radius: 8px;
     }
 </style>

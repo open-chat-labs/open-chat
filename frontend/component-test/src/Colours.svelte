@@ -66,6 +66,7 @@
         {#each allColours as { name, colours }}
             <Container
                 borderRadius={"lg"}
+                width={{ kind: "hug" }}
                 padding={["lg"]}
                 borderWidth={"thin"}
                 direction={"vertical"}>
@@ -79,7 +80,12 @@
                 </Container>
             </Container>
         {/each}
-        <Container borderRadius={"lg"} padding={["lg"]} borderWidth={"thin"} direction={"vertical"}>
+        <Container
+            width={{ kind: "hug" }}
+            borderRadius={"lg"}
+            padding={["lg"]}
+            borderWidth={"thin"}
+            direction={"vertical"}>
             <h3>{"Gradients"}</h3>
             <Container gap={"xl"} padding={["lg", "zero", "xxl", "zero"]}>
                 {@render card(
@@ -98,10 +104,6 @@
 </Container>
 
 <style lang="scss">
-    .grid {
-        padding: var(--sp-md);
-    }
-
     .neon {
         color: var(--primary);
     }

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Container, type Direction, type SpacingSize } from "component-lib";
+    import { Container, type SpacingSize } from "component-lib";
 
     let paddingLeft = $state<SpacingSize>("lg");
     let paddingRight = $state<SpacingSize>("lg");
@@ -21,10 +21,9 @@
     <option value="huge">Huge</option>
 {/snippet}
 
-{#snippet contentBlock(name: string, parent: Direction, fixed = true)}
+{#snippet contentBlock(name: string, fixed = true)}
     <Container
         colour={"var(--secondary-muted)"}
-        parentDirection={parent}
         borderWidth={"thick"}
         padding={["lg"]}
         borderColour={"var(--secondary)"}
@@ -38,35 +37,35 @@
     </Container>
 {/snippet}
 
-{#snippet contentBlocks(parent: Direction)}
-    {@render contentBlock("Content A", parent)}
-    {@render contentBlock("Content B", parent, false)}
-    {@render contentBlock("Content C", parent)}
-    {@render contentBlock("Content D", parent)}
+{#snippet contentBlocks()}
+    {@render contentBlock("Content A")}
+    {@render contentBlock("Content B", false)}
+    {@render contentBlock("Content C")}
+    {@render contentBlock("Content D")}
 {/snippet}
 
-<Container gap={"xxl"}>
+<Container mainAxisAlignment={"spaceBetween"} gap={"xxl"}>
     <Container gap={"lg"} direction={"vertical"}>
         <h3>Horizontal Container / Row</h3>
 
         <Container
             padding={[paddingTop, paddingRight, paddingBottom, paddingLeft]}
             borderWidth={"thick"}
-            width={{ kind: "fixed", size: "900px" }}
+            width={{ kind: "fill" }}
             borderRadius={"lg"}
             {gap}>
-            {@render contentBlocks("horizontal")}
+            {@render contentBlocks()}
         </Container>
 
         <h3>Vertical Container / Column</h3>
-        <Container gap={"lg"}>
+        <Container width={{ kind: "hug" }} gap={"lg"}>
             <Container
                 direction={"vertical"}
                 padding={[paddingTop, paddingRight, paddingBottom, paddingLeft]}
                 borderWidth={"thick"}
                 borderRadius={"lg"}
                 {gap}>
-                {@render contentBlocks("vertical")}
+                {@render contentBlocks()}
             </Container>
             <Container
                 direction={"vertical"}
@@ -74,7 +73,7 @@
                 borderWidth={"thick"}
                 borderRadius={"lg"}
                 {gap}>
-                {@render contentBlocks("vertical")}
+                {@render contentBlocks()}
             </Container>
             <Container
                 direction={"vertical"}
@@ -82,9 +81,13 @@
                 borderWidth={"thick"}
                 borderRadius={"lg"}
                 {gap}>
-                {@render contentBlocks("vertical")}
+                {@render contentBlocks()}
             </Container>
         </Container>
+
+        <h3>Complex layout</h3>
+
+        <Container padding={["xl"]} borderRadius={"lg"} borderWidth={"thin"}>outer</Container>
     </Container>
     <Container width={{ kind: "fixed", size: "300px" }} direction={"vertical"}>
         <h3>Spacing</h3>
@@ -128,6 +131,7 @@
         border-radius: var(--rad-sm);
         padding: var(--sp-xs);
         height: 30px;
+        width: 100%;
         background-color: var(--text-tertiary);
         color: var(--text-placeholder);
     }

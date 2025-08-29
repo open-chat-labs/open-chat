@@ -18,7 +18,7 @@
     <Button onClick={() => (selected = "layout")} secondary={selected !== "layout"}>Layout</Button>
 </Container>
 
-<Container padding={["lg"]}>
+<Container direction={"vertical"} padding={["lg"]}>
     {#if selected === "colours"}
         <Colours></Colours>
     {:else if selected === "buttons"}
