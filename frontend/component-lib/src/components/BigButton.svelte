@@ -1,62 +1,43 @@
 <script lang="ts">
     import type { Snippet } from "svelte";
-    import Spinner from "./Spinner.svelte";
 
     interface Props {
         children?: Snippet;
-        disabled?: boolean;
-        loading?: boolean;
-        secondary?: boolean;
+        style: "default" | "pressed" | "active";
         onClick?: (e: MouseEvent) => void;
-        icon?: Snippet<[string]>;
+        icon: Snippet<[string]>;
     }
-    let {
-        children,
-        icon,
-        disabled = false,
-        onClick,
-        loading = false,
-        secondary = false,
-    }: Props = $props();
+    let { children, icon, onClick, style }: Props = $props();
 
-    let spinnerColour = secondary ? "var(--primary)" : "var(--text-on-primary)";
-    let iconColour = secondary ? "var(--primary)" : "var(--text-on-primary)";
+    let iconColour = "var(--primary)";
 </script>
 
-<button class:secondary class:disabled onclick={onClick} disabled={disabled || loading}>
-    {#if loading}
-        <Spinner
-            size={"1.4rem"}
-            backgroundColour={"var(--text-tertiary)"}
-            foregroundColour={spinnerColour} />
-    {:else}
-        <span class="content">{@render children?.()}</span>
-        {#if icon}
-            <span class="icon">{@render icon(iconColour)}</span>
-        {/if}
+<button onclick={onClick} class={`${style}`}>
+    <span class="content">{@render children?.()}</span>
+    {#if icon}
+        <span class="icon">{@render icon(iconColour)}</span>
     {/if}
 </button>
 
 <style lang="scss">
     button {
         position: relative;
-        background: var(--primary-gradient-inverted);
-        min-height: var(--sp-xxxl);
+        background: var(--background-1);
+        min-height: 80px; // TOOD - not sure about this
         display: flex;
-        justify-content: center;
-        align-items: center;
+        flex-direction: column;
+        align-items: flex-start;
         border: none;
         border-radius: var(--rad-sm);
-        color: var(--text-on-primary);
+        color: var(--text-primary);
         cursor: pointer;
         width: 100%;
         transition:
-            border ease-in-out 200ms,
             background ease-in-out 200ms,
             color ease-in-out 200ms;
 
         font-weight: 700; // TODO - typography vars (weight semi - bold)
-        font-size: 14px; // TODO - typography vars
+        font-size: 12px; // TODO - typography vars (body small)
 
         .content {
             pointer-events: none;

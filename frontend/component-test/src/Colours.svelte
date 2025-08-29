@@ -1,6 +1,5 @@
 <script lang="ts">
-    import type { Colours } from "component-lib";
-    import { theme as neon } from "component-lib";
+    import { Container, theme as neon, type Colours } from "component-lib";
 
     type Section = {
         name: string;
@@ -47,47 +46,56 @@
             name: "Main",
             colours: mainColours,
         },
+        { name: "Backgrounds", colours: backgroundColours },
         { name: "Muted", colours: mutedColours },
         { name: "Typography", colours: typographyColours },
-        { name: "Backgrounds", colours: backgroundColours },
     ];
 </script>
 
-<h3>Colours / <span class="neon">Neon</span> theme</h3>
-<div class="grid">
-    {#each allColours as { name, colours }}
-        <h3>{name}</h3>
-        <div class="section">
-            {#each colours as { name, key }}
-                {@const colour = neon.colours[key]}
-                {@const code = colour.toString()}
-                <div class={`${key} card`}>
-                    <div class="name">{name}</div>
-                    <div class="circle" style={`background: ${code};`}></div>
-                    <div class="code">{code}</div>
-                </div>
-            {/each}
-        </div>
-    {/each}
+{#snippet card(name: string, code: string, summary: string = code)}
+    <Container gap={"md"} direction={"vertical"}>
+        <div class="name">{name}</div>
+        <div class="circle" style={`background: ${code};`}></div>
+        <div class="code">{summary}</div>
+    </Container>
+{/snippet}
 
-    <h3>{"Gradients"}</h3>
-    <div class="section">
-        <div class={`card`}>
-            <div class="name">{"Primary Gradient"}</div>
-            <div class="circle" style={`background: ${neon.colours.primaryGradient.toString()};`}>
-            </div>
-            <div class="code">{neon.colours.primaryGradient.summarise()}</div>
-        </div>
-        <div class={`card`}>
-            <div class="name">{"Primary Gradient Inverted"}</div>
-            <div
-                class="circle"
-                style={`background: ${neon.colours.primaryGradientInverted.toString()};`}>
-            </div>
-            <div class="code">{neon.colours.primaryGradientInverted.summarise()}</div>
-        </div>
-    </div>
-</div>
+<Container direction={"vertical"}>
+    <h3>Colours / <span class="neon">Neon</span> theme</h3>
+    <Container gap={"lg"} direction={"vertical"}>
+        {#each allColours as { name, colours }}
+            <Container
+                borderRadius={"lg"}
+                padding={["lg"]}
+                borderWidth={"thin"}
+                direction={"vertical"}>
+                <h3>{name}</h3>
+                <Container gap={"xl"} padding={["lg", "zero", "xxl", "zero"]}>
+                    {#each colours as { name, key }}
+                        {@const colour = neon.colours[key]}
+                        {@const code = colour.toString()}
+                        {@render card(name, code)}
+                    {/each}
+                </Container>
+            </Container>
+        {/each}
+        <Container borderRadius={"lg"} padding={["lg"]} borderWidth={"thin"} direction={"vertical"}>
+            <h3>{"Gradients"}</h3>
+            <Container gap={"xl"} padding={["lg", "zero", "xxl", "zero"]}>
+                {@render card(
+                    "Primary Gradient",
+                    neon.colours.primaryGradient.toString(),
+                    neon.colours.primaryGradient.summarise(),
+                )}
+                {@render card(
+                    "Primary Gradient Inverted",
+                    neon.colours.primaryGradientInverted.toString(),
+                    neon.colours.primaryGradientInverted.summarise(),
+                )}
+            </Container>
+        </Container>
+    </Container>
+</Container>
 
 <style lang="scss">
     .grid {
@@ -98,32 +106,20 @@
         color: var(--primary);
     }
 
-    .section {
-        display: flex;
-        gap: var(--sp-xxl);
-        margin-bottom: var(--sp-xxxl);
+    .name {
+        color: var(--text-secondary);
+        align-self: center;
     }
 
-    .card {
-        display: flex;
-        flex-direction: column;
-        gap: var(--sp-md);
-        min-width: 100px;
-        align-items: center;
-        justify-content: center;
+    .code {
+        text-transform: uppercase;
+        align-self: center;
+    }
 
-        .name {
-            color: var(--text-secondary);
-        }
-
-        .code {
-            text-transform: uppercase;
-        }
-
-        .circle {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-        }
+    .circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        align-self: center;
     }
 </style>

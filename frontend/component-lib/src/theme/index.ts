@@ -1,5 +1,5 @@
 export * from "./colour";
 export * from "./neon";
-export * from "./spacing";
+export * from "./sizes";
 export * from "./theme";
 export * from "./variable";
