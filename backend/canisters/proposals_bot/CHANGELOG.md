@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Submit an SNS proposal for each relevant NNS proposal ([#5446](https://github.com/open-chat-labs/open-chat/pull/5446))
+
 ### Changed
 
 - Expose `liquid_cycles_balance` in metrics ([#8350](https://github.com/open-chat-labs/open-chat/pull/8350))
