@@ -1,0 +1,67 @@
+name: Deploy Notifications Pusher
+
+on:
+  workflow_dispatch: # Trigger manually!
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure on master
+        run: |
+          branch=$(git rev-parse --abbrev-ref HEAD)
+          if [ "$branch" != "master" ]; then
+            echo "Not on master branch!"
+            exit 1
+          fi
+
+      - name: Get latest tag and extract version
+        id: version
+        run: |
+          TAG=$(git tag --list "*-notification_pusher" "*-notifications_pusher" | sort -V | tail -1)
+
+          if [ -z "$TAG" ]; then
+            echo "No matching tag found for notification pusher!"
+            exit 1
+          fi
+
+          echo "Latest tag: $TAG"
+
+          NEW_VERSION=$(echo "$TAG" | sed -E 's/^v([0-9]+\.[0-9]+\.[0-9]+)-.*/\1/')
+          echo "Version extracted: $NEW_VERSION"
+
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Install musl tools
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+
+      - name: Add musl target
+        run: rustup target add x86_64-unknown-linux-musl
+
+      - name: Build and deploy to EC2
+        run: |
+          KEY_PATH=$(mktemp)
+          echo "${{ secrets.NP_EC2_SSH_KEY }}" > "$KEY_PATH"
+          chmod 600 "$KEY_PATH"
+
+          ./scripts/deploy-notification-pusher-prod.sh \
+            "${{ steps.version.outputs.version }}" \
+            "${{ secrets.NP_EC2_USER }}" \
+            "${{ secrets.NP_EC2_HOST }}" \
+            "$KEY_PATH"
+
+          # cleanup
+          rm -f "$KEY_PATH"
