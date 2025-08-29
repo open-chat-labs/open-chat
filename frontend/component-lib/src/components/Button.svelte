@@ -1,5 +1,6 @@
 <script lang="ts">
-    import type { Snippet } from "svelte";
+    import { getContext, type Snippet } from "svelte";
+    import { getFlexStyle, type Direction, type SizeMode } from "..";
     import Spinner from "./Spinner.svelte";
 
     interface Props {
@@ -9,6 +10,8 @@
         secondary?: boolean;
         onClick?: (e: MouseEvent) => void;
         icon?: Snippet<[string]>;
+        width?: SizeMode;
+        height?: SizeMode;
     }
     let {
         children,
@@ -17,13 +20,19 @@
         onClick,
         loading = false,
         secondary = false,
+        width = { kind: "fill" },
+        height = { kind: "hug" },
     }: Props = $props();
 
+    let parentDirection = getContext<Direction>("direction");
     let spinnerColour = secondary ? "var(--primary)" : "var(--text-on-primary)";
     let iconColour = secondary ? "var(--primary)" : "var(--text-on-primary)";
+    let widthCss = $derived(getFlexStyle("width", width, parentDirection));
+    let heightCss = $derived(getFlexStyle("height", height, parentDirection));
+    let style = $derived(`${heightCss}; ${widthCss};`);
 </script>
 
-<button class:secondary class:disabled onclick={onClick} disabled={disabled || loading}>
+<button {style} class:secondary class:disabled onclick={onClick} disabled={disabled || loading}>
     {#if loading}
         <Spinner
             size={"1.4rem"}
@@ -49,7 +58,6 @@
         border-radius: var(--rad-sm);
         color: var(--text-on-primary);
         cursor: pointer;
-        width: 100%;
         transition:
             border ease-in-out 200ms,
             background ease-in-out 200ms,
