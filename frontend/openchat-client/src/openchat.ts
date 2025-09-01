@@ -10151,6 +10151,14 @@ export class OpenChat {
             days,
         });
     }
+
+    addOneSecToken(tokenSymbol: string, infoUrl: string): Promise<boolean> {
+        return this.#sendRequest({
+            kind: "addOneSecToken",
+            tokenSymbol,
+            infoUrl,
+        });
+    }
 }
 
 type UserIndexMetrics = {
