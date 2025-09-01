@@ -18,7 +18,6 @@
     }: Props = $props();
 
     function onEmojiSelectedInternal(selected: SelectedEmoji) {
-        console.log("Feature clicked", selected);
         onEmojiSelected(selected);
     }
 </script>

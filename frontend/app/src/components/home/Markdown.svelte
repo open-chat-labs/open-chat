@@ -2,7 +2,12 @@
     import "highlight.js/styles/base16/helios.css";
     import { marked } from "marked";
     import type { OpenChat, ReadonlyMap, UserGroupSummary } from "openchat-client";
-    import { allUsersStore, customEmojis, userGroupSummariesStore } from "openchat-client";
+    import {
+        allUsersStore,
+        customEmojis,
+        premiumItemsStore,
+        userGroupSummariesStore,
+    } from "openchat-client";
     import { getContext } from "svelte";
     import { DOMPurifyDefault, DOMPurifyOneLine } from "../../utils/domPurify";
     import { isSingleEmoji } from "../../utils/emojis";
@@ -76,7 +81,11 @@
         return text.replace(/@(?:CustomEmoji|CE)\(([^)]+)\)/g, (match, p1) => {
             const emoji = customEmojis.get(p1);
             if (emoji !== undefined) {
-                return `<custom-emoji data-id="${emoji.code}"></custom-emoji>`;
+                if ($premiumItemsStore.has(emoji.premiumItem)) {
+                    return `<custom-emoji data-id="${emoji.code}"></custom-emoji>`;
+                } else {
+                    return "";
+                }
             }
             return match;
         });

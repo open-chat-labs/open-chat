@@ -22,10 +22,12 @@
         botState,
         chatIdentifiersEqual,
         currentUserIdStore,
+        customEmojis,
         directMessageCommandInstance,
         iconSize,
         localUpdates,
         messageContextsEqual,
+        premiumItemsStore,
         random64,
         screenWidth,
         ScreenWidth,
@@ -378,13 +380,25 @@
         return false;
     }
 
+    function stripCustomEmojis(txt: string): string {
+        return txt.replace(/@(?:CustomEmoji|CE)\(([^)]+)\)/g, (match, p1) => {
+            const emoji = customEmojis.get(p1);
+            if (emoji !== undefined) {
+                if (!$premiumItemsStore.has(emoji.premiumItem)) {
+                    return "";
+                }
+            }
+            return match;
+        });
+    }
+
     function sendMessage() {
         if (showCommandSelector || messageIsEmpty) return;
 
         const txt = inp?.innerText?.trim() ?? "";
 
         if (!parseCommands(txt)) {
-            onSendMessage(expandMentions(txt));
+            onSendMessage(expandMentions(stripCustomEmojis(txt)));
         }
 
         afterSendMessage();
