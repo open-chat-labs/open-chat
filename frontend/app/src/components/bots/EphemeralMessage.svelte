@@ -24,7 +24,7 @@
     onMount(() => {
         perc.target = 0;
         timer = window.setTimeout(onClose, duration);
-        return clearTimer();
+        return clearTimer;
     });
 
     function clearTimer() {
