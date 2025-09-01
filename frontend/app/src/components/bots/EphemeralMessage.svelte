@@ -24,18 +24,28 @@
     onMount(() => {
         perc.target = 0;
         timer = window.setTimeout(onClose, duration);
-        return () => window.clearTimeout(timer);
+        return clearTimer();
     });
+
+    function clearTimer() {
+        window.clearTimeout(timer);
+        timer = undefined;
+    }
 
     function pause() {
         perc.target = perc.current;
-        window.clearTimeout(timer);
+        clearTimer();
     }
 
     function resume() {
         const remainingTime = (perc.current / 100) * duration;
         perc.set(0, { duration: remainingTime });
         timer = window.setTimeout(onClose, remainingTime);
+    }
+
+    function closeClicked() {
+        clearTimer();
+        onClose();
     }
 </script>
 
@@ -50,7 +60,7 @@
                 </div>
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
-                <span class="close" onclick={onClose}>
+                <span class="close" onclick={closeClicked}>
                     <HoverIcon>
                         <Close size={"1em"} color={"var(--icon-txt)"} />
                     </HoverIcon>
