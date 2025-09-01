@@ -84,6 +84,8 @@ STORAGE_INDEX_CANISTER_ID=$(dfx canister id storage_index)
 ./scripts/get-test-icp.sh $STORAGE_INDEX_CANISTER_ID $IDENTITY
 dfx --identity $IDENTITY canister call storage_index add_bucket_canister '(record { })'
 
+FIRST_USER_ID=xvemo-ap777-77774-qaalq-cai
+
 ./scripts/deploy-test-chat-ledger.sh $IDENTITY
-./scripts/get-test-icp.sh "xsfk2-nx777-77774-qaala-cai" $IDENTITY
-./scripts/get-test-chat-tokens.sh "xsfk2-nx777-77774-qaala-cai" $IDENTITY
+./scripts/get-test-icp.sh $FIRST_USER_ID $IDENTITY
+./scripts/get-test-chat-tokens.sh $FIRST_USER_ID $IDENTITY
