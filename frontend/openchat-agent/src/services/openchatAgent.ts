@@ -4658,6 +4658,10 @@ export class OpenChatAgent extends EventTarget {
             days,
         );
     }
+
+    addOneSecToken(tokenSymbol: string, infoUrl: string): Promise<boolean> {
+        return this._registryClient.addOneSecToken(tokenSymbol, infoUrl);
+    }
 }
 
 export interface ExchangeRateClient {

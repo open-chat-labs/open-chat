@@ -472,7 +472,8 @@ export type WorkerRequest =
     | SetPremiumItemCost
     | OneSecGetTransferFees
     | OneSecForwardEvmToIcp
-    | OneSecGetForwardingStatus;
+    | OneSecGetForwardingStatus
+    | AddOneSecToken;
 
 type OneSecGetTransferFees = {
     kind: "oneSecGetTransferFees";
@@ -492,6 +493,12 @@ type OneSecGetForwardingStatus = {
     chain: EvmChain;
     address: string;
     receiver: string;
+};
+
+type AddOneSecToken = {
+    kind: "addOneSecToken";
+    tokenSymbol: string;
+    infoUrl: string;
 };
 
 type SetPremiumItemCost = {
@@ -2615,4 +2622,6 @@ export type WorkerResult<T> = T extends Init
     ? OneSecForwardingStatus
     : T extends OneSecGetForwardingStatus
     ? OneSecForwardingStatus
+    : T extends AddOneSecToken
+    ? boolean
     : never;
