@@ -129,13 +129,15 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
             }
 
             mutate_state(|state| {
+                let now = state.env.now();
+
                 if governance_canister_id == state.data.nns_governance_canister_id
                     && let Some(neuron_id) = state.data.nns_neuron_to_vote_with
                 {
                     for proposal in proposals.iter() {
                         if let Proposal::NNS(nns) = proposal
                             && NNS_TOPICS_TO_PUSH_SNS_PROPOSALS_FOR.contains(&nns.topic)
-                            && state.data.nns_proposals_scheduled_to_vote_on.insert(nns.id)
+                            && state.data.nns_proposals_requiring_manual_vote.insert(nns.id)
                         {
                             // Set up a job to reject the proposal 10 minutes before its deadline.
                             // In parallel, we will submit an SNS proposal instructing the SNS governance
@@ -149,7 +151,7 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
                                     vote: false,
                                 }),
                                 nns.deadline.saturating_sub(10 * MINUTE_IN_MS),
-                                state.env.now(),
+                                now,
                             );
                         }
                     }
@@ -183,12 +185,11 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
                     .nervous_systems
                     .take_newly_decided_user_submitted_proposals(governance_canister_id);
 
-                let now = state.env.now();
-                for proposal in decided_user_submitted_proposals {
-                    if let Some(ns) = state.data.nervous_systems.get(&governance_canister_id) {
-                        let ledger_canister_id = ns.ledger_canister_id();
-                        let amount = ns.proposal_rejection_fee().into();
-                        let fee = ns.transaction_fee().into();
+                if let Some(ns) = state.data.nervous_systems.get(&governance_canister_id) {
+                    let ledger_canister_id = ns.ledger_canister_id();
+                    let amount = ns.proposal_rejection_fee().into();
+                    let fee = ns.transaction_fee().into();
+                    for proposal in decided_user_submitted_proposals {
                         if proposal.adopted {
                             let job = ProcessUserRefundJob {
                                 user_id: proposal.user_id,
