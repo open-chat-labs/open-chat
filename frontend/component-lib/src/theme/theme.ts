@@ -1,6 +1,6 @@
 import type { Colours } from "./colour";
 import { BorderRadius, BorderWidth, IconSize, Pixel, Rem, Spacings } from "./sizes";
-import { TypographicStyle, TypographicStyles } from "./typography";
+import { FontWeights, TypographicStyle, TypographicStyles } from "./typography";
 
 export class Theme {
     public spacings: Spacings;
@@ -8,6 +8,7 @@ export class Theme {
     public borderWidth: BorderWidth;
     public iconSize: IconSize;
     public typography: TypographicStyles;
+    public fontWeights: FontWeights;
 
     constructor(public colours: Colours) {
         // Colours are injected (as they are flexible), all other params are hard-coded for now
@@ -55,6 +56,8 @@ export class Theme {
             new TypographicStyle(Rem.fromPixels(10), Rem.fromPixels(16)),
             new TypographicStyle(Rem.fromPixels(14), Rem.fromPixels(20)),
         );
+
+        this.fontWeights = new FontWeights();
     }
 
     writeCssVariables() {
@@ -65,6 +68,7 @@ export class Theme {
             ...this.borderWidth.cssVariables(),
             ...this.iconSize.cssVariables(),
             ...this.typography.cssVariables(),
+            ...this.fontWeights.cssVariables(),
         ];
         vars.forEach((cssVar) => {
             cssVar.write();

@@ -1,15 +1,7 @@
 <script lang="ts">
-    import type { Snippet } from "svelte";
-    import type { SizeMode } from "..";
-    import Typography from "./Typography.svelte";
+    import Typography, { type TypographyProps } from "./Typography.svelte";
 
-    interface Props {
-        children?: Snippet;
-        width?: SizeMode;
-        height?: SizeMode;
-    }
-
-    let { children, ...rest }: Props = $props();
+    let props: TypographyProps = $props();
 </script>
 
-<Typography type={"body"} {...rest}>{@render children?.()}</Typography>
+<Typography type={"body"} {...props}>{@render props.children?.()}</Typography>

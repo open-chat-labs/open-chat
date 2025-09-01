@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Container, theme as neon, type Colours } from "component-lib";
+    import { Container, H2, Subtitle, theme as neon, type Colours } from "component-lib";
 
     type Section = {
         name: string;
@@ -60,8 +60,8 @@
     </Container>
 {/snippet}
 
-<Container direction={"vertical"}>
-    <h3>Colours / <span class="neon">Neon</span> theme</h3>
+<Container gap={"md"} direction={"vertical"}>
+    <Subtitle>Colours / <span class="neon">Neon</span> theme</Subtitle>
     <Container gap={"lg"} direction={"vertical"}>
         {#each allColours as { name, colours }}
             <Container
@@ -70,7 +70,7 @@
                 padding={["lg"]}
                 borderWidth={"thin"}
                 direction={"vertical"}>
-                <h3>{name}</h3>
+                <H2>{name}</H2>
                 <Container gap={"xl"} padding={["lg", "zero", "xxl", "zero"]}>
                     {#each colours as { name, key }}
                         {@const colour = neon.colours[key]}

@@ -1,6 +1,19 @@
-import type { CssVariable, Rem } from ".";
+import { CssVariable, type Rem } from ".";
 
 export type TypographicStyleName = Exclude<keyof TypographicStyles, keyof object | "cssVariables">;
+
+export type FontWeight = "light" | "normal" | "semi-bold" | "bold";
+
+export class FontWeights {
+    cssVariables(): CssVariable[] {
+        return [
+            new CssVariable("font-light", "300"),
+            new CssVariable("font-normal", "400"),
+            new CssVariable("font-semi-bold", "700"),
+            new CssVariable("font-bold", "900"),
+        ];
+    }
+}
 
 export class TypographicStyle {
     constructor(

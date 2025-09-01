@@ -4,4 +4,4 @@
     let props: TypographyProps = $props();
 </script>
 
-<Typography type={"overview"} {...props}>{@render props.children?.()}</Typography>
+<Typography type={"label"} {...props}>{@render props.children?.()}</Typography>

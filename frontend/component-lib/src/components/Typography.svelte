@@ -1,20 +1,32 @@
+<script module lang="ts">
+    export type TypographyProps = Omit<Props, "type">;
+
+    interface Props {
+        type: TypographicStyleName;
+        fontWeight?: FontWeight;
+        children?: Snippet;
+        width?: SizeMode;
+        height?: SizeMode;
+    }
+</script>
+
 <script lang="ts">
     import { getContext, type Snippet } from "svelte";
     import {
         getFlexStyle,
         type Direction,
+        type FontWeight,
         type SizeMode,
         type TypographicStyleName,
     } from "../theme";
 
-    interface Props {
-        type: TypographicStyleName;
-        children?: Snippet;
-        width?: SizeMode;
-        height?: SizeMode;
-    }
-
-    let { type, children, width = { kind: "fill" }, height = { kind: "hug" } }: Props = $props();
+    let {
+        fontWeight = "normal",
+        type,
+        children,
+        width = { kind: "fill" },
+        height = { kind: "hug" },
+    }: Props = $props();
 
     let parentDirection = getContext<Direction>("direction");
     let widthCss = $derived(getFlexStyle("width", width, parentDirection));
@@ -23,13 +35,13 @@
 </script>
 
 {#if type === "overview" || type === "h1"}
-    <h1 {style} class={`${type}`}>{@render children?.()}</h1>
+    <h1 {style} class={`${type} ${fontWeight}`}>{@render children?.()}</h1>
 {:else if type === "h2"}
-    <h2 {style} class={`${type}`}>{@render children?.()}</h2>
+    <h2 {style} class={`${type} ${fontWeight}`}>{@render children?.()}</h2>
 {:else if type === "subtitle"}
-    <h5 {style} class={`${type}`}>{@render children?.()}</h5>
+    <h5 {style} class={`${type} ${fontWeight}`}>{@render children?.()}</h5>
 {:else}
-    <p {style} class={`${type}`}>{@render children?.()}</p>
+    <p {style} class={`${type} ${fontWeight}`}>{@render children?.()}</p>
 {/if}
 
 <style lang="scss">
@@ -72,5 +84,21 @@
     .label {
         font-size: var(--typo-label-sz);
         line-height: var(--typo-label-lh);
+    }
+
+    .light {
+        font-weight: var(--font-light);
+    }
+
+    .normal {
+        font-weight: var(--font-normal);
+    }
+
+    .semi-bold {
+        font-weight: var(--font-semi-bold);
+    }
+
+    .bold {
+        font-weight: var(--font-bold);
     }
 </style>

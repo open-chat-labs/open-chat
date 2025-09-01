@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Button, Container } from "component-lib";
+    import { Body, Button, Container, H2, Subtitle } from "component-lib";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import { fade } from "svelte/transition";
 
@@ -18,7 +18,7 @@
 </script>
 
 <Container gap={"xl"} direction={"vertical"}>
-    <h3>Filled & Outlined buttons</h3>
+    <H2>Filled & Outlined buttons</H2>
 
     <Container gap={"lg"}>
         <Container
@@ -28,7 +28,7 @@
             padding={["lg"]}
             borderWidth={"thin"}
             direction={"vertical"}>
-            <h5>Filled / Primary</h5>
+            <Body>Filled / Primary</Body>
             <Button onClick={onFilledClick}>Button filled</Button>
             <Button>
                 {#snippet icon(color)}
@@ -49,7 +49,7 @@
             padding={["lg"]}
             borderWidth={"thin"}
             direction={"vertical"}>
-            <h5>Outlined / Secondary</h5>
+            <Body>Outlined / Secondary</Body>
             <Button secondary onClick={onHollowClick}>Button Outlined</Button>
             <Button secondary>
                 {#snippet icon(color)}
@@ -66,8 +66,8 @@
     </Container>
 
     <Container direction={"vertical"} gap={"sm"}>
-        <h3>Button Groups (spoiler - they're just containers)</h3>
-        <p>Overflowing</p>
+        <H2>Button Groups (spoiler - they're just containers)</H2>
+        <Subtitle>Overflowing</Subtitle>
 
         <Container
             padding={["lg"]}
@@ -81,7 +81,7 @@
             </Container>
         </Container>
 
-        <p>Filling</p>
+        <Subtitle>Filling</Subtitle>
         <Container
             padding={["lg"]}
             borderWidth={"thin"}

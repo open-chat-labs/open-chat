@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Container, type SpacingSize } from "component-lib";
+    import { Container, Label, Subtitle, type SpacingSize } from "component-lib";
 
     let paddingLeft = $state<SpacingSize>("lg");
     let paddingRight = $state<SpacingSize>("lg");
@@ -46,7 +46,7 @@
 
 <Container mainAxisAlignment={"spaceBetween"} gap={"xxl"}>
     <Container gap={"lg"} direction={"vertical"}>
-        <h3>Horizontal Container / Row</h3>
+        <Subtitle>Horizontal Container / Row</Subtitle>
 
         <Container
             padding={[paddingTop, paddingRight, paddingBottom, paddingLeft]}
@@ -57,7 +57,8 @@
             {@render contentBlocks()}
         </Container>
 
-        <h3>Vertical Container / Column</h3>
+        <Subtitle>Vertical Container / Column</Subtitle>
+
         <Container width={{ kind: "hug" }} gap={"lg"}>
             <Container
                 direction={"vertical"}
@@ -85,7 +86,7 @@
             </Container>
         </Container>
 
-        <h3>Complex layout</h3>
+        <Subtitle>Complex Layout</Subtitle>
 
         <Container gap={"lg"} padding={["xl"]} borderRadius={"lg"} borderWidth={"thin"}>
             <Container gap={"lg"} direction={"vertical"}>
@@ -135,30 +136,30 @@
             </Container>
         </Container>
     </Container>
-    <Container width={{ kind: "fixed", size: "300px" }} direction={"vertical"}>
-        <h3>Spacing</h3>
+    <Container gap={"xs"} width={{ kind: "fixed", size: "300px" }} direction={"vertical"}>
+        <Subtitle>Spacing</Subtitle>
 
-        <h5>Padding top</h5>
+        <Label>Padding top</Label>
         <select bind:value={paddingTop}>
             {@render sizeOptions()}
         </select>
 
-        <h5>Padding right</h5>
+        <Label>Padding right</Label>
         <select bind:value={paddingRight}>
             {@render sizeOptions()}
         </select>
 
-        <h5>Padding bottom</h5>
+        <Label>Padding bottom</Label>
         <select bind:value={paddingBottom}>
             {@render sizeOptions()}
         </select>
 
-        <h5>Padding left</h5>
+        <Label>Padding left</Label>
         <select bind:value={paddingLeft}>
             {@render sizeOptions()}
         </select>
 
-        <h5>Gap</h5>
+        <Label>Gap</Label>
         <select bind:value={gap}>
             {@render sizeOptions()}
         </select>
