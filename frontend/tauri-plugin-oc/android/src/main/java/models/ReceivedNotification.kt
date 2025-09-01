@@ -38,7 +38,6 @@ sealed class ReceivedNotification(
     val contextId: Int,
 ) {
     abstract fun toTitle(): String
-    abstract fun toSubtitle(): String?
     abstract fun toMessage(): String
 
     // Convert to db notification type!
@@ -193,10 +192,6 @@ sealed class ReceivedNotification(
             return senderName
         }
 
-        override fun toSubtitle(): String? {
-            return null
-        }
-
         override fun toMessage(): String {
             return toMessage(body, bodyType)
         }
@@ -219,10 +214,6 @@ sealed class ReceivedNotification(
     ) {
         override fun toTitle(): String {
             return "$groupName${if (threadIndex != null) " // Thread" else ""}"
-        }
-
-        override fun toSubtitle(): String? {
-            return null
         }
 
         override fun toMessage(): String {
@@ -249,11 +240,7 @@ sealed class ReceivedNotification(
         toChannelContextId(communityId, channelId, threadIndex),
     ) {
         override fun toTitle(): String {
-            return "#$channelName${if (threadIndex != null) " // Thread" else ""}"
-        }
-
-        override fun toSubtitle(): String? {
-            return communityName
+            return "$communityName#$channelName${if (threadIndex != null) " // Thread" else ""}"
         }
 
         override fun toMessage(): String {

@@ -117,7 +117,6 @@ object NotificationsHelper {
             .setSmallIcon(OpenChatPlugin.icNotificationSmall)
             .setContentTitle(receivedNotification.toTitle())
             .setContentText(receivedNotification.toMessage())
-            .setSubText(receivedNotification.toSubtitle())
             .setStyle(messagingStyle)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
