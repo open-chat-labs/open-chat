@@ -17,7 +17,7 @@
     }
 </script>
 
-<Container direction={"vertical"}>
+<Container gap={"xl"} direction={"vertical"}>
     <h3>Filled & Outlined buttons</h3>
 
     <Container gap={"lg"}>
@@ -62,6 +62,36 @@
             {#if hollowMouseEvent}
                 <pre transition:fade>{JSON.stringify(hollowMouseEvent)}</pre>
             {/if}
+        </Container>
+    </Container>
+
+    <Container direction={"vertical"} gap={"sm"}>
+        <h3>Button Groups (spoiler - they're just containers)</h3>
+        <p>Overflowing</p>
+
+        <Container
+            padding={["lg"]}
+            borderWidth={"thin"}
+            borderRadius={"lg"}
+            width={{ kind: "fixed", size: "450px" }}>
+            <Container gap={"md"}>
+                {#each ["a", "b", "c", "d", "e", "f"] as c}
+                    <Button width={{ kind: "fixed", size: "150px" }}>Button {c}</Button>
+                {/each}
+            </Container>
+        </Container>
+
+        <p>Filling</p>
+        <Container
+            padding={["lg"]}
+            borderWidth={"thin"}
+            borderRadius={"lg"}
+            width={{ kind: "hug" }}>
+            <Container gap={"md"}>
+                {#each ["a", "b", "c", "d", "e", "f"] as c}
+                    <Button width={{ kind: "fixed", size: "150px" }}>Button {c}</Button>
+                {/each}
+            </Container>
         </Container>
     </Container>
 </Container>
