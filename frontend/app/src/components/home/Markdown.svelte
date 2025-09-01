@@ -2,7 +2,7 @@
     import "highlight.js/styles/base16/helios.css";
     import { marked } from "marked";
     import type { OpenChat, ReadonlyMap, UserGroupSummary } from "openchat-client";
-    import { allUsersStore, customEmojis, userGroupSummariesStore } from "openchat-client";
+    import { allUsersStore, userGroupSummariesStore } from "openchat-client";
     import { getContext } from "svelte";
     import { DOMPurifyDefault, DOMPurifyOneLine } from "../../utils/domPurify";
     import { isSingleEmoji } from "../../utils/emojis";
@@ -46,7 +46,6 @@
 
             // replace userIds & emojis *after* markdown parsing so that we can fully disallow html in the markdown source
             parsed = replaceUserIds(parsed);
-            parsed = replaceEmojis(parsed);
         } catch (err: any) {
             client.logError("Error parsing markdown: ", err);
         }
@@ -67,16 +66,6 @@
                 return `<profile-link text="${escapeHtml(u.username)}" user-id="${
                     u.userId
                 }" suppress-links="${suppressLinks}"></profile-link>`;
-            }
-            return match;
-        });
-    }
-
-    function replaceEmojis(text: string): string {
-        return text.replace(/@(?:CustomEmoji|CE)\(([^)]+)\)/g, (match, p1) => {
-            const emoji = customEmojis.get(p1);
-            if (emoji !== undefined) {
-                return `<custom-emoji data-id="${emoji.code}"></custom-emoji>`;
             }
             return match;
         });
