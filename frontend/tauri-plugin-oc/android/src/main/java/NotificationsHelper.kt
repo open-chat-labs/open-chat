@@ -6,20 +6,12 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
 import android.os.Build
 import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.core.app.NotificationCompat
 import androidx.core.app.Person
-import coil3.BitmapImage
-import coil3.ImageLoader
-import coil3.request.ImageRequest
-import coil3.request.SuccessResult
-import coil3.request.bitmapConfig
 import com.google.firebase.messaging.FirebaseMessaging
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import com.ocplugin.app.data.AppDb
 import com.ocplugin.app.data.Notification
 import com.ocplugin.app.data.NotificationDao
@@ -31,6 +23,7 @@ import com.ocplugin.app.models.ReceivedNotification
 import com.ocplugin.app.models.SenderId
 import com.ocplugin.app.models.ThreadIndex
 import com.ocplugin.app.models.decodeNotificationData
+import androidx.core.graphics.drawable.IconCompat
 
 // All functions are used, though outside the plugin codebase
 @Suppress("UNUSED")
@@ -98,32 +91,39 @@ object NotificationsHelper {
 
         // Add notifications to the bunch!
         notifications.forEach { notification ->
-            val person = Person.Builder().setName(notification.senderName).build()
+            val personBuilder = Person.Builder().setName(notification.senderName)
+
+            notification.senderAvatarId?.let { avatarId ->
+                AvatarHelper.loadBitmapForUser(context, notification.senderId, avatarId)?.let { avatarBitmap ->
+                    val icon = IconCompat.createWithBitmap(avatarBitmap)
+                    personBuilder.setIcon(icon)
+                }
+            }
+
             messagingStyle.addMessage(
                 ReceivedNotification.toMessage(notification.body, notification.bodyType),
                 notification.receivedAt,
-                person
+                personBuilder.build()
             )
         }
 
-        Log.d(LOG_TAG, "### Received notification: $receivedNotification")
-
-        when (receivedNotification) {
-            is ReceivedNotification.Direct -> {}
-            else -> messagingStyle.setConversationTitle(receivedNotification.toTitle())
+        if (receivedNotification !is ReceivedNotification.Direct) {
+            messagingStyle.setConversationTitle(receivedNotification.toTitle())
         }
 
-        val notification = NotificationCompat.Builder(context, MESSAGES_CHANNEL_ID)
-            .setSmallIcon(OpenChatPlugin.icNotificationSmall)
-            .setContentTitle(receivedNotification.toTitle())
+        // Main avatar for notification header
+        val mainAvatar = AvatarHelper.loadBitmapForReceivedNotification(context, receivedNotification)
+        val notificationBuilder = NotificationCompat.Builder(context, MESSAGES_CHANNEL_ID)
+        notificationBuilder.setContentTitle(receivedNotification.toTitle())
             .setContentText(receivedNotification.toMessage())
             .setStyle(messagingStyle)
+            .setSmallIcon(OpenChatPlugin.icNotificationSmall)
+            .setLargeIcon(mainAvatar)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
-            .build()
 
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.notify(receivedNotification.contextId, notification)
+        manager.notify(receivedNotification.contextId, notificationBuilder.build())
     }
 
     // Load notifications for the given data.
@@ -321,39 +321,5 @@ object NotificationsHelper {
     // Sets the drawable resource for the notification icon that appears in the status bar!
     fun setNotificationIconSmall(@DrawableRes smallIconRes: Int) {
         OpenChatPlugin.icNotificationSmall = smallIconRes
-    }
-
-    // A coroutine based function for loading avatars off main thread, uses lightweight Coil
-    // library.
-    suspend fun loadBitmapFromUrl(context: Context, url: String): Bitmap? {
-        return withContext(Dispatchers.IO) {
-            try {
-                // TODO for global caching reuse image loader
-                val loader = ImageLoader(context)
-                val request =
-                        ImageRequest.Builder(context)
-                                .data(url)
-                                .bitmapConfig(
-                                        Bitmap.Config.ARGB_8888
-                                ) // Needed to convert to Bitmap
-                                .build()
-
-                val result = loader.execute(request)
-                if (result is SuccessResult) {
-                    val image = result.image
-                    if (image is BitmapImage) {
-                        image.bitmap
-                    } else {
-                        null
-                    }
-                } else {
-                    Log.e("TEST_OC", "Avatar result: $result")
-                    null
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
-            }
-        }
     }
 }
