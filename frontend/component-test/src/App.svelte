@@ -4,10 +4,11 @@
     import Buttons from "./Buttons.svelte";
     import Colours from "./Colours.svelte";
     import Layout from "./Layout.svelte";
+    import Typography from "./Typography.svelte";
 
     neon.writeCssVariables();
 
-    type Section = "colours" | "buttons" | "big_buttons" | "layout";
+    type Section = "colours" | "buttons" | "big_buttons" | "layout" | "typography";
     let selected = $state<Section>("colours");
 </script>
 
@@ -19,6 +20,8 @@
     <Button onClick={() => (selected = "big_buttons")} secondary={selected !== "big_buttons"}
         >Big Buttons</Button>
     <Button onClick={() => (selected = "layout")} secondary={selected !== "layout"}>Layout</Button>
+    <Button onClick={() => (selected = "typography")} secondary={selected !== "typography"}
+        >Typography</Button>
 </Container>
 
 <Container direction={"vertical"} padding={["lg"]}>
@@ -30,5 +33,7 @@
         <BigButtons></BigButtons>
     {:else if selected === "layout"}
         <Layout></Layout>
+    {:else if selected === "typography"}
+        <Typography></Typography>
     {/if}
 </Container>

@@ -1,5 +1,11 @@
 export { default as BigButton } from "./components/BigButton.svelte";
+export { default as Body } from "./components/Body.svelte";
 export { default as Button } from "./components/Button.svelte";
 export { default as Container } from "./components/Container.svelte";
+export { default as H1 } from "./components/H1.svelte";
+export { default as H2 } from "./components/H2.svelte";
+export { default as Overview } from "./components/Overview.svelte";
 export { default as Spinner } from "./components/Spinner.svelte";
+export { default as Subtitle } from "./components/Subtitle.svelte";
+export { default as Typography } from "./components/Typography.svelte";
 export * from "./theme";
