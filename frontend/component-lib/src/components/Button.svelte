@@ -1,5 +1,6 @@
 <script lang="ts">
-    import type { Snippet } from "svelte";
+    import { getContext, type Snippet } from "svelte";
+    import { getFlexStyle, type Direction, type SizeMode } from "..";
     import Spinner from "./Spinner.svelte";
 
     interface Props {
@@ -9,6 +10,8 @@
         secondary?: boolean;
         onClick?: (e: MouseEvent) => void;
         icon?: Snippet<[string]>;
+        width?: SizeMode;
+        height?: SizeMode;
     }
     let {
         children,
@@ -17,17 +20,23 @@
         onClick,
         loading = false,
         secondary = false,
+        width = { kind: "fill" },
+        height = { kind: "hug" },
     }: Props = $props();
 
-    let spinnerColour = secondary ? "var(--primary)" : "var(--textOnPrimary)";
-    let iconColour = secondary ? "var(--primary)" : "var(--textOnPrimary)";
+    let parentDirection = getContext<Direction>("direction");
+    let spinnerColour = secondary ? "var(--primary)" : "var(--text-on-primary)";
+    let iconColour = secondary ? "var(--primary)" : "var(--text-on-primary)";
+    let widthCss = $derived(getFlexStyle("width", width, parentDirection));
+    let heightCss = $derived(getFlexStyle("height", height, parentDirection));
+    let style = $derived(`${heightCss}; ${widthCss};`);
 </script>
 
-<button class:secondary class:disabled onclick={onClick} disabled={disabled || loading}>
+<button {style} class:secondary class:disabled onclick={onClick} disabled={disabled || loading}>
     {#if loading}
         <Spinner
             size={"1.4rem"}
-            backgroundColour={"var(--textTertiary)"}
+            backgroundColour={"var(--text-tertiary)"}
             foregroundColour={spinnerColour} />
     {:else}
         <span class="content">{@render children?.()}</span>
@@ -40,26 +49,29 @@
 <style lang="scss">
     button {
         position: relative;
-        background: var(--primaryGradientInverted);
-        min-height: 2.75rem;
+        background: var(--primary-gradient-inverted);
+        min-height: var(--sp-xxxl);
         display: flex;
         justify-content: center;
         align-items: center;
         border: none;
-        border-radius: 4px;
-        color: var(--textOnPrimary);
+        border-radius: var(--rad-sm);
+        color: var(--text-on-primary);
         cursor: pointer;
+        transition:
+            border ease-in-out 200ms,
+            background ease-in-out 200ms,
+            color ease-in-out 200ms;
 
-        font-weight: 700;
-        font-size: 14px;
-        line-height: 20px;
+        font-weight: 700; // TODO - typography vars (weight semi - bold)
+        font-size: 14px; // TODO - typography vars
 
         .content {
             pointer-events: none;
         }
 
         &.disabled {
-            background: var(--disabledButton);
+            background: var(--disabled-button);
         }
 
         &:disabled {
@@ -80,8 +92,8 @@
             border: 1px solid var(--primary);
 
             &.disabled {
-                color: var(--disabledButton);
-                border-color: var(--disabledButton);
+                color: var(--disabled-button);
+                border-color: var(--disabled-button);
             }
         }
     }
