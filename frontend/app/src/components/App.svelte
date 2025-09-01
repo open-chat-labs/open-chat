@@ -187,6 +187,7 @@
 
         //@ts-ignore
         window.platformOperator = {
+            addOneSecToken,
             addRemoveSwapProvider,
             setGroupUpgradeConcurrency,
             setCommunityUpgradeConcurrency,
@@ -241,25 +242,23 @@
         }
     }
 
-    if (client.isNativeApp()) {
-        // Listen for incoming push notifications from Firebase; also asks
-        // for permission to show notifications if not already granted.
-        expectPushNotifications().catch(console.error);
+    // Sets up push notifications and FCM token management for native apps
+    function setupNativeApp() {
+        const addFcmToken = (token: string) => {
+            client
+                .addFcmToken(token)
+                .then(() => console.info("FCM token updated successfully"))
+                .catch(console.error);
+        };
 
-        // Listen for notifications user has tapped on
-        expectNotificationTap().catch(console.error);
-    }
-
-    function addFcmToken(token: string) {
-        console.info("Updating FCM token");
-        client
-            .addFcmToken(token)
-            .then(() => console.info("FCM token updated successfully"))
-            .catch(console.error);
-    }
-
-    function onUserLoggedIn(userId: string) {
         if (client.isNativeApp()) {
+            // Listen for incoming push notifications from Firebase; also asks
+            // for permission to show notifications if not already granted.
+            expectPushNotifications().catch(console.error);
+
+            // Listen for notifications user has tapped on
+            expectNotificationTap().catch(console.error);
+
             // Expect FCM token refreshes
             expectNewFcmToken(addFcmToken);
 
@@ -273,12 +272,22 @@
 
                 client.checkFcmTokenExists(token).then((exists) => {
                     if (!exists) {
+                        console.log("Adding FCM token for the first time!");
                         addFcmToken(token);
+                    } else {
+                        console.log("FCM token already registered");
                     }
                 });
             });
         }
+    }
 
+    if ($identityStateStore.kind === "logged_in") {
+        setupNativeApp();
+    }
+
+    function onUserLoggedIn(userId: string) {
+        setupNativeApp();
         broadcastLoggedInUser(userId);
     }
 
@@ -414,13 +423,23 @@
             });
     }
 
+    function addOneSecToken(tokenSymbol: string, infoUrl: string): void {
+        client.addOneSecToken(tokenSymbol, infoUrl).then((success) => {
+            if (success) {
+                console.log("OneSec token added");
+            } else {
+                console.error("Failed to add OneSec token");
+            }
+        })
+    }
+
     function addRemoveSwapProvider(swapProvider: DexId, add: boolean): void {
         client.addRemoveSwapProvider(swapProvider, add).then((success) => {
             if (success) {
                 const action = add ? "Added" : "Removed";
                 console.log(`${action} swap provider`, swapProvider);
             } else {
-                console.log("Failed to add/remove swap provider");
+                console.error("Failed to add/remove swap provider");
             }
         });
     }
@@ -430,7 +449,7 @@
             if (success) {
                 console.log("Group upgrade concurrency set", value);
             } else {
-                console.log("Failed to set group upgrade concurrency", value);
+                console.error("Failed to set group upgrade concurrency", value);
             }
         });
     }
@@ -440,7 +459,7 @@
             if (success) {
                 console.log("Community upgrade concurrency set", value);
             } else {
-                console.log("Failed to set community upgrade concurrency", value);
+                console.error("Failed to set community upgrade concurrency", value);
             }
         });
     }
@@ -450,7 +469,7 @@
             if (success) {
                 console.log("User upgrade concurrency set", value);
             } else {
-                console.log("Failed to set user upgrade concurrency", value);
+                console.error("Failed to set user upgrade concurrency", value);
             }
         });
     }
@@ -460,7 +479,7 @@
             if (success) {
                 console.log("LocalGroupIndex marked as full", full);
             } else {
-                console.log("Failed to mark LocalGroupIndex as full", full);
+                console.error("Failed to mark LocalGroupIndex as full", full);
             }
         });
     }
@@ -470,7 +489,7 @@
             if (success) {
                 console.log("Reinstated missed daily claims");
             } else {
-                console.log("Failed to reinstate missed daily claims");
+                console.error("Failed to reinstate missed daily claims");
             }
         });
     }
@@ -487,7 +506,7 @@
                 if (success) {
                     console.log("Airdrop config set");
                 } else {
-                    console.log("Failed to set airdrop config");
+                    console.error("Failed to set airdrop config");
                 }
             });
     }
@@ -497,7 +516,7 @@
             if (success) {
                 console.log("Diamond membership fees set", fees);
             } else {
-                console.log("Failed to set diamond membership fees", fees);
+                console.error("Failed to set diamond membership fees", fees);
             }
         });
     }
@@ -508,7 +527,7 @@
             if (success) {
                 console.log(`Token ${status}`);
             } else {
-                console.log(`Failed to set token ${status}`);
+                console.error(`Failed to set token ${status}`);
             }
         });
     }
@@ -518,7 +537,7 @@
             if (success) {
                 console.log("Neuron staked successfully");
             } else {
-                console.log("Failed to stake neuron");
+                console.error("Failed to stake neuron");
             }
         });
     }
@@ -528,7 +547,7 @@
             if (success) {
                 console.log("Neuron topped up successfully");
             } else {
-                console.log("Failed to top up neuron");
+                console.error("Failed to top up neuron");
             }
         });
     }
@@ -538,7 +557,7 @@
             if (resp === "success") {
                 console.log("Market maker config updated");
             } else {
-                console.log("Failed to update market maker config", resp);
+                console.error("Failed to update market maker config", resp);
             }
         });
     }

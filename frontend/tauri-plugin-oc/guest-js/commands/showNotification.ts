@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 
 export type ShowNotificationRequest = {
-    data: object;
+    notificationId: number;
 };
 
 export async function showNotification(payload: ShowNotificationRequest): Promise<void> {

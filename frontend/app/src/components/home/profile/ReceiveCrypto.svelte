@@ -3,6 +3,7 @@
         cryptoBalanceStore,
         cryptoLookup,
         mobileWidth,
+        Poller,
     } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
@@ -13,6 +14,7 @@
     import Translatable from "../../Translatable.svelte";
     import AccountInfo from "../AccountInfo.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
+    import { onDestroy } from "svelte";
 
     interface Props {
         ledger: string;
@@ -26,6 +28,11 @@
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let symbol = $derived(tokenDetails.symbol);
     let title = $derived(i18nKey(`cryptoAccount.receiveToken`, { symbol }));
+    let balanceWithRefresh: BalanceWithRefresh;
+
+    const refreshBalancePoller = new Poller(() => balanceWithRefresh?.refresh(), 10_000);
+
+    onDestroy(() => refreshBalancePoller.stop());
 
     function onBalanceRefreshed() {
         error = undefined;
@@ -41,6 +48,7 @@
         <span class="header">
             <div class="main-title"><Translatable resourceKey={title} /></div>
             <BalanceWithRefresh
+                bind:this={balanceWithRefresh}
                 {ledger}
                 value={$cryptoBalanceStore.get(ledger) ?? 0n}
                 label={i18nKey("cryptoAccount.shortBalanceLabel")}

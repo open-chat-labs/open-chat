@@ -20,7 +20,7 @@
     import page from "page";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
-    import EyeOffIcon from "svelte-material-icons/EyeOff.svelte";
+    import EyeOffIcon from "svelte-material-icons/EyeOffOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { pop } from "../../../utils/transition";
     import Avatar from "../../Avatar.svelte";

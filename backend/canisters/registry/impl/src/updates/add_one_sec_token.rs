@@ -55,7 +55,8 @@ async fn add_one_sec_token_impl(args: Args) -> OCResult {
         })
         .collect();
 
-    let transaction_url_format = format!("https://dashboard.internetcomputer.org/tokens/{ledger_canister_id}/transactions)");
+    let transaction_url_format =
+        format!("https://dashboard.internetcomputer.org/tokens/{ledger_canister_id}/transaction/{{transaction_index}}");
 
     add_token_impl(
         ledger_canister_id,

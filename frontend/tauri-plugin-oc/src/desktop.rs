@@ -33,4 +33,8 @@ impl<R: Runtime> Oc<R> {
     pub fn svelte_ready(&self) {
         unimplemented!("not implemented for desktop environment")
     }
+
+    pub fn release_notifications(&self, _payload: ReleaseNotificationsRequest) {
+        unimplemented!("not implemented for desktop environment")
+    }
 }

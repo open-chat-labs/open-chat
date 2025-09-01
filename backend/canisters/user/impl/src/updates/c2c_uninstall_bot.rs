@@ -32,7 +32,7 @@ fn c2c_uninstall_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.push_bot_notification(Some(BotNotification {
         event: BotEvent::Lifecycle(BotLifecycleEvent::Uninstalled(BotUninstalledEvent {
             uninstalled_by: args.caller,
-            location: BotInstallationLocation::Group(args.caller.into()),
+            location: BotInstallationLocation::User(args.caller.into()),
         })),
         recipients: vec![args.bot_id],
         timestamp: now,

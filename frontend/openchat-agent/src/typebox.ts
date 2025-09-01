@@ -1889,6 +1889,12 @@ export const RegistryUpdatesArgs = Type.Object({
     since: Type.Optional(Type.BigInt()),
 });
 
+export type RegistryAddOneSecTokenArgs = Static<typeof RegistryAddOneSecTokenArgs>;
+export const RegistryAddOneSecTokenArgs = Type.Object({
+    token: Type.String(),
+    info_url: Type.String(),
+});
+
 export type RegistrySetTokenEnabledResponse = Static<typeof RegistrySetTokenEnabledResponse>;
 export const RegistrySetTokenEnabledResponse = Type.Union([
     Type.Literal("Success"),
@@ -6568,6 +6574,9 @@ export const UserSwapTokensExchangeArgs = Type.Union([
     }),
     Type.Object({
         KongSwap: UserSwapTokensExchangeSwapArgs,
+    }),
+    Type.Object({
+        Sonic: UserSwapTokensExchangeSwapArgs,
     }),
 ]);
 
