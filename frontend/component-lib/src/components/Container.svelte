@@ -75,6 +75,8 @@
 
 <style lang="scss">
     .container {
+        overflow: auto;
+        scrollbar-width: none;
         position: relative;
         transition:
             padding ease-in-out 200ms,

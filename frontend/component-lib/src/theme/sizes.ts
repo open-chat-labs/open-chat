@@ -160,7 +160,8 @@ export function getFlexStyle(
     if (isMainAxis) {
         if (mode.kind === "fixed") return `flex: 0 0 ${mode.size ?? "auto"}`;
         if (mode.kind === "hug") return `flex: 0 0 auto`;
-        if (mode.kind === "fill") return `flex: 1 1 auto`;
+        // if (mode.kind === "fill") return `flex: 1 1 auto`;
+        if (mode.kind === "fill") return `flex: 1 1 0`;
     }
 
     if (!isMainAxis) {

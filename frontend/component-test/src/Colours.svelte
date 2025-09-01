@@ -111,6 +111,7 @@
     .name {
         color: var(--text-secondary);
         align-self: center;
+        text-wrap-mode: nowrap;
     }
 
     .code {
