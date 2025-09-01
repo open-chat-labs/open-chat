@@ -3,6 +3,7 @@
         cryptoBalanceStore,
         cryptoLookup,
         mobileWidth,
+        Poller,
     } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
@@ -13,7 +14,7 @@
     import Translatable from "../../Translatable.svelte";
     import AccountInfo from "../AccountInfo.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
-    import { onDestroy, onMount } from "svelte";
+    import { onDestroy } from "svelte";
 
     interface Props {
         ledger: string;
@@ -27,17 +28,11 @@
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let symbol = $derived(tokenDetails.symbol);
     let title = $derived(i18nKey(`cryptoAccount.receiveToken`, { symbol }));
-
     let balanceWithRefresh: BalanceWithRefresh;
-    let timeoutId: number | undefined = undefined;
 
-    onMount(() => runRefreshBalanceJob());
-    onDestroy(() => window.clearTimeout(timeoutId));
+    const refreshBalancePoller = new Poller(() => balanceWithRefresh?.refresh(), 10_000);
 
-    // Start a job to refresh the balance every 10 seconds
-    function runRefreshBalanceJob() {
-        balanceWithRefresh?.refresh().finally(() => timeoutId = window.setTimeout(() => runRefreshBalanceJob(), 10_000));
-    }
+    onDestroy(() => refreshBalancePoller.stop());
 
     function onBalanceRefreshed() {
         error = undefined;
