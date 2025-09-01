@@ -47,7 +47,8 @@
     {#snippet header()}
         <span class="header">
             <div class="main-title"><Translatable resourceKey={title} /></div>
-            <BalanceWithRefresh bind:this={balanceWithRefresh}
+            <BalanceWithRefresh
+                bind:this={balanceWithRefresh}
                 {ledger}
                 value={$cryptoBalanceStore.get(ledger) ?? 0n}
                 label={i18nKey("cryptoAccount.shortBalanceLabel")}
