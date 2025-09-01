@@ -13,6 +13,7 @@
     import Translatable from "../../Translatable.svelte";
     import AccountInfo from "../AccountInfo.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
+    import { onDestroy, onMount } from "svelte";
 
     interface Props {
         ledger: string;
@@ -27,6 +28,17 @@
     let symbol = $derived(tokenDetails.symbol);
     let title = $derived(i18nKey(`cryptoAccount.receiveToken`, { symbol }));
 
+    let balanceWithRefresh: BalanceWithRefresh;
+    let timeoutId: number | undefined = undefined;
+
+    onMount(() => runRefreshBalanceJob());
+    onDestroy(() => window.clearTimeout(timeoutId));
+
+    // Start a job to refresh the balance every 10 seconds
+    function runRefreshBalanceJob() {
+        balanceWithRefresh?.refresh().finally(() => timeoutId = window.setTimeout(() => runRefreshBalanceJob(), 10_000));
+    }
+
     function onBalanceRefreshed() {
         error = undefined;
     }
@@ -40,7 +52,7 @@
     {#snippet header()}
         <span class="header">
             <div class="main-title"><Translatable resourceKey={title} /></div>
-            <BalanceWithRefresh
+            <BalanceWithRefresh bind:this={balanceWithRefresh}
                 {ledger}
                 value={$cryptoBalanceStore.get(ledger) ?? 0n}
                 label={i18nKey("cryptoAccount.shortBalanceLabel")}
