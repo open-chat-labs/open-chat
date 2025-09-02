@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Container, Label, Subtitle, type SpacingSize } from "component-lib";
+    import { Container, H2, Label, Subtitle, type SpacingSize } from "component-lib";
 
     let paddingLeft = $state<SpacingSize>("lg");
     let paddingRight = $state<SpacingSize>("lg");
@@ -46,7 +46,7 @@
 
 <Container mainAxisAlignment={"spaceBetween"} gap={"xxl"}>
     <Container gap={"lg"} direction={"vertical"}>
-        <Subtitle>Horizontal Container / Row</Subtitle>
+        <H2>Horizontal Container / Row</H2>
 
         <Container
             padding={[paddingTop, paddingRight, paddingBottom, paddingLeft]}
@@ -57,7 +57,7 @@
             {@render contentBlocks()}
         </Container>
 
-        <Subtitle>Vertical Container / Column</Subtitle>
+        <H2>Vertical Container / Column</H2>
 
         <Container width={{ kind: "hug" }} gap={"lg"}>
             <Container
@@ -86,7 +86,7 @@
             </Container>
         </Container>
 
-        <Subtitle>Complex Layout</Subtitle>
+        <H2>Complex Layout</H2>
 
         <Container gap={"lg"} padding={["xl"]} borderRadius={"lg"} borderWidth={"thin"}>
             <Container gap={"lg"} direction={"vertical"}>
@@ -137,29 +137,29 @@
         </Container>
     </Container>
     <Container gap={"xs"} width={{ kind: "fixed", size: "300px" }} direction={"vertical"}>
-        <Subtitle>Spacing</Subtitle>
+        <Subtitle fontWeight={"semi-bold"}>Spacing</Subtitle>
 
-        <Label>Padding top</Label>
+        <Label fontWeight={"light"}>Padding top</Label>
         <select bind:value={paddingTop}>
             {@render sizeOptions()}
         </select>
 
-        <Label>Padding right</Label>
+        <Label fontWeight={"light"}>Padding right</Label>
         <select bind:value={paddingRight}>
             {@render sizeOptions()}
         </select>
 
-        <Label>Padding bottom</Label>
+        <Label fontWeight={"light"}>Padding bottom</Label>
         <select bind:value={paddingBottom}>
             {@render sizeOptions()}
         </select>
 
-        <Label>Padding left</Label>
+        <Label fontWeight={"light"}>Padding left</Label>
         <select bind:value={paddingLeft}>
             {@render sizeOptions()}
         </select>
 
-        <Label>Gap</Label>
+        <Label fontWeight={"light"}>Gap</Label>
         <select bind:value={gap}>
             {@render sizeOptions()}
         </select>

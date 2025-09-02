@@ -16,7 +16,6 @@
 </script>
 
 <Container gap={"xl"} direction={"vertical"}>
-    <pre>{fontWeight}</pre>
     <H2>Typography</H2>
 
     <Container gap={"md"}>
