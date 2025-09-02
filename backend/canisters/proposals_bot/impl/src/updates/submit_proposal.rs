@@ -1,6 +1,6 @@
 use crate::model::nervous_systems::ValidateSubmitProposalPaymentError;
 use crate::timer_job_types::{ProcessUserRefundJob, SubmitProposalJob, TimerJob};
-use crate::{RuntimeState, mutate_state, read_state};
+use crate::{RuntimeState, UserIdAndPayment, mutate_state, read_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_timer_jobs::Job;
@@ -61,13 +61,15 @@ async fn submit_proposal_impl(args: Args) -> Response {
     let proposal = prepare_proposal(args.proposal, user_id, username, chat);
 
     submit_proposal(
-        user_id,
+        Some(UserIdAndPayment {
+            user_id,
+            ledger_canister_id: args.transaction.ledger,
+            amount: args.transaction.amount,
+            fee: args.transaction.fee,
+        }),
         args.governance_canister_id,
         neuron_id,
         proposal,
-        args.transaction.ledger,
-        args.transaction.amount,
-        args.transaction.fee,
     )
     .await
 }
@@ -128,13 +130,10 @@ fn prepare_proposal(
 }
 
 pub(crate) async fn submit_proposal(
-    user_id: UserId,
+    user_id_and_payment: Option<UserIdAndPayment>,
     governance_canister_id: CanisterId,
     neuron_id: SnsNeuronId,
     proposal: ProposalToSubmit,
-    ledger_canister_id: CanisterId,
-    payment_amount: u128,
-    transaction_fee: u128,
 ) -> Response {
     let make_proposal_args = sns_governance_canister::manage_neuron::Args {
         subaccount: neuron_id.to_vec(),
@@ -145,6 +144,8 @@ pub(crate) async fn submit_proposal(
             action: Some(convert_proposal_action(proposal.action.clone())),
         })),
     };
+    let user_id = user_id_and_payment.as_ref().map(|u| u.user_id);
+    let user_id_string = user_id.map_or("none".to_string(), |id| id.to_string());
     match sns_governance_canister_c2c_client::manage_neuron(governance_canister_id, &make_proposal_args).await {
         Ok(response) => {
             if let Some(command) = response.command {
@@ -152,44 +153,45 @@ pub(crate) async fn submit_proposal(
                     manage_neuron_response::Command::MakeProposal(p) => {
                         let proposal_id = p.proposal_id.unwrap().id;
                         mutate_state(|state| {
-                            state.data.nervous_systems.record_user_submitted_proposal(
-                                governance_canister_id,
-                                user_id,
-                                proposal_id,
-                            )
+                            if let Some(user_id) = user_id {
+                                state.data.nervous_systems.record_user_submitted_proposal(
+                                    governance_canister_id,
+                                    user_id,
+                                    proposal_id,
+                                )
+                            }
                         });
-                        info!(proposal_id, %user_id, "Proposal submitted");
+                        info!(proposal_id, user_id = user_id_string, %governance_canister_id, "Proposal submitted");
                         Success
                     }
                     manage_neuron_response::Command::Error(error) => {
-                        ProcessUserRefundJob {
-                            user_id,
-                            ledger_canister_id,
-                            amount: payment_amount.saturating_sub(transaction_fee),
-                            fee: transaction_fee,
-                        }
-                        .execute();
+                        if let Some(user_and_payment) = user_id_and_payment {
+                            ProcessUserRefundJob {
+                                user_id: user_and_payment.user_id,
+                                ledger_canister_id: user_and_payment.ledger_canister_id,
+                                amount: user_and_payment.amount.saturating_sub(user_and_payment.fee),
+                                fee: user_and_payment.fee,
+                            }
+                            .execute();
 
-                        error!(?error, %user_id, "Failed to submit proposal, refunding user");
+                            error!(?error, user_id = user_id_string, "Failed to submit proposal, refunding user");
+                        }
                         InternalError(format!("{error:?}"))
                     }
                     _ => unreachable!(),
                 };
             }
-            error!(%user_id, "Failed to submit proposal, response was empty");
+            error!(user_id = user_id_string, "Failed to submit proposal, response was empty");
             InternalError("Empty response from `manage_neuron`".to_string())
         }
         Err(error) => {
             mutate_state(|state| {
                 enqueue_job(
                     TimerJob::SubmitProposal(Box::new(SubmitProposalJob {
-                        user_id,
                         governance_canister_id,
                         neuron_id,
                         proposal,
-                        ledger: ledger_canister_id,
-                        payment_amount,
-                        transaction_fee,
+                        user_id_and_payment,
                     })),
                     state,
                 )
