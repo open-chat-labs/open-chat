@@ -40,7 +40,7 @@ fn encode_logs(logs: Vec<LogEntry>) -> HttpResponse {
 }
 
 fn to_json_response<T: Serialize>(data: &T) -> HttpResponse {
-    let body = serde_json::to_string(data).unwrap().into_bytes();
+    let body = json::serialize(data).unwrap();
 
     HttpResponse {
         status_code: 200,

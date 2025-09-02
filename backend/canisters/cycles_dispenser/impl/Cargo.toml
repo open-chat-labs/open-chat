@@ -26,12 +26,12 @@ ic-cdk-timers = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
 icp_ledger_canister_c2c_client = { path = "../../../external_canisters/icp_ledger/c2c_client" }
+json = { path = "../../../libraries/json" }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 msgpack = { path = "../../../libraries/msgpack" }
 rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
-serde_json = { workspace = true }
 sns_root_canister = { path = "../../../external_canisters/sns_root/api" }
 sns_root_canister_c2c_client = { path = "../../../external_canisters/sns_root/c2c_client" }
 stable_memory = { path = "../../../libraries/stable_memory" }

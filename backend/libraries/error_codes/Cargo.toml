@@ -6,7 +6,7 @@ edition.workspace = true
 [dependencies]
 candid = { workspace = true }
 enum-repr = { workspace = true }
+json = { path = "../json" }
 serde = { workspace = true }
-serde_json = { workspace = true }
 ts_export = { path = "../ts_export" }
 ts-rs = { workspace = true }

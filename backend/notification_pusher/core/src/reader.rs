@@ -88,7 +88,7 @@ impl<I: IndexStore> Reader<I> {
                     }
 
                     let base64 = base64::engine::general_purpose::STANDARD_NO_PAD.encode(notification.notification_bytes);
-                    let payload = Arc::new(serde_json::to_vec(&Timestamped::new(base64, notification.timestamp)).unwrap());
+                    let payload = Arc::new(json::serialize(&Timestamped::new(base64, notification.timestamp)).unwrap());
 
                     for user_id in notification.recipients {
                         if let Some(subscriptions) = ic_response.subscriptions.get(&user_id) {

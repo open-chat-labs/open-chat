@@ -2357,12 +2357,12 @@ dependencies = [
  "ic-ledger-types",
  "ic-stable-structures 0.7.0",
  "icp_ledger_canister_c2c_client",
+ "json",
  "ledger_utils",
  "msgpack",
  "rand 0.8.5",
  "serde",
  "serde_bytes",
- "serde_json",
  "sns_root_canister",
  "sns_root_canister_c2c_client",
  "stable_memory",
@@ -4305,8 +4305,8 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_logger",
+ "json",
  "serde",
- "serde_json",
  "types",
 ]
 
@@ -5674,6 +5674,7 @@ dependencies = [
 name = "json"
 version = "0.1.0"
 dependencies = [
+ "itoa",
  "serde",
  "serde_json",
 ]
@@ -5735,11 +5736,11 @@ dependencies = [
  "candid",
  "ct-codecs",
  "hmac-sha256",
+ "json",
  "p256",
  "p256_key_pair",
  "rand 0.8.5",
  "serde",
- "serde_json",
  "types",
 ]
 
@@ -6084,7 +6085,6 @@ dependencies = [
  "rand 0.8.5",
  "serde",
  "serde_bytes",
- "serde_json",
  "sha256",
  "stable_memory",
  "stable_memory_map",
@@ -6614,6 +6614,7 @@ dependencies = [
  "fcm-service",
  "ic-agent",
  "index_store",
+ "json",
  "local_user_index_canister",
  "local_user_index_canister_client",
  "notifications_index_canister",
@@ -6623,7 +6624,6 @@ dependencies = [
  "reqwest",
  "rustls 0.23.31",
  "serde",
- "serde_json",
  "tokio",
  "tracing",
  "types",
@@ -7095,8 +7095,8 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "enum-repr",
+ "json",
  "serde",
- "serde_json",
  "ts-rs",
  "ts_export",
 ]
@@ -11593,6 +11593,7 @@ dependencies = [
  "identity_canister_c2c_client",
  "identity_utils",
  "itertools 0.14.0",
+ "json",
  "jwt",
  "ledger_utils",
  "local_user_index_canister",
@@ -11663,11 +11664,11 @@ dependencies = [
  "ic-cdk-timers",
  "ic-management-canister-types",
  "itertools 0.14.0",
+ "json",
  "msgpack",
  "oc_error_codes",
  "rand 0.8.5",
  "serde",
- "serde_json",
  "sha256",
  "sha3",
  "time",

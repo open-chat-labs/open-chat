@@ -10,7 +10,7 @@ pub use logs_handler::*;
 pub use router::*;
 
 pub fn build_json_response<T: Serialize>(body: &T) -> HttpResponse {
-    let bytes = serde_json::to_string(body).unwrap().into_bytes();
+    let bytes = json::serialize(body).unwrap();
 
     build_response(bytes, "application/json")
 }
