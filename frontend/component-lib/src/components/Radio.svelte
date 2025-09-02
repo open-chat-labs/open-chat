@@ -39,6 +39,8 @@
 </label>
 
 <style lang="scss">
+    $speed: 0.2s;
+
     .radio {
         display: flex;
         align-items: center;
@@ -61,8 +63,8 @@
         justify-content: center;
         flex-shrink: 0;
         transition:
-            border-color 0.2s,
-            background 0.2s;
+            border-color $speed,
+            background $speed;
     }
 
     .radio-control::before {
@@ -74,7 +76,7 @@
             no-repeat center / contain;
         background: var(--text-on-primary);
         opacity: 0;
-        transition: opacity 0.2s;
+        transition: opacity $speed;
     }
 
     .radio-input:checked + .radio-control {

@@ -14,6 +14,8 @@
 </label>
 
 <style lang="scss">
+    $speed: 0.2s;
+
     .toggle {
         display: inline-flex;
         align-items: center;
@@ -35,7 +37,7 @@
         display: flex;
         align-items: center;
         padding: 1.5px;
-        transition: border-color 0.2s;
+        transition: border-color $speed;
         background: transparent;
     }
 
@@ -51,9 +53,9 @@
         font-size: 1rem;
         font-weight: bold;
         transition:
-            transform 0.2s,
-            background 0.2s,
-            color 0.2s;
+            transform $speed,
+            background $speed,
+            color $speed;
         position: relative;
     }
 
@@ -63,7 +65,7 @@
         height: 1px;
         background: var(--text-on-primary);
         display: block;
-        transition: opacity 0.2s;
+        transition: opacity $speed;
     }
 
     .toggle-knob::after {
@@ -75,11 +77,11 @@
         mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'><path fill='black' d='M7.6 13.2l-3.2-3.2-1.4 1.4 4.6 4.6 9.6-9.6-1.4-1.4z'/></svg>")
             no-repeat center / contain;
         opacity: 0;
-        transition: opacity 0.2s;
+        transition: opacity $speed;
     }
 
     .toggle-input:checked + .toggle-track {
-        border-color: #1da1f2;
+        border-color: var(--secondary);
     }
 
     .toggle-input:checked + .toggle-track .toggle-knob {
