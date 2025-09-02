@@ -14,5 +14,6 @@ export { default as NotificationIndicator } from "./components/NotificationIndic
 export { default as Overview } from "./components/Overview.svelte";
 export { default as Spinner } from "./components/Spinner.svelte";
 export { default as Subtitle } from "./components/Subtitle.svelte";
+export { default as Switch } from "./components/Switch.svelte";
 export { default as Typography } from "./components/Typography.svelte";
 export * from "./theme";

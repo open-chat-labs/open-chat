@@ -1,5 +1,15 @@
 <script lang="ts">
-    import { Body, Caption, Container, CountBadge, H2, NotificationIndicator } from "component-lib";
+    import {
+        Body,
+        Caption,
+        Container,
+        CountBadge,
+        H2,
+        NotificationIndicator,
+        Switch,
+    } from "component-lib";
+
+    let toggle = $state(true);
 </script>
 
 <Container gap={"xl"} direction={"vertical"}>
@@ -30,6 +40,10 @@
         </Container>
         <Container gap={"lg"} direction={"vertical"}>
             <Body>Switch / Checkbox</Body>
+
+            <Switch bind:checked={toggle} />
+
+            <pre>Toggle value: {toggle}</pre>
         </Container>
         <Container gap={"lg"} direction={"vertical"}>
             <Body>Radio</Body>
