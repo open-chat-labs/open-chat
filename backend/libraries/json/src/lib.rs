@@ -47,7 +47,7 @@ impl LargeNumbersAsStringsFormatter {
 
 impl serde_json::ser::Formatter for LargeNumbersAsStringsFormatter {
     fn write_i64<W: ?Sized + Write>(&mut self, writer: &mut W, value: i64) -> std::io::Result<()> {
-        if value.abs() as u64 > MAX_SAFE_INT {
+        if value.unsigned_abs() > MAX_SAFE_INT {
             self.write_str(writer, &value.to_string())
         } else {
             let mut buffer = itoa::Buffer::new();
@@ -57,7 +57,7 @@ impl serde_json::ser::Formatter for LargeNumbersAsStringsFormatter {
     }
 
     fn write_i128<W: ?Sized + Write>(&mut self, writer: &mut W, value: i128) -> std::io::Result<()> {
-        if value.abs() as u128 > MAX_SAFE_INT as u128 {
+        if value.unsigned_abs() > MAX_SAFE_INT as u128 {
             self.write_str(writer, &value.to_string())
         } else {
             let mut buffer = itoa::Buffer::new();
