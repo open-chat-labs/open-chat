@@ -92,6 +92,7 @@ function createTestBot(): ExternalBot {
             autonomousConfig: undefined,
             defaultSubscriptions: undefined,
             dataEncoding: undefined,
+            restrictedLocations: undefined,
         },
     };
 }

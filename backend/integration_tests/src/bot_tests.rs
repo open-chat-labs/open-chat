@@ -601,6 +601,7 @@ fn read_messages_by_command() {
             }),
             default_subscriptions: None,
             data_encoding: None,
+            restricted_locations: None,
         },
     );
 
@@ -713,6 +714,7 @@ fn send_direct_message() {
             autonomous_config: None,
             default_subscriptions: None,
             data_encoding: None,
+            restricted_locations: None,
         },
     );
 
@@ -1163,6 +1165,7 @@ fn register_bot(
             }),
             default_subscriptions: None,
             data_encoding: None,
+            restricted_locations: None,
         },
     )
 }
