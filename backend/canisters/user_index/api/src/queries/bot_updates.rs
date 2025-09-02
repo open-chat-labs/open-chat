@@ -1,7 +1,11 @@
+use std::collections::HashSet;
+
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{AutonomousConfig, BotCommandDefinition, BotRegistrationStatus, TimestampMillis, UserId};
+use types::{
+    AutonomousConfig, BotCommandDefinition, BotInstallationLocationType, BotRegistrationStatus, TimestampMillis, UserId,
+};
 
 #[ts_export(user_index, bot_updates)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -37,4 +41,5 @@ pub struct BotDetails {
     pub autonomous_config: Option<AutonomousConfig>,
     pub last_updated: TimestampMillis,
     pub registration_status: BotRegistrationStatus,
+    pub restricted_locations: Option<HashSet<BotInstallationLocationType>>,
 }

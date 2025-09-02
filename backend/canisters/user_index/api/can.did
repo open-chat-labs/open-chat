@@ -29,6 +29,7 @@ type BotUpdatesResponse = variant {
             autonomous_config : opt AutonomousConfig;
             last_updated : TimestampMillis;
             registration_status : BotRegistrationStatus;
+            restricted_locations : opt vec BotInstallationLocationType;
         };
         removed : vec UserId;
         timestamp : TimestampMillis;
@@ -231,6 +232,7 @@ type BotDefinition = record {
     autonomous_config : opt AutonomousConfig;
     default_subscriptions : opt BotSubscriptions;
     data_encoding : opt BotDataEncoding;
+    restricted_locations : opt vec BotInstallationLocationType;
 };
 
 type AutonomousConfig = record {

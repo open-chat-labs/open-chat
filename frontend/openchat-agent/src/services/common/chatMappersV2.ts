@@ -6,6 +6,7 @@ import type {
     AudioContent,
     BlobReference,
     BotDefinition,
+    BotInstallationLocationType,
     BotMessageContext,
     ChannelIdentifier,
     ChannelSummary,
@@ -135,6 +136,7 @@ import type {
     AcceptSwapSuccess,
     AccountICRC1,
     BotDefinition as ApiBotDefinition,
+    BotInstallationLocationType as ApiBotInstallationLocationType,
     BotCommandDefinition as ApiCommandDefinition,
     BotCommandParam as ApiCommandParam,
     BotCommandParamType as ApiCommandParamType,
@@ -268,7 +270,6 @@ import {
 } from "../../utils/mapping";
 import type { ApiPrincipal } from "../index";
 import { ensureReplicaIsUpToDate } from "./replicaUpToDateChecker";
-
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
 export async function getEventsSuccess(
@@ -2797,6 +2798,7 @@ export function externalBotDefinition(value: ApiBotDefinition): BotDefinition {
             chat: s.chat,
         })),
         dataEncoding: mapOptional(value.data_encoding, dataEncoding),
+        restrictedLocations: mapOptional(value.restricted_locations, restrictedLocations),
     };
 }
 
@@ -2814,6 +2816,23 @@ export function externalBotCommand(command: ApiCommandDefinition): CommandDefini
 
 export function dataEncoding(data_encoding: BotDataEncoding): "json" | "candid" {
     return data_encoding === "Candid" ? "candid" : "json";
+}
+
+export function restrictedLocations(
+    locations: ApiBotInstallationLocationType[],
+): BotInstallationLocationType[] {
+    return locations.map((location) => {
+        switch (location) {
+            case "Community":
+                return "community";
+            case "Group":
+                return "group_chat";
+            case "User":
+                return "direct_chat";
+            default:
+                throw new Error(`Unknown location type: ${location}`);
+        }
+    });
 }
 
 export function externalBotParam(param: ApiCommandParam): CommandParam {

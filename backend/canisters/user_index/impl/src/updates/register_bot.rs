@@ -76,6 +76,7 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
             avatar,
             installations: HashMap::new(),
             registration_status: BotRegistrationStatus::Private(args.permitted_install_location),
+            restricted_locations: args.definition.restricted_locations.clone(),
         }),
     );
 

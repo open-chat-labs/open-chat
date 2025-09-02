@@ -39,6 +39,8 @@ export type BotInstallationLocation =
     | GroupChatIdentifier
     | DirectChatIdentifier;
 
+export type BotInstallationLocationType = "community" | "group_chat" | "direct_chat";
+
 export type BotsResponse = {
     timestamp: bigint;
     bots: ExternalBot[];
@@ -304,6 +306,7 @@ export function emptyBotInstance(ownerId: string): ExternalBot {
             autonomousConfig: undefined,
             defaultSubscriptions: undefined,
             dataEncoding: undefined,
+            restrictedLocations: undefined,
         },
         registrationStatus: { kind: "private" },
     };
@@ -342,6 +345,7 @@ export type BotDefinition = {
     autonomousConfig: AutonomousBotConfig | undefined;
     defaultSubscriptions: BotSubscriptions | undefined;
     dataEncoding: "json" | "candid" | undefined;
+    restrictedLocations: BotInstallationLocationType[] | undefined;
 };
 
 export type AutonomousBotConfig = {
