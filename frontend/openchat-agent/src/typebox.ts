@@ -856,6 +856,13 @@ export const GroupReplyContext = Type.Object({
     event_index: EventIndex,
 });
 
+export type BotInstallationLocationType = Static<typeof BotInstallationLocationType>;
+export const BotInstallationLocationType = Type.Union([
+    Type.Literal("Community"),
+    Type.Literal("Group"),
+    Type.Literal("User"),
+]);
+
 export type MemberType = Static<typeof MemberType>;
 export const MemberType = Type.Union([
     Type.Literal("Owner"),
@@ -7845,6 +7852,7 @@ export const BotDefinition = Type.Object({
     autonomous_config: Type.Optional(AutonomousConfig),
     default_subscriptions: Type.Optional(BotSubscriptions),
     data_encoding: Type.Optional(BotDataEncoding),
+    restricted_locations: Type.Optional(Type.Array(BotInstallationLocationType)),
 });
 
 export type UserIndexBotUpdatesBotDetails = Static<typeof UserIndexBotUpdatesBotDetails>;
@@ -7859,6 +7867,7 @@ export const UserIndexBotUpdatesBotDetails = Type.Object({
     autonomous_config: Type.Optional(AutonomousConfig),
     last_updated: Type.BigInt(),
     registration_status: BotRegistrationStatus,
+    restricted_locations: Type.Optional(Type.Array(BotInstallationLocationType)),
 });
 
 export type UserIndexUsersResult = Static<typeof UserIndexUsersResult>;

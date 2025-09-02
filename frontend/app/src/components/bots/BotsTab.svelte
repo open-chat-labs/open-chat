@@ -102,6 +102,10 @@
     let numberOfInstalledBots = $derived(matchingInstalledBots.length + matchingWebhooks.length);
 
     function botIsInstallable(bot: ExternalBot) {
+        if (bot.definition.restrictedLocations?.includes(location.kind) === false) {
+            return false;
+        }
+
         switch (bot.registrationStatus.kind) {
             case "public":
                 return true;

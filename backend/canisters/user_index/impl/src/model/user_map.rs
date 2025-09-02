@@ -5,12 +5,13 @@ use crate::model::user::User;
 use candid::Principal;
 use search::weighted::{Document as SearchDocument, Query};
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::ops::RangeFrom;
 use tracing::info;
 use types::{
-    AutonomousConfig, BotCommandDefinition, BotInstallationLocation, BotMatch, BotRegistrationStatus, CanisterId, CyclesTopUp,
-    Document, Milliseconds, SuspensionDuration, TimestampMillis, UniquePersonProof, UserId, UserType,
+    AutonomousConfig, BotCommandDefinition, BotInstallationLocation, BotInstallationLocationType, BotMatch,
+    BotRegistrationStatus, CanisterId, CyclesTopUp, Document, Milliseconds, SuspensionDuration, TimestampMillis,
+    UniquePersonProof, UserId, UserType,
 };
 use user_index_canister::bot_updates::BotDetails;
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
@@ -53,6 +54,8 @@ pub struct Bot {
     pub last_updated: TimestampMillis,
     pub installations: HashMap<BotInstallationLocation, InstalledBotDetails>,
     pub registration_status: BotRegistrationStatus,
+    #[serde(default)]
+    pub restricted_locations: Option<HashSet<BotInstallationLocationType>>,
 }
 
 impl Bot {
@@ -105,6 +108,7 @@ impl Bot {
             autonomous_config: self.autonomous_config.clone(),
             last_updated: self.last_updated,
             registration_status: self.registration_status.clone(),
+            restricted_locations: self.restricted_locations.clone(),
         }
     }
 }
@@ -615,6 +619,10 @@ impl UserMap {
             .iter()
             .filter(|(_, bot)| {
                 !(exclude_installed && installation_location.is_some_and(|loc| bot.installations.contains_key(&loc)))
+            })
+            .filter(|(_, bot)| {
+                installation_location
+                    .is_none_or(|loc| bot.restricted_locations.as_ref().is_none_or(|rl| rl.contains(&loc.into())))
             })
             .filter(|(_, bot)| match bot.registration_status {
                 BotRegistrationStatus::Public => true,

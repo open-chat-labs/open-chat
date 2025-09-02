@@ -18,6 +18,7 @@ pub struct BotDefinition {
     pub autonomous_config: Option<AutonomousConfig>,
     pub default_subscriptions: Option<BotSubscriptions>,
     pub data_encoding: Option<BotDataEncoding>,
+    pub restricted_locations: Option<HashSet<BotInstallationLocationType>>,
 }
 
 #[ts_export]
@@ -419,6 +420,24 @@ impl From<Chat> for BotInstallationLocation {
             Chat::Channel(community_id, _) => BotInstallationLocation::Community(community_id),
             Chat::Group(g) => BotInstallationLocation::Group(g),
             Chat::Direct(u) => BotInstallationLocation::User(u),
+        }
+    }
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum BotInstallationLocationType {
+    Community,
+    Group,
+    User,
+}
+
+impl From<BotInstallationLocation> for BotInstallationLocationType {
+    fn from(value: BotInstallationLocation) -> Self {
+        match value {
+            BotInstallationLocation::Community(_) => BotInstallationLocationType::Community,
+            BotInstallationLocation::Group(_) => BotInstallationLocationType::Group,
+            BotInstallationLocation::User(_) => BotInstallationLocationType::User,
         }
     }
 }

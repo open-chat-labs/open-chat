@@ -40,8 +40,8 @@ nns_governance_canister = { path = "../../../external_canisters/nns_governance/a
 nns_governance_canister_c2c_client = { path = "../../../external_canisters/nns_governance/c2c_client" }
 proposals_bot_canister = { path = "../api" }
 rand = { workspace = true }
-registry_canister = { path = "../../../canisters/registry/api" }
-registry_canister_c2c_client = { path = "../../../canisters/registry/c2c_client" }
+registry_canister = { path = "../../registry/api" }
+registry_canister_c2c_client = { path = "../../registry/c2c_client" }
 serde = { workspace = true }
 sha2 = { workspace = true }
 sns_governance_canister = { path = "../../../external_canisters/sns_governance/api" }
