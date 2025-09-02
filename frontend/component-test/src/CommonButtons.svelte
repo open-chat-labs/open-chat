@@ -16,10 +16,6 @@
 <Container width={{ kind: "fixed", size: "800px" }} gap={"xl"} direction={"vertical"}>
     <H2>Common buttons for any use</H2>
 
-    {#if mouseEvent}
-        <pre transition:fade>{JSON.stringify(mouseEvent)}</pre>
-    {/if}
-
     <Container gap={"lg"}>
         <CommonButton {onClick} size={"small"} mode={"default"}>
             {#snippet icon(color)}
@@ -72,4 +68,8 @@
             Pressed variant</CommonButton>
         <CommonButton {onClick} size={"large"} mode={"active"}>Active variant</CommonButton>
     </Container>
+
+    {#if mouseEvent}
+        <pre transition:fade>{JSON.stringify(mouseEvent)}</pre>
+    {/if}
 </Container>
