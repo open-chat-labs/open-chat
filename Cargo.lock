@@ -11611,7 +11611,6 @@ dependencies = [
  "search",
  "serde",
  "serde_bytes",
- "serde_json",
  "stable_memory",
  "stable_memory_map",
  "storage_index_canister",

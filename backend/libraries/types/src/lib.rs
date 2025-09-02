@@ -76,6 +76,7 @@ mod reactions;
 mod referrals;
 mod registration_fee;
 mod relayed_args;
+mod serde_utils;
 mod source_group;
 mod subscription;
 mod suspension;
