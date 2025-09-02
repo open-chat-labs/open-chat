@@ -70,7 +70,7 @@
             background ease-in-out 200ms,
             color ease-in-out 200ms;
 
-        font-weight: 700; // TODO - typography vars (weight semi - bold)
+        font-weight: var(--font-semi-bold);
         font-size: 14px; // TODO - typography vars
 
         .content {
