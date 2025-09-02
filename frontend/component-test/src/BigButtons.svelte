@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { BigButton, Container } from "component-lib";
+    import { BigButton, Container, H2 } from "component-lib";
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import AccountGroupOutline from "svelte-material-icons/AccountGroupOutline.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
@@ -16,13 +16,10 @@
         filledMouseEvent = e;
         window.setTimeout(() => (filledMouseEvent = undefined), 2000);
     }
-
-    // annoyingly if I set the button to fill - it doesn't mean that all the buttons will be the same size
-    // Not sure how to deal with that
 </script>
 
 <Container gap={"xl"} direction={"vertical"}>
-    <h3>Big button groups</h3>
+    <H2>Big button groups</H2>
 
     <Container
         width={{ kind: "fixed", size: "450px" }}
