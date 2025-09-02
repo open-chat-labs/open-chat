@@ -19,18 +19,20 @@
     let selected = $state<Section>("colours");
 </script>
 
+{#snippet sectionButton(section: Section, name: string)}
+    <Button
+        width={{ kind: "fixed", size: "200px" }}
+        onClick={() => (selected = section)}
+        secondary={selected !== section}>{name}</Button>
+{/snippet}
+
 <Container padding={["zero", "lg"]} gap={"md"}>
-    <Button onClick={() => (selected = "colours")} secondary={selected !== "colours"}
-        >Colours</Button>
-    <Button onClick={() => (selected = "layout")} secondary={selected !== "layout"}>Layout</Button>
-    <Button onClick={() => (selected = "typography")} secondary={selected !== "typography"}
-        >Typography</Button>
-    <Button onClick={() => (selected = "buttons")} secondary={selected !== "buttons"}
-        >Buttons</Button>
-    <Button onClick={() => (selected = "big_buttons")} secondary={selected !== "big_buttons"}
-        >Big Buttons</Button>
-    <Button onClick={() => (selected = "common_buttons")} secondary={selected !== "common_buttons"}
-        >Common Buttons</Button>
+    {@render sectionButton("colours", "Colours")}
+    {@render sectionButton("layout", "Layout")}
+    {@render sectionButton("typography", "Typography")}
+    {@render sectionButton("buttons", "Buttons")}
+    {@render sectionButton("big_buttons", "Big buttons")}
+    {@render sectionButton("common_buttons", "Common buttons")}
 </Container>
 
 <Container direction={"vertical"} padding={["lg"]}>
