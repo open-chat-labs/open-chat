@@ -2295,6 +2295,12 @@ type BotInstallationLocation = variant {
     User : UserId;
 };
 
+type BotInstallationLocationType = variant {
+    Group;
+    Community;
+    User;
+};
+
 type CommunityEventType = variant {
     NameChanged;
     GateUpdated;
