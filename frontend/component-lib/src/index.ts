@@ -12,6 +12,7 @@ export { default as H2 } from "./components/H2.svelte";
 export { default as Label } from "./components/Label.svelte";
 export { default as NotificationIndicator } from "./components/NotificationIndicator.svelte";
 export { default as Overview } from "./components/Overview.svelte";
+export { default as Radio } from "./components/Radio.svelte";
 export { default as Spinner } from "./components/Spinner.svelte";
 export { default as Subtitle } from "./components/Subtitle.svelte";
 export { default as Switch } from "./components/Switch.svelte";

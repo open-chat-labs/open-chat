@@ -35,7 +35,7 @@
         display: flex;
         align-items: center;
         padding: 1.5px;
-        transition: border-color 0.3s;
+        transition: border-color 0.2s;
         background: transparent;
     }
 
@@ -51,17 +51,35 @@
         font-size: 1rem;
         font-weight: bold;
         transition:
-            transform 0.3s,
-            background 0.3s,
-            color 0.3s;
+            transform 0.2s,
+            background 0.2s,
+            color 0.2s;
+        position: relative;
     }
 
     .toggle-knob::before {
-        content: "−";
+        content: "";
+        width: 10px;
+        height: 1px;
+        background: var(--text-on-primary);
+        display: block;
+        transition: opacity 0.2s;
+    }
+
+    .toggle-knob::after {
+        content: "";
+        position: absolute;
+        width: 12px;
+        height: 14px;
+        background: var(--text-on-primary);
+        mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'><path fill='black' d='M7.6 13.2l-3.2-3.2-1.4 1.4 4.6 4.6 9.6-9.6-1.4-1.4z'/></svg>")
+            no-repeat center / contain;
+        opacity: 0;
+        transition: opacity 0.2s;
     }
 
     .toggle-input:checked + .toggle-track {
-        border-color: var(--secondary);
+        border-color: #1da1f2;
     }
 
     .toggle-input:checked + .toggle-track .toggle-knob {
@@ -71,7 +89,10 @@
     }
 
     .toggle-input:checked + .toggle-track .toggle-knob::before {
-        content: "✓";
-        font-size: 14px;
+        opacity: 0;
+    }
+
+    .toggle-input:checked + .toggle-track .toggle-knob::after {
+        opacity: 1;
     }
 </style>

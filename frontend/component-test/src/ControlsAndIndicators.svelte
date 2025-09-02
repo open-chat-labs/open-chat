@@ -6,10 +6,12 @@
         CountBadge,
         H2,
         NotificationIndicator,
+        Radio,
         Switch,
     } from "component-lib";
 
     let toggle = $state(true);
+    let radioVal = $state("a");
 </script>
 
 <Container gap={"xl"} direction={"vertical"}>
@@ -47,6 +49,21 @@
         </Container>
         <Container gap={"lg"} direction={"vertical"}>
             <Body>Radio</Body>
+
+            <Radio
+                onChange={() => (radioVal = "a")}
+                checked={radioVal === "a"}
+                id={"option-a"}
+                value={"a"}
+                group={"test-group"}>Not a selected option</Radio>
+            <Radio
+                onChange={() => (radioVal = "b")}
+                checked={radioVal === "b"}
+                id={"option-b"}
+                value={"b"}
+                group={"test-group"}>Another option that's selected</Radio>
+
+            <pre>Radio value: {radioVal}</pre>
         </Container>
     </Container>
 </Container>
