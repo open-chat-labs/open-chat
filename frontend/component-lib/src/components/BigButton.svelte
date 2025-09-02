@@ -38,7 +38,7 @@
     let iconColour = $derived(iconColours[mode]);
 </script>
 
-<button {disabled} type="button" {style} onclick={onClick} class={`${mode}`}>
+<button {disabled} type="button" {style} onclick={onClick} class={`big_button ${mode}`}>
     {#if icon}
         <span class="icon">{@render icon(iconColour)}</span>
     {/if}
@@ -53,6 +53,11 @@
 </button>
 
 <style lang="scss">
+    :global(.big_button > .icon > svg) {
+        width: var(--icon-md);
+        height: var(--icon-md);
+    }
+
     button {
         background: var(--background-1);
         border: none;

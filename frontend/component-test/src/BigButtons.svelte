@@ -30,7 +30,7 @@
         gap={"md"}>
         <BigButton onClick={onFilledClick}>
             {#snippet icon(color)}
-                <AccountMultiplePlus size={"1.6rem"} {color} />
+                <AccountMultiplePlus {color} />
             {/snippet}
             {#snippet modifier(color)}
                 <div class="count">21</div>
@@ -39,7 +39,7 @@
         </BigButton>
         <BigButton onClick={onFilledClick}>
             {#snippet icon(color)}
-                <Wallet size={"1.6rem"} {color} />
+                <Wallet {color} />
             {/snippet}
             Wallet
         </BigButton>
@@ -51,13 +51,13 @@
         gap={"md"}>
         <BigButton mode={"active"} onClick={onFilledClick}>
             {#snippet icon(color)}
-                <Waveform size={"1.6rem"} {color} />
+                <Waveform {color} />
             {/snippet}
             Waveform
         </BigButton>
         <BigButton onClick={onFilledClick}>
             {#snippet icon(color)}
-                <Save size={"1.6rem"} {color} />
+                <Save {color} />
             {/snippet}
             {#snippet modifier(color)}
                 <div class="count">21</div>
@@ -66,7 +66,7 @@
         </BigButton>
         <BigButton onClick={onFilledClick}>
             {#snippet icon(color)}
-                <Wallet size={"1.6rem"} {color} />
+                <Wallet {color} />
             {/snippet}
             Do the robot dance
         </BigButton>
@@ -78,25 +78,25 @@
         gap={"md"}>
         <BigButton width={{ kind: "fixed", size: "150px" }} onClick={onFilledClick}>
             {#snippet icon(color)}
-                <AccountGroup size={"1.6rem"} {color} />
+                <AccountGroup {color} />
             {/snippet}
             Filled
         </BigButton>
         <BigButton mode="active" width={{ kind: "fixed", size: "150px" }} onClick={onFilledClick}>
             {#snippet icon(color)}
-                <AccountGroupOutline size={"1.6rem"} {color} />
+                <AccountGroupOutline {color} />
             {/snippet}
             Outlined
         </BigButton>
         <BigButton mode="pressed" width={{ kind: "fixed", size: "150px" }} onClick={onFilledClick}>
             {#snippet icon(color)}
-                <AccountMultiple size={"1.6rem"} {color} />
+                <AccountMultiple {color} />
             {/snippet}
             Pressed
         </BigButton>
         <BigButton width={{ kind: "fixed", size: "150px" }} onClick={onFilledClick}>
             {#snippet icon(color)}
-                <FlagOutline size={"1.6rem"} {color} />
+                <FlagOutline {color} />
             {/snippet}
             Overflowing
         </BigButton>

@@ -4,6 +4,7 @@ export { default as BodySmall } from "./components/BodySmall.svelte";
 export { default as Button } from "./components/Button.svelte";
 export { default as Caption } from "./components/Caption.svelte";
 export { default as Container } from "./components/Container.svelte";
+export { default as FloatingButton } from "./components/FloatingButton.svelte";
 export { default as H1 } from "./components/H1.svelte";
 export { default as H2 } from "./components/H2.svelte";
 export { default as Label } from "./components/Label.svelte";

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Body, Button, Container, H2, Subtitle } from "component-lib";
+    import { Body, Button, Container, FloatingButton, H2, Subtitle } from "component-lib";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import { fade } from "svelte/transition";
 
@@ -92,6 +92,23 @@
                     <Button width={{ kind: "fixed", size: "150px" }}>Button {c}</Button>
                 {/each}
             </Container>
+        </Container>
+    </Container>
+
+    <Container direction={"vertical"} gap={"sm"}>
+        <H2>Floating Buttons</H2>
+
+        <Container
+            padding={["lg"]}
+            borderWidth={"thin"}
+            borderRadius={"lg"}
+            width={{ kind: "fixed", size: "450px" }}
+            height={{ kind: "fixed", size: "450px" }}>
+            <FloatingButton>
+                {#snippet icon(color)}
+                    <AccountMultiplePlus {color} />
+                {/snippet}
+            </FloatingButton>
         </Container>
     </Container>
 </Container>
