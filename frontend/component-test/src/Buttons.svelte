@@ -102,6 +102,8 @@
             padding={["lg"]}
             borderWidth={"thin"}
             borderRadius={"lg"}
+            mainAxisAlignment={"end"}
+            crossAxisAlignment={"end"}
             width={{ kind: "fixed", size: "450px" }}
             height={{ kind: "fixed", size: "450px" }}>
             <FloatingButton>
