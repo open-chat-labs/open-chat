@@ -63,6 +63,7 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
         bot.description = definition.description.clone();
         bot.commands = definition.commands.clone();
         bot.autonomous_config = definition.autonomous_config.clone();
+        bot.restricted_locations = definition.restricted_locations.clone();
     }
 
     let owner_id = bot.owner;

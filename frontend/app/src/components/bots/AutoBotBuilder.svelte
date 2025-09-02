@@ -143,6 +143,7 @@
             autonomousConfig: undefined,
             defaultSubscriptions: undefined,
             dataEncoding: undefined,
+            restrictedLocations: undefined,
         };
     }
 

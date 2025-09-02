@@ -2,6 +2,7 @@ import type {
     AutonomousBotConfig,
     BotDefinition,
     BotInstallationLocation,
+    BotInstallationLocationType,
     BotMatch,
     BotRegistrationStatus,
     BotsResponse,
@@ -37,6 +38,7 @@ import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import type {
     BotDefinition as ApiBotDefinition,
     BotInstallationLocation as ApiBotInstallationLocation,
+    BotInstallationLocationType as ApiBotInstallationLocationType,
     BotMatch as ApiBotMatch,
     BotRegistrationStatus as ApiBotRegistrationStatus,
     BotCommandDefinition as ApiCommandDefinition,
@@ -716,6 +718,7 @@ export function apiBotDefinition(domain: BotDefinition): ApiBotDefinition {
         autonomous_config: mapOptional(domain.autonomousConfig, apiAutonomousConfig),
         default_subscriptions: mapOptional(domain.defaultSubscriptions, identity),
         data_encoding: mapOptional(domain.dataEncoding, apiDataEncoding),
+        restricted_locations: mapOptional(domain.restrictedLocations, apiRestrictedLocations),
     };
 }
 
@@ -727,6 +730,21 @@ export function apiAutonomousConfig(domain: AutonomousBotConfig): AutonomousConf
 
 export function apiDataEncoding(dataEncoding: "json" | "candid"): BotDataEncoding {
     return dataEncoding === "candid" ? "Candid" : "Json";
+}
+
+export function apiRestrictedLocations(
+    locations: BotInstallationLocationType[],
+): ApiBotInstallationLocationType[] {
+    return locations.map((location) => {
+        switch (location) {
+            case "community":
+                return "Community";
+            case "group_chat":
+                return "Group";
+            case "direct_chat":
+                return "User";
+        }
+    });
 }
 
 export function apiExternalBotCommand(command: CommandDefinition): ApiCommandDefinition {
