@@ -32,7 +32,14 @@
     let style = $derived(`${heightCss}; ${widthCss};`);
 </script>
 
-<button {style} class:secondary class:disabled onclick={onClick} disabled={disabled || loading}>
+<button
+    type="button"
+    aria-busy={loading}
+    {style}
+    class:secondary
+    class:disabled
+    onclick={onClick}
+    disabled={disabled || loading}>
     {#if loading}
         <Spinner
             size={"1.4rem"}

@@ -12,6 +12,7 @@
         modifier?: Snippet<[string]>;
         width?: SizeMode;
         height?: SizeMode;
+        disabled?: boolean;
     }
     let {
         children,
@@ -21,6 +22,7 @@
         modifier,
         width = { kind: "fill" },
         height = { kind: "fill" },
+        disabled = false,
     }: Props = $props();
 
     const iconColours: Record<Mode, string> = {
@@ -36,7 +38,7 @@
     let iconColour = $derived(iconColours[mode]);
 </script>
 
-<button {style} onclick={onClick} class={`${mode}`}>
+<button {disabled} type="button" {style} onclick={onClick} class={`${mode}`}>
     {#if icon}
         <span class="icon">{@render icon(iconColour)}</span>
     {/if}
