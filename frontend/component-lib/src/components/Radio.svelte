@@ -7,7 +7,6 @@
         checked?: boolean;
         id: string;
         disabled?: boolean;
-        compact?: boolean;
         children?: Snippet;
         onChange?: () => void;
     }
@@ -18,7 +17,6 @@
         checked = false,
         id,
         disabled = false,
-        compact = false,
         children,
         onChange,
     }: Props = $props();
