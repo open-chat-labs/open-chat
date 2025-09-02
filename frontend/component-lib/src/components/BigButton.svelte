@@ -59,6 +59,7 @@
     }
 
     button {
+        all: unset;
         background: var(--background-1);
         border: none;
         font-weight: 700;

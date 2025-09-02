@@ -71,7 +71,7 @@ export class BorderRadius {
     cssVariables(): CssVariable[] {
         return [
             this.zero.cssVariable("rad", "zero"),
-            this.xs.cssVariable("rad", "xxs"),
+            this.xs.cssVariable("rad", "xs"),
             this.sm.cssVariable("rad", "sm"),
             this.md.cssVariable("rad", "md"),
             this.lg.cssVariable("rad", "lg"),

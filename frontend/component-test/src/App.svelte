@@ -4,6 +4,7 @@
     import Buttons from "./Buttons.svelte";
     import Colours from "./Colours.svelte";
     import CommonButtons from "./CommonButtons.svelte";
+    import ControlsAndIndicators from "./ControlsAndIndicators.svelte";
     import Layout from "./Layout.svelte";
     import Typography from "./Typography.svelte";
 
@@ -15,6 +16,7 @@
         | "big_buttons"
         | "common_buttons"
         | "layout"
+        | "controls"
         | "typography";
     let selected = $state<Section>("colours");
 </script>
@@ -33,6 +35,7 @@
     {@render sectionButton("buttons", "Buttons")}
     {@render sectionButton("big_buttons", "Big buttons")}
     {@render sectionButton("common_buttons", "Common buttons")}
+    {@render sectionButton("controls", "Controls & Indicators")}
 </Container>
 
 <Container direction={"vertical"} padding={["lg"]}>
@@ -44,6 +47,8 @@
         <BigButtons></BigButtons>
     {:else if selected === "common_buttons"}
         <CommonButtons></CommonButtons>
+    {:else if selected === "controls"}
+        <ControlsAndIndicators />
     {:else if selected === "layout"}
         <Layout></Layout>
     {:else if selected === "typography"}

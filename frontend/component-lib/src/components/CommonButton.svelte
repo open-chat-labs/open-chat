@@ -96,6 +96,7 @@
     }
 
     button {
+        all: unset;
         position: relative;
         display: flex;
         justify-content: center;

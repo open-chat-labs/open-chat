@@ -55,6 +55,7 @@
 
 <style lang="scss">
     button {
+        all: unset;
         position: relative;
         background: var(--primary-gradient-inverted);
         min-height: var(--sp-xxxl);
@@ -102,6 +103,13 @@
                 color: var(--disabled-button);
                 border-color: var(--disabled-button);
             }
+        }
+
+        // TODO - figure out out what to do with this and apply it consistently
+        &:focus-visible {
+            border: 1px solid var(--secondary);
+            outline: none;
+            outline-offset: 0px;
         }
     }
 </style>
