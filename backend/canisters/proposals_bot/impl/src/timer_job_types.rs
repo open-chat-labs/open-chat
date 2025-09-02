@@ -1,5 +1,5 @@
-use crate::mutate_state;
 use crate::updates::submit_proposal::submit_proposal;
+use crate::{UserIdAndPayment, mutate_state};
 use canister_timer_jobs::Job;
 use constants::{MINUTE_IN_MS, SECOND_IN_MS};
 use icrc_ledger_types::icrc1::{account::Account, transfer::TransferArg};
@@ -23,12 +23,9 @@ pub enum TimerJob {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct SubmitProposalJob {
     pub governance_canister_id: CanisterId,
-    pub user_id: UserId,
     pub neuron_id: SnsNeuronId,
     pub proposal: ProposalToSubmit,
-    pub ledger: CanisterId,
-    pub payment_amount: u128,
-    pub transaction_fee: u128,
+    pub user_id_and_payment: Option<UserIdAndPayment>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -78,13 +75,10 @@ impl Job for SubmitProposalJob {
     fn execute(self) {
         ic_cdk::futures::spawn(async move {
             submit_proposal(
-                self.user_id,
+                self.user_id_and_payment,
                 self.governance_canister_id,
                 self.neuron_id,
                 self.proposal,
-                self.ledger,
-                self.payment_amount,
-                self.transaction_fee,
             )
             .await;
         });
