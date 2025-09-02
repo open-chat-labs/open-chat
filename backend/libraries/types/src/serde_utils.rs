@@ -9,7 +9,9 @@ struct NumberVisitor<T> {
 
 impl<'de, T> serde::de::Visitor<'de> for NumberVisitor<T>
 where
-    T: TryFrom<u128> + TryFrom<i128> + FromStr,
+    T: TryFrom<u64> + TryFrom<i64> + TryFrom<u128> + TryFrom<i128> + FromStr,
+    <T as TryFrom<u64>>::Error: Display,
+    <T as TryFrom<i64>>::Error: Display,
     <T as TryFrom<u128>>::Error: Display,
     <T as TryFrom<i128>>::Error: Display,
     <T as FromStr>::Err: Display,
@@ -59,7 +61,9 @@ where
 pub fn deserialize_int_or_string<'de, D, T>(deserializer: D) -> Result<T, D::Error>
 where
     D: Deserializer<'de>,
-    T: TryFrom<u128> + TryFrom<i128> + FromStr,
+    T: TryFrom<u64> + TryFrom<i64> + TryFrom<u128> + TryFrom<i128> + FromStr,
+    <T as TryFrom<u64>>::Error: Display,
+    <T as TryFrom<i64>>::Error: Display,
     <T as TryFrom<u128>>::Error: Display,
     <T as TryFrom<i128>>::Error: Display,
     <T as FromStr>::Err: Display,
