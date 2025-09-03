@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Container, theme as neon, type Colours } from "component-lib";
+    import { Container, H2, Pixel, Subtitle, theme as neon, type Colours } from "component-lib";
 
     type Section = {
         name: string;
@@ -53,15 +53,15 @@
 </script>
 
 {#snippet card(name: string, code: string, summary: string = code)}
-    <Container gap={"md"} direction={"vertical"}>
+    <Container minWidth={new Pixel(150)} gap={"md"} direction={"vertical"}>
         <div class="name">{name}</div>
         <div class="circle" style={`background: ${code};`}></div>
         <div class="code">{summary}</div>
     </Container>
 {/snippet}
 
-<Container direction={"vertical"}>
-    <h3>Colours / <span class="neon">Neon</span> theme</h3>
+<Container gap={"md"} direction={"vertical"}>
+    <H2>Colours / <span class="neon">Neon</span> theme</H2>
     <Container gap={"lg"} direction={"vertical"}>
         {#each allColours as { name, colours }}
             <Container
@@ -70,7 +70,7 @@
                 padding={["lg"]}
                 borderWidth={"thin"}
                 direction={"vertical"}>
-                <h3>{name}</h3>
+                <Subtitle fontWeight={"bold"}>{name}</Subtitle>
                 <Container gap={"xl"} padding={["lg", "zero", "xxl", "zero"]}>
                     {#each colours as { name, key }}
                         {@const colour = neon.colours[key]}
@@ -86,7 +86,7 @@
             padding={["lg"]}
             borderWidth={"thin"}
             direction={"vertical"}>
-            <h3>{"Gradients"}</h3>
+            <Subtitle fontWeight={"semi-bold"}>{"Gradients"}</Subtitle>
             <Container gap={"xl"} padding={["lg", "zero", "xxl", "zero"]}>
                 {@render card(
                     "Primary Gradient",
@@ -111,7 +111,7 @@
     .name {
         color: var(--text-secondary);
         align-self: center;
-        text-wrap-mode: nowrap;
+        white-space: nowrap;
     }
 
     .code {

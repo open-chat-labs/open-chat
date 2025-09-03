@@ -3,22 +3,39 @@
     import BigButtons from "./BigButtons.svelte";
     import Buttons from "./Buttons.svelte";
     import Colours from "./Colours.svelte";
+    import CommonButtons from "./CommonButtons.svelte";
+    import ControlsAndIndicators from "./ControlsAndIndicators.svelte";
     import Layout from "./Layout.svelte";
+    import Typography from "./Typography.svelte";
 
     neon.writeCssVariables();
 
-    type Section = "colours" | "buttons" | "big_buttons" | "layout";
+    type Section =
+        | "colours"
+        | "buttons"
+        | "big_buttons"
+        | "common_buttons"
+        | "layout"
+        | "controls"
+        | "typography";
     let selected = $state<Section>("colours");
 </script>
 
+{#snippet sectionButton(section: Section, name: string)}
+    <Button
+        width={{ kind: "fixed", size: "200px" }}
+        onClick={() => (selected = section)}
+        secondary={selected !== section}>{name}</Button>
+{/snippet}
+
 <Container padding={["zero", "lg"]} gap={"md"}>
-    <Button onClick={() => (selected = "colours")} secondary={selected !== "colours"}
-        >Colours</Button>
-    <Button onClick={() => (selected = "buttons")} secondary={selected !== "buttons"}
-        >Buttons</Button>
-    <Button onClick={() => (selected = "big_buttons")} secondary={selected !== "big_buttons"}
-        >Big Buttons</Button>
-    <Button onClick={() => (selected = "layout")} secondary={selected !== "layout"}>Layout</Button>
+    {@render sectionButton("colours", "Colours")}
+    {@render sectionButton("layout", "Layout")}
+    {@render sectionButton("typography", "Typography")}
+    {@render sectionButton("buttons", "Buttons")}
+    {@render sectionButton("big_buttons", "Big buttons")}
+    {@render sectionButton("common_buttons", "Common buttons")}
+    {@render sectionButton("controls", "Controls & Indicators")}
 </Container>
 
 <Container direction={"vertical"} padding={["lg"]}>
@@ -28,7 +45,13 @@
         <Buttons></Buttons>
     {:else if selected === "big_buttons"}
         <BigButtons></BigButtons>
+    {:else if selected === "common_buttons"}
+        <CommonButtons></CommonButtons>
+    {:else if selected === "controls"}
+        <ControlsAndIndicators />
     {:else if selected === "layout"}
         <Layout></Layout>
+    {:else if selected === "typography"}
+        <Typography></Typography>
     {/if}
 </Container>
