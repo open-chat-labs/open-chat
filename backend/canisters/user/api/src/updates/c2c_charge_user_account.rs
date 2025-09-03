@@ -1,17 +1,16 @@
-use candid::CandidType;
 use ic_ledger_types::{BlockIndex, TransferError};
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::CanisterId;
 use types::nns::Tokens;
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub ledger_canister_id: CanisterId,
     pub amount: Tokens,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(BlockIndex),
     TransferError(TransferError),

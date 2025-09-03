@@ -4,7 +4,6 @@ use crate::guards::{caller_is_local_user_index, caller_is_owner};
 use crate::timer_job_types::{DeleteFileReferencesJob, MarkP2PSwapExpiredJob, NotifyEscrowCanisterOfDepositJob};
 use crate::updates::send_message_with_transfer::set_up_p2p_swap;
 use crate::{Data, RuntimeState, TimerJob, UserEventPusher, execute_update, execute_update_async, mutate_state, read_state};
-use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{
@@ -12,6 +11,7 @@ use chat_events::{
     TextContentInternal, ValidateNewMessageContentResult,
 };
 use constants::{MEMO_MESSAGE, OPENCHAT_BOT_USER_ID};
+use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use std::ops::Not;

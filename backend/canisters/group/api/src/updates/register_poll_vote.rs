@@ -1,4 +1,3 @@
-use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
@@ -15,7 +14,7 @@ pub struct Args {
 }
 
 #[ts_export(group, register_poll_vote)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(PollVotes),
     Error(OCError),

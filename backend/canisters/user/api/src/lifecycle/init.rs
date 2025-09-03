@@ -1,4 +1,5 @@
-use candid::{CandidType, Principal};
+use candid::CandidType;
+use ic_principal::Principal;
 use serde::{Deserialize, Serialize};
 use types::{BuildVersion, CanisterId, MessageContentInitial, UserId};
 
@@ -9,15 +10,6 @@ pub struct Args {
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
     pub identity_canister_id: CanisterId,
-    #[deprecated]
-    #[serde(default = "CanisterId::anonymous")]
-    pub notifications_canister_id: CanisterId,
-    #[deprecated]
-    #[serde(default = "CanisterId::anonymous")]
-    pub bot_api_gateway_canister_id: CanisterId,
-    #[deprecated]
-    #[serde(default = "CanisterId::anonymous")]
-    pub proposals_bot_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
     pub wasm_version: BuildVersion,
     pub username: String,
