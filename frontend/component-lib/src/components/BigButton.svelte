@@ -66,11 +66,13 @@
         color: var(--text-primary);
         border-radius: var(--rad-sm);
         display: flex;
-        gap: var(--sp-sm);
+        gap: var(--sp-xs);
         flex-direction: column;
         align-items: start;
         justify-content: flex-end;
         padding: var(--sp-sm);
+        font-size: var(--typo-bodySmall-sz);
+        line-height: var(--typo-bodySmall-lh);
         cursor: pointer;
         transition:
             border ease-in-out 200ms,
