@@ -49,7 +49,7 @@ class MainActivity : TauriActivity() {
         if (notificationId != null) {
             ProcessLifecycleOwner.get().lifecycleScope.launch {
                 // Release associated notifications from the local db.
-                val notification = NotificationsHelper.releaseNotificationsAfterTap(notificationId)
+                val notification = NotificationsHelper.releaseNotificationsAfterTap(this@MainActivity, notificationId)
                 
                 Log.d("TEST_OC", "Released notification $notification")
                 
