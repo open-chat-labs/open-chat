@@ -11,14 +11,14 @@
 </script>
 
 <script lang="ts">
-    import { getContext, type Snippet } from "svelte";
     import {
         getFlexStyle,
         type Direction,
         type FontWeight,
         type SizeMode,
         type TypographicStyleName,
-    } from "../theme";
+    } from "component-lib";
+    import { getContext, type Snippet } from "svelte";
 
     let {
         fontWeight = "normal",

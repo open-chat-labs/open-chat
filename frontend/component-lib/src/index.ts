@@ -19,4 +19,5 @@ export { default as Spinner } from "./components/Spinner.svelte";
 export { default as Subtitle } from "./components/Subtitle.svelte";
 export { default as Switch } from "./components/Switch.svelte";
 export { default as Typography } from "./components/Typography.svelte";
-export { theme, type FontWeight } from "./theme";
+export * from "./theme";
+export * from "./utils";

@@ -12,9 +12,10 @@
             "@stores/*": ["./src/stores/*"],
             "@theme/*": ["./src/theme/*"],
             "@utils/*": ["./src/utils/*"],
-            "@styles/*": ["./src/styles/*"]
+            "@styles/*": ["./src/styles/*"],
+            "@component-lib/*": ["../component-lib/src/*"]
         }
     },
-    "include": ["./src/**/*", "../vite-env.d.ts"],
+    "include": ["./src/**/*", "../vite-env.d.ts", "../node_modules/component-lib/src/**/*.ts"],
     "exclude": ["build/**/*", "node_modules"]
 }

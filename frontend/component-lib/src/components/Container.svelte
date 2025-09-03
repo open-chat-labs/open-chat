@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { getContext, setContext, type Snippet } from "svelte";
     import {
         getAlignmentCss,
         getBorderRadiusCss,
@@ -17,7 +16,8 @@
         type Padding,
         type SizeMode,
         type SpacingSize,
-    } from "../theme";
+    } from "component-lib";
+    import { getContext, setContext, type Snippet } from "svelte";
 
     /**
      * Some notes on usage. This component uses the Figma concepts of Hug and Fill which need to be understood to use it properly.

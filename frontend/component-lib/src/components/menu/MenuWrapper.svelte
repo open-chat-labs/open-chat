@@ -1,12 +1,12 @@
 <script lang="ts">
-    import { onMount, type Snippet } from "svelte";
     import {
         centerOfScreen,
         reposition,
         type Alignment,
         type NanoPopPosition,
         type Position,
-    } from "../../utils";
+    } from "component-lib";
+    import { onMount, type Snippet } from "svelte";
 
     interface Props {
         children?: Snippet;

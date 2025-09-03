@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { getFlexStyle, type Direction, type SizeMode } from "component-lib";
     import { getContext, type Snippet } from "svelte";
-    import { getFlexStyle, type Direction, type SizeMode } from "../theme";
     import Spinner from "./Spinner.svelte";
 
     type Mode = "default" | "active" | "pressed";

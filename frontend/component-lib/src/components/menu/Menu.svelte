@@ -1,7 +1,7 @@
 <script lang="ts">
+    import { Pixel } from "component-lib";
     import type { Snippet } from "svelte";
     import { fade } from "svelte/transition";
-    import { Pixel } from "../../theme";
     import Container from "../Container.svelte";
 
     interface Props {
