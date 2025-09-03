@@ -4,8 +4,6 @@
     import Menu from "./Menu.svelte";
     import MenuWrapper from "./MenuWrapper.svelte";
 
-    // TODO - I don't think this component needs to exist. I think it can just be an action
-
     interface Props {
         centered?: boolean;
         position?: Position;

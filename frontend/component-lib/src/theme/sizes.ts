@@ -153,6 +153,13 @@ export function getFlexStyle(
     mode: SizeMode,
     parentDirection: Direction,
 ): string {
+    // Fallback for unknown or non-flex parent
+    if (parentDirection === "unknown" || parentDirection === undefined) {
+        if (mode.kind === "fixed") return `${axis}: ${mode.size ?? "auto"}`;
+        if (mode.kind === "hug") return `${axis}: fit-content`;
+        if (mode.kind === "fill") return `${axis}: 100%`;
+    }
+
     const isMainAxis =
         (axis === "width" && parentDirection === "horizontal") ||
         (axis === "height" && parentDirection === "vertical");
@@ -168,13 +175,6 @@ export function getFlexStyle(
         if (mode.kind === "fixed") return `${axis}: ${mode.size ?? "auto"}`;
         if (mode.kind === "hug") return `${axis}: fit-content`;
         if (mode.kind === "fill") return `align-self: stretch`;
-    }
-
-    // Fallback for unknown or non-flex parent
-    if (parentDirection === "unknown") {
-        if (mode.kind === "fixed") return `${axis}: ${mode.size ?? "auto"}`;
-        if (mode.kind === "hug") return `${axis}: fit-content`;
-        if (mode.kind === "fill") return `${axis}: 100%`;
     }
 
     return "";

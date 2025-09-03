@@ -43,7 +43,6 @@
     });
 
     function move(container: HTMLElement) {
-        console.log("Params: ", centered, position, align, container, trigger);
         if (centered && mobileWidth) {
             positionInCenter(container);
         } else {
@@ -55,7 +54,6 @@
     }
 
     function positionInCenter(menu: HTMLElement) {
-        console.log("Positioning in center");
         const rect = menu.getBoundingClientRect();
         const dim = centerOfScreen(rect);
         menu.style.setProperty("left", `${dim.x}px`);
