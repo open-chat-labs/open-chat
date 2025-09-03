@@ -67,6 +67,6 @@
 
 <style lang="scss">
     :global(.menu-trigger.open path) {
-        fill: var(--secondary);
+        fill: var(--primary);
     }
 </style>
