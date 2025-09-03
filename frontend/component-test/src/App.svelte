@@ -1,15 +1,9 @@
 <script lang="ts">
-    import {
-        Button,
-        CommonButton,
-        Container,
-        MenuTrigger,
-        theme as neon,
-        Overview,
-    } from "component-lib";
+    import { CommonButton, Container, MenuTrigger, theme as neon, Overview } from "component-lib";
     import Burger from "svelte-material-icons/Menu.svelte";
     import MenuItem from "../../component-lib/src/components/menu/MenuItem.svelte";
     import BigButtons from "./BigButtons.svelte";
+    import BottomBars from "./BottomBars.svelte";
     import Buttons from "./Buttons.svelte";
     import Colours from "./Colours.svelte";
     import CommonButtons from "./CommonButtons.svelte";
@@ -28,6 +22,7 @@
         | "layout"
         | "controls"
         | "menus"
+        | "bottom_bar"
         | "typography";
     let selected = $state<Section>("colours");
 
@@ -40,16 +35,9 @@
         controls: "Controls & indicators",
         menus: "Menus",
         typography: "Typography",
+        bottom_bar: "Bottom bar",
     };
 </script>
-
-{#snippet sectionButton(section: Section)}
-    <Button
-        width={{ kind: "fixed", size: "200px" }}
-        height={{ kind: "fill" }}
-        onClick={() => (selected = section)}
-        secondary={selected !== section}>{labels[section]}</Button>
-{/snippet}
 
 {#snippet sectionMenuItem(section: Section)}
     <MenuItem onclick={() => (selected = section)}>{labels[section]}</MenuItem>
@@ -65,28 +53,15 @@
                 Menu
             </CommonButton>
             {#snippet menuItems()}
-                {@render sectionMenuItem("colours")}
-                {@render sectionMenuItem("layout")}
-                {@render sectionMenuItem("typography")}
-                {@render sectionMenuItem("buttons")}
-                {@render sectionMenuItem("big_buttons")}
-                {@render sectionMenuItem("common_buttons")}
-                {@render sectionMenuItem("controls")}
-                {@render sectionMenuItem("menus")}
+                {#each Object.keys(labels) as k}
+                    {@render sectionMenuItem(k as Section)}
+                {/each}
             {/snippet}
         </MenuTrigger>
         <Overview>{labels[selected]}</Overview>
-        <!-- {@render sectionButton("colours")}
-        {@render sectionButton("layout")}
-        {@render sectionButton("typography")}
-        {@render sectionButton("buttons")}
-        {@render sectionButton("big_buttons")}
-        {@render sectionButton("common_buttons")}
-        {@render sectionButton("controls")}
-        {@render sectionButton("menus")} -->
     </Container>
 
-    <Container height={{ kind: "fill" }} direction={"vertical"} padding={["lg"]}>
+    <Container height={{ kind: "fill" }} direction={"vertical"} padding={"lg"}>
         {#if selected === "colours"}
             <Colours></Colours>
         {:else if selected === "buttons"}
@@ -101,6 +76,8 @@
             <Layout></Layout>
         {:else if selected === "menus"}
             <Menus></Menus>
+        {:else if selected === "bottom_bar"}
+            <BottomBars />
         {:else if selected === "typography"}
             <Typography></Typography>
         {/if}

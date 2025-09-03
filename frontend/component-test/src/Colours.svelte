@@ -67,7 +67,7 @@
             <Container
                 borderRadius={"lg"}
                 width={{ kind: "hug" }}
-                padding={["lg"]}
+                padding={"lg"}
                 borderWidth={"thin"}
                 direction={"vertical"}>
                 <Subtitle fontWeight={"bold"}>{name}</Subtitle>
@@ -83,7 +83,7 @@
         <Container
             width={{ kind: "hug" }}
             borderRadius={"lg"}
-            padding={["lg"]}
+            padding={"lg"}
             borderWidth={"thin"}
             direction={"vertical"}>
             <Subtitle fontWeight={"semi-bold"}>{"Gradients"}</Subtitle>

@@ -8,12 +8,12 @@
         getGapCss,
         getPaddingCss,
         Pixel,
-        type BorderRadiusSize,
         type BorderWidthSize,
         type CrossAxisAlignment,
         type Direction,
         type MainAxisAlignment,
         type Padding,
+        type Radius,
         type SizeMode,
         type SpacingSize,
     } from "component-lib";
@@ -41,7 +41,7 @@
         gap?: SpacingSize;
         padding?: Padding;
         borderWidth?: BorderWidthSize;
-        borderRadius?: BorderRadiusSize;
+        borderRadius?: Radius;
         borderStyle?: string;
         borderColour?: string;
         width?: SizeMode;
@@ -59,7 +59,7 @@
         children,
         direction = "horizontal",
         gap = "zero",
-        padding = ["zero"],
+        padding = "zero",
         borderWidth = "zero",
         borderRadius = "zero",
         width = { kind: "fill" },

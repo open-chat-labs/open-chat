@@ -48,8 +48,15 @@ export function getBorderStyleCss(
     return bw === "zero" ? "" : `border-style: ${borderStyle}; border-color: ${borderColour}`;
 }
 
-export function getPaddingCss(padding: Padding): string {
-    return `padding: ${padding.map((p) => `var(--sp-${p})`).join(" ")}`;
+function isSingularSize<T>(size: StyleSize<T>): size is T {
+    return !Array.isArray(size);
+}
+
+export function getPaddingCss(padding: Padding, prefix: boolean = true): string {
+    if (isSingularSize(padding)) {
+        return `${prefix ? "padding: " : ""}var(--sp-${padding})`;
+    }
+    return `padding: ${padding.map((p) => getPaddingCss(p, false)).join(" ")}`;
 }
 
 export function getGapCss(sz: SpacingSize): string {
@@ -82,8 +89,11 @@ export class BorderRadius {
     }
 }
 
-export function getBorderRadiusCss(rad: BorderRadiusSize): string {
-    return rad === "zero" ? "" : `border-radius: var(--rad-${rad})`;
+export function getBorderRadiusCss(radius: Radius, prefix: boolean = true): string {
+    if (isSingularSize(radius)) {
+        return `${prefix ? "border-radius: " : ""}var(--rad-${radius})`;
+    }
+    return `border-radius: ${radius.map((r) => getBorderRadiusCss(r, false)).join(" ")}`;
 }
 
 export type BorderRadiusSize = Exclude<keyof BorderRadius, keyof object | "cssVariables">;
@@ -182,11 +192,11 @@ export function getFlexStyle(
 
 export type SpacingSize = "zero" | Exclude<keyof Spacings, keyof object | "cssVariables">;
 
-export type Padding =
-    | [SpacingSize]
-    | [SpacingSize, SpacingSize]
-    | [SpacingSize, SpacingSize, SpacingSize]
-    | [SpacingSize, SpacingSize, SpacingSize, SpacingSize];
+type StyleSize<T> = T | [T, T] | [T, T, T] | [T, T, T, T];
+
+export type Padding = StyleSize<SpacingSize>;
+
+export type Radius = StyleSize<BorderRadiusSize>;
 
 abstract class Unit {
     protected val: number;
