@@ -112,7 +112,11 @@ export default {
         }),
         commonjs(),
         typescript({
-            include: ["./src/**/*", "../vite-env.d.ts"],
+            include: [
+                "./src/**/*",
+                "../vite-env.d.ts",
+                "../node_modules/component-lib/src/**/*.ts",
+            ],
         }),
         inject({
             Buffer: ["buffer", "Buffer"],

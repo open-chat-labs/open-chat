@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { reposition, type NanoPopPosition } from "@src/utils/position";
+    import { reposition, type NanoPopPosition } from "component-lib";
     import { mobileWidth } from "openchat-client";
     import { onMount, tick, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";

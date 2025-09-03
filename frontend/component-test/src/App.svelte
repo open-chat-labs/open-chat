@@ -6,6 +6,7 @@
     import CommonButtons from "./CommonButtons.svelte";
     import ControlsAndIndicators from "./ControlsAndIndicators.svelte";
     import Layout from "./Layout.svelte";
+    import Menus from "./Menus.svelte";
     import Typography from "./Typography.svelte";
 
     neon.writeCssVariables();
@@ -17,6 +18,7 @@
         | "common_buttons"
         | "layout"
         | "controls"
+        | "menus"
         | "typography";
     let selected = $state<Section>("colours");
 </script>
@@ -28,30 +30,35 @@
         secondary={selected !== section}>{name}</Button>
 {/snippet}
 
-<Container padding={["zero", "lg"]} gap={"md"}>
-    {@render sectionButton("colours", "Colours")}
-    {@render sectionButton("layout", "Layout")}
-    {@render sectionButton("typography", "Typography")}
-    {@render sectionButton("buttons", "Buttons")}
-    {@render sectionButton("big_buttons", "Big buttons")}
-    {@render sectionButton("common_buttons", "Common buttons")}
-    {@render sectionButton("controls", "Controls & Indicators")}
-</Container>
+<Container height={{ kind: "fill" }} direction={"vertical"}>
+    <Container padding={["zero", "lg"]} gap={"md"}>
+        {@render sectionButton("colours", "Colours")}
+        {@render sectionButton("layout", "Layout")}
+        {@render sectionButton("typography", "Typography")}
+        {@render sectionButton("buttons", "Buttons")}
+        {@render sectionButton("big_buttons", "Big buttons")}
+        {@render sectionButton("common_buttons", "Common buttons")}
+        {@render sectionButton("controls", "Controls & Indicators")}
+        {@render sectionButton("menus", "Context menus")}
+    </Container>
 
-<Container direction={"vertical"} padding={["lg"]}>
-    {#if selected === "colours"}
-        <Colours></Colours>
-    {:else if selected === "buttons"}
-        <Buttons></Buttons>
-    {:else if selected === "big_buttons"}
-        <BigButtons></BigButtons>
-    {:else if selected === "common_buttons"}
-        <CommonButtons></CommonButtons>
-    {:else if selected === "controls"}
-        <ControlsAndIndicators />
-    {:else if selected === "layout"}
-        <Layout></Layout>
-    {:else if selected === "typography"}
-        <Typography></Typography>
-    {/if}
+    <Container height={{ kind: "fill" }} direction={"vertical"} padding={["lg"]}>
+        {#if selected === "colours"}
+            <Colours></Colours>
+        {:else if selected === "buttons"}
+            <Buttons></Buttons>
+        {:else if selected === "big_buttons"}
+            <BigButtons></BigButtons>
+        {:else if selected === "common_buttons"}
+            <CommonButtons></CommonButtons>
+        {:else if selected === "controls"}
+            <ControlsAndIndicators />
+        {:else if selected === "layout"}
+            <Layout></Layout>
+        {:else if selected === "menus"}
+            <Menus></Menus>
+        {:else if selected === "typography"}
+            <Typography></Typography>
+        {/if}
+    </Container>
 </Container>

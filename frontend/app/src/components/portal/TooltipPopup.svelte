@@ -1,6 +1,5 @@
 <script lang="ts">
-    import { type Alignment, type Position } from "@src/utils/alignment";
-    import { reposition, type NanoPopPosition } from "@src/utils/position";
+    import { reposition, type Alignment, type NanoPopPosition, type Position } from "component-lib";
     import { mobileWidth } from "openchat-client";
     import { onMount, type Snippet } from "svelte";
     import { fade } from "svelte/transition";

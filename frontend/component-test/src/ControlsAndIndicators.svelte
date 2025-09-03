@@ -45,6 +45,8 @@
 
             <Switch bind:checked={toggle} />
 
+            <Switch disabled bind:checked={toggle} />
+
             <pre>Toggle value: {toggle}</pre>
         </Container>
         <Container gap={"lg"} direction={"vertical"}>

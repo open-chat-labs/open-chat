@@ -45,6 +45,7 @@
         display: flex;
         align-items: center;
         gap: var(--sp-md);
+        cursor: pointer;
     }
 
     .radio-input {
