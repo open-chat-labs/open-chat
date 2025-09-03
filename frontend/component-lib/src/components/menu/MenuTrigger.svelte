@@ -1,19 +1,21 @@
 <script lang="ts">
-    import type { Alignment, Position } from "component-lib";
     import { getAllContexts, mount, onDestroy, type Snippet } from "svelte";
-    import MenuWrapper from "./portal/MenuWrapper.svelte";
-    import { portalState } from "./portalState.svelte";
+    import { portalState, type Alignment, type Position } from "../..";
+    import Menu from "./Menu.svelte";
+    import MenuWrapper from "./MenuWrapper.svelte";
+
+    // TODO - I don't think this component needs to exist. I think it can just be an action
 
     interface Props {
         centered?: boolean;
         position?: Position;
         align?: Alignment;
         gutter?: number;
-        menuIcon?: Snippet;
-        menuItems?: Snippet;
+        children: Snippet;
+        menuItems: Snippet;
     }
 
-    let { menuIcon, menuItems, ...rest }: Props = $props();
+    let { children, menuItems, ...rest }: Props = $props();
 
     let menu: HTMLElement;
     let open = $state(false);
@@ -37,7 +39,7 @@
             mount(MenuWrapper, {
                 target: document.body,
                 props: {
-                    children: menuItems,
+                    children: wrappedMenuItems,
                     onClose: closeMenu,
                     trigger: menu,
                     ...rest,
@@ -53,14 +55,20 @@
     }
 </script>
 
+{#snippet wrappedMenuItems()}
+    <Menu>
+        {@render menuItems()}
+    </Menu>
+{/snippet}
+
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class:open class="menu-icon" bind:this={menu} onclick={click}>
-    {@render menuIcon?.()}
+<div class:open class="menu-trigger" bind:this={menu} onclick={click}>
+    {@render children()}
 </div>
 
 <style lang="scss">
-    :global(.menu-icon.open path) {
-        fill: var(--icon-selected);
+    :global(.menu-trigger.open path) {
+        fill: var(--secondary);
     }
 </style>

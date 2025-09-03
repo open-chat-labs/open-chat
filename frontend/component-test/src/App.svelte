@@ -6,6 +6,7 @@
     import CommonButtons from "./CommonButtons.svelte";
     import ControlsAndIndicators from "./ControlsAndIndicators.svelte";
     import Layout from "./Layout.svelte";
+    import Menus from "./Menus.svelte";
     import Typography from "./Typography.svelte";
 
     neon.writeCssVariables();
@@ -17,6 +18,7 @@
         | "common_buttons"
         | "layout"
         | "controls"
+        | "menus"
         | "typography";
     let selected = $state<Section>("colours");
 </script>
@@ -36,6 +38,7 @@
     {@render sectionButton("big_buttons", "Big buttons")}
     {@render sectionButton("common_buttons", "Common buttons")}
     {@render sectionButton("controls", "Controls & Indicators")}
+    {@render sectionButton("menus", "Context menus")}
 </Container>
 
 <Container direction={"vertical"} padding={["lg"]}>
@@ -51,6 +54,8 @@
         <ControlsAndIndicators />
     {:else if selected === "layout"}
         <Layout></Layout>
+    {:else if selected === "menus"}
+        <Menus></Menus>
     {:else if selected === "typography"}
         <Typography></Typography>
     {/if}

@@ -51,6 +51,8 @@
         crossAxisAlignment?: CrossAxisAlignment;
         minWidth?: Pixel;
         minHeight?: Pixel;
+        shadow?: string;
+        backgroundColour?: string;
     }
 
     let {
@@ -69,6 +71,8 @@
         crossAxisAlignment = "start",
         minWidth = new Pixel(0),
         minHeight = new Pixel(0),
+        shadow,
+        backgroundColour = "unset",
     }: Props = $props();
 
     // you might expect this to be done inside onMount but
@@ -86,7 +90,7 @@
     let colourCss = $derived(colour ? `background-color: ${colour}` : "");
     let alignmentCss = $derived(getAlignmentCss(mainAxisAlignment, crossAxisAlignment));
     let style = $derived(
-        `min-width: ${minWidth}; min-height: ${minHeight}; ${alignmentCss}; ${colourCss}; ${heightCss}; ${widthCss}; ${borderStyleCss}; ${borderRadiusCss}; ${borderWidthCss}; ${paddingCss}; ${gapCss};`,
+        `background-color: ${backgroundColour}; box-shadow: ${shadow}; min-width: ${minWidth}; min-height: ${minHeight}; ${alignmentCss}; ${colourCss}; ${heightCss}; ${widthCss}; ${borderStyleCss}; ${borderRadiusCss}; ${borderWidthCss}; ${paddingCss}; ${gapCss};`,
     );
 </script>
 

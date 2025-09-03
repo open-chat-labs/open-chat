@@ -1,13 +1,14 @@
 <script lang="ts">
     interface Props {
         checked: boolean;
+        disabled?: boolean;
     }
 
-    let { checked = $bindable() }: Props = $props();
+    let { checked = $bindable(), disabled = false }: Props = $props();
 </script>
 
-<label class="toggle">
-    <input bind:checked type="checkbox" class="toggle-input" />
+<label class="toggle" class:disabled>
+    <input {disabled} bind:checked type="checkbox" class="toggle-input" />
     <span class="toggle-track">
         <span class="toggle-knob"></span>
     </span>
@@ -20,6 +21,10 @@
         display: inline-flex;
         align-items: center;
         cursor: pointer;
+
+        &.disabled {
+            cursor: not-allowed;
+        }
     }
 
     .toggle-input {
@@ -96,5 +101,14 @@
 
     .toggle-input:checked + .toggle-track .toggle-knob::after {
         opacity: 1;
+    }
+
+    .toggle-input:disabled + .toggle-track .toggle-knob {
+        background: var(--disabled-button);
+        color: var(--disabled-button);
+    }
+
+    .toggle-input:disabled + .toggle-track {
+        border-color: var(--disabled-button);
     }
 </style>

@@ -1,13 +1,12 @@
 <script lang="ts">
+    import { onMount, type Snippet } from "svelte";
     import {
         centerOfScreen,
         reposition,
         type Alignment,
         type NanoPopPosition,
         type Position,
-    } from "component-lib";
-    import { mobileWidth } from "openchat-client";
-    import { onMount, type Snippet } from "svelte";
+    } from "../..";
 
     interface Props {
         children?: Snippet;
@@ -30,6 +29,9 @@
 
     let container: HTMLElement | undefined;
 
+    // TODO
+    let mobileWidth = $state(false);
+
     onMount(() => {
         if (container) {
             move(container);
@@ -41,7 +43,8 @@
     });
 
     function move(container: HTMLElement) {
-        if (centered && $mobileWidth) {
+        console.log("Params: ", centered, position, align, container, trigger);
+        if (centered && mobileWidth) {
             positionInCenter(container);
         } else {
             reposition(trigger, container, {
@@ -52,6 +55,7 @@
     }
 
     function positionInCenter(menu: HTMLElement) {
+        console.log("Positioning in center");
         const rect = menu.getBoundingClientRect();
         const dim = centerOfScreen(rect);
         menu.style.setProperty("left", `${dim.x}px`);
@@ -60,6 +64,8 @@
 </script>
 
 {#if children}
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <span bind:this={container} class="menu" onclick={onClose}>
         {@render children()}
     </span>
@@ -68,6 +74,5 @@
 <style lang="scss">
     .menu {
         position: fixed;
-        @include z-index("popup-menu");
     }
 </style>
