@@ -6,7 +6,7 @@
         type Alignment,
         type NanoPopPosition,
         type Position,
-    } from "../..";
+    } from "../../utils";
 
     interface Props {
         children?: Snippet;

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { getContext, type Snippet } from "svelte";
-    import { type Direction, getFlexStyle, type SizeMode } from "..";
+    import { type Direction, getFlexStyle, type SizeMode } from "../theme";
 
     type Mode = "default" | "pressed" | "active";
 
