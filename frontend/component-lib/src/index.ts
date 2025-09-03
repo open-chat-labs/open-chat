@@ -12,7 +12,6 @@ export { default as H2 } from "./components/H2.svelte";
 export { default as Label } from "./components/Label.svelte";
 export { default as MenuItem } from "./components/menu/MenuItem.svelte";
 export { default as MenuTrigger } from "./components/menu/MenuTrigger.svelte";
-export { default as MenuWrapper } from "./components/menu/MenuWrapper.svelte";
 export { default as NotificationIndicator } from "./components/NotificationIndicator.svelte";
 export { default as Overview } from "./components/Overview.svelte";
 export { default as Radio } from "./components/Radio.svelte";
