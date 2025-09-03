@@ -1,10 +1,9 @@
-use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{PinNumberWrapper, UnitResult};
 
 #[ts_export(user, pay_for_streak_insurance)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub additional_days: u8,
     pub expected_price: u128,

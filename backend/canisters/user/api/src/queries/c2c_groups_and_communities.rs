@@ -1,5 +1,4 @@
-use candid::Deserialize;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use types::{ChatId, CommunityId, Empty};
 
 pub type Args = Empty;

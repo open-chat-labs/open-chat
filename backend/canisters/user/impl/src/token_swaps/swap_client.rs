@@ -1,6 +1,5 @@
 use async_trait::async_trait;
-use candid::Deserialize;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use types::icrc1::Account;
 use types::{C2CError, CanisterId};
 

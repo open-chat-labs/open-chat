@@ -1,6 +1,5 @@
-use candid::Deserialize;
 use oc_error_codes::OCError;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use types::{BotInitiator, ChatSummaryDirect, UserId};
 
 #[derive(Serialize, Deserialize, Debug)]
