@@ -161,15 +161,12 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         .and_then(|c| c.user())
         .filter(|user_id| state.data.global_users.contains(user_id));
 
-    #[expect(deprecated)]
     let init_canister_args = InitUserCanisterArgs {
         owner: caller,
         group_index_canister_id: state.data.group_index_canister_id,
         user_index_canister_id: state.data.user_index_canister_id,
         local_user_index_canister_id: state.env.canister_id(),
         identity_canister_id: state.data.identity_canister_id,
-        notifications_canister_id: CanisterId::anonymous(),
-        proposals_bot_canister_id: CanisterId::anonymous(),
         escrow_canister_id: state.data.escrow_canister_id,
         wasm_version: canister_wasm.version,
         username: args.username.clone(),
@@ -177,7 +174,6 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         video_call_operators: state.data.video_call_operators.clone(),
         referred_by,
         test_mode: state.data.test_mode,
-        bot_api_gateway_canister_id: Principal::anonymous(),
     };
 
     crate::jobs::topup_canister_pool::start_job_if_required(state, None);

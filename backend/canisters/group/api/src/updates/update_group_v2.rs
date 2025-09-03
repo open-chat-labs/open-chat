@@ -1,4 +1,3 @@
-use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
@@ -22,14 +21,14 @@ pub struct Args {
 }
 
 #[ts_export(group, update_group)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     SuccessV2(SuccessResult),
     Error(OCError),
 }
 
 #[ts_export(group, update_group)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub rules_version: Option<Version>,
 }

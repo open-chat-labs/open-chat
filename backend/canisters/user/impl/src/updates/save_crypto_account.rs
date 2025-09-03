@@ -1,9 +1,9 @@
 use crate::guards::caller_is_owner;
 use crate::{RuntimeState, execute_update};
-use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ic_ledger_types::AccountIdentifier;
+use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
 use types::OCResult;
 use user_canister::save_crypto_account::*;
