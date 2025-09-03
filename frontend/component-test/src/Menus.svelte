@@ -6,40 +6,46 @@
     import Headphones from "svelte-material-icons/Headphones.svelte";
     import Burger from "svelte-material-icons/Menu.svelte";
     import Translate from "svelte-material-icons/Translate.svelte";
+    import { fade } from "svelte/transition";
+
+    let nameClicked = $state();
 
     function showMenu() {
         console.log("show menu");
     }
 
-    function menuItemClicked() {}
+    function menuItemClicked(name: string) {
+        nameClicked = name;
+        window.setTimeout(() => (nameClicked = undefined), 2000);
+    }
 </script>
 
 {#snippet commonMenu()}
-    <MenuItem onclick={menuItemClicked}>
+    <MenuItem onclick={() => menuItemClicked("Make a call")}>
         {#snippet icon(color)}
             <Headphones {color} />
         {/snippet}
         Make a call
     </MenuItem>
-    <MenuItem onclick={menuItemClicked}>
+    <MenuItem onclick={() => menuItemClicked("Quote")}>
         {#snippet icon(color)}
             <CommentQuoteOutline {color} />
         {/snippet}
         Quote
     </MenuItem>
-    <MenuItem onclick={menuItemClicked}>
+    <MenuItem onclick={() => menuItemClicked("Reply in thread")}>
         {#snippet icon(color)}
             <ChatOutline {color} />
         {/snippet}
         Reply in thread
     </MenuItem>
-    <MenuItem onclick={menuItemClicked}>
+    <MenuItem onclick={() => menuItemClicked("Translate")}>
         {#snippet icon(color)}
             <Translate {color} />
         {/snippet}
         Translate
     </MenuItem>
-    <MenuItem onclick={menuItemClicked}>
+    <MenuItem onclick={() => menuItemClicked("Report")}>
         {#snippet icon(color)}
             <Flag {color} />
         {/snippet}
@@ -55,7 +61,7 @@
         mainAxisAlignment={"spaceBetween"}
         gap="lg">
         <MenuTrigger position={"bottom"} align={"middle"}>
-            <CommonButton mode={"active"} onClick={showMenu}>
+            <CommonButton size={"large"} mode={"active"} onClick={showMenu}>
                 {#snippet icon(color)}
                     <Burger {color} />
                 {/snippet}
@@ -67,7 +73,7 @@
         </MenuTrigger>
 
         <MenuTrigger position={"bottom"} align={"middle"}>
-            <CommonButton mode={"active"} onClick={showMenu}>
+            <CommonButton size={"large"} mode={"active"} onClick={showMenu}>
                 {#snippet icon(color)}
                     <Burger {color} />
                 {/snippet}
@@ -84,7 +90,7 @@
         mainAxisAlignment={"spaceBetween"}
         gap="lg">
         <MenuTrigger position={"right"} align={"start"}>
-            <CommonButton mode={"active"} onClick={showMenu}>
+            <CommonButton size={"large"} mode={"active"} onClick={showMenu}>
                 {#snippet icon(color)}
                     <Burger {color} />
                 {/snippet}
@@ -96,7 +102,7 @@
         </MenuTrigger>
 
         <MenuTrigger position={"left"} align={"end"}>
-            <CommonButton mode={"active"} onClick={showMenu}>
+            <CommonButton size={"large"} mode={"active"} onClick={showMenu}>
                 {#snippet icon(color)}
                     <Burger {color} />
                 {/snippet}
@@ -113,7 +119,7 @@
         mainAxisAlignment={"spaceBetween"}
         gap="lg">
         <MenuTrigger position={"top"} align={"start"}>
-            <CommonButton mode={"active"} onClick={showMenu}>
+            <CommonButton size={"large"} mode={"active"} onClick={showMenu}>
                 {#snippet icon(color)}
                     <Burger {color} />
                 {/snippet}
@@ -125,7 +131,7 @@
         </MenuTrigger>
 
         <MenuTrigger position={"top"} align={"start"}>
-            <CommonButton mode={"active"} onClick={showMenu}>
+            <CommonButton size={"large"} mode={"active"} onClick={showMenu}>
                 {#snippet icon(color)}
                     <Burger {color} />
                 {/snippet}
@@ -136,4 +142,8 @@
             {/snippet}
         </MenuTrigger>
     </Container>
+
+    {#if nameClicked}
+        <pre transition:fade>{`${nameClicked} clicked!`}</pre>
+    {/if}
 </Container>
