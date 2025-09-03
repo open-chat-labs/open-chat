@@ -38,6 +38,7 @@ http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-ledger-types = { workspace = true }
+ic_principal = { workspace = true }
 ic-stable-structures = { workspace = true }
 icpswap_swap_pool_canister = { path = "../../../external_canisters/icpswap_swap_pool/api" }
 icpswap_swap_pool_canister_c2c_client = { path = "../../../external_canisters/icpswap_swap_pool/c2c_client" }

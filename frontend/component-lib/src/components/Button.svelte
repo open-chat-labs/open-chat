@@ -32,7 +32,14 @@
     let style = $derived(`${heightCss}; ${widthCss};`);
 </script>
 
-<button {style} class:secondary class:disabled onclick={onClick} disabled={disabled || loading}>
+<button
+    type="button"
+    aria-busy={loading}
+    {style}
+    class:secondary
+    class:disabled
+    onclick={onClick}
+    disabled={disabled || loading}>
     {#if loading}
         <Spinner
             size={"1.4rem"}
@@ -48,6 +55,7 @@
 
 <style lang="scss">
     button {
+        all: unset;
         position: relative;
         background: var(--primary-gradient-inverted);
         min-height: var(--sp-xxxl);
@@ -63,7 +71,7 @@
             background ease-in-out 200ms,
             color ease-in-out 200ms;
 
-        font-weight: 700; // TODO - typography vars (weight semi - bold)
+        font-weight: var(--font-semi-bold);
         font-size: 14px; // TODO - typography vars
 
         .content {
@@ -95,6 +103,13 @@
                 color: var(--disabled-button);
                 border-color: var(--disabled-button);
             }
+        }
+
+        // TODO - figure out out what to do with this and apply it consistently
+        &:focus-visible {
+            border: 1px solid var(--secondary);
+            outline: none;
+            outline-offset: 0px;
         }
     }
 </style>

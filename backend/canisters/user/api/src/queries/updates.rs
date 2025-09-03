@@ -1,5 +1,4 @@
 use crate::{MessageActivitySummary, Referral, WalletConfig};
-use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
@@ -8,21 +7,21 @@ use types::{
 };
 
 #[ts_export(user, updates)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub updates_since: TimestampMillis,
 }
 
 #[expect(clippy::large_enum_variant)]
 #[ts_export(user, updates)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
     SuccessNoUpdates,
 }
 
 #[ts_export(user, updates)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub timestamp: TimestampMillis,
     pub username: Option<String>,
@@ -60,7 +59,7 @@ pub struct SuccessResult {
 }
 
 #[ts_export(user, updates)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct DirectChatsUpdates {
     pub added: Vec<DirectChatSummary>,
     pub updated: Vec<DirectChatSummaryUpdates>,
@@ -69,7 +68,7 @@ pub struct DirectChatsUpdates {
 }
 
 #[ts_export(user, updates)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GroupChatsUpdates {
     pub added: Vec<crate::GroupChatSummary>,
     pub updated: Vec<crate::GroupChatSummaryUpdates>,
@@ -78,7 +77,7 @@ pub struct GroupChatsUpdates {
 }
 
 #[ts_export(user, updates)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct CommunitiesUpdates {
     pub added: Vec<crate::CommunitySummary>,
     pub updated: Vec<crate::CommunitySummaryUpdates>,
@@ -86,7 +85,7 @@ pub struct CommunitiesUpdates {
 }
 
 #[ts_export(user, updates)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct FavouriteChatsUpdates {
     pub chats: Option<Vec<Chat>>,
     pub pinned: Option<Vec<Chat>>,
