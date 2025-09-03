@@ -38,16 +38,33 @@ fun Bitmap.toCircularBitmap(): Bitmap {
 object AvatarHelper {
 
     suspend fun loadBitmapForReceivedNotification(context: Context, notification: ReceivedNotification): Bitmap? {
-        val url = when (notification) {
-            is ReceivedNotification.Direct ->
-                "${String.format(BuildConfig.AVATAR_BASE_URL, notification.senderId.value)}/avatar/${notification.senderAvatarId}"
-            is ReceivedNotification.Group ->
-                "${String.format(BuildConfig.AVATAR_BASE_URL, notification.groupId.value)}/avatar/${notification.groupAvatarId}"
-            is ReceivedNotification.Channel ->
-                "${String.format(BuildConfig.AVATAR_BASE_URL, notification.communityId.value)}/channel/${notification.channelId.value}/avatar/${notification.channelAvatarId}}"
+        val toMainAvatarURL = { entityId: String, avatarId: String? ->
+            if (avatarId != null) {
+                "${String.format(BuildConfig.AVATAR_BASE_URL, entityId)}/avatar/$avatarId"
+            } else {
+                null
+            }
         }
 
-         return loadBitmap(context, url)
+        val url = when (notification) {
+            is ReceivedNotification.Direct ->
+                toMainAvatarURL(notification.senderId.value, notification.senderAvatarId)
+            is ReceivedNotification.Group ->
+                toMainAvatarURL(notification.groupId.value, notification.groupAvatarId)
+            is ReceivedNotification.Channel ->
+                if (notification.channelAvatarId != null) {
+                    "${
+                        String.format(
+                            BuildConfig.AVATAR_BASE_URL,
+                            notification.communityId.value
+                        )
+                    }/channel/${notification.channelId.value}/avatar/${notification.channelAvatarId}}"
+                } else {
+                    toMainAvatarURL(notification.communityId.value, notification.communityAvatarId)
+                }
+        }
+
+        return if (url != null) loadBitmap(context, url) else null
     }
 
     suspend fun loadBitmapForUser(context: Context, senderId: SenderId, avatarId: String): Bitmap? {
@@ -59,6 +76,7 @@ object AvatarHelper {
     // A coroutine based function for loading avatars off main thread, uses lightweight Coil
     // library.
     suspend fun loadBitmap(context: Context, url: String): Bitmap? {
+        Log.d(LOG_TAG, "Loading avatar for url: $url")
         return withContext(Dispatchers.IO) {
             try {
                 // TODO for global caching reuse image loader
