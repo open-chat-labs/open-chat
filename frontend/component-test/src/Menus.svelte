@@ -1,7 +1,11 @@
 <script lang="ts">
     import { CommonButton, Container, H2, MenuItem, MenuTrigger } from "component-lib";
+    import ChatOutline from "svelte-material-icons/ChatOutline.svelte";
+    import CommentQuoteOutline from "svelte-material-icons/CommentQuoteOutline.svelte";
+    import Flag from "svelte-material-icons/Flag.svelte";
     import Headphones from "svelte-material-icons/Headphones.svelte";
     import Burger from "svelte-material-icons/Menu.svelte";
+    import Translate from "svelte-material-icons/Translate.svelte";
 
     function showMenu() {
         console.log("show menu");
@@ -19,25 +23,25 @@
     </MenuItem>
     <MenuItem onclick={menuItemClicked}>
         {#snippet icon(color)}
-            <Headphones {color} />
+            <CommentQuoteOutline {color} />
         {/snippet}
         Quote
     </MenuItem>
     <MenuItem onclick={menuItemClicked}>
         {#snippet icon(color)}
-            <Headphones {color} />
+            <ChatOutline {color} />
         {/snippet}
         Reply in thread
     </MenuItem>
     <MenuItem onclick={menuItemClicked}>
         {#snippet icon(color)}
-            <Headphones {color} />
+            <Translate {color} />
         {/snippet}
         Translate
     </MenuItem>
     <MenuItem onclick={menuItemClicked}>
         {#snippet icon(color)}
-            <Headphones {color} />
+            <Flag {color} />
         {/snippet}
         Report
     </MenuItem>
