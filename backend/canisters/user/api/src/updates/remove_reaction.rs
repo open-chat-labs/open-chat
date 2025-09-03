@@ -1,10 +1,9 @@
-use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{MessageId, MessageIndex, Reaction, UnitResult, UserId};
 
 #[ts_export(user, remove_reaction)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub user_id: UserId,
     pub thread_root_message_index: Option<MessageIndex>,

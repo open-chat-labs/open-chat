@@ -1,11 +1,10 @@
-use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{AccessGateConfig, ChannelId, CommunityId, CommunityPermissions, Document, Rules};
 
 #[ts_export(user, create_community)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub is_public: bool,
     pub name: String,
@@ -22,14 +21,14 @@ pub struct Args {
 }
 
 #[ts_export(user, create_community)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
     Error(OCError),
 }
 
 #[ts_export(user, create_community)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub community_id: CommunityId,
     pub channels: Vec<(ChannelId, String)>,

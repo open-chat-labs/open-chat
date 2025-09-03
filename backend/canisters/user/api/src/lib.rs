@@ -1,5 +1,4 @@
 #![expect(deprecated)]
-use candid::CandidType;
 use chat_events::MessageContentInternal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -23,14 +22,14 @@ pub use queries::*;
 use ts_export::ts_export;
 
 #[ts_export(user)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum EventsResponse {
     Success(types::EventsResponse),
     Error(OCError),
 }
 
 #[ts_export(user)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GroupChatSummary {
     pub chat_id: ChatId,
     pub local_user_index_canister_id: CanisterId,
@@ -41,7 +40,7 @@ pub struct GroupChatSummary {
 }
 
 #[ts_export(user)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GroupChatSummaryUpdates {
     pub chat_id: ChatId,
     pub read_by_me_up_to: Option<MessageIndex>,
@@ -51,7 +50,7 @@ pub struct GroupChatSummaryUpdates {
 }
 
 #[ts_export(user)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct CommunitySummary {
     pub community_id: CommunityId,
     pub local_user_index_canister_id: CanisterId,
@@ -62,7 +61,7 @@ pub struct CommunitySummary {
 }
 
 #[ts_export(user)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct CommunitySummaryUpdates {
     pub community_id: CommunityId,
     pub channels: Vec<ChannelSummaryUpdates>,
@@ -72,7 +71,7 @@ pub struct CommunitySummaryUpdates {
 }
 
 #[ts_export(user)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ChannelSummary {
     pub channel_id: ChannelId,
     pub read_by_me_up_to: Option<MessageIndex>,
@@ -82,7 +81,7 @@ pub struct ChannelSummary {
 }
 
 #[ts_export(user)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ChannelSummaryUpdates {
     pub channel_id: ChannelId,
     pub read_by_me_up_to: Option<MessageIndex>,
@@ -228,14 +227,14 @@ pub enum C2CReplyContext {
 }
 
 #[ts_export(user)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct DeleteUndeleteMessagesArgs {
     pub thread_root_message_id: Option<MessageId>,
     pub message_ids: Vec<MessageId>,
 }
 
 #[ts_export(user)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct EditMessageArgs {
     pub thread_root_message_id: Option<MessageId>,
     pub message_id: MessageId,
@@ -244,7 +243,7 @@ pub struct EditMessageArgs {
 }
 
 #[ts_export(user)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ToggleReactionArgs {
     pub thread_root_message_id: Option<MessageId>,
     pub message_id: MessageId,
@@ -256,7 +255,7 @@ pub struct ToggleReactionArgs {
 }
 
 #[ts_export(user)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct TipMessageArgs {
     pub thread_root_message_id: Option<MessageId>,
     pub message_id: MessageId,
@@ -270,7 +269,7 @@ pub struct TipMessageArgs {
 }
 
 #[ts_export(user)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MarkMessagesReadArgs {
     pub read_up_to: MessageIndex,
 }
@@ -312,7 +311,7 @@ pub fn map_chats_to_chat_ids(chats: Vec<Chat>) -> Vec<ChatId> {
 }
 
 #[ts_export(user)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum ChatInList {
     Direct(ChatId),
     Group(ChatId),
@@ -321,27 +320,27 @@ pub enum ChatInList {
 }
 
 #[ts_export(user)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct NamedAccount {
     pub name: String,
     pub account: String,
 }
 
 #[ts_export(user)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum WalletConfig {
     Auto(AutoWallet),
     Manual(ManualWallet),
 }
 
 #[ts_export(user)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct AutoWallet {
     pub min_cents_visible: u32,
 }
 
 #[ts_export(user)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct ManualWallet {
     #[ts(as = "Vec<ts_export::TSPrincipal>")]
     pub tokens: Vec<CanisterId>,
@@ -354,7 +353,7 @@ impl Default for WalletConfig {
 }
 
 #[ts_export(user)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Referral {
     pub user_id: UserId,
     pub status: ReferralStatus,
@@ -366,14 +365,14 @@ pub struct Referrals {
     pub referrals: Vec<Referral>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ExternalAchievementAwarded {
     pub name: String,
     pub chit_reward: u32,
 }
 
 #[ts_export(user)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MessageActivityEvent {
     pub chat: Chat,
     pub thread_root_message_index: Option<MessageIndex>,
@@ -395,7 +394,7 @@ impl MessageActivityEvent {
 }
 
 #[ts_export(user)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Eq, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, Clone, Copy, Eq, PartialEq, Debug)]
 pub enum MessageActivity {
     Mention,
     Reaction,
@@ -407,7 +406,7 @@ pub enum MessageActivity {
 }
 
 #[ts_export(user)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct MessageActivitySummary {
     pub read_up_to: TimestampMillis,
     pub latest_event_timestamp: TimestampMillis,

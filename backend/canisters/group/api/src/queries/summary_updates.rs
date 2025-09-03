@@ -1,4 +1,4 @@
-use candid::Principal;
+use ic_principal::Principal;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;

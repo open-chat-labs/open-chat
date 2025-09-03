@@ -1,11 +1,11 @@
 use crate::crypto::process_transaction;
 use crate::guards::caller_is_owner;
 use crate::{RuntimeState, UserEventPusher, execute_update_async, mutate_state};
-use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::TipMessageArgs;
 use constants::{MEMO_TIP, NANOS_PER_MILLISECOND};
+use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
 use serde::Serialize;
 use types::{

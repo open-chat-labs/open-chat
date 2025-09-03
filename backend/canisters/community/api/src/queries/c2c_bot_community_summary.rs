@@ -7,14 +7,14 @@ use types::{
     UserId, VersionedRules,
 };
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub bot_id: UserId,
     pub initiator: BotInitiator,
 }
 
 #[expect(clippy::large_enum_variant)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(CommunitySummary),
     Error(OCError),

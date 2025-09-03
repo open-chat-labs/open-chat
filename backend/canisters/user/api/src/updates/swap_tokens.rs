@@ -1,4 +1,3 @@
-use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
@@ -61,7 +60,7 @@ pub enum Response {
 }
 
 #[ts_export(user, swap_tokens)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub amount_out: u128,
 }

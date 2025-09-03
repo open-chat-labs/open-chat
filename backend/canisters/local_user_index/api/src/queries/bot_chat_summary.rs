@@ -1,11 +1,11 @@
-use candid::Deserialize;
+use candid::{CandidType, Deserialize};
 use community_canister::c2c_bot_channel_details;
 use group_canister::c2c_bot_group_details;
 use oc_error_codes::OCError;
 use serde::Serialize;
 use ts_export::ts_export;
 use types::{BotChatContext, ChatSummary};
-use user_canister::{c2c_bot_chat_summary, token_swap_status::CandidType};
+use user_canister::c2c_bot_chat_summary;
 
 #[ts_export(local_user_index, bot_chat_summary)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
