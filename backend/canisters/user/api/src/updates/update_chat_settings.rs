@@ -1,11 +1,9 @@
-use crate::token_swap_status::CandidType;
-use candid::Deserialize;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{Milliseconds, OptionUpdate, UnitResult, UserId};
 
 #[ts_export(user, update_chat_settings)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub user_id: UserId,
     #[ts(as = "types::OptionUpdateU64")]

@@ -1,24 +1,23 @@
-pub use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::TimestampMillis;
 
 #[ts_export(user, token_swap_status)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub swap_id: u128,
 }
 
 #[ts_export(user, token_swap_status)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(TokenSwapStatus),
     Error(OCError),
 }
 
 #[ts_export(user, token_swap_status)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct TokenSwapStatus {
     pub started: TimestampMillis,
     pub icrc2: bool,

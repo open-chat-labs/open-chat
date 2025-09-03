@@ -10,9 +10,9 @@ candid = { workspace = true }
 chat_events = { path = "../../../libraries/chat_events" }
 constants = { path = "../../../libraries/constants" }
 ic-ledger-types = { workspace = true }
+ic_principal = { workspace = true }
 icrc-ledger-types = { workspace = true }
 oc_error_codes = { path = "../../../libraries/error_codes" }
-proposals_bot_canister = { path = "../../proposals_bot/api" }
 serde = { workspace = true }
 ts_export = { path = "../../../libraries/ts_export" }
 ts-rs = { workspace = true }

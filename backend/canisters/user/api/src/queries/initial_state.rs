@@ -1,5 +1,4 @@
 use crate::{MessageActivitySummary, Referral, WalletConfig};
-use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
@@ -10,13 +9,13 @@ use types::{
 pub type Args = Empty;
 
 #[ts_export(user, initial_state)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
 }
 
 #[ts_export(user, initial_state)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub timestamp: TimestampMillis,
     pub direct_chats: DirectChatsInitial,
@@ -48,27 +47,27 @@ pub struct SuccessResult {
 }
 
 #[ts_export(user, initial_state)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct DirectChatsInitial {
     pub summaries: Vec<DirectChatSummary>,
     pub pinned: Vec<ChatId>,
 }
 
 #[ts_export(user, initial_state)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct GroupChatsInitial {
     pub summaries: Vec<crate::GroupChatSummary>,
     pub pinned: Vec<ChatId>,
 }
 
 #[ts_export(user, initial_state)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct CommunitiesInitial {
     pub summaries: Vec<crate::CommunitySummary>,
 }
 
 #[ts_export(user, initial_state)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct FavouriteChatsInitial {
     pub chats: Vec<Chat>,
     pub pinned: Vec<Chat>,

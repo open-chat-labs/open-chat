@@ -1,4 +1,3 @@
-use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 
@@ -13,7 +12,7 @@ use types::UserId;
 pub use updates::*;
 
 #[ts_export(group)]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum EventsResponse {
     Success(types::EventsResponse),
     Error(OCError),

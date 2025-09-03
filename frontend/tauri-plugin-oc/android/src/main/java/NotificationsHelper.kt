@@ -11,6 +11,8 @@ import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.core.app.NotificationCompat
 import androidx.core.app.Person
+import androidx.core.content.pm.ShortcutInfoCompat
+import androidx.core.content.pm.ShortcutManagerCompat
 import com.google.firebase.messaging.FirebaseMessaging
 import com.ocplugin.app.data.AppDb
 import com.ocplugin.app.data.Notification
@@ -25,11 +27,16 @@ import com.ocplugin.app.models.ThreadIndex
 import com.ocplugin.app.models.decodeNotificationData
 import androidx.core.graphics.drawable.IconCompat
 
-// All functions are used, though outside the plugin codebase
+// TODO Reconstruct notifications on device restart!
+// TODO Manage media (i.e. shared photos)
+// TODO Notification actions - reply, mark as read, mute, forward - what we feel we should have!
+// TODO Split concerns - DB and notification handling
+// TODO manage video call notification
 @Suppress("UNUSED")
 object NotificationsHelper {
     private const val MESSAGES_CHANNEL_ID = "oc_messages"
     private const val MESSAGES_GROUP_ID = "oc_messages_group"
+    private const val NOTIFICATIONS_GROUP_KEY = "notifications_group_key"
 
     suspend fun processReceivedNotification(context: Context, data: Map<String, String>, appIsInForeground: Boolean) {
         // Decode received notification data!
@@ -81,29 +88,36 @@ object NotificationsHelper {
     suspend fun notifyMessageStyleNotification(context: Context, receivedNotification: ReceivedNotification) {
         val dao = AppDb.get().notificationDao()
         val notifications = loadNotificationsForData(dao, receivedNotification)
+        if (notifications.isEmpty()) return
+
         val lastNotificationId = notifications.last().id
         val pendingIntent = buildPendingIntentForData(context, lastNotificationId)
+
+        // Main avatar for notification
+        val mainAvatar = AvatarHelper.loadBitmapForReceivedNotification(context, receivedNotification)
 
         // TODO i18n
         // Build "yourself" as the base persona to initialise the messagingStyle!
         val you = Person.Builder().setName("You").build()
         val messagingStyle = NotificationCompat.MessagingStyle(you)
 
-        // Add notifications to the bunch!
+        // Build personas list
+        val persons = mutableListOf<Person>()
         notifications.forEach { notification ->
-            val personBuilder = Person.Builder().setName(notification.senderName)
+            val personBuilder = Person.Builder()
+                .setName(notification.senderName)
+                .setImportant(true)
 
-            notification.senderAvatarId?.let { avatarId ->
-                AvatarHelper.loadBitmapForUser(context, notification.senderId, avatarId)?.let { avatarBitmap ->
-                    val icon = IconCompat.createWithBitmap(avatarBitmap)
-                    personBuilder.setIcon(icon)
-                }
+            if (mainAvatar != null) {
+                personBuilder.setIcon(IconCompat.createWithBitmap(mainAvatar))
             }
+
+            persons.add(personBuilder.build())
 
             messagingStyle.addMessage(
                 ReceivedNotification.toMessage(notification.body, notification.bodyType),
                 notification.receivedAt,
-                personBuilder.build()
+                persons.last()
             )
         }
 
@@ -111,19 +125,35 @@ object NotificationsHelper {
             messagingStyle.setConversationTitle(receivedNotification.toTitle())
         }
 
-        // Main avatar for notification header
-        val mainAvatar = AvatarHelper.loadBitmapForReceivedNotification(context, receivedNotification)
+        val packageName = context.packageName
+        val mainActivityClass = Class.forName("$packageName.MainActivity")
+        val intent = Intent(context, mainActivityClass).apply {
+            putExtra("notificationPayload", lastNotificationId.toString())
+            action = Intent.ACTION_VIEW
+        }
+
+        val shortcut = ShortcutInfoCompat.Builder(context, "shortcut_${receivedNotification.contextId}")
+            .setShortLabel(receivedNotification.toTitle())
+            .setLongLived(true)
+            .setPersons(persons.toTypedArray())
+            .setIntent(intent)
+            .build()
+        ShortcutManagerCompat.pushDynamicShortcut(context, shortcut)
+
         val notificationBuilder = NotificationCompat.Builder(context, MESSAGES_CHANNEL_ID)
-        notificationBuilder.setContentTitle(receivedNotification.toTitle())
-            .setContentText(receivedNotification.toMessage())
             .setStyle(messagingStyle)
+            .setShortcutId("shortcut_${receivedNotification.contextId}")
+            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
             .setSmallIcon(OpenChatPlugin.icNotificationSmall)
             .setLargeIcon(mainAvatar)
+            .setContentTitle(receivedNotification.toTitle())
+            .setContentText(receivedNotification.toMessage())
+            .setGroup(NOTIFICATIONS_GROUP_KEY)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
 
-        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.notify(receivedNotification.contextId, notificationBuilder.build())
+        val nm = OpenChatPlugin.getNotificationsManager(context)
+        nm.notify(receivedNotification.contextId, notificationBuilder.build())
     }
 
     // Load notifications for the given data.
@@ -145,7 +175,7 @@ object NotificationsHelper {
     // This notification id is then used to load the notification from the local db and mark
     // it, and all related notifications, as released. Then the released notifications are
     // cleaned up.
-    suspend fun releaseNotificationsAfterTap(notificationId: Long): Notification? {
+    suspend fun releaseNotificationsAfterTap(context: Context, notificationId: Long): Notification? {
         val dao = AppDb.get().notificationDao()
         val notification = dao.getById(notificationId);
 
@@ -179,7 +209,9 @@ object NotificationsHelper {
         // TODO | notifications with the other clients a user might be using.
         // TODO | also consider potential analytics we could gather before cleaning up!
         // For now, keep this here for simplicity.
-        if (marked > 0) dao.cleanup()
+        if (marked > 0) {
+            dao.cleanup()
+        }
 
         return notification
     }
@@ -220,9 +252,8 @@ object NotificationsHelper {
             // TODO same as for the tap, move to a service
             dao.cleanup()
 
-            // Cancel any notifications for this context
-            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            manager.cancel(notificationContextId)
+            // Cancel any notifications for this context and update the summary notification!
+            OpenChatPlugin.getNotificationsManager(context).cancel(notificationContextId)
         }
         return true
     }
@@ -261,8 +292,7 @@ object NotificationsHelper {
     // notifications channel if it doesn't already exist. This method is called from the Tauri
     // app MainActivity on app start.
     fun createNotificationChannel(context: Context) {
-        val notificationManager: NotificationManager =
-                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager = OpenChatPlugin.getNotificationsManager(context)
 
         // Create the NotificationChannel, but only on API 26+ because
         // the NotificationChannel class is new and not in the support library
