@@ -15,6 +15,7 @@
     let iconColour = $derived(selected ? "var(--primary)" : "var(--text-primary)");
 </script>
 
+<!-- Semantically it would be better if this were a button but we also want it to behave like a Container which is ... interesting -->
 <Container
     onClick={onSelect}
     borderWidth={"zero"}
@@ -24,7 +25,6 @@
     mainAxisAlignment={"spaceBetween"}
     height={{ kind: "fill" }}
     direction={"vertical"}>
-    <div class="selection" class:selected></div>
     <div class="bottom_bar_icon">
         {@render icon(iconColour)}
     </div>
@@ -47,10 +47,10 @@
         border-radius: var(--rad-sm);
         background-color: transparent;
         transition: background-color ease-in-out 300ms;
-    }
 
-    .selected {
-        background-color: var(--primary);
+        &.selected {
+            background-color: var(--primary);
+        }
     }
 
     .icon {
