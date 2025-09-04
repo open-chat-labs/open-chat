@@ -25,7 +25,7 @@
     class:centered>
     <Container
         borderWidth={"thin"}
-        padding={["md"]}
+        padding={"md"}
         gap={"sm"}
         backgroundColour={"var(--background-1)"}
         minWidth={new Pixel(160)}

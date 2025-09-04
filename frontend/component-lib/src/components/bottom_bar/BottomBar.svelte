@@ -69,7 +69,7 @@
         indicator={indicators.has("profile")}
         onSelect={() => itemSelected("profile")}
         selected={selection === "profile"}>
-        {#snippet icon(color)}
+        {#snippet icon()}
             <Avatar size={"large"} url={avatarUrl} name={avatarName}></Avatar>
         {/snippet}
     </BottomBarItem>
