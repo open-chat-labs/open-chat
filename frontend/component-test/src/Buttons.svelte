@@ -25,7 +25,7 @@
             width={{ kind: "fixed", size: "300px" }}
             gap={"md"}
             borderRadius={"lg"}
-            padding={["lg"]}
+            padding={"lg"}
             borderWidth={"thin"}
             direction={"vertical"}>
             <Body>Filled / Primary</Body>
@@ -46,7 +46,7 @@
             width={{ kind: "fixed", size: "300px" }}
             gap={"md"}
             borderRadius={"lg"}
-            padding={["lg"]}
+            padding={"lg"}
             borderWidth={"thin"}
             direction={"vertical"}>
             <Body>Outlined / Secondary</Body>
@@ -70,7 +70,7 @@
         <Subtitle>Overflowing</Subtitle>
 
         <Container
-            padding={["lg"]}
+            padding={"lg"}
             borderWidth={"thin"}
             borderRadius={"lg"}
             width={{ kind: "fixed", size: "450px" }}>
@@ -82,11 +82,7 @@
         </Container>
 
         <Subtitle>Filling</Subtitle>
-        <Container
-            padding={["lg"]}
-            borderWidth={"thin"}
-            borderRadius={"lg"}
-            width={{ kind: "hug" }}>
+        <Container padding={"lg"} borderWidth={"thin"} borderRadius={"lg"} width={{ kind: "hug" }}>
             <Container gap={"md"}>
                 {#each ["a", "b", "c", "d", "e", "f"] as c}
                     <Button width={{ kind: "fixed", size: "150px" }}>Button {c}</Button>
@@ -99,7 +95,7 @@
         <H2>Floating Buttons</H2>
 
         <Container
-            padding={["lg"]}
+            padding={"lg"}
             borderWidth={"thin"}
             borderRadius={"lg"}
             mainAxisAlignment={"end"}

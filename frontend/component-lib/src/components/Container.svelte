@@ -53,6 +53,7 @@
         minHeight?: Pixel;
         shadow?: string;
         backgroundColour?: string;
+        onClick?: () => void;
     }
 
     let {
@@ -73,6 +74,7 @@
         minHeight = new Pixel(0),
         shadow,
         backgroundColour = "unset",
+        onClick,
     }: Props = $props();
 
     // you might expect this to be done inside onMount but
@@ -94,7 +96,13 @@
     );
 </script>
 
-<div {style} class={`container ${direction}`}>
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div
+    class:clickable={onClick !== undefined}
+    onclick={onClick}
+    {style}
+    class={`container ${direction}`}>
     {@render children()}
 </div>
 
@@ -115,6 +123,10 @@
         &.vertical {
             display: flex;
             flex-direction: column;
+        }
+
+        &.clickable {
+            cursor: pointer;
         }
     }
 

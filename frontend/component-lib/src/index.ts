@@ -1,3 +1,4 @@
+export { default as Avatar } from "./components/Avatar.svelte";
 export { default as BottomBar } from "./components/bottom_bar/BottomBar.svelte";
 export { default as BottomBarItem } from "./components/bottom_bar/BottomBarItem.svelte";
 export { default as BigButton } from "./components/buttons/BigButton.svelte";
