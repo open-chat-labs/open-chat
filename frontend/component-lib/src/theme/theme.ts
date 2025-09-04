@@ -1,3 +1,4 @@
+import { Avatars } from "./avatars";
 import type { Colours } from "./colour";
 import { Shadows } from "./shadow";
 import { BorderRadius, BorderWidth, IconSize, Pixel, Rem, Spacings } from "./sizes";
@@ -11,6 +12,7 @@ export class Theme {
     public typography: TypographicStyles;
     public fontWeights: FontWeights;
     public shadows: Shadows;
+    public avatars: Avatars;
 
     constructor(public colours: Colours) {
         // Colours are injected (as they are flexible), all other params are hard-coded for now
@@ -62,6 +64,8 @@ export class Theme {
         this.fontWeights = new FontWeights();
 
         this.shadows = new Shadows();
+
+        this.avatars = new Avatars(new Pixel(32), new Pixel(40), new Pixel(48));
     }
 
     writeCssVariables() {
@@ -74,6 +78,7 @@ export class Theme {
             ...this.typography.cssVariables(),
             ...this.fontWeights.cssVariables(),
             ...this.shadows.cssVariables(),
+            ...this.avatars.cssVariables(),
         ];
         vars.forEach((cssVar) => {
             cssVar.write();

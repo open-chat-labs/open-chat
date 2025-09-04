@@ -1,6 +1,9 @@
 <script lang="ts">
-    import { Button, Container, theme as neon } from "component-lib";
+    import { CommonButton, Container, MenuTrigger, theme as neon, Overview } from "component-lib";
+    import Burger from "svelte-material-icons/Menu.svelte";
+    import MenuItem from "../../component-lib/src/components/menu/MenuItem.svelte";
     import BigButtons from "./BigButtons.svelte";
+    import BottomBars from "./BottomBars.svelte";
     import Buttons from "./Buttons.svelte";
     import Colours from "./Colours.svelte";
     import CommonButtons from "./CommonButtons.svelte";
@@ -19,30 +22,46 @@
         | "layout"
         | "controls"
         | "menus"
+        | "bottom_bar"
         | "typography";
     let selected = $state<Section>("colours");
+
+    const labels: Record<Section, string> = {
+        colours: "Colours",
+        buttons: "Buttons",
+        big_buttons: "Big buttons",
+        common_buttons: "Common buttons",
+        layout: "Layout",
+        controls: "Controls & indicators",
+        menus: "Menus",
+        typography: "Typography",
+        bottom_bar: "Bottom bar",
+    };
 </script>
 
-{#snippet sectionButton(section: Section, name: string)}
-    <Button
-        width={{ kind: "fixed", size: "200px" }}
-        onClick={() => (selected = section)}
-        secondary={selected !== section}>{name}</Button>
+{#snippet sectionMenuItem(section: Section)}
+    <MenuItem onclick={() => (selected = section)}>{labels[section]}</MenuItem>
 {/snippet}
 
-<Container height={{ kind: "fill" }} direction={"vertical"}>
-    <Container padding={["zero", "lg"]} gap={"md"}>
-        {@render sectionButton("colours", "Colours")}
-        {@render sectionButton("layout", "Layout")}
-        {@render sectionButton("typography", "Typography")}
-        {@render sectionButton("buttons", "Buttons")}
-        {@render sectionButton("big_buttons", "Big buttons")}
-        {@render sectionButton("common_buttons", "Common buttons")}
-        {@render sectionButton("controls", "Controls & Indicators")}
-        {@render sectionButton("menus", "Context menus")}
+<Container gap={"xl"} height={{ kind: "fill" }} direction={"vertical"}>
+    <Container crossAxisAlignment={"center"} padding={["zero", "lg"]} gap={"xl"}>
+        <MenuTrigger>
+            <CommonButton mode="active" size="large">
+                {#snippet icon(color)}
+                    <Burger {color} />
+                {/snippet}
+                Menu
+            </CommonButton>
+            {#snippet menuItems()}
+                {#each Object.keys(labels) as k}
+                    {@render sectionMenuItem(k as Section)}
+                {/each}
+            {/snippet}
+        </MenuTrigger>
+        <Overview>{labels[selected]}</Overview>
     </Container>
 
-    <Container height={{ kind: "fill" }} direction={"vertical"} padding={["lg"]}>
+    <Container height={{ kind: "fill" }} direction={"vertical"} padding={"lg"}>
         {#if selected === "colours"}
             <Colours></Colours>
         {:else if selected === "buttons"}
@@ -57,6 +76,8 @@
             <Layout></Layout>
         {:else if selected === "menus"}
             <Menus></Menus>
+        {:else if selected === "bottom_bar"}
+            <BottomBars />
         {:else if selected === "typography"}
             <Typography></Typography>
         {/if}

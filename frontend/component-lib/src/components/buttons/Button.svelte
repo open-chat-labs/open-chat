@@ -1,7 +1,7 @@
 <script lang="ts">
     import { getFlexStyle, type Direction, type SizeMode } from "component-lib";
     import { getContext, type Snippet } from "svelte";
-    import Spinner from "./Spinner.svelte";
+    import Spinner from "../Spinner.svelte";
 
     interface Props {
         children?: Snippet;
