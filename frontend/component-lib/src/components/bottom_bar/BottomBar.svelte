@@ -19,7 +19,7 @@
     }
 
     let {
-        selection = "chats",
+        selection = $bindable("chats"),
         onSelect,
         avatarUrl,
         avatarName,
