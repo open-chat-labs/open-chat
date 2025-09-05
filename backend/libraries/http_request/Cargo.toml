@@ -8,6 +8,6 @@ edition.workspace = true
 [dependencies]
 candid = { workspace = true }
 canister_logger = { path = "../canister_logger" }
+json = { path = "../json" }
 serde = { workspace = true }
-serde_json = { workspace = true }
 types = { path = "../types" }

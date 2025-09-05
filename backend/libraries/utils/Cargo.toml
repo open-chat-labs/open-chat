@@ -19,11 +19,11 @@ ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-management-canister-types = { workspace = true }
 itertools = { workspace = true }
+json = { path = "../json" }
 msgpack = { path = "../msgpack" }
 oc_error_codes = { path = "../error_codes" }
 rand = { workspace = true }
 serde = { workspace = true }
-serde_json = { workspace = true }
 sha256 = { path = "../sha256" }
 sha3 = { workspace = true }
 time = { workspace = true }

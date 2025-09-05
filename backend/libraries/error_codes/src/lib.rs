@@ -211,6 +211,6 @@ impl OCErrorCode {
     }
 
     pub fn with_json<T: Serialize>(self, data: &T) -> OCError {
-        OCError(self as u16, Some(serde_json::to_string(data).unwrap()))
+        OCError(self as u16, Some(json::serialize_to_string(data).unwrap()))
     }
 }

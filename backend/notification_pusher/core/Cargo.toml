@@ -12,6 +12,7 @@ envconfig = { workspace = true }
 fcm-service = { workspace = true }
 ic-agent = { workspace = true }
 index_store = { path = "../../libraries/index_store" }
+json = { path = "../../libraries/json" }
 local_user_index_canister = { path = "../../canisters/local_user_index/api" }
 local_user_index_canister_client = { path = "../../canisters/local_user_index/client" }
 notifications_index_canister = { path = "../../canisters/notifications_index/api" }
@@ -21,7 +22,6 @@ prometheus = { workspace = true }
 reqwest = { workspace = true }
 rustls = { workspace = true }
 serde = { workspace = true }
-serde_json = { workspace = true }
 tokio = { workspace = true, features = ["macros", "time"] }
 tracing = { workspace = true }
 types = { path = "../../libraries/types" }

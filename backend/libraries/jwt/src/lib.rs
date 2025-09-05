@@ -106,7 +106,7 @@ fn sign_token(token: &str, secret_key_der: &[u8], rng: &mut impl CryptoRngCore) 
 }
 
 pub fn encode_as_json<T: Serialize>(value: &T) -> Result<String, Box<dyn Error>> {
-    let bytes = serde_json::to_vec(value)?;
+    let bytes = json::serialize(value)?;
     Ok(encode_bytes(&bytes)?)
 }
 
@@ -116,7 +116,7 @@ fn encode_bytes(bytes: &[u8]) -> Result<String, ct_codecs::Error> {
 
 pub fn decode_from_json<T: DeserializeOwned>(s: &str) -> Result<T, Box<dyn Error>> {
     let bytes = decode_to_bytes(s)?;
-    Ok(serde_json::from_slice(&bytes)?)
+    Ok(json::deserialize(&bytes)?)
 }
 
 fn decode_to_bytes(s: &str) -> Result<Vec<u8>, ct_codecs::Error> {

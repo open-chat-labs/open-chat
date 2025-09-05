@@ -1,4 +1,5 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
+use crate::serde_utils::deserialize_int_or_string;
 use crate::{
     Achievement, CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, EncryptionKey, MessageIndex,
     MessagePermission, Milliseconds, P2PSwapStatus, PendingCryptoTransaction, ProposalContent, TimestampMillis, TokenInfo,
@@ -742,6 +743,7 @@ pub struct DeletedBy {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct BlobReference {
     pub canister_id: CanisterId,
+    #[serde(deserialize_with = "deserialize_int_or_string")]
     pub blob_id: u128,
 }
 
