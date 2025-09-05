@@ -247,7 +247,7 @@
                 </div>
             </div>
         {/if}
-        <div class="inner" class:me class:rtl>
+        <div class="inner" class:me>
             {#if shouldRenderPreviews}
                 {#if preview.kind === "twitter"}
                     <Tweet tweetId={preview.tweetId} />
@@ -318,13 +318,8 @@
 
         .inner {
             flex: 1;
-            border-left: $sp2 solid var(--currentChat-msg-separator);
-            padding-left: 12px;
-
-            &.rtl {
-                border-right: $sp2 solid var(--currentChat-msg-separator);
-                padding-right: 12px;
-            }
+            border-inline-start: $sp2 solid var(--currentChat-msg-separator);
+            padding-inline-start: 12px;
 
             &.me {
                 border-color: var(--currentChat-msg-me-separator);
