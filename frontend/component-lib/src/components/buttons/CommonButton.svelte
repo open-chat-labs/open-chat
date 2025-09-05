@@ -17,7 +17,6 @@
         icon?: Snippet<[string]>;
         width?: SizeMode;
         height?: SizeMode;
-        debug?: boolean;
     }
     let {
         children,
@@ -29,16 +28,16 @@
         size = "medium",
         width = { kind: "hug" },
         height = { kind: "hug" },
-        debug = false,
     }: Props = $props();
 
+    const SPEED = 300;
     let internalMode = $state<InternalMode>("default");
     let parentDirection = getContext<Direction>("direction");
     let spinnerColour = mode === "default" ? "var(--primary)" : "var(--text-on-primary)";
     let iconColour = $derived(getIconColour());
     let widthCss = $derived(getFlexStyle("width", width, parentDirection));
     let heightCss = $derived(getFlexStyle("height", height, parentDirection));
-    let style = $derived(`${heightCss}; ${widthCss};`);
+    let style = $derived(`--speed: ${SPEED}ms; ${heightCss}; ${widthCss};`);
     let pressing = $state(false);
     let timer = $state<number>();
 
@@ -54,7 +53,7 @@
             timer = window.setTimeout(() => {
                 pressing = false;
                 internalMode = "active";
-            }, 100);
+            }, SPEED);
         } else if (!pressing) {
             internalMode = mode;
         }
@@ -99,6 +98,10 @@
     $medium_icon: 16px;
     $large_icon: 18px;
 
+    :global(.common_button .icon svg path) {
+        transition: fill var(--speed) ease-in-out;
+    }
+
     :global(.common_button.small .icon svg) {
         width: $small_icon;
         height: $small_icon;
@@ -115,7 +118,7 @@
     }
 
     button {
-        $speed: 200ms;
+        $speed: var(--speed);
         all: unset;
         position: relative;
         display: flex;
