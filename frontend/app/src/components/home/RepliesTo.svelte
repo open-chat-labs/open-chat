@@ -39,7 +39,11 @@
     let displayName = $derived(
         me
             ? client.toTitleCase($_("you"))
-            : client.getDisplayName(repliesTo.senderId, $selectedCommunityMembersStore, $selectedChatWebhooksStore),
+            : client.getDisplayName(
+                  repliesTo.senderId,
+                  $selectedCommunityMembersStore,
+                  $selectedChatWebhooksStore,
+              ),
     );
 
     function getUrl() {

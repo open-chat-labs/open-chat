@@ -293,6 +293,15 @@ export const instagramRegex = (): RegExp =>
 
 export const spotifyRegex = (): RegExp => /\/(album|artist|show|episode|track|playlist)\/(\w+)/i;
 
+// https://oc.app/community/yf5kc-uaaaa-aaaar-a7qfq-cai/channel/2656124989/1863
+// or https://oc.app/community/yf5kc-uaaaa-aaaar-a7qfq-cai/channel/2656124989/1863/2
+export const communityMessageRegex = (): RegExp =>
+    /\/community\/([a-z0-9_-]+)\/channel\/(\d+)\/(\d+)(?:\/(\d+))?/i;
+
+// https://oc.app/group/s5ihe-dqaaa-aaaac-a3elq-cai/172
+// or https://oc.app/group/s5ihe-dqaaa-aaaac-a3elq-cai/172/3
+export const groupMessageRegex = (): RegExp => /\/group\/([a-z0-9_-]+)\/(\d+)(?:\/(\d+))?/i;
+
 export function isYoutubeLink(text: string): boolean {
     return matchesLink(text, text.match(youtubeRegex()));
 }

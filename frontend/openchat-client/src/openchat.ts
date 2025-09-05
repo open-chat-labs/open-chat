@@ -1,6 +1,6 @@
 /* eslint-disable no-case-declarations */
-import { DER_COSE_OID, type Identity, type SignIdentity, unwrapDER } from "@icp-sdk/core/agent";
 import { AuthClient, type AuthClientLoginOptions } from "@dfinity/auth-client";
+import { DER_COSE_OID, type Identity, type SignIdentity, unwrapDER } from "@icp-sdk/core/agent";
 import {
     DelegationChain,
     DelegationIdentity,
@@ -541,6 +541,7 @@ import {
     toMonthString,
     toShortTimeString,
 } from "./utils/date";
+import { getErc20TokenBalances } from "./utils/evm";
 import formatFileSize from "./utils/fileSize";
 import { gaTrack } from "./utils/ga";
 import { calculateMediaDimensions } from "./utils/layout";
@@ -554,10 +555,12 @@ import { groupBy, groupWhile, keepMax, partition, toRecord, toRecord2 } from "./
 import { getUserCountryCode } from "./utils/location";
 import {
     audioRecordingMimeType,
+    communityMessageRegex,
     containsSocialVideoLink,
     DIAMOND_MAX_SIZES,
     fillMessage,
     FREE_MAX_SIZES,
+    groupMessageRegex,
     instagramRegex,
     isSocialVideoLink,
     type MaxMediaSizes,
@@ -602,7 +605,6 @@ import {
 } from "./utils/user";
 import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 import { createWebAuthnIdentity, MultiWebAuthnIdentity } from "./utils/webAuthn";
-import { getErc20TokenBalances } from "./utils/evm";
 
 export const DEFAULT_WORKER_TIMEOUT = 1000 * 90;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -2677,6 +2679,8 @@ export class OpenChat {
     trackEvent = trackEvent;
     twitterLinkRegex = twitterLinkRegex;
     youtubeRegex = youtubeRegex;
+    communityMessageRegex = communityMessageRegex;
+    groupMessageRegex = groupMessageRegex;
     instagramRegex = instagramRegex;
     spotifyRegex = spotifyRegex;
     metricsEqual = metricsEqual;
@@ -5786,16 +5790,18 @@ export class OpenChat {
         });
     }
 
-    async getGroupMessagesByMessageIndex(
-        chatId: MultiUserChatIdentifier,
+    async getMessagesByMessageIndex(
+        chatId: ChatIdentifier,
+        threadRootMessageIndex: number | undefined,
         messageIndexes: ReadonlySet<number>,
     ): Promise<EventsResponse<Message>> {
         const serverChat = allServerChatsStore.value.get(chatId);
 
         try {
             const resp = await this.#sendRequest({
-                kind: "getGroupMessagesByMessageIndex",
+                kind: "getMessagesByMessageIndex",
                 chatId,
+                threadRootMessageIndex,
                 messageIndexes: new Set(messageIndexes),
                 latestKnownUpdate: serverChat?.lastUpdated,
             });

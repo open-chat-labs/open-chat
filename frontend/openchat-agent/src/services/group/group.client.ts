@@ -267,7 +267,7 @@ export class GroupClient extends MsgpackCanisterAgent {
 
     private setCachedEvents<T extends ChatEvent>(
         resp: EventsResponse<T>,
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex: number | undefined,
     ): EventsResponse<T> {
         setCachedEvents(this.db, this.chatId, resp, threadRootMessageIndex).catch((err) =>
             this.config.logger.error("Error writing cached group events", err),
@@ -848,17 +848,24 @@ export class GroupClient extends MsgpackCanisterAgent {
     }
 
     async getMessagesByMessageIndex(
+        threadRootMessageIndex: number | undefined,
         messageIndexes: Set<number>,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<Message>> {
-        const fromCache = await loadMessagesByMessageIndex(this.db, this.chatId, messageIndexes);
+        const fromCache = await loadMessagesByMessageIndex(
+            this.db,
+            this.chatId,
+            threadRootMessageIndex,
+            messageIndexes,
+        );
         if (fromCache.missing.size > 0) {
             console.log("Missing idxs from the cached: ", fromCache.missing);
 
             const resp = await this.getMessagesByMessageIndexFromBackend(
+                threadRootMessageIndex,
                 [...fromCache.missing],
                 latestKnownUpdate,
-            ).then((resp) => this.setCachedEvents(resp));
+            ).then((resp) => this.setCachedEvents(resp, threadRootMessageIndex));
 
             return isSuccessfulEventsResponse(resp)
                 ? {
@@ -878,15 +885,15 @@ export class GroupClient extends MsgpackCanisterAgent {
     }
 
     private getMessagesByMessageIndexFromBackend(
+        threadRootMessageIndex: number | undefined,
         messageIndexes: number[],
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<Message>> {
+        console.log("group.client.ts, threadRootMessageIndex: ", threadRootMessageIndex);
         const args = {
-            thread_root_message_index: undefined,
+            thread_root_message_index: threadRootMessageIndex,
             messages: messageIndexes,
-            invite_code: undefined,
             latest_known_update: latestKnownUpdate,
-            latest_client_event_index: undefined,
         };
         return this.executeMsgpackQuery(
             "messages_by_message_index",
