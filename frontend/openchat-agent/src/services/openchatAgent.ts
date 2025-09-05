@@ -2920,8 +2920,9 @@ export class OpenChatAgent extends EventTarget {
         return this.getLedgerIndexClient(ledgerIndex).getAccountTransactions(principal, fromId);
     }
 
-    getGroupMessagesByMessageIndex(
-        chatId: MultiUserChatIdentifier,
+    getMessagesByMessageIndex(
+        chatId: ChatIdentifier,
+        threadRootMessageIndex: number | undefined,
         messageIndexes: Set<number>,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<Message>> {
@@ -2930,6 +2931,7 @@ export class OpenChatAgent extends EventTarget {
                 return this.rehydrateEventResponse(
                     chatId,
                     this.getGroupClient(chatId.groupId).getMessagesByMessageIndex(
+                        threadRootMessageIndex,
                         messageIndexes,
                         latestKnownUpdate,
                     ),
@@ -2941,6 +2943,18 @@ export class OpenChatAgent extends EventTarget {
                     chatId,
                     this.communityClient(chatId.communityId).getMessagesByMessageIndex(
                         chatId,
+                        threadRootMessageIndex,
+                        messageIndexes,
+                        latestKnownUpdate,
+                    ),
+                    undefined,
+                    latestKnownUpdate,
+                );
+            case "direct_chat":
+                return this.rehydrateEventResponse(
+                    chatId,
+                    this.userClient.getMessagesByMessageIndex(
+                        threadRootMessageIndex,
                         messageIndexes,
                         latestKnownUpdate,
                     ),

@@ -734,18 +734,25 @@ export class CommunityClient extends MsgpackCanisterAgent {
 
     async getMessagesByMessageIndex(
         chatId: ChannelIdentifier,
+        threadRootMessageIndex: number | undefined,
         messageIndexes: Set<number>,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<Message>> {
-        const fromCache = await loadMessagesByMessageIndex(this.db, chatId, messageIndexes);
+        const fromCache = await loadMessagesByMessageIndex(
+            this.db,
+            chatId,
+            threadRootMessageIndex,
+            messageIndexes,
+        );
         if (fromCache.missing.size > 0) {
             console.log("Missing idxs from the cached: ", fromCache.missing);
 
             const resp = await this.getMessagesByMessageIndexFromBackend(
                 chatId,
+                threadRootMessageIndex,
                 [...fromCache.missing],
                 latestKnownUpdate,
-            ).then((resp) => this.setCachedEvents(chatId, resp));
+            ).then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex));
 
             return isSuccessfulEventsResponse(resp)
                 ? {
@@ -766,12 +773,13 @@ export class CommunityClient extends MsgpackCanisterAgent {
 
     private getMessagesByMessageIndexFromBackend(
         chatId: ChannelIdentifier,
+        threadRootMessageIndex: number | undefined,
         messageIndexes: number[],
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<Message>> {
         const args = {
             channel_id: toBigInt32(chatId.channelId),
-            thread_root_message_index: undefined,
+            thread_root_message_index: threadRootMessageIndex,
             messages: messageIndexes,
             invite_code: mapOptional(this.inviteCode, textToCode),
             latest_known_update: latestKnownUpdate,
@@ -814,7 +822,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
     private setCachedEvents<T extends ChatEvent>(
         chatId: ChannelIdentifier,
         resp: EventsResponse<T>,
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex: number | undefined,
     ): EventsResponse<T> {
         setCachedEvents(this.db, chatId, resp, threadRootMessageIndex).catch((err) =>
             this.config.logger.error("Error writing cached channel events", err),

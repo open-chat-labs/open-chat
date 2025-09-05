@@ -1,8 +1,8 @@
 import type { EventWrapper, Message } from "openchat-shared";
 
-// Taken from here - https://stackoverflow.com/a/6041965
+// Originally taken from here - https://stackoverflow.com/a/6041965
 const URL_REGEX = new RegExp(
-    `(https?):\\/\\/([\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:\\/~+#-]*[\\w@?^=%&\\/~+#-])`,
+    `(https?):\\/\\/(localhost|[\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:\\/~+#-]*[\\w@?^=%&\\/~+#-])`,
     "g",
 );
 
