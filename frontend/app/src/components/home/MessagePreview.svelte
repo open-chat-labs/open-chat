@@ -8,7 +8,7 @@
         OpenChat,
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
-        type ChatIdentifier,
+        type MultiUserChatIdentifier,
         type MessageContent,
     } from "openchat-client";
     import { getContext } from "svelte";
@@ -29,7 +29,7 @@
     interface Props {
         url: string;
         me: boolean;
-        chatId: ChatIdentifier;
+        chatId: MultiUserChatIdentifier;
         threadRootMessageIndex: number | undefined;
         messageIndex: number;
         intersecting: boolean;

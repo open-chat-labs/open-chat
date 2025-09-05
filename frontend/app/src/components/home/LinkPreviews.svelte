@@ -4,7 +4,7 @@
         eventListScrolling,
         iconSize,
         offlineStore,
-        type ChatIdentifier,
+        type MultiUserChatIdentifier,
         type OpenChat,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
@@ -52,7 +52,7 @@
 
     type MessagePreview = PreviewBase & {
         kind: "message";
-        chatId: ChatIdentifier;
+        chatId: MultiUserChatIdentifier;
         threadRootMessageIndex: number | undefined;
         messageIndex: number;
     };
@@ -175,20 +175,6 @@
                 chatId: {
                     kind: "group_chat",
                     groupId: regexMatch[1],
-                },
-                threadRootMessageIndex: regexMatch[3] ? Number(regexMatch[2]) : undefined,
-                messageIndex: regexMatch[3] ? Number(regexMatch[3]) : Number(regexMatch[2]),
-            };
-        }
-
-        regexMatch = url.pathname.match(client.userMessageRegex());
-        if (regexMatch) {
-            return {
-                kind: "message",
-                url: urlText,
-                chatId: {
-                    kind: "direct_chat",
-                    userId: regexMatch[1],
                 },
                 threadRootMessageIndex: regexMatch[3] ? Number(regexMatch[2]) : undefined,
                 messageIndex: regexMatch[3] ? Number(regexMatch[3]) : Number(regexMatch[2]),

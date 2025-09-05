@@ -302,10 +302,6 @@ export const communityMessageRegex = (): RegExp =>
 // or https://oc.app/group/s5ihe-dqaaa-aaaac-a3elq-cai/172/3
 export const groupMessageRegex = (): RegExp => /\/group\/([a-z0-9_-]+)\/(\d+)(?:\/(\d+))?/i;
 
-// https://oc.app/user/2yfsq-kaaaa-aaaaf-aaa4q-cai/562
-// or https://oc.app/user/2yfsq-kaaaa-aaaaf-aaa4q-cai/562/5
-export const userMessageRegex = (): RegExp => /\/user\/([a-z0-9_-]+)\/(\d+)(?:\/(\d+))?/i;
-
 export function isYoutubeLink(text: string): boolean {
     return matchesLink(text, text.match(youtubeRegex()));
 }

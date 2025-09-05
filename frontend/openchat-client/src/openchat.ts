@@ -567,7 +567,6 @@ import {
     messageContentFromFile,
     spotifyRegex,
     twitterLinkRegex,
-    userMessageRegex,
     youtubeRegex,
 } from "./utils/media";
 import { mergeKeepingOnlyChanged } from "./utils/object";
@@ -2682,7 +2681,6 @@ export class OpenChat {
     youtubeRegex = youtubeRegex;
     communityMessageRegex = communityMessageRegex;
     groupMessageRegex = groupMessageRegex;
-    userMessageRegex = userMessageRegex;
     instagramRegex = instagramRegex;
     spotifyRegex = spotifyRegex;
     metricsEqual = metricsEqual;
