@@ -31,7 +31,6 @@
             <CommonButton
                 onClick={() => (selected = option as Option)}
                 size={"medium"}
-                debug={option === "favourites"}
                 mode={(option as Option) === selected ? "active" : "default"}>
                 {#snippet icon(color)}
                     <Cog {color}></Cog>
@@ -48,12 +47,6 @@
             {/snippet}
             Small button
         </CommonButton>
-        <!-- <CommonButton {onClick} size={"small"} mode={"pressed"}>
-            {#snippet icon(color)}
-                <Cog {color}></Cog>
-            {/snippet}
-            Pressed variant
-        </CommonButton> -->
         <CommonButton {onClick} size={"small"} mode={"active"}>
             {#snippet icon(color)}
                 <Cog {color}></Cog>
@@ -69,12 +62,6 @@
             {/snippet}
             Medium button
         </CommonButton>
-        <!-- <CommonButton {onClick} size={"medium"} mode={"pressed"}>
-            {#snippet icon(color)}
-                <DiamondOutline {color} />
-            {/snippet}
-            Pressed variant
-        </CommonButton> -->
         <CommonButton {onClick} size={"medium"} mode={"active"}>
             {#snippet icon(color)}
                 <DiamondOutline {color} />
@@ -86,11 +73,6 @@
     <Container gap={"md"}>
         <CommonButton {onClick} size={"large"} mode={"default"}
             >Large / icon is optional</CommonButton>
-        <!-- <CommonButton {onClick} size={"large"} mode={"pressed"}>
-            {#snippet icon(color)}
-                <AccountCircle {color} />
-            {/snippet}
-            Pressed variant</CommonButton> -->
         <CommonButton {onClick} size={"large"} mode={"active"}>Active variant</CommonButton>
     </Container>
 
