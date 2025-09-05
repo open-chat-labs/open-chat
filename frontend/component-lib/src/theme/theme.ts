@@ -65,7 +65,7 @@ export class Theme {
 
         this.shadows = new Shadows();
 
-        this.avatars = new Avatars(new Pixel(32), new Pixel(40), new Pixel(48));
+        this.avatars = new Avatars(new Pixel(32), new Pixel(40), new Pixel(48), new Pixel(60));
     }
 
     writeCssVariables() {

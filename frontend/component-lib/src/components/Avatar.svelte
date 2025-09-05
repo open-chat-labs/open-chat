@@ -1,5 +1,5 @@
 <script lang="ts">
-    type AvatarSize = "small" | "medium" | "large";
+    type AvatarSize = "sm" | "md" | "lg" | "xl";
 
     interface Props {
         url: string;
@@ -8,7 +8,7 @@
     }
 
     // TODO - add intersection observer
-    let { url, size = "medium", name }: Props = $props();
+    let { url, size = "md", name }: Props = $props();
 </script>
 
 <img loading="lazy" src={url} alt={name} class={`avatar ${size}`} />
@@ -18,19 +18,24 @@
         border-radius: var(--rad-circle);
         object-fit: cover;
 
-        &.small {
+        &.sm {
             width: var(--avatar-sm);
             height: var(--avatar-sm);
         }
 
-        &.medium {
+        &.md {
             width: var(--avatar-md);
             height: var(--avatar-md);
         }
 
-        &.large {
+        &.lg {
             width: var(--avatar-lg);
             height: var(--avatar-lg);
+        }
+
+        &.xl {
+            width: var(--avatar-xl);
+            height: var(--avatar-xl);
         }
     }
 </style>

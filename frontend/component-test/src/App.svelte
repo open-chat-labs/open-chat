@@ -2,6 +2,7 @@
     import { CommonButton, Container, MenuTrigger, theme as neon, Overview } from "component-lib";
     import Burger from "svelte-material-icons/Menu.svelte";
     import MenuItem from "../../component-lib/src/components/menu/MenuItem.svelte";
+    import Avatars from "./Avatars.svelte";
     import BigButtons from "./BigButtons.svelte";
     import BottomBars from "./BottomBars.svelte";
     import Buttons from "./Buttons.svelte";
@@ -23,19 +24,21 @@
         | "controls"
         | "menus"
         | "bottom_bar"
+        | "avatars"
         | "typography";
     let selected = $state<Section>("colours");
 
     const labels: Record<Section, string> = {
-        colours: "Colours",
-        buttons: "Buttons",
+        avatars: "Avatars",
         big_buttons: "Big buttons",
+        bottom_bar: "Bottom bar",
+        buttons: "Buttons",
+        colours: "Colours",
         common_buttons: "Common buttons",
-        layout: "Layout",
         controls: "Controls & indicators",
+        layout: "Layout",
         menus: "Menus",
         typography: "Typography",
-        bottom_bar: "Bottom bar",
     };
 </script>
 
@@ -78,6 +81,8 @@
             <Menus></Menus>
         {:else if selected === "bottom_bar"}
             <BottomBars />
+        {:else if selected === "avatars"}
+            <Avatars />
         {:else if selected === "typography"}
             <Typography></Typography>
         {/if}
