@@ -1,6 +1,6 @@
 use crate::{
-    BotDataEncoding, BotInstallationLocation, BotPermissions, CanisterId, ChannelId, Chat, ChatEvent, ChatId, CommunityEvent,
-    CommunityId, EventIndex, FcmData, MessageIndex, Reaction, TimestampMillis, UserId,
+    BotDataEncoding, BotEventPayload, BotInstallationLocation, BotPermissions, CanisterId, ChannelId, Chat, ChatEvent, ChatId,
+    CommunityEvent, CommunityId, EventIndex, FcmData, MessageIndex, Reaction, TimestampMillis, UserId,
 };
 use candid::{CandidType, Principal};
 use serde::de::DeserializeOwned;
@@ -177,7 +177,7 @@ pub struct BotNotificationEnvelope {
     #[serde(rename = "r")]
     pub recipients: HashMap<UserId, BotDataEncoding>,
     #[serde(rename = "e")]
-    pub event_map: HashMap<BotDataEncoding, String>,
+    pub event_map: HashMap<BotDataEncoding, BotEventPayload>,
     #[serde(rename = "t")]
     pub timestamp: TimestampMillis,
 }
