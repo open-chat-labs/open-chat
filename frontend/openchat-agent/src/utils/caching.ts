@@ -1138,13 +1138,13 @@ export async function openDbAndGetCachedChats(
     }
 }
 
-// for now this is only used for loading pinned messages so we can ignore the idea of
-// thread root message index, but it might come up later
 export async function loadMessagesByMessageIndex(
     db: Database,
     chatId: ChatIdentifier,
+    threadRootMessageIndex: number | undefined,
     messagesIndexes: Set<number>,
 ): Promise<{ messageEvents: EventWrapper<Message>[]; missing: Set<number> }> {
+    const store = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
     const resolvedDb = await db;
 
     const missing: Set<number> = new Set();
@@ -1152,11 +1152,15 @@ export async function loadMessagesByMessageIndex(
 
     await Promise.all<Message | undefined>(
         [...messagesIndexes].map(async (msgIdx) => {
-            const evt = await resolvedDb.getFromIndex(
-                "chat_events",
-                "messageIdx",
-                createCacheKey({ chatId }, msgIdx),
+            const cacheKey = createCacheKey(
+                {
+                    chatId,
+                    threadRootMessageIndex,
+                },
+                msgIdx,
             );
+
+            const evt = await resolvedDb.getFromIndex(store, "messageIdx", cacheKey);
             if (evt?.kind === "event" && evt.event.kind === "message") {
                 messages.push(evt as EventWrapper<Message>);
                 return evt.event;

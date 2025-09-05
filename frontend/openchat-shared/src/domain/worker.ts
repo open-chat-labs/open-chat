@@ -168,7 +168,11 @@ import type {
 import type { CommunityInvite, GroupInvite } from "./inviteCodes";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
 import type { ToggleMuteNotificationResponse } from "./notifications";
-import type { WithdrawViaOneSecResponse } from "./oneSec";
+import type {
+    OneSecForwardingStatus,
+    OneSecTransferFees,
+    WithdrawViaOneSecResponse,
+} from "./oneSec";
 import type { MinutesOnline } from "./online";
 import type { OptionUpdate } from "./optionUpdate";
 import type {
@@ -224,7 +228,6 @@ import type {
     UserSummary,
 } from "./user";
 import type { Verification } from "./wallet";
-import type { OneSecForwardingStatus, OneSecTransferFees } from "./oneSec";
 
 /**
  * Worker request types
@@ -307,7 +310,7 @@ export type WorkerRequest =
     | SetBio
     | GetBio
     | WithdrawCrypto
-    | GroupMessagesByMessageIndex
+    | MessagesByMessageIndex
     | GetInviteCode
     | EnableInviteCode
     | ResetInviteCode
@@ -866,11 +869,12 @@ type GetInviteCode = {
     kind: "getInviteCode";
 };
 
-type GroupMessagesByMessageIndex = {
-    chatId: MultiUserChatIdentifier;
+type MessagesByMessageIndex = {
+    chatId: ChatIdentifier;
+    threadRootMessageIndex: number | undefined;
     messageIndexes: Set<number>;
     latestKnownUpdate: bigint | undefined;
-    kind: "getGroupMessagesByMessageIndex";
+    kind: "getMessagesByMessageIndex";
 };
 
 type WithdrawCrypto = {
@@ -2324,7 +2328,7 @@ export type WorkerResult<T> = T extends Init
     ? string
     : T extends WithdrawCrypto
     ? WithdrawCryptocurrencyResponse
-    : T extends GroupMessagesByMessageIndex
+    : T extends MessagesByMessageIndex
     ? EventsResponse<Message>
     : T extends GetInviteCode
     ? InviteCodeResponse

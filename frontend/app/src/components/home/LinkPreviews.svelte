@@ -1,11 +1,18 @@
 <script lang="ts">
     import { previewDimensionsObserver } from "@utils/previewDimensionsObserver";
-    import { eventListScrolling, iconSize, offlineStore, type OpenChat } from "openchat-client";
+    import {
+        eventListScrolling,
+        iconSize,
+        offlineStore,
+        type ChatIdentifier,
+        type OpenChat,
+    } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import { rtlStore } from "../../stores/rtl";
     import GenericPreviewComponent from "./GenericPreview.svelte";
     import InstagramPreviewComponent from "./InstagramPreview.svelte";
+    import MessagePreviewComponent from "./MessagePreview.svelte";
     import SpotifyPreviewComponent from "./SpotifyPreview.svelte";
     import Tweet from "./Tweet.svelte";
     import YouTubePreview from "./YouTubePreview.svelte";
@@ -15,6 +22,7 @@
         | YoutubePreview
         | TwitterPreview
         | InstagramPreview
+        | MessagePreview
         | GenericPreview;
 
     type PreviewBase = {
@@ -42,6 +50,13 @@
         regexMatch: RegExpMatchArray;
     };
 
+    type MessagePreview = PreviewBase & {
+        kind: "message";
+        chatId: ChatIdentifier;
+        threadRootMessageIndex: number | undefined;
+        messageIndex: number;
+    };
+
     type GenericPreview = PreviewBase & {
         kind: "generic";
     };
@@ -62,6 +77,7 @@
     let previousLinks = links;
     let previews: Preview[] = $state(links.map(buildPreview));
     let shouldRenderPreviews = $state(false);
+    let rtl = $rtlStore;
 
     function arraysAreEqual(a: string[], b: string[]) {
         if (a === b) return true;
@@ -113,10 +129,71 @@
             };
         }
 
+        const messagePreview = parseMessageUrl(url);
+        if (messagePreview) {
+            return messagePreview;
+        }
+
         return {
             kind: "generic",
             url,
         };
+    }
+
+    function parseMessageUrl(urlText: string): MessagePreview | undefined {
+        const url = new URL(urlText);
+        if (!url) return;
+
+        if (
+            url.hostname !== "oc.app" &&
+            !url.hostname.endsWith(".oc.app") &&
+            url.hostname !== "localhost"
+        ) {
+            return;
+        }
+
+        let regexMatch = url.pathname.match(client.communityMessageRegex());
+        if (regexMatch) {
+            return {
+                kind: "message",
+                url: urlText,
+                chatId: {
+                    kind: "channel",
+                    communityId: regexMatch[1],
+                    channelId: Number(regexMatch[2]),
+                },
+                threadRootMessageIndex: regexMatch[4] ? Number(regexMatch[3]) : undefined,
+                messageIndex: regexMatch[4] ? Number(regexMatch[4]) : Number(regexMatch[3]),
+            };
+        }
+
+        regexMatch = url.pathname.match(client.groupMessageRegex());
+        if (regexMatch) {
+            return {
+                kind: "message",
+                url: urlText,
+                chatId: {
+                    kind: "group_chat",
+                    groupId: regexMatch[1],
+                },
+                threadRootMessageIndex: regexMatch[3] ? Number(regexMatch[2]) : undefined,
+                messageIndex: regexMatch[3] ? Number(regexMatch[3]) : Number(regexMatch[2]),
+            };
+        }
+
+        regexMatch = url.pathname.match(client.userMessageRegex());
+        if (regexMatch) {
+            return {
+                kind: "message",
+                url: urlText,
+                chatId: {
+                    kind: "direct_chat",
+                    userId: regexMatch[1],
+                },
+                threadRootMessageIndex: regexMatch[3] ? Number(regexMatch[2]) : undefined,
+                messageIndex: regexMatch[3] ? Number(regexMatch[3]) : Number(regexMatch[2]),
+            };
+        }
     }
 
     function renderPreview(url: string): void {
@@ -175,16 +252,16 @@
     <div
         class="preview"
         bind:this={preview.container}
-        class:visible={preview.kind !== "generic"}
+        class:visible={preview.kind !== "generic" && preview.kind !== "message"}
         class:me>
         {#if me}
-            <div class="remove-wrapper" class:rtl={$rtlStore}>
+            <div class="remove-wrapper" class:rtl>
                 <div class="remove" onclick={() => removePreview(preview)}>
                     <CloseIcon viewBox="0 0 24 24" size={$iconSize} color={"var(--button-txt)"} />
                 </div>
             </div>
         {/if}
-        <div class="inner">
+        <div class="inner" class:me class:rtl>
             {#if shouldRenderPreviews}
                 {#if preview.kind === "twitter"}
                     <Tweet tweetId={preview.tweetId} />
@@ -200,6 +277,15 @@
                         {pinned}
                         fill={fill && previews.length === 1}
                         matches={preview.regexMatch} />
+                {:else if preview.kind === "message"}
+                    <MessagePreviewComponent
+                        url={preview.url}
+                        {me}
+                        chatId={preview.chatId}
+                        threadRootMessageIndex={preview.threadRootMessageIndex}
+                        messageIndex={preview.messageIndex}
+                        {intersecting}
+                        onRendered={renderPreview} />
                 {:else}
                     <GenericPreviewComponent
                         url={preview.url}
@@ -213,11 +299,10 @@
 
 <style lang="scss">
     .preview {
+        display: none;
         margin-top: $sp4;
-        border-top: 1px solid var(--currentChat-msg-separator);
-        padding-top: $sp2;
+        border-color: var(--currentChat-msg-separator);
         flex-direction: row-reverse;
-        gap: $sp1;
         word-break: break-word;
 
         &.me {
@@ -232,6 +317,7 @@
             flex: 0;
             position: relative;
             left: 6px;
+            visibility: hidden;
 
             &.rtl {
                 right: 6px;
@@ -246,6 +332,21 @@
 
         .inner {
             flex: 1;
+            border-left: $sp2 solid var(--currentChat-msg-separator);
+            padding-left: 12px;
+
+            &.rtl {
+                border-right: $sp2 solid var(--currentChat-msg-separator);
+                padding-right: 12px;
+            }
+
+            &.me {
+                border-color: var(--currentChat-msg-me-separator);
+            }
         }
+    }
+
+    .preview:hover .remove-wrapper {
+        visibility: visible;
     }
 </style>

@@ -963,12 +963,13 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
-            case "getGroupMessagesByMessageIndex":
+            case "getMessagesByMessageIndex":
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.getGroupMessagesByMessageIndex(
+                    agent.getMessagesByMessageIndex(
                         payload.chatId,
+                        payload.threadRootMessageIndex,
                         payload.messageIndexes,
                         payload.latestKnownUpdate,
                     ),
@@ -2213,10 +2214,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.addOneSecToken(
-                        payload.tokenSymbol,
-                        payload.infoUrl,
-                    ),
+                    agent.addOneSecToken(payload.tokenSymbol, payload.infoUrl),
                 );
                 break;
 

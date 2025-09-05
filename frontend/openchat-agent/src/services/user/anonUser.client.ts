@@ -182,6 +182,14 @@ export class AnonUserClient {
         throw new AnonymousOperationError();
     }
 
+    async getMessagesByMessageIndex(
+        _threadRootMessageIndex: number | undefined,
+        _messageIndexes: Set<number>,
+        _latestKnownUpdate: bigint | undefined,
+    ): Promise<EventsResponse<Message>> {
+        throw new AnonymousOperationError();
+    }
+
     async chatEventsWindow(
         _eventIndexRange: IndexRange,
         _chatId: DirectChatIdentifier,
