@@ -76,7 +76,6 @@
         previewPromise.then((preview) => {
             if (preview && intersecting && !$eventListScrolling) {
                 rendered = true;
-                console.log(url);
                 onRendered(url);
             }
         });
