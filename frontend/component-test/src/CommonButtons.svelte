@@ -1,11 +1,21 @@
 <script lang="ts">
     import { CommonButton, Container, H2 } from "component-lib";
-    import AccountCircle from "svelte-material-icons/AccountCircle.svelte";
     import Cog from "svelte-material-icons/Cog.svelte";
     import DiamondOutline from "svelte-material-icons/DiamondOutline.svelte";
     import { fade } from "svelte/transition";
 
     let mouseEvent = $state<MouseEvent>();
+
+    type Option = "all" | "unread" | "groups" | "favourites";
+
+    const labels: Record<Option, string> = {
+        all: "All",
+        unread: "Unread",
+        groups: "Groups",
+        favourites: "Favourites",
+    };
+
+    let selected = $state<Option>("all");
 
     function onClick(e: MouseEvent) {
         mouseEvent = e;
@@ -17,18 +27,33 @@
     <H2>Common buttons for any use</H2>
 
     <Container gap={"lg"}>
+        {#each Object.keys(labels) as option}
+            <CommonButton
+                onClick={() => (selected = option as Option)}
+                size={"medium"}
+                debug={option === "favourites"}
+                mode={(option as Option) === selected ? "active" : "default"}>
+                {#snippet icon(color)}
+                    <Cog {color}></Cog>
+                {/snippet}
+                {labels[option as Option]}
+            </CommonButton>
+        {/each}
+    </Container>
+
+    <Container gap={"lg"}>
         <CommonButton {onClick} size={"small"} mode={"default"}>
             {#snippet icon(color)}
                 <Cog {color}></Cog>
             {/snippet}
             Small button
         </CommonButton>
-        <CommonButton {onClick} size={"small"} mode={"pressed"}>
+        <!-- <CommonButton {onClick} size={"small"} mode={"pressed"}>
             {#snippet icon(color)}
                 <Cog {color}></Cog>
             {/snippet}
             Pressed variant
-        </CommonButton>
+        </CommonButton> -->
         <CommonButton {onClick} size={"small"} mode={"active"}>
             {#snippet icon(color)}
                 <Cog {color}></Cog>
@@ -44,12 +69,12 @@
             {/snippet}
             Medium button
         </CommonButton>
-        <CommonButton {onClick} size={"medium"} mode={"pressed"}>
+        <!-- <CommonButton {onClick} size={"medium"} mode={"pressed"}>
             {#snippet icon(color)}
                 <DiamondOutline {color} />
             {/snippet}
             Pressed variant
-        </CommonButton>
+        </CommonButton> -->
         <CommonButton {onClick} size={"medium"} mode={"active"}>
             {#snippet icon(color)}
                 <DiamondOutline {color} />
@@ -61,11 +86,11 @@
     <Container gap={"md"}>
         <CommonButton {onClick} size={"large"} mode={"default"}
             >Large / icon is optional</CommonButton>
-        <CommonButton {onClick} size={"large"} mode={"pressed"}>
+        <!-- <CommonButton {onClick} size={"large"} mode={"pressed"}>
             {#snippet icon(color)}
                 <AccountCircle {color} />
             {/snippet}
-            Pressed variant</CommonButton>
+            Pressed variant</CommonButton> -->
         <CommonButton {onClick} size={"large"} mode={"active"}>Active variant</CommonButton>
     </Container>
 

@@ -1,10 +1,11 @@
 <script lang="ts">
     import { getFlexStyle, type Direction, type SizeMode } from "component-lib";
-    import { getContext, type Snippet } from "svelte";
+    import { getContext, onMount, type Snippet } from "svelte";
     import Spinner from "../Spinner.svelte";
 
-    type Mode = "default" | "active" | "pressed";
+    type Mode = "default" | "active";
     type Size = "small" | "medium" | "large";
+    type InternalMode = Mode | "pressed";
 
     interface Props {
         children?: Snippet;
@@ -16,6 +17,7 @@
         icon?: Snippet<[string]>;
         width?: SizeMode;
         height?: SizeMode;
+        debug?: boolean;
     }
     let {
         children,
@@ -27,28 +29,45 @@
         size = "medium",
         width = { kind: "hug" },
         height = { kind: "hug" },
+        debug = false,
     }: Props = $props();
 
+    let internalMode = $state<InternalMode>("default");
     let parentDirection = getContext<Direction>("direction");
     let spinnerColour = mode === "default" ? "var(--primary)" : "var(--text-on-primary)";
     let iconColour = $derived(getIconColour());
     let widthCss = $derived(getFlexStyle("width", width, parentDirection));
     let heightCss = $derived(getFlexStyle("height", height, parentDirection));
     let style = $derived(`${heightCss}; ${widthCss};`);
+    let pressing = $state(false);
+    let timer = $state<number>();
+
+    onMount(() => (internalMode = mode));
+
+    $effect(() => {
+        if (mode === "active" && internalMode === "default") {
+            internalMode = "pressed";
+            pressing = true;
+            if (timer) {
+                window.clearTimeout(timer);
+            }
+            timer = window.setTimeout(() => {
+                pressing = false;
+                internalMode = "active";
+            }, 100);
+        } else if (!pressing) {
+            internalMode = mode;
+        }
+    });
 
     function getIconColour(): string {
-        switch (mode) {
+        switch (internalMode) {
             case "default":
                 return "var(--text-secondary)";
             case "pressed":
                 return "var(--text-primary)";
             case "active": {
-                switch (size) {
-                    case "small":
-                        return "var(--text-on-primary)";
-                    default:
-                        return "var(--primary-light)";
-                }
+                return "var(--primary-light)";
             }
         }
     }
@@ -58,7 +77,7 @@
     type="button"
     aria-busy={loading}
     {style}
-    class={`common_button ${mode} ${size}`}
+    class={`common_button ${internalMode} ${size}`}
     class:disabled
     onclick={onClick}
     disabled={disabled || loading}>
@@ -71,7 +90,7 @@
         {#if icon}
             <span class="icon">{@render icon(iconColour)}</span>
         {/if}
-        <span class="content">{@render children?.()}</span>
+        <span class="content"> {@render children?.()}</span>
     {/if}
 </button>
 
@@ -96,6 +115,7 @@
     }
 
     button {
+        $speed: 200ms;
         all: unset;
         position: relative;
         display: flex;
@@ -104,9 +124,10 @@
         border: none;
         cursor: pointer;
         transition:
-            border ease-in-out 200ms,
-            background ease-in-out 200ms,
-            color ease-in-out 200ms;
+            border-radius ease-in-out $speed,
+            border ease-in-out $speed,
+            background ease-in-out $speed,
+            color ease-in-out $speed;
 
         font-weight: var(--font-normal);
         font-size: 14px; // TODO - typography vars
@@ -126,16 +147,22 @@
         &.default {
             border-radius: var(--rad-circle);
             border: var(--bw-thin) solid var(--background-2);
+            background: var(--background-1);
+            color: var(--text-secondary);
         }
 
         &.pressed {
             border-radius: var(--rad-lg);
             border: var(--bw-thin) solid transparent;
+            background: var(--background-2);
+            color: var(--text-primary);
         }
 
         &.active {
             border-radius: var(--rad-md);
             border: var(--bw-thin) solid transparent;
+            background: var(--primary-muted);
+            color: var(--primary-light);
         }
 
         &.small {
@@ -143,18 +170,6 @@
             font-size: var(--typo-bodySmall-sz);
             line-height: 12px;
             gap: var(--sp-xs);
-            &.default {
-                background: var(--background-1);
-                color: var(--text-secondary);
-            }
-            &.pressed {
-                background: var(--background-2);
-                color: var(--text-primary);
-            }
-            &.active {
-                background: var(--primary);
-                color: var(--text-on-primary);
-            }
             .icon {
                 height: $small_icon;
             }
@@ -166,18 +181,12 @@
             line-height: 12px;
             gap: var(--sp-sm);
             &.default {
-                background: var(--background-1);
-                color: var(--text-secondary);
                 border-radius: var(--rad-circle);
             }
             &.pressed {
-                background: var(--background-2);
-                color: var(--text-primary);
                 border-radius: var(--rad-lg);
             }
             &.active {
-                background: var(--primary-muted);
-                color: var(--primary-light);
                 border-radius: var(--rad-md);
             }
             .icon {
@@ -191,18 +200,12 @@
             line-height: var(--typo-body-lh);
             gap: var(--sp-sm);
             &.default {
-                background: var(--background-1);
-                color: var(--text-secondary);
                 border-radius: var(--rad-circle);
             }
             &.pressed {
-                background: var(--background-2);
-                color: var(--text-primary);
                 border-radius: var(--rad-lg);
             }
             &.active {
-                background: var(--primary-muted);
-                color: var(--primary-light);
                 border-radius: var(--rad-md);
             }
             .icon {
