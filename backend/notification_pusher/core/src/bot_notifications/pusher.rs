@@ -7,6 +7,7 @@ use reqwest::{Client, ClientBuilder, Url};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::sync::Arc;
 use std::time::Instant;
+use types::BotEventPayload;
 
 pub struct Pusher {
     receiver: Receiver<BotNotification>,
@@ -31,8 +32,10 @@ impl Pusher {
     pub async fn run(self) {
         while let Ok(notification) = self.receiver.recv().await {
             let start = Instant::now();
-            let payload_size = notification.event_jwt.len() as u64;
-            let push_result = self.push_notification(notification.event_jwt, notification.endpoint).await;
+            let payload_size = notification.payload.data.len() as u64;
+            let push_result = self
+                .push_notification(notification.payload, notification.mime_type, notification.endpoint)
+                .await;
 
             let success = push_result.is_ok();
             let end = Instant::now();
@@ -53,13 +56,14 @@ impl Pusher {
         }
     }
 
-    async fn push_notification(&self, event_jwt: String, endpoint: String) -> Result<(), String> {
+    async fn push_notification(&self, payload: BotEventPayload, mime_type: String, endpoint: String) -> Result<(), String> {
         let mut url = Url::parse(&endpoint).map_err(|e| e.to_string())?;
         url = url.join("notify").map_err(|e| e.to_string())?;
         self.http_client
             .post(url)
-            .header(CONTENT_TYPE, "text/plain")
-            .body(event_jwt)
+            .header(CONTENT_TYPE, mime_type)
+            .header("x-oc-signature", payload.signature)
+            .body(payload.data.into_vec())
             .send()
             .await
             .map_err(|e| e.to_string())?;

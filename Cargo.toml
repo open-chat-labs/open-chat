@@ -179,7 +179,6 @@ async-trait = "0.1"
 aws-config = "1"
 aws-sdk-dynamodb = "1"
 aws-types = "1"
-base64 = "0.22"
 bitflags = { version = "2", features = ["serde"] }
 candid = "0.10"
 canbench-rs = "0.2"
