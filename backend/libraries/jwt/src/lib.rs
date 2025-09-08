@@ -94,9 +94,13 @@ pub fn verify_and_decode<T: DeserializeOwned>(jwt: &str, public_key_pem: &str) -
     decode_from_json(&claims_json)
 }
 
-fn sign_token(token: &str, secret_key_der: &[u8], rng: &mut impl CryptoRngCore) -> Result<Vec<u8>, Box<dyn Error>> {
+pub fn sign_token(token: &str, secret_key_der: &[u8], rng: &mut impl CryptoRngCore) -> Result<Vec<u8>, Box<dyn Error>> {
+    sign_bytes(token.as_bytes(), secret_key_der, rng)
+}
+
+pub fn sign_bytes(bytes: &[u8], secret_key_der: &[u8], rng: &mut impl CryptoRngCore) -> Result<Vec<u8>, Box<dyn Error>> {
     let mut digest = hmac_sha256::Hash::new();
-    digest.update(token.as_bytes());
+    digest.update(bytes);
 
     let p256_sk = ecdsa::SigningKey::from_pkcs8_der(secret_key_der)?;
 

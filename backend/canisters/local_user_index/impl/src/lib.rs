@@ -7,17 +7,17 @@ use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use crate::model::user_event_batch::UserEventBatch;
 use crate::model::user_index_event_batch::UserIndexEventBatch;
 use crate::model::web_push_subscriptions::WebPushSubscriptions;
-use base64::Engine;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use community_canister::LocalIndexEvent as CommunityEvent;
 use constants::{CYCLES_REQUIRED_FOR_UPGRADE, MINUTE_IN_MS};
+use ct_codecs::{Base64UrlSafeNoPadding, Encoder};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use event_store_utils::EventDeduper;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_canister::LocalIndexEvent as GroupEvent;
-use jwt::{Claims, sign_and_encode_token, verify_and_decode};
+use jwt::{Claims, sign_bytes, verify_and_decode};
 use local_user_index_canister::{ChildCanisterType, GlobalUser};
 use model::bots_map::BotsMap;
 use model::global_user_map::GlobalUserMap;
@@ -33,7 +33,7 @@ use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
-    BotDataEncoding, BotEventWrapper, BotNotification, BotNotificationEnvelope, BuildVersion, CandidPayload, CanisterId,
+    BotDataEncoding, BotEventPayload, BotEventWrapper, BotNotification, BotNotificationEnvelope, BuildVersion, CanisterId,
     ChannelLatestMessageIndex, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
     CommunityId, Cycles, DiamondMembershipDetails, IdempotentEnvelope, MessageContent, Milliseconds, Notification,
     NotificationEnvelope, ReferralType, TimestampMillis, Timestamped, UserId, UserNotificationEnvelope,
@@ -380,26 +380,27 @@ impl RuntimeState {
             timestamp: bot_notification.timestamp,
         };
 
-        let expiry = now + 300_000; // Token valid for 5 mins from now
-
         let event_map = encodings
             .into_iter()
             .map(|encoding| {
                 let secret_key_der = self.data.oc_key_pair.secret_key_der();
-                let jwt = match encoding {
-                    BotDataEncoding::Json => {
-                        let claims = Claims::new(expiry, "BotEventJson".to_string(), event_wrapper.clone());
-                        sign_and_encode_token(secret_key_der, claims, self.env.rng()).unwrap_or_default()
-                    }
-                    BotDataEncoding::Candid => {
-                        let payload =
-                            base64::engine::general_purpose::STANDARD.encode(candid::encode_one(&event_wrapper).unwrap());
-
-                        let claims = Claims::new(expiry, "BotEventCandid".to_string(), CandidPayload { payload });
-                        sign_and_encode_token(secret_key_der, claims, self.env.rng()).unwrap_or_default()
-                    }
+                let payload = match encoding {
+                    BotDataEncoding::MsgPack => msgpack::serialize_to_vec(&event_wrapper).unwrap(),
+                    BotDataEncoding::Candid => candid::encode_one(&event_wrapper).unwrap(),
+                    BotDataEncoding::Json => unreachable!("JSON encoding is not supported"),
                 };
-                (encoding, jwt)
+
+                let signature =
+                    Base64UrlSafeNoPadding::encode_to_string(sign_bytes(&payload, secret_key_der, self.env.rng()).unwrap())
+                        .unwrap();
+
+                (
+                    encoding,
+                    BotEventPayload {
+                        data: ByteBuf::from(payload),
+                        signature,
+                    },
+                )
             })
             .collect();
 

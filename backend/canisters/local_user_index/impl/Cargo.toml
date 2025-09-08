@@ -10,7 +10,6 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-base64 = { workspace = true }
 candid = { workspace = true }
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }
 canister_client = { path = "../../../libraries/canister_client" }
@@ -21,6 +20,7 @@ canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" 
 community_canister = { path = "../../community/api" }
 community_canister_c2c_client = { path = "../../community/c2c_client" }
 constants = { path = "../../../libraries/constants" }
+ct-codecs = { workspace = true }
 event_store_producer = { workspace = true }
 event_store_producer_cdk_runtime = { workspace = true }
 event_store_utils = { workspace = true }

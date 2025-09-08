@@ -73,12 +73,13 @@
     let selectedNetwork = $state<string>();
     let isBtc = $derived(symbol === BTC_SYMBOL);
     let isBtcNetwork = $derived(selectedNetwork === BTC_SYMBOL);
-    let isOneSec = $derived(tokenDetails.oneSecEnabled);
+    let oneSecEnabled = $derived(tokenDetails.oneSecEnabled);
+    let isOneSecNetwork = $derived(oneSecEnabled && selectedNetwork !== ICP_SYMBOL);
     let networks = $derived.by(() => {
         if (isBtc) {
             return [BTC_SYMBOL, CKBTC_SYMBOL];
-        } else if (isOneSec) {
-            return [ETHEREUM_NETWORK, ARBITRUM_NETWORK, BASE_NETWORK];
+        } else if (oneSecEnabled) {
+            return [ICP_SYMBOL, ETHEREUM_NETWORK, ARBITRUM_NETWORK, BASE_NETWORK];
         } else {
             return [];
         }
@@ -87,7 +88,7 @@
     let targetAccountValid = $derived.by(() => {
         if (targetAccount.length === 0 || targetAccount === account) return false;
         if (isBtc) return targetAccount.length >= 14;
-        if (isOneSec) return targetAccount.length === 42;
+        if (isOneSecNetwork) return targetAccount.length === 42;
         if (isPrincipalValid(targetAccount)) return true;
         if (symbol === ICP_SYMBOL && isAccountIdentifierValid(targetAccount)) return true;
         return false;
@@ -95,7 +96,7 @@
 
     let oneSecFees = $state<OneSecTransferFees[]>();
     let oneSecFeesForToken = $derived.by(() => {
-        if (!isOneSec || oneSecFees === undefined) return undefined;
+        if (!isOneSecNetwork || oneSecFees === undefined) return undefined;
         return oneSecFees.find((f) => f.sourceToken === tokenDetails.symbol && f.destinationChain === selectedNetwork);
     });
 
@@ -103,7 +104,7 @@
         if (isBtcNetwork && ckbtcMinterWithdrawalInfo !== undefined) {
             return ckbtcMinterWithdrawalInfo.minWithdrawalAmount;
         }
-        if (isOneSec && oneSecFeesForToken !== undefined) {
+        if (isOneSecNetwork && oneSecFeesForToken !== undefined) {
             return oneSecFeesForToken.minAmount;
         }
         return BigInt(0);
@@ -125,7 +126,7 @@
     let networkFee = $derived.by(() => {
         if (isBtcNetwork && ckbtcMinterWithdrawalInfo !== undefined) {
             return ckbtcMinterWithdrawalInfo.feeEstimate;
-        } else if (isOneSec && oneSecFeesForToken !== undefined) {
+        } else if (isOneSecNetwork && oneSecFeesForToken !== undefined) {
             return oneSecFeesForToken.latestTransferFee + (amountToSend * BigInt(100 * oneSecFeesForToken.protocolFeePercent) / BigInt(10000));
         } else {
             return undefined;
@@ -150,7 +151,7 @@
     $effect(() => {
         if (isBtcNetwork) {
             ckbtcMinterInfoDebouncer.execute(amountToSend);
-        } else if (isOneSec) {
+        } else if (isOneSecNetwork) {
             // Filter to where source token equals destination token since we're dealing with cross-chain withdrawals
             oneSecFeesPromise.get().then((fees) =>
                 oneSecFees = fees.filter((f) => f.sourceToken === f.destinationToken && f.sourceChain === ICP_SYMBOL));
@@ -196,7 +197,7 @@
 
         const withdrawTokensPromise = isBtcNetwork
             ? client.withdrawBtc(targetAccount, amountToSend)
-            : isOneSec
+            : isOneSecNetwork
                 ? client.withdrawViaOneSec(ledger, symbol, selectedNetwork as EvmChain, targetAccount, amountToSend)
                 : client.withdrawCryptocurrency({
                       kind: "pending",

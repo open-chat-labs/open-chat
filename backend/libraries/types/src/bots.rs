@@ -6,6 +6,7 @@ use crate::{
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use serde_bytes::ByteBuf;
 use std::collections::HashSet;
 use std::hash::Hash;
 use ts_export::ts_export;
@@ -564,7 +565,7 @@ impl From<&BotSubscriptions> for BotPermissions {
 
 impl BotDefinition {
     pub fn encoding(&self) -> BotDataEncoding {
-        *self.data_encoding.as_ref().unwrap_or(&BotDataEncoding::Json)
+        *self.data_encoding.as_ref().unwrap_or(&BotDataEncoding::MsgPack)
     }
 }
 
@@ -572,11 +573,13 @@ impl BotDefinition {
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
 pub enum BotDataEncoding {
     #[default]
+    MsgPack,
     Json,
     Candid,
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct CandidPayload {
-    pub payload: String,
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct BotEventPayload {
+    pub data: ByteBuf,
+    pub signature: String,
 }

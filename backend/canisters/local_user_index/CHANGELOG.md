@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Send BotEventWrapper as HTTP body & signature as a header ([#8570](https://github.com/open-chat-labs/open-chat/pull/8570))
+
 ## [[2.0.1879](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1879-local_user_index)] - 2025-08-27
 
 ### Changed
