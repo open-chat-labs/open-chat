@@ -7602,6 +7602,9 @@ export class OpenChat {
     #startOneSecBalanceUpdateJob() {
         oneSecAddress.subscribe((addr) => {
             if (addr !== undefined) {
+                this.#oneSecEnableForwarding(currentUserIdStore.value, addr);
+
+                // Keep the poller for now until we are confident the automatic forwarding is working reliably
                 const poller = new Poller(
                     () => this.#checkOneSecBalances(addr),
                     ONE_MINUTE_MILLIS,
@@ -7610,6 +7613,14 @@ export class OpenChat {
                 );
                 return () => poller.stop();
             }
+        });
+    }
+
+    #oneSecEnableForwarding(userId: string, evmAddress: string) {
+        return this.#sendRequest({
+            kind: "oneSecEnableForwarding",
+            userId,
+            evmAddress,
         });
     }
 
@@ -9451,6 +9462,7 @@ export class OpenChat {
                     signInWithEmailCanister: this.config.signInWithEmailCanister,
                     signInWithEthereumCanister: this.config.signInWithEthereumCanister,
                     signInWithSolanaCanister: this.config.signInWithSolanaCanister,
+                    oneSecForwarderCanister: this.config.oneSecForwarderCanister,
                     oneSecMinterCanister: this.config.oneSecMinterCanister,
                     websiteVersion: this.config.websiteVersion,
                     rollbarApiKey: this.config.rollbarApiKey,
