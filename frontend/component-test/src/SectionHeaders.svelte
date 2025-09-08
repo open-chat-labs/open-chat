@@ -5,42 +5,51 @@
     import Flag from "svelte-material-icons/Flag.svelte";
     import Headphones from "svelte-material-icons/Headphones.svelte";
     import Translate from "svelte-material-icons/Translate.svelte";
+    import Video from "svelte-material-icons/VideoOutline.svelte";
     import { fade } from "svelte/transition";
 
     let action = $state<string>();
 
-    function onBack() {
-        action = "Back clicked";
+    function onAction(txt: string) {
+        action = txt;
         window.setTimeout(() => (action = undefined), 2000);
+    }
+
+    function onBack() {
+        onAction("Back clicked");
+    }
+
+    function menuItemClicked() {
+        onAction("Menu item clicked");
     }
 </script>
 
 {#snippet commonMenu()}
-    <MenuItem>
+    <MenuItem onclick={menuItemClicked}>
         {#snippet icon(color)}
             <Headphones {color} />
         {/snippet}
         Make a call
     </MenuItem>
-    <MenuItem>
+    <MenuItem onclick={menuItemClicked}>
         {#snippet icon(color)}
             <CommentQuoteOutline {color} />
         {/snippet}
         Quote
     </MenuItem>
-    <MenuItem>
+    <MenuItem onclick={menuItemClicked}>
         {#snippet icon(color)}
             <ChatOutline {color} />
         {/snippet}
         Reply in thread
     </MenuItem>
-    <MenuItem>
+    <MenuItem onclick={menuItemClicked}>
         {#snippet icon(color)}
             <Translate {color} />
         {/snippet}
         Translate
     </MenuItem>
-    <MenuItem>
+    <MenuItem onclick={menuItemClicked}>
         {#snippet icon(color)}
             <Flag {color} />
         {/snippet}
@@ -59,7 +68,13 @@
             {/snippet}
         </SectionHeader>
 
-        <SectionHeader title={"For direct chat"} {onBack}>
+        <SectionHeader
+            onAction={() => onAction("Action clicked")}
+            title={"For direct chat"}
+            {onBack}>
+            {#snippet action(color)}
+                <Video {color} />
+            {/snippet}
             {#snippet menu()}
                 {@render commonMenu()}
             {/snippet}
@@ -77,12 +92,19 @@
             {/snippet}
         </SectionHeader>
 
-        <SectionHeader {onBack} title={"For channel or group"} subtitle={"And with a subtitle"}>
+        <SectionHeader
+            onAction={() => onAction("Action clicked")}
+            {onBack}
+            title={"For channel or group"}
+            subtitle={"And with a subtitle"}>
             {#snippet menu()}
                 {@render commonMenu()}
             {/snippet}
             {#snippet avatar()}
                 <Avatar url={"/mushroom.png"} size={"lg"} />
+            {/snippet}
+            {#snippet action(color)}
+                <Video {color} />
             {/snippet}
         </SectionHeader>
 

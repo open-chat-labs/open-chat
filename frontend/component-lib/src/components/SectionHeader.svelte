@@ -10,14 +10,18 @@
 
     interface Props {
         onBack?: () => void;
+        onAction?: () => void;
         title: string;
         subtitle?: string;
         menu?: Snippet;
-        action?: Snippet;
+        action?: Snippet<[string]>;
         avatar?: Snippet;
     }
 
-    let { onBack, title, subtitle, menu, action, avatar }: Props = $props();
+    let { onBack, onAction, title, subtitle, menu, action, avatar }: Props = $props();
+
+    // Not sure if this will ever *not* be --text-primary
+    let iconColour = "var(--text-primary)";
 </script>
 
 <Container
@@ -27,7 +31,7 @@
     gap={"md"}>
     {#if onBack}
         <IconButton onclick={onBack}>
-            <ArrowLeft color={"var(--text-primary)"} />
+            <ArrowLeft color={iconColour} />
         </IconButton>
     {/if}
 
@@ -45,8 +49,8 @@
         {/if}
     </Container>
     {#if action}
-        <IconButton>
-            {@render action()}
+        <IconButton onclick={onAction}>
+            {@render action(iconColour)}
         </IconButton>
     {/if}
     {#if menu}
