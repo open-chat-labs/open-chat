@@ -160,6 +160,8 @@ export class Gradient {
     }
 }
 
+export type TypographyColour = "primary" | "secondary" | "tertiary" | "placeholder" | "on-primary";
+
 export class Colours {
     constructor(
         public primary: Colour,

@@ -25,9 +25,7 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
 
         // Init notifications channel (if it's not been initialised before)
         NotificationsChannel.createMainChannel(activity)
-
-        // TODO summary notification requires a bit more testing
-        // NotificationsChannel.createSummaryChannel(activity)
+        NotificationsChannel.createSummaryChannel(activity)
 
         // Init the trigger fn!
         OCPluginCompanion.setTriggerRef(this)

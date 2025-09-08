@@ -71,7 +71,7 @@
         onSelect={() => itemSelected("profile")}
         selected={selection === "profile"}>
         {#snippet icon()}
-            <Avatar size={"large"} url={avatarUrl} name={avatarName}></Avatar>
+            <Avatar size={"lg"} url={avatarUrl} name={avatarName}></Avatar>
         {/snippet}
     </BottomBarItem>
 </Container>

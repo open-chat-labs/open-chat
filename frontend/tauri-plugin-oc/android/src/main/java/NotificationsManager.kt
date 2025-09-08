@@ -146,7 +146,7 @@ object NotificationsManager {
         nm.notify(notification.contextId.value, notificationBuilder.build())
 
         // TODO summary notification requires a bit more testing
-        // setSummaryNotification(context)
+        setSummaryNotification(context)
     }
 
     // Mark notifications released and clean up!
@@ -174,7 +174,7 @@ object NotificationsManager {
 
                 // TODO summary notification requires a bit more testing
                 // Notifications are already canceled via tap, but we want to update summary notification!
-                // setSummaryNotification(context)
+                setSummaryNotification(context)
             }
 
             // Send notification data to Svelte code, which will then determine where to navigate
@@ -218,13 +218,13 @@ object NotificationsManager {
 
             // TODO summary notification requires a bit more testing
             // Update summary notification
-            // setSummaryNotification(context)
+            setSummaryNotification(context)
         }
 
         return true
     }
 
-    // TODO this is disabled for now, requires a bit more testing
+    // TODO requires a bit more testing
     // Init summary notification!
     suspend fun setSummaryNotification(context: Context) {
         val notificationManager = OCPluginCompanion.getNotificationsManager(context)
