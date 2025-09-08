@@ -1,0 +1,8 @@
+type EnableForwardingArgs = record { icp_account : IcpAccount };
+type IcpAccount = variant { ICRC : IcrcAccount; AccountId : text };
+type IcrcAccount = record { owner : principal; subaccount : opt blob };
+type IsForwardingAddressArgs = record { evm_address : text };
+service : () -> {
+  enable_forwarding : (EnableForwardingArgs) -> (text);
+  is_forwarding_address : (IsForwardingAddressArgs) -> (bool) query;
+}

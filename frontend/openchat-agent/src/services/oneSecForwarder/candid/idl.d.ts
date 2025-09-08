@@ -1,0 +1,12 @@
+import type { IDL } from "@icp-sdk/core/candid";
+
+import {
+    IsForwardingAddressArgs,
+    EnableForwardingArgs,
+    _SERVICE,
+} from "./types";
+export {
+    _SERVICE as OneSecForwarderService,
+};
+
+export const idlFactory: IDL.InterfaceFactory;

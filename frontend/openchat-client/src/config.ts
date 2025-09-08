@@ -26,6 +26,7 @@ export type OpenChatConfig = {
     signInWithEmailCanister: string;
     signInWithEthereumCanister: string;
     signInWithSolanaCanister: string;
+    oneSecForwarderCanister: string;
     oneSecMinterCanister: string;
     i18nFormatter: MessageFormatter;
     logger: Logger;

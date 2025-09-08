@@ -76,7 +76,8 @@ export function initEnv() {
             process.env.OC_SIGN_IN_WITH_ETHEREUM_CANISTER =
                 canisters.sign_in_with_ethereum[dfxNetwork];
             process.env.OC_SIGN_IN_WITH_SOLANA_CANISTER = canisters.sign_in_with_solana[dfxNetwork];
-            process.env.OC_ONE_SEC_MINTER_CANISTER = "5okwm-giaaa-aaaar-qbn6a-cai";
+            process.env.OC_ONESEC_FORWARDER_CANISTER = "lsoct-pyaaa-aaaar-boahq-cai";
+            process.env.OC_ONESEC_MINTER_CANISTER = "5okwm-giaaa-aaaar-qbn6a-cai";
 
             console.log("TranslationsCanisterId: ", process.env.OC_TRANSLATIONS_CANISTER);
             console.log("UserIndexCanisterId: ", process.env.OC_USER_INDEX_CANISTER);

@@ -2180,6 +2180,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "oneSecEnableForwarding":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.oneSecEnableForwarding(payload.userId, payload.evmAddress),
+                );
+                break;
+
             case "oneSecGetTransferFees":
                 executeThenReply(payload, correlationId, agent.oneSecGetTransferFees());
                 break;
