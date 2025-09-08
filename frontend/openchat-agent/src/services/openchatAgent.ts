@@ -292,6 +292,7 @@ import { LocalUserIndexClient } from "./localUserIndex/localUserIndex.client";
 import { MarketMakerClient } from "./marketMaker/marketMaker.client";
 import { NnsGovernanceClient } from "./nnsGovernance/nns.governance.client";
 import { NotificationsClient } from "./notifications/notifications.client";
+import { OneSecForwarderClient } from "./oneSecForwarder/oneSecForwarder.client";
 import { OneSecMinterClient } from "./oneSecMinter/oneSecMinter.client";
 import { OnlineClient } from "./online/online.client";
 import { ProposalsBotClient } from "./proposalsBot/proposalsBot.client";
@@ -337,6 +338,7 @@ export class OpenChatAgent extends EventTarget {
     private _signInWithEthereumClient: Lazy<SignInWithEthereumClient>;
     private _signInWithSolanaClient: Lazy<SignInWithSolanaClient>;
     private _translationsClient: Lazy<TranslationsClient>;
+    private _oneSecForwarderClient: Lazy<OneSecForwarderClient>;
     private _oneSecMinterClient: Lazy<OneSecMinterClient>;
 
     constructor(private identity: Identity, private config: AgentConfig) {
@@ -414,6 +416,9 @@ export class OpenChatAgent extends EventTarget {
         );
         this._translationsClient = new Lazy(
             () => new TranslationsClient(identity, this._agent, config.translationsCanister),
+        );
+        this._oneSecForwarderClient = new Lazy(
+            () => new OneSecForwarderClient(identity, this._agent, config.oneSecForwarderCanister),
         );
         this._oneSecMinterClient = new Lazy(
             () => new OneSecMinterClient(identity, this._agent, config.oneSecMinterCanister),
@@ -4088,6 +4093,14 @@ export class OpenChatAgent extends EventTarget {
         return this._oneSecMinterClient
             .get()
             .getForwardingStatus(tokenSymbol, chain, address, receiver);
+    }
+
+    async oneSecEnableForwarding(userId: string, evmAddress: string): Promise<void> {
+        const client = this._oneSecForwarderClient.get();
+        const forwarding = await client.isForwarding(evmAddress);
+        if (!forwarding) {
+            await client.enableForwarding(userId);
+        }
     }
 
     generateMagicLink(email: string, sessionKey: Uint8Array): Promise<GenerateMagicLinkResponse> {

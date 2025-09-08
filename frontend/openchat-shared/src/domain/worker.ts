@@ -473,10 +473,17 @@ export type WorkerRequest =
     | FinaliseAccountLinkingWithCode
     | PayForPremiumItem
     | SetPremiumItemCost
+    | OneSecEnableForwarding
     | OneSecGetTransferFees
     | OneSecForwardEvmToIcp
     | OneSecGetForwardingStatus
     | AddOneSecToken;
+
+type OneSecEnableForwarding = {
+    kind: "oneSecEnableForwarding";
+    userId: string;
+    evmAddress: string;
+};
 
 type OneSecGetTransferFees = {
     kind: "oneSecGetTransferFees";
@@ -2620,6 +2627,8 @@ export type WorkerResult<T> = T extends Init
     ? AccountLinkingCode | undefined
     : T extends ReinstateMissedDailyClaims
     ? boolean
+    : T extends OneSecEnableForwarding
+    ? void
     : T extends OneSecGetTransferFees
     ? OneSecTransferFees[]
     : T extends OneSecForwardEvmToIcp
