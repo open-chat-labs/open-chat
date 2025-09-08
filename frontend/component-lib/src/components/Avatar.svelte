@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { BorderRadiusSize } from "@src/theme";
+    import type { BorderRadiusSize } from "component-lib";
 
     type AvatarSize = "sm" | "md" | "lg" | "xl";
 
