@@ -387,7 +387,7 @@ impl RuntimeState {
                 let payload = match encoding {
                     BotDataEncoding::MsgPack => msgpack::serialize_to_vec(&event_wrapper).unwrap(),
                     BotDataEncoding::Candid => candid::encode_one(&event_wrapper).unwrap(),
-                    BotDataEncoding::Json => serde_json::to_vec(&event_wrapper).unwrap(),
+                    BotDataEncoding::Json => unreachable!("JSON encoding is not supported"),
                 };
 
                 let signature =

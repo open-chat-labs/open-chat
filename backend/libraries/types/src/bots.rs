@@ -565,7 +565,7 @@ impl From<&BotSubscriptions> for BotPermissions {
 
 impl BotDefinition {
     pub fn encoding(&self) -> BotDataEncoding {
-        *self.data_encoding.as_ref().unwrap_or(&BotDataEncoding::Json)
+        *self.data_encoding.as_ref().unwrap_or(&BotDataEncoding::MsgPack)
     }
 }
 

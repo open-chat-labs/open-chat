@@ -131,9 +131,9 @@ impl<I: IndexStore> Reader<I> {
                         if let Some(endpoint) = ic_response.bot_endpoints.get(&bot_id) {
                             let payload = notification.event_map[&encoding].clone();
                             let mime_type = match encoding {
-                                BotDataEncoding::Json => "application/json",
                                 BotDataEncoding::Candid => "application/candid",
                                 BotDataEncoding::MsgPack => "application/msgpack",
+                                BotDataEncoding::Json => unreachable!("JSON encoding is not supported"),
                             };
 
                             self.bot_notification_sender
