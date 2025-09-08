@@ -11,6 +11,7 @@
     import ControlsAndIndicators from "./ControlsAndIndicators.svelte";
     import Layout from "./Layout.svelte";
     import Menus from "./Menus.svelte";
+    import SectionHeaders from "./SectionHeaders.svelte";
     import Typography from "./Typography.svelte";
 
     neon.writeCssVariables();
@@ -25,6 +26,7 @@
         | "menus"
         | "bottom_bar"
         | "avatars"
+        | "section_header"
         | "typography";
     let selected = $state<Section>("colours");
 
@@ -38,6 +40,7 @@
         controls: "Controls & indicators",
         layout: "Layout",
         menus: "Menus",
+        section_header: "Section headers",
         typography: "Typography",
     };
 </script>
@@ -83,6 +86,8 @@
             <BottomBars />
         {:else if selected === "avatars"}
             <Avatars />
+        {:else if selected === "section_header"}
+            <SectionHeaders />
         {:else if selected === "typography"}
             <Typography></Typography>
         {/if}

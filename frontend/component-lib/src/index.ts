@@ -7,10 +7,12 @@ export { default as CommonButton } from "./components/buttons/CommonButton.svelt
 export { default as FloatingButton } from "./components/buttons/FloatingButton.svelte";
 export { default as Container } from "./components/Container.svelte";
 export { default as CountBadge } from "./components/CountBadge.svelte";
+export { default as Logo } from "./components/Logo.svelte";
 export { default as MenuItem } from "./components/menu/MenuItem.svelte";
 export { default as MenuTrigger } from "./components/menu/MenuTrigger.svelte";
 export { default as NotificationIndicator } from "./components/NotificationIndicator.svelte";
 export { default as Radio } from "./components/Radio.svelte";
+export { default as SectionHeader } from "./components/SectionHeader.svelte";
 export { default as Spinner } from "./components/Spinner.svelte";
 export { default as Switch } from "./components/Switch.svelte";
 export { default as Body } from "./components/typography/Body.svelte";

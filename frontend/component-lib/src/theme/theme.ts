@@ -54,6 +54,7 @@ export class Theme {
             new TypographicStyle(Rem.fromPixels(40), Rem.fromPixels(48)),
             new TypographicStyle(Rem.fromPixels(32), Rem.fromPixels(40)),
             new TypographicStyle(Rem.fromPixels(24), Rem.fromPixels(32)),
+            new TypographicStyle(Rem.fromPixels(18), Rem.fromPixels(24)),
             new TypographicStyle(Rem.fromPixels(16), Rem.fromPixels(26)),
             new TypographicStyle(Rem.fromPixels(14), Rem.fromPixels(22)),
             new TypographicStyle(Rem.fromPixels(12), Rem.fromPixels(20)),
