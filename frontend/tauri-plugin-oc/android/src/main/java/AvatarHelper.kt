@@ -8,11 +8,12 @@ import coil3.ImageLoader
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
 import coil3.request.bitmapConfig
-import com.ocplugin.app.models.ReceivedNotification
+import com.ocplugin.app.data.SenderId
+import com.ocplugin.app.models.Conversation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import androidx.core.graphics.createBitmap
-import com.ocplugin.app.models.SenderId
+import com.ocplugin.app.data.Notification
 
 fun Bitmap.toCircularBitmap(): Bitmap {
     val size = minOf(width, height)
@@ -37,34 +38,39 @@ fun Bitmap.toCircularBitmap(): Bitmap {
 @Suppress("UNUSED")
 object AvatarHelper {
 
-    suspend fun loadBitmapForReceivedNotification(context: Context, notification: ReceivedNotification): Bitmap? {
-        val toMainAvatarURL = { entityId: String, avatarId: String? ->
-            if (avatarId != null) {
-                "${String.format(BuildConfig.AVATAR_BASE_URL, entityId)}/avatar/$avatarId"
-            } else {
-                null
+    suspend fun loadBitmapForNotification(context: Context, notification: Notification): Bitmap? {
+        val conversation = Conversation.fromNotification(notification) ?: return null
+
+        fun urlBase(entityId: String) =
+            String.format(BuildConfig.AVATAR_BASE_URL, entityId)
+
+        fun mainAvatarUrl(entityId: String, avatarId: String) =
+            "${urlBase(entityId)}/avatar/$avatarId"
+
+        fun channelAvatarUrl(entityId: String, channelId: UInt, avatarId: String) =
+            "${urlBase(entityId)}/channel/$channelId/avatar/$avatarId"
+
+        val url = when (conversation) {
+            is Conversation.Direct ->
+                notification.senderAvatarId?.let {
+                    mainAvatarUrl(conversation.senderId.value, it)
+                }
+
+            is Conversation.Group ->
+                notification.groupAvatarId?.let {
+                    mainAvatarUrl(conversation.groupId.value, it)
+                }
+
+            is Conversation.Channel -> {
+                notification.channelAvatarId?.let {
+                    channelAvatarUrl(conversation.communityId.value, conversation.channelId.value, it)
+                } ?: notification.communityAvatarId?.let {
+                    mainAvatarUrl(conversation.communityId.value, it)
+                }
             }
         }
 
-        val url = when (notification) {
-            is ReceivedNotification.Direct ->
-                toMainAvatarURL(notification.senderId.value, notification.senderAvatarId)
-            is ReceivedNotification.Group ->
-                toMainAvatarURL(notification.groupId.value, notification.groupAvatarId)
-            is ReceivedNotification.Channel ->
-                if (notification.channelAvatarId != null) {
-                    "${
-                        String.format(
-                            BuildConfig.AVATAR_BASE_URL,
-                            notification.communityId.value
-                        )
-                    }/channel/${notification.channelId.value}/avatar/${notification.channelAvatarId}}"
-                } else {
-                    toMainAvatarURL(notification.communityId.value, notification.communityAvatarId)
-                }
-        }
-
-        return if (url != null) loadBitmap(context, url) else null
+        return url?.let { loadBitmap(context, it) }
     }
 
     suspend fun loadBitmapForUser(context: Context, senderId: SenderId, avatarId: String): Bitmap? {
