@@ -5,8 +5,8 @@ import android.util.Log
 import app.tauri.annotation.InvokeArg
 import app.tauri.plugin.Invoke
 import com.ocplugin.app.LOG_TAG
-import com.ocplugin.app.models.*
-import com.ocplugin.app.NotificationsHelper
+import com.ocplugin.app.data.*
+import com.ocplugin.app.NotificationsManager
 
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.CoroutineScope
@@ -19,8 +19,8 @@ class ReleaseNotificationsArgs {
     val senderId: String? = null
     val groupId: String? = null
     val communityId: String? = null
-    val channelId: UInt? = null
-    val threadIndex: UInt? = null
+    val channelId: String? = null
+    val threadIndex: String? = null
 }
 
 @Suppress("UNUSED")
@@ -35,13 +35,13 @@ class ReleaseNotifications(private val activity: Activity) {
         val senderId = args.senderId?.let(::SenderId)
         val groupId = args.groupId?.let(::GroupId)
         val communityId = args.communityId?.let(::CommunityId)
-        val channelId = args.channelId?.let(::ChannelId)
-        val threadIndex = args.threadIndex?.let(::ThreadIndex)
+        val channelId = args.channelId?.let { ChannelId(it.toUInt()) }
+        val threadIndex = args.threadIndex?.let { ThreadIndex(it.toUInt()) }
 
         scope.launch {
             val success = withContext(Dispatchers.IO) {
                 runCatching {
-                    NotificationsHelper.releaseNotificationsAfterAccessedUiContext(
+                    NotificationsManager.releaseNotificationsAfterAccessedUiContext(
                         activity, senderId, groupId, communityId, channelId, threadIndex
                     )
                 }.getOrElse {
