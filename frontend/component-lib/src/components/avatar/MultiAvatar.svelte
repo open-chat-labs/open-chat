@@ -50,6 +50,7 @@
         .second {
             width: 2rem;
             height: 2rem;
+            border-radius: var(--rad-circle);
         }
 
         .count {
