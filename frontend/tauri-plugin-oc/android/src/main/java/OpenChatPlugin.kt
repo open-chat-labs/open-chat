@@ -5,12 +5,12 @@ import android.app.NotificationManager
 import android.content.Context
 import android.util.Log
 import android.webkit.WebView
-import androidx.annotation.DrawableRes
 import app.tauri.annotation.Command
 import app.tauri.annotation.TauriPlugin
 import app.tauri.plugin.Invoke
 import app.tauri.plugin.JSObject
 import app.tauri.plugin.Plugin
+import com.google.firebase.messaging.FirebaseMessaging
 import com.ocplugin.app.commands.*
 
 @Suppress("UNUSED")
@@ -18,65 +18,20 @@ import com.ocplugin.app.commands.*
 class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
     private val passkeyAuth = PasskeyAuth(activity)
 
-    companion object {
-        // Fire Svelte handled event
-        //
-        // We can use this function anywhere in our codebase to fire a JS event, that will get
-        // handled by our Svelte code, and pass any data as JSON payload!
-        var triggerRef: (event: String, payload: JSObject) -> Unit = { event, payload ->
-            eventQueue.add(Pair(event, payload.toString()))
-        }
-
-        // Flush any init event
-        //
-        // This is a queue for any event that might have fired while the UI was initialised. This
-        // queue is flushed when the Svelte code reports that it's ready to process events.
-        var eventQueue = mutableListOf<Pair<String, String>>()
-        var flushQueuedEvents: () -> Unit = {
-            Log.d("TEST_OC", "Flushing queued events")
-            eventQueue.forEach { (event, payload) ->
-                triggerRef(event, JSObject(payload))
-            }
-            eventQueue.clear()
-        }
-
-        // FCM token, identifies this device for any push notifications from the Firebase service
-        var fcmToken: String? = null
-
-        // Indicates that the UI is ready!
-        var svelteReady: Boolean = false
-
-        // Reference to the notification manager!
-        //
-        // Notifications manager is used to register new notifications, and cancel existing ones.
-        // Initialised as singleton, to make it a bit more convenient to use.
-        var notificationsManager: NotificationManager? = null
-        val getNotificationsManager: (context: Context) -> NotificationManager = { context ->
-            if (notificationsManager == null) {
-                notificationsManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            }
-            notificationsManager!!
-        }
-
-        // Small notification icon, passed in from the MainActivity! Main activity has a drawable
-        // res resource handle to it. Used by NotificationsHelper when displaying notifications.
-        @DrawableRes var icNotificationSmall: Int = android.R.drawable.ic_dialog_info
-    }
-
     // Called when the plugin is loaded.
     //
     // Initialise any values that may be required while the app is running.
     override fun load(webView: WebView) {
-        var self = this
+
+        // Init notifications channel (if it's not been initialised before)
+        NotificationsChannel.createMainChannel(activity)
+        NotificationsChannel.createSummaryChannel(activity)
 
         // Init the trigger fn!
-        triggerRef = { event, payload ->
-            if (svelteReady) {
-                self.trigger(event, payload)
-            } else {
-                eventQueue.add(Pair(event, payload.toString()))
-            }
-        }
+        OCPluginCompanion.setTriggerRef(this)
+
+        // Init FCM token cache, have it populated with a token!
+        OCPluginCompanion.initFcmTokenCache()
     }
 
     @Command
@@ -96,7 +51,7 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
 
     @Command
     fun getFcmToken(invoke: Invoke) {
-        invoke.resolve(JSObject().put("fcmToken", fcmToken))
+        invoke.resolve(JSObject().put("fcmToken", OCPluginCompanion.fcmToken))
     }
 
     @Command
@@ -107,11 +62,97 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
     @Command
     fun svelteReady(invoke: Invoke) {
         SvelteReady(activity).handler(invoke)
-        flushQueuedEvents()
+        OCPluginCompanion.flushQueuedEvents()
     }
 
     @Command
     fun releaseNotifications(invoke: Invoke) {
         ReleaseNotifications(activity).handler(invoke)
+    }
+}
+
+object OCPluginCompanion {
+
+    // Indicates that the UI is ready!
+    var svelteReady: Boolean = false
+
+    // FCM token cache!
+    //
+    // Creates cache for the FCM token.
+    var fcmToken: String? = null
+
+    fun initFcmTokenCache() {
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                Log.e(LOG_TAG, "Fetching FCM registration token failed", task.exception)
+                return@addOnCompleteListener
+            }
+
+            // Get FCM token
+            val token = task.result
+            Log.d(LOG_TAG, "FCM Token: $token")
+
+            // Cache token locally so that we can query it!
+            fcmToken = token
+        }
+    }
+
+    // Cache new token
+    //
+    // Once the Firebase service reports a new token, we cache it, and send it to the UI.
+    fun cacheNewFcmToken(token: String) {
+        fcmToken = token
+        triggerRef("fcm-token-refresh", JSObject().apply { put("fcmToken", token) })
+        Log.d(LOG_TAG, "FCM token refreshed: $token")
+    }
+
+    // Fire Svelte handled event
+    //
+    // We can use this function anywhere in our codebase to fire a JS event, that will get
+    // handled by our Svelte code, and pass any data as JSON payload!
+    var triggerRef: (event: String, payload: JSObject) -> Unit = { event, payload ->
+        eventQueue.add(Pair(event, payload.toString()))
+    }
+
+    fun setTriggerRef(plugin: OpenChatPlugin) {
+        triggerRef = { event, payload ->
+            if (svelteReady) {
+                Log.d(LOG_TAG, "FIRE EVENT: $event, $payload")
+                plugin.trigger(event, payload)
+            } else {
+                Log.d(LOG_TAG, "ADD EVENT TO QUEUE: $event, $payload")
+                eventQueue.add(Pair(event, payload.toString()))
+            }
+        }
+    }
+
+    // Events queue!
+    //
+    // This is a queue for any event that might have fired while the UI was initialising. The
+    // queue is flushed when the Svelte code reports that it's ready to process events.
+    var eventQueue = mutableListOf<Pair<String, String>>()
+
+    fun flushQueuedEvents() {
+        if (svelteReady) {
+            Log.d(LOG_TAG, "Flushing queued events")
+            eventQueue.forEach { (event, payload) -> triggerRef(event, JSObject(payload)) }
+            eventQueue.clear()
+        } else {
+            Log.e(LOG_TAG, "Svelte is not ready yet! Trying to flush queued events.")
+        }
+    }
+
+    // Reference to the notification manager!
+    //
+    // Notifications manager is used to register new notifications, and cancel existing ones.
+    // Initialised as singleton, to make it a bit more convenient to use.
+    var notificationsManager: NotificationManager? = null
+
+    fun getNotificationsManager(context: Context): NotificationManager {
+        if (notificationsManager == null) {
+            notificationsManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        }
+
+        return notificationsManager!!
     }
 }

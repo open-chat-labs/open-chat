@@ -24,8 +24,8 @@ type ReleaseNotificationsRequest = {
     senderId?: string;
     groupId?: string;
     communityId?: string;
-    channelId?: number;
-    threadIndex?: number;
+    channelId?: string;
+    threadIndex?: string;
 };
 
 function identifierToPayload(identifier: NotificationIdentifier): ReleaseNotificationsRequest {
@@ -35,19 +35,18 @@ function identifierToPayload(identifier: NotificationIdentifier): ReleaseNotific
         case "group":
             return {
                 groupId: identifier.groupId,
-                threadIndex: identifier.threadIndex,
+                threadIndex: identifier.threadIndex?.toString(),
             };
         case "channel":
             return {
                 communityId: identifier.communityId,
-                channelId: identifier.channelId,
-                threadIndex: identifier.threadIndex,
+                channelId: identifier.channelId?.toString(),
+                threadIndex: identifier.threadIndex?.toString(),
             };
     }
 }
 
 export async function releaseNotifications(identifier: NotificationIdentifier): Promise<void> {
-    return await invoke<void>("plugin:oc|release_notifications", {
-        payload: identifierToPayload(identifier),
-    });
+    const payload = identifierToPayload(identifier);
+    return await invoke<void>("plugin:oc|release_notifications", { payload });
 }
