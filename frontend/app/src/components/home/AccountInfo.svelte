@@ -105,7 +105,7 @@
 
     let oneSecFees = $state<OneSecTransferFees[]>();
     let oneSecFeesForToken = $derived.by(() => {
-        if (!oneSecEnabled || oneSecFees === undefined) return undefined;
+        if (!isOneSecNetwork || oneSecFees === undefined) return undefined;
         return oneSecFees.filter((f) => f.sourceToken === tokenDetails.symbol);
     });
     let oneSecProtocolFee = $derived.by(() => {
