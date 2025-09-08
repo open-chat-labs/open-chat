@@ -1,36 +1,48 @@
 <script lang="ts">
-    type AvatarSize = "small" | "medium" | "large";
+    import type { BorderRadiusSize } from "component-lib";
+
+    type AvatarSize = "sm" | "md" | "lg" | "xl";
 
     interface Props {
         url: string;
         size?: AvatarSize;
         name?: string;
+        radius?: BorderRadiusSize;
     }
 
     // TODO - add intersection observer
-    let { url, size = "medium", name }: Props = $props();
+    let { url, size = "md", name, radius = "circle" }: Props = $props();
 </script>
 
-<img loading="lazy" src={url} alt={name} class={`avatar ${size}`} />
+<img
+    loading="lazy"
+    src={url}
+    alt={name}
+    class={`avatar ${size}`}
+    style={`border-radius: var(--rad-${radius});`} />
 
 <style lang="scss">
     .avatar {
-        border-radius: var(--rad-circle);
         object-fit: cover;
 
-        &.small {
+        &.sm {
             width: var(--avatar-sm);
             height: var(--avatar-sm);
         }
 
-        &.medium {
+        &.md {
             width: var(--avatar-md);
             height: var(--avatar-md);
         }
 
-        &.large {
+        &.lg {
             width: var(--avatar-lg);
             height: var(--avatar-lg);
+        }
+
+        &.xl {
+            width: var(--avatar-xl);
+            height: var(--avatar-xl);
         }
     }
 </style>
