@@ -1,11 +1,10 @@
 package com.oc.app
 
 import android.util.Log
-import app.tauri.plugin.JSObject
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import com.ocplugin.app.NotificationsHelper
-import com.ocplugin.app.OpenChatPlugin
+import com.ocplugin.app.NotificationsManager
+import com.ocplugin.app.OCPluginCompanion
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -17,13 +16,7 @@ class OpenChatNotificationService : FirebaseMessagingService() {
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     override fun onNewToken(token: String) {
-        Log.d("TEST_OC", "FCM token refreshed: $token")
-
-        // Re-cache new token
-        OpenChatPlugin.fcmToken = token
-
-        // Report token refresh to the UI, which will then send it to the backend
-        OpenChatPlugin.triggerRef("fcm-token-refresh", JSObject().apply { put("fcmToken", token) })
+        OCPluginCompanion.cacheNewFcmToken(token)
     }
 
     // Handle new notification!
@@ -32,11 +25,9 @@ class OpenChatNotificationService : FirebaseMessagingService() {
     // Notification data is handed off to the NotificationsHelper, which will then process it.
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         remoteMessage.data.let { data ->
-            NotificationsHelper.setNotificationIconSmall(R.drawable.ic_notification_small)
-            
             serviceScope.launch {
                 try {
-                    NotificationsHelper.processReceivedNotification(
+                    NotificationsManager.processReceivedNotification(
                         this@OpenChatNotificationService, data, MyApplication.isAppInForeground
                     )
                 } catch (e: Exception) {

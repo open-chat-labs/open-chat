@@ -5,7 +5,7 @@ import android.util.Log
 import app.tauri.annotation.InvokeArg
 import app.tauri.plugin.Invoke
 import com.ocplugin.app.LOG_TAG
-import com.ocplugin.app.NotificationsHelper
+import com.ocplugin.app.NotificationsManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -22,13 +22,15 @@ class ShowNotification(private val activity: Activity) {
         val args = invoke.parseArgs(ShowNotificationsArgs::class.java)
         val notificationId = args.notificationId
 
+        Log.d(LOG_TAG, ".... Passed back by Svelte > Showing notification: $notificationId")
+
         if (notificationId == null) {
-            Log.e(LOG_TAG, "Cannot display notification, missing notification id!")
+            Log.e(LOG_TAG, "!!!! Cannot display notification, missing notification id!")
             return
         }
 
         CoroutineScope(Dispatchers.IO).launch {
-            NotificationsHelper.processPreviouslySavedNotification(activity, notificationId)
+            NotificationsManager.processPreviouslySavedNotification(activity, notificationId)
         }
     }
 }

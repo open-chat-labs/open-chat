@@ -13,6 +13,7 @@ import androidx.credentials.exceptions.GetCredentialCancellationException
 import app.tauri.annotation.InvokeArg
 import app.tauri.plugin.Invoke
 import app.tauri.plugin.JSObject
+import com.ocplugin.app.LOG_TAG
 import java.security.SecureRandom
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -87,10 +88,10 @@ class PasskeyAuth(private val activity: Activity) {
             } catch (e: CreateCredentialNoCreateOptionException) {
                 // Exception raised if credential manager providers are not available (aka the
                 // passkey cannot be saved anywhere)
-                Log.e("ERROR", "No providers available to store the passkey", e)
+                Log.e(LOG_TAG, "No providers available to store the passkey", e)
                 invoke.reject(errResponse("NO_PROVIDERS", "No providers available to store the passkey"))
             } catch (e: Exception) {
-                Log.e("ERROR", "Error creating credentials", e)
+                Log.e(LOG_TAG, "Error creating credentials", e)
                 invoke.reject(errResponse("PASSKEY_CREATE_FAILED", e.toString()))
             }
         }
@@ -134,13 +135,13 @@ class PasskeyAuth(private val activity: Activity) {
                 val tauriResponse = JSObject().put("passkey", rawResponse)
                 invoke.resolve(tauriResponse)
             } catch (e: GetCredentialCancellationException) {
-                Log.d("TEST_OC", "User cancelled auth: $e")
+                Log.d(LOG_TAG, "User cancelled auth: $e")
                 invoke.reject(errResponse("USER_CANCELLED", "User cancelled auth: $e"))
             } catch (e: GetCredentialException) {
-                Log.d("TEST_OC", "No passkey found: $e")
+                Log.d(LOG_TAG, "No passkey found: $e")
                 invoke.reject(errResponse("NO_PASSKEY", "No passkey found: $e"))
             } catch (e: Exception) {
-                Log.d("TEST_OC", "Sign in failed: $e")
+                Log.d(LOG_TAG, "Sign in failed: $e")
                 invoke.reject(errResponse("AUTH_FAILED", "Sign in failed: $e"))
             }
         }

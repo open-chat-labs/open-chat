@@ -9,6 +9,7 @@ import androidx.core.net.toUri
 import app.tauri.annotation.InvokeArg
 import app.tauri.plugin.Invoke
 import app.tauri.plugin.JSObject
+import com.ocplugin.app.LOG_TAG
 
 @InvokeArg
 class OpenUrlArgs {
@@ -22,8 +23,8 @@ class OpenUrl(private val activity: Activity) {
         val args = invoke.parseArgs(OpenUrlArgs::class.java)
         val uri = args.url?.toUri()
 
-        if (uri == null) { // || !uri.scheme.equals("https", ignoreCase = true)) {
-            Log.e("AUTH_E", "Invalid or insecure URI: $uri")
+        if (uri == null) {
+            Log.e(LOG_TAG, "Invalid or insecure URI: $uri")
             invoke.reject("Invalid or insecure URL")
             return
         }
@@ -34,7 +35,7 @@ class OpenUrl(private val activity: Activity) {
 
             // TODO fallback to Intent.ACTION_VIEW if error, or browserPackage is null
             val browserPackage = CustomTabsClient.getPackageName(activity, null)
-            Log.d("AUTH_I", "Found browser: $browserPackage")
+            Log.d(LOG_TAG, "Found browser: $browserPackage")
 
             customTabsIntent.intent.setPackage(browserPackage)
             customTabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -46,7 +47,7 @@ class OpenUrl(private val activity: Activity) {
             val tauriResponse = JSObject().put("value", "ok")
             invoke.resolve(tauriResponse)
         } catch (e: Exception) {
-            Log.e("AUTH_E", e.toString())
+            Log.e(LOG_TAG, e.toString())
             invoke.reject(e.toString())
         }
     }

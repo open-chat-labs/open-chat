@@ -51,6 +51,6 @@ pub struct ReleaseNotificationsRequest {
     pub sender_id: Option<String>,
     pub group_id: Option<String>,
     pub community_id: Option<String>,
-    pub channel_id: Option<u32>,
-    pub thread_index: Option<u32>,
+    pub channel_id: Option<String>,
+    pub thread_index: Option<String>,
 }

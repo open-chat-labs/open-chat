@@ -1,11 +1,12 @@
 package com.ocplugin.app.data
 
 import androidx.room.TypeConverter
-import com.ocplugin.app.models.SenderId
-import com.ocplugin.app.models.GroupId
-import com.ocplugin.app.models.CommunityId
-import com.ocplugin.app.models.ChannelId
-import com.ocplugin.app.models.ThreadIndex
+import com.ocplugin.app.data.SenderId
+import com.ocplugin.app.data.GroupId
+import com.ocplugin.app.data.CommunityId
+import com.ocplugin.app.data.ChannelId
+import com.ocplugin.app.data.ThreadIndex
+import com.ocplugin.app.data.ContextId
 
 class Converters {
     @TypeConverter
@@ -76,5 +77,15 @@ class Converters {
     @TypeConverter
     fun toBodyType(value: String): BodyType {
         return BodyType.valueOf(value)
+    }
+
+    @TypeConverter
+    fun fromContextId(contextId: ContextId): Int {
+        return contextId.value
+    }
+
+    @TypeConverter
+    fun toContextId(value: Int): ContextId {
+        return ContextId(value)
     }
 }

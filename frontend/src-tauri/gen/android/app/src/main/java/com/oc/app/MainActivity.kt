@@ -3,9 +3,7 @@ package com.oc.app
 import android.content.Intent
 import android.util.Log
 import android.os.Bundle
-import com.ocplugin.app.NotificationsHelper
-import com.ocplugin.app.OpenChatPlugin
-import com.ocplugin.app.data.notificationToJSObject
+import com.ocplugin.app.NotificationsManager
 import kotlinx.coroutines.launch
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.lifecycleScope
@@ -13,23 +11,18 @@ import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebView
 import android.view.ViewTreeObserver
+import com.ocplugin.app.LOG_TAG
 
 class MainActivity : TauriActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
         try {
             // Makes sure inputs are visible on soft keyboard toggle
             handleViewportSizeOnSoftKeyboardToggle()
-            
-            // Cache FCM token, and create notification channel
-            NotificationsHelper.cacheFCMToken()
-            NotificationsHelper.createNotificationChannel(this)
-            NotificationsHelper.setNotificationIconSmall(R.drawable.ic_notification_small)
             handleNotificationIntent(intent)
         } catch (e: Exception) {
-            Log.e("OC_APP", "Error occurred $e")
+            Log.e(LOG_TAG, "Error occurred $e")
         }
     }
 
@@ -38,28 +31,17 @@ class MainActivity : TauriActivity() {
         try {
             handleNotificationIntent(intent)
         } catch (e: Exception) {
-            Log.e("OC_APP", "Error occurred $e")
+            Log.e(LOG_TAG, "Error occurred $e")
         }
     }
     
     private fun handleNotificationIntent(intent: Intent) {
         val notificationPayload = intent.getStringExtra("notificationPayload")
-        val notificationId = notificationPayload?.toLongOrNull()
         
-        if (notificationId != null) {
+        // Payload should be json string
+        if (notificationPayload != null) {
             ProcessLifecycleOwner.get().lifecycleScope.launch {
-                // Release associated notifications from the local db.
-                val notification = NotificationsHelper.releaseNotificationsAfterTap(this@MainActivity, notificationId)
-                
-                Log.d("TEST_OC", "Released notification $notification")
-                
-                if (notification != null) {
-                    // Send notification data to Svelte code, which will then determine where to navigate
-                    OpenChatPlugin.triggerRef(
-                        "notification-tap",
-                        notificationToJSObject(notification)
-                    )
-                }
+                NotificationsManager.releaseNotificationsAfterTap(this@MainActivity, notificationPayload)
             }
         }
     }
