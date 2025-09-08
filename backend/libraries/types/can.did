@@ -2377,4 +2377,4 @@ type ChatEventType = variant {
     BotUpdated;
 };
 
-type BotDataEncoding = variant { Json; Candid };
+type BotDataEncoding = variant { Json; Candid; MsgPack };
