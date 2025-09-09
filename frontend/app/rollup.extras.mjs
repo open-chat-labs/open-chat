@@ -93,7 +93,8 @@ export function initEnv() {
             console.log("SignInWithEmail: ", process.env.OC_SIGN_IN_WITH_EMAIL_CANISTER);
             console.log("SignInWithEthereum: ", process.env.OC_SIGN_IN_WITH_ETHEREUM_CANISTER);
             console.log("SignInWithSolana: ", process.env.OC_SIGN_IN_WITH_SOLANA_CANISTER);
-            console.log("OneSecMinter: ", process.env.OC_ONE_SEC_MINTER_CANISTER);
+            console.log("OneSecForwarder: ", process.env.OC_ONESEC_FORWARDER_CANISTERER_CANISTER);
+            console.log("OneSecMinter: ", process.env.OC_ONESEC_MINTER_CANISTER);
         } else {
             console.log(
                 "Couldn't find canisters JSON at: ",
