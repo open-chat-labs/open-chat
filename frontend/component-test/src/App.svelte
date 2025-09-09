@@ -14,6 +14,7 @@
     import Menus from "./Menus.svelte";
     import SectionHeaders from "./SectionHeaders.svelte";
     import Typography from "./Typography.svelte";
+    import Users from "./Users.svelte";
 
     neon.writeCssVariables();
 
@@ -29,7 +30,8 @@
         | "bottom_bar"
         | "avatars"
         | "section_header"
-        | "typography";
+        | "typography"
+        | "users";
     let selected = $state<Section>("colours");
 
     const labels: Record<Section, string> = {
@@ -45,6 +47,7 @@
         menus: "Menus",
         section_header: "Section headers",
         typography: "Typography",
+        users: "Users",
     };
 </script>
 
@@ -93,6 +96,8 @@
             <SectionHeaders />
         {:else if selected === "chat_summary"}
             <ChatSummaries />
+        {:else if selected === "users"}
+            <Users />
         {:else if selected === "typography"}
             <Typography></Typography>
         {/if}

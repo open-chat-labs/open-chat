@@ -85,6 +85,14 @@
             }
         }
     }
+
+    function clickInternal(e: MouseEvent) {
+        if (onClick) {
+            e.stopPropagation();
+            e.preventDefault();
+            onClick(e);
+        }
+    }
 </script>
 
 <button
@@ -93,7 +101,7 @@
     {style}
     class={`common_button ${internalMode} ${size}`}
     class:disabled
-    onclick={onClick}
+    onclick={clickInternal}
     disabled={disabled || loading}>
     {#if loading}
         <Spinner
@@ -147,7 +155,7 @@
             background ease-in-out $speed,
             color ease-in-out $speed;
 
-        font-weight: var(--font-normal);
+        font-weight: var(--font-semi-bold);
         font-size: 14px; // TODO - typography vars
 
         .content {
