@@ -227,8 +227,34 @@ function toKebabCase(key: string) {
 export type ColourVarKeys = Exclude<keyof Colours, keyof object | "cssVariables">;
 type ColourVarsType = Record<ColourVarKeys, string>;
 
-export const ColourVars: ColourVarsType = new Proxy({} as ColourVarsType, {
-    get(_, prop: string) {
-        return `var(--${toKebabCase(prop)})`;
-    },
-});
+const dummyColour = Colour.fromHex("#000000");
+const dummyGradient = new Gradient(dummyColour, dummyColour);
+
+// this is a little bit of a hack but ...
+export const ColourVars: ColourVarsType = Object.fromEntries(
+    Object.keys(
+        new Colours(
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyGradient,
+            dummyGradient,
+        ),
+    ).map((k) => [k, `var(--${toKebabCase(k)})`]),
+) as ColourVarsType;
