@@ -728,8 +728,15 @@ export function apiAutonomousConfig(domain: AutonomousBotConfig): AutonomousConf
     };
 }
 
-export function apiDataEncoding(dataEncoding: "json" | "candid"): BotDataEncoding {
-    return dataEncoding === "candid" ? "Candid" : "Json";
+export function apiDataEncoding(dataEncoding: "json" | "candid" | "msgpack"): BotDataEncoding {
+    switch (dataEncoding) {
+        case "json":
+            return "Json";
+        case "candid":
+            return "Candid";
+        case "msgpack":
+            return "MsgPack";
+    }
 }
 
 export function apiRestrictedLocations(
