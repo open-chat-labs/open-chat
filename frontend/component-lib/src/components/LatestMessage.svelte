@@ -17,7 +17,6 @@
 
 <script lang="ts">
     import type { TypographyColour } from "component-lib";
-    import { theme } from "component-lib";
     import Container from "./Container.svelte";
     import BodySmall from "./typography/BodySmall.svelte";
 
@@ -28,8 +27,8 @@
     let { latestMessage }: Props = $props();
     let iconColour = $derived(
         latestMessage.kind === "video_call" && latestMessage.inProgress
-            ? theme.colours.primary
-            : theme.colours.textSecondary,
+            ? "var(--primary)"
+            : "var(--text-secondary)",
     );
     let textColour = $derived<TypographyColour>(
         latestMessage.kind === "video_call" && latestMessage.inProgress ? "accent" : "secondary",
