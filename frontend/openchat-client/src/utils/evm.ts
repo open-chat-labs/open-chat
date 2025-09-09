@@ -17,6 +17,8 @@ export async function getErc20TokenBalances(
     address: string,
     contractAddresses: EvmContractAddress[],
 ): Promise<Erc20TokenBalance[]> {
+    if (contractAddresses.length === 0) return [];
+
     const url = `https://api.g.alchemy.com/data/v1/${ALCHEMY_API_KEY}/assets/tokens/balances/by-address`;
 
     const requestOptions = {
