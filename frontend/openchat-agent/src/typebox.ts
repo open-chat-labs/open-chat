@@ -606,7 +606,11 @@ export type VideoCallType = Static<typeof VideoCallType>;
 export const VideoCallType = Type.Union([Type.Literal("Broadcast"), Type.Literal("Default")]);
 
 export type BotDataEncoding = Static<typeof BotDataEncoding>;
-export const BotDataEncoding = Type.Union([Type.Literal("Json"), Type.Literal("Candid")]);
+export const BotDataEncoding = Type.Union([
+    Type.Literal("MsgPack"),
+    Type.Literal("Json"),
+    Type.Literal("Candid"),
+]);
 
 export type CommunityEventType = Static<typeof CommunityEventType>;
 export const CommunityEventType = Type.Union([

@@ -2814,8 +2814,15 @@ export function externalBotCommand(command: ApiCommandDefinition): CommandDefini
     };
 }
 
-export function dataEncoding(data_encoding: BotDataEncoding): "json" | "candid" {
-    return data_encoding === "Candid" ? "candid" : "json";
+export function dataEncoding(data_encoding: BotDataEncoding): "json" | "candid" | "msgpack" {
+    switch (data_encoding) {
+        case "Json":
+            return "json";
+        case "Candid":
+            return "candid";
+        case "MsgPack":
+            return "msgpack";
+    }
 }
 
 export function restrictedLocations(
