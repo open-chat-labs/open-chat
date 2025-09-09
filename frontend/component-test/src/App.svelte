@@ -6,6 +6,7 @@
     import BigButtons from "./BigButtons.svelte";
     import BottomBars from "./BottomBars.svelte";
     import Buttons from "./Buttons.svelte";
+    import ChatSummaries from "./ChatSummaries.svelte";
     import Colours from "./Colours.svelte";
     import CommonButtons from "./CommonButtons.svelte";
     import ControlsAndIndicators from "./ControlsAndIndicators.svelte";
@@ -20,6 +21,7 @@
         | "colours"
         | "buttons"
         | "big_buttons"
+        | "chat_summary"
         | "common_buttons"
         | "layout"
         | "controls"
@@ -35,6 +37,7 @@
         big_buttons: "Big buttons",
         bottom_bar: "Bottom bar",
         buttons: "Buttons",
+        chat_summary: "Chat summary",
         colours: "Colours",
         common_buttons: "Common buttons",
         controls: "Controls & indicators",
@@ -88,6 +91,8 @@
             <Avatars />
         {:else if selected === "section_header"}
             <SectionHeaders />
+        {:else if selected === "chat_summary"}
+            <ChatSummaries />
         {:else if selected === "typography"}
             <Typography></Typography>
         {/if}

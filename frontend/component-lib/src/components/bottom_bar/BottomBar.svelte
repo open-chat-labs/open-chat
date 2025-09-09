@@ -2,7 +2,7 @@
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import Lightbulb from "svelte-material-icons/LightbulbVariantOutline.svelte";
-    import Avatar from "../Avatar.svelte";
+    import Avatar from "../avatar/Avatar.svelte";
     import Container from "../Container.svelte";
     import BottomBarItem from "./BottomBarItem.svelte";
 

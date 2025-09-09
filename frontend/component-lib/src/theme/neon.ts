@@ -21,6 +21,7 @@ export const theme = new Theme(
         Colour.fromHex("#50535d"),
         Colour.fromHex("#a7a9ae"),
         Colour.fromHex("#242834"),
+        Colour.fromHex("#e41e79"),
         new Gradient(Colour.fromHex("#8d2380"), Colour.fromHex("#e81e79")),
         new Gradient(Colour.fromHex("#e81e79"), Colour.fromHex("#8d2380")),
     ),

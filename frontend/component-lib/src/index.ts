@@ -1,10 +1,12 @@
-export { default as Avatar } from "./components/Avatar.svelte";
+export { default as Avatar } from "./components/avatar/Avatar.svelte";
+export { default as MultiAvatar } from "./components/avatar/MultiAvatar.svelte";
 export { default as BottomBar } from "./components/bottom_bar/BottomBar.svelte";
 export { default as BottomBarItem } from "./components/bottom_bar/BottomBarItem.svelte";
 export { default as BigButton } from "./components/buttons/BigButton.svelte";
 export { default as Button } from "./components/buttons/Button.svelte";
 export { default as CommonButton } from "./components/buttons/CommonButton.svelte";
 export { default as FloatingButton } from "./components/buttons/FloatingButton.svelte";
+export { default as ChatSummary } from "./components/ChatSummary.svelte";
 export { default as Container } from "./components/Container.svelte";
 export { default as CountBadge } from "./components/CountBadge.svelte";
 export { default as Logo } from "./components/Logo.svelte";

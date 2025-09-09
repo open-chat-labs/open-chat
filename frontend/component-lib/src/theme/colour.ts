@@ -160,7 +160,13 @@ export class Gradient {
     }
 }
 
-export type TypographyColour = "primary" | "secondary" | "tertiary" | "placeholder" | "on-primary";
+export type TypographyColour =
+    | "accent"
+    | "primary"
+    | "secondary"
+    | "tertiary"
+    | "placeholder"
+    | "on-primary";
 
 export class Colours {
     constructor(
@@ -182,6 +188,7 @@ export class Colours {
         public textTertiary: Colour,
         public textPlaceholder: Colour,
         public textOnPrimary: Colour,
+        public textAccent: Colour,
         public primaryGradient: Gradient,
         public primaryGradientInverted: Gradient,
     ) {}
@@ -206,6 +213,7 @@ export class Colours {
             this.textTertiary.cssVariable("text-tertiary"),
             this.textPlaceholder.cssVariable("text-placeholder"),
             this.textOnPrimary.cssVariable("text-on-primary"),
+            this.textAccent.cssVariable("text-accent"),
             this.primaryGradient.cssVariable("primary-gradient"),
             this.primaryGradientInverted.cssVariable("primary-gradient-inverted"),
         ];
