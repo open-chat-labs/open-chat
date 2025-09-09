@@ -219,3 +219,16 @@ export class Colours {
         ];
     }
 }
+
+function toKebabCase(key: string) {
+    return key.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+}
+
+export type ColourVarKeys = Exclude<keyof Colours, keyof object | "cssVariables">;
+type ColourVarsType = Record<ColourVarKeys, string>;
+
+export const ColourVars: ColourVarsType = new Proxy({} as ColourVarsType, {
+    get(_, prop: string) {
+        return `var(--${toKebabCase(prop)})`;
+    },
+});
