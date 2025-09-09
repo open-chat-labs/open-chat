@@ -7601,6 +7601,8 @@ export class OpenChat {
         oneSecAddress.subscribe((addr) => {
             if (addr !== undefined) {
                 this.#oneSecEnableForwarding(currentUserIdStore.value, addr).then(() => {
+                    // Check balances in case a deposit was made before the OneSecForwarder
+                    // canister started tracking the address
                     this.#checkOneSecBalances(addr)
                 });
             }
