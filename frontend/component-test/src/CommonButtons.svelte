@@ -41,6 +41,35 @@
     </Container>
 
     <Container gap={"lg"}>
+        {#each Object.keys(labels) as option}
+            <CommonButton
+                onClick={() => (selected = option as Option)}
+                size={"small_text"}
+                mode={(option as Option) === selected ? "active" : "default"}>
+                {#snippet icon(color)}
+                    <Cog {color}></Cog>
+                {/snippet}
+                {labels[option as Option]}
+            </CommonButton>
+        {/each}
+    </Container>
+
+    <Container gap={"lg"}>
+        <CommonButton {onClick} size={"small_text"} mode={"default"}>
+            {#snippet icon(color)}
+                <Cog {color}></Cog>
+            {/snippet}
+            Small text
+        </CommonButton>
+        <CommonButton {onClick} size={"small_text"} mode={"active"}>
+            {#snippet icon(color)}
+                <Cog {color}></Cog>
+            {/snippet}
+            Active variant
+        </CommonButton>
+    </Container>
+
+    <Container gap={"lg"}>
         <CommonButton {onClick} size={"small"} mode={"default"}>
             {#snippet icon(color)}
                 <Cog {color}></Cog>

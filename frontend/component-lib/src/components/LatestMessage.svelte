@@ -17,6 +17,7 @@
 
 <script lang="ts">
     import type { TypographyColour } from "component-lib";
+    import { theme } from "component-lib";
     import Container from "./Container.svelte";
     import BodySmall from "./typography/BodySmall.svelte";
 
@@ -27,8 +28,8 @@
     let { latestMessage }: Props = $props();
     let iconColour = $derived(
         latestMessage.kind === "video_call" && latestMessage.inProgress
-            ? "var(--primary)"
-            : "var(--text-secondary",
+            ? theme.colours.primary
+            : theme.colours.textSecondary,
     );
     let textColour = $derived<TypographyColour>(
         latestMessage.kind === "video_call" && latestMessage.inProgress ? "accent" : "secondary",
@@ -37,7 +38,7 @@
 
 <Container gap={"xs"} crossAxisAlignment={"center"}>
     {#if latestMessage.kind === "video_call"}
-        <Video color={iconColour} />
+        <Video color={iconColour.toString()} />
     {:else if latestMessage.kind === "video"}
         <Movie color={"var(--text-secondary"} />
     {:else if latestMessage.kind === "image"}
