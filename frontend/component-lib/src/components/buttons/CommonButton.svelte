@@ -4,7 +4,7 @@
     import Spinner from "../Spinner.svelte";
 
     type Mode = "default" | "active";
-    type Size = "small" | "medium" | "large";
+    type Size = "small_text" | "small" | "medium" | "large";
     type InternalMode = Mode | "pressed";
 
     interface Props {
@@ -62,12 +62,35 @@
     function getIconColour(): string {
         switch (internalMode) {
             case "default":
-                return "var(--text-secondary)";
+                switch (size) {
+                    case "small_text":
+                        return "var(--text-primary)";
+                    default:
+                        return "var(--text-secondary)";
+                }
             case "pressed":
-                return "var(--text-primary)";
+                switch (size) {
+                    case "small_text":
+                        return "var(--primary)";
+                    default:
+                        return "var(--text-primary)";
+                }
             case "active": {
-                return "var(--primary-light)";
+                switch (size) {
+                    case "small_text":
+                        return "var(--primary)";
+                    default:
+                        return "var(--primary-light)";
+                }
             }
+        }
+    }
+
+    function clickInternal(e: MouseEvent) {
+        if (onClick) {
+            e.stopPropagation();
+            e.preventDefault();
+            onClick(e);
         }
     }
 </script>
@@ -78,7 +101,7 @@
     {style}
     class={`common_button ${internalMode} ${size}`}
     class:disabled
-    onclick={onClick}
+    onclick={clickInternal}
     disabled={disabled || loading}>
     {#if loading}
         <Spinner
@@ -132,7 +155,7 @@
             background ease-in-out $speed,
             color ease-in-out $speed;
 
-        font-weight: var(--font-normal);
+        font-weight: var(--font-semi-bold);
         font-size: 14px; // TODO - typography vars
 
         .content {
@@ -152,6 +175,16 @@
             border: var(--bw-thin) solid var(--background-2);
             background: var(--background-1);
             color: var(--text-secondary);
+
+            &.small,
+            &.small_text {
+                background: transparent;
+            }
+
+            &.small_text {
+                border: var(--bw-thin) solid transparent;
+                color: var(--text-primary);
+            }
         }
 
         &.pressed {
@@ -159,6 +192,11 @@
             border: var(--bw-thin) solid transparent;
             background: var(--background-2);
             color: var(--text-primary);
+
+            &.small_text {
+                background: var(--primary-light);
+                color: var(--primary);
+            }
         }
 
         &.active {
@@ -166,9 +204,16 @@
             border: var(--bw-thin) solid transparent;
             background: var(--primary-muted);
             color: var(--primary-light);
+
+            &.small_text {
+                background: transparent;
+                color: var(--primary);
+                border: var(--bw-thin) solid transparent;
+            }
         }
 
-        &.small {
+        &.small,
+        &.small_text {
             padding: var(--sp-sm) var(--sp-md);
             font-size: var(--typo-bodySmall-sz);
             line-height: 12px;

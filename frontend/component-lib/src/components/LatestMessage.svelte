@@ -16,7 +16,7 @@
 </script>
 
 <script lang="ts">
-    import type { TypographyColour } from "component-lib";
+    import { ColourVars, type TypographyColour } from "component-lib";
     import Container from "./Container.svelte";
     import BodySmall from "./typography/BodySmall.svelte";
 
@@ -27,8 +27,8 @@
     let { latestMessage }: Props = $props();
     let iconColour = $derived(
         latestMessage.kind === "video_call" && latestMessage.inProgress
-            ? "var(--primary)"
-            : "var(--text-secondary",
+            ? ColourVars.primary
+            : ColourVars.textSecondary,
     );
     let textColour = $derived<TypographyColour>(
         latestMessage.kind === "video_call" && latestMessage.inProgress ? "accent" : "secondary",
@@ -39,11 +39,11 @@
     {#if latestMessage.kind === "video_call"}
         <Video color={iconColour} />
     {:else if latestMessage.kind === "video"}
-        <Movie color={"var(--text-secondary"} />
+        <Movie color={ColourVars.textSecondary} />
     {:else if latestMessage.kind === "image"}
-        <Image color={"var(--text-secondary"} />
+        <Image color={ColourVars.textSecondary} />
     {:else if latestMessage.kind === "audio"}
-        <Waveform color={"var(--text-secondary"} />
+        <Waveform color={ColourVars.textSecondary} />
     {/if}
     <BodySmall colour={textColour} ellipsisTruncate fontWeight={"normal"}>
         {latestMessage.text}
