@@ -37,7 +37,7 @@
 
 <Container gap={"xs"} crossAxisAlignment={"center"}>
     {#if latestMessage.kind === "video_call"}
-        <Video color={iconColour.toString()} />
+        <Video color={iconColour} />
     {:else if latestMessage.kind === "video"}
         <Movie color={"var(--text-secondary"} />
     {:else if latestMessage.kind === "image"}
