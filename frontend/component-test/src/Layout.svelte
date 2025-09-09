@@ -51,7 +51,6 @@
         <Container
             padding={[paddingTop, paddingRight, paddingBottom, paddingLeft]}
             borderWidth={"thick"}
-            onLongPress={() => console.log("Container long pressed")}
             width={{ kind: "fill" }}
             borderRadius={"lg"}
             {gap}>
