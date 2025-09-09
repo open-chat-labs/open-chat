@@ -25,7 +25,7 @@
     <Container
         colour={"var(--secondary-muted)"}
         borderWidth={"thick"}
-        padding={["lg"]}
+        padding={"lg"}
         borderColour={"var(--secondary)"}
         borderStyle={"dashed"}
         borderRadius={"md"}
@@ -51,6 +51,7 @@
         <Container
             padding={[paddingTop, paddingRight, paddingBottom, paddingLeft]}
             borderWidth={"thick"}
+            onLongPress={() => console.log("Container long pressed")}
             width={{ kind: "fill" }}
             borderRadius={"lg"}
             {gap}>
@@ -88,7 +89,7 @@
 
         <H2>Complex Layout</H2>
 
-        <Container gap={"lg"} padding={["xl"]} borderRadius={"lg"} borderWidth={"thin"}>
+        <Container gap={"lg"} padding={"xl"} borderRadius={"lg"} borderWidth={"thin"}>
             <Container gap={"lg"} direction={"vertical"}>
                 {@render contentBlock("A", false)}
                 {@render contentBlock("B", false)}
@@ -100,7 +101,7 @@
                     gap={"md"}
                     colour={"var(--secondary-muted)"}
                     borderWidth={"thick"}
-                    padding={["lg"]}
+                    padding={"lg"}
                     borderColour={"var(--secondary)"}
                     borderStyle={"dashed"}
                     borderRadius={"md"}
@@ -109,7 +110,7 @@
                     width={{ kind: "fill" }}
                     height={{ kind: "fill" }}>
                     <Container
-                        padding={["md"]}
+                        padding={"md"}
                         borderColour={"var(--secondary)"}
                         borderStyle={"dashed"}
                         mainAxisAlignment={"center"}
@@ -117,7 +118,7 @@
                         borderRadius={"md"}
                         borderWidth={"thin"}>A</Container>
                     <Container
-                        padding={["md"]}
+                        padding={"md"}
                         borderColour={"var(--secondary)"}
                         borderStyle={"dashed"}
                         mainAxisAlignment={"center"}
@@ -125,7 +126,7 @@
                         borderRadius={"md"}
                         borderWidth={"thin"}>B</Container>
                     <Container
-                        padding={["md"]}
+                        padding={"md"}
                         borderColour={"var(--secondary)"}
                         borderStyle={"dashed"}
                         mainAxisAlignment={"center"}
@@ -167,11 +168,6 @@
 </Container>
 
 <style lang="scss">
-    h5 {
-        margin-bottom: 4px;
-        color: var(--text-secondary);
-    }
-
     select {
         margin-bottom: var(--sp-lg);
         border: none;

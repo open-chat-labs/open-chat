@@ -11,6 +11,7 @@
     import CommonButtons from "./CommonButtons.svelte";
     import ControlsAndIndicators from "./ControlsAndIndicators.svelte";
     import Layout from "./Layout.svelte";
+    import Longpress from "./Longpress.svelte";
     import Menus from "./Menus.svelte";
     import SectionHeaders from "./SectionHeaders.svelte";
     import Typography from "./Typography.svelte";
@@ -25,6 +26,7 @@
         | "chat_summary"
         | "common_buttons"
         | "layout"
+        | "longpress"
         | "controls"
         | "menus"
         | "bottom_bar"
@@ -44,6 +46,7 @@
         common_buttons: "Common buttons",
         controls: "Controls & indicators",
         layout: "Layout",
+        longpress: "Longpress",
         menus: "Menus",
         section_header: "Section headers",
         typography: "Typography",
@@ -96,6 +99,8 @@
             <SectionHeaders />
         {:else if selected === "chat_summary"}
             <ChatSummaries />
+        {:else if selected === "longpress"}
+            <Longpress />
         {:else if selected === "users"}
             <Users />
         {:else if selected === "typography"}
