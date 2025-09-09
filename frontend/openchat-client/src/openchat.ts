@@ -672,8 +672,6 @@ export class OpenChat {
     #getBtcAddressPromise: Promise<string> | undefined = undefined;
     #getOneSecAddressPromise: Promise<string> | undefined = undefined;
     #evmContractAddresses: EvmContractAddress[] = [];
-    #oneSecMinterNotificationTimestamps: { chain: EvmChain; token: string; timestamp: number }[] =
-        [];
 
     currentAirdropChannel: AirdropChannelDetails | undefined = undefined;
 
@@ -7602,16 +7600,9 @@ export class OpenChat {
     #startOneSecBalanceUpdateJob() {
         oneSecAddress.subscribe((addr) => {
             if (addr !== undefined) {
-                this.#oneSecEnableForwarding(currentUserIdStore.value, addr);
-
-                // Keep the poller for now until we are confident the automatic forwarding is working reliably
-                const poller = new Poller(
-                    () => this.#checkOneSecBalances(addr),
-                    ONE_MINUTE_MILLIS,
-                    5 * ONE_MINUTE_MILLIS,
-                    true,
-                );
-                return () => poller.stop();
+                this.#oneSecEnableForwarding(currentUserIdStore.value, addr).then(() => {
+                    this.#checkOneSecBalances(addr)
+                });
             }
         });
     }
@@ -7627,36 +7618,15 @@ export class OpenChat {
     async #checkOneSecBalances(address: string) {
         const balances = await getErc20TokenBalances(address, this.#evmContractAddresses);
         if (balances.length > 0) {
-            const now = Date.now();
-            // Clear entries older than 15 minutes
-            this.#oneSecMinterNotificationTimestamps =
-                this.#oneSecMinterNotificationTimestamps.filter(
-                    (x) => x.timestamp > now - 15 * ONE_MINUTE_MILLIS,
-                );
-
-            // Notify the OneSec minter of any tokens with non-zero balances, skipping any which
-            // have already been notified within the last 15 minutes, since the OneSec minter will
-            // already be polling for updates to these tokens
+            // Notify the OneSec minter of any tokens with non-zero balances
             for (const balance of balances) {
-                if (
-                    !this.#oneSecMinterNotificationTimestamps.some(
-                        (x) => x.chain === balance.chain && x.token === balance.token,
-                    )
-                ) {
-                    this.#sendRequest({
-                        kind: "oneSecForwardEvmToIcp",
-                        chain: balance.chain,
-                        tokenSymbol: balance.token,
-                        address,
-                        receiver: currentUserIdStore.value,
-                    }).then(() => {
-                        this.#oneSecMinterNotificationTimestamps.push({
-                            chain: balance.chain,
-                            token: balance.token,
-                            timestamp: now,
-                        });
-                    });
-                }
+                this.#sendRequest({
+                    kind: "oneSecForwardEvmToIcp",
+                    chain: balance.chain,
+                    tokenSymbol: balance.token,
+                    address,
+                    receiver: currentUserIdStore.value,
+                });
             }
         }
     }
