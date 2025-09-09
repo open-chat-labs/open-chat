@@ -344,7 +344,7 @@ export type BotDefinition = {
     commands: CommandDefinition[];
     autonomousConfig: AutonomousBotConfig | undefined;
     defaultSubscriptions: BotSubscriptions | undefined;
-    dataEncoding: "json" | "candid" | undefined;
+    dataEncoding: "json" | "candid" | "msgpack" | undefined;
     restrictedLocations: BotInstallationLocationType[] | undefined;
 };
 

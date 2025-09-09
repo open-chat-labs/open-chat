@@ -219,3 +219,42 @@ export class Colours {
         ];
     }
 }
+
+function toKebabCase(key: string) {
+    return key.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+}
+
+export type ColourVarKeys = Exclude<keyof Colours, keyof object | "cssVariables">;
+type ColourVarsType = Record<ColourVarKeys, string>;
+
+const dummyColour = Colour.fromHex("#000000");
+const dummyGradient = new Gradient(dummyColour, dummyColour);
+
+// this is a little bit of a hack but ...
+export const ColourVars: ColourVarsType = Object.fromEntries(
+    Object.keys(
+        new Colours(
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyColour,
+            dummyGradient,
+            dummyGradient,
+        ),
+    ).map((k) => [k, `var(--${toKebabCase(k)})`]),
+) as ColourVarsType;
