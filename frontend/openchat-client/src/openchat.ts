@@ -23,10 +23,12 @@ import {
     anonymousUser,
     type ApproveAccessGatePaymentResponse,
     type ApproveTransferResponse,
+    ARBITRUM_NETWORK,
     type ArchitectureRoute,
     type AttachmentContent,
     type AuthenticationPrincipal,
     AuthProvider,
+    BASE_NETWORK,
     type BlogRoute,
     type BotActionScope,
     type BotClientConfigData,
@@ -104,6 +106,7 @@ import {
     type EnableInviteCodeResponse,
     type EnhancedAccessGate,
     ErrorCode,
+    ETHEREUM_NETWORK,
     type EventsResponse,
     type EventWrapper,
     type EvmChain,
@@ -138,6 +141,7 @@ import {
     type GuidelinesRoute,
     type HandleMagicLinkResponse,
     type HomeRoute,
+    ICP_SYMBOL,
     type IdentityState,
     IdentityStorage,
     indexRangeForChat,
@@ -7631,6 +7635,13 @@ export class OpenChat {
                 });
             }
         }
+    }
+
+    oneSecGetNetworks(token: string): string[] {
+        const ethNetworks = [ETHEREUM_NETWORK, ARBITRUM_NETWORK, BASE_NETWORK]
+            .filter((n) => this.#evmContractAddresses.some((c) => c.token === token && c.chain === n));
+
+        return [ICP_SYMBOL, ...ethNetworks];
     }
 
     async getBtcAddress(): Promise<string> {

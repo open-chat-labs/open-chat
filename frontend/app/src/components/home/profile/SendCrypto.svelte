@@ -7,15 +7,12 @@
         type ResourceKey,
     } from "openchat-client";
     import {
-        ARBITRUM_NETWORK,
-        BASE_NETWORK,
         BTC_SYMBOL,
         CKBTC_SYMBOL,
         cryptoBalanceStore,
         cryptoLookup,
         currentUserIdStore,
         currentUserStore,
-        ETHEREUM_NETWORK,
         iconSize,
         ICP_SYMBOL,
         mobileWidth,
@@ -79,7 +76,7 @@
         if (isBtc) {
             return [BTC_SYMBOL, CKBTC_SYMBOL];
         } else if (oneSecEnabled) {
-            return [ICP_SYMBOL, ETHEREUM_NETWORK, ARBITRUM_NETWORK, BASE_NETWORK];
+            return client.oneSecGetNetworks(tokenDetails.symbol);
         } else {
             return [];
         }
