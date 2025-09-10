@@ -21,7 +21,7 @@ pub enum IcpAccount {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Token {
     ICP,
     USDC,

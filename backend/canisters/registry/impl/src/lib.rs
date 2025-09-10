@@ -10,8 +10,8 @@ use registry_canister::subnets::Subnet;
 use registry_canister::{MessageFilterSummary, NervousSystemDetails};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::{BTreeMap, HashSet};
-use types::{AirdropConfig, BuildVersion, CanisterId, Cycles, ExchangeId, TimestampMillis, Timestamped};
+use std::collections::{BTreeMap, HashMap, HashSet};
+use types::{AirdropConfig, BuildVersion, CanisterId, Cycles, EvmContractAddress, ExchangeId, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
 mod guards;
@@ -107,6 +107,8 @@ struct Data {
     airdrop_config: Timestamped<Option<AirdropConfig>>,
     subnets: Subnets,
     timer_jobs: TimerJobs<TimerJob>,
+    #[serde(default)]
+    evm_contract_addresses: HashMap<CanisterId, Vec<EvmContractAddress>>,
     rng_seed: [u8; 32],
     test_mode: bool,
 }
@@ -149,6 +151,7 @@ impl Data {
             airdrop_config: Timestamped::default(),
             subnets: Subnets::default(),
             timer_jobs: TimerJobs::default(),
+            evm_contract_addresses: HashMap::new(),
             rng_seed: [0; 32],
             test_mode,
         }
