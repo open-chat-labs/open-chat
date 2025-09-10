@@ -224,6 +224,7 @@
                         $currentUserIdStore,
                         addOrUpdateTokenInfoUrl,
                         addOrUpdateTokenTransactionUrlFormat,
+                        undefined,
                     ),
                 };
             }
@@ -237,6 +238,7 @@
                         undefined,
                         addOrUpdateTokenInfoUrl,
                         addOrUpdateTokenTransactionUrlFormat,
+                        undefined,
                     ),
                 };
             }
