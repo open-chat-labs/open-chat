@@ -148,6 +148,23 @@ impl Tokens {
         );
     }
 
+    pub fn set_evm_contract_addresses(
+        &mut self,
+        ledger_canister_id: CanisterId,
+        evm_contract_addresses: Vec<EvmContractAddress>,
+        now: TimestampMillis,
+    ) {
+        self.apply_update(
+            ledger_canister_id,
+            |t| {
+                t.evm_contract_addresses = evm_contract_addresses;
+                info!(%ledger_canister_id, "Set token EVM contract addresses");
+                true
+            },
+            now,
+        );
+    }
+
     pub fn mark_uninstalled(&mut self, ledger_canister_id: CanisterId, now: TimestampMillis) {
         self.apply_update(
             ledger_canister_id,
