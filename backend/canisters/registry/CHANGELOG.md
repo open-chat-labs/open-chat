@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Store and regularly update EVM contract addresses ([#8589](https://github.com/open-chat-labs/open-chat/pull/8589))
+- Log message each time a token is updated ([#8596](https://github.com/open-chat-labs/open-chat/pull/8596))
 
 ### Removed
 
