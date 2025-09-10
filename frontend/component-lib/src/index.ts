@@ -1,3 +1,4 @@
+export * from "./actions";
 export { default as Avatar } from "./components/avatar/Avatar.svelte";
 export { default as MultiAvatar } from "./components/avatar/MultiAvatar.svelte";
 export { default as BottomBar } from "./components/bottom_bar/BottomBar.svelte";
