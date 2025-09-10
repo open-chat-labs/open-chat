@@ -14,7 +14,6 @@ generate_query_call!(notifications);
 generate_update_call!(bot_create_channel);
 generate_update_call!(bot_delete_channel);
 generate_update_call!(bot_send_message);
-generate_update_call!(bot_subscribe_to_events);
 generate_msgpack_update_call!(install_bot);
 generate_msgpack_update_call!(invite_users_to_channel);
 generate_msgpack_update_call!(invite_users_to_community);
