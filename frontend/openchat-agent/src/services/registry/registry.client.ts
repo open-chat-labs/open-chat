@@ -6,7 +6,6 @@ import { mapOptional, principalStringToBytes } from "../../utils/mapping";
 import {
     RegistryAddMessageFilterArgs,
     RegistryAddMessageFilterResponse,
-    RegistryAddOneSecTokenArgs,
     RegistryAddRemoveSwapProviderArgs,
     RegistryAddRemoveSwapProviderResponse,
     RegistryRemoveMessageFilterArgs,
@@ -16,9 +15,8 @@ import {
     RegistrySetTokenEnabledResponse,
     RegistryUpdatesArgs,
     RegistryUpdatesResponse as TRegistryUpdatesResponse,
-    UnitResult,
 } from "../../typebox";
-import { apiDexId, isSuccess } from "../common/chatMappersV2";
+import { apiDexId } from "../common/chatMappersV2";
 
 export class RegistryClient extends MsgpackCanisterAgent {
     private readonly blobUrlPattern: string;
@@ -115,18 +113,5 @@ export class RegistryClient extends MsgpackCanisterAgent {
             RegistrySetTokenEnabledArgs,
             RegistrySetTokenEnabledResponse,
         );
-    }
-
-    addOneSecToken(tokenSymbol: string, infoUrl: string): Promise<boolean> {
-        return this.executeMsgpackUpdate(
-            "add_one_sec_token",
-            {
-                token: tokenSymbol,
-                info_url: infoUrl,
-            },
-            isSuccess,
-            RegistryAddOneSecTokenArgs,
-            UnitResult,
-        )
     }
 }
