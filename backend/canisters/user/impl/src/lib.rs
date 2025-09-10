@@ -680,23 +680,10 @@ impl Data {
 
     pub fn handle_bot_definition_updated(&mut self, update: BotDefinitionUpdate, now: TimestampMillis) {
         let bot_id = update.bot_id;
-        if !self.bots.update_from_definition(update, now) {
-            return;
+
+        if self.bots.update_from_definition(update, now) {
+            self.apply_bot_update(bot_id, Some(OPENCHAT_BOT_USER_ID), now);
         }
-
-        let Some(chat) = self.direct_chats.get_mut(&bot_id.into()) else {
-            return;
-        };
-
-        chat.events.push_main_event(
-            ChatEventInternal::BotUpdated(Box::new(BotUpdated {
-                user_id: bot_id,
-                updated_by: OPENCHAT_BOT_USER_ID,
-            })),
-            now,
-        );
-
-        self.reapply_event_subscriptions_for_bot(bot_id);
     }
 
     pub fn update_bot_permissions(
@@ -710,15 +697,28 @@ impl Data {
             .bots
             .update_permissions(bot_id, command_permissions, autonomous_permissions, now)
         {
-            self.reapply_event_subscriptions_for_bot(bot_id);
+            self.apply_bot_update(bot_id, None, now);
             true
         } else {
             false
         }
     }
 
-    fn reapply_event_subscriptions_for_bot(&mut self, bot_id: UserId) {
+    fn apply_bot_update(&mut self, bot_id: UserId, updated_by: Option<UserId>, now: TimestampMillis) {
         let chat = self.direct_chats.get_mut(&bot_id.into()).unwrap();
+
+        // Push a chat event
+        if let Some(updated_by) = updated_by {
+            chat.events.push_main_event(
+                ChatEventInternal::BotUpdated(Box::new(BotUpdated {
+                    user_id: bot_id,
+                    updated_by,
+                })),
+                now,
+            );
+        }
+
+        // Re-apply event subscriptions given the changes to permissions and/or subscriptions
         let bot = self.bots.get(&bot_id).unwrap();
 
         let permissions = &bot.autonomous_permissions.clone().unwrap_or_default();
