@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Store and regularly update EVM contract addresses ([#8589](https://github.com/open-chat-labs/open-chat/pull/8589))
 - Add `one_sec_enabled` to `add_token` and `update_token` args ([#8595](https://github.com/open-chat-labs/open-chat/pull/8595))
 - Log message each time a token is updated ([#8596](https://github.com/open-chat-labs/open-chat/pull/8596))
+- Apply EVM contract address updates to tokens ([#8597](https://github.com/open-chat-labs/open-chat/pull/8597))
 
 ### Removed
 
