@@ -103,7 +103,7 @@ impl Tokens {
             |t| {
                 if t.supported_standards != supported_standards {
                     t.supported_standards = supported_standards;
-                    info!(%ledger_canister_id, ?supported_standards, "Updated token standards");
+                    info!(%ledger_canister_id, "Updated token standards");
                     true
                 } else {
                     false
