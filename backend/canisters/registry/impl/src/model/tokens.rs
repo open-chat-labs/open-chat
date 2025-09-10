@@ -158,7 +158,7 @@ impl Tokens {
             ledger_canister_id,
             |t| {
                 t.evm_contract_addresses = evm_contract_addresses;
-                info!(%ledger_canister_id, "Set EVM contract addresses");
+                info!(%ledger_canister_id, "Set token EVM contract addresses");
                 true
             },
             now,
