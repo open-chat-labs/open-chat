@@ -49,6 +49,46 @@ async fn run_async() {
     }
 
     mutate_state(|state| {
-        state.data.evm_contract_addresses = evm_contract_addresses;
+        let previous_addresses = std::mem::replace(&mut state.data.evm_contract_addresses, evm_contract_addresses);
+
+        let mut tokens_with_updates = Vec::new();
+
+        // Add the tokens which previously didn't have any EVM contract addresses
+        tokens_with_updates.extend(
+            state
+                .data
+                .evm_contract_addresses
+                .keys()
+                .filter(|a| !previous_addresses.contains_key(a)),
+        );
+
+        // Add the tokens where the list of EVM contract addresses has changed
+        for (ledger_canister_id, previous_addresses) in previous_addresses {
+            if let Some(new_addresses) = state.data.evm_contract_addresses.get(&ledger_canister_id) {
+                let updated = previous_addresses.len() != new_addresses.len()
+                    || previous_addresses.iter().any(|a| !new_addresses.contains(a));
+
+                if updated {
+                    tokens_with_updates.push(ledger_canister_id);
+                }
+            }
+        }
+
+        if !tokens_with_updates.is_empty() {
+            let now = state.env.now();
+
+            for ledger_canister_id in tokens_with_updates {
+                state.data.tokens.set_evm_contract_addresses(
+                    ledger_canister_id,
+                    state
+                        .data
+                        .evm_contract_addresses
+                        .get(&ledger_canister_id)
+                        .cloned()
+                        .unwrap_or_default(),
+                    now,
+                );
+            }
+        }
     });
 }
