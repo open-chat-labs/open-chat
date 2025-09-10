@@ -56,6 +56,12 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
             state.data.chat.members.remove(user_id, **now);
             state.data.remove_user(user_id, None);
         }
+        LocalIndexEvent::BotRemoved(bot_id) => {
+            state.data.uninstall_bot(OPENCHAT_BOT_USER_ID, bot_id, **now);
+        }
+        LocalIndexEvent::BotUpdated(ev) => {
+            state.data.handle_bot_definition_updated(ev, **now);
+        }
     }
 
     handle_activity_notification(state);

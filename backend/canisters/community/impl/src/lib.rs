@@ -30,16 +30,16 @@ use rand::rngs::StdRng;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
 use std::cell::RefCell;
-use std::collections::{BTreeMap, HashSet};
+use std::collections::BTreeMap;
 use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
-    AccessGate, AccessGateConfigInternal, Achievement, BotCommunityEvent, BotEventsCaller, BotInitiator, BotNotification,
-    BotPermissions, BuildVersion, Caller, CanisterId, ChannelCreated, ChannelId, ChannelUserNotificationPayload,
-    ChatEventCategory, ChatEventType, ChatMetrics, ChatPermission, CommunityCanisterCommunitySummary, CommunityEvent,
-    CommunityEventCategory, CommunityEventType, CommunityMembership, CommunityPermissions, Cycles, Document, EventIndex,
-    EventsCaller, FrozenGroupInfo, GroupRole, IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules,
-    TimestampMillis, Timestamped, UserId, UserNotification, UserType,
+    AccessGate, AccessGateConfigInternal, Achievement, BotCommunityEvent, BotEventsCaller, BotInitiator, BotInstallationUpdate,
+    BotNotification, BotPermissions, BuildVersion, Caller, CanisterId, ChannelCreated, ChannelId,
+    ChannelUserNotificationPayload, ChatMetrics, ChatPermission, CommunityCanisterCommunitySummary, CommunityEvent,
+    CommunityMembership, CommunityPermissions, Cycles, Document, EventIndex, EventsCaller, FrozenGroupInfo, GroupRole,
+    IdempotentEnvelope, MembersAdded, Milliseconds, Notification, OptionUpdate, Rules, TimestampMillis, Timestamped, UserId,
+    UserNotification, UserType,
 };
 use types::{BotSubscriptions, CommunityId};
 use user_canister::CommunityCanisterEvent;
@@ -939,28 +939,21 @@ impl Data {
 
         if let (Some(subscriptions), Some(permissions)) = (default_subscriptions, autonomous_permissions) {
             // Subscribe to permitted community events
-            let permitted_categories = permissions.permitted_community_event_categories_to_read();
-
-            let community_events: HashSet<CommunityEventType> = subscriptions
-                .community
-                .into_iter()
-                .filter(|t| permitted_categories.contains(&CommunityEventCategory::from(*t)))
-                .collect();
-
-            self.events.subscribe_bot_to_events(bot_id, community_events);
+            self.events.subscribe_bot_to_events(
+                bot_id,
+                subscriptions.community,
+                &permissions.permitted_community_event_categories_to_read(),
+            );
 
             // Subscribe to permitted chat events for all public channels
             let permitted_categories = permissions.permitted_chat_event_categories_to_read();
 
-            let chat_events: HashSet<ChatEventType> = subscriptions
-                .chat
-                .into_iter()
-                .filter(|t| permitted_categories.contains(&ChatEventCategory::from(*t)))
-                .collect();
-
             for channel in self.channels.iter_mut() {
                 if channel.chat.is_public.value {
-                    channel.chat.events.subscribe_bot_to_events(bot_id, chat_events.clone());
+                    channel
+                        .chat
+                        .events
+                        .subscribe_bot_to_events(bot_id, subscriptions.chat.clone(), &permitted_categories);
                 }
             }
         }
@@ -968,35 +961,82 @@ impl Data {
         true
     }
 
-    pub fn update_bot(
+    pub fn handle_bot_definition_updated(&mut self, update: BotInstallationUpdate, now: TimestampMillis) {
+        let Some(bot) = self.bots.get(&update.bot_id) else {
+            return;
+        };
+
+        // The stored bot permissions are _granted_ permissions, whereas the incoming permissions are
+        // those requested by the bot. So intersect the requested permissions with the stored permissions.
+
+        let granted_command_permissions = match update.command_permissions {
+            OptionUpdate::NoChange => bot.permissions.clone(),
+            OptionUpdate::SetToNone => BotPermissions::default(),
+            OptionUpdate::SetToSome(requested) => bot.permissions.intersect(&requested),
+        };
+
+        let granted_autonomous_permissions = match update.autonomous_permissions {
+            OptionUpdate::NoChange => bot.autonomous_permissions.clone(),
+            OptionUpdate::SetToNone => None,
+            OptionUpdate::SetToSome(requested) => bot
+                .autonomous_permissions
+                .as_ref()
+                .map(|existing| existing.intersect(&requested)),
+        };
+
+        self.bots.update(
+            update.bot_id,
+            granted_command_permissions,
+            granted_autonomous_permissions,
+            update.default_subscriptions,
+            now,
+        );
+
+        self.reapply_event_subscriptions_for_bot(update.bot_id);
+    }
+
+    pub fn update_bot_permissions(
         &mut self,
         bot_id: UserId,
-        permissions: BotPermissions,
+        command_permissions: BotPermissions,
         autonomous_permissions: Option<BotPermissions>,
         now: TimestampMillis,
     ) -> bool {
-        if !self.bots.update(bot_id, permissions, autonomous_permissions.clone(), now) {
+        if !self.bots.update(
+            bot_id,
+            command_permissions,
+            autonomous_permissions,
+            OptionUpdate::NoChange,
+            now,
+        ) {
             return false;
         }
 
-        let bot = self.bots.get(&bot_id).unwrap();
-        let permissions = autonomous_permissions.unwrap_or_default();
-        let permitted_categories = permissions.permitted_chat_event_categories_to_read();
-        let subscriptions = bot.default_subscriptions.clone().unwrap_or_default();
-
-        let chat_events = subscriptions
-            .chat
-            .into_iter()
-            .filter(|t| permitted_categories.contains(&ChatEventCategory::from(*t)))
-            .collect::<HashSet<ChatEventType>>();
-
-        for channel in self.channels.iter_mut() {
-            if channel.chat.is_public.value {
-                channel.chat.events.subscribe_bot_to_events(bot_id, chat_events.clone());
-            }
-        }
-
+        self.reapply_event_subscriptions_for_bot(bot_id);
         true
+    }
+
+    fn reapply_event_subscriptions_for_bot(&mut self, bot_id: UserId) {
+        let Some(bot) = self.bots.get(&bot_id) else {
+            return;
+        };
+
+        let permissions = &bot.autonomous_permissions.clone().unwrap_or_default();
+        let subscriptions = bot.default_subscriptions.clone().unwrap_or_default();
+        let permitted_chat_categories = permissions.permitted_chat_event_categories_to_read();
+        let permitted_community_categories = permissions.permitted_community_event_categories_to_read();
+
+        // Update community event subscriptions
+        self.events
+            .subscribe_bot_to_events(bot_id, subscriptions.community.clone(), &permitted_community_categories);
+
+        // Update chat event subscriptions for all channels
+        for channel in self.channels.iter_mut() {
+            channel
+                .chat
+                .events
+                .subscribe_bot_to_events(bot_id, subscriptions.chat.clone(), &permitted_chat_categories);
+        }
     }
 
     pub fn uninstall_bot(&mut self, bot_id: UserId, now: TimestampMillis) -> bool {

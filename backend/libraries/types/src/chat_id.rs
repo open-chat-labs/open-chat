@@ -27,6 +27,12 @@ impl From<UserId> for ChatId {
     }
 }
 
+impl From<ChatId> for UserId {
+    fn from(chat_id: ChatId) -> Self {
+        Principal::from(chat_id).into()
+    }
+}
+
 impl Debug for ChatId {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         std::fmt::Display::fmt(&self.0, f)

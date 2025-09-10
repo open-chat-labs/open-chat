@@ -14,7 +14,7 @@ use crate::model::user_canister_event_batch::UserCanisterEventBatch;
 use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, DeleteFileReferencesJob, RemoveExpiredEventsJob, TimerJob};
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
-use chat_events::EventPusher;
+use chat_events::{ChatEventInternal, EventPusher};
 use constants::{DAY_IN_MS, ICP_LEDGER_CANISTER_ID, LIFETIME_DIAMOND_TIMESTAMP, OPENCHAT_BOT_USER_ID};
 use event_store_types::{Event, EventBuilder};
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -36,9 +36,10 @@ use std::collections::{BTreeMap, HashSet};
 use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
-    Achievement, BotInitiator, BotNotification, BotPermissions, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEvent,
+    Achievement, BotEvent, BotInitiator, BotInstallationLocation, BotInstallationUpdate, BotLifecycleEvent, BotNotification,
+    BotPermissions, BotUninstalledEvent, BotUpdated, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEvent,
     ChitEventType, CommunityId, Cycles, DirectChatUserNotificationPayload, Document, IdempotentEnvelope, Milliseconds,
-    Notification, NotifyChit, TimestampMillis, Timestamped, UniquePersonProof, UserCanisterStreakInsuranceClaim,
+    Notification, NotifyChit, OptionUpdate, TimestampMillis, Timestamped, UniquePersonProof, UserCanisterStreakInsuranceClaim,
     UserCanisterStreakInsurancePayment, UserId, UserNotification,
 };
 use user_canister::{MessageActivityEvent, NamedAccount, UserCanisterEvent, WalletConfig};
@@ -447,6 +448,27 @@ Your streak is now {new_streak} days!"
         jobs::garbage_collect_stable_memory::start_job_if_required(self);
         true
     }
+
+    pub fn uninstall_bot(&mut self, bot_id: UserId, notify_bot: bool) {
+        let now = self.env.now();
+
+        self.data.bots.remove(bot_id, now);
+
+        self.delete_direct_chat(bot_id, false, now);
+
+        if notify_bot {
+            let user_id: UserId = self.env.canister_id().into();
+
+            self.push_bot_notification(Some(BotNotification {
+                event: BotEvent::Lifecycle(BotLifecycleEvent::Uninstalled(BotUninstalledEvent {
+                    uninstalled_by: user_id,
+                    location: BotInstallationLocation::User(user_id.into()),
+                })),
+                recipients: vec![bot_id],
+                timestamp: now,
+            }));
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -654,6 +676,90 @@ impl Data {
     pub fn flush_pending_events(&mut self) {
         self.user_canister_events_queue.flush();
         self.local_user_index_event_sync_queue.flush();
+    }
+
+    pub fn handle_bot_definition_updated(&mut self, update: BotInstallationUpdate, now: TimestampMillis) {
+        let Some(chat) = self.direct_chats.get_mut(&update.bot_id.into()) else {
+            return;
+        };
+
+        let Some(bot) = self.bots.get(&update.bot_id) else {
+            return;
+        };
+
+        // The stored bot permissions are _granted_ permissions, whereas the incoming permissions are
+        // those requested by the bot. So intersect the requested permissions with the stored permissions.
+
+        let granted_command_permissions = match update.command_permissions {
+            OptionUpdate::NoChange => bot.permissions.clone(),
+            OptionUpdate::SetToNone => BotPermissions::default(),
+            OptionUpdate::SetToSome(requested) => bot.permissions.intersect(&requested),
+        };
+
+        let granted_autonomous_permissions = match update.autonomous_permissions {
+            OptionUpdate::NoChange => bot.autonomous_permissions.clone(),
+            OptionUpdate::SetToNone => None,
+            OptionUpdate::SetToSome(requested) => bot
+                .autonomous_permissions
+                .as_ref()
+                .map(|existing| existing.intersect(&requested)),
+        };
+
+        self.bots.update(
+            update.bot_id,
+            granted_command_permissions,
+            granted_autonomous_permissions,
+            update.default_subscriptions,
+            now,
+        );
+
+        chat.events.push_main_event(
+            ChatEventInternal::BotUpdated(Box::new(BotUpdated {
+                user_id: update.bot_id,
+                updated_by: OPENCHAT_BOT_USER_ID,
+            })),
+            now,
+        );
+
+        self.reapply_event_subscriptions_for_bot(update.bot_id);
+    }
+
+    pub fn update_bot_permissions(
+        &mut self,
+        bot_id: UserId,
+        command_permissions: BotPermissions,
+        autonomous_permissions: Option<BotPermissions>,
+        now: TimestampMillis,
+    ) -> bool {
+        if !self.bots.update(
+            bot_id,
+            command_permissions,
+            autonomous_permissions,
+            OptionUpdate::NoChange,
+            now,
+        ) {
+            return false;
+        }
+
+        self.reapply_event_subscriptions_for_bot(bot_id);
+        true
+    }
+
+    fn reapply_event_subscriptions_for_bot(&mut self, bot_id: UserId) {
+        let Some(chat) = self.direct_chats.get_mut(&bot_id.into()) else {
+            return;
+        };
+
+        let Some(bot) = self.bots.get(&bot_id) else {
+            return;
+        };
+
+        let permissions = &bot.autonomous_permissions.clone().unwrap_or_default();
+        let permitted_categories = permissions.permitted_chat_event_categories_to_read();
+        let subscriptions = bot.default_subscriptions.clone().unwrap_or_default();
+
+        chat.events
+            .subscribe_bot_to_events(bot_id, subscriptions.chat, &permitted_categories);
     }
 }
 

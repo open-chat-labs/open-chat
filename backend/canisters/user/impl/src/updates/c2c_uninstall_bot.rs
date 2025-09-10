@@ -4,8 +4,8 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;
 use oc_error_codes::OCErrorCode;
+use types::OCResult;
 use types::c2c_uninstall_bot::*;
-use types::{BotEvent, BotInstallationLocation, BotLifecycleEvent, BotNotification, BotUninstalledEvent, OCResult};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
@@ -24,19 +24,7 @@ fn c2c_uninstall_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         }
     }
 
-    let now = state.env.now();
-
-    state.data.bots.remove(args.bot_id, now);
-    state.delete_direct_chat(args.bot_id, false, now);
-
-    state.push_bot_notification(Some(BotNotification {
-        event: BotEvent::Lifecycle(BotLifecycleEvent::Uninstalled(BotUninstalledEvent {
-            uninstalled_by: args.caller,
-            location: BotInstallationLocation::User(args.caller.into()),
-        })),
-        recipients: vec![args.bot_id],
-        timestamp: now,
-    }));
+    state.uninstall_bot(args.bot_id, true);
 
     Ok(())
 }

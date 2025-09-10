@@ -8,7 +8,7 @@ mod updates;
 pub use lifecycle::*;
 use oc_error_codes::OCError;
 pub use queries::*;
-use types::UserId;
+use types::{BotInstallationUpdate, UserId};
 pub use updates::*;
 
 #[ts_export(community)]
@@ -23,6 +23,8 @@ pub enum LocalIndexEvent {
     NameChanged(NameChanged),
     VerifiedChanged(VerifiedChanged),
     UserDeleted(UserId),
+    BotUpdated(BotInstallationUpdate),
+    BotRemoved(UserId),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

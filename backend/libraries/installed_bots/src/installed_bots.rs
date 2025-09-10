@@ -3,7 +3,7 @@ use constants::calculate_summary_updates_data_removal_cutoff;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::collections::{btree_map::Entry, BTreeMap, BTreeSet};
-use types::{BotPermissions, BotSubscriptions, TimestampMillis, UserId};
+use types::{BotPermissions, BotSubscriptions, OptionUpdate, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct InstalledBots {
@@ -43,16 +43,22 @@ impl InstalledBots {
     pub fn update(
         &mut self,
         bot_id: UserId,
-        permissions: BotPermissions,
+        command_permissions: BotPermissions,
         autonomous_permissions: Option<BotPermissions>,
+        default_subscriptions: OptionUpdate<BotSubscriptions>,
         now: TimestampMillis,
     ) -> bool {
         match self.bots.entry(bot_id) {
             Entry::Vacant(_) => false,
             Entry::Occupied(mut o) => {
                 let bot = o.get_mut();
-                bot.permissions = permissions;
+                bot.permissions = command_permissions;
                 bot.autonomous_permissions = autonomous_permissions;
+                match default_subscriptions {
+                    OptionUpdate::NoChange => (),
+                    OptionUpdate::SetToNone => bot.default_subscriptions = None,
+                    OptionUpdate::SetToSome(subs) => bot.default_subscriptions = Some(subs),
+                }
                 self.prune_then_insert_member_update(bot_id, BotUpdate::Updated, now);
                 true
             }
