@@ -34,7 +34,7 @@
         | "section_header"
         | "typography"
         | "users";
-    let selected = $state<Section>("colours");
+    let selected = $state<Section>("menus");
 
     const labels: Record<Section, string> = {
         avatars: "Avatars",
