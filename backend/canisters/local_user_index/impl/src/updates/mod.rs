@@ -5,7 +5,6 @@ pub mod bot_delete_messages;
 pub mod bot_invite_users;
 pub mod bot_remove_user;
 pub mod bot_send_message;
-pub mod bot_subscribe_to_events;
 pub mod c2c_create_community;
 pub mod c2c_create_group;
 pub mod c2c_delete_community;

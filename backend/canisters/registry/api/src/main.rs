@@ -1,10 +1,7 @@
-use candid_gen::generate_candid_method;
 use std::env;
 use ts_export::generate_ts_method;
 
 fn main() {
-    generate_candid_method!(registry, add_token, update);
-
     candid::export_service!();
     std::print!("{}", __export_service());
 
@@ -14,7 +11,6 @@ fn main() {
     }
 
     generate_ts_method!(registry, add_message_filter);
-    generate_ts_method!(registry, add_one_sec_token);
     generate_ts_method!(registry, add_remove_swap_provider);
     generate_ts_method!(registry, remove_message_filter);
     generate_ts_method!(registry, set_airdrop_config);

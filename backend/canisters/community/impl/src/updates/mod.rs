@@ -1,7 +1,6 @@
 pub mod accept_p2p_swap;
 pub mod add_members_to_channel;
 pub mod add_reaction;
-pub mod c2c_bot_subscribe_to_events;
 pub mod c2c_delete_community;
 pub mod c2c_freeze_community;
 pub mod c2c_install_bot;

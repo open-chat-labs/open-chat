@@ -10,7 +10,7 @@ use oc_error_codes::OCErrorCode;
 use registry_canister::add_token::*;
 use registry_canister::{NervousSystemDetails, Payment};
 use tracing::{error, info};
-use types::{CanisterId, EvmContractAddress, OCResult, UserId};
+use types::{CanisterId, OCResult, UserId};
 
 const TOKEN_LISTING_FEE_E8S: u128 = 50_000_000_000; // 500 CHAT
 
@@ -23,8 +23,7 @@ async fn add_token(args: Args) -> Response {
         None,
         Some(args.info_url),
         Some(args.transaction_url_format),
-        false,
-        Vec::new(),
+        args.one_sec_enabled == Some(true),
     )
     .await
     .into()
@@ -38,19 +37,17 @@ pub(crate) async fn add_sns_token(nervous_system: NervousSystemDetails) {
         None,
         None,
         false,
-        Vec::new(),
     )
     .await;
 }
 
-pub(crate) async fn add_token_impl(
+async fn add_token_impl(
     ledger_canister_id: CanisterId,
     payer: Option<UserId>,
     nervous_system: Option<NervousSystemDetails>,
     info_url: Option<String>,
     transaction_url_format: Option<String>,
     one_sec_enabled: bool,
-    evm_contract_addresses: Vec<EvmContractAddress>,
 ) -> OCResult {
     let metadata = icrc_ledger_canister_c2c_client::icrc1_metadata(ledger_canister_id).await?;
 
@@ -135,6 +132,13 @@ pub(crate) async fn add_token_impl(
         if let Some(ns) = nervous_system {
             state.data.nervous_systems.add(ns, now);
         }
+
+        let evm_contract_addresses = state
+            .data
+            .evm_contract_addresses
+            .get(&ledger_canister_id)
+            .cloned()
+            .unwrap_or_default();
 
         let name = metadata_helper.name().to_string();
         state.data.tokens.add(

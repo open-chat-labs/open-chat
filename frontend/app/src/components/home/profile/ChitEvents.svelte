@@ -33,18 +33,16 @@
         return date.getTimezoneOffset() * 60000;
     }
 
-    function utcToLocal(utc: number): number {
-        const utcDate = new Date(utc);
-        return new Date(utc + offset(utcDate)).getTime();
-    }
-
     function localToUtc(date: Date): Date {
-        return new Date(date.getTime() - offset(date));
+        return new Date(date.getTime() + offset(date));
     }
 
     function chitEventsForDay(events: ChitEvent[], date: Date): ChitEvent[] {
         return events.filter((e) => {
-            const eventDate = new Date(Number(e.timestamp));
+            let eventDate = new Date(Number(e.timestamp));
+            if ($utcMode) {
+                eventDate = localToUtc(eventDate);
+            }
             return isSameDay(date, eventDate);
         });
     }
@@ -56,7 +54,7 @@
     function dateSelected(selection: DateRange) {
         let [from, to] = selection.range;
 
-        if (utcMode) {
+        if ($utcMode) {
             // our date range will be in local dates. If we are in utc mode, we need to ask for
             // the corresponding utc date range
             from = localToUtc(from);
@@ -72,14 +70,7 @@
                 ascending: true,
             })
             .then((resp) => {
-                if (utcMode) {
-                    events = resp.events.map((ev) => ({
-                        ...ev,
-                        timestamp: BigInt(utcToLocal(Number(ev.timestamp))),
-                    }));
-                } else {
-                    events = resp.events;
-                }
+                events = resp.events;
             });
     }
 </script>
@@ -116,6 +107,7 @@
                     {/snippet}
                     {#snippet dayTemplate(day)}
                         <ChitEventsForDay
+                            utcMode={$utcMode}
                             {day}
                             selectedMonth={calendarState.selectedMonth}
                             events={chitEventsForDay(events, day)} />
