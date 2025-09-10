@@ -62,6 +62,7 @@ impl Tokens {
                 uninstalled: false,
             });
             self.last_updated = now;
+            info!(%ledger_canister_id, "Added token");
             true
         }
     }
@@ -105,6 +106,7 @@ impl Tokens {
             |t| {
                 if t.supported_standards != supported_standards {
                     t.supported_standards = supported_standards;
+                    info!(%ledger_canister_id, "Updated token standards");
                     true
                 } else {
                     false
@@ -120,6 +122,11 @@ impl Tokens {
             |t| {
                 if t.enabled != enabled {
                     t.enabled = enabled;
+                    if enabled {
+                        info!(%ledger_canister_id, "Set token enabled");
+                    } else {
+                        info!(%ledger_canister_id, "Set token disabled");
+                    }
                     true
                 } else {
                     false
@@ -134,6 +141,7 @@ impl Tokens {
             ledger_canister_id,
             |t| {
                 t.index_canister_id = Some(index_canister_id);
+                info!(%ledger_canister_id, ?index_canister_id, "Set token index canister");
                 true
             },
             now,
@@ -145,6 +153,7 @@ impl Tokens {
             ledger_canister_id,
             |t| {
                 t.uninstalled = true;
+                info!(%ledger_canister_id, "Marked token uninstalled");
                 true
             },
             now,
