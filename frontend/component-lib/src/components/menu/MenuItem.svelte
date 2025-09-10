@@ -66,7 +66,7 @@
         color: var(--menu-txt);
         align-items: center;
         gap: var(--sp-sm);
-        height: 2rem;
+        height: 2.375rem;
 
         &:last-child {
             border-bottom: none;
