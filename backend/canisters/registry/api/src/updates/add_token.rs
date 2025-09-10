@@ -9,6 +9,7 @@ pub struct Args {
     pub payer: Option<UserId>,
     pub info_url: String,
     pub transaction_url_format: String,
+    pub one_sec_enabled: Option<bool>,
 }
 
 pub type Response = UnitResult;
@@ -19,6 +20,7 @@ pub struct HumanReadableArgs {
     payer: Option<HumanReadablePrincipal>,
     info_url: String,
     transaction_url_format: String,
+    one_sec_enabled: bool,
 }
 
 impl ToHumanReadable for Args {
@@ -30,6 +32,7 @@ impl ToHumanReadable for Args {
             payer: self.payer.map(|user_id| Principal::from(user_id).into()),
             info_url: self.info_url.clone(),
             transaction_url_format: self.transaction_url_format.clone(),
+            one_sec_enabled: self.one_sec_enabled == Some(true),
         }
     }
 }

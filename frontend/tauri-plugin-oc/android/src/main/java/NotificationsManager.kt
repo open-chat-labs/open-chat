@@ -141,6 +141,9 @@ object NotificationsManager {
             .setContentIntent(
                 IntentsManager.buildPendingIntentForNotification(context, notification)
             )
+            .setDeleteIntent(
+                IntentsManager.buildDeleteIntentNotification(context, notification)
+            )
 
         val nm = OCPluginCompanion.getNotificationsManager(context)
         nm.notify(notification.contextId.value, notificationBuilder.build())
@@ -155,10 +158,11 @@ object NotificationsManager {
     // This notification id is then used to load the notification from the local db and mark
     // it, and all related notifications, as released. Then the released notifications are
     // cleaned up.
-    suspend fun releaseNotificationsAfterTap(context: Context, intentPayload: String) {
+    // TODO perhaps the isTaped arg could be in the intent extras??!
+    suspend fun releaseNotificationsAfterTapOrDismissed(context: Context, intentPayload: String, isTaped: Boolean) {
         try {
             val notificationJson = JSObject(intentPayload)
-            Log.d(LOG_TAG, "#### Taped notification JSON: $notificationJson")
+            Log.d(LOG_TAG, "#### Taped or dismissed notification JSON: $notificationJson")
 
             val contextId = ContextId(notificationJson.getInt("contextId"))
             val marked = DBManager.releaseNotificationsForContext(contextId)
@@ -178,7 +182,9 @@ object NotificationsManager {
             }
 
             // Send notification data to Svelte code, which will then determine where to navigate
-            OCPluginCompanion.triggerRef("notification-tap", notificationJson)
+            if (isTaped) {
+                OCPluginCompanion.triggerRef("notification-tap", notificationJson)
+            }
         } catch (e: Exception) {
             Log.e(LOG_TAG, "Error processing notification tap", e)
         }
@@ -233,7 +239,7 @@ object NotificationsManager {
         if (activeNotifications > 0) {
             // TODO i18n
             val title = "OpenChat"
-            val messages = "$activeNotifications new message${if (activeNotifications > 1) "s" else ""}"
+            val messages = "$activeNotifications message${if (activeNotifications > 1) "s" else ""}"
             val summary = if (activeContexts > 1) "$messages, from $activeContexts chats" else messages
 
             val summaryNotification = NotificationCompat.Builder(context, SUMMARY_CHANNEL_ID)
@@ -256,6 +262,7 @@ object NotificationsManager {
             Log.d(LOG_TAG, "#### Set summary notification: $summary")
             notificationManager.notify(SUMMARY_NOTIFICATION_ID, summaryNotification)
         } else {
+            Log.d(LOG_TAG, "#### Summary notification CANCELED!")
             notificationManager.cancel(SUMMARY_NOTIFICATION_ID)
         }
     }

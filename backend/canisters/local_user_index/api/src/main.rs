@@ -25,7 +25,6 @@ fn main() {
     generate_ts_method!(local_user_index, bot_invite_users);
     generate_ts_method!(local_user_index, bot_members);
     generate_ts_method!(local_user_index, bot_send_message);
-    generate_ts_method!(local_user_index, bot_subscribe_to_events);
     generate_ts_method!(local_user_index, install_bot);
     generate_ts_method!(local_user_index, invite_users_to_channel);
     generate_ts_method!(local_user_index, invite_users_to_community);

@@ -1,13 +1,10 @@
 <script lang="ts">
     import {
-        ARBITRUM_NETWORK,
-        BASE_NETWORK,
         BTC_SYMBOL,
         CKBTC_SYMBOL,
         cryptoLookup,
         currentUserIdStore,
         currentUserStore,
-        ETHEREUM_NETWORK,
         ICP_SYMBOL,
         Lazy,
         type OneSecTransferFees,
@@ -44,13 +41,13 @@
     let selectedNetwork = $state<string>();
     let isBtc = $derived(tokenDetails.symbol === BTC_SYMBOL);
     let isBtcNetwork = $derived(selectedNetwork === BTC_SYMBOL);
-    let oneSecEnabled = $derived(tokenDetails.oneSecEnabled);
+    let oneSecEnabled = $derived(tokenDetails.oneSecEnabled && tokenDetails.evmContractAddresses.length > 0);
     let isOneSecNetwork = $derived(oneSecEnabled && selectedNetwork !== ICP_SYMBOL);
     let networks = $derived.by(() => {
         if (isBtc) {
             return [BTC_SYMBOL, CKBTC_SYMBOL];
         } else if (oneSecEnabled) {
-            return [ICP_SYMBOL, ETHEREUM_NETWORK, ARBITRUM_NETWORK, BASE_NETWORK];
+            return client.oneSecGetNetworks(tokenDetails.symbol);
         } else {
             return [];
         }
