@@ -2218,14 +2218,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
-            case "addOneSecToken":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent.addOneSecToken(payload.tokenSymbol, payload.infoUrl),
-                );
-                break;
-
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }
