@@ -188,7 +188,6 @@
 
         //@ts-ignore
         window.platformOperator = {
-            addOneSecToken,
             addRemoveSwapProvider,
             setGroupUpgradeConcurrency,
             setCommunityUpgradeConcurrency,
@@ -422,16 +421,6 @@
                     );
                 }
             });
-    }
-
-    function addOneSecToken(tokenSymbol: string, infoUrl: string): void {
-        client.addOneSecToken(tokenSymbol, infoUrl).then((success) => {
-            if (success) {
-                console.log("OneSec token added");
-            } else {
-                console.error("Failed to add OneSec token");
-            }
-        })
     }
 
     function addRemoveSwapProvider(swapProvider: DexId, add: boolean): void {

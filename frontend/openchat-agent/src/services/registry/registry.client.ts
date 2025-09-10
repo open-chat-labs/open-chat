@@ -116,17 +116,4 @@ export class RegistryClient extends MsgpackCanisterAgent {
             RegistrySetTokenEnabledResponse,
         );
     }
-
-    addOneSecToken(tokenSymbol: string, infoUrl: string): Promise<boolean> {
-        return this.executeMsgpackUpdate(
-            "add_one_sec_token",
-            {
-                token: tokenSymbol,
-                info_url: infoUrl,
-            },
-            isSuccess,
-            RegistryAddOneSecTokenArgs,
-            UnitResult,
-        )
-    }
 }

@@ -1,5 +1,4 @@
 pub mod add_message_filter;
-pub mod add_one_sec_token;
 pub mod add_remove_swap_provider;
 pub mod add_token;
 pub mod c2c_set_submitting_proposals_enabled;
