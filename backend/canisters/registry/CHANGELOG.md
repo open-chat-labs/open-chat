@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Store and regularly update EVM contract addresses ([#8589](https://github.com/open-chat-labs/open-chat/pull/8589))
+
+## [[2.0.1887](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1887-registry)] - 2025-09-01
+
 ### Fixed
 
 - Fix transaction url format for OneSec tokens ([#8551](https://github.com/open-chat-labs/open-chat/pull/8551))
