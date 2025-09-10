@@ -15,11 +15,11 @@ use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    AutonomousBotScope, AutonomousConfig, BotActionChatDetails, BotActionScope, BotChatContext, BotCommandArg,
-    BotCommandArgValue, BotCommandDefinition, BotCommandParam, BotCommandParamType, BotDefinition, BotInstallationLocation,
-    BotMessageContent, BotPermissions, CanisterId, Chat, ChatEvent, ChatEventType, ChatPermission, ChatType,
-    CommunityEventType, CommunityPermission, EventIndex, MessageContent, MessageId, MessagePermission, NotificationEnvelope,
-    OptionUpdate, Rules, StringParam, TextContent, UpdatedRules, UserId,
+    AutonomousConfig, BotActionChatDetails, BotActionScope, BotChatContext, BotCommandArg, BotCommandArgValue,
+    BotCommandDefinition, BotCommandParam, BotCommandParamType, BotDefinition, BotInstallationLocation, BotMessageContent,
+    BotPermissions, BotSubscriptions, CanisterId, Chat, ChatEvent, ChatEventType, ChatPermission, ChatType, CommunityEventType,
+    CommunityPermission, EventIndex, MessageContent, MessageId, MessagePermission, NotificationEnvelope, OptionUpdate, Rules,
+    StringParam, TextContent, UpdatedRules, UserId,
 };
 
 #[test]
@@ -319,25 +319,6 @@ fn e2e_autonomous_bot_test() {
         env,
         *controller,
         canister_ids.local_user_index(env, community_id),
-    );
-
-    let subscribe_response = client::local_user_index::bot_subscribe_to_events(
-        env,
-        bot_principal,
-        canister_ids.local_user_index(env, community_id),
-        &local_user_index_canister::bot_subscribe_to_events::Args {
-            scope: AutonomousBotScope::Chat(chat),
-            chat_events: HashSet::from_iter([ChatEventType::Message]),
-            community_events: HashSet::new(),
-        },
-    );
-
-    assert!(
-        matches!(
-            subscribe_response,
-            local_user_index_canister::bot_subscribe_to_events::Response::Success
-        ),
-        "'bot_subscribe_to_events' error: {subscribe_response:?}"
     );
 
     // Call bot_send_message
@@ -1163,7 +1144,10 @@ fn register_bot(
             autonomous_config: Some(AutonomousConfig {
                 permissions: BotPermissions::text_only(),
             }),
-            default_subscriptions: None,
+            default_subscriptions: Some(BotSubscriptions {
+                community: HashSet::new(),
+                chat: HashSet::from_iter([ChatEventType::Message]),
+            }),
             data_encoding: None,
             restricted_locations: None,
         },

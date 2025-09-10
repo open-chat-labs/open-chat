@@ -90,6 +90,9 @@ impl Tokens {
                 if let Some(fee) = args.fee {
                     t.fee = fee;
                 }
+                if let Some(one_sec_enabled) = args.one_sec_enabled {
+                    t.one_sec_enabled = one_sec_enabled;
+                }
                 info!(ledger_canister_id = %args.ledger_canister_id, "Token details updated");
                 true
             },

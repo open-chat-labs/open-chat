@@ -8477,7 +8477,6 @@ name = "registry_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
- "candid_gen",
  "human_readable",
  "oc_error_codes",
  "serde",
