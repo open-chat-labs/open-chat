@@ -8,12 +8,17 @@
         events: ChitEvent[];
         day: Date;
         selectedMonth: number;
+        utcMode: boolean;
     }
 
-    let { events, day, selectedMonth }: Props = $props();
+    let { events, day, selectedMonth, utcMode }: Props = $props();
 
     let otherMonth = $derived(day.getMonth() !== selectedMonth);
 </script>
+
+{#snippet eventtime(t: string)}
+    <span class="time">({t})</span>
+{/snippet}
 
 {#if events.length === 0}
     <div class="day">{day.getDate()}</div>
@@ -24,16 +29,25 @@
             {#snippet popupTemplate()}
                 <div class="tt">
                     {#each events as event}
+                        {@const time = new Date(Number(event.timestamp))}
+                        {@const timeStr = utcMode
+                            ? time.toLocaleTimeString("en-GB", { timeZone: "UTC" })
+                            : time.toLocaleTimeString()}
                         {#if event.reason.kind === "daily_claim" || event.reason.kind === "daily_claim_reinstated" || event.reason.kind === "streak_insurance_claim"}
-                            <p>{`🚀 Daily claim: ${event.amount.toLocaleString()}`}</p>
+                            <p>
+                                {`🚀 Daily claim: ${event.amount.toLocaleString()}`}
+                                {@render eventtime(timeStr)}
+                            </p>
                         {:else if event.reason.kind === "achievement_unlocked"}
                             <p>
                                 🥳 <Translatable
                                     resourceKey={i18nKey(`learnToEarn.${event.reason.type}`)} />: {event.amount.toLocaleString()}
+                                {@render eventtime(timeStr)}
                             </p>
                         {:else if event.reason.kind === "purchased_premium_item"}
                             <p>
                                 🤑 <Translatable resourceKey={i18nKey("premiumItem.purchased")} />: {event.amount.toLocaleString()}
+                                {@render eventtime(timeStr)}
                             </p>
                         {:else if event.reason.kind === "referral"}
                             <p>
@@ -41,12 +55,17 @@
                                     resourceKey={i18nKey(
                                         `chitReferralRewardReason.${event.reason.type}`,
                                     )} />: {event.amount.toLocaleString()}
+                                {@render eventtime(timeStr)}
                             </p>
                         {:else if event.reason.kind === "meme_contest_winner"}
-                            <p>{`🏆️ Meme contest win: ${event.amount.toLocaleString()}`}</p>
+                            <p>
+                                {`🏆️ Meme contest win: ${event.amount.toLocaleString()}`}
+                                {@render eventtime(timeStr)}
+                            </p>
                         {:else if event.reason.kind === "external_achievement_unlocked"}
                             <p>
                                 🔓 <Translatable resourceKey={i18nKey(event.reason.name)} />: {event.amount.toLocaleString()}
+                                {@render eventtime(timeStr)}
                             </p>
                         {/if}
                     {/each}
@@ -91,5 +110,9 @@
         text-align: start;
         @include font(book, normal, fs-100);
         padding: $sp3;
+    }
+
+    .time {
+        @include font(book, normal, fs-60);
     }
 </style>
