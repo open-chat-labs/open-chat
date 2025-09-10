@@ -64,13 +64,19 @@ async fn run_async() {
 
         // Add the tokens where the list of EVM contract addresses has changed
         for (ledger_canister_id, previous_addresses) in previous_addresses {
+            let mut updated = false;
             if let Some(new_addresses) = state.data.evm_contract_addresses.get(&ledger_canister_id) {
-                let updated = previous_addresses.len() != new_addresses.len()
-                    || previous_addresses.iter().any(|a| !new_addresses.contains(a));
-
-                if updated {
-                    tokens_with_updates.push(ledger_canister_id);
+                if previous_addresses.len() != new_addresses.len()
+                    || previous_addresses.iter().any(|a| !new_addresses.contains(a))
+                {
+                    updated = true;
                 }
+            } else {
+                updated = true;
+            }
+
+            if updated {
+                tokens_with_updates.push(ledger_canister_id);
             }
         }
 
