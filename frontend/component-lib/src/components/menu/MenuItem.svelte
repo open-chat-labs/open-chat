@@ -3,33 +3,33 @@
         href?: string;
         disabled?: boolean;
         selected?: boolean;
-        warning?: boolean;
+        danger?: boolean;
         separator?: boolean;
-        unpadded?: boolean;
         onclick?: (e?: Event) => void;
     }
 </script>
 
 <script lang="ts">
+    import { ColourVars } from "component-lib";
+
     import type { Snippet } from "svelte";
 
     let {
         href,
         disabled = false,
         selected = false,
-        warning = false,
+        danger = false,
         separator = false,
-        unpadded = false,
         icon,
         children,
         onclick,
     }: MenuItemProps & { icon?: Snippet<[string]>; children: Snippet } = $props();
 
-    let iconColour = "var(--text-primary)";
+    let iconColour = $derived(danger ? ColourVars.error : ColourVars.textPrimary);
 </script>
 
 {#if disabled}
-    <div class:unpadded class:disabled class="menu-item" role="menuitem">
+    <div class:disabled class="menu-item" role="menuitem">
         {#if icon}
             <span class="icon">
                 {@render icon(iconColour)}
@@ -44,13 +44,12 @@
         {href}
         target="_blank"
         rel="noreferrer"
-        class:unpadded
         tabindex="0"
         class="menu-item"
         {onclick}
         role="menuitem"
         class:selected
-        class:warning>
+        class:danger>
         {#if icon}
             <span class="icon">
                 {@render icon(iconColour)}
@@ -66,12 +65,8 @@
         cursor: pointer;
         color: var(--menu-txt);
         align-items: center;
-        gap: 10px;
-        min-width: 10rem;
-
-        &.unpadded {
-            padding: 0;
-        }
+        gap: var(--sp-sm);
+        height: 2rem;
 
         &:last-child {
             border-bottom: none;
@@ -100,9 +95,8 @@
             cursor: not-allowed;
         }
 
-        // TODO
-        &.warning {
-            color: var(--menu-warn);
+        &.danger {
+            color: var(--error);
         }
     }
 

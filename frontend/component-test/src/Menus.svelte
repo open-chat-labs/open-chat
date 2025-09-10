@@ -61,7 +61,7 @@
         mainAxisAlignment={"spaceBetween"}
         gap="lg">
         <MenuTrigger position={"bottom"} align={"middle"}>
-            <CommonButton size={"large"} mode={"active"} onClick={showMenu}>
+            <CommonButton size={"large"} mode={"active"}>
                 {#snippet icon(color)}
                     <Burger {color} />
                 {/snippet}
@@ -73,7 +73,7 @@
         </MenuTrigger>
 
         <MenuTrigger position={"bottom"} align={"middle"}>
-            <CommonButton size={"large"} mode={"active"} onClick={showMenu}>
+            <CommonButton size={"large"} mode={"active"}>
                 {#snippet icon(color)}
                     <Burger {color} />
                 {/snippet}
@@ -90,7 +90,7 @@
         mainAxisAlignment={"spaceBetween"}
         gap="lg">
         <MenuTrigger position={"right"} align={"start"}>
-            <CommonButton size={"large"} mode={"active"} onClick={showMenu}>
+            <CommonButton size={"large"} mode={"active"}>
                 {#snippet icon(color)}
                     <Burger {color} />
                 {/snippet}
@@ -102,7 +102,7 @@
         </MenuTrigger>
 
         <MenuTrigger position={"left"} align={"end"}>
-            <CommonButton size={"large"} mode={"active"} onClick={showMenu}>
+            <CommonButton size={"large"} mode={"active"}>
                 {#snippet icon(color)}
                     <Burger {color} />
                 {/snippet}
@@ -119,7 +119,7 @@
         mainAxisAlignment={"spaceBetween"}
         gap="lg">
         <MenuTrigger position={"top"} align={"start"}>
-            <CommonButton size={"large"} mode={"active"} onClick={showMenu}>
+            <CommonButton size={"large"} mode={"active"}>
                 {#snippet icon(color)}
                     <Burger {color} />
                 {/snippet}
@@ -131,7 +131,7 @@
         </MenuTrigger>
 
         <MenuTrigger position={"top"} align={"start"}>
-            <CommonButton size={"large"} mode={"active"} onClick={showMenu}>
+            <CommonButton size={"large"} mode={"active"}>
                 {#snippet icon(color)}
                     <Burger {color} />
                 {/snippet}
