@@ -41,7 +41,7 @@ class MainActivity : TauriActivity() {
         // Payload should be json string
         if (notificationPayload != null) {
             ProcessLifecycleOwner.get().lifecycleScope.launch {
-                NotificationsManager.releaseNotificationsAfterTap(this@MainActivity, notificationPayload)
+                NotificationsManager.releaseNotificationsAfterTapOrDismissed(this@MainActivity, notificationPayload, true)
             }
         }
     }
