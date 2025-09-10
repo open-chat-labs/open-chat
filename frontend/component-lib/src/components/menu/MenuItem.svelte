@@ -65,8 +65,8 @@
         cursor: pointer;
         color: var(--menu-txt);
         align-items: center;
-        gap: var(--sp-xs);
-        min-width: 10rem;
+        gap: var(--sp-sm);
+        height: 2rem;
 
         &:last-child {
             border-bottom: none;
