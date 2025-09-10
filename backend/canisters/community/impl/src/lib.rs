@@ -35,7 +35,7 @@ use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     AccessGate, AccessGateConfigInternal, Achievement, BotCommunityEvent, BotEventsCaller, BotInitiator, BotInstallationUpdate,
-    BotNotification, BotPermissions, BuildVersion, Caller, CanisterId, ChannelCreated, ChannelId,
+    BotNotification, BotPermissions, BotUpdated, BuildVersion, Caller, CanisterId, ChannelCreated, ChannelId,
     ChannelUserNotificationPayload, ChatMetrics, ChatPermission, CommunityCanisterCommunitySummary, CommunityEvent,
     CommunityMembership, CommunityPermissions, Cycles, Document, EventIndex, EventsCaller, FrozenGroupInfo, GroupRole,
     IdempotentEnvelope, MembersAdded, Milliseconds, Notification, OptionUpdate, Rules, TimestampMillis, Timestamped, UserId,
@@ -992,11 +992,12 @@ impl Data {
             now,
         );
 
-        self.reapply_event_subscriptions_for_bot(update.bot_id);
+        self.apply_bot_update(update.bot_id, OPENCHAT_BOT_USER_ID, now);
     }
 
     pub fn update_bot_permissions(
         &mut self,
+        owner_id: UserId,
         bot_id: UserId,
         command_permissions: BotPermissions,
         autonomous_permissions: Option<BotPermissions>,
@@ -1012,15 +1013,22 @@ impl Data {
             return false;
         }
 
-        self.reapply_event_subscriptions_for_bot(bot_id);
+        self.apply_bot_update(bot_id, owner_id, now);
         true
     }
 
-    fn reapply_event_subscriptions_for_bot(&mut self, bot_id: UserId) {
-        let Some(bot) = self.bots.get(&bot_id) else {
-            return;
-        };
+    fn apply_bot_update(&mut self, bot_id: UserId, updated_by: UserId, now: TimestampMillis) {
+        // Push a community event
+        self.events.push_event(
+            CommunityEventInternal::BotUpdated(Box::new(BotUpdated {
+                user_id: bot_id,
+                updated_by,
+            })),
+            now,
+        );
 
+        // Re-apply event subscriptions given the changes to permissions and/or subscriptions
+        let bot = self.bots.get(&bot_id).unwrap();
         let permissions = &bot.autonomous_permissions.clone().unwrap_or_default();
         let subscriptions = bot.default_subscriptions.clone().unwrap_or_default();
         let permitted_chat_categories = permissions.permitted_chat_event_categories_to_read();

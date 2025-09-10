@@ -850,23 +850,15 @@ impl Data {
                 .map(|existing| existing.intersect(&requested)),
         };
 
-        self.bots.update(
+        if self.bots.update(
             update.bot_id,
             granted_command_permissions,
             granted_autonomous_permissions,
             update.default_subscriptions,
             now,
-        );
-
-        self.chat.events.push_main_event(
-            ChatEventInternal::BotUpdated(Box::new(BotUpdated {
-                user_id: update.bot_id,
-                updated_by: OPENCHAT_BOT_USER_ID,
-            })),
-            now,
-        );
-
-        self.reapply_event_subscriptions_for_bot(update.bot_id);
+        ) {
+            self.apply_bot_update(update.bot_id, OPENCHAT_BOT_USER_ID, now);
+        }
     }
 
     pub fn update_bot_permissions(
@@ -877,31 +869,32 @@ impl Data {
         autonomous_permissions: Option<BotPermissions>,
         now: TimestampMillis,
     ) -> bool {
-        if !self.bots.update(
+        if self.bots.update(
             bot_id,
             command_permissions,
             autonomous_permissions,
             OptionUpdate::NoChange,
             now,
         ) {
-            return false;
+            self.apply_bot_update(bot_id, owner_id, now);
+            true
+        } else {
+            false
         }
+    }
 
+    fn apply_bot_update(&mut self, bot_id: UserId, updated_by: UserId, now: TimestampMillis) {
+        // Push a chat event
         self.chat.events.push_main_event(
             ChatEventInternal::BotUpdated(Box::new(BotUpdated {
                 user_id: bot_id,
-                updated_by: owner_id,
+                updated_by,
             })),
             now,
         );
 
-        self.reapply_event_subscriptions_for_bot(bot_id);
-        true
-    }
-
-    fn reapply_event_subscriptions_for_bot(&mut self, bot_id: UserId) {
-        let Some(bot) = self.bots.get(&bot_id) else { return };
-
+        // Re-apply event subscriptions given the changes to permissions and/or subscriptions
+        let bot = self.bots.get(&bot_id).unwrap();
         let permissions = &bot.autonomous_permissions.clone().unwrap_or_default();
         let permitted_categories = permissions.permitted_chat_event_categories_to_read();
         let subscriptions = bot.default_subscriptions.clone().unwrap_or_default();

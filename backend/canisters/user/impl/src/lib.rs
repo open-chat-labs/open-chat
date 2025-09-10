@@ -746,13 +746,8 @@ impl Data {
     }
 
     fn reapply_event_subscriptions_for_bot(&mut self, bot_id: UserId) {
-        let Some(chat) = self.direct_chats.get_mut(&bot_id.into()) else {
-            return;
-        };
-
-        let Some(bot) = self.bots.get(&bot_id) else {
-            return;
-        };
+        let chat = self.direct_chats.get_mut(&bot_id.into()).unwrap();
+        let bot = self.bots.get(&bot_id).unwrap();
 
         let permissions = &bot.autonomous_permissions.clone().unwrap_or_default();
         let permitted_categories = permissions.permitted_chat_event_categories_to_read();
