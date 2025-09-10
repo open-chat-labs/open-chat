@@ -41,7 +41,7 @@
     let selectedNetwork = $state<string>();
     let isBtc = $derived(tokenDetails.symbol === BTC_SYMBOL);
     let isBtcNetwork = $derived(selectedNetwork === BTC_SYMBOL);
-    let oneSecEnabled = $derived(tokenDetails.oneSecEnabled);
+    let oneSecEnabled = $derived(tokenDetails.oneSecEnabled && tokenDetails.evmContractAddresses.length > 0);
     let isOneSecNetwork = $derived(oneSecEnabled && selectedNetwork !== ICP_SYMBOL);
     let networks = $derived.by(() => {
         if (isBtc) {
