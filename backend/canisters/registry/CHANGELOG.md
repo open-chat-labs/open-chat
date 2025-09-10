@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Store and regularly update EVM contract addresses ([#8589](https://github.com/open-chat-labs/open-chat/pull/8589))
 
+### Removed
+
+- Remove `add_one_sec_token` ([#8593](https://github.com/open-chat-labs/open-chat/pull/8593))
+
 ## [[2.0.1887](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1887-registry)] - 2025-09-01
 
 ### Fixed
