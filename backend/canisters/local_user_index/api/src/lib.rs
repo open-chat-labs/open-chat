@@ -6,7 +6,7 @@ use std::cmp::max;
 use std::collections::HashMap;
 use types::nns::CryptoAmount;
 use types::{
-    AutonomousConfig, BotCommandDefinition, BotDataEncoding, BotDefinition, BotInstallationLocation, BotInstallationUpdate,
+    AutonomousConfig, BotCommandDefinition, BotDataEncoding, BotDefinition, BotDefinitionUpdate, BotInstallationLocation,
     BotSubscriptions, BuildVersion, CanisterId, ChannelLatestMessageIndex, ChannelUserNotificationPayload, ChatId, CommunityId,
     CyclesTopUp, DiamondMembershipPlanDuration, GroupChatUserNotificationPayload, MessageContent, MessageContentInitial,
     MessageId, MessageIndex, Notification, NotifyChit, PhoneNumber, ReferralType, SuspensionDuration, TimestampMillis,
@@ -34,7 +34,7 @@ pub enum UserIndexEvent {
     BotUpdated(BotUpdated),
     BotRemoved(BotRemoved),
     BotUninstall(BotInstallationLocation, UserId),
-    BotUpdateInstallation(BotInstallationLocation, BotInstallationUpdate),
+    BotUpdateInstallation(BotInstallationLocation, BotDefinitionUpdate),
     PlatformOperatorStatusChanged(PlatformOperatorStatusChanged),
     PlatformModeratorStatusChanged(PlatformModeratorStatusChanged),
     MaxConcurrentCanisterUpgradesChanged(MaxConcurrentCanisterUpgradesChanged),

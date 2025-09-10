@@ -7,7 +7,7 @@ use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::{BotUpdated, UserIndexEvent};
-use types::{BotInstallationUpdate, OptionUpdate};
+use types::{BotDefinitionUpdate, OptionUpdate};
 use url::Url;
 use user_index_canister::update_bot::{Response::*, *};
 use utils::document::try_parse_data_url;
@@ -35,7 +35,7 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
     };
 
-    let mut installation_update = BotInstallationUpdate {
+    let mut installation_update = BotDefinitionUpdate {
         bot_id: args.bot_id,
         command_permissions: OptionUpdate::NoChange,
         autonomous_permissions: OptionUpdate::NoChange,

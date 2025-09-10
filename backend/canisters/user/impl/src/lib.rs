@@ -36,10 +36,10 @@ use std::collections::{BTreeMap, HashSet};
 use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
-    Achievement, BotEvent, BotInitiator, BotInstallationLocation, BotInstallationUpdate, BotLifecycleEvent, BotNotification,
+    Achievement, BotDefinitionUpdate, BotEvent, BotInitiator, BotInstallationLocation, BotLifecycleEvent, BotNotification,
     BotPermissions, BotUninstalledEvent, BotUpdated, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEvent,
     ChitEventType, CommunityId, Cycles, DirectChatUserNotificationPayload, Document, IdempotentEnvelope, Milliseconds,
-    Notification, NotifyChit, OptionUpdate, TimestampMillis, Timestamped, UniquePersonProof, UserCanisterStreakInsuranceClaim,
+    Notification, NotifyChit, TimestampMillis, Timestamped, UniquePersonProof, UserCanisterStreakInsuranceClaim,
     UserCanisterStreakInsurancePayment, UserId, UserNotification,
 };
 use user_canister::{MessageActivityEvent, NamedAccount, UserCanisterEvent, WalletConfig};
@@ -678,50 +678,25 @@ impl Data {
         self.local_user_index_event_sync_queue.flush();
     }
 
-    pub fn handle_bot_definition_updated(&mut self, update: BotInstallationUpdate, now: TimestampMillis) {
-        let Some(chat) = self.direct_chats.get_mut(&update.bot_id.into()) else {
+    pub fn handle_bot_definition_updated(&mut self, update: BotDefinitionUpdate, now: TimestampMillis) {
+        let bot_id = update.bot_id;
+        if !self.bots.update_from_definition(update, now) {
+            return;
+        }
+
+        let Some(chat) = self.direct_chats.get_mut(&bot_id.into()) else {
             return;
         };
-
-        let Some(bot) = self.bots.get(&update.bot_id) else {
-            return;
-        };
-
-        // The stored bot permissions are _granted_ permissions, whereas the incoming permissions are
-        // those requested by the bot. So intersect the requested permissions with the stored permissions.
-
-        let granted_command_permissions = match update.command_permissions {
-            OptionUpdate::NoChange => bot.permissions.clone(),
-            OptionUpdate::SetToNone => BotPermissions::default(),
-            OptionUpdate::SetToSome(requested) => bot.permissions.intersect(&requested),
-        };
-
-        let granted_autonomous_permissions = match update.autonomous_permissions {
-            OptionUpdate::NoChange => bot.autonomous_permissions.clone(),
-            OptionUpdate::SetToNone => None,
-            OptionUpdate::SetToSome(requested) => bot
-                .autonomous_permissions
-                .as_ref()
-                .map(|existing| existing.intersect(&requested)),
-        };
-
-        self.bots.update(
-            update.bot_id,
-            granted_command_permissions,
-            granted_autonomous_permissions,
-            update.default_subscriptions,
-            now,
-        );
 
         chat.events.push_main_event(
             ChatEventInternal::BotUpdated(Box::new(BotUpdated {
-                user_id: update.bot_id,
+                user_id: bot_id,
                 updated_by: OPENCHAT_BOT_USER_ID,
             })),
             now,
         );
 
-        self.reapply_event_subscriptions_for_bot(update.bot_id);
+        self.reapply_event_subscriptions_for_bot(bot_id);
     }
 
     pub fn update_bot_permissions(
@@ -731,18 +706,15 @@ impl Data {
         autonomous_permissions: Option<BotPermissions>,
         now: TimestampMillis,
     ) -> bool {
-        if !self.bots.update(
-            bot_id,
-            command_permissions,
-            autonomous_permissions,
-            OptionUpdate::NoChange,
-            now,
-        ) {
-            return false;
+        if self
+            .bots
+            .update_permissions(bot_id, command_permissions, autonomous_permissions, now)
+        {
+            self.reapply_event_subscriptions_for_bot(bot_id);
+            true
+        } else {
+            false
         }
-
-        self.reapply_event_subscriptions_for_bot(bot_id);
-        true
     }
 
     fn reapply_event_subscriptions_for_bot(&mut self, bot_id: UserId) {

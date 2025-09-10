@@ -34,11 +34,11 @@ use std::collections::BTreeMap;
 use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
-    AccessGate, AccessGateConfigInternal, Achievement, BotCommunityEvent, BotEventsCaller, BotInitiator, BotInstallationUpdate,
+    AccessGate, AccessGateConfigInternal, Achievement, BotCommunityEvent, BotDefinitionUpdate, BotEventsCaller, BotInitiator,
     BotNotification, BotPermissions, BotUpdated, BuildVersion, Caller, CanisterId, ChannelCreated, ChannelId,
     ChannelUserNotificationPayload, ChatMetrics, ChatPermission, CommunityCanisterCommunitySummary, CommunityEvent,
     CommunityMembership, CommunityPermissions, Cycles, Document, EventIndex, EventsCaller, FrozenGroupInfo, GroupRole,
-    IdempotentEnvelope, MembersAdded, Milliseconds, Notification, OptionUpdate, Rules, TimestampMillis, Timestamped, UserId,
+    IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId,
     UserNotification, UserType,
 };
 use types::{BotSubscriptions, CommunityId};
@@ -961,38 +961,11 @@ impl Data {
         true
     }
 
-    pub fn handle_bot_definition_updated(&mut self, update: BotInstallationUpdate, now: TimestampMillis) {
-        let Some(bot) = self.bots.get(&update.bot_id) else {
-            return;
-        };
-
-        // The stored bot permissions are _granted_ permissions, whereas the incoming permissions are
-        // those requested by the bot. So intersect the requested permissions with the stored permissions.
-
-        let granted_command_permissions = match update.command_permissions {
-            OptionUpdate::NoChange => bot.permissions.clone(),
-            OptionUpdate::SetToNone => BotPermissions::default(),
-            OptionUpdate::SetToSome(requested) => bot.permissions.intersect(&requested),
-        };
-
-        let granted_autonomous_permissions = match update.autonomous_permissions {
-            OptionUpdate::NoChange => bot.autonomous_permissions.clone(),
-            OptionUpdate::SetToNone => None,
-            OptionUpdate::SetToSome(requested) => bot
-                .autonomous_permissions
-                .as_ref()
-                .map(|existing| existing.intersect(&requested)),
-        };
-
-        self.bots.update(
-            update.bot_id,
-            granted_command_permissions,
-            granted_autonomous_permissions,
-            update.default_subscriptions,
-            now,
-        );
-
-        self.apply_bot_update(update.bot_id, OPENCHAT_BOT_USER_ID, now);
+    pub fn handle_bot_definition_updated(&mut self, update: BotDefinitionUpdate, now: TimestampMillis) {
+        let bot_id = update.bot_id;
+        if self.bots.update_from_definition(update, now) {
+            self.apply_bot_update(bot_id, OPENCHAT_BOT_USER_ID, now);
+        }
     }
 
     pub fn update_bot_permissions(
@@ -1003,18 +976,15 @@ impl Data {
         autonomous_permissions: Option<BotPermissions>,
         now: TimestampMillis,
     ) -> bool {
-        if !self.bots.update(
-            bot_id,
-            command_permissions,
-            autonomous_permissions,
-            OptionUpdate::NoChange,
-            now,
-        ) {
-            return false;
+        if self
+            .bots
+            .update_permissions(bot_id, command_permissions, autonomous_permissions, now)
+        {
+            self.apply_bot_update(bot_id, owner_id, now);
+            true
+        } else {
+            false
         }
-
-        self.apply_bot_update(bot_id, owner_id, now);
-        true
     }
 
     fn apply_bot_update(&mut self, bot_id: UserId, updated_by: UserId, now: TimestampMillis) {

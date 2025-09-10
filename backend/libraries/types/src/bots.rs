@@ -595,14 +595,14 @@ pub struct BotEventPayload {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct BotInstallationUpdate {
+pub struct BotDefinitionUpdate {
     pub bot_id: UserId,
     pub command_permissions: OptionUpdate<BotPermissions>,
     pub autonomous_permissions: OptionUpdate<BotPermissions>,
     pub default_subscriptions: OptionUpdate<BotSubscriptions>,
 }
 
-impl BotInstallationUpdate {
+impl BotDefinitionUpdate {
     pub fn has_updates(&self) -> bool {
         self.command_permissions.has_update()
             || self.autonomous_permissions.has_update()
