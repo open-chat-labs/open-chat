@@ -9,6 +9,7 @@ export function createAddTokenPayload(
     userId: string,
     infoUrl: string,
     transactionUrlFormat: string,
+    oneSecEnabled: boolean | undefined,
 ): Uint8Array {
     return new Uint8Array(
         IDL.encode(
@@ -18,6 +19,7 @@ export function createAddTokenPayload(
                     payer: IDL.Opt(IDL.Principal),
                     ledger_canister_id: IDL.Principal,
                     transaction_url_format: IDL.Text,
+                    one_sec_enabled: IDL.Opt(IDL.Bool),
                 }),
             ],
             [
@@ -26,6 +28,7 @@ export function createAddTokenPayload(
                     payer: [Principal.fromText(userId)],
                     ledger_canister_id: Principal.fromText(ledgerCanisterId),
                     transaction_url_format: transactionUrlFormat,
+                    one_sec_enabled: optionalToCandid(oneSecEnabled),
                 },
             ],
         ),
@@ -38,6 +41,7 @@ export function createUpdateTokenPayload(
     symbol: string | undefined,
     infoUrl: string | undefined,
     transactionUrlFormat: string | undefined,
+    oneSecEnabled: boolean | undefined,
 ): Uint8Array {
     return new Uint8Array(
         IDL.encode(
@@ -48,6 +52,7 @@ export function createUpdateTokenPayload(
                     ledger_canister_id: IDL.Principal,
                     symbol: IDL.Opt(IDL.Text),
                     transaction_url_format: IDL.Opt(IDL.Text),
+                    one_sec_enabled: IDL.Opt(IDL.Bool),
                 }),
             ],
             [
@@ -57,6 +62,7 @@ export function createUpdateTokenPayload(
                     ledger_canister_id: Principal.fromText(ledgerCanisterId),
                     symbol: optionalStringToCandid(symbol),
                     transaction_url_format: optionalStringToCandid(transactionUrlFormat),
+                    one_sec_enabled: optionalToCandid(oneSecEnabled),
                 },
             ],
         ),
@@ -125,4 +131,8 @@ export function createRegisterExternalAchievementPayload(
 
 function optionalStringToCandid(value: string | undefined): [string] | [] {
     return value !== undefined && value.length > 0 ? [value] : [];
+}
+
+function optionalToCandid<T>(value: T | undefined): [T] | [] {
+    return value !== undefined ? [value] : [];
 }
