@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Remove legacy group membership fields from backend ([#8508](https://github.com/open-chat-labs/open-chat/pull/8508))
+- Remove endpoint for manual bot event subscriptions ([#8594](https://github.com/open-chat-labs/open-chat/pull/8594))
 
 ## [[2.0.1873](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1873-community)] - 2025-08-20
 
