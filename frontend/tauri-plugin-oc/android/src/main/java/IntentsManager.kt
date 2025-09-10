@@ -48,6 +48,24 @@ object IntentsManager {
             pendingIntentFlags)
     }
 
+    fun buildDeleteIntentNotification(context: Context, notification: Notification): PendingIntent {
+        val packageName = context.packageName
+        val dismissReceiverClass = Class.forName("$packageName.NotificationDismissReceiver")
+        val payload = NotificationCompanion.toJSObject(notification).toString()
+        val intent = Intent(context, dismissReceiverClass).apply {
+            putExtra("notificationPayload", payload)
+        }
+
+        val pendingIntentFlags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+
+        return PendingIntent.getBroadcast(
+            context,
+            notification.id.toInt(),
+            intent,
+            pendingIntentFlags,
+        )
+    }
+
     // Build notification shortcut intent
     //
     //

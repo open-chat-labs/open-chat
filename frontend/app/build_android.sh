@@ -29,6 +29,8 @@ export OC_WEBSITE_VERSION=2.0.0-mobile-rc1
 export OC_ROLLBAR_ACCESS_TOKEN="this-is-a-fake-token"
 export OC_USERGEEK_APIKEY="this-is-a-fake-apikey"
 export OC_METERED_APIKEY="this-is-a-fake-apikey"
+export OC_ONESEC_FORWARDER_CANISTER="this-is-a-fake-canister-id"
+export OC_ONESEC_MINTER_CANISTER="this-is-a-fake-canister-id"
 
 npx rollup -c
 
