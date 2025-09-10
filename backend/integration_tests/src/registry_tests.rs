@@ -35,6 +35,7 @@ fn add_token_succeeds() {
             payer: Some(test_data.user.user_id),
             info_url: info_url.clone(),
             transaction_url_format: transaction_url_format.clone(),
+            one_sec_enabled: None,
         },
     );
 
@@ -111,6 +112,7 @@ fn update_token_succeeds() {
             payer: Some(test_data.user.user_id),
             info_url: info_url.clone(),
             transaction_url_format: transaction_url_format.clone(),
+            one_sec_enabled: None,
         },
     );
 
@@ -130,6 +132,7 @@ fn update_token_succeeds() {
             transaction_url_format: None,
             logo: None,
             fee: None,
+            one_sec_enabled: None,
         },
     );
 
