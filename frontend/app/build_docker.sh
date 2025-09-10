@@ -27,5 +27,7 @@ export OC_VIDEO_BRIDGE_URL=http://localhost:5050
 export OC_WALLET_CONNECT_PROJECT_ID=b9aafebed2abfaf8341afd9428c947d5
 export OC_WEBAUTHN_ORIGIN=localhost
 export OC_WEBSITE_VERSION=200.20.2
+export OC_ONESEC_FORWARDER_CANISTER="this-is-a-fake-canister-id"
+export OC_ONESEC_MINTER_CANISTER="this-is-a-fake-canister-id"
 
 npx rollup -c

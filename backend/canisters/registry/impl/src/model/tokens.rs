@@ -62,6 +62,7 @@ impl Tokens {
                 uninstalled: false,
             });
             self.last_updated = now;
+            info!(%ledger_canister_id, "Added token");
             true
         }
     }
@@ -89,6 +90,9 @@ impl Tokens {
                 if let Some(fee) = args.fee {
                     t.fee = fee;
                 }
+                if let Some(one_sec_enabled) = args.one_sec_enabled {
+                    t.one_sec_enabled = one_sec_enabled;
+                }
                 info!(ledger_canister_id = %args.ledger_canister_id, "Token details updated");
                 true
             },
@@ -102,6 +106,7 @@ impl Tokens {
             |t| {
                 if t.supported_standards != supported_standards {
                     t.supported_standards = supported_standards;
+                    info!(%ledger_canister_id, "Updated token standards");
                     true
                 } else {
                     false
@@ -117,6 +122,11 @@ impl Tokens {
             |t| {
                 if t.enabled != enabled {
                     t.enabled = enabled;
+                    if enabled {
+                        info!(%ledger_canister_id, "Set token enabled");
+                    } else {
+                        info!(%ledger_canister_id, "Set token disabled");
+                    }
                     true
                 } else {
                     false
@@ -131,6 +141,24 @@ impl Tokens {
             ledger_canister_id,
             |t| {
                 t.index_canister_id = Some(index_canister_id);
+                info!(%ledger_canister_id, ?index_canister_id, "Set token index canister");
+                true
+            },
+            now,
+        );
+    }
+
+    pub fn set_evm_contract_addresses(
+        &mut self,
+        ledger_canister_id: CanisterId,
+        evm_contract_addresses: Vec<EvmContractAddress>,
+        now: TimestampMillis,
+    ) {
+        self.apply_update(
+            ledger_canister_id,
+            |t| {
+                t.evm_contract_addresses = evm_contract_addresses;
+                info!(%ledger_canister_id, "Set token EVM contract addresses");
                 true
             },
             now,
@@ -142,6 +170,7 @@ impl Tokens {
             ledger_canister_id,
             |t| {
                 t.uninstalled = true;
+                info!(%ledger_canister_id, "Marked token uninstalled");
                 true
             },
             now,
