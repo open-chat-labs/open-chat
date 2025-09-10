@@ -1,5 +1,7 @@
 import { isTouchDevice, mobileOperatingSystem } from "component-lib";
 
+// Experience tells us that we get a strange rogue click event that fires after a long-press
+// on Safari and we need to deliberately ignore this. No this is not nice.
 function suppressNextClick() {
     if (mobileOperatingSystem !== "iOS") return;
 
