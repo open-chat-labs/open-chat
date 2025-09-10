@@ -54,6 +54,7 @@ pub struct Bot {
     pub registration_status: BotRegistrationStatus,
 }
 
+// TODO: Remove this after the next release
 impl<'de> Deserialize<'de> for Bot {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where

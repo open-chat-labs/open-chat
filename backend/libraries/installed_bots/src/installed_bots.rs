@@ -48,19 +48,21 @@ impl InstalledBots {
         // The stored bot permissions are _granted_ permissions, whereas the incoming permissions are
         // those requested by the bot. So intersect the requested permissions with the stored permissions.
 
-        bot.permissions = match update.command_permissions {
-            OptionUpdate::NoChange => bot.permissions.clone(),
-            OptionUpdate::SetToNone => BotPermissions::default(),
-            OptionUpdate::SetToSome(requested) => bot.permissions.intersect(&requested),
+        match update.command_permissions {
+            OptionUpdate::NoChange => (),
+            OptionUpdate::SetToNone => bot.permissions = BotPermissions::default(),
+            OptionUpdate::SetToSome(requested) => bot.permissions = bot.permissions.intersect(&requested),
         };
 
-        bot.autonomous_permissions = match update.autonomous_permissions {
-            OptionUpdate::NoChange => bot.autonomous_permissions.clone(),
-            OptionUpdate::SetToNone => None,
-            OptionUpdate::SetToSome(requested) => bot
-                .autonomous_permissions
-                .as_ref()
-                .map(|existing| existing.intersect(&requested)),
+        match update.autonomous_permissions {
+            OptionUpdate::NoChange => (),
+            OptionUpdate::SetToNone => bot.autonomous_permissions = None,
+            OptionUpdate::SetToSome(requested) => {
+                bot.autonomous_permissions = bot
+                    .autonomous_permissions
+                    .as_ref()
+                    .map(|existing| existing.intersect(&requested))
+            }
         };
 
         match update.default_subscriptions {
