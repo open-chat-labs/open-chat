@@ -1,11 +1,11 @@
-use candid::{Encode, Principal};
+use candid::Encode;
 use canister_agent_utils::CanisterName;
 use clap::Parser;
 use sha256::sha256;
 use sns_governance_canister::types::{ExecuteGenericNervousSystemFunction, Proposal, proposal};
+use std::error::Error;
 use std::fs;
-use std::{collections::HashSet, error::Error};
-use types::{BuildVersion, CanisterWasm, UpgradeCanisterWasmArgs, UpgradeChunkedCanisterWasmArgs, UpgradesFilter};
+use types::{BuildVersion, CanisterWasm, UpgradeCanisterWasmArgs, UpgradeChunkedCanisterWasmArgs};
 
 /// Builds the binary encoded candid representation of an ExecuteGenericNervousSystemFunction proposal
 /// for upgrading a canister WASM
@@ -48,12 +48,7 @@ pub fn build(config: Config) -> Result<Vec<u8>, Box<dyn Error>> {
 fn create_proposal(config: Config) -> Result<Proposal, Box<dyn Error>> {
     let wasm_module = fs::read(config.wasm_path)?;
     let wasm_hash = sha256(&wasm_module);
-    let filter = Some(UpgradesFilter {
-        versions: HashSet::new(),
-        active_since: None,
-        include: HashSet::from_iter([Principal::from_text("wowos-hyaaa-aaaar-ar4ca-cai").unwrap()]),
-        exclude: HashSet::new(),
-    });
+    let filter = None;
 
     let payload = match config.canister_name {
         CanisterName::UserIndex | CanisterName::GroupIndex | CanisterName::NotificationsIndex => {
