@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1895](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1895-user_index)] - 2025-09-11
+
 ### Changed
 
 - Allow bots to restrict installation locations ([#8560](https://github.com/open-chat-labs/open-chat/pull/8560))
