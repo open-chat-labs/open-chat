@@ -48,12 +48,7 @@ pub fn build(config: Config) -> Result<Vec<u8>, Box<dyn Error>> {
 fn create_proposal(config: Config) -> Result<Proposal, Box<dyn Error>> {
     let wasm_module = fs::read(config.wasm_path)?;
     let wasm_hash = sha256(&wasm_module);
-    let filter = Some(UpgradesFilter {
-        versions: HashSet::new(),
-        active_since: None,
-        include: HashSet::from_iter([Principal::from_text("wowos-hyaaa-aaaar-ar4ca-cai").unwrap()]),
-        exclude: HashSet::new(),
-    });
+    let filter = None;
 
     let payload = match config.canister_name {
         CanisterName::UserIndex | CanisterName::GroupIndex | CanisterName::NotificationsIndex => {
