@@ -20,11 +20,13 @@
         { name: "Error", key: "error" },
     ];
 
-    const mutedColours: ColourCard[] = [
+    const modifiedColours: ColourCard[] = [
         { name: "Primary Muted", key: "primaryMuted" },
-        { name: "Primary Light", key: "primaryLight" },
         { name: "Secondary Muted", key: "secondaryMuted" },
-        { name: "Warning Muted", key: "warningMuted" },
+        { name: "Tertiary Muted", key: "tertiaryMuted" },
+        { name: "Primary Light", key: "primaryLight" },
+        { name: "Secondary Light", key: "secondaryLight" },
+        { name: "Tertiary Light", key: "tertiaryLight" },
     ];
 
     const typographyColours: ColourCard[] = [
@@ -47,8 +49,8 @@
             name: "Main",
             colours: mainColours,
         },
+        { name: "Modified", colours: modifiedColours },
         { name: "Backgrounds", colours: backgroundColours },
-        { name: "Muted", colours: mutedColours },
         { name: "Typography", colours: typographyColours },
     ];
 </script>
@@ -72,7 +74,7 @@
                 borderWidth={"thin"}
                 direction={"vertical"}>
                 <Subtitle fontWeight={"bold"}>{name}</Subtitle>
-                <Container gap={"xl"} padding={["lg", "zero", "xxl", "zero"]}>
+                <Container gap={"xs"} padding={["lg", "zero", "xxl", "zero"]}>
                     {#each colours as { name, key }}
                         {@const colour = neon.colours[key]}
                         {@const code = colour.toString()}

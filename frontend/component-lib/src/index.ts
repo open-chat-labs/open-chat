@@ -10,6 +10,7 @@ export { default as FloatingButton } from "./components/buttons/FloatingButton.s
 export { default as ChatSummary } from "./components/ChatSummary.svelte";
 export { default as Container } from "./components/Container.svelte";
 export { default as CountBadge } from "./components/CountBadge.svelte";
+export { default as ListAction } from "./components/ListAction.svelte";
 export { default as Logo } from "./components/Logo.svelte";
 export { default as MenuItem } from "./components/menu/MenuItem.svelte";
 export { default as MenuTrigger } from "./components/menu/MenuTrigger.svelte";

@@ -18,7 +18,7 @@
     let { title, subtitle, onClick, avatarUrl, button, badges }: Props = $props();
 </script>
 
-<Container {onClick} crossAxisAlignment={"center"} gap={"md"}>
+<Container {onClick} crossAxisAlignment={"center"} gap={"lg"}>
     <Avatar url={avatarUrl} size={"lg"} />
     <Container {onClick} crossAxisAlignment={"center"} gap={"md"}>
         <Container gap={"xxs"} direction={"vertical"} width={{ kind: "fill" }}>

@@ -16,7 +16,7 @@
         .inner {
             width: 0.5rem;
             height: 0.5rem;
-            background: var(--tertiary);
+            background: var(--primary);
             border-radius: var(--rad-xs);
             transform: rotate(45deg);
             transform-origin: 50%;

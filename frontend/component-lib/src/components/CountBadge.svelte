@@ -27,7 +27,7 @@
         font-size: var(--typo-caption-sz);
         line-height: var(--typo-caption-lh);
         font-weight: var(--font-semi-bold);
-        background: var(--tertiary);
+        background: var(--primary);
         color: var(--text-on-primary);
 
         &.large-size {
