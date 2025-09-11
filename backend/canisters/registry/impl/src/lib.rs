@@ -107,7 +107,6 @@ struct Data {
     airdrop_config: Timestamped<Option<AirdropConfig>>,
     subnets: Subnets,
     timer_jobs: TimerJobs<TimerJob>,
-    #[serde(default)]
     evm_contract_addresses: HashMap<CanisterId, Vec<EvmContractAddress>>,
     rng_seed: [u8; 32],
     test_mode: bool,
