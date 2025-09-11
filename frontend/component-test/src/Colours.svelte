@@ -14,16 +14,19 @@
     const mainColours: ColourCard[] = [
         { name: "Primary", key: "primary" },
         { name: "Secondary", key: "secondary" },
+        { name: "Tertiary", key: "tertiary" },
         { name: "Success", key: "success" },
         { name: "Warning", key: "warning" },
         { name: "Error", key: "error" },
     ];
 
-    const mutedColours: ColourCard[] = [
+    const modifiedColours: ColourCard[] = [
         { name: "Primary Muted", key: "primaryMuted" },
-        { name: "Primary Light", key: "primaryLight" },
         { name: "Secondary Muted", key: "secondaryMuted" },
-        { name: "Warning Muted", key: "warningMuted" },
+        { name: "Tertiary Muted", key: "tertiaryMuted" },
+        { name: "Primary Light", key: "primaryLight" },
+        { name: "Secondary Light", key: "secondaryLight" },
+        { name: "Tertiary Light", key: "tertiaryLight" },
     ];
 
     const typographyColours: ColourCard[] = [
@@ -46,8 +49,8 @@
             name: "Main",
             colours: mainColours,
         },
+        { name: "Modified", colours: modifiedColours },
         { name: "Backgrounds", colours: backgroundColours },
-        { name: "Muted", colours: mutedColours },
         { name: "Typography", colours: typographyColours },
     ];
 </script>
@@ -71,7 +74,7 @@
                 borderWidth={"thin"}
                 direction={"vertical"}>
                 <Subtitle fontWeight={"bold"}>{name}</Subtitle>
-                <Container gap={"xl"} padding={["lg", "zero", "xxl", "zero"]}>
+                <Container gap={"xs"} padding={["lg", "zero", "xxl", "zero"]}>
                     {#each colours as { name, key }}
                         {@const colour = neon.colours[key]}
                         {@const code = colour.toString()}
@@ -90,13 +93,13 @@
             <Container gap={"xl"} padding={["lg", "zero", "xxl", "zero"]}>
                 {@render card(
                     "Primary Gradient",
-                    neon.colours.primaryGradient.toString(),
-                    neon.colours.primaryGradient.summarise(),
+                    neon.colours.gradient.toString(),
+                    neon.colours.gradient.summarise(),
                 )}
                 {@render card(
                     "Primary Gradient Inverted",
-                    neon.colours.primaryGradientInverted.toString(),
-                    neon.colours.primaryGradientInverted.summarise(),
+                    neon.colours.gradientInverted.toString(),
+                    neon.colours.gradientInverted.summarise(),
                 )}
             </Container>
         </Container>

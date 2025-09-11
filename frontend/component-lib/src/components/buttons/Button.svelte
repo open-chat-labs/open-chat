@@ -25,8 +25,8 @@
     }: Props = $props();
 
     let parentDirection = getContext<Direction>("direction");
-    let spinnerColour = secondary ? "var(--primary)" : "var(--text-on-primary)";
-    let iconColour = secondary ? "var(--primary)" : "var(--text-on-primary)";
+    let spinnerColour = secondary ? "var(--gradient-secondary)" : "var(--text-on-primary)";
+    let iconColour = secondary ? "var(--gradient-secondary)" : "var(--text-on-primary)";
     let widthCss = $derived(getFlexStyle("width", width, parentDirection));
     let heightCss = $derived(getFlexStyle("height", height, parentDirection));
     let style = $derived(`${heightCss}; ${widthCss};`);
@@ -57,12 +57,11 @@
     button {
         all: unset;
         position: relative;
-        background: var(--primary-gradient-inverted);
         min-height: var(--sp-xxxl);
         display: flex;
         justify-content: center;
         align-items: center;
-        border: none;
+        border: var(--bw-thick) solid transparent;
         border-radius: var(--rad-sm);
         color: var(--text-on-primary);
         cursor: pointer;
@@ -73,6 +72,18 @@
 
         font-weight: var(--font-semi-bold);
         font-size: 14px; // TODO - typography vars
+        z-index: 0;
+
+        // This is a bit of a faff but we have to do the background fill this way to
+        // end up with a filled button that is exactly the same size as a hollow button
+        &:not(.secondary)::before {
+            content: "";
+            position: absolute;
+            inset: calc(-1 * var(--bw-thick));
+            border-radius: var(--rad-sm);
+            background: var(--gradient-inverted);
+            z-index: -1;
+        }
 
         .content {
             pointer-events: none;
@@ -96,8 +107,8 @@
 
         &.secondary {
             background: none;
-            color: var(--primary);
-            border: 1px solid var(--primary);
+            color: var(--gradient-secondary);
+            border: var(--bw-thick) solid var(--gradient-secondary);
 
             &.disabled {
                 color: var(--disabled-button);

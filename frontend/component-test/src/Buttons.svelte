@@ -63,7 +63,9 @@
                     width={{ kind: "fixed", size: "450px" }}>
                     <Container gap={"md"}>
                         {#each ["a", "b", "c", "d", "e", "f"] as c}
-                            <Button width={{ kind: "fixed", size: "150px" }}>Button {c}</Button>
+                            <Button
+                                secondary={["b", "d", "f"].includes(c)}
+                                width={{ kind: "fixed", size: "150px" }}>Button {c}</Button>
                         {/each}
                     </Container>
                 </Container>
@@ -76,7 +78,9 @@
                     width={{ kind: "hug" }}>
                     <Container gap={"md"}>
                         {#each ["a", "b", "c", "d", "e", "f"] as c}
-                            <Button width={{ kind: "fixed", size: "150px" }}>Button {c}</Button>
+                            <Button
+                                secondary={["b", "d", "f"].includes(c)}
+                                width={{ kind: "fixed", size: "150px" }}>Button {c}</Button>
                         {/each}
                     </Container>
                 </Container>

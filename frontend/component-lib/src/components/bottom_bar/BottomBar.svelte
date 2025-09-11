@@ -83,7 +83,7 @@
         left: 0;
         top: 0.375rem;
         height: var(--sp-xs);
-        background-color: var(--primary);
+        background: var(--gradient);
         border-radius: var(--rad-sm);
         transition: left ease-in-out 200ms;
 
