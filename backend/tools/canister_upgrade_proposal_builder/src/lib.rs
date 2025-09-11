@@ -1,11 +1,11 @@
-use candid::{Encode, Principal};
+use candid::Encode;
 use canister_agent_utils::CanisterName;
 use clap::Parser;
 use sha256::sha256;
 use sns_governance_canister::types::{ExecuteGenericNervousSystemFunction, Proposal, proposal};
+use std::error::Error;
 use std::fs;
-use std::{collections::HashSet, error::Error};
-use types::{BuildVersion, CanisterWasm, UpgradeCanisterWasmArgs, UpgradeChunkedCanisterWasmArgs, UpgradesFilter};
+use types::{BuildVersion, CanisterWasm, UpgradeCanisterWasmArgs, UpgradeChunkedCanisterWasmArgs};
 
 /// Builds the binary encoded candid representation of an ExecuteGenericNervousSystemFunction proposal
 /// for upgrading a canister WASM
