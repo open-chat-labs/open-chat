@@ -32,6 +32,7 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
+use tracing::error;
 use types::{
     BotDataEncoding, BotEventPayload, BotEventWrapper, BotNotification, BotNotificationEnvelope, BuildVersion, CanisterId,
     ChannelLatestMessageIndex, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
@@ -380,29 +381,36 @@ impl RuntimeState {
             timestamp: bot_notification.timestamp,
         };
 
-        let event_map = encodings
+        let event_map: HashMap<_, _> = encodings
             .into_iter()
-            .map(|encoding| {
+            .filter_map(|encoding| {
                 let secret_key_der = self.data.oc_key_pair.secret_key_der();
                 let payload = match encoding {
-                    BotDataEncoding::MsgPack => msgpack::serialize_to_vec(&event_wrapper).unwrap(),
-                    BotDataEncoding::Candid => candid::encode_one(&event_wrapper).unwrap(),
-                    BotDataEncoding::Json => unreachable!("JSON encoding is not supported"),
-                };
+                    BotDataEncoding::MsgPack => Some(msgpack::serialize_to_vec(&event_wrapper).unwrap()),
+                    BotDataEncoding::Candid => Some(candid::encode_one(&event_wrapper).unwrap()),
+                    BotDataEncoding::Json => {
+                        error!("BotDataEncoding::Json is no longer supported");
+                        None
+                    }
+                }?;
 
                 let signature =
                     Base64UrlSafeNoPadding::encode_to_string(sign_bytes(&payload, secret_key_der, self.env.rng()).unwrap())
-                        .unwrap();
+                        .ok()?;
 
-                (
+                Some((
                     encoding,
                     BotEventPayload {
                         data: ByteBuf::from(payload),
                         signature,
                     },
-                )
+                ))
             })
             .collect();
+
+        if event_map.is_empty() {
+            return;
+        }
 
         self.data
             .notifications
