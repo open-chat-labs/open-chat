@@ -382,25 +382,28 @@ impl RuntimeState {
 
         let event_map = encodings
             .into_iter()
-            .map(|encoding| {
+            .filter_map(|encoding| {
                 let secret_key_der = self.data.oc_key_pair.secret_key_der();
                 let payload = match encoding {
-                    BotDataEncoding::MsgPack => msgpack::serialize_to_vec(&event_wrapper).unwrap(),
-                    BotDataEncoding::Candid => candid::encode_one(&event_wrapper).unwrap(),
-                    BotDataEncoding::Json => unreachable!("JSON encoding is not supported"),
-                };
+                    BotDataEncoding::MsgPack => Some(msgpack::serialize_to_vec(&event_wrapper).unwrap()),
+                    BotDataEncoding::Candid => Some(candid::encode_one(&event_wrapper).unwrap()),
+                    BotDataEncoding::Json => {
+                        ic_cdk::println!("Warning: BotDataEncoding::Json is no longer supported, skipping event generation");
+                        None
+                    }
+                }?;
 
                 let signature =
                     Base64UrlSafeNoPadding::encode_to_string(sign_bytes(&payload, secret_key_der, self.env.rng()).unwrap())
-                        .unwrap();
+                        .ok()?;
 
-                (
+                Some((
                     encoding,
                     BotEventPayload {
                         data: ByteBuf::from(payload),
                         signature,
                     },
-                )
+                ))
             })
             .collect();
 

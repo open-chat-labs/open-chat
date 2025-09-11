@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fix
+
+- Don't trap for unsupported bot data encoding ([#8604](https://github.com/open-chat-labs/open-chat/pull/8604))
+
 ## [[2.0.1895](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1895-user_index)] - 2025-09-11
 
 ### Changed
