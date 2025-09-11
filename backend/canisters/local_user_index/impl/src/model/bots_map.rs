@@ -94,8 +94,4 @@ impl BotsMap {
     pub fn iter(&self) -> impl Iterator<Item = &Bot> {
         self.bots.values()
     }
-
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Bot> {
-        self.bots.values_mut()
-    }
 }
