@@ -9,6 +9,7 @@
         height?: SizeMode;
         ellipsisTruncate?: boolean;
         colour?: TypographyColour;
+        labelFor?: string;
     }
 </script>
 
@@ -31,12 +32,22 @@
         height = { kind: "hug" },
         ellipsisTruncate = false,
         colour = "primary",
+        labelFor,
     }: Props = $props();
 
     let parentDirection = getContext<Direction>("direction");
     let widthCss = $derived(getFlexStyle("width", width, parentDirection));
     let heightCss = $derived(getFlexStyle("height", height, parentDirection));
-    let style = $derived(`${heightCss}; ${widthCss}; color: var(--text-${colour});`);
+    let style = $derived(`${heightCss}; ${widthCss}; color: ${getColourVar()};`);
+
+    function getColourVar() {
+        switch (colour) {
+            case "error":
+                return "var(--error)";
+            default:
+                return `var(--text-${colour})`;
+        }
+    }
 </script>
 
 {#if type === "overview" || type === "h1"}
@@ -55,6 +66,10 @@
     <h5 class:ellipsis={ellipsisTruncate} {style} class={`${type} ${fontWeight}`}>
         {@render children?.()}
     </h5>
+{:else if type === "label"}
+    <label for={labelFor} class:ellipsis={ellipsisTruncate} {style} class={`${type} ${fontWeight}`}>
+        {@render children?.()}
+    </label>
 {:else}
     <p class:ellipsis={ellipsisTruncate} {style} class={`${type} ${fontWeight}`}>
         {@render children?.()}

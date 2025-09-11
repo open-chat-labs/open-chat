@@ -161,6 +161,7 @@ export class Gradient {
 }
 
 export type TypographyColour =
+    | "error"
     | "accent"
     | "primary"
     | "secondary"
