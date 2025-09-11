@@ -26,7 +26,6 @@
     <Container
         borderWidth={"thin"}
         padding={"md"}
-        gap={"sm"}
         backgroundColour={"var(--background-1)"}
         minWidth={new Pixel(160)}
         borderRadius={"lg"}

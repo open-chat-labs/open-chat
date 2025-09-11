@@ -23,7 +23,7 @@
     button {
         width: 3.5rem;
         height: 3.5rem;
-        background-color: var(--primary);
+        background: var(--gradient-inverted);
         color: var(--text-primary);
         border-radius: var(--rad-lg);
         border: none;
