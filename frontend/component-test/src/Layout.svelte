@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Container, H2, Label, Subtitle, type SpacingSize } from "component-lib";
+    import { Button, Container, H2, Label, Subtitle, type SpacingSize } from "component-lib";
 
     let paddingLeft = $state<SpacingSize>("lg");
     let paddingRight = $state<SpacingSize>("lg");
@@ -108,30 +108,9 @@
                     crossAxisAlignment={"end"}
                     width={{ kind: "fill" }}
                     height={{ kind: "fill" }}>
-                    <Container
-                        padding={"md"}
-                        borderColour={"var(--secondary)"}
-                        borderStyle={"dashed"}
-                        mainAxisAlignment={"center"}
-                        crossAxisAlignment={"center"}
-                        borderRadius={"md"}
-                        borderWidth={"thin"}>A</Container>
-                    <Container
-                        padding={"md"}
-                        borderColour={"var(--secondary)"}
-                        borderStyle={"dashed"}
-                        mainAxisAlignment={"center"}
-                        crossAxisAlignment={"center"}
-                        borderRadius={"md"}
-                        borderWidth={"thin"}>B</Container>
-                    <Container
-                        padding={"md"}
-                        borderColour={"var(--secondary)"}
-                        borderStyle={"dashed"}
-                        mainAxisAlignment={"center"}
-                        crossAxisAlignment={"center"}
-                        borderRadius={"md"}
-                        borderWidth={"thin"}>C</Container>
+                    <Button>A</Button>
+                    <Button secondary>B</Button>
+                    <Button secondary>C</Button>
                 </Container>
             </Container>
         </Container>

@@ -14,6 +14,7 @@
     const mainColours: ColourCard[] = [
         { name: "Primary", key: "primary" },
         { name: "Secondary", key: "secondary" },
+        { name: "Tertiary", key: "tertiary" },
         { name: "Success", key: "success" },
         { name: "Warning", key: "warning" },
         { name: "Error", key: "error" },
@@ -90,13 +91,13 @@
             <Container gap={"xl"} padding={["lg", "zero", "xxl", "zero"]}>
                 {@render card(
                     "Primary Gradient",
-                    neon.colours.primaryGradient.toString(),
-                    neon.colours.primaryGradient.summarise(),
+                    neon.colours.gradient.toString(),
+                    neon.colours.gradient.summarise(),
                 )}
                 {@render card(
                     "Primary Gradient Inverted",
-                    neon.colours.primaryGradientInverted.toString(),
-                    neon.colours.primaryGradientInverted.summarise(),
+                    neon.colours.gradientInverted.toString(),
+                    neon.colours.gradientInverted.summarise(),
                 )}
             </Container>
         </Container>

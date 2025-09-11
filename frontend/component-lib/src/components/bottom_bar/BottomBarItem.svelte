@@ -12,7 +12,7 @@
 
     let { indicator = false, selected = false, onSelect, icon }: Props = $props();
 
-    let iconColour = $derived(selected ? "var(--primary)" : "var(--text-primary)");
+    let iconColour = $derived(selected ? "var(--tertiary)" : "var(--text-primary)");
 </script>
 
 <!-- Semantically it would be better if this were a button but we also want it to behave like a Container which is ... interesting -->

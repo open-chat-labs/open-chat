@@ -1,12 +1,16 @@
-import { Colour, Colours, Gradient } from "./colour";
+import { Colour, Colours } from "./colour";
 import { Theme } from "./theme";
 
-const primary = Colour.fromHex("#e41e79");
+const primary = Colour.fromHex("#FF5672");
+const tertiary = Colour.fromHex("#e41e79");
+const gradientPrimary = tertiary;
+const gradientSecondary = primary;
 
 export const theme = new Theme(
     new Colours(
         primary,
         Colour.fromHex("#23A2EE"),
+        tertiary,
         Colour.fromHex("#4dc164"),
         Colour.fromHex("#f36d28"),
         Colour.fromHex("#ea2929"),
@@ -24,7 +28,7 @@ export const theme = new Theme(
         Colour.fromHex("#a7a9ae"),
         Colour.fromHex("#242834"),
         Colour.fromHex("#e41e79"),
-        new Gradient(Colour.fromHex("#8d2380"), primary),
-        new Gradient(primary, Colour.fromHex("#8d2380")),
+        gradientPrimary,
+        gradientSecondary,
     ),
 );

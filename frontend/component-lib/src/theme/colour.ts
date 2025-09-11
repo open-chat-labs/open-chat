@@ -169,9 +169,13 @@ export type TypographyColour =
     | "on-primary";
 
 export class Colours {
+    public gradient: Gradient;
+    public gradientInverted: Gradient;
+
     constructor(
         public primary: Colour,
         public secondary: Colour,
+        public tertiary: Colour,
         public success: Colour,
         public warning: Colour,
         public error: Colour,
@@ -189,14 +193,18 @@ export class Colours {
         public textPlaceholder: Colour,
         public textOnPrimary: Colour,
         public textAccent: Colour,
-        public primaryGradient: Gradient,
-        public primaryGradientInverted: Gradient,
-    ) {}
+        public gradientPrimary: Colour,
+        public gradientSecondary: Colour,
+    ) {
+        this.gradient = new Gradient(gradientPrimary, gradientSecondary);
+        this.gradientInverted = new Gradient(gradientSecondary, gradientPrimary);
+    }
 
     cssVariables(): CssVariable[] {
         return [
             this.primary.cssVariable("primary"),
             this.secondary.cssVariable("secondary"),
+            this.tertiary.cssVariable("tertiary"),
             this.success.cssVariable("success"),
             this.warning.cssVariable("warning"),
             this.error.cssVariable("error"),
@@ -214,8 +222,10 @@ export class Colours {
             this.textPlaceholder.cssVariable("text-placeholder"),
             this.textOnPrimary.cssVariable("text-on-primary"),
             this.textAccent.cssVariable("text-accent"),
-            this.primaryGradient.cssVariable("primary-gradient"),
-            this.primaryGradientInverted.cssVariable("primary-gradient-inverted"),
+            this.gradient.cssVariable("gradient"),
+            this.gradientInverted.cssVariable("gradient-inverted"),
+            this.gradientPrimary.cssVariable("gradient-primary"),
+            this.gradientSecondary.cssVariable("gradient-secondary"),
         ];
     }
 }
@@ -228,7 +238,6 @@ export type ColourVarKeys = Exclude<keyof Colours, keyof object | "cssVariables"
 type ColourVarsType = Record<ColourVarKeys, string>;
 
 const dummyColour = Colour.fromHex("#000000");
-const dummyGradient = new Gradient(dummyColour, dummyColour);
 
 // this is a little bit of a hack but ...
 export const ColourVars: ColourVarsType = Object.fromEntries(
@@ -253,8 +262,9 @@ export const ColourVars: ColourVarsType = Object.fromEntries(
             dummyColour,
             dummyColour,
             dummyColour,
-            dummyGradient,
-            dummyGradient,
+            dummyColour,
+            dummyColour,
+            dummyColour,
         ),
     ).map((k) => [k, `var(--${toKebabCase(k)})`]),
 ) as ColourVarsType;
