@@ -1,7 +1,6 @@
 <script lang="ts">
     import { ColourVars } from "component-lib";
     import type { Snippet } from "svelte";
-    import Plus from "svelte-material-icons/Plus.svelte";
     import Container from "./Container.svelte";
     import Subtitle from "./typography/Subtitle.svelte";
 
@@ -10,9 +9,10 @@
         children: Snippet;
         icon: Snippet<[string]>;
         onClick?: () => void;
+        smallIcon?: Snippet<[string]>;
     }
 
-    let { colour = "primary", children, onClick, icon }: Props = $props();
+    let { colour = "primary", children, onClick, icon, smallIcon }: Props = $props();
     let iconColour = $derived(getIconColour());
 
     function getIconColour() {
@@ -30,9 +30,11 @@
 <Container crossAxisAlignment={"center"} gap={"lg"} {onClick}>
     <button class={`list_action_button ${colour}`} type="button">
         {@render icon(iconColour)}
-        <div class="plus">
-            <Plus color={ColourVars.background1} />
-        </div>
+        {#if smallIcon !== undefined}
+            <div class="plus">
+                {@render smallIcon(ColourVars.background1)}
+            </div>
+        {/if}
     </button>
     <Subtitle ellipsisTruncate fontWeight={"bold"}>{@render children()}</Subtitle>
 </Container>
