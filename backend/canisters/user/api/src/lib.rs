@@ -3,9 +3,9 @@ use chat_events::MessageContentInternal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
-    Achievement, CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId, DiamondMembershipPlanDuration,
-    EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds, P2PSwapStatus, PhoneNumber,
-    Reaction, ReferralStatus, SuspensionDuration, TimestampMillis, UniquePersonProof, User, UserId,
+    Achievement, BotDefinitionUpdate, CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId,
+    DiamondMembershipPlanDuration, EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
+    P2PSwapStatus, PhoneNumber, Reaction, ReferralStatus, SuspensionDuration, TimestampMillis, UniquePersonProof, User, UserId,
 };
 
 mod lifecycle;
@@ -107,6 +107,8 @@ pub enum LocalUserIndexEvent {
     NotifyUniquePersonProof(Box<UniquePersonProof>),
     ExternalAchievementAwarded(Box<ExternalAchievementAwarded>),
     ReinstateMissedDailyClaims(Vec<u16>),
+    BotUpdated(Box<BotDefinitionUpdate>),
+    BotRemoved(UserId),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

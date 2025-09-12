@@ -55,6 +55,12 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
             }
             state.data.members.remove(user_id, None, **now);
         }
+        LocalIndexEvent::BotRemoved(bot_id) => {
+            state.data.uninstall_bot(bot_id, **now);
+        }
+        LocalIndexEvent::BotUpdated(ev) => {
+            state.data.handle_bot_definition_updated(ev, **now);
+        }
     }
 
     handle_activity_notification(state);

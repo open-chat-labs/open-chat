@@ -33,8 +33,8 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
-    AccessGateConfigInternal, Achievement, BotAdded, BotEventsCaller, BotInitiator, BotNotification, BotPermissions,
-    BotRemoved, BotSubscriptions, BotUpdated, BuildVersion, Caller, CanisterId, ChatEventCategory, ChatId, ChatMetrics,
+    AccessGateConfigInternal, Achievement, BotAdded, BotDefinitionUpdate, BotEventsCaller, BotInitiator, BotNotification,
+    BotPermissions, BotRemoved, BotSubscriptions, BotUpdated, BuildVersion, Caller, CanisterId, ChatId, ChatMetrics,
     CommunityId, Cycles, Document, EventIndex, EventsCaller, FrozenGroupInfo, GroupCanisterGroupChatSummary,
     GroupChatUserNotificationPayload, GroupMembership, GroupPermissions, GroupSubtype, IdempotentEnvelope,
     MAX_THREADS_IN_SUMMARY, MessageIndex, Milliseconds, MultiUserChat, Notification, OCResult, Rules, TimestampMillis,
@@ -817,57 +817,61 @@ impl Data {
 
         // Subscribe to permitted chat events
         if let (Some(subscriptions), Some(permissions)) = (default_subscriptions, autonomous_permissions) {
-            let permitted_categories = permissions.permitted_chat_event_categories_to_read();
-
             self.chat.events.subscribe_bot_to_events(
                 bot_id,
-                subscriptions
-                    .chat
-                    .into_iter()
-                    .filter(|t| permitted_categories.contains(&ChatEventCategory::from(*t)))
-                    .collect(),
+                subscriptions.chat,
+                &permissions.permitted_chat_event_categories_to_read(),
             );
         }
 
         true
     }
 
-    pub fn update_bot(
+    pub fn handle_bot_definition_updated(&mut self, update: BotDefinitionUpdate, now: TimestampMillis) {
+        let bot_id = update.bot_id;
+        if self.bots.update_from_definition(update, now) {
+            self.apply_bot_update(bot_id, OPENCHAT_BOT_USER_ID, now);
+        }
+    }
+
+    pub fn update_bot_permissions(
         &mut self,
         owner_id: UserId,
         bot_id: UserId,
-        permissions: BotPermissions,
+        command_permissions: BotPermissions,
         autonomous_permissions: Option<BotPermissions>,
         now: TimestampMillis,
     ) -> bool {
-        if !self.bots.update(bot_id, permissions, autonomous_permissions.clone(), now) {
-            return false;
+        if self
+            .bots
+            .update_permissions(bot_id, command_permissions, autonomous_permissions, now)
+        {
+            self.apply_bot_update(bot_id, owner_id, now);
+            true
+        } else {
+            false
         }
+    }
 
+    fn apply_bot_update(&mut self, bot_id: UserId, updated_by: UserId, now: TimestampMillis) {
+        // Push a chat event
         self.chat.events.push_main_event(
             ChatEventInternal::BotUpdated(Box::new(BotUpdated {
                 user_id: bot_id,
-                updated_by: owner_id,
+                updated_by,
             })),
             now,
         );
 
-        // Subscribe to permitted chat events
+        // Re-apply event subscriptions given the changes to permissions and/or subscriptions
         let bot = self.bots.get(&bot_id).unwrap();
-        let permissions = autonomous_permissions.unwrap_or_default();
+        let permissions = &bot.autonomous_permissions.clone().unwrap_or_default();
         let permitted_categories = permissions.permitted_chat_event_categories_to_read();
         let subscriptions = bot.default_subscriptions.clone().unwrap_or_default();
 
-        self.chat.events.subscribe_bot_to_events(
-            bot_id,
-            subscriptions
-                .chat
-                .into_iter()
-                .filter(|t| permitted_categories.contains(&ChatEventCategory::from(*t)))
-                .collect(),
-        );
-
-        true
+        self.chat
+            .events
+            .subscribe_bot_to_events(bot_id, subscriptions.chat, &permitted_categories);
     }
 
     pub fn uninstall_bot(&mut self, owner_id: UserId, bot_id: UserId, now: TimestampMillis) -> bool {

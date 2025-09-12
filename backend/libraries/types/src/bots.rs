@@ -2,7 +2,8 @@ use crate::bitflags::{decode_from_bitflags, encode_as_bitflags};
 use crate::{
     AudioContent, CanisterId, Chat, ChatEventCategory, ChatEventType, ChatId, ChatPermission, CommunityEventCategory,
     CommunityEventType, CommunityId, CommunityOrGroup, CommunityPermission, FileContent, GiphyContent, GroupRole, ImageContent,
-    MessageContentInitial, MessageId, MessagePermission, PollContent, TextContent, TimestampMillis, UserId, VideoContent,
+    MessageContentInitial, MessageId, MessagePermission, OptionUpdate, PollContent, TextContent, TimestampMillis, UserId,
+    VideoContent,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -514,7 +515,7 @@ pub enum BotRegistrationStatus {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
 pub struct BotSubscriptions {
     pub community: HashSet<CommunityEventType>,
     pub chat: HashSet<ChatEventType>,
@@ -567,6 +568,15 @@ impl BotDefinition {
     pub fn encoding(&self) -> BotDataEncoding {
         *self.data_encoding.as_ref().unwrap_or(&BotDataEncoding::MsgPack)
     }
+
+    pub fn command_permissions(&self) -> Option<BotPermissions> {
+        let permissions = self
+            .commands
+            .iter()
+            .fold(BotPermissions::default(), |acc, cmd| acc.union(&cmd.permissions));
+
+        if permissions.is_empty() { None } else { Some(permissions) }
+    }
 }
 
 #[ts_export]
@@ -582,4 +592,20 @@ pub enum BotDataEncoding {
 pub struct BotEventPayload {
     pub data: ByteBuf,
     pub signature: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BotDefinitionUpdate {
+    pub bot_id: UserId,
+    pub command_permissions: OptionUpdate<BotPermissions>,
+    pub autonomous_permissions: OptionUpdate<BotPermissions>,
+    pub default_subscriptions: OptionUpdate<BotSubscriptions>,
+}
+
+impl BotDefinitionUpdate {
+    pub fn has_updates(&self) -> bool {
+        self.command_permissions.has_update()
+            || self.autonomous_permissions.has_update()
+            || self.default_subscriptions.has_update()
+    }
 }

@@ -12,11 +12,7 @@ use community_canister::{c2c_bot_create_channel, c2c_join_community};
 use group_chat_core::GroupChatCore;
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
-use std::collections::HashSet;
-use types::{
-    BotCaller, BotPermissions, Caller, ChannelCreated, ChatEventCategory, ChatEventType, CommunityPermission, MultiUserChat,
-    OCResult, UserType,
-};
+use types::{BotCaller, BotPermissions, Caller, ChannelCreated, CommunityPermission, MultiUserChat, OCResult, UserType};
 use url::Url;
 use utils::document::validate_avatar;
 use utils::text_validation::{StringLengthValidationError, validate_channel_name, validate_description, validate_rules};
@@ -235,16 +231,11 @@ fn create_channel_impl(
 fn subscribe_bots_to_events(state: &mut RuntimeState, chat: &mut GroupChatCore) {
     for (bot_id, bot) in state.data.bots.iter() {
         if let (Some(subscriptions), Some(permissions)) = (&bot.default_subscriptions, &bot.autonomous_permissions) {
-            let permitted_categories = permissions.permitted_chat_event_categories_to_read();
-
-            let chat_events: HashSet<ChatEventType> = subscriptions
-                .chat
-                .iter()
-                .filter(|t| permitted_categories.contains(&ChatEventCategory::from(**t)))
-                .cloned()
-                .collect();
-
-            chat.events.subscribe_bot_to_events(*bot_id, chat_events.clone());
+            chat.events.subscribe_bot_to_events(
+                *bot_id,
+                subscriptions.chat.clone(),
+                &permissions.permitted_chat_event_categories_to_read(),
+            );
         }
     }
 }
