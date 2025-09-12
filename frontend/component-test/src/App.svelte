@@ -10,6 +10,7 @@
     import Colours from "./Colours.svelte";
     import CommonButtons from "./CommonButtons.svelte";
     import ControlsAndIndicators from "./ControlsAndIndicators.svelte";
+    import Forms from "./Forms.svelte";
     import Layout from "./Layout.svelte";
     import ListActions from "./ListActions.svelte";
     import Longpress from "./Longpress.svelte";
@@ -26,6 +27,7 @@
         | "big_buttons"
         | "chat_summary"
         | "common_buttons"
+        | "forms"
         | "layout"
         | "list_actions"
         | "longpress"
@@ -36,6 +38,7 @@
         | "section_header"
         | "typography"
         | "users";
+
     let selected = $state<Section>("colours");
 
     const labels: Record<Section, string> = {
@@ -47,6 +50,7 @@
         colours: "Colours",
         common_buttons: "Common buttons",
         controls: "Controls & indicators",
+        forms: "Forms",
         layout: "Layout",
         list_actions: "List Actions",
         longpress: "Longpress",
@@ -100,6 +104,8 @@
             <BottomBars />
         {:else if selected === "avatars"}
             <Avatars />
+        {:else if selected === "forms"}
+            <Forms />
         {:else if selected === "section_header"}
             <SectionHeaders />
         {:else if selected === "chat_summary"}
