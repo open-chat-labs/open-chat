@@ -12,6 +12,16 @@ pub enum OptionUpdate<T> {
     SetToSome(T),
 }
 
+impl<T: PartialEq> OptionUpdate<T> {
+    pub fn from(old: &Option<T>, new: Option<T>) -> OptionUpdate<T> {
+        if old == &new {
+            OptionUpdate::NoChange
+        } else {
+            new.map_or(OptionUpdate::SetToNone, OptionUpdate::SetToSome)
+        }
+    }
+}
+
 impl<T> OptionUpdate<T> {
     pub fn from_update(option: Option<T>) -> OptionUpdate<T> {
         if let Some(value) = option { OptionUpdate::SetToSome(value) } else { OptionUpdate::SetToNone }

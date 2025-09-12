@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Allow bots to restrict installation locations ([#8560](https://github.com/open-chat-labs/open-chat/pull/8560))
+- Keep bot event subscriptions in sync ([#8600](https://github.com/open-chat-labs/open-chat/pull/8600))
 
 ## [[2.0.1861](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1861-user_index)] - 2025-08-12
 

@@ -23,7 +23,7 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let installed_by = member.user_id();
     let now = state.env.now();
 
-    if !state.data.update_bot(
+    if !state.data.update_bot_permissions(
         installed_by,
         args.bot_id,
         args.granted_permissions.clone(),
