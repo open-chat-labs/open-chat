@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Snippet } from "svelte";
 
-    type Mode = "default" | "additive";
+    type Mode = "default" | "default_on_primary" | "additive";
     type Size = "default" | "large";
     interface Props {
         mode?: Mode;
@@ -12,11 +12,12 @@
     let { children, mode = "default", size = "default" }: Props = $props();
 </script>
 
-<div class={`badge ${mode}-mode ${size}-size`}>
+<div class={`badge ${mode}_mode ${size}-size`}>
     {@render children()}
 </div>
 
 <style lang="scss">
+    $speed: 300ms;
     .badge {
         display: flex;
         justify-content: center;
@@ -29,6 +30,17 @@
         font-weight: var(--font-semi-bold);
         background: var(--primary);
         color: var(--text-on-primary);
+        border: var(--bw-thin) solid transparent;
+        transition:
+            border ease-in-out $speed,
+            background ease-in-out $speed,
+            color ease-in-out $speed;
+
+        &.default_on_primary_mode {
+            background: transparent;
+            color: var(--text-on-primary);
+            border: var(--bw-thin) solid var(--text-on-primary);
+        }
 
         &.large-size {
             width: 1.75rem;
@@ -37,7 +49,7 @@
             line-height: var(--typo-bodySmall-lh);
         }
 
-        &.additive-mode {
+        &.additive_mode {
             background: var(--background-2);
             color: var(--text-placeholder);
         }
