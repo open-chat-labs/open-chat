@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { BigButton, Container, CountBadge, H2 } from "component-lib";
+    import { BigButton, Container, H2, Label } from "component-lib";
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import AccountGroupOutline from "svelte-material-icons/AccountGroupOutline.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
@@ -9,6 +9,9 @@
     import Wallet from "svelte-material-icons/Wallet.svelte";
     import Waveform from "svelte-material-icons/Waveform.svelte";
     import DebugEvent from "./DebugEvent.svelte";
+
+    let selected1 = $state(1);
+    let selected2 = $state(0);
 
     function onClicked(onAction: (action: string) => void) {
         return () => onAction("Button clicked");
@@ -24,16 +27,13 @@
                 width={{ kind: "fixed", size: "450px" }}
                 height={{ kind: "fixed", size: "85px" }}
                 gap={"md"}>
-                <BigButton onClick={onClicked(onAction)}>
+                <BigButton countBadge={23} mode={"active"} onClick={onClicked(onAction)}>
                     {#snippet icon(color)}
                         <AccountMultiplePlus {color} />
                     {/snippet}
-                    {#snippet modifier(color)}
-                        <CountBadge>23</CountBadge>
-                    {/snippet}
                     Alert!!!
                 </BigButton>
-                <BigButton onClick={onClicked(onAction)}>
+                <BigButton countBadge={23} onClick={onClicked(onAction)}>
                     {#snippet icon(color)}
                         <Wallet {color} />
                     {/snippet}
@@ -45,22 +45,26 @@
                 width={{ kind: "fixed", size: "450px" }}
                 height={{ kind: "fixed", size: "85px" }}
                 gap={"md"}>
-                <BigButton mode={"active"} onClick={onClicked(onAction)}>
+                <BigButton
+                    mode={selected1 === 0 ? "active" : "default"}
+                    onClick={() => (selected1 = 0)}>
                     {#snippet icon(color)}
                         <Waveform {color} />
                     {/snippet}
                     Waveform
                 </BigButton>
-                <BigButton onClick={onClicked(onAction)}>
+                <BigButton
+                    countBadge={23}
+                    mode={selected1 === 1 ? "active" : "default"}
+                    onClick={() => (selected1 = 1)}>
                     {#snippet icon(color)}
                         <Save {color} />
                     {/snippet}
-                    {#snippet modifier(color)}
-                        <CountBadge>23</CountBadge>
-                    {/snippet}
                     Save content
                 </BigButton>
-                <BigButton onClick={onClicked(onAction)}>
+                <BigButton
+                    mode={selected1 === 2 ? "active" : "default"}
+                    onClick={() => (selected1 = 2)}>
                     {#snippet icon(color)}
                         <Wallet {color} />
                     {/snippet}
@@ -68,39 +72,51 @@
                 </BigButton>
             </Container>
 
+            <Label>Overflowing group</Label>
             <Container
+                borderColour={"cyan"}
+                borderStyle={"dashed"}
+                borderWidth={"thick"}
+                borderRadius={"xl"}
+                padding={"xl"}
                 width={{ kind: "fixed", size: "500px" }}
-                height={{ kind: "fixed", size: "85px" }}
+                height={{ kind: "fixed", size: "150px" }}
                 gap={"md"}>
-                <BigButton width={{ kind: "fixed", size: "150px" }} onClick={onClicked(onAction)}>
+                <BigButton
+                    mode={selected2 === 0 ? "active" : "default"}
+                    width={{ kind: "fixed", size: "150px" }}
+                    onClick={() => (selected2 = 0)}>
                     {#snippet icon(color)}
                         <AccountGroup {color} />
                     {/snippet}
-                    Filled
+                    Button One
                 </BigButton>
                 <BigButton
-                    mode="active"
+                    mode={selected2 === 1 ? "active" : "default"}
                     width={{ kind: "fixed", size: "150px" }}
-                    onClick={onClicked(onAction)}>
+                    onClick={() => (selected2 = 1)}>
                     {#snippet icon(color)}
                         <AccountGroupOutline {color} />
                     {/snippet}
-                    Outlined
+                    Button Two
                 </BigButton>
                 <BigButton
-                    mode="pressed"
+                    mode={selected2 === 2 ? "active" : "default"}
                     width={{ kind: "fixed", size: "150px" }}
-                    onClick={onClicked(onAction)}>
+                    onClick={() => (selected2 = 2)}>
                     {#snippet icon(color)}
                         <AccountMultiple {color} />
                     {/snippet}
-                    Pressed
+                    Button Three
                 </BigButton>
-                <BigButton width={{ kind: "fixed", size: "150px" }} onClick={onClicked(onAction)}>
+                <BigButton
+                    mode={selected2 === 3 ? "active" : "default"}
+                    width={{ kind: "fixed", size: "150px" }}
+                    onClick={() => (selected2 = 3)}>
                     {#snippet icon(color)}
                         <FlagOutline {color} />
                     {/snippet}
-                    Overflowing
+                    Button Four
                 </BigButton>
             </Container>
         </Container>
