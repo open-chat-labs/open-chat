@@ -71,7 +71,7 @@
         {/if}
         {#if countBadge}
             <span class="modifier">
-                <CountBadge mode={internalMode === "active" ? "default_on_primary" : "default"}
+                <CountBadge mode={internalMode === "active" ? "on_primary" : "default"}
                     >{countBadge}</CountBadge>
             </span>
         {/if}

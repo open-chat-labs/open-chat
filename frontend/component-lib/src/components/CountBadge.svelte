@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Snippet } from "svelte";
 
-    type Mode = "default" | "default_on_primary" | "additive";
+    type Mode = "default" | "on_primary" | "additive";
     type Size = "default" | "large";
     interface Props {
         mode?: Mode;
@@ -36,7 +36,7 @@
             background ease-in-out $speed,
             color ease-in-out $speed;
 
-        &.default_on_primary_mode {
+        &.on_primary_mode {
             background: transparent;
             color: var(--text-on-primary);
             border: var(--bw-thin) solid var(--text-on-primary);
