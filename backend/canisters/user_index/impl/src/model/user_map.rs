@@ -4,14 +4,13 @@ use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
 use crate::model::user::User;
 use candid::Principal;
 use search::weighted::{Document as SearchDocument, Query};
-use serde::{Deserialize, Deserializer, Serialize};
-use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::ops::RangeFrom;
 use tracing::info;
 use types::{
-    AutonomousConfig, BotCommandDefinition, BotDefinition, BotInstallationLocation, BotInstallationLocationType, BotMatch,
-    BotRegistrationStatus, CanisterId, CyclesTopUp, Document, Milliseconds, OptionUpdate, SuspensionDuration, TimestampMillis,
-    UniquePersonProof, UserId, UserType,
+    BotDefinition, BotInstallationLocation, BotMatch, BotRegistrationStatus, CanisterId, CyclesTopUp, Document, Milliseconds,
+    OptionUpdate, SuspensionDuration, TimestampMillis, UniquePersonProof, UserId, UserType,
 };
 use user_index_canister::bot_updates::BotDetails;
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
@@ -42,7 +41,7 @@ pub struct UserMap {
     pub users_with_duplicate_principals: Vec<(UserId, UserId)>,
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Bot {
     pub name: String,
     pub avatar: Option<Document>,
@@ -52,49 +51,6 @@ pub struct Bot {
     pub last_updated: TimestampMillis,
     pub installations: HashMap<BotInstallationLocation, InstalledBotDetails>,
     pub registration_status: BotRegistrationStatus,
-}
-
-// TODO: Remove this after the next release
-impl<'de> Deserialize<'de> for Bot {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        #[derive(Deserialize)]
-        struct Inner {
-            name: String,
-            avatar: Option<Document>,
-            owner: UserId,
-            endpoint: String,
-            description: String,
-            commands: Vec<BotCommandDefinition>,
-            autonomous_config: Option<AutonomousConfig>,
-            last_updated: TimestampMillis,
-            installations: HashMap<BotInstallationLocation, InstalledBotDetails>,
-            registration_status: BotRegistrationStatus,
-            #[serde(default)]
-            restricted_locations: Option<HashSet<BotInstallationLocationType>>,
-        }
-
-        let inner = Inner::deserialize(deserializer)?;
-        Ok(Bot {
-            name: inner.name,
-            avatar: inner.avatar,
-            owner: inner.owner,
-            endpoint: inner.endpoint,
-            definition: BotDefinition {
-                description: inner.description,
-                commands: inner.commands,
-                autonomous_config: inner.autonomous_config,
-                default_subscriptions: None,
-                data_encoding: None,
-                restricted_locations: inner.restricted_locations,
-            },
-            last_updated: inner.last_updated,
-            installations: inner.installations,
-            registration_status: inner.registration_status,
-        })
-    }
 }
 
 impl Bot {

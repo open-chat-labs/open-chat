@@ -1028,7 +1028,6 @@ impl Data {
             channel.chat.events.unsubscribe_bot_from_events(bot_id);
         }
 
-        // TODO: Notify UserIndex
         true
     }
 
