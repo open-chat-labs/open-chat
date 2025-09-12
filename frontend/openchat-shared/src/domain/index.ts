@@ -15,6 +15,7 @@ export * from "./error";
 export * from "./events";
 export * from "./faq";
 export * from "./feature";
+export * from "./fixedArray";
 export * from "./gif";
 export * from "./i18n";
 export * from "./identity";
