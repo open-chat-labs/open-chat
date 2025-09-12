@@ -6,12 +6,12 @@ use std::cmp::max;
 use std::collections::HashMap;
 use types::nns::CryptoAmount;
 use types::{
-    AutonomousConfig, BotCommandDefinition, BotDataEncoding, BotDefinition, BotInstallationLocation, BotSubscriptions,
-    BuildVersion, CanisterId, ChannelLatestMessageIndex, ChannelUserNotificationPayload, ChatId, CommunityId, CyclesTopUp,
-    DiamondMembershipPlanDuration, GroupChatUserNotificationPayload, MessageContent, MessageContentInitial, MessageId,
-    MessageIndex, Notification, NotifyChit, PhoneNumber, ReferralType, SuspensionDuration, TimestampMillis, UniquePersonProof,
-    UpdateUserPrincipalArgs, User, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
-    UserNotificationPayload, UserType, is_default,
+    AutonomousConfig, BotCommandDefinition, BotDataEncoding, BotDefinition, BotDefinitionUpdate, BotInstallationLocation,
+    BotSubscriptions, BuildVersion, CanisterId, ChannelLatestMessageIndex, ChannelUserNotificationPayload, ChatId, CommunityId,
+    CyclesTopUp, DiamondMembershipPlanDuration, GroupChatUserNotificationPayload, MessageContent, MessageContentInitial,
+    MessageId, MessageIndex, Notification, NotifyChit, PhoneNumber, ReferralType, SuspensionDuration, TimestampMillis,
+    UniquePersonProof, UpdateUserPrincipalArgs, User, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment,
+    UserId, UserNotificationPayload, UserType, is_default,
 };
 
 mod lifecycle;
@@ -33,7 +33,8 @@ pub enum UserIndexEvent {
     BotPublished(BotPublished),
     BotUpdated(BotUpdated),
     BotRemoved(BotRemoved),
-    BotUninstall(BotUninstall),
+    BotUninstall(BotInstallationLocation, UserId),
+    BotUpdateInstallation(BotInstallationLocation, BotDefinitionUpdate),
     PlatformOperatorStatusChanged(PlatformOperatorStatusChanged),
     PlatformModeratorStatusChanged(PlatformModeratorStatusChanged),
     MaxConcurrentCanisterUpgradesChanged(MaxConcurrentCanisterUpgradesChanged),
@@ -160,12 +161,6 @@ pub struct BotUpdated {
 pub struct BotRemoved {
     pub user_id: UserId,
     pub deleted_by: UserId,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct BotUninstall {
-    pub location: BotInstallationLocation,
-    pub bot_id: UserId,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

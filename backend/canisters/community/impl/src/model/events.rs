@@ -157,12 +157,22 @@ impl CommunityEvents {
         )
     }
 
-    pub fn subscribe_bot_to_events(&mut self, bot_id: UserId, event_types: HashSet<CommunityEventType>) {
+    pub fn subscribe_bot_to_events(
+        &mut self,
+        bot_id: UserId,
+        event_types: HashSet<CommunityEventType>,
+        permitted_categories: &HashSet<CommunityEventCategory>,
+    ) {
         // Remove any existing subscriptions
         self.unsubscribe_bot_from_events(bot_id);
 
-        // Add the new subscriptions (if any)
-        for event_type in event_types {
+        // Add any permitted new subscriptions
+        let permitted_event_types: HashSet<CommunityEventType> = event_types
+            .into_iter()
+            .filter(|t| permitted_categories.contains(&CommunityEventCategory::from(*t)))
+            .collect();
+
+        for event_type in permitted_event_types {
             self.bot_subscriptions.entry(event_type).or_default().insert(bot_id);
         }
     }
