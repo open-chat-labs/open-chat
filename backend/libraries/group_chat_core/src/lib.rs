@@ -15,14 +15,15 @@ use std::cmp::{Reverse, max, min};
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use types::{
     AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotMessageContext, BotNotification, Caller, Chat,
-    CustomPermission, Document, EventIndex, EventOrExpiredRange, EventWrapper, EventsCaller, EventsResponse,
-    ExternalUrlUpdated, GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole,
-    GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention, MAX_RETURNED_MENTIONS, MemberLeft,
-    MembersRemoved, Message, MessageContent, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned,
-    MessageUnpinned, MessagesResponse, Milliseconds, MultiUserChat, OCResult, OptionUpdate, OptionalGroupPermissions,
-    OptionalMessagePermissions, PermissionsChanged, Reaction, ReserveP2PSwapSuccess, RoleChanged, Rules, SelectedGroupUpdates,
-    SenderContext, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited,
-    Version, Versioned, VersionedRules, VideoCall, VideoCallPresence, VoteOperation, WebhookDetails,
+    CustomPermission, DiamondMembershipStatus, Document, EventIndex, EventOrExpiredRange, EventWrapper, EventsCaller,
+    EventsResponse, ExternalUrlUpdated, GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions,
+    GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention,
+    MAX_RETURNED_MENTIONS, MemberLeft, MembersRemoved, Message, MessageContent, MessageId, MessageIndex, MessageMatch,
+    MessagePermissions, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, MultiUserChat, OCResult, OptionUpdate,
+    OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged, Reaction, ReserveP2PSwapSuccess, RoleChanged,
+    Rules, SelectedGroupUpdates, SenderContext, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UserType,
+    UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall, VideoCallPresence, VoteOperation,
+    WebhookDetails,
 };
 use utils::document::validate_avatar;
 use utils::text_validation::{
@@ -1747,11 +1748,22 @@ impl GroupChatCore {
         user_id: UserId,
         message_id: MessageId,
         now: TimestampMillis,
+        is_unique_person: bool,
+        diamond_status: DiamondMembershipStatus,
+        total_chit_earned: u32,
     ) -> OCResult<ReservePrizeSuccess> {
         let member = self.members.get_verified_member(user_id)?;
         let min_visible_event_index = member.min_visible_event_index();
 
-        self.events.reserve_prize(user_id, min_visible_event_index, message_id, now)
+        self.events.reserve_prize(
+            user_id,
+            min_visible_event_index,
+            message_id,
+            now,
+            is_unique_person,
+            diamond_status,
+            total_chit_earned,
+        )
     }
 
     pub fn reserve_p2p_swap(
