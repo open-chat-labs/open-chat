@@ -1,3 +1,4 @@
+import { decodeIcrcAccount } from "@dfinity/ledger-icrc";
 import type { Principal } from "@icp-sdk/core/principal";
 import type {
     AcceptP2PSwapResponse,
@@ -64,6 +65,7 @@ import type {
     MessageReminderCreatedContent,
     Metrics,
     MultiUserChatIdentifier,
+    NumberArray32,
     OCError,
     P2PSwapContent,
     P2PSwapContentInitial,
@@ -2009,40 +2011,7 @@ export function apiPendingCryptocurrencyWithdrawal(
                     ledger: principalStringToBytes(domain.ledger),
                     token_symbol: domain.token,
                     to: {
-                        Account: [...hexStringToBytes(domain.to)] as [
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                            number,
-                        ],
+                        Account: [...hexStringToBytes(domain.to)] as NumberArray32,
                     },
                     amount: apiICP(domain.amountE8s),
                     fee: undefined,
@@ -2058,7 +2027,7 @@ export function apiPendingCryptocurrencyWithdrawal(
                 ICRC1: {
                     ledger: principalStringToBytes(domain.ledger),
                     token_symbol: domain.token,
-                    to: principalToIcrcAccount(domain.to),
+                    to: addressToIcrcAccount(domain.to),
                     amount: domain.amountE8s,
                     fee: domain.feeE8s ?? BigInt(0),
                     memo: mapOptional(domain.memo, bigintToBytes),
@@ -2894,6 +2863,18 @@ export function principalToIcrcAccount(principal: string): AccountICRC1 {
     return {
         owner: principalStringToBytes(principal),
         subaccount: undefined,
+    };
+}
+
+export function addressToIcrcAccount(address: string): AccountICRC1 {
+    const icrcAccount = decodeIcrcAccount(address);
+
+    return {
+        owner: icrcAccount.owner.toUint8Array(),
+        subaccount:
+            icrcAccount?.subaccount !== undefined
+                ? ([...icrcAccount.subaccount] as NumberArray32)
+                : undefined,
     };
 }
 
