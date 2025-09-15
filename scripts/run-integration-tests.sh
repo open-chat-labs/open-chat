@@ -7,7 +7,7 @@ cd $SCRIPT_DIR/..
 WASM_SRC=${1:-build}
 TEST_THREADS=${2:-6}
 TESTNAME=$3
-POCKET_IC_SERVER_VERSION="9.0.3"
+POCKET_IC_SERVER_VERSION="10.0.0"
 
 if [[ $OSTYPE == "linux-gnu"* ]] || [[ $RUNNER_OS == "Linux" ]]
 then
@@ -37,7 +37,6 @@ echo "PocketIC download completed"
 cd ../..
 
 ./scripts/download-nns-canister-wasm.sh icp_ledger ledger-canister_notify-method
-./scripts/download-nns-canister-wasm.sh cycles_minting_canister cycles-minting-canister
 ./scripts/download-nns-canister-wasm.sh sns_wasm sns-wasm-canister
 ./scripts/download-nns-canister-wasm.sh icrc_ledger ic-icrc1-ledger
 ./scripts/download-canister-wasm-dfx.sh event_store || exit 1

@@ -8,7 +8,6 @@ lazy_static! {
     pub static ref AIRDROP_BOT: CanisterWasm = get_canister_wasm("airdrop_bot");
     pub static ref COMMUNITY: CanisterWasm = get_canister_wasm("community");
     pub static ref CYCLES_DISPENSER: CanisterWasm = get_canister_wasm("cycles_dispenser");
-    pub static ref CYCLES_MINTING_CANISTER: CanisterWasm = get_canister_wasm("cycles_minting_canister");
     pub static ref ESCROW: CanisterWasm = get_canister_wasm("escrow");
     pub static ref EVENT_RELAY: CanisterWasm = get_canister_wasm("event_relay");
     pub static ref EVENT_STORE: CanisterWasm = get_canister_wasm("event_store");
