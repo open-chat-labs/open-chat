@@ -272,6 +272,10 @@ pub struct GlobalUser {
 pub struct ChitBalance {
     pub total_earned: i32,
     pub curr_balance: i32,
+    #[serde(default)]
+    pub streak: u16,
+    #[serde(default)]
+    pub streak_ends: TimestampMillis,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

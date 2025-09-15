@@ -1,7 +1,7 @@
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{CompletedCryptoTransaction, DiamondMembershipStatus, FailedCryptoTransaction, MessageId, UserId};
+use types::{CompletedCryptoTransaction, DiamondMembershipStatus, FailedCryptoTransaction, MessageId, TimestampMillis, UserId};
 
 #[ts_export(group, c2c_claim_prize)]
 #[derive(Serialize, Deserialize, Debug)]
@@ -11,6 +11,8 @@ pub struct Args {
     pub is_unique_person: bool,
     pub diamond_status: DiamondMembershipStatus,
     pub total_chit_earned: u32,
+    pub streak: u16,
+    pub streak_ends: TimestampMillis,
 }
 
 #[ts_export(group, c2c_claim_prize)]

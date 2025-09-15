@@ -73,6 +73,8 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
         true,
         DiamondMembershipStatus::Lifetime,
         1000000,
+        10000,
+        u64::MAX,
     )?;
 
     // Hack to ensure 2 prizes claimed by the same user in the same block don't result in "duplicate transaction" errors.

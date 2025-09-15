@@ -1004,6 +1004,7 @@ impl ChatEvents {
         Ok(())
     }
 
+    #[expect(clippy::too_many_arguments)]
     pub fn reserve_prize(
         &mut self,
         user_id: UserId,
@@ -1013,6 +1014,8 @@ impl ChatEvents {
         is_unique_person: bool,
         diamond_status: DiamondMembershipStatus,
         total_chit_earned: u32,
+        streak: u16,
+        streak_ends: TimestampMillis,
     ) -> OCResult<ReservePrizeSuccess> {
         match self.update_message(
             None,
@@ -1021,7 +1024,18 @@ impl ChatEvents {
             now,
             true,
             ChatEventType::MessageOther,
-            |message, _| Self::reserve_prize_inner(message, user_id, now, is_unique_person, diamond_status, total_chit_earned),
+            |message, _| {
+                Self::reserve_prize_inner(
+                    message,
+                    user_id,
+                    now,
+                    is_unique_person,
+                    diamond_status,
+                    total_chit_earned,
+                    streak,
+                    streak_ends,
+                )
+            },
         ) {
             Ok(result) => Ok(result.value),
             Err(UpdateEventError::NoChange(error)) => Err(error.into()),
@@ -1029,6 +1043,7 @@ impl ChatEvents {
         }
     }
 
+    #[expect(clippy::too_many_arguments)]
     fn reserve_prize_inner(
         message: &mut MessageInternal,
         user_id: UserId,
@@ -1036,11 +1051,16 @@ impl ChatEvents {
         is_unique_person: bool,
         diamond_status: DiamondMembershipStatus,
         total_chit_earned: u32,
+        streak: u16,
+        streak_ends: TimestampMillis,
     ) -> Result<ReservePrizeSuccess, UpdateEventError<OCErrorCode>> {
-        //TODO this is where we need to interject the new logic
         let MessageContentInternal::Prize(content) = &mut message.content else {
             return Err(UpdateEventError::NotFound);
         };
+
+        if content.streak_only > 0 && (streak < content.streak_only || streak_ends < now) {
+            return Err(UpdateEventError::NoChange(OCErrorCode::PrizeUserNotElligible));
+        }
 
         if content.diamond_only && diamond_status == DiamondMembershipStatus::Inactive {
             return Err(UpdateEventError::NoChange(OCErrorCode::PrizeUserNotElligible));
