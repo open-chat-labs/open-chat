@@ -82,7 +82,8 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let nns_governance_canister_id = create_canister_with_id(env, controller, "rrkah-fqaaa-aaaaa-aaaaq-cai");
     let nns_ledger_canister_id = create_canister_with_id(env, controller, "ryjl3-tyaaa-aaaaa-aaaba-cai");
     let nns_root_canister_id = create_canister_with_id(env, controller, "r7inp-6aaaa-aaaaa-aaabq-cai");
-    let cycles_minting_canister_id = create_canister_with_id(env, controller, "rkp4c-7iaaa-aaaaa-aaaca-cai");
+    // Cycles Minting Canister is deployed during PocketIC instance creation using a built-in PocketIC feature.
+    let cycles_minting_canister_id = Principal::from_text("rkp4c-7iaaa-aaaaa-aaaca-cai").unwrap();
     let sns_wasm_canister_id = create_canister_with_id(env, controller, "qaa6y-5yaaa-aaaaa-aaafa-cai");
     let nns_index_canister_id = create_canister_with_id(env, controller, "qhbym-qaaaa-aaaaa-aaafq-cai");
     let chat_ledger_canister_id = install_icrc_ledger(
