@@ -14,7 +14,6 @@ use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration};
 mod macros;
 
 pub mod airdrop_bot;
-pub mod cmc;
 pub mod community;
 pub mod cycles_dispenser;
 pub mod escrow;
