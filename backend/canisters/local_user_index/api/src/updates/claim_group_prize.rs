@@ -2,13 +2,12 @@ use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{ChannelId, ChatId, CompletedCryptoTransaction, FailedCryptoTransaction, MessageId};
+use types::{ChatId, CompletedCryptoTransaction, FailedCryptoTransaction, MessageId};
 
 #[ts_export(local_user_index, claim_group_prize)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub chat_id: ChatId,
-    pub channel_id: ChannelId,
     pub message_id: MessageId,
 }
 

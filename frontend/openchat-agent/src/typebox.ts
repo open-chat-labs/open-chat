@@ -6235,7 +6235,6 @@ export const LocalUserIndexPayForPremiumItemResponse = Type.Union([
 export type LocalUserIndexClaimGroupPrizeArgs = Static<typeof LocalUserIndexClaimGroupPrizeArgs>;
 export const LocalUserIndexClaimGroupPrizeArgs = Type.Object({
     chat_id: ChatId,
-    channel_id: ChannelId,
     message_id: MessageId,
 });
 
