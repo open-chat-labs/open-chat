@@ -3366,17 +3366,25 @@ export class OpenChatAgent extends EventTarget {
         return removeFailedMessage(this.db, chatId, messageId, threadRootMessageIndex);
     }
 
-    claimPrize(chatId: MultiUserChatIdentifier, messageId: bigint): Promise<ClaimPrizeResponse> {
+    async claimPrize(
+        chatId: MultiUserChatIdentifier,
+        messageId: bigint,
+    ): Promise<ClaimPrizeResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (chatId.kind) {
-            case "group_chat":
-                return this.getGroupClient(chatId.groupId).claimPrize(messageId);
-            case "channel":
-                return this.communityClient(chatId.communityId).claimPrize(
-                    chatId.channelId,
-                    messageId,
-                );
+            case "group_chat": {
+                const localUserIndex = await this.getGroupClient(chatId.groupId).localUserIndex();
+                const localUserIndexClient = this.getLocalUserIndexClient(localUserIndex);
+                return localUserIndexClient.claimGroupPrize(chatId.groupId, messageId);
+            }
+            case "channel": {
+                const localUserIndex = await this.communityClient(
+                    chatId.communityId,
+                ).localUserIndex();
+                const localUserIndexClient = this.getLocalUserIndexClient(localUserIndex);
+                return localUserIndexClient.claimChannelPrize(chatId, messageId);
+            }
         }
     }
 

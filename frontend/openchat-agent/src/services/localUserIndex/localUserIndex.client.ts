@@ -8,6 +8,7 @@ import type {
     ChatEventsArgsInner,
     ChatEventsBatchResponse,
     ChatEventsResponse,
+    ClaimPrizeResponse,
     EventsSuccessResult,
     EventWrapper,
     GrantedBotPermissions,
@@ -38,6 +39,10 @@ import {
     LocalUserIndexActiveProposalTalliesResponse,
     LocalUserIndexChatEventsArgs,
     LocalUserIndexChatEventsResponse,
+    LocalUserIndexClaimChannelPrizeArgs,
+    LocalUserIndexClaimChannelPrizeResponse,
+    LocalUserIndexClaimGroupPrizeArgs,
+    LocalUserIndexClaimGroupPrizeResponse,
     LocalUserIndexGroupAndCommunitySummaryUpdatesV2Args,
     LocalUserIndexGroupAndCommunitySummaryUpdatesV2Response,
     LocalUserIndexInstallBotArgs,
@@ -509,6 +514,39 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
             isSuccess,
             LocalUserIndexReinstateMissedDailyClaimsArgs,
             UnitResult,
+        );
+    }
+
+    claimChannelPrize(id: ChannelIdentifier, messageId: bigint): Promise<ClaimPrizeResponse> {
+        return this.executeMsgpackUpdate(
+            "claim_channel_prize",
+            {
+                community_id: principalStringToBytes(id.communityId),
+                channel_id: toBigInt32(id.channelId),
+                message_id: messageId,
+            },
+            (resp) => {
+                console.log("Resp: ", resp);
+                return resp === "Success" ? { kind: "success" } : { kind: "failure" };
+            },
+            LocalUserIndexClaimChannelPrizeArgs,
+            LocalUserIndexClaimChannelPrizeResponse,
+        );
+    }
+
+    claimGroupPrize(chatId: string, messageId: bigint): Promise<ClaimPrizeResponse> {
+        return this.executeMsgpackUpdate(
+            "claim_group_prize",
+            {
+                chat_id: principalStringToBytes(chatId),
+                message_id: messageId,
+            },
+            (resp) => {
+                console.log("Resp: ", resp);
+                return resp === "Success" ? { kind: "success" } : { kind: "failure" };
+            },
+            LocalUserIndexClaimGroupPrizeArgs,
+            LocalUserIndexClaimGroupPrizeResponse,
         );
     }
 }

@@ -3,19 +3,19 @@ use crate::{GroupEventPusher, RuntimeState, execute_update_async, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::MEMO_PRIZE_CLAIM;
-use group_canister::claim_prize::{Response::*, *};
+use group_canister::c2c_claim_prize::{Response::*, *};
 use ledger_utils::{create_pending_transaction, process_transaction};
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
-use types::{CanisterId, CompletedCryptoTransaction, DiamondMembershipStatus, OCResult, PendingCryptoTransaction, UserId};
+use types::{CanisterId, CompletedCryptoTransaction, OCResult, PendingCryptoTransaction, UserId};
 
 #[update(msgpack = true)]
 #[trace]
-async fn claim_prize(args: Args) -> Response {
-    execute_update_async(|| claim_prize_impl(args)).await
+async fn c2c_claim_prize(args: Args) -> Response {
+    execute_update_async(|| c2c_claim_prize_impl(args)).await
 }
 
-async fn claim_prize_impl(args: Args) -> Response {
+async fn c2c_claim_prize_impl(args: Args) -> Response {
     // Validate the request and reserve a prize
     let prepare_result = match mutate_state(|state| prepare(&args, state)) {
         Ok(c) => c,
@@ -31,7 +31,7 @@ async fn claim_prize_impl(args: Args) -> Response {
         Ok(Ok(completed_transaction)) => {
             // Claim the prize and send a message to the group
             if let Some(error_message) =
-                mutate_state(|state| commit(args, prepare_result.user_id, completed_transaction.clone(), state))
+                mutate_state(|state| commit(args, prepare_rsult.user_id, completed_transaction.clone(), state))
             {
                 FailedAfterTransfer(error_message, completed_transaction)
             } else {
@@ -63,7 +63,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
     let now = state.env.now();
     let now_nanos = state.env.now_nanos();
 
-    let result = state.data.chat.reserve_prize(user_id, args.message_id, now, true, DiamondMembershipStatus::Lifetime, 1000000)?;
+    let result = state.data.chat.reserve_prize(user_id, args.message_id, now, args.is_unique_person, args.diamond_status, args.total_chit_earned)?;
 
     // Hack to ensure 2 prizes claimed by the same user in the same block don't result in "duplicate transaction" errors.
     let duplicate_buster = u32::from(result.message_index) as u64 % 1000;
