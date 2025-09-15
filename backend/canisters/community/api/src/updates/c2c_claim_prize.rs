@@ -1,9 +1,10 @@
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
-use types::{ChannelId, CompletedCryptoTransaction, DiamondMembershipStatus, FailedCryptoTransaction, MessageId};
+use types::{ChannelId, CompletedCryptoTransaction, DiamondMembershipStatus, FailedCryptoTransaction, MessageId, UserId};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
+    pub user_id: UserId,
     pub channel_id: ChannelId,
     pub message_id: MessageId,
     pub is_unique_person: bool,

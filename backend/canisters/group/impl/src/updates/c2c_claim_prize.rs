@@ -1,4 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
+use crate::guards::caller_is_user_index_or_local_user_index;
 use crate::{GroupEventPusher, RuntimeState, execute_update_async, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -9,7 +10,7 @@ use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use types::{CanisterId, CompletedCryptoTransaction, OCResult, PendingCryptoTransaction, UserId};
 
-#[update(msgpack = true)]
+#[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
 async fn c2c_claim_prize(args: Args) -> Response {
     execute_update_async(|| c2c_claim_prize_impl(args)).await
@@ -31,7 +32,7 @@ async fn c2c_claim_prize_impl(args: Args) -> Response {
         Ok(Ok(completed_transaction)) => {
             // Claim the prize and send a message to the group
             if let Some(error_message) =
-                mutate_state(|state| commit(args, prepare_rsult.user_id, completed_transaction.clone(), state))
+                mutate_state(|state| commit(args, prepare_result.user_id, completed_transaction.clone(), state))
             {
                 FailedAfterTransfer(error_message, completed_transaction)
             } else {
@@ -59,11 +60,17 @@ struct PrepareResult {
 fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
     state.data.verify_not_frozen()?;
 
-    let user_id = state.get_caller_user_id()?;
     let now = state.env.now();
     let now_nanos = state.env.now_nanos();
 
-    let result = state.data.chat.reserve_prize(user_id, args.message_id, now, args.is_unique_person, args.diamond_status, args.total_chit_earned)?;
+    let result = state.data.chat.reserve_prize(
+        args.user_id,
+        args.message_id,
+        now,
+        args.is_unique_person,
+        args.diamond_status,
+        args.total_chit_earned,
+    )?;
 
     // Hack to ensure 2 prizes claimed by the same user in the same block don't result in "duplicate transaction" errors.
     let duplicate_buster = u32::from(result.message_index) as u64 % 1000;
@@ -74,7 +81,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
         result.ledger_canister_id,
         result.amount,
         result.fee,
-        user_id,
+        args.user_id,
         Some(&MEMO_PRIZE_CLAIM),
         transaction_time,
     );
@@ -82,7 +89,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
     Ok(PrepareResult {
         group: state.env.canister_id(),
         transaction,
-        user_id,
+        user_id: args.user_id,
     })
 }
 

@@ -66,7 +66,14 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
     let now = state.env.now();
     let now_nanos = state.env.now_nanos();
     let user_id = member.user_id;
-    let result = channel.chat.reserve_prize(user_id, args.message_id, now, true, DiamondMembershipStatus::Lifetime, 1000000)?;
+    let result = channel.chat.reserve_prize(
+        user_id,
+        args.message_id,
+        now,
+        true,
+        DiamondMembershipStatus::Lifetime,
+        1000000,
+    )?;
 
     // Hack to ensure 2 prizes claimed by the same user in the same block don't result in "duplicate transaction" errors.
     let duplicate_buster = u32::from(result.message_index) as u64 % 1000;

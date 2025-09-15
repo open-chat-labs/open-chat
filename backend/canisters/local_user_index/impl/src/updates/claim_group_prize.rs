@@ -22,6 +22,7 @@ async fn claim_group_prize(args: Args) -> Response {
     let total_chit_earned: u32 = user_details.chit.total_earned as u32;
 
     let c2c_args = group_canister::c2c_claim_prize::Args {
+        user_id: user_details.user_id,
         message_id: args.message_id,
         is_unique_person,
         diamond_status,
