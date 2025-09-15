@@ -61,6 +61,28 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> OCResult<Suc
         now,
     )?;
 
+    if args.public.is_some() {
+        state.data.public_channel_list_updated = now;
+
+        for (bot_id, bot) in state.data.bots.iter() {
+            if result.newly_public {
+                // The channel is now public so subscribe the bot to all default events
+                if let (Some(subscriptions), Some(permissions)) =
+                    (bot.default_subscriptions.as_ref(), bot.autonomous_permissions.as_ref())
+                {
+                    channel.chat.events.subscribe_bot_to_events(
+                        *bot_id,
+                        subscriptions.chat.clone(),
+                        &permissions.permitted_chat_event_categories_to_read(),
+                    );
+                }
+            } else {
+                // The channel is now private so unsubscribe the bot from events
+                channel.chat.events.unsubscribe_bot_from_events(*bot_id);
+            }
+        }
+    }
+
     if channel.chat.is_public.value && channel.chat.gate_config.is_none() {
         // If the channel has just been made public or had its gate removed, add
         // all existing community members to the channel, except those who have
@@ -87,10 +109,6 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> OCResult<Suc
     if has_gate_config_updates {
         state.data.update_member_expiry(Some(args.channel_id), &prev_gate_config, now);
         jobs::expire_members::restart_job(state);
-    }
-
-    if args.public.is_some() {
-        state.data.public_channel_list_updated = now;
     }
 
     state.push_bot_notifications(result.bot_notifications);

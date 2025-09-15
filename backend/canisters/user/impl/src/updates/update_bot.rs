@@ -2,9 +2,7 @@ use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
-use types::{
-    BotEvent, BotInstallationLocation, BotInstalledEvent, BotLifecycleEvent, BotNotification, ChatEventCategory, OCResult,
-};
+use types::{BotEvent, BotInstallationLocation, BotInstalledEvent, BotLifecycleEvent, BotNotification, OCResult};
 use user_canister::update_bot::*;
 
 #[update(msgpack = true)]
@@ -18,34 +16,14 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
     let now = state.env.now();
 
-    state
-        .data
-        .bots
-        .update(
-            args.bot_id,
-            args.granted_permissions.clone(),
-            args.granted_autonomous_permissions.clone(),
-            now,
-        )
-        .then_some(())
-        .ok_or(OCErrorCode::BotNotFound)?;
-
-    // Subscribe to permitted chat events
-
-    let bot = state.data.bots.get(&args.bot_id).unwrap();
-    let subscriptions = bot.default_subscriptions.clone().unwrap_or_default();
-    let permissions = args.granted_autonomous_permissions.clone().unwrap_or_default();
-    let permitted_categories = permissions.permitted_chat_event_categories_to_read();
-    let chat = state.data.direct_chats.get_mut(&args.bot_id.into()).unwrap();
-
-    chat.events.subscribe_bot_to_events(
+    if !state.data.update_bot_permissions(
         args.bot_id,
-        subscriptions
-            .chat
-            .into_iter()
-            .filter(|t| permitted_categories.contains(&ChatEventCategory::from(*t)))
-            .collect(),
-    );
+        args.granted_permissions.clone(),
+        args.granted_autonomous_permissions.clone(),
+        now,
+    ) {
+        return Err(OCErrorCode::BotNotFound.into());
+    }
 
     let installed_by = state.env.canister_id().into();
 

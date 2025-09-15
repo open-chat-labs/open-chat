@@ -4,13 +4,13 @@ use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
 use crate::model::user::User;
 use candid::Principal;
 use search::weighted::{Document as SearchDocument, Query};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::ops::RangeFrom;
 use tracing::info;
 use types::{
-    AutonomousConfig, BotCommandDefinition, BotInstallationLocation, BotInstallationLocationType, BotMatch,
-    BotRegistrationStatus, CanisterId, CyclesTopUp, Document, Milliseconds, SuspensionDuration, TimestampMillis,
+    AutonomousConfig, BotCommandDefinition, BotDefinition, BotInstallationLocation, BotInstallationLocationType, BotMatch,
+    BotRegistrationStatus, CanisterId, CyclesTopUp, Document, Milliseconds, OptionUpdate, SuspensionDuration, TimestampMillis,
     UniquePersonProof, UserId, UserType,
 };
 use user_index_canister::bot_updates::BotDetails;
@@ -42,20 +42,59 @@ pub struct UserMap {
     pub users_with_duplicate_principals: Vec<(UserId, UserId)>,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Clone)]
 pub struct Bot {
     pub name: String,
     pub avatar: Option<Document>,
     pub owner: UserId,
     pub endpoint: String,
-    pub description: String,
-    pub commands: Vec<BotCommandDefinition>,
-    pub autonomous_config: Option<AutonomousConfig>,
+    pub definition: BotDefinition,
     pub last_updated: TimestampMillis,
     pub installations: HashMap<BotInstallationLocation, InstalledBotDetails>,
     pub registration_status: BotRegistrationStatus,
-    #[serde(default)]
-    pub restricted_locations: Option<HashSet<BotInstallationLocationType>>,
+}
+
+// TODO: Remove this after the next release
+impl<'de> Deserialize<'de> for Bot {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        struct Inner {
+            name: String,
+            avatar: Option<Document>,
+            owner: UserId,
+            endpoint: String,
+            description: String,
+            commands: Vec<BotCommandDefinition>,
+            autonomous_config: Option<AutonomousConfig>,
+            last_updated: TimestampMillis,
+            installations: HashMap<BotInstallationLocation, InstalledBotDetails>,
+            registration_status: BotRegistrationStatus,
+            #[serde(default)]
+            restricted_locations: Option<HashSet<BotInstallationLocationType>>,
+        }
+
+        let inner = Inner::deserialize(deserializer)?;
+        Ok(Bot {
+            name: inner.name,
+            avatar: inner.avatar,
+            owner: inner.owner,
+            endpoint: inner.endpoint,
+            definition: BotDefinition {
+                description: inner.description,
+                commands: inner.commands,
+                autonomous_config: inner.autonomous_config,
+                default_subscriptions: None,
+                data_encoding: None,
+                restricted_locations: inner.restricted_locations,
+            },
+            last_updated: inner.last_updated,
+            installations: inner.installations,
+            registration_status: inner.registration_status,
+        })
+    }
 }
 
 impl Bot {
@@ -65,11 +104,11 @@ impl Bot {
             score,
             owner: self.owner,
             name: self.name.clone(),
-            description: self.description.clone(),
+            description: self.definition.description.clone(),
             endpoint: self.endpoint.clone(),
             avatar_id: self.avatar.as_ref().map(|a| a.id),
-            commands: self.commands.clone(),
-            autonomous_config: self.autonomous_config.clone(),
+            commands: self.definition.commands.clone(),
+            autonomous_config: self.definition.autonomous_config.clone(),
         }
     }
 
@@ -103,12 +142,12 @@ impl Bot {
             name: self.name.clone(),
             avatar_id: self.avatar.as_ref().map(|a| a.id),
             endpoint: self.endpoint.clone(),
-            description: self.description.clone(),
-            commands: self.commands.clone(),
-            autonomous_config: self.autonomous_config.clone(),
+            description: self.definition.description.clone(),
+            commands: self.definition.commands.clone(),
+            autonomous_config: self.definition.autonomous_config.clone(),
             last_updated: self.last_updated,
             registration_status: self.registration_status.clone(),
-            restricted_locations: self.restricted_locations.clone(),
+            restricted_locations: self.definition.restricted_locations.clone(),
         }
     }
 }
@@ -193,12 +232,89 @@ impl UserMap {
         }
     }
 
+    #[expect(clippy::too_many_arguments)]
+    pub fn update_bot(
+        &mut self,
+        bot_id: UserId,
+        owner: Option<UserId>,
+        principal: Option<Principal>,
+        avatar: OptionUpdate<Document>,
+        endpoint: Option<String>,
+        definition: Option<BotDefinition>,
+        now: TimestampMillis,
+    ) -> UpdateBotResult {
+        use UpdateBotResult::*;
+
+        let Some(user) = self.get_by_user_id(&bot_id) else {
+            return UserNotFound;
+        };
+
+        let avatar_has_update = avatar.has_update();
+
+        if principal.is_some() || avatar_has_update {
+            let mut user = user.clone();
+
+            user.principal = principal.unwrap_or(user.principal);
+
+            match &avatar {
+                OptionUpdate::NoChange => (),
+                OptionUpdate::SetToNone => {
+                    user.avatar_id = None;
+                }
+                OptionUpdate::SetToSome(a) => {
+                    user.avatar_id = Some(a.id);
+                }
+            };
+
+            match self.update(user, now, false, true) {
+                UpdateUserResult::Success => (),
+                UpdateUserResult::UsernameTaken => unreachable!(),
+                UpdateUserResult::UserNotFound => return UserNotFound,
+                UpdateUserResult::PrincipalTaken => return PrincipalTaken,
+            }
+        }
+
+        if avatar_has_update || endpoint.is_some() || definition.is_some() || owner.is_some() {
+            let Some(bot) = self.bots.get_mut(&bot_id) else {
+                return UserNotFound;
+            };
+
+            if let Some(owner_id) = owner {
+                bot.owner = owner_id;
+            }
+
+            if let Some(endpoint) = endpoint {
+                bot.endpoint = endpoint;
+            }
+
+            match avatar {
+                OptionUpdate::NoChange => (),
+                OptionUpdate::SetToNone => {
+                    bot.avatar = None;
+                }
+                OptionUpdate::SetToSome(a) => {
+                    bot.avatar = Some(a);
+                }
+            };
+
+            if let Some(definition) = definition {
+                bot.definition = definition;
+            }
+
+            bot.last_updated = now;
+
+            self.bot_updates.insert((now, BotUpdate::Updated(bot_id)));
+        }
+
+        Success
+    }
+
     pub fn update(
         &mut self,
         mut user: User,
         now: TimestampMillis,
         ignore_principal_clash: bool,
-        bot: Option<Bot>,
+        is_bot: bool,
     ) -> UpdateUserResult {
         let user_id = user.user_id;
 
@@ -218,7 +334,7 @@ impl UserMap {
                 info!(user_id1 = %user_id, user_id2 = %other, "Principal clash");
             }
 
-            if username_case_insensitive_changed && self.does_username_exist(username, bot.is_some()) {
+            if username_case_insensitive_changed && self.does_username_exist(username, is_bot) {
                 return UpdateUserResult::UsernameTaken;
             }
 
@@ -232,7 +348,7 @@ impl UserMap {
             }
 
             if username_case_insensitive_changed {
-                if bot.is_some() {
+                if is_bot {
                     self.botname_to_user_id.remove(previous_username);
                     self.botname_to_user_id.insert(username, user_id);
                 } else {
@@ -246,11 +362,6 @@ impl UserMap {
             }
 
             self.users.insert(user_id, user);
-
-            if let Some(bot) = bot {
-                self.bots.insert(user_id, bot);
-                self.bot_updates.insert((now, BotUpdate::Updated(user_id)));
-            }
 
             UpdateUserResult::Success
         } else {
@@ -621,8 +732,12 @@ impl UserMap {
                 !(exclude_installed && installation_location.is_some_and(|loc| bot.installations.contains_key(&loc)))
             })
             .filter(|(_, bot)| {
-                installation_location
-                    .is_none_or(|loc| bot.restricted_locations.as_ref().is_none_or(|rl| rl.contains(&loc.into())))
+                installation_location.is_none_or(|loc| {
+                    bot.definition
+                        .restricted_locations
+                        .as_ref()
+                        .is_none_or(|rl| rl.contains(&loc.into()))
+                })
             })
             .filter(|(_, bot)| match bot.registration_status {
                 BotRegistrationStatus::Public => true,
@@ -637,7 +752,7 @@ impl UserMap {
                 let score = if let Some(query) = &query {
                     SearchDocument::default()
                         .add_field(bot.name.clone(), 5.0, true)
-                        .add_field(bot.description.clone(), 1.0, true)
+                        .add_field(bot.definition.description.clone(), 1.0, true)
                         .calculate_score(query)
                 } else {
                     (bot.installations.len() + 1) as u32
@@ -675,7 +790,7 @@ impl UserMap {
             UserType::User,
             None,
         );
-        self.update(user, date_created, false, None);
+        self.update(user, date_created, false, false);
     }
 }
 
@@ -684,6 +799,13 @@ pub enum UpdateUserResult {
     Success,
     PrincipalTaken,
     UsernameTaken,
+    UserNotFound,
+}
+
+#[derive(Debug)]
+pub enum UpdateBotResult {
+    Success,
+    PrincipalTaken,
     UserNotFound,
 }
 
@@ -821,7 +943,7 @@ mod tests {
             let mut updated = original.clone();
             updated.username.clone_from(&username2);
 
-            assert!(matches!(user_map.update(updated, 3, false, None), UpdateUserResult::Success));
+            assert!(matches!(user_map.update(updated, 3, false, false), UpdateUserResult::Success));
 
             assert_eq!(user_map.users.keys().collect_vec(), vec!(&user_id));
             assert_eq!(user_map.username_to_user_id.len(), 1);
@@ -866,7 +988,7 @@ mod tests {
         user_map.add_test_user(original);
         user_map.add_test_user(other);
         assert!(matches!(
-            user_map.update(updated, 3, false, None),
+            user_map.update(updated, 3, false, false),
             UpdateUserResult::UsernameTaken
         ));
     }
@@ -892,6 +1014,6 @@ mod tests {
         user_map.add_test_user(original);
         updated.username = "ABC".to_string();
 
-        assert!(matches!(user_map.update(updated, 2, false, None), UpdateUserResult::Success));
+        assert!(matches!(user_map.update(updated, 2, false, false), UpdateUserResult::Success));
     }
 }
