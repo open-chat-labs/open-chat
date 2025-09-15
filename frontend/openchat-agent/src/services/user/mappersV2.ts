@@ -1,4 +1,6 @@
+import { encodeIcrcAccount } from "@dfinity/ledger-icrc";
 import { DelegationChain } from "@icp-sdk/core/identity";
+import { Principal } from "@icp-sdk/core/principal";
 import type {
     Achievement,
     ArchiveChatResponse,
@@ -959,10 +961,10 @@ export function withdrawCryptoResponse(
 }
 
 function formatIcrc1Account(value: AccountICRC1): string {
-    const owner = principalBytesToString(value.owner);
-    const subaccount = mapOptional(value.subaccount, bytesToHexString);
-
-    return subaccount !== undefined ? `${owner}:${subaccount}` : owner;
+    return encodeIcrcAccount({
+        owner: Principal.fromText(principalBytesToString(value.owner)),
+        subaccount: value?.subaccount,
+    });
 }
 
 export function swapTokensSuccess(value: UserSwapTokensSuccessResult): SwapTokensResponse {
