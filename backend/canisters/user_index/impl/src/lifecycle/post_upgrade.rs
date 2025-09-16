@@ -1,7 +1,6 @@
-use crate::model::user::User;
-use crate::{mutate_state, Data};
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
+use crate::{Data, mutate_state};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
@@ -28,14 +27,23 @@ fn post_upgrade(args: Args) {
         let now = state.env.now();
 
         // Borrow checker would not let me do this in one go
-        let events: Vec<UserIndexEvent> = state.data.users.iter().filter(|u| u.streak > 0 && u.streak_ends > now).map(|u| {
-            UserIndexEvent::UpdateChitBalance(u.user_id, ChitBalance {
+        let events: Vec<UserIndexEvent> = state
+            .data
+            .users
+            .iter()
+            .filter(|u| u.streak > 0 && u.streak_ends > now)
+            .map(|u| {
+                UserIndexEvent::UpdateChitBalance(
+                    u.user_id,
+                    ChitBalance {
                         total_earned: u.total_chit_earned,
                         curr_balance: u.chit_balance,
                         streak: u.streak,
                         streak_ends: u.streak_ends,
-                    })
-        }).collect();
+                    },
+                )
+            })
+            .collect();
 
         for ev in events {
             state.push_event_to_all_local_user_indexes(ev, None);

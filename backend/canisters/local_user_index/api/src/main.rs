@@ -1,6 +1,6 @@
 use std::env;
 use ts_export::generate_ts_method;
-use types::{BotEventWrapper};
+use types::BotEventWrapper;
 
 fn main() {
     let directory = env::current_dir().unwrap().join("tsBindings/localUserIndex");

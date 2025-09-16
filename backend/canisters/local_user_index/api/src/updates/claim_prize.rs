@@ -2,7 +2,7 @@ use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{CompletedCryptoTransaction, FailedCryptoTransaction, MessageId, MultiUserChat };
+use types::{CompletedCryptoTransaction, FailedCryptoTransaction, MessageId, MultiUserChat};
 
 #[ts_export(local_user_index, claim_prize)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
