@@ -3376,14 +3376,14 @@ export class OpenChatAgent extends EventTarget {
             case "group_chat": {
                 const localUserIndex = await this.getGroupClient(chatId.groupId).localUserIndex();
                 const localUserIndexClient = this.getLocalUserIndexClient(localUserIndex);
-                return localUserIndexClient.claimGroupPrize(chatId.groupId, messageId);
+                return localUserIndexClient.claimPrize(chatId, messageId);
             }
             case "channel": {
                 const localUserIndex = await this.communityClient(
                     chatId.communityId,
                 ).localUserIndex();
                 const localUserIndexClient = this.getLocalUserIndexClient(localUserIndex);
-                return localUserIndexClient.claimChannelPrize(chatId, messageId);
+                return localUserIndexClient.claimPrize(chatId, messageId);
             }
         }
     }

@@ -4,19 +4,23 @@ use crate::{GroupEventPusher, RuntimeState, execute_update_async, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::MEMO_PRIZE_CLAIM;
-use group_canister::c2c_claim_prize::{Response::*, *};
+use group_canister::c2c_claim_prize::*;
 use ledger_utils::{create_pending_transaction, process_transaction};
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
-use types::{CanisterId, CompletedCryptoTransaction, OCResult, PendingCryptoTransaction, UserId};
+use types::{
+    CanisterId, CompletedCryptoTransaction, OCResult, PendingCryptoTransaction,
+    PrizeClaimResponse::{self, *},
+    UserId,
+};
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
-async fn c2c_claim_prize(args: Args) -> Response {
+async fn c2c_claim_prize(args: Args) -> PrizeClaimResponse {
     execute_update_async(|| c2c_claim_prize_impl(args)).await
 }
 
-async fn c2c_claim_prize_impl(args: Args) -> Response {
+async fn c2c_claim_prize_impl(args: Args) -> PrizeClaimResponse {
     // Validate the request and reserve a prize
     let prepare_result = match mutate_state(|state| prepare(&args, state)) {
         Ok(c) => c,

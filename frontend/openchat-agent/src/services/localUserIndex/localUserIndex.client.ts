@@ -39,10 +39,8 @@ import {
     LocalUserIndexActiveProposalTalliesResponse,
     LocalUserIndexChatEventsArgs,
     LocalUserIndexChatEventsResponse,
-    LocalUserIndexClaimChannelPrizeArgs,
-    LocalUserIndexClaimChannelPrizeResponse,
-    LocalUserIndexClaimGroupPrizeArgs,
-    LocalUserIndexClaimGroupPrizeResponse,
+    LocalUserIndexClaimPrizeArgs,
+    LocalUserIndexClaimPrizeResponse,
     LocalUserIndexGroupAndCommunitySummaryUpdatesV2Args,
     LocalUserIndexGroupAndCommunitySummaryUpdatesV2Response,
     LocalUserIndexInstallBotArgs,
@@ -86,6 +84,7 @@ import { MsgpackCanisterAgent } from "../canisterAgent/msgpack";
 import {
     apiChatIdentifier,
     apiExternalBotPermissions,
+    apiMultiUserChat,
     isSuccess,
     joinGroupResponse,
 } from "../common/chatMappersV2";
@@ -517,36 +516,19 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
         );
     }
 
-    claimChannelPrize(id: ChannelIdentifier, messageId: bigint): Promise<ClaimPrizeResponse> {
+    claimPrize(id: MultiUserChatIdentifier, messageId: bigint): Promise<ClaimPrizeResponse> {
         return this.executeMsgpackUpdate(
-            "claim_channel_prize",
+            "claim_prize",
             {
-                community_id: principalStringToBytes(id.communityId),
-                channel_id: toBigInt32(id.channelId),
+                chat_id: apiMultiUserChat(id),
                 message_id: messageId,
             },
             (resp) => {
                 console.log("Resp: ", resp);
                 return resp === "Success" ? { kind: "success" } : { kind: "failure" };
             },
-            LocalUserIndexClaimChannelPrizeArgs,
-            LocalUserIndexClaimChannelPrizeResponse,
-        );
-    }
-
-    claimGroupPrize(chatId: string, messageId: bigint): Promise<ClaimPrizeResponse> {
-        return this.executeMsgpackUpdate(
-            "claim_group_prize",
-            {
-                chat_id: principalStringToBytes(chatId),
-                message_id: messageId,
-            },
-            (resp) => {
-                console.log("Resp: ", resp);
-                return resp === "Success" ? { kind: "success" } : { kind: "failure" };
-            },
-            LocalUserIndexClaimGroupPrizeArgs,
-            LocalUserIndexClaimGroupPrizeResponse,
+            LocalUserIndexClaimPrizeArgs,
+            LocalUserIndexClaimPrizeResponse,
         );
     }
 }

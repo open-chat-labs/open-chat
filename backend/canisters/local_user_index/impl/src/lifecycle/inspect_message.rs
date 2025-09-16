@@ -11,8 +11,7 @@ fn accept_if_valid(state: &RuntimeState) {
 
     let is_valid = match method_name.as_str() {
         "install_bot"
-        | "claim_group_prize"
-        | "claim_channel_prize"
+        | "claim_prize"
         | "invite_users_to_channel"
         | "invite_users_to_community"
         | "invite_users_to_group"

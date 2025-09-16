@@ -2442,15 +2442,6 @@ export const LocalUserIndexBotDeleteChannelArgs = Type.Object({
     channel_id: ChannelId,
 });
 
-export type LocalUserIndexClaimChannelPrizeArgs = Static<
-    typeof LocalUserIndexClaimChannelPrizeArgs
->;
-export const LocalUserIndexClaimChannelPrizeArgs = Type.Object({
-    community_id: CommunityId,
-    channel_id: ChannelId,
-    message_id: MessageId,
-});
-
 export type LocalUserIndexRegisterUserArgs = Static<typeof LocalUserIndexRegisterUserArgs>;
 export const LocalUserIndexRegisterUserArgs = Type.Object({
     username: Type.String(),
@@ -6060,6 +6051,12 @@ export const UserIndexPlatformModeratorsGroupResponse = Type.Object({
     Success: ChatId,
 });
 
+export type LocalUserIndexClaimPrizeArgs = Static<typeof LocalUserIndexClaimPrizeArgs>;
+export const LocalUserIndexClaimPrizeArgs = Type.Object({
+    chat_id: MultiUserChat,
+    message_id: MessageId,
+});
+
 export type LocalUserIndexInstallBotArgs = Static<typeof LocalUserIndexInstallBotArgs>;
 export const LocalUserIndexInstallBotArgs = Type.Object({
     location: BotInstallationLocation,
@@ -6231,12 +6228,6 @@ export const LocalUserIndexPayForPremiumItemResponse = Type.Union([
         Error: OCError,
     }),
 ]);
-
-export type LocalUserIndexClaimGroupPrizeArgs = Static<typeof LocalUserIndexClaimGroupPrizeArgs>;
-export const LocalUserIndexClaimGroupPrizeArgs = Type.Object({
-    chat_id: ChatId,
-    message_id: MessageId,
-});
 
 export type CommunitySelectedChannelUpdatesResponse = Static<
     typeof CommunitySelectedChannelUpdatesResponse
@@ -7371,15 +7362,8 @@ export const UserIndexCurrentUserResponse = Type.Union([
     }),
 ]);
 
-export type LocalUserIndexBotChatSummaryArgs = Static<typeof LocalUserIndexBotChatSummaryArgs>;
-export const LocalUserIndexBotChatSummaryArgs = Type.Object({
-    chat_context: BotChatContext,
-});
-
-export type LocalUserIndexClaimChannelPrizeResponse = Static<
-    typeof LocalUserIndexClaimChannelPrizeResponse
->;
-export const LocalUserIndexClaimChannelPrizeResponse = Type.Union([
+export type LocalUserIndexClaimPrizeResponse = Static<typeof LocalUserIndexClaimPrizeResponse>;
+export const LocalUserIndexClaimPrizeResponse = Type.Union([
     Type.Literal("Success"),
     Type.Object({
         TransferFailed: Type.Tuple([Type.String(), FailedCryptoTransaction]),
@@ -7391,6 +7375,11 @@ export const LocalUserIndexClaimChannelPrizeResponse = Type.Union([
         Error: OCError,
     }),
 ]);
+
+export type LocalUserIndexBotChatSummaryArgs = Static<typeof LocalUserIndexBotChatSummaryArgs>;
+export const LocalUserIndexBotChatSummaryArgs = Type.Object({
+    chat_context: BotChatContext,
+});
 
 export type LocalUserIndexChatEventsEventsArgs = Static<typeof LocalUserIndexChatEventsEventsArgs>;
 export const LocalUserIndexChatEventsEventsArgs = Type.Object({
@@ -7450,22 +7439,6 @@ export const LocalUserIndexBotChatEventsArgs = Type.Object({
     thread: Type.Optional(MessageIndex),
     events: LocalUserIndexChatEventsEventsSelectionCriteria,
 });
-
-export type LocalUserIndexClaimGroupPrizeResponse = Static<
-    typeof LocalUserIndexClaimGroupPrizeResponse
->;
-export const LocalUserIndexClaimGroupPrizeResponse = Type.Union([
-    Type.Literal("Success"),
-    Type.Object({
-        TransferFailed: Type.Tuple([Type.String(), FailedCryptoTransaction]),
-    }),
-    Type.Object({
-        FailedAfterTransfer: Type.Tuple([Type.String(), CompletedCryptoTransaction]),
-    }),
-    Type.Object({
-        Error: OCError,
-    }),
-]);
 
 export type CommunityClaimPrizeResponse = Static<typeof CommunityClaimPrizeResponse>;
 export const CommunityClaimPrizeResponse = Type.Union([

@@ -1,7 +1,6 @@
-use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{CompletedCryptoTransaction, DiamondMembershipStatus, FailedCryptoTransaction, MessageId, TimestampMillis, UserId};
+use types::{DiamondMembershipStatus, MessageId, PrizeClaimResponse, TimestampMillis, UserId};
 
 #[ts_export(group, c2c_claim_prize)]
 #[derive(Serialize, Deserialize, Debug)]
@@ -15,11 +14,5 @@ pub struct Args {
     pub streak_ends: TimestampMillis,
 }
 
-#[ts_export(group, c2c_claim_prize)]
-#[derive(Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    TransferFailed(String, FailedCryptoTransaction),
-    FailedAfterTransfer(String, CompletedCryptoTransaction),
-    Error(OCError),
-}
+// this is needed so that the generate_c2c_call macro doesn't complain
+pub type Response = PrizeClaimResponse;
