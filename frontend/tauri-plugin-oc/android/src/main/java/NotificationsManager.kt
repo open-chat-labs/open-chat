@@ -242,6 +242,14 @@ object NotificationsManager {
             val messages = "$activeNotifications message${if (activeNotifications > 1) "s" else ""}"
             val summary = if (activeContexts > 1) "$messages, from $activeContexts chats" else messages
 
+            val publicSummary = NotificationCompat.Builder(context, SUMMARY_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_notification_small)
+                .setContentTitle(title)
+                .setContentText(summary)  // this will show on lock screen
+                .setGroup(NOTIFICATIONS_GROUP_KEY)
+                .setGroupSummary(true)
+                .build()
+
             val summaryNotification = NotificationCompat.Builder(context, SUMMARY_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification_small)
                 .setContentTitle(title)
@@ -255,8 +263,9 @@ object NotificationsManager {
                 .setGroupSummary(true)
                 .setAutoCancel(true)
                 .setSilent(true)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setPublicVersion(publicSummary)
                 .build()
 
             Log.d(LOG_TAG, "#### Set summary notification: $summary")
