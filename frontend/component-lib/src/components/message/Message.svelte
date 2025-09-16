@@ -7,7 +7,6 @@
     interface Props {
         me?: boolean;
         messageContent?: Snippet<[boolean]>;
-        messageSubtext?: Snippet;
         threadSummary?: Snippet<[boolean]>;
         reactions?: Snippet<[boolean, boolean]>;
         time: number;
@@ -18,7 +17,6 @@
     let {
         me = false,
         messageContent,
-        messageSubtext,
         threadSummary,
         reactions,
         time,
@@ -42,7 +40,6 @@
             {edited}
             hasReactions={reactions !== undefined}
             hasThread={threadSummary !== undefined}
-            {messageSubtext}
             {me}
             {messageContent}></MessageBubble>
         {@render threadSummary?.(me)}

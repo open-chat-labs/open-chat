@@ -41,7 +41,7 @@
         | "typography"
         | "users";
 
-    let selected = $state<Section>("messages");
+    let selected = $state<Section>("colours");
 
     const labels: Record<Section, string> = {
         avatars: "Avatars",
