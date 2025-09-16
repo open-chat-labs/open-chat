@@ -8,7 +8,6 @@
         messageContent?: Snippet<[boolean]>;
         hasThread?: boolean;
         hasReactions?: boolean;
-        messageSubtext?: Snippet;
         time: number;
         edited: boolean;
     }
@@ -19,7 +18,6 @@
         time,
         hasThread = false,
         hasReactions = false,
-        messageSubtext,
         edited,
     }: Props = $props();
 
