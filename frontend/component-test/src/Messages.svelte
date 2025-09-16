@@ -75,7 +75,7 @@
                 {/snippet}
             </Message>
 
-            <Message edited {time}>
+            <Message avatarUrl={"/witch.png"} edited {time}>
                 {#snippet messageContent()}
                     <Body>
                         In this example the message content is being injected as plain text. But it
