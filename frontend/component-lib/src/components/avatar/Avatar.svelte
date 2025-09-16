@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { BorderRadiusSize } from "component-lib";
 
-    type AvatarSize = "sm" | "md" | "lg" | "xl";
+    type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl";
 
     interface Props {
         url: string;
@@ -24,6 +24,11 @@
 <style lang="scss">
     .avatar {
         object-fit: cover;
+
+        &.xs {
+            width: var(--avatar-xs);
+            height: var(--avatar-xs);
+        }
 
         &.sm {
             width: var(--avatar-sm);

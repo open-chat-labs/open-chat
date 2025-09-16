@@ -154,8 +154,17 @@ const crossAxisToCss = {
 export function getAlignmentCss(
     mainAxisAlignment: MainAxisAlignment,
     crossAxisAlignment: CrossAxisAlignment,
+    mainAxisSelfAlignment?: MainAxisAlignment,
+    crossAxisSelfAlignment?: CrossAxisAlignment,
 ) {
-    return `justify-content: ${mainAxisToCss[mainAxisAlignment]}; align-items: ${crossAxisToCss[crossAxisAlignment]}`;
+    let css = `justify-content: ${mainAxisToCss[mainAxisAlignment]}; align-items: ${crossAxisToCss[crossAxisAlignment]};`;
+    if (mainAxisSelfAlignment !== undefined) {
+        css += ` justify-self: ${mainAxisToCss[mainAxisSelfAlignment]};`;
+    }
+    if (crossAxisSelfAlignment !== undefined) {
+        css += ` align-self: ${crossAxisToCss[crossAxisSelfAlignment]};`;
+    }
+    return css;
 }
 
 export function getFlexStyle(

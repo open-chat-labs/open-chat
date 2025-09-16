@@ -236,7 +236,10 @@ export class Colours {
 }
 
 function toKebabCase(key: string) {
-    return key.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+    return key
+        .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
+        .replace(/([a-zA-Z])([0-9])/g, "$1-$2")
+        .toLowerCase();
 }
 
 export type ColourVarKeys = Exclude<keyof Colours, keyof object | "cssVariables">;
