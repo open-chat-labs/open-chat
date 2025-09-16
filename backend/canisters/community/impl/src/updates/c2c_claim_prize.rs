@@ -1,5 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::guards::caller_is_user_index_or_local_user_index;
+use crate::guards::caller_is_local_user_index;
 use crate::{CommunityEventPusher, RuntimeState, execute_update_async, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -15,7 +15,7 @@ use types::{
     UserId,
 };
 
-#[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
+#[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 async fn c2c_claim_prize(args: Args) -> PrizeClaimResponse {
     execute_update_async(|| c2c_claim_prize_impl(args)).await

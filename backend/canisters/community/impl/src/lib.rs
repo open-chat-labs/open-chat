@@ -112,8 +112,8 @@ impl RuntimeState {
         }
     }
 
-    pub fn get_member(&self, verify: bool, user_id: UserId) -> Result<CommunityMemberInternal, OCErrorCode> {
-        let member = self.data.members.get(*user_id).ok_or(OCErrorCode::InitiatorNotInCommunity)?;
+    pub fn get_member(&self, verify: bool, user_id_or_principal: Principal) -> Result<CommunityMemberInternal, OCErrorCode> {
+        let member = self.data.members.get(*user_id_or_principal).ok_or(OCErrorCode::InitiatorNotInCommunity)?;
         if verify {
             member.verify()?;
         }
