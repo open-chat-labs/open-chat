@@ -1,22 +1,27 @@
 use crate::activity_notifications::handle_activity_notification;
+use crate::guards::caller_is_local_user_index;
 use crate::{CommunityEventPusher, RuntimeState, execute_update_async, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use community_canister::claim_prize::{Response::*, *};
+use community_canister::c2c_claim_prize::*;
 use constants::MEMO_PRIZE_CLAIM;
 use ledger_utils::{create_pending_transaction, process_transaction};
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use tracing::error;
-use types::{CanisterId, CompletedCryptoTransaction, DiamondMembershipStatus, OCResult, PendingCryptoTransaction, UserId};
+use types::{
+    CanisterId, CompletedCryptoTransaction, OCResult, PendingCryptoTransaction,
+    PrizeClaimResponse::{self, *},
+    UserId,
+};
 
-#[update(msgpack = true)]
+#[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
-async fn claim_prize(args: Args) -> Response {
-    execute_update_async(|| claim_prize_impl(args)).await
+async fn c2c_claim_prize(args: Args) -> PrizeClaimResponse {
+    execute_update_async(|| c2c_claim_prize_impl(args)).await
 }
 
-async fn claim_prize_impl(args: Args) -> Response {
+async fn c2c_claim_prize_impl(args: Args) -> PrizeClaimResponse {
     // Validate the request and reserve a prize
     let prepare_result = match mutate_state(|state| prepare(&args, state)) {
         Ok(c) => c,
@@ -61,7 +66,7 @@ struct PrepareResult {
 fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
     state.data.verify_not_frozen()?;
 
-    let member = state.get_calling_member(true)?;
+    let member = state.get_member(true, *args.user_id)?;
     let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
     let now = state.env.now();
     let now_nanos = state.env.now_nanos();
@@ -70,11 +75,11 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
         user_id,
         args.message_id,
         now,
-        true,
-        DiamondMembershipStatus::Lifetime,
-        1000000,
-        10000,
-        u64::MAX,
+        args.is_unique_person,
+        args.diamond_status,
+        args.total_chit_earned,
+        args.streak,
+        args.streak_ends,
     )?;
 
     // Hack to ensure 2 prizes claimed by the same user in the same block don't result in "duplicate transaction" errors.

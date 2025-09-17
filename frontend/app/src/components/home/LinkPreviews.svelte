@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { previewDimensionsObserver } from "@utils/previewDimensionsObserver";
+    import { previewHeightObserver } from "@utils/previewHeightObserver";
     import {
         eventListScrolling,
         iconSize,
@@ -201,23 +201,22 @@
         const toUnobserve: Element[] = [];
         for (const preview of previews) {
             if (preview.container) {
-                previewDimensionsObserver.observe(preview.container, preview.url);
+                previewHeightObserver.observe(preview.container, preview.url);
                 toUnobserve.push(preview.container);
 
-                const dimensions = previewDimensionsObserver.getDimensions(preview.url);
-                if (dimensions) {
-                    preview.container.style.setProperty("min-height", `${dimensions[0]}px`);
-                    preview.container.style.setProperty("min-width", `${dimensions[1]}px`);
+                const height = previewHeightObserver.getHeight(preview.url);
+                if (height) {
+                    preview.container.style.setProperty("min-height", `${height}px`);
                 }
                 if (preview.kind === "generic") {
-                    // If we have dimensions for this preview then display the container immediately, else hide it
+                    // If we have a recorded height for this preview then display the container immediately, else hide it
                     // until we have fetched the preview (if any)
-                    const display = dimensions ? "flex" : "none";
+                    const display = height ? "flex" : "none";
                     preview.container.style.setProperty("display", display);
                 }
             }
         }
-        return () => toUnobserve.forEach((e) => previewDimensionsObserver.unobserve(e));
+        return () => toUnobserve.forEach((e) => previewHeightObserver.unobserve(e));
     });
 
     $effect(() => {
@@ -320,6 +319,7 @@
             flex: 1;
             border-inline-start: $sp2 solid var(--currentChat-msg-separator);
             padding-inline-start: 12px;
+            max-width: 100%;
 
             &.me {
                 border-color: var(--currentChat-msg-me-separator);

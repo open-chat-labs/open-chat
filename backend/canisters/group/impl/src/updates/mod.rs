@@ -1,5 +1,6 @@
 pub mod accept_p2p_swap;
 pub mod add_reaction;
+pub mod c2c_claim_prize;
 pub mod c2c_delete_group;
 pub mod c2c_export_group;
 pub mod c2c_export_group_events;
