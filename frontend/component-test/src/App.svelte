@@ -4,7 +4,6 @@
     import MenuItem from "../../component-lib/src/components/menu/MenuItem.svelte";
     import Avatars from "./Avatars.svelte";
     import BigButtons from "./BigButtons.svelte";
-    import BottomBars from "./BottomBars.svelte";
     import Buttons from "./Buttons.svelte";
     import ChatSummaries from "./ChatSummaries.svelte";
     import Colours from "./Colours.svelte";
@@ -33,7 +32,6 @@
         | "longpress"
         | "controls"
         | "menus"
-        | "bottom_bar"
         | "avatars"
         | "section_header"
         | "typography"
@@ -44,7 +42,6 @@
     const labels: Record<Section, string> = {
         avatars: "Avatars",
         big_buttons: "Big buttons",
-        bottom_bar: "Bottom bar",
         buttons: "Buttons",
         chat_summary: "Chat summary",
         colours: "Colours",
@@ -100,8 +97,6 @@
             <ListActions></ListActions>
         {:else if selected === "menus"}
             <Menus></Menus>
-        {:else if selected === "bottom_bar"}
-            <BottomBars />
         {:else if selected === "avatars"}
             <Avatars />
         {:else if selected === "forms"}

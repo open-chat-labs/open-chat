@@ -717,6 +717,10 @@ export class OpenChat {
         return this.#authPrincipal;
     }
 
+    isNativeTheme() {
+        return this.isNativeApp() || localStorage.getItem("openchat_native_theme") === "true";
+    }
+
     isNativeAndroid() {
         return this.#appType === "android";
     }
@@ -7607,7 +7611,7 @@ export class OpenChat {
                 this.#oneSecEnableForwarding(currentUserIdStore.value, addr).then(() => {
                     // Check balances in case a deposit was made before the OneSecForwarder
                     // canister started tracking the address
-                    this.#checkOneSecBalances(addr)
+                    this.#checkOneSecBalances(addr);
                 });
             }
         });
@@ -7638,8 +7642,9 @@ export class OpenChat {
     }
 
     oneSecGetNetworks(token: string): string[] {
-        const ethNetworks = [ETHEREUM_NETWORK, ARBITRUM_NETWORK, BASE_NETWORK]
-            .filter((n) => this.#evmContractAddresses.some((c) => c.token === token && c.chain === n));
+        const ethNetworks = [ETHEREUM_NETWORK, ARBITRUM_NETWORK, BASE_NETWORK].filter((n) =>
+            this.#evmContractAddresses.some((c) => c.token === token && c.chain === n),
+        );
 
         return [ICP_SYMBOL, ...ethNetworks];
     }

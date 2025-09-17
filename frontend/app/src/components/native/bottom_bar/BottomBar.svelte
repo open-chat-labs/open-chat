@@ -1,30 +1,31 @@
+<script module lang="ts">
+    export type Selection = "chats" | "communities" | "notification" | "profile";
+</script>
+
 <script lang="ts">
+    import { Avatar, Container } from "component-lib";
+    import { allUsersStore, currentUserIdStore, OpenChat } from "openchat-client";
+    import { getContext } from "svelte";
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import Lightbulb from "svelte-material-icons/LightbulbVariantOutline.svelte";
-    import Avatar from "../avatar/Avatar.svelte";
-    import Container from "../Container.svelte";
     import BottomBarItem from "./BottomBarItem.svelte";
-
-    type Selection = "chats" | "communities" | "notification" | "profile";
 
     type Indicators = Set<Selection>;
 
     interface Props {
         selection: Selection;
         onSelect?: (selection: Selection) => void;
-        avatarUrl: string;
-        avatarName?: string;
         indicators?: Indicators;
     }
 
-    let {
-        selection = $bindable("chats"),
-        onSelect,
-        avatarUrl,
-        avatarName,
-        indicators = new Set(),
-    }: Props = $props();
+    const client = getContext<OpenChat>("client");
+
+    let { selection = $bindable("chats"), onSelect, indicators = new Set() }: Props = $props();
+
+    let user = $derived($allUsersStore.get($currentUserIdStore));
+    let avatarUrl = $derived(user ? client.userAvatarUrl(user) : "/assets/unknownUserAvatar.svg");
+    let avatarName = $derived(user?.username ?? "unknown user");
 
     function itemSelected(s: Selection) {
         selection = s;

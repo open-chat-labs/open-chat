@@ -11,7 +11,7 @@
     import { snowing } from "@stores/snow";
     import { incomingVideoCall } from "@stores/video";
     import { broadcastLoggedInUser } from "@stores/xframe";
-    import { currentTheme } from "@theme/themes";
+    import { currentTheme, setNativeTheme } from "@theme/themes";
     import "@utils/markdown";
     import {
         expectNewFcmToken,
@@ -73,7 +73,7 @@
     );
 
     function createOpenChatClient(): OpenChat {
-        return new OpenChat({
+        const client = new OpenChat({
             appType: import.meta.env.OC_APP_TYPE,
             icUrl: import.meta.env.OC_IC_URL,
             webAuthnOrigin: import.meta.env.OC_WEBAUTHN_ORIGIN,
@@ -110,6 +110,12 @@
             accountLinkingCodesEnabled:
                 import.meta.env.OC_ACCOUNT_LINKING_CODES_ENABLED! === "true",
         });
+
+        if (client.isNativeTheme()) {
+            setNativeTheme();
+        }
+
+        return client;
     }
 
     let client: OpenChat = createOpenChatClient();
