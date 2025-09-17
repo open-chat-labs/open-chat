@@ -375,7 +375,6 @@ export class UserClient extends MsgpackCanisterAgent {
                 primary_language: community.primaryLanguage,
             },
             (resp) => {
-                console.log("CreateCommunity: ", resp);
                 return mapResult(resp, createCommunitySuccess);
             },
             UserCreateCommunityArgs,

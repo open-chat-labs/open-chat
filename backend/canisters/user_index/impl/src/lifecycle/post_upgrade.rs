@@ -23,6 +23,7 @@ fn post_upgrade(args: Args) {
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
+    // TODO - remove this after release
     mutate_state(|state| {
         let now = state.env.now();
 
