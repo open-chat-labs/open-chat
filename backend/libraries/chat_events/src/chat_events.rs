@@ -18,14 +18,14 @@ use std::ops::DerefMut;
 use tracing::error;
 use types::{
     BlobReference, BotChatEvent, BotNotification, CallParticipant, CanisterId, Chat, ChatEvent, ChatEventCategory,
-    ChatEventType, ChatType, CompletedCryptoTransaction, DirectChatCreated, EventContext, EventIndex, EventMetaData,
-    EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen,
-    GroupUnfrozen, HydratedMention, Mention, Message, MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex,
-    MessageMatch, MessageTippedEventPayload, Milliseconds, MultiUserChat, OCResult, OptionUpdate, P2PSwapAccepted,
-    P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes,
-    ProposalRewardStatus, ProposalUpdate, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapSuccess,
-    SenderContext, Tally, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload,
-    VideoCallParticipants, VideoCallPresence, VideoCallType, VoteOperation,
+    ChatEventType, ChatType, CompletedCryptoTransaction, DiamondMembershipStatus, DirectChatCreated, EventContext, EventIndex,
+    EventMetaData, EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated,
+    GroupFrozen, GroupUnfrozen, HydratedMention, Mention, Message, MessageEditedEventPayload, MessageEventPayload, MessageId,
+    MessageIndex, MessageMatch, MessageTippedEventPayload, Milliseconds, MultiUserChat, OCResult, OptionUpdate,
+    P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction,
+    PollVotes, ProposalRewardStatus, ProposalUpdate, Reaction, ReactionAddedEventPayload, RegisterVoteResult,
+    ReserveP2PSwapSuccess, SenderContext, Tally, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall,
+    VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence, VideoCallType, VoteOperation,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -1004,12 +1004,18 @@ impl ChatEvents {
         Ok(())
     }
 
+    #[expect(clippy::too_many_arguments)]
     pub fn reserve_prize(
         &mut self,
         user_id: UserId,
         min_visible_event_index: EventIndex,
         message_id: MessageId,
         now: TimestampMillis,
+        is_unique_person: bool,
+        diamond_status: DiamondMembershipStatus,
+        total_chit_earned: u32,
+        streak: u16,
+        streak_ends: TimestampMillis,
     ) -> OCResult<ReservePrizeSuccess> {
         match self.update_message(
             None,
@@ -1018,7 +1024,18 @@ impl ChatEvents {
             now,
             true,
             ChatEventType::MessageOther,
-            |message, _| Self::reserve_prize_inner(message, user_id, now),
+            |message, _| {
+                Self::reserve_prize_inner(
+                    message,
+                    user_id,
+                    now,
+                    is_unique_person,
+                    diamond_status,
+                    total_chit_earned,
+                    streak,
+                    streak_ends,
+                )
+            },
         ) {
             Ok(result) => Ok(result.value),
             Err(UpdateEventError::NoChange(error)) => Err(error.into()),
@@ -1026,14 +1043,40 @@ impl ChatEvents {
         }
     }
 
+    #[expect(clippy::too_many_arguments)]
     fn reserve_prize_inner(
         message: &mut MessageInternal,
         user_id: UserId,
         now: TimestampMillis,
+        is_unique_person: bool,
+        diamond_status: DiamondMembershipStatus,
+        total_chit_earned: u32,
+        streak: u16,
+        streak_ends: TimestampMillis,
     ) -> Result<ReservePrizeSuccess, UpdateEventError<OCErrorCode>> {
         let MessageContentInternal::Prize(content) = &mut message.content else {
             return Err(UpdateEventError::NotFound);
         };
+
+        if content.streak_only > 0 && (streak < content.streak_only || streak_ends < now) {
+            return Err(UpdateEventError::NoChange(OCErrorCode::PrizeUserNotElligible));
+        }
+
+        if content.diamond_only && diamond_status == DiamondMembershipStatus::Inactive {
+            return Err(UpdateEventError::NoChange(OCErrorCode::PrizeUserNotElligible));
+        }
+
+        if content.lifetime_diamond_only && diamond_status != DiamondMembershipStatus::Lifetime {
+            return Err(UpdateEventError::NoChange(OCErrorCode::PrizeUserNotElligible));
+        }
+
+        if content.unique_person_only && !is_unique_person {
+            return Err(UpdateEventError::NoChange(OCErrorCode::PrizeUserNotElligible));
+        }
+
+        if content.min_chit_earned > total_chit_earned {
+            return Err(UpdateEventError::NoChange(OCErrorCode::PrizeUserNotElligible));
+        }
 
         if content.end_date < now {
             return Err(UpdateEventError::NoChange(OCErrorCode::PrizeEnded));

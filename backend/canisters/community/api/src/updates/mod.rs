@@ -9,6 +9,7 @@ pub mod c2c_bot_delete_messages;
 pub mod c2c_bot_invite_users;
 pub mod c2c_bot_remove_user;
 pub mod c2c_bot_send_message;
+pub mod c2c_claim_prize;
 pub mod c2c_create_proposals_channel;
 pub mod c2c_delete_community;
 pub mod c2c_freeze_community;
