@@ -25,6 +25,9 @@ export { default as InputTextButton } from "./components/forms/InputTextButton.s
 export { default as Search } from "./components/forms/Search.svelte";
 export { default as MenuItem } from "./components/menu/MenuItem.svelte";
 export { default as MenuTrigger } from "./components/menu/MenuTrigger.svelte";
+export { default as Message } from "./components/message/Message.svelte";
+export { default as Reactions } from "./components/message/Reactions.svelte";
+export { default as ThreadSummary } from "./components/message/ThreadSummary.svelte";
 export { default as Body } from "./components/typography/Body.svelte";
 export { default as BodySmall } from "./components/typography/BodySmall.svelte";
 export { default as Caption } from "./components/typography/Caption.svelte";

@@ -17,6 +17,7 @@
             <Avatar name={`large ${name}`} url={`/${file}`} size={"lg"} />
             <Avatar name={`medium ${name}`} url={`/${file}`} size={"md"} />
             <Avatar name={`small ${name}`} url={`/${file}`} size={"sm"} />
+            <Avatar name={`extra small ${name}`} url={`/${file}`} size={"xs"} />
         </Container>
     {/each}
 </Container>

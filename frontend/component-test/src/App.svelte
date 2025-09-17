@@ -15,6 +15,7 @@
     import ListActions from "./ListActions.svelte";
     import Longpress from "./Longpress.svelte";
     import Menus from "./Menus.svelte";
+    import Messages from "./Messages.svelte";
     import SectionHeaders from "./SectionHeaders.svelte";
     import Typography from "./Typography.svelte";
     import Users from "./Users.svelte";
@@ -33,6 +34,7 @@
         | "longpress"
         | "controls"
         | "menus"
+        | "messages"
         | "bottom_bar"
         | "avatars"
         | "section_header"
@@ -55,6 +57,7 @@
         list_actions: "List Actions",
         longpress: "Longpress",
         menus: "Menus",
+        messages: "Messages",
         section_header: "Section headers",
         typography: "Typography",
         users: "Users",
@@ -100,6 +103,8 @@
             <ListActions></ListActions>
         {:else if selected === "menus"}
             <Menus></Menus>
+        {:else if selected === "messages"}
+            <Messages></Messages>
         {:else if selected === "bottom_bar"}
             <BottomBars />
         {:else if selected === "avatars"}

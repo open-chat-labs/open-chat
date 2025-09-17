@@ -32,6 +32,10 @@
 
             <CountBadge>21</CountBadge>
 
+            <div class="primary">
+                <CountBadge mode={"on_primary"}>21</CountBadge>
+            </div>
+
             <CountBadge size={"large"}>55</CountBadge>
 
             <CountBadge mode={"additive"}>+21</CountBadge>
@@ -69,3 +73,11 @@
         </Container>
     </Container>
 </Container>
+
+<style lang="scss">
+    .primary {
+        background-color: var(--primary);
+        padding: 20px;
+        border-radius: 16px;
+    }
+</style>

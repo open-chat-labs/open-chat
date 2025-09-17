@@ -49,11 +49,15 @@
         colour?: string;
         mainAxisAlignment?: MainAxisAlignment;
         crossAxisAlignment?: CrossAxisAlignment;
+        mainAxisSelfAlignment?: MainAxisAlignment;
+        crossAxisSelfAlignment?: CrossAxisAlignment;
         minWidth?: Pixel;
         minHeight?: Pixel;
         shadow?: string;
         backgroundColour?: string;
         onClick?: () => void;
+        supplementalClass?: string;
+        allowOverflow?: boolean;
     }
 
     let {
@@ -70,11 +74,15 @@
         borderColour = "var(--background-2)",
         mainAxisAlignment = "start",
         crossAxisAlignment = "start",
+        mainAxisSelfAlignment,
+        crossAxisSelfAlignment,
         minWidth = new Pixel(0),
         minHeight = new Pixel(0),
         shadow,
         backgroundColour = "unset",
         onClick,
+        supplementalClass,
+        allowOverflow = false,
     }: Props = $props();
 
     // you might expect this to be done inside onMount but
@@ -90,7 +98,14 @@
     let widthCss = $derived(getFlexStyle("width", width, parentDirection));
     let heightCss = $derived(getFlexStyle("height", height, parentDirection));
     let colourCss = $derived(colour ? `background-color: ${colour}` : "");
-    let alignmentCss = $derived(getAlignmentCss(mainAxisAlignment, crossAxisAlignment));
+    let alignmentCss = $derived(
+        getAlignmentCss(
+            mainAxisAlignment,
+            crossAxisAlignment,
+            mainAxisSelfAlignment,
+            crossAxisSelfAlignment,
+        ),
+    );
     let style = $derived(
         `background-color: ${backgroundColour}; box-shadow: ${shadow}; min-width: ${minWidth}; min-height: ${minHeight}; ${alignmentCss}; ${colourCss}; ${heightCss}; ${widthCss}; ${borderStyleCss}; ${borderRadiusCss}; ${borderWidthCss}; ${paddingCss}; ${gapCss};`,
     );
@@ -102,9 +117,10 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
     class:clickable={onClick !== undefined}
+    class:overflow={allowOverflow}
     onclick={onClick}
     {style}
-    class={`container ${direction}`}>
+    class={`container ${direction} ${supplementalClass ?? ""}`}>
     {@render children()}
 </div>
 
@@ -116,6 +132,10 @@
         transition:
             padding ease-in-out 200ms,
             gap ease-in-out 200ms;
+
+        &.overflow {
+            overflow: visible;
+        }
 
         &.horizontal {
             display: flex;

@@ -67,6 +67,7 @@ export class Theme {
         this.shadows = new Shadows();
 
         this.avatars = new Avatars(
+            Rem.fromPixels(20),
             Rem.fromPixels(32),
             Rem.fromPixels(40),
             Rem.fromPixels(48),
