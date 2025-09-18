@@ -105,29 +105,6 @@
         }
     }
 
-    function chatMatchesSearch(chat: ChatSummaryType): boolean {
-        if (chat.kind === "group_chat" || chat.kind === "channel") {
-            return (
-                chat.name.toLowerCase().indexOf(lowercaseSearch) >= 0 ||
-                chat.description.toLowerCase().indexOf(lowercaseSearch) >= 0
-            );
-        }
-
-        if (chat.kind === "direct_chat") {
-            const user = $allUsersStore.get(chat.them.userId);
-            if (user !== undefined) {
-                return (
-                    user.username.toLowerCase().indexOf(lowercaseSearch) >= 0 ||
-                    (user.displayName !== undefined &&
-                        user.displayName.toLowerCase().indexOf(lowercaseSearch) >= 0)
-                );
-            } else {
-                return false;
-            }
-        }
-        return false;
-    }
-
     function chatWith(userId: string): void {
         publish("chatWith", { kind: "direct_chat", userId });
     }
@@ -230,7 +207,7 @@
     });
     let chats = $derived(
         searchTerm !== ""
-            ? $chatSummariesListStore.filter(chatMatchesSearch)
+            ? $chatSummariesListStore.filter((c) => client.chatMatchesSearch(lowercaseSearch, c))
             : $chatSummariesListStore,
     );
 </script>

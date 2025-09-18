@@ -4,31 +4,83 @@
 
 <script lang="ts">
     import { Avatar, Container } from "component-lib";
-    import { allUsersStore, currentUserIdStore, OpenChat } from "openchat-client";
+    import {
+        allUsersStore,
+        currentUserIdStore,
+        mergeListOfCombinedUnreadCounts,
+        messageActivitySummaryStore,
+        OpenChat,
+        unreadCommunityChannelCountsStore,
+        unreadDirectAndGroupCountsStore,
+        type UnreadCounts,
+    } from "openchat-client";
+    import page from "page";
     import { getContext } from "svelte";
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import Lightbulb from "svelte-material-icons/LightbulbVariantOutline.svelte";
     import BottomBarItem from "./BottomBarItem.svelte";
 
-    type Indicators = Set<Selection>;
-
     interface Props {
         selection: Selection;
         onSelect?: (selection: Selection) => void;
-        indicators?: Indicators;
     }
 
     const client = getContext<OpenChat>("client");
 
-    let { selection = $bindable("chats"), onSelect, indicators = new Set() }: Props = $props();
+    let { selection = $bindable("chats"), onSelect }: Props = $props();
 
     let user = $derived($allUsersStore.get($currentUserIdStore));
     let avatarUrl = $derived(user ? client.userAvatarUrl(user) : "/assets/unknownUserAvatar.svg");
     let avatarName = $derived(user?.username ?? "unknown user");
+    let unreadCommunities = $derived(
+        mergeListOfCombinedUnreadCounts(Array.from($unreadCommunityChannelCountsStore.values())),
+    );
+
+    let chatIndicator = $derived.by(() => showIndicator($unreadDirectAndGroupCountsStore.chats));
+    let communityIndicator = $derived(showIndicator(unreadCommunities.chats));
+    let activityIndicator = $derived.by(() => {
+        return (
+            showIndicator($unreadDirectAndGroupCountsStore.threads) ||
+            showIndicator(unreadCommunities.threads) ||
+            $messageActivitySummaryStore.latestTimestamp > 0n
+        );
+    });
+    let indicators = $derived.by(() => {
+        const i: Set<Selection> = new Set();
+        if (chatIndicator) {
+            i.add("chats");
+        }
+        if (communityIndicator) {
+            i.add("communities");
+        }
+        if (activityIndicator) {
+            i.add("notification");
+        }
+        return i;
+    });
+
+    function showIndicator(u: UnreadCounts) {
+        return u.mentions || u.unmuted > 0;
+    }
 
     function itemSelected(s: Selection) {
         selection = s;
+        switch (selection) {
+            case "chats":
+                page("/direct_and_group");
+                break;
+            case "communities":
+                page("/communities");
+                break;
+            case "notification":
+                page("/activity");
+                break;
+            case "profile":
+                page("/profile");
+                break;
+        }
+
         onSelect?.(s);
     }
 </script>

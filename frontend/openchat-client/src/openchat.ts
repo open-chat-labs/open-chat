@@ -323,6 +323,7 @@ import {
     achievementsStore,
     allChatsStore,
     allServerChatsStore,
+    allUsersStore,
     anonUserStore,
     askForNotificationPermission,
     bitcoinAddress,
@@ -717,8 +718,8 @@ export class OpenChat {
         return this.#authPrincipal;
     }
 
-    isNativeTheme() {
-        return this.isNativeApp() || localStorage.getItem("openchat_native_theme") === "true";
+    isNativeLayout() {
+        return this.isNativeApp() || localStorage.getItem("openchat_native_layout") === "true";
     }
 
     isNativeAndroid() {
@@ -10156,6 +10157,29 @@ export class OpenChat {
             userId,
             days,
         });
+    }
+
+    chatMatchesSearch(search: string, chat: ChatSummary): boolean {
+        if (chat.kind === "group_chat" || chat.kind === "channel") {
+            return (
+                chat.name.toLowerCase().indexOf(search) >= 0 ||
+                chat.description.toLowerCase().indexOf(search) >= 0
+            );
+        }
+
+        if (chat.kind === "direct_chat") {
+            const user = allUsersStore.value.get(chat.them.userId);
+            if (user !== undefined) {
+                return (
+                    user.username.toLowerCase().indexOf(search) >= 0 ||
+                    (user.displayName !== undefined &&
+                        user.displayName.toLowerCase().indexOf(search) >= 0)
+                );
+            } else {
+                return false;
+            }
+        }
+        return false;
     }
 }
 

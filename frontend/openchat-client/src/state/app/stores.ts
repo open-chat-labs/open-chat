@@ -15,6 +15,7 @@ import {
     emptyChatMetrics,
     Immutable,
     mergeListOfCombinedUnreadCounts,
+    mergePairOfCombinedUnreadCounts,
     messageContextsEqual,
     MessageMap,
     ModerationFlags,
@@ -1013,6 +1014,8 @@ export const chatSummariesStore = derived(
                 return allChats.filter((c) => c.kind === "group_chat");
             case "direct_chat":
                 return allChats.filter((c) => c.kind === "direct_chat");
+            case "direct_and_group_chat":
+                return allChats.filter((c) => c.kind === "direct_chat" || c.kind === "group_chat");
             case "favourite": {
                 return [...favourites.values()].reduce((favs, chatId) => {
                     const chat = allChats.get(chatId);
@@ -1252,6 +1255,13 @@ export const unreadDirectCountsStore = derived(
     [serverDirectChatsStore, messagesRead],
     ([serverDirectChats, _]) => {
         return messagesRead.combinedUnreadCountForChats(serverDirectChats);
+    },
+);
+
+export const unreadDirectAndGroupCountsStore = derived(
+    [unreadDirectCountsStore, unreadGroupCountsStore],
+    ([direct, group]) => {
+        return mergePairOfCombinedUnreadCounts(direct, group);
     },
 );
 

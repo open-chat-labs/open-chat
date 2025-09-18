@@ -33,6 +33,7 @@ export { default as H2 } from "./components/typography/H2.svelte";
 export { default as Label } from "./components/typography/Label.svelte";
 export { default as Overview } from "./components/typography/Overview.svelte";
 export { default as Subtitle } from "./components/typography/Subtitle.svelte";
+export { default as Title } from "./components/typography/Title.svelte";
 export { default as Typography } from "./components/typography/Typography.svelte";
 export { default as User } from "./components/User.svelte";
 export * from "./theme";

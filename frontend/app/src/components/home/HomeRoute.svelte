@@ -18,7 +18,8 @@
 
     let { showLandingPage }: HomeProps = $props();
 
-    let native = $derived(client.isNativeTheme());
+    let native = $derived(client.isNativeLayout());
+    // let native = $derived(false);
     let registering = $derived(
         $identityStateStore.kind === "registering" ||
             $identityStateStore.kind === "challenging" ||

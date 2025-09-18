@@ -132,6 +132,13 @@
             track,
             () => (route = Home),
         );
+        // global group chats
+        page(
+            "/direct_and_group",
+            parsePathParams(chatListRoute({ kind: "direct_and_group_chat" })),
+            track,
+            () => (route = Home),
+        );
         // global group chat selected
         page(
             "/group/:chatId/:messageIndex?/:threadMessageIndex?",

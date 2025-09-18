@@ -11,7 +11,7 @@
     import { snowing } from "@stores/snow";
     import { incomingVideoCall } from "@stores/video";
     import { broadcastLoggedInUser } from "@stores/xframe";
-    import { currentTheme, setNativeTheme } from "@theme/themes";
+    import { currentTheme, setNativeTheme, writeNativeCssVariables } from "@theme/themes";
     import "@utils/markdown";
     import {
         expectNewFcmToken,
@@ -111,8 +111,10 @@
                 import.meta.env.OC_ACCOUNT_LINKING_CODES_ENABLED! === "true",
         });
 
-        if (client.isNativeTheme()) {
+        if (client.isNativeLayout()) {
             setNativeTheme();
+        } else {
+            writeNativeCssVariables();
         }
 
         return client;

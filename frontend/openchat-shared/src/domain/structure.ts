@@ -6,8 +6,15 @@ export type HasLevel = {
     level: Level;
 };
 
-export type ChatListScope = GroupScope | DirectScope | FavouriteScope | CommunityScope | NullScope;
+export type ChatListScope =
+    | GroupScope
+    | DirectScope
+    | DirectAndGroupScope
+    | FavouriteScope
+    | CommunityScope
+    | NullScope;
 
+export type DirectAndGroupScope = { kind: "direct_and_group_chat" };
 export type GroupScope = { kind: "group_chat" };
 export type DirectScope = { kind: "direct_chat" };
 export type FavouriteScope = { kind: "favourite" };
