@@ -1010,11 +1010,7 @@ export const chatSummariesStore = derived(
                     (c) => c.kind === "channel" && c.id.communityId === communityId,
                 );
             }
-            case "group_chat":
-                return allChats.filter((c) => c.kind === "group_chat");
-            case "direct_chat":
-                return allChats.filter((c) => c.kind === "direct_chat");
-            case "direct_and_group_chat":
+            case "chats":
                 return allChats.filter((c) => c.kind === "direct_chat" || c.kind === "group_chat");
             case "favourite": {
                 return [...favourites.values()].reduce((favs, chatId) => {
@@ -1166,6 +1162,16 @@ export const groupVideoCallCountsStore = derived(serverGroupChatsStore, (serverG
 export const directVideoCallCountsStore = derived(serverDirectChatsStore, (serverDirectChats) => {
     return videoCallsInProgressForChats([...serverDirectChats.values()]);
 });
+
+export const directAndGroupVideoCallCountsStore = derived(
+    [serverDirectChatsStore, serverGroupChatsStore],
+    ([serverDirectChats, serverGroupChats]) => {
+        return videoCallsInProgressForChats([
+            ...serverDirectChats.values(),
+            ...serverGroupChats.values(),
+        ]);
+    },
+);
 
 export const eventsStore = derived(
     [

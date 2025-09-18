@@ -46,9 +46,8 @@
     import ChatListSectionButton from "./ChatListSectionButton.svelte";
     import ChatSummary from "./ChatSummary.svelte";
     import BrowseChannels from "./communities/details/BrowseChannels.svelte";
-    import DirectChatsHeader from "./communities/DirectChatsHeader.svelte";
+    import DirectAndGroupChatsHeader from "./communities/DirectAndGroupChatsHeader.svelte";
     import FavouriteChatsHeader from "./communities/FavouriteChatsHeader.svelte";
-    import GroupChatsHeader from "./communities/GroupChatsHeader.svelte";
     import PreviewWrapper from "./communities/PreviewWrapper.svelte";
     import SelectedCommunityHeader from "./communities/SelectedCommunityHeader.svelte";
     import Badges from "./profile/Badges.svelte";
@@ -214,12 +213,10 @@
 
 <!-- svelte-ignore missing_declaration -->
 {#if user}
-    {#if $chatListScopeStore.kind === "favourite"}
+    {#if $chatListScopeStore.kind === "chats"}
+        <DirectAndGroupChatsHeader {canMarkAllRead} />
+    {:else if $chatListScopeStore.kind === "favourite"}
         <FavouriteChatsHeader {canMarkAllRead} />
-    {:else if $chatListScopeStore.kind === "group_chat"}
-        <GroupChatsHeader {canMarkAllRead} />
-    {:else if $chatListScopeStore.kind === "direct_chat"}
-        <DirectChatsHeader {canMarkAllRead} />
     {:else if $selectedCommunitySummaryStore && $chatListScopeStore.kind === "community"}
         <SelectedCommunityHeader community={$selectedCommunitySummaryStore} {canMarkAllRead} />
     {/if}

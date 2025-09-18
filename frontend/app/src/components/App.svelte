@@ -114,6 +114,8 @@
         if (client.isNativeLayout()) {
             setNativeTheme();
         } else {
+            // even if we are not using the native layout
+            // we do need the variables if we are going to use the new components
             writeNativeCssVariables();
         }
 

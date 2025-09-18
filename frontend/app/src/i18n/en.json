@@ -511,6 +511,7 @@
         "general": "General",
         "goto": "Go to community",
         "groupChats": "Group chats",
+        "directAndGroupChats": "Chats",
         "hideLeftNav": "Collapse communities menu",
         "imageLabel": "Banner/Avatar image",
         "import": "Import to community",
