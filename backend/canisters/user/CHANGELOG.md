@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Added pinned_chats to the initial_state and updates responses ([#8619](https://github.com/open-chat-labs/open-chat/pull/8619))
+
+### Changed
+
 - Keep bot event subscriptions in sync ([#8600](https://github.com/open-chat-labs/open-chat/pull/8600))
 
 ### Fixed
