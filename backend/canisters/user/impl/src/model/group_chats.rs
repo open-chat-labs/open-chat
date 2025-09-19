@@ -1,15 +1,40 @@
 use crate::model::group_chat::GroupChat;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use types::{CanisterId, ChatId, MessageIndex, TimestampMillis, Timestamped};
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Default)]
 pub struct GroupChats {
     groups_created: u32,
     group_chats: HashMap<ChatId, GroupChat>,
-    pinned: Timestamped<Vec<ChatId>>,
+    pinned: Timestamped<HashMap<ChatId, TimestampMillis>>,
     removed: Vec<RemovedGroup>,
+}
+
+// TODO: Remove this after the next release
+impl<'de> Deserialize<'de> for GroupChats {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        struct OldGroupChats {
+            groups_created: u32,
+            group_chats: HashMap<ChatId, GroupChat>,
+            pinned: Timestamped<Vec<ChatId>>,
+            removed: Vec<RemovedGroup>,
+        }
+
+        let inner = OldGroupChats::deserialize(deserializer)?;
+        let Timestamped { value, timestamp } = inner.pinned;
+        Ok(GroupChats {
+            groups_created: inner.groups_created,
+            group_chats: inner.group_chats,
+            pinned: Timestamped::new(value.into_iter().map(|id| (id, 0)).collect(), timestamp),
+            removed: inner.removed,
+        })
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -27,12 +52,12 @@ impl GroupChats {
         self.group_chats.values().filter(move |c| c.last_updated() > since)
     }
 
-    pub fn pinned(&self) -> &Vec<ChatId> {
+    pub fn pinned(&self) -> &HashMap<ChatId, TimestampMillis> {
         &self.pinned.value
     }
 
-    pub fn pinned_if_updated(&self, since: TimestampMillis) -> Option<Vec<ChatId>> {
-        self.pinned.if_set_after(since).map(|ids| ids.to_vec())
+    pub fn pinned_if_updated(&self, since: TimestampMillis) -> Option<HashMap<ChatId, TimestampMillis>> {
+        self.pinned.if_set_after(since).map(|ids| ids.to_owned())
     }
 
     pub fn removed_since(&self, timestamp: TimestampMillis) -> Vec<ChatId> {
@@ -100,16 +125,16 @@ impl GroupChats {
     }
 
     pub fn pin(&mut self, chat_id: ChatId, now: TimestampMillis) {
-        if !self.pinned.value.contains(&chat_id) {
+        if !self.pinned.value.contains_key(&chat_id) {
             self.pinned.timestamp = now;
-            self.pinned.value.insert(0, chat_id);
+            self.pinned.value.insert(chat_id, now);
         }
     }
 
     pub fn unpin(&mut self, chat_id: &ChatId, now: TimestampMillis) {
-        if self.pinned.value.contains(chat_id) {
+        if self.pinned.value.contains_key(chat_id) {
             self.pinned.timestamp = now;
-            self.pinned.value.retain(|pinned_chat_id| pinned_chat_id != chat_id);
+            self.pinned.value.remove(chat_id);
         }
     }
 }

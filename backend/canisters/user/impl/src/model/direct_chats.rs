@@ -1,20 +1,47 @@
 use crate::model::direct_chat::DirectChat;
 use chat_events::{ChatInternal, ChatMetricsInternal};
 use oc_error_codes::OCErrorCode;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use types::{ChatId, MessageIndex, TimestampMillis, Timestamped, UserId, UserType};
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Default)]
 pub struct DirectChats {
     direct_chats: HashMap<ChatId, DirectChat>,
-    pinned: Timestamped<Vec<ChatId>>,
+    pinned: Timestamped<HashMap<ChatId, TimestampMillis>>,
     metrics: ChatMetricsInternal,
     chats_removed: BTreeSet<(TimestampMillis, ChatId)>,
     // This is needed so that when a group is imported into a community we can quickly update the
     // replies to point to the community
     #[serde(default)]
     private_replies_to_groups: BTreeMap<ChatId, Vec<(UserId, MessageIndex)>>,
+}
+//
+// TODO: Remove this after the next release
+impl<'de> Deserialize<'de> for DirectChats {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        struct OldDirectChats {
+            direct_chats: HashMap<ChatId, DirectChat>,
+            pinned: Timestamped<Vec<ChatId>>,
+            metrics: ChatMetricsInternal,
+            chats_removed: BTreeSet<(TimestampMillis, ChatId)>,
+            private_replies_to_groups: BTreeMap<ChatId, Vec<(UserId, MessageIndex)>>,
+        }
+
+        let inner = OldDirectChats::deserialize(deserializer)?;
+        let Timestamped { value, timestamp } = inner.pinned;
+        Ok(DirectChats {
+            direct_chats: inner.direct_chats,
+            pinned: Timestamped::new(value.into_iter().map(|id| (id, 0)).collect(), timestamp),
+            metrics: inner.metrics,
+            chats_removed: inner.chats_removed,
+            private_replies_to_groups: inner.private_replies_to_groups,
+        })
+    }
 }
 
 impl DirectChats {
@@ -59,12 +86,12 @@ impl DirectChats {
             .collect()
     }
 
-    pub fn pinned(&self) -> &Vec<ChatId> {
+    pub fn pinned(&self) -> &HashMap<ChatId, TimestampMillis> {
         &self.pinned.value
     }
 
-    pub fn pinned_if_updated(&self, since: TimestampMillis) -> Option<Vec<ChatId>> {
-        self.pinned.if_set_after(since).map(|ids| ids.to_vec())
+    pub fn pinned_if_updated(&self, since: TimestampMillis) -> Option<HashMap<ChatId, TimestampMillis>> {
+        self.pinned.if_set_after(since).map(|ids| ids.to_owned())
     }
 
     pub fn any_updated(&self, since: TimestampMillis) -> bool {
@@ -125,16 +152,16 @@ impl DirectChats {
     }
 
     pub fn pin(&mut self, chat_id: ChatId, now: TimestampMillis) {
-        if !self.pinned.value.contains(&chat_id) {
+        if !self.pinned.value.contains_key(&chat_id) {
             self.pinned.timestamp = now;
-            self.pinned.value.insert(0, chat_id);
+            self.pinned.value.insert(chat_id, now);
         }
     }
 
     pub fn unpin(&mut self, chat_id: &ChatId, now: TimestampMillis) {
-        if self.pinned.value.contains(chat_id) {
+        if self.pinned.value.contains_key(chat_id) {
             self.pinned.timestamp = now;
-            self.pinned.value.retain(|pinned_chat_id| pinned_chat_id != chat_id);
+            self.pinned.value.remove(chat_id);
         }
     }
 
