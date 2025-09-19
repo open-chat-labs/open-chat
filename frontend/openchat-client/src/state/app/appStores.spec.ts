@@ -146,8 +146,8 @@ describe("app state", () => {
                 kind: "explore_groups_route",
                 scope: { kind: "chats" },
             });
-            expect(get(chatListScopeStore)).toMatchObject({ kind: "group_chat" });
-            expect(chatListScopeStore.value).toMatchObject({ kind: "group_chat" });
+            expect(get(chatListScopeStore)).toMatchObject({ kind: "chats" });
+            expect(chatListScopeStore.value).toMatchObject({ kind: "chats" });
         });
 
         test("selected chat id is set", () => {
@@ -325,7 +325,7 @@ describe("app state", () => {
                     expect(chatSummariesStore.value.get(groupId)).not.toBeUndefined();
                     setRouteParams(mockContext, {
                         kind: "home_route",
-                        scope: { kind: "chats" },
+                        scope: { kind: "favourite" },
                     });
                     expect(chatSummariesStore.value.get(groupId)).toBeUndefined();
                 });
@@ -534,9 +534,9 @@ describe("app state", () => {
                             [
                                 { kind: "direct_chat", userId: "123456" },
                                 { kind: "direct_chat", userId: "888888" },
+                                { kind: "direct_chat", userId: "654321" },
                             ],
                         ],
-                        ["chats", [{ kind: "direct_chat", userId: "654321" }]],
                     ]),
                 );
             });
@@ -555,7 +555,7 @@ describe("app state", () => {
                 localUpdates.pinToScope(chatId, "chats");
                 const directs = get(pinnedChatsStore).get("chats");
                 expect(directs).not.toBeUndefined();
-                expect(directs?.length).toEqual(3);
+                expect(directs?.length).toEqual(4);
                 expect(directs?.[0]).toEqual(chatId);
             });
 
@@ -564,7 +564,7 @@ describe("app state", () => {
                 localUpdates.unpinFromScope(chatId, "chats");
                 const directs = get(pinnedChatsStore).get("chats");
                 expect(directs).not.toBeUndefined();
-                expect(directs?.length).toEqual(1);
+                expect(directs?.length).toEqual(2);
                 expect(directs?.[0]).toEqual({ kind: "direct_chat", userId: "888888" });
             });
         });
