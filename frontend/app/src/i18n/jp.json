@@ -484,6 +484,7 @@
         "description": "説明",
         "descriptionPlaceholder": "あなたのコミュニティについて教えてください",
         "details": "詳細",
+        "directAndGroupChats": "チャット",
         "directChats": "ダイレクトチャット",
         "edit": "コミュニティを編集する",
         "embed": "埋め込みチャンネルを追加",

@@ -484,6 +484,7 @@
         "description": "Description",
         "descriptionPlaceholder": "Dites-nous en quoi consiste votre communauté",
         "details": "Détails",
+        "directAndGroupChats": "Chats",
         "directChats": "Chats directs",
         "edit": "Modifier la communauté",
         "embed": "Ajouter une chaîne intégrée",

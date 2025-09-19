@@ -30,7 +30,6 @@
     import Headphones from "svelte-material-icons/Headphones.svelte";
     import PhoneHangup from "svelte-material-icons/PhoneHangup.svelte";
     import DurationPicker from "../DurationPicker.svelte";
-    import Markdown from "../Markdown.svelte";
     import UserProfileCard from "../profile/UserProfileCard.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -193,9 +192,6 @@
                 <div class="profile-card">
                     <UserProfileCard {profile} {user} userProfileMode></UserProfileCard>
                 </div>
-            {/if}
-            {#if profile && profile.bio.length > 0}
-                <p class="bio"><Markdown inline={false} text={profile.bio} /></p>
             {/if}
             <div style={`--darkened-call: ${darkenedCall}`} class="controls">
                 <ButtonGroup align={"fill"}>

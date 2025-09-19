@@ -154,7 +154,11 @@
         const pin = await client.promptForPinIfRequired();
 
         if (
-            !(await approvePayment(PROPOSALS_BOT_CANISTER, proposalCost + BigInt(2) * transferFee, pin))
+            !(await approvePayment(
+                PROPOSALS_BOT_CANISTER,
+                proposalCost + BigInt(2) * transferFee,
+                pin,
+            ))
         ) {
             busy = false;
             return;
@@ -272,7 +276,11 @@
         }
     }
 
-    async function approvePayment(spender_canister_id: string, amount: bigint, pin: string | undefined): Promise<boolean> {
+    async function approvePayment(
+        spender_canister_id: string,
+        amount: bigint,
+        pin: string | undefined,
+    ): Promise<boolean> {
         return client
             .approveTransfer(
                 spender_canister_id,
@@ -322,7 +330,7 @@
 
     function wrappedSummary(summary: string) {
         const groupPath = routeForChatIdentifier(
-            selectedMultiUserChat.kind === "group_chat" ? "group_chat" : "community",
+            selectedMultiUserChat.kind === "group_chat" ? "chats" : "community",
             selectedMultiUserChat.id,
         );
 

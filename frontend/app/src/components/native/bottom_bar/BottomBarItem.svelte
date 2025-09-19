@@ -1,7 +1,6 @@
 <script lang="ts">
+    import { Container, NotificationIndicator } from "component-lib";
     import type { Snippet } from "svelte";
-    import Container from "../Container.svelte";
-    import NotificationIndicator from "../NotificationIndicator.svelte";
 
     interface Props {
         selected?: boolean;
@@ -39,27 +38,6 @@
     :global(.bottom_bar_icon svg) {
         width: var(--icon-lg);
         height: var(--icon-lg);
-    }
-
-    .selection {
-        height: 4px;
-        width: 100%;
-        border-radius: var(--rad-sm);
-        background-color: transparent;
-        transition: background-color ease-in-out 300ms;
-
-        &.selected {
-            background-color: var(--primary);
-        }
-    }
-
-    .icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: var(--avatar-lg);
-        height: var(--avatar-lg);
-        border-radius: 50%;
     }
 
     .indicator {

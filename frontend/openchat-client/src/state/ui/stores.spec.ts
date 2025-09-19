@@ -4,7 +4,7 @@ import { dimensions, fullWidth, layout, mobileWidth, screenWidth } from "./store
 
 describe("layout stores", () => {
     beforeEach(() => {
-        routeStore.set({ kind: "chat_list_route", scope: { kind: "group_chat" } });
+        routeStore.set({ kind: "chat_list_route", scope: { kind: "chats" } });
         dimensions.set({ width: 100, height: 100 });
     });
 
@@ -42,7 +42,7 @@ describe("layout stores", () => {
             chatId: { kind: "group_chat", groupId: "123456" },
             chatType: "group_chat",
             open: false,
-            scope: { kind: "group_chat" },
+            scope: { kind: "chats" },
         });
         layout.subscribe((_) => {});
         expect(layout.value).toMatchObject({ showMiddle: true, showNav: false });

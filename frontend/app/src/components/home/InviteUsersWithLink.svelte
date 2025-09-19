@@ -53,7 +53,7 @@
             case "channel":
                 return `${window.location.origin}${routeForChatIdentifier("community", id)}${qs}`;
             case "group_chat":
-                return `${window.location.origin}${routeForChatIdentifier("group_chat", id)}${qs}`;
+                return `${window.location.origin}${routeForChatIdentifier("chats", id)}${qs}`;
         }
     }
 

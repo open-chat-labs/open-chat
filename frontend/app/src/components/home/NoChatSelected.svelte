@@ -29,12 +29,8 @@
         switch (scope) {
             case "community":
                 return ["noChannelSelected", "selectAChannel"];
-            case "direct_chat":
-                return ["noUserSelected", "selectAUser"];
             case "favourite":
                 return ["noChatSelected", "selectAFavourite"];
-            case "group_chat":
-                return ["noChatSelected", "selectAGroupChat"];
             default:
                 return ["noChatSelected", "selectAChat"];
         }
@@ -88,9 +84,6 @@
         <p class="subtitle"><Translatable resourceKey={i18nKey(message)} /></p>
         {#if $chatListScopeStore.kind === "community"}
             <Button><Translatable resourceKey={i18nKey("communities.browseChannels")} /></Button>
-        {:else if $chatListScopeStore.kind === "group_chat"}
-            <Button onClick={() => page("/groups")}
-                ><Translatable resourceKey={i18nKey("discoverMoreGroups")} /></Button>
         {/if}
     </div>
 {/if}

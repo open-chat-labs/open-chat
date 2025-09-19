@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        ColourVars,
         getAlignmentCss,
         getBorderRadiusCss,
         getBorderStyleCss,
@@ -58,6 +59,7 @@
         onClick?: () => void;
         supplementalClass?: string;
         allowOverflow?: boolean;
+        tag?: "div" | "main" | "section"; // this could be just about anything but let's try to limit it
     }
 
     let {
@@ -71,7 +73,7 @@
         height = { kind: "hug" },
         colour,
         borderStyle = "solid",
-        borderColour = "var(--background-2)",
+        borderColour = ColourVars.background2,
         mainAxisAlignment = "start",
         crossAxisAlignment = "start",
         mainAxisSelfAlignment,
@@ -83,6 +85,7 @@
         onClick,
         supplementalClass,
         allowOverflow = false,
+        tag = "div",
     }: Props = $props();
 
     // you might expect this to be done inside onMount but
@@ -115,14 +118,15 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div
+<svelte:element
+    this={tag}
     class:clickable={onClick !== undefined}
     class:overflow={allowOverflow}
     onclick={onClick}
     {style}
     class={`container ${direction} ${supplementalClass ?? ""}`}>
     {@render children()}
-</div>
+</svelte:element>
 
 <style lang="scss">
     .container {

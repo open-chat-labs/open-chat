@@ -324,14 +324,14 @@ function defaultMessage(messageType: string): string {
 function notificationPath(n: Notification): string {
     switch (n.kind) {
         case "direct_notification":
-            return routeForChatIdentifier("direct_chat", n.chatId);
+            return routeForChatIdentifier("chats", n.chatId);
 
         case "direct_reaction":
         case "direct_message_tipped":
-            return routeForMessage("direct_chat", { chatId: n.chatId }, n.messageIndex);
+            return routeForMessage("chats", { chatId: n.chatId }, n.messageIndex);
 
         case "group_notification":
-            return routeForMessageContext("group_chat", {
+            return routeForMessageContext("chats", {
                 chatId: n.chatId,
                 threadRootMessageIndex: n.threadRootMessageIndex,
             });
@@ -339,7 +339,7 @@ function notificationPath(n: Notification): string {
         case "group_reaction":
         case "group_message_tipped":
             return routeForMessage(
-                "group_chat",
+                "chats",
                 {
                     chatId: n.chatId,
                     threadRootMessageIndex: n.threadRootMessageIndex,

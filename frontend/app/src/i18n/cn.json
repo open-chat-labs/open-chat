@@ -484,6 +484,7 @@
         "description": "描述",
         "descriptionPlaceholder": "告诉我们您的社区是关于什么的",
         "details": "细节",
+        "directAndGroupChats": "聊天",
         "directChats": "直接聊天",
         "edit": "编辑社区",
         "embed": "添加内嵌频道",

@@ -39,7 +39,25 @@
     let widthCss = $derived(getFlexStyle("width", width, parentDirection));
     let heightCss = $derived(getFlexStyle("height", height, parentDirection));
     let style = $derived(`${heightCss}; ${widthCss}; color: ${getColourVar()};`);
+    let tag = $derived(getTag());
 
+    function getTag() {
+        switch (type) {
+            case "overview":
+            case "h1":
+                return "h1";
+            case "h2":
+                return "h2";
+            case "title":
+                return "h3";
+            case "subtitle":
+                return "h5";
+            case "label":
+                return "label";
+            default:
+                return "p";
+        }
+    }
     function getColourVar() {
         switch (colour) {
             case "error":
@@ -50,30 +68,18 @@
     }
 </script>
 
-{#if type === "overview" || type === "h1"}
-    <h1 class:ellipsis={ellipsisTruncate} {style} class={`${type} ${fontWeight}`}>
-        {@render children?.()}
-    </h1>
-{:else if type === "h2"}
-    <h2 class:ellipsis={ellipsisTruncate} {style} class={`${type} ${fontWeight}`}>
-        {@render children?.()}
-    </h2>
-{:else if type === "title"}
-    <h3 class:ellipsis={ellipsisTruncate} {style} class={`${type} ${fontWeight}`}>
-        {@render children?.()}
-    </h3>
-{:else if type === "subtitle"}
-    <h5 class:ellipsis={ellipsisTruncate} {style} class={`${type} ${fontWeight}`}>
-        {@render children?.()}
-    </h5>
-{:else if type === "label"}
+{#if type === "label"}
     <label for={labelFor} class:ellipsis={ellipsisTruncate} {style} class={`${type} ${fontWeight}`}>
         {@render children?.()}
     </label>
 {:else}
-    <p class:ellipsis={ellipsisTruncate} {style} class={`${type} ${fontWeight}`}>
+    <svelte:element
+        this={tag}
+        class:ellipsis={ellipsisTruncate}
+        {style}
+        class={`${type} ${fontWeight}`}>
         {@render children?.()}
-    </p>
+    </svelte:element>
 {/if}
 
 <style lang="scss">

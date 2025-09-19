@@ -639,9 +639,8 @@ export function messageContextToChatListScope(ctx: MessageContext): ChatListScop
                 id: { kind: "community", communityId: ctx.chatId.communityId },
             };
         case "direct_chat":
-            return { kind: "direct_chat" };
         case "group_chat":
-            return { kind: "group_chat" };
+            return { kind: "chats" };
     }
 }
 

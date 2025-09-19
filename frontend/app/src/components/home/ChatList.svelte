@@ -14,7 +14,6 @@
         emptyCombinedUnreadCounts,
         type GroupMatch,
         type GroupSearchResponse,
-        iconSize,
         mobileWidth,
         numberOfThreadsStore,
         OpenChat,
@@ -25,19 +24,15 @@
         selectedChatIdStore,
         selectedCommunitySummaryStore,
         unreadCommunityChannelCountsStore,
-        unreadDirectCountsStore,
+        unreadDirectAndGroupCountsStore,
         unreadFavouriteCountsStore,
-        unreadGroupCountsStore,
         type UserSummary,
     } from "openchat-client";
     import page from "page";
     import { getContext, tick } from "svelte";
-    import Close from "svelte-material-icons/Close.svelte";
-    import Compass from "svelte-material-icons/CompassOutline.svelte";
     import { menuCloser } from "../../actions/closeMenu";
     import { i18nKey } from "../../i18n/i18n";
     import { chatListView } from "../../stores/chatListView";
-    import { exploreGroupsDismissed } from "../../stores/settings";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import FilteredUsername from "../FilteredUsername.svelte";
@@ -46,9 +41,8 @@
     import ChatListSectionButton from "./ChatListSectionButton.svelte";
     import ChatSummary from "./ChatSummary.svelte";
     import BrowseChannels from "./communities/details/BrowseChannels.svelte";
-    import DirectChatsHeader from "./communities/DirectChatsHeader.svelte";
+    import DirectAndGroupChatsHeader from "./communities/DirectAndGroupChatsHeader.svelte";
     import FavouriteChatsHeader from "./communities/FavouriteChatsHeader.svelte";
-    import GroupChatsHeader from "./communities/GroupChatsHeader.svelte";
     import PreviewWrapper from "./communities/PreviewWrapper.svelte";
     import SelectedCommunityHeader from "./communities/SelectedCommunityHeader.svelte";
     import Badges from "./profile/Badges.svelte";
@@ -103,29 +97,6 @@
             client.removeCommunity($selectedCommunitySummaryStore.id);
             page(routeForScope(client.getDefaultScope()));
         }
-    }
-
-    function chatMatchesSearch(chat: ChatSummaryType): boolean {
-        if (chat.kind === "group_chat" || chat.kind === "channel") {
-            return (
-                chat.name.toLowerCase().indexOf(lowercaseSearch) >= 0 ||
-                chat.description.toLowerCase().indexOf(lowercaseSearch) >= 0
-            );
-        }
-
-        if (chat.kind === "direct_chat") {
-            const user = $allUsersStore.get(chat.them.userId);
-            if (user !== undefined) {
-                return (
-                    user.username.toLowerCase().indexOf(lowercaseSearch) >= 0 ||
-                    (user.displayName !== undefined &&
-                        user.displayName.toLowerCase().indexOf(lowercaseSearch) >= 0)
-                );
-            } else {
-                return false;
-            }
-        }
-        return false;
     }
 
     function chatWith(userId: string): void {
@@ -190,19 +161,11 @@
     );
     let user = $derived($allUsersStore.get($currentUserIdStore));
     let lowercaseSearch = $derived(searchTerm.toLowerCase());
-    let showExploreGroups = $derived(
-        ($chatListScopeStore.kind === "none" || $chatListScopeStore.kind === "group_chat") &&
-            !$exploreGroupsDismissed &&
-            !searchResultsAvailable,
-    );
     let showBrowseChannnels = $derived($chatListScopeStore.kind === "community");
     let unreadCounts = $derived.by(() => {
         switch ($chatListScopeStore.kind) {
-            case "group_chat": {
-                return $unreadGroupCountsStore;
-            }
-            case "direct_chat": {
-                return $unreadDirectCountsStore;
+            case "chats": {
+                return $unreadDirectAndGroupCountsStore;
             }
             case "favourite": {
                 return $unreadFavouriteCountsStore;
@@ -230,19 +193,17 @@
     });
     let chats = $derived(
         searchTerm !== ""
-            ? $chatSummariesListStore.filter(chatMatchesSearch)
+            ? $chatSummariesListStore.filter((c) => client.chatMatchesSearch(lowercaseSearch, c))
             : $chatSummariesListStore,
     );
 </script>
 
 <!-- svelte-ignore missing_declaration -->
 {#if user}
-    {#if $chatListScopeStore.kind === "favourite"}
+    {#if $chatListScopeStore.kind === "chats"}
+        <DirectAndGroupChatsHeader {canMarkAllRead} />
+    {:else if $chatListScopeStore.kind === "favourite"}
         <FavouriteChatsHeader {canMarkAllRead} />
-    {:else if $chatListScopeStore.kind === "group_chat"}
-        <GroupChatsHeader {canMarkAllRead} />
-    {:else if $chatListScopeStore.kind === "direct_chat"}
-        <DirectChatsHeader {canMarkAllRead} />
     {:else if $selectedCommunitySummaryStore && $chatListScopeStore.kind === "community"}
         <SelectedCommunityHeader community={$selectedCommunitySummaryStore} {canMarkAllRead} />
     {/if}
@@ -371,19 +332,6 @@
                     </div>
                 {/if}
             </div>
-            {#if showExploreGroups}
-                <div class="explore-groups" onclick={() => page("/groups?explore=true")}>
-                    <div class="disc">
-                        <Compass size={$iconSize} color={"var(--icon-txt)"} />
-                    </div>
-                    <div class="label">
-                        <Translatable resourceKey={i18nKey("exploreGroups")} />
-                    </div>
-                    <div onclick={() => exploreGroupsDismissed.set(true)} class="close">
-                        <Close viewBox="0 -3 24 24" size={$iconSize} color={"var(--button-txt)"} />
-                    </div>
-                </div>
-            {/if}
             {#if showBrowseChannnels}
                 <BrowseChannels {searchTerm} />
             {/if}

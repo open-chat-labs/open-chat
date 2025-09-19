@@ -44,10 +44,8 @@
         switch (scope) {
             case "community":
                 return i18nKey("searchChannelsPlaceholder");
-            case "group_chat":
-                return i18nKey("searchGroupsPlaceholder");
-            case "direct_chat":
-                return i18nKey("searchUsersPlaceholder");
+            case "chats":
+                return i18nKey("search");
             case "favourite":
                 return i18nKey("searchFavouritesPlaceholder");
             case "none":
@@ -63,9 +61,7 @@
         searchResultsAvailable = false;
         searchTerm = term;
 
-        if ($chatListScopeStore.kind === "direct_chat") {
-            searchTerm = trimLeadingAtSymbol(searchTerm);
-        }
+        searchTerm = trimLeadingAtSymbol(searchTerm);
 
         if (searchTerm !== "") {
             try {
@@ -75,12 +71,8 @@
                     case "none":
                         legacySearch(term);
                         break;
-                    case "group_chat":
-                        groupSearch(term);
-                        break;
-                    case "direct_chat":
+                    case "chats":
                         userAndBotSearch(term);
-                        break;
                 }
             } catch (err) {
                 console.warn("search failed with: ", err);
@@ -128,11 +120,6 @@
 
     function searchUsers(term: string): Promise<UserSummary[]> {
         return client.searchUsers(term, 10);
-    }
-
-    async function groupSearch(term: string) {
-        groupSearchResults = client.searchGroups(term, 10);
-        groupSearchResults.then(postSearch);
     }
 
     async function legacySearch(term: string) {
