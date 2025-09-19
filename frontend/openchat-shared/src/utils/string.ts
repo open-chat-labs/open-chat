@@ -1,3 +1,4 @@
+import { decodeIcrcAccount } from "@dfinity/ledger-icrc";
 import { Principal } from "@icp-sdk/core/principal";
 
 export const HEX_REGEX = new RegExp("^[A-Fa-f0-9]+$");
@@ -24,6 +25,15 @@ export function isSubAccountValid(text: string): boolean {
 
 export function isAccountIdentifierValid(text: string): boolean {
     return text.length === 64 && isHexString(text);
+}
+
+export function isICRCAddressValid(text: string): boolean {
+    try {
+        decodeIcrcAccount(text);
+        return true;
+    } catch (_e) {
+        return false;
+    }
 }
 
 export function isHexString(text: string): boolean {

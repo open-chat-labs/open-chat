@@ -1,23 +1,23 @@
 <script lang="ts">
     import {
-        type CkbtcMinterWithdrawalInfo,
-        type EvmChain, Lazy,
-        type NamedAccount, type OneSecTransferFees,
-        type OpenChat,
-        type ResourceKey,
-    } from "openchat-client";
-    import {
         BTC_SYMBOL,
         CKBTC_SYMBOL,
+        type CkbtcMinterWithdrawalInfo,
         cryptoBalanceStore,
         cryptoLookup,
         currentUserIdStore,
         currentUserStore,
+        type EvmChain,
         iconSize,
         ICP_SYMBOL,
+        Lazy,
         mobileWidth,
+        type NamedAccount,
+        type OneSecTransferFees,
+        type OpenChat,
+        type ResourceKey,
     } from "openchat-client";
-    import { ErrorCode, isAccountIdentifierValid, isPrincipalValid } from "openchat-shared";
+    import { ErrorCode, isAccountIdentifierValid, isICRCAddressValid } from "openchat-shared";
     import { getContext, onMount } from "svelte";
     import QrcodeScan from "svelte-material-icons/QrcodeScan.svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -55,6 +55,7 @@
     let capturingAccount = $state(false);
     let validAmount = $state(false);
     let targetAccount: string = $state("");
+
     let scanner: Scanner;
     let accounts: NamedAccount[] = $state([]);
     let saveAccountElement: SaveAccount;
@@ -70,7 +71,9 @@
     let selectedNetwork = $state<string>();
     let isBtc = $derived(symbol === BTC_SYMBOL);
     let isBtcNetwork = $derived(selectedNetwork === BTC_SYMBOL);
-    let oneSecEnabled = $derived(tokenDetails.oneSecEnabled && tokenDetails.evmContractAddresses.length > 0);
+    let oneSecEnabled = $derived(
+        tokenDetails.oneSecEnabled && tokenDetails.evmContractAddresses.length > 0,
+    );
     let isOneSecNetwork = $derived(oneSecEnabled && selectedNetwork !== ICP_SYMBOL);
     let networks = $derived.by(() => {
         if (isBtc) {
@@ -86,7 +89,7 @@
         if (targetAccount.length === 0 || targetAccount === account) return false;
         if (isBtc) return targetAccount.length >= 14;
         if (isOneSecNetwork) return targetAccount.length === 42;
-        if (isPrincipalValid(targetAccount)) return true;
+        if (isICRCAddressValid(targetAccount)) return true;
         if (symbol === ICP_SYMBOL && isAccountIdentifierValid(targetAccount)) return true;
         return false;
     });
@@ -94,7 +97,9 @@
     let oneSecFees = $state<OneSecTransferFees[]>();
     let oneSecFeesForToken = $derived.by(() => {
         if (!isOneSecNetwork || oneSecFees === undefined) return undefined;
-        return oneSecFees.find((f) => f.sourceToken === tokenDetails.symbol && f.destinationChain === selectedNetwork);
+        return oneSecFees.find(
+            (f) => f.sourceToken === tokenDetails.symbol && f.destinationChain === selectedNetwork,
+        );
     });
 
     let minAmount = $derived.by(() => {
@@ -124,12 +129,19 @@
         if (isBtcNetwork && ckbtcMinterWithdrawalInfo !== undefined) {
             return ckbtcMinterWithdrawalInfo.feeEstimate;
         } else if (isOneSecNetwork && oneSecFeesForToken !== undefined) {
-            return oneSecFeesForToken.latestTransferFee + (amountToSend * BigInt(100 * oneSecFeesForToken.protocolFeePercent) / BigInt(10000));
+            return (
+                oneSecFeesForToken.latestTransferFee +
+                (amountToSend * BigInt(100 * oneSecFeesForToken.protocolFeePercent)) / BigInt(10000)
+            );
         } else {
             return undefined;
         }
     });
-    let networkFeeFormatted = $derived(networkFee === undefined ? undefined : `~${client.formatTokens(networkFee, tokenDetails.decimals)}`);
+    let networkFeeFormatted = $derived(
+        networkFee === undefined
+            ? undefined
+            : `~${client.formatTokens(networkFee, tokenDetails.decimals)}`,
+    );
 
     onMount(async () => {
         accounts = await client.loadSavedCryptoAccounts();
@@ -150,8 +162,16 @@
             ckbtcMinterInfoDebouncer.execute(amountToSend);
         } else if (isOneSecNetwork) {
             // Filter to where source token equals destination token since we're dealing with cross-chain withdrawals
-            oneSecFeesPromise.get().then((fees) =>
-                oneSecFees = fees.filter((f) => f.sourceToken === f.destinationToken && f.sourceChain === ICP_SYMBOL));
+            oneSecFeesPromise
+                .get()
+                .then(
+                    (fees) =>
+                        (oneSecFees = fees.filter(
+                            (f) =>
+                                f.sourceToken === f.destinationToken &&
+                                f.sourceChain === ICP_SYMBOL,
+                        )),
+                );
         }
     });
 
@@ -195,16 +215,22 @@
         const withdrawTokensPromise = isBtcNetwork
             ? client.withdrawBtc(targetAccount, amountToSend)
             : isOneSecNetwork
-                ? client.withdrawViaOneSec(ledger, symbol, selectedNetwork as EvmChain, targetAccount, amountToSend)
-                : client.withdrawCryptocurrency({
-                      kind: "pending",
-                      ledger,
-                      token: symbol,
-                      to: targetAccount,
-                      amountE8s: amountToSend,
-                      feeE8s: transferFees,
-                      createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
-                  });
+              ? client.withdrawViaOneSec(
+                    ledger,
+                    symbol,
+                    selectedNetwork as EvmChain,
+                    targetAccount,
+                    amountToSend,
+                )
+              : client.withdrawCryptocurrency({
+                    kind: "pending",
+                    ledger,
+                    token: symbol,
+                    to: targetAccount,
+                    amountE8s: amountToSend,
+                    feeE8s: transferFees,
+                    createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
+                });
 
         withdrawTokensPromise
             .then((resp) => {
@@ -280,7 +306,7 @@
                 <Scanner onData={(data) => (targetAccount = data)} bind:this={scanner} />
 
                 {#if networks.length > 0 && selectedNetwork !== undefined}
-                    <NetworkSelector {networks} bind:selectedNetwork={selectedNetwork} />
+                    <NetworkSelector {networks} bind:selectedNetwork />
                 {/if}
 
                 <div class="token-input">
@@ -315,10 +341,11 @@
 
                         {#if networkFeeFormatted !== undefined}
                             <div class="network-fee">
-                                <Translatable resourceKey={i18nKey("cryptoAccount.networkFee", {
-                                    amount: networkFeeFormatted,
-                                    token: symbol,
-                                })} />
+                                <Translatable
+                                    resourceKey={i18nKey("cryptoAccount.networkFee", {
+                                        amount: networkFeeFormatted,
+                                        token: symbol,
+                                    })} />
                             </div>
                         {/if}
                     </div>

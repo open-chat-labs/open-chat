@@ -2,9 +2,9 @@ import { dimensionsWidth } from "openchat-client";
 
 const MAX_HEIGHT = 1000;
 
-class PreviewDimensionsObserver {
+class PreviewHeightObserver {
     #observer: ResizeObserver;
-    #dimensions: Map<string, [number, number]> = new Map();
+    #heights: Map<string, number> = new Map();
     #elementUrls: Map<Element, string> = new Map();
 
     constructor() {
@@ -14,16 +14,16 @@ class PreviewDimensionsObserver {
                 if (0 < element.clientHeight && element.clientHeight <= MAX_HEIGHT) {
                     const url = this.#elementUrls.get(e.target);
                     if (url) {
-                        this.#dimensions.set(url, [element.clientHeight, element.clientWidth]);
+                        this.#heights.set(url, element.clientHeight);
                     }
                 }
             }
         });
-        dimensionsWidth.subscribe((_) => this.#dimensions.clear());
+        dimensionsWidth.subscribe((_) => this.#heights.clear());
     }
 
-    getDimensions(url: string): [number, number] | undefined {
-        return this.#dimensions.get(url);
+    getHeight(url: string): number | undefined {
+        return this.#heights.get(url);
     }
 
     observe(element: Element, url: string) {
@@ -37,4 +37,4 @@ class PreviewDimensionsObserver {
     }
 }
 
-export const previewDimensionsObserver = new PreviewDimensionsObserver();
+export const previewHeightObserver = new PreviewHeightObserver();

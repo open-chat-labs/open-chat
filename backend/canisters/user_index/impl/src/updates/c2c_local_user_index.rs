@@ -149,6 +149,8 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                         ChitBalance {
                             total_earned: total_chit_earned,
                             curr_balance: user.chit_balance,
+                            streak: user.streak,
+                            streak_ends: user.streak_ends,
                         },
                     ),
                     None,

@@ -1,9 +1,10 @@
-use crate::Data;
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
+use crate::{Data, mutate_state};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
+use local_user_index_canister::{ChitBalance, UserIndexEvent};
 use stable_memory::get_reader;
 use tracing::info;
 use user_index_canister::post_upgrade::Args;
@@ -21,6 +22,34 @@ fn post_upgrade(args: Args) {
         msgpack::deserialize(reader).unwrap();
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
+
+    // TODO - remove this after release
+    mutate_state(|state| {
+        let now = state.env.now();
+
+        // Borrow checker would not let me do this in one go
+        let events: Vec<UserIndexEvent> = state
+            .data
+            .users
+            .iter()
+            .filter(|u| u.streak > 0 && u.streak_ends > now)
+            .map(|u| {
+                UserIndexEvent::UpdateChitBalance(
+                    u.user_id,
+                    ChitBalance {
+                        total_earned: u.total_chit_earned,
+                        curr_balance: u.chit_balance,
+                        streak: u.streak,
+                        streak_ends: u.streak_ends,
+                    },
+                )
+            })
+            .collect();
+
+        for ev in events {
+            state.push_event_to_all_local_user_indexes(ev, None);
+        }
+    });
 
     let env = init_env(data.rng_seed, data.oc_key_pair.is_initialised());
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id, data.test_mode);
