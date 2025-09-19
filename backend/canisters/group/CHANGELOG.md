@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add c2c_claim_prize to be called by the local_user_index ([#8613](https://github.com/open-chat-labs/open-chat/pull/8613))
 
+## [[2.0.1900](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1900-group)] - 2025-09-12
+
 ### Changed
 
 - Remove legacy group membership fields from backend ([#8508](https://github.com/open-chat-labs/open-chat/pull/8508))
