@@ -96,7 +96,7 @@ describe("app state", () => {
         localUpdates.clearAll();
         setRouteParams(mockContext, {
             kind: "home_route",
-            scope: { kind: "group_chat" },
+            scope: { kind: "chats" },
         });
     });
 
@@ -107,14 +107,14 @@ describe("app state", () => {
                 chatId: { kind: "group_chat", groupId: "123456" },
                 chatType: "group_chat",
                 open: false,
-                scope: { kind: "group_chat" },
+                scope: { kind: "chats" },
             });
 
             expect(selectedChatIdStore.value).toEqual({ kind: "group_chat", groupId: "123456" });
 
             routeStore.set({
                 kind: "chat_list_route",
-                scope: { kind: "group_chat" },
+                scope: { kind: "chats" },
             });
 
             expect(selectedChatIdStore.value).toBeUndefined();
@@ -144,7 +144,7 @@ describe("app state", () => {
             expect(chatListScopeStore.value).toMatchObject({ kind: "community", id: communityId });
             setRouteParams(mockContext, {
                 kind: "explore_groups_route",
-                scope: { kind: "group_chat" },
+                scope: { kind: "chats" },
             });
             expect(get(chatListScopeStore)).toMatchObject({ kind: "group_chat" });
             expect(chatListScopeStore.value).toMatchObject({ kind: "group_chat" });
@@ -241,7 +241,7 @@ describe("app state", () => {
                 beforeEach(() => {
                     setRouteParams(mockContext, {
                         kind: "home_route",
-                        scope: { kind: "group_chat" },
+                        scope: { kind: "chats" },
                     });
                     localUpdates.addChat(groupChat("654321", chatMessage()));
                 });
@@ -319,13 +319,13 @@ describe("app state", () => {
                 test("scoping works as expected", () => {
                     setRouteParams(mockContext, {
                         kind: "home_route",
-                        scope: { kind: "group_chat" },
+                        scope: { kind: "chats" },
                     });
                     expect(get(allChatsStore).get(groupId)).not.toBeUndefined();
                     expect(chatSummariesStore.value.get(groupId)).not.toBeUndefined();
                     setRouteParams(mockContext, {
                         kind: "home_route",
-                        scope: { kind: "direct_chat" },
+                        scope: { kind: "chats" },
                     });
                     expect(chatSummariesStore.value.get(groupId)).toBeUndefined();
                 });
@@ -392,7 +392,7 @@ describe("app state", () => {
 
             setRouteParams(mockContext, {
                 kind: "home_route",
-                scope: { kind: "group_chat" },
+                scope: { kind: "chats" },
             });
 
             expect(get(selectedCommunityIdStore)).toBeUndefined();
@@ -530,13 +530,13 @@ describe("app state", () => {
                 serverPinnedChatsStore.set(
                     new Map([
                         [
-                            "direct_chat",
+                            "chats",
                             [
                                 { kind: "direct_chat", userId: "123456" },
                                 { kind: "direct_chat", userId: "888888" },
                             ],
                         ],
-                        ["group_chat", [{ kind: "direct_chat", userId: "654321" }]],
+                        ["chats", [{ kind: "direct_chat", userId: "654321" }]],
                     ]),
                 );
             });
@@ -552,8 +552,8 @@ describe("app state", () => {
 
             test("added chat goes first", () => {
                 const chatId: ChatIdentifier = { kind: "direct_chat", userId: "7777777" };
-                localUpdates.pinToScope(chatId, "direct_chat");
-                const directs = get(pinnedChatsStore).get("direct_chat");
+                localUpdates.pinToScope(chatId, "chats");
+                const directs = get(pinnedChatsStore).get("chats");
                 expect(directs).not.toBeUndefined();
                 expect(directs?.length).toEqual(3);
                 expect(directs?.[0]).toEqual(chatId);
@@ -561,8 +561,8 @@ describe("app state", () => {
 
             test("remove pinned chat", () => {
                 const chatId: ChatIdentifier = { kind: "direct_chat", userId: "123456" };
-                localUpdates.unpinFromScope(chatId, "direct_chat");
-                const directs = get(pinnedChatsStore).get("direct_chat");
+                localUpdates.unpinFromScope(chatId, "chats");
+                const directs = get(pinnedChatsStore).get("chats");
                 expect(directs).not.toBeUndefined();
                 expect(directs?.length).toEqual(1);
                 expect(directs?.[0]).toEqual({ kind: "direct_chat", userId: "888888" });

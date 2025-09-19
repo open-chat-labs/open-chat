@@ -1,13 +1,10 @@
 <script lang="ts">
-    import { iconSize, OpenChat } from "openchat-client";
-    import { getContext } from "svelte";
+    import { iconSize } from "openchat-client";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import SectionHeader from "../../SectionHeader.svelte";
     import Translatable from "../../Translatable.svelte";
     import GroupChatsMenu from "./GroupChatsMenu.svelte";
-
-    const client = getContext<OpenChat>("client");
 
     interface Props {
         canMarkAllRead: boolean;

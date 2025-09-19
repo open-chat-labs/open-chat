@@ -337,10 +337,10 @@
                 if (
                     $anonUserStore &&
                     client.isChatListRoute(route) &&
-                    (route.scope.kind === "direct_chat" || route.scope.kind === "favourite")
+                    route.scope.kind === "favourite"
                 ) {
                     client.updateIdentityState({ kind: "logging_in" });
-                    pageRedirect("/group");
+                    pageRedirect("/chats");
                     return;
                 }
 
@@ -518,7 +518,7 @@
             return c.kind === "direct_chat" && c.them === chatId;
         });
 
-        page(routeForChatIdentifier(chat ? $chatListScopeStore.kind : "direct_chat", chatId));
+        page(routeForChatIdentifier(chat ? $chatListScopeStore.kind : "chats", chatId));
     }
 
     function showInviteGroupUsers(show: boolean) {
@@ -841,7 +841,7 @@
             return false;
         }
 
-        page(routeForChatIdentifier("direct_chat", chatId));
+        page(routeForChatIdentifier("chats", chatId));
         return true;
     }
 

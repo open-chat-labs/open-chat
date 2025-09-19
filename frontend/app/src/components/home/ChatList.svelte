@@ -14,7 +14,6 @@
         emptyCombinedUnreadCounts,
         type GroupMatch,
         type GroupSearchResponse,
-        iconSize,
         mobileWidth,
         numberOfThreadsStore,
         OpenChat,
@@ -25,19 +24,15 @@
         selectedChatIdStore,
         selectedCommunitySummaryStore,
         unreadCommunityChannelCountsStore,
-        unreadDirectCountsStore,
+        unreadDirectAndGroupCountsStore,
         unreadFavouriteCountsStore,
-        unreadGroupCountsStore,
         type UserSummary,
     } from "openchat-client";
     import page from "page";
     import { getContext, tick } from "svelte";
-    import Close from "svelte-material-icons/Close.svelte";
-    import Compass from "svelte-material-icons/CompassOutline.svelte";
     import { menuCloser } from "../../actions/closeMenu";
     import { i18nKey } from "../../i18n/i18n";
     import { chatListView } from "../../stores/chatListView";
-    import { exploreGroupsDismissed } from "../../stores/settings";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import FilteredUsername from "../FilteredUsername.svelte";
@@ -166,19 +161,11 @@
     );
     let user = $derived($allUsersStore.get($currentUserIdStore));
     let lowercaseSearch = $derived(searchTerm.toLowerCase());
-    let showExploreGroups = $derived(
-        ($chatListScopeStore.kind === "none" || $chatListScopeStore.kind === "group_chat") &&
-            !$exploreGroupsDismissed &&
-            !searchResultsAvailable,
-    );
     let showBrowseChannnels = $derived($chatListScopeStore.kind === "community");
     let unreadCounts = $derived.by(() => {
         switch ($chatListScopeStore.kind) {
-            case "group_chat": {
-                return $unreadGroupCountsStore;
-            }
-            case "direct_chat": {
-                return $unreadDirectCountsStore;
+            case "chats": {
+                return $unreadDirectAndGroupCountsStore;
             }
             case "favourite": {
                 return $unreadFavouriteCountsStore;
@@ -345,19 +332,6 @@
                     </div>
                 {/if}
             </div>
-            {#if showExploreGroups}
-                <div class="explore-groups" onclick={() => page("/groups?explore=true")}>
-                    <div class="disc">
-                        <Compass size={$iconSize} color={"var(--icon-txt)"} />
-                    </div>
-                    <div class="label">
-                        <Translatable resourceKey={i18nKey("exploreGroups")} />
-                    </div>
-                    <div onclick={() => exploreGroupsDismissed.set(true)} class="close">
-                        <Close viewBox="0 -3 24 24" size={$iconSize} color={"var(--button-txt)"} />
-                    </div>
-                </div>
-            {/if}
             {#if showBrowseChannnels}
                 <BrowseChannels {searchTerm} />
             {/if}

@@ -45,7 +45,7 @@
             case "community":
                 return i18nKey("searchChannelsPlaceholder");
             case "chats":
-                return i18nKey("searchPlaceholder");
+                return i18nKey("search");
             case "favourite":
                 return i18nKey("searchFavouritesPlaceholder");
             case "none":
