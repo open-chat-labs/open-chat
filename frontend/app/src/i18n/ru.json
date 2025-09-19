@@ -484,6 +484,7 @@
         "description": "Описание",
         "descriptionPlaceholder": "Расскажите нам, что представляет собой ваше сообщество",
         "details": "Подробности",
+        "directAndGroupChats": "Чаты",
         "directChats": "Личные чаты",
         "edit": "Изменить сообщество",
         "embed": "Добавить встроенный канал",
