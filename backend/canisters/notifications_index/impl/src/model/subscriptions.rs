@@ -2,7 +2,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use types::{SubscriptionInfo, TimestampMillis, UserId};
+use types::{SubscriptionInfo, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct Subscriptions {
@@ -74,10 +74,4 @@ impl Subscriptions {
     pub fn iter(&self) -> impl Iterator<Item = (&UserId, &Vec<SubscriptionInfo>)> {
         self.subscriptions.iter()
     }
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct Subscription {
-    value: SubscriptionInfo,
-    last_active: TimestampMillis,
 }
