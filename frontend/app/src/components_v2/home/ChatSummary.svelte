@@ -745,6 +745,7 @@
     }
 
     .chat-summary {
+        width: 100%;
         position: relative;
         display: flex;
         justify-content: space-between;

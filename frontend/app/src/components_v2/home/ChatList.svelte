@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { FloatingButton } from "component-lib";
+    import { Container, FloatingButton } from "component-lib";
     import {
         allUsersStore,
         type BotMatch,
@@ -32,7 +32,6 @@
     import page from "page";
     import { getContext, tick } from "svelte";
     import Pencil from "svelte-material-icons/LeadPencil.svelte";
-    import { menuCloser } from "../../actions/closeMenu";
     import { i18nKey } from "../../i18n/i18n";
     import { chatListView } from "../../stores/chatListView";
     import Button from "../Button.svelte";
@@ -238,7 +237,7 @@
         <ChatListFilters bind:filter={chatListFilter} />
     {/if}
 
-    {#if $numberOfThreadsStore > 0}
+    {#if $numberOfThreadsStore > 0 && !$mobileWidth}
         <div class="section-selector">
             <ChatListSectionButton
                 onClick={() => setView("chats")}
@@ -253,11 +252,11 @@
         </div>
     {/if}
 
-    <div use:menuCloser bind:this={chatListElement} class="body">
+    <Container width={{ kind: "fill" }} height={{ kind: "fill" }} direction={"vertical"}>
         {#if $chatListView === "threads"}
             <ThreadPreviews />
         {:else}
-            <div class="chat-summaries">
+            <Container width={{ kind: "fill" }} height={{ kind: "fill" }} direction={"vertical"}>
                 {#if searchResultsAvailable && chats.length > 0}
                     <h3 class="search-subtitle">
                         <Translatable resourceKey={i18nKey("yourChats")} />
@@ -355,12 +354,12 @@
                         {/await}
                     </div>
                 {/if}
-            </div>
+            </Container>
             {#if showBrowseChannnels}
                 <BrowseChannels {searchTerm} />
             {/if}
         {/if}
-    </div>
+    </Container>
     <ActiveCallSummary />
     {#if showPreview}
         <PreviewWrapper>
@@ -394,17 +393,6 @@
 {/if}
 
 <style lang="scss">
-    .body {
-        overflow: auto;
-        flex: auto;
-        @include nice-scrollbar();
-        position: relative;
-    }
-    .chat-summaries {
-        overflow: auto;
-        overflow-x: hidden;
-    }
-
     .join {
         position: sticky;
         bottom: 0;
@@ -442,39 +430,6 @@
         color: var(--txt-light);
         @include font(light, normal, fs-80);
         @include ellipsis();
-    }
-
-    .explore-groups {
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        height: toRem(80);
-        border-top: var(--bw) solid var(--bd);
-        border-bottom: var(--bw) solid var(--bd);
-        padding: $sp4;
-        gap: toRem(12);
-        cursor: pointer;
-
-        @include mobile() {
-            padding: $sp3 toRem(10);
-        }
-
-        .label {
-            flex: auto;
-        }
-
-        .disc {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            align-content: center;
-            text-align: center;
-            height: toRem(48);
-            width: toRem(48);
-            background-color: var(--icon-hv);
-            border-radius: 50%;
-        }
     }
 
     .user-result {
