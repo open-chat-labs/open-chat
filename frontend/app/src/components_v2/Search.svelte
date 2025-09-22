@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Container } from "component-lib";
     import { iconSize, type ResourceKey } from "openchat-client";
     import { onMount } from "svelte";
     import { _ } from "svelte-i18n";
@@ -11,7 +12,6 @@
         searchTerm?: string;
         searching: boolean;
         placeholder?: ResourceKey;
-        fill?: boolean;
         inputStyle?: boolean;
         autofocus?: boolean;
         onPerformSearch?: (term: string) => void;
@@ -23,7 +23,6 @@
         searchTerm = $bindable(""),
         searching = $bindable(false),
         placeholder = i18nKey("searchPlaceholder"),
-        fill = false,
         inputStyle = false,
         onPerformSearch,
         onFocus,
@@ -67,59 +66,51 @@
     });
 </script>
 
-<form onsubmit={performSearch} class="wrapper" class:fill class:input-style={inputStyle}>
-    <input
-        bind:this={inp}
-        onkeydown={keydown}
-        spellcheck="false"
-        bind:value={searchTerm}
-        type="text"
-        class:input-style={inputStyle}
-        use:translatable={{ key: placeholder }}
-        placeholder={interpolate($_, placeholder)}
-        onfocus={onFocus}
-        onblur={onBlur} />
-    {#if searchTerm !== ""}
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <span onclick={clearSearch} class="icon close" class:input-style={inputStyle}
-            ><Close
-                viewBox={inputStyle ? "0 -3 24 24" : "0 0 24 24"}
-                size={$iconSize}
-                color={"var(--icon-txt)"} /></span>
-    {:else}
-        <span class="icon" class:searching class:input-style={inputStyle}>
-            {#if !searching}
-                <Magnify
+<Container padding={["sm", "md"]}>
+    <form onsubmit={performSearch} class="wrapper" class:input-style={inputStyle}>
+        <input
+            bind:this={inp}
+            onkeydown={keydown}
+            spellcheck="false"
+            bind:value={searchTerm}
+            type="text"
+            class:input-style={inputStyle}
+            use:translatable={{ key: placeholder }}
+            placeholder={interpolate($_, placeholder)}
+            onfocus={onFocus}
+            onblur={onBlur} />
+        {#if searchTerm !== ""}
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <span onclick={clearSearch} class="icon close" class:input-style={inputStyle}
+                ><Close
                     viewBox={inputStyle ? "0 -3 24 24" : "0 0 24 24"}
                     size={$iconSize}
-                    color={"var(--icon-txt)"} />
-            {/if}
-        </span>
-    {/if}
-</form>
+                    color={"var(--icon-txt)"} /></span>
+        {:else}
+            <span class="icon" class:searching class:input-style={inputStyle}>
+                {#if !searching}
+                    <Magnify
+                        viewBox={inputStyle ? "0 -3 24 24" : "0 0 24 24"}
+                        size={$iconSize}
+                        color={"var(--icon-txt)"} />
+                {/if}
+            </span>
+        {/if}
+    </form>
+</Container>
 
 <style lang="scss">
     .wrapper {
-        margin: 0 $sp4 $sp4 $sp4;
         background-color: var(--chatSearch-bg);
         display: flex;
         align-items: center;
         position: relative;
-        padding: $sp2 $sp4;
         border-radius: var(--rd);
         box-shadow: var(--chatSearch-sh);
         border: var(--bw) solid var(--chatSearch-bd);
         border-radius: var(--chatSearch-rd);
-
-        @include mobile() {
-            margin: 0 $sp3;
-            margin-bottom: $sp3;
-        }
-
-        &.fill {
-            margin: 0;
-        }
+        width: 100%;
 
         &.input-style {
             padding: $sp3 $sp4;

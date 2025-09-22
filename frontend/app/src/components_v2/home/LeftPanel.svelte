@@ -1,13 +1,19 @@
 <script lang="ts">
     import { Container } from "component-lib";
-    import { activityFeedShowing, mobileWidth, showLeft, showNav } from "openchat-client";
+    import {
+        activityFeedShowing,
+        chatListScopeStore,
+        mobileWidth,
+        showLeft,
+        showNav,
+    } from "openchat-client";
     import { rtlStore } from "../../stores/rtl";
     import ActivityFeed from "./activity/ActivityFeed.svelte";
     import BottomBar, { type Selection } from "./bottom_bar/BottomBar.svelte";
     import ChatList from "./ChatList.svelte";
 
     let offset = $derived($showNav && !$mobileWidth);
-    let selection = $state<Selection>("chats");
+    let selection = $state<Selection>(initialSelection());
     let sectionClass = $derived.by(() => {
         const c = ["left_panel"];
         if ($showLeft) {
@@ -21,11 +27,25 @@
         }
         return c.join(" ");
     });
+
+    function initialSelection() {
+        switch ($chatListScopeStore.kind) {
+            case "community":
+                return "communities";
+            default:
+                return "chats";
+        }
+    }
+
+    // TODO - on mobile, the right panel is not really a thing. It's feels like it's just a modal really.
+    // Doesn't it?
+    // And a modal isn't really a thing either. It's just a page that isn't represented by a route.
 </script>
 
 <Container
     mainAxisAlignment={"spaceBetween"}
     supplementalClass={sectionClass}
+    backgroundColour={"var(--panel-left-bg)"}
     tag={"section"}
     height={{ kind: "fill" }}
     direction={"vertical"}>
@@ -36,38 +56,39 @@
             <ChatList />
         {/if}
     </Container>
-    <BottomBar bind:selection />
+    {#if $mobileWidth}
+        <BottomBar bind:selection />
+    {/if}
 </Container>
 
 <style lang="scss">
     :global(.container.left_panel) {
-        overflow: auto;
-        overflow-x: hidden;
-        max-width: toRem(500);
-        min-width: toRem(300);
-        flex: 7;
-        border-right: var(--bw) solid var(--bd);
-        background: var(--panel-left-bg);
+        overflow: auto !important;
+        overflow-x: hidden !important;
+        max-width: toRem(500) !important;
+        min-width: toRem(300) !important;
+        flex: 7 !important;
+        border-right: var(--bw) solid var(--bd) !important;
 
         @include mobile() {
-            width: 100%;
-            max-width: unset;
-            min-width: unset;
-            flex: auto;
-            border-right: none;
+            width: 100% !important;
+            max-width: unset !important;
+            min-width: unset !important;
+            flex: auto !important;
+            border-right: none !important;
         }
     }
 
     :global(.container.left_panel.offset) {
-        margin-inline-start: toRem(80);
+        margin-inline-start: toRem(80) !important;
     }
 
     :global(.container.left_panel.rtl) {
-        border-right: none;
-        border-left: var(--bw) solid var(--bd);
+        border-right: none !important;
+        border-left: var(--bw) solid var(--bd) !important;
     }
 
     :global(.container.left_panel:not(.visible)) {
-        display: none;
+        display: none !important;
     }
 </style>

@@ -59,7 +59,10 @@
 
 <Container width={{ kind: "fixed", size: "500px" }}>
     <Container gap={"xl"} direction={"vertical"}>
-        <SectionHeader title={"With OC logo"}>
+        <SectionHeader>
+            {#snippet title()}
+                With OC logo
+            {/snippet}
             {#snippet menu()}
                 {@render commonMenu()}
             {/snippet}
@@ -68,10 +71,10 @@
             {/snippet}
         </SectionHeader>
 
-        <SectionHeader
-            onAction={() => onAction("Action clicked")}
-            title={"For direct chat"}
-            {onBack}>
+        <SectionHeader onAction={() => onAction("Action clicked")} {onBack}>
+            {#snippet title()}
+                For direct chat
+            {/snippet}
             {#snippet action(color)}
                 <Video {color} />
             {/snippet}
@@ -83,7 +86,13 @@
             {/snippet}
         </SectionHeader>
 
-        <SectionHeader title={"For community"} subtitle={"And with a subtitle"}>
+        <SectionHeader>
+            {#snippet title()}
+                For community
+            {/snippet}
+            {#snippet subtitle()}
+                And with a subtitle
+            {/snippet}
             {#snippet menu()}
                 {@render commonMenu()}
             {/snippet}
@@ -92,11 +101,13 @@
             {/snippet}
         </SectionHeader>
 
-        <SectionHeader
-            onAction={() => onAction("Action clicked")}
-            {onBack}
-            title={"For channel or group"}
-            subtitle={"And with a subtitle"}>
+        <SectionHeader onAction={() => onAction("Action clicked")} {onBack}>
+            {#snippet title()}
+                For channel or group
+            {/snippet}
+            {#snippet subtitle()}
+                And with a subtitle
+            {/snippet}
             {#snippet menu()}
                 {@render commonMenu()}
             {/snippet}
@@ -108,7 +119,10 @@
             {/snippet}
         </SectionHeader>
 
-        <SectionHeader {onBack} title={"Basic header with label"}>
+        <SectionHeader {onBack}>
+            {#snippet title()}
+                Basic header with label
+            {/snippet}
             {#snippet menu()}
                 {@render commonMenu()}
             {/snippet}
@@ -117,10 +131,14 @@
             {/snippet}
         </SectionHeader>
 
-        <SectionHeader
-            {onBack}
-            title={"With a really really long label that won't fit in the space without being truncated"}
-            subtitle={"And also with a really really long subtitle that also isn't going to fit without being truncated"}>
+        <SectionHeader {onBack}>
+            {#snippet title()}
+                With a really really long label that won't fit in the space without being truncated
+            {/snippet}
+            {#snippet subtitle()}
+                And also with a really really long subtitle that also isn't going to fit without
+                being truncated
+            {/snippet}
             {#snippet menu()}
                 {@render commonMenu()}
             {/snippet}

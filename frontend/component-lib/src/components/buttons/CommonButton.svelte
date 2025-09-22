@@ -210,10 +210,17 @@
                 color: var(--primary);
                 border: var(--bw-thin) solid transparent;
             }
+
+            &.small {
+                color: var(--primary);
+                background: transparent;
+                border: var(--bw-thin) solid var(--primary);
+            }
         }
 
         &.small,
         &.small_text {
+            border-radius: var(--rad-circle);
             padding: var(--sp-sm) var(--sp-md);
             font-size: var(--typo-bodySmall-sz);
             line-height: 12px;

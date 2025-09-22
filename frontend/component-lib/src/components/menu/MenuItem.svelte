@@ -23,7 +23,7 @@
         icon,
         children,
         onclick,
-    }: MenuItemProps & { icon?: Snippet<[string]>; children: Snippet } = $props();
+    }: MenuItemProps & { icon?: Snippet<[string]>; children?: Snippet } = $props();
 
     let iconColour = $derived(danger ? ColourVars.error : ColourVars.textPrimary);
 </script>
@@ -35,7 +35,7 @@
                 {@render icon(iconColour)}
             </span>
         {/if}
-        {@render children()}
+        {@render children?.()}
     </div>
 {:else if separator}
     <hr class="menu-item-separator" />
@@ -55,7 +55,7 @@
                 {@render icon(iconColour)}
             </span>
         {/if}
-        {@render children()}
+        {@render children?.()}
     </a>
 {/if}
 

@@ -11,8 +11,8 @@
     interface Props {
         onBack?: () => void;
         onAction?: () => void;
-        title: string;
-        subtitle?: string;
+        title: Snippet;
+        subtitle?: Snippet;
         menu?: Snippet;
         action?: Snippet<[string]>;
         avatar?: Snippet;
@@ -40,11 +40,11 @@
     {/if}
     <Container gap={"xxs"} direction={"vertical"} width={{ kind: "fill" }}>
         <Title ellipsisTruncate fontWeight={"semi-bold"}>
-            {title}
+            {@render title()}
         </Title>
         {#if subtitle !== undefined}
             <Caption colour={"secondary"} ellipsisTruncate fontWeight={"normal"}>
-                {subtitle}
+                {@render subtitle()}
             </Caption>
         {/if}
     </Container>

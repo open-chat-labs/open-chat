@@ -37,6 +37,7 @@
     import ButtonGroup from "../ButtonGroup.svelte";
     import FilteredUsername from "../FilteredUsername.svelte";
     import Translatable from "../Translatable.svelte";
+    import ChatListFilters, { type ChatListFilter } from "./ChatListFilters.svelte";
     import ChatListSearch from "./ChatListSearch.svelte";
     import ChatListSectionButton from "./ChatListSectionButton.svelte";
     import ChatSummary from "./ChatSummary.svelte";
@@ -60,6 +61,7 @@
     let chatsScrollTop = $state<number | undefined>();
     let previousScope: ChatListScope = $chatListScopeStore;
     let previousView: "chats" | "threads" = $chatListView;
+    let chatListFilter = $state<ChatListFilter>("all");
 
     // TODO this doesn't work properly and I think it's to do with the way
     // effect dependencies are worked out when you have conditional code
@@ -196,6 +198,16 @@
             ? $chatSummariesListStore.filter((c) => client.chatMatchesSearch(lowercaseSearch, c))
             : $chatSummariesListStore,
     );
+
+    // TODO - come back to this later
+    let filteredChats = $derived.by(() => {
+        return chats.filter((c) => {
+            return (
+                chatListFilter !== "groups" ||
+                (chatListFilter === "groups" && c.kind === "group_chat")
+            );
+        });
+    });
 </script>
 
 <!-- svelte-ignore missing_declaration -->
@@ -208,11 +220,17 @@
         <SelectedCommunityHeader community={$selectedCommunitySummaryStore} {canMarkAllRead} />
     {/if}
 
-    <ChatListSearch
-        bind:userAndBotsSearchResults={userAndBotSearchResults}
-        bind:groupSearchResults
-        bind:searchResultsAvailable
-        bind:searchTerm />
+    {#if !$mobileWidth}
+        <ChatListSearch
+            bind:userAndBotsSearchResults={userAndBotSearchResults}
+            bind:groupSearchResults
+            bind:searchResultsAvailable
+            bind:searchTerm />
+    {/if}
+
+    {#if $mobileWidth}
+        <ChatListFilters bind:filter={chatListFilter} />
+    {/if}
 
     {#if $numberOfThreadsStore > 0}
         <div class="section-selector">
@@ -239,7 +257,7 @@
                         <Translatable resourceKey={i18nKey("yourChats")} />
                     </h3>
                 {/if}
-                {#each chats as chatSummary (chatIdentifierToString(chatSummary.id))}
+                {#each filteredChats as chatSummary (chatIdentifierToString(chatSummary.id))}
                     <ChatSummary
                         {chatSummary}
                         selected={chatIdentifiersEqual($selectedChatIdStore, chatSummary.id)}
