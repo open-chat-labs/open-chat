@@ -7,7 +7,7 @@ use chat_events::{MessageContentInternal, MessageReminderContentInternal};
 use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, SECOND_IN_MS};
 use serde::{Deserialize, Serialize};
 use tracing::error;
-use types::{BlobReference, Chat, ChatId, CommunityId, EventIndex, MessageId, MessageIndex, P2PSwapStatus, UserId};
+use types::{BlobReference, Chat, ChatId, CommunityId, EventIndex, MessageId, MessageIndex, P2PSwapStatus};
 use user_canister::C2CReplyContext;
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -24,12 +24,6 @@ pub enum TimerJob {
     SendMessageToChannel(Box<SendMessageToChannelJob>),
     MarkVideoCallEnded(MarkVideoCallEndedJob),
     ClaimOrResetStreakInsurance(ClaimOrResetStreakInsuranceJob),
-}
-
-#[derive(Serialize, Deserialize, Clone)]
-pub struct RetrySendingFailedMessagesJob {
-    pub recipient: UserId,
-    pub attempt: u32,
 }
 
 #[derive(Serialize, Deserialize, Clone)]

@@ -203,13 +203,13 @@ fn calculate_price_limits(
     let diff_in_increments = min_ask_price.saturating_sub(max_bid_price) / config.price_increment;
     if diff_in_increments < config.spread {
         let increase_required = config.spread - diff_in_increments;
-        if increase_required % 2 == 0 || latest_ask_taken.is_some() {
+        if increase_required.is_multiple_of(2) || latest_ask_taken.is_some() {
             max_bid_price = max_bid_price.saturating_sub((increase_required / 2) * config.price_increment);
         } else {
             max_bid_price = max_bid_price.saturating_sub(increase_required.div_ceil(2) * config.price_increment);
         }
 
-        if increase_required % 2 == 0 || latest_ask_taken.is_none() {
+        if increase_required.is_multiple_of(2) || latest_ask_taken.is_none() {
             min_ask_price = min_ask_price.saturating_add((increase_required / 2) * config.price_increment);
         } else {
             min_ask_price = min_ask_price.saturating_add(increase_required.div_ceil(2) * config.price_increment);
