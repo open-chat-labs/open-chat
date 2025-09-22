@@ -12,11 +12,10 @@
         communityChannelVideoCallCountsStore,
         communityListScrollTop,
         currentUserIdStore,
-        directVideoCallCountsStore,
+        directAndGroupVideoCallCountsStore,
         emptyCombinedUnreadCounts,
         favouritesStore,
         favouritesVideoCallCountsStore,
-        groupVideoCallCountsStore,
         latestSuccessfulUpdatesLoop,
         messageActivitySummaryStore,
         mobileWidth,
@@ -27,9 +26,8 @@
         showNav,
         sortedCommunitiesStore,
         unreadCommunityChannelCountsStore,
-        unreadDirectCountsStore,
+        unreadDirectAndGroupCountsStore,
         unreadFavouriteCountsStore,
-        unreadGroupCountsStore,
     } from "openchat-client";
     import page from "page";
     import { getContext, onMount, tick } from "svelte";
@@ -40,7 +38,6 @@
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
     import Hamburger from "svelte-material-icons/Menu.svelte";
-    import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
     import { flip } from "svelte/animate";
     import { i18nKey } from "../../../i18n/i18n";
     import { rtlStore } from "../../../stores/rtl";
@@ -62,7 +59,10 @@
     let communityExplorer = $derived($routeStore.kind === "communities_route");
     let selectedCommunityId = $derived($selectedCommunitySummaryStore?.id.communityId);
     let claimChitAvailable = $derived.by(() => {
-        return $chitStateStore.nextDailyChitClaim < $now && $latestSuccessfulUpdatesLoop > $now - 10 * ONE_MINUTE_MILLIS;
+        return (
+            $chitStateStore.nextDailyChitClaim < $now &&
+            $latestSuccessfulUpdatesLoop > $now - 10 * ONE_MINUTE_MILLIS
+        );
     });
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
@@ -108,14 +108,9 @@
         page("/communities");
     }
 
-    function directChats() {
+    function directAndGroupChats() {
         activityFeedShowing.set(false);
-        page("/user");
-    }
-
-    function groupChats() {
-        activityFeedShowing.set(false);
-        page("/group");
+        page("/chats");
     }
 
     function favouriteChats() {
@@ -164,21 +159,11 @@
             </LeftNavItem>
         {/if}
         <LeftNavItem
-            selected={$chatListScopeStore.kind === "direct_chat" && !communityExplorer}
-            label={i18nKey("communities.directChats")}
-            unread={$unreadDirectCountsStore.chats}
-            video={$directVideoCallCountsStore}
-            onClick={directChats}>
-            <div class="hover direct">
-                <MessageOutline size={iconSize} color={"var(--icon-txt)"} />
-            </div>
-        </LeftNavItem>
-        <LeftNavItem
-            selected={$chatListScopeStore.kind === "group_chat" && !communityExplorer}
-            label={i18nKey("communities.groupChats")}
-            unread={client.mergeCombinedUnreadCounts($unreadGroupCountsStore)}
-            video={$groupVideoCallCountsStore}
-            onClick={groupChats}>
+            selected={$chatListScopeStore.kind === "chats" && !communityExplorer}
+            label={i18nKey("communities.directAndGroupChats")}
+            unread={client.mergeCombinedUnreadCounts($unreadDirectAndGroupCountsStore)}
+            video={$directAndGroupVideoCallCountsStore}
+            onClick={directAndGroupChats}>
             <div class="hover direct">
                 <ForumOutline size={iconSize} color={"var(--icon-txt)"} />
             </div>

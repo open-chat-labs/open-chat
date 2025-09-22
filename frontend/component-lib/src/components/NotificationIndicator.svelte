@@ -1,9 +1,14 @@
 <script lang="ts">
     // TODO - not clear how this should be positioned
+    interface Props {
+        muted?: boolean;
+    }
+
+    let { muted }: Props = $props();
 </script>
 
 <div class="outer">
-    <div class="inner"></div>
+    <div class="inner" class:muted></div>
 </div>
 
 <style lang="scss">
@@ -20,6 +25,10 @@
             border-radius: var(--rad-xs);
             transform: rotate(45deg);
             transform-origin: 50%;
+
+            &.muted {
+                background: var(--disabled-button);
+            }
         }
     }
 </style>
