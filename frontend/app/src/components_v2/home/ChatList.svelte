@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { FloatingButton } from "component-lib";
     import {
         allUsersStore,
         type BotMatch,
@@ -30,6 +31,7 @@
     } from "openchat-client";
     import page from "page";
     import { getContext, tick } from "svelte";
+    import Pencil from "svelte-material-icons/LeadPencil.svelte";
     import { menuCloser } from "../../actions/closeMenu";
     import { i18nKey } from "../../i18n/i18n";
     import { chatListView } from "../../stores/chatListView";
@@ -208,6 +210,10 @@
             );
         });
     });
+
+    function newMessage() {
+        alert("TODO come back to this");
+    }
 </script>
 
 <!-- svelte-ignore missing_declaration -->
@@ -377,6 +383,16 @@
     {/if}
 {/if}
 
+{#if $mobileWidth}
+    <div class="floating">
+        <FloatingButton onClick={newMessage}>
+            {#snippet icon(color)}
+                <Pencil {color}></Pencil>
+            {/snippet}
+        </FloatingButton>
+    </div>
+{/if}
+
 <style lang="scss">
     .body {
         overflow: auto;
@@ -477,5 +493,11 @@
             color: var(--txt-light);
             @include clamp();
         }
+    }
+
+    .floating {
+        position: absolute;
+        bottom: var(--sp-md);
+        right: var(--sp-md);
     }
 </style>
