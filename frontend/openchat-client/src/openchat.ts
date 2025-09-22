@@ -718,10 +718,6 @@ export class OpenChat {
         return this.#authPrincipal;
     }
 
-    isNativeLayout() {
-        return this.isNativeApp() || localStorage.getItem("openchat_native_layout") === "true";
-    }
-
     isNativeAndroid() {
         return this.#appType === "android";
     }
@@ -8252,6 +8248,15 @@ export class OpenChat {
         );
         if (first !== undefined) {
             pageRedirect(routeForChatIdentifier(chatListScopeStore.value.kind, first.id));
+            return true;
+        }
+        return false;
+    }
+
+    selectDefaultCommunity(): boolean {
+        const first = [...communitiesStore.value.values()].find((c) => !c.membership.archived);
+        if (first !== undefined) {
+            pageRedirect(`/community/${first.id.communityId}`);
             return true;
         }
         return false;

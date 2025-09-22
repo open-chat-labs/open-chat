@@ -35,7 +35,7 @@ export const communityThemes = [
     getSignalsTheme(cloneTheme(blueTheme)),
 ];
 
-if (localStorage.getItem("openchat_native_layout") === "true") {
+if (localStorage.getItem("openchat_v2_layout") === "true") {
     communityThemes.push(getNeonTheme(cloneTheme(defaultDark)));
 }
 

@@ -8,7 +8,6 @@
         getFlexStyle,
         getGapCss,
         getPaddingCss,
-        Pixel,
         type BorderWidthSize,
         type CrossAxisAlignment,
         type Direction,
@@ -52,14 +51,14 @@
         crossAxisAlignment?: CrossAxisAlignment;
         mainAxisSelfAlignment?: MainAxisAlignment;
         crossAxisSelfAlignment?: CrossAxisAlignment;
-        minWidth?: Pixel;
-        minHeight?: Pixel;
+        minWidth?: string;
+        minHeight?: string;
         shadow?: string;
         backgroundColour?: string;
         onClick?: () => void;
         supplementalClass?: string;
         allowOverflow?: boolean;
-        tag?: "div" | "main" | "section"; // this could be just about anything but let's try to limit it
+        tag?: "div" | "button" | "main" | "section"; // this could be just about anything but let's try to limit it
     }
 
     let {
@@ -78,8 +77,8 @@
         crossAxisAlignment = "start",
         mainAxisSelfAlignment,
         crossAxisSelfAlignment,
-        minWidth = new Pixel(0),
-        minHeight = new Pixel(0),
+        minWidth = "auto",
+        minHeight = "auto",
         shadow,
         backgroundColour = "unset",
         onClick,
@@ -134,8 +133,10 @@
         scrollbar-width: none;
         position: relative;
         transition:
-            padding ease-in-out 200ms,
-            gap ease-in-out 200ms;
+            min-width 200ms ease-in-out,
+            //flex-basis 200ms ease-in-out,
+            padding 200ms ease-in-out,
+            gap 200ms ease-in-out;
 
         &.overflow {
             overflow: visible;
