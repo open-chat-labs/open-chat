@@ -724,7 +724,7 @@ impl UserMap {
         let matches = matches
             .into_iter()
             .rev()
-            .filter(|&(s, _, _)| (s > 0))
+            .filter(|&(s, _, _)| s > 0)
             .map(|(s, id, b)| b.to_match(*id, s))
             .skip(page_index as usize * page_size as usize)
             .take(page_size as usize)
