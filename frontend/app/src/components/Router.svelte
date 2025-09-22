@@ -111,31 +111,17 @@
         );
         // this is for explore mode
         page("/communities", parsePathParams(communitesRoute), track, () => (route = Home));
-        // global direct chats
-        page(
-            "/user",
-            parsePathParams(chatListRoute({ kind: "direct_chat" })),
-            track,
-            () => (route = Home),
-        );
         // global direct chat selected
         page(
             "/user/:chatId/:messageIndex?/:threadMessageIndex?",
-            parsePathParams(globalDirectChatSelectedRoute({ kind: "direct_chat" })),
-            track,
-            () => (route = Home),
-        );
-        // global group chats
-        page(
-            "/group",
-            parsePathParams(chatListRoute({ kind: "group_chat" })),
+            parsePathParams(globalDirectChatSelectedRoute({ kind: "chats" })),
             track,
             () => (route = Home),
         );
         // global group chat selected
         page(
             "/group/:chatId/:messageIndex?/:threadMessageIndex?",
-            parsePathParams(globalGroupChatSelectedRoute({ kind: "group_chat" })),
+            parsePathParams(globalGroupChatSelectedRoute({ kind: "chats" })),
             track,
             () => (route = Home),
         );
@@ -150,6 +136,25 @@
         page(
             "/community/:communityId/channel/:channelId/:messageIndex?/:threadMessageIndex?",
             parsePathParams(selectedChannelRoute(false)),
+            track,
+            () => (route = Home),
+        );
+        // global direct and group chats
+        page(
+            "/chats",
+            parsePathParams(chatListRoute({ kind: "chats" })),
+            track,
+            () => (route = Home),
+        );
+        page(
+            "/chats/user/:chatId/:messageIndex?/:threadMessageIndex?",
+            parsePathParams(globalDirectChatSelectedRoute({ kind: "chats" })),
+            track,
+            () => (route = Home),
+        );
+        page(
+            "/chats/group/:chatId/:messageIndex?/:threadMessageIndex?",
+            parsePathParams(globalGroupChatSelectedRoute({ kind: "chats" })),
             track,
             () => (route = Home),
         );
@@ -182,15 +187,6 @@
             () => (route = Home),
         );
         page("/share", parsePathParams(shareRoute), track, () => (route = Home));
-        page(
-            "/groups",
-            parsePathParams(() => ({
-                kind: "explore_groups_route",
-                scope: { kind: "group_chat" },
-            })),
-            track,
-            () => (route = Home),
-        );
         page("/admin", parsePathParams(adminRoute), track, () => (route = Home));
         page(
             "/",
@@ -201,7 +197,7 @@
         // legacy route
         page(
             "/:chatId/:messageIndex?/:threadMessageIndex?",
-            parsePathParams(globalGroupChatSelectedRoute({ kind: "group_chat" })),
+            parsePathParams(globalGroupChatSelectedRoute({ kind: "chats" })),
             track,
             () => (route = Home),
         );

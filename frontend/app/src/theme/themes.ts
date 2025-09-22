@@ -1,3 +1,4 @@
+import { theme as neon } from "component-lib";
 import { derived, readable, writable } from "svelte/store";
 import { createLocalStorageStore } from "../utils/store";
 import { getTheme as getBarbieTheme } from "./community/barbie";
@@ -34,7 +35,7 @@ export const communityThemes = [
     getSignalsTheme(cloneTheme(blueTheme)),
 ];
 
-if (localStorage.getItem("openchat_neon_theme") === "true") {
+if (localStorage.getItem("openchat_native_layout") === "true") {
     communityThemes.push(getNeonTheme(cloneTheme(defaultDark)));
 }
 
@@ -83,6 +84,15 @@ export function setModifiedTheme(
         themes[newName] = overridden;
         themeOverride.set(newName);
     }
+}
+
+export function writeNativeCssVariables() {
+    neon.writeCssVariables();
+}
+
+export function setNativeTheme() {
+    writeNativeCssVariables();
+    themeOverride.set("neon_dark");
 }
 
 export const themeOverride = writable<string>(undefined);

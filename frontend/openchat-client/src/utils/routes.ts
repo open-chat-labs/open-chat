@@ -114,10 +114,8 @@ export function routeForScope(scope: ChatListScope): string {
     switch (scope.kind) {
         case "community":
             return `/community/${scope.id.communityId}`;
-        case "direct_chat":
-            return "/user";
-        case "group_chat":
-            return "/group";
+        case "chats":
+            return "/chats";
         case "favourite":
             return "/favourite";
         default:

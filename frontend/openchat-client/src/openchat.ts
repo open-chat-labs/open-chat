@@ -324,6 +324,7 @@ import {
     achievementsStore,
     allChatsStore,
     allServerChatsStore,
+    allUsersStore,
     anonUserStore,
     askForNotificationPermission,
     bitcoinAddress,
@@ -715,6 +716,10 @@ export class OpenChat {
             throw new Error("Trying to access the _authPrincipal before it has been set up");
         }
         return this.#authPrincipal;
+    }
+
+    isNativeLayout() {
+        return this.isNativeApp() || localStorage.getItem("openchat_native_layout") === "true";
     }
 
     isNativeAndroid() {
@@ -2850,7 +2855,7 @@ export class OpenChat {
             if (scope.kind === "favourite") {
                 pageRedirect(
                     routeForChatIdentifier(
-                        selectedCommunityIdStore.value === undefined ? "group_chat" : "community",
+                        selectedCommunityIdStore.value === undefined ? "chats" : "community",
                         chatId,
                     ),
                 );
@@ -2860,7 +2865,7 @@ export class OpenChat {
                 if (!(await this.createDirectChat(chatId))) {
                     publish("notFound");
                 } else {
-                    page(routeForChatIdentifier("direct_chat", chatId));
+                    page(routeForChatIdentifier("chats", chatId));
                 }
             } else if (chatId.kind === "group_chat" || chatId.kind === "channel") {
                 autojoin = querystringStore.value.has("autojoin");
@@ -6442,12 +6447,17 @@ export class OpenChat {
         if (favourites !== undefined) {
             serverFavouritesStore.set(new ChatSet(favourites));
         }
-        if (pinnedDirectChats !== undefined) {
-            serverPinnedChatsStore.update((map) => map.set("direct_chat", pinnedDirectChats));
+
+        // TODO - this is not right at the moment. We really need the pinned timestamps to be able to
+        // order these correctly - but it's not a disaster, just not quite right
+        const pinnedChats = new ChatSet([
+            ...(pinnedDirectChats ?? []),
+            ...(pinnedGroupChats ?? []),
+        ]);
+        if (pinnedDirectChats !== undefined || pinnedGroupChats !== undefined) {
+            serverPinnedChatsStore.update((map) => map.set("chats", [...pinnedChats.values()]));
         }
-        if (pinnedGroupChats !== undefined) {
-            serverPinnedChatsStore.update((map) => map.set("group_chat", pinnedGroupChats));
-        }
+
         if (pinnedChannels !== undefined) {
             serverPinnedChatsStore.update((map) => map.set("community", pinnedChannels));
         }
@@ -8589,7 +8599,7 @@ export class OpenChat {
     }
 
     getDefaultScope(): ChatListScope {
-        if (anonUserStore.value) return { kind: "group_chat" };
+        if (anonUserStore.value) return { kind: "chats" };
 
         // sometimes we have to re-direct the user to home route "/"
         // However, with communities enabled it is not clear what this means
@@ -8598,8 +8608,7 @@ export class OpenChat {
 
         const favourites = favouritesStore.value;
         if (favourites.size > 0) return { kind: "favourite" };
-        if (serverGroupChatsStore.value.size > 0) return { kind: "group_chat" };
-        return { kind: "direct_chat" };
+        return { kind: "chats" };
     }
 
     getUserLocation(): Promise<string | undefined> {
@@ -10154,6 +10163,29 @@ export class OpenChat {
             userId,
             days,
         });
+    }
+
+    chatMatchesSearch(search: string, chat: ChatSummary): boolean {
+        if (chat.kind === "group_chat" || chat.kind === "channel") {
+            return (
+                chat.name.toLowerCase().indexOf(search) >= 0 ||
+                chat.description.toLowerCase().indexOf(search) >= 0
+            );
+        }
+
+        if (chat.kind === "direct_chat") {
+            const user = allUsersStore.value.get(chat.them.userId);
+            if (user !== undefined) {
+                return (
+                    user.username.toLowerCase().indexOf(search) >= 0 ||
+                    (user.displayName !== undefined &&
+                        user.displayName.toLowerCase().indexOf(search) >= 0)
+                );
+            } else {
+                return false;
+            }
+        }
+        return false;
     }
 }
 

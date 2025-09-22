@@ -484,6 +484,7 @@
         "description": "опис",
         "descriptionPlaceholder": "Розкажіть нам, що таке ваша спільнота",
         "details": "Подробиці",
+        "directAndGroupChats": "Чати",
         "directChats": "Прямі чати",
         "edit": "Редагувати спільноту",
         "embed": "Додати вбудований канал",
