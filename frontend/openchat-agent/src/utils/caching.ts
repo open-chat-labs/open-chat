@@ -22,9 +22,9 @@ import type {
     CurrentUserSummary,
     DataContent,
     DiamondMembershipStatus,
+    EventWrapper,
     EventsResponse,
     EventsSuccessResult,
-    EventWrapper,
     ExpiredEventsRange,
     ExpiredMessagesRange,
     ExternalAchievement,
@@ -45,19 +45,19 @@ import type {
     UpdatedEvent,
 } from "openchat-shared";
 import {
-    canRetryMessage,
-    chatIdentifiersEqual,
-    chatIdentifierToString,
     ChatMap,
-    isSuccessfulEventsResponse,
     MAX_EVENTS,
     MAX_MESSAGES,
     MessageContextMap,
     ONE_DAY,
+    canRetryMessage,
+    chatIdentifierToString,
+    chatIdentifiersEqual,
+    isSuccessfulEventsResponse,
     updateCreatedUser,
 } from "openchat-shared";
 
-const CACHE_VERSION = 142;
+const CACHE_VERSION = 143;
 const EARLIEST_SUPPORTED_MIGRATION = 138;
 const MAX_INDEX = 9999999999;
 
@@ -266,6 +266,7 @@ const migrations: Record<number, MigrationFunction<ChatSchema>> = {
     140: clearEvents,
     141: clearChatsAndCurrentUser,
     142: createPublicProfileStore,
+    143: clearCommunityDetailsStore,
 };
 
 async function migrate(

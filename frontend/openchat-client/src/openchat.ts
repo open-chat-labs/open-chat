@@ -3414,6 +3414,8 @@ export class OpenChat {
                 return;
             }
 
+            // this should not actually happen because we should just get back the previous value
+            // is there were no updates
             if (resp.kind === "success_no_updates") {
                 selectedServerCommunityStore.update((state) => {
                     if (state) {
