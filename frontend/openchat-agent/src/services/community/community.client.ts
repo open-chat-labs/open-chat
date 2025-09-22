@@ -180,7 +180,6 @@ import {
     UnitResult,
 } from "../../typebox";
 import {
-    type Database,
     getCachedCommunityDetails,
     getCachedEvents,
     getCachedEventsByIndex,
@@ -194,6 +193,7 @@ import {
     setCachedEvents,
     setCachedGroupDetails,
     setCachedMessageFromSendResponse,
+    type Database,
 } from "../../utils/caching";
 import { mergeCommunityDetails, mergeGroupChatDetails } from "../../utils/chat";
 import {
@@ -975,10 +975,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
             if (fromCache.lastUpdated >= communityLastUpdated || offline()) {
                 return fromCache;
             } else {
-                const [details, anyUpdates] = await this.getCommunityDetailsUpdates(id, fromCache);
-                return anyUpdates
-                    ? details
-                    : { kind: "success_no_updates", lastUpdated: details.lastUpdated };
+                return await this.getCommunityDetailsUpdates(id, fromCache);
             }
         }
 
@@ -1004,17 +1001,17 @@ export class CommunityClient extends MsgpackCanisterAgent {
     private async getCommunityDetailsUpdates(
         id: CommunityIdentifier,
         previous: CommunityDetails,
-    ): Promise<[CommunityDetails, boolean]> {
-        const [details, anyUpdates] = await this.getCommunityDetailsUpdatesFromBackend(previous);
+    ): Promise<CommunityDetails> {
+        const details = await this.getCommunityDetailsUpdatesFromBackend(previous);
         if (details.lastUpdated > previous.lastUpdated) {
             await setCachedCommunityDetails(this.db, id.communityId, details);
         }
-        return [details, anyUpdates];
+        return details;
     }
 
     private async getCommunityDetailsUpdatesFromBackend(
         previous: CommunityDetails,
-    ): Promise<[CommunityDetails, boolean]> {
+    ): Promise<CommunityDetails> {
         const updatesResponse = await this.executeMsgpackQuery(
             "selected_updates_v2",
             {
@@ -1027,20 +1024,17 @@ export class CommunityClient extends MsgpackCanisterAgent {
         );
 
         if (updatesResponse.kind === "failure") {
-            return [previous, false];
+            return previous;
         }
 
         if (updatesResponse.kind === "success_no_updates") {
-            return [
-                {
-                    ...previous,
-                    lastUpdated: updatesResponse.lastUpdated,
-                },
-                false,
-            ];
+            return {
+                ...previous,
+                lastUpdated: updatesResponse.lastUpdated,
+            };
         }
 
-        return [mergeCommunityDetails(previous, updatesResponse), true];
+        return mergeCommunityDetails(previous, updatesResponse);
     }
 
     async getChannelDetails(

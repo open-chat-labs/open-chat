@@ -53,7 +53,7 @@ fn mark_as_online_impl(user_id: UserId, state: &mut RuntimeState) -> Response {
     // also avoid double counting for users who are on multiple devices simultaneously.
     if last_online.is_none_or(|lo| now.saturating_sub(lo) > 50 * SECOND_IN_MS) {
         let minutes_online = state.data.user_online_minutes.incr(user_id, now);
-        if minutes_online % state.data.sync_online_minutes_to_airdrop_bot_increment == 0 {
+        if minutes_online.is_multiple_of(state.data.sync_online_minutes_to_airdrop_bot_increment) {
             state.data.airdrop_bot_event_sync_queue.push(IdempotentEnvelope {
                 created_at: now,
                 idempotency_id: state.env.rng().next_u64(),
