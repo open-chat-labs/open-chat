@@ -493,7 +493,8 @@
                         {/if}
                     </BodySmall>
                     {#if unreadMessages > 0}
-                        <CountBadge>{unreadMessages > 999 ? "999+" : unreadMessages}</CountBadge>
+                        <CountBadge {muted}
+                            >{unreadMessages > 999 ? "999+" : unreadMessages}</CountBadge>
                     {/if}
                 </Container>
             </Container>

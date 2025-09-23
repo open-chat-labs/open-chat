@@ -13,6 +13,8 @@
 
 <style lang="scss">
     .outer {
+        background-color: var(--background-1);
+        border-radius: var(--rad-xs);
         display: inline-flex;
         align-items: center;
         justify-content: center;

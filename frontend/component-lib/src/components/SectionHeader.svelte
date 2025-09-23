@@ -26,7 +26,7 @@
 </script>
 
 <Container
-    padding={"md"}
+    padding={"lg"}
     backgroundColour={ColourVars.background0}
     crossAxisAlignment={"center"}
     mainAxisAlignment={"spaceBetween"}

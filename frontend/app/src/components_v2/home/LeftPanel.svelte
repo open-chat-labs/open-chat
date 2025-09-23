@@ -11,6 +11,7 @@
     import ActivityFeed from "./activity/ActivityFeed.svelte";
     import BottomBar, { type Selection } from "./bottom_bar/BottomBar.svelte";
     import ChatList from "./ChatList.svelte";
+    import CommunitiesSheet from "./communities_sheet/CommunitiesSheet.svelte";
 
     let offset = $derived($showNav && !$mobileWidth);
     let selection = $state<Selection>(initialSelection());
@@ -57,6 +58,9 @@
         {/if}
     </Container>
     {#if $mobileWidth}
+        {#if $chatListScopeStore.kind === "community"}
+            <CommunitiesSheet />
+        {/if}
         <BottomBar bind:selection />
     {/if}
 </Container>

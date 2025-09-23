@@ -21,7 +21,7 @@
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import Lightbulb from "svelte-material-icons/LightbulbVariantOutline.svelte";
-    import BottomBarItem from "./BottomBarItem.svelte";
+    import BottomBarItem, { type Unread } from "./BottomBarItem.svelte";
 
     interface Props {
         selection: Selection;
@@ -42,28 +42,36 @@
     let chatIndicator = $derived.by(() => showIndicator($unreadDirectAndGroupCountsStore.chats));
     let communityIndicator = $derived(showIndicator(unreadCommunities.chats));
     let activityIndicator = $derived.by(() => {
-        return (
-            showIndicator($unreadDirectAndGroupCountsStore.threads) ||
-            showIndicator(unreadCommunities.threads) ||
-            $messageActivitySummaryStore.latestTimestamp > 0n
-        );
+        const directAndGroup = showIndicator($unreadDirectAndGroupCountsStore.threads);
+        const communities = showIndicator(unreadCommunities.threads);
+        const show =
+            directAndGroup.show ||
+            communities.show ||
+            $messageActivitySummaryStore.latestTimestamp > 0n;
+        return {
+            show,
+            muted: false,
+        };
     });
     let indicators = $derived.by(() => {
-        const i: Set<Selection> = new Set();
-        if (chatIndicator) {
-            i.add("chats");
+        const i: Map<Selection, boolean> = new Map();
+        if (chatIndicator.show) {
+            i.set("chats", chatIndicator.muted);
         }
         if (communityIndicator) {
-            i.add("communities");
+            i.set("communities", communityIndicator.muted);
         }
         if (activityIndicator) {
-            i.add("notification");
+            i.set("notification", activityIndicator.muted);
         }
         return i;
     });
 
-    function showIndicator(u: UnreadCounts) {
-        return u.mentions || u.unmuted > 0;
+    function showIndicator({ mentions, unmuted, muted }: UnreadCounts): Unread {
+        return {
+            show: mentions || unmuted > 0 || muted > 0,
+            muted: !mentions && unmuted === 0 && muted > 0,
+        };
     }
 
     function itemSelected(s: Selection) {
@@ -102,7 +110,7 @@
     mainAxisAlignment={"spaceAround"}>
     <div class={`selection ${selection}`}></div>
     <BottomBarItem
-        indicator={indicators.has("chats")}
+        indicator={chatIndicator}
         onSelect={() => itemSelected("chats")}
         selected={selection === "chats"}>
         {#snippet icon(color)}
@@ -110,7 +118,7 @@
         {/snippet}
     </BottomBarItem>
     <BottomBarItem
-        indicator={indicators.has("communities")}
+        indicator={communityIndicator}
         onSelect={() => itemSelected("communities")}
         selected={selection === "communities"}>
         {#snippet icon(color)}
@@ -118,17 +126,14 @@
         {/snippet}
     </BottomBarItem>
     <BottomBarItem
-        indicator={indicators.has("notification")}
+        indicator={activityIndicator}
         onSelect={() => itemSelected("notification")}
         selected={selection === "notification"}>
         {#snippet icon(color)}
             <Lightbulb {color} />
         {/snippet}
     </BottomBarItem>
-    <BottomBarItem
-        indicator={indicators.has("profile")}
-        onSelect={() => itemSelected("profile")}
-        selected={selection === "profile"}>
+    <BottomBarItem onSelect={() => itemSelected("profile")} selected={selection === "profile"}>
         {#snippet icon()}
             <Avatar size={"lg"} url={avatarUrl} name={avatarName}></Avatar>
         {/snippet}

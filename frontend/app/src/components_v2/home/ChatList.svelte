@@ -409,7 +409,7 @@
     {/if}
 {/if}
 
-{#if $mobileWidth}
+{#if $mobileWidth && $chatListScopeStore.kind === "chats"}
     <div class="floating">
         <FloatingButton onClick={newMessage}>
             {#snippet icon(color)}

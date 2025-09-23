@@ -1,15 +1,24 @@
+<script module lang="ts">
+    export type Unread = { show: boolean; muted: boolean };
+</script>
+
 <script lang="ts">
     import { Container, NotificationIndicator } from "component-lib";
     import type { Snippet } from "svelte";
 
     interface Props {
         selected?: boolean;
-        indicator?: boolean;
+        indicator?: Unread;
         onSelect: () => void;
         icon: Snippet<[string]>;
     }
 
-    let { indicator = false, selected = false, onSelect, icon }: Props = $props();
+    let {
+        indicator = { show: false, muted: false },
+        selected = false,
+        onSelect,
+        icon,
+    }: Props = $props();
 
     let iconColour = $derived(selected ? "var(--primary)" : "var(--text-primary)");
 </script>
@@ -28,8 +37,8 @@
         {@render icon(iconColour)}
     </div>
     <div class="indicator">
-        {#if indicator}
-            <NotificationIndicator />
+        {#if indicator.show}
+            <NotificationIndicator muted={indicator.muted} />
         {/if}
     </div>
 </Container>

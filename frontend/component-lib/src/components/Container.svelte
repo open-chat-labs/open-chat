@@ -134,7 +134,7 @@
         position: relative;
         transition:
             min-width 200ms ease-in-out,
-            //flex-basis 200ms ease-in-out,
+            flex-basis 200ms ease-in-out,
             padding 200ms ease-in-out,
             gap 200ms ease-in-out;
 
