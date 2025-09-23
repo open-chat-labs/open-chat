@@ -56,7 +56,7 @@ pub struct SuccessResult {
     pub btc_address: Option<String>,
     pub one_sec_address: Option<String>,
     pub premium_items: Option<Vec<u32>>,
-    pub pinned_chats: Option<Vec<ChatId>>,
+    pub pinned_chats: Option<Vec<Chat>>,
 }
 
 #[ts_export(user, updates)]

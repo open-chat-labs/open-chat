@@ -14,8 +14,10 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
     let my_user_id: UserId = state.env.canister_id().into();
     let avatar_id = state.data.avatar.value.as_ref().map(|a| a.id);
     let blocked_users = state.data.blocked_users.value.iter().copied().collect();
-
-    let merged_pinned = sorted_pinned(&merge_maps(state.data.direct_chats.pinned(), state.data.group_chats.pinned()));
+    let merged_pinned = sorted_pinned(&merge_maps(
+        &state.data.direct_chats.pinned_chats(),
+        &state.data.group_chats.pinned_chats(),
+    ));
 
     let direct_chats = DirectChatsInitial {
         summaries: state.data.direct_chats.iter().map(|d| d.to_summary(my_user_id)).collect(),

@@ -3,7 +3,7 @@ use chat_events::{ChatInternal, ChatMetricsInternal};
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
-use types::{ChatId, MessageIndex, TimestampMillis, Timestamped, UserId, UserType};
+use types::{Chat, ChatId, MessageIndex, TimestampMillis, Timestamped, UserId, UserType};
 
 #[derive(Serialize, Default)]
 pub struct DirectChats {
@@ -90,8 +90,18 @@ impl DirectChats {
         &self.pinned.value
     }
 
+    pub fn pinned_chats(&self) -> HashMap<Chat, TimestampMillis> {
+        self.pinned.value.iter().map(|(k, v)| (Chat::Direct(*k), *v)).collect()
+    }
+
     pub fn pinned_if_updated(&self, since: TimestampMillis) -> Option<HashMap<ChatId, TimestampMillis>> {
         self.pinned.if_set_after(since).map(|ids| ids.to_owned())
+    }
+
+    pub fn pinned_chats_if_updated(&self, since: TimestampMillis) -> Option<HashMap<Chat, TimestampMillis>> {
+        self.pinned
+            .if_set_after(since)
+            .map(|ids| ids.iter().map(|(k, v)| (Chat::Direct(*k), *v)).collect())
     }
 
     pub fn any_updated(&self, since: TimestampMillis) -> bool {

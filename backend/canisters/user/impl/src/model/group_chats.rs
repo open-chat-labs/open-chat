@@ -2,7 +2,7 @@ use crate::model::group_chat::GroupChat;
 use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use types::{CanisterId, ChatId, MessageIndex, TimestampMillis, Timestamped};
+use types::{CanisterId, Chat, ChatId, MessageIndex, TimestampMillis, Timestamped};
 
 #[derive(Serialize, Default)]
 pub struct GroupChats {
@@ -56,8 +56,18 @@ impl GroupChats {
         &self.pinned.value
     }
 
+    pub fn pinned_chats(&self) -> HashMap<Chat, TimestampMillis> {
+        self.pinned.value.iter().map(|(k, v)| (Chat::Group(*k), *v)).collect()
+    }
+
     pub fn pinned_if_updated(&self, since: TimestampMillis) -> Option<HashMap<ChatId, TimestampMillis>> {
         self.pinned.if_set_after(since).map(|ids| ids.to_owned())
+    }
+
+    pub fn pinned_chats_if_updated(&self, since: TimestampMillis) -> Option<HashMap<Chat, TimestampMillis>> {
+        self.pinned
+            .if_set_after(since)
+            .map(|ids| ids.iter().map(|(k, v)| (Chat::Group(*k), *v)).collect())
     }
 
     pub fn removed_since(&self, timestamp: TimestampMillis) -> Vec<ChatId> {
