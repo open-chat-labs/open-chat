@@ -6306,8 +6306,7 @@ export class OpenChat {
                 chatsResponse.groupsRemoved,
                 chatsResponse.communitiesRemoved,
                 chatsResponse.favouriteChats,
-                chatsResponse.pinnedDirectChats,
-                chatsResponse.pinnedGroupChats,
+                chatsResponse.pinnedChats,
                 chatsResponse.pinnedChannels,
                 chatsResponse.pinnedFavouriteChats,
                 chatsResponse.achievements,
@@ -6394,8 +6393,7 @@ export class OpenChat {
         groupsRemoved: string[],
         communitiesRemoved: string[],
         favourites: ChatIdentifier[] | undefined,
-        pinnedDirectChats: DirectChatIdentifier[] | undefined,
-        pinnedGroupChats: GroupChatIdentifier[] | undefined,
+        pinnedChats: ChatIdentifier[] | undefined,
         pinnedChannels: ChannelIdentifier[] | undefined,
         pinnedFavourites: ChatIdentifier[] | undefined,
         achievements: Set<string> | undefined,
@@ -6444,13 +6442,7 @@ export class OpenChat {
             serverFavouritesStore.set(new ChatSet(favourites));
         }
 
-        // TODO - this is not right at the moment. We really need the pinned timestamps to be able to
-        // order these correctly - but it's not a disaster, just not quite right
-        const pinnedChats = new ChatSet([
-            ...(pinnedDirectChats ?? []),
-            ...(pinnedGroupChats ?? []),
-        ]);
-        if (pinnedDirectChats !== undefined || pinnedGroupChats !== undefined) {
+        if (pinnedChats !== undefined) {
             serverPinnedChatsStore.update((map) => map.set("chats", [...pinnedChats.values()]));
         }
 

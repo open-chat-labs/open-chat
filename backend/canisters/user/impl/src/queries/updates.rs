@@ -101,12 +101,12 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         }
     }
 
-    let direct_pinned = state.data.direct_chats.pinned_if_updated(updates_since);
-    let group_pinned = state.data.group_chats.pinned_if_updated(updates_since);
+    let direct_pinned = state.data.direct_chats.pinned_chats_if_updated(updates_since);
+    let group_pinned = state.data.group_chats.pinned_chats_if_updated(updates_since);
     let merged_pinned = match (&direct_pinned, &group_pinned) {
         (Some(direct), Some(group)) => Some(sorted_pinned(&merge_maps(direct, group))),
-        (Some(direct), None) => Some(sorted_pinned(&merge_maps(direct, state.data.group_chats.pinned()))),
-        (None, Some(group)) => Some(sorted_pinned(&merge_maps(state.data.direct_chats.pinned(), group))),
+        (Some(direct), None) => Some(sorted_pinned(&merge_maps(direct, &state.data.group_chats.pinned_chats()))),
+        (None, Some(group)) => Some(sorted_pinned(&merge_maps(&state.data.direct_chats.pinned_chats(), group))),
         _ => None,
     };
 
@@ -114,7 +114,11 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         added: direct_chats_added,
         updated: direct_chats_updated,
         removed: state.data.direct_chats.removed_since(updates_since),
-        pinned: direct_pinned.map(|m| sorted_pinned(&m)),
+        pinned: state
+            .data
+            .direct_chats
+            .pinned_if_updated(updates_since)
+            .map(|m| sorted_pinned(&m)),
     };
 
     let group_chats_removed = state.data.group_chats.removed_since(updates_since);
@@ -132,7 +136,11 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         added: group_chats_added,
         updated: group_chats_updated,
         removed: group_chats_removed,
-        pinned: group_pinned.map(|m| sorted_pinned(&m)),
+        pinned: state
+            .data
+            .group_chats
+            .pinned_if_updated(updates_since)
+            .map(|m| sorted_pinned(&m)),
     };
 
     let communities_removed = state.data.communities.removed_since(updates_since);

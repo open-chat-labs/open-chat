@@ -537,20 +537,12 @@ export function createCommunitySuccess(
 function groupChatsInitial(value: UserInitialStateGroupChatsInitial): GroupChatsInitial {
     return {
         summaries: value.summaries.map(userCanisterGroupSummary),
-        pinned: value.pinned.map((c) => ({
-            kind: "group_chat",
-            groupId: principalBytesToString(c),
-        })),
     };
 }
 
 function directChatsInitial(value: UserInitialStateDirectChatsInitial): DirectChatsInitial {
     return {
         summaries: value.summaries.map(directChatSummary),
-        pinned: value.pinned.map((c) => ({
-            kind: "direct_chat",
-            userId: principalBytesToString(c),
-        })),
     };
 }
 
@@ -655,6 +647,7 @@ export function initialStateResponse(value: UserInitialStateResponse): InitialSt
             oneSecAddress: result.one_sec_address,
             streakInsurance: mapOptional(result.streak_insurance, streakInsurance),
             premiumItems: new Set(result.premium_items),
+            pinnedChats: result.pinned_chats.map(chatIdentifier),
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${value}`);
@@ -768,9 +761,6 @@ export function favouriteChatsUpdates(
 export function groupChatsUpdates(value: UserUpdatesGroupChatsUpdates): GroupChatsUpdates {
     return {
         added: value.added.map(userCanisterGroupSummary),
-        pinned: mapOptional(value.pinned, (p) =>
-            p.map((p) => ({ kind: "group_chat", groupId: principalBytesToString(p) })),
-        ),
         updated: value.updated.map(userCanisterGroupSummaryUpdates),
         removed: value.removed.map(principalBytesToString),
     };
@@ -779,9 +769,6 @@ export function groupChatsUpdates(value: UserUpdatesGroupChatsUpdates): GroupCha
 export function directChatsUpdates(value: UserUpdatesDirectChatsUpdates): DirectChatsUpdates {
     return {
         added: value.added.map(directChatSummary),
-        pinned: mapOptional(value.pinned, (p) =>
-            p.map((p) => ({ kind: "direct_chat", userId: principalBytesToString(p) })),
-        ),
         updated: value.updated.map(directChatSummaryUpdates),
         removed: value.removed.map(principalBytesToString),
     };
@@ -826,6 +813,7 @@ export function getUpdatesResponse(value: UserUpdatesResponse): UpdatesResponse 
             oneSecAddress: value.Success.one_sec_address,
             streakInsurance: optionUpdateV2(result.streak_insurance, streakInsurance),
             premiumItems: mapOptional(result.premium_items, (items) => new Set(items)),
+            pinnedChats: mapOptional(result.pinned_chats, (pinned) => pinned.map(chatIdentifier)),
         };
     }
 
