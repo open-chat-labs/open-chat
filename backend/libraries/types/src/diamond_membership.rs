@@ -21,7 +21,7 @@ pub enum DiamondMembershipStatusFull {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq)]
 #[repr(u8)]
 pub enum DiamondMembershipStatus {
     Inactive = 0,

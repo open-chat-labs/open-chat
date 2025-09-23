@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{ChannelId, EventIndex, MessageIndex, TimestampMillis, UserId};
+use types::{TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct InvitedUsers {
@@ -12,13 +12,6 @@ pub struct InvitedUsers {
 pub struct UserInvitation {
     pub invited_by: UserId,
     pub timestamp: TimestampMillis,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct ChannelInvitation {
-    pub channel_id: ChannelId,
-    pub min_visible_event_index: EventIndex,
-    pub min_visible_message_index: MessageIndex,
 }
 
 impl InvitedUsers {

@@ -330,14 +330,26 @@ export function routeForMessageContext(
 }
 
 export function routeForChatIdentifier(scope: ChatListScope["kind"], id: ChatIdentifier): string {
-    const prefix = scope === "favourite" ? "/favourite" : "";
-    switch (id.kind) {
-        case "direct_chat":
-            return `${prefix}/user/${id.userId}`;
-        case "group_chat":
-            return `${prefix}/group/${id.groupId}`;
-        case "channel":
-            return `${prefix}/community/${id.communityId}/channel/${id.channelId}`;
+    switch (scope) {
+        case "favourite":
+            switch (id.kind) {
+                case "direct_chat":
+                    return `/favourite/user/${id.userId}`;
+                case "group_chat":
+                    return `/favourite/group/${id.groupId}`;
+                case "channel":
+                    return `/favourite/community/${id.communityId}/channel/${id.channelId}`;
+            }
+            break;
+        default:
+            switch (id.kind) {
+                case "direct_chat":
+                    return `/chats/user/${id.userId}`;
+                case "group_chat":
+                    return `/chats/group/${id.groupId}`;
+                case "channel":
+                    return `/community/${id.communityId}/channel/${id.channelId}`;
+            }
     }
 }
 

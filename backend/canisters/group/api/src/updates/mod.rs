@@ -6,6 +6,7 @@ pub mod c2c_bot_delete_messages;
 pub mod c2c_bot_invite_users;
 pub mod c2c_bot_remove_user;
 pub mod c2c_bot_send_message;
+pub mod c2c_claim_prize;
 pub mod c2c_delete_group;
 pub mod c2c_export_group;
 pub mod c2c_export_group_events;

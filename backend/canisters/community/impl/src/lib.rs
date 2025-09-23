@@ -112,13 +112,21 @@ impl RuntimeState {
         }
     }
 
-    pub fn get_calling_member(&self, verify: bool) -> Result<CommunityMemberInternal, OCErrorCode> {
-        let caller = self.env.caller();
-        let member = self.data.members.get(caller).ok_or(OCErrorCode::InitiatorNotInCommunity)?;
+    pub fn get_member(&self, verify: bool, user_id_or_principal: Principal) -> Result<CommunityMemberInternal, OCErrorCode> {
+        let member = self
+            .data
+            .members
+            .get(user_id_or_principal)
+            .ok_or(OCErrorCode::InitiatorNotInCommunity)?;
         if verify {
             member.verify()?;
         }
         Ok(member)
+    }
+
+    pub fn get_calling_member(&self, verify: bool) -> Result<CommunityMemberInternal, OCErrorCode> {
+        let caller = self.env.caller();
+        self.get_member(verify, caller)
     }
 
     pub fn push_notification(
@@ -1028,7 +1036,6 @@ impl Data {
             channel.chat.events.unsubscribe_bot_from_events(bot_id);
         }
 
-        // TODO: Notify UserIndex
         true
     }
 

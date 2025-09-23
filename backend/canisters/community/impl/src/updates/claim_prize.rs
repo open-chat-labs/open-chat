@@ -8,7 +8,7 @@ use ledger_utils::{create_pending_transaction, process_transaction};
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use tracing::error;
-use types::{CanisterId, CompletedCryptoTransaction, OCResult, PendingCryptoTransaction, UserId};
+use types::{CanisterId, CompletedCryptoTransaction, DiamondMembershipStatus, OCResult, PendingCryptoTransaction, UserId};
 
 #[update(msgpack = true)]
 #[trace]
@@ -66,7 +66,16 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
     let now = state.env.now();
     let now_nanos = state.env.now_nanos();
     let user_id = member.user_id;
-    let result = channel.chat.reserve_prize(user_id, args.message_id, now)?;
+    let result = channel.chat.reserve_prize(
+        user_id,
+        args.message_id,
+        now,
+        true,
+        DiamondMembershipStatus::Lifetime,
+        1000000,
+        10000,
+        u64::MAX,
+    )?;
 
     // Hack to ensure 2 prizes claimed by the same user in the same block don't result in "duplicate transaction" errors.
     let duplicate_buster = u32::from(result.message_index) as u64 % 1000;

@@ -484,6 +484,7 @@
         "description": "Descripción",
         "descriptionPlaceholder": "Cuéntanos de qué se trata tu comunidad",
         "details": "Detalles",
+        "directAndGroupChats": "Chats",
         "directChats": "Chats directos",
         "edit": "Editar comunidad",
         "embed": "Agregar canal incrustado",

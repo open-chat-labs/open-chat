@@ -189,6 +189,7 @@ pub enum OCErrorCode {
     AmountNotSpecified = 345,
     ProfileBackgroundTooBig = 346,
     LedgerNotFound = 347,
+    PrizeUserNotElligible = 348,
 
     // InternalError
     C2CError = 500,

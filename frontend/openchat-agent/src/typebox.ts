@@ -6051,6 +6051,12 @@ export const UserIndexPlatformModeratorsGroupResponse = Type.Object({
     Success: ChatId,
 });
 
+export type LocalUserIndexClaimPrizeArgs = Static<typeof LocalUserIndexClaimPrizeArgs>;
+export const LocalUserIndexClaimPrizeArgs = Type.Object({
+    chat_id: MultiUserChat,
+    message_id: MessageId,
+});
+
 export type LocalUserIndexInstallBotArgs = Static<typeof LocalUserIndexInstallBotArgs>;
 export const LocalUserIndexInstallBotArgs = Type.Object({
     location: BotInstallationLocation,
@@ -6951,16 +6957,6 @@ export const BotRegistrationStatus = Type.Union([
     }),
 ]);
 
-export type AutonomousBotScope = Static<typeof AutonomousBotScope>;
-export const AutonomousBotScope = Type.Union([
-    Type.Object({
-        Chat: Chat,
-    }),
-    Type.Object({
-        Community: CommunityId,
-    }),
-]);
-
 export type EventWrapperGroupUnfrozen = Static<typeof EventWrapperGroupUnfrozen>;
 export const EventWrapperGroupUnfrozen = Type.Object({
     index: EventIndex,
@@ -7366,6 +7362,20 @@ export const UserIndexCurrentUserResponse = Type.Union([
     }),
 ]);
 
+export type LocalUserIndexClaimPrizeResponse = Static<typeof LocalUserIndexClaimPrizeResponse>;
+export const LocalUserIndexClaimPrizeResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Object({
+        TransferFailed: Type.Tuple([Type.String(), FailedCryptoTransaction]),
+    }),
+    Type.Object({
+        FailedAfterTransfer: Type.Tuple([Type.String(), CompletedCryptoTransaction]),
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
 export type LocalUserIndexBotChatSummaryArgs = Static<typeof LocalUserIndexBotChatSummaryArgs>;
 export const LocalUserIndexBotChatSummaryArgs = Type.Object({
     chat_context: BotChatContext,
@@ -7384,15 +7394,6 @@ export const LocalUserIndexBotAddReactionArgs = Type.Object({
     thread: Type.Optional(MessageIndex),
     message_id: MessageId,
     reaction: Reaction,
-});
-
-export type LocalUserIndexBotSubscribeToEventsArgs = Static<
-    typeof LocalUserIndexBotSubscribeToEventsArgs
->;
-export const LocalUserIndexBotSubscribeToEventsArgs = Type.Object({
-    scope: AutonomousBotScope,
-    community_events: Type.Array(CommunityEventType),
-    chat_events: Type.Array(ChatEventType),
 });
 
 export type LocalUserIndexActiveProposalTalliesResponse = Static<

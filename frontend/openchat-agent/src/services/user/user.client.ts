@@ -374,7 +374,9 @@ export class UserClient extends MsgpackCanisterAgent {
                 default_channel_rules: defaultChannelRules,
                 primary_language: community.primaryLanguage,
             },
-            (resp) => mapResult(resp, createCommunitySuccess),
+            (resp) => {
+                return mapResult(resp, createCommunitySuccess);
+            },
             UserCreateCommunityArgs,
             UserCreateCommunityResponse,
         );
