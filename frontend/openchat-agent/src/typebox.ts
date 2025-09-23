@@ -9625,6 +9625,7 @@ export const UserInitialStateSuccessResult = Type.Object({
     btc_address: Type.Optional(Type.String()),
     one_sec_address: Type.Optional(Type.String()),
     premium_items: Type.Array(Type.Number()),
+    pinned_chats: Type.Array(Chat),
 });
 
 export type UserInitialStateResponse = Static<typeof UserInitialStateResponse>;
@@ -9663,6 +9664,7 @@ export const UserUpdatesSuccessResult = Type.Object({
     btc_address: Type.Optional(Type.String()),
     one_sec_address: Type.Optional(Type.String()),
     premium_items: Type.Optional(Type.Array(Type.Number())),
+    pinned_chats: Type.Optional(Type.Array(Chat)),
 });
 
 export type UserUpdatesResponse = Static<typeof UserUpdatesResponse>;

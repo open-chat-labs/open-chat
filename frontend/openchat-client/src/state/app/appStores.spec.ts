@@ -630,7 +630,6 @@ function initialiseGlobalState() {
         [],
         [],
         [],
-        [],
         new Set(),
         chitState(),
         [],
