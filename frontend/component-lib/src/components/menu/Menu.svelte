@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Pixel } from "component-lib";
+    import { Rem } from "component-lib";
     import type { Snippet } from "svelte";
     import { fade } from "svelte/transition";
     import Container from "../Container.svelte";
@@ -27,7 +27,7 @@
         borderWidth={"thin"}
         padding={"md"}
         backgroundColour={"var(--background-1)"}
-        minWidth={new Pixel(160)}
+        minWidth={Rem.fromPixels(160).toString()}
         borderRadius={"lg"}
         shadow={"var(--shadow-menu)"}
         width={{ kind: "hug" }}

@@ -39,8 +39,8 @@ export function longpress(node: HTMLElement, onlongpress?: (e: TouchEvent) => vo
         longPressTimer = window.setTimeout(() => {
             if (mobileOperatingSystem === "iOS") {
                 suppressNextClick();
-                handler(e);
             }
+            handler(e);
         }, 500);
     }
 

@@ -18,7 +18,6 @@
     } from "openchat-client";
     import {
         allUsersStore,
-        botState,
         chatIdentifiersEqual,
         chatListScopeStore,
         communitiesStore,
@@ -244,22 +243,6 @@
         }
     });
 
-    function deleteEmptyChat(e: Event) {
-        e.stopPropagation();
-        e.preventDefault();
-        const directBot =
-            chatSummary.kind === "direct_chat"
-                ? botState.externalBots.get(chatSummary.them.userId)
-                : undefined;
-        if (directBot !== undefined) {
-            client.uninstallBot({ kind: "direct_chat", userId: $currentUserIdStore }, directBot.id);
-        } else {
-            client.removePreviewedChat(chatSummary.id);
-        }
-        page(routeForScope($chatListScopeStore));
-        delOffset = -60;
-    }
-
     function pinChat() {
         client.pinChat(chatSummary.id).then((success) => {
             if (!success) {
@@ -432,37 +415,12 @@
             {/if}
         {/snippet}
         <Container
+            onClick={selectChat}
             supplementalClass={"chat_summary"}
             padding={["zero", "lg"]}
             mainAxisAlignment={"spaceBetween"}
             crossAxisAlignment={"center"}
             gap={"lg"}>
-            <!-- {#if !externalContent}
-                <div class:rtl={$rtlStore} class="chat-date">
-                    {#if muted && notificationsSupported}
-                        <div class="mute icon" class:rtl={$rtlStore}>
-                            <MutedIcon size={"1em"} color={"var(--icon-txt)"} />
-                        </div>
-                    {/if}
-                    {#if pinned}
-                        <div class="pin icon">
-                            <PinIcon size={"1em"} color={"var(--icon-txt)"} />
-                        </div>
-                    {/if}
-                    {#if chat.fav}
-                        <div class="fav icon">
-                            <Heart size={"1em"} color={"var(--icon-txt)"} />
-                        </div>
-                    {/if}
-                    {client.formatMessageDate(
-                        displayDate,
-                        $_("today"),
-                        $_("yesterday"),
-                        true,
-                        true,
-                    )}
-                </div>
-            {/if} -->
             <div class="avatar">
                 <Avatar size={"lg"} url={chat.avatarUrl} name={chat.name} />
                 {#if chat.eventsTTL}
