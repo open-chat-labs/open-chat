@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Container } from "component-lib";
+    import { ColourVars, Container } from "component-lib";
     import {
         activityFeedShowing,
         chatListScopeStore,
@@ -45,7 +45,7 @@
 <Container
     mainAxisAlignment={"spaceBetween"}
     supplementalClass={sectionClass}
-    backgroundColour={"var(--panel-left-bg)"}
+    backgroundColour={ColourVars.background0}
     tag={"section"}
     height={{ kind: "fill" }}
     direction={"vertical"}>

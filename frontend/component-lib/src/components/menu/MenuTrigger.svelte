@@ -13,6 +13,7 @@
     type MobileMode = "longpress" | "tap";
 
     interface Props {
+        classString?: string;
         centered?: boolean;
         position?: Position;
         align?: Alignment;
@@ -20,12 +21,14 @@
         children: Snippet;
         menuItems: Snippet;
         mobileMode?: MobileMode;
+        disabled?: boolean;
     }
 
     let props: Props = $props();
     let mobileMode = $derived(props.mobileMode ?? "tap");
     let menuItems = $derived(props.menuItems);
     let children = $derived(props.children);
+    let disabled = $derived(props.disabled);
 
     let menu: HTMLElement;
     let open = $state(false);
@@ -36,6 +39,8 @@
     onDestroy(closeMenu);
 
     function click(e: MouseEvent | TouchEvent) {
+        if (disabled) return;
+
         e.preventDefault();
         e.stopPropagation();
         if (open) {
@@ -73,13 +78,17 @@
 {/snippet}
 
 {#if useLongpress}
-    <div class:open class="menu-trigger noselect" bind:this={menu} use:longpress={click}>
+    <div
+        class:open
+        class={`menu-trigger noselect ${props.classString}`}
+        bind:this={menu}
+        use:longpress={click}>
         {@render children()}
     </div>
 {:else}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class:open class="menu-trigger" bind:this={menu} onclick={click}>
+    <div class:open class={`menu-trigger ${props.classString}`} bind:this={menu} onclick={click}>
         {@render children()}
     </div>
 {/if}

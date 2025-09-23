@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { ColourVars } from "component-lib";
     import type { Snippet } from "svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
@@ -26,8 +27,9 @@
 
 <Container
     padding={"md"}
-    backgroundColour={"var(--background-1)"}
+    backgroundColour={ColourVars.background0}
     crossAxisAlignment={"center"}
+    mainAxisAlignment={"spaceBetween"}
     gap={"md"}>
     {#if onBack}
         <IconButton onclick={onBack}>

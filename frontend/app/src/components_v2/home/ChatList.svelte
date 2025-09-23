@@ -260,7 +260,13 @@
         {#if $chatListView === "threads"}
             <ThreadPreviews />
         {:else}
-            <Container width={{ kind: "fill" }} height={{ kind: "fill" }} direction={"vertical"}>
+            <Container
+                supplementalClass={"chat_summary_list"}
+                padding={["md", "zero", "zero", "zero"]}
+                gap={"md"}
+                width={{ kind: "fill" }}
+                height={{ kind: "fill" }}
+                direction={"vertical"}>
                 {#if searchResultsAvailable && chats.length > 0}
                     <h3 class="search-subtitle">
                         <Translatable resourceKey={i18nKey("yourChats")} />
