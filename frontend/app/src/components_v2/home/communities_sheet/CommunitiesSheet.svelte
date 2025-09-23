@@ -1,10 +1,20 @@
 <script lang="ts">
     import { Container } from "component-lib";
-    import { activityFeedShowing, type CommunitySummary } from "openchat-client";
+    import {
+        activityFeedShowing,
+        emptyCombinedUnreadCounts,
+        OpenChat,
+        unreadCommunityChannelCountsStore,
+        type CommunitySummary,
+        type UnreadCounts,
+    } from "openchat-client";
     import page from "page";
+    import { getContext } from "svelte";
     import { fade } from "svelte/transition";
     import CommunitiesList from "./CommunitiesList.svelte";
     import CommunitiesScroller from "./CommunitiesScroller.svelte";
+
+    const client = getContext<OpenChat>("client");
 
     let expanded = $state(false);
 
@@ -13,13 +23,27 @@
         activityFeedShowing.set(false);
         page(`/community/${community.id.communityId}`);
     }
+
+    function hasUnread(community: CommunitySummary): [boolean, boolean, UnreadCounts] {
+        const unread = client.mergeCombinedUnreadCounts(
+            $unreadCommunityChannelCountsStore.get(community.id) ?? emptyCombinedUnreadCounts(),
+        );
+
+        const { mentions, unmuted, muted } = unread;
+
+        return [
+            mentions || unmuted > 0 || muted > 0,
+            !mentions && unmuted === 0 && muted > 0,
+            unread,
+        ];
+    }
 </script>
 
 <Container
     direction={"vertical"}
-    padding={["md", "lg", "lg", "lg"]}
+    padding={["md", "xl", "lg", "xl"]}
     width={{ kind: "fill" }}
-    height={{ kind: "fixed", size: expanded ? "65%" : "100px" }}
+    height={{ kind: "fixed", size: expanded ? "75%" : "180px" }}
     backgroundColour={"var(--background-1)"}>
     <button onclick={() => (expanded = !expanded)} aria-label="handle" class="handle_outer">
         <div class="handle_inner"></div>
@@ -27,17 +51,18 @@
 
     {#if !expanded}
         <div transition:fade={{ duration: 200 }} class="scroller">
-            <CommunitiesScroller onSelect={selectCommunity}></CommunitiesScroller>
+            <CommunitiesScroller {hasUnread} onSelect={selectCommunity}></CommunitiesScroller>
         </div>
     {:else}
         <div transition:fade={{ duration: 200 }} class="list">
-            <CommunitiesList onSelect={selectCommunity}></CommunitiesList>
+            <CommunitiesList {hasUnread} onSelect={selectCommunity}></CommunitiesList>
         </div>
     {/if}
 </Container>
 
 <style lang="scss">
-    .list {
+    .list,
+    .scroller {
         width: 100%;
     }
 

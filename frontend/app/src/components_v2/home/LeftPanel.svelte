@@ -50,7 +50,7 @@
     tag={"section"}
     height={{ kind: "fill" }}
     direction={"vertical"}>
-    <Container height={{ kind: "fill" }} width={{ kind: "fill" }} direction={"vertical"}>
+    <Container gap={"sm"} height={{ kind: "fill" }} width={{ kind: "fill" }} direction={"vertical"}>
         {#if $activityFeedShowing}
             <ActivityFeed />
         {:else}

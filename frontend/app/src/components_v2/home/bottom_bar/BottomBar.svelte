@@ -53,19 +53,6 @@
             muted: false,
         };
     });
-    let indicators = $derived.by(() => {
-        const i: Map<Selection, boolean> = new Map();
-        if (chatIndicator.show) {
-            i.set("chats", chatIndicator.muted);
-        }
-        if (communityIndicator) {
-            i.set("communities", communityIndicator.muted);
-        }
-        if (activityIndicator) {
-            i.set("notification", activityIndicator.muted);
-        }
-        return i;
-    });
 
     function showIndicator({ mentions, unmuted, muted }: UnreadCounts): Unread {
         return {
@@ -100,8 +87,10 @@
 </script>
 
 <Container
+    supplementalClass={"bottom_nav_bar"}
     padding={["xl", "lg", "sm", "lg"]}
     borderWidth={"thick"}
+    minWidth={"100%"}
     gap={"xl"}
     borderColour={"var(--background-0)"}
     height={{ kind: "fixed", size: "88px" }}
@@ -141,6 +130,13 @@
 </Container>
 
 <style lang="scss">
+    :global(.bottom_nav_bar) {
+        position: absolute !important;
+        bottom: 0;
+        border-left: none !important;
+        border-right: none !important;
+        border-bottom: none !important;
+    }
     .selection {
         position: absolute;
         width: calc(25% - 2rem);

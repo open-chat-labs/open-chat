@@ -26,7 +26,8 @@
 </script>
 
 <Container
-    padding={"lg"}
+    supplementalClass={"section_header"}
+    padding={["md", "sm", "sm", "lg"]}
     backgroundColour={ColourVars.background0}
     crossAxisAlignment={"center"}
     mainAxisAlignment={"spaceBetween"}
@@ -66,3 +67,9 @@
         </MenuTrigger>
     {/if}
 </Container>
+
+<style lang="scss">
+    :global(.container.section_header) {
+        border-bottom: var(--bw-thin) solid var(--background-1);
+    }
+</style>

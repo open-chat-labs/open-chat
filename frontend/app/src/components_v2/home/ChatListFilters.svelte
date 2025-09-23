@@ -24,7 +24,7 @@
     </CommonButton>
 {/snippet}
 
-<Container mainAxisAlignment={"spaceBetween"} padding={["sm", "md"]} gap={"xs"}>
+<Container mainAxisAlignment={"spaceBetween"} padding={["sm", "md"]} gap={"sm"}>
     {@render button("all", "All")}
     {@render button("unread", "Unread")}
     {@render button("groups", "Groups")}

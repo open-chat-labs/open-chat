@@ -1,11 +1,10 @@
 <script lang="ts">
     import { Avatar, Container, NotificationIndicator } from "component-lib";
     import {
-        emptyCombinedUnreadCounts,
         OpenChat,
         sortedCommunitiesStore,
-        unreadCommunityChannelCountsStore,
         type CommunitySummary,
+        type UnreadCounts,
     } from "openchat-client";
     import { getContext } from "svelte";
 
@@ -13,23 +12,16 @@
 
     interface Props {
         onSelect: (community: CommunitySummary) => void;
+        hasUnread: (community: CommunitySummary) => [boolean, boolean, UnreadCounts];
     }
 
     let props: Props = $props();
-
-    function hasUnread(community: CommunitySummary): [boolean, boolean] {
-        const { mentions, unmuted, muted } = client.mergeCombinedUnreadCounts(
-            $unreadCommunityChannelCountsStore.get(community.id) ?? emptyCombinedUnreadCounts(),
-        );
-
-        return [mentions || unmuted > 0 || muted > 0, !mentions && unmuted === 0 && muted > 0];
-    }
 </script>
 
-<Container width={{ kind: "fill" }} gap={"lg"}>
+<Container supplementalClass="scroller" allowOverflow width={{ kind: "fill" }} gap={"lg"}>
     {#each $sortedCommunitiesStore as community}
-        {@const [unread, muted] = hasUnread(community)}
-        <Container width={{ kind: "hug" }} onClick={() => props.onSelect(community)}>
+        {@const [unread, muted] = props.hasUnread(community)}
+        <Container allowOverflow width={{ kind: "hug" }} onClick={() => props.onSelect(community)}>
             <Avatar
                 url={client.communityAvatarUrl(community.id.communityId, community.avatar)}
                 size={"xl"}
@@ -46,8 +38,9 @@
 <style lang="scss">
     .unread {
         position: absolute;
-        bottom: -4px;
+        bottom: -5px;
         left: 50%;
         transform: translateX(-50%);
+        display: flex;
     }
 </style>

@@ -434,7 +434,7 @@
                 <Container
                     gap={"xs"}
                     mainAxisAlignment={"spaceBetween"}
-                    crossAxisAlignment={"start"}>
+                    crossAxisAlignment={"center"}>
                     {#if chat.private}
                         <div class="private"></div>
                     {/if}
