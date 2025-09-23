@@ -13,6 +13,7 @@
         type CombinedUnreadCounts,
         currentUserIdStore,
         emptyCombinedUnreadCounts,
+        favouritesStore,
         type GroupMatch,
         type GroupSearchResponse,
         mobileWidth,
@@ -204,7 +205,10 @@
     let filteredChats = $derived.by(() => {
         return chats.filter((c) => {
             return (
-                chatListFilter !== "groups" ||
+                chatListFilter === "all" ||
+                (chatListFilter === "unread" &&
+                    client.unreadMessageCount(c.id, c.latestMessage?.event.messageIndex) > 0) ||
+                (chatListFilter === "favourites" && $favouritesStore.has(c.id)) ||
                 (chatListFilter === "groups" && c.kind === "group_chat")
             );
         });
