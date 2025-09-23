@@ -1,11 +1,11 @@
 <script lang="ts">
-    import { rtlStore } from "../stores/rtl";
-    import { slide } from "svelte/transition";
     import { expoInOut } from "svelte/easing";
+    import { slide } from "svelte/transition";
+    import { rtlStore } from "../stores/rtl";
 
+    import type { ResourceKey } from "openchat-client";
     import { type Snippet } from "svelte";
     import Arrow from "./Arrow.svelte";
-    import type { ResourceKey } from "openchat-client";
     import Translatable from "./Translatable.svelte";
 
     interface Props {
@@ -80,6 +80,7 @@
 
 <style lang="scss">
     .card {
+        width: 100%;
         border-bottom: var(--bw) solid var(--bd);
 
         &.first {
@@ -88,7 +89,7 @@
     }
 
     .header {
-        padding: toRem(20) 0;
+        padding: 1rem 0;
         display: flex;
         cursor: pointer;
         justify-content: space-between;

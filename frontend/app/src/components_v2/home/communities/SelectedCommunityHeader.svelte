@@ -1,14 +1,8 @@
 <script lang="ts">
-    import { Body, Container, SectionHeader } from "component-lib";
-    import {
-        AvatarSize,
-        setRightPanelHistory,
-        type CommunitySummary,
-        type OpenChat,
-    } from "openchat-client";
+    import { Avatar, Body, Container, SectionHeader } from "component-lib";
+    import { setRightPanelHistory, type CommunitySummary, type OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import Avatar from "../../Avatar.svelte";
     import WithVerifiedBadge from "../../icons/WithVerifiedBadge.svelte";
     import Translatable from "../../Translatable.svelte";
     import VisibilityLabel from "../VisibilityLabel.svelte";
@@ -31,9 +25,9 @@
 <SectionHeader>
     {#snippet avatar()}
         <Avatar
+            radius={"md"}
             url={client.communityAvatarUrl(community.id.communityId, community.avatar)}
-            userId={undefined}
-            size={AvatarSize.Default} />
+            size={"lg"} />
     {/snippet}
     {#snippet title()}
         <WithVerifiedBadge verified={community.verified} size={"small"}>

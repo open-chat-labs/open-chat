@@ -1,6 +1,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
+    import { Container } from "component-lib";
     import { debouncedDerived, threadsByChatStore, type OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import Loading from "../../Loading.svelte";
@@ -29,7 +30,11 @@
     }
 </script>
 
-<div class="threads">
+<Container
+    supplementalClass={"threads"}
+    width={{ kind: "fill" }}
+    height={{ kind: "fill" }}
+    direction={"vertical"}>
     {#if loading && !initialised}
         <Loading />
     {:else}
@@ -37,7 +42,7 @@
             <ThreadPreviewComponent {observer} {thread} />
         {/each}
     {/if}
-</div>
+</Container>
 
 <style lang="scss">
     .threads {

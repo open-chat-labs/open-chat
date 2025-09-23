@@ -2,9 +2,9 @@
     import Spinner from "@src/components/icons/Spinner.svelte";
     import Tooltip from "@src/components/tooltip/Tooltip.svelte";
     import { toastStore } from "@src/stores/toast";
+    import { Avatar, BodySmall, Container, CountBadge, Title } from "component-lib";
     import {
         allUsersStore,
-        AvatarSize,
         chatListScopeStore,
         chatSummariesStore,
         currentUserIdStore,
@@ -22,8 +22,6 @@
     import { _ } from "svelte-i18n";
     import EyeOffIcon from "svelte-material-icons/EyeOffOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import { pop } from "../../../utils/transition";
-    import Avatar from "../../Avatar.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
     import LinkButton from "../../LinkButton.svelte";
     import Translatable from "../../Translatable.svelte";
@@ -125,61 +123,68 @@
 </script>
 
 {#if chat !== undefined}
-    <div class="wrapper">
+    <Container padding={["zero", "lg"]}>
         <CollapsibleCard
             onToggle={() => (open = !open)}
             {open}
             headerText={i18nKey("userInfoHeader")}>
             {#snippet titleSlot()}
-                <div class="header">
+                <Container
+                    supplementalClass={"thread_preview_header"}
+                    mainAxisAlignment={"spaceBetween"}
+                    crossAxisAlignment={"center"}
+                    gap={"lg"}>
                     <div class="avatar">
-                        <Avatar url={chatData.avatarUrl} size={AvatarSize.Default} />
+                        <Avatar url={chatData.avatarUrl} size={"lg"} />
                     </div>
-                    <div class="details">
-                        <div class="title-and-link">
-                            <h4 class="title">
+                    <Container width={{ kind: "fill" }} gap={"xxs"} direction={"vertical"}>
+                        <Container width={{ kind: "hug" }} gap={"sm"}>
+                            <Title ellipsisTruncate fontWeight={"semi-bold"}>
                                 {(chat.kind === "group_chat" || chat.kind === "channel") &&
                                     chat.name}
-                            </h4>
+                            </Title>
                             <LinkButton underline="hover" onClick={selectThread}
                                 ><Translatable
                                     resourceKey={i18nKey("thread.open")} />&#8594;</LinkButton>
-                        </div>
-                        <div class="root-msg">
-                            <Markdown
-                                text={client.getContentAsText($_, thread.rootMessage.event.content)}
-                                oneLine
-                                suppressLinks />
-                        </div>
-                    </div>
-                    <Tooltip position={"bottom"} align={"middle"}>
-                        <!-- svelte-ignore a11y_no_static_element_interactions -->
-                        <!-- svelte-ignore a11y_click_events_have_key_events -->
-                        <div onclick={unfollow} class="unfollow">
-                            {#if !unfollowing}
-                                <EyeOffIcon size={"1.2em"} color={"var(--icon-inverted-txt)"} />
-                            {:else}
-                                <Spinner
-                                    backgroundColour={"rgba(0,0,0,0.3)"}
-                                    foregroundColour={"var(--button-spinner)"} />
+                            <Tooltip position={"bottom"} align={"middle"}>
+                                <!-- svelte-ignore a11y_no_static_element_interactions -->
+                                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                                <div onclick={unfollow} class="unfollow">
+                                    {#if !unfollowing}
+                                        <EyeOffIcon
+                                            size={"1.2em"}
+                                            color={"var(--icon-inverted-txt)"} />
+                                    {:else}
+                                        <Spinner
+                                            backgroundColour={"rgba(0,0,0,0.3)"}
+                                            foregroundColour={"var(--button-spinner)"} />
+                                    {/if}
+                                </div>
+                                {#snippet popupTemplate()}
+                                    <Translatable resourceKey={i18nKey("unfollowThread")}
+                                    ></Translatable>
+                                {/snippet}
+                            </Tooltip>
+                        </Container>
+                        <Container
+                            gap={"xs"}
+                            mainAxisAlignment={"spaceBetween"}
+                            crossAxisAlignment={"end"}>
+                            <BodySmall ellipsisTruncate colour={"secondary"}>
+                                <Markdown
+                                    text={client.getContentAsText(
+                                        $_,
+                                        thread.rootMessage.event.content,
+                                    )}
+                                    oneLine
+                                    suppressLinks />
+                            </BodySmall>
+                            {#if unreadCount > 0}
+                                <CountBadge>{unreadCount > 999 ? "999+" : unreadCount}</CountBadge>
                             {/if}
-                        </div>
-                        {#snippet popupTemplate()}
-                            <Translatable resourceKey={i18nKey("unfollowThread")}></Translatable>
-                        {/snippet}
-                    </Tooltip>
-                    {#if unreadCount > 0}
-                        <div
-                            in:pop={{ duration: 1500 }}
-                            title={$_("chatSummary.unread", {
-                                values: { count: unreadCount.toString() },
-                            })}
-                            class:muted
-                            class="unread">
-                            {unreadCount > 999 ? "999+" : unreadCount}
-                        </div>
-                    {/if}
-                </div>
+                        </Container>
+                    </Container>
+                </Container>
             {/snippet}
             <IntersectionObserverComponent onIntersecting={isIntersecting}>
                 <div class="body">
@@ -269,7 +274,7 @@
                 </div>
             </IntersectionObserverComponent>
         </CollapsibleCard>
-    </div>
+    </Container>
 {/if}
 
 <style lang="scss">
@@ -285,9 +290,6 @@
         border-top: 1px solid var(--bd);
     }
 
-    .wrapper {
-        background-color: var(--thread-preview-bg);
-    }
     .separator {
         padding: $sp2;
         background-color: var(--timeline-bg);
@@ -295,51 +297,6 @@
         text-align: center;
         color: var(--timeline-txt);
         @include font(book, normal, fs-90);
-    }
-    .header {
-        position: relative;
-        display: flex;
-        align-items: center;
-        width: calc(100% - 24px);
-        gap: $sp4;
-
-        @include mobile() {
-            gap: $sp3;
-        }
-    }
-    .avatar {
-        flex: 0 0 40px;
-    }
-    .details {
-        flex: 1;
-        overflow: hidden;
-
-        .title-and-link {
-            display: flex;
-            gap: $sp3;
-            align-items: center;
-            margin-bottom: $sp1;
-        }
-
-        .title {
-            @include font(book, normal, fs-100);
-            color: var(--txt);
-            @include ellipsis();
-        }
-
-        .root-msg {
-            color: var(--txt-light);
-            @include font(book, normal, fs-80);
-        }
-    }
-    .unread {
-        @include unread();
-        margin: 0 $sp2;
-
-        &.muted {
-            background-color: var(--unread-mute);
-            text-shadow: none;
-        }
     }
 
     .unfollow {

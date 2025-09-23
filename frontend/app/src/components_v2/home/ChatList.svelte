@@ -238,11 +238,28 @@
     {/if}
 
     {#if $mobileWidth}
-        <ChatListFilters bind:filter={chatListFilter} />
+        {#if $chatListScopeStore.kind === "chats"}
+            <ChatListFilters bind:filter={chatListFilter} />
+        {:else if $chatListScopeStore.kind === "community"}
+            {#if $numberOfThreadsStore > 0}
+                <Container mainAxisAlignment={"spaceBetween"} padding={["sm", "md"]} gap={"sm"}>
+                    <ChatListSectionButton
+                        onClick={() => setView("chats")}
+                        unread={unreadCounts.chats}
+                        title={i18nKey("chats")}
+                        selected={$chatListView === "chats"} />
+                    <ChatListSectionButton
+                        unread={unreadCounts.threads}
+                        onClick={() => setView("threads")}
+                        title={i18nKey("thread.previewTitle")}
+                        selected={$chatListView === "threads"} />
+                </Container>
+            {/if}
+        {/if}
     {/if}
 
     {#if $numberOfThreadsStore > 0 && !$mobileWidth}
-        <div class="section-selector">
+        <Container mainAxisAlignment={"spaceBetween"} padding={["sm", "md"]} gap={"sm"}>
             <ChatListSectionButton
                 onClick={() => setView("chats")}
                 unread={unreadCounts.chats}
@@ -253,7 +270,7 @@
                 onClick={() => setView("threads")}
                 title={i18nKey("thread.previewTitle")}
                 selected={$chatListView === "threads"} />
-        </div>
+        </Container>
     {/if}
 
     <Container width={{ kind: "fill" }} height={{ kind: "fill" }} direction={"vertical"}>
@@ -262,7 +279,7 @@
         {:else}
             <Container
                 supplementalClass={"chat_summary_list"}
-                padding={["md", "zero", "zero", "zero"]}
+                padding={["lg", "zero", "zero", "zero"]}
                 gap={"md"}
                 width={{ kind: "fill" }}
                 height={{ kind: "fill" }}
