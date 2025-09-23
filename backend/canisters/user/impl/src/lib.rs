@@ -20,6 +20,7 @@ use event_store_types::{Event, EventBuilder};
 use fire_and_forget_handler::FireAndForgetHandler;
 use ic_principal::Principal;
 use installed_bots::InstalledBots;
+use itertools::Itertools;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
 use model::contacts::Contacts;
 use model::favourite_chats::FavouriteChats;
@@ -32,7 +33,9 @@ use rand::prelude::StdRng;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
 use std::cell::RefCell;
-use std::collections::{BTreeMap, HashSet};
+use std::cmp::Reverse;
+use std::collections::{BTreeMap, HashMap, HashSet};
+use std::hash::Hash;
 use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
@@ -801,6 +804,24 @@ fn run_regular_jobs() {
 
 fn flush_pending_events() {
     mutate_state(|state| state.data.flush_pending_events());
+}
+
+fn sorted_pinned<T: Clone>(map: &HashMap<T, TimestampMillis>) -> Vec<T> {
+    map.iter()
+        .map(|(key, &ts)| (key.clone(), ts))
+        .sorted_by_key(|(_, ts)| Reverse(*ts))
+        .map(|(key, _)| key)
+        .collect()
+}
+
+fn merge_maps<K, V>(a: &HashMap<K, V>, b: &HashMap<K, V>) -> HashMap<K, V>
+where
+    K: Eq + Hash + Clone,
+    V: Clone,
+{
+    let mut merged = a.clone();
+    merged.extend(b.iter().map(|(k, v)| (k.clone(), v.clone())));
+    merged
 }
 
 #[derive(Serialize, Debug)]
