@@ -169,47 +169,57 @@
         border-bottom: none !important;
     }
     .selection {
+        --width: calc(25% - 2rem);
         position: absolute;
-        width: calc(25% - 2rem);
+        width: var(--width);
         left: 0;
-        top: 0.375rem;
+        top: 0.25rem;
         height: var(--sp-xs);
         background: var(--gradient);
         border-radius: var(--rad-sm);
         transition: left ease-in-out 200ms;
-
-        &.showFavourites {
-            width: calc(20% - 2rem);
-        }
+        transform: translateX(-50%);
 
         // first and last need to account for the container's padding
-
         &.chats {
-            left: calc(0% + 1rem + 0.25rem);
+            left: 12.5%;
         }
 
         &.communities {
-            left: calc(25% + 1rem);
-            &.showFavourites {
-                left: calc(20% + 1rem);
-            }
+            left: 37.5%;
         }
 
         &.favourites {
-            left: calc(40% + 1rem);
+            left: 60%;
         }
 
         &.notification {
-            left: calc(50% + 1rem);
-            &.showFavourites {
-                left: calc(60% + 1rem);
-            }
+            left: 62.5%;
         }
 
         &.profile {
-            left: calc(75% + 1rem - 0.25rem);
-            &.showFavourites {
-                left: calc(80% + 1rem - 0.25rem);
+            left: 87.5%;
+        }
+
+        &.showFavourites {
+            &.chats {
+                left: 10%;
+            }
+
+            &.communities {
+                left: 30%;
+            }
+
+            &.favourites {
+                left: 50%;
+            }
+
+            &.notification {
+                left: 70%;
+            }
+
+            &.profile {
+                left: 90%;
             }
         }
     }
