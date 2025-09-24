@@ -106,12 +106,13 @@
 
 <Container
     supplementalClass={"bottom_nav_bar"}
-    padding={["xl", "lg", "sm", "lg"]}
+    padding={["xl", "lg", "md", "lg"]}
     borderWidth={"thick"}
     minWidth={"100%"}
+    minHeight={"5.5rem"}
     gap={"xl"}
     borderColour={"var(--background-0)"}
-    height={{ kind: "fixed", size: "88px" }}
+    height={{ kind: "fixed", size: "5.5rem" }}
     borderRadius={["md", "md", "zero", "zero"]}
     backgroundColour={"var(--background-1)"}
     mainAxisAlignment={"spaceAround"}>

@@ -43,7 +43,7 @@
     direction={"vertical"}
     padding={["md", "xl", "lg", "xl"]}
     width={{ kind: "fill" }}
-    height={{ kind: "fixed", size: expanded ? "75%" : "180px" }}
+    height={{ kind: "fixed", size: expanded ? "75%" : "12.5rem" }}
     backgroundColour={"var(--background-1)"}>
     <button onclick={() => (expanded = !expanded)} aria-label="handle" class="handle_outer">
         <div class="handle_inner"></div>

@@ -80,7 +80,12 @@ export function toPixel(rem: number): number {
     return pixelsFromRems(rem, dimensionsWidth.value);
 }
 export const iconSize = derived(mobileWidth, (mobileWidth) => (mobileWidth ? "1.6em" : "1.4em"));
-export const baseFontSize = derived(mobileWidth, (mobileWidth) => (mobileWidth ? 14 : 16));
+export const baseFontSize = derived(mobileWidth, (mobileWidth) => {
+    if (localStorage.getItem("openchat_v2_layout") === "true") {
+        return 16;
+    }
+    return mobileWidth ? 14 : 16;
+});
 
 export const fontScaleStore = new LocalStorageStore<FontScale>(
     "openchat_font_size",

@@ -530,8 +530,15 @@
         }
     }
 
+    .avatar {
+        display: flex;
+        position: relative;
+    }
+
     .expires {
         @include disappearing();
+        bottom: 0;
+        right: 0;
     }
 
     .private {

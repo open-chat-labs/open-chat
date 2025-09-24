@@ -11,7 +11,7 @@
     import { snowing } from "@stores/snow";
     import { incomingVideoCall } from "@stores/video";
     import { broadcastLoggedInUser } from "@stores/xframe";
-    import { currentTheme, setNativeTheme, writeNativeCssVariables } from "@theme/themes";
+    import { currentTheme } from "@theme/themes";
     import "@utils/markdown";
     import {
         expectNewFcmToken,

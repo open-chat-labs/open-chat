@@ -38,7 +38,7 @@
 <style lang="scss">
     .unread {
         position: absolute;
-        bottom: -5px;
+        bottom: -6px;
         left: 50%;
         transform: translateX(-50%);
         display: flex;
