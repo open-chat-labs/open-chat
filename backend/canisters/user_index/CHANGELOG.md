@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- fixed post upgrade error ([#8625](https://github.com/open-chat-labs/open-chat/pull/8625))
 - sync streak data to local user indexes ([#8613](https://github.com/open-chat-labs/open-chat/pull/8613))
 
 ## [[2.0.1903](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1903-user_index)] - 2025-09-12

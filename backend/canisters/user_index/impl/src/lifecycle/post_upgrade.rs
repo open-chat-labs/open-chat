@@ -51,7 +51,9 @@ fn post_upgrade(args: Args) {
             .collect();
 
         for ev in events {
-            state.push_event_to_all_local_user_indexes(ev, None);
+            for canister_id in state.data.local_index_map.canisters() {
+                state.data.user_index_event_sync_queue.push(*canister_id, ev.clone());
+            }
         }
     });
 
