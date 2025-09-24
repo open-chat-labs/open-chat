@@ -13,6 +13,7 @@
         messageActivitySummaryStore,
         OpenChat,
         publish,
+        showProfileStore,
         unreadCommunityChannelCountsStore,
         unreadDirectAndGroupCountsStore,
         unreadFavouriteCountsStore,
@@ -67,26 +68,36 @@
         };
     }
 
+    function closeOthers() {
+        if ($showProfileStore) {
+            client.popRightPanelHistory();
+        }
+        if ($activityFeedShowing) {
+            activityFeedShowing.set(false);
+        }
+    }
+
     function itemSelected(s: Selection) {
         switch (s) {
             case "chats":
-                activityFeedShowing.set(false);
+                closeOthers();
                 page("/chats");
                 break;
             case "communities":
                 // TODO - what do we do if they are not a member of any communities?
-                activityFeedShowing.set(false);
+                closeOthers();
                 client.selectDefaultCommunity();
                 break;
             case "favourites":
-                activityFeedShowing.set(false);
+                closeOthers();
                 page("/favourite");
                 break;
             case "notification":
+                closeOthers();
                 activityFeedShowing.set(true);
                 break;
             case "profile":
-                activityFeedShowing.set(false);
+                closeOthers();
                 publish("profile");
                 break;
         }

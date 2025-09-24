@@ -6,6 +6,7 @@
         mobileWidth,
         showLeft,
         showNav,
+        showProfileStore,
     } from "openchat-client";
     import { rtlStore } from "../../stores/rtl";
     import ActivityFeed from "./activity/ActivityFeed.svelte";
@@ -32,6 +33,8 @@
     function bottomBarSelection() {
         if ($activityFeedShowing) {
             return "notification";
+        } else if ($showProfileStore) {
+            return "profile";
         } else {
             switch ($chatListScopeStore.kind) {
                 case "community":

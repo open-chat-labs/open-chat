@@ -111,6 +111,14 @@ export function setRightPanelHistory(history: RightPanelContent[]) {
     rightPanelHistory.set(history);
 }
 
+export const showProfileStore = derived(
+    lastRightPanelState,
+    (lastRightPanelState) => {
+        return lastRightPanelState.kind === "user_profile";
+    },
+    notEq,
+);
+
 export const xframeOverrides = writable<XFrameOverrides>({
     disableLeftNav: false,
     restrictTo: undefined,
