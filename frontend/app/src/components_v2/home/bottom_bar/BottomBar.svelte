@@ -1,5 +1,5 @@
 <script module lang="ts">
-    export type Selection = "chats" | "communities" | "notification" | "profile";
+    export type Selection = "chats" | "favourites" | "communities" | "notification" | "profile";
 </script>
 
 <script lang="ts">
@@ -8,29 +8,31 @@
         activityFeedShowing,
         allUsersStore,
         currentUserIdStore,
+        favouritesStore,
         mergeListOfCombinedUnreadCounts,
         messageActivitySummaryStore,
         OpenChat,
         publish,
         unreadCommunityChannelCountsStore,
         unreadDirectAndGroupCountsStore,
+        unreadFavouriteCountsStore,
         type UnreadCounts,
     } from "openchat-client";
     import page from "page";
     import { getContext } from "svelte";
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
+    import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
     import Lightbulb from "svelte-material-icons/LightbulbVariantOutline.svelte";
     import BottomBarItem, { type Unread } from "./BottomBarItem.svelte";
 
     interface Props {
         selection: Selection;
-        onSelect?: (selection: Selection) => void;
     }
 
     const client = getContext<OpenChat>("client");
 
-    let { selection = $bindable("chats"), onSelect }: Props = $props();
+    let props: Props = $props();
 
     let user = $derived($allUsersStore.get($currentUserIdStore));
     let avatarUrl = $derived(user ? client.userAvatarUrl(user) : "/assets/unknownUserAvatar.svg");
@@ -41,6 +43,10 @@
 
     let chatIndicator = $derived.by(() => showIndicator($unreadDirectAndGroupCountsStore.chats));
     let communityIndicator = $derived(showIndicator(unreadCommunities.chats));
+    let favouritesIndicator = $derived(
+        showIndicator(client.mergeCombinedUnreadCounts($unreadFavouriteCountsStore)),
+    );
+    let showFavourites = $derived($favouritesStore.size > 0);
     let activityIndicator = $derived.by(() => {
         const directAndGroup = showIndicator($unreadDirectAndGroupCountsStore.threads);
         const communities = showIndicator(unreadCommunities.threads);
@@ -62,8 +68,7 @@
     }
 
     function itemSelected(s: Selection) {
-        selection = s;
-        switch (selection) {
+        switch (s) {
             case "chats":
                 activityFeedShowing.set(false);
                 page("/chats");
@@ -73,6 +78,10 @@
                 activityFeedShowing.set(false);
                 client.selectDefaultCommunity();
                 break;
+            case "favourites":
+                activityFeedShowing.set(false);
+                page("/favourite");
+                break;
             case "notification":
                 activityFeedShowing.set(true);
                 break;
@@ -81,8 +90,6 @@
                 publish("profile");
                 break;
         }
-
-        onSelect?.(s);
     }
 </script>
 
@@ -97,11 +104,11 @@
     borderRadius={["md", "md", "zero", "zero"]}
     backgroundColour={"var(--background-1)"}
     mainAxisAlignment={"spaceAround"}>
-    <div class={`selection ${selection}`}></div>
+    <div class:showFavourites class={`selection ${props.selection}`}></div>
     <BottomBarItem
         indicator={chatIndicator}
         onSelect={() => itemSelected("chats")}
-        selected={selection === "chats"}>
+        selected={props.selection === "chats"}>
         {#snippet icon(color)}
             <ForumOutline {color} />
         {/snippet}
@@ -109,20 +116,32 @@
     <BottomBarItem
         indicator={communityIndicator}
         onSelect={() => itemSelected("communities")}
-        selected={selection === "communities"}>
+        selected={props.selection === "communities"}>
         {#snippet icon(color)}
             <AccountGroup {color} />
         {/snippet}
     </BottomBarItem>
+    {#if $favouritesStore.size > 0}
+        <BottomBarItem
+            indicator={favouritesIndicator}
+            onSelect={() => itemSelected("favourites")}
+            selected={props.selection === "favourites"}>
+            {#snippet icon(color)}
+                <HeartOutline {color} />
+            {/snippet}
+        </BottomBarItem>
+    {/if}
     <BottomBarItem
         indicator={activityIndicator}
         onSelect={() => itemSelected("notification")}
-        selected={selection === "notification"}>
+        selected={props.selection === "notification"}>
         {#snippet icon(color)}
             <Lightbulb {color} />
         {/snippet}
     </BottomBarItem>
-    <BottomBarItem onSelect={() => itemSelected("profile")} selected={selection === "profile"}>
+    <BottomBarItem
+        onSelect={() => itemSelected("profile")}
+        selected={props.selection === "profile"}>
         {#snippet icon()}
             <Avatar size={"lg"} url={avatarUrl} name={avatarName}></Avatar>
         {/snippet}
@@ -147,6 +166,10 @@
         border-radius: var(--rad-sm);
         transition: left ease-in-out 200ms;
 
+        &.showFavourites {
+            width: calc(20% - 2rem);
+        }
+
         // first and last need to account for the container's padding
 
         &.chats {
@@ -155,14 +178,27 @@
 
         &.communities {
             left: calc(25% + 1rem);
+            &.showFavourites {
+                left: calc(20% + 1rem);
+            }
+        }
+
+        &.favourites {
+            left: calc(40% + 1rem);
         }
 
         &.notification {
             left: calc(50% + 1rem);
+            &.showFavourites {
+                left: calc(60% + 1rem);
+            }
         }
 
         &.profile {
             left: calc(75% + 1rem - 0.25rem);
+            &.showFavourites {
+                left: calc(80% + 1rem - 0.25rem);
+            }
         }
     }
 </style>

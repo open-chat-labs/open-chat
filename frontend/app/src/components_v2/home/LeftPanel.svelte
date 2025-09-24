@@ -14,7 +14,7 @@
     import CommunitiesSheet from "./communities_sheet/CommunitiesSheet.svelte";
 
     let offset = $derived($showNav && !$mobileWidth);
-    let selection = $state<Selection>(initialSelection());
+    let selection = $derived<Selection>(bottomBarSelection());
     let sectionClass = $derived.by(() => {
         const c = ["left_panel"];
         if ($showLeft) {
@@ -29,12 +29,18 @@
         return c.join(" ");
     });
 
-    function initialSelection() {
-        switch ($chatListScopeStore.kind) {
-            case "community":
-                return "communities";
-            default:
-                return "chats";
+    function bottomBarSelection() {
+        if ($activityFeedShowing) {
+            return "notification";
+        } else {
+            switch ($chatListScopeStore.kind) {
+                case "community":
+                    return "communities";
+                case "favourite":
+                    return "favourites";
+                default:
+                    return "chats";
+            }
         }
     }
 
@@ -61,7 +67,7 @@
         {#if $chatListScopeStore.kind === "community"}
             <CommunitiesSheet />
         {/if}
-        <BottomBar bind:selection />
+        <BottomBar {selection} />
     {/if}
 </Container>
 
