@@ -6,11 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
-## [[2.0.1901-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1901-user)] - 2025-09-12
+## [[2.0.1908-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1908-user)] - 2025-09-24
 
 ### Changed
 
 - Added pinned_chats to the initial_state and updates responses ([#8619](https://github.com/open-chat-labs/open-chat/pull/8619))
+
+## [[2.0.1901-user](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1901-user)] - 2025-09-12
 
 ### Changed
 

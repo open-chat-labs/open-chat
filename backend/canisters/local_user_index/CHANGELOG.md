@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1904](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1904-local_user_index)] - 2025-09-24
+
 ### Added
 
 - Add claim_prize so that all criteria can be checked on the server ([#8613](https://github.com/open-chat-labs/open-chat/pull/8613))
