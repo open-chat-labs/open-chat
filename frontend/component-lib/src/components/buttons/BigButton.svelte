@@ -9,7 +9,7 @@
         children?: Snippet;
         mode?: Mode;
         onClick?: (e: MouseEvent) => void;
-        icon: Snippet<[string]>;
+        icon: Snippet<[string, string]>;
         countBadge?: number;
         width?: SizeMode;
         height?: SizeMode;
@@ -31,6 +31,7 @@
         active: "var(--text-on-primary)",
         pressed: "var(--text-primary)",
     };
+    const iconSize = "var(--icon-md)";
 
     const SPEED = 300;
     let internalMode = $state<InternalMode>("default");
@@ -63,7 +64,7 @@
 
 <button {disabled} type="button" {style} onclick={onClick} class={`big_button ${internalMode}`}>
     {#if icon}
-        <span class="icon">{@render icon(iconColour)}</span>
+        <span class="icon">{@render icon(iconColour, iconSize)}</span>
     {/if}
     <div class="row2">
         {#if children}

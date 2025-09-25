@@ -16,12 +16,26 @@
     }
 
     let props: Props = $props();
+
+    function internalSelect(community: CommunitySummary, e?: MouseEvent) {
+        props.onSelect(community);
+        const t = e?.target;
+        if (t !== undefined) {
+            (t as HTMLDivElement).scrollIntoView({
+                behavior: "smooth",
+                inline: "center",
+            });
+        }
+    }
 </script>
 
 <Container supplementalClass="scroller" allowOverflow width={{ kind: "fill" }} gap={"lg"}>
     {#each $sortedCommunitiesStore as community}
         {@const [unread, muted] = props.hasUnread(community)}
-        <Container allowOverflow width={{ kind: "hug" }} onClick={() => props.onSelect(community)}>
+        <Container
+            allowOverflow
+            width={{ kind: "hug" }}
+            onClick={(e) => internalSelect(community, e)}>
             <Avatar
                 url={client.communityAvatarUrl(community.id.communityId, community.avatar)}
                 size={"xl"}

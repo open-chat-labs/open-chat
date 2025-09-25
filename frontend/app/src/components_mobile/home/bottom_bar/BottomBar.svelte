@@ -161,8 +161,6 @@
 
 <style lang="scss">
     :global(.bottom_nav_bar) {
-        position: absolute !important;
-        bottom: 0;
         border-left: none !important;
         border-right: none !important;
         border-bottom: none !important;

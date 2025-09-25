@@ -44,10 +44,11 @@
 </script>
 
 <Container
+    supplementalClass={"communities_sheet"}
     direction={"vertical"}
     padding={["md", "xl", "lg", "xl"]}
     width={{ kind: "fill" }}
-    height={{ kind: "fixed", size: expanded ? "75%" : "12.5rem" }}
+    height={{ kind: "fixed", size: expanded ? "70%" : "7rem" }}
     backgroundColour={"var(--background-1)"}>
     <button onclick={() => (expanded = !expanded)} aria-label="handle" class="handle_outer">
         <div class="handle_inner"></div>
@@ -65,6 +66,10 @@
 </Container>
 
 <style lang="scss">
+    :global(.container.communities_sheet) {
+        margin-bottom: -6px;
+    }
+
     .list,
     .scroller {
         width: 100%;

@@ -57,7 +57,7 @@
     <Container onClick={() => props.onSelect(community)} crossAxisAlignment={"center"} gap={"md"}>
         <Avatar
             url={client.communityAvatarUrl(community.id.communityId, community.avatar)}
-            size={"xl"}
+            size={"lg"}
             radius={"lg"} />
         <Container gap={"xxs"} direction={"vertical"} width={{ kind: "fill" }}>
             <Container gap={"xs"} mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"start"}>

@@ -55,7 +55,7 @@
         minHeight?: string;
         shadow?: string;
         backgroundColour?: string;
-        onClick?: () => void;
+        onClick?: (e?: MouseEvent) => void;
         supplementalClass?: string;
         allowOverflow?: boolean;
         tag?: "div" | "button" | "main" | "section"; // this could be just about anything but let's try to limit it
