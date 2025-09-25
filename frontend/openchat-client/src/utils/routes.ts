@@ -50,6 +50,12 @@ export function adminRoute(_ctx: PageJS.Context): RouteParams {
         scope: noScope,
     };
 }
+export function profileSummaryRoute(_ctx: PageJS.Context): RouteParams {
+    return {
+        kind: "profile_summary_route",
+        scope: noScope,
+    };
+}
 
 export function communitesRoute(_ctx: PageJS.Context): RouteParams {
     return {

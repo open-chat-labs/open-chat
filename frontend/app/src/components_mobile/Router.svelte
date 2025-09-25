@@ -17,6 +17,7 @@
         messageIndexStore,
         notFoundStore,
         pageReplace,
+        profileSummaryRoute,
         routeKindStore,
         routeStore,
         routerReadyStore,
@@ -188,6 +189,7 @@
         );
         page("/share", parsePathParams(shareRoute), track, () => (route = Home));
         page("/admin", parsePathParams(adminRoute), track, () => (route = Home));
+        page("/profile_summary", parsePathParams(profileSummaryRoute), track, () => (route = Home));
         page(
             "/",
             parsePathParams(() => ({ kind: "home_route", scope: { kind: "none" } })),

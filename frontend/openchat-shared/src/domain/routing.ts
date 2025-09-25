@@ -33,7 +33,8 @@ export type RouteParams =
     | ShareRoute
     | NotFound
     | HotGroupsRoute
-    | AdminRoute;
+    | AdminRoute
+    | ProfileSummaryRoute;
 
 export type MessageIndexRoute = GlobalSelectedChatRoute | FavouritesRoute | SelectedChannelRoute;
 
@@ -92,6 +93,10 @@ export type CommunitiesRoute = NoScope & {
 
 export type AdminRoute = NoScope & {
     kind: "admin_route";
+};
+
+export type ProfileSummaryRoute = NoScope & {
+    kind: "profile_summary_route";
 };
 
 export type ShareRoute = NoScope & {

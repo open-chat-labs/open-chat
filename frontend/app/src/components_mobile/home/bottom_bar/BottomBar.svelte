@@ -12,7 +12,6 @@
         mergeListOfCombinedUnreadCounts,
         messageActivitySummaryStore,
         OpenChat,
-        publish,
         showProfileStore,
         unreadCommunityChannelCountsStore,
         unreadDirectAndGroupCountsStore,
@@ -98,7 +97,7 @@
                 break;
             case "profile":
                 closeOthers();
-                publish("profile");
+                page("/profile_summary");
                 break;
         }
     }

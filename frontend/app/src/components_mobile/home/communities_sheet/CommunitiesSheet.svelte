@@ -16,7 +16,11 @@
 
     const client = getContext<OpenChat>("client");
 
-    let expanded = $state(false);
+    interface Props {
+        expanded: boolean;
+    }
+
+    let { expanded = $bindable(false) }: Props = $props();
 
     function selectCommunity(community: CommunitySummary) {
         expanded = false;

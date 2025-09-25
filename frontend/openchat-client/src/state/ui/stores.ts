@@ -101,6 +101,7 @@ function someHomeRoute(route: RouteParams["kind"]): boolean {
     return (
         route === "home_route" ||
         route === "chat_list_route" ||
+        route === "profile_summary_route" ||
         route === "selected_community_route"
     );
 }
