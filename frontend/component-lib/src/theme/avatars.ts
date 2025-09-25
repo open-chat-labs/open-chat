@@ -8,6 +8,7 @@ export class Avatars {
         public md: Pixel,
         public lg: Pixel,
         public xl: Pixel,
+        public huge: Pixel,
     ) {}
     cssVariables(): CssVariable[] {
         return [
@@ -16,6 +17,7 @@ export class Avatars {
             this.md.cssVariable("avatar", "md"),
             this.lg.cssVariable("avatar", "lg"),
             this.xl.cssVariable("avatar", "xl"),
+            this.huge.cssVariable("avatar", "huge"),
         ];
     }
 }

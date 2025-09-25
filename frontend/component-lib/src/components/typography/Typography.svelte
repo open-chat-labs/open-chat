@@ -10,6 +10,7 @@
         ellipsisTruncate?: boolean;
         colour?: TypographyColour;
         labelFor?: string;
+        align?: "start" | "end" | "center" | "unset";
     }
 </script>
 
@@ -33,12 +34,15 @@
         ellipsisTruncate = false,
         colour = "primary",
         labelFor,
+        align = "unset",
     }: Props = $props();
 
     let parentDirection = getContext<Direction>("direction");
     let widthCss = $derived(getFlexStyle("width", width, parentDirection));
     let heightCss = $derived(getFlexStyle("height", height, parentDirection));
-    let style = $derived(`${heightCss}; ${widthCss}; color: ${getColourVar()};`);
+    let style = $derived(
+        `${heightCss}; ${widthCss}; color: ${getColourVar()}; text-align:${align};`,
+    );
     let tag = $derived(getTag());
 
     function getTag() {
