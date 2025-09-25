@@ -186,8 +186,9 @@ function decodeWebPushNotification(bytes: Uint8Array, timestamp: bigint): Notifi
         const deserialized = deserializeFromMsgPack(bytes);
         const validated = typeboxValidate(deserialized, TNotification);
         return toNotification(validated, timestamp);
-    } catch {
+    } catch (e) {
         // Failed to decode using MsgPack
+        console.error("SW: unable to decode notification", e);
     }
 }
 
