@@ -25,6 +25,7 @@
         isScrollingRoute,
         redirectLandingPageLinksIfNecessary,
     } from "@utils/urls";
+    import { portalState } from "component-lib";
     import {
         type ChatIdentifier,
         type DexId,
@@ -61,7 +62,6 @@
     import ActiveCall from "./home/video/ActiveCall.svelte";
     import IncomingCall from "./home/video/IncomingCall.svelte";
     import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
-    import { portalState } from "./portalState.svelte";
     import Upgrading from "./upgrading/Upgrading.svelte";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");

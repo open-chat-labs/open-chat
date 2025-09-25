@@ -1,8 +1,8 @@
 <script lang="ts">
     import type { Alignment, Position } from "component-lib";
+    import { portalState } from "component-lib";
     import { getAllContexts, mount, onDestroy, type Snippet } from "svelte";
     import MenuWrapper from "./portal/MenuWrapper.svelte";
-    import { portalState } from "./portalState.svelte";
 
     interface Props {
         centered?: boolean;

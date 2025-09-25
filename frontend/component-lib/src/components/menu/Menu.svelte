@@ -25,9 +25,9 @@
     class:centered>
     <Container
         borderWidth={"thin"}
-        padding={"md"}
+        padding={["sm", "zero"]}
         backgroundColour={"var(--background-1)"}
-        minWidth={Rem.fromPixels(160).toString()}
+        minWidth={Rem.fromPixels(200).toString()}
         borderRadius={"lg"}
         shadow={"var(--shadow-menu)"}
         width={{ kind: "hug" }}
@@ -42,12 +42,9 @@
         max-height: 80vh;
         max-height: var(--override-height, 80vh);
 
-        // TODO
-        // @include mobile() {
-        //     &.centered {
-        //         width: 70vw;
-        //     }
-        // }
+        &.centered {
+            width: 70vw;
+        }
 
         &.shadow {
             box-shadow: var(--menu-sh);

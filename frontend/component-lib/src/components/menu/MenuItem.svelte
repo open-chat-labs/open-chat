@@ -10,7 +10,7 @@
 </script>
 
 <script lang="ts">
-    import { ColourVars } from "component-lib";
+    import { Body, ColourVars } from "component-lib";
 
     import type { Snippet } from "svelte";
 
@@ -23,50 +23,57 @@
         icon,
         children,
         onclick,
-    }: MenuItemProps & { icon?: Snippet<[string]>; children?: Snippet } = $props();
+    }: MenuItemProps & { icon?: Snippet<[string, string]>; children?: Snippet } = $props();
 
     let iconColour = $derived(danger ? ColourVars.error : ColourVars.textPrimary);
+    let iconSize = "20px";
 </script>
 
 {#if disabled}
-    <div class:disabled class="menu-item" role="menuitem">
+    <div class:disabled class="menu_item" role="menuitem">
         {#if icon}
             <span class="icon">
-                {@render icon(iconColour)}
+                {@render icon(iconColour, iconSize)}
             </span>
         {/if}
-        {@render children?.()}
+        <Body width={{ kind: "hug" }}>
+            {@render children?.()}
+        </Body>
     </div>
 {:else if separator}
-    <hr class="menu-item-separator" />
+    <hr class="menu_item_separator" />
 {:else}
     <a
         {href}
         target="_blank"
         rel="noreferrer"
         tabindex="0"
-        class="menu-item"
+        class="menu_item"
         {onclick}
         role="menuitem"
         class:selected
         class:danger>
         {#if icon}
             <span class="icon">
-                {@render icon(iconColour)}
+                {@render icon(iconColour, iconSize)}
             </span>
         {/if}
-        {@render children?.()}
+        <Body colour={danger ? "error" : "primary"} width={{ kind: "hug" }}>
+            {@render children?.()}
+        </Body>
     </a>
 {/if}
 
 <style lang="scss">
-    :global(.menu-item) {
+    :global(.menu_item) {
         display: flex;
         cursor: pointer;
-        color: var(--menu-txt);
+        color: var(--text-primary);
         align-items: center;
         gap: var(--sp-sm);
         height: 2.375rem;
+        padding: 0 var(--sp-lg);
+        width: 100%;
 
         &:last-child {
             border-bottom: none;
@@ -100,8 +107,9 @@
         }
     }
 
-    :global(.menu-item-separator) {
-        border: 1px solid var(--menu-separator);
+    :global(.menu_item_separator) {
+        border: var(--bw-thin) solid var(--background-2);
+        width: 100%;
 
         &:last-child {
             display: none;

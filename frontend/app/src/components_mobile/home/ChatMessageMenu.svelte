@@ -1,5 +1,6 @@
 <script lang="ts">
     import { confirmMessageDeletion } from "@src/stores/settings";
+    import { MenuItem } from "component-lib";
     import {
         chatListScopeStore,
         cryptoLookup,
@@ -27,8 +28,6 @@
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import DeleteOffOutline from "svelte-material-icons/DeleteOffOutline.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
-    import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
-    import EmoticonOutline from "svelte-material-icons/EmoticonOutline.svelte";
     import EyeIcon from "svelte-material-icons/Eye.svelte";
     import EyeArrowRightIcon from "svelte-material-icons/EyeArrowRight.svelte";
     import EyeOffIcon from "svelte-material-icons/EyeOff.svelte";
@@ -44,20 +43,13 @@
     import TranslateIcon from "svelte-material-icons/Translate.svelte";
     import TranslateOff from "svelte-material-icons/TranslateOff.svelte";
     import { i18nKey, translationCodes } from "../../i18n/i18n";
-    import { quickReactions } from "../../stores/quickReactions";
-    import { rtlStore } from "../../stores/rtl";
     import { now } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
-    import { isTouchOnlyDevice } from "../../utils/devices";
     import * as shareFunctions from "../../utils/share";
     import { copyToClipboard } from "../../utils/urls";
     import AreYouSure from "../AreYouSure.svelte";
     import Checkbox from "../Checkbox.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
     import Bitcoin from "../icons/Bitcoin.svelte";
-    import Menu from "../Menu.svelte";
-    import MenuIcon from "../MenuIcon.svelte";
-    import MenuItem from "../MenuItem.svelte";
     import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -84,7 +76,6 @@
         canUndelete: boolean;
         canRevealDeleted: boolean;
         canRevealBlocked: boolean;
-        canReact: boolean;
         translatable: boolean;
         translated: boolean;
         msg: Message;
@@ -126,7 +117,6 @@
         canUndelete,
         canRevealDeleted,
         canRevealBlocked,
-        canReact,
         translatable,
         translated,
         msg,
@@ -146,8 +136,6 @@
         onTipMessage,
     }: Props = $props();
 
-    let menuIconEl: MenuIcon | undefined;
-    let quickReactionIconSize = "1.2rem";
     let showConfirmDelete = $state(false);
 
     let canRemind = $derived(
@@ -174,10 +162,6 @@
     );
     let canFollow = $derived(threadRootMessage !== undefined && !isFollowedByMe);
     let canUnfollow = $derived(isFollowedByMe);
-
-    export function showMenu() {
-        menuIconEl?.showMenu();
-    }
 
     function blockUser() {
         if (!canBlockUser || chatId.kind !== "group_chat") return;
@@ -344,350 +328,204 @@
     </AreYouSure>
 {/if}
 
-<div class="menu" class:touch={isTouchOnlyDevice} class:inert class:rtl={$rtlStore}>
-    {#if !inert && !isTouchOnlyDevice}
-        {#each $quickReactions as reaction}
-            <HoverIcon compact onclick={() => selectQuickReaction(reaction)}>
-                <div class="quick-reaction">
-                    {reaction}
-                </div>
-            </HoverIcon>
-        {/each}
-        {#if canReact && !failed}
-            <HoverIcon compact onclick={() => showEmojiPicker()} title={$_("pickEmoji")}>
-                <div class="quick-reaction">
-                    <EmoticonOutline size={quickReactionIconSize} color={"var(--menu-txt)"} />
-                </div>
-            </HoverIcon>
-        {/if}
-        {#if confirmed && supportsReply && !failed}
-            {#if !inThread && canStartThread}
-                <HoverIcon compact onclick={initiateThread} title={$_("thread.menu")}>
-                    <div class="quick-reaction">
-                        <ChatPlusOutline size={quickReactionIconSize} color={"var(--menu-txt)"} />
-                    </div>
-                </HoverIcon>
-            {/if}
-            {#if canQuoteReply && !me}
-                <HoverIcon compact onclick={onReply} title={$_("quoteReply")}>
-                    <div class="quick-reaction">
-                        <Reply size={quickReactionIconSize} color={"var(--menu-txt)"} />
-                    </div>
-                </HoverIcon>
-            {/if}
-            {#if canEdit && !failed}
-                <HoverIcon compact onclick={onEditMessage} title={$_("editMessage")}>
-                    <div class="quick-reaction">
-                        <PencilOutline size={quickReactionIconSize} color={"var(--menu-txt)"} />
-                    </div>
-                </HoverIcon>
-            {/if}
-        {/if}
+{#if isProposal && !inert}
+    <MenuItem onclick={onCollapseMessage}>
+        {#snippet icon()}
+            <CollapseIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
+        {/snippet}
+        <Translatable resourceKey={i18nKey("proposal.collapse")} />
+    </MenuItem>
+{/if}
+{#if confirmed && !inert && !failed}
+    {#if canFollow}
+        <MenuItem onclick={() => followThread(true)}>
+            {#snippet icon()}
+                <EyeArrowRightIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("followThread")} />
+        </MenuItem>
+    {:else if canUnfollow}
+        <MenuItem onclick={() => followThread(false)}>
+            {#snippet icon()}
+                <EyeOffIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("unfollowThread")} />
+        </MenuItem>
     {/if}
-    <MenuIcon bind:this={menuIconEl} centered position={"right"} align={"end"}>
-        {#snippet menuIcon()}
-            <div class="quick-reaction">
-                <HoverIcon compact>
-                    <DotsVertical size="1.625em" color={"var(--menu-txt)"} />
-                </HoverIcon>
-            </div>
+    {#if publicGroup && canShare}
+        <MenuItem onclick={shareMessage}>
+            {#snippet icon(color, size)}
+                <ShareIcon {color} {size} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("share")} />
+        </MenuItem>
+    {/if}
+    <MenuItem onclick={copyMessageUrl}>
+        {#snippet icon(color, size)}
+            <ContentCopy {color} {size} />
         {/snippet}
-        {#snippet menuItems()}
-            <Menu centered>
-                {#if isProposal && !inert}
-                    <MenuItem onclick={onCollapseMessage}>
-                        {#snippet icon()}
-                            <CollapseIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
-                        {/snippet}
-                        {#snippet text()}
-                            <div>
-                                <Translatable resourceKey={i18nKey("proposal.collapse")} />
-                            </div>
-                        {/snippet}
-                    </MenuItem>
-                {/if}
-                {#if confirmed && !inert && !failed}
-                    {#if canFollow}
-                        <MenuItem onclick={() => followThread(true)}>
-                            {#snippet icon()}
-                                <EyeArrowRightIcon
-                                    size={$iconSize}
-                                    color={"var(--icon-inverted-txt)"} />
-                            {/snippet}
-                            {#snippet text()}
-                                <div>
-                                    <Translatable resourceKey={i18nKey("followThread")} />
-                                </div>
-                            {/snippet}
-                        </MenuItem>
-                    {:else if canUnfollow}
-                        <MenuItem onclick={() => followThread(false)}>
-                            {#snippet icon()}
-                                <EyeOffIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
-                            {/snippet}
-                            {#snippet text()}
-                                <div>
-                                    <Translatable resourceKey={i18nKey("unfollowThread")} />
-                                </div>
-                            {/snippet}
-                        </MenuItem>
-                    {/if}
-                    {#if publicGroup && canShare}
-                        <MenuItem onclick={shareMessage}>
-                            {#snippet icon()}
-                                <ShareIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
-                            {/snippet}
-                            {#snippet text()}
-                                <div><Translatable resourceKey={i18nKey("share")} /></div>
-                            {/snippet}
-                        </MenuItem>
-                    {/if}
-                    <MenuItem onclick={copyMessageUrl}>
-                        {#snippet icon()}
-                            <ContentCopy size={$iconSize} color={"var(--icon-inverted-txt)"} />
-                        {/snippet}
-                        {#snippet text()}
-                            <div>
-                                <Translatable resourceKey={i18nKey("copyMessageUrl")} />
-                            </div>
-                        {/snippet}
-                    </MenuItem>
-                {/if}
-                <MenuItem onclick={copyMessage}>
-                    {#snippet icon()}
-                        <ContentCopy size={$iconSize} color={"var(--icon-inverted-txt)"} />
-                    {/snippet}
-                    {#snippet text()}
-                        <div><Translatable resourceKey={i18nKey("copy")} /></div>
-                    {/snippet}
-                </MenuItem>
-                {#if canRemind && confirmed && !inert && !failed}
-                    <MenuItem onclick={onRemindMe}>
-                        {#snippet icon()}
-                            <ClockPlusOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
-                        {/snippet}
-                        {#snippet text()}
-                            <div>
-                                <Translatable resourceKey={i18nKey("reminders.menu")} />
-                            </div>
-                        {/snippet}
-                    </MenuItem>
-                {/if}
-                {#if canCancelRemind && confirmed && !inert && !failed}
-                    <MenuItem onclick={cancelReminder}>
-                        {#snippet icon()}
-                            <ClockRemoveOutline
-                                size={$iconSize}
-                                color={"var(--icon-inverted-txt)"} />
-                        {/snippet}
-                        {#snippet text()}
-                            <div>
-                                <Translatable resourceKey={i18nKey("reminders.cancel")} />
-                            </div>
-                        {/snippet}
-                    </MenuItem>
-                {/if}
-                {#if confirmed && canPin && !inThread && !inert && !failed}
-                    {#if pinned}
-                        <MenuItem onclick={unpinMessage}>
-                            {#snippet icon()}
-                                <PinOff size={$iconSize} color={"var(--icon-inverted-txt)"} />
-                            {/snippet}
-                            {#snippet text()}
-                                <div>
-                                    <Translatable resourceKey={i18nKey("unpinMessage")} />
-                                </div>
-                            {/snippet}
-                        </MenuItem>
-                    {:else}
-                        <MenuItem onclick={pinMessage}>
-                            {#snippet icon()}
-                                <Pin size={$iconSize} color={"var(--icon-inverted-txt)"} />
-                            {/snippet}
-                            {#snippet text()}
-                                <div>
-                                    <Translatable resourceKey={i18nKey("pinMessage")} />
-                                </div>
-                            {/snippet}
-                        </MenuItem>
-                    {/if}
-                {/if}
-                {#if confirmed && supportsReply && !inert && !failed}
-                    {#if canQuoteReply}
-                        <MenuItem onclick={onReply}>
-                            {#snippet icon()}
-                                <Reply size={$iconSize} color={"var(--icon-inverted-txt)"} />
-                            {/snippet}
-                            {#snippet text()}
-                                <div>
-                                    <Translatable resourceKey={i18nKey("quoteReply")} />
-                                </div>
-                            {/snippet}
-                        </MenuItem>
-                    {/if}
-                    {#if !inThread && canStartThread}
-                        <MenuItem onclick={initiateThread}>
-                            {#snippet icon()}
-                                <ChatPlusOutline
-                                    size={$iconSize}
-                                    color={"var(--icon-inverted-txt)"} />
-                            {/snippet}
-                            {#snippet text()}
-                                <div>
-                                    <Translatable resourceKey={i18nKey("thread.menu")} />
-                                </div>
-                            {/snippet}
-                        </MenuItem>
-                    {/if}
-                {/if}
-                {#if canForward && !inThread && !inert && !failed}
-                    <MenuItem onclick={forward}>
-                        {#snippet icon()}
-                            <ForwardIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
-                        {/snippet}
-                        {#snippet text()}
-                            <div><Translatable resourceKey={i18nKey("forward")} /></div>
-                        {/snippet}
-                    </MenuItem>
-                {/if}
-                {#if confirmed && multiUserChat && !inThread && !me && !isProposal && !inert && !failed}
-                    <MenuItem onclick={onReplyPrivately}>
-                        {#snippet icon()}
-                            <ReplyOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
-                        {/snippet}
-                        {#snippet text()}
-                            <div>
-                                <Translatable resourceKey={i18nKey("replyPrivately")} />
-                            </div>
-                        {/snippet}
-                    </MenuItem>
-                {/if}
-                {#if !me && translatable && !failed}
-                    {#if translated}
-                        <MenuItem onclick={untranslateMessage}>
-                            {#snippet icon()}
-                                <TranslateOff size={$iconSize} color={"var(--icon-inverted-txt)"} />
-                            {/snippet}
-                            {#snippet text()}
-                                <div>
-                                    <Translatable resourceKey={i18nKey("untranslateMessage")} />
-                                </div>
-                            {/snippet}
-                        </MenuItem>
-                    {:else}
-                        <MenuItem onclick={translateMessage}>
-                            {#snippet icon()}
-                                <TranslateIcon
-                                    size={$iconSize}
-                                    color={"var(--icon-inverted-txt)"} />
-                            {/snippet}
-                            {#snippet text()}
-                                <div>
-                                    <Translatable resourceKey={i18nKey("translateMessage")} />
-                                </div>
-                            {/snippet}
-                        </MenuItem>
-                    {/if}
-                {/if}
-                {#if canEdit && !inert && !failed}
-                    <MenuItem onclick={onEditMessage}>
-                        {#snippet icon()}
-                            <PencilOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
-                        {/snippet}
-                        {#snippet text()}
-                            <div><Translatable resourceKey={i18nKey("editMessage")} /></div>
-                        {/snippet}
-                    </MenuItem>
-                {/if}
-                {#if canTip}
-                    <MenuItem onclick={() => onTipMessage($lastCryptoSent ?? LEDGER_CANISTER_ICP)}>
-                        {#snippet icon()}
-                            <Bitcoin size={$iconSize} color={"var(--icon-inverted-txt)"} />
-                        {/snippet}
-                        {#snippet text()}
-                            <div><Translatable resourceKey={i18nKey("tip.menu")} /></div>
-                        {/snippet}
-                    </MenuItem>
-                {/if}
-                <MenuItem separator />
-                {#if confirmed && multiUserChat && !me && canBlockUser && !failed}
-                    <MenuItem onclick={blockUser}>
-                        {#snippet icon()}
-                            <Cancel size={$iconSize} color={"var(--icon-inverted-txt)"} />
-                        {/snippet}
-                        {#snippet text()}
-                            <div><Translatable resourceKey={i18nKey("blockUser")} /></div>
-                        {/snippet}
-                    </MenuItem>
-                {/if}
-                {#if canDeleteMessage}
-                    <MenuItem onclick={() => deleteMessage(!$confirmMessageDeletion)}>
-                        {#snippet icon()}
-                            <DeleteOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
-                        {/snippet}
-                        {#snippet text()}
-                            <div>
-                                {#if multiUserChat || me}
-                                    <Translatable resourceKey={i18nKey("deleteMessage")} />
-                                {:else}
-                                    <Translatable resourceKey={i18nKey("deleteMessageForMe")} />
-                                {/if}
-                            </div>
-                        {/snippet}
-                    </MenuItem>
-                {/if}
-                {#if confirmed && !me && !inert}
-                    <MenuItem onclick={onReportMessage}>
-                        {#snippet icon()}
-                            <Flag size={$iconSize} color={"var(--error)"} />
-                        {/snippet}
-                        {#snippet text()}
-                            <div>
-                                <Translatable resourceKey={i18nKey("report.menu")} />
-                            </div>
-                        {/snippet}
-                    </MenuItem>
-                {/if}
-                {#if canRevealDeleted || canRevealBlocked}
-                    <MenuItem onclick={revealDeletedMessage}>
-                        {#snippet icon()}
-                            <EyeIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
-                        {/snippet}
-                        {#snippet text()}
-                            <div>
-                                <Translatable resourceKey={i18nKey("revealDeletedMessage")} />
-                            </div>
-                        {/snippet}
-                    </MenuItem>
-                {/if}
-                {#if canUndelete}
-                    <MenuItem onclick={undeleteMessage}>
-                        {#snippet icon()}
-                            <DeleteOffOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
-                        {/snippet}
-                        {#snippet text()}
-                            <div>
-                                <Translatable resourceKey={i18nKey("undeleteMessage")} />
-                            </div>
-                        {/snippet}
-                    </MenuItem>
-                {/if}
-                {#if failed}
-                    <MenuItem onclick={onRetrySend}>
-                        {#snippet icon()}
-                            <Refresh size={$iconSize} color={"var(--icon-inverted-txt)"} />
-                        {/snippet}
-                        {#snippet text()}
-                            <div>
-                                <Translatable resourceKey={i18nKey("retryMessage")} />
-                            </div>
-                        {/snippet}
-                    </MenuItem>
-                {/if}
-            </Menu>
+        <Translatable resourceKey={i18nKey("copyMessageUrl")} />
+    </MenuItem>
+{/if}
+<MenuItem onclick={copyMessage}>
+    {#snippet icon(color, size)}
+        <ContentCopy {color} {size} />
+    {/snippet}
+    <Translatable resourceKey={i18nKey("copy")} />
+</MenuItem>
+{#if canRemind && confirmed && !inert && !failed}
+    <MenuItem onclick={onRemindMe}>
+        {#snippet icon(color, size)}
+            <ClockPlusOutline {color} {size} />
         {/snippet}
-    </MenuIcon>
-</div>
+        <Translatable resourceKey={i18nKey("reminders.menu")} />
+    </MenuItem>
+{/if}
+{#if canCancelRemind && confirmed && !inert && !failed}
+    <MenuItem onclick={cancelReminder}>
+        {#snippet icon(color, size)}
+            <ClockRemoveOutline {size} {color} />
+        {/snippet}
+        <Translatable resourceKey={i18nKey("reminders.cancel")} />
+    </MenuItem>
+{/if}
+{#if confirmed && canPin && !inThread && !inert && !failed}
+    {#if pinned}
+        <MenuItem onclick={unpinMessage}>
+            {#snippet icon(color, size)}
+                <PinOff {color} {size} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("unpinMessage")} />
+        </MenuItem>
+    {:else}
+        <MenuItem onclick={pinMessage}>
+            {#snippet icon(color, size)}
+                <Pin {color} {size} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("pinMessage")} />
+        </MenuItem>
+    {/if}
+{/if}
+{#if confirmed && supportsReply && !inert && !failed}
+    {#if canQuoteReply}
+        <MenuItem onclick={onReply}>
+            {#snippet icon(color, size)}
+                <Reply {color} {size} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("quoteReply")} />
+        </MenuItem>
+    {/if}
+    {#if !inThread && canStartThread}
+        <MenuItem onclick={initiateThread}>
+            {#snippet icon(color, size)}
+                <ChatPlusOutline {size} {color} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("thread.menu")} />
+        </MenuItem>
+    {/if}
+{/if}
+{#if canForward && !inThread && !inert && !failed}
+    <MenuItem onclick={forward}>
+        {#snippet icon(color, size)}
+            <ForwardIcon {color} {size} />
+        {/snippet}
+        <Translatable resourceKey={i18nKey("forward")} />
+    </MenuItem>
+{/if}
+{#if confirmed && multiUserChat && !inThread && !me && !isProposal && !inert && !failed}
+    <MenuItem onclick={onReplyPrivately}>
+        {#snippet icon(color, size)}
+            <ReplyOutline {color} {size} />
+        {/snippet}
+        <Translatable resourceKey={i18nKey("replyPrivately")} />
+    </MenuItem>
+{/if}
+{#if !me && translatable && !failed}
+    {#if translated}
+        <MenuItem onclick={untranslateMessage}>
+            {#snippet icon(color, size)}
+                <TranslateOff {color} {size} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("untranslateMessage")} />
+        </MenuItem>
+    {:else}
+        <MenuItem onclick={translateMessage}>
+            {#snippet icon(color, size)}
+                <TranslateIcon {color} {size} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("translateMessage")} />
+        </MenuItem>
+    {/if}
+{/if}
+{#if canEdit && !inert && !failed}
+    <MenuItem onclick={onEditMessage}>
+        {#snippet icon(color, size)}
+            <PencilOutline {color} {size} />
+        {/snippet}
+        <Translatable resourceKey={i18nKey("editMessage")} />
+    </MenuItem>
+{/if}
+{#if canTip}
+    <MenuItem onclick={() => onTipMessage($lastCryptoSent ?? LEDGER_CANISTER_ICP)}>
+        {#snippet icon(color, size)}
+            <Bitcoin {color} {size} />
+        {/snippet}
+        <Translatable resourceKey={i18nKey("tip.menu")} />
+    </MenuItem>
+{/if}
+<MenuItem separator />
+{#if confirmed && multiUserChat && !me && canBlockUser && !failed}
+    <MenuItem onclick={blockUser}>
+        {#snippet icon(color, size)}
+            <Cancel {color} {size} />
+        {/snippet}
+        <Translatable resourceKey={i18nKey("blockUser")} />
+    </MenuItem>
+{/if}
+{#if canDeleteMessage}
+    <MenuItem onclick={() => deleteMessage(!$confirmMessageDeletion)}>
+        {#snippet icon(color, size)}
+            <DeleteOutline {color} {size} />
+        {/snippet}
+        {#if multiUserChat || me}
+            <Translatable resourceKey={i18nKey("deleteMessage")} />
+        {:else}
+            <Translatable resourceKey={i18nKey("deleteMessageForMe")} />
+        {/if}
+    </MenuItem>
+{/if}
+{#if confirmed && !me && !inert}
+    <MenuItem danger onclick={onReportMessage}>
+        {#snippet icon(color, size)}
+            <Flag {color} {size} />
+        {/snippet}
+        <Translatable resourceKey={i18nKey("report.menu")} />
+    </MenuItem>
+{/if}
+{#if canRevealDeleted || canRevealBlocked}
+    <MenuItem onclick={revealDeletedMessage}>
+        {#snippet icon(color, size)}
+            <EyeIcon {color} {size} />
+        {/snippet}
+        <Translatable resourceKey={i18nKey("revealDeletedMessage")} />
+    </MenuItem>
+{/if}
+{#if canUndelete}
+    <MenuItem onclick={undeleteMessage}>
+        {#snippet icon(color, size)}
+            <DeleteOffOutline {color} {size} />
+        {/snippet}
+        <Translatable resourceKey={i18nKey("undeleteMessage")} />
+    </MenuItem>
+{/if}
+{#if failed}
+    <MenuItem onclick={onRetrySend}>
+        {#snippet icon(color, size)}
+            <Refresh {color} {size} />
+        {/snippet}
+        <Translatable resourceKey={i18nKey("retryMessage")} />
+    </MenuItem>
+{/if}
 
 <style lang="scss">
     // This will align the menu relative to the selected side of the chat

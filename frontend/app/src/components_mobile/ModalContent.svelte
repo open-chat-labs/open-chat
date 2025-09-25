@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { reposition, type NanoPopPosition } from "component-lib";
+    import { portalState, reposition, type NanoPopPosition } from "component-lib";
     import { mobileWidth } from "openchat-client";
     import { onMount, tick, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
@@ -12,7 +12,6 @@
     import Button from "./Button.svelte";
     import HoverIcon from "./HoverIcon.svelte";
     import Translatable from "./Translatable.svelte";
-    import { portalState } from "./portalState.svelte";
 
     type OnClose = (() => void) | undefined;
 

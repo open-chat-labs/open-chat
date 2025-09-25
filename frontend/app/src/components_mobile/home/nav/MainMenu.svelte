@@ -1,9 +1,9 @@
 <script lang="ts">
+    import { MenuItem } from "component-lib";
     import type { OpenChat } from "openchat-client";
     import {
         anonUserStore,
         canExtendDiamondStore,
-        iconSize,
         platformOperatorStore,
         publish,
     } from "openchat-client";
@@ -24,148 +24,112 @@
     import Security from "svelte-material-icons/Security.svelte";
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItem.svelte";
     import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 </script>
 
-<Menu>
-    {#if !$anonUserStore}
-        <MenuItem onclick={() => publish("wallet")}>
-            {#snippet icon()}
-                <Wallet size={$iconSize} color={"var(--icon-inverted-txt)"} />
-            {/snippet}
-            {#snippet text()}
-                <Translatable resourceKey={i18nKey("wallet")} />
-            {/snippet}
-        </MenuItem>
-        <MenuItem onclick={() => publish("profile")}>
-            {#snippet icon()}
-                <AccountSettings size={$iconSize} color={"var(--icon-inverted-txt)"} />
-            {/snippet}
-            {#snippet text()}
-                <Translatable resourceKey={i18nKey("profile.title")} />
-            {/snippet}
-        </MenuItem>
-        <MenuItem onclick={() => publish("upgrade")}>
-            {#snippet icon()}
-                <span class="diamond-icon"></span>
-            {/snippet}
-            {#snippet text()}
-                <Translatable
-                    resourceKey={i18nKey(
-                        $canExtendDiamondStore ? "upgrade.extend" : "upgrade.diamond",
-                    )} />
-            {/snippet}
-        </MenuItem>
-        <MenuItem separator />
-    {/if}
-    <MenuItem onclick={() => page("/home")}>
-        {#snippet icon()}
-            <Home size={$iconSize} color={"var(--icon-inverted-txt)"} />
+{#if !$anonUserStore}
+    <MenuItem onclick={() => publish("wallet")}>
+        {#snippet icon(color, size)}
+            <Wallet {color} {size} />
         {/snippet}
-        {#snippet text()}
-            Home page
-        {/snippet}
+        <Translatable resourceKey={i18nKey("wallet")} />
     </MenuItem>
-    <MenuItem onclick={() => page("/features")}>
-        {#snippet icon()}
-            <InformationOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
+    <MenuItem onclick={() => publish("profile")}>
+        {#snippet icon(color, size)}
+            <AccountSettings {color} {size} />
         {/snippet}
-        {#snippet text()}
-            Features
-        {/snippet}
+        <Translatable resourceKey={i18nKey("profile.title")} />
     </MenuItem>
-    <MenuItem onclick={() => page("/roadmap")}>
+    <MenuItem onclick={() => publish("upgrade")}>
         {#snippet icon()}
-            <Road size={$iconSize} color={"var(--icon-inverted-txt)"} />
+            <span class="diamond-icon"></span>
         {/snippet}
-        {#snippet text()}
-            Roadmap
-        {/snippet}
+        <Translatable
+            resourceKey={i18nKey($canExtendDiamondStore ? "upgrade.extend" : "upgrade.diamond")} />
     </MenuItem>
-    <MenuItem onclick={() => page("/whitepaper")}>
-        {#snippet icon()}
-            <Note size={$iconSize} color={"var(--icon-inverted-txt)"} />
-        {/snippet}
-        {#snippet text()}
-            Whitepaper
-        {/snippet}
-    </MenuItem>
-    <MenuItem onclick={() => page("/architecture")}>
-        {#snippet icon()}
-            <Graph size={$iconSize} color={"var(--icon-inverted-txt)"} />
-        {/snippet}
-        {#snippet text()}
-            Architecture
-        {/snippet}
-    </MenuItem>
-    <MenuItem onclick={() => page("/blog")}>
-        {#snippet icon()}
-            <Blog size={$iconSize} color={"var(--icon-inverted-txt)"} />
-        {/snippet}
-        {#snippet text()}
-            Blog
-        {/snippet}
-    </MenuItem>
-    <MenuItem onclick={() => page("/faq")}>
-        {#snippet icon()}
-            <Help size={$iconSize} color={"var(--icon-inverted-txt)"} />
-        {/snippet}
-        {#snippet text()}
-            FAQs
-        {/snippet}
-    </MenuItem>
-    <MenuItem onclick={() => page("/guidelines")}>
-        {#snippet icon()}
-            <Security size={$iconSize} color={"var(--icon-inverted-txt)"} />
-        {/snippet}
-        {#snippet text()}
-            Guidelines
-        {/snippet}
-    </MenuItem>
-    <MenuItem href="https://tokenterminal.com/terminal/projects/openchat">
-        {#snippet icon()}
-            <ChartLine size={$iconSize} color={"var(--icon-inverted-txt)"} />
-        {/snippet}
-        {#snippet text()}
-            Metrics
-        {/snippet}
-    </MenuItem>
-    {#if $platformOperatorStore}
-        <MenuItem separator />
-        <MenuItem onclick={() => page("/admin")}>
-            {#snippet icon()}
-                <CogOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
-            {/snippet}
-            {#snippet text()}
-                {"Admin"}
-            {/snippet}
-        </MenuItem>
-    {/if}
     <MenuItem separator />
-    {#if !$anonUserStore}
-        <MenuItem onclick={() => client.logout()}>
-            {#snippet icon()}
-                <Logout size={$iconSize} color={"var(--icon-inverted-txt)"} />
-            {/snippet}
-            {#snippet text()}
-                <Translatable resourceKey={i18nKey("logout")} />
-            {/snippet}
-        </MenuItem>
-    {:else}
-        <MenuItem onclick={() => client.updateIdentityState({ kind: "logging_in" })}>
-            {#snippet icon()}
-                <Login size={$iconSize} color={"var(--icon-inverted-txt)"} />
-            {/snippet}
-            {#snippet text()}
-                <Translatable resourceKey={i18nKey("login")} />
-            {/snippet}
-        </MenuItem>
-    {/if}
-</Menu>
+{/if}
+<MenuItem onclick={() => page("/home")}>
+    {#snippet icon(color, size)}
+        <Home {color} {size} />
+    {/snippet}
+    Home page
+</MenuItem>
+<MenuItem onclick={() => page("/features")}>
+    {#snippet icon(color, size)}
+        <InformationOutline {color} {size} />
+    {/snippet}
+    Features
+</MenuItem>
+<MenuItem onclick={() => page("/roadmap")}>
+    {#snippet icon(color, size)}
+        <Road {color} {size} />
+    {/snippet}
+    Roadmap
+</MenuItem>
+<MenuItem onclick={() => page("/whitepaper")}>
+    {#snippet icon(color, size)}
+        <Note {color} {size} />
+    {/snippet}
+    Whitepaper
+</MenuItem>
+<MenuItem onclick={() => page("/architecture")}>
+    {#snippet icon(color, size)}
+        <Graph {color} {size} />
+    {/snippet}
+    Architecture
+</MenuItem>
+<MenuItem onclick={() => page("/blog")}>
+    {#snippet icon(color, size)}
+        <Blog {color} {size} />
+    {/snippet}
+    Blog
+</MenuItem>
+<MenuItem onclick={() => page("/faq")}>
+    {#snippet icon(color, size)}
+        <Help {color} {size} />
+    {/snippet}
+    FAQs
+</MenuItem>
+<MenuItem onclick={() => page("/guidelines")}>
+    {#snippet icon(color, size)}
+        <Security {color} {size} />
+    {/snippet}
+    Guidelines
+</MenuItem>
+<MenuItem href="https://tokenterminal.com/terminal/projects/openchat">
+    {#snippet icon(color, size)}
+        <ChartLine {color} {size} />
+    {/snippet}
+    Metrics
+</MenuItem>
+{#if $platformOperatorStore}
+    <MenuItem separator />
+    <MenuItem onclick={() => page("/admin")}>
+        {#snippet icon(color, size)}
+            <CogOutline {color} {size} />
+        {/snippet}
+        {"Admin"}
+    </MenuItem>
+{/if}
+<MenuItem separator />
+{#if !$anonUserStore}
+    <MenuItem onclick={() => client.logout()}>
+        {#snippet icon(color, size)}
+            <Logout {color} {size} />
+        {/snippet}
+        <Translatable resourceKey={i18nKey("logout")} />
+    </MenuItem>
+{:else}
+    <MenuItem onclick={() => client.updateIdentityState({ kind: "logging_in" })}>
+        {#snippet icon(color, size)}
+            <Login {color} {size} />
+        {/snippet}
+        <Translatable resourceKey={i18nKey("login")} />
+    </MenuItem>
+{/if}
 
 <style lang="scss">
     .diamond-icon {

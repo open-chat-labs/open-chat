@@ -29,9 +29,6 @@
 
     let container: HTMLElement | undefined;
 
-    // TODO
-    let mobileWidth = $state(false);
-
     onMount(() => {
         if (container) {
             move(container);
@@ -43,7 +40,7 @@
     });
 
     function move(container: HTMLElement) {
-        if (centered && mobileWidth) {
+        if (centered) {
             positionInCenter(container);
         } else {
             reposition(trigger, container, {

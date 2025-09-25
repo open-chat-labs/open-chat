@@ -11,6 +11,7 @@
 </script>
 
 <script lang="ts">
+    import { portalState } from "component-lib";
     import {
         MessageContextMap,
         currentUserIdStore,
@@ -38,7 +39,6 @@
     import { rtlStore } from "../../stores/rtl";
     import { pop } from "../../utils/transition";
     import Fab from "../Fab.svelte";
-    import { portalState } from "../portalState.svelte";
     import TimelineDate from "./TimelineDate.svelte";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens

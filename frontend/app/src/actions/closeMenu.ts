@@ -1,5 +1,4 @@
- 
-import { portalState } from "@src/components/portalState.svelte";
+import { portalState } from "component-lib";
 
 function hideMenu() {
     portalState.close();

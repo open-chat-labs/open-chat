@@ -23,7 +23,6 @@
         communitiesStore,
         currentUserIdStore,
         favouritesStore,
-        iconSize,
         messagesRead,
         notificationsSupported,
         OpenChat,
@@ -316,30 +315,30 @@
         {#snippet menuItems()}
             {#if !$favouritesStore.has(chatSummary.id)}
                 <MenuItem onclick={addToFavourites}>
-                    {#snippet icon()}
-                        <HeartPlus size={$iconSize} color={"var(--menu-warn)"} />
+                    {#snippet icon(_, size)}
+                        <HeartPlus color={"var(--error)"} {size} />
                     {/snippet}
                     <Translatable resourceKey={i18nKey("communities.addToFavourites")} />
                 </MenuItem>
             {:else}
                 <MenuItem onclick={removeFromFavourites}>
-                    {#snippet icon()}
-                        <HeartMinus size={$iconSize} color={"var(--menu-warn)"} />
+                    {#snippet icon(_, size)}
+                        <HeartMinus color={"var(--error)"} {size} />
                     {/snippet}
                     <Translatable resourceKey={i18nKey("communities.removeFromFavourites")} />
                 </MenuItem>
             {/if}
             {#if !pinned}
                 <MenuItem onclick={pinChat}>
-                    {#snippet icon()}
-                        <PinIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                    {#snippet icon(color, size)}
+                        <PinIcon {color} {size} />
                     {/snippet}
                     <Translatable resourceKey={i18nKey("pinChat.menuItem")} />
                 </MenuItem>
             {:else}
                 <MenuItem onclick={unpinChat}>
-                    {#snippet icon()}
-                        <PinOffIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                    {#snippet icon(color, size)}
+                        <PinOffIcon {color} {size} />
                     {/snippet}
                     <Translatable resourceKey={i18nKey("pinChat.unpinMenuItem")} />
                 </MenuItem>
@@ -347,30 +346,30 @@
             {#if notificationsSupported && !externalContent}
                 {#if muted}
                     <MenuItem onclick={() => toggleMuteNotifications(false, undefined)}>
-                        {#snippet icon()}
-                            <BellIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        {#snippet icon(color, size)}
+                            <BellIcon {color} {size} />
                         {/snippet}
                         <Translatable resourceKey={i18nKey("unmuteNotifications")} />
                     </MenuItem>
                 {:else}
                     <MenuItem onclick={() => toggleMuteNotifications(true, undefined)}>
-                        {#snippet icon()}
-                            <MutedIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        {#snippet icon(color, size)}
+                            <MutedIcon {color} {size} />
                         {/snippet}
                         <Translatable resourceKey={i18nKey("muteNotifications")} />
                     </MenuItem>
                 {/if}
                 {#if atEveryoneMuted}
                     <MenuItem onclick={() => toggleMuteNotifications(undefined, false)}>
-                        {#snippet icon()}
-                            <MutedIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        {#snippet icon(color, size)}
+                            <MutedIcon {color} {size} />
                         {/snippet}
                         <Translatable resourceKey={i18nKey("unmuteAtEveryone")} />
                     </MenuItem>
                 {:else}
                     <MenuItem onclick={() => toggleMuteNotifications(undefined, true)}>
-                        {#snippet icon()}
-                            <MutedIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        {#snippet icon(color, size)}
+                            <MutedIcon {color} {size} />
                         {/snippet}
                         <Translatable resourceKey={i18nKey("muteAtEveryone")} />
                     </MenuItem>
@@ -380,10 +379,8 @@
                 <MenuItem
                     disabled={unreadMessages === 0}
                     onclick={() => client.markAllRead(chatSummary)}>
-                    {#snippet icon()}
-                        <CheckboxMultipleMarked
-                            size={$iconSize}
-                            color={"var(--icon-inverted-txt)"} />
+                    {#snippet icon(color, size)}
+                        <CheckboxMultipleMarked {size} {color} />
                     {/snippet}
                     <Translatable resourceKey={i18nKey("markAllRead")} />
                 </MenuItem>
@@ -391,15 +388,15 @@
             {#if !chat.bot}
                 {#if chatSummary.membership.archived}
                     <MenuItem onclick={selectChat}>
-                        {#snippet icon()}
-                            <ArchiveOffIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        {#snippet icon(color, size)}
+                            <ArchiveOffIcon {color} {size} />
                         {/snippet}
                         <Translatable resourceKey={i18nKey("unarchiveChat")} />
                     </MenuItem>
                 {:else}
                     <MenuItem onclick={archiveChat}>
-                        {#snippet icon()}
-                            <ArchiveIcon size={$iconSize} color={"var(--icon-inverted-txt)"} />
+                        {#snippet icon(color, size)}
+                            <ArchiveIcon {color} {size} />
                         {/snippet}
                         <Translatable resourceKey={i18nKey("archiveChat")} />
                     </MenuItem>
@@ -407,8 +404,8 @@
             {/if}
             {#if chatSummary.kind !== "direct_chat" && client.canLeaveGroup(chatSummary.id)}
                 <MenuItem danger onclick={leaveGroup}>
-                    {#snippet icon()}
-                        <LocationExit size={$iconSize} color={"var(--menu-warn)"} />
+                    {#snippet icon(color, size)}
+                        <LocationExit {color} {size} />
                     {/snippet}
                     {interpolate($_, i18nKey("leaveGroup", undefined, chatSummary.level, true))}
                 </MenuItem>

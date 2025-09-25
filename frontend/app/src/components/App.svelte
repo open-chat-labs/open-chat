@@ -11,7 +11,7 @@
     import { snowing } from "@stores/snow";
     import { incomingVideoCall } from "@stores/video";
     import { broadcastLoggedInUser } from "@stores/xframe";
-    import { currentTheme, setNativeTheme, writeNativeCssVariables } from "@theme/themes";
+    import { currentTheme } from "@theme/themes";
     import "@utils/markdown";
     import {
         expectNewFcmToken,
@@ -25,6 +25,7 @@
         isScrollingRoute,
         redirectLandingPageLinksIfNecessary,
     } from "@utils/urls";
+    import { portalState } from "component-lib";
     import {
         type ChatIdentifier,
         type DexId,
@@ -61,7 +62,6 @@
     import ActiveCall from "./home/video/ActiveCall.svelte";
     import IncomingCall from "./home/video/IncomingCall.svelte";
     import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
-    import { portalState } from "./portalState.svelte";
     import Upgrading from "./upgrading/Upgrading.svelte";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");

@@ -3,7 +3,6 @@
     import type { CommunitySummary, OpenChat } from "openchat-client";
     import {
         chatSummariesListStore,
-        iconSize,
         mobileWidth,
         notificationsSupported,
         platformModeratorStore,
@@ -130,76 +129,76 @@
 </script>
 
 <MenuItem onclick={communityDetails}>
-    {#snippet icon()}
-        <FileDocument size={$iconSize} color={"var(--icon-inverted-txt)"} />
+    {#snippet icon(color, size)}
+        <FileDocument {color} {size} />
     {/snippet}
     <Translatable resourceKey={i18nKey("communities.details")} />
 </MenuItem>
 <MenuItem onclick={showMembers}>
-    {#snippet icon()}
-        <AccountMultiple size={$iconSize} color={"var(--icon-inverted-txt)"} />
+    {#snippet icon(color, size)}
+        <AccountMultiple {color} {size} />
     {/snippet}
     <Translatable resourceKey={i18nKey("communities.members")} />
 </MenuItem>
 {#if canInvite}
     <MenuItem onclick={invite}>
-        {#snippet icon()}
-            <AccountMultiplePlus size={$iconSize} color={"var(--icon-inverted-txt)"} />
+        {#snippet icon(color, size)}
+            <AccountMultiplePlus {color} {size} />
         {/snippet}
         <Translatable resourceKey={i18nKey("communities.invite")} />
     </MenuItem>
 {/if}
 {#if canEdit}
     <MenuItem onclick={editCommunity}>
-        {#snippet icon()}
-            <PencilOutline size={$iconSize} color={"var(--icon-inverted-txt)"} />
+        {#snippet icon(color, size)}
+            <PencilOutline {color} {size} />
         {/snippet}
         <Translatable resourceKey={i18nKey("communities.edit")} />
     </MenuItem>
 {/if}
 {#if canCreateChannel}
     <MenuItem onclick={newChannel}>
-        {#snippet icon()}
-            <PlaylistPlus size={$iconSize} color={"var(--icon-inverted-txt)"} />
+        {#snippet icon(color, size)}
+            <PlaylistPlus {color} {size} />
         {/snippet}
         <Translatable resourceKey={i18nKey("communities.createChannel")} />
     </MenuItem>
 {/if}
 {#if canCreateChannel}
     <MenuItem onclick={embedContent}>
-        {#snippet icon()}
-            <Contain size={$iconSize} color={"var(--icon-inverted-txt)"} />
+        {#snippet icon(color, size)}
+            <Contain {color} {size} />
         {/snippet}
         <Translatable resourceKey={i18nKey("communities.embed")} />
     </MenuItem>
 {/if}
 {#if $mobileWidth}
     <MenuItem onclick={copyUrl}>
-        {#snippet icon()}
-            <ContentCopy size={$iconSize} color={"var(--icon-txt)"} />
+        {#snippet icon(color, size)}
+            <ContentCopy {color} {size} />
         {/snippet}
         <Translatable resourceKey={i18nKey("copyUrl")} />
     </MenuItem>
 {/if}
 <MenuItem disabled={!canMarkAllRead} onclick={markAllRead}>
-    {#snippet icon()}
-        <CheckboxMultipleMarked size={$iconSize} color={"var(--icon-inverted-txt)"} />
+    {#snippet icon(color, size)}
+        <CheckboxMultipleMarked {color} {size} />
     {/snippet}
     <Translatable resourceKey={i18nKey("markAllRead")} />
 </MenuItem>
 {#if notificationsSupported}
     {#if !isCommunityMuted}
         <MenuItem onclick={() => muteAllChannels(false)}>
-            {#snippet icon()}
-                <BellOff size={$iconSize} color={"var(--icon-inverted-txt)"} />
+            {#snippet icon(color, size)}
+                <BellOff {color} {size} />
             {/snippet}
             <Translatable resourceKey={i18nKey("communities.muteAllChannels")} />
         </MenuItem>
     {/if}
     {#if !isAtEveryoneMutedForCommunity}
         <MenuItem onclick={() => muteAllChannels(true)}>
-            {#snippet icon()}
-                <BellOff size={$iconSize} color={"var(--icon-inverted-txt)"} />
+            {#snippet icon(color, size)}
+                <BellOff {color} {size} />
             {/snippet}
             <Translatable resourceKey={i18nKey("communities.muteAllChannelsAtEveryone")} />
         </MenuItem>
@@ -209,16 +208,16 @@
     <MenuItem separator />
     {#if canDelete}
         <MenuItem danger onclick={deleteCommunity}>
-            {#snippet icon()}
-                <DeleteOutline size={$iconSize} color={"var(--menu-warn)"} />
+            {#snippet icon(color, size)}
+                <DeleteOutline {color} {size} />
             {/snippet}
             <Translatable resourceKey={i18nKey("communities.delete")} />
         </MenuItem>
     {/if}
     {#if canLeave}
         <MenuItem danger onclick={leaveCommunity}>
-            {#snippet icon()}
-                <LocationExit size={$iconSize} color={"var(--menu-warn)"} />
+            {#snippet icon(color, size)}
+                <LocationExit {color} {size} />
             {/snippet}
             <Translatable resourceKey={i18nKey("communities.leave")} />
         </MenuItem>
@@ -227,15 +226,15 @@
 {#if $platformModeratorStore}
     {#if client.isCommunityFrozen(community.id)}
         <MenuItem danger onclick={unfreezeCommunity}>
-            {#snippet icon()}
-                <TickIcon size={$iconSize} color={"var(--menu-warn"} />
+            {#snippet icon(color, size)}
+                <TickIcon {color} {size} />
             {/snippet}
             <Translatable resourceKey={i18nKey("unfreezeCommunity")} />
         </MenuItem>
     {:else}
         <MenuItem danger onclick={freezeCommunity}>
-            {#snippet icon()}
-                <CancelIcon size={$iconSize} color={"var(--menu-warn"} />
+            {#snippet icon(color, size)}
+                <CancelIcon {color} {size} />
             {/snippet}
             <Translatable resourceKey={i18nKey("freezeCommunity")} />
         </MenuItem>

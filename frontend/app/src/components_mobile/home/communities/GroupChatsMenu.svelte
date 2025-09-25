@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
-    import { anonUserStore, iconSize, identityStateStore, publish } from "openchat-client";
+    import { anonUserStore, identityStateStore, publish } from "openchat-client";
     import { getContext, tick } from "svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
@@ -39,14 +39,14 @@
 </script>
 
 <MenuItem onclick={newGroup}>
-    {#snippet icon()}
-        <AccountMultiplePlus size={$iconSize} color={"var(--icon-inverted-txt)"} />
+    {#snippet icon(color, size)}
+        <AccountMultiplePlus {color} {size} />
     {/snippet}
     <Translatable resourceKey={i18nKey("newGroup")} />
 </MenuItem>
 <MenuItem disabled={!canMarkAllRead} onclick={() => client.markAllReadForCurrentScope()}>
-    {#snippet icon()}
-        <CheckboxMultipleMarked size={$iconSize} color={"var(--icon-inverted-txt)"} />
+    {#snippet icon(color, size)}
+        <CheckboxMultipleMarked {color} {size} />
     {/snippet}
     <Translatable resourceKey={i18nKey("markAllRead")} />
 </MenuItem>
