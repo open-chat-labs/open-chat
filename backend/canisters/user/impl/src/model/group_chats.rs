@@ -1,40 +1,15 @@
 use crate::model::group_chat::GroupChat;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use types::{CanisterId, Chat, ChatId, MessageIndex, TimestampMillis, Timestamped};
 
-#[derive(Serialize, Default)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct GroupChats {
     groups_created: u32,
     group_chats: HashMap<ChatId, GroupChat>,
     pinned: Timestamped<HashMap<ChatId, TimestampMillis>>,
     removed: Vec<RemovedGroup>,
-}
-
-// TODO: Remove this after the next release
-impl<'de> Deserialize<'de> for GroupChats {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        #[derive(Deserialize)]
-        struct OldGroupChats {
-            groups_created: u32,
-            group_chats: HashMap<ChatId, GroupChat>,
-            pinned: Timestamped<Vec<ChatId>>,
-            removed: Vec<RemovedGroup>,
-        }
-
-        let inner = OldGroupChats::deserialize(deserializer)?;
-        let Timestamped { value, timestamp } = inner.pinned;
-        Ok(GroupChats {
-            groups_created: inner.groups_created,
-            group_chats: inner.group_chats,
-            pinned: Timestamped::new(value.into_iter().map(|id| (id, 0)).collect(), timestamp),
-            removed: inner.removed,
-        })
-    }
 }
 
 #[derive(Serialize, Deserialize)]
