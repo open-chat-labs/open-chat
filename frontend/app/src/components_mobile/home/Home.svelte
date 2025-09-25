@@ -41,7 +41,6 @@
         fullWidth,
         identityStateStore,
         localUpdates,
-        mobileWidth,
         nullMembership,
         offlineStore,
         pageRedirect,
@@ -106,7 +105,6 @@
     import DailyChitModal from "./DailyChitModal.svelte";
     import LeftPanel from "./LeftPanel.svelte";
     import MiddlePanel from "./MiddlePanel.svelte";
-    import LeftNav from "./nav/LeftNav.svelte";
     import NoAccess from "./NoAccess.svelte";
     import PinNumberModal from "./PinNumberModal.svelte";
     import AccountsModal from "./profile/AccountsModal.svelte";
@@ -1019,9 +1017,6 @@
     width={{ kind: "fill" }}
     supplementalClass={mainClass}
     tag="main">
-    {#if !$mobileWidth}
-        <LeftNav />
-    {/if}
     <LeftPanel />
     <MiddlePanel {joining} />
     <RightPanel />

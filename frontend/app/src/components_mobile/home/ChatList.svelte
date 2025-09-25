@@ -16,7 +16,6 @@
         favouritesStore,
         type GroupMatch,
         type GroupSearchResponse,
-        mobileWidth,
         numberOfThreadsStore,
         OpenChat,
         publish,
@@ -40,7 +39,6 @@
     import FilteredUsername from "../FilteredUsername.svelte";
     import Translatable from "../Translatable.svelte";
     import ChatListFilters, { type ChatListFilter } from "./ChatListFilters.svelte";
-    import ChatListSearch from "./ChatListSearch.svelte";
     import ChatListSectionButton from "./ChatListSectionButton.svelte";
     import ChatSummary from "./ChatSummary.svelte";
     import BrowseChannels from "./communities/details/BrowseChannels.svelte";
@@ -159,8 +157,7 @@
     }
 
     let showPreview = $derived(
-        $mobileWidth &&
-            $selectedCommunitySummaryStore?.membership.role === ROLE_NONE &&
+        $selectedCommunitySummaryStore?.membership.role === ROLE_NONE &&
             $selectedChatIdStore === undefined,
     );
     let user = $derived($allUsersStore.get($currentUserIdStore));
@@ -219,7 +216,6 @@
     }
 </script>
 
-<!-- svelte-ignore missing_declaration -->
 {#if user}
     {#if $chatListScopeStore.kind === "chats"}
         <DirectAndGroupChatsHeader {canMarkAllRead} />
@@ -229,48 +225,23 @@
         <SelectedCommunityHeader community={$selectedCommunitySummaryStore} {canMarkAllRead} />
     {/if}
 
-    {#if !$mobileWidth}
-        <ChatListSearch
-            bind:userAndBotsSearchResults={userAndBotSearchResults}
-            bind:groupSearchResults
-            bind:searchResultsAvailable
-            bind:searchTerm />
-    {/if}
-
-    {#if $mobileWidth}
-        {#if $chatListScopeStore.kind === "chats"}
-            <ChatListFilters bind:filter={chatListFilter} />
-        {:else if $chatListScopeStore.kind === "community"}
-            {#if $numberOfThreadsStore > 0}
-                <Container mainAxisAlignment={"spaceBetween"} padding={["sm", "md"]} gap={"sm"}>
-                    <ChatListSectionButton
-                        onClick={() => setView("chats")}
-                        unread={unreadCounts.chats}
-                        title={i18nKey("chats")}
-                        selected={$chatListView === "chats"} />
-                    <ChatListSectionButton
-                        unread={unreadCounts.threads}
-                        onClick={() => setView("threads")}
-                        title={i18nKey("thread.previewTitle")}
-                        selected={$chatListView === "threads"} />
-                </Container>
-            {/if}
+    {#if $chatListScopeStore.kind === "chats"}
+        <ChatListFilters bind:filter={chatListFilter} />
+    {:else if $chatListScopeStore.kind === "community"}
+        {#if $numberOfThreadsStore > 0}
+            <Container mainAxisAlignment={"spaceBetween"} padding={["sm", "md"]} gap={"sm"}>
+                <ChatListSectionButton
+                    onClick={() => setView("chats")}
+                    unread={unreadCounts.chats}
+                    title={i18nKey("chats")}
+                    selected={$chatListView === "chats"} />
+                <ChatListSectionButton
+                    unread={unreadCounts.threads}
+                    onClick={() => setView("threads")}
+                    title={i18nKey("thread.previewTitle")}
+                    selected={$chatListView === "threads"} />
+            </Container>
         {/if}
-    {/if}
-
-    {#if $numberOfThreadsStore > 0 && !$mobileWidth}
-        <Container mainAxisAlignment={"spaceBetween"} padding={["sm", "md"]} gap={"sm"}>
-            <ChatListSectionButton
-                onClick={() => setView("chats")}
-                unread={unreadCounts.chats}
-                title={i18nKey("chats")}
-                selected={$chatListView === "chats"} />
-            <ChatListSectionButton
-                unread={unreadCounts.threads}
-                onClick={() => setView("threads")}
-                title={i18nKey("thread.previewTitle")}
-                selected={$chatListView === "threads"} />
-        </Container>
     {/if}
 
     <Container width={{ kind: "fill" }} height={{ kind: "fill" }} direction={"vertical"}>
@@ -409,7 +380,7 @@
     {/if}
 {/if}
 
-{#if $mobileWidth && $chatListScopeStore.kind === "chats"}
+{#if $chatListScopeStore.kind === "chats"}
     <div class="floating">
         <FloatingButton onClick={newMessage}>
             {#snippet icon(color)}
@@ -425,16 +396,6 @@
         bottom: 0;
         padding: $sp3 $sp4;
         background-color: var(--entry-bg);
-    }
-
-    .section-selector {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        margin: 0 $sp4 $sp4 $sp4;
-        gap: $sp3;
-        @include mobile() {
-            margin: 0 $sp3 $sp3 $sp3;
-        }
     }
 
     .search-subtitle {

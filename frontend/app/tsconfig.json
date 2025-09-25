@@ -8,7 +8,7 @@
             "@src/*": ["./src/*"],
             "@actions/*": ["./src/actions/*"],
             "@components/*": ["./src/components/*"],
-            "@components_v2/*": ["./src/components_v2/*"],
+            "@components_mobile/*": ["./src/components_mobile/*"],
             "@i18n/*": ["./src/i18n/*"],
             "@stores/*": ["./src/stores/*"],
             "@theme/*": ["./src/theme/*"],
