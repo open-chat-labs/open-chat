@@ -1,10 +1,9 @@
+use crate::Data;
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
-use crate::{Data, mutate_state};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
-use local_user_index_canister::{ChitBalance, UserIndexEvent};
 use stable_memory::get_reader;
 use tracing::info;
 use user_index_canister::post_upgrade::Args;
