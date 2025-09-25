@@ -173,7 +173,7 @@
         position: absolute;
         width: var(--width);
         left: 0;
-        top: 0.25rem;
+        top: 0.375rem;
         height: var(--sp-xs);
         background: var(--gradient);
         border-radius: var(--rad-sm);
