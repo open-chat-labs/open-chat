@@ -27,36 +27,6 @@ fn post_upgrade(args: Args) {
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id, data.test_mode);
     init_state(env, data, args.wasm_version);
 
-    // TODO - remove this after release
-    mutate_state(|state| {
-        let now = state.env.now();
-
-        // Borrow checker would not let me do this in one go
-        let events: Vec<UserIndexEvent> = state
-            .data
-            .users
-            .iter()
-            .filter(|u| u.streak > 0 && u.streak_ends > now)
-            .map(|u| {
-                UserIndexEvent::UpdateChitBalance(
-                    u.user_id,
-                    ChitBalance {
-                        total_earned: u.total_chit_earned,
-                        curr_balance: u.chit_balance,
-                        streak: u.streak,
-                        streak_ends: u.streak_ends,
-                    },
-                )
-            })
-            .collect();
-
-        for ev in events {
-            for canister_id in state.data.local_index_map.canisters() {
-                state.data.user_index_event_sync_queue.push(*canister_id, ev.clone());
-            }
-        }
-    });
-
     let total_instructions = ic_cdk::api::call_context_instruction_counter();
     info!(version = %args.wasm_version, total_instructions, "Post-upgrade complete");
 }
