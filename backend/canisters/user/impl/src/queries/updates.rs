@@ -114,11 +114,6 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         added: direct_chats_added,
         updated: direct_chats_updated,
         removed: state.data.direct_chats.removed_since(updates_since),
-        pinned: state
-            .data
-            .direct_chats
-            .pinned_if_updated(updates_since)
-            .map(|m| sorted_pinned(&m)),
     };
 
     let group_chats_removed = state.data.group_chats.removed_since(updates_since);
@@ -136,11 +131,6 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         added: group_chats_added,
         updated: group_chats_updated,
         removed: group_chats_removed,
-        pinned: state
-            .data
-            .group_chats
-            .pinned_if_updated(updates_since)
-            .map(|m| sorted_pinned(&m)),
     };
 
     let communities_removed = state.data.communities.removed_since(updates_since);

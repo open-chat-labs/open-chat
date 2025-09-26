@@ -27,16 +27,8 @@ impl GroupChats {
         self.group_chats.values().filter(move |c| c.last_updated() > since)
     }
 
-    pub fn pinned(&self) -> &HashMap<ChatId, TimestampMillis> {
-        &self.pinned.value
-    }
-
     pub fn pinned_chats(&self) -> HashMap<Chat, TimestampMillis> {
         self.pinned.value.iter().map(|(k, v)| (Chat::Group(*k), *v)).collect()
-    }
-
-    pub fn pinned_if_updated(&self, since: TimestampMillis) -> Option<HashMap<ChatId, TimestampMillis>> {
-        self.pinned.if_set_after(since).map(|ids| ids.to_owned())
     }
 
     pub fn pinned_chats_if_updated(&self, since: TimestampMillis) -> Option<HashMap<Chat, TimestampMillis>> {
