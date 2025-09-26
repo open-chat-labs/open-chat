@@ -27,6 +27,7 @@ import {
     type ChatSummary,
     type ChitState,
     type CombinedUnreadCounts,
+    type CommunityIdentifier,
     type CommunitySummary,
     type CreatedUser,
     type CryptocurrencyDetails,
@@ -112,6 +113,8 @@ export const lastSelectedChatByScopeStore = writable<ChatListScopeMap<ChatIdenti
     undefined,
     notEq,
 );
+
+export const lastSelectedCommunityIdStore = writable<CommunityIdentifier | undefined>(undefined);
 
 export const cryptoLookup = writable<ReadonlyMap<LedgerCanister, CryptocurrencyDetails>>(
     new SafeMap(),

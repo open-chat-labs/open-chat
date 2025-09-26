@@ -355,6 +355,7 @@ import {
     isLifetimeDiamondStore,
     lastCryptoSent,
     lastSelectedChatByScopeStore,
+    lastSelectedCommunityIdStore,
     latestSuccessfulUpdatesLoop,
     localUpdates,
     messageActivitySummaryStore,
@@ -416,6 +417,7 @@ import {
     serverWalletConfigStore,
     setSoftDisabled,
     snsFunctionsStore,
+    sortedCommunitiesStore,
     storageStore,
     suspendedUserStore,
     swappableTokensStore,
@@ -8215,6 +8217,7 @@ export class OpenChat {
         }
 
         if (community !== undefined) {
+            lastSelectedCommunityIdStore.set(community.id);
             this.#loadCommunityDetails(community);
         }
 
@@ -8245,11 +8248,30 @@ export class OpenChat {
         return false;
     }
 
-    selectDefaultCommunity(): boolean {
-        const first = [...communitiesStore.value.values()].find((c) => !c.membership.archived);
+    #selectLastSelectedCommunity(): boolean {
+        const mostRecentId = lastSelectedCommunityIdStore.value;
+        const mostRecentCommunity = mostRecentId
+            ? communitiesStore.value.get(mostRecentId)
+            : undefined;
+        if (mostRecentCommunity !== undefined) {
+            pageRedirect(`/community/${mostRecentCommunity.id.communityId}`);
+            return true;
+        }
+        return false;
+    }
+
+    #selectFirstCommunity(): boolean {
+        const first = sortedCommunitiesStore.value.find((c) => !c.membership.archived);
         if (first !== undefined) {
             pageRedirect(`/community/${first.id.communityId}`);
             return true;
+        }
+        return false;
+    }
+
+    selectDefaultCommunity(): boolean {
+        if (!this.#selectLastSelectedCommunity()) {
+            return this.#selectFirstCommunity();
         }
         return false;
     }

@@ -2,6 +2,7 @@
     import { Avatar, Container, NotificationIndicator } from "component-lib";
     import {
         OpenChat,
+        selectedCommunityIdStore,
         sortedCommunitiesStore,
         type CommunitySummary,
         type UnreadCounts,
@@ -17,17 +18,21 @@
 
     let props: Props = $props();
 
-    // TODO - this should not be driven by the selection - it should be an effect based on the routing
-    // That way it will also work when we start remembering the last selected community (which we definitely need to do)
-    function internalSelect(community: CommunitySummary, e?: MouseEvent) {
-        props.onSelect(community);
-        const t = e?.target;
-        if (t !== undefined) {
-            (t as HTMLDivElement).scrollIntoView({
-                behavior: "smooth",
-                inline: "center",
-            });
+    $effect(() => {
+        if ($selectedCommunityIdStore !== undefined) {
+            const id = `scroller_item_${$selectedCommunityIdStore.communityId}`;
+            const el = document.getElementById(id);
+            if (el !== undefined) {
+                scrollIntoView(el as HTMLDivElement);
+            }
         }
+    });
+
+    function scrollIntoView(el: HTMLDivElement) {
+        el.scrollIntoView({
+            behavior: "smooth",
+            inline: "center",
+        });
     }
 </script>
 
@@ -35,9 +40,10 @@
     {#each $sortedCommunitiesStore as community}
         {@const [unread, muted] = props.hasUnread(community)}
         <Container
+            id={`scroller_item_${community.id.communityId}`}
             allowOverflow
             width={{ kind: "hug" }}
-            onClick={(e) => internalSelect(community, e)}>
+            onClick={() => props.onSelect(community)}>
             <Avatar
                 url={client.communityAvatarUrl(community.id.communityId, community.avatar)}
                 size={"xl"}
