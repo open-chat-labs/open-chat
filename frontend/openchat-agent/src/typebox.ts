@@ -6683,7 +6683,6 @@ export const UserInitialStateCommunitiesInitial = Type.Object({
 export type UserInitialStateGroupChatsInitial = Static<typeof UserInitialStateGroupChatsInitial>;
 export const UserInitialStateGroupChatsInitial = Type.Object({
     summaries: Type.Array(UserGroupChatSummary),
-    pinned: Type.Array(ChatId),
 });
 
 export type UserInitialStateFavouriteChatsInitial = Static<
@@ -6704,7 +6703,6 @@ export const UserUpdatesGroupChatsUpdates = Type.Object({
     added: Type.Array(UserGroupChatSummary),
     updated: Type.Array(UserGroupChatSummaryUpdates),
     removed: Type.Array(ChatId),
-    pinned: Type.Optional(Type.Array(ChatId)),
 });
 
 export type UserUpdatesCommunitiesUpdates = Static<typeof UserUpdatesCommunitiesUpdates>;
@@ -9301,7 +9299,6 @@ export const GroupSummaryResponse = Type.Union([
 export type UserInitialStateDirectChatsInitial = Static<typeof UserInitialStateDirectChatsInitial>;
 export const UserInitialStateDirectChatsInitial = Type.Object({
     summaries: Type.Array(DirectChatSummary),
-    pinned: Type.Array(ChatId),
 });
 
 export type UserUpdatesDirectChatsUpdates = Static<typeof UserUpdatesDirectChatsUpdates>;
@@ -9309,7 +9306,6 @@ export const UserUpdatesDirectChatsUpdates = Type.Object({
     added: Type.Array(DirectChatSummary),
     updated: Type.Array(DirectChatSummaryUpdates),
     removed: Type.Array(ChatId),
-    pinned: Type.Optional(Type.Array(ChatId)),
 });
 
 export type UserMessagesByMessageIndexResponse = Static<typeof UserMessagesByMessageIndexResponse>;

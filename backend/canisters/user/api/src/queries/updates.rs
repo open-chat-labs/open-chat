@@ -65,7 +65,6 @@ pub struct DirectChatsUpdates {
     pub added: Vec<DirectChatSummary>,
     pub updated: Vec<DirectChatSummaryUpdates>,
     pub removed: Vec<ChatId>,
-    pub pinned: Option<Vec<ChatId>>,
 }
 
 #[ts_export(user, updates)]
@@ -74,7 +73,6 @@ pub struct GroupChatsUpdates {
     pub added: Vec<crate::GroupChatSummary>,
     pub updated: Vec<crate::GroupChatSummaryUpdates>,
     pub removed: Vec<ChatId>,
-    pub pinned: Option<Vec<ChatId>>,
 }
 
 #[ts_export(user, updates)]
