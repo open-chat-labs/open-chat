@@ -17,6 +17,8 @@
 
     let props: Props = $props();
 
+    // TODO - this should not be driven by the selection - it should be an effect based on the routing
+    // That way it will also work when we start remembering the last selected community (which we definitely need to do)
     function internalSelect(community: CommunitySummary, e?: MouseEvent) {
         props.onSelect(community);
         const t = e?.target;
