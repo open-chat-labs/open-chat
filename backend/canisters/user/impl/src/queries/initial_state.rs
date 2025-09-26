@@ -21,12 +21,10 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
 
     let direct_chats = DirectChatsInitial {
         summaries: state.data.direct_chats.iter().map(|d| d.to_summary(my_user_id)).collect(),
-        pinned: sorted_pinned(state.data.direct_chats.pinned()),
     };
 
     let group_chats = GroupChatsInitial {
         summaries: state.data.group_chats.iter().map(|g| g.to_summary()).collect(),
-        pinned: sorted_pinned(state.data.group_chats.pinned()),
     };
 
     let communities = CommunitiesInitial {

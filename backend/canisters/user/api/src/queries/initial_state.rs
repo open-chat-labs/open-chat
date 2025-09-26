@@ -2,7 +2,7 @@ use crate::{MessageActivitySummary, Referral, WalletConfig};
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
-    CanisterId, Chat, ChatId, ChitEvent, DirectChatSummary, Empty, InstalledBotDetails, PinNumberSettings, StreakInsurance,
+    CanisterId, Chat, ChitEvent, DirectChatSummary, Empty, InstalledBotDetails, PinNumberSettings, StreakInsurance,
     TimestampMillis, UserId,
 };
 
@@ -51,14 +51,12 @@ pub struct SuccessResult {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DirectChatsInitial {
     pub summaries: Vec<DirectChatSummary>,
-    pub pinned: Vec<ChatId>,
 }
 
 #[ts_export(user, initial_state)]
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GroupChatsInitial {
     pub summaries: Vec<crate::GroupChatSummary>,
-    pub pinned: Vec<ChatId>,
 }
 
 #[ts_export(user, initial_state)]
