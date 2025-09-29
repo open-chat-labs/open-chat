@@ -377,26 +377,6 @@
         action={updateGroup} />
 {/if}
 
-<!-- {#snippet subsectionButton(Icon: any, title: ResourceKey, info: ResourceKey)}
-    <Container
-        borderRadius={"md"}
-        direction={"vertical"}
-        gap={"md"}
-        backgroundColour={ColourVars.background1}
-        padding={"xl"}>
-        <Container crossAxisAlignment={"center"} gap={"sm"}>
-            <Icon color={"var(--primary)"} />
-            <BodySmall colour={"accent"}>
-                <Translatable resourceKey={title}></Translatable>
-            </BodySmall>
-            <ChevronRight color={ColourVars.primary} />
-        </Container>
-        <Body>
-            <Translatable resourceKey={info}></Translatable>
-        </Body>
-    </Container>
-{/snippet} -->
-
 <Container
     backgroundColour={ColourVars.background0}
     mainAxisAlignment={"spaceBetween"}

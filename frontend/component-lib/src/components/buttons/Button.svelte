@@ -48,16 +48,21 @@
     {:else}
         <span class="content">{@render children?.()}</span>
         {#if icon}
-            <span class="icon">{@render icon(iconColour)}</span>
+            <span class="button_icon">{@render icon(iconColour)}</span>
         {/if}
     {/if}
 </button>
 
 <style lang="scss">
+    :global(.button_icon svg) {
+        width: var(--icon-md);
+        height: var(--icon-md);
+    }
+
     button {
         all: unset;
         position: relative;
-        min-height: var(--sp-xxxl);
+        min-height: 2.75rem;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -81,7 +86,7 @@
             position: absolute;
             inset: calc(-1 * var(--bw-thick));
             border-radius: var(--rad-sm);
-            background: var(--gradient-inverted);
+            background: var(--gradient);
             z-index: -1;
         }
 
@@ -97,7 +102,7 @@
             cursor: not-allowed;
         }
 
-        .icon {
+        .button_icon {
             position: absolute;
             right: 0;
             top: 50%;
