@@ -25,11 +25,12 @@
         height: 3.5rem;
         background: var(--gradient-inverted);
         color: var(--text-primary);
-        border-radius: var(--rad-lg);
+        border-radius: var(--rad-xl);
         border: none;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
+        box-shadow: var(--shadow-menu);
     }
 </style>

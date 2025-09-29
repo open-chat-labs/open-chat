@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { Avatar, Caption, Container, H1 } from "component-lib";
-    import { allUsersStore, currentUserIdStore, OpenChat } from "openchat-client";
+    import { Avatar, Caption, Container, FloatingButton, H1 } from "component-lib";
+    import { allUsersStore, currentUserIdStore, OpenChat, publish } from "openchat-client";
     import { getContext } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountStar from "svelte-material-icons/AccountStarOutline.svelte";
@@ -11,19 +11,17 @@
     import FlashOutline from "svelte-material-icons/FlashOutline.svelte";
     import RobotOutline from "svelte-material-icons/RobotOutline.svelte";
     import Sync from "svelte-material-icons/Sync.svelte";
+    import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import SectionButton from "../../SectionButton.svelte";
     import SparkleBox from "../../SparkleBox.svelte";
     import Translatable from "../../Translatable.svelte";
     import UserProfileHeader from "./UserProfileHeader.svelte";
-
-    type SubArea = "profile" | "general" | "advanced" | "about";
 
     const client = getContext<OpenChat>("client");
 
     let user = $derived($allUsersStore.get($currentUserIdStore));
     let name = $derived(client.getDisplayName($currentUserIdStore));
     let avatarUrl = $derived(client.userAvatarUrl(user));
-    let subarea = $state<SubArea>("profile");
 </script>
 
 <UserProfileHeader />
@@ -118,10 +116,22 @@
             )} />
     </Container>
 </Container>
+<div class="floating">
+    <FloatingButton onClick={() => publish("wallet")}>
+        {#snippet icon(color)}
+            <Wallet {color}></Wallet>
+        {/snippet}
+    </FloatingButton>
+</div>
 
 <style lang="scss">
     :global(.container.user_profile_summary_buttons) {
         margin-top: auto;
         margin-bottom: var(--sp-md);
+    }
+    .floating {
+        position: absolute;
+        bottom: var(--sp-md);
+        right: var(--sp-md);
     }
 </style>
