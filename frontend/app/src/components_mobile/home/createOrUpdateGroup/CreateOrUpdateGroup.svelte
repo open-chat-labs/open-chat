@@ -1,40 +1,50 @@
 <script lang="ts">
     import {
+        Body,
+        BodySmall,
+        ColourVars,
+        CommonButton,
+        Container,
+        Form,
+        Input,
+        SectionHeader,
+        TextArea,
+    } from "component-lib";
+    import {
         type CandidateGroupChat,
         type CandidateMember,
+        chatIdentifierUnset,
+        chatListScopeStore,
         type CreateGroupResponse,
         type Level,
         type MultiUserChatIdentifier,
         type OpenChat,
         type ResourceKey,
         ROLE_ADMIN,
+        routeForChatIdentifier,
+        selectedCommunitySummaryStore,
         UnsupportedValueError,
         type UpdateGroupResponse,
         type UserSummary,
-        chatIdentifierUnset,
-        chatListScopeStore,
-        mobileWidth,
-        routeForChatIdentifier,
-        selectedCommunitySummaryStore,
     } from "openchat-client";
     import { ErrorCode } from "openchat-shared";
     import page from "page";
     import { getContext, tick } from "svelte";
-    import { menuCloser } from "../../../actions/closeMenu";
+    import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
+    import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
+    import AlertRhombusOutline from "svelte-material-icons/AlertRhombusOutline.svelte";
+    import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
+    import Cog from "svelte-material-icons/Cog.svelte";
+    import FormatList from "svelte-material-icons/FormatListBulletedType.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import AreYouSure from "../../AreYouSure.svelte";
-    import Button from "../../Button.svelte";
-    import ModalContent from "../../ModalContent.svelte";
+    import EditableAvatar from "../../EditableAvatar.svelte";
     import Translatable from "../../Translatable.svelte";
-    import ChooseMembers from "../ChooseMembers.svelte";
-    import GroupPermissionsEditor from "../GroupPermissionsEditor.svelte";
-    import GroupPermissionsViewer from "../GroupPermissionsViewer.svelte";
-    import RulesEditor from "../RulesEditor.svelte";
-    import StageHeader from "../StageHeader.svelte";
-    import VisibilityControl from "../VisibilityControl.svelte";
-    import GroupDetails from "./GroupDetails.svelte";
 
+    const MIN_LENGTH = 3;
+    const MAX_LENGTH = 40;
+    const MAX_DESC_LENGTH = 1024;
     const client = getContext<OpenChat>("client");
 
     interface Props {
@@ -54,6 +64,9 @@
     let originalGroup = $state<CandidateGroupChat>($state.snapshot(candidateGroup));
     let rulesValid = $state(true);
     let usersToInvite = $state<CandidateMember[]>([]);
+
+    let nameIsValid =
+        candidateGroup.name.length >= MIN_LENGTH && candidateGroup.name.length <= MAX_LENGTH;
 
     function getSteps(
         editing: boolean,
@@ -340,6 +353,13 @@
         }
     });
     let verificationWarning = $derived(nameDirty && editing && originalGroup.verified);
+
+    function groupAvatarSelected(detail: { url: string; data: Uint8Array }) {
+        candidateGroup.avatar = {
+            blobUrl: detail.url,
+            blobData: detail.data,
+        };
+    }
 </script>
 
 {#if confirming}
@@ -359,7 +379,139 @@
         action={updateGroup} />
 {/if}
 
-<ModalContent bind:actualWidth closeIcon {onClose}>
+{#snippet subsectionButton(Icon: any, title: ResourceKey, info: ResourceKey)}
+    <Container
+        borderRadius={"md"}
+        direction={"vertical"}
+        gap={"md"}
+        backgroundColour={ColourVars.background1}
+        padding={"xl"}>
+        <Container crossAxisAlignment={"center"} gap={"sm"}>
+            <Icon color={"var(--primary)"} />
+            <BodySmall colour={"accent"}>
+                <Translatable resourceKey={title}></Translatable>
+            </BodySmall>
+            <ChevronRight color={ColourVars.primary} />
+        </Container>
+        <Body>
+            <Translatable resourceKey={info}></Translatable>
+        </Body>
+    </Container>
+{/snippet}
+
+<Container
+    backgroundColour={ColourVars.background0}
+    mainAxisAlignment={"spaceBetween"}
+    direction={"vertical"}
+    height={{ kind: "fill" }}>
+    <SectionHeader onBack={onClose}>
+        {#snippet title()}
+            <Translatable
+                resourceKey={i18nKey(
+                    "group.addGroupInfo",
+                    undefined,
+                    candidateGroup.level,
+                    true,
+                )} />
+        {/snippet}
+        {#snippet subtitle()}
+            <Translatable
+                resourceKey={i18nKey("group.createTitle", undefined, candidateGroup.level, true)} />
+        {/snippet}
+    </SectionHeader>
+
+    <Container height={{ kind: "fill" }} gap={"xxl"} direction={"vertical"}>
+        <Container
+            direction={"vertical"}
+            crossAxisAlignment={"center"}
+            supplementalClass={"group_avatar"}>
+            <EditableAvatar
+                size={"headline"}
+                image={candidateGroup.avatar?.blobUrl}
+                onImageSelected={groupAvatarSelected} />
+        </Container>
+
+        <Form onSubmit={() => console.log("On submit")}>
+            <Container
+                padding={["zero", "lg"]}
+                direction={"vertical"}
+                gap={"lg"}
+                supplementalClass={"group_basic_info"}>
+                <Input
+                    minlength={MIN_LENGTH}
+                    maxlength={MAX_LENGTH}
+                    countdown
+                    id={"group_name"}
+                    placeholder={"Group name"}
+                    bind:value={candidateGroup.name}>
+                    {#snippet subtext()}
+                        <Translatable resourceKey={i18nKey("Group name is required *")}
+                        ></Translatable>
+                    {/snippet}
+                </Input>
+                <TextArea
+                    maxlength={MAX_DESC_LENGTH}
+                    countdown
+                    id={"group_desc"}
+                    placeholder={"Description"}
+                    bind:value={candidateGroup.description}>
+                    {#snippet subtext()}
+                        <Translatable
+                            resourceKey={i18nKey("Optionally, tell us what your group is about")}
+                        ></Translatable>
+                    {/snippet}
+                </TextArea>
+            </Container>
+        </Form>
+
+        <Container
+            padding={["zero", "lg"]}
+            direction={"vertical"}
+            gap={"lg"}
+            supplementalClass={"group_sub_sections"}>
+            {@render subsectionButton(
+                Cog,
+                i18nKey("General setup"),
+                i18nKey(
+                    "Enable sharing via link, disappearing messages, or hide chat history for new members.",
+                ),
+            )}
+            {@render subsectionButton(
+                AlertRhombusOutline,
+                i18nKey("Access gates"),
+                i18nKey("Fine tune who can join your group by setting specific access gates."),
+            )}
+            {@render subsectionButton(
+                FormatList,
+                i18nKey("Rules"),
+                i18nKey(
+                    "Define a set of rules that the members of your group will ahve to follow.",
+                ),
+            )}
+            {@render subsectionButton(
+                AccountMultiple,
+                i18nKey("Permissions"),
+                i18nKey("Define which user groups can access certain features within the group."),
+            )}
+        </Container>
+    </Container>
+
+    <Container mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"end"} padding={"lg"}>
+        <CommonButton onClick={onClose} size={"small_text"}>
+            <Translatable resourceKey={i18nKey("group.back")}></Translatable>
+        </CommonButton>
+        <CommonButton onClick={() => console.log("create")} size={"medium"} mode={"active"}>
+            {#snippet icon(color)}
+                <AccountGroup {color}></AccountGroup>
+            {/snippet}
+            <Translatable
+                resourceKey={i18nKey("group.create", undefined, candidateGroup.level, true)}
+            ></Translatable>
+        </CommonButton>
+    </Container>
+</Container>
+
+<!-- <ModalContent bind:actualWidth closeIcon {onClose}>
     {#snippet header()}
         <div class="header">
             <Translatable
@@ -494,7 +646,7 @@
             </div>
         </span>
     {/snippet}
-</ModalContent>
+</ModalContent> -->
 
 <style lang="scss">
     :global(.group-buttons button:not(.loading)) {

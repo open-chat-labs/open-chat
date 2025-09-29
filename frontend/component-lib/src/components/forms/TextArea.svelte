@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Caption, ColourVars, Container, type Padding } from "component-lib";
+    import { Caption, ColourVars, Container } from "component-lib";
     import type { Snippet } from "svelte";
 
     interface Props {
@@ -11,9 +11,7 @@
         minlength?: number;
         maxlength?: number;
         countdown?: boolean;
-        icon?: Snippet<[string]>;
-        iconButtons?: Snippet<[string]>;
-        textButtons?: Snippet;
+        rows?: number;
     }
 
     let {
@@ -25,55 +23,36 @@
         minlength = 0,
         maxlength = 10000,
         countdown = false,
-        icon,
-        iconButtons,
-        textButtons,
+        rows = 4,
     }: Props = $props();
 
     let remaining = $derived(maxlength - (value?.length ?? 0));
     let warn = $derived(remaining <= 5);
-    let hasButtons = $derived(iconButtons || textButtons);
-    let padding = $derived<Padding>(hasButtons ? ["xs", "xs", "xs", "md"] : ["xs", "xl"]);
 </script>
 
 <Container direction={"vertical"} gap={"xs"}>
     <Container
         backgroundColour={ColourVars.textTertiary}
-        height={{ kind: "fixed", size: "3rem" }}
-        {padding}
-        borderRadius={"circle"}
+        padding={["md", "xl", "xs", "xl"]}
+        borderRadius={"xxl"}
         gap={"sm"}
-        crossAxisAlignment={"center"}>
-        <input
+        crossAxisAlignment={"start"}>
+        <textarea
             data-gram="false"
             data-gramm_editor="false"
             data-enable-grammarly="false"
             data-lpignore="true"
             spellcheck="false"
+            {rows}
             {minlength}
             {maxlength}
             required={minlength > 0}
             {id}
             bind:value
-            {placeholder} />
+            {placeholder}></textarea>
 
         {#if countdown}
             <div class:warn class="countdown">{remaining}</div>
-        {/if}
-        {#if icon}
-            <div class="input_icon">
-                {@render icon(ColourVars.textSecondary)}
-            </div>
-        {/if}
-        {#if iconButtons}
-            <Container width={{ kind: "hug" }} gap={"xs"}>
-                {@render iconButtons(ColourVars.textPrimary)}
-            </Container>
-        {/if}
-        {#if textButtons}
-            <Container width={{ kind: "hug" }} gap={"xs"}>
-                {@render textButtons()}
-            </Container>
         {/if}
     </Container>
     {#if subtext}
@@ -93,17 +72,7 @@
 </Container>
 
 <style lang="scss">
-    :global(.input_icon svg) {
-        width: var(--icon-md);
-        height: var(--icon-md);
-    }
-
-    .input_icon {
-        all: unset;
-        display: flex;
-    }
-
-    input {
+    textarea {
         all: unset;
         width: 100%;
         color: var(--text-secondary);

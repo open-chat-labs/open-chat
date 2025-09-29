@@ -77,10 +77,11 @@
                 }
             case "active": {
                 switch (size) {
+                    case "small":
                     case "small_text":
                         return "var(--primary)";
                     default:
-                        return "var(--primary-light)";
+                        return "var(--text-on-primary)";
                 }
             }
         }
@@ -202,8 +203,8 @@
         &.active {
             border-radius: var(--rad-md);
             border: var(--bw-thin) solid transparent;
-            background: var(--primary-muted);
-            color: var(--primary-light);
+            background: var(--primary);
+            color: var(--text-on-primary);
 
             &.small_text {
                 background: transparent;

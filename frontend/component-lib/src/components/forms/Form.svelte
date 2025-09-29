@@ -21,6 +21,9 @@
 </form>
 
 <style lang="scss">
+    form {
+        width: 100%;
+    }
     input.submit {
         display: none;
     }

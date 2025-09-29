@@ -794,6 +794,7 @@
     "goToFirstMention": "Go to the first unread mention",
     "goToLatestMessage": "Go to latest message",
     "group": {
+        "addGroupInfo": "Add {level} info",
         "addGroupPhoto": "Add {level} photo",
         "addMembers": "Add channel members",
         "addMembersFailed": "There was an error adding members",

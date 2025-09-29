@@ -5,19 +5,35 @@
         children: Snippet;
         disabled?: boolean;
         onclick?: () => void;
+        size?: "xs" | "sm" | "md" | "lg";
     }
 
-    let { children, onclick, disabled = false }: Props = $props();
+    let { children, onclick, disabled = false, size = "md" }: Props = $props();
 </script>
 
-<button class="icon_button" {disabled} type={"button"} {onclick}>
+<button class={`icon_button ${size}`} {disabled} type={"button"} {onclick}>
     {@render children()}
 </button>
 
 <style lang="scss">
-    :global(.icon_button svg) {
+    :global(.icon_button.lg svg) {
         width: var(--icon-lg);
         height: var(--icon-lg);
+    }
+
+    :global(.icon_button.md svg) {
+        width: var(--icon-md);
+        height: var(--icon-md);
+    }
+
+    :global(.icon_button.sm svg) {
+        width: var(--icon-sm);
+        height: var(--icon-sm);
+    }
+
+    :global(.icon_button.xs svg) {
+        width: var(--icon-xs);
+        height: var(--icon-xs);
     }
 
     button {

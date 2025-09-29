@@ -1,10 +1,10 @@
 <script lang="ts">
+    import { CommonButton, Container } from "component-lib";
     import type { Snippet } from "svelte";
     import type { CropData } from "svelte-easy-crop";
     import Cropper from "svelte-easy-crop";
+    import Crop from "svelte-material-icons/Crop.svelte";
     import { i18nKey } from "../i18n/i18n";
-    import Button from "./Button.svelte";
-    import ButtonGroup from "./ButtonGroup.svelte";
     import ModalContent from "./ModalContent.svelte";
     import Overlay from "./Overlay.svelte";
     import Translatable from "./Translatable.svelte";
@@ -134,12 +134,17 @@
                 </div>
             {/snippet}
             {#snippet footer()}
-                <ButtonGroup>
-                    <Button tiny secondary onClick={() => (showModal = false)}
-                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-                    <Button tiny onClick={cropImage}
-                        ><Translatable resourceKey={i18nKey("apply")} /></Button>
-                </ButtonGroup>
+                <Container mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"end"}>
+                    <CommonButton onClick={() => (showModal = false)} size={"small_text"}>
+                        <Translatable resourceKey={i18nKey("cancel")}></Translatable>
+                    </CommonButton>
+                    <CommonButton onClick={cropImage} size={"medium"} mode={"active"}>
+                        {#snippet icon(color)}
+                            <Crop {color}></Crop>
+                        {/snippet}
+                        <Translatable resourceKey={i18nKey("apply")} />
+                    </CommonButton>
+                </Container>
             {/snippet}
         </ModalContent>
     </Overlay>

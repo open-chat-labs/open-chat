@@ -1,81 +1,80 @@
 <script lang="ts">
+    import ImageEditOutline from "svelte-material-icons/ImageEditOutline.svelte";
     import EditableImageWrapper from "./EditableImageWrapper.svelte";
-    import ChooseImage from "./icons/ChooseImage.svelte";
 
     interface Props {
         image: string | null | undefined;
         disabled?: boolean;
         size?: Size;
-        overlayIcon?: boolean;
         onImageSelected: (args: { url: string; data: Uint8Array }) => void;
     }
 
     let {
         image = $bindable(),
         size = "large",
-        overlayIcon = false,
         disabled = false,
         onImageSelected,
     }: Props = $props();
 
-    type Size = "small" | "medium" | "large";
-
-    function getIconSize(size: Size): string {
-        switch (size) {
-            case "large":
-                return "3em";
-            case "medium":
-                return "2em";
-            case "small":
-                return "1em";
-        }
-    }
-
-    let iconSize = $derived(getIconSize(size));
+    type Size = "small" | "medium" | "large" | "headline";
 </script>
 
 <EditableImageWrapper mode={"avatar"} {disabled} {image} {onImageSelected}>
     {#snippet children(choosePhoto: () => void)}
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div class={`photo-section avatar`} onclick={choosePhoto}>
-            <div class={`photo-icon avatar ${size}`}>
+        <div class="border">
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <div onclick={choosePhoto} class={`photo-icon avatar ${size}`}>
                 {#if image}
                     <div class="avatar" style={`background-image: url(${image})`}></div>
-                    {#if overlayIcon}
-                        <div class="overlay">
-                            <ChooseImage size={iconSize} color={"#fff"} />
-                        </div>
-                    {/if}
-                {:else}
-                    <ChooseImage size={iconSize} color={"var(--icon-txt)"} />
                 {/if}
+            </div>
+            <div class="editable_avatar_edit_icon">
+                <ImageEditOutline color={"var(--text-primary)"} />
             </div>
         </div>
     {/snippet}
 </EditableImageWrapper>
 
 <style lang="scss">
-    .photo-section {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
+    :global(.editable_avatar_edit_icon svg) {
+        width: var(--icon-md);
+        height: var(--icon-md);
     }
 
-    .overlay {
+    .editable_avatar_edit_icon {
         position: absolute;
+        bottom: 6px;
+        right: 6px;
+        border-radius: var(--rad-circle);
+        background-color: var(--background-1);
+        border: 5px solid var(--background-0);
+        width: toRem(48);
+        height: toRem(48);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .border {
+        background: var(--gradient);
+        border-radius: var(--rad-circle);
+        padding: 6px;
+        position: relative;
     }
 
     .photo-icon {
-        border-radius: var(--avatar-rd);
+        border-radius: var(--rad-circle);
         display: flex;
         justify-content: center;
         align-items: center;
         position: relative;
-        background-color: var(--input-bg);
+        background-color: var(--text-tertiary);
 
+        &.headline {
+            width: toRem(192);
+            height: toRem(192);
+        }
         &.large {
             width: toRem(150);
             height: toRem(150);

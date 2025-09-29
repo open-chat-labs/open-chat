@@ -33,7 +33,7 @@
     mainAxisAlignment={"spaceBetween"}
     gap={"md"}>
     {#if onBack}
-        <IconButton onclick={onBack}>
+        <IconButton size={"md"} onclick={onBack}>
             <ArrowLeft color={iconColour} />
         </IconButton>
     {/if}
@@ -52,13 +52,13 @@
         {/if}
     </Container>
     {#if action}
-        <IconButton onclick={onAction}>
+        <IconButton size={"lg"} onclick={onAction}>
             {@render action(iconColour)}
         </IconButton>
     {/if}
     {#if menu}
         <MenuTrigger position={"bottom"} align={"end"}>
-            <IconButton>
+            <IconButton size={"lg"}>
                 <DotsVertical color={"var(--text-primary)"} />
             </IconButton>
             {#snippet menuItems()}
