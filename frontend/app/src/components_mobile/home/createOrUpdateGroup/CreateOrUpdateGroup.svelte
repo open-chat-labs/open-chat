@@ -1,7 +1,5 @@
 <script lang="ts">
     import {
-        Body,
-        BodySmall,
         ColourVars,
         CommonButton,
         Container,
@@ -33,13 +31,13 @@
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AlertRhombusOutline from "svelte-material-icons/AlertRhombusOutline.svelte";
-    import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import Cog from "svelte-material-icons/Cog.svelte";
     import FormatList from "svelte-material-icons/FormatListBulletedType.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import AreYouSure from "../../AreYouSure.svelte";
     import EditableAvatar from "../../EditableAvatar.svelte";
+    import SectionButton from "../../SectionButton.svelte";
     import Translatable from "../../Translatable.svelte";
 
     const MIN_LENGTH = 3;
@@ -379,7 +377,7 @@
         action={updateGroup} />
 {/if}
 
-{#snippet subsectionButton(Icon: any, title: ResourceKey, info: ResourceKey)}
+<!-- {#snippet subsectionButton(Icon: any, title: ResourceKey, info: ResourceKey)}
     <Container
         borderRadius={"md"}
         direction={"vertical"}
@@ -397,7 +395,7 @@
             <Translatable resourceKey={info}></Translatable>
         </Body>
     </Container>
-{/snippet}
+{/snippet} -->
 
 <Container
     backgroundColour={ColourVars.background0}
@@ -469,30 +467,30 @@
             direction={"vertical"}
             gap={"lg"}
             supplementalClass={"group_sub_sections"}>
-            {@render subsectionButton(
-                Cog,
-                i18nKey("General setup"),
-                i18nKey(
+            <SectionButton
+                Icon={Cog}
+                title={i18nKey("General setup")}
+                info={i18nKey(
                     "Enable sharing via link, disappearing messages, or hide chat history for new members.",
-                ),
-            )}
-            {@render subsectionButton(
-                AlertRhombusOutline,
-                i18nKey("Access gates"),
-                i18nKey("Fine tune who can join your group by setting specific access gates."),
-            )}
-            {@render subsectionButton(
-                FormatList,
-                i18nKey("Rules"),
-                i18nKey(
+                )} />
+            <SectionButton
+                Icon={AlertRhombusOutline}
+                title={i18nKey("Access gates")}
+                info={i18nKey(
+                    "Fine tune who can join your group by setting specific access gates.",
+                )} />
+            <SectionButton
+                Icon={FormatList}
+                title={i18nKey("Rules")}
+                info={i18nKey(
                     "Define a set of rules that the members of your group will ahve to follow.",
-                ),
-            )}
-            {@render subsectionButton(
-                AccountMultiple,
-                i18nKey("Permissions"),
-                i18nKey("Define which user groups can access certain features within the group."),
-            )}
+                )} />
+            <SectionButton
+                Icon={AccountMultiple}
+                title={i18nKey("Permissions")}
+                info={i18nKey(
+                    "Define which user groups can access certain features within the group.",
+                )} />
         </Container>
     </Container>
 
