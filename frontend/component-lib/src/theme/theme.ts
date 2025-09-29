@@ -72,6 +72,7 @@ export class Theme {
             Rem.fromPixels(40),
             Rem.fromPixels(48),
             Rem.fromPixels(56),
+            Rem.fromPixels(80),
             Rem.fromPixels(128),
         );
     }

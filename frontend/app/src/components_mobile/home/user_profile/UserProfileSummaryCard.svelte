@@ -1,0 +1,89 @@
+<script lang="ts">
+    import { Avatar, Body, BodySmall, Container, H2, IconButton } from "component-lib";
+    import { OpenChat, type PublicProfile, type UserSummary } from "openchat-client";
+    import { getContext } from "svelte";
+    import Cog from "svelte-material-icons/Cog.svelte";
+    import Info from "svelte-material-icons/InformationOutline.svelte";
+    import Share from "svelte-material-icons/ShareVariantOutline.svelte";
+    import Badges from "../profile/Badges.svelte";
+    import ChitSummary from "./ChitSummary.svelte";
+
+    const client = getContext<OpenChat>("client");
+
+    interface Props {
+        user: UserSummary;
+        profile: PublicProfile;
+    }
+
+    let { user, profile }: Props = $props();
+
+    let avatarUrl = $derived(
+        profile !== undefined
+            ? client.buildUserAvatarUrl(
+                  import.meta.env.OC_BLOB_URL_PATTERN!,
+                  user.userId,
+                  profile.avatarId,
+              )
+            : "/assets/unknownUserAvatar.svg",
+    );
+
+    // This doesn't exist as a first-class thing in the theme at the moment - not sure if it _should_
+    const gradient =
+        "linear-gradient(90deg, var(--warning) 0%, var(--primary) 30%, var(--primary) 70%, var(--tertiary) 100%)";
+</script>
+
+<Container direction={"vertical"}>
+    <Container
+        borderRadius={"md"}
+        minHeight={"10rem"}
+        mainAxisAlignment={"end"}
+        padding={"sm"}
+        gap={"xs"}
+        backgroundColour={gradient}>
+        <IconButton size={"sm"} mode={"dark"}>
+            {#snippet icon(color)}
+                <Info {color} />
+            {/snippet}
+        </IconButton>
+        <IconButton size={"sm"} mode={"dark"}>
+            {#snippet icon(color)}
+                <Share {color} />
+            {/snippet}
+        </IconButton>
+        <IconButton size={"sm"} mode={"dark"}>
+            {#snippet icon(color)}
+                <Cog {color} />
+            {/snippet}
+        </IconButton>
+    </Container>
+    <Container
+        supplementalClass={"username_and_bio"}
+        gap={"lg"}
+        padding={["zero", "lg"]}
+        direction="vertical">
+        <Container gap={"sm"}>
+            <Avatar borderWidth={"thick"} size={"xxl"} url={avatarUrl}></Avatar>
+            <Container height={{ kind: "fill" }} mainAxisAlignment={"end"} direction={"vertical"}>
+                <Container gap={"sm"} crossAxisAlignment={"center"}>
+                    <H2 width={{ kind: "hug" }}>{profile.displayName}</H2>
+                    <Badges diamondStatus={user.diamondStatus} uniquePerson={user.isUniquePerson} />
+                </Container>
+                <BodySmall colour={"textSecondary"}>@{user.username}</BodySmall>
+            </Container>
+        </Container>
+        <Body fontWeight={"light"}>
+            {profile.bio}
+        </Body>
+        <!-- <ChitSummary
+            streak={user.streak}
+            earned={user.totalChitEarned}
+            balance={user.chitBalance} /> -->
+        <ChitSummary streak={57} earned={539_400} balance={102_000} />
+    </Container>
+</Container>
+
+<style lang="scss">
+    :global(.container.username_and_bio) {
+        margin-top: -1.75rem;
+    }
+</style>

@@ -170,7 +170,7 @@
                             gap={"xs"}
                             mainAxisAlignment={"spaceBetween"}
                             crossAxisAlignment={"end"}>
-                            <BodySmall ellipsisTruncate colour={"secondary"}>
+                            <BodySmall ellipsisTruncate colour={"textSecondary"}>
                                 <Markdown
                                     text={client.getContentAsText(
                                         $_,

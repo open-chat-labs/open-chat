@@ -58,7 +58,7 @@
                 {@render icon(iconColour, iconSize)}
             </span>
         {/if}
-        <Body colour={danger ? "error" : "primary"} width={{ kind: "hug" }}>
+        <Body colour={danger ? "error" : "textPrimary"} width={{ kind: "hug" }}>
             {@render children?.()}
         </Body>
     </a>

@@ -66,7 +66,7 @@
                 </Title>
             </Container>
             <Container gap={"xs"} mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"end"}>
-                <BodySmall colour={"secondary"} ellipsisTruncate fontWeight={"normal"}>
+                <BodySmall colour={"textSecondary"} ellipsisTruncate fontWeight={"normal"}>
                     The idea is that we put the latest message here, but not sure how we get that
                     yet
                 </BodySmall>
@@ -94,10 +94,10 @@
         </ListAction>
     </Container>
     <!-- <Container width={{ kind: "fill" }} gap={"md"} direction={"vertical"} height={{ kind: "hug" }}>
-        <Label fontWeight={"bold"} colour={"secondary"}>Your favourites</Label>
+        <Label fontWeight={"bold"} colour={"secotSecondary"}>Your favourites</Label>
     </Container> -->
     <Container width={{ kind: "fill" }} gap={"lg"} direction={"vertical"} height={{ kind: "hug" }}>
-        <Label fontWeight={"bold"} colour={"secondary"}>Your communities</Label>
+        <Label fontWeight={"bold"} colour={"textSecondary"}>Your communities</Label>
 
         {#each $sortedCommunitiesStore as community}
             {@render communityRow(community)}

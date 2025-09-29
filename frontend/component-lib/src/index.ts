@@ -5,6 +5,7 @@ export { default as BigButton } from "./components/buttons/BigButton.svelte";
 export { default as Button } from "./components/buttons/Button.svelte";
 export { default as CommonButton } from "./components/buttons/CommonButton.svelte";
 export { default as FloatingButton } from "./components/buttons/FloatingButton.svelte";
+export { default as IconButton } from "./components/buttons/IconButton.svelte";
 export { default as ChatSummary } from "./components/ChatSummary.svelte";
 export { default as Container } from "./components/Container.svelte";
 export { default as CountBadge } from "./components/CountBadge.svelte";

@@ -56,7 +56,7 @@
             <CountBadge mode="additive">+{additional}</CountBadge>
         {/if}
     </Container>
-    <Label width={{ kind: "hug" }} colour={"secondary"}>{text}</Label>
+    <Label width={{ kind: "hug" }} colour={"textSecondary"}>{text}</Label>
     <Container width={{ kind: "hug" }}>
         <div class={`arrow`} class:hasUnread>
             <ChevronRight color={ColourVars.background0} />

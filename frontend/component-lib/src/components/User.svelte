@@ -27,11 +27,11 @@
                     {title}
                 </Title>
                 {#if badges}
-                    <Caption width={{ kind: "hug" }} colour={"secondary"}>{"Badges?"}</Caption>
+                    <Caption width={{ kind: "hug" }} colour={"textSecondary"}>{"Badges?"}</Caption>
                 {/if}
             </Container>
             <Container gap={"xs"} mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"end"}>
-                <BodySmall colour={"secondary"}>{subtitle}</BodySmall>
+                <BodySmall colour={"textSecondary"}>{subtitle}</BodySmall>
             </Container>
         </Container>
         <Container gap={"xxs"} width={{ kind: "hug" }}>

@@ -23,11 +23,11 @@
         padding={"lg"}
         direction={"vertical"}
         backgroundColour={"#000"}>
-        <Subtitle fontWeight={"bold"} colour={"primary"}>
+        <Subtitle fontWeight={"bold"} colour={"primaryLight"}>
             {@render title()}
         </Subtitle>
 
-        <BodySmall colour={"primary"}>
+        <BodySmall colour={"primaryLight"}>
             {@render body()}
         </BodySmall>
 
@@ -53,9 +53,9 @@
             radial-gradient(2px 2px at 40% 80%, rgba(255, 255, 255, 0.7) 50%, transparent 50%),
             radial-gradient(2px 2px at 75% 55%, rgba(255, 255, 255, 0.75) 50%, transparent 50%),
             radial-gradient(3px 3px at 15% 85%, rgba(255, 255, 255, 0.4) 40%, transparent 60%),
-            radial-gradient(3px 3px at 60% 65%, rgba(255, 255, 255, 0.35) 40%, transparent 60%);
-        background-repeat: repeat;
-        background-size: 8rem 8rem;
+            radial-gradient(3px 3px at 60% 65%, rgba(255, 255, 255, 0.35) 40%, transparent 60%) !important;
+        background-repeat: repeat !important;
+        background-size: 8rem 8rem !important;
         animation: drift 60s linear infinite;
     }
 

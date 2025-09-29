@@ -1,18 +1,31 @@
 <script lang="ts">
+    import { ColourVars } from "component-lib";
     import type { Snippet } from "svelte";
 
     interface Props {
-        children: Snippet;
+        mode?: "transparent" | "dark" | "primary";
+        icon: Snippet<[string]>;
         disabled?: boolean;
         onclick?: () => void;
         size?: "xs" | "sm" | "md" | "lg";
     }
 
-    let { children, onclick, disabled = false, size = "md" }: Props = $props();
+    let { icon, mode = "transparent", onclick, disabled = false, size = "md" }: Props = $props();
+
+    let iconColour = $derived.by(() => {
+        switch (mode) {
+            case "transparent":
+                return ColourVars.textPrimary;
+            case "dark":
+                return ColourVars.primary;
+            case "primary":
+                return ColourVars.background0;
+        }
+    });
 </script>
 
-<button class={`icon_button ${size}`} {disabled} type={"button"} {onclick}>
-    {@render children()}
+<button class={`icon_button ${size} ${mode}`} {disabled} type={"button"} {onclick}>
+    {@render icon(iconColour)}
 </button>
 
 <style lang="scss">
@@ -43,13 +56,20 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        background-color: transparent;
         transition: background-color ease-in-out 100ms;
         cursor: pointer;
         aspect-ratio: 1 / 1;
 
-        &:not(.disabled):hover {
-            background-color: var(--background-2);
+        &.transparent {
+            background-color: transparent;
+        }
+
+        &.dark {
+            background-color: var(--background-0);
+        }
+
+        &.primary {
+            background-color: var(--primary);
         }
     }
 </style>

@@ -8,7 +8,7 @@
         width?: SizeMode;
         height?: SizeMode;
         ellipsisTruncate?: boolean;
-        colour?: TypographyColour;
+        colour?: ColourVarKeys;
         labelFor?: string;
         align?: "start" | "end" | "center" | "unset";
     }
@@ -16,12 +16,13 @@
 
 <script lang="ts">
     import {
+        ColourVars,
         getFlexStyle,
+        type ColourVarKeys,
         type Direction,
         type FontWeight,
         type SizeMode,
         type TypographicStyleName,
-        type TypographyColour,
     } from "component-lib";
     import { getContext, type Snippet } from "svelte";
 
@@ -32,7 +33,7 @@
         width = { kind: "fill" },
         height = { kind: "hug" },
         ellipsisTruncate = false,
-        colour = "primary",
+        colour = "textPrimary",
         labelFor,
         align = "unset",
     }: Props = $props();
@@ -63,12 +64,7 @@
         }
     }
     function getColourVar() {
-        switch (colour) {
-            case "error":
-                return "var(--error)";
-            default:
-                return `var(--text-${colour})`;
-        }
+        return ColourVars[colour];
     }
 </script>
 
@@ -134,19 +130,19 @@
     }
 
     .light {
-        font-weight: var(--font-light);
+        font-weight: var(--font-weight-light);
     }
 
     .normal {
-        font-weight: var(--font-normal);
+        font-weight: var(--font-weight-normal);
     }
 
     .semi-bold {
-        font-weight: var(--font-semi-bold);
+        font-weight: var(--font-weight-semi-bold);
     }
 
     .bold {
-        font-weight: var(--font-bold);
+        font-weight: var(--font-weight-bold);
     }
 
     .ellipsis {

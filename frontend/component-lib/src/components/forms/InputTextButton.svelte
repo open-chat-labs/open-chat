@@ -16,7 +16,7 @@
         onClick();
     }}
     class="input_text_button">
-    <BodySmall colour={"primary"}>{@render children()}</BodySmall>
+    <BodySmall colour={"textPrimary"}>{@render children()}</BodySmall>
 </button>
 
 <style lang="scss">

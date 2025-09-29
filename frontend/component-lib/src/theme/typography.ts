@@ -7,10 +7,10 @@ export type FontWeight = "light" | "normal" | "semi-bold" | "bold";
 export class FontWeights {
     cssVariables(): CssVariable[] {
         return [
-            new CssVariable("font-light", "300"),
-            new CssVariable("font-normal", "400"),
-            new CssVariable("font-semi-bold", "700"),
-            new CssVariable("font-bold", "900"),
+            new CssVariable("font-weight-light", "300"),
+            new CssVariable("font-weight-normal", "400"),
+            new CssVariable("font-weight-semi-bold", "700"),
+            new CssVariable("font-weight-bold", "900"),
         ];
     }
 }

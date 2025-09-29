@@ -4,39 +4,33 @@
 
     interface Props {
         percent: number;
-        bg?: "button" | "accent";
         size?: string;
         children?: Snippet;
     }
 
-    let { percent, bg = "button", size = "40px", children }: Props = $props();
+    let { percent, size = "40px", children }: Props = $props();
 </script>
 
 <div class="bar" style={`--size: ${size}`}>
-    <span
-        class="meter"
-        class:rtl={$rtlStore}
-        style={`width: ${percent}%; background-color: ${
-            bg === "button" ? "var(--primary)" : "var(--progress-fill)"
-        }`}></span>
+    <span class="meter" class:rtl={$rtlStore} style={`width: ${percent}%;}`}></span>
     <div class="label">
         {@render children?.()}
     </div>
 </div>
 
 <style lang="scss">
-    $radius: calc(var(--size) / 2);
-
     .bar {
-        border: 1px solid var(--progress-bd);
         width: 100%;
         height: var(--size);
         position: relative;
-        border-radius: $radius;
+        background-color: var(--text-tertiary);
+        border-radius: var(--rad-circle);
         overflow: hidden;
     }
 
     .meter {
+        background-color: var(--primary);
+        border-radius: var(--rad-circle);
         width: 0;
         transition: width 300ms;
         display: block;

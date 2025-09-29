@@ -34,7 +34,9 @@
     gap={"md"}>
     {#if onBack}
         <IconButton size={"md"} onclick={onBack}>
-            <ArrowLeft color={iconColour} />
+            {#snippet icon(color)}
+                <ArrowLeft {color} />
+            {/snippet}
         </IconButton>
     {/if}
 
@@ -46,20 +48,24 @@
             {@render title()}
         </Title>
         {#if subtitle !== undefined}
-            <Caption colour={"secondary"} ellipsisTruncate fontWeight={"normal"}>
+            <Caption colour={"textSecondary"} ellipsisTruncate fontWeight={"normal"}>
                 {@render subtitle()}
             </Caption>
         {/if}
     </Container>
     {#if action}
         <IconButton size={"lg"} onclick={onAction}>
-            {@render action(iconColour)}
+            {#snippet icon(color)}
+                {@render action(color)}
+            {/snippet}
         </IconButton>
     {/if}
     {#if menu}
         <MenuTrigger position={"bottom"} align={"end"}>
             <IconButton size={"lg"}>
-                <DotsVertical color={"var(--text-primary)"} />
+                {#snippet icon(color)}
+                    <DotsVertical {color} />
+                {/snippet}
             </IconButton>
             {#snippet menuItems()}
                 {@render menu()}

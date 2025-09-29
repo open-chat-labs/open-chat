@@ -482,7 +482,7 @@
                     </Container>
                 </Container>
                 <Container gap={"xs"} mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"end"}>
-                    <BodySmall ellipsisTruncate colour={"secondary"}>
+                    <BodySmall ellipsisTruncate colour={"textSecondary"}>
                         {#if chat.typing !== undefined}
                             {chat.typing} <Typing />
                         {:else}

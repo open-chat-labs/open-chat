@@ -26,7 +26,9 @@
                         {/snippet}
                         Primary list label
                     </ListAction>
-                    <ListAction onClick={() => onAction("Secondary clicked")} colour={"secondary"}>
+                    <ListAction
+                        onClick={() => onAction("Secondary clicked")}
+                        colour={"textSecondary"}>
                         {#snippet icon(color)}
                             <Compass {color} />
                         {/snippet}
@@ -63,7 +65,9 @@
                         {/snippet}
                         Primary list label
                     </ListAction>
-                    <ListAction onClick={() => onAction("Secondary clicked")} colour={"secondary"}>
+                    <ListAction
+                        onClick={() => onAction("Secondary clicked")}
+                        colour={"textSecondary"}>
                         {#snippet icon(color)}
                             <Compass {color} />
                         {/snippet}

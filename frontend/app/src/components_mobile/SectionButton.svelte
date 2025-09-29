@@ -21,7 +21,7 @@
     padding={"xl"}>
     <Container crossAxisAlignment={"center"} gap={"sm"}>
         <Icon color={"var(--primary)"} />
-        <BodySmall colour={"accent"}>
+        <BodySmall colour={"primary"}>
             <Translatable resourceKey={title}></Translatable>
         </BodySmall>
         <ChevronRight color={ColourVars.primary} />

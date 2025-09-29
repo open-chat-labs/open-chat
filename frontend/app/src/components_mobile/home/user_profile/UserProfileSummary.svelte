@@ -1,8 +1,15 @@
 <script lang="ts">
+    import MulticolourText from "@src/components_mobile/MulticolourText.svelte";
     import { i18nKey } from "@src/i18n/i18n";
-    import { Avatar, Caption, Container, FloatingButton, H1 } from "component-lib";
-    import { allUsersStore, currentUserIdStore, OpenChat, publish } from "openchat-client";
-    import { getContext } from "svelte";
+    import { Caption, Container, FloatingButton } from "component-lib";
+    import {
+        allUsersStore,
+        currentUserIdStore,
+        OpenChat,
+        publish,
+        type PublicProfile,
+    } from "openchat-client";
+    import { getContext, onMount } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountStar from "svelte-material-icons/AccountStarOutline.svelte";
     import Cog from "svelte-material-icons/Cog.svelte";
@@ -16,45 +23,77 @@
     import SparkleBox from "../../SparkleBox.svelte";
     import Translatable from "../../Translatable.svelte";
     import UserProfileHeader from "./UserProfileHeader.svelte";
+    import UserProfileSummaryCard from "./UserProfileSummaryCard.svelte";
 
     const client = getContext<OpenChat>("client");
 
     let user = $derived($allUsersStore.get($currentUserIdStore));
-    let name = $derived(client.getDisplayName($currentUserIdStore));
-    let avatarUrl = $derived(client.userAvatarUrl(user));
+    let verified = $derived(user?.isUniquePerson ?? false);
+    let profile: PublicProfile | undefined = $state();
+
+    onMount(async () => {
+        try {
+            user = await client.getUser($currentUserIdStore);
+            client.getPublicProfile($currentUserIdStore).subscribe({
+                onResult: (result) => {
+                    profile = result;
+                },
+            });
+        } catch (e: any) {
+            client.logError("Failed to load user profile", e);
+        }
+    });
 </script>
 
 <UserProfileHeader />
 
 <Container
-    padding={["xl", "lg", "zero", "lg"]}
+    padding={["zero", "lg", "zero", "lg"]}
     gap={"lg"}
     height={{ kind: "fill" }}
     crossAxisAlignment={"center"}
     direction={"vertical"}>
-    <Avatar size={"huge"} url={avatarUrl}></Avatar>
-    <Container crossAxisAlignment={"center"} direction={"vertical"}>
-        <H1 align={"center"}>{name}</H1>
-        <Caption colour={"secondary"} align={"center"}>@{user?.username}</Caption>
-    </Container>
-
     <Container gap={"lg"} direction={"vertical"}>
-        <SparkleBox
-            buttonText={i18nKey("Start verification")}
-            onClick={() => console.log("Verify")}>
-            {#snippet title()}
-                <Translatable resourceKey={i18nKey("Verify you are a real person")}></Translatable>
-            {/snippet}
-            {#snippet body()}
-                <Translatable
-                    resourceKey={i18nKey(
-                        "Verify your unique personhood as a signal of your trustworthiness to other users! It only takes a minute.",
-                    )}></Translatable>
-            {/snippet}
-            {#snippet buttonIcon(color)}
-                <AccountStar {color} />
-            {/snippet}
-        </SparkleBox>
+        {#if user !== undefined && profile !== undefined}
+            <UserProfileSummaryCard {user} {profile} />
+        {/if}
+        {#if !verified}
+            <SparkleBox
+                buttonText={i18nKey("Start verification")}
+                onClick={() => publish("verifyHumanity")}>
+                {#snippet title()}
+                    <MulticolourText
+                        parts={[
+                            {
+                                text: i18nKey("Verify you are a "),
+                                colour: "primaryLight",
+                            },
+                            {
+                                text: i18nKey("real person"),
+                                colour: "primary",
+                            },
+                        ]} />
+                {/snippet}
+                {#snippet body()}
+                    <MulticolourText
+                        parts={[
+                            {
+                                text: i18nKey(
+                                    "Verify your unique personhood as a signal of your trustworthiness to other users! ",
+                                ),
+                                colour: "primaryLight",
+                            },
+                            {
+                                text: i18nKey("It only takes a minute."),
+                                colour: "textPrimary",
+                            },
+                        ]} />
+                {/snippet}
+                {#snippet buttonIcon(color)}
+                    <AccountStar {color} />
+                {/snippet}
+            </SparkleBox>
+        {/if}
         <Container padding={["zero", "xl"]}>
             <Caption>
                 <Translatable resourceKey={i18nKey("General options")}></Translatable>

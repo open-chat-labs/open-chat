@@ -57,7 +57,7 @@
     </Container>
     {#if subtext}
         <div class="subtext">
-            <Caption colour={"secondary"}>
+            <Caption colour={"textSecondary"}>
                 {@render subtext()}
             </Caption>
         </div>
