@@ -7,6 +7,7 @@
     import "@i18n/i18n";
     import { reviewingTranslations } from "@i18n/i18n";
     import { trackedEffect } from "@src/utils/effects.svelte";
+    import { detectNeedsSafeInset } from "@src/utils/safe_area";
     import { rtlStore } from "@stores/rtl";
     import { snowing } from "@stores/snow";
     import { incomingVideoCall } from "@stores/video";
@@ -621,9 +622,8 @@
         videoCallElement?.startOrJoinVideoCall(chatId, callType, true);
     }
 
-    if (client.isNativeAndroid()) {
-        document.body.classList.add("native-android");
-    }
+    document.body.classList.add("native-android");
+    detectNeedsSafeInset();
 </script>
 
 {#if $currentTheme.burst}

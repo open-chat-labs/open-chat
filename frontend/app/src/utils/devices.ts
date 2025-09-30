@@ -6,6 +6,11 @@ export const isTouchDevice: boolean =
 
 export const supportsHover = window.matchMedia("(hover: hover)").matches;
 
+export const isStandalone =
+    window.matchMedia("(display-mode: standalone)").matches ||
+    //@ts-ignore
+    window.navigator.standalone === true;
+
 // Often we *don't* want to include things like touch screen laptops so we want to also check that hover is *not* supported
 export const isTouchOnlyDevice = isTouchDevice && !supportsHover;
 

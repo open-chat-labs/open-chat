@@ -236,17 +236,12 @@ body {
 // this is designed to target only iOS devices where the app is saved to home screen
 // and the device does not have a home button (hence the min-height check)
 // and the virtual keyboard is not visible
-@supports (-webkit-touch-callout: none) {
-    @media (display-mode: standalone) and (min-height: 668px) {
-        body:not(.keyboard) {
-            $inset: 32px;
-            --safe-inset: 32px;
-            padding-bottom: $inset;
+body.needs-safe-inset:not(.keyboard) {
+    --safe-inset: 32px;
+    padding-bottom: var(--safe-inset);
 
-            .modal-content {
-                padding-bottom: $inset;
-            }
-        }
+    .modal-content {
+        padding-bottom: var(--safe-inset);
     }
 }
 
@@ -455,8 +450,9 @@ body.native-android {
     // This is a workaround for the Android status bar issue
     // where the content is pushed down by the status bar height.
     &:not(.landing-page) > main {
-        margin-top: var(--status-bar-height);
-        height: calc(100vh - var(--status-bar-height));
+        // height: calc(100vh - var(--status-bar-height));
+        // we also need to account for the safe area at the bottom
+        padding-top: var(--status-bar-height) !important;
     }
 
     &.landing-page {
