@@ -29,7 +29,7 @@
         type UserSummary,
     } from "openchat-client";
     import page from "page";
-    import { getContext, tick } from "svelte";
+    import { getContext } from "svelte";
     import { menuCloser } from "../../actions/closeMenu";
     import { i18nKey } from "../../i18n/i18n";
     import { chatListView } from "../../stores/chatListView";
@@ -37,6 +37,7 @@
     import ButtonGroup from "../ButtonGroup.svelte";
     import FilteredUsername from "../FilteredUsername.svelte";
     import Translatable from "../Translatable.svelte";
+    import VirtualList from "../VirtualList.svelte";
     import ChatListSearch from "./ChatListSearch.svelte";
     import ChatListSectionButton from "./ChatListSectionButton.svelte";
     import ChatSummary from "./ChatSummary.svelte";
@@ -57,22 +58,9 @@
         $state(undefined);
     let searchTerm: string = $state("");
     let searchResultsAvailable: boolean = $state(false);
-    let chatsScrollTop = $state<number | undefined>();
     let previousScope: ChatListScope = $chatListScopeStore;
     let previousView: "chats" | "threads" = $chatListView;
-
-    // TODO this doesn't work properly and I think it's to do with the way
-    // effect dependencies are worked out when you have conditional code
-    // Probably can just be done in a more explicit way but it's not urgent
-    $effect.pre(() => {
-        if (
-            chatListScopesEqual(previousScope, $chatListScopeStore) &&
-            $chatListView !== "chats" &&
-            previousView === "chats"
-        ) {
-            chatsScrollTop = chatListElement?.scrollTop;
-        }
-    });
+    let chatListElement = $state<VirtualList<ChatSummaryType> | undefined>();
 
     $effect(() => {
         if (!chatListScopesEqual(previousScope, $chatListScopeStore)) {
@@ -80,6 +68,7 @@
         } else if (previousView !== $chatListView) {
             onViewChanged();
         }
+        chatListElement?.reset();
     });
 
     function anythingUnread(unread: CombinedUnreadCounts): boolean {
@@ -118,8 +107,6 @@
         searchTerm = "";
     }
 
-    let chatListElement: HTMLElement | undefined;
-
     function setView(view: "chats" | "threads"): void {
         chatListView.set(view);
 
@@ -131,18 +118,11 @@
     function onScopeChanged() {
         previousScope = $chatListScopeStore;
         chatListView.set("chats");
-        chatsScrollTop = 0;
         onViewChanged();
     }
 
     function onViewChanged() {
         previousView = $chatListView;
-        const scrollTop = previousView === "chats" ? chatsScrollTop ?? 0 : 0;
-        tick().then(() => {
-            if (chatListElement !== undefined) {
-                chatListElement.scrollTop = scrollTop;
-            }
-        });
     }
 
     function userOrBotKey(match: UserSummary | BotMatch): string {
@@ -229,7 +209,7 @@
         </div>
     {/if}
 
-    <div use:menuCloser bind:this={chatListElement} class="body">
+    <div use:menuCloser class="body">
         {#if $chatListView === "threads"}
             <ThreadPreviews />
         {:else}
@@ -239,13 +219,18 @@
                         <Translatable resourceKey={i18nKey("yourChats")} />
                     </h3>
                 {/if}
-                {#each chats as chatSummary (chatIdentifierToString(chatSummary.id))}
-                    <ChatSummary
-                        {chatSummary}
-                        selected={chatIdentifiersEqual($selectedChatIdStore, chatSummary.id)}
-                        visible={searchTerm !== "" || !chatSummary.membership.archived}
-                        onChatSelected={chatSelected} />
-                {/each}
+                <VirtualList
+                    bind:this={chatListElement}
+                    keyFn={(c) => chatIdentifierToString(c.id)}
+                    items={chats}>
+                    {#snippet children(item)}
+                        <ChatSummary
+                            chatSummary={item}
+                            selected={chatIdentifiersEqual($selectedChatIdStore, item.id)}
+                            visible={searchTerm !== "" || !item.membership.archived}
+                            onChatSelected={chatSelected} />
+                    {/snippet}
+                </VirtualList>
 
                 {#if userAndBotSearchResults !== undefined}
                     <div class="search-matches">
@@ -369,6 +354,7 @@
     .chat-summaries {
         overflow: auto;
         overflow-x: hidden;
+        height: 100%;
     }
 
     .join {
