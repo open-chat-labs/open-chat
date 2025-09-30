@@ -68,7 +68,6 @@
         } else if (previousView !== $chatListView) {
             onViewChanged();
         }
-        chatListElement?.reset();
     });
 
     function anythingUnread(unread: CombinedUnreadCounts): boolean {
@@ -123,6 +122,7 @@
 
     function onViewChanged() {
         previousView = $chatListView;
+        chatListElement?.reset();
     }
 
     function userOrBotKey(match: UserSummary | BotMatch): string {
@@ -209,6 +209,19 @@
         </div>
     {/if}
 
+    <VirtualList
+        bind:this={chatListElement}
+        keyFn={(c) => chatIdentifierToString(c.id)}
+        items={chats}>
+        {#snippet children(item)}
+            <ChatSummary
+                chatSummary={item}
+                selected={chatIdentifiersEqual($selectedChatIdStore, item.id)}
+                visible={searchTerm !== "" || !item.membership.archived}
+                onChatSelected={chatSelected} />
+        {/snippet}
+    </VirtualList>
+
     <div use:menuCloser class="body">
         {#if $chatListView === "threads"}
             <ThreadPreviews />
@@ -219,18 +232,6 @@
                         <Translatable resourceKey={i18nKey("yourChats")} />
                     </h3>
                 {/if}
-                <VirtualList
-                    bind:this={chatListElement}
-                    keyFn={(c) => chatIdentifierToString(c.id)}
-                    items={chats}>
-                    {#snippet children(item)}
-                        <ChatSummary
-                            chatSummary={item}
-                            selected={chatIdentifiersEqual($selectedChatIdStore, item.id)}
-                            visible={searchTerm !== "" || !item.membership.archived}
-                            onChatSelected={chatSelected} />
-                    {/snippet}
-                </VirtualList>
 
                 {#if userAndBotSearchResults !== undefined}
                     <div class="search-matches">
