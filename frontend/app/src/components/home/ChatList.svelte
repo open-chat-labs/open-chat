@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { scrollLimits } from "component-lib";
     import {
         allUsersStore,
         type BotMatch,
@@ -29,7 +30,7 @@
         type UserSummary,
     } from "openchat-client";
     import page from "page";
-    import { getContext } from "svelte";
+    import { getContext, tick } from "svelte";
     import { menuCloser } from "../../actions/closeMenu";
     import { i18nKey } from "../../i18n/i18n";
     import { chatListView } from "../../stores/chatListView";
@@ -37,7 +38,6 @@
     import ButtonGroup from "../ButtonGroup.svelte";
     import FilteredUsername from "../FilteredUsername.svelte";
     import Translatable from "../Translatable.svelte";
-    import VirtualList from "../VirtualList.svelte";
     import ChatListSearch from "./ChatListSearch.svelte";
     import ChatListSectionButton from "./ChatListSectionButton.svelte";
     import ChatSummary from "./ChatSummary.svelte";
@@ -51,6 +51,7 @@
     import ThreadPreviews from "./thread/ThreadPreviews.svelte";
     import ActiveCallSummary from "./video/ActiveCallSummary.svelte";
 
+    const TO_SHOW = 30;
     const client = getContext<OpenChat>("client");
 
     let groupSearchResults: Promise<GroupSearchResponse> | undefined = $state(undefined);
@@ -60,7 +61,15 @@
     let searchResultsAvailable: boolean = $state(false);
     let previousScope: ChatListScope = $chatListScopeStore;
     let previousView: "chats" | "threads" = $chatListView;
-    let chatListElement = $state<VirtualList<ChatSummaryType> | undefined>();
+    let chatsToShow = $state(TO_SHOW);
+    let rendering = $state(false);
+
+    function insideBottom() {
+        if (rendering) return;
+        rendering = true;
+        chatsToShow = Math.min(allMatchingChats.length, chatsToShow + TO_SHOW / 2);
+        tick().then(() => (rendering = false));
+    }
 
     $effect(() => {
         if (!chatListScopesEqual(previousScope, $chatListScopeStore)) {
@@ -122,7 +131,7 @@
 
     function onViewChanged() {
         previousView = $chatListView;
-        chatListElement?.reset();
+        chatsToShow = TO_SHOW;
     }
 
     function userOrBotKey(match: UserSummary | BotMatch): string {
@@ -171,11 +180,12 @@
             chatListView.set("chats");
         }
     });
-    let chats = $derived(
+    let allMatchingChats = $derived(
         searchTerm !== ""
             ? $chatSummariesListStore.filter((c) => client.chatMatchesSearch(lowercaseSearch, c))
             : $chatSummariesListStore,
     );
+    let chats = $derived(allMatchingChats.slice(0, chatsToShow));
 </script>
 
 <!-- svelte-ignore missing_declaration -->
@@ -213,25 +223,26 @@
         {#if $chatListView === "threads"}
             <ThreadPreviews />
         {:else}
-            <div use:menuCloser class="chat-summaries">
+            <div
+                use:scrollLimits={{
+                    threshold: 200,
+                    onEnd: insideBottom,
+                }}
+                use:menuCloser
+                class="chat-summaries">
                 {#if searchResultsAvailable && chats.length > 0}
                     <h3 class="search-subtitle">
                         <Translatable resourceKey={i18nKey("yourChats")} />
                     </h3>
                 {/if}
-                <VirtualList
-                    bind:this={chatListElement}
-                    keyFn={(c) => chatIdentifierToString(c.id)}
-                    itemHeight={80}
-                    items={chats}>
-                    {#snippet children(item)}
-                        <ChatSummary
-                            chatSummary={item}
-                            selected={chatIdentifiersEqual($selectedChatIdStore, item.id)}
-                            visible={searchTerm !== "" || !item.membership.archived}
-                            onChatSelected={chatSelected} />
-                    {/snippet}
-                </VirtualList>
+
+                {#each chats as chatSummary (chatIdentifierToString(chatSummary.id))}
+                    <ChatSummary
+                        {chatSummary}
+                        selected={chatIdentifiersEqual($selectedChatIdStore, chatSummary.id)}
+                        visible={searchTerm !== "" || !chatSummary.membership.archived}
+                        onChatSelected={chatSelected} />
+                {/each}
 
                 {#if userAndBotSearchResults !== undefined}
                     <div class="search-matches">
