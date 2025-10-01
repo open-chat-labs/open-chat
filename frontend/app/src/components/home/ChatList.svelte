@@ -1,9 +1,9 @@
 <script lang="ts">
-    import SvelteVirtualList from "@humanspeak/svelte-virtual-list";
     import {
         allUsersStore,
         type BotMatch,
         chatIdentifiersEqual,
+        chatIdentifierToString,
         type ChatListScope,
         chatListScopesEqual,
         chatListScopeStore,
@@ -37,6 +37,7 @@
     import ButtonGroup from "../ButtonGroup.svelte";
     import FilteredUsername from "../FilteredUsername.svelte";
     import Translatable from "../Translatable.svelte";
+    import VirtualList from "../VirtualList.svelte";
     import ChatListSearch from "./ChatListSearch.svelte";
     import ChatListSectionButton from "./ChatListSectionButton.svelte";
     import ChatSummary from "./ChatSummary.svelte";
@@ -59,7 +60,7 @@
     let searchResultsAvailable: boolean = $state(false);
     let previousScope: ChatListScope = $chatListScopeStore;
     let previousView: "chats" | "threads" = $chatListView;
-    // let chatListElement = $state<SvelteVirtualList<ChatSummaryType> | undefined>();
+    let chatListElement = $state<VirtualList<ChatSummaryType> | undefined>();
 
     $effect(() => {
         if (!chatListScopesEqual(previousScope, $chatListScopeStore)) {
@@ -121,7 +122,7 @@
 
     function onViewChanged() {
         previousView = $chatListView;
-        // chatListElement?.reset();
+        chatListElement?.reset();
     }
 
     function userOrBotKey(match: UserSummary | BotMatch): string {
@@ -208,26 +209,17 @@
         </div>
     {/if}
 
-    <div use:menuCloser class="body">
+    <div class="body">
         {#if $chatListView === "threads"}
             <ThreadPreviews />
         {:else}
-            <div class="chat-summaries">
+            <div use:menuCloser class="chat-summaries">
                 {#if searchResultsAvailable && chats.length > 0}
                     <h3 class="search-subtitle">
                         <Translatable resourceKey={i18nKey("yourChats")} />
                     </h3>
                 {/if}
-                <SvelteVirtualList items={chats} defaultEstimatedItemHeight={80}>
-                    {#snippet renderItem(item)}
-                        <ChatSummary
-                            chatSummary={item}
-                            selected={chatIdentifiersEqual($selectedChatIdStore, item.id)}
-                            visible={searchTerm !== "" || !item.membership.archived}
-                            onChatSelected={chatSelected} />
-                    {/snippet}
-                </SvelteVirtualList>
-                <!-- <VirtualList
+                <VirtualList
                     bind:this={chatListElement}
                     keyFn={(c) => chatIdentifierToString(c.id)}
                     itemHeight={80}
@@ -239,7 +231,7 @@
                             visible={searchTerm !== "" || !item.membership.archived}
                             onChatSelected={chatSelected} />
                     {/snippet}
-                </VirtualList> -->
+                </VirtualList>
 
                 {#if userAndBotSearchResults !== undefined}
                     <div class="search-matches">
@@ -355,15 +347,14 @@
 
 <style lang="scss">
     .body {
-        overflow: auto;
+        overflow: hidden;
         flex: auto;
-        @include nice-scrollbar();
         position: relative;
     }
     .chat-summaries {
-        overflow: auto;
-        overflow-x: hidden;
         height: 100%;
+        @include nice-scrollbar();
+        overflow-x: hidden;
     }
 
     .join {
