@@ -41,7 +41,7 @@
         "@rollup/plugin-replace": "^5.0.5",
         "@rollup/plugin-terser": "^0.4.4",
         "@rollup/plugin-typescript": "^11.1.2",
-        "@tauri-apps/api": "^2.7.0",
+        "@tauri-apps/api": "^2.8.0",
         "@typescript-eslint/eslint-plugin": "^8.38.0",
         "@typescript-eslint/parser": "^8.38.0",
         "auto-changelog": "open-chat-labs/auto-changelog#master",
