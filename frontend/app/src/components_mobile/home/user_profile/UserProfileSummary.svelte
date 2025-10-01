@@ -19,7 +19,7 @@
     import RobotOutline from "svelte-material-icons/RobotOutline.svelte";
     import Sync from "svelte-material-icons/Sync.svelte";
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
-    import SectionButton from "../../SectionButton.svelte";
+    import LinkedCard from "../../LinkedCard.svelte";
     import SparkleBox from "../../SparkleBox.svelte";
     import Translatable from "../../Translatable.svelte";
     import UserProfileHeader from "./UserProfileHeader.svelte";
@@ -31,6 +31,7 @@
     let verified = $derived(user?.isUniquePerson ?? false);
     let profile: PublicProfile | undefined = $state();
 
+    // this is no good. We need to have already loaded this profile to avoid a horrible clunk in the UI
     onMount(async () => {
         try {
             user = await client.getUser($currentUserIdStore);
@@ -99,28 +100,28 @@
                 <Translatable resourceKey={i18nKey("General options")}></Translatable>
             </Caption>
         </Container>
-        <SectionButton
+        <LinkedCard
             Icon={Cog}
             title={i18nKey("Chat & video call settings")}
             info={i18nKey(
                 "Modify the behaviour of your chats, video calls, and manage restricted content.",
             )} />
 
-        <SectionButton
+        <LinkedCard
             Icon={AccountMultiple}
             title={i18nKey("Community settings")}
             info={i18nKey(
                 "This section allows you to set your desired display name per community.",
             )} />
 
-        <SectionButton
+        <LinkedCard
             Icon={Eye}
             title={i18nKey("Appearance")}
             info={i18nKey(
                 "Set the default language or the font size. New options to adjust the app's theme will soon be added.",
             )} />
 
-        <SectionButton
+        <LinkedCard
             Icon={FlashOutline}
             title={i18nKey("CHIT rewards")}
             info={i18nKey(
@@ -133,21 +134,21 @@
             </Caption>
         </Container>
 
-        <SectionButton
+        <LinkedCard
             Icon={Sync}
             title={i18nKey("Cache management")}
             info={i18nKey(
                 "In some circumstances, clearing the app's cached data can resolve issues. You should not normally need to use this.",
             )} />
 
-        <SectionButton
+        <LinkedCard
             Icon={RobotOutline}
             title={i18nKey("Bot configuration")}
             info={i18nKey(
                 "View configuration data required when creating your own OpenChat bot.",
             )} />
 
-        <SectionButton
+        <LinkedCard
             Icon={Delete}
             title={i18nKey("Delete account")}
             info={i18nKey(

@@ -37,7 +37,7 @@
     import { toastStore } from "../../../stores/toast";
     import AreYouSure from "../../AreYouSure.svelte";
     import EditableAvatar from "../../EditableAvatar.svelte";
-    import SectionButton from "../../SectionButton.svelte";
+    import LinkedCard from "../../LinkedCard.svelte";
     import Translatable from "../../Translatable.svelte";
 
     const MIN_LENGTH = 3;
@@ -447,25 +447,25 @@
             direction={"vertical"}
             gap={"lg"}
             supplementalClass={"group_sub_sections"}>
-            <SectionButton
+            <LinkedCard
                 Icon={Cog}
                 title={i18nKey("General setup")}
                 info={i18nKey(
                     "Enable sharing via link, disappearing messages, or hide chat history for new members.",
                 )} />
-            <SectionButton
+            <LinkedCard
                 Icon={AlertRhombusOutline}
                 title={i18nKey("Access gates")}
                 info={i18nKey(
                     "Fine tune who can join your group by setting specific access gates.",
                 )} />
-            <SectionButton
+            <LinkedCard
                 Icon={FormatList}
                 title={i18nKey("Rules")}
                 info={i18nKey(
                     "Define a set of rules that the members of your group will ahve to follow.",
                 )} />
-            <SectionButton
+            <LinkedCard
                 Icon={AccountMultiple}
                 title={i18nKey("Permissions")}
                 info={i18nKey(

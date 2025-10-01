@@ -7,6 +7,7 @@
     import Share from "svelte-material-icons/ShareVariantOutline.svelte";
     import Badges from "../profile/Badges.svelte";
     import ChitSummary from "./ChitSummary.svelte";
+    import Markdown from "../Markdown.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -72,7 +73,7 @@
             </Container>
         </Container>
         <Body fontWeight={"light"}>
-            {profile.bio}
+            <Markdown inline={false} text={profile.bio} />
         </Body>
         <!-- <ChitSummary
             streak={user.streak}
