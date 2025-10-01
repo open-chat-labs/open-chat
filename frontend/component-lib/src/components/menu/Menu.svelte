@@ -26,7 +26,7 @@
     <Container
         borderWidth={"thin"}
         padding={["sm", "zero"]}
-        backgroundColour={"var(--background-1)"}
+        background={"var(--background-1)"}
         minWidth={Rem.fromPixels(200).toString()}
         borderRadius={"lg"}
         shadow={"var(--shadow-menu)"}

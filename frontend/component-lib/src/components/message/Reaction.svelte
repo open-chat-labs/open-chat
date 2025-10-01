@@ -13,7 +13,7 @@
 <Container
     borderRadius={"lg"}
     padding={["zero", "xs"]}
-    backgroundColour={ColourVars.background2}
+    background={ColourVars.background2}
     crossAxisAlignment={"center"}
     gap={"xs"}
     borderWidth={"thin"}

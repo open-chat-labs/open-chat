@@ -50,7 +50,7 @@
 <Container
     mainAxisAlignment={"spaceBetween"}
     supplementalClass={sectionClass}
-    backgroundColour={ColourVars.background0}
+    background={ColourVars.background0}
     tag={"section"}
     height={{ kind: "fill" }}
     direction={"vertical"}>

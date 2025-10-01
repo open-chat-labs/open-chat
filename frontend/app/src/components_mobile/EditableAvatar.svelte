@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { IconButton } from "component-lib";
     import ImageEditOutline from "svelte-material-icons/ImageEditOutline.svelte";
     import EditableImageWrapper from "./EditableImageWrapper.svelte";
 
@@ -30,7 +31,11 @@
                 {/if}
             </div>
             <div class="editable_avatar_edit_icon">
-                <ImageEditOutline color={"var(--text-primary)"} />
+                <IconButton onclick={choosePhoto} mode={"primary"}>
+                    {#snippet icon(color)}
+                        <ImageEditOutline {color} />
+                    {/snippet}
+                </IconButton>
             </div>
         </div>
     {/snippet}
@@ -48,16 +53,12 @@
         right: 6px;
         border-radius: var(--rad-circle);
         background-color: var(--background-1);
-        border: 5px solid var(--background-0);
-        width: toRem(48);
-        height: toRem(48);
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        border: 4px solid var(--background-0);
     }
 
     .border {
-        background: var(--gradient);
+        // background: var(--gradient);
+        background: var(--background-0);
         border-radius: var(--rad-circle);
         padding: 6px;
         position: relative;
@@ -72,8 +73,8 @@
         background-color: var(--text-tertiary);
 
         &.headline {
-            width: toRem(192);
-            height: toRem(192);
+            width: toRem(154);
+            height: toRem(154);
         }
         &.large {
             width: toRem(150);

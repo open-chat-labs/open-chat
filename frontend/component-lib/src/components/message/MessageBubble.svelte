@@ -40,7 +40,7 @@
     {padding}
     gap={"xs"}
     width={{ kind: "hug" }}
-    {backgroundColour}>
+    background={backgroundColour}>
     {@render messageContent?.(me)}
     <MessageMetadata {edited} {time}></MessageMetadata>
 </Container>

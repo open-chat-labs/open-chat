@@ -28,7 +28,7 @@
 <Container
     supplementalClass={"section_header"}
     padding={["md", "sm", "sm", "lg"]}
-    backgroundColour={ColourVars.background0}
+    background={ColourVars.background0}
     crossAxisAlignment={"center"}
     mainAxisAlignment={"spaceBetween"}
     gap={"md"}>

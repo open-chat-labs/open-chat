@@ -32,7 +32,7 @@
 
 <Container direction={"vertical"} gap={"xs"}>
     <Container
-        backgroundColour={ColourVars.textTertiary}
+        background={ColourVars.textTertiary}
         padding={["md", "xl", "xs", "xl"]}
         borderRadius={"xxl"}
         gap={"sm"}
@@ -87,6 +87,9 @@
     }
 
     .countdown {
+        position: absolute;
+        top: var(--sp-md);
+        right: var(--sp-xl);
         color: var(--text-secondary);
         &.warn {
             color: var(--warning);

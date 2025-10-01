@@ -28,12 +28,20 @@
             : "/assets/unknownUserAvatar.svg",
     );
 
+    let backgroundUrl = $derived(
+        client.buildUserBackgroundUrl(
+            import.meta.env.OC_BLOB_URL_PATTERN!,
+            user.userId,
+            profile.backgroundId,
+        ),
+    );
+
     // This doesn't exist as a first-class thing in the theme at the moment - not sure if it _should_
     const gradient =
         "linear-gradient(90deg, var(--warning) 0%, var(--primary) 30%, var(--primary) 70%, var(--tertiary) 100%)";
 
     function profileSettings() {
-        client.pushRightPanelHistory({ kind: "user_profile_settings" });
+        client.pushRightPanelHistory({ kind: "user_profile_settings", profile });
     }
 </script>
 
@@ -44,7 +52,8 @@
         mainAxisAlignment={"end"}
         padding={"sm"}
         gap={"xs"}
-        backgroundColour={gradient}>
+        backgroundImage={backgroundUrl}
+        background={gradient}>
         <IconButton size={"sm"} mode={"dark"}>
             {#snippet icon(color)}
                 <Info {color} />
@@ -79,10 +88,6 @@
         <Body fontWeight={"light"}>
             <Markdown inline={false} text={profile.bio} />
         </Body>
-        <!-- <ChitSummary
-            streak={user.streak}
-            earned={user.totalChitEarned}
-            balance={user.chitBalance} /> -->
     </Container>
     <ChitSummary streak={57} earned={539_400} balance={102_000} />
 </Container>

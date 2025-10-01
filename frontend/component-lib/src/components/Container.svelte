@@ -57,7 +57,8 @@
         minWidth?: string;
         minHeight?: string;
         shadow?: string;
-        backgroundColour?: string;
+        background?: string;
+        backgroundImage?: string;
         onClick?: (e?: MouseEvent) => void;
         supplementalClass?: string;
         allowOverflow?: boolean;
@@ -87,7 +88,8 @@
         minWidth = "auto",
         minHeight = "auto",
         shadow,
-        backgroundColour = "unset",
+        background = "unset",
+        backgroundImage,
         onClick,
         supplementalClass,
         allowOverflow = false,
@@ -119,8 +121,15 @@
             crossAxisSelfAlignment,
         ),
     );
+    let backgroundCss = $derived(
+        backgroundImage
+            ? `background-image: url(${backgroundImage});`
+            : background
+              ? `background: ${background};`
+              : "",
+    );
     let style = $derived(
-        `background: ${backgroundColour}; box-shadow: ${shadow}; min-width: ${minWidth}; min-height: ${minHeight}; ${alignmentCss}; ${colourCss}; ${heightCss}; ${widthCss}; ${borderStyleCss}; ${borderRadiusCss}; ${borderWidthCss}; ${paddingCss}; ${gapCss};`,
+        `${backgroundCss} box-shadow: ${shadow}; min-width: ${minWidth}; min-height: ${minHeight}; ${alignmentCss}; ${colourCss}; ${heightCss}; ${widthCss}; ${borderStyleCss}; ${borderRadiusCss}; ${borderWidthCss}; ${paddingCss}; ${gapCss};`,
     );
     // TODO I think it might be nice to do a lot of this flex sizing with classes rather than inline styles
     // although I'm not sure I can say *why*
@@ -146,6 +155,9 @@
         overflow: auto;
         scrollbar-width: none;
         position: relative;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
         transition:
             min-width 200ms ease-in-out,
             flex-basis 200ms ease-in-out,

@@ -60,9 +60,9 @@
     import Members from "./groupdetails/Members.svelte";
     import PinnedMessages from "./pinned/PinnedMessages.svelte";
     import UserProfile from "./profile/UserProfile.svelte";
-    import ProfileSettings from "./user_profile/ProfileSettings.svelte";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import Thread from "./thread/Thread.svelte";
+    import ProfileSettings from "./user_profile/ProfileSettings.svelte";
     import ActiveCallParticipants from "./video/ActiveCallParticipants.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -550,7 +550,7 @@
             {user}
             onCloseProfile={client.popRightPanelHistory} />
     {:else if $lastRightPanelState.kind === "user_profile_settings"}
-        <ProfileSettings />
+        <ProfileSettings profile={$lastRightPanelState.profile} />
     {:else if threadRootEvent !== undefined && $selectedChatSummaryStore !== undefined}
         <Thread
             rootEvent={threadRootEvent}

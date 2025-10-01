@@ -17,7 +17,7 @@
     borderRadius={"md"}
     direction={"vertical"}
     gap={"md"}
-    backgroundColour={ColourVars.background1}
+    background={ColourVars.background1}
     padding={"xl"}>
     <Container crossAxisAlignment={"center"} gap={"sm"}>
         <Icon color={"var(--primary)"} />

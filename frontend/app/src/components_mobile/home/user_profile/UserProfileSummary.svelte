@@ -5,6 +5,7 @@
     import {
         allUsersStore,
         currentUserIdStore,
+        currentUserProfileStore,
         OpenChat,
         publish,
         type PublicProfile,
@@ -31,17 +32,17 @@
     let profile: PublicProfile | undefined = $state();
 
     // this is no good. We need to have already loaded this profile to avoid a horrible clunk in the UI
-    onMount(async () => {
-        try {
-            user = await client.getUser($currentUserIdStore);
-            client.getPublicProfile($currentUserIdStore).subscribe({
-                onResult: (result) => {
-                    profile = result;
-                },
-            });
-        } catch (e: any) {
-            client.logError("Failed to load user profile", e);
-        }
+    onMount(() => {
+        client.getUser($currentUserIdStore).then((u) => (user = u));
+        // client.getPublicProfile($currentUserIdStore).subscribe({
+        //     onResult: (result) => {
+        //         profile = result;
+        //     },
+        // });
+        return currentUserProfileStore.subscribe((p) => {
+            console.log("Profile: ", p);
+            profile = p;
+        });
     });
 </script>
 

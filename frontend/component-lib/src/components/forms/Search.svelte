@@ -38,7 +38,7 @@
 </script>
 
 <Container
-    backgroundColour={ColourVars.textTertiary}
+    background={ColourVars.textTertiary}
     padding={"lg"}
     borderRadius={"circle"}
     gap={"lg"}

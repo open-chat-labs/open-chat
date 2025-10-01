@@ -1,4 +1,5 @@
 import type { MultiUserChatIdentifier } from "./chat";
+import type { PublicProfile } from "./user";
 
 export type FontScale = 0 | 1 | 2 | 3 | 4;
 
@@ -49,6 +50,7 @@ export type RightPanelContent =
 
 type UserProfileSettings = {
     kind: "user_profile_settings";
+    profile: PublicProfile;
 };
 
 type ProposalFilterPanel = {

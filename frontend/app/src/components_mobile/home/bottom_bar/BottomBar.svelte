@@ -113,7 +113,7 @@
     borderColour={"var(--background-0)"}
     height={{ kind: "fixed", size: "5.5rem" }}
     borderRadius={["md", "md", "zero", "zero"]}
-    backgroundColour={"var(--background-1)"}
+    background={"var(--background-1)"}
     mainAxisAlignment={"spaceAround"}>
     <div class:showFavourites class={`selection ${props.selection}`}></div>
     <BottomBarItem

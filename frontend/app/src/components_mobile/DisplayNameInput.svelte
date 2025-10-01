@@ -1,9 +1,10 @@
 <script lang="ts">
-    import Input from "./Input.svelte";
-    import { onMount } from "svelte";
-    import { _ } from "svelte-i18n";
+    import { Input } from "component-lib";
     import type { OpenChat } from "openchat-client";
-    import { i18nKey } from "../i18n/i18n";
+    import { onMount, untrack } from "svelte";
+    import { _ } from "svelte-i18n";
+    import { i18nKey, interpolate } from "../i18n/i18n";
+    import Translatable from "./Translatable.svelte";
 
     const MIN_DISPLAY_NAME_LENGTH = 3;
     const MAX_DISPLAY_NAME_LENGTH = 25;
@@ -13,8 +14,8 @@
         originalDisplayName: string | undefined;
         displayName: string | undefined;
         displayNameValid: boolean;
-        disabled: boolean;
-        children?: import("svelte").Snippet;
+        disabled?: boolean;
+        errorMsg?: string;
     }
 
     let {
@@ -22,40 +23,41 @@
         originalDisplayName,
         displayName = $bindable(),
         displayNameValid = $bindable(),
-        disabled,
-        children,
+        disabled = false,
+        errorMsg = $bindable(),
     }: Props = $props();
-
-    let invalid = $derived(originalDisplayName !== displayName && !displayNameValid);
 
     onMount(() => {
         displayName = originalDisplayName;
         displayNameValid = true;
     });
 
-    function onChange(val: string | number | bigint) {
-        if (typeof val !== "string") return;
+    $effect(() => {
+        if (typeof displayName !== "string") return;
 
-        displayName = val;
+        let d = displayName;
 
-        if (displayName.length === 0) {
-            displayName = undefined;
-            displayNameValid = true;
-            return;
-        }
+        untrack(() => {
+            if (d.length === 0) {
+                displayName = undefined;
+                displayNameValid = true;
+                return;
+            }
 
-        displayNameValid = client.isDisplayNameValid(displayName);
-    }
+            displayNameValid = client.isDisplayNameValid(d);
+        });
+    });
 </script>
 
 <Input
-    {onChange}
-    value={originalDisplayName ?? ""}
+    bind:value={displayName}
     {disabled}
-    {invalid}
     minlength={MIN_DISPLAY_NAME_LENGTH}
     maxlength={MAX_DISPLAY_NAME_LENGTH}
     countdown
-    placeholder={i18nKey("register.enterDisplayName")}>
-    {@render children?.()}
+    placeholder={interpolate($_, i18nKey("register.enterDisplayName"))}>
+    {#snippet subtext()}
+        <Translatable resourceKey={i18nKey(errorMsg ?? "Optionally enter your display name")}
+        ></Translatable>
+    {/snippet}
 </Input>

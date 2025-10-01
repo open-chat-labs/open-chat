@@ -1,8 +1,10 @@
 <script lang="ts">
+    import { Input, Spinner } from "component-lib";
     import type { OpenChat } from "openchat-client";
-    import { onMount } from "svelte";
-    import { i18nKey } from "../i18n/i18n";
-    import Input from "./Input.svelte";
+    import { onMount, untrack } from "svelte";
+    import { _ } from "svelte-i18n";
+    import { i18nKey, interpolate } from "../i18n/i18n";
+    import Translatable from "./Translatable.svelte";
 
     const MIN_EXTANT_USERNAME_LENGTH = 3;
     const MAX_USERNAME_LENGTH = 20;
@@ -12,11 +14,8 @@
         originalUsername: string;
         username: string;
         usernameValid: boolean;
-        error?: string | undefined;
-        checking?: boolean;
         disabled?: boolean;
-        autofocus?: boolean;
-        children?: import("svelte").Snippet;
+        errorMsg?: string;
     }
 
     let {
@@ -24,19 +23,13 @@
         originalUsername,
         username = $bindable(),
         usernameValid = $bindable(),
-        error = $bindable(undefined),
-        checking = $bindable(false),
         disabled = false,
-        autofocus = false,
-        children,
+        errorMsg = $bindable(),
     }: Props = $props();
-
-    error;
 
     let timer: number | undefined = undefined;
     let currentPromise: Promise<unknown> | undefined;
-
-    let invalid = $derived(originalUsername !== username && !usernameValid && !checking);
+    let checking = $state(false);
 
     onMount(() => {
         username = originalUsername;
@@ -55,52 +48,65 @@
 
                 if (value.toLowerCase() === originalUsername.toLowerCase() || resp === "success") {
                     usernameValid = true;
-                    error = undefined;
+                    errorMsg = undefined;
                     return;
+                } else {
+                    usernameValid = false;
                 }
 
                 if (resp === "username_taken") {
-                    error = "register.usernameTaken";
+                    errorMsg = "register.usernameTaken";
                 }
             })
             .catch((err) => {
-                error = "register.errorCheckingUsername";
+                errorMsg = "register.errorCheckingUsername";
                 client.logError("Unable to check username: ", err);
                 checking = false;
+                usernameValid = false;
             });
 
         currentPromise = promise;
     }
 
-    function onChange(val: string | number | bigint) {
-        if (typeof val !== "string") return;
+    $effect(() => {
+        if (typeof username !== "string") return;
 
-        username = val;
-        usernameValid = false;
-        error = undefined;
+        let u = username;
 
-        window.clearTimeout(timer);
-        checking = false;
+        untrack(() => {
+            usernameValid = client.isUsernameValid(u);
+            errorMsg = undefined;
 
-        if (
-            client.isUsernameValid(username) ||
-            username.toLowerCase() === originalUsername.toLowerCase()
-        ) {
-            checking = true;
-            timer = window.setTimeout(() => checkUsername(username), 350);
-        }
-    }
+            window.clearTimeout(timer);
+            checking = false;
+
+            if (usernameValid || u.toLowerCase() === originalUsername.toLowerCase()) {
+                checking = true;
+                timer = window.setTimeout(() => checkUsername(u), 350);
+            }
+        });
+    });
 </script>
 
 <Input
-    {onChange}
-    value={originalUsername}
+    bind:value={username}
     {disabled}
-    {invalid}
-    {autofocus}
+    error={errorMsg !== undefined || !usernameValid}
     minlength={MIN_EXTANT_USERNAME_LENGTH}
     maxlength={MAX_USERNAME_LENGTH}
-    countdown
-    placeholder={i18nKey("register.enterUsername")}>
-    {@render children?.()}
+    placeholder={interpolate($_, i18nKey("register.enterUsername"))}>
+    {#snippet icon(color)}
+        {#if checking}
+            <Spinner
+                size={"1.4rem"}
+                backgroundColour={"var(--text-tertiary)"}
+                foregroundColour={color} />
+        {/if}
+    {/snippet}
+    {#snippet subtext()}
+        <Translatable
+            resourceKey={i18nKey(
+                errorMsg ?? "Username, alphanumeric characters & underscrores only",
+            )}></Translatable>
+    {/snippet}
 </Input>

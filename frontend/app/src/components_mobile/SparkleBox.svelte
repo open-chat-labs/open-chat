@@ -22,7 +22,7 @@
         borderRadius={"lg"}
         padding={"lg"}
         direction={"vertical"}
-        backgroundColour={"#000"}>
+        background={"#000"}>
         <Subtitle fontWeight={"bold"} colour={"primaryLight"}>
             {@render title()}
         </Subtitle>

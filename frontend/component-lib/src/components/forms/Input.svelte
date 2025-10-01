@@ -7,13 +7,14 @@
         value?: string;
         placeholder?: string;
         subtext?: Snippet;
-        error?: Snippet;
+        error?: boolean;
         minlength?: number;
         maxlength?: number;
         countdown?: boolean;
         icon?: Snippet<[string]>;
         iconButtons?: Snippet<[string]>;
         textButtons?: Snippet;
+        disabled?: boolean;
     }
 
     let {
@@ -28,6 +29,7 @@
         icon,
         iconButtons,
         textButtons,
+        disabled = false,
     }: Props = $props();
 
     let remaining = $derived(maxlength - (value?.length ?? 0));
@@ -38,13 +40,15 @@
 
 <Container direction={"vertical"} gap={"xs"}>
     <Container
-        backgroundColour={ColourVars.textTertiary}
+        background={ColourVars.textTertiary}
         height={{ kind: "fixed", size: "3rem" }}
         {padding}
         borderRadius={"circle"}
         gap={"sm"}
         crossAxisAlignment={"center"}>
         <input
+            class:disabled
+            {disabled}
             data-gram="false"
             data-gramm_editor="false"
             data-enable-grammarly="false"
@@ -78,15 +82,8 @@
     </Container>
     {#if subtext}
         <div class="subtext">
-            <Caption colour={"textSecondary"}>
+            <Caption colour={error ? "error" : "textSecondary"}>
                 {@render subtext()}
-            </Caption>
-        </div>
-    {/if}
-    {#if error}
-        <div class="subtext">
-            <Caption colour={"error"}>
-                {@render error()}
             </Caption>
         </div>
     {/if}

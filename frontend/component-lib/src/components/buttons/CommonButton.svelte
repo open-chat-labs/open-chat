@@ -101,20 +101,20 @@
     aria-busy={loading}
     {style}
     class={`common_button ${internalMode} ${size}`}
-    class:disabled
+    class:disabled={disabled || loading}
     onclick={clickInternal}
     disabled={disabled || loading}>
     {#if loading}
-        <Spinner
-            size={"1.4rem"}
-            backgroundColour={"var(--text-tertiary)"}
-            foregroundColour={spinnerColour} />
-    {:else}
-        {#if icon}
-            <span class="icon">{@render icon(iconColour)}</span>
-        {/if}
-        <span class="content"> {@render children?.()}</span>
+        <span class="icon">
+            <Spinner
+                size={"1.4rem"}
+                backgroundColour={"var(--text-tertiary)"}
+                foregroundColour={spinnerColour} />
+        </span>
+    {:else if icon}
+        <span class="icon">{@render icon(iconColour)}</span>
     {/if}
+    <span class="content"> {@render children?.()}</span>
 </button>
 
 <style lang="scss">
@@ -161,14 +161,6 @@
 
         .content {
             pointer-events: none;
-        }
-
-        &.disabled {
-            background: var(--disabled-button);
-        }
-
-        &:disabled {
-            cursor: not-allowed;
         }
 
         &.default {
@@ -267,6 +259,14 @@
             .icon {
                 height: $large_icon;
             }
+        }
+
+        &.disabled {
+            background: var(--disabled-button);
+        }
+
+        &:disabled {
+            cursor: not-allowed;
         }
     }
 </style>

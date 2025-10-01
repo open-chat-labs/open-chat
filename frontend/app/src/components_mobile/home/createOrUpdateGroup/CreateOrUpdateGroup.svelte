@@ -378,7 +378,7 @@
 {/if}
 
 <Container
-    backgroundColour={ColourVars.background0}
+    background={ColourVars.background0}
     mainAxisAlignment={"spaceBetween"}
     direction={"vertical"}
     height={{ kind: "fill" }}>

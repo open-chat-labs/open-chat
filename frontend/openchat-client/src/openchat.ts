@@ -339,6 +339,7 @@ import {
     cryptoBalanceStore,
     cryptoLookup,
     currentUserIdStore,
+    currentUserProfileStore,
     currentUserStore,
     diamondStatusStore,
     directChatBotsStore,
@@ -1480,7 +1481,7 @@ export class OpenChat {
             });
     }
 
-    setUserAvatar(data: Uint8Array, url: string): Promise<boolean> {
+    setUserAvatar(data: Uint8Array, url: string): Promise<bigint | undefined> {
         const partialUser = userStore.get(currentUserIdStore.value);
         if (partialUser) {
             userStore.addUser({
@@ -1491,13 +1492,25 @@ export class OpenChat {
         }
 
         return this.#sendRequest({ kind: "setUserAvatar", data })
-            .then((_resp) => true)
-            .catch(() => false);
+            .then((resp) => {
+                currentUserProfileStore.update((profile) => ({
+                    ...profile,
+                    avatarId: resp.blobId,
+                }));
+                return resp.blobId;
+            })
+            .catch(() => undefined);
     }
 
     setUserProfileBackground(data: Uint8Array): Promise<bigint | undefined> {
         return this.#sendRequest({ kind: "setProfileBackground", data })
-            .then((resp) => resp.blobId)
+            .then((resp) => {
+                currentUserProfileStore.update((profile) => ({
+                    ...profile,
+                    backgroundId: resp.blobId,
+                }));
+                return resp.blobId;
+            })
             .catch(() => undefined);
     }
 
@@ -5135,6 +5148,13 @@ export class OpenChat {
                         userCreatedStore.set(true);
                         currentUserStore.set(user);
                         this.#setDiamondStatus(user.diamondStatus);
+                        this.getPublicProfile(user.userId).subscribe({
+                            onResult: (profile) => {
+                                if (profile !== undefined) {
+                                    currentUserProfileStore.set(profile);
+                                }
+                            },
+                        });
                     }
                     if (!resolved) {
                         // we want to resolve the promise with the first response from the stream so that

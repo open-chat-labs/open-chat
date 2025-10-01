@@ -1,4 +1,4 @@
-import type { MessageFormatter, UserLookup, UserSummary } from "openchat-shared";
+import type { MessageFormatter, PublicProfile, UserLookup, UserSummary } from "openchat-shared";
 
 export function formatLastOnlineDate(
     formatter: MessageFormatter,
@@ -94,6 +94,17 @@ export function nullUser(username: string): UserSummary {
     };
 }
 
+export function nullProfile(): PublicProfile {
+    return {
+        username: "",
+        displayName: undefined,
+        bio: "",
+        isPremium: false,
+        phoneIsVerified: false,
+        created: 0n,
+    };
+}
+
 export function compareUsername(u1: UserSummary, u2: UserSummary): number {
     return u1.username.localeCompare(u2.username, undefined, { sensitivity: "accent" });
 }
@@ -115,7 +126,11 @@ export function userAvatarUrl<T extends { blobUrl?: string }>(dataContent?: T): 
     return dataContent?.blobUrl ?? "/assets/unknownUserAvatar.svg";
 }
 
-export function missingUserIds(userLookup: UserLookup, webhookUserIds: Set<string>, userIds: Iterable<string>): string[] {
+export function missingUserIds(
+    userLookup: UserLookup,
+    webhookUserIds: Set<string>,
+    userIds: Iterable<string>,
+): string[] {
     const missing: string[] = [];
     for (const userId of userIds) {
         if (!userLookup.has(userId) && !webhookUserIds.has(userId)) {

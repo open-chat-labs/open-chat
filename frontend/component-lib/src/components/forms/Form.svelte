@@ -2,7 +2,7 @@
     import type { Snippet } from "svelte";
 
     interface Props {
-        onSubmit: () => void;
+        onSubmit: (e: Event) => void;
         children: Snippet;
         autocomplete?: boolean;
     }
@@ -11,7 +11,7 @@
 
     function onsubmit(e: SubmitEvent) {
         e.preventDefault();
-        onSubmit();
+        onSubmit(e);
     }
 </script>
 

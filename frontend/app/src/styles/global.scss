@@ -160,6 +160,10 @@ select {
     vertical-align: middle;
 }
 
+div[data-lastpass-icon-root] {
+    display: none;
+}
+
 html,
 body {
     position: relative;

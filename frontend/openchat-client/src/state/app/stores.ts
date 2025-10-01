@@ -46,6 +46,7 @@ import {
     type PinnedByScope,
     type PinNumberFailures,
     type PinNumberResolver,
+    type PublicProfile,
     type ReadonlyMap,
     type ReadonlySet,
     type Referral,
@@ -71,6 +72,7 @@ import {
 import { configKeys } from "../../utils/config";
 import { enumFromStringValue } from "../../utils/enums";
 import { derived, writable, type Readable, type Subscriber } from "../../utils/stores";
+import { nullProfile } from "../../utils/user";
 import { chatDetailsLocalUpdates } from "../chat/detailsUpdates";
 import type { ChatDetailsState } from "../chat/serverDetails";
 import { chatSummaryLocalUpdates, ChatSummaryUpdates } from "../chat/summaryUpdates";
@@ -333,6 +335,7 @@ export const messageFiltersStore = writable<MessageFilter[]>([], undefined, notE
 export const translationsStore = writable<MessageMap<string>>(new MessageMap(), undefined, notEq);
 export const snsFunctionsStore = writable<SnsFunctions>(new SnsFunctions(), undefined, notEq);
 export const currentUserStore = writable<CreatedUser>(anonymousUser(), undefined, notEq);
+export const currentUserProfileStore = writable<PublicProfile>(nullProfile(), undefined, notEq);
 export const currentUserIdStore = derived(currentUserStore, ({ userId }) => userId);
 export const anonUserStore = derived(currentUserIdStore, (id) => id === ANON_USER_ID);
 export const suspendedUserStore = derived(

@@ -51,7 +51,7 @@
             width={{ kind: "hug" }}
             padding={["sm", "xl"]}
             crossAxisAlignment={"center"}
-            backgroundColour={ColourVars.primary}
+            background={ColourVars.primary}
             direction={"vertical"}>
             <H2 colour={"textOnPrimary"} fontWeight={"bold"}>{streak}</H2>
             <Caption>

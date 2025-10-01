@@ -16,7 +16,7 @@
     gap={"sm"}
     padding={["zero", "sm", "zero", "zero"]}
     borderRadius={"sm"}
-    backgroundColour={"var(--chatSummary-bg-selected)"}>
+    background={"var(--chatSummary-bg-selected)"}>
     <div class={`img ${isPublic ? "public" : "private"}`}></div>
     <div class="name">
         <Translatable resourceKey={i18nKey(isPublic ? "access.public" : "access.private")} />

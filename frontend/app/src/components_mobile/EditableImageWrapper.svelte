@@ -17,6 +17,7 @@
         mode?: Mode;
         onImageSelected: (args: { url: string; data: Uint8Array }) => void;
         children: Snippet<[OnChoosePhoto, number, number]>;
+        classString?: string;
     }
 
     let {
@@ -25,6 +26,7 @@
         mode = "avatar",
         onImageSelected,
         children,
+        classString,
     }: Props = $props();
 
     type Dimensions = { width: number; height: number };
@@ -44,7 +46,7 @@
             case "banner":
                 return { width: 600, height: 300 };
             case "profile":
-                return { width: 600, height: 800 };
+                return { width: 600, height: 300 };
         }
     }
 
@@ -157,7 +159,7 @@
     onchange={onFileSelected}
     bind:this={fileinput} />
 
-<div class="editable-image" bind:clientWidth={elementWidth}>
+<div class={`editable-image ${classString}`} bind:clientWidth={elementWidth}>
     {@render children(addPhoto, elementWidth, elementHeight)}
 </div>
 
