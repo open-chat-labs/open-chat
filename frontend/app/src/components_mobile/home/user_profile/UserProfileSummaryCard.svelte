@@ -78,8 +78,8 @@
             streak={user.streak}
             earned={user.totalChitEarned}
             balance={user.chitBalance} /> -->
-        <ChitSummary streak={57} earned={539_400} balance={102_000} />
     </Container>
+    <ChitSummary streak={57} earned={539_400} balance={102_000} />
 </Container>
 
 <style lang="scss">

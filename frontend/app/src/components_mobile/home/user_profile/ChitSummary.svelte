@@ -42,7 +42,7 @@
     let percent = $derived(calculatePercentage(streak, maxBadgeVisible));
 </script>
 
-<Container direction={"vertical"} allowOverflow>
+<Container padding={["xl", "lg"]} direction={"vertical"} allowOverflow>
     <Container gap={"sm"} crossAxisAlignment={"center"}>
         <Container
             supplementalClass={"streak_bubble"}
