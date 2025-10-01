@@ -25,7 +25,7 @@
         unreadFavouriteCountsStore,
     } from "openchat-client";
     import page from "page";
-    import { getContext } from "svelte";
+    import { getContext, tick } from "svelte";
     import Pencil from "svelte-material-icons/LeadPencil.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { chatListView } from "../../stores/chatListView";
@@ -44,10 +44,19 @@
     import ActiveCallSummary from "./video/ActiveCallSummary.svelte";
 
     const client = getContext<OpenChat>("client");
+    const TO_SHOW = 10;
 
     let previousScope: ChatListScope = $chatListScopeStore;
     let previousView: "chats" | "threads" = $chatListView;
     let chatListFilter = $state<ChatListFilter>("all");
+    let chatsToShow = $state(TO_SHOW);
+    let rendering = $state(false);
+    function insideBottom() {
+        if (rendering || chatsToShow >= filteredChats.length) return;
+        rendering = true;
+        chatsToShow = Math.min(filteredChats.length, chatsToShow + TO_SHOW / 2);
+        tick().then(() => (rendering = false));
+    }
 
     $effect(() => {
         if (!chatListScopesEqual(previousScope, $chatListScopeStore)) {
@@ -91,6 +100,7 @@
 
     function onViewChanged() {
         previousView = $chatListView;
+        chatsToShow = TO_SHOW;
     }
 
     let showPreview = $derived(
@@ -123,11 +133,10 @@
             chatListView.set("chats");
         }
     });
-    let chats = $derived($chatSummariesListStore);
 
-    // TODO - come back to this later
+    let allChats = $derived($chatSummariesListStore);
     let filteredChats = $derived.by(() => {
-        return chats.filter((c) => {
+        return allChats.filter((c) => {
             return (
                 chatListFilter === "all" ||
                 (chatListFilter === "unread" &&
@@ -137,6 +146,8 @@
             );
         });
     });
+
+    let chats = $derived(filteredChats.slice(0, chatsToShow));
 
     function newMessage() {
         alert("TODO come back to this");
@@ -179,10 +190,11 @@
                 supplementalClass={"chat_summary_list"}
                 padding={["lg", "zero", "zero", "zero"]}
                 gap={"lg"}
+                onInsideEnd={insideBottom}
                 width={{ kind: "fill" }}
                 height={{ kind: "fill" }}
                 direction={"vertical"}>
-                {#each filteredChats as chatSummary (chatIdentifierToString(chatSummary.id))}
+                {#each chats as chatSummary (chatIdentifierToString(chatSummary.id))}
                     <ChatSummary
                         {chatSummary}
                         selected={chatIdentifiersEqual($selectedChatIdStore, chatSummary.id)}

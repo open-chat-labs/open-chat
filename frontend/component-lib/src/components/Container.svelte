@@ -8,6 +8,7 @@
         getFlexStyle,
         getGapCss,
         getPaddingCss,
+        scrollLimits,
         type BorderWidthSize,
         type CrossAxisAlignment,
         type Direction,
@@ -60,6 +61,8 @@
         allowOverflow?: boolean;
         tag?: "div" | "button" | "main" | "section"; // this could be just about anything but let's try to limit it
         id?: string;
+        onInsideStart?: (fromStart: number) => void;
+        onInsideEnd?: (fromEnd: number) => void;
     }
 
     let {
@@ -87,6 +90,8 @@
         allowOverflow = false,
         tag = "div",
         id,
+        onInsideEnd,
+        onInsideStart,
     }: Props = $props();
 
     // you might expect this to be done inside onMount but
@@ -121,6 +126,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <svelte:element
     this={tag}
+    use:scrollLimits={{ onEnd: onInsideEnd, onStart: onInsideStart }}
     {id}
     class:clickable={onClick !== undefined}
     class:overflow={allowOverflow}
