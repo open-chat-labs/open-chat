@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { scrollLimits } from "component-lib";
     import {
         allUsersStore,
         type BotMatch,
@@ -50,6 +51,7 @@
     import ThreadPreviews from "./thread/ThreadPreviews.svelte";
     import ActiveCallSummary from "./video/ActiveCallSummary.svelte";
 
+    const TO_SHOW = 30;
     const client = getContext<OpenChat>("client");
 
     let groupSearchResults: Promise<GroupSearchResponse> | undefined = $state(undefined);
@@ -57,22 +59,17 @@
         $state(undefined);
     let searchTerm: string = $state("");
     let searchResultsAvailable: boolean = $state(false);
-    let chatsScrollTop = $state<number | undefined>();
     let previousScope: ChatListScope = $chatListScopeStore;
     let previousView: "chats" | "threads" = $chatListView;
+    let chatsToShow = $state(TO_SHOW);
+    let rendering = $state(false);
 
-    // TODO this doesn't work properly and I think it's to do with the way
-    // effect dependencies are worked out when you have conditional code
-    // Probably can just be done in a more explicit way but it's not urgent
-    $effect.pre(() => {
-        if (
-            chatListScopesEqual(previousScope, $chatListScopeStore) &&
-            $chatListView !== "chats" &&
-            previousView === "chats"
-        ) {
-            chatsScrollTop = chatListElement?.scrollTop;
-        }
-    });
+    function insideBottom() {
+        if (rendering) return;
+        rendering = true;
+        chatsToShow = Math.min(allMatchingChats.length, chatsToShow + TO_SHOW / 2);
+        tick().then(() => (rendering = false));
+    }
 
     $effect(() => {
         if (!chatListScopesEqual(previousScope, $chatListScopeStore)) {
@@ -118,8 +115,6 @@
         searchTerm = "";
     }
 
-    let chatListElement: HTMLElement | undefined;
-
     function setView(view: "chats" | "threads"): void {
         chatListView.set(view);
 
@@ -131,18 +126,12 @@
     function onScopeChanged() {
         previousScope = $chatListScopeStore;
         chatListView.set("chats");
-        chatsScrollTop = 0;
         onViewChanged();
     }
 
     function onViewChanged() {
         previousView = $chatListView;
-        const scrollTop = previousView === "chats" ? chatsScrollTop ?? 0 : 0;
-        tick().then(() => {
-            if (chatListElement !== undefined) {
-                chatListElement.scrollTop = scrollTop;
-            }
-        });
+        chatsToShow = TO_SHOW;
     }
 
     function userOrBotKey(match: UserSummary | BotMatch): string {
@@ -191,11 +180,12 @@
             chatListView.set("chats");
         }
     });
-    let chats = $derived(
+    let allMatchingChats = $derived(
         searchTerm !== ""
             ? $chatSummariesListStore.filter((c) => client.chatMatchesSearch(lowercaseSearch, c))
             : $chatSummariesListStore,
     );
+    let chats = $derived(allMatchingChats.slice(0, chatsToShow));
 </script>
 
 <!-- svelte-ignore missing_declaration -->
@@ -229,16 +219,23 @@
         </div>
     {/if}
 
-    <div bind:this={chatListElement} class="body">
+    <div class="body">
         {#if $chatListView === "threads"}
             <ThreadPreviews />
         {:else}
-            <div use:menuCloser class="chat-summaries">
+            <div
+                use:scrollLimits={{
+                    threshold: 200,
+                    onEnd: insideBottom,
+                }}
+                use:menuCloser
+                class="chat-summaries">
                 {#if searchResultsAvailable && chats.length > 0}
                     <h3 class="search-subtitle">
                         <Translatable resourceKey={i18nKey("yourChats")} />
                     </h3>
                 {/if}
+
                 {#each chats as chatSummary (chatIdentifierToString(chatSummary.id))}
                     <ChatSummary
                         {chatSummary}
@@ -366,6 +363,7 @@
         position: relative;
     }
     .chat-summaries {
+        height: 100%;
         @include nice-scrollbar();
         overflow-x: hidden;
         height: 100%;
