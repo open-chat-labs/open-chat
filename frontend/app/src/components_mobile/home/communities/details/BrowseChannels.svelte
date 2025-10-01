@@ -17,10 +17,10 @@
     const client = getContext<OpenChat>("client");
 
     interface Props {
-        searchTerm: string;
+        searchTerm?: string;
     }
 
-    let { searchTerm }: Props = $props();
+    let { searchTerm = "" }: Props = $props();
 
     let selectedCommunityId = $derived($selectedCommunitySummaryStore?.id.communityId);
     let searching = $state(false);

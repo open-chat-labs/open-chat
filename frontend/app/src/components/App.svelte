@@ -7,7 +7,7 @@
     import "@i18n/i18n";
     import { reviewingTranslations } from "@i18n/i18n";
     import { trackedEffect } from "@src/utils/effects.svelte";
-    import { detectNeedsSafeInset } from "@src/utils/safe_area";
+    import { detectNeedsSafeInset, setupKeyboardTracking } from "@src/utils/safe_area";
     import { rtlStore } from "@stores/rtl";
     import { snowing } from "@stores/snow";
     import { incomingVideoCall } from "@stores/video";
@@ -138,8 +138,6 @@
             $identityStateStore.kind === "upgrade_user",
     );
 
-    let lastScrollY = $state(window.scrollY);
-
     trackedEffect("rtl", () => {
         // subscribe to the rtl store so that we can set the overall page direction at the right time
         document.dir = $rtlStore ? "rtl" : "ltr";
@@ -167,8 +165,6 @@
             subscribe("askToSpeak", askToSpeak),
             subscribe("userLoggedIn", onUserLoggedIn),
         ];
-        window.addEventListener("scroll", trackVirtualKeyboard);
-        window.addEventListener("resize", trackVirtualKeyboard);
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
 
@@ -222,28 +218,16 @@
             setTimeout(svelteReady);
         }
 
+        const unsubKeyboard = setupKeyboardTracking();
+
         return () => {
-            window.removeEventListener("scroll", trackVirtualKeyboard);
-            window.removeEventListener("resize", trackVirtualKeyboard);
             window.removeEventListener("orientationchange", calculateHeight);
             window.removeEventListener("unhandledrejection", unhandledError);
             unsubs.forEach((u) => u());
             unsub();
+            unsubKeyboard();
         };
     });
-
-    // We will interpret a significant leap in window.scrollY to indicate the opening of the virtual keyboard
-    function trackVirtualKeyboard() {
-        const threshold = 100; // prevent accidental triggering
-        const delta = window.scrollY - lastScrollY;
-        const keyboardVisible = delta > threshold;
-        lastScrollY = window.scrollY;
-        if (keyboardVisible) {
-            document.body.classList.add("keyboard");
-        } else {
-            document.body.classList.remove("keyboard");
-        }
-    }
 
     // Sets up push notifications and FCM token management for native apps
     function setupNativeApp() {

@@ -229,11 +229,11 @@
         </div>
     {/if}
 
-    <div use:menuCloser bind:this={chatListElement} class="body">
+    <div bind:this={chatListElement} class="body">
         {#if $chatListView === "threads"}
             <ThreadPreviews />
         {:else}
-            <div class="chat-summaries">
+            <div use:menuCloser class="chat-summaries">
                 {#if searchResultsAvailable && chats.length > 0}
                     <h3 class="search-subtitle">
                         <Translatable resourceKey={i18nKey("yourChats")} />
@@ -361,14 +361,14 @@
 
 <style lang="scss">
     .body {
-        overflow: auto;
+        overflow: hidden;
         flex: auto;
-        @include nice-scrollbar();
         position: relative;
     }
     .chat-summaries {
-        overflow: auto;
+        @include nice-scrollbar();
         overflow-x: hidden;
+        height: 100%;
     }
 
     .join {
