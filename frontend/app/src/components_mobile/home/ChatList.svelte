@@ -44,7 +44,7 @@
     import ActiveCallSummary from "./video/ActiveCallSummary.svelte";
 
     const client = getContext<OpenChat>("client");
-    const TO_SHOW = 10;
+    const TO_SHOW = 30;
 
     let previousScope: ChatListScope = $chatListScopeStore;
     let previousView: "chats" | "threads" = $chatListView;

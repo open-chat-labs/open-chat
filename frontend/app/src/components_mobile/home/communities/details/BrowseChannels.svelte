@@ -156,6 +156,10 @@
         text-align: center;
     }
 
+    .channels-section {
+        width: 100%;
+    }
+
     .browse-channels {
         display: flex;
         align-items: center;

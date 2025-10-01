@@ -9,6 +9,7 @@
         getGapCss,
         getPaddingCss,
         scrollLimits,
+        swipe,
         type BorderWidthSize,
         type CrossAxisAlignment,
         type Direction,
@@ -17,6 +18,7 @@
         type Radius,
         type SizeMode,
         type SpacingSize,
+        type SwipeDirection,
     } from "component-lib";
     import { getContext, setContext, type Snippet } from "svelte";
 
@@ -63,6 +65,7 @@
         id?: string;
         onInsideStart?: (fromStart: number) => void;
         onInsideEnd?: (fromEnd: number) => void;
+        onSwipe?: (direction: SwipeDirection) => void;
     }
 
     let {
@@ -92,6 +95,7 @@
         id,
         onInsideEnd,
         onInsideStart,
+        onSwipe,
     }: Props = $props();
 
     // you might expect this to be done inside onMount but
@@ -126,6 +130,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <svelte:element
     this={tag}
+    use:swipe={{ onSwipe }}
     use:scrollLimits={{ onEnd: onInsideEnd, onStart: onInsideStart }}
     {id}
     class:clickable={onClick !== undefined}

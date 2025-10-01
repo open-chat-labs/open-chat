@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Container } from "component-lib";
+    import { Container, type SwipeDirection } from "component-lib";
     import {
         activityFeedShowing,
         emptyCombinedUnreadCounts,
@@ -41,9 +41,19 @@
             unread,
         ];
     }
+
+    function onSwipe(dir: SwipeDirection) {
+        if (dir === "up") {
+            expanded = true;
+        }
+        if (dir === "down") {
+            expanded = false;
+        }
+    }
 </script>
 
 <Container
+    {onSwipe}
     supplementalClass={"communities_sheet"}
     direction={"vertical"}
     padding={["md", "xl", "lg", "xl"]}

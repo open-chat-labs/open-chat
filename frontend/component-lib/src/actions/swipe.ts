@@ -1,0 +1,55 @@
+export type SwipeDirection = "up" | "down" | "left" | "right";
+
+export type SwipeConfig = {
+    threshold?: number;
+    velocity?: number;
+    onSwipe?: (dir: SwipeDirection) => void;
+};
+
+export function swipe(node: HTMLElement, config: SwipeConfig) {
+    const { threshold = 30, velocity = 0.3, onSwipe } = config;
+
+    let startX: number, startY: number, startTime: number;
+
+    function handleTouchStart(e: TouchEvent) {
+        const t = e.touches[0];
+        startX = t.clientX;
+        startY = t.clientY;
+        startTime = Date.now();
+    }
+
+    function handleTouchEnd(e: TouchEvent) {
+        const t = e.changedTouches[0];
+        const dx = t.clientX - startX;
+        const dy = t.clientY - startY;
+        const dt = Date.now() - startTime;
+
+        const absX = Math.abs(dx);
+        const absY = Math.abs(dy);
+        const speedX = absX / dt;
+        const speedY = absY / dt;
+
+        let direction: "up" | "down" | "left" | "right" | null = null;
+
+        if (absX > absY && absX > threshold && speedX > velocity) {
+            direction = dx > 0 ? "right" : "left";
+        } else if (absY > threshold && speedY > velocity) {
+            direction = dy > 0 ? "down" : "up";
+        }
+
+        if (direction) {
+            onSwipe?.(direction);
+        }
+    }
+
+    if (onSwipe !== undefined) {
+        node.addEventListener("touchstart", handleTouchStart, { passive: true });
+        node.addEventListener("touchend", handleTouchEnd);
+        return {
+            destroy() {
+                node.removeEventListener("touchstart", handleTouchStart);
+                node.removeEventListener("touchend", handleTouchEnd);
+            },
+        };
+    }
+}
