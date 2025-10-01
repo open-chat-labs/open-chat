@@ -22,7 +22,6 @@
     import LinkedCard from "../../LinkedCard.svelte";
     import SparkleBox from "../../SparkleBox.svelte";
     import Translatable from "../../Translatable.svelte";
-    import UserProfileHeader from "./UserProfileHeader.svelte";
     import UserProfileSummaryCard from "./UserProfileSummaryCard.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -45,8 +44,6 @@
         }
     });
 </script>
-
-<UserProfileHeader />
 
 <Container
     padding={["zero", "lg", "zero", "lg"]}

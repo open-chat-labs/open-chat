@@ -10,6 +10,7 @@
     } from "component-lib";
     import { i18nKey } from "openchat-client";
     import PartyPopper from "svelte-material-icons/PartyPopper.svelte";
+    import ShieldStarOutline from "svelte-material-icons/ShieldStarOutline.svelte";
     import Progress from "../../Progress.svelte";
     import Translatable from "../../Translatable.svelte";
     import Streak from "./Streak.svelte";
@@ -78,9 +79,12 @@
         {/each}
     </div>
 
-    <Container mainAxisAlignment={"end"} gap={"sm"} crossAxisAlignment={"center"}>
+    <Container mainAxisAlignment={"end"} gap={"sm"} crossAxisAlignment={"end"}>
         <CommonButton onClick={() => console.log("insurance")} size={"small_text"}>
-            <Translatable resourceKey={i18nKey("Insurance")}></Translatable>
+            {#snippet icon(color)}
+                <ShieldStarOutline {color}></ShieldStarOutline>
+            {/snippet}
+            <Translatable resourceKey={i18nKey("Streak insurance")}></Translatable>
         </CommonButton>
         <CommonButton onClick={() => console.log("claim")} size={"medium"} mode={"active"}>
             {#snippet icon(color)}

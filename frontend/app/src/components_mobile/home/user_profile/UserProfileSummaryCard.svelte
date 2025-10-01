@@ -5,9 +5,9 @@
     import Cog from "svelte-material-icons/Cog.svelte";
     import Info from "svelte-material-icons/InformationOutline.svelte";
     import Share from "svelte-material-icons/ShareVariantOutline.svelte";
+    import Markdown from "../Markdown.svelte";
     import Badges from "../profile/Badges.svelte";
     import ChitSummary from "./ChitSummary.svelte";
-    import Markdown from "../Markdown.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -31,6 +31,10 @@
     // This doesn't exist as a first-class thing in the theme at the moment - not sure if it _should_
     const gradient =
         "linear-gradient(90deg, var(--warning) 0%, var(--primary) 30%, var(--primary) 70%, var(--tertiary) 100%)";
+
+    function profileSettings() {
+        client.pushRightPanelHistory({ kind: "user_profile_settings" });
+    }
 </script>
 
 <Container direction={"vertical"}>
@@ -51,7 +55,7 @@
                 <Share {color} />
             {/snippet}
         </IconButton>
-        <IconButton size={"sm"} mode={"dark"}>
+        <IconButton onclick={profileSettings} size={"sm"} mode={"dark"}>
             {#snippet icon(color)}
                 <Cog {color} />
             {/snippet}

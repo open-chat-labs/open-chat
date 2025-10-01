@@ -60,6 +60,7 @@
     import Members from "./groupdetails/Members.svelte";
     import PinnedMessages from "./pinned/PinnedMessages.svelte";
     import UserProfile from "./profile/UserProfile.svelte";
+    import ProfileSettings from "./user_profile/ProfileSettings.svelte";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import Thread from "./thread/Thread.svelte";
     import ActiveCallParticipants from "./video/ActiveCallParticipants.svelte";
@@ -548,6 +549,8 @@
             onUnsubscribeNotifications={() => client.setSoftDisabled(true)}
             {user}
             onCloseProfile={client.popRightPanelHistory} />
+    {:else if $lastRightPanelState.kind === "user_profile_settings"}
+        <ProfileSettings />
     {:else if threadRootEvent !== undefined && $selectedChatSummaryStore !== undefined}
         <Thread
             rootEvent={threadRootEvent}

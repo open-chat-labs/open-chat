@@ -44,7 +44,12 @@ export type RightPanelContent =
     | CommunityFilters
     | CommunityDetails
     | CallParticipantsPanel
+    | UserProfileSettings
     | NoPanel;
+
+type UserProfileSettings = {
+    kind: "user_profile_settings";
+};
 
 type ProposalFilterPanel = {
     kind: "proposal_filters";
