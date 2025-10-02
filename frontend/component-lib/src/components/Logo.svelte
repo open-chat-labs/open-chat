@@ -1,5 +1,5 @@
 <script lang="ts">
-    type LogoSize = "sm" | "md" | "lg" | "xl";
+    type LogoSize = "sm" | "md" | "lg" | "xl" | "huge";
 
     interface Props {
         size?: LogoSize;

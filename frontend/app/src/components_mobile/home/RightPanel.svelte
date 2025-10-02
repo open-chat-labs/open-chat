@@ -62,6 +62,7 @@
     import UserProfile from "./profile/UserProfile.svelte";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import Thread from "./thread/Thread.svelte";
+    import About from "./user_profile/About.svelte";
     import ProfileSettings from "./user_profile/ProfileSettings.svelte";
     import Share from "./user_profile/Share.svelte";
     import ActiveCallParticipants from "./video/ActiveCallParticipants.svelte";
@@ -554,6 +555,8 @@
         <ProfileSettings profile={$lastRightPanelState.profile} />
     {:else if $lastRightPanelState.kind === "user_profile_share"}
         <Share />
+    {:else if $lastRightPanelState.kind === "user_profile_about"}
+        <About />
     {:else if threadRootEvent !== undefined && $selectedChatSummaryStore !== undefined}
         <Thread
             rootEvent={threadRootEvent}

@@ -47,6 +47,10 @@
     function shareProfile() {
         client.pushRightPanelHistory({ kind: "user_profile_share" });
     }
+
+    function about() {
+        client.pushRightPanelHistory({ kind: "user_profile_about" });
+    }
 </script>
 
 <Container direction={"vertical"}>
@@ -58,7 +62,7 @@
         gap={"sm"}
         backgroundImage={backgroundUrl}
         background={gradient}>
-        <IconButton size={"md"} mode={"dark"}>
+        <IconButton onclick={about} size={"md"} mode={"dark"}>
             {#snippet icon(color)}
                 <Info {color} />
             {/snippet}
