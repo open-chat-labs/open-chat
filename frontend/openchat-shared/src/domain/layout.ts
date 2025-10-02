@@ -46,11 +46,16 @@ export type RightPanelContent =
     | CommunityDetails
     | CallParticipantsPanel
     | UserProfileSettings
+    | UserProfileShare
     | NoPanel;
 
 type UserProfileSettings = {
     kind: "user_profile_settings";
     profile: PublicProfile;
+};
+
+type UserProfileShare = {
+    kind: "user_profile_share";
 };
 
 type ProposalFilterPanel = {

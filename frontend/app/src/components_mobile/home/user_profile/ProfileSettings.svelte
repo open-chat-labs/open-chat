@@ -35,7 +35,7 @@
     import Translatable from "../../Translatable.svelte";
     import UsernameInput from "../../UsernameInput.svelte";
     import Stats from "../Stats.svelte";
-    import ProfileSettingsHeader from "./ProfileSettingsHeader.svelte";
+    import ProfileSectionHeader from "./ProfileSectionHeader.svelte";
     import UserProfileImageEditor from "./UserProfileImageEditor.svelte";
 
     const MAX_DESC_LENGTH = 1024;
@@ -165,7 +165,7 @@
     background={ColourVars.background0}
     height={{ kind: "fill" }}
     direction={"vertical"}>
-    <ProfileSettingsHeader />
+    <ProfileSectionHeader titleKey={i18nKey("Profile settings")} />
     <Container
         padding={["zero", "lg", "zero", "lg"]}
         gap={"lg"}

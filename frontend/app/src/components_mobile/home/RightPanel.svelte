@@ -63,6 +63,7 @@
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import Thread from "./thread/Thread.svelte";
     import ProfileSettings from "./user_profile/ProfileSettings.svelte";
+    import Share from "./user_profile/Share.svelte";
     import ActiveCallParticipants from "./video/ActiveCallParticipants.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -551,6 +552,8 @@
             onCloseProfile={client.popRightPanelHistory} />
     {:else if $lastRightPanelState.kind === "user_profile_settings"}
         <ProfileSettings profile={$lastRightPanelState.profile} />
+    {:else if $lastRightPanelState.kind === "user_profile_share"}
+        <Share />
     {:else if threadRootEvent !== undefined && $selectedChatSummaryStore !== undefined}
         <Thread
             rootEvent={threadRootEvent}

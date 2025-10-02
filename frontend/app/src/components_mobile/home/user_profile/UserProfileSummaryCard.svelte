@@ -43,6 +43,10 @@
     function profileSettings() {
         client.pushRightPanelHistory({ kind: "user_profile_settings", profile });
     }
+
+    function shareProfile() {
+        client.pushRightPanelHistory({ kind: "user_profile_share" });
+    }
 </script>
 
 <Container direction={"vertical"}>
@@ -59,7 +63,7 @@
                 <Info {color} />
             {/snippet}
         </IconButton>
-        <IconButton size={"md"} mode={"dark"}>
+        <IconButton onclick={shareProfile} size={"md"} mode={"dark"}>
             {#snippet icon(color)}
                 <Share {color} />
             {/snippet}
