@@ -1,6 +1,8 @@
 <script lang="ts">
-    import { iconSize, mobileWidth, pinNumberRequiredStore } from "openchat-client";
+    import { CommonButton, Container } from "component-lib";
+    import { iconSize, pinNumberRequiredStore } from "openchat-client";
     import { _ } from "svelte-i18n";
+    import Cog from "svelte-material-icons/Cog.svelte";
     import EyeOff from "svelte-material-icons/EyeOffOutline.svelte";
     import Eye from "svelte-material-icons/EyeOutline.svelte";
     import Hamburger from "svelte-material-icons/Menu.svelte";
@@ -12,8 +14,6 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { type PinOperation } from "../../../stores/pinNumber";
     import { hideTokenBalances } from "../../../stores/settings";
-    import Button from "../../Button.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Menu from "../../Menu.svelte";
     import MenuIcon from "../../MenuIcon.svelte";
@@ -136,19 +136,17 @@
             hideTokenBalances={$hideTokenBalances} />
     {/snippet}
     {#snippet footer()}
-        <ButtonGroup>
-            <Button
-                secondary
-                onClick={() => (managing = true)}
-                small={!$mobileWidth}
-                tiny={$mobileWidth}>
+        <Container gap={"md"} mainAxisAlignment={"end"} crossAxisAlignment={"end"}>
+            <CommonButton mode={"default"} onClick={onClose} size={"small_text"}>
+                <Translatable resourceKey={i18nKey("close")}></Translatable>
+            </CommonButton>
+            <CommonButton mode={"active"} onClick={() => (managing = true)} size={"medium"}>
+                {#snippet icon(color)}
+                    <Cog {color}></Cog>
+                {/snippet}
                 <Translatable resourceKey={i18nKey("cryptoAccount.manage")} />
-            </Button>
-
-            <Button onClick={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
-                <Translatable resourceKey={i18nKey("close")} />
-            </Button>
-        </ButtonGroup>
+            </CommonButton>
+        </Container>
     {/snippet}
 </ModalContent>
 

@@ -1,5 +1,12 @@
 <script lang="ts">
-    import { portalState, reposition, Subtitle, type NanoPopPosition } from "component-lib";
+    import {
+        CommonButton,
+        Container,
+        portalState,
+        reposition,
+        Subtitle,
+        type NanoPopPosition,
+    } from "component-lib";
     import { mobileWidth } from "openchat-client";
     import { onMount, tick, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
@@ -9,7 +16,6 @@
     import { i18nKey } from "../i18n/i18n";
     import { rtlStore } from "../stores/rtl";
     import { currentTheme } from "../theme/themes";
-    import Button from "./Button.svelte";
     import HoverIcon from "./HoverIcon.svelte";
     import Translatable from "./Translatable.svelte";
 
@@ -158,9 +164,14 @@
     {#if !hideFooter}
         <div class={`footer ${footerClass}`} class:rtl={$rtlStore} class:compact={compactFooter}>
             {#if footer}{@render footer(onClose)}{:else}
-                <Button onClick={() => onClose?.()} small={!$mobileWidth} tiny={$mobileWidth}>
-                    <Translatable resourceKey={i18nKey("close")} />
-                </Button>
+                <Container mainAxisAlignment={"end"}>
+                    <CommonButton mode={"active"} onClick={onClose} size={"medium"}>
+                        {#snippet icon(color)}
+                            <Close {color} />
+                        {/snippet}
+                        <Translatable resourceKey={i18nKey("close")}></Translatable>
+                    </CommonButton>
+                </Container>
             {/if}
         </div>
     {/if}
