@@ -2,22 +2,35 @@
     import MulticolourText from "@src/components_mobile/MulticolourText.svelte";
     import { i18nKey } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
-    import { Caption, ColourVars, CommonButton, Container, Form, TextArea } from "component-lib";
+    import {
+        BodySmall,
+        Caption,
+        ColourVars,
+        CommonButton,
+        Container,
+        Form,
+        IconButton,
+        TextArea,
+    } from "component-lib";
     import {
         allUsersStore,
         anonUserStore,
         currentUserIdStore,
         ErrorCode,
         OpenChat,
+        percentageStorageUsedStore,
         publish,
+        storageInGBStore,
         suspendedUserStore,
         userMetricsStore,
         type PublicProfile,
     } from "openchat-client";
     import { getContext } from "svelte";
+    import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";
     import DiamondOutline from "svelte-material-icons/DiamondOutline.svelte";
     import DisplayNameInput from "../../DisplayNameInput.svelte";
+    import Progress from "../../Progress.svelte";
     import SparkleBox from "../../SparkleBox.svelte";
     import Translatable from "../../Translatable.svelte";
     import UsernameInput from "../../UsernameInput.svelte";
@@ -139,6 +152,12 @@
 
         Promise.all(promises).finally(() => (saving = false));
     }
+
+    function onCopy() {
+        navigator.clipboard.writeText(user.userId).then(() => {
+            toastStore.showSuccessToast(i18nKey("userIdCopiedToClipboard"));
+        });
+    }
 </script>
 
 <Container
@@ -153,7 +172,7 @@
         height={{ kind: "fill" }}
         crossAxisAlignment={"center"}
         direction={"vertical"}>
-        <Container gap={"lg"} direction={"vertical"}>
+        <Container gap={"xl"} direction={"vertical"}>
             {#if !diamond}
                 <SparkleBox buttonText={i18nKey("Get Diamond")} onClick={() => publish("upgrade")}>
                     {#snippet title()}
@@ -248,6 +267,53 @@
                     </Container>
                 </Container>
             </Form>
+
+            <Container gap={"lg"} direction={"vertical"} padding={["zero", "xl"]}>
+                <Caption>
+                    <Translatable resourceKey={i18nKey("Account details")}></Translatable>
+                </Caption>
+                <Container gap={"sm"} direction={"vertical"}>
+                    <Container crossAxisAlignment={"center"}>
+                        <Container direction={"vertical"}>
+                            <BodySmall colour={"textSecondary"}>
+                                <Translatable resourceKey={i18nKey("user & canister id")}
+                                ></Translatable>
+                            </BodySmall>
+
+                            <BodySmall>
+                                {user.userId}
+                            </BodySmall>
+                        </Container>
+                        <IconButton onclick={onCopy} size={"sm"}>
+                            {#snippet icon()}
+                                <CopyIcon color={ColourVars.textSecondary} />
+                            {/snippet}
+                        </IconButton>
+                    </Container>
+                </Container>
+                <Container gap={"sm"} direction={"vertical"}>
+                    <Container direction={"vertical"}>
+                        <BodySmall colour={"textSecondary"}>
+                            <Translatable resourceKey={i18nKey("account storage usage")}
+                            ></Translatable>
+                        </BodySmall>
+
+                        <Progress size={"4px"} percent={$percentageStorageUsedStore} />
+
+                        <BodySmall>
+                            <Translatable
+                                resourceKey={i18nKey("storageUsed", {
+                                    used: $storageInGBStore.gbUsed.toFixed(2),
+                                    limit: $storageInGBStore.gbLimit.toFixed(1),
+                                })} />
+                            <Translatable
+                                resourceKey={i18nKey("storagePercentRemaining", {
+                                    percent: $percentageStorageUsedStore,
+                                })} />
+                        </BodySmall>
+                    </Container>
+                </Container>
+            </Container>
 
             <Container gap={"lg"} direction={"vertical"} padding={["zero", "xl"]}>
                 <Caption>

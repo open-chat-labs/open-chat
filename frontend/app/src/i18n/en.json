@@ -1738,6 +1738,7 @@
     "stopRecording": "Stop recording",
     "storage": "Storage",
     "storageUsed": "{used}GB used of {limit}GB",
+    "storagePercentRemaining": " / {percent}% remaining",
     "streakInsurance": {
         "addDay": "Add a day",
         "atRisk": "Your streak is at risk",

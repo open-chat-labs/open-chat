@@ -94,29 +94,20 @@
 
     .message {
         transition: background 200ms ease-in-out;
-        background: var(--button-bg);
+        background: var(--success);
+        border-radius: var(--rad-md);
         padding: $sp4;
-        width: 75%;
         max-width: 800px;
         margin: 0 $sp4;
         display: flex;
         gap: $sp4;
         justify-content: center;
         align-items: center;
-        color: var(--button-txt);
-        @include mobile() {
-            width: 100%;
-        }
-
-        @media (hover: hover) {
-            &:hover {
-                background: var(--button-hv);
-            }
-        }
+        color: var(--text-primary);
+        width: 100%;
 
         &.failure {
-            background: var(--toast-failure-bg);
-            color: var(--toast-failure-txt);
+            background: var(--error);
         }
 
         .text {
@@ -125,8 +116,7 @@
         }
 
         &.success {
-            background: var(--toast-success-bg);
-            color: var(--toast-success-txt);
+            background: var(--success);
         }
 
         .close,
