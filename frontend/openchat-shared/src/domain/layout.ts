@@ -47,8 +47,13 @@ export type RightPanelContent =
     | CallParticipantsPanel
     | UserProfileSettings
     | UserProfileShare
+    | UserProfileChatsAndVideo
     | UserProfileAbout
     | NoPanel;
+
+type UserProfileChatsAndVideo = {
+    kind: "user_profile_chats_and_video";
+};
 
 type UserProfileAbout = {
     kind: "user_profile_about";

@@ -37,6 +37,10 @@
             profile = p;
         });
     });
+
+    function chatsAndVideo() {
+        client.pushRightPanelHistory({ kind: "user_profile_chats_and_video" });
+    }
 </script>
 
 <Container
@@ -92,6 +96,7 @@
             </Caption>
         </Container>
         <LinkedCard
+            onClick={chatsAndVideo}
             Icon={Cog}
             title={i18nKey("Chat & video call settings")}
             info={i18nKey(

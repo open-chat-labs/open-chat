@@ -8,15 +8,17 @@
         Icon: any;
         title: ResourceKey;
         info: ResourceKey;
+        onClick?: () => void;
     }
 
-    let { Icon, title, info }: Props = $props();
+    let { Icon, title, info, onClick }: Props = $props();
 </script>
 
 <Container
     borderRadius={"md"}
     direction={"vertical"}
     gap={"md"}
+    {onClick}
     background={ColourVars.background1}
     padding={"xl"}>
     <Container crossAxisAlignment={"center"} gap={"sm"}>

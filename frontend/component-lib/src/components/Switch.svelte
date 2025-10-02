@@ -2,13 +2,14 @@
     interface Props {
         checked: boolean;
         disabled?: boolean;
+        onChange?: () => void;
     }
 
-    let { checked = $bindable(), disabled = false }: Props = $props();
+    let { checked = $bindable(), disabled = false, onChange }: Props = $props();
 </script>
 
 <label class="toggle" class:disabled>
-    <input {disabled} bind:checked type="checkbox" class="toggle-input" />
+    <input onchange={onChange} {disabled} bind:checked type="checkbox" class="toggle-input" />
     <span class="toggle-track">
         <span class="toggle-knob"></span>
     </span>
