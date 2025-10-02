@@ -11,6 +11,7 @@
         OpenChat,
         publish,
         suspendedUserStore,
+        userMetricsStore,
         type PublicProfile,
     } from "openchat-client";
     import { getContext } from "svelte";
@@ -20,6 +21,7 @@
     import SparkleBox from "../../SparkleBox.svelte";
     import Translatable from "../../Translatable.svelte";
     import UsernameInput from "../../UsernameInput.svelte";
+    import Stats from "../Stats.svelte";
     import ProfileSettingsHeader from "./ProfileSettingsHeader.svelte";
     import UserProfileImageEditor from "./UserProfileImageEditor.svelte";
 
@@ -246,6 +248,13 @@
                     </Container>
                 </Container>
             </Form>
+
+            <Container gap={"lg"} direction={"vertical"} padding={["zero", "xl"]}>
+                <Caption>
+                    <Translatable resourceKey={i18nKey("User stats")}></Translatable>
+                </Caption>
+                <Stats showReported stats={$userMetricsStore} />
+            </Container>
         </Container>
     </Container>
 </Container>

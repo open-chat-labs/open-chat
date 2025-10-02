@@ -1,12 +1,12 @@
 <script lang="ts">
+    import { Body, BodySmall, Caption, ColourVars, Container, Label } from "component-lib";
     import type { Metrics, OpenChat } from "openchat-client";
-    import { iconSize, minutesOnlineStore } from "openchat-client";
+    import { minutesOnlineStore } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import Flag from "svelte-material-icons/Flag.svelte";
     import { cubicOut } from "svelte/easing";
     import { Tween } from "svelte/motion";
     import { i18nKey } from "../../i18n/i18n";
-    import Tooltip from "../tooltip/Tooltip.svelte";
     import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -132,7 +132,17 @@
     ]);
 </script>
 
-<div class="message-stats">
+{#snippet mediaStat(n: number, resourceKey: string, cls?: string)}
+    <Container crossAxisAlignment={"center"} gap={"sm"}>
+        <div class={`legend ${cls} key`}></div>
+        <div class={`legend ${cls}`}>{n.toLocaleString()}</div>
+        <Label width={{ kind: "hug" }}>
+            <Translatable resourceKey={i18nKey(resourceKey)} />
+        </Label>
+    </Container>
+{/snippet}
+
+<Container direction={"vertical"} gap={"lg"} crossAxisAlignment={"center"}>
     <svg class:rendered class="pie" viewBox="0 0 320 320">
         <clipPath id="hollow">
             <path
@@ -159,110 +169,72 @@
             </circle>
         {/each}
     </svg>
-    <div class="numbers">
-        <div class="text legend">
-            <div class="key"></div>
-            <div class="label">
-                <span class="stat">{stats.textMessages.toLocaleString()}</span><Translatable
-                    resourceKey={i18nKey("stats.textMessages")} />
-            </div>
-        </div>
-        <div class="image legend">
-            <div class="key"></div>
-            <div class="label">
-                <span class="stat">{stats.imageMessages.toLocaleString()}</span><Translatable
-                    resourceKey={i18nKey("stats.imageMessages")} />
-            </div>
-        </div>
-        <div class="video legend">
-            <div class="key"></div>
-            <div class="label">
-                <span class="stat">{stats.videoMessages.toLocaleString()}</span><Translatable
-                    resourceKey={i18nKey("stats.videoMessages")} />
-            </div>
-        </div>
-        <div class="audio legend">
-            <div class="key"></div>
-            <div class="label">
-                <span class="stat">{stats.audioMessages.toLocaleString()}</span><Translatable
-                    resourceKey={i18nKey("stats.audioMessages")} />
-            </div>
-        </div>
-        <div class="file legend">
-            <div class="key"></div>
-            <div class="label">
-                <span class="stat">{stats.fileMessages.toLocaleString()}</span><Translatable
-                    resourceKey={i18nKey("stats.fileMessages")} />
-            </div>
-        </div>
-        <div class="poll legend">
-            <div class="key"></div>
-            <div class="label">
-                <span class="stat">{stats.polls.toLocaleString()}</span><Translatable
-                    resourceKey={i18nKey("stats.pollMessages")} />
-            </div>
-        </div>
-        <div class="crypto legend">
-            <div class="key"></div>
-            <div class="label">
-                <span class="stat">{cryptoMessages.toLocaleString()}</span><Translatable
-                    resourceKey={i18nKey("stats.cryptoTransfers")} />
-            </div>
-        </div>
-        <div class="giphy legend">
-            <div class="key"></div>
-            <div class="label">
-                <span class="stat">{stats.giphyMessages.toLocaleString()}</span><Translatable
-                    resourceKey={i18nKey("stats.giphyMessages")} />
-            </div>
-        </div>
-    </div>
-</div>
 
-<div class="other-stats">
-    <div class="poll-votes">
-        <span class="stat">{stats.pollVotes.toLocaleString()}</span>
-        <Translatable resourceKey={i18nKey("stats.pollVotes")} />
-    </div>
-    <div class="replies">
-        <span class="stat">{stats.replies.toLocaleString()}</span>
-        <Translatable resourceKey={i18nKey("stats.replies")} />
-    </div>
-    <div class="reactions">
-        <span class="stat">{stats.reactions.toLocaleString()}</span>
-        <Translatable resourceKey={i18nKey("stats.reactions")} />
-    </div>
-    <div class="deleted-messages">
-        <span class="stat">{stats.deletedMessages.toLocaleString()}</span>
-        <Translatable resourceKey={i18nKey("stats.deletedMessages")} />
-    </div>
-    <div class="minutes-online">
-        <span class="stat">{$minutesOnlineStore.minutesOnlineThisMonth.toLocaleString()}</span>
-        <Translatable resourceKey={i18nKey("stats.minutesOnlineThisMonth")} />
-    </div>
-    <div class="minutes-online">
-        <span class="stat">{$minutesOnlineStore.minutesOnlineLastMonth.toLocaleString()}</span>
-        <Translatable resourceKey={i18nKey("stats.minutesOnlineLastMonth")} />
-    </div>
+    <Container
+        supplementalClass={"stats_online_summary"}
+        crossAxisAlignment={"center"}
+        direction={"vertical"}>
+        <Container mainAxisAlignment={"center"} gap={"xs"}>
+            <Body colour={"primary"} width={{ kind: "hug" }} fontWeight={"bold"}
+                >{$minutesOnlineStore.minutesOnlineThisMonth.toLocaleString()}</Body>
+            <Body width={{ kind: "hug" }} fontWeight={"bold"}>min</Body>
+        </Container>
+        <BodySmall align={"center"}>
+            <Translatable resourceKey={i18nKey("online this month")}></Translatable>
+        </BodySmall>
+        <Container mainAxisAlignment={"center"} gap={"xs"}>
+            <Caption colour={"textSecondary"} width={{ kind: "hug" }} fontWeight={"bold"}
+                >{$minutesOnlineStore.minutesOnlineLastMonth.toLocaleString()}</Caption>
+            <Caption colour={"textSecondary"} width={{ kind: "hug" }} fontWeight={"bold"}
+                >previous month</Caption>
+        </Container>
+    </Container>
+
+    <Container gap={"lg"}>
+        <Container gap={"md"} direction={"vertical"}>
+            {@render mediaStat(stats.textMessages, "stats.textMessages", "text")}
+            {@render mediaStat(stats.videoMessages, "stats.videoMessages", "video")}
+            {@render mediaStat(stats.fileMessages, "stats.fileMessages", "file")}
+            {@render mediaStat(cryptoMessages, "stats.cryptoTransfers", "crypto")}
+            {@render mediaStat(stats.pollVotes, "stats.pollVotes")}
+            {@render mediaStat(stats.reactions, "stats.reactions")}
+        </Container>
+        <Container gap={"md"} direction={"vertical"}>
+            {@render mediaStat(stats.imageMessages, "stats.imageMessages", "image")}
+            {@render mediaStat(stats.audioMessages, "stats.audioMessages", "audio")}
+            {@render mediaStat(stats.polls, "stats.pollMessages", "poll")}
+            {@render mediaStat(stats.giphyMessages, "stats.giphyMessages", "giphy")}
+            {@render mediaStat(stats.replies, "stats.replies")}
+            {@render mediaStat(stats.deletedMessages, "stats.deletedMessages")}
+        </Container>
+    </Container>
+
     {#if showReported}
-        <Tooltip longestWord={20} position={"top"} align="middle">
-            <div class="reported-messages">
-                <span>
-                    <span class="stat">{stats.reportedMessages.toLocaleString()}</span>
+        <Container gap={"xs"} direction={"vertical"}>
+            <Container gap={"xs"}>
+                <Flag color={ColourVars.error} />
+                <BodySmall width={{ kind: "hug" }} colour={"error"} fontWeight={"bold"}>
                     <Translatable resourceKey={i18nKey("stats.reportedMessages")} />
-                </span>
-                <span class="icon">
-                    <Flag size={$iconSize} color={"var(--accent)"} />
-                </span>
-            </div>
-            {#snippet popupTemplate()}
+                </BodySmall>
+                <BodySmall width={{ kind: "hug" }} colour={"error"} fontWeight={"bold"}>
+                    / {stats.reportedMessages.toLocaleString()}
+                </BodySmall>
+            </Container>
+            <BodySmall colour={"textSecondary"} align={"start"}>
                 <Translatable resourceKey={i18nKey("stats.reportedMessagesInfo")} />
-            {/snippet}
-        </Tooltip>
+            </BodySmall>
+        </Container>
     {/if}
-</div>
+</Container>
 
 <style lang="scss">
+    :global(.container.stats_online_summary) {
+        top: 90px; // might need to do better than this but it'll do for now
+        left: 50%;
+        transform: translateX(-50%);
+        position: absolute;
+    }
+
     $saturation: 80%;
     $lightness: 65%;
 
@@ -274,47 +246,6 @@
     $poll-colour: #5eed82;
     $crypto-colour: #a6ed5e;
     $giphy-colour: #ed5e5e;
-
-    .stat {
-        color: var(--txt);
-        @include font-size(fs-110);
-
-        @include mobile() {
-            @include font-size(fs-90);
-        }
-    }
-
-    .other-stats {
-        display: flex;
-        gap: $sp4;
-        margin-bottom: $sp4;
-        flex-wrap: wrap;
-        justify-content: space-between;
-
-        color: var(--txt-light);
-        @include font(book, normal, fs-80);
-
-        @include mobile() {
-            gap: 6px;
-        }
-
-        .reported-messages {
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: $sp3;
-            color: var(--accent);
-
-            .icon {
-                position: relative;
-                top: $sp2;
-            }
-        }
-    }
-
-    .message-stats {
-        text-align: center;
-    }
 
     .slice {
         fill: transparent;
@@ -342,91 +273,73 @@
         fill: transparent;
     }
 
-    .legend {
-        color: var(--txt-light);
-        display: flex;
-        justify-content: flex-start;
-        align-items: center;
-        gap: $sp3;
-
-        .stat {
-            margin-right: $sp3;
-        }
-        .key {
-            width: $sp5;
-            height: $sp5;
-            flex: 0 0 $sp5;
-
-            @include mobile() {
-                width: $sp6;
-                height: $sp6;
-                flex: 0 0 $sp6;
-            }
-        }
-        .label {
-            flex: auto;
-
-            @include mobile() {
-                @include font-size(fs-90);
-
-                display: flex;
-                flex-direction: column;
-            }
-        }
+    .key {
+        width: toRem(12);
+        height: toRem(12);
+        flex: 0 0 toRem(12);
+        border-radius: var(--rad-circle);
     }
 
     .text {
         stroke: $text-colour;
-        .key {
+        color: $text-colour;
+        &.key {
             background-color: $text-colour;
         }
     }
 
     .image {
         stroke: $image-colour;
-        .key {
+        color: $image-colour;
+        &.key {
             background-color: $image-colour;
         }
     }
 
     .video {
         stroke: $video-colour;
-        .key {
+        color: $video-colour;
+        &.key {
             background-color: $video-colour;
         }
     }
 
     .audio {
         stroke: $audio-colour;
-        .key {
+        color: $audio-colour;
+        &.key {
             background-color: $audio-colour;
         }
     }
 
     .file {
         stroke: $file-colour;
-        .key {
+        color: $file-colour;
+        &.key {
             background-color: $file-colour;
         }
     }
 
     .poll {
         stroke: $poll-colour;
-        .key {
+        color: $poll-colour;
+        &.key {
             background-color: $poll-colour;
         }
     }
 
     .crypto {
         stroke: $crypto-colour;
-        .key {
+        color: $crypto-colour;
+        &.key {
             background-color: $crypto-colour;
         }
     }
 
     .giphy {
         stroke: $giphy-colour;
-        .key {
+        color: $giphy-colour;
+        &.key {
             background-color: $giphy-colour;
         }
     }
