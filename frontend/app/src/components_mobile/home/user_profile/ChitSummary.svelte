@@ -117,8 +117,6 @@
     </Container>
 </Container>
 
-<div class="progress"></div>
-
 <style lang="scss">
     :global(.container.streak_bubble h2) {
         line-height: 1rem;
