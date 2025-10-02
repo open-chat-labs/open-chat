@@ -1,7 +1,6 @@
 <script lang="ts">
-    import Button from "@src/components/Button.svelte";
-    import ButtonGroup from "@src/components/ButtonGroup.svelte";
     import { toastStore } from "@src/stores/toast";
+    import { ColourVars, CommonButton, Container, Label, Overview } from "component-lib";
     import {
         LEDGER_CANISTER_CHAT,
         OpenChat,
@@ -10,9 +9,11 @@
         streakInsuranceStore,
     } from "openchat-client";
     import { getContext } from "svelte";
+    import CreditCard from "svelte-material-icons/CreditCardOutline.svelte";
     import Equal from "svelte-material-icons/Equal.svelte";
     import Minus from "svelte-material-icons/Minus.svelte";
     import ShieldHalfFull from "svelte-material-icons/ShieldHalfFull.svelte";
+    import ShieldPlusOutline from "svelte-material-icons/ShieldPlusOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
@@ -64,127 +65,131 @@
 <Overlay {onClose}>
     <ModalContent fill {onClose}>
         {#snippet header()}
-            <div class="header">
-                {#if !confirming && !confirmed}
-                    <div class="title">
+            {#if !confirming && !confirmed}
+                <Container crossAxisAlignment={"center"} mainAxisAlignment={"spaceBetween"}>
+                    <Container crossAxisAlignment={"center"} gap={"sm"}>
                         <ShieldHalfFull size={"1em"} />
                         <Translatable resourceKey={i18nKey("streakInsurance.topUpTitle")} />
-                    </div>
-                    <div class="balance">
-                        <BalanceWithRefresh
-                            {ledger}
-                            value={remainingBalance}
-                            bind:refreshing={refreshingBalance} />
-                    </div>
-                {/if}
-            </div>
+                    </Container>
+
+                    <BalanceWithRefresh
+                        {ledger}
+                        value={remainingBalance}
+                        bind:refreshing={refreshingBalance} />
+                </Container>
+            {/if}
         {/snippet}
         {#snippet body()}
-            <div class="details">
-                <div class="column">
-                    <div class="label">
+            <Container
+                padding={"lg"}
+                gap={"md"}
+                mainAxisAlignment={"spaceAround"}
+                crossAxisAlignment={"end"}>
+                <Container crossAxisAlignment={"center"} direction={"vertical"}>
+                    <Label
+                        align={"center"}
+                        width={{ kind: "hug" }}
+                        colour={"textSecondary"}
+                        uppercase>
                         <Translatable resourceKey={i18nKey("streakInsurance.bought")}
                         ></Translatable>
-                    </div>
-                    <div class="number">
+                    </Label>
+                    <Overview
+                        align={"center"}
+                        width={{ kind: "hug" }}
+                        colour={"primary"}
+                        fontWeight={"bold"}>
                         {totalDays}
-                    </div>
-                </div>
+                    </Overview>
+                </Container>
 
-                <div class="column operator">
-                    <Minus color={"var(--txt-light)"} />
-                </div>
+                <Container
+                    padding={["zero", "md"]}
+                    width={{ kind: "hug" }}
+                    height={{ kind: "fill" }}
+                    crossAxisAlignment={"center"}>
+                    <Minus color={ColourVars.textSecondary} />
+                </Container>
 
-                <div class="column">
-                    <div class="label">
+                <Container crossAxisAlignment={"center"} direction={"vertical"}>
+                    <Label
+                        align={"center"}
+                        width={{ kind: "hug" }}
+                        colour={"textSecondary"}
+                        uppercase>
                         <Translatable resourceKey={i18nKey("streakInsurance.missed")}
                         ></Translatable>
-                    </div>
-                    <div class="number">
+                    </Label>
+                    <Overview
+                        align={"center"}
+                        width={{ kind: "hug" }}
+                        colour={"primary"}
+                        fontWeight={"bold"}>
                         {currentDaysMissed}
-                    </div>
-                </div>
+                    </Overview>
+                </Container>
 
-                <div class="column operator">
-                    <Equal color={"var(--txt-light)"} />
-                </div>
+                <Container
+                    width={{ kind: "hug" }}
+                    padding={["zero", "md"]}
+                    height={{ kind: "fill" }}
+                    crossAxisAlignment={"center"}>
+                    <Equal color={ColourVars.textSecondary} />
+                </Container>
 
-                <div class="column">
-                    <div class="label">
+                <Container crossAxisAlignment={"center"} direction={"vertical"}>
+                    <Label
+                        align={"center"}
+                        width={{ kind: "hug" }}
+                        colour={"textSecondary"}
+                        uppercase>
                         <Translatable resourceKey={i18nKey("streakInsurance.remaining")}
                         ></Translatable>
-                    </div>
-                    <div class="number">
+                    </Label>
+                    <Overview
+                        align={"center"}
+                        width={{ kind: "hug" }}
+                        colour={"primary"}
+                        fontWeight={"bold"}>
                         {remaining}
-                    </div>
-                </div>
-            </div>
+                    </Overview>
+                </Container>
+            </Container>
         {/snippet}
         {#snippet footer()}
-            <ButtonGroup nowrap>
-                <Button disabled={paying} small secondary onClick={onClose}>
+            <Container gap={"md"} mainAxisAlignment={"end"} crossAxisAlignment={"end"}>
+                <CommonButton
+                    mode={"default"}
+                    disabled={paying}
+                    onClick={onClose}
+                    size={"small_text"}>
                     <Translatable resourceKey={i18nKey("cancel")}></Translatable>
-                </Button>
-                <Button disabled={paying || maxReached} small onClick={() => (additionalDays += 1)}>
+                </CommonButton>
+                <CommonButton
+                    mode={"active"}
+                    disabled={paying || maxReached}
+                    onClick={() => (additionalDays += 1)}
+                    size={"medium"}>
+                    {#snippet icon(color)}
+                        <ShieldPlusOutline {color}></ShieldPlusOutline>
+                    {/snippet}
                     <Translatable resourceKey={i18nKey("streakInsurance.addDay")}></Translatable>
-                </Button>
-                <Button
+                </CommonButton>
+                <CommonButton
+                    mode={"active"}
                     loading={paying}
                     disabled={paying || additionalDays === 0 || insufficientBalance}
-                    small
-                    onClick={pay}>
+                    onClick={pay}
+                    size={"medium"}>
+                    {#snippet icon(color)}
+                        <CreditCard {color}></CreditCard>
+                    {/snippet}
                     <Translatable
                         resourceKey={i18nKey("streakInsurance.pay", {
                             price: price.toLocaleString(),
                         })}></Translatable>
-                </Button>
-            </ButtonGroup>
+                </CommonButton>
+            </Container>
         {/snippet}
     </ModalContent>
 </Overlay>
-
-<style lang="scss">
-    .header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .title {
-        display: flex;
-        align-items: center;
-        gap: $sp3;
-    }
-
-    .details {
-        display: flex;
-        gap: $sp3;
-        padding: $sp5;
-        justify-content: space-evenly;
-        max-width: toRem(500);
-        margin: 0 auto;
-        min-width: 75%;
-
-        .column {
-            text-align: center;
-            align-self: center;
-
-            .label {
-                text-transform: uppercase;
-                @include font(light, normal, fs-80);
-                color: var(--txt-light);
-            }
-
-            .number {
-                @include font(bold, normal, fs-240);
-                color: var(--error);
-            }
-        }
-
-        .operator {
-            margin-top: $sp6;
-            @include font(light, normal, fs-200);
-            color: var(--txt-light);
-        }
-    }
-</style>

@@ -106,10 +106,7 @@
     disabled={disabled || loading}>
     {#if loading}
         <span class="icon">
-            <Spinner
-                size={"1.4rem"}
-                backgroundColour={"var(--text-tertiary)"}
-                foregroundColour={spinnerColour} />
+            <Spinner backgroundColour={"var(--text-tertiary)"} foregroundColour={spinnerColour} />
         </span>
     {:else if icon}
         <span class="icon">{@render icon(iconColour)}</span>

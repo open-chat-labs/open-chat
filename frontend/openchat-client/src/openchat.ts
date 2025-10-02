@@ -641,6 +641,7 @@ type PromiseResolver<T> = {
 };
 
 export class OpenChat {
+    #mobileLayout: "v1" | "v2";
     #worker!: Worker;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     #pending: Map<string, PromiseResolver<any>> = new Map(); // in-flight requests
@@ -686,6 +687,7 @@ export class OpenChat {
     constructor(private config: OpenChatConfig) {
         this.#logger = config.logger;
         this.#appType = config.appType;
+        this.#mobileLayout = config.mobileLayout;
         this.#vapidPublicKey = config.vapidPublicKey;
         locale.subscribe((v) => (this.#locale = v ?? "en"));
 
@@ -728,6 +730,10 @@ export class OpenChat {
     isNativeApp() {
         // TODO this will be updated to include iOS
         return this.isNativeAndroid();
+    }
+
+    get mobileLayout() {
+        return this.#mobileLayout;
     }
 
     clearCachedData() {

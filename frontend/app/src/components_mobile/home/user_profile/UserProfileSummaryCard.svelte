@@ -51,20 +51,20 @@
         minHeight={"10rem"}
         mainAxisAlignment={"end"}
         padding={"sm"}
-        gap={"xs"}
+        gap={"sm"}
         backgroundImage={backgroundUrl}
         background={gradient}>
-        <IconButton size={"sm"} mode={"dark"}>
+        <IconButton size={"md"} mode={"dark"}>
             {#snippet icon(color)}
                 <Info {color} />
             {/snippet}
         </IconButton>
-        <IconButton size={"sm"} mode={"dark"}>
+        <IconButton size={"md"} mode={"dark"}>
             {#snippet icon(color)}
                 <Share {color} />
             {/snippet}
         </IconButton>
-        <IconButton onclick={profileSettings} size={"sm"} mode={"dark"}>
+        <IconButton onclick={profileSettings} size={"md"} mode={"dark"}>
             {#snippet icon(color)}
                 <Cog {color} />
             {/snippet}
@@ -89,7 +89,7 @@
             <Markdown inline={false} text={profile.bio} />
         </Body>
     </Container>
-    <ChitSummary streak={57} earned={539_400} balance={102_000} />
+    <ChitSummary streak={user.streak} earned={user.totalChitEarned} balance={user.chitBalance} />
 </Container>
 
 <style lang="scss">

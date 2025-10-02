@@ -1,6 +1,7 @@
 export NODE_ENV=production
 
 export OC_APP_TYPE=android
+export OC_MOBILE_LAYOUT=v2
 export OC_BLOB_URL_PATTERN=https://{canisterId}.raw.icp0.io/{blobType}
 export OC_NODE_ENV=$NODE_ENV
 export OC_BUILD_ENV=$NODE_ENV

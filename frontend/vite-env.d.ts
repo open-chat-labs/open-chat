@@ -5,6 +5,7 @@ interface ImportMetaEnv {
     readonly OC_AIRDROP_BOT_CANISTER: string;
     readonly OC_ALCHEMY_API_KEY: string;
     readonly OC_APP_TYPE: "android" | "ios" | "web" | undefined;
+    readonly OC_MOBILE_LAYOUT: "v1" | "v2";
     readonly OC_BITCOIN_MAINNET_ENABLED: string;
     readonly OC_BLOB_URL_PATTERN: string;
     readonly OC_BUILD_ENV: string;

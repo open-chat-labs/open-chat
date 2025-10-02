@@ -29,5 +29,6 @@ export OC_WEBAUTHN_ORIGIN=localhost
 export OC_WEBSITE_VERSION=200.20.2
 export OC_ONESEC_FORWARDER_CANISTER="this-is-a-fake-canister-id"
 export OC_ONESEC_MINTER_CANISTER="this-is-a-fake-canister-id"
+export OC_MOBILE_LAYOUT=v1
 
 npx rollup -c

@@ -437,7 +437,7 @@ body.native-android {
     // webview does not respect it
     touch-action: pan-x pan-y;
     height: 100%;
-    background: var(--background-1);
+    background: var(--background-0);
 
     // Status bar on Android devices
     &:before {

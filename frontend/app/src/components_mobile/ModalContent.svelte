@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { portalState, reposition, type NanoPopPosition } from "component-lib";
+    import { portalState, reposition, Subtitle, type NanoPopPosition } from "component-lib";
     import { mobileWidth } from "openchat-client";
     import { onMount, tick, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
@@ -130,9 +130,9 @@
     class:fit_to_content={fitToContent}>
     {#if !hideHeader}
         <div class="header">
-            <h4>
+            <Subtitle fontWeight={"bold"}>
                 {@render header?.(onClose)}
-            </h4>
+            </Subtitle>
             {#if closeIcon}
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <span title={$_("close")} class="close" class:rtl={$rtlStore} onclick={onClose}>

@@ -11,6 +11,7 @@
         colour?: ColourVarKeys;
         labelFor?: string;
         align?: "start" | "end" | "center" | "unset";
+        uppercase?: boolean;
     }
 </script>
 
@@ -36,6 +37,7 @@
         colour = "textPrimary",
         labelFor,
         align = "unset",
+        uppercase = false,
     }: Props = $props();
 
     let parentDirection = getContext<Direction>("direction");
@@ -69,12 +71,18 @@
 </script>
 
 {#if type === "label"}
-    <label for={labelFor} class:ellipsis={ellipsisTruncate} {style} class={`${type} ${fontWeight}`}>
+    <label
+        class:uppercase
+        for={labelFor}
+        class:ellipsis={ellipsisTruncate}
+        {style}
+        class={`${type} ${fontWeight}`}>
         {@render children?.()}
     </label>
 {:else}
     <svelte:element
         this={tag}
+        class:uppercase
         class:ellipsis={ellipsisTruncate}
         {style}
         class={`${type} ${fontWeight}`}>
@@ -150,5 +158,9 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+
+    .uppercase {
+        text-transform: uppercase;
     }
 </style>

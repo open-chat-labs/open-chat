@@ -35,9 +35,9 @@ export const communityThemes = [
     getSignalsTheme(cloneTheme(blueTheme)),
 ];
 
-// if (localStorage.getItem("openchat_v2_layout") === "true") {
+if (import.meta.env.OC_MOBILE_LAYOUT === "v2") {
     communityThemes.push(getNeonTheme(cloneTheme(defaultDark)));
-// }
+}
 
 export const themes: Themes = {
     white: defaultLight,

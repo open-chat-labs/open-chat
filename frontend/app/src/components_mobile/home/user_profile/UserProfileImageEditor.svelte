@@ -80,7 +80,7 @@
                 gap={"xs"}
                 backgroundImage={backgroundUrl}
                 background={gradient}>
-                <IconButton onclick={choosePhoto} size={"sm"} mode={"dark"}>
+                <IconButton onclick={choosePhoto} size={"md"} mode={"dark"}>
                     {#snippet icon(color)}
                         <ImageEditOutline {color} />
                     {/snippet}

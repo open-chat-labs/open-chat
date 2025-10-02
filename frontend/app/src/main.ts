@@ -11,8 +11,7 @@ import App from "./components/App.svelte";
 import AppV2 from "./components_mobile/App.svelte";
 import { setNativeTheme, writeNativeCssVariables } from "./theme/themes";
 
-const v2 = localStorage.getItem("openchat_v2_layout") === "true" && mobileWidth.value;
-// const v2 = true;
+const v2 = import.meta.env.OC_MOBILE_LAYOUT === "v2" && mobileWidth.value;
 
 if (v2) {
     setNativeTheme();

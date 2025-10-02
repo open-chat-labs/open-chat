@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { now500 } from "@src/stores/time";
     import {
         BodySmall,
         Caption,
@@ -8,12 +9,16 @@
         H2,
         Subtitle,
     } from "component-lib";
-    import { i18nKey } from "openchat-client";
+    import { chitStateStore, i18nKey, OpenChat, publish } from "openchat-client";
+    import { getContext } from "svelte";
     import PartyPopper from "svelte-material-icons/PartyPopper.svelte";
     import ShieldStarOutline from "svelte-material-icons/ShieldStarOutline.svelte";
     import Progress from "../../Progress.svelte";
     import Translatable from "../../Translatable.svelte";
+    import StreakInsuranceBuy from "../insurance/StreakInsuranceBuy.svelte";
     import Streak from "./Streak.svelte";
+
+    const client = getContext<OpenChat>("client");
 
     interface Props {
         streak?: number;
@@ -41,7 +46,16 @@
     let badgesVisible = $derived(calculateBadgesVisible(streak));
     let maxBadgeVisible = $derived(badgesVisible[badgesVisible.length - 1]);
     let percent = $derived(calculatePercentage(streak, maxBadgeVisible));
+    let claimChitAvailable = $derived($chitStateStore.nextDailyChitClaim < $now500);
+    let remaining = $derived(
+        client.formatTimeRemaining($now500, Number($chitStateStore.nextDailyChitClaim), true),
+    );
+    let showInsurance = $state(false);
 </script>
+
+{#if showInsurance}
+    <StreakInsuranceBuy onClose={() => (showInsurance = false)} />
+{/if}
 
 <Container padding={["xl", "lg"]} direction={"vertical"} allowOverflow>
     <Container gap={"sm"} crossAxisAlignment={"center"}>
@@ -80,17 +94,25 @@
     </div>
 
     <Container mainAxisAlignment={"end"} gap={"sm"} crossAxisAlignment={"end"}>
-        <CommonButton onClick={() => console.log("insurance")} size={"small_text"}>
+        <CommonButton onClick={() => (showInsurance = true)} size={"small_text"}>
             {#snippet icon(color)}
                 <ShieldStarOutline {color}></ShieldStarOutline>
             {/snippet}
             <Translatable resourceKey={i18nKey("Streak insurance")}></Translatable>
         </CommonButton>
-        <CommonButton onClick={() => console.log("claim")} size={"medium"} mode={"active"}>
+        <CommonButton
+            disabled={!claimChitAvailable}
+            onClick={() => publish("claimDailyChit")}
+            size={"medium"}
+            mode={"active"}>
             {#snippet icon(color)}
                 <PartyPopper {color}></PartyPopper>
             {/snippet}
-            <Translatable resourceKey={i18nKey("Claim CHIT")}></Translatable>
+            {#if claimChitAvailable}
+                <Translatable resourceKey={i18nKey("Claim CHIT")}></Translatable>
+            {:else}
+                <Translatable resourceKey={i18nKey("dailyChit.comeback", { time: remaining })} />
+            {/if}
         </CommonButton>
     </Container>
 </Container>
@@ -100,6 +122,10 @@
 <style lang="scss">
     :global(.container.streak_bubble h2) {
         line-height: 1rem;
+    }
+
+    :global(.container.streak_bubble) {
+        z-index: 1;
     }
 
     .progress {
@@ -112,6 +138,7 @@
         position: relative;
         margin-bottom: 3rem;
         width: 100%;
+        z-index: 2;
 
         .badge {
             top: 8px;

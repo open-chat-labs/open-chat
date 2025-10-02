@@ -165,6 +165,18 @@
         border-right: none !important;
         border-bottom: none !important;
     }
+
+    :global(.bottom_nav_bar:after) {
+        content: "";
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: var(--safe-inset);
+        background-color: var(--background-1);
+        z-index: 1;
+    }
+
     .selection {
         --width: calc(25% - 2rem);
         position: absolute;
