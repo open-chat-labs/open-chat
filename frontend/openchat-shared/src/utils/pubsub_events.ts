@@ -17,6 +17,7 @@ import type {
     MultiUserChat,
     MultiUserChatIdentifier,
     Notification,
+    PublicProfile,
     ResourceKey,
     UpdatedRules,
     VideoCallType,
@@ -137,4 +138,9 @@ export type PubSubEvents = {
     ephemeralMessage: EphemeralMessageEvent;
     copyUrl: undefined;
     suspendUser: string;
+    userProfileChatsAndVideo: undefined;
+    userProfileSettings: PublicProfile;
+    userProfileShare: undefined;
+    userProfileAbout: undefined;
+    closeModalPage: undefined;
 };

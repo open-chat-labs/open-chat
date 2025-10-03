@@ -8,6 +8,7 @@
         getFlexStyle,
         getGapCss,
         getPaddingCss,
+        menuCloser,
         scrollLimits,
         swipe,
         type BorderWidthSize,
@@ -67,6 +68,7 @@
         onInsideStart?: (fromStart: number) => void;
         onInsideEnd?: (fromEnd: number) => void;
         onSwipe?: (direction: SwipeDirection) => void;
+        closeMenuOnScroll?: boolean;
     }
 
     let {
@@ -98,6 +100,7 @@
         onInsideEnd,
         onInsideStart,
         onSwipe,
+        closeMenuOnScroll = false,
     }: Props = $props();
 
     // you might expect this to be done inside onMount but
@@ -139,6 +142,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <svelte:element
     this={tag}
+    use:menuCloser={closeMenuOnScroll}
     use:swipe={{ onSwipe }}
     use:scrollLimits={{ onEnd: onInsideEnd, onStart: onInsideStart }}
     {id}

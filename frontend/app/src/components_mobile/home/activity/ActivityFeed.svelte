@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { menuCloser } from "component-lib";
     import {
         activityFeedShowing,
         iconSize,
@@ -13,7 +14,6 @@
     import { getContext } from "svelte";
     import BellRingOutline from "svelte-material-icons/BellRingOutline.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import { menuCloser } from "../../../actions/closeMenu";
     import { i18nKey } from "../../../i18n/i18n";
     import HoverIcon from "../../HoverIcon.svelte";
     import SectionHeader from "../../SectionHeader.svelte";

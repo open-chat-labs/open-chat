@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { menuCloser } from "component-lib";
     import type {
         CandidateTranslations,
         OpenChat,
@@ -14,7 +15,6 @@
     import Hamburger from "svelte-material-icons/Menu.svelte";
     import Refresh from "svelte-material-icons/Refresh.svelte";
     import Translate from "svelte-material-icons/Translate.svelte";
-    import { menuCloser } from "../../../actions/closeMenu";
     import { i18nKey, reviewingTranslations } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import HoverIcon from "../../HoverIcon.svelte";

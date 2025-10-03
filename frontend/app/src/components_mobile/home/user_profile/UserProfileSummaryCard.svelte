@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Avatar, Body, BodySmall, Container, H2, IconButton } from "component-lib";
-    import { OpenChat, type PublicProfile, type UserSummary } from "openchat-client";
+    import { OpenChat, publish, type PublicProfile, type UserSummary } from "openchat-client";
     import { getContext } from "svelte";
     import Cog from "svelte-material-icons/Cog.svelte";
     import Info from "svelte-material-icons/InformationOutline.svelte";
@@ -41,15 +41,15 @@
         "linear-gradient(90deg, var(--warning) 0%, var(--primary) 30%, var(--primary) 70%, var(--tertiary) 100%)";
 
     function profileSettings() {
-        client.pushRightPanelHistory({ kind: "user_profile_settings", profile });
+        publish("userProfileSettings", profile);
     }
 
     function shareProfile() {
-        client.pushRightPanelHistory({ kind: "user_profile_share" });
+        publish("userProfileShare");
     }
 
     function about() {
-        client.pushRightPanelHistory({ kind: "user_profile_about" });
+        publish("userProfileAbout");
     }
 </script>
 

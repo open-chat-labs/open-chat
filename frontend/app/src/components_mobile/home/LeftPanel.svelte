@@ -6,6 +6,7 @@
     import BottomBar, { type Selection } from "./bottom_bar/BottomBar.svelte";
     import ChatList from "./ChatList.svelte";
     import CommunitiesSheet from "./communities_sheet/CommunitiesSheet.svelte";
+    import SlidingModals from "./SlidingModals.svelte";
     import UserProfileSummary from "./user_profile/UserProfileSummary.svelte";
 
     let showProfileSummary = $derived($routeStore.kind === "profile_summary_route");
@@ -46,6 +47,8 @@
         }
     }
 </script>
+
+<SlidingModals />
 
 <Container
     mainAxisAlignment={"spaceBetween"}

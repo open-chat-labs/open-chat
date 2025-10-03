@@ -1,26 +1,26 @@
 <script lang="ts">
+    import { menuCloser } from "component-lib";
     import {
         type CandidateGroupChat,
         type CandidateMember,
+        chatIdentifierUnset,
+        chatListScopeStore,
         type CreateGroupResponse,
         type Level,
+        mobileWidth,
         type MultiUserChatIdentifier,
         type OpenChat,
         type ResourceKey,
         ROLE_ADMIN,
+        routeForChatIdentifier,
+        selectedCommunitySummaryStore,
         UnsupportedValueError,
         type UpdateGroupResponse,
         type UserSummary,
-        chatIdentifierUnset,
-        chatListScopeStore,
-        mobileWidth,
-        routeForChatIdentifier,
-        selectedCommunitySummaryStore,
     } from "openchat-client";
     import { ErrorCode } from "openchat-shared";
     import page from "page";
     import { getContext, tick } from "svelte";
-    import { menuCloser } from "../../../actions/closeMenu";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import AreYouSure from "../../AreYouSure.svelte";

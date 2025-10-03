@@ -190,6 +190,7 @@
                 supplementalClass={"chat_summary_list"}
                 padding={["lg", "zero", "zero", "zero"]}
                 gap={"lg"}
+                closeMenuOnScroll
                 onInsideEnd={insideBottom}
                 width={{ kind: "fill" }}
                 height={{ kind: "fill" }}

@@ -1,5 +1,6 @@
 <script lang="ts">
     import BotsTab from "@src/components/bots/BotsTab.svelte";
+    import { menuCloser } from "component-lib";
     import {
         type CommunityIdentifier,
         type CommunitySummary,
@@ -30,7 +31,6 @@
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
     import Alarm from "svelte-material-icons/Alarm.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
-    import { menuCloser } from "../../../actions/closeMenu";
     import { i18nKey } from "../../../i18n/i18n";
     import { trimLeadingAtSymbol } from "../../../utils/user";
     import Search from "../../Search.svelte";

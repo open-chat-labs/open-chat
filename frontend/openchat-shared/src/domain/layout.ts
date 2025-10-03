@@ -1,5 +1,4 @@
 import type { MultiUserChatIdentifier } from "./chat";
-import type { PublicProfile } from "./user";
 
 export type FontScale = 0 | 1 | 2 | 3 | 4;
 
@@ -45,28 +44,7 @@ export type RightPanelContent =
     | CommunityFilters
     | CommunityDetails
     | CallParticipantsPanel
-    | UserProfileSettings
-    | UserProfileShare
-    | UserProfileChatsAndVideo
-    | UserProfileAbout
     | NoPanel;
-
-type UserProfileChatsAndVideo = {
-    kind: "user_profile_chats_and_video";
-};
-
-type UserProfileAbout = {
-    kind: "user_profile_about";
-};
-
-type UserProfileSettings = {
-    kind: "user_profile_settings";
-    profile: PublicProfile;
-};
-
-type UserProfileShare = {
-    kind: "user_profile_share";
-};
 
 type ProposalFilterPanel = {
     kind: "proposal_filters";

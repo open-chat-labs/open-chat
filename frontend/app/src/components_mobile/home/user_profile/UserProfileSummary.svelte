@@ -39,7 +39,8 @@
     });
 
     function chatsAndVideo() {
-        client.pushRightPanelHistory({ kind: "user_profile_chats_and_video" });
+        publish("userProfileChatsAndVideo");
+        // client.pushRightPanelHistory({ kind: "user_profile_chats_and_video" });
     }
 </script>
 
