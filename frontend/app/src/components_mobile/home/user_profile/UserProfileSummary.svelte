@@ -37,10 +37,6 @@
             profile = p;
         });
     });
-
-    function chatsAndVideo() {
-        publish("userProfileChatsAndVideo");
-    }
 </script>
 
 <Container
@@ -147,6 +143,7 @@
             )} />
 
         <LinkedCard
+            onClick={() => publish("userProfileDeleteAccount")}
             Icon={Delete}
             title={i18nKey("Delete account")}
             info={i18nKey(

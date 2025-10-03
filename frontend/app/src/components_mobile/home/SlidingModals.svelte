@@ -6,6 +6,7 @@
     import BotConfig from "./user_profile/BotConfig.svelte";
     import ChatsAndVideo from "./user_profile/ChatsAndVideo.svelte";
     import ClearCache from "./user_profile/ClearCache.svelte";
+    import DeleteAccount from "./user_profile/DeleteAccount.svelte";
     import ProfileSettings from "./user_profile/ProfileSettings.svelte";
     import Share from "./user_profile/Share.svelte";
 
@@ -14,6 +15,7 @@
         | { kind: "user_profile_share" }
         | { kind: "user_profile_about" }
         | { kind: "user_profile_bot_config" }
+        | { kind: "user_profile_delete_account" }
         | { kind: "user_profile_cache_management" }
         | { kind: "user_profile_settings"; profile: PublicProfile }
         | { kind: "none" };
@@ -27,6 +29,10 @@
                 (profile) => (modalType = { kind: "user_profile_settings", profile }),
             ),
             subscribe("userProfileShare", () => (modalType = { kind: "user_profile_share" })),
+            subscribe(
+                "userProfileDeleteAccount",
+                () => (modalType = { kind: "user_profile_delete_account" }),
+            ),
             subscribe(
                 "userProfileBotConfig",
                 () => (modalType = { kind: "user_profile_bot_config" }),
@@ -55,6 +61,10 @@
 {:else if modalType.kind === "user_profile_share"}
     <SlidingPage>
         <Share />
+    </SlidingPage>
+{:else if modalType.kind === "user_profile_delete_account"}
+    <SlidingPage>
+        <DeleteAccount />
     </SlidingPage>
 {:else if modalType.kind === "user_profile_about"}
     <SlidingPage>

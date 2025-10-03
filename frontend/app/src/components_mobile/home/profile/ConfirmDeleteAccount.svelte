@@ -1,28 +1,27 @@
 <script lang="ts">
+    import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
     import { AuthProvider, i18nKey, OpenChat } from "openchat-client";
+    import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
+    import { interpolate } from "../../../i18n/i18n";
+    import { toastStore } from "../../../stores/toast";
+    import Button from "../../Button.svelte";
+    import ButtonGroup from "../../ButtonGroup.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
     import Translatable from "../../Translatable.svelte";
-    import { interpolate } from "../../../i18n/i18n";
-    import { _ } from "svelte-i18n";
     import Markdown from "../Markdown.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
-    import Button from "../../Button.svelte";
-    import { getContext } from "svelte";
-    import { toastStore } from "../../../stores/toast";
     import ReAuthenticate from "./ReAuthenticate.svelte";
-    import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
 
     const client = getContext<OpenChat>("client");
 
     interface Props {
         deleting: boolean;
         onClose: () => void;
+        authenticating?: boolean;
     }
 
-    let { deleting = $bindable(), onClose }: Props = $props();
-
-    let authenticating = $state(false);
+    let { deleting = $bindable(), onClose, authenticating = $bindable(false) }: Props = $props();
 
     function deleteAccount(detail: {
         key: ECDSAKeyIdentity;
