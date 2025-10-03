@@ -25,12 +25,13 @@
 <style lang="scss">
     $trackHeight: var(--track-height);
     $thumbSize: var(--thumb-size);
-    $trackColor: var(--button-bg);
+    $trackColor: var(--gradient);
 
     input[type="range"] {
         -webkit-appearance: none;
         margin: 18px 0;
         width: 100%;
+        border-radius: var(--rad-circle);
     }
     input[type="range"]:focus {
         outline: none;
@@ -40,6 +41,7 @@
         height: $trackHeight;
         cursor: pointer;
         background: $trackColor;
+        border-radius: var(--rad-circle);
     }
     input[type="range"]::-webkit-slider-thumb {
         height: $thumbSize;

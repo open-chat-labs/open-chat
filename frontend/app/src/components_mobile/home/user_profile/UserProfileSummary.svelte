@@ -107,6 +107,7 @@
             )} />
 
         <LinkedCard
+            onClick={() => publish("userProfileAppearance")}
             Icon={Eye}
             title={i18nKey("Appearance")}
             info={i18nKey(

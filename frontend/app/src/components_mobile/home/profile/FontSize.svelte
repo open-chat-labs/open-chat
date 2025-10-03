@@ -77,6 +77,7 @@
     }
 
     .grid {
+        width: 100%;
         display: grid;
         grid-template-columns: 1fr repeat(3, 2fr) 1fr;
         align-items: flex-end;
