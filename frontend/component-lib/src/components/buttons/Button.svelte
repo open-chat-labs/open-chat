@@ -37,19 +37,18 @@
     aria-busy={loading}
     {style}
     class:secondary
-    class:disabled
+    class:disabled={disabled || loading}
     onclick={onClick}
     disabled={disabled || loading}>
+    <span class="content">
+        {@render children?.()}
+    </span>
     {#if loading}
-        <Spinner
-            size={"1.4rem"}
-            backgroundColour={"var(--text-tertiary)"}
-            foregroundColour={spinnerColour} />
-    {:else}
-        <span class="content">{@render children?.()}</span>
-        {#if icon}
-            <span class="button_icon">{@render icon(iconColour)}</span>
-        {/if}
+        <span class="button_icon">
+            <Spinner backgroundColour={"var(--text-tertiary)"} foregroundColour={spinnerColour} />
+        </span>
+    {:else if icon}
+        <span class="button_icon">{@render icon(iconColour)}</span>
     {/if}
 </button>
 
@@ -81,7 +80,7 @@
 
         // This is a bit of a faff but we have to do the background fill this way to
         // end up with a filled button that is exactly the same size as a hollow button
-        &:not(.secondary)::before {
+        &:not(.secondary):not(.disabled)::before {
             content: "";
             position: absolute;
             inset: calc(-1 * var(--bw-thick));

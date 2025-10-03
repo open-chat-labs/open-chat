@@ -40,7 +40,10 @@
 
     function chatsAndVideo() {
         publish("userProfileChatsAndVideo");
-        // client.pushRightPanelHistory({ kind: "user_profile_chats_and_video" });
+    }
+
+    function cacheManagement() {
+        publish("userProfileCacheManagement");
     }
 </script>
 
@@ -132,6 +135,7 @@
         </Container>
 
         <LinkedCard
+            onClick={cacheManagement}
             Icon={Sync}
             title={i18nKey("Cache management")}
             info={i18nKey(

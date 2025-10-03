@@ -142,5 +142,6 @@ export type PubSubEvents = {
     userProfileSettings: PublicProfile;
     userProfileShare: undefined;
     userProfileAbout: undefined;
+    userProfileCacheManagement: undefined;
     closeModalPage: undefined;
 };
