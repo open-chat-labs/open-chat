@@ -167,7 +167,7 @@
     direction={"vertical"}>
     <ProfileSectionHeader titleKey={i18nKey("Profile settings")} />
     <Container
-        padding={["zero", "lg", "zero", "lg"]}
+        padding={["zero", "lg", "lg", "lg"]}
         gap={"lg"}
         height={{ kind: "fill" }}
         crossAxisAlignment={"center"}

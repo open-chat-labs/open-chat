@@ -34,5 +34,6 @@
         bottom: 0;
         @include z-index("right-panel");
         display: flex;
+        padding-top: var(--status-bar-height);
     }
 </style>
