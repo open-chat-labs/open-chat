@@ -115,6 +115,7 @@
             )} />
 
         <LinkedCard
+            onClick={() => publish("userProfileChitRewards")}
             Icon={FlashOutline}
             title={i18nKey("CHIT rewards")}
             info={i18nKey(

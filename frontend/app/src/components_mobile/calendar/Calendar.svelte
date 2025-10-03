@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { iconSize } from "openchat-client";
+    import { Container, Subtitle } from "component-lib";
     import { type Snippet } from "svelte";
     import { locale } from "svelte-i18n";
     import PrevIcon from "svelte-material-icons/ChevronLeft.svelte";
@@ -66,19 +66,21 @@
 </script>
 
 <div class={"calendar-wrapper"}>
-    <div class="calendar-header">
+    <Container crossAxisAlignment={"center"} mainAxisAlignment={"spaceBetween"}>
         <HoverIcon onclick={previousMonth}>
-            <PrevIcon size={$iconSize} color={"var(--icon-txt"} />
+            <PrevIcon size={"2rem"} color={"var(--primary"} />
         </HoverIcon>
         {#if monthTitleTemplate}
             {@render monthTitleTemplate()}
         {:else}
-            <h3>{calendarState.monthTitle}</h3>
+            <Subtitle width={{ kind: "hug" }} fontWeight={"bold"}>
+                {calendarState.monthTitle}
+            </Subtitle>
         {/if}
         <HoverIcon onclick={nextMonth}>
-            <NextIcon size={$iconSize} color={"var(--icon-txt"} />
+            <NextIcon size={"2rem"} color={"var(--primary"} />
         </HoverIcon>
-    </div>
+    </Container>
     <div class="week-days-row">
         {#each $weekDays as [day, d]}
             <div title={day} class="block weekday-name-block">
@@ -112,7 +114,6 @@
         height: 100%;
         display: flex;
         flex-direction: column;
-        border-radius: var(--rd);
         margin-bottom: $sp4;
     }
 
@@ -120,24 +121,10 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        min-height: toRem(50);
+        min-height: 2.5rem;
         @include font(medium, normal, fs-100);
         flex-grow: 0;
         flex-shrink: 0;
-        border-left: var(--bw) solid var(--bd);
-        border-bottom: var(--bw) solid var(--bd);
-
-        &:last-child {
-            border-right: var(--bw) solid var(--bd);
-        }
-    }
-
-    .calendar-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: $sp4;
-        border: solid var(--bw) var(--bd);
     }
 
     .week-days-row,
@@ -162,11 +149,10 @@
 
     .today {
         font-weight: 700;
-        text-decoration: underline;
     }
 
     .disabled {
-        color: var(--txt-light);
+        color: var(--text-secondary);
     }
 
     .weekday-name-block {

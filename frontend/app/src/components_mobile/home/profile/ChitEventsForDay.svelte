@@ -83,26 +83,21 @@
     .day {
         width: 100%;
         height: 100%;
+        margin: var(--sp-xs);
         display: flex;
         align-items: center;
         justify-content: center;
+        border-radius: var(--rad-circle);
 
         &.has-events {
-            background: var(--button-bg);
-            color: var(--button-txt);
+            background: var(--primary);
+            color: var(--text-on-primary);
             transition: background-color 300ms ease-in-out;
-
-            &:hover {
-                background: var(--button-hv);
-            }
         }
 
         &.otherMonth {
-            background: var(--button-disabled);
-            color: var(--button-disabled-txt);
-            &:hover {
-                background: var(--button-disabled);
-            }
+            background: none;
+            color: var(--text-secondary);
         }
     }
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { disableChit } from "@src/stores/settings";
     import { Avatar, Body, BodySmall, Container, H2, IconButton } from "component-lib";
     import { OpenChat, publish, type PublicProfile, type UserSummary } from "openchat-client";
     import { getContext } from "svelte";
@@ -97,7 +98,15 @@
             <Markdown inline={false} text={profile.bio} />
         </Body>
     </Container>
-    <ChitSummary streak={user.streak} earned={user.totalChitEarned} balance={user.chitBalance} />
+
+    {#if !$disableChit}
+        <Container padding={["xl", "lg"]} direction={"vertical"} allowOverflow>
+            <ChitSummary
+                streak={user.streak}
+                earned={user.totalChitEarned}
+                balance={user.chitBalance} />
+        </Container>
+    {/if}
 </Container>
 
 <style lang="scss">

@@ -6,6 +6,7 @@
     import Appearance from "./user_profile/Appearance.svelte";
     import BotConfig from "./user_profile/BotConfig.svelte";
     import ChatsAndVideo from "./user_profile/ChatsAndVideo.svelte";
+    import ChitRewards from "./user_profile/ChitRewards.svelte";
     import ClearCache from "./user_profile/ClearCache.svelte";
     import DeleteAccount from "./user_profile/DeleteAccount.svelte";
     import ProfileSettings from "./user_profile/ProfileSettings.svelte";
@@ -17,6 +18,7 @@
         | { kind: "user_profile_about" }
         | { kind: "user_profile_appearance" }
         | { kind: "user_profile_bot_config" }
+        | { kind: "user_profile_chit" }
         | { kind: "user_profile_delete_account" }
         | { kind: "user_profile_cache_management" }
         | { kind: "user_profile_settings"; profile: PublicProfile }
@@ -31,6 +33,7 @@
                 (profile) => (modalType = { kind: "user_profile_settings", profile }),
             ),
             subscribe("userProfileShare", () => (modalType = { kind: "user_profile_share" })),
+            subscribe("userProfileChitRewards", () => (modalType = { kind: "user_profile_chit" })),
             subscribe(
                 "userProfileAppearance",
                 () => (modalType = { kind: "user_profile_appearance" }),
@@ -60,36 +63,26 @@
     });
 </script>
 
-{#if modalType.kind === "user_profile_chats_and_video"}
+{#if modalType.kind !== "none"}
     <SlidingPage>
-        <ChatsAndVideo />
-    </SlidingPage>
-{:else if modalType.kind === "user_profile_share"}
-    <SlidingPage>
-        <Share />
-    </SlidingPage>
-{:else if modalType.kind === "user_profile_delete_account"}
-    <SlidingPage>
-        <DeleteAccount />
-    </SlidingPage>
-{:else if modalType.kind === "user_profile_about"}
-    <SlidingPage>
-        <About />
-    </SlidingPage>
-{:else if modalType.kind === "user_profile_appearance"}
-    <SlidingPage>
-        <Appearance />
-    </SlidingPage>
-{:else if modalType.kind === "user_profile_cache_management"}
-    <SlidingPage>
-        <ClearCache />
-    </SlidingPage>
-{:else if modalType.kind === "user_profile_bot_config"}
-    <SlidingPage>
-        <BotConfig />
-    </SlidingPage>
-{:else if modalType.kind === "user_profile_settings"}
-    <SlidingPage>
-        <ProfileSettings profile={modalType.profile} />
+        {#if modalType.kind === "user_profile_chats_and_video"}
+            <ChatsAndVideo />
+        {:else if modalType.kind === "user_profile_share"}
+            <Share />
+        {:else if modalType.kind === "user_profile_delete_account"}
+            <DeleteAccount />
+        {:else if modalType.kind === "user_profile_about"}
+            <About />
+        {:else if modalType.kind === "user_profile_appearance"}
+            <Appearance />
+        {:else if modalType.kind === "user_profile_cache_management"}
+            <ClearCache />
+        {:else if modalType.kind === "user_profile_bot_config"}
+            <BotConfig />
+        {:else if modalType.kind === "user_profile_chit"}
+            <ChitRewards />
+        {:else if modalType.kind === "user_profile_settings"}
+            <ProfileSettings profile={modalType.profile} />
+        {/if}
     </SlidingPage>
 {/if}

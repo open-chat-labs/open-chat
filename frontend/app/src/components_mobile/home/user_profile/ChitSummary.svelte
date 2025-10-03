@@ -24,9 +24,10 @@
         streak?: number;
         earned?: number;
         balance?: number;
+        insuranceLink?: boolean;
     }
 
-    let { streak = 0, earned = 0, balance = 0 }: Props = $props();
+    let { streak = 0, earned = 0, balance = 0, insuranceLink = true }: Props = $props();
 
     function calculateBadgesVisible(streak: number): number[] {
         if (streak < 30) {
@@ -57,64 +58,64 @@
     <StreakInsuranceBuy onClose={() => (showInsurance = false)} />
 {/if}
 
-<Container padding={["xl", "lg"]} direction={"vertical"} allowOverflow>
-    <Container gap={"sm"} crossAxisAlignment={"center"}>
-        <Container
-            supplementalClass={"streak_bubble"}
-            borderRadius={"circle"}
-            width={{ kind: "hug" }}
-            padding={["sm", "xl"]}
-            crossAxisAlignment={"center"}
-            background={ColourVars.primary}
-            direction={"vertical"}>
-            <H2 colour={"textOnPrimary"} fontWeight={"bold"}>{streak}</H2>
-            <Caption>
-                <Translatable resourceKey={i18nKey("streak")}></Translatable>
-            </Caption>
-        </Container>
-        <Container crossAxisAlignment={"center"} gap={"xs"}>
-            <Subtitle width={{ kind: "hug" }} fontWeight={"bold"} colour={"primary"}
-                >{`${balance.toLocaleString()} CHIT`}</Subtitle>
-            <BodySmall width={{ kind: "hug" }} fontWeight={"bold"} colour={"textSecondary"}
-                >{`/ ${earned.toLocaleString()} earned`}</BodySmall>
-        </Container>
+<Container gap={"sm"} crossAxisAlignment={"center"}>
+    <Container
+        supplementalClass={"streak_bubble"}
+        borderRadius={"circle"}
+        width={{ kind: "hug" }}
+        padding={["sm", "xl"]}
+        crossAxisAlignment={"center"}
+        background={ColourVars.primary}
+        direction={"vertical"}>
+        <H2 colour={"textOnPrimary"} fontWeight={"bold"}>{streak}</H2>
+        <Caption>
+            <Translatable resourceKey={i18nKey("streak")}></Translatable>
+        </Caption>
     </Container>
-    <div class="progress">
-        <Progress size={"6px"} {percent}></Progress>
-    </div>
-    <div class="marker" style="left: {percent}%">
-        <div class="line"></div>
-    </div>
-    <div class="badges">
-        {#each badgesVisible as badge}
-            <div class="badge" style="left: {(badge * 100) / maxBadgeVisible}%">
-                <Streak disabled={streak < badge} days={badge} />
-            </div>
-        {/each}
-    </div>
+    <Container crossAxisAlignment={"center"} gap={"xs"}>
+        <Subtitle width={{ kind: "hug" }} fontWeight={"bold"} colour={"primary"}
+            >{`${balance.toLocaleString()} CHIT`}</Subtitle>
+        <BodySmall width={{ kind: "hug" }} fontWeight={"bold"} colour={"textSecondary"}
+            >{`/ ${earned.toLocaleString()} earned`}</BodySmall>
+    </Container>
+</Container>
+<div class="progress">
+    <Progress size={"6px"} {percent}></Progress>
+</div>
+<div class="marker" style="left: {percent}%">
+    <div class="line"></div>
+</div>
+<div class="badges">
+    {#each badgesVisible as badge}
+        <div class="badge" style="left: {(badge * 100) / maxBadgeVisible}%">
+            <Streak disabled={streak < badge} days={badge} />
+        </div>
+    {/each}
+</div>
 
-    <Container mainAxisAlignment={"end"} gap={"sm"} crossAxisAlignment={"end"}>
+<Container mainAxisAlignment={"end"} gap={"sm"} crossAxisAlignment={"end"}>
+    {#if insuranceLink}
         <CommonButton onClick={() => (showInsurance = true)} size={"small_text"}>
             {#snippet icon(color)}
                 <ShieldStarOutline {color}></ShieldStarOutline>
             {/snippet}
             <Translatable resourceKey={i18nKey("Streak insurance")}></Translatable>
         </CommonButton>
-        <CommonButton
-            disabled={!claimChitAvailable}
-            onClick={() => publish("claimDailyChit")}
-            size={"medium"}
-            mode={"active"}>
-            {#snippet icon(color)}
-                <PartyPopper {color}></PartyPopper>
-            {/snippet}
-            {#if claimChitAvailable}
-                <Translatable resourceKey={i18nKey("Claim CHIT")}></Translatable>
-            {:else}
-                <Translatable resourceKey={i18nKey("dailyChit.comeback", { time: remaining })} />
-            {/if}
-        </CommonButton>
-    </Container>
+    {/if}
+    <CommonButton
+        disabled={!claimChitAvailable}
+        onClick={() => publish("claimDailyChit")}
+        size={"medium"}
+        mode={"active"}>
+        {#snippet icon(color)}
+            <PartyPopper {color}></PartyPopper>
+        {/snippet}
+        {#if claimChitAvailable}
+            <Translatable resourceKey={i18nKey("Claim CHIT")}></Translatable>
+        {:else}
+            <Translatable resourceKey={i18nKey("dailyChit.comeback", { time: remaining })} />
+        {/if}
+    </CommonButton>
 </Container>
 
 <style lang="scss">

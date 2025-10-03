@@ -146,5 +146,6 @@ export type PubSubEvents = {
     userProfileBotConfig: undefined;
     userProfileDeleteAccount: undefined;
     userProfileAppearance: undefined;
+    userProfileChitRewards: undefined;
     closeModalPage: undefined;
 };
