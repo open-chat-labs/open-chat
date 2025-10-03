@@ -41,10 +41,6 @@
     function chatsAndVideo() {
         publish("userProfileChatsAndVideo");
     }
-
-    function cacheManagement() {
-        publish("userProfileCacheManagement");
-    }
 </script>
 
 <Container
@@ -100,7 +96,7 @@
             </Caption>
         </Container>
         <LinkedCard
-            onClick={chatsAndVideo}
+            onClick={() => publish("userProfileChatsAndVideo")}
             Icon={Cog}
             title={i18nKey("Chat & video call settings")}
             info={i18nKey(
@@ -135,7 +131,7 @@
         </Container>
 
         <LinkedCard
-            onClick={cacheManagement}
+            onClick={() => publish("userProfileCacheManagement")}
             Icon={Sync}
             title={i18nKey("Cache management")}
             info={i18nKey(
@@ -143,6 +139,7 @@
             )} />
 
         <LinkedCard
+            onClick={() => publish("userProfileBotConfig")}
             Icon={RobotOutline}
             title={i18nKey("Bot configuration")}
             info={i18nKey(

@@ -3,6 +3,7 @@
     import { onMount } from "svelte";
     import SlidingPage from "./SlidingPage.svelte";
     import About from "./user_profile/About.svelte";
+    import BotConfig from "./user_profile/BotConfig.svelte";
     import ChatsAndVideo from "./user_profile/ChatsAndVideo.svelte";
     import ClearCache from "./user_profile/ClearCache.svelte";
     import ProfileSettings from "./user_profile/ProfileSettings.svelte";
@@ -12,6 +13,7 @@
         | { kind: "user_profile_chats_and_video" }
         | { kind: "user_profile_share" }
         | { kind: "user_profile_about" }
+        | { kind: "user_profile_bot_config" }
         | { kind: "user_profile_cache_management" }
         | { kind: "user_profile_settings"; profile: PublicProfile }
         | { kind: "none" };
@@ -25,6 +27,10 @@
                 (profile) => (modalType = { kind: "user_profile_settings", profile }),
             ),
             subscribe("userProfileShare", () => (modalType = { kind: "user_profile_share" })),
+            subscribe(
+                "userProfileBotConfig",
+                () => (modalType = { kind: "user_profile_bot_config" }),
+            ),
             subscribe(
                 "userProfileCacheManagement",
                 () => (modalType = { kind: "user_profile_cache_management" }),
@@ -57,6 +63,10 @@
 {:else if modalType.kind === "user_profile_cache_management"}
     <SlidingPage>
         <ClearCache />
+    </SlidingPage>
+{:else if modalType.kind === "user_profile_bot_config"}
+    <SlidingPage>
+        <BotConfig />
     </SlidingPage>
 {:else if modalType.kind === "user_profile_settings"}
     <SlidingPage>
