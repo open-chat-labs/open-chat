@@ -138,6 +138,7 @@ object NotificationsManager {
             .setContentText(message)
             .setGroup(NOTIFICATIONS_GROUP_KEY)
             .setAutoCancel(true)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(
                 IntentsManager.buildPendingIntentForNotification(context, notification)
             )
