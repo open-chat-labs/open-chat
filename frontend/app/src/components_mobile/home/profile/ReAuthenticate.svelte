@@ -1,6 +1,7 @@
 <script lang="ts">
     import { AuthClient } from "@dfinity/auth-client";
     import { DelegationChain, DelegationIdentity, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
+    import { Body } from "component-lib";
     import {
         AuthProvider,
         InMemoryAuthClientStorage,
@@ -168,8 +169,10 @@
 
 <div class="body">
     {#if authStep === "choose_provider"}
-        <div class="info center">
-            <Translatable resourceKey={message} />
+        <div class="info">
+            <Body colour={"error"}>
+                <Translatable resourceKey={message} />
+            </Body>
         </div>
         <ChooseSignInOption mode={"signin"} bind:emailInvalid bind:email onLogin={login} />
     {:else if authStep === "choose_eth_wallet"}
@@ -210,18 +213,10 @@
 <style lang="scss">
     .body {
         width: 100%;
-
-        @include not-mobile() {
-            min-width: 350px;
-        }
     }
 
     .info {
         margin-bottom: $sp4;
-
-        &.center {
-            text-align: center;
-        }
     }
 
     .eth-options,

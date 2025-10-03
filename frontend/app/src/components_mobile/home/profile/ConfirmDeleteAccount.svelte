@@ -1,12 +1,12 @@
 <script lang="ts">
     import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
+    import { CommonButton, Container } from "component-lib";
     import { AuthProvider, i18nKey, OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
+    import Delete from "svelte-material-icons/DeleteForeverOutline.svelte";
     import { interpolate } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
-    import Button from "../../Button.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
     import Translatable from "../../Translatable.svelte";
@@ -58,24 +58,27 @@
             {/if}
         {/snippet}
         {#snippet footer()}
-            <ButtonGroup>
-                <Button small onClick={onClose} secondary>
-                    <Translatable resourceKey={i18nKey("cancel")} />
-                </Button>
+            <Container gap={"md"} mainAxisAlignment={"end"} crossAxisAlignment={"end"}>
+                <CommonButton mode={"default"} onClick={onClose} size={"small_text"}>
+                    <Translatable resourceKey={i18nKey("cancel")}></Translatable>
+                </CommonButton>
                 {#if !authenticating}
-                    <Button
-                        danger
+                    <CommonButton
+                        mode={"active"}
                         disabled={deleting}
                         loading={deleting}
-                        small
-                        onClick={() => (authenticating = true)}>
+                        onClick={() => (authenticating = true)}
+                        size={"medium"}>
+                        {#snippet icon(color)}
+                            <Delete {color}></Delete>
+                        {/snippet}
                         <Translatable
                             resourceKey={i18nKey(
                                 deleting ? "danger.deleting" : "danger.deleteAccount",
                             )} />
-                    </Button>
+                    </CommonButton>
                 {/if}
-            </ButtonGroup>
+            </Container>
         {/snippet}
     </ModalContent>
 </Overlay>
