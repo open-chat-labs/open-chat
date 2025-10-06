@@ -1,5 +1,6 @@
 <script lang="ts">
     import { now500 } from "@src/stores/time";
+    import { toastStore } from "@src/stores/toast";
     import {
         BodySmall,
         Caption,
@@ -9,7 +10,7 @@
         H2,
         Subtitle,
     } from "component-lib";
-    import { chitStateStore, i18nKey, OpenChat, publish } from "openchat-client";
+    import { chitStateStore, i18nKey, OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import PartyPopper from "svelte-material-icons/PartyPopper.svelte";
     import ShieldStarOutline from "svelte-material-icons/ShieldStarOutline.svelte";
@@ -52,6 +53,27 @@
         client.formatTimeRemaining($now500, Number($chitStateStore.nextDailyChitClaim), true),
     );
     let showInsurance = $state(false);
+    let busy = $state(false);
+
+    function claim() {
+        busy = true;
+        client
+            .claimDailyChit()
+            .then((resp) => {
+                if (resp.kind !== "success") {
+                    toastStore.showFailureToast(i18nKey("dailyChit.failedToClaim"), resp);
+                }
+            })
+            .catch((err) => {
+                toastStore.showFailureToast(
+                    i18nKey("dailyChit.failedToClaim"),
+                    JSON.stringify(err),
+                );
+            })
+            .finally(() => {
+                busy = false;
+            });
+    }
 </script>
 
 {#if showInsurance}
@@ -104,7 +126,8 @@
     {/if}
     <CommonButton
         disabled={!claimChitAvailable}
-        onClick={() => publish("claimDailyChit")}
+        loading={busy}
+        onClick={claim}
         size={"medium"}
         mode={"active"}>
         {#snippet icon(color)}
