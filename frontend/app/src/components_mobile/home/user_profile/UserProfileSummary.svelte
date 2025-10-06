@@ -45,7 +45,7 @@
     height={{ kind: "fill" }}
     crossAxisAlignment={"center"}
     direction={"vertical"}>
-    <Container gap={"lg"} direction={"vertical"}>
+    <Container padding={["zero", "zero", "lg", "zero"]} gap={"lg"} direction={"vertical"}>
         {#if user !== undefined && profile !== undefined}
             <UserProfileSummaryCard {user} {profile} />
         {/if}
