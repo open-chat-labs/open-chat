@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Container, type SwipeDirection } from "component-lib";
+    import { Container, IconButton, type SwipeDirection } from "component-lib";
     import {
         activityFeedShowing,
         emptyCombinedUnreadCounts,
@@ -9,7 +9,9 @@
         type UnreadCounts,
     } from "openchat-client";
     import page from "page";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
+    import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
+    import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import { fade } from "svelte/transition";
     import CommunitiesList from "./CommunitiesList.svelte";
     import CommunitiesScroller from "./CommunitiesScroller.svelte";
@@ -50,9 +52,53 @@
             expanded = false;
         }
     }
+
+    let container: HTMLElement;
+    let scroller: HTMLElement;
+
+    let unreadLeft = $state<HTMLElement>();
+    let unreadRight = $state<HTMLElement>();
+
+    function offscreenUnreadCheck() {
+        const withUnread = container.querySelectorAll(
+            ".scroller_item.unread",
+        ) as NodeListOf<HTMLElement>;
+        const { scrollLeft, clientWidth } = container;
+        unreadLeft = undefined;
+        unreadRight = undefined;
+        for (const el of withUnread) {
+            const { offsetLeft, offsetWidth } = el;
+            if (offsetLeft - scrollLeft + offsetWidth / 2 > clientWidth) {
+                unreadRight = el;
+            }
+            if (scrollLeft > offsetLeft + offsetWidth / 2) {
+                if (unreadLeft === undefined) {
+                    unreadLeft = el;
+                }
+            }
+        }
+    }
+
+    function scrollToUnread(el?: HTMLElement) {
+        if (el !== undefined) {
+            el.scrollIntoView({
+                behavior: "smooth",
+                inline: "center",
+            });
+        }
+    }
+
+    onMount(() => {
+        container.addEventListener("scroll", offscreenUnreadCheck);
+        offscreenUnreadCheck();
+        return () => {
+            container.removeEventListener("scroll", offscreenUnreadCheck);
+        };
+    });
 </script>
 
 <Container
+    bind:ref={container}
     {onSwipe}
     supplementalClass={"communities_sheet"}
     direction={"vertical"}
@@ -64,9 +110,30 @@
         <div class="handle_inner"></div>
     </button>
 
+    {#if unreadRight}
+        <div transition:fade class="right">
+            <IconButton size={"sm"} onclick={() => scrollToUnread(unreadRight)} mode={"primary"}>
+                {#snippet icon(color)}
+                    <ChevronRight size={"2rem"} {color} />
+                {/snippet}
+            </IconButton>
+        </div>
+    {/if}
+
+    {#if unreadLeft}
+        <div transition:fade class="left">
+            <IconButton size={"sm"} onclick={() => scrollToUnread(unreadLeft)} mode={"primary"}>
+                {#snippet icon(color)}
+                    <ChevronLeft size={"2rem"} {color} />
+                {/snippet}
+            </IconButton>
+        </div>
+    {/if}
+
     {#if !expanded}
         <div transition:fade={{ duration: 200 }} class="scroller">
-            <CommunitiesScroller {hasUnread} onSelect={selectCommunity}></CommunitiesScroller>
+            <CommunitiesScroller bind:ref={scroller} {hasUnread} onSelect={selectCommunity}
+            ></CommunitiesScroller>
         </div>
     {:else}
         <div transition:fade={{ duration: 200 }} class="list">
@@ -83,6 +150,22 @@
     .list,
     .scroller {
         width: 100%;
+    }
+
+    .right,
+    .left {
+        position: fixed;
+        bottom: 9.5rem;
+        z-index: 1;
+        // opacity: 0.8;
+    }
+
+    .right {
+        right: 0.25rem;
+    }
+
+    .left {
+        left: 0.25rem;
     }
 
     .handle_outer {

@@ -70,6 +70,7 @@
         onSwipe?: (direction: SwipeDirection) => void;
         closeMenuOnScroll?: boolean;
         wrap?: boolean;
+        ref?: HTMLElement;
     }
 
     let {
@@ -103,6 +104,7 @@
         onSwipe,
         closeMenuOnScroll = false,
         wrap = false,
+        ref = $bindable(),
     }: Props = $props();
 
     // you might expect this to be done inside onMount but
@@ -145,6 +147,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <svelte:element
     this={tag}
+    bind:this={ref}
     use:menuCloser={closeMenuOnScroll}
     use:swipe={{ onSwipe }}
     use:scrollLimits={{ onEnd: onInsideEnd, onStart: onInsideStart }}

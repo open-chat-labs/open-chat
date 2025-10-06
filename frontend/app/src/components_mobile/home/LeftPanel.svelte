@@ -71,7 +71,7 @@
             <ChatList />
         {/if}
     </Container>
-    {#if $chatListScopeStore.kind === "community"}
+    {#if $chatListScopeStore.kind === "community" && !$activityFeedShowing}
         <CommunitiesSheet bind:expanded={communitiesExpanded} />
     {/if}
     <BottomBar {selection} />

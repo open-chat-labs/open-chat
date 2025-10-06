@@ -14,9 +14,10 @@
     interface Props {
         onSelect: (community: CommunitySummary) => void;
         hasUnread: (community: CommunitySummary) => [boolean, boolean, UnreadCounts];
+        ref?: HTMLElement;
     }
 
-    let props: Props = $props();
+    let { ref = $bindable(), onSelect, hasUnread }: Props = $props();
 
     $effect(() => {
         if ($selectedCommunityIdStore !== undefined) {
@@ -37,18 +38,20 @@
 </script>
 
 <Container
+    bind:ref
     padding={["zero", "lg"]}
     supplementalClass="scroller"
     allowOverflow
     width={{ kind: "fill" }}
     gap={"lg"}>
     {#each $sortedCommunitiesStore as community}
-        {@const [unread, muted] = props.hasUnread(community)}
+        {@const [unread, muted] = hasUnread(community)}
         <Container
+            supplementalClass={`scroller_item ${unread ? "unread" : ""}`}
             id={`scroller_item_${community.id.communityId}`}
             allowOverflow
             width={{ kind: "hug" }}
-            onClick={() => props.onSelect(community)}>
+            onClick={() => onSelect(community)}>
             <Avatar
                 url={client.communityAvatarUrl(community.id.communityId, community.avatar)}
                 size={"xl"}
