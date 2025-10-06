@@ -81,8 +81,8 @@
     }
 
     .day {
-        width: 100%;
-        height: 100%;
+        width: toRem(36);
+        height: toRem(36);
         margin: var(--sp-xs);
         display: flex;
         align-items: center;
