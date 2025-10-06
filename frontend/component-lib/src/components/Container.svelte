@@ -69,6 +69,7 @@
         onInsideEnd?: (fromEnd: number) => void;
         onSwipe?: (direction: SwipeDirection) => void;
         closeMenuOnScroll?: boolean;
+        wrap?: boolean;
     }
 
     let {
@@ -101,6 +102,7 @@
         onInsideStart,
         onSwipe,
         closeMenuOnScroll = false,
+        wrap = false,
     }: Props = $props();
 
     // you might expect this to be done inside onMount but
@@ -116,6 +118,7 @@
     let widthCss = $derived(getFlexStyle("width", width, parentDirection));
     let heightCss = $derived(getFlexStyle("height", height, parentDirection));
     let colourCss = $derived(colour ? `background-color: ${colour}` : "");
+    let wrapCss = $derived(wrap ? "flex-wrap: wrap;" : "");
     let alignmentCss = $derived(
         getAlignmentCss(
             mainAxisAlignment,
@@ -132,7 +135,7 @@
               : "",
     );
     let style = $derived(
-        `${backgroundCss} box-shadow: ${shadow}; min-width: ${minWidth}; min-height: ${minHeight}; ${alignmentCss}; ${colourCss}; ${heightCss}; ${widthCss}; ${borderStyleCss}; ${borderRadiusCss}; ${borderWidthCss}; ${paddingCss}; ${gapCss};`,
+        `${wrapCss} ${backgroundCss} box-shadow: ${shadow}; min-width: ${minWidth}; min-height: ${minHeight}; ${alignmentCss}; ${colourCss}; ${heightCss}; ${widthCss}; ${borderStyleCss}; ${borderRadiusCss}; ${borderWidthCss}; ${paddingCss}; ${gapCss};`,
     );
     // TODO I think it might be nice to do a lot of this flex sizing with classes rather than inline styles
     // although I'm not sure I can say *why*
