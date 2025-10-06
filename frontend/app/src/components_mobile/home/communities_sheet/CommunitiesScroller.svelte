@@ -47,7 +47,7 @@
     {#each $sortedCommunitiesStore as community}
         {@const [unread, muted] = hasUnread(community)}
         <Container
-            supplementalClass={`scroller_item ${unread ? "unread" : ""}`}
+            supplementalClass={`scroller_item ${unread && !muted ? "unread" : ""}`}
             id={`scroller_item_${community.id.communityId}`}
             allowOverflow
             width={{ kind: "hug" }}

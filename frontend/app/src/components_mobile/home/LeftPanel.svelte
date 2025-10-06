@@ -63,10 +63,10 @@
         height={{ kind: "fill" }}
         width={{ kind: "fill" }}
         direction={"vertical"}>
-        {#if showProfileSummary}
-            <UserProfileSummary />
-        {:else if $activityFeedShowing}
+        {#if $activityFeedShowing}
             <ActivityFeed />
+        {:else if showProfileSummary}
+            <UserProfileSummary />
         {:else}
             <ChatList />
         {/if}
