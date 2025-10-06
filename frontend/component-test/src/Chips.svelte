@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Chip, Container } from "component-lib";
+    import { Chip, Container, UserChip } from "component-lib";
     import GiftOutline from "svelte-material-icons/GiftOutline.svelte";
     import DebugEvent from "./DebugEvent.svelte";
 
@@ -23,7 +23,7 @@
 
 <DebugEvent>
     {#snippet children(onAction)}
-        <Container width={{ kind: "fixed", size: "400px" }} gap={"xl"} direction={"vertical"}>
+        <Container width={{ kind: "fixed", size: "500px" }} gap={"xl"} direction={"vertical"}>
             <Container mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
                 <Chip mode={"default"}>Chip</Chip>
 
@@ -79,6 +79,21 @@
                         <GiftOutline {color} />
                     {/snippet}
                     Chip</Chip>
+            </Container>
+
+            <Container mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
+                <UserChip avatarUrl={"/witch.png"} onRemove={() => onAction("remove clicked")}
+                    >@AlphaUser</UserChip>
+                <UserChip avatarUrl={"/horse.png"} onRemove={() => onAction("remove clicked")}
+                    >@BetaUser</UserChip>
+                <UserChip avatarUrl={"/disco.png"} onRemove={() => onAction("remove clicked")}
+                    >@CharlieUser</UserChip>
+            </Container>
+
+            <Container mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
+                <UserChip avatarUrl={"/witch.png"}>@AlphaUser</UserChip>
+                <UserChip avatarUrl={"/horse.png"}>@BetaUser</UserChip>
+                <UserChip avatarUrl={"/disco.png"}>@CharlieUser</UserChip>
             </Container>
         </Container>
     {/snippet}
