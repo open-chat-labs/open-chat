@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Avatar, MultiAvatar, type TypographyColour } from "component-lib";
+    import { Avatar, MultiAvatar, type ColourVarKeys } from "component-lib";
     import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
     import Container from "./Container.svelte";
     import CountBadge from "./CountBadge.svelte";
@@ -29,7 +29,7 @@
         onClick,
         avatarUrls,
     }: Props = $props();
-    let timeColour = $derived<TypographyColour>(unreadCount > 0 && !muted ? "accent" : "secondary");
+    let timeColour = $derived<ColourVarKeys>(unreadCount > 0 && !muted ? "primary" : "secondary");
     let iconColor = $derived("var(--text-secondary)");
 
     // TODO - not sure exactly how to handle the delivery icons - just puting something in there to sketch out the layout

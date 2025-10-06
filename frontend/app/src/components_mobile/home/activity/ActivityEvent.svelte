@@ -173,7 +173,7 @@
     <Avatar size={"sm"} url={client.userAvatarUrl(sender)}></Avatar>
     <Container direction={"vertical"}>
         <Container mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
-            <Body fontWeight={"bold"}>
+            <Body ellipsisTruncate fontWeight={"bold"}>
                 <Markdown text={interpolate($_, eventSummary)} />
             </Body>
             <Caption colour={"textSecondary"} width={{ kind: "hug" }}>
@@ -222,6 +222,10 @@
 </Container>
 
 <style lang="scss">
+    :global(.activity-event) {
+        border-bottom: var(--bw-thin) solid var(--background-1);
+    }
+
     :global(.activity-event a) {
         color: inherit;
     }
