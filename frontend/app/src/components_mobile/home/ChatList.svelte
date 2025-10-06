@@ -101,6 +101,7 @@
     function onViewChanged() {
         previousView = $chatListView;
         chatsToShow = TO_SHOW;
+        chatListFilter = "all";
     }
 
     let showPreview = $derived(

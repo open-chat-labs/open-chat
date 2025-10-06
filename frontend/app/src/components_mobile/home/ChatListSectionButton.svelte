@@ -23,7 +23,7 @@
     <Translatable resourceKey={title}></Translatable>
     {#if count > 0}
         <div class="unread">
-            <NotificationIndicator></NotificationIndicator>
+            <NotificationIndicator {muted}></NotificationIndicator>
         </div>
     {/if}
 </CommonButton>
