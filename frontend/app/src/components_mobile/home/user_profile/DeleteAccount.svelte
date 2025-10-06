@@ -1,10 +1,10 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { Body, BodySmall, Button, ColourVars, Container, H2 } from "component-lib";
+    import { Body, BodySmall, Button, Container, H2 } from "component-lib";
     import Delete from "svelte-material-icons/DeleteForeverOutline.svelte";
     import Translatable from "../../Translatable.svelte";
     import ConfirmDeleteAccount from "../profile/ConfirmDeleteAccount.svelte";
-    import ProfileSectionHeader from "./ProfileSectionHeader.svelte";
+    import ProfileSubPage from "./ProfileSubPage.svelte";
 
     let deleting = $state(false);
     let authenticating = $state(false);
@@ -21,12 +21,7 @@
         onClose={() => (authenticating = false)} />
 {/if}
 
-<Container
-    mainAxisAlignment={"spaceBetween"}
-    background={ColourVars.background0}
-    height={{ kind: "fill" }}
-    direction={"vertical"}>
-    <ProfileSectionHeader titleKey={i18nKey("Delete account")} />
+<ProfileSubPage title={i18nKey("Delete account")}>
     <Container
         padding={"xxl"}
         gap={"lg"}
@@ -78,4 +73,4 @@
             </Button>
         </Container>
     </Container>
-</Container>
+</ProfileSubPage>

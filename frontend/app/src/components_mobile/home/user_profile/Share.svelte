@@ -9,7 +9,7 @@
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
     import QRCode from "../../QRCode.svelte";
     import Translatable from "../../Translatable.svelte";
-    import ProfileSectionHeader from "./ProfileSectionHeader.svelte";
+    import ProfileSubPage from "./ProfileSubPage.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -23,12 +23,7 @@
     }
 </script>
 
-<Container
-    mainAxisAlignment={"spaceBetween"}
-    background={ColourVars.background0}
-    height={{ kind: "fill" }}
-    direction={"vertical"}>
-    <ProfileSectionHeader titleKey={i18nKey("Share")} />
+<ProfileSubPage title={i18nKey("Share")}>
     <Container
         padding={"xxl"}
         gap={"lg"}
@@ -92,4 +87,4 @@
             </Container>
         </Container>
     </Container>
-</Container>
+</ProfileSubPage>

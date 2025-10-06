@@ -100,6 +100,7 @@
             )} />
 
         <LinkedCard
+            onClick={() => publish("userProfileCommunitySettings")}
             Icon={AccountMultiple}
             title={i18nKey("Community settings")}
             info={i18nKey(

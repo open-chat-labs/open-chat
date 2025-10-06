@@ -101,6 +101,10 @@ q {
     quotes: none;
 }
 
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
 blockquote::before,
 blockquote::after,
 q::before,

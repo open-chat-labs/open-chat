@@ -8,6 +8,7 @@
     import ChatsAndVideo from "./user_profile/ChatsAndVideo.svelte";
     import ChitRewards from "./user_profile/ChitRewards.svelte";
     import ClearCache from "./user_profile/ClearCache.svelte";
+    import CommunitySettings from "./user_profile/CommunitySettings.svelte";
     import DeleteAccount from "./user_profile/DeleteAccount.svelte";
     import ProfileSettings from "./user_profile/ProfileSettings.svelte";
     import Share from "./user_profile/Share.svelte";
@@ -17,6 +18,7 @@
         | { kind: "user_profile_share" }
         | { kind: "user_profile_about" }
         | { kind: "user_profile_appearance" }
+        | { kind: "user_profile_community" }
         | { kind: "user_profile_bot_config" }
         | { kind: "user_profile_chit" }
         | { kind: "user_profile_delete_account" }
@@ -33,6 +35,10 @@
                 (profile) => (modalType = { kind: "user_profile_settings", profile }),
             ),
             subscribe("userProfileShare", () => (modalType = { kind: "user_profile_share" })),
+            subscribe(
+                "userProfileCommunitySettings",
+                () => (modalType = { kind: "user_profile_community" }),
+            ),
             subscribe("userProfileChitRewards", () => (modalType = { kind: "user_profile_chit" })),
             subscribe(
                 "userProfileAppearance",
@@ -81,6 +87,8 @@
             <BotConfig />
         {:else if modalType.kind === "user_profile_chit"}
             <ChitRewards />
+        {:else if modalType.kind === "user_profile_community"}
+            <CommunitySettings />
         {:else if modalType.kind === "user_profile_settings"}
             <ProfileSettings profile={modalType.profile} />
         {/if}

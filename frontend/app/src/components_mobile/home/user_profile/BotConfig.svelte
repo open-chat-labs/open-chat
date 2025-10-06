@@ -1,12 +1,12 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
-    import { BodySmall, ColourVars, Container, H2, IconButton, Label } from "component-lib";
+    import { BodySmall, Container, H2, IconButton, Label } from "component-lib";
     import { OpenChat, type BotClientConfigData } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import Translatable from "../../Translatable.svelte";
-    import ProfileSectionHeader from "./ProfileSectionHeader.svelte";
+    import ProfileSubPage from "./ProfileSubPage.svelte";
 
     const client = getContext<OpenChat>("client");
     let botConfigData = $state<BotClientConfigData>();
@@ -46,12 +46,7 @@
     </Container>
 {/snippet}
 
-<Container
-    mainAxisAlignment={"spaceBetween"}
-    background={ColourVars.background0}
-    height={{ kind: "fill" }}
-    direction={"vertical"}>
-    <ProfileSectionHeader titleKey={i18nKey("Bot configuration")} />
+<ProfileSubPage title={i18nKey("Bot configuration")}>
     <Container
         padding={"xxl"}
         gap={"lg"}
@@ -83,7 +78,7 @@
             </Container>
         </Container>
     </Container>
-</Container>
+</ProfileSubPage>
 
 <style lang="scss">
     .label {

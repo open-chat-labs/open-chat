@@ -1,10 +1,10 @@
 <script lang="ts">
     import { i18nKey, setLocale, supportedLanguages } from "@src/i18n/i18n";
-    import { Body, BodySmall, ColourVars, Container, Select } from "component-lib";
+    import { Body, BodySmall, Container, Select } from "component-lib";
     import { locale } from "svelte-i18n";
     import Translatable from "../../Translatable.svelte";
     import FontSize from "./FontSize.svelte";
-    import ProfileSectionHeader from "./ProfileSectionHeader.svelte";
+    import ProfileSubPage from "./ProfileSubPage.svelte";
 
     let selectedLocale = $state(($locale as string).substring(0, 2));
 
@@ -13,12 +13,7 @@
     });
 </script>
 
-<Container
-    mainAxisAlignment={"spaceBetween"}
-    background={ColourVars.background0}
-    height={{ kind: "fill" }}
-    direction={"vertical"}>
-    <ProfileSectionHeader titleKey={i18nKey("Appearance")} />
+<ProfileSubPage title={i18nKey("Appearance")}>
     <Container
         padding={["xxl", "lg"]}
         gap={"lg"}
@@ -70,4 +65,4 @@
             </Container>
         </Container>
     </Container>
-</Container>
+</ProfileSubPage>

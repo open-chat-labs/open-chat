@@ -100,7 +100,11 @@
     </Container>
 
     {#if !$disableChit}
-        <Container padding={["xl", "lg"]} direction={"vertical"} allowOverflow>
+        <Container
+            onClick={() => publish("userProfileChitRewards")}
+            padding={["xl", "lg"]}
+            direction={"vertical"}
+            allowOverflow>
             <ChitSummary
                 streak={user.streak}
                 earned={user.totalChitEarned}

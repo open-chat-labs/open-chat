@@ -35,7 +35,7 @@
     import Translatable from "../../Translatable.svelte";
     import UsernameInput from "../../UsernameInput.svelte";
     import Stats from "../Stats.svelte";
-    import ProfileSectionHeader from "./ProfileSectionHeader.svelte";
+    import ProfileSubPage from "./ProfileSubPage.svelte";
     import UserProfileImageEditor from "./UserProfileImageEditor.svelte";
 
     const MAX_DESC_LENGTH = 1024;
@@ -160,12 +160,7 @@
     }
 </script>
 
-<Container
-    mainAxisAlignment={"spaceBetween"}
-    background={ColourVars.background0}
-    height={{ kind: "fill" }}
-    direction={"vertical"}>
-    <ProfileSectionHeader titleKey={i18nKey("Profile settings")} />
+<ProfileSubPage title={i18nKey("Profile settings")}>
     <Container
         padding={["zero", "lg", "lg", "lg"]}
         gap={"lg"}
@@ -323,7 +318,4 @@
             </Container>
         </Container>
     </Container>
-</Container>
-
-<style lang="scss">
-</style>
+</ProfileSubPage>

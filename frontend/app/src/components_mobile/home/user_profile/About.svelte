@@ -3,7 +3,7 @@
     import { Body, BodySmall, ColourVars, Container, Logo, Overview } from "component-lib";
     import page from "page";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
-    import ProfileSectionHeader from "./ProfileSectionHeader.svelte";
+    import ProfileSubPage from "./ProfileSubPage.svelte";
 
     //@ts-ignore
     let version = window.OC_WEBSITE_VERSION;
@@ -16,12 +16,7 @@
     </Container>
 {/snippet}
 
-<Container
-    mainAxisAlignment={"spaceBetween"}
-    background={ColourVars.background0}
-    height={{ kind: "fill" }}
-    direction={"vertical"}>
-    <ProfileSectionHeader titleKey={i18nKey("About")} />
+<ProfileSubPage title={i18nKey("About")}>
     <Container
         padding={["sm", "xxl", "xxl", "xxl"]}
         height={{ kind: "fill" }}
@@ -44,7 +39,7 @@
             {@render menuitem("Whitepaper", "/whitepaper")}
         </Container>
     </Container>
-</Container>
+</ProfileSubPage>
 
 <style lang="scss">
     .line {
