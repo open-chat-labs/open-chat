@@ -47,13 +47,21 @@
         showIndicator(client.mergeCombinedUnreadCounts($unreadFavouriteCountsStore)),
     );
     let showFavourites = $derived($favouritesStore.size > 0);
+    // TODO - activity *might* have to account for threads if we do it that way. Something like the below ...
+    // let activityIndicator = $derived.by(() => {
+    //     const directAndGroup = showIndicator($unreadDirectAndGroupCountsStore.threads);
+    //     const communities = showIndicator(unreadCommunities.threads);
+    //     const show =
+    //         directAndGroup.show ||
+    //         communities.show ||
+    //         $messageActivitySummaryStore.latestTimestamp > 0n;
+    //     return {
+    //         show,
+    //         muted: false,
+    //     };
+    // });
     let activityIndicator = $derived.by(() => {
-        const directAndGroup = showIndicator($unreadDirectAndGroupCountsStore.threads);
-        const communities = showIndicator(unreadCommunities.threads);
-        const show =
-            directAndGroup.show ||
-            communities.show ||
-            $messageActivitySummaryStore.latestTimestamp > 0n;
+        const show = $messageActivitySummaryStore.unreadCount > 0;
         return {
             show,
             muted: false,

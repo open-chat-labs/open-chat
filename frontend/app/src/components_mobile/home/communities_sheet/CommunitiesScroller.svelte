@@ -36,7 +36,12 @@
     }
 </script>
 
-<Container supplementalClass="scroller" allowOverflow width={{ kind: "fill" }} gap={"lg"}>
+<Container
+    padding={["zero", "lg"]}
+    supplementalClass="scroller"
+    allowOverflow
+    width={{ kind: "fill" }}
+    gap={"lg"}>
     {#each $sortedCommunitiesStore as community}
         {@const [unread, muted] = props.hasUnread(community)}
         <Container

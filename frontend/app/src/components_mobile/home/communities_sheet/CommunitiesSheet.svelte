@@ -56,7 +56,7 @@
     {onSwipe}
     supplementalClass={"communities_sheet"}
     direction={"vertical"}
-    padding={["md", "xl", "lg", "xl"]}
+    padding={["md", "zero", "lg", "zero"]}
     width={{ kind: "fill" }}
     height={{ kind: "fixed", size: expanded ? "70%" : "7rem" }}
     background={"var(--background-1)"}>
