@@ -1,14 +1,6 @@
 <script lang="ts">
     import { toastStore } from "@src/stores/toast";
-    import {
-        Body,
-        BodySmall,
-        ColourVars,
-        CommonButton,
-        Container,
-        Label,
-        Select,
-    } from "component-lib";
+    import { Body, BodySmall, Chip, CommonButton, Container, Select } from "component-lib";
     import {
         type CommunitySummary,
         ErrorCode,
@@ -18,7 +10,6 @@
         sortedCommunitiesStore,
     } from "openchat-client";
     import { getContext } from "svelte";
-    import Close from "svelte-material-icons/Close.svelte";
     import Plus from "svelte-material-icons/Plus.svelte";
     import DisplayNameInput from "../../DisplayNameInput.svelte";
     import Translatable from "../../Translatable.svelte";
@@ -105,19 +96,9 @@
                 </Container>
                 <Container padding={["zero", "lg"]} gap={"sm"} direction={"vertical"}>
                     {#each displayNames as [community, displayName]}
-                        <Container
-                            borderRadius={"sm"}
-                            borderWidth={"thick"}
-                            padding={"sm"}
-                            onClick={() => deleteDisplayName(community)}
-                            crossAxisAlignment={"center"}
-                            width={{ kind: "hug" }}
-                            gap={"md"}>
-                            <Label width={{ kind: "hug" }} colour={"textSecondary"}>
-                                {community.name} / {displayName}
-                            </Label>
-                            <Close color={ColourVars.textSecondary} />
-                        </Container>
+                        <Chip onRemove={() => deleteDisplayName(community)}>
+                            {community.name} / {displayName}
+                        </Chip>
                     {/each}
                 </Container>
             {/if}
