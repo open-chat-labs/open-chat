@@ -6,7 +6,6 @@
         "declarationMap": true,
         "outDir": "dist",
         "paths": {
-            "@components/*": ["./src/components/*"],
             "@src/*": ["./src/*"],
             "lib": ["./src"]
         }

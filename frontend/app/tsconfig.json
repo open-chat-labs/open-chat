@@ -7,8 +7,6 @@
         "paths": {
             "@src/*": ["./src/*"],
             "@actions/*": ["./src/actions/*"],
-            "@components/*": ["./src/components/*"],
-            "@components_mobile/*": ["./src/components_mobile/*"],
             "@i18n/*": ["./src/i18n/*"],
             "@stores/*": ["./src/stores/*"],
             "@theme/*": ["./src/theme/*"],

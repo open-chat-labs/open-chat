@@ -1,17 +1,17 @@
+import replace from "@rollup/plugin-replace";
+import { svelte } from "@sveltejs/vite-plugin-svelte";
+import chokidar, { FSWatcher } from "chokidar";
 import fs from "fs";
 import path from "path";
-import replace from "@rollup/plugin-replace";
 import execute from "rollup-plugin-shell";
-import dfxJson from "../../dfx.json";
 import { defineConfig, type PluginOption } from "vite";
-import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { createHtmlPlugin } from "vite-plugin-html";
-import chokidar, { FSWatcher } from "chokidar";
+import dfxJson from "../../dfx.json";
 import {
-    sassModulesAndMixins,
+    __dirname,
     generateCspForScripts,
     initEnv,
-    __dirname,
+    sassModulesAndMixins,
 } from "./rollup.extras.mjs";
 
 const version = `1000.0.${Date.now()}`;
@@ -138,7 +138,6 @@ export default defineConfig({
         alias: {
             "@src": path.resolve(__dirname, "./src"),
             "@actions": path.resolve(__dirname, "./src/actions"),
-            "@components": path.resolve(__dirname, "./src/components"),
             "@i18n": path.resolve(__dirname, "./src/i18n"),
             "@stores": path.resolve(__dirname, "./src/stores"),
             "@theme": path.resolve(__dirname, "./src/theme"),

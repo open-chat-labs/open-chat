@@ -13,9 +13,7 @@
         UserSummary,
     } from "openchat-client";
     import {
-        allUsersStore,
         compareRoles,
-        currentUserIdStore,
         eventsStore,
         fullWidth,
         lastRightPanelState,
@@ -59,7 +57,6 @@
     import InviteUsers from "./groupdetails/InviteUsers.svelte";
     import Members from "./groupdetails/Members.svelte";
     import PinnedMessages from "./pinned/PinnedMessages.svelte";
-    import UserProfile from "./profile/UserProfile.svelte";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import Thread from "./thread/Thread.svelte";
     import ActiveCallParticipants from "./video/ActiveCallParticipants.svelte";
@@ -72,7 +69,6 @@
     let resizing = $state(false);
     let resizedWidth = $state("7");
 
-    let user = $derived($allUsersStore.get($currentUserIdStore) ?? client.nullUser("unknown"));
     let modal = $derived(!$fullWidth);
     let multiUserChat = $derived($selectedChatSummaryStore as MultiUserChat | undefined);
     let empty = $derived($rightPanelHistory.length === 0);
@@ -543,11 +539,6 @@
             pinned={$selectedChatPinnedMessagesStore}
             dateLastPinned={multiUserChat.dateLastPinned}
             onClose={client.popRightPanelHistory} />
-    {:else if $lastRightPanelState.kind === "user_profile"}
-        <UserProfile
-            onUnsubscribeNotifications={() => client.setSoftDisabled(true)}
-            {user}
-            onCloseProfile={client.popRightPanelHistory} />
     {:else if threadRootEvent !== undefined && $selectedChatSummaryStore !== undefined}
         <Thread
             rootEvent={threadRootEvent}

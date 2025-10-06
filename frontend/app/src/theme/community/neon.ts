@@ -39,8 +39,8 @@ export function getTheme(base: Theme): Theme {
     base.panel.right.modal = level0;
     base.panel.nav.bg = level1;
     base.placeholder = txtPlaceholder;
-    base.button.bg = buttonGradient;
-    base.button.hv = buttonGradient;
+    base.button.bg = primary;
+    base.button.hv = primary;
     base.button.txt = txtOnPrimary;
     base.button["hv-txt"] = txtOnPrimary;
     base.button.disabled = buttonDisabled;

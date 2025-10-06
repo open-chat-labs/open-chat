@@ -94,7 +94,6 @@ export default {
             entries: [
                 { find: "@src", replacement: path.resolve(__dirname, "src") },
                 { find: "@actions", replacement: path.resolve(__dirname, "src/actions") },
-                { find: "@components", replacement: path.resolve(__dirname, "src/components") },
                 { find: "@i18n", replacement: path.resolve(__dirname, "src/i18n") },
                 { find: "@stores", replacement: path.resolve(__dirname, "src/stores") },
                 { find: "@theme", replacement: path.resolve(__dirname, "src/theme") },

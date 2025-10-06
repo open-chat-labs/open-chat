@@ -1,9 +1,6 @@
 <script lang="ts">
     import "@styles/global.scss";
 
-    import Router from "@components/Router.svelte";
-    import "@components/web-components/customEmoji";
-    import "@components/web-components/profileLink";
     import "@i18n/i18n";
     import { reviewingTranslations } from "@i18n/i18n";
     import { trackedEffect } from "@src/utils/effects.svelte";
@@ -54,6 +51,7 @@
     import { getFcmToken, svelteReady } from "tauri-plugin-oc-api";
     import Head from "./Head.svelte";
     import Profiler from "./Profiler.svelte";
+    import Router from "./Router.svelte";
     import Snow from "./Snow.svelte";
     import SwitchDomain from "./SwitchDomain.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
@@ -64,6 +62,8 @@
     import IncomingCall from "./home/video/IncomingCall.svelte";
     import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
     import Upgrading from "./upgrading/Upgrading.svelte";
+    import "./web-components/customEmoji";
+    import "./web-components/profileLink";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 

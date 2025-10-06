@@ -1,7 +1,7 @@
 <script lang="ts">
-    import MultiToggle from "@components/MultiToggle.svelte";
-    import Translatable from "@components/Translatable.svelte";
     import { i18nKey } from "@i18n/i18n";
+    import MultiToggle from "../MultiToggle.svelte";
+    import Translatable from "../Translatable.svelte";
 
     type Props = {
         networks: string[];
