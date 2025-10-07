@@ -40,6 +40,7 @@
         onBack: () => void;
         busy?: boolean;
         onCreateGroup?: () => void;
+        onGeneralSetup?: () => void;
     }
 
     let {
@@ -50,6 +51,7 @@
         onBack,
         busy = false,
         onCreateGroup,
+        onGeneralSetup,
     }: Props = $props();
 
     let nameValid = $derived(
@@ -143,6 +145,7 @@
 
     <Container direction={"vertical"} gap={"lg"} supplementalClass={"group_sub_sections"}>
         <LinkedCard
+            onClick={onGeneralSetup}
             Icon={Cog}
             title={i18nKey("General setup")}
             info={i18nKey(

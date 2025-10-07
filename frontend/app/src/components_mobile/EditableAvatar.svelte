@@ -78,8 +78,8 @@
         background-color: var(--text-tertiary);
 
         &.headline {
-            width: toRem(154);
-            height: toRem(154);
+            width: toRem(170);
+            height: toRem(170);
         }
         &.large {
             width: toRem(150);

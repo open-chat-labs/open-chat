@@ -63,7 +63,8 @@
         [...$serverDirectChatsStore.values()]
             .sort(compareChats)
             .map((c) => $allUsersStore.get(c.them.userId))
-            .filter((u) => u?.kind !== "bot"),
+            .filter((u) => u?.kind !== "bot")
+            .slice(0, 30),
     );
 </script>
 

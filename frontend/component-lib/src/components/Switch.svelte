@@ -6,10 +6,17 @@
     }
 
     let { checked = $bindable(), disabled = false, onChange }: Props = $props();
+
+    function internalOnChange(e: Event) {
+        checked = !checked;
+        e.stopPropagation();
+        e.preventDefault();
+        onChange?.();
+    }
 </script>
 
 <label class="toggle" class:disabled>
-    <input onchange={onChange} {disabled} bind:checked type="checkbox" class="toggle-input" />
+    <input onchange={internalOnChange} {disabled} {checked} type="checkbox" class="toggle-input" />
     <span class="toggle-track">
         <span class="toggle-knob"></span>
     </span>

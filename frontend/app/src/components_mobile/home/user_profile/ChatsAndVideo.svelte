@@ -19,9 +19,9 @@
         type ModerationFlag,
     } from "openchat-client";
     import { getContext } from "svelte";
+    import Setting from "../../Setting.svelte";
     import Translatable from "../../Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
-    import Setting from "./Setting.svelte";
 
     const client = getContext<OpenChat>("client");
 

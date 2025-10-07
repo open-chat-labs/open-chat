@@ -8,12 +8,12 @@
     import FlashOutline from "svelte-material-icons/FlashOutline.svelte";
     import Calendar from "../../calendar/Calendar.svelte";
     import { calendarState, type DateRange } from "../../calendar/calendarState.svelte";
+    import Setting from "../../Setting.svelte";
     import Translatable from "../../Translatable.svelte";
     import StreakInsuranceBuy from "../insurance/StreakInsuranceBuy.svelte";
     import ChitEventsForDay from "../profile/ChitEventsForDay.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import ChitSummary from "./ChitSummary.svelte";
-    import Setting from "./Setting.svelte";
 
     const client = getContext<OpenChat>("client");
 

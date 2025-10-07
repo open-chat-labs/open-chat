@@ -48,17 +48,20 @@
         userLookup={searchUsers}
         {selectedUsers}
         mode={"add"}></SelectUsers>
+</Container>
+
+<div class="add_group_members_next">
     <FloatingButton onClick={onNext}>
         {#snippet icon(color)}
             <Check {color} />
         {/snippet}
     </FloatingButton>
-</Container>
+</div>
 
 <style lang="scss">
-    :global(.container.add_group_members .floating_button) {
+    .add_group_members_next {
         position: absolute;
-        bottom: 0;
-        right: var(--sp-lg);
+        bottom: var(--sp-md);
+        right: var(--sp-md);
     }
 </style>

@@ -39,6 +39,8 @@ export function swipe(node: HTMLElement, config: SwipeConfig) {
 
         if (direction) {
             onSwipe?.(direction);
+            e.preventDefault();
+            e.stopPropagation();
         }
     }
 

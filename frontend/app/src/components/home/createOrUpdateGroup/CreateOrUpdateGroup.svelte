@@ -5,7 +5,6 @@
         type CandidateMember,
         chatIdentifierUnset,
         chatListScopeStore,
-        type CreateGroupResponse,
         type Level,
         mobileWidth,
         type MultiUserChatIdentifier,
@@ -18,7 +17,6 @@
         type UpdateGroupResponse,
         type UserSummary,
     } from "openchat-client";
-    import { ErrorCode } from "openchat-shared";
     import page from "page";
     import { getContext, tick } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -113,33 +111,6 @@
         if (resp.kind === "offline") return i18nKey("offlineError");
         if (resp.kind === "access_gate_invalid") return i18nKey("access.gateInvalid");
         throw new UnsupportedValueError(`Unexpected UpdateGroupResponse type received`, resp);
-    }
-
-    function groupCreationErrorMessage(
-        resp: CreateGroupResponse,
-        level: Level,
-    ): ResourceKey | undefined {
-        if (resp.kind === "success") return undefined;
-        if (resp.kind === "offline") return i18nKey("offlineError");
-        if (resp.kind === "error") {
-            if (resp.code === ErrorCode.NameTooShort) return i18nKey("groupNameTooShort");
-            if (resp.code === ErrorCode.NameTooLong) return i18nKey("groupNameTooLong");
-            if (resp.code === ErrorCode.NameReserved) return i18nKey("groupNameReserved");
-            if (resp.code === ErrorCode.DescriptionTooLong) return i18nKey("groupDescTooLong");
-            if (resp.code === ErrorCode.NameTaken && level === "group")
-                return i18nKey("groupAlreadyExists");
-            if (resp.code === ErrorCode.NameTaken) return i18nKey("channelAlreadyExists");
-            if (resp.code === ErrorCode.AvatarTooBig) return i18nKey("groupAvatarTooBig");
-            if (resp.code === ErrorCode.MaxGroupsCreated) return i18nKey("maxGroupsCreated");
-            if (resp.code === ErrorCode.Throttled) return i18nKey("groupCreationFailed");
-            if (resp.code === ErrorCode.RulesTooShort) return i18nKey("groupRulesTooShort");
-            if (resp.code === ErrorCode.RulesTooLong) return i18nKey("groupRulesTooLong");
-            if (resp.code === ErrorCode.InitiatorSuspended) return i18nKey("userSuspended");
-            if (resp.code === ErrorCode.NotDiamondMember)
-                return i18nKey("unauthorizedToCreatePublicGroup");
-            if (resp.code === ErrorCode.InvalidAccessGate) return i18nKey("access.gateInvalid");
-        }
-        return i18nKey("groupCreationFailed");
     }
 
     function optionallyInviteUsers(chatId: MultiUserChatIdentifier): Promise<void> {
@@ -244,7 +215,7 @@
             .createGroupChat($state.snapshot(candidateGroup))
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    const resourceKey = groupCreationErrorMessage(resp, level);
+                    const resourceKey = client.groupCreationErrorMessage(resp, level);
                     if (resourceKey)
                         toastStore.showFailureToast({
                             ...resourceKey,

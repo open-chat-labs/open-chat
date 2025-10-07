@@ -15,6 +15,7 @@
     import { getContext, tick } from "svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import AddGroupMembers from "./AddGroupMembers.svelte";
+    import GeneralSetup from "./GeneralSetup.svelte";
     import GroupInfo from "./GroupInfo.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -25,7 +26,7 @@
         onClose: () => void;
     }
 
-    type Step = "add_members" | "details";
+    type Step = "add_members" | "details" | "general_setup";
 
     let {
         embeddedContent,
@@ -43,11 +44,16 @@
                 return i18nKey("Add members");
             case "details":
                 return i18nKey("group.addGroupInfo", undefined, candidateGroup.level, true);
+            case "general_setup":
+                return i18nKey("GeneralSetup");
         }
     }
 
     function onBack() {
         switch (step) {
+            case "general_setup":
+                step = "details";
+                break;
             case "details":
                 step = "add_members";
                 break;
@@ -131,9 +137,12 @@
             {busy}
             {onCreateGroup}
             onDeleteUser={deleteMember}
+            onGeneralSetup={() => (step = "general_setup")}
+            {onBack}
             bind:candidateMembers
-            onBack={() => (step = "add_members")}
             bind:candidateGroup
             bind:valid={detailsValid} />
+    {:else if step === "general_setup"}
+        <GeneralSetup bind:candidateGroup />
     {/if}
 </SlidingPageContent>
