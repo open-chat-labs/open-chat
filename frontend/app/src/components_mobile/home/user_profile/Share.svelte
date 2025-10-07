@@ -9,7 +9,7 @@
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
     import QRCode from "../../QRCode.svelte";
     import Translatable from "../../Translatable.svelte";
-    import ProfileSubPage from "./ProfileSubPage.svelte";
+    import SlidingPageContent from "../SlidingPageContent.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -23,7 +23,7 @@
     }
 </script>
 
-<ProfileSubPage title={i18nKey("Share")}>
+<SlidingPageContent title={i18nKey("Share")}>
     <Container
         padding={"xxl"}
         gap={"lg"}
@@ -87,4 +87,4 @@
             </Container>
         </Container>
     </Container>
-</ProfileSubPage>
+</SlidingPageContent>

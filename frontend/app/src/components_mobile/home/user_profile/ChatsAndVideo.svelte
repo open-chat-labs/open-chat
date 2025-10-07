@@ -20,7 +20,7 @@
     } from "openchat-client";
     import { getContext } from "svelte";
     import Translatable from "../../Translatable.svelte";
-    import ProfileSubPage from "./ProfileSubPage.svelte";
+    import SlidingPageContent from "../SlidingPageContent.svelte";
     import Setting from "./Setting.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -30,7 +30,7 @@
     }
 </script>
 
-<ProfileSubPage title={i18nKey("Chats & video calls")}>
+<SlidingPageContent title={i18nKey("Chats & video calls")}>
     <Container padding={"xxl"} gap={"lg"} height={{ kind: "fill" }} direction={"vertical"}>
         <Container gap={"xl"} direction={"vertical"}>
             <H2 colour={"primary"}>
@@ -99,4 +99,4 @@
             </Setting>
         </Container>
     </Container>
-</ProfileSubPage>
+</SlidingPageContent>

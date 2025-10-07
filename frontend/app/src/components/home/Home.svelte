@@ -735,38 +735,13 @@
     }
 
     function newGroup(level: Level = "group", embeddedContent: boolean = false) {
-        if (level === "channel" && $chatListScopeStore.kind !== "community") {
-            return;
-        }
-        const id: MultiUserChatIdentifier =
-            level === "channel" && $chatListScopeStore.kind === "community"
-                ? { kind: "channel", communityId: $chatListScopeStore.id.communityId, channelId: 0 }
-                : { kind: "group_chat", groupId: "" };
+        const candidate = client.createCandidateGroup(level, embeddedContent);
+        if (candidate === undefined) return;
 
         modal = {
             kind: "new_group",
             embeddedContent,
-            candidate: {
-                id,
-                kind: "candidate_group_chat",
-                name: "",
-                description: "",
-                historyVisible: true,
-                public: false,
-                frozen: false,
-                members: [],
-                permissions: defaultChatPermissions(),
-                rules: { ...defaultChatRules(level), newVersion: false },
-                gateConfig: { gate: { kind: "no_gate" }, expiry: undefined },
-                level,
-                membership: {
-                    ...nullMembership(),
-                    role: ROLE_OWNER,
-                },
-                messagesVisibleToNonMembers: false,
-                externalUrl: embeddedContent ? "" : undefined,
-                verified: false,
-            },
+            candidate,
         };
     }
 

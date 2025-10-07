@@ -2,7 +2,6 @@
     import { trackedEffect } from "@src/utils/effects.svelte";
     import { Container } from "component-lib";
     import type {
-        CandidateGroupChat,
         ChannelIdentifier,
         ChatIdentifier,
         CommunityIdentifier,
@@ -23,7 +22,6 @@
         ResourceKey,
         RouteParams,
         Rules,
-        UpdatedRules,
     } from "openchat-client";
     import {
         allUsersStore,
@@ -35,20 +33,17 @@
         chatSummariesStore,
         communitiesStore,
         currentUserStore,
-        defaultChatPermissions,
         defaultChatRules,
         dimensionsHeight,
         fullWidth,
         identityStateStore,
         localUpdates,
-        nullMembership,
         offlineStore,
         pageRedirect,
         pageReplace,
         pinNumberResolverStore,
         querystringStore,
         ROLE_NONE,
-        ROLE_OWNER,
         routeForChatIdentifier,
         routeForScope,
         routeStore,
@@ -101,7 +96,6 @@
     import HallOfFame from "./ChitHallOfFame.svelte";
     import Convert from "./communities/Convert.svelte";
     import EditCommunity from "./communities/edit/Edit.svelte";
-    import CreateOrUpdateGroup from "./createOrUpdateGroup/CreateOrUpdateGroup.svelte";
     import DailyChitModal from "./DailyChitModal.svelte";
     import LeftPanel from "./LeftPanel.svelte";
     import MiddlePanel from "./MiddlePanel.svelte";
@@ -171,7 +165,6 @@
         | { kind: "suspended" }
         | { kind: "suspending"; userId: string }
         | { kind: "no_access" }
-        | { kind: "new_group"; embeddedContent: boolean; candidate: CandidateGroupChat }
         | { kind: "wallet" }
         | { kind: "gate_check_failed"; gates: EnhancedAccessGate[] }
         | { kind: "hall_of_fame" }
@@ -212,7 +205,6 @@
             subscribe("leaveCommunity", onTriggerConfirm),
             subscribe("makeProposal", showMakeProposalModal),
             subscribe("leaveGroup", onTriggerConfirm),
-            subscribe("newGroup", () => newGroup("group")),
             subscribe("wallet", showWallet),
             subscribe("profile", showProfile),
             subscribe("claimDailyChit", claimDailyChit),
@@ -221,12 +213,10 @@
             subscribe("unarchiveChat", unarchiveChat),
             subscribe("forward", forwardMessage),
             subscribe("toggleMuteNotifications", toggleMuteNotifications),
-            subscribe("newChannel", newChannel),
             subscribe("successfulImport", successfulImport),
             subscribe("showProposalFilters", showProposalFilters),
             subscribe("convertGroupToCommunity", convertGroupToCommunity),
             subscribe("clearSelection", () => page(routeForScope($chatListScopeStore))),
-            subscribe("editGroup", editGroup),
             subscribe("userSuspensionChanged", () => window.location.reload()),
             subscribe("selectedChatInvalid", selectedChatInvalid),
             subscribe("sendMessageFailed", sendMessageFailed),
@@ -730,79 +720,6 @@
         modal = { kind: "wallet" };
     }
 
-    function newChannel(embeddedContent: boolean) {
-        newGroup("channel", embeddedContent);
-    }
-
-    function newGroup(level: Level = "group", embeddedContent: boolean = false) {
-        if (level === "channel" && $chatListScopeStore.kind !== "community") {
-            return;
-        }
-        const id: MultiUserChatIdentifier =
-            level === "channel" && $chatListScopeStore.kind === "community"
-                ? { kind: "channel", communityId: $chatListScopeStore.id.communityId, channelId: 0 }
-                : { kind: "group_chat", groupId: "" };
-
-        modal = {
-            kind: "new_group",
-            embeddedContent,
-            candidate: {
-                id,
-                kind: "candidate_group_chat",
-                name: "",
-                description: "",
-                historyVisible: true,
-                public: false,
-                frozen: false,
-                members: [],
-                permissions: defaultChatPermissions(),
-                rules: { ...defaultChatRules(level), newVersion: false },
-                gateConfig: { gate: { kind: "no_gate" }, expiry: undefined },
-                level,
-                membership: {
-                    ...nullMembership(),
-                    role: ROLE_OWNER,
-                },
-                messagesVisibleToNonMembers: false,
-                externalUrl: embeddedContent ? "" : undefined,
-                verified: false,
-            },
-        };
-    }
-
-    function editGroup(detail: { chat: MultiUserChat; rules: UpdatedRules | undefined }) {
-        const chat = detail.chat;
-        let level: Level = chat.id.kind === "group_chat" ? "group" : "channel";
-        let rules = detail.rules ?? { ...defaultChatRules(level), newVersion: false };
-        modal = {
-            kind: "new_group",
-            embeddedContent: chat.kind === "channel" && chat.externalUrl !== undefined,
-            candidate: {
-                id: chat.id,
-                kind: "candidate_group_chat",
-                name: chat.name,
-                description: chat.description,
-                historyVisible: chat.historyVisible,
-                public: chat.public,
-                frozen: chat.frozen,
-                members: [],
-                permissions: { ...chat.permissions },
-                rules,
-                avatar: {
-                    blobUrl: chat.blobUrl,
-                    blobData: chat.blobData,
-                },
-                gateConfig: { ...chat.gateConfig },
-                level,
-                membership: chat.membership,
-                eventsTTL: chat.eventsTTL,
-                messagesVisibleToNonMembers: chat.messagesVisibleToNonMembers,
-                externalUrl: chat.kind === "channel" ? chat.externalUrl : undefined,
-                verified: chat.kind === "group_chat" ? chat.verified : false,
-            },
-        };
-    }
-
     function toggleMuteNotifications(detail: {
         chatId: ChatIdentifier;
         mute: boolean | undefined;
@@ -1085,11 +1002,6 @@
                 gates={modal.gates}
                 onClose={closeModal}
                 onSuccess={accessGatesEvaluated} />
-        {:else if modal.kind === "new_group"}
-            <CreateOrUpdateGroup
-                embeddedContent={modal.embeddedContent}
-                bind:candidateGroup={modal.candidate}
-                onClose={closeModal} />
         {:else if modal.kind === "edit_community"}
             <EditCommunity
                 originalRules={modal.communityRules}

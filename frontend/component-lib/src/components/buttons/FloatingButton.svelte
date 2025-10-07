@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { ColourVars } from "component-lib";
     import { type Snippet } from "svelte";
 
     interface Props {
@@ -10,7 +11,7 @@
 </script>
 
 <button class="floating_button" {disabled} type="button" onclick={onClick}>
-    {@render icon("var(--text-on-primary)")}
+    {@render icon(ColourVars.textOnPrimary)}
 </button>
 
 <style lang="scss">

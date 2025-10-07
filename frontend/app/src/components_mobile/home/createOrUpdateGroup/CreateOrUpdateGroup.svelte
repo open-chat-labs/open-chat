@@ -1,13 +1,5 @@
 <script lang="ts">
-    import {
-        ColourVars,
-        CommonButton,
-        Container,
-        Form,
-        Input,
-        SectionHeader,
-        TextArea,
-    } from "component-lib";
+    import { CommonButton, Container, Form, Input, TextArea } from "component-lib";
     import {
         type CandidateGroupChat,
         type CandidateMember,
@@ -39,6 +31,7 @@
     import EditableAvatar from "../../EditableAvatar.svelte";
     import LinkedCard from "../../LinkedCard.svelte";
     import Translatable from "../../Translatable.svelte";
+    import SlidingPageContent from "../SlidingPageContent.svelte";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 40;
@@ -377,27 +370,7 @@
         action={updateGroup} />
 {/if}
 
-<Container
-    background={ColourVars.background0}
-    mainAxisAlignment={"spaceBetween"}
-    direction={"vertical"}
-    height={{ kind: "fill" }}>
-    <SectionHeader onBack={onClose}>
-        {#snippet title()}
-            <Translatable
-                resourceKey={i18nKey(
-                    "group.addGroupInfo",
-                    undefined,
-                    candidateGroup.level,
-                    true,
-                )} />
-        {/snippet}
-        {#snippet subtitle()}
-            <Translatable
-                resourceKey={i18nKey("group.createTitle", undefined, candidateGroup.level, true)} />
-        {/snippet}
-    </SectionHeader>
-
+<SlidingPageContent title={i18nKey("group.addGroupInfo", undefined, candidateGroup.level, true)}>
     <Container height={{ kind: "fill" }} gap={"xxl"} direction={"vertical"}>
         <Container
             direction={"vertical"}
@@ -472,22 +445,22 @@
                     "Define which user groups can access certain features within the group.",
                 )} />
         </Container>
-    </Container>
 
-    <Container mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"end"} padding={"lg"}>
-        <CommonButton onClick={onClose} size={"small_text"}>
-            <Translatable resourceKey={i18nKey("group.back")}></Translatable>
-        </CommonButton>
-        <CommonButton onClick={() => console.log("create")} size={"medium"} mode={"active"}>
-            {#snippet icon(color)}
-                <AccountGroup {color}></AccountGroup>
-            {/snippet}
-            <Translatable
-                resourceKey={i18nKey("group.create", undefined, candidateGroup.level, true)}
-            ></Translatable>
-        </CommonButton>
+        <Container mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"end"} padding={"lg"}>
+            <CommonButton onClick={onClose} size={"small_text"}>
+                <Translatable resourceKey={i18nKey("group.back")}></Translatable>
+            </CommonButton>
+            <CommonButton onClick={() => console.log("create")} size={"medium"} mode={"active"}>
+                {#snippet icon(color)}
+                    <AccountGroup {color}></AccountGroup>
+                {/snippet}
+                <Translatable
+                    resourceKey={i18nKey("group.create", undefined, candidateGroup.level, true)}
+                ></Translatable>
+            </CommonButton>
+        </Container>
     </Container>
-</Container>
+</SlidingPageContent>
 
 <!-- <ModalContent bind:actualWidth closeIcon {onClose}>
     {#snippet header()}

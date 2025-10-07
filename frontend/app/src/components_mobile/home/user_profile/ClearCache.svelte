@@ -5,7 +5,7 @@
     import { getContext } from "svelte";
     import Sync from "svelte-material-icons/Sync.svelte";
     import Translatable from "../../Translatable.svelte";
-    import ProfileSubPage from "./ProfileSubPage.svelte";
+    import SlidingPageContent from "../SlidingPageContent.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -20,7 +20,7 @@
     }
 </script>
 
-<ProfileSubPage title={i18nKey("Cache management")}>
+<SlidingPageContent title={i18nKey("Cache management")}>
     <Container
         padding={"xxl"}
         gap={"lg"}
@@ -51,4 +51,4 @@
             </Container>
         </Container>
     </Container>
-</ProfileSubPage>
+</SlidingPageContent>

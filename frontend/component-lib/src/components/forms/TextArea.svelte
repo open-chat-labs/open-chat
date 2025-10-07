@@ -12,6 +12,7 @@
         maxlength?: number;
         countdown?: boolean;
         rows?: number;
+        disabled?: boolean;
     }
 
     let {
@@ -24,6 +25,7 @@
         maxlength = 10000,
         countdown = false,
         rows = 4,
+        disabled = false,
     }: Props = $props();
 
     let remaining = $derived(maxlength - (value?.length ?? 0));
@@ -38,6 +40,8 @@
         gap={"sm"}
         crossAxisAlignment={"start"}>
         <textarea
+            class:disabled
+            {disabled}
             data-gram="false"
             data-gramm_editor="false"
             data-enable-grammarly="false"

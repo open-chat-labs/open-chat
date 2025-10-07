@@ -3,7 +3,7 @@
     import { Body, BodySmall, ColourVars, Container, Logo, Overview } from "component-lib";
     import page from "page";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
-    import ProfileSubPage from "./ProfileSubPage.svelte";
+    import SlidingPageContent from "../SlidingPageContent.svelte";
 
     //@ts-ignore
     let version = window.OC_WEBSITE_VERSION;
@@ -16,7 +16,7 @@
     </Container>
 {/snippet}
 
-<ProfileSubPage title={i18nKey("About")}>
+<SlidingPageContent title={i18nKey("About")}>
     <Container
         padding={["sm", "xxl", "xxl", "xxl"]}
         height={{ kind: "fill" }}
@@ -39,7 +39,7 @@
             {@render menuitem("Whitepaper", "/whitepaper")}
         </Container>
     </Container>
-</ProfileSubPage>
+</SlidingPageContent>
 
 <style lang="scss">
     .line {

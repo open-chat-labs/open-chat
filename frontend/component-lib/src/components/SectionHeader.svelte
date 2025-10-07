@@ -1,12 +1,11 @@
 <script lang="ts">
-    import { ColourVars } from "component-lib";
+    import { ColourVars, Label } from "component-lib";
     import type { Snippet } from "svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import Container from "./Container.svelte";
     import IconButton from "./buttons/IconButton.svelte";
     import MenuTrigger from "./menu/MenuTrigger.svelte";
-    import Caption from "./typography/Caption.svelte";
     import Title from "./typography/Title.svelte";
 
     interface Props {
@@ -27,7 +26,7 @@
 
 <Container
     supplementalClass={"section_header"}
-    padding={["md", "sm", "sm", "lg"]}
+    padding={["md", "sm", "sm", "sm"]}
     background={ColourVars.background0}
     crossAxisAlignment={"center"}
     mainAxisAlignment={"spaceBetween"}
@@ -48,9 +47,9 @@
             {@render title()}
         </Title>
         {#if subtitle !== undefined}
-            <Caption colour={"textSecondary"} ellipsisTruncate fontWeight={"normal"}>
+            <Label colour={"textSecondary"} ellipsisTruncate fontWeight={"normal"}>
                 {@render subtitle()}
-            </Caption>
+            </Label>
         {/if}
     </Container>
     {#if action}

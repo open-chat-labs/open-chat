@@ -4,7 +4,7 @@
     import Delete from "svelte-material-icons/DeleteForeverOutline.svelte";
     import Translatable from "../../Translatable.svelte";
     import ConfirmDeleteAccount from "../profile/ConfirmDeleteAccount.svelte";
-    import ProfileSubPage from "./ProfileSubPage.svelte";
+    import SlidingPageContent from "../SlidingPageContent.svelte";
 
     let deleting = $state(false);
     let authenticating = $state(false);
@@ -21,7 +21,7 @@
         onClose={() => (authenticating = false)} />
 {/if}
 
-<ProfileSubPage title={i18nKey("Delete account")}>
+<SlidingPageContent title={i18nKey("Delete account")}>
     <Container
         padding={"xxl"}
         gap={"lg"}
@@ -73,4 +73,4 @@
             </Button>
         </Container>
     </Container>
-</ProfileSubPage>
+</SlidingPageContent>

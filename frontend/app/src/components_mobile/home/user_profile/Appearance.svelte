@@ -3,8 +3,8 @@
     import { Body, BodySmall, Container, Select } from "component-lib";
     import { locale } from "svelte-i18n";
     import Translatable from "../../Translatable.svelte";
+    import SlidingPageContent from "../SlidingPageContent.svelte";
     import FontSize from "./FontSize.svelte";
-    import ProfileSubPage from "./ProfileSubPage.svelte";
 
     let selectedLocale = $state(($locale as string).substring(0, 2));
 
@@ -13,7 +13,7 @@
     });
 </script>
 
-<ProfileSubPage title={i18nKey("Appearance")}>
+<SlidingPageContent title={i18nKey("Appearance")}>
     <Container
         padding={["xxl", "lg"]}
         gap={"lg"}
@@ -65,4 +65,4 @@
             </Container>
         </Container>
     </Container>
-</ProfileSubPage>
+</SlidingPageContent>

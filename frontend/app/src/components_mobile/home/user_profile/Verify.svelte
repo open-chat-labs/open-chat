@@ -15,7 +15,7 @@
     import AccountStar from "svelte-material-icons/AccountStarOutline.svelte";
     import Translatable from "../../Translatable.svelte";
     import Markdown from "../Markdown.svelte";
-    import ProfileSubPage from "./ProfileSubPage.svelte";
+    import SlidingPageContent from "../SlidingPageContent.svelte";
 
     let confirmed = $state(false);
     function verify() {
@@ -23,7 +23,7 @@
     }
 </script>
 
-<ProfileSubPage title={i18nKey("Verification")}>
+<SlidingPageContent title={i18nKey("Verification")}>
     <Container
         padding={"xxl"}
         gap={"lg"}
@@ -92,4 +92,4 @@
             </Container>
         </Container>
     </Container>
-</ProfileSubPage>
+</SlidingPageContent>

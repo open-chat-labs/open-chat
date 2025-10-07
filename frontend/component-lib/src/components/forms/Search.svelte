@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { ColourVars, Container } from "component-lib";
+    import { ColourVars, Container, Spinner } from "component-lib";
+    import Close from "svelte-material-icons/Close.svelte";
     import Magnify from "svelte-material-icons/Magnify.svelte";
 
     interface Props {
@@ -7,6 +8,8 @@
         value?: string;
         placeholder?: string;
         onSearch?: (val?: string) => void;
+        onClear?: () => void;
+        searching?: boolean;
         debounceDuration?: number;
     }
 
@@ -15,6 +18,8 @@
         value = $bindable(),
         placeholder,
         onSearch,
+        onClear,
+        searching = false,
         debounceDuration = 300,
     }: Props = $props();
     let timer: number | undefined;
@@ -46,7 +51,29 @@
     <div class="search_icon">
         <Magnify color={ColourVars.textPlaceholder} />
     </div>
-    <input {id} onkeydown={keydown} bind:value {placeholder} />
+    <input
+        autocomplete="off"
+        data-gram="false"
+        data-gramm_editor="false"
+        data-enable-grammarly="false"
+        data-lpignore="true"
+        spellcheck="false"
+        {id}
+        onkeydown={keydown}
+        bind:value
+        {placeholder} />
+    {#if searching}
+        <Spinner
+            size={"1.4rem"}
+            backgroundColour={ColourVars.textTertiary}
+            foregroundColour={ColourVars.textSecondary} />
+    {:else if value !== undefined && value !== ""}
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div class="close" onclick={onClear}>
+            <Close color={ColourVars.textPlaceholder} />
+        </div>
+    {/if}
 </Container>
 
 <style lang="scss">
@@ -55,7 +82,8 @@
         height: var(--icon-md);
     }
 
-    .search_icon {
+    .search_icon,
+    .close {
         display: flex;
     }
 

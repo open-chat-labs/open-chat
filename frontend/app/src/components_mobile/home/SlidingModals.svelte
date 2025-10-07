@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { subscribe, type PublicProfile } from "openchat-client";
+    import { publish, subscribe, type PublicProfile } from "openchat-client";
     import { onMount } from "svelte";
+    import CreateGroup from "./createOrUpdateGroup/CreateGroup.svelte";
     import SlidingPage from "./SlidingPage.svelte";
     import About from "./user_profile/About.svelte";
     import Appearance from "./user_profile/Appearance.svelte";
@@ -15,6 +16,7 @@
     import Verify from "./user_profile/Verify.svelte";
 
     type SlidingModalType =
+        | { kind: "new_group" }
         | { kind: "user_profile_chats_and_video" }
         | { kind: "user_profile_share" }
         | { kind: "user_profile_about" }
@@ -32,6 +34,7 @@
 
     onMount(() => {
         const unsubs = [
+            subscribe("newGroup", () => (modalType = { kind: "new_group" })),
             subscribe(
                 "userProfileSettings",
                 (profile) => (modalType = { kind: "user_profile_settings", profile }),
@@ -96,6 +99,8 @@
             <CommunitySettings />
         {:else if modalType.kind === "user_profile_settings"}
             <ProfileSettings profile={modalType.profile} />
+        {:else if modalType.kind === "new_group"}
+            <CreateGroup embeddedContent={false} onClose={() => publish("closeModalPage")} />
         {/if}
     </SlidingPage>
 {/if}

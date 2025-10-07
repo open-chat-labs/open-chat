@@ -6,7 +6,7 @@
     import { getContext, onMount } from "svelte";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import Translatable from "../../Translatable.svelte";
-    import ProfileSubPage from "./ProfileSubPage.svelte";
+    import SlidingPageContent from "../SlidingPageContent.svelte";
 
     const client = getContext<OpenChat>("client");
     let botConfigData = $state<BotClientConfigData>();
@@ -46,7 +46,7 @@
     </Container>
 {/snippet}
 
-<ProfileSubPage title={i18nKey("Bot configuration")}>
+<SlidingPageContent title={i18nKey("Bot configuration")}>
     <Container
         padding={"xxl"}
         gap={"lg"}
@@ -78,7 +78,7 @@
             </Container>
         </Container>
     </Container>
-</ProfileSubPage>
+</SlidingPageContent>
 
 <style lang="scss">
     .label {

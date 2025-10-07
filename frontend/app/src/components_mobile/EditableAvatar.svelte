@@ -8,6 +8,7 @@
         disabled?: boolean;
         size?: Size;
         onImageSelected: (args: { url: string; data: Uint8Array }) => void;
+        highlightBorder?: boolean;
     }
 
     let {
@@ -15,6 +16,7 @@
         size = "large",
         disabled = false,
         onImageSelected,
+        highlightBorder = false,
     }: Props = $props();
 
     type Size = "small" | "medium" | "large" | "headline";
@@ -22,7 +24,7 @@
 
 <EditableImageWrapper mode={"avatar"} {disabled} {image} {onImageSelected}>
     {#snippet children(choosePhoto: () => void)}
-        <div class="border">
+        <div class:highlight={highlightBorder} class="border">
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div onclick={choosePhoto} class={`photo-icon avatar ${size}`}>
@@ -57,11 +59,14 @@
     }
 
     .border {
-        // background: var(--gradient);
         background: var(--background-0);
         border-radius: var(--rad-circle);
         padding: 6px;
         position: relative;
+
+        &.highlight {
+            background: var(--gradient);
+        }
     }
 
     .photo-icon {

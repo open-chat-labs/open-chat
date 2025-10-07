@@ -1,8 +1,9 @@
 <script lang="ts">
+    import { Avatar, BodySmall, ColourVars, Container } from "component-lib";
     import type { OpenChat, UserSummary } from "openchat-client";
-    import { AvatarSize, currentUserIdStore } from "openchat-client";
+    import { currentUserIdStore } from "openchat-client";
     import { getContext } from "svelte";
-    import Avatar from "./Avatar.svelte";
+    import CheckboxMarkedOutline from "svelte-material-icons/CheckboxMarkedOutline.svelte";
     import FilteredUsername from "./FilteredUsername.svelte";
     import Badges from "./home/profile/Badges.svelte";
 
@@ -11,38 +12,21 @@
     interface Props {
         searchTerm: string;
         user: UserSummary;
-        hovering?: boolean;
-        compact?: boolean;
         onSelect: (user: UserSummary) => void;
+        checked?: boolean;
     }
 
-    let {
-        searchTerm,
-        user,
-        hovering = $bindable(false),
-        compact = false,
-        onSelect,
-    }: Props = $props();
+    let { searchTerm, user, onSelect, checked = false }: Props = $props();
 </script>
 
-<!-- svelte-ignore a11y_click_events_have_key_events -->
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-<div
-    class="user"
-    class:compact
-    onclick={() => onSelect(user)}
-    onmouseenter={() => (hovering = true)}
-    onmouseleave={() => (hovering = false)}>
-    <span class="avatar">
-        <Avatar
-            statusBorder={hovering ? "var(--members-hv)" : "transparent"}
-            showStatus
-            userId={user.userId}
-            url={client.userAvatarUrl(user)}
-            size={AvatarSize.Default} />
-    </span>
-    <div class="details">
-        <h4>
+<Container
+    padding={["md", "zero"]}
+    crossAxisAlignment={"center"}
+    gap={"md"}
+    onClick={() => onSelect(user)}>
+    <Avatar size={"md"} url={client.userAvatarUrl(user)} />
+    <Container direction={"vertical"}>
+        <Container crossAxisAlignment={"center"} gap={"xs"}>
             <FilteredUsername
                 {searchTerm}
                 me={user.userId === $currentUserIdStore}
@@ -51,60 +35,12 @@
                 uniquePerson={user.isUniquePerson}
                 diamondStatus={user.diamondStatus}
                 streak={user.streak} />
-        </h4>
-        <div class="username">
+        </Container>
+        <BodySmall colour={"textSecondary"}>
             <FilteredUsername {searchTerm} username={"@" + user.username} />
-        </div>
-    </div>
-</div>
-
-<style lang="scss">
-    .user {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        color: var(--txt);
-        padding: $sp4;
-        margin: 0 0 $sp3 0;
-        transition:
-            background-color ease-in-out 100ms,
-            border-color ease-in-out 100ms;
-        cursor: pointer;
-        gap: 12px;
-
-        @include mobile() {
-            padding: $sp3 toRem(10);
-        }
-
-        &.compact {
-            margin: 0;
-            padding: $sp3;
-        }
-
-        @media (hover: hover) {
-            &:hover {
-                background-color: var(--members-hv);
-            }
-        }
-    }
-    .avatar {
-        flex: 0 0 50px;
-    }
-    .details {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        padding: 0 5px;
-
-        .username {
-            font-weight: 200;
-            color: var(--txt-light);
-        }
-
-        h4 {
-            display: flex;
-            gap: $sp2;
-            align-items: center;
-        }
-    }
-</style>
+        </BodySmall>
+    </Container>
+    {#if checked}
+        <CheckboxMarkedOutline size={"1.4rem"} color={ColourVars.primary} />
+    {/if}
+</Container>

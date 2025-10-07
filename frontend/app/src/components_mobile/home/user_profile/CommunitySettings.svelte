@@ -13,7 +13,7 @@
     import Plus from "svelte-material-icons/Plus.svelte";
     import DisplayNameInput from "../../DisplayNameInput.svelte";
     import Translatable from "../../Translatable.svelte";
-    import ProfileSubPage from "./ProfileSubPage.svelte";
+    import SlidingPageContent from "../SlidingPageContent.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -73,7 +73,7 @@
     }
 </script>
 
-<ProfileSubPage title={i18nKey("Communities")}>
+<SlidingPageContent title={i18nKey("Communities")}>
     <Container
         padding={["xxl", "lg"]}
         gap={"lg"}
@@ -167,4 +167,4 @@
             {/if}
         </Container>
     </Container>
-</ProfileSubPage>
+</SlidingPageContent>

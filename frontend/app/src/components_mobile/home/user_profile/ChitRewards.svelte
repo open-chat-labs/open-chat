@@ -11,8 +11,8 @@
     import Translatable from "../../Translatable.svelte";
     import StreakInsuranceBuy from "../insurance/StreakInsuranceBuy.svelte";
     import ChitEventsForDay from "../profile/ChitEventsForDay.svelte";
+    import SlidingPageContent from "../SlidingPageContent.svelte";
     import ChitSummary from "./ChitSummary.svelte";
-    import ProfileSubPage from "./ProfileSubPage.svelte";
     import Setting from "./Setting.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -81,7 +81,7 @@
     <StreakInsuranceBuy onClose={() => (showInsurance = false)} />
 {/if}
 
-<ProfileSubPage title={i18nKey("CHIT rewards")}>
+<SlidingPageContent title={i18nKey("CHIT rewards")}>
     <Container
         padding={"xxl"}
         gap={"lg"}
@@ -174,7 +174,7 @@
             </Container>
         </Container>
     </Container>
-</ProfileSubPage>
+</SlidingPageContent>
 
 <style lang="scss">
     :global(.container.streak_title > h1) {

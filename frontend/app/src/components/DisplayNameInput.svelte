@@ -12,7 +12,8 @@
         originalDisplayName: string | undefined;
         displayName: string | undefined;
         displayNameValid: boolean;
-        disabled?: boolean;
+        disabled: boolean;
+        children?: import("svelte").Snippet;
     }
 
     let {
@@ -20,7 +21,8 @@
         originalDisplayName,
         displayName = $bindable(),
         displayNameValid = $bindable(),
-        disabled = false,
+        disabled,
+        children,
     }: Props = $props();
 
     let invalid = $derived(originalDisplayName !== displayName && !displayNameValid);

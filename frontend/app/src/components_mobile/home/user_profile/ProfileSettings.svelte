@@ -34,8 +34,8 @@
     import SparkleBox from "../../SparkleBox.svelte";
     import Translatable from "../../Translatable.svelte";
     import UsernameInput from "../../UsernameInput.svelte";
+    import SlidingPageContent from "../SlidingPageContent.svelte";
     import Stats from "../Stats.svelte";
-    import ProfileSubPage from "./ProfileSubPage.svelte";
     import UserProfileImageEditor from "./UserProfileImageEditor.svelte";
 
     const MAX_DESC_LENGTH = 1024;
@@ -160,7 +160,7 @@
     }
 </script>
 
-<ProfileSubPage title={i18nKey("Profile settings")}>
+<SlidingPageContent title={i18nKey("Profile settings")}>
     <Container
         padding={["zero", "lg", "lg", "lg"]}
         gap={"lg"}
@@ -318,4 +318,4 @@
             </Container>
         </Container>
     </Container>
-</ProfileSubPage>
+</SlidingPageContent>

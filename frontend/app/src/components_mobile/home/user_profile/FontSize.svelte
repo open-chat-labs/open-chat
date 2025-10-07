@@ -4,17 +4,6 @@
     import Range from "../../Range.svelte";
 </script>
 
-<!-- <div class="grid">
-    <div class="letter zero" onclick={() => fontScaleStore.set(0)}>50%</div>
-    <div class="letter one" onclick={() => fontScaleStore.set(1)}>75%</div>
-    <div class="letter two" onclick={() => fontScaleStore.set(2)}>100%</div>
-    <div class="letter three" onclick={() => fontScaleStore.set(3)}>125%</div>
-    <div class="letter four" onclick={() => fontScaleStore.set(4)}>150%</div>
-    <div class="slider">
-        <Range min={0} max={4} bind:value={$fontScaleStore} />
-    </div>
-</div> -->
-
 <Container allowOverflow direction={"vertical"}>
     <Container allowOverflow minHeight={"1rem"} mainAxisAlignment={"spaceBetween"}>
         <div
