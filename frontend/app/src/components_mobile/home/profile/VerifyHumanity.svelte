@@ -1,17 +1,16 @@
 <script lang="ts">
+    import { CommonButton, Container } from "component-lib";
     import { iconSize, type OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import AccountCheck from "svelte-material-icons/AccountCheck.svelte";
+    import AccountStar from "svelte-material-icons/AccountStarOutline.svelte";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
     import { uniquePersonCredentialGate } from "../../../utils/access";
-    import Button from "../../Button.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import Translatable from "../../Translatable.svelte";
-    import HumanityConfirmation from "../HumanityConfirmation.svelte";
     import Markdown from "../Markdown.svelte";
     import LinkAccounts from "./LinkAccounts.svelte";
     import LinkAccountsModal from "./LinkAccountsModal.svelte";
@@ -28,7 +27,6 @@
     let failed = $state(false);
     let verifying = $state(false);
     let step: "linking" | "verification" = $state("linking");
-    let confirmed = $state(false);
     let iiPrincipal: string | undefined = $state(undefined);
     let checkingPrincipal = $state(true);
 
@@ -38,7 +36,7 @@
             .then((p) => {
                 iiPrincipal = p;
                 if (iiPrincipal !== undefined) {
-                    step = "verification";
+                    verify();
                 }
             })
             .finally(() => (checkingPrincipal = false));
@@ -123,25 +121,27 @@
                     <p class="info">
                         <Translatable resourceKey={i18nKey("human.instruction")} />
                     </p>
-                    <HumanityConfirmation bind:confirmed />
                 {/if}
             </div>
         {/snippet}
 
         {#snippet footer()}
-            <div>
-                <ButtonGroup>
-                    <Button secondary onClick={onClose}
-                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-                    <!-- <Button secondary on:click={() => (step = "linking")}
-                        ><Translatable resourceKey={i18nKey("identity.back")} /></Button> -->
-                    <Button
-                        loading={verifying}
-                        disabled={verifying || !confirmed || iiPrincipal === undefined}
-                        onClick={verify}
-                        ><Translatable resourceKey={i18nKey("access.verify")} /></Button>
-                </ButtonGroup>
-            </div>
+            <Container mainAxisAlignment={"end"} gap={"sm"} crossAxisAlignment={"end"}>
+                <CommonButton onClick={onClose} size={"small_text"}>
+                    <Translatable resourceKey={i18nKey("cancel")}></Translatable>
+                </CommonButton>
+                <CommonButton
+                    loading={verifying}
+                    disabled={verifying || iiPrincipal === undefined}
+                    onClick={verify}
+                    size={"medium"}
+                    mode={"active"}>
+                    {#snippet icon(color)}
+                        <AccountStar {color}></AccountStar>
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("access.verify")}></Translatable>
+                </CommonButton>
+            </Container>
         {/snippet}
     </ModalContent>
 {/if}

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Container, IconButton, type SwipeDirection } from "component-lib";
+    import { Container, type SwipeDirection } from "component-lib";
     import {
         activityFeedShowing,
         emptyCombinedUnreadCounts,
@@ -10,8 +10,6 @@
     } from "openchat-client";
     import page from "page";
     import { getContext, onMount } from "svelte";
-    import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
-    import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import { fade } from "svelte/transition";
     import CommunitiesList from "./CommunitiesList.svelte";
     import CommunitiesScroller from "./CommunitiesScroller.svelte";
@@ -111,23 +109,15 @@
     </button>
 
     {#if unreadRight}
-        <div transition:fade class="right">
-            <IconButton size={"sm"} onclick={() => scrollToUnread(unreadRight)} mode={"primary"}>
-                {#snippet icon(color)}
-                    <ChevronRight size={"2rem"} {color} />
-                {/snippet}
-            </IconButton>
-        </div>
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div onclick={() => scrollToUnread(unreadRight)} transition:fade class="right"></div>
     {/if}
 
     {#if unreadLeft}
-        <div transition:fade class="left">
-            <IconButton size={"sm"} onclick={() => scrollToUnread(unreadLeft)} mode={"primary"}>
-                {#snippet icon(color)}
-                    <ChevronLeft size={"2rem"} {color} />
-                {/snippet}
-            </IconButton>
-        </div>
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div onclick={() => scrollToUnread(unreadLeft)} transition:fade class="left"></div>
     {/if}
 
     {#if !expanded}
@@ -155,17 +145,22 @@
     .right,
     .left {
         position: fixed;
-        bottom: 9.5rem;
+        bottom: toRem(120);
         z-index: 1;
-        // opacity: 0.8;
+        height: toRem(105);
+        // width: toRem(60);
+        width: 6px;
+        // opacity: 0.6;
     }
 
     .right {
-        right: 0.25rem;
+        background: linear-gradient(90deg, transparent, var(--primary));
+        right: 0;
     }
 
     .left {
-        left: 0.25rem;
+        background: linear-gradient(90deg, var(--primary), transparent);
+        left: 0;
     }
 
     .handle_outer {

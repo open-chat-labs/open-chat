@@ -44,7 +44,7 @@
         "diamondGateInfo": "Only users with Diamond membership will be allowed to join",
         "diamondGateInfo2": "In order to join this {level} you are required to have Diamond membership.",
         "diamondMember": "Diamond membership",
-        "doYouHaveUniquePersonCredential": "IMPORTANT! Please confirm that you have verified your unique personhood via <a target='_blank' href='https://id.decideai.xyz'>the DecideAI website</a> _before_ you proceed.",
+        "doYouHaveUniquePersonCredential": "Please confirm that you have verified your unique personhood via the [DecideAI website](https://id.decideai.xyz) _before_ you proceed.",
         "evaluationInterval": "Access gate evaluation interval",
         "evaluationIntervalInfo": "You may choose to enforce the periodic re-evaluation of your access gate. When a member's access lapses, they will not be able to interact with the {level} until they have re-evaluated that the access conditions are still met.",
         "evaluationIntervalSummary": "This access gate will be re-evaluated every {interval}",
@@ -102,7 +102,7 @@
         "uniquePerson": "Unique person",
         "uniquePersonInfo": "Only users who have provided a unique personhood proof will be allowed to join",
         "uniquePersonInfo1": "What if I do not have the verifiable credential?",
-        "uniquePersonInfo2": "If you have not done so, simply head over to <a target='_blank' href='https://id.decideai.xyz'>DecideAI</a>, sign in using the same Internet Identity that you used to access OpenChat and follow the instructions to prove your unique personhood.",
+        "uniquePersonInfo2": "If you have not done so, simply head over to [DecideAI](https://id.decideai.xyz), sign in using the same Internet Identity that you used to access OpenChat and follow the instructions to prove your unique personhood.",
         "uniquePersonInfo3": "It's simple to do, takes only a few minutes and only needs to be done once. When you have completed the process, come back here and hit 'Verify'.",
         "verify": "Verify",
         "visibility": "Access"

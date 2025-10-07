@@ -52,7 +52,7 @@
         {#if !verified}
             <SparkleBox
                 buttonText={i18nKey("Start verification")}
-                onClick={() => publish("verifyHumanity")}>
+                onClick={() => publish("userProfileVerify")}>
                 {#snippet title()}
                     <MulticolourText
                         parts={[

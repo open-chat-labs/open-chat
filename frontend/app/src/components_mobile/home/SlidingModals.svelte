@@ -12,12 +12,14 @@
     import DeleteAccount from "./user_profile/DeleteAccount.svelte";
     import ProfileSettings from "./user_profile/ProfileSettings.svelte";
     import Share from "./user_profile/Share.svelte";
+    import Verify from "./user_profile/Verify.svelte";
 
     type SlidingModalType =
         | { kind: "user_profile_chats_and_video" }
         | { kind: "user_profile_share" }
         | { kind: "user_profile_about" }
         | { kind: "user_profile_appearance" }
+        | { kind: "user_profile_verify" }
         | { kind: "user_profile_community" }
         | { kind: "user_profile_bot_config" }
         | { kind: "user_profile_chit" }
@@ -35,6 +37,7 @@
                 (profile) => (modalType = { kind: "user_profile_settings", profile }),
             ),
             subscribe("userProfileShare", () => (modalType = { kind: "user_profile_share" })),
+            subscribe("userProfileVerify", () => (modalType = { kind: "user_profile_verify" })),
             subscribe(
                 "userProfileCommunitySettings",
                 () => (modalType = { kind: "user_profile_community" }),
@@ -83,6 +86,8 @@
             <Appearance />
         {:else if modalType.kind === "user_profile_cache_management"}
             <ClearCache />
+        {:else if modalType.kind === "user_profile_verify"}
+            <Verify />
         {:else if modalType.kind === "user_profile_bot_config"}
             <BotConfig />
         {:else if modalType.kind === "user_profile_chit"}

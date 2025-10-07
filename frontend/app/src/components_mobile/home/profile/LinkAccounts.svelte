@@ -2,6 +2,7 @@
     import { AuthClient } from "@dfinity/auth-client";
     import { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
     import { Principal } from "@icp-sdk/core/principal";
+    import { CommonButton, Container } from "component-lib";
     import {
         AuthProvider,
         InMemoryAuthClientStorage,
@@ -24,8 +25,6 @@
         EmailSigninHandler,
     } from "../../../utils/signin";
     import AlertBox from "../../AlertBox.svelte";
-    import Button from "../../Button.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import InternetIdentityLogo from "../../landingpages/InternetIdentityLogo.svelte";
     import Translatable from "../../Translatable.svelte";
@@ -381,14 +380,19 @@
             <div class="info">
                 <Translatable resourceKey={i18nKey("identity.signInNext")} />
             </div>
-            <Button
+            <CommonButton
+                mode={"active"}
+                size={"small"}
                 loading={loggingInInitiator}
                 disabled={loggingInInitiator}
                 onClick={loginInternetIdentity}>
-                <span class="link-ii-logo">
-                    <InternetIdentityLogo />
-                </span>
-                <Translatable resourceKey={i18nKey("loginDialog.signin")} /></Button>
+                {#snippet icon()}
+                    <span class="link-ii-logo">
+                        <InternetIdentityLogo />
+                    </span>
+                {/snippet}
+                <Translatable resourceKey={i18nKey("loginDialog.signin")} />
+            </CommonButton>
         {:else if providerStep === "choose_provider"}
             <div class="info center">
                 <Translatable resourceKey={i18nKey(`identity.signIn_${substep.kind}`)} />
@@ -434,32 +438,46 @@
 </div>
 
 <div class="footer">
-    <ButtonGroup>
-        <Button secondary onClick={onClose}
-            ><Translatable resourceKey={i18nKey("cancel")} /></Button>
+    <Container mainAxisAlignment={"end"} gap={"sm"} crossAxisAlignment={"end"}>
+        <CommonButton onClick={onClose} size={"small_text"}>
+            <Translatable resourceKey={i18nKey("cancel")}></Translatable>
+        </CommonButton>
         {#if error !== undefined}
-            <Button secondary onClick={reset}
-                ><Translatable resourceKey={i18nKey("identity.tryAgain")} /></Button>
+            <CommonButton mode={"active"} onClick={reset} size={"small"}>
+                <Translatable resourceKey={i18nKey("identity.tryAgain")}></Translatable>
+            </CommonButton>
         {:else if step === "explain"}
             {#if linkInternetIdentity}
-                <Button onClick={initiateLinking}>
-                    <span class="link-ii-logo">
-                        <InternetIdentityLogo />
-                    </span>
-                    <Translatable resourceKey={i18nKey("identity.link")} /></Button>
+                <CommonButton mode={"active"} onClick={initiateLinking} size={"small"}>
+                    {#snippet icon()}
+                        <span class="link-ii-logo">
+                            <InternetIdentityLogo />
+                        </span>
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("identity.link")}></Translatable>
+                </CommonButton>
             {:else}
-                <Button onClick={initiateLinking}>
-                    <Translatable resourceKey={i18nKey("identity.linkedAccounts.start")} /></Button>
+                <CommonButton mode={"active"} onClick={initiateLinking} size={"small"}>
+                    <Translatable resourceKey={i18nKey("identity.linkedAccounts.start")}
+                    ></Translatable>
+                </CommonButton>
             {/if}
         {:else if step === "linking"}
-            <Button secondary onClick={reset}
-                ><Translatable resourceKey={i18nKey("identity.back")} /></Button>
+            <CommonButton onClick={reset} size={"small_text"}>
+                <Translatable resourceKey={i18nKey("identity.back")}></Translatable>
+            </CommonButton>
             {#if substep.kind === "ready_to_link"}
-                <Button loading={linking} disabled={linking} onClick={linkIdentities}>
-                    <Translatable resourceKey={i18nKey("identity.link")} /></Button>
+                <CommonButton
+                    mode={"active"}
+                    disabled={linking}
+                    loading={linking}
+                    onClick={linkIdentities}
+                    size={"medium"}>
+                    <Translatable resourceKey={i18nKey("identity.link")}></Translatable>
+                </CommonButton>
             {/if}
         {/if}
-    </ButtonGroup>
+    </Container>
 </div>
 
 <style lang="scss">
@@ -497,5 +515,6 @@
         gap: $sp3;
         justify-content: space-between;
         align-items: center;
+        flex-wrap: wrap;
     }
 </style>
