@@ -42,6 +42,7 @@
         onCreateGroup?: () => void;
         onGeneralSetup?: () => void;
         onRules?: () => void;
+        onAccessGates?: () => void;
         minNameLength: number;
         maxNameLength: number;
     }
@@ -60,6 +61,7 @@
         onCreateGroup,
         onGeneralSetup,
         onRules,
+        onAccessGates,
     }: Props = $props();
 
     function groupAvatarSelected(detail: { url: string; data: Uint8Array }) {
@@ -156,6 +158,7 @@
                 "Enable sharing via link, disappearing messages, or hide chat history for new members.",
             )} />
         <LinkedCard
+            onClick={onAccessGates}
             Icon={AlertRhombusOutline}
             title={i18nKey("Access gates")}
             info={i18nKey("Fine tune who can join your group by setting specific access gates.")} />

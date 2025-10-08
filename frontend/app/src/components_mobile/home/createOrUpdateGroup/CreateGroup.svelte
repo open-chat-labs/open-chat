@@ -14,6 +14,7 @@
     import page from "page";
     import { getContext, tick } from "svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
+    import AccessGates from "./AccessGates.svelte";
     import AddGroupMembers from "./AddGroupMembers.svelte";
     import GeneralSetup from "./GeneralSetup.svelte";
     import GroupInfo from "./GroupInfo.svelte";
@@ -31,7 +32,7 @@
         onClose: () => void;
     }
 
-    type Step = "add_members" | "details" | "general_setup" | "rules";
+    type Step = "add_members" | "details" | "general_setup" | "rules" | "access_gates";
 
     let {
         embeddedContent,
@@ -56,6 +57,8 @@
         switch (step) {
             case "add_members":
                 return i18nKey("Add members");
+            case "access_gates":
+                return i18nKey("Access gates");
             case "details":
                 return i18nKey("group.addGroupInfo", undefined, candidateGroup.level, true);
             case "general_setup":
@@ -67,6 +70,9 @@
 
     function onBack() {
         switch (step) {
+            case "access_gates":
+                step = "details";
+                break;
             case "general_setup":
                 step = "details";
                 break;
@@ -162,6 +168,7 @@
             onDeleteUser={deleteMember}
             onGeneralSetup={() => (step = "general_setup")}
             onRules={() => (step = "rules")}
+            onAccessGates={() => (step = "access_gates")}
             {onBack}
             bind:candidateMembers
             bind:candidateGroup
@@ -170,5 +177,7 @@
         <GeneralSetup {onBack} bind:candidateGroup />
     {:else if step === "rules"}
         <Rules valid={rulesValid} maxLength={MAX_RULES_LENGTH} {onBack} bind:candidateGroup />
+    {:else if step === "access_gates"}
+        <AccessGates valid={rulesValid} maxLength={MAX_RULES_LENGTH} {onBack} bind:candidateGroup />
     {/if}
 </SlidingPageContent>

@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { ColourVarKeys } from "component-lib";
-    import { Avatar, BodySmall, ColourVars, Container, Subtitle } from "component-lib";
+    import { Avatar, BodySmall, ColourVars, Container, Rem, Subtitle } from "component-lib";
     import type { CandidateGroupChat, OpenChat } from "openchat-client";
     import { getContext } from "svelte";
 
@@ -54,7 +54,10 @@
     background={ColourVars.background1}
     borderRadius={"lg"}
     padding={"lg"}>
-    <Avatar size={"xxl"} url={candidateGroup.avatar?.blobUrl ?? "/assets/group.svg"} />
+    <Avatar
+        customSize={Rem.fromPixels(64).toString()}
+        highlightBorder
+        url={candidateGroup.avatar?.blobUrl ?? "/assets/group.svg"} />
     <Container direction={"vertical"} gap={"sm"}>
         <Subtitle fontWeight={"bold"}>{candidateGroup.name}</Subtitle>
         <Container gap={"xs"} supplementalClass="group_card_features" wrap>

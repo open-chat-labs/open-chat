@@ -104,6 +104,8 @@
         all: unset;
         width: 100%;
         color: var(--text-secondary);
+        font-size: var(--typo-body-sz);
+        line-height: var(--typo-body-lh);
 
         &::placeholder {
             color: var(--text-placeholder);

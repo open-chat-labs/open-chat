@@ -54,7 +54,11 @@
 {#snippet communityRow(community: CommunitySummary)}
     {@const [unread, muted, counts] = props.hasUnread(community)}
     {@const count = muted ? counts.muted : counts.unmuted}
-    <Container onClick={() => props.onSelect(community)} crossAxisAlignment={"center"} gap={"md"}>
+    <Container
+        height={{ kind: "hug" }}
+        onClick={() => props.onSelect(community)}
+        crossAxisAlignment={"center"}
+        gap={"md"}>
         <Avatar
             url={client.communityAvatarUrl(community.id.communityId, community.avatar)}
             size={"lg"}
@@ -78,7 +82,12 @@
     </Container>
 {/snippet}
 
-<Container width={{ kind: "fill" }} gap={"xl"} direction={"vertical"} height={{ kind: "hug" }}>
+<Container
+    padding={["zero", "lg", "zero", "lg"]}
+    width={{ kind: "fill" }}
+    gap={"xl"}
+    direction={"vertical"}
+    height={{ kind: "hug" }}>
     <Container width={{ kind: "fill" }} gap={"lg"} direction={"vertical"} height={{ kind: "hug" }}>
         <ListAction onClick={exploreCommunities}>
             {#snippet icon(color)}
@@ -96,7 +105,7 @@
     <!-- <Container width={{ kind: "fill" }} gap={"md"} direction={"vertical"} height={{ kind: "hug" }}>
         <Label fontWeight={"bold"} colour={"secotSecondary"}>Your favourites</Label>
     </Container> -->
-    <Container width={{ kind: "fill" }} gap={"lg"} direction={"vertical"} height={{ kind: "hug" }}>
+    <Container width={{ kind: "fill" }} gap={"lg"} direction={"vertical"}>
         <Label fontWeight={"bold"} colour={"textSecondary"}>Your communities</Label>
 
         {#each $sortedCommunitiesStore as community}
