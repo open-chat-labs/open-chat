@@ -17,6 +17,7 @@
     import AddGroupMembers from "./AddGroupMembers.svelte";
     import GeneralSetup from "./GeneralSetup.svelte";
     import GroupInfo from "./GroupInfo.svelte";
+    import Rules from "./Rules.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -26,7 +27,7 @@
         onClose: () => void;
     }
 
-    type Step = "add_members" | "details" | "general_setup";
+    type Step = "add_members" | "details" | "general_setup" | "rules";
 
     let {
         embeddedContent,
@@ -46,6 +47,8 @@
                 return i18nKey("group.addGroupInfo", undefined, candidateGroup.level, true);
             case "general_setup":
                 return i18nKey("GeneralSetup");
+            case "rules":
+                return i18nKey("Rules");
         }
     }
 
@@ -59,6 +62,9 @@
                 break;
             case "add_members":
                 publish("closeModalPage");
+                break;
+            case "rules":
+                step = "details";
                 break;
         }
     }
@@ -138,11 +144,14 @@
             {onCreateGroup}
             onDeleteUser={deleteMember}
             onGeneralSetup={() => (step = "general_setup")}
+            onRules={() => (step = "rules")}
             {onBack}
             bind:candidateMembers
             bind:candidateGroup
             bind:valid={detailsValid} />
     {:else if step === "general_setup"}
-        <GeneralSetup bind:candidateGroup />
+        <GeneralSetup {onBack} bind:candidateGroup />
+    {:else if step === "rules"}
+        <Rules {onBack} bind:candidateGroup />
     {/if}
 </SlidingPageContent>

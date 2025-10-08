@@ -41,6 +41,7 @@
         busy?: boolean;
         onCreateGroup?: () => void;
         onGeneralSetup?: () => void;
+        onRules?: () => void;
     }
 
     let {
@@ -52,6 +53,7 @@
         busy = false,
         onCreateGroup,
         onGeneralSetup,
+        onRules,
     }: Props = $props();
 
     let nameValid = $derived(
@@ -156,6 +158,7 @@
             title={i18nKey("Access gates")}
             info={i18nKey("Fine tune who can join your group by setting specific access gates.")} />
         <LinkedCard
+            onClick={onRules}
             Icon={FormatList}
             title={i18nKey("Rules")}
             info={i18nKey(
