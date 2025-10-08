@@ -3,7 +3,7 @@
 </script>
 
 <script lang="ts">
-    import { Avatar, Container } from "component-lib";
+    import { Avatar, Container, type SwipeDirection } from "component-lib";
     import {
         activityFeedShowing,
         allUsersStore,
@@ -109,6 +109,42 @@
                 break;
         }
     }
+
+    function onSwipe(dir: SwipeDirection) {
+        if (dir === "down" || dir === "up") return;
+        if (dir === "left") {
+            switch (props.selection) {
+                case "chats":
+                    itemSelected("communities");
+                    break;
+                case "communities":
+                    itemSelected($favouritesStore.size > 0 ? "favourites" : "notification");
+                    break;
+                case "favourites":
+                    itemSelected("notification");
+                    break;
+                case "notification":
+                    itemSelected("profile");
+                    break;
+            }
+        }
+        if (dir === "right") {
+            switch (props.selection) {
+                case "profile":
+                    itemSelected("notification");
+                    break;
+                case "notification":
+                    itemSelected($favouritesStore.size > 0 ? "favourites" : "communities");
+                    break;
+                case "favourites":
+                    itemSelected("communities");
+                    break;
+                case "communities":
+                    itemSelected("chats");
+                    break;
+            }
+        }
+    }
 </script>
 
 <Container
@@ -118,6 +154,7 @@
     minWidth={"100%"}
     minHeight={"5.5rem"}
     gap={"xl"}
+    {onSwipe}
     borderColour={"var(--background-0)"}
     height={{ kind: "fixed", size: "5.5rem" }}
     borderRadius={["md", "md", "zero", "zero"]}

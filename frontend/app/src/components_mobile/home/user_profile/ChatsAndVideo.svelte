@@ -37,16 +37,19 @@
                 <Translatable resourceKey={i18nKey("Chats")}></Translatable>
             </H2>
             <Setting
+                toggle={() => lowBandwidth.toggle()}
                 info={"If you're having connection issues or just want to save bandwidth, enabling this option will try to optimise the app's data traffic."}
                 title={"lowBandwidth"}>
                 <Switch bind:checked={$lowBandwidth} />
             </Setting>
             <Setting
+                toggle={() => renderPreviews.toggle()}
                 info={"When you share links in your message, with this option turned on, a preview will ne automatically rendered. Turn it off if you don't want to see previews."}
                 title={"renderPreviews"}>
                 <Switch bind:checked={$renderPreviews} />
             </Setting>
             <Setting
+                toggle={() => hideMessagesFromDirectBlocked.toggle()}
                 info={"With this option turned on, messages from users you have blocked will not be visible in group and community chats. Keep in mind that this might cause you to lose some conversation context."}
                 title={"Hide messages from blocked users"}>
                 <Switch bind:checked={$hideMessagesFromDirectBlocked} />
@@ -57,16 +60,19 @@
                 <Translatable resourceKey={i18nKey("Video calls")}></Translatable>
             </H2>
             <Setting
+                toggle={() => videoCameraOn.toggle()}
                 info={"With this option on, camera will be active when a vide call starts. By default, this option is turned on."}
                 title={"profile.videoCameraOn"}>
                 <Switch bind:checked={$videoCameraOn} />
             </Setting>
             <Setting
+                toggle={() => videoMicOn.toggle()}
                 info={"When this option on, your microphone will be active when a video call starts, otherwise it will be muted. By default, this option is turned on."}
                 title={"profile.videoMicOn"}>
                 <Switch bind:checked={$videoMicOn} />
             </Setting>
             <Setting
+                toggle={() => videoSpeakerView.toggle()}
                 info={"This setting controls whether the video call view will focus on the active speaker or automatically or just show a grid of all of the speakers."}
                 title={"profile.videoSpeakerView"}>
                 <Switch bind:checked={$videoSpeakerView} />
@@ -77,6 +83,7 @@
                 <Translatable resourceKey={i18nKey("Restricted content")}></Translatable>
             </H2>
             <Setting
+                toggle={() => toggleModerationFlag(ModerationFlags.Offensive)}
                 info={"Choose if you would like to see communities and groups marked as offensive."}
                 title={"communities.offensive"}>
                 <Switch
@@ -84,6 +91,7 @@
                     checked={$offensiveEnabledStore} />
             </Setting>
             <Setting
+                toggle={() => toggleModerationFlag(ModerationFlags.Adult)}
                 info={"Choose if you would like to see communitie and groups marked as containing adult content."}
                 title={"communities.adult"}>
                 <Switch
@@ -91,6 +99,7 @@
                     checked={$adultEnabledStore} />
             </Setting>
             <Setting
+                toggle={() => toggleModerationFlag(ModerationFlags.UnderReview)}
                 info={"Choose if you would like to see communities and groups that are currently under review."}
                 title={"communities.underReview"}>
                 <Switch
