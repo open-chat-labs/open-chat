@@ -7,10 +7,11 @@
     interface Props {
         children?: Snippet;
         icon?: Snippet<[string]>;
-        mode?: "default" | "filter" | "rounded";
+        mode?: "filled" | "default" | "filter" | "rounded";
         onRemove?: () => void;
+        fill?: boolean;
     }
-    let { children, icon, mode = "default", onRemove }: Props = $props();
+    let { children, icon, mode = "default", onRemove, fill = false }: Props = $props();
 
     let iconColour = $derived(getIconColour());
     let textColour = $derived(getTextColour());
@@ -19,6 +20,7 @@
 
     function getIconColour(): string {
         switch (mode) {
+            case "filled":
             case "filter":
                 return ColourVars.primaryLight;
             default:
@@ -28,6 +30,8 @@
 
     function getTextColour(): ColourVarKeys {
         switch (mode) {
+            case "filled":
+                return "primaryLight";
             case "filter":
                 return "secondaryLight";
             case "default":
@@ -39,6 +43,8 @@
 
     function getTextColourVar(): string {
         switch (mode) {
+            case "filled":
+                return ColourVars.primaryLight;
             case "filter":
                 return ColourVars.secondaryLight;
             case "default":
@@ -50,6 +56,8 @@
 
     function getBackgroundColour(): string {
         switch (mode) {
+            case "filled":
+                return ColourVars.primaryMuted;
             case "filter":
                 return ColourVars.secondaryMuted;
             default:
@@ -63,17 +71,17 @@
     background={bgColour}
     mainAxisAlignment={"spaceBetween"}
     crossAxisAlignment={"center"}
-    width={{ kind: "hug" }}
+    width={{ kind: fill ? "fill" : "hug" }}
     gap={"sm"}
     borderColour={mode === "rounded" ? ColourVars.primary : ColourVars.textTertiary}
     borderRadius={mode === "rounded" ? "circle" : "md"}
-    borderWidth={mode === "filter" ? "zero" : "thick"}
+    borderWidth={mode === "filter" || mode === "filled" ? "zero" : "thick"}
     padding={["xs", onRemove ? "md" : "lg", "xs", icon ? "md" : "lg"]}
     onClick={onRemove}>
     {#if icon}
         <span class="icon">{@render icon(iconColour)}</span>
     {/if}
-    <Label colour={textColour} width={{ kind: "hug" }}>
+    <Label colour={textColour} width={{ kind: "fill" }}>
         {@render children?.()}
     </Label>
     {#if onRemove}

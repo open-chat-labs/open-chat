@@ -28,11 +28,11 @@
 
     const client = getContext<OpenChat>("client");
 
-    const MIN_LENGTH = 3;
-    const MAX_LENGTH = 40;
     const MAX_DESC_LENGTH = 1024;
 
     interface Props {
+        rulesValid: boolean;
+        nameValid: boolean;
         candidateGroup: CandidateGroupChat;
         candidateMembers: CandidateMember[];
         onDeleteUser: (user: UserOrUserGroup) => void;
@@ -42,29 +42,25 @@
         onCreateGroup?: () => void;
         onGeneralSetup?: () => void;
         onRules?: () => void;
+        minNameLength: number;
+        maxNameLength: number;
     }
 
     let {
+        rulesValid,
+        nameValid,
+        minNameLength,
+        maxNameLength,
         candidateMembers = $bindable(),
         candidateGroup = $bindable(),
         onDeleteUser,
-        valid = $bindable(),
+        valid,
         onBack,
         busy = false,
         onCreateGroup,
         onGeneralSetup,
         onRules,
     }: Props = $props();
-
-    let nameValid = $derived(
-        candidateGroup.name.length >= MIN_LENGTH && candidateGroup.name.length <= MAX_LENGTH,
-    );
-
-    $effect(() => {
-        if (nameValid !== valid) {
-            valid = nameValid;
-        }
-    });
 
     function groupAvatarSelected(detail: { url: string; data: Uint8Array }) {
         candidateGroup.avatar = {
@@ -73,6 +69,12 @@
         };
     }
 </script>
+
+{#snippet rulesError()}
+    {#if !rulesValid}
+        Rules have validation errors
+    {/if}
+{/snippet}
 
 <Container
     supplementalClass={"group_info"}
@@ -94,8 +96,8 @@
     <Form onSubmit={() => console.log("On submit")}>
         <Container direction={"vertical"} gap={"lg"} supplementalClass={"group_basic_info"}>
             <Input
-                minlength={MIN_LENGTH}
-                maxlength={MAX_LENGTH}
+                minlength={minNameLength}
+                maxlength={maxNameLength}
                 countdown
                 disabled={busy}
                 error={!nameValid}
@@ -158,11 +160,12 @@
             title={i18nKey("Access gates")}
             info={i18nKey("Fine tune who can join your group by setting specific access gates.")} />
         <LinkedCard
+            error={rulesValid ? undefined : rulesError}
             onClick={onRules}
             Icon={FormatList}
             title={i18nKey("Rules")}
             info={i18nKey(
-                "Define a set of rules that the members of your group will ahve to follow.",
+                "Define a set of rules that the members of your group will have to follow.",
             )} />
         <LinkedCard
             Icon={AccountMultiple}

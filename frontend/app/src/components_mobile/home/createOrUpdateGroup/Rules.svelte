@@ -8,14 +8,14 @@
     import Translatable from "../../Translatable.svelte";
     import GroupCard from "./GroupCard.svelte";
 
-    const MAX_RULES_LENGTH = 1024;
-
     interface Props {
         candidateGroup: CandidateGroupChat;
         onBack: () => void;
+        valid: boolean;
+        maxLength: number;
     }
 
-    let { candidateGroup = $bindable(), onBack }: Props = $props();
+    let { candidateGroup = $bindable(), onBack, valid, maxLength }: Props = $props();
 </script>
 
 <Container
@@ -47,8 +47,9 @@
         <TextArea
             bind:value={candidateGroup.rules.text}
             minlength={0}
-            maxlength={MAX_RULES_LENGTH}
+            maxlength={maxLength}
             rows={8}
+            error={!valid}
             placeholder={interpolate(
                 $_,
                 i18nKey("rules.placeholder", undefined, candidateGroup.level, true),

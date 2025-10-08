@@ -19,6 +19,10 @@
     import GroupInfo from "./GroupInfo.svelte";
     import Rules from "./Rules.svelte";
 
+    const MAX_RULES_LENGTH = 1024;
+    const MIN_NAME_LENGTH = 3;
+    const MAX_NAME_LENGTH = 40;
+
     const client = getContext<OpenChat>("client");
 
     interface Props {
@@ -35,9 +39,18 @@
     }: Props = $props();
     let step = $state<Step>("add_members");
     let title = $derived(getTitle());
-    let detailsValid = $state(false);
     let candidateMembers = $state<CandidateMember[]>([]);
     let busy = $state(false);
+    let rulesValid = $derived(
+        !candidateGroup.rules.enabled ||
+            (candidateGroup.rules.text.length > 0 &&
+                candidateGroup.rules.text.length < MAX_RULES_LENGTH),
+    );
+    let nameValid = $derived(
+        candidateGroup.name.length >= MIN_NAME_LENGTH &&
+            candidateGroup.name.length <= MAX_NAME_LENGTH,
+    );
+    let valid = $derived(rulesValid && nameValid);
 
     function getTitle() {
         switch (step) {
@@ -140,18 +153,22 @@
             onNext={() => (step = "details")} />
     {:else if step === "details"}
         <GroupInfo
+            {rulesValid}
+            {nameValid}
             {busy}
             {onCreateGroup}
+            minNameLength={MIN_NAME_LENGTH}
+            maxNameLength={MAX_NAME_LENGTH}
             onDeleteUser={deleteMember}
             onGeneralSetup={() => (step = "general_setup")}
             onRules={() => (step = "rules")}
             {onBack}
             bind:candidateMembers
             bind:candidateGroup
-            bind:valid={detailsValid} />
+            {valid} />
     {:else if step === "general_setup"}
         <GeneralSetup {onBack} bind:candidateGroup />
     {:else if step === "rules"}
-        <Rules {onBack} bind:candidateGroup />
+        <Rules valid={rulesValid} maxLength={MAX_RULES_LENGTH} {onBack} bind:candidateGroup />
     {/if}
 </SlidingPageContent>

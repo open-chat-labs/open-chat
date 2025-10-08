@@ -7,7 +7,7 @@
         value?: string;
         placeholder?: string;
         subtext?: Snippet;
-        error?: Snippet;
+        error?: boolean;
         minlength?: number;
         maxlength?: number;
         countdown?: boolean;
@@ -61,15 +61,8 @@
     </Container>
     {#if subtext}
         <div class="subtext">
-            <Caption colour={"textSecondary"}>
+            <Caption colour={error ? "error" : "textSecondary"}>
                 {@render subtext()}
-            </Caption>
-        </div>
-    {/if}
-    {#if error}
-        <div class="subtext">
-            <Caption colour={"error"}>
-                {@render error()}
             </Caption>
         </div>
     {/if}
