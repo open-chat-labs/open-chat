@@ -12,9 +12,10 @@
         info: ResourceKey;
         onClick?: () => void;
         error?: Snippet;
+        children?: Snippet;
     }
 
-    let { Icon, title, info, onClick, error }: Props = $props();
+    let { Icon, title, info, onClick, error, children }: Props = $props();
 </script>
 
 <Container
@@ -35,6 +36,7 @@
         <Body>
             <Translatable resourceKey={info}></Translatable>
         </Body>
+        {@render children?.()}
     </Container>
     {#if error}
         <Chip fill mode={"filled"}>

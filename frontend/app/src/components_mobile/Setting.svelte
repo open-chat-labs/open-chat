@@ -9,19 +9,20 @@
         info: string;
         children: Snippet;
         toggle?: () => void;
+        disabled?: boolean;
     }
 
-    let { title, info, children, toggle }: Props = $props();
+    let { title, info, children, toggle, disabled = false }: Props = $props();
 </script>
 
-<Container onClick={toggle} gap={"sm"} direction={"vertical"}>
+<Container onClick={disabled ? undefined : toggle} gap={"sm"} direction={"vertical"}>
     <Container>
-        <Body fontWeight={"bold"}>
+        <Body colour={disabled ? "textTertiary" : "textPrimary"} fontWeight={"bold"}>
             <Translatable resourceKey={i18nKey(title)}></Translatable>
         </Body>
         {@render children()}
     </Container>
-    <BodySmall colour={"textSecondary"}>
+    <BodySmall colour={disabled ? "textTertiary" : "textSecondary"}>
         <Translatable resourceKey={i18nKey(info)}></Translatable>
     </BodySmall>
 </Container>

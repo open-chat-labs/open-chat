@@ -4,89 +4,75 @@
     import Close from "svelte-material-icons/Close.svelte";
     import Container from "./Container.svelte";
 
+    type Mode = "filled" | "default" | "filter" | "rounded";
+
     interface Props {
         children?: Snippet;
         icon?: Snippet<[string]>;
-        mode?: "filled" | "default" | "filter" | "rounded";
+        mode?: Mode;
         onRemove?: () => void;
+        onClick?: () => void;
         fill?: boolean;
     }
-    let { children, icon, mode = "default", onRemove, fill = false }: Props = $props();
+    let { children, icon, mode = "default", onRemove, fill = false, onClick }: Props = $props();
 
-    let iconColour = $derived(getIconColour());
-    let textColour = $derived(getTextColour());
-    let textColourVar = $derived(getTextColourVar());
-    let bgColour = $derived(getBackgroundColour());
+    const iconColours: Record<Mode, string> = {
+        filled: ColourVars.primaryLight,
+        filter: ColourVars.primaryLight,
+        rounded: ColourVars.primary,
+        default: ColourVars.primary,
+    };
 
-    function getIconColour(): string {
-        switch (mode) {
-            case "filled":
-            case "filter":
-                return ColourVars.primaryLight;
-            default:
-                return ColourVars.primary;
-        }
-    }
+    const textColours: Record<Mode, ColourVarKeys> = {
+        filled: "primaryLight",
+        filter: "secondaryLight",
+        rounded: "primary",
+        default: "textSecondary",
+    };
 
-    function getTextColour(): ColourVarKeys {
-        switch (mode) {
-            case "filled":
-                return "primaryLight";
-            case "filter":
-                return "secondaryLight";
-            case "default":
-                return "textSecondary";
-            case "rounded":
-                return "primary";
-        }
-    }
+    const textColourVars: Record<Mode, string> = {
+        filled: ColourVars.primaryLight,
+        filter: ColourVars.secondaryLight,
+        rounded: ColourVars.primary,
+        default: ColourVars.textSecondary,
+    };
 
-    function getTextColourVar(): string {
-        switch (mode) {
-            case "filled":
-                return ColourVars.primaryLight;
-            case "filter":
-                return ColourVars.secondaryLight;
-            case "default":
-                return ColourVars.textSecondary;
-            case "rounded":
-                return ColourVars.primary;
-        }
-    }
+    const borderColours: Record<Mode, string> = {
+        filled: ColourVars.primaryMuted,
+        filter: ColourVars.secondaryMuted,
+        rounded: ColourVars.primary,
+        default: ColourVars.textTertiary,
+    };
 
-    function getBackgroundColour(): string {
-        switch (mode) {
-            case "filled":
-                return ColourVars.primaryMuted;
-            case "filter":
-                return ColourVars.secondaryMuted;
-            default:
-                return "transparent";
-        }
-    }
+    const backgroundColours: Record<Mode, string> = {
+        filled: ColourVars.primaryMuted,
+        filter: ColourVars.secondaryMuted,
+        rounded: "transparent",
+        default: "transparent",
+    };
 </script>
 
 <Container
     supplementalClass={"chip"}
-    background={bgColour}
+    background={backgroundColours[mode]}
     mainAxisAlignment={"spaceBetween"}
     crossAxisAlignment={"center"}
     width={{ kind: fill ? "fill" : "hug" }}
     gap={"sm"}
-    borderColour={mode === "rounded" ? ColourVars.primary : ColourVars.textTertiary}
+    borderColour={borderColours[mode]}
     borderRadius={mode === "rounded" ? "circle" : "md"}
-    borderWidth={mode === "filter" || mode === "filled" ? "zero" : "thick"}
+    borderWidth={"thick"}
     padding={["xs", onRemove ? "md" : "lg", "xs", icon ? "md" : "lg"]}
-    onClick={onRemove}>
+    onClick={onRemove ?? onClick}>
     {#if icon}
-        <span class="icon">{@render icon(iconColour)}</span>
+        <span class="icon">{@render icon(iconColours[mode])}</span>
     {/if}
-    <Label colour={textColour} width={{ kind: "fill" }}>
+    <Label colour={textColours[mode]} width={{ kind: "fill" }}>
         {@render children?.()}
     </Label>
     {#if onRemove}
         <span class="icon">
-            <Close color={textColourVar} />
+            <Close color={textColourVars[mode]} />
         </span>
     {/if}
 </Container>

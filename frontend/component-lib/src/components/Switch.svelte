@@ -112,11 +112,11 @@
     }
 
     .toggle-input:disabled + .toggle-track .toggle-knob {
-        background: var(--disabled-button);
-        color: var(--disabled-button);
+        background: var(--text-tertiary);
+        color: var(--text-tertiary);
     }
 
     .toggle-input:disabled + .toggle-track {
-        border-color: var(--disabled-button);
+        border-color: var(--text-tertiary);
     }
 </style>

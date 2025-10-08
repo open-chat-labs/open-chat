@@ -114,6 +114,7 @@
 
     .subtext {
         padding-inline-start: var(--sp-xl);
+        padding-inline-end: var(--sp-xl);
     }
 
     .countdown {

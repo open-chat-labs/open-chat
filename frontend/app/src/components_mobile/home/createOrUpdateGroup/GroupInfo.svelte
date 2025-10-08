@@ -1,7 +1,9 @@
 <script lang="ts">
+    import { gateLabel } from "@src/utils/access";
     import {
         Body,
         BodySmall,
+        Chip,
         CommonButton,
         Container,
         Form,
@@ -9,16 +11,22 @@
         TextArea,
         UserChip,
     } from "component-lib";
-    import type {
-        CandidateGroupChat,
-        CandidateMember,
-        OpenChat,
-        UserOrUserGroup,
+    import {
+        isCompositeGate,
+        isLeafGate,
+        type CandidateGroupChat,
+        type CandidateMember,
+        type LeafGate,
+        type OpenChat,
+        type UserOrUserGroup,
     } from "openchat-client";
     import { getContext } from "svelte";
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
+    import AlertOutline from "svelte-material-icons/AlertOutline.svelte";
     import AlertRhombusOutline from "svelte-material-icons/AlertRhombusOutline.svelte";
+    import Check from "svelte-material-icons/Check.svelte";
+    import ClockOutline from "svelte-material-icons/ClockOutline.svelte";
     import Cog from "svelte-material-icons/Cog.svelte";
     import FormatList from "svelte-material-icons/FormatListBulletedType.svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -63,6 +71,14 @@
         onRules,
         onAccessGates,
     }: Props = $props();
+
+    let accessGates = $derived.by<LeafGate[]>(() => {
+        if (candidateGroup.gateConfig.gate.kind === "no_gate") return [];
+        if (isLeafGate(candidateGroup.gateConfig.gate)) return [candidateGroup.gateConfig.gate];
+        if (isCompositeGate(candidateGroup.gateConfig.gate))
+            return candidateGroup.gateConfig.gate.gates;
+        return [];
+    });
 
     function groupAvatarSelected(detail: { url: string; data: Uint8Array }) {
         candidateGroup.avatar = {
@@ -161,7 +177,27 @@
             onClick={onAccessGates}
             Icon={AlertRhombusOutline}
             title={i18nKey("Access gates")}
-            info={i18nKey("Fine tune who can join your group by setting specific access gates.")} />
+            info={i18nKey("Fine tune who can join your group by setting specific access gates.")}>
+            <Container wrap gap={"sm"}>
+                {#each accessGates as gate}
+                    <Chip mode={"filter"}>
+                        {#snippet icon(color)}
+                            <Check {color} />
+                        {/snippet}
+                        <Translatable resourceKey={i18nKey(gateLabel[gate.kind])}></Translatable>
+                    </Chip>
+                {/each}
+                {#if candidateGroup.gateConfig.expiry !== undefined}
+                    <Chip>
+                        {#snippet icon(color)}
+                            <ClockOutline {color} />
+                        {/snippet}
+                        <Translatable resourceKey={i18nKey("Evaluation interval set")}
+                        ></Translatable>
+                    </Chip>
+                {/if}
+            </Container>
+        </LinkedCard>
         <LinkedCard
             error={rulesValid ? undefined : rulesError}
             onClick={onRules}
@@ -169,7 +205,16 @@
             title={i18nKey("Rules")}
             info={i18nKey(
                 "Define a set of rules that the members of your group will have to follow.",
-            )} />
+            )}>
+            {#if candidateGroup.rules.enabled}
+                <Chip>
+                    {#snippet icon(color)}
+                        <AlertOutline {color} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("Rules enabled")}></Translatable>
+                </Chip>
+            {/if}
+        </LinkedCard>
         <LinkedCard
             Icon={AccountMultiple}
             title={i18nKey("Permissions")}
