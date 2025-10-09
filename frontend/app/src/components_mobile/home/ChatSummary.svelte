@@ -307,6 +307,8 @@
     <!-- svelte-ignore a11y_click_events_have_key_events -->
 
     <MenuTrigger
+        fill
+        maskUI
         classString={"chat_summary_menu_trigger"}
         disabled={$suspendedUserStore || readonly}
         position={"top"}
@@ -414,7 +416,7 @@
         <Container
             onClick={selectChat}
             supplementalClass={"chat_summary"}
-            padding={["zero", "lg"]}
+            padding={["md", "lg"]}
             mainAxisAlignment={"spaceBetween"}
             crossAxisAlignment={"center"}
             gap={"lg"}>
@@ -504,11 +506,17 @@
         gap: $sp2;
     }
 
-    :global(.chat_summary_menu_trigger) {
-        width: 100%;
+    :global(.menu_trigger_clone > .chat_summary) {
+        background-color: var(--background-1) !important;
+        box-shadow: var(--menu-sh);
+        opacity: 1 !important;
     }
 
-    :global(.chat_summary_menu_trigger) {
+    /* :global(.chat_summary_menu_trigger) {
+        width: 100%;
+    } */
+
+    /* :global(.chat_summary_menu_trigger) {
         transition: opacity 200ms ease-in-out;
     }
 
@@ -517,7 +525,7 @@
                 > .chat_summary_menu_trigger:not(.open)
         ) {
         opacity: 0.5;
-    }
+    } */
 
     :global(.chat_summary .chat-date) {
         color: var(--txt-light);

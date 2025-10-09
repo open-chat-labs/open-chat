@@ -489,7 +489,7 @@ svelte-virtual-list-viewport {
     transition: opacity 300ms ease-in-out;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.3);
     z-index: 90;
     pointer-events: none;
 }

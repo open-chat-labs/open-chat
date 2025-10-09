@@ -46,7 +46,7 @@
             }
         }
         if (isCompositeGate(gateConfig.gate)) {
-            return gateConfig.gate.gates.filter((g) => g.kind === "neuron_gate");
+            return gateConfig.gate.gates.filter((g) => g.kind === "neuron_gate") as NeuronGate[];
         }
         return [];
     });

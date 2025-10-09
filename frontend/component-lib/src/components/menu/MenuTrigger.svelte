@@ -86,6 +86,7 @@
         menuClone = menu.cloneNode(true) as HTMLElement;
         const rect = menu.getBoundingClientRect();
 
+        menuClone.addEventListener("contextmenu", (e) => e.preventDefault());
         menuClone.classList.add("menu_trigger_clone");
         menuClone.style.cssText = `
                 position: fixed;
@@ -111,6 +112,7 @@
 
 {#if useLongpress}
     <div
+        class:fill
         class:open
         class={`menu-trigger noselect ${props.classString}`}
         bind:this={menu}
