@@ -8,7 +8,6 @@
         isLeafGate,
         publish,
         type AccessGate,
-        type AccessGateConfig,
         type CandidateGroupChat,
         type LeafGate,
     } from "openchat-client";
@@ -24,11 +23,11 @@
 
     interface Props {
         candidateGroup: CandidateGroupChat;
-        gateConfig: AccessGateConfig;
         onBack: () => void;
+        onLearnMore: () => void;
     }
 
-    let { candidateGroup = $bindable(), onBack }: Props = $props();
+    let { candidateGroup = $bindable(), onBack, onLearnMore }: Props = $props();
     let gateConfig = $derived(candidateGroup.gateConfig);
     let diamond = $derived($currentUserStore.diamondStatus.kind !== "inactive");
     let hasAccessGates = $derived(gateConfig.gate.kind !== "no_gate");
@@ -131,9 +130,14 @@
     <GroupCard {candidateGroup} />
 
     <Container padding={["zero", "md"]} gap={"sm"} direction={"vertical"}>
-        <Body colour={diamond ? "textPrimary" : "textTertiary"} fontWeight={"bold"}>
-            <Translatable resourceKey={i18nKey("Access gates")}></Translatable>
-        </Body>
+        <Container>
+            <Body colour={diamond ? "textPrimary" : "textTertiary"} fontWeight={"bold"}>
+                <Translatable resourceKey={i18nKey("Access gates")}></Translatable>
+            </Body>
+            <CommonButton onClick={onLearnMore} mode={"active"} size={"small_text"}>
+                <Translatable resourceKey={i18nKey("Learn more")}></Translatable>
+            </CommonButton>
+        </Container>
 
         <BodySmall colour={diamond ? "textSecondary" : "textTertiary"}>
             <Translatable

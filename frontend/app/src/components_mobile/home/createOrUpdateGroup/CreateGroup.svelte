@@ -14,6 +14,7 @@
     import page from "page";
     import { getContext, tick } from "svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
+    import AboutAccessGates from "./AboutAccessGates.svelte";
     import AccessGates from "./AccessGates.svelte";
     import AddGroupMembers from "./AddGroupMembers.svelte";
     import GeneralSetup from "./GeneralSetup.svelte";
@@ -32,7 +33,13 @@
         onClose: () => void;
     }
 
-    type Step = "add_members" | "details" | "general_setup" | "rules" | "access_gates";
+    type Step =
+        | "add_members"
+        | "details"
+        | "general_setup"
+        | "rules"
+        | "access_gates"
+        | "about_access_gates";
 
     let {
         embeddedContent,
@@ -55,6 +62,8 @@
 
     function getTitle() {
         switch (step) {
+            case "about_access_gates":
+                return i18nKey("Access gates description");
             case "add_members":
                 return i18nKey("Add members");
             case "access_gates":
@@ -70,6 +79,9 @@
 
     function onBack() {
         switch (step) {
+            case "about_access_gates":
+                step = "access_gates";
+                break;
             case "access_gates":
                 step = "details";
                 break;
@@ -150,7 +162,10 @@
     }
 </script>
 
-<SlidingPageContent {onBack} {title} subtitle={i18nKey("Create group")}>
+<SlidingPageContent
+    {onBack}
+    {title}
+    subtitle={step === "about_access_gates" ? undefined : i18nKey("Create group")}>
     {#if step === "add_members"}
         <AddGroupMembers
             onDeleteUser={deleteMember}
@@ -178,6 +193,11 @@
     {:else if step === "rules"}
         <Rules valid={rulesValid} maxLength={MAX_RULES_LENGTH} {onBack} bind:candidateGroup />
     {:else if step === "access_gates"}
-        <AccessGates valid={rulesValid} maxLength={MAX_RULES_LENGTH} {onBack} bind:candidateGroup />
+        <AccessGates
+            onLearnMore={() => (step = "about_access_gates")}
+            {onBack}
+            bind:candidateGroup />
+    {:else if step === "about_access_gates"}
+        <AboutAccessGates />
     {/if}
 </SlidingPageContent>
