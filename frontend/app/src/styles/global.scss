@@ -484,3 +484,12 @@ body.native-android {
 svelte-virtual-list-viewport {
     width: 100%;
 }
+
+#masked_overlay {
+    transition: opacity 300ms ease-in-out;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 90;
+    pointer-events: none;
+}

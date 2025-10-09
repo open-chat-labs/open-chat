@@ -23,8 +23,7 @@
         mobileMode?: MobileMode;
         disabled?: boolean;
         fill?: boolean;
-        onOpen?: (menu: HTMLElement) => void;
-        onClose?: () => void;
+        maskUI?: boolean;
     }
 
     let props: Props = $props();
@@ -33,10 +32,12 @@
     let children = $derived(props.children);
     let disabled = $derived(props.disabled);
     let fill = $derived(props.fill ?? false);
+    let maskUI = $derived(props.maskUI ?? false);
 
     let menu: HTMLElement;
     let open = $state(false);
     let useLongpress = $derived(mobileMode === "longpress" && isTouchDevice);
+    let menuClone = $state<HTMLElement>();
 
     const context = getAllContexts();
 
@@ -68,12 +69,37 @@
             }),
             closeMenu,
         );
-        props.onOpen?.(menu);
+        if (maskUI) {
+            activateMask();
+        }
     }
 
     function closeMenu() {
         open = portalState.close();
-        props.onClose?.();
+        menuClone?.remove();
+        document.getElementById("masked_overlay")?.remove();
+    }
+
+    function activateMask() {
+        const overlay = document.createElement("div");
+        overlay.id = "masked_overlay";
+        menuClone = menu.cloneNode(true) as HTMLElement;
+        const rect = menu.getBoundingClientRect();
+
+        menuClone.classList.add("menu_trigger_clone");
+        menuClone.style.cssText = `
+                position: fixed;
+                left: ${rect.left}px;
+                top: ${rect.top}px;
+                width: ${rect.width}px;
+                height: ${rect.height}px;
+                margin: 0;
+                z-index: 91;
+                pointer-events: auto;
+            `;
+
+        document.body.appendChild(overlay);
+        document.body.appendChild(menuClone);
     }
 </script>
 

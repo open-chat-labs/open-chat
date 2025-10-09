@@ -67,17 +67,6 @@
     function removeAll() {
         neuronGates.forEach((g) => deleteGate(gateConfig, g));
     }
-
-    function menuOpened(trigger: HTMLElement) {
-        const rect = trigger.getBoundingClientRect();
-        const mask = document.getElementById("mask-hole");
-        mask?.setAttribute("x", rect.left.toString());
-        mask?.setAttribute("y", rect.top.toString());
-        mask?.setAttribute("width", rect.width.toString());
-        mask?.setAttribute("height", rect.height.toString());
-        mask?.setAttribute("rx", "8px");
-        mask?.setAttribute("ry", "8px");
-    }
 </script>
 
 <Container
@@ -106,12 +95,7 @@
             <Container gap={"md"} direction={"vertical"}>
                 {#each neuronGates as gate}
                     {@const token = client.getTokenDetailsForAccessGate(gate)}
-                    <MenuTrigger
-                        onOpen={menuOpened}
-                        classString={"neuron_gate_menu_trigger"}
-                        fill
-                        position={"bottom"}
-                        align={"end"}>
+                    <MenuTrigger maskUI fill position={"bottom"} align={"end"}>
                         <Container
                             supplementalClass={"neuron_gate_list_item"}
                             crossAxisAlignment={"center"}
@@ -174,47 +158,13 @@
             <Translatable resourceKey={i18nKey("Add gate")}></Translatable>
         </CommonButton>
     </Container>
-    <svg style="position:absolute;width:0;height:0">
-        <defs>
-            <mask id="hole-mask">
-                <!-- White = area where overlay is visible (the dimming) -->
-                <rect x="0" y="0" width="100vw" height="100vh" fill="white" />
-                <!-- Black = hole where overlay is transparent -->
-                <rect id="mask-hole" x="100" y="100" width="100" height="100" fill="black" />
-            </mask>
-        </defs>
-    </svg>
-    <div class="masked_overlay"></div>
 </Container>
 
 <style lang="scss">
-    :global(.neuron_gate_menu_trigger.open > .neuron_gate_list_item) {
+    :global(.menu_trigger_clone > .neuron_gate_list_item) {
         background-color: var(--background-1) !important;
         border-color: transparent !important;
         box-shadow: var(--menu-sh);
         opacity: 1 !important;
-    }
-
-    :global(.neuron_gate_list:has(.neuron_gate_menu_trigger.open) .masked_overlay) {
-        display: block;
-        opacity: 1;
-    }
-
-    svg {
-        position: absolute;
-    }
-
-    .masked_overlay {
-        transition: opacity 300ms ease-in-out;
-        opacity: 0;
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 90;
-
-        /* Both mask syntaxes for full browser coverage */
-        mask: url(#hole-mask);
-        -webkit-mask: url(#hole-mask);
-        pointer-events: none;
     }
 </style>
