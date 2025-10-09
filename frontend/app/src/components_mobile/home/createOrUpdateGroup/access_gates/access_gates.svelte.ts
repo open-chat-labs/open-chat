@@ -24,13 +24,21 @@ export function addLeaf(gateConfig: AccessGateConfig, newGate: LeafGate) {
 
 export function deleteGate(gateConfig: AccessGateConfig, gate: LeafGate) {
     if (isCompositeGate(gateConfig.gate)) {
-        gateConfig.gate.gates = gateConfig.gate.gates.filter((g) => g.kind !== gate.kind);
+        gateConfig.gate.gates = gateConfig.gate.gates.filter((g) => !gatesMatch(g, gate));
         if (gateConfig.gate.gates.length === 1) {
             gateConfig.gate = gateConfig.gate.gates[0];
         }
     } else {
         gateConfig.gate = { kind: "no_gate" };
     }
+}
+
+function gatesMatch(a: LeafGate, b: LeafGate): boolean {
+    // TODO fill in other types
+    if (a.kind === "neuron_gate" && b.kind === "neuron_gate") {
+        return a.governanceCanister === b.governanceCanister;
+    }
+    return a.kind === b.kind;
 }
 
 export function defaultNeuronGate(): NeuronGate {
