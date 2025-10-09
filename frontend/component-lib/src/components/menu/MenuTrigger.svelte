@@ -22,6 +22,9 @@
         menuItems: Snippet;
         mobileMode?: MobileMode;
         disabled?: boolean;
+        fill?: boolean;
+        onOpen?: (menu: HTMLElement) => void;
+        onClose?: () => void;
     }
 
     let props: Props = $props();
@@ -29,6 +32,7 @@
     let menuItems = $derived(props.menuItems);
     let children = $derived(props.children);
     let disabled = $derived(props.disabled);
+    let fill = $derived(props.fill ?? false);
 
     let menu: HTMLElement;
     let open = $state(false);
@@ -64,10 +68,12 @@
             }),
             closeMenu,
         );
+        props.onOpen?.(menu);
     }
 
     function closeMenu() {
         open = portalState.close();
+        props.onClose?.();
     }
 </script>
 
@@ -88,7 +94,12 @@
 {:else}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class:open class={`menu-trigger ${props.classString}`} bind:this={menu} onclick={click}>
+    <div
+        class:fill
+        class:open
+        class={`menu-trigger ${props.classString}`}
+        bind:this={menu}
+        onclick={click}>
         {@render children()}
     </div>
 {/if}
@@ -102,6 +113,9 @@
         cursor: pointer;
         &.noselect {
             user-select: none;
+        }
+        &.fill {
+            width: 100%;
         }
     }
 </style>

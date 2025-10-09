@@ -69,5 +69,6 @@
 <style lang="scss">
     .menu {
         position: fixed;
+        z-index: 100;
     }
 </style>

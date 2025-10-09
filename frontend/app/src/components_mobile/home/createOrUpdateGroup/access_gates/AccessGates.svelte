@@ -9,25 +9,35 @@
         publish,
         type AccessGate,
         type CandidateGroupChat,
-        type LeafGate,
     } from "openchat-client";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import Check from "svelte-material-icons/Check.svelte";
     import DiamondOutline from "svelte-material-icons/DiamondOutline.svelte";
     import Plus from "svelte-material-icons/Plus.svelte";
-    import MulticolourText from "../../MulticolourText.svelte";
-    import Setting from "../../Setting.svelte";
-    import SparkleBox from "../../SparkleBox.svelte";
-    import Translatable from "../../Translatable.svelte";
-    import GroupCard from "./GroupCard.svelte";
+    import MulticolourText from "../../../MulticolourText.svelte";
+    import Setting from "../../../Setting.svelte";
+    import SparkleBox from "../../../SparkleBox.svelte";
+    import Translatable from "../../../Translatable.svelte";
+    import GroupCard from "../GroupCard.svelte";
+    import { addLeaf, deleteGate } from "./access_gates.svelte";
 
     interface Props {
         candidateGroup: CandidateGroupChat;
         onBack: () => void;
         onLearnMore: () => void;
+        onNeuronGate: () => void;
+        onPaymentGate: () => void;
+        onTokenBalanceGate: () => void;
     }
 
-    let { candidateGroup = $bindable(), onBack, onLearnMore }: Props = $props();
+    let {
+        candidateGroup = $bindable(),
+        onBack,
+        onLearnMore,
+        onNeuronGate,
+        onPaymentGate,
+        onTokenBalanceGate,
+    }: Props = $props();
     let gateConfig = $derived(candidateGroup.gateConfig);
     let diamond = $derived($currentUserStore.diamondStatus.kind !== "inactive");
     let hasAccessGates = $derived(gateConfig.gate.kind !== "no_gate");
@@ -47,34 +57,6 @@
         expiryEnabled = !expiryEnabled;
     }
 
-    function addLeaf(newGate: LeafGate) {
-        if (isCompositeGate(gateConfig.gate)) {
-            gateConfig.gate.gates.push(newGate);
-        } else {
-            if (gateConfig.gate.kind === "no_gate") {
-                gateConfig.gate = newGate;
-            } else {
-                const oldGate = { ...gateConfig.gate };
-                gateConfig.gate = {
-                    kind: "composite_gate",
-                    gates: [oldGate, newGate],
-                    operator: "and",
-                };
-            }
-        }
-    }
-
-    function deleteGate(gate: LeafGate) {
-        if (isCompositeGate(gateConfig.gate)) {
-            gateConfig.gate.gates = gateConfig.gate.gates.filter((g) => g.kind !== gate.kind);
-            if (gateConfig.gate.gates.length === 1) {
-                gateConfig.gate = gateConfig.gate.gates[0];
-            }
-        } else {
-            gateConfig.gate = { kind: "no_gate" };
-        }
-    }
-
     function isGateActive(gate: AccessGate) {
         if (isLeafGate(gateConfig.gate)) {
             return gate.kind === gateConfig.gate.kind;
@@ -85,12 +67,28 @@
         return false;
     }
 
+    function clickGate(gate: AccessGate, active: boolean) {
+        switch (gate.kind) {
+            case "neuron_gate":
+                onNeuronGate();
+                break;
+            case "payment_gate":
+                onPaymentGate();
+                break;
+            case "token_balance_gate":
+                onTokenBalanceGate();
+                break;
+            default:
+                toggleGate(gate, active);
+        }
+    }
+
     function toggleGate(gate: AccessGate, active: boolean) {
         if (isLeafGate(gate)) {
             if (active) {
-                deleteGate(gate);
+                deleteGate(gateConfig, gate);
             } else {
-                addLeaf(gate);
+                addLeaf(gateConfig, gate);
             }
         }
     }
@@ -185,7 +183,7 @@
                 {#each gateBindings as gate}
                     {@const active = isGateActive(gate.gate)}
                     <Chip
-                        onClick={() => toggleGate(gate.gate, active)}
+                        onClick={() => clickGate(gate.gate, active)}
                         mode={active ? "filter" : "default"}>
                         {#snippet icon(color)}
                             {#if active}

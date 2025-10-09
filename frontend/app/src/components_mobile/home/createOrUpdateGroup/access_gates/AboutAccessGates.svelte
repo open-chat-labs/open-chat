@@ -1,29 +1,14 @@
 <script lang="ts">
-    import { i18nKey } from "@src/i18n/i18n";
-    import { Body, BodySmall, Container } from "component-lib";
-    import Translatable from "../../Translatable.svelte";
+    import { Container } from "component-lib";
+    import AboutAccessGate from "./AboutAccessGate.svelte";
+    import AboutNeuronGate from "./AboutNeuronGate.svelte";
 </script>
 
-{#snippet gate(icon: string, alt: string, title: string, sub: string)}
-    <Container crossAxisAlignment={"center"} gap={"xl"}>
-        <img class={"icon"} src={`/assets/access_gate/${icon}`} {alt} />
-        <Container gap={"xs"} direction={"vertical"}>
-            <Body fontWeight={"bold"}>
-                <Translatable resourceKey={i18nKey(title)}></Translatable>
-            </Body>
-            <BodySmall colour={"textSecondary"}>
-                <Translatable resourceKey={i18nKey(sub)}></Translatable>
-            </BodySmall>
-        </Container>
-    </Container>
+{#snippet gate(icon: string, alt: string, title: string, subtitle: string)}
+    <AboutAccessGate padding={"md"} {icon} {alt} {title} {subtitle} />
 {/snippet}
 
-<Container
-    supplementalClass={"group_general_setup"}
-    height={{ kind: "fill" }}
-    gap={"xl"}
-    direction={"vertical"}
-    padding={"xl"}>
+<Container height={{ kind: "fill" }} direction={"vertical"} padding={"xs"}>
     {@render gate(
         "lifetime_diamond.svg",
         "lifetime diamond",
@@ -36,12 +21,7 @@
         "Diamond membership",
         "Users must have an active diamond membership to obtain access.",
     )}
-    {@render gate(
-        "neuron.svg",
-        "neuron holder",
-        "Neuron holder",
-        "Users must stake a neuron with specific criteria (e.g. dissolve delay, stake amount).",
-    )}
+    <AboutNeuronGate padding={"md"} />
     {@render gate(
         "payment.svg",
         "payment",
@@ -73,9 +53,3 @@
         "Must hold a specific NFT gate for useres who own a particular NFT (feature not yet available).",
     )}
 </Container>
-
-<style lang="scss">
-    img.icon {
-        width: 3rem;
-    }
-</style>
