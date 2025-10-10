@@ -9,7 +9,10 @@
         Container,
         Form,
         Input,
-        Select,
+        Option,
+        Search,
+        Select2,
+        Subtitle,
     } from "component-lib";
     import {
         isCompositeGate,
@@ -37,20 +40,29 @@
     let { gateConfig = $bindable(), gate, onBack }: Props = $props();
 
     const bindings = getNeuronGateBindings($nervousSystemLookup);
-    let nervousSystemKey = $state<string>(gate.governanceCanister);
+    let searching = $state(false);
+    let searchTerm = $state<string>();
+    let filteredBindings = $derived(
+        bindings.filter(
+            (b) =>
+                searchTerm === undefined ||
+                searchTerm === "" ||
+                b.label.toLocaleLowerCase().includes(searchTerm?.toLocaleLowerCase()),
+        ),
+    );
+    let selectedNervousSystem = $state(initialBinding());
     let candidateTokenDetails = $derived(client.getTokenDetailsForAccessGate(gate));
     let minDissolveDelay = $state(client.getMinDissolveDelayDays(gate)?.toString() ?? "");
     let minStake = $state(client.getMinStakeInTokens(gate)?.toString() ?? "");
     let invalidDissolveDelay = $derived(minDissolveDelay !== "" && isNaN(Number(minDissolveDelay)));
     let invalidMinStake = $derived(minStake !== "" && isNaN(Number(minStake)));
     let valid = $derived(
-        !(
-            invalidDissolveDelay ||
-            invalidMinStake ||
-            nervousSystemKey === "" ||
-            nervousSystemKey === undefined
-        ),
+        !(invalidDissolveDelay || invalidMinStake || selectedNervousSystem === undefined),
     );
+
+    function initialBinding() {
+        return bindings.find((b) => b.gate.governanceCanister === gate.governanceCanister);
+    }
 
     function save() {
         const delay =
@@ -65,11 +77,11 @@
         if (
             delay !== gate.minDissolveDelay ||
             stake !== gate.minStakeE8s ||
-            nervousSystemKey !== gate.governanceCanister
+            selectedNervousSystem?.gate?.governanceCanister !== gate.governanceCanister
         ) {
             updateOrAddGate({
                 kind: "neuron_gate",
-                governanceCanister: nervousSystemKey ?? "",
+                governanceCanister: selectedNervousSystem?.gate?.governanceCanister ?? "",
                 minDissolveDelay: delay,
                 minStakeE8s: stake,
             });
@@ -105,6 +117,7 @@
     }
 
     function updateGate() {
+        // nervousSystemKey = key;
         minDissolveDelay = "";
         minStake = "";
     }
@@ -129,19 +142,54 @@
 
         <Form onSubmit={save}>
             <Container direction={"vertical"} gap={"xl"}>
-                <Select onchange={updateGate} bind:value={nervousSystemKey}>
-                    <option disabled={true} value={undefined}
-                        >{"Choose one of the available nervous systems"}</option>
-                    {#each bindings as g}
-                        <!-- <option disabled={!g.enabled} value={g.key}>{g.label}</option> -->
-                        <option value={g.key}>{g.label}</option>
-                    {/each}
+                <Select2
+                    onSelect={(val) => {
+                        selectedNervousSystem = val;
+                        updateGate();
+                    }}
+                    placeholder={"Choose one of the available nervous systems"}
+                    value={selectedNervousSystem}>
+                    {#snippet selectedValue(val)}
+                        {val.label}
+                    {/snippet}
+                    {#snippet selectOptions(onSelect)}
+                        <Container
+                            height={{ kind: "fixed", size: "100%" }}
+                            padding={"lg"}
+                            gap={"lg"}
+                            direction={"vertical"}>
+                            <Subtitle fontWeight={"bold"}>
+                                <Translatable resourceKey={i18nKey("Choose nervous system")}
+                                ></Translatable>
+                            </Subtitle>
+
+                            <Search
+                                {searching}
+                                id={"search_component"}
+                                placeholder={$_("search")}
+                                bind:value={searchTerm} />
+
+                            <Container
+                                supplementalClass={"nervous_system_options"}
+                                direction={"vertical"}>
+                                {#each filteredBindings as g}
+                                    <Option
+                                        disabled={!g.enabled}
+                                        value={g}
+                                        onClick={onSelect}
+                                        selected={selectedNervousSystem?.key === g.key}>
+                                        {g.label}
+                                    </Option>
+                                {/each}
+                            </Container>
+                        </Container>
+                    {/snippet}
                     {#snippet subtext()}
                         <Translatable
                             resourceKey={i18nKey("Choose one of the available nervous systems")}
                         ></Translatable>
                     {/snippet}
-                </Select>
+                </Select2>
 
                 <Input
                     maxlength={100}
@@ -177,3 +225,10 @@
         </CommonButton>
     </Container>
 </Container>
+
+<style lang="scss">
+    // this is a bit unfortunate
+    :global(.container.nervous_system_options) {
+        flex: auto !important;
+    }
+</style>

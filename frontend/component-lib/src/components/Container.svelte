@@ -42,6 +42,7 @@
     interface Props {
         children: Snippet;
         direction?: Direction;
+        parentDirection?: Direction;
         gap?: SpacingSize;
         padding?: Padding;
         borderWidth?: BorderWidthSize;
@@ -57,6 +58,8 @@
         crossAxisSelfAlignment?: CrossAxisAlignment;
         minWidth?: string;
         minHeight?: string;
+        maxWidth?: string;
+        maxHeight?: string;
         shadow?: string;
         background?: string;
         backgroundImage?: string;
@@ -76,6 +79,7 @@
     let {
         children,
         direction = "horizontal",
+        parentDirection = "unknown",
         gap = "zero",
         padding = "zero",
         borderWidth = "zero",
@@ -91,6 +95,8 @@
         crossAxisSelfAlignment,
         minWidth = "auto",
         minHeight = "auto",
+        maxWidth = "auto",
+        maxHeight = "auto",
         shadow,
         background = "unset",
         backgroundImage,
@@ -109,7 +115,7 @@
 
     // you might expect this to be done inside onMount but
     // that runs from the bottom of the tree up which is not what we need
-    let parentDirection = getContext<Direction>("direction");
+    parentDirection = getContext<Direction>("direction") ?? parentDirection;
     setContext("direction", direction);
 
     let paddingCss = $derived(getPaddingCss(padding));
@@ -137,7 +143,7 @@
               : "",
     );
     let style = $derived(
-        `${wrapCss} ${backgroundCss} box-shadow: ${shadow}; min-width: ${minWidth}; min-height: ${minHeight}; ${alignmentCss}; ${colourCss}; ${heightCss}; ${widthCss}; ${borderStyleCss}; ${borderRadiusCss}; ${borderWidthCss}; ${paddingCss}; ${gapCss};`,
+        `${wrapCss} ${backgroundCss} box-shadow: ${shadow}; max-width: ${maxWidth}; max-height: ${maxHeight}; min-width: ${minWidth}; min-height: ${minHeight}; ${alignmentCss}; ${colourCss}; ${heightCss}; ${widthCss}; ${borderStyleCss}; ${borderRadiusCss}; ${borderWidthCss}; ${paddingCss}; ${gapCss};`,
     );
     // TODO I think it might be nice to do a lot of this flex sizing with classes rather than inline styles
     // although I'm not sure I can say *why*

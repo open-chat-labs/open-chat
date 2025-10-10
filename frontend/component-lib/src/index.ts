@@ -16,6 +16,8 @@ export { default as InputIconButton } from "./components/forms/InputIconButton.s
 export { default as InputTextButton } from "./components/forms/InputTextButton.svelte";
 export { default as Search } from "./components/forms/Search.svelte";
 export { default as Select } from "./components/forms/Select.svelte";
+export { default as Option } from "./components/forms/select/Option.svelte";
+export { default as Select2 } from "./components/forms/select/Select2.svelte";
 export { default as TextArea } from "./components/forms/TextArea.svelte";
 export { default as ListAction } from "./components/ListAction.svelte";
 export { default as Logo } from "./components/Logo.svelte";
@@ -27,6 +29,7 @@ export { default as ThreadSummary } from "./components/message/ThreadSummary.sve
 export { default as NotificationIndicator } from "./components/NotificationIndicator.svelte";
 export { default as Radio } from "./components/Radio.svelte";
 export { default as SectionHeader } from "./components/SectionHeader.svelte";
+export { default as SheetTrigger } from "./components/sheet/SheetTrigger.svelte";
 export { default as Spinner } from "./components/Spinner.svelte";
 export { default as Switch } from "./components/Switch.svelte";
 export { default as Body } from "./components/typography/Body.svelte";

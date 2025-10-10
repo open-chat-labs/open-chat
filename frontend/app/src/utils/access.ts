@@ -6,6 +6,7 @@ import {
     type EnhancedAccessGate,
     type Level,
     type NervousSystemDetails,
+    type NeuronGate,
     type ReadonlyMap,
 } from "openchat-client";
 import { _ } from "svelte-i18n";
@@ -61,9 +62,11 @@ const chitEarnedGate: GateBinding = {
     enabled: true,
 };
 
+export type NeuronGateBinding = GateBinding & { gate: NeuronGate };
+
 export function getNeuronGateBindings(
     nervousSystemLookup: ReadonlyMap<string, NervousSystemDetails>,
-): GateBinding[] {
+): NeuronGateBinding[] {
     return [...nervousSystemLookup.values()].map((ns) => {
         return {
             label: formatLabel(ns.token.name, ns.isNns),
