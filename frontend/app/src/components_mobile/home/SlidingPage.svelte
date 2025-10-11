@@ -20,7 +20,7 @@
 
 <div
     use:swipe={{ onSwipe }}
-    transition:fly={{ duration: 300, easing: expoInOut, x: 2000 }}
+    transition:fly={{ duration: 500, easing: expoInOut, x: 2000 }}
     class="sliding_page">
     {@render children()}
 </div>

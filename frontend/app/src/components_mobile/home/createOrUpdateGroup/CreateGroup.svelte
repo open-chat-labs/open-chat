@@ -10,7 +10,6 @@
         type CandidateMember,
         type MultiUserChatIdentifier,
         type NeuronGate,
-        type UserOrUserGroup,
     } from "openchat-client";
     import page from "page";
     import { getContext, tick } from "svelte";
@@ -116,11 +115,6 @@
                 publish("closeModalPage");
                 break;
         }
-    }
-
-    function deleteMember(user: UserOrUserGroup): void {
-        if (user.kind !== "user") return;
-        candidateMembers = candidateMembers.filter((m) => m.user.userId !== user.userId);
     }
 
     function onCreateGroup() {

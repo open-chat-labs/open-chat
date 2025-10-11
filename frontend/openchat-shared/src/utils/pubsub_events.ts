@@ -150,4 +150,8 @@ export type PubSubEvents = {
     userProfileCommunitySettings: undefined;
     userProfileVerify: undefined;
     closeModalPage: undefined;
+    updateGroupDetails: undefined;
+    updateGroupRules: undefined;
+    updateGroupAccessGates: undefined;
+    updateGroupGeneralSetup: undefined;
 };

@@ -2,23 +2,20 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { msToDays, msToHours, msToMinutes } from "@src/utils/time";
     import { Body, CommonButton, Container, Switch } from "component-lib";
-    import type { CandidateGroupChat, OpenChat } from "openchat-client";
+    import type { OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import Setting from "../../Setting.svelte";
     import Translatable from "../../Translatable.svelte";
+    import { updateGroupState } from "./group.svelte";
 
     const ONE_MINUTE = 1000 * 60;
     const ONE_HOUR = ONE_MINUTE * 60;
     const ONE_DAY = ONE_HOUR * 24;
     const client = getContext<OpenChat>("client");
 
-    interface Props {
-        candidateGroup: CandidateGroupChat;
-    }
+    let ugs = updateGroupState;
 
-    let { candidateGroup = $bindable() }: Props = $props();
-
-    let disappearingMessages = $state(candidateGroup.eventsTTL !== undefined);
+    let disappearingMessages = $state(ugs.candidateGroup.eventsTTL !== undefined);
 
     type Unit = "minutes" | "hours" | "days";
 
@@ -71,11 +68,11 @@
     }
 
     $effect(() => {
-        fromMilliseconds(candidateGroup.eventsTTL);
+        fromMilliseconds(ugs.candidateGroup.eventsTTL);
     });
 
     $effect(() => {
-        candidateGroup.eventsTTL = toMilliseconds();
+        ugs.candidateGroup.eventsTTL = toMilliseconds();
     });
 </script>
 

@@ -1,7 +1,10 @@
 <script lang="ts">
-    import { publish, subscribe, type PublicProfile } from "openchat-client";
+    import { subscribe, type PublicProfile } from "openchat-client";
     import { onMount } from "svelte";
-    import CreateGroup from "./createOrUpdateGroup/CreateGroup.svelte";
+    import AddGroupMembers from "./createOrUpdateGroup/AddGroupMembers.svelte";
+    import GeneralSetup from "./createOrUpdateGroup/GeneralSetup.svelte";
+    import GroupInfo from "./createOrUpdateGroup/GroupInfo.svelte";
+    import Rules from "./createOrUpdateGroup/Rules.svelte";
     import SlidingPage from "./SlidingPage.svelte";
     import About from "./user_profile/About.svelte";
     import Appearance from "./user_profile/Appearance.svelte";
@@ -16,7 +19,10 @@
     import Verify from "./user_profile/Verify.svelte";
 
     type SlidingModalType =
-        | { kind: "new_group" }
+        | { kind: "new_group_add_members" }
+        | { kind: "new_group_details" }
+        | { kind: "new_group_rules" }
+        | { kind: "new_group_general_setup" }
         | { kind: "user_profile_chats_and_video" }
         | { kind: "user_profile_share" }
         | { kind: "user_profile_about" }
@@ -27,46 +33,44 @@
         | { kind: "user_profile_chit" }
         | { kind: "user_profile_delete_account" }
         | { kind: "user_profile_cache_management" }
-        | { kind: "user_profile_settings"; profile: PublicProfile }
-        | { kind: "none" };
+        | { kind: "user_profile_settings"; profile: PublicProfile };
 
-    let modalType = $state<SlidingModalType>({ kind: "none" });
+    let modalStack = $state<SlidingModalType[]>([]);
+    function push(modal: SlidingModalType) {
+        modalStack.push(modal);
+    }
+
+    function pop() {
+        modalStack.pop();
+    }
 
     onMount(() => {
         const unsubs = [
-            subscribe("newGroup", () => (modalType = { kind: "new_group" })),
-            subscribe(
-                "userProfileSettings",
-                (profile) => (modalType = { kind: "user_profile_settings", profile }),
+            subscribe("newGroup", () => push({ kind: "new_group_add_members" })),
+            subscribe("updateGroupRules", () => push({ kind: "new_group_rules" })),
+            subscribe("updateGroupDetails", () => push({ kind: "new_group_details" })),
+            subscribe("updateGroupGeneralSetup", () => push({ kind: "new_group_general_setup" })),
+            subscribe("userProfileSettings", (profile) =>
+                push({ kind: "user_profile_settings", profile }),
             ),
-            subscribe("userProfileShare", () => (modalType = { kind: "user_profile_share" })),
-            subscribe("userProfileVerify", () => (modalType = { kind: "user_profile_verify" })),
-            subscribe(
-                "userProfileCommunitySettings",
-                () => (modalType = { kind: "user_profile_community" }),
+            subscribe("userProfileShare", () => push({ kind: "user_profile_share" })),
+            subscribe("userProfileVerify", () => push({ kind: "user_profile_verify" })),
+            subscribe("userProfileCommunitySettings", () =>
+                push({ kind: "user_profile_community" }),
             ),
-            subscribe("userProfileChitRewards", () => (modalType = { kind: "user_profile_chit" })),
-            subscribe(
-                "userProfileAppearance",
-                () => (modalType = { kind: "user_profile_appearance" }),
+            subscribe("userProfileChitRewards", () => push({ kind: "user_profile_chit" })),
+            subscribe("userProfileAppearance", () => push({ kind: "user_profile_appearance" })),
+            subscribe("userProfileDeleteAccount", () =>
+                push({ kind: "user_profile_delete_account" }),
             ),
-            subscribe(
-                "userProfileDeleteAccount",
-                () => (modalType = { kind: "user_profile_delete_account" }),
+            subscribe("userProfileBotConfig", () => push({ kind: "user_profile_bot_config" })),
+            subscribe("userProfileCacheManagement", () =>
+                push({ kind: "user_profile_cache_management" }),
             ),
-            subscribe(
-                "userProfileBotConfig",
-                () => (modalType = { kind: "user_profile_bot_config" }),
-            ),
-            subscribe(
-                "userProfileCacheManagement",
-                () => (modalType = { kind: "user_profile_cache_management" }),
-            ),
-            subscribe("userProfileAbout", () => (modalType = { kind: "user_profile_about" })),
-            subscribe("closeModalPage", () => (modalType = { kind: "none" })),
-            subscribe(
-                "userProfileChatsAndVideo",
-                () => (modalType = { kind: "user_profile_chats_and_video" }),
+            subscribe("userProfileAbout", () => push({ kind: "user_profile_about" })),
+            subscribe("closeModalPage", pop),
+            subscribe("userProfileChatsAndVideo", () =>
+                push({ kind: "user_profile_chats_and_video" }),
             ),
         ];
         return () => {
@@ -75,32 +79,38 @@
     });
 </script>
 
-{#if modalType.kind !== "none"}
+{#each modalStack as top}
     <SlidingPage>
-        {#if modalType.kind === "user_profile_chats_and_video"}
+        {#if top.kind === "user_profile_chats_and_video"}
             <ChatsAndVideo />
-        {:else if modalType.kind === "user_profile_share"}
+        {:else if top.kind === "user_profile_share"}
             <Share />
-        {:else if modalType.kind === "user_profile_delete_account"}
+        {:else if top.kind === "user_profile_delete_account"}
             <DeleteAccount />
-        {:else if modalType.kind === "user_profile_about"}
+        {:else if top.kind === "user_profile_about"}
             <About />
-        {:else if modalType.kind === "user_profile_appearance"}
+        {:else if top.kind === "user_profile_appearance"}
             <Appearance />
-        {:else if modalType.kind === "user_profile_cache_management"}
+        {:else if top.kind === "user_profile_cache_management"}
             <ClearCache />
-        {:else if modalType.kind === "user_profile_verify"}
+        {:else if top.kind === "user_profile_verify"}
             <Verify />
-        {:else if modalType.kind === "user_profile_bot_config"}
+        {:else if top.kind === "user_profile_bot_config"}
             <BotConfig />
-        {:else if modalType.kind === "user_profile_chit"}
+        {:else if top.kind === "user_profile_chit"}
             <ChitRewards />
-        {:else if modalType.kind === "user_profile_community"}
+        {:else if top.kind === "user_profile_community"}
             <CommunitySettings />
-        {:else if modalType.kind === "user_profile_settings"}
-            <ProfileSettings profile={modalType.profile} />
-        {:else if modalType.kind === "new_group"}
-            <CreateGroup embeddedContent={false} onClose={() => publish("closeModalPage")} />
+        {:else if top.kind === "user_profile_settings"}
+            <ProfileSettings profile={top.profile} />
+        {:else if top.kind === "new_group_add_members"}
+            <AddGroupMembers />
+        {:else if top.kind === "new_group_details"}
+            <GroupInfo />
+        {:else if top.kind === "new_group_rules"}
+            <Rules />
+        {:else if top.kind === "new_group_general_setup"}
+            <GeneralSetup />
         {/if}
     </SlidingPage>
-{/if}
+{/each}

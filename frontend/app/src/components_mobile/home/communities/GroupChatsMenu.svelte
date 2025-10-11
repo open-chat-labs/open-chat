@@ -8,6 +8,7 @@
     import Translatable from "../../Translatable.svelte";
 
     import { MenuItem } from "component-lib";
+    import { updateGroupState } from "../createOrUpdateGroup/group.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -24,6 +25,7 @@
                 postLogin: { kind: "create_group" },
             });
         } else {
+            updateGroupState.initialise(client.createCandidateGroup("group", false));
             publish("newGroup");
         }
     }
