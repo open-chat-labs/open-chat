@@ -2,7 +2,7 @@
     import { swipe, type SwipeDirection } from "component-lib";
     import { publish } from "openchat-client";
     import type { Snippet } from "svelte";
-    import { expoInOut } from "svelte/easing";
+    import { cubicInOut } from "svelte/easing";
     import { fade, fly } from "svelte/transition";
 
     interface Props {
@@ -21,16 +21,19 @@
     const SPEED = 500;
 </script>
 
+{#if !top}
+    <div transition:fade={{ duration: SPEED }} class="sliding_page_overlay_before"></div>
+{/if}
 <div
     class:top
     use:swipe={{ onSwipe }}
-    transition:fly={{ duration: SPEED, easing: expoInOut, x: 2000 }}
+    transition:fly={{ duration: SPEED, easing: cubicInOut, x: 2000 }}
     class="sliding_page">
     {@render children()}
-    {#if !top}
-        <div transition:fade={{ duration: SPEED }} class="sliding_page_overlay"></div>
-    {/if}
 </div>
+{#if !top}
+    <div transition:fade={{ duration: SPEED }} class="sliding_page_overlay"></div>
+{/if}
 
 <style lang="scss">
     .sliding_page {
@@ -50,6 +53,7 @@
         }
     }
 
+    .sliding_page_overlay_before,
     .sliding_page_overlay {
         width: 100%;
         height: 100%;
@@ -61,6 +65,12 @@
         display: flex;
         padding-top: var(--status-bar-height);
         margin-top: var(--status-bar-height);
-        background-color: rgba(0, 0, 0, 0.5);
+        background-color: var(--background-0);
+        opacity: 0.5;
+    }
+
+    .sliding_page_overlay_before {
+        z-index: 4;
+        background-color: var(--background-1);
     }
 </style>
