@@ -3,26 +3,33 @@
     import { publish } from "openchat-client";
     import type { Snippet } from "svelte";
     import { expoInOut } from "svelte/easing";
-    import { fly } from "svelte/transition";
+    import { fade, fly } from "svelte/transition";
 
     interface Props {
         children: Snippet;
+        top: boolean;
     }
 
-    let { children }: Props = $props();
+    let { children, top }: Props = $props();
 
     function onSwipe(dir: SwipeDirection) {
         if (dir === "right") {
             publish("closeModalPage");
         }
     }
+
+    const SPEED = 500;
 </script>
 
 <div
+    class:top
     use:swipe={{ onSwipe }}
-    transition:fly={{ duration: 500, easing: expoInOut, x: 2000 }}
+    transition:fly={{ duration: SPEED, easing: expoInOut, x: 2000 }}
     class="sliding_page">
     {@render children()}
+    {#if !top}
+        <div transition:fade={{ duration: SPEED }} class="sliding_page_overlay"></div>
+    {/if}
 </div>
 
 <style lang="scss">
@@ -35,5 +42,25 @@
         @include z-index("right-panel");
         display: flex;
         padding-top: var(--status-bar-height);
+        transition: transform ease-in-out 500ms;
+        overflow: hidden;
+
+        &:not(.top) {
+            transform: scale(0.93);
+        }
+    }
+
+    .sliding_page_overlay {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        overflow: hidden;
+        top: 0;
+        bottom: 0;
+        @include z-index("right-panel");
+        display: flex;
+        padding-top: var(--status-bar-height);
+        margin-top: var(--status-bar-height);
+        background-color: rgba(0, 0, 0, 0.5);
     }
 </style>

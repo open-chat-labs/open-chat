@@ -16,6 +16,7 @@ import type {
     MessageContext,
     MultiUserChat,
     MultiUserChatIdentifier,
+    NeuronGate,
     Notification,
     PublicProfile,
     ResourceKey,
@@ -150,8 +151,12 @@ export type PubSubEvents = {
     userProfileCommunitySettings: undefined;
     userProfileVerify: undefined;
     closeModalPage: undefined;
+    closeModalStack: undefined;
     updateGroupDetails: undefined;
     updateGroupRules: undefined;
     updateGroupAccessGates: undefined;
     updateGroupGeneralSetup: undefined;
+    updateGroupNeuronGates: undefined;
+    updateGroupGatesLearnMore: undefined;
+    updateGroupEditNeuronGate: NeuronGate;
 };

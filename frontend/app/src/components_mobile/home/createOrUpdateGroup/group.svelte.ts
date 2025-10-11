@@ -11,10 +11,13 @@ import {
     publish,
     ROLE_MEMBER,
     routeForChatIdentifier,
+    type AccessGate,
+    type AccessGateConfig,
     type CandidateGroupChat,
     type CandidateMember,
     type LeafGate,
     type MultiUserChatIdentifier,
+    type NeuronGate,
     type UserOrUserGroup,
     type UserSummary,
 } from "openchat-client";
@@ -37,6 +40,22 @@ class UpdateGroupState {
             return [this.#candidateGroup.gateConfig.gate];
         if (isCompositeGate(this.#candidateGroup.gateConfig.gate))
             return this.#candidateGroup.gateConfig.gate.gates;
+        return [];
+    });
+    #gateConfig = $derived<AccessGateConfig>(
+        this.#candidateGroup?.gateConfig ?? { expiry: undefined, gate: { kind: "no_gate" } },
+    );
+    #neuronGates = $derived.by<NeuronGate[]>(() => {
+        if (isLeafGate(this.#gateConfig.gate)) {
+            if (this.#gateConfig.gate.kind === "neuron_gate") {
+                return [this.#gateConfig.gate];
+            }
+        }
+        if (isCompositeGate(this.#gateConfig.gate)) {
+            return this.#gateConfig.gate.gates.filter(
+                (g) => g.kind === "neuron_gate",
+            ) as NeuronGate[];
+        }
         return [];
     });
     #busy = $state(false);
@@ -63,6 +82,14 @@ class UpdateGroupState {
             blobUrl: detail.url,
             blobData: detail.data,
         };
+    }
+
+    get neuronGates() {
+        return this.#neuronGates;
+    }
+
+    get gateConfig() {
+        return this.#gateConfig;
     }
 
     get nameValid() {
@@ -149,7 +176,7 @@ class UpdateGroupState {
 
     #onGroupCreated(canisterId: MultiUserChatIdentifier) {
         const url = routeForChatIdentifier(chatListScopeStore.value.kind, canisterId);
-        publish("closeModalPage");
+        publish("closeModalStack");
         tick().then(() => page(url)); // trigger the selection of the chat
     }
 
@@ -167,6 +194,84 @@ class UpdateGroupState {
                     Promise.reject("Unable to invite users to the new group");
                 }
             });
+    }
+
+    isGateActive(gate: AccessGate) {
+        if (isLeafGate(this.#gateConfig.gate)) {
+            return gate.kind === this.#gateConfig.gate.kind;
+        }
+        if (isCompositeGate(this.#gateConfig.gate)) {
+            return this.#gateConfig.gate.gates.some((g) => g.kind === gate.kind);
+        }
+        return false;
+    }
+
+    addLeaf(newGate: LeafGate) {
+        if (isCompositeGate(this.#gateConfig.gate)) {
+            this.#gateConfig.gate.gates.push(newGate);
+        } else {
+            if (this.#gateConfig.gate.kind === "no_gate") {
+                this.#gateConfig.gate = newGate;
+            } else {
+                const oldGate = { ...this.#gateConfig.gate };
+                this.#gateConfig.gate = {
+                    kind: "composite_gate",
+                    gates: [oldGate, newGate],
+                    operator: "and",
+                };
+            }
+        }
+    }
+
+    deleteGate(gate: LeafGate) {
+        if (isCompositeGate(this.#gateConfig.gate)) {
+            this.#gateConfig.gate.gates = this.#gateConfig.gate.gates.filter(
+                (g) => !this.gatesMatch(g, gate),
+            );
+            if (this.#gateConfig.gate.gates.length === 1) {
+                this.#gateConfig.gate = this.#gateConfig.gate.gates[0];
+            }
+        } else {
+            this.#gateConfig.gate = { kind: "no_gate" };
+        }
+    }
+
+    gatesMatch(a: LeafGate, b: LeafGate): boolean {
+        // TODO fill in other types
+        if (a.kind === "neuron_gate" && b.kind === "neuron_gate") {
+            return a.governanceCanister === b.governanceCanister;
+        }
+        return a.kind === b.kind;
+    }
+
+    defaultNeuronGate(): NeuronGate {
+        return {
+            kind: "neuron_gate",
+            governanceCanister: "",
+        };
+    }
+
+    toggleGate(gate: AccessGate, active: boolean) {
+        if (isLeafGate(gate)) {
+            if (active) {
+                this.deleteGate(gate);
+            } else {
+                this.addLeaf(gate);
+            }
+        }
+    }
+
+    toggleOperator() {
+        if (isCompositeGate(this.#gateConfig.gate)) {
+            switch (this.#gateConfig.gate.operator) {
+                case "and":
+                    this.#gateConfig.gate.operator = "or";
+                    break;
+                case "or":
+                    this.#gateConfig.gate.operator = "and";
+                    break;
+            }
+        }
     }
 }
 

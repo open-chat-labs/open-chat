@@ -1,6 +1,10 @@
 <script lang="ts">
-    import { subscribe, type PublicProfile } from "openchat-client";
+    import { subscribe, type NeuronGate, type PublicProfile } from "openchat-client";
     import { onMount } from "svelte";
+    import AboutAccessGates from "./createOrUpdateGroup/access_gates/AboutAccessGates.svelte";
+    import AccessGates from "./createOrUpdateGroup/access_gates/AccessGates.svelte";
+    import EditNeuronGate from "./createOrUpdateGroup/access_gates/EditNeuronGate.svelte";
+    import NeuronGates from "./createOrUpdateGroup/access_gates/NeuronGates.svelte";
     import AddGroupMembers from "./createOrUpdateGroup/AddGroupMembers.svelte";
     import GeneralSetup from "./createOrUpdateGroup/GeneralSetup.svelte";
     import GroupInfo from "./createOrUpdateGroup/GroupInfo.svelte";
@@ -23,6 +27,10 @@
         | { kind: "new_group_details" }
         | { kind: "new_group_rules" }
         | { kind: "new_group_general_setup" }
+        | { kind: "new_group_access_gates" }
+        | { kind: "new_group_neuron_gates" }
+        | { kind: "new_group_edit_neuron_gate"; gate: NeuronGate }
+        | { kind: "new_group_gates_learn" }
         | { kind: "user_profile_chats_and_video" }
         | { kind: "user_profile_share" }
         | { kind: "user_profile_about" }
@@ -36,6 +44,7 @@
         | { kind: "user_profile_settings"; profile: PublicProfile };
 
     let modalStack = $state<SlidingModalType[]>([]);
+    let top = $derived(modalStack[modalStack.length - 1]);
     function push(modal: SlidingModalType) {
         modalStack.push(modal);
     }
@@ -50,6 +59,12 @@
             subscribe("updateGroupRules", () => push({ kind: "new_group_rules" })),
             subscribe("updateGroupDetails", () => push({ kind: "new_group_details" })),
             subscribe("updateGroupGeneralSetup", () => push({ kind: "new_group_general_setup" })),
+            subscribe("updateGroupAccessGates", () => push({ kind: "new_group_access_gates" })),
+            subscribe("updateGroupNeuronGates", () => push({ kind: "new_group_neuron_gates" })),
+            subscribe("updateGroupEditNeuronGate", (gate) =>
+                push({ kind: "new_group_edit_neuron_gate", gate }),
+            ),
+            subscribe("updateGroupGatesLearnMore", () => push({ kind: "new_group_gates_learn" })),
             subscribe("userProfileSettings", (profile) =>
                 push({ kind: "user_profile_settings", profile }),
             ),
@@ -69,6 +84,7 @@
             ),
             subscribe("userProfileAbout", () => push({ kind: "user_profile_about" })),
             subscribe("closeModalPage", pop),
+            subscribe("closeModalStack", () => (modalStack = [])),
             subscribe("userProfileChatsAndVideo", () =>
                 push({ kind: "user_profile_chats_and_video" }),
             ),
@@ -79,38 +95,46 @@
     });
 </script>
 
-{#each modalStack as top}
-    <SlidingPage>
-        {#if top.kind === "user_profile_chats_and_video"}
+{#each modalStack as page}
+    <SlidingPage top={page === top}>
+        {#if page.kind === "user_profile_chats_and_video"}
             <ChatsAndVideo />
-        {:else if top.kind === "user_profile_share"}
+        {:else if page.kind === "user_profile_share"}
             <Share />
-        {:else if top.kind === "user_profile_delete_account"}
+        {:else if page.kind === "user_profile_delete_account"}
             <DeleteAccount />
-        {:else if top.kind === "user_profile_about"}
+        {:else if page.kind === "user_profile_about"}
             <About />
-        {:else if top.kind === "user_profile_appearance"}
+        {:else if page.kind === "user_profile_appearance"}
             <Appearance />
-        {:else if top.kind === "user_profile_cache_management"}
+        {:else if page.kind === "user_profile_cache_management"}
             <ClearCache />
-        {:else if top.kind === "user_profile_verify"}
+        {:else if page.kind === "user_profile_verify"}
             <Verify />
-        {:else if top.kind === "user_profile_bot_config"}
+        {:else if page.kind === "user_profile_bot_config"}
             <BotConfig />
-        {:else if top.kind === "user_profile_chit"}
+        {:else if page.kind === "user_profile_chit"}
             <ChitRewards />
-        {:else if top.kind === "user_profile_community"}
+        {:else if page.kind === "user_profile_community"}
             <CommunitySettings />
-        {:else if top.kind === "user_profile_settings"}
-            <ProfileSettings profile={top.profile} />
-        {:else if top.kind === "new_group_add_members"}
+        {:else if page.kind === "user_profile_settings"}
+            <ProfileSettings profile={page.profile} />
+        {:else if page.kind === "new_group_add_members"}
             <AddGroupMembers />
-        {:else if top.kind === "new_group_details"}
+        {:else if page.kind === "new_group_details"}
             <GroupInfo />
-        {:else if top.kind === "new_group_rules"}
+        {:else if page.kind === "new_group_rules"}
             <Rules />
-        {:else if top.kind === "new_group_general_setup"}
+        {:else if page.kind === "new_group_general_setup"}
             <GeneralSetup />
+        {:else if page.kind === "new_group_access_gates"}
+            <AccessGates />
+        {:else if page.kind === "new_group_gates_learn"}
+            <AboutAccessGates />
+        {:else if page.kind === "new_group_neuron_gates"}
+            <NeuronGates />
+        {:else if page.kind === "new_group_edit_neuron_gate"}
+            <EditNeuronGate gate={page.gate} />
         {/if}
     </SlidingPage>
 {/each}
