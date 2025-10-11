@@ -11,7 +11,7 @@
         Input,
         Option,
         Search,
-        Select2,
+        Select,
         Subtitle,
     } from "component-lib";
     import {
@@ -142,7 +142,7 @@
 
             <Form onSubmit={save}>
                 <Container direction={"vertical"} gap={"xl"}>
-                    <Select2
+                    <Select
                         onSelect={(val) => {
                             selectedNervousSystem = val;
                             updateGate();
@@ -189,7 +189,7 @@
                                 resourceKey={i18nKey("Choose one of the available nervous systems")}
                             ></Translatable>
                         {/snippet}
-                    </Select2>
+                    </Select>
 
                     <Input
                         maxlength={100}

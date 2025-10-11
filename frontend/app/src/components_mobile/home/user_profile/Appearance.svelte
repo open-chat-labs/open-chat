@@ -1,15 +1,16 @@
 <script lang="ts">
     import { i18nKey, setLocale, supportedLanguages } from "@src/i18n/i18n";
-    import { Body, BodySmall, Container, Select } from "component-lib";
+    import { Body, BodySmall, Container, Option, Select } from "component-lib";
     import { locale } from "svelte-i18n";
     import Translatable from "../../Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import FontSize from "./FontSize.svelte";
 
     let selectedLocale = $state(($locale as string).substring(0, 2));
+    let selectedLanguage = $state(supportedLanguages.find((l) => l.code === selectedLocale));
 
     $effect(() => {
-        setLocale(selectedLocale);
+        setLocale(selectedLanguage?.code ?? "en");
     });
 </script>
 
@@ -34,10 +35,25 @@
                 </BodySmall>
             </Container>
 
-            <Select bind:value={selectedLocale}>
-                {#each supportedLanguages as lang}
-                    <option value={lang.code}>{lang.name}</option>
-                {/each}
+            <Select
+                onSelect={(lang) => (selectedLanguage = lang)}
+                placeholder={"Choose your preferred language"}
+                value={selectedLanguage}>
+                {#snippet selectedValue(val)}
+                    {val.name}
+                {/snippet}
+                {#snippet selectOptions(onSelect)}
+                    <Container padding={["zero", "zero", "lg", "zero"]} direction={"vertical"}>
+                        {#each supportedLanguages as lang}
+                            <Option
+                                value={lang}
+                                onClick={onSelect}
+                                selected={selectedLanguage?.code === lang.code}>
+                                {lang.name}
+                            </Option>
+                        {/each}
+                    </Container>
+                {/snippet}
                 {#snippet subtext()}
                     <Translatable
                         resourceKey={i18nKey("This does not apply to messages sent or received")}

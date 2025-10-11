@@ -1,6 +1,6 @@
 <script lang="ts">
     import { ColourVars, Container } from "component-lib";
-    import { onMount, type Snippet } from "svelte";
+    import { type Snippet } from "svelte";
     import { expoInOut } from "svelte/easing";
     import { fade, fly } from "svelte/transition";
 
