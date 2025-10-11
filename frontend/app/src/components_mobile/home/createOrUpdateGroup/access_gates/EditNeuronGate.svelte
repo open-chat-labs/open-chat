@@ -117,7 +117,6 @@
     }
 
     function updateGate() {
-        // nervousSystemKey = key;
         minDissolveDelay = "";
         minStake = "";
     }
