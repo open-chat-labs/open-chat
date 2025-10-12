@@ -4,9 +4,11 @@ import {
     type CredentialGate,
     type CryptocurrencyDetails,
     type EnhancedAccessGate,
+    type LeafGate,
     type Level,
     type NervousSystemDetails,
     type NeuronGate,
+    type PaymentGate,
     type ReadonlyMap,
 } from "openchat-client";
 import { _ } from "svelte-i18n";
@@ -16,7 +18,7 @@ export type GateBinding = {
     key: string;
     label: string;
     enabled: boolean;
-    gate: AccessGate;
+    gate: LeafGate;
 };
 
 export const gateLabel: Record<AccessGate["kind"], string> = {
@@ -63,6 +65,7 @@ const chitEarnedGate: GateBinding = {
 };
 
 export type NeuronGateBinding = GateBinding & { gate: NeuronGate };
+export type PaymentGateBinding = GateBinding & { gate: PaymentGate };
 
 export function getNeuronGateBindings(
     nervousSystemLookup: ReadonlyMap<string, NervousSystemDetails>,
@@ -83,7 +86,7 @@ export function getNeuronGateBindings(
 export function getPaymentGateBindings(
     cryptoLookup: ReadonlyMap<string, CryptocurrencyDetails>,
     nsLedgers: Set<string>,
-): GateBinding[] {
+): PaymentGateBinding[] {
     return [...cryptoLookup.values()]
         .filter((c) => c.supportedStandards.includes("ICRC-2") || nsLedgers.has(c.ledger))
         .map((c) => {

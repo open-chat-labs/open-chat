@@ -18,6 +18,7 @@ import type {
     MultiUserChatIdentifier,
     NeuronGate,
     Notification,
+    PaymentGate,
     PublicProfile,
     ResourceKey,
     UpdatedRules,
@@ -157,6 +158,8 @@ export type PubSubEvents = {
     updateGroupAccessGates: undefined;
     updateGroupGeneralSetup: undefined;
     updateGroupNeuronGates: undefined;
+    updateGroupPaymentGates: undefined;
     updateGroupGatesLearnMore: undefined;
     updateGroupEditNeuronGate: NeuronGate;
+    updateGroupEditPaymentGate: PaymentGate;
 };

@@ -9,10 +9,6 @@
         Container,
         Form,
         Input,
-        Option,
-        Search,
-        Select,
-        Subtitle,
     } from "component-lib";
     import {
         isCompositeGate,
@@ -29,6 +25,7 @@
     import SlidingPageContent from "../../SlidingPageContent.svelte";
     import { updateGroupState } from "../group.svelte";
     import AboutNeuronGate from "./AboutNeuronGate.svelte";
+    import SelectBinding from "./SelectBinding.svelte";
 
     const client = getContext<OpenChat>("client");
     let ugs = updateGroupState;
@@ -40,28 +37,21 @@
     let { gate }: Props = $props();
 
     const bindings = getNeuronGateBindings($nervousSystemLookup);
-    let searching = $state(false);
-    let searchTerm = $state<string>();
-    let filteredBindings = $derived(
-        bindings.filter(
-            (b) =>
-                searchTerm === undefined ||
-                searchTerm === "" ||
-                b.label.toLocaleLowerCase().includes(searchTerm?.toLocaleLowerCase()),
-        ),
-    );
-    let selectedNervousSystem = $state(initialBinding());
-    let candidateTokenDetails = $derived(client.getTokenDetailsForAccessGate(gate));
+    let selectedBinding = $state(initialBinding());
+    let candidateTokenDetails = $derived(client.getTokenDetailsForAccessGate(selectedBinding.gate));
     let minDissolveDelay = $state(client.getMinDissolveDelayDays(gate)?.toString() ?? "");
     let minStake = $state(client.getMinStakeInTokens(gate)?.toString() ?? "");
     let invalidDissolveDelay = $derived(minDissolveDelay !== "" && isNaN(Number(minDissolveDelay)));
     let invalidMinStake = $derived(minStake !== "" && isNaN(Number(minStake)));
     let valid = $derived(
-        !(invalidDissolveDelay || invalidMinStake || selectedNervousSystem === undefined),
+        !(invalidDissolveDelay || invalidMinStake || selectedBinding === undefined),
     );
 
     function initialBinding() {
-        return bindings.find((b) => b.gate.governanceCanister === gate.governanceCanister);
+        return (
+            bindings.find((b) => b.gate.governanceCanister === gate.governanceCanister) ??
+            bindings[0]
+        );
     }
 
     function save() {
@@ -77,11 +67,11 @@
         if (
             delay !== gate.minDissolveDelay ||
             stake !== gate.minStakeE8s ||
-            selectedNervousSystem?.gate?.governanceCanister !== gate.governanceCanister
+            selectedBinding?.gate?.governanceCanister !== gate.governanceCanister
         ) {
             updateOrAddGate({
                 kind: "neuron_gate",
-                governanceCanister: selectedNervousSystem?.gate?.governanceCanister ?? "",
+                governanceCanister: selectedBinding?.gate?.governanceCanister ?? "",
                 minDissolveDelay: delay,
                 minStakeE8s: stake,
             });
@@ -142,54 +132,13 @@
 
             <Form onSubmit={save}>
                 <Container direction={"vertical"} gap={"xl"}>
-                    <Select
-                        onSelect={(val) => {
-                            selectedNervousSystem = val;
-                            updateGate();
-                        }}
-                        placeholder={"Choose one of the available nervous systems"}
-                        value={selectedNervousSystem}>
-                        {#snippet selectedValue(val)}
-                            {val.label}
-                        {/snippet}
-                        {#snippet selectOptions(onSelect)}
-                            <Container
-                                height={{ kind: "fixed", size: "100%" }}
-                                padding={"lg"}
-                                gap={"lg"}
-                                direction={"vertical"}>
-                                <Subtitle fontWeight={"bold"}>
-                                    <Translatable resourceKey={i18nKey("Choose nervous system")}
-                                    ></Translatable>
-                                </Subtitle>
-
-                                <Search
-                                    {searching}
-                                    id={"search_component"}
-                                    placeholder={$_("search")}
-                                    bind:value={searchTerm} />
-
-                                <Container
-                                    supplementalClass={"nervous_system_options"}
-                                    direction={"vertical"}>
-                                    {#each filteredBindings as g}
-                                        <Option
-                                            disabled={!g.enabled}
-                                            value={g}
-                                            onClick={onSelect}
-                                            selected={selectedNervousSystem?.key === g.key}>
-                                            {g.label}
-                                        </Option>
-                                    {/each}
-                                </Container>
-                            </Container>
-                        {/snippet}
-                        {#snippet subtext()}
-                            <Translatable
-                                resourceKey={i18nKey("Choose one of the available nervous systems")}
-                            ></Translatable>
-                        {/snippet}
-                    </Select>
+                    <SelectBinding
+                        {bindings}
+                        onSelect={updateGate}
+                        title={"Choose nervous system"}
+                        bind:selectedBinding
+                        placeholder={"Choose one of the available nervous systems"}>
+                    </SelectBinding>
 
                     <Input
                         maxlength={100}
@@ -226,10 +175,3 @@
         </Container>
     </Container>
 </SlidingPageContent>
-
-<style lang="scss">
-    // this is a bit unfortunate
-    :global(.container.nervous_system_options) {
-        flex: auto !important;
-    }
-</style>

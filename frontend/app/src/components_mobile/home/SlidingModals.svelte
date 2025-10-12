@@ -1,10 +1,17 @@
 <script lang="ts">
-    import { subscribe, type NeuronGate, type PublicProfile } from "openchat-client";
+    import {
+        subscribe,
+        type NeuronGate,
+        type PaymentGate,
+        type PublicProfile,
+    } from "openchat-client";
     import { onMount } from "svelte";
     import AboutAccessGates from "./createOrUpdateGroup/access_gates/AboutAccessGates.svelte";
     import AccessGates from "./createOrUpdateGroup/access_gates/AccessGates.svelte";
     import EditNeuronGate from "./createOrUpdateGroup/access_gates/EditNeuronGate.svelte";
+    import EditPaymentGate from "./createOrUpdateGroup/access_gates/EditPaymentGate.svelte";
     import NeuronGates from "./createOrUpdateGroup/access_gates/NeuronGates.svelte";
+    import PaymentGates from "./createOrUpdateGroup/access_gates/PaymentGates.svelte";
     import AddGroupMembers from "./createOrUpdateGroup/AddGroupMembers.svelte";
     import GeneralSetup from "./createOrUpdateGroup/GeneralSetup.svelte";
     import GroupInfo from "./createOrUpdateGroup/GroupInfo.svelte";
@@ -29,7 +36,9 @@
         | { kind: "new_group_general_setup" }
         | { kind: "new_group_access_gates" }
         | { kind: "new_group_neuron_gates" }
+        | { kind: "new_group_payment_gates" }
         | { kind: "new_group_edit_neuron_gate"; gate: NeuronGate }
+        | { kind: "new_group_edit_payment_gate"; gate: PaymentGate }
         | { kind: "new_group_gates_learn" }
         | { kind: "user_profile_chats_and_video" }
         | { kind: "user_profile_share" }
@@ -61,8 +70,12 @@
             subscribe("updateGroupGeneralSetup", () => push({ kind: "new_group_general_setup" })),
             subscribe("updateGroupAccessGates", () => push({ kind: "new_group_access_gates" })),
             subscribe("updateGroupNeuronGates", () => push({ kind: "new_group_neuron_gates" })),
+            subscribe("updateGroupPaymentGates", () => push({ kind: "new_group_payment_gates" })),
             subscribe("updateGroupEditNeuronGate", (gate) =>
                 push({ kind: "new_group_edit_neuron_gate", gate }),
+            ),
+            subscribe("updateGroupEditPaymentGate", (gate) =>
+                push({ kind: "new_group_edit_payment_gate", gate }),
             ),
             subscribe("updateGroupGatesLearnMore", () => push({ kind: "new_group_gates_learn" })),
             subscribe("userProfileSettings", (profile) =>
@@ -135,6 +148,10 @@
             <NeuronGates />
         {:else if page.kind === "new_group_edit_neuron_gate"}
             <EditNeuronGate gate={page.gate} />
+        {:else if page.kind === "new_group_payment_gates"}
+            <PaymentGates />
+        {:else if page.kind === "new_group_edit_payment_gate"}
+            <EditPaymentGate gate={page.gate} />
         {/if}
     </SlidingPage>
 {/each}

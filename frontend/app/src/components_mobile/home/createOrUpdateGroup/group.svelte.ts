@@ -18,6 +18,7 @@ import {
     type LeafGate,
     type MultiUserChatIdentifier,
     type NeuronGate,
+    type PaymentGate,
     type UserOrUserGroup,
     type UserSummary,
 } from "openchat-client";
@@ -28,6 +29,18 @@ export const MAX_RULES_LENGTH = 1024;
 export const MIN_NAME_LENGTH = 3;
 export const MAX_NAME_LENGTH = 40;
 export const MAX_DESC_LENGTH = 1024;
+
+function gatesByKind(config: AccessGateConfig, kind: AccessGate["kind"]): AccessGate[] {
+    if (isLeafGate(config.gate)) {
+        if (config.gate.kind === kind) {
+            return [config.gate];
+        }
+    }
+    if (isCompositeGate(config.gate)) {
+        return config.gate.gates.filter((g) => g.kind === kind);
+    }
+    return [];
+}
 
 class UpdateGroupState {
     #candidateGroup = $state<CandidateGroupChat>();
@@ -46,17 +59,10 @@ class UpdateGroupState {
         this.#candidateGroup?.gateConfig ?? { expiry: undefined, gate: { kind: "no_gate" } },
     );
     #neuronGates = $derived.by<NeuronGate[]>(() => {
-        if (isLeafGate(this.#gateConfig.gate)) {
-            if (this.#gateConfig.gate.kind === "neuron_gate") {
-                return [this.#gateConfig.gate];
-            }
-        }
-        if (isCompositeGate(this.#gateConfig.gate)) {
-            return this.#gateConfig.gate.gates.filter(
-                (g) => g.kind === "neuron_gate",
-            ) as NeuronGate[];
-        }
-        return [];
+        return gatesByKind(this.gateConfig, "neuron_gate") as NeuronGate[];
+    });
+    #paymentGates = $derived.by<PaymentGate[]>(() => {
+        return gatesByKind(this.gateConfig, "payment_gate") as PaymentGate[];
     });
     #busy = $state(false);
     #rulesValid = $derived(
@@ -86,6 +92,10 @@ class UpdateGroupState {
 
     get neuronGates() {
         return this.#neuronGates;
+    }
+
+    get paymentGates() {
+        return this.#paymentGates;
     }
 
     get gateConfig() {
@@ -241,6 +251,9 @@ class UpdateGroupState {
         if (a.kind === "neuron_gate" && b.kind === "neuron_gate") {
             return a.governanceCanister === b.governanceCanister;
         }
+        if (a.kind === "payment_gate" && b.kind === "payment_gate") {
+            return a.ledgerCanister === b.ledgerCanister;
+        }
         return a.kind === b.kind;
     }
 
@@ -248,6 +261,15 @@ class UpdateGroupState {
         return {
             kind: "neuron_gate",
             governanceCanister: "",
+        };
+    }
+
+    defaultPaymentGate(): PaymentGate {
+        return {
+            kind: "payment_gate",
+            ledgerCanister: "",
+            amount: 0n,
+            fee: 0n,
         };
     }
 

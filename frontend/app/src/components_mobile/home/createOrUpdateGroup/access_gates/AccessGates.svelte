@@ -41,7 +41,7 @@
                 publish("updateGroupNeuronGates");
                 break;
             case "payment_gate":
-                console.log("TODO");
+                publish("updateGroupPaymentGates");
                 break;
             case "token_balance_gate":
                 console.log("TODO");

@@ -2,7 +2,7 @@
     import { swipe, type SwipeDirection } from "component-lib";
     import { publish } from "openchat-client";
     import type { Snippet } from "svelte";
-    import { cubicInOut } from "svelte/easing";
+    import { quadInOut } from "svelte/easing";
     import { fade, fly } from "svelte/transition";
 
     interface Props {
@@ -27,7 +27,7 @@
 <div
     class:top
     use:swipe={{ onSwipe }}
-    transition:fly={{ duration: SPEED, easing: cubicInOut, x: 2000 }}
+    transition:fly={{ duration: SPEED, easing: quadInOut, x: 2000 }}
     class="sliding_page">
     {@render children()}
 </div>

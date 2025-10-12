@@ -4,6 +4,7 @@
     import SlidingPageContent from "../../SlidingPageContent.svelte";
     import AboutAccessGate from "./AboutAccessGate.svelte";
     import AboutNeuronGate from "./AboutNeuronGate.svelte";
+    import AboutPaymentGate from "./AboutPaymentGate.svelte";
 </script>
 
 {#snippet gate(icon: string, alt: string, title: string, subtitle: string)}
@@ -25,12 +26,7 @@
             "Users must have an active diamond membership to obtain access.",
         )}
         <AboutNeuronGate padding={"md"} />
-        {@render gate(
-            "payment.svg",
-            "payment",
-            "Payment",
-            "Access is granted after the user pays a one-time or recurring entry fee.",
-        )}
+        <AboutPaymentGate padding={"md"} />
         {@render gate(
             "token_balance.svg",
             "minimum token balance",
