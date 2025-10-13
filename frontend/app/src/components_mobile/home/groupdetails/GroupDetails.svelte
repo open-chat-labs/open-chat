@@ -33,6 +33,7 @@
                 permissions: { ...chat.permissions },
                 rules: { ...rules, newVersion: false },
                 avatar: {
+                    blobReference: chat.blobReference,
                     blobUrl: chat.blobUrl,
                     blobData: chat.blobData,
                 },

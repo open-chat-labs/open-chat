@@ -27,6 +27,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import Translatable from "../../Translatable.svelte";
+    import { updateGroupState } from "../createOrUpdateGroup/group.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -78,11 +79,17 @@
     }
 
     function newChannel() {
-        canCreateChannel && publish("newChannel", false);
+        if (canCreateChannel) {
+            updateGroupState.initialise(client.createCandidateGroup("channel", false));
+            publish("newChannel", false);
+        }
     }
 
     function embedContent() {
-        canCreateChannel && publish("newChannel", true);
+        if (canCreateChannel) {
+            updateGroupState.initialise(client.createCandidateGroup("channel", true));
+            publish("newChannel", true);
+        }
     }
 
     function copyUrl() {

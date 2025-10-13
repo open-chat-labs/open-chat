@@ -72,6 +72,7 @@
 
     onMount(() => {
         const unsubs = [
+            subscribe("newChannel", () => push({ kind: "update_group_add_members" })),
             subscribe("newGroup", () => push({ kind: "update_group_add_members" })),
             subscribe("updateGroup", () => push({ kind: "update_group_details" })),
             subscribe("updateGroupRules", () => push({ kind: "update_group_rules" })),

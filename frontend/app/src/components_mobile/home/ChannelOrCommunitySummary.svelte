@@ -14,6 +14,7 @@
     import CommunityDetailsHeader from "./communities/details/CommunityDetailsHeader.svelte";
     import CommunityCard from "./communities/explore/CommunityCard.svelte";
     import ScopeToggle from "./communities/ScopeToggle.svelte";
+    import { updateGroupState } from "./createOrUpdateGroup/group.svelte";
     import GroupDetailsBody from "./groupdetails/GroupDetailsBody.svelte";
     import GroupDetailsHeader from "./groupdetails/GroupDetailsHeader.svelte";
 
@@ -47,13 +48,34 @@
 
     function editGroup() {
         if (canEditChannel) {
-            publish("editGroup", {
-                chat: channel,
+            updateGroupState.initialise({
+                id: channel.id,
+                kind: "candidate_group_chat",
+                name: channel.name,
+                description: channel.description,
+                historyVisible: channel.historyVisible,
+                public: channel.public,
+                frozen: channel.frozen,
+                members: [],
+                permissions: { ...channel.permissions },
                 rules: {
                     ...($selectedChatRulesStore ?? defaultChatRules("channel")),
                     newVersion: false,
                 },
+                avatar: {
+                    blobReference: channel.blobReference,
+                    blobUrl: channel.blobUrl,
+                    blobData: channel.blobData,
+                },
+                gateConfig: { ...channel.gateConfig },
+                level: channel.level,
+                membership: channel.membership,
+                eventsTTL: channel.eventsTTL,
+                messagesVisibleToNonMembers: channel.messagesVisibleToNonMembers,
+                externalUrl: channel.kind === "channel" ? channel.externalUrl : undefined,
+                verified: false,
             });
+            publish("updateGroup");
         }
     }
 </script>
