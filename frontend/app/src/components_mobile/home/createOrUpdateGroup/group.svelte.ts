@@ -15,6 +15,7 @@ import {
     type AccessGateConfig,
     type CandidateGroupChat,
     type CandidateMember,
+    type ChitEarnedGate,
     type LeafGate,
     type MultiUserChatIdentifier,
     type NeuronGate,
@@ -254,14 +255,22 @@ class UpdateGroupState {
         }
     }
 
-    findMatch(gate: LeafGate): LeafGate | undefined {
+    #findMatchBy(fn: (g: LeafGate) => boolean) {
         if (isCompositeGate(this.#gateConfig.gate)) {
-            return this.#gateConfig.gate.gates.find((g) => this.gatesMatch(g, gate));
+            return this.#gateConfig.gate.gates.find(fn);
         }
 
-        if (isLeafGate(this.#gateConfig.gate) && this.gatesMatch(this.#gateConfig.gate, gate)) {
+        if (isLeafGate(this.#gateConfig.gate) && fn(this.#gateConfig.gate)) {
             return this.#gateConfig.gate;
         }
+    }
+
+    findMatchByKind(kind: LeafGate["kind"]): LeafGate | undefined {
+        return this.#findMatchBy((g) => g.kind === kind);
+    }
+
+    findMatch(gate: LeafGate): LeafGate | undefined {
+        return this.#findMatchBy((g) => this.gatesMatch(g, gate));
     }
 
     gatesMatch(a: LeafGate, b: LeafGate): boolean {
@@ -275,6 +284,13 @@ class UpdateGroupState {
             return a.ledgerCanister === b.ledgerCanister;
         }
         return a.kind === b.kind;
+    }
+
+    defaultChitGate(): ChitEarnedGate {
+        return {
+            kind: "chit_earned_gate",
+            minEarned: 0,
+        };
     }
 
     defaultTokenBalanceGate(): TokenBalanceGate {

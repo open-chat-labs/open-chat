@@ -3,6 +3,8 @@
     import { Container } from "component-lib";
     import SlidingPageContent from "../../SlidingPageContent.svelte";
     import AboutAccessGate from "./AboutAccessGate.svelte";
+    import AboutBalanceGate from "./AboutBalanceGate.svelte";
+    import AboutChitGate from "./AboutChitGate.svelte";
     import AboutNeuronGate from "./AboutNeuronGate.svelte";
     import AboutPaymentGate from "./AboutPaymentGate.svelte";
 </script>
@@ -25,14 +27,10 @@
             "Diamond membership",
             "Users must have an active diamond membership to obtain access.",
         )}
+        <AboutChitGate padding={"md"} />
         <AboutNeuronGate padding={"md"} />
         <AboutPaymentGate padding={"md"} />
-        {@render gate(
-            "token_balance.svg",
-            "minimum token balance",
-            "Minimum token balance",
-            "Requires users to hold a minimum amount of a specified token.",
-        )}
+        <AboutBalanceGate padding={"md"} />
         {@render gate(
             "unique_person.svg",
             "unique person",

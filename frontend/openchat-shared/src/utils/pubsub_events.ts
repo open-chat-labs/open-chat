@@ -2,6 +2,7 @@ import type { Readable } from "svelte/store";
 import type {
     ChannelIdentifier,
     ChatIdentifier,
+    ChitEarnedGate,
     ChitEvent,
     CommunityIdentifier,
     CommunitySummary,
@@ -164,5 +165,6 @@ export type PubSubEvents = {
     updateGroupGatesLearnMore: undefined;
     updateGroupEditNeuronGate: NeuronGate;
     updateGroupEditPaymentGate: PaymentGate;
+    updateGroupEditChitGate: ChitEarnedGate;
     updateGroupEditTokenBalanceGate: TokenBalanceGate;
 };

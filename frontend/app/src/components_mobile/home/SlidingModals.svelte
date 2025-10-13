@@ -1,6 +1,7 @@
 <script lang="ts">
     import {
         subscribe,
+        type ChitEarnedGate,
         type NeuronGate,
         type PaymentGate,
         type PublicProfile,
@@ -11,6 +12,7 @@
     import AccessGates from "./createOrUpdateGroup/access_gates/AccessGates.svelte";
     import BalanceGates from "./createOrUpdateGroup/access_gates/BalanceGates.svelte";
     import EditBalanceGate from "./createOrUpdateGroup/access_gates/EditBalanceGate.svelte";
+    import EditChitGate from "./createOrUpdateGroup/access_gates/EditChitGate.svelte";
     import EditNeuronGate from "./createOrUpdateGroup/access_gates/EditNeuronGate.svelte";
     import EditPaymentGate from "./createOrUpdateGroup/access_gates/EditPaymentGate.svelte";
     import NeuronGates from "./createOrUpdateGroup/access_gates/NeuronGates.svelte";
@@ -44,6 +46,7 @@
         | { kind: "new_group_edit_neuron_gate"; gate: NeuronGate }
         | { kind: "new_group_edit_payment_gate"; gate: PaymentGate }
         | { kind: "new_group_edit_balance_gate"; gate: TokenBalanceGate }
+        | { kind: "new_group_edit_chit_gate"; gate: ChitEarnedGate }
         | { kind: "new_group_gates_learn" }
         | { kind: "user_profile_chats_and_video" }
         | { kind: "user_profile_share" }
@@ -87,6 +90,9 @@
             ),
             subscribe("updateGroupEditTokenBalanceGate", (gate) =>
                 push({ kind: "new_group_edit_balance_gate", gate }),
+            ),
+            subscribe("updateGroupEditChitGate", (gate) =>
+                push({ kind: "new_group_edit_chit_gate", gate }),
             ),
             subscribe("updateGroupGatesLearnMore", () => push({ kind: "new_group_gates_learn" })),
             subscribe("userProfileSettings", (profile) =>
@@ -167,6 +173,8 @@
             <EditPaymentGate gate={page.gate} />
         {:else if page.kind === "new_group_edit_balance_gate"}
             <EditBalanceGate gate={page.gate} />
+        {:else if page.kind === "new_group_edit_chit_gate"}
+            <EditChitGate gate={page.gate} />
         {/if}
     </SlidingPage>
 {/each}

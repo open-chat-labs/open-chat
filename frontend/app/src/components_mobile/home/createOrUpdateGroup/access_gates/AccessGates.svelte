@@ -2,7 +2,13 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { getGateBindings, type GateBinding } from "@src/utils/access";
     import { Body, BodySmall, Chip, CommonButton, Container, Input, Switch } from "component-lib";
-    import { currentUserStore, isCompositeGate, publish, type AccessGate } from "openchat-client";
+    import {
+        currentUserStore,
+        isChitEarnedGate,
+        isCompositeGate,
+        publish,
+        type AccessGate,
+    } from "openchat-client";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import Check from "svelte-material-icons/Check.svelte";
     import DiamondOutline from "svelte-material-icons/DiamondOutline.svelte";
@@ -45,6 +51,17 @@
                 break;
             case "token_balance_gate":
                 publish("updateGroupTokenBalanceGates");
+                break;
+            case "chit_earned_gate":
+                if (active) {
+                    const existing =
+                        ugs.findMatchByKind("chit_earned_gate") ?? ugs.defaultChitGate();
+                    if (existing && isChitEarnedGate(existing)) {
+                        publish("updateGroupEditChitGate", existing);
+                    }
+                } else {
+                    publish("updateGroupEditChitGate", ugs.defaultChitGate());
+                }
                 break;
             default:
                 ugs.toggleGate(gate, active);
