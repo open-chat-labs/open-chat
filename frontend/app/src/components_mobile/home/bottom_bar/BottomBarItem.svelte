@@ -27,10 +27,11 @@
 <Container
     onClick={onSelect}
     borderWidth={"zero"}
+    allowOverflow
     borderColour={"red"}
     borderStyle={"dashed"}
     crossAxisAlignment={"center"}
-    mainAxisAlignment={"spaceBetween"}
+    mainAxisAlignment={"center"}
     height={{ kind: "fill" }}
     direction={"vertical"}>
     <div class="bottom_bar_icon">
@@ -49,7 +50,13 @@
         height: var(--icon-lg);
     }
 
-    .indicator {
+    .bottom_bar_icon {
         display: flex;
+    }
+
+    .indicator {
+        position: absolute;
+        display: flex;
+        bottom: -0.75rem;
     }
 </style>
