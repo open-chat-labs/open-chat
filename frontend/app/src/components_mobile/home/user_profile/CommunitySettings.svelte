@@ -1,6 +1,6 @@
 <script lang="ts">
     import { toastStore } from "@src/stores/toast";
-    import { Body, BodySmall, Chip, CommonButton, Container, Select } from "component-lib";
+    import { Body, BodySmall, Chip, CommonButton, Container, Option, Select } from "component-lib";
     import {
         type CommunitySummary,
         ErrorCode,
@@ -115,12 +115,30 @@
                         )}></Translatable>
                 </BodySmall>
             </Container>
-            <Select disabled={saving} onchange={onCommunitySelected} bind:value={selectedCommunity}>
-                <option disabled selected value={undefined}
-                    ><Translatable resourceKey={i18nKey("profile.selectCommunity")} /></option>
-                {#each $sortedCommunitiesStore.filter((s) => s.membership?.role !== ROLE_NONE) as community (community.id.communityId)}
-                    <option value={community}>{community.name}</option>
-                {/each}
+            <Select
+                onSelect={(val) => {
+                    selectedCommunity = val;
+                    onCommunitySelected();
+                }}
+                disabled={saving}
+                placeholder={"Select a community"}
+                value={selectedCommunity}>
+                {#snippet selectedValue(community)}
+                    {community.name}
+                {/snippet}
+                {#snippet selectOptions(onSelect)}
+                    <Container padding={"lg"} direction={"vertical"}>
+                        {#each $sortedCommunitiesStore.filter((s) => s.membership?.role !== ROLE_NONE) as community (community.id.communityId)}
+                            <Option
+                                value={community}
+                                onClick={onSelect}
+                                selected={selectedCommunity?.id.communityId ===
+                                    community.id.communityId}>
+                                {community.name}
+                            </Option>
+                        {/each}
+                    </Container>
+                {/snippet}
                 {#snippet subtext()}
                     <Translatable
                         resourceKey={i18nKey("This does not apply to messages sent or received")}
