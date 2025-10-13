@@ -11,8 +11,7 @@
         Input,
     } from "component-lib";
     import {
-        isCompositeGate,
-        isLeafGate,
+        isNeuronGate,
         nervousSystemLookup,
         OpenChat,
         publish,
@@ -81,28 +80,12 @@
     }
 
     function updateOrAddGate(gate: NeuronGate) {
-        if (isCompositeGate(ugs.gateConfig.gate)) {
-            const match = ugs.gateConfig.gate.gates.find(
-                (g) => g.kind === "neuron_gate" && g.governanceCanister === gate.governanceCanister,
-            );
-            if (match && match.kind === "neuron_gate") {
-                match.minDissolveDelay = gate.minDissolveDelay;
-                match.minStakeE8s = gate.minStakeE8s;
-            } else {
-                ugs.addLeaf(gate);
-            }
-        }
-
-        if (isLeafGate(ugs.gateConfig.gate)) {
-            if (
-                ugs.gateConfig.gate.kind === "neuron_gate" &&
-                ugs.gateConfig.gate.governanceCanister === gate.governanceCanister
-            ) {
-                ugs.gateConfig.gate.minDissolveDelay = gate.minDissolveDelay;
-                ugs.gateConfig.gate.minStakeE8s = gate.minStakeE8s;
-            } else {
-                ugs.addLeaf(gate);
-            }
+        const match = ugs.findMatch(gate);
+        if (match === undefined) {
+            ugs.addLeaf(gate);
+        } else if (isNeuronGate(match)) {
+            match.minDissolveDelay = gate.minDissolveDelay;
+            match.minStakeE8s = gate.minStakeE8s;
         }
     }
 

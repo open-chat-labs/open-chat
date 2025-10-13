@@ -12,8 +12,6 @@
     } from "component-lib";
     import {
         cryptoLookup,
-        isCompositeGate,
-        isLeafGate,
         isPaymentGate,
         nervousSystemLookup,
         OpenChat,
@@ -92,26 +90,11 @@
     }
 
     function updateOrAddGate(gate: PaymentGate) {
-        if (isCompositeGate(ugs.gateConfig.gate)) {
-            const match = ugs.gateConfig.gate.gates.find(
-                (g) => g.kind === "payment_gate" && g.ledgerCanister === gate.ledgerCanister,
-            );
-            if (match && match.kind === "payment_gate") {
-                match.amount = gate.amount;
-            } else {
-                ugs.addLeaf(gate);
-            }
-        }
-
-        if (isLeafGate(ugs.gateConfig.gate)) {
-            if (
-                ugs.gateConfig.gate.kind === "payment_gate" &&
-                ugs.gateConfig.gate.ledgerCanister === gate.ledgerCanister
-            ) {
-                ugs.gateConfig.gate.amount = gate.amount;
-            } else {
-                ugs.addLeaf(gate);
-            }
+        const match = ugs.findMatch(gate);
+        if (match === undefined) {
+            ugs.addLeaf(gate);
+        } else if (isPaymentGate(match)) {
+            match.amount = gate.amount;
         }
     }
 

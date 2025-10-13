@@ -18,12 +18,14 @@
     let searching = $state(false);
     let searchTerm = $state<string>();
     let filteredBindings = $derived(
-        bindings.filter(
-            (b) =>
-                searchTerm === undefined ||
-                searchTerm === "" ||
-                b.label.toLocaleLowerCase().includes(searchTerm?.toLocaleLowerCase()),
-        ),
+        bindings
+            .sort((a, b) => a.label.localeCompare(b.label))
+            .filter(
+                (b) =>
+                    searchTerm === undefined ||
+                    searchTerm === "" ||
+                    b.label.toLocaleLowerCase().includes(searchTerm?.toLocaleLowerCase()),
+            ),
     );
 </script>
 

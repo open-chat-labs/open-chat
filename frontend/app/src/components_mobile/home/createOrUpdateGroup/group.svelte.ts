@@ -246,6 +246,16 @@ class UpdateGroupState {
         }
     }
 
+    findMatch(gate: LeafGate): LeafGate | undefined {
+        if (isCompositeGate(this.#gateConfig.gate)) {
+            return this.#gateConfig.gate.gates.find((g) => this.gatesMatch(g, gate));
+        }
+
+        if (isLeafGate(this.#gateConfig.gate) && this.gatesMatch(this.#gateConfig.gate, gate)) {
+            return this.#gateConfig.gate;
+        }
+    }
+
     gatesMatch(a: LeafGate, b: LeafGate): boolean {
         // TODO fill in other types
         if (a.kind === "neuron_gate" && b.kind === "neuron_gate") {
