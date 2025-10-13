@@ -43,7 +43,7 @@
         position: absolute;
         top: 0;
         bottom: 0;
-        @include z-index("right-panel");
+        @include z-index("sliding-page");
         display: flex;
         padding-top: var(--status-bar-height);
         transition:
@@ -65,7 +65,7 @@
         overflow: hidden;
         top: 0;
         bottom: 0;
-        @include z-index("right-panel");
+        @include z-index("sliding-page");
         display: flex;
         padding-top: var(--status-bar-height);
         margin-top: var(--status-bar-height);

@@ -35,19 +35,19 @@
     import Verify from "./user_profile/Verify.svelte";
 
     type SlidingModalType =
-        | { kind: "new_group_add_members" }
-        | { kind: "new_group_details" }
-        | { kind: "new_group_rules" }
-        | { kind: "new_group_general_setup" }
-        | { kind: "new_group_access_gates" }
-        | { kind: "new_group_neuron_gates" }
-        | { kind: "new_group_payment_gates" }
-        | { kind: "new_group_balance_gates" }
-        | { kind: "new_group_edit_neuron_gate"; gate: NeuronGate }
-        | { kind: "new_group_edit_payment_gate"; gate: PaymentGate }
-        | { kind: "new_group_edit_balance_gate"; gate: TokenBalanceGate }
-        | { kind: "new_group_edit_chit_gate"; gate: ChitEarnedGate }
-        | { kind: "new_group_gates_learn" }
+        | { kind: "update_group_add_members" }
+        | { kind: "update_group_details" }
+        | { kind: "update_group_rules" }
+        | { kind: "update_group_general_setup" }
+        | { kind: "update_group_access_gates" }
+        | { kind: "update_group_neuron_gates" }
+        | { kind: "update_group_payment_gates" }
+        | { kind: "update_group_balance_gates" }
+        | { kind: "update_group_edit_neuron_gate"; gate: NeuronGate }
+        | { kind: "update_group_edit_payment_gate"; gate: PaymentGate }
+        | { kind: "update_group_edit_balance_gate"; gate: TokenBalanceGate }
+        | { kind: "update_group_edit_chit_gate"; gate: ChitEarnedGate }
+        | { kind: "update_group_gates_learn" }
         | { kind: "user_profile_chats_and_video" }
         | { kind: "user_profile_share" }
         | { kind: "user_profile_about" }
@@ -72,29 +72,36 @@
 
     onMount(() => {
         const unsubs = [
-            subscribe("newGroup", () => push({ kind: "new_group_add_members" })),
-            subscribe("updateGroupRules", () => push({ kind: "new_group_rules" })),
-            subscribe("updateGroupDetails", () => push({ kind: "new_group_details" })),
-            subscribe("updateGroupGeneralSetup", () => push({ kind: "new_group_general_setup" })),
-            subscribe("updateGroupAccessGates", () => push({ kind: "new_group_access_gates" })),
-            subscribe("updateGroupNeuronGates", () => push({ kind: "new_group_neuron_gates" })),
-            subscribe("updateGroupPaymentGates", () => push({ kind: "new_group_payment_gates" })),
+            subscribe("newGroup", () => push({ kind: "update_group_add_members" })),
+            subscribe("updateGroup", () => push({ kind: "update_group_details" })),
+            subscribe("updateGroupRules", () => push({ kind: "update_group_rules" })),
+            subscribe("updateGroupDetails", () => push({ kind: "update_group_details" })),
+            subscribe("updateGroupGeneralSetup", () =>
+                push({ kind: "update_group_general_setup" }),
+            ),
+            subscribe("updateGroupAccessGates", () => push({ kind: "update_group_access_gates" })),
+            subscribe("updateGroupNeuronGates", () => push({ kind: "update_group_neuron_gates" })),
+            subscribe("updateGroupPaymentGates", () =>
+                push({ kind: "update_group_payment_gates" }),
+            ),
             subscribe("updateGroupTokenBalanceGates", () =>
-                push({ kind: "new_group_balance_gates" }),
+                push({ kind: "update_group_balance_gates" }),
             ),
             subscribe("updateGroupEditNeuronGate", (gate) =>
-                push({ kind: "new_group_edit_neuron_gate", gate }),
+                push({ kind: "update_group_edit_neuron_gate", gate }),
             ),
             subscribe("updateGroupEditPaymentGate", (gate) =>
-                push({ kind: "new_group_edit_payment_gate", gate }),
+                push({ kind: "update_group_edit_payment_gate", gate }),
             ),
             subscribe("updateGroupEditTokenBalanceGate", (gate) =>
-                push({ kind: "new_group_edit_balance_gate", gate }),
+                push({ kind: "update_group_edit_balance_gate", gate }),
             ),
             subscribe("updateGroupEditChitGate", (gate) =>
-                push({ kind: "new_group_edit_chit_gate", gate }),
+                push({ kind: "update_group_edit_chit_gate", gate }),
             ),
-            subscribe("updateGroupGatesLearnMore", () => push({ kind: "new_group_gates_learn" })),
+            subscribe("updateGroupGatesLearnMore", () =>
+                push({ kind: "update_group_gates_learn" }),
+            ),
             subscribe("userProfileSettings", (profile) =>
                 push({ kind: "user_profile_settings", profile }),
             ),
@@ -149,31 +156,31 @@
             <CommunitySettings />
         {:else if page.kind === "user_profile_settings"}
             <ProfileSettings profile={page.profile} />
-        {:else if page.kind === "new_group_add_members"}
+        {:else if page.kind === "update_group_add_members"}
             <AddGroupMembers />
-        {:else if page.kind === "new_group_details"}
+        {:else if page.kind === "update_group_details"}
             <GroupInfo />
-        {:else if page.kind === "new_group_rules"}
+        {:else if page.kind === "update_group_rules"}
             <Rules />
-        {:else if page.kind === "new_group_general_setup"}
+        {:else if page.kind === "update_group_general_setup"}
             <GeneralSetup />
-        {:else if page.kind === "new_group_access_gates"}
+        {:else if page.kind === "update_group_access_gates"}
             <AccessGates />
-        {:else if page.kind === "new_group_gates_learn"}
+        {:else if page.kind === "update_group_gates_learn"}
             <AboutAccessGates />
-        {:else if page.kind === "new_group_neuron_gates"}
+        {:else if page.kind === "update_group_neuron_gates"}
             <NeuronGates />
-        {:else if page.kind === "new_group_balance_gates"}
+        {:else if page.kind === "update_group_balance_gates"}
             <BalanceGates />
-        {:else if page.kind === "new_group_edit_neuron_gate"}
+        {:else if page.kind === "update_group_edit_neuron_gate"}
             <EditNeuronGate gate={page.gate} />
-        {:else if page.kind === "new_group_payment_gates"}
+        {:else if page.kind === "update_group_payment_gates"}
             <PaymentGates />
-        {:else if page.kind === "new_group_edit_payment_gate"}
+        {:else if page.kind === "update_group_edit_payment_gate"}
             <EditPaymentGate gate={page.gate} />
-        {:else if page.kind === "new_group_edit_balance_gate"}
+        {:else if page.kind === "update_group_edit_balance_gate"}
             <EditBalanceGate gate={page.gate} />
-        {:else if page.kind === "new_group_edit_chit_gate"}
+        {:else if page.kind === "update_group_edit_chit_gate"}
             <EditChitGate gate={page.gate} />
         {/if}
     </SlidingPage>

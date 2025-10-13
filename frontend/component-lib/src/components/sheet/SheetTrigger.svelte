@@ -1,7 +1,7 @@
 <script lang="ts">
     import { portalState } from "component-lib";
     import { getAllContexts, mount, type Snippet } from "svelte";
-    import SheetWrapper from "./SheetWrapper.svelte";
+    import Sheet from "./Sheet.svelte";
 
     interface Props {
         trigger: Snippet<[(e?: MouseEvent | TouchEvent) => void]>;
@@ -26,7 +26,7 @@
 
     export function openSheet() {
         open = portalState.open(
-            mount(SheetWrapper, {
+            mount(Sheet, {
                 target: document.body,
                 props: {
                     sheet: sheet,

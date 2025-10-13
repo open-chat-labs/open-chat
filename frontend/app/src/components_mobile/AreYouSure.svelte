@@ -1,14 +1,12 @@
 <script lang="ts">
+    import { Body, CommonButton, Container, Input, Sheet, Title } from "component-lib";
     import type { ResourceKey } from "openchat-client";
     import type { Snippet } from "svelte";
     import { _ } from "svelte-i18n";
+    import Check from "svelte-material-icons/Check.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey, interpolate } from "../i18n/i18n";
-    import Button from "./Button.svelte";
-    import ButtonGroup from "./ButtonGroup.svelte";
     import Markdown from "./home/Markdown.svelte";
-    import Input from "./Input.svelte";
-    import ModalContent from "./ModalContent.svelte";
-    import Overlay from "./Overlay.svelte";
     import Translatable from "./Translatable.svelte";
 
     interface Props {
@@ -50,56 +48,58 @@
     }
 </script>
 
-<Overlay>
-    <ModalContent hideBody={message === undefined && children === undefined}>
-        {#snippet header()}
+<Sheet onClose={() => action(false)}>
+    {#snippet sheet()}
+        <Container height={{ kind: "hug" }} padding={"xl"} gap={"xl"} direction={"vertical"}>
             {#if title !== undefined}
-                <Translatable resourceKey={title} />
+                <Title fontWeight={"bold"}>
+                    <Translatable resourceKey={title} />
+                </Title>
             {/if}
-        {/snippet}
-        {#snippet body()}
+
             {@render children?.()}
+
             {#if message !== undefined}
-                <Markdown inline={false} text={interpolate($_, message)} />
+                <Body>
+                    <Markdown inline={false} text={interpolate($_, message)} />
+                </Body>
 
                 {#if doubleCheck !== undefined}
                     <p class="challenge">
                         <Markdown text={interpolate($_, doubleCheck.challenge)} />
                     </p>
                     <Input
-                        invalid={false}
                         disabled={inProgress}
-                        autofocus
                         bind:value={response}
                         minlength={0}
                         maxlength={200}
                         countdown={false} />
                 {/if}
             {/if}
-        {/snippet}
-        {#snippet footer()}
-            <ButtonGroup>
-                <Button disabled={inProgress} small onClick={() => onClick(false)} secondary>
+
+            <Container gap={"md"} crossAxisAlignment={"end"} mainAxisAlignment={"end"}>
+                <CommonButton disabled={inProgress} onClick={() => onClick(false)} size={"medium"}>
+                    {#snippet icon(color)}
+                        <Close {color} />
+                    {/snippet}
                     {#if noLabel !== undefined}
                         <Translatable resourceKey={noLabel} />
                     {/if}
-                </Button>
-                <Button
+                </CommonButton>
+                <CommonButton
                     loading={inProgress}
                     disabled={!canConfirm}
-                    small
-                    onClick={() => onClick(true)}>
+                    mode={"active"}
+                    onClick={() => onClick(true)}
+                    size={"medium"}>
+                    {#snippet icon(color)}
+                        <Check {color} />
+                    {/snippet}
                     {#if yesLabel !== undefined}
                         <Translatable resourceKey={yesLabel} />
                     {/if}
-                </Button>
-            </ButtonGroup>
-        {/snippet}
-    </ModalContent>
-</Overlay>
-
-<style lang="scss">
-    .challenge {
-        margin: $sp3 0;
-    }
-</style>
+                </CommonButton>
+            </Container>
+        </Container>
+    {/snippet}
+</Sheet>

@@ -22,6 +22,7 @@
     import Cog from "svelte-material-icons/Cog.svelte";
     import FormatList from "svelte-material-icons/FormatListBulletedType.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import AreYouSure from "../../AreYouSure.svelte";
     import EditableAvatar from "../../EditableAvatar.svelte";
     import LinkedCard from "../../LinkedCard.svelte";
     import Translatable from "../../Translatable.svelte";
@@ -44,9 +45,20 @@
     {/if}
 {/snippet}
 
+{#if ugs.showingVerificationWarning}
+    <AreYouSure
+        message={i18nKey("verified.nameChangeWarning", undefined, ugs.candidateGroup.level, true)}
+        action={(yes) => ugs.saveGroup(client, yes)} />
+{/if}
+
 <SlidingPageContent
-    title={i18nKey("group.addGroupInfo", undefined, ugs.candidateGroup.level, true)}
-    subtitle={i18nKey("Create group")}>
+    title={i18nKey(
+        ugs.editMode ? "group.updateInfo" : "group.addGroupInfo",
+        undefined,
+        ugs.candidateGroup.level,
+        true,
+    )}
+    subtitle={i18nKey(ugs.editMode ? "Update group" : "Create group")}>
     <Container
         supplementalClass={"group_info"}
         height={{ kind: "fill" }}
@@ -64,7 +76,7 @@
                 image={ugs.candidateGroup.avatar?.blobUrl}
                 onImageSelected={(image) => ugs.groupAvatarSelected(image)} />
         </Container>
-        <Form onSubmit={() => console.log("On submit")}>
+        <Form onSubmit={() => ugs.saveGroup(client)}>
             <Container direction={"vertical"} gap={"lg"} supplementalClass={"group_basic_info"}>
                 <Input
                     minlength={MIN_NAME_LENGTH}
@@ -186,15 +198,19 @@
             <CommonButton
                 disabled={!ugs.valid}
                 loading={ugs.busy}
-                onClick={() => ugs.createGroup(client)}
+                onClick={() => ugs.saveGroup(client)}
                 size={"medium"}
                 mode={"active"}>
                 {#snippet icon(color)}
                     <AccountGroup {color}></AccountGroup>
                 {/snippet}
                 <Translatable
-                    resourceKey={i18nKey("group.create", undefined, ugs.candidateGroup.level, true)}
-                ></Translatable>
+                    resourceKey={i18nKey(
+                        ugs.editMode ? "group.update" : "group.create",
+                        undefined,
+                        ugs.candidateGroup.level,
+                        true,
+                    )}></Translatable>
             </CommonButton>
         </Container>
     </Container>

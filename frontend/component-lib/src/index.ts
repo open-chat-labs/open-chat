@@ -28,6 +28,7 @@ export { default as ThreadSummary } from "./components/message/ThreadSummary.sve
 export { default as NotificationIndicator } from "./components/NotificationIndicator.svelte";
 export { default as Radio } from "./components/Radio.svelte";
 export { default as SectionHeader } from "./components/SectionHeader.svelte";
+export { default as Sheet } from "./components/sheet/Sheet.svelte";
 export { default as SheetTrigger } from "./components/sheet/SheetTrigger.svelte";
 export { default as Spinner } from "./components/Spinner.svelte";
 export { default as Switch } from "./components/Switch.svelte";

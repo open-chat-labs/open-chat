@@ -2,6 +2,7 @@
     import type { MultiUserChat, OpenChat } from "openchat-client";
     import { defaultChatRules, publish, selectedChatRulesStore } from "openchat-client";
     import { getContext } from "svelte";
+    import { updateGroupState } from "../createOrUpdateGroup/group.svelte";
     import GroupDetailsBody from "./GroupDetailsBody.svelte";
     import GroupDetailsHeader from "./GroupDetailsHeader.svelte";
 
@@ -20,7 +21,30 @@
 
     function editGroup() {
         if (canEdit) {
-            publish("editGroup", { chat, rules: { ...rules, newVersion: false } });
+            updateGroupState.initialise({
+                id: chat.id,
+                kind: "candidate_group_chat",
+                name: chat.name,
+                description: chat.description,
+                historyVisible: chat.historyVisible,
+                public: chat.public,
+                frozen: chat.frozen,
+                members: [],
+                permissions: { ...chat.permissions },
+                rules: { ...rules, newVersion: false },
+                avatar: {
+                    blobUrl: chat.blobUrl,
+                    blobData: chat.blobData,
+                },
+                gateConfig: { ...chat.gateConfig },
+                level: chat.level,
+                membership: chat.membership,
+                eventsTTL: chat.eventsTTL,
+                messagesVisibleToNonMembers: chat.messagesVisibleToNonMembers,
+                externalUrl: chat.kind === "channel" ? chat.externalUrl : undefined,
+                verified: chat.kind === "group_chat" ? chat.verified : false,
+            });
+            publish("updateGroup");
         }
     }
 </script>

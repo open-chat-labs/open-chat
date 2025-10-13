@@ -1,5 +1,6 @@
 // this is a class that holds all state and logic required for creating and editing groups
 // so that the components themselves can be as purely presentational as possible
+// We will use this in the new mobile components but there should be no reason that we cannot use this for the desktop components too in order to simplify them as well.
 
 import { toastStore } from "@src/stores/toast";
 import {
@@ -11,16 +12,20 @@ import {
     publish,
     ROLE_MEMBER,
     routeForChatIdentifier,
+    UnsupportedValueError,
     type AccessGate,
     type AccessGateConfig,
     type CandidateGroupChat,
     type CandidateMember,
     type ChitEarnedGate,
     type LeafGate,
+    type Level,
     type MultiUserChatIdentifier,
     type NeuronGate,
     type PaymentGate,
+    type ResourceKey,
     type TokenBalanceGate,
+    type UpdateGroupResponse,
     type UserOrUserGroup,
     type UserSummary,
 } from "openchat-client";
@@ -46,6 +51,7 @@ function gatesByKind(config: AccessGateConfig, kind: AccessGate["kind"]): Access
 
 class UpdateGroupState {
     #candidateGroup = $state<CandidateGroupChat>();
+    #originalGroup: CandidateGroupChat | undefined;
     #candidateMembers = $state<CandidateMember[]>([]);
     #candidateUsers = $derived(this.#candidateMembers.map((m) => m.user));
     #accessGates = $derived.by<LeafGate[]>(() => {
@@ -70,6 +76,8 @@ class UpdateGroupState {
         return gatesByKind(this.gateConfig, "token_balance_gate") as TokenBalanceGate[];
     });
     #busy = $state(false);
+    #showingVerificationWarning = $state(false);
+    #confirming = $state(false);
     #rulesValid = $derived(
         this.#candidateGroup !== undefined &&
             (!this.#candidateGroup.rules.enabled ||
@@ -82,10 +90,24 @@ class UpdateGroupState {
             this.#candidateGroup.name.length <= MAX_NAME_LENGTH,
     );
     #valid = $derived(this.#rulesValid && this.#nameValid);
+    #editMode = $derived.by(() => {
+        if (this.#candidateGroup === undefined) return false;
+        const id = this.#candidateGroup.id;
+        switch (id.kind) {
+            case "channel":
+                return id.channelId !== 0;
+            case "group_chat":
+                return id.groupId !== "";
+        }
+    });
 
     initialise(group: CandidateGroupChat | undefined) {
         this.#candidateGroup = group;
+        this.#originalGroup = $state.snapshot(this.candidateGroup);
         this.#candidateMembers = [];
+        this.#showingVerificationWarning = false;
+        this.#busy = false;
+        this.#confirming = false;
     }
 
     groupAvatarSelected(detail: { url: string; data: Uint8Array }) {
@@ -93,6 +115,10 @@ class UpdateGroupState {
             blobUrl: detail.url,
             blobData: detail.data,
         };
+    }
+
+    get editMode(): boolean {
+        return this.#editMode;
     }
 
     get neuronGates() {
@@ -125,6 +151,10 @@ class UpdateGroupState {
 
     get busy() {
         return this.#busy;
+    }
+
+    get showingVerificationWarning() {
+        return this.#showingVerificationWarning;
     }
 
     get candidateGroup(): CandidateGroupChat {
@@ -160,12 +190,160 @@ class UpdateGroupState {
         }
     }
 
-    createGroup(client: OpenChat) {
+    saveGroup(client: OpenChat, yes: boolean = true): Promise<void> {
+        if (this.editMode) {
+            return this.#updateGroup(client, yes);
+        } else {
+            return this.#createGroup(client);
+        }
+    }
+
+    #dirtyCheck(
+        fn: (original: CandidateGroupChat, current: CandidateGroupChat) => boolean,
+    ): boolean {
+        if (this.#originalGroup === undefined || this.#candidateGroup === undefined) return false;
+        return fn(this.#originalGroup, this.#candidateGroup);
+    }
+
+    get #visibilityChanged() {
+        return this.#dirtyCheck((original, current) => original.public !== current.public);
+    }
+
+    get #nameChanged() {
+        return this.#dirtyCheck((original, current) => original.name !== current.name);
+    }
+
+    get #descriptionChanged() {
+        return this.#dirtyCheck(
+            (original, current) => original.description !== current.description,
+        );
+    }
+
+    get #rulesChanged() {
+        return this.#dirtyCheck(
+            (original, current) =>
+                original.rules.enabled !== current.rules.enabled ||
+                original.rules.text !== current.rules.text,
+        );
+    }
+
+    get #avatarChanged() {
+        return this.#dirtyCheck(
+            (original, current) => original.avatar?.blobUrl !== current.avatar?.blobUrl,
+        );
+    }
+
+    get #ttlChanged() {
+        return this.#dirtyCheck((original, current) => original.eventsTTL !== current.eventsTTL);
+    }
+
+    get #visibleToNonMembersChanged() {
+        return this.#dirtyCheck(
+            (original, current) =>
+                original.messagesVisibleToNonMembers !== current.messagesVisibleToNonMembers,
+        );
+    }
+
+    get #externalUrlChanged() {
+        return this.#dirtyCheck(
+            (original, current) => original.externalUrl !== current.externalUrl,
+        );
+    }
+
+    #accessGatesChanged(client: OpenChat) {
+        return this.#dirtyCheck((original, current) =>
+            client.hasAccessGateChanged(original.gateConfig, current.gateConfig),
+        );
+    }
+
+    #updateGroup(client: OpenChat, yes: boolean = true): Promise<void> {
+        if (this.#originalGroup === undefined || this.#candidateGroup === undefined)
+            return Promise.resolve();
+
+        this.#busy = true;
+
+        const changeVisibility = this.#visibilityChanged;
+        const verificationWarning = this.#nameChanged && this.#originalGroup?.verified;
+
+        if (verificationWarning && !this.#showingVerificationWarning) {
+            this.#showingVerificationWarning = true;
+            return Promise.resolve();
+        }
+
+        if (changeVisibility && !this.#confirming) {
+            this.#confirming = true;
+            return Promise.resolve();
+        }
+
+        if (verificationWarning && this.#showingVerificationWarning && !yes) {
+            this.#showingVerificationWarning = false;
+            this.#busy = false;
+            this.#candidateGroup.name = this.#originalGroup.name;
+            return Promise.resolve();
+        }
+
+        if (changeVisibility && this.#confirming && !yes) {
+            this.#confirming = false;
+            this.#busy = false;
+            return Promise.resolve();
+        }
+
+        this.#confirming = false;
+
+        const updatedGroup = $state.snapshot(this.candidateGroup);
+
+        return client
+            .updateGroup(
+                updatedGroup.id,
+                this.#nameChanged ? updatedGroup.name : undefined,
+                this.#descriptionChanged ? updatedGroup.description : undefined,
+                this.#rulesChanged && this.rulesValid ? updatedGroup.rules : undefined,
+                undefined, // todo - this where we plug in permissions
+                // permissionsDirty
+                //     ? client.diffGroupPermissions(
+                //           originalGroup.permissions,
+                //           updatedGroup.permissions,
+                //       )
+                //     : undefined,
+                this.#avatarChanged ? updatedGroup.avatar?.blobData : undefined,
+                this.#ttlChanged
+                    ? updatedGroup.eventsTTL === undefined
+                        ? "set_to_none"
+                        : { value: updatedGroup.eventsTTL }
+                    : undefined,
+                this.#accessGatesChanged(client) ? updatedGroup.gateConfig : undefined,
+                this.#visibilityChanged ? updatedGroup.public : undefined,
+                this.#visibleToNonMembersChanged
+                    ? updatedGroup.messagesVisibleToNonMembers
+                    : undefined,
+                this.#externalUrlChanged ? updatedGroup.externalUrl : undefined,
+            )
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    this.#originalGroup = updatedGroup;
+                } else {
+                    const resourceKey = this.#groupUpdateErrorMessage(resp, updatedGroup.level);
+                    if (resourceKey) {
+                        toastStore.showFailureToast({
+                            ...resourceKey,
+                            level: updatedGroup.level,
+                            lowercase: true,
+                        });
+                    }
+                }
+            })
+            .finally(() => {
+                this.#busy = false;
+                publish("closeModalStack");
+            });
+    }
+
+    #createGroup(client: OpenChat): Promise<void> {
         this.#busy = true;
 
         const level = this.candidateGroup.level;
 
-        client
+        return client
             .createGroupChat($state.snapshot(this.candidateGroup))
             .then((resp) => {
                 if (resp.kind !== "success") {
@@ -191,6 +369,31 @@ class UpdateGroupState {
                 console.error("Error creating group: ", err);
             })
             .finally(() => (this.#busy = false));
+    }
+
+    #groupUpdateErrorMessage(resp: UpdateGroupResponse, level: Level): ResourceKey | undefined {
+        console.log("Group update response: ", resp);
+        if (resp.kind === "success") return undefined;
+        if (resp.kind === "unchanged") return undefined;
+        if (resp.kind === "name_too_short") return i18nKey("groupNameTooShort");
+        if (resp.kind === "name_too_long") return i18nKey("groupNameTooLong");
+        if (resp.kind === "name_reserved") return i18nKey("groupNameReserved");
+        if (resp.kind === "desc_too_long") return i18nKey("groupDescTooLong");
+        if (resp.kind === "name_taken" && level === "group") return i18nKey("groupAlreadyExists");
+        if (resp.kind === "name_taken") return i18nKey("channelAlreadyExists");
+        if (resp.kind === "not_in_group") return i18nKey("userNotInGroup");
+        if (resp.kind === "internal_error") return i18nKey("groupUpdateFailed");
+        if (resp.kind === "not_authorized") return i18nKey("groupUpdateFailed");
+        if (resp.kind === "avatar_too_big") return i18nKey("avatarTooBig");
+        if (resp.kind === "rules_too_short") return i18nKey("groupRulesTooShort");
+        if (resp.kind === "rules_too_long") return i18nKey("groupRulesTooLong");
+        if (resp.kind === "user_suspended") return i18nKey("userSuspended");
+        if (resp.kind === "user_lapsed") return i18nKey("userLapsed");
+        if (resp.kind === "chat_frozen") return i18nKey("chatFrozen");
+        if (resp.kind === "failure" || resp.kind === "error") return i18nKey("failure");
+        if (resp.kind === "offline") return i18nKey("offlineError");
+        if (resp.kind === "access_gate_invalid") return i18nKey("access.gateInvalid");
+        throw new UnsupportedValueError(`Unexpected UpdateGroupResponse type received`, resp);
     }
 
     #onGroupCreated(canisterId: MultiUserChatIdentifier) {

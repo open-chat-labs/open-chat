@@ -830,6 +830,7 @@
         "shareTab": "Share",
         "tooManyInvites": "You can only have 100 outstanding invitations",
         "update": "Update {level}",
+        "updateInfo": "Update {level} info",
         "usersInvited": "Invite message sent!",
         "welcome": "Welcome to {groupName}"
     },

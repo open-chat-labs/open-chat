@@ -9,23 +9,12 @@
         onClose: () => void;
     }
     let { sheet, onClose }: Props = $props();
-
-    // onMount(() => {
-    //     setTimeout(() => {
-    //         document.addEventListener("click", onClose, { once: true });
-    //     }, 100);
-    // });
-
-    function internalClose() {
-        // document.removeEventListener("click", onClose);
-        onClose();
-    }
 </script>
 
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div onclick={onClose} transition:fade={{ duration: 300 }} class="sheet_overlay">
-    <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div transition:fly={{ duration: 300, easing: expoInOut, y: 2000 }} class="sheet_content">
+    <div transition:fly={{ duration: 300, easing: expoInOut, y: 2000 }}>
         <Container
             parentDirection={"vertical"}
             height={{ kind: "fixed", size: "100%" }}
@@ -34,7 +23,7 @@
             supplementalClass={"sheet_content"}
             borderRadius={["xl", "xl", "zero", "zero"]}
             direction={"vertical"}>
-            {@render sheet(internalClose)}
+            {@render sheet(onClose)}
         </Container>
     </div>
 </div>
@@ -55,9 +44,7 @@
         background: rgba(0, 0, 0, 0.5);
     }
 
-    .sheet_content {
-        display: flex;
-        flex-direction: column;
+    :global(.sheet_content) {
         max-height: 75vh;
     }
 </style>

@@ -43,7 +43,7 @@
                     {val.name}
                 {/snippet}
                 {#snippet selectOptions(onSelect)}
-                    <Container padding={["zero", "zero", "lg", "zero"]} direction={"vertical"}>
+                    <Container padding={"lg"} direction={"vertical"}>
                         {#each supportedLanguages as lang}
                             <Option
                                 value={lang}
