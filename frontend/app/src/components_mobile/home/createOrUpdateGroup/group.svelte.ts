@@ -19,6 +19,7 @@ import {
     type MultiUserChatIdentifier,
     type NeuronGate,
     type PaymentGate,
+    type TokenBalanceGate,
     type UserOrUserGroup,
     type UserSummary,
 } from "openchat-client";
@@ -64,6 +65,9 @@ class UpdateGroupState {
     #paymentGates = $derived.by<PaymentGate[]>(() => {
         return gatesByKind(this.gateConfig, "payment_gate") as PaymentGate[];
     });
+    #tokenBalanceGates = $derived.by<TokenBalanceGate[]>(() => {
+        return gatesByKind(this.gateConfig, "token_balance_gate") as TokenBalanceGate[];
+    });
     #busy = $state(false);
     #rulesValid = $derived(
         this.#candidateGroup !== undefined &&
@@ -96,6 +100,10 @@ class UpdateGroupState {
 
     get paymentGates() {
         return this.#paymentGates;
+    }
+
+    get tokenBalanceGates() {
+        return this.#tokenBalanceGates;
     }
 
     get gateConfig() {
@@ -257,14 +265,24 @@ class UpdateGroupState {
     }
 
     gatesMatch(a: LeafGate, b: LeafGate): boolean {
-        // TODO fill in other types
         if (a.kind === "neuron_gate" && b.kind === "neuron_gate") {
             return a.governanceCanister === b.governanceCanister;
         }
         if (a.kind === "payment_gate" && b.kind === "payment_gate") {
             return a.ledgerCanister === b.ledgerCanister;
         }
+        if (a.kind === "token_balance_gate" && b.kind === "token_balance_gate") {
+            return a.ledgerCanister === b.ledgerCanister;
+        }
         return a.kind === b.kind;
+    }
+
+    defaultTokenBalanceGate(): TokenBalanceGate {
+        return {
+            kind: "token_balance_gate",
+            ledgerCanister: "",
+            minBalance: 0n,
+        };
     }
 
     defaultNeuronGate(): NeuronGate {

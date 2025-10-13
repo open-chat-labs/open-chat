@@ -44,7 +44,7 @@
                 publish("updateGroupPaymentGates");
                 break;
             case "token_balance_gate":
-                console.log("TODO");
+                publish("updateGroupTokenBalanceGates");
                 break;
             default:
                 ugs.toggleGate(gate, active);

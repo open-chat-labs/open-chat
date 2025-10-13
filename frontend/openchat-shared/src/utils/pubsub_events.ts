@@ -21,6 +21,7 @@ import type {
     PaymentGate,
     PublicProfile,
     ResourceKey,
+    TokenBalanceGate,
     UpdatedRules,
     VideoCallType,
 } from "..";
@@ -159,7 +160,9 @@ export type PubSubEvents = {
     updateGroupGeneralSetup: undefined;
     updateGroupNeuronGates: undefined;
     updateGroupPaymentGates: undefined;
+    updateGroupTokenBalanceGates: undefined;
     updateGroupGatesLearnMore: undefined;
     updateGroupEditNeuronGate: NeuronGate;
     updateGroupEditPaymentGate: PaymentGate;
+    updateGroupEditTokenBalanceGate: TokenBalanceGate;
 };

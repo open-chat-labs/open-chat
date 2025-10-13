@@ -10,6 +10,7 @@ import {
     type NeuronGate,
     type PaymentGate,
     type ReadonlyMap,
+    type TokenBalanceGate,
 } from "openchat-client";
 import { _ } from "svelte-i18n";
 import { get } from "svelte/store";
@@ -66,6 +67,7 @@ const chitEarnedGate: GateBinding = {
 
 export type NeuronGateBinding = GateBinding & { gate: NeuronGate };
 export type PaymentGateBinding = GateBinding & { gate: PaymentGate };
+export type BalanceGateBinding = GateBinding & { gate: TokenBalanceGate };
 
 export function getNeuronGateBindings(
     nervousSystemLookup: ReadonlyMap<string, NervousSystemDetails>,
@@ -107,7 +109,7 @@ export function getPaymentGateBindings(
 
 export function getBalanceGateBindings(
     cryptoLookup: ReadonlyMap<string, CryptocurrencyDetails>,
-): GateBinding[] {
+): BalanceGateBinding[] {
     return [...cryptoLookup.values()].map((c) => {
         return {
             label: formatLabel(c.symbol, false),
