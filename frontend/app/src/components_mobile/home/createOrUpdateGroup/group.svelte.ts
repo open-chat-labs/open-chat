@@ -28,7 +28,6 @@ export const MAX_DESC_LENGTH = 1024;
 class UpdateGroupState extends UpdateGroupOrCommunityState {
     #candidateGroup = $state<CandidateGroupChat>();
     #originalGroup: CandidateGroupChat | undefined;
-    #showingVerificationWarning = $state(false);
     #rulesValid = $derived(
         this.#candidateGroup !== undefined &&
             (!this.#candidateGroup.rules.enabled ||
@@ -56,11 +55,14 @@ class UpdateGroupState extends UpdateGroupOrCommunityState {
         return this.candidateGroup;
     }
 
+    get original() {
+        return this.#originalGroup;
+    }
+
     initialise(group: CandidateGroupChat | undefined) {
         this.reset();
         this.#candidateGroup = group;
         this.#originalGroup = $state.snapshot(this.candidateGroup);
-        this.#showingVerificationWarning = false;
     }
 
     groupAvatarSelected(detail: { url: string; data: Uint8Array }) {
@@ -84,10 +86,6 @@ class UpdateGroupState extends UpdateGroupOrCommunityState {
 
     get valid() {
         return this.#valid;
-    }
-
-    get showingVerificationWarning() {
-        return this.#showingVerificationWarning;
     }
 
     get candidateGroup(): CandidateGroupChat {
@@ -172,8 +170,8 @@ class UpdateGroupState extends UpdateGroupOrCommunityState {
         const changeVisibility = this.#visibilityChanged;
         const verificationWarning = this.#nameChanged && this.#originalGroup?.verified;
 
-        if (verificationWarning && !this.#showingVerificationWarning) {
-            this.#showingVerificationWarning = true;
+        if (verificationWarning && !this.showingVerificationWarning) {
+            this.showingVerificationWarning = true;
             return Promise.resolve();
         }
 
@@ -182,8 +180,8 @@ class UpdateGroupState extends UpdateGroupOrCommunityState {
             return Promise.resolve();
         }
 
-        if (verificationWarning && this.#showingVerificationWarning && !yes) {
-            this.#showingVerificationWarning = false;
+        if (verificationWarning && this.showingVerificationWarning && !yes) {
+            this.showingVerificationWarning = false;
             this.busy = false;
             this.#candidateGroup.name = this.#originalGroup.name;
             return Promise.resolve();

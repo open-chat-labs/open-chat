@@ -28,10 +28,14 @@ function gatesByKind(config: AccessGateConfig, kind: AccessGate["kind"]): Access
     return [];
 }
 
+type Entity = AccessControlled & HasLevel;
+
 export abstract class UpdateGroupOrCommunityState {
-    abstract get candidate(): AccessControlled & HasLevel;
+    abstract get candidate(): Entity;
+    abstract get original(): Entity | undefined;
     #confirming = $state(false);
     #busy = $state(false);
+    #showingVerificationWarning = $state(false);
     #candidateMembers = $state<CandidateMember[]>([]);
     #candidateUsers = $derived(this.#candidateMembers.map((m) => m.user));
     #accessGates = $derived.by<LeafGate[]>(() => {
@@ -59,6 +63,15 @@ export abstract class UpdateGroupOrCommunityState {
         this.#busy = false;
         this.#confirming = false;
         this.#candidateMembers = [];
+        this.#showingVerificationWarning = false;
+    }
+
+    get showingVerificationWarning() {
+        return this.#showingVerificationWarning;
+    }
+
+    set showingVerificationWarning(val: boolean) {
+        this.#showingVerificationWarning = val;
     }
 
     get busy() {

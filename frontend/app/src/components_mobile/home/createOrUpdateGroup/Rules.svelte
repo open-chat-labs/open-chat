@@ -20,7 +20,7 @@
         gap={"xl"}
         direction={"vertical"}
         padding={["xxl", "lg", "lg", "lg"]}>
-        <GroupCard candidate={ugs.candidateGroup} />
+        <GroupCard candidateGroup={ugs.candidateGroup} />
 
         <Container padding={["zero", "md"]} gap={"xl"} direction={"vertical"}>
             <Setting
