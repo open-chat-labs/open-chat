@@ -185,7 +185,7 @@
                     "Enable sharing via link, disappearing messages, or hide chat history for new members.",
                 )} />
             <LinkedCard
-                onClick={() => publish("updateCommunityAccessGates")}
+                onClick={() => publish("updateAccessGates", ucs)}
                 Icon={AlertRhombusOutline}
                 title={i18nKey("Access gates")}
                 info={i18nKey(

@@ -3,7 +3,7 @@
     import type { GateBinding } from "@src/utils/access";
     import { Container, Option, Search, Select, Subtitle } from "component-lib";
     import { _ } from "svelte-i18n";
-    import Translatable from "../../../Translatable.svelte";
+    import Translatable from "../../Translatable.svelte";
 
     interface Props {
         bindings: GateBinding[];

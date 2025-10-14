@@ -22,20 +22,20 @@
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";
-    import Translatable from "../../../Translatable.svelte";
-    import SlidingPageContent from "../../SlidingPageContent.svelte";
-    import { updateGroupState } from "../group.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import type { UpdateGroupOrCommunityState } from "../groupOrCommunity.svelte";
+    import SlidingPageContent from "../SlidingPageContent.svelte";
     import AboutPaymentGate from "./AboutPaymentGate.svelte";
     import SelectBinding from "./SelectBinding.svelte";
 
     const client = getContext<OpenChat>("client");
-    let ugs = updateGroupState;
 
     interface Props {
         gate: TokenBalanceGate;
+        data: UpdateGroupOrCommunityState;
     }
 
-    let { gate }: Props = $props();
+    let { gate, data }: Props = $props();
 
     let bindings = $derived(getBalanceGateBindings($cryptoLookup));
     let selectedBinding = $state(initialBinding());
@@ -85,9 +85,9 @@
     }
 
     function updateOrAddGate(gate: TokenBalanceGate) {
-        const match = ugs.findMatch(gate);
+        const match = data.findMatch(gate);
         if (match === undefined) {
-            ugs.addLeaf(gate);
+            data.addLeaf(gate);
         } else if (isBalanceGate(match)) {
             match.minBalance = gate.minBalance;
         }

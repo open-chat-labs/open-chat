@@ -7,6 +7,7 @@ import {
     type AccessGateConfig,
     type CandidateMember,
     type ChitEarnedGate,
+    type HasLevel,
     type LeafGate,
     type NeuronGate,
     type PaymentGate,
@@ -28,7 +29,7 @@ function gatesByKind(config: AccessGateConfig, kind: AccessGate["kind"]): Access
 }
 
 export abstract class UpdateGroupOrCommunityState {
-    abstract get candidate(): AccessControlled;
+    abstract get candidate(): AccessControlled & HasLevel;
     #confirming = $state(false);
     #busy = $state(false);
     #candidateMembers = $state<CandidateMember[]>([]);

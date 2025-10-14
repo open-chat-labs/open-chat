@@ -19,9 +19,9 @@
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import Plus from "svelte-material-icons/Plus.svelte";
     import Edit from "svelte-material-icons/TextBoxEditOutline.svelte";
-    import Translatable from "../../../Translatable.svelte";
-    import SlidingPageContent from "../../SlidingPageContent.svelte";
-    import { updateGroupState } from "../group.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import SlidingPageContent from "../SlidingPageContent.svelte";
+    import { updateGroupState } from "../createOrUpdateGroup/group.svelte";
 
     const client = getContext<OpenChat>("client");
 

@@ -17,18 +17,17 @@
     } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";
-    import Translatable from "../../../Translatable.svelte";
-    import SlidingPageContent from "../../SlidingPageContent.svelte";
-    import { updateGroupState } from "../group.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import type { UpdateGroupOrCommunityState } from "../groupOrCommunity.svelte";
+    import SlidingPageContent from "../SlidingPageContent.svelte";
     import AboutChitGate from "./AboutChitGate.svelte";
-
-    let ugs = updateGroupState;
 
     interface Props {
         gate: ChitEarnedGate;
+        data: UpdateGroupOrCommunityState;
     }
 
-    let { gate }: Props = $props();
+    let { gate, data }: Props = $props();
 
     // svelte-ignore state_referenced_locally
     let minEarnedText = $state(initialMinEarned(gate));
@@ -60,9 +59,9 @@
     }
 
     function updateOrAddGate(gate: ChitEarnedGate) {
-        const match = ugs.findMatch(gate);
+        const match = data.findMatch(gate);
         if (match === undefined) {
-            ugs.addLeaf(gate);
+            data.addLeaf(gate);
         } else if (isChitEarnedGate(match)) {
             match.minEarned = gate.minEarned;
         }

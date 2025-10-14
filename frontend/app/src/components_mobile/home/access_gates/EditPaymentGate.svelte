@@ -23,20 +23,20 @@
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";
-    import Translatable from "../../../Translatable.svelte";
-    import SlidingPageContent from "../../SlidingPageContent.svelte";
-    import { updateGroupState } from "../group.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import type { UpdateGroupOrCommunityState } from "../groupOrCommunity.svelte";
+    import SlidingPageContent from "../SlidingPageContent.svelte";
     import AboutPaymentGate from "./AboutPaymentGate.svelte";
     import SelectBinding from "./SelectBinding.svelte";
 
     const client = getContext<OpenChat>("client");
-    let ugs = updateGroupState;
 
     interface Props {
         gate: PaymentGate;
+        data: UpdateGroupOrCommunityState;
     }
 
-    let { gate }: Props = $props();
+    let { gate, data }: Props = $props();
 
     let nsLedgers = $derived(
         new Set([...$nervousSystemLookup.values()].map((d) => d.ledgerCanisterId)),
@@ -90,9 +90,9 @@
     }
 
     function updateOrAddGate(gate: PaymentGate) {
-        const match = ugs.findMatch(gate);
+        const match = data.findMatch(gate);
         if (match === undefined) {
-            ugs.addLeaf(gate);
+            data.addLeaf(gate);
         } else if (isPaymentGate(match)) {
             match.amount = gate.amount;
         }

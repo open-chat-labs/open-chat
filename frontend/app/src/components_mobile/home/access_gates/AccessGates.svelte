@@ -13,28 +13,31 @@
     import Check from "svelte-material-icons/Check.svelte";
     import DiamondOutline from "svelte-material-icons/DiamondOutline.svelte";
     import Plus from "svelte-material-icons/Plus.svelte";
-    import MulticolourText from "../../../MulticolourText.svelte";
-    import Setting from "../../../Setting.svelte";
-    import SparkleBox from "../../../SparkleBox.svelte";
-    import Translatable from "../../../Translatable.svelte";
-    import SlidingPageContent from "../../SlidingPageContent.svelte";
-    import { updateGroupState } from "../group.svelte";
-    import GroupCard from "../GroupCard.svelte";
+    import MulticolourText from "../../MulticolourText.svelte";
+    import Setting from "../../Setting.svelte";
+    import SparkleBox from "../../SparkleBox.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import type { UpdateGroupOrCommunityState } from "../groupOrCommunity.svelte";
+    import SlidingPageContent from "../SlidingPageContent.svelte";
 
-    let ugs = updateGroupState;
+    interface Props {
+        data: UpdateGroupOrCommunityState;
+    }
+
+    let { data }: Props = $props();
 
     let diamond = $derived($currentUserStore.diamondStatus.kind !== "inactive");
-    let hasAccessGates = $derived(ugs.gateConfig.gate.kind !== "no_gate");
-    let gateBindings: GateBinding[] = getGateBindings(ugs.candidateGroup.level).filter(
+    let hasAccessGates = $derived(data.gateConfig.gate.kind !== "no_gate");
+    let gateBindings: GateBinding[] = getGateBindings(data.candidate.level).filter(
         (b) => b.enabled && b.gate.kind !== "no_gate" && b.gate.kind !== "credential_gate",
     );
     // svelte-ignore state_referenced_locally
-    let expiryEnabled = $state(ugs.gateConfig.expiry !== undefined);
+    let expiryEnabled = $state(data.gateConfig.expiry !== undefined);
     let evaluationDays = $state(initialEvaluationDays());
 
     function initialEvaluationDays() {
-        if (ugs.gateConfig.expiry === undefined) return undefined;
-        return Math.floor(Number(ugs.gateConfig.expiry) / 1000 / 60 / 60 / 24).toString();
+        if (data.gateConfig.expiry === undefined) return undefined;
+        return Math.floor(Number(data.gateConfig.expiry) / 1000 / 60 / 60 / 24).toString();
     }
 
     function toggleEvaluationInterval() {
@@ -44,40 +47,40 @@
     function clickGate(gate: AccessGate, active: boolean) {
         switch (gate.kind) {
             case "neuron_gate":
-                publish("updateGroupNeuronGates");
+                publish("updateNeuronGates", data);
                 break;
             case "payment_gate":
-                publish("updateGroupPaymentGates");
+                publish("updatePaymentGates", data);
                 break;
             case "token_balance_gate":
-                publish("updateGroupTokenBalanceGates");
+                publish("updateTokenBalanceGates", data);
                 break;
             case "chit_earned_gate":
                 if (active) {
                     const existing =
-                        ugs.findMatchByKind("chit_earned_gate") ?? ugs.defaultChitGate();
+                        data.findMatchByKind("chit_earned_gate") ?? data.defaultChitGate();
                     if (existing && isChitEarnedGate(existing)) {
                         publish("updateGroupEditChitGate", existing);
                     }
                 } else {
-                    publish("updateGroupEditChitGate", ugs.defaultChitGate());
+                    publish("updateEditChitGate", { data, gate: data.defaultChitGate() });
                 }
                 break;
             default:
-                ugs.toggleGate(gate, active);
+                data.toggleGate(gate, active);
         }
     }
 
     $effect(() => {
         if (!expiryEnabled || evaluationDays === "" || evaluationDays === undefined) {
-            ugs.gateConfig.expiry = undefined;
+            data.gateConfig.expiry = undefined;
             return;
         }
         const days = Number(evaluationDays);
         if (isNaN(days)) return;
 
         const ms = days * 24 * 60 * 60 * 1000;
-        ugs.gateConfig.expiry = BigInt(ms);
+        data.gateConfig.expiry = BigInt(ms);
     });
 </script>
 
@@ -88,7 +91,7 @@
         gap={"xl"}
         direction={"vertical"}
         padding={["xxl", "lg", "lg", "lg"]}>
-        <GroupCard candidateGroup={ugs.candidateGroup} />
+        <!-- <GroupCard candidate={data.candidate} /> -->
 
         <Container padding={["zero", "md"]} gap={"sm"} direction={"vertical"}>
             <Container>
@@ -147,7 +150,7 @@
             <Container padding={["zero", "md"]} gap={"xl"} direction={"vertical"}>
                 <Container padding={["zero", "zero", "xl", "zero"]} wrap gap={"sm"}>
                     {#each gateBindings as gate}
-                        {@const active = ugs.isGateActive(gate.gate)}
+                        {@const active = data.isGateActive(gate.gate)}
                         <Chip
                             onClick={() => clickGate(gate.gate, active)}
                             mode={active ? "filter" : "default"}>
@@ -176,7 +179,7 @@
 
             {#if expiryEnabled}
                 <Input
-                    error={ugs.gateConfig.expiry === undefined}
+                    error={data.gateConfig.expiry === undefined}
                     bind:value={evaluationDays}
                     placeholder={"Evaluation interval"}>
                     {#snippet subtext()}
@@ -189,15 +192,15 @@
             {/if}
             <Container padding={["zero", "md"]} gap={"xl"} direction={"vertical"}>
                 <Setting
-                    disabled={!isCompositeGate(ugs.gateConfig.gate)}
-                    toggle={() => ugs.toggleOperator()}
+                    disabled={!isCompositeGate(data.gateConfig.gate)}
+                    toggle={() => data.toggleOperator()}
                     info={"When enabled, users joining your group will need to satisfy at least one of your defined gates. If left disabled users will have to satisfy all of your defined access gates."}
                     title={"Require any access gate"}>
                     <Switch
-                        onChange={() => ugs.toggleOperator()}
-                        disabled={!isCompositeGate(ugs.gateConfig.gate)}
-                        checked={isCompositeGate(ugs.gateConfig.gate) &&
-                            ugs.gateConfig.gate.operator === "and"} />
+                        onChange={() => data.toggleOperator()}
+                        disabled={!isCompositeGate(data.gateConfig.gate)}
+                        checked={isCompositeGate(data.gateConfig.gate) &&
+                            data.gateConfig.gate.operator === "and"} />
                 </Setting>
             </Container>
         {/if}

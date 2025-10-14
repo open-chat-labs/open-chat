@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { Container } from "component-lib";
-    import SlidingPageContent from "../../SlidingPageContent.svelte";
+    import SlidingPageContent from "../SlidingPageContent.svelte";
     import AboutAccessGate from "./AboutAccessGate.svelte";
     import AboutBalanceGate from "./AboutBalanceGate.svelte";
     import AboutChitGate from "./AboutChitGate.svelte";

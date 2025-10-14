@@ -20,20 +20,20 @@
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";
-    import Translatable from "../../../Translatable.svelte";
-    import SlidingPageContent from "../../SlidingPageContent.svelte";
-    import { updateGroupState } from "../group.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import type { UpdateGroupOrCommunityState } from "../groupOrCommunity.svelte";
+    import SlidingPageContent from "../SlidingPageContent.svelte";
     import AboutNeuronGate from "./AboutNeuronGate.svelte";
     import SelectBinding from "./SelectBinding.svelte";
 
     const client = getContext<OpenChat>("client");
-    let ugs = updateGroupState;
 
     interface Props {
         gate: NeuronGate;
+        data: UpdateGroupOrCommunityState;
     }
 
-    let { gate }: Props = $props();
+    let { gate, data }: Props = $props();
 
     const bindings = getNeuronGateBindings($nervousSystemLookup);
     let selectedBinding = $state(initialBinding());
@@ -80,9 +80,9 @@
     }
 
     function updateOrAddGate(gate: NeuronGate) {
-        const match = ugs.findMatch(gate);
+        const match = data.findMatch(gate);
         if (match === undefined) {
-            ugs.addLeaf(gate);
+            data.addLeaf(gate);
         } else if (isNeuronGate(match)) {
             match.minDissolveDelay = gate.minDissolveDelay;
             match.minStakeE8s = gate.minStakeE8s;
