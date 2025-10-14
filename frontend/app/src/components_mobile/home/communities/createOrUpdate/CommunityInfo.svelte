@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { i18nKey } from "@src/i18n/i18n";
+    import { i18nKey, supportedLanguages } from "@src/i18n/i18n";
     import { gateLabel } from "@src/utils/access";
     import {
         Body,
@@ -29,6 +29,7 @@
     import EditableImageWrapper from "../../../EditableImageWrapper.svelte";
     import LinkedCard from "../../../LinkedCard.svelte";
     import Translatable from "../../../Translatable.svelte";
+    import LanguageSelector from "../../LanguageSelector.svelte";
     import SlidingPageContent from "../../SlidingPageContent.svelte";
     import {
         MAX_DESC_LENGTH,
@@ -42,6 +43,10 @@
         "linear-gradient(90deg, var(--warning) 0%, var(--primary) 30%, var(--primary) 70%, var(--tertiary) 100%)";
 
     let ucs = updateCommunityState;
+
+    let selectedLanguage = $derived(
+        supportedLanguages.find((l) => l.code === ucs.candidate.primaryLanguage),
+    );
 </script>
 
 {#snippet rulesError()}
@@ -120,6 +125,17 @@
                         ></Translatable>
                     {/snippet}
                 </Input>
+                <LanguageSelector
+                    selected={selectedLanguage}
+                    onSelect={(lang) => (ucs.candidate.primaryLanguage = lang.code)}
+                    placeholder={"Choose your preferred language"}>
+                    {#snippet subtext()}
+                        <Translatable
+                            resourceKey={i18nKey(
+                                "This does not apply to messages sent or received",
+                            )}></Translatable>
+                    {/snippet}
+                </LanguageSelector>
                 <TextArea
                     maxlength={MAX_DESC_LENGTH}
                     countdown

@@ -1,8 +1,9 @@
 <script lang="ts">
     import { i18nKey, setLocale, supportedLanguages } from "@src/i18n/i18n";
-    import { Body, BodySmall, Container, Option, Select } from "component-lib";
+    import { Body, BodySmall, Container } from "component-lib";
     import { locale } from "svelte-i18n";
     import Translatable from "../../Translatable.svelte";
+    import LanguageSelector from "../LanguageSelector.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import FontSize from "./FontSize.svelte";
 
@@ -35,31 +36,16 @@
                 </BodySmall>
             </Container>
 
-            <Select
+            <LanguageSelector
+                selected={selectedLanguage}
                 onSelect={(lang) => (selectedLanguage = lang)}
-                placeholder={"Choose your preferred language"}
-                value={selectedLanguage}>
-                {#snippet selectedValue(val)}
-                    {val.name}
-                {/snippet}
-                {#snippet selectOptions(onSelect)}
-                    <Container padding={"lg"} direction={"vertical"}>
-                        {#each supportedLanguages as lang}
-                            <Option
-                                value={lang}
-                                onClick={onSelect}
-                                selected={selectedLanguage?.code === lang.code}>
-                                {lang.name}
-                            </Option>
-                        {/each}
-                    </Container>
-                {/snippet}
+                placeholder={"Choose your preferred language"}>
                 {#snippet subtext()}
                     <Translatable
                         resourceKey={i18nKey("This does not apply to messages sent or received")}
                     ></Translatable>
                 {/snippet}
-            </Select>
+            </LanguageSelector>
         </Container>
 
         <Container gap={"xl"} direction={"vertical"}>
