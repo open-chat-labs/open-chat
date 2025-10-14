@@ -224,6 +224,7 @@ class UpdateCommunityState extends UpdateGroupOrCommunityState {
                         });
                         publish("closeModalStack");
                     } else {
+                        console.log("CreateCommunity failed with", response);
                         toastStore.showFailureToast(i18nKey(`communities.errors.${response.kind}`));
                     }
                 })
