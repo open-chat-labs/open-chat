@@ -1,5 +1,7 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
+    import type { SwipeDirection } from "component-lib";
+    import { swipe } from "component-lib";
     import {
         type AttachmentContent,
         blockedUsersStore,
@@ -26,6 +28,7 @@
         messagesRead,
         type MultiUserChat,
         type OpenChat,
+        publish,
         type ReadonlySet,
         ROLE_OWNER,
         selectedChatDraftMessageStore,
@@ -37,6 +40,7 @@
         type User,
     } from "openchat-client";
     import { getContext, onMount, tick } from "svelte";
+    import { releaseNotifications } from "tauri-plugin-oc-api";
     import { i18nKey } from "../../i18n/i18n";
     import { messageToForwardStore } from "../../stores/messageToForward";
     import { toastStore } from "../../stores/toast";
@@ -56,7 +60,6 @@
     import P2PSwapContentBuilder from "./P2PSwapContentBuilder.svelte";
     import PollBuilder from "./PollBuilder.svelte";
     import PrizeContentBuilder from "./PrizeContentBuilder.svelte";
-    import { releaseNotifications } from "tauri-plugin-oc-api";
 
     interface Props {
         joining: MultiUserChat | undefined;
@@ -378,6 +381,12 @@
             client.startTyping(chat.id, $currentUserIdStore);
         }
     }
+
+    function onSwipe(dir: SwipeDirection) {
+        if (dir === "right") {
+            publish("clearSelection");
+        }
+    }
 </script>
 
 <svelte:window onfocus={onWindowFocus} />
@@ -429,7 +438,7 @@
 <MemeBuilder onSend={onSendMessageWithContent} bind:this={memeBuilder} bind:open={buildingMeme} />
 
 <DropTarget {chat} mode={"message"} {onFileSelected}>
-    <div class="wrapper">
+    <div use:swipe={{ onSwipe }} class="wrapper">
         {#if showSearchHeader}
             <CurrentChatSearchHeader
                 {chat}
