@@ -372,7 +372,7 @@ export class OpenChatAgent extends EventTarget {
         this._dataClient = new DataClient(identity, this._agent, config);
         this._exchangeRateClients = [
             new IcpCoinsClient(identity, this._agent),
-            new IcpSwapClient(identity, this._agent),
+            new IcpSwapClient(),
         ];
         this._localUserIndexClients = {};
         this._ledgerClients = {};
