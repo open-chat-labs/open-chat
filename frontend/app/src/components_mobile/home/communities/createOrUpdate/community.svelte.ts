@@ -24,17 +24,13 @@ class UpdateCommunityState extends UpdateGroupOrCommunityState {
     #candidateCommunity = $state<CommunitySummary>();
     #originalCommunity: CommunitySummary | undefined;
     #rules = $state<UpdatedRules>({ ...defaultChatRules("community"), newVersion: false });
-    #originalRules: VersionedRules = defaultChatRules("community");
-    #rulesValid = $derived(
-        !this.#rules.enabled ||
-            (this.#rules.text.length > 0 && this.#rules.text.length < MAX_RULES_LENGTH),
-    );
+    #originalRules: UpdatedRules = { ...defaultChatRules("community"), newVersion: false };
     #nameValid = $derived(
         this.#candidateCommunity !== undefined &&
             this.#candidateCommunity.name.length >= MIN_NAME_LENGTH &&
             this.#candidateCommunity.name.length <= MAX_NAME_LENGTH,
     );
-    #valid = $derived(this.#rulesValid && this.#nameValid);
+    #valid = $derived(this.rulesValid && this.#nameValid);
     #editMode = $derived.by(() => {
         return this.#candidateCommunity?.id?.communityId !== "";
     });
@@ -44,7 +40,18 @@ class UpdateCommunityState extends UpdateGroupOrCommunityState {
     }
 
     get original() {
+        if (this.#originalCommunity === undefined) {
+            throw new Error("Trying to access original community before it has been intiialised");
+        }
         return this.#originalCommunity;
+    }
+
+    get rules() {
+        return this.#rules;
+    }
+
+    get originalRules() {
+        return this.#originalRules;
     }
 
     initialise(community: CommunitySummary, rules: VersionedRules) {
@@ -52,7 +59,7 @@ class UpdateCommunityState extends UpdateGroupOrCommunityState {
         this.#candidateCommunity = community;
         this.#rules = { ...rules, newVersion: false };
         this.#originalCommunity = $state.snapshot(this.candidateCommunity);
-        this.#originalRules = $state.snapshot(rules);
+        this.#originalRules = $state.snapshot(this.#rules);
     }
 
     bannerSelected(detail: { url: string; data: Uint8Array }) {
@@ -77,16 +84,8 @@ class UpdateCommunityState extends UpdateGroupOrCommunityState {
         return this.#nameValid;
     }
 
-    get rulesValid() {
-        return this.#rulesValid;
-    }
-
     get valid() {
         return this.#valid;
-    }
-
-    get rules() {
-        return this.#rules;
     }
 
     get candidateCommunity(): CommunitySummary {
@@ -96,54 +95,28 @@ class UpdateCommunityState extends UpdateGroupOrCommunityState {
         return this.#candidateCommunity;
     }
 
-    #dirtyCheck(fn: (original: CommunitySummary, current: CommunitySummary) => boolean): boolean {
-        if (this.original === undefined || this.candidate === undefined) return false;
-        return fn(this.original, this.candidate);
-    }
-
     get #visibilityChanged() {
-        return this.#dirtyCheck((original, current) => original.public !== current.public);
+        return this.original.public !== this.candidate.public;
     }
 
     get #nameChanged() {
-        return this.#dirtyCheck((original, current) => original.name !== current.name);
-    }
-
-    get #rulesChanged() {
-        return (
-            this.#rules.enabled !== this.#originalRules.enabled ||
-            this.#rules.text !== this.#originalRules.text
-        );
+        return this.original.name !== this.candidate.name;
     }
 
     get #descriptionChanged() {
-        return this.#dirtyCheck(
-            (original, current) => original.description !== current.description,
-        );
+        return this.original.description !== this.candidate.description;
     }
 
     get #avatarChanged() {
-        return this.#dirtyCheck(
-            (original, current) => original.avatar?.blobUrl !== current.avatar?.blobUrl,
-        );
+        return this.original.avatar?.blobUrl !== this.candidate.avatar?.blobUrl;
     }
 
     get #bannerChanged() {
-        return this.#dirtyCheck(
-            (original, current) => original.banner?.blobUrl !== current.banner?.blobUrl,
-        );
+        return this.original.banner?.blobUrl !== this.candidate.banner?.blobUrl;
     }
 
     get #languageChanged() {
-        return this.#dirtyCheck(
-            (original, current) => original.primaryLanguage !== current.primaryLanguage,
-        );
-    }
-
-    #accessGatesChanged(client: OpenChat) {
-        return this.#dirtyCheck((original, current) =>
-            client.hasAccessGateChanged(original.gateConfig, current.gateConfig),
-        );
+        return this.original.primaryLanguage !== this.candidate.primaryLanguage;
     }
 
     saveCommunity(client: OpenChat, yes: boolean = true): Promise<void> {
@@ -188,12 +161,12 @@ class UpdateCommunityState extends UpdateGroupOrCommunityState {
                     community,
                     this.#nameChanged ? community.name : undefined,
                     this.#descriptionChanged ? community.description : undefined,
-                    this.#rulesChanged ? communityRules : undefined,
+                    this.rulesChanged ? communityRules : undefined,
                     undefined, // todo - come back and sort out permissions
                     // permissionsDirty ? community.permissions : undefined,
                     this.#avatarChanged ? community.avatar.blobData : undefined,
                     this.#bannerChanged ? community.banner.blobData : undefined,
-                    this.#accessGatesChanged(client) ? community.gateConfig : undefined,
+                    this.accessGatesChanged(client) ? community.gateConfig : undefined,
                     this.#visibilityChanged ? community.public : undefined,
                     this.#languageChanged ? community.primaryLanguage : undefined,
                 )
