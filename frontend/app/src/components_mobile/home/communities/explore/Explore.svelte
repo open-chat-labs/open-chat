@@ -1,15 +1,12 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
     import {
-        anonUserStore,
         exploreCommunitiesFiltersStore,
         iconSize,
         identityStateStore,
         ipadWidth,
-        isDiamondStore,
         mobileWidth,
         offlineStore,
-        publish,
         ScreenWidth,
         screenWidth,
     } from "openchat-client";
@@ -27,6 +24,7 @@
     import HoverIcon from "../../../HoverIcon.svelte";
     import FancyLoader from "../../../icons/FancyLoader.svelte";
     import Translatable from "../../../Translatable.svelte";
+    import { updateCommunityState } from "../createOrUpdate/community.svelte";
     import CommunityCard from "./CommunityCard.svelte";
     import CommunityCardLink from "./CommunityCardLink.svelte";
 
@@ -49,18 +47,7 @@
     }
 
     function createCommunity() {
-        if ($anonUserStore) {
-            client.updateIdentityState({
-                kind: "logging_in",
-                postLogin: { kind: "create_community" },
-            });
-            return;
-        }
-        if (!$isDiamondStore) {
-            publish("upgrade");
-        } else {
-            publish("createCommunity");
-        }
+        updateCommunityState.createCommunity(client);
     }
 
     function search(filters: { languages: string[]; flags: number }, reset = false) {
@@ -152,7 +139,6 @@
             {#if !$ipadWidth}
                 <div class="search">
                     <Search
-                        fill
                         bind:searchTerm={communitySearchState.term}
                         searching={false}
                         onPerformSearch={() => search($exploreCommunitiesFiltersStore, true)}
@@ -180,7 +166,6 @@
                 <div class="search">
                     <Search
                         searching={false}
-                        fill
                         bind:searchTerm={communitySearchState.term}
                         onPerformSearch={() => search($exploreCommunitiesFiltersStore, true)}
                         placeholder={i18nKey("communities.search")} />

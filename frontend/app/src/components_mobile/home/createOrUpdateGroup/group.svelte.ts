@@ -6,78 +6,29 @@ import { toastStore } from "@src/stores/toast";
 import {
     chatListScopeStore,
     i18nKey,
-    isCompositeGate,
-    isLeafGate,
     OpenChat,
     publish,
-    ROLE_MEMBER,
     routeForChatIdentifier,
     UnsupportedValueError,
-    type AccessGate,
-    type AccessGateConfig,
     type CandidateGroupChat,
-    type CandidateMember,
-    type ChitEarnedGate,
-    type LeafGate,
     type Level,
     type MultiUserChatIdentifier,
-    type NeuronGate,
-    type PaymentGate,
     type ResourceKey,
-    type TokenBalanceGate,
     type UpdateGroupResponse,
-    type UserOrUserGroup,
-    type UserSummary,
 } from "openchat-client";
 import page from "page";
 import { tick } from "svelte";
+import { UpdateGroupOrCommunityState } from "../groupOrCommunity.svelte";
 
 export const MAX_RULES_LENGTH = 1024;
 export const MIN_NAME_LENGTH = 3;
 export const MAX_NAME_LENGTH = 40;
 export const MAX_DESC_LENGTH = 1024;
 
-function gatesByKind(config: AccessGateConfig, kind: AccessGate["kind"]): AccessGate[] {
-    if (isLeafGate(config.gate)) {
-        if (config.gate.kind === kind) {
-            return [config.gate];
-        }
-    }
-    if (isCompositeGate(config.gate)) {
-        return config.gate.gates.filter((g) => g.kind === kind);
-    }
-    return [];
-}
-
-class UpdateGroupState {
+class UpdateGroupState extends UpdateGroupOrCommunityState {
     #candidateGroup = $state<CandidateGroupChat>();
     #originalGroup: CandidateGroupChat | undefined;
-    #candidateMembers = $state<CandidateMember[]>([]);
-    #candidateUsers = $derived(this.#candidateMembers.map((m) => m.user));
-    #accessGates = $derived.by<LeafGate[]>(() => {
-        if (this.#candidateGroup === undefined) return [];
-        if (this.#candidateGroup.gateConfig.gate.kind === "no_gate") return [];
-        if (isLeafGate(this.#candidateGroup.gateConfig.gate))
-            return [this.#candidateGroup.gateConfig.gate];
-        if (isCompositeGate(this.#candidateGroup.gateConfig.gate))
-            return this.#candidateGroup.gateConfig.gate.gates;
-        return [];
-    });
-    #gateConfig = $derived<AccessGateConfig>(
-        this.#candidateGroup?.gateConfig ?? { expiry: undefined, gate: { kind: "no_gate" } },
-    );
-    #neuronGates = $derived.by<NeuronGate[]>(() => {
-        return gatesByKind(this.gateConfig, "neuron_gate") as NeuronGate[];
-    });
-    #paymentGates = $derived.by<PaymentGate[]>(() => {
-        return gatesByKind(this.gateConfig, "payment_gate") as PaymentGate[];
-    });
-    #tokenBalanceGates = $derived.by<TokenBalanceGate[]>(() => {
-        return gatesByKind(this.gateConfig, "token_balance_gate") as TokenBalanceGate[];
-    });
-    #busy = $state(false);
     #showingVerificationWarning = $state(false);
-    #confirming = $state(false);
     #rulesValid = $derived(
         this.#candidateGroup !== undefined &&
             (!this.#candidateGroup.rules.enabled ||
@@ -101,13 +52,15 @@ class UpdateGroupState {
         }
     });
 
+    get candidate() {
+        return this.candidateGroup;
+    }
+
     initialise(group: CandidateGroupChat | undefined) {
+        this.reset();
         this.#candidateGroup = group;
         this.#originalGroup = $state.snapshot(this.candidateGroup);
-        this.#candidateMembers = [];
         this.#showingVerificationWarning = false;
-        this.#busy = false;
-        this.#confirming = false;
     }
 
     groupAvatarSelected(detail: { url: string; data: Uint8Array }) {
@@ -119,22 +72,6 @@ class UpdateGroupState {
 
     get editMode(): boolean {
         return this.#editMode;
-    }
-
-    get neuronGates() {
-        return this.#neuronGates;
-    }
-
-    get paymentGates() {
-        return this.#paymentGates;
-    }
-
-    get tokenBalanceGates() {
-        return this.#tokenBalanceGates;
-    }
-
-    get gateConfig() {
-        return this.#gateConfig;
     }
 
     get nameValid() {
@@ -149,10 +86,6 @@ class UpdateGroupState {
         return this.#valid;
     }
 
-    get busy() {
-        return this.#busy;
-    }
-
     get showingVerificationWarning() {
         return this.#showingVerificationWarning;
     }
@@ -162,32 +95,6 @@ class UpdateGroupState {
             throw new Error("Trying to access candidate group before it has been set");
         }
         return this.#candidateGroup;
-    }
-
-    get accessGates() {
-        return this.#accessGates;
-    }
-
-    get candidateMembers() {
-        return this.#candidateMembers;
-    }
-
-    get candidateUsers() {
-        return this.#candidateUsers;
-    }
-
-    deleteMember(user: UserOrUserGroup): void {
-        if (user.kind !== "user") return;
-        this.#candidateMembers = this.#candidateMembers.filter(
-            (m) => m.user.userId !== user.userId,
-        );
-    }
-
-    addMember(user: UserSummary): void {
-        const u = this.#candidateMembers.find((m) => m.user.userId === user.userId);
-        if (u === undefined) {
-            this.#candidateMembers.push({ role: ROLE_MEMBER, user });
-        }
     }
 
     saveGroup(client: OpenChat, yes: boolean = true): Promise<void> {
@@ -260,7 +167,7 @@ class UpdateGroupState {
         if (this.#originalGroup === undefined || this.#candidateGroup === undefined)
             return Promise.resolve();
 
-        this.#busy = true;
+        this.busy = true;
 
         const changeVisibility = this.#visibilityChanged;
         const verificationWarning = this.#nameChanged && this.#originalGroup?.verified;
@@ -270,25 +177,25 @@ class UpdateGroupState {
             return Promise.resolve();
         }
 
-        if (changeVisibility && !this.#confirming) {
-            this.#confirming = true;
+        if (changeVisibility && !this.confirming) {
+            this.confirming = true;
             return Promise.resolve();
         }
 
         if (verificationWarning && this.#showingVerificationWarning && !yes) {
             this.#showingVerificationWarning = false;
-            this.#busy = false;
+            this.busy = false;
             this.#candidateGroup.name = this.#originalGroup.name;
             return Promise.resolve();
         }
 
-        if (changeVisibility && this.#confirming && !yes) {
-            this.#confirming = false;
-            this.#busy = false;
+        if (changeVisibility && this.confirming && !yes) {
+            this.confirming = false;
+            this.busy = false;
             return Promise.resolve();
         }
 
-        this.#confirming = false;
+        this.confirming = false;
 
         const updatedGroup = $state.snapshot(this.candidateGroup);
 
@@ -333,13 +240,13 @@ class UpdateGroupState {
                 }
             })
             .finally(() => {
-                this.#busy = false;
+                this.busy = false;
                 publish("closeModalStack");
             });
     }
 
     #createGroup(client: OpenChat): Promise<void> {
-        this.#busy = true;
+        this.busy = true;
 
         const level = this.candidateGroup.level;
 
@@ -368,7 +275,7 @@ class UpdateGroupState {
                 toastStore.showFailureToast(i18nKey("groupCreationFailed"));
                 console.error("Error creating group: ", err);
             })
-            .finally(() => (this.#busy = false));
+            .finally(() => (this.busy = false));
     }
 
     #groupUpdateErrorMessage(resp: UpdateGroupResponse, level: Level): ResourceKey | undefined {
@@ -416,131 +323,6 @@ class UpdateGroupState {
                     Promise.reject("Unable to invite users to the new group");
                 }
             });
-    }
-
-    isGateActive(gate: AccessGate) {
-        if (isLeafGate(this.#gateConfig.gate)) {
-            return gate.kind === this.#gateConfig.gate.kind;
-        }
-        if (isCompositeGate(this.#gateConfig.gate)) {
-            return this.#gateConfig.gate.gates.some((g) => g.kind === gate.kind);
-        }
-        return false;
-    }
-
-    addLeaf(newGate: LeafGate) {
-        if (isCompositeGate(this.#gateConfig.gate)) {
-            this.#gateConfig.gate.gates.push(newGate);
-        } else {
-            if (this.#gateConfig.gate.kind === "no_gate") {
-                this.#gateConfig.gate = newGate;
-            } else {
-                const oldGate = { ...this.#gateConfig.gate };
-                this.#gateConfig.gate = {
-                    kind: "composite_gate",
-                    gates: [oldGate, newGate],
-                    operator: "and",
-                };
-            }
-        }
-    }
-
-    deleteGate(gate: LeafGate) {
-        if (isCompositeGate(this.#gateConfig.gate)) {
-            this.#gateConfig.gate.gates = this.#gateConfig.gate.gates.filter(
-                (g) => !this.gatesMatch(g, gate),
-            );
-            if (this.#gateConfig.gate.gates.length === 1) {
-                this.#gateConfig.gate = this.#gateConfig.gate.gates[0];
-            }
-        } else {
-            this.#gateConfig.gate = { kind: "no_gate" };
-        }
-    }
-
-    #findMatchBy(fn: (g: LeafGate) => boolean) {
-        if (isCompositeGate(this.#gateConfig.gate)) {
-            return this.#gateConfig.gate.gates.find(fn);
-        }
-
-        if (isLeafGate(this.#gateConfig.gate) && fn(this.#gateConfig.gate)) {
-            return this.#gateConfig.gate;
-        }
-    }
-
-    findMatchByKind(kind: LeafGate["kind"]): LeafGate | undefined {
-        return this.#findMatchBy((g) => g.kind === kind);
-    }
-
-    findMatch(gate: LeafGate): LeafGate | undefined {
-        return this.#findMatchBy((g) => this.gatesMatch(g, gate));
-    }
-
-    gatesMatch(a: LeafGate, b: LeafGate): boolean {
-        if (a.kind === "neuron_gate" && b.kind === "neuron_gate") {
-            return a.governanceCanister === b.governanceCanister;
-        }
-        if (a.kind === "payment_gate" && b.kind === "payment_gate") {
-            return a.ledgerCanister === b.ledgerCanister;
-        }
-        if (a.kind === "token_balance_gate" && b.kind === "token_balance_gate") {
-            return a.ledgerCanister === b.ledgerCanister;
-        }
-        return a.kind === b.kind;
-    }
-
-    defaultChitGate(): ChitEarnedGate {
-        return {
-            kind: "chit_earned_gate",
-            minEarned: 0,
-        };
-    }
-
-    defaultTokenBalanceGate(): TokenBalanceGate {
-        return {
-            kind: "token_balance_gate",
-            ledgerCanister: "",
-            minBalance: 0n,
-        };
-    }
-
-    defaultNeuronGate(): NeuronGate {
-        return {
-            kind: "neuron_gate",
-            governanceCanister: "",
-        };
-    }
-
-    defaultPaymentGate(): PaymentGate {
-        return {
-            kind: "payment_gate",
-            ledgerCanister: "",
-            amount: 0n,
-            fee: 0n,
-        };
-    }
-
-    toggleGate(gate: AccessGate, active: boolean) {
-        if (isLeafGate(gate)) {
-            if (active) {
-                this.deleteGate(gate);
-            } else {
-                this.addLeaf(gate);
-            }
-        }
-    }
-
-    toggleOperator() {
-        if (isCompositeGate(this.#gateConfig.gate)) {
-            switch (this.#gateConfig.gate.operator) {
-                case "and":
-                    this.#gateConfig.gate.operator = "or";
-                    break;
-                case "or":
-                    this.#gateConfig.gate.operator = "and";
-                    break;
-            }
-        }
     }
 }
 

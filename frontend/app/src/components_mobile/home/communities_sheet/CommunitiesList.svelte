@@ -21,6 +21,7 @@
     import { getContext } from "svelte";
     import AccountGroupOutline from "svelte-material-icons/AccountGroupOutline.svelte";
     import Compass from "svelte-material-icons/CompassOutline.svelte";
+    import { updateCommunityState } from "../communities/createOrUpdate/community.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -46,7 +47,7 @@
         if (!$isDiamondStore) {
             publish("upgrade");
         } else {
-            publish("createCommunity");
+            updateCommunityState.createCommunity(client);
         }
     }
 </script>

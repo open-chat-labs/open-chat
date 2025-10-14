@@ -8,6 +8,8 @@
         type TokenBalanceGate,
     } from "openchat-client";
     import { onMount } from "svelte";
+    import AddCommunityMembers from "./communities/createOrUpdate/AddCommunityMembers.svelte";
+    import CommunityInfo from "./communities/createOrUpdate/CommunityInfo.svelte";
     import AboutAccessGates from "./createOrUpdateGroup/access_gates/AboutAccessGates.svelte";
     import AccessGates from "./createOrUpdateGroup/access_gates/AccessGates.svelte";
     import BalanceGates from "./createOrUpdateGroup/access_gates/BalanceGates.svelte";
@@ -35,6 +37,8 @@
     import Verify from "./user_profile/Verify.svelte";
 
     type SlidingModalType =
+        | { kind: "update_community_add_members" }
+        | { kind: "update_community_details" }
         | { kind: "update_group_add_members" }
         | { kind: "update_group_details" }
         | { kind: "update_group_rules" }
@@ -72,6 +76,8 @@
 
     onMount(() => {
         const unsubs = [
+            subscribe("updateCommunity", () => push({ kind: "update_community_add_members" })),
+            subscribe("updateCommunityDetails", () => push({ kind: "update_community_details" })),
             subscribe("newChannel", () => push({ kind: "update_group_add_members" })),
             subscribe("newGroup", () => push({ kind: "update_group_add_members" })),
             subscribe("updateGroup", () => push({ kind: "update_group_details" })),
@@ -183,6 +189,10 @@
             <EditBalanceGate gate={page.gate} />
         {:else if page.kind === "update_group_edit_chit_gate"}
             <EditChitGate gate={page.gate} />
+        {:else if page.kind === "update_community_add_members"}
+            <AddCommunityMembers />
+        {:else if page.kind === "update_community_details"}
+            <CommunityInfo />
         {/if}
     </SlidingPage>
 {/each}

@@ -168,4 +168,9 @@ export type PubSubEvents = {
     updateGroupEditPaymentGate: PaymentGate;
     updateGroupEditChitGate: ChitEarnedGate;
     updateGroupEditTokenBalanceGate: TokenBalanceGate;
+    updateCommunity: undefined;
+    updateCommunityDetails: undefined;
+    updateCommunityGeneralSetup: undefined;
+    updateCommunityAccessGates: undefined;
+    updateCommunityRules: undefined;
 };
