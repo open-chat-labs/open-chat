@@ -20,7 +20,6 @@ import page from "page";
 import { tick } from "svelte";
 import { UpdateGroupOrCommunityState } from "../groupOrCommunity.svelte";
 
-export const MAX_RULES_LENGTH = 1024;
 export const MIN_NAME_LENGTH = 3;
 export const MAX_NAME_LENGTH = 40;
 export const MAX_DESC_LENGTH = 1024;
@@ -28,18 +27,12 @@ export const MAX_DESC_LENGTH = 1024;
 class UpdateGroupState extends UpdateGroupOrCommunityState {
     #candidateGroup = $state<CandidateGroupChat>();
     #originalGroup: CandidateGroupChat | undefined;
-    #rulesValid = $derived(
-        this.#candidateGroup !== undefined &&
-            (!this.#candidateGroup.rules.enabled ||
-                (this.#candidateGroup.rules.text.length > 0 &&
-                    this.#candidateGroup.rules.text.length < MAX_RULES_LENGTH)),
-    );
     #nameValid = $derived(
         this.#candidateGroup !== undefined &&
             this.#candidateGroup.name.length >= MIN_NAME_LENGTH &&
             this.#candidateGroup.name.length <= MAX_NAME_LENGTH,
     );
-    #valid = $derived(this.#rulesValid && this.#nameValid);
+    #valid = $derived(this.rulesValid && this.#nameValid);
     #editMode = $derived.by(() => {
         if (this.#candidateGroup === undefined) return false;
         const id = this.#candidateGroup.id;
@@ -56,7 +49,18 @@ class UpdateGroupState extends UpdateGroupOrCommunityState {
     }
 
     get original() {
+        if (this.#originalGroup === undefined) {
+            throw new Error("Trying to access original group before it has been intiialised");
+        }
         return this.#originalGroup;
+    }
+
+    get rules() {
+        return this.candidate.rules;
+    }
+
+    get originalRules() {
+        return this.original.rules;
     }
 
     initialise(group: CandidateGroupChat | undefined) {
@@ -80,10 +84,6 @@ class UpdateGroupState extends UpdateGroupOrCommunityState {
         return this.#nameValid;
     }
 
-    get rulesValid() {
-        return this.#rulesValid;
-    }
-
     get valid() {
         return this.#valid;
     }
@@ -103,62 +103,34 @@ class UpdateGroupState extends UpdateGroupOrCommunityState {
         }
     }
 
-    #dirtyCheck(
-        fn: (original: CandidateGroupChat, current: CandidateGroupChat) => boolean,
-    ): boolean {
-        if (this.#originalGroup === undefined || this.#candidateGroup === undefined) return false;
-        return fn(this.#originalGroup, this.#candidateGroup);
-    }
-
     get #visibilityChanged() {
-        return this.#dirtyCheck((original, current) => original.public !== current.public);
+        return this.original.public !== this.candidate.public;
     }
 
     get #nameChanged() {
-        return this.#dirtyCheck((original, current) => original.name !== current.name);
+        return this.original.name !== this.candidate.name;
     }
 
     get #descriptionChanged() {
-        return this.#dirtyCheck(
-            (original, current) => original.description !== current.description,
-        );
-    }
-
-    get #rulesChanged() {
-        return this.#dirtyCheck(
-            (original, current) =>
-                original.rules.enabled !== current.rules.enabled ||
-                original.rules.text !== current.rules.text,
-        );
+        return this.original.description !== this.candidate.description;
     }
 
     get #avatarChanged() {
-        return this.#dirtyCheck(
-            (original, current) => original.avatar?.blobUrl !== current.avatar?.blobUrl,
-        );
+        return this.original.avatar?.blobUrl !== this.candidate.avatar?.blobUrl;
     }
 
     get #ttlChanged() {
-        return this.#dirtyCheck((original, current) => original.eventsTTL !== current.eventsTTL);
+        return this.original.eventsTTL !== this.candidate.eventsTTL;
     }
 
     get #visibleToNonMembersChanged() {
-        return this.#dirtyCheck(
-            (original, current) =>
-                original.messagesVisibleToNonMembers !== current.messagesVisibleToNonMembers,
+        return (
+            this.original.messagesVisibleToNonMembers !== this.candidate.messagesVisibleToNonMembers
         );
     }
 
     get #externalUrlChanged() {
-        return this.#dirtyCheck(
-            (original, current) => original.externalUrl !== current.externalUrl,
-        );
-    }
-
-    #accessGatesChanged(client: OpenChat) {
-        return this.#dirtyCheck((original, current) =>
-            client.hasAccessGateChanged(original.gateConfig, current.gateConfig),
-        );
+        return this.original.externalUrl !== this.candidate.externalUrl;
     }
 
     #updateGroup(client: OpenChat, yes: boolean = true): Promise<void> {
@@ -202,7 +174,7 @@ class UpdateGroupState extends UpdateGroupOrCommunityState {
                 updatedGroup.id,
                 this.#nameChanged ? updatedGroup.name : undefined,
                 this.#descriptionChanged ? updatedGroup.description : undefined,
-                this.#rulesChanged && this.rulesValid ? updatedGroup.rules : undefined,
+                this.rulesChanged && this.rulesValid ? updatedGroup.rules : undefined,
                 undefined, // todo - this where we plug in permissions
                 // permissionsDirty
                 //     ? client.diffGroupPermissions(
@@ -216,7 +188,7 @@ class UpdateGroupState extends UpdateGroupOrCommunityState {
                         ? "set_to_none"
                         : { value: updatedGroup.eventsTTL }
                     : undefined,
-                this.#accessGatesChanged(client) ? updatedGroup.gateConfig : undefined,
+                this.accessGatesChanged(client) ? updatedGroup.gateConfig : undefined,
                 this.#visibilityChanged ? updatedGroup.public : undefined,
                 this.#visibleToNonMembersChanged
                     ? updatedGroup.messagesVisibleToNonMembers

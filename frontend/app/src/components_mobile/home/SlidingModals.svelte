@@ -22,8 +22,8 @@
     import AddGroupMembers from "./createOrUpdateGroup/AddGroupMembers.svelte";
     import GeneralSetup from "./createOrUpdateGroup/GeneralSetup.svelte";
     import GroupInfo from "./createOrUpdateGroup/GroupInfo.svelte";
-    import Rules from "./createOrUpdateGroup/Rules.svelte";
     import { UpdateGroupOrCommunityState } from "./groupOrCommunity.svelte";
+    import Rules from "./Rules.svelte";
     import SlidingPage from "./SlidingPage.svelte";
     import About from "./user_profile/About.svelte";
     import Appearance from "./user_profile/Appearance.svelte";
@@ -42,7 +42,7 @@
         | { kind: "update_community_details" }
         | { kind: "update_group_add_members" }
         | { kind: "update_group_details" }
-        | { kind: "update_group_rules" }
+        | { kind: "update_rules"; data: UpdateGroupOrCommunityState }
         | { kind: "update_group_general_setup" }
         | { kind: "update_access_gates"; data: UpdateGroupOrCommunityState }
         | { kind: "update_neuron_gates"; data: UpdateGroupOrCommunityState }
@@ -77,12 +77,18 @@
 
     onMount(() => {
         const unsubs = [
-            subscribe("updateCommunity", () => push({ kind: "update_community_add_members" })),
+            subscribe("newCommunity", () => push({ kind: "update_community_add_members" })),
+            subscribe("updateCommunity", () => push({ kind: "update_community_details" })),
             subscribe("updateCommunityDetails", () => push({ kind: "update_community_details" })),
             subscribe("newChannel", () => push({ kind: "update_group_add_members" })),
             subscribe("newGroup", () => push({ kind: "update_group_add_members" })),
             subscribe("updateGroup", () => push({ kind: "update_group_details" })),
-            subscribe("updateGroupRules", () => push({ kind: "update_group_rules" })),
+            subscribe("updateRules", (data) =>
+                push({
+                    kind: "update_rules",
+                    data: data as unknown as UpdateGroupOrCommunityState,
+                }),
+            ),
             subscribe("updateGroupDetails", () => push({ kind: "update_group_details" })),
             subscribe("updateGroupGeneralSetup", () =>
                 push({ kind: "update_group_general_setup" }),
@@ -198,8 +204,8 @@
             <AddGroupMembers />
         {:else if page.kind === "update_group_details"}
             <GroupInfo />
-        {:else if page.kind === "update_group_rules"}
-            <Rules />
+        {:else if page.kind === "update_rules"}
+            <Rules data={page.data} />
         {:else if page.kind === "update_group_general_setup"}
             <GeneralSetup />
         {:else if page.kind === "update_access_gates"}

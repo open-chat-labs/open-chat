@@ -213,7 +213,7 @@ class UpdateCommunityState extends UpdateGroupOrCommunityState {
                 .createCommunity(
                     community,
                     communityRules,
-                    [], // todo - this should be a list of channel names but we don't have a design yet
+                    ["General"], // todo - this should be a list of channel names but we don't have a design yet
                 )
                 .then((response) => {
                     if (response.kind === "success") {
@@ -267,7 +267,7 @@ class UpdateCommunityState extends UpdateGroupOrCommunityState {
                 createCandidateCommunity("", maxIndex + 1),
                 defaultChatRules("community"),
             );
-            publish("updateCommunity");
+            publish("newCommunity");
         }
     }
 }

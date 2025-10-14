@@ -157,7 +157,7 @@ export type PubSubEvents = {
     closeModalPage: undefined;
     closeModalStack: undefined;
     updateGroupDetails: undefined;
-    updateGroupRules: undefined;
+    updateRules: unknown;
     updateAccessGates: unknown;
     updateGroupGeneralSetup: undefined;
     updateNeuronGates: unknown;
@@ -175,4 +175,5 @@ export type PubSubEvents = {
     updateCommunityDetails: undefined;
     updateCommunityGeneralSetup: undefined;
     updateCommunityRules: undefined;
+    newCommunity: undefined;
 };

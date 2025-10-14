@@ -169,7 +169,7 @@
             </LinkedCard>
             <LinkedCard
                 error={ugs.rulesValid ? undefined : rulesError}
-                onClick={() => publish("updateGroupRules")}
+                onClick={() => publish("updateRules", ugs)}
                 Icon={FormatList}
                 title={i18nKey("Rules")}
                 info={i18nKey(

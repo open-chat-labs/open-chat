@@ -1,8 +1,10 @@
 <script lang="ts">
     import {
+        defaultChatRules,
         iconSize,
         OpenChat,
         publish,
+        selectedCommunityRulesStore,
         type CommunitySummary,
         type Level,
     } from "openchat-client";
@@ -20,6 +22,7 @@
     import MenuItem from "../../../MenuItem.svelte";
     import SectionHeader from "../../../SectionHeader.svelte";
     import Translatable from "../../../Translatable.svelte";
+    import { updateCommunityState } from "../createOrUpdate/community.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -42,7 +45,11 @@
     }
     function editCommunity() {
         if (canEdit) {
-            publish("editCommunity", community);
+            updateCommunityState.initialise(
+                community,
+                $selectedCommunityRulesStore ?? defaultChatRules("community"),
+            );
+            publish("updateCommunity");
         }
     }
 </script>

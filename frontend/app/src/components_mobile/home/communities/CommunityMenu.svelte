@@ -3,11 +3,13 @@
     import type { CommunitySummary, OpenChat } from "openchat-client";
     import {
         chatSummariesListStore,
+        defaultChatRules,
         mobileWidth,
         notificationsSupported,
         platformModeratorStore,
         publish,
         ROLE_NONE,
+        selectedCommunityRulesStore,
         setRightPanelHistory,
     } from "openchat-client";
     import { getContext } from "svelte";
@@ -28,6 +30,7 @@
     import { toastStore } from "../../../stores/toast";
     import Translatable from "../../Translatable.svelte";
     import { updateGroupState } from "../createOrUpdateGroup/group.svelte";
+    import { updateCommunityState } from "./createOrUpdate/community.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -107,7 +110,13 @@
     }
 
     function editCommunity() {
-        canEdit && publish("editCommunity", community);
+        if (canEdit) {
+            updateCommunityState.initialise(
+                community,
+                $selectedCommunityRulesStore ?? defaultChatRules("community"),
+            );
+            publish("updateCommunity");
+        }
     }
 
     function muteAllChannels(muteAtEveryone: boolean) {

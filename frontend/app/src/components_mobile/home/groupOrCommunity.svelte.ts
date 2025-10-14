@@ -1,6 +1,7 @@
 import {
     isCompositeGate,
     isLeafGate,
+    OpenChat,
     ROLE_MEMBER,
     type AccessControlled,
     type AccessGate,
@@ -12,9 +13,12 @@ import {
     type NeuronGate,
     type PaymentGate,
     type TokenBalanceGate,
+    type UpdatedRules,
     type UserOrUserGroup,
     type UserSummary,
 } from "openchat-client";
+
+export const MAX_RULES_LENGTH = 1024;
 
 function gatesByKind(config: AccessGateConfig, kind: AccessGate["kind"]): AccessGate[] {
     if (isLeafGate(config.gate)) {
@@ -32,11 +36,19 @@ type Entity = AccessControlled & HasLevel;
 
 export abstract class UpdateGroupOrCommunityState {
     abstract get candidate(): Entity;
-    abstract get original(): Entity | undefined;
+    abstract get original(): Entity;
+    abstract get rules(): UpdatedRules;
+    abstract get originalRules(): UpdatedRules;
     #confirming = $state(false);
     #busy = $state(false);
     #showingVerificationWarning = $state(false);
     #candidateMembers = $state<CandidateMember[]>([]);
+    #rulesValid = $derived.by(() => {
+        return (
+            !this.rules.enabled ||
+            (this.rules.text.length > 0 && this.rules.text.length < MAX_RULES_LENGTH)
+        );
+    });
     #candidateUsers = $derived(this.#candidateMembers.map((m) => m.user));
     #accessGates = $derived.by<LeafGate[]>(() => {
         if (this.candidate === undefined) return [];
@@ -64,6 +76,29 @@ export abstract class UpdateGroupOrCommunityState {
         this.#confirming = false;
         this.#candidateMembers = [];
         this.#showingVerificationWarning = false;
+    }
+
+    get rulesValid() {
+        return this.#rulesValid;
+    }
+
+    get rulesChanged() {
+        return (
+            this.rules.enabled !== this.originalRules.enabled ||
+            this.rules.text !== this.originalRules.text
+        );
+    }
+
+    accessGatesChanged(client: OpenChat) {
+        return client.hasAccessGateChanged(this.original.gateConfig, this.candidate.gateConfig);
+    }
+
+    toggleRulesEnabled() {
+        this.rules.enabled = !this.rules.enabled;
+    }
+
+    toggleNewRulesVersion() {
+        this.rules.newVersion = !this.rules.newVersion;
     }
 
     get showingVerificationWarning() {

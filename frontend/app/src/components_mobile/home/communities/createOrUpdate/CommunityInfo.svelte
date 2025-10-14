@@ -214,7 +214,7 @@
             </LinkedCard>
             <LinkedCard
                 error={ucs.rulesValid ? undefined : rulesError}
-                onClick={() => publish("updateGroupRules")}
+                onClick={() => publish("updateRules", ucs)}
                 Icon={FormatList}
                 title={i18nKey("Rules")}
                 info={i18nKey(
