@@ -153,6 +153,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <svelte:element
     this={tag}
+    role={onClick ? "button" : "none"}
     bind:this={ref}
     use:menuCloser={closeMenuOnScroll}
     use:swipe={{ onSwipe }}

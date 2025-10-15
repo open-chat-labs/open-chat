@@ -81,7 +81,7 @@
     <StreakInsuranceBuy onClose={() => (showInsurance = false)} />
 {/if}
 
-<SlidingPageContent title={i18nKey("CHIT rewards")}>
+<SlidingPageContent title={i18nKey("CHIT rewards")} subtitle={i18nKey("General options")}>
     <Container
         padding={"xxl"}
         gap={"lg"}

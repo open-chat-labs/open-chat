@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
+    import { CommonButton } from "component-lib";
     import {
         AuthProvider,
         mobileWidth,
@@ -8,6 +9,7 @@
         type Verification,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
+    import ShieldPlusOutline from "svelte-material-icons/ShieldPlusOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import {
         pinNumberErrorMessageStore,
@@ -15,7 +17,6 @@
         type PinOperation,
     } from "../../../stores/pinNumber";
     import { toastStore } from "../../../stores/toast";
-    import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import ModalContent from "../../ModalContent.svelte";
@@ -177,16 +178,27 @@
     {#snippet footer()}
         <div class="footer">
             {#if type.kind === "forgot"}
-                <ButtonGroup align="center">
-                    <Button disabled={busy} secondary onClick={onClose}
-                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
+                <ButtonGroup align="end">
+                    <CommonButton disabled={busy} onClick={onClose} size={"small_text"}>
+                        <Translatable resourceKey={i18nKey("cancel")} />
+                    </CommonButton>
                 </ButtonGroup>
             {:else}
-                <ButtonGroup align="center">
-                    <Button disabled={busy} secondary onClick={onClose}
-                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-                    <Button loading={busy} disabled={busy || !isValid} onClick={changePin}
-                        ><Translatable resourceKey={action} /></Button>
+                <ButtonGroup align="end">
+                    <CommonButton disabled={busy} onClick={onClose} size={"small_text"}>
+                        <Translatable resourceKey={i18nKey("cancel")} />
+                    </CommonButton>
+                    <CommonButton
+                        loading={busy}
+                        disabled={busy || !isValid}
+                        onClick={changePin}
+                        mode={"active"}
+                        size={"medium"}>
+                        {#snippet icon(color)}
+                            <ShieldPlusOutline {color} />
+                        {/snippet}
+                        <Translatable resourceKey={action} />
+                    </CommonButton>
                 </ButtonGroup>
             {/if}
         </div>

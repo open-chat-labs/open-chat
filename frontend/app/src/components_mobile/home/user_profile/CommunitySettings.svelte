@@ -73,7 +73,7 @@
     }
 </script>
 
-<SlidingPageContent title={i18nKey("Communities")}>
+<SlidingPageContent title={i18nKey("Communities")} subtitle={i18nKey("General options")}>
     <Container
         padding={["xxl", "lg"]}
         gap={"lg"}

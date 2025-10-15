@@ -39,8 +39,8 @@
 
         &.muted {
             border: var(--bw-thin) solid transparent;
-            background: var(--disabled-button);
-            color: var(--text-placeholder);
+            background: var(--text-tertiary);
+            color: var(--text-secondary);
         }
 
         &.on_primary_mode {
@@ -57,8 +57,8 @@
         }
 
         &.additive_mode {
-            background: var(--background-2);
-            color: var(--text-placeholder);
+            background: var(--text-tertiary);
+            color: var(--text-secondary);
         }
     }
 </style>

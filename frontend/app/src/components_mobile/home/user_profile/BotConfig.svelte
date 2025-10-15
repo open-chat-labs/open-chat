@@ -46,7 +46,7 @@
     </Container>
 {/snippet}
 
-<SlidingPageContent title={i18nKey("Bot configuration")}>
+<SlidingPageContent title={i18nKey("Bot configuration")} subtitle={i18nKey("Advanced options")}>
     <Container
         padding={"xxl"}
         gap={"lg"}

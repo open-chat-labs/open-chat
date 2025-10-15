@@ -1,51 +1,43 @@
 <script lang="ts">
+    import type { MainAxisAlignment } from "component-lib";
+    import { Container } from "component-lib";
+    import { type Snippet } from "svelte";
+
     interface Props {
         align?: "end" | "fill" | "center" | "start"; // we may need more options later but I think this covers it at the moment
         nowrap?: boolean;
         nogap?: boolean;
-        children?: import("svelte").Snippet;
+        children?: Snippet;
     }
 
     let { align = "end", nowrap = false, nogap = false, children }: Props = $props();
-    const cls = `button-group ${align}`;
+
+    function alignment(align: "end" | "fill" | "center" | "start"): MainAxisAlignment {
+        switch (align) {
+            case "center":
+                return "center";
+            case "end":
+                return "end";
+            case "start":
+                return "start";
+            case "fill":
+                "spaceBetween";
+        }
+        return "start";
+    }
 </script>
 
-<div class:nowrap class={cls} class:nogap>
+<Container
+    wrap={!nowrap}
+    supplementalClass={`button-group ${align === "fill" ? "fill" : ""}`}
+    gap={nogap ? "zero" : "sm"}
+    crossAxisAlignment={"center"}
+    mainAxisAlignment={alignment(align)}>
     {@render children?.()}
-</div>
+</Container>
 
 <style lang="scss">
     :global(.button-group.fill button) {
         flex: auto;
-    }
-
-    .button-group {
-        display: flex;
-        gap: $sp3;
-        flex-wrap: wrap;
-
-        &.nogap {
-            gap: 0;
-        }
-
-        &.nowrap {
-            flex-wrap: nowrap;
-        }
-
-        &.start {
-            justify-content: flex-start;
-        }
-
-        &.end {
-            justify-content: flex-end;
-        }
-
-        &.center {
-            justify-content: center;
-        }
-
-        &.fill {
-            justify-content: space-between;
-        }
     }
 </style>

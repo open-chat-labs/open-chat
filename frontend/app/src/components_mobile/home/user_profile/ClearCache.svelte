@@ -20,7 +20,7 @@
     }
 </script>
 
-<SlidingPageContent title={i18nKey("Cache management")}>
+<SlidingPageContent title={i18nKey("Cache management")} subtitle={i18nKey("Advanced options")}>
     <Container
         padding={"xxl"}
         gap={"lg"}

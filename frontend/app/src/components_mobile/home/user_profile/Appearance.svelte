@@ -15,7 +15,7 @@
     });
 </script>
 
-<SlidingPageContent title={i18nKey("Appearance")}>
+<SlidingPageContent title={i18nKey("Appearance")} subtitle={i18nKey("General options")}>
     <Container
         padding={["xxl", "lg"]}
         gap={"lg"}

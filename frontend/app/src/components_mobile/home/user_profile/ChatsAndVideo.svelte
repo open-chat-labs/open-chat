@@ -30,7 +30,7 @@
     }
 </script>
 
-<SlidingPageContent title={i18nKey("Chats & video calls")}>
+<SlidingPageContent title={i18nKey("Chats & video calls")} subtitle={i18nKey("General options")}>
     <Container padding={"xxl"} gap={"lg"} height={{ kind: "fill" }} direction={"vertical"}>
         <Container gap={"xl"} direction={"vertical"}>
             <H2 colour={"primary"}>

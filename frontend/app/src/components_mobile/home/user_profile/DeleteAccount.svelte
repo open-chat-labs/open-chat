@@ -21,7 +21,7 @@
         onClose={() => (authenticating = false)} />
 {/if}
 
-<SlidingPageContent title={i18nKey("Delete account")}>
+<SlidingPageContent title={i18nKey("Delete account")} subtitle={i18nKey("Advanced options")}>
     <Container
         padding={"xxl"}
         gap={"lg"}
