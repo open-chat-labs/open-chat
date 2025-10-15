@@ -15,6 +15,7 @@
         favouritesStore,
         numberOfThreadsStore,
         OpenChat,
+        publish,
         ROLE_NONE,
         routeForChatIdentifier,
         routeForScope,
@@ -151,7 +152,7 @@
     let chats = $derived(filteredChats.slice(0, chatsToShow));
 
     function newMessage() {
-        alert("TODO come back to this");
+        publish("newMessage");
     }
 </script>
 

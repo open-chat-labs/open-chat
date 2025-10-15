@@ -4,6 +4,7 @@
         allUsersStore,
         compareChats,
         serverDirectChatsStore,
+        type BotMatch,
         type UserSummary,
     } from "openchat-client";
     import type { Snippet } from "svelte";
@@ -35,8 +36,10 @@
     let searching: boolean = $state(false);
     let selectedSet = $derived(new Set(selectedUsers.map((u) => u.userId)));
 
-    function onSelect(user: UserSummary) {
-        onSelectUser?.(user);
+    function onSelect(user: UserSummary | BotMatch) {
+        if (user.kind !== "bot_match") {
+            onSelectUser?.(user);
+        }
     }
 
     function searchUsers(value?: string) {

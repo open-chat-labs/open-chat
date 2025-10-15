@@ -176,4 +176,5 @@ export type PubSubEvents = {
     updateCommunityGeneralSetup: undefined;
     updateCommunityRules: undefined;
     newCommunity: undefined;
+    newMessage: undefined;
 };

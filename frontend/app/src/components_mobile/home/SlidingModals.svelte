@@ -23,6 +23,7 @@
     import GeneralSetup from "./createOrUpdateGroup/GeneralSetup.svelte";
     import GroupInfo from "./createOrUpdateGroup/GroupInfo.svelte";
     import { UpdateGroupOrCommunityState } from "./groupOrCommunity.svelte";
+    import NewMessage from "./NewMessage.svelte";
     import Rules from "./Rules.svelte";
     import SlidingPage from "./SlidingPage.svelte";
     import About from "./user_profile/About.svelte";
@@ -38,6 +39,7 @@
     import Verify from "./user_profile/Verify.svelte";
 
     type SlidingModalType =
+        | { kind: "new_message" }
         | { kind: "update_community_add_members" }
         | { kind: "update_community_details" }
         | { kind: "update_group_add_members" }
@@ -77,6 +79,7 @@
 
     onMount(() => {
         const unsubs = [
+            subscribe("newMessage", () => push({ kind: "new_message" })),
             subscribe("newCommunity", () => push({ kind: "update_community_add_members" })),
             subscribe("updateCommunity", () => push({ kind: "update_community_details" })),
             subscribe("updateCommunityDetails", () => push({ kind: "update_community_details" })),
@@ -230,6 +233,8 @@
             <AddCommunityMembers />
         {:else if page.kind === "update_community_details"}
             <CommunityInfo />
+        {:else if page.kind === "new_message"}
+            <NewMessage />
         {/if}
     </SlidingPage>
 {/each}

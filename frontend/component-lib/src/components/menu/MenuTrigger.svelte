@@ -94,19 +94,17 @@
                 top: ${rect.top}px;
                 width: ${rect.width}px;
                 height: ${rect.height}px;
-                transition: opacity 200ms ease-in-out, transform 200ms ease-in-out;
+                transition: opacity 200ms ease-in-out;
                 margin: 0;
                 z-index: 91;
                 pointer-events: auto;
                 opacity: 0.8;
-                transform: scaleX(0.99);
             `;
 
         document.body.appendChild(overlay);
         document.body.appendChild(menuClone);
         setTimeout(() => {
             menuClone.style.opacity = "1";
-            menuClone.style.transform = "scaleX(1)";
         }, 0);
     }
 </script>
