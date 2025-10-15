@@ -54,6 +54,11 @@ class UpdateCommunityState extends UpdateGroupOrCommunityState {
         return this.#originalRules;
     }
 
+    enableDefaultRules() {
+        const newVersion = this.rules.newVersion;
+        this.#rules = { ...defaultChatRules(this.candidate.level), newVersion, enabled: true };
+    }
+
     initialise(community: CommunitySummary, rules: VersionedRules) {
         this.reset();
         this.#candidateCommunity = community;

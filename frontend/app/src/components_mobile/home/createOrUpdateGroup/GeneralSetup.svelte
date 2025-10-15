@@ -35,10 +35,7 @@
         </Container>
 
         <Container padding={["xl", "zero", "zero", "zero"]} mainAxisAlignment={"end"}>
-            <CommonButton
-                onClick={() => publish("closeModalPage")}
-                mode="active"
-                size={"small_text"}>
+            <CommonButton onClick={() => publish("closeModalPage")} mode="active" size={"medium"}>
                 {#snippet icon(color)}
                     <ArrowLeft {color} />
                 {/snippet}

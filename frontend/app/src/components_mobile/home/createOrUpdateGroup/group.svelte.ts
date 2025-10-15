@@ -5,6 +5,7 @@
 import { toastStore } from "@src/stores/toast";
 import {
     chatListScopeStore,
+    defaultChatRules,
     i18nKey,
     OpenChat,
     publish,
@@ -24,7 +25,7 @@ export const MIN_NAME_LENGTH = 3;
 export const MAX_NAME_LENGTH = 40;
 export const MAX_DESC_LENGTH = 1024;
 
-class UpdateGroupState extends UpdateGroupOrCommunityState {
+export class UpdateGroupState extends UpdateGroupOrCommunityState {
     #candidateGroup = $state<CandidateGroupChat>();
     #originalGroup: CandidateGroupChat | undefined;
     #nameValid = $derived(
@@ -61,6 +62,15 @@ class UpdateGroupState extends UpdateGroupOrCommunityState {
 
     get originalRules() {
         return this.original.rules;
+    }
+
+    enableDefaultRules() {
+        const newVersion = this.rules.newVersion;
+        this.candidate.rules = {
+            ...defaultChatRules(this.candidate.level),
+            newVersion,
+            enabled: true,
+        };
     }
 
     initialise(group: CandidateGroupChat | undefined) {

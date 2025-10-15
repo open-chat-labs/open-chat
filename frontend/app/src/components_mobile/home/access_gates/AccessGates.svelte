@@ -17,6 +17,8 @@
     import Setting from "../../Setting.svelte";
     import SparkleBox from "../../SparkleBox.svelte";
     import Translatable from "../../Translatable.svelte";
+    import { UpdateGroupState } from "../createOrUpdateGroup/group.svelte";
+    import GroupCard from "../createOrUpdateGroup/GroupCard.svelte";
     import type { UpdateGroupOrCommunityState } from "../groupOrCommunity.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
 
@@ -60,10 +62,10 @@
                     const existing =
                         data.findMatchByKind("chit_earned_gate") ?? data.defaultChitGate();
                     if (existing && isChitEarnedGate(existing)) {
-                        publish("updateGroupEditChitGate", existing);
+                        publish("updateChitGate", { data, gate: existing });
                     }
                 } else {
-                    publish("updateEditChitGate", { data, gate: data.defaultChitGate() });
+                    publish("updateChitGate", { data, gate: data.defaultChitGate() });
                 }
                 break;
             default:
@@ -91,7 +93,9 @@
         gap={"xl"}
         direction={"vertical"}
         padding={["xxl", "lg", "lg", "lg"]}>
-        <!-- <GroupCard candidate={data.candidate} /> -->
+        {#if data instanceof UpdateGroupState}
+            <GroupCard candidateGroup={data.candidateGroup} />
+        {/if}
 
         <Container padding={["zero", "md"]} gap={"sm"} direction={"vertical"}>
             <Container>
@@ -99,7 +103,7 @@
                     <Translatable resourceKey={i18nKey("Access gates")}></Translatable>
                 </Body>
                 <CommonButton
-                    onClick={() => publish("updateGroupGatesLearnMore")}
+                    onClick={() => publish("accessGatesLearnMore")}
                     mode={"active"}
                     size={"small_text"}>
                     <Translatable resourceKey={i18nKey("Learn more")}></Translatable>
@@ -206,10 +210,7 @@
         {/if}
 
         <Container padding={["xl", "zero", "zero", "zero"]} mainAxisAlignment={"end"}>
-            <CommonButton
-                onClick={() => publish("closeModalPage")}
-                mode="active"
-                size={"small_text"}>
+            <CommonButton onClick={() => publish("closeModalPage")} mode="active" size={"medium"}>
                 {#snippet icon(color)}
                     <ArrowLeft {color} />
                 {/snippet}

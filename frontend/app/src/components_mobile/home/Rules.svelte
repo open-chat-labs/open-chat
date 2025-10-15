@@ -1,20 +1,81 @@
 <script lang="ts">
     import { i18nKey, interpolate } from "@src/i18n/i18n";
-    import { CommonButton, Container, Switch, TextArea } from "component-lib";
+    import {
+        BodySmall,
+        ColourVars,
+        CommonButton,
+        Container,
+        Sheet,
+        Subtitle,
+        Switch,
+        TextArea,
+    } from "component-lib";
     import { publish } from "openchat-client";
     import { _ } from "svelte-i18n";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
+    import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
+    import Eye from "svelte-material-icons/EyeOutline.svelte";
     import Setting from "../Setting.svelte";
     import Translatable from "../Translatable.svelte";
-    import SlidingPageContent from "./SlidingPageContent.svelte";
+    import { UpdateGroupState } from "./createOrUpdateGroup/group.svelte";
+    import GroupCard from "./createOrUpdateGroup/GroupCard.svelte";
     import { MAX_RULES_LENGTH, type UpdateGroupOrCommunityState } from "./groupOrCommunity.svelte";
+    import Markdown from "./Markdown.svelte";
+    import SlidingPageContent from "./SlidingPageContent.svelte";
 
     interface Props {
         data: UpdateGroupOrCommunityState;
     }
 
     let { data }: Props = $props();
+
+    let showExampleRules = $state(false);
+
+    function useExampleRules() {
+        data.enableDefaultRules();
+        showExampleRules = false;
+    }
 </script>
+
+{#if showExampleRules}
+    <Sheet onClose={() => (showExampleRules = false)}>
+        {#snippet sheet()}
+            <Container height={{ kind: "hug" }} padding={"xl"} gap={"xl"} direction={"vertical"}>
+                <Subtitle fontWeight={"bold"}>
+                    <Translatable resourceKey={i18nKey("Example rules")} />
+                </Subtitle>
+
+                <BodySmall colour={"textSecondary"}>
+                    <Translatable
+                        resourceKey={i18nKey(
+                            "Below are the example rules to showcase what they potentially might be. If you would like to use these rules, or modify them for your particular group, feel free to do so!",
+                        )} />
+                </BodySmall>
+
+                <Container padding={"lg"} borderRadius={"md"} background={ColourVars.background0}>
+                    <BodySmall colour={"textSecondary"}>
+                        <Markdown inline={false} text={data.defaultRules.text}></Markdown>
+                    </BodySmall>
+                </Container>
+
+                <Container gap={"md"} crossAxisAlignment={"end"} mainAxisAlignment={"end"}>
+                    <CommonButton
+                        onClick={() => (showExampleRules = false)}
+                        mode="default"
+                        size={"small_text"}>
+                        <Translatable resourceKey={i18nKey("cancel")}></Translatable>
+                    </CommonButton>
+                    <CommonButton mode={"active"} onClick={useExampleRules} size={"medium"}>
+                        {#snippet icon(color)}
+                            <ContentCopy {color} />
+                        {/snippet}
+                        <Translatable resourceKey={i18nKey("Use example rules")} />
+                    </CommonButton>
+                </Container>
+            </Container>
+        {/snippet}
+    </Sheet>
+{/if}
 
 <SlidingPageContent title={i18nKey("Rules", undefined, data.candidate.level, true)}>
     <Container
@@ -23,7 +84,9 @@
         gap={"xl"}
         direction={"vertical"}
         padding={["xxl", "lg", "lg", "lg"]}>
-        <!-- <GroupCard candidateGroup={ugs.candidateGroup} /> -->
+        {#if data instanceof UpdateGroupState}
+            <GroupCard candidateGroup={data.candidateGroup} />
+        {/if}
 
         <Container padding={["zero", "md"]} gap={"xl"} direction={"vertical"}>
             <Setting
@@ -62,11 +125,20 @@
             </TextArea>
         {/if}
 
-        <Container padding={["xl", "zero", "zero", "zero"]} mainAxisAlignment={"end"}>
+        <Container
+            padding={["xl", "zero", "zero", "zero"]}
+            mainAxisAlignment={"spaceBetween"}
+            crossAxisAlignment={"center"}>
             <CommonButton
-                onClick={() => publish("closeModalPage")}
-                mode="active"
+                onClick={() => (showExampleRules = true)}
+                mode="default"
                 size={"small_text"}>
+                {#snippet icon(color)}
+                    <Eye {color} />
+                {/snippet}
+                <Translatable resourceKey={i18nKey("View example")}></Translatable>
+            </CommonButton>
+            <CommonButton onClick={() => publish("closeModalPage")} mode="active" size={"medium"}>
                 {#snippet icon(color)}
                     <ArrowLeft {color} />
                 {/snippet}

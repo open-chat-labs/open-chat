@@ -1,4 +1,5 @@
 import {
+    defaultChatRules,
     isCompositeGate,
     isLeafGate,
     OpenChat,
@@ -39,6 +40,7 @@ export abstract class UpdateGroupOrCommunityState {
     abstract get original(): Entity;
     abstract get rules(): UpdatedRules;
     abstract get originalRules(): UpdatedRules;
+    abstract enableDefaultRules(): void;
     #confirming = $state(false);
     #busy = $state(false);
     #showingVerificationWarning = $state(false);
@@ -76,6 +78,10 @@ export abstract class UpdateGroupOrCommunityState {
         this.#confirming = false;
         this.#candidateMembers = [];
         this.#showingVerificationWarning = false;
+    }
+
+    get defaultRules() {
+        return defaultChatRules(this.candidate.level);
     }
 
     get rulesValid() {
