@@ -507,25 +507,13 @@
     }
 
     :global(.menu_trigger_clone > .chat_summary) {
+        margin: 0 var(--sp-sm);
+        padding: var(--sp-md) var(--sp-sm) !important;
+        border-radius: var(--rad-md) !important;
         background-color: var(--background-1) !important;
         box-shadow: var(--menu-sh);
         opacity: 1 !important;
     }
-
-    /* :global(.chat_summary_menu_trigger) {
-        width: 100%;
-    } */
-
-    /* :global(.chat_summary_menu_trigger) {
-        transition: opacity 200ms ease-in-out;
-    }
-
-    :global(
-            .chat_summary_list:has(.chat_summary_menu_trigger.open)
-                > .chat_summary_menu_trigger:not(.open)
-        ) {
-        opacity: 0.5;
-    } */
 
     :global(.chat_summary .chat-date) {
         color: var(--txt-light);

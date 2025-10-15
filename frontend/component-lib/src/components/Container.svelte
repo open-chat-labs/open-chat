@@ -175,6 +175,8 @@
         background-position: center;
         background-repeat: no-repeat;
         transition:
+            border-radius 200ms eae-in-out,
+            margin 200ms eae-in-out,
             min-width 200ms ease-in-out,
             flex-basis 200ms ease-in-out,
             padding 200ms ease-in-out,
