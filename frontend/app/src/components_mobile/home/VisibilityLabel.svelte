@@ -14,7 +14,6 @@
     width={{ kind: "hug" }}
     crossAxisAlignment={"center"}
     gap={"sm"}
-    padding={["zero", "sm", "zero", "zero"]}
     borderRadius={"sm"}
     background={"var(--chatSummary-bg-selected)"}>
     <div class={`img ${isPublic ? "public" : "private"}`}></div>

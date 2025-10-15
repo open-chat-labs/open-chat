@@ -256,6 +256,7 @@
     .footer {
         position: relative;
         flex: 0 0 toRem(60);
+        width: 100%;
     }
 
     .footer-overlay {

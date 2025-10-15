@@ -11,6 +11,7 @@
         borderWidth?: "zero" | "thin" | "thick";
         customSize?: string;
         highlightBorder?: boolean;
+        onClick?: (ev: Event) => void;
     }
 
     // TODO - add intersection observer
@@ -22,6 +23,7 @@
         highlightBorder = false,
         borderWidth = highlightBorder ? "thick" : "zero",
         customSize,
+        onClick,
     }: Props = $props();
     let borderCss = $derived.by(() => {
         switch (borderWidth) {
@@ -36,9 +38,13 @@
     let radiusCss = $derived(`border-radius: var(--rad-${radius});`);
 </script>
 
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<!-- svelte-ignore a11y_click_events_have_key_events -->
 <div
+    class:clickable={onClick !== undefined}
     class:highlight={highlightBorder}
     class="border"
+    onclick={onClick}
     style={`${sizeCss} ${radiusCss} ${borderCss}`}>
     <img
         loading="lazy"
@@ -56,6 +62,10 @@
 
         &.highlight {
             background: var(--gradient);
+        }
+
+        &.clickable {
+            cursor: pointer;
         }
     }
 

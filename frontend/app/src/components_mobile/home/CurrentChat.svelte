@@ -1,7 +1,7 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
     import type { SwipeDirection } from "component-lib";
-    import { swipe } from "component-lib";
+    import { ColourVars, Container } from "component-lib";
     import {
         type AttachmentContent,
         blockedUsersStore,
@@ -438,7 +438,11 @@
 <MemeBuilder onSend={onSendMessageWithContent} bind:this={memeBuilder} bind:open={buildingMeme} />
 
 <DropTarget {chat} mode={"message"} {onFileSelected}>
-    <div use:swipe={{ onSwipe }} class="wrapper">
+    <Container
+        {onSwipe}
+        background={ColourVars.background0}
+        height={{ kind: "fill" }}
+        direction={"vertical"}>
         {#if showSearchHeader}
             <CurrentChatSearchHeader
                 {chat}
@@ -510,15 +514,5 @@
                 onCreateP2PSwapMessage={createP2PSwapMessage}
                 onCreatePoll={createPoll} />
         {/if}
-    </div>
+    </Container>
 </DropTarget>
-
-<style lang="scss">
-    .wrapper {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        height: 100%;
-        position: relative;
-    }
-</style>

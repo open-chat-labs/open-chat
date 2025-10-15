@@ -1,12 +1,10 @@
 <script lang="ts">
+    import { Avatar, Container, SectionHeader } from "component-lib";
     import type { ChatSummary, DiamondMembershipStatus, GroupChatSummary } from "openchat-client";
     import {
         allUsersStore,
         anonUserStore,
-        AvatarSize,
         chatListScopeStore,
-        iconSize,
-        mobileWidth,
         publish,
         restrictToSelectedChat,
         routeForChatIdentifier,
@@ -20,15 +18,9 @@
     import page from "page";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
-    import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import { rtlStore } from "../../stores/rtl";
     import { now } from "../../stores/time";
-    import Avatar from "../Avatar.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
-    import SectionHeader from "../SectionHeader.svelte";
     import Translatable from "../Translatable.svelte";
     import Typing from "../Typing.svelte";
     import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
@@ -160,78 +152,7 @@
     let chat = $derived(normaliseChatSummary($now, selectedChatSummary, $typersByContext));
 </script>
 
-<SectionHeader shadow flush>
-    {#if $mobileWidth && !$restrictToSelectedChat}
-        <div class="back" class:rtl={$rtlStore} onclick={clearSelection}>
-            <HoverIcon>
-                {#if $rtlStore}
-                    <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
-                {:else}
-                    <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
-                {/if}
-            </HoverIcon>
-        </div>
-    {/if}
-
-    <div class="avatar" class:has-user-profile={hasUserProfile} onclick={openUserProfile}>
-        <Avatar
-            statusBorder={"var(--section-bg)"}
-            {blocked}
-            showStatus
-            userId={chat.userId}
-            url={chat.avatarUrl}
-            size={AvatarSize.Default} />
-    </div>
-    <div class="chat-details">
-        <div class="chat-name">
-            {#if isMultiUser && !readonly}
-                <WithVerifiedBadge {verified} size={"small"}>
-                    <div class="title">
-                        {#if $selectedCommunitySummaryStore !== undefined && $chatListScopeStore.kind === "favourite"}
-                            <span onclick={navigateToCommunity} class="pointer">
-                                {$selectedCommunitySummaryStore.name}
-                            </span>
-                            <span>{">"}</span>
-                            <span onclick={navigateToChannel} class="pointer">
-                                {chat.name}
-                            </span>
-                        {:else}
-                            {chat.name}
-                        {/if}
-                    </div>
-                </WithVerifiedBadge>
-            {:else if hasUserProfile}
-                <span onclick={openUserProfile} class="user-link">
-                    {chat.name}
-                </span>
-                <Badges
-                    uniquePerson={chat.uniquePerson}
-                    diamondStatus={chat.diamondStatus}
-                    streak={chat.streak}
-                    chitEarned={chat.chitEarned} />
-                <span class="username">{chat.username}</span>
-            {:else}
-                {chat.name}
-            {/if}
-        </div>
-        <div class="chat-subtext">
-            {#if blocked}
-                <Translatable resourceKey={i18nKey("blocked")} />
-            {:else if readonly}
-                <ChatSubtext chat={selectedChatSummary} />
-            {:else if chat.typing !== undefined}
-                {chat.typing} <Typing />
-            {:else if isMultiUser}
-                <ChatSubtext
-                    chat={selectedChatSummary}
-                    clickableMembers
-                    onMembersClick={showGroupMembers} />
-            {:else}
-                <ChatSubtext chat={selectedChatSummary} />
-            {/if}
-        </div>
-    </div>
-    <ActiveVideoCallResume />
+{#snippet menu()}
     {#if !readonly && !$anonUserStore}
         <CurrentChatMenu
             {hasPinned}
@@ -241,34 +162,71 @@
             onShowGroupDetails={showGroupDetails}
             {onSearchChat} />
     {/if}
+{/snippet}
 
-    <ActiveBroadcastSummary />
+<SectionHeader
+    menu={!readonly && !$anonUserStore ? menu : undefined}
+    onBack={$restrictToSelectedChat ? undefined : clearSelection}>
+    {#snippet avatar()}
+        <Avatar onClick={openUserProfile} url={chat.avatarUrl} size={"lg"} />
+    {/snippet}
+
+    {#snippet title()}
+        {#if isMultiUser && !readonly}
+            <WithVerifiedBadge {verified} size={"small"}>
+                <Container gap={"md"}>
+                    {#if $selectedCommunitySummaryStore !== undefined && $chatListScopeStore.kind === "favourite"}
+                        <span onclick={navigateToCommunity} class="pointer">
+                            {$selectedCommunitySummaryStore.name}
+                        </span>
+                        <span>{">"}</span>
+                        <span onclick={navigateToChannel} class="pointer">
+                            {chat.name}
+                        </span>
+                    {:else}
+                        {chat.name}
+                    {/if}
+                </Container>
+            </WithVerifiedBadge>
+        {:else if hasUserProfile}
+            <span onclick={openUserProfile} class="user-link">
+                {chat.name}
+            </span>
+            <Badges
+                uniquePerson={chat.uniquePerson}
+                diamondStatus={chat.diamondStatus}
+                streak={chat.streak}
+                chitEarned={chat.chitEarned} />
+            <span class="username">{chat.username}</span>
+        {:else}
+            {chat.name}
+        {/if}
+    {/snippet}
+
+    {#snippet subtitle()}
+        {#if blocked}
+            <Translatable resourceKey={i18nKey("blocked")} />
+        {:else if readonly}
+            <ChatSubtext chat={selectedChatSummary} />
+        {:else if chat.typing !== undefined}
+            {chat.typing} <Typing />
+        {:else if isMultiUser}
+            <ChatSubtext
+                chat={selectedChatSummary}
+                clickableMembers
+                onMembersClick={showGroupMembers} />
+        {:else}
+            <ChatSubtext chat={selectedChatSummary} />
+        {/if}
+    {/snippet}
+
+    {#snippet action()}
+        <ActiveVideoCallResume />
+        <ActiveBroadcastSummary />
+    {/snippet}
 </SectionHeader>
 
 <style lang="scss">
-    .chat-name {
-        @include font(book, normal, fs-120);
-        @include ellipsis();
-        margin-bottom: $sp1;
-        display: flex;
-        align-items: center;
-        gap: $sp2;
-    }
-
-    .chat-subtext {
-        @include font(book, normal, fs-80);
-        @include ellipsis();
-        color: var(--txt-light);
-    }
-
-    .avatar {
-        flex: 0 0 55px;
-
-        &.has-user-profile {
-            cursor: pointer;
-        }
-    }
-
     .pointer {
         cursor: pointer;
     }
@@ -285,27 +243,5 @@
     .username {
         font-weight: 200;
         color: var(--txt-light);
-    }
-
-    .chat-details {
-        flex: 1;
-        overflow: auto;
-        padding: 0 $sp2;
-    }
-
-    .title {
-        display: flex;
-        flex-direction: row;
-        gap: $sp3;
-    }
-
-    .back {
-        flex: 0 0 10px;
-        margin-right: 5px;
-
-        &.rtl {
-            margin-right: 0;
-            margin-left: 5px;
-        }
     }
 </style>

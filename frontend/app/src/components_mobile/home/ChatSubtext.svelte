@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { BodySmall, Container } from "component-lib";
     import type { ChatSummary, OpenChat } from "openchat-client";
     import { allUsersStore } from "openchat-client";
     import { getContext } from "svelte";
@@ -45,38 +46,31 @@
 </script>
 
 {#if chat.kind === "direct_chat"}
-    <div class="wrapper">
+    <Container gap={"sm"} crossAxisAlignment={"center"}>
         {#if chat.eventsTTL !== undefined}
             <DisappearLabel ttl={chat.eventsTTL} />
         {/if}
         {subtext}
-    </div>
+    </Container>
 {:else if chat.kind === "group_chat" || chat.kind === "channel"}
-    <div class="wrapper">
+    <Container onClick={click} gap={"sm"} crossAxisAlignment={"center"}>
+        <BodySmall width={{ kind: "hug" }} colour={"textSecondary"}>
+            <VisibilityLabel isPublic={chat.public} />
+        </BodySmall>
         {#if chat.eventsTTL !== undefined}
             <DisappearLabel ttl={chat.eventsTTL} />
         {/if}
-        <VisibilityLabel isPublic={chat.public} />
-        <div class="members" class:clickable={clickableMembers} onclick={click}>
+        <BodySmall colour={"textSecondary"}>
             <span class="num">{chat.memberCount.toLocaleString()}</span>
             <Translatable resourceKey={i18nKey("members")} />
-        </div>
-    </div>
+        </BodySmall>
+    </Container>
 {/if}
 
 <style lang="scss">
-    .wrapper {
-        display: flex;
-        gap: $sp3;
-        align-items: center;
-        @include font(book, normal, fs-70);
-    }
-
-    .members {
-        .num {
-            color: var(--txt);
-            font-weight: 700;
-        }
+    .num {
+        color: var(--txt);
+        font-weight: 700;
     }
 
     .clickable {

@@ -11,14 +11,13 @@
 </script>
 
 <script lang="ts">
-    import { portalState } from "component-lib";
+    import { FloatingButton, portalState } from "component-lib";
     import {
         MessageContextMap,
         currentUserIdStore,
         eventListLastScrolled,
         eventListScrollTop,
         eventListScrolling,
-        iconSize,
         localUpdates,
         messageContextsEqual,
         routeStore,
@@ -38,7 +37,6 @@
     import ArrowUp from "svelte-material-icons/ArrowUp.svelte";
     import { rtlStore } from "../../stores/rtl";
     import { pop } from "../../utils/transition";
-    import Fab from "../Fab.svelte";
     import TimelineDate from "./TimelineDate.svelte";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
@@ -769,6 +767,7 @@
 {#if floatingTimestamp !== undefined && labelObserver !== undefined}
     <TimelineDate observer={labelObserver} timestamp={BigInt(floatingTimestamp)} floating />
 {/if}
+
 <div
     id={`scrollable-list-${rootSelector}`}
     bind:this={messagesDiv}
@@ -793,9 +792,11 @@
         class:show={showGoToTop}
         class="fab to-top"
         class:rtl={$rtlStore}>
-        <Fab on:click={scrollToTop}>
-            <ArrowUp size={$iconSize} color={"#fff"} />
-        </Fab>
+        <FloatingButton onClick={scrollToTop}>
+            {#snippet icon(color)}
+                <ArrowUp {color} />
+            {/snippet}
+        </FloatingButton>
     </div>
 {/if}
 
@@ -805,11 +806,13 @@
         class:show={firstUnreadMention !== undefined}
         class="fab mentions"
         class:rtl={$rtlStore}>
-        <Fab on:click={() => scrollToMention(firstUnreadMention)}>
-            <div in:pop={{ duration: 1500 }} class="unread">
-                <div class="mention-count">@</div>
-            </div>
-        </Fab>
+        <FloatingButton onClick={() => scrollToMention(firstUnreadMention)}>
+            {#snippet icon()}
+                <div in:pop={{ duration: 1500 }} class="unread">
+                    <div class="mention-count">@</div>
+                </div>
+            {/snippet}
+        </FloatingButton>
     </div>
 {/if}
 <div
@@ -818,17 +821,19 @@
     class="fab to-bottom"
     class:footer
     class:rtl={$rtlStore}>
-    <Fab on:click={scrollToLast}>
-        {#if loadingFromUserScroll}
-            <div class="spinner"></div>
-        {:else if unreadMessages > 0}
-            <div in:pop={{ duration: 1500 }} class="unread">
-                <div class="unread-count">{unreadMessages > 999 ? "999+" : unreadMessages}</div>
-            </div>
-        {:else}
-            <ArrowDown size={$iconSize} color={"#fff"} />
-        {/if}
-    </Fab>
+    <FloatingButton onClick={scrollToLast}>
+        {#snippet icon(color)}
+            {#if loadingFromUserScroll}
+                <div class="spinner"></div>
+            {:else if unreadMessages > 0}
+                <div in:pop={{ duration: 1500 }} class="unread">
+                    <div class="unread-count">{unreadMessages > 999 ? "999+" : unreadMessages}</div>
+                </div>
+            {:else}
+                <ArrowDown {color} />
+            {/if}
+        {/snippet}
+    </FloatingButton>
 </div>
 
 <style lang="scss">
@@ -837,6 +842,7 @@
         background-color: var(--currentChat-msgs-bg);
         display: flex;
         flex-direction: column-reverse;
+        width: 100%;
 
         &.interrupt {
             overflow-y: hidden;
@@ -876,9 +882,8 @@
     }
 
     .unread {
-        color: var(--button-txt);
+        color: var(--text-on-primary);
         text-align: center;
-        text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
 
         .unread-count {
             line-height: 80%;
