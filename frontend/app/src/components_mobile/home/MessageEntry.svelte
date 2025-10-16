@@ -1,5 +1,6 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
+    import { ColourVars, Container, IconButton } from "component-lib";
     import type {
         AttachmentContent,
         BotActionScope,
@@ -36,9 +37,11 @@
     import { getContext, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import Alert from "svelte-material-icons/Alert.svelte";
+    import Camera from "svelte-material-icons/CameraOutline.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import ContentSaveEditOutline from "svelte-material-icons/ContentSaveMoveOutline.svelte";
-    import Send from "svelte-material-icons/Send.svelte";
+    import PlusCircle from "svelte-material-icons/PlusCircleOutline.svelte";
+    import StickerEmoji from "svelte-material-icons/StickerEmoji.svelte";
     import { translatable } from "../../actions/translatable";
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import { enterSend, useBlockLevelMarkdown } from "../../stores/settings";
@@ -46,7 +49,7 @@
     import AlertBoxModal from "../AlertBoxModal.svelte";
     import CommandBuilder from "../bots/CommandInstanceBuilder.svelte";
     import CommandSelector from "../bots/CommandSelector.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
+    import Send from "../icons/Send.svelte";
     import Progress from "../Progress.svelte";
     import Translatable from "../Translatable.svelte";
     import AudioAttacher from "./AudioAttacher.svelte";
@@ -523,7 +526,6 @@
             editingEvent !== undefined ||
             attachment !== undefined,
     );
-    let excessiveLinks = $derived(client.extractEnabledLinks(textContent ?? "").length > 5);
     let frozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore));
     $effect(() => {
         if (inp) {
@@ -630,10 +632,14 @@
         query={emojiQuery} />
 {/if}
 
-<div
-    class="message-entry"
-    class:editing={editingEvent !== undefined}
-    bind:clientHeight={messageEntryHeight}>
+<Container
+    allowOverflow
+    gap={"sm"}
+    mainAxisAlignment={"spaceBetween"}
+    crossAxisAlignment={"center"}
+    background={editingEvent !== undefined ? ColourVars.gradient : ColourVars.background0}
+    padding={["sm", "md"]}
+    minHeight={"3.75rem"}>
     {#if frozen}
         <div class="frozen">
             <Translatable resourceKey={i18nKey("chatFrozen")} />
@@ -669,10 +675,20 @@
             </div>
         {:else if canEnterText}
             {#key textboxId}
-                <div class="container">
-                    {#if excessiveLinks}
-                        <div class="note">{$_("excessiveLinksNote")}</div>
-                    {/if}
+                <Container
+                    gap={"sm"}
+                    background={ColourVars.textTertiary}
+                    borderRadius={"xl"}
+                    minHeight={"3rem"}
+                    maxHeight={"calc(var(--vh, 1vh) * 50)"}
+                    crossAxisAlignment={"end"}
+                    mainAxisAlignment={"spaceBetween"}
+                    supplementalClass={"message_entry_text_box"}>
+                    <IconButton padding={["sm", "zero", "md", "sm"]} size={"md"}>
+                        {#snippet icon()}
+                            <StickerEmoji color={ColourVars.textPlaceholder} />
+                        {/snippet}
+                    </IconButton>
                     <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_static_element_interactions -->
                     <div
                         data-gram="false"
@@ -698,10 +714,22 @@
                         onkeypress={keyPress}>
                     </div>
 
+                    <IconButton padding={["sm", "zero", "md", "zero"]} size={"md"}>
+                        {#snippet icon()}
+                            <PlusCircle color={ColourVars.textPlaceholder} />
+                        {/snippet}
+                    </IconButton>
+
+                    <IconButton padding={["sm", "sm", "md", "zero"]} size={"md"}>
+                        {#snippet icon()}
+                            <Camera color={ColourVars.textPlaceholder} />
+                        {/snippet}
+                    </IconButton>
+
                     {#if containsMarkdown}
                         <MarkdownToggle {editingEvent} />
                     {/if}
-                </div>
+                </Container>
             {/key}
         {:else}
             <div class="textbox light">
@@ -710,109 +738,75 @@
         {/if}
 
         {#if directChatBotId === undefined}
-            <div class="icons">
-                {#if editingEvent === undefined}
-                    {#if permittedMessages.get("audio") && messageIsEmpty && audioMimeType !== undefined && audioSupported}
-                        <div class="record">
-                            <AudioAttacher
-                                mimeType={audioMimeType}
-                                bind:percentRecorded
-                                bind:recording
-                                bind:supported={audioSupported}
-                                onAudioCaptured={onFileSelected} />
-                        </div>
-                    {:else if canEnterText}
-                        <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
-                        <div class="send" onclick={sendMessage}>
-                            <HoverIcon title={$_("sendMessage")}>
-                                <Send size={$iconSize} color={"var(--icon-txt)"} />
-                            </HoverIcon>
-                        </div>
-                    {/if}
-                    <!-- we might need this if we are editing too -->
-                    <MessageActions
-                        bind:this={messageActions}
-                        bind:messageAction
-                        {permittedMessages}
-                        {attachment}
-                        {mode}
-                        editing={editingEvent !== undefined}
-                        {onTokenTransfer}
-                        {onCreatePrizeMessage}
-                        {onCreateP2PSwapMessage}
-                        {onAttachGif}
-                        {onMakeMeme}
-                        {onCreatePoll}
-                        {onClearAttachment}
-                        {onFileSelected} />
-                {:else}
-                    <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
-                    <div class="send" onclick={sendMessage}>
-                        <HoverIcon>
-                            <ContentSaveEditOutline size={$iconSize} color={"var(--button-txt)"} />
-                        </HoverIcon>
-                    </div>
-                    <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
-                    <div class="send" onclick={onCancelEdit}>
-                        <HoverIcon>
-                            <Close size={$iconSize} color={"var(--button-txt)"} />
-                        </HoverIcon>
-                    </div>
+            {#if editingEvent === undefined}
+                {#if permittedMessages.get("audio") && messageIsEmpty && audioMimeType !== undefined && audioSupported}
+                    <AudioAttacher
+                        mimeType={audioMimeType}
+                        bind:percentRecorded
+                        bind:recording
+                        bind:supported={audioSupported}
+                        onAudioCaptured={onFileSelected} />
+                {:else if canEnterText}
+                    <IconButton mode={"primary"} size={"md"} onclick={sendMessage}>
+                        {#snippet icon(color)}
+                            <Send {color} />
+                        {/snippet}
+                    </IconButton>
                 {/if}
-            </div>
+                <!-- we might need this if we are editing too -->
+
+                <!-- <MessageActions
+                    bind:this={messageActions}
+                    bind:messageAction
+                    {permittedMessages}
+                    {attachment}
+                    {mode}
+                    editing={editingEvent !== undefined}
+                    {onTokenTransfer}
+                    {onCreatePrizeMessage}
+                    {onCreateP2PSwapMessage}
+                    {onAttachGif}
+                    {onMakeMeme}
+                    {onCreatePoll}
+                    {onClearAttachment}
+                    {onFileSelected} /> -->
+            {:else}
+                <IconButton mode={"dark"} size={"md"} onclick={sendMessage}>
+                    {#snippet icon(color)}
+                        <ContentSaveEditOutline {color} />
+                    {/snippet}
+                </IconButton>
+                <IconButton mode={"dark"} size={"md"} onclick={onCancelEdit}>
+                    {#snippet icon(color)}
+                        <Close {color} />
+                    {/snippet}
+                </IconButton>
+            {/if}
         {/if}
     {/if}
-</div>
+</Container>
 
 <style lang="scss">
-    .message-entry {
-        position: relative;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background-color: var(--entry-bg);
-        padding: $sp3;
-        border-top: var(--bw) solid var(--bd);
-        min-height: toRem(60);
-
-        &.editing {
-            background: var(--button-bg);
-        }
-
-        .icons {
-            display: flex;
-            align-self: flex-end;
-        }
-    }
     .send {
         flex: 0 0 15px;
     }
 
-    .container {
-        margin: 0 $sp3;
-        flex: 1;
-        position: relative;
-    }
-
     .textbox {
-        padding: toRem(12) $sp4 $sp3 $sp4;
-        background-color: var(--entry-input-bg);
-        border-radius: var(--entry-input-rd);
         outline: none;
         border: 0;
-        max-height: calc(var(--vh, 1vh) * 50);
-        min-height: toRem(30);
         overflow-x: hidden;
+        padding: var(--sp-md) 0 var(--sp-md) 0;
         overflow-y: auto;
         user-select: text;
         white-space: pre-wrap;
         overflow-wrap: anywhere;
-        border: var(--bw) solid var(--entry-input-bd);
-        box-shadow: var(--entry-input-sh);
+        flex: auto;
+        font-size: var(--typo-body-sz);
+        line-height: var(--typo-body-lh);
 
         &.empty:before {
             content: attr(placeholder);
-            color: var(--placeholder);
+            color: var(--text-placeholder);
             pointer-events: none;
             display: block; /* For Firefox */
             position: absolute;
@@ -823,7 +817,7 @@
         }
 
         &.light {
-            color: var(--txt-light);
+            color: var(--text-secondary);
         }
     }
 
@@ -831,8 +825,7 @@
     .frozen,
     .disabled {
         height: 42px;
-        color: var(--txt);
-        @include font(book, normal, fs-100);
+        color: var(--text-secondary);
         display: flex;
         justify-content: center;
         align-items: center;
@@ -844,24 +837,11 @@
         flex: auto;
     }
 
-    .note {
-        @include font(book, normal, fs-70);
-        margin-bottom: $sp2;
-    }
-
     .disclaimer {
         display: flex;
         justify-content: center;
         align-items: center;
         height: 100%;
         gap: $sp4;
-    }
-
-    .prefix {
-        position: absolute;
-        top: 0;
-        right: 0;
-        z-index: 1000;
-        @include font(bold, normal, fs-200);
     }
 </style>

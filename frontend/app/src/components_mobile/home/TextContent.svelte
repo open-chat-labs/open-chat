@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Body } from "component-lib";
     import type { OpenChat, TextContent } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -59,7 +60,9 @@
     let iconColour = $derived(me ? "var(--currentChat-msg-me-txt)" : "var(--currentChat-msg-txt)");
 </script>
 
-<Markdown inline={!blockLevelMarkdown} suppressLinks={pinned} {text} />
+<Body>
+    <Markdown inline={!blockLevelMarkdown} suppressLinks={pinned} {text} />
+</Body>
 {#if edited}
     <span class="edited-msg">({$_("edited")})</span>
 {/if}

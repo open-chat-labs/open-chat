@@ -1,12 +1,11 @@
 <script lang="ts">
+    import { IconButton } from "component-lib";
     import { iconSize, type AudioContent, type OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import { _ } from "svelte-i18n";
     import Microphone from "svelte-material-icons/Microphone.svelte";
     import RadioboxMarked from "svelte-material-icons/RadioboxMarked.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
-    import HoverIcon from "../HoverIcon.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -115,13 +114,13 @@
 </script>
 
 {#if supported}
-    <div onclick={toggle}>
-        <HoverIcon title={recording ? $_("stopRecording") : $_("recordAudioMessage")}>
+    <IconButton mode={"primary"} onclick={toggle}>
+        {#snippet icon(color)}
             {#if recording}
-                <RadioboxMarked size={$iconSize} color={"red"} />
+                <RadioboxMarked size={$iconSize} {color} />
             {:else}
-                <Microphone size={$iconSize} color={"var(--icon-txt)"} />
+                <Microphone size={$iconSize} {color} />
             {/if}
-        </HoverIcon>
-    </div>
+        {/snippet}
+    </IconButton>
 {/if}

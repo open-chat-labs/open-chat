@@ -74,6 +74,8 @@
         closeMenuOnScroll?: boolean;
         wrap?: boolean;
         ref?: HTMLElement;
+        clientHeight?: number;
+        clientWidth?: number;
     }
 
     let {
@@ -111,6 +113,8 @@
         closeMenuOnScroll = false,
         wrap = false,
         ref = $bindable(),
+        clientHeight = $bindable(),
+        clientWidth = $bindable(),
     }: Props = $props();
 
     // you might expect this to be done inside onMount but
@@ -153,6 +157,8 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <svelte:element
     this={tag}
+    bind:clientHeight
+    bind:clientWidth
     role={onClick ? "button" : "none"}
     bind:this={ref}
     use:menuCloser={closeMenuOnScroll}

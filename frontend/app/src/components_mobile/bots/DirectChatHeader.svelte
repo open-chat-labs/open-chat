@@ -59,7 +59,7 @@
             {/snippet}
 
             {#snippet subtitle()}
-                <Translatable resourceKey={i18nKey("User bot commands below")} />
+                <Translatable resourceKey={i18nKey("Use bot commands below")} />
             {/snippet}
 
             {#snippet menu()}

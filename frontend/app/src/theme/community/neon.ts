@@ -20,6 +20,8 @@ const buttonGradient = neon.colours.gradientInverted.toString();
 export function getTheme(base: Theme): Theme {
     // it's ok to mutate the theme passed in because it's a clone
     base.author = "2yfsq-kaaaa-aaaaf-aaa4q-cai";
+    base.font = '"Manrope", sans-serif';
+    base["font-bold"] = '"Manrope", sans-serif';
     base.mode = "dark";
     base.name = "neon_dark";
     base.label = "Neon";
