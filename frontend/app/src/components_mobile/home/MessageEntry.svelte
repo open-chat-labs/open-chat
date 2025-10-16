@@ -53,7 +53,9 @@
     import Progress from "../Progress.svelte";
     import Translatable from "../Translatable.svelte";
     import AudioAttacher from "./AudioAttacher.svelte";
+    import CustomMessageTrigger from "./CustomMessageTrigger.svelte";
     import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
+    import FileAttacher from "./FileAttacher.svelte";
     import MarkdownToggle from "./MarkdownToggle.svelte";
     import MentionPicker from "./MentionPicker.svelte";
     import MessageActions from "./MessageActions.svelte";
@@ -148,6 +150,8 @@
     let containsMarkdown = $state(false);
     let showDirectBotChatWarning = $state(false);
     let commandSent = false;
+
+    let showCustomMessageTrigger = $state(false);
 
     // Update this to force a new textbox instance to be created
     let textboxId = $state(Symbol());
@@ -526,6 +530,9 @@
             editingEvent !== undefined ||
             attachment !== undefined,
     );
+    let canAddImageOrVideo = $derived(
+        permittedMessages.get("image") || permittedMessages.get("video"),
+    );
     let frozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore));
     $effect(() => {
         if (inp) {
@@ -636,7 +643,7 @@
     allowOverflow
     gap={"sm"}
     mainAxisAlignment={"spaceBetween"}
-    crossAxisAlignment={"center"}
+    crossAxisAlignment={"end"}
     background={editingEvent !== undefined ? ColourVars.gradient : ColourVars.background0}
     padding={["sm", "md"]}
     minHeight={"3.75rem"}>
@@ -684,7 +691,10 @@
                     crossAxisAlignment={"end"}
                     mainAxisAlignment={"spaceBetween"}
                     supplementalClass={"message_entry_text_box"}>
-                    <IconButton padding={["sm", "zero", "md", "sm"]} size={"md"}>
+                    <IconButton
+                        onclick={() => onAttachGif("")}
+                        padding={["sm", "zero", "md", "sm"]}
+                        size={"md"}>
                         {#snippet icon()}
                             <StickerEmoji color={ColourVars.textPlaceholder} />
                         {/snippet}
@@ -714,17 +724,36 @@
                         onkeypress={keyPress}>
                     </div>
 
-                    <IconButton padding={["sm", "zero", "md", "zero"]} size={"md"}>
-                        {#snippet icon()}
-                            <PlusCircle color={ColourVars.textPlaceholder} />
-                        {/snippet}
-                    </IconButton>
+                    <Container
+                        padding={["zero", "sm", "zero", "zero"]}
+                        width={{ kind: "hug" }}
+                        gap={"md"}>
+                        <IconButton
+                            onclick={() => (showCustomMessageTrigger = !showCustomMessageTrigger)}
+                            padding={["sm", "zero", "md", "zero"]}
+                            size={"md"}>
+                            {#snippet icon()}
+                                <div class:open={showCustomMessageTrigger} class="drawer_trigger">
+                                    <PlusCircle color={ColourVars.textPlaceholder} />
+                                </div>
+                            {/snippet}
+                        </IconButton>
 
-                    <IconButton padding={["sm", "sm", "md", "zero"]} size={"md"}>
-                        {#snippet icon()}
-                            <Camera color={ColourVars.textPlaceholder} />
-                        {/snippet}
-                    </IconButton>
+                        {#if messageIsEmpty && canAddImageOrVideo}
+                            <FileAttacher {onFileSelected}>
+                                {#snippet children(onClick)}
+                                    <IconButton
+                                        onclick={onClick}
+                                        padding={["sm", "zero", "md", "zero"]}
+                                        size={"md"}>
+                                        {#snippet icon()}
+                                            <Camera color={ColourVars.textPlaceholder} />
+                                        {/snippet}
+                                    </IconButton>
+                                {/snippet}
+                            </FileAttacher>
+                        {/if}
+                    </Container>
 
                     {#if containsMarkdown}
                         <MarkdownToggle {editingEvent} />
@@ -732,7 +761,7 @@
                 </Container>
             {/key}
         {:else}
-            <div class="textbox light">
+            <div class="textbox">
                 <Translatable resourceKey={placeholder} />
             </div>
         {/if}
@@ -753,23 +782,6 @@
                         {/snippet}
                     </IconButton>
                 {/if}
-                <!-- we might need this if we are editing too -->
-
-                <!-- <MessageActions
-                    bind:this={messageActions}
-                    bind:messageAction
-                    {permittedMessages}
-                    {attachment}
-                    {mode}
-                    editing={editingEvent !== undefined}
-                    {onTokenTransfer}
-                    {onCreatePrizeMessage}
-                    {onCreateP2PSwapMessage}
-                    {onAttachGif}
-                    {onMakeMeme}
-                    {onCreatePoll}
-                    {onClearAttachment}
-                    {onFileSelected} /> -->
             {:else}
                 <IconButton mode={"dark"} size={"md"} onclick={sendMessage}>
                     {#snippet icon(color)}
@@ -785,12 +797,29 @@
         {/if}
     {/if}
 </Container>
+<CustomMessageTrigger
+    {permittedMessages}
+    {onTokenTransfer}
+    {onCreatePrizeMessage}
+    {onCreateP2PSwapMessage}
+    {onAttachGif}
+    {onMakeMeme}
+    {onCreatePoll}
+    {onClearAttachment}
+    {onFileSelected}
+    bind:open={showCustomMessageTrigger} />
 
 <style lang="scss">
-    .send {
-        flex: 0 0 15px;
+    .drawer_trigger {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: transform 200ms ease-in-out;
+        transform-origin: 50%;
+        &.open {
+            transform: rotate(135deg);
+        }
     }
-
     .textbox {
         outline: none;
         border: 0;
@@ -803,6 +832,7 @@
         flex: auto;
         font-size: var(--typo-body-sz);
         line-height: var(--typo-body-lh);
+        color: var(--text-secondary);
 
         &.empty:before {
             content: attr(placeholder);
@@ -814,10 +844,6 @@
 
         &.recording {
             display: none;
-        }
-
-        &.light {
-            color: var(--text-secondary);
         }
     }
 

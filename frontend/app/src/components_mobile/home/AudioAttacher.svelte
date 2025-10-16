@@ -2,7 +2,7 @@
     import { IconButton } from "component-lib";
     import { iconSize, type AudioContent, type OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import Microphone from "svelte-material-icons/Microphone.svelte";
+    import Microphone from "svelte-material-icons/MicrophoneOutline.svelte";
     import RadioboxMarked from "svelte-material-icons/RadioboxMarked.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
