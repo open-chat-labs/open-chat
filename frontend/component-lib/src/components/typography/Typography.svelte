@@ -62,7 +62,7 @@
             case "label":
                 return "label";
             default:
-                return "p";
+                return "span";
         }
     }
     function getColourVar() {

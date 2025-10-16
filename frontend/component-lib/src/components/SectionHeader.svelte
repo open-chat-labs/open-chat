@@ -32,7 +32,7 @@
     mainAxisAlignment={"spaceBetween"}
     gap={"md"}>
     {#if onBack}
-        <IconButton size={"md"} onclick={onBack}>
+        <IconButton padding={["sm", "zero", "sm", "xs"]} size={"md"} onclick={onBack}>
             {#snippet icon(color)}
                 <ArrowLeft {color} />
             {/snippet}
@@ -53,7 +53,7 @@
         {/if}
     </Container>
     {#if action}
-        <IconButton size={"lg"} onclick={onAction}>
+        <IconButton padding={["sm", "zero"]} size={"md"} onclick={onAction}>
             {#snippet icon(color)}
                 {@render action(color)}
             {/snippet}
@@ -61,7 +61,7 @@
     {/if}
     {#if menu}
         <MenuTrigger position={"bottom"} align={"end"}>
-            <IconButton size={"lg"}>
+            <IconButton padding={["sm", "xs", "sm", "zero"]} size={"md"}>
                 {#snippet icon(color)}
                     <DotsVertical {color} />
                 {/snippet}

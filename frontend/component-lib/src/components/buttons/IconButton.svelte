@@ -1,17 +1,26 @@
 <script lang="ts">
-    import { ColourVars } from "component-lib";
+    import { ColourVars, getPaddingCss, type Padding } from "component-lib";
     import type { Snippet } from "svelte";
 
     interface Props {
         mode?: "transparent" | "dark" | "primary";
         icon: Snippet<[string]>;
         disabled?: boolean;
+        padding?: Padding;
         onclick?: () => void;
         size?: "xs" | "sm" | "md" | "lg";
     }
 
-    let { icon, mode = "transparent", onclick, disabled = false, size = "md" }: Props = $props();
+    let {
+        icon,
+        mode = "transparent",
+        onclick,
+        disabled = false,
+        size = "md",
+        padding = "sm",
+    }: Props = $props();
 
+    let paddingCss = $derived(getPaddingCss(padding));
     let iconColour = $derived.by(() => {
         switch (mode) {
             case "transparent":
@@ -24,7 +33,12 @@
     });
 </script>
 
-<button class={`icon_button ${size} ${mode}`} {disabled} type={"button"} {onclick}>
+<button
+    style={paddingCss}
+    class={`icon_button ${size} ${mode}`}
+    {disabled}
+    type={"button"}
+    {onclick}>
     {@render icon(iconColour)}
 </button>
 
@@ -51,7 +65,6 @@
 
     button {
         all: unset;
-        padding: var(--sp-sm);
         border-radius: var(--rad-circle);
         display: flex;
         justify-content: center;

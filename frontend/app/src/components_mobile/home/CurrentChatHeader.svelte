@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Avatar, Container, SectionHeader } from "component-lib";
+    import { Avatar, Container, Label, SectionHeader } from "component-lib";
     import type { ChatSummary, DiamondMembershipStatus, GroupChatSummary } from "openchat-client";
     import {
         allUsersStore,
@@ -27,8 +27,6 @@
     import ChatSubtext from "./ChatSubtext.svelte";
     import CurrentChatMenu from "./CurrentChatMenu.svelte";
     import Badges from "./profile/Badges.svelte";
-    import ActiveBroadcastSummary from "./video/ActiveBroadcastSummary.svelte";
-    import ActiveVideoCallResume from "./video/ActiveVideoCallResume.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -122,9 +120,9 @@
         }
     }
 
-    function openUserProfile(ev: Event) {
+    function openUserProfile(ev?: Event) {
         if (hasUserProfile) {
-            ev.target?.dispatchEvent(
+            ev?.target?.dispatchEvent(
                 new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
                     detail: {
                         userId,
@@ -189,15 +187,15 @@
                 </Container>
             </WithVerifiedBadge>
         {:else if hasUserProfile}
-            <span onclick={openUserProfile} class="user-link">
+            <Container onClick={openUserProfile} crossAxisAlignment={"center"} gap={"xxs"}>
                 {chat.name}
-            </span>
-            <Badges
-                uniquePerson={chat.uniquePerson}
-                diamondStatus={chat.diamondStatus}
-                streak={chat.streak}
-                chitEarned={chat.chitEarned} />
-            <span class="username">{chat.username}</span>
+                <Badges
+                    uniquePerson={chat.uniquePerson}
+                    diamondStatus={chat.diamondStatus}
+                    streak={chat.streak}
+                    chitEarned={chat.chitEarned} />
+                <Label colour={"textSecondary"}>{chat.username}</Label>
+            </Container>
         {:else}
             {chat.name}
         {/if}
@@ -220,24 +218,17 @@
         {/if}
     {/snippet}
 
+    <!-- TODO - have to come back to this
     {#snippet action()}
         <ActiveVideoCallResume />
         <ActiveBroadcastSummary />
     {/snippet}
+    -->
 </SectionHeader>
 
 <style lang="scss">
     .pointer {
         cursor: pointer;
-    }
-
-    .user-link {
-        cursor: pointer;
-        @media (hover: hover) {
-            &:hover {
-                text-decoration: underline;
-            }
-        }
     }
 
     .username {

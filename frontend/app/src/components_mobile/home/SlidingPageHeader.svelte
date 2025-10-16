@@ -1,7 +1,6 @@
 <script lang="ts">
-    import { IconButton, SectionHeader } from "component-lib";
+    import { SectionHeader } from "component-lib";
     import { publish, type ResourceKey } from "openchat-client";
-    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import Translatable from "../Translatable.svelte";
 
     interface Props {
@@ -13,14 +12,7 @@
     let { titleKey, subtitleKey, onBack = () => publish("closeModalPage") }: Props = $props();
 </script>
 
-<SectionHeader>
-    {#snippet avatar()}
-        <IconButton onclick={onBack}>
-            {#snippet icon(color)}
-                <ArrowLeft {color} />
-            {/snippet}
-        </IconButton>
-    {/snippet}
+<SectionHeader {onBack}>
     {#snippet title()}
         <Translatable resourceKey={titleKey} />
     {/snippet}
