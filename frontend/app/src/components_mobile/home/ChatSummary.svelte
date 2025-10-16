@@ -437,7 +437,7 @@
                     {#if chat.private}
                         <div class="private"></div>
                     {/if}
-                    <Container crossAxisAlignment={"center"} gap={"xs"} width={{ kind: "hug" }}>
+                    <Container crossAxisAlignment={"center"} gap={"xxs"} width={{ kind: "hug" }}>
                         <WithVerifiedBadge {verified} size={"small"}>
                             <Title ellipsisTruncate fontWeight={"semi-bold"}>
                                 {#if community !== undefined && $chatListScopeStore.kind === "favourite"}

@@ -133,11 +133,11 @@
         transition:
             height 200ms ease-in-out,
             opacity 200ms ease-in-out;
-        height: 0;
+        height: 0 !important;
         opacity: 0;
     }
     :global(.container.custom_message_selector.open) {
-        height: 6.5rem;
+        height: 6.5rem !important;
         opacity: 1;
     }
 </style>

@@ -767,33 +767,35 @@
         {/if}
 
         {#if directChatBotId === undefined}
-            {#if editingEvent === undefined}
-                {#if permittedMessages.get("audio") && messageIsEmpty && audioMimeType !== undefined && audioSupported}
-                    <AudioAttacher
-                        mimeType={audioMimeType}
-                        bind:percentRecorded
-                        bind:recording
-                        bind:supported={audioSupported}
-                        onAudioCaptured={onFileSelected} />
-                {:else if canEnterText}
-                    <IconButton mode={"primary"} size={"md"} onclick={sendMessage}>
+            <Container gap={"xs"} padding={["zero", "zero", "xs", "zero"]} width={{ kind: "hug" }}>
+                {#if editingEvent === undefined}
+                    {#if permittedMessages.get("audio") && messageIsEmpty && audioMimeType !== undefined && audioSupported}
+                        <AudioAttacher
+                            mimeType={audioMimeType}
+                            bind:percentRecorded
+                            bind:recording
+                            bind:supported={audioSupported}
+                            onAudioCaptured={onFileSelected} />
+                    {:else if canEnterText}
+                        <IconButton mode={"primary"} size={"md"} onclick={sendMessage}>
+                            {#snippet icon(color)}
+                                <Send {color} />
+                            {/snippet}
+                        </IconButton>
+                    {/if}
+                {:else}
+                    <IconButton mode={"dark"} size={"md"} onclick={sendMessage}>
                         {#snippet icon(color)}
-                            <Send {color} />
+                            <ContentSaveEditOutline {color} />
+                        {/snippet}
+                    </IconButton>
+                    <IconButton mode={"dark"} size={"md"} onclick={onCancelEdit}>
+                        {#snippet icon(color)}
+                            <Close {color} />
                         {/snippet}
                     </IconButton>
                 {/if}
-            {:else}
-                <IconButton mode={"dark"} size={"md"} onclick={sendMessage}>
-                    {#snippet icon(color)}
-                        <ContentSaveEditOutline {color} />
-                    {/snippet}
-                </IconButton>
-                <IconButton mode={"dark"} size={"md"} onclick={onCancelEdit}>
-                    {#snippet icon(color)}
-                        <Close {color} />
-                    {/snippet}
-                </IconButton>
-            {/if}
+            </Container>
         {/if}
     {/if}
 </Container>
