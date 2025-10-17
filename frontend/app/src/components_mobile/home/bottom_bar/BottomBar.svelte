@@ -206,46 +206,16 @@
 </Container>
 
 <style lang="scss">
-    /* @keyframes fade-in {
-        from {
-            opacity: 0;
-        }
+    ::view-transition-new(bottom_nav_bar),
+    ::view-transition-old(bottom_nav_bar) {
+        animation: none;
     }
-
-    @keyframes fade-out {
-        to {
-            opacity: 0;
-        }
-    }
-
-    @keyframes slide-from-right {
-        from {
-            transform: translateX(300px);
-        }
-    }
-
-    @keyframes slide-to-left {
-        to {
-            transform: translateX(-300px);
-        }
-    }
-
-    ::view-transition-old(root) {
-        animation:
-            90ms cubic-bezier(0.4, 0, 1, 1) both fade-out,
-            300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-to-left;
-    }
-
-    ::view-transition-new(root) {
-        animation:
-            210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in,
-            300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-from-right;
-    } */
 
     :global(.bottom_nav_bar) {
         border-left: none !important;
         border-right: none !important;
         border-bottom: none !important;
+        view-transition-name: bottom_nav_bar;
     }
 
     :global(.bottom_nav_bar:after) {
