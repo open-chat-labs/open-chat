@@ -25,6 +25,7 @@
     import GroupInfo from "./createOrUpdateGroup/GroupInfo.svelte";
     import { UpdateGroupOrCommunityState } from "./groupOrCommunity.svelte";
     import NewMessage from "./NewMessage.svelte";
+    import Permissions from "./permission/Permissions.svelte";
     import Rules from "./Rules.svelte";
     import SlidingPage from "./SlidingPage.svelte";
     import About from "./user_profile/About.svelte";
@@ -48,6 +49,7 @@
         | { kind: "update_group_details" }
         | { kind: "update_rules"; data: UpdateGroupOrCommunityState }
         | { kind: "update_group_general_setup" }
+        | { kind: "update_permissions"; data: UpdateGroupOrCommunityState }
         | { kind: "update_access_gates"; data: UpdateGroupOrCommunityState }
         | { kind: "update_neuron_gates"; data: UpdateGroupOrCommunityState }
         | { kind: "update_payment_gates"; data: UpdateGroupOrCommunityState }
@@ -98,6 +100,12 @@
             subscribe("updateGroupDetails", () => push({ kind: "update_group_details" })),
             subscribe("updateGroupGeneralSetup", () =>
                 push({ kind: "update_group_general_setup" }),
+            ),
+            subscribe("updatePermissions", (data) =>
+                push({
+                    kind: "update_permissions",
+                    data: data as unknown as UpdateGroupOrCommunityState,
+                }),
             ),
             subscribe("updateAccessGates", (data) =>
                 push({
@@ -216,6 +224,8 @@
             <GeneralSetup />
         {:else if page.kind === "update_access_gates"}
             <AccessGates data={page.data} />
+        {:else if page.kind === "update_permissions"}
+            <Permissions data={page.data} />
         {:else if page.kind === "access_gates_learn_more"}
             <AboutAccessGates />
         {:else if page.kind === "update_neuron_gates"}

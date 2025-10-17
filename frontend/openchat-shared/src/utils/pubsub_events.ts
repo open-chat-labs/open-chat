@@ -159,6 +159,7 @@ export type PubSubEvents = {
     updateGroupDetails: undefined;
     updateRules: unknown;
     updateAccessGates: unknown;
+    updatePermissions: unknown;
     updateGroupGeneralSetup: undefined;
     updateNeuronGates: unknown;
     updatePaymentGates: unknown;
