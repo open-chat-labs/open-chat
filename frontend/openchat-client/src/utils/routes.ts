@@ -32,6 +32,21 @@ function getRouter(): Promise<typeof page> {
     });
 }
 
+page("*", (ctx, next) => {
+    if (ctx.init || !document.startViewTransition) return next();
+    document.startViewTransition(() => next());
+});
+
+// No need to use this for router stuff, but can be used to do transitions between *any* dom states
+export function transition(fn: () => void) {
+    if (!document.startViewTransition) {
+        fn();
+        return;
+    }
+
+    document.startViewTransition(fn);
+}
+
 export function pageReplace(url: string) {
     return getRouter().then((r) => r.replace(url));
 }
