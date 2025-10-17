@@ -21,6 +21,7 @@ export const MAX_NAME_LENGTH = 25;
 export const MAX_DESC_LENGTH = 1024;
 
 class UpdateCommunityState extends UpdateGroupOrCommunityState {
+    #channelNames = $state<string[]>([]);
     #candidateCommunity = $state<CommunitySummary>();
     #originalCommunity: CommunitySummary | undefined;
     #rules = $state<UpdatedRules>({ ...defaultChatRules("community"), newVersion: false });
@@ -61,6 +62,7 @@ class UpdateCommunityState extends UpdateGroupOrCommunityState {
 
     initialise(community: CommunitySummary, rules: VersionedRules) {
         this.reset();
+        this.#channelNames = ["General"];
         this.#candidateCommunity = community;
         this.#rules = { ...rules, newVersion: false };
         this.#originalCommunity = $state.snapshot(this.candidateCommunity);
@@ -79,6 +81,10 @@ class UpdateCommunityState extends UpdateGroupOrCommunityState {
             blobUrl: detail.url,
             blobData: detail.data,
         };
+    }
+
+    get channelNames(): string[] {
+        return this.#channelNames;
     }
 
     get editMode(): boolean {
@@ -122,6 +128,31 @@ class UpdateCommunityState extends UpdateGroupOrCommunityState {
 
     get #languageChanged() {
         return this.original.primaryLanguage !== this.candidate.primaryLanguage;
+    }
+
+    deleteChannelName(channelName: string) {
+        this.#channelNames = this.#channelNames.filter((n) => n !== channelName);
+    }
+
+    updateChannelName(from: string | undefined, to: string | undefined) {
+        if (to === undefined) return;
+
+        if (from === undefined) {
+            this.#channelNames.push(to);
+        } else {
+            this.#channelNames = this.#channelNames.map((n) => (n === from ? to : n));
+        }
+    }
+
+    isDuplicateChannelName(name: string): boolean {
+        return (
+            this.#channelNames.find((n) => n.toLocaleLowerCase() === name.toLocaleLowerCase()) !==
+            undefined
+        );
+    }
+
+    resetChannelNames() {
+        this.#channelNames = ["General"];
     }
 
     saveCommunity(client: OpenChat, yes: boolean = true): Promise<void> {
@@ -188,11 +219,7 @@ class UpdateCommunityState extends UpdateGroupOrCommunityState {
             const community = $state.snapshot(this.candidateCommunity);
             const communityRules = $state.snapshot(this.#rules);
             return client
-                .createCommunity(
-                    community,
-                    communityRules,
-                    ["General"], // todo - this should be a list of channel names but we don't have a design yet
-                )
+                .createCommunity(community, communityRules, this.channelNames)
                 .then((response) => {
                     if (response.kind === "success") {
                         toastStore.showSuccessToast(i18nKey("communities.created"));

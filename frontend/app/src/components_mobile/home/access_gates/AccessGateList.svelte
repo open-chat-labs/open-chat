@@ -21,11 +21,12 @@
     import Edit from "svelte-material-icons/TextBoxEditOutline.svelte";
     import Translatable from "../../Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
-    import { updateGroupState } from "../createOrUpdateGroup/group.svelte";
+    import type { UpdateGroupOrCommunityState } from "../groupOrCommunity.svelte";
 
     const client = getContext<OpenChat>("client");
 
     interface Props {
+        data: UpdateGroupOrCommunityState;
         pageTitleKey: string;
         titleKey: string;
         descKey: string;
@@ -38,8 +39,8 @@
         onAddGate: () => void;
     }
 
-    let ugs = updateGroupState;
     let {
+        data,
         pageTitleKey,
         gates,
         fallbackIcon,
@@ -109,7 +110,7 @@
                                     {/snippet}
                                     Edit
                                 </MenuItem>
-                                <MenuItem danger onclick={() => ugs.deleteGate(gate)}>
+                                <MenuItem danger onclick={() => data.deleteGate(gate)}>
                                     {#snippet icon(color)}
                                         <Delete {color} />
                                     {/snippet}

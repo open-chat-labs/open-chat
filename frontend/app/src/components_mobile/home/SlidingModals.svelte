@@ -18,6 +18,7 @@
     import NeuronGates from "./access_gates/NeuronGates.svelte";
     import PaymentGates from "./access_gates/PaymentGates.svelte";
     import AddCommunityMembers from "./communities/createOrUpdate/AddCommunityMembers.svelte";
+    import Channels from "./communities/createOrUpdate/Channels.svelte";
     import CommunityInfo from "./communities/createOrUpdate/CommunityInfo.svelte";
     import AddGroupMembers from "./createOrUpdateGroup/AddGroupMembers.svelte";
     import GeneralSetup from "./createOrUpdateGroup/GeneralSetup.svelte";
@@ -42,6 +43,7 @@
         | { kind: "new_message" }
         | { kind: "update_community_add_members" }
         | { kind: "update_community_details" }
+        | { kind: "update_community_channels" }
         | { kind: "update_group_add_members" }
         | { kind: "update_group_details" }
         | { kind: "update_rules"; data: UpdateGroupOrCommunityState }
@@ -83,6 +85,7 @@
             subscribe("newCommunity", () => push({ kind: "update_community_add_members" })),
             subscribe("updateCommunity", () => push({ kind: "update_community_details" })),
             subscribe("updateCommunityDetails", () => push({ kind: "update_community_details" })),
+            subscribe("updateCommunityChannels", () => push({ kind: "update_community_channels" })),
             subscribe("newChannel", () => push({ kind: "update_group_add_members" })),
             subscribe("newGroup", () => push({ kind: "update_group_add_members" })),
             subscribe("updateGroup", () => push({ kind: "update_group_details" })),
@@ -233,6 +236,8 @@
             <AddCommunityMembers />
         {:else if page.kind === "update_community_details"}
             <CommunityInfo />
+        {:else if page.kind === "update_community_channels"}
+            <Channels />
         {:else if page.kind === "new_message"}
             <NewMessage />
         {/if}

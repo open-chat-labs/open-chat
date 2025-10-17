@@ -33,6 +33,7 @@
 </script>
 
 <AccessGateList
+    {data}
     pageTitleKey={"Neuron access gates"}
     onRemoveAll={removeAll}
     onAddGate={() => publish("updateNeuronGate", { data, gate: data.defaultNeuronGate() })}

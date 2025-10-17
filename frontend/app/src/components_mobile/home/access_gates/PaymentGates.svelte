@@ -26,6 +26,7 @@
 </script>
 
 <AccessGateList
+    {data}
     pageTitleKey={"Payment access gates"}
     onRemoveAll={removeAll}
     onAddGate={() => publish("updatePaymentGate", { data, gate: data.defaultPaymentGate() })}

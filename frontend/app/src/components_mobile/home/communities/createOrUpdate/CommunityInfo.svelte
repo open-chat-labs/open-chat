@@ -19,11 +19,13 @@
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AlertOutline from "svelte-material-icons/AlertOutline.svelte";
     import AlertRhombusOutline from "svelte-material-icons/AlertRhombusOutline.svelte";
+    import ChatPlusOutline from "svelte-material-icons/ChatPlusOutline.svelte";
     import Check from "svelte-material-icons/Check.svelte";
     import ClockOutline from "svelte-material-icons/ClockOutline.svelte";
     import Cog from "svelte-material-icons/Cog.svelte";
     import FormatList from "svelte-material-icons/FormatListBulletedType.svelte";
     import ImageEditOutline from "svelte-material-icons/ImageEditOutline.svelte";
+    import Pound from "svelte-material-icons/Pound.svelte";
     import AreYouSure from "../../../AreYouSure.svelte";
     import EditableAvatar from "../../../EditableAvatar.svelte";
     import EditableImageWrapper from "../../../EditableImageWrapper.svelte";
@@ -184,6 +186,26 @@
                 info={i18nKey(
                     "Enable sharing via link, disappearing messages, or hide chat history for new members.",
                 )} />
+            {#if !ucs.editMode}
+                <LinkedCard
+                    onClick={() => publish("updateCommunityChannels")}
+                    Icon={ChatPlusOutline}
+                    title={i18nKey("Public channels")}
+                    info={i18nKey(
+                        "New community members will be added to these channels by default.",
+                    )}>
+                    <Container wrap gap={"sm"}>
+                        {#each ucs.channelNames as channelName}
+                            <Chip mode={"filter"}>
+                                {#snippet icon(color)}
+                                    <Pound {color} />
+                                {/snippet}
+                                {channelName}
+                            </Chip>
+                        {/each}
+                    </Container>
+                </LinkedCard>
+            {/if}
             <LinkedCard
                 onClick={() => publish("updateAccessGates", ucs)}
                 Icon={AlertRhombusOutline}

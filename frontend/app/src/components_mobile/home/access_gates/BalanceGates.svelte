@@ -26,6 +26,7 @@
 </script>
 
 <AccessGateList
+    {data}
     pageTitleKey={"Token balance access gates"}
     onRemoveAll={removeAll}
     onAddGate={() =>

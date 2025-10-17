@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Caption, ColourVars, Container, type Padding } from "component-lib";
-    import type { Snippet } from "svelte";
+    import { onMount, type Snippet } from "svelte";
 
     interface Props {
         id?: string;
@@ -15,6 +15,7 @@
         iconButtons?: Snippet<[string]>;
         textButtons?: Snippet;
         disabled?: boolean;
+        autofocus?: boolean;
     }
 
     let {
@@ -30,12 +31,20 @@
         iconButtons,
         textButtons,
         disabled = false,
+        autofocus = false,
     }: Props = $props();
 
     let remaining = $derived(maxlength - (value?.length ?? 0));
     let warn = $derived(remaining <= 5);
     let hasButtons = $derived(iconButtons || textButtons);
     let padding = $derived<Padding>(hasButtons ? ["xs", "xs", "xs", "md"] : ["xs", "xl"]);
+    let inp: HTMLInputElement;
+
+    onMount(() => {
+        if (autofocus) {
+            inp?.focus();
+        }
+    });
 </script>
 
 <Container direction={"vertical"} gap={"xs"}>
@@ -47,6 +56,7 @@
         gap={"sm"}
         crossAxisAlignment={"center"}>
         <input
+            bind:this={inp}
             class:disabled
             {disabled}
             data-gram="false"
