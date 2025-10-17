@@ -9,6 +9,7 @@ import {
     type RouteParams,
 } from "openchat-shared";
 import page from "page";
+import { tick } from "svelte";
 import { get } from "svelte/store";
 import { routerReadyStore } from "../state";
 
@@ -34,7 +35,10 @@ function getRouter(): Promise<typeof page> {
 
 page("*", (ctx, next) => {
     if (ctx.init || !document.startViewTransition) return next();
-    document.startViewTransition(() => next());
+    document.startViewTransition(async () => {
+        await tick();
+        next();
+    });
 });
 
 // No need to use this for router stuff, but can be used to do transitions between *any* dom states
