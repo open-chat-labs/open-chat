@@ -51,8 +51,11 @@
 </script>
 
 {#if editingChannelName !== undefined}
-    <EditChannel onSave={saveChannel} bind:channelName={editingChannelName} onCancel={cancelEdit}
-    ></EditChannel>
+    <EditChannel
+        mode={originalChannelName === undefined ? "add" : "edit"}
+        onSave={saveChannel}
+        bind:channelName={editingChannelName}
+        onCancel={cancelEdit}></EditChannel>
 {/if}
 
 <SlidingPageContent title={i18nKey("Public channels")}>

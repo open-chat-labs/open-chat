@@ -1,7 +1,6 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { BodySmall, CommonButton, Container, Form, Input, Sheet, Title } from "component-lib";
-    import Close from "svelte-material-icons/Close.svelte";
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";
     import Translatable from "../../../Translatable.svelte";
     import { updateCommunityState } from "./community.svelte";
@@ -14,9 +13,10 @@
         channelName: string;
         onCancel: () => void;
         onSave: () => void;
+        mode: "add" | "edit";
     }
 
-    let { channelName = $bindable(), onCancel, onSave }: Props = $props();
+    let { channelName = $bindable(), onCancel, onSave, mode }: Props = $props();
 
     let duplicate = $derived(ucs.isDuplicateChannelName(channelName));
     let tooShort = $derived(channelName.length < MIN_LENGTH);
@@ -33,22 +33,28 @@
 <Sheet onClose={() => {}}>
     {#snippet sheet()}
         <Container height={{ kind: "hug" }} padding={"xl"} gap={"xl"} direction={"vertical"}>
-            <Title fontWeight={"bold"}>
-                <Translatable resourceKey={i18nKey("Edit channel name")} />
-            </Title>
+            <Container gap={"lg"} padding={"md"} direction={"vertical"}>
+                <Title fontWeight={"bold"}>
+                    <Translatable
+                        resourceKey={i18nKey(
+                            mode === "edit" ? "Edit channel name" : "Add a new channel",
+                        )} />
+                </Title>
 
-            <BodySmall colour={"textSecondary"}>
-                <Translatable
-                    resourceKey={i18nKey(
-                        "Update your channel name so that people know what this channel is about. Channels names must be unique within thiss community.",
-                    )} />
-            </BodySmall>
+                <BodySmall colour={"textSecondary"}>
+                    <Translatable
+                        resourceKey={i18nKey(
+                            "Use the channel name to let people know what this channel is about. Channels names must be unique within this community.",
+                        )} />
+                </BodySmall>
+            </Container>
 
             <Form {onSubmit}>
                 <Input
                     minlength={MIN_LENGTH}
                     maxlength={MAX_LENGTH}
                     countdown
+                    placeholder={"Channel name"}
                     autofocus
                     error={!valid}
                     bind:value={channelName}>
@@ -66,11 +72,8 @@
                 </Input>
             </Form>
 
-            <Container gap={"md"} crossAxisAlignment={"end"} mainAxisAlignment={"end"}>
-                <CommonButton onClick={onCancel} size={"medium"}>
-                    {#snippet icon(color)}
-                        <Close {color} />
-                    {/snippet}
+            <Container gap={"md"} crossAxisAlignment={"end"} mainAxisAlignment={"spaceBetween"}>
+                <CommonButton onClick={onCancel} size={"small_text"}>
                     <Translatable resourceKey={i18nKey("cancel")} />
                 </CommonButton>
                 <CommonButton disabled={!valid} mode={"active"} onClick={onSave} size={"medium"}>
