@@ -34,8 +34,10 @@ function getRouter(): Promise<typeof page> {
 }
 
 page("*", (ctx, next) => {
-    if (ctx.init || !document.startViewTransition) return next();
-    document.startViewTransition(async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (ctx.init || !(document as any).startViewTransition) return next();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (document as any).startViewTransition(async () => {
         await tick();
         next();
     });
@@ -43,12 +45,14 @@ page("*", (ctx, next) => {
 
 // No need to use this for router stuff, but can be used to do transitions between *any* dom states
 export function transition(fn: () => void) {
-    if (!document.startViewTransition) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!(document as any).startViewTransition) {
         fn();
         return;
     }
 
-    document.startViewTransition(fn);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (document as any).startViewTransition(fn);
 }
 
 export function pageReplace(url: string) {

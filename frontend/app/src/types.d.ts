@@ -39,6 +39,14 @@ declare global {
         platformModerator: any;
         platformOperator: any;
     }
+
+    interface Document {
+        startViewTransition?: (callback: () => void | Promise<void>) => {
+            finished: Promise<void>;
+            updateCallbackDone: Promise<void>;
+            ready: Promise<void>;
+        };
+    }
 }
 
 declare namespace svelteHTML {
