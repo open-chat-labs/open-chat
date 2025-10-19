@@ -24,8 +24,6 @@ export function coinsByMarketcapResponse(
             }
         }
     }
-
-    console.log("ICPCoins exchange rates", exchangeRates);
     return exchangeRates;
 }
 
