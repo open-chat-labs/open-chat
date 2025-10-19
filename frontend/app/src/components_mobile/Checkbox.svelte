@@ -1,8 +1,9 @@
 <script lang="ts">
+    import { Body } from "component-lib";
     import type { ResourceKey } from "openchat-client";
+    import type { Snippet } from "svelte";
     import { rtlStore } from "../stores/rtl";
     import Translatable from "./Translatable.svelte";
-    import type { Snippet } from "svelte";
 
     interface Props {
         checked?: boolean;
@@ -41,7 +42,9 @@
     <input {id} type="checkbox" bind:checked {disabled} onchange={onChange} />
     <label class:small for={id}>
         {#if children}{@render children()}{:else if label !== undefined}
-            <Translatable resourceKey={label} />
+            <Body ellipsisTruncate>
+                <Translatable resourceKey={label} />
+            </Body>
         {/if}
     </label>
 </div>

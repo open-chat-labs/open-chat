@@ -1,7 +1,8 @@
 <script lang="ts">
+    import { Body } from "component-lib";
     import type { ResourceKey } from "openchat-client";
-    import Translatable from "./Translatable.svelte";
     import type { Snippet } from "svelte";
+    import Translatable from "./Translatable.svelte";
 
     interface Props {
         group?: string;
@@ -34,7 +35,9 @@
     <input {disabled} {id} type="radio" name={group} {checked} {value} onchange={onChange} />
     <label class:disabled for={id}>
         {#if children}{@render children()}{:else if label}
-            <Translatable resourceKey={label} />
+            <Body ellipsisTruncate>
+                <Translatable resourceKey={label} />
+            </Body>
         {/if}
     </label>
 </div>
