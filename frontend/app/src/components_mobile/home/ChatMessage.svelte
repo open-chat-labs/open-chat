@@ -36,7 +36,6 @@
     import { getContext, onDestroy, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
-    import EmoticonOutline from "svelte-material-icons/EmoticonOutline.svelte";
     import ForwardIcon from "svelte-material-icons/Share.svelte";
     import { fade } from "svelte/transition";
     import { i18nKey } from "../../i18n/i18n";
@@ -45,7 +44,6 @@
     import { dclickReply } from "../../stores/settings";
     import { now } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
-    import { isTouchOnlyDevice } from "../../utils/devices";
     import { canShareMessage } from "../../utils/share";
     import { removeQueryStringParam } from "../../utils/urls";
     import Avatar from "../Avatar.svelte";
@@ -458,7 +456,9 @@
     );
     let mediaDimensions = $derived(extractDimensions(msg.content));
     let fill = $derived(client.fillMessage(msg));
-    let showAvatar = $derived($screenWidth !== ScreenWidth.ExtraExtraSmall);
+    let showAvatar = $derived(
+        chatType !== "direct_chat" && !me && $screenWidth !== ScreenWidth.ExtraExtraSmall,
+    );
     let translated = $derived($translationsStore.has(msg.messageId));
     let threadSummary = $derived(msg.thread);
     let msgUrl = $derived(
@@ -569,7 +569,7 @@
         {/if}
         <IntersectionObserverComponent>
             {#snippet children(intersecting)}
-                <MenuTrigger centered mobileMode={"longpress"}>
+                <MenuTrigger maskUI centered mobileMode={"longpress"}>
                     {#snippet menuItems()}
                         {#if showChatMenu && intersecting}
                             <ChatMessageMenu
@@ -582,6 +582,7 @@
                                 {canShare}
                                 {me}
                                 {canPin}
+                                {canReact}
                                 {canTip}
                                 {pinned}
                                 {supportsReply}
@@ -813,7 +814,7 @@
                             {/if}
                         </div>
 
-                        {#if !collapsed && !msg.deleted && canReact && !failed}
+                        <!-- {#if !collapsed && !msg.deleted && canReact && !failed}
                             <div class="actions" class:touch={isTouchOnlyDevice}>
                                 <div class="reaction" onclick={() => (showEmojiPicker = true)}>
                                     <HoverIcon>
@@ -823,7 +824,7 @@
                                     </HoverIcon>
                                 </div>
                             </div>
-                        {/if}
+                        {/if} -->
                     </div>
                 </MenuTrigger>
 
@@ -949,7 +950,7 @@
 
     .message-wrapper {
         &.last {
-            margin-bottom: $sp4;
+            margin-bottom: var(--sp-md);
         }
     }
 
@@ -982,6 +983,10 @@
         flex-wrap: wrap;
         gap: 3px;
 
+        &.me {
+            justify-content: flex-end;
+        }
+
         &.indent {
             margin-left: $avatar-width;
             @include mobile() {
@@ -1006,6 +1011,10 @@
         justify-content: flex-start;
         margin-bottom: $sp2;
         position: relative;
+
+        &.me {
+            justify-content: flex-end;
+        }
 
         .avatar-col {
             flex: 0 0 $avatar-width;

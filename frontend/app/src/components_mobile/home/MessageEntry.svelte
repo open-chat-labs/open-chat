@@ -685,7 +685,7 @@
                 <Container
                     gap={"sm"}
                     background={ColourVars.textTertiary}
-                    borderRadius={"xl"}
+                    borderRadius={"xxl"}
                     minHeight={"3rem"}
                     maxHeight={"calc(var(--vh, 1vh) * 50)"}
                     crossAxisAlignment={"end"}
@@ -834,7 +834,7 @@
         flex: auto;
         font-size: var(--typo-body-sz);
         line-height: var(--typo-body-lh);
-        color: var(--text-secondary);
+        color: var(--text-primary);
 
         &.empty:before {
             content: attr(placeholder);

@@ -1,6 +1,7 @@
 <script lang="ts">
+    import { quickReactions } from "@src/stores/quickReactions";
     import { confirmMessageDeletion } from "@src/stores/settings";
-    import { MenuItem } from "component-lib";
+    import { Container, MenuItem } from "component-lib";
     import {
         chatListScopeStore,
         cryptoLookup,
@@ -28,6 +29,7 @@
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import DeleteOffOutline from "svelte-material-icons/DeleteOffOutline.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
+    import EmoticonOutline from "svelte-material-icons/EmoticonOutline.svelte";
     import EyeIcon from "svelte-material-icons/Eye.svelte";
     import EyeArrowRightIcon from "svelte-material-icons/EyeArrowRight.svelte";
     import EyeOffIcon from "svelte-material-icons/EyeOff.svelte";
@@ -49,6 +51,7 @@
     import { copyToClipboard } from "../../utils/urls";
     import AreYouSure from "../AreYouSure.svelte";
     import Checkbox from "../Checkbox.svelte";
+    import HoverIcon from "../HoverIcon.svelte";
     import Bitcoin from "../icons/Bitcoin.svelte";
     import Translatable from "../Translatable.svelte";
 
@@ -73,6 +76,7 @@
         canBlockUser: boolean;
         canEdit: boolean;
         canDelete: boolean;
+        canReact: boolean;
         canUndelete: boolean;
         canRevealDeleted: boolean;
         canRevealBlocked: boolean;
@@ -114,6 +118,7 @@
         canBlockUser,
         canEdit,
         canDelete,
+        canReact,
         canUndelete,
         canRevealDeleted,
         canRevealBlocked,
@@ -137,6 +142,7 @@
     }: Props = $props();
 
     let showConfirmDelete = $state(false);
+    let quickReactionIconSize = "1.3rem";
 
     let canRemind = $derived(
         msg.content.kind !== "message_reminder_content" &&
@@ -328,6 +334,26 @@
     </AreYouSure>
 {/if}
 
+<Container
+    mainAxisAlignment={"center"}
+    crossAxisAlignment={"center"}
+    supplementalClass={"quick_reactions"}
+    padding={["xs", "md", "xs", "md"]}>
+    {#each $quickReactions as reaction}
+        <HoverIcon compact onclick={() => selectQuickReaction(reaction)}>
+            <div class="quick-reaction">
+                {reaction}
+            </div>
+        </HoverIcon>
+    {/each}
+    {#if canReact && !failed}
+        <HoverIcon compact onclick={() => showEmojiPicker()} title={$_("pickEmoji")}>
+            <div class="quick-reaction">
+                <EmoticonOutline size={quickReactionIconSize} color={"var(--menu-txt)"} />
+            </div>
+        </HoverIcon>
+    {/if}
+</Container>
 {#if isProposal && !inert}
     <MenuItem onclick={onCollapseMessage}>
         {#snippet icon()}
@@ -528,6 +554,9 @@
 {/if}
 
 <style lang="scss">
+    :global(.container.quick_reactions) {
+        border-bottom: var(--bw-thin) solid var(--background-2) !important;
+    }
     // This will align the menu relative to the selected side of the chat
     // bubble with 0.75rem overflow, or align it to the opposite edge of the
     // chat bubble if the menu width is larger than the chat bubble's.
@@ -585,6 +614,7 @@
     .quick-reaction {
         width: 1.625rem;
         height: 1.625rem;
+        font-size: 1.3rem;
         display: flex;
         align-items: center;
         justify-content: center;

@@ -30,7 +30,7 @@
         minWidth={Rem.fromPixels(200).toString()}
         borderRadius={"lg"}
         shadow={"var(--shadow-menu)"}
-        width={{ kind: "hug" }}
+        width={{ kind: "fill" }}
         height={{ kind: "fill" }}
         direction={"vertical"}>
         {@render children?.()}

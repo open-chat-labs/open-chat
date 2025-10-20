@@ -12,6 +12,8 @@
         chatListScopeStore,
         chatsInitialisedStore,
         communitesRoute,
+        communitiesStore,
+        communityIdentifiersEqual,
         exploringStore,
         globalDirectChatSelectedRoute,
         globalGroupChatSelectedRoute,
@@ -51,9 +53,27 @@
         "selected_community_route",
         "notifications_route",
         "profile_summary_route",
+        "global_chat_selected_route",
+        "selected_channel_route",
     ];
 
     function routeToTransitionType(next: RouteParams, current: RouteParams): TransitionType {
+        if (
+            next.kind === "selected_community_route" &&
+            current.kind === "selected_community_route"
+        ) {
+            if (communityIdentifiersEqual(next.communityId, current.communityId)) {
+                return "fade";
+            }
+            const nextCommunity = $communitiesStore.get(next.communityId);
+            const currentCommunity = $communitiesStore.get(current.communityId);
+            if (nextCommunity !== undefined && currentCommunity !== undefined) {
+                return nextCommunity.membership.index > currentCommunity.membership.index
+                    ? "slide_right"
+                    : "slide_left";
+            }
+            return "fade";
+        }
         const nextIdx = bottomBarRoutes.indexOf(next.kind);
         const currIdx = bottomBarRoutes.indexOf(current.kind);
         if (nextIdx === currIdx) return "fade";

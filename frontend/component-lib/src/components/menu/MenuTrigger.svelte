@@ -110,7 +110,7 @@
 </script>
 
 {#snippet wrappedMenuItems()}
-    <Menu>
+    <Menu centered={props.centered}>
         {@render menuItems()}
     </Menu>
 {/snippet}

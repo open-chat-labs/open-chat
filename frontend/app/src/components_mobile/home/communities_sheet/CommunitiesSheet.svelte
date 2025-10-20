@@ -135,6 +135,7 @@
 <style lang="scss">
     :global(.container.communities_sheet) {
         margin-bottom: -6px;
+        view-transition-name: communities_sheet;
     }
 
     .list,
