@@ -4,6 +4,7 @@
         type ChatIdentifier,
         OpenChat,
         type RouteParams,
+        type TransitionType,
         adminRoute,
         blogRoute,
         chatIdentifiersEqual,
@@ -16,6 +17,7 @@
         globalGroupChatSelectedRoute,
         messageIndexStore,
         notFoundStore,
+        notificationsRoute,
         pageReplace,
         profileSummaryRoute,
         routeKindStore,
@@ -31,7 +33,7 @@
         threadOpenStore,
     } from "openchat-client";
     import page from "page";
-    import { getContext, onDestroy, onMount, untrack } from "svelte";
+    import { getContext, onDestroy, onMount, tick, untrack } from "svelte";
     import Home, { type HomeType } from "./home/HomeRoute.svelte";
     import LandingPage, { type LandingPageType } from "./landingpages/LandingPage.svelte";
     import NotFound, { type NotFoundType } from "./NotFound.svelte";
@@ -44,13 +46,47 @@
 
     let { showLandingPage }: Props = $props();
 
+    const bottomBarRoutes: RouteParams["kind"][] = [
+        "chat_list_route",
+        "selected_community_route",
+        "notifications_route",
+        "profile_summary_route",
+    ];
+
+    function routeToTransitionType(next: RouteParams, current: RouteParams): TransitionType {
+        const nextIdx = bottomBarRoutes.indexOf(next.kind);
+        const currIdx = bottomBarRoutes.indexOf(current.kind);
+        if (nextIdx === currIdx) return "fade";
+        if (nextIdx === -1 || currIdx === -1) return "fade";
+        return nextIdx > currIdx ? "slide_left" : "slide_right";
+    }
+
     let route: HomeType | LandingPageType | NotFoundType | undefined = $state(undefined);
 
     function parsePathParams(fn: (ctx: PageJS.Context) => RouteParams) {
         return (ctx: PageJS.Context, next: () => any) => {
-            client.setRouteParams(ctx, fn(ctx));
-            scrollToTop();
-            next();
+            const params = fn(ctx);
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            if (ctx.init || !(document as any).startViewTransition) {
+                client.setRouteParams(ctx, params);
+                scrollToTop();
+                next();
+                return;
+            }
+
+            // Finally - we are in a position to specify the *type* of transition
+            const transitionType = routeToTransitionType(params, routeStore.value);
+            console.log("Transition Type: ", transitionType);
+            (document as any).startViewTransition({
+                update: async () => {
+                    client.setRouteParams(ctx, params);
+                    scrollToTop();
+                    await tick();
+                    next();
+                },
+                types: [transitionType],
+            });
         };
     }
 
@@ -190,6 +226,7 @@
         page("/share", parsePathParams(shareRoute), track, () => (route = Home));
         page("/admin", parsePathParams(adminRoute), track, () => (route = Home));
         page("/profile_summary", parsePathParams(profileSummaryRoute), track, () => (route = Home));
+        page("/notifications", parsePathParams(notificationsRoute), track, () => (route = Home));
         page(
             "/",
             parsePathParams(() => ({ kind: "home_route", scope: { kind: "none" } })),
@@ -211,6 +248,7 @@
                 route = NotFound;
             },
         );
+
         page.start();
 
         routerReadyStore.set(true);

@@ -10,6 +10,7 @@
     import UserProfileSummary from "./user_profile/UserProfileSummary.svelte";
 
     let showProfileSummary = $derived($routeStore.kind === "profile_summary_route");
+    let showNotifications = $derived($routeStore.kind === "notifications_route");
     let selection = $derived<Selection>(bottomBarSelection());
     let sectionClass = $derived.by(() => {
         const c = ["left_panel"];
@@ -31,7 +32,7 @@
     });
 
     function bottomBarSelection() {
-        if ($activityFeedShowing) {
+        if (showNotifications) {
             return "notification";
         } else if (showProfileSummary) {
             return "profile";
@@ -63,7 +64,7 @@
         height={{ kind: "fill" }}
         width={{ kind: "fill" }}
         direction={"vertical"}>
-        {#if $activityFeedShowing}
+        {#if showNotifications}
             <ActivityFeed />
         {:else if showProfileSummary}
             <UserProfileSummary />

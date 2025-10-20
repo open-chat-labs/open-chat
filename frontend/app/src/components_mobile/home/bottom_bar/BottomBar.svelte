@@ -5,15 +5,12 @@
 <script lang="ts">
     import { Avatar, Container, type SwipeDirection } from "component-lib";
     import {
-        activityFeedShowing,
         allUsersStore,
         currentUserIdStore,
         favouritesStore,
         mergeListOfCombinedUnreadCounts,
         messageActivitySummaryStore,
         OpenChat,
-        showProfileStore,
-        transition,
         unreadCommunityChannelCountsStore,
         unreadDirectAndGroupCountsStore,
         unreadFavouriteCountsStore,
@@ -76,36 +73,22 @@
         };
     }
 
-    function closeOthers() {
-        if ($showProfileStore) {
-            client.popRightPanelHistory();
-        }
-        if ($activityFeedShowing) {
-            activityFeedShowing.set(false);
-        }
-    }
-
     function itemSelected(s: Selection) {
         switch (s) {
             case "chats":
-                closeOthers();
                 page("/chats");
                 break;
             case "communities":
                 // TODO - what do we do if they are not a member of any communities?
-                closeOthers();
                 client.selectDefaultCommunity();
                 break;
             case "favourites":
-                closeOthers();
-                page("/favourite");
+                page("/favourites");
                 break;
             case "notification":
-                closeOthers();
-                transition(() => activityFeedShowing.set(true));
+                page("/notifications");
                 break;
             case "profile":
-                closeOthers();
                 page("/profile_summary");
                 break;
         }
@@ -206,11 +189,6 @@
 </Container>
 
 <style lang="scss">
-    ::view-transition-new(bottom_nav_bar),
-    ::view-transition-old(bottom_nav_bar) {
-        animation: none;
-    }
-
     :global(.bottom_nav_bar) {
         border-left: none !important;
         border-right: none !important;

@@ -494,7 +494,76 @@ svelte-virtual-list-viewport {
     pointer-events: none;
 }
 
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+}
+
+@keyframes fade-out {
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes slide-to-right {
+    to {
+        transform: translateX(100vw);
+    }
+}
+
+@keyframes slide-from-right {
+    from {
+        transform: translateX(100vw);
+    }
+}
+
+@keyframes slide-to-left {
+    to {
+        transform: translateX(-100vw);
+    }
+}
+
+@keyframes slide-from-left {
+    from {
+        transform: translateX(-100vw);
+    }
+}
+
 ::view-transition-old(root),
 ::view-transition-new(root) {
     animation-duration: 250ms;
+}
+
+html:active-view-transition-type(slide_left, slide_right) {
+    &::view-transition-old(bottom_nav_bar),
+    &:view-transition-new(bottom_nav_bar) {
+        animation: none;
+    }
+}
+
+html:active-view-transition-type(slide_left) {
+    &::view-transition-old(root) {
+        animation:
+            250ms ease-in both slide-to-left,
+            250ms ease-in both fade-out;
+    }
+    &::view-transition-new(root) {
+        animation:
+            250ms ease-out both slide-from-right,
+            250ms ease-out both fade-in;
+    }
+}
+
+html:active-view-transition-type(slide_right) {
+    &::view-transition-old(root) {
+        animation:
+            250ms ease-in both slide-to-right,
+            250ms ease-in both fade-out;
+    }
+    &::view-transition-new(root) {
+        animation:
+            250ms ease-out both slide-from-left,
+            250ms ease-out both fade-in;
+    }
 }

@@ -33,18 +33,10 @@ function getRouter(): Promise<typeof page> {
     });
 }
 
-page("*", (ctx, next) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (ctx.init || !(document as any).startViewTransition) return next();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (document as any).startViewTransition(async () => {
-        await tick();
-        next();
-    });
-});
+export type TransitionType = "slide_left" | "slide_right" | "fade";
 
 // No need to use this for router stuff, but can be used to do transitions between *any* dom states
-export function transition(fn: () => void) {
+export async function transition(types: TransitionType[], fn: () => void | Promise<void>) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (!(document as any).startViewTransition) {
         fn();
@@ -52,7 +44,13 @@ export function transition(fn: () => void) {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (document as any).startViewTransition(fn);
+    (document as any).startViewTransition({
+        update: async () => {
+            await fn();
+            await tick();
+        },
+        types,
+    });
 }
 
 export function pageReplace(url: string) {
@@ -76,6 +74,13 @@ export function adminRoute(_ctx: PageJS.Context): RouteParams {
 export function profileSummaryRoute(_ctx: PageJS.Context): RouteParams {
     return {
         kind: "profile_summary_route",
+        scope: noScope,
+    };
+}
+
+export function notificationsRoute(_ctx: PageJS.Context): RouteParams {
+    return {
+        kind: "notifications_route",
         scope: noScope,
     };
 }
