@@ -1049,8 +1049,7 @@ export type UpdatesResult = {
     communitiesRemoved: string[];
     avatarId: OptionUpdate<bigint>;
     blockedUsers: string[] | undefined;
-    pinnedDirectChats: DirectChatIdentifier[] | undefined;
-    pinnedGroupChats: GroupChatIdentifier[] | undefined;
+    pinnedChats: ChatIdentifier[] | undefined;
     pinnedChannels: ChannelIdentifier[] | undefined;
     pinnedFavouriteChats: ChatIdentifier[] | undefined;
     favouriteChats: ChatIdentifier[] | undefined;
@@ -1077,8 +1076,7 @@ export type ChatStateFull = {
     communities: CommunitySummary[];
     avatarId: bigint | undefined;
     blockedUsers: string[];
-    pinnedGroupChats: GroupChatIdentifier[];
-    pinnedDirectChats: DirectChatIdentifier[];
+    pinnedChats: ChatIdentifier[];
     pinnedFavouriteChats: ChatIdentifier[];
     pinnedChannels: ChannelIdentifier[];
     favouriteChats: ChatIdentifier[];
@@ -1119,12 +1117,10 @@ export type CachedGroupChatSummaries = {
 
 export type GroupChatsInitial = {
     summaries: UserCanisterGroupChatSummary[];
-    pinned: GroupChatIdentifier[];
 };
 
 export type DirectChatsInitial = {
     summaries: DirectChatSummary[];
-    pinned: DirectChatIdentifier[];
 };
 
 export type ChatIdentifier = MultiUserChatIdentifier | DirectChatIdentifier;
@@ -1267,6 +1263,7 @@ export type InitialStateResponse = {
     oneSecAddress: string | undefined;
     streakInsurance?: StreakInsurance;
     premiumItems: Set<PremiumItem>;
+    pinnedChats: ChatIdentifier[];
 };
 
 export type StreakInsurance = {
@@ -1355,18 +1352,17 @@ export type UpdatesSuccessResponse = {
     oneSecAddress: string | undefined;
     streakInsurance: OptionUpdate<StreakInsurance>;
     premiumItems: Set<PremiumItem> | undefined;
+    pinnedChats: ChatIdentifier[] | undefined;
 };
 
 export type DirectChatsUpdates = {
     added: DirectChatSummary[];
-    pinned?: DirectChatIdentifier[];
     updated: DirectChatSummaryUpdates[];
     removed: string[];
 };
 
 export type GroupChatsUpdates = {
     added: UserCanisterGroupChatSummary[];
-    pinned?: GroupChatIdentifier[];
     updated: UserCanisterGroupChatSummaryUpdates[];
     removed: string[];
 };

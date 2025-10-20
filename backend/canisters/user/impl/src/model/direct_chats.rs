@@ -1,11 +1,11 @@
 use crate::model::direct_chat::DirectChat;
 use chat_events::{ChatInternal, ChatMetricsInternal};
 use oc_error_codes::OCErrorCode;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
-use types::{ChatId, MessageIndex, TimestampMillis, Timestamped, UserId, UserType};
+use types::{Chat, ChatId, MessageIndex, TimestampMillis, Timestamped, UserId, UserType};
 
-#[derive(Serialize, Default)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct DirectChats {
     direct_chats: HashMap<ChatId, DirectChat>,
     pinned: Timestamped<HashMap<ChatId, TimestampMillis>>,
@@ -15,33 +15,6 @@ pub struct DirectChats {
     // replies to point to the community
     #[serde(default)]
     private_replies_to_groups: BTreeMap<ChatId, Vec<(UserId, MessageIndex)>>,
-}
-//
-// TODO: Remove this after the next release
-impl<'de> Deserialize<'de> for DirectChats {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        #[derive(Deserialize)]
-        struct OldDirectChats {
-            direct_chats: HashMap<ChatId, DirectChat>,
-            pinned: Timestamped<Vec<ChatId>>,
-            metrics: ChatMetricsInternal,
-            chats_removed: BTreeSet<(TimestampMillis, ChatId)>,
-            private_replies_to_groups: BTreeMap<ChatId, Vec<(UserId, MessageIndex)>>,
-        }
-
-        let inner = OldDirectChats::deserialize(deserializer)?;
-        let Timestamped { value, timestamp } = inner.pinned;
-        Ok(DirectChats {
-            direct_chats: inner.direct_chats,
-            pinned: Timestamped::new(value.into_iter().map(|id| (id, 0)).collect(), timestamp),
-            metrics: inner.metrics,
-            chats_removed: inner.chats_removed,
-            private_replies_to_groups: inner.private_replies_to_groups,
-        })
-    }
 }
 
 impl DirectChats {
@@ -86,12 +59,14 @@ impl DirectChats {
             .collect()
     }
 
-    pub fn pinned(&self) -> &HashMap<ChatId, TimestampMillis> {
-        &self.pinned.value
+    pub fn pinned_chats(&self) -> HashMap<Chat, TimestampMillis> {
+        self.pinned.value.iter().map(|(k, v)| (Chat::Direct(*k), *v)).collect()
     }
 
-    pub fn pinned_if_updated(&self, since: TimestampMillis) -> Option<HashMap<ChatId, TimestampMillis>> {
-        self.pinned.if_set_after(since).map(|ids| ids.to_owned())
+    pub fn pinned_chats_if_updated(&self, since: TimestampMillis) -> Option<HashMap<Chat, TimestampMillis>> {
+        self.pinned
+            .if_set_after(since)
+            .map(|ids| ids.iter().map(|(k, v)| (Chat::Direct(*k), *v)).collect())
     }
 
     pub fn any_updated(&self, since: TimestampMillis) -> bool {

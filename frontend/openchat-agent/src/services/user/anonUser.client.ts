@@ -106,7 +106,6 @@ export class AnonUserClient {
             avatarId: undefined,
             directChats: {
                 summaries: [],
-                pinned: [],
             },
             favouriteChats: {
                 chats: [],
@@ -135,6 +134,7 @@ export class AnonUserClient {
             bitcoinAddress: undefined,
             oneSecAddress: undefined,
             premiumItems: new Set(),
+            pinnedChats: [],
         });
     }
 

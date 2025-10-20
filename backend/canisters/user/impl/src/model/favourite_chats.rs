@@ -1,33 +1,12 @@
 use std::collections::HashMap;
 
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use types::{Chat, TimestampMillis, Timestamped};
 
-#[derive(Serialize, Default)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct FavouriteChats {
     chats: Timestamped<Vec<Chat>>,
     pinned: Timestamped<HashMap<Chat, TimestampMillis>>,
-}
-
-// TODO: Remove this after the next release
-impl<'de> Deserialize<'de> for FavouriteChats {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        #[derive(Deserialize)]
-        pub struct OldFavouriteChats {
-            chats: Timestamped<Vec<Chat>>,
-            pinned: Timestamped<Vec<Chat>>,
-        }
-
-        let inner = OldFavouriteChats::deserialize(deserializer)?;
-        let Timestamped { value, timestamp } = inner.pinned;
-        Ok(FavouriteChats {
-            chats: inner.chats,
-            pinned: Timestamped::new(value.into_iter().map(|id| (id, 0)).collect(), timestamp),
-        })
-    }
 }
 
 impl FavouriteChats {

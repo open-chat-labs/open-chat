@@ -2,8 +2,8 @@
 import { HttpAgent, type Identity } from "@icp-sdk/core/agent";
 import type { Principal } from "@icp-sdk/core/principal";
 import type {
-    AcceptedRules,
     AcceptP2PSwapResponse,
+    AcceptedRules,
     AccessGateConfig,
     AccessTokenType,
     AccountTransactionResult,
@@ -43,19 +43,19 @@ import type {
     CommunitySummary,
     CommunitySummaryResponse,
     ConvertToCommunityResponse,
-    CreatedUser,
     CreateGroupResponse,
     CreateUserGroupResponse,
+    CreatedUser,
     CryptocurrencyDetails,
     CurrentUserResponse,
     DataContent,
     DeclineInvitationResponse,
-    DeletedDirectMessageResponse,
-    DeletedGroupMessageResponse,
     DeleteFrozenGroupResponse,
     DeleteGroupResponse,
     DeleteMessageResponse,
     DeleteUserGroupsResponse,
+    DeletedDirectMessageResponse,
+    DeletedGroupMessageResponse,
     DexId,
     DiamondMembershipDuration,
     DiamondMembershipFees,
@@ -65,8 +65,8 @@ import type {
     DisableInviteCodeResponse,
     EditMessageResponse,
     EnableInviteCodeResponse,
-    EventsResponse,
     EventWrapper,
+    EventsResponse,
     EvmChain,
     ExchangeTokenSwapArgs,
     ExploreBotsResponse,
@@ -112,8 +112,8 @@ import type {
     MultiUserChatIdentifier,
     OneSecForwardingStatus,
     OneSecTransferFees,
-    OptionalChatPermissions,
     OptionUpdate,
+    OptionalChatPermissions,
     PayForDiamondMembershipResponse,
     PayForPremiumItemResponse,
     PayForStreakInsuranceResponse,
@@ -145,8 +145,8 @@ import type {
     SetMemberDisplayNameResponse,
     SetMessageReminderResponse,
     SetPinNumberResponse,
-    SetUsernameResponse,
     SetUserUpgradeConcurrencyResponse,
+    SetUsernameResponse,
     SetVideoCallPresenceResponse,
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
@@ -172,22 +172,22 @@ import type {
     UnpinChatResponse,
     UnpinMessageResponse,
     UnsuspendUserResponse,
-    UpdatedEvent,
-    UpdatedRules,
     UpdateGroupResponse,
     UpdateMarketMakerConfigArgs,
     UpdateMarketMakerConfigResponse,
+    UpdateUserGroupResponse,
+    UpdatedEvent,
+    UpdatedRules,
     UpdatesResult,
     UpdatesSuccessResponse,
-    UpdateUserGroupResponse,
     User,
     UserCanisterCommunitySummary,
     UserCanisterCommunitySummaryUpdates,
     UserCanisterGroupChatSummary,
     UserCanisterGroupChatSummaryUpdates,
+    UserSummary,
     UsersArgs,
     UsersResponse,
-    UserSummary,
     Verification,
     VerifiedCredentialArgs,
     VideoCallParticipantsResponse,
@@ -199,23 +199,23 @@ import type {
 } from "openchat-shared";
 import {
     ANON_USER_ID,
-    applyOptionUpdate,
-    chatIdentifiersEqual,
     ChatMap,
     CommonResponses,
     DestinationInvalidError,
-    getOrAdd,
-    isError,
-    isSuccessfulEventsResponse,
     Lazy,
     MAX_ACTIVITY_EVENTS,
     MessageContextMap,
-    messageContextToString,
     MessageMap,
-    offline,
     ONE_MINUTE_MILLIS,
     Stream,
     UnsupportedValueError,
+    applyOptionUpdate,
+    chatIdentifiersEqual,
+    getOrAdd,
+    isError,
+    isSuccessfulEventsResponse,
+    messageContextToString,
+    offline,
     waitAll,
 } from "openchat-shared";
 import type { AgentConfig } from "../config";
@@ -223,13 +223,12 @@ import { CachePrimer } from "../utils/cachePrimer";
 import {
     cacheLocalUserIndexForUser,
     clearCache,
-    type Database,
     deleteEventsForChat,
     getActivityFeedEvents,
+    getCachePrimerTimestamps,
     getCachedBots,
     getCachedChats,
     getCachedExternalAchievements,
-    getCachePrimerTimestamps,
     getLocalUserIndexForUser,
     initDb,
     loadFailedMessages,
@@ -241,14 +240,15 @@ import {
     setCachedExternalAchievements,
     setCachedMessageIfNotExists,
     updateCachedProposalTallies,
+    type Database,
 } from "../utils/caching";
 import {
     buildBlobUrl,
     buildUserAvatarUrl,
     getUpdatedEvents,
     mergeDirectChatUpdates,
-    mergeGroupChats,
     mergeGroupChatUpdates,
+    mergeGroupChats,
 } from "../utils/chat";
 import {
     isSuccessfulCommunitySummaryResponse,
@@ -283,9 +283,9 @@ import { DexesAgent } from "./dexes";
 import { callBotCommandEndpoint } from "./externalBot/externalBot";
 import { GroupClient } from "./group/group.client";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
-import { IcpCoinsClient } from "./icpcoins/icpCoinsClient";
 import { IcpLedgerIndexClient } from "./icpLedgerIndex/icpLedgerIndex.client";
 import { IcpSwapClient } from "./icpSwap/icpSwapClient";
+import { IcpCoinsClient } from "./icpcoins/icpCoinsClient";
 import { LedgerClient } from "./ledger/ledger.client";
 import { LedgerIndexClient } from "./ledgerIndex/ledgerIndex.client";
 import { LocalUserIndexClient } from "./localUserIndex/localUserIndex.client";
@@ -372,7 +372,7 @@ export class OpenChatAgent extends EventTarget {
         this._dataClient = new DataClient(identity, this._agent, config);
         this._exchangeRateClients = [
             new IcpCoinsClient(identity, this._agent),
-            new IcpSwapClient(identity, this._agent),
+            new IcpSwapClient(),
         ];
         this._localUserIndexClients = {};
         this._ledgerClients = {};
@@ -1719,8 +1719,7 @@ export class OpenChatAgent extends EventTarget {
 
         let avatarId: UpdatableOption<bigint>;
         let blockedUsers: Updatable<string[]>;
-        let pinnedGroupChats: Updatable<GroupChatIdentifier[]>;
-        let pinnedDirectChats: Updatable<DirectChatIdentifier[]>;
+        let pinnedChats: Updatable<ChatIdentifier[]>;
         let pinnedFavouriteChats: Updatable<ChatIdentifier[]>;
         let pinnedChannels: Updatable<ChannelIdentifier[]>;
         let favouriteChats: Updatable<ChatIdentifier[]>;
@@ -1775,8 +1774,7 @@ export class OpenChatAgent extends EventTarget {
 
             avatarId = new UpdatableOption(userResponse.avatarId, true);
             blockedUsers = new Updatable(userResponse.blockedUsers, true);
-            pinnedGroupChats = new Updatable(userResponse.groupChats.pinned, true);
-            pinnedDirectChats = new Updatable(userResponse.directChats.pinned, true);
+            pinnedChats = new Updatable(userResponse.pinnedChats, true);
             pinnedFavouriteChats = new Updatable(userResponse.favouriteChats.pinned, true);
             pinnedChannels = new Updatable(
                 userResponse.communities.summaries.flatMap((c) => c.pinned),
@@ -1817,8 +1815,7 @@ export class OpenChatAgent extends EventTarget {
 
             avatarId = new UpdatableOption(current.avatarId);
             blockedUsers = new Updatable(current.blockedUsers);
-            pinnedGroupChats = new Updatable(current.pinnedGroupChats);
-            pinnedDirectChats = new Updatable(current.pinnedDirectChats);
+            pinnedChats = new Updatable(current.pinnedChats);
             pinnedFavouriteChats = new Updatable(current.pinnedFavouriteChats);
             pinnedChannels = new Updatable(current.pinnedChannels);
             favouriteChats = new Updatable(current.favouriteChats);
@@ -1863,8 +1860,7 @@ export class OpenChatAgent extends EventTarget {
 
                     avatarId.applyOptionUpdate(userResponse.avatarId);
                     blockedUsers.updateIfNotUndefined(userResponse.blockedUsers);
-                    pinnedGroupChats.updateIfNotUndefined(userResponse.groupChats.pinned);
-                    pinnedDirectChats.updateIfNotUndefined(userResponse.directChats.pinned);
+                    pinnedChats.updateIfNotUndefined(userResponse.pinnedChats);
                     pinnedFavouriteChats.updateIfNotUndefined(userResponse.favouriteChats.pinned);
                     this.applyPinnedChannelUpdates(pinnedChannels, userResponse);
                     favouriteChats.updateIfNotUndefined(userResponse.favouriteChats.chats);
@@ -2067,8 +2063,7 @@ export class OpenChatAgent extends EventTarget {
             communities,
             avatarId: avatarId.value,
             blockedUsers: blockedUsers.value,
-            pinnedGroupChats: pinnedGroupChats.value,
-            pinnedDirectChats: pinnedDirectChats.value,
+            pinnedChats: pinnedChats.value,
             pinnedFavouriteChats: pinnedFavouriteChats.value,
             pinnedChannels: pinnedChannels.value,
             favouriteChats: favouriteChats.value,
@@ -2153,8 +2148,7 @@ export class OpenChatAgent extends EventTarget {
             updatedEvents: updatedEvents.toMap() as Map<string, UpdatedEvent[]>,
             avatarId: avatarId.toOptionUpdate(),
             blockedUsers: blockedUsers.valueIfUpdated(),
-            pinnedGroupChats: pinnedGroupChats.valueIfUpdated(),
-            pinnedDirectChats: pinnedDirectChats.valueIfUpdated(),
+            pinnedChats: pinnedChats.valueIfUpdated(),
             pinnedChannels: pinnedChannels.valueIfUpdated(),
             pinnedFavouriteChats: pinnedFavouriteChats.valueIfUpdated(),
             favouriteChats: favouriteChats.valueIfUpdated(),

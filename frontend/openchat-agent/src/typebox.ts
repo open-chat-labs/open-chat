@@ -6683,7 +6683,6 @@ export const UserInitialStateCommunitiesInitial = Type.Object({
 export type UserInitialStateGroupChatsInitial = Static<typeof UserInitialStateGroupChatsInitial>;
 export const UserInitialStateGroupChatsInitial = Type.Object({
     summaries: Type.Array(UserGroupChatSummary),
-    pinned: Type.Array(ChatId),
 });
 
 export type UserInitialStateFavouriteChatsInitial = Static<
@@ -6704,7 +6703,6 @@ export const UserUpdatesGroupChatsUpdates = Type.Object({
     added: Type.Array(UserGroupChatSummary),
     updated: Type.Array(UserGroupChatSummaryUpdates),
     removed: Type.Array(ChatId),
-    pinned: Type.Optional(Type.Array(ChatId)),
 });
 
 export type UserUpdatesCommunitiesUpdates = Static<typeof UserUpdatesCommunitiesUpdates>;
@@ -9301,7 +9299,6 @@ export const GroupSummaryResponse = Type.Union([
 export type UserInitialStateDirectChatsInitial = Static<typeof UserInitialStateDirectChatsInitial>;
 export const UserInitialStateDirectChatsInitial = Type.Object({
     summaries: Type.Array(DirectChatSummary),
-    pinned: Type.Array(ChatId),
 });
 
 export type UserUpdatesDirectChatsUpdates = Static<typeof UserUpdatesDirectChatsUpdates>;
@@ -9309,7 +9306,6 @@ export const UserUpdatesDirectChatsUpdates = Type.Object({
     added: Type.Array(DirectChatSummary),
     updated: Type.Array(DirectChatSummaryUpdates),
     removed: Type.Array(ChatId),
-    pinned: Type.Optional(Type.Array(ChatId)),
 });
 
 export type UserMessagesByMessageIndexResponse = Static<typeof UserMessagesByMessageIndexResponse>;
@@ -9625,6 +9621,7 @@ export const UserInitialStateSuccessResult = Type.Object({
     btc_address: Type.Optional(Type.String()),
     one_sec_address: Type.Optional(Type.String()),
     premium_items: Type.Array(Type.Number()),
+    pinned_chats: Type.Array(Chat),
 });
 
 export type UserInitialStateResponse = Static<typeof UserInitialStateResponse>;
@@ -9663,6 +9660,7 @@ export const UserUpdatesSuccessResult = Type.Object({
     btc_address: Type.Optional(Type.String()),
     one_sec_address: Type.Optional(Type.String()),
     premium_items: Type.Optional(Type.Array(Type.Number())),
+    pinned_chats: Type.Optional(Type.Array(Chat)),
 });
 
 export type UserUpdatesResponse = Static<typeof UserUpdatesResponse>;
