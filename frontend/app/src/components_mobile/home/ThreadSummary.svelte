@@ -114,6 +114,10 @@
         gap: $sp3;
         margin-bottom: $sp2;
 
+        &.me {
+            justify-content: flex-end;
+        }
+
         &.indent {
             margin-left: $avatar-width;
             @include mobile() {

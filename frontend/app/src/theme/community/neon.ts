@@ -78,7 +78,7 @@ export function getTheme(base: Theme): Theme {
     base.icon.selected = primary;
     base.currentChat.msg.bg = level1;
     base.currentChat.msg.me.bg = primary;
-    base.currentChat.msg.focus = secondary;
+    base.currentChat.msg.focus = primary;
     base.entry.bg = "none";
     base.entry.input.bg = base.input.bg;
     base.entry.input.sh = "none";

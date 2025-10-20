@@ -855,7 +855,7 @@
                 {/if}
 
                 {#if tips.length > 0 && !inert}
-                    <div class="tips" class:indent={showAvatar}>
+                    <div class="tips" class:me class:indent={showAvatar}>
                         {#each tips as [ledger, userTips]}
                             <TipThumbnail onClick={tipMessage} {canTip} {ledger} {userTips} />
                         {/each}
