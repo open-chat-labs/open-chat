@@ -1782,7 +1782,7 @@
     "thisIsPrivateGroupWithN": "This is a private {level} with {number} members",
     "thisIsPublicGroupWithN": "This is a public {level} with {number} members",
     "thread": {
-        "lastMessage": "(last message {date}) ",
+        "lastMessage": "/ {date} ",
         "menu": "Reply in thread",
         "moreMessages": "- {number} more message(s) -",
         "nreplies": "{number} {replies} {message}",

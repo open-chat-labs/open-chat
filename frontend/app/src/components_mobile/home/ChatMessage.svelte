@@ -1,8 +1,7 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
-    import { MenuTrigger } from "component-lib";
+    import { Avatar, Container, MenuTrigger } from "component-lib";
     import {
-        AvatarSize,
         type ChatIdentifier,
         chatListScopeStore,
         type ChatType,
@@ -20,7 +19,6 @@
         pageReplace,
         publish,
         routeForMessage,
-        routeStore,
         screenWidth,
         ScreenWidth,
         selectedChatBlockedUsersStore,
@@ -34,46 +32,32 @@
         type UserSummary,
     } from "openchat-client";
     import { getContext, onDestroy, onMount, tick } from "svelte";
-    import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
-    import ForwardIcon from "svelte-material-icons/Share.svelte";
-    import { fade } from "svelte/transition";
     import { i18nKey } from "../../i18n/i18n";
     import { quickReactions } from "../../stores/quickReactions";
-    import { rtlStore } from "../../stores/rtl";
     import { dclickReply } from "../../stores/settings";
     import { now } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
     import { canShareMessage } from "../../utils/share";
     import { removeQueryStringParam } from "../../utils/urls";
-    import Avatar from "../Avatar.svelte";
-    import BotMessageContext from "../bots/BotMessageContext.svelte";
     import BotProfile, { type BotProfileProps } from "../bots/BotProfile.svelte";
     import HoverIcon from "../HoverIcon.svelte";
-    import Link from "../Link.svelte";
     import ModalContent from "../ModalContent.svelte";
     import Overlay from "../Overlay.svelte";
     import Translatable from "../Translatable.svelte";
-    import Typing from "../Typing.svelte";
     import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
     import ChatMessageContent from "./ChatMessageContent.svelte";
     import ChatMessageMenu from "./ChatMessageMenu.svelte";
     import EmojiPicker from "./EmojiPickerWrapper.svelte";
-    import EphemeralNote from "./EphemeralNote.svelte";
     import IntersectionObserverComponent from "./IntersectionObserver.svelte";
-    import MessageReaction from "./MessageReaction.svelte";
-    import Badges from "./profile/Badges.svelte";
-    import BotBadge from "./profile/BotBadge.svelte";
-    import RoleIcon from "./profile/RoleIcon.svelte";
-    import WithRole from "./profile/WithRole.svelte";
+    import MessageBubble from "./message/MessageBubble.svelte";
     import ReminderBuilder from "./ReminderBuilder.svelte";
-    import RepliesTo from "./RepliesTo.svelte";
     import ReportMessage from "./ReportMessage.svelte";
-    import ThreadSummary from "./ThreadSummary.svelte";
-    import TimeAndTicks from "./TimeAndTicks.svelte";
+    // import ThreadSummary from "./ThreadSummary.svelte";
+    import Reactions from "./message/Reactions.svelte";
+    import ThreadSummary from "./message/ThreadSummary.svelte";
+    import Tips from "./message/Tips.svelte";
     import TipBuilder from "./TipBuilder.svelte";
-    import TipThumbnail from "./TipThumbnail.svelte";
-    import UnresolvedReply from "./UnresolvedReply.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -521,14 +505,9 @@
             {#snippet body()}
                 <div class="emoji-header">
                     <h4><Translatable resourceKey={i18nKey("chooseReaction")} /></h4>
-                    <span
-                        title={$_("close")}
-                        class="close-emoji"
-                        onclick={() => (showEmojiPicker = false)}>
-                        <HoverIcon>
-                            <Close size={$iconSize} color={"var(--icon-txt)"} />
-                        </HoverIcon>
-                    </span>
+                    <HoverIcon onclick={() => (showEmojiPicker = false)}>
+                        <Close size={$iconSize} color={"var(--icon-txt)"} />
+                    </HoverIcon>
                 </div>
                 <EmojiPicker
                     onEmojiSelected={selectReaction}
@@ -558,186 +537,86 @@
 {/if}
 
 {#if expiresAt === undefined || percentageExpired < 100}
-    <div out:fade|local={{ duration: 1000 }} class="message-wrapper" class:last>
-        {#if senderContext?.kind === "bot" && senderContext.command !== undefined}
-            <div class="bot-context">
-                <BotMessageContext
-                    botName={senderDisplayName}
-                    botCommand={senderContext.command}
-                    finalised={senderContext.finalised} />
-            </div>
-        {/if}
-        <IntersectionObserverComponent>
-            {#snippet children(intersecting)}
-                <MenuTrigger maskUI centered mobileMode={"longpress"}>
-                    {#snippet menuItems()}
-                        {#if showChatMenu && intersecting}
-                            <ChatMessageMenu
-                                {chatId}
-                                {isProposal}
-                                {inert}
-                                {publicGroup}
-                                {confirmed}
-                                {failed}
-                                {canShare}
-                                {me}
-                                {canPin}
-                                {canReact}
-                                {canTip}
-                                {pinned}
-                                {supportsReply}
-                                {canQuoteReply}
-                                {threadRootMessage}
-                                {canStartThread}
-                                {multiUserChat}
-                                {msg}
-                                {canForward}
-                                {canBlockUser}
-                                {canEdit}
-                                {canDelete}
-                                {canUndelete}
-                                {canRevealDeleted}
-                                {canRevealBlocked}
-                                translatable={canTranslate}
-                                {translated}
-                                {selectQuickReaction}
-                                showEmojiPicker={() => {
-                                    showEmojiPicker = true;
-                                }}
-                                {onCollapseMessage}
-                                onReply={reply}
-                                {onRetrySend}
-                                {onDeleteFailedMessage}
-                                onReplyPrivately={replyPrivately}
-                                onEditMessage={editMessage}
-                                onTipMessage={tipMessage}
-                                onReportMessage={reportMessage}
-                                onCancelReminder={cancelReminder}
-                                onRemindMe={remindMe} />
-                        {/if}
-                    {/snippet}
-                    <div
-                        bind:this={msgElement}
-                        class="message"
-                        class:me
-                        data-index={failed ? "" : msg.messageIndex}
-                        data-id={failed ? "" : msg.messageId}
-                        id={failed ? "" : `event-${eventIndex}`}>
-                        {#if showAvatar}
-                            <div class="avatar-col">
-                                {#if first}
-                                    <!-- svelte-ignore a11y_click_events_have_key_events -->
-                                    <!-- svelte-ignore a11y_no_static_element_interactions -->
-                                    <div class="avatar" onclick={openUserProfile}>
-                                        <Avatar
-                                            maxStreak={hasAchievedMaxStreak}
-                                            url={client.userAvatarUrl(sender)}
-                                            userId={msg.sender}
-                                            size={$mobileWidth
-                                                ? AvatarSize.Small
-                                                : AvatarSize.Default} />
-                                    </div>
-                                {/if}
-                            </div>
-                        {/if}
-
-                        <div
-                            bind:this={msgBubbleWrapperElement}
-                            class="bubble-wrapper"
-                            style={`--max-width: ${maxWidthFraction * 100}%; ${
-                                msgBubbleCalculatedWidth !== undefined
-                                    ? `flex: 0 0 ${msgBubbleCalculatedWidth}px`
-                                    : undefined
-                            }`}
-                            class:p2pSwap={isP2PSwap}
-                            class:proposal={isProposal && !inert}>
-                            <!-- svelte-ignore a11y_no_static_element_interactions -->
-                            <div
-                                bind:this={msgBubbleElement}
-                                ondblclick={doubleClickMessage}
-                                class="message-bubble"
-                                class:focused
-                                class:editing
-                                class:fill={fill && !inert}
-                                class:me
-                                class:inert
-                                class:collapsed
-                                class:first
-                                class:last
-                                class:readByMe
-                                class:crypto
-                                class:failed
-                                class:bot={senderContext?.kind === "bot"}
-                                class:thread={inThread}
-                                class:rtl={$rtlStore}>
-                                {#if first && !isProposal && !isPrize}
-                                    <div class="sender" class:fill class:rtl={$rtlStore}>
-                                        <Link underline={"never"} onClick={openUserProfile}>
-                                            <h4 class="username" class:fill class:crypto>
-                                                {senderDisplayName}
-                                            </h4>
-
-                                            <Badges
-                                                uniquePerson={sender?.isUniquePerson}
-                                                diamondStatus={sender?.diamondStatus}
-                                                {streak}
-                                                {chitEarned} />
-                                            <BotBadge
-                                                bot={senderContext?.kind === "bot"}
-                                                webhook={senderContext?.kind === "webhook"} />
-                                            {#if sender !== undefined && multiUserChat}
-                                                <WithRole
-                                                    userId={sender.userId}
-                                                    chatMembers={$selectedCommunityMembersStore}
-                                                    communityMembers={$selectedCommunityMembersStore}>
-                                                    {#snippet children(communityRole, chatRole)}
-                                                        <RoleIcon
-                                                            level="community"
-                                                            popup
-                                                            role={communityRole} />
-                                                        <RoleIcon
-                                                            level={chatType === "channel"
-                                                                ? "channel"
-                                                                : "group"}
-                                                            popup
-                                                            role={chatRole} />
-                                                    {/snippet}
-                                                </WithRole>
-                                            {/if}
-                                        </Link>
-                                        {#if senderTyping}
-                                            <span class="typing">
-                                                <Typing />
-                                            </span>
-                                        {/if}
-                                    </div>
-                                {/if}
-                                {#if msg.forwarded}
-                                    <div class="forwarded">
-                                        <div>
-                                            <ForwardIcon
-                                                size={$iconSize}
-                                                color={me
-                                                    ? "var(--currentChat-msg-me-muted)"
-                                                    : "var(--currentChat-msg-muted)"} />
-                                        </div>
-                                        <div class="text">{"Forwarded"}</div>
-                                    </div>
-                                {/if}
-                                {#if msg.repliesTo !== undefined && !inert}
-                                    {#if msg.repliesTo.kind === "rehydrated_reply_context"}
-                                        <RepliesTo
-                                            {readonly}
-                                            {chatId}
-                                            {intersecting}
-                                            {onRemovePreview}
-                                            {onGoToMessageIndex}
-                                            repliesTo={msg.repliesTo} />
-                                    {:else}
-                                        <UnresolvedReply />
-                                    {/if}
-                                {/if}
-
+    <IntersectionObserverComponent>
+        {#snippet children(intersecting)}
+            <MenuTrigger maskUI centered mobileMode={"longpress"}>
+                {#snippet menuItems()}
+                    {#if showChatMenu && intersecting}
+                        <ChatMessageMenu
+                            {chatId}
+                            {isProposal}
+                            {inert}
+                            {publicGroup}
+                            {confirmed}
+                            {failed}
+                            {canShare}
+                            {me}
+                            {canPin}
+                            {canReact}
+                            {canTip}
+                            {pinned}
+                            {supportsReply}
+                            {canQuoteReply}
+                            {threadRootMessage}
+                            {canStartThread}
+                            {multiUserChat}
+                            {msg}
+                            {canForward}
+                            {canBlockUser}
+                            {canEdit}
+                            {canDelete}
+                            {canUndelete}
+                            {canRevealDeleted}
+                            {canRevealBlocked}
+                            translatable={canTranslate}
+                            {translated}
+                            {selectQuickReaction}
+                            showEmojiPicker={() => {
+                                showEmojiPicker = true;
+                            }}
+                            {onCollapseMessage}
+                            onReply={reply}
+                            {onRetrySend}
+                            {onDeleteFailedMessage}
+                            onReplyPrivately={replyPrivately}
+                            onEditMessage={editMessage}
+                            onTipMessage={tipMessage}
+                            onReportMessage={reportMessage}
+                            onCancelReminder={cancelReminder}
+                            onRemindMe={remindMe} />
+                    {/if}
+                {/snippet}
+                <Container
+                    padding={last ? ["zero", "zero", "lg", "zero"] : "zero"}
+                    gap={"sm"}
+                    allowOverflow
+                    mainAxisAlignment={me ? "end" : "start"}>
+                    {#if showAvatar}
+                        <div class:first class="avatar">
+                            <Avatar
+                                onClick={openUserProfile}
+                                url={client.userAvatarUrl(sender)}
+                                size={"sm"}></Avatar>
+                        </div>
+                    {/if}
+                    {@const hasThread = threadSummary !== undefined && !inThread}
+                    {@const hasReactions = msg.reactions.length > 0}
+                    {@const hasTips = tips.length > 0}
+                    <Container
+                        allowOverflow
+                        crossAxisAlignment={me ? "end" : "start"}
+                        width={{ kind: "fixed", size: "80%" }}
+                        gap={"xs"}
+                        direction={"vertical"}>
+                        <MessageBubble
+                            {first}
+                            {last}
+                            {me}
+                            {hasThread}
+                            {hasReactions}
+                            time={Number(timestamp)}
+                            edited={msg.edited}>
+                            {#snippet messageContent(me)}
                                 <ChatMessageContent
                                     senderId={msg.sender}
                                     showPreviews
@@ -759,111 +638,36 @@
                                     {onRemovePreview}
                                     {onRegisterVote}
                                     {onExpandMessage} />
-
-                                {#if !inert}
-                                    <TimeAndTicks
-                                        {pinned}
-                                        prize={isPrize}
-                                        fill={fill && !isPrize}
-                                        {timestamp}
-                                        {expiresAt}
-                                        {percentageExpired}
-                                        {me}
-                                        bot={sender?.kind === "bot"}
-                                        {accepted}
-                                        {failed}
-                                        deleted={msg.deleted}
-                                        {undeleting}
-                                        {readByThem}
-                                        {crypto}
-                                        {chatType}
-                                        {dateFormatter} />
-                                {/if}
-
-                                {#if debug}
-                                    <pre>Sender: {msg.sender}</pre>
-                                    <pre>EventIdx: {eventIndex}</pre>
-                                    <pre>MsgIdx: {msg.messageIndex}</pre>
-                                    <pre>MsgId: {msg.messageId}</pre>
-                                    <pre>Confirmed: {confirmed}</pre>
-                                    <pre>ReadByThem: {readByThem}</pre>
-                                    <pre>ReadByUs: {readByMe}</pre>
-                                    <pre>Pinned: {pinned}</pre>
-                                    <pre>edited: {msg.edited}</pre>
-                                    <pre>failed: {failed}</pre>
-                                    <pre>timestamp: {timestamp}</pre>
-                                    <pre>expiresAt: {expiresAt}</pre>
-                                    <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
-                                    <pre>senderContext: {JSON.stringify(
-                                            senderContext,
-                                            null,
-                                            4,
-                                        )}</pre>
-                                    <pre>inert: {inert}</pre>
-                                    <pre>canRevealDeleted: {canRevealDeleted}</pre>
-                                    <pre>canlRevealBlocked: {canRevealBlocked}</pre>
-                                    <pre>readonly: {readonly}</pre>
-                                    <pre>showChatMenu: {showChatMenu}</pre>
-                                    <pre>intersecting: {intersecting}</pre>
-                                    <pre>ephemeral: {ephemeral}</pre>
-                                {/if}
-                            </div>
-
-                            {#if ephemeral}
-                                <EphemeralNote />
-                            {/if}
-                        </div>
-
-                        <!-- {#if !collapsed && !msg.deleted && canReact && !failed}
-                            <div class="actions" class:touch={isTouchOnlyDevice}>
-                                <div class="reaction" onclick={() => (showEmojiPicker = true)}>
-                                    <HoverIcon>
-                                        <EmoticonOutline
-                                            size={$iconSize}
-                                            color={"var(--icon-txt)"} />
-                                    </HoverIcon>
-                                </div>
-                            </div>
-                        {/if} -->
-                    </div>
-                </MenuTrigger>
-
-                {#if threadSummary !== undefined && !inThread}
-                    <ThreadSummary
-                        {chatId}
-                        threadRootMessageIndex={msg.messageIndex}
-                        selected={($routeStore.kind === "global_chat_selected_route" ||
-                            $routeStore.kind === "selected_channel_route") &&
-                            msg.messageIndex === $routeStore.messageIndex &&
-                            $routeStore.open}
-                        {threadSummary}
-                        indent={showAvatar}
-                        {me}
-                        url={msgUrl} />
-                {/if}
-
-                {#if msg.reactions.length > 0 && !inert}
-                    <div class="message-reactions" class:me class:indent={showAvatar}>
-                        {#each msg.reactions as { reaction, userIds } (reaction)}
-                            <MessageReaction
-                                onClick={() => toggleReaction(false, reaction)}
-                                {reaction}
+                            {/snippet}
+                        </MessageBubble>
+                        {#if hasThread}
+                            <ThreadSummary
+                                url={msgUrl}
+                                {threadSummary}
+                                {chatId}
+                                threadRootMessageIndex={msg.messageIndex}
+                                {me} />
+                        {/if}
+                        {#if hasReactions}
+                            <Reactions
+                                onClick={({ reaction }) => toggleReaction(false, reaction)}
                                 {intersecting}
-                                {userIds} />
-                        {/each}
-                    </div>
-                {/if}
+                                reactions={msg.reactions}
+                                offset={!hasThread}></Reactions>
+                        {/if}
 
-                {#if tips.length > 0 && !inert}
-                    <div class="tips" class:me class:indent={showAvatar}>
-                        {#each tips as [ledger, userTips]}
-                            <TipThumbnail onClick={tipMessage} {canTip} {ledger} {userTips} />
-                        {/each}
-                    </div>
-                {/if}
-            {/snippet}
-        </IntersectionObserverComponent>
-    </div>
+                        {#if hasTips && !inert}
+                            <Tips
+                                tips={msg.tips}
+                                onClick={tipMessage}
+                                {canTip}
+                                offset={!hasThread} />
+                        {/if}
+                    </Container>
+                </Container>
+            </MenuTrigger>
+        {/snippet}
+    </IntersectionObserverComponent>
 {/if}
 
 <style lang="scss">
@@ -871,6 +675,10 @@
 
     $avatar-width: toRem(56);
     $avatar-width-mob: toRem(43);
+
+    .avatar:not(.first) {
+        visibility: hidden;
+    }
 
     @keyframes show-bubble-menu {
         0% {
@@ -951,6 +759,10 @@
     .message-wrapper {
         &.last {
             margin-bottom: var(--sp-md);
+        }
+
+        &.me {
+            align-self: flex-end;
         }
     }
 
@@ -1202,9 +1014,5 @@
         align-items: center;
         padding: $sp3 $sp4;
         background-color: var(--section-bg);
-
-        .close-emoji {
-            flex: 0 0 20px;
-        }
     }
 </style>

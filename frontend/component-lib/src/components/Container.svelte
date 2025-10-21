@@ -76,6 +76,7 @@
         ref?: HTMLElement;
         clientHeight?: number;
         clientWidth?: number;
+        reverse?: boolean;
     }
 
     let {
@@ -115,6 +116,7 @@
         ref = $bindable(),
         clientHeight = $bindable(),
         clientWidth = $bindable(),
+        reverse = false,
     }: Props = $props();
 
     // you might expect this to be done inside onMount but
@@ -167,6 +169,7 @@
     {id}
     class:clickable={onClick !== undefined}
     class:overflow={allowOverflow}
+    class:reverse
     onclick={onClick}
     {style}
     class={`container ${direction} ${supplementalClass ?? ""}`}>
@@ -196,11 +199,17 @@
         &.horizontal {
             display: flex;
             flex-direction: row;
+            &.reverse {
+                flex-direction: row-reverse;
+            }
         }
 
         &.vertical {
             display: flex;
             flex-direction: column;
+            &.reverse {
+                flex-direction: column-reverse;
+            }
         }
 
         &.clickable {

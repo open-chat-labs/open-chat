@@ -1,31 +1,30 @@
 <script module lang="ts">
-    import Container from "../Container.svelte";
+    import { Container } from "component-lib";
+    import type { Reaction } from "openchat-client";
     import ReactionComponent from "./Reaction.svelte";
-
-    export type Reaction = {
-        text: string;
-        usernames: string[];
-    };
 </script>
 
 <script lang="ts">
     interface Props {
         reactions: Reaction[];
         offset: boolean;
+        intersecting: boolean;
+        onClick: (r: Reaction) => void;
     }
 
-    let { reactions, offset }: Props = $props();
+    let { reactions, offset, intersecting, onClick }: Props = $props();
 </script>
 
 <Container
     supplementalClass={offset ? "reactions-offset-top" : ""}
     gap={"xxs"}
+    wrap
     padding={["zero", "md"]}
     width={{ kind: "hug" }}
     height={{ kind: "hug" }}
     crossAxisAlignment={"center"}>
     {#each reactions as reaction}
-        <ReactionComponent {reaction} />
+        <ReactionComponent {onClick} {intersecting} {reaction} />
     {/each}
 </Container>
 

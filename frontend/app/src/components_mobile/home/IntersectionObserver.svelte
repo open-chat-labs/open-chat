@@ -35,6 +35,12 @@
     });
 </script>
 
-<div bind:this={container}>
+<div class="intersection_observer" bind:this={container}>
     {@render children?.(intersecting)}
 </div>
+
+<style lang="scss">
+    .intersection_observer {
+        width: 100%;
+    }
+</style>

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Body, Container, Message, Reactions, ThreadSummary } from "component-lib";
+    import { Body, Container } from "component-lib";
     import DebugEvent from "./DebugEvent.svelte";
 
     let time = new Date().getTime();

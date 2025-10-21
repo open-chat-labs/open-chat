@@ -1,7 +1,6 @@
 <script lang="ts">
+    import { Avatar, Container } from "component-lib";
     import type { Snippet } from "svelte";
-    import Container from "../Container.svelte";
-    import Avatar from "../avatar/Avatar.svelte";
     import MessageBubble from "./MessageBubble.svelte";
 
     interface Props {

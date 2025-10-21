@@ -11,7 +11,7 @@
 </script>
 
 <script lang="ts">
-    import { FloatingButton, portalState } from "component-lib";
+    import { Container, FloatingButton, portalState } from "component-lib";
     import {
         MessageContextMap,
         currentUserIdStore,
@@ -355,6 +355,8 @@
             }
         }, labelObserverOptions);
 
+        messagesDiv?.addEventListener("scroll", onUserScroll);
+
         const unsubs = [
             subscribe("chatUpdated", chatsUpdated),
             subscribe("reactionSelected", afterReaction),
@@ -371,6 +373,7 @@
             ),
         ];
         return () => {
+            messagesDiv?.removeEventListener("scroll", onUserScroll);
             heightObserver.disconnect();
             unsubs.forEach((u) => u());
             destroyed = true;
@@ -768,13 +771,16 @@
     <TimelineDate observer={labelObserver} timestamp={BigInt(floatingTimestamp)} floating />
 {/if}
 
-<div
+<Container
+    reverse
+    padding={["md", "lg", "zero", "lg"]}
+    direction={"vertical"}
+    height={{ kind: "fill" }}
+    gap={"xs"}
     id={`scrollable-list-${rootSelector}`}
-    bind:this={messagesDiv}
+    supplementalClass={`scrollable-list ${rootSelector} ${interrupt ? "interrupt" : ""}`}
     bind:clientHeight={messagesDivHeight}
-    onscroll={onUserScroll}
-    class:interrupt
-    class={`scrollable-list ${rootSelector}`}>
+    bind:ref={messagesDiv}>
     {@render children?.({
         isAccepted,
         isConfirmed,
@@ -784,7 +790,7 @@
         labelObserver,
         focusIndex,
     })}
-</div>
+</Container>
 
 {#if scrollTopButtonEnabled}
     <div
@@ -837,7 +843,11 @@
 </div>
 
 <style lang="scss">
-    .scrollable-list {
+    :global(.container.scrollable-list.interrupt) {
+        overflow-y: hidden !important;
+    }
+
+    /* .scrollable-list {
         @include message-list();
         background-color: var(--currentChat-msgs-bg);
         display: flex;
@@ -847,7 +857,7 @@
         &.interrupt {
             overflow-y: hidden;
         }
-    }
+    } */
 
     .spinner {
         @include loading-spinner(1em, 0.5em, var(--button-spinner), "/assets/plain-spinner.svg");

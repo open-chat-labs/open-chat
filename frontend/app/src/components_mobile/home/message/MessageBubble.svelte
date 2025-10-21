@@ -10,6 +10,8 @@
         hasReactions?: boolean;
         time: number;
         edited: boolean;
+        first: boolean;
+        last: boolean;
     }
 
     let {
@@ -19,6 +21,8 @@
         hasThread = false,
         hasReactions = false,
         edited,
+        first,
+        last,
     }: Props = $props();
 
     let backgroundColour = $derived(me ? ColourVars.primary : ColourVars.background2);
@@ -26,12 +30,14 @@
         hasReactions && !hasThread ? ["sm", "md"] : ["sm", "md", "xxs", "md"],
     );
 
-    // combination of xl & sm
-    let borderRadius = $derived<Radius>(
-        me
-            ? ["xl", "sm", hasThread ? "sm" : "xl", "xl"]
-            : ["sm", "xl", "xl", hasThread ? "sm" : "xl"],
-    ); // TODO this probably also needs to account for message groups - will come back to that
+    let borderRadius = $derived.by<Radius>(() => {
+        // top, right, bottom, left
+        if (me) {
+            return ["xl", "sm", hasThread || !last ? "sm" : "xl", "xl"];
+        } else {
+            return ["sm", "xl", "xl", hasThread || !last ? "sm" : "xl"];
+        }
+    });
 </script>
 
 <Container
