@@ -136,6 +136,22 @@
         font-size: var(--typo-label-sz);
         line-height: var(--typo-label-lh);
     }
+    .chatLabel {
+        font-size: var(--typo-chatLabel-sz);
+        line-height: var(--typo-chatLabel-lh);
+    }
+    .chatText {
+        font-size: var(--typo-chatText-sz);
+        line-height: var(--typo-chatText-lh);
+    }
+    .chatFootnote {
+        font-size: var(--typo-chatFootnote-sz);
+        line-height: var(--typo-chatFootnote-lh);
+    }
+    .chatCaption {
+        font-size: var(--typo-chatCaption-sz);
+        line-height: var(--typo-chatCaption-lh);
+    }
 
     .light {
         font-weight: var(--font-weight-light);

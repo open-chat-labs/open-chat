@@ -1,6 +1,6 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { Caption, Container } from "component-lib";
+    import { ChatFootnote, Container } from "component-lib";
     import type { ChatType, OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import AlertCircleOutline from "svelte-material-icons/AlertCircleOutline.svelte";
@@ -56,11 +56,11 @@
     crossAxisSelfAlignment={"end"}
     width={{ kind: "hug" }}>
     {#if edited}
-        <Caption>(<Translatable resourceKey={i18nKey("edited")} />)</Caption>
+        <ChatFootnote>(<Translatable resourceKey={i18nKey("edited")} />)</ChatFootnote>
     {/if}
-    <Caption>
+    <ChatFootnote>
         {client.toShortTimeString(new Date(time))}
-    </Caption>
+    </ChatFootnote>
     <Container supplementalClass={"message-metadata-icons"}>
         {#if failed}
             <AlertCircleOutline />

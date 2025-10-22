@@ -1,5 +1,12 @@
 <script lang="ts">
-    import { Avatar, Caption, ColourVars, Container, Tooltip, type Alignment } from "component-lib";
+    import {
+        Avatar,
+        ChatFootnote,
+        ColourVars,
+        Container,
+        Tooltip,
+        type Alignment,
+    } from "component-lib";
     import { allUsersStore, cryptoLookup, OpenChat } from "openchat-client";
     import { getContext } from "svelte";
 
@@ -30,9 +37,9 @@
         borderWidth={"thin"}
         borderColour={ColourVars.background0}>
         <img alt={tokenDetails.symbol} class="tip-icon" src={tokenDetails.logo} />
-        <Caption>
+        <ChatFootnote>
             {userTipsList.length > 999 ? "999+" : userTipsList.length}
-        </Caption>
+        </ChatFootnote>
     </Container>
 
     {#snippet popup()}

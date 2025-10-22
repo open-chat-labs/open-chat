@@ -1,12 +1,13 @@
 <script lang="ts">
     import {
         Body,
+        ChatLabel,
         ColourVars,
         Container,
+        onSwipeRight,
         type BorderRadiusSize,
         type Padding,
         type Radius,
-        type SwipeDirection,
     } from "component-lib";
     import {
         currentUserIdStore,
@@ -57,6 +58,7 @@
         onOpenUserProfile: (e?: Event) => void;
         focused: boolean;
         onGoToMessageIndex?: (args: { index: number }) => void;
+        onDoubleClick: () => void;
     }
 
     let {
@@ -85,6 +87,7 @@
         onOpenUserProfile,
         focused,
         onGoToMessageIndex,
+        onDoubleClick,
     }: Props = $props();
 
     let senderContainer = $state<HTMLDivElement>();
@@ -153,31 +156,14 @@
         }
         return classes.join(" ");
     });
-
-    function onSwipe(dir: SwipeDirection) {
-        // This *should* be done at a much higher level (and it is)
-        // But unfortunately because there is also a long press menu
-        // trigger on the message bubble it will stop the touch event
-        // bubbling far enough. This is a work around until I can think
-        // of a better solution.
-        //
-        // The root cause is that both longpress and swipe deal in touchstart
-        // events and we don't want to allow those to bubble otherwise they
-        // interfere with each other. But sometimes we *do* need them to bubble.
-        //
-        // Might be that we need custom events for Swipe and Longpress so that
-        // they can bubble without interference.
-        if (dir === "right") {
-            publish("clearSelection");
-        }
-    }
 </script>
 
 <Container
-    {onSwipe}
+    onSwipe={onSwipeRight(() => publish("clearSelection"))}
     bind:ref
     supplementalClass={classList}
     allowOverflow
+    {onDoubleClick}
     minWidth={senderWidth}
     direction={"vertical"}
     {borderRadius}
@@ -198,7 +184,7 @@
             crossAxisAlignment={"center"}
             gap={"xs"}
             onClick={onOpenUserProfile}>
-            <Body fontWeight={"bold"} width={{ kind: "hug" }}>{senderDisplayName}</Body>
+            <ChatLabel fontWeight={"bold"} width={{ kind: "hug" }}>{senderDisplayName}</ChatLabel>
             <Badges
                 uniquePerson={sender?.isUniquePerson}
                 diamondStatus={sender?.diamondStatus}

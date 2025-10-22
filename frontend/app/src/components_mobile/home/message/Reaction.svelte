@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { emojiDatabase } from "@src/utils/emojis";
-    import { Caption, ColourVars, Container, Tooltip, type Alignment } from "component-lib";
+    import { ChatFootnote, ColourVars, Container, Tooltip, type Alignment } from "component-lib";
     import type { NativeEmoji } from "emoji-picker-element/shared";
     import type { CustomEmoji, Reaction, UserLookup } from "openchat-client";
     import { allUsersStore, currentUserIdStore, customEmojis, OpenChat } from "openchat-client";
@@ -84,9 +84,9 @@
         {:else}
             {reaction.reaction}
         {/if}
-        <Caption>
+        <ChatFootnote>
             {reaction.userIds.size > 999 ? "999+" : reaction.userIds.size}
-        </Caption>
+        </ChatFootnote>
     </Container>
     {#snippet popup()}
         <div class="reaction-tooltip-emoji">
@@ -97,25 +97,18 @@
             {/if}
         </div>
         <div>
-            <span class="reaction_usernames">{usernames}</span>
-            <Translatable resourceKey={i18nKey("reactions.reactedWith")} />
-            <span class="reaction_code">
-                {reactionCode}
-            </span>
+            <ChatFootnote fontWeight={"bold"}>{usernames}</ChatFootnote>
+            <ChatFootnote>
+                <Translatable resourceKey={i18nKey("reactions.reactedWith")} />
+                <span class="reaction_code">
+                    {reactionCode}
+                </span>
+            </ChatFootnote>
         </div>
     {/snippet}
 </Tooltip>
 
 <style lang="scss">
-    .reaction-tooltip-emoji {
-        @include font-size(fs-180);
-        margin-bottom: $sp1;
-    }
-
-    .reaction_usernames {
-        font-weight: bold;
-    }
-
     .reaction_code {
         word-wrap: break-word;
     }

@@ -40,6 +40,10 @@ export class TypographicStyles {
         public bodySmall: TypographicStyle,
         public caption: TypographicStyle,
         public label: TypographicStyle,
+        public chatLabel: TypographicStyle,
+        public chatText: TypographicStyle,
+        public chatFootnote: TypographicStyle,
+        public chatCaption: TypographicStyle,
     ) {}
 
     cssVariables(): CssVariable[] {
@@ -53,6 +57,10 @@ export class TypographicStyles {
             ...this.bodySmall.cssVariables("bodySmall"),
             ...this.caption.cssVariables("caption"),
             ...this.label.cssVariables("label"),
+            ...this.chatLabel.cssVariables("chatLabel"),
+            ...this.chatText.cssVariables("chatText"),
+            ...this.chatFootnote.cssVariables("chatFootnote"),
+            ...this.chatCaption.cssVariables("chatCaption"),
         ];
     }
 }

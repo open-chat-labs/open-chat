@@ -64,6 +64,7 @@
         background?: string;
         backgroundImage?: string;
         onClick?: (e?: MouseEvent) => void;
+        onDoubleClick?: (e?: MouseEvent) => void;
         supplementalClass?: string;
         allowOverflow?: boolean;
         tag?: "div" | "button" | "main" | "section"; // this could be just about anything but let's try to limit it
@@ -106,6 +107,7 @@
         background = "unset",
         backgroundImage,
         onClick,
+        onDoubleClick,
         supplementalClass,
         allowOverflow = false,
         tag = "div",
@@ -176,6 +178,7 @@
     class:clickable={onClick !== undefined}
     class:overflow={allowOverflow}
     class:reverse
+    ondblclick={onDoubleClick}
     onclick={onClick}
     {style}
     class={`container ${direction} ${supplementalClass ?? ""}`}>

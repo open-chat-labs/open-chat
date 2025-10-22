@@ -1,10 +1,10 @@
 <script lang="ts">
     import {
         Avatar,
+        ChatFootnote,
         ColourVars,
         Container,
         CountBadge,
-        Label,
         NotificationIndicator,
         type Padding,
         type Radius,
@@ -101,7 +101,7 @@
             <CountBadge mode="additive">+{additional}</CountBadge>
         {/if}
     </Container>
-    <Label width={{ kind: "hug" }} colour={"textSecondary"}>{text}</Label>
+    <ChatFootnote width={{ kind: "hug" }} colour={"textSecondary"}>{text}</ChatFootnote>
     <Container width={{ kind: "hug" }}>
         <div class={`arrow`} class:hasUnread>
             <ChevronRight color={ColourVars.background0} />

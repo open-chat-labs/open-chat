@@ -48,6 +48,7 @@
     import ReminderBuilder from "./ReminderBuilder.svelte";
     import ReportMessage from "./ReportMessage.svelte";
     // import ThreadSummary from "./ThreadSummary.svelte";
+    import { dclickReply } from "@src/stores/settings";
     import Reactions from "./message/Reactions.svelte";
     import ThreadSummary from "./message/ThreadSummary.svelte";
     import Tips from "./message/Tips.svelte";
@@ -143,22 +144,16 @@
     }: Props = $props();
 
     let msgElement: HTMLElement | undefined;
-    let msgBubbleWrapperElement: HTMLElement | undefined;
     let msgBubbleElement: HTMLElement | undefined;
 
     let multiUserChat = chatType === "group_chat" || chatType === "channel";
     let showEmojiPicker = $state(false);
     let debug = false;
-    let crypto =
-        msg.content.kind === "crypto_content" ||
-        msg.content.kind === "prize_content" ||
-        msg.content.kind === "p2p_swap_content";
     let showRemindMe = $state(false);
     let showReport = $state(false);
     let tipping: string | undefined = $state(undefined);
     let percentageExpired = $state(100);
     let mediaCalculatedHeight = $state(undefined as number | undefined);
-    let msgBubbleCalculatedWidth = $state(undefined as number | undefined);
     let botProfile: BotProfileProps | undefined = $state(undefined);
     let confirmedReadByThem = $derived(client.messageIsReadByThem(chatId, msg.messageIndex));
     let readByThem = $derived(confirmedReadByThem || $unconfirmedReadByThem.has(msg.messageId));
@@ -248,6 +243,16 @@
         }
     }
 
+    function doubleClickMessage() {
+        if (failed || msg.deleted || !$dclickReply) return;
+
+        if (me) {
+            editMessage();
+        } else if (confirmed) {
+            reply();
+        }
+    }
+
     function tipMessage(ledger: string) {
         tipping = ledger;
     }
@@ -324,7 +329,6 @@
             maxWidthFraction,
         );
         mediaCalculatedHeight = targetMediaDimensions.height;
-        msgBubbleCalculatedWidth = targetMediaDimensions.width + msgBubblePaddingWidth;
     }
 
     function openUserProfile(ev?: Event) {
@@ -585,6 +589,7 @@
                             {sender}
                             bind:ref={msgBubbleElement}
                             onOpenUserProfile={openUserProfile}
+                            onDoubleClick={doubleClickMessage}
                             {msg}
                             {fill}
                             {first}

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Body } from "component-lib";
+    import { ChatText } from "component-lib";
     import type { OpenChat, TextContent } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -58,9 +58,9 @@
     let iconColour = $derived(me ? "var(--currentChat-msg-me-txt)" : "var(--currentChat-msg-txt)");
 </script>
 
-<Body>
+<ChatText>
     <Markdown inline={!blockLevelMarkdown} suppressLinks={pinned} {text} />
-</Body>
+</ChatText>
 
 {#if previewUrls.length > 0}
     {#if !expanded}

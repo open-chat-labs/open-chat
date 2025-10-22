@@ -60,6 +60,10 @@ export class Theme {
             new TypographicStyle(Rem.fromPixels(12), Rem.fromPixels(20)),
             new TypographicStyle(Rem.fromPixels(10), Rem.fromPixels(16)),
             new TypographicStyle(Rem.fromPixels(14), Rem.fromPixels(20)),
+            new TypographicStyle(Rem.fromPixels(12), Rem.fromPixels(12)),
+            new TypographicStyle(Rem.fromPixels(14), Rem.fromPixels(20)),
+            new TypographicStyle(Rem.fromPixels(10), Rem.fromPixels(12)),
+            new TypographicStyle(Rem.fromPixels(12), Rem.fromPixels(16)),
         );
 
         this.fontWeights = new FontWeights();

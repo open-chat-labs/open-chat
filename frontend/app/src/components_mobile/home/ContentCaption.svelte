@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Body } from "component-lib";
+    import { ChatText } from "component-lib";
     import Markdown from "./Markdown.svelte";
 
     interface Props {
@@ -12,7 +12,7 @@
 </script>
 
 {#if caption !== undefined && caption !== ""}
-    <Body>
+    <ChatText>
         <Markdown text={caption} inline={!blockLevelMarkdown} />
-    </Body>
+    </ChatText>
 {/if}
