@@ -20,13 +20,13 @@
 <script lang="ts">
     // TODO i18n localisation for the date picker!
 
+    import { Tooltip } from "component-lib";
     import type { ResourceKey } from "openchat-client";
     import { onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Information from "svelte-material-icons/Information.svelte";
     import SveltyPicker from "svelty-picker";
     import { i18nKey, interpolate } from "../i18n/i18n";
-    import Tooltip from "./tooltip/Tooltip.svelte";
     import Translatable from "./Translatable.svelte";
 
     let {
@@ -84,7 +84,7 @@
                 <div class="param" class:required>
                     <Information width="1.25rem" height="1.25rem" />
                 </div>
-                {#snippet popupTemplate()}
+                {#snippet popup()}
                     <Translatable resourceKey={i18nKey("mustBeFutureDateError")} />
                 {/snippet}
             </Tooltip>

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Tooltip } from "component-lib";
     import {
         type ChatIdentifier,
         iconSize,
@@ -15,7 +16,6 @@
     import { fly } from "svelte/transition";
     import { i18nKey, interpolate } from "../i18n/i18n";
     import { toastStore } from "../stores/toast";
-    import Tooltip from "./tooltip/Tooltip.svelte";
     import Translatable from "./Translatable.svelte";
 
     let reactiveResourceKey = $derived($toastStore?.resourceKey);
@@ -68,7 +68,7 @@
                         <div class="report" onclick={report}>
                             <Bug size={$iconSize} color={"var(--button-txt)"} />
                         </div>
-                        {#snippet popupTemplate()}
+                        {#snippet popup()}
                             <Translatable resourceKey={i18nKey("reportBug")} />
                         {/snippet}
                     </Tooltip>

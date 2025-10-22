@@ -1,10 +1,10 @@
 <script lang="ts">
+    import { Tooltip } from "component-lib";
     import { iconSize, type EventWrapper, type Message } from "openchat-client";
     import Markdown from "svelte-material-icons/LanguageMarkdown.svelte";
     import MarkdownOutline from "svelte-material-icons/LanguageMarkdownOutline.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { useBlockLevelMarkdown } from "../../stores/settings";
-    import Tooltip from "../tooltip/Tooltip.svelte";
     import Translatable from "../Translatable.svelte";
 
     interface Props {
@@ -34,7 +34,7 @@
                 <MarkdownOutline size={$iconSize} color={"var(--icon-txt)"} />
             {/if}
         </div>
-        {#snippet popupTemplate()}
+        {#snippet popup()}
             <Translatable resourceKey={i18nKey("toggleBlockMarkdown")} />
         {/snippet}
     </Tooltip>

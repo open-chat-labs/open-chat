@@ -1,8 +1,8 @@
 <script lang="ts">
+    import { Tooltip } from "component-lib";
     import { allUsersStore, AvatarSize, cryptoLookup, type OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import Avatar from "../Avatar.svelte";
-    import Tooltip from "../tooltip/Tooltip.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -28,14 +28,14 @@
     }
 </script>
 
-<Tooltip autoWidth bind:longPressed position={"bottom"} align={"start"}>
+<Tooltip position={"bottom"} align={"start"}>
     <div role="button" tabindex="0" onclick={click} class="tip-wrapper" class:canTip>
         <img class="tip-icon" src={tokenDetails.logo} />
         <span class="tip-count">
             {userTipsList.length > 999 ? "999+" : userTipsList.length}
         </span>
     </div>
-    {#snippet popupTemplate()}
+    {#snippet popup()}
         <div class="user-tips">
             {#each userTipsList as [userId, amount]}
                 <div class="avatar">

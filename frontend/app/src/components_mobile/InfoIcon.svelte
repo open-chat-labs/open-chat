@@ -1,8 +1,7 @@
 <script lang="ts">
-    import type { Alignment, Position } from "component-lib";
+    import { Tooltip, type Alignment, type Position } from "component-lib";
     import { type Snippet } from "svelte";
     import Help from "svelte-material-icons/HelpCircleOutline.svelte";
-    import Tooltip from "./tooltip/Tooltip.svelte";
 
     interface Props {
         position?: Position;
@@ -15,11 +14,11 @@
     let { position = "top", align = "end", color, onClick, children }: Props = $props();
 </script>
 
-<Tooltip textLength={100} longestWord={10} {position} {align}>
+<Tooltip {position} {align}>
     <div onclick={onClick} class="help">
         <Help {color} />
     </div>
-    {#snippet popupTemplate()}
+    {#snippet popup()}
         {@render children()}
     {/snippet}
 </Tooltip>

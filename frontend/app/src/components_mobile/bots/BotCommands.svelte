@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Tooltip } from "component-lib";
     import {
         commandSupportsDirectMessages,
         hasEveryRequiredPermission,
@@ -10,7 +11,6 @@
     import ShieldAccount from "svelte-material-icons/ShieldAccount.svelte";
     import SwapHorizontal from "svelte-material-icons/SwapHorizontal.svelte";
     import Pill from "../Pill.svelte";
-    import Tooltip from "../tooltip/Tooltip.svelte";
 
     interface Props {
         grantedPermissions?: GrantedBotPermissions;
@@ -46,7 +46,7 @@
                     {`/${command.name}`}
                 </div>
             </Pill>
-            {#snippet popupTemplate()}
+            {#snippet popup()}
                 {command.description}
             {/snippet}
         </Tooltip>

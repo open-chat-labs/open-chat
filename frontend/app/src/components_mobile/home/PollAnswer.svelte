@@ -1,11 +1,11 @@
 <script lang="ts">
+    import { Tooltip } from "component-lib";
     import type { OpenChat, UserLookup } from "openchat-client";
     import { allUsersStore, currentUserIdStore } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
     import Progress from "../Progress.svelte";
-    import Tooltip from "../tooltip/Tooltip.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -83,7 +83,6 @@
 <Tooltip
     textLength={usernames === undefined ? 10 : usernames.length + 16}
     longestWord={30}
-    bind:longPressed
     position={"right"}
     align={"middle"}
     enable={showVotes}>
@@ -97,7 +96,7 @@
             </div>
         </Progress>
     </div>
-    {#snippet popupTemplate()}
+    {#snippet popup()}
         {buildTooltipText()}
     {/snippet}
 </Tooltip>

@@ -7,14 +7,11 @@
         type ChatType,
         currentUserIdStore,
         currentUserStore,
-        type Dimensions,
         type EnhancedReplyContext,
         iconSize,
         localUpdates,
         type Message,
-        type MessageContent,
         type MessageReminderCreatedContent,
-        mobileWidth,
         OpenChat,
         pageReplace,
         publish,
@@ -22,8 +19,6 @@
         screenWidth,
         ScreenWidth,
         selectedChatBlockedUsersStore,
-        selectedChatWebhooksStore,
-        selectedCommunityMembersStore,
         type SelectedEmoji,
         type SenderContext,
         translationsStore,
@@ -35,7 +30,6 @@
     import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { quickReactions } from "../../stores/quickReactions";
-    import { dclickReply } from "../../stores/settings";
     import { now } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
     import { canShareMessage } from "../../utils/share";
@@ -57,6 +51,7 @@
     import Reactions from "./message/Reactions.svelte";
     import ThreadSummary from "./message/ThreadSummary.svelte";
     import Tips from "./message/Tips.svelte";
+    import RepliesTo from "./RepliesTo.svelte";
     import TipBuilder from "./TipBuilder.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -134,7 +129,6 @@
         editing,
         canStartThread,
         senderTyping,
-        dateFormatter = (date) => client.toShortTimeString(date),
         collapsed = false,
         threadRootMessage,
         senderContext,
@@ -170,9 +164,6 @@
     let botProfile: BotProfileProps | undefined = $state(undefined);
     let confirmedReadByThem = $derived(client.messageIsReadByThem(chatId, msg.messageIndex));
     let readByThem = $derived(confirmedReadByThem || $unconfirmedReadByThem.has(msg.messageId));
-    let streak = $derived(sender?.streak ?? 0);
-    let chitEarned = $derived(sender?.totalChitEarned ?? 0);
-    let hasAchievedMaxStreak = $derived((sender?.maxStreak ?? 0) >= 365);
 
     trackedEffect("read-by-them", () => {
         if (confirmedReadByThem && $unconfirmedReadByThem.has(msg.messageId)) {
@@ -259,16 +250,6 @@
         }
     }
 
-    function doubleClickMessage() {
-        if (failed || msg.deleted || !$dclickReply) return;
-
-        if (me) {
-            editMessage();
-        } else if (confirmed) {
-            reply();
-        }
-    }
-
     function tipMessage(ledger: string) {
         tipping = ledger;
     }
@@ -320,36 +301,6 @@
         showEmojiPicker = false;
     }
 
-    function extractDimensions(content: MessageContent): Dimensions | undefined {
-        if (content.kind === "image_content") {
-            return {
-                width: content.width,
-                height: content.height,
-            };
-        } else if (content.kind === "video_content") {
-            return {
-                width: content.width,
-                height: content.height,
-            };
-        } else if (content.kind === "meme_fighter_content") {
-            return {
-                width: content.width,
-                height: content.height,
-            };
-        } else if (content.kind === "giphy_content") {
-            return $mobileWidth
-                ? { width: content.mobile.width, height: content.mobile.height }
-                : { width: content.desktop.width, height: content.desktop.height };
-        } else if (
-            content.kind === "text_content" &&
-            (client.isSocialVideoLink(content.text) || client.containsSocialVideoLink(content.text))
-        ) {
-            return { width: 560, height: 315 };
-        }
-
-        return undefined;
-    }
-
     function recalculateMediaDimensions() {
         if (mediaDimensions === undefined || !msgBubbleElement) {
             return;
@@ -365,7 +316,7 @@
                 parseFloat(msgBubbleStyle.borderLeftWidth);
         }
 
-        const messageWrapperWidth = msgBubbleWrapperElement?.parentElement?.offsetWidth ?? 0;
+        const messageWrapperWidth = msgElement?.offsetWidth ?? 0;
 
         let targetMediaDimensions = client.calculateMediaDimensions(
             mediaDimensions,
@@ -378,7 +329,7 @@
         msgBubbleCalculatedWidth = targetMediaDimensions.width + msgBubblePaddingWidth;
     }
 
-    function openUserProfile(ev: Event) {
+    function openUserProfile(ev?: Event) {
         if (sender?.kind === "bot") {
             botProfile = {
                 botId: sender.userId,
@@ -386,7 +337,7 @@
                 onClose: () => (botProfile = undefined),
             };
         } else {
-            ev.target?.dispatchEvent(
+            ev?.target?.dispatchEvent(
                 new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
                     detail: {
                         userId: msg.sender,
@@ -425,7 +376,8 @@
     function remindMe() {
         showRemindMe = true;
     }
-    let maxWidthFraction = $derived($screenWidth === ScreenWidth.ExtraLarge ? 0.7 : 0.8);
+
+    const maxWidthFraction = 0.8;
     let inert = $derived(
         msg.content.kind === "deleted_content" ||
             msg.content.kind === "blocked_content" ||
@@ -438,7 +390,7 @@
             ? undefined
             : threadRootMessage?.messageIndex,
     );
-    let mediaDimensions = $derived(extractDimensions(msg.content));
+    let mediaDimensions = $derived(client.extractDimensionsFromMessageContent(msg.content));
     let fill = $derived(client.fillMessage(msg));
     let showAvatar = $derived(
         chatType !== "direct_chat" && !me && $screenWidth !== ScreenWidth.ExtraExtraSmall,
@@ -449,8 +401,6 @@
         `${routeForMessage($chatListScopeStore.kind, { chatId }, msg.messageIndex)}?open=true`,
     );
     let isProposal = $derived(msg.content.kind === "proposal_content");
-    let isPrize = $derived(msg.content.kind === "prize_content");
-    let isP2PSwap = $derived(msg.content.kind === "p2p_swap_content");
     let canEdit = $derived(
         me && supportsEdit && !msg.deleted && client.contentTypeSupportsEdit(msg.content.kind),
     );
@@ -472,13 +422,6 @@
         (!inert || canRevealDeleted || canRevealBlocked) && !readonly && !ephemeral,
     );
     let canUndelete = $derived(msg.deleted && msg.content.kind !== "deleted_content");
-    let senderDisplayName = $derived(
-        client.getDisplayName(
-            msg.sender,
-            $selectedCommunityMembersStore,
-            $selectedChatWebhooksStore,
-        ),
-    );
     let tips = $derived(msg.tips ? Object.entries(msg.tips) : []);
     let canBlockUser = $derived(canBlockUsers && !$selectedChatBlockedUsersStore.has(msg.sender));
     let edited = $derived(
@@ -586,8 +529,35 @@
                             onRemindMe={remindMe} />
                     {/if}
                 {/snippet}
+                {#if debug}
+                    <pre>Sender: {msg.sender}</pre>
+                    <pre>EventIdx: {eventIndex}</pre>
+                    <pre>MsgIdx: {msg.messageIndex}</pre>
+                    <pre>MsgId: {msg.messageId}</pre>
+                    <pre>Confirmed: {confirmed}</pre>
+                    <pre>ReadByThem: {readByThem}</pre>
+                    <pre>ReadByUs: {readByMe}</pre>
+                    <pre>Pinned: {pinned}</pre>
+                    <pre>edited: {msg.edited}</pre>
+                    <pre>failed: {failed}</pre>
+                    <pre>timestamp: {timestamp}</pre>
+                    <pre>expiresAt: {expiresAt}</pre>
+                    <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
+                    <pre>senderContext: {JSON.stringify(senderContext, null, 4)}</pre>
+                    <pre>inert: {inert}</pre>
+                    <pre>canRevealDeleted: {canRevealDeleted}</pre>
+                    <pre>canlRevealBlocked: {canRevealBlocked}</pre>
+                    <pre>readonly: {readonly}</pre>
+                    <pre>showChatMenu: {showChatMenu}</pre>
+                    <pre>intersecting: {intersecting}</pre>
+                    <pre>ephemeral: {ephemeral}</pre>
+                {/if}
                 <Container
-                    padding={last ? ["zero", "zero", "lg", "zero"] : "zero"}
+                    data_index={failed ? "" : `${msg.messageIndex}`}
+                    data_id={failed ? "" : `${msg.messageId}`}
+                    id={failed ? "" : `event-${eventIndex}`}
+                    bind:ref={msgElement}
+                    padding={last ? ["zero", "zero", "sm", "zero"] : "zero"}
                     gap={"sm"}
                     allowOverflow
                     mainAxisAlignment={me ? "end" : "start"}>
@@ -605,17 +575,43 @@
                     <Container
                         allowOverflow
                         crossAxisAlignment={me ? "end" : "start"}
-                        width={{ kind: "fixed", size: "80%" }}
-                        gap={"xs"}
+                        width={{ kind: "hug" }}
+                        maxWidth={"80%"}
+                        gap={"xxs"}
+                        minWidth={"6rem"}
                         direction={"vertical"}>
                         <MessageBubble
+                            {senderTyping}
+                            {senderContext}
+                            {sender}
+                            bind:ref={msgBubbleElement}
+                            onOpenUserProfile={openUserProfile}
+                            {msg}
+                            {fill}
+                            onSwipeRight={reply}
                             {first}
                             {last}
-                            {me}
                             {hasThread}
-                            {hasReactions}
                             time={Number(timestamp)}
-                            edited={msg.edited}>
+                            {pinned}
+                            {expiresAt}
+                            {percentageExpired}
+                            bot={sender?.kind === "bot"}
+                            {accepted}
+                            {failed}
+                            {undeleting}
+                            {readByThem}
+                            {chatType}>
+                            {#snippet repliesTo(reply)}
+                                <RepliesTo
+                                    {readonly}
+                                    {chatId}
+                                    {intersecting}
+                                    {onRemovePreview}
+                                    {onGoToMessageIndex}
+                                    repliesTo={reply} />
+                            {/snippet}
+
                             {#snippet messageContent(me)}
                                 <ChatMessageContent
                                     senderId={msg.sender}
@@ -650,6 +646,7 @@
                         {/if}
                         {#if hasReactions}
                             <Reactions
+                                {me}
                                 onClick={({ reaction }) => toggleReaction(false, reaction)}
                                 {intersecting}
                                 reactions={msg.reactions}
@@ -658,6 +655,7 @@
 
                         {#if hasTips && !inert}
                             <Tips
+                                {me}
                                 tips={msg.tips}
                                 onClick={tipMessage}
                                 {canTip}
@@ -671,343 +669,9 @@
 {/if}
 
 <style lang="scss">
-    $size: 10px;
-
-    $avatar-width: toRem(56);
-    $avatar-width-mob: toRem(43);
-
     .avatar:not(.first) {
         visibility: hidden;
     }
-
-    @keyframes show-bubble-menu {
-        0% {
-            z-index: -1;
-            opacity: 0;
-        }
-        1% {
-            z-index: 1;
-            opacity: 0;
-        }
-        100% {
-            z-index: 1;
-            opacity: 1;
-        }
-    }
-
-    @include mobile() {
-        :global(.bubble-wrapper .menu) {
-            display: none;
-        }
-    }
-
-    @include not-mobile() {
-        :global(.bubble-wrapper .menu) {
-            display: flex;
-            z-index: -1;
-            opacity: 0;
-        }
-
-        // Keeps hover menu showing if context menu is clicked!
-        :global(.bubble-wrapper .menu:has(.menu-icon.open)) {
-            border-color: var(--primary);
-            z-index: 1;
-            opacity: 1;
-        }
-
-        @media (hover: hover) {
-            :global(.bubble-wrapper:hover .menu:not(:has(.menu-icon.open))) {
-                animation: show-bubble-menu 200ms ease-in-out forwards;
-            }
-        }
-    }
-
-    :global(.message .sender .never) {
-        display: inline-flex;
-        gap: $sp2;
-        align-items: center;
-    }
-
-    :global(.message .avatar .avatar) {
-        margin: 0;
-    }
-
-    :global(.message-bubble .content a) {
-        text-decoration: underline;
-    }
-
-    :global(.message-bubble .content ul) {
-        margin: 0 $sp4;
-    }
-
-    :global(.message-bubble a) {
-        color: inherit;
-    }
-
-    :global(.message-bubble.crypto a) {
-        color: inherit;
-    }
-
-    :global(.message-bubble.first .menu) {
-        top: -24px;
-    }
-
-    :global(.actions .reaction .wrapper) {
-        padding: 6px;
-    }
-
-    .message-wrapper {
-        &.last {
-            margin-bottom: var(--sp-md);
-        }
-
-        &.me {
-            align-self: flex-end;
-        }
-    }
-
-    .sender {
-        margin-bottom: $sp1;
-
-        &.fill {
-            position: absolute;
-            background-color: rgba(0, 0, 0, 0.3);
-            color: #fff;
-            padding: $sp4 $sp4;
-            border-radius: 0 0 $sp4 0;
-            z-index: 1;
-
-            &.rtl {
-                right: 0;
-                border-radius: 0 0 0 $sp4;
-            }
-        }
-
-        .typing {
-            color: var(--accent);
-        }
-    }
-
-    .message-reactions,
-    .tips {
-        display: flex;
-        justify-content: flex-start;
-        flex-wrap: wrap;
-        gap: 3px;
-
-        &.me {
-            justify-content: flex-end;
-        }
-
-        &.indent {
-            margin-left: $avatar-width;
-            @include mobile() {
-                margin-left: $avatar-width-mob;
-            }
-        }
-    }
-
-    .bot-context {
-        display: flex;
-        margin-inline-start: $avatar-width;
-        margin-bottom: $sp2;
-        margin-top: $sp2;
-
-        @include mobile() {
-            margin-inline-start: $avatar-width-mob;
-        }
-    }
-
-    .message {
-        display: flex;
-        justify-content: flex-start;
-        margin-bottom: $sp2;
-        position: relative;
-
-        &.me {
-            justify-content: flex-end;
-        }
-
-        .avatar-col {
-            flex: 0 0 $avatar-width;
-
-            @include mobile() {
-                flex: 0 0 $avatar-width-mob;
-            }
-
-            .avatar {
-                cursor: pointer;
-            }
-        }
-
-        .actions {
-            display: none;
-            opacity: 0.3;
-            padding: 0 $sp3;
-            align-items: center;
-            justify-content: center;
-            transition: opacity 200ms ease-in-out;
-        }
-
-        .actions.touch {
-            display: flex;
-        }
-
-        @include mobile() {
-            .actions:not(.touch) {
-                display: flex;
-            }
-        }
-    }
-
-    .bubble-wrapper {
-        position: relative;
-        max-width: var(--max-width);
-        min-width: 90px;
-
-        &.p2pSwap {
-            width: 350px;
-        }
-
-        &.proposal {
-            max-width: 800px;
-        }
-
-        &.proposal,
-        &.p2pSwap {
-            .message-bubble {
-                width: 100%;
-            }
-        }
-    }
-
-    .message-bubble {
-        $radius: var(--currentChat-msg-r1);
-        $inner-radius: var(--currentChat-msg-r2);
-        transition:
-            box-shadow ease-out 500ms,
-            background-color ease-in-out 200ms,
-            border ease-in-out 300ms,
-            transform ease-in-out 200ms;
-        position: relative;
-        padding: toRem(8) toRem(12) toRem(8) toRem(12);
-        background-color: var(--currentChat-msg-bg);
-        color: var(--currentChat-msg-txt);
-        @include font(book, normal, fs-100);
-        border-radius: $radius;
-        border: var(--currentChat-msg-bd);
-        box-shadow: var(--currentChat-msg-sh);
-
-        :global(.markdown-wrapper) {
-            word-break: break-word;
-        }
-
-        .username {
-            color: inherit;
-            color: var(--txt);
-            display: inline;
-
-            &.fill {
-                color: #fff;
-            }
-        }
-
-        &:not(.readByMe) {
-            box-shadow: 0 0 0 5px var(--notificationBar-bg);
-        }
-
-        &.last:not(.first) {
-            border-radius: $inner-radius $radius $radius $radius;
-        }
-        &.first:not(.last) {
-            border-radius: $radius $radius $radius $inner-radius;
-        }
-        &:not(.first):not(.last) {
-            border-radius: $inner-radius $radius $radius $inner-radius;
-        }
-
-        &.me {
-            background-color: var(--currentChat-msg-me-bg);
-            color: var(--currentChat-msg-me-txt);
-
-            .username {
-                color: var(--currentChat-msg-me-txt);
-            }
-
-            &.inert {
-                .username {
-                    color: var(--txt);
-                }
-            }
-        }
-
-        &.rtl {
-            &.last:not(.first) {
-                border-radius: $radius $inner-radius $radius $radius;
-            }
-            &.first:not(.last) {
-                border-radius: $radius $radius $inner-radius $radius;
-            }
-            &:not(.first):not(.last) {
-                border-radius: $radius $inner-radius $inner-radius $radius;
-            }
-        }
-
-        &.fill {
-            padding: 0;
-            border: none;
-            line-height: 0;
-        }
-
-        &.focused {
-            box-shadow: 0 0 0 4px var(--currentChat-msg-focus);
-            transition:
-                background-color ease-in-out 200ms,
-                border ease-in-out 300ms,
-                transform ease-in-out 200ms;
-        }
-
-        &.editing {
-            box-shadow: 0 0 0 4px var(--currentChat-msg-focus);
-        }
-
-        &.inert {
-            opacity: 0.8;
-            color: var(--currentChat-msg-txt);
-            background-color: var(--currentChat-msg-inert);
-        }
-
-        &.collapsed {
-            cursor: pointer;
-        }
-
-        &:after {
-            content: "";
-            display: table;
-            clear: both;
-        }
-
-        .forwarded {
-            color: var(--currentChat-msg-muted);
-            display: flex;
-            gap: $sp1;
-            align-items: center;
-            @include font-size(fs-80);
-            font-style: italic;
-            .text {
-                margin-bottom: $sp2;
-            }
-        }
-
-        &.me .forwarded {
-            color: var(--currentChat-msg-me-muted);
-        }
-
-        &.failed {
-            background-color: var(--error);
-        }
-    }
-
     .emoji-header {
         display: flex;
         justify-content: space-between;

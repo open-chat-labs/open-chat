@@ -29,9 +29,11 @@ export function longpress(node: HTMLElement, onlongpress?: (e: TouchEvent) => vo
 
     function onContextMenu(e: MouseEvent) {
         e.preventDefault();
+        e.stopPropagation();
     }
 
     function onTouchStart(e: TouchEvent) {
+        e.stopPropagation();
         const t = e.changedTouches[0];
         startX = t.screenX;
         startY = t.screenY;
@@ -44,7 +46,10 @@ export function longpress(node: HTMLElement, onlongpress?: (e: TouchEvent) => vo
         }, 500);
     }
 
-    function onTouchMove({ changedTouches: [t] }: TouchEvent) {
+    function onTouchMove(e: TouchEvent) {
+        const {
+            changedTouches: [t],
+        } = e;
         const diffX = Math.abs(startX - t.screenX);
         const diffY = Math.abs(startY - t.screenY);
         if (diffX >= 10 || diffY >= 10) {
@@ -57,11 +62,11 @@ export function longpress(node: HTMLElement, onlongpress?: (e: TouchEvent) => vo
     }
 
     if (isTouchDevice) {
-        node.addEventListener("touchend", clearLongPressTimer, true);
-        node.addEventListener("touchleave", clearLongPressTimer, true);
-        node.addEventListener("touchmove", onTouchMove, true);
-        node.addEventListener("touchstart", onTouchStart, true);
-        node.addEventListener("contextmenu", onContextMenu, true);
+        node.addEventListener("touchend", clearLongPressTimer);
+        node.addEventListener("touchleave", clearLongPressTimer);
+        node.addEventListener("touchmove", onTouchMove);
+        node.addEventListener("touchstart", onTouchStart);
+        node.addEventListener("contextmenu", onContextMenu);
         return {
             destroy() {
                 node.removeEventListener("touchend", clearLongPressTimer);

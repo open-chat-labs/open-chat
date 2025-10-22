@@ -3,7 +3,7 @@
     import { msToDays, msToHours, msToMinutes } from "@src/utils/time";
     import { Body, CommonButton, Container, Switch } from "component-lib";
     import type { OpenChat } from "openchat-client";
-    import { getContext } from "svelte";
+    import { getContext, onMount, untrack } from "svelte";
     import Setting from "../../Setting.svelte";
     import Translatable from "../../Translatable.svelte";
     import { updateGroupState } from "./group.svelte";
@@ -39,8 +39,6 @@
         }
         const duration = client.durationFromMilliseconds(Number(milliseconds));
         const { days, hours, minutes, total } = duration;
-        let amount: string = "";
-        let unit: Unit = "days";
         if (days > 0) {
             selectedValue = msToDays(total);
             selectedUnit = "days";
@@ -49,9 +47,8 @@
             selectedUnit = "hours";
         } else if (minutes > 0) {
             selectedValue = msToMinutes(total);
-            unit = "minutes";
+            selectedUnit = "minutes";
         }
-        return { amount, unit };
     }
 
     function toMilliseconds() {
@@ -67,8 +64,10 @@
         }
     }
 
-    $effect(() => {
-        fromMilliseconds(ugs.candidateGroup.eventsTTL);
+    onMount(() => {
+        untrack(() => {
+            fromMilliseconds(ugs.candidateGroup.eventsTTL);
+        });
     });
 
     $effect(() => {

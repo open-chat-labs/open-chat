@@ -1,7 +1,7 @@
 <script lang="ts">
     import { quickReactions } from "@src/stores/quickReactions";
     import { confirmMessageDeletion } from "@src/stores/settings";
-    import { Container, MenuItem } from "component-lib";
+    import { Container, IconButton, MenuItem } from "component-lib";
     import {
         chatListScopeStore,
         cryptoLookup,
@@ -51,7 +51,6 @@
     import { copyToClipboard } from "../../utils/urls";
     import AreYouSure from "../AreYouSure.svelte";
     import Checkbox from "../Checkbox.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
     import Bitcoin from "../icons/Bitcoin.svelte";
     import Translatable from "../Translatable.svelte";
 
@@ -142,7 +141,6 @@
     }: Props = $props();
 
     let showConfirmDelete = $state(false);
-    let quickReactionIconSize = "1.3rem";
 
     let canRemind = $derived(
         msg.content.kind !== "message_reminder_content" &&
@@ -335,23 +333,25 @@
 {/if}
 
 <Container
-    mainAxisAlignment={"center"}
+    mainAxisAlignment={"spaceBetween"}
     crossAxisAlignment={"center"}
     supplementalClass={"quick_reactions"}
-    padding={["xs", "md", "xs", "md"]}>
+    padding={["zero", "xs", "xs", "xs"]}>
     {#each $quickReactions as reaction}
-        <HoverIcon compact onclick={() => selectQuickReaction(reaction)}>
-            <div class="quick-reaction">
-                {reaction}
-            </div>
-        </HoverIcon>
+        <IconButton onclick={() => selectQuickReaction(reaction)}>
+            {#snippet icon()}
+                <span class="quick-reaction">
+                    {reaction}
+                </span>
+            {/snippet}
+        </IconButton>
     {/each}
     {#if canReact && !failed}
-        <HoverIcon compact onclick={() => showEmojiPicker()} title={$_("pickEmoji")}>
-            <div class="quick-reaction">
-                <EmoticonOutline size={quickReactionIconSize} color={"var(--menu-txt)"} />
-            </div>
-        </HoverIcon>
+        <IconButton onclick={showEmojiPicker}>
+            {#snippet icon(color)}
+                <EmoticonOutline {color} />
+            {/snippet}
+        </IconButton>
     {/if}
 </Container>
 {#if isProposal && !inert}
@@ -557,67 +557,9 @@
     :global(.container.quick_reactions) {
         border-bottom: var(--bw-thin) solid var(--background-2) !important;
     }
-    // This will align the menu relative to the selected side of the chat
-    // bubble with 0.75rem overflow, or align it to the opposite edge of the
-    // chat bubble if the menu width is larger than the chat bubble's.
-    @mixin calcMenuOffset($property, $menu-width) {
-        #{$property}: calc(100% - min(100%, calc($menu-width - 0.75rem)));
-    }
-
-    // We're expecting a number of menu items, plus one hidden item, hence the
-    // `$count + 1`
-    @mixin setMenuOffsetByMenuItemCount($count, $menu-width) {
-        :global(.bubble-wrapper > .menu:has(> :nth-child(#{$count + 1}):last-child)) {
-            &:not(.rtl) {
-                @include calcMenuOffset(left, $menu-width);
-            }
-            &.rtl {
-                @include calcMenuOffset(right, $menu-width);
-            }
-        }
-    }
-
-    .menu {
-        position: absolute;
-    }
-
-    .menu:not(.touch) {
-        width: fit-content;
-        background-color: var(--menu-bg);
-        border: var(--bw) solid var(--menu-bd);
-
-        top: -1.5rem;
-        padding: 0.125rem;
-        border-radius: 0.375rem;
-
-        :global(.menu-icon) {
-            width: 2.125rem;
-            height: 2.125rem;
-            padding: 0.25rem;
-        }
-    }
-
-    .menu.touch {
-        height: 0;
-        overflow: hidden;
-    }
-
-    @include setMenuOffsetByMenuItemCount(1, 2.5rem);
-    @include setMenuOffsetByMenuItemCount(2, 4.625rem);
-    @include setMenuOffsetByMenuItemCount(3, 6.75rem);
-    @include setMenuOffsetByMenuItemCount(4, 8.875rem);
-    @include setMenuOffsetByMenuItemCount(5, 11rem);
-    @include setMenuOffsetByMenuItemCount(6, 13.125rem);
-    @include setMenuOffsetByMenuItemCount(7, 15.25rem);
-    @include setMenuOffsetByMenuItemCount(8, 17.375rem);
 
     .quick-reaction {
-        width: 1.625rem;
-        height: 1.625rem;
         font-size: 1.3rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
     }
 
     .confirm {

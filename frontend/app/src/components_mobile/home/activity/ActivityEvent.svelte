@@ -14,8 +14,8 @@
     import { buildDisplayName } from "../../../utils/user";
     import Translatable from "../../Translatable.svelte";
     import Markdown from "../Markdown.svelte";
-    import MessageReaction from "../MessageReaction.svelte";
     import TipThumbnail from "../TipThumbnail.svelte";
+    import Reaction from "../message/Reaction.svelte";
 
     const MAX_REACTIONS = 4;
     const client = getContext<OpenChat>("client");
@@ -198,8 +198,8 @@
             {#if event.activity === "reaction" && event.message !== undefined && event.message.reactions.length > 0}
                 <Container gap={"xs"} crossAxisAlignment={"center"} width={{ kind: "hug" }}>
                     {@const more = event.message.reactions.length - MAX_REACTIONS}
-                    {#each event.message.reactions.slice(0, MAX_REACTIONS) as { reaction, userIds } (reaction)}
-                        <MessageReaction {reaction} {userIds} />
+                    {#each event.message.reactions.slice(0, MAX_REACTIONS) as reaction (reaction.reaction)}
+                        <Reaction {reaction} intersecting />
                     {/each}
                     {#if more > 0}
                         <CountBadge mode="additive">+{more}</CountBadge>

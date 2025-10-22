@@ -1,6 +1,5 @@
 <script lang="ts">
-    import { i18nKey } from "../../i18n/i18n";
-    import Translatable from "../Translatable.svelte";
+    import { Body } from "component-lib";
     import Markdown from "./Markdown.svelte";
 
     interface Props {
@@ -9,12 +8,11 @@
         blockLevelMarkdown?: boolean;
     }
 
-    let { edited, caption, blockLevelMarkdown = false }: Props = $props();
+    let { caption, blockLevelMarkdown = false }: Props = $props();
 </script>
 
 {#if caption !== undefined && caption !== ""}
-    <Markdown text={caption} inline={!blockLevelMarkdown} />
-    {#if edited}
-        <span class="edited-msg">(<Translatable resourceKey={i18nKey("edited")} />)</span>
-    {/if}
+    <Body>
+        <Markdown text={caption} inline={!blockLevelMarkdown} />
+    </Body>
 {/if}

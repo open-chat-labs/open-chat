@@ -77,6 +77,8 @@
         clientHeight?: number;
         clientWidth?: number;
         reverse?: boolean;
+        data_id?: string; //todo find a better way to do this
+        data_index?: string; // tod fine a better way to do this
     }
 
     let {
@@ -117,6 +119,8 @@
         clientHeight = $bindable(),
         clientWidth = $bindable(),
         reverse = false,
+        data_id,
+        data_index,
     }: Props = $props();
 
     // you might expect this to be done inside onMount but
@@ -159,6 +163,8 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <svelte:element
     this={tag}
+    data-id={data_id}
+    data-index={data_index}
     bind:clientHeight
     bind:clientWidth
     role={onClick ? "button" : "none"}

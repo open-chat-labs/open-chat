@@ -1,13 +1,12 @@
 <script lang="ts">
-    import { ColourVars, CommonButton, Container } from "component-lib";
     import type { ImageContent, MemeFighterContent } from "openchat-client";
     import ArrowCollapse from "svelte-material-icons/ArrowCollapse.svelte";
     import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
-    import EyeOutline from "svelte-material-icons/EyeOutline.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { rtlStore } from "../../stores/rtl";
     import { lowBandwidth } from "../../stores/settings";
     import { isTouchDevice } from "../../utils/devices";
+    import Button from "../Button.svelte";
     import ModalContent from "../ModalContent.svelte";
     import Overlay from "../Overlay.svelte";
     import Translatable from "../Translatable.svelte";
@@ -130,20 +129,10 @@
         {#if hidden}
             <div class="mask">
                 {#if !reply && !draft}
-                    <Container
-                        minHeight={"100%"}
-                        mainAxisAlignment={"center"}
-                        crossAxisAlignment={"center"}>
-                        <CommonButton
-                            onClick={() => (hidden = false)}
-                            size={"medium"}
-                            mode={"active"}>
-                            {#snippet icon()}
-                                <EyeOutline color={ColourVars.textOnPrimary} />
-                            {/snippet}
-                            <Translatable resourceKey={i18nKey(normalised.loadMsg)} />
-                        </CommonButton>
-                    </Container>
+                    <div class="reveal">
+                        <Button onClick={() => (hidden = false)}
+                            ><Translatable resourceKey={i18nKey(normalised.loadMsg)} /></Button>
+                    </div>
                 {/if}
             </div>
         {/if}

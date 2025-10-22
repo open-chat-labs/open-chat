@@ -33,7 +33,7 @@
     let degrees = $derived((remaining / 100) * 360);
 </script>
 
-<svg width="0.9em" height="0.9em" class="pie" viewBox="0 0 320 320">
+<svg width="1rem" height="1rem" class="pie" viewBox="0 0 320 320">
     <clipPath id="hollow">
         <path
             d="M 160 160 m -160 0 a 160 160 0 1 0 320 0 a 160 160 0 1 0 -320 0 Z M 160 160 m -120 0 a 120 120 0 0 1 240 0 a 120 120 0 0 1 -240 0 Z"

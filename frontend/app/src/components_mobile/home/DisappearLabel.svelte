@@ -1,11 +1,11 @@
 <script lang="ts">
+    import { Tooltip } from "component-lib";
     import type { OpenChat } from "openchat-client";
     import { getContext } from "svelte";
-    import CameraTimer from "svelte-material-icons/CameraTimer.svelte";
-    import Tooltip from "../tooltip/Tooltip.svelte";
-    import Translatable from "../Translatable.svelte";
-    import { i18nKey } from "../../i18n/i18n";
     import { _ } from "svelte-i18n";
+    import CameraTimer from "svelte-material-icons/CameraTimer.svelte";
+    import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
     interface Props {
@@ -22,7 +22,7 @@
         </div>
         <div class="name">{client.formatDisappearingMessageTime(Number(ttl), $_)}</div>
     </div>
-    {#snippet popupTemplate()}
+    {#snippet popup()}
         <Translatable
             resourceKey={i18nKey("disappearingMessages.summary", {
                 duration: client.formatDuration(Number(ttl)),

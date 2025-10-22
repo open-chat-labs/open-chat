@@ -7,12 +7,10 @@
         type ChatType,
         currentUserIdStore,
         currentUserStore,
-        type Dimensions,
         type EnhancedReplyContext,
         iconSize,
         localUpdates,
         type Message,
-        type MessageContent,
         type MessageReminderCreatedContent,
         mobileWidth,
         OpenChat,
@@ -339,36 +337,6 @@
         showEmojiPicker = false;
     }
 
-    function extractDimensions(content: MessageContent): Dimensions | undefined {
-        if (content.kind === "image_content") {
-            return {
-                width: content.width,
-                height: content.height,
-            };
-        } else if (content.kind === "video_content") {
-            return {
-                width: content.width,
-                height: content.height,
-            };
-        } else if (content.kind === "meme_fighter_content") {
-            return {
-                width: content.width,
-                height: content.height,
-            };
-        } else if (content.kind === "giphy_content") {
-            return $mobileWidth
-                ? { width: content.mobile.width, height: content.mobile.height }
-                : { width: content.desktop.width, height: content.desktop.height };
-        } else if (
-            content.kind === "text_content" &&
-            (client.isSocialVideoLink(content.text) || client.containsSocialVideoLink(content.text))
-        ) {
-            return { width: 560, height: 315 };
-        }
-
-        return undefined;
-    }
-
     function recalculateMediaDimensions() {
         if (mediaDimensions === undefined || !msgBubbleElement) {
             return;
@@ -457,7 +425,7 @@
             ? undefined
             : threadRootMessage?.messageIndex,
     );
-    let mediaDimensions = $derived(extractDimensions(msg.content));
+    let mediaDimensions = $derived(client.extractDimensionsFromMessageContent(msg.content));
     let fill = $derived(client.fillMessage(msg));
     let showAvatar = $derived($screenWidth !== ScreenWidth.ExtraExtraSmall);
     let translated = $derived($translationsStore.has(msg.messageId));

@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { Tooltip } from "component-lib";
     import type { DiamondMembershipStatus, ResourceKey } from "openchat-client";
-    import Tooltip from "../tooltip/Tooltip.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
     import DiamondBase from "./DiamondBase.svelte";
@@ -39,7 +39,7 @@
 {#if status !== "inactive" || show}
     <Tooltip uppercase position="top" align="middle">
         <DiamondBase {size} dark={colours.dark} medium={colours.medium} light={colours.light} {y} />
-        {#snippet popupTemplate()}
+        {#snippet popup()}
             {#if statusName !== undefined}
                 <Translatable resourceKey={statusName} />
             {/if}

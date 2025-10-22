@@ -46,7 +46,6 @@
     function click(e: MouseEvent | TouchEvent) {
         if (disabled) return;
 
-        e.preventDefault();
         e.stopPropagation();
         if (open) {
             closeMenu();
@@ -104,7 +103,9 @@
         document.body.appendChild(overlay);
         document.body.appendChild(menuClone);
         setTimeout(() => {
-            menuClone.style.opacity = "1";
+            if (menuClone !== undefined) {
+                menuClone.style.opacity = "1";
+            }
         }, 0);
     }
 </script>

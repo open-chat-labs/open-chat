@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Tooltip from "../../tooltip/Tooltip.svelte";
+    import { Tooltip } from "component-lib";
 
     type Streak =
         | "none"
@@ -63,7 +63,7 @@
             <div class:disabled class={`icon ${streak.replace(/ /g, "_")}`}>
                 {num}
             </div>
-            {#snippet popupTemplate()}
+            {#snippet popup()}
                 {`${streak} day streak!`}
             {/snippet}
         </Tooltip>

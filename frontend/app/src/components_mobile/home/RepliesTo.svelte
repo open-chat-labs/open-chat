@@ -1,7 +1,6 @@
 <script lang="ts">
+    import { BodySmall } from "component-lib";
     import {
-        type ChatIdentifier,
-        type RehydratedReplyContext,
         chatIdentifiersEqual,
         chatListScopeStore,
         currentUserIdStore,
@@ -9,11 +8,12 @@
         routeForChatIdentifier,
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
+        type ChatIdentifier,
+        type RehydratedReplyContext,
     } from "openchat-client";
     import page from "page";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import { rtlStore } from "../../stores/rtl";
     import Link from "../Link.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
 
@@ -69,15 +69,10 @@
 </script>
 
 <Link onClick={zoomToMessage}>
-    <div
-        class="reply-wrapper"
-        class:me
-        class:rtl={$rtlStore}
-        class:p2pSwap={isP2PSwap}
-        class:crypto={repliesTo.content.kind === "crypto_content"}>
-        <h4 class="username" class:text-content={isTextContent}>
+    <div class="quote">
+        <BodySmall fontWeight={"bold"}>
             {displayName}
-        </h4>
+        </BodySmall>
         {#if repliesTo.content !== undefined}
             <div class="inert">
                 <ChatMessageContent
@@ -89,7 +84,7 @@
                     messageId={repliesTo.messageId}
                     messageIndex={repliesTo.messageIndex}
                     senderId={repliesTo.senderId}
-                    edited={repliesTo.edited}
+                    edited={false}
                     fill={false}
                     failed={false}
                     blockLevelMarkdown={true}
@@ -110,50 +105,12 @@
 </Link>
 
 <style lang="scss">
-    :global(.reply-wrapper.me a) {
-        color: inherit;
+    .inert {
+        pointer-events: none;
     }
 
-    .reply-wrapper {
-        border-radius: $sp3;
-        padding: $sp3;
-        background-color: var(--currentChat-msg-bg);
-        color: var(--currentChat-msg-txt);
-        border: var(--bw) solid var(--replies-bd);
-        cursor: pointer;
-        margin-bottom: $sp3;
-        overflow: hidden;
-        @include nice-scrollbar();
-        max-height: 300px;
-
-        .inert {
-            pointer-events: none;
-        }
-
-        &.me {
-            background-color: var(--currentChat-msg-me-bg);
-            border: var(--bw) solid var(--currentChat-msg-me-bd);
-            color: var(--currentChat-msg-me-txt);
-        }
-
-        &:after {
-            content: "";
-            display: table;
-            clear: both;
-        }
-
-        &.p2pSwap {
-            max-width: 350px;
-        }
-    }
-
-    .username {
-        margin: 0;
-        margin-bottom: $sp1;
-        display: inline;
-
-        &.text-content {
-            display: block;
-        }
+    .quote {
+        border-left: 4px solid var(--primary-light);
+        padding-left: var(--sp-md);
     }
 </style>

@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { Tooltip } from "component-lib";
     import { type Level, type MemberRole, ROLE_MEMBER, roleAsText } from "openchat-client";
-    import Tooltip from "../../../components/tooltip/Tooltip.svelte";
 
     interface Props {
         level: Level;
@@ -16,7 +16,7 @@
     {#if popup}
         <Tooltip position="top" align="middle">
             <div class={`icon ${level} ${roleText}`}></div>
-            {#snippet popupTemplate()}
+            {#snippet popup()}
                 {`${level.toUpperCase()} ${roleText?.toUpperCase()}`}
             {/snippet}
         </Tooltip>

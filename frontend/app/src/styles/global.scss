@@ -248,8 +248,10 @@ body.needs-safe-inset:not(.keyboard) {
     --safe-inset: 32px;
     padding-bottom: var(--safe-inset);
 
-    .modal-content {
-        padding-bottom: var(--safe-inset);
+    .align-bottom {
+        .modal-content {
+            padding-bottom: var(--safe-inset);
+        }
     }
 }
 
@@ -536,6 +538,10 @@ svelte-virtual-list-viewport {
 }
 
 html:active-view-transition-type(slide_left, slide_right) {
+    &::view-transition-old(message_footer),
+    &:view-transition-new(message_footer) {
+        animation: none;
+    }
     &::view-transition-old(bottom_nav_bar),
     &:view-transition-new(bottom_nav_bar) {
         animation: none;

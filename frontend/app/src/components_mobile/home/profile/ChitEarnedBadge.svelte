@@ -1,8 +1,8 @@
 <script lang="ts">
     import Translatable from "@src/components/Translatable.svelte";
     import { i18nKey } from "@src/i18n/i18n";
+    import { Tooltip } from "component-lib";
     import { chitBands, findClosestChitBand } from "openchat-client";
-    import Tooltip from "../../tooltip/Tooltip.svelte";
 
     interface Props {
         earned: number;
@@ -25,7 +25,7 @@
             <div class={`icon`}>
                 {chitIconText}
             </div>
-            {#snippet popupTemplate()}
+            {#snippet popup()}
                 <Translatable
                     resourceKey={i18nKey("prizes.minChitEarnedValue", {
                         n: chitBands.get(closest) ?? "0",

@@ -51,6 +51,7 @@
     }
 
     let {
+        radius,
         content,
         me = false,
         truncate = false,

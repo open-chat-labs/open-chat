@@ -162,6 +162,7 @@ import {
     type DiamondMembershipFees,
     type DiamondMembershipStatus,
     type DiamondRoute,
+    type Dimensions,
     type DirectChatIdentifier,
     type DirectChatSummary,
     type DisableInviteCodeResponse,
@@ -10296,6 +10297,36 @@ export class OpenChat {
             if (resp.code === ErrorCode.InvalidAccessGate) return i18nKey("access.gateInvalid");
         }
         return i18nKey("groupCreationFailed");
+    }
+
+    extractDimensionsFromMessageContent(content: MessageContent): Dimensions | undefined {
+        if (content.kind === "image_content") {
+            return {
+                width: content.width,
+                height: content.height,
+            };
+        } else if (content.kind === "video_content") {
+            return {
+                width: content.width,
+                height: content.height,
+            };
+        } else if (content.kind === "meme_fighter_content") {
+            return {
+                width: content.width,
+                height: content.height,
+            };
+        } else if (content.kind === "giphy_content") {
+            return mobileWidth.value
+                ? { width: content.mobile.width, height: content.mobile.height }
+                : { width: content.desktop.width, height: content.desktop.height };
+        } else if (
+            content.kind === "text_content" &&
+            (this.isSocialVideoLink(content.text) || this.containsSocialVideoLink(content.text))
+        ) {
+            return { width: 560, height: 315 };
+        }
+
+        return undefined;
     }
 }
 

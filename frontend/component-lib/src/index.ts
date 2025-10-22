@@ -29,6 +29,7 @@ export { default as Sheet } from "./components/sheet/Sheet.svelte";
 export { default as SheetTrigger } from "./components/sheet/SheetTrigger.svelte";
 export { default as Spinner } from "./components/Spinner.svelte";
 export { default as Switch } from "./components/Switch.svelte";
+export { default as Tooltip } from "./components/tooltip/Tooltip.svelte";
 export { default as Body } from "./components/typography/Body.svelte";
 export { default as BodySmall } from "./components/typography/BodySmall.svelte";
 export { default as Caption } from "./components/typography/Caption.svelte";

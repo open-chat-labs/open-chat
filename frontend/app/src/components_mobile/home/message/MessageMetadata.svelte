@@ -1,32 +1,100 @@
 <script lang="ts">
+    import { i18nKey } from "@src/i18n/i18n";
     import { Caption, Container } from "component-lib";
+    import type { ChatType, OpenChat } from "openchat-client";
+    import { getContext } from "svelte";
+    import AlertCircleOutline from "svelte-material-icons/AlertCircleOutline.svelte";
     import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
     import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
+    import DeletedIcon from "svelte-material-icons/DeleteOutline.svelte";
+    import Pin from "svelte-material-icons/Pin.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import DisappearsAt from "../DisappearsAt.svelte";
+
+    const client = getContext<OpenChat>("client");
 
     interface Props {
         time: number;
         edited: boolean;
+        failed: boolean;
+        deleted: boolean;
+        undeleting: boolean;
+        bot: boolean;
+        me: boolean;
+        fill: boolean;
+        accepted: boolean;
+        chatType: ChatType;
+        readByThem: boolean;
+        expiresAt: number | undefined;
+        percentageExpired: number;
+        pinned: boolean;
     }
 
-    let { edited, time }: Props = $props();
+    let {
+        edited,
+        time,
+        failed,
+        deleted,
+        undeleting,
+        bot,
+        me,
+        accepted,
+        chatType,
+        readByThem,
+        expiresAt,
+        percentageExpired,
+        pinned,
+        fill,
+    }: Props = $props();
 </script>
 
 <Container
-    supplementalClass={"message-metadata"}
+    supplementalClass={`message-metadata ${fill ? "fill" : ""}`}
     gap={"xs"}
     padding={["zero", "zero", "xs", "zero"]}
     crossAxisAlignment={"center"}
     crossAxisSelfAlignment={"end"}
     width={{ kind: "hug" }}>
     {#if edited}
-        <Caption>(edited)</Caption>
+        <Caption>(<Translatable resourceKey={i18nKey("edited")} />)</Caption>
     {/if}
     <Caption>
-        {new Date(time).toLocaleTimeString()}
+        {client.toShortTimeString(new Date(time))}
     </Caption>
     <Container supplementalClass={"message-metadata-icons"}>
-        <CheckCircleOutline />
-        <CheckCircle />
+        {#if failed}
+            <AlertCircleOutline />
+        {/if}
+        {#if deleted}
+            <DeletedIcon />
+            {#if undeleting}
+                <div class="confirming"></div>
+            {/if}
+        {/if}
+        {#if !bot}
+            {#if me}
+                {#if accepted}
+                    <CheckCircle />
+                {:else}
+                    <div class="confirming"></div>
+                {/if}
+                {#if chatType === "direct_chat"}
+                    {#if readByThem}
+                        <CheckCircle />
+                    {:else}
+                        <CheckCircleOutline />
+                    {/if}
+                {/if}
+            {:else if !accepted}
+                <div class="confirming"></div>
+            {/if}
+            {#if expiresAt !== undefined}
+                <DisappearsAt {me} {percentageExpired} {expiresAt} />
+            {/if}
+        {/if}
+        {#if pinned}
+            <Pin />
+        {/if}
     </Container>
 </Container>
 
@@ -35,11 +103,19 @@
         opacity: 0.6;
     }
 
-    :global(.message-metadata-icons svg) {
-        margin-inline-start: -0.35rem;
+    :global(.message-metadata.fill) {
+        position: absolute;
+        padding: var(--sp-sm) !important;
+        bottom: 0;
+        right: 0;
+        background-color: rgba(0, 0, 0, 0.3) !important;
+        color: #fff;
+        border-radius: var(--rad-xl) 0 0 0 !important;
     }
 
-    :global(.message-metadata-icons svg:first-child) {
-        margin-inline-start: 0;
+    .confirming {
+        width: 1.45em;
+        height: 1.4em;
+        @include loading-spinner(1.2em, 0.6em, "#ffffff", "/assets/plain-spinner.svg", 1.5s);
     }
 </style>

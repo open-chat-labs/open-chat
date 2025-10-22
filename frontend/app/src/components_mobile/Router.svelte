@@ -59,6 +59,20 @@
 
     function routeToTransitionType(next: RouteParams, current: RouteParams): TransitionType {
         if (
+            next.kind === "selected_channel_route" &&
+            current.kind === "selected_channel_route" &&
+            chatIdentifiersEqual(next.chatId, current.chatId)
+        ) {
+            // we have opened a thread
+            if (next.open && !current.open) {
+                return "slide_left";
+            }
+            // we have closed a thread
+            if (!next.open && current.open) {
+                return "slide_right";
+            }
+        }
+        if (
             next.kind === "selected_community_route" &&
             current.kind === "selected_community_route"
         ) {

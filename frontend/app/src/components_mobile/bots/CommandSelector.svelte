@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Tooltip } from "component-lib";
     import type {
         ChatPermissions,
         ChatSummary,
@@ -26,7 +27,6 @@
     import ErrorMessage from "../ErrorMessage.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import Logo from "../Logo.svelte";
-    import Tooltip from "../tooltip/Tooltip.svelte";
     import Translatable from "../Translatable.svelte";
     import BotAvatar from "./BotAvatar.svelte";
 
@@ -235,7 +235,7 @@
                             <div class="param" class:required={param.required}>
                                 <Translatable resourceKey={i18nKey(param.name)} />
                             </div>
-                            {#snippet popupTemplate()}
+                            {#snippet popup()}
                                 <Translatable resourceKey={i18nKey(param.description ?? "")} />
                             {/snippet}
                         </Tooltip>
