@@ -22,6 +22,7 @@
     }
 
     button {
+        font-size: var(--typo-subtitle-sz);
         width: 3.5rem;
         height: 3.5rem;
         background: var(--primary);

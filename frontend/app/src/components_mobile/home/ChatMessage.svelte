@@ -81,7 +81,6 @@
         canQuoteReply: boolean;
         canReact: boolean;
         publicGroup: boolean;
-        editing: boolean;
         canStartThread: boolean;
         senderTyping: boolean;
         dateFormatter?: (date: Date) => string;
@@ -126,7 +125,6 @@
         canQuoteReply,
         canReact,
         publicGroup,
-        editing,
         canStartThread,
         senderTyping,
         collapsed = false,
@@ -581,6 +579,7 @@
                         minWidth={"6rem"}
                         direction={"vertical"}>
                         <MessageBubble
+                            {focused}
                             {senderTyping}
                             {senderContext}
                             {sender}
@@ -600,6 +599,8 @@
                             {failed}
                             {undeleting}
                             {readByThem}
+                            {readByMe}
+                            {onGoToMessageIndex}
                             {chatType}>
                             {#snippet repliesTo(reply)}
                                 <RepliesTo
@@ -607,7 +608,6 @@
                                     {chatId}
                                     {intersecting}
                                     {onRemovePreview}
-                                    {onGoToMessageIndex}
                                     repliesTo={reply} />
                             {/snippet}
 

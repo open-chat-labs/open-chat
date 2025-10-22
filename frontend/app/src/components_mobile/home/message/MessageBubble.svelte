@@ -48,12 +48,15 @@
         accepted: boolean;
         chatType: ChatType;
         readByThem: boolean;
+        readByMe: boolean;
         expiresAt: number | undefined;
         percentageExpired: number;
         pinned: boolean;
         repliesTo: Snippet<[RehydratedReplyContext]>;
         fill: boolean;
         onOpenUserProfile: (e?: Event) => void;
+        focused: boolean;
+        onGoToMessageIndex?: (args: { index: number }) => void;
     }
 
     let {
@@ -73,12 +76,15 @@
         accepted,
         chatType,
         readByThem,
+        readByMe,
         expiresAt,
         percentageExpired,
         pinned,
         repliesTo,
         fill,
         onOpenUserProfile,
+        focused,
+        onGoToMessageIndex,
     }: Props = $props();
 
     let senderContainer = $state<HTMLDivElement>();
@@ -137,6 +143,17 @@
         "sm",
     ]);
 
+    let classList = $derived.by(() => {
+        const classes = ["message_bubble"];
+        if (focused) {
+            classes.push("focused");
+        }
+        if (readByMe) {
+            classes.push("read_by_me");
+        }
+        return classes.join(" ");
+    });
+
     function onSwipe(dir: SwipeDirection) {
         // This *should* be done at a much higher level (and it is)
         // But unfortunately because there is also a long press menu
@@ -159,6 +176,7 @@
 <Container
     {onSwipe}
     bind:ref
+    supplementalClass={classList}
     allowOverflow
     minWidth={senderWidth}
     direction={"vertical"}
@@ -211,7 +229,12 @@
         </Container>
     {/if}
     {#if msg.repliesTo !== undefined}
+        {@const msgIndex =
+            msg.repliesTo.kind === "rehydrated_reply_context"
+                ? msg.repliesTo.messageIndex
+                : undefined}
         <Container
+            onClick={msgIndex ? () => onGoToMessageIndex?.({ index: msgIndex }) : undefined}
             borderRadius={replyRadius}
             padding={"md"}
             supplementalClass={`reply-wrapper ${me ? "me" : ""}`}
@@ -259,5 +282,17 @@
         color: #fff;
         z-index: 1;
         width: max-content !important;
+    }
+
+    :global(.container.message_bubble) {
+        transition: box-shadow ease-in 300ms;
+    }
+
+    :global(.container.message_bubble.focused) {
+        box-shadow: 0 0 0 4px var(--secondary);
+    }
+
+    :global(.container.message_bubble:not(.read_by_me)) {
+        box-shadow: 0 0 0 4px var(--secondary);
     }
 </style>
