@@ -321,6 +321,10 @@
         border: 1px solid $accent !important;
     }
 
+    .prize-claim {
+        padding-bottom: var(--sp-lg);
+    }
+
     .prize {
         max-width: 400px;
     }

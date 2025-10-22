@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Avatar, SectionHeader } from "component-lib";
     import type {
         ChatIdentifier,
         ChatSummary,
@@ -9,23 +10,14 @@
     } from "openchat-client";
     import {
         allUsersStore,
-        AvatarSize,
         byContext,
-        iconSize,
         mobileWidth,
         selectedCommunitySummaryStore,
         UserStatus,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
-    import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
-    import { rtlStore } from "../../../stores/rtl";
     import { now } from "../../../stores/time";
-    import Avatar from "../../Avatar.svelte";
-    import HoverIcon from "../../HoverIcon.svelte";
-    import SectionHeader from "../../SectionHeader.svelte";
     import Typing from "../../Typing.svelte";
     import Markdown from "../../home/Markdown.svelte";
 
@@ -88,62 +80,18 @@
 
 <svelte:window onkeydown={onKeyDown} />
 
-<SectionHeader gap flush shadow>
-    <div class="avatar">
-        <Avatar
-            statusBorder={"var(--section-bg)"}
-            showStatus
-            userId={chat.userId}
-            url={chat.avatarUrl}
-            size={AvatarSize.Default} />
-    </div>
-    <div class="chat-details">
-        <div class="chat-name" title={chat.title}>
-            {chat.title}
-        </div>
-        <div class="chat-subtext" title={chat.subtext}>
-            {#if chat.typing}
-                {chat.subtext} <Typing />
-            {:else}
-                <Markdown text={chat.subtext} oneLine suppressLinks />
-            {/if}
-        </div>
-    </div>
-    <div class="close" onclick={close}>
-        <HoverIcon>
-            {#if $mobileWidth}
-                {#if $rtlStore}
-                    <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
-                {:else}
-                    <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
-                {/if}
-            {:else}
-                <Close size={$iconSize} color={"var(--icon-txt)"} />
-            {/if}
-        </HoverIcon>
-    </div>
+<SectionHeader onBack={close}>
+    {#snippet avatar()}
+        <Avatar url={chat.avatarUrl} size={"lg"} />
+    {/snippet}
+    {#snippet title()}
+        {chat.title}
+    {/snippet}
+    {#snippet subtitle()}
+        {#if chat.typing}
+            {chat.subtext} <Typing />
+        {:else}
+            <Markdown text={chat.subtext} oneLine suppressLinks />
+        {/if}
+    {/snippet}
 </SectionHeader>
-
-<style lang="scss">
-    .chat-name {
-        @include font(book, normal, fs-120);
-        @include ellipsis();
-        margin-bottom: $sp1;
-    }
-
-    .chat-subtext {
-        @include font(book, normal, fs-80);
-        @include ellipsis();
-        color: var(--txt-light);
-    }
-
-    .chat-details {
-        flex: 1;
-        overflow: auto;
-        padding: 0 $sp2;
-    }
-
-    .avatar {
-        flex: 0 0 55px;
-    }
-</style>

@@ -289,10 +289,10 @@
     }
 
     :global(.container.message_bubble.focused) {
-        box-shadow: 0 0 0 4px var(--secondary);
+        box-shadow: 0 0 0 4px var(--primary-muted);
     }
 
     :global(.container.message_bubble:not(.read_by_me)) {
-        box-shadow: 0 0 0 4px var(--secondary);
+        box-shadow: 0 0 0 4px var(--primary-muted);
     }
 </style>

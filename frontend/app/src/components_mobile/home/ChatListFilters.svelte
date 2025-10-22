@@ -1,5 +1,5 @@
 <script module lang="ts">
-    export type ChatListFilter = "all" | "unread" | "groups" | "favourites";
+    export type ChatListFilter = "all" | "unread" | "groups" | "direct";
 </script>
 
 <script lang="ts">
@@ -28,5 +28,5 @@
     {@render button("all", "All")}
     {@render button("unread", "Unread")}
     {@render button("groups", "Groups")}
-    {@render button("favourites", "Favourites")}
+    {@render button("direct", "Direct")}
 </Container>

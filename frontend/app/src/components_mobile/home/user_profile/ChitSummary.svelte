@@ -21,14 +21,23 @@
 
     const client = getContext<OpenChat>("client");
 
+    type Mode = "edit" | "view";
+
     interface Props {
+        mode?: Mode;
         streak?: number;
         earned?: number;
         balance?: number;
         insuranceLink?: boolean;
     }
 
-    let { streak = 0, earned = 0, balance = 0, insuranceLink = true }: Props = $props();
+    let {
+        mode = "edit",
+        streak = 0,
+        earned = 0,
+        balance = 0,
+        insuranceLink = true,
+    }: Props = $props();
 
     function calculateBadgesVisible(streak: number): number[] {
         if (streak < 30) {
@@ -115,31 +124,33 @@
     {/each}
 </div>
 
-<Container mainAxisAlignment={"end"} gap={"sm"} crossAxisAlignment={"end"}>
-    {#if insuranceLink}
-        <CommonButton onClick={() => (showInsurance = true)} size={"small_text"}>
-            {#snippet icon(color)}
-                <ShieldStarOutline {color}></ShieldStarOutline>
-            {/snippet}
-            <Translatable resourceKey={i18nKey("Streak insurance")}></Translatable>
-        </CommonButton>
-    {/if}
-    <CommonButton
-        disabled={!claimChitAvailable}
-        loading={busy}
-        onClick={claim}
-        size={"medium"}
-        mode={"active"}>
-        {#snippet icon(color)}
-            <PartyPopper {color}></PartyPopper>
-        {/snippet}
-        {#if claimChitAvailable}
-            <Translatable resourceKey={i18nKey("Claim CHIT")}></Translatable>
-        {:else}
-            <Translatable resourceKey={i18nKey("dailyChit.comeback", { time: remaining })} />
+{#if mode === "edit"}
+    <Container mainAxisAlignment={"end"} gap={"sm"} crossAxisAlignment={"end"}>
+        {#if insuranceLink}
+            <CommonButton onClick={() => (showInsurance = true)} size={"small_text"}>
+                {#snippet icon(color)}
+                    <ShieldStarOutline {color}></ShieldStarOutline>
+                {/snippet}
+                <Translatable resourceKey={i18nKey("Streak insurance")}></Translatable>
+            </CommonButton>
         {/if}
-    </CommonButton>
-</Container>
+        <CommonButton
+            disabled={!claimChitAvailable}
+            loading={busy}
+            onClick={claim}
+            size={"medium"}
+            mode={"active"}>
+            {#snippet icon(color)}
+                <PartyPopper {color}></PartyPopper>
+            {/snippet}
+            {#if claimChitAvailable}
+                <Translatable resourceKey={i18nKey("Claim CHIT")}></Translatable>
+            {:else}
+                <Translatable resourceKey={i18nKey("dailyChit.comeback", { time: remaining })} />
+            {/if}
+        </CommonButton>
+    </Container>
+{/if}
 
 <style lang="scss">
     :global(.container.streak_bubble h2) {

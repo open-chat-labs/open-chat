@@ -1,7 +1,7 @@
 <script lang="ts">
+    import { Button } from "component-lib";
     import { onMount } from "svelte";
     import type { ButtonProps } from "./Button.svelte";
-    import Button from "./Button.svelte";
     import { suspectedAutomationBot } from "../stores/automation";
     import { isTouchDevice } from "../utils/devices";
 

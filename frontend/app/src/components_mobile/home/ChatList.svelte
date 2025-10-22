@@ -12,7 +12,6 @@
         type CombinedUnreadCounts,
         currentUserIdStore,
         emptyCombinedUnreadCounts,
-        favouritesStore,
         numberOfThreadsStore,
         OpenChat,
         publish,
@@ -143,7 +142,7 @@
                 chatListFilter === "all" ||
                 (chatListFilter === "unread" &&
                     client.unreadMessageCount(c.id, c.latestMessage?.event.messageIndex) > 0) ||
-                (chatListFilter === "favourites" && $favouritesStore.has(c.id)) ||
+                (chatListFilter === "direct" && c.kind === "direct_chat") ||
                 (chatListFilter === "groups" && c.kind === "group_chat")
             );
         });

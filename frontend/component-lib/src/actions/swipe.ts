@@ -6,6 +6,30 @@ export type SwipeConfig = {
     onSwipe?: (dir: SwipeDirection) => void;
 };
 
+export function onSwipeUp(fn: () => void) {
+    return onSwipe("up", fn);
+}
+
+export function onSwipeDown(fn: () => void) {
+    return onSwipe("down", fn);
+}
+
+export function onSwipeRight(fn: () => void) {
+    return onSwipe("right", fn);
+}
+
+export function onSwipeLeft(fn: () => void) {
+    return onSwipe("left", fn);
+}
+
+function onSwipe(match: SwipeDirection, fn: () => void) {
+    return (dir: SwipeDirection) => {
+        if (dir === match) {
+            fn();
+        }
+    };
+}
+
 export function swipe(node: HTMLElement, config: SwipeConfig) {
     const { threshold = 30, velocity = 0.3, onSwipe } = config;
 

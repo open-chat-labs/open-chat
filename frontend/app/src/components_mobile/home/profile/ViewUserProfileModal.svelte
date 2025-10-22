@@ -16,18 +16,19 @@
         selectedChatSummaryStore,
         selectedCommunityBlockedUsersStore,
         selectedCommunitySummaryStore,
-        setRightPanelHistory,
     } from "openchat-client";
 
+    import { CommonButton, Container, Sheet } from "component-lib";
+    import page from "page";
     import { getContext, onMount } from "svelte";
+    import AccountCancel from "svelte-material-icons/AccountCancelOutline.svelte";
+    import Cancel from "svelte-material-icons/Cancel.svelte";
+    import ChatOutline from "svelte-material-icons/ChatOutline.svelte";
+    import Cog from "svelte-material-icons/Cog.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
-    import Button from "../../Button.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
-    import ModalContent from "../../ModalContent.svelte";
-    import Overlay from "../../Overlay.svelte";
     import Translatable from "../../Translatable.svelte";
-    import UserProfileCard from "./UserProfileCard.svelte";
+    import UserProfileSummaryCard from "../user_profile/UserProfileSummaryCard.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -51,17 +52,6 @@
 
     let profile: PublicProfile | undefined = $state();
     let user: UserSummary | undefined = $state();
-    let backgroundUrl = $derived(
-        profile !== undefined
-            ? client.buildUserBackgroundUrl(
-                  import.meta.env.OC_BLOB_URL_PATTERN!,
-                  userId,
-                  profile.backgroundId,
-              )
-            : undefined,
-    );
-    let hasCustomBackground = $derived(backgroundUrl !== undefined);
-
     let rendering = $state<Promise<void>>();
 
     onMount(async () => {
@@ -205,7 +195,7 @@
     }
 
     function showUserProfile() {
-        setRightPanelHistory([{ kind: "user_profile" }]);
+        page("/profile_summary");
         onClose();
     }
 
@@ -256,75 +246,65 @@
 <svelte:window onresize={onWindowResize} />
 
 {#if profile !== undefined}
-    <Overlay dismissible {onClose}>
-        <ModalContent
-            fill
-            {rendering}
-            compactFooter
-            backgroundImage={backgroundUrl}
-            hideFooter={!me && !chatButton && !canBlock && !canUnblock}
-            hideHeader
-            fixedWidth={false}
-            large={modal}
-            footerClass={hasCustomBackground ? "mask-footer" : ""}
-            {alignTo}
-            {onClose}>
-            {#snippet body()}
-                {#if profile !== undefined && user !== undefined}
-                    <UserProfileCard {user} {profile} {inGlobalContext} {onClose}></UserProfileCard>
-                {/if}
-            {/snippet}
-            {#snippet footer()}
-                <div class="footer" class:hasCustomBackground>
-                    <ButtonGroup align={"fill"}>
+    <Sheet {onClose}>
+        {#snippet sheet()}
+            {#if profile !== undefined && user !== undefined}
+                <!-- <UserProfileCard {user} {profile} {inGlobalContext} {onClose}></UserProfileCard> -->
+                <Container direction={"vertical"} padding={["sm", "sm", "lg", "sm"]}>
+                    <UserProfileSummaryCard mode={"view"} {user} {profile}></UserProfileSummaryCard>
+                    <Container mainAxisAlignment={"center"} gap={"xs"}>
                         {#if chatButton && !me}
-                            <Button onClick={handleOpenDirectChat} small
-                                ><Translatable resourceKey={i18nKey("profile.chat")} /></Button>
+                            <CommonButton onClick={handleOpenDirectChat} mode={"active"}>
+                                {#snippet icon(color)}
+                                    <ChatOutline {color} />
+                                {/snippet}
+                                <Translatable resourceKey={i18nKey("profile.chat")} />
+                            </CommonButton>
                         {/if}
                         {#if me}
-                            <Button onClick={showUserProfile} small
-                                ><Translatable resourceKey={i18nKey("profile.settings")} /></Button>
+                            <CommonButton onClick={showUserProfile} mode={"active"}>
+                                {#snippet icon(color)}
+                                    <Cog {color} />
+                                {/snippet}
+                                <Translatable resourceKey={i18nKey("profile.label")} />
+                            </CommonButton>
                         {/if}
                         {#if canBlock}
-                            <Button onClick={blockUser} small
-                                ><Translatable resourceKey={i18nKey("profile.block")} /></Button>
+                            <CommonButton onClick={blockUser} mode={"active"}>
+                                {#snippet icon(color)}
+                                    <Cancel {color} />
+                                {/snippet}
+                                <Translatable resourceKey={i18nKey("profile.block")} />
+                            </CommonButton>
                         {/if}
                         {#if canUnblock}
-                            <Button onClick={unblockUser} small
-                                ><Translatable resourceKey={i18nKey("profile.unblock")} /></Button>
+                            <CommonButton onClick={unblockUser} mode={"active"}>
+                                {#snippet icon(color)}
+                                    <Cancel {color} />
+                                {/snippet}
+                                <Translatable resourceKey={i18nKey("profile.unblock")} />
+                            </CommonButton>
                         {/if}
-                    </ButtonGroup>
-                    {#if $platformModeratorStore}
-                        <div class="suspend">
-                            <ButtonGroup align={"fill"}>
-                                {#if isSuspended}
-                                    <Button onClick={unsuspendUser} small
-                                        ><Translatable
-                                            resourceKey={i18nKey("unsuspendUser")} /></Button>
-                                {:else}
-                                    <Button onClick={suspendUser} small
-                                        ><Translatable
-                                            resourceKey={i18nKey("suspendUser")} /></Button>
-                                {/if}
-                            </ButtonGroup>
-                        </div>
-                    {/if}
-                </div>
-            {/snippet}
-        </ModalContent>
-    </Overlay>
+                        {#if $platformModeratorStore}
+                            {#if isSuspended}
+                                <CommonButton onClick={unsuspendUser} mode={"active"}>
+                                    {#snippet icon(color)}
+                                        <AccountCancel {color} />
+                                    {/snippet}
+                                    <Translatable resourceKey={i18nKey("unsuspendUser")} />
+                                </CommonButton>
+                            {:else}
+                                <CommonButton onClick={suspendUser} mode={"active"}>
+                                    {#snippet icon(color)}
+                                        <AccountCancel {color} />
+                                    {/snippet}
+                                    <Translatable resourceKey={i18nKey("suspendUser")} />
+                                </CommonButton>
+                            {/if}
+                        {/if}
+                    </Container>
+                </Container>
+            {/if}
+        {/snippet}
+    </Sheet>
 {/if}
-
-<style lang="scss">
-    .suspend {
-        margin-top: $sp3;
-    }
-
-    :global(.modal-content .footer.mask-footer) {
-        background-color: rgba(0, 0, 0, 0.45);
-
-        @include not-mobile() {
-            border-radius: 0 0 var(--modal-rd) var(--modal-rd);
-        }
-    }
-</style>

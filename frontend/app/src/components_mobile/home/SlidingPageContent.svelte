@@ -9,9 +9,10 @@
         title: ResourceKey;
         subtitle?: ResourceKey;
         onBack?: () => void;
+        avatar?: Snippet;
     }
 
-    let { children, title, subtitle, onBack }: Props = $props();
+    let { avatar, children, title, subtitle, onBack }: Props = $props();
     let onSwipe = $derived(
         onBack
             ? (dir: SwipeDirection) => {
@@ -28,6 +29,6 @@
     background={ColourVars.background0}
     height={{ kind: "fill" }}
     direction={"vertical"}>
-    <SlidingPageHeader subtitleKey={subtitle} {onBack} titleKey={title} />
+    <SlidingPageHeader {avatar} subtitleKey={subtitle} {onBack} titleKey={title} />
     {@render children()}
 </Container>

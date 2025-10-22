@@ -253,6 +253,10 @@ body.needs-safe-inset:not(.keyboard) {
             padding-bottom: var(--safe-inset);
         }
     }
+
+    .sheet_content {
+        padding-bottom: var(--safe-inset) !important;
+    }
 }
 
 h1,

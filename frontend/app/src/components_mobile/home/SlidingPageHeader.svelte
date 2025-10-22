@@ -1,18 +1,25 @@
 <script lang="ts">
     import { SectionHeader } from "component-lib";
     import { publish, type ResourceKey } from "openchat-client";
+    import type { Snippet } from "svelte";
     import Translatable from "../Translatable.svelte";
 
     interface Props {
         titleKey: ResourceKey;
         subtitleKey?: ResourceKey;
         onBack?: () => void;
+        avatar?: Snippet;
     }
 
-    let { titleKey, subtitleKey, onBack = () => publish("closeModalPage") }: Props = $props();
+    let {
+        avatar,
+        titleKey,
+        subtitleKey,
+        onBack = () => publish("closeModalPage"),
+    }: Props = $props();
 </script>
 
-<SectionHeader {onBack}>
+<SectionHeader {avatar} {onBack}>
     {#snippet title()}
         <Translatable resourceKey={titleKey} />
     {/snippet}

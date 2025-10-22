@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ColourVars, Container, type SwipeDirection } from "component-lib";
+    import { ColourVars, Container, onSwipeRight } from "component-lib";
     import type {
         AttachmentContent,
         ChatEvent as ChatEventType,
@@ -317,12 +317,6 @@
     function onSendMessageWithContent(content: MessageContent) {
         client.sendMessageWithContent(messageContext, content, false);
     }
-
-    function onSwipe(dir: SwipeDirection) {
-        if (dir === "right") {
-            onCloseThread(chat.id);
-        }
-    }
 </script>
 
 {#if removeLinkPreviewDetails !== undefined}
@@ -357,12 +351,11 @@
 
 <DropTarget {chat} mode={"thread"} {onFileSelected}>
     <Container
-        {onSwipe}
+        onSwipe={onSwipeRight(() => onCloseThread(chat.id))}
         background={ColourVars.background0}
         height={{ kind: "fill" }}
         direction={"vertical"}>
         <ThreadHeader {threadRootMessageIndex} {onCloseThread} {rootEvent} chatSummary={chat} />
-
         <ChatEventList
             threadRootEvent={rootEvent}
             rootSelector={"thread-messages"}

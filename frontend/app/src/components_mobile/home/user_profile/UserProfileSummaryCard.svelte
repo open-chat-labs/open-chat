@@ -12,12 +12,15 @@
 
     const client = getContext<OpenChat>("client");
 
+    type Mode = "edit" | "view";
+
     interface Props {
         user: UserSummary;
         profile: PublicProfile;
+        mode?: Mode;
     }
 
-    let { user, profile }: Props = $props();
+    let { user, profile, mode = "edit" }: Props = $props();
 
     let avatarUrl = $derived(
         profile !== undefined
@@ -63,21 +66,23 @@
         gap={"sm"}
         backgroundImage={backgroundUrl}
         background={gradient}>
-        <IconButton onclick={about} size={"md"} mode={"dark"}>
-            {#snippet icon(color)}
-                <Info {color} />
-            {/snippet}
-        </IconButton>
-        <IconButton onclick={shareProfile} size={"md"} mode={"dark"}>
-            {#snippet icon(color)}
-                <Share {color} />
-            {/snippet}
-        </IconButton>
-        <IconButton onclick={profileSettings} size={"md"} mode={"dark"}>
-            {#snippet icon(color)}
-                <Cog {color} />
-            {/snippet}
-        </IconButton>
+        {#if mode === "edit"}
+            <IconButton onclick={about} size={"md"} mode={"dark"}>
+                {#snippet icon(color)}
+                    <Info {color} />
+                {/snippet}
+            </IconButton>
+            <IconButton onclick={shareProfile} size={"md"} mode={"dark"}>
+                {#snippet icon(color)}
+                    <Share {color} />
+                {/snippet}
+            </IconButton>
+            <IconButton onclick={profileSettings} size={"md"} mode={"dark"}>
+                {#snippet icon(color)}
+                    <Cog {color} />
+                {/snippet}
+            </IconButton>
+        {/if}
     </Container>
     <Container
         supplementalClass={"username_and_bio"}
@@ -88,7 +93,7 @@
             <Avatar borderWidth={"thick"} size={"xxl"} url={avatarUrl}></Avatar>
             <Container height={{ kind: "fill" }} mainAxisAlignment={"end"} direction={"vertical"}>
                 <Container gap={"sm"} crossAxisAlignment={"center"}>
-                    <H2 width={{ kind: "hug" }}>{profile.displayName}</H2>
+                    <H2 width={{ kind: "hug" }}>{profile.displayName ?? profile.username}</H2>
                     <Badges diamondStatus={user.diamondStatus} uniquePerson={user.isUniquePerson} />
                 </Container>
                 <BodySmall colour={"textSecondary"}>@{user.username}</BodySmall>
@@ -106,6 +111,7 @@
             direction={"vertical"}
             allowOverflow>
             <ChitSummary
+                {mode}
                 streak={user.streak}
                 earned={user.totalChitEarned}
                 balance={user.chitBalance} />
