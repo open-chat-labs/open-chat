@@ -14,8 +14,8 @@
     import { buildDisplayName } from "../../../utils/user";
     import Translatable from "../../Translatable.svelte";
     import Markdown from "../Markdown.svelte";
-    import TipThumbnail from "../TipThumbnail.svelte";
     import Reaction from "../message/Reaction.svelte";
+    import Tip from "../message/Tip.svelte";
 
     const MAX_REACTIONS = 4;
     const client = getContext<OpenChat>("client");
@@ -199,7 +199,7 @@
                 <Container gap={"xs"} crossAxisAlignment={"center"} width={{ kind: "hug" }}>
                     {@const more = event.message.reactions.length - MAX_REACTIONS}
                     {#each event.message.reactions.slice(0, MAX_REACTIONS) as reaction (reaction.reaction)}
-                        <Reaction {reaction} intersecting />
+                        <Reaction alignTooltip={"end"} {reaction} intersecting />
                     {/each}
                     {#if more > 0}
                         <CountBadge mode="additive">+{more}</CountBadge>
@@ -209,8 +209,8 @@
             {#if event.activity === "tip" && tips.length > 0}
                 <Container gap={"xs"} crossAxisAlignment={"center"} width={{ kind: "hug" }}>
                     {@const more = tips.length - MAX_REACTIONS}
-                    {#each tips.slice(0, MAX_REACTIONS) as [ledger, userTips]}
-                        <TipThumbnail canTip={false} {ledger} {userTips} />
+                    {#each tips.slice(0, MAX_REACTIONS) as tip}
+                        <Tip alignTooltip={"end"} {tip} />
                     {/each}
                     {#if more > 0}
                         <CountBadge mode="additive">+{more}</CountBadge>

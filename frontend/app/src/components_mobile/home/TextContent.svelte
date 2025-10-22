@@ -16,7 +16,6 @@
         content: TextContent;
         truncate?: boolean;
         pinned?: boolean;
-        edited: boolean;
         fill: boolean;
         me: boolean;
         blockLevelMarkdown: boolean;
@@ -28,7 +27,6 @@
         content,
         truncate = false,
         pinned = false,
-        edited,
         fill,
         me,
         blockLevelMarkdown,
@@ -63,9 +61,6 @@
 <Body>
     <Markdown inline={!blockLevelMarkdown} suppressLinks={pinned} {text} />
 </Body>
-{#if edited}
-    <span class="edited-msg">({$_("edited")})</span>
-{/if}
 
 {#if previewUrls.length > 0}
     {#if !expanded}

@@ -41,6 +41,7 @@
     .menu {
         max-height: 80vh;
         max-height: var(--override-height, 80vh);
+        border-radius: var(--rad-lg);
 
         &.centered {
             width: 70vw;

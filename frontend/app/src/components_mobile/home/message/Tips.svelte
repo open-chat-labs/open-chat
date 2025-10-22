@@ -25,12 +25,12 @@
     height={{ kind: "hug" }}
     crossAxisAlignment={"center"}>
     {#each tipEntries as tip}
-        <Tip {alignTooltip} {tip} {onClick} {canTip} />
+        <Tip {alignTooltip} {tip} onClick={canTip ? onClick : undefined} />
     {/each}
 </Container>
 
 <style lang="scss">
-    :global(.tips-offset-top) {
+    :global {
         top: -0.5rem;
     }
 </style>

@@ -51,7 +51,6 @@
     }
 
     let {
-        radius,
         content,
         me = false,
         truncate = false,
@@ -85,7 +84,6 @@
         {truncate}
         {pinned}
         {content}
-        {edited}
         {blockLevelMarkdown}
         {showPreviews}
         {onRemovePreview} />

@@ -111,7 +111,6 @@
 
             // Finally - we are in a position to specify the *type* of transition
             const transitionType = routeToTransitionType(params, routeStore.value);
-            console.log("Transition Type: ", transitionType);
             (document as any).startViewTransition({
                 update: async () => {
                     client.setRouteParams(ctx, params);

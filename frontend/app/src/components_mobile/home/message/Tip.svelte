@@ -8,13 +8,10 @@
     interface Props {
         alignTooltip?: Alignment;
         tip: [string, Record<string, bigint>];
-        canTip: boolean;
-        onClick: (ledger: string) => void;
+        onClick?: (ledger: string) => void;
     }
 
-    // TODO - come back and deal with tooltips
-
-    let { onClick, tip, canTip, alignTooltip }: Props = $props();
+    let { onClick, tip, alignTooltip }: Props = $props();
     let [ledger, userTips] = $derived(tip);
     let userTipsList = $derived(Object.entries(userTips));
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
@@ -23,7 +20,7 @@
 
 <Tooltip autoWidth position={"bottom"} align={alignTooltip}>
     <Container
-        onClick={canTip ? () => onClick(ledger) : undefined}
+        onClick={() => onClick?.(ledger)}
         borderRadius={"lg"}
         width={{ kind: "hug" }}
         padding={["zero", "xs"]}

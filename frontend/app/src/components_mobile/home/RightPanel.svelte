@@ -46,7 +46,6 @@
     import { activeVideoCall } from "../../stores/video";
     import { currentTheme } from "../../theme/themes";
     import { removeQueryStringParam, removeThreadMessageIndex } from "../../utils/urls";
-    import Resizable from "../Resizable.svelte";
     import ChannelOrCommunityInvite from "./ChannelOrCommunityInvite.svelte";
     import ChannelOrCommunityMembers from "./ChannelOrCommunityMembers.svelte";
     import ChannelOrCommunitySummary from "./ChannelOrCommunitySummary.svelte";
@@ -562,8 +561,6 @@
     {:else if $lastRightPanelState.kind === "community_filters"}
         <CommunityFilters onClose={client.popRightPanelHistory} />
     {/if}
-
-    <Resizable {modal} {section} bind:resizedWidth bind:resized bind:resizing />
 </section>
 
 <style lang="scss">

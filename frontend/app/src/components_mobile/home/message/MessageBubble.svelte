@@ -11,6 +11,7 @@
     import {
         currentUserIdStore,
         OpenChat,
+        publish,
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
         type ChatType,
@@ -50,7 +51,6 @@
         expiresAt: number | undefined;
         percentageExpired: number;
         pinned: boolean;
-        onSwipeRight: () => void;
         repliesTo: Snippet<[RehydratedReplyContext]>;
         fill: boolean;
         onOpenUserProfile: (e?: Event) => void;
@@ -76,7 +76,6 @@
         expiresAt,
         percentageExpired,
         pinned,
-        onSwipeRight,
         repliesTo,
         fill,
         onOpenUserProfile,
@@ -125,25 +124,43 @@
         }
     });
 
+    // this is terrible
+    function adjustInnerRadius(outer: BorderRadiusSize): BorderRadiusSize {
+        if (outer === "xl") return "lg";
+        return outer;
+    }
+
     let replyRadius = $derived<Radius>([
-        borderRadius[0] as BorderRadiusSize,
-        borderRadius[1] as BorderRadiusSize,
+        first ? "sm" : adjustInnerRadius(borderRadius[0] as BorderRadiusSize),
+        first ? "sm" : adjustInnerRadius(borderRadius[1] as BorderRadiusSize),
         "sm",
         "sm",
     ]);
 
     function onSwipe(dir: SwipeDirection) {
+        // This *should* be done at a much higher level (and it is)
+        // But unfortunately because there is also a long press menu
+        // trigger on the message bubble it will stop the touch event
+        // bubbling far enough. This is a work around until I can think
+        // of a better solution.
+        //
+        // The root cause is that both longpress and swipe deal in touchstart
+        // events and we don't want to allow those to bubble otherwise they
+        // interfere with each other. But sometimes we *do* need them to bubble.
+        //
+        // Might be that we need custom events for Swipe and Longpress so that
+        // they can bubble without interference.
         if (dir === "right") {
-            onSwipeRight();
+            publish("clearSelection");
         }
     }
 </script>
 
 <Container
+    {onSwipe}
     bind:ref
     allowOverflow
     minWidth={senderWidth}
-    {onSwipe}
     direction={"vertical"}
     {borderRadius}
     {padding}

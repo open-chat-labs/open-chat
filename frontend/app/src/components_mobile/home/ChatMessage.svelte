@@ -588,7 +588,6 @@
                             onOpenUserProfile={openUserProfile}
                             {msg}
                             {fill}
-                            onSwipeRight={reply}
                             {first}
                             {last}
                             {hasThread}

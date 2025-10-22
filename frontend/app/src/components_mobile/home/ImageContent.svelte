@@ -38,9 +38,6 @@
 
     let imgElement: HTMLImageElement | undefined = $state();
     let zoom = $state(false);
-    let withCaption = $derived(
-        content.kind === "image_content" && content.caption !== undefined && content.caption !== "",
-    );
     let landscape = $derived(content.height < content.width);
     let zoomedWidth: number = $state(0);
     let zoomedHeight: number = $state(0);
@@ -144,7 +141,6 @@
             class="unzoomed"
             class:landscape
             class:fill
-            class:withCaption
             class:draft
             class:reply
             class:zoomable={zoomable && !hidden}
@@ -266,10 +262,6 @@
 
         &:not(.fill) {
             border-radius: $radius;
-        }
-
-        &.withCaption {
-            margin-bottom: $sp2;
         }
 
         &.draft {
