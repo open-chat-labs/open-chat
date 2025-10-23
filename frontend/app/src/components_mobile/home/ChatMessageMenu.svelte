@@ -336,9 +336,9 @@
     mainAxisAlignment={"spaceBetween"}
     crossAxisAlignment={"center"}
     supplementalClass={"quick_reactions"}
-    padding={["zero", "xs", "xs", "xs"]}>
+    padding={["zero", "sm", "xs", "sm"]}>
     {#each $quickReactions as reaction}
-        <IconButton onclick={() => selectQuickReaction(reaction)}>
+        <IconButton padding={["sm", "zero"]} onclick={() => selectQuickReaction(reaction)}>
             {#snippet icon()}
                 <span class="quick-reaction">
                     {reaction}
@@ -347,7 +347,7 @@
         </IconButton>
     {/each}
     {#if canReact && !failed}
-        <IconButton onclick={showEmojiPicker}>
+        <IconButton padding={["sm", "zero"]} onclick={showEmojiPicker}>
             {#snippet icon(color)}
                 <EmoticonOutline {color} />
             {/snippet}

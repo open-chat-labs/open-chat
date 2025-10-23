@@ -76,12 +76,21 @@
     function closeMenu() {
         open = portalState.close();
         menuClone?.remove();
-        document.getElementById("masked_overlay")?.remove();
+        let overlay = document.getElementById("masked_overlay");
+        if (overlay) {
+            overlay.classList.remove("visible");
+        }
     }
 
     function activateMask() {
-        const overlay = document.createElement("div");
-        overlay.id = "masked_overlay";
+        let overlay = document.getElementById("masked_overlay");
+        if (!overlay) {
+            overlay = document.createElement("div");
+            overlay.id = "masked_overlay";
+            document.body.appendChild(overlay);
+        }
+        overlay.classList.add("visible");
+
         menuClone = menu.cloneNode(true) as HTMLElement;
         const rect = menu.getBoundingClientRect();
 
@@ -100,7 +109,6 @@
                 opacity: 0.8;
             `;
 
-        document.body.appendChild(overlay);
         document.body.appendChild(menuClone);
         setTimeout(() => {
             if (menuClone !== undefined) {

@@ -492,12 +492,16 @@ svelte-virtual-list-viewport {
 }
 
 #masked_overlay {
-    transition: opacity 300ms ease-in-out;
+    transition: opacity 250ms ease-in-out;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--background-0);
     z-index: 90;
     pointer-events: none;
+    opacity: 0;
+    &.visible {
+        opacity: 0.5;
+    }
 }
 
 @keyframes fade-in {

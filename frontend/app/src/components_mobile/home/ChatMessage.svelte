@@ -481,107 +481,107 @@
         onClose={() => (showReport = false)} />
 {/if}
 
+{#if debug}
+    <pre>Sender: {msg.sender}</pre>
+    <pre>EventIdx: {eventIndex}</pre>
+    <pre>MsgIdx: {msg.messageIndex}</pre>
+    <pre>MsgId: {msg.messageId}</pre>
+    <pre>Confirmed: {confirmed}</pre>
+    <pre>ReadByThem: {readByThem}</pre>
+    <pre>ReadByUs: {readByMe}</pre>
+    <pre>Pinned: {pinned}</pre>
+    <pre>edited: {msg.edited}</pre>
+    <pre>failed: {failed}</pre>
+    <pre>timestamp: {timestamp}</pre>
+    <pre>expiresAt: {expiresAt}</pre>
+    <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
+    <pre>senderContext: {JSON.stringify(senderContext, null, 4)}</pre>
+    <pre>inert: {inert}</pre>
+    <pre>canRevealDeleted: {canRevealDeleted}</pre>
+    <pre>canlRevealBlocked: {canRevealBlocked}</pre>
+    <pre>readonly: {readonly}</pre>
+    <pre>showChatMenu: {showChatMenu}</pre>
+    <pre>intersecting: {intersecting}</pre>
+    <pre>ephemeral: {ephemeral}</pre>
+{/if}
 {#if expiresAt === undefined || percentageExpired < 100}
     <IntersectionObserverComponent>
         {#snippet children(intersecting)}
-            <MenuTrigger maskUI centered mobileMode={"longpress"}>
-                {#snippet menuItems()}
-                    {#if showChatMenu && intersecting}
-                        <ChatMessageMenu
-                            {chatId}
-                            {isProposal}
-                            {inert}
-                            {publicGroup}
-                            {confirmed}
-                            {failed}
-                            {canShare}
-                            {me}
-                            {canPin}
-                            {canReact}
-                            {canTip}
-                            {pinned}
-                            {supportsReply}
-                            {canQuoteReply}
-                            {threadRootMessage}
-                            {canStartThread}
-                            {multiUserChat}
-                            {msg}
-                            {canForward}
-                            {canBlockUser}
-                            {canEdit}
-                            {canDelete}
-                            {canUndelete}
-                            {canRevealDeleted}
-                            {canRevealBlocked}
-                            translatable={canTranslate}
-                            {translated}
-                            {selectQuickReaction}
-                            showEmojiPicker={() => {
-                                showEmojiPicker = true;
-                            }}
-                            {onCollapseMessage}
-                            onReply={reply}
-                            {onRetrySend}
-                            {onDeleteFailedMessage}
-                            onReplyPrivately={replyPrivately}
-                            onEditMessage={editMessage}
-                            onTipMessage={tipMessage}
-                            onReportMessage={reportMessage}
-                            onCancelReminder={cancelReminder}
-                            onRemindMe={remindMe} />
-                    {/if}
-                {/snippet}
-                {#if debug}
-                    <pre>Sender: {msg.sender}</pre>
-                    <pre>EventIdx: {eventIndex}</pre>
-                    <pre>MsgIdx: {msg.messageIndex}</pre>
-                    <pre>MsgId: {msg.messageId}</pre>
-                    <pre>Confirmed: {confirmed}</pre>
-                    <pre>ReadByThem: {readByThem}</pre>
-                    <pre>ReadByUs: {readByMe}</pre>
-                    <pre>Pinned: {pinned}</pre>
-                    <pre>edited: {msg.edited}</pre>
-                    <pre>failed: {failed}</pre>
-                    <pre>timestamp: {timestamp}</pre>
-                    <pre>expiresAt: {expiresAt}</pre>
-                    <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
-                    <pre>senderContext: {JSON.stringify(senderContext, null, 4)}</pre>
-                    <pre>inert: {inert}</pre>
-                    <pre>canRevealDeleted: {canRevealDeleted}</pre>
-                    <pre>canlRevealBlocked: {canRevealBlocked}</pre>
-                    <pre>readonly: {readonly}</pre>
-                    <pre>showChatMenu: {showChatMenu}</pre>
-                    <pre>intersecting: {intersecting}</pre>
-                    <pre>ephemeral: {ephemeral}</pre>
+            <Container
+                data_index={failed ? "" : `${msg.messageIndex}`}
+                data_id={failed ? "" : `${msg.messageId}`}
+                id={failed ? "" : `event-${eventIndex}`}
+                bind:ref={msgElement}
+                padding={last ? ["zero", "zero", "sm", "zero"] : "zero"}
+                gap={"sm"}
+                allowOverflow
+                mainAxisAlignment={me ? "end" : "start"}>
+                {#if showAvatar}
+                    <div class:first class="avatar">
+                        <Avatar
+                            onClick={openUserProfile}
+                            url={client.userAvatarUrl(sender)}
+                            size={"sm"}></Avatar>
+                    </div>
                 {/if}
+                {@const hasThread = threadSummary !== undefined && !inThread}
+                {@const hasReactions = msg.reactions.length > 0}
+                {@const hasTips = tips.length > 0}
                 <Container
-                    data_index={failed ? "" : `${msg.messageIndex}`}
-                    data_id={failed ? "" : `${msg.messageId}`}
-                    id={failed ? "" : `event-${eventIndex}`}
-                    bind:ref={msgElement}
-                    padding={last ? ["zero", "zero", "sm", "zero"] : "zero"}
-                    gap={"sm"}
                     allowOverflow
-                    mainAxisAlignment={me ? "end" : "start"}>
-                    {#if showAvatar}
-                        <div class:first class="avatar">
-                            <Avatar
-                                onClick={openUserProfile}
-                                url={client.userAvatarUrl(sender)}
-                                size={"sm"}></Avatar>
-                        </div>
-                    {/if}
-                    {@const hasThread = threadSummary !== undefined && !inThread}
-                    {@const hasReactions = msg.reactions.length > 0}
-                    {@const hasTips = tips.length > 0}
-                    <Container
-                        allowOverflow
-                        crossAxisAlignment={me ? "end" : "start"}
-                        width={{ kind: "hug" }}
-                        maxWidth={"80%"}
-                        gap={"xxs"}
-                        minWidth={"6rem"}
-                        direction={"vertical"}>
+                    crossAxisAlignment={me ? "end" : "start"}
+                    width={{ kind: "hug" }}
+                    maxWidth={"80%"}
+                    gap={"xxs"}
+                    minWidth={"6rem"}
+                    direction={"vertical"}>
+                    <MenuTrigger maskUI centered mobileMode={"longpress"}>
+                        {#snippet menuItems()}
+                            {#if showChatMenu && intersecting}
+                                <ChatMessageMenu
+                                    {chatId}
+                                    {isProposal}
+                                    {inert}
+                                    {publicGroup}
+                                    {confirmed}
+                                    {failed}
+                                    {canShare}
+                                    {me}
+                                    {canPin}
+                                    {canReact}
+                                    {canTip}
+                                    {pinned}
+                                    {supportsReply}
+                                    {canQuoteReply}
+                                    {threadRootMessage}
+                                    {canStartThread}
+                                    {multiUserChat}
+                                    {msg}
+                                    {canForward}
+                                    {canBlockUser}
+                                    {canEdit}
+                                    {canDelete}
+                                    {canUndelete}
+                                    {canRevealDeleted}
+                                    {canRevealBlocked}
+                                    translatable={canTranslate}
+                                    {translated}
+                                    {selectQuickReaction}
+                                    showEmojiPicker={() => {
+                                        showEmojiPicker = true;
+                                    }}
+                                    {onCollapseMessage}
+                                    onReply={reply}
+                                    {onRetrySend}
+                                    {onDeleteFailedMessage}
+                                    onReplyPrivately={replyPrivately}
+                                    onEditMessage={editMessage}
+                                    onTipMessage={tipMessage}
+                                    onReportMessage={reportMessage}
+                                    onCancelReminder={cancelReminder}
+                                    onRemindMe={remindMe} />
+                            {/if}
+                        {/snippet}
                         <MessageBubble
                             {focused}
                             {senderTyping}
@@ -640,34 +640,34 @@
                                     {onExpandMessage} />
                             {/snippet}
                         </MessageBubble>
-                        {#if hasThread}
-                            <ThreadSummary
-                                url={msgUrl}
-                                {threadSummary}
-                                {chatId}
-                                threadRootMessageIndex={msg.messageIndex}
-                                {me} />
-                        {/if}
-                        {#if hasReactions}
-                            <Reactions
-                                {me}
-                                onClick={({ reaction }) => toggleReaction(false, reaction)}
-                                {intersecting}
-                                reactions={msg.reactions}
-                                offset={!hasThread}></Reactions>
-                        {/if}
+                    </MenuTrigger>
+                    {#if hasThread}
+                        <ThreadSummary
+                            url={msgUrl}
+                            {threadSummary}
+                            {chatId}
+                            threadRootMessageIndex={msg.messageIndex}
+                            {me} />
+                    {/if}
+                    {#if hasReactions}
+                        <Reactions
+                            {me}
+                            onClick={({ reaction }) => toggleReaction(false, reaction)}
+                            {intersecting}
+                            reactions={msg.reactions}
+                            offset={!hasThread}></Reactions>
+                    {/if}
 
-                        {#if hasTips && !inert}
-                            <Tips
-                                {me}
-                                tips={msg.tips}
-                                onClick={tipMessage}
-                                {canTip}
-                                offset={!hasThread} />
-                        {/if}
-                    </Container>
+                    {#if hasTips && !inert}
+                        <Tips
+                            {me}
+                            tips={msg.tips}
+                            onClick={tipMessage}
+                            {canTip}
+                            offset={!hasThread} />
+                    {/if}
                 </Container>
-            </MenuTrigger>
+            </Container>
         {/snippet}
     </IntersectionObserverComponent>
 {/if}
