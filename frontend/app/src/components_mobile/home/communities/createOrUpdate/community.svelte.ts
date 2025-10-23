@@ -8,6 +8,7 @@ import {
     isDiamondStore,
     OpenChat,
     publish,
+    type CommunityPermissions,
     type CommunitySummary,
     type UpdatedRules,
     type VersionedRules,
@@ -81,6 +82,10 @@ class UpdateCommunityState extends UpdateGroupOrCommunityState {
             blobUrl: detail.url,
             blobData: detail.data,
         };
+    }
+
+    get permissions(): CommunityPermissions {
+        return this.candidate.permissions;
     }
 
     get channelNames(): string[] {

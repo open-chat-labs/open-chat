@@ -252,11 +252,11 @@
                 {/if}
             </LinkedCard>
             <LinkedCard
-                onClick={() => publish("updatePermissions", ucs)}
+                onClick={() => publish("updateCommunityPermissions")}
                 Icon={AccountMultiple}
                 title={i18nKey("Permissions")}
                 info={i18nKey(
-                    "Define which user groups can access certain features within the group.",
+                    "Define which user roles can access certain features within the community.",
                 )} />
         </Container>
         <Container mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"end"}>

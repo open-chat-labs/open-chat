@@ -20,12 +20,13 @@
     import AddCommunityMembers from "./communities/createOrUpdate/AddCommunityMembers.svelte";
     import Channels from "./communities/createOrUpdate/Channels.svelte";
     import CommunityInfo from "./communities/createOrUpdate/CommunityInfo.svelte";
+    import CommunityPermissions from "./communities/createOrUpdate/Permissions.svelte";
     import AddGroupMembers from "./createOrUpdateGroup/AddGroupMembers.svelte";
     import GeneralSetup from "./createOrUpdateGroup/GeneralSetup.svelte";
     import GroupInfo from "./createOrUpdateGroup/GroupInfo.svelte";
+    import GroupPermissions from "./createOrUpdateGroup/Permissions.svelte";
     import { UpdateGroupOrCommunityState } from "./groupOrCommunity.svelte";
     import NewMessage from "./NewMessage.svelte";
-    import Permissions from "./permission/Permissions.svelte";
     import Rules from "./Rules.svelte";
     import SlidingPage from "./SlidingPage.svelte";
     import About from "./user_profile/About.svelte";
@@ -39,6 +40,14 @@
     import ProfileSettings from "./user_profile/ProfileSettings.svelte";
     import Share from "./user_profile/Share.svelte";
     import Verify from "./user_profile/Verify.svelte";
+    /**
+     * It is tempting to think that this can completely replace the right panel on mobile but it's not quite so simple.
+     * It can replace everything _that is not represented by it's own route_. That is because at the moment
+     * we have view transitions backed into the router and also done manually in the sliding page. So if we represent
+     * a route with a sliding modal we end up with clunky double transitions. That could be solved by implementing the
+     * sliding modal transition with a different automated view transition. Maybe. But for the moment I'd rather let
+     * sleeping dogs lie.
+     */
 
     type SlidingModalType =
         | { kind: "new_message" }
@@ -49,7 +58,8 @@
         | { kind: "update_group_details" }
         | { kind: "update_rules"; data: UpdateGroupOrCommunityState }
         | { kind: "update_group_general_setup" }
-        | { kind: "update_permissions"; data: UpdateGroupOrCommunityState }
+        | { kind: "update_group_permissions" }
+        | { kind: "update_community_permissions" }
         | { kind: "update_access_gates"; data: UpdateGroupOrCommunityState }
         | { kind: "update_neuron_gates"; data: UpdateGroupOrCommunityState }
         | { kind: "update_payment_gates"; data: UpdateGroupOrCommunityState }
@@ -101,12 +111,10 @@
             subscribe("updateGroupGeneralSetup", () =>
                 push({ kind: "update_group_general_setup" }),
             ),
-            subscribe("updatePermissions", (data) =>
-                push({
-                    kind: "update_permissions",
-                    data: data as unknown as UpdateGroupOrCommunityState,
-                }),
+            subscribe("updateCommunityPermissions", () =>
+                push({ kind: "update_community_permissions" }),
             ),
+            subscribe("updateGroupPermissions", () => push({ kind: "update_group_permissions" })),
             subscribe("updateAccessGates", (data) =>
                 push({
                     kind: "update_access_gates",
@@ -224,8 +232,10 @@
             <GeneralSetup />
         {:else if page.kind === "update_access_gates"}
             <AccessGates data={page.data} />
-        {:else if page.kind === "update_permissions"}
-            <Permissions data={page.data} />
+        {:else if page.kind === "update_group_permissions"}
+            <GroupPermissions />
+        {:else if page.kind === "update_community_permissions"}
+            <CommunityPermissions />
         {:else if page.kind === "access_gates_learn_more"}
             <AboutAccessGates />
         {:else if page.kind === "update_neuron_gates"}

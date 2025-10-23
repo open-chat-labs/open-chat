@@ -185,7 +185,7 @@
                 {/if}
             </LinkedCard>
             <LinkedCard
-                onClick={() => publish("updatePermissions", ugs)}
+                onClick={() => publish("updateGroupPermissions")}
                 Icon={AccountMultiple}
                 title={i18nKey("Permissions")}
                 info={i18nKey(

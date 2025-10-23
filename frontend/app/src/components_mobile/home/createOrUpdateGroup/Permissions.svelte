@@ -4,16 +4,11 @@
     import { publish } from "openchat-client";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import Translatable from "../../Translatable.svelte";
-    import { UpdateGroupState } from "../createOrUpdateGroup/group.svelte";
     import GroupCard from "../createOrUpdateGroup/GroupCard.svelte";
-    import type { UpdateGroupOrCommunityState } from "../groupOrCommunity.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
+    import { updateGroupState } from "./group.svelte";
 
-    interface Props {
-        data: UpdateGroupOrCommunityState;
-    }
-
-    let { data }: Props = $props();
+    const data = updateGroupState;
 </script>
 
 <SlidingPageContent title={i18nKey("Permission")}>
@@ -22,9 +17,7 @@
         gap={"xl"}
         direction={"vertical"}
         padding={["xxl", "lg", "lg", "lg"]}>
-        {#if data instanceof UpdateGroupState}
-            <GroupCard candidateGroup={data.candidateGroup} />
-        {/if}
+        <GroupCard candidateGroup={data.candidateGroup} />
 
         <Container padding={["zero", "md"]} gap={"sm"} direction={"vertical"}>
             <Body fontWeight={"bold"}>

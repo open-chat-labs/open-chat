@@ -43,6 +43,7 @@
         pageReplace,
         pinNumberResolverStore,
         querystringStore,
+        rightPanelMode,
         ROLE_NONE,
         routeForChatIdentifier,
         routeForScope,
@@ -106,7 +107,7 @@
     import VerifyHumanity from "./profile/VerifyHumanity.svelte";
     import ViewUserProfile from "./profile/ViewUserProfileModal.svelte";
     import MakeProposalModal from "./proposal/MakeProposalModal.svelte";
-    import RightPanel from "./RightPanelWrapper.svelte";
+    import RightPanel from "./RightPanel.svelte";
     import SuspendModal from "./SuspendModal.svelte";
     import Upgrade from "./upgrade/Upgrade.svelte";
 
@@ -936,7 +937,9 @@
     tag="main">
     <LeftPanel />
     <MiddlePanel {joining} />
-    <RightPanel />
+    {#if $rightPanelMode !== "hidden"}
+        <RightPanel />
+    {/if}
 </Container>
 
 {#if $anonUserStore}
