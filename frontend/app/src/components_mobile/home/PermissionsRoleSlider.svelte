@@ -2,6 +2,7 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { BodySmall, CommonButton, Container, Subtitle, type SizeMode } from "component-lib";
     import {
+        ROLE_NONE,
         roleAsText,
         type ChatPermissionRole,
         type MemberRole,
@@ -24,13 +25,20 @@
 
     let selectedIndex = $derived(roles.findIndex((r) => r === rolePermission));
 
-    function percentFromIndex(idx: number) {
+    function percentFromIndex(idx: number, progress = false) {
+        if (rolePermission === ROLE_NONE && progress) return 0;
         return (idx / (roles.length - 1)) * 100;
     }
 
     function select(r: ChatPermissionRole | undefined) {
         rolePermission = r;
-        // onClose?.();
+    }
+
+    function isActive(r: MemberRole) {
+        if (rolePermission === ROLE_NONE) {
+            return rolePermission === r;
+        }
+        return r >= (rolePermission ?? 0);
     }
 </script>
 
@@ -57,9 +65,10 @@
             allowOverflow
             padding={["md", "xxl", "md", "zero"]}>
             <div class="track">
-                <div class="progress" style={`height: ${percentFromIndex(selectedIndex)}%`}></div>
+                <div class="progress" style={`height: ${percentFromIndex(selectedIndex, true)}%`}>
+                </div>
                 {#each roles as r, i}
-                    {@const active = r >= (rolePermission ?? 0)}
+                    {@const active = isActive(r)}
                     <!-- svelte-ignore a11y_click_events_have_key_events -->
                     <!-- svelte-ignore a11y_no_static_element_interactions -->
                     <div
@@ -83,7 +92,7 @@
             padding={"zero"}
             mainAxisAlignment={"spaceBetween"}>
             {#each roles as r, i}
-                {@const active = r >= (rolePermission ?? 0)}
+                {@const active = isActive(r)}
                 <button
                     class="role_label"
                     onclick={() => select(r)}
