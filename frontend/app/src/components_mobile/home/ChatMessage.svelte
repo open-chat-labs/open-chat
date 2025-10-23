@@ -379,7 +379,7 @@
         showRemindMe = true;
     }
 
-    const maxWidthFraction = 0.8;
+    const maxWidthFraction = 0.85;
     let inert = $derived(
         msg.content.kind === "deleted_content" ||
             msg.content.kind === "blocked_content" ||
@@ -528,10 +528,11 @@
                 {@const hasReactions = msg.reactions.length > 0}
                 {@const hasTips = tips.length > 0}
                 <Container
+                    supplementalClass={"message_bubble_wrapper"}
                     allowOverflow
                     crossAxisAlignment={me ? "end" : "start"}
                     width={{ kind: "hug" }}
-                    maxWidth={"80%"}
+                    maxWidth={"85%"}
                     gap={"xxs"}
                     minWidth={"6rem"}
                     direction={"vertical"}>
@@ -673,6 +674,9 @@
 {/if}
 
 <style lang="scss">
+    :global(.container.message_bubble_wrapper .menu-trigger) {
+        width: 100%;
+    }
     .avatar:not(.first) {
         visibility: hidden;
     }

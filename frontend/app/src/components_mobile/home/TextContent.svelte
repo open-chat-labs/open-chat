@@ -58,7 +58,7 @@
     let iconColour = $derived(me ? "var(--currentChat-msg-me-txt)" : "var(--currentChat-msg-txt)");
 </script>
 
-<ChatText>
+<ChatText width={{ kind: "hug" }}>
     <Markdown inline={!blockLevelMarkdown} suppressLinks={pinned} {text} />
 </ChatText>
 

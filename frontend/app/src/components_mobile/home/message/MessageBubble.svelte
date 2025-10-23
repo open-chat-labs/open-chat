@@ -274,6 +274,10 @@
         transition: box-shadow ease-in 300ms;
     }
 
+    :global(.container.message_bubble .markdown-wrapper) {
+        word-break: break-word;
+    }
+
     :global(.container.message_bubble.focused) {
         box-shadow: 0 0 0 4px var(--primary-muted);
     }
