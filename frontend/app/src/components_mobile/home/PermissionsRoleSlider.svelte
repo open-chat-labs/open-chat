@@ -128,7 +128,7 @@
 
             &.selected {
                 width: 4px;
-                height: 1.5rem;
+                height: 1.2rem;
             }
         }
     }

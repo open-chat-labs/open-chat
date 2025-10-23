@@ -12,6 +12,7 @@ import {
     routeForChatIdentifier,
     UnsupportedValueError,
     type CandidateGroupChat,
+    type ChatPermissions,
     type Level,
     type MultiUserChatIdentifier,
     type ResourceKey,
@@ -96,6 +97,10 @@ export class UpdateGroupState extends UpdateGroupOrCommunityState {
 
     get valid() {
         return this.#valid;
+    }
+
+    get permissions(): ChatPermissions {
+        return this.candidate.permissions;
     }
 
     get candidateGroup(): CandidateGroupChat {
