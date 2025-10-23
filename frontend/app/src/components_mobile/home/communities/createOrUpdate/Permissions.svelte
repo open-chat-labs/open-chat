@@ -1,7 +1,13 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { CommonButton, Container } from "component-lib";
-    import { communityRoles, publish, type CommunityPermissions } from "openchat-client";
+    import { Body, BodySmall, CommonButton, Container, Sheet } from "component-lib";
+    import {
+        communityRoles,
+        publish,
+        roleAsText,
+        type CommunityPermissions,
+    } from "openchat-client";
+    import { _ } from "svelte-i18n";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import Translatable from "../../../Translatable.svelte";
     import PermissionsRoleSlider from "../../PermissionsRoleSlider.svelte";
@@ -16,20 +22,56 @@
             `permissions.${p}`,
         ]),
     );
+
+    let selected = $state<[keyof CommunityPermissions, string]>();
 </script>
+
+{#if selected !== undefined}
+    {@const [key, resourceKey] = selected}
+    <Sheet onClose={() => (selected = undefined)}>
+        {#snippet sheet()}
+            <PermissionsRoleSlider
+                height={{ kind: "fixed", size: "150px" }}
+                roles={communityRoles}
+                label={i18nKey(resourceKey)}
+                onClose={() => (selected = undefined)}
+                bind:rolePermission={ucs.permissions[key]} />
+        {/snippet}
+    </Sheet>
+{/if}
 
 <SlidingPageContent title={i18nKey("Community permissions")}>
     <Container
         height={{ kind: "fill" }}
         gap={"xl"}
         direction={"vertical"}
-        padding={["xxl", "md", "lg", "md"]}>
-        <Container gap={"lg"} direction={"vertical"}>
+        padding={["xxl", "xl", "lg", "xl"]}>
+        <Container gap={"sm"} direction={"vertical"}>
+            <Body fontWeight={"bold"}>
+                <Translatable resourceKey={i18nKey("Manage community permissions")}></Translatable>
+            </Body>
+
+            <BodySmall colour={"textSecondary"}>
+                <Translatable
+                    resourceKey={i18nKey(
+                        "You can assign permissions to different roles, from members to owners. Roles are built in a hierarchy, meaning that anyone above another role automatically gets everything that role can do.",
+                    )}></Translatable>
+            </BodySmall>
+        </Container>
+        <Container gap={"xxl"} direction={"vertical"}>
             {#each selectors as [key, resourceKey]}
-                <PermissionsRoleSlider
-                    roles={communityRoles}
-                    label={i18nKey(resourceKey)}
-                    bind:rolePermission={ucs.permissions[key]} />
+                <Container
+                    onClick={() => (selected = [key, resourceKey])}
+                    mainAxisAlignment={"spaceBetween"}
+                    crossAxisAlignment={"end"}>
+                    <div class="label">
+                        <Body>
+                            <Translatable resourceKey={i18nKey(resourceKey)}></Translatable>
+                        </Body>
+                    </div>
+                    <BodySmall colour={"primary"} fontWeight={"bold"} width={{ kind: "hug" }}
+                        >{$_(`role.${roleAsText(ucs.permissions[key])}`)}</BodySmall>
+                </Container>
             {/each}
         </Container>
 
@@ -43,3 +85,9 @@
         </Container>
     </Container>
 </SlidingPageContent>
+
+<style lang="scss">
+    .label {
+        text-transform: capitalize;
+    }
+</style>
