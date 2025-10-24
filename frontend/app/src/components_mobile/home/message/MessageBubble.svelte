@@ -107,7 +107,15 @@
     let showHeader = $derived(first && !isProposal && !isPrize);
     let hasReply = $derived(msg.repliesTo !== undefined);
     let me = $derived(msg.sender === $currentUserIdStore);
-    let backgroundColour = $derived(me ? ColourVars.primary : ColourVars.background2);
+    let backgroundColour = $derived.by(() => {
+        if (failed) {
+            return ColourVars.error;
+        }
+        if (me) {
+            return ColourVars.primary;
+        }
+        return ColourVars.background2;
+    });
     let padding = $derived.by<Padding>(() => {
         if (fill) return "zero";
         const uniform = hasReactions && !hasThread;
@@ -272,6 +280,10 @@
 
     :global(.container.message_bubble) {
         transition: box-shadow ease-in 300ms;
+    }
+
+    :global(.container.message_bubble a) {
+        color: inherit;
     }
 
     :global(.container.message_bubble .markdown-wrapper) {
