@@ -19,7 +19,7 @@
             parentDirection={"vertical"}
             height={{ kind: "fixed", size: "100%" }}
             onClick={(e) => e?.stopPropagation()}
-            background={ColourVars.background2}
+            background={ColourVars.background1}
             supplementalClass={"sheet_content"}
             borderRadius={["xl", "xl", "zero", "zero"]}
             direction={"vertical"}>
