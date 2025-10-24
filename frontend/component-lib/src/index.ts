@@ -26,7 +26,6 @@ export { default as NotificationIndicator } from "./components/NotificationIndic
 export { default as Radio } from "./components/Radio.svelte";
 export { default as SectionHeader } from "./components/SectionHeader.svelte";
 export { default as Sheet } from "./components/sheet/Sheet.svelte";
-export { default as SheetTrigger } from "./components/sheet/SheetTrigger.svelte";
 export { default as Spinner } from "./components/Spinner.svelte";
 export { default as Switch } from "./components/Switch.svelte";
 export { default as Tooltip } from "./components/tooltip/Tooltip.svelte";

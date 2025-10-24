@@ -1,5 +1,5 @@
 <script lang="ts" generics="T">
-    import { Body, Caption, ColourVars, Container, SheetTrigger } from "component-lib";
+    import { Body, Caption, ColourVars, Container, Sheet } from "component-lib";
     import { type Snippet } from "svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
 
@@ -24,49 +24,50 @@
         selectOptions: Snippet<[(val: T) => void]>;
         onSelect: (val: T) => void;
     }>();
+
+    let popupVisible = $state(false);
 </script>
 
-<SheetTrigger>
-    {#snippet trigger(toggle)}
-        <Container onClick={toggle} direction={"vertical"} gap={"xs"}>
-            <Container
-                background={ColourVars.textTertiary}
-                height={{ kind: "fixed", size: "3rem" }}
-                padding={["xs", "xl"]}
-                borderRadius={"circle"}
-                gap={"sm"}
-                crossAxisAlignment={"center"}>
-                {#if selectedValue !== undefined && value !== undefined}
-                    <Body colour={"textSecondary"}>
-                        {@render selectedValue(value)}
-                    </Body>
-                {:else}
-                    <Body colour={"textPlaceholder"}>
-                        {placeholder}
-                    </Body>
-                {/if}
-                {#if !disabled}
-                    <div class="icon">
-                        <ChevronDown color={"var(--text-placeholder)"} size="1.5rem" />
-                    </div>
-                {/if}
-            </Container>
-            {#if subtext}
-                <div class="subtext">
-                    <Caption colour={error ? "error" : "textSecondary"}>
-                        {@render subtext()}
-                    </Caption>
-                </div>
-            {/if}
-        </Container>
-    {/snippet}
-    {#snippet sheet(close)}
+<Container onClick={() => (popupVisible = true)} direction={"vertical"} gap={"xs"}>
+    <Container
+        background={ColourVars.textTertiary}
+        height={{ kind: "fixed", size: "3rem" }}
+        padding={["xs", "xl"]}
+        borderRadius={"circle"}
+        gap={"sm"}
+        crossAxisAlignment={"center"}>
+        {#if selectedValue !== undefined && value !== undefined}
+            <Body colour={"textSecondary"}>
+                {@render selectedValue(value)}
+            </Body>
+        {:else}
+            <Body colour={"textPlaceholder"}>
+                {placeholder}
+            </Body>
+        {/if}
+        {#if !disabled}
+            <div class="icon">
+                <ChevronDown color={"var(--text-placeholder)"} size="1.5rem" />
+            </div>
+        {/if}
+    </Container>
+    {#if subtext}
+        <div class="subtext">
+            <Caption colour={error ? "error" : "textSecondary"}>
+                {@render subtext()}
+            </Caption>
+        </div>
+    {/if}
+</Container>
+
+{#if popupVisible}
+    <Sheet dismissible onClose={() => (popupVisible = false)}>
         {@render selectOptions((val: T) => {
-            close();
+            popupVisible = false;
             onSelect(val);
         })}
-    {/snippet}
-</SheetTrigger>
+    </Sheet>
+{/if}
 
 <style lang="scss">
     :global(option) {

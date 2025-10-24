@@ -93,40 +93,38 @@
     }
 </script>
 
-<Sheet {onClose}>
-    {#snippet sheet()}
-        <Container direction={"vertical"} padding={"lg"} gap={"xl"}>
-            <Subtitle fontWeight={"bold"}>
-                <Translatable resourceKey={i18nKey("communities.otherChannels")} />
-            </Subtitle>
+<Sheet dismissible {onClose}>
+    <Container direction={"vertical"} padding={"lg"} gap={"xl"}>
+        <Subtitle fontWeight={"bold"}>
+            <Translatable resourceKey={i18nKey("communities.otherChannels")} />
+        </Subtitle>
 
-            {#if !searching && filteredResults.length === 0}
-                <Body colour={"textSecondary"}>
-                    <Translatable
-                        resourceKey={i18nKey(
-                            "There don't seem to be any other channels that you are no already a member of.",
-                        )}></Translatable>
-                </Body>
-            {:else}
-                <Container gap={"xl"} direction="vertical">
-                    {#each filteredResults as channel}
-                        <ChannelCard
-                            onSelectChannel={() => selectChannel(channel)}
-                            onDeleteChannel={() => deleteChannel(channel)}
-                            {channel} />
-                    {/each}
-                    {#if more}
-                        <CommonButton
-                            mode={"default"}
-                            size={"small_text"}
-                            disabled={searching}
-                            loading={searching}
-                            onClick={() => search(false)}
-                            ><Translatable
-                                resourceKey={i18nKey("communities.loadMore")} /></CommonButton>
-                    {/if}
-                </Container>
-            {/if}
-        </Container>
-    {/snippet}
+        {#if !searching && filteredResults.length === 0}
+            <Body colour={"textSecondary"}>
+                <Translatable
+                    resourceKey={i18nKey(
+                        "There don't seem to be any other channels that you are no already a member of.",
+                    )}></Translatable>
+            </Body>
+        {:else}
+            <Container gap={"xl"} direction="vertical">
+                {#each filteredResults as channel}
+                    <ChannelCard
+                        onSelectChannel={() => selectChannel(channel)}
+                        onDeleteChannel={() => deleteChannel(channel)}
+                        {channel} />
+                {/each}
+                {#if more}
+                    <CommonButton
+                        mode={"default"}
+                        size={"small_text"}
+                        disabled={searching}
+                        loading={searching}
+                        onClick={() => search(false)}
+                        ><Translatable
+                            resourceKey={i18nKey("communities.loadMore")} /></CommonButton>
+                {/if}
+            </Container>
+        {/if}
+    </Container>
 </Sheet>

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Tooltip } from "component-lib";
+    import { Body, Tooltip } from "component-lib";
     import {
         type ChatIdentifier,
         iconSize,
@@ -61,12 +61,14 @@
             class="message"
             class:failure={$toastStore.kind === "failure"}
             class:success={$toastStore.kind === "success"}>
-            <div class="text"><Translatable resourceKey={$reactiveResourceKey} /></div>
+            <Body align={"center"}>
+                <Translatable resourceKey={$reactiveResourceKey} />
+            </Body>
             {#if $toastStore.kind === "failure"}
                 {#if $toastStore.err !== undefined}
                     <Tooltip position="top" align="middle">
                         <div class="report" onclick={report}>
-                            <Bug size={$iconSize} color={"var(--button-txt)"} />
+                            <Bug size={$iconSize} color={"var(--text-primary)"} />
                         </div>
                         {#snippet popup()}
                             <Translatable resourceKey={i18nKey("reportBug")} />
@@ -74,7 +76,7 @@
                     </Tooltip>
                 {/if}
                 <div class="close" onclick={toastStore.hideToast}>
-                    <Close size={$iconSize} color={"var(--button-txt)"} />
+                    <Close size={$iconSize} color={"var(--text-primary)"} />
                 </div>
             {/if}
         </div>
@@ -108,11 +110,6 @@
 
         &.failure {
             background: var(--error);
-        }
-
-        .text {
-            text-align: center;
-            flex: auto;
         }
 
         &.success {

@@ -34,7 +34,6 @@
 
     interface Props {
         userId: string;
-        alignTo?: HTMLElement | undefined;
         chatButton?: boolean;
         inGlobalContext?: boolean;
         onOpenDirectChat: () => void;
@@ -43,7 +42,6 @@
 
     let {
         userId,
-        alignTo = undefined,
         chatButton = true,
         inGlobalContext = false,
         onOpenDirectChat,
@@ -247,64 +245,62 @@
 
 {#if profile !== undefined}
     <Sheet {onClose}>
-        {#snippet sheet()}
-            {#if profile !== undefined && user !== undefined}
-                <!-- <UserProfileCard {user} {profile} {inGlobalContext} {onClose}></UserProfileCard> -->
-                <Container direction={"vertical"} padding={["sm", "sm", "lg", "sm"]}>
-                    <UserProfileSummaryCard mode={"view"} {user} {profile}></UserProfileSummaryCard>
-                    <Container mainAxisAlignment={"center"} gap={"xs"}>
-                        {#if chatButton && !me}
-                            <CommonButton onClick={handleOpenDirectChat} mode={"active"}>
+        {#if profile !== undefined && user !== undefined}
+            <!-- <UserProfileCard {user} {profile} {inGlobalContext} {onClose}></UserProfileCard> -->
+            <Container direction={"vertical"} padding={["sm", "sm", "lg", "sm"]}>
+                <UserProfileSummaryCard mode={"view"} {user} {profile}></UserProfileSummaryCard>
+                <Container mainAxisAlignment={"center"} gap={"xs"}>
+                    {#if chatButton && !me}
+                        <CommonButton onClick={handleOpenDirectChat} mode={"active"}>
+                            {#snippet icon(color)}
+                                <ChatOutline {color} />
+                            {/snippet}
+                            <Translatable resourceKey={i18nKey("profile.chat")} />
+                        </CommonButton>
+                    {/if}
+                    {#if me}
+                        <CommonButton onClick={showUserProfile} mode={"active"}>
+                            {#snippet icon(color)}
+                                <Cog {color} />
+                            {/snippet}
+                            <Translatable resourceKey={i18nKey("profile.label")} />
+                        </CommonButton>
+                    {/if}
+                    {#if canBlock}
+                        <CommonButton onClick={blockUser} mode={"active"}>
+                            {#snippet icon(color)}
+                                <Cancel {color} />
+                            {/snippet}
+                            <Translatable resourceKey={i18nKey("profile.block")} />
+                        </CommonButton>
+                    {/if}
+                    {#if canUnblock}
+                        <CommonButton onClick={unblockUser} mode={"active"}>
+                            {#snippet icon(color)}
+                                <Cancel {color} />
+                            {/snippet}
+                            <Translatable resourceKey={i18nKey("profile.unblock")} />
+                        </CommonButton>
+                    {/if}
+                    {#if $platformModeratorStore}
+                        {#if isSuspended}
+                            <CommonButton onClick={unsuspendUser} mode={"active"}>
                                 {#snippet icon(color)}
-                                    <ChatOutline {color} />
+                                    <AccountCancel {color} />
                                 {/snippet}
-                                <Translatable resourceKey={i18nKey("profile.chat")} />
+                                <Translatable resourceKey={i18nKey("unsuspendUser")} />
+                            </CommonButton>
+                        {:else}
+                            <CommonButton onClick={suspendUser} mode={"active"}>
+                                {#snippet icon(color)}
+                                    <AccountCancel {color} />
+                                {/snippet}
+                                <Translatable resourceKey={i18nKey("suspendUser")} />
                             </CommonButton>
                         {/if}
-                        {#if me}
-                            <CommonButton onClick={showUserProfile} mode={"active"}>
-                                {#snippet icon(color)}
-                                    <Cog {color} />
-                                {/snippet}
-                                <Translatable resourceKey={i18nKey("profile.label")} />
-                            </CommonButton>
-                        {/if}
-                        {#if canBlock}
-                            <CommonButton onClick={blockUser} mode={"active"}>
-                                {#snippet icon(color)}
-                                    <Cancel {color} />
-                                {/snippet}
-                                <Translatable resourceKey={i18nKey("profile.block")} />
-                            </CommonButton>
-                        {/if}
-                        {#if canUnblock}
-                            <CommonButton onClick={unblockUser} mode={"active"}>
-                                {#snippet icon(color)}
-                                    <Cancel {color} />
-                                {/snippet}
-                                <Translatable resourceKey={i18nKey("profile.unblock")} />
-                            </CommonButton>
-                        {/if}
-                        {#if $platformModeratorStore}
-                            {#if isSuspended}
-                                <CommonButton onClick={unsuspendUser} mode={"active"}>
-                                    {#snippet icon(color)}
-                                        <AccountCancel {color} />
-                                    {/snippet}
-                                    <Translatable resourceKey={i18nKey("unsuspendUser")} />
-                                </CommonButton>
-                            {:else}
-                                <CommonButton onClick={suspendUser} mode={"active"}>
-                                    {#snippet icon(color)}
-                                        <AccountCancel {color} />
-                                    {/snippet}
-                                    <Translatable resourceKey={i18nKey("suspendUser")} />
-                                </CommonButton>
-                            {/if}
-                        {/if}
-                    </Container>
+                    {/if}
                 </Container>
-            {/if}
-        {/snippet}
+            </Container>
+        {/if}
     </Sheet>
 {/if}

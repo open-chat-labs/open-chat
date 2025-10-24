@@ -1,11 +1,24 @@
 <script lang="ts">
+    import { gateLabel } from "@src/utils/access";
+    import {
+        Avatar,
+        BodySmall,
+        Chip,
+        ColourVars,
+        CommonButton,
+        Container,
+        Sheet,
+        Subtitle,
+    } from "component-lib";
     import {
         chatListScopeStore,
+        type EnhancedAccessGate,
+        isCompositeGate,
+        isLeafGate,
         isLocked,
         mobileWidth,
         type MultiUserChat,
         type OpenChat,
-        platformModeratorStore,
         publish,
         ROLE_NONE,
         routeForScope,
@@ -13,11 +26,9 @@
     } from "openchat-client";
     import page from "page";
     import { getContext } from "svelte";
+    import Check from "svelte-material-icons/Check.svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import { toastStore } from "../../stores/toast";
-    import Button from "../Button.svelte";
     import Translatable from "../Translatable.svelte";
-    import AccessGateIconsForChat from "./access/AccessGateIconsForChat.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -29,15 +40,23 @@
 
     let { chat, joining, lapsed }: Props = $props();
 
-    let isFrozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore));
     let previewingCommunity = $derived(
         $selectedCommunitySummaryStore?.membership.role === ROLE_NONE ||
             $selectedCommunitySummaryStore?.membership.lapsed,
     );
     let gates = $derived(client.accessGatesForChat(chat));
+    let flattenedGates = $derived.by<EnhancedAccessGate[]>(() => {
+        return gates.flatMap((g) => {
+            if (isCompositeGate(g)) {
+                return g.gates.map((l) => ({ ...l, level: g.level, expiry: g.expiry }));
+            }
+            if (isLeafGate(g)) {
+                return [g];
+            }
+            return [];
+        });
+    });
     let locked = $derived(gates.some((g) => isLocked(g)));
-
-    let freezingInProgress = $state(false);
 
     function joinGroup() {
         publish("joinGroup", {
@@ -60,138 +79,59 @@
             }
         }
     }
-
-    function freeze() {
-        freezingInProgress = true;
-        switch (chat.kind) {
-            case "group_chat":
-                client
-                    .freezeGroup(chat.id, undefined)
-                    .then((success) => {
-                        if (!success) {
-                            toastStore.showFailureToast(i18nKey("failedToFreezeGroup"));
-                        } else {
-                            toastStore.showSuccessToast(i18nKey("chatFrozen"));
-                        }
-                    })
-                    .finally(() => (freezingInProgress = false));
-                break;
-
-            case "channel":
-                if ($selectedCommunitySummaryStore) {
-                    client
-                        .freezeCommunity($selectedCommunitySummaryStore.id, undefined)
-                        .then((success) => {
-                            if (!success) {
-                                toastStore.showFailureToast(i18nKey("failedToFreezeCommunity"));
-                            } else {
-                                toastStore.showSuccessToast(i18nKey("communityFrozen"));
-                            }
-                        })
-                        .finally(() => (freezingInProgress = false));
-                }
-                break;
-        }
-    }
-
-    function unfreeze() {
-        freezingInProgress = true;
-
-        switch (chat.kind) {
-            case "group_chat":
-                client
-                    .unfreezeGroup(chat.id)
-                    .then((success) => {
-                        if (!success) {
-                            toastStore.showFailureToast(i18nKey("failedToUnfreezeGroup"));
-                        } else {
-                            toastStore.showSuccessToast(i18nKey("Chat unfrozen"));
-                        }
-                    })
-                    .finally(() => (freezingInProgress = false));
-
-            case "channel":
-                if ($selectedCommunitySummaryStore) {
-                    client
-                        .unfreezeCommunity($selectedCommunitySummaryStore.id)
-                        .then((success) => {
-                            if (!success) {
-                                toastStore.showFailureToast(i18nKey("failedToUnfreezeCommunity"));
-                            } else {
-                                toastStore.showSuccessToast(i18nKey("communityUnfrozen"));
-                            }
-                        })
-                        .finally(() => (freezingInProgress = false));
-                }
-        }
-    }
 </script>
 
-<div class="preview">
-    <div class="gate">
-        <AccessGateIconsForChat {gates} />
-    </div>
-    {#if lapsed}
-        <div class="lapsed">
-            <Translatable resourceKey={i18nKey("access.lapsed.label")} />
-        </div>
-    {/if}
-    {#if $platformModeratorStore}
-        {#if isFrozen}
-            <Button loading={freezingInProgress} secondary small onClick={unfreeze}>
+<Sheet onClose={cancelPreview}>
+    <Container direction={"vertical"} gap={"lg"} padding={"xl"}>
+        <Container
+            crossAxisAlignment={"center"}
+            gap={"lg"}
+            background={ColourVars.background1}
+            borderRadius={"lg"}>
+            <Avatar size={"lg"} url={client.groupAvatarUrl(chat)} />
+            <Container direction={"vertical"} gap={"xxs"}>
+                <Subtitle fontWeight={"bold"}>{chat.name}</Subtitle>
+                <BodySmall width={{ kind: "hug" }} colour={"textSecondary"}>
+                    {#if lapsed}
+                        <Translatable
+                            resourceKey={i18nKey(
+                                "Your membership has lapsed. Click re-join to below to join the chat",
+                            )} />
+                    {:else}
+                        <Translatable resourceKey={i18nKey("Click join below to join the chat")} />
+                    {/if}
+                </BodySmall>
+            </Container>
+        </Container>
+        <Container wrap gap={"xs"}>
+            {#each flattenedGates as gate}
+                <Chip mode={"filter"}>
+                    {#snippet icon(color)}
+                        <Check {color} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey(gateLabel[gate.kind])}></Translatable>
+                </Chip>
+            {/each}
+        </Container>
+        <Container crossAxisAlignment={"end"} mainAxisAlignment={"end"} gap={"md"}>
+            {#if !lapsed}
+                <CommonButton onClick={cancelPreview}>
+                    <Translatable resourceKey={i18nKey("close")} />
+                </CommonButton>
+            {/if}
+
+            <CommonButton
+                mode={"active"}
+                loading={joining !== undefined}
+                disabled={locked || joining !== undefined}
+                onClick={joinGroup}>
                 <Translatable
-                    resourceKey={chat.kind === "group_chat"
-                        ? i18nKey("unfreezeGroup")
-                        : i18nKey("unfreezeCommunity")} />
-            </Button>
-        {:else}
-            <Button loading={freezingInProgress} secondary small onClick={freeze}>
-                <Translatable
-                    resourceKey={chat.kind === "group_chat"
-                        ? i18nKey("freezeGroup")
-                        : i18nKey("freezeCommunity")} />
-            </Button>
-        {/if}
-    {/if}
-    {#if !lapsed}
-        <Button secondary small onClick={cancelPreview}>
-            <Translatable resourceKey={i18nKey("leave")} />
-        </Button>
-    {/if}
-    <Button
-        loading={joining !== undefined}
-        disabled={locked || joining !== undefined}
-        small
-        onClick={joinGroup}>
-        <Translatable
-            resourceKey={locked
-                ? i18nKey("access.lockedGate", undefined, chat.level, true)
-                : lapsed
-                  ? i18nKey("access.lapsed.rejoin", undefined, chat.level, true)
-                  : i18nKey("joinGroup", undefined, chat.level, true)} />
-    </Button>
-</div>
-
-<style lang="scss">
-    .preview {
-        height: 42px;
-        color: var(--txt);
-        @include font(book, normal, fs-100);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-        position: relative;
-        justify-content: flex-end;
-        gap: $sp3;
-
-        .gate {
-            position: absolute;
-            left: 0;
-        }
-    }
-
-    .lapsed {
-        @include font(bold, normal, fs-100);
-    }
-</style>
+                    resourceKey={locked
+                        ? i18nKey("access.lockedGate", undefined, chat.level, true)
+                        : lapsed
+                          ? i18nKey("access.lapsed.rejoin", undefined, chat.level, true)
+                          : i18nKey("joinGroup", undefined, chat.level, true)} />
+            </CommonButton>
+        </Container>
+    </Container>
+</Sheet>

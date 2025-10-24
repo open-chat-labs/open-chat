@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { Container, FloatingButton } from "component-lib";
+    import { CommonButton, Container, FloatingButton } from "component-lib";
     import {
+        type AccessGateConfig,
         allUsersStore,
         chatIdentifiersEqual,
         chatIdentifierToString,
@@ -12,6 +13,9 @@
         type CombinedUnreadCounts,
         currentUserIdStore,
         emptyCombinedUnreadCounts,
+        isCompositeGate,
+        isLeafGate,
+        type LeafGate,
         numberOfThreadsStore,
         OpenChat,
         publish,
@@ -29,8 +33,6 @@
     import Pencil from "svelte-material-icons/LeadPencil.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { chatListView } from "../../stores/chatListView";
-    import Button from "../Button.svelte";
-    import ButtonGroup from "../ButtonGroup.svelte";
     import Translatable from "../Translatable.svelte";
     import ChatListFilters, { type ChatListFilter } from "./ChatListFilters.svelte";
     import ChatListSectionButton from "./ChatListSectionButton.svelte";
@@ -151,6 +153,18 @@
     function newMessage() {
         publish("newMessage");
     }
+
+    function flattenGates(gateConfig: AccessGateConfig): LeafGate[] {
+        if (isLeafGate(gateConfig.gate)) {
+            if (gateConfig.gate.kind === "no_gate") {
+                return [];
+            }
+        }
+        if (isCompositeGate(gateConfig.gate)) {
+            return gateConfig.gate.gates;
+        }
+        return [];
+    }
 </script>
 
 {#if user}
@@ -207,17 +221,19 @@
         <PreviewWrapper>
             {#snippet children(joiningCommunity, joinCommunity)}
                 <div class="join">
-                    <ButtonGroup align="center">
-                        <Button secondary small onClick={cancelPreview}>
-                            <Translatable resourceKey={i18nKey("leave")} />
-                        </Button>
-                        <Button
+                    <Container crossAxisAlignment={"end"} mainAxisAlignment={"end"} gap={"md"}>
+                        <CommonButton onClick={cancelPreview}>
+                            <Translatable resourceKey={i18nKey("close")} />
+                        </CommonButton>
+
+                        <CommonButton
+                            mode={"active"}
                             loading={joiningCommunity}
                             disabled={joiningCommunity}
-                            onClick={joinCommunity}
-                            ><Translatable
-                                resourceKey={i18nKey("communities.joinCommunity")} /></Button>
-                    </ButtonGroup>
+                            onClick={joinCommunity}>
+                            <Translatable resourceKey={i18nKey("communities.joinCommunity")} />
+                        </CommonButton>
+                    </Container>
                 </div>
             {/snippet}
         </PreviewWrapper>
@@ -240,6 +256,7 @@
         bottom: 0;
         padding: $sp3 $sp4;
         background-color: var(--entry-bg);
+        width: 100%;
     }
 
     .floating {

@@ -29,14 +29,12 @@
 {#if selected !== undefined}
     {@const [key, resourceKey] = selected}
     <Sheet onClose={() => (selected = undefined)}>
-        {#snippet sheet()}
-            <PermissionsRoleSlider
-                height={{ kind: "fixed", size: "150px" }}
-                roles={communityRoles}
-                label={i18nKey(resourceKey)}
-                onClose={() => (selected = undefined)}
-                bind:rolePermission={ucs.permissions[key]} />
-        {/snippet}
+        <PermissionsRoleSlider
+            height={{ kind: "fixed", size: "150px" }}
+            roles={communityRoles}
+            label={i18nKey(resourceKey)}
+            onClose={() => (selected = undefined)}
+            bind:rolePermission={ucs.permissions[key]} />
     </Sheet>
 {/if}
 

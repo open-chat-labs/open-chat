@@ -85,7 +85,7 @@
     let {
         children,
         direction = "horizontal",
-        parentDirection = "unknown",
+        parentDirection,
         gap = "zero",
         padding = "zero",
         borderWidth = "zero",
@@ -127,7 +127,7 @@
 
     // you might expect this to be done inside onMount but
     // that runs from the bottom of the tree up which is not what we need
-    parentDirection = getContext<Direction>("direction") ?? parentDirection;
+    parentDirection = parentDirection ?? getContext<Direction>("direction");
     setContext("direction", direction);
 
     let paddingCss = $derived(getPaddingCss(padding));

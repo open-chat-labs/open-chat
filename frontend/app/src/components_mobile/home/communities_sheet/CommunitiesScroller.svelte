@@ -23,7 +23,7 @@
         if ($selectedCommunityIdStore !== undefined) {
             const id = `scroller_item_${$selectedCommunityIdStore.communityId}`;
             const el = document.getElementById(id);
-            if (el !== undefined) {
+            if (el) {
                 scrollIntoView(el as HTMLDivElement);
             }
         }

@@ -39,41 +39,39 @@
 
 {#if showExampleRules}
     <Sheet onClose={() => (showExampleRules = false)}>
-        {#snippet sheet()}
-            <Container height={{ kind: "hug" }} padding={"xl"} gap={"xl"} direction={"vertical"}>
-                <Subtitle fontWeight={"bold"}>
-                    <Translatable resourceKey={i18nKey("Example rules")} />
-                </Subtitle>
+        <Container height={{ kind: "hug" }} padding={"xl"} gap={"xl"} direction={"vertical"}>
+            <Subtitle fontWeight={"bold"}>
+                <Translatable resourceKey={i18nKey("Example rules")} />
+            </Subtitle>
 
+            <BodySmall colour={"textSecondary"}>
+                <Translatable
+                    resourceKey={i18nKey(
+                        "Below are the example rules to showcase what they potentially might be. If you would like to use these rules, or modify them for your particular group, feel free to do so!",
+                    )} />
+            </BodySmall>
+
+            <Container padding={"lg"} borderRadius={"md"} background={ColourVars.background0}>
                 <BodySmall colour={"textSecondary"}>
-                    <Translatable
-                        resourceKey={i18nKey(
-                            "Below are the example rules to showcase what they potentially might be. If you would like to use these rules, or modify them for your particular group, feel free to do so!",
-                        )} />
+                    <Markdown inline={false} text={data.defaultRules.text}></Markdown>
                 </BodySmall>
-
-                <Container padding={"lg"} borderRadius={"md"} background={ColourVars.background0}>
-                    <BodySmall colour={"textSecondary"}>
-                        <Markdown inline={false} text={data.defaultRules.text}></Markdown>
-                    </BodySmall>
-                </Container>
-
-                <Container gap={"md"} crossAxisAlignment={"end"} mainAxisAlignment={"end"}>
-                    <CommonButton
-                        onClick={() => (showExampleRules = false)}
-                        mode="default"
-                        size={"small_text"}>
-                        <Translatable resourceKey={i18nKey("cancel")}></Translatable>
-                    </CommonButton>
-                    <CommonButton mode={"active"} onClick={useExampleRules} size={"medium"}>
-                        {#snippet icon(color)}
-                            <ContentCopy {color} />
-                        {/snippet}
-                        <Translatable resourceKey={i18nKey("Use example rules")} />
-                    </CommonButton>
-                </Container>
             </Container>
-        {/snippet}
+
+            <Container gap={"md"} crossAxisAlignment={"end"} mainAxisAlignment={"end"}>
+                <CommonButton
+                    onClick={() => (showExampleRules = false)}
+                    mode="default"
+                    size={"small_text"}>
+                    <Translatable resourceKey={i18nKey("cancel")}></Translatable>
+                </CommonButton>
+                <CommonButton mode={"active"} onClick={useExampleRules} size={"medium"}>
+                    {#snippet icon(color)}
+                        <ContentCopy {color} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("Use example rules")} />
+                </CommonButton>
+            </Container>
+        </Container>
     </Sheet>
 {/if}
 

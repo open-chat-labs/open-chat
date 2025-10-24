@@ -49,57 +49,55 @@
 </script>
 
 <Sheet onClose={() => action(false)}>
-    {#snippet sheet()}
-        <Container height={{ kind: "hug" }} padding={"xl"} gap={"xl"} direction={"vertical"}>
-            {#if title !== undefined}
-                <Title fontWeight={"bold"}>
-                    <Translatable resourceKey={title} />
-                </Title>
+    <Container height={{ kind: "hug" }} padding={"xl"} gap={"xl"} direction={"vertical"}>
+        {#if title !== undefined}
+            <Title fontWeight={"bold"}>
+                <Translatable resourceKey={title} />
+            </Title>
+        {/if}
+
+        {@render children?.()}
+
+        {#if message !== undefined}
+            <Body>
+                <Markdown inline={false} text={interpolate($_, message)} />
+            </Body>
+
+            {#if doubleCheck !== undefined}
+                <p class="challenge">
+                    <Markdown text={interpolate($_, doubleCheck.challenge)} />
+                </p>
+                <Input
+                    disabled={inProgress}
+                    bind:value={response}
+                    minlength={0}
+                    maxlength={200}
+                    countdown={false} />
             {/if}
+        {/if}
 
-            {@render children?.()}
-
-            {#if message !== undefined}
-                <Body>
-                    <Markdown inline={false} text={interpolate($_, message)} />
-                </Body>
-
-                {#if doubleCheck !== undefined}
-                    <p class="challenge">
-                        <Markdown text={interpolate($_, doubleCheck.challenge)} />
-                    </p>
-                    <Input
-                        disabled={inProgress}
-                        bind:value={response}
-                        minlength={0}
-                        maxlength={200}
-                        countdown={false} />
+        <Container gap={"md"} crossAxisAlignment={"end"} mainAxisAlignment={"end"}>
+            <CommonButton disabled={inProgress} onClick={() => onClick(false)} size={"medium"}>
+                {#snippet icon(color)}
+                    <Close {color} />
+                {/snippet}
+                {#if noLabel !== undefined}
+                    <Translatable resourceKey={noLabel} />
                 {/if}
-            {/if}
-
-            <Container gap={"md"} crossAxisAlignment={"end"} mainAxisAlignment={"end"}>
-                <CommonButton disabled={inProgress} onClick={() => onClick(false)} size={"medium"}>
-                    {#snippet icon(color)}
-                        <Close {color} />
-                    {/snippet}
-                    {#if noLabel !== undefined}
-                        <Translatable resourceKey={noLabel} />
-                    {/if}
-                </CommonButton>
-                <CommonButton
-                    loading={inProgress}
-                    disabled={!canConfirm}
-                    mode={"active"}
-                    onClick={() => onClick(true)}
-                    size={"medium"}>
-                    {#snippet icon(color)}
-                        <Check {color} />
-                    {/snippet}
-                    {#if yesLabel !== undefined}
-                        <Translatable resourceKey={yesLabel} />
-                    {/if}
-                </CommonButton>
-            </Container>
+            </CommonButton>
+            <CommonButton
+                loading={inProgress}
+                disabled={!canConfirm}
+                mode={"active"}
+                onClick={() => onClick(true)}
+                size={"medium"}>
+                {#snippet icon(color)}
+                    <Check {color} />
+                {/snippet}
+                {#if yesLabel !== undefined}
+                    <Translatable resourceKey={yesLabel} />
+                {/if}
+            </CommonButton>
         </Container>
-    {/snippet}
+    </Container>
 </Sheet>
