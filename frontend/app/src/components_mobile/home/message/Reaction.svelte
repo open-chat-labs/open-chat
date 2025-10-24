@@ -109,6 +109,11 @@
 </Tooltip>
 
 <style lang="scss">
+    .reaction-tooltip-emoji {
+        @include font-size(fs-180);
+        margin-bottom: $sp1;
+    }
+
     .reaction_code {
         word-wrap: break-word;
     }
