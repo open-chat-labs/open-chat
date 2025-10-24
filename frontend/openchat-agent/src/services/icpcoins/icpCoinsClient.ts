@@ -1,11 +1,11 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import type { CryptocurrencyDetails, TokenExchangeRates } from "openchat-shared";
-import { idlFactory, type ICPCoinsService } from "./candid/idl";
 import { CandidCanisterAgent } from "../canisterAgent/candid";
-import { getLatestResponse } from "./mappers";
 import type { ExchangeRateClient } from "../openchatAgent";
+import { idlFactory, type ICPCoinsService } from "./candid/idl";
+import { coinsByMarketcapResponse } from "./mappers";
 
-const ICPCOINS_CANISTER_ID = "u45jl-liaaa-aaaam-abppa-cai";
+const ICPCOINS_CANISTER_ID = "4rsaq-myaaa-aaaal-qscca-cai";
 
 export class IcpCoinsClient
     extends CandidCanisterAgent<ICPCoinsService>
@@ -18,9 +18,13 @@ export class IcpCoinsClient
     exchangeRates(
         supportedTokens: CryptocurrencyDetails[],
     ): Promise<Record<string, TokenExchangeRates>> {
-        return this.handleQueryResponse(
-            () => this.service.get_latest(),
-            (resp) => getLatestResponse(resp, supportedTokens),
+        return this.handleResponse(
+            this.service.get_coins_by_marketcap({
+                from: [],
+                full: true,
+                select: [],
+            }),
+            (resp) => coinsByMarketcapResponse(resp, supportedTokens),
         );
     }
 }
