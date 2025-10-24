@@ -1,6 +1,6 @@
 <script lang="ts">
     import { ColourVars, Container } from "component-lib";
-    import { onMount, tick, type Snippet } from "svelte";
+    import { onMount, type Snippet } from "svelte";
 
     interface Props {
         dismissible?: boolean;
@@ -16,10 +16,6 @@
     let classes = $state(["sheet_content"]);
 
     onMount(() => {
-        tick().then(() => {
-            container?.classList.add("faded");
-            classes.push("visible");
-        });
         window.addEventListener("popstate", popState);
         return () => {
             window.removeEventListener("popstate", popState);
@@ -31,7 +27,6 @@
     }
 
     function onMousedown(ev: MouseEvent) {
-        console.log("Here?", dismissible, ev.target === container);
         if (dismissible && ev.target === container) {
             onClose?.();
         }
@@ -48,13 +43,13 @@
 
 {#if children}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class:block bind:this={container} class="sheet_overlay" onmousedown={onMousedown}>
+    <div class:block bind:this={container} class="sheet_overlay faded" onmousedown={onMousedown}>
         <Container
             parentDirection={"vertical"}
             maxHeight={"65vh"}
             height={{ kind: "hug" }}
             background={ColourVars.background1}
-            supplementalClass={classes.join(" ")}
+            supplementalClass={"sheet_content"}
             borderRadius={["xl", "xl", "zero", "zero"]}
             direction={"vertical"}>
             {@render children?.()}
@@ -63,30 +58,11 @@
 {/if}
 
 <style lang="scss">
-    $speed: 200ms;
-
-    :global(.container.sheet_content) {
-        top: 40rem;
-        opacity: 0;
-        transition:
-            top ease-out $speed,
-            opacity ease-out $speed;
-    }
-
-    :global(.container.sheet_content.visible) {
-        opacity: 1;
-        top: 0;
-    }
-
-    :global(.sheet_overlay.faded.block) {
-        backdrop-filter: blur(4px);
+    :global(.sheet_overlay.block) {
         background: rgba(0, 0, 0, 0.5);
     }
 
     .sheet_overlay {
-        transition:
-            background ease-out $speed,
-            backdrop-filter ease-out $speed;
         z-index: 25; // this is annoyingly error prone
         position: fixed;
         display: flex;

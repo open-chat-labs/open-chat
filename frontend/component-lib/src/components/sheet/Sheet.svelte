@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { transition } from "component-lib";
     import { getAllContexts, mount, onMount, unmount, type Snippet } from "svelte";
     import SheetWrapper from "./SheetWrapper.svelte";
 
@@ -12,27 +13,37 @@
     let { dismissible, children, onClose, block }: Props = $props();
 
     const context = getAllContexts();
-    let mounted: Record<string, any> | undefined;
+    let mounted: Record<string, any> | undefined = undefined;
+    let unmounting = $state(false);
 
-    function internalClose() {
-        if (mounted) {
-            unmount(mounted);
+    async function internalClose() {
+        console.log("Is this happening twice", mounted, unmounting);
+        if (mounted && !unmounting) {
+            unmounting = true;
+            await transition(["modal_sheet_out"], async () => {
+                if (mounted) {
+                    await unmount(mounted, { outro: true });
+                    mounted = undefined;
+                    unmounting = false;
+                }
+            });
+            onClose?.();
         }
-        onClose?.();
     }
 
     onMount(() => {
-        mounted = mount(SheetWrapper, {
-            target: document.body,
-            props: {
-                children,
-                onClose: internalClose,
-                dismissible,
-                block,
-            },
-            context,
+        transition(["modal_sheet_in"], () => {
+            mounted = mount(SheetWrapper, {
+                target: document.body,
+                props: {
+                    children,
+                    onClose: internalClose,
+                    dismissible,
+                    block,
+                },
+                context,
+            });
         });
-
-        return () => internalClose();
+        return async () => internalClose();
     });
 </script>
