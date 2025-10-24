@@ -35,7 +35,6 @@
     import ChatListFilters, { type ChatListFilter } from "./ChatListFilters.svelte";
     import ChatListSectionButton from "./ChatListSectionButton.svelte";
     import ChatSummary from "./ChatSummary.svelte";
-    import BrowseChannels from "./communities/details/BrowseChannels.svelte";
     import DirectAndGroupChatsHeader from "./communities/DirectAndGroupChatsHeader.svelte";
     import FavouriteChatsHeader from "./communities/FavouriteChatsHeader.svelte";
     import PreviewWrapper from "./communities/PreviewWrapper.svelte";
@@ -109,7 +108,6 @@
             $selectedChatIdStore === undefined,
     );
     let user = $derived($allUsersStore.get($currentUserIdStore));
-    let showBrowseChannnels = $derived($chatListScopeStore.kind === "community");
     let unreadCounts = $derived.by(() => {
         switch ($chatListScopeStore.kind) {
             case "chats": {
@@ -202,9 +200,6 @@
                         onChatSelected={chatSelected} />
                 {/each}
             </Container>
-            {#if showBrowseChannnels}
-                <BrowseChannels />
-            {/if}
         {/if}
     </Container>
     <ActiveCallSummary />

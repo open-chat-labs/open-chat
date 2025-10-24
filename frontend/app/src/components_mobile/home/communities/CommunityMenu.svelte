@@ -26,6 +26,7 @@
     import LocationExit from "svelte-material-icons/LocationExit.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
     import PlaylistPlus from "svelte-material-icons/PlaylistPlus.svelte";
+    import Pound from "svelte-material-icons/Pound.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import Translatable from "../../Translatable.svelte";
@@ -37,9 +38,10 @@
     interface Props {
         community: CommunitySummary;
         canMarkAllRead: boolean;
+        onOtherChannels?: () => void;
     }
 
-    let { community, canMarkAllRead }: Props = $props();
+    let { community, canMarkAllRead, onOtherChannels }: Props = $props();
 
     let member = $derived(community.membership.role !== ROLE_NONE);
     let frozen = $derived(client.isCommunityFrozen(community.id));
@@ -220,6 +222,12 @@
         </MenuItem>
     {/if}
 {/if}
+<MenuItem onclick={onOtherChannels}>
+    {#snippet icon(color, size)}
+        <Pound {color} {size} />
+    {/snippet}
+    <Translatable resourceKey={i18nKey("communities.otherChannels")} />
+</MenuItem>
 {#if member}
     <MenuItem separator />
     {#if canDelete}

@@ -7,6 +7,7 @@
     import Translatable from "../../Translatable.svelte";
     import VisibilityLabel from "../VisibilityLabel.svelte";
     import CommunityMenu from "./CommunityMenu.svelte";
+    import OtherChannels from "./OtherChannels.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -17,10 +18,16 @@
 
     let { community, canMarkAllRead }: Props = $props();
 
+    let showOtherChannels = $state(false);
+
     function showCommunityMembers() {
         setRightPanelHistory([{ kind: "show_community_members" }]);
     }
 </script>
+
+{#if showOtherChannels}
+    <OtherChannels {community} onClose={() => (showOtherChannels = false)} />
+{/if}
 
 <SectionHeader>
     {#snippet avatar()}
@@ -37,7 +44,7 @@
         </WithVerifiedBadge>
     {/snippet}
     {#snippet subtitle()}
-        <Container onClick={showCommunityMembers} crossAxisAlignment={"center"}>
+        <Container gap={"sm"} onClick={showCommunityMembers} crossAxisAlignment={"center"}>
             <VisibilityLabel isPublic={community.public} />
             <Body>
                 <div class="members">
@@ -48,7 +55,10 @@
         </Container>
     {/snippet}
     {#snippet menu()}
-        <CommunityMenu {canMarkAllRead} {community} />
+        <CommunityMenu
+            onOtherChannels={() => (showOtherChannels = true)}
+            {canMarkAllRead}
+            {community} />
     {/snippet}
 </SectionHeader>
 

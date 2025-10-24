@@ -13,7 +13,7 @@
 <Container
     width={{ kind: "hug" }}
     crossAxisAlignment={"center"}
-    gap={"sm"}
+    gap={"xs"}
     borderRadius={"sm"}
     background={"var(--chatSummary-bg-selected)"}>
     <div class={`img ${isPublic ? "public" : "private"}`}></div>
