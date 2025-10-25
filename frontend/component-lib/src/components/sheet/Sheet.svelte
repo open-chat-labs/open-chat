@@ -16,7 +16,7 @@
 
     function internalClose() {
         if (mounted) {
-            transition(["modal_sheet_out"], () => {
+            transition(["modal_sheet"], () => {
                 if (mounted) {
                     unmount(mounted, { outro: true });
                     mounted = undefined;
@@ -26,7 +26,7 @@
     }
 
     onMount(() => {
-        transition(["modal_sheet_in"], () => {
+        transition(["modal_sheet"], () => {
             mounted = mount(SheetWrapper, {
                 target: document.body,
                 props: {

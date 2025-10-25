@@ -552,7 +552,7 @@ svelte-virtual-list-viewport {
     }
 }
 
-html:active-view-transition-type(modal_sheet_in, modal_sheet_out) {
+html:active-view-transition-type(modal_sheet) {
     // set the view transition names that apply during these transitions
     .bottom_nav_bar,
     .communities_sheet {
