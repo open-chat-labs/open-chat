@@ -9,7 +9,6 @@ import {
     type RouteParams,
 } from "openchat-shared";
 import page from "page";
-import { tick } from "svelte";
 import { get } from "svelte/store";
 import { routerReadyStore } from "../state";
 

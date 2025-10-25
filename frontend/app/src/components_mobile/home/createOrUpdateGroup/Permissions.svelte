@@ -64,7 +64,7 @@
         padding={["xxl", "xl", "lg", "xl"]}>
         <GroupCard candidateGroup={data.candidateGroup} />
 
-        <Container gap={"lg"} direction={"vertical"}>
+        <Container gap={"xxl"} direction={"vertical"}>
             {@render permissionSummary("changeRoles", i18nKey("permissions.changeRoles"))}
             {@render permissionSummary("updateGroup", i18nKey("permissions.updateGroup"))}
 
