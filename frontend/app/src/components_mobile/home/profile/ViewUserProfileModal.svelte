@@ -244,7 +244,7 @@
 <svelte:window onresize={onWindowResize} />
 
 {#if profile !== undefined}
-    <Sheet {onClose}>
+    <Sheet onDismiss={onClose}>
         {#if profile !== undefined && user !== undefined}
             <!-- <UserProfileCard {user} {profile} {inGlobalContext} {onClose}></UserProfileCard> -->
             <Container direction={"vertical"} padding={["sm", "sm", "lg", "sm"]}>

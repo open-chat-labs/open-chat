@@ -93,7 +93,7 @@
     }
 </script>
 
-<Sheet dismissible {onClose}>
+<Sheet onDismiss={onClose}>
     <Container direction={"vertical"} padding={"lg"} gap={"xl"}>
         <Subtitle fontWeight={"bold"}>
             <Translatable resourceKey={i18nKey("communities.otherChannels")} />

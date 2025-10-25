@@ -48,7 +48,7 @@
     }
 </script>
 
-<Sheet onClose={() => action(false)}>
+<Sheet>
     <Container height={{ kind: "hug" }} padding={"xl"} gap={"xl"} direction={"vertical"}>
         {#if title !== undefined}
             <Title fontWeight={"bold"}>

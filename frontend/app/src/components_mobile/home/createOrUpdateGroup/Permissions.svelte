@@ -31,7 +31,7 @@
 
 {#if selected !== undefined}
     {@const [key, resourceKey] = selected}
-    <Sheet onClose={() => (selected = undefined)}>
+    <Sheet onDismiss={() => (selected = undefined)}>
         <PermissionsRoleSlider
             height={{ kind: "fixed", size: "250px" }}
             {roles}

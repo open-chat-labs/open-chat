@@ -81,7 +81,7 @@
     }
 </script>
 
-<Sheet onClose={cancelPreview}>
+<Sheet onDismiss={cancelPreview}>
     <Container direction={"vertical"} gap={"lg"} padding={"xl"}>
         <Container
             crossAxisAlignment={"center"}

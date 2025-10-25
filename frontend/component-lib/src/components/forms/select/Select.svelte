@@ -61,7 +61,7 @@
 </Container>
 
 {#if popupVisible}
-    <Sheet dismissible onClose={() => (popupVisible = false)}>
+    <Sheet onDismiss={() => (popupVisible = false)}>
         {@render selectOptions((val: T) => {
             popupVisible = false;
             onSelect(val);

@@ -38,7 +38,7 @@
 </script>
 
 {#if showExampleRules}
-    <Sheet onClose={() => (showExampleRules = false)}>
+    <Sheet onDismiss={() => (showExampleRules = false)}>
         <Container height={{ kind: "hug" }} padding={"xl"} gap={"xl"} direction={"vertical"}>
             <Subtitle fontWeight={"bold"}>
                 <Translatable resourceKey={i18nKey("Example rules")} />

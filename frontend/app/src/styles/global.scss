@@ -552,12 +552,8 @@ svelte-virtual-list-viewport {
     }
 }
 
-::view-transition-old(root),
-::view-transition-new(root) {
-    animation-duration: 250ms;
-}
-
 html:active-view-transition-type(modal_sheet_in, modal_sheet_out) {
+    // set the view transition names that apply during these transitions
     .bottom_nav_bar,
     .communities_sheet {
         view-transition-name: none;
@@ -568,9 +564,8 @@ html:active-view-transition-type(modal_sheet_in, modal_sheet_out) {
     .sheet_content {
         view-transition-name: sheet_content;
     }
-}
 
-html:active-view-transition-type(modal_sheet_out, modal_sheet_in) {
+    // then describe how those elements behave during the transition
     &::view-transition-old(sheet_overlay) {
         animation: 90ms ease-in both fade-out;
     }

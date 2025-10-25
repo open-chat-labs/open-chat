@@ -3,17 +3,14 @@
     import { onMount, type Snippet } from "svelte";
 
     interface Props {
-        dismissible?: boolean;
+        onDismiss?: () => void;
         children?: Snippet;
-        onClose?: () => void;
         block?: boolean;
     }
 
-    let { dismissible = false, children, onClose, block = true }: Props = $props();
+    let { onDismiss, children, block = true }: Props = $props();
 
     let container: HTMLElement | undefined;
-
-    let classes = $state(["sheet_content"]);
 
     onMount(() => {
         window.addEventListener("popstate", popState);
@@ -23,18 +20,18 @@
     });
 
     function popState() {
-        onClose?.();
+        onDismiss?.();
     }
 
     function onMousedown(ev: MouseEvent) {
-        if (dismissible && ev.target === container) {
-            onClose?.();
+        if (ev.target === container) {
+            onDismiss?.();
         }
     }
 
     function onKeyDown(ev: KeyboardEvent) {
-        if (dismissible && ev.key === "Escape") {
-            onClose?.();
+        if (ev.key === "Escape") {
+            onDismiss?.();
         }
     }
 </script>

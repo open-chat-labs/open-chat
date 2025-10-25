@@ -4,30 +4,24 @@
     import SheetWrapper from "./SheetWrapper.svelte";
 
     interface Props {
-        dismissible?: boolean;
+        onDismiss?: () => void;
         children?: Snippet;
-        onClose?: () => void;
         block?: boolean;
     }
 
-    let { dismissible, children, onClose, block }: Props = $props();
+    let { onDismiss, children, block }: Props = $props();
 
     const context = getAllContexts();
     let mounted: Record<string, any> | undefined = undefined;
-    let unmounting = $state(false);
 
-    async function internalClose() {
-        console.log("Is this happening twice", mounted, unmounting);
-        if (mounted && !unmounting) {
-            unmounting = true;
-            await transition(["modal_sheet_out"], async () => {
+    function internalClose() {
+        if (mounted) {
+            transition(["modal_sheet_out"], () => {
                 if (mounted) {
-                    await unmount(mounted, { outro: true });
+                    unmount(mounted, { outro: true });
                     mounted = undefined;
-                    unmounting = false;
                 }
             });
-            onClose?.();
         }
     }
 
@@ -37,13 +31,12 @@
                 target: document.body,
                 props: {
                     children,
-                    onClose: internalClose,
-                    dismissible,
+                    onDismiss,
                     block,
                 },
                 context,
             });
         });
-        return async () => internalClose();
+        return internalClose;
     });
 </script>
