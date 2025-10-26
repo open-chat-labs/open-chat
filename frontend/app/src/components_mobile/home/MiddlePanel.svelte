@@ -156,6 +156,7 @@
         background: none;
         padding: 0;
         height: 100%;
+        flex-direction: column;
         display: flex;
 
         @include mobile() {

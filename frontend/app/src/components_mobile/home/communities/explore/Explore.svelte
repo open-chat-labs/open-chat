@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        CommonButton,
         Container,
         FloatingButton,
         IconButton,
@@ -12,6 +13,7 @@
     import { exploreCommunitiesFiltersStore, offlineStore } from "openchat-client";
     import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
+    import Account from "svelte-material-icons/AccountMultipleOutline.svelte";
     import ArrowUp from "svelte-material-icons/ArrowUp.svelte";
     import CloudOffOutline from "svelte-material-icons/CloudOffOutline.svelte";
     import Tune from "svelte-material-icons/Tune.svelte";
@@ -178,6 +180,21 @@
                         verified={community.verified} />
                 </CommunityCardLink>
             {/each}
+            {#if more}
+                <Container mainAxisAlignment={"center"}>
+                    <CommonButton
+                        width={{ kind: "hug" }}
+                        disabled={searching}
+                        loading={searching}
+                        mode={"active"}
+                        onClick={() => search($exploreCommunitiesFiltersStore, false)}>
+                        {#snippet icon(color)}
+                            <Account {color} />
+                        {/snippet}
+                        <Translatable
+                            resourceKey={i18nKey("communities.loadMore")} /></CommonButton>
+                </Container>
+            {/if}
         {/if}
     </Container>
 </Container>

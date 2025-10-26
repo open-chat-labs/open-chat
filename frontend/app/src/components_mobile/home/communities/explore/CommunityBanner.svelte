@@ -27,7 +27,7 @@
         position: relative;
         background-size: cover;
         background-position: center center;
-        border-radius: var(--card-rd) var(--card-rd) 0 0;
+        border-radius: var(--rad-md) var(--rad-md) 0 0;
         padding-bottom: 50%; // forces 2:1 aspect ratio
 
         &.square {
