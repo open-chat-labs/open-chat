@@ -12,5 +12,6 @@
 <style lang="scss">
     a {
         color: currentColor;
+        width: 100%;
     }
 </style>

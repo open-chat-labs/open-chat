@@ -156,6 +156,7 @@
         background: none;
         padding: 0;
         height: 100%;
+        display: flex;
 
         @include mobile() {
             min-width: unset;

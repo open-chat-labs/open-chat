@@ -1,7 +1,13 @@
 <script lang="ts">
     import { disableChit } from "@src/stores/settings";
     import { Avatar, Body, BodySmall, Container, H2, IconButton } from "component-lib";
-    import { OpenChat, publish, type PublicProfile, type UserSummary } from "openchat-client";
+    import {
+        currentUserIdStore,
+        OpenChat,
+        publish,
+        type PublicProfile,
+        type UserSummary,
+    } from "openchat-client";
     import { getContext } from "svelte";
     import Cog from "svelte-material-icons/Cog.svelte";
     import Info from "svelte-material-icons/InformationOutline.svelte";
@@ -21,6 +27,8 @@
     }
 
     let { user, profile, mode = "edit" }: Props = $props();
+
+    let me = $derived(user.userId === $currentUserIdStore);
 
     let avatarUrl = $derived(
         profile !== undefined
@@ -106,7 +114,7 @@
 
     {#if !$disableChit}
         <Container
-            onClick={() => publish("userProfileChitRewards")}
+            onClick={me ? () => publish("userProfileChitRewards") : undefined}
             padding={["xl", "lg"]}
             direction={"vertical"}
             allowOverflow>
