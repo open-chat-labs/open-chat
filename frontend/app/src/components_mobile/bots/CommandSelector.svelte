@@ -1,5 +1,13 @@
 <script lang="ts">
-    import { Tooltip } from "component-lib";
+    import {
+        Body,
+        BodySmall,
+        ColourVars,
+        Container,
+        IconButton,
+        Subtitle,
+        Tooltip,
+    } from "component-lib";
     import type {
         ChatPermissions,
         ChatSummary,
@@ -25,7 +33,6 @@
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
     import ErrorMessage from "../ErrorMessage.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
     import Logo from "../Logo.svelte";
     import Translatable from "../Translatable.svelte";
     import BotAvatar from "./BotAvatar.svelte";
@@ -204,55 +211,68 @@
     }
 </script>
 
-<div class="command-header">
-    <h4>
+<Container
+    background={ColourVars.background1}
+    padding={["sm", "lg"]}
+    mainAxisAlignment={"spaceBetween"}
+    crossAxisAlignment={"center"}>
+    <Subtitle>
         <Translatable resourceKey={i18nKey("bots.matchingCommands")} />
-    </h4>
-    <HoverIcon onclick={onCancel}>
-        <Close size={"1em"} color={"var(--icon-txt)"} />
-    </HoverIcon>
-</div>
-<div class="command-list">
-    {#each commands as command, i}
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div
-            class="command"
-            class:selected={botState.focusedCommandIndex === i}
-            onclick={() => selectCommand(command)}>
-            {#if command.kind === "external_bot"}
-                <BotAvatar bot={command} />
-            {:else}
-                <Logo />
-            {/if}
-            <div class="details">
-                <div class="interface">
-                    <div class="command-name">
+    </Subtitle>
+    <IconButton onclick={onCancel} size={"sm"}>
+        {#snippet icon(color)}
+            <Close {color} />
+        {/snippet}
+    </IconButton>
+</Container>
+<Container maxHeight={"calc(var(--vh, 1vh) * 50)"} direction={"vertical"}>
+    {#each commands as command}
+        <Container
+            padding={"sm"}
+            crossAxisAlignment={"center"}
+            mainAxisAlignment={"spaceBetween"}
+            gap={"sm"}
+            onClick={() => selectCommand(command)}>
+            <Container maxWidth={"3rem"} maxHeight={"3rem"} width={{ kind: "hug" }}>
+                {#if command.kind === "external_bot"}
+                    <BotAvatar bot={command} />
+                {:else}
+                    <Logo />
+                {/if}
+            </Container>
+            <Container direction={"vertical"}>
+                <Container crossAxisAlignment={"center"} gap={"sm"}>
+                    <Body fontWeight={"bold"} width={{ kind: "hug" }}>
                         /{command.name}
-                    </div>
+                    </Body>
                     {#each command?.params ?? [] as param}
                         <Tooltip position={"top"} align={"middle"}>
                             <div class="param" class:required={param.required}>
-                                <Translatable resourceKey={i18nKey(param.name)} />
+                                <BodySmall>
+                                    <Translatable resourceKey={i18nKey(param.name)} />
+                                </BodySmall>
                             </div>
                             {#snippet popup()}
                                 <Translatable resourceKey={i18nKey(param.description ?? "")} />
                             {/snippet}
                         </Tooltip>
                     {/each}
-                </div>
-                {#if command.description}
-                    <div class="desc">
-                        <Translatable resourceKey={i18nKey(command.description)} />
-                    </div>
-                {/if}
-            </div>
-            <div class="bot-name">
+                </Container>
+                <Container>
+                    <div class="interface"></div>
+                    {#if command.description}
+                        <Body ellipsisTruncate width={{ kind: "hug" }} colour={"textSecondary"}>
+                            <Translatable resourceKey={i18nKey(command.description)} />
+                        </Body>
+                    {/if}
+                </Container>
+            </Container>
+            <BodySmall width={{ kind: "hug" }} colour={"textSecondary"}>
                 <Translatable resourceKey={i18nKey(command.botName)} />
-            </div>
-        </div>
+            </BodySmall>
+        </Container>
     {/each}
-</div>
+</Container>
 
 {#if botState.error !== undefined}
     <div class="command-error">
@@ -269,80 +289,16 @@
         }
     }
 
-    .command-header {
-        background-color: var(--modal-bg);
-        padding: $sp3 $sp4;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid var(--bd);
-        border-top: 1px solid var(--bd);
-    }
+    .param {
+        border: 1px solid var(--primary);
+        padding: var(--sp-xxs) var(--sp-sm);
+        border-radius: var(--rad-sm);
+        line-height: 18px;
 
-    .command-list {
-        position: relative;
-        max-height: calc(var(--vh, 1vh) * 50);
-        overflow: auto;
-        background-color: var(--modal-bg);
-
-        .command {
-            $size: toRem(48);
-            display: flex;
-            align-items: center;
-            gap: $sp3;
-            border-bottom: 1px solid var(--bd);
-            padding: $sp3;
-            cursor: pointer;
-
-            :global(.logo),
-            :global(.avatar) {
-                width: $size;
-                height: $size;
-                flex: 0 0 $size;
-            }
-
-            &.selected {
-                background-color: var(--chatSummary-bg-selected);
-            }
-
-            .bot-name {
-                @include font(light, normal, fs-80);
-                color: var(--txt-light);
-            }
-
-            .details {
-                flex: auto;
-                display: flex;
-                flex-direction: column;
-
-                .interface {
-                    display: flex;
-                    align-items: center;
-                    gap: $sp3;
-
-                    .command-name {
-                        @include font(bold, normal, fs-100);
-                    }
-
-                    .param {
-                        @include font(light, normal, fs-80);
-                        border: 1px solid var(--button-bg);
-                        padding: $sp1 $sp3;
-                        border-radius: $sp2;
-                        line-height: 18px;
-
-                        &.required {
-                            background: var(--button-bg);
-                            color: var(--button-txt);
-                            border: none;
-                        }
-                    }
-                }
-
-                .desc {
-                    @include font(light, normal, fs-80);
-                }
-            }
+        &.required {
+            background: var(--gradient-inverted);
+            color: var(--text-on-primary);
+            border: none;
         }
     }
 </style>
