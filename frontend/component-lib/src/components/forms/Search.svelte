@@ -35,9 +35,7 @@
             window.clearTimeout(timer);
         }
         timer = window.setTimeout(() => {
-            if (value?.length ?? 0 > 0) {
-                onSearch?.(value);
-            }
+            onSearch?.(value);
         }, debounceDuration);
     }
 </script>

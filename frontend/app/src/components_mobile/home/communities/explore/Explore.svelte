@@ -210,6 +210,13 @@
 {/if}
 
 <style lang="scss">
+    $size: 150px;
+
+    .loading {
+        width: $size;
+        margin: auto;
+    }
+
     .fab {
         position: absolute;
         bottom: var(--sp-md);
