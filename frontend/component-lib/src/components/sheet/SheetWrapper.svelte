@@ -43,12 +43,15 @@
 <svelte:window onkeydown={onKeyDown} />
 
 {#if children}
+    <!-- Yes this *should* be set to height:hug because we don't want it to take up more space than it needs -->
+    <!-- When you feel like changing it to height:fill - DON'T -->
+    <!-- That said, this *can* cause issues because it means that the children of the sheet must define the height if it matters -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class:block bind:this={container} class="sheet_overlay faded" onmousedown={onMousedown}>
         <Container
             parentDirection={"vertical"}
             maxHeight={"65vh"}
-            height={{ kind: "fill" }}
+            height={{ kind: "hug" }}
             background={ColourVars.background1}
             supplementalClass={"sheet_content"}
             borderRadius={["xl", "xl", "zero", "zero"]}

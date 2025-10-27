@@ -8,7 +8,11 @@
     const client = getContext<OpenChat>("client");
 </script>
 
-<Container height={{ kind: "fill" }} padding={"lg"} gap={"lg"} direction={"vertical"}>
+<Container
+    height={{ kind: "fixed", size: "55vh" }}
+    padding={"lg"}
+    gap={"lg"}
+    direction={"vertical"}>
     <Title fontWeight={"bold"}>
         <Translatable resourceKey={i18nKey("communities.primaryLanguage")} />
     </Title>
