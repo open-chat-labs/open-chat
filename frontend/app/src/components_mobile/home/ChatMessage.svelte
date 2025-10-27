@@ -48,7 +48,9 @@
     import ReminderBuilder from "./ReminderBuilder.svelte";
     import ReportMessage from "./ReportMessage.svelte";
     // import ThreadSummary from "./ThreadSummary.svelte";
-    import { dclickReply } from "@src/stores/settings";
+    import { confirmMessageDeletion, dclickReply } from "@src/stores/settings";
+    import AreYouSure from "../AreYouSure.svelte";
+    import Checkbox from "../Checkbox.svelte";
     import Reactions from "./message/Reactions.svelte";
     import ThreadSummary from "./message/ThreadSummary.svelte";
     import Tips from "./message/Tips.svelte";
@@ -432,6 +434,28 @@
     let canShare = $derived(canShareMessage(msg.content));
     let canForward = $derived(client.canForward(msg.content));
     let canTranslate = $derived((client.getMessageText(msg.content) ?? "").length > 0);
+    let canDeleteMessage = $derived(
+        (canDelete || me) &&
+            !inert &&
+            !(msg.content.kind === "video_call_content" && msg.content.ended === undefined),
+    );
+    let showConfirmDelete = $state(false);
+
+    async function deleteMessage(deletionConfirmed: boolean) {
+        if (failed) {
+            onDeleteFailedMessage?.();
+            return;
+        }
+        if (!canDeleteMessage) return;
+
+        if (!deletionConfirmed) {
+            showConfirmDelete = !showConfirmDelete;
+            return;
+        }
+
+        showConfirmDelete = false;
+        await client.deleteMessage(chatId, threadRootMessageIndex, msg.messageId);
+    }
 </script>
 
 <svelte:window onresize={recalculateMediaDimensions} />
@@ -442,6 +466,20 @@
 
 {#if tipping !== undefined}
     <TipBuilder ledger={tipping} onClose={() => (tipping = undefined)} {msg} {messageContext} />
+{/if}
+
+{#if showConfirmDelete}
+    <AreYouSure action={deleteMessage}>
+        <Container gap={"lg"} direction={"vertical"}>
+            <Translatable resourceKey={i18nKey("deleteMessageConfirm")}></Translatable>
+            <Checkbox
+                id="dont_show"
+                label={i18nKey("install.dontShow")}
+                checked={!$confirmMessageDeletion}
+                onChange={confirmMessageDeletion.toggle}>
+            </Checkbox>
+        </Container>
+    </AreYouSure>
 {/if}
 
 {#if showEmojiPicker && canReact}
@@ -579,10 +617,12 @@
                                     onTipMessage={tipMessage}
                                     onReportMessage={reportMessage}
                                     onCancelReminder={cancelReminder}
+                                    onDeleteMessage={deleteMessage}
                                     onRemindMe={remindMe} />
                             {/if}
                         {/snippet}
                         <MessageBubble
+                            {chatId}
                             {focused}
                             {senderTyping}
                             {senderContext}

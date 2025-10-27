@@ -49,8 +49,6 @@
     import { toastStore } from "../../stores/toast";
     import * as shareFunctions from "../../utils/share";
     import { copyToClipboard } from "../../utils/urls";
-    import AreYouSure from "../AreYouSure.svelte";
-    import Checkbox from "../Checkbox.svelte";
     import Bitcoin from "../icons/Bitcoin.svelte";
     import Translatable from "../Translatable.svelte";
 
@@ -96,6 +94,7 @@
         onEditMessage: () => void;
         onReplyPrivately: () => void;
         onTipMessage: (ledger: string) => void;
+        onDeleteMessage: (confirm: boolean) => void;
     }
 
     let {
@@ -133,14 +132,12 @@
         onCancelReminder,
         onRetrySend,
         onReportMessage,
-        onDeleteFailedMessage,
         onReply,
         onEditMessage,
         onReplyPrivately,
         onTipMessage,
+        onDeleteMessage,
     }: Props = $props();
-
-    let showConfirmDelete = $state(false);
 
     let canRemind = $derived(
         msg.content.kind !== "message_reminder_content" &&
@@ -224,22 +221,6 @@
         publish("forward", msg);
     }
 
-    async function deleteMessage(deletionConfirmed: boolean) {
-        if (failed) {
-            onDeleteFailedMessage?.();
-            return;
-        }
-        if (!canDeleteMessage) return;
-
-        if (!deletionConfirmed) {
-            showConfirmDelete = !showConfirmDelete;
-            return;
-        }
-
-        showConfirmDelete = false;
-        await client.deleteMessage(chatId, threadRootMessageIndex, msg.messageId);
-    }
-
     function undeleteMessage() {
         if (!canUndelete) return;
         client.undeleteMessage(chatId, threadRootMessageIndex, msg).then((success) => {
@@ -315,22 +296,6 @@
         );
     }
 </script>
-
-{#if showConfirmDelete}
-    <AreYouSure action={deleteMessage}>
-        <div class="confirm">
-            <Translatable resourceKey={i18nKey("deleteMessageConfirm")}></Translatable>
-            <div class="dont-show">
-                <Checkbox
-                    id="dont_show"
-                    label={i18nKey("install.dontShow")}
-                    checked={!$confirmMessageDeletion}
-                    onChange={confirmMessageDeletion.toggle}>
-                </Checkbox>
-            </div>
-        </div>
-    </AreYouSure>
-{/if}
 
 <Container
     mainAxisAlignment={"spaceBetween"}
@@ -509,7 +474,7 @@
     </MenuItem>
 {/if}
 {#if canDeleteMessage}
-    <MenuItem onclick={() => deleteMessage(!$confirmMessageDeletion)}>
+    <MenuItem onclick={() => onDeleteMessage(!$confirmMessageDeletion)}>
         {#snippet icon(color, size)}
             <DeleteOutline {color} {size} />
         {/snippet}
@@ -560,14 +525,5 @@
 
     .quick-reaction {
         font-size: 1.3rem;
-    }
-
-    .confirm {
-        display: flex;
-        flex-direction: column;
-        gap: $sp4;
-    }
-    .dont-show {
-        @include font(light, normal, fs-80);
     }
 </style>

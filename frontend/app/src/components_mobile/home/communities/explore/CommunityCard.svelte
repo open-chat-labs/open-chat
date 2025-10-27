@@ -107,7 +107,7 @@
             <Markdown inline={false} text={description} />
         </Body>
         <Container gap={"sm"} wrap>
-            <Chip mode={"filter"}>
+            <Chip mode={"default"}>
                 {#snippet icon(color)}
                     <Pound {color} />
                 {/snippet}

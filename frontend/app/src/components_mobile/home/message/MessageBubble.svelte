@@ -10,11 +10,15 @@
         type Radius,
     } from "component-lib";
     import {
+        chatIdentifiersEqual,
+        chatListScopeStore,
         currentUserIdStore,
         OpenChat,
         publish,
+        routeForChatIdentifier,
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
+        type ChatIdentifier,
         type ChatType,
         type Message,
         type RehydratedReplyContext,
@@ -33,6 +37,7 @@
     const client = getContext<OpenChat>("client");
 
     interface Props {
+        chatId: ChatIdentifier;
         senderTyping: boolean;
         senderContext?: SenderContext;
         sender?: UserSummary;
@@ -62,6 +67,7 @@
     }
 
     let {
+        chatId,
         senderTyping,
         senderContext,
         sender,
@@ -164,6 +170,27 @@
         }
         return classes.join(" ");
     });
+
+    function getUrl(repliesTo: RehydratedReplyContext) {
+        const path = [
+            routeForChatIdentifier($chatListScopeStore.kind, repliesTo.sourceContext.chatId),
+            repliesTo.sourceContext.threadRootMessageIndex ?? repliesTo.messageIndex,
+        ];
+        if (repliesTo.sourceContext.threadRootMessageIndex !== undefined) {
+            path.push(repliesTo.messageIndex);
+        }
+        return path.join("/");
+    }
+
+    function zoomToMessage(repliesTo: RehydratedReplyContext) {
+        if (chatIdentifiersEqual(repliesTo.sourceContext.chatId, chatId)) {
+            onGoToMessageIndex?.({
+                index: repliesTo.messageIndex,
+            });
+        } else {
+            page(getUrl(repliesTo));
+        }
+    }
 </script>
 
 <Container
@@ -223,12 +250,10 @@
         </Container>
     {/if}
     {#if msg.repliesTo !== undefined}
-        {@const msgIndex =
-            msg.repliesTo.kind === "rehydrated_reply_context"
-                ? msg.repliesTo.messageIndex
-                : undefined}
+        {@const reply =
+            msg.repliesTo.kind === "rehydrated_reply_context" ? msg.repliesTo : undefined}
         <Container
-            onClick={msgIndex ? () => onGoToMessageIndex?.({ index: msgIndex }) : undefined}
+            onClick={reply ? () => zoomToMessage(reply) : undefined}
             borderRadius={replyRadius}
             padding={"md"}
             supplementalClass={`reply-wrapper ${me ? "me" : ""}`}

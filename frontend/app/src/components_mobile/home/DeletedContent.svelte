@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { ChatText } from "component-lib";
     import {
         OPENCHAT_BOT_USER_ID,
         selectedChatWebhooksStore,
@@ -26,11 +27,15 @@
         `${client.toLongDateString(date)} @ ${client.toShortTimeString(date)}`,
     );
     let username = $derived(
-        client.getDisplayName(content.deletedBy, $selectedCommunityMembersStore, $selectedChatWebhooksStore),
+        client.getDisplayName(
+            content.deletedBy,
+            $selectedCommunityMembersStore,
+            $selectedChatWebhooksStore,
+        ),
     );
 </script>
 
-<div class="deleted">
+<ChatText fontWeight={"light"} colour={"textSecondary"}>
     {#if undeleting}
         <Translatable
             resourceKey={i18nKey("undeletingMessage", {
@@ -54,10 +59,4 @@
                 timestamp: timestampStr,
             })} />
     {/if}
-</div>
-
-<style lang="scss">
-    .deleted {
-        @include font(light, italic, fs-80);
-    }
-</style>
+</ChatText>

@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        BigButton,
         CommonButton,
         Container,
         FloatingButton,
@@ -13,9 +14,10 @@
     import { exploreCommunitiesFiltersStore, offlineStore } from "openchat-client";
     import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
-    import Account from "svelte-material-icons/AccountMultipleOutline.svelte";
+    import Account from "svelte-material-icons/AccountGroupOutline.svelte";
     import ArrowUp from "svelte-material-icons/ArrowUp.svelte";
     import CloudOffOutline from "svelte-material-icons/CloudOffOutline.svelte";
+    import Robot from "svelte-material-icons/RobotOutline.svelte";
     import Tune from "svelte-material-icons/Tune.svelte";
     import { i18nKey, interpolate } from "../../../../i18n/i18n";
     import { communitySearchState } from "../../../../stores/search.svelte";
@@ -26,10 +28,16 @@
 
     const client = getContext<OpenChat>("client");
 
+    type View = "communities" | "bots";
     let searching = $state(false);
     let showFab = $state(false);
     let scrollableElement: HTMLElement | undefined;
     let initialised = $state(false);
+    let view = $state<View>("communities");
+
+    function selectView(v: View) {
+        view = v;
+    }
 
     function clear() {
         communitySearchState.term = "";
@@ -107,7 +115,7 @@
     let loading = $derived(searching && communitySearchState.results.length === 0);
 </script>
 
-<Container height={{ kind: "fill" }} parentDirection={"vertical"} gap={"md"} direction={"vertical"}>
+<Container height={{ kind: "fill" }} parentDirection={"vertical"} gap={"sm"} direction={"vertical"}>
     <SectionHeader onBack={() => history.back()}>
         {#snippet title()}
             <Translatable resourceKey={i18nKey("communities.exploreMobile")} />
@@ -121,15 +129,16 @@
         {/snippet}
     </SectionHeader>
 
-    <pre>{scrollableElement?.scrollTop}</pre>
-
     <Container padding={["zero", "md"]}>
         <Search
             bind:value={communitySearchState.term}
             onClear={clear}
             {searching}
             onSearch={() => search($exploreCommunitiesFiltersStore, true)}
-            placeholder={interpolate($_, i18nKey("communities.search"))} />
+            placeholder={interpolate(
+                $_,
+                i18nKey(view === "communities" ? "communities.search" : "Search bots"),
+            )} />
     </Container>
 
     <Container
@@ -197,6 +206,22 @@
             {/if}
         {/if}
     </Container>
+    <Container padding={["zero", "md"]} gap={"sm"}>
+        <BigButton
+            mode={view === "communities" ? "active" : "default"}
+            onClick={() => selectView("communities")}>
+            {#snippet icon(color)}
+                <Account {color} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("Communities")} />
+        </BigButton>
+        <BigButton mode={view === "bots" ? "active" : "default"} onClick={() => selectView("bots")}>
+            {#snippet icon(color)}
+                <Robot {color} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("Bots")} />
+        </BigButton>
+    </Container>
 </Container>
 
 {#if showFab}
@@ -219,7 +244,7 @@
 
     .fab {
         position: absolute;
-        bottom: var(--sp-md);
+        bottom: 5.5rem;
         right: var(--sp-md);
     }
 </style>

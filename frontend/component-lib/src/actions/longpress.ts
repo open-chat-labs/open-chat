@@ -64,8 +64,8 @@ export function longpress(node: HTMLElement, onlongpress?: (e: TouchEvent) => vo
     if (isTouchDevice) {
         node.addEventListener("touchend", clearLongPressTimer);
         node.addEventListener("touchleave", clearLongPressTimer);
-        node.addEventListener("touchmove", onTouchMove);
-        node.addEventListener("touchstart", onTouchStart);
+        node.addEventListener("touchmove", onTouchMove, { passive: true });
+        node.addEventListener("touchstart", onTouchStart, { passive: true });
         node.addEventListener("contextmenu", onContextMenu);
         return {
             destroy() {
