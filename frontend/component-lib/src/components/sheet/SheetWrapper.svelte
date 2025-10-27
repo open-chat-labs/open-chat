@@ -22,8 +22,10 @@
 
     function dismissInternal() {
         if (onDismiss !== undefined) {
-            dismissed = true;
-            onDismiss?.();
+            try {
+                onDismiss?.();
+            } catch (_err) {}
+            //dismissed = true;
         }
     }
 

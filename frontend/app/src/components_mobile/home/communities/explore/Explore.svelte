@@ -21,6 +21,7 @@
         botState,
         exploreCommunitiesFiltersStore,
         offlineStore,
+        showUnpublishedBots,
     } from "openchat-client";
     import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
@@ -39,6 +40,7 @@
     import FancyLoader from "../../../icons/FancyLoader.svelte";
     import Translatable from "../../../Translatable.svelte";
     import Markdown from "../../Markdown.svelte";
+    import BotFilters from "./BotFilters.svelte";
     import CommunityCard from "./CommunityCard.svelte";
     import CommunityCardLink from "./CommunityCardLink.svelte";
     import CommunityFilters from "./Filters.svelte";
@@ -59,22 +61,27 @@
 
     function selectView(v: View) {
         view = v;
-        search($exploreCommunitiesFiltersStore, true);
+        search(true);
     }
 
     function clear() {
         searchState.term = "";
-        search($exploreCommunitiesFiltersStore, true);
+        search(true);
     }
 
-    function searchCommunities(filters: { languages: string[]; flags: number }, reset = false) {
+    function searchCommunities(
+        filters: {
+            languages: string[];
+            flags: number;
+        },
+        reset = false,
+    ) {
         searching = true;
         if (reset) {
             searchState.reset();
         } else {
             searchState.nextPage();
         }
-
         client
             .exploreCommunities(
                 searchState.term === "" ? undefined : searchState.term,
@@ -96,14 +103,15 @@
             .finally(() => (searching = false));
     }
 
-    function searchBots() {
+    function searchBots(showUnpublished: boolean) {
         botSearchState.results = [...botState.externalBots.values()]
             .filter(
                 (b) =>
-                    b.name.toLocaleLowerCase().includes(botSearchState.term.toLocaleLowerCase()) ||
-                    b.definition.description
-                        .toLocaleLowerCase()
-                        .includes(botSearchState.term.toLocaleLowerCase()),
+                    (b.registrationStatus.kind === "public" || showUnpublished) &&
+                    (b.name.toLocaleLowerCase().includes(botSearchState.term.toLocaleLowerCase()) ||
+                        b.definition.description
+                            .toLocaleLowerCase()
+                            .includes(botSearchState.term.toLocaleLowerCase())),
             )
             .map((b) => ({
                 ...b,
@@ -111,11 +119,11 @@
             }));
     }
 
-    function search(filters: { languages: string[]; flags: number }, reset = false) {
+    function search(reset = false) {
         if (view === "communities") {
-            searchCommunities(filters, reset);
+            searchCommunities($exploreCommunitiesFiltersStore, reset);
         } else {
-            searchBots();
+            searchBots($showUnpublishedBots);
         }
     }
 
@@ -130,14 +138,22 @@
 
         const unsub = exploreCommunitiesFiltersStore.subscribe((filters) => {
             if (initialised || searchState.results.length === 0) {
-                search(filters, true);
+                searchCommunities(filters, true);
             }
             initialised = true;
         });
 
+        const unsubBot = showUnpublishedBots.subscribe((show) => {
+            if (initialised || searchState.results.length === 0) {
+                searchBots(show);
+            }
+            initialised = true;
+        }, undefined);
+
         return () => {
             scrollableElement?.removeEventListener("scroll", onScroll);
             unsub();
+            unsubBot();
         };
     });
 
@@ -157,16 +173,24 @@
     let loading = $derived(searching && searchState.results.length === 0);
 
     let installing = $state<BotMatch>();
+    let showInstalling = $state(false);
+    function hideInstalling() {
+        showInstalling = false;
+    }
 </script>
 
 {#if showingFilters}
     <Sheet onDismiss={() => (showingFilters = false)}>
-        <CommunityFilters />
+        {#if view === "communities"}
+            <CommunityFilters />
+        {:else}
+            <BotFilters />
+        {/if}
     </Sheet>
 {/if}
 
-{#if installing}
-    <Sheet onDismiss={() => (installing = undefined)}>
+{#if showInstalling && installing}
+    <Sheet onDismiss={hideInstalling}>
         {@render botCard(installing)}
         <Body align={"center"} colour={"textSecondary"}>This is where we will do the install</Body>
     </Sheet>
@@ -176,7 +200,10 @@
     {@const isPublic = botState.externalBots.get(bot.id)?.registrationStatus?.kind === "public"}
     {@const owner = $allUsersStore.get(bot.ownerId)}
     <Container
-        onClick={() => (installing = bot)}
+        onClick={() => {
+            installing = bot;
+            showInstalling = true;
+        }}
         padding={"lg"}
         borderRadius={"md"}
         background={ColourVars.background1}
@@ -205,7 +232,7 @@
             <Translatable resourceKey={i18nKey("communities.exploreMobile")} />
         {/snippet}
         {#snippet action()}
-            <IconButton disabled={view === "bots"} onclick={() => (showingFilters = true)}>
+            <IconButton onclick={() => (showingFilters = true)}>
                 {#snippet icon(color)}
                     <Tune {color} />
                 {/snippet}
@@ -218,7 +245,7 @@
             bind:value={searchState.term}
             onClear={clear}
             {searching}
-            onSearch={() => search($exploreCommunitiesFiltersStore, true)}
+            onSearch={() => search(true)}
             placeholder={interpolate(
                 $_,
                 i18nKey(view === "communities" ? "communities.search" : "Search bots"),
@@ -290,7 +317,7 @@
                         disabled={searching}
                         loading={searching}
                         mode={"active"}
-                        onClick={() => search($exploreCommunitiesFiltersStore, false)}>
+                        onClick={() => search(false)}>
                         {#snippet icon(color)}
                             <Account {color} />
                         {/snippet}

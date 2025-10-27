@@ -457,6 +457,8 @@ export async function askForNotificationPermission(): Promise<NotificationPermis
         });
 }
 
+export const showUnpublishedBots = new LocalStorageBoolStore("openchat_unpublished_bots", false);
+
 export const communityFiltersStore = new LocalStorageStore(
     "openchat_community_filters",
     new Set<string>(),
