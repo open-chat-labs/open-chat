@@ -11,27 +11,31 @@
     let { onDismiss, children, block = true }: Props = $props();
 
     let container: HTMLElement | undefined;
+    let dismissed = $state(false);
 
     onMount(() => {
-        window.addEventListener("popstate", popState);
+        window.addEventListener("popstate", dismissInternal);
         return () => {
-            window.removeEventListener("popstate", popState);
+            window.removeEventListener("popstate", dismissInternal);
         };
     });
 
-    function popState() {
-        onDismiss?.();
+    function dismissInternal() {
+        if (onDismiss !== undefined) {
+            dismissed = true;
+            onDismiss?.();
+        }
     }
 
     function onMousedown(ev: MouseEvent) {
         if (ev.target === container) {
-            onDismiss?.();
+            dismissInternal();
         }
     }
 
     function onKeyDown(ev: KeyboardEvent) {
         if (ev.key === "Escape") {
-            onDismiss?.();
+            dismissInternal();
         }
     }
 </script>
@@ -44,12 +48,14 @@
         <Container
             parentDirection={"vertical"}
             maxHeight={"65vh"}
-            height={{ kind: "hug" }}
+            height={{ kind: "fill" }}
             background={ColourVars.background1}
             supplementalClass={"sheet_content"}
             borderRadius={["xl", "xl", "zero", "zero"]}
             direction={"vertical"}>
-            {@render children?.()}
+            {#if !dismissed}
+                {@render children?.()}
+            {/if}
         </Container>
     </div>
 {/if}

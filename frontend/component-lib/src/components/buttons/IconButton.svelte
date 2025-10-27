@@ -24,7 +24,7 @@
     let iconColour = $derived.by(() => {
         switch (mode) {
             case "transparent":
-                return ColourVars.textPrimary;
+                return disabled ? ColourVars.disabledButton : ColourVars.textPrimary;
             case "dark":
                 return ColourVars.primary;
             case "primary":

@@ -1,6 +1,7 @@
 <script lang="ts">
     import {
         BigButton,
+        Body,
         BodySmall,
         ColourVars,
         CommonButton,
@@ -9,6 +10,7 @@
         IconButton,
         Search,
         SectionHeader,
+        Sheet,
         Subtitle,
         Title,
         UserChip,
@@ -39,6 +41,7 @@
     import Markdown from "../../Markdown.svelte";
     import CommunityCard from "./CommunityCard.svelte";
     import CommunityCardLink from "./CommunityCardLink.svelte";
+    import CommunityFilters from "./Filters.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -48,6 +51,7 @@
     let scrollableElement: HTMLElement | undefined;
     let initialised = $state(false);
     let view = $state<View>("communities");
+    let showingFilters = $state(false);
 
     let searchState = $derived<SearchState<CommunityMatch | BotMatch>>(
         view === "communities" ? communitySearchState : botSearchState,
@@ -115,10 +119,6 @@
         }
     }
 
-    function showFilters() {
-        client.pushRightPanelHistory({ kind: "community_filters" });
-    }
-
     onMount(() => {
         tick().then(() => {
             if (scrollableElement) {
@@ -155,12 +155,28 @@
     }
     let more = $derived(searchState.total > searchState.results.length);
     let loading = $derived(searching && searchState.results.length === 0);
+
+    let installing = $state<BotMatch>();
 </script>
+
+{#if showingFilters}
+    <Sheet onDismiss={() => (showingFilters = false)}>
+        <CommunityFilters />
+    </Sheet>
+{/if}
+
+{#if installing}
+    <Sheet onDismiss={() => (installing = undefined)}>
+        {@render botCard(installing)}
+        <Body align={"center"} colour={"textSecondary"}>This is where we will do the install</Body>
+    </Sheet>
+{/if}
 
 {#snippet botCard(bot: BotMatch)}
     {@const isPublic = botState.externalBots.get(bot.id)?.registrationStatus?.kind === "public"}
     {@const owner = $allUsersStore.get(bot.ownerId)}
     <Container
+        onClick={() => (installing = bot)}
         padding={"lg"}
         borderRadius={"md"}
         background={ColourVars.background1}
@@ -189,7 +205,7 @@
             <Translatable resourceKey={i18nKey("communities.exploreMobile")} />
         {/snippet}
         {#snippet action()}
-            <IconButton onclick={showFilters}>
+            <IconButton disabled={view === "bots"} onclick={() => (showingFilters = true)}>
                 {#snippet icon(color)}
                     <Tune {color} />
                 {/snippet}

@@ -18,7 +18,7 @@
         if (mounted) {
             transition(["modal_sheet"], () => {
                 if (mounted) {
-                    unmount(mounted, { outro: true });
+                    unmount(mounted);
                     mounted = undefined;
                 }
             });

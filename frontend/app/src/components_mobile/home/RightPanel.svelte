@@ -50,7 +50,6 @@
     import ChannelOrCommunityMembers from "./ChannelOrCommunityMembers.svelte";
     import ChannelOrCommunitySummary from "./ChannelOrCommunitySummary.svelte";
     import CommunityDetails from "./communities/details/CommunitySummary.svelte";
-    import CommunityFilters from "./communities/explore/Filters.svelte";
     import DirectChatDetails from "./groupdetails/DirectChatDetails.svelte";
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
     import InviteUsers from "./groupdetails/InviteUsers.svelte";
@@ -558,8 +557,6 @@
         {:else}
             <CommunityDetails />
         {/if}
-    {:else if $lastRightPanelState.kind === "community_filters"}
-        <CommunityFilters onClose={client.popRightPanelHistory} />
     {/if}
 </section>
 
