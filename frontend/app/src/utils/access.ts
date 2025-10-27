@@ -1,5 +1,8 @@
 import {
+    isCompositeGate,
+    isLeafGate,
     type AccessGate,
+    type AccessGateConfig,
     type Credential,
     type CredentialGate,
     type CryptocurrencyDetails,
@@ -289,4 +292,15 @@ export function mergeAccessGates(
         ];
     }
     return [g1, g2];
+}
+
+export function flattenGateConfig({ gate }: AccessGateConfig): LeafGate[] {
+    if (isLeafGate(gate)) {
+        if (gate.kind === "no_gate") return [];
+        return [gate];
+    }
+    if (isCompositeGate(gate)) {
+        return gate.gates;
+    }
+    return [];
 }

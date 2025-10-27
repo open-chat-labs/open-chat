@@ -1,8 +1,10 @@
 <script lang="ts">
+    import { flattenGateConfig, gateLabel } from "@src/utils/access";
     import { Avatar, Body, BodySmall, Chip, ColourVars, Container, Title } from "component-lib";
     import type { AccessGateConfig, DataContent, OpenChat } from "openchat-client";
     import { ModerationFlags } from "openchat-client";
     import { getContext } from "svelte";
+    import Check from "svelte-material-icons/Check.svelte";
     import Pound from "svelte-material-icons/Pound.svelte";
     import { i18nKey, supportedLanguagesByCode } from "../../../../i18n/i18n";
     import Translatable from "../../../Translatable.svelte";
@@ -42,6 +44,8 @@
         flags,
         verified,
     }: Props = $props();
+
+    let gates = flattenGateConfig(gateConfig);
 
     let flagsArray = $derived(serialiseFlags(flags));
     function serialiseFlags(flags: number) {
@@ -112,6 +116,16 @@
             {#each flagsArray as flag}
                 <Chip mode={"default"}>
                     <div class="flag"><Translatable resourceKey={i18nKey(flag)} /></div>
+                </Chip>
+            {/each}
+        </Container>
+        <Container gap={"sm"} wrap>
+            {#each gates as gate}
+                <Chip mode={"filter"}>
+                    {#snippet icon(color)}
+                        <Check {color} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey(gateLabel[gate.kind])}></Translatable>
                 </Chip>
             {/each}
         </Container>

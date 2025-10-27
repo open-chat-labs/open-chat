@@ -1,7 +1,6 @@
 <script lang="ts">
     import { CommonButton, Container, FloatingButton } from "component-lib";
     import {
-        type AccessGateConfig,
         allUsersStore,
         chatIdentifiersEqual,
         chatIdentifierToString,
@@ -13,9 +12,6 @@
         type CombinedUnreadCounts,
         currentUserIdStore,
         emptyCombinedUnreadCounts,
-        isCompositeGate,
-        isLeafGate,
-        type LeafGate,
         numberOfThreadsStore,
         OpenChat,
         publish,
@@ -152,18 +148,6 @@
 
     function newMessage() {
         publish("newMessage");
-    }
-
-    function flattenGates(gateConfig: AccessGateConfig): LeafGate[] {
-        if (isLeafGate(gateConfig.gate)) {
-            if (gateConfig.gate.kind === "no_gate") {
-                return [];
-            }
-        }
-        if (isCompositeGate(gateConfig.gate)) {
-            return gateConfig.gate.gates;
-        }
-        return [];
     }
 </script>
 

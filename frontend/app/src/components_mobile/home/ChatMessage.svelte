@@ -501,7 +501,6 @@
     <pre>canlRevealBlocked: {canRevealBlocked}</pre>
     <pre>readonly: {readonly}</pre>
     <pre>showChatMenu: {showChatMenu}</pre>
-    <pre>intersecting: {intersecting}</pre>
     <pre>ephemeral: {ephemeral}</pre>
 {/if}
 {#if expiresAt === undefined || percentageExpired < 100}
