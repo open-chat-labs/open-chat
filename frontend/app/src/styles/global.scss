@@ -552,6 +552,8 @@ svelte-virtual-list-viewport {
     }
 }
 
+$speed: 250ms;
+
 html:active-view-transition-type(modal_sheet) {
     // set the view transition names that apply during these transitions
     .bottom_nav_bar,
@@ -574,13 +576,13 @@ html:active-view-transition-type(modal_sheet) {
     }
     &::view-transition-old(sheet_content) {
         animation:
-            250ms ease-in both fade-out,
-            250ms ease-in both slide_down;
+            $speed ease-in both fade-out,
+            $speed ease-in both slide_down;
     }
     &::view-transition-new(sheet_content) {
         animation:
-            250ms ease-out both fade-in,
-            250ms ease-out both slide_up;
+            $speed ease-out both fade-in,
+            $speed ease-out both slide_up;
     }
 }
 
@@ -602,25 +604,25 @@ html:active-view-transition-type(slide_left, slide_right) {
 html:active-view-transition-type(slide_left) {
     &::view-transition-old(root) {
         animation:
-            250ms ease-in both slide-to-left,
-            250ms ease-in both fade-out;
+            $speed ease-in both slide-to-left,
+            $speed ease-in both fade-out;
     }
     &::view-transition-new(root) {
         animation:
-            250ms ease-out both slide-from-right,
-            250ms ease-out both fade-in;
+            $speed ease-out both slide-from-right,
+            $speed ease-out both fade-in;
     }
 }
 
 html:active-view-transition-type(slide_right) {
     &::view-transition-old(root) {
         animation:
-            250ms ease-in both slide-to-right,
-            250ms ease-in both fade-out;
+            $speed ease-in both slide-to-right,
+            $speed ease-in both fade-out;
     }
     &::view-transition-new(root) {
         animation:
-            250ms ease-out both slide-from-left,
-            250ms ease-out both fade-in;
+            $speed ease-out both slide-from-left,
+            $speed ease-out both fade-in;
     }
 }

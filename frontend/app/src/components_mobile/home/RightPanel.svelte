@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { activeVideoCall } from "@src/stores/video";
     import type {
         ChatEvent,
         ChatIdentifier,
@@ -43,7 +44,6 @@
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
-    import { activeVideoCall } from "../../stores/video";
     import { currentTheme } from "../../theme/themes";
     import { removeQueryStringParam, removeThreadMessageIndex } from "../../utils/urls";
     import ChannelOrCommunityInvite from "./ChannelOrCommunityInvite.svelte";
@@ -62,7 +62,6 @@
     const client = getContext<OpenChat>("client");
 
     let invitingUsers = $state(false);
-    let section: HTMLElement | undefined = $state();
     let resized = $state(false);
     let resizing = $state(false);
     let resizedWidth = $state("7");
@@ -195,9 +194,9 @@
     }
 
     function closeThread(_id: ChatIdentifier) {
-        client.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
         pageReplace(stripThreadFromUrl(removeQueryStringParam("open")));
         activeVideoCall.threadOpen(false);
+        client.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
     }
 
     function findMessage(
@@ -380,7 +379,6 @@
 </script>
 
 <section
-    bind:this={section}
     class:modal
     class:resized
     class:resizing
