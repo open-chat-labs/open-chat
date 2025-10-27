@@ -94,7 +94,7 @@
             {#snippet icon(color)}
                 <Compass {color} />
             {/snippet}
-            Explore communities
+            Explore bots & communities
         </ListAction>
         <ListAction onClick={createCommunity} colour={"tertiary"}>
             {#snippet icon(color)}
