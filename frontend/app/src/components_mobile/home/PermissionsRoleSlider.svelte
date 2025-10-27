@@ -21,24 +21,51 @@
         onClose?: () => void;
     }
 
-    let { label, height, rolePermission = $bindable(), roles, onClose }: Props = $props();
+    let {
+        label,
+        height,
+        rolePermission = $bindable(),
+        roles,
+        onClose,
+        defaultRole,
+    }: Props = $props();
 
-    let selectedIndex = $derived(roles.findIndex((r) => r === rolePermission));
+    let usingDefault = $derived(rolePermission === undefined && defaultRole !== undefined);
+    let selectedIndex = $derived(
+        usingDefault
+            ? roles.findIndex((r) => r === defaultRole)
+            : roles.findIndex((r) => r === rolePermission),
+    );
 
     function percentFromIndex(idx: number, progress = false) {
-        if (rolePermission === ROLE_NONE && progress) return 0;
+        const role = usingDefault ? defaultRole : rolePermission;
+        if (role === ROLE_NONE && progress) return 0;
         return (idx / (roles.length - 1)) * 100;
     }
 
-    function select(r: ChatPermissionRole | undefined) {
-        rolePermission = r;
+    function select(r: ChatPermissionRole) {
+        if (r === defaultRole) {
+            rolePermission = undefined;
+        } else {
+            rolePermission = r;
+        }
     }
 
     function isActive(r: MemberRole) {
-        if (rolePermission === ROLE_NONE) {
-            return rolePermission === r;
+        const role = usingDefault ? defaultRole : rolePermission;
+        if (role === ROLE_NONE) {
+            return role === r;
         }
-        return r >= (rolePermission ?? 0);
+
+        return r >= (role ?? 0);
+    }
+
+    function roleLabel(r: MemberRole) {
+        const parts = [$_(`role.${roleAsText(r)}`)];
+        if (r === defaultRole) {
+            parts.push(`(${$_("role.default")})`);
+        }
+        return parts.join(" ");
     }
 </script>
 
@@ -57,7 +84,10 @@
         </BodySmall>
     </Container>
 
-    <Container mainAxisAlignment={"start"} padding={["zero", "sm"]}>
+    <Container
+        supplementalClass={`permission_slider ${usingDefault ? "faded" : ""}`}
+        mainAxisAlignment={"start"}
+        padding={["zero", "sm"]}>
         <Container
             width={{ kind: "hug" }}
             direction={"vertical"}
@@ -76,7 +106,7 @@
                         style={`top: ${percentFromIndex(i)}%;`}
                         class="marker-target">
                         <div
-                            class:selected={r === rolePermission}
+                            class:selected={usingDefault ? r === defaultRole : r === rolePermission}
                             class:active
                             class="marker"
                             class:end={i === 0 || i === roles.length - 1}>
@@ -101,7 +131,9 @@
                         align={"center"}
                         colour={active ? "primary" : "textSecondary"}
                         fontWeight={"bold"}
-                        width={{ kind: "hug" }}>{$_(`role.${roleAsText(r)}`)}</Subtitle>
+                        width={{ kind: "hug" }}>
+                        {roleLabel(r)}
+                    </Subtitle>
                 </button>
             {/each}
         </Container>

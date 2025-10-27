@@ -16,12 +16,12 @@
 
     function internalClose() {
         if (mounted) {
-            transition(["modal_sheet"], () => {
-                if (mounted) {
-                    unmount(mounted);
-                    mounted = undefined;
-                }
-            });
+            // transition(["modal_sheet"], () => {
+            if (mounted) {
+                unmount(mounted);
+                mounted = undefined;
+            }
+            //});
         }
     }
 

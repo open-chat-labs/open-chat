@@ -11,7 +11,6 @@
     let { onDismiss, children, block = true }: Props = $props();
 
     let container: HTMLElement | undefined;
-    let dismissed = $state(false);
 
     onMount(() => {
         window.addEventListener("popstate", dismissInternal);
@@ -22,10 +21,7 @@
 
     function dismissInternal() {
         if (onDismiss !== undefined) {
-            try {
-                onDismiss?.();
-            } catch (_err) {}
-            //dismissed = true;
+            onDismiss?.();
         }
     }
 
@@ -58,9 +54,7 @@
             supplementalClass={"sheet_content"}
             borderRadius={["xl", "xl", "zero", "zero"]}
             direction={"vertical"}>
-            {#if !dismissed}
-                {@render children?.()}
-            {/if}
+            {@render children?.()}
         </Container>
     </div>
 {/if}
