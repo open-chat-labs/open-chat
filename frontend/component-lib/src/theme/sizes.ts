@@ -128,7 +128,11 @@ export class Spacings {
     }
 }
 
-export type SizeMode = { kind: "hug" } | { kind: "fill" } | { kind: "fixed"; size: string };
+export type SizeMode =
+    | { kind: "hug" }
+    | { kind: "fill" }
+    | { kind: "fixed"; size: string }
+    | { kind: "share"; value: number };
 
 export type MainAxisAlignment = "start" | "center" | "end" | "spaceBetween" | "spaceAround";
 
@@ -188,12 +192,18 @@ export function getFlexStyle(
         if (mode.kind === "hug") return `flex: 0 0 auto`;
         // if (mode.kind === "fill") return `flex: 1 1 auto`;
         if (mode.kind === "fill") return `flex: 1 1 0`;
+        if (mode.kind === "share") return `flex: ${mode.value}`;
     }
 
     if (!isMainAxis) {
         if (mode.kind === "fixed") return `${axis}: ${mode.size ?? "auto"}`;
         if (mode.kind === "hug") return `${axis}: fit-content`;
         if (mode.kind === "fill") return `align-self: stretch`;
+        if (mode.kind === "share") {
+            console.warn(
+                "share SizeMode does not make sense for the cross-axis - you are probably making a mistake",
+            );
+        }
     }
 
     return "";

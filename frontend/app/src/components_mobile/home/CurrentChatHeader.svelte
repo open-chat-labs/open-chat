@@ -66,6 +66,10 @@
 
     function showGroupDetails() {
         if ($selectedChatIdStore !== undefined) {
+            if (selectedChatSummary.kind === "direct_chat") {
+                publish("directChatDetails", selectedChatSummary);
+                return;
+            }
             setRightPanelHistory([
                 {
                     kind: "group_details",

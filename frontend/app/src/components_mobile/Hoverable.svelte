@@ -64,7 +64,10 @@
 
         longPressTimer = window.setTimeout(() => {
             if (longPressTimer !== undefined) {
-                document.addEventListener("touchstart", handleDocumentTouchStart, { once: true });
+                document.addEventListener("touchstart", handleDocumentTouchStart, {
+                    once: true,
+                    passive: true,
+                });
                 longPressed = true;
             }
         }, LONGPRESS_DELAY);
@@ -111,8 +114,8 @@
     onMount(() => {
         if (isTouchDevice && enableLongPress) {
             containerDiv?.addEventListener("touchend", handleTouchEnd);
-            containerDiv?.addEventListener("touchmove", handleTouchMove);
-            containerDiv?.addEventListener("touchstart", handleTouchStart);
+            containerDiv?.addEventListener("touchmove", handleTouchMove, { passive: true });
+            containerDiv?.addEventListener("touchstart", handleTouchStart, { passive: true });
             containerDiv?.addEventListener("contextmenu", onContextMenu);
         }
         containerDiv?.addEventListener("mouseenter", startHover);

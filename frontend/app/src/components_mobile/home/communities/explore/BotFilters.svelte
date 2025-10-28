@@ -17,11 +17,10 @@
             )} />
     </BodySmall>
     <Container direction={"vertical"} gap={"md"}>
-        <Container onClick={() => showUnpublishedBots.toggle()} gap={"md"}>
-            <Switch onChange={() => showUnpublishedBots.toggle()} checked={$showUnpublishedBots} />
+        <Switch onChange={() => showUnpublishedBots.toggle()} checked={$showUnpublishedBots}>
             <Subtitle>
                 <Translatable resourceKey={i18nKey("Show unpublished bots")} />
             </Subtitle>
-        </Container>
+        </Switch>
     </Container>
 </Container>

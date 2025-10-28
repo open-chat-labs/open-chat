@@ -18,14 +18,13 @@
     </Title>
     <Container height={{ kind: "fill" }} direction={"vertical"} gap={"md"}>
         {#each supportedLanguages as lang}
-            <Container onClick={() => client.toggleCommunityFilterLanguage(lang.code)} gap={"md"}>
-                <Switch
-                    onChange={() => client.toggleCommunityFilterLanguage(lang.code)}
-                    checked={$communityFiltersStore.has(lang.code)} />
+            <Switch
+                onChange={() => client.toggleCommunityFilterLanguage(lang.code)}
+                checked={$communityFiltersStore.has(lang.code)}>
                 <Subtitle>
                     <Translatable resourceKey={i18nKey(lang.name)} />
                 </Subtitle>
-            </Container>
+            </Switch>
         {/each}
     </Container>
 </Container>

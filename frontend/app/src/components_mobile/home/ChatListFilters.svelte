@@ -15,10 +15,11 @@
 </script>
 
 {#snippet button(f: ChatListFilter, name: string)}
+    {@const selected = filter === f}
     <CommonButton
-        width={{ kind: "fill" }}
+        width={selected ? { kind: "share", value: 1.3 } : { kind: "share", value: 1 }}
         onClick={() => (filter = f)}
-        mode={filter === f ? "active" : "default"}
+        mode={selected ? "active" : "default"}
         size={"small"}>
         <Translatable resourceKey={i18nKey(name)}></Translatable>
     </CommonButton>

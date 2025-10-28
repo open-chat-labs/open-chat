@@ -2,6 +2,7 @@
     import {
         subscribe,
         type ChitEarnedGate,
+        type DirectChatSummary,
         type NeuronGate,
         type PaymentGate,
         type PublicProfile,
@@ -25,6 +26,7 @@
     import GeneralSetup from "./createOrUpdateGroup/GeneralSetup.svelte";
     import GroupInfo from "./createOrUpdateGroup/GroupInfo.svelte";
     import GroupPermissions from "./createOrUpdateGroup/Permissions.svelte";
+    import DirectChatDetails from "./groupdetails/DirectChatDetails.svelte";
     import { UpdateGroupOrCommunityState } from "./groupOrCommunity.svelte";
     import NewMessage from "./NewMessage.svelte";
     import Rules from "./Rules.svelte";
@@ -50,6 +52,7 @@
      */
 
     type SlidingModalType =
+        | { kind: "direct_chat_details"; chat: DirectChatSummary }
         | { kind: "new_message" }
         | { kind: "update_community_add_members" }
         | { kind: "update_community_details" }
@@ -93,6 +96,7 @@
 
     onMount(() => {
         const unsubs = [
+            subscribe("directChatDetails", (chat) => push({ kind: "direct_chat_details", chat })),
             subscribe("newMessage", () => push({ kind: "new_message" })),
             subscribe("newCommunity", () => push({ kind: "update_community_add_members" })),
             subscribe("updateCommunity", () => push({ kind: "update_community_details" })),
@@ -260,6 +264,8 @@
             <Channels />
         {:else if page.kind === "new_message"}
             <NewMessage />
+        {:else if page.kind === "direct_chat_details"}
+            <DirectChatDetails chat={page.chat} />
         {/if}
     </SlidingPage>
 {/each}

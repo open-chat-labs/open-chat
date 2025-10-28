@@ -7,6 +7,7 @@ import type {
     CommunityIdentifier,
     CommunitySummary,
     DirectChatIdentifier,
+    DirectChatSummary,
     EnhancedReplyContext,
     EphemeralMessageEvent,
     EventWrapper,
@@ -180,4 +181,5 @@ export type PubSubEvents = {
     updateCommunityChannels: undefined;
     newCommunity: undefined;
     newMessage: undefined;
+    directChatDetails: DirectChatSummary;
 };

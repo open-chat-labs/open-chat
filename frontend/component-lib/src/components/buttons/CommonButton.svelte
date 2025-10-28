@@ -30,7 +30,7 @@
         height = { kind: "hug" },
     }: Props = $props();
 
-    const SPEED = 300;
+    const SPEED = 250;
     let internalMode = $state<InternalMode>("default");
     let parentDirection = getContext<Direction>("direction");
     let spinnerColour = mode === "default" ? "var(--primary)" : "var(--text-on-primary)";
@@ -148,6 +148,7 @@
         border: none;
         cursor: pointer;
         transition:
+            flex ease-in-out $speed,
             border-radius ease-in-out $speed,
             border ease-in-out $speed,
             background ease-in-out $speed,
