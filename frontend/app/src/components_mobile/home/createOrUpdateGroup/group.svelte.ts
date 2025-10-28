@@ -183,6 +183,10 @@ export class UpdateGroupState extends UpdateGroupOrCommunityState {
         this.confirming = false;
 
         const updatedGroup = $state.snapshot(this.candidateGroup);
+        const permissionsDirty = client.haveGroupPermissionsChanged(
+            this.original.permissions,
+            updatedGroup.permissions,
+        );
 
         return client
             .updateGroup(
@@ -190,13 +194,12 @@ export class UpdateGroupState extends UpdateGroupOrCommunityState {
                 this.#nameChanged ? updatedGroup.name : undefined,
                 this.#descriptionChanged ? updatedGroup.description : undefined,
                 this.rulesChanged && this.rulesValid ? updatedGroup.rules : undefined,
-                undefined, // todo - this where we plug in permissions
-                // permissionsDirty
-                //     ? client.diffGroupPermissions(
-                //           originalGroup.permissions,
-                //           updatedGroup.permissions,
-                //       )
-                //     : undefined,
+                permissionsDirty
+                    ? client.diffGroupPermissions(
+                          this.original.permissions,
+                          updatedGroup.permissions,
+                      )
+                    : undefined,
                 this.#avatarChanged ? updatedGroup.avatar?.blobData : undefined,
                 this.#ttlChanged
                     ? updatedGroup.eventsTTL === undefined

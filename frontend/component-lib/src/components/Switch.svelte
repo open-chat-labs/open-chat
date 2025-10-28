@@ -1,26 +1,46 @@
 <script lang="ts">
+    import { Container } from "component-lib";
+    import type { Snippet } from "svelte";
     interface Props {
         checked: boolean;
         disabled?: boolean;
         onChange?: () => void;
+        children?: Snippet;
+        reverse?: boolean;
     }
 
-    let { checked = $bindable(), disabled = false, onChange }: Props = $props();
+    let {
+        checked = $bindable(),
+        disabled = false,
+        onChange,
+        children,
+        reverse = false,
+    }: Props = $props();
 
-    function internalOnChange(e: Event) {
+    function internalOnChange(e?: Event) {
         checked = !checked;
-        e.stopPropagation();
-        e.preventDefault();
+        e?.stopPropagation();
+        e?.preventDefault();
         onChange?.();
     }
 </script>
 
-<label class="toggle" class:disabled>
-    <input onchange={internalOnChange} {disabled} {checked} type="checkbox" class="toggle-input" />
-    <span class="toggle-track">
-        <span class="toggle-knob"></span>
-    </span>
-</label>
+<Container {reverse} crossAxisAlignment={"center"} onClick={internalOnChange} gap={"md"}>
+    <label class="toggle" class:disabled>
+        <input
+            onchange={internalOnChange}
+            {disabled}
+            {checked}
+            type="checkbox"
+            class="toggle-input" />
+        <span class="toggle-track">
+            <span class="toggle-knob"></span>
+        </span>
+    </label>
+    {#if children}
+        {@render children()}
+    {/if}
+</Container>
 
 <style lang="scss">
     $speed: 0.2s;

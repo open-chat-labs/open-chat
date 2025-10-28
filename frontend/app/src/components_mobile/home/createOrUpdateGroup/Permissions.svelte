@@ -1,9 +1,17 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { Body, BodySmall, CommonButton, Container, Sheet } from "component-lib";
+    import {
+        BodySmall,
+        CommonButton,
+        Container,
+        Sheet,
+        type SheetState,
+        Switch,
+    } from "component-lib";
     import {
         type ChatPermissionRole,
         chatRoles,
+        type MessagePermissions,
         publish,
         type ResourceKey,
         roleAsText,
@@ -26,48 +34,56 @@
 
     const data = updateGroupState;
     let defaultText = $derived($_("role.default"));
-    let selected = $state<Selected>();
     let roles = [...chatRoles];
     let isCommunityPublic = $derived($selectedCommunitySummaryStore?.public ?? true);
     let isChannel = $derived(data.candidate.id.kind === "channel");
     let selectedTab = $state("permissions.general");
+    let overrideChatMessages = $state(data.permissions.threadPermissions !== undefined);
+
+    let selected = $state<SheetState<Selected>>({ visible: false });
 
     // This is because I simply cannot get the data binding to work as I *think* it should
     function syncPermission() {
-        if (selected !== undefined) {
-            selected.sync?.(selected.role);
-            selected = undefined;
+        if (selected.data !== undefined) {
+            selected.data.sync?.(selected.data.role);
+            selected.visible = false;
         }
+    }
+
+    function onOverrideChatMessagesChanged() {
+        data.permissions.threadPermissions = overrideChatMessages
+            ? structuredClone($state.snapshot(data.permissions.messagePermissions))
+            : undefined;
     }
 </script>
 
-{#if selected !== undefined}
-    {@const { label } = selected}
+{#if selected.visible}
+    {@const { label } = selected.data}
     <Sheet onDismiss={syncPermission}>
         <PermissionsRoleSlider
             height={{ kind: "fixed", size: "250px" }}
             {roles}
             {label}
             onClose={syncPermission}
-            defaultRole={selected.defaultRole}
-            bind:rolePermission={selected.role} />
+            defaultRole={selected.data.defaultRole}
+            bind:rolePermission={selected.data.role} />
     </Sheet>
 {/if}
 
 {#snippet permissionSummary(
     label: ResourceKey,
-    sync: (r: ChatPermissionRole) => void,
+    sync: (r?: ChatPermissionRole) => void,
     role?: ChatPermissionRole,
     defaultRole?: ChatPermissionRole,
 )}
     <Container
-        onClick={() => (selected = { role, defaultRole, label, sync })}
+        onClick={() => (selected = { visible: true, data: { role, defaultRole, label, sync } })}
         mainAxisAlignment={"spaceBetween"}
         crossAxisAlignment={"end"}>
         <div class="label">
-            <Body>
+            <BodySmall>
                 <Translatable resourceKey={label}></Translatable>
-            </Body>
+            </BodySmall>
         </div>
         {#if role !== undefined}
             <BodySmall colour={"primary"} fontWeight={"bold"} width={{ kind: "hug" }}
@@ -89,6 +105,80 @@
     </CommonButton>
 {/snippet}
 
+{#snippet messageLevelPermissions(p: MessagePermissions, label: string)}
+    {@render permissionSummary(
+        i18nKey(`permissions.${label}.default`),
+        (r) => (p.default = r ?? p.default),
+        p.default,
+    )}
+    {@render permissionSummary(
+        i18nKey(`permissions.${label}.text`),
+        (r) => (p.text = r),
+        p.text,
+        p.default,
+    )}
+    {@render permissionSummary(
+        i18nKey(`permissions.${label}.image`),
+        (r) => (p.image = r),
+        p.image,
+        p.default,
+    )}
+    {@render permissionSummary(
+        i18nKey(`permissions.${label}.video`),
+        (r) => (p.video = r),
+        p.video,
+        p.default,
+    )}
+    {@render permissionSummary(
+        i18nKey(`permissions.${label}.audio`),
+        (r) => (p.audio = r),
+        p.audio,
+        p.default,
+    )}
+    {@render permissionSummary(
+        i18nKey(`permissions.${label}.file`),
+        (r) => (p.file = r),
+        p.file,
+        p.default,
+    )}
+    {@render permissionSummary(
+        i18nKey(`permissions.${label}.poll`),
+        (r) => (p.poll = r),
+        p.poll,
+        p.default,
+    )}
+    {@render permissionSummary(
+        i18nKey(`permissions.${label}.crypto`),
+        (r) => (p.crypto = r),
+        p.crypto,
+        p.default,
+    )}
+    {@render permissionSummary(
+        i18nKey(`permissions.${label}.giphy`),
+        (r) => (p.giphy = r),
+        p.giphy,
+        p.default,
+    )}
+    {@render permissionSummary(
+        i18nKey(`permissions.${label}.prize`),
+        (r) => (p.prize = r),
+        p.prize,
+        p.default,
+    )}
+    {@render permissionSummary(
+        i18nKey(`permissions.${label}.memeFighter`),
+        (r) => (p.memeFighter = r),
+        p.memeFighter,
+        p.default,
+    )}
+    {@render permissionSummary(
+        i18nKey(`permissions.${label}.p2pSwap`),
+        (r) => (p.p2pSwap = r),
+        p.p2pSwap,
+        p.default,
+    )}
+{/snippet}
+
 <SlidingPageContent title={i18nKey("Permission")}>
     <Container
         height={{ kind: "fill" }}
@@ -108,83 +198,77 @@
                 {@const p = data.permissions}
                 {@render permissionSummary(
                     i18nKey("permissions.changeRoles"),
-                    (r) => (p.changeRoles = r),
+                    (r) => (p.changeRoles = r ?? p.changeRoles),
                     p.changeRoles,
                 )}
                 {@render permissionSummary(
                     i18nKey("permissions.updateGroup"),
-                    (r) => (p.updateGroup = r),
+                    (r) => (p.updateGroup = r ?? p.updateGroup),
                     p.updateGroup,
                 )}
 
                 {#if isChannel && !isCommunityPublic}
                     {@render permissionSummary(
                         i18nKey("permissions.addMembers"),
-                        (r) => (p.addMembers = r),
+                        (r) => (p.addMembers = r ?? p.addMembers),
                         p.addMembers,
                     )}
                 {/if}
                 {@render permissionSummary(
                     i18nKey("permissions.inviteUsers"),
-                    (r) => (p.inviteUsers = r),
+                    (r) => (p.inviteUsers = r ?? p.inviteUsers),
                     p.inviteUsers,
                 )}
                 {@render permissionSummary(
                     i18nKey("permissions.removeMembers"),
-                    (r) => (p.removeMembers = r),
+                    (r) => (p.removeMembers = r ?? p.removeMembers),
                     p.removeMembers,
                 )}
                 {@render permissionSummary(
                     i18nKey("permissions.deleteMessages"),
-                    (r) => (p.deleteMessages = r),
+                    (r) => (p.deleteMessages = r ?? p.deleteMessages),
                     p.deleteMessages,
                 )}
                 {@render permissionSummary(
                     i18nKey("permissions.startVideoCall"),
-                    (r) => (p.startVideoCall = r),
+                    (r) => (p.startVideoCall = r ?? p.startVideoCall),
                     p.startVideoCall,
                 )}
                 {@render permissionSummary(
                     i18nKey("permissions.pinMessages"),
-                    (r) => (p.pinMessages = r),
+                    (r) => (p.pinMessages = r ?? p.pinMessages),
                     p.pinMessages,
                 )}
                 {@render permissionSummary(
                     i18nKey("permissions.reactToMessages"),
-                    (r) => (p.reactToMessages = r),
+                    (r) => (p.reactToMessages = r ?? p.reactToMessages),
                     p.reactToMessages,
                 )}
                 {@render permissionSummary(
                     i18nKey("permissions.mentionAllMembers", { mention: "@everyone" }),
-                    (r) => (p.mentionAllMembers = r),
+                    (r) => (p.mentionAllMembers = r ?? p.mentionAllMembers),
                     p.mentionAllMembers,
                 )}
             {:else if selectedTab === "permissions.message"}
-                {@const p = data.permissions.messagePermissions}
-                {@render permissionSummary(
-                    i18nKey("permissions.messagePermissions.default"),
-                    (r) => (p.default = r),
-                    p.default,
+                {@render messageLevelPermissions(
+                    data.permissions.messagePermissions,
+                    "messagePermissions",
                 )}
-                {@render permissionSummary(
-                    i18nKey("permissions.messagePermissions.text"),
-                    (r) => (p.text = r),
-                    p.text,
-                    p.default,
-                )}
-                {@render permissionSummary(
-                    i18nKey("permissions.messagePermissions.image"),
-                    (r) => (p.image = r),
-                    p.image,
-                    p.default,
-                )}
-                {@render permissionSummary(
-                    i18nKey("permissions.messagePermissions.video"),
-                    (r) => (p.video = r),
-                    p.video,
-                    p.default,
-                )}
-            {:else if selectedTab === "permissions.thread"}{/if}
+            {:else if selectedTab === "permissions.thread"}
+                <Switch
+                    bind:checked={overrideChatMessages}
+                    onChange={onOverrideChatMessagesChanged}>
+                    <BodySmall>
+                        <Translatable resourceKey={i18nKey("permissions.overrideChatMessages")} />
+                    </BodySmall>
+                </Switch>
+                {#if data.permissions.threadPermissions !== undefined}
+                    {@render messageLevelPermissions(
+                        data.permissions.threadPermissions,
+                        "threadPermissions",
+                    )}
+                {/if}
+            {/if}
         </Container>
 
         <Container padding={["xl", "zero", "zero", "zero"]} mainAxisAlignment={"end"}>

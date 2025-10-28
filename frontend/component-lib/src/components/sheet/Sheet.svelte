@@ -1,3 +1,12 @@
+<script lang="ts" module>
+    export type SheetState<T> =
+        | {
+              data: T;
+              visible: true;
+          }
+        | { data?: T; visible: false };
+</script>
+
 <script lang="ts">
     import { transition } from "component-lib";
     import { getAllContexts, mount, onMount, unmount, type Snippet } from "svelte";
@@ -16,12 +25,12 @@
 
     function internalClose() {
         if (mounted) {
-            // transition(["modal_sheet"], () => {
-            if (mounted) {
-                unmount(mounted);
-                mounted = undefined;
-            }
-            //});
+            transition(["modal_sheet"], () => {
+                if (mounted) {
+                    unmount(mounted);
+                    mounted = undefined;
+                }
+            });
         }
     }
 
