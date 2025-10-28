@@ -163,7 +163,7 @@
 
         &.default {
             border-radius: var(--rad-circle);
-            border: var(--bw-thin) solid var(--background-2);
+            border: var(--bw-thick) solid var(--background-2);
             background: var(--background-1);
             color: var(--text-secondary);
 
@@ -173,14 +173,14 @@
             }
 
             &.small_text {
-                border: var(--bw-thin) solid transparent;
+                border: var(--bw-thick) solid transparent;
                 color: var(--text-primary);
             }
         }
 
         &.pressed {
             border-radius: var(--rad-lg);
-            border: var(--bw-thin) solid transparent;
+            border: var(--bw-thick) solid transparent;
             background: var(--background-2);
             color: var(--text-primary);
 
@@ -192,20 +192,20 @@
 
         &.active {
             border-radius: var(--rad-md);
-            border: var(--bw-thin) solid transparent;
+            border: var(--bw-thick) solid transparent;
             background: var(--primary);
             color: var(--text-on-primary);
 
             &.small_text {
                 background: transparent;
                 color: var(--primary);
-                border: var(--bw-thin) solid transparent;
+                border: var(--bw-thick) solid transparent;
             }
 
             &.small {
                 color: var(--primary);
                 background: transparent;
-                border: var(--bw-thin) solid var(--primary);
+                border: var(--bw-thick) solid var(--primary);
             }
         }
 
