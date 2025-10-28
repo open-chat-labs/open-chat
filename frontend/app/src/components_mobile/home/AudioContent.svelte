@@ -1,8 +1,10 @@
 <script lang="ts">
+    import { Caption, Container, IconButton } from "component-lib";
     import type { AudioContent } from "openchat-client";
     import { onMount } from "svelte";
+    import Pause from "svelte-material-icons/Pause.svelte";
+    import Play from "svelte-material-icons/PlayOutline.svelte";
     import WaveSurfer from "wavesurfer.js";
-    import { setPlayingMedia } from "../../utils/media";
     import ContentCaption from "./ContentCaption.svelte";
 
     interface Props {
@@ -14,160 +16,99 @@
 
     let { content, edited, blockLevelMarkdown = false, me }: Props = $props();
 
-    let inner = $derived(`var(--audio${me ? "-me" : ""}-inner)`);
-    let note = $derived(`var(--audio${me ? "-me" : ""}-note)`);
-
-    let audioPlayer: HTMLAudioElement | undefined = $state();
-    let playing: boolean = $state(false);
-    let percPlayed: number = $state(0);
-    const circum = 471.24;
+    let currentTime = $state<string>();
     let waveformDiv: HTMLDivElement | undefined;
-
-    function timeupdate() {
-        if (!audioPlayer) return;
-        const fractionPlayed = Math.min(audioPlayer.currentTime / audioPlayer.duration, 1);
-        percPlayed = fractionPlayed * 100;
-    }
+    let playing = $state(false);
 
     function togglePlay() {
-        if (playing) {
-            audioPlayer?.pause();
-        } else {
-            audioPlayer?.play();
-        }
-    }
-
-    function onPlay() {
-        if (!audioPlayer) return;
-        playing = true;
-        setPlayingMedia(audioPlayer);
+        wavesurfer?.playPause();
+        playing = wavesurfer?.isPlaying() ?? false;
     }
 
     const precomputed = $derived(Array.from(content.samples, (s) => s / 255));
 
+    let wavesurfer = $state<WaveSurfer>();
+
+    function formatTime(seconds: number) {
+        const minutes = Math.floor(seconds / 60);
+        const secondsRemainder = Math.round(seconds) % 60;
+        const paddedSeconds = `0${secondsRemainder}`.slice(-2);
+        return `${minutes}:${paddedSeconds}`;
+    }
+
+    const width = 3;
+
     onMount(() => {
         if (waveformDiv !== undefined) {
-            const wavesurfer = WaveSurfer.create({
+            wavesurfer = WaveSurfer.create({
                 height: 50,
+                barHeight: 0.9,
                 width: 250,
                 container: waveformDiv,
-                waveColor: "#23A2EE",
-                progressColor: "#AA2E43",
-                barWidth: 2,
-                barRadius: 10,
-                barGap: 1,
+                waveColor: "#ffffff",
+                progressColor: "#23A2EE",
+                cursorColor: "#23A2EE",
+                cursorWidth: width,
+                barWidth: width,
+                barRadius: 3,
+                dragToSeek: true,
+                barGap: width,
                 url: content.blobUrl,
                 peaks: [precomputed],
                 duration: content.duration,
             });
 
             wavesurfer.on("interaction", () => {
-                wavesurfer.play();
+                wavesurfer?.play();
             });
 
             wavesurfer.on("finish", () => {
-                wavesurfer.setTime(0);
+                wavesurfer?.setTime(0);
             });
+
+            wavesurfer.on("timeupdate", (t) => (currentTime = formatTime(t)));
+
+            wavesurfer.on("play", () => (playing = true));
+
+            wavesurfer.on("pause", () => (playing = false));
         }
     });
 </script>
 
-<audio
-    ontimeupdate={timeupdate}
-    preload="metadata"
-    onended={() => (playing = false)}
-    onplay={onPlay}
-    onpause={() => (playing = false)}
-    bind:this={audioPlayer}>
-    <track kind="captions" />
-    {#if content.blobUrl}
-        <source src={content.blobUrl} />
-    {/if}
-</audio>
+<Container crossAxisAlignment={"center"} gap={"md"}>
+    <Container
+        mainAxisAlignment={"center"}
+        crossAxisAlignment={"center"}
+        width={{ kind: "fixed", size: "3.5rem" }}
+        direction={"vertical"}
+        gap={"xxs"}>
+        <IconButton size={"sm"} onclick={togglePlay} mode={me ? "dark" : "primary"}>
+            {#snippet icon(color)}
+                {#if playing}
+                    <Pause {color} />
+                {:else}
+                    <Play {color} />
+                {/if}
+            {/snippet}
+        </IconButton>
+        <Container mainAxisAlignment={"center"} crossAxisAlignment={"end"} gap={"xxs"}>
+            <Caption fontWeight={"bold"} colour={"secondary"} width={{ kind: "hug" }}>
+                {currentTime ?? "0:00"}
+            </Caption>
+            <Caption width={{ kind: "hug" }}>/</Caption>
+            <Caption width={{ kind: "hug" }}>
+                {formatTime(content.duration)}
+            </Caption>
+        </Container>
+    </Container>
 
-<div bind:this={waveformDiv} class="waveform"></div>
-
-<!-- <div class="circular" role="button" onclick={togglePlay}>
-    <div class="circle">
-        <div class="number">
-            {#if playing}
-                <Pause size={"2.5em"} color={note} />
-            {:else}
-                <MusicNote size={"2.5em"} color={note} />
-            {/if}
-        </div>
-        <svg class="pie" viewBox="0 0 320 320">
-            <clipPath id="hollow">
-                <path
-                    d="M 160 160 m -160 0 a 160 160 0 1 0 320 0 a 160 160 0 1 0 -320 0 Z M 160 160 m -100 0 a 100 100 0 0 1 200 0 a 100 100 0 0 1 -200 0 Z"
-                    style={`fill: rgb(216, 216, 216); stroke: rgb(0, 0, 0);`} />
-            </clipPath>
-
-            <circle
-                class:me
-                class="background"
-                cx={160}
-                cy={160}
-                r={150}
-                clip-path="url(#hollow)" />
-
-            {#if percPlayed > 0}
-                <circle
-                    class={`slice`}
-                    cx={160}
-                    cy={160}
-                    r={75}
-                    stroke={inner}
-                    clip-path="url(#hollow)"
-                    transform={`rotate(${-90})`}
-                    stroke-dasharray={`${(percPlayed * circum) / 100} ${circum}`} />
-            {/if}
-        </svg>
-    </div>
-</div> -->
+    <div bind:this={waveformDiv} class="waveform"></div>
+</Container>
 
 <ContentCaption caption={content.caption} {edited} {blockLevelMarkdown} />
 
 <style lang="scss">
     .waveform {
         width: 100%;
-    }
-
-    $size: 120px;
-
-    .circle {
-        position: relative;
-        height: $size;
-        width: $size;
-        margin: auto;
-        position: relative;
-        background: transparent;
-
-        .number {
-            position: absolute;
-            top: calc(50% - 1.25em);
-            left: calc(50% - 1.25em);
-        }
-
-        .background {
-            fill: var(--audio-outer);
-
-            &.me {
-                fill: var(--audio-me-outer);
-            }
-        }
-    }
-
-    .slice {
-        fill: transparent;
-        transform-origin: 50% 50%;
-        stroke-width: 150px;
-        cursor: pointer;
-        transition: stroke-dasharray 100ms ease-in-out;
-    }
-
-    .pie {
-        width: min(250px, 100%);
-        margin-bottom: $sp5;
     }
 </style>
