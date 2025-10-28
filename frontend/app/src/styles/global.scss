@@ -518,13 +518,13 @@ svelte-virtual-list-viewport {
 
 @keyframes slide_down {
     to {
-        transform: translateY(600px);
+        transform: translateY(100%);
     }
 }
 
 @keyframes slide_up {
     from {
-        transform: translateY(600px);
+        transform: translateY(100%);
     }
 }
 
@@ -553,38 +553,6 @@ svelte-virtual-list-viewport {
 }
 
 $speed: 250ms;
-
-html:active-view-transition-type(modal_sheet) {
-    // set the view transition names that apply during these transitions
-    .bottom_nav_bar,
-    .communities_sheet {
-        view-transition-name: none;
-    }
-    .sheet_overlay {
-        view-transition-name: sheet_overlay;
-    }
-    .sheet_content {
-        view-transition-name: sheet_content;
-    }
-
-    // then describe how those elements behave during the transition
-    &::view-transition-old(sheet_overlay) {
-        animation: 90ms ease-in both fade-out;
-    }
-    &::view-transition-new(sheet_overlay) {
-        animation: 90ms ease-out both fade-in;
-    }
-    &::view-transition-old(sheet_content) {
-        animation:
-            $speed ease-in both fade-out,
-            $speed ease-in both slide_down;
-    }
-    &::view-transition-new(sheet_content) {
-        animation:
-            $speed ease-out both fade-in,
-            $speed ease-out both slide_up;
-    }
-}
 
 html:active-view-transition-type(slide_left, slide_right) {
     &::view-transition-old(message_footer),

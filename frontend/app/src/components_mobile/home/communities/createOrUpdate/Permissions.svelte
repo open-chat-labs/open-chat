@@ -1,13 +1,6 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import {
-        Body,
-        BodySmall,
-        CommonButton,
-        Container,
-        Sheet,
-        type SheetState,
-    } from "component-lib";
+    import { Body, BodySmall, CommonButton, Container, Sheet } from "component-lib";
     import {
         communityRoles,
         publish,
@@ -30,17 +23,17 @@
         ]),
     );
 
-    let selected = $state<SheetState<[keyof CommunityPermissions, string]>>({ visible: false });
+    let selected = $state<[keyof CommunityPermissions, string]>();
 </script>
 
-{#if selected.visible}
-    {@const [key, resourceKey] = selected.data}
-    <Sheet onDismiss={() => (selected.visible = false)}>
+{#if selected !== undefined}
+    {@const [key, resourceKey] = selected}
+    <Sheet onDismiss={() => (selected = undefined)}>
         <PermissionsRoleSlider
             height={{ kind: "fixed", size: "150px" }}
             roles={communityRoles}
             label={i18nKey(resourceKey)}
-            onClose={() => (selected.visible = false)}
+            onClose={() => (selected = undefined)}
             bind:rolePermission={ucs.permissions[key]} />
     </Sheet>
 {/if}
@@ -66,7 +59,7 @@
         <Container gap={"xxl"} direction={"vertical"}>
             {#each selectors as [key, resourceKey]}
                 <Container
-                    onClick={() => (selected = { visible: true, data: [key, resourceKey] })}
+                    onClick={() => (selected = [key, resourceKey])}
                     mainAxisAlignment={"spaceBetween"}
                     crossAxisAlignment={"end"}>
                     <div class="label">

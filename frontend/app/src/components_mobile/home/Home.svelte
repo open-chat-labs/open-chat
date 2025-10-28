@@ -1,6 +1,6 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
-    import { Container, type SheetState } from "component-lib";
+    import { Container } from "component-lib";
     import type {
         ChannelIdentifier,
         ChatIdentifier,
@@ -121,7 +121,7 @@
     const client = getContext<OpenChat>("client");
 
     let convertGroup: GroupChatSummary | undefined = $state(undefined);
-    let showProfileCard = $state<SheetState<ViewProfileConfig>>({ visible: false });
+    let showProfileCard = $state<ViewProfileConfig>();
 
     type ConfirmActionEvent =
         | ConfirmLeaveEvent
@@ -794,21 +794,17 @@
 
     function profileLinkClicked(ev: CustomEvent<ProfileLinkClickedEvent>) {
         showProfileCard = {
-            visible: true,
-            data: {
-                userId: ev.detail.userId,
-                chatButton: ev.detail.chatButton,
-                inGlobalContext: ev.detail.inGlobalContext,
-                alignTo: ev.target ? (ev.target as HTMLElement) : undefined,
-            },
+            userId: ev.detail.userId,
+            chatButton: ev.detail.chatButton,
+            inGlobalContext: ev.detail.inGlobalContext,
+            alignTo: ev.target ? (ev.target as HTMLElement) : undefined,
         };
     }
 
     function chatWithFromProfileCard() {
-        if (!showProfileCard.visible) return;
-        chatWith({ kind: "direct_chat", userId: showProfileCard.data.userId });
-        //@ts-ignore
-        showProfileCard.visible = false;
+        if (showProfileCard === undefined) return;
+        chatWith({ kind: "direct_chat", userId: showProfileCard.userId });
+        showProfileCard = undefined;
     }
 
     let forgotPin = $state(false);
@@ -921,15 +917,15 @@
     });
 </script>
 
-{#if showProfileCard.visible}
-    {@const profileUser = $allUsersStore.get(showProfileCard.data.userId)}
+{#if showProfileCard !== undefined}
+    {@const profileUser = $allUsersStore.get(showProfileCard.userId)}
     {#if profileUser?.kind !== "bot"}
         <ViewUserProfile
-            userId={showProfileCard.data.userId}
-            inGlobalContext={showProfileCard.data.inGlobalContext}
-            chatButton={showProfileCard.data.chatButton}
+            userId={showProfileCard.userId}
+            inGlobalContext={showProfileCard.inGlobalContext}
+            chatButton={showProfileCard.chatButton}
             onOpenDirectChat={chatWithFromProfileCard}
-            onClose={() => (showProfileCard.visible = false)} />
+            onClose={() => (showProfileCard = undefined)} />
     {/if}
 {/if}
 

@@ -1,6 +1,6 @@
 import { tick } from "svelte";
 
-export type TransitionType = "slide_left" | "slide_right" | "fade" | "modal_sheet";
+export type TransitionType = "slide_left" | "slide_right" | "fade";
 
 export async function transition(types: TransitionType[], fn: () => void | Promise<void>) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

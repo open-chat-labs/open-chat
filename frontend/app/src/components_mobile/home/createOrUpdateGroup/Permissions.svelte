@@ -1,13 +1,6 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import {
-        BodySmall,
-        CommonButton,
-        Container,
-        Sheet,
-        type SheetState,
-        Switch,
-    } from "component-lib";
+    import { BodySmall, CommonButton, Container, Sheet, Switch } from "component-lib";
     import {
         type ChatPermissionRole,
         chatRoles,
@@ -40,13 +33,13 @@
     let selectedTab = $state("permissions.general");
     let overrideChatMessages = $state(data.permissions.threadPermissions !== undefined);
 
-    let selected = $state<SheetState<Selected>>({ visible: false });
+    let selected = $state<Selected>();
 
     // This is because I simply cannot get the data binding to work as I *think* it should
     function syncPermission() {
-        if (selected.data !== undefined) {
-            selected.data.sync?.(selected.data.role);
-            selected.visible = false;
+        if (selected !== undefined) {
+            selected.sync?.(selected.role);
+            selected = undefined;
         }
     }
 
@@ -57,16 +50,16 @@
     }
 </script>
 
-{#if selected.visible}
-    {@const { label } = selected.data}
+{#if selected !== undefined}
+    {@const { label } = selected}
     <Sheet onDismiss={syncPermission}>
         <PermissionsRoleSlider
             height={{ kind: "fixed", size: "250px" }}
             {roles}
             {label}
             onClose={syncPermission}
-            defaultRole={selected.data.defaultRole}
-            bind:rolePermission={selected.data.role} />
+            defaultRole={selected.defaultRole}
+            bind:rolePermission={selected.role} />
     </Sheet>
 {/if}
 
@@ -77,7 +70,7 @@
     defaultRole?: ChatPermissionRole,
 )}
     <Container
-        onClick={() => (selected = { visible: true, data: { role, defaultRole, label, sync } })}
+        onClick={() => (selected = { role, defaultRole, label, sync })}
         mainAxisAlignment={"spaceBetween"}
         crossAxisAlignment={"end"}>
         <div class="label">
