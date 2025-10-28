@@ -29,13 +29,13 @@ export function coinsByMarketcapResponse(
 
 type OverviewJson = Static<typeof OverviewJson>;
 export const OverviewJson = Type.Object({
-    price_usd: Type.Number(),
+    price_usd: Type.Union([Type.Number(), Type.Null()])
 });
 
 function tryGetRate(coin: CoinWithDetails): number | undefined {
     try {
         const value = typeboxValidate(JSON.parse(coin.overview_json), OverviewJson);
-        return value.price_usd;
+        return value.price_usd ?? undefined;
     } catch (err) {
         console.debug("Error parsing overview_json for token", coin.symbol, formatError(err));
     }
