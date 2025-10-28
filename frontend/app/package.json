@@ -34,6 +34,7 @@
         "@types/md5": "^2.3.2",
         "@types/node": "^20.5.0",
         "@types/page": "^1.11.6",
+        "@types/wavesurfer.js": "^6.0.12",
         "assert": "2.0.0",
         "autoprefixer": "^10.4.15",
         "buffer": "6.0.3",
@@ -96,6 +97,6 @@
         "svelte-qrcode-image": "^1.0.0-rc.2",
         "tauri-plugin-oc-api": "file:../tauri-plugin-oc",
         "usergeek-ic-js": "^1.0.6",
-        "wavesurfer.js": "^7.7.5"
+        "wavesurfer.js": "^7.11.1"
     }
 }

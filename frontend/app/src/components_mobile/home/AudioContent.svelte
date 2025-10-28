@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { AudioContent } from "openchat-client";
-    import MusicNote from "svelte-material-icons/MusicNote.svelte";
-    import Pause from "svelte-material-icons/Pause.svelte";
+    import { onMount } from "svelte";
+    import WaveSurfer from "wavesurfer.js";
     import { setPlayingMedia } from "../../utils/media";
     import ContentCaption from "./ContentCaption.svelte";
 
@@ -21,6 +21,7 @@
     let playing: boolean = $state(false);
     let percPlayed: number = $state(0);
     const circum = 471.24;
+    let waveformDiv: HTMLDivElement | undefined;
 
     function timeupdate() {
         if (!audioPlayer) return;
@@ -41,6 +42,34 @@
         playing = true;
         setPlayingMedia(audioPlayer);
     }
+
+    const precomputed = $derived(Array.from(content.samples, (s) => s / 255));
+
+    onMount(() => {
+        if (waveformDiv !== undefined) {
+            const wavesurfer = WaveSurfer.create({
+                height: 50,
+                width: 250,
+                container: waveformDiv,
+                waveColor: "#23A2EE",
+                progressColor: "#AA2E43",
+                barWidth: 2,
+                barRadius: 10,
+                barGap: 1,
+                url: content.blobUrl,
+                peaks: [precomputed],
+                duration: content.duration,
+            });
+
+            wavesurfer.on("interaction", () => {
+                wavesurfer.play();
+            });
+
+            wavesurfer.on("finish", () => {
+                wavesurfer.setTime(0);
+            });
+        }
+    });
 </script>
 
 <audio
@@ -56,7 +85,9 @@
     {/if}
 </audio>
 
-<div class="circular" role="button" onclick={togglePlay}>
+<div bind:this={waveformDiv} class="waveform"></div>
+
+<!-- <div class="circular" role="button" onclick={togglePlay}>
     <div class="circle">
         <div class="number">
             {#if playing}
@@ -93,11 +124,15 @@
             {/if}
         </svg>
     </div>
-</div>
+</div> -->
 
 <ContentCaption caption={content.caption} {edited} {blockLevelMarkdown} />
 
 <style lang="scss">
+    .waveform {
+        width: 100%;
+    }
+
     $size: 120px;
 
     .circle {

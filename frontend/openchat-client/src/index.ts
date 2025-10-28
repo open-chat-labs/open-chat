@@ -13,7 +13,7 @@ export { builtinBot } from "./utils/builtinBotCommands";
 export { buildCryptoTransferText, buildTransactionUrl } from "./utils/chat";
 export type { TrackingCategory } from "./utils/ga";
 export { toRecord } from "./utils/list";
-export type { Dimensions } from "./utils/media";
+export { quantiseWaveform, type Dimensions } from "./utils/media";
 export * from "./utils/permissions";
 export { Poller } from "./utils/poller";
 export * from "./utils/routes";

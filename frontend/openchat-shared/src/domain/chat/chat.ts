@@ -550,6 +550,8 @@ export interface AudioContent extends DataContent {
     kind: "audio_content";
     caption?: string;
     mimeType: string;
+    samples: Uint8Array;
+    duration: number;
 }
 
 export type DeletedContent = {

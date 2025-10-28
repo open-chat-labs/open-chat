@@ -1210,6 +1210,8 @@ function audioContent(value: TAudioContent): AudioContent {
         mimeType: value.mime_type,
         blobReference: mapOptional(value.blob_reference, blobReference),
         caption: mapOptional(value.caption, identity),
+        samples: new Uint8Array(),
+        duration: 0,
     };
 }
 
@@ -1660,6 +1662,7 @@ function apiVideoContent(domain: VideoContent): TVideoContent {
 }
 
 function apiAudioContent(domain: AudioContent): TAudioContent {
+    console.log("Sending audio message: ", domain);
     return {
         mime_type: domain.mimeType,
         blob_reference: apiBlobReference(domain.blobReference),

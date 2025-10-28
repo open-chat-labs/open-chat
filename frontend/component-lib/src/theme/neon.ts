@@ -17,9 +17,9 @@ const success = Colour.fromHex("#4dc164");
 const warn = Colour.fromHex("#f36d28");
 const error = Colour.fromHex("#ea2929");
 
-const background0 = Colour.fromHex("#242834");
-const background1 = Colour.fromHex("#2f333e");
-const background2 = Colour.fromHex("#3a3e48");
+const background0 = Colour.fromHex("#13151B");
+const background1 = Colour.fromHex("#1C1D26");
+const background2 = Colour.fromHex("#282B34");
 const disabledButton = Colour.fromHex("#7c7e85");
 
 const textPrimary = Colour.fromHex("#ffffff");

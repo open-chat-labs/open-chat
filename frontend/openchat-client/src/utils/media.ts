@@ -22,7 +22,7 @@ export const FREE_MAX_SIZES: MaxMediaSizes = {
 export const DIAMOND_MAX_SIZES: MaxMediaSizes = {
     image: 1024 * 1024 * 5,
     video: 1024 * 1024 * 50,
-    audio: 1024 * 1024 * 5,
+    audio: 1024 * 1024 * 20,
     file: 1024 * 1024 * 5,
 };
 
@@ -185,6 +185,65 @@ export function audioRecordingMimeType(): "audio/webm" | "audio/mp4" | undefined
     return undefined;
 }
 
+function reduceWaveform(channels: Float32Array[]): Uint8Array {
+    const targetSamples = 120;
+    const bits = 8;
+    const maxLevel = (1 << bits) - 1;
+
+    const frameCount = channels[0].length;
+    const samplesPerBucket = frameCount / targetSamples;
+
+    const samples = new Uint8Array(targetSamples);
+
+    function summariseBlock(start: number, end: number) {
+        let sumsq = 0;
+        let count = 0;
+        for (let c = 0; c < channels.length; c++) {
+            const ch = channels[c];
+            for (let i = start; i < end; i++) {
+                const v = ch[i];
+                sumsq += v * v;
+                count++;
+            }
+        }
+        return Math.sqrt(sumsq / Math.max(1, count));
+    }
+
+    const raw = new Float32Array(targetSamples);
+    let maxRaw = 0;
+    for (let s = 0; s < targetSamples; s++) {
+        const start = Math.floor(s * samplesPerBucket);
+        const end = Math.min(Math.floor((s + 1) * samplesPerBucket), frameCount);
+        const val = summariseBlock(start, end);
+        raw[s] = val;
+        if (val > maxRaw) maxRaw = val;
+    }
+
+    const normaliser = maxRaw > 0 ? 1 / maxRaw : 1;
+    for (let s = 0; s < targetSamples; s++) {
+        const q = Math.round(raw[s] * normaliser * maxLevel);
+        samples[s] = Math.min(maxLevel, Math.max(0, q));
+    }
+
+    return samples;
+}
+
+export async function quantiseWaveform(
+    bytes: ArrayBuffer,
+): Promise<{ duration: number; samples: Uint8Array }> {
+    const ctx = new AudioContext();
+    const audioBuffer = await ctx.decodeAudioData(bytes);
+
+    const channels = [];
+    for (let c = 0; c < audioBuffer.numberOfChannels; c++) {
+        channels.push(audioBuffer.getChannelData(c));
+    }
+    const samples = reduceWaveform(channels);
+    const duration = audioBuffer.duration;
+
+    return { samples, duration };
+}
+
 export async function messageContentFromFile(
     file: File,
     isDiamond: boolean,
@@ -201,7 +260,7 @@ export async function messageContentFromFile(
             const isGif = isImage && /gif/.test(mimeType);
             const isVideo = /^video/.test(mimeType);
             const isAudio = /^audio/.test(mimeType);
-            const isFile = !(isImage || isVideo);
+            const isFile = !(isImage || isVideo || isAudio);
             let data = e.target.result as ArrayBuffer;
             let content: MessageContent;
             const maxSizes = isDiamond ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
@@ -254,11 +313,14 @@ export async function messageContentFromFile(
                     thumbnailData: thumb.url,
                 };
             } else if (isAudio) {
+                const quantised = await quantiseWaveform(data.slice(0));
+                console.log("Quantised: ", quantised);
                 content = {
                     kind: "audio_content",
                     mimeType: mimeType,
                     blobData: new Uint8Array(data),
                     blobUrl: blobUrl,
+                    ...quantised,
                 };
             } else {
                 content = {
