@@ -184,16 +184,14 @@
                     <Translatable resourceKey={blockLabel} />
                 </CommonButton>
             </Container>
-            <Container gap={"md"} direction={"vertical"}>
+            <Container gap={"lg"} direction={"vertical"}>
                 <Switch onChange={toggleDisappearingMessages} checked={disappearingMessages}>
                     <Body>
                         <Translatable resourceKey={i18nKey("disappearingMessages.label")} />
                     </Body>
                 </Switch>
                 {#if disappearingMessages}
-                    <div class="picker">
-                        <DurationPicker bind:milliseconds={eventsTTL} />
-                    </div>
+                    <DurationPicker bind:milliseconds={eventsTTL} />
                 {/if}
             </Container>
             <Container mainAxisAlignment={"end"}>
@@ -212,18 +210,3 @@
         </Container>
     {/if}
 </SlidingPageContent>
-
-<style lang="scss">
-    .disappearing {
-        align-self: flex-start;
-    }
-
-    .controls {
-        align-self: stretch;
-        margin-bottom: $sp5;
-    }
-
-    .picker {
-        margin-top: $sp3;
-    }
-</style>

@@ -220,7 +220,9 @@
                 <BodySmall>
                     <Markdown inline={false} text={bot.definition.description} />
                 </BodySmall>
-                <UserChip avatarUrl={client.userAvatarUrl(owner)}>@{owner?.username}</UserChip>
+                {#if owner}
+                    <UserChip avatarUrl={client.userAvatarUrl(owner)}>@{owner?.username}</UserChip>
+                {/if}
             </Container>
         </Container>
     </Container>
