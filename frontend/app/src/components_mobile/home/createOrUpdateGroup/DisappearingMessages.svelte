@@ -78,7 +78,7 @@
 <Setting
     toggle={() => (disappearingMessages = !disappearingMessages)}
     info={"When enabled, messages older than the specified timeout will get automatically deleted from the group."}>
-    <Switch reverse bind:checked={disappearingMessages}>
+    <Switch width={{ kind: "fill" }} reverse bind:checked={disappearingMessages}>
         <Translatable resourceKey={i18nKey("Enable disappearing messages")}></Translatable>
     </Switch>
 </Setting>

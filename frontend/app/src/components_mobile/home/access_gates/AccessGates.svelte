@@ -174,6 +174,7 @@
                     toggle={toggleEvaluationInterval}
                     info={"You may choose to enforce the periodic re-evaluation of your access gates. When a member's access lapses, they will not be able to interact with the group until they have re-evaluated that the access conditions are still met."}>
                     <Switch
+                        width={{ kind: "fill" }}
                         reverse
                         onChange={toggleEvaluationInterval}
                         disabled={!hasAccessGates}
@@ -203,6 +204,7 @@
                     toggle={() => data.toggleOperator()}
                     info={"When enabled, users joining your group will need to satisfy at least one of your defined gates. If left disabled users will have to satisfy all of your defined access gates."}>
                     <Switch
+                        width={{ kind: "fill" }}
                         reverse
                         onChange={() => data.toggleOperator()}
                         disabled={!isCompositeGate(data.gateConfig.gate)}

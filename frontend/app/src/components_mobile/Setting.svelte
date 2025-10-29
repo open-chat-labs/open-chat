@@ -16,7 +16,7 @@
 
 <Container onClick={disabled ? undefined : toggle} gap={"sm"} direction={"vertical"}>
     {@render children()}
-    <BodySmall colour={disabled ? "textTertiary" : "textSecondary"}>
+    <BodySmall width={{ kind: "fill" }} colour={disabled ? "textTertiary" : "textSecondary"}>
         <Translatable resourceKey={i18nKey(info)}></Translatable>
     </BodySmall>
 </Container>

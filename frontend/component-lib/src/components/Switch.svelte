@@ -7,6 +7,7 @@
         onChange?: () => void;
         children?: Snippet;
         reverse?: boolean;
+        width?: SizeMode;
     }
 
     let {
@@ -15,6 +16,7 @@
         onChange,
         children,
         reverse = false,
+        width = { kind: "hug" },
     }: Props = $props();
 
     function internalOnChange(e?: Event) {
@@ -29,7 +31,7 @@
 <Container
     mainAxisAlignment={"spaceBetween"}
     {reverse}
-    width={{ kind: "hug" }}
+    {width}
     crossAxisAlignment={"center"}
     onClick={internalOnChange}
     gap={"md"}>

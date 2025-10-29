@@ -90,7 +90,7 @@
             <Setting
                 toggle={() => data.toggleRulesEnabled()}
                 info={"If enabled, new members must agree to the rules before they can send messages. View example!"}>
-                <Switch reverse bind:checked={data.rules.enabled}>
+                <Switch width={{ kind: "fill" }} reverse bind:checked={data.rules.enabled}>
                     <Translatable resourceKey={i18nKey("Enable rules for the group")} />
                 </Switch>
             </Setting>
@@ -98,7 +98,7 @@
                 <Setting
                     toggle={() => data.toggleNewRulesVersion()}
                     info={"rules.promptExistingUsersInstructions"}>
-                    <Switch reverse bind:checked={data.rules.newVersion}>
+                    <Switch width={{ kind: "fill" }} reverse bind:checked={data.rules.newVersion}>
                         <Translatable resourceKey={i18nKey("rules.promptExistingUsers")} />
                     </Switch>
                 </Setting>
