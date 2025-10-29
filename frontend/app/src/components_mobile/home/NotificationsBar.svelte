@@ -1,12 +1,10 @@
 <script lang="ts">
+    import { BodySmall, CommonButton, Container, Sheet, Title } from "component-lib";
     import type { OpenChat } from "openchat-client";
     import { anonUserStore, notificationStatus } from "openchat-client";
     import { getContext } from "svelte";
+    import Bell from "svelte-material-icons/BellOutline.svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import Button from "../Button.svelte";
-    import ButtonGroup from "../ButtonGroup.svelte";
-    import ModalContent from "../ModalContent.svelte";
-    import Overlay from "../Overlay.svelte";
     import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -15,22 +13,32 @@
 </script>
 
 {#if !$anonUserStore && $notificationStatus === "prompt"}
-    <Overlay dismissible>
-        <ModalContent>
-            {#snippet header()}
-                <Translatable resourceKey={i18nKey("Notifications")} />
-            {/snippet}
-            {#snippet body()}
-                <Translatable resourceKey={i18nKey("enableNotifications")} />
-            {/snippet}
-            {#snippet footer()}
-                <ButtonGroup>
-                    <Button onClick={() => client.askForNotificationPermission()}
-                        ><Translatable resourceKey={i18nKey("yesPlease")} /></Button>
-                    <Button secondary onClick={() => client.setSoftDisabled(true)}
-                        ><Translatable resourceKey={i18nKey("noThanks")} /></Button>
-                </ButtonGroup>
-            {/snippet}
-        </ModalContent>
-    </Overlay>
+    <Sheet onDismiss={() => client.setSoftDisabled(true)}>
+        <Container height={{ kind: "hug" }} padding={"xl"} gap={"xl"} direction={"vertical"}>
+            <Container gap={"lg"} padding={"md"} direction={"vertical"}>
+                <Title fontWeight={"bold"}>
+                    <Translatable resourceKey={i18nKey("Notifications")} />
+                </Title>
+
+                <BodySmall colour={"textSecondary"}>
+                    <Translatable resourceKey={i18nKey("enableNotifications")} />
+                </BodySmall>
+            </Container>
+
+            <Container gap={"md"} crossAxisAlignment={"end"} mainAxisAlignment={"end"}>
+                <CommonButton onClick={() => client.setSoftDisabled(true)} size={"medium"}>
+                    <Translatable resourceKey={i18nKey("noThanks")} />
+                </CommonButton>
+                <CommonButton
+                    mode={"active"}
+                    onClick={() => client.askForNotificationPermission()}
+                    size={"medium"}>
+                    {#snippet icon(color)}
+                        <Bell {color} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("yesPlease")} />
+                </CommonButton>
+            </Container>
+        </Container>
+    </Sheet>
 {/if}

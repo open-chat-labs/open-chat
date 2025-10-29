@@ -11,6 +11,7 @@
     import { getContext } from "svelte";
     import Cog from "svelte-material-icons/Cog.svelte";
     import Info from "svelte-material-icons/InformationOutline.svelte";
+    import Logout from "svelte-material-icons/Logout.svelte";
     import Share from "svelte-material-icons/ShareVariantOutline.svelte";
     import Markdown from "../Markdown.svelte";
     import Badges from "../profile/Badges.svelte";
@@ -67,6 +68,7 @@
 
 <Container direction={"vertical"}>
     <Container
+        supplementalClass={"user_background_image"}
         borderRadius={"md"}
         minHeight={"10rem"}
         mainAxisAlignment={"end"}
@@ -75,6 +77,11 @@
         backgroundImage={backgroundUrl}
         background={gradient}>
         {#if mode === "edit"}
+            <IconButton onclick={() => client.logout()} size={"md"} mode={"dark"}>
+                {#snippet icon(color)}
+                    <Logout {color} />
+                {/snippet}
+            </IconButton>
             <IconButton onclick={about} size={"md"} mode={"dark"}>
                 {#snippet icon(color)}
                     <Info {color} />
@@ -130,5 +137,9 @@
 <style lang="scss">
     :global(.container.username_and_bio) {
         margin-top: -1.75rem;
+    }
+
+    :global(.container.user_background_image > .icon_button:first-child) {
+        margin-inline-end: auto;
     }
 </style>

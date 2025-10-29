@@ -8390,6 +8390,7 @@ export class OpenChat {
                 if (resp.kind === "success") {
                     // Make the community appear at the top of the list
                     resp.community.membership.index = nextCommunityIndexStore.value;
+                    resp.community.avatar = community.avatar;
                     localUpdates.addCommunity(resp.community);
                     this.#loadCommunityDetails(resp.community);
                     withPausedStores(() => {

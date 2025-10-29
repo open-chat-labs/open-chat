@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { i18nKey } from "@src/i18n/i18n";
     import {
         Avatar,
         BodySmall,
@@ -9,8 +10,10 @@
         Title,
     } from "component-lib";
     import {
+        allUsersStore,
         anonUserStore,
         type CommunitySummary,
+        currentUserIdStore,
         isDiamondStore,
         OpenChat,
         publish,
@@ -22,8 +25,12 @@
     import AccountGroupOutline from "svelte-material-icons/AccountGroupOutline.svelte";
     import Compass from "svelte-material-icons/CompassOutline.svelte";
     import { updateCommunityState } from "../communities/createOrUpdate/community.svelte";
+    import DiamondUpgradeBox from "../DiamondUpgradeBox.svelte";
 
     const client = getContext<OpenChat>("client");
+
+    let user = $derived($allUsersStore.get($currentUserIdStore) ?? client.nullUser("unknown"));
+    let diamond = $derived(user?.diamondStatus !== "inactive");
 
     interface Props {
         onSelect: (community: CommunitySummary) => void;
@@ -96,16 +103,20 @@
             {/snippet}
             Explore bots & communities
         </ListAction>
-        <ListAction onClick={createCommunity} colour={"tertiary"}>
-            {#snippet icon(color)}
-                <AccountGroupOutline {color} />
-            {/snippet}
-            Create a community
-        </ListAction>
+        {#if !diamond}
+            <DiamondUpgradeBox
+                message={i18nKey(
+                    "To create a community of your own and enjoy many other benefits.",
+                )} />
+        {:else}
+            <ListAction onClick={createCommunity} colour={"tertiary"}>
+                {#snippet icon(color)}
+                    <AccountGroupOutline {color} />
+                {/snippet}
+                Create a community
+            </ListAction>
+        {/if}
     </Container>
-    <!-- <Container width={{ kind: "fill" }} gap={"md"} direction={"vertical"} height={{ kind: "hug" }}>
-        <Label fontWeight={"bold"} colour={"secotSecondary"}>Your favourites</Label>
-    </Container> -->
     <Container width={{ kind: "fill" }} gap={"lg"} direction={"vertical"}>
         <Label fontWeight={"bold"} colour={"textSecondary"}>Your communities</Label>
 

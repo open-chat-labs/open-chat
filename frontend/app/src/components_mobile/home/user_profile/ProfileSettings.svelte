@@ -1,5 +1,4 @@
 <script lang="ts">
-    import MulticolourText from "@src/components_mobile/MulticolourText.svelte";
     import { i18nKey } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
     import {
@@ -19,7 +18,6 @@
         ErrorCode,
         OpenChat,
         percentageStorageUsedStore,
-        publish,
         storageInGBStore,
         suspendedUserStore,
         userMetricsStore,
@@ -28,12 +26,11 @@
     import { getContext } from "svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";
-    import DiamondOutline from "svelte-material-icons/DiamondOutline.svelte";
     import DisplayNameInput from "../../DisplayNameInput.svelte";
     import Progress from "../../Progress.svelte";
-    import SparkleBox from "../../SparkleBox.svelte";
     import Translatable from "../../Translatable.svelte";
     import UsernameInput from "../../UsernameInput.svelte";
+    import DiamondUpgradeBox from "../DiamondUpgradeBox.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import Stats from "../Stats.svelte";
     import UserProfileImageEditor from "./UserProfileImageEditor.svelte";
@@ -169,39 +166,7 @@
         direction={"vertical"}>
         <Container gap={"xl"} direction={"vertical"}>
             {#if !diamond}
-                <SparkleBox buttonText={i18nKey("Get Diamond")} onClick={() => publish("upgrade")}>
-                    {#snippet title()}
-                        <MulticolourText
-                            parts={[
-                                {
-                                    text: i18nKey("Upgrade to "),
-                                    colour: "primaryLight",
-                                },
-                                {
-                                    text: i18nKey("Diamond"),
-                                    colour: "secondary",
-                                },
-                            ]} />
-                    {/snippet}
-                    {#snippet body()}
-                        <MulticolourText
-                            parts={[
-                                {
-                                    text: i18nKey(
-                                        "Diamond members get access to many additional features including extra storage, translation and much more. ",
-                                    ),
-                                    colour: "primaryLight",
-                                },
-                                {
-                                    text: i18nKey("Join now!"),
-                                    colour: "textPrimary",
-                                },
-                            ]} />
-                    {/snippet}
-                    {#snippet buttonIcon(color)}
-                        <DiamondOutline {color} />
-                    {/snippet}
-                </SparkleBox>
+                <DiamondUpgradeBox />
             {/if}
 
             <UserProfileImageEditor bind:profile={candidate} />

@@ -79,8 +79,12 @@
                 page("/chats");
                 break;
             case "communities":
-                // TODO - what do we do if they are not a member of any communities?
-                client.selectDefaultCommunity();
+                const selected = client.selectDefaultCommunity();
+                if (!selected) {
+                    // this probably means that we are not a member of any communities so
+                    // let's go the the /communities route
+                    page("/communities");
+                }
                 break;
             case "favourites":
                 page("/favourites");
