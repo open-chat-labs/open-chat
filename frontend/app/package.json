@@ -87,7 +87,7 @@
         "openchat-worker": "*",
         "page": "^1.11.6",
         "peerjs": "^1.4.7",
-        "rollbar": "^2.26.2",
+        "rollbar": "^2.26.5",
         "sirv-cli": "^2.0.2",
         "smoothscroll": "^0.4.0",
         "svelte-confetti": "^2.1.2",
