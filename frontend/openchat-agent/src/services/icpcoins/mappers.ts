@@ -12,10 +12,12 @@ export function coinsByMarketcapResponse(
     supportedSymbols.add("btc");
     supportedSymbols.add("eth");
 
+    const symbolOverrides = new Map<string, string>([["ckbtc", "btc"]]);
     const exchangeRates: Record<string, TokenExchangeRates> = {};
 
     for (const coin of coins) {
-        const symbol = coin.symbol.toLowerCase();
+        const originalSymbol = coin.symbol.toLowerCase();
+        const symbol = symbolOverrides.get(originalSymbol) ?? originalSymbol;
 
         if (supportedSymbols.has(symbol)) {
             const rate = tryGetRate(coin);
@@ -29,13 +31,13 @@ export function coinsByMarketcapResponse(
 
 type OverviewJson = Static<typeof OverviewJson>;
 export const OverviewJson = Type.Object({
-    price_usd: Type.Number(),
+    price_usd: Type.Optional(Type.Union([Type.Number(), Type.Null()]))
 });
 
 function tryGetRate(coin: CoinWithDetails): number | undefined {
     try {
         const value = typeboxValidate(JSON.parse(coin.overview_json), OverviewJson);
-        return value.price_usd;
+        return value.price_usd ?? undefined;
     } catch (err) {
         console.debug("Error parsing overview_json for token", coin.symbol, formatError(err));
     }
