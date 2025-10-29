@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { Caption, Container, IconButton } from "component-lib";
+    import { Caption, ColourVars, Container, IconButton } from "component-lib";
     import type { AudioContent } from "openchat-client";
     import { onMount } from "svelte";
-    import Pause from "svelte-material-icons/Pause.svelte";
-    import Play from "svelte-material-icons/PlayOutline.svelte";
+    import Pause from "svelte-material-icons/PauseCircleOutline.svelte";
+    import Play from "svelte-material-icons/PlayCircleOutline.svelte";
     import WaveSurfer from "wavesurfer.js";
     import ContentCaption from "./ContentCaption.svelte";
 
@@ -25,7 +25,7 @@
         playing = wavesurfer?.isPlaying() ?? false;
     }
 
-    const precomputed = $derived(Array.from(content.samples, (s) => s / 255));
+    const precomputed = $derived(Array.from(content.samples, (s: number) => s / 255));
 
     let wavesurfer = $state<WaveSurfer>();
 
@@ -54,8 +54,8 @@
                 dragToSeek: true,
                 barGap: width,
                 url: content.blobUrl,
-                peaks: [precomputed],
-                duration: content.duration,
+                peaks: precomputed.length > 0 ? [precomputed] : undefined,
+                // duration: content.duration,
             });
 
             wavesurfer.on("interaction", () => {
@@ -81,9 +81,10 @@
         crossAxisAlignment={"center"}
         width={{ kind: "fixed", size: "3.5rem" }}
         direction={"vertical"}
-        gap={"xxs"}>
-        <IconButton size={"sm"} onclick={togglePlay} mode={me ? "dark" : "primary"}>
-            {#snippet icon(color)}
+        gap={"zero"}>
+        <IconButton size={"lg"} onclick={togglePlay} mode={"transparent"}>
+            {#snippet icon()}
+                {@const color = me ? ColourVars.textSecondary : ColourVars.textSecondary}
                 {#if playing}
                     <Pause {color} />
                 {:else}

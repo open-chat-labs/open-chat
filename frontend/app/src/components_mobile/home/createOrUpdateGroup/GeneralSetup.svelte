@@ -26,9 +26,11 @@
             <Setting
                 toggle={() =>
                     (ugs.candidateGroup.historyVisible = !ugs.candidateGroup.historyVisible)}
-                info={"By default new memebers in the group will see all the previous messages that were sent within the group. Enable this option to hide chat history for new members."}
-                title={"Hide chat history for new members"}>
-                <Switch bind:checked={ugs.candidateGroup.historyVisible} />
+                info={"By default new memebers in the group will see all the previous messages that were sent within the group. Enable this option to hide chat history for new members."}>
+                <Switch reverse bind:checked={ugs.candidateGroup.historyVisible}>
+                    <Translatable resourceKey={i18nKey("Hide chat history for new members")}
+                    ></Translatable>
+                </Switch>
             </Setting>
 
             <DisappearingMessages />

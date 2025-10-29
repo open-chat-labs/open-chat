@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Container } from "component-lib";
+    import { Body, Container } from "component-lib";
     import type { Snippet } from "svelte";
     interface Props {
         checked: boolean;
@@ -18,6 +18,7 @@
     }: Props = $props();
 
     function internalOnChange(e?: Event) {
+        if (disabled) return;
         checked = !checked;
         e?.stopPropagation();
         e?.preventDefault();
@@ -25,7 +26,12 @@
     }
 </script>
 
-<Container {reverse} crossAxisAlignment={"center"} onClick={internalOnChange} gap={"md"}>
+<Container
+    mainAxisAlignment={"spaceBetween"}
+    {reverse}
+    crossAxisAlignment={"center"}
+    onClick={internalOnChange}
+    gap={"md"}>
     <label class="toggle" class:disabled>
         <input
             onchange={internalOnChange}
@@ -38,7 +44,9 @@
         </span>
     </label>
     {#if children}
-        {@render children()}
+        <Body fontWeight={"bold"} colour={disabled ? "textTertiary" : "textPrimary"}>
+            {@render children()}
+        </Body>
     {/if}
 </Container>
 

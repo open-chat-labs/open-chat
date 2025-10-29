@@ -89,16 +89,18 @@
         <Container padding={["zero", "md"]} gap={"xl"} direction={"vertical"}>
             <Setting
                 toggle={() => data.toggleRulesEnabled()}
-                info={"If enabled, new members must agree to the rules before they can send messages. View example!"}
-                title={"Enable rules for the group"}>
-                <Switch bind:checked={data.rules.enabled} />
+                info={"If enabled, new members must agree to the rules before they can send messages. View example!"}>
+                <Switch reverse bind:checked={data.rules.enabled}>
+                    <Translatable resourceKey={i18nKey("Enable rules for the group")} />
+                </Switch>
             </Setting>
             {#if data.rules.enabled}
                 <Setting
                     toggle={() => data.toggleNewRulesVersion()}
-                    info={"rules.promptExistingUsersInstructions"}
-                    title={"rules.promptExistingUsers"}>
-                    <Switch bind:checked={data.rules.newVersion} />
+                    info={"rules.promptExistingUsersInstructions"}>
+                    <Switch reverse bind:checked={data.rules.newVersion}>
+                        <Translatable resourceKey={i18nKey("rules.promptExistingUsers")} />
+                    </Switch>
                 </Setting>
             {/if}
         </Container>

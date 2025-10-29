@@ -106,7 +106,7 @@
 {:else if content.kind === "file_content"}
     <FileContent {edited} {me} {content} {blockLevelMarkdown} />
 {:else if content.kind === "deleted_content"}
-    <DeletedContent {content} {undeleting} />
+    <DeletedContent {me} {content} {undeleting} />
 {:else if content.kind === "blocked_content"}
     <BlockedContent />
 {:else if content.kind === "crypto_content"}

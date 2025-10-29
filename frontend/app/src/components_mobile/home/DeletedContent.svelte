@@ -18,9 +18,10 @@
     interface Props {
         content: DeletedContent;
         undeleting: boolean;
+        me: boolean;
     }
 
-    let { content, undeleting }: Props = $props();
+    let { content, undeleting, me }: Props = $props();
 
     let date = $derived(new Date(Number(content.timestamp)));
     let timestampStr = $derived(
@@ -35,7 +36,7 @@
     );
 </script>
 
-<ChatText fontWeight={"light"} colour={"textSecondary"}>
+<ChatText fontWeight={"light"} colour={me ? "textPrimary" : "textSecondary"}>
     {#if undeleting}
         <Translatable
             resourceKey={i18nKey("undeletingMessage", {

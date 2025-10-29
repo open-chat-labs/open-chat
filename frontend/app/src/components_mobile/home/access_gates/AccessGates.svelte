@@ -172,12 +172,15 @@
                 <Setting
                     disabled={!hasAccessGates}
                     toggle={toggleEvaluationInterval}
-                    info={"You may choose to enforce the periodic re-evaluation of your access gates. When a member's access lapses, they will not be able to interact with the group until they have re-evaluated that the access conditions are still met."}
-                    title={"Access gate evaluation interval"}>
+                    info={"You may choose to enforce the periodic re-evaluation of your access gates. When a member's access lapses, they will not be able to interact with the group until they have re-evaluated that the access conditions are still met."}>
                     <Switch
+                        reverse
                         onChange={toggleEvaluationInterval}
                         disabled={!hasAccessGates}
-                        checked={expiryEnabled} />
+                        checked={expiryEnabled}>
+                        <Translatable resourceKey={i18nKey("Access gate evaluation interval")}
+                        ></Translatable>
+                    </Switch>
                 </Setting>
             </Container>
 
@@ -198,13 +201,16 @@
                 <Setting
                     disabled={!isCompositeGate(data.gateConfig.gate)}
                     toggle={() => data.toggleOperator()}
-                    info={"When enabled, users joining your group will need to satisfy at least one of your defined gates. If left disabled users will have to satisfy all of your defined access gates."}
-                    title={"Require any access gate"}>
+                    info={"When enabled, users joining your group will need to satisfy at least one of your defined gates. If left disabled users will have to satisfy all of your defined access gates."}>
                     <Switch
+                        reverse
                         onChange={() => data.toggleOperator()}
                         disabled={!isCompositeGate(data.gateConfig.gate)}
                         checked={isCompositeGate(data.gateConfig.gate) &&
-                            data.gateConfig.gate.operator === "and"} />
+                            data.gateConfig.gate.operator === "and"}>
+                        <Translatable resourceKey={i18nKey("Require any access gate")}
+                        ></Translatable>
+                    </Switch>
                 </Setting>
             </Container>
         {/if}

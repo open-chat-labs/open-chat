@@ -38,21 +38,24 @@
             </H2>
             <Setting
                 toggle={() => lowBandwidth.toggle()}
-                info={"If you're having connection issues or just want to save bandwidth, enabling this option will try to optimise the app's data traffic."}
-                title={"lowBandwidth"}>
-                <Switch bind:checked={$lowBandwidth} />
+                info={"If you're having connection issues or just want to save bandwidth, enabling this option will try to optimise the app's data traffic."}>
+                <Switch reverse bind:checked={$lowBandwidth}>
+                    <Translatable resourceKey={i18nKey("lowBandwidth")}></Translatable>
+                </Switch>
             </Setting>
             <Setting
                 toggle={() => renderPreviews.toggle()}
-                info={"When you share links in your message, with this option turned on, a preview will ne automatically rendered. Turn it off if you don't want to see previews."}
-                title={"renderPreviews"}>
-                <Switch bind:checked={$renderPreviews} />
+                info={"When you share links in your message, with this option turned on, a preview will ne automatically rendered. Turn it off if you don't want to see previews."}>
+                <Switch reverse bind:checked={$renderPreviews}>
+                    <Translatable resourceKey={i18nKey("renderPreviews")}></Translatable>
+                </Switch>
             </Setting>
             <Setting
                 toggle={() => hideMessagesFromDirectBlocked.toggle()}
-                info={"With this option turned on, messages from users you have blocked will not be visible in group and community chats. Keep in mind that this might cause you to lose some conversation context."}
-                title={"Hide messages from blocked users"}>
-                <Switch bind:checked={$hideMessagesFromDirectBlocked} />
+                info={"With this option turned on, messages from users you have blocked will not be visible in group and community chats. Keep in mind that this might cause you to lose some conversation context."}>
+                <Switch reverse bind:checked={$hideMessagesFromDirectBlocked}>
+                    <Translatable resourceKey={i18nKey("Hide messages from blocked users")} />
+                </Switch>
             </Setting>
         </Container>
         <Container gap={"xl"} direction={"vertical"}>
@@ -61,21 +64,24 @@
             </H2>
             <Setting
                 toggle={() => videoCameraOn.toggle()}
-                info={"With this option on, camera will be active when a vide call starts. By default, this option is turned on."}
-                title={"profile.videoCameraOn"}>
-                <Switch bind:checked={$videoCameraOn} />
+                info={"With this option on, camera will be active when a vide call starts. By default, this option is turned on."}>
+                <Switch reverse bind:checked={$videoCameraOn}>
+                    <Translatable resourceKey={i18nKey("profile.videoCameraOn")}></Translatable>
+                </Switch>
             </Setting>
             <Setting
                 toggle={() => videoMicOn.toggle()}
-                info={"When this option on, your microphone will be active when a video call starts, otherwise it will be muted. By default, this option is turned on."}
-                title={"profile.videoMicOn"}>
-                <Switch bind:checked={$videoMicOn} />
+                info={"When this option on, your microphone will be active when a video call starts, otherwise it will be muted. By default, this option is turned on."}>
+                <Switch reverse bind:checked={$videoMicOn}>
+                    <Translatable resourceKey={i18nKey("profile.videoMicOn")}></Translatable>
+                </Switch>
             </Setting>
             <Setting
                 toggle={() => videoSpeakerView.toggle()}
-                info={"This setting controls whether the video call view will focus on the active speaker or automatically or just show a grid of all of the speakers."}
-                title={"profile.videoSpeakerView"}>
-                <Switch bind:checked={$videoSpeakerView} />
+                info={"This setting controls whether the video call view will focus on the active speaker or automatically or just show a grid of all of the speakers."}>
+                <Switch reverse bind:checked={$videoSpeakerView}>
+                    <Translatable resourceKey={i18nKey("profile.videoSpeakerView")}></Translatable>
+                </Switch>
             </Setting>
         </Container>
         <Container gap={"xl"} direction={"vertical"}>
@@ -84,27 +90,33 @@
             </H2>
             <Setting
                 toggle={() => toggleModerationFlag(ModerationFlags.Offensive)}
-                info={"Choose if you would like to see communities and groups marked as offensive."}
-                title={"communities.offensive"}>
+                info={"Choose if you would like to see communities and groups marked as offensive."}>
                 <Switch
+                    reverse
                     onChange={() => toggleModerationFlag(ModerationFlags.Offensive)}
-                    checked={$offensiveEnabledStore} />
+                    checked={$offensiveEnabledStore}>
+                    <Translatable resourceKey={i18nKey("communities.offensive")}></Translatable>
+                </Switch>
             </Setting>
             <Setting
                 toggle={() => toggleModerationFlag(ModerationFlags.Adult)}
-                info={"Choose if you would like to see communitie and groups marked as containing adult content."}
-                title={"communities.adult"}>
+                info={"Choose if you would like to see communitie and groups marked as containing adult content."}>
                 <Switch
+                    reverse
                     onChange={() => toggleModerationFlag(ModerationFlags.Adult)}
-                    checked={$adultEnabledStore} />
+                    checked={$adultEnabledStore}>
+                    <Translatable resourceKey={i18nKey("communities.adult")}></Translatable>
+                </Switch>
             </Setting>
             <Setting
                 toggle={() => toggleModerationFlag(ModerationFlags.UnderReview)}
-                info={"Choose if you would like to see communities and groups that are currently under review."}
-                title={"communities.underReview"}>
+                info={"Choose if you would like to see communities and groups that are currently under review."}>
                 <Switch
+                    reverse
                     onChange={() => toggleModerationFlag(ModerationFlags.UnderReview)}
-                    checked={$underReviewEnabledStore} />
+                    checked={$underReviewEnabledStore}>
+                    <Translatable resourceKey={i18nKey("communities.underReview")}></Translatable>
+                </Switch>
             </Setting>
         </Container>
     </Container>
