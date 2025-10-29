@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Body, Container } from "component-lib";
     import type { OpenChat, ResourceKey } from "openchat-client";
     import { enhancedCryptoLookup as cryptoLookup } from "openchat-client";
     import { getContext } from "svelte";
@@ -94,45 +95,34 @@
     });
 </script>
 
-<div class="container">
+<Container mainAxisAlignment={"end"} crossAxisAlignment={"center"} gap={"sm"}>
     {#if label !== undefined}
-        <div class="label"><Translatable resourceKey={label} /></div>
+        <Body width={{ kind: "hug" }}>
+            <Translatable resourceKey={label} />
+        </Body>
     {/if}
-    <div class="amount" class:bold>
+    <Body width={{ kind: "hug" }} fontWeight={"bold"}>
         {formattedValue}
-    </div>
+    </Body>
     {#if showRefresh && !hideBalance}
         <div class="refresh" class:refreshing onclick={() => refresh()}>
-            <Refresh size={"1em"} color={"var(--icon-txt)"} />
+            <Refresh size={"1.5rem"} color={"var(--icon-txt)"} />
         </div>
     {/if}
     {#if showTopUp}
         <div class="top-up" onclick={topUp} title={$_("cryptoAccount.topUp")}>
-            <Plus size={"1em"} color={toppingUp ? "var(--icon-selected)" : "var(--icon-txt)"} />
+            <Plus size={"1.5rem"} color={toppingUp ? "var(--icon-selected)" : "var(--icon-txt)"} />
         </div>
     {/if}
-</div>
+</Container>
 
 <style lang="scss">
-    .container {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        gap: 6px;
-    }
-
     .top-up,
     .refresh {
-        // We want the size of the refresh icon (1em) to be 24px
-        // but we can't use rem units in SVGs
-        @include font-size(fs-140);
-        height: $sp5;
-        width: $sp5;
         cursor: pointer;
-        @include mobile() {
-            height: 21.59px;
-            width: 21.59px;
-        }
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .hideBalance {
@@ -143,15 +133,5 @@
         &.refreshing {
             @include spin();
         }
-    }
-
-    .label {
-        @include font(bold, normal, fs-100, 22);
-        color: var(--txt-light);
-        font-weight: 400;
-    }
-
-    .amount {
-        @include font(bold, normal, fs-100, 22);
     }
 </style>

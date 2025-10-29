@@ -1,8 +1,8 @@
 <script lang="ts">
+    import { IconButton, MenuItem, MenuTrigger, Sheet } from "component-lib";
     import {
         walletTokensSorted as accountsSorted,
         type EnhancedTokenDetails,
-        iconSize,
         ICP_SYMBOL,
         nervousSystemLookup,
         type OpenChat,
@@ -19,11 +19,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { sum } from "../../../utils/math";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import Menu from "../../Menu.svelte";
-    import MenuIcon from "../../MenuIcon.svelte";
-    import MenuItem from "../../MenuItem.svelte";
     import MultiToggle, { type Option } from "../../MultiToggle.svelte";
-    import Overlay from "../../Overlay.svelte";
     import Translatable from "../../Translatable.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import AccountTransactions from "./AccountTransactions.svelte";
@@ -126,9 +122,7 @@
 </script>
 
 {#if actionMode !== "none" && selectedLedger !== undefined}
-    <Overlay
-        dismissible={actionMode === "receive" || actionMode === "transactions"}
-        onClose={hideManageModal}>
+    <Sheet onDismiss={hideManageModal}>
         {#if actionMode === "receive"}
             <ReceiveCrypto ledger={selectedLedger} onClose={hideManageModal} />
         {:else if actionMode === "send"}
@@ -143,7 +137,7 @@
         {:else if actionMode === "restricted"}
             <RestrictedFeature onClose={hideManageModal} feature="swap" />
         {/if}
-    </Overlay>
+    </Sheet>
 {/if}
 
 <table>
@@ -157,6 +151,7 @@
         </tr>
     </thead>
     {#each $accountsSorted as token (token.ledger)}
+        <!-- svelte-ignore node_invalid_placement_ssr -->
         <tr>
             <td width="99%">
                 <div class="token">
@@ -182,104 +177,60 @@
             </td>
             <td class="manage-col">
                 <div class="manage">
-                    <MenuIcon position="bottom" align="end">
-                        {#snippet menuIcon()}
-                            <span class="wallet-menu">
-                                <ChevronDown
-                                    viewBox={"0 -3 24 24"}
-                                    size={$iconSize}
-                                    color={"var(--txt)"} />
-                            </span>
-                        {/snippet}
+                    <MenuTrigger position={"bottom"} align={"end"}>
+                        <IconButton padding={["sm", "xs", "sm", "zero"]} size={"md"}>
+                            {#snippet icon(color)}
+                                <ChevronDown {color} />
+                            {/snippet}
+                        </IconButton>
                         {#snippet menuItems()}
-                            <Menu>
-                                <MenuItem onclick={() => showSend(token.ledger)}>
-                                    {#snippet icon()}
-                                        <ArrowRightBoldCircle
-                                            size={$iconSize}
-                                            color={"var(--icon-inverted-txt)"} />
+                            <MenuItem onclick={() => showSend(token.ledger)}>
+                                {#snippet icon(color)}
+                                    <ArrowRightBoldCircle {color} />
+                                {/snippet}
+                                <Translatable resourceKey={i18nKey("cryptoAccount.send")} />
+                            </MenuItem>
+                            {#if token.enabled}
+                                <MenuItem onclick={() => showReceive(token.ledger)}>
+                                    {#snippet icon(color)}
+                                        <ArrowLeftBoldCircle {color} />
                                     {/snippet}
-                                    {#snippet text()}
-                                        <div>
-                                            <Translatable
-                                                resourceKey={i18nKey("cryptoAccount.send")} />
-                                        </div>
-                                    {/snippet}
+                                    <Translatable resourceKey={i18nKey("cryptoAccount.receive")} />
                                 </MenuItem>
-                                {#if token.enabled}
-                                    <MenuItem onclick={() => showReceive(token.ledger)}>
-                                        {#snippet icon()}
-                                            <ArrowLeftBoldCircle
-                                                size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"} />
+                                {#if $swappableTokensStore.has(token.ledger)}
+                                    <MenuItem onclick={() => showSwap(token.ledger)}>
+                                        {#snippet icon(color)}
+                                            <SwapIcon {color} />
                                         {/snippet}
-                                        {#snippet text()}
-                                            <div>
-                                                <Translatable
-                                                    resourceKey={i18nKey(
-                                                        "cryptoAccount.receive",
-                                                    )} />
-                                            </div>
-                                        {/snippet}
-                                    </MenuItem>
-                                    {#if $swappableTokensStore.has(token.ledger)}
-                                        <MenuItem onclick={() => showSwap(token.ledger)}>
-                                            {#snippet icon()}
-                                                <SwapIcon
-                                                    size={$iconSize}
-                                                    color={"var(--icon-inverted-txt)"} />
-                                            {/snippet}
-                                            {#snippet text()}
-                                                <div>
-                                                    <Translatable
-                                                        resourceKey={i18nKey(
-                                                            "cryptoAccount.swap",
-                                                        )} />
-                                                </div>
-                                            {/snippet}
-                                        </MenuItem>
-                                    {/if}
-                                {/if}
-                                {#if token.symbol === ICP_SYMBOL || snsLedgers.has(token.ledger)}
-                                    <MenuItem onclick={() => showTransactions(token)}>
-                                        {#snippet icon()}
-                                            <ViewList
-                                                size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"} />
-                                        {/snippet}
-                                        {#snippet text()}
-                                            <div>
-                                                <Translatable
-                                                    resourceKey={i18nKey(
-                                                        "cryptoAccount.transactions",
-                                                    )} />
-                                            </div>
-                                        {/snippet}
+                                        <Translatable resourceKey={i18nKey("cryptoAccount.swap")} />
                                     </MenuItem>
                                 {/if}
-                                {#if manualWalletConfig}
-                                    <MenuItem onclick={() => removeFromWallet(token.ledger)}>
-                                        {#snippet icon()}
-                                            <HeartRemoveOutline
-                                                size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"} />
-                                        {/snippet}
-                                        {#snippet text()}
-                                            <div>
-                                                <Translatable
-                                                    resourceKey={i18nKey("cryptoAccount.remove")} />
-                                            </div>
-                                        {/snippet}
-                                    </MenuItem>
-                                {/if}
-                            </Menu>
+                            {/if}
+                            {#if token.symbol === ICP_SYMBOL || snsLedgers.has(token.ledger)}
+                                <MenuItem onclick={() => showTransactions(token)}>
+                                    {#snippet icon(color)}
+                                        <ViewList {color} />
+                                    {/snippet}
+                                    <Translatable
+                                        resourceKey={i18nKey("cryptoAccount.transactions")} />
+                                </MenuItem>
+                            {/if}
+                            {#if manualWalletConfig}
+                                <MenuItem onclick={() => removeFromWallet(token.ledger)}>
+                                    {#snippet icon(color)}
+                                        <HeartRemoveOutline {color} />
+                                    {/snippet}
+                                    <Translatable resourceKey={i18nKey("cryptoAccount.remove")} />
+                                </MenuItem>
+                            {/if}
                         {/snippet}
-                    </MenuIcon>
+                    </MenuTrigger>
                 </div>
             </td>
         </tr>
     {/each}
     {#if selectedConversion !== "none" && !hideTokenBalances}
+        <!-- svelte-ignore node_invalid_placement_ssr -->
         <tr class="total">
             <td>
                 <div class="token">
@@ -304,10 +255,6 @@
             border-right: 1px solid var(--txt-light);
             padding: 0 $sp3 0 0;
         }
-    }
-
-    .wallet-menu {
-        cursor: pointer;
     }
 
     table {

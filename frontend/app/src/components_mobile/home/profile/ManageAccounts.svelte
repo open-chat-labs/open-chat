@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { BodySmall, Container, Search, Subtitle, Switch, Title } from "component-lib";
     import {
         cryptoTokensSorted as accountsSorted,
         cryptoLookup,
@@ -10,15 +11,12 @@
         type WalletConfig,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import { i18nKey } from "../../../i18n/i18n";
+    import { _ } from "svelte-i18n";
+    import { i18nKey, interpolate } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import Input from "../../Input.svelte";
     import Legend from "../../Legend.svelte";
-    import ModalContent from "../../ModalContent.svelte";
     import MultiToggle, { type Option } from "../../MultiToggle.svelte";
-    import Overlay from "../../Overlay.svelte";
-    import Search from "../../Search.svelte";
-    import Toggle from "../../Toggle.svelte";
     import Translatable from "../../Translatable.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
 
@@ -126,168 +124,95 @@
     );
 </script>
 
-<Overlay {onClose}>
-    <ModalContent closeIcon {onClose}>
-        {#snippet header()}
-            <div>
-                <Translatable resourceKey={i18nKey("cryptoAccount.configureWallet")} />
-            </div>
-        {/snippet}
-        {#snippet body()}
-            <div>
-                <div class="select-mode">
-                    <div
-                        onclick={() => selectMode("manual_wallet")}
-                        class="mode-label"
-                        class:selected={config.kind === "manual_wallet"}>
-                        <Translatable resourceKey={i18nKey("cryptoAccount.manual")} />
-                    </div>
-                    <Toggle
-                        checked={config.kind === "auto_wallet"}
-                        onChange={toggleMode}
-                        small
-                        bottomMargin={false}
-                        id={"wallet-mode-select"}></Toggle>
-                    <div
-                        onclick={() => selectMode("auto_wallet")}
-                        class="mode-label"
-                        class:selected={config.kind === "auto_wallet"}>
-                        <Translatable resourceKey={i18nKey("cryptoAccount.auto")} />
-                    </div>
-                </div>
-                {#if config.kind === "auto_wallet"}
-                    <div class="auto-mode">
-                        <div class="info">
-                            <Translatable resourceKey={i18nKey("cryptoAccount.autoInfo")} />
-                        </div>
-                        <Legend label={i18nKey("cryptoAccount.minDollarPlaceholder")} />
-                        <Input
-                            invalid={!valid}
-                            bind:value={config.minDollarValue}
-                            placeholder={i18nKey("cryptoAccount.minDollarPlaceholder")} />
-                    </div>
-                {:else if config.kind === "manual_wallet"}
-                    <div class="info">
-                        <Translatable resourceKey={i18nKey("cryptoAccount.manualInfo")} />
-                    </div>
-                    <div class="token-selection">
-                        <Search
-                            fill
-                            bind:searchTerm
-                            bind:searching
-                            placeholder={i18nKey("cryptoAccount.search")} />
-                        <div class="token-header">
-                            <Translatable resourceKey={i18nKey("cryptoAccount.token")} />
-                            <MultiToggle
-                                options={conversionOptions}
-                                bind:selected={selectedConversion} />
-                        </div>
-                        <div class="tokens">
-                            {#each filteredTokens as token}
-                                <div class="token">
-                                    <div class="token-details">
-                                        <img
-                                            alt={token.name}
-                                            class:disabled={!token.enabled}
-                                            class="icon"
-                                            src={token.logo} />
-                                        <div>
-                                            {token.symbol}
-                                        </div>
-                                    </div>
-                                    <BalanceWithRefresh
-                                        ledger={token.ledger}
-                                        value={token.balance}
-                                        allowCached={true}
-                                        conversion={selectedConversion} />
-                                    <Toggle
-                                        checked={config.tokens.has(token.ledger)}
-                                        onChange={() => toggle(token.ledger)}
-                                        small
-                                        bottomMargin={false}
-                                        id={`token_${token.symbol}_toggle`}></Toggle>
-                                </div>
-                            {/each}
-                        </div>
-                    </div>
-                {/if}
-            </div>
-        {/snippet}
-    </ModalContent>
-</Overlay>
+<Container
+    height={{ kind: "hug" }}
+    padding={["xl", "md", "xl", "md"]}
+    gap={"xl"}
+    direction={"vertical"}>
+    <Container padding={["zero", "md"]} direction={"vertical"}>
+        <Subtitle fontWeight={"bold"}>
+            <Translatable resourceKey={i18nKey("cryptoAccount.configureWallet")} />
+        </Subtitle>
+    </Container>
+
+    <Container padding={["zero", "md"]} gap={"xl"}>
+        <Title width={{ kind: "hug" }} onClick={() => selectMode("manual_wallet")} align={"end"}>
+            <Translatable resourceKey={i18nKey("cryptoAccount.manual")} />
+        </Title>
+        <Switch checked={config.kind === "auto_wallet"} onChange={toggleMode} />
+        <Title width={{ kind: "hug" }} onClick={() => selectMode("auto_wallet")} align={"start"}>
+            <Translatable resourceKey={i18nKey("cryptoAccount.auto")} />
+        </Title>
+    </Container>
+    {#if config.kind === "auto_wallet"}
+        <Container padding={["zero", "md"]} gap={"md"} direction={"vertical"}>
+            <BodySmall colour={"textSecondary"}>
+                <Translatable resourceKey={i18nKey("cryptoAccount.autoInfo")} />
+            </BodySmall>
+            <Legend label={i18nKey("cryptoAccount.minDollarPlaceholder")} />
+            <Input
+                invalid={!valid}
+                bind:value={config.minDollarValue}
+                placeholder={i18nKey("cryptoAccount.minDollarPlaceholder")} />
+        </Container>
+    {:else if config.kind === "manual_wallet"}
+        <Container padding={["zero", "md"]} gap={"md"} direction={"vertical"}>
+            <BodySmall colour={"textSecondary"}>
+                <Translatable resourceKey={i18nKey("cryptoAccount.manualInfo")} />
+            </BodySmall>
+        </Container>
+        <Container direction={"vertical"}>
+            <Search
+                bind:value={searchTerm}
+                bind:searching
+                placeholder={interpolate($_, i18nKey("cryptoAccount.search"))} />
+        </Container>
+        <Container padding={["zero", "md"]} gap={"md"} direction={"vertical"}>
+            <Container crossAxisAlignment={"center"} mainAxisAlignment={"spaceBetween"}>
+                <BodySmall>
+                    <Translatable resourceKey={i18nKey("cryptoAccount.token")} />
+                </BodySmall>
+                <MultiToggle options={conversionOptions} bind:selected={selectedConversion} />
+            </Container>
+            <Container gap={"md"} direction={"vertical"}>
+                {#each filteredTokens as token}
+                    <Container crossAxisAlignment={"center"} gap={"sm"}>
+                        <Container crossAxisAlignment={"center"} gap={"sm"}>
+                            <img
+                                alt={token.name}
+                                class:disabled={!token.enabled}
+                                class="icon"
+                                src={token.logo} />
+                            <BodySmall>
+                                {token.symbol}
+                            </BodySmall>
+                        </Container>
+                        <BalanceWithRefresh
+                            ledger={token.ledger}
+                            value={token.balance}
+                            allowCached={true}
+                            conversion={selectedConversion} />
+                        <Switch
+                            checked={config.tokens.has(token.ledger)}
+                            onChange={() => toggle(token.ledger)} />
+                    </Container>
+                {/each}
+            </Container>
+        </Container>
+    {/if}
+</Container>
 
 <style lang="scss">
-    .select-mode {
-        display: flex;
-        gap: $sp4;
-        align-items: center;
-        @include font(medium, normal, fs-120);
-        margin-bottom: $sp4;
+    .icon {
+        background-size: contain;
+        height: 24px;
+        width: 24px;
+        border-radius: 50%;
+        background-repeat: no-repeat;
+        background-position: top;
 
-        .mode-label {
-            cursor: pointer;
-            color: var(--txt-light);
-
-            &.selected {
-                color: var(--txt);
-            }
+        &.disabled {
+            filter: grayscale(1);
         }
-    }
-
-    .token-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        @include font(book, normal, fs-60);
-        text-transform: uppercase;
-    }
-
-    .auto-mode {
-        margin-bottom: 400px;
-    }
-
-    .token-selection {
-        display: flex;
-        flex-direction: column;
-        gap: $sp4;
-    }
-
-    .tokens {
-        height: 400px;
-        @include nice-scrollbar();
-        flex: auto;
-    }
-
-    .token {
-        display: flex;
-        gap: $sp3;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: $sp3;
-
-        .token-details {
-            display: flex;
-            gap: $sp3;
-            flex: auto;
-        }
-
-        .icon {
-            background-size: contain;
-            height: 24px;
-            width: 24px;
-            border-radius: 50%;
-            background-repeat: no-repeat;
-            background-position: top;
-
-            &.disabled {
-                filter: grayscale(1);
-            }
-        }
-    }
-
-    .info {
-        @include font(light, normal, fs-70);
-        margin-bottom: $sp4;
-        color: var(--txt-light);
     }
 </style>

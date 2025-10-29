@@ -6,6 +6,8 @@
 </script>
 
 <script lang="ts">
+    import { BodySmall } from "component-lib";
+
     interface Props {
         options: Option[];
         selected: string;
@@ -28,7 +30,9 @@
             class:first={i === 0}
             class:last={i === options.length - 1}
             onclick={() => selectOption(id)}>
-            {label}
+            <BodySmall>
+                {label}
+            </BodySmall>
         </div>
     {/each}
 </div>
@@ -44,7 +48,7 @@
         .toggle {
             border: none;
             border-right: 1px solid var(--bd);
-            padding: 6px 10px 5px 10px;
+            padding: var(--sp-xs) var(--sp-md);
             white-space: nowrap;
 
             &.selected {

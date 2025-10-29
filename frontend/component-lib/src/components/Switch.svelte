@@ -29,6 +29,7 @@
 <Container
     mainAxisAlignment={"spaceBetween"}
     {reverse}
+    width={{ kind: "hug" }}
     crossAxisAlignment={"center"}
     onClick={internalOnChange}
     gap={"md"}>

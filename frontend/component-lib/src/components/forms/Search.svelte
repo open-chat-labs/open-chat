@@ -19,7 +19,7 @@
         placeholder,
         onSearch,
         onClear,
-        searching = false,
+        searching = $bindable(false),
         debounceDuration = 300,
     }: Props = $props();
     let timer: number | undefined;

@@ -1,9 +1,8 @@
 <script lang="ts">
     import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
-    import { CommonButton } from "component-lib";
+    import { Body, CommonButton, Container, Subtitle } from "component-lib";
     import {
         AuthProvider,
-        mobileWidth,
         pinNumberFailureStore,
         type OpenChat,
         type Verification,
@@ -17,9 +16,7 @@
         type PinOperation,
     } from "../../../stores/pinNumber";
     import { toastStore } from "../../../stores/toast";
-    import ButtonGroup from "../../ButtonGroup.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import ModalContent from "../../ModalContent.svelte";
     import Pincode from "../../pincode/Pincode.svelte";
     import Translatable from "../../Translatable.svelte";
     import ForgotPinLabel from "../ForgotPinLabel.svelte";
@@ -130,94 +127,74 @@
     let errorMessage = $derived($pinNumberErrorMessageStore);
 </script>
 
-<ModalContent closeIcon fitToContent={!$mobileWidth} fixedWidth={false} {onClose}>
-    {#snippet header()}
-        <div class="header">
-            <Translatable resourceKey={title} />
-        </div>
-    {/snippet}
-    {#snippet body()}
-        <div class="body">
-            {#if type.kind === "forgot"}
-                {#if message !== undefined}
-                    <ReAuthenticate onSuccess={reauthenticated} {message} />
-                {/if}
-            {:else}
-                {#if message !== undefined}
-                    <p>
-                        <Translatable resourceKey={message} />
-                    </p>
-                {/if}
-                {#if showCurrentPin}
-                    <div class="code">
-                        {#if type.kind === "change"}
-                            <div>
-                                <Translatable resourceKey={i18nKey("pinNumber.currentPin")} />
-                            </div>
-                        {/if}
-                        <Pincode type="numeric" length={6} bind:code={currPinArray} />
-                        <ForgotPinLabel {onForgot} />
-                    </div>
-                {/if}
-                {#if type.kind !== "clear"}
-                    <div class="code">
-                        {#if type.kind === "change"}
-                            <div><Translatable resourceKey={i18nKey("pinNumber.newPin")} /></div>
-                        {/if}
-                        <Pincode type="numeric" length={6} bind:code={newPinArray} />
-                    </div>
-                {/if}
-                {#if errorMessage !== undefined}
-                    <ErrorMessage>
-                        <Translatable resourceKey={errorMessage} />
-                    </ErrorMessage>
-                {/if}
+<Container height={{ kind: "hug" }} padding={"xl"} gap={"xl"} direction={"vertical"}>
+    <Subtitle fontWeight={"bold"}>
+        <Translatable resourceKey={title} />
+    </Subtitle>
+
+    <Container direction={"vertical"} gap={"lg"}>
+        {#if type.kind === "forgot"}
+            {#if message !== undefined}
+                <ReAuthenticate onSuccess={reauthenticated} {message} />
             {/if}
-        </div>
-    {/snippet}
-    {#snippet footer()}
-        <div class="footer">
-            {#if type.kind === "forgot"}
-                <ButtonGroup align="end">
-                    <CommonButton disabled={busy} onClick={onClose} size={"small_text"}>
-                        <Translatable resourceKey={i18nKey("cancel")} />
-                    </CommonButton>
-                </ButtonGroup>
-            {:else}
-                <ButtonGroup align="end">
-                    <CommonButton disabled={busy} onClick={onClose} size={"small_text"}>
-                        <Translatable resourceKey={i18nKey("cancel")} />
-                    </CommonButton>
-                    <CommonButton
-                        loading={busy}
-                        disabled={busy || !isValid}
-                        onClick={changePin}
-                        mode={"active"}
-                        size={"medium"}>
-                        {#snippet icon(color)}
-                            <ShieldPlusOutline {color} />
-                        {/snippet}
-                        <Translatable resourceKey={action} />
-                    </CommonButton>
-                </ButtonGroup>
+        {:else}
+            {#if message !== undefined}
+                <Body colour={"textSecondary"}>
+                    <Translatable resourceKey={message} />
+                </Body>
             {/if}
-        </div>
-    {/snippet}
-</ModalContent>
+            {#if showCurrentPin}
+                <div class="code">
+                    {#if type.kind === "change"}
+                        <div>
+                            <Translatable resourceKey={i18nKey("pinNumber.currentPin")} />
+                        </div>
+                    {/if}
+                    <Pincode type="numeric" length={6} bind:code={currPinArray} />
+                    <ForgotPinLabel {onForgot} />
+                </div>
+            {/if}
+            {#if type.kind !== "clear"}
+                <div class="code">
+                    {#if type.kind === "change"}
+                        <div><Translatable resourceKey={i18nKey("pinNumber.newPin")} /></div>
+                    {/if}
+                    <Pincode type="numeric" length={6} bind:code={newPinArray} />
+                </div>
+            {/if}
+            {#if errorMessage !== undefined}
+                <ErrorMessage>
+                    <Translatable resourceKey={errorMessage} />
+                </ErrorMessage>
+            {/if}
+        {/if}
+    </Container>
+
+    <Container gap={"md"} crossAxisAlignment={"end"} mainAxisAlignment={"end"}>
+        {#if type.kind === "forgot"}
+            <CommonButton disabled={busy} onClick={onClose} size={"medium"}>
+                <Translatable resourceKey={i18nKey("cancel")} />
+            </CommonButton>
+        {:else}
+            <CommonButton disabled={busy} onClick={onClose} size={"small_text"}>
+                <Translatable resourceKey={i18nKey("cancel")} />
+            </CommonButton>
+            <CommonButton
+                loading={busy}
+                disabled={busy || !isValid}
+                onClick={changePin}
+                mode={"active"}
+                size={"medium"}>
+                {#snippet icon(color)}
+                    <ShieldPlusOutline {color} />
+                {/snippet}
+                <Translatable resourceKey={action} />
+            </CommonButton>
+        {/if}
+    </Container>
+</Container>
 
 <style lang="scss">
-    .header {
-        text-align: center;
-    }
-
-    .body {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: $sp4;
-        max-width: 500px;
-    }
-
     .code {
         display: flex;
         flex-direction: column;

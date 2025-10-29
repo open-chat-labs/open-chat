@@ -8,6 +8,7 @@
     import CommunitiesSheet from "./communities_sheet/CommunitiesSheet.svelte";
     import SlidingModals from "./SlidingModals.svelte";
     import UserProfileSummary from "./user_profile/UserProfileSummary.svelte";
+    import Wallet from "./wallet/Wallet.svelte";
 
     let showProfileSummary = $derived($routeStore.kind === "profile_summary_route");
     let showWallet = $derived($routeStore.kind === "wallet_route");
@@ -69,6 +70,8 @@
         direction={"vertical"}>
         {#if showNotifications}
             <ActivityFeed />
+        {:else if showWallet}
+            <Wallet />
         {:else if showProfileSummary}
             <UserProfileSummary />
         {:else}

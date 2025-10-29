@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Container } from "component-lib";
     import {
         cryptoLookup,
         exchangeRatesLookupStore as exchangeRatesLookup,
@@ -130,7 +131,7 @@
     });
 </script>
 
-<div class="label">
+<Container gap={"xs"} crossAxisSelfAlignment={"center"}>
     <Legend label={i18nKey(label)} rules={i18nKey(symbol)} />
     {#if maxAmount !== undefined}
         <div onclick={max} class="max">
@@ -145,7 +146,7 @@
                 resourceKey={i18nKey("tokenTransfer.min", { amount: minAmountFormatted })} />
         </div>
     {/if}
-</div>
+</Container>
 <div class="wrapper">
     {#if transferFees !== undefined && transferFees > 0n}
         <div class="fee">
@@ -174,45 +175,42 @@
 <style lang="scss">
     .wrapper {
         position: relative;
+        width: 100%;
     }
 
-    .label {
-        display: flex;
-        align-items: center;
-        gap: $sp3;
+    .max {
+        transition: background ease-in-out 200ms;
+        background: var(--button-bg);
+        color: var(--button-txt);
+        padding: 0 $sp3;
+        border-radius: var(--rd);
+        cursor: pointer;
+        border: none;
+        @include font(book, normal, fs-50, 20);
 
-        .max {
-            transition: background ease-in-out 200ms;
-            background: var(--button-bg);
-            color: var(--button-txt);
-            padding: 0 $sp3;
-            border-radius: var(--rd);
-            cursor: pointer;
-            border: none;
-            @include font(book, normal, fs-50, 20);
-
-            @media (hover: hover) {
-                &:hover {
-                    background: var(--button-hv);
-                }
+        @media (hover: hover) {
+            &:hover {
+                background: var(--button-hv);
             }
         }
+    }
 
-        .usd,
-        .min {
-            @include font(light, normal, fs-60);
-            color: var(--txt-light);
-            flex: 1;
-            text-align: right;
-        }
+    .usd,
+    .min {
+        @include font(light, normal, fs-60);
+        color: var(--txt-light);
+        flex: 1;
+        text-align: right;
     }
 
     .amount-val {
         width: 100%;
         display: block;
         text-align: start;
+        height: 3rem;
 
         @include input();
+        border-radius: var(--rad-circle);
 
         &::placeholder {
             color: var(--placeholder);
@@ -221,12 +219,12 @@
 
     .fee {
         position: absolute;
-        right: $sp3;
-        top: 12px;
+        right: toRem(20);
+        top: toRem(28);
         display: flex;
         gap: $sp3;
         align-items: center;
-        @include font(book, normal, fs-60);
+        @include font(book, normal, fs-50);
     }
 
     /* Chrome, Safari, Edge, Opera */

@@ -102,7 +102,6 @@
     import MiddlePanel from "./MiddlePanel.svelte";
     import NoAccess from "./NoAccess.svelte";
     import PinNumberModal from "./PinNumberModal.svelte";
-    import AccountsModal from "./profile/AccountsModal.svelte";
     import SetPinNumberModal from "./profile/SetPinNumberModal.svelte";
     import VerifyHumanity from "./profile/VerifyHumanity.svelte";
     import ViewUserProfile from "./profile/ViewUserProfileModal.svelte";
@@ -166,7 +165,6 @@
         | { kind: "suspended" }
         | { kind: "suspending"; userId: string }
         | { kind: "no_access" }
-        | { kind: "wallet" }
         | { kind: "gate_check_failed"; gates: EnhancedAccessGate[] }
         | { kind: "hall_of_fame" }
         | { kind: "edit_community"; community: CommunitySummary; communityRules: Rules }
@@ -206,7 +204,6 @@
             subscribe("leaveCommunity", onTriggerConfirm),
             subscribe("makeProposal", showMakeProposalModal),
             subscribe("leaveGroup", onTriggerConfirm),
-            subscribe("wallet", showWallet),
             subscribe("profile", showProfile),
             subscribe("claimDailyChit", claimDailyChit),
             subscribe("joinGroup", joinGroup),
@@ -717,10 +714,6 @@
         localUpdates.draftMessages.setTextContent({ chatId }, text);
     }
 
-    function showWallet() {
-        modal = { kind: "wallet" };
-    }
-
     function toggleMuteNotifications(detail: {
         chatId: ChatIdentifier;
         mute: boolean | undefined;
@@ -882,10 +875,6 @@
             if (faq !== null) {
                 pageReplace(`/faq?q=${faq}`);
             }
-            if ($querystringStore.get("wallet") !== null) {
-                showWallet();
-                pageReplace(removeQueryStringParam("wallet"));
-            }
             if ($querystringStore.get("hof") !== null) {
                 modal = { kind: "hall_of_fame" };
                 pageReplace(removeQueryStringParam("hof"));
@@ -1009,8 +998,6 @@
                 originalRules={modal.communityRules}
                 original={modal.community}
                 onClose={closeModal} />
-        {:else if modal.kind === "wallet"}
-            <AccountsModal onClose={closeModal} />
         {:else if modal.kind === "hall_of_fame"}
             <HallOfFame
                 onStreak={() => (modal = { kind: "claim_daily_chit" })}

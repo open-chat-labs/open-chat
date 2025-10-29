@@ -154,6 +154,17 @@
     }
 </script>
 
+{#snippet item(selection: Selection, Icon: any, indicator?: Unread)}
+    <BottomBarItem
+        {indicator}
+        onSelect={() => itemSelected(selection)}
+        selected={props.selection === selection}>
+        {#snippet icon(color)}
+            <Icon {color} size={iconSize} />
+        {/snippet}
+    </BottomBarItem>
+{/snippet}
+
 <Container
     supplementalClass={"bottom_nav_bar"}
     padding={["xl", "lg", "md", "lg"]}
@@ -168,45 +179,13 @@
     mainAxisAlignment={"spaceAround"}>
     <div style={`--num: ${numIcons}`} class:showFavourites class={`selection ${props.selection}`}>
     </div>
-    <BottomBarItem
-        indicator={chatIndicator}
-        onSelect={() => itemSelected("chats")}
-        selected={props.selection === "chats"}>
-        {#snippet icon(color)}
-            <ForumOutline {color} size={iconSize} />
-        {/snippet}
-    </BottomBarItem>
-    <BottomBarItem
-        indicator={communityIndicator}
-        onSelect={() => itemSelected("communities")}
-        selected={props.selection === "communities"}>
-        {#snippet icon(color)}
-            <AccountGroup {color} size={iconSize} />
-        {/snippet}
-    </BottomBarItem>
+    {@render item("chats", ForumOutline, chatIndicator)}
+    {@render item("communities", AccountGroup, communityIndicator)}
     {#if $favouritesStore.size > 0}
-        <BottomBarItem
-            indicator={favouritesIndicator}
-            onSelect={() => itemSelected("favourites")}
-            selected={props.selection === "favourites"}>
-            {#snippet icon(color)}
-                <HeartOutline {color} size={iconSize} />
-            {/snippet}
-        </BottomBarItem>
+        {@render item("favourites", HeartOutline, favouritesIndicator)}
     {/if}
-    <BottomBarItem
-        indicator={activityIndicator}
-        onSelect={() => itemSelected("notification")}
-        selected={props.selection === "notification"}>
-        {#snippet icon(color)}
-            <Lightbulb {color} size={iconSize} />
-        {/snippet}
-    </BottomBarItem>
-    <BottomBarItem onSelect={() => itemSelected("wallet")} selected={props.selection === "wallet"}>
-        {#snippet icon(color)}
-            <Wallet {color} size={iconSize} />
-        {/snippet}
-    </BottomBarItem>
+    {@render item("notification", Lightbulb, activityIndicator)}
+    {@render item("wallet", Wallet)}
     <BottomBarItem
         onSelect={() => itemSelected("profile")}
         selected={props.selection === "profile"}>

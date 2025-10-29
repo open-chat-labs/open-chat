@@ -80,7 +80,7 @@
             </div>
         {/if}
         {#if iconButtons}
-            <Container width={{ kind: "hug" }} gap={"xs"}>
+            <Container padding={["zero", "md", "zero", "zero"]} width={{ kind: "hug" }} gap={"xs"}>
                 {@render iconButtons(ColourVars.textPrimary)}
             </Container>
         {/if}

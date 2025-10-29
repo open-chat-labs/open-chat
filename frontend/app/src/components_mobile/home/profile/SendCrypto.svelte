@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { CommonButton, Container, Input, InputIconButton, Title } from "component-lib";
     import {
         BTC_SYMBOL,
         CKBTC_SYMBOL,
@@ -8,10 +9,8 @@
         currentUserIdStore,
         currentUserStore,
         type EvmChain,
-        iconSize,
         ICP_SYMBOL,
         Lazy,
-        mobileWidth,
         type NamedAccount,
         type OneSecTransferFees,
         type OpenChat,
@@ -19,16 +18,14 @@
     } from "openchat-client";
     import { ErrorCode, isAccountIdentifierValid, isICRCAddressValid } from "openchat-shared";
     import { getContext, onMount } from "svelte";
+    import { _ } from "svelte-i18n";
     import QrcodeScan from "svelte-material-icons/QrcodeScan.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
+    import Send from "svelte-material-icons/Send.svelte";
+    import { i18nKey, interpolate } from "../../../i18n/i18n";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
     import { toastStore } from "../../../stores/toast";
     import { Debouncer } from "../../../utils/debouncer";
-    import Button from "../../Button.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import Input from "../../Input.svelte";
-    import ModalContent from "../../ModalContent.svelte";
     import Translatable from "../../Translatable.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import NetworkSelector from "../NetworkSelector.svelte";
@@ -280,102 +277,101 @@
     }
 </script>
 
-<ModalContent>
-    {#snippet header()}
-        <span class="header">
-            <div class="main-title"><Translatable resourceKey={title} /></div>
-            <BalanceWithRefresh
-                bind:this={balanceWithRefresh}
-                {ledger}
-                value={remainingBalance}
-                label={i18nKey("cryptoAccount.shortBalanceLabel")}
-                bold
-                onRefreshed={onBalanceRefreshed}
-                onError={onBalanceRefreshError} />
-        </span>
-    {/snippet}
-    {#snippet body()}
-        <form class="body">
-            {#if capturingAccount}
-                <SaveAccount
-                    bind:this={saveAccountElement}
-                    bind:valid={validAccountName}
-                    account={targetAccount}
-                    {accounts} />
-            {:else}
-                <Scanner onData={(data) => (targetAccount = data)} bind:this={scanner} />
+<Container gap={"xl"} padding={"xl"} direction={"vertical"}>
+    <Container crossAxisAlignment={"center"}>
+        <Title fontWeight={"bold"}>
+            <Translatable resourceKey={title} />
+        </Title>
+        <BalanceWithRefresh
+            bind:this={balanceWithRefresh}
+            {ledger}
+            value={remainingBalance}
+            label={i18nKey("cryptoAccount.shortBalanceLabel")}
+            bold
+            onRefreshed={onBalanceRefreshed}
+            onError={onBalanceRefreshError} />
+    </Container>
+    <Container gap={"md"} direction={"vertical"}>
+        {#if capturingAccount}
+            <SaveAccount
+                bind:this={saveAccountElement}
+                bind:valid={validAccountName}
+                account={targetAccount}
+                {accounts} />
+        {:else}
+            <Scanner onData={(data) => (targetAccount = data)} bind:this={scanner} />
 
-                {#if networks.length > 0 && selectedNetwork !== undefined}
-                    <NetworkSelector {networks} bind:selectedNetwork />
-                {/if}
-
-                <div class="token-input">
-                    <TokenInput
-                        {ledger}
-                        {transferFees}
-                        {minAmount}
-                        maxAmount={BigInt(Math.max(0, Number(cryptoBalance - transferFees)))}
-                        bind:valid={validAmount}
-                        bind:amount={amountToSend} />
-                </div>
-                <div class="target">
-                    <Input
-                        bind:value={targetAccount}
-                        countdown={false}
-                        maxlength={100}
-                        invalid={targetAccount.length > 0 && !targetAccountValid}
-                        placeholder={i18nKey("cryptoAccount.sendTarget")} />
-
-                    <div class="qr" onclick={scan}>
-                        <QrcodeScan size={$iconSize} color={"var(--icon-selected)"} />
-                    </div>
-                </div>
-
-                {#if accounts.length > 0 || networkFee !== undefined}
-                    <div class="lower-container">
-                        {#if accounts.length > 0}
-                            <div class="accounts">
-                                <AccountSelector bind:targetAccount {accounts} />
-                            </div>
-                        {/if}
-
-                        {#if networkFeeFormatted !== undefined}
-                            <div class="network-fee">
-                                <Translatable
-                                    resourceKey={i18nKey("cryptoAccount.networkFee", {
-                                        amount: networkFeeFormatted,
-                                        token: symbol,
-                                    })} />
-                            </div>
-                        {/if}
-                    </div>
-                {/if}
+            {#if networks.length > 0 && selectedNetwork !== undefined}
+                <NetworkSelector {networks} bind:selectedNetwork />
             {/if}
 
-            {#if errorMessage !== undefined}
-                <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
+            <Container gap={"xs"} direction={"vertical"}>
+                <TokenInput
+                    {ledger}
+                    {transferFees}
+                    {minAmount}
+                    maxAmount={BigInt(Math.max(0, Number(cryptoBalance - transferFees)))}
+                    bind:valid={validAmount}
+                    bind:amount={amountToSend} />
+            </Container>
+
+            <Input
+                bind:value={targetAccount}
+                countdown={false}
+                maxlength={100}
+                error={targetAccount.length > 0 && !targetAccountValid}
+                placeholder={interpolate($_, i18nKey("cryptoAccount.sendTarget"))}>
+                {#snippet iconButtons(color)}
+                    <InputIconButton onClick={scan}>
+                        <QrcodeScan {color} />
+                    </InputIconButton>
+                {/snippet}
+            </Input>
+
+            {#if accounts.length > 0 || networkFee !== undefined}
+                <div class="lower-container">
+                    {#if accounts.length > 0}
+                        <div class="accounts">
+                            <AccountSelector bind:targetAccount {accounts} />
+                        </div>
+                    {/if}
+
+                    {#if networkFeeFormatted !== undefined}
+                        <div class="network-fee">
+                            <Translatable
+                                resourceKey={i18nKey("cryptoAccount.networkFee", {
+                                    amount: networkFeeFormatted,
+                                    token: symbol,
+                                })} />
+                        </div>
+                    {/if}
+                </div>
             {/if}
-        </form>
-    {/snippet}
-    {#snippet footer()}
-        <span>
-            <ButtonGroup>
-                <Button secondary tiny={$mobileWidth} onClick={onClose}
-                    ><Translatable
-                        resourceKey={i18nKey(capturingAccount ? "noThanks" : "cancel")} /></Button>
-                <Button
-                    disabled={busy || !valid}
-                    loading={busy}
-                    tiny={$mobileWidth}
-                    onClick={onPrimaryClick}
-                    ><Translatable
-                        resourceKey={i18nKey(
-                            capturingAccount ? "tokenTransfer.saveAccount" : "tokenTransfer.send",
-                        )} /></Button>
-            </ButtonGroup>
-        </span>
-    {/snippet}
-</ModalContent>
+        {/if}
+
+        {#if errorMessage !== undefined}
+            <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
+        {/if}
+    </Container>
+    <Container mainAxisAlignment={"end"} gap={"sm"}>
+        <CommonButton onClick={onClose}>
+            <Translatable resourceKey={i18nKey(capturingAccount ? "noThanks" : "cancel")} />
+        </CommonButton>
+        <CommonButton
+            disabled={busy || !valid}
+            loading={busy}
+            mode={"active"}
+            onClick={onPrimaryClick}>
+            {#snippet icon(color)}
+                <Send {color} />
+            {/snippet}
+            <Translatable
+                resourceKey={i18nKey(
+                    capturingAccount ? "tokenTransfer.saveAccount" : "tokenTransfer.send",
+                )} />
+        </CommonButton>
+    </Container>
+</Container>
 
 <style lang="scss">
     :global(.target .input-wrapper input) {

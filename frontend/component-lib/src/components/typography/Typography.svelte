@@ -12,6 +12,7 @@
         labelFor?: string;
         align?: "start" | "end" | "center" | "unset";
         uppercase?: boolean;
+        onClick?: () => void;
     }
 </script>
 
@@ -38,6 +39,7 @@
         labelFor,
         align = "unset",
         uppercase = false,
+        onClick,
     }: Props = $props();
 
     let parentDirection = getContext<Direction>("direction");
@@ -71,7 +73,10 @@
 </script>
 
 {#if type === "label"}
+    <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
     <label
+        onclick={onClick}
         class:uppercase
         for={labelFor}
         class:ellipsis={ellipsisTruncate}
@@ -80,8 +85,10 @@
         {@render children?.()}
     </label>
 {:else}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <svelte:element
         this={tag}
+        onclick={onClick}
         class:uppercase
         class:ellipsis={ellipsisTruncate}
         {style}
