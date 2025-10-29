@@ -1662,7 +1662,6 @@ function apiVideoContent(domain: VideoContent): TVideoContent {
 }
 
 function apiAudioContent(domain: AudioContent): TAudioContent {
-    console.log("Sending audio message: ", domain);
     return {
         mime_type: domain.mimeType,
         blob_reference: apiBlobReference(domain.blobReference),
