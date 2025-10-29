@@ -18,4 +18,4 @@ key.properties
 /.tauri
 
 # THIS FILE WAS IN GIT IGNORE, BUT IS REQUIERD BY ANDROID STUDIO TO SYNC GRADLE
-# /tauri.settings.gradle
+tauri.settings.gradle
