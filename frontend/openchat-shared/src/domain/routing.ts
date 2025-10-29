@@ -35,6 +35,7 @@ export type RouteParams =
     | HotGroupsRoute
     | AdminRoute
     | ProfileSummaryRoute
+    | WalletRoute
     | NotificationsRoute;
 
 export type MessageIndexRoute = GlobalSelectedChatRoute | FavouritesRoute | SelectedChannelRoute;
@@ -98,6 +99,10 @@ export type AdminRoute = NoScope & {
 
 export type ProfileSummaryRoute = NoScope & {
     kind: "profile_summary_route";
+};
+
+export type WalletRoute = NoScope & {
+    kind: "wallet_route";
 };
 
 export type NotificationsRoute = NoScope & {
