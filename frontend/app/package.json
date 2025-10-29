@@ -64,7 +64,7 @@
         "@fingerprintjs/botd": "^1.9.1",
         "@fortawesome/free-solid-svg-icons": "^6.4.2",
         "@memefighter/maker-core": "^0.0.17",
-        "@metamask/sdk": "^0.28.4",
+        "@metamask/sdk": "^0.33.1",
         "@solana/wallet-adapter-wallets": "^0.19.32",
         "@solana/web3.js": "^1.91.8",
         "@tauri-apps/plugin-notification": "^2.3.1",
