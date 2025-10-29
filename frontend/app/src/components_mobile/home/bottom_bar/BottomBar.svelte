@@ -1,5 +1,11 @@
 <script module lang="ts">
-    export type Selection = "chats" | "favourites" | "communities" | "notification" | "profile";
+    export type Selection =
+        | "chats"
+        | "favourites"
+        | "communities"
+        | "notification"
+        | "profile"
+        | "wallet";
 </script>
 
 <script lang="ts">
@@ -22,6 +28,7 @@
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
     import Lightbulb from "svelte-material-icons/LightbulbVariantOutline.svelte";
+    import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import BottomBarItem, { type Unread } from "./BottomBarItem.svelte";
 
     interface Props {
@@ -38,6 +45,8 @@
     let unreadCommunities = $derived(
         mergeListOfCombinedUnreadCounts(Array.from($unreadCommunityChannelCountsStore.values())),
     );
+    let numIcons = $derived($favouritesStore.size > 0 ? 6 : 5);
+    let iconSize = $derived(numIcons === 6 ? "1.7rem" : "1.9rem");
 
     let chatIndicator = $derived.by(() => showIndicator($unreadDirectAndGroupCountsStore.chats));
     let communityIndicator = $derived(showIndicator(unreadCommunities.chats));
@@ -79,21 +88,25 @@
                 page("/chats");
                 break;
             case "communities":
-                const selected = client.selectDefaultCommunity();
-                if (!selected) {
-                    // this probably means that we are not a member of any communities so
-                    // let's go the the /communities route
-                    page("/communities");
-                }
+                client.selectDefaultCommunity();
+                // const selected = client.selectDefaultCommunity();
+                // if (!selected) {
+                //     // this probably means that we are not a member of any communities so
+                //     // let's go the the /communities route
+                //     page("/communities");
+                // }
                 break;
             case "favourites":
-                page("/favourites");
+                page("/favourite");
                 break;
             case "notification":
                 page("/notifications");
                 break;
             case "profile":
                 page("/profile_summary");
+                break;
+            case "wallet":
+                page("/wallet");
                 break;
         }
     }
@@ -112,6 +125,9 @@
                     itemSelected("notification");
                     break;
                 case "notification":
+                    itemSelected("wallet");
+                    break;
+                case "wallet":
                     itemSelected("profile");
                     break;
             }
@@ -119,7 +135,7 @@
         if (dir === "right") {
             switch (props.selection) {
                 case "profile":
-                    itemSelected("notification");
+                    itemSelected("wallet");
                     break;
                 case "notification":
                     itemSelected($favouritesStore.size > 0 ? "favourites" : "communities");
@@ -129,6 +145,9 @@
                     break;
                 case "communities":
                     itemSelected("chats");
+                    break;
+                case "wallet":
+                    itemSelected("notification");
                     break;
             }
         }
@@ -141,20 +160,20 @@
     borderWidth={"thick"}
     minWidth={"100%"}
     minHeight={"5.5rem"}
-    gap={"xl"}
     {onSwipe}
     borderColour={"var(--background-0)"}
     height={{ kind: "fixed", size: "5.5rem" }}
     borderRadius={["md", "md", "zero", "zero"]}
     background={"var(--background-1)"}
     mainAxisAlignment={"spaceAround"}>
-    <div class:showFavourites class={`selection ${props.selection}`}></div>
+    <div style={`--num: ${numIcons}`} class:showFavourites class={`selection ${props.selection}`}>
+    </div>
     <BottomBarItem
         indicator={chatIndicator}
         onSelect={() => itemSelected("chats")}
         selected={props.selection === "chats"}>
         {#snippet icon(color)}
-            <ForumOutline {color} />
+            <ForumOutline {color} size={iconSize} />
         {/snippet}
     </BottomBarItem>
     <BottomBarItem
@@ -162,7 +181,7 @@
         onSelect={() => itemSelected("communities")}
         selected={props.selection === "communities"}>
         {#snippet icon(color)}
-            <AccountGroup {color} />
+            <AccountGroup {color} size={iconSize} />
         {/snippet}
     </BottomBarItem>
     {#if $favouritesStore.size > 0}
@@ -171,7 +190,7 @@
             onSelect={() => itemSelected("favourites")}
             selected={props.selection === "favourites"}>
             {#snippet icon(color)}
-                <HeartOutline {color} />
+                <HeartOutline {color} size={iconSize} />
             {/snippet}
         </BottomBarItem>
     {/if}
@@ -180,14 +199,19 @@
         onSelect={() => itemSelected("notification")}
         selected={props.selection === "notification"}>
         {#snippet icon(color)}
-            <Lightbulb {color} />
+            <Lightbulb {color} size={iconSize} />
+        {/snippet}
+    </BottomBarItem>
+    <BottomBarItem onSelect={() => itemSelected("wallet")} selected={props.selection === "wallet"}>
+        {#snippet icon(color)}
+            <Wallet {color} size={iconSize} />
         {/snippet}
     </BottomBarItem>
     <BottomBarItem
         onSelect={() => itemSelected("profile")}
         selected={props.selection === "profile"}>
         {#snippet icon()}
-            <Avatar size={"lg"} url={avatarUrl} name={avatarName}></Avatar>
+            <Avatar customSize={iconSize} size={"lg"} url={avatarUrl} name={avatarName}></Avatar>
         {/snippet}
     </BottomBarItem>
 </Container>
@@ -212,7 +236,10 @@
     }
 
     .selection {
-        --width: calc(25% - 2rem);
+        // --width: calc(22% - 2rem);
+        --width: calc((100% - 2rem) / var(--num));
+        --half: calc(var(--width) / 2);
+        --offset: calc(1rem + var(--half));
         position: absolute;
         width: var(--width);
         left: 0;
@@ -223,46 +250,41 @@
         transition: left ease-in-out 200ms;
         transform: translateX(-50%);
 
-        // first and last need to account for the container's padding
         &.chats {
-            left: 12.5%;
+            left: var(--offset);
         }
 
         &.communities {
-            left: 37.5%;
-        }
-
-        &.favourites {
-            left: 60%;
+            left: calc(var(--offset) + var(--width));
         }
 
         &.notification {
-            left: 62.5%;
+            left: calc(var(--offset) + (var(--width) * 2));
+        }
+
+        &.wallet {
+            left: calc(var(--offset) + (var(--width) * 3));
         }
 
         &.profile {
-            left: 87.5%;
+            left: calc(var(--offset) + (var(--width) * 4));
         }
 
         &.showFavourites {
-            &.chats {
-                left: 10%;
-            }
-
-            &.communities {
-                left: 30%;
-            }
-
             &.favourites {
-                left: 50%;
+                left: calc(var(--offset) + (var(--width) * 2));
             }
 
             &.notification {
-                left: 70%;
+                left: calc(var(--offset) + (var(--width) * 3));
+            }
+
+            &.wallet {
+                left: calc(var(--offset) + (var(--width) * 4));
             }
 
             &.profile {
-                left: 90%;
+                left: calc(var(--offset) + (var(--width) * 5));
             }
         }
     }

@@ -33,6 +33,7 @@
         shareRoute,
         threadMessageIndexStore,
         threadOpenStore,
+        walletRoute,
     } from "openchat-client";
     import page from "page";
     import { getContext, onDestroy, onMount, tick, untrack } from "svelte";
@@ -51,11 +52,20 @@
     const bottomBarRoutes: RouteParams["kind"][] = [
         "chat_list_route",
         "selected_community_route",
+        "favourites_route",
         "notifications_route",
+        "wallet_route",
         "profile_summary_route",
         "global_chat_selected_route",
         "selected_channel_route",
     ];
+
+    function disambiguateRouteKind(route: RouteParams): RouteParams["kind"] {
+        if (route.kind === "chat_list_route" && route.scope.kind === "favourite") {
+            return "favourites_route";
+        }
+        return route.kind;
+    }
 
     function routeToTransitionType(next: RouteParams, current: RouteParams): TransitionType {
         if (
@@ -88,8 +98,8 @@
             }
             return "fade";
         }
-        const nextIdx = bottomBarRoutes.indexOf(next.kind);
-        const currIdx = bottomBarRoutes.indexOf(current.kind);
+        const nextIdx = bottomBarRoutes.indexOf(disambiguateRouteKind(next));
+        const currIdx = bottomBarRoutes.indexOf(disambiguateRouteKind(current));
         if (nextIdx === currIdx) return "fade";
         if (nextIdx === -1 || currIdx === -1) return "fade";
         return nextIdx > currIdx ? "slide_left" : "slide_right";
@@ -259,6 +269,7 @@
         page("/share", parsePathParams(shareRoute), track, () => (route = Home));
         page("/admin", parsePathParams(adminRoute), track, () => (route = Home));
         page("/profile_summary", parsePathParams(profileSummaryRoute), track, () => (route = Home));
+        page("/wallet", parsePathParams(walletRoute), track, () => (route = Home));
         page("/notifications", parsePathParams(notificationsRoute), track, () => (route = Home));
         page(
             "/",

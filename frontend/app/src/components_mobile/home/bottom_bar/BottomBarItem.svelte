@@ -45,11 +45,6 @@
 </Container>
 
 <style lang="scss">
-    :global(.bottom_bar_icon svg) {
-        width: var(--icon-lg);
-        height: var(--icon-lg);
-    }
-
     .bottom_bar_icon {
         display: flex;
     }

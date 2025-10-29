@@ -10,6 +10,7 @@
     import UserProfileSummary from "./user_profile/UserProfileSummary.svelte";
 
     let showProfileSummary = $derived($routeStore.kind === "profile_summary_route");
+    let showWallet = $derived($routeStore.kind === "wallet_route");
     let showNotifications = $derived($routeStore.kind === "notifications_route");
     let selection = $derived<Selection>(bottomBarSelection());
     let sectionClass = $derived.by(() => {
@@ -36,6 +37,8 @@
             return "notification";
         } else if (showProfileSummary) {
             return "profile";
+        } else if (showWallet) {
+            return "wallet";
         } else {
             switch ($chatListScopeStore.kind) {
                 case "community":
