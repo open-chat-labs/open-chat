@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { CommonButton, Container, FloatingButton } from "component-lib";
+    import { chatListFilterStore } from "@src/stores/settings";
+    import { CommonButton, Container, FloatingButton, transition } from "component-lib";
     import {
         allUsersStore,
         chatIdentifiersEqual,
@@ -45,7 +46,6 @@
 
     let previousScope: ChatListScope = $chatListScopeStore;
     let previousView: "chats" | "threads" = $chatListView;
-    let chatListFilter = $state<ChatListFilter>("all");
     let chatsToShow = $state(TO_SHOW);
     let rendering = $state(false);
     function insideBottom() {
@@ -86,7 +86,9 @@
     }
 
     function setView(view: "chats" | "threads"): void {
-        chatListView.set(view);
+        transition(["fade"], () => {
+            chatListView.set(view);
+        });
     }
 
     function onScopeChanged() {
@@ -98,7 +100,7 @@
     function onViewChanged() {
         previousView = $chatListView;
         chatsToShow = TO_SHOW;
-        chatListFilter = "all";
+        chatListFilterStore.set("all");
     }
 
     let showPreview = $derived(
@@ -135,11 +137,11 @@
     let filteredChats = $derived.by(() => {
         return allChats.filter((c) => {
             return (
-                chatListFilter === "all" ||
-                (chatListFilter === "unread" &&
+                $chatListFilterStore === "all" ||
+                ($chatListFilterStore === "unread" &&
                     client.unreadMessageCount(c.id, c.latestMessage?.event.messageIndex) > 0) ||
-                (chatListFilter === "direct" && c.kind === "direct_chat") ||
-                (chatListFilter === "groups" && c.kind === "group_chat")
+                ($chatListFilterStore === "direct" && c.kind === "direct_chat") ||
+                ($chatListFilterStore === "groups" && c.kind === "group_chat")
             );
         });
     });
@@ -161,7 +163,7 @@
     {/if}
 
     {#if $chatListScopeStore.kind === "chats"}
-        <ChatListFilters bind:filter={chatListFilter} />
+        <ChatListFilters bind:filter={$chatListFilterStore as ChatListFilter} />
     {:else if $chatListScopeStore.kind === "community"}
         {#if $numberOfThreadsStore > 0}
             <Container mainAxisAlignment={"spaceBetween"} padding={["sm", "md"]} gap={"sm"}>

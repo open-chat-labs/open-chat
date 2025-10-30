@@ -154,22 +154,10 @@
             )} />
     </Container>
 </Container>
-<div class="floating">
-    <FloatingButton onClick={() => publish("wallet")}>
-        {#snippet icon(color)}
-            <Wallet {color}></Wallet>
-        {/snippet}
-    </FloatingButton>
-</div>
 
 <style lang="scss">
     :global(.container.user_profile_summary_buttons) {
         margin-top: auto;
         margin-bottom: var(--sp-md);
-    }
-    .floating {
-        position: absolute;
-        bottom: var(--sp-md);
-        right: var(--sp-md);
     }
 </style>
