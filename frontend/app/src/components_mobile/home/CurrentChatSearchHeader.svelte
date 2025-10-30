@@ -300,7 +300,7 @@
         background-color: var(--chatSearch-bg);
         box-shadow: var(--chatSearch-sh);
         border: var(--bw) solid var(--chatSearch-bd);
-        border-radius: var(--chatSearch-rd);
+        border-radius: var(--rad-circle);
     }
 
     input {

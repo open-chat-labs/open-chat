@@ -110,9 +110,9 @@
     let isProposal = $derived(msg.content.kind === "proposal_content");
     let isPrize = $derived(msg.content.kind === "prize_content");
     let hasReactions = $derived(msg.reactions.length > 0);
-    let showHeader = $derived(first && !isProposal && !isPrize);
-    let hasReply = $derived(msg.repliesTo !== undefined);
     let me = $derived(msg.sender === $currentUserIdStore);
+    let showHeader = $derived(first && !isProposal && !isPrize && !me);
+    let hasReply = $derived(msg.repliesTo !== undefined);
     let backgroundColour = $derived.by(() => {
         if (failed) {
             return ColourVars.error;
