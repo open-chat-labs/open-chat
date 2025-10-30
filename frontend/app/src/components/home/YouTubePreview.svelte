@@ -21,6 +21,7 @@
         class:fill
         width="100%"
         height="315"
+        referrerpolicy="origin"
         src={`https://www.youtube.com/embed/${youtubeCode}?start=${youtubeStartTime}`}
         title="YouTube video player"
         frameborder="0"
