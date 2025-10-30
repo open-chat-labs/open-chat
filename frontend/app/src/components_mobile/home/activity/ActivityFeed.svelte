@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { activityFeedState } from "@src/runes/activity.svelte";
     import { Container, Logo, SectionHeader } from "component-lib";
     import {
         messageActivitySummaryStore,
@@ -17,17 +18,15 @@
 
     const client = getContext<OpenChat>("client");
 
-    let activityEvents = $state<MessageActivityEvent[]>([]);
-    let latestTimestamp = $derived(activityEvents[0]?.timestamp ?? 0n);
     let uptodate = $derived.by(() => {
-        return $messageActivitySummaryStore.latestTimestamp <= latestTimestamp;
+        return $messageActivitySummaryStore.latestTimestamp <= activityFeedState.latestTimestamp;
     });
 
     function loadActivity() {
         client.subscribeToMessageActivityFeed((resp, final) => {
-            activityEvents = resp.events;
-            if (activityEvents.length > 0 && final) {
-                client.markActivityFeedRead(latestTimestamp);
+            activityFeedState.activityEvents = resp.events;
+            if (activityFeedState.activityEvents.length > 0 && final) {
+                client.markActivityFeedRead(activityFeedState.latestTimestamp);
             }
         });
     }
@@ -65,7 +64,7 @@
 </SectionHeader>
 
 <Container height={{ kind: "fill" }} closeMenuOnScroll direction={"vertical"}>
-    <VirtualList keyFn={eventKey} items={activityEvents}>
+    <VirtualList keyFn={eventKey} items={activityFeedState.activityEvents}>
         {#snippet children(item)}
             <ActivityEvent event={item} onClick={() => selectEvent(item)} />
         {/snippet}

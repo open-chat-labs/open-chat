@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { activityFeedState } from "@src/runes/activity.svelte";
     import { menuCloser } from "component-lib";
     import {
         activityFeedShowing,
@@ -23,18 +24,16 @@
 
     const client = getContext<OpenChat>("client");
 
-    let activityEvents = $state<MessageActivityEvent[]>([]);
     let selectedEventIndex = $state<number | undefined>();
-    let latestTimestamp = $derived(activityEvents[0]?.timestamp ?? 0n);
     let uptodate = $derived.by(() => {
-        return $messageActivitySummaryStore.latestTimestamp <= latestTimestamp;
+        return $messageActivitySummaryStore.latestTimestamp <= activityFeedState.latestTimestamp;
     });
 
     function loadActivity() {
         client.subscribeToMessageActivityFeed((resp, final) => {
-            activityEvents = resp.events;
-            if (activityEvents.length > 0 && final) {
-                client.markActivityFeedRead(latestTimestamp);
+            activityFeedState.activityEvents = resp.events;
+            if (activityFeedState.activityEvents.length > 0 && final) {
+                client.markActivityFeedRead(activityFeedState.latestTimestamp);
             }
         });
     }
@@ -80,7 +79,7 @@
 </SectionHeader>
 
 <div use:menuCloser class="body">
-    <VirtualList keyFn={eventKey} items={activityEvents}>
+    <VirtualList keyFn={eventKey} items={activityFeedState.activityEvents}>
         {#snippet children(item, idx)}
             <ActivityEvent
                 event={item}
