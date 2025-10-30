@@ -24,6 +24,7 @@
         disabled?: boolean;
         fill?: boolean;
         maskUI?: boolean;
+        constrainMask?: string;
     }
 
     let props: Props = $props();
@@ -92,16 +93,24 @@
         overlay.classList.add("visible");
 
         menuClone = menu.cloneNode(true) as HTMLElement;
-        const rect = menu.getBoundingClientRect();
+        const sourceRect = menu.getBoundingClientRect();
+        let parent = document.body;
+        let { top, left } = sourceRect;
+        if (props.constrainMask !== undefined) {
+            parent = document.getElementById(props.constrainMask) ?? document.body;
+        }
+        const parentRect = parent.getBoundingClientRect();
+        top = sourceRect.top - parentRect.top + parent.scrollTop;
+        left = sourceRect.left - parentRect.left + parent.scrollLeft;
 
         menuClone.addEventListener("contextmenu", (e) => e.preventDefault());
         menuClone.classList.add("menu_trigger_clone");
         menuClone.style.cssText = `
-                position: fixed;
-                left: ${rect.left}px;
-                top: ${rect.top}px;
-                width: ${rect.width}px;
-                height: ${rect.height}px;
+                position: absolute;
+                left: ${left}px;
+                top: ${top}px;
+                width: ${sourceRect.width}px;
+                height: ${sourceRect.height}px;
                 transition: opacity 200ms ease-in-out;
                 margin: 0;
                 z-index: 91;
@@ -109,7 +118,7 @@
                 opacity: 0.8;
             `;
 
-        document.body.appendChild(menuClone);
+        parent.appendChild(menuClone);
         setTimeout(() => {
             if (menuClone !== undefined) {
                 menuClone.style.opacity = "1";

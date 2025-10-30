@@ -389,6 +389,9 @@
     );
     let canTip = $derived(!me && confirmed && !inert && !failed);
     let inThread = $derived(threadRootMessage !== undefined);
+    let scrollingId = $derived(
+        inThread ? "scrollable-list-thread-messages" : "scrollable-list-chat-messages",
+    );
     let threadRootMessageIndex = $derived(
         threadRootMessage?.messageId === msg.messageId
             ? undefined
@@ -573,7 +576,11 @@
                     gap={"xxs"}
                     minWidth={"6rem"}
                     direction={"vertical"}>
-                    <MenuTrigger maskUI centered mobileMode={"longpress"}>
+                    <MenuTrigger
+                        constrainMask={scrollingId}
+                        maskUI
+                        centered
+                        mobileMode={"longpress"}>
                         {#snippet menuItems()}
                             {#if showChatMenu && intersecting}
                                 <ChatMessageMenu
