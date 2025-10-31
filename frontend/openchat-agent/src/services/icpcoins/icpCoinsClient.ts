@@ -1,5 +1,5 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
-import type { CryptocurrencyDetails, TokenExchangeRates } from "openchat-shared";
+import type { TokenExchangeRates } from "openchat-shared";
 import { CandidCanisterAgent } from "../canisterAgent/candid";
 import type { ExchangeRateClient } from "../openchatAgent";
 import { idlFactory, type ICPCoinsService } from "./candid/idl";
@@ -16,7 +16,7 @@ export class IcpCoinsClient
     }
 
     exchangeRates(
-        supportedTokens: CryptocurrencyDetails[],
+        supportedSymbols: Set<string>,
     ): Promise<Record<string, TokenExchangeRates>> {
         return this.handleResponse(
             this.service.get_coins_by_marketcap({
@@ -24,7 +24,7 @@ export class IcpCoinsClient
                 full: true,
                 select: [],
             }),
-            (resp) => coinsByMarketcapResponse(resp, supportedTokens),
+            (resp) => coinsByMarketcapResponse(resp, supportedSymbols),
         );
     }
 }
