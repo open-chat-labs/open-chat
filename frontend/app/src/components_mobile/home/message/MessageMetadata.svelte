@@ -114,8 +114,8 @@
     }
 
     .confirming {
-        width: 1.45em;
-        height: 1.4em;
-        @include loading-spinner(1.2em, 0.6em, "#ffffff", "/assets/plain-spinner.svg", 1.5s);
+        width: 1.1rem;
+        height: 0.8rem;
+        @include loading-spinner(0.8rem, 0.3rem, "#ffffff", "/assets/plain-spinner.svg", 1.5s);
     }
 </style>
