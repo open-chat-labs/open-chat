@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { IconButton, MenuItem, MenuTrigger, Sheet } from "component-lib";
+    import { Container, IconButton, MenuItem, MenuTrigger, Sheet } from "component-lib";
     import {
         walletTokensSorted as accountsSorted,
         type EnhancedTokenDetails,
@@ -19,7 +19,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { sum } from "../../../utils/math";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import MultiToggle, { type Option } from "../../MultiToggle.svelte";
+    import { type Option } from "../../MultiToggle.svelte";
     import Translatable from "../../Translatable.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import AccountTransactions from "./AccountTransactions.svelte";
@@ -140,113 +140,109 @@
     </Sheet>
 {/if}
 
-<table>
-    <thead>
-        <tr>
-            <th class="token-header"
-                ><Translatable resourceKey={i18nKey("cryptoAccount.token")} /></th>
-            <th class="balance-header" colspan="2" class:hideTokenBalances>
-                <MultiToggle options={conversionOptions} bind:selected={selectedConversion} />
-            </th>
-        </tr>
-    </thead>
-    {#each $accountsSorted as token (token.ledger)}
-        <!-- svelte-ignore node_invalid_placement_ssr -->
-        <tr>
-            <td width="99%">
-                <div class="token">
-                    <img
-                        alt={token.name}
-                        class:disabled={!token.enabled}
-                        class="icon"
-                        src={token.logo} />
-                    <div>
-                        {token.symbol}
+<Container height={{ kind: "fill" }} direction={"vertical"}>
+    <table>
+        {#each $accountsSorted as token (token.ledger)}
+            <!-- svelte-ignore node_invalid_placement_ssr -->
+            <tr>
+                <td width="99%">
+                    <div class="token">
+                        <img
+                            alt={token.name}
+                            class:disabled={!token.enabled}
+                            class="icon"
+                            src={token.logo} />
+                        <div>
+                            {token.symbol}
+                        </div>
                     </div>
-                </div>
-            </td>
-            <td>
-                <BalanceWithRefresh
-                    ledger={token.ledger}
-                    value={token.balance}
-                    conversion={selectedConversion}
-                    hideBalance={hideTokenBalances}
-                    allowCached={true}
-                    onRefreshed={onBalanceRefreshed}
-                    onError={onBalanceRefreshError} />
-            </td>
-            <td class="manage-col">
-                <div class="manage">
-                    <MenuTrigger position={"bottom"} align={"end"}>
-                        <IconButton padding={["sm", "xs", "sm", "zero"]} size={"md"}>
-                            {#snippet icon(color)}
-                                <ChevronDown {color} />
-                            {/snippet}
-                        </IconButton>
-                        {#snippet menuItems()}
-                            <MenuItem onclick={() => showSend(token.ledger)}>
+                </td>
+                <td>
+                    <BalanceWithRefresh
+                        ledger={token.ledger}
+                        value={token.balance}
+                        conversion={selectedConversion}
+                        hideBalance={hideTokenBalances}
+                        allowCached={true}
+                        onRefreshed={onBalanceRefreshed}
+                        onError={onBalanceRefreshError} />
+                </td>
+                <td class="manage-col">
+                    <div class="manage">
+                        <MenuTrigger position={"bottom"} align={"end"}>
+                            <IconButton padding={["sm", "xs", "sm", "zero"]} size={"md"}>
                                 {#snippet icon(color)}
-                                    <ArrowRightBoldCircle {color} />
+                                    <ChevronDown {color} />
                                 {/snippet}
-                                <Translatable resourceKey={i18nKey("cryptoAccount.send")} />
-                            </MenuItem>
-                            {#if token.enabled}
-                                <MenuItem onclick={() => showReceive(token.ledger)}>
+                            </IconButton>
+                            {#snippet menuItems()}
+                                <MenuItem onclick={() => showSend(token.ledger)}>
                                     {#snippet icon(color)}
-                                        <ArrowLeftBoldCircle {color} />
+                                        <ArrowRightBoldCircle {color} />
                                     {/snippet}
-                                    <Translatable resourceKey={i18nKey("cryptoAccount.receive")} />
+                                    <Translatable resourceKey={i18nKey("cryptoAccount.send")} />
                                 </MenuItem>
-                                {#if $swappableTokensStore.has(token.ledger)}
-                                    <MenuItem onclick={() => showSwap(token.ledger)}>
+                                {#if token.enabled}
+                                    <MenuItem onclick={() => showReceive(token.ledger)}>
                                         {#snippet icon(color)}
-                                            <SwapIcon {color} />
+                                            <ArrowLeftBoldCircle {color} />
                                         {/snippet}
-                                        <Translatable resourceKey={i18nKey("cryptoAccount.swap")} />
+                                        <Translatable
+                                            resourceKey={i18nKey("cryptoAccount.receive")} />
+                                    </MenuItem>
+                                    {#if $swappableTokensStore.has(token.ledger)}
+                                        <MenuItem onclick={() => showSwap(token.ledger)}>
+                                            {#snippet icon(color)}
+                                                <SwapIcon {color} />
+                                            {/snippet}
+                                            <Translatable
+                                                resourceKey={i18nKey("cryptoAccount.swap")} />
+                                        </MenuItem>
+                                    {/if}
+                                {/if}
+                                {#if token.symbol === ICP_SYMBOL || snsLedgers.has(token.ledger)}
+                                    <MenuItem onclick={() => showTransactions(token)}>
+                                        {#snippet icon(color)}
+                                            <ViewList {color} />
+                                        {/snippet}
+                                        <Translatable
+                                            resourceKey={i18nKey("cryptoAccount.transactions")} />
                                     </MenuItem>
                                 {/if}
-                            {/if}
-                            {#if token.symbol === ICP_SYMBOL || snsLedgers.has(token.ledger)}
-                                <MenuItem onclick={() => showTransactions(token)}>
-                                    {#snippet icon(color)}
-                                        <ViewList {color} />
-                                    {/snippet}
-                                    <Translatable
-                                        resourceKey={i18nKey("cryptoAccount.transactions")} />
-                                </MenuItem>
-                            {/if}
-                            {#if manualWalletConfig}
-                                <MenuItem onclick={() => removeFromWallet(token.ledger)}>
-                                    {#snippet icon(color)}
-                                        <HeartRemoveOutline {color} />
-                                    {/snippet}
-                                    <Translatable resourceKey={i18nKey("cryptoAccount.remove")} />
-                                </MenuItem>
-                            {/if}
-                        {/snippet}
-                    </MenuTrigger>
-                </div>
-            </td>
-        </tr>
-    {/each}
-    {#if selectedConversion !== "none" && !hideTokenBalances}
-        <!-- svelte-ignore node_invalid_placement_ssr -->
-        <tr class="total">
-            <td>
-                <div class="token">
-                    <div class="icon"></div>
-                    <Translatable resourceKey={i18nKey("cryptoAccount.total")} />
-                </div>
-            </td>
-            <td class="total">{total}</td>
-            <td></td>
-        </tr>
-    {/if}
-</table>
+                                {#if manualWalletConfig}
+                                    <MenuItem onclick={() => removeFromWallet(token.ledger)}>
+                                        {#snippet icon(color)}
+                                            <HeartRemoveOutline {color} />
+                                        {/snippet}
+                                        <Translatable
+                                            resourceKey={i18nKey("cryptoAccount.remove")} />
+                                    </MenuItem>
+                                {/if}
+                            {/snippet}
+                        </MenuTrigger>
+                    </div>
+                </td>
+            </tr>
+        {/each}
+        {#if selectedConversion !== "none" && !hideTokenBalances}
+            <!-- svelte-ignore node_invalid_placement_ssr -->
+            <tr class="total">
+                <td>
+                    <div class="token">
+                        <div class="icon"></div>
+                        <Translatable resourceKey={i18nKey("cryptoAccount.total")} />
+                    </div>
+                </td>
+                <td class="total">{total}</td>
+                <td></td>
+            </tr>
+        {/if}
+    </table>
 
-{#if balanceError !== undefined}
-    <ErrorMessage>{balanceError}</ErrorMessage>
-{/if}
+    {#if balanceError !== undefined}
+        <ErrorMessage>{balanceError}</ErrorMessage>
+    {/if}
+</Container>
 
 <style lang="scss">
     :global(.manage .link-button) {

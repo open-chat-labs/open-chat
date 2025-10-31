@@ -1,34 +1,44 @@
 <script lang="ts">
     import type { PinOperation } from "@src/stores/pinNumber";
-    import { hideTokenBalances } from "@src/stores/settings";
     import { Container, Logo, MenuItem, SectionHeader, Sheet } from "component-lib";
     import { pinNumberRequiredStore } from "openchat-client";
-    import { _ } from "svelte-i18n";
-    import EyeOff from "svelte-material-icons/EyeOffOutline.svelte";
-    import Eye from "svelte-material-icons/EyeOutline.svelte";
-    import ShieldPlusIcon from "svelte-material-icons/ShieldPlus.svelte";
-    import ShieldRefreshIcon from "svelte-material-icons/ShieldRefresh.svelte";
-    import ShieldRemoveIcon from "svelte-material-icons/ShieldRemove.svelte";
-    import TuneVertical from "svelte-material-icons/TuneVertical.svelte";
+    import Cog from "svelte-material-icons/CogOutline.svelte";
+    import ShieldPlusIcon from "svelte-material-icons/ShieldPlusOutline.svelte";
+    import ShieldRefreshIcon from "svelte-material-icons/ShieldRefreshOutline.svelte";
+    import ShieldRemoveIcon from "svelte-material-icons/ShieldRemoveOutline.svelte";
+    import SwapVertical from "svelte-material-icons/SwapVertical.svelte";
+    import TrayArrowDown from "svelte-material-icons/TrayArrowDown.svelte";
+    import TrayArrowUp from "svelte-material-icons/TrayArrowUp.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
-    import Accounts from "../profile/Accounts.svelte";
     import ManageAccounts from "../profile/ManageAccounts.svelte";
     import SetPinNumberModal from "../profile/SetPinNumberModal.svelte";
+    import Accounts from "./Accounts.svelte";
+    import BottomBar from "./BottomBar.svelte";
+    import OverallBalance from "./OverallBalance.svelte";
+    import TokenToggle from "./TokenToggle.svelte";
+    import type { ConversionToken } from "./wallet";
 
     let pinAction: PinOperation | undefined = $state(undefined);
     let managing = $state(false);
-    let selectedConversion: "none" | "usd" | "icp" | "btc" | "eth" = $state("none");
+    let selectedConversion: ConversionToken = $state("usd");
     let conversionOptions = [
-        { id: "none", label: $_("cryptoAccount.tokens") },
         { id: "usd", label: "USD" },
         { id: "icp", label: "ICP" },
         { id: "btc", label: "BTC" },
         { id: "eth", label: "ETH" },
     ];
+
+    function receive() {}
+    function send() {}
+    function swap() {}
+
+    function onRefreshWallet() {
+        console.log("Not sure what this does yet");
+    }
 </script>
 
-<SectionHeader onAction={() => hideTokenBalances.toggle()}>
+<SectionHeader>
     {#snippet avatar()}
         <Logo />
     {/snippet}
@@ -36,17 +46,27 @@
         <Translatable resourceKey={i18nKey("wallet")} />
     {/snippet}
 
-    {#snippet action()}
-        {#if $hideTokenBalances}
-            <Eye color={"var(--icon-txt)"} />
-        {:else}
-            <EyeOff color={"var(--icon-txt)"} />
-        {/if}
-    {/snippet}
-
     {#snippet menu()}
+        <MenuItem onclick={() => (pinAction = { kind: "set" })}>
+            {#snippet icon(color, size)}
+                <TrayArrowDown {color} {size} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("cryptoAccount.receive")} />
+        </MenuItem>
+        <MenuItem onclick={receive}>
+            {#snippet icon(color, size)}
+                <TrayArrowUp {color} {size} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("cryptoAccount.send")} />
+        </MenuItem>
+        <MenuItem onclick={send}>
+            {#snippet icon(color, size)}
+                <SwapVertical {color} {size} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("cryptoAccount.swap")} />
+        </MenuItem>
         {#if !$pinNumberRequiredStore}
-            <MenuItem onclick={() => (pinAction = { kind: "set" })}>
+            <MenuItem onclick={swap}>
                 {#snippet icon(color, size)}
                     <ShieldPlusIcon {color} {size} />
                 {/snippet}
@@ -68,15 +88,23 @@
         {/if}
         <MenuItem onclick={() => (managing = true)}>
             {#snippet icon(color, size)}
-                <TuneVertical {color} {size} />
+                <Cog {color} {size} />
             {/snippet}
             <Translatable resourceKey={i18nKey("cryptoAccount.manage")} />
         </MenuItem>
     {/snippet}
 </SectionHeader>
 
-<Container height={{ kind: "fill" }} padding={"lg"} closeMenuOnScroll direction={"vertical"}>
-    <Accounts bind:selectedConversion {conversionOptions} hideTokenBalances={$hideTokenBalances} />
+<Container
+    gap={"lg"}
+    height={{ kind: "fill" }}
+    padding={"lg"}
+    closeMenuOnScroll
+    direction={"vertical"}>
+    <TokenToggle options={conversionOptions} bind:selected={selectedConversion} />
+    <OverallBalance {onRefreshWallet} {selectedConversion} />
+    <Accounts bind:selectedConversion />
+    <BottomBar />
 </Container>
 
 {#if pinAction !== undefined}
