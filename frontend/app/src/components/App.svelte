@@ -1,5 +1,6 @@
 <script lang="ts">
     import "@styles/global.scss";
+    import "spoilerjs/spoiler-span";
 
     import Router from "@components/Router.svelte";
     import "@components/web-components/customEmoji";
