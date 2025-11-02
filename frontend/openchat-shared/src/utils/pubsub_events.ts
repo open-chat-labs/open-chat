@@ -9,6 +9,7 @@ import type {
     DirectChatIdentifier,
     DirectChatSummary,
     EnhancedReplyContext,
+    EnhancedTokenDetails,
     EphemeralMessageEvent,
     EventWrapper,
     FullWebhookDetails,
@@ -182,4 +183,5 @@ export type PubSubEvents = {
     newCommunity: undefined;
     newMessage: undefined;
     directChatDetails: DirectChatSummary;
+    tokenPage: EnhancedTokenDetails;
 };

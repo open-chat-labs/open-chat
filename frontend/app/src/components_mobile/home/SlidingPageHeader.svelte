@@ -9,17 +9,19 @@
         subtitleKey?: ResourceKey;
         onBack?: () => void;
         avatar?: Snippet;
+        menu?: Snippet;
     }
 
     let {
         avatar,
+        menu,
         titleKey,
         subtitleKey,
         onBack = () => publish("closeModalPage"),
     }: Props = $props();
 </script>
 
-<SectionHeader {avatar} {onBack}>
+<SectionHeader {menu} {avatar} {onBack}>
     {#snippet title()}
         <Translatable resourceKey={titleKey} />
     {/snippet}

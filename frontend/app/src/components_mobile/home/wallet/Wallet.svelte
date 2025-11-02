@@ -17,7 +17,7 @@
     import BottomBar from "./BottomBar.svelte";
     import OverallBalance from "./OverallBalance.svelte";
     import TokenToggle from "./TokenToggle.svelte";
-    import type { ConversionToken } from "./wallet";
+    import type { ConversionToken } from "./walletState.svelte";
 
     let pinAction: PinOperation | undefined = $state(undefined);
     let managing = $state(false);

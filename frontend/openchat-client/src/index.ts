@@ -11,6 +11,7 @@ export { createSetStore } from "./stores/setStore";
 export type { TypersByKey } from "./stores/typing";
 export { builtinBot } from "./utils/builtinBotCommands";
 export { buildCryptoTransferText, buildTransactionUrl } from "./utils/chat";
+export * from "./utils/cryptoFormatter";
 export type { TrackingCategory } from "./utils/ga";
 export { toRecord } from "./utils/list";
 export { quantiseWaveform, type Dimensions } from "./utils/media";

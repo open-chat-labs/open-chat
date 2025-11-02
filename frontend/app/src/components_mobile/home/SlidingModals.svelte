@@ -3,6 +3,7 @@
         subscribe,
         type ChitEarnedGate,
         type DirectChatSummary,
+        type EnhancedTokenDetails,
         type NeuronGate,
         type PaymentGate,
         type PublicProfile,
@@ -42,6 +43,7 @@
     import ProfileSettings from "./user_profile/ProfileSettings.svelte";
     import Share from "./user_profile/Share.svelte";
     import Verify from "./user_profile/Verify.svelte";
+    import TokenPage from "./wallet/TokenPage.svelte";
     /**
      * It is tempting to think that this can completely replace the right panel on mobile but it's not quite so simple.
      * It can replace everything _that is not represented by it's own route_. That is because at the moment
@@ -52,6 +54,7 @@
      */
 
     type SlidingModalType =
+        | { kind: "token_page"; token: EnhancedTokenDetails }
         | { kind: "direct_chat_details"; chat: DirectChatSummary }
         | { kind: "new_message" }
         | { kind: "update_community_add_members" }
@@ -96,7 +99,10 @@
 
     onMount(() => {
         const unsubs = [
-            subscribe("directChatDetails", (chat) => push({ kind: "direct_chat_details", chat })),
+            subscribe("tokenPage", (token) => push({ kind: "token_page", token })) <
+                subscribe("directChatDetails", (chat) =>
+                    push({ kind: "direct_chat_details", chat }),
+                ),
             subscribe("newMessage", () => push({ kind: "new_message" })),
             subscribe("newCommunity", () => push({ kind: "update_community_add_members" })),
             subscribe("updateCommunity", () => push({ kind: "update_community_details" })),
@@ -266,6 +272,8 @@
             <NewMessage />
         {:else if page.kind === "direct_chat_details"}
             <DirectChatDetails chat={page.chat} />
+        {:else if page.kind === "token_page"}
+            <TokenPage token={page.token} />
         {/if}
     </SlidingPage>
 {/each}

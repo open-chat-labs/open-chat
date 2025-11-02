@@ -15,6 +15,7 @@
     import {
         ICP_SYMBOL,
         OpenChat,
+        publish,
         swappableTokensStore,
         walletConfigStore,
         type EnhancedTokenDetails,
@@ -28,12 +29,7 @@
     import SwapIcon from "svelte-material-icons/SwapHorizontal.svelte";
     import ViewList from "svelte-material-icons/ViewList.svelte";
     import Translatable from "../../Translatable.svelte";
-    import {
-        convertAndFormat,
-        formatTokenValue,
-        getConvertedTokenValue,
-        type ConversionToken,
-    } from "./wallet";
+    import { TokenState, type ConversionToken } from "./walletState.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -58,17 +54,10 @@
         onTransactions,
         onRemoveFromWallet,
     }: Props = $props();
+
+    let tokenState = $derived(new TokenState(token, selectedConversion));
     let manualWalletConfig = $derived($walletConfigStore.kind === "manual_wallet");
     let refreshing = $state(false);
-    let tokenValue = $derived(client.formatTokens(token.balance, token.decimals));
-    let convertedValue = $derived(
-        $hideTokenBalances ? "*****" : convertAndFormat(selectedConversion, token),
-    );
-    let unitValue = $derived.by(() => {
-        const converted = getConvertedTokenValue(selectedConversion, token);
-        if (converted === undefined) return "???";
-        return formatTokenValue(selectedConversion, converted / Number(token.balance));
-    });
 
     function refreshBalance(ledger: string) {
         refreshing = true;
@@ -84,7 +73,13 @@
     }
 </script>
 
-<MenuTrigger fill maskUI classString={"token_menu_trigger"} position={"bottom"} align={"end"}>
+<MenuTrigger
+    mobileMode={"longpress"}
+    fill
+    maskUI
+    classString={"token_menu_trigger"}
+    position={"bottom"}
+    align={"end"}>
     {#snippet menuItems()}
         <MenuItem onclick={() => refreshBalance(token.ledger)}>
             {#snippet icon(color)}
@@ -134,6 +129,7 @@
     <Container
         supplementalClass={"wallet_token"}
         gap={"md"}
+        onClick={() => publish("tokenPage", token)}
         mainAxisAlignment={"spaceBetween"}
         crossAxisAlignment={"center"}
         padding={"sm"}>
@@ -141,12 +137,19 @@
         <Container direction={"vertical"}>
             <Body width={{ kind: "hug" }} fontWeight={"bold"}>{token.symbol}</Body>
             <Caption width={{ kind: "hug" }} colour={"textSecondary"} fontWeight={"bold"}
-                >{unitValue}</Caption>
+                >{tokenState.formattedUnitValue}</Caption>
         </Container>
-        <BodySmall align={"end"} width={{ kind: "hug" }} fontWeight={"bold"}
-            >{tokenValue}</BodySmall>
-        <Body align={"end"} width={{ kind: "hug" }} colour={"primary"} fontWeight={"bold"}
-            >{convertedValue}</Body>
+        <BodySmall
+            blur={$hideTokenBalances}
+            align={"end"}
+            width={{ kind: "hug" }}
+            fontWeight={"bold"}>{tokenState.formattedTokenBalance}</BodySmall>
+        <Body
+            blur={$hideTokenBalances}
+            align={"end"}
+            width={{ kind: "hug" }}
+            colour={"primary"}
+            fontWeight={"bold"}>{tokenState.formattedConvertedValue}</Body>
         {#if refreshing}
             <Reload color={ColourVars.textSecondary} />
         {:else}

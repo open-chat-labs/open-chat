@@ -11,7 +11,7 @@
     import Eye from "svelte-material-icons/EyeOutline.svelte";
     import Reload from "svelte-material-icons/Reload.svelte";
     import Translatable from "../../Translatable.svelte";
-    import type { ConversionToken } from "./wallet";
+    import type { ConversionToken } from "./walletState.svelte";
 
     interface Props {
         selectedConversion: ConversionToken;
@@ -48,7 +48,7 @@
     <BodySmall width={{ kind: "hug" }} fontWeight={"bold"} colour={"textSecondary"}>
         <Translatable resourceKey={i18nKey("Total balance")} />
     </BodySmall>
-    <H1 width={{ kind: "hug" }} fontWeight={"bold"}>
+    <H1 blur={$hideTokenBalances} width={{ kind: "hug" }} fontWeight={"bold"}>
         {selectedConversion === "usd" ? "$" : ""}
         {total}
     </H1>

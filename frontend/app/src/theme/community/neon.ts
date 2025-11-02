@@ -15,7 +15,7 @@ const txtPrimary = neon.colours.textPrimary.toString();
 const txtSecondary = neon.colours.textSecondary.toString();
 const txtTertiary = neon.colours.textTertiary.toString();
 const txtPlaceholder = neon.colours.textPlaceholder.toString();
-const buttonGradient = neon.colours.gradientInverted.toString();
+// const buttonGradient = neon.colours.gradientInverted.toString();
 
 export function getTheme(base: Theme): Theme {
     // it's ok to mutate the theme passed in because it's a clone

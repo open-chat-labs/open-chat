@@ -13,7 +13,7 @@
     import SendCrypto from "../profile/SendCrypto.svelte";
     import SwapCrypto from "../profile/SwapCrypto.svelte";
     import WalletToken from "./WalletToken.svelte";
-    import type { ConversionToken } from "./wallet";
+    import type { ConversionToken } from "./walletState.svelte";
 
     const client = getContext<OpenChat>("client");
 

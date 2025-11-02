@@ -13,6 +13,7 @@
         align?: "start" | "end" | "center" | "unset";
         uppercase?: boolean;
         onClick?: () => void;
+        blur?: boolean;
     }
 </script>
 
@@ -40,6 +41,7 @@
         align = "unset",
         uppercase = false,
         onClick,
+        blur = false,
     }: Props = $props();
 
     let parentDirection = getContext<Direction>("direction");
@@ -78,10 +80,11 @@
     <label
         onclick={onClick}
         class:uppercase
+        class:blur
         for={labelFor}
         class:ellipsis={ellipsisTruncate}
         {style}
-        class={`${type} ${fontWeight}`}>
+        class={`typo ${type} ${fontWeight}`}>
         {@render children?.()}
     </label>
 {:else}
@@ -90,9 +93,10 @@
         this={tag}
         onclick={onClick}
         class:uppercase
+        class:blur
         class:ellipsis={ellipsisTruncate}
         {style}
-        class={`${type} ${fontWeight}`}>
+        class={`typo ${type} ${fontWeight}`}>
         {@render children?.()}
     </svelte:element>
 {/if}
@@ -105,6 +109,10 @@
     p {
         margin: 0;
         padding: 0;
+    }
+
+    .typo {
+        transition: filter ease-in-out 250ms;
     }
 
     .overview {
@@ -185,5 +193,9 @@
 
     .uppercase {
         text-transform: uppercase;
+    }
+
+    .blur {
+        filter: blur(8px);
     }
 </style>
