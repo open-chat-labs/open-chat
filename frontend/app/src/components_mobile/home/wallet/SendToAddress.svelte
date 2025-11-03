@@ -1,11 +1,10 @@
 <script lang="ts">
-    import { CommonButton, Container, Input, InputIconButton, Title } from "component-lib";
+    import { CommonButton, Container, Input, InputIconButton } from "component-lib";
     import {
         BTC_SYMBOL,
         CKBTC_SYMBOL,
         type CkbtcMinterWithdrawalInfo,
         cryptoBalanceStore,
-        cryptoLookup,
         currentUserIdStore,
         currentUserStore,
         type EvmChain,
@@ -16,7 +15,12 @@
         type OpenChat,
         type ResourceKey,
     } from "openchat-client";
-    import { ErrorCode, isAccountIdentifierValid, isICRCAddressValid } from "openchat-shared";
+    import {
+        type EnhancedTokenDetails,
+        ErrorCode,
+        isAccountIdentifierValid,
+        isICRCAddressValid,
+    } from "openchat-shared";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import QrcodeScan from "svelte-material-icons/QrcodeScan.svelte";
@@ -27,7 +31,6 @@
     import { Debouncer } from "../../../utils/debouncer";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import Translatable from "../../Translatable.svelte";
-    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import NetworkSelector from "../NetworkSelector.svelte";
     import TokenInput from "../TokenInput.svelte";
     import AccountSelector from "./AccountSelector.svelte";
@@ -35,14 +38,15 @@
     import Scanner from "./Scanner.svelte";
 
     interface Props {
-        ledger: string;
+        token: EnhancedTokenDetails;
         onClose: () => void;
     }
 
-    let { ledger, onClose }: Props = $props();
+    let { token, onClose }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
+    let ledger = $derived(token.ledger);
     let error: ResourceKey | undefined = $state();
     let amountToSend: bigint = $state(0n);
     let ckbtcMinterWithdrawalInfo = $state<CkbtcMinterWithdrawalInfo>();
@@ -56,32 +60,28 @@
     let scanner: Scanner;
     let accounts: NamedAccount[] = $state([]);
     let saveAccountElement: SaveAccount;
-    let balanceWithRefresh: BalanceWithRefresh;
     const ckbtcMinterInfoDebouncer = new Debouncer(getCkbtcMinterWithdrawalInfo, 500);
 
     let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? 0n);
-    let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let account = $derived(
-        tokenDetails?.symbol === ICP_SYMBOL ? $currentUserStore.cryptoAccount : $currentUserIdStore,
+        token.symbol === ICP_SYMBOL ? $currentUserStore.cryptoAccount : $currentUserIdStore,
     );
-    let symbol = $derived(tokenDetails.symbol);
+    let symbol = $derived(token.symbol);
     let selectedNetwork = $state<string>();
     let isBtc = $derived(symbol === BTC_SYMBOL);
     let isBtcNetwork = $derived(selectedNetwork === BTC_SYMBOL);
-    let oneSecEnabled = $derived(
-        tokenDetails.oneSecEnabled && tokenDetails.evmContractAddresses.length > 0,
-    );
+    let oneSecEnabled = $derived(token.oneSecEnabled && token.evmContractAddresses.length > 0);
     let isOneSecNetwork = $derived(oneSecEnabled && selectedNetwork !== ICP_SYMBOL);
     let networks = $derived.by(() => {
         if (isBtc) {
             return [BTC_SYMBOL, CKBTC_SYMBOL];
         } else if (oneSecEnabled) {
-            return client.oneSecGetNetworks(tokenDetails.symbol);
+            return client.oneSecGetNetworks(token.symbol);
         } else {
             return [];
         }
     });
-    let transferFees = $derived(tokenDetails?.transferFee ?? 0n);
+    let transferFees = $derived(token?.transferFee ?? 0n);
     let targetAccountValid = $derived.by(() => {
         if (targetAccount.length === 0 || targetAccount === account) return false;
         if (isBtc) return targetAccount.length >= 14;
@@ -95,7 +95,7 @@
     let oneSecFeesForToken = $derived.by(() => {
         if (!isOneSecNetwork || oneSecFees === undefined) return undefined;
         return oneSecFees.find(
-            (f) => f.sourceToken === tokenDetails.symbol && f.destinationChain === selectedNetwork,
+            (f) => f.sourceToken === token.symbol && f.destinationChain === selectedNetwork,
         );
     });
 
@@ -115,11 +115,6 @@
             (capturingAccount ? validAccountName : validSend) &&
             (!isBtcNetwork || ckbtcMinterWithdrawalInfo !== undefined);
     });
-    let title = $derived(i18nKey("cryptoAccount.sendToken", { symbol }));
-
-    let remainingBalance = $derived(
-        amountToSend > BigInt(0) ? cryptoBalance - amountToSend - transferFees : cryptoBalance,
-    );
 
     let errorMessage = $derived(error !== undefined ? error : $pinNumberErrorMessageStore);
     let networkFee = $derived.by(() => {
@@ -137,7 +132,7 @@
     let networkFeeFormatted = $derived(
         networkFee === undefined
             ? undefined
-            : `~${client.formatTokens(networkFee, tokenDetails.decimals)}`,
+            : `~${client.formatTokens(networkFee, token.decimals)}`,
     );
 
     onMount(async () => {
@@ -233,7 +228,6 @@
             .then((resp) => {
                 if (resp.kind === "completed" || resp.kind === "success") {
                     amountToSend = BigInt(0);
-                    balanceWithRefresh.refresh();
                     toastStore.showSuccessToast(
                         i18nKey("cryptoAccount.sendSucceeded", {
                             symbol,
@@ -259,14 +253,6 @@
             .finally(() => (busy = false));
     }
 
-    function onBalanceRefreshed() {
-        error = undefined;
-    }
-
-    function onBalanceRefreshError(err: string) {
-        error = i18nKey(err);
-    }
-
     function onPrimaryClick() {
         busy = true;
         if (capturingAccount) {
@@ -277,100 +263,81 @@
     }
 </script>
 
-<Container gap={"xl"} padding={"xl"} direction={"vertical"}>
-    <Container crossAxisAlignment={"center"}>
-        <Title fontWeight={"bold"}>
-            <Translatable resourceKey={title} />
-        </Title>
-        <BalanceWithRefresh
-            bind:this={balanceWithRefresh}
-            {ledger}
-            value={remainingBalance}
-            label={i18nKey("cryptoAccount.shortBalanceLabel")}
-            bold
-            onRefreshed={onBalanceRefreshed}
-            onError={onBalanceRefreshError} />
-    </Container>
-    <Container gap={"md"} direction={"vertical"}>
-        {#if capturingAccount}
-            <SaveAccount
-                bind:this={saveAccountElement}
-                bind:valid={validAccountName}
-                account={targetAccount}
-                {accounts} />
-        {:else}
-            <Scanner onData={(data) => (targetAccount = data)} bind:this={scanner} />
+<Container gap={"md"} direction={"vertical"}>
+    {#if capturingAccount}
+        <SaveAccount
+            bind:this={saveAccountElement}
+            bind:valid={validAccountName}
+            account={targetAccount}
+            {accounts} />
+    {:else}
+        <Scanner onData={(data) => (targetAccount = data)} bind:this={scanner} />
 
-            {#if networks.length > 0 && selectedNetwork !== undefined}
-                <NetworkSelector {networks} bind:selectedNetwork />
-            {/if}
-
-            <Container gap={"xs"} direction={"vertical"}>
-                <TokenInput
-                    {ledger}
-                    {transferFees}
-                    {minAmount}
-                    maxAmount={BigInt(Math.max(0, Number(cryptoBalance - transferFees)))}
-                    bind:valid={validAmount}
-                    bind:amount={amountToSend} />
-            </Container>
-
-            <Input
-                bind:value={targetAccount}
-                countdown={false}
-                maxlength={100}
-                error={targetAccount.length > 0 && !targetAccountValid}
-                placeholder={interpolate($_, i18nKey("cryptoAccount.sendTarget"))}>
-                {#snippet iconButtons(color)}
-                    <InputIconButton onClick={scan}>
-                        <QrcodeScan {color} />
-                    </InputIconButton>
-                {/snippet}
-            </Input>
-
-            {#if accounts.length > 0 || networkFee !== undefined}
-                <div class="lower-container">
-                    {#if accounts.length > 0}
-                        <div class="accounts">
-                            <AccountSelector bind:targetAccount {accounts} />
-                        </div>
-                    {/if}
-
-                    {#if networkFeeFormatted !== undefined}
-                        <div class="network-fee">
-                            <Translatable
-                                resourceKey={i18nKey("cryptoAccount.networkFee", {
-                                    amount: networkFeeFormatted,
-                                    token: symbol,
-                                })} />
-                        </div>
-                    {/if}
-                </div>
-            {/if}
+        {#if networks.length > 0 && selectedNetwork !== undefined}
+            <NetworkSelector {networks} bind:selectedNetwork />
         {/if}
 
-        {#if errorMessage !== undefined}
-            <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
-        {/if}
-    </Container>
-    <Container mainAxisAlignment={"end"} gap={"sm"}>
-        <CommonButton onClick={onClose}>
-            <Translatable resourceKey={i18nKey(capturingAccount ? "noThanks" : "cancel")} />
-        </CommonButton>
-        <CommonButton
-            disabled={busy || !valid}
-            loading={busy}
-            mode={"active"}
-            onClick={onPrimaryClick}>
-            {#snippet icon(color)}
-                <Send {color} />
+        <Container gap={"xs"} direction={"vertical"}>
+            <TokenInput
+                {ledger}
+                {transferFees}
+                {minAmount}
+                maxAmount={BigInt(Math.max(0, Number(cryptoBalance - transferFees)))}
+                bind:valid={validAmount}
+                bind:amount={amountToSend} />
+        </Container>
+
+        <Input
+            bind:value={targetAccount}
+            countdown={false}
+            maxlength={100}
+            error={targetAccount.length > 0 && !targetAccountValid}
+            placeholder={interpolate($_, i18nKey("cryptoAccount.sendTarget"))}>
+            {#snippet iconButtons(color)}
+                <InputIconButton onClick={scan}>
+                    <QrcodeScan {color} />
+                </InputIconButton>
             {/snippet}
-            <Translatable
-                resourceKey={i18nKey(
-                    capturingAccount ? "tokenTransfer.saveAccount" : "tokenTransfer.send",
-                )} />
-        </CommonButton>
-    </Container>
+        </Input>
+
+        {#if accounts.length > 0 || networkFee !== undefined}
+            <div class="lower-container">
+                {#if accounts.length > 0}
+                    <div class="accounts">
+                        <AccountSelector bind:targetAccount {accounts} />
+                    </div>
+                {/if}
+
+                {#if networkFeeFormatted !== undefined}
+                    <div class="network-fee">
+                        <Translatable
+                            resourceKey={i18nKey("cryptoAccount.networkFee", {
+                                amount: networkFeeFormatted,
+                                token: symbol,
+                            })} />
+                    </div>
+                {/if}
+            </div>
+        {/if}
+    {/if}
+
+    {#if errorMessage !== undefined}
+        <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
+    {/if}
+</Container>
+<Container mainAxisAlignment={"end"} gap={"sm"}>
+    <CommonButton onClick={onClose}>
+        <Translatable resourceKey={i18nKey(capturingAccount ? "noThanks" : "cancel")} />
+    </CommonButton>
+    <CommonButton disabled={busy || !valid} loading={busy} mode={"active"} onClick={onPrimaryClick}>
+        {#snippet icon(color)}
+            <Send {color} />
+        {/snippet}
+        <Translatable
+            resourceKey={i18nKey(
+                capturingAccount ? "tokenTransfer.saveAccount" : "tokenTransfer.send",
+            )} />
+    </CommonButton>
 </Container>
 
 <style lang="scss">

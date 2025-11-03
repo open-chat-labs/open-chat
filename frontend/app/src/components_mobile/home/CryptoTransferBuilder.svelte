@@ -26,6 +26,7 @@
     import CryptoSelector from "./CryptoSelector.svelte";
     import SingleUserSelector from "./SingleUserSelector.svelte";
     import TokenInput from "./TokenInput.svelte";
+    import TransferFeesMessage from "./TransferFeesMessage.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -174,8 +175,6 @@
                     bind:this={balanceWithRefresh}
                     {ledger}
                     value={remainingBalance}
-                    label={i18nKey("cryptoAccount.shortBalanceLabel")}
-                    bold
                     showTopUp
                     onClick={() => (confirming = false)}
                     onRefreshed={onBalanceRefreshed}
@@ -208,11 +207,16 @@
                         <div class="transfer">
                             <TokenInput
                                 {ledger}
-                                {transferFees}
-                                autofocus={!multiUserChat}
                                 bind:valid={validAmount}
                                 maxAmount={maxAmount(cryptoBalance)}
-                                bind:amount={draftAmount} />
+                                bind:amount={draftAmount}>
+                                {#snippet fees()}
+                                    <TransferFeesMessage
+                                        symbol={tokenDetails.symbol}
+                                        tokenDecimals={tokenDetails.decimals}
+                                        transferFees={tokenDetails.transferFee} />
+                                {/snippet}
+                            </TokenInput>
                         </div>
                         <div class="message">
                             <Legend label={i18nKey("tokenTransfer.message")} />

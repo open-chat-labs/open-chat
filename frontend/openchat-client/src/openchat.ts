@@ -4298,7 +4298,7 @@ export class OpenChat {
         messageIdIfRetrying?: bigint,
     ): Promise<SendMessageResponse> {
         const { chatId, threadRootMessageIndex } = messageContext;
-        const chat = chatSummariesStore.value.get(chatId);
+        const chat = allChatsStore.value.get(chatId);
         if (chat === undefined) {
             return Promise.resolve(CommonResponses.failure());
         }

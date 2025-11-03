@@ -1,44 +1,36 @@
 <script lang="ts">
-    import { Container } from "component-lib";
-    import {
-        cryptoLookup,
-        exchangeRatesLookupStore as exchangeRatesLookup,
-        iconSize,
-        type OpenChat,
-    } from "openchat-client";
-    import { getContext, onMount, untrack } from "svelte";
-    import Alert from "svelte-material-icons/Alert.svelte";
+    import { Caption, ColourVars, Container, InputTextButton } from "component-lib";
+    import { cryptoLookup, type OpenChat } from "openchat-client";
+    import { getContext, onMount, untrack, type Snippet } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import { calculateDollarAmount } from "../../utils/exchange";
-    import Legend from "../Legend.svelte";
     import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
     interface Props {
         amount?: bigint;
-        autofocus?: boolean;
         minAmount?: bigint;
         maxAmount?: bigint | undefined;
         ledger: string;
         valid?: boolean;
         status?: "ok" | "zero" | "too_low" | "too_high";
-        label?: string;
-        transferFees?: bigint | undefined;
-        showDollarAmount?: boolean;
+        subtext?: Snippet;
+        error?: boolean;
+        fees?: Snippet;
+        disabled?: boolean;
     }
 
     let {
         amount = $bindable(BigInt(0)),
-        autofocus = false,
         minAmount = BigInt(0),
         maxAmount = undefined,
         ledger,
+        subtext,
         valid = $bindable(false),
         status = $bindable("zero"),
-        label = "tokenTransfer.amount",
-        transferFees = undefined,
-        showDollarAmount = false,
+        error = false,
+        fees,
+        disabled = false,
     }: Props = $props();
 
     valid;
@@ -100,18 +92,7 @@
         }
     }
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
-    let symbol = $derived(tokenDetails?.symbol);
     let tokenDecimals = $derived(tokenDetails?.decimals ?? 0);
-    let amountInUsd = $derived(
-        tokenDetails !== undefined && showDollarAmount
-            ? calculateDollarAmount(
-                  amount,
-                  $exchangeRatesLookup.get(tokenDetails.symbol.toLowerCase())?.toUSD,
-                  tokenDetails.decimals,
-              )
-            : "???",
-    );
-    let minAmountFormatted = $derived(`${client.formatTokens(minAmount, tokenDecimals)} ${symbol}`);
     $effect(() => {
         // TODO - worry about this
         if (inputElement !== undefined) {
@@ -131,68 +112,50 @@
     });
 </script>
 
-<Container gap={"xs"} crossAxisSelfAlignment={"center"}>
-    <Legend label={i18nKey(label)} rules={i18nKey(symbol)} />
-    {#if maxAmount !== undefined}
-        <div onclick={max} class="max">
-            <Translatable resourceKey={i18nKey("tokenTransfer.max")} />
+<Container direction={"vertical"}>
+    {#if fees !== undefined}
+        <div class="fees">
+            {@render fees()}
         </div>
     {/if}
-    {#if showDollarAmount && amount > 0}
-        <div class="usd">({amountInUsd} USD)</div>
-    {:else if minAmount > BigInt(0)}
-        <div class="min">
-            <Translatable
-                resourceKey={i18nKey("tokenTransfer.min", { amount: minAmountFormatted })} />
+    <Container
+        padding={["xs", "xs", "xs", "xl"]}
+        crossAxisAlignment={"center"}
+        maxHeight={"3rem"}
+        background={ColourVars.textTertiary}
+        borderRadius={"circle"}>
+        <input
+            {disabled}
+            class="amount-val"
+            min={Number(minAmount) / Math.pow(10, tokenDecimals)}
+            max={maxAmount !== undefined
+                ? Number(maxAmount) / Math.pow(10, tokenDecimals)
+                : undefined}
+            type="number"
+            step="0.00000001"
+            bind:this={inputElement}
+            onkeyup={onKeyup}
+            placeholder="0" />
+        {#if maxAmount !== undefined}
+            <InputTextButton onClick={max}>
+                <Translatable resourceKey={i18nKey("tokenTransfer.max")} />
+            </InputTextButton>
+        {/if}
+    </Container>
+
+    {#if subtext}
+        <div class="subtext">
+            <Caption colour={error ? "error" : "textSecondary"}>
+                {@render subtext()}
+            </Caption>
         </div>
     {/if}
 </Container>
-<div class="wrapper">
-    {#if transferFees !== undefined && transferFees > 0n}
-        <div class="fee">
-            <Alert size={$iconSize} color={"var(--warn)"} />
-            <span>
-                <Translatable
-                    resourceKey={i18nKey("tokenTransfer.fee", {
-                        fee: client.formatTokens(transferFees, tokenDecimals),
-                        token: symbol,
-                    })} />
-            </span>
-        </div>
-    {/if}
-    <input
-        {autofocus}
-        class="amount-val"
-        min={Number(minAmount) / Math.pow(10, tokenDecimals)}
-        max={maxAmount !== undefined ? Number(maxAmount) / Math.pow(10, tokenDecimals) : undefined}
-        type="number"
-        step="0.00000001"
-        bind:this={inputElement}
-        onkeyup={onKeyup}
-        placeholder="0" />
-</div>
 
 <style lang="scss">
-    .wrapper {
-        position: relative;
-        width: 100%;
-    }
-
-    .max {
-        transition: background ease-in-out 200ms;
-        background: var(--button-bg);
-        color: var(--button-txt);
-        padding: 0 $sp3;
-        border-radius: var(--rd);
-        cursor: pointer;
-        border: none;
-        @include font(book, normal, fs-50, 20);
-
-        @media (hover: hover) {
-            &:hover {
-                background: var(--button-hv);
-            }
-        }
+    .subtext {
+        padding-inline-start: var(--sp-xl);
+        padding-inline-end: var(--sp-xl);
     }
 
     .usd,
@@ -210,21 +173,20 @@
         height: 3rem;
 
         @include input();
-        border-radius: var(--rad-circle);
+        color: var(--text-secondary);
+        font-size: var(--typo-body-sz);
+        line-height: var(--typo-body-lh);
+        padding: 0;
 
         &::placeholder {
             color: var(--placeholder);
         }
     }
 
-    .fee {
+    .fees {
         position: absolute;
         right: toRem(20);
         top: toRem(28);
-        display: flex;
-        gap: $sp3;
-        align-items: center;
-        @include font(book, normal, fs-50);
     }
 
     /* Chrome, Safari, Edge, Opera */

@@ -9,6 +9,7 @@
     import Search from "../Search.svelte";
     import Translatable from "../Translatable.svelte";
 
+    // TODO - probably we don't need this and we replace it with wallet/TokenSelector.svelte
     interface Props {
         ledger: string | undefined;
         filter?: (details: EnhancedTokenDetails) => boolean;

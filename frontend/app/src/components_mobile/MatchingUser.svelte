@@ -19,7 +19,7 @@
     };
 
     interface Props {
-        searchTerm: string;
+        searchTerm?: string;
         user: UserSummary | BotMatch;
         onSelect: (user: UserSummary | BotMatch) => void;
         checked?: boolean;

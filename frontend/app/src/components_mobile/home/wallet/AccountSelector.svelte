@@ -1,12 +1,13 @@
 <script lang="ts">
-    import { iconSize, mobileWidth, type NamedAccount } from "openchat-client";
+    import { IconButton, MenuTrigger } from "component-lib";
+    import { type NamedAccount } from "openchat-client";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import Menu from "../../Menu.svelte";
     import MenuIcon from "../../MenuIcon.svelte";
     import MenuItem from "../../MenuItem.svelte";
     import Translatable from "../../Translatable.svelte";
 
+    // TODO - come back and sort this out - it should just be a Select list
     interface Props {
         accounts: NamedAccount[];
         targetAccount: string;
@@ -44,31 +45,29 @@
     <div class="name">
         <Translatable resourceKey={i18nKey(selectedName ?? "tokenTransfer.chooseAddress")} />
     </div>
-    <div class="icon">
-        <MenuIcon bind:this={menuIconEl} position={$mobileWidth ? "top" : "bottom"} align={"end"}>
-            {#snippet menuIcon()}
-                <ChevronDown viewBox={"0 -3 24 24"} size={$iconSize} color={"var(--icon-txt)"} />
+    <MenuTrigger position={"bottom"} align={"end"}>
+        <IconButton padding={["sm", "xs", "sm", "zero"]} size={"md"}>
+            {#snippet icon(color)}
+                <ChevronDown {color} />
             {/snippet}
-            {#snippet menuItems()}
-                <Menu>
-                    {#each accounts as namedAccount}
-                        <MenuItem unpadded onclick={() => selectAccount(namedAccount)}>
-                            {#snippet text()}
-                                <div class="named-account">
-                                    <div class="name">
-                                        {namedAccount.name}
-                                    </div>
-                                    <div class="account">
-                                        {collapseAccount(namedAccount.account)}
-                                    </div>
-                                </div>
-                            {/snippet}
-                        </MenuItem>
-                    {/each}
-                </Menu>
-            {/snippet}
-        </MenuIcon>
-    </div>
+        </IconButton>
+        {#snippet menuItems()}
+            {#each accounts as namedAccount}
+                <MenuItem unpadded onclick={() => selectAccount(namedAccount)}>
+                    {#snippet text()}
+                        <div class="named-account">
+                            <div class="name">
+                                {namedAccount.name}
+                            </div>
+                            <div class="account">
+                                {collapseAccount(namedAccount.account)}
+                            </div>
+                        </div>
+                    {/snippet}
+                </MenuItem>
+            {/each}
+        {/snippet}
+    </MenuTrigger>
 </div>
 
 <style lang="scss">

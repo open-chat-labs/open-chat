@@ -1,20 +1,17 @@
 <script lang="ts">
     import { Body, Container } from "component-lib";
-    import type { OpenChat, ResourceKey } from "openchat-client";
+    import type { OpenChat } from "openchat-client";
     import { enhancedCryptoLookup as cryptoLookup } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Plus from "svelte-material-icons/Plus.svelte";
     import Refresh from "svelte-material-icons/Refresh.svelte";
-    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
     interface Props {
         ledger: string;
         value: bigint;
-        label?: ResourceKey | undefined;
-        bold?: boolean;
         toppingUp?: boolean;
         showTopUp?: boolean;
         showRefresh?: boolean;
@@ -30,7 +27,6 @@
     let {
         ledger,
         value,
-        label = undefined,
         toppingUp = $bindable(false),
         showTopUp = false,
         showRefresh = true,
@@ -81,11 +77,9 @@
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let symbol = $derived(tokenDetails.symbol);
     let formattedValue = $derived(
-        hideBalance
-            ? "*****"
-            : conversion === "none"
-              ? client.formatTokens(value, tokenDetails.decimals)
-              : convertValue(conversion, tokenDetails),
+        conversion === "none"
+            ? client.formatTokens(value, tokenDetails.decimals)
+            : convertValue(conversion, tokenDetails),
     );
     $effect(() => {
         if (ledger) {
@@ -95,12 +89,7 @@
 </script>
 
 <Container mainAxisAlignment={"end"} crossAxisAlignment={"center"} gap={"sm"}>
-    {#if label !== undefined}
-        <Body width={{ kind: "hug" }}>
-            <Translatable resourceKey={label} />
-        </Body>
-    {/if}
-    <Body width={{ kind: "hug" }} fontWeight={"bold"}>
+    <Body blur={hideBalance} width={{ kind: "hug" }} fontWeight={"bold"}>
         {formattedValue}
     </Body>
     {#if showRefresh && !hideBalance}
@@ -122,10 +111,6 @@
         display: flex;
         align-items: center;
         justify-content: center;
-    }
-
-    .hideBalance {
-        visibility: hidden;
     }
 
     .refresh {

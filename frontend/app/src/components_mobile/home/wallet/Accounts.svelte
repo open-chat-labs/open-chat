@@ -4,7 +4,6 @@
     import { getContext, onMount } from "svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import RestrictedFeature from "../profile/RestrictedFeature.svelte";
-    import SendCrypto from "../profile/SendCrypto.svelte";
     import SwapCrypto from "../profile/SwapCrypto.svelte";
     import WalletToken from "./WalletToken.svelte";
     import type { ConversionToken } from "./walletState.svelte";
@@ -18,7 +17,7 @@
     let { selectedConversion = $bindable("usd") }: Props = $props();
 
     let balanceError: string | undefined = $state();
-    let actionMode: "none" | "send" | "swap" | "restricted" = $state("none");
+    let actionMode: "none" | "swap" | "restricted" = $state("none");
     let selectedLedger: string | undefined = $state(undefined);
 
     onMount(() => client.refreshSwappableTokens());
@@ -34,9 +33,7 @@
 
 {#if actionMode !== "none" && selectedLedger !== undefined}
     <Sheet onDismiss={hideManageModal}>
-        {#if actionMode === "send"}
-            <SendCrypto ledger={selectedLedger} onClose={hideManageModal} />
-        {:else if actionMode === "swap"}
+        {#if actionMode === "swap"}
             <SwapCrypto bind:ledgerIn={selectedLedger} onClose={hideManageModal} />
         {:else if actionMode === "restricted"}
             <RestrictedFeature onClose={hideManageModal} feature="swap" />
