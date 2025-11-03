@@ -43,6 +43,7 @@
     import ProfileSettings from "./user_profile/ProfileSettings.svelte";
     import Share from "./user_profile/Share.svelte";
     import Verify from "./user_profile/Verify.svelte";
+    import ReceiveCrypto from "./wallet/ReceiveCrypto.svelte";
     import TokenPage from "./wallet/TokenPage.svelte";
     /**
      * It is tempting to think that this can completely replace the right panel on mobile but it's not quite so simple.
@@ -54,6 +55,7 @@
      */
 
     type SlidingModalType =
+        | { kind: "receive_token"; token: EnhancedTokenDetails }
         | { kind: "token_page"; token: EnhancedTokenDetails }
         | { kind: "direct_chat_details"; chat: DirectChatSummary }
         | { kind: "new_message" }
@@ -99,10 +101,9 @@
 
     onMount(() => {
         const unsubs = [
-            subscribe("tokenPage", (token) => push({ kind: "token_page", token })) <
-                subscribe("directChatDetails", (chat) =>
-                    push({ kind: "direct_chat_details", chat }),
-                ),
+            subscribe("receiveToken", (token) => push({ kind: "receive_token", token })),
+            subscribe("tokenPage", (token) => push({ kind: "token_page", token })),
+            subscribe("directChatDetails", (chat) => push({ kind: "direct_chat_details", chat })),
             subscribe("newMessage", () => push({ kind: "new_message" })),
             subscribe("newCommunity", () => push({ kind: "update_community_add_members" })),
             subscribe("updateCommunity", () => push({ kind: "update_community_details" })),
@@ -274,6 +275,8 @@
             <DirectChatDetails chat={page.chat} />
         {:else if page.kind === "token_page"}
             <TokenPage token={page.token} />
+        {:else if page.kind === "receive_token"}
+            <ReceiveCrypto token={page.token} />
         {/if}
     </SlidingPage>
 {/each}

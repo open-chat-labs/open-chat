@@ -1,5 +1,6 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
+    import { hideTokenBalances } from "@src/stores/settings";
     import {
         Avatar,
         Body,
@@ -11,7 +12,7 @@
         MenuItem,
         Subtitle,
     } from "component-lib";
-    import { type EnhancedTokenDetails, swappableTokensStore } from "openchat-client";
+    import { type EnhancedTokenDetails, publish, swappableTokensStore } from "openchat-client";
     import ArrowLeftBoldCircle from "svelte-material-icons/ArrowLeftBoldCircle.svelte";
     import ArrowRightBoldCircle from "svelte-material-icons/ArrowRightBoldCircle.svelte";
     import SwapIcon from "svelte-material-icons/SwapHorizontal.svelte";
@@ -30,33 +31,27 @@
     let { token }: Props = $props();
 
     let tokenState = $derived(new TokenState(token, "usd"));
-
-    function showReceive(_ledger: string) {}
-
-    function showSend(_ledger: string) {}
-
-    function showSwap(_ledger: string) {}
 </script>
 
 <SlidingPageContent
     title={i18nKey(token.symbol)}
     subtitle={i18nKey(`${tokenState.formattedUnitValue} per ${token.symbol}`)}>
     {#snippet menu()}
-        <MenuItem onclick={() => showSend(token.ledger)}>
+        <MenuItem onclick={() => publish("sendToken", token)}>
             {#snippet icon(color)}
                 <ArrowRightBoldCircle {color} />
             {/snippet}
             <Translatable resourceKey={i18nKey("cryptoAccount.send")} />
         </MenuItem>
         {#if token.enabled}
-            <MenuItem onclick={() => showReceive(token.ledger)}>
+            <MenuItem onclick={() => publish("receiveToken", token)}>
                 {#snippet icon(color)}
                     <ArrowLeftBoldCircle {color} />
                 {/snippet}
                 <Translatable resourceKey={i18nKey("cryptoAccount.receive")} />
             </MenuItem>
             {#if $swappableTokensStore.has(token.ledger)}
-                <MenuItem onclick={() => showSwap(token.ledger)}>
+                <MenuItem onclick={() => publish("swapToken", token)}>
                     {#snippet icon(color)}
                         <SwapIcon {color} />
                     {/snippet}
@@ -81,9 +76,13 @@
                     >{token.name}</Caption>
             </Container>
             <Container crossAxisAlignment={"end"} width={{ kind: "hug" }} direction={"vertical"}>
-                <Subtitle align={"end"} width={{ kind: "hug" }} fontWeight={"bold"}
-                    >{tokenState.formattedTokenBalance}</Subtitle>
+                <Subtitle
+                    blur={$hideTokenBalances}
+                    align={"end"}
+                    width={{ kind: "hug" }}
+                    fontWeight={"bold"}>{tokenState.formattedTokenBalance}</Subtitle>
                 <BodySmall
+                    blur={$hideTokenBalances}
                     align={"end"}
                     width={{ kind: "hug" }}
                     colour={"primary"}
@@ -98,21 +97,30 @@
             mainAxisAlignment={"spaceAround"}
             borderWidth={"thick"}
             borderColour={ColourVars.primary}>
-            <CommonButton mode={"active"} size={"small_text"}>
+            <CommonButton
+                onClick={() => publish("receiveToken", token)}
+                mode={"active"}
+                size={"small_text"}>
                 {#snippet icon(color)}
                     <TrayArrowDown {color} />
                 {/snippet}
                 <Translatable resourceKey={i18nKey("Receive")} />
             </CommonButton>
             /
-            <CommonButton mode={"active"} size={"small_text"}>
+            <CommonButton
+                onClick={() => publish("sendToken", token)}
+                mode={"active"}
+                size={"small_text"}>
                 {#snippet icon(color)}
                     <TrayArrowUp {color} />
                 {/snippet}
                 <Translatable resourceKey={i18nKey("Send")} />
             </CommonButton>
             /
-            <CommonButton mode={"active"} size={"small_text"}>
+            <CommonButton
+                onClick={() => publish("swapToken", token)}
+                mode={"active"}
+                size={"small_text"}>
                 {#snippet icon(color)}
                     <SwapVertical {color} />
                 {/snippet}

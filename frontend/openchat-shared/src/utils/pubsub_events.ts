@@ -184,4 +184,7 @@ export type PubSubEvents = {
     newMessage: undefined;
     directChatDetails: DirectChatSummary;
     tokenPage: EnhancedTokenDetails;
+    receiveToken: EnhancedTokenDetails;
+    sendToken: EnhancedTokenDetails;
+    swapToken: EnhancedTokenDetails;
 };

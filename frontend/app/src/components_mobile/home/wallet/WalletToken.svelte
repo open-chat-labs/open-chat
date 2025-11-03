@@ -13,21 +13,15 @@
         MenuTrigger,
     } from "component-lib";
     import {
-        ICP_SYMBOL,
         OpenChat,
         publish,
-        swappableTokensStore,
         walletConfigStore,
         type EnhancedTokenDetails,
     } from "openchat-client";
     import { getContext } from "svelte";
-    import ArrowLeftBoldCircle from "svelte-material-icons/ArrowLeftBoldCircle.svelte";
-    import ArrowRightBoldCircle from "svelte-material-icons/ArrowRightBoldCircle.svelte";
     import HeartRemoveOutline from "svelte-material-icons/HeartRemoveOutline.svelte";
     import MenuRight from "svelte-material-icons/MenuRight.svelte";
     import Reload from "svelte-material-icons/Reload.svelte";
-    import SwapIcon from "svelte-material-icons/SwapHorizontal.svelte";
-    import ViewList from "svelte-material-icons/ViewList.svelte";
     import Translatable from "../../Translatable.svelte";
     import { TokenState, type ConversionToken } from "./walletState.svelte";
 
@@ -36,24 +30,10 @@
     interface Props {
         selectedConversion: ConversionToken;
         token: EnhancedTokenDetails;
-        snsLedgers: Set<string>;
-        onSend: (ledger: string) => void;
-        onReceive: (ledger: string) => void;
-        onSwap: (ledger: string) => void;
         onRemoveFromWallet: (ledger: string) => void;
-        onTransactions: (token: EnhancedTokenDetails) => void;
     }
 
-    let {
-        selectedConversion,
-        token,
-        snsLedgers,
-        onSend,
-        onReceive,
-        onSwap,
-        onTransactions,
-        onRemoveFromWallet,
-    }: Props = $props();
+    let { selectedConversion, token, onRemoveFromWallet }: Props = $props();
 
     let tokenState = $derived(new TokenState(token, selectedConversion));
     let manualWalletConfig = $derived($walletConfigStore.kind === "manual_wallet");
@@ -87,36 +67,14 @@
             {/snippet}
             <Translatable resourceKey={i18nKey("Refresh balance")} />
         </MenuItem>
-        <MenuItem onclick={() => onSend(token.ledger)}>
-            {#snippet icon(color)}
-                <ArrowRightBoldCircle {color} />
-            {/snippet}
-            <Translatable resourceKey={i18nKey("cryptoAccount.send")} />
-        </MenuItem>
-        {#if token.enabled}
-            <MenuItem onclick={() => onReceive(token.ledger)}>
-                {#snippet icon(color)}
-                    <ArrowLeftBoldCircle {color} />
-                {/snippet}
-                <Translatable resourceKey={i18nKey("cryptoAccount.receive")} />
-            </MenuItem>
-            {#if $swappableTokensStore.has(token.ledger)}
-                <MenuItem onclick={() => onSwap(token.ledger)}>
-                    {#snippet icon(color)}
-                        <SwapIcon {color} />
-                    {/snippet}
-                    <Translatable resourceKey={i18nKey("cryptoAccount.swap")} />
-                </MenuItem>
-            {/if}
-        {/if}
-        {#if token.symbol === ICP_SYMBOL || snsLedgers.has(token.ledger)}
+        <!-- {#if token.symbol === ICP_SYMBOL || snsLedgers.has(token.ledger)}
             <MenuItem onclick={() => onTransactions(token)}>
                 {#snippet icon(color)}
                     <ViewList {color} />
                 {/snippet}
                 <Translatable resourceKey={i18nKey("cryptoAccount.transactions")} />
             </MenuItem>
-        {/if}
+        {/if} -->
         {#if manualWalletConfig}
             <MenuItem onclick={() => onRemoveFromWallet(token.ledger)}>
                 {#snippet icon(color)}

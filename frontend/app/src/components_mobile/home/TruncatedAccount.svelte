@@ -1,7 +1,6 @@
 <script lang="ts">
-    import { iconSize } from "openchat-client";
+    import { Body, ColourVars, Container, IconButton } from "component-lib";
     import type { Snippet } from "svelte";
-    import { _ } from "svelte-i18n";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
@@ -9,12 +8,11 @@
 
     interface Props {
         account: string;
-        centered?: boolean;
         disableCopy?: boolean;
         children?: Snippet;
     }
 
-    let { account, centered = false, disableCopy = false, children }: Props = $props();
+    let { account, disableCopy = false, children }: Props = $props();
 
     function collapseAccount(account: string) {
         if (account.length > 23) {
@@ -38,40 +36,16 @@
     }
 </script>
 
-<div class="wrapper" class:centered>
+<Container crossAxisAlignment={"center"} gap={"md"}>
     {@render children?.()}
-    <div class="principal">
+    <Body fontWeight={"bold"}>
         {collapseAccount(account)}
-    </div>
+    </Body>
     {#if !disableCopy}
-        <div class="copy" title={$_("copyToClipboard")} onclick={copy}>
-            <ContentCopy size={$iconSize} color={"var(--icon-txt)"} />
-        </div>
+        <IconButton onclick={copy}>
+            {#snippet icon()}
+                <ContentCopy color={ColourVars.primary} />
+            {/snippet}
+        </IconButton>
     {/if}
-</div>
-
-<style lang="scss">
-    .centered {
-        text-align: center;
-    }
-
-    .wrapper {
-        display: flex;
-        align-items: center;
-        gap: $sp3;
-        .principal {
-            @include ellipsis();
-            @include font(book, normal, fs-80);
-            color: var(--primary);
-        }
-
-        &.centered {
-            justify-content: center;
-        }
-
-        .copy {
-            display: flex;
-            cursor: pointer;
-        }
-    }
-</style>
+</Container>
