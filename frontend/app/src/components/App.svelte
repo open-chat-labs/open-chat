@@ -1,5 +1,6 @@
 <script lang="ts">
     import "@styles/global.scss";
+    import "spoilerjs/spoiler-span";
 
     import "@i18n/i18n";
     import { reviewingTranslations } from "@i18n/i18n";

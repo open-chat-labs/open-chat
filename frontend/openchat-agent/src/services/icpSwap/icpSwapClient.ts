@@ -1,6 +1,6 @@
 import { Type, type Static } from "@sinclair/typebox";
 import { AssertError } from "@sinclair/typebox/value";
-import type { CryptocurrencyDetails, TokenExchangeRates } from "openchat-shared";
+import type { TokenExchangeRates } from "openchat-shared";
 import { typeboxValidate } from "../../utils/typebox";
 import type { ExchangeRateClient } from "../openchatAgent";
 
@@ -19,17 +19,17 @@ export const ICSwapResponse = Type.Object({
 });
 
 function getAllTokensResponse(
-    supportedTokens: CryptocurrencyDetails[],
+    supportedSymbols: Set<string>,
     json: unknown,
 ): Record<string, TokenExchangeRates> {
     const exchangeRates: Record<string, TokenExchangeRates> = {};
     try {
         const value = typeboxValidate(json, ICSwapResponse);
-        const supportedLedgers = new Set<string>(supportedTokens.map((t) => t.ledger));
 
         for (const token of value.data) {
-            if (supportedLedgers.has(token.tokenLedgerId) && token.tokenSymbol) {
-                exchangeRates[token.tokenSymbol.trim().toLowerCase()] = {
+            const symbol = token.tokenSymbol?.trim().toLowerCase();
+            if (symbol && supportedSymbols.has(symbol)) {
+                exchangeRates[symbol] = {
                     toUSD: Number(token.price),
                 };
             }
@@ -49,7 +49,7 @@ function formatError(err: unknown) {
 
 export class IcpSwapClient implements ExchangeRateClient {
     exchangeRates(
-        supportedTokens: CryptocurrencyDetails[],
+        supportedSymbols: Set<string>,
     ): Promise<Record<string, TokenExchangeRates>> {
         return fetch("https://api.icpswap.com/info/token/all")
             .then((res) => {
@@ -64,6 +64,6 @@ export class IcpSwapClient implements ExchangeRateClient {
                     return {};
                 }
             })
-            .then((res) => getAllTokensResponse(supportedTokens, res as ResponseType));
+            .then((res) => getAllTokensResponse(supportedSymbols, res as ResponseType));
     }
 }
