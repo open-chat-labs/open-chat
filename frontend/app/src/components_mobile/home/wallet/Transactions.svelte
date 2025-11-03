@@ -165,12 +165,6 @@
     );
 </script>
 
-<Container padding={["md", "zero"]}>
-    <BodySmall colour={"textTertiary"} fontWeight={"bold"}>
-        <Translatable resourceKey={i18nKey("cryptoAccount.transactions")} />
-    </BodySmall>
-</Container>
-
 {#snippet transactionIcon({ memo }: AccountTransaction)}
     {#if memo === "OC_MSG"}
         <Chat color={ColourVars.textPrimary} />
@@ -191,7 +185,12 @@
     {/if}
 {/snippet}
 
-<Container gap={"xl"} direction={"vertical"}>
+<Container height={{ kind: "fill" }} gap={"xl"} direction={"vertical"}>
+    <Container padding={["lg", "zero", "zero", "zero"]}>
+        <BodySmall colour={"textTertiary"} fontWeight={"bold"}>
+            <Translatable resourceKey={i18nKey("cryptoAccount.transactions")} />
+        </BodySmall>
+    </Container>
     {#if transactionData.kind === "idle"}
         <Container
             gap={"lg"}
