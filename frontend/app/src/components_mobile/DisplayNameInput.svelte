@@ -27,6 +27,8 @@
         errorMsg = $bindable(),
     }: Props = $props();
 
+    void displayNameValid;
+
     onMount(() => {
         displayName = originalDisplayName;
         displayNameValid = true;

@@ -25,10 +25,9 @@
     interface Props {
         conversionOptions: Option[];
         selectedConversion?: "none" | "usd" | "icp" | "btc" | "eth";
-        onClose: () => void;
     }
 
-    let { conversionOptions, selectedConversion = $bindable("none"), onClose }: Props = $props();
+    let { conversionOptions, selectedConversion = $bindable("none") }: Props = $props();
 
     let searchTerm = $state("");
     let searching = $state(false);

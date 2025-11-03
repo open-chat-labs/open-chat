@@ -3,7 +3,6 @@
     import { walletTokensSorted as accountsSorted, type OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import AccountTransactions from "../profile/AccountTransactions.svelte";
     import RestrictedFeature from "../profile/RestrictedFeature.svelte";
     import SendCrypto from "../profile/SendCrypto.svelte";
     import SwapCrypto from "../profile/SwapCrypto.svelte";
@@ -19,10 +18,8 @@
     let { selectedConversion = $bindable("usd") }: Props = $props();
 
     let balanceError: string | undefined = $state();
-    let actionMode: "none" | "send" | "receive" | "swap" | "transactions" | "restricted" =
-        $state("none");
+    let actionMode: "none" | "send" | "swap" | "restricted" = $state("none");
     let selectedLedger: string | undefined = $state(undefined);
-    let transactionsFormat: string = $state("");
 
     onMount(() => client.refreshSwappableTokens());
 
@@ -41,11 +38,6 @@
             <SendCrypto ledger={selectedLedger} onClose={hideManageModal} />
         {:else if actionMode === "swap"}
             <SwapCrypto bind:ledgerIn={selectedLedger} onClose={hideManageModal} />
-        {:else if actionMode === "transactions"}
-            <AccountTransactions
-                ledger={selectedLedger}
-                onClose={hideManageModal}
-                urlFormat={transactionsFormat} />
         {:else if actionMode === "restricted"}
             <RestrictedFeature onClose={hideManageModal} feature="swap" />
         {/if}

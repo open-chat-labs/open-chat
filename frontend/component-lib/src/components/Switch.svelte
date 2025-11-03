@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Body, Container } from "component-lib";
+    import { Body, Container, type SizeMode } from "component-lib";
     import type { Snippet } from "svelte";
     interface Props {
         checked: boolean;

@@ -19,9 +19,6 @@
     }
 
     let { onBack, onAction, title, subtitle, menu, action, avatar }: Props = $props();
-
-    // Not sure if this will ever *not* be --text-primary
-    let iconColour = "var(--text-primary)";
 </script>
 
 <Container

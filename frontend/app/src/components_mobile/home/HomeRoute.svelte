@@ -7,13 +7,11 @@
 </script>
 
 <script lang="ts">
-    import { chatsInitialisedStore, identityStateStore, OpenChat } from "openchat-client";
-    import { getContext, type Component } from "svelte";
+    import { chatsInitialisedStore, identityStateStore } from "openchat-client";
+    import { type Component } from "svelte";
     import FancyLoader from "../icons/FancyLoader.svelte";
     import LandingPage from "../landingpages/LandingPage.svelte";
     import Home from "./Home.svelte";
-
-    const client = getContext<OpenChat>("client");
 
     let { showLandingPage }: HomeProps = $props();
 

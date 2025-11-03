@@ -103,6 +103,8 @@
                             mimeType: mimeType,
                             blobData: new Uint8Array(data),
                             blobUrl: client.dataToBlobUrl(data, mimeType),
+                            samples: new Uint8Array(),
+                            duration: 0,
                         });
                         stream.getTracks().forEach((track) => track.stop());
                     });

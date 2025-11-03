@@ -146,7 +146,6 @@
         <div class="search-row">
             <div class="search">
                 <Search
-                    fill
                     searching={false}
                     bind:searchTerm
                     placeholder={i18nKey("communities.searchUserGroups")} />

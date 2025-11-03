@@ -33,7 +33,6 @@
         voters,
         numVotes,
         showVotes,
-        me,
         onClick,
     }: Props = $props();
 
@@ -87,7 +86,7 @@
     align={"middle"}
     enable={showVotes}>
     <div class:readonly class="answer-text" class:finished onclick={click}>
-        <Progress bg={me ? "accent" : "button"} {percent}>
+        <Progress {percent}>
             <div class="label">
                 <span>{answer}</span>
                 {#if voted}

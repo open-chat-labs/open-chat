@@ -1,10 +1,5 @@
-<script lang="ts">
-    import { onMount, type Snippet } from "svelte";
-    import { currentTheme } from "../theme/themes";
-    import { darkenHexColour } from "../theme/utils";
-    import Spinner from "./icons/Spinner.svelte";
-
-    interface ButtonProps {
+<script lang="ts" module>
+    export interface ButtonProps {
         cls?: string;
         loading?: boolean;
         disabled?: boolean;
@@ -19,6 +14,13 @@
         danger?: boolean;
         onClick?: (e: MouseEvent) => void;
     }
+</script>
+
+<script lang="ts">
+    import { onMount, type Snippet } from "svelte";
+    import { currentTheme } from "../theme/themes";
+    import { darkenHexColour } from "../theme/utils";
+    import Spinner from "./icons/Spinner.svelte";
 
     let {
         cls = "",

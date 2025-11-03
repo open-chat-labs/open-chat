@@ -95,7 +95,6 @@
         canInvite,
         canReplyInThread,
         publicGroup,
-        editing,
         supportsEdit,
         supportsReply,
         collapsed,
@@ -193,7 +192,6 @@
             {canReact}
             canStartThread={canReplyInThread}
             {publicGroup}
-            {editing}
             {threadRootMessage}
             {supportsEdit}
             {supportsReply}

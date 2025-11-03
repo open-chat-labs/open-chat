@@ -31,7 +31,6 @@
         ledger,
         value,
         label = undefined,
-        bold = false,
         toppingUp = $bindable(false),
         showTopUp = false,
         showRefresh = true,

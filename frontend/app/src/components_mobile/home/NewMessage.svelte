@@ -87,7 +87,7 @@
             {#await userAndBotSearchResults then resp}
                 {#if resp.length > 0}
                     <Container direction={"vertical"} padding={["zero", "md"]}>
-                        {#each resp as match, i (userOrBotKey(match))}
+                        {#each resp as match (userOrBotKey(match))}
                             {@render matched_user(match)}
                         {/each}
                     </Container>

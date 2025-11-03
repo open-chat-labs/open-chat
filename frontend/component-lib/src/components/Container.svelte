@@ -125,6 +125,10 @@
         data_index,
     }: Props = $props();
 
+    void clientHeight;
+    void clientWidth;
+    void ref;
+
     // you might expect this to be done inside onMount but
     // that runs from the bottom of the tree up which is not what we need
     parentDirection = parentDirection ?? getContext<Direction>("direction");

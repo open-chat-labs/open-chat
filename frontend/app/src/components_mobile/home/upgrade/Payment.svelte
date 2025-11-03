@@ -202,7 +202,7 @@
                 {/each}
             </div>
             <div class="right">
-                <AccountInfo fullWidthOnMobile border={false} centered {ledger} />
+                <AccountInfo {ledger} />
             </div>
         </div>
 

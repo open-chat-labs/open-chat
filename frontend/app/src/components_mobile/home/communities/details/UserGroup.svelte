@@ -168,7 +168,6 @@
         <div class="search">
             <Search
                 onPerformSearch={() => searchVirtualList?.reset()}
-                fill
                 searching={false}
                 bind:searchTerm={searchTermEntered}
                 placeholder={i18nKey("searchUsersPlaceholder")} />

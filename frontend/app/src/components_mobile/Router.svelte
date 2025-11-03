@@ -1,10 +1,10 @@
 <script lang="ts">
     import { removeQueryStringParam } from "@src/utils/urls";
+    import type { TransitionType } from "component-lib";
     import {
         type ChatIdentifier,
         OpenChat,
         type RouteParams,
-        type TransitionType,
         adminRoute,
         blogRoute,
         chatIdentifiersEqual,

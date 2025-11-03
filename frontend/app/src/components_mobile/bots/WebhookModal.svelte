@@ -155,7 +155,6 @@
                 <Legend label={i18nKey("webhook.avatarLabel")} />
                 <div class="photo">
                     <EditableAvatar
-                        overlayIcon
                         size={"medium"}
                         image={webhook.current.avatarUrl}
                         onImageSelected={avatarSelected} />

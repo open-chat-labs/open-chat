@@ -226,7 +226,6 @@
     <Legend label={i18nKey("bots.builder.iconLabel")} />
     <div class="photo">
         <EditableAvatar
-            overlayIcon
             size={"medium"}
             image={candidate.avatarUrl}
             onImageSelected={botAvatarSelected} />

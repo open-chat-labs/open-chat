@@ -97,9 +97,6 @@
 
 {#if managing}
     <Sheet onDismiss={() => (managing = false)}>
-        <ManageAccounts
-            bind:selectedConversion
-            {conversionOptions}
-            onClose={() => (managing = false)} />
+        <ManageAccounts bind:selectedConversion {conversionOptions} />
     </Sheet>
 {/if}

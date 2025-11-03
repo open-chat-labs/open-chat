@@ -23,14 +23,7 @@
         excludeInstalled?: boolean;
     }
 
-    let {
-        location,
-        onSelect,
-        fill = false,
-        maxHeight,
-        installingBot,
-        excludeInstalled,
-    }: Props = $props();
+    let { location, onSelect, maxHeight, installingBot, excludeInstalled }: Props = $props();
 
     function onSearchEntered(reset = false) {
         if (reset) {
@@ -64,7 +57,6 @@
 </script>
 
 <Search
-    {fill}
     onPerformSearch={() => onSearchEntered(true)}
     searching={false}
     bind:searchTerm={botSearchState.term}

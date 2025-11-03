@@ -50,7 +50,6 @@
     import ChannelOrCommunityMembers from "./ChannelOrCommunityMembers.svelte";
     import ChannelOrCommunitySummary from "./ChannelOrCommunitySummary.svelte";
     import CommunityDetails from "./communities/details/CommunitySummary.svelte";
-    import DirectChatDetails from "./groupdetails/DirectChatDetails.svelte";
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
     import InviteUsers from "./groupdetails/InviteUsers.svelte";
     import Members from "./groupdetails/Members.svelte";
@@ -397,10 +396,6 @@
             <GroupDetails
                 chat={$selectedChatSummaryStore}
                 memberCount={$selectedChatMembersStore.size}
-                onClose={client.popRightPanelHistory} />
-        {:else if $selectedChatSummaryStore.kind === "direct_chat"}
-            <DirectChatDetails
-                chat={$selectedChatSummaryStore}
                 onClose={client.popRightPanelHistory} />
         {/if}
     {:else if $lastRightPanelState.kind === "call_participants_panel"}

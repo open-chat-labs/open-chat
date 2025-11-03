@@ -22,13 +22,11 @@
         onRemovePreview?: (url: string) => void;
     }
 
-    let { chatId, repliesTo, readonly, intersecting, onRemovePreview }: Props = $props();
+    let { repliesTo, readonly, intersecting, onRemovePreview }: Props = $props();
 
     let debug = false;
 
     let me = $derived(repliesTo.senderId === $currentUserIdStore);
-    let isTextContent = $derived(repliesTo.content?.kind === "text_content");
-    let isP2PSwap = $derived(repliesTo.content.kind === "p2p_swap_content");
     let displayName = $derived(
         me
             ? client.toTitleCase($_("you"))

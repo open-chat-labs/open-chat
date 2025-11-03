@@ -210,7 +210,6 @@
     </div>
     <MessageEntry
         bind:this={messageEntry}
-        bind:messageAction
         {onPaste}
         {externalContent}
         {mode}

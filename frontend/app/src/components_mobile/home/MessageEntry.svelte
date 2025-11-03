@@ -9,7 +9,6 @@
         EventWrapper,
         ExternalBot,
         Message,
-        MessageAction,
         MessageContext,
         MultiUserChat,
         OpenChat,
@@ -21,7 +20,6 @@
         allUsersStore,
         anonUserStore,
         botState,
-        chatIdentifiersEqual,
         currentUserIdStore,
         directMessageCommandInstance,
         iconSize,
@@ -69,7 +67,6 @@
         blocked: boolean;
         preview: boolean;
         lapsed: boolean;
-        messageAction?: MessageAction;
         joining: MultiUserChat | undefined;
         attachment: AttachmentContent | undefined;
         editingEvent: EventWrapper<Message> | undefined;
@@ -99,7 +96,6 @@
         blocked,
         preview,
         lapsed,
-        messageAction = $bindable(undefined),
         joining,
         attachment,
         editingEvent,
@@ -146,7 +142,6 @@
     let messageEntryHeight: number = $state(0);
     let messageActions: MessageActions | undefined = $state();
     let rangeToReplace: [Node, number, number] | undefined = undefined;
-    let previousChatId = $state(chat.id);
     let containsMarkdown = $state(false);
     let showDirectBotChatWarning = $state(false);
     let commandSent = false;
@@ -567,13 +562,6 @@
 
         if (editingEvent === undefined) {
             previousEditingEvent = undefined;
-        }
-    });
-    trackedEffect("clear-message-actions", () => {
-        // If the chat has changed, close the emoji picker or file selector
-        if (!chatIdentifiersEqual(chat.id, previousChatId)) {
-            messageAction = undefined;
-            previousChatId = chat.id;
         }
     });
     trackedEffect("attachment-focus", () => {

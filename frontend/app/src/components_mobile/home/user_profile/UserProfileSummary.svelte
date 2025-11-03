@@ -1,7 +1,7 @@
 <script lang="ts">
     import MulticolourText from "@src/components_mobile/MulticolourText.svelte";
     import { i18nKey } from "@src/i18n/i18n";
-    import { Caption, Container, FloatingButton } from "component-lib";
+    import { Caption, Container } from "component-lib";
     import {
         allUsersStore,
         currentUserIdStore,
@@ -19,7 +19,6 @@
     import FlashOutline from "svelte-material-icons/FlashOutline.svelte";
     import RobotOutline from "svelte-material-icons/RobotOutline.svelte";
     import Sync from "svelte-material-icons/Sync.svelte";
-    import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import LinkedCard from "../../LinkedCard.svelte";
     import SparkleBox from "../../SparkleBox.svelte";
     import Translatable from "../../Translatable.svelte";

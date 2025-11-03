@@ -50,22 +50,16 @@
 
     let profile: PublicProfile | undefined = $state();
     let user: UserSummary | undefined = $state();
-    let rendering = $state<Promise<void>>();
-
     onMount(async () => {
         try {
-            rendering = new Promise(async (resolve) => {
-                user = await client.getUser(userId);
-                client.getPublicProfile(userId).subscribe({
-                    onResult: (result) => {
-                        profile = result;
-                        if (profile === undefined) {
-                            onClose();
-                        } else {
-                            resolve();
-                        }
-                    },
-                });
+            user = await client.getUser(userId);
+            client.getPublicProfile(userId).subscribe({
+                onResult: (result) => {
+                    profile = result;
+                    if (profile === undefined) {
+                        onClose();
+                    }
+                },
             });
         } catch (e: any) {
             client.logError("Failed to load user profile", e);

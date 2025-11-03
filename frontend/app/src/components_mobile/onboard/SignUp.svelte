@@ -215,10 +215,6 @@
                 <FindUser
                     placeholderKey={"register.searchForReferrer"}
                     {userLookup}
-                    enabled
-                    compact
-                    mode={"add"}
-                    autofocus={false}
                     onSelectUser={selectUser} />
             {/if}
         </div>

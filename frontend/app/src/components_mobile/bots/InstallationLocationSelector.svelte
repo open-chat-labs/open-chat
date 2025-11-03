@@ -100,7 +100,6 @@
     {:else}
         <Search
             inputStyle
-            fill
             {placeholder}
             searching={false}
             {searchTerm}

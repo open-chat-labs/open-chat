@@ -1,14 +1,13 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
-    import { i18nKey } from "../../../i18n/i18n";
-    import Search from "../../Search.svelte";
-    import { communitySearchState } from "../../../stores/search.svelte";
-    import { getContext } from "svelte";
     import { AvatarSize, OpenChat, type CommunityMatch } from "openchat-client";
-    import SelectedMatch from "./SelectedMatch.svelte";
+    import { getContext } from "svelte";
+    import { i18nKey } from "../../../i18n/i18n";
+    import { communitySearchState } from "../../../stores/search.svelte";
     import Avatar from "../../Avatar.svelte";
     import Menu from "../../Menu.svelte";
     import MenuItem from "../../MenuItem.svelte";
+    import Search from "../../Search.svelte";
+    import SelectedMatch from "./SelectedMatch.svelte";
 
     const client = getContext<OpenChat>("client");
     const PAGE_SIZE = 15;
@@ -64,7 +63,6 @@
         <SelectedMatch onRemove={() => reset(true)} match={selected}></SelectedMatch>
     {:else}
         <Search
-            fill
             bind:searchTerm={communitySearchState.term}
             searching={false}
             onPerformSearch={search}
