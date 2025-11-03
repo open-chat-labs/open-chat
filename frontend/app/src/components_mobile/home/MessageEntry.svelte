@@ -56,7 +56,6 @@
     import FileAttacher from "./FileAttacher.svelte";
     import MarkdownToggle from "./MarkdownToggle.svelte";
     import MentionPicker from "./MentionPicker.svelte";
-    import MessageActions from "./MessageActions.svelte";
     import PreviewFooter from "./PreviewFooter.svelte";
     import ThrottleCountdown from "./ThrottleCountdown.svelte";
 
@@ -140,7 +139,6 @@
     let mentionPrefix: string | undefined = $state();
     let emojiQuery: string | undefined = $state();
     let messageEntryHeight: number = $state(0);
-    let messageActions: MessageActions | undefined = $state();
     let rangeToReplace: [Node, number, number] | undefined = undefined;
     let containsMarkdown = $state(false);
     let showDirectBotChatWarning = $state(false);
@@ -398,7 +396,6 @@
         }
         onSetTextContent();
 
-        messageActions?.close();
         onStopTyping();
 
         // After sending a message we must force a new textbox instance to be created, otherwise on iPhone the
