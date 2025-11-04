@@ -41,6 +41,7 @@ import {
     type MessageActivitySummary,
     type MessageFilter,
     type ModerationFlag,
+    type NamedAccount,
     type NervousSystemDetails,
     type NotificationStatus,
     type PinnedByScope,
@@ -161,6 +162,7 @@ const cryptoBalancesLastUpdated = new Map<string, number>();
 
 export const bitcoinAddress = writable<string | undefined>(undefined);
 export const oneSecAddress = writable<string | undefined>(undefined);
+export const namedAccountsStore = writable<NamedAccount[]>([], undefined, notEq);
 
 export const lastCryptoSent = new LocalStorageStore<string | undefined>(
     configKeys.lastCryptoSent,

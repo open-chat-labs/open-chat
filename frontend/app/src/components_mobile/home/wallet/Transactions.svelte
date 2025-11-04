@@ -3,12 +3,12 @@
     import {
         type AccountTransaction,
         type AccountTransactions,
-        type NamedAccount,
         type OpenChat,
         allUsersStore,
         cryptoLookup,
         currentUserIdStore,
         currentUserStore,
+        namedAccountsStore,
         toRecord,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
@@ -37,24 +37,7 @@
     type RemoteData = RD<AccountTransactions, string> | LoadingMore<AccountTransactions>;
 
     let transactionData = $state<RemoteData>({ kind: "loading" });
-    // let transactionData = $state<RemoteData>({
-    //     kind: "success",
-    //     data: {
-    //         transactions: [
-    //             {
-    //                 kind: "transfer",
-    //                 id: 100n,
-    //                 memo: "OC_TIP",
-    //                 from: $currentUserIdStore,
-    //                 to: "someone",
-    //                 timestamp: new Date(),
-    //                 amount: 12646876n,
-    //             },
-    //         ],
-    //     },
-    // });
-    let accounts: NamedAccount[] = $state([]);
-    let accountLookup = $derived(toRecord(accounts, (a) => a.account));
+    let accountLookup = $derived(toRecord($namedAccountsStore, (a) => a.account));
 
     function moreTransactionsAvailable(trans: RemoteData): boolean {
         if (trans.kind !== "success") return false;
@@ -89,7 +72,6 @@
     }
 
     onMount(async () => {
-        accounts = await client.loadSavedCryptoAccounts();
         loadTransactions();
     });
 

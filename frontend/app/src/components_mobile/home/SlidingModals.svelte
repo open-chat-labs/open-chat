@@ -3,6 +3,7 @@
         subscribe,
         type ChitEarnedGate,
         type DirectChatSummary,
+        type NamedAccount,
         type NeuronGate,
         type PaymentGate,
         type PublicProfile,
@@ -42,6 +43,8 @@
     import ProfileSettings from "./user_profile/ProfileSettings.svelte";
     import Share from "./user_profile/Share.svelte";
     import Verify from "./user_profile/Verify.svelte";
+    import EditRecipient from "./wallet/EditRecipient.svelte";
+    import ManageRecipients from "./wallet/ManageRecipients.svelte";
     import ReceiveCrypto from "./wallet/ReceiveCrypto.svelte";
     import SendCrypto from "./wallet/SendCrypto.svelte";
     import TokenPage from "./wallet/TokenPage.svelte";
@@ -56,6 +59,9 @@
      */
 
     type SlidingModalType =
+        | { kind: "edit_recipient"; account: NamedAccount }
+        | { kind: "add_recipient"; account?: NamedAccount }
+        | { kind: "manage_recipients" }
         | { kind: "send_token"; tokenState: TokenState }
         | { kind: "receive_token"; tokenState: TokenState }
         | { kind: "token_page"; tokenState: TokenState }
@@ -103,6 +109,9 @@
 
     onMount(() => {
         const unsubs = [
+            subscribe("editRecipient", (account) => push({ kind: "edit_recipient", account })),
+            subscribe("addRecipient", (account) => push({ kind: "add_recipient", account })),
+            subscribe("manageRecipients", () => push({ kind: "manage_recipients" })),
             subscribe("sendToken", (tokenState) =>
                 push({ kind: "send_token", tokenState: tokenState as unknown as TokenState }),
             ),
@@ -288,6 +297,12 @@
             <ReceiveCrypto tokenState={page.tokenState} />
         {:else if page.kind === "send_token"}
             <SendCrypto onClose={pop} tokenState={page.tokenState} />
+        {:else if page.kind === "manage_recipients"}
+            <ManageRecipients />
+        {:else if page.kind === "add_recipient"}
+            <EditRecipient account={page.account} onClose={pop} />
+        {:else if page.kind === "edit_recipient"}
+            <EditRecipient account={page.account} onClose={pop} />
         {/if}
     </SlidingPage>
 {/each}

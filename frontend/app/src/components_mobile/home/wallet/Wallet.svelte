@@ -1,7 +1,8 @@
 <script lang="ts">
     import type { PinOperation } from "@src/stores/pinNumber";
     import { Container, Logo, MenuItem, SectionHeader, Sheet } from "component-lib";
-    import { pinNumberRequiredStore } from "openchat-client";
+    import { namedAccountsStore, OpenChat, pinNumberRequiredStore, publish } from "openchat-client";
+    import { getContext, onMount } from "svelte";
     import Book from "svelte-material-icons/BookOpenOutline.svelte";
     import Cog from "svelte-material-icons/CogOutline.svelte";
     import ShieldPlusIcon from "svelte-material-icons/ShieldPlusOutline.svelte";
@@ -17,6 +18,8 @@
     import TokenToggle from "./TokenToggle.svelte";
     import type { ConversionToken } from "./walletState.svelte";
 
+    const client = getContext<OpenChat>("client");
+
     let pinAction: PinOperation | undefined = $state(undefined);
     let managing = $state(false);
     let selectedConversion: ConversionToken = $state("usd");
@@ -30,6 +33,11 @@
     function onRefreshWallet() {
         console.log("Not sure what this does yet");
     }
+
+    onMount(async () => {
+        const accounts = await client.loadSavedCryptoAccounts();
+        namedAccountsStore.set(accounts);
+    });
 </script>
 
 <SectionHeader>
@@ -62,11 +70,11 @@
                 <Translatable resourceKey={i18nKey("pinNumber.clearPin")} />
             </MenuItem>
         {/if}
-        <MenuItem onclick={() => console.log("TODO - Manage addresses")}>
+        <MenuItem onclick={() => publish("manageRecipients")}>
             {#snippet icon(color, size)}
                 <Book {color} {size} />
             {/snippet}
-            <Translatable resourceKey={i18nKey("Manage addresses")} />
+            <Translatable resourceKey={i18nKey("Manage recipients")} />
         </MenuItem>
         <MenuItem onclick={() => (managing = true)}>
             {#snippet icon(color, size)}

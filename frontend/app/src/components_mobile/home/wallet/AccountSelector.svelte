@@ -1,21 +1,20 @@
 <script lang="ts">
     import { BodySmall, Container, Label, Option, Search, Sheet, Subtitle } from "component-lib";
-    import { type NamedAccount } from "openchat-client";
+    import { namedAccountsStore, type NamedAccount } from "openchat-client";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
 
     interface Props {
-        accounts: NamedAccount[];
         targetAccount: string;
         onDismiss: () => void;
     }
 
-    let { accounts, targetAccount = $bindable(), onDismiss }: Props = $props();
+    let { targetAccount = $bindable(), onDismiss }: Props = $props();
     let searching = $state(false);
     let searchTerm = $state<string>("");
     let searchTermLower = $derived(searchTerm?.toLowerCase());
     let filteredAccounts = $derived(
-        accounts.filter(
+        $namedAccountsStore.filter(
             ({ account, name }) =>
                 searchTermLower === "" ||
                 name.toLowerCase().includes(searchTermLower) ||

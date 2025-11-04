@@ -20,12 +20,12 @@
         formatTokens,
         ICP_SYMBOL,
         Lazy,
-        type NamedAccount,
+        namedAccountsStore,
         type OneSecTransferFees,
         type OpenChat,
         type ResourceKey,
     } from "openchat-client";
-    import { isAccountIdentifierValid, isICRCAddressValid } from "openchat-shared";
+    import { isAccountIdentifierValid, isICRCAddressValid, publish } from "openchat-shared";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Account from "svelte-material-icons/AccountBoxOutline.svelte";
@@ -34,7 +34,6 @@
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
-    import { toastStore } from "../../../stores/toast";
     import { Debouncer } from "../../../utils/debouncer";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import Translatable from "../../Translatable.svelte";
@@ -65,8 +64,7 @@
     let validAmount = $state(false);
     let targetAccount: string = $state("");
     let showAddressBook = $state(false);
-    let accounts: NamedAccount[] = $state([]);
-    let namedAccount = $derived(accounts.find((a) => a.account === targetAccount));
+    let namedAccount = $derived($namedAccountsStore.find((a) => a.account === targetAccount));
 
     let scanner: Scanner;
     const ckbtcMinterInfoDebouncer = new Debouncer(getCkbtcMinterWithdrawalInfo, 500);
@@ -146,9 +144,6 @@
     );
 
     onMount(async () => {
-        accounts = await client.loadSavedCryptoAccounts();
-        // accounts = [{ name: "Alfie Jelfs", account: "trwdi-fh777-77774-qaaqa-cai" }];
-
         if (isBtc) {
             getCkbtcMinterWithdrawalInfo(0n);
         }
@@ -217,12 +212,6 @@
         withdrawTokensPromise
             .then((resp) => {
                 if (resp.kind === "completed" || resp.kind === "success") {
-                    tokenState.draftAmount = 0n;
-                    toastStore.showSuccessToast(
-                        i18nKey("cryptoAccount.sendSucceeded", {
-                            symbol: tokenState.symbol,
-                        }),
-                    );
                     status = "sent";
                 } else if (resp.kind === "failed" || resp.kind === "error") {
                     error = i18nKey("cryptoAccount.sendFailed", { symbol: tokenState.symbol });
@@ -239,7 +228,12 @@
             });
     }
 
-    function saveAddress() {}
+    function saveAddress() {
+        publish("addRecipient", { name: "", account: targetAccount });
+        tokenState.draftAmount = 0n;
+        targetAccount = "";
+        status = "idle";
+    }
 </script>
 
 <Scanner onData={(data) => (targetAccount = data)} bind:this={scanner} />
@@ -268,7 +262,7 @@
     error={targetAccount.length > 0 && !targetAccountValid}
     placeholder={interpolate($_, i18nKey("cryptoAccount.sendTarget"))}>
     {#snippet iconButtons(color)}
-        {#if accounts.length > 0}
+        {#if $namedAccountsStore.length > 0}
             <InputIconButton onClick={() => (showAddressBook = true)}>
                 <Account {color} />
             </InputIconButton>
@@ -286,7 +280,7 @@
 </Input>
 
 {#if showAddressBook}
-    <AccountSelector onDismiss={() => (showAddressBook = false)} bind:targetAccount {accounts} />
+    <AccountSelector onDismiss={() => (showAddressBook = false)} bind:targetAccount />
 {/if}
 
 {#if errorMessage !== undefined}
@@ -322,11 +316,10 @@
                 borderRadius={["lg", "lg", "zero", "zero"]}
                 background={ColourVars.background2}>
                 <BodySmall colour={"textSecondary"}>
-                    Recipient
+                    <Translatable resourceKey={i18nKey("Recipient")} />
                     {#if account}
                         ({account})
                     {/if}
-                    <Translatable resourceKey={i18nKey("Recipient")} />
                 </BodySmall>
                 <Body fontWeight={"bold"}>
                     {account}
@@ -335,7 +328,8 @@
             <Container
                 gap={"lg"}
                 background={ColourVars.background2}
-                padding={["sm", "xl", "zero", "xl"]}
+                padding={["md", "lg", "md", "lg"]}
+                borderRadius={["zero", "zero", "lg", "lg"]}
                 direction={"vertical"}>
                 <Container mainAxisAlignment={"spaceBetween"}>
                     <BodySmall colour={"textSecondary"}>
@@ -385,13 +379,13 @@
                 </Container>
             </Container>
         </Container>
-        <Container direction={"vertical"} padding={["sm", "xl", "zero", "xl"]}>
+        <Container gap={"sm"} direction={"vertical"} padding={["sm", "xl", "zero", "xl"]}>
             {#if namedAccount === undefined}
                 <Button secondary onClick={saveAddress}>
                     {#snippet icon(color)}
                         <Account {color} />
                     {/snippet}
-                    Done
+                    Save address
                 </Button>
             {/if}
             <Button onClick={onComplete}>

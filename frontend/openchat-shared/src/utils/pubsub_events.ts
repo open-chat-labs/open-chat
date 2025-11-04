@@ -18,6 +18,7 @@ import type {
     MessageContext,
     MultiUserChat,
     MultiUserChatIdentifier,
+    NamedAccount,
     NeuronGate,
     Notification,
     PaymentGate,
@@ -186,4 +187,7 @@ export type PubSubEvents = {
     receiveToken: unknown;
     sendToken: unknown;
     swapToken: unknown;
+    manageRecipients: undefined;
+    addRecipient: NamedAccount | undefined;
+    editRecipient: NamedAccount;
 };
