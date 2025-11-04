@@ -3870,6 +3870,22 @@ export class OpenChatAgent extends EventTarget {
             }
         }
 
+        const equivalentSymbols = [["btc", "ckbtc"], ["eth", "cketh"]];
+
+        // If any symbols within a group of equivalent symbols are missing exchange rates,
+        // copy them over from other symbols within the group
+        for (const group of equivalentSymbols) {
+            const symbolWithExchangeRates = group.find((s) => grouped[s] !== undefined);
+            if (symbolWithExchangeRates) {
+                const exchangeRates = grouped[symbolWithExchangeRates];
+                for (const symbol of group) {
+                    if (grouped[symbol] === undefined) {
+                        grouped[symbol] = exchangeRates;
+                    }
+                }
+            }
+        }
+
         return toRecord2(
             Object.entries(grouped),
             ([token, _]) => token,
