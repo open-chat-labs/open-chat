@@ -1,10 +1,17 @@
-import { formatTokens, type EnhancedTokenDetails } from "openchat-client";
+import {
+    cryptoBalanceStore,
+    exchangeRatesLookupStore,
+    formatTokens,
+    getConvertedBalances,
+    type ConvertedBalances,
+    type EnhancedTokenDetails,
+} from "openchat-client";
 
 export type ConversionToken = "usd" | "icp" | "btc" | "eth";
 
 export function getConvertedTokenValue(
     c: ConversionToken,
-    t: EnhancedTokenDetails,
+    t: ConvertedBalances,
 ): number | undefined {
     switch (c) {
         case "usd":
@@ -18,7 +25,7 @@ export function getConvertedTokenValue(
     }
 }
 
-export function formatTokenValue(c: ConversionToken, val?: number): string {
+export function formatConvertedValue(c: ConversionToken, val?: number): string {
     switch (c) {
         case "usd":
             if (val !== undefined) {
@@ -35,32 +42,135 @@ export function formatTokenValue(c: ConversionToken, val?: number): string {
 }
 
 export function convertAndFormat(c: ConversionToken, t: EnhancedTokenDetails): string {
-    return formatTokenValue(c, getConvertedTokenValue(c, t));
+    return formatConvertedValue(c, getConvertedTokenValue(c, t));
 }
 
+const nullToken: EnhancedTokenDetails = {
+    name: "",
+    symbol: "",
+    ledger: "",
+    index: undefined,
+    decimals: 0,
+    transferFee: 0n,
+    logo: "",
+    infoUrl: "",
+    transactionUrlFormat: "",
+    supportedStandards: [],
+    added: 0n,
+    enabled: false,
+    oneSecEnabled: false,
+    evmContractAddresses: [],
+    lastUpdated: 0n,
+    balance: 0n,
+    dollarBalance: undefined,
+    icpBalance: undefined,
+    btcBalance: undefined,
+    ethBalance: undefined,
+    zero: false,
+    urlFormat: "",
+};
+
 export class TokenState {
-    #selectedConversion = $state<ConversionToken>();
-    #token = $state<EnhancedTokenDetails>();
-    #tokenBalance = $derived.by(() => {
-        const n = Number(this.token.balance);
-        return n / Math.pow(10, this.token.decimals);
+    #selectedConversion = $state<ConversionToken>("usd");
+    #token = $state<EnhancedTokenDetails>(nullToken);
+    #enabled = $derived(this.#token.enabled);
+    #urlFormat = $derived(this.#token.urlFormat);
+    #decimals = $derived(this.#token.decimals);
+    #logo = $derived(this.#token.logo);
+    #minAmount = $derived(this.#token.transferFee * 10n);
+    #minAmountLabel = $derived(Number(this.#minAmount) / Math.pow(10, this.#decimals));
+    #ledger = $derived(this.#token.ledger);
+    #draftAmount = $state(this.minAmount);
+    #symbol = $derived(this.#token.symbol);
+    #cryptoBalance = $derived(cryptoBalanceStore.value.get(this.#ledger) ?? 0n);
+    #transferFees = $derived(this.#token.transferFee);
+    #remainingBalance = $derived(
+        this.#draftAmount > BigInt(0)
+            ? this.#cryptoBalance - this.#draftAmount - this.#transferFees
+            : this.#cryptoBalance,
+    );
+    #convertedBalances = $derived(
+        getConvertedBalances(
+            exchangeRatesLookupStore.value,
+            this.#remainingBalance,
+            this.#decimals,
+            this.#symbol,
+        ),
+    );
+    #wholeUnitRemainingBalance = $derived.by(() => {
+        const n = Number(this.#remainingBalance);
+        return n / Math.pow(10, this.#decimals);
     });
-    #formattedTokenBalance = $derived(formatTokens(this.token.balance, this.token.decimals));
-    #convertedValue = $derived(getConvertedTokenValue(this.selectedConversion, this.token));
+    #formattedTokenBalance = $derived(formatTokens(this.#remainingBalance, this.#decimals));
+    #convertedValue = $derived(
+        getConvertedTokenValue(this.#selectedConversion, this.#convertedBalances),
+    );
     #formattedConvertedValue = $derived(
-        formatTokenValue(this.selectedConversion, this.#convertedValue),
+        formatConvertedValue(this.#selectedConversion, this.#convertedValue),
     );
     #formattedUnitValue = $derived.by(() => {
         if (this.#convertedValue === undefined) return "?????";
-        return formatTokenValue(
-            this.selectedConversion,
-            this.#convertedValue / Number(this.#tokenBalance),
+        return formatConvertedValue(
+            this.#selectedConversion,
+            this.#convertedValue / Number(this.#wholeUnitRemainingBalance),
         );
     });
 
     constructor(t: EnhancedTokenDetails, c: ConversionToken) {
-        this.token = t;
-        this.selectedConversion = c;
+        this.#token = t;
+        this.#selectedConversion = c;
+    }
+
+    get urlFormat() {
+        return this.#urlFormat;
+    }
+
+    get enabled() {
+        return this.#enabled;
+    }
+
+    get logo() {
+        return this.#logo;
+    }
+
+    get decimals() {
+        return this.#decimals;
+    }
+
+    get symbol() {
+        return this.#symbol;
+    }
+
+    get transferFees() {
+        return this.#transferFees;
+    }
+
+    get maxAmount() {
+        return this.#cryptoBalance - this.#transferFees;
+    }
+
+    get cryptoBalance() {
+        return this.#cryptoBalance;
+    }
+
+    get ledger() {
+        return this.#ledger;
+    }
+
+    get minAmount() {
+        return this.#minAmount;
+    }
+
+    get minAmountLabel() {
+        return this.#minAmountLabel;
+    }
+
+    get draftAmount() {
+        return this.#draftAmount;
+    }
+
+    set draftAmount(val: bigint) {
+        this.#draftAmount = val;
     }
 
     get formattedUnitValue(): string {
@@ -76,9 +186,6 @@ export class TokenState {
     }
 
     get token(): EnhancedTokenDetails {
-        if (this.#token === undefined) {
-            throw new Error("Trying to access token before it has been initialised");
-        }
         return this.#token;
     }
 

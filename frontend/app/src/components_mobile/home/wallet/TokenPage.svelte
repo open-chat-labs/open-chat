@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { ColourVars, CommonButton, Container, MenuItem } from "component-lib";
-    import { type EnhancedTokenDetails, publish, swappableTokensStore } from "openchat-client";
+    import { publish, swappableTokensStore } from "openchat-client";
     import ArrowLeftBoldCircle from "svelte-material-icons/ArrowLeftBoldCircle.svelte";
     import ArrowRightBoldCircle from "svelte-material-icons/ArrowRightBoldCircle.svelte";
     import SwapIcon from "svelte-material-icons/SwapHorizontal.svelte";
@@ -15,33 +15,31 @@
     import { TokenState } from "./walletState.svelte";
 
     interface Props {
-        token: EnhancedTokenDetails;
+        tokenState: TokenState;
     }
 
-    let { token }: Props = $props();
-
-    let tokenState = $derived(new TokenState(token, "usd"));
+    let { tokenState }: Props = $props();
 </script>
 
 <SlidingPageContent
-    title={i18nKey(token.symbol)}
-    subtitle={i18nKey(`${tokenState.formattedUnitValue} per ${token.symbol}`)}>
+    title={i18nKey(tokenState.symbol)}
+    subtitle={i18nKey(`${tokenState.formattedUnitValue} per ${tokenState.symbol}`)}>
     {#snippet menu()}
-        <MenuItem onclick={() => publish("sendToken", token)}>
+        <MenuItem onclick={() => publish("sendToken", tokenState)}>
             {#snippet icon(color)}
                 <ArrowRightBoldCircle {color} />
             {/snippet}
             <Translatable resourceKey={i18nKey("cryptoAccount.send")} />
         </MenuItem>
-        {#if token.enabled}
-            <MenuItem onclick={() => publish("receiveToken", token)}>
+        {#if tokenState.enabled}
+            <MenuItem onclick={() => publish("receiveToken", tokenState)}>
                 {#snippet icon(color)}
                     <ArrowLeftBoldCircle {color} />
                 {/snippet}
                 <Translatable resourceKey={i18nKey("cryptoAccount.receive")} />
             </MenuItem>
-            {#if $swappableTokensStore.has(token.ledger)}
-                <MenuItem onclick={() => publish("swapToken", token)}>
+            {#if $swappableTokensStore.has(tokenState.ledger)}
+                <MenuItem onclick={() => publish("swapToken", tokenState)}>
                     {#snippet icon(color)}
                         <SwapIcon {color} />
                     {/snippet}
@@ -61,7 +59,7 @@
             borderWidth={"thick"}
             borderColour={ColourVars.primary}>
             <CommonButton
-                onClick={() => publish("receiveToken", token)}
+                onClick={() => publish("receiveToken", tokenState)}
                 mode={"active"}
                 size={"small_text"}>
                 {#snippet icon(color)}
@@ -71,7 +69,7 @@
             </CommonButton>
             /
             <CommonButton
-                onClick={() => publish("sendToken", token)}
+                onClick={() => publish("sendToken", tokenState)}
                 mode={"active"}
                 size={"small_text"}>
                 {#snippet icon(color)}
@@ -81,7 +79,7 @@
             </CommonButton>
             /
             <CommonButton
-                onClick={() => publish("swapToken", token)}
+                onClick={() => publish("swapToken", tokenState)}
                 mode={"active"}
                 size={"small_text"}>
                 {#snippet icon(color)}
@@ -91,6 +89,6 @@
             </CommonButton>
         </Container>
 
-        <Transactions ledger={token.ledger} urlFormat={token.urlFormat} />
+        <Transactions ledger={tokenState.ledger} urlFormat={tokenState.urlFormat} />
     </Container>
 </SlidingPageContent>

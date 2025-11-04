@@ -4,7 +4,6 @@
         BTC_SYMBOL,
         CKBTC_SYMBOL,
         type CkbtcMinterWithdrawalInfo,
-        cryptoBalanceStore,
         currentUserIdStore,
         currentUserStore,
         type EvmChain,
@@ -15,12 +14,7 @@
         type OpenChat,
         type ResourceKey,
     } from "openchat-client";
-    import {
-        type EnhancedTokenDetails,
-        ErrorCode,
-        isAccountIdentifierValid,
-        isICRCAddressValid,
-    } from "openchat-shared";
+    import { ErrorCode, isAccountIdentifierValid, isICRCAddressValid } from "openchat-shared";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import QrcodeScan from "svelte-material-icons/QrcodeScan.svelte";
@@ -36,17 +30,17 @@
     import AccountSelector from "./AccountSelector.svelte";
     import SaveAccount from "./SaveAccount.svelte";
     import Scanner from "./Scanner.svelte";
+    import type { TokenState } from "./walletState.svelte";
 
     interface Props {
-        token: EnhancedTokenDetails;
+        tokenState: TokenState;
         onClose: () => void;
     }
 
-    let { token, onClose }: Props = $props();
+    let { tokenState, onClose }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
-    let ledger = $derived(token.ledger);
     let error: ResourceKey | undefined = $state();
     let amountToSend: bigint = $state(0n);
     let ckbtcMinterWithdrawalInfo = $state<CkbtcMinterWithdrawalInfo>();
@@ -62,32 +56,32 @@
     let saveAccountElement: SaveAccount;
     const ckbtcMinterInfoDebouncer = new Debouncer(getCkbtcMinterWithdrawalInfo, 500);
 
-    let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? 0n);
     let account = $derived(
-        token.symbol === ICP_SYMBOL ? $currentUserStore.cryptoAccount : $currentUserIdStore,
+        tokenState.symbol === ICP_SYMBOL ? $currentUserStore.cryptoAccount : $currentUserIdStore,
     );
-    let symbol = $derived(token.symbol);
     let selectedNetwork = $state<string>();
-    let isBtc = $derived(symbol === BTC_SYMBOL);
+    let isBtc = $derived(tokenState.symbol === BTC_SYMBOL);
     let isBtcNetwork = $derived(selectedNetwork === BTC_SYMBOL);
-    let oneSecEnabled = $derived(token.oneSecEnabled && token.evmContractAddresses.length > 0);
+    let oneSecEnabled = $derived(
+        tokenState.token.oneSecEnabled && tokenState.token.evmContractAddresses.length > 0,
+    );
     let isOneSecNetwork = $derived(oneSecEnabled && selectedNetwork !== ICP_SYMBOL);
     let networks = $derived.by(() => {
         if (isBtc) {
             return [BTC_SYMBOL, CKBTC_SYMBOL];
         } else if (oneSecEnabled) {
-            return client.oneSecGetNetworks(token.symbol);
+            return client.oneSecGetNetworks(tokenState.symbol);
         } else {
             return [];
         }
     });
-    let transferFees = $derived(token?.transferFee ?? 0n);
     let targetAccountValid = $derived.by(() => {
         if (targetAccount.length === 0 || targetAccount === account) return false;
         if (isBtc) return targetAccount.length >= 14;
         if (isOneSecNetwork) return targetAccount.length === 42;
         if (isICRCAddressValid(targetAccount)) return true;
-        if (symbol === ICP_SYMBOL && isAccountIdentifierValid(targetAccount)) return true;
+        if (tokenState.symbol === ICP_SYMBOL && isAccountIdentifierValid(targetAccount))
+            return true;
         return false;
     });
 
@@ -95,7 +89,7 @@
     let oneSecFeesForToken = $derived.by(() => {
         if (!isOneSecNetwork || oneSecFees === undefined) return undefined;
         return oneSecFees.find(
-            (f) => f.sourceToken === token.symbol && f.destinationChain === selectedNetwork,
+            (f) => f.sourceToken === tokenState.symbol && f.destinationChain === selectedNetwork,
         );
     });
 
@@ -132,7 +126,7 @@
     let networkFeeFormatted = $derived(
         networkFee === undefined
             ? undefined
-            : `~${client.formatTokens(networkFee, token.decimals)}`,
+            : `~${client.formatTokens(networkFee, tokenState.decimals)}`,
     );
 
     onMount(async () => {
@@ -208,19 +202,19 @@
             ? client.withdrawBtc(targetAccount, amountToSend)
             : isOneSecNetwork
               ? client.withdrawViaOneSec(
-                    ledger,
-                    symbol,
+                    tokenState.ledger,
+                    tokenState.symbol,
                     selectedNetwork as EvmChain,
                     targetAccount,
                     amountToSend,
                 )
               : client.withdrawCryptocurrency({
                     kind: "pending",
-                    ledger,
-                    token: symbol,
+                    ledger: tokenState.ledger,
+                    token: tokenState.symbol,
                     to: targetAccount,
                     amountE8s: amountToSend,
-                    feeE8s: transferFees,
+                    feeE8s: tokenState.transferFees,
                     createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
                 });
 
@@ -230,7 +224,7 @@
                     amountToSend = BigInt(0);
                     toastStore.showSuccessToast(
                         i18nKey("cryptoAccount.sendSucceeded", {
-                            symbol,
+                            symbol: tokenState.symbol,
                         }),
                     );
                     if (unknownAccount(targetAccount)) {
@@ -240,14 +234,14 @@
                         targetAccount = "";
                     }
                 } else if (resp.kind === "failed" || resp.kind === "error") {
-                    error = i18nKey("cryptoAccount.sendFailed", { symbol });
-                    client.logMessage(`Unable to withdraw ${symbol}`, resp);
+                    error = i18nKey("cryptoAccount.sendFailed", { symbol: tokenState.symbol });
+                    client.logMessage(`Unable to withdraw ${tokenState.symbol}`, resp);
                 }
             })
             .catch((err) => {
                 if (err !== "cancelled") {
-                    error = i18nKey("cryptoAccount.sendFailed", { symbol });
-                    client.logError(`Unable to withdraw ${symbol}`, err);
+                    error = i18nKey("cryptoAccount.sendFailed", { symbol: tokenState.symbol });
+                    client.logError(`Unable to withdraw ${tokenState.symbol}`, err);
                 }
             })
             .finally(() => (busy = false));
@@ -279,10 +273,9 @@
 
         <Container gap={"xs"} direction={"vertical"}>
             <TokenInput
-                {ledger}
-                {transferFees}
+                ledger={tokenState.ledger}
                 {minAmount}
-                maxAmount={BigInt(Math.max(0, Number(cryptoBalance - transferFees)))}
+                maxAmount={tokenState.maxAmount}
                 bind:valid={validAmount}
                 bind:amount={amountToSend} />
         </Container>
@@ -313,7 +306,7 @@
                         <Translatable
                             resourceKey={i18nKey("cryptoAccount.networkFee", {
                                 amount: networkFeeFormatted,
-                                token: symbol,
+                                token: tokenState.symbol,
                             })} />
                     </div>
                 {/if}

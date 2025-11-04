@@ -167,44 +167,69 @@ export const lastCryptoSent = new LocalStorageStore<string | undefined>(
     undefined,
 );
 
+export type ConvertedBalance = {
+    dollarBalance: number | undefined;
+    icpBalance: number | undefined;
+    btcBalance: number | undefined;
+    ethBalance: number | undefined;
+};
+
+export function getConvertedBalances(
+    xr: ReadonlyMap<string, TokenExchangeRates>,
+    balance: bigint,
+    decimals: number,
+    symbol: string,
+): ConvertedBalance {
+    const xrICPtoDollar = xr.get("icp")?.toUSD;
+    const xrBTCtoDollar = xr.get("btc")?.toUSD;
+    const xrETHtoDollar = xr.get("eth")?.toUSD;
+    const xrDollarToICP = xrICPtoDollar === undefined ? 0 : 1 / xrICPtoDollar;
+    const xrDollarToBTC = xrBTCtoDollar === undefined ? 0 : 1 / xrBTCtoDollar;
+    const xrDollarToETH = xrETHtoDollar === undefined ? 0 : 1 / xrETHtoDollar;
+
+    const symbolLower = symbol.toLowerCase();
+    const balanceWholeUnits = Number(balance) / Math.pow(10, decimals);
+    const rates = exchangeRatesLookupStore.value.get(symbolLower);
+    const xrUSD = rates?.toUSD;
+    const dollarBalance = xrUSD !== undefined ? xrUSD * balanceWholeUnits : undefined;
+    const icpBalance =
+        dollarBalance !== undefined && xrDollarToICP !== undefined
+            ? dollarBalance * xrDollarToICP
+            : undefined;
+    const btcBalance =
+        dollarBalance !== undefined && xrDollarToBTC !== undefined
+            ? dollarBalance * xrDollarToBTC
+            : undefined;
+    const ethBalance =
+        dollarBalance !== undefined && xrDollarToETH !== undefined
+            ? dollarBalance * xrDollarToETH
+            : undefined;
+    return {
+        dollarBalance,
+        icpBalance,
+        btcBalance,
+        ethBalance,
+    };
+}
+
 export const enhancedCryptoLookup = derived(
     [cryptoLookup, cryptoBalanceStore, exchangeRatesLookupStore],
     ([$lookup, $balance, $exchangeRatesLookup]) => {
-        const xrICPtoDollar = $exchangeRatesLookup.get("icp")?.toUSD;
-        const xrBTCtoDollar = $exchangeRatesLookup.get("btc")?.toUSD;
-        const xrETHtoDollar = $exchangeRatesLookup.get("eth")?.toUSD;
-
-        const xrDollarToICP = xrICPtoDollar === undefined ? 0 : 1 / xrICPtoDollar;
-        const xrDollarToBTC = xrBTCtoDollar === undefined ? 0 : 1 / xrBTCtoDollar;
-        const xrDollarToETH = xrETHtoDollar === undefined ? 0 : 1 / xrETHtoDollar;
-
         return [...$lookup.entries()].reduce((result, [key, t]) => {
             const balance = $balance.get(t.ledger) ?? BigInt(0);
             const symbolLower = t.symbol.toLowerCase();
-            const balanceWholeUnits = Number(balance) / Math.pow(10, t.decimals);
-            const rates = $exchangeRatesLookup.get(symbolLower);
-            const xrUSD = rates?.toUSD;
-            const dollarBalance = xrUSD !== undefined ? xrUSD * balanceWholeUnits : undefined;
-            const icpBalance =
-                dollarBalance !== undefined && xrDollarToICP !== undefined
-                    ? dollarBalance * xrDollarToICP
-                    : undefined;
-            const btcBalance =
-                dollarBalance !== undefined && xrDollarToBTC !== undefined
-                    ? dollarBalance * xrDollarToBTC
-                    : undefined;
-            const ethBalance =
-                dollarBalance !== undefined && xrDollarToETH !== undefined
-                    ? dollarBalance * xrDollarToETH
-                    : undefined;
+            const balances = getConvertedBalances(
+                $exchangeRatesLookup,
+                balance,
+                t.decimals,
+                symbolLower,
+            );
+
             const zero = balance === BigInt(0) && !DEFAULT_TOKENS.includes(t.symbol);
             result.set(key, {
                 ...t,
                 balance,
-                dollarBalance,
-                icpBalance,
-                btcBalance,
-                ethBalance,
+                ...balances,
                 zero,
                 urlFormat: t.transactionUrlFormat,
             });

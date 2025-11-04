@@ -3,7 +3,6 @@
         subscribe,
         type ChitEarnedGate,
         type DirectChatSummary,
-        type EnhancedTokenDetails,
         type NeuronGate,
         type PaymentGate,
         type PublicProfile,
@@ -46,6 +45,7 @@
     import ReceiveCrypto from "./wallet/ReceiveCrypto.svelte";
     import SendCrypto from "./wallet/SendCrypto.svelte";
     import TokenPage from "./wallet/TokenPage.svelte";
+    import type { TokenState } from "./wallet/walletState.svelte";
     /**
      * It is tempting to think that this can completely replace the right panel on mobile but it's not quite so simple.
      * It can replace everything _that is not represented by it's own route_. That is because at the moment
@@ -56,9 +56,9 @@
      */
 
     type SlidingModalType =
-        | { kind: "send_token"; token: EnhancedTokenDetails }
-        | { kind: "receive_token"; token: EnhancedTokenDetails }
-        | { kind: "token_page"; token: EnhancedTokenDetails }
+        | { kind: "send_token"; tokenState: TokenState }
+        | { kind: "receive_token"; tokenState: TokenState }
+        | { kind: "token_page"; tokenState: TokenState }
         | { kind: "direct_chat_details"; chat: DirectChatSummary }
         | { kind: "new_message" }
         | { kind: "update_community_add_members" }
@@ -103,9 +103,15 @@
 
     onMount(() => {
         const unsubs = [
-            subscribe("sendToken", (token) => push({ kind: "send_token", token })),
-            subscribe("receiveToken", (token) => push({ kind: "receive_token", token })),
-            subscribe("tokenPage", (token) => push({ kind: "token_page", token })),
+            subscribe("sendToken", (tokenState) =>
+                push({ kind: "send_token", tokenState: tokenState as unknown as TokenState }),
+            ),
+            subscribe("receiveToken", (tokenState) =>
+                push({ kind: "receive_token", tokenState: tokenState as unknown as TokenState }),
+            ),
+            subscribe("tokenPage", (tokenState) =>
+                push({ kind: "token_page", tokenState: tokenState as unknown as TokenState }),
+            ),
             subscribe("directChatDetails", (chat) => push({ kind: "direct_chat_details", chat })),
             subscribe("newMessage", () => push({ kind: "new_message" })),
             subscribe("newCommunity", () => push({ kind: "update_community_add_members" })),
@@ -277,11 +283,11 @@
         {:else if page.kind === "direct_chat_details"}
             <DirectChatDetails chat={page.chat} />
         {:else if page.kind === "token_page"}
-            <TokenPage token={page.token} />
+            <TokenPage tokenState={page.tokenState} />
         {:else if page.kind === "receive_token"}
-            <ReceiveCrypto token={page.token} />
+            <ReceiveCrypto tokenState={page.tokenState} />
         {:else if page.kind === "send_token"}
-            <SendCrypto onClose={pop} token={page.token} />
+            <SendCrypto onClose={pop} tokenState={page.tokenState} />
         {/if}
     </SlidingPage>
 {/each}

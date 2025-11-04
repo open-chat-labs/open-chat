@@ -1,6 +1,5 @@
 <script lang="ts">
     import { BigButton, Container } from "component-lib";
-    import { type EnhancedTokenDetails } from "openchat-shared";
     import ChatPlus from "svelte-material-icons/ChatPlusOutline.svelte";
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -12,17 +11,14 @@
     import { TokenState } from "./walletState.svelte";
 
     interface Props {
-        token: EnhancedTokenDetails;
+        tokenState: TokenState;
         onClose: () => void;
     }
 
-    let { token, onClose }: Props = $props();
+    let { tokenState, onClose }: Props = $props();
 
-    let tokenState = $derived(new TokenState(token, "usd"));
     let mode = $state<"user" | "address">("user");
-
-    let symbol = $derived(token.symbol);
-    let title = $derived(i18nKey("cryptoAccount.sendToken", { symbol }));
+    let title = $derived(i18nKey("cryptoAccount.sendToken", { symbol: tokenState.symbol }));
 </script>
 
 <SlidingPageContent {title}>
@@ -36,9 +32,9 @@
 
         <Container gap={"xl"} height={{ kind: "fill" }} direction={"vertical"}>
             {#if mode === "user"}
-                <SendToUser onComplete={onClose} {token} />
+                <SendToUser onComplete={onClose} {tokenState} />
             {:else if mode === "address"}
-                <SendToAddress {onClose} {token} />
+                <SendToAddress {onClose} {tokenState} />
             {/if}
         </Container>
 

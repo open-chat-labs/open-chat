@@ -13,12 +13,10 @@
         TextArea,
     } from "component-lib";
     import {
-        cryptoBalanceStore,
         formatTokens,
         nowNanos,
         OpenChat,
         type CryptocurrencyContent,
-        type EnhancedTokenDetails,
         type MessageContext,
         type UserSummary,
     } from "openchat-client";
@@ -30,37 +28,28 @@
     import Translatable from "../../Translatable.svelte";
     import TokenInput from "../TokenInput.svelte";
     import TransferFeesMessage from "../TransferFeesMessage.svelte";
+    import type { TokenState } from "./walletState.svelte";
 
     const client = getContext<OpenChat>("client");
 
     interface Props {
-        token: EnhancedTokenDetails;
+        tokenState: TokenState;
         onComplete: () => void;
     }
 
-    let { token, onComplete }: Props = $props();
+    let { tokenState, onComplete }: Props = $props();
 
-    let ledger = $derived(token.ledger);
-    let transferFees = $derived(token.transferFee);
-    let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? 0n);
     let selectedUser = $state<UserSummary>();
     let messageContext = $derived.by<MessageContext | undefined>(() => {
         if (selectedUser === undefined) return undefined;
         return { chatId: { kind: "direct_chat", userId: selectedUser.userId } };
     });
     let validAmount = $state(false);
-    let minAmount = $derived(token.transferFee * BigInt(10));
-    let minAmountLabel = $derived(Number(minAmount) / Math.pow(10, token.decimals));
     // svelte-ignore state_referenced_locally
-    let draftAmount = $state(minAmount);
     let message = $state("");
     let valid = $derived(validAmount && selectedUser !== undefined);
     let status = $state<"idle" | "sending" | "sent" | "error">("idle");
     let busy = $derived(status === "sending");
-
-    function maxAmount(balance: bigint): bigint {
-        return balance - transferFees;
-    }
 
     function send() {
         if (selectedUser === undefined || messageContext === undefined) return;
@@ -70,11 +59,11 @@
             caption: message === "" ? undefined : message,
             transfer: {
                 kind: "pending",
-                ledger,
-                token: token.symbol,
+                ledger: tokenState.ledger,
+                token: tokenState.symbol,
                 recipient: selectedUser.userId,
-                amountE8s: draftAmount,
-                feeE8s: transferFees,
+                amountE8s: tokenState.draftAmount,
+                feeE8s: tokenState.transferFees,
                 createdAtNanos: nowNanos(),
             },
         };
@@ -96,22 +85,22 @@
     disabled={busy}
     onSelect={(user) => (selectedUser = user)}
     selected={selectedUser}
-    placeholder={`Select a user to send ${token.symbol} to`}>
+    placeholder={`Select a user to send ${tokenState.symbol} to`}>
     {#snippet subtext()}
-        {`Select a user to send ${token.symbol} to`}
+        {`Select a user to send ${tokenState.symbol} to`}
     {/snippet}
 </SelectUser>
 
 <TokenInput
-    {ledger}
-    {minAmount}
+    ledger={tokenState.ledger}
+    minAmount={tokenState.minAmount}
     disabled={busy}
     error={!validAmount}
     bind:valid={validAmount}
-    maxAmount={maxAmount(cryptoBalance)}
-    bind:amount={draftAmount}>
+    maxAmount={tokenState.maxAmount}
+    bind:amount={tokenState.draftAmount}>
     {#snippet subtext()}
-        {`Minimum amount ${minAmountLabel} ${token.symbol}`}
+        {`Minimum amount ${tokenState.minAmountLabel} ${tokenState.symbol}`}
     {/snippet}
 </TokenInput>
 
@@ -128,9 +117,9 @@
 
 <Container mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
     <TransferFeesMessage
-        symbol={token.symbol}
-        tokenDecimals={token.decimals}
-        transferFees={token.transferFee} />
+        symbol={tokenState.symbol}
+        tokenDecimals={tokenState.decimals}
+        transferFees={tokenState.transferFees} />
 
     <CommonButton onClick={send} loading={status === "sending"} disabled={!valid} mode={"active"}>
         {#snippet icon(color)}
@@ -174,7 +163,7 @@
                         <Translatable resourceKey={i18nKey("Transfer amount")} />
                     </BodySmall>
                     <Body width={{ kind: "hug" }} colour={"primary"} fontWeight={"bold"}>
-                        {formatTokens(draftAmount, token.decimals)}
+                        {formatTokens(tokenState.draftAmount, tokenState.decimals)}
                     </Body>
                 </Container>
                 <Container mainAxisAlignment={"spaceBetween"}>
@@ -182,7 +171,7 @@
                         <Translatable resourceKey={i18nKey("Fee")} />
                     </BodySmall>
                     <Body width={{ kind: "hug" }} fontWeight={"bold"}>
-                        {formatTokens(transferFees, token.decimals)}
+                        {formatTokens(tokenState.transferFees, tokenState.decimals)}
                     </Body>
                 </Container>
                 <Container mainAxisAlignment={"spaceBetween"}>
@@ -248,7 +237,7 @@
                     fill="#4DC164" />
             </svg>
             <div class="nested_avatar">
-                <Avatar size={"sm"} url={token.logo}></Avatar>
+                <Avatar size={"sm"} url={tokenState.logo}></Avatar>
             </div>
         </Container>
     </Container>

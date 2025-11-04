@@ -86,7 +86,7 @@
     <TokenToggle options={conversionOptions} bind:selected={selectedConversion} />
     <OverallBalance {onRefreshWallet} {selectedConversion} />
     <Accounts bind:selectedConversion />
-    <BottomBar />
+    <BottomBar {selectedConversion} />
 </Container>
 
 {#if pinAction !== undefined}

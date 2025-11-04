@@ -15,6 +15,7 @@
     import TrayArrowUp from "svelte-material-icons/TrayArrowUp.svelte";
     import Translatable from "../../Translatable.svelte";
     import TokenSelector from "./TokenSelector.svelte";
+    import { TokenState, type ConversionToken } from "./walletState.svelte";
 
     type TokenSelectorParams = {
         title: ResourceKey;
@@ -24,12 +25,18 @@
         extraFilter?: (token: EnhancedTokenDetails) => boolean;
     };
 
+    interface Props {
+        selectedConversion: ConversionToken;
+    }
+
+    let { selectedConversion }: Props = $props();
+
     const width: SizeMode = { kind: "fixed", size: "6rem" };
     let tokenSelector = $state<TokenSelectorParams>();
 
     function onSelect(ev: "receiveToken" | "sendToken" | "swapToken", token: EnhancedTokenDetails) {
         tokenSelector = undefined;
-        publish(ev as keyof PubSubEvents, token);
+        publish(ev as keyof PubSubEvents, new TokenState(token, selectedConversion));
     }
 
     function onReceive() {

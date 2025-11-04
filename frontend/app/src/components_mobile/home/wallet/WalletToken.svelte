@@ -67,14 +67,6 @@
             {/snippet}
             <Translatable resourceKey={i18nKey("Refresh balance")} />
         </MenuItem>
-        <!-- {#if token.symbol === ICP_SYMBOL || snsLedgers.has(token.ledger)}
-            <MenuItem onclick={() => onTransactions(token)}>
-                {#snippet icon(color)}
-                    <ViewList {color} />
-                {/snippet}
-                <Translatable resourceKey={i18nKey("cryptoAccount.transactions")} />
-            </MenuItem>
-        {/if} -->
         {#if manualWalletConfig}
             <MenuItem onclick={() => onRemoveFromWallet(token.ledger)}>
                 {#snippet icon(color)}
@@ -87,7 +79,7 @@
     <Container
         supplementalClass={"wallet_token"}
         gap={"md"}
-        onClick={() => publish("tokenPage", token)}
+        onClick={() => publish("tokenPage", tokenState)}
         mainAxisAlignment={"spaceBetween"}
         crossAxisAlignment={"center"}
         padding={"sm"}>
