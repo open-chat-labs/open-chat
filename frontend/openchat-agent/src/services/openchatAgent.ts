@@ -3854,18 +3854,8 @@ export class OpenChatAgent extends EventTarget {
             return Promise.resolve({});
         }
 
-        const supportedSymbols = new Set(supportedTokens.map((t) => t.symbol.toLowerCase()));
-        const equivalentSymbols = [["btc", "ckbtc"], ["eth", "cketh"]];
-
-        // If any symbol within a group of equivalent symbols is included, then include the whole group
-        for (const group of equivalentSymbols) {
-            if (group.some((s) => supportedSymbols.has(s))) {
-                group.forEach((s) => supportedSymbols.add(s));
-            }
-        }
-
         const exchangeRatesFromAllProviders = await Promise.allSettled(
-            this._exchangeRateClients.map((c) => c.exchangeRates(supportedSymbols)),
+            this._exchangeRateClients.map((c) => c.exchangeRates(supportedTokens)),
         );
 
         const grouped: Record<string, TokenExchangeRates[]> = {};
@@ -3876,20 +3866,6 @@ export class OpenChatAgent extends EventTarget {
                         grouped[token] = [];
                     }
                     grouped[token].push(exchangeRates);
-                }
-            }
-        }
-
-        // If any symbols within a group of equivalent symbols are missing exchange rates,
-        // copy them over from other symbols within the group
-        for (const group of equivalentSymbols) {
-            const symbolWithExchangeRates = group.find((s) => grouped[s] !== undefined);
-            if (symbolWithExchangeRates) {
-                const exchangeRates = grouped[symbolWithExchangeRates];
-                for (const symbol of group) {
-                    if (grouped[symbol] === undefined) {
-                        grouped[symbol] = exchangeRates;
-                    }
                 }
             }
         }
@@ -4715,6 +4691,6 @@ export class OpenChatAgent extends EventTarget {
 
 export interface ExchangeRateClient {
     exchangeRates(
-        supportedSymbols: Set<string>,
+        supportedTokens: CryptocurrencyDetails[],
     ): Promise<Record<string, TokenExchangeRates>>;
 }
