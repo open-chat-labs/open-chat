@@ -245,8 +245,6 @@
                     bind:this={balanceWithRefresh}
                     {ledger}
                     value={remainingBalance}
-                    label={i18nKey("cryptoAccount.shortBalanceLabel")}
-                    bold
                     showTopUp
                     bind:refreshing
                     onRefreshed={onBalanceRefreshed}
@@ -323,7 +321,6 @@
                                 <div in:fade|local={{ duration: 500 }} class="custom-tip-amount">
                                     <TokenInput
                                         {ledger}
-                                        {transferFees}
                                         bind:valid={validAmount}
                                         maxAmount={maxAmount(cryptoBalance)}
                                         bind:amount={draftAmount} />

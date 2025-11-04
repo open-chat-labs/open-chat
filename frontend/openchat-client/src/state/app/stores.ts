@@ -167,7 +167,7 @@ export const lastCryptoSent = new LocalStorageStore<string | undefined>(
     undefined,
 );
 
-export type ConvertedBalance = {
+export type ConvertedBalances = {
     dollarBalance: number | undefined;
     icpBalance: number | undefined;
     btcBalance: number | undefined;
@@ -179,7 +179,7 @@ export function getConvertedBalances(
     balance: bigint,
     decimals: number,
     symbol: string,
-): ConvertedBalance {
+): ConvertedBalances {
     const xrICPtoDollar = xr.get("icp")?.toUSD;
     const xrBTCtoDollar = xr.get("btc")?.toUSD;
     const xrETHtoDollar = xr.get("eth")?.toUSD;

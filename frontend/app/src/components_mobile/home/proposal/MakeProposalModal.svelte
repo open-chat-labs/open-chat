@@ -442,8 +442,6 @@
                 bind:this={balanceWithRefresh}
                 {ledger}
                 value={cryptoBalance}
-                label={i18nKey("cryptoAccount.shortBalanceLabel")}
-                bold
                 onClick={onStartRefreshingBalance}
                 onRefreshed={onRefreshingBalanceSuccess}
                 onError={onRefreshingBalanceFailed} />

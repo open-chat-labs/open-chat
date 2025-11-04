@@ -74,13 +74,7 @@
         onClose: () => void;
     }
 
-    let {
-        draftAmount = $bindable(),
-        ledger = $bindable(),
-        chat,
-        context,
-        onClose,
-    }: Props = $props();
+    let { draftAmount = $bindable(), ledger = $bindable(), context, onClose }: Props = $props();
 
     const prizeConfig = new LocalStorageStore(
         "openchat_prize_config",
@@ -118,7 +112,6 @@
     let transferFees = $derived(transferFee * BigInt(numberOfWinners ?? 0));
     let prizeFees = $derived(transferFees + (draftAmount * OC_FEE_PERCENTAGE) / 100n);
     let totalFees = $derived(transferFee + prizeFees);
-    let multiUserChat = $derived(chat.kind === "group_chat" || chat.kind === "channel");
     let remainingBalance = $state(0n);
     $effect(() => {
         remainingBalance =
@@ -356,8 +349,6 @@
                     bind:this={balanceWithRefresh}
                     {ledger}
                     value={remainingBalance}
-                    label={i18nKey("cryptoAccount.shortBalanceLabel")}
-                    bold
                     showTopUp
                     onRefreshed={onBalanceRefreshed}
                     onError={onBalanceRefreshError} />
@@ -381,10 +372,7 @@
                         <div class="transfer">
                             <TokenInput
                                 {ledger}
-                                label={"prizes.totalAmount"}
-                                autofocus={!multiUserChat}
                                 bind:status={tokenInputState}
-                                transferFees={totalFees}
                                 {minAmount}
                                 {maxAmount}
                                 bind:amount={draftAmount} />

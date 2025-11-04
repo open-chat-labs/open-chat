@@ -62,9 +62,7 @@
                 <BalanceWithRefresh
                     bind:this={balanceWithRefresh}
                     ledger={ledger1}
-                    value={cryptoBalance}
-                    label={i18nKey("p2pSwap.tokenBalance", { token: symbol1 })}
-                    bold />
+                    value={cryptoBalance} />
             </span>
         {/snippet}
         {#snippet body()}

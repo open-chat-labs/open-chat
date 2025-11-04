@@ -273,8 +273,6 @@
                 <BalanceWithRefresh
                     ledger={ledgerIn}
                     value={remainingBalance}
-                    label={i18nKey("cryptoAccount.shortBalanceLabel")}
-                    bold
                     onRefreshed={onBalanceRefreshed}
                     onError={onBalanceRefreshError} />
             {/if}

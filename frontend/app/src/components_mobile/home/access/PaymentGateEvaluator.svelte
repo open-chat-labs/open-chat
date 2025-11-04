@@ -107,8 +107,6 @@
         bind:this={balanceWithRefresh}
         ledger={gate.ledgerCanister}
         value={cryptoBalance}
-        label={i18nKey("cryptoAccount.shortBalanceLabel")}
-        bold
         onClick={onStartRefreshingBalance}
         onRefreshed={onRefreshingBalanceSuccess}
         onError={onRefreshingBalanceFailed} />

@@ -42,7 +42,6 @@
     let missingMessages = $derived(thread.totalReplies - thread.latestReplies.length);
     let threadRootMessageIndex = $derived(thread.rootMessage.event.messageIndex);
     let chat = $derived($chatSummariesStore.get(thread.chatId) as MultiUserChat | undefined);
-    let muted = $derived(chat?.membership?.notificationsMuted || false);
     let syncDetails = $derived(
         chat?.membership?.latestThreads?.find(
             (t) => t.threadRootMessageIndex === threadRootMessageIndex,

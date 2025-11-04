@@ -176,8 +176,6 @@
                 <BalanceWithRefresh
                     ledger={fromLedger}
                     value={remainingBalance}
-                    label={i18nKey("cryptoAccount.shortBalanceLabel")}
-                    bold
                     onRefreshed={onBalanceRefreshed}
                     onError={onBalanceRefreshError} />
             </span>
@@ -199,7 +197,6 @@
                             ledger={fromLedger}
                             {minAmount}
                             maxAmount={fromDetails.balance - totalFees}
-                            showDollarAmount
                             bind:status={tokenInputState}
                             bind:valid={fromAmountValid}
                             bind:amount={fromAmount} />
@@ -217,7 +214,6 @@
                     <div class="amount">
                         <TokenInput
                             ledger={toLedger}
-                            showDollarAmount
                             bind:valid={toAmountValid}
                             bind:amount={toAmount} />
                     </div>
