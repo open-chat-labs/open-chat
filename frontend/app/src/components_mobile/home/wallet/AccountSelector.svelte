@@ -63,8 +63,8 @@
                     value={account}
                     onClick={() => selectAccount(account)}>
                     <Container direction={"vertical"}>
-                        <BodySmall colour={"textSecondary"}>{account.name}</BodySmall>
-                        <Label fontWeight={"bold"}>{collapseAccount(account.account)}</Label>
+                        <Label fontWeight={"bold"}>{collapseAccount(account.name)}</Label>
+                        <BodySmall colour={"textSecondary"}>{account.account}</BodySmall>
                     </Container>
                 </Option>
             {/each}

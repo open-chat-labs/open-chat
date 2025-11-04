@@ -34,7 +34,7 @@
             {#if mode === "user"}
                 <SendToUser onComplete={onClose} {tokenState} />
             {:else if mode === "address"}
-                <SendToAddress {onClose} {tokenState} />
+                <SendToAddress onComplete={onClose} {tokenState} />
             {/if}
         </Container>
 

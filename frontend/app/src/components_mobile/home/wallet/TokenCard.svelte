@@ -32,7 +32,11 @@
         <Caption width={{ kind: "hug" }} colour={"textSecondary"} fontWeight={"bold"}
             >{tokenState.token.name}</Caption>
     </Container>
-    <Container crossAxisAlignment={"end"} width={{ kind: "hug" }} direction={"vertical"}>
+    <Container
+        allowOverflow
+        crossAxisAlignment={"end"}
+        width={{ kind: "hug" }}
+        direction={"vertical"}>
         <Subtitle
             blur={$hideTokenBalances}
             align={"end"}

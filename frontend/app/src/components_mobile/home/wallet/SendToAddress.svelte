@@ -1,5 +1,16 @@
 <script lang="ts">
-    import { Caption, CommonButton, Container, Input, InputIconButton } from "component-lib";
+    import {
+        Body,
+        BodySmall,
+        Button,
+        Caption,
+        ColourVars,
+        CommonButton,
+        Container,
+        Input,
+        InputIconButton,
+        Sheet,
+    } from "component-lib";
     import {
         BTC_SYMBOL,
         CKBTC_SYMBOL,
@@ -7,6 +18,7 @@
         currentUserIdStore,
         currentUserStore,
         type EvmChain,
+        formatTokens,
         ICP_SYMBOL,
         Lazy,
         type NamedAccount,
@@ -14,12 +26,13 @@
         type OpenChat,
         type ResourceKey,
     } from "openchat-client";
-    import { ErrorCode, isAccountIdentifierValid, isICRCAddressValid } from "openchat-shared";
+    import { isAccountIdentifierValid, isICRCAddressValid } from "openchat-shared";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Account from "svelte-material-icons/AccountBoxOutline.svelte";
+    import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import QrcodeScan from "svelte-material-icons/QrcodeScan.svelte";
-    import Send from "svelte-material-icons/SendOutline.svelte";
+    import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
     import { toastStore } from "../../../stores/toast";
@@ -30,16 +43,16 @@
     import TokenInput from "../TokenInput.svelte";
     import TransferFeesMessage from "../TransferFeesMessage.svelte";
     import AccountSelector from "./AccountSelector.svelte";
-    import SaveAccount from "./SaveAccount.svelte";
     import Scanner from "./Scanner.svelte";
+    import SuccessIcon from "./SuccessIcon.svelte";
     import type { TokenState } from "./walletState.svelte";
 
     interface Props {
         tokenState: TokenState;
-        onClose: () => void;
+        onComplete: () => void;
     }
 
-    let { tokenState, onClose }: Props = $props();
+    let { tokenState, onComplete }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
@@ -53,10 +66,10 @@
     let validAmount = $state(false);
     let targetAccount: string = $state("");
     let showAddressBook = $state(false);
+    let accounts: NamedAccount[] = $state([]);
+    let namedAccount = $derived(accounts.find((a) => a.account === targetAccount));
 
     let scanner: Scanner;
-    let accounts: NamedAccount[] = $state([]);
-    let saveAccountElement: SaveAccount;
     const ckbtcMinterInfoDebouncer = new Debouncer(getCkbtcMinterWithdrawalInfo, 500);
 
     let account = $derived(
@@ -172,29 +185,8 @@
             .then((i) => (ckbtcMinterWithdrawalInfo = i));
     }
 
-    function saveAccount() {
-        if (saveAccountElement !== undefined) {
-            saveAccountElement
-                .saveAccount()
-                .then((resp) => {
-                    if (resp.kind === "success") {
-                        onClose();
-                    } else if (resp.kind === "error" && resp.code === ErrorCode.NameTaken) {
-                        error = i18nKey("tokenTransfer.accountNameTaken");
-                    } else {
-                        error = i18nKey("tokenTransfer.failedToSaveAccount");
-                    }
-                })
-                .finally(() => (busy = false));
-        }
-    }
-
     function scan() {
         scanner?.scan();
-    }
-
-    function unknownAccount(account: string): boolean {
-        return accounts.find((a) => a.account === account) === undefined;
     }
 
     function send() {
@@ -232,12 +224,7 @@
                             symbol: tokenState.symbol,
                         }),
                     );
-                    if (unknownAccount(targetAccount)) {
-                        capturingAccount = true;
-                    } else {
-                        status = "sent";
-                        targetAccount = "";
-                    }
+                    status = "sent";
                 } else if (resp.kind === "failed" || resp.kind === "error") {
                     error = i18nKey("cryptoAccount.sendFailed", { symbol: tokenState.symbol });
                     client.logMessage(`Unable to withdraw ${tokenState.symbol}`, resp);
@@ -252,64 +239,55 @@
                 }
             });
     }
+
+    function saveAddress() {}
 </script>
 
-{#if capturingAccount}
-    <SaveAccount
-        bind:this={saveAccountElement}
-        bind:valid={validAccountName}
-        account={targetAccount}
-        {accounts} />
-{:else}
-    <Scanner onData={(data) => (targetAccount = data)} bind:this={scanner} />
+<Scanner onData={(data) => (targetAccount = data)} bind:this={scanner} />
 
-    {#if networks.length > 0 && selectedNetwork !== undefined}
-        <NetworkSelector {networks} bind:selectedNetwork />
-    {/if}
+{#if networks.length > 0 && selectedNetwork !== undefined}
+    <NetworkSelector {networks} bind:selectedNetwork />
+{/if}
 
-    <TokenInput
-        ledger={tokenState.ledger}
-        {minAmount}
-        disabled={busy}
-        error={!validAmount}
-        bind:valid={validAmount}
-        maxAmount={tokenState.maxAmount}
-        bind:amount={tokenState.draftAmount}>
-        {#snippet subtext()}
-            {`Minimum amount ${tokenState.minAmountLabel} ${tokenState.symbol}`}
-        {/snippet}
-    </TokenInput>
+<TokenInput
+    ledger={tokenState.ledger}
+    {minAmount}
+    disabled={busy}
+    error={!validAmount}
+    bind:valid={validAmount}
+    maxAmount={tokenState.maxAmount}
+    bind:amount={tokenState.draftAmount}>
+    {#snippet subtext()}
+        {`Minimum amount ${minAmount} ${tokenState.symbol}`}
+    {/snippet}
+</TokenInput>
 
-    <Input
-        bind:value={targetAccount}
-        countdown={false}
-        maxlength={100}
-        error={targetAccount.length > 0 && !targetAccountValid}
-        placeholder={interpolate($_, i18nKey("cryptoAccount.sendTarget"))}>
-        {#snippet iconButtons(color)}
-            {#if accounts.length > 0}
-                <InputIconButton onClick={() => (showAddressBook = true)}>
-                    <Account {color} />
-                </InputIconButton>
-            {/if}
-            <InputIconButton onClick={scan}>
-                <QrcodeScan {color} />
+<Input
+    bind:value={targetAccount}
+    countdown={false}
+    maxlength={100}
+    error={targetAccount.length > 0 && !targetAccountValid}
+    placeholder={interpolate($_, i18nKey("cryptoAccount.sendTarget"))}>
+    {#snippet iconButtons(color)}
+        {#if accounts.length > 0}
+            <InputIconButton onClick={() => (showAddressBook = true)}>
+                <Account {color} />
             </InputIconButton>
-        {/snippet}
-        {#snippet subtext()}
-            <Translatable
-                resourceKey={i18nKey(
-                    "Paste the address manually, chose from the list of saved addresses, or scan a QR code",
-                )} />
-        {/snippet}
-    </Input>
+        {/if}
+        <InputIconButton onClick={scan}>
+            <QrcodeScan {color} />
+        </InputIconButton>
+    {/snippet}
+    {#snippet subtext()}
+        <Translatable
+            resourceKey={i18nKey(
+                "Paste the address manually, chose from the list of saved addresses, or scan a QR code",
+            )} />
+    {/snippet}
+</Input>
 
-    {#if showAddressBook}
-        <AccountSelector
-            onDismiss={() => (showAddressBook = false)}
-            bind:targetAccount
-            {accounts} />
-    {/if}
+{#if showAddressBook}
+    <AccountSelector onDismiss={() => (showAddressBook = false)} bind:targetAccount {accounts} />
 {/if}
 
 {#if errorMessage !== undefined}
@@ -335,8 +313,102 @@
 
     <CommonButton onClick={send} loading={status === "sending"} disabled={!valid} mode={"active"}>
         {#snippet icon(color)}
-            <Send {color} />
+            <Wallet {color} />
         {/snippet}
-        <Translatable resourceKey={i18nKey("tokenTransfer.send")} />
+        <Translatable resourceKey={i18nKey("Send to address")} />
     </CommonButton>
 </Container>
+
+{#if status === "sent"}
+    <Sheet>
+        <Container gap={"xs"} direction={"vertical"} padding={"xl"}>
+            <SuccessIcon tokenUrl={tokenState.logo} />
+
+            <Container
+                padding={"lg"}
+                gap={"md"}
+                direction={"vertical"}
+                borderRadius={["lg", "lg", "zero", "zero"]}
+                background={ColourVars.background2}>
+                <BodySmall colour={"textSecondary"}>
+                    Recipient
+                    {#if account}
+                        ({account})
+                    {/if}
+                    <Translatable resourceKey={i18nKey("Recipient")} />
+                </BodySmall>
+                <Body fontWeight={"bold"}>
+                    {account}
+                </Body>
+            </Container>
+            <Container
+                gap={"lg"}
+                background={ColourVars.background2}
+                padding={["sm", "xl", "zero", "xl"]}
+                direction={"vertical"}>
+                <Container mainAxisAlignment={"spaceBetween"}>
+                    <BodySmall colour={"textSecondary"}>
+                        <Translatable resourceKey={i18nKey("Transfer amount")} />
+                    </BodySmall>
+                    <Body width={{ kind: "hug" }} colour={"primary"} fontWeight={"bold"}>
+                        {formatTokens(tokenState.draftAmount, tokenState.decimals)}
+                    </Body>
+                </Container>
+                <Container mainAxisAlignment={"spaceBetween"}>
+                    <BodySmall colour={"textSecondary"}>
+                        <Translatable resourceKey={i18nKey("Fee")} />
+                    </BodySmall>
+                    <Body width={{ kind: "hug" }} fontWeight={"bold"}>
+                        {formatTokens(tokenState.transferFees, tokenState.decimals)}
+                    </Body>
+                </Container>
+                {#if networkFeeFormatted !== undefined}
+                    <Container mainAxisAlignment={"spaceBetween"}>
+                        <BodySmall colour={"textSecondary"}>
+                            <Translatable resourceKey={i18nKey("Network fee")} />
+                        </BodySmall>
+                        <Body width={{ kind: "hug" }} fontWeight={"bold"}>
+                            <Translatable
+                                resourceKey={i18nKey("cryptoAccount.networkFee", {
+                                    amount: networkFeeFormatted,
+                                    token: tokenState.symbol,
+                                })} />
+                        </Body>
+                    </Container>
+                {/if}
+                <Container mainAxisAlignment={"spaceBetween"}>
+                    <BodySmall colour={"textSecondary"}>
+                        <Translatable resourceKey={i18nKey("Date & time")} />
+                    </BodySmall>
+                    <Body width={{ kind: "hug" }} fontWeight={"bold"}>
+                        {new Date().toISOString()}
+                    </Body>
+                </Container>
+                <Container mainAxisAlignment={"spaceBetween"}>
+                    <BodySmall colour={"textSecondary"}>
+                        <Translatable resourceKey={i18nKey("Transaction ID")} />
+                    </BodySmall>
+                    <Body width={{ kind: "hug" }} fontWeight={"bold"}>
+                        {"XXXXXXXX"}
+                    </Body>
+                </Container>
+            </Container>
+        </Container>
+        <Container direction={"vertical"} padding={["sm", "xl", "zero", "xl"]}>
+            {#if namedAccount === undefined}
+                <Button secondary onClick={saveAddress}>
+                    {#snippet icon(color)}
+                        <Account {color} />
+                    {/snippet}
+                    Done
+                </Button>
+            {/if}
+            <Button onClick={onComplete}>
+                {#snippet icon(color)}
+                    <ChevronRight {color} />
+                {/snippet}
+                Done
+            </Button>
+        </Container>
+    </Sheet>
+{/if}
