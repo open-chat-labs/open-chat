@@ -11,18 +11,30 @@
         symbol: string;
         tokenDecimals: number;
         transferFees: bigint;
+        networkFee?: bigint;
     }
 
-    let { transferFees, tokenDecimals, symbol }: Props = $props();
+    let { transferFees, tokenDecimals, symbol, networkFee }: Props = $props();
 </script>
 
-<Container crossAxisAlignment={"end"} gap={"xs"}>
+<Container crossAxisAlignment={"center"} gap={"sm"}>
     <Info viewBox={"0 2 24 24"} size={"1rem"} color={ColourVars.warning} />
-    <Caption colour={"warning"}>
-        <Translatable
-            resourceKey={i18nKey("tokenTransfer.fee", {
-                fee: client.formatTokens(transferFees, tokenDecimals),
-                token: symbol,
-            })} />
-    </Caption>
+    <Container direction={"vertical"}>
+        <Caption colour={"warning"}>
+            <Translatable
+                resourceKey={i18nKey("tokenTransfer.fee", {
+                    fee: client.formatTokens(transferFees, tokenDecimals),
+                    token: symbol,
+                })} />
+        </Caption>
+        {#if networkFee !== undefined}
+            <Caption colour={"warning"}>
+                <Translatable
+                    resourceKey={i18nKey("cryptoAccount.networkFee", {
+                        amount: `~${client.formatTokens(networkFee, tokenDecimals)}`,
+                        token: symbol,
+                    })} />
+            </Caption>
+        {/if}
+    </Container>
 </Container>

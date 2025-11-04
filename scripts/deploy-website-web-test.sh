@@ -5,7 +5,7 @@
 
 IDENTITY=$1
 export OC_WEBSITE_VERSION=$2
-export OC_MOBILE_LAYOUT=v2
+# export OC_MOBILE_LAYOUT=v2
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")

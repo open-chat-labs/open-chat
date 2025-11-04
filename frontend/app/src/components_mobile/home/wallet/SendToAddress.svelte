@@ -3,7 +3,6 @@
         Body,
         BodySmall,
         Button,
-        Caption,
         ColourVars,
         CommonButton,
         Container,
@@ -299,16 +298,8 @@
         <TransferFeesMessage
             symbol={tokenState.symbol}
             tokenDecimals={tokenState.decimals}
+            {networkFee}
             transferFees={tokenState.transferFees} />
-        {#if networkFeeFormatted !== undefined}
-            <Caption colour={"warning"}>
-                <Translatable
-                    resourceKey={i18nKey("cryptoAccount.networkFee", {
-                        amount: networkFeeFormatted,
-                        token: tokenState.symbol,
-                    })} />
-            </Caption>
-        {/if}
     </Container>
 
     <CommonButton onClick={send} loading={status === "sending"} disabled={!valid} mode={"active"}>
