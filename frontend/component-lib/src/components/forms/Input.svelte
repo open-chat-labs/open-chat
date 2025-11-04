@@ -36,8 +36,8 @@
 
     let remaining = $derived(maxlength - (value?.length ?? 0));
     let warn = $derived(remaining <= 5);
-    let hasButtons = $derived(iconButtons || textButtons);
-    let padding = $derived<Padding>(hasButtons ? ["xs", "xs", "xs", "md"] : ["xs", "xl"]);
+    let hasInternalButtons = $derived(textButtons);
+    let padding = $derived<Padding>(hasInternalButtons ? ["xs", "xs", "xs", "md"] : ["xs", "xl"]);
     let inp: HTMLInputElement;
 
     onMount(() => {
@@ -48,45 +48,47 @@
 </script>
 
 <Container direction={"vertical"} gap={"xs"}>
-    <Container
-        background={ColourVars.textTertiary}
-        height={{ kind: "fixed", size: "3rem" }}
-        {padding}
-        borderRadius={"circle"}
-        gap={"sm"}
-        crossAxisAlignment={"center"}>
-        <input
-            bind:this={inp}
-            class:disabled
-            {disabled}
-            data-gram="false"
-            data-gramm_editor="false"
-            data-enable-grammarly="false"
-            data-lpignore="true"
-            spellcheck="false"
-            {minlength}
-            {maxlength}
-            required={minlength > 0}
-            {id}
-            bind:value
-            {placeholder} />
+    <Container mainAxisAlignment={"spaceBetween"} gap={"xs"}>
+        <Container
+            background={ColourVars.textTertiary}
+            height={{ kind: "fixed", size: "3rem" }}
+            {padding}
+            borderRadius={"circle"}
+            gap={"sm"}
+            crossAxisAlignment={"center"}>
+            <input
+                bind:this={inp}
+                class:disabled
+                {disabled}
+                data-gram="false"
+                data-gramm_editor="false"
+                data-enable-grammarly="false"
+                data-lpignore="true"
+                spellcheck="false"
+                {minlength}
+                {maxlength}
+                required={minlength > 0}
+                {id}
+                bind:value
+                {placeholder} />
 
-        {#if countdown}
-            <div class:warn class="countdown">{remaining}</div>
-        {/if}
-        {#if icon}
-            <div class="input_icon">
-                {@render icon(ColourVars.textSecondary)}
-            </div>
-        {/if}
+            {#if countdown}
+                <div class:warn class="countdown">{remaining}</div>
+            {/if}
+            {#if icon}
+                <div class="input_icon">
+                    {@render icon(ColourVars.textSecondary)}
+                </div>
+            {/if}
+            {#if textButtons}
+                <Container width={{ kind: "hug" }} gap={"xs"}>
+                    {@render textButtons()}
+                </Container>
+            {/if}
+        </Container>
         {#if iconButtons}
-            <Container padding={["zero", "md", "zero", "zero"]} width={{ kind: "hug" }} gap={"xs"}>
-                {@render iconButtons(ColourVars.textPrimary)}
-            </Container>
-        {/if}
-        {#if textButtons}
             <Container width={{ kind: "hug" }} gap={"xs"}>
-                {@render textButtons()}
+                {@render iconButtons(ColourVars.textPrimary)}
             </Container>
         {/if}
     </Container>

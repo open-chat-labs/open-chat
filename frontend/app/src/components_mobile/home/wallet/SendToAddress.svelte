@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { CommonButton, Container, Input, InputIconButton } from "component-lib";
+    import { Caption, CommonButton, Container, Input, InputIconButton } from "component-lib";
     import {
         BTC_SYMBOL,
         CKBTC_SYMBOL,
@@ -17,8 +17,9 @@
     import { ErrorCode, isAccountIdentifierValid, isICRCAddressValid } from "openchat-shared";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
+    import Account from "svelte-material-icons/AccountBoxOutline.svelte";
     import QrcodeScan from "svelte-material-icons/QrcodeScan.svelte";
-    import Send from "svelte-material-icons/Send.svelte";
+    import Send from "svelte-material-icons/SendOutline.svelte";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
     import { toastStore } from "../../../stores/toast";
@@ -27,6 +28,7 @@
     import Translatable from "../../Translatable.svelte";
     import NetworkSelector from "../NetworkSelector.svelte";
     import TokenInput from "../TokenInput.svelte";
+    import TransferFeesMessage from "../TransferFeesMessage.svelte";
     import AccountSelector from "./AccountSelector.svelte";
     import SaveAccount from "./SaveAccount.svelte";
     import Scanner from "./Scanner.svelte";
@@ -41,15 +43,16 @@
 
     const client = getContext<OpenChat>("client");
 
+    let status = $state<"idle" | "sending" | "sent" | "error">("idle");
+    let busy = $derived(status === "sending");
     let error: ResourceKey | undefined = $state();
-    let amountToSend: bigint = $state(0n);
     let ckbtcMinterWithdrawalInfo = $state<CkbtcMinterWithdrawalInfo>();
-    let busy = $state(false);
     let valid = $state(false);
     let validAccountName = $state(false);
     let capturingAccount = $state(false);
     let validAmount = $state(false);
     let targetAccount: string = $state("");
+    let showAddressBook = $state(false);
 
     let scanner: Scanner;
     let accounts: NamedAccount[] = $state([]);
@@ -100,7 +103,7 @@
         if (isOneSecNetwork && oneSecFeesForToken !== undefined) {
             return oneSecFeesForToken.minAmount;
         }
-        return BigInt(0);
+        return 0n;
     });
     let validSend = $derived(validAmount && targetAccountValid);
     $effect(() => {
@@ -117,7 +120,8 @@
         } else if (isOneSecNetwork && oneSecFeesForToken !== undefined) {
             return (
                 oneSecFeesForToken.latestTransferFee +
-                (amountToSend * BigInt(100 * oneSecFeesForToken.protocolFeePercent)) / BigInt(10000)
+                (tokenState.draftAmount * BigInt(100 * oneSecFeesForToken.protocolFeePercent)) /
+                    10000n
             );
         } else {
             return undefined;
@@ -131,9 +135,10 @@
 
     onMount(async () => {
         accounts = await client.loadSavedCryptoAccounts();
+        // accounts = [{ name: "Alfie Jelfs", account: "trwdi-fh777-77774-qaaqa-cai" }];
 
         if (isBtc) {
-            getCkbtcMinterWithdrawalInfo(BigInt(0));
+            getCkbtcMinterWithdrawalInfo(0n);
         }
     });
 
@@ -145,7 +150,7 @@
     const oneSecFeesPromise = new Lazy(() => client.oneSecGetTransferFees());
     $effect(() => {
         if (isBtcNetwork) {
-            ckbtcMinterInfoDebouncer.execute(amountToSend);
+            ckbtcMinterInfoDebouncer.execute(tokenState.draftAmount);
         } else if (isOneSecNetwork) {
             // Filter to where source token equals destination token since we're dealing with cross-chain withdrawals
             oneSecFeesPromise
@@ -195,33 +200,33 @@
     function send() {
         if (!valid) return;
 
-        busy = true;
+        status = "sending";
         error = undefined;
 
         const withdrawTokensPromise = isBtcNetwork
-            ? client.withdrawBtc(targetAccount, amountToSend)
+            ? client.withdrawBtc(targetAccount, tokenState.draftAmount)
             : isOneSecNetwork
               ? client.withdrawViaOneSec(
                     tokenState.ledger,
                     tokenState.symbol,
                     selectedNetwork as EvmChain,
                     targetAccount,
-                    amountToSend,
+                    tokenState.draftAmount,
                 )
               : client.withdrawCryptocurrency({
                     kind: "pending",
                     ledger: tokenState.ledger,
                     token: tokenState.symbol,
                     to: targetAccount,
-                    amountE8s: amountToSend,
+                    amountE8s: tokenState.draftAmount,
                     feeE8s: tokenState.transferFees,
-                    createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
+                    createdAtNanos: BigInt(Date.now()) * 1_000_000n,
                 });
 
         withdrawTokensPromise
             .then((resp) => {
                 if (resp.kind === "completed" || resp.kind === "success") {
-                    amountToSend = BigInt(0);
+                    tokenState.draftAmount = 0n;
                     toastStore.showSuccessToast(
                         i18nKey("cryptoAccount.sendSucceeded", {
                             symbol: tokenState.symbol,
@@ -230,152 +235,108 @@
                     if (unknownAccount(targetAccount)) {
                         capturingAccount = true;
                     } else {
-                        onClose();
+                        status = "sent";
                         targetAccount = "";
                     }
                 } else if (resp.kind === "failed" || resp.kind === "error") {
                     error = i18nKey("cryptoAccount.sendFailed", { symbol: tokenState.symbol });
                     client.logMessage(`Unable to withdraw ${tokenState.symbol}`, resp);
+                    status = "error";
                 }
             })
             .catch((err) => {
                 if (err !== "cancelled") {
                     error = i18nKey("cryptoAccount.sendFailed", { symbol: tokenState.symbol });
                     client.logError(`Unable to withdraw ${tokenState.symbol}`, err);
+                    status = "error";
                 }
-            })
-            .finally(() => (busy = false));
-    }
-
-    function onPrimaryClick() {
-        busy = true;
-        if (capturingAccount) {
-            saveAccount();
-        } else {
-            send();
-        }
+            });
     }
 </script>
 
-<Container gap={"md"} direction={"vertical"}>
-    {#if capturingAccount}
-        <SaveAccount
-            bind:this={saveAccountElement}
-            bind:valid={validAccountName}
-            account={targetAccount}
-            {accounts} />
-    {:else}
-        <Scanner onData={(data) => (targetAccount = data)} bind:this={scanner} />
+{#if capturingAccount}
+    <SaveAccount
+        bind:this={saveAccountElement}
+        bind:valid={validAccountName}
+        account={targetAccount}
+        {accounts} />
+{:else}
+    <Scanner onData={(data) => (targetAccount = data)} bind:this={scanner} />
 
-        {#if networks.length > 0 && selectedNetwork !== undefined}
-            <NetworkSelector {networks} bind:selectedNetwork />
-        {/if}
+    {#if networks.length > 0 && selectedNetwork !== undefined}
+        <NetworkSelector {networks} bind:selectedNetwork />
+    {/if}
 
-        <Container gap={"xs"} direction={"vertical"}>
-            <TokenInput
-                ledger={tokenState.ledger}
-                {minAmount}
-                maxAmount={tokenState.maxAmount}
-                bind:valid={validAmount}
-                bind:amount={amountToSend} />
-        </Container>
+    <TokenInput
+        ledger={tokenState.ledger}
+        {minAmount}
+        disabled={busy}
+        error={!validAmount}
+        bind:valid={validAmount}
+        maxAmount={tokenState.maxAmount}
+        bind:amount={tokenState.draftAmount}>
+        {#snippet subtext()}
+            {`Minimum amount ${tokenState.minAmountLabel} ${tokenState.symbol}`}
+        {/snippet}
+    </TokenInput>
 
-        <Input
-            bind:value={targetAccount}
-            countdown={false}
-            maxlength={100}
-            error={targetAccount.length > 0 && !targetAccountValid}
-            placeholder={interpolate($_, i18nKey("cryptoAccount.sendTarget"))}>
-            {#snippet iconButtons(color)}
-                <InputIconButton onClick={scan}>
-                    <QrcodeScan {color} />
+    <Input
+        bind:value={targetAccount}
+        countdown={false}
+        maxlength={100}
+        error={targetAccount.length > 0 && !targetAccountValid}
+        placeholder={interpolate($_, i18nKey("cryptoAccount.sendTarget"))}>
+        {#snippet iconButtons(color)}
+            {#if accounts.length > 0}
+                <InputIconButton onClick={() => (showAddressBook = true)}>
+                    <Account {color} />
                 </InputIconButton>
-            {/snippet}
-        </Input>
+            {/if}
+            <InputIconButton onClick={scan}>
+                <QrcodeScan {color} />
+            </InputIconButton>
+        {/snippet}
+        {#snippet subtext()}
+            <Translatable
+                resourceKey={i18nKey(
+                    "Paste the address manually, chose from the list of saved addresses, or scan a QR code",
+                )} />
+        {/snippet}
+    </Input>
 
-        {#if accounts.length > 0 || networkFee !== undefined}
-            <div class="lower-container">
-                {#if accounts.length > 0}
-                    <div class="accounts">
-                        <AccountSelector bind:targetAccount {accounts} />
-                    </div>
-                {/if}
+    {#if showAddressBook}
+        <AccountSelector
+            onDismiss={() => (showAddressBook = false)}
+            bind:targetAccount
+            {accounts} />
+    {/if}
+{/if}
 
-                {#if networkFeeFormatted !== undefined}
-                    <div class="network-fee">
-                        <Translatable
-                            resourceKey={i18nKey("cryptoAccount.networkFee", {
-                                amount: networkFeeFormatted,
-                                token: tokenState.symbol,
-                            })} />
-                    </div>
-                {/if}
-            </div>
+{#if errorMessage !== undefined}
+    <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
+{/if}
+
+<Container mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
+    <Container direction={"vertical"}>
+        <TransferFeesMessage
+            symbol={tokenState.symbol}
+            tokenDecimals={tokenState.decimals}
+            transferFees={tokenState.transferFees} />
+        {#if networkFeeFormatted !== undefined}
+            <Caption colour={"warning"}>
+                <Translatable
+                    resourceKey={i18nKey("cryptoAccount.networkFee", {
+                        amount: networkFeeFormatted,
+                        token: tokenState.symbol,
+                    })} />
+            </Caption>
         {/if}
-    {/if}
+    </Container>
 
-    {#if errorMessage !== undefined}
-        <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
-    {/if}
-</Container>
-<Container mainAxisAlignment={"end"} gap={"sm"}>
-    <CommonButton onClick={onClose}>
-        <Translatable resourceKey={i18nKey(capturingAccount ? "noThanks" : "cancel")} />
-    </CommonButton>
-    <CommonButton disabled={busy || !valid} loading={busy} mode={"active"} onClick={onPrimaryClick}>
+    <CommonButton onClick={send} loading={status === "sending"} disabled={!valid} mode={"active"}>
         {#snippet icon(color)}
             <Send {color} />
         {/snippet}
-        <Translatable
-            resourceKey={i18nKey(
-                capturingAccount ? "tokenTransfer.saveAccount" : "tokenTransfer.send",
-            )} />
+        <Translatable resourceKey={i18nKey("tokenTransfer.send")} />
     </CommonButton>
 </Container>
-
-<style lang="scss">
-    :global(.target .input-wrapper input) {
-        padding-right: 40px;
-    }
-
-    .header {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: $sp2;
-
-        .main-title {
-            flex: auto;
-        }
-    }
-
-    .body {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .token-input {
-        margin-bottom: $sp3;
-    }
-
-    .target {
-        position: relative;
-
-        .qr {
-            position: absolute !important;
-            top: 10px;
-            right: $sp3;
-            cursor: pointer;
-        }
-    }
-
-    .lower-container {
-        display: flex;
-        justify-content: space-between;
-    }
-
-    .network-fee {
-        @include font(book, normal, fs-60);
-        margin-left: auto;
-    }
-</style>

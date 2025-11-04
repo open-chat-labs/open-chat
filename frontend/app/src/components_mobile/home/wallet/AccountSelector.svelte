@@ -1,28 +1,27 @@
 <script lang="ts">
-    import { IconButton, MenuTrigger } from "component-lib";
+    import { BodySmall, Container, Label, Option, Search, Sheet, Subtitle } from "component-lib";
     import { type NamedAccount } from "openchat-client";
-    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import MenuIcon from "../../MenuIcon.svelte";
-    import MenuItem from "../../MenuItem.svelte";
     import Translatable from "../../Translatable.svelte";
 
-    // TODO - come back and sort this out - it should just be a Select list
     interface Props {
         accounts: NamedAccount[];
         targetAccount: string;
+        onDismiss: () => void;
     }
 
-    let { accounts, targetAccount = $bindable() }: Props = $props();
-
-    let selectedName: string | undefined = $state(undefined);
-    let menuIconEl: MenuIcon | undefined = $state();
-
-    $effect(() => {
-        selectedName = accounts.find((a) => {
-            return a.account.toLowerCase() === targetAccount.toLowerCase();
-        })?.name;
-    });
+    let { accounts, targetAccount = $bindable(), onDismiss }: Props = $props();
+    let searching = $state(false);
+    let searchTerm = $state<string>("");
+    let searchTermLower = $derived(searchTerm?.toLowerCase());
+    let filteredAccounts = $derived(
+        accounts.filter(
+            ({ account, name }) =>
+                searchTermLower === "" ||
+                name.toLowerCase().includes(searchTermLower) ||
+                account.toLowerCase().includes(searchTermLower),
+        ),
+    );
 
     function collapseAccount(account: string) {
         if (account.length > 23) {
@@ -33,75 +32,42 @@
 
     function selectAccount(namedAccount: NamedAccount) {
         targetAccount = namedAccount.account;
-    }
-
-    function showMenu(e: Event) {
-        e.stopPropagation();
-        menuIconEl?.showMenu();
+        onDismiss();
     }
 </script>
 
-<div role="combobox" tabindex="0" class="selected" onclick={showMenu}>
-    <div class="name">
-        <Translatable resourceKey={i18nKey(selectedName ?? "tokenTransfer.chooseAddress")} />
-    </div>
-    <MenuTrigger position={"bottom"} align={"end"}>
-        <IconButton padding={["sm", "xs", "sm", "zero"]} size={"md"}>
-            {#snippet icon(color)}
-                <ChevronDown {color} />
-            {/snippet}
-        </IconButton>
-        {#snippet menuItems()}
-            {#each accounts as namedAccount}
-                <MenuItem unpadded onclick={() => selectAccount(namedAccount)}>
-                    {#snippet text()}
-                        <div class="named-account">
-                            <div class="name">
-                                {namedAccount.name}
-                            </div>
-                            <div class="account">
-                                {collapseAccount(namedAccount.account)}
-                            </div>
-                        </div>
-                    {/snippet}
-                </MenuItem>
+<Sheet {onDismiss}>
+    <Container
+        height={{ kind: "fixed", size: "100%" }}
+        supplementalClass={"account_selector"}
+        padding={"lg"}
+        gap={"xl"}
+        direction={"vertical"}>
+        <Container padding={["zero", "sm"]} gap={"md"} crossAxisAlignment={"center"}>
+            <Subtitle fontWeight={"bold"}>
+                <Translatable resourceKey={i18nKey("Select saved address")}></Translatable>
+            </Subtitle>
+        </Container>
+
+        <Search
+            {searching}
+            id={"search_component"}
+            placeholder={"Find address..."}
+            bind:value={searchTerm} />
+
+        <Container supplementalClass={"token_selector"} direction={"vertical"}>
+            {#each filteredAccounts as account}
+                <Option
+                    padding={["sm", "lg", "sm", "xxl"]}
+                    selected={account.account === targetAccount}
+                    value={account}
+                    onClick={() => selectAccount(account)}>
+                    <Container direction={"vertical"}>
+                        <BodySmall colour={"textSecondary"}>{account.name}</BodySmall>
+                        <Label fontWeight={"bold"}>{collapseAccount(account.account)}</Label>
+                    </Container>
+                </Option>
             {/each}
-        {/snippet}
-    </MenuTrigger>
-</div>
-
-<style lang="scss">
-    .selected {
-        display: flex;
-        align-items: center;
-        gap: $sp3;
-        cursor: pointer;
-        @include font(book, normal, fs-80);
-
-        .name {
-            color: var(--primary);
-        }
-
-        .icon {
-            transition: transform 250ms ease-in-out;
-            transform-origin: 50%;
-        }
-    }
-
-    .named-account {
-        padding: $sp3;
-        display: flex;
-        flex-direction: column;
-        @include font(book, normal, fs-80);
-        font-family: var(--font);
-
-        .name {
-            color: var(--primary);
-        }
-
-        .account {
-            @include font(light, normal, fs-70);
-            color: var(--menu-disabled-txt);
-        }
-    }
-</style>
+        </Container>
+    </Container>
+</Sheet>

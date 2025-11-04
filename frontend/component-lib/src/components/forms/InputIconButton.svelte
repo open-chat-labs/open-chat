@@ -28,10 +28,10 @@
     .input_icon_button {
         all: unset;
         display: flex;
-        width: 2.5rem;
-        height: 2.5rem;
+        width: 3rem;
+        height: 3rem;
         background-color: var(--background-1);
-        border-radius: var(--rad-sm);
+        border-radius: var(--rad-circle);
         justify-content: center;
         align-items: center;
         cursor: pointer;
