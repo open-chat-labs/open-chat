@@ -80,6 +80,7 @@
     );
     let isOneSecNetwork = $derived(oneSecEnabled && selectedNetwork !== ICP_SYMBOL);
     let networks = $derived.by(() => {
+        return [BTC_SYMBOL, CKBTC_SYMBOL];
         if (isBtc) {
             return [BTC_SYMBOL, CKBTC_SYMBOL];
         } else if (oneSecEnabled) {
