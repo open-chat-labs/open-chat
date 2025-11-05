@@ -28,7 +28,7 @@
 
     const iconColours: Record<InternalMode, string> = {
         default: "var(--text-tertiary)",
-        active: "var(--text-on-primary)",
+        active: "var(--primary)",
         pressed: "var(--text-primary)",
     };
     const iconSize = "var(--icon-md)";
@@ -120,8 +120,8 @@
         }
 
         &.active {
-            background: var(--primary);
-            color: var(--text-on-primary);
+            background: var(--background-2);
+            color: var(--primary);
         }
 
         &.pressed {

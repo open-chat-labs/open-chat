@@ -106,12 +106,11 @@
 
     function selectToken(token: EnhancedTokenDetails) {
         if (config.kind === "manual_wallet") {
-            if (config.tokens.has(token.symbol)) {
-                config.tokens.delete(token.symbol);
+            if (config.tokens.has(token.ledger)) {
+                config.tokens.delete(token.ledger);
             } else {
-                config.tokens.add(token.symbol);
+                config.tokens.add(token.ledger);
             }
-            console.log("Config: ", config, config.tokens.size);
             config = clone(config);
         }
     }
@@ -167,7 +166,7 @@
                         onClick={() => (showTokenSelector = true)}>Configure</CommonButton>
                 </Container>
                 {@const tokens = config.tokens}
-                {@const selected = $accountsSorted.filter((a) => tokens.has(a.symbol))}
+                {@const selected = $accountsSorted.filter((a) => tokens.has(a.ledger))}
                 <Container wrap gap={"sm"}>
                     {#each selected as token}
                         {@render selectedToken(token)}
@@ -200,7 +199,7 @@
         borderColour={ColourVars.primary}
         borderRadius={"circle"}
         borderWidth={"thick"}
-        onClick={() => selectedToken(token)}>
+        onClick={() => selectToken(token)}>
         <Avatar size={"xs"} url={token.logo}></Avatar>
         <Label colour={"primaryLight"} width={{ kind: "hug" }}>
             {token.symbol}

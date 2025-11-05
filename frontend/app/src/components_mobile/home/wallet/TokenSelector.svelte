@@ -69,7 +69,7 @@
                     onClick={() => onSelect(token)}
                     padding={["zero", "md", "zero", "zero"]}
                     value={token}
-                    selected={selected.has(token.symbol)}>
+                    selected={selected.has(token.ledger)}>
                     <WalletToken withMenu={false} selectedConversion={"usd"} {token} />
                 </Option>
             {/each}
