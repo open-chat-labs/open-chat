@@ -59,8 +59,8 @@
      */
 
     type SlidingModalType =
-        | { kind: "edit_recipient"; account: NamedAccount }
-        | { kind: "add_recipient"; account?: NamedAccount }
+        | { kind: "edit_recipient"; account: NamedAccount; onComplete: () => void }
+        | { kind: "add_recipient"; account?: NamedAccount; onComplete: () => void }
         | { kind: "manage_recipients" }
         | { kind: "send_token"; tokenState: TokenState }
         | { kind: "receive_token"; tokenState: TokenState }
@@ -109,8 +109,12 @@
 
     onMount(() => {
         const unsubs = [
-            subscribe("editRecipient", (account) => push({ kind: "edit_recipient", account })),
-            subscribe("addRecipient", (account) => push({ kind: "add_recipient", account })),
+            subscribe("editRecipient", ({ account, onComplete }) =>
+                push({ kind: "edit_recipient", account, onComplete }),
+            ),
+            subscribe("addRecipient", ({ account, onComplete }) =>
+                push({ kind: "add_recipient", account, onComplete }),
+            ),
             subscribe("manageRecipients", () => push({ kind: "manage_recipients" })),
             subscribe("sendToken", (tokenState) =>
                 push({ kind: "send_token", tokenState: tokenState as unknown as TokenState }),
@@ -300,9 +304,9 @@
         {:else if page.kind === "manage_recipients"}
             <ManageRecipients />
         {:else if page.kind === "add_recipient"}
-            <EditRecipient account={page.account} onClose={pop} />
+            <EditRecipient account={page.account} onClose={page.onComplete} />
         {:else if page.kind === "edit_recipient"}
-            <EditRecipient account={page.account} onClose={pop} />
+            <EditRecipient account={page.account} onClose={page.onComplete} />
         {/if}
     </SlidingPage>
 {/each}

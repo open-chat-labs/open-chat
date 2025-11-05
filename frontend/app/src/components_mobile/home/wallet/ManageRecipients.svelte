@@ -26,7 +26,7 @@
     let deleting = $state<string>();
 
     function editAccount(account: NamedAccount) {
-        publish("editRecipient", account);
+        publish("editRecipient", { account, onComplete: () => publish("closeModalPage") });
     }
 
     async function deleteAccount({ account }: NamedAccount) {
@@ -40,7 +40,7 @@
     }
 
     function addAccount() {
-        publish("addRecipient");
+        publish("addRecipient", { onComplete: () => publish("closeModalPage") });
     }
 </script>
 

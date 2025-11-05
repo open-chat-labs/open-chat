@@ -20,6 +20,7 @@ import type {
     CreateGroupResponse,
     CryptocurrencyDetails,
     DeleteCommunityResponse,
+    DeleteCryptoAccountResponse,
     DeletedDirectMessageResponse,
     DeleteGroupResponse,
     DeleteMessageResponse,

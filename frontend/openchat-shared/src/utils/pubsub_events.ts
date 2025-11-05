@@ -188,6 +188,6 @@ export type PubSubEvents = {
     sendToken: unknown;
     swapToken: unknown;
     manageRecipients: undefined;
-    addRecipient: NamedAccount | undefined;
-    editRecipient: NamedAccount;
+    addRecipient: { account?: NamedAccount; onComplete: () => void };
+    editRecipient: { account: NamedAccount; onComplete: () => void };
 };

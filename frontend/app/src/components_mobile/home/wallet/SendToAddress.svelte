@@ -229,7 +229,10 @@
     }
 
     function saveAddress() {
-        publish("addRecipient", { name: "", account: targetAccount });
+        publish("addRecipient", {
+            account: { name: "", account: targetAccount },
+            onComplete: () => publish("closeModalStack"),
+        });
         tokenState.draftAmount = 0n;
         targetAccount = "";
         status = "idle";
