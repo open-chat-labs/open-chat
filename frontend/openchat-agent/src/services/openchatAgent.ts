@@ -3854,21 +3854,8 @@ export class OpenChatAgent extends EventTarget {
             return Promise.resolve({});
         }
 
-        const supportedSymbols = new Set(supportedTokens.map((t) => t.symbol.toLowerCase()));
-        const equivalentSymbols = [
-            ["btc", "ckbtc"],
-            ["eth", "cketh"],
-        ];
-
-        // If any symbol within a group of equivalent symbols is included, then include the whole group
-        for (const group of equivalentSymbols) {
-            if (group.some((s) => supportedSymbols.has(s))) {
-                group.forEach((s) => supportedSymbols.add(s));
-            }
-        }
-
         const exchangeRatesFromAllProviders = await Promise.allSettled(
-            this._exchangeRateClients.map((c) => c.exchangeRates(supportedSymbols)),
+            this._exchangeRateClients.map((c) => c.exchangeRates(supportedTokens)),
         );
 
         const grouped: Record<string, TokenExchangeRates[]> = {};
@@ -3882,6 +3869,8 @@ export class OpenChatAgent extends EventTarget {
                 }
             }
         }
+
+        const equivalentSymbols = [["btc", "ckbtc"], ["eth", "cketh"]];
 
         // If any symbols within a group of equivalent symbols are missing exchange rates,
         // copy them over from other symbols within the group
@@ -4717,5 +4706,11 @@ export class OpenChatAgent extends EventTarget {
 }
 
 export interface ExchangeRateClient {
+<<<<<<< HEAD
     exchangeRates(supportedSymbols: Set<string>): Promise<Record<string, TokenExchangeRates>>;
+=======
+    exchangeRates(
+        supportedTokens: CryptocurrencyDetails[],
+    ): Promise<Record<string, TokenExchangeRates>>;
+>>>>>>> master
 }
