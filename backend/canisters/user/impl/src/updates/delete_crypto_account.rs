@@ -14,6 +14,6 @@ fn delete_crypto_account(args: Args) -> Response {
 fn delete_crypto_account_impl(mut args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_suspended()?;
     args = args.trim().to_string();
-    state.data.saved_crypto_accounts.retain(|named| named.account.eq(&args));
+    state.data.saved_crypto_accounts.retain(|named| named.account.ne(&args));
     Ok(())
 }
