@@ -242,19 +242,6 @@
     <NetworkSelector {networks} bind:selectedNetwork />
 {/if}
 
-<TokenInput
-    ledger={tokenState.ledger}
-    {minAmount}
-    disabled={busy}
-    error={!validAmount}
-    bind:valid={validAmount}
-    maxAmount={tokenState.maxAmount}
-    bind:amount={tokenState.draftAmount}>
-    {#snippet subtext()}
-        {`Minimum amount ${minAmount} ${tokenState.symbol}`}
-    {/snippet}
-</TokenInput>
-
 <Input
     bind:value={targetAccount}
     countdown={false}
@@ -278,6 +265,19 @@
             )} />
     {/snippet}
 </Input>
+
+<TokenInput
+    ledger={tokenState.ledger}
+    {minAmount}
+    disabled={busy}
+    error={!validAmount}
+    bind:valid={validAmount}
+    maxAmount={tokenState.maxAmount}
+    bind:amount={tokenState.draftAmount}>
+    {#snippet subtext()}
+        {`Minimum amount ${minAmount} ${tokenState.symbol}`}
+    {/snippet}
+</TokenInput>
 
 {#if showAddressBook}
     <AccountSelector onDismiss={() => (showAddressBook = false)} bind:targetAccount />

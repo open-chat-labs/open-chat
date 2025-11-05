@@ -1,16 +1,36 @@
 <script lang="ts">
-    import { ColourVars } from "component-lib";
+    import { ColourVars, type SpacingSize, sizeToCssVar } from "component-lib";
     import { type Snippet } from "svelte";
+
+    type Pos = {
+        top?: SpacingSize;
+        bottom?: SpacingSize;
+        left?: SpacingSize;
+        right?: SpacingSize;
+    };
 
     interface Props {
         onClick?: (e: MouseEvent) => void;
         icon: Snippet<[string]>;
         disabled?: boolean;
+        pos?: Pos;
     }
-    let { icon, onClick, disabled = false }: Props = $props();
+    let { icon, onClick, disabled = false, pos = {} }: Props = $props();
+
+    function posToStyle(pos: Pos) {
+        const keys: (keyof Pos)[] = ["top", "right", "bottom", "left"];
+        return keys
+            .reduce((res, key) => {
+                if (pos[key] !== undefined) {
+                    res.push(`${key}: ${sizeToCssVar(pos[key])}`);
+                }
+                return res;
+            }, [] as string[])
+            .join("; ");
+    }
 </script>
 
-<button class="floating_button" {disabled} type="button" onclick={onClick}>
+<button style={posToStyle(pos)} class="floating_button" {disabled} type="button" onclick={onClick}>
     {@render icon(ColourVars.textOnPrimary)}
 </button>
 
@@ -22,6 +42,7 @@
     }
 
     button {
+        position: absolute;
         font-size: var(--typo-subtitle-sz);
         width: 3.5rem;
         height: 3.5rem;

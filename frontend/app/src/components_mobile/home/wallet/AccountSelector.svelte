@@ -63,7 +63,8 @@
                     onClick={() => selectAccount(account)}>
                     <Container direction={"vertical"}>
                         <Label fontWeight={"bold"}>{collapseAccount(account.name)}</Label>
-                        <BodySmall colour={"textSecondary"}>{account.account}</BodySmall>
+                        <BodySmall ellipsisTruncate colour={"textSecondary"}
+                            >{account.account}</BodySmall>
                     </Container>
                 </Option>
             {/each}

@@ -213,6 +213,10 @@ export type SpacingSize = "zero" | Exclude<keyof Spacings, keyof object | "cssVa
 
 type StyleSize<T> = T | [T, T] | [T, T, T] | [T, T, T, T];
 
+export function sizeToCssVar(sz: SpacingSize): string {
+    return `var(--sp-${sz})`;
+}
+
 export type Padding = StyleSize<SpacingSize>;
 
 export type Radius = StyleSize<BorderRadiusSize>;

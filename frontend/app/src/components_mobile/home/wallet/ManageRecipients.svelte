@@ -4,8 +4,8 @@
         Body,
         BodySmall,
         ColourVars,
-        CommonButton,
         Container,
+        FloatingButton,
         IconButton,
         Label,
         MenuItem,
@@ -18,13 +18,6 @@
     import Edit from "svelte-material-icons/TextBoxEditOutline.svelte";
     import Translatable from "../../Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
-
-    function collapseAccount(account: string) {
-        if (account.length > 23) {
-            return account.slice(0, 10) + "..." + account.slice(account.length - 10);
-        }
-        return account;
-    }
 
     function editAccount(account: NamedAccount) {
         publish("editRecipient", account);
@@ -40,7 +33,7 @@
 </script>
 
 <SlidingPageContent title={i18nKey("Manage recipients")}>
-    <Container gap={"lg"} padding={"lg"} direction={"vertical"}>
+    <Container height={{ kind: "fill" }} gap={"lg"} padding={"lg"} direction={"vertical"}>
         <Container padding={"sm"} gap={"sm"} direction={"vertical"}>
             <Body fontWeight={"bold"}>
                 <Translatable resourceKey={i18nKey("List of recipients")} />
@@ -52,7 +45,7 @@
                     )} />
             </BodySmall>
         </Container>
-        <Container gap={"md"} direction={"vertical"}>
+        <Container closeMenuOnScroll height={{ kind: "fill" }} gap={"md"} direction={"vertical"}>
             {#each $namedAccountsStore as account}
                 <MenuTrigger maskUI fill position={"bottom"} align={"end"}>
                     <Container
@@ -65,8 +58,8 @@
                         borderRadius={"md"}>
                         <Container direction={"vertical"}>
                             <Label fontWeight={"bold"}>{account.name}</Label>
-                            <BodySmall colour={"textSecondary"}
-                                >{collapseAccount(account.account)}</BodySmall>
+                            <BodySmall ellipsisTruncate colour={"textSecondary"}
+                                >{account.account}</BodySmall>
                         </Container>
 
                         <IconButton size={"md"}>
@@ -92,15 +85,12 @@
                 </MenuTrigger>
             {/each}
         </Container>
-        <Container mainAxisAlignment={"end"} crossAxisAlignment={"center"}>
-            <CommonButton onClick={addAccount} mode={"active"} size={"medium"}>
-                {#snippet icon(color)}
-                    <Plus {color} />
-                {/snippet}
-                <Translatable resourceKey={i18nKey("Add recipient")}></Translatable>
-            </CommonButton>
-        </Container>
     </Container>
+    <FloatingButton pos={{ bottom: "md", right: "md" }} onClick={addAccount}>
+        {#snippet icon(color)}
+            <Plus {color} />
+        {/snippet}
+    </FloatingButton>
 </SlidingPageContent>
 
 <style lang="scss">
