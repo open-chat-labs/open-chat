@@ -15,17 +15,21 @@
         disabled?: boolean;
         pos?: Pos;
     }
-    let { icon, onClick, disabled = false, pos = {} }: Props = $props();
+    let { icon, onClick, disabled = false, pos }: Props = $props();
 
-    function posToStyle(pos: Pos) {
+    function posToStyle(pos?: Pos) {
+        if (pos === undefined) return "";
         const keys: (keyof Pos)[] = ["top", "right", "bottom", "left"];
         return keys
-            .reduce((res, key) => {
-                if (pos[key] !== undefined) {
-                    res.push(`${key}: ${sizeToCssVar(pos[key])}`);
-                }
-                return res;
-            }, [] as string[])
+            .reduce(
+                (res, key) => {
+                    if (pos[key] !== undefined) {
+                        res.push(`${key}: ${sizeToCssVar(pos[key])}`);
+                    }
+                    return res;
+                },
+                ["position: absolute"] as string[],
+            )
             .join("; ");
     }
 </script>
@@ -42,7 +46,6 @@
     }
 
     button {
-        position: absolute;
         font-size: var(--typo-subtitle-sz);
         width: 3.5rem;
         height: 3.5rem;

@@ -446,6 +446,8 @@ export type NamedAccount = {
 
 export type SaveCryptoAccountResponse = Success | OCError | Failure;
 
+export type DeleteCryptoAccountResponse = Success | OCError | Failure;
+
 export type SubmitProposalResponse =
     | Success
     | Retrying

@@ -157,6 +157,7 @@ import {
     type CryptocurrencyTransfer,
     type CurrentUserResponse,
     type DataContent,
+    type DeleteCryptoAccountResponse,
     type DexId,
     type DiamondMembershipDuration,
     type DiamondMembershipFees,
@@ -7095,6 +7096,13 @@ export class OpenChat {
         return this.#sendRequest({
             kind: "saveCryptoAccount",
             namedAccount,
+        }).catch(() => ({ kind: "failure" }));
+    }
+
+    deleteCryptoAccount(account: string): Promise<DeleteCryptoAccountResponse> {
+        return this.#sendRequest({
+            kind: "deleteCryptoAccount",
+            account,
         }).catch(() => ({ kind: "failure" }));
     }
 

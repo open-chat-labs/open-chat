@@ -264,6 +264,10 @@ export class AnonUserClient {
         throw new AnonymousOperationError();
     }
 
+    deleteCryptoAccount(_: string): Promise<DeleteCryptoAccountResponse> {
+        throw new AnonymousOperationError();
+    }
+
     sendMessageWithTransferToChannel(
         _id: ChannelIdentifier,
         _recipientId: string | undefined,

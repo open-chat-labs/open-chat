@@ -15,7 +15,7 @@
         account?: NamedAccount;
     }
 
-    let { onClose, account = $bindable() }: Props = $props();
+    let { onClose, account }: Props = $props();
     let loading = $state(false);
     let name = $state(account?.name ?? "");
     let address = $state(account?.account ?? "");
@@ -41,6 +41,9 @@
         const accounts = await client.loadSavedCryptoAccounts();
         namedAccountsStore.set(accounts);
         loading = false;
+        // todo - we really need to know where we came from
+        // if we came from the manage recipient page we just want to pop the stack
+        // if we came from the token send success page we want to *clear* the stack
         onClose();
     }
 </script>

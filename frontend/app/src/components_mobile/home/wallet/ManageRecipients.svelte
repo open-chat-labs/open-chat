@@ -10,8 +10,10 @@
         Label,
         MenuItem,
         MenuTrigger,
+        Spinner,
     } from "component-lib";
-    import { namedAccountsStore, publish, type NamedAccount } from "openchat-client";
+    import { namedAccountsStore, OpenChat, publish, type NamedAccount } from "openchat-client";
+    import { getContext } from "svelte";
     import Delete from "svelte-material-icons/DeleteForeverOutline.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import Plus from "svelte-material-icons/Plus.svelte";
@@ -19,12 +21,22 @@
     import Translatable from "../../Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
 
+    const client = getContext<OpenChat>("client");
+
+    let deleting = $state<string>();
+
     function editAccount(account: NamedAccount) {
         publish("editRecipient", account);
     }
 
-    function deleteAccount(_account: NamedAccount) {
-        console.log("Delete account");
+    async function deleteAccount({ account }: NamedAccount) {
+        deleting = account;
+        const res = await client.deleteCryptoAccount(account);
+        if (res.kind === "success") {
+            const accts = await client.loadSavedCryptoAccounts();
+            namedAccountsStore.set(accts);
+        }
+        deleting = undefined;
     }
 
     function addAccount() {
@@ -64,7 +76,15 @@
 
                         <IconButton size={"md"}>
                             {#snippet icon()}
-                                <DotsVertical color={ColourVars.textSecondary} />
+                                {#if deleting === account.account}
+                                    <span class="busy_icon">
+                                        <Spinner
+                                            backgroundColour={ColourVars.textTertiary}
+                                            foregroundColour={ColourVars.textSecondary} />
+                                    </span>
+                                {:else}
+                                    <DotsVertical color={ColourVars.textSecondary} />
+                                {/if}
                             {/snippet}
                         </IconButton>
                     </Container>
@@ -99,5 +119,9 @@
         border-color: transparent !important;
         box-shadow: var(--menu-sh);
         opacity: 1 !important;
+    }
+
+    .busy_icon {
+        display: flex;
     }
 </style>

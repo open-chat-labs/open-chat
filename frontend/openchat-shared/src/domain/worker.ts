@@ -201,6 +201,7 @@ import type {
     CheckUsernameResponse,
     CreatedUser,
     CurrentUserResponse,
+    DeleteCryptoAccountResponse,
     DiamondMembershipDuration,
     DiamondMembershipFees,
     ManageFavouritesResponse,
@@ -392,6 +393,7 @@ export type WorkerRequest =
     | FollowThread
     | LoadSavedCryptoAccounts
     | SaveCryptoAccount
+    | DeleteCryptoAccount
     | SubmitProposal
     | TipMessage
     | CanSwap
@@ -725,6 +727,11 @@ type LoadSavedCryptoAccounts = {
 type SaveCryptoAccount = {
     kind: "saveCryptoAccount";
     namedAccount: NamedAccount;
+};
+
+type DeleteCryptoAccount = {
+    kind: "deleteCryptoAccount";
+    account: string;
 };
 
 type TipMessage = {
@@ -2176,6 +2183,8 @@ export type WorkerResult<T> = T extends Init
     ? NamedAccount[]
     : T extends SaveCryptoAccount
     ? SaveCryptoAccountResponse
+    : T extends DeleteCryptoAccount
+    ? DeleteCryptoAccountResponse
     : T extends TipMessage
     ? TipMessageResponse
     : T extends UnpinMessage

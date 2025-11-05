@@ -1,4 +1,5 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
+import { Type } from "@sinclair/typebox";
 import {
     isSuccessfulEventsResponse,
     MAX_EVENTS,
@@ -29,6 +30,7 @@ import {
     type CreateGroupResponse,
     type CryptocurrencyDetails,
     type DeleteCommunityResponse,
+    type DeleteCryptoAccountResponse,
     type DeletedDirectMessageResponse,
     type DeleteGroupResponse,
     type DeleteMessageResponse,
@@ -929,6 +931,16 @@ export class UserClient extends MsgpackCanisterAgent {
             },
             unitResult,
             UserNamedAccount,
+            UnitResult,
+        );
+    }
+
+    deleteCryptoAccount(account: string): Promise<DeleteCryptoAccountResponse> {
+        return this.executeMsgpackUpdate(
+            "delete_crypto_account",
+            account,
+            unitResult,
+            Type.String(),
             UnitResult,
         );
     }

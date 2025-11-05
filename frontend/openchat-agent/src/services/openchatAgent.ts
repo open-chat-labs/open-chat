@@ -4706,11 +4706,7 @@ export class OpenChatAgent extends EventTarget {
 }
 
 export interface ExchangeRateClient {
-<<<<<<< HEAD
-    exchangeRates(supportedSymbols: Set<string>): Promise<Record<string, TokenExchangeRates>>;
-=======
     exchangeRates(
         supportedTokens: CryptocurrencyDetails[],
     ): Promise<Record<string, TokenExchangeRates>>;
->>>>>>> master
 }

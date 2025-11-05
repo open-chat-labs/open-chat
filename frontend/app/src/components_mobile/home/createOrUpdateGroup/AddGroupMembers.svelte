@@ -32,13 +32,11 @@
     </Container>
 </SlidingPageContent>
 
-<div class="add_group_members_next">
-    <FloatingButton onClick={() => publish("updateGroupDetails")}>
-        {#snippet icon(color)}
-            <Check {color} />
-        {/snippet}
-    </FloatingButton>
-</div>
+<FloatingButton pos={{ bottom: "md", right: "md" }} onClick={() => publish("updateGroupDetails")}>
+    {#snippet icon(color)}
+        <Check {color} />
+    {/snippet}
+</FloatingButton>
 
 <style lang="scss">
     .add_group_members_next {

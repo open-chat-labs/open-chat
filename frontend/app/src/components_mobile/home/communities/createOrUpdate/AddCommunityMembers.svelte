@@ -32,18 +32,10 @@
     </Container>
 </SlidingPageContent>
 
-<div class="add_community_members_next">
-    <FloatingButton onClick={() => publish("updateCommunityDetails")}>
-        {#snippet icon(color)}
-            <Check {color} />
-        {/snippet}
-    </FloatingButton>
-</div>
-
-<style lang="scss">
-    .add_community_members_next {
-        position: absolute;
-        bottom: var(--sp-md);
-        right: var(--sp-md);
-    }
-</style>
+<FloatingButton
+    pos={{ bottom: "md", right: "md" }}
+    onClick={() => publish("updateCommunityDetails")}>
+    {#snippet icon(color)}
+        <Check {color} />
+    {/snippet}
+</FloatingButton>
