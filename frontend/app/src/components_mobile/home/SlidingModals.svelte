@@ -48,6 +48,7 @@
     import ReceiveCrypto from "./wallet/ReceiveCrypto.svelte";
     import SendCrypto from "./wallet/SendCrypto.svelte";
     import TokenPage from "./wallet/TokenPage.svelte";
+    import WalletSettings from "./wallet/WalletSettings.svelte";
     import type { TokenState } from "./wallet/walletState.svelte";
     /**
      * It is tempting to think that this can completely replace the right panel on mobile but it's not quite so simple.
@@ -62,6 +63,7 @@
         | { kind: "edit_recipient"; account: NamedAccount; onComplete: () => void }
         | { kind: "add_recipient"; account?: NamedAccount; onComplete: () => void }
         | { kind: "manage_recipients" }
+        | { kind: "wallet_settings" }
         | { kind: "send_token"; tokenState: TokenState }
         | { kind: "receive_token"; tokenState: TokenState }
         | { kind: "token_page"; tokenState: TokenState }
@@ -116,6 +118,7 @@
                 push({ kind: "add_recipient", account, onComplete }),
             ),
             subscribe("manageRecipients", () => push({ kind: "manage_recipients" })),
+            subscribe("walletSettings", () => push({ kind: "wallet_settings" })),
             subscribe("sendToken", (tokenState) =>
                 push({ kind: "send_token", tokenState: tokenState as unknown as TokenState }),
             ),
@@ -307,6 +310,8 @@
             <EditRecipient account={page.account} onClose={page.onComplete} />
         {:else if page.kind === "edit_recipient"}
             <EditRecipient account={page.account} onClose={page.onComplete} />
+        {:else if page.kind === "wallet_settings"}
+            <WalletSettings />
         {/if}
     </SlidingPage>
 {/each}

@@ -4,7 +4,7 @@
 
     interface Props {
         id?: string;
-        value?: string;
+        value?: string | number;
         placeholder?: string;
         subtext?: Snippet;
         error?: boolean;
@@ -34,7 +34,7 @@
         autofocus = false,
     }: Props = $props();
 
-    let remaining = $derived(maxlength - (value?.length ?? 0));
+    let remaining = $derived(maxlength - (value?.toString()?.length ?? 0));
     let warn = $derived(remaining <= 5);
     let hasInternalButtons = $derived(textButtons);
     let padding = $derived<Padding>(hasInternalButtons ? ["xs", "xs", "xs", "md"] : ["xs", "xl"]);

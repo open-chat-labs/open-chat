@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Container, Sheet } from "component-lib";
-    import { walletTokensSorted as accountsSorted, type OpenChat } from "openchat-client";
+    import { walletTokensSorted as accountsSorted, publish, type OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import RestrictedFeature from "../profile/RestrictedFeature.svelte";
@@ -43,7 +43,12 @@
 
 <Container gap={"sm"} height={{ kind: "fill" }} direction={"vertical"}>
     {#each $accountsSorted as token (token.ledger)}
-        <WalletToken {selectedConversion} {token} onRemoveFromWallet={removeFromWallet} />
+        <WalletToken
+            withMenu
+            onClick={(tokenState) => publish("tokenPage", tokenState)}
+            {selectedConversion}
+            {token}
+            onRemoveFromWallet={removeFromWallet} />
     {/each}
     {#if balanceError !== undefined}
         <ErrorMessage>{balanceError}</ErrorMessage>

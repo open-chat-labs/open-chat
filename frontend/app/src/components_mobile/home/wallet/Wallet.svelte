@@ -10,7 +10,6 @@
     import ShieldRemoveIcon from "svelte-material-icons/ShieldRemoveOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
-    import ManageAccounts from "../profile/ManageAccounts.svelte";
     import SetPinNumberModal from "../profile/SetPinNumberModal.svelte";
     import Accounts from "./Accounts.svelte";
     import BottomBar from "./BottomBar.svelte";
@@ -21,7 +20,6 @@
     const client = getContext<OpenChat>("client");
 
     let pinAction: PinOperation | undefined = $state(undefined);
-    let managing = $state(false);
     let selectedConversion: ConversionToken = $state("usd");
     let conversionOptions = [
         { id: "usd", label: "USD" },
@@ -76,11 +74,11 @@
             {/snippet}
             <Translatable resourceKey={i18nKey("Manage recipients")} />
         </MenuItem>
-        <MenuItem onclick={() => (managing = true)}>
+        <MenuItem onclick={() => publish("walletSettings")}>
             {#snippet icon(color, size)}
                 <Cog {color} {size} />
             {/snippet}
-            <Translatable resourceKey={i18nKey("cryptoAccount.manage")} />
+            <Translatable resourceKey={i18nKey("Settings")} />
         </MenuItem>
     {/snippet}
 </SectionHeader>
@@ -100,11 +98,5 @@
 {#if pinAction !== undefined}
     <Sheet>
         <SetPinNumberModal type={pinAction} onClose={() => (pinAction = undefined)} />
-    </Sheet>
-{/if}
-
-{#if managing}
-    <Sheet onDismiss={() => (managing = false)}>
-        <ManageAccounts bind:selectedConversion {conversionOptions} />
     </Sheet>
 {/if}

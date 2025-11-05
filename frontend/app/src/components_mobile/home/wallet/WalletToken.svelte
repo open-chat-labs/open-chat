@@ -12,12 +12,7 @@
         MenuItem,
         MenuTrigger,
     } from "component-lib";
-    import {
-        OpenChat,
-        publish,
-        walletConfigStore,
-        type EnhancedTokenDetails,
-    } from "openchat-client";
+    import { OpenChat, walletConfigStore, type EnhancedTokenDetails } from "openchat-client";
     import { getContext } from "svelte";
     import HeartRemoveOutline from "svelte-material-icons/HeartRemoveOutline.svelte";
     import MenuRight from "svelte-material-icons/MenuRight.svelte";
@@ -30,10 +25,18 @@
     interface Props {
         selectedConversion: ConversionToken;
         token: EnhancedTokenDetails;
-        onRemoveFromWallet: (ledger: string) => void;
+        onRemoveFromWallet?: (ledger: string) => void;
+        withMenu?: boolean;
+        onClick?: (tokenState: TokenState) => void;
     }
 
-    let { selectedConversion, token, onRemoveFromWallet }: Props = $props();
+    let {
+        selectedConversion,
+        token,
+        onRemoveFromWallet,
+        withMenu = true,
+        onClick,
+    }: Props = $props();
 
     let tokenState = $derived(new TokenState(token, selectedConversion));
     let manualWalletConfig = $derived($walletConfigStore.kind === "manual_wallet");
@@ -53,33 +56,11 @@
     }
 </script>
 
-<MenuTrigger
-    mobileMode={"longpress"}
-    fill
-    maskUI
-    classString={"token_menu_trigger"}
-    position={"bottom"}
-    align={"end"}>
-    {#snippet menuItems()}
-        <MenuItem onclick={() => refreshBalance(token.ledger)}>
-            {#snippet icon(color)}
-                <Reload {color} />
-            {/snippet}
-            <Translatable resourceKey={i18nKey("Refresh balance")} />
-        </MenuItem>
-        {#if manualWalletConfig}
-            <MenuItem onclick={() => onRemoveFromWallet(token.ledger)}>
-                {#snippet icon(color)}
-                    <HeartRemoveOutline {color} />
-                {/snippet}
-                <Translatable resourceKey={i18nKey("cryptoAccount.remove")} />
-            </MenuItem>
-        {/if}
-    {/snippet}
+{#snippet content()}
     <Container
         supplementalClass={"wallet_token"}
         gap={"md"}
-        onClick={() => publish("tokenPage", tokenState)}
+        onClick={onClick ? () => onClick(tokenState) : undefined}
         mainAxisAlignment={"spaceBetween"}
         crossAxisAlignment={"center"}
         padding={"sm"}>
@@ -100,10 +81,42 @@
             width={{ kind: "hug" }}
             colour={"primary"}
             fontWeight={"bold"}>{tokenState.formattedConvertedValue}</Body>
-        {#if refreshing}
-            <Reload color={ColourVars.textSecondary} />
-        {:else}
-            <MenuRight color={ColourVars.textSecondary} />
+        {#if withMenu}
+            {#if refreshing}
+                <Reload color={ColourVars.textSecondary} />
+            {:else}
+                <MenuRight color={ColourVars.textSecondary} />
+            {/if}
         {/if}
     </Container>
-</MenuTrigger>
+{/snippet}
+
+{#if withMenu}
+    <MenuTrigger
+        mobileMode={"longpress"}
+        fill
+        maskUI
+        classString={"token_menu_trigger"}
+        position={"bottom"}
+        align={"end"}>
+        {#snippet menuItems()}
+            <MenuItem onclick={() => refreshBalance(token.ledger)}>
+                {#snippet icon(color)}
+                    <Reload {color} />
+                {/snippet}
+                <Translatable resourceKey={i18nKey("Refresh balance")} />
+            </MenuItem>
+            {#if manualWalletConfig && onRemoveFromWallet}
+                <MenuItem onclick={() => onRemoveFromWallet(token.ledger)}>
+                    {#snippet icon(color)}
+                        <HeartRemoveOutline {color} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("cryptoAccount.remove")} />
+                </MenuItem>
+            {/if}
+        {/snippet}
+        {@render content()}
+    </MenuTrigger>
+{:else}
+    {@render content()}
+{/if}

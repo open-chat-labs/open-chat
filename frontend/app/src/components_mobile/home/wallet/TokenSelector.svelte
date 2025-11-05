@@ -1,22 +1,32 @@
 <script lang="ts">
     import { interpolate } from "@src/i18n/i18n";
-    import { Avatar, Body, ColourVars, Container, Search, Sheet, Subtitle } from "component-lib";
+    import { ColourVars, Container, Option, Search, Sheet, Subtitle } from "component-lib";
     import type { EnhancedTokenDetails, ResourceKey } from "openchat-client";
     import { cryptoTokensSorted as accountsSorted } from "openchat-client";
     import type { Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import Translatable from "../../Translatable.svelte";
+    import WalletToken from "./WalletToken.svelte";
 
     interface Props {
         onDismiss: () => void;
         onSelect: (token: EnhancedTokenDetails) => void;
         title: ResourceKey;
         placeholder: ResourceKey;
-        icon: Snippet<[string, string]>;
+        icon?: Snippet<[string, string]>;
         extraFilter?: (token: EnhancedTokenDetails) => boolean;
+        selected?: Set<string>;
     }
 
-    let { onDismiss, onSelect, title, icon, placeholder, extraFilter }: Props = $props();
+    let {
+        onDismiss,
+        onSelect,
+        title,
+        icon,
+        placeholder,
+        extraFilter,
+        selected = new Set(),
+    }: Props = $props();
 
     let searching = $state(false);
     let searchTerm = $state<string>("");
@@ -41,7 +51,7 @@
         gap={"xl"}
         direction={"vertical"}>
         <Container padding={["zero", "sm"]} gap={"md"} crossAxisAlignment={"center"}>
-            {@render icon(ColourVars.textSecondary, "1.4rem")}
+            {@render icon?.(ColourVars.textSecondary, "1.4rem")}
             <Subtitle fontWeight={"bold"}>
                 <Translatable resourceKey={title}></Translatable>
             </Subtitle>
@@ -53,17 +63,15 @@
             placeholder={interpolate($_, placeholder)}
             bind:value={searchTerm} />
 
-        <Container supplementalClass={"token_selector"} direction={"vertical"}>
+        <Container gap={"sm"} supplementalClass={"token_selector"} direction={"vertical"}>
             {#each filteredTokens as token}
-                <Container
-                    supplementalClass={"wallet_token"}
-                    gap={"md"}
+                <Option
                     onClick={() => onSelect(token)}
-                    crossAxisAlignment={"center"}
-                    padding={"sm"}>
-                    <Avatar url={token.logo}></Avatar>
-                    <Body width={{ kind: "hug" }} fontWeight={"bold"}>{token.symbol}</Body>
-                </Container>
+                    padding={["zero", "md", "zero", "zero"]}
+                    value={token}
+                    selected={selected.has(token.symbol)}>
+                    <WalletToken withMenu={false} selectedConversion={"usd"} {token} />
+                </Option>
             {/each}
         </Container>
     </Container>
