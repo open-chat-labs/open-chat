@@ -33,6 +33,7 @@ pub mod configure_wallet;
 pub mod create_community;
 pub mod create_group;
 pub mod delete_community;
+pub mod delete_crypto_account;
 pub mod delete_direct_chat;
 pub mod delete_group;
 pub mod delete_messages;
