@@ -23,8 +23,9 @@
         return keys
             .reduce(
                 (res, key) => {
-                    if (pos[key] !== undefined) {
-                        res.push(`${key}: ${sizeToCssVar(pos[key])}`);
+                    const val = pos[key];
+                    if (val !== undefined) {
+                        res.push(`${key}: ${sizeToCssVar(val)}`);
                     }
                     return res;
                 },

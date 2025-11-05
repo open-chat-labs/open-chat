@@ -14,6 +14,7 @@
     import {
         cryptoTokensSorted as accountsSorted,
         cryptoLookup,
+        DEFAULT_TOKENS,
         OpenChat,
         pinNumberRequiredStore,
         walletConfigStore,
@@ -33,20 +34,9 @@
     const client = getContext<OpenChat>("client");
 
     let showTokenSelector = $state(false);
-    let searchTerm = $state("");
-    let searching = $state(false);
     let config: WalletConfig = $state({ ...$walletConfigStore });
     let valid = $derived(config.kind === "manual_wallet" || !isNaN(Number(config.minDollarValue)));
     let defaultLedgers = $derived(getDefaultLedgers($cryptoLookup));
-    let searchTermLower = $derived(searchTerm.toLowerCase());
-    let filteredTokens = $derived(
-        $accountsSorted.filter(
-            (token) =>
-                searchTermLower === "" ||
-                token.name.toLowerCase().includes(searchTermLower) ||
-                token.symbol.toLowerCase().includes(searchTermLower),
-        ),
-    );
 
     function getDefaultLedgers(
         ledgerLookup: ReadonlyMap<string, CryptocurrencyDetails>,
@@ -58,8 +48,7 @@
             },
             {} as Record<string, string>,
         );
-        // return new Set<string>(DEFAULT_TOKENS.map((t) => lookup[t]).filter((l) => l !== undefined));
-        return new Set<string>(["chat"].map((t) => lookup[t]).filter((l) => l !== undefined));
+        return new Set<string>(DEFAULT_TOKENS.map((t) => lookup[t]).filter((l) => l !== undefined));
     }
 
     function toggleMode() {
@@ -86,7 +75,6 @@
         config = clone($walletConfigStore);
 
         return () => {
-            console.log("On destroy - why is this running?");
             if (client.walletConfigChanged($walletConfigStore, config)) {
                 client.setWalletConfig(config).then((success) => {
                     if (!success) {
@@ -117,14 +105,14 @@
     }
 
     function selectToken(token: EnhancedTokenDetails) {
-        console.log("is this running", config);
         if (config.kind === "manual_wallet") {
             if (config.tokens.has(token.symbol)) {
                 config.tokens.delete(token.symbol);
             } else {
                 config.tokens.add(token.symbol);
             }
-            config = { ...config };
+            console.log("Config: ", config, config.tokens.size);
+            config = clone(config);
         }
     }
 </script>

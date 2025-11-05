@@ -97,10 +97,6 @@ export class TokenState {
             this.#symbol,
         ),
     );
-    #wholeUnitRemainingBalance = $derived.by(() => {
-        const n = Number(this.#remainingBalance);
-        return n / Math.pow(10, this.#decimals);
-    });
     #formattedTokenBalance = $derived(formatTokens(this.#remainingBalance, this.#decimals));
     #convertedValue = $derived(
         getConvertedTokenValue(this.#selectedConversion, this.#convertedBalances),
@@ -108,12 +104,16 @@ export class TokenState {
     #formattedConvertedValue = $derived(
         formatConvertedValue(this.#selectedConversion, this.#convertedValue),
     );
+    #usdRate(symbol: string) {
+        if (symbol === "usd") return 1;
+        return exchangeRatesLookupStore.value.get(symbol.toLowerCase())?.toUSD;
+    }
+
     #formattedUnitValue = $derived.by(() => {
-        if (this.#convertedValue === undefined) return "?????";
-        return formatConvertedValue(
-            this.#selectedConversion,
-            this.#convertedValue / Number(this.#wholeUnitRemainingBalance),
-        );
+        const conversion = this.#usdRate(this.#selectedConversion.toLowerCase());
+        const token = this.#usdRate(this.#symbol);
+        if (conversion === undefined || token === undefined || conversion === 0) return "?????";
+        return formatConvertedValue(this.#selectedConversion, token / conversion);
     });
 
     constructor(t: EnhancedTokenDetails, c: ConversionToken) {

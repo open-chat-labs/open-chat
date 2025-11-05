@@ -41,7 +41,7 @@
     </Sheet>
 {/if}
 
-<Container gap={"sm"} height={{ kind: "fill" }} direction={"vertical"}>
+<Container closeMenuOnScroll gap={"sm"} height={{ kind: "fill" }} direction={"vertical"}>
     {#each $accountsSorted as token (token.ledger)}
         <WalletToken
             withMenu
