@@ -39,6 +39,7 @@ fn main() {
     generate_ts_method!(user, create_community);
     generate_ts_method!(user, create_group);
     generate_ts_method!(user, delete_community);
+    generate_ts_method!(user, delete_crypto_account);
     generate_ts_method!(user, delete_direct_chat);
     generate_ts_method!(user, delete_group);
     generate_ts_method!(user, delete_messages);
