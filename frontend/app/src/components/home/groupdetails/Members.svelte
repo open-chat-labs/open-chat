@@ -39,9 +39,9 @@
     import UserGroups from "../communities/details/UserGroups.svelte";
     import BlockedUser from "./BlockedUser.svelte";
     import InvitedUser from "./InvitedUser.svelte";
+    import LapsedUser from "./LapsedUser.svelte";
     import Member from "./Member.svelte";
     import MembersHeader from "./MembersHeader.svelte";
-    import User from "./User.svelte";
 
     const MAX_SEARCH_RESULTS = 255; // irritatingly this is a nat8 in the candid
     const client = getContext<OpenChat>("client");
@@ -115,6 +115,8 @@
     let membersList = $state<VirtualList<FullMember> | undefined>();
     let memberView = $state<View>("members");
     let selectedTab = $state<Tab>("users");
+    let canBlockUser = $derived(client.canBlockUsers(collection.id));
+    let canRemoveMember = $derived(client.canRemoveMembers(collection.id));
 
     function idsMatch(
         previous: CommunityIdentifier | MultiUserChatIdentifier,
@@ -209,7 +211,8 @@
 
         if (
             (memberView === "blocked" && blocked.size === 0) ||
-            (memberView === "invited" && invited.size === 0)
+            (memberView === "invited" && invited.size === 0) ||
+            (memberView === "lapsed" && lapsed.size === 0)
         ) {
             memberView = "members";
         }
@@ -339,8 +342,8 @@
                         ROLE_MODERATOR,
                     )}
                     canDemoteToMember={client.canDemote(collection.id, item.role, ROLE_MEMBER)}
-                    canBlockUser={client.canBlockUsers(collection.id)}
-                    canRemoveMember={client.canRemoveMembers(collection.id)}
+                    {canBlockUser}
+                    {canRemoveMember}
                     {searchTerm}
                     {onBlockUser}
                     {onChangeRole}
@@ -372,7 +375,12 @@
     {:else if memberView === "lapsed"}
         <div use:menuCloser class="user-list">
             {#each lapsedMembers as user}
-                <User me={user.userId === $currentUserIdStore} {user} {searchTerm} />
+                <LapsedUser
+                    me={user.userId === $currentUserIdStore}
+                    onBlockUser={canBlockUser ? onBlockUser : undefined}
+                    onRemoveMember={canRemoveMember ? onRemoveMember : undefined}
+                    {user}
+                    {searchTerm} />
             {/each}
         </div>
     {/if}

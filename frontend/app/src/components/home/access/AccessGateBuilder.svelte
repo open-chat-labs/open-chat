@@ -218,7 +218,7 @@
                                         <DurationPicker
                                             bind:valid={evaluationIntervalValid}
                                             bind:milliseconds={gateConfig.expiry}
-                                            unitFilter={(u) => !["minutes", "hours"].includes(u)} />
+                                            unitFilter={(u) => ![].includes(u)} />
                                     {/if}
                                 </div>
                             </Checkbox>
