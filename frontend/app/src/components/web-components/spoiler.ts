@@ -21,7 +21,7 @@ class SpoilerSpan extends HTMLElement {
       }
 
       .spoiler-content {
-        filter: blur(5px);
+        filter: blur(6px);
         cursor: pointer;
         user-select: none;
         transition: filter 0.3s ease;
@@ -32,10 +32,6 @@ class SpoilerSpan extends HTMLElement {
         filter: none;
         cursor: default;
         user-select: text;
-      }
-
-      .spoiler-content:hover:not(.revealed) {
-        filter: blur(4px);
       }
     `;
 
@@ -78,3 +74,10 @@ class SpoilerSpan extends HTMLElement {
 
 // Register the custom element
 customElements.define("spoiler-span", SpoilerSpan);
+
+// // TypeScript declaration for the custom element
+// declare global {
+//     interface HTMLElementTagNameMap {
+//         "spoiler-span": SpoilerSpan;
+//     }
+// }
