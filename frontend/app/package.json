@@ -90,7 +90,6 @@
         "rollbar": "^2.26.5",
         "sirv-cli": "^2.0.2",
         "smoothscroll": "^0.4.0",
-        "spoilerjs": "^0.2.0",
         "svelte-confetti": "^2.1.2",
         "svelte-easy-crop": "^3.0.0",
         "svelte-material-icons": "^3.0.5",

@@ -1,10 +1,10 @@
 <script lang="ts">
     import "@styles/global.scss";
-    import "spoilerjs/spoiler-span";
 
     import Router from "@components/Router.svelte";
     import "@components/web-components/customEmoji";
     import "@components/web-components/profileLink";
+    import "@components/web-components/spoiler";
     import "@i18n/i18n";
     import { reviewingTranslations } from "@i18n/i18n";
     import { trackedEffect } from "@src/utils/effects.svelte";
