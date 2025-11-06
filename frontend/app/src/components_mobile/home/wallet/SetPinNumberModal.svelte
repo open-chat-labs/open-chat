@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
-    import { Body, CommonButton, Container, Subtitle } from "component-lib";
+    import { Body, Button, Container, Subtitle } from "component-lib";
     import {
         AuthProvider,
         pinNumberFailureStore,
@@ -8,7 +8,7 @@
         type Verification,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import ShieldPlusOutline from "svelte-material-icons/ShieldPlusOutline.svelte";
+    import Lock from "svelte-material-icons/Lock.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import {
         pinNumberErrorMessageStore,
@@ -20,7 +20,7 @@
     import Pincode from "../../pincode/Pincode.svelte";
     import Translatable from "../../Translatable.svelte";
     import ForgotPinLabel from "../ForgotPinLabel.svelte";
-    import ReAuthenticate from "./ReAuthenticate.svelte";
+    import ReAuthenticate from "../profile/ReAuthenticate.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -144,33 +144,51 @@
                 </Body>
             {/if}
             {#if showCurrentPin}
-                <div class="code">
-                    {#if type.kind === "change"}
-                        <div>
-                            <Translatable resourceKey={i18nKey("pinNumber.currentPin")} />
-                        </div>
-                    {/if}
-                    <Pincode type="numeric" length={6} bind:code={currPinArray} />
-                    <ForgotPinLabel {onForgot} />
-                </div>
+                <Container allowOverflow crossAxisAlignment={"center"} direction={"vertical"}>
+                    <Pincode
+                        subtext={type.kind === "change"
+                            ? i18nKey("pinNumber.currentPin")
+                            : undefined}
+                        type="numeric"
+                        length={6}
+                        bind:code={currPinArray} />
+                </Container>
             {/if}
             {#if type.kind !== "clear"}
-                <div class="code">
-                    {#if type.kind === "change"}
-                        <div><Translatable resourceKey={i18nKey("pinNumber.newPin")} /></div>
-                    {/if}
-                    <Pincode type="numeric" length={6} bind:code={newPinArray} />
-                </div>
-            {/if}
-            {#if errorMessage !== undefined}
-                <ErrorMessage>
-                    <Translatable resourceKey={errorMessage} />
-                </ErrorMessage>
+                <Pincode
+                    subtext={type.kind === "change" ? i18nKey("pinNumber.newPin") : undefined}
+                    type="numeric"
+                    length={6}
+                    bind:code={newPinArray} />
             {/if}
         {/if}
     </Container>
 
-    <Container gap={"md"} crossAxisAlignment={"end"} mainAxisAlignment={"end"}>
+    {#if type.kind !== "forgot"}
+        <Container
+            padding={["xl", "zero", "zero", "zero"]}
+            direction={"vertical"}
+            gap={"xs"}
+            crossAxisAlignment={"center"}>
+            <Button loading={busy} disabled={busy || !isValid} onClick={changePin}>
+                {#snippet icon(color)}
+                    <Lock {color} />
+                {/snippet}
+                <Translatable resourceKey={action} />
+            </Button>
+            {#if type.kind !== "set"}
+                <ForgotPinLabel {onForgot} />
+            {/if}
+        </Container>
+    {/if}
+
+    {#if errorMessage !== undefined}
+        <ErrorMessage>
+            <Translatable resourceKey={errorMessage} />
+        </ErrorMessage>
+    {/if}
+
+    <!-- <Container gap={"md"} crossAxisAlignment={"end"} mainAxisAlignment={"end"}>
         {#if type.kind === "forgot"}
             <CommonButton disabled={busy} onClick={onClose} size={"medium"}>
                 <Translatable resourceKey={i18nKey("cancel")} />
@@ -191,7 +209,7 @@
                 <Translatable resourceKey={action} />
             </CommonButton>
         {/if}
-    </Container>
+    </Container> -->
 </Container>
 
 <style lang="scss">

@@ -43,60 +43,78 @@
     }
 </script>
 
-<input
-    type="text"
-    inputmode={type === "numeric" ? "numeric" : "text"}
-    pattern={type === "numeric" ? "[0-9]{1}" : "^[a-zA-Z0-9]$"}
-    maxlength="1"
-    value={char.value.length > 0 ? "*" : ""}
-    onblur={onBlur}
-    oninput={onInput}
-    onkeydown={(e) => {
-        if (e.key === KEYBOARD.BACKSPACE) {
-            e.preventDefault();
-            onClear(char);
-            return;
-        }
+<div class="wrapper">
+    <input
+        type="text"
+        inputmode={type === "numeric" ? "numeric" : "text"}
+        pattern={type === "numeric" ? "[0-9]{1}" : "^[a-zA-Z0-9]$"}
+        maxlength="1"
+        value={char.value.length > 0 ? "*" : ""}
+        onblur={onBlur}
+        oninput={onInput}
+        onkeydown={(e) => {
+            if (e.key === KEYBOARD.BACKSPACE) {
+                e.preventDefault();
+                onClear(char);
+                return;
+            }
 
-        if (e.key == KEYBOARD.CONTROL || e.key == KEYBOARD.COMMAND) {
-            modifierKeyDown = true;
-        }
+            if (e.key == KEYBOARD.CONTROL || e.key == KEYBOARD.COMMAND) {
+                modifierKeyDown = true;
+            }
 
-        if (e.key == KEYBOARD.V && modifierKeyDown) {
-            return;
-        }
+            if (e.key == KEYBOARD.V && modifierKeyDown) {
+                return;
+            }
 
-        if (e.key !== KEYBOARD.TAB) {
-            e.preventDefault();
-        }
+            if (e.key !== KEYBOARD.TAB) {
+                e.preventDefault();
+            }
 
-        // Do not try to update the value from the keydown event if on android, leave that to the input event
-        if (!androidHack) {
-            dispatchUpdate(e.key);
-        }
-    }}
-    onkeyup={(e) => {
-        if (e.key == KEYBOARD.CONTROL || e.key == KEYBOARD.COMMAND) {
-            modifierKeyDown = false;
-        }
-    }} />
+            // Do not try to update the value from the keydown event if on android, leave that to the input event
+            if (!androidHack) {
+                dispatchUpdate(e.key);
+            }
+        }}
+        onkeyup={(e) => {
+            if (e.key == KEYBOARD.CONTROL || e.key == KEYBOARD.COMMAND) {
+                modifierKeyDown = false;
+            }
+        }} />
+</div>
 
 <style lang="scss">
-    input {
+    .wrapper {
+        position: relative;
+        display: flex;
+        align-items: flex-end;
         width: 4rem;
-        padding: 0.5rem 1rem;
+        &::after {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            content: "";
+            width: 100%;
+            height: 6px;
+            display: block;
+            border-radius: var(--rad-circle);
+            background-color: var(--primary);
+        }
+    }
+
+    input {
+        width: 100%;
+        padding: 1rem;
         margin: 0;
         border: 0;
         border-radius: 0;
         text-align: center;
-        background-color: var(--input-bg);
+        background-color: transparent;
         color: var(--txt);
-        @include font(book, normal, fs-130);
-        border: var(--bw) solid var(--bd);
-        box-shadow: var(--input-sh);
+        @include font(bold, normal, fs-130);
 
-        @include mobile() {
-            width: 3rem;
+        &:focus {
+            outline: none;
         }
     }
 

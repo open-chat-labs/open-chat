@@ -102,13 +102,13 @@
     import MiddlePanel from "./MiddlePanel.svelte";
     import NoAccess from "./NoAccess.svelte";
     import PinNumberModal from "./PinNumberModal.svelte";
-    import SetPinNumberModal from "./profile/SetPinNumberModal.svelte";
     import VerifyHumanity from "./profile/VerifyHumanity.svelte";
     import ViewUserProfile from "./profile/ViewUserProfileModal.svelte";
     import MakeProposalModal from "./proposal/MakeProposalModal.svelte";
     import RightPanel from "./RightPanel.svelte";
     import SuspendModal from "./SuspendModal.svelte";
     import Upgrade from "./upgrade/Upgrade.svelte";
+    import SetPinNumberModal from "./wallet/SetPinNumberModal.svelte";
 
     type ViewProfileConfig = {
         userId: string;

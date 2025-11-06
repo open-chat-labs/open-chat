@@ -1,16 +1,11 @@
 <script lang="ts">
-    import type { PinOperation } from "@src/stores/pinNumber";
-    import { Container, Logo, MenuItem, SectionHeader, Sheet } from "component-lib";
-    import { namedAccountsStore, OpenChat, pinNumberRequiredStore, publish } from "openchat-client";
+    import { Container, Logo, MenuItem, SectionHeader } from "component-lib";
+    import { namedAccountsStore, OpenChat, publish } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import Book from "svelte-material-icons/BookOpenOutline.svelte";
     import Cog from "svelte-material-icons/CogOutline.svelte";
-    import ShieldPlusIcon from "svelte-material-icons/ShieldPlusOutline.svelte";
-    import ShieldRefreshIcon from "svelte-material-icons/ShieldRefreshOutline.svelte";
-    import ShieldRemoveIcon from "svelte-material-icons/ShieldRemoveOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
-    import SetPinNumberModal from "../profile/SetPinNumberModal.svelte";
     import Accounts from "./Accounts.svelte";
     import BottomBar from "./BottomBar.svelte";
     import OverallBalance from "./OverallBalance.svelte";
@@ -19,7 +14,6 @@
 
     const client = getContext<OpenChat>("client");
 
-    let pinAction: PinOperation | undefined = $state(undefined);
     let selectedConversion: ConversionToken = $state("usd");
     let conversionOptions = [
         { id: "usd", label: "USD" },
@@ -47,27 +41,6 @@
     {/snippet}
 
     {#snippet menu()}
-        {#if !$pinNumberRequiredStore}
-            <MenuItem onclick={() => (pinAction = { kind: "set" })}>
-                {#snippet icon(color, size)}
-                    <ShieldPlusIcon {color} {size} />
-                {/snippet}
-                <Translatable resourceKey={i18nKey("pinNumber.setPin")} />
-            </MenuItem>
-        {:else}
-            <MenuItem onclick={() => (pinAction = { kind: "change" })}>
-                {#snippet icon(color, size)}
-                    <ShieldRefreshIcon {color} {size} />
-                {/snippet}
-                <Translatable resourceKey={i18nKey("pinNumber.changePin")} />
-            </MenuItem>
-            <MenuItem onclick={() => (pinAction = { kind: "clear" })}>
-                {#snippet icon(color, size)}
-                    <ShieldRemoveIcon {color} {size} />
-                {/snippet}
-                <Translatable resourceKey={i18nKey("pinNumber.clearPin")} />
-            </MenuItem>
-        {/if}
         <MenuItem onclick={() => publish("manageRecipients")}>
             {#snippet icon(color, size)}
                 <Book {color} {size} />
@@ -94,9 +67,3 @@
     <Accounts bind:selectedConversion />
     <BottomBar {selectedConversion} />
 </Container>
-
-{#if pinAction !== undefined}
-    <Sheet>
-        <SetPinNumberModal type={pinAction} onClose={() => (pinAction = undefined)} />
-    </Sheet>
-{/if}

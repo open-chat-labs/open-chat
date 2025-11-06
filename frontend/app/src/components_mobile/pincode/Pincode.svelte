@@ -7,6 +7,11 @@
 </script>
 
 <script lang="ts">
+    import { BodySmall, Container } from "component-lib";
+
+    import { i18nKey } from "@src/i18n/i18n";
+    import type { ResourceKey } from "openchat-client";
+    import Translatable from "../Translatable.svelte";
     import PincodeInput from "./PincodeInput.svelte";
 
     interface Props {
@@ -15,6 +20,7 @@
         type?: PincodeType;
         onClear?: () => void;
         onComplete?: (code: string[], value: string) => void;
+        subtext?: ResourceKey;
     }
 
     let {
@@ -23,6 +29,7 @@
         type = "numeric",
         onClear,
         onComplete,
+        subtext = i18nKey("Only use numbers for your PIN"),
     }: Props = $props();
 
     function initialise(length: number): PincodeChar[] {
@@ -100,14 +107,22 @@
 </script>
 
 <div class="pincode" bind:this={ref} onpaste={handlePaste}>
-    {#each characters as char}
-        <PincodeInput onUpdate={onUpdateCharacter} onClear={onClearCharacter} {type} {char} />
-    {/each}
+    <Container crossAxisAlignment={"end"} mainAxisAlignment={"spaceAround"} gap={"sm"}>
+        {#each characters as char}
+            <PincodeInput onUpdate={onUpdateCharacter} onClear={onClearCharacter} {type} {char} />
+        {/each}
+    </Container>
+    <BodySmall width={{ kind: "hug" }} colour={"textSecondary"}>
+        <Translatable resourceKey={subtext} />
+    </BodySmall>
 </div>
 
 <style lang="scss">
     .pincode {
-        display: inline-flex;
-        gap: $sp3;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--sp-xs);
     }
 </style>

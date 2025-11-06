@@ -8,6 +8,7 @@
         children?: Snippet;
         reverse?: boolean;
         width?: SizeMode;
+        bound?: boolean;
     }
 
     let {
@@ -17,11 +18,14 @@
         children,
         reverse = false,
         width = { kind: "hug" },
+        bound = true,
     }: Props = $props();
 
     function internalOnChange(e?: Event) {
         if (disabled) return;
-        checked = !checked;
+        if (bound) {
+            checked = !checked;
+        }
         e?.stopPropagation();
         e?.preventDefault();
         onChange?.();

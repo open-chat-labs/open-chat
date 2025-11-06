@@ -1,14 +1,17 @@
 <script lang="ts">
     import { i18nKey, interpolate } from "@src/i18n/i18n";
+    import type { PinOperation } from "@src/stores/pinNumber";
     import { toastStore } from "@src/stores/toast";
     import {
         Avatar,
         Body,
+        Button,
         ColourVars,
         CommonButton,
         Container,
         Input,
         Label,
+        Sheet,
         Switch,
     } from "component-lib";
     import {
@@ -26,9 +29,11 @@
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
+    import Lock from "svelte-material-icons/Lock.svelte";
     import Setting from "../../Setting.svelte";
     import Translatable from "../../Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
+    import SetPinNumberModal from "./SetPinNumberModal.svelte";
     import TokenSelector from "./TokenSelector.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -37,6 +42,7 @@
     let config: WalletConfig = $state({ ...$walletConfigStore });
     let valid = $derived(config.kind === "manual_wallet" || !isNaN(Number(config.minDollarValue)));
     let defaultLedgers = $derived(getDefaultLedgers($cryptoLookup));
+    let pinAction = $state<PinOperation>();
 
     function getDefaultLedgers(
         ledgerLookup: ReadonlyMap<string, CryptocurrencyDetails>,
@@ -114,18 +120,42 @@
             config = clone(config);
         }
     }
+
+    function togglePin() {
+        const set = !$pinNumberRequiredStore;
+        if (set) {
+            pinAction = { kind: "set" };
+        } else {
+            pinAction = { kind: "clear" };
+        }
+    }
 </script>
 
 <SlidingPageContent title={i18nKey("Wallet settings")}>
     <Container height={{ kind: "fill" }} gap={"lg"} padding={"lg"} direction={"vertical"}>
-        <Container padding={"sm"} gap={"sm"} direction={"vertical"}>
-            <Setting
-                toggle={() => console.log("toggle pin")}
-                info={"Set a PIN number to add an extra layer of security to your wallet. You will be prompted to enter your pin before making any transactions."}>
-                <Switch width={{ kind: "fill" }} reverse checked={$pinNumberRequiredStore ?? false}>
-                    <Translatable resourceKey={i18nKey("PIN number")} />
-                </Switch>
-            </Setting>
+        <Container padding={"sm"} gap={"xl"} direction={"vertical"}>
+            <Container gap={"md"} direction={"vertical"}>
+                <Setting
+                    toggle={togglePin}
+                    info={"Set a PIN number to add an extra layer of security to your wallet. You will be prompted to enter your pin before making any transactions."}>
+                    <Switch
+                        onChange={togglePin}
+                        width={{ kind: "fill" }}
+                        reverse
+                        bound={false}
+                        checked={$pinNumberRequiredStore ?? false}>
+                        <Translatable resourceKey={i18nKey("PIN number")} />
+                    </Switch>
+                </Setting>
+                {#if $pinNumberRequiredStore}
+                    <Button secondary onClick={() => (pinAction = { kind: "change" })}>
+                        {#snippet icon(color)}
+                            <Lock {color} />
+                        {/snippet}
+                        <Translatable resourceKey={i18nKey("Change PIN")} />
+                    </Button>
+                {/if}
+            </Container>
             <Setting
                 toggle={toggleMode}
                 info={[
@@ -209,6 +239,12 @@
         </span>
     </Container>
 {/snippet}
+
+{#if pinAction !== undefined}
+    <Sheet onDismiss={() => (pinAction = undefined)}>
+        <SetPinNumberModal type={pinAction} onClose={() => (pinAction = undefined)} />
+    </Sheet>
+{/if}
 
 <style lang="scss">
     .icon {
