@@ -61,23 +61,13 @@ class SpoilerSpan extends HTMLElement {
         );
     }
 
-    // Public method to programmatically reveal
     public revealSpoiler() {
         this.reveal();
     }
 
-    // Public method to check if revealed
     public get revealed(): boolean {
         return this.isRevealed;
     }
 }
 
-// Register the custom element
 customElements.define("spoiler-span", SpoilerSpan);
-
-// // TypeScript declaration for the custom element
-// declare global {
-//     interface HTMLElementTagNameMap {
-//         "spoiler-span": SpoilerSpan;
-//     }
-// }
