@@ -4,7 +4,6 @@
 
     interface Props {
         flush?: boolean;
-        shadow?: boolean;
         slim?: boolean;
         entry?: boolean;
         gap?: boolean;
@@ -15,7 +14,6 @@
 
     let {
         flush = false,
-        shadow = false,
         slim = false,
         entry = false,
         gap = false,
@@ -31,7 +29,6 @@
     class="section-header"
     class:border
     class:flush
-    class:shadow
     class:entry
     class:gap
     class:slim

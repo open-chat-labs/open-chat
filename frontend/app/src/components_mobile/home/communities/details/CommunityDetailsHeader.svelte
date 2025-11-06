@@ -54,7 +54,7 @@
     }
 </script>
 
-<SectionHeader border flush shadow>
+<SectionHeader border={false}>
     <MenuIcon position="bottom" align="start">
         {#snippet menuIcon()}
             <HoverIcon>

@@ -1,10 +1,9 @@
 <script lang="ts">
+    import { Button } from "component-lib";
     import { userCreatedStore } from "openchat-client";
     import AccountPlus from "svelte-material-icons/AccountPlus.svelte";
     import Login from "svelte-material-icons/Login.svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import Button from "../Button.svelte";
-    import OnBoardOptionLogo from "../home/profile/OnBoardOptionLogo.svelte";
     import Translatable from "../Translatable.svelte";
 
     interface Props {
@@ -27,18 +26,16 @@
 
 <div class="buttons">
     {#snippet button(primary: boolean)}
-        <div class="button">
-            <OnBoardOptionLogo>
+        <Button secondary={!primary} onClick={onClick(primary)}>
+            {#snippet icon(color)}
                 {#if primary === hasExistingAccount}
-                    <Login size="1.5em" />
+                    <Login {color} />
                 {:else}
-                    <AccountPlus size="1.5em" />
+                    <AccountPlus {color} />
                 {/if}
-            </OnBoardOptionLogo>
-            <Button fill secondary={!primary} onClick={onClick(primary)}>
-                <Translatable resourceKey={i18nKey(buttonLabel(primary))} />
-            </Button>
-        </div>
+            {/snippet}
+            <Translatable resourceKey={i18nKey(buttonLabel(primary))} />
+        </Button>
     {/snippet}
 
     {@render button(true)}

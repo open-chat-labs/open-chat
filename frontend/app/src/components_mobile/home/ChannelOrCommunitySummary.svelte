@@ -80,7 +80,7 @@
     }
 </script>
 
-<ScopeToggle flush bind:selectedTab>
+<ScopeToggle bind:selectedTab>
     {#snippet header()}
         {#if selectedTab === "community"}
             <CommunityDetailsHeader {community} canEdit={canEditCommunity} level={"community"} />

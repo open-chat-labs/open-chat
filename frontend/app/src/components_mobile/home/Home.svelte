@@ -78,7 +78,6 @@
     import BackgroundLogo from "../BackgroundLogo.svelte";
     import BotBuilderModal from "../bots/BotBuilderModal.svelte";
     import WebhookModal from "../bots/WebhookModal.svelte";
-    import EditLabel from "../EditLabel.svelte";
     import NativeOnboardModal from "../mobile/NativeOnboardModal.svelte";
     import NotFound from "../NotFound.svelte";
     import OfflineFooter from "../OfflineFooter.svelte";
@@ -1038,8 +1037,6 @@
 {/if}
 
 <Convert bind:group={convertGroup} />
-
-<EditLabel />
 
 {#if $rulesAcceptanceStore !== undefined}
     <AcceptRulesModal />

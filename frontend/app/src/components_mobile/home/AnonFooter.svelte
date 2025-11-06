@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { ColourVars, Container, Subtitle } from "component-lib";
     import type { OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -7,29 +8,23 @@
     const client = getContext<OpenChat>("client");
 </script>
 
-<div
-    role="button"
-    tabindex="0"
-    on:click={() => client.updateIdentityState({ kind: "logging_in" })}
-    class="anon-footer">
-    <Markdown text={$_("createAccountOrSignIn")} />
-</div>
+<Container
+    padding={"xl"}
+    mainAxisAlignment={"center"}
+    crossAxisAlignment={"center"}
+    background={ColourVars.gradientInverted}
+    onClick={() => client.updateIdentityState({ kind: "logging_in" })}
+    supplementalClass={"anon-footer"}>
+    <Subtitle width={{ kind: "hug" }}>
+        <Markdown text={$_("createAccountOrSignIn")} />
+    </Subtitle>
+</Container>
 
 <style lang="scss">
-    .anon-footer {
+    :global(.container.anon-footer) {
         position: absolute;
-        height: toRem(50);
-        width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         bottom: 0;
         bottom: var(--safe-inset);
-        cursor: pointer;
         @include z-index("anon-banner");
-        background-color: var(--notificationBar-bg);
-        color: var(--notificationBar-txt);
-        padding: $sp4 $sp3;
-        font-size: 1.2rem;
     }
 </style>

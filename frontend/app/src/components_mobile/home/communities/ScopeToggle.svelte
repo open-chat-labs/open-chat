@@ -1,23 +1,17 @@
 <script lang="ts">
+    import { CommonButton, Container } from "component-lib";
     import type { Snippet } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
 
     interface Props {
         selectedTab?: "community" | "channel";
-        flush?: boolean;
         header: Snippet;
         communityTab: Snippet;
         channelTab: Snippet;
     }
 
-    let {
-        selectedTab = $bindable("channel"),
-        flush = false,
-        header,
-        communityTab,
-        channelTab,
-    }: Props = $props();
+    let { selectedTab = $bindable("channel"), header, communityTab, channelTab }: Props = $props();
 
     function selectTab(tab: "community" | "channel") {
         selectedTab = tab;
@@ -26,25 +20,30 @@
 
 {@render header()}
 
-<div class="button-tabs" class:flush>
-    <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-        class:selected={selectedTab === "channel"}
-        onclick={() => selectTab("channel")}
-        class="button-tab">
-        <Translatable resourceKey={i18nKey("level.channel")} />
-    </div>
-
-    <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-        class:selected={selectedTab === "community"}
-        onclick={() => selectTab("community")}
-        class="button-tab">
-        <Translatable resourceKey={i18nKey("level.community")} />
-    </div>
-</div>
+<Container
+    parentDirection={"vertical"}
+    mainAxisAlignment={"spaceBetween"}
+    padding={["zero", "md", "lg", "md"]}
+    gap={"sm"}>
+    <CommonButton
+        width={selectedTab === "channel"
+            ? { kind: "share", value: 1.3 }
+            : { kind: "share", value: 1 }}
+        onClick={() => selectTab("channel")}
+        mode={selectedTab === "channel" ? "active" : "default"}
+        size={"small"}>
+        <Translatable resourceKey={i18nKey("level.channel")}></Translatable>
+    </CommonButton>
+    <CommonButton
+        width={selectedTab === "community"
+            ? { kind: "share", value: 1.3 }
+            : { kind: "share", value: 1 }}
+        onClick={() => selectTab("community")}
+        mode={selectedTab === "community" ? "active" : "default"}
+        size={"small"}>
+        <Translatable resourceKey={i18nKey("level.community")}></Translatable>
+    </CommonButton>
+</Container>
 
 <div class="body">
     {#if selectedTab === "community"}

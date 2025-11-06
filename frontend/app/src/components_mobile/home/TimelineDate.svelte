@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { BodySmall } from "component-lib";
     import type { OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
@@ -30,23 +31,23 @@
 </script>
 
 <div data-timestamp={timestamp} bind:this={element} class="date-label" class:floating>
-    {client.formatMessageDate(timestamp, $_("today"), $_("yesterday"))}
+    <BodySmall align={"center"} colour={"textSecondary"}>
+        {client.formatMessageDate(timestamp, $_("today"), $_("yesterday"))}
+    </BodySmall>
 </div>
 
 <style lang="scss">
     .date-label {
-        padding: $sp2 10px;
-        background-color: var(--currentChat-date-bg);
-        border: var(--currentChat-date-bd);
-        color: var(--currentChat-date-txt);
+        padding: var(--sp-xs) var(--sp-md);
+        background-color: var(--background-2);
+        box-shadow: var(--menu-sh);
+        color: var(--text-secondary);
         width: fit-content;
         min-width: 100px;
         margin: 0 auto;
-        border-radius: 12px;
+        border-radius: var(--rad-circle);
         @include z-index("date-label");
-        @include font(book, normal, fs-70);
-        text-align: center;
-        margin-bottom: $sp4;
+        margin-bottom: var(--sp-lg);
 
         &.floating {
             position: absolute;

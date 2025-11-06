@@ -59,7 +59,13 @@
     }
 </script>
 
-<ModalContent fill hideFooter onClose={cancel} closeIcon={step === "select_mode"} onBack={() => (step = "select_mode")} backIcon={step !== "select_mode"}>
+<ModalContent
+    fill
+    hideFooter
+    onClose={cancel}
+    closeIcon={step === "select_mode"}
+    onBack={() => (step = "select_mode")}
+    backIcon={step !== "select_mode"}>
     {#snippet header()}
         <div class="header">
             <div class="logo-img">

@@ -54,12 +54,9 @@
     import { _, isLoading } from "svelte-i18n";
     import { getFcmToken, svelteReady } from "tauri-plugin-oc-api";
     import Head from "./Head.svelte";
-    import Profiler from "./Profiler.svelte";
     import Snow from "./Snow.svelte";
     import SwitchDomain from "./SwitchDomain.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
-    import Witch from "./Witch.svelte";
-    import InstallPrompt from "./home/InstallPrompt.svelte";
     import NotificationsBar from "./home/NotificationsBar.svelte";
     import ActiveCall from "./home/video/ActiveCall.svelte";
     import IncomingCall from "./home/video/IncomingCall.svelte";
@@ -120,7 +117,6 @@
     let client: OpenChat = createOpenChatClient();
     setContext<OpenChat>("client", client);
 
-    let profileTrace = client.showTrace();
     // I can't (yet) find a way to avoid using "any" here. Will try to improve but need to commit this crime for the time being
     let videoCallElement: any;
     let landingPageRoute = $derived(isLandingPageRoute($routeStore));
@@ -630,12 +626,6 @@
 
 <IncomingCall onJoinVideoCall={joinVideoCall} />
 
-<Witch background />
-
-{#if !client.isNativeApp()}
-    <InstallPrompt />
-{/if}
-
 <NotificationsBar />
 
 {#if isCanisterUrl}
@@ -646,10 +636,6 @@
     {#if !$isLoading || $reviewingTranslations}
         <Router {showLandingPage} />
     {/if}
-{/if}
-
-{#if profileTrace}
-    <Profiler />
 {/if}
 
 <UpgradeBanner />
