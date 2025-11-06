@@ -62,9 +62,6 @@
     });
 
     function replaceSpoilers(input: string): string {
-        if (suppressLinks) {
-            return input.replace(/\|\|([^|]+?)\|\|/g, "******");
-        }
         return input.replace(/\|\|([^|]+?)\|\|/g, "<spoiler-span>$1</spoiler-span>");
     }
 
