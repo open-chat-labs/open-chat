@@ -2,9 +2,9 @@
     import "@styles/global.scss";
 
     import Router from "./Router.svelte";
-    import "./web-components/customEmoji";
-    import "./web-components/profileLink";
-    import "./web-components/spoiler";
+    // import "./web-components/customEmoji";
+    // import "./web-components/profileLink";
+    // import "./web-components/spoiler";
     import "@i18n/i18n";
     import { reviewingTranslations } from "@i18n/i18n";
     import { trackedEffect } from "@src/utils/effects.svelte";

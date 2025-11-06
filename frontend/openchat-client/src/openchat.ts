@@ -8313,7 +8313,7 @@ export class OpenChat {
         if (!this.#selectLastSelectedCommunity()) {
             return this.#selectFirstCommunity();
         }
-        return false;
+        return true;
     }
 
     selectDefaultChat(desktopOnly: boolean = true): boolean {

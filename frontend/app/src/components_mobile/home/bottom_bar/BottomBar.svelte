@@ -88,7 +88,12 @@
                 page("/chats");
                 break;
             case "communities":
-                client.selectDefaultCommunity();
+                const selected = client.selectDefaultCommunity();
+                if (!selected) {
+                    console.log("is this happening");
+                    // we have to decide what to do here
+                    page("/communities");
+                }
                 // const selected = client.selectDefaultCommunity();
                 // if (!selected) {
                 //     // this probably means that we are not a member of any communities so

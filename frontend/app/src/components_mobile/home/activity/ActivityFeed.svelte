@@ -14,6 +14,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import VirtualList from "../../VirtualList.svelte";
+    import NothingToSee from "../NothingToSee.svelte";
     import ActivityEvent from "./ActivityEvent.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -64,9 +65,16 @@
 </SectionHeader>
 
 <Container height={{ kind: "fill" }} closeMenuOnScroll direction={"vertical"}>
-    <VirtualList keyFn={eventKey} items={activityFeedState.activityEvents}>
-        {#snippet children(item)}
-            <ActivityEvent event={item} onClick={() => selectEvent(item)} />
-        {/snippet}
-    </VirtualList>
+    {#if activityFeedState.activityEvents.length === 0}
+        <NothingToSee
+            title={"No activity yet"}
+            subtitle={"Check back later for new activity"}
+            reset={""} />
+    {:else}
+        <VirtualList keyFn={eventKey} items={activityFeedState.activityEvents}>
+            {#snippet children(item)}
+                <ActivityEvent event={item} onClick={() => selectEvent(item)} />
+            {/snippet}
+        </VirtualList>
+    {/if}
 </Container>

@@ -572,25 +572,25 @@ html:active-view-transition-type(slide_left, slide_right) {
 html:active-view-transition-type(slide_left) {
     &::view-transition-old(root) {
         animation:
-            $speed ease-in both slide-to-left,
-            $speed ease-in both fade-out;
+            $speed ease-in-out both slide-to-left,
+            $speed ease-in-out both fade-out;
     }
     &::view-transition-new(root) {
         animation:
-            $speed ease-out both slide-from-right,
-            $speed ease-out both fade-in;
+            $speed ease-in-out both slide-from-right,
+            $speed ease-in-out both fade-in;
     }
 }
 
 html:active-view-transition-type(slide_right) {
     &::view-transition-old(root) {
         animation:
-            $speed ease-in both slide-to-right,
-            $speed ease-in both fade-out;
+            $speed ease-in-out both slide-to-right,
+            $speed ease-in-out both fade-out;
     }
     &::view-transition-new(root) {
         animation:
-            $speed ease-out both slide-from-left,
-            $speed ease-out both fade-in;
+            $speed ease-in-out both slide-from-left,
+            $speed ease-in-out both fade-in;
     }
 }

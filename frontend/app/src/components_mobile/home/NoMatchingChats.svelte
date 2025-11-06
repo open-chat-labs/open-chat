@@ -1,12 +1,15 @@
 <script lang="ts">
-    import { ColourVars, Container } from "component-lib";
-    import Robot from "svelte-material-icons/RobotExcitedOutline.svelte";
+    import NothingToSee from "./NothingToSee.svelte";
+
+    interface Props {
+        onReset: () => void;
+    }
+
+    let { onReset }: Props = $props();
 </script>
 
-<Container
-    height={{ kind: "fill" }}
-    crossAxisAlignment={"center"}
-    mainAxisAlignment={"center"}
-    direction={"vertical"}>
-    <Robot color={ColourVars.primary} size={"6rem"} />
-</Container>
+<NothingToSee
+    {onReset}
+    title={"No chats found"}
+    subtitle={"Feel free to choose a different filter"}
+    reset={"View all chats"} />

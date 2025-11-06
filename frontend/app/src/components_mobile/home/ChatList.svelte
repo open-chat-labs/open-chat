@@ -194,7 +194,7 @@
                 height={{ kind: "fill" }}
                 direction={"vertical"}>
                 {#if chats.length === 0}
-                    <NoMatchingChats />
+                    <NoMatchingChats onReset={() => chatListFilterStore.set("all")} />
                 {:else}
                     {#each chats as chatSummary (chatIdentifierToString(chatSummary.id))}
                         <ChatSummary

@@ -1,7 +1,7 @@
 <script lang="ts">
     import "@styles/global.scss";
 
-    import Router from "@components/Router.svelte";
+    import Router from "./Router.svelte";
     import "./web-components/customEmoji";
     import "./web-components/profileLink";
     import "./web-components/spoiler";
@@ -55,7 +55,6 @@
     import { getFcmToken, svelteReady } from "tauri-plugin-oc-api";
     import Head from "./Head.svelte";
     import Profiler from "./Profiler.svelte";
-    import Router from "./Router.svelte";
     import Snow from "./Snow.svelte";
     import SwitchDomain from "./SwitchDomain.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
