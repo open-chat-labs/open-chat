@@ -1596,6 +1596,8 @@
         "cancelFailure": "Spiacenti, non è stato possibile annullare il promemoria",
         "cancelSuccess": "Il tuo promemoria è stato annullato con successo",
         "create": "Creare",
+        "custom": "In una data e ora specifiche",
+        "customPlaceholder": "Inserisci una data e un'ora specifiche",
         "failure": "Spiacenti, non siamo riusciti a impostare il tuo promemoria",
         "menu": "Promemoria",
         "nextWeek": "La prossima settimana",

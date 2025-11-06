@@ -1596,6 +1596,8 @@
         "cancelFailure": "リマインダーをキャンセルできませんでした",
         "cancelSuccess": "リマインダーがキャンセルされました",
         "create": "作成",
+        "custom": "特定の日時に",
+        "customPlaceholder": "特定の日付と時刻を入力してください",
         "failure": "リマインダーを設定できませんでした",
         "menu": "思い出させる",
         "nextWeek": "次の週",

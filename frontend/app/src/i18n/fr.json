@@ -1596,6 +1596,8 @@
         "cancelFailure": "Désolé, nous n'avons pas pu annuler votre rappel",
         "cancelSuccess": "Votre rappel a été annulé avec succès",
         "create": "Créer",
+        "custom": "À une date et une heure précises",
+        "customPlaceholder": "Saisissez une date et une heure précises",
         "failure": "Désolé, nous n'avons pas pu définir votre rappel",
         "menu": "Rappelle moi",
         "nextWeek": "La semaine prochaine",
