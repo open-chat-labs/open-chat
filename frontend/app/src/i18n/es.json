@@ -1596,6 +1596,8 @@
         "cancelFailure": "Lo sentimos, no pudimos cancelar tu recordatorio.",
         "cancelSuccess": "Su recordatorio ha sido cancelado con éxito",
         "create": "Crear",
+        "custom": "En una fecha y hora específicas",
+        "customPlaceholder": "Introduzca una fecha y hora específicas.",
         "failure": "Lo sentimos, no pudimos configurar su recordatorio",
         "menu": "Recuerdame",
         "nextWeek": "La próxima semana",

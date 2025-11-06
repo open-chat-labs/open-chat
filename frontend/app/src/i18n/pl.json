@@ -1596,6 +1596,8 @@
         "cancelFailure": "Przepraszamy, nie udało nam się anulować Twojego przypomnienia",
         "cancelSuccess": "Twoje przypomnienie zostało pomyślnie anulowane",
         "create": "Tworzyć",
+        "custom": "W określonym dniu i godzinie",
+        "customPlaceholder": "Wprowadź konkretną datę i godzinę",
         "failure": "Przepraszamy, nie udało nam się ustawić Twojego przypomnienia",
         "menu": "Przypomnij mi",
         "nextWeek": "W następnym tygodniu",
