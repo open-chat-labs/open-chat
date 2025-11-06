@@ -5792,6 +5792,8 @@ export class OpenChat {
                 const pinNumberFailure = pinNumberFailureFromError(resp);
                 if (pinNumberFailure !== undefined) {
                     pinNumberFailureStore.set(pinNumberFailure);
+                } else {
+                    console.error("Withdrawal failed", resp);
                 }
             }
 
