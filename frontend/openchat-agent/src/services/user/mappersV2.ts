@@ -943,6 +943,9 @@ export function withdrawCryptoResponse(
                 return completedIcrc1CryptoWithdrawal(value.Success.ICRC1);
             }
         }
+        if ("Error" in value) {
+            return ocError(value.Error);
+        }
     }
 
     throw new Error("Unexpected ApiWithdrawCryptocurrencyResponse type received");

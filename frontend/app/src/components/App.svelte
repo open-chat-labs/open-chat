@@ -217,6 +217,9 @@
             resumeEventLoop: () => client.resumeEventLoop(),
         };
 
+        //@ts-ignore
+        window.transferTokens = transferTokens;
+
         const unsub = _.subscribe((formatter) => {
             botState.messageFormatter = formatter;
         });
@@ -575,6 +578,19 @@
 
     function setPremiumItemCost(item: PremiumItem, chitCost: number): void {
         client.setPremiumItemCost(item, chitCost);
+    }
+
+    // This allows users to transfer tokens which aren't registered with OC
+    function transferTokens(token: string, ledger: string, amount: bigint, recipient: string, fee?: bigint) {
+        client.withdrawCryptocurrency({
+            kind: "pending",
+            ledger,
+            token,
+            to: recipient,
+            amountE8s: BigInt(amount),
+            feeE8s: fee ? BigInt(fee) : undefined,
+            createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000)
+        });
     }
 
     function calculateHeight() {
