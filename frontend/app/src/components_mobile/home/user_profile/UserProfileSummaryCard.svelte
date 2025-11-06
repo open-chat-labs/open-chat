@@ -108,7 +108,7 @@
             <Avatar borderWidth={"thick"} size={"xxl"} url={avatarUrl}></Avatar>
             <Container height={{ kind: "fill" }} mainAxisAlignment={"end"} direction={"vertical"}>
                 <Container gap={"sm"} crossAxisAlignment={"center"}>
-                    <H2 width={{ kind: "hug" }}>{profile.displayName ?? profile.username}</H2>
+                    <H2 width={{ kind: "hug" }}>{profile.displayName ?? `@${profile.username}`}</H2>
                     <Badges diamondStatus={user.diamondStatus} uniquePerson={user.isUniquePerson} />
                 </Container>
                 <BodySmall colour={"textSecondary"}>@{user.username}</BodySmall>

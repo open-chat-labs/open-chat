@@ -38,6 +38,7 @@
     import FavouriteChatsHeader from "./communities/FavouriteChatsHeader.svelte";
     import PreviewWrapper from "./communities/PreviewWrapper.svelte";
     import SelectedCommunityHeader from "./communities/SelectedCommunityHeader.svelte";
+    import NoMatchingChats from "./NoMatchingChats.svelte";
     import ThreadPreviews from "./thread/ThreadPreviews.svelte";
     import ActiveCallSummary from "./video/ActiveCallSummary.svelte";
 
@@ -192,13 +193,17 @@
                 width={{ kind: "fill" }}
                 height={{ kind: "fill" }}
                 direction={"vertical"}>
-                {#each chats as chatSummary (chatIdentifierToString(chatSummary.id))}
-                    <ChatSummary
-                        {chatSummary}
-                        selected={chatIdentifiersEqual($selectedChatIdStore, chatSummary.id)}
-                        visible={!chatSummary.membership.archived}
-                        onChatSelected={chatSelected} />
-                {/each}
+                {#if chats.length === 0}
+                    <NoMatchingChats />
+                {:else}
+                    {#each chats as chatSummary (chatIdentifierToString(chatSummary.id))}
+                        <ChatSummary
+                            {chatSummary}
+                            selected={chatIdentifiersEqual($selectedChatIdStore, chatSummary.id)}
+                            visible={!chatSummary.membership.archived}
+                            onChatSelected={chatSelected} />
+                    {/each}
+                {/if}
             </Container>
         {/if}
     </Container>

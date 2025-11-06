@@ -13,6 +13,7 @@
         Sheet,
         Subtitle,
         Title,
+        transition,
         UserChip,
     } from "component-lib";
     import type { BotMatch, CommunityMatch, OpenChat } from "openchat-client";
@@ -60,7 +61,9 @@
     );
 
     function selectView(v: View) {
-        view = v;
+        transition(["fade"], () => {
+            view = v;
+        });
         search(true);
     }
 
