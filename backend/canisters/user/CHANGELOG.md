@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+- Added delete_crypto_account ([#8652](https://github.com/open-chat-labs/open-chat/pull/8652))
+
 ### Changed
 
 - Removed pinned from direct and group chat initial_state and updates ([#8631](https://github.com/open-chat-labs/open-chat/pull/8631))
