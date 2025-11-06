@@ -716,8 +716,11 @@ export const selectedChatBlockedUsersStore = derived(
     notEq,
 );
 export const selectedChatLapsedMembersStore = derived(
-    selectedServerChatStore,
-    (chat) => chat?.lapsedMembers ?? (new Set() as ReadonlySet<string>),
+    [selectedServerChatStore, chatDetailsLocalUpdates.lapsed],
+    ([chat, lapsed]) => {
+        if (chat === undefined) return new Set() as ReadonlySet<string>;
+        return lapsed.get(chat.chatId)?.apply(chat.lapsedMembers) ?? chat.lapsedMembers;
+    },
     notEq,
 );
 export const selectedChatPinnedMessagesStore = derived(
