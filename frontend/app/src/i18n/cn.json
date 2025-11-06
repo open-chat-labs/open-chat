@@ -1596,6 +1596,8 @@
         "cancelFailure": "抱歉，我们无法取消您的提醒",
         "cancelSuccess": "您的提醒已成功取消",
         "create": "创造",
+        "custom": "在特定的日期和时间",
+        "customPlaceholder": "请输入具体日期和时间",
         "failure": "抱歉，我们无法设置您的提醒",
         "menu": "提醒我",
         "nextWeek": "下周",

@@ -1596,6 +1596,8 @@
         "cancelFailure": "Xin lỗi, chúng tôi không thể hủy lời nhắc của bạn",
         "cancelSuccess": "Lời nhắc của bạn đã được hủy thành công",
         "create": "Tạo nên",
+        "custom": "Vào một ngày và giờ cụ thể",
+        "customPlaceholder": "Nhập ngày và giờ cụ thể",
         "failure": "Xin lỗi, chúng tôi không thể đặt lời nhắc của bạn",
         "menu": "Nhắc nhở tôi",
         "nextWeek": "Tuần tới",

@@ -6,6 +6,7 @@
     import { toastStore } from "../../stores/toast";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
+    import DateInput from "../DateInput.svelte";
     import Legend from "../Legend.svelte";
     import ModalContent from "../ModalContent.svelte";
     import Overlay from "../Overlay.svelte";
@@ -48,6 +49,10 @@
             label: i18nKey("reminders.nextWeek"),
             index: 4,
         },
+        {
+            label: i18nKey("reminders.custom"),
+            index: 5,
+        },
     ];
 
     function deriveRemindAt(now: number, interval: number): number {
@@ -65,6 +70,9 @@
         }
         if (interval === 4) {
             return nextWeek(now);
+        }
+        if (interval === 5 && customTimestamp != null) {
+            return Number(customTimestamp);
         }
         return now;
     }
@@ -103,12 +111,14 @@
             .finally(() => (busy = false));
         onClose();
     }
+    let customTimestamp = $state<bigint | null | undefined>();
     let remindAtMs = $derived(deriveRemindAt($now, selectedIntervalIndex));
     let remindAtDate = $derived(new Date(remindAtMs));
+    let valid = $derived(remindAtMs >= $now);
 </script>
 
 <Overlay {onClose} dismissible>
-    <ModalContent {onClose} closeIcon>
+    <ModalContent overflowVisible {onClose} closeIcon>
         {#snippet header()}
             <h1>⏰ <Translatable resourceKey={i18nKey("reminders.title")} /></h1>
         {/snippet}
@@ -122,6 +132,15 @@
                     {/each}
                 </Select>
             </div>
+            {#if selectedIntervalIndex === 5}
+                <div class="custom">
+                    <DateInput
+                        futureOnly
+                        placeholder={i18nKey("reminders.customPlaceholder")}
+                        onchange={(t) => (customTimestamp = t)}
+                        value={customTimestamp} />
+                </div>
+            {/if}
             <div class="note">
                 <Legend label={i18nKey("reminders.note")} rules={i18nKey("reminders.optional")} />
                 <TextArea
@@ -143,7 +162,7 @@
                 <Button secondary small={!$mobileWidth} tiny={$mobileWidth} onClick={onClose}
                     ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                 <Button
-                    disabled={busy}
+                    disabled={busy || !valid}
                     loading={busy}
                     small={!$mobileWidth}
                     tiny={$mobileWidth}

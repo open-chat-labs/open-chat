@@ -1596,6 +1596,8 @@
         "cancelFailure": "Sorry we were unable to cancel your reminder",
         "cancelSuccess": "Your reminder has been successfully cancelled",
         "create": "Create",
+        "custom": "At a specific date and time",
+        "customPlaceholder": "Enter a specific date and time",
         "failure": "Sorry we were unable to set your reminder",
         "menu": "Remind me",
         "nextWeek": "Next week",

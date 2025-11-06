@@ -1596,6 +1596,8 @@
         "cancelFailure": "Es tut uns leid, dass wir Ihre Erinnerung nicht stornieren konnten",
         "cancelSuccess": "Ihre Erinnerung wurde erfolgreich storniert",
         "create": "Erstellen",
+        "custom": "Zu einem bestimmten Datum und einer bestimmten Uhrzeit",
+        "customPlaceholder": "Geben Sie ein bestimmtes Datum und eine Uhrzeit ein.",
         "failure": "Leider konnten wir Ihre Erinnerung nicht einstellen",
         "menu": "Erinnere mich",
         "nextWeek": "Nächste Woche",
