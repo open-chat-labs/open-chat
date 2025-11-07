@@ -170,8 +170,8 @@
                     disabled={paying || maxReached}
                     onClick={() => (additionalDays += 1)}
                     size={"medium"}>
-                    {#snippet icon(color)}
-                        <ShieldPlusOutline {color}></ShieldPlusOutline>
+                    {#snippet icon(color, size)}
+                        <ShieldPlusOutline {color} {size}></ShieldPlusOutline>
                     {/snippet}
                     <Translatable resourceKey={i18nKey("streakInsurance.addDay")}></Translatable>
                 </CommonButton>
@@ -181,8 +181,8 @@
                     disabled={paying || additionalDays === 0 || insufficientBalance}
                     onClick={pay}
                     size={"medium"}>
-                    {#snippet icon(color)}
-                        <CreditCard {color}></CreditCard>
+                    {#snippet icon(color, size)}
+                        <CreditCard {color} {size}></CreditCard>
                     {/snippet}
                     <Translatable
                         resourceKey={i18nKey("streakInsurance.pay", {

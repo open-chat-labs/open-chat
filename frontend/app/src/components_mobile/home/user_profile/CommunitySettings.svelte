@@ -176,8 +176,8 @@
                         onClick={save}
                         size={"medium"}
                         mode={"active"}>
-                        {#snippet icon(color)}
-                            <Plus {color}></Plus>
+                        {#snippet icon(color, size)}
+                            <Plus {color} {size}></Plus>
                         {/snippet}
                         <Translatable resourceKey={i18nKey("Add association")}></Translatable>
                     </CommonButton>

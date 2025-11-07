@@ -123,8 +123,8 @@
         transferFees={tokenState.transferFees} />
 
     <CommonButton onClick={send} loading={status === "sending"} disabled={!valid} mode={"active"}>
-        {#snippet icon(color)}
-            <Chat {color} />
+        {#snippet icon(color, size)}
+            <Chat {color} {size} />
         {/snippet}
         <Translatable resourceKey={i18nKey("Send to user")} />
     </CommonButton>

@@ -94,8 +94,8 @@
                 onClick={addAccount}
                 mode={"active"}
                 size={"medium"}>
-                {#snippet icon(color)}
-                    <Save {color} />
+                {#snippet icon(color, size)}
+                    <Save {color} {size} />
                 {/snippet}
                 <Translatable resourceKey={i18nKey("Save recipient")}></Translatable>
             </CommonButton>

@@ -47,6 +47,7 @@
     import ManageRecipients from "./wallet/ManageRecipients.svelte";
     import ReceiveCrypto from "./wallet/ReceiveCrypto.svelte";
     import SendCrypto from "./wallet/SendCrypto.svelte";
+    import SwapToken from "./wallet/SwapToken.svelte";
     import TokenPage from "./wallet/TokenPage.svelte";
     import WalletSettings from "./wallet/WalletSettings.svelte";
     import type { TokenState } from "./wallet/walletState.svelte";
@@ -64,6 +65,7 @@
         | { kind: "add_recipient"; account?: NamedAccount; onComplete: () => void }
         | { kind: "manage_recipients" }
         | { kind: "wallet_settings" }
+        | { kind: "swap_token"; tokenState: TokenState }
         | { kind: "send_token"; tokenState: TokenState }
         | { kind: "receive_token"; tokenState: TokenState }
         | { kind: "token_page"; tokenState: TokenState }
@@ -119,6 +121,9 @@
             ),
             subscribe("manageRecipients", () => push({ kind: "manage_recipients" })),
             subscribe("walletSettings", () => push({ kind: "wallet_settings" })),
+            subscribe("swapToken", (tokenState) =>
+                push({ kind: "swap_token", tokenState: tokenState as unknown as TokenState }),
+            ),
             subscribe("sendToken", (tokenState) =>
                 push({ kind: "send_token", tokenState: tokenState as unknown as TokenState }),
             ),
@@ -304,6 +309,8 @@
             <ReceiveCrypto tokenState={page.tokenState} />
         {:else if page.kind === "send_token"}
             <SendCrypto onClose={pop} tokenState={page.tokenState} />
+        {:else if page.kind === "swap_token"}
+            <SwapToken onClose={pop} tokenState={page.tokenState} />
         {:else if page.kind === "manage_recipients"}
             <ManageRecipients />
         {:else if page.kind === "add_recipient"}

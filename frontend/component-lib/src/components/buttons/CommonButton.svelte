@@ -1,5 +1,12 @@
 <script lang="ts">
-    import { getFlexStyle, type Direction, type SizeMode } from "component-lib";
+    import {
+        Body,
+        ColourVars,
+        getFlexStyle,
+        type ColourVarKeys,
+        type Direction,
+        type SizeMode,
+    } from "component-lib";
     import { getContext, onMount, type Snippet } from "svelte";
     import Spinner from "../Spinner.svelte";
 
@@ -14,7 +21,7 @@
         mode?: Mode;
         size?: Size;
         onClick?: (e: MouseEvent) => void;
-        icon?: Snippet<[string]>;
+        icon?: Snippet<[string, string]>;
         width?: SizeMode;
         height?: SizeMode;
     }
@@ -35,6 +42,8 @@
     let parentDirection = getContext<Direction>("direction");
     let spinnerColour = mode === "default" ? "var(--primary)" : "var(--text-on-primary)";
     let iconColour = $derived(getIconColour());
+    let iconSize = $derived(getIconSize());
+    let textColour = $derived(getTextColour());
     let widthCss = $derived(getFlexStyle("width", width, parentDirection));
     let heightCss = $derived(getFlexStyle("height", height, parentDirection));
     let style = $derived(`--speed: ${SPEED}ms; ${heightCss}; ${widthCss};`);
@@ -59,16 +68,49 @@
         }
     });
 
+    function getTextColour(): ColourVarKeys {
+        switch (internalMode) {
+            case "default":
+                if (disabled) return "disabledButton";
+                switch (size) {
+                    case "small_text":
+                        return "primary";
+                    default:
+                        return "textSecondary";
+                }
+            case "pressed":
+                if (disabled) return "disabledButton";
+                switch (size) {
+                    case "small_text":
+                        return "primary";
+                    default:
+                        return "textPrimary";
+                }
+            case "active": {
+                if (disabled) return "textTertiary";
+                switch (size) {
+                    case "small":
+                    case "small_text":
+                        return "primary";
+                    default:
+                        return "textOnPrimary";
+                }
+            }
+        }
+    }
+
     function getIconColour(): string {
         switch (internalMode) {
             case "default":
+                if (disabled) return ColourVars.disabledButton;
                 switch (size) {
                     case "small_text":
-                        return "var(--text-primary)";
+                        return "var(--primary)";
                     default:
                         return "var(--text-secondary)";
                 }
             case "pressed":
+                if (disabled) return ColourVars.disabledButton;
                 switch (size) {
                     case "small_text":
                         return "var(--primary)";
@@ -76,6 +118,7 @@
                         return "var(--text-primary)";
                 }
             case "active": {
+                if (disabled) return ColourVars.textTertiary;
                 switch (size) {
                     case "small":
                     case "small_text":
@@ -84,6 +127,17 @@
                         return "var(--text-on-primary)";
                 }
             }
+        }
+    }
+
+    function getIconSize() {
+        switch (size) {
+            case "large":
+                return "1.4rem";
+            case "medium":
+                return "1.2rem";
+            default:
+                return "1.2rem";
         }
     }
 
@@ -109,33 +163,17 @@
             <Spinner backgroundColour={"var(--text-tertiary)"} foregroundColour={spinnerColour} />
         </span>
     {:else if icon}
-        <span class="icon">{@render icon(iconColour)}</span>
+        <span class="icon">{@render icon(iconColour, iconSize)}</span>
     {/if}
-    <span class="content"> {@render children?.()}</span>
+    {#if children}
+        <Body align={"center"} width={{ kind: "hug" }} colour={textColour} fontWeight={"bold"}
+            >{@render children?.()}</Body>
+    {/if}
 </button>
 
 <style lang="scss">
-    $small_icon: 12px;
-    $medium_icon: 16px;
-    $large_icon: 18px;
-
     :global(.common_button .icon svg path) {
         transition: fill var(--speed) ease-in-out;
-    }
-
-    :global(.common_button.small .icon svg) {
-        width: $small_icon;
-        height: $small_icon;
-    }
-
-    :global(.common_button.medium .icon svg) {
-        width: $medium_icon;
-        height: $medium_icon;
-    }
-
-    :global(.common_button.large .icon svg) {
-        width: $large_icon;
-        height: $large_icon;
     }
 
     button {
@@ -154,11 +192,12 @@
             background ease-in-out $speed,
             color ease-in-out $speed;
 
-        font-weight: var(--font-semi-bold);
-        font-size: 14px; // TODO - typography vars
-
         .content {
             pointer-events: none;
+        }
+
+        .icon {
+            display: flex;
         }
 
         &.default {
@@ -212,13 +251,10 @@
         &.small,
         &.small_text {
             border-radius: var(--rad-circle);
-            padding: var(--sp-sm) var(--sp-md);
+            padding: var(--sp-xs) var(--sp-md);
             font-size: var(--typo-bodySmall-sz);
             line-height: 12px;
             gap: var(--sp-xs);
-            .icon {
-                height: $small_icon;
-            }
         }
 
         &.medium {
@@ -235,9 +271,6 @@
             &.active {
                 border-radius: var(--rad-md);
             }
-            .icon {
-                height: $medium_icon;
-            }
         }
 
         &.large {
@@ -253,9 +286,6 @@
             }
             &.active {
                 border-radius: var(--rad-md);
-            }
-            .icon {
-                height: $large_icon;
             }
         }
 

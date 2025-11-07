@@ -76,8 +76,8 @@
                 <Translatable resourceKey={i18nKey("cancel")} />
             </CommonButton>
             <CommonButton disabled={!valid} mode={"active"} onClick={onSave} size={"medium"}>
-                {#snippet icon(color)}
-                    <Save {color} />
+                {#snippet icon(color, size)}
+                    <Save {color} {size} />
                 {/snippet}
                 <Translatable resourceKey={i18nKey("save")} />
             </CommonButton>

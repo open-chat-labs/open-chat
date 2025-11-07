@@ -202,8 +202,8 @@
                 onClick={() => ugs.saveGroup(client)}
                 size={"medium"}
                 mode={"active"}>
-                {#snippet icon(color)}
-                    <AccountGroup {color}></AccountGroup>
+                {#snippet icon(color, size)}
+                    <AccountGroup {color} {size}></AccountGroup>
                 {/snippet}
                 <Translatable
                     resourceKey={i18nKey(

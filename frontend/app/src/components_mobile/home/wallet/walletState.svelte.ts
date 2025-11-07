@@ -80,7 +80,7 @@ export class TokenState {
     #minAmount = $derived(this.#token.transferFee * 10n);
     #minAmountLabel = $derived(Number(this.#minAmount) / Math.pow(10, this.#decimals));
     #ledger = $derived(this.#token.ledger);
-    #draftAmount = $state(this.minAmount);
+    #draftAmount = $state(this.#minAmount);
     #symbol = $derived(this.#token.symbol);
     #cryptoBalance = $derived(cryptoBalanceStore.value.get(this.#ledger) ?? 0n);
     #transferFees = $derived(this.#token.transferFee);

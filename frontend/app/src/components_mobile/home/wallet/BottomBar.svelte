@@ -54,6 +54,7 @@
             onSelect: (token: EnhancedTokenDetails) => onSelect("sendToken", token),
             placeholder: i18nKey("Find token to send..."),
             icon: sendIcon,
+            extraFilter: (token: EnhancedTokenDetails) => token.balance > 0n,
         };
     }
 
@@ -63,7 +64,8 @@
             onSelect: (token: EnhancedTokenDetails) => onSelect("swapToken", token),
             placeholder: i18nKey("Find token to swap..."),
             icon: swapIcon,
-            extraFilter: (token: EnhancedTokenDetails) => $swappableTokensStore.has(token.ledger),
+            extraFilter: (token: EnhancedTokenDetails) =>
+                !$swappableTokensStore.has(token.ledger) && token.balance > 0n,
         };
     }
 </script>
@@ -85,6 +87,7 @@
         icon={tokenSelector.icon}
         onSelect={tokenSelector.onSelect}
         placeholder={tokenSelector.placeholder}
+        extraFilter={tokenSelector.extraFilter}
         onDismiss={() => (tokenSelector = undefined)}
         title={tokenSelector.title} />
 {/if}

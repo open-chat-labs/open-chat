@@ -33,8 +33,8 @@
                     mode={"active"}
                     onClick={() => client.askForNotificationPermission()}
                     size={"medium"}>
-                    {#snippet icon(color)}
-                        <Bell {color} />
+                    {#snippet icon(color, size)}
+                        <Bell {color} {size} />
                     {/snippet}
                     <Translatable resourceKey={i18nKey("yesPlease")} />
                 </CommonButton>

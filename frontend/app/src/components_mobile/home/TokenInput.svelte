@@ -18,6 +18,7 @@
         error?: boolean;
         fees?: Snippet;
         disabled?: boolean;
+        icon?: Snippet;
     }
 
     let {
@@ -31,6 +32,7 @@
         error = false,
         fees,
         disabled = false,
+        icon,
     }: Props = $props();
 
     valid;
@@ -140,6 +142,9 @@
             <InputTextButton onClick={max}>
                 <Translatable resourceKey={i18nKey("tokenTransfer.max")} />
             </InputTextButton>
+        {/if}
+        {#if icon !== undefined}
+            {@render icon()}
         {/if}
     </Container>
 

@@ -166,8 +166,8 @@
             {#if footer}{@render footer(onClose)}{:else}
                 <Container mainAxisAlignment={"end"}>
                     <CommonButton mode={"active"} onClick={onClose} size={"medium"}>
-                        {#snippet icon(color)}
-                            <Close {color} />
+                        {#snippet icon(color, size)}
+                            <Close {color} {size} />
                         {/snippet}
                         <Translatable resourceKey={i18nKey("close")}></Translatable>
                     </CommonButton>

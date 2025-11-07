@@ -72,8 +72,8 @@
     <Container crossAxisAlignment={"center"} padding={["zero", "lg"]} gap={"xl"}>
         <MenuTrigger>
             <CommonButton mode="active" size="large">
-                {#snippet icon(color)}
-                    <Burger {color} />
+                {#snippet icon(color, size)}
+                    <Burger {color} {size} />
                 {/snippet}
                 Menu
             </CommonButton>

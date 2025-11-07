@@ -79,8 +79,8 @@
                     <Translatable resourceKey={i18nKey("Copy link")}></Translatable>
                 </CommonButton>
                 <CommonButton onClick={() => shareLink(link)} size={"medium"} mode={"active"}>
-                    {#snippet icon(color)}
-                        <ShareIcon {color}></ShareIcon>
+                    {#snippet icon(color, size)}
+                        <ShareIcon {color} {size}></ShareIcon>
                     {/snippet}
                     <Translatable resourceKey={i18nKey("share")}></Translatable>
                 </CommonButton>

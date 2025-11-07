@@ -58,12 +58,13 @@
             mainAxisAlignment={"spaceAround"}
             borderWidth={"thick"}
             borderColour={ColourVars.primary}>
+            {@const swapDisabled = !$swappableTokensStore.has(tokenState.ledger)}
             <CommonButton
                 onClick={() => publish("receiveToken", tokenState)}
                 mode={"active"}
                 size={"small_text"}>
-                {#snippet icon(color)}
-                    <TrayArrowDown {color} />
+                {#snippet icon(color, size)}
+                    <TrayArrowDown {color} {size} />
                 {/snippet}
                 <Translatable resourceKey={i18nKey("Receive")} />
             </CommonButton>
@@ -72,18 +73,19 @@
                 onClick={() => publish("sendToken", tokenState)}
                 mode={"active"}
                 size={"small_text"}>
-                {#snippet icon(color)}
-                    <TrayArrowUp {color} />
+                {#snippet icon(color, size)}
+                    <TrayArrowUp {color} {size} />
                 {/snippet}
                 <Translatable resourceKey={i18nKey("Send")} />
             </CommonButton>
             /
             <CommonButton
+                disabled={swapDisabled}
                 onClick={() => publish("swapToken", tokenState)}
-                mode={"active"}
+                mode={swapDisabled ? "default" : "active"}
                 size={"small_text"}>
-                {#snippet icon(color)}
-                    <SwapVertical {color} />
+                {#snippet icon(color, size)}
+                    <SwapVertical {color} {size} />
                 {/snippet}
                 <Translatable resourceKey={i18nKey("Swap")} />
             </CommonButton>

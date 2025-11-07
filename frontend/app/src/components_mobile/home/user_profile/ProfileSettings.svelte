@@ -219,8 +219,8 @@
                             loading={saving}
                             size={"medium"}
                             mode={"active"}>
-                            {#snippet icon(color)}
-                                <Save {color}></Save>
+                            {#snippet icon(color, size)}
+                                <Save {color} {size}></Save>
                             {/snippet}
                             <Translatable resourceKey={i18nKey("Save profile")}></Translatable>
                         </CommonButton>

@@ -142,8 +142,8 @@
 
         <Container mainAxisAlignment={"end"} crossAxisAlignment={"center"}>
             <CommonButton disabled={!valid} onClick={save} mode={"active"} size={"medium"}>
-                {#snippet icon(color)}
-                    <Save {color} />
+                {#snippet icon(color, size)}
+                    <Save {color} {size} />
                 {/snippet}
                 <Translatable resourceKey={i18nKey("Save gate")}></Translatable>
             </CommonButton>

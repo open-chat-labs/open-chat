@@ -172,14 +172,14 @@
             {/if}
             <Container mainAxisAlignment={"center"} gap={"md"}>
                 <CommonButton width={{ kind: "fill" }} mode={"active"} onClick={startVideoCall}>
-                    {#snippet icon(color)}
-                        <PhoneHangup {color} />
+                    {#snippet icon(color, size)}
+                        <PhoneHangup {color} {size} />
                     {/snippet}
                     <Translatable resourceKey={videoMenuText} />
                 </CommonButton>
                 <CommonButton width={{ kind: "fill" }} mode={"active"} onClick={toggleBlocked}>
-                    {#snippet icon(color)}
-                        <CancelIcon {color} />
+                    {#snippet icon(color, size)}
+                        <CancelIcon {color} {size} />
                     {/snippet}
                     <Translatable resourceKey={blockLabel} />
                 </CommonButton>
@@ -201,8 +201,8 @@
                     disabled={!dirty || saving}
                     mode={"active"}
                     size={"medium"}>
-                    {#snippet icon(color)}
-                        <Save {color} />
+                    {#snippet icon(color, size)}
+                        <Save {color} {size} />
                     {/snippet}
                     <Translatable resourceKey={i18nKey("update")} />
                 </CommonButton>

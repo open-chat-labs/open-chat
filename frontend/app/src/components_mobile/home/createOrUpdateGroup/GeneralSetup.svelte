@@ -41,8 +41,8 @@
 
         <Container padding={["xl", "zero", "zero", "zero"]} mainAxisAlignment={"end"}>
             <CommonButton onClick={() => publish("closeModalPage")} mode="active" size={"medium"}>
-                {#snippet icon(color)}
-                    <ArrowLeft {color} />
+                {#snippet icon(color, size)}
+                    <ArrowLeft {color} {size} />
                 {/snippet}
                 <Translatable resourceKey={i18nKey("Done, go back")}></Translatable>
             </CommonButton>

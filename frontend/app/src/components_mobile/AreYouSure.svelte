@@ -78,8 +78,8 @@
 
         <Container gap={"md"} crossAxisAlignment={"end"} mainAxisAlignment={"end"}>
             <CommonButton disabled={inProgress} onClick={() => onClick(false)} size={"medium"}>
-                {#snippet icon(color)}
-                    <Close {color} />
+                {#snippet icon(color, size)}
+                    <Close {color} {size} />
                 {/snippet}
                 {#if noLabel !== undefined}
                     <Translatable resourceKey={noLabel} />
@@ -91,8 +91,8 @@
                 mode={"active"}
                 onClick={() => onClick(true)}
                 size={"medium"}>
-                {#snippet icon(color)}
-                    <Check {color} />
+                {#snippet icon(color, size)}
+                    <Check {color} {size} />
                 {/snippet}
                 {#if yesLabel !== undefined}
                     <Translatable resourceKey={yesLabel} />

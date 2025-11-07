@@ -125,14 +125,14 @@
 
         <Container mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
             <CommonButton onClick={onRemoveAll} disabled={gates.length === 0} size={"small_text"}>
-                {#snippet icon(color)}
-                    <Delete {color} />
+                {#snippet icon(color, size)}
+                    <Delete {color} {size} />
                 {/snippet}
                 <Translatable resourceKey={i18nKey("Remove all")}></Translatable>
             </CommonButton>
             <CommonButton onClick={onAddGate} mode={"active"} size={"medium"}>
-                {#snippet icon(color)}
-                    <Plus {color} />
+                {#snippet icon(color, size)}
+                    <Plus {color} {size} />
                 {/snippet}
                 <Translatable resourceKey={i18nKey("Add gate")}></Translatable>
             </CommonButton>

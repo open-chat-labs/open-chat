@@ -127,8 +127,8 @@
                 onClick={() => ucs.resetChannelNames()}
                 disabled={ucs.channelNames.length <= 1}
                 size={"small_text"}>
-                {#snippet icon(color)}
-                    <Delete {color} />
+                {#snippet icon(color, size)}
+                    <Delete {color} {size} />
                 {/snippet}
                 <Translatable resourceKey={i18nKey("Remove all")}></Translatable>
             </CommonButton>
@@ -137,8 +137,8 @@
                 onClick={addChannel}
                 mode={"active"}
                 size={"medium"}>
-                {#snippet icon(color)}
-                    <Plus {color} />
+                {#snippet icon(color, size)}
+                    <Plus {color} {size} />
                 {/snippet}
                 <Translatable resourceKey={i18nKey("Add channel")}></Translatable>
             </CommonButton>

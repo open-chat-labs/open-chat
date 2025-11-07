@@ -323,8 +323,8 @@
                         loading={searching}
                         mode={"active"}
                         onClick={() => search(false)}>
-                        {#snippet icon(color)}
-                            <Account {color} />
+                        {#snippet icon(color, size)}
+                            <Account {color} {size} />
                         {/snippet}
                         <Translatable
                             resourceKey={i18nKey("communities.loadMore")} /></CommonButton>

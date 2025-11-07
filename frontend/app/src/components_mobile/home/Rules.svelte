@@ -65,8 +65,8 @@
                     <Translatable resourceKey={i18nKey("cancel")}></Translatable>
                 </CommonButton>
                 <CommonButton mode={"active"} onClick={useExampleRules} size={"medium"}>
-                    {#snippet icon(color)}
-                        <ContentCopy {color} />
+                    {#snippet icon(color, size)}
+                        <ContentCopy {color} {size} />
                     {/snippet}
                     <Translatable resourceKey={i18nKey("Use example rules")} />
                 </CommonButton>
@@ -133,14 +133,14 @@
                 onClick={() => (showExampleRules = true)}
                 mode="default"
                 size={"small_text"}>
-                {#snippet icon(color)}
-                    <Eye {color} />
+                {#snippet icon(color, size)}
+                    <Eye {color} {size} />
                 {/snippet}
                 <Translatable resourceKey={i18nKey("View example")}></Translatable>
             </CommonButton>
             <CommonButton onClick={() => publish("closeModalPage")} mode="active" size={"medium"}>
-                {#snippet icon(color)}
-                    <ArrowLeft {color} />
+                {#snippet icon(color, size)}
+                    <ArrowLeft {color} {size} />
                 {/snippet}
                 <Translatable resourceKey={i18nKey("Done, go back")}></Translatable>
             </CommonButton>

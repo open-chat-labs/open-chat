@@ -300,8 +300,8 @@
     </Container>
 
     <CommonButton onClick={send} loading={status === "sending"} disabled={!valid} mode={"active"}>
-        {#snippet icon(color)}
-            <Wallet {color} />
+        {#snippet icon(color, size)}
+            <Wallet {color} {size} />
         {/snippet}
         <Translatable resourceKey={i18nKey("Send to address")} />
     </CommonButton>

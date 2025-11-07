@@ -62,8 +62,8 @@
         gap="lg">
         <MenuTrigger position={"bottom"} align={"middle"}>
             <CommonButton size={"large"} mode={"active"}>
-                {#snippet icon(color)}
-                    <Burger {color} />
+                {#snippet icon(color, size)}
+                    <Burger {color} {size} />
                 {/snippet}
                 Bottom middle
             </CommonButton>
@@ -74,8 +74,8 @@
 
         <MenuTrigger position={"bottom"} align={"middle"}>
             <CommonButton size={"large"} mode={"active"}>
-                {#snippet icon(color)}
-                    <Burger {color} />
+                {#snippet icon(color, size)}
+                    <Burger {color} {size} />
                 {/snippet}
                 Bottom middle
             </CommonButton>
@@ -91,8 +91,8 @@
         gap="lg">
         <MenuTrigger position={"right"} align={"start"}>
             <CommonButton size={"large"} mode={"active"}>
-                {#snippet icon(color)}
-                    <Burger {color} />
+                {#snippet icon(color, size)}
+                    <Burger {color} {size} />
                 {/snippet}
                 Right start
             </CommonButton>
@@ -103,8 +103,8 @@
 
         <MenuTrigger position={"left"} align={"end"}>
             <CommonButton size={"large"} mode={"active"}>
-                {#snippet icon(color)}
-                    <Burger {color} />
+                {#snippet icon(color, size)}
+                    <Burger {color} {size} />
                 {/snippet}
                 Left end
             </CommonButton>
@@ -120,8 +120,8 @@
         gap="lg">
         <MenuTrigger position={"top"} align={"start"}>
             <CommonButton size={"large"} mode={"active"}>
-                {#snippet icon(color)}
-                    <Burger {color} />
+                {#snippet icon(color, size)}
+                    <Burger {color} {size} />
                 {/snippet}
                 Top start
             </CommonButton>
@@ -132,8 +132,8 @@
 
         <MenuTrigger position={"top"} align={"start"}>
             <CommonButton size={"large"} mode={"active"}>
-                {#snippet icon(color)}
-                    <Burger {color} />
+                {#snippet icon(color, size)}
+                    <Burger {color} {size} />
                 {/snippet}
                 Top start
             </CommonButton>

@@ -141,8 +141,8 @@
 
     <Container mainAxisAlignment={"end"} crossAxisAlignment={"end"}>
         <CommonButton onClick={onClose} size={"medium"} mode={"active"}>
-            {#snippet icon(color)}
-                <Save {color}></Save>
+            {#snippet icon(color, size)}
+                <Save {color} {size}></Save>
             {/snippet}
             <Translatable resourceKey={i18nKey("Done")}></Translatable>
         </CommonButton>

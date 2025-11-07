@@ -23,8 +23,8 @@
         {#snippet button()}
             {#if invite}
                 <CommonButton onClick={inviteClicked(onAction)} mode={"active"} size={"small_text"}>
-                    {#snippet icon(color)}
-                        <ForwardIcon {color} />
+                    {#snippet icon(color, size)}
+                        <ForwardIcon {color} {size} />
                     {/snippet}
                     Invite
                 </CommonButton>

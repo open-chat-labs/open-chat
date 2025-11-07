@@ -128,8 +128,8 @@
     <Container mainAxisAlignment={"end"} gap={"sm"} crossAxisAlignment={"end"}>
         {#if insuranceLink}
             <CommonButton onClick={() => (showInsurance = true)} size={"small_text"}>
-                {#snippet icon(color)}
-                    <ShieldStarOutline {color}></ShieldStarOutline>
+                {#snippet icon(color, size)}
+                    <ShieldStarOutline {color} {size}></ShieldStarOutline>
                 {/snippet}
                 <Translatable resourceKey={i18nKey("Streak insurance")}></Translatable>
             </CommonButton>
@@ -140,8 +140,8 @@
             onClick={claim}
             size={"medium"}
             mode={"active"}>
-            {#snippet icon(color)}
-                <PartyPopper {color}></PartyPopper>
+            {#snippet icon(color, size)}
+                <PartyPopper {color} {size}></PartyPopper>
             {/snippet}
             {#if claimChitAvailable}
                 <Translatable resourceKey={i18nKey("Claim CHIT")}></Translatable>

@@ -246,32 +246,32 @@
                 <Container mainAxisAlignment={"center"} gap={"xs"}>
                     {#if chatButton && !me}
                         <CommonButton onClick={handleOpenDirectChat} mode={"active"}>
-                            {#snippet icon(color)}
-                                <ChatOutline {color} />
+                            {#snippet icon(color, size)}
+                                <ChatOutline {color} {size} />
                             {/snippet}
                             <Translatable resourceKey={i18nKey("profile.chat")} />
                         </CommonButton>
                     {/if}
                     {#if me}
                         <CommonButton onClick={showUserProfile} mode={"active"}>
-                            {#snippet icon(color)}
-                                <Cog {color} />
+                            {#snippet icon(color, size)}
+                                <Cog {color} {size} />
                             {/snippet}
                             <Translatable resourceKey={i18nKey("profile.label")} />
                         </CommonButton>
                     {/if}
                     {#if canBlock}
                         <CommonButton onClick={blockUser} mode={"active"}>
-                            {#snippet icon(color)}
-                                <Cancel {color} />
+                            {#snippet icon(color, size)}
+                                <Cancel {color} {size} />
                             {/snippet}
                             <Translatable resourceKey={i18nKey("profile.block")} />
                         </CommonButton>
                     {/if}
                     {#if canUnblock}
                         <CommonButton onClick={unblockUser} mode={"active"}>
-                            {#snippet icon(color)}
-                                <Cancel {color} />
+                            {#snippet icon(color, size)}
+                                <Cancel {color} {size} />
                             {/snippet}
                             <Translatable resourceKey={i18nKey("profile.unblock")} />
                         </CommonButton>
@@ -279,15 +279,15 @@
                     {#if $platformModeratorStore}
                         {#if isSuspended}
                             <CommonButton onClick={unsuspendUser} mode={"active"}>
-                                {#snippet icon(color)}
-                                    <AccountCancel {color} />
+                                {#snippet icon(color, size)}
+                                    <AccountCancel {color} {size} />
                                 {/snippet}
                                 <Translatable resourceKey={i18nKey("unsuspendUser")} />
                             </CommonButton>
                         {:else}
                             <CommonButton onClick={suspendUser} mode={"active"}>
-                                {#snippet icon(color)}
-                                    <AccountCancel {color} />
+                                {#snippet icon(color, size)}
+                                    <AccountCancel {color} {size} />
                                 {/snippet}
                                 <Translatable resourceKey={i18nKey("suspendUser")} />
                             </CommonButton>

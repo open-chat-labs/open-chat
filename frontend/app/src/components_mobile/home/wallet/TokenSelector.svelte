@@ -6,6 +6,7 @@
     import type { Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import Translatable from "../../Translatable.svelte";
+    import NothingToSee from "../NothingToSee.svelte";
     import WalletToken from "./WalletToken.svelte";
 
     interface Props {
@@ -64,15 +65,27 @@
             bind:value={searchTerm} />
 
         <Container gap={"sm"} supplementalClass={"token_selector"} direction={"vertical"}>
-            {#each filteredTokens as token}
-                <Option
-                    onClick={() => onSelect(token)}
-                    padding={["zero", "md", "zero", "zero"]}
-                    value={token}
-                    selected={selected.has(token.ledger)}>
-                    <WalletToken withMenu={false} selectedConversion={"usd"} {token} />
-                </Option>
-            {/each}
+            {#if filteredTokens.length === 0}
+                <NothingToSee
+                    height={{ kind: "fixed", size: "6" }}
+                    padding={"zero"}
+                    onReset={onDismiss}
+                    reset={"Close"}
+                    title={"No matching tokens"}
+                    subtitle={searchTerm !== ""
+                        ? "Try relaxing your search criteria"
+                        : "You may not have any tokens that support this operation"} />
+            {:else}
+                {#each filteredTokens as token}
+                    <Option
+                        onClick={() => onSelect(token)}
+                        padding={["zero", "md", "zero", "zero"]}
+                        value={token}
+                        selected={selected.has(token.ledger)}>
+                        <WalletToken withMenu={false} selectedConversion={"usd"} {token} />
+                    </Option>
+                {/each}
+            {/if}
         </Container>
     </Container>
 </Sheet>

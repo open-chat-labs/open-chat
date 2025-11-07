@@ -141,8 +141,8 @@
                         <Translatable resourceKey={i18nKey("cancel")}></Translatable>
                     </CommonButton>
                     <CommonButton onClick={cropImage} size={"medium"} mode={"active"}>
-                        {#snippet icon(color)}
-                            <Crop {color}></Crop>
+                        {#snippet icon(color, size)}
+                            <Crop {color} {size}></Crop>
                         {/snippet}
                         <Translatable resourceKey={i18nKey("apply")} />
                     </CommonButton>

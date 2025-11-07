@@ -33,8 +33,8 @@
                         onClick={() => (selected = option as Option)}
                         size={"medium"}
                         mode={(option as Option) === selected ? "active" : "default"}>
-                        {#snippet icon(color)}
-                            <Cog {color}></Cog>
+                        {#snippet icon(color, size)}
+                            <Cog {color} {size}></Cog>
                         {/snippet}
                         {labels[option as Option]}
                     </CommonButton>
@@ -47,8 +47,8 @@
                         onClick={() => (selected = option as Option)}
                         size={"small_text"}
                         mode={(option as Option) === selected ? "active" : "default"}>
-                        {#snippet icon(color)}
-                            <Cog {color}></Cog>
+                        {#snippet icon(color, size)}
+                            <Cog {color} {size}></Cog>
                         {/snippet}
                         {labels[option as Option]}
                     </CommonButton>
@@ -57,14 +57,14 @@
 
             <Container gap={"lg"}>
                 <CommonButton onClick={onClick(onAction)} size={"small_text"} mode={"default"}>
-                    {#snippet icon(color)}
-                        <Cog {color}></Cog>
+                    {#snippet icon(color, size)}
+                        <Cog {color} {size}></Cog>
                     {/snippet}
                     Small text
                 </CommonButton>
                 <CommonButton onClick={onClick(onAction)} size={"small_text"} mode={"active"}>
-                    {#snippet icon(color)}
-                        <Cog {color}></Cog>
+                    {#snippet icon(color, size)}
+                        <Cog {color} {size}></Cog>
                     {/snippet}
                     Active variant
                 </CommonButton>
@@ -72,14 +72,14 @@
 
             <Container gap={"lg"}>
                 <CommonButton onClick={onClick(onAction)} size={"small"} mode={"default"}>
-                    {#snippet icon(color)}
-                        <Cog {color}></Cog>
+                    {#snippet icon(color, size)}
+                        <Cog {color} {size}></Cog>
                     {/snippet}
                     Small button
                 </CommonButton>
                 <CommonButton onClick={onClick(onAction)} size={"small"} mode={"active"}>
-                    {#snippet icon(color)}
-                        <Cog {color}></Cog>
+                    {#snippet icon(color, size)}
+                        <Cog {color} {size}></Cog>
                     {/snippet}
                     Active variant
                 </CommonButton>
@@ -87,14 +87,14 @@
 
             <Container gap={"md"}>
                 <CommonButton onClick={onClick(onAction)} size={"medium"} mode={"default"}>
-                    {#snippet icon(color)}
-                        <DiamondOutline {color} />
+                    {#snippet icon(color, size)}
+                        <DiamondOutline {color} {size} />
                     {/snippet}
                     Medium button
                 </CommonButton>
                 <CommonButton onClick={onClick(onAction)} size={"medium"} mode={"active"}>
-                    {#snippet icon(color)}
-                        <DiamondOutline {color} />
+                    {#snippet icon(color, size)}
+                        <DiamondOutline {color} {size} />
                     {/snippet}
                     Active variant
                 </CommonButton>

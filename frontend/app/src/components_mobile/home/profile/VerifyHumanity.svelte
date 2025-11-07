@@ -136,8 +136,8 @@
                     onClick={verify}
                     size={"medium"}
                     mode={"active"}>
-                    {#snippet icon(color)}
-                        <AccountStar {color}></AccountStar>
+                    {#snippet icon(color, size)}
+                        <AccountStar {color} {size}></AccountStar>
                     {/snippet}
                     <Translatable resourceKey={i18nKey("access.verify")}></Translatable>
                 </CommonButton>

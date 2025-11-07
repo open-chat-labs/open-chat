@@ -54,18 +54,18 @@
     </H1>
     <Container mainAxisAlignment={"center"} crossAxisAlignment={"center"}>
         <CommonButton onClick={onRefreshWallet} mode={"active"} size={"small_text"}>
-            {#snippet icon(color)}
-                <Reload {color} />
+            {#snippet icon(color, size)}
+                <Reload {color} {size} />
             {/snippet}
             <Translatable resourceKey={i18nKey("Refresh wallet")} />
         </CommonButton>
         <Body width={{ kind: "hug" }}>/</Body>
         <CommonButton onClick={hideTokenBalances.toggle} mode={"active"} size={"small_text"}>
-            {#snippet icon(color)}
+            {#snippet icon(color, size)}
                 {#if $hideTokenBalances}
-                    <EyeOff {color} />
+                    <EyeOff {color} {size} />
                 {:else}
-                    <Eye {color} />
+                    <Eye {color} {size} />
                 {/if}
             {/snippet}
             <Translatable

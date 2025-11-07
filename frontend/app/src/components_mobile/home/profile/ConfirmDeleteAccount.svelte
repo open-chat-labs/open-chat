@@ -69,8 +69,8 @@
                         loading={deleting}
                         onClick={() => (authenticating = true)}
                         size={"medium"}>
-                        {#snippet icon(color)}
-                            <Delete {color}></Delete>
+                        {#snippet icon(color, size)}
+                            <Delete {color} {size}></Delete>
                         {/snippet}
                         <Translatable
                             resourceKey={i18nKey(
