@@ -310,7 +310,7 @@
         {:else if page.kind === "send_token"}
             <SendCrypto onClose={pop} tokenState={page.tokenState} />
         {:else if page.kind === "swap_token"}
-            <SwapToken onClose={pop} tokenState={page.tokenState} />
+            <SwapToken onClose={pop} fromToken={page.tokenState} />
         {:else if page.kind === "manage_recipients"}
             <ManageRecipients />
         {:else if page.kind === "add_recipient"}

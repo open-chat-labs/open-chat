@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { pinNumberErrorMessageStore } from "@src/stores/pinNumber";
+    import { calculateDollarAmount } from "@src/utils/exchange";
     import {
         Avatar,
         Body,
@@ -9,21 +11,34 @@
         Container,
     } from "component-lib";
     import {
+        exchangeRatesLookupStore as exchangeRatesLookup,
+        OpenChat,
         swappableTokensStore,
+        type DexId,
         type EnhancedTokenDetails,
+        type InterpolationValues,
         type ResourceKey,
     } from "openchat-client";
+    import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import ShareOutline from "svelte-material-icons/ShareOutline.svelte";
     import SwapVertical from "svelte-material-icons/SwapVertical.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import ErrorMessage from "../../ErrorMessage.svelte";
     import Translatable from "../../Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import TokenInput from "../TokenInput.svelte";
     import TokenCard from "./TokenCard.svelte";
     import TokenSelector from "./TokenSelector.svelte";
     import { TokenState } from "./walletState.svelte";
+
+    const client = getContext<OpenChat>("client");
+
+    type SwapState = "quote" | "swap" | "finished";
+
+    type Result = "success" | "rateChanged" | "insufficientFunds" | "error" | undefined;
 
     type TokenSelectorParams = {
         title: ResourceKey;
@@ -32,29 +47,38 @@
     };
 
     interface Props {
-        tokenState: TokenState;
+        fromToken: TokenState;
         onClose: () => void;
     }
 
-    let { tokenState = $bindable() }: Props = $props();
+    let { fromToken = $bindable() }: Props = $props();
 
+    let swapState = $state<SwapState>("quote");
+    let result = $state<Result>();
+    let swapId = $state<bigint>();
+    let bestQuote = $state<[DexId, bigint]>();
     let validAmount = $state(false);
-    let otherToken = $state<TokenState>();
+    let toToken = $state<TokenState>();
     let tokenSelector = $state<TokenSelectorParams>();
-    let status = $state<"idle" | "sending" | "sent" | "error">("idle");
-    let busy = $derived(status === "sending");
-    let valid = $derived(validAmount && tokenState !== undefined && otherToken !== undefined);
+    let busy = $state(false);
+    let valid = $derived(validAmount && fromToken !== undefined && toToken !== undefined);
+    let pinNumberError = $derived($pinNumberErrorMessageStore);
+    let error = $state<string>();
+    let warnValueUnknown = $state(false);
+    let warnValueDropped = $state(false);
+    let swapMessageValues: InterpolationValues | undefined = $state(undefined);
+    let swaps = $state({} as Record<string, DexId[]>);
 
     function selectFrom() {
         tokenSelector = {
             title: i18nKey("Select token to swap from"),
             onSelect: (token: EnhancedTokenDetails) => {
-                tokenState = new TokenState(token, "usd");
+                fromToken = new TokenState(token, "usd");
                 tokenSelector = undefined;
             },
             extraFilter: (token: EnhancedTokenDetails) =>
                 !$swappableTokensStore.has(token.ledger) &&
-                token.symbol !== otherToken?.symbol &&
+                token.symbol !== toToken?.symbol &&
                 token.balance > 0n,
         };
     }
@@ -63,18 +87,107 @@
         tokenSelector = {
             title: i18nKey("Select token to swap to"),
             onSelect: (token: EnhancedTokenDetails) => {
-                otherToken = new TokenState(token, "usd");
+                toToken = new TokenState(token, "usd");
                 tokenSelector = undefined;
             },
             extraFilter: (token: EnhancedTokenDetails) =>
-                !$swappableTokensStore.has(token.ledger) && token.symbol !== tokenState?.symbol,
+                !$swappableTokensStore.has(token.ledger) && token.symbol !== fromToken?.symbol,
         };
     }
 
     function setAmount(percentage: number) {
-        tokenState.draftAmount =
-            BigInt(Math.floor(Number(tokenState.cryptoBalance) * (percentage / 100))) -
-            tokenState.transferFees;
+        fromToken.draftAmount =
+            BigInt(Math.floor(Number(fromToken.cryptoBalance) * (percentage / 100))) -
+            fromToken.transferFees;
+    }
+
+    function dexName(dex: DexId): string {
+        switch (dex) {
+            case "icpswap":
+                return "ICPSwap";
+
+            case "sonic":
+                return "Sonic";
+
+            case "kongswap":
+                return "KongSwap";
+        }
+    }
+
+    function quote() {
+        if (!valid) return;
+        if (toToken === undefined) return;
+
+        busy = true;
+        error = undefined;
+        result = undefined;
+        swapId = undefined;
+
+        client
+            .getTokenSwapQuotes(
+                fromToken.ledger,
+                toToken.ledger!,
+                fromToken.draftAmount - BigInt(2) * fromToken.transferFees,
+            )
+            .then((response) => {
+                if (response.length === 0) {
+                    error = $_("tokenSwap.noQuotes", { values: { tokenIn: fromToken.symbol } });
+                } else {
+                    bestQuote = response[0];
+
+                    const [dexId, quote] = bestQuote!;
+
+                    const amountOutText = client.formatTokens(quote, toToken!.decimals);
+                    const amountInText = client.formatTokens(
+                        fromToken.draftAmount,
+                        fromToken.decimals,
+                    );
+                    const rate = (Number(amountOutText) / Number(amountInText)).toPrecision(3);
+                    const dex = dexName(dexId);
+                    const minAmountOut = toToken!.minAmount;
+                    const minAmountOutText = client.formatTokens(minAmountOut, toToken!.decimals);
+
+                    const usdInText = calculateDollarAmount(
+                        fromToken.draftAmount,
+                        $exchangeRatesLookup.get(fromToken.symbol.toLowerCase())?.toUSD,
+                        fromToken.decimals,
+                    );
+                    const usdOutText = calculateDollarAmount(
+                        bestQuote[1],
+                        $exchangeRatesLookup.get(toToken!.symbol.toLowerCase())?.toUSD,
+                        toToken!.decimals,
+                    );
+
+                    warnValueUnknown = usdInText === "???" || usdOutText === "???";
+                    warnValueDropped =
+                        !warnValueUnknown && Number(usdOutText) < 0.9 * Number(usdInText);
+
+                    swapMessageValues = {
+                        amountIn: amountInText,
+                        tokenIn: fromToken.symbol,
+                        rate,
+                        amountOut: amountOutText,
+                        tokenOut: toToken!.symbol,
+                        dex,
+                        minAmountOut: minAmountOutText,
+                        usdOut: usdOutText,
+                        usdIn: usdInText,
+                    };
+
+                    console.log("SwapMessageValues: ", swapMessageValues);
+
+                    if (quote > minAmountOut) {
+                        swapState = "swap";
+                    } else {
+                        error = $_("tokenSwap.quoteTooLow", { values: swapMessageValues });
+                    }
+                }
+            })
+            .catch((err) => {
+                client.logError(`Error getting swap quotes for token: ${fromToken.symbol}`, err);
+                error = $_("tokenSwap.quoteError", { values: { tokenIn: fromToken.symbol } });
+            })
+            .finally(() => (busy = false));
     }
 </script>
 
@@ -111,7 +224,7 @@
             </Container>
         {:else}
             <Body colour={"textPlaceholder"}>
-                <Translatable resourceKey={i18nKey("Choose...")} />
+                <Translatable resourceKey={i18nKey("Choose token...")} />
             </Body>
         {/if}
         <div class="icon">
@@ -124,7 +237,7 @@
     <Container height={{ kind: "fill" }} gap={"lg"} padding={"xl"} direction={"vertical"}>
         <Container gap={"md"} direction={"vertical"} padding={"md"}>
             <Body fontWeight={"bold"}>
-                <Translatable resourceKey={i18nKey(`Swap ${tokenState.symbol}`)} />
+                <Translatable resourceKey={i18nKey(`Swap ${fromToken.symbol}`)} />
             </Body>
 
             <BodySmall colour={"textSecondary"}>
@@ -135,7 +248,7 @@
             </BodySmall>
         </Container>
 
-        <TokenCard {tokenState} />
+        <TokenCard tokenState={fromToken} />
 
         <Container
             background={ColourVars.background1}
@@ -144,7 +257,7 @@
             borderRadius={"lg"}
             padding={["xl", "lg"]}>
             <Container direction={"vertical"} gap={"md"} crossAxisAlignment={"center"}>
-                {@render selectedToken(selectFrom, tokenState.token)}
+                {@render selectedToken(selectFrom, fromToken.token)}
                 <Container
                     supplementalClass={"swap_down_arrow"}
                     width={{ kind: "fixed", size: "3rem" }}
@@ -155,22 +268,22 @@
                     crossAxisAlignment={"center"}>
                     <ArrowDown size={"1.5rem"} />
                 </Container>
-                {@render selectedToken(selectTo, otherToken?.token)}
+                {@render selectedToken(selectTo, toToken?.token)}
             </Container>
 
             <TokenInput
-                ledger={tokenState.ledger}
-                minAmount={tokenState.minAmount}
+                ledger={fromToken.ledger}
+                minAmount={fromToken.minAmount}
                 disabled={busy}
                 error={!validAmount}
                 bind:valid={validAmount}
-                bind:amount={tokenState.draftAmount}>
+                bind:amount={fromToken.draftAmount}>
                 {#snippet subtext()}
-                    {`Minimum amount ${tokenState.minAmountLabel} ${tokenState.symbol}`}
+                    {`Minimum amount ${fromToken.minAmountLabel} ${fromToken.symbol}`}
                 {/snippet}
                 {#snippet icon()}
                     <Container padding={["zero", "xs"]} width={{ kind: "hug" }}>
-                        <Avatar url={tokenState.logo} size={"sm"} />
+                        <Avatar url={fromToken.logo} size={"sm"} />
                     </Container>
                 {/snippet}
             </TokenInput>
@@ -190,8 +303,22 @@
                 </Caption>
             </Container>
         </Container>
+        {#if error !== undefined || pinNumberError !== undefined}
+            <ErrorMessage>
+                {#if pinNumberError !== undefined}
+                    <Translatable resourceKey={pinNumberError} />
+                {:else}
+                    {error}
+                {/if}
+            </ErrorMessage>
+        {/if}
         <Container mainAxisAlignment={"end"}>
-            <CommonButton disabled={!valid} mode={"active"} size={"medium"}>
+            <CommonButton
+                loading={busy}
+                onClick={quote}
+                disabled={!valid}
+                mode={"active"}
+                size={"medium"}>
                 {#snippet icon(color, size)}
                     <ShareOutline {color} {size} />
                 {/snippet}
