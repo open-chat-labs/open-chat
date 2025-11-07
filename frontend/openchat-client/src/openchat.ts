@@ -7309,11 +7309,6 @@ export class OpenChat {
         outputTokenLedger: string,
         amountIn: bigint,
     ): Promise<[DexId, bigint][]> {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve([["icpswap", 123456579n]]);
-            }, 1000);
-        });
         return this.#sendRequest({
             kind: "getTokenSwapQuotes",
             inputTokenLedger,

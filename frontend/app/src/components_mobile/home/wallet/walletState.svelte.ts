@@ -121,6 +121,10 @@ export class TokenState {
         this.#selectedConversion = c;
     }
 
+    get remainingBalance() {
+        return this.#remainingBalance;
+    }
+
     get urlFormat() {
         return this.#urlFormat;
     }

@@ -65,7 +65,7 @@
             placeholder: i18nKey("Find token to swap..."),
             icon: swapIcon,
             extraFilter: (token: EnhancedTokenDetails) =>
-                !$swappableTokensStore.has(token.ledger) && token.balance > 0n,
+                $swappableTokensStore.has(token.ledger) && token.balance > 0n,
         };
     }
 </script>

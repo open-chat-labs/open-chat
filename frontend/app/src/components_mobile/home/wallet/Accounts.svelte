@@ -4,7 +4,6 @@
     import { getContext, onMount } from "svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import RestrictedFeature from "../profile/RestrictedFeature.svelte";
-    import SwapCrypto from "../profile/SwapCrypto.svelte";
     import WalletToken from "./WalletToken.svelte";
     import type { ConversionToken } from "./walletState.svelte";
 
@@ -34,7 +33,7 @@
 {#if actionMode !== "none" && selectedLedger !== undefined}
     <Sheet onDismiss={hideManageModal}>
         {#if actionMode === "swap"}
-            <SwapCrypto bind:ledgerIn={selectedLedger} onClose={hideManageModal} />
+            <ErrorMessage>TODO - get rid of this</ErrorMessage>
         {:else if actionMode === "restricted"}
             <RestrictedFeature onClose={hideManageModal} feature="swap" />
         {/if}

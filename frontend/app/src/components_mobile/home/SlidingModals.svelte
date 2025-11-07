@@ -47,7 +47,7 @@
     import ManageRecipients from "./wallet/ManageRecipients.svelte";
     import ReceiveCrypto from "./wallet/ReceiveCrypto.svelte";
     import SendCrypto from "./wallet/SendCrypto.svelte";
-    import SwapToken from "./wallet/SwapToken.svelte";
+    import SwapToken from "./wallet/SwapCrypto.svelte";
     import TokenPage from "./wallet/TokenPage.svelte";
     import WalletSettings from "./wallet/WalletSettings.svelte";
     import type { TokenState } from "./wallet/walletState.svelte";
@@ -310,7 +310,7 @@
         {:else if page.kind === "send_token"}
             <SendCrypto onClose={pop} tokenState={page.tokenState} />
         {:else if page.kind === "swap_token"}
-            <SwapToken onClose={pop} fromToken={page.tokenState} />
+            <SwapToken onClose={pop} inToken={page.tokenState} />
         {:else if page.kind === "manage_recipients"}
             <ManageRecipients />
         {:else if page.kind === "add_recipient"}
