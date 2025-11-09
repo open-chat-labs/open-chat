@@ -17,7 +17,7 @@
     import { rtlStore } from "../../../stores/rtl";
     import Avatar from "../../Avatar.svelte";
     import Link from "../../Link.svelte";
-    import type { ProfileLinkClickedEvent } from "../../web-components/profileLink";
+    import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import ChatMessageContent from "../ChatMessageContent.svelte";
     import IntersectionObserver from "../IntersectionObserver.svelte";
     import RepliesTo from "../RepliesTo.svelte";
@@ -38,7 +38,13 @@
     let crypto = msg.content.kind === "crypto_content";
 
     let sender = $derived(findUser(msg.sender, $allUsersStore, $selectedChatWebhooksStore));
-    let username = $derived(client.getDisplayName(msg.sender, $selectedCommunityMembersStore, $selectedChatWebhooksStore));
+    let username = $derived(
+        client.getDisplayName(
+            msg.sender,
+            $selectedCommunityMembersStore,
+            $selectedChatWebhooksStore,
+        ),
+    );
     let deleted = $derived(msg.content.kind === "deleted_content");
     let fill = $derived(client.fillMessage(msg));
     let me = $derived(user.userId === senderId);

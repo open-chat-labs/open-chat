@@ -7,7 +7,7 @@
     import Avatar from "../../Avatar.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
     import LinkButton from "../../LinkButton.svelte";
-    import type { ProfileLinkClickedEvent } from "../../web-components/profileLink";
+    import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import Badges from "./Badges.svelte";
 
     const client = getContext<OpenChat>("client");

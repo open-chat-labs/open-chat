@@ -12,6 +12,7 @@
             "@theme/*": ["./src/theme/*"],
             "@utils/*": ["./src/utils/*"],
             "@styles/*": ["./src/styles/*"],
+            "@webcomponents/*": ["./src/web-components/*"],
             "@component-lib/*": ["../component-lib/src/*"]
         }
     },

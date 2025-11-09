@@ -88,7 +88,7 @@
     }
 </script>
 
-<SectionHeader shadow flush={$mobileWidth}>
+<SectionHeader flush={$mobileWidth}>
     <h4><Translatable resourceKey={i18nKey("proposal.filter")} /></h4>
     <span title={$_("close")} class="close" onclick={onClose}>
         <HoverIcon>

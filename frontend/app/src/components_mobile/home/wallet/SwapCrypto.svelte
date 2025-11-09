@@ -46,7 +46,7 @@
         onClose: () => void;
     }
 
-    let { inToken = $bindable(), onClose }: Props = $props();
+    let { inToken = $bindable() }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
@@ -433,7 +433,9 @@
                 </div>
             {/if}
 
-            {#if swapState === "swap" && !swapping}
+            {#if swapState === "swap" && !swapping && outToken !== undefined}
+                <TokenCard tokenState={outToken} />
+
                 <div>{$_("tokenSwap.bestQuote", { values: swapMessageValues })}</div>
                 <Markdown text={$_("tokenSwap.youWillReceive", { values: swapMessageValues })} />
 

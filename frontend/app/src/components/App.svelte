@@ -2,9 +2,6 @@
     import "@styles/global.scss";
 
     import Router from "./Router.svelte";
-    import "./web-components/customEmoji";
-    import "./web-components/profileLink";
-    import "./web-components/spoiler";
     import "@i18n/i18n";
     import { reviewingTranslations } from "@i18n/i18n";
     import { trackedEffect } from "@src/utils/effects.svelte";
@@ -65,8 +62,6 @@
     import IncomingCall from "./home/video/IncomingCall.svelte";
     import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
     import Upgrading from "./upgrading/Upgrading.svelte";
-    import "./web-components/customEmoji";
-    import "./web-components/profileLink";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 

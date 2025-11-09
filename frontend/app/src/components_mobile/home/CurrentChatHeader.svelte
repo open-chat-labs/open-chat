@@ -23,7 +23,7 @@
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
     import Translatable from "../Translatable.svelte";
     import Typing from "../Typing.svelte";
-    import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
+    import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import ChatSubtext from "./ChatSubtext.svelte";
     import CurrentChatMenu from "./CurrentChatMenu.svelte";
     import Badges from "./profile/Badges.svelte";

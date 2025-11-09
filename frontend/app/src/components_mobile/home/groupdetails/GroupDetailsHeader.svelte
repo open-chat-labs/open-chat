@@ -28,7 +28,7 @@
     }
 </script>
 
-<SectionHeader border={false} flush={!$mobileWidth} shadow>
+<SectionHeader border={false} flush={!$mobileWidth}>
     <span title={$_("members")} class="members" onclick={showGroupMembers}>
         <HoverIcon>
             <AccountMultiple size={$iconSize} color={"var(--icon-txt)"} />

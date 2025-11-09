@@ -254,7 +254,7 @@
         onMention={mention} />
 {/if}
 
-<SectionHeader shadow flush entry bind:height={searchBoxHeight}>
+<SectionHeader flush entry bind:height={searchBoxHeight}>
     <div onclick={onClose}>
         <HoverIcon>
             <Close size={$iconSize} color={"var(--icon-txt)"} />

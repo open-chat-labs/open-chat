@@ -35,7 +35,7 @@
     }
 </script>
 
-<SectionHeader shadow flush>
+<SectionHeader flush>
     <div class="header">
         {#if $mobileWidth}
             <!-- svelte-ignore a11y_click_events_have_key_events -->
