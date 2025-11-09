@@ -7,6 +7,9 @@ import type { Theme } from "../theme/types";
 
 const FRAME_ANCESTORS = [
     "http://localhost:5173",
+    "https://clown.it.com",
+    "https://social.insaneclownprotocol.com",
+    "https://insaneclownprotocol.com",
     "https://windoge98.com",
     "https://desktop.windoge98.com",
     "https://4hy5z-qaaaa-aaaal-addrq-cai.icp0.io",
