@@ -150,7 +150,7 @@
     );
     let user = $derived($allUsersStore.get($currentUserIdStore));
     let lowercaseSearch = $derived(searchTerm.toLowerCase());
-    let showBrowseChannnels = $derived($chatListScopeStore.kind === "community");
+    let showBrowseChannels = $derived($chatListScopeStore.kind === "community");
     let unreadCounts = $derived.by(() => {
         switch ($chatListScopeStore.kind) {
             case "chats": {
@@ -329,7 +329,7 @@
                     </div>
                 {/if}
             </div>
-            {#if showBrowseChannnels}
+            {#if showBrowseChannels}
                 <BrowseChannels {searchTerm} />
             {/if}
         {/if}
@@ -361,11 +361,13 @@
         overflow: hidden;
         flex: auto;
         position: relative;
+        display: flex;
+        flex-direction: column;
     }
     .chat-summaries {
-        height: 100%;
         @include nice-scrollbar();
         overflow-x: hidden;
+        flex: 1 1 auto;
     }
 
     .join {
