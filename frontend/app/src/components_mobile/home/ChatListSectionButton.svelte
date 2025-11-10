@@ -16,6 +16,7 @@
 </script>
 
 <CommonButton
+    height={{ kind: "fill" }}
     width={selected ? { kind: "share", value: 1.2 } : { kind: "share", value: 1 }}
     {onClick}
     mode={selected ? "active" : "default"}

@@ -1,6 +1,7 @@
 <script lang="ts">
     import {
         Body,
+        ButtonSmall,
         ColourVars,
         getFlexStyle,
         type ColourVarKeys,
@@ -169,8 +170,16 @@
         <span class="icon">{@render icon(iconColour, iconSize)}</span>
     {/if}
     {#if children}
-        <Body align={"center"} width={{ kind: "hug" }} colour={textColour} fontWeight={"bold"}
-            >{@render children?.()}</Body>
+        {#if size !== "large"}
+            <ButtonSmall
+                align={"center"}
+                width={{ kind: "hug" }}
+                colour={textColour}
+                fontWeight={"bold"}>{@render children?.()}</ButtonSmall>
+        {:else}
+            <Body align={"center"} width={{ kind: "hug" }} colour={textColour} fontWeight={"bold"}
+                >{@render children?.()}</Body>
+        {/if}
     {/if}
 </button>
 

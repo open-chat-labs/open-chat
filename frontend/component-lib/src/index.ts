@@ -37,6 +37,7 @@ export { default as ChatFootnote } from "./components/typography/ChatFootnote.sv
 export { default as ChatLabel } from "./components/typography/ChatLabel.svelte";
 export { default as ChatText } from "./components/typography/ChatText.svelte";
 export { default as H1 } from "./components/typography/H1.svelte";
+export { default as ButtonSmall } from "./components/typography/ButtonSmall.svelte";
 export { default as H2 } from "./components/typography/H2.svelte";
 export { default as Label } from "./components/typography/Label.svelte";
 export { default as Overview } from "./components/typography/Overview.svelte";

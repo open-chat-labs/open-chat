@@ -167,7 +167,11 @@
         <ChatListFilters bind:filter={$chatListFilterStore as ChatListFilter} />
     {:else if $chatListScopeStore.kind === "community"}
         {#if $numberOfThreadsStore > 0}
-            <Container mainAxisAlignment={"spaceBetween"} padding={["sm", "md"]} gap={"sm"}>
+            <Container
+                height={{ kind: "fixed", size: "3rem" }}
+                mainAxisAlignment={"spaceBetween"}
+                padding={["sm", "md"]}
+                gap={"sm"}>
                 <ChatListSectionButton
                     onClick={() => setView("chats")}
                     unread={unreadCounts.chats}

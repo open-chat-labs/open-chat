@@ -167,6 +167,10 @@
         font-size: var(--typo-chatCaption-sz);
         line-height: var(--typo-chatCaption-lh);
     }
+    .buttonSmall {
+        font-size: var(--typo-buttonSmall-sz);
+        line-height: var(--typo-buttonSmall-lh);
+    }
 
     .light {
         font-weight: var(--font-weight-light);
