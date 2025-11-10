@@ -7,36 +7,36 @@
         ColourVars,
         CommonButton,
         Container,
+        Switch,
     } from "component-lib";
-    import type {
-        DexId,
-        EnhancedTokenDetails,
-        InterpolationValues,
-        OpenChat,
-        ResourceKey,
-    } from "openchat-client";
     import {
         exchangeRatesLookupStore as exchangeRatesLookup,
+        formatTokens,
         swappableTokensStore,
+        type DexId,
+        type EnhancedTokenDetails,
+        type InterpolationValues,
+        type OpenChat,
+        type ResourceKey,
     } from "openchat-client";
     import { random128 } from "openchat-shared";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
+    import Alert from "svelte-material-icons/AlertOutline.svelte";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
+    import Check from "svelte-material-icons/Check.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
+    import Info from "svelte-material-icons/InformationOutline.svelte";
     import ShareOutline from "svelte-material-icons/ShareOutline.svelte";
     import SwapVertical from "svelte-material-icons/SwapVertical.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
     import { calculateDollarAmount } from "../../../utils/exchange";
-    import AlertBox from "../../AlertBox.svelte";
-    import Checkbox from "../../Checkbox.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import Translatable from "../../Translatable.svelte";
-    import Markdown from "../Markdown.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import TokenInput from "../TokenInput.svelte";
-    import SwapProgress, { type SwapOutcome } from "./SwapProgress.svelte";
+    import SwapProgress from "./SwapProgress.svelte";
     import TokenCard from "./TokenCard.svelte";
     import TokenSelector from "./TokenSelector.svelte";
     import { TokenState } from "./walletState.svelte";
@@ -55,8 +55,7 @@
         onSelect: (token: EnhancedTokenDetails) => void;
         extraFilter?: (token: EnhancedTokenDetails) => boolean;
     };
-    type SwapState = "quote" | "swap" | "finished";
-    type Result = "success" | "rateChanged" | "insufficientFunds" | "error" | undefined;
+    type SwapState = "quote" | "swap";
 
     let outToken = $state<TokenState>();
     let ledgerIn = $derived(inToken.ledger);
@@ -65,7 +64,6 @@
     let busy = $state(false);
     let valid = $state(false);
     let swapState = $state<SwapState>("quote");
-    let result: Result = $state(undefined);
     let validAmount = $state(false);
     let ledgerOut = $derived(outToken?.ledger);
     let swaps = $state({} as Record<string, DexId[]>);
@@ -80,28 +78,15 @@
     let detailsOut = $derived(outToken?.token);
     let anySwapsAvailable = $derived(Object.keys(swaps).length > 0 && detailsOut !== undefined);
     let swapping = $derived(swapState === "swap" && busy);
-    let amountInText = $derived(client.formatTokens(inToken.draftAmount, detailsIn.decimals));
+    let amountInText = $derived(formatTokens(inToken.draftAmount, detailsIn.decimals));
 
     onMount(() => loadSwaps(inToken.ledger));
-
-    function getPrimaryButtonText(state: SwapState, result: Result): ResourceKey {
-        let label;
-
-        if (state === "finished") {
-            label = result === "insufficientFunds" ? "back" : "requote";
-        } else {
-            label = state;
-        }
-
-        return i18nKey(`tokenSwap.${label}`);
-    }
 
     function quote() {
         if (!valid) return;
 
         busy = true;
         error = undefined;
-        result = undefined;
         swapId = undefined;
 
         client
@@ -118,14 +103,11 @@
 
                     const [dexId, quote] = bestQuote!;
 
-                    const amountOutText = client.formatTokens(quote, detailsOut!.decimals);
+                    const amountOutText = formatTokens(quote, detailsOut!.decimals);
                     const rate = (Number(amountOutText) / Number(amountInText)).toPrecision(3);
                     const dex = dexName(dexId);
                     const minAmountOut = BigInt(10) * detailsOut!.transferFee;
-                    const minAmountOutText = client.formatTokens(
-                        minAmountOut,
-                        detailsOut!.decimals,
-                    );
+                    const minAmountOutText = formatTokens(minAmountOut, detailsOut!.decimals);
 
                     const usdInText = calculateDollarAmount(
                         inToken.draftAmount,
@@ -173,7 +155,6 @@
 
         busy = true;
         error = undefined;
-        result = undefined;
 
         const ledgerInLocal = ledgerIn;
         const ledgerOutLocal = ledgerOut!;
@@ -186,7 +167,6 @@
             .then((balance) => {
                 if (balance < inToken.draftAmount) {
                     error = $_("tokenSwap.progress.insufficientFunds");
-                    result = "insufficientFunds";
                     return false;
                 } else {
                     return true;
@@ -233,23 +213,14 @@
         });
     }
 
-    function onSwapFinished(outcome: SwapOutcome, ledgerIn: string, ledgerOut: string) {
-        busy = false;
-        swapState = "finished";
-        result = outcome;
-
-        client.refreshAccountBalance(ledgerIn);
-        client.refreshAccountBalance(ledgerOut);
-    }
-
     function onPrimaryClick() {
-        if (swapState === "finished" && result === "insufficientFunds") {
-            inToken.draftAmount = 0n;
-            swapState = "quote";
-        } else if (swapState === "quote" || result === "rateChanged") {
-            quote();
-        } else if (swapState === "swap") {
-            swap();
+        switch (swapState) {
+            case "quote":
+                quote();
+                break;
+            case "swap":
+                swap();
+                break;
         }
     }
 
@@ -262,7 +233,7 @@
                   (!warnValueUnknown && !warnValueDropped)
                 : true);
     });
-    let primaryButtonText = $derived(getPrimaryButtonText(swapState, result));
+
     let pinNumberError = $derived($pinNumberErrorMessageStore);
 
     function setAmount(percentage: number) {
@@ -418,30 +389,91 @@
                 </Container>
             {/if}
 
-            {#if (swapping || swapState === "finished") && swapId !== undefined && detailsOut !== undefined && bestQuote !== undefined}
-                <div>
-                    <SwapProgress
-                        {swapId}
-                        tokenIn={detailsIn.symbol}
-                        tokenOut={detailsOut.symbol}
-                        ledgerIn={detailsIn.ledger}
-                        ledgerOut={detailsOut.ledger}
-                        amountIn={amountInText}
-                        decimalsOut={detailsOut.decimals}
-                        dex={dexName(bestQuote[0])}
-                        onFinished={onSwapFinished} />
-                </div>
-            {/if}
-
-            {#if swapState === "swap" && !swapping && outToken !== undefined}
+            {#if swapState === "swap" && outToken !== undefined && swapMessageValues !== undefined}
                 <TokenCard tokenState={outToken} />
 
-                <div>{$_("tokenSwap.bestQuote", { values: swapMessageValues })}</div>
-                <Markdown text={$_("tokenSwap.youWillReceive", { values: swapMessageValues })} />
+                <Container
+                    gap={"lg"}
+                    background={ColourVars.background1}
+                    padding={"lg"}
+                    borderRadius={"lg"}
+                    direction={"vertical"}>
+                    <Container mainAxisAlignment={"spaceBetween"}>
+                        <BodySmall colour={"textSecondary"}>
+                            <Translatable resourceKey={i18nKey("You swap")} />
+                        </BodySmall>
+                        <Container
+                            crossAxisAlignment={"end"}
+                            width={{ kind: "hug" }}
+                            direction={"vertical"}>
+                            <Body align={"end"} width={{ kind: "hug" }} fontWeight={"bold"}>
+                                {`${swapMessageValues.amountIn} ${swapMessageValues.tokenIn}`}
+                            </Body>
+                            <Caption
+                                align={"end"}
+                                width={{ kind: "hug" }}
+                                fontWeight={"bold"}
+                                colour={"textSecondary"}>
+                                ${swapMessageValues.usdIn}
+                            </Caption>
+                        </Container>
+                    </Container>
+                    <Container mainAxisAlignment={"spaceBetween"}>
+                        <BodySmall colour={"textSecondary"}>
+                            <Translatable resourceKey={i18nKey("You receive (approx.)")} />
+                        </BodySmall>
+                        <Container
+                            crossAxisAlignment={"end"}
+                            width={{ kind: "hug" }}
+                            direction={"vertical"}>
+                            <Body
+                                align={"end"}
+                                width={{ kind: "hug" }}
+                                colour={"primary"}
+                                fontWeight={"bold"}>
+                                {`${swapMessageValues.amountOut} ${swapMessageValues.tokenOut}`}
+                            </Body>
+                            <Caption
+                                align={"end"}
+                                width={{ kind: "hug" }}
+                                fontWeight={"bold"}
+                                colour={"textSecondary"}>
+                                ${swapMessageValues.usdOut}
+                            </Caption>
+                        </Container>
+                    </Container>
+                    <Container mainAxisAlignment={"spaceBetween"}>
+                        <BodySmall colour={"textSecondary"}>
+                            <Translatable resourceKey={i18nKey("Exchange rate")} />
+                        </BodySmall>
+                        <Body width={{ kind: "hug" }} fontWeight={"bold"}>
+                            {`${swapMessageValues.rate} ${swapMessageValues.tokenOut} ~ 1 ${swapMessageValues.tokenIn}`}
+                        </Body>
+                    </Container>
+                    <Container mainAxisAlignment={"spaceBetween"}>
+                        <BodySmall colour={"textSecondary"}>
+                            <Translatable resourceKey={i18nKey("Quote provider")} />
+                        </BodySmall>
+                        <Body width={{ kind: "hug" }} fontWeight={"bold"}>
+                            {`${swapMessageValues.dex}`}
+                        </Body>
+                    </Container>
+                </Container>
 
                 {#if warnValueDropped || warnValueUnknown}
-                    <AlertBox>
-                        <div class="warning">
+                    <Container
+                        gap={"md"}
+                        background={ColourVars.background1}
+                        padding={"lg"}
+                        borderRadius={"lg"}
+                        direction={"vertical"}>
+                        <Container crossAxisAlignment={"center"} gap={"sm"}>
+                            <Alert color={ColourVars.warning} />
+                            <Body fontWeight={"bold"} colour={"warning"}>
+                                <Translatable resourceKey={i18nKey("Low value warning")} />
+                            </Body>
+                        </Container>
+                        <Body colour={"textSecondary"}>
                             {#if warnValueDropped}
                                 <Translatable
                                     resourceKey={i18nKey(
@@ -455,16 +487,30 @@
                                         swapMessageValues,
                                     )} />
                             {/if}
-                        </div>
-                        <Checkbox
-                            id="confirm-understanding"
-                            small
-                            label={i18nKey("tokenSwap.confirmUnderstanding")}
-                            bind:checked={userAcceptedWarning} />
-                    </AlertBox>
+                        </Body>
+                        <Switch reverse bind:checked={userAcceptedWarning}>
+                            <Translatable resourceKey={i18nKey("tokenSwap.confirmUnderstanding")} />
+                        </Switch>
+                    </Container>
                 {/if}
 
-                <div>{$_("tokenSwap.proceedWithSwap", { values: swapMessageValues })}</div>
+                <Container
+                    gap={"md"}
+                    background={ColourVars.background1}
+                    padding={"lg"}
+                    borderRadius={"lg"}
+                    direction={"vertical"}>
+                    <Container crossAxisAlignment={"center"} gap={"sm"}>
+                        <Info color={ColourVars.secondary} />
+                        <Body fontWeight={"bold"} colour={"secondary"}>
+                            <Translatable resourceKey={i18nKey("Swap success limit")} />
+                        </Body>
+                    </Container>
+                    <Body colour={"textSecondary"}>
+                        <Translatable
+                            resourceKey={i18nKey("tokenSwap.proceedWithSwap", swapMessageValues)} />
+                    </Body>
+                </Container>
             {/if}
         {/if}
         {#if error !== undefined || pinNumberError !== undefined}
@@ -476,23 +522,51 @@
                 {/if}
             </ErrorMessage>
         {/if}
-        <Container mainAxisAlignment={"end"}>
-            {#if result !== "success" && result !== "error"}
+        <Container
+            crossAxisAlignment={"end"}
+            mainAxisAlignment={swapState === "quote" ? "end" : "spaceBetween"}>
+            {#if swapState === "swap" && !swapping}
                 <CommonButton
-                    loading={busy}
-                    onClick={onPrimaryClick}
-                    disabled={busy || !valid}
-                    mode={"active"}
-                    size={"medium"}>
-                    {#snippet icon(color, size)}
-                        <ShareOutline {color} {size} />
-                    {/snippet}
-                    <Translatable resourceKey={primaryButtonText} />
+                    onClick={() => (swapState = "quote")}
+                    mode={"default"}
+                    size={"small_text"}>
+                    <Translatable resourceKey={i18nKey("cancel")} />
                 </CommonButton>
             {/if}
+            <CommonButton
+                loading={busy}
+                onClick={onPrimaryClick}
+                disabled={busy || !valid}
+                mode={"active"}
+                size={"medium"}>
+                {#snippet icon(color, size)}
+                    {#if swapState === "swap"}
+                        <Check {color} {size} />
+                    {:else}
+                        <ShareOutline {color} {size} />
+                    {/if}
+                {/snippet}
+                {#if swapState === "swap"}
+                    <Translatable resourceKey={i18nKey("Accept quote & proceed")} />
+                {:else}
+                    <Translatable resourceKey={i18nKey("Get swap quote")} />
+                {/if}
+            </CommonButton>
         </Container>
     </Container>
 </SlidingPageContent>
+
+{#if swapping && swapId !== undefined && detailsOut !== undefined && bestQuote !== undefined}
+    <SwapProgress
+        {swapId}
+        tokenIn={detailsIn.symbol}
+        tokenOut={detailsOut.symbol}
+        ledgerIn={detailsIn.ledger}
+        ledgerOut={detailsOut.ledger}
+        amountIn={amountInText}
+        decimalsOut={detailsOut.decimals}
+        dex={dexName(bestQuote[0])} />
+{/if}
 
 {#snippet percentage(perc: number)}
     <CommonButton
@@ -504,121 +578,6 @@
     </CommonButton>
 {/snippet}
 
-<!-- <ModalContent>
-    {#snippet body()}
-        <form class="body">
-            {#if initialized}
-                {#if swapState === "quote"}
-                    <div class="swap">
-                        <div class="select-from">
-                            <Legend label={i18nKey("cryptoAccount.transactionHeaders.from")} />
-                            <div class="inner">
-                                <CryptoSelector
-                                    filter={(t) =>
-                                        t.balance > 0 && $swappableTokensStore.has(t.ledger)}
-                                    bind:ledger={ledgerIn}
-                                    onSelect={onLedgerInSelected} />
-                            </div>
-                        </div>
-                        <div class="amount">
-                            <TokenInput
-                                ledger={ledgerIn}
-                                minAmount={detailsIn.transferFee * BigInt(10)}
-                                maxAmount={detailsIn.balance}
-                                bind:valid={validAmount}
-                                bind:amount={fromToken.draftAmount} />
-                        </div>
-                        <div class="select-to">
-                            <Legend label={i18nKey("cryptoAccount.transactionHeaders.to")} />
-                            <div class="inner">
-                                <CryptoSelector
-                                    filter={(t) => Object.keys(swaps).includes(t.ledger)}
-                                    bind:ledger={ledgerOut} />
-                            </div>
-                        </div>
-                    </div>
-                {/if}
-
-                {#if (swapping || swapState === "finished") && swapId !== undefined && detailsOut !== undefined && bestQuote !== undefined}
-                    <div>
-                        <SwapProgress
-                            {swapId}
-                            tokenIn={detailsIn.symbol}
-                            tokenOut={detailsOut.symbol}
-                            ledgerIn={detailsIn.ledger}
-                            ledgerOut={detailsOut.ledger}
-                            amountIn={amountInText}
-                            decimalsOut={detailsOut.decimals}
-                            dex={dexName(bestQuote[0])}
-                            onFinished={onSwapFinished} />
-                    </div>
-                {/if}
-
-                {#if swapState === "swap" && !swapping}
-                    <div>{$_("tokenSwap.bestQuote", { values: swapMessageValues })}</div>
-                    <Markdown
-                        text={$_("tokenSwap.youWillReceive", { values: swapMessageValues })} />
-
-                    {#if warnValueDropped || warnValueUnknown}
-                        <AlertBox>
-                            <div class="warning">
-                                {#if warnValueDropped}
-                                    <Translatable
-                                        resourceKey={i18nKey(
-                                            "tokenSwap.warningValueDropped",
-                                            swapMessageValues,
-                                        )} />
-                                {:else}
-                                    <Translatable
-                                        resourceKey={i18nKey(
-                                            "tokenSwap.warningValueUnknown",
-                                            swapMessageValues,
-                                        )} />
-                                {/if}
-                            </div>
-                            <Checkbox
-                                id="confirm-understanding"
-                                small
-                                label={i18nKey("tokenSwap.confirmUnderstanding")}
-                                bind:checked={userAcceptedWarning} />
-                        </AlertBox>
-                    {/if}
-
-                    <div>{$_("tokenSwap.proceedWithSwap", { values: swapMessageValues })}</div>
-                {/if}
-
-                {#if error !== undefined || pinNumberError !== undefined}
-                    <ErrorMessage>
-                        {#if pinNumberError !== undefined}
-                            <Translatable resourceKey={pinNumberError} />
-                        {:else}
-                            {error}
-                        {/if}
-                    </ErrorMessage>
-                {/if}
-            {/if}
-        </form>
-    {/snippet}
-    {#snippet footer()}
-        <span>
-            <ButtonGroup>
-                {#if !swapping}
-                    <Button secondary tiny={$mobileWidth} onClick={onClose}
-                        ><Translatable resourceKey={i18nKey("close")} /></Button>
-                {/if}
-                {#if result !== "success" && result !== "error"}
-                    <Button
-                        disabled={busy || !valid}
-                        loading={busy}
-                        tiny={$mobileWidth}
-                        onClick={onPrimaryClick}
-                        ><Translatable resourceKey={primaryButtonText} /></Button>
-                {/if}
-            </ButtonGroup>
-        </span>
-    {/snippet}
-</ModalContent>
- -->
 <style lang="scss">
     :global(.container.swap_down_arrow) {
         position: absolute;
@@ -626,9 +585,5 @@
         height: 3rem;
         transform: translateY(calc(50% + 0.3rem));
         z-index: 1;
-    }
-
-    .warning {
-        margin-bottom: $sp4;
     }
 </style>

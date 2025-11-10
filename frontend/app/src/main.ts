@@ -4,9 +4,9 @@ BigInt.prototype.toJSON = function () {
     return this.toString();
 };
 
-import "@webcomponents/customEmoji";
-import "@webcomponents/profileLink";
-import "@webcomponents/spoiler";
+import "./web-components/customEmoji";
+import "./web-components/profileLink";
+import "./web-components/spoiler";
 
 import { mobileWidth } from "openchat-client";
 import "svelte";

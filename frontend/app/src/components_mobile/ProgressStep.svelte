@@ -1,12 +1,12 @@
 <script lang="ts">
-    import Spinner from "./icons/Spinner.svelte";
+    import type { ResourceKey } from "openchat-client";
     import { _ } from "svelte-i18n";
     import DoneIcon from "svelte-material-icons/CheckCircle.svelte";
     import FailedIcon from "svelte-material-icons/CloseCircle.svelte";
-    import { currentTheme } from "../theme/themes";
     import { interpolate } from "../i18n/i18n";
+    import { currentTheme } from "../theme/themes";
     import Markdown from "./home/Markdown.svelte";
-    import type { ResourceKey } from "openchat-client";
+    import Spinner from "./icons/Spinner.svelte";
 
     interface Props {
         label: ResourceKey;
@@ -51,8 +51,9 @@
         align-items: center;
         margin-bottom: $sp4;
         &.todo {
-            color: var(--txt-light);
-            @include font(book, normal, fs-80);
+            color: var(--text-secondary);
+            font-size: var(--typo-body-small-sz);
+            line-height: var(--typo-body-small-lh);
         }
         .index {
             display: flex;
