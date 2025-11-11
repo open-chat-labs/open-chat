@@ -1,38 +1,23 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
-    import {
-        BodySmall,
-        Caption,
-        ColourVars,
-        CommonButton,
-        Container,
-        Form,
-        IconButton,
-        TextArea,
-    } from "component-lib";
+    import { Caption, CommonButton, Container, Form, TextArea } from "component-lib";
     import {
         allUsersStore,
         anonUserStore,
         currentUserIdStore,
         ErrorCode,
         OpenChat,
-        percentageStorageUsedStore,
-        storageInGBStore,
         suspendedUserStore,
-        userMetricsStore,
         type PublicProfile,
     } from "openchat-client";
     import { getContext } from "svelte";
-    import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";
     import DisplayNameInput from "../../DisplayNameInput.svelte";
-    import Progress from "../../Progress.svelte";
     import Translatable from "../../Translatable.svelte";
     import UsernameInput from "../../UsernameInput.svelte";
     import DiamondUpgradeBox from "../DiamondUpgradeBox.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
-    import Stats from "../Stats.svelte";
     import UserProfileImageEditor from "./UserProfileImageEditor.svelte";
 
     const MAX_DESC_LENGTH = 1024;
@@ -149,12 +134,6 @@
 
         Promise.all(promises).finally(() => (saving = false));
     }
-
-    function onCopy() {
-        navigator.clipboard.writeText(user.userId).then(() => {
-            toastStore.showSuccessToast(i18nKey("userIdCopiedToClipboard"));
-        });
-    }
 </script>
 
 <SlidingPageContent title={i18nKey("Profile settings")}>
@@ -227,60 +206,6 @@
                     </Container>
                 </Container>
             </Form>
-
-            <Container gap={"lg"} direction={"vertical"} padding={["zero", "xl"]}>
-                <Caption>
-                    <Translatable resourceKey={i18nKey("Account details")}></Translatable>
-                </Caption>
-                <Container gap={"sm"} direction={"vertical"}>
-                    <Container crossAxisAlignment={"center"}>
-                        <Container direction={"vertical"}>
-                            <BodySmall colour={"textSecondary"}>
-                                <Translatable resourceKey={i18nKey("user & canister id")}
-                                ></Translatable>
-                            </BodySmall>
-
-                            <BodySmall>
-                                {user.userId}
-                            </BodySmall>
-                        </Container>
-                        <IconButton onclick={onCopy} size={"sm"}>
-                            {#snippet icon()}
-                                <CopyIcon color={ColourVars.textSecondary} />
-                            {/snippet}
-                        </IconButton>
-                    </Container>
-                </Container>
-                <Container gap={"sm"} direction={"vertical"}>
-                    <Container direction={"vertical"}>
-                        <BodySmall colour={"textSecondary"}>
-                            <Translatable resourceKey={i18nKey("account storage usage")}
-                            ></Translatable>
-                        </BodySmall>
-
-                        <Progress size={"4px"} percent={$percentageStorageUsedStore} />
-
-                        <BodySmall>
-                            <Translatable
-                                resourceKey={i18nKey("storageUsed", {
-                                    used: $storageInGBStore.gbUsed.toFixed(2),
-                                    limit: $storageInGBStore.gbLimit.toFixed(1),
-                                })} />
-                            <Translatable
-                                resourceKey={i18nKey("storagePercentRemaining", {
-                                    percent: $percentageStorageUsedStore,
-                                })} />
-                        </BodySmall>
-                    </Container>
-                </Container>
-            </Container>
-
-            <Container gap={"lg"} direction={"vertical"} padding={["zero", "xl"]}>
-                <Caption>
-                    <Translatable resourceKey={i18nKey("User stats")}></Translatable>
-                </Caption>
-                <Stats showReported stats={$userMetricsStore} />
-            </Container>
         </Container>
     </Container>
 </SlidingPageContent>

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Body, BodySmall, Caption, ColourVars, Container, Label } from "component-lib";
+    import { Body, BodySmall, ColourVars, Container, Subtitle } from "component-lib";
     import type { Metrics, OpenChat } from "openchat-client";
     import { minutesOnlineStore } from "openchat-client";
     import { getContext, onMount } from "svelte";
@@ -136,13 +136,13 @@
     <Container crossAxisAlignment={"center"} gap={"sm"}>
         <div class={`legend ${cls} key`}></div>
         <div class={`legend ${cls}`}>{n.toLocaleString()}</div>
-        <Label width={{ kind: "hug" }}>
+        <BodySmall width={{ kind: "hug" }}>
             <Translatable resourceKey={i18nKey(resourceKey)} />
-        </Label>
+        </BodySmall>
     </Container>
 {/snippet}
 
-<Container direction={"vertical"} gap={"lg"} crossAxisAlignment={"center"}>
+<Container direction={"vertical"} gap={"xl"} crossAxisAlignment={"center"}>
     <svg class:rendered class="pie" viewBox="0 0 320 320">
         <clipPath id="hollow">
             <path
@@ -179,14 +179,14 @@
                 >{$minutesOnlineStore.minutesOnlineThisMonth.toLocaleString()}</Body>
             <Body width={{ kind: "hug" }} fontWeight={"bold"}>min</Body>
         </Container>
-        <BodySmall align={"center"}>
+        <Body align={"center"}>
             <Translatable resourceKey={i18nKey("online this month")}></Translatable>
-        </BodySmall>
+        </Body>
         <Container mainAxisAlignment={"center"} gap={"xs"}>
-            <Caption colour={"textSecondary"} width={{ kind: "hug" }} fontWeight={"bold"}
-                >{$minutesOnlineStore.minutesOnlineLastMonth.toLocaleString()}</Caption>
-            <Caption colour={"textSecondary"} width={{ kind: "hug" }} fontWeight={"bold"}
-                >previous month</Caption>
+            <BodySmall colour={"textSecondary"} width={{ kind: "hug" }} fontWeight={"bold"}
+                >{$minutesOnlineStore.minutesOnlineLastMonth.toLocaleString()}</BodySmall>
+            <BodySmall colour={"textSecondary"} width={{ kind: "hug" }} fontWeight={"bold"}
+                >previous month</BodySmall>
         </Container>
     </Container>
 
@@ -211,14 +211,14 @@
 
     {#if showReported}
         <Container gap={"xs"} direction={"vertical"}>
-            <Container gap={"xs"}>
+            <Container crossAxisAlignment={"center"} gap={"xs"}>
                 <Flag color={ColourVars.error} />
-                <BodySmall width={{ kind: "hug" }} colour={"error"} fontWeight={"bold"}>
+                <Subtitle width={{ kind: "hug" }} colour={"error"} fontWeight={"bold"}>
                     <Translatable resourceKey={i18nKey("stats.reportedMessages")} />
-                </BodySmall>
-                <BodySmall width={{ kind: "hug" }} colour={"error"} fontWeight={"bold"}>
+                </Subtitle>
+                <Subtitle width={{ kind: "hug" }} colour={"error"} fontWeight={"bold"}>
                     / {stats.reportedMessages.toLocaleString()}
-                </BodySmall>
+                </Subtitle>
             </Container>
             <BodySmall colour={"textSecondary"} align={"start"}>
                 <Translatable resourceKey={i18nKey("stats.reportedMessagesInfo")} />
@@ -246,6 +246,11 @@
     $poll-colour: #5eed82;
     $crypto-colour: #a6ed5e;
     $giphy-colour: #ed5e5e;
+
+    .legend {
+        font-size: var(--typo-bodySmall-sz);
+        line-height: var(--typo-bodySmall-lh);
+    }
 
     .slice {
         fill: transparent;

@@ -1,9 +1,10 @@
 <script lang="ts">
+    import SparkleBoxOutline from "@src/components_mobile/SparkleBoxOutline.svelte";
     import { now500 } from "@src/stores/time";
     import { toastStore } from "@src/stores/toast";
     import {
         BodySmall,
-        Caption,
+        Button,
         ColourVars,
         CommonButton,
         Container,
@@ -89,68 +90,77 @@
     <StreakInsuranceBuy onClose={() => (showInsurance = false)} />
 {/if}
 
-<Container gap={"sm"} crossAxisAlignment={"center"}>
-    <Container
-        supplementalClass={"streak_bubble"}
-        borderRadius={"circle"}
-        width={{ kind: "hug" }}
-        padding={["sm", "xl"]}
-        crossAxisAlignment={"center"}
-        background={ColourVars.primary}
-        direction={"vertical"}>
-        <H2 colour={"textOnPrimary"} fontWeight={"bold"}>{streak}</H2>
-        <Caption>
-            <Translatable resourceKey={i18nKey("streak")}></Translatable>
-        </Caption>
+<SparkleBoxOutline>
+    <Container padding={["zero", "zero", "lg", "zero"]} gap={"sm"} crossAxisAlignment={"center"}>
+        <Container
+            supplementalClass={"streak_bubble"}
+            borderRadius={"circle"}
+            width={{ kind: "fixed", size: "5rem" }}
+            height={{ kind: "fixed", size: "5rem" }}
+            crossAxisAlignment={"center"}
+            mainAxisAlignment={"center"}
+            gap={"xs"}
+            background={ColourVars.primary}
+            direction={"vertical"}>
+            <H2 width={{ kind: "hug" }} colour={"textOnPrimary"} fontWeight={"bold"}>{streak}</H2>
+            <BodySmall fontWeight={"bold"} width={{ kind: "hug" }}>
+                <Translatable resourceKey={i18nKey("streak")}></Translatable>
+            </BodySmall>
+        </Container>
+        <Container gap={"xxs"} allowOverflow direction={"vertical"}>
+            <div class="badges">
+                {#each badgesVisible as badge}
+                    <div class="badge" style="left: {(badge * 100) / maxBadgeVisible}%">
+                        <Streak disabled={streak < badge} days={badge} />
+                    </div>
+                {/each}
+            </div>
+            <div class="progress">
+                <Progress size={"6px"} {percent}></Progress>
+            </div>
+            <div class="marker" style="left: {percent}%">
+                <div class="line"></div>
+            </div>
+            <Container crossAxisAlignment={"center"} gap={"xs"}>
+                <Subtitle width={{ kind: "hug" }} fontWeight={"bold"} colour={"primary"}
+                    >{`${balance.toLocaleString()} CHIT`}</Subtitle>
+                <BodySmall width={{ kind: "hug" }} fontWeight={"bold"} colour={"textSecondary"}
+                    >{`/ ${earned.toLocaleString()} earned`}</BodySmall>
+            </Container>
+        </Container>
     </Container>
-    <Container crossAxisAlignment={"center"} gap={"xs"}>
-        <Subtitle width={{ kind: "hug" }} fontWeight={"bold"} colour={"primary"}
-            >{`${balance.toLocaleString()} CHIT`}</Subtitle>
-        <BodySmall width={{ kind: "hug" }} fontWeight={"bold"} colour={"textSecondary"}
-            >{`/ ${earned.toLocaleString()} earned`}</BodySmall>
-    </Container>
-</Container>
-<div class="progress">
-    <Progress size={"6px"} {percent}></Progress>
-</div>
-<div class="marker" style="left: {percent}%">
-    <div class="line"></div>
-</div>
-<div class="badges">
-    {#each badgesVisible as badge}
-        <div class="badge" style="left: {(badge * 100) / maxBadgeVisible}%">
-            <Streak disabled={streak < badge} days={badge} />
-        </div>
-    {/each}
-</div>
 
-{#if mode === "edit"}
-    <Container mainAxisAlignment={"end"} gap={"sm"} crossAxisAlignment={"end"}>
-        {#if insuranceLink}
-            <CommonButton onClick={() => (showInsurance = true)} size={"small_text"}>
-                {#snippet icon(color, size)}
-                    <ShieldStarOutline {color} {size}></ShieldStarOutline>
+    {#if mode === "edit"}
+        <Container
+            direction={"vertical"}
+            mainAxisAlignment={"center"}
+            gap={"md"}
+            crossAxisAlignment={"center"}>
+            <Button disabled={!claimChitAvailable} loading={busy} onClick={claim}>
+                {#snippet icon(color)}
+                    <PartyPopper {color}></PartyPopper>
                 {/snippet}
-                <Translatable resourceKey={i18nKey("Streak insurance")}></Translatable>
-            </CommonButton>
-        {/if}
-        <CommonButton
-            disabled={!claimChitAvailable}
-            loading={busy}
-            onClick={claim}
-            size={"medium"}
-            mode={"active"}>
-            {#snippet icon(color, size)}
-                <PartyPopper {color} {size}></PartyPopper>
-            {/snippet}
-            {#if claimChitAvailable}
-                <Translatable resourceKey={i18nKey("Claim CHIT")}></Translatable>
-            {:else}
-                <Translatable resourceKey={i18nKey("dailyChit.comeback", { time: remaining })} />
+                {#if claimChitAvailable}
+                    <Translatable resourceKey={i18nKey("Claim CHIT")}></Translatable>
+                {:else}
+                    <Translatable
+                        resourceKey={i18nKey("dailyChit.comeback", { time: remaining })} />
+                {/if}
+            </Button>
+            {#if insuranceLink}
+                <CommonButton
+                    mode={"default"}
+                    onClick={() => (showInsurance = true)}
+                    size={"small_text"}>
+                    {#snippet icon(color, size)}
+                        <ShieldStarOutline {color} {size}></ShieldStarOutline>
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("Streak insurance")}></Translatable>
+                </CommonButton>
             {/if}
-        </CommonButton>
-    </Container>
-{/if}
+        </Container>
+    {/if}
+</SparkleBoxOutline>
 
 <style lang="scss">
     :global(.container.streak_bubble h2) {
@@ -163,15 +173,19 @@
 
     .progress {
         width: 100%;
-        margin-top: -6px;
-        padding-inline-start: 26px;
+        // margin-top: -6px;
+        // padding-inline-start: 26px;
+        margin-inline-start: -0.75rem;
+        margin-top: 1.6rem;
     }
 
     .badges {
         position: relative;
-        margin-bottom: 3rem;
+        // margin-bottom: 2px;
         width: 100%;
         z-index: 2;
+        margin-inline-start: -0.75rem;
+        margin-bottom: 3px;
 
         .badge {
             top: 8px;

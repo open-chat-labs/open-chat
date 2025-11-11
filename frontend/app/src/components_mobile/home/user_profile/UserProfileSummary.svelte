@@ -1,45 +1,54 @@
 <script lang="ts">
     import MulticolourText from "@src/components_mobile/MulticolourText.svelte";
     import { i18nKey } from "@src/i18n/i18n";
-    import { Caption, Container } from "component-lib";
+    import { toastStore } from "@src/stores/toast";
+    import { Body, BodySmall, ColourVars, Container, IconButton } from "component-lib";
     import {
         allUsersStore,
         currentUserIdStore,
         currentUserProfileStore,
         OpenChat,
+        percentageStorageUsedStore,
         publish,
+        storageInGBStore,
+        userMetricsStore,
         type PublicProfile,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountStar from "svelte-material-icons/AccountStarOutline.svelte";
-    import Cog from "svelte-material-icons/Cog.svelte";
-    import Delete from "svelte-material-icons/DeleteForeverOutline.svelte";
-    import Eye from "svelte-material-icons/EyeOutline.svelte";
-    import FlashOutline from "svelte-material-icons/FlashOutline.svelte";
-    import RobotOutline from "svelte-material-icons/RobotOutline.svelte";
-    import Sync from "svelte-material-icons/Sync.svelte";
-    import LinkedCard from "../../LinkedCard.svelte";
+    import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
+    import Progress from "../../Progress.svelte";
     import SparkleBox from "../../SparkleBox.svelte";
     import Translatable from "../../Translatable.svelte";
+    import Stats from "../Stats.svelte";
     import UserProfileSummaryCard from "./UserProfileSummaryCard.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    let user = $derived($allUsersStore.get($currentUserIdStore));
+    let user = $derived($allUsersStore.get($currentUserIdStore) ?? client.nullUser("unknown"));
     let verified = $derived(user?.isUniquePerson ?? false);
     let profile: PublicProfile | undefined = $state();
 
     onMount(() => {
-        client.getUser($currentUserIdStore).then((u) => (user = u));
+        client.getUser($currentUserIdStore).then((u) => {
+            if (u) {
+                user = u;
+            }
+        });
         return currentUserProfileStore.subscribe((p) => {
             profile = p;
         });
     });
+
+    function onCopy() {
+        navigator.clipboard.writeText(user.userId).then(() => {
+            toastStore.showSuccessToast(i18nKey("userIdCopiedToClipboard"));
+        });
+    }
 </script>
 
 <Container
-    padding={["lg", "lg", "zero", "lg"]}
+    padding={["lg", "lg", "lg", "lg"]}
     gap={"lg"}
     height={{ kind: "fill" }}
     crossAxisAlignment={"center"}
@@ -85,11 +94,66 @@
                 {/snippet}
             </SparkleBox>
         {/if}
+        <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
+            <BodySmall colour={"textSecondary"} fontWeight={"bold"}>
+                <Translatable resourceKey={i18nKey("Account details")}></Translatable>
+            </BodySmall>
+            <Container gap={"sm"} direction={"vertical"}>
+                <Container crossAxisAlignment={"center"}>
+                    <Container direction={"vertical"}>
+                        <Body colour={"textSecondary"}>
+                            <Translatable resourceKey={i18nKey("user & canister id")}
+                            ></Translatable>
+                        </Body>
+
+                        <Body fontWeight={"bold"}>
+                            {user.userId}
+                        </Body>
+                    </Container>
+                    <IconButton onclick={onCopy} size={"sm"}>
+                        {#snippet icon()}
+                            <CopyIcon color={ColourVars.textSecondary} />
+                        {/snippet}
+                    </IconButton>
+                </Container>
+            </Container>
+            <Container gap={"sm"} direction={"vertical"}>
+                <Body colour={"textSecondary"}>
+                    <Translatable resourceKey={i18nKey("account storage usage")}></Translatable>
+                </Body>
+
+                <Progress
+                    colour={ColourVars.secondary}
+                    size={"6px"}
+                    percent={$percentageStorageUsedStore} />
+
+                <Body fontWeight={"bold"}>
+                    <Translatable
+                        resourceKey={i18nKey("storageUsed", {
+                            used: $storageInGBStore.gbUsed.toFixed(2),
+                            limit: $storageInGBStore.gbLimit.toFixed(1),
+                        })} />
+                    <Translatable
+                        resourceKey={i18nKey("storagePercentRemaining", {
+                            percent: $percentageStorageUsedStore,
+                        })} />
+                </Body>
+            </Container>
+        </Container>
+
+        <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
+            <BodySmall colour={"textSecondary"} fontWeight={"bold"}>
+                <Translatable resourceKey={i18nKey("User stats")}></Translatable>
+            </BodySmall>
+            <Stats showReported stats={$userMetricsStore} />
+        </Container>
+        <!--
         <Container padding={["zero", "xl"]}>
             <Caption>
                 <Translatable resourceKey={i18nKey("General options")}></Translatable>
             </Caption>
         </Container>
+
         <LinkedCard
             onClick={() => publish("userProfileChatsAndVideo")}
             Icon={Cog}
@@ -150,7 +214,7 @@
             title={i18nKey("Delete account")}
             info={i18nKey(
                 "You've decided not to be a member of OpenChat anymore. We'd hate to see you go... Perhaps we can havve a CHAT about it?",
-            )} />
+            )} /> -->
     </Container>
 </Container>
 

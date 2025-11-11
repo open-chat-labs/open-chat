@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ColourVars, Label } from "component-lib";
+    import { ColourVars, Label, type Padding } from "component-lib";
     import type { Snippet } from "svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
@@ -19,11 +19,13 @@
     }
 
     let { onBack, onAction, title, subtitle, menu, action, avatar }: Props = $props();
+
+    let padding = $derived<Padding>(onBack ? "sm" : ["sm", "sm", "sm", "lg"]);
 </script>
 
 <Container
     supplementalClass={"section_header"}
-    padding={["md", "sm", "sm", "sm"]}
+    {padding}
     background={ColourVars.background0}
     crossAxisAlignment={"center"}
     mainAxisAlignment={"spaceBetween"}

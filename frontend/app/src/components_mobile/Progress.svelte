@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { ColourVars } from "component-lib";
     import type { Snippet } from "svelte";
     import { rtlStore } from "../stores/rtl";
 
@@ -6,13 +7,17 @@
         percent: number;
         size?: string;
         children?: Snippet;
+        colour?: string;
     }
 
-    let { percent, size = "40px", children }: Props = $props();
+    let { percent, size = "40px", children, colour = ColourVars.primary }: Props = $props();
 </script>
 
 <div class="bar" style={`--size: ${size}`}>
-    <span class="meter" class:rtl={$rtlStore} style={`width: ${percent}%;}`}></span>
+    <span
+        class="meter"
+        class:rtl={$rtlStore}
+        style={`width: ${percent}%; background-color: ${colour};}`}></span>
     <div class="label">
         {@render children?.()}
     </div>

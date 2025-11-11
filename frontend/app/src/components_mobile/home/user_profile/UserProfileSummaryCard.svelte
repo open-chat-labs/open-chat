@@ -122,7 +122,7 @@
     {#if !$disableChit}
         <Container
             onClick={me ? () => publish("userProfileChitRewards") : undefined}
-            padding={["xl", "lg"]}
+            padding={["xl", "zero"]}
             direction={"vertical"}
             allowOverflow>
             <ChitSummary

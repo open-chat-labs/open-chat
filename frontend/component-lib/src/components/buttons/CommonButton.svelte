@@ -75,7 +75,7 @@
                 if (disabled) return "disabledButton";
                 switch (size) {
                     case "small_text":
-                        return "primary";
+                        return "textPrimary";
                     default:
                         return "textSecondary";
                 }
@@ -106,26 +106,26 @@
                 if (disabled) return ColourVars.disabledButton;
                 switch (size) {
                     case "small_text":
-                        return "var(--primary)";
+                        return ColourVars.textPrimary;
                     default:
-                        return "var(--text-secondary)";
+                        return ColourVars.textSecondary;
                 }
             case "pressed":
                 if (disabled) return ColourVars.disabledButton;
                 switch (size) {
                     case "small_text":
-                        return "var(--primary)";
+                        return ColourVars.primary;
                     default:
-                        return "var(--text-primary)";
+                        return ColourVars.textPrimary;
                 }
             case "active": {
                 if (disabled) return ColourVars.textTertiary;
                 switch (size) {
                     case "small":
                     case "small_text":
-                        return "var(--primary)";
+                        return ColourVars.primary;
                     default:
-                        return "var(--text-on-primary)";
+                        return ColourVars.textOnPrimary;
                 }
             }
         }
