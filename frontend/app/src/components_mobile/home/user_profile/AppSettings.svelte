@@ -13,13 +13,17 @@
     import LinkedCard from "../../LinkedCard.svelte";
     import Translatable from "../../Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
+
+    function help() {
+        publish("closeModalStack");
+        page("/community/dgegb-daaaa-aaaar-arlhq-cai/channel/3798400021");
+    }
 </script>
 
 <SlidingPageContent title={i18nKey("Edit user info")}>
     {#snippet menu()}
         <MenuItem onclick={() => publish("userProfileAbout")}>About OpenChat</MenuItem>
-        <MenuItem onclick={() => page("/community/dgegb-daaaa-aaaar-arlhq-cai/channel/3798400021")}
-            >Get help</MenuItem>
+        <MenuItem onclick={help}>Get help</MenuItem>
     {/snippet}
     <Container
         padding={["zero", "lg", "lg", "lg"]}

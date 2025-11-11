@@ -143,7 +143,11 @@
             <Container height={{ kind: "fill" }} mainAxisAlignment={"end"} direction={"vertical"}>
                 <Container gap={"sm"} crossAxisAlignment={"center"}>
                     <H2 width={{ kind: "hug" }}>{profile.displayName ?? `@${profile.username}`}</H2>
-                    <Badges diamondStatus={user.diamondStatus} uniquePerson={user.isUniquePerson} />
+                    <Badges
+                        diamondStatus={user.diamondStatus}
+                        uniquePerson={user.isUniquePerson}
+                        streak={user.streak}
+                        chitEarned={user.totalChitEarned} />
                 </Container>
                 <BodySmall colour={"textSecondary"}>@{user.username}</BodySmall>
             </Container>

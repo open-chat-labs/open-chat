@@ -1,5 +1,6 @@
 <script lang="ts">
     import { disableChit } from "@src/stores/settings";
+    import { Container } from "component-lib";
     import type { DiamondMembershipStatus } from "openchat-client";
     import Diamond from "../../icons/Diamond.svelte";
     import Verified from "../../icons/Verified.svelte";
@@ -21,9 +22,11 @@
     }: Props = $props();
 </script>
 
-<Diamond status={diamondStatus} />
-<Verified size={"small"} verified={uniquePerson} />
-{#if !$disableChit}
-    <Streak days={streak} />
-    <ChitEarnedBadge earned={chitEarned} />
-{/if}
+<Container width={{ kind: "hug" }} crossAxisAlignment={"center"} gap={"xs"}>
+    <Diamond status={diamondStatus} />
+    <Verified size={"small"} verified={uniquePerson} />
+    {#if !$disableChit}
+        <Streak days={streak} />
+        <ChitEarnedBadge earned={chitEarned} />
+    {/if}
+</Container>
