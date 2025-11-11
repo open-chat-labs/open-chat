@@ -1,8 +1,17 @@
 <script lang="ts">
-    import Spinner from "@src/components/icons/Spinner.svelte";
-    import Tooltip from "@src/components/tooltip/Tooltip.svelte";
     import { toastStore } from "@src/stores/toast";
-    import { Avatar, BodySmall, Container, CountBadge, Title } from "component-lib";
+    import {
+        Avatar,
+        BodySmall,
+        ColourVars,
+        CommonButton,
+        Container,
+        CountBadge,
+        IconButton,
+        MenuItem,
+        MenuTrigger,
+        Title,
+    } from "component-lib";
     import {
         allUsersStore,
         chatListScopeStore,
@@ -13,6 +22,7 @@
         messagesRead,
         type MultiUserChat,
         OpenChat,
+        publish,
         routeForChatIdentifier,
         selectedCommunitySummaryStore,
         type ThreadPreview,
@@ -20,10 +30,8 @@
     import page from "page";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
-    import EyeOffIcon from "svelte-material-icons/EyeOffOutline.svelte";
+    import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import CollapsibleCard from "../../CollapsibleCard.svelte";
-    import LinkButton from "../../LinkButton.svelte";
     import Translatable from "../../Translatable.svelte";
     import ChatMessage from "../ChatMessage.svelte";
     import IntersectionObserverComponent from "../IntersectionObserver.svelte";
@@ -38,7 +46,6 @@
 
     let { thread, observer }: Props = $props();
 
-    let unfollowing = $state(false);
     let missingMessages = $derived(thread.totalReplies - thread.latestReplies.length);
     let threadRootMessageIndex = $derived(thread.rootMessage.event.messageIndex);
     let chat = $derived($chatSummariesStore.get(thread.chatId) as MultiUserChat | undefined);
@@ -61,6 +68,16 @@
         avatarUrl: client.groupAvatarUrl(chat, $selectedCommunitySummaryStore),
     });
 
+    function markAllRead() {
+        if (chat !== undefined && syncDetails !== undefined) {
+            const context = {
+                chatId: chat.id,
+                threadRootMessageIndex,
+            };
+            messagesRead.markReadUpTo(context, syncDetails?.latestMessageIndex);
+        }
+    }
+
     onMount(() => {
         return messagesRead.subscribe(() => {
             if (syncDetails !== undefined) {
@@ -74,8 +91,6 @@
     });
 
     let grouped = $derived(client.groupBySender(thread.latestReplies));
-
-    let open = $state(false);
 
     function lastMessageIndex(events: EventWrapper<Message>[]): number | undefined {
         for (let i = events.length - 1; i >= 0; i--) {
@@ -98,6 +113,7 @@
     }
 
     function selectThread() {
+        publish("closeModalPage");
         page(
             `${routeForChatIdentifier($chatListScopeStore.kind, thread.chatId)}/${
                 thread.rootMessage.event.messageIndex
@@ -105,91 +121,111 @@
         );
     }
 
-    function unfollow(e: Event) {
-        e.preventDefault();
-        e.stopPropagation();
-        unfollowing = true;
-        client
-            .followThread(thread.chatId, thread.rootMessage.event, false)
-            .then((success) => {
-                if (!success) {
-                    toastStore.showFailureToast(i18nKey("unfollowThreadFailed"));
-                    unfollowing = false;
-                }
-            })
-            .catch(() => (unfollowing = false));
+    function unfollow() {
+        client.followThread(thread.chatId, thread.rootMessage.event, false).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast(i18nKey("unfollowThreadFailed"));
+            }
+        });
     }
 </script>
 
 {#if chat !== undefined}
-    <Container padding={["zero", "lg"]}>
-        <CollapsibleCard
-            onToggle={() => (open = !open)}
-            {open}
-            headerText={i18nKey("userInfoHeader")}>
-            {#snippet titleSlot()}
-                <Container
-                    supplementalClass={"thread_preview_header"}
-                    mainAxisAlignment={"spaceBetween"}
-                    crossAxisAlignment={"center"}
-                    gap={"lg"}>
-                    <div class="avatar">
-                        <Avatar url={chatData.avatarUrl} size={"lg"} />
-                    </div>
-                    <Container width={{ kind: "fill" }} gap={"xxs"} direction={"vertical"}>
-                        <Container width={{ kind: "hug" }} gap={"sm"}>
-                            <Title ellipsisTruncate fontWeight={"semi-bold"}>
-                                {(chat.kind === "group_chat" || chat.kind === "channel") &&
-                                    chat.name}
-                            </Title>
-                            <LinkButton underline="hover" onClick={selectThread}
-                                ><Translatable
-                                    resourceKey={i18nKey("thread.open")} />&#8594;</LinkButton>
-                            <Tooltip position={"bottom"} align={"middle"}>
-                                <!-- svelte-ignore a11y_no_static_element_interactions -->
-                                <!-- svelte-ignore a11y_click_events_have_key_events -->
-                                <div onclick={unfollow} class="unfollow">
-                                    {#if !unfollowing}
-                                        <EyeOffIcon
-                                            size={"1.2em"}
-                                            color={"var(--icon-inverted-txt)"} />
-                                    {:else}
-                                        <Spinner
-                                            backgroundColour={"rgba(0,0,0,0.3)"}
-                                            foregroundColour={"var(--button-spinner)"} />
-                                    {/if}
-                                </div>
-                                {#snippet popupTemplate()}
-                                    <Translatable resourceKey={i18nKey("unfollowThread")}
-                                    ></Translatable>
-                                {/snippet}
-                            </Tooltip>
-                        </Container>
-                        <Container
-                            gap={"xs"}
-                            mainAxisAlignment={"spaceBetween"}
-                            crossAxisAlignment={"end"}>
-                            <BodySmall ellipsisTruncate colour={"textSecondary"}>
-                                <Markdown
-                                    text={client.getContentAsText(
-                                        $_,
-                                        thread.rootMessage.event.content,
-                                    )}
-                                    oneLine
-                                    suppressLinks />
-                            </BodySmall>
-                            {#if unreadCount > 0}
-                                <CountBadge>{unreadCount > 999 ? "999+" : unreadCount}</CountBadge>
-                            {/if}
-                        </Container>
-                    </Container>
+    <Container direction={"vertical"}>
+        <Container
+            background={ColourVars.background1}
+            padding={["lg", "md"]}
+            onClick={selectThread}
+            mainAxisAlignment={"spaceBetween"}
+            crossAxisAlignment={"center"}
+            gap={"md"}>
+            <div class="avatar">
+                <Avatar url={chatData.avatarUrl} size={"lg"} />
+            </div>
+            <Container width={{ kind: "fill" }} gap={"xxs"} direction={"vertical"}>
+                <Container width={{ kind: "hug" }} gap={"sm"}>
+                    <Title ellipsisTruncate fontWeight={"semi-bold"}>
+                        {(chat.kind === "group_chat" || chat.kind === "channel") && chat.name}
+                    </Title>
                 </Container>
-            {/snippet}
-            <IntersectionObserverComponent onIntersecting={isIntersecting}>
-                <div class="body">
-                    <div class="root-msg">
+                <Container gap={"xs"} mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"end"}>
+                    <BodySmall ellipsisTruncate colour={"textSecondary"}>
+                        <Markdown
+                            text={client.getContentAsText($_, thread.rootMessage.event.content)}
+                            oneLine
+                            suppressLinks />
+                    </BodySmall>
+                </Container>
+            </Container>
+            {#if unreadCount > 0}
+                <CountBadge>{unreadCount > 999 ? "999+" : unreadCount}</CountBadge>
+            {/if}
+            <MenuTrigger position={"bottom"} align={"end"}>
+                <IconButton padding={["sm", "xs", "sm", "zero"]} size={"md"}>
+                    {#snippet icon(color)}
+                        <DotsVertical {color} />
+                    {/snippet}
+                </IconButton>
+                {#snippet menuItems()}
+                    <MenuItem onclick={unfollow}>
+                        <Translatable resourceKey={i18nKey("unfollowThread")} />
+                    </MenuItem>
+                    <MenuItem onclick={markAllRead}>
+                        <Translatable resourceKey={i18nKey("Mark all as read")} />
+                    </MenuItem>
+                {/snippet}
+            </MenuTrigger>
+        </Container>
+        <IntersectionObserverComponent onIntersecting={isIntersecting}>
+            <Container gap={"sm"} padding={"md"} direction={"vertical"}>
+                <ChatMessage
+                    sender={$allUsersStore.get(thread.rootMessage.event.sender)}
+                    focused={false}
+                    {observer}
+                    accepted
+                    confirmed
+                    failed={false}
+                    senderTyping={false}
+                    readByMe
+                    chatId={thread.chatId}
+                    chatType={chat.kind}
+                    me={thread.rootMessage.event.sender === $currentUserIdStore}
+                    first
+                    last
+                    readonly
+                    threadRootMessage={thread.rootMessage.event}
+                    pinned={false}
+                    supportsEdit={false}
+                    supportsReply={false}
+                    canPin={false}
+                    canBlockUsers={false}
+                    canDelete={false}
+                    canQuoteReply={false}
+                    canReact={false}
+                    canStartThread={false}
+                    publicGroup={chat.kind === "group_chat" && chat.public}
+                    eventIndex={thread.rootMessage.index}
+                    timestamp={thread.rootMessage.timestamp}
+                    expiresAt={thread.rootMessage.expiresAt}
+                    dateFormatter={(date) => client.toDatetimeString(date)}
+                    msg={thread.rootMessage.event}
+                    senderContext={thread.rootMessage.event.senderContext} />
+                {#if missingMessages > 0}
+                    <BodySmall
+                        height={{ kind: "fixed", size: "2rem" }}
+                        colour={"textSecondary"}
+                        align={"center"}
+                        fontWeight={"bold"}>
+                        <Translatable
+                            resourceKey={i18nKey("thread.moreMessages", {
+                                number: missingMessages.toString(),
+                            })} />
+                    </BodySmall>
+                {/if}
+                {#each grouped as userGroup}
+                    {#each userGroup as evt, i (evt.event.messageId)}
                         <ChatMessage
-                            sender={$allUsersStore.get(thread.rootMessage.event.sender)}
+                            sender={$allUsersStore.get(evt.event.sender)}
                             focused={false}
                             {observer}
                             accepted
@@ -199,9 +235,9 @@
                             readByMe
                             chatId={thread.chatId}
                             chatType={chat.kind}
-                            me={thread.rootMessage.event.sender === $currentUserIdStore}
-                            first
-                            last
+                            me={evt.event.sender === $currentUserIdStore}
+                            first={i === 0}
+                            last={i === userGroup.length - 1}
                             readonly
                             threadRootMessage={thread.rootMessage.event}
                             pinned={false}
@@ -214,63 +250,22 @@
                             canReact={false}
                             canStartThread={false}
                             publicGroup={chat.kind === "group_chat" && chat.public}
-                            eventIndex={thread.rootMessage.index}
-                            timestamp={thread.rootMessage.timestamp}
-                            expiresAt={thread.rootMessage.expiresAt}
+                            eventIndex={evt.index}
+                            timestamp={evt.timestamp}
+                            expiresAt={evt.expiresAt}
                             dateFormatter={(date) => client.toDatetimeString(date)}
-                            msg={thread.rootMessage.event}
-                            senderContext={thread.rootMessage.event.senderContext} />
-                    </div>
-                    {#if missingMessages > 0}
-                        <div class="separator">
-                            <Translatable
-                                resourceKey={i18nKey("thread.moreMessages", {
-                                    number: missingMessages.toString(),
-                                })} />
-                        </div>
-                    {/if}
-                    {#each grouped as userGroup}
-                        {#each userGroup as evt, i (evt.event.messageId)}
-                            <ChatMessage
-                                sender={$allUsersStore.get(evt.event.sender)}
-                                focused={false}
-                                {observer}
-                                accepted
-                                confirmed
-                                failed={false}
-                                senderTyping={false}
-                                readByMe
-                                chatId={thread.chatId}
-                                chatType={chat.kind}
-                                me={evt.event.sender === $currentUserIdStore}
-                                first={i === 0}
-                                last={i === userGroup.length - 1}
-                                readonly
-                                threadRootMessage={thread.rootMessage.event}
-                                pinned={false}
-                                supportsEdit={false}
-                                supportsReply={false}
-                                canPin={false}
-                                canBlockUsers={false}
-                                canDelete={false}
-                                canQuoteReply={false}
-                                canReact={false}
-                                canStartThread={false}
-                                publicGroup={chat.kind === "group_chat" && chat.public}
-                                eventIndex={evt.index}
-                                timestamp={evt.timestamp}
-                                expiresAt={evt.expiresAt}
-                                dateFormatter={(date) => client.toDatetimeString(date)}
-                                msg={evt.event}
-                                senderContext={evt.event.senderContext} />
-                        {/each}
+                            msg={evt.event}
+                            senderContext={evt.event.senderContext} />
                     {/each}
-                    <LinkButton underline="hover" onClick={selectThread}
-                        ><Translatable
-                            resourceKey={i18nKey("thread.openThread")} />&#8594;</LinkButton>
-                </div>
-            </IntersectionObserverComponent>
-        </CollapsibleCard>
+                {/each}
+
+                <Container mainAxisAlignment={"end"}>
+                    <CommonButton mode={"active"} size={"medium"} onClick={selectThread}>
+                        <Translatable resourceKey={i18nKey("View thread")} />
+                    </CommonButton>
+                </Container>
+            </Container>
+        </IntersectionObserverComponent>
     </Container>
 {/if}
 

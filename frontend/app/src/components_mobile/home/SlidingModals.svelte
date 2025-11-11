@@ -32,6 +32,7 @@
     import NewMessage from "./NewMessage.svelte";
     import Rules from "./Rules.svelte";
     import SlidingPage from "./SlidingPage.svelte";
+    import ThreadPreviews from "./thread/ThreadPreviews.svelte";
     import About from "./user_profile/About.svelte";
     import Appearance from "./user_profile/Appearance.svelte";
     import BotConfig from "./user_profile/BotConfig.svelte";
@@ -61,6 +62,7 @@
      */
 
     type SlidingModalType =
+        | { kind: "show_threads" }
         | { kind: "edit_recipient"; account: NamedAccount; onComplete: () => void }
         | { kind: "add_recipient"; account?: NamedAccount; onComplete: () => void }
         | { kind: "manage_recipients" }
@@ -113,6 +115,7 @@
 
     onMount(() => {
         const unsubs = [
+            subscribe("showThreads", () => push({ kind: "show_threads" })),
             subscribe("editRecipient", ({ account, onComplete }) =>
                 push({ kind: "edit_recipient", account, onComplete }),
             ),
@@ -319,6 +322,8 @@
             <EditRecipient account={page.account} onClose={page.onComplete} />
         {:else if page.kind === "wallet_settings"}
             <WalletSettings />
+        {:else if page.kind === "show_threads"}
+            <ThreadPreviews />
         {/if}
     </SlidingPage>
 {/each}

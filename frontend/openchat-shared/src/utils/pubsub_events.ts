@@ -191,4 +191,5 @@ export type PubSubEvents = {
     addRecipient: { account?: NamedAccount; onComplete: () => void };
     editRecipient: { account: NamedAccount; onComplete: () => void };
     walletSettings: undefined;
+    showThreads: undefined;
 };

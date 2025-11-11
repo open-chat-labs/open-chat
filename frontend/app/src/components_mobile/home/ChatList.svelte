@@ -1,6 +1,6 @@
 <script lang="ts">
     import { chatListFilterStore } from "@src/stores/settings";
-    import { CommonButton, Container, FloatingButton, transition } from "component-lib";
+    import { CommonButton, Container, FloatingButton } from "component-lib";
     import {
         allUsersStore,
         chatIdentifiersEqual,
@@ -29,24 +29,21 @@
     import { getContext, tick } from "svelte";
     import Pencil from "svelte-material-icons/LeadPencil.svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import { chatListView } from "../../stores/chatListView";
     import Translatable from "../Translatable.svelte";
     import ChatListFilters, { type ChatListFilter } from "./ChatListFilters.svelte";
-    import ChatListSectionButton from "./ChatListSectionButton.svelte";
     import ChatSummary from "./ChatSummary.svelte";
     import DirectAndGroupChatsHeader from "./communities/DirectAndGroupChatsHeader.svelte";
     import FavouriteChatsHeader from "./communities/FavouriteChatsHeader.svelte";
     import PreviewWrapper from "./communities/PreviewWrapper.svelte";
     import SelectedCommunityHeader from "./communities/SelectedCommunityHeader.svelte";
     import NoMatchingChats from "./NoMatchingChats.svelte";
-    import ThreadPreviews from "./thread/ThreadPreviews.svelte";
+    import ThreadIndicator from "./ThreadIndicator.svelte";
     import ActiveCallSummary from "./video/ActiveCallSummary.svelte";
 
     const client = getContext<OpenChat>("client");
     const TO_SHOW = 30;
 
     let previousScope: ChatListScope = $chatListScopeStore;
-    let previousView: "chats" | "threads" = $chatListView;
     let chatsToShow = $state(TO_SHOW);
     let rendering = $state(false);
     function insideBottom() {
@@ -59,8 +56,6 @@
     $effect(() => {
         if (!chatListScopesEqual(previousScope, $chatListScopeStore)) {
             onScopeChanged();
-        } else if (previousView !== $chatListView) {
-            onViewChanged();
         }
     });
 
@@ -86,22 +81,8 @@
         page(url);
     }
 
-    function setView(view: "chats" | "threads"): void {
-        transition(["fade"], () => {
-            chatListView.set(view);
-        });
-    }
-
     function onScopeChanged() {
         previousScope = $chatListScopeStore;
-        chatListView.set("chats");
-        onViewChanged();
-    }
-
-    function onViewChanged() {
-        previousView = $chatListView;
-        chatsToShow = TO_SHOW;
-        chatListFilterStore.set("all");
     }
 
     let showPreview = $derived(
@@ -128,12 +109,6 @@
         }
     });
     let canMarkAllRead = $derived(anythingUnread(unreadCounts));
-    $effect(() => {
-        if ($numberOfThreadsStore === 0) {
-            chatListView.set("chats");
-        }
-    });
-
     let allChats = $derived($chatSummariesListStore);
     let filteredChats = $derived.by(() => {
         return allChats.filter((c) => {
@@ -165,50 +140,30 @@
 
     {#if $chatListScopeStore.kind === "chats"}
         <ChatListFilters bind:filter={$chatListFilterStore as ChatListFilter} />
-    {:else if $chatListScopeStore.kind === "community"}
-        {#if $numberOfThreadsStore > 0}
-            <Container
-                height={{ kind: "fixed", size: "3rem" }}
-                mainAxisAlignment={"spaceBetween"}
-                padding={["sm", "md"]}
-                gap={"sm"}>
-                <ChatListSectionButton
-                    onClick={() => setView("chats")}
-                    unread={unreadCounts.chats}
-                    title={i18nKey("chats")}
-                    selected={$chatListView === "chats"} />
-                <ChatListSectionButton
-                    unread={unreadCounts.threads}
-                    onClick={() => setView("threads")}
-                    title={i18nKey("thread.previewTitle")}
-                    selected={$chatListView === "threads"} />
-            </Container>
-        {/if}
     {/if}
 
-    <Container width={{ kind: "fill" }} height={{ kind: "fill" }} direction={"vertical"}>
-        {#if $chatListView === "threads"}
-            <ThreadPreviews />
+    <Container
+        supplementalClass={"chat_summary_list"}
+        closeMenuOnScroll
+        onInsideEnd={insideBottom}
+        width={{ kind: "fill" }}
+        height={{ kind: "fill" }}
+        direction={"vertical"}>
+        {#if chats.length === 0}
+            <NoMatchingChats onReset={() => chatListFilterStore.set("all")} />
         {:else}
-            <Container
-                supplementalClass={"chat_summary_list"}
-                closeMenuOnScroll
-                onInsideEnd={insideBottom}
-                width={{ kind: "fill" }}
-                height={{ kind: "fill" }}
-                direction={"vertical"}>
-                {#if chats.length === 0}
-                    <NoMatchingChats onReset={() => chatListFilterStore.set("all")} />
-                {:else}
-                    {#each chats as chatSummary (chatIdentifierToString(chatSummary.id))}
-                        <ChatSummary
-                            {chatSummary}
-                            selected={chatIdentifiersEqual($selectedChatIdStore, chatSummary.id)}
-                            visible={!chatSummary.membership.archived}
-                            onChatSelected={chatSelected} />
-                    {/each}
-                {/if}
-            </Container>
+            {#if $numberOfThreadsStore > 0}
+                <ThreadIndicator
+                    onClick={() => publish("showThreads")}
+                    unread={unreadCounts.threads} />
+            {/if}
+            {#each chats as chatSummary (chatIdentifierToString(chatSummary.id))}
+                <ChatSummary
+                    {chatSummary}
+                    selected={chatIdentifiersEqual($selectedChatIdStore, chatSummary.id)}
+                    visible={!chatSummary.membership.archived}
+                    onChatSelected={chatSelected} />
+            {/each}
         {/if}
     </Container>
     <ActiveCallSummary />
