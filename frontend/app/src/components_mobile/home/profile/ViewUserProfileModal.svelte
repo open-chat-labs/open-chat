@@ -241,7 +241,7 @@
     <Sheet onDismiss={onClose}>
         {#if profile !== undefined && user !== undefined}
             <!-- <UserProfileCard {user} {profile} {inGlobalContext} {onClose}></UserProfileCard> -->
-            <Container direction={"vertical"} padding={["sm", "sm", "lg", "sm"]}>
+            <Container direction={"vertical"} padding={["md", "md", "lg", "md"]}>
                 <UserProfileSummaryCard mode={"view"} {user} {profile}></UserProfileSummaryCard>
                 <Container mainAxisAlignment={"center"} gap={"xs"}>
                     {#if chatButton && !me}

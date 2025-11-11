@@ -1,6 +1,15 @@
 <script lang="ts">
     import { disableChit } from "@src/stores/settings";
-    import { Avatar, Body, BodySmall, Container, H2, IconButton } from "component-lib";
+    import {
+        Avatar,
+        Body,
+        BodySmall,
+        ColourVars,
+        Container,
+        H2,
+        IconButton,
+        Logo,
+    } from "component-lib";
     import {
         currentUserIdStore,
         OpenChat,
@@ -8,7 +17,10 @@
         type PublicProfile,
         type UserSummary,
     } from "openchat-client";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
+    import { _ } from "svelte-i18n";
+    import Account from "svelte-material-icons/AccountBadgeOutline.svelte";
+    import Calendar from "svelte-material-icons/CalendarMonthOutline.svelte";
     import Cog from "svelte-material-icons/Cog.svelte";
     import Logout from "svelte-material-icons/Logout.svelte";
     import Share from "svelte-material-icons/ShareVariantOutline.svelte";
@@ -31,6 +43,20 @@
 
     let me = $derived(user.userId === $currentUserIdStore);
 
+    let lastOnline: number | undefined = $state();
+
+    onMount(async () => {
+        try {
+            lastOnline = await client.getLastOnlineDate(user.userId, Date.now());
+        } catch (_) {}
+    });
+
+    let [status, online] = $derived(
+        lastOnline !== undefined && lastOnline !== 0
+            ? client.formatLastOnlineDate($_, Date.now(), lastOnline)
+            : ["", false],
+    );
+
     let avatarUrl = $derived(
         profile !== undefined
             ? client.buildUserAvatarUrl(
@@ -48,6 +74,14 @@
             profile.backgroundId,
         ),
     );
+
+    function formatDate(timestamp: bigint): string {
+        const date = new Date(Number(timestamp));
+        return date.toLocaleDateString(undefined, {
+            month: "short",
+            year: "numeric",
+        });
+    }
 
     // This doesn't exist as a first-class thing in the theme at the moment - not sure if it _should_
     const gradient =
@@ -117,6 +151,35 @@
         <Body fontWeight={"light"}>
             <Markdown inline={false} text={profile.bio} />
         </Body>
+
+        <Container gap={"sm"} direction={"vertical"}>
+            <Container gap={"sm"} crossAxisAlignment={"center"}>
+                <div class="icon">
+                    <Calendar size={"1.25rem"} color={ColourVars.primary} />
+                </div>
+                <Container gap={"xs"}>
+                    <Body width={{ kind: "hug" }} colour={"textSecondary"}>joined</Body>
+                    <Body width={{ kind: "hug" }} fontWeight={"bold"}
+                        >{formatDate(profile.created)}</Body>
+                </Container>
+            </Container>
+            <Container gap={"sm"} crossAxisAlignment={"center"}>
+                <Logo size={"xs"} />
+                <Container gap={"xs"}>
+                    <Body width={{ kind: "hug" }} fontWeight={"bold"}
+                        >{user.totalChitEarned.toLocaleString()}</Body>
+                    <Body width={{ kind: "hug" }} colour={"textSecondary"}>CHIT earned</Body>
+                </Container>
+            </Container>
+            <Container gap={"sm"} crossAxisAlignment={"center"}>
+                <div class="icon">
+                    <Account size={"1.25rem"} color={ColourVars.primary} />
+                </div>
+                <Container gap={"xs"}>
+                    <Body width={{ kind: "hug" }} fontWeight={"bold"}>{status}</Body>
+                </Container>
+            </Container>
+        </Container>
     </Container>
 
     {#if !$disableChit}
@@ -141,5 +204,11 @@
 
     :global(.container.user_background_image > .icon_button:first-child) {
         margin-inline-end: auto;
+    }
+
+    .icon {
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 </style>
