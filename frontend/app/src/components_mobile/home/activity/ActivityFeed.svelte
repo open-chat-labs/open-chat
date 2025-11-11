@@ -14,10 +14,13 @@
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import VirtualList from "../../VirtualList.svelte";
+    import FancyLoader from "../../icons/FancyLoader.svelte";
     import NothingToSee from "../NothingToSee.svelte";
     import ActivityEvent from "./ActivityEvent.svelte";
 
     const client = getContext<OpenChat>("client");
+
+    let initialised = $state(false);
 
     let uptodate = $derived.by(() => {
         return $messageActivitySummaryStore.latestTimestamp <= activityFeedState.latestTimestamp;
@@ -29,6 +32,7 @@
             if (activityFeedState.activityEvents.length > 0 && final) {
                 client.markActivityFeedRead(activityFeedState.latestTimestamp);
             }
+            initialised = true;
         });
     }
 
@@ -64,8 +68,15 @@
     {/snippet}
 </SectionHeader>
 
-<Container height={{ kind: "fill" }} closeMenuOnScroll direction={"vertical"}>
-    {#if activityFeedState.activityEvents.length === 0}
+<Container
+    mainAxisAlignment={initialised ? undefined : "center"}
+    crossAxisAlignment={initialised ? undefined : "center"}
+    height={{ kind: "fill" }}
+    closeMenuOnScroll
+    direction={"vertical"}>
+    {#if !initialised}
+        <FancyLoader size={"3rem"} />
+    {:else if activityFeedState.activityEvents.length === 0 && initialised}
         <NothingToSee
             title={"No activity yet"}
             subtitle={"Check back later for new activity"}

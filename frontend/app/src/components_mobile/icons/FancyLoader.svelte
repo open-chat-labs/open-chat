@@ -5,10 +5,12 @@
 
     interface Props {
         loop?: boolean;
+        size?: string;
     }
 
-    let { loop = true }: Props = $props();
+    let { loop = true, size }: Props = $props();
 
+    let style = $derived(size === undefined ? "" : `width: ${size}; height: ${size};`);
     let canvas: HTMLCanvasElement | undefined = $state();
     let ctx: CanvasRenderingContext2D | null | undefined;
     let speed = 800;
@@ -141,7 +143,7 @@
     });
 </script>
 
-<canvas width="500" height="500" class="logo" bind:this={canvas}></canvas>
+<canvas {style} width={500} height={500} class="logo" bind:this={canvas}></canvas>
 
 <style lang="scss">
     .logo {

@@ -369,8 +369,12 @@
                         {/snippet}
                     </TokenInput>
 
-                    <Container direction={"vertical"} gap={"xs"}>
+                    <Container
+                        height={{ kind: "fixed", size: "2rem" }}
+                        direction={"vertical"}
+                        gap={"xs"}>
                         <Container
+                            height={{ kind: "fill" }}
                             mainAxisAlignment={"spaceBetween"}
                             padding={["sm", "zero"]}
                             gap={"sm"}>
