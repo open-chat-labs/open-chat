@@ -51,7 +51,7 @@
         } catch (_) {}
     });
 
-    let [status, online] = $derived(
+    let [status] = $derived(
         lastOnline !== undefined && lastOnline !== 0
             ? client.formatLastOnlineDate($_, Date.now(), lastOnline)
             : ["", false],
@@ -164,7 +164,7 @@
                 </Container>
             </Container>
             <Container gap={"sm"} crossAxisAlignment={"center"}>
-                <Logo size={"xs"} />
+                <Logo size={"xs"}></Logo>
                 <Container gap={"xs"}>
                     <Body width={{ kind: "hug" }} fontWeight={"bold"}
                         >{user.totalChitEarned.toLocaleString()}</Body>
