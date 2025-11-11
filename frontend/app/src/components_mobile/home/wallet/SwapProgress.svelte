@@ -19,6 +19,7 @@
     import Check from "svelte-material-icons/Check.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import Robot from "svelte-material-icons/RobotOutline.svelte";
+    import ErrorMessage from "../../ErrorMessage.svelte";
     import Translatable from "../../Translatable.svelte";
 
     interface Props {
@@ -201,6 +202,18 @@
             </Container>
         </Container>
 
+        {#if outcome !== "success"}
+            <ErrorMessage>
+                {#if outcome === "error"}
+                    <Translatable resourceKey={i18nKey("Failed to get deposit account")} />
+                {:else if outcome === "insufficientFunds"}
+                    <Translatable resourceKey={i18nKey("Insufficient funds")} />
+                {:else if outcome === "rateChanged"}
+                    <Translatable resourceKey={i18nKey("Rate changed")} />
+                {/if}
+            </ErrorMessage>
+        {/if}
+
         <Container mainAxisAlignment={"end"}>
             <Button
                 secondary={outcome !== undefined && outcome !== "success"}
@@ -208,14 +221,10 @@
                 loading={outcome === undefined}>
                 {#if outcome === undefined}
                     <Translatable resourceKey={i18nKey("In progress")} />
-                {:else if outcome === "error"}
-                    <Translatable resourceKey={i18nKey("Error")} />
-                {:else if outcome === "insufficientFunds"}
-                    <Translatable resourceKey={i18nKey("Insufficient funds")} />
-                {:else if outcome === "rateChanged"}
-                    <Translatable resourceKey={i18nKey("Rate changed")} />
                 {:else if outcome === "success"}
                     <Translatable resourceKey={i18nKey("Swap complete")} />
+                {:else}
+                    <Translatable resourceKey={i18nKey("Unable to complete swap")} />
                 {/if}
                 {#snippet icon(color)}
                     <Robot {color} />
