@@ -83,12 +83,12 @@
 
 <SlidingPageContent title={i18nKey("CHIT rewards")} subtitle={i18nKey("General options")}>
     <Container
-        padding={"xxl"}
+        padding={"xl"}
         gap={"lg"}
         height={{ kind: "fill" }}
         crossAxisAlignment={"center"}
         direction={"vertical"}>
-        <Container gap={"xl"} direction={"vertical"}>
+        <Container padding={["zero", "md"]} gap={"xl"} direction={"vertical"}>
             <Container supplementalClass={"streak_title"} gap={"xl"} direction={"vertical"}>
                 <H1 width={{ kind: "fixed", size: "70%" }} fontWeight={"bold"} colour={"primary"}>
                     <Translatable
@@ -96,90 +96,82 @@
                             streak: $chitStateStore.streak,
                         })}></Translatable>
                 </H1>
-
-                <Container
-                    padding={["sm", "lg", "xl", "zero"]}
-                    direction={"vertical"}
-                    allowOverflow>
-                    <ChitSummary
-                        insuranceLink={false}
-                        streak={$chitStateStore.streak}
-                        earned={$chitStateStore.totalChitEarned}
-                        balance={$chitStateStore.chitBalance} />
-                </Container>
-
-                <Container
-                    padding={["zero", "zero", "md", "zero"]}
-                    gap={"md"}
-                    direction={"vertical"}>
-                    <Body fontWeight={"bold"}>
-                        <Translatable resourceKey={i18nKey("Streak insurance")}></Translatable>
-                    </Body>
-
-                    <BodySmall colour={"textSecondary"}>
-                        <Translatable
-                            resourceKey={i18nKey(
-                                "Insure your day streak in case you're unable to claim on any given day. Press Top-up now button to buy insurance!",
-                            )}></Translatable>
-                    </BodySmall>
-
-                    <Button onClick={() => (showInsurance = true)}>
-                        {#snippet icon(color)}
-                            <FlashOutline {color} />
-                        {/snippet}
-                        <Translatable resourceKey={i18nKey("Top-up now!")}></Translatable>
-                    </Button>
-                </Container>
-
-                <Setting
-                    info={"CHIT is our in-app currency that can be earned by simply using the app. CHIT rewards can then be exchanged for in-app items like emoji packs, or profile backgrounds and themes. If you'd prefer not to see anything CHIT related outside of this settings page you can opt out here."}>
-                    <Switch width={{ kind: "fill" }} reverse bind:checked={$disableChit}>
-                        <Translatable resourceKey={i18nKey("hideChit")}></Translatable>
-                    </Switch>
-                </Setting>
-
-                <Setting
-                    info={"Any time you perform a certain actions that is on the list of achievements, you will get notified. If you would like to opt out of the small celebratory notification, you may do so here. To learn more tap here to view achievements."}>
-                    <Switch width={{ kind: "fill" }} reverse bind:checked={$chitPopup}>
-                        <Translatable resourceKey={i18nKey("Notify me of my CHIT achievements")}
-                        ></Translatable>
-                    </Switch>
-                </Setting>
-
-                <Body fontWeight={"bold"}>
-                    <Translatable resourceKey={i18nKey("CHIT claim events")}></Translatable>
-                </Body>
-                <Calendar {dateSelected}>
-                    {#snippet monthTitleTemplate()}
-                        <Container
-                            width={{ kind: "hug" }}
-                            crossAxisAlignment={"center"}
-                            direction={"vertical"}>
-                            <Subtitle>{calendarState.monthTitle}</Subtitle>
-                            <BodySmall colour={"textSecondary"}
-                                >{totalEarned.toLocaleString()} CHIT earned</BodySmall>
-                        </Container>
-                    {/snippet}
-                    {#snippet dayTemplate(day)}
-                        <ChitEventsForDay
-                            utcMode={$utcMode}
-                            {day}
-                            selectedMonth={calendarState.selectedMonth}
-                            events={chitEventsForDay(events, day)} />
-                    {/snippet}
-                </Calendar>
-
-                <Setting
-                    info={"You CHIT claim window should automatically adjust to your own timezone and run from midnight to midnight to midnight. If anything looks odd, you might also want to view the CHIT events calendar in UTC mode."}>
-                    <Switch
-                        width={{ kind: "fill" }}
-                        reverse
-                        onChange={changeMode}
-                        checked={$utcMode}>
-                        <Translatable resourceKey={i18nKey("Show in UTC")}></Translatable>
-                    </Switch>
-                </Setting>
             </Container>
+        </Container>
+
+        <Container padding={["lg", "zero"]} direction={"vertical"} allowOverflow>
+            <ChitSummary
+                insuranceLink={false}
+                streak={$chitStateStore.streak}
+                earned={$chitStateStore.totalChitEarned}
+                balance={$chitStateStore.chitBalance} />
+        </Container>
+
+        <Container padding={["zero", "md"]} gap={"xl"} direction={"vertical"}>
+            <Container padding={["zero", "zero", "md", "zero"]} gap={"md"} direction={"vertical"}>
+                <Body fontWeight={"bold"}>
+                    <Translatable resourceKey={i18nKey("Streak insurance")}></Translatable>
+                </Body>
+
+                <BodySmall colour={"textSecondary"}>
+                    <Translatable
+                        resourceKey={i18nKey(
+                            "Insure your day streak in case you're unable to claim on any given day. Press Top-up now button to buy insurance!",
+                        )}></Translatable>
+                </BodySmall>
+
+                <Button onClick={() => (showInsurance = true)}>
+                    {#snippet icon(color)}
+                        <FlashOutline {color} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("Top-up now!")}></Translatable>
+                </Button>
+            </Container>
+
+            <Setting
+                info={"CHIT is our in-app currency that can be earned by simply using the app. CHIT rewards can then be exchanged for in-app items like emoji packs, or profile backgrounds and themes. If you'd prefer not to see anything CHIT related outside of this settings page you can opt out here."}>
+                <Switch width={{ kind: "fill" }} reverse bind:checked={$disableChit}>
+                    <Translatable resourceKey={i18nKey("hideChit")}></Translatable>
+                </Switch>
+            </Setting>
+
+            <Setting
+                info={"Any time you perform a certain actions that is on the list of achievements, you will get notified. If you would like to opt out of the small celebratory notification, you may do so here. To learn more tap here to view achievements."}>
+                <Switch width={{ kind: "fill" }} reverse bind:checked={$chitPopup}>
+                    <Translatable resourceKey={i18nKey("Notify me of my CHIT achievements")}
+                    ></Translatable>
+                </Switch>
+            </Setting>
+
+            <Body fontWeight={"bold"}>
+                <Translatable resourceKey={i18nKey("CHIT claim events")}></Translatable>
+            </Body>
+            <Calendar {dateSelected}>
+                {#snippet monthTitleTemplate()}
+                    <Container
+                        width={{ kind: "hug" }}
+                        crossAxisAlignment={"center"}
+                        direction={"vertical"}>
+                        <Subtitle>{calendarState.monthTitle}</Subtitle>
+                        <BodySmall colour={"textSecondary"}
+                            >{totalEarned.toLocaleString()} CHIT earned</BodySmall>
+                    </Container>
+                {/snippet}
+                {#snippet dayTemplate(day)}
+                    <ChitEventsForDay
+                        utcMode={$utcMode}
+                        {day}
+                        selectedMonth={calendarState.selectedMonth}
+                        events={chitEventsForDay(events, day)} />
+                {/snippet}
+            </Calendar>
+
+            <Setting
+                info={"You CHIT claim window should automatically adjust to your own timezone and run from midnight to midnight to midnight. If anything looks odd, you might also want to view the CHIT events calendar in UTC mode."}>
+                <Switch width={{ kind: "fill" }} reverse onChange={changeMode} checked={$utcMode}>
+                    <Translatable resourceKey={i18nKey("Show in UTC")}></Translatable>
+                </Switch>
+            </Setting>
         </Container>
     </Container>
 </SlidingPageContent>

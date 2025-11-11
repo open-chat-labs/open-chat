@@ -146,7 +146,8 @@ export type PubSubEvents = {
     copyUrl: undefined;
     suspendUser: string;
     userProfileChatsAndVideo: undefined;
-    userProfileSettings: PublicProfile;
+    appSettings: undefined;
+    userInformation: PublicProfile;
     userProfileShare: undefined;
     userProfileAbout: undefined;
     userProfileCacheManagement: undefined;

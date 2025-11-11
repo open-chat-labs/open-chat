@@ -35,14 +35,15 @@
     import ThreadPreviews from "./thread/ThreadPreviews.svelte";
     import About from "./user_profile/About.svelte";
     import Appearance from "./user_profile/Appearance.svelte";
+    import AppSettings from "./user_profile/AppSettings.svelte";
     import BotConfig from "./user_profile/BotConfig.svelte";
     import ChatsAndVideo from "./user_profile/ChatsAndVideo.svelte";
     import ChitRewards from "./user_profile/ChitRewards.svelte";
     import ClearCache from "./user_profile/ClearCache.svelte";
     import CommunitySettings from "./user_profile/CommunitySettings.svelte";
     import DeleteAccount from "./user_profile/DeleteAccount.svelte";
-    import ProfileSettings from "./user_profile/ProfileSettings.svelte";
     import Share from "./user_profile/Share.svelte";
+    import UserInformation from "./user_profile/UserInformation.svelte";
     import Verify from "./user_profile/Verify.svelte";
     import EditRecipient from "./wallet/EditRecipient.svelte";
     import ManageRecipients from "./wallet/ManageRecipients.svelte";
@@ -101,7 +102,8 @@
         | { kind: "user_profile_chit" }
         | { kind: "user_profile_delete_account" }
         | { kind: "user_profile_cache_management" }
-        | { kind: "user_profile_settings"; profile: PublicProfile };
+        | { kind: "app_settings" }
+        | { kind: "user_information"; profile: PublicProfile };
 
     let modalStack = $state<SlidingModalType[]>([]);
     let top = $derived(modalStack[modalStack.length - 1]);
@@ -212,9 +214,8 @@
                 }),
             ),
             subscribe("accessGatesLearnMore", () => push({ kind: "access_gates_learn_more" })),
-            subscribe("userProfileSettings", (profile) =>
-                push({ kind: "user_profile_settings", profile }),
-            ),
+            subscribe("appSettings", () => push({ kind: "app_settings" })),
+            subscribe("userInformation", (profile) => push({ kind: "user_information", profile })),
             subscribe("userProfileShare", () => push({ kind: "user_profile_share" })),
             subscribe("userProfileVerify", () => push({ kind: "user_profile_verify" })),
             subscribe("userProfileCommunitySettings", () =>
@@ -264,8 +265,10 @@
             <ChitRewards />
         {:else if page.kind === "user_profile_community"}
             <CommunitySettings />
-        {:else if page.kind === "user_profile_settings"}
-            <ProfileSettings profile={page.profile} />
+        {:else if page.kind === "user_information"}
+            <UserInformation profile={page.profile} />
+        {:else if page.kind === "app_settings"}
+            <AppSettings />
         {:else if page.kind === "update_group_add_members"}
             <AddGroupMembers />
         {:else if page.kind === "update_group_details"}

@@ -176,7 +176,7 @@
         // margin-top: -6px;
         // padding-inline-start: 26px;
         margin-inline-start: -0.75rem;
-        margin-top: 1.6rem;
+        margin-top: 1.7rem;
     }
 
     .badges {
@@ -188,7 +188,7 @@
         margin-bottom: 3px;
 
         .badge {
-            top: 8px;
+            top: 12px;
             position: absolute;
             transform-origin: 50% 50%;
             transform: translateX(var(--offset)) scale(var(--scale));

@@ -10,9 +10,9 @@
     } from "openchat-client";
     import { getContext } from "svelte";
     import Cog from "svelte-material-icons/Cog.svelte";
-    import Info from "svelte-material-icons/InformationOutline.svelte";
     import Logout from "svelte-material-icons/Logout.svelte";
     import Share from "svelte-material-icons/ShareVariantOutline.svelte";
+    import SquareEdit from "svelte-material-icons/SquareEditOutline.svelte";
     import Markdown from "../Markdown.svelte";
     import Badges from "../profile/Badges.svelte";
     import ChitSummary from "./ChitSummary.svelte";
@@ -53,16 +53,16 @@
     const gradient =
         "linear-gradient(90deg, var(--warning) 0%, var(--primary) 30%, var(--primary) 70%, var(--tertiary) 100%)";
 
-    function profileSettings() {
-        publish("userProfileSettings", profile);
+    function appSettings() {
+        publish("appSettings");
+    }
+
+    function userInformation() {
+        publish("userInformation", profile);
     }
 
     function shareProfile() {
         publish("userProfileShare");
-    }
-
-    function about() {
-        publish("userProfileAbout");
     }
 </script>
 
@@ -82,17 +82,17 @@
                     <Logout {color} />
                 {/snippet}
             </IconButton>
-            <IconButton onclick={about} size={"md"} mode={"dark"}>
-                {#snippet icon(color)}
-                    <Info {color} />
-                {/snippet}
-            </IconButton>
             <IconButton onclick={shareProfile} size={"md"} mode={"dark"}>
                 {#snippet icon(color)}
                     <Share {color} />
                 {/snippet}
             </IconButton>
-            <IconButton onclick={profileSettings} size={"md"} mode={"dark"}>
+            <IconButton onclick={userInformation} size={"md"} mode={"dark"}>
+                {#snippet icon(color)}
+                    <SquareEdit {color} />
+                {/snippet}
+            </IconButton>
+            <IconButton onclick={appSettings} size={"md"} mode={"dark"}>
                 {#snippet icon(color)}
                     <Cog {color} />
                 {/snippet}

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
-    import { Caption, CommonButton, Container, Form, TextArea } from "component-lib";
+    import { BodySmall, CommonButton, Container, Form, TextArea } from "component-lib";
     import {
         allUsersStore,
         anonUserStore,
@@ -136,7 +136,7 @@
     }
 </script>
 
-<SlidingPageContent title={i18nKey("Profile settings")}>
+<SlidingPageContent title={i18nKey("Edit user info")}>
     <Container
         padding={["zero", "lg", "lg", "lg"]}
         gap={"lg"}
@@ -150,10 +150,10 @@
 
             <UserProfileImageEditor bind:profile={candidate} />
 
-            <Container padding={["zero", "xl"]}>
-                <Caption>
+            <Container padding={["zero", "lg"]}>
+                <BodySmall fontWeight={"bold"}>
                     <Translatable resourceKey={i18nKey("Profile data")}></Translatable>
-                </Caption>
+                </BodySmall>
             </Container>
             <Form onSubmit={saveUser}>
                 <Container
