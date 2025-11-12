@@ -555,6 +555,10 @@ svelte-virtual-list-viewport {
 $speed: 250ms;
 
 html:active-view-transition-type(slide_left, slide_right) {
+    &::view-transition-old(thread_footer),
+    &:view-transition-new(thread_footer) {
+        animation: none;
+    }
     &::view-transition-old(message_footer),
     &:view-transition-new(message_footer) {
         animation: none;

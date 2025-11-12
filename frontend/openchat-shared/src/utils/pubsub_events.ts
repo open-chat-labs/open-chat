@@ -2,6 +2,7 @@ import type { Readable } from "svelte/store";
 import type {
     ChannelIdentifier,
     ChatIdentifier,
+    ChatSummary,
     ChitEarnedGate,
     ChitEvent,
     CommunityIdentifier,
@@ -184,6 +185,7 @@ export type PubSubEvents = {
     newCommunity: undefined;
     newMessage: undefined;
     directChatDetails: DirectChatSummary;
+    groupChatDetails: GroupChatSummary;
     tokenPage: unknown;
     receiveToken: unknown;
     sendToken: unknown;
@@ -193,4 +195,5 @@ export type PubSubEvents = {
     editRecipient: { account: NamedAccount; onComplete: () => void };
     walletSettings: undefined;
     showThreads: undefined;
+    openThread: { chat: ChatSummary; msg: EventWrapper<Message> };
 };

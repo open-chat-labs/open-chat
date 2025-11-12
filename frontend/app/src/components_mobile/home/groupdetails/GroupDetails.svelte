@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { ColourVars, Container } from "component-lib";
     import type { MultiUserChat, OpenChat } from "openchat-client";
     import { defaultChatRules, publish, selectedChatRulesStore } from "openchat-client";
     import { getContext } from "svelte";
@@ -50,6 +51,7 @@
     }
 </script>
 
-<GroupDetailsHeader level={chat.level} {canEdit} {onClose} onEditGroup={editGroup} />
-
-<GroupDetailsBody {chat} {memberCount} />
+<Container background={ColourVars.background0} height={{ kind: "fill" }} direction={"vertical"}>
+    <GroupDetailsHeader level={chat.level} {canEdit} {onClose} onEditGroup={editGroup} />
+    <GroupDetailsBody {chat} {memberCount} />
+</Container>

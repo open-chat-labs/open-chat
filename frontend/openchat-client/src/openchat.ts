@@ -3065,6 +3065,7 @@ export class OpenChat {
                 this.loadPreviousMessages(chatId, threadRootEvent, true);
             }
         }
+
         rightPanelHistory.set([
             {
                 kind: "message_thread_panel",
@@ -3072,6 +3073,12 @@ export class OpenChat {
                 threadRootMessageId: threadRootEvent.event.messageId,
             },
         ]);
+
+        const msg = this.#findMessageById(threadRootEvent.event.messageId, eventsStore.value);
+        const chat = allChatsStore.value.get(chatId);
+        if (msg && chat) {
+            publish("openThread", { msg, chat });
+        }
     }
 
     async loadThreadMessages(

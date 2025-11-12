@@ -58,6 +58,14 @@ export type HomeRoute = Scoped & {
     kind: "home_route";
 };
 
+export function isMessageIndexRoute(route: RouteParams): route is MessageIndexRoute {
+    return (
+        route.kind === "global_chat_selected_route" ||
+        route.kind === "favourites_route" ||
+        route.kind === "selected_channel_route"
+    );
+}
+
 export type GlobalSelectedChatRoute = Scoped & {
     kind: "global_chat_selected_route";
     chatId: GroupChatIdentifier | DirectChatIdentifier;

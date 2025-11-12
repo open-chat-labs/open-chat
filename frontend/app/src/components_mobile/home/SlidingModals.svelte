@@ -1,8 +1,13 @@
 <script lang="ts">
     import {
+        selectedChatMembersStore,
         subscribe,
+        type ChatSummary,
         type ChitEarnedGate,
         type DirectChatSummary,
+        type EventWrapper,
+        type GroupChatSummary,
+        type Message,
         type NamedAccount,
         type NeuronGate,
         type PaymentGate,
@@ -28,10 +33,12 @@
     import GroupInfo from "./createOrUpdateGroup/GroupInfo.svelte";
     import GroupPermissions from "./createOrUpdateGroup/Permissions.svelte";
     import DirectChatDetails from "./groupdetails/DirectChatDetails.svelte";
+    import GroupDetails from "./groupdetails/GroupDetails.svelte";
     import { UpdateGroupOrCommunityState } from "./groupOrCommunity.svelte";
     import NewMessage from "./NewMessage.svelte";
     import Rules from "./Rules.svelte";
     import SlidingPage from "./SlidingPage.svelte";
+    import Thread from "./thread/Thread.svelte";
     import ThreadPreviews from "./thread/ThreadPreviews.svelte";
     import About from "./user_profile/About.svelte";
     import Appearance from "./user_profile/Appearance.svelte";
@@ -63,6 +70,7 @@
      */
 
     type SlidingModalType =
+        | { kind: "open_thread"; chat: ChatSummary; msg: EventWrapper<Message> }
         | { kind: "show_threads" }
         | { kind: "edit_recipient"; account: NamedAccount; onComplete: () => void }
         | { kind: "add_recipient"; account?: NamedAccount; onComplete: () => void }
@@ -73,6 +81,7 @@
         | { kind: "receive_token"; tokenState: TokenState }
         | { kind: "token_page"; tokenState: TokenState }
         | { kind: "direct_chat_details"; chat: DirectChatSummary }
+        | { kind: "group_chat_details"; chat: GroupChatSummary }
         | { kind: "new_message" }
         | { kind: "update_community_add_members" }
         | { kind: "update_community_details" }
@@ -108,7 +117,9 @@
     let modalStack = $state<SlidingModalType[]>([]);
     let top = $derived(modalStack[modalStack.length - 1]);
     function push(modal: SlidingModalType) {
-        modalStack.push(modal);
+        if (!modalStack.find((m) => m.kind === modal.kind)) {
+            modalStack.push(modal);
+        }
     }
 
     function pop() {
@@ -117,6 +128,7 @@
 
     onMount(() => {
         const unsubs = [
+            subscribe("openThread", ({ chat, msg }) => push({ kind: "open_thread", chat, msg })),
             subscribe("showThreads", () => push({ kind: "show_threads" })),
             subscribe("editRecipient", ({ account, onComplete }) =>
                 push({ kind: "edit_recipient", account, onComplete }),
@@ -139,6 +151,7 @@
                 push({ kind: "token_page", tokenState: tokenState as unknown as TokenState }),
             ),
             subscribe("directChatDetails", (chat) => push({ kind: "direct_chat_details", chat })),
+            subscribe("groupChatDetails", (chat) => push({ kind: "group_chat_details", chat })),
             subscribe("newMessage", () => push({ kind: "new_message" })),
             subscribe("newCommunity", () => push({ kind: "update_community_add_members" })),
             subscribe("updateCommunity", () => push({ kind: "update_community_details" })),
@@ -309,6 +322,11 @@
             <NewMessage />
         {:else if page.kind === "direct_chat_details"}
             <DirectChatDetails chat={page.chat} />
+        {:else if page.kind === "group_chat_details"}
+            <GroupDetails
+                chat={page.chat}
+                memberCount={$selectedChatMembersStore.size}
+                onClose={pop} />
         {:else if page.kind === "token_page"}
             <TokenPage tokenState={page.tokenState} />
         {:else if page.kind === "receive_token"}
@@ -327,6 +345,8 @@
             <WalletSettings />
         {:else if page.kind === "show_threads"}
             <ThreadPreviews />
+        {:else if page.kind === "open_thread"}
+            <Thread rootEvent={page.msg} chat={page.chat} />
         {/if}
     </SlidingPage>
 {/each}

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Caption, Container } from "component-lib";
     import type { OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import Markdown from "./Markdown.svelte";
@@ -14,23 +15,11 @@
     let date = $derived(new Date(Number(timestamp)));
 </script>
 
-<div class="timeline-event">
-    <Markdown suppressLinks {text} />
-    <p class="timestamp">
+<Container padding={"sm"} crossAxisAlignment={"center"} direction={"vertical"}>
+    <Caption width={{ kind: "hug" }} colour={"textSecondary"}>
+        <Markdown suppressLinks {text} />
+    </Caption>
+    <Caption width={{ kind: "hug" }} colour={"textSecondary"}>
         {`${client.toLongDateString(date)} @ ${client.toShortTimeString(date)}`}
-    </p>
-</div>
-
-<style lang="scss">
-    .timeline-event {
-        padding: $sp2;
-        background-color: var(--timeline-bg);
-        margin: $sp4 auto;
-        text-align: center;
-        color: var(--timeline-txt);
-        @include font(book, normal, fs-70);
-    }
-    .timestamp {
-        @include font(light, normal, fs-70);
-    }
-</style>
+    </Caption>
+</Container>

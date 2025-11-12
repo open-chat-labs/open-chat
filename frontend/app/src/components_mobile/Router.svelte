@@ -17,6 +17,7 @@
         exploringStore,
         globalDirectChatSelectedRoute,
         globalGroupChatSelectedRoute,
+        isMessageIndexRoute,
         messageIndexStore,
         notFoundStore,
         notificationsRoute,
@@ -69,17 +70,19 @@
 
     function routeToTransitionType(next: RouteParams, current: RouteParams): TransitionType {
         if (
-            next.kind === "selected_channel_route" &&
-            current.kind === "selected_channel_route" &&
+            isMessageIndexRoute(next) &&
+            isMessageIndexRoute(current) &&
             chatIdentifiersEqual(next.chatId, current.chatId)
         ) {
+            // we don't want to slide when opening and closing threads because
+            // threads are implemented as sliding modals
             // we have opened a thread
             if (next.open && !current.open) {
-                return "slide_left";
+                return "fade";
             }
             // we have closed a thread
             if (!next.open && current.open) {
-                return "slide_right";
+                return "fade";
             }
         }
         if (
@@ -121,7 +124,6 @@
 
             // Finally - we are in a position to specify the *type* of transition
             const transitionType = routeToTransitionType(params, routeStore.value);
-            console.log("TransType: ", transitionType);
             (document as any).startViewTransition({
                 update: async () => {
                     client.setRouteParams(ctx, params);

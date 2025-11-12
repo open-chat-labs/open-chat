@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Caption, Container } from "component-lib";
     import type { Level, MemberRole, OpenChat, UserLookup, UserSummary } from "openchat-client";
     import { allUsersStore, roleAsText } from "openchat-client";
     import { getContext, onDestroy, onMount } from "svelte";
@@ -123,52 +124,28 @@
 </script>
 
 {#if joinedText !== undefined || deletedText !== undefined || roleChangedTextList?.length > 0}
-    <div class="timeline-event">
+    <Container padding={"sm"} crossAxisAlignment={"center"} direction={"vertical"}>
         {#if joinedText !== undefined}
-            <p>
+            <Caption width={{ kind: "hug" }} colour={"textSecondary"}>
                 <Markdown oneLine suppressLinks text={joinedText} />
-            </p>
+            </Caption>
         {/if}
         {#if deletedText !== undefined}
-            <p
-                class="deleted"
-                title={$_("expandDeletedMessages")}
+            <div
                 bind:this={deletedMessagesElement}
                 data-index={messagesDeleted.join(" ")}
-                onclick={expandDeletedMessages}>
-                {deletedText}
-            </p>
+                class="deleted">
+                <Container onClick={expandDeletedMessages}>
+                    <Caption width={{ kind: "hug" }} colour={"textSecondary"}>
+                        {deletedText}
+                    </Caption>
+                </Container>
+            </div>
         {/if}
         {#each roleChangedTextList as text}
-            <p>
+            <Caption width={{ kind: "hug" }} colour={"textSecondary"}>
                 <Markdown suppressLinks {text} />
-            </p>
+            </Caption>
         {/each}
-    </div>
+    </Container>
 {/if}
-
-<style lang="scss">
-    .timeline-event {
-        max-width: 80%;
-        padding: $sp2;
-        background-color: var(--timeline-bg);
-        margin: 0 auto $sp4 auto;
-        text-align: center;
-        color: var(--timeline-txt);
-        @include font(book, normal, fs-70);
-
-        p {
-            margin-bottom: $sp3;
-            &:last-child {
-                margin-bottom: 0;
-            }
-
-            @media (hover: hover) {
-                &.deleted:hover {
-                    cursor: pointer;
-                    text-decoration: underline;
-                }
-            }
-        }
-    }
-</style>

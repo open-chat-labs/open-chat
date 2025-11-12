@@ -1,5 +1,6 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
+    import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import { Container } from "component-lib";
     import type {
         ChannelIdentifier,
@@ -43,7 +44,6 @@
         pageReplace,
         pinNumberResolverStore,
         querystringStore,
-        rightPanelMode,
         ROLE_NONE,
         routeForChatIdentifier,
         routeForScope,
@@ -86,7 +86,6 @@
     import SelectChatModal from "../SelectChatModal.svelte";
     import SuspendedModal from "../SuspendedModal.svelte";
     import Toast from "../Toast.svelte";
-    import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import AcceptRulesModal from "./AcceptRulesModal.svelte";
     import GateCheckFailed from "./access/AccessGateCheckFailed.svelte";
     import AccessGateEvaluator from "./access/AccessGateEvaluator.svelte";
@@ -104,7 +103,6 @@
     import VerifyHumanity from "./profile/VerifyHumanity.svelte";
     import ViewUserProfile from "./profile/ViewUserProfileModal.svelte";
     import MakeProposalModal from "./proposal/MakeProposalModal.svelte";
-    import RightPanel from "./RightPanel.svelte";
     import SuspendModal from "./SuspendModal.svelte";
     import Upgrade from "./upgrade/Upgrade.svelte";
     import SetPinNumberModal from "./wallet/SetPinNumberModal.svelte";
@@ -924,9 +922,6 @@
     tag="main">
     <LeftPanel />
     <MiddlePanel {joining} />
-    {#if $rightPanelMode !== "hidden"}
-        <RightPanel />
-    {/if}
 </Container>
 
 {#if $anonUserStore}

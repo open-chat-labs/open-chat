@@ -1,9 +1,10 @@
 <script lang="ts">
+    import { activeVideoCall } from "@src/stores/video";
+    import { removeQueryStringParam, stripThreadFromUrl } from "@src/utils/urls";
     import { ColourVars, Container, onSwipeRight } from "component-lib";
     import type {
         AttachmentContent,
         ChatEvent as ChatEventType,
-        ChatIdentifier,
         ChatSummary,
         EnhancedReplyContext,
         EventWrapper,
@@ -19,11 +20,15 @@
         currentUserIdStore,
         currentUserStore,
         failedMessagesStore,
+        isMessageIndexRoute,
         lastCryptoSent,
         LEDGER_CANISTER_ICP,
         localUpdates,
         messageContextsEqual,
         messagesRead,
+        pageReplace,
+        publish,
+        routeStore,
         selectedChatBlockedUsersStore,
         selectedChatExpandedDeletedMessageStore,
         selectedThreadDraftMessageStore,
@@ -55,10 +60,9 @@
     interface Props {
         rootEvent: EventWrapper<Message>;
         chat: ChatSummary;
-        onCloseThread: (id: ChatIdentifier) => void;
     }
 
-    let { rootEvent, chat, onCloseThread }: Props = $props();
+    let { rootEvent, chat }: Props = $props();
 
     let chatEventList: ChatEventList | undefined = $state();
     //@ts-ignore
@@ -106,6 +110,27 @@
     let isFollowedByMe = $derived(
         $threadsFollowedByMeStore.get(chat.id)?.has(threadRootMessageIndex) ?? false,
     );
+
+    // This should handle closing the thread if some route change indicates it should not be open
+    $effect(() => {
+        if (isMessageIndexRoute($routeStore)) {
+            if (!$routeStore.open) {
+                onCloseThread();
+            }
+        } else {
+            onCloseThread();
+        }
+    });
+
+    function onCloseThread() {
+        pageReplace(stripThreadFromUrl(removeQueryStringParam("open")));
+        activeVideoCall.threadOpen(false);
+        publish("closeModalPage");
+        // this is a little hack - we don't really care about right panel history in mobile mode
+        setTimeout(() => {
+            client.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
+        }, 0);
+    }
 
     onMount(() => {
         const unsubs = [
@@ -351,7 +376,7 @@
 
 <DropTarget {chat} mode={"thread"} {onFileSelected}>
     <Container
-        onSwipe={onSwipeRight(() => onCloseThread(chat.id))}
+        onSwipe={onSwipeRight(onCloseThread)}
         background={ColourVars.background0}
         height={{ kind: "fill" }}
         direction={"vertical"}>

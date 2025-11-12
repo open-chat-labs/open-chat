@@ -1,13 +1,8 @@
 <script lang="ts">
-    import { activeVideoCall } from "@src/stores/video";
     import type {
-        ChatEvent,
-        ChatIdentifier,
         CommunityIdentifier,
-        EventWrapper,
         Level,
         MemberRole,
-        Message,
         MultiUserChat,
         MultiUserChatIdentifier,
         OpenChat,
@@ -15,14 +10,11 @@
     } from "openchat-client";
     import {
         compareRoles,
-        eventsStore,
         fullWidth,
         lastRightPanelState,
-        pageReplace,
         publish,
         rightPanelHistory,
         roleAsText,
-        routeStore,
         selectedChatBlockedUsersStore,
         selectedChatBotsStore,
         selectedChatIdStore,
@@ -45,17 +37,14 @@
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
     import { currentTheme } from "../../theme/themes";
-    import { removeQueryStringParam, removeThreadMessageIndex } from "../../utils/urls";
     import ChannelOrCommunityInvite from "./ChannelOrCommunityInvite.svelte";
     import ChannelOrCommunityMembers from "./ChannelOrCommunityMembers.svelte";
     import ChannelOrCommunitySummary from "./ChannelOrCommunitySummary.svelte";
     import CommunityDetails from "./communities/details/CommunitySummary.svelte";
-    import GroupDetails from "./groupdetails/GroupDetails.svelte";
     import InviteUsers from "./groupdetails/InviteUsers.svelte";
     import Members from "./groupdetails/Members.svelte";
     import PinnedMessages from "./pinned/PinnedMessages.svelte";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
-    import Thread from "./thread/Thread.svelte";
     import ActiveCallParticipants from "./video/ActiveCallParticipants.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -179,39 +168,6 @@
 
             invitingUsers = false;
         }
-    }
-
-    function stripThreadFromUrl(path: string) {
-        if (
-            ($routeStore.kind === "global_chat_selected_route" ||
-                $routeStore.kind === "selected_channel_route") &&
-            $routeStore.threadMessageIndex !== undefined
-        ) {
-            return removeThreadMessageIndex($routeStore.threadMessageIndex, path);
-        }
-        return path;
-    }
-
-    function closeThread(_id: ChatIdentifier) {
-        // TODO - at the moment there is a problem with this. It causes a janky transition.
-        // I think it is because we are performing a routing change *and* filtering the right panel history
-        // We should really only have one source of truth and that should be the router.
-        // so we know that message_thread_panel should not be there because the route tells us.
-        // I *think* this will be resolved by just moving threads out of the right panel (along with everything else)
-        // and into the left
-        // In fact this is step one of getting *everything* out of the right panel
-        pageReplace(stripThreadFromUrl(removeQueryStringParam("open")));
-        activeVideoCall.threadOpen(false);
-        client.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
-    }
-
-    function findMessage(
-        events: EventWrapper<ChatEvent>[],
-        messageId: bigint,
-    ): EventWrapper<Message> | undefined {
-        return events.find((e) => {
-            return e.event.kind === "message" && e.event.messageId === messageId;
-        }) as EventWrapper<Message> | undefined;
     }
 
     function changeGroupRole(
@@ -369,12 +325,6 @@
         }
     }
 
-    let threadRootEvent = $derived(
-        $lastRightPanelState.kind === "message_thread_panel" && $selectedChatIdStore !== undefined
-            ? findMessage($eventsStore, $lastRightPanelState.threadRootMessageId)
-            : undefined,
-    );
-
     let level = $derived(
         ($lastRightPanelState.kind === "invite_community_users"
             ? "community"
@@ -398,11 +348,6 @@
                 memberCount={$selectedChatMembersStore.size}
                 community={$selectedCommunitySummaryStore}
                 selectedTab="channel"
-                onClose={client.popRightPanelHistory} />
-        {:else if $selectedChatSummaryStore.kind === "group_chat"}
-            <GroupDetails
-                chat={$selectedChatSummaryStore}
-                memberCount={$selectedChatMembersStore.size}
                 onClose={client.popRightPanelHistory} />
         {/if}
     {:else if $lastRightPanelState.kind === "call_participants_panel"}
@@ -537,12 +482,6 @@
             pinned={$selectedChatPinnedMessagesStore}
             dateLastPinned={multiUserChat.dateLastPinned}
             onClose={client.popRightPanelHistory} />
-    {:else if threadRootEvent !== undefined && $selectedChatSummaryStore !== undefined}
-        <!-- this is weird having this here. Ultimately we want to get rid of the whole RightPanel concept on mobile  -->
-        <Thread
-            rootEvent={threadRootEvent}
-            chat={$selectedChatSummaryStore}
-            onCloseThread={closeThread} />
     {:else if $lastRightPanelState.kind === "proposal_filters" && $selectedChatSummaryStore !== undefined}
         <ProposalGroupFilters
             selectedChat={$selectedChatSummaryStore}
