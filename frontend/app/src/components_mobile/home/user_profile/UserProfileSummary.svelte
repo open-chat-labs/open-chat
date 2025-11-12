@@ -66,7 +66,7 @@
 </script>
 
 <Container
-    padding={["lg", "lg", "lg", "lg"]}
+    padding={"lg"}
     gap={"lg"}
     height={{ kind: "fill" }}
     crossAxisAlignment={"center"}

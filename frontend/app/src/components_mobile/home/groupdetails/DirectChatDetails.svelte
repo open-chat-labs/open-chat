@@ -128,7 +128,7 @@
 
 <Container background={ColourVars.background0} height={{ kind: "fill" }} direction={"vertical"}>
     {#if user !== undefined}
-        <Container gap={"xl"} direction={"vertical"} padding={["zero", "md", "md", "md"]}>
+        <Container gap={"xl"} direction={"vertical"} padding={["lg", "md", "md", "md"]}>
             {#if profile}
                 <UserProfileSummaryCard showChit={false} mode={"view"} {user} {profile}>
                     {#snippet buttons()}
