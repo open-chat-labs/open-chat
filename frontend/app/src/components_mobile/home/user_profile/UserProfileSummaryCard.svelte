@@ -1,15 +1,6 @@
 <script lang="ts">
     import { disableChit } from "@src/stores/settings";
-    import {
-        Avatar,
-        Body,
-        BodySmall,
-        ColourVars,
-        Container,
-        H2,
-        IconButton,
-        Logo,
-    } from "component-lib";
+    import { Avatar, Body, BodySmall, ColourVars, Container, H2, Logo } from "component-lib";
     import {
         currentUserIdStore,
         OpenChat,
@@ -17,14 +8,10 @@
         type PublicProfile,
         type UserSummary,
     } from "openchat-client";
-    import { getContext, onMount } from "svelte";
+    import { getContext, onMount, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import Account from "svelte-material-icons/AccountBadgeOutline.svelte";
     import Calendar from "svelte-material-icons/CalendarMonthOutline.svelte";
-    import Cog from "svelte-material-icons/Cog.svelte";
-    import Logout from "svelte-material-icons/Logout.svelte";
-    import Share from "svelte-material-icons/ShareVariantOutline.svelte";
-    import SquareEdit from "svelte-material-icons/SquareEditOutline.svelte";
     import Markdown from "../Markdown.svelte";
     import Badges from "../profile/Badges.svelte";
     import ChitSummary from "./ChitSummary.svelte";
@@ -37,9 +24,11 @@
         user: UserSummary;
         profile: PublicProfile;
         mode?: Mode;
+        buttons?: Snippet;
+        showChit?: boolean;
     }
 
-    let { user, profile, mode = "edit" }: Props = $props();
+    let { user, profile, mode = "edit", buttons, showChit = true }: Props = $props();
 
     let me = $derived(user.userId === $currentUserIdStore);
 
@@ -86,18 +75,6 @@
     // This doesn't exist as a first-class thing in the theme at the moment - not sure if it _should_
     const gradient =
         "linear-gradient(90deg, var(--warning) 0%, var(--primary) 30%, var(--primary) 70%, var(--tertiary) 100%)";
-
-    function appSettings() {
-        publish("appSettings");
-    }
-
-    function userInformation() {
-        publish("userInformation", profile);
-    }
-
-    function shareProfile() {
-        publish("userProfileShare");
-    }
 </script>
 
 <Container direction={"vertical"}>
@@ -110,32 +87,13 @@
         gap={"sm"}
         backgroundImage={backgroundUrl}
         background={gradient}>
-        {#if mode === "edit"}
-            <IconButton onclick={() => client.logout()} size={"md"} mode={"dark"}>
-                {#snippet icon(color)}
-                    <Logout {color} />
-                {/snippet}
-            </IconButton>
-            <IconButton onclick={shareProfile} size={"md"} mode={"dark"}>
-                {#snippet icon(color)}
-                    <Share {color} />
-                {/snippet}
-            </IconButton>
-            <IconButton onclick={userInformation} size={"md"} mode={"dark"}>
-                {#snippet icon(color)}
-                    <SquareEdit {color} />
-                {/snippet}
-            </IconButton>
-            <IconButton onclick={appSettings} size={"md"} mode={"dark"}>
-                {#snippet icon(color)}
-                    <Cog {color} />
-                {/snippet}
-            </IconButton>
+        {#if buttons !== undefined}
+            {@render buttons()}
         {/if}
     </Container>
     <Container
         supplementalClass={"username_and_bio"}
-        gap={"lg"}
+        gap={"xl"}
         padding={["zero", "lg"]}
         direction="vertical">
         <Container gap={"sm"}>
@@ -186,7 +144,7 @@
         </Container>
     </Container>
 
-    {#if !$disableChit}
+    {#if !$disableChit && showChit}
         <Container
             onClick={me ? () => publish("userProfileChitRewards") : undefined}
             padding={["xl", "zero"]}

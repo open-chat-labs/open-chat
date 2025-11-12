@@ -1,11 +1,18 @@
 <script lang="ts">
-    import HeartMinus from "@src/components/icons/HeartMinus.svelte";
-    import HeartPlus from "@src/components/icons/HeartPlus.svelte";
     import Translatable from "@src/components/Translatable.svelte";
+    import Setting from "@src/components_mobile/Setting.svelte";
     import { i18nKey } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
     import { activeVideoCall } from "@src/stores/video";
-    import { Body, CommonButton, Container, IconButton, Switch } from "component-lib";
+    import {
+        Body,
+        Button,
+        ColourVars,
+        CommonButton,
+        Container,
+        IconButton,
+        Switch,
+    } from "component-lib";
     import type { DirectChatSummary, OptionUpdate, PublicProfile } from "openchat-client";
     import {
         allUsersStore,
@@ -16,11 +23,13 @@
         publish,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
+    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import CancelIcon from "svelte-material-icons/Cancel.svelte";
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";
-    import PhoneHangup from "svelte-material-icons/PhoneHangup.svelte";
+    import HeartMinus from "svelte-material-icons/HeartMinusOutline.svelte";
+    import HeartPlus from "svelte-material-icons/HeartPlusOutline.svelte";
+    import Video from "svelte-material-icons/VideoOutline.svelte";
     import DurationPicker from "../DurationPicker.svelte";
-    import SlidingPageContent from "../SlidingPageContent.svelte";
     import UserProfileSummaryCard from "../user_profile/UserProfileSummaryCard.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -42,6 +51,16 @@
     let dirty = $derived(eventsTTL !== chat.eventsTTL);
     let videoCallInProgress = $derived(chat.videoCallInProgress !== undefined);
     let blockLabel = $derived(blocked ? i18nKey("Unblock") : i18nKey("Block"));
+    let blockTitle = $derived(blocked ? i18nKey("Unblock this user") : i18nKey("Block this user"));
+    let blockInfo = $derived(
+        blocked
+            ? i18nKey(
+                  "If you would like to allow this user to send you messages or viewing your profile or activity.",
+              )
+            : i18nKey(
+                  "If you would like to prevent this user from sending you messages or viewing your profile or activity.",
+              ),
+    );
     let inCall = $derived(
         videoCallInProgress &&
             $activeVideoCall !== undefined &&
@@ -152,48 +171,72 @@
     }
 </script>
 
-<SlidingPageContent title={i18nKey("Direct chat")}>
-    {#snippet avatar()}
-        <IconButton onclick={toggleFavourites}>
-            {#snippet icon()}
-                {#if !$favouritesStore.has(chat.id)}
-                    <HeartPlus color={"var(--menu-warn)"} />
-                {:else}
-                    <HeartMinus color={"var(--menu-warn)"} />
-                {/if}
-            {/snippet}
-        </IconButton>
-    {/snippet}
-
+<Container background={ColourVars.background0} height={{ kind: "fill" }} direction={"vertical"}>
     {#if user !== undefined}
-        <Container gap={"lg"} direction={"vertical"} padding={"lg"}>
+        <Container gap={"xl"} direction={"vertical"} padding={["zero", "md", "md", "md"]}>
             {#if profile}
-                <UserProfileSummaryCard mode={"view"} {user} {profile}></UserProfileSummaryCard>
+                <UserProfileSummaryCard showChit={false} mode={"view"} {user} {profile}>
+                    {#snippet buttons()}
+                        <IconButton
+                            onclick={() => publish("closeModalPage")}
+                            size={"md"}
+                            mode={"dark"}>
+                            {#snippet icon(color)}
+                                <ArrowLeft {color} />
+                            {/snippet}
+                        </IconButton>
+                        <IconButton onclick={toggleFavourites} size={"md"} mode={"dark"}>
+                            {#snippet icon(color)}
+                                {#if !$favouritesStore.has(chat.id)}
+                                    <HeartPlus {color} />
+                                {:else}
+                                    <HeartMinus {color} />
+                                {/if}
+                            {/snippet}
+                        </IconButton>
+                        <IconButton onclick={startVideoCall} size={"md"} mode={"dark"}>
+                            {#snippet icon(color)}
+                                <Video {color} />
+                            {/snippet}
+                        </IconButton>
+                    {/snippet}
+                </UserProfileSummaryCard>
             {/if}
-            <Container mainAxisAlignment={"center"} gap={"md"}>
-                <CommonButton width={{ kind: "fill" }} mode={"active"} onClick={startVideoCall}>
-                    {#snippet icon(color, size)}
-                        <PhoneHangup {color} {size} />
-                    {/snippet}
-                    <Translatable resourceKey={videoMenuText} />
-                </CommonButton>
-                <CommonButton width={{ kind: "fill" }} mode={"active"} onClick={toggleBlocked}>
-                    {#snippet icon(color, size)}
-                        <CancelIcon {color} {size} />
-                    {/snippet}
-                    <Translatable resourceKey={blockLabel} />
-                </CommonButton>
-            </Container>
-            <Container gap={"lg"} direction={"vertical"}>
-                <Switch onChange={toggleDisappearingMessages} checked={disappearingMessages}>
-                    <Body>
+
+            <div class="separator"></div>
+
+            <Container gap={"md"} padding={["zero", "lg"]} direction={"vertical"}>
+                <Setting
+                    toggle={toggleDisappearingMessages}
+                    info={"A feature that automatically deletes messages after a set period, helping keep chats private and temporary."}>
+                    <Switch
+                        onChange={toggleDisappearingMessages}
+                        width={{ kind: "fill" }}
+                        reverse
+                        checked={disappearingMessages}>
                         <Translatable resourceKey={i18nKey("disappearingMessages.label")} />
-                    </Body>
-                </Switch>
+                    </Switch>
+                </Setting>
                 {#if disappearingMessages}
                     <DurationPicker bind:milliseconds={eventsTTL} />
                 {/if}
             </Container>
+
+            <Container gap={"md"} padding={["zero", "lg"]} direction={"vertical"}>
+                <Body fontWeight={"bold"}>
+                    <Translatable resourceKey={blockTitle} />
+                </Body>
+                <Body colour={"textSecondary"}>
+                    <Translatable resourceKey={blockInfo} />
+                </Body>
+                <Button secondary={blocked} width={{ kind: "fill" }} onClick={toggleBlocked}>
+                    {#snippet icon(color)}
+                        <CancelIcon {color} />
+                    {/snippet}
+                    <Translatable resourceKey={blockLabel} />
+                </Button>
+            </Container>
+
             <Container mainAxisAlignment={"end"}>
                 <CommonButton
                     onClick={updateDirectChatDetails}
@@ -209,4 +252,14 @@
             </Container>
         </Container>
     {/if}
-</SlidingPageContent>
+</Container>
+
+<style lang="scss">
+    .separator {
+        height: 6px;
+        align-self: stretch;
+        background-color: var(--background-1);
+        border-radius: var(--rad-circle);
+        margin: 0 var(--sp-md);
+    }
+</style>

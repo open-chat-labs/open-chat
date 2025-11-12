@@ -16,7 +16,11 @@
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import AccountStar from "svelte-material-icons/AccountStarOutline.svelte";
+    import Cog from "svelte-material-icons/Cog.svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
+    import Logout from "svelte-material-icons/Logout.svelte";
+    import Share from "svelte-material-icons/ShareVariantOutline.svelte";
+    import SquareEdit from "svelte-material-icons/SquareEditOutline.svelte";
     import Progress from "../../Progress.svelte";
     import SparkleBox from "../../SparkleBox.svelte";
     import Translatable from "../../Translatable.svelte";
@@ -45,6 +49,20 @@
             toastStore.showSuccessToast(i18nKey("userIdCopiedToClipboard"));
         });
     }
+
+    function appSettings() {
+        publish("appSettings");
+    }
+
+    function userInformation() {
+        if (profile !== undefined) {
+            publish("userInformation", profile);
+        }
+    }
+
+    function shareProfile() {
+        publish("userProfileShare");
+    }
 </script>
 
 <Container
@@ -55,7 +73,30 @@
     direction={"vertical"}>
     <Container padding={["zero", "zero", "lg", "zero"]} gap={"lg"} direction={"vertical"}>
         {#if user !== undefined && profile !== undefined}
-            <UserProfileSummaryCard {user} {profile} />
+            <UserProfileSummaryCard {user} {profile}>
+                {#snippet buttons()}
+                    <IconButton onclick={() => client.logout()} size={"md"} mode={"dark"}>
+                        {#snippet icon(color)}
+                            <Logout {color} />
+                        {/snippet}
+                    </IconButton>
+                    <IconButton onclick={shareProfile} size={"md"} mode={"dark"}>
+                        {#snippet icon(color)}
+                            <Share {color} />
+                        {/snippet}
+                    </IconButton>
+                    <IconButton onclick={userInformation} size={"md"} mode={"dark"}>
+                        {#snippet icon(color)}
+                            <SquareEdit {color} />
+                        {/snippet}
+                    </IconButton>
+                    <IconButton onclick={appSettings} size={"md"} mode={"dark"}>
+                        {#snippet icon(color)}
+                            <Cog {color} />
+                        {/snippet}
+                    </IconButton>
+                {/snippet}
+            </UserProfileSummaryCard>
         {/if}
         {#if !verified}
             <SparkleBox
