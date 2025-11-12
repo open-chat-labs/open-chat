@@ -90,6 +90,7 @@
 
 {#snippet button(name: ResourceKey)}
     <CommonButton
+        height={{ kind: "fill" }}
         width={{ kind: "fill" }}
         onClick={() => (selectedTab = name.key)}
         mode={selectedTab === name.key ? "active" : "default"}
@@ -180,7 +181,11 @@
         padding={["xxl", "xl", "lg", "xl"]}>
         <GroupCard candidateGroup={data.candidateGroup} />
 
-        <Container mainAxisAlignment={"spaceBetween"} padding={["sm", "zero"]} gap={"sm"}>
+        <Container
+            height={{ kind: "fixed", size: "3rem" }}
+            mainAxisAlignment={"spaceBetween"}
+            padding={["zero", "zero", "sm", "zero"]}
+            gap={"sm"}>
             {@render button(i18nKey("permissions.general"))}
             {@render button(i18nKey("permissions.message"))}
             {@render button(i18nKey("permissions.thread"))}

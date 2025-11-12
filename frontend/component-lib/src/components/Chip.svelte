@@ -4,7 +4,7 @@
     import Close from "svelte-material-icons/Close.svelte";
     import Container from "./Container.svelte";
 
-    type Mode = "filled" | "default" | "filter" | "rounded";
+    type Mode = "filled" | "default" | "filter" | "rounded" | "unselected";
 
     interface Props {
         children?: Snippet;
@@ -21,6 +21,7 @@
         filter: ColourVars.primaryLight,
         rounded: ColourVars.primary,
         default: ColourVars.primary,
+        unselected: ColourVars.textSecondary,
     };
 
     const textColours: Record<Mode, ColourVarKeys> = {
@@ -28,6 +29,7 @@
         filter: "secondaryLight",
         rounded: "primary",
         default: "textSecondary",
+        unselected: "textSecondary",
     };
 
     const textColourVars: Record<Mode, string> = {
@@ -35,6 +37,7 @@
         filter: ColourVars.secondaryLight,
         rounded: ColourVars.primary,
         default: ColourVars.textSecondary,
+        unselected: ColourVars.textSecondary,
     };
 
     const borderColours: Record<Mode, string> = {
@@ -42,6 +45,7 @@
         filter: ColourVars.secondaryMuted,
         rounded: ColourVars.primary,
         default: ColourVars.textTertiary,
+        unselected: ColourVars.textTertiary,
     };
 
     const backgroundColours: Record<Mode, string> = {
@@ -49,6 +53,7 @@
         filter: ColourVars.secondaryMuted,
         rounded: "transparent",
         default: "transparent",
+        unselected: "transparent",
     };
 </script>
 
@@ -60,14 +65,14 @@
     width={{ kind: fill ? "fill" : "hug" }}
     gap={"sm"}
     borderColour={borderColours[mode]}
-    borderRadius={mode === "rounded" ? "circle" : "md"}
+    borderRadius={mode === "rounded" || mode === "unselected" ? "circle" : "md"}
     borderWidth={"thick"}
     padding={["xs", onRemove ? "md" : "lg", "xs", icon ? "md" : "lg"]}
     onClick={onRemove ?? onClick}>
     {#if icon}
         <span class="icon">{@render icon(iconColours[mode])}</span>
     {/if}
-    <Label colour={textColours[mode]} width={{ kind: "fill" }}>
+    <Label align={"center"} colour={textColours[mode]} width={{ kind: "fill" }}>
         {@render children?.()}
     </Label>
     {#if onRemove}

@@ -4,15 +4,7 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
     import { activeVideoCall } from "@src/stores/video";
-    import {
-        Body,
-        Button,
-        ColourVars,
-        CommonButton,
-        Container,
-        IconButton,
-        Switch,
-    } from "component-lib";
+    import { Body, Button, ColourVars, Container, IconButton, Switch } from "component-lib";
     import type { DirectChatSummary, OptionUpdate, PublicProfile } from "openchat-client";
     import {
         allUsersStore,
@@ -22,18 +14,16 @@
         OpenChat,
         publish,
     } from "openchat-client";
-    import { getContext, onMount } from "svelte";
+    import { getContext, onDestroy, onMount } from "svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import CancelIcon from "svelte-material-icons/Cancel.svelte";
-    import Save from "svelte-material-icons/ContentSaveOutline.svelte";
     import HeartMinus from "svelte-material-icons/HeartMinusOutline.svelte";
     import HeartPlus from "svelte-material-icons/HeartPlusOutline.svelte";
     import Video from "svelte-material-icons/VideoOutline.svelte";
-    import DurationPicker from "../DurationPicker.svelte";
+    import DisappearingDuration from "../DisappearingDuration.svelte";
     import UserProfileSummaryCard from "../user_profile/UserProfileSummaryCard.svelte";
 
     const client = getContext<OpenChat>("client");
-    const ONE_WEEK = 604800000n;
 
     interface Props {
         chat: DirectChatSummary;
@@ -44,11 +34,7 @@
     let blocked = $derived($blockedUsersStore.has(chat.them.userId));
     let user = $derived($allUsersStore.get(chat.them.userId));
     let profile = $state<PublicProfile | undefined>();
-    let disappearingMessages = $state(chat.eventsTTL !== undefined);
     let eventsTTL = $state(chat.eventsTTL);
-    let originalTTL = $state(chat.eventsTTL);
-    let saving = $state(false);
-    let dirty = $derived(eventsTTL !== chat.eventsTTL);
     let videoCallInProgress = $derived(chat.videoCallInProgress !== undefined);
     let blockLabel = $derived(blocked ? i18nKey("Unblock") : i18nKey("Block"));
     let blockTitle = $derived(blocked ? i18nKey("Unblock this user") : i18nKey("Block this user"));
@@ -66,9 +52,6 @@
             $activeVideoCall !== undefined &&
             chatIdentifiersEqual($activeVideoCall.chatId, chat.id),
     );
-    let videoMenuText = $derived(
-        videoCallInProgress ? (inCall ? i18nKey("Leave") : i18nKey("Join")) : i18nKey("Start"),
-    );
 
     onMount(() => {
         client.getPublicProfile(chat.them.userId).subscribe({
@@ -77,26 +60,6 @@
             },
         });
     });
-
-    $effect(() => {
-        if (chat.eventsTTL !== originalTTL) {
-            eventsTTL = originalTTL = chat.eventsTTL;
-            disappearingMessages = chat.eventsTTL !== undefined;
-        }
-    });
-
-    $effect(() => {
-        dirty = eventsTTL !== chat.eventsTTL;
-    });
-
-    function toggleDisappearingMessages() {
-        disappearingMessages = !disappearingMessages;
-        if (!disappearingMessages) {
-            eventsTTL = undefined;
-        } else {
-            eventsTTL = ONE_WEEK;
-        }
-    }
 
     function getUpdate(): OptionUpdate<bigint> {
         if (eventsTTL !== undefined) {
@@ -108,19 +71,11 @@
         }
     }
 
-    async function updateDirectChatDetails(e: Event) {
-        e.preventDefault();
-        if (!dirty) return;
-
-        saving = true;
-
-        const success = await client
-            .updateDirectChatSettings(chat, getUpdate())
-            .finally(() => (saving = false));
-        if (success) {
-            originalTTL = originalTTL = chat.eventsTTL;
+    onDestroy(async () => {
+        if (eventsTTL !== chat.eventsTTL) {
+            await client.updateDirectChatSettings(chat, getUpdate());
         }
-    }
+    });
 
     function toggleFavourites() {
         if ($favouritesStore.has(chat.id)) {
@@ -206,20 +161,21 @@
             <div class="separator"></div>
 
             <Container gap={"md"} padding={["zero", "lg"]} direction={"vertical"}>
-                <Setting
-                    toggle={toggleDisappearingMessages}
-                    info={"A feature that automatically deletes messages after a set period, helping keep chats private and temporary."}>
-                    <Switch
-                        onChange={toggleDisappearingMessages}
-                        width={{ kind: "fill" }}
-                        reverse
-                        checked={disappearingMessages}>
-                        <Translatable resourceKey={i18nKey("disappearingMessages.label")} />
-                    </Switch>
-                </Setting>
-                {#if disappearingMessages}
-                    <DurationPicker bind:milliseconds={eventsTTL} />
-                {/if}
+                <DisappearingDuration bind:eventsTTL>
+                    {#snippet toggle(onToggle, enabled)}
+                        <Setting
+                            toggle={onToggle}
+                            info={"A feature that automatically deletes messages after a set period, helping keep chats private and temporary."}>
+                            <Switch
+                                onChange={onToggle}
+                                width={{ kind: "fill" }}
+                                reverse
+                                checked={enabled}>
+                                <Translatable resourceKey={i18nKey("disappearingMessages.label")} />
+                            </Switch>
+                        </Setting>
+                    {/snippet}
+                </DisappearingDuration>
             </Container>
 
             <Container gap={"md"} padding={["zero", "lg"]} direction={"vertical"}>
@@ -235,20 +191,6 @@
                     {/snippet}
                     <Translatable resourceKey={blockLabel} />
                 </Button>
-            </Container>
-
-            <Container mainAxisAlignment={"end"}>
-                <CommonButton
-                    onClick={updateDirectChatDetails}
-                    loading={saving}
-                    disabled={!dirty || saving}
-                    mode={"active"}
-                    size={"medium"}>
-                    {#snippet icon(color, size)}
-                        <Save {color} {size} />
-                    {/snippet}
-                    <Translatable resourceKey={i18nKey("update")} />
-                </CommonButton>
             </Container>
         </Container>
     {/if}
