@@ -193,6 +193,13 @@
     }
 
     function closeThread(_id: ChatIdentifier) {
+        // TODO - at the moment there is a problem with this. It causes a janky transition.
+        // I think it is because we are performing a routing change *and* filtering the right panel history
+        // We should really only have one source of truth and that should be the router.
+        // so we know that message_thread_panel should not be there because the route tells us.
+        // I *think* this will be resolved by just moving threads out of the right panel (along with everything else)
+        // and into the left
+        // In fact this is step one of getting *everything* out of the right panel
         pageReplace(stripThreadFromUrl(removeQueryStringParam("open")));
         activeVideoCall.threadOpen(false);
         client.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
@@ -531,6 +538,7 @@
             dateLastPinned={multiUserChat.dateLastPinned}
             onClose={client.popRightPanelHistory} />
     {:else if threadRootEvent !== undefined && $selectedChatSummaryStore !== undefined}
+        <!-- this is weird having this here. Ultimately we want to get rid of the whole RightPanel concept on mobile  -->
         <Thread
             rootEvent={threadRootEvent}
             chat={$selectedChatSummaryStore}
