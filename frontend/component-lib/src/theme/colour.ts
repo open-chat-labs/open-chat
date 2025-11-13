@@ -1,5 +1,8 @@
 import { CssVariable } from "./variable";
 
+export const defaultBackgroundGradient =
+    "linear-gradient(90deg, var(--warning) 0%, var(--primary) 30%, var(--primary) 70%, var(--tertiary) 100%)";
+
 export class Colour {
     #r: number;
     #g: number;

@@ -205,7 +205,6 @@
         border-left: none !important;
         border-right: none !important;
         border-bottom: none !important;
-        view-transition-name: bottom_nav_bar;
     }
 
     :global(.bottom_nav_bar:after) {

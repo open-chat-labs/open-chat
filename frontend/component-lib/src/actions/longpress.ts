@@ -33,7 +33,6 @@ export function longpress(node: HTMLElement, onlongpress?: (e: TouchEvent) => vo
     }
 
     function onTouchStart(e: TouchEvent) {
-        e.stopPropagation();
         const t = e.changedTouches[0];
         startX = t.screenX;
         startY = t.screenY;

@@ -323,10 +323,7 @@
         {:else if page.kind === "direct_chat_details"}
             <DirectChatDetails chat={page.chat} />
         {:else if page.kind === "group_chat_details"}
-            <GroupDetails
-                chat={page.chat}
-                memberCount={$selectedChatMembersStore.size}
-                onClose={pop} />
+            <GroupDetails chat={page.chat} memberCount={$selectedChatMembersStore.size} />
         {:else if page.kind === "token_page"}
             <TokenPage tokenState={page.tokenState} />
         {:else if page.kind === "receive_token"}

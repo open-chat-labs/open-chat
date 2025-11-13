@@ -555,12 +555,29 @@ svelte-virtual-list-viewport {
 $speed: 300ms;
 
 html:active-view-transition-type(slide_left, slide_right) {
-    &::view-transition-old(thread_footer),
-    &:view-transition-new(thread_footer) {
-        animation: none;
+    .sliding_page {
+        view-transition-name: sliding_modal;
     }
-    &::view-transition-old(message_footer),
-    &:view-transition-new(message_footer) {
+
+    .sheet_overlay .sheet_content {
+        view-transition-name: sheet_content;
+    }
+
+    .bottom_nav_bar {
+        view-transition-name: bottom_nav_bar;
+    }
+
+    .communities_sheet {
+        view-transition-name: communities_sheet;
+    }
+
+    .footer.thread,
+    .footer.message {
+        view-transition-name: footer;
+    }
+
+    &::view-transition-old(footer),
+    &:view-transition-new(footer) {
         animation: none;
     }
     &::view-transition-old(bottom_nav_bar),
@@ -569,6 +586,14 @@ html:active-view-transition-type(slide_left, slide_right) {
     }
     &::view-transition-old(communities_sheet),
     &:view-transition-new(communities_sheet) {
+        animation: none;
+    }
+    &::view-transition-old(sheet_content),
+    &:view-transition-new(sheet_content) {
+        animation: none;
+    }
+    &::view-transition-old(sliding_modal),
+    &:view-transition-new(sliding_modal) {
         animation: none;
     }
 }

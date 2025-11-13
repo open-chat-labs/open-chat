@@ -1,6 +1,15 @@
 <script lang="ts">
     import { disableChit } from "@src/stores/settings";
-    import { Avatar, Body, BodySmall, ColourVars, Container, H2, Logo } from "component-lib";
+    import {
+        Avatar,
+        Body,
+        BodySmall,
+        ColourVars,
+        Container,
+        defaultBackgroundGradient,
+        H2,
+        Logo,
+    } from "component-lib";
     import {
         currentUserIdStore,
         OpenChat,
@@ -71,10 +80,6 @@
             year: "numeric",
         });
     }
-
-    // This doesn't exist as a first-class thing in the theme at the moment - not sure if it _should_
-    const gradient =
-        "linear-gradient(90deg, var(--warning) 0%, var(--primary) 30%, var(--primary) 70%, var(--tertiary) 100%)";
 </script>
 
 <Container direction={"vertical"}>
@@ -86,7 +91,7 @@
         padding={"sm"}
         gap={"sm"}
         backgroundImage={backgroundUrl}
-        background={gradient}>
+        background={defaultBackgroundGradient}>
         {#if buttons !== undefined}
             {@render buttons()}
         {/if}

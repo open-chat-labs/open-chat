@@ -191,7 +191,6 @@
             subscribe("chatWith", chatWith),
             subscribe("showInviteGroupUsers", showInviteGroupUsers),
             subscribe("replyPrivatelyTo", replyPrivatelyTo),
-            subscribe("showGroupMembers", showGroupMembers),
             subscribe("upgrade", upgrade),
             subscribe("verifyHumanity", verifyHumanity),
             subscribe("deleteGroup", onTriggerConfirm),
@@ -544,12 +543,6 @@
         modal = { kind: "select_chat" };
     }
 
-    function showGroupMembers() {
-        if ($selectedChatIdStore !== undefined) {
-            setRightPanelHistory([{ kind: "show_group_members" }]);
-        }
-    }
-
     function showProfile() {
         setRightPanelHistory([{ kind: "user_profile" }]);
     }
@@ -875,10 +868,6 @@
             if ($querystringStore.get("hof") !== null) {
                 modal = { kind: "hall_of_fame" };
                 pageReplace(removeQueryStringParam("hof"));
-            }
-            if ($querystringStore.get("everyone") !== null) {
-                setRightPanelHistory([{ kind: "show_group_members" }]);
-                pageReplace(removeQueryStringParam("everyone"));
             }
             const usergroup = $querystringStore.get("usergroup");
             if (usergroup !== null) {

@@ -36,7 +36,6 @@ export function swipe(node: HTMLElement, config: SwipeConfig) {
     let startX: number, startY: number, startTime: number;
 
     function handleTouchStart(e: TouchEvent) {
-        console.log("TouchStart: ", e);
         const t = e.touches[0];
         startX = t.clientX;
         startY = t.clientY;
@@ -44,7 +43,6 @@ export function swipe(node: HTMLElement, config: SwipeConfig) {
     }
 
     function handleTouchEnd(e: TouchEvent) {
-        console.log("TouchEnd: ", e);
         const t = e.changedTouches[0];
         const dx = t.clientX - startX;
         const dy = t.clientY - startY;
@@ -70,7 +68,7 @@ export function swipe(node: HTMLElement, config: SwipeConfig) {
     }
 
     if (onSwipe !== undefined) {
-        node.addEventListener("touchstart", handleTouchStart, { passive: true, capture: true });
+        node.addEventListener("touchstart", handleTouchStart, { passive: true });
         node.addEventListener("touchend", handleTouchEnd, { passive: true });
         return {
             destroy() {

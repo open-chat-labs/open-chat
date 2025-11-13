@@ -12,18 +12,12 @@
         compareRoles,
         fullWidth,
         lastRightPanelState,
-        publish,
         rightPanelHistory,
         roleAsText,
-        selectedChatBlockedUsersStore,
-        selectedChatBotsStore,
         selectedChatIdStore,
-        selectedChatInvitedUsersStore,
-        selectedChatLapsedMembersStore,
         selectedChatMembersStore,
         selectedChatPinnedMessagesStore,
         selectedChatSummaryStore,
-        selectedChatWebhooksStore,
         selectedCommunityBlockedUsersStore,
         selectedCommunityBotsStore,
         selectedCommunityInvitedUsersStore,
@@ -291,9 +285,9 @@
         }
     }
 
-    function onShowInviteGroupUsers() {
-        publish("showInviteGroupUsers", true);
-    }
+    // function onShowInviteGroupUsers() {
+    //     publish("showInviteGroupUsers", true);
+    // }
 
     function showInviteCommunityUsers() {
         if ($selectedCommunitySummaryStore !== undefined) {
@@ -441,41 +435,6 @@
                 onInviteUsers={onInviteGroupUsers}
                 onCancelInviteUsers={client.popRightPanelHistory} />
         {/if}
-    {:else if $lastRightPanelState.kind === "show_group_members" && $selectedChatIdStore !== undefined && multiUserChat !== undefined && multiUserChat.kind === "group_chat"}
-        <Members
-            {closeIcon}
-            collection={multiUserChat}
-            invited={$selectedChatInvitedUsersStore}
-            members={[...$selectedChatMembersStore.values()]}
-            blocked={$selectedChatBlockedUsersStore}
-            lapsed={$selectedChatLapsedMembersStore}
-            installedBots={$selectedChatBotsStore}
-            webhooks={Array.from($selectedChatWebhooksStore.values())}
-            onClose={client.popRightPanelHistory}
-            onBlockUser={onBlockGroupUser}
-            onUnblockUser={onUnblockGroupUser}
-            onShowInviteUsers={onShowInviteGroupUsers}
-            onRemoveMember={onRemoveGroupMember}
-            onChangeRole={onChangeGroupRole}
-            onCancelInvite={onCancelGroupInvite} />
-    {:else if $lastRightPanelState.kind === "show_group_members" && $selectedChatIdStore !== undefined && multiUserChat !== undefined && multiUserChat.kind === "channel" && $selectedCommunitySummaryStore !== undefined}
-        <ChannelOrCommunityMembers
-            selectedTab="channel"
-            channel={multiUserChat}
-            community={$selectedCommunitySummaryStore}
-            {closeIcon}
-            onShowInviteCommunityUsers={showInviteCommunityUsers}
-            {onRemoveCommunityMember}
-            {onChangeCommunityRole}
-            {onBlockCommunityUser}
-            {onUnblockCommunityUser}
-            {onBlockGroupUser}
-            {onUnblockGroupUser}
-            {onRemoveGroupMember}
-            {onChangeGroupRole}
-            onClose={client.popRightPanelHistory}
-            {onCancelGroupInvite}
-            {onCancelCommunityInvite} />
     {:else if $lastRightPanelState.kind === "show_pinned" && $selectedChatIdStore !== undefined && ($selectedChatIdStore.kind === "group_chat" || $selectedChatIdStore.kind === "channel") && multiUserChat !== undefined}
         <PinnedMessages
             chatId={$selectedChatIdStore}

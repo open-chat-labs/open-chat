@@ -256,12 +256,6 @@
         position: relative;
         flex: 0 0 toRem(60);
         width: 100%;
-        &.thread {
-            view-transition-name: thread_footer;
-        }
-        &.message {
-            view-transition-name: message_footer;
-        }
     }
 
     .footer-overlay {
