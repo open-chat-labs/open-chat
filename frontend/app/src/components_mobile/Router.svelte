@@ -347,6 +347,10 @@
 
     let previousChatId: ChatIdentifier | undefined = undefined;
     $effect(() => {
+        /**
+         * The purpose of this effect is to capture the thread open when we click a thread when we already have a chat open
+         * Therefore this will not run when we click on a thread preview (because at that point both previousChatId will be undefined)
+         */
         if (
             $threadOpenStore &&
             $messageIndexStore !== undefined &&
@@ -410,6 +414,7 @@
     $effect(() => {
         if ($selectedChatIdStore === undefined) {
             selectedServerChatStore.set(undefined);
+            previousChatId = undefined;
         }
     });
 </script>

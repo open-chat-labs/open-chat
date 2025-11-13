@@ -1,7 +1,6 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
-    import type { SwipeDirection } from "component-lib";
-    import { ColourVars, Container } from "component-lib";
+    import { ColourVars, Container, onSwipeRight } from "component-lib";
     import {
         type AttachmentContent,
         blockedUsersStore,
@@ -381,12 +380,6 @@
             client.startTyping(chat.id, $currentUserIdStore);
         }
     }
-
-    function onSwipe(dir: SwipeDirection) {
-        if (dir === "right") {
-            publish("clearSelection");
-        }
-    }
 </script>
 
 <svelte:window onfocus={onWindowFocus} />
@@ -439,7 +432,7 @@
 
 <DropTarget {chat} mode={"message"} {onFileSelected}>
     <Container
-        {onSwipe}
+        onSwipe={onSwipeRight(() => publish("clearSelection"))}
         background={ColourVars.background0}
         height={{ kind: "fill" }}
         direction={"vertical"}>

@@ -10,7 +10,6 @@
         type Message,
         type OpenChat,
         type ReadonlySet,
-        FilteredProposals,
         allUsersStore,
         chatIdentifiersEqual,
         chatListScopeStore,
@@ -18,6 +17,7 @@
         currentUserIdStore,
         eventsStore,
         failedMessagesStore,
+        FilteredProposals,
         localUpdates,
         messageIndexStore,
         messagesRead,
@@ -274,6 +274,7 @@
     );
 
     // if the messageIndex has changed but the chatId has not, scroll to the specified message
+    // We should *only* do this if the thread is not open
     let previousChatId: ChatIdentifier | undefined = undefined;
     $effect(() => {
         void $threadOpenStore;

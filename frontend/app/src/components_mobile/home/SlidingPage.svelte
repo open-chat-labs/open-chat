@@ -2,7 +2,7 @@
     import { swipe, type SwipeDirection } from "component-lib";
     import { publish } from "openchat-client";
     import type { Snippet } from "svelte";
-    import { expoInOut } from "svelte/easing";
+    import { elasticInOut, expoInOut } from "svelte/easing";
     import { fade, fly } from "svelte/transition";
 
     interface Props {
@@ -22,7 +22,10 @@
 </script>
 
 {#if !top}
-    <div transition:fade={{ duration: SPEED }} class="sliding_page_overlay_before"></div>
+    <div
+        transition:fade={{ duration: SPEED, easing: elasticInOut }}
+        class="sliding_page_overlay_before">
+    </div>
 {/if}
 <div
     class:top

@@ -14,7 +14,6 @@
     } from "component-lib";
     import {
         allUsersStore,
-        chatListScopeStore,
         chatSummariesStore,
         currentUserIdStore,
         type EventWrapper,
@@ -22,12 +21,9 @@
         messagesRead,
         type MultiUserChat,
         OpenChat,
-        publish,
-        routeForChatIdentifier,
         selectedCommunitySummaryStore,
         type ThreadPreview,
     } from "openchat-client";
-    import page from "page";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
@@ -46,6 +42,7 @@
 
     let { thread, observer }: Props = $props();
 
+    let expanded = $state(false);
     let missingMessages = $derived(thread.totalReplies - thread.latestReplies.length);
     let threadRootMessageIndex = $derived(thread.rootMessage.event.messageIndex);
     let chat = $derived($chatSummariesStore.get(thread.chatId) as MultiUserChat | undefined);
@@ -112,13 +109,22 @@
         }
     }
 
+    function clickedThread() {
+        if (expanded) {
+            selectThread();
+        } else {
+            expanded = true;
+        }
+    }
+
     function selectThread() {
-        publish("closeModalPage");
-        page(
-            `${routeForChatIdentifier($chatListScopeStore.kind, thread.chatId)}/${
-                thread.rootMessage.event.messageIndex
-            }?open=true`,
-        );
+        /**
+         * Note that we are deliberately not changing the route here. This is kind of
+         * peaking a thread, rather than loading it.
+         * This *should* make loading the thread faster because we don't load the chat and its
+         * messages *as well*.
+         */
+        client.openThread(thread.chatId, thread.rootMessage, false);
     }
 
     function unfollow() {
@@ -135,7 +141,7 @@
         <Container
             background={ColourVars.background1}
             padding={["lg", "md"]}
-            onClick={selectThread}
+            onClick={clickedThread}
             mainAxisAlignment={"spaceBetween"}
             crossAxisAlignment={"center"}
             gap={"md"}>
@@ -176,96 +182,98 @@
                 {/snippet}
             </MenuTrigger>
         </Container>
-        <IntersectionObserverComponent onIntersecting={isIntersecting}>
-            <Container gap={"sm"} padding={"md"} direction={"vertical"}>
-                <ChatMessage
-                    sender={$allUsersStore.get(thread.rootMessage.event.sender)}
-                    focused={false}
-                    {observer}
-                    accepted
-                    confirmed
-                    failed={false}
-                    senderTyping={false}
-                    readByMe
-                    chatId={thread.chatId}
-                    chatType={chat.kind}
-                    me={thread.rootMessage.event.sender === $currentUserIdStore}
-                    first
-                    last
-                    readonly
-                    threadRootMessage={thread.rootMessage.event}
-                    pinned={false}
-                    supportsEdit={false}
-                    supportsReply={false}
-                    canPin={false}
-                    canBlockUsers={false}
-                    canDelete={false}
-                    canQuoteReply={false}
-                    canReact={false}
-                    canStartThread={false}
-                    publicGroup={chat.kind === "group_chat" && chat.public}
-                    eventIndex={thread.rootMessage.index}
-                    timestamp={thread.rootMessage.timestamp}
-                    expiresAt={thread.rootMessage.expiresAt}
-                    dateFormatter={(date) => client.toDatetimeString(date)}
-                    msg={thread.rootMessage.event}
-                    senderContext={thread.rootMessage.event.senderContext} />
-                {#if missingMessages > 0}
-                    <BodySmall
-                        height={{ kind: "fixed", size: "2rem" }}
-                        colour={"textSecondary"}
-                        align={"center"}
-                        fontWeight={"bold"}>
-                        <Translatable
-                            resourceKey={i18nKey("thread.moreMessages", {
-                                number: missingMessages.toString(),
-                            })} />
-                    </BodySmall>
-                {/if}
-                {#each grouped as userGroup}
-                    {#each userGroup as evt, i (evt.event.messageId)}
-                        <ChatMessage
-                            sender={$allUsersStore.get(evt.event.sender)}
-                            focused={false}
-                            {observer}
-                            accepted
-                            confirmed
-                            failed={false}
-                            senderTyping={false}
-                            readByMe
-                            chatId={thread.chatId}
-                            chatType={chat.kind}
-                            me={evt.event.sender === $currentUserIdStore}
-                            first={i === 0}
-                            last={i === userGroup.length - 1}
-                            readonly
-                            threadRootMessage={thread.rootMessage.event}
-                            pinned={false}
-                            supportsEdit={false}
-                            supportsReply={false}
-                            canPin={false}
-                            canBlockUsers={false}
-                            canDelete={false}
-                            canQuoteReply={false}
-                            canReact={false}
-                            canStartThread={false}
-                            publicGroup={chat.kind === "group_chat" && chat.public}
-                            eventIndex={evt.index}
-                            timestamp={evt.timestamp}
-                            expiresAt={evt.expiresAt}
-                            dateFormatter={(date) => client.toDatetimeString(date)}
-                            msg={evt.event}
-                            senderContext={evt.event.senderContext} />
+        {#if expanded}
+            <IntersectionObserverComponent onIntersecting={isIntersecting}>
+                <Container gap={"sm"} padding={"md"} direction={"vertical"}>
+                    <ChatMessage
+                        sender={$allUsersStore.get(thread.rootMessage.event.sender)}
+                        focused={false}
+                        {observer}
+                        accepted
+                        confirmed
+                        failed={false}
+                        senderTyping={false}
+                        readByMe
+                        chatId={thread.chatId}
+                        chatType={chat.kind}
+                        me={thread.rootMessage.event.sender === $currentUserIdStore}
+                        first
+                        last
+                        readonly
+                        threadRootMessage={thread.rootMessage.event}
+                        pinned={false}
+                        supportsEdit={false}
+                        supportsReply={false}
+                        canPin={false}
+                        canBlockUsers={false}
+                        canDelete={false}
+                        canQuoteReply={false}
+                        canReact={false}
+                        canStartThread={false}
+                        publicGroup={chat.kind === "group_chat" && chat.public}
+                        eventIndex={thread.rootMessage.index}
+                        timestamp={thread.rootMessage.timestamp}
+                        expiresAt={thread.rootMessage.expiresAt}
+                        dateFormatter={(date) => client.toDatetimeString(date)}
+                        msg={thread.rootMessage.event}
+                        senderContext={thread.rootMessage.event.senderContext} />
+                    {#if missingMessages > 0}
+                        <BodySmall
+                            height={{ kind: "fixed", size: "2rem" }}
+                            colour={"textSecondary"}
+                            align={"center"}
+                            fontWeight={"bold"}>
+                            <Translatable
+                                resourceKey={i18nKey("thread.moreMessages", {
+                                    number: missingMessages.toString(),
+                                })} />
+                        </BodySmall>
+                    {/if}
+                    {#each grouped as userGroup}
+                        {#each userGroup as evt, i (evt.event.messageId)}
+                            <ChatMessage
+                                sender={$allUsersStore.get(evt.event.sender)}
+                                focused={false}
+                                {observer}
+                                accepted
+                                confirmed
+                                failed={false}
+                                senderTyping={false}
+                                readByMe
+                                chatId={thread.chatId}
+                                chatType={chat.kind}
+                                me={evt.event.sender === $currentUserIdStore}
+                                first={i === 0}
+                                last={i === userGroup.length - 1}
+                                readonly
+                                threadRootMessage={thread.rootMessage.event}
+                                pinned={false}
+                                supportsEdit={false}
+                                supportsReply={false}
+                                canPin={false}
+                                canBlockUsers={false}
+                                canDelete={false}
+                                canQuoteReply={false}
+                                canReact={false}
+                                canStartThread={false}
+                                publicGroup={chat.kind === "group_chat" && chat.public}
+                                eventIndex={evt.index}
+                                timestamp={evt.timestamp}
+                                expiresAt={evt.expiresAt}
+                                dateFormatter={(date) => client.toDatetimeString(date)}
+                                msg={evt.event}
+                                senderContext={evt.event.senderContext} />
+                        {/each}
                     {/each}
-                {/each}
 
-                <Container mainAxisAlignment={"end"}>
-                    <CommonButton mode={"active"} size={"medium"} onClick={selectThread}>
-                        <Translatable resourceKey={i18nKey("View thread")} />
-                    </CommonButton>
+                    <Container mainAxisAlignment={"end"}>
+                        <CommonButton mode={"active"} size={"medium"} onClick={selectThread}>
+                            <Translatable resourceKey={i18nKey("View thread")} />
+                        </CommonButton>
+                    </Container>
                 </Container>
-            </Container>
-        </IntersectionObserverComponent>
+            </IntersectionObserverComponent>
+        {/if}
     </Container>
 {/if}
 

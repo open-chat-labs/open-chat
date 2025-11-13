@@ -123,6 +123,7 @@
     }
 
     function pop() {
+        console.trace("what is calling this?");
         modalStack.pop();
     }
 

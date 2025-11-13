@@ -552,7 +552,7 @@ svelte-virtual-list-viewport {
     }
 }
 
-$speed: 250ms;
+$speed: 300ms;
 
 html:active-view-transition-type(slide_left, slide_right) {
     &::view-transition-old(thread_footer),

@@ -79,9 +79,10 @@ export const availableHeight = derived(
 export function toPixel(rem: number): number {
     return pixelsFromRems(rem, dimensionsWidth.value);
 }
+const v2Mobile = import.meta.env.OC_MOBILE_LAYOUT === "v2";
 export const iconSize = derived(mobileWidth, (mobileWidth) => (mobileWidth ? "1.6em" : "1.4em"));
 export const baseFontSize = derived(mobileWidth, (mobileWidth) => {
-    if (import.meta.env.OC_MOBILE_LAYOUT === "v2") {
+    if (v2Mobile) {
         return 16;
     }
     return mobileWidth ? 14 : 16;
@@ -147,7 +148,7 @@ export const layout = derived(
             xframeOverrides.restrictTo !== undefined || xframeOverrides.disableLeftNav;
         const disableLeft = xframeOverrides.restrictTo === "selected_chat";
         if (mobileWidth) {
-            const showRight = rightPanelHistory.length > 0;
+            const showRight = v2Mobile ? false : rightPanelHistory.length > 0;
             const showMiddle = !someHomeRoute(route.kind) && !showRight;
             const showLeft = !showMiddle && !showRight && !disableLeft;
             const showNav =

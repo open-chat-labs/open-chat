@@ -20,7 +20,6 @@
         currentUserIdStore,
         currentUserStore,
         failedMessagesStore,
-        isMessageIndexRoute,
         lastCryptoSent,
         LEDGER_CANISTER_ICP,
         localUpdates,
@@ -28,7 +27,6 @@
         messagesRead,
         pageReplace,
         publish,
-        routeStore,
         selectedChatBlockedUsersStore,
         selectedChatExpandedDeletedMessageStore,
         selectedThreadDraftMessageStore,
@@ -111,25 +109,10 @@
         $threadsFollowedByMeStore.get(chat.id)?.has(threadRootMessageIndex) ?? false,
     );
 
-    // This should handle closing the thread if some route change indicates it should not be open
-    $effect(() => {
-        if (isMessageIndexRoute($routeStore)) {
-            if (!$routeStore.open) {
-                onCloseThread();
-            }
-        } else {
-            onCloseThread();
-        }
-    });
-
     function onCloseThread() {
         pageReplace(stripThreadFromUrl(removeQueryStringParam("open")));
         activeVideoCall.threadOpen(false);
         publish("closeModalPage");
-        // this is a little hack - we don't really care about right panel history in mobile mode
-        setTimeout(() => {
-            client.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
-        }, 0);
     }
 
     onMount(() => {

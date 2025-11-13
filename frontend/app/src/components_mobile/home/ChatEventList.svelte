@@ -18,6 +18,7 @@
         eventListLastScrolled,
         eventListScrollTop,
         eventListScrolling,
+        isMessageIndexRoute,
         localUpdates,
         messageContextsEqual,
         routeStore,
@@ -583,8 +584,7 @@
         if (msgEvent && threadRootEvent === undefined) {
             if (
                 msgEvent.event.thread !== undefined &&
-                ($routeStore.kind === "global_chat_selected_route" ||
-                    $routeStore.kind === "selected_channel_route") &&
+                isMessageIndexRoute($routeStore) &&
                 ($routeStore.open || $routeStore.threadMessageIndex !== undefined)
             ) {
                 client.openThread(chat.id, msgEvent, false, $routeStore.threadMessageIndex);
