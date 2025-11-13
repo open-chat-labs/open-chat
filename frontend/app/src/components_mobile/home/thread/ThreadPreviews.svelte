@@ -15,6 +15,7 @@
     } from "openchat-client";
     import { getContext } from "svelte";
     import FancyLoader from "../../icons/FancyLoader.svelte";
+    import VirtualList from "../../VirtualList.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import ThreadPreviewComponent from "./ThreadPreview.svelte";
 
@@ -80,9 +81,13 @@
         {#if loading && !initialised}
             <FancyLoader size={"3rem"} />
         {:else}
-            {#each threads as thread (`${thread.rootMessage.index}_${thread.rootMessage.event.messageId}`)}
-                <ThreadPreviewComponent {observer} {thread} />
-            {/each}
+            <VirtualList
+                keyFn={(e) => `${e.rootMessage.index}_${e.rootMessage.event.messageId}`}
+                items={threads}>
+                {#snippet children(thread)}
+                    <ThreadPreviewComponent {observer} {thread} />
+                {/snippet}
+            </VirtualList>
         {/if}
     </Container>
 </SlidingPageContent>
