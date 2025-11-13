@@ -43,6 +43,7 @@
         pageRedirect,
         pageReplace,
         pinNumberResolverStore,
+        publish,
         querystringStore,
         ROLE_NONE,
         routeForChatIdentifier,
@@ -491,6 +492,8 @@
                     );
                 }
                 page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
+            } else {
+                publish("closeModalStack");
             }
         });
 

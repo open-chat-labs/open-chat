@@ -27,6 +27,7 @@
     import Delete from "svelte-material-icons/DeleteForeverOutline.svelte";
     import HeartMinus from "svelte-material-icons/HeartMinusOutline.svelte";
     import HeartPlus from "svelte-material-icons/HeartPlusOutline.svelte";
+    import Exit from "svelte-material-icons/Logout.svelte";
     import Share from "svelte-material-icons/ShareVariantOutline.svelte";
     import SquareEdit from "svelte-material-icons/SquareEditOutline.svelte";
     import Translatable from "../../Translatable.svelte";
@@ -48,6 +49,7 @@
     let canEdit = $derived(client.canEditGroupDetails(chat.id));
     let rules = $derived($selectedChatRulesStore ?? defaultChatRules(chat.level));
     let avatarUrl = $derived(client.groupAvatarUrl(chat, $selectedCommunitySummaryStore));
+    let busy = $state(false);
 
     function toggleFavourites() {
         if ($favouritesStore.has(chat.id)) {
@@ -100,6 +102,7 @@
     }
 
     function deleteGroup() {
+        busy = true;
         publish("deleteGroup", {
             kind: "delete",
             chatId: chat.id,
@@ -109,6 +112,15 @@
                 response: i18nKey(chat.name),
             },
             after: () => publish("closeModalStack"),
+        });
+    }
+
+    function leaveGroup() {
+        busy = true;
+        publish("leaveGroup", {
+            kind: "leave",
+            chatId: chat.id,
+            level: chat.level,
         });
     }
 </script>
@@ -229,11 +241,33 @@
                     </Body>
                 </Container>
 
-                <Button onClick={deleteGroup}>
+                <Button loading={busy} onClick={deleteGroup}>
                     {#snippet icon(color)}
                         <Delete {color} />
                     {/snippet}
                     <Translatable resourceKey={i18nKey("Delete group")}></Translatable>
+                </Button>
+            </Container>
+        {:else if client.canLeaveGroup(chat.id)}
+            <div class="separator"></div>
+            <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
+                <Container direction={"vertical"} gap={"sm"}>
+                    <Body fontWeight={"bold"}>
+                        <Translatable resourceKey={i18nKey("Leave group")}></Translatable>
+                    </Body>
+                    <Body colour={"textSecondary"}>
+                        <Translatable
+                            resourceKey={i18nKey(
+                                "Keep in mind that you may have to pass access gates to re-join later. A group must have at least one owner.",
+                            )}></Translatable>
+                    </Body>
+                </Container>
+
+                <Button loading={busy} onClick={leaveGroup}>
+                    {#snippet icon(color)}
+                        <Exit {color} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("Leave group")}></Translatable>
                 </Button>
             </Container>
         {/if}
