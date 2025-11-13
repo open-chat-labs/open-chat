@@ -1,9 +1,8 @@
-import TouchSweep from "touchsweep";
-
 export type SwipeDirection = "up" | "down" | "left" | "right";
 
 export type SwipeConfig = {
     threshold?: number;
+    velocity?: number;
     onSwipe?: (dir: SwipeDirection) => void;
 };
 
@@ -32,36 +31,52 @@ function onSwipe(match: SwipeDirection, fn: () => void) {
 }
 
 export function swipe(node: HTMLElement, config: SwipeConfig) {
-    const { threshold = 30, onSwipe } = config;
+    const { threshold = 30, velocity = 0.3, onSwipe } = config;
 
-    if (onSwipe === undefined) return;
+    let startX: number, startY: number, startTime: number;
 
-    new TouchSweep(node, undefined, threshold);
-
-    function left() {
-        onSwipe?.("left");
-    }
-    function right() {
-        onSwipe?.("right");
-    }
-    function down() {
-        onSwipe?.("down");
-    }
-    function up() {
-        onSwipe?.("up");
+    function handleTouchStart(e: TouchEvent) {
+        console.log("TouchStart: ", e);
+        const t = e.touches[0];
+        startX = t.clientX;
+        startY = t.clientY;
+        startTime = Date.now();
     }
 
-    node.addEventListener("swipeleft", left);
-    node.addEventListener("swiperight", right);
-    node.addEventListener("swipedown", down);
-    node.addEventListener("swipeup", up);
+    function handleTouchEnd(e: TouchEvent) {
+        console.log("TouchEnd: ", e);
+        const t = e.changedTouches[0];
+        const dx = t.clientX - startX;
+        const dy = t.clientY - startY;
+        const dt = Date.now() - startTime;
 
-    return {
-        destroy() {
-            node.removeEventListener("swipeleft", left);
-            node.removeEventListener("swiperight", right);
-            node.removeEventListener("swipedown", down);
-            node.removeEventListener("swipeup", up);
-        },
-    };
+        const absX = Math.abs(dx);
+        const absY = Math.abs(dy);
+        const speedX = absX / dt;
+        const speedY = absY / dt;
+
+        let direction: "up" | "down" | "left" | "right" | null = null;
+
+        if (absX > absY && absX > threshold && speedX > velocity) {
+            direction = dx > 0 ? "right" : "left";
+        } else if (absY > threshold && speedY > velocity) {
+            direction = dy > 0 ? "down" : "up";
+        }
+
+        if (direction) {
+            onSwipe?.(direction);
+            e.stopPropagation();
+        }
+    }
+
+    if (onSwipe !== undefined) {
+        node.addEventListener("touchstart", handleTouchStart, { passive: true, capture: true });
+        node.addEventListener("touchend", handleTouchEnd, { passive: true });
+        return {
+            destroy() {
+                node.removeEventListener("touchstart", handleTouchStart, false);
+                node.removeEventListener("touchend", handleTouchEnd, false);
+            },
+        };
+    }
 }
