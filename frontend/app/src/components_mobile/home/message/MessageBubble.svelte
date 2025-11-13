@@ -4,7 +4,6 @@
         ChatLabel,
         ColourVars,
         Container,
-        onSwipeRight,
         type BorderRadiusSize,
         type Padding,
         type Radius,
@@ -14,7 +13,6 @@
         chatListScopeStore,
         currentUserIdStore,
         OpenChat,
-        publish,
         routeForChatIdentifier,
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
@@ -194,7 +192,6 @@
 </script>
 
 <Container
-    onSwipe={onSwipeRight(() => publish("clearSelection"))}
     bind:ref
     supplementalClass={classList}
     allowOverflow

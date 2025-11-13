@@ -27,5 +27,8 @@
     "devDependencies": {
         "@tsconfig/svelte": "^5.0.4",
         "typescript": "^5.9.2"
+    },
+    "dependencies": {
+        "touchsweep": "^2.2.0"
     }
 }
