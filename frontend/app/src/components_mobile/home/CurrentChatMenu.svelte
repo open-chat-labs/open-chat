@@ -157,7 +157,9 @@
     }
 
     function showGroupMembers() {
-        publish("showGroupMembers");
+        if (selectedChatSummary.kind !== "direct_chat") {
+            publish("groupMembers", selectedChatSummary);
+        }
     }
 
     function blockUser() {

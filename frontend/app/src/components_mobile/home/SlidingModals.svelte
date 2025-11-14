@@ -8,6 +8,7 @@
         type EventWrapper,
         type GroupChatSummary,
         type Message,
+        type MultiUserChat,
         type NamedAccount,
         type NeuronGate,
         type PaymentGate,
@@ -34,6 +35,7 @@
     import GroupPermissions from "./createOrUpdateGroup/Permissions.svelte";
     import DirectChatDetails from "./groupdetails/DirectChatDetails.svelte";
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
+    import MemberManagement from "./groupdetails/MemberManagement.svelte";
     import { UpdateGroupOrCommunityState } from "./groupOrCommunity.svelte";
     import NewMessage from "./NewMessage.svelte";
     import Rules from "./Rules.svelte";
@@ -72,6 +74,7 @@
     type SlidingModalType =
         | { kind: "open_thread"; chat: ChatSummary; msg: EventWrapper<Message> }
         | { kind: "show_threads" }
+        | { kind: "group_members"; chat: MultiUserChat }
         | { kind: "edit_recipient"; account: NamedAccount; onComplete: () => void }
         | { kind: "add_recipient"; account?: NamedAccount; onComplete: () => void }
         | { kind: "manage_recipients" }
@@ -130,6 +133,7 @@
         const unsubs = [
             subscribe("openThread", ({ chat, msg }) => push({ kind: "open_thread", chat, msg })),
             subscribe("showThreads", () => push({ kind: "show_threads" })),
+            subscribe("groupMembers", (chat) => push({ kind: "group_members", chat })),
             subscribe("editRecipient", ({ account, onComplete }) =>
                 push({ kind: "edit_recipient", account, onComplete }),
             ),
@@ -344,6 +348,8 @@
             <ThreadPreviews />
         {:else if page.kind === "open_thread"}
             <Thread rootEvent={page.msg} chat={page.chat} />
+        {:else if page.kind === "group_members"}
+            <MemberManagement chat={page.chat} />
         {/if}
     </SlidingPage>
 {/each}

@@ -14,7 +14,6 @@
 
     function onSwipe(dir: SwipeDirection) {
         if (dir === "right") {
-            console.trace("sliding page swipe");
             publish("closeModalPage");
         }
     }

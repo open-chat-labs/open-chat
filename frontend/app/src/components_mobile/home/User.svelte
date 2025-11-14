@@ -23,8 +23,8 @@
     import type { MemberRole, UserSummary } from "openchat-shared";
     import { getContext, type Snippet } from "svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
-    import FilteredUsername from "../../FilteredUsername.svelte";
-    import Badges from "../profile/Badges.svelte";
+    import FilteredUsername from "../FilteredUsername.svelte";
+    import Badges from "./profile/Badges.svelte";
 
     const client = getContext<OpenChat>("client");
 
