@@ -24,7 +24,7 @@
 <style lang="scss">
     .robot {
         border-radius: 50%;
-        background-color: var(--accent);
+        background-color: var(--primary);
         padding: toRem(3);
         display: flex;
         justify-content: center;

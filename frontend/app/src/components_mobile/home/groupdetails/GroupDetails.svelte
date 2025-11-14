@@ -34,11 +34,10 @@
     import { updateGroupState } from "../createOrUpdateGroup/group.svelte";
     import Markdown from "../Markdown.svelte";
     import Stats from "../Stats.svelte";
+    import BotsSummary from "./BotsSummary.svelte";
     import MembersSummary from "./MembersSummary.svelte";
 
     const client = getContext<OpenChat>("client");
-
-    window.publish = publish;
 
     interface Props {
         chat: MultiUserChat;
@@ -126,7 +125,11 @@
     }
 </script>
 
-<Container background={ColourVars.background0} height={{ kind: "fill" }} direction={"vertical"}>
+<Container
+    closeMenuOnScroll
+    background={ColourVars.background0}
+    height={{ kind: "fill" }}
+    direction={"vertical"}>
     <Container gap={"xl"} direction={"vertical"} padding={["lg", "md", "md", "md"]}>
         <!-- this is the group card -->
         <Container direction={"vertical"}>
@@ -222,6 +225,12 @@
 
         <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
             <MembersSummary {chat} />
+        </Container>
+
+        <div class="separator"></div>
+
+        <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
+            <BotsSummary {chat} />
         </Container>
 
         <div class="separator"></div>

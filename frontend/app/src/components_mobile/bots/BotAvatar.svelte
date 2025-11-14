@@ -1,13 +1,12 @@
 <script lang="ts">
-    import { AvatarSize } from "openchat-client";
-    import Avatar from "../Avatar.svelte";
+    import { Avatar, type AvatarSize } from "component-lib";
 
     interface Props {
         bot: { avatarUrl?: string };
         size?: AvatarSize;
     }
 
-    let { bot, size = AvatarSize.Default }: Props = $props();
+    let { bot, size }: Props = $props();
 </script>
 
 <Avatar url={bot.avatarUrl ?? "/assets/bot_avatar.svg"} {size} />

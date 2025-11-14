@@ -3,12 +3,17 @@ import { toastStore } from "@src/stores/toast";
 import {
     compareRoles,
     roleAsText,
+    type ChatIdentifier,
+    type CommunityIdentifier,
+    type EnhancedExternalBot,
     type ExternalBot,
     type FullMember,
+    type GrantedBotPermissions,
     type Member,
     type MemberRole,
     type MultiUserChat,
     type OpenChat,
+    type ReadonlyMap,
     type UserSummary,
 } from "openchat-client";
 
@@ -72,6 +77,10 @@ export class MemberManagement {
         return this.client.canDemote(this.chat.id, from, to);
     }
 
+    canManageBots(id: ChatIdentifier | CommunityIdentifier) {
+        return this.client.canManageBots(id);
+    }
+
     onRemoveMember(userId: string): void {
         this.client
             .removeMember(this.chat.id, userId)
@@ -105,5 +114,21 @@ export class MemberManagement {
             (user.displayName !== undefined &&
                 user.displayName.toLowerCase().includes(searchTermLower))
         );
+    }
+
+    hydrateBots(
+        bots: ReadonlyMap<string, GrantedBotPermissions>,
+        allBots: Map<string, ExternalBot>,
+    ): EnhancedExternalBot[] {
+        return [...bots.entries()].reduce((bots, [id, perm]) => {
+            const bot = allBots.get(id);
+            if (bot !== undefined) {
+                bots.push({
+                    ...bot,
+                    grantedPermissions: perm,
+                });
+            }
+            return bots;
+        }, [] as EnhancedExternalBot[]);
     }
 }
