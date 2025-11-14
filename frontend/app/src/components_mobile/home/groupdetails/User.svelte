@@ -1,17 +1,29 @@
 <script lang="ts">
+    import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
+    import {
+        Avatar,
+        BodySmall,
+        Caption,
+        ColourVars,
+        Container,
+        IconButton,
+        MenuTrigger,
+    } from "component-lib";
     import type { OpenChat } from "openchat-client";
     import {
-        AvatarSize,
+        ROLE_ADMIN,
+        ROLE_MEMBER,
+        ROLE_MODERATOR,
+        ROLE_NONE,
+        ROLE_OWNER,
+        roleAsText,
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
     } from "openchat-client";
-    import type { UserSummary } from "openchat-shared";
+    import type { MemberRole, UserSummary } from "openchat-shared";
     import { getContext, type Snippet } from "svelte";
-    import { i18nKey } from "../../../i18n/i18n";
-    import Avatar from "../../Avatar.svelte";
+    import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import FilteredUsername from "../../FilteredUsername.svelte";
-    import Translatable from "../../Translatable.svelte";
-    import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import Badges from "../profile/Badges.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -20,7 +32,7 @@
         user: UserSummary;
         me?: boolean;
         searchTerm?: string;
-        role?: string | undefined;
+        role?: MemberRole;
         profile?: boolean;
         children?: Snippet;
         onClick?: () => void;
@@ -30,15 +42,13 @@
         user,
         me = false,
         searchTerm = "",
-        role = undefined,
+        role = ROLE_NONE,
         profile = true,
         children,
         onClick,
     }: Props = $props();
 
     // if search term is !== "", split the username into three parts [prefix, match, postfix]
-
-    let hovering = $state(false);
 
     let displayName = $derived(
         client.getDisplayName(
@@ -48,9 +58,9 @@
         ),
     );
 
-    function click(ev: Event) {
+    function click(ev?: MouseEvent) {
         if (profile) {
-            ev.target?.dispatchEvent(
+            ev?.target?.dispatchEvent(
                 new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
                     detail: {
                         userId: user.userId,
@@ -64,24 +74,74 @@
 
         onClick?.();
     }
+
+    function getRoleColour() {
+        switch (role) {
+            case ROLE_OWNER:
+                return ColourVars.primary;
+            case ROLE_ADMIN:
+                return ColourVars.secondary;
+            case ROLE_MODERATOR:
+                return ColourVars.warning;
+            default:
+                return ColourVars.primary;
+        }
+    }
 </script>
 
+{#snippet role_label()}
+    {#if role > ROLE_MEMBER}
+        <Container
+            width={{ kind: "hug" }}
+            borderRadius={"sm"}
+            padding={["zero", "xs"]}
+            background={getRoleColour()}>
+            <Caption colour={"textOnPrimary"} fontWeight={"bold"}>{roleAsText(role)}</Caption>
+        </Container>
+    {/if}
+{/snippet}
+
+<Container onClick={click} crossAxisAlignment={"center"} gap={"md"}>
+    <Avatar url={client.userAvatarUrl(user)} size={"md"} />
+    <Container gap={"xxs"} direction={"vertical"} width={{ kind: "fill" }}>
+        <Container crossAxisAlignment={"center"} gap={"xs"}>
+            <FilteredUsername {searchTerm} username={displayName} {me} />
+            <Badges
+                uniquePerson={user.isUniquePerson}
+                diamondStatus={user.diamondStatus}
+                streak={user.streak}
+                chitEarned={user.totalChitEarned} />
+        </Container>
+        <Container crossAxisAlignment={"center"} gap={"sm"}>
+            <BodySmall width={{ kind: "hug" }} colour={"textSecondary"}>
+                @{user.username}
+            </BodySmall>
+            {@render role_label()}
+        </Container>
+    </Container>
+    {#if children}
+        <MenuTrigger position={"bottom"} align={"end"}>
+            <IconButton padding={["sm", "xs", "sm", "zero"]} size={"md"}>
+                {#snippet icon(color)}
+                    <DotsVertical {color} />
+                {/snippet}
+            </IconButton>
+            {#snippet menuItems()}
+                {@render children()}
+            {/snippet}
+        </MenuTrigger>
+    {/if}
+</Container>
+
 <!-- svelte-ignore a11y_interactive_supports_focus -->
-<div
+<!-- <div
     class="member"
     class:me
     onclick={click}
     role="button"
     onmouseenter={() => (hovering = true)}
     onmouseleave={() => (hovering = false)}>
-    <span class="avatar">
-        <Avatar
-            statusBorder={hovering && !me ? "var(--members-hv)" : "transparent"}
-            userId={user.userId}
-            url={client.userAvatarUrl(user)}
-            maxStreak={user.maxStreak >= 365}
-            size={AvatarSize.Default} />
-    </span>
+    <span class="avatar"> </span>
     <div class="details">
         <div class="display-name">
             <h4>
@@ -103,65 +163,4 @@
         </div>
     </div>
     {@render children?.()}
-</div>
-
-<style lang="scss">
-    .member {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: $sp4;
-        transition:
-            background-color ease-in-out 100ms,
-            border-color ease-in-out 100ms;
-        gap: 12px;
-
-        &:not(.me) {
-            cursor: pointer;
-        }
-
-        @media (hover: hover) {
-            &:not(.me):hover {
-                background-color: var(--members-hv);
-            }
-        }
-
-        @include mobile() {
-            padding: $sp3 toRem(10);
-        }
-    }
-    .avatar {
-        flex: 0 0 50px;
-        position: relative;
-    }
-
-    .details {
-        display: flex;
-        flex: 1;
-        flex-direction: column;
-        @include font(medium, normal, fs-100);
-
-        .display-name {
-            display: flex;
-            flex: 1;
-            align-items: center;
-            @include ellipsis();
-
-            h4 {
-                display: flex;
-                align-items: center;
-                gap: $sp2;
-            }
-        }
-
-        .username {
-            font-weight: 200;
-            color: var(--txt-light);
-        }
-    }
-
-    .role {
-        margin: 0 $sp3;
-        @include font(light, normal, fs-70);
-    }
-</style>
+</div> -->

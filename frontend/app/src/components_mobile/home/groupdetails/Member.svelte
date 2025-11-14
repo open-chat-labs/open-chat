@@ -1,25 +1,20 @@
 <script lang="ts">
+    import { MenuItem } from "component-lib";
     import {
-        iconSize,
-        type FullMember,
-        type MemberRole,
         ROLE_ADMIN,
         ROLE_MEMBER,
         ROLE_MODERATOR,
         ROLE_OWNER,
         roleAsText,
+        type FullMember,
+        type MemberRole,
     } from "openchat-client";
     import { _ } from "svelte-i18n";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
     import AccountRemoveOutline from "svelte-material-icons/AccountRemoveOutline.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
-    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import MinusCircleOutline from "svelte-material-icons/MinusCircleOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import HoverIcon from "../../HoverIcon.svelte";
-    import Menu from "../../Menu.svelte";
-    import MenuIcon from "../../MenuIcon.svelte";
-    import MenuItem from "../../MenuItem.svelte";
     import Translatable from "../../Translatable.svelte";
     import User from "./User.svelte";
 
@@ -92,154 +87,89 @@
     }
 </script>
 
-<User
-    user={member}
-    {me}
-    {searchTerm}
-    role={member.role > ROLE_MEMBER
-        ? roleAsText(member.role)
-        : undefined}>
+<User user={member} {me} {searchTerm} role={member.role > ROLE_MEMBER ? member.role : undefined}>
     {#if showMenu}
-        <span class="menu">
-            <MenuIcon position={"bottom"} align={"end"}>
-                {#snippet menuIcon()}
-                    <HoverIcon>
-                        <ChevronDown size={$iconSize} color={"var(--icon-txt)"} />
-                    </HoverIcon>
+        {#if canPromoteToOwner}
+            <MenuItem onclick={() => changeRole(ROLE_OWNER)}>
+                {#snippet icon(color, size)}
+                    <AccountPlusOutline {size} {color} />
                 {/snippet}
-                {#snippet menuItems()}
-                    <Menu>
-                        {#if canPromoteToOwner}
-                            <MenuItem onclick={() => changeRole(ROLE_OWNER)}>
-                                {#snippet icon()}
-                                    <AccountPlusOutline
-                                        size={$iconSize}
-                                        color={"var(--icon-inverted-txt)"} />
-                                {/snippet}
-                                {#snippet text()}
-                                    <div>
-                                        <Translatable
-                                            resourceKey={i18nKey("promoteTo", {
-                                                role: ownerText,
-                                            })} />
-                                    </div>
-                                {/snippet}
-                            </MenuItem>
-                        {/if}
-                        {#if canPromoteToAdmin}
-                            <MenuItem onclick={() => changeRole(ROLE_ADMIN)}>
-                                {#snippet icon()}
-                                    <AccountPlusOutline
-                                        size={$iconSize}
-                                        color={"var(--icon-inverted-txt)"} />
-                                {/snippet}
-                                {#snippet text()}
-                                    <div>
-                                        <Translatable
-                                            resourceKey={i18nKey("promoteTo", {
-                                                role: adminText,
-                                            })} />
-                                    </div>
-                                {/snippet}
-                            </MenuItem>
-                        {/if}
-                        {#if canDemoteToAdmin}
-                            <MenuItem onclick={() => changeRole(ROLE_ADMIN)}>
-                                {#snippet icon()}
-                                    <AccountRemoveOutline
-                                        size={$iconSize}
-                                        color={"var(--icon-inverted-txt)"} />
-                                {/snippet}
-                                {#snippet text()}
-                                    <div>
-                                        <Translatable
-                                            resourceKey={i18nKey("demoteTo", {
-                                                role: adminText,
-                                            })} />
-                                    </div>
-                                {/snippet}
-                            </MenuItem>
-                        {/if}
-                        {#if canPromoteToModerator}
-                            <MenuItem onclick={() => changeRole(ROLE_MODERATOR)}>
-                                {#snippet icon()}
-                                    <AccountPlusOutline
-                                        size={$iconSize}
-                                        color={"var(--icon-inverted-txt)"} />
-                                {/snippet}
-                                {#snippet text()}
-                                    <div>
-                                        <Translatable
-                                            resourceKey={i18nKey("promoteTo", {
-                                                role: moderatorText,
-                                            })} />
-                                    </div>
-                                {/snippet}
-                            </MenuItem>
-                        {/if}
-                        {#if canDemoteToModerator}
-                            <MenuItem onclick={() => changeRole(ROLE_MODERATOR)}>
-                                {#snippet icon()}
-                                    <AccountRemoveOutline
-                                        size={$iconSize}
-                                        color={"var(--icon-inverted-txt)"} />
-                                {/snippet}
-                                {#snippet text()}
-                                    <div>
-                                        <Translatable
-                                            resourceKey={i18nKey("demoteTo", {
-                                                role: moderatorText,
-                                            })} />
-                                    </div>
-                                {/snippet}
-                            </MenuItem>
-                        {/if}
-                        {#if canDemoteToMember}
-                            <MenuItem onclick={() => changeRole(ROLE_MEMBER)}>
-                                {#snippet icon()}
-                                    <AccountRemoveOutline
-                                        size={$iconSize}
-                                        color={"var(--icon-inverted-txt)"} />
-                                {/snippet}
-                                {#snippet text()}
-                                    <div>
-                                        <Translatable
-                                            resourceKey={i18nKey("demoteTo", {
-                                                role: memberText,
-                                            })} />
-                                    </div>
-                                {/snippet}
-                            </MenuItem>
-                        {/if}
-                        {#if canBlockUser}
-                            <MenuItem onclick={blockUser}>
-                                {#snippet icon()}
-                                    <Cancel size={$iconSize} color={"var(--icon-inverted-txt)"} />
-                                {/snippet}
-                                {#snippet text()}
-                                    <div>
-                                        <Translatable resourceKey={i18nKey("blockUser")} />
-                                    </div>
-                                {/snippet}
-                            </MenuItem>
-                        {/if}
-                        {#if canRemoveMember}
-                            <MenuItem onclick={removeUser}>
-                                {#snippet icon()}
-                                    <MinusCircleOutline
-                                        size={$iconSize}
-                                        color={"var(--icon-inverted-txt)"} />
-                                {/snippet}
-                                {#snippet text()}
-                                    <div>
-                                        <Translatable resourceKey={i18nKey("remove")} />
-                                    </div>
-                                {/snippet}
-                            </MenuItem>
-                        {/if}
-                    </Menu>
+                <Translatable
+                    resourceKey={i18nKey("promoteTo", {
+                        role: ownerText,
+                    })} />
+            </MenuItem>
+        {/if}
+        {#if canPromoteToAdmin}
+            <MenuItem onclick={() => changeRole(ROLE_ADMIN)}>
+                {#snippet icon(color, size)}
+                    <AccountPlusOutline {size} {color} />
                 {/snippet}
-            </MenuIcon>
-        </span>
+                <Translatable
+                    resourceKey={i18nKey("promoteTo", {
+                        role: adminText,
+                    })} />
+            </MenuItem>
+        {/if}
+        {#if canDemoteToAdmin}
+            <MenuItem onclick={() => changeRole(ROLE_ADMIN)}>
+                {#snippet icon(color, size)}
+                    <AccountRemoveOutline {size} {color} />
+                {/snippet}
+                <Translatable
+                    resourceKey={i18nKey("demoteTo", {
+                        role: adminText,
+                    })} />
+            </MenuItem>
+        {/if}
+        {#if canPromoteToModerator}
+            <MenuItem onclick={() => changeRole(ROLE_MODERATOR)}>
+                {#snippet icon(color, size)}
+                    <AccountPlusOutline {size} {color} />
+                {/snippet}
+                <Translatable
+                    resourceKey={i18nKey("promoteTo", {
+                        role: moderatorText,
+                    })} />
+            </MenuItem>
+        {/if}
+        {#if canDemoteToModerator}
+            <MenuItem onclick={() => changeRole(ROLE_MODERATOR)}>
+                {#snippet icon(color, size)}
+                    <AccountRemoveOutline {size} {color} />
+                {/snippet}
+                <Translatable
+                    resourceKey={i18nKey("demoteTo", {
+                        role: moderatorText,
+                    })} />
+            </MenuItem>
+        {/if}
+        {#if canDemoteToMember}
+            <MenuItem onclick={() => changeRole(ROLE_MEMBER)}>
+                {#snippet icon(color, size)}
+                    <AccountRemoveOutline {size} {color} />
+                {/snippet}
+                <Translatable
+                    resourceKey={i18nKey("demoteTo", {
+                        role: memberText,
+                    })} />
+            </MenuItem>
+        {/if}
+        {#if canBlockUser}
+            <MenuItem onclick={blockUser}>
+                {#snippet icon(color, size)}
+                    <Cancel {size} {color} />
+                {/snippet}
+                <Translatable resourceKey={i18nKey("blockUser")} />
+            </MenuItem>
+        {/if}
+        {#if canRemoveMember}
+            <MenuItem onclick={removeUser}>
+                {#snippet icon(color, size)}
+                    <MinusCircleOutline {size} {color} />
+                {/snippet}
+                <Translatable resourceKey={i18nKey("remove")} />
+            </MenuItem>
+        {/if}
     {/if}
 </User>

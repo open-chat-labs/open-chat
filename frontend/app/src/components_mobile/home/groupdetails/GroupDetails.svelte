@@ -34,6 +34,7 @@
     import { updateGroupState } from "../createOrUpdateGroup/group.svelte";
     import Markdown from "../Markdown.svelte";
     import Stats from "../Stats.svelte";
+    import MembersSummary from "./MembersSummary.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -215,6 +216,12 @@
                     </Container>
                 </Container>
             </Container>
+        </Container>
+
+        <div class="separator"></div>
+
+        <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
+            <MembersSummary {chat} />
         </Container>
 
         <div class="separator"></div>
