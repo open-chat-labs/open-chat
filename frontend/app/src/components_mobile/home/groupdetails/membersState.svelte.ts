@@ -14,6 +14,7 @@ import {
     type MultiUserChat,
     type OpenChat,
     type ReadonlyMap,
+    type ReadonlySet,
     type UserSummary,
 } from "openchat-client";
 
@@ -22,6 +23,16 @@ export class MemberManagement {
         private client: OpenChat,
         private chat: MultiUserChat,
     ) {}
+
+    getUsersFromSet(userLookup: Map<string, UserSummary>, ids: ReadonlySet<string>) {
+        return Array.from<string>(ids).reduce((matching, id) => {
+            const user = userLookup.get(id);
+            if (user) {
+                matching.push(user);
+            }
+            return matching;
+        }, [] as UserSummary[]);
+    }
 
     getKnownUsers(userLookup: Map<string, UserSummary>, members: Member[]): FullMember[] {
         const users: FullMember[] = [];
@@ -47,6 +58,15 @@ export class MemberManagement {
         }
     }
 
+    async onUnblockUser(userId: string) {
+        const success = await this.client.unblockUser(this.chat.id, userId);
+        if (success) {
+            toastStore.showSuccessToast(i18nKey("unblockUserSucceeded"));
+        } else {
+            toastStore.showFailureToast(i18nKey("unblockUserFailed"));
+        }
+    }
+
     onChangeRole(args: { userId: string; newRole: MemberRole; oldRole: MemberRole }): void {
         const { userId, newRole, oldRole } = args;
         this.client.changeRole(this.chat.id, userId, newRole, oldRole).then((success) => {
@@ -63,6 +83,10 @@ export class MemberManagement {
 
     canBlockUsers() {
         return this.client.canBlockUsers(this.chat.id);
+    }
+
+    canUnblockUsers() {
+        return this.client.canUnblockUsers(this.chat.id);
     }
 
     canRemoveMembers() {

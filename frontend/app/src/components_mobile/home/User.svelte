@@ -132,35 +132,3 @@
         </MenuTrigger>
     {/if}
 </Container>
-
-<!-- svelte-ignore a11y_interactive_supports_focus -->
-<!-- <div
-    class="member"
-    class:me
-    onclick={click}
-    role="button"
-    onmouseenter={() => (hovering = true)}
-    onmouseleave={() => (hovering = false)}>
-    <span class="avatar"> </span>
-    <div class="details">
-        <div class="display-name">
-            <h4>
-                <FilteredUsername {searchTerm} username={displayName} {me} />
-                <Badges
-                    uniquePerson={user.isUniquePerson}
-                    diamondStatus={user.diamondStatus}
-                    streak={user.streak}
-                    chitEarned={user.totalChitEarned} />
-            </h4>
-            {#if role !== undefined}
-                <span class="role">
-                    (<Translatable resourceKey={i18nKey(role)} />)
-                </span>
-            {/if}
-        </div>
-        <div class="username">
-            <FilteredUsername {searchTerm} username={"@" + user.username} />
-        </div>
-    </div>
-    {@render children?.()}
-</div> -->

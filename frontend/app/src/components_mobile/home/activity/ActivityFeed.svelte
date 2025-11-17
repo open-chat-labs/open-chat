@@ -77,10 +77,7 @@
     {#if !initialised}
         <FancyLoader size={"3rem"} />
     {:else if activityFeedState.activityEvents.length === 0 && initialised}
-        <NothingToSee
-            title={"No activity yet"}
-            subtitle={"Check back later for new activity"}
-            reset={""} />
+        <NothingToSee title={"No activity yet"} subtitle={"Check back later for new activity"} />
     {:else}
         <VirtualList keyFn={eventKey} items={activityFeedState.activityEvents}>
             {#snippet children(item)}

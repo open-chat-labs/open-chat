@@ -1,9 +1,14 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { trimLeadingAtSymbol } from "@src/utils/user";
-    import { BigButton, Body, Container, Search } from "component-lib";
-    import type { FullMember, MultiUserChat, OpenChat } from "openchat-client";
-    import { allUsersStore, selectedChatMembersStore } from "openchat-client";
+    import { BigButton, Body, Container, Search, transition } from "component-lib";
+    import type { FullMember, MultiUserChat, OpenChat, UserSummary } from "openchat-client";
+    import {
+        allUsersStore,
+        selectedChatBlockedUsersStore,
+        selectedChatLapsedMembersStore,
+        selectedChatMembersStore,
+    } from "openchat-client";
     import { getContext } from "svelte";
     import AccountAlert from "svelte-material-icons/AccountAlertOutline.svelte";
     import AccountCancel from "svelte-material-icons/AccountCancelOutline.svelte";
@@ -11,6 +16,8 @@
     import AccountPlus from "svelte-material-icons/AccountPlusOutline.svelte";
     import Translatable from "../../Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
+    import BlockedList from "./BlockedList.svelte";
+    import LapsedList from "./LapsedList.svelte";
     import MemberList from "./MemberList.svelte";
     import { MemberManagement } from "./membersState.svelte";
 
@@ -29,12 +36,34 @@
     let members = $derived<FullMember[]>(
         membersState.getKnownUsers($allUsersStore, [...$selectedChatMembersStore.values()]),
     );
+    let lapsed = $derived<UserSummary[]>(
+        membersState.getUsersFromSet($allUsersStore, $selectedChatLapsedMembersStore),
+    );
+    let filteredLapsed = $derived<UserSummary[]>(
+        lapsed.filter((u) => membersState.matchesSearch(searchTermLower, u)),
+    );
+    let blocked = $derived<UserSummary[]>(
+        membersState.getUsersFromSet($allUsersStore, $selectedChatBlockedUsersStore),
+    );
+    let filteredBlocked = $derived<UserSummary[]>(
+        blocked.filter((u) => membersState.matchesSearch(searchTermLower, u)),
+    );
     let filteredMembers = $derived(
         members
             .filter((u) => membersState.matchesSearch(searchTermLower, u))
             .sort(membersState.compareMembers),
     );
+
+    function setView(v: View) {
+        transition(["fade"], () => {
+            view = v;
+        });
+    }
 </script>
+
+{#snippet membersIcon(color: string, size: string)}
+    <Account {color} {size} />
+{/snippet}
 
 <SlidingPageContent title={i18nKey("Member management")} subtitle={i18nKey(chat.name)}>
     <Container height={{ kind: "fill" }} mainAxisAlignment={"spaceBetween"} direction={"vertical"}>
@@ -66,25 +95,33 @@
             {:else if view === "invite"}
                 invite
             {:else if view === "lapsed"}
-                lapsed
+                <LapsedList
+                    onReset={() => (view = "members")}
+                    count={lapsed.length}
+                    searchTerm={searchTermEntered}
+                    users={filteredLapsed}
+                    {membersState} />
             {:else if view === "blocked"}
-                blocked
+                <BlockedList
+                    onReset={() => (view = "members")}
+                    count={blocked.length}
+                    searchTerm={searchTermEntered}
+                    users={filteredBlocked}
+                    {membersState} />
             {/if}
         </Container>
         <Container onSwipe={() => {}} padding={["zero", "md"]} gap={"sm"}>
             <BigButton
+                icon={membersIcon}
                 width={{ kind: "fixed", size: "7rem" }}
                 mode={view === "members" ? "active" : "default"}
-                onClick={() => (view = "members")}>
-                {#snippet icon(color)}
-                    <Account {color} />
-                {/snippet}
+                onClick={() => setView("members")}>
                 <Translatable resourceKey={i18nKey("Members")} />
             </BigButton>
             <BigButton
                 width={{ kind: "fixed", size: "7rem" }}
                 mode={view === "invite" ? "active" : "default"}
-                onClick={() => (view = "invite")}>
+                onClick={() => setView("invite")}>
                 {#snippet icon(color)}
                     <AccountPlus {color} />
                 {/snippet}
@@ -93,7 +130,7 @@
             <BigButton
                 width={{ kind: "fixed", size: "7rem" }}
                 mode={view === "lapsed" ? "active" : "default"}
-                onClick={() => (view = "lapsed")}>
+                onClick={() => setView("lapsed")}>
                 {#snippet icon(color)}
                     <AccountAlert {color} />
                 {/snippet}
@@ -102,7 +139,7 @@
             <BigButton
                 width={{ kind: "fixed", size: "7rem" }}
                 mode={view === "blocked" ? "active" : "default"}
-                onClick={() => (view = "blocked")}>
+                onClick={() => setView("blocked")}>
                 {#snippet icon(color)}
                     <AccountCancel {color} />
                 {/snippet}

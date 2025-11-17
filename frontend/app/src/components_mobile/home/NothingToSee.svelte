@@ -9,26 +9,32 @@
         type Padding,
         type SizeMode,
     } from "component-lib";
-    import Chat from "svelte-material-icons/ChatOutline.svelte";
+    import type { Snippet } from "svelte";
     import Robot from "svelte-material-icons/RobotExcitedOutline.svelte";
     import Translatable from "../Translatable.svelte";
 
+    interface ButtonProps {
+        onClick: () => void;
+        text: string;
+        icon?: Snippet<[string, string]>;
+    }
+
     interface Props {
-        onReset?: () => void;
         title: string;
         subtitle: string;
-        reset?: string;
         height?: SizeMode;
         padding?: Padding;
+        icon?: Snippet<[string, string]>;
+        reset?: ButtonProps;
     }
 
     let {
-        onReset,
         title,
         subtitle,
         reset,
         height = { kind: "fill" },
         padding = ["huge", "zero", "zero", "zero"],
+        icon,
     }: Props = $props();
 </script>
 
@@ -39,27 +45,28 @@
     crossAxisAlignment={"center"}
     mainAxisAlignment={"start"}
     direction={"vertical"}>
-    <Robot color={ColourVars.primary} size={"6rem"} />
+    {#if icon}
+        {@render icon(ColourVars.primary, "6rem")}
+    {:else}
+        <Robot color={ColourVars.primary} size={"6rem"} />
+    {/if}
 
     <Container
         gap={"xs"}
         crossAxisAlignment={"center"}
         width={{ kind: "hug" }}
         direction={"vertical"}>
-        <Body colour={"primary"} width={{ kind: "hug" }} fontWeight={"bold"}>
+        <Body align={"center"} colour={"primary"} width={{ kind: "hug" }} fontWeight={"bold"}>
             <Translatable resourceKey={i18nKey(title)}></Translatable>
         </Body>
-        <BodySmall width={{ kind: "hug" }} colour={"textSecondary"}>
+        <BodySmall align={"center"} width={{ kind: "hug" }} colour={"textSecondary"}>
             <Translatable resourceKey={i18nKey(subtitle)}></Translatable>
         </BodySmall>
     </Container>
 
-    {#if onReset && reset}
-        <CommonButton onClick={onReset}>
-            {#snippet icon(color, size)}
-                <Chat {color} {size} />
-            {/snippet}
-            <Translatable resourceKey={i18nKey(reset)}></Translatable>
+    {#if reset}
+        <CommonButton icon={reset.icon} onClick={reset.onClick}>
+            <Translatable resourceKey={i18nKey(reset.text)}></Translatable>
         </CommonButton>
     {/if}
 </Container>

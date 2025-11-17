@@ -354,7 +354,6 @@
                     me={user.userId === $currentUserIdStore}
                     {user}
                     {searchTerm}
-                    canUnblockUser={client.canUnblockUsers(collection.id)}
                     {onUnblockUser} />
             {/each}
         </div>

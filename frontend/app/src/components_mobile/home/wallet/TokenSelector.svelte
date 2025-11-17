@@ -69,8 +69,7 @@
                 <NothingToSee
                     height={{ kind: "fixed", size: "6" }}
                     padding={"zero"}
-                    onReset={onDismiss}
-                    reset={"Close"}
+                    reset={{ onClick: onDismiss, text: "Close" }}
                     title={"No matching tokens"}
                     subtitle={searchTerm !== ""
                         ? "Try relaxing your search criteria"

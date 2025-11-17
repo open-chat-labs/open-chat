@@ -2,12 +2,12 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { Body, Container } from "component-lib";
     import { currentUserIdStore, type UserSummary } from "openchat-client";
-    import AccountAlert from "svelte-material-icons/AccountAlertOutline.svelte";
+    import AccountCancel from "svelte-material-icons/AccountCancelOutline.svelte";
     import Account from "svelte-material-icons/AccountGroupOutline.svelte";
     import Translatable from "../../Translatable.svelte";
     import VirtualList from "../../VirtualList.svelte";
     import NothingToSee from "../NothingToSee.svelte";
-    import LapsedUser from "./LapsedUser.svelte";
+    import BlockedUser from "./BlockedUser.svelte";
     import type { MemberManagement } from "./membersState.svelte";
 
     interface Props {
@@ -24,16 +24,11 @@
 {#snippet userView(user: UserSummary)}
     {@const me = user.userId === $currentUserIdStore}
     <Container padding={["md", "zero"]}>
-        <LapsedUser
+        <BlockedUser
             {searchTerm}
             {me}
             {user}
-            onBlockUser={membersState.canBlockUsers()
-                ? (userId) => membersState.onBlockUser(userId)
-                : undefined}
-            onRemoveMember={membersState.canRemoveMembers()
-                ? (userId) => membersState.onRemoveMember(userId)
-                : undefined} />
+            onUnblockUser={(userId) => membersState.onUnblockUser(userId)} />
     </Container>
 {/snippet}
 
@@ -46,15 +41,15 @@
         <NothingToSee
             reset={{ onClick: onReset, icon: membersIcon, text: "View all members" }}
             padding={["huge", "xxl"]}
-            title={"No lapsed members"}
-            subtitle={"When a member of your group no longer satisfies the access gates set in the group settings, they become a lapsed member!"}>
+            title={"No blocked members"}
+            subtitle={"You don't seem to have blocked any users from this group"}>
             {#snippet icon(color, size)}
-                <AccountAlert {color} {size} />
+                <AccountCancel {color} {size} />
             {/snippet}
         </NothingToSee>
     {:else}
         <Body fontWeight={"bold"}>
-            <Translatable resourceKey={i18nKey(`Lapsed members (${count})`)} />
+            <Translatable resourceKey={i18nKey(`Blocked users (${count})`)} />
         </Body>
         {#if virtualise}
             <VirtualList keyFn={(user) => user.userId} items={users}>
