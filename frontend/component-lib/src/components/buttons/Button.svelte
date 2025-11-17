@@ -12,6 +12,7 @@
         icon?: Snippet<[string]>;
         width?: SizeMode;
         height?: SizeMode;
+        danger?: boolean;
     }
     let {
         children,
@@ -22,6 +23,7 @@
         secondary = false,
         width = { kind: "fill" },
         height = { kind: "hug" },
+        danger = false,
     }: Props = $props();
 
     let parentDirection = getContext<Direction>("direction");
@@ -36,6 +38,7 @@
     type="button"
     aria-busy={loading}
     {style}
+    class:danger
     class:secondary
     class:disabled={disabled || loading}
     onclick={onClick}
@@ -86,6 +89,15 @@
             inset: calc(-1 * var(--bw-thick));
             border-radius: var(--rad-sm);
             background: var(--gradient);
+            z-index: -1;
+        }
+
+        &:not(.secondary):not(.disabled).danger::before {
+            content: "";
+            position: absolute;
+            inset: calc(-1 * var(--bw-thick));
+            border-radius: var(--rad-sm);
+            background: var(--error);
             z-index: -1;
         }
 

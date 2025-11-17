@@ -153,16 +153,8 @@
         }
     }
 
-    function formatDate(timestamp: bigint): string {
-        const date = new Date(Number(timestamp));
-        return date.toLocaleDateString(undefined, {
-            month: "short",
-            year: "numeric",
-        });
-    }
-
     function deleteGroup() {
-        busy = true;
+        // busy = true;
         publish("deleteGroup", {
             kind: "delete",
             chatId: chat.id,
@@ -422,7 +414,7 @@
                     </Body>
                 </Container>
 
-                <Button loading={busy} onClick={deleteGroup}>
+                <Button danger loading={busy} onClick={deleteGroup}>
                     {#snippet icon(color)}
                         <Delete {color} />
                     {/snippet}
