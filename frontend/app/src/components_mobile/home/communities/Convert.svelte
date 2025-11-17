@@ -2,6 +2,7 @@
     import {
         chatListScopeStore,
         defaultChatRules,
+        publish,
         routeForChatIdentifier,
         type ChannelIdentifier,
         type ChatListScope,
@@ -55,6 +56,7 @@
     function close() {
         group = undefined;
         state = "idle";
+        publish("closeModalStack");
     }
 </script>
 

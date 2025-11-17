@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { Avatar, Body, Button, Container, Option, Sheet, Subtitle } from "component-lib";
     import {
-        AvatarSize,
         type ChatIdentifier,
         type CommunityMap,
         type CommunitySummary,
@@ -10,11 +10,6 @@
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
-    import Avatar from "../../Avatar.svelte";
-    import Button from "../../Button.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
-    import ModalContent from "../../ModalContent.svelte";
-    import Overlay from "../../Overlay.svelte";
     import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -62,70 +57,41 @@
     }
 </script>
 
-{#if communitiesList.length > 0}
-    <Overlay>
-        <ModalContent>
-            {#snippet header()}
-                <span><Translatable resourceKey={i18nKey("communities.chooseCommunity")} /></span>
-            {/snippet}
-            {#snippet body()}
-                <span>
-                    {#each communitiesList as community}
-                        <div
-                            onclick={() => selectCommunity(community)}
-                            class="card"
-                            class:selected={areEqual(selected, community)}>
-                            <div class="avatar">
-                                <Avatar
-                                    url={client.communityAvatarUrl(
-                                        community.id.communityId,
-                                        community.avatar,
-                                    )}
-                                    userId={undefined}
-                                    size={AvatarSize.Default} />
-                            </div>
-                            <div class="details">
-                                <h4 class="name">{community.name}</h4>
-                            </div>
-                        </div>
-                    {/each}
-                </span>
-            {/snippet}
-            {#snippet footer()}
-                <span>
-                    <ButtonGroup>
-                        <Button secondary onClick={onCancel}
-                            ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-                        <Button loading={importing} disabled={importing} onClick={performImport}
-                            ><Translatable
-                                resourceKey={i18nKey("communities.importBtn")} /></Button>
-                    </ButtonGroup>
-                </span>
-            {/snippet}
-        </ModalContent>
-    </Overlay>
-{/if}
+<Sheet onDismiss={onCancel}>
+    <Container
+        height={{ kind: "fixed", size: "100%" }}
+        supplementalClass={"token_selector"}
+        padding={"lg"}
+        gap={"xl"}
+        direction={"vertical"}>
+        <Subtitle fontWeight={"bold"}>
+            <Translatable resourceKey={i18nKey("communities.chooseCommunity")}></Translatable>
+        </Subtitle>
 
-<style lang="scss">
-    .card {
-        display: flex;
-        align-items: center;
-        gap: $sp4;
-        cursor: pointer;
-        padding: $sp4;
-        border-radius: var(--rd);
-        transition: background-color 250ms ease-in-out;
-        border: 1px solid transparent;
-
-        &.selected {
-            background-color: var(--chatSummary-bg-selected);
-            border: 1px solid var(--txt-light);
-        }
-
-        @media (hover: hover) {
-            &:hover {
-                background-color: var(--chatSummary-hv);
-            }
-        }
-    }
-</style>
+        <Container gap={"sm"} supplementalClass={"token_selector"} direction={"vertical"}>
+            {#each communitiesList as community}
+                <Option
+                    onClick={() => selectCommunity(community)}
+                    padding={["sm", "md", "sm", "sm"]}
+                    value={community}
+                    selected={areEqual(selected, community)}>
+                    <Container crossAxisAlignment={"center"} gap={"sm"}>
+                        <Avatar
+                            url={client.communityAvatarUrl(
+                                community.id.communityId,
+                                community.avatar,
+                            )} />
+                        <Body fontWeight={"bold"}>{community.name}</Body>
+                    </Container>
+                </Option>
+            {/each}
+        </Container>
+        <Container>
+            <Button
+                loading={importing}
+                disabled={importing || selected === undefined}
+                onClick={performImport}
+                ><Translatable resourceKey={i18nKey("communities.importBtn")} /></Button>
+        </Container>
+    </Container>
+</Sheet>

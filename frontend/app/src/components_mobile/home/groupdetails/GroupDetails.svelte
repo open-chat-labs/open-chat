@@ -1,5 +1,6 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
+    import { toastStore } from "@src/stores/toast";
     import { activeVideoCall } from "@src/stores/video";
     import {
         Avatar,
@@ -13,12 +14,14 @@
         H2,
         IconButton,
     } from "component-lib";
-    import type { MultiUserChat, OpenChat } from "openchat-client";
+    import type { CommunityMap, CommunitySummary, MultiUserChat, OpenChat } from "openchat-client";
     import {
         allUsersStore,
         chatIdentifiersEqual,
+        communitiesStore,
         defaultChatRules,
         favouritesStore,
+        isDiamondStore,
         publish,
         ROLE_OWNER,
         selectedChatMembersStore,
@@ -28,6 +31,7 @@
         selectedCommunitySummaryStore,
     } from "openchat-client";
     import { getContext } from "svelte";
+    import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import BellOff from "svelte-material-icons/BellOffOutline.svelte";
     import Bell from "svelte-material-icons/BellOutline.svelte";
@@ -39,6 +43,7 @@
     import Exit from "svelte-material-icons/Logout.svelte";
     import Video from "svelte-material-icons/VideoOutline.svelte";
     import Translatable from "../../Translatable.svelte";
+    import ImportToCommunity from "../communities/Import.svelte";
     import { updateGroupState } from "../createOrUpdateGroup/group.svelte";
     import Markdown from "../Markdown.svelte";
     import Stats from "../Stats.svelte";
@@ -55,8 +60,13 @@
         memberCount: number;
     }
 
-    let { chat, memberCount }: Props = $props();
+    let { chat }: Props = $props();
 
+    let importToCommunities: CommunityMap<CommunitySummary> | undefined = $state();
+    let canImportToCommunity = $derived(client.canImportToCommunity(chat.id));
+    let canConvert = $derived(
+        chat.kind === "group_chat" && client.canConvertGroupToCommunity(chat.id),
+    );
     let ownerMember = $derived(
         [...$selectedChatMembersStore.values()].find((m) => m.role === ROLE_OWNER),
     );
@@ -82,6 +92,26 @@
             client.removeFromFavourites(chat.id);
         } else {
             client.addToFavourites(chat.id);
+        }
+    }
+
+    function convertToCommunity() {
+        if (!$isDiamondStore) {
+            publish("upgrade");
+        } else {
+            if (chat.kind === "group_chat") {
+                publish("convertGroupToCommunity", chat);
+            }
+        }
+    }
+
+    function importToCommunity() {
+        if (chat.kind === "group_chat") {
+            importToCommunities = $communitiesStore.filter((c) => c.membership.role === ROLE_OWNER);
+            if (importToCommunities.size === 0) {
+                toastStore.showFailureToast(i18nKey("communities.noOwned"));
+                importToCommunities = undefined;
+            }
         }
     }
 
@@ -166,6 +196,13 @@
         }
     }
 </script>
+
+{#if importToCommunities !== undefined}
+    <ImportToCommunity
+        groupId={chat.id}
+        onCancel={() => (importToCommunities = undefined)}
+        ownedCommunities={importToCommunities} />
+{/if}
 
 <Container
     closeMenuOnScroll
@@ -319,6 +356,56 @@
             </BodySmall>
             <Stats showReported={false} stats={chat.metrics} />
         </Container>
+
+        {#if canConvert}
+            <div class="separator"></div>
+
+            <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
+                <Container direction={"vertical"} gap={"sm"}>
+                    <Body fontWeight={"bold"}>
+                        <Translatable resourceKey={i18nKey("Convert to community")}></Translatable>
+                    </Body>
+                    <Body colour={"textSecondary"}>
+                        <Translatable
+                            resourceKey={i18nKey(
+                                "If your group is growing, and you would like to support multiple conversation streams, it might be time to convert to a community.",
+                            )}></Translatable>
+                    </Body>
+                </Container>
+
+                <Button loading={busy} onClick={convertToCommunity}>
+                    {#snippet icon(color)}
+                        <AccountGroup {color} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("Convert to community")}></Translatable>
+                </Button>
+            </Container>
+        {/if}
+
+        {#if canImportToCommunity}
+            <div class="separator"></div>
+
+            <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
+                <Container direction={"vertical"} gap={"sm"}>
+                    <Body fontWeight={"bold"}>
+                        <Translatable resourceKey={i18nKey("Import to community")}></Translatable>
+                    </Body>
+                    <Body colour={"textSecondary"}>
+                        <Translatable
+                            resourceKey={i18nKey(
+                                "Convert this group into a channel and import it into an existing community.",
+                            )}></Translatable>
+                    </Body>
+                </Container>
+
+                <Button loading={busy} onClick={importToCommunity}>
+                    {#snippet icon(color)}
+                        <AccountGroup {color} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("Import to community")}></Translatable>
+                </Button>
+            </Container>
+        {/if}
 
         {#if client.canDeleteGroup(chat.id)}
             <div class="separator"></div>
