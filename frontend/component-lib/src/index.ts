@@ -1,5 +1,6 @@
 export * from "./actions";
-export { default as Avatar, type AvatarSize } from "./components/avatar/Avatar.svelte";
+export type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl" | "xxl" | "huge";
+export { default as Avatar } from "./components/avatar/Avatar.svelte";
 export { default as MultiAvatar } from "./components/avatar/MultiAvatar.svelte";
 export { default as BigButton } from "./components/buttons/BigButton.svelte";
 export { default as Button } from "./components/buttons/Button.svelte";

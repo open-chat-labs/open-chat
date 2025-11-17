@@ -1,6 +1,6 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { AvatarSize, botState, type EphemeralMessageEvent } from "openchat-client";
+    import { botState, type EphemeralMessageEvent } from "openchat-client";
     import { onMount } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { Tween } from "svelte/motion";
@@ -54,7 +54,7 @@
     <div class="ephemeral-msg">
         <div onmousedown={pause} onmouseup={resume} class="content">
             <div class="header">
-                <BotAvatar size={AvatarSize.Tiny} {bot} />
+                <BotAvatar size={"xs"} {bot} />
                 <div class="title">
                     <Translatable resourceKey={i18nKey(`${bot.name} /${event.commandName}`)} />
                 </div>

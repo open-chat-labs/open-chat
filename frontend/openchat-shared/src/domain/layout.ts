@@ -35,6 +35,7 @@ export type RightPanelContent =
     | GroupDetailsPanel
     | InviteGroupMembersPanel
     | InviteCommunityMembers
+    | ShowGroupMembersPanel
     | ShowCommunityMembers
     | ShowPinnedPanel
     | UserProfilePanel
@@ -77,6 +78,10 @@ type InviteGroupMembersPanel = {
 
 type InviteCommunityMembers = {
     kind: "invite_community_users";
+};
+
+type ShowGroupMembersPanel = {
+    kind: "show_group_members";
 };
 
 type CommunityDetails = {
