@@ -17,6 +17,7 @@
         favouritesStore,
         publish,
         selectedChatRulesStore,
+        selectedCommunityRulesStore,
         selectedCommunitySummaryStore,
     } from "openchat-client";
     import { getContext } from "svelte";
@@ -34,7 +35,9 @@
     import { updateGroupState } from "../createOrUpdateGroup/group.svelte";
     import Markdown from "../Markdown.svelte";
     import Stats from "../Stats.svelte";
+    import AccessGateSummary from "./AccessGateSummary.svelte";
     import BotsSummary from "./BotsSummary.svelte";
+    import DisappearingMessagesSummary from "./DisappearingMessagesSummary.svelte";
     import MembersSummary from "./MembersSummary.svelte";
     import PermissionsSummary from "./PermissionsSummary.svelte";
 
@@ -51,7 +54,12 @@
     let rules = $derived($selectedChatRulesStore ?? defaultChatRules(chat.level));
     let avatarUrl = $derived(client.groupAvatarUrl(chat, $selectedCommunitySummaryStore));
     let busy = $state(false);
-
+    let canSend = $derived(client.canSendMessage(chat.id, "any"));
+    let combinedRulesText = $derived(
+        canSend
+            ? client.combineRulesText($selectedChatRulesStore, $selectedCommunityRulesStore)
+            : "",
+    );
     function toggleFavourites() {
         if ($favouritesStore.has(chat.id)) {
             client.removeFromFavourites(chat.id);
@@ -244,6 +252,26 @@
                 isChannel={chat.kind === "channel"}
                 embeddedContent={chat.kind === "channel" && chat.externalUrl !== undefined} />
         </Container>
+
+        <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
+            <AccessGateSummary gateConfig={chat.gateConfig} />
+        </Container>
+
+        <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
+            <DisappearingMessagesSummary eventsTTL={chat.eventsTTL} />
+        </Container>
+
+        {#if combinedRulesText.length > 0}
+            <div class="separator"></div>
+
+            <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
+                <Body colour={"textSecondary"} fontWeight={"bold"}>
+                    <Translatable resourceKey={i18nKey("Group rules")}></Translatable>
+                </Body>
+
+                <Body><Markdown inline={false} text={combinedRulesText} /></Body>
+            </Container>
+        {/if}
 
         <div class="separator"></div>
 

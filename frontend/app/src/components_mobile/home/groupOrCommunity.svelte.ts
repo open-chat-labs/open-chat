@@ -1,3 +1,4 @@
+import { flattenGateConfig } from "@src/utils/access";
 import {
     defaultChatRules,
     isCompositeGate,
@@ -54,11 +55,7 @@ export abstract class UpdateGroupOrCommunityState {
     #candidateUsers = $derived(this.#candidateMembers.map((m) => m.user));
     #accessGates = $derived.by<LeafGate[]>(() => {
         if (this.candidate === undefined) return [];
-        if (this.candidate.gateConfig.gate.kind === "no_gate") return [];
-        if (isLeafGate(this.candidate.gateConfig.gate)) return [this.candidate.gateConfig.gate];
-        if (isCompositeGate(this.candidate.gateConfig.gate))
-            return this.candidate.gateConfig.gate.gates;
-        return [];
+        return flattenGateConfig(this.candidate.gateConfig);
     });
     #gateConfig = $derived.by<AccessGateConfig>(
         () => this.candidate.gateConfig ?? { expiry: undefined, gate: { kind: "no_gate" } },

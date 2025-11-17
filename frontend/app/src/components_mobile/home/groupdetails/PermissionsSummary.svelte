@@ -1,6 +1,6 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { Body, Chip, Container } from "component-lib";
+    import { Body, Chip, Container, transition } from "component-lib";
     import {
         ROLE_ADMIN,
         ROLE_MEMBER,
@@ -123,13 +123,16 @@
             } as PermissionsByRole,
         );
     }
+
+    function switchTab(tab: string) {
+        transition(["fade"], () => {
+            selectedTab = tab;
+        });
+    }
 </script>
 
 {#snippet viewChip(tab: string)}
-    <Chip
-        fill
-        onClick={() => (selectedTab = tab)}
-        mode={selectedTab === tab ? "rounded" : "unselected"}>
+    <Chip fill onClick={() => switchTab(tab)} mode={selectedTab === tab ? "rounded" : "unselected"}>
         <Translatable resourceKey={i18nKey(tab)}></Translatable>
     </Chip>
 {/snippet}
