@@ -1,7 +1,9 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
+    import { activeVideoCall } from "@src/stores/video";
     import {
         Avatar,
+        BigButton,
         Body,
         BodySmall,
         Button,
@@ -13,24 +15,29 @@
     } from "component-lib";
     import type { MultiUserChat, OpenChat } from "openchat-client";
     import {
+        allUsersStore,
+        chatIdentifiersEqual,
         defaultChatRules,
         favouritesStore,
         publish,
+        ROLE_OWNER,
+        selectedChatMembersStore,
         selectedChatRulesStore,
+        selectedChatSummaryStore,
         selectedCommunityRulesStore,
         selectedCommunitySummaryStore,
     } from "openchat-client";
     import { getContext } from "svelte";
-    import Account from "svelte-material-icons/AccountBadgeOutline.svelte";
-    import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
-    import Calendar from "svelte-material-icons/CalendarMonthOutline.svelte";
+    import BellOff from "svelte-material-icons/BellOffOutline.svelte";
+    import Bell from "svelte-material-icons/BellOutline.svelte";
     import Delete from "svelte-material-icons/DeleteForeverOutline.svelte";
+    import EditIcon from "svelte-material-icons/FileDocumentEditOutline.svelte";
     import HeartMinus from "svelte-material-icons/HeartMinusOutline.svelte";
     import HeartPlus from "svelte-material-icons/HeartPlusOutline.svelte";
+    import Link from "svelte-material-icons/LinkVariant.svelte";
     import Exit from "svelte-material-icons/Logout.svelte";
-    import Share from "svelte-material-icons/ShareVariantOutline.svelte";
-    import SquareEdit from "svelte-material-icons/SquareEditOutline.svelte";
+    import Video from "svelte-material-icons/VideoOutline.svelte";
     import Translatable from "../../Translatable.svelte";
     import { updateGroupState } from "../createOrUpdateGroup/group.svelte";
     import Markdown from "../Markdown.svelte";
@@ -44,12 +51,22 @@
     const client = getContext<OpenChat>("client");
 
     interface Props {
-        chat: MultiUserChat;
+        chat: MultiUserChat; // this is NOT reactive - why
         memberCount: number;
     }
 
     let { chat, memberCount }: Props = $props();
 
+    let ownerMember = $derived(
+        [...$selectedChatMembersStore.values()].find((m) => m.role === ROLE_OWNER),
+    );
+    let owner = $derived(ownerMember ? $allUsersStore.get(ownerMember.userId) : undefined);
+    let videoCallInProgress = $derived(chat.videoCallInProgress !== undefined);
+    let inCall = $derived(
+        videoCallInProgress &&
+            $activeVideoCall !== undefined &&
+            chatIdentifiersEqual($activeVideoCall.chatId, chat.id),
+    );
     let canEdit = $derived(client.canEditGroupDetails(chat.id));
     let rules = $derived($selectedChatRulesStore ?? defaultChatRules(chat.level));
     let avatarUrl = $derived(client.groupAvatarUrl(chat, $selectedCommunitySummaryStore));
@@ -68,8 +85,12 @@
         }
     }
 
-    function share() {
-        console.log("share group");
+    function toggleMuteNotifications() {
+        publish("toggleMuteNotifications", {
+            chatId: chat.id,
+            mute: !$selectedChatSummaryStore?.membership.notificationsMuted,
+            muteAtEveryone: undefined,
+        });
     }
 
     function editGroup() {
@@ -132,6 +153,18 @@
             level: chat.level,
         });
     }
+
+    function startVideoCall() {
+        if (inCall) {
+            publish("hangup");
+        } else {
+            publish("startVideoCall", {
+                chatId: chat.id,
+                callType: "default",
+                join: videoCallInProgress,
+            });
+        }
+    }
 </script>
 
 <Container
@@ -145,7 +178,7 @@
             <Container
                 supplementalClass={"group_details_header"}
                 borderRadius={"md"}
-                minHeight={"10rem"}
+                minHeight={"7rem"}
                 mainAxisAlignment={"end"}
                 padding={"sm"}
                 gap={"sm"}
@@ -155,24 +188,19 @@
                         <ArrowLeft {color} />
                     {/snippet}
                 </IconButton>
-                <IconButton onclick={toggleFavourites} size={"md"} mode={"dark"}>
+                <IconButton onclick={toggleMuteNotifications} size={"md"} mode={"dark"}>
                     {#snippet icon(color)}
-                        {#if !$favouritesStore.has(chat.id)}
-                            <HeartPlus {color} />
+                        {#if $selectedChatSummaryStore?.membership.notificationsMuted}
+                            <Bell {color} />
                         {:else}
-                            <HeartMinus {color} />
+                            <BellOff {color} />
                         {/if}
                     {/snippet}
                 </IconButton>
-                <IconButton onclick={share} size={"md"} mode={"dark"}>
-                    {#snippet icon(color)}
-                        <Share {color} />
-                    {/snippet}
-                </IconButton>
                 {#if canEdit}
-                    <IconButton onclick={editGroup} size={"md"} mode={"dark"}>
+                    <IconButton onclick={() => publish("copyUrl")} size={"md"} mode={"dark"}>
                         {#snippet icon(color)}
-                            <SquareEdit {color} />
+                            <Link {color} />
                         {/snippet}
                     </IconButton>
                 {/if}
@@ -182,51 +210,61 @@
                 gap={"xl"}
                 padding={["zero", "lg"]}
                 direction="vertical">
-                <Container direction={"vertical"} crossAxisAlignment={"center"} gap={"lg"}>
-                    <Avatar borderWidth={"thick"} customSize={"10rem"} url={avatarUrl}></Avatar>
+                <Container crossAxisAlignment={"end"} gap={"md"}>
+                    <Avatar borderWidth={"thick"} size={"xxl"} url={avatarUrl}></Avatar>
                     <Container
+                        direction={"vertical"}
                         mainAxisAlignment={"center"}
-                        supplementalClass={"group_name"}
-                        gap={"xl"}>
-                        <H2 colour={"primary"} fontWeight={"bold"} width={{ kind: "hug" }}
-                            >{chat.name}</H2>
+                        supplementalClass={"group_name"}>
+                        <H2 fontWeight={"bold"} width={{ kind: "hug" }}>{chat.name}</H2>
+                        <Container gap={"xs"}>
+                            <BodySmall colour={"textSecondary"} width={{ kind: "hug" }}>
+                                <Translatable resourceKey={i18nKey("owned by")} />
+                            </BodySmall>
+                            <BodySmall colour={"primary"}>
+                                @{owner?.username}
+                            </BodySmall>
+                        </Container>
                     </Container>
                 </Container>
+
+                <Container gap={"sm"}>
+                    <BigButton onClick={toggleFavourites}>
+                        {#snippet icon(color, size)}
+                            {#if !$favouritesStore.has(chat.id)}
+                                <HeartPlus {color} {size} />
+                            {:else}
+                                <HeartMinus {color} {size} />
+                            {/if}
+                        {/snippet}
+                        {#if $favouritesStore.has(chat.id)}
+                            <Translatable resourceKey={i18nKey("Remove favourite")} />
+                        {:else}
+                            <Translatable resourceKey={i18nKey("Add favourite")} />
+                        {/if}
+                    </BigButton>
+                    <BigButton onClick={startVideoCall}>
+                        {#snippet icon(color, size)}
+                            <Video {color} {size} />
+                        {/snippet}
+                        <Translatable
+                            resourceKey={i18nKey(
+                                videoCallInProgress ? "Join video call" : "Start video call",
+                            )} />
+                    </BigButton>
+                    {#if canEdit}
+                        <BigButton onClick={editGroup}>
+                            {#snippet icon(color, size)}
+                                <EditIcon {color} {size} />
+                            {/snippet}
+                            <Translatable resourceKey={i18nKey("Edit group")} />
+                        </BigButton>
+                    {/if}
+                </Container>
+
                 <Body fontWeight={"light"}>
                     <Markdown inline={false} text={chat.description} />
                 </Body>
-
-                <Container gap={"sm"} direction={"vertical"}>
-                    <Container gap={"sm"} crossAxisAlignment={"center"}>
-                        <div class="icon">
-                            <Calendar size={"1.25rem"} color={ColourVars.primary} />
-                        </div>
-                        <Container gap={"xs"}>
-                            <Body width={{ kind: "hug" }} colour={"textSecondary"}>created</Body>
-                            <Body width={{ kind: "hug" }} fontWeight={"bold"}
-                                >{formatDate(BigInt(+new Date()))}</Body>
-                        </Container>
-                    </Container>
-                    <Container gap={"sm"} crossAxisAlignment={"center"}>
-                        <div class="icon">
-                            <AccountMultiple size={"1.25rem"} color={ColourVars.primary} />
-                        </div>
-                        <Container gap={"xs"}>
-                            <Body width={{ kind: "hug" }} colour={"textSecondary"}>group with</Body>
-                            <Body width={{ kind: "hug" }} fontWeight={"bold"}
-                                >{memberCount} member</Body>
-                        </Container>
-                    </Container>
-                    <Container gap={"sm"} crossAxisAlignment={"center"}>
-                        <div class="icon">
-                            <Account size={"1.25rem"} color={ColourVars.primary} />
-                        </div>
-                        <Container gap={"xs"}>
-                            <Body width={{ kind: "hug" }} fontWeight={"bold"}>2 members</Body>
-                            <Body width={{ kind: "hug" }} colour={"textSecondary"}>online</Body>
-                        </Container>
-                    </Container>
-                </Container>
             </Container>
         </Container>
 
@@ -337,7 +375,7 @@
 
 <style lang="scss">
     :global(.container.name_and_description) {
-        margin-top: -5.75rem;
+        margin-top: -1.75rem;
     }
 
     :global(.container.group_details_header > .icon_button:first-child) {
@@ -348,12 +386,6 @@
         display: flex;
         justify-content: center;
         align-items: center;
-    }
-
-    :global(.container.group_name > h2) {
-        background: var(--gradient-inverted);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
     }
 
     .separator {

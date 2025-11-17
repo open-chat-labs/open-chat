@@ -117,6 +117,7 @@
             justify-content: space-between;
             align-items: center;
             width: 100%;
+            white-space: nowrap;
         }
 
         &.active {
