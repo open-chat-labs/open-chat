@@ -36,6 +36,7 @@
     import Stats from "../Stats.svelte";
     import BotsSummary from "./BotsSummary.svelte";
     import MembersSummary from "./MembersSummary.svelte";
+    import PermissionsSummary from "./PermissionsSummary.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -231,6 +232,17 @@
 
         <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
             <BotsSummary {chat} />
+        </Container>
+
+        <div class="separator"></div>
+
+        <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
+            <PermissionsSummary
+                permissions={chat.permissions}
+                isPublic={chat.public}
+                isCommunityPublic={$selectedCommunitySummaryStore?.public ?? true}
+                isChannel={chat.kind === "channel"}
+                embeddedContent={chat.kind === "channel" && chat.externalUrl !== undefined} />
         </Container>
 
         <div class="separator"></div>

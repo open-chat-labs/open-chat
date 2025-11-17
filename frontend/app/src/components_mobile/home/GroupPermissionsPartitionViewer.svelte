@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Check from "svelte-material-icons/Check.svelte";
+    import { Body, Container, type SizeMode } from "component-lib";
     import {
         type ChatPermissionRole,
         chatRoles,
@@ -10,8 +10,8 @@
         ROLE_NONE,
         ROLE_OWNER,
     } from "openchat-client";
-    import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     interface Props {
         partition: PermissionsByRole;
@@ -26,43 +26,27 @@
         [ROLE_MODERATOR]: "permissions.ownerAndAdminsAndModerators",
         [ROLE_MEMBER]: "permissions.allMembers",
     };
+
+    const width: SizeMode = { kind: "hug" };
 </script>
 
-<ul>
-    {#each chatRoles as role}
-        {#if partition[role].size > 0}
-            <li class="section">
-                <div class="who-can"><Translatable resourceKey={i18nKey(roleLabels[role])} /></div>
-                <ul>
-                    {#each [...partition[role]] as perm}
-                        <li class="permission">
-                            <Check size={"1em"} color={"var(--success)"} />
-                            {perm}
-                        </li>
-                    {/each}
-                </ul>
-            </li>
-        {/if}
-    {/each}
-</ul>
-
-<style lang="scss">
-    ul {
-        list-style: none;
-    }
-
-    .section {
-        margin-bottom: $sp4;
-    }
-
-    .who-can {
-        @include font(bold, normal, fs-110);
-    }
-
-    .permission {
-        display: flex;
-        align-items: center;
-        gap: $sp3;
-        @include font(light, normal, fs-90);
-    }
-</style>
+{#each chatRoles as role}
+    {#if partition[role].size > 0}
+        {@const perms = [...partition[role]]}
+        <Container {width} wrap gap={"sm"}>
+            <Body {width} colour={"textSecondary"}>
+                <Translatable resourceKey={i18nKey(roleLabels[role])} />
+            </Body>
+            <Body {width} colour={"textSecondary"}>//</Body>
+            {#each perms as perm, i}
+                {@const last = i === perms.length - 1}
+                <Body {width}>
+                    {perm}
+                </Body>
+                {#if !last}
+                    <Body colour={"primary"} {width}>/</Body>
+                {/if}
+            {/each}
+        </Container>
+    {/if}
+{/each}
