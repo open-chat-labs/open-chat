@@ -1760,11 +1760,6 @@
     "suspend": "サスペンド",
     "suspendedUser": "停止中のユーザー",
     "suspendUser": "ユーザーの停止",
-    "switchDomain": {
-        "blurb": "現在、[{currentDomain}]({currentDomain}) ドメインを使用しています。<br /><br />このレガシー ドメインからの通知は受信されず、間もなく完全に廃止されます。<br /><br /> *OpenChat を引き続き使用し、継続的なパフォーマンスの最適化から十分に利益を得るには、新しいドメイン [https://oc.app](https://oc.app)* に切り替えてください。<br /><br />サイトをホーム画面に保存した場合は、削除/アンインストールして、新しいドメインから再度ホーム画面に保存する必要があります。<br/><br/>",
-        "continue": "継続する",
-        "title": "新しいドメインに切り替えてください"
-    },
     "tapForReferralLink": "タップして個人紹介リンクをコピーします",
     "tellMeMore": "詳しくは",
     "theInternetComputer": "インターネットコンピューター",

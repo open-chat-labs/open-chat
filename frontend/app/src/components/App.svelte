@@ -21,7 +21,6 @@
     } from "@utils/native/notification_channels";
     import "@utils/scream";
     import {
-        isCanisterUrl,
         isLandingPageRoute,
         isScrollingRoute,
         redirectLandingPageLinksIfNecessary,
@@ -54,7 +53,6 @@
     import Head from "./Head.svelte";
     import Profiler from "./Profiler.svelte";
     import Snow from "./Snow.svelte";
-    import SwitchDomain from "./SwitchDomain.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
     import Witch from "./Witch.svelte";
     import InstallPrompt from "./home/InstallPrompt.svelte";
@@ -656,9 +654,7 @@
 
 <NotificationsBar />
 
-{#if isCanisterUrl}
-    <SwitchDomain />
-{:else if $identityStateStore.kind === "anon" || $identityStateStore.kind === "logging_in" || $identityStateStore.kind === "registering" || $identityStateStore.kind === "logged_in" || $identityStateStore.kind === "loading_user" || $identityStateStore.kind === "challenging"}
+{#if $identityStateStore.kind === "anon" || $identityStateStore.kind === "logging_in" || $identityStateStore.kind === "registering" || $identityStateStore.kind === "logged_in" || $identityStateStore.kind === "loading_user" || $identityStateStore.kind === "challenging"}
     {#if !$isLoading || $reviewingTranslations}
         <Router {showLandingPage} />
     {/if}
