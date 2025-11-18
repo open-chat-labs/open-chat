@@ -1220,7 +1220,6 @@
     },
     "participant": "thành viên",
     "percLeft": "Còn lại {perc}%",
-    "performingUpgrade": "Đang nâng cấp",
     "permissions": {
         "addMembers": "thêm thành viên",
         "allMembers": "Tất cả các thành viên có thể",
@@ -1327,7 +1326,6 @@
     },
     "placeholderContent": "Vui lòng đợi, tin nhắn của bạn đang tải",
     "pleaseDeposit": "Hãy gửi {amount} ICP vào địa chỉ ví bên trên và nhấn nút Xác Nhận.",
-    "pleaseWait": "Vui lòng đợi trong vài giây",
     "poll": {
         "addAnotherAnswer": "Thêm câu trả lời khác",
         "addAnswer": "Thêm ít nhất 2 câu trả lời",
@@ -1762,11 +1760,6 @@
     "suspend": "Đình chỉ",
     "suspendedUser": "người dùng bị treo",
     "suspendUser": "tạm ngưng người dùng",
-    "switchDomain": {
-        "blurb": "Bạn hiện đang sử dụng miền [{currentDomain}] ({currentDomain}).<br /><br /> Bạn sẽ không nhận được thông báo từ miền kế thừa này và miền này sẽ sớm bị gỡ bỏ hoàn toàn.<br /><br /> * Để tiếp tục sử dụng OpenChat và hưởng lợi đầy đủ từ việc tối ưu hóa hiệu suất liên tục, vui lòng chuyển sang miền mới của chúng tôi [https://oc.app] (https://oc.app) *<br /><br /> Nếu bạn đã lưu trang web vào màn hình chính của mình, bạn sẽ cần phải xóa / gỡ cài đặt và lưu lại vào màn hình chính từ miền mới.<br/><br/>",
-        "continue": "Tiếp tục",
-        "title": "Vui lòng chuyển sang miền mới của chúng tôi"
-    },
     "tapForReferralLink": "Nhấn để sao chép liên kết giới thiệu cá nhân của bạn",
     "tellMeMore": "Thêm thông tin",
     "theInternetComputer": "Internet Computer",

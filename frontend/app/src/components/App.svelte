@@ -21,7 +21,6 @@
     } from "@utils/native/notification_channels";
     import "@utils/scream";
     import {
-        isCanisterUrl,
         isLandingPageRoute,
         isScrollingRoute,
         redirectLandingPageLinksIfNecessary,
@@ -54,7 +53,6 @@
     import Head from "./Head.svelte";
     import Profiler from "./Profiler.svelte";
     import Snow from "./Snow.svelte";
-    import SwitchDomain from "./SwitchDomain.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
     import Witch from "./Witch.svelte";
     import InstallPrompt from "./home/InstallPrompt.svelte";
@@ -63,7 +61,6 @@
     import IncomingCall from "./home/video/IncomingCall.svelte";
     import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
     import { portalState } from "./portalState.svelte";
-    import Upgrading from "./upgrading/Upgrading.svelte";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
@@ -140,11 +137,6 @@
     );
     let burstUrl = $derived(isFirefox ? `${burstPath}.png` : `${burstPath}.svg`);
     let burstFixed = $derived(isScrollingRoute($routeStore));
-
-    let upgrading = $derived(
-        $identityStateStore.kind === "upgrading_user" ||
-            $identityStateStore.kind === "upgrade_user",
-    );
 
     let lastScrollY = $state(window.scrollY);
 
@@ -662,11 +654,7 @@
 
 <NotificationsBar />
 
-{#if isCanisterUrl}
-    <SwitchDomain />
-{:else if upgrading}
-    <Upgrading />
-{:else if $identityStateStore.kind === "anon" || $identityStateStore.kind === "logging_in" || $identityStateStore.kind === "registering" || $identityStateStore.kind === "logged_in" || $identityStateStore.kind === "loading_user" || $identityStateStore.kind === "challenging"}
+{#if $identityStateStore.kind === "anon" || $identityStateStore.kind === "logging_in" || $identityStateStore.kind === "registering" || $identityStateStore.kind === "logged_in" || $identityStateStore.kind === "loading_user" || $identityStateStore.kind === "challenging"}
     {#if !$isLoading || $reviewingTranslations}
         <Router {showLandingPage} />
     {/if}

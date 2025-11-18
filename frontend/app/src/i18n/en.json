@@ -1220,7 +1220,6 @@
     },
     "participant": "member",
     "percLeft": "{perc}% left",
-    "performingUpgrade": "Performing Upgrade",
     "permissions": {
         "addMembers": "add members",
         "allMembers": "All members can",
@@ -1327,7 +1326,6 @@
     },
     "placeholderContent": "Please wait, your message will load shortly",
     "pleaseDeposit": "Please press the \"Confirm\" button if you are happy to pay {amount} ICP from the above account to upgrade your storage to {limit}",
-    "pleaseWait": "Please wait for a few seconds",
     "poll": {
         "addAnotherAnswer": "Add another answer",
         "addAnswer": "Add at least 2 answers",
@@ -1762,11 +1760,6 @@
     "suspend": "Suspend",
     "suspendedUser": "Suspended user",
     "suspendUser": "Suspend user",
-    "switchDomain": {
-        "blurb": "You are currently using the [{currentDomain}]({currentDomain}) domain.<br /><br />You will not receive notifications from this legacy domain and it will soon be retired altogether.<br /><br /> *To continue using OpenChat and benefit fully from ongoing performance optimisations please switch to our new domain [https://oc.app](https://oc.app)*<br /><br />If you have saved the site to your home screen you will need to delete/uninstall and save to home screen again from the new domain.<br/><br/>",
-        "continue": "Continue",
-        "title": "Please switch to our new domain"
-    },
     "tapForReferralLink": "Tap to copy your personal referral link",
     "tellMeMore": "More information",
     "theInternetComputer": "The Internet Computer",
