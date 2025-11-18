@@ -1760,11 +1760,6 @@
     "suspend": "Sospendere",
     "suspendedUser": "Utente sospeso",
     "suspendUser": "Sospendi utente",
-    "switchDomain": {
-        "blurb": "Stai attualmente utilizzando il dominio [{currentDomain}]({currentDomain}).<br /><br /> Non riceverai notifiche da questo dominio legacy e presto verrà ritirato del tutto.<br /><br /> *Per continuare a utilizzare OpenChat e beneficiare appieno delle continue ottimizzazioni delle prestazioni, passa al nostro nuovo dominio [https://oc.app](https://oc.app)*<br /><br /> Se hai salvato il sito nella schermata iniziale, dovrai eliminarlo/disinstallarlo e salvarlo nuovamente nella schermata iniziale dal nuovo dominio.<br/><br/>",
-        "continue": "Continua",
-        "title": "Si prega di passare al nostro nuovo dominio"
-    },
     "tapForReferralLink": "Tocca per copiare il tuo link di riferimento personale",
     "tellMeMore": "Maggiori informazioni",
     "theInternetComputer": "Internet Computer",
