@@ -1220,7 +1220,6 @@
     },
     "participant": "membre",
     "percLeft": "{min} % restants",
-    "performingUpgrade": "Exécution de la mise à niveau",
     "permissions": {
         "addMembers": "ajouter des membres",
         "allMembers": "Tous les membres peuvent",
@@ -1327,7 +1326,6 @@
     },
     "placeholderContent": "Veuillez patienter, votre message va bientôt se charger",
     "pleaseDeposit": "Veuillez appuyer sur le bouton \"Confirmer\" si vous souhaitez payer {amount} ICP à partir du compte ci-dessus pour mettre à niveau votre stockage à {limit}",
-    "pleaseWait": "Veuillez patienter quelques secondes",
     "poll": {
         "addAnotherAnswer": "Ajouter une autre réponse",
         "addAnswer": "Ajoutez au moins 2 réponses",

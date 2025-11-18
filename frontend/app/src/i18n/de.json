@@ -1220,7 +1220,6 @@
     },
     "participant": "Mitglied",
     "percLeft": "{perc}% übrig",
-    "performingUpgrade": "Upgrade durchführen",
     "permissions": {
         "addMembers": "Mitglieder hinzufügen",
         "allMembers": "Alle Mitglieder können",
@@ -1327,7 +1326,6 @@
     },
     "placeholderContent": "Bitte warten Sie, Ihre Nachricht wird in Kürze geladen",
     "pleaseDeposit": "Bitte klicken Sie auf die Schaltfläche „Bestätigen“, um {amount} ICP vom oben genannten Konto zu zahlen, damit Ihr Speicherplatz auf {limit} erweitert wird.",
-    "pleaseWait": "Bitte warten Sie einige Sekunden",
     "poll": {
         "addAnotherAnswer": "Fügen Sie eine weitere Antwort hinzu",
         "addAnswer": "Fügen Sie mindestens 2 Antworten hinzu",

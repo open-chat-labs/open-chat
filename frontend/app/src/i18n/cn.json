@@ -1220,7 +1220,6 @@
     },
     "participant": "成员",
     "percLeft": "还剩 {perc}%",
-    "performingUpgrade": "更新中",
     "permissions": {
         "addMembers": "添加成员",
         "allMembers": "所有成员都可以",
@@ -1327,7 +1326,6 @@
     },
     "placeholderContent": "信息读取中，请稍等",
     "pleaseDeposit": "如果您愿意从上述帐户支付 {amount} ICP 以将您的存储升级到 {limit}，请按“确认”按钮",
-    "pleaseWait": "请稍等",
     "poll": {
         "addAnotherAnswer": "添加另一个答案",
         "addAnswer": "添加至少 2 个答案",

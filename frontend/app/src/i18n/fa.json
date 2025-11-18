@@ -1220,7 +1220,6 @@
     },
     "participant": "عضو",
     "percLeft": "{perc}% باقی مانده است",
-    "performingUpgrade": "انجام ارتقا",
     "permissions": {
         "addMembers": "اضافه کردن اعضا",
         "allMembers": "همه اعضا می توانند",
@@ -1327,7 +1326,6 @@
     },
     "placeholderContent": "لطفا صبر کنید، پیام شما به زودی بارگیری می شود",
     "pleaseDeposit": "لطفاً در صورت تمایل به پرداخت {amount} ICP از حساب فوق، دکمه \"تأیید\" را فشار دهید تا فضای ذخیره سازی خود را به {limit} ارتقا دهید.",
-    "pleaseWait": "لطفا چند ثانیه صبر کنید",
     "poll": {
         "addAnotherAnswer": "پاسخ دیگری اضافه کنید",
         "addAnswer": "حداقل 2 پاسخ اضافه کنید",

@@ -1220,7 +1220,6 @@
     },
     "participant": "membro",
     "percLeft": "{perc}% rimanenti",
-    "performingUpgrade": "Esecuzione dell'aggiornamento",
     "permissions": {
         "addMembers": "aggiungere membri",
         "allMembers": "Tutti i membri possono",
@@ -1327,7 +1326,6 @@
     },
     "placeholderContent": "Attendi, il tuo messaggio verrà caricato a breve",
     "pleaseDeposit": "Premi il pulsante \"Conferma\" se sei felice di pagare {amount} ICP dall'account sopra per aggiornare lo spazio di archiviazione a {limit}",
-    "pleaseWait": "Si prega di attendere qualche secondo",
     "poll": {
         "addAnotherAnswer": "Aggiungi un'altra risposta",
         "addAnswer": "Aggiungi almeno 2 risposte",
