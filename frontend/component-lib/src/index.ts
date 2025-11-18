@@ -1,5 +1,4 @@
 export * from "./actions";
-export type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl" | "xxl" | "huge";
 export { default as Avatar } from "./components/avatar/Avatar.svelte";
 export { default as MultiAvatar } from "./components/avatar/MultiAvatar.svelte";
 export { default as BigButton } from "./components/buttons/BigButton.svelte";
@@ -28,6 +27,7 @@ export { default as Radio } from "./components/Radio.svelte";
 export { default as SectionHeader } from "./components/SectionHeader.svelte";
 export { default as Sheet } from "./components/sheet/Sheet.svelte";
 export { default as Spinner } from "./components/Spinner.svelte";
+export { default as StatusCard } from "./components/StatusCard.svelte";
 export { default as Switch } from "./components/Switch.svelte";
 export { default as Tooltip } from "./components/tooltip/Tooltip.svelte";
 export { default as Body } from "./components/typography/Body.svelte";
@@ -49,3 +49,4 @@ export { default as User } from "./components/User.svelte";
 export { default as UserChip } from "./components/UserChip.svelte";
 export * from "./theme";
 export * from "./utils";
+export type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl" | "xxl" | "huge";

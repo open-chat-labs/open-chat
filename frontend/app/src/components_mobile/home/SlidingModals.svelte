@@ -2,6 +2,7 @@
     import {
         selectedChatMembersStore,
         subscribe,
+        type ChannelIdentifier,
         type ChatSummary,
         type ChitEarnedGate,
         type DirectChatSummary,
@@ -33,6 +34,8 @@
     import GeneralSetup from "./createOrUpdateGroup/GeneralSetup.svelte";
     import GroupInfo from "./createOrUpdateGroup/GroupInfo.svelte";
     import GroupPermissions from "./createOrUpdateGroup/Permissions.svelte";
+    import Convert from "./groupdetails/Convert.svelte";
+    import Converted from "./groupdetails/Converted.svelte";
     import DirectChatDetails from "./groupdetails/DirectChatDetails.svelte";
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
     import MemberManagement from "./groupdetails/MemberManagement.svelte";
@@ -72,6 +75,8 @@
      */
 
     type SlidingModalType =
+        | { kind: "converted_to_community"; name: string; channelId: ChannelIdentifier }
+        | { kind: "convert_to_community"; chat: GroupChatSummary }
         | { kind: "open_thread"; chat: ChatSummary; msg: EventWrapper<Message> }
         | { kind: "show_threads" }
         | { kind: "group_members"; chat: MultiUserChat }
@@ -131,6 +136,12 @@
 
     onMount(() => {
         const unsubs = [
+            subscribe("convertedGroupToCommunity", ({ name, channelId }) =>
+                push({ kind: "converted_to_community", name, channelId }),
+            ),
+            subscribe("convertGroupToCommunity", (chat) =>
+                push({ kind: "convert_to_community", chat }),
+            ),
             subscribe("openThread", ({ chat, msg }) => push({ kind: "open_thread", chat, msg })),
             subscribe("showThreads", () => push({ kind: "show_threads" })),
             subscribe("groupMembers", (chat) => push({ kind: "group_members", chat })),
@@ -348,6 +359,10 @@
             <ThreadPreviews />
         {:else if page.kind === "open_thread"}
             <Thread rootEvent={page.msg} chat={page.chat} />
+        {:else if page.kind === "convert_to_community"}
+            <Convert chat={page.chat} />
+        {:else if page.kind === "converted_to_community"}
+            <Converted name={page.name} channelId={page.channelId} />
         {:else if page.kind === "group_members"}
             <MemberManagement chat={page.chat} />
         {/if}

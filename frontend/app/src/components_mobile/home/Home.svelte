@@ -12,7 +12,6 @@
         EnhancedReplyContext,
         FullWebhookDetails,
         GateCheckSucceeded,
-        GroupChatSummary,
         Level,
         Message,
         MultiUserChat,
@@ -94,7 +93,6 @@
     import ChallengeModal from "./ChallengeModal.svelte";
     import ChitEarned from "./ChitEarned.svelte";
     import HallOfFame from "./ChitHallOfFame.svelte";
-    import Convert from "./communities/Convert.svelte";
     import EditCommunity from "./communities/edit/Edit.svelte";
     import DailyChitModal from "./DailyChitModal.svelte";
     import LeftPanel from "./LeftPanel.svelte";
@@ -117,7 +115,6 @@
 
     const client = getContext<OpenChat>("client");
 
-    let convertGroup: GroupChatSummary | undefined = $state(undefined);
     let showProfileCard = $state<ViewProfileConfig>();
 
     type ConfirmActionEvent =
@@ -210,7 +207,6 @@
             subscribe("toggleMuteNotifications", toggleMuteNotifications),
             subscribe("successfulImport", successfulImport),
             subscribe("showProposalFilters", showProposalFilters),
-            subscribe("convertGroupToCommunity", convertGroupToCommunity),
             subscribe("clearSelection", () => page(routeForScope($chatListScopeStore))),
             subscribe("userSuspensionChanged", () => window.location.reload()),
             subscribe("selectedChatInvalid", selectedChatInvalid),
@@ -769,11 +765,6 @@
         };
     }
 
-    function convertGroupToCommunity(group: GroupChatSummary) {
-        setRightPanelHistory([]);
-        convertGroup = group;
-    }
-
     function successfulImport(id: ChannelIdentifier) {
         page(`/community/${id.communityId}`);
     }
@@ -1022,8 +1013,6 @@
         skew={"5deg"}
         viewBox={`0 0 361 ${bgClip}`} />
 {/if}
-
-<Convert bind:group={convertGroup} />
 
 {#if $rulesAcceptanceStore !== undefined}
     <AcceptRulesModal />

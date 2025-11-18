@@ -84,6 +84,7 @@ export type PubSubEvents = {
     successfulImport: ChannelIdentifier;
     showProposalFilters: undefined;
     convertGroupToCommunity: GroupChatSummary;
+    convertedGroupToCommunity: { name: string; channelId: ChannelIdentifier };
     clearSelection: undefined;
     editGroup: { chat: MultiUserChat; rules: UpdatedRules | undefined };
     updateGroup: undefined;
