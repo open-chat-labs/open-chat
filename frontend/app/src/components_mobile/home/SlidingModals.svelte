@@ -39,8 +39,8 @@
     import Converted from "./groupdetails/Converted.svelte";
     import DirectChatDetails from "./groupdetails/DirectChatDetails.svelte";
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
-    import MemberManagement from "./groupdetails/MemberManagement.svelte";
     import { UpdateGroupOrCommunityState } from "./groupOrCommunity.svelte";
+    import MemberManagement from "./membership/MemberManagement.svelte";
     import NewMessage from "./NewMessage.svelte";
     import Rules from "./Rules.svelte";
     import SlidingPage from "./SlidingPage.svelte";

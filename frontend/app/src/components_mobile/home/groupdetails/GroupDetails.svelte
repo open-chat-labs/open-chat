@@ -46,11 +46,11 @@
     import ImportToCommunity from "../communities/Import.svelte";
     import { updateGroupState } from "../createOrUpdateGroup/group.svelte";
     import Markdown from "../Markdown.svelte";
+    import BotsSummary from "../membership/BotsSummary.svelte";
+    import MembersSummary from "../membership/MembersSummary.svelte";
     import Stats from "../Stats.svelte";
     import AccessGateSummary from "./AccessGateSummary.svelte";
-    import BotsSummary from "./BotsSummary.svelte";
     import DisappearingMessagesSummary from "./DisappearingMessagesSummary.svelte";
-    import MembersSummary from "./MembersSummary.svelte";
     import PermissionsSummary from "./PermissionsSummary.svelte";
 
     const client = getContext<OpenChat>("client");

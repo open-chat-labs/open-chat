@@ -28,7 +28,7 @@
 <SlidingPageContent title={i18nKey("Convert to community")} subtitle={i18nKey(name)}>
     <Container direction={"vertical"} gap={"xxl"} padding={["xxl", "lg"]}>
         <Container padding={["zero", "lg"]} gap={"sm"} direction={"vertical"}>
-            <PartyPopper color={ColourVars.primary} size={"10rem"} />
+            <PartyPopper color={ColourVars.primary} size={"7rem"} />
             <H2>
                 <MulticolourText
                     parts={[

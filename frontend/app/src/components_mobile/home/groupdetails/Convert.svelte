@@ -56,7 +56,7 @@
 <SlidingPageContent title={i18nKey("Convert to community")} subtitle={i18nKey(chat.name)}>
     <Container direction={"vertical"} gap={"xxl"} padding={["xxl", "lg"]}>
         <Container padding={["zero", "lg"]} gap={"sm"} direction={"vertical"}>
-            <AccountGroup color={ColourVars.primary} size={"10rem"} />
+            <AccountGroup color={ColourVars.primary} size={"7rem"} />
             <H2>
                 <MulticolourText
                     parts={[
