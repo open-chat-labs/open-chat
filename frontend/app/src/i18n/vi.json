@@ -1220,7 +1220,6 @@
     },
     "participant": "thành viên",
     "percLeft": "Còn lại {perc}%",
-    "performingUpgrade": "Đang nâng cấp",
     "permissions": {
         "addMembers": "thêm thành viên",
         "allMembers": "Tất cả các thành viên có thể",
@@ -1327,7 +1326,6 @@
     },
     "placeholderContent": "Vui lòng đợi, tin nhắn của bạn đang tải",
     "pleaseDeposit": "Hãy gửi {amount} ICP vào địa chỉ ví bên trên và nhấn nút Xác Nhận.",
-    "pleaseWait": "Vui lòng đợi trong vài giây",
     "poll": {
         "addAnotherAnswer": "Thêm câu trả lời khác",
         "addAnswer": "Thêm ít nhất 2 câu trả lời",

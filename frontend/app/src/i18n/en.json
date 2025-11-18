@@ -1220,7 +1220,6 @@
     },
     "participant": "member",
     "percLeft": "{perc}% left",
-    "performingUpgrade": "Performing Upgrade",
     "permissions": {
         "addMembers": "add members",
         "allMembers": "All members can",
@@ -1327,7 +1326,6 @@
     },
     "placeholderContent": "Please wait, your message will load shortly",
     "pleaseDeposit": "Please press the \"Confirm\" button if you are happy to pay {amount} ICP from the above account to upgrade your storage to {limit}",
-    "pleaseWait": "Please wait for a few seconds",
     "poll": {
         "addAnotherAnswer": "Add another answer",
         "addAnswer": "Add at least 2 answers",

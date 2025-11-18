@@ -1220,7 +1220,6 @@
     },
     "participant": "メンバー",
     "percLeft": "残り{perc}%",
-    "performingUpgrade": "アップグレードの実行",
     "permissions": {
         "addMembers": "メンバーを追加",
         "allMembers": "すべてのメンバーができます",
@@ -1327,7 +1326,6 @@
     },
     "placeholderContent": "メッセージがまもなく読み込まれますので、お待ちください",
     "pleaseDeposit": "上記のアカウントから{amount} ICPを支払い、ストレージを{limit}にアップグレードする場合は、[確認]ボタンを押してください。",
-    "pleaseWait": "数秒お待ちください",
     "poll": {
         "addAnotherAnswer": "別の答えを追加",
         "addAnswer": "少なくとも2つの答えを追加してください",

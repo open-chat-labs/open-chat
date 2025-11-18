@@ -1220,7 +1220,6 @@
     },
     "participant": "członek",
     "percLeft": "Pozostało {perc}%.",
-    "performingUpgrade": "Wykonywanie aktualizacji",
     "permissions": {
         "addMembers": "dodaj członków",
         "allMembers": "Wszyscy członkowie mogą",
@@ -1327,7 +1326,6 @@
     },
     "placeholderContent": "Proszę czekać, Twoja wiadomość wkrótce się załaduje",
     "pleaseDeposit": "Naciśnij przycisk „Potwierdź”, jeśli chcesz zapłacić {amount} ICP z powyższego konta, aby uaktualnić swoje miejsce do {limit}",
-    "pleaseWait": "Proszę poczekać kilka sekund",
     "poll": {
         "addAnotherAnswer": "Dodaj kolejną odpowiedź",
         "addAnswer": "Dodaj co najmniej 2 odpowiedzi",

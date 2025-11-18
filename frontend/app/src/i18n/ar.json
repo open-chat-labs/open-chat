@@ -1220,7 +1220,6 @@
     },
     "participant": "عضو",
     "percLeft": "{perc}% متبقية",
-    "performingUpgrade": "تنفيذ الترقية",
     "permissions": {
         "addMembers": "إضافة أعضاء",
         "allMembers": "يمكن لجميع الأعضاء",
@@ -1327,7 +1326,6 @@
     },
     "placeholderContent": "يرجى الانتظار، سيتم تحميل رسالتك قريبًا",
     "pleaseDeposit": "يرجى الضغط على زر \"تأكيد\" إذا كنت سعيدًا بدفع {amount} ICP من الحساب أعلاه لترقية مساحة التخزين الخاصة بك إلى {limit}",
-    "pleaseWait": "الرجاء الانتظار لبضع ثوان",
     "poll": {
         "addAnotherAnswer": "أضف إجابة أخرى",
         "addAnswer": "أضف إجابتين على الأقل",

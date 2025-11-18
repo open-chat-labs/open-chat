@@ -1220,7 +1220,6 @@
     },
     "participant": "miembro",
     "percLeft": "{perc}% restante",
-    "performingUpgrade": "Realización de actualización",
     "permissions": {
         "addMembers": "Añadir miembros",
         "allMembers": "Todos los miembros pueden",
@@ -1327,7 +1326,6 @@
     },
     "placeholderContent": "Por favor espera, tu mensaje se cargará en breve",
     "pleaseDeposit": "Deposita {amount} ICP en la cuenta anterior y luego presiona el botón de confirmación.",
-    "pleaseWait": "Por favor espera unos segundos",
     "poll": {
         "addAnotherAnswer": "Agregar otra respuesta",
         "addAnswer": "Agregar al menos 2 respuestas",

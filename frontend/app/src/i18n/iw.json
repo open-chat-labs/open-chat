@@ -1220,7 +1220,6 @@
     },
     "participant": "חבר",
     "percLeft": "נותרו {perc}%",
-    "performingUpgrade": "מבצע שדרוג",
     "permissions": {
         "addMembers": "להוסיף חברים",
         "allMembers": "כל החברים יכולים",
@@ -1327,7 +1326,6 @@
     },
     "placeholderContent": "אנא המתן, ההודעה שלך תיטען בקרוב",
     "pleaseDeposit": "אנא לחץ על הלחצן \"אשר\" אם אתה מעוניין לשלם ICP {amount} מהחשבון שלמעלה כדי לשדרג את האחסון שלך ל-{limit}",
-    "pleaseWait": "אנא המתן מספר שניות",
     "poll": {
         "addAnotherAnswer": "הוסף עוד תשובה",
         "addAnswer": "הוסף לפחות 2 תשובות",
