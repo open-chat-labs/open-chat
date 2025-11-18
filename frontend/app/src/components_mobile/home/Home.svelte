@@ -119,7 +119,6 @@
 
     type ConfirmActionEvent =
         | ConfirmLeaveEvent
-        | ConfirmDeleteEvent
         | ConfirmLeaveCommunityEvent
         | ConfirmDeleteCommunityEvent;
 
@@ -132,14 +131,6 @@
         kind: "leave";
         chatId: MultiUserChatIdentifier;
         level: Level;
-    };
-
-    type ConfirmDeleteEvent = {
-        kind: "delete";
-        chatId: MultiUserChatIdentifier;
-        level: Level;
-        doubleCheck: { challenge: ResourceKey; response: ResourceKey };
-        after?: () => void;
     };
 
     type ConfirmDeleteCommunityEvent = {
@@ -191,7 +182,6 @@
             subscribe("replyPrivatelyTo", replyPrivatelyTo),
             subscribe("upgrade", upgrade),
             subscribe("verifyHumanity", verifyHumanity),
-            subscribe("deleteGroup", onTriggerConfirm),
             subscribe("deleteCommunity", onTriggerConfirm),
             subscribe("communityDetails", communityDetails),
             subscribe("editCommunity", editCommunity),
@@ -394,8 +384,6 @@
                 return i18nKey("communities.leaveMessage");
             case "delete_community":
                 return i18nKey("communities.deleteMessage");
-            case "delete":
-                return i18nKey("irreversible", undefined, confirmActionEvent.level, true);
         }
     }
 
@@ -421,32 +409,9 @@
                 return deleteCommunity(confirmActionEvent.communityId).then((_) => {
                     setRightPanelHistory([]);
                 });
-            case "delete":
-                return deleteGroup(confirmActionEvent.chatId, confirmActionEvent.level).then(
-                    (_) => {
-                        setRightPanelHistory([]);
-                        confirmActionEvent.after?.();
-                    },
-                );
             default:
                 return Promise.reject();
         }
-    }
-
-    function deleteGroup(chatId: MultiUserChatIdentifier, level: Level): Promise<void> {
-        if (chatId.kind === "channel") {
-            page(`/community/${chatId.communityId}`);
-        } else {
-            page(routeForScope($chatListScopeStore));
-        }
-        return client.deleteGroup(chatId).then((success) => {
-            if (success) {
-                toastStore.showSuccessToast(i18nKey("deleteGroupSuccess", undefined, level));
-            } else {
-                toastStore.showFailureToast(i18nKey("deleteGroupFailure", undefined, level, true));
-                page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
-            }
-        });
     }
 
     function deleteCommunity(id: CommunityIdentifier): Promise<void> {
@@ -917,8 +882,7 @@
 
 {#if confirmActionEvent !== undefined}
     <AreYouSure
-        doubleCheck={confirmActionEvent.kind === "delete" ||
-        confirmActionEvent.kind === "delete_community"
+        doubleCheck={confirmActionEvent.kind === "delete_community"
             ? confirmActionEvent.doubleCheck
             : undefined}
         message={confirmMessage}

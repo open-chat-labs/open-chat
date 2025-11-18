@@ -40,6 +40,7 @@ export type PubSubEvents = {
     showGroupMembers: undefined;
     upgrade: undefined;
     verifyHumanity: undefined;
+    deleteChat: MultiUserChat;
     deleteGroup: {
         kind: "delete";
         chatId: MultiUserChatIdentifier;

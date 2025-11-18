@@ -153,20 +153,6 @@
         }
     }
 
-    function deleteGroup() {
-        // busy = true;
-        publish("deleteGroup", {
-            kind: "delete",
-            chatId: chat.id,
-            level: "group",
-            doubleCheck: {
-                challenge: i18nKey("typeGroupName", { name: chat.name }),
-                response: i18nKey(chat.name),
-            },
-            after: () => publish("closeModalStack"),
-        });
-    }
-
     function leaveGroup() {
         busy = true;
         publish("leaveGroup", {
@@ -414,7 +400,7 @@
                     </Body>
                 </Container>
 
-                <Button danger loading={busy} onClick={deleteGroup}>
+                <Button danger loading={busy} onClick={() => publish("deleteChat", chat)}>
                     {#snippet icon(color)}
                         <Delete {color} />
                     {/snippet}

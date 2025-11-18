@@ -34,6 +34,7 @@
     import GeneralSetup from "./createOrUpdateGroup/GeneralSetup.svelte";
     import GroupInfo from "./createOrUpdateGroup/GroupInfo.svelte";
     import GroupPermissions from "./createOrUpdateGroup/Permissions.svelte";
+    import ConfirmDelete from "./groupdetails/ConfirmDelete.svelte";
     import Convert from "./groupdetails/Convert.svelte";
     import Converted from "./groupdetails/Converted.svelte";
     import DirectChatDetails from "./groupdetails/DirectChatDetails.svelte";
@@ -75,6 +76,7 @@
      */
 
     type SlidingModalType =
+        | { kind: "delete_chat"; chat: MultiUserChat }
         | { kind: "converted_to_community"; name: string; channelId: ChannelIdentifier }
         | { kind: "convert_to_community"; chat: GroupChatSummary }
         | { kind: "open_thread"; chat: ChatSummary; msg: EventWrapper<Message> }
@@ -136,6 +138,7 @@
 
     onMount(() => {
         const unsubs = [
+            subscribe("deleteChat", (chat) => push({ kind: "delete_chat", chat })),
             subscribe("convertedGroupToCommunity", ({ name, channelId }) =>
                 push({ kind: "converted_to_community", name, channelId }),
             ),
@@ -363,6 +366,8 @@
             <Convert chat={page.chat} />
         {:else if page.kind === "converted_to_community"}
             <Converted name={page.name} channelId={page.channelId} />
+        {:else if page.kind === "delete_chat"}
+            <ConfirmDelete chat={page.chat} />
         {:else if page.kind === "group_members"}
             <MemberManagement chat={page.chat} />
         {/if}
