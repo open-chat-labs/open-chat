@@ -462,6 +462,7 @@
     }
 
     function chatWith(chatId: DirectChatIdentifier) {
+        publish("closeModalStack");
         const chat = $chatSummariesListStore.find((c) => {
             return c.kind === "direct_chat" && c.them === chatId;
         });

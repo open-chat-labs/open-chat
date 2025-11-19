@@ -34,10 +34,12 @@
     );
 
     function showAllMembers() {
-        publish("groupMembers", chat);
+        publish("groupMembers", { chat, view: "members" });
     }
 
-    function inviteUsers() {}
+    function inviteUsers() {
+        publish("groupMembers", { chat, view: "invite" });
+    }
 
     function share() {}
 </script>

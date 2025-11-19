@@ -36,6 +36,7 @@
         profile?: boolean;
         children?: Snippet;
         onClick?: () => void;
+        action?: Snippet;
     }
 
     let {
@@ -46,6 +47,7 @@
         profile = true,
         children,
         onClick,
+        action,
     }: Props = $props();
 
     // if search term is !== "", split the username into three parts [prefix, match, postfix]
@@ -119,6 +121,9 @@
             {@render role_label()}
         </Container>
     </Container>
+    {#if action}
+        {@render action()}
+    {/if}
     {#if children}
         <MenuTrigger position={"bottom"} align={"end"}>
             <IconButton padding={["sm", "xs", "sm", "zero"]} size={"md"}>

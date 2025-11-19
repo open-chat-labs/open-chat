@@ -81,6 +81,39 @@ export class MemberManagement {
         });
     }
 
+    inviteUser(userId: string) {
+        this.client
+            .inviteUsers(this.chat.id, [userId])
+            .then((resp) => {
+                if (resp) {
+                    if (this.chat?.public ?? false) {
+                        toastStore.showSuccessToast(i18nKey("group.usersInvited"));
+                    }
+                } else {
+                    toastStore.showFailureToast(
+                        i18nKey("group.inviteUsersFailed", undefined, this.chat.level, true),
+                    );
+                }
+            })
+            .catch(() => {
+                toastStore.showFailureToast(
+                    i18nKey("group.inviteUsersFailed", undefined, this.chat.level, true),
+                );
+            });
+    }
+
+    cancelInvites(userIds: string[]) {
+        return this.client.cancelInvites(this.chat.id, userIds);
+    }
+
+    canUninvite() {
+        return this.client.canInviteUsers(this.chat.id);
+    }
+
+    canInvite() {
+        return this.client.canInviteUsers(this.chat.id);
+    }
+
     canBlockUsers() {
         return this.client.canBlockUsers(this.chat.id);
     }

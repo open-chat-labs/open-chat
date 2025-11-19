@@ -42,7 +42,7 @@
     let items = $derived<Item[]>([...installedBots, ...installedHooks]);
 
     function showAllBots() {
-        publish("groupMembers", chat);
+        publish("groupMembers", { chat, view: "members" });
     }
 
     function addBots() {}

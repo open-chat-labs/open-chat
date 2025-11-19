@@ -198,5 +198,5 @@ export type PubSubEvents = {
     walletSettings: undefined;
     showThreads: undefined;
     openThread: { chat: ChatSummary; msg: EventWrapper<Message> };
-    groupMembers: MultiUserChat;
+    groupMembers: { chat: MultiUserChat; view: "members" | "invite" | "lapsed" | "blocked" };
 };

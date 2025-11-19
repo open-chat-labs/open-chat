@@ -81,7 +81,11 @@
         | { kind: "convert_to_community"; chat: GroupChatSummary }
         | { kind: "open_thread"; chat: ChatSummary; msg: EventWrapper<Message> }
         | { kind: "show_threads" }
-        | { kind: "group_members"; chat: MultiUserChat }
+        | {
+              kind: "group_members";
+              chat: MultiUserChat;
+              view: "members" | "invite" | "lapsed" | "blocked";
+          }
         | { kind: "edit_recipient"; account: NamedAccount; onComplete: () => void }
         | { kind: "add_recipient"; account?: NamedAccount; onComplete: () => void }
         | { kind: "manage_recipients" }
@@ -147,7 +151,9 @@
             ),
             subscribe("openThread", ({ chat, msg }) => push({ kind: "open_thread", chat, msg })),
             subscribe("showThreads", () => push({ kind: "show_threads" })),
-            subscribe("groupMembers", (chat) => push({ kind: "group_members", chat })),
+            subscribe("groupMembers", ({ chat, view }) =>
+                push({ kind: "group_members", chat, view }),
+            ),
             subscribe("editRecipient", ({ account, onComplete }) =>
                 push({ kind: "edit_recipient", account, onComplete }),
             ),
@@ -369,7 +375,7 @@
         {:else if page.kind === "delete_chat"}
             <ConfirmDelete chat={page.chat} />
         {:else if page.kind === "group_members"}
-            <MemberManagement chat={page.chat} />
+            <MemberManagement chat={page.chat} view={page.view} />
         {/if}
     </SlidingPage>
 {/each}

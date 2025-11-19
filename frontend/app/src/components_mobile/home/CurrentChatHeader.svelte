@@ -83,7 +83,7 @@
 
     function showGroupMembers() {
         if (selectedChatSummary.kind !== "direct_chat") {
-            publish("groupMembers", selectedChatSummary);
+            publish("groupMembers", { chat: selectedChatSummary, view: "members" });
         }
     }
 
