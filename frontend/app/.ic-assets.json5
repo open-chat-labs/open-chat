@@ -29,4 +29,10 @@
         match: ".well-known",
         ignore: false,
     },
+    {
+        match: ".well-known/{ii-alternative-origins,webauthn}",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    },
 ]

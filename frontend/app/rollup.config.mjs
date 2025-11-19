@@ -37,21 +37,26 @@ function clean() {
             console.log("cleaning up the build directory");
             rimraf.sync(path.join(__dirname, "build"));
             fs.mkdirSync("build");
+            fs.mkdirSync("build/.well-known");
             if (version) {
                 fs.writeFileSync("build/version", JSON.stringify({ version }));
             }
             const customDomains = process.env.OC_CUSTOM_DOMAINS;
             if (customDomains !== undefined) {
-                fs.mkdirSync("build/.well-known");
+                const origins = customDomains.split(",").map((d) => `https://${d}`)
                 fs.writeFileSync(
                     "build/.well-known/ii-alternative-origins",
                     JSON.stringify({
-                        alternativeOrigins: customDomains.split(",").map((d) => `https://${d}`),
+                        alternativeOrigins: origins,
                     }),
                 );
                 fs.writeFileSync(
                     "build/.well-known/ic-domains",
                     customDomains.split(",").join("\n"),
+                );
+                fs.writeFileSync(
+                    "build/.well-known/webauthn",
+                    JSON.stringify({ origins })
                 );
             }
             copyFile(".", "build", ".ic-assets.json5");
