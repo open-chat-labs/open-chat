@@ -41,6 +41,7 @@ export type PubSubEvents = {
     upgrade: undefined;
     verifyHumanity: undefined;
     deleteChat: MultiUserChat;
+    deleteCommunityMobile: CommunitySummary;
     deleteGroup: {
         kind: "delete";
         chatId: MultiUserChatIdentifier;
@@ -199,4 +200,5 @@ export type PubSubEvents = {
     showThreads: undefined;
     openThread: { chat: ChatSummary; msg: EventWrapper<Message> };
     groupMembers: { chat: MultiUserChat; view: "members" | "invite" | "lapsed" | "blocked" };
+    showUserGroups: undefined;
 };

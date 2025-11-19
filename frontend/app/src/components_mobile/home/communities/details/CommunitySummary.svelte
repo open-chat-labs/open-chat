@@ -18,6 +18,7 @@
         allUsersStore,
         defaultChatRules,
         publish,
+        ROLE_NONE,
         ROLE_OWNER,
         selectedCommunityMembersStore,
         selectedCommunityRulesStore,
@@ -26,7 +27,9 @@
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import BellOff from "svelte-material-icons/BellOff.svelte";
+    import Delete from "svelte-material-icons/DeleteForeverOutline.svelte";
     import NewChannel from "svelte-material-icons/FormatListGroupPlus.svelte";
+    import Exit from "svelte-material-icons/Logout.svelte";
     import Pound from "svelte-material-icons/Pound.svelte";
     import Share from "svelte-material-icons/ShareVariantOutline.svelte";
     import Edit from "svelte-material-icons/SquareEditOutline.svelte";
@@ -40,6 +43,7 @@
     import { updateCommunityState } from "../createOrUpdate/community.svelte";
     import { CommunityState } from "./communityState.svelte";
     import PermissionsSummary from "./PermissionsSummary.svelte";
+    import UserGroupSummary from "./UserGroupSummary.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -50,7 +54,9 @@
     let { community }: Props = $props();
 
     let communityState = new CommunityState(client, community);
+    let busy = $state(false);
 
+    let canManageUserGroups = $derived(client.canManageUserGroups(community.id));
     let ownerMember = $derived(
         [...$selectedCommunityMembersStore.values()].find((m) => m.role === ROLE_OWNER),
     );
@@ -78,6 +84,13 @@
             publish("updateCommunity");
         }
     }
+
+    function leaveCommunity() {
+        publish("leaveCommunity", {
+            kind: "leave_community",
+            communityId: community.id,
+        });
+    }
 </script>
 
 <Container
@@ -87,7 +100,7 @@
     direction={"vertical"}>
     <Container gap={"xl"} direction={"vertical"} padding={["lg", "md", "md", "md"]}>
         <!-- this is the group card -->
-        <Container direction={"vertical"}>
+        <Container gap={"lg"} direction={"vertical"}>
             <Container
                 supplementalClass={"group_details_header"}
                 borderRadius={"md"}
@@ -157,13 +170,15 @@
                         <Translatable resourceKey={i18nKey("Share")} />
                     </BigButton>
                 </Container>
+            </Container>
 
-                <StatusCard mode="information" title={accessibilityTitle} body={accessibilityInfo}>
-                    {#snippet icon(color, size)}
-                        <AccountGroup {color} {size} />
-                    {/snippet}
-                </StatusCard>
+            <StatusCard mode="information" title={accessibilityTitle} body={accessibilityInfo}>
+                {#snippet icon(color, size)}
+                    <AccountGroup {color} {size} />
+                {/snippet}
+            </StatusCard>
 
+            <Container padding={["zero", "lg"]} direction="vertical">
                 <Body fontWeight={"light"}>
                     <Markdown inline={false} text={community.description} />
                 </Body>
@@ -180,6 +195,12 @@
 
         <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
             <BotsSummary collection={community} />
+        </Container>
+
+        <div class="separator"></div>
+
+        <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
+            <UserGroupSummary {community} />
         </Container>
 
         <div class="separator"></div>
@@ -245,13 +266,60 @@
                     <Translatable resourceKey={i18nKey("Add embedded channel")}></Translatable>
                 </Button>
             </Container>
+
+            {#if client.canDeleteCommunity(community.id)}
+                <div class="separator"></div>
+
+                <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
+                    <Container direction={"vertical"} gap={"sm"}>
+                        <Body fontWeight={"bold"}>
+                            <Translatable resourceKey={i18nKey("Delete community")}></Translatable>
+                        </Body>
+                        <Body colour={"textSecondary"}>
+                            <Translatable
+                                resourceKey={i18nKey(
+                                    "Keep in mind that by deleting a community all of its data is also removed, and this operation cannot be undone.",
+                                )}></Translatable>
+                        </Body>
+                    </Container>
+
+                    <Button
+                        danger
+                        loading={busy}
+                        onClick={() => publish("deleteCommunityMobile", community)}>
+                        {#snippet icon(color)}
+                            <Delete {color} />
+                        {/snippet}
+                        <Translatable resourceKey={i18nKey("Delete community")}></Translatable>
+                    </Button>
+                </Container>
+            {:else if community.membership.role !== ROLE_NONE}
+                <div class="separator"></div>
+
+                <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
+                    <Container direction={"vertical"} gap={"sm"}>
+                        <Body fontWeight={"bold"}>
+                            <Translatable resourceKey={i18nKey("Leave community")}></Translatable>
+                        </Body>
+                        <Body colour={"textSecondary"}>
+                            <Translatable
+                                resourceKey={i18nKey(
+                                    "Keep in mind that you may have to pass access gates to re-join later. A community must have at least one owner.",
+                                )}></Translatable>
+                        </Body>
+                    </Container>
+
+                    <Button loading={busy} onClick={leaveCommunity}>
+                        {#snippet icon(color)}
+                            <Exit {color} />
+                        {/snippet}
+                        <Translatable resourceKey={i18nKey("Leave community")}></Translatable>
+                    </Button>
+                </Container>
+            {/if}
         {/if}
 
-        <!-- <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
-            <DisappearingMessagesSummary eventsTTL={chat.eventsTTL} />
-        </Container>
-
-        {#if combinedRulesText.length > 0}
+        <!-- {#if combinedRulesText.length > 0}
             <div class="separator"></div>
 
             <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
@@ -263,16 +331,7 @@
             </Container>
         {/if}
 
-        <div class="separator"></div>
-
-        <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
-            <BodySmall colour={"textSecondary"} fontWeight={"bold"}>
-                <Translatable resourceKey={i18nKey("Group stats")}></Translatable>
-            </BodySmall>
-            <Stats showReported={false} stats={chat.metrics} />
-        </Container>
- -->
-        <!-- {#if client.canDeleteGroup(chat.id)}
+        {#if client.canDeleteGroup(chat.id)}
             <div class="separator"></div>
             <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
                 <Container direction={"vertical"} gap={"sm"}>

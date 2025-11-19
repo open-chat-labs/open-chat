@@ -2,60 +2,49 @@
     import { toastStore } from "@src/stores/toast";
     import { Body, Button, ColourVars, Container, H2, Input } from "component-lib";
     import {
-        chatListScopeStore,
+        i18nKey,
         OpenChat,
         publish,
-        routeForChatIdentifier,
         routeForScope,
-        type MultiUserChat,
+        type CommunitySummary,
     } from "openchat-client";
     import page from "page";
     import { getContext } from "svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import Delete from "svelte-material-icons/DeleteForeverOutline.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
-    import MulticolourText from "../../MulticolourText.svelte";
-    import Translatable from "../../Translatable.svelte";
-    import SlidingPageContent from "../SlidingPageContent.svelte";
+    import MulticolourText from "../../../MulticolourText.svelte";
+    import Translatable from "../../../Translatable.svelte";
+    import SlidingPageContent from "../../SlidingPageContent.svelte";
 
     const client = getContext<OpenChat>("client");
 
     interface Props {
-        chat: MultiUserChat;
+        community: CommunitySummary;
     }
 
-    let { chat }: Props = $props();
+    let { community }: Props = $props();
 
-    let chatName = $state<string>();
+    let communityName = $state<string>();
     let deleting = $state(false);
 
-    function deleteChat() {
+    function deleteCommunity() {
         deleting = true;
-        if (chat.id.kind === "channel") {
-            page(`/community/${chat.id.communityId}`);
-        } else {
-            page(routeForScope($chatListScopeStore));
-        }
+        page(routeForScope(client.getDefaultScope()));
         client
-            .deleteGroup(chat.id)
+            .deleteCommunity(community.id)
             .then((success) => {
-                if (success) {
-                    toastStore.showSuccessToast(
-                        i18nKey("deleteGroupSuccess", undefined, chat.level),
-                    );
-                    publish("closeModalStack");
+                if (!success) {
+                    toastStore.showFailureToast(i18nKey("communities.errors.deleteFailed"));
+                    page(`/community/${community.id.communityId}`);
                 } else {
-                    toastStore.showFailureToast(
-                        i18nKey("deleteGroupFailure", undefined, chat.level, true),
-                    );
-                    page(routeForChatIdentifier($chatListScopeStore.kind, chat.id));
+                    publish("closeModalStack");
                 }
             })
             .finally(() => (deleting = false));
     }
 </script>
 
-<SlidingPageContent title={i18nKey("Delete a chat")} subtitle={i18nKey(chat.name)}>
+<SlidingPageContent title={i18nKey("Delete a chat")} subtitle={i18nKey(community.name)}>
     <Container direction={"vertical"} gap={"xxl"} padding={["xxl", "lg"]}>
         <Container padding={["zero", "lg"]} gap={"sm"} direction={"vertical"}>
             <Delete color={ColourVars.primary} size={"7rem"} />
@@ -67,11 +56,11 @@
                             colour: "textPrimary",
                         },
                         {
-                            text: i18nKey(chat.name),
+                            text: i18nKey(community.name),
                             colour: "primary",
                         },
                         {
-                            text: i18nKey(" chat"),
+                            text: i18nKey(" community"),
                             colour: "textPrimary",
                         },
                     ]}></MulticolourText>
@@ -79,16 +68,16 @@
             <Body colour={"textSecondary"}>
                 <Translatable
                     resourceKey={i18nKey(
-                        "Do you definitely want to delete this chat? All of your chat history will be lost, and this cannot be undone.",
+                        "Do you definitely want to delete this community? All of your history will be lost, and this cannot be undone.",
                     )} />
             </Body>
         </Container>
 
         <Container>
             <Input
-                error={chatName !== chat.name}
-                bind:value={chatName}
-                placeholder={"Type in chat name..."}
+                error={communityName !== community.name}
+                bind:value={communityName}
+                placeholder={"Type in community name..."}
                 minlength={0}
                 maxlength={200}
                 countdown={false}>
@@ -104,9 +93,9 @@
         <Container direction={"vertical"} gap={"lg"}>
             <Button
                 loading={deleting}
-                disabled={chatName !== chat.name}
+                disabled={communityName !== community.name}
                 danger
-                onClick={deleteChat}>
+                onClick={deleteCommunity}>
                 <Translatable resourceKey={i18nKey("Delete")} />
                 {#snippet icon(color)}
                     <Delete {color} />

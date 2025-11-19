@@ -33,11 +33,12 @@
     import CommunityInfo from "./communities/createOrUpdate/CommunityInfo.svelte";
     import CommunityPermissions from "./communities/createOrUpdate/Permissions.svelte";
     import CommunitySummaryComponent from "./communities/details/CommunitySummary.svelte";
+    import ConfirmDeleteCommunity from "./communities/details/ConfirmDelete.svelte";
     import AddGroupMembers from "./createOrUpdateGroup/AddGroupMembers.svelte";
     import GeneralSetup from "./createOrUpdateGroup/GeneralSetup.svelte";
     import GroupInfo from "./createOrUpdateGroup/GroupInfo.svelte";
     import GroupPermissions from "./createOrUpdateGroup/Permissions.svelte";
-    import ConfirmDelete from "./groupdetails/ConfirmDelete.svelte";
+    import ConfirmDeleteChat from "./groupdetails/ConfirmDelete.svelte";
     import Convert from "./groupdetails/Convert.svelte";
     import Converted from "./groupdetails/Converted.svelte";
     import DirectChatDetails from "./groupdetails/DirectChatDetails.svelte";
@@ -81,6 +82,7 @@
     type SlidingModalType =
         | { kind: "community_details"; community: CommunitySummary }
         | { kind: "delete_chat"; chat: MultiUserChat }
+        | { kind: "delete_community"; community: CommunitySummary }
         | { kind: "converted_to_community"; name: string; channelId: ChannelIdentifier }
         | { kind: "convert_to_community"; chat: GroupChatSummary }
         | { kind: "open_thread"; chat: ChatSummary; msg: EventWrapper<Message> }
@@ -152,6 +154,9 @@
                 }
             }),
             subscribe("deleteChat", (chat) => push({ kind: "delete_chat", chat })),
+            subscribe("deleteCommunityMobile", (community) =>
+                push({ kind: "delete_community", community }),
+            ),
             subscribe("convertedGroupToCommunity", ({ name, channelId }) =>
                 push({ kind: "converted_to_community", name, channelId }),
             ),
@@ -382,7 +387,9 @@
         {:else if page.kind === "converted_to_community"}
             <Converted name={page.name} channelId={page.channelId} />
         {:else if page.kind === "delete_chat"}
-            <ConfirmDelete chat={page.chat} />
+            <ConfirmDeleteChat chat={page.chat} />
+        {:else if page.kind === "delete_community"}
+            <ConfirmDeleteCommunity community={page.community} />
         {:else if page.kind === "group_members"}
             <MemberManagement chat={page.chat} view={page.view} />
         {:else if page.kind === "community_details"}
