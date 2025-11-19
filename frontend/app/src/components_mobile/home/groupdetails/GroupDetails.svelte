@@ -286,13 +286,13 @@
         <div class="separator"></div>
 
         <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
-            <MembersSummary {chat} />
+            <MembersSummary collection={chat} />
         </Container>
 
         <div class="separator"></div>
 
         <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
-            <BotsSummary {chat} />
+            <BotsSummary collection={chat} />
         </Container>
 
         <div class="separator"></div>

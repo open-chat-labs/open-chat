@@ -4,10 +4,11 @@ import {
     compareRoles,
     publish,
     roleAsText,
+    selectedChatBotsStore,
     selectedChatMembersStore,
+    selectedChatWebhooksStore,
+    selectedCommunityBotsStore,
     selectedCommunityMembersStore,
-    type ChatIdentifier,
-    type CommunityIdentifier,
     type CommunitySummary,
     type EnhancedExternalBot,
     type ExternalBot,
@@ -20,10 +21,13 @@ import {
     type ReadonlyMap,
     type ReadonlySet,
     type UserSummary,
+    type WebhookDetails,
 } from "openchat-client";
 
 export class MemberManagement {
     #members = $state<ReadonlyMap<string, Member>>(new Map());
+    #bots = $state<ReadonlyMap<string, GrantedBotPermissions>>(new Map());
+    #webhooks = $state<ReadonlyMap<string, WebhookDetails>>(new Map());
 
     destroy: () => void;
 
@@ -35,11 +39,34 @@ export class MemberManagement {
             collection.kind === "community"
                 ? selectedCommunityMembersStore
                 : selectedChatMembersStore;
-        this.destroy = membersStore.subscribe((m) => (this.#members = m));
+
+        const botsStore =
+            collection.kind === "community" ? selectedCommunityBotsStore : selectedChatBotsStore;
+
+        const unsubs = [
+            membersStore.subscribe((m) => (this.#members = m)),
+            botsStore.subscribe((b) => (this.#bots = b)),
+        ];
+
+        if (collection.kind !== "community") {
+            unsubs.push(selectedChatWebhooksStore.subscribe((h) => (this.#webhooks = h)));
+        }
+
+        this.destroy = () => {
+            unsubs.forEach((u) => u());
+        };
     }
 
     get members() {
         return this.#members;
+    }
+
+    get bots() {
+        return this.#bots;
+    }
+
+    get webhooks() {
+        return this.#webhooks;
     }
 
     getUsersFromSet(userLookup: Map<string, UserSummary>, ids: ReadonlySet<string>) {
@@ -165,8 +192,8 @@ export class MemberManagement {
         return this.client.canDemote(this.collection.id, from, to);
     }
 
-    canManageBots(id: ChatIdentifier | CommunityIdentifier) {
-        return this.client.canManageBots(id);
+    canManageBots() {
+        return this.client.canManageBots(this.collection.id);
     }
 
     onRemoveMember(userId: string): void {

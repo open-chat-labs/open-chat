@@ -4,9 +4,7 @@
     import {
         botState,
         OpenChat,
-        publish,
-        selectedChatBotsStore,
-        selectedChatWebhooksStore,
+        type CommunitySummary,
         type EnhancedExternalBot,
         type MultiUserChat,
         type WebhookDetails,
@@ -21,28 +19,30 @@
     const TO_SHOW = 5;
 
     interface Props {
-        chat: MultiUserChat;
+        collection: MultiUserChat | CommunitySummary;
     }
 
-    let { chat }: Props = $props();
+    let { collection }: Props = $props();
 
     type EnhancedWebhook = WebhookDetails & { kind: "webhook" };
     type Item = EnhancedExternalBot | EnhancedWebhook;
 
-    let membersState = new MemberManagement(getContext<OpenChat>("client"), chat);
-    let canManageBots = $derived(membersState.canManageBots(chat.id));
-    let botCount = $derived($selectedChatBotsStore.size + $selectedChatWebhooksStore.size);
+    let title = $derived(collection.kind === "community" ? "Bots" : "Bots & Webhooks");
+    let membersState = new MemberManagement(getContext<OpenChat>("client"), collection);
+    let canManageBots = $derived(membersState.canManageBots());
+    let botCount = $derived(membersState.bots.size + membersState.webhooks.size);
     let more = $derived(botCount - TO_SHOW);
     let installedBots = $derived(
-        membersState.hydrateBots($selectedChatBotsStore, botState.externalBots),
+        membersState.hydrateBots(membersState.bots, botState.externalBots),
     );
     let installedHooks = $derived<EnhancedWebhook[]>(
-        [...$selectedChatWebhooksStore.values()].map((h) => ({ ...h, kind: "webhook" })),
+        [...membersState.webhooks.values()].map((h) => ({ ...h, kind: "webhook" })),
     );
     let items = $derived<Item[]>([...installedBots, ...installedHooks]);
 
     function showAllBots() {
-        publish("groupMembers", { chat, view: "members" });
+        // TODO This is probably wrong
+        membersState.showAllMembers();
     }
 
     function addBots() {}
@@ -51,7 +51,7 @@
 <Container gap={"xl"} direction={"vertical"}>
     <Container>
         <Body colour={"textSecondary"} fontWeight={"bold"}>
-            <Translatable resourceKey={i18nKey("Bots & Webhooks")}></Translatable>
+            <Translatable resourceKey={i18nKey(title)}></Translatable>
         </Body>
 
         {#if botCount > TO_SHOW}
@@ -71,13 +71,13 @@
     {#each items as item}
         {#if item.kind === "external_bot"}
             <BotMember
-                collection={chat}
+                {collection}
                 bot={item}
                 canManage={canManageBots}
                 searchTerm={""}
                 grantedPermissions={item.grantedPermissions} />
-        {:else if item.kind === "webhook"}
-            <WebhookMember {chat} webhook={item} searchTerm={""} />
+        {:else if item.kind === "webhook" && collection.kind !== "community"}
+            <WebhookMember chat={collection} webhook={item} searchTerm={""} />
         {/if}
     {/each}
 </Container>

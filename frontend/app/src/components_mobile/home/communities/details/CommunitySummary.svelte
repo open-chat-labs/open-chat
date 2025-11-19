@@ -28,6 +28,7 @@
     import Edit from "svelte-material-icons/SquareEditOutline.svelte";
     import Translatable from "../../../Translatable.svelte";
     import Markdown from "../../Markdown.svelte";
+    import BotsSummary from "../../membership/BotsSummary.svelte";
     import MembersSummary from "../../membership/MembersSummary.svelte";
     import { CommunityState } from "./communityState.svelte";
 
@@ -164,13 +165,13 @@
             <MembersSummary collection={community} />
         </Container>
 
-        <!-- <div class="separator"></div>
+        <div class="separator"></div>
 
         <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
-            <BotsSummary {chat} />
+            <BotsSummary collection={community} />
         </Container>
 
-        <div class="separator"></div>
+        <!-- <div class="separator"></div>
 
         <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
             <PermissionsSummary
