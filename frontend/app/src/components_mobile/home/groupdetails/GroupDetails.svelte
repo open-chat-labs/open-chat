@@ -43,13 +43,13 @@
     import Exit from "svelte-material-icons/Logout.svelte";
     import Video from "svelte-material-icons/VideoOutline.svelte";
     import Translatable from "../../Translatable.svelte";
+    import AccessGateSummary from "../AccessGateSummary.svelte";
     import ImportToCommunity from "../communities/Import.svelte";
     import { updateGroupState } from "../createOrUpdateGroup/group.svelte";
     import Markdown from "../Markdown.svelte";
     import BotsSummary from "../membership/BotsSummary.svelte";
     import MembersSummary from "../membership/MembersSummary.svelte";
     import Stats from "../Stats.svelte";
-    import AccessGateSummary from "./AccessGateSummary.svelte";
     import DisappearingMessagesSummary from "./DisappearingMessagesSummary.svelte";
     import PermissionsSummary from "./PermissionsSummary.svelte";
 
@@ -305,6 +305,8 @@
                 isChannel={chat.kind === "channel"}
                 embeddedContent={chat.kind === "channel" && chat.externalUrl !== undefined} />
         </Container>
+
+        <div class="separator"></div>
 
         <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
             <AccessGateSummary gateConfig={chat.gateConfig} />

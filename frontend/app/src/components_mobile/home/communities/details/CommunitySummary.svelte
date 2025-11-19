@@ -5,6 +5,7 @@
         BigButton,
         Body,
         BodySmall,
+        Button,
         ColourVars,
         Container,
         defaultBackgroundGradient,
@@ -15,22 +16,30 @@
     import type { CommunitySummary, OpenChat } from "openchat-client";
     import {
         allUsersStore,
+        defaultChatRules,
         publish,
         ROLE_OWNER,
         selectedCommunityMembersStore,
+        selectedCommunityRulesStore,
     } from "openchat-client";
     import { getContext } from "svelte";
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import BellOff from "svelte-material-icons/BellOff.svelte";
     import NewChannel from "svelte-material-icons/FormatListGroupPlus.svelte";
+    import Pound from "svelte-material-icons/Pound.svelte";
     import Share from "svelte-material-icons/ShareVariantOutline.svelte";
     import Edit from "svelte-material-icons/SquareEditOutline.svelte";
     import Translatable from "../../../Translatable.svelte";
+    import AccessGateSummary from "../../AccessGateSummary.svelte";
+    import { updateGroupState } from "../../createOrUpdateGroup/group.svelte";
     import Markdown from "../../Markdown.svelte";
     import BotsSummary from "../../membership/BotsSummary.svelte";
     import MembersSummary from "../../membership/MembersSummary.svelte";
+    import Stats from "../../Stats.svelte";
+    import { updateCommunityState } from "../createOrUpdate/community.svelte";
     import { CommunityState } from "./communityState.svelte";
+    import PermissionsSummary from "./PermissionsSummary.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -54,19 +63,21 @@
             : "This is a private community. Only people who are invited will be able to join this community.",
     );
     let canEdit = $derived(communityState.canEditCommunity());
-    // let canEdit = $derived(client.canEditGroupDetails(chat.id));
-    // let rules = $derived($selectedChatRulesStore ?? defaultChatRules(chat.level));
-    // let avatarUrl = $derived(client.groupAvatarUrl(chat, $selectedCommunitySummaryStore));
-    // let busy = $state(false);
-    // let canSend = $derived(client.canSendMessage(chat.id, "any"));
-    // let combinedRulesText = $derived(
-    //     canSend
-    //         ? client.combineRulesText($selectedChatRulesStore, $selectedCommunityRulesStore)
-    //         : "",
-    // );
-    //
-    function newChannel() {}
-    function editCommunity() {}
+    let rules = $derived($selectedCommunityRulesStore ?? defaultChatRules("community"));
+
+    function newChannel(embedded: boolean) {
+        if (canCreateChannel) {
+            updateGroupState.initialise(client.createCandidateGroup("channel", embedded));
+            publish("newChannel", embedded);
+        }
+    }
+
+    function editCommunity() {
+        if (canEdit) {
+            updateCommunityState.initialise(community, rules);
+            publish("updateCommunity");
+        }
+    }
 </script>
 
 <Container
@@ -91,7 +102,7 @@
                     {/snippet}
                 </IconButton>
                 {#if canCreateChannel}
-                    <IconButton onclick={newChannel} size={"md"} mode={"dark"}>
+                    <IconButton onclick={() => newChannel(false)} size={"md"} mode={"dark"}>
                         {#snippet icon(color)}
                             <NewChannel {color} />
                         {/snippet}
@@ -171,22 +182,72 @@
             <BotsSummary collection={community} />
         </Container>
 
-        <!-- <div class="separator"></div>
+        <div class="separator"></div>
 
         <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
-            <PermissionsSummary
-                permissions={chat.permissions}
-                isPublic={chat.public}
-                isCommunityPublic={$selectedCommunitySummaryStore?.public ?? true}
-                isChannel={chat.kind === "channel"}
-                embeddedContent={chat.kind === "channel" && chat.externalUrl !== undefined} />
+            <PermissionsSummary permissions={community.permissions} isPublic={community.public} />
         </Container>
 
         <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
-            <AccessGateSummary gateConfig={chat.gateConfig} />
+            <AccessGateSummary gateConfig={community.gateConfig} />
         </Container>
 
+        <div class="separator"></div>
+
         <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
+            <BodySmall colour={"textSecondary"} fontWeight={"bold"}>
+                <Translatable resourceKey={i18nKey("Community stats")}></Translatable>
+            </BodySmall>
+            <Stats showReported={false} stats={community.metrics} />
+        </Container>
+
+        <div class="separator"></div>
+
+        {#if canCreateChannel}
+            <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
+                <Container direction={"vertical"} gap={"sm"}>
+                    <Body fontWeight={"bold"}>
+                        <Translatable resourceKey={i18nKey("Add new channel")}></Translatable>
+                    </Body>
+                    <Body colour={"textSecondary"}>
+                        <Translatable resourceKey={i18nKey("Add a new channel to this community")}
+                        ></Translatable>
+                    </Body>
+                </Container>
+
+                <Button onClick={() => newChannel(false)}>
+                    {#snippet icon(color)}
+                        <NewChannel {color} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("Add channel")}></Translatable>
+                </Button>
+            </Container>
+
+            <div class="separator"></div>
+
+            <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
+                <Container direction={"vertical"} gap={"sm"}>
+                    <Body fontWeight={"bold"}>
+                        <Translatable resourceKey={i18nKey("Add embedded channel")}></Translatable>
+                    </Body>
+                    <Body colour={"textSecondary"}>
+                        <Translatable
+                            resourceKey={i18nKey(
+                                "Add an embedded channel to display third party content to this community.",
+                            )}></Translatable>
+                    </Body>
+                </Container>
+
+                <Button onClick={() => newChannel(true)}>
+                    {#snippet icon(color)}
+                        <Pound {color} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("Add embedded channel")}></Translatable>
+                </Button>
+            </Container>
+        {/if}
+
+        <!-- <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
             <DisappearingMessagesSummary eventsTTL={chat.eventsTTL} />
         </Container>
 

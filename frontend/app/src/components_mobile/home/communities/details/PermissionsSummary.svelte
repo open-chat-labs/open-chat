@@ -1,16 +1,16 @@
 <script lang="ts">
+    import { i18nKey } from "@src/i18n/i18n";
+    import { Body, Container, type SizeMode } from "component-lib";
     import {
-        type CommunityPermissionRole,
-        type CommunityPermissions,
-        type ResourceKey,
         communityRoles,
         ROLE_ADMIN,
         ROLE_MEMBER,
         ROLE_OWNER,
+        type CommunityPermissionRole,
+        type CommunityPermissions,
+        type ResourceKey,
     } from "openchat-client";
-    import Check from "svelte-material-icons/Check.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "../../../Translatable.svelte";
 
     interface Props {
         permissions: CommunityPermissions;
@@ -44,43 +44,32 @@
         );
     }
     let partitioned = $derived(partitionPermissions(permissions));
+    const width: SizeMode = { kind: "hug" };
 </script>
 
-<ul>
+<Container gap={"xl"} direction={"vertical"}>
+    <Body colour={"textSecondary"} fontWeight={"bold"}>
+        <Translatable resourceKey={i18nKey("Permissions")}></Translatable>
+    </Body>
+
     {#each communityRoles as role}
         {#if partitioned[role].size > 0}
-            <li class="section">
-                <div class="who-can"><Translatable resourceKey={roleLabels[role]} /></div>
-                <ul>
-                    {#each [...partitioned[role]] as perm}
-                        <li class="permission">
-                            <Check size={"1em"} color={"var(--success)"} />
-                            <Translatable resourceKey={i18nKey(perm)} />
-                        </li>
-                    {/each}
-                </ul>
-            </li>
+            {@const perms = [...partitioned[role]]}
+            <Container {width} wrap gap={"sm"}>
+                <Body {width} colour={"textSecondary"}>
+                    <Translatable resourceKey={roleLabels[role]} />
+                </Body>
+                <Body {width} colour={"textSecondary"}>//</Body>
+                {#each perms as perm, i}
+                    {@const last = i === perms.length - 1}
+                    <Body {width}>
+                        <Translatable resourceKey={i18nKey(perm)} />
+                    </Body>
+                    {#if !last}
+                        <Body colour={"primary"} {width}>/</Body>
+                    {/if}
+                {/each}
+            </Container>
         {/if}
     {/each}
-</ul>
-
-<style lang="scss">
-    ul {
-        list-style: none;
-    }
-
-    .section {
-        margin-bottom: $sp4;
-    }
-
-    .who-can {
-        @include font(bold, normal, fs-110);
-    }
-
-    .permission {
-        display: flex;
-        align-items: center;
-        gap: $sp3;
-        @include font(light, normal, fs-90);
-    }
-</style>
+</Container>
