@@ -34,7 +34,6 @@
     import ChannelOrCommunityInvite from "./ChannelOrCommunityInvite.svelte";
     import ChannelOrCommunityMembers from "./ChannelOrCommunityMembers.svelte";
     import ChannelOrCommunitySummary from "./ChannelOrCommunitySummary.svelte";
-    import CommunityDetails from "./communities/details/CommunitySummary.svelte";
     import InviteUsers from "./groupdetails/InviteUsers.svelte";
     import Members from "./groupdetails/Members.svelte";
     import PinnedMessages from "./pinned/PinnedMessages.svelte";
@@ -445,17 +444,6 @@
         <ProposalGroupFilters
             selectedChat={$selectedChatSummaryStore}
             onClose={client.popRightPanelHistory} />
-    {:else if $lastRightPanelState.kind === "community_details" && $selectedCommunitySummaryStore !== undefined}
-        {#if multiUserChat !== undefined && multiUserChat.kind === "channel"}
-            <ChannelOrCommunitySummary
-                channel={multiUserChat}
-                community={$selectedCommunitySummaryStore}
-                memberCount={$selectedChatMembersStore.size}
-                selectedTab="community"
-                onClose={client.popRightPanelHistory} />
-        {:else}
-            <CommunityDetails />
-        {/if}
     {/if}
 </section>
 

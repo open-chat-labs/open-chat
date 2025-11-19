@@ -4,11 +4,12 @@
     import {
         allUsersStore,
         OpenChat,
-        type CommunitySummary,
+        publish,
+        selectedChatMembersStore,
         type FullMember,
         type MultiUserChat,
     } from "openchat-client";
-    import { getContext, onDestroy } from "svelte";
+    import { getContext } from "svelte";
     import AccountPlus from "svelte-material-icons/AccountPlusOutline.svelte";
     import Translatable from "../../Translatable.svelte";
     import MemberList from "./MemberList.svelte";
@@ -17,23 +18,28 @@
     const TO_SHOW = 5;
 
     interface Props {
-        collection: MultiUserChat | CommunitySummary;
+        chat: MultiUserChat;
     }
 
-    let { collection }: Props = $props();
+    let { chat }: Props = $props();
 
-    let membersState = new MemberManagement(getContext<OpenChat>("client"), collection);
-    let more = $derived(membersState.members.size - TO_SHOW);
+    let membersState = new MemberManagement(getContext<OpenChat>("client"), chat);
+    let memberCount = $derived($selectedChatMembersStore.size);
+    let more = $derived(memberCount - TO_SHOW);
     let subset = $derived<FullMember[]>(
         membersState.getKnownUsers(
             $allUsersStore,
-            [...membersState.members.values()].slice(0, TO_SHOW),
+            [...$selectedChatMembersStore.values()].slice(0, TO_SHOW),
         ),
     );
 
-    onDestroy(() => {
-        membersState.destroy();
-    });
+    function showAllMembers() {
+        publish("groupMembers", { chat, view: "members" });
+    }
+
+    function inviteUsers() {
+        publish("groupMembers", { chat, view: "invite" });
+    }
 
     function share() {}
 </script>
@@ -44,17 +50,14 @@
             <Translatable resourceKey={i18nKey("Members")}></Translatable>
         </Body>
 
-        {#if membersState.members.size > TO_SHOW}
-            <CommonButton
-                onClick={() => membersState.showAllMembers()}
-                size={"small_text"}
-                mode={"active"}>
+        {#if memberCount > TO_SHOW}
+            <CommonButton onClick={showAllMembers} size={"small_text"} mode={"active"}>
                 <Translatable resourceKey={i18nKey(`View all (+${more})`)}></Translatable>
             </CommonButton>
         {/if}
     </Container>
 
-    <ListAction onClick={() => membersState.inviteUsers()}>
+    <ListAction onClick={inviteUsers}>
         {#snippet icon(color)}
             <AccountPlus {color} />
         {/snippet}

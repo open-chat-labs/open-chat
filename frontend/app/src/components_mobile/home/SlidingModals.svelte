@@ -1,10 +1,12 @@
 <script lang="ts">
     import {
         selectedChatMembersStore,
+        selectedCommunitySummaryStore,
         subscribe,
         type ChannelIdentifier,
         type ChatSummary,
         type ChitEarnedGate,
+        type CommunitySummary,
         type DirectChatSummary,
         type EventWrapper,
         type GroupChatSummary,
@@ -30,6 +32,7 @@
     import Channels from "./communities/createOrUpdate/Channels.svelte";
     import CommunityInfo from "./communities/createOrUpdate/CommunityInfo.svelte";
     import CommunityPermissions from "./communities/createOrUpdate/Permissions.svelte";
+    import CommunitySummaryComponent from "./communities/details/CommunitySummary.svelte";
     import AddGroupMembers from "./createOrUpdateGroup/AddGroupMembers.svelte";
     import GeneralSetup from "./createOrUpdateGroup/GeneralSetup.svelte";
     import GroupInfo from "./createOrUpdateGroup/GroupInfo.svelte";
@@ -76,6 +79,7 @@
      */
 
     type SlidingModalType =
+        | { kind: "community_details"; community: CommunitySummary }
         | { kind: "delete_chat"; chat: MultiUserChat }
         | { kind: "converted_to_community"; name: string; channelId: ChannelIdentifier }
         | { kind: "convert_to_community"; chat: GroupChatSummary }
@@ -142,6 +146,11 @@
 
     onMount(() => {
         const unsubs = [
+            subscribe("communityDetails", () => {
+                if ($selectedCommunitySummaryStore !== undefined) {
+                    push({ kind: "community_details", community: $selectedCommunitySummaryStore });
+                }
+            }),
             subscribe("deleteChat", (chat) => push({ kind: "delete_chat", chat })),
             subscribe("convertedGroupToCommunity", ({ name, channelId }) =>
                 push({ kind: "converted_to_community", name, channelId }),
@@ -376,6 +385,8 @@
             <ConfirmDelete chat={page.chat} />
         {:else if page.kind === "group_members"}
             <MemberManagement chat={page.chat} view={page.view} />
+        {:else if page.kind === "community_details"}
+            <CommunitySummaryComponent community={page.community} />
         {/if}
     </SlidingPage>
 {/each}

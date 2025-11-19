@@ -183,7 +183,6 @@
             subscribe("upgrade", upgrade),
             subscribe("verifyHumanity", verifyHumanity),
             subscribe("deleteCommunity", onTriggerConfirm),
-            subscribe("communityDetails", communityDetails),
             subscribe("editCommunity", editCommunity),
             subscribe("leaveCommunity", onTriggerConfirm),
             subscribe("makeProposal", showMakeProposalModal),
@@ -510,14 +509,6 @@
 
     function showProfile() {
         setRightPanelHistory([{ kind: "user_profile" }]);
-    }
-
-    function communityDetails(_: CommunitySummary) {
-        // what do we do here if the community is not selected
-        // do we select it?
-        if ($chatListScopeStore.kind === "community") {
-            setRightPanelHistory([{ kind: "community_details" }]);
-        }
     }
 
     function showProposalFilters() {
