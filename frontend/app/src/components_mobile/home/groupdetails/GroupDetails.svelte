@@ -37,10 +37,10 @@
     import BellOff from "svelte-material-icons/BellOffOutline.svelte";
     import Bell from "svelte-material-icons/BellOutline.svelte";
     import Delete from "svelte-material-icons/DeleteForeverOutline.svelte";
-    import EditIcon from "svelte-material-icons/FileDocumentEditOutline.svelte";
     import HeartMinus from "svelte-material-icons/HeartMinusOutline.svelte";
     import HeartPlus from "svelte-material-icons/HeartPlusOutline.svelte";
     import Exit from "svelte-material-icons/Logout.svelte";
+    import Share from "svelte-material-icons/ShareVariantOutline.svelte";
     import Edit from "svelte-material-icons/SquareEditOutline.svelte";
     import Video from "svelte-material-icons/VideoOutline.svelte";
     import Translatable from "../../Translatable.svelte";
@@ -153,6 +153,10 @@
             });
             publish("updateGroup");
         }
+    }
+
+    function shareGroup() {
+        console.log("Share group - to do");
     }
 
     function leaveGroup() {
@@ -270,14 +274,12 @@
                         {/snippet}
                         <Translatable resourceKey={i18nKey(muted ? "Unmute chat" : "Mute chat")} />
                     </BigButton>
-                    {#if canEdit}
-                        <BigButton onClick={editGroup}>
-                            {#snippet icon(color, size)}
-                                <EditIcon {color} {size} />
-                            {/snippet}
-                            <Translatable resourceKey={i18nKey("Edit group")} />
-                        </BigButton>
-                    {/if}
+                    <BigButton onClick={shareGroup}>
+                        {#snippet icon(color, size)}
+                            <Share {color} {size} />
+                        {/snippet}
+                        <Translatable resourceKey={i18nKey("Share chat")} />
+                    </BigButton>
                 </Container>
 
                 <ReadMore>
