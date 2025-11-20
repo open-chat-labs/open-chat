@@ -24,6 +24,7 @@ fn c2c_notifications_index_impl(args: Args, state: &mut RuntimeState) -> Respons
                 }
                 NotificationsIndexEvent::SubscriptionRemoved(s) => {
                     state.data.web_push_subscriptions.remove(s.user_id, &s.p256dh_key);
+                    state.data.web_push_subscriptions.remove(s.user_id, &s.endpoint);
                 }
                 NotificationsIndexEvent::AllSubscriptionsRemoved(u) => {
                     state.data.web_push_subscriptions.remove_all(u);

@@ -42,5 +42,8 @@ pub struct SubscriptionAdded {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct SubscriptionRemoved {
     pub user_id: UserId,
+    #[serde(default)]
     pub p256dh_key: String,
+    #[serde(default)]
+    pub endpoint: String,
 }

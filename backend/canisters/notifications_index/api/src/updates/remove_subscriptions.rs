@@ -10,6 +10,7 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct UserSubscriptions {
     pub user_id: UserId,
+    pub endpoints: Vec<String>,
     pub p256dh_keys: Vec<String>,
 }
 

@@ -60,7 +60,7 @@ pub fn start_user_notifications_processor(
 fn register_metrics(
     to_process_sender: Sender<PushNotification>,
     to_push_sender: Sender<NotificationToPush>,
-    subscriptions_to_remove_sender: Sender<(UserId, String)>,
+    subscriptions_to_remove_sender: Sender<(UserId, (String, String))>,
 ) {
     let notifications_to_process_queue = PullingGauge::new(
         "notifications_to_process_queue",

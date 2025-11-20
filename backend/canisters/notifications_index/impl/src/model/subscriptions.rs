@@ -1,32 +1,33 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
+use std::collections::{HashMap, VecDeque};
 use types::{SubscriptionInfo, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct Subscriptions {
-    subscriptions: HashMap<UserId, Vec<SubscriptionInfo>>,
+    subscriptions: HashMap<UserId, VecDeque<SubscriptionInfo>>,
     total: u64,
 }
 
 impl Subscriptions {
     // Returns any subscriptions which were removed
-    pub fn push(&mut self, user_id: UserId, subscription: SubscriptionInfo) -> Vec<String> {
+    pub fn push(&mut self, user_id: UserId, subscription: SubscriptionInfo) -> Vec<SubscriptionInfo> {
         let mut removed = Vec::new();
         match self.subscriptions.entry(user_id) {
             Occupied(e) => {
                 let subscriptions = e.into_mut();
-                if subscriptions.contains(&subscription) {
+                if subscriptions.iter().any(|s| s.endpoint == subscription.endpoint) {
                     return removed;
                 }
-                if subscriptions.len() >= 10 {
-                    removed.extend(subscriptions.drain(..subscriptions.len() - 9).map(|s| s.keys.p256dh));
-                };
-                subscriptions.push(subscription);
+                while subscriptions.len() >= 10 {
+                    removed.push(subscriptions.pop_front().unwrap());
+                    self.total = self.total.saturating_sub(1);
+                }
+                subscriptions.push_back(subscription);
             }
             Vacant(e) => {
-                e.insert(vec![subscription]);
+                e.insert(VecDeque::from([subscription]));
             }
         }
 
@@ -40,29 +41,31 @@ impl Subscriptions {
         }
     }
 
-    pub fn remove(&mut self, user_id: UserId, p256dh_key: &str) -> bool {
+    pub fn remove(&mut self, user_id: UserId, endpoint: &str) -> Option<SubscriptionInfo> {
+        let mut removed = None;
         if let Occupied(mut e) = self.subscriptions.entry(user_id) {
             let subs = e.get_mut();
             if let Some(index) = subs
                 .iter()
                 .enumerate()
-                .find(|(_, s)| s.keys.p256dh.as_str() == p256dh_key)
+                .find(|(_, s)| s.endpoint.as_str() == endpoint || s.keys.p256dh.as_str() == endpoint)
                 .map(|(i, _)| i)
             {
-                subs.remove(index);
+                removed = subs.remove(index);
                 if subs.is_empty() {
                     e.remove();
                 }
                 self.total = self.total.saturating_sub(1);
-                return true;
             }
         }
-        false
+        removed
     }
 
-    pub fn exists(&self, user_id: &UserId, p256dh_key: String) -> bool {
+    pub fn exists(&self, user_id: &UserId, endpoint: &str) -> bool {
         match self.subscriptions.get(user_id) {
-            Some(subscriptions) => subscriptions.iter().any(|s| s.keys.p256dh == p256dh_key),
+            Some(subscriptions) => subscriptions
+                .iter()
+                .any(|s| s.endpoint.as_str() == endpoint || s.keys.p256dh.as_str() == endpoint),
             None => false,
         }
     }
@@ -71,7 +74,7 @@ impl Subscriptions {
         self.total
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (&UserId, &Vec<SubscriptionInfo>)> {
+    pub fn iter(&self) -> impl Iterator<Item = (&UserId, &VecDeque<SubscriptionInfo>)> {
         self.subscriptions.iter()
     }
 }
