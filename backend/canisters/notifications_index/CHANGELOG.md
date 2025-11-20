@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Switch some endpoints over to using common response types ([#8450](https://github.com/open-chat-labs/open-chat/pull/8450))
 - Use the endpoint as unique identifier for notification subscriptions ([#8670](https://github.com/open-chat-labs/open-chat/pull/8670))
 - Expose partial notification subscription details to aid with debugging ([#8671](https://github.com/open-chat-labs/open-chat/pull/8671))
+- Store date added alongside each notification subscription ([#8672](https://github.com/open-chat-labs/open-chat/pull/8672))
 
 ## [[2.0.1858](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1858-notifications_index)] - 2025-08-05
 
