@@ -55,7 +55,6 @@
 
     let communityState = new CommunityState(client, community);
     let busy = $state(false);
-
     let ownerMember = $derived(
         [...$selectedCommunityMembersStore.values()].find((m) => m.role === ROLE_OWNER),
     );
@@ -212,6 +211,18 @@
             <AccessGateSummary gateConfig={community.gateConfig} />
         </Container>
 
+        {#if rules.enabled}
+            <div class="separator"></div>
+
+            <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
+                <Body colour={"textSecondary"} fontWeight={"bold"}>
+                    <Translatable resourceKey={i18nKey("Community rules")}></Translatable>
+                </Body>
+
+                <Body><Markdown inline={false} text={rules.text} /></Body>
+            </Container>
+        {/if}
+
         <div class="separator"></div>
 
         <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
@@ -329,52 +340,7 @@
                 <Body><Markdown inline={false} text={combinedRulesText} /></Body>
             </Container>
         {/if}
-
-        {#if client.canDeleteGroup(chat.id)}
-            <div class="separator"></div>
-            <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
-                <Container direction={"vertical"} gap={"sm"}>
-                    <Body fontWeight={"bold"}>
-                        <Translatable resourceKey={i18nKey("Delete group")}></Translatable>
-                    </Body>
-                    <Body colour={"textSecondary"}>
-                        <Translatable
-                            resourceKey={i18nKey(
-                                "Keep in mind that by deleting a group all of its data is also removed, and this operation cannot be undone.",
-                            )}></Translatable>
-                    </Body>
-                </Container>
-
-                <Button danger loading={busy} onClick={() => publish("deleteChat", chat)}>
-                    {#snippet icon(color)}
-                        <Delete {color} />
-                    {/snippet}
-                    <Translatable resourceKey={i18nKey("Delete group")}></Translatable>
-                </Button>
-            </Container>
-        {:else if client.canLeaveGroup(chat.id)}
-            <div class="separator"></div>
-            <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
-                <Container direction={"vertical"} gap={"sm"}>
-                    <Body fontWeight={"bold"}>
-                        <Translatable resourceKey={i18nKey("Leave group")}></Translatable>
-                    </Body>
-                    <Body colour={"textSecondary"}>
-                        <Translatable
-                            resourceKey={i18nKey(
-                                "Keep in mind that you may have to pass access gates to re-join later. A group must have at least one owner.",
-                            )}></Translatable>
-                    </Body>
-                </Container>
-
-                <Button loading={busy} onClick={leaveGroup}>
-                    {#snippet icon(color)}
-                        <Exit {color} />
-                    {/snippet}
-                    <Translatable resourceKey={i18nKey("Leave group")}></Translatable>
-                </Button>
-            </Container>
-        {/if} -->
+         -->
     </Container>
 </Container>
 
