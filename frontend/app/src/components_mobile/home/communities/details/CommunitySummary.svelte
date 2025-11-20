@@ -200,7 +200,7 @@
         <div class="separator"></div>
 
         <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
-            <UserGroupSummary {community} />
+            <UserGroupSummary {communityState} {community} />
         </Container>
 
         <div class="separator"></div>

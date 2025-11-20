@@ -201,4 +201,5 @@ export type PubSubEvents = {
     openThread: { chat: ChatSummary; msg: EventWrapper<Message> };
     groupMembers: { chat: MultiUserChat; view: "members" | "invite" | "lapsed" | "blocked" };
     showUserGroups: undefined;
+    showUserGroup: number;
 };
