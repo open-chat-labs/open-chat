@@ -13,6 +13,7 @@
         defaultBackgroundGradient,
         H2,
         IconButton,
+        ReadMore,
     } from "component-lib";
     import type { CommunityMap, CommunitySummary, MultiUserChat, OpenChat } from "openchat-client";
     import {
@@ -39,8 +40,8 @@
     import EditIcon from "svelte-material-icons/FileDocumentEditOutline.svelte";
     import HeartMinus from "svelte-material-icons/HeartMinusOutline.svelte";
     import HeartPlus from "svelte-material-icons/HeartPlusOutline.svelte";
-    import Link from "svelte-material-icons/LinkVariant.svelte";
     import Exit from "svelte-material-icons/Logout.svelte";
+    import Edit from "svelte-material-icons/SquareEditOutline.svelte";
     import Video from "svelte-material-icons/VideoOutline.svelte";
     import Translatable from "../../Translatable.svelte";
     import AccessGateSummary from "../AccessGateSummary.svelte";
@@ -62,6 +63,7 @@
 
     let { chat }: Props = $props();
 
+    let muted = $derived($selectedChatSummaryStore?.membership.notificationsMuted);
     let importToCommunities: CommunityMap<CommunitySummary> | undefined = $state();
     let canImportToCommunity = $derived(client.canImportToCommunity(chat.id));
     let canConvert = $derived(
@@ -203,19 +205,19 @@
                         <ArrowLeft {color} />
                     {/snippet}
                 </IconButton>
-                <IconButton onclick={toggleMuteNotifications} size={"md"} mode={"dark"}>
+                <IconButton onclick={startVideoCall} size={"md"} mode={"dark"}>
                     {#snippet icon(color)}
-                        {#if $selectedChatSummaryStore?.membership.notificationsMuted}
-                            <Bell {color} />
-                        {:else}
-                            <BellOff {color} />
-                        {/if}
+                        <Video {color} />
                     {/snippet}
+                    <Translatable
+                        resourceKey={i18nKey(
+                            videoCallInProgress ? "Join video call" : "Start video call",
+                        )} />
                 </IconButton>
                 {#if canEdit}
-                    <IconButton onclick={() => publish("copyUrl")} size={"md"} mode={"dark"}>
+                    <IconButton onclick={editGroup} size={"md"} mode={"dark"}>
                         {#snippet icon(color)}
-                            <Link {color} />
+                            <Edit {color} />
                         {/snippet}
                     </IconButton>
                 {/if}
@@ -258,14 +260,15 @@
                             <Translatable resourceKey={i18nKey("Add favourite")} />
                         {/if}
                     </BigButton>
-                    <BigButton onClick={startVideoCall}>
+                    <BigButton onClick={toggleMuteNotifications}>
                         {#snippet icon(color, size)}
-                            <Video {color} {size} />
+                            {#if muted}
+                                <Bell {color} {size} />
+                            {:else}
+                                <BellOff {color} {size} />
+                            {/if}
                         {/snippet}
-                        <Translatable
-                            resourceKey={i18nKey(
-                                videoCallInProgress ? "Join video call" : "Start video call",
-                            )} />
+                        <Translatable resourceKey={i18nKey(muted ? "Unmute chat" : "Mute chat")} />
                     </BigButton>
                     {#if canEdit}
                         <BigButton onClick={editGroup}>
@@ -277,9 +280,11 @@
                     {/if}
                 </Container>
 
-                <Body fontWeight={"light"}>
-                    <Markdown inline={false} text={chat.description} />
-                </Body>
+                <ReadMore>
+                    <Body fontWeight={"light"}>
+                        <Markdown inline={false} text={chat.description} />
+                    </Body>
+                </ReadMore>
             </Container>
         </Container>
 

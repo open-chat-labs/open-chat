@@ -145,6 +145,7 @@
     <Container
         supplementalClass={"chat_summary_list"}
         closeMenuOnScroll
+        gap={"lg"}
         onInsideEnd={insideBottom}
         width={{ kind: "fill" }}
         height={{ kind: "fill" }}

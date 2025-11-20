@@ -24,6 +24,7 @@ export { default as MenuItem } from "./components/menu/MenuItem.svelte";
 export { default as MenuTrigger } from "./components/menu/MenuTrigger.svelte";
 export { default as NotificationIndicator } from "./components/NotificationIndicator.svelte";
 export { default as Radio } from "./components/Radio.svelte";
+export { default as ReadMore } from "./components/ReadMore.svelte";
 export { default as SectionHeader } from "./components/SectionHeader.svelte";
 export { default as Sheet } from "./components/sheet/Sheet.svelte";
 export { default as Spinner } from "./components/Spinner.svelte";

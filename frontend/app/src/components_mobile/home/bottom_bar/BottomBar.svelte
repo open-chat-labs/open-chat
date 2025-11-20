@@ -175,10 +175,10 @@
     padding={["xl", "lg", "md", "lg"]}
     borderWidth={"thick"}
     minWidth={"100%"}
-    minHeight={"5.5rem"}
+    minHeight={"4.875rem"}
     {onSwipe}
     borderColour={"var(--background-0)"}
-    height={{ kind: "fixed", size: "5.5rem" }}
+    height={{ kind: "fixed", size: "4.875rem" }}
     borderRadius={["md", "md", "zero", "zero"]}
     background={"var(--background-1)"}
     mainAxisAlignment={"spaceAround"}>

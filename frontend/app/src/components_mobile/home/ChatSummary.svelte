@@ -416,7 +416,7 @@
         <Container
             onClick={selectChat}
             supplementalClass={"chat_summary"}
-            padding={["md", "lg"]}
+            padding={["sm", "lg"]}
             mainAxisAlignment={"spaceBetween"}
             crossAxisAlignment={"center"}
             gap={"lg"}>

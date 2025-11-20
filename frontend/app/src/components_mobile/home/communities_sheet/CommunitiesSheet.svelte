@@ -148,9 +148,7 @@
         bottom: toRem(120);
         z-index: 1;
         height: toRem(105);
-        // width: toRem(60);
         width: 6px;
-        // opacity: 0.6;
     }
 
     .right {

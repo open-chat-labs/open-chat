@@ -24,6 +24,14 @@
 
         <Container padding={["zero", "md"]} gap={"xxl"} direction={"vertical"}>
             <Setting
+                toggle={() => (ugs.candidateGroup.public = !ugs.candidateGroup.public)}
+                info={"Groups are private by default, and limited to people you invite. Public channels must have unique names, and community members are automatically added to them."}>
+                <Switch width={{ kind: "fill" }} reverse bind:checked={ugs.candidateGroup.public}>
+                    <Translatable resourceKey={i18nKey("Public group")}></Translatable>
+                </Switch>
+            </Setting>
+
+            <Setting
                 toggle={() =>
                     (ugs.candidateGroup.historyVisible = !ugs.candidateGroup.historyVisible)}
                 info={"By default new memebers in the group will see all the previous messages that were sent within the group. Enable this option to hide chat history for new members."}>

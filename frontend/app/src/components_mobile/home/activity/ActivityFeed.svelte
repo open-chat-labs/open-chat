@@ -53,7 +53,7 @@
     }
 
     $effect(() => {
-        if (!uptodate) {
+        if (!uptodate || !initialised) {
             loadActivity();
         }
     });

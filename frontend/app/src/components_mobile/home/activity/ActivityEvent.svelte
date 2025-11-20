@@ -169,7 +169,7 @@
     let tips = $derived(event?.message?.tips ? Object.entries(event.message.tips) : []);
 </script>
 
-<Container padding={"md"} gap={"sm"} supplementalClass={"activity-event"} {onClick}>
+<Container padding={"lg"} gap={"md"} supplementalClass={"activity-event"} {onClick}>
     <Avatar size={"sm"} url={client.userAvatarUrl(sender)}></Avatar>
     <Container direction={"vertical"}>
         <Container mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>

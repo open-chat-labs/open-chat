@@ -6,6 +6,7 @@
         Chip,
         CommonButton,
         Container,
+        FloatingButton,
         Form,
         Input,
         TextArea,
@@ -20,6 +21,7 @@
     import Check from "svelte-material-icons/Check.svelte";
     import ClockOutline from "svelte-material-icons/ClockOutline.svelte";
     import Cog from "svelte-material-icons/Cog.svelte";
+    import Save from "svelte-material-icons/ContentSaveOutline.svelte";
     import FormatList from "svelte-material-icons/FormatListBulletedType.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import AreYouSure from "../../AreYouSure.svelte";
@@ -196,23 +198,35 @@
             <CommonButton onClick={() => publish("closeModalPage")} size={"small_text"}>
                 <Translatable resourceKey={i18nKey("group.back")}></Translatable>
             </CommonButton>
-            <CommonButton
-                disabled={!ugs.valid}
-                loading={ugs.busy}
-                onClick={() => ugs.saveGroup(client)}
-                size={"medium"}
-                mode={"active"}>
-                {#snippet icon(color, size)}
-                    <AccountGroup {color} {size}></AccountGroup>
-                {/snippet}
-                <Translatable
-                    resourceKey={i18nKey(
-                        ugs.editMode ? "group.update" : "group.create",
-                        undefined,
-                        ugs.candidateGroup.level,
-                        true,
-                    )}></Translatable>
-            </CommonButton>
+            {#if !ugs.editMode}
+                <CommonButton
+                    disabled={!ugs.valid}
+                    loading={ugs.busy}
+                    onClick={() => ugs.saveGroup(client)}
+                    size={"medium"}
+                    mode={"active"}>
+                    {#snippet icon(color, size)}
+                        <AccountGroup {color} {size}></AccountGroup>
+                    {/snippet}
+                    <Translatable
+                        resourceKey={i18nKey(
+                            ugs.editMode ? "group.update" : "group.create",
+                            undefined,
+                            ugs.candidateGroup.level,
+                            true,
+                        )}></Translatable>
+                </CommonButton>
+            {/if}
         </Container>
     </Container>
+    {#if ugs.editMode}
+        <FloatingButton
+            loading={ugs.busy}
+            pos={{ bottom: "lg", right: "lg" }}
+            onClick={() => ugs.saveGroup(client)}>
+            {#snippet icon(color)}
+                <Save {color} />
+            {/snippet}
+        </FloatingButton>
+    {/if}
 </SlidingPageContent>

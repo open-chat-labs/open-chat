@@ -7,6 +7,7 @@
         Chip,
         CommonButton,
         Container,
+        FloatingButton,
         Form,
         IconButton,
         Input,
@@ -23,6 +24,7 @@
     import Check from "svelte-material-icons/Check.svelte";
     import ClockOutline from "svelte-material-icons/ClockOutline.svelte";
     import Cog from "svelte-material-icons/Cog.svelte";
+    import Save from "svelte-material-icons/ContentSaveOutline.svelte";
     import FormatList from "svelte-material-icons/FormatListBulletedType.svelte";
     import ImageEditOutline from "svelte-material-icons/ImageEditOutline.svelte";
     import Pound from "svelte-material-icons/Pound.svelte";
@@ -263,23 +265,35 @@
             <CommonButton onClick={() => publish("closeModalPage")} size={"small_text"}>
                 <Translatable resourceKey={i18nKey("group.back")}></Translatable>
             </CommonButton>
-            <CommonButton
-                disabled={!ucs.valid}
-                loading={ucs.busy}
-                onClick={() => ucs.saveCommunity(client)}
-                size={"medium"}
-                mode={"active"}>
-                {#snippet icon(color, size)}
-                    <AccountGroup {color} {size}></AccountGroup>
-                {/snippet}
-                <Translatable
-                    resourceKey={i18nKey(
-                        ucs.editMode ? "Update community" : "Create community",
-                        undefined,
-                        ucs.candidate.level,
-                        true,
-                    )}></Translatable>
-            </CommonButton>
+            {#if !ucs.editMode}
+                <CommonButton
+                    disabled={!ucs.valid}
+                    loading={ucs.busy}
+                    onClick={() => ucs.saveCommunity(client)}
+                    size={"medium"}
+                    mode={"active"}>
+                    {#snippet icon(color, size)}
+                        <AccountGroup {color} {size}></AccountGroup>
+                    {/snippet}
+                    <Translatable
+                        resourceKey={i18nKey(
+                            ucs.editMode ? "Update community" : "Create community",
+                            undefined,
+                            ucs.candidate.level,
+                            true,
+                        )}></Translatable>
+                </CommonButton>
+            {/if}
         </Container>
     </Container>
+    {#if ucs.editMode}
+        <FloatingButton
+            loading={ucs.busy}
+            pos={{ bottom: "lg", right: "lg" }}
+            onClick={() => ucs.saveCommunity(client)}>
+            {#snippet icon(color)}
+                <Save {color} />
+            {/snippet}
+        </FloatingButton>
+    {/if}
 </SlidingPageContent>
