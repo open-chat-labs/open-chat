@@ -6,6 +6,7 @@ use types::SuccessOnly;
 #[ts_export(notifications_index, remove_subscription)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
+    pub endpoint: String,
     pub p256dh_key: String,
 }
 
