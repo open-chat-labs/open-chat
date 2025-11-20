@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ColourVars, type SpacingSize, sizeToCssVar } from "component-lib";
+    import { ColourVars, type SpacingSize, Spinner, sizeToCssVar } from "component-lib";
     import { type Snippet } from "svelte";
 
     type Pos = {
@@ -14,8 +14,9 @@
         icon: Snippet<[string]>;
         disabled?: boolean;
         pos?: Pos;
+        loading?: boolean;
     }
-    let { icon, onClick, disabled = false, pos }: Props = $props();
+    let { icon, onClick, disabled = false, pos, loading = false }: Props = $props();
 
     function posToStyle(pos?: Pos) {
         if (pos === undefined) return "";
@@ -35,8 +36,23 @@
     }
 </script>
 
-<button style={posToStyle(pos)} class="floating_button" {disabled} type="button" onclick={onClick}>
-    {@render icon(ColourVars.textOnPrimary)}
+<button
+    class:disabled={disabled || loading}
+    style={posToStyle(pos)}
+    aria-busy={loading}
+    class="floating_button"
+    disabled={disabled || loading}
+    type="button"
+    onclick={onClick}>
+    {#if loading}
+        <span class="button_icon">
+            <Spinner
+                backgroundColour={ColourVars.textTertiary}
+                foregroundColour={ColourVars.textOnPrimary} />
+        </span>
+    {:else}
+        {@render icon(ColourVars.textOnPrimary)}
+    {/if}
 </button>
 
 <style lang="scss">
@@ -59,5 +75,14 @@
         justify-content: center;
         cursor: pointer;
         box-shadow: var(--shadow-menu);
+        transition: background ease-in-out 200ms;
+
+        &.disabled {
+            background: var(--button-disabled);
+        }
+
+        .button_icon {
+            display: flex;
+        }
     }
 </style>

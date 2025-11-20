@@ -56,7 +56,6 @@
     let communityState = new CommunityState(client, community);
     let busy = $state(false);
 
-    let canManageUserGroups = $derived(client.canManageUserGroups(community.id));
     let ownerMember = $derived(
         [...$selectedCommunityMembersStore.values()].find((m) => m.role === ROLE_OWNER),
     );
@@ -200,7 +199,7 @@
         <div class="separator"></div>
 
         <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
-            <UserGroupSummary {communityState} {community} />
+            <UserGroupSummary {communityState} />
         </Container>
 
         <div class="separator"></div>

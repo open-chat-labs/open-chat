@@ -17,6 +17,7 @@
         type PaymentGate,
         type PublicProfile,
         type TokenBalanceGate,
+        type UserGroupDetails,
     } from "openchat-client";
     import { onMount } from "svelte";
     import AboutAccessGates from "./access_gates/AboutAccessGates.svelte";
@@ -34,6 +35,9 @@
     import CommunityPermissions from "./communities/createOrUpdate/Permissions.svelte";
     import CommunitySummaryComponent from "./communities/details/CommunitySummary.svelte";
     import ConfirmDeleteCommunity from "./communities/details/ConfirmDelete.svelte";
+    import EditUserGroup from "./communities/details/EditUserGroup.svelte";
+    import UserGroup from "./communities/details/UserGroup.svelte";
+    import UserGroups from "./communities/details/UserGroups.svelte";
     import AddGroupMembers from "./createOrUpdateGroup/AddGroupMembers.svelte";
     import GeneralSetup from "./createOrUpdateGroup/GeneralSetup.svelte";
     import GroupInfo from "./createOrUpdateGroup/GroupInfo.svelte";
@@ -80,6 +84,9 @@
      */
 
     type SlidingModalType =
+        | { kind: "user_groups"; community: CommunitySummary }
+        | { kind: "user_group"; community: CommunitySummary; userGroup: UserGroupDetails }
+        | { kind: "edit_user_group"; community: CommunitySummary; userGroup: UserGroupDetails }
         | { kind: "community_details"; community: CommunitySummary }
         | { kind: "delete_chat"; chat: MultiUserChat }
         | { kind: "delete_community"; community: CommunitySummary }
@@ -148,6 +155,29 @@
 
     onMount(() => {
         const unsubs = [
+            subscribe("showUserGroups", () => {
+                if ($selectedCommunitySummaryStore !== undefined) {
+                    push({ kind: "user_groups", community: $selectedCommunitySummaryStore });
+                }
+            }),
+            subscribe("showUserGroup", (userGroup) => {
+                if ($selectedCommunitySummaryStore !== undefined) {
+                    push({
+                        kind: "user_group",
+                        community: $selectedCommunitySummaryStore,
+                        userGroup,
+                    });
+                }
+            }),
+            subscribe("editUserGroup", (userGroup) => {
+                if ($selectedCommunitySummaryStore !== undefined) {
+                    push({
+                        kind: "edit_user_group",
+                        community: $selectedCommunitySummaryStore,
+                        userGroup,
+                    });
+                }
+            }),
             subscribe("communityDetails", () => {
                 if ($selectedCommunitySummaryStore !== undefined) {
                     push({ kind: "community_details", community: $selectedCommunitySummaryStore });
@@ -394,6 +424,12 @@
             <MemberManagement chat={page.chat} view={page.view} />
         {:else if page.kind === "community_details"}
             <CommunitySummaryComponent community={page.community} />
+        {:else if page.kind === "user_groups"}
+            <UserGroups community={page.community} />
+        {:else if page.kind === "user_group"}
+            <UserGroup community={page.community} userGroup={page.userGroup} />
+        {:else if page.kind === "edit_user_group"}
+            <EditUserGroup community={page.community} original={page.userGroup} />
         {/if}
     </SlidingPage>
 {/each}

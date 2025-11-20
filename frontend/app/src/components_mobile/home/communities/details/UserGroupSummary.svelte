@@ -1,109 +1,37 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import {
-        Body,
-        BodySmall,
-        CommonButton,
-        Container,
-        IconButton,
-        ListAction,
-        MenuItem,
-        MenuTrigger,
-        MultiAvatar,
-    } from "component-lib";
-    import {
-        allUsersStore,
-        OpenChat,
-        publish,
-        selectedCommunityUserGroupsStore,
-        type CommunitySummary,
-        type UserGroupDetails,
-    } from "openchat-client";
-    import { getContext } from "svelte";
+    import { Body, CommonButton, Container, ListAction } from "component-lib";
+    import { publish, selectedCommunityUserGroupsStore } from "openchat-client";
     import AccountGroup from "svelte-material-icons/AccountGroupOutline.svelte";
-    import Delete from "svelte-material-icons/DeleteForeverOutline.svelte";
-    import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
-    import Edit from "svelte-material-icons/TextBoxEditOutline.svelte";
-    import AreYouSure from "../../../AreYouSure.svelte";
+    import { SvelteSet } from "svelte/reactivity";
     import Translatable from "../../../Translatable.svelte";
     import type { CommunityState } from "./communityState.svelte";
-
-    const client = getContext<OpenChat>("client");
+    import UserGroupRow from "./UserGroupRow.svelte";
 
     interface Props {
-        community: CommunitySummary;
         communityState: CommunityState;
     }
 
-    let { community, communityState }: Props = $props();
+    let { communityState }: Props = $props();
 
     const TO_SHOW = 5;
 
     let userGroups = $derived([...$selectedCommunityUserGroupsStore.values()]);
-    let canManageUserGroups = $derived(client.canManageUserGroups(community.id));
     let more = $derived(userGroups.length - TO_SHOW);
-    let show = $derived(canManageUserGroups || userGroups.length > 0);
-
-    function memberUrls(ug: UserGroupDetails) {
-        return [...ug.members].map((id) => client.userAvatarUrl($allUsersStore.get(id)));
-    }
-
+    let show = $derived(communityState.canManageUserGroups || userGroups.length > 0);
     function showAll() {
         publish("showUserGroups");
     }
 
-    function showUserGroup(id: number) {
-        publish("showUserGroup", id);
+    function addUserGroup() {
+        publish("editUserGroup", {
+            kind: "user_group",
+            id: -1,
+            name: "",
+            members: new SvelteSet<string>(),
+        });
     }
 </script>
-
-{#if communityState.confirmingUserGroupDelete}
-    <AreYouSure
-        message={i18nKey("communities.confirmDeleteUserGroup")}
-        action={(answer) => communityState.deleteUserGroup(answer)} />
-{/if}
-
-{#snippet userGroupSnippet(userGroup: UserGroupDetails)}
-    <Container onClick={() => showUserGroup(userGroup.id)} crossAxisAlignment={"center"} gap={"md"}>
-        <MultiAvatar urls={memberUrls(userGroup)}></MultiAvatar>
-        <Container direction={"vertical"}>
-            <Body fontWeight={"bold"}>{userGroup.name}</Body>
-            <BodySmall colour={"textSecondary"}>{`${userGroup.members.size} members`}</BodySmall>
-        </Container>
-        <MenuTrigger position={"bottom"} align={"end"}>
-            {#snippet menuItems()}
-                {#if canManageUserGroups}
-                    <MenuItem onclick={() => showUserGroup(userGroup.id)}>
-                        {#snippet icon(color)}
-                            <Edit {color} />
-                        {/snippet}
-                        Edit
-                    </MenuItem>
-                    <MenuItem
-                        danger
-                        onclick={() => communityState.confirmDeleteUserGroup(userGroup)}>
-                        {#snippet icon(color)}
-                            <Delete {color} />
-                        {/snippet}
-                        Remove
-                    </MenuItem>
-                {:else}
-                    <MenuItem onclick={() => showUserGroup(userGroup.id)}>
-                        {#snippet icon(color)}
-                            <AccountGroup {color} />
-                        {/snippet}
-                        View members
-                    </MenuItem>
-                {/if}
-            {/snippet}
-            <IconButton padding={["sm", "xs", "sm", "zero"]} size={"md"}>
-                {#snippet icon(color)}
-                    <DotsVertical {color} />
-                {/snippet}
-            </IconButton>
-        </MenuTrigger>
-    </Container>
-{/snippet}
 
 {#if show}
     <Container gap={"xl"} direction={"vertical"}>
@@ -119,8 +47,8 @@
             {/if}
         </Container>
 
-        {#if canManageUserGroups}
-            <ListAction onClick={showAll}>
+        {#if communityState.canManageUserGroups}
+            <ListAction onClick={addUserGroup}>
                 {#snippet icon(color)}
                     <AccountGroup {color} />
                 {/snippet}
@@ -138,7 +66,10 @@
                 </Body>
             {:else}
                 {#each userGroups as userGroup}
-                    {@render userGroupSnippet(userGroup)}
+                    <UserGroupRow
+                        {userGroup}
+                        canManageUserGroups={communityState.canManageUserGroups}
+                        {communityState} />
                 {/each}
             {/if}
         </Container>

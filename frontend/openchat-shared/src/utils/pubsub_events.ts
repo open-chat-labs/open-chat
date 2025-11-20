@@ -27,6 +27,7 @@ import type {
     ResourceKey,
     TokenBalanceGate,
     UpdatedRules,
+    UserGroupDetails,
     VideoCallType,
 } from "..";
 
@@ -201,5 +202,6 @@ export type PubSubEvents = {
     openThread: { chat: ChatSummary; msg: EventWrapper<Message> };
     groupMembers: { chat: MultiUserChat; view: "members" | "invite" | "lapsed" | "blocked" };
     showUserGroups: undefined;
-    showUserGroup: number;
+    showUserGroup: UserGroupDetails;
+    editUserGroup: UserGroupDetails;
 };

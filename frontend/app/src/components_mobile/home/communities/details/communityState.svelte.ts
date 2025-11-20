@@ -5,11 +5,18 @@ import { OpenChat, ROLE_NONE, type CommunitySummary, type UserGroupDetails } fro
 export class CommunityState {
     #confirmingUserGroupDelete = $state(false);
     #userGroupToDelete = $state<UserGroupDetails>();
+    #canManageUserGroups = false;
 
     constructor(
         private client: OpenChat,
         private community: CommunitySummary,
-    ) {}
+    ) {
+        this.#canManageUserGroups = client.canManageUserGroups(community.id);
+    }
+
+    get canManageUserGroups() {
+        return this.#canManageUserGroups;
+    }
 
     get #accessible() {
         if (this.community.membership.role === ROLE_NONE) return false;
