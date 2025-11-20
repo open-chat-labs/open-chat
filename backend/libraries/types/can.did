@@ -56,6 +56,8 @@ type AudioContent = record {
     caption : opt text;
     mime_type : text;
     blob_reference : opt BlobReference;
+    duration_ms : Milliseconds;
+    samples : blob;
 };
 
 type Document = record {
