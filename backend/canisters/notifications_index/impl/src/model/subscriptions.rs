@@ -70,6 +70,12 @@ impl Subscriptions {
         }
     }
 
+    pub fn get_by_user(&self, user_id: &UserId) -> Vec<SubscriptionInfo> {
+        self.subscriptions
+            .get(user_id)
+            .map_or(Vec::new(), |subs| subs.iter().cloned().collect())
+    }
+
     pub fn total(&self) -> u64 {
         self.total
     }
