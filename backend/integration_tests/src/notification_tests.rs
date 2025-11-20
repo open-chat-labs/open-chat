@@ -226,7 +226,7 @@ fn only_store_up_to_10_subscriptions_per_user() {
             canister_ids.notifications_index,
             i.to_string(),
             i.to_string(),
-            "https://xyz.com/",
+            format!("https://xyz.com/{i}"),
         );
     }
 

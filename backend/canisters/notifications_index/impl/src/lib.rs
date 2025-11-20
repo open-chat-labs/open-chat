@@ -1,5 +1,5 @@
 use crate::model::local_index_event_batch::LocalIndexEventBatch;
-use crate::model::subscriptions::Subscriptions;
+use crate::model::subscriptions::{SubscriptionInfoInternal, Subscriptions};
 use candid::Principal;
 use canister_state_macros::canister_state;
 use notifications_index_canister::{NotificationsIndexEvent, SubscriptionAdded, SubscriptionRemoved};
@@ -48,7 +48,14 @@ impl RuntimeState {
     }
 
     pub fn add_subscription(&mut self, user_id: UserId, subscription: SubscriptionInfo, now: TimestampMillis) {
-        let subscriptions_removed = self.data.subscriptions.push(user_id, subscription.clone());
+        let subscriptions_removed = self.data.subscriptions.push(
+            user_id,
+            SubscriptionInfoInternal {
+                added: now,
+                endpoint: subscription.endpoint.clone(),
+                keys: subscription.keys.clone(),
+            },
+        );
 
         let event = NotificationsIndexEvent::SubscriptionAdded(SubscriptionAdded { user_id, subscription });
 
