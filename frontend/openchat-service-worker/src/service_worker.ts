@@ -124,7 +124,6 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
 
     const webPushNotification = decodeWebPushNotification(bytes, timestamp);
     if (webPushNotification === undefined) {
-        console.error("SW: unable to decode notification", id, bytes);
         return;
     }
 
