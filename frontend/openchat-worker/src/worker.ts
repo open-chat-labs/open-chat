@@ -717,7 +717,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.subscriptionExists(payload.p256dh_key),
+                    agent.subscriptionExists(payload.endpoint, payload.p256dh_key),
                 );
                 break;
 

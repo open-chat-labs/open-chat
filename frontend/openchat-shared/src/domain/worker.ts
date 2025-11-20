@@ -1042,6 +1042,7 @@ type PushSub = {
 };
 
 type SubscriptionExists = {
+    endpoint: string;
     p256dh_key: string;
     kind: "subscriptionExists";
 };

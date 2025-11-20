@@ -47,14 +47,15 @@ pub mod happy_path {
         env: &PocketIc,
         sender: Principal,
         notifications_index_canister_id: CanisterId,
-        p256dh_key: impl Into<String>,
+        endpoint: impl Into<String>,
     ) -> bool {
         let response = super::subscription_exists(
             env,
             sender,
             notifications_index_canister_id,
             &notifications_index_canister::subscription_exists::Args {
-                p256dh_key: p256dh_key.into(),
+                p256dh_key: String::default(),
+                endpoint: endpoint.into(),
             },
         );
 

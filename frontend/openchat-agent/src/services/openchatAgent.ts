@@ -2735,8 +2735,8 @@ export class OpenChatAgent extends EventTarget {
         return this._onlineClient.markAsOnline();
     }
 
-    subscriptionExists(p256dh_key: string): Promise<boolean> {
-        return this._notificationClient.subscriptionExists(p256dh_key);
+    subscriptionExists(endpoint: string, p256dh_key: string): Promise<boolean> {
+        return this._notificationClient.subscriptionExists(endpoint, p256dh_key);
     }
 
     pushSubscription(subscription: PushSubscriptionJSON): Promise<void> {

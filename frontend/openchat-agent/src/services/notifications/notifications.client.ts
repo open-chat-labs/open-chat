@@ -20,10 +20,11 @@ export class NotificationsClient extends MsgpackCanisterAgent {
         super(identity, agent, canisterId, "Notifications");
     }
 
-    subscriptionExists(p256dh_key: string): Promise<boolean> {
+    subscriptionExists(endpoint: string, p256dh_key: string): Promise<boolean> {
         return this.executeMsgpackQuery(
             "subscription_exists",
             {
+                endpoint,
                 p256dh_key,
             },
             subscriptionExistsResponse,
@@ -55,6 +56,7 @@ export class NotificationsClient extends MsgpackCanisterAgent {
         return this.executeMsgpackUpdate(
             "remove_subscription",
             {
+                endpoint: subscription.endpoint!,
                 p256dh_key: subscription.keys!["p256dh"],
             },
             toVoid,
