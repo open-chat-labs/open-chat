@@ -54,19 +54,27 @@ impl RuntimeState {
 
         self.push_event_to_local_indexes(event, now);
 
-        for p256dh_key in subscriptions_removed {
-            let event = NotificationsIndexEvent::SubscriptionRemoved(SubscriptionRemoved { user_id, p256dh_key });
+        for removed in subscriptions_removed {
+            let event = NotificationsIndexEvent::SubscriptionRemoved(SubscriptionRemoved {
+                user_id,
+                p256dh_key: removed.keys.p256dh,
+                endpoint: removed.endpoint,
+            });
 
             self.push_event_to_local_indexes(event, now);
         }
     }
 
-    pub fn remove_subscription(&mut self, user_id: UserId, p256dh_key: String, now: TimestampMillis) {
-        self.data.subscriptions.remove(user_id, &p256dh_key);
+    pub fn remove_subscription(&mut self, user_id: UserId, endpoint: String, now: TimestampMillis) {
+        if let Some(removed) = self.data.subscriptions.remove(user_id, &endpoint) {
+            let event = NotificationsIndexEvent::SubscriptionRemoved(SubscriptionRemoved {
+                user_id,
+                endpoint: removed.endpoint,
+                p256dh_key: removed.keys.p256dh,
+            });
 
-        let event = NotificationsIndexEvent::SubscriptionRemoved(SubscriptionRemoved { user_id, p256dh_key });
-
-        self.push_event_to_local_indexes(event, now);
+            self.push_event_to_local_indexes(event, now);
+        }
     }
 
     pub fn remove_all_subscriptions(&mut self, user_id: UserId, now: TimestampMillis) {

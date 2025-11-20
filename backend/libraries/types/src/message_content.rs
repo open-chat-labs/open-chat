@@ -6,7 +6,8 @@ use crate::{
 };
 use candid::CandidType;
 use oc_error_codes::{OCError, OCErrorCode};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde_bytes::ByteBuf;
 use std::collections::HashMap;
 use std::fmt::{Debug, Display, Formatter};
 use ts_export::ts_export;
@@ -534,6 +535,20 @@ pub struct AudioContent {
     pub caption: Option<String>,
     pub mime_type: String,
     pub blob_reference: Option<BlobReference>,
+    // TODO remove the `Option` wrapper here and on `samples` once everything is released
+    pub duration_ms: Option<Milliseconds>,
+    #[serde(serialize_with = "serialize_samples", deserialize_with = "deserialize_samples")]
+    pub samples: Option<Vec<u8>>,
+}
+
+fn serialize_samples<S: Serializer>(value: &Option<Vec<u8>>, serializer: S) -> Result<S::Ok, S::Error> {
+    // Let's not worry about the clone here as this code is only temporary
+    value.clone().map(ByteBuf::from).serialize(serializer)
+}
+
+fn deserialize_samples<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Option<Vec<u8>>, D::Error> {
+    let deserialized: Option<ByteBuf> = Deserialize::deserialize(deserializer)?;
+    Ok(deserialized.map(|b| b.into_vec()))
 }
 
 #[ts_export]

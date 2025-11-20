@@ -1220,7 +1220,6 @@
     },
     "participant": "חבר",
     "percLeft": "נותרו {perc}%",
-    "performingUpgrade": "מבצע שדרוג",
     "permissions": {
         "addMembers": "להוסיף חברים",
         "allMembers": "כל החברים יכולים",
@@ -1327,7 +1326,6 @@
     },
     "placeholderContent": "אנא המתן, ההודעה שלך תיטען בקרוב",
     "pleaseDeposit": "אנא לחץ על הלחצן \"אשר\" אם אתה מעוניין לשלם ICP {amount} מהחשבון שלמעלה כדי לשדרג את האחסון שלך ל-{limit}",
-    "pleaseWait": "אנא המתן מספר שניות",
     "poll": {
         "addAnotherAnswer": "הוסף עוד תשובה",
         "addAnswer": "הוסף לפחות 2 תשובות",
@@ -1762,11 +1760,6 @@
     "suspend": "לְהַשְׁעוֹת",
     "suspendedUser": "משתמש מושעה",
     "suspendUser": "השעיית משתמש",
-    "switchDomain": {
-        "blurb": "אתה משתמש כרגע בדומיין [{currentDomain}]({currentDomain}).<br /><br /> לא תקבל התראות מדומיין מדור קודם זה ובקרוב הוא יופסק לחלוטין.<br /><br /> *כדי להמשיך להשתמש ב-OpenChat ולהפיק תועלת מלאה מאופטימיזציית ביצועים מתמשכת, עבור לדומיין החדש שלנו [https://oc.app](https://oc.app)*<br /><br /> אם שמרת את האתר במסך הבית שלך תצטרך למחוק/להסיר את ההתקנה ולשמור שוב במסך הבית מהדומיין החדש.<br/><br/>",
-        "continue": "לְהַמשִׁיך",
-        "title": "נא לעבור לדומיין החדש שלנו"
-    },
     "tapForReferralLink": "הקש כדי להעתיק את קישור ההפניה האישי שלך",
     "tellMeMore": "עוד מידע",
     "theInternetComputer": "מחשב האינטרנט",

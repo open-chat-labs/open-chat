@@ -1220,7 +1220,6 @@
     },
     "participant": "成员",
     "percLeft": "还剩 {perc}%",
-    "performingUpgrade": "更新中",
     "permissions": {
         "addMembers": "添加成员",
         "allMembers": "所有成员都可以",
@@ -1327,7 +1326,6 @@
     },
     "placeholderContent": "信息读取中，请稍等",
     "pleaseDeposit": "如果您愿意从上述帐户支付 {amount} ICP 以将您的存储升级到 {limit}，请按“确认”按钮",
-    "pleaseWait": "请稍等",
     "poll": {
         "addAnotherAnswer": "添加另一个答案",
         "addAnswer": "添加至少 2 个答案",
@@ -1762,11 +1760,6 @@
     "suspend": "暂停",
     "suspendedUser": "暂停用户",
     "suspendUser": "暂停用户",
-    "switchDomain": {
-        "blurb": "您当前正在使用 [{currentDomain}]({currentDomain}) 域。<br /><br />您将不会收到来自此旧域的通知，并且很快将完全停用。<br /><br /> *要继续使用 OpenChat 并充分受益于持续的性能优化，请切换到我们的新域 [https://oc.app](https://oc.app)*<br /><br />如果您已将站点保存到主屏幕，则需要从新域中删除/卸载并再次保存到主屏幕。<br/><br/>",
-        "continue": "继续",
-        "title": "请切换到我们的新域"
-    },
     "tapForReferralLink": "点击复制您的个人推荐链接",
     "tellMeMore": "更多信息",
     "theInternetComputer": "互联网计算机",

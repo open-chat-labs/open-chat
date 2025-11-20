@@ -3321,6 +3321,7 @@ export type NotificationsIndexSubscriptionExistsArgs = Static<
 >;
 export const NotificationsIndexSubscriptionExistsArgs = Type.Object({
     p256dh_key: Type.String(),
+    endpoint: Type.String(),
 });
 
 export type NotificationsIndexSubscriptionExistsResponse = Static<
@@ -3335,6 +3336,7 @@ export type NotificationsIndexRemoveSubscriptionArgs = Static<
     typeof NotificationsIndexRemoveSubscriptionArgs
 >;
 export const NotificationsIndexRemoveSubscriptionArgs = Type.Object({
+    endpoint: Type.String(),
     p256dh_key: Type.String(),
 });
 
@@ -5454,6 +5456,8 @@ export const AudioContent = Type.Object({
     caption: Type.Optional(Type.String()),
     mime_type: Type.String(),
     blob_reference: Type.Optional(BlobReference),
+    duration_ms: Type.Optional(Type.BigInt()),
+    samples: Type.Optional(Type.Array(Type.Number())),
 });
 
 export type ImageContent = Static<typeof ImageContent>;

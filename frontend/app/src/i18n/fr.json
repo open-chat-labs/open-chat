@@ -1220,7 +1220,6 @@
     },
     "participant": "membre",
     "percLeft": "{min} % restants",
-    "performingUpgrade": "Exécution de la mise à niveau",
     "permissions": {
         "addMembers": "ajouter des membres",
         "allMembers": "Tous les membres peuvent",
@@ -1327,7 +1326,6 @@
     },
     "placeholderContent": "Veuillez patienter, votre message va bientôt se charger",
     "pleaseDeposit": "Veuillez appuyer sur le bouton \"Confirmer\" si vous souhaitez payer {amount} ICP à partir du compte ci-dessus pour mettre à niveau votre stockage à {limit}",
-    "pleaseWait": "Veuillez patienter quelques secondes",
     "poll": {
         "addAnotherAnswer": "Ajouter une autre réponse",
         "addAnswer": "Ajoutez au moins 2 réponses",
@@ -1762,11 +1760,6 @@
     "suspend": "Suspendre",
     "suspendedUser": "Utilisateur suspendu",
     "suspendUser": "Suspendre l'utilisateur",
-    "switchDomain": {
-        "blurb": "Vous utilisez actuellement le domaine [{currentDomain}]({currentDomain}).<br /><br /> Vous ne recevrez pas de notifications de cet ancien domaine et il sera bientôt supprimé.<br /><br /> *Pour continuer à utiliser OpenChat et bénéficier pleinement des optimisations de performances en cours, veuillez passer à notre nouveau domaine [https://oc.app](https://oc.app)*<br /><br /> Si vous avez enregistré le site sur votre écran d&#39;accueil, vous devrez supprimer/désinstaller et enregistrer à nouveau sur l&#39;écran d&#39;accueil à partir du nouveau domaine.<br/><br/>",
-        "continue": "Continuer",
-        "title": "Veuillez passer à notre nouveau domaine"
-    },
     "tapForReferralLink": "Appuyez pour copier votre lien de parrainage personnel",
     "tellMeMore": "Plus d'information",
     "theInternetComputer": "L'ordinateur Internet",

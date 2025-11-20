@@ -1220,7 +1220,6 @@
     },
     "participant": "miembro",
     "percLeft": "{perc}% restante",
-    "performingUpgrade": "Realización de actualización",
     "permissions": {
         "addMembers": "Añadir miembros",
         "allMembers": "Todos los miembros pueden",
@@ -1327,7 +1326,6 @@
     },
     "placeholderContent": "Por favor espera, tu mensaje se cargará en breve",
     "pleaseDeposit": "Deposita {amount} ICP en la cuenta anterior y luego presiona el botón de confirmación.",
-    "pleaseWait": "Por favor espera unos segundos",
     "poll": {
         "addAnotherAnswer": "Agregar otra respuesta",
         "addAnswer": "Agregar al menos 2 respuestas",
@@ -1762,11 +1760,6 @@
     "suspend": "Suspender",
     "suspendedUser": "usuario suspendido",
     "suspendUser": "Suspender usuario",
-    "switchDomain": {
-        "blurb": "Actualmente estás usando el dominio [{currentDomain}]({currentDomain}).<br /><br /> No recibirá notificaciones de este dominio heredado y pronto se retirará por completo.<br /><br /> *Para continuar usando OpenChat y beneficiarse plenamente de las optimizaciones de rendimiento en curso, cambie a nuestro nuevo dominio [https://oc.app](https://oc.app)*<br /><br /> Si guardó el sitio en su pantalla de inicio, deberá eliminar/desinstalar y guardar en la pantalla de inicio nuevamente desde el nuevo dominio.<br/><br/>",
-        "continue": "Continuar",
-        "title": "Cambia a nuestro nuevo dominio"
-    },
     "tapForReferralLink": "Toque para copiar su enlace de referencia personal",
     "tellMeMore": "Más información",
     "theInternetComputer": "Internet Computer",

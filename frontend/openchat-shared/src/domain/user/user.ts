@@ -155,8 +155,6 @@ export type IdentityState =
     | { kind: "logged_in"; postLogin?: PostLoginOperation }
     | { kind: "registering"; postLogin?: PostLoginOperation }
     | { kind: "logging_in"; postLogin?: PostLoginOperation }
-    | { kind: "upgrading_user"; postLogin?: PostLoginOperation }
-    | { kind: "upgrade_user"; postLogin?: PostLoginOperation }
     | { kind: "challenging"; postLogin?: PostLoginOperation };
 
 export type UserLookup = ReadonlyMap<string, UserSummary>;
