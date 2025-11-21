@@ -101,6 +101,7 @@ type Burn = record {
   created_at_time : opt Timestamp;
   amount : nat;
   spender : opt Account;
+  fee : opt nat;
 };
 
 type Mint = record {
@@ -108,6 +109,7 @@ type Mint = record {
   memo : opt blob;
   created_at_time : opt Timestamp;
   amount : nat;
+  fee : opt nat;
 };
 
 type Transfer = record {
@@ -121,5 +123,5 @@ type Transfer = record {
 };
 
 service : {
-    get_transactions : (GetTransactionsRequest) -> (GetTransactionsResponse) query;
+  get_transactions : (GetTransactionsRequest) -> (GetTransactionsResponse) query;
 }
