@@ -12,7 +12,6 @@ import type {
     ChannelIdentifier,
     ChannelSummaryResponse,
     ChatEvent,
-    ClaimPrizeResponse,
     CommunityDetails,
     CommunityDetailsResponse,
     CommunityIdentifier,
@@ -99,7 +98,6 @@ import {
     CommunityChangeRoleArgs,
     CommunityChannelSummaryArgs,
     CommunityChannelSummaryResponse,
-    CommunityClaimPrizeArgs,
     CommunityCreateChannelArgs,
     CommunityCreateChannelResponse,
     CommunityCreateUserGroupArgs,
@@ -266,19 +264,6 @@ export class CommunityClient extends MsgpackCanisterAgent {
         private inviteCode: string | undefined,
     ) {
         super(identity, agent, communityId, "Community");
-    }
-
-    claimPrize(channelId: number, messageId: bigint): Promise<ClaimPrizeResponse> {
-        return this.executeMsgpackUpdate(
-            "claim_prize",
-            {
-                channel_id: toBigInt32(channelId),
-                message_id: messageId,
-            },
-            unitResult,
-            CommunityClaimPrizeArgs,
-            UnitResult,
-        );
     }
 
     addMembersToChannel(
