@@ -8,9 +8,6 @@
         type ChatIdentifier,
         chatIdentifiersEqual,
         type ChatSummary,
-        communitiesStore,
-        CommunityMap,
-        type CommunitySummary,
         currentUserIdStore,
         currentUserStore,
         type EnhancedReplyContext,
@@ -29,11 +26,9 @@
         type OpenChat,
         publish,
         type ReadonlySet,
-        ROLE_OWNER,
         selectedChatDraftMessageStore,
         selectedChatPinnedMessagesStore,
         selectedCommunitySummaryStore,
-        setRightPanelHistory,
         subscribe,
         suspendedUserStore,
         type User,
@@ -46,7 +41,6 @@
     import { randomSentence } from "../../utils/randomMsg";
     import AreYouSure from "../AreYouSure.svelte";
     import DirectChatHeader from "../bots/DirectChatHeader.svelte";
-    import ImportToCommunity from "./communities/Import.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
     import CurrentChatHeader from "./CurrentChatHeader.svelte";
     import CurrentChatMessages from "./CurrentChatMessages.svelte";
@@ -89,7 +83,6 @@
     let memeBuilder: MemeBuilder = $state();
     let showSearchHeader = $state(false);
     let searchTerm = $state("");
-    let importToCommunities: CommunityMap<CommunitySummary> | undefined = $state();
     let removeLinkPreviewDetails: { event: EventWrapper<Message>; url: string } | undefined =
         $state(undefined);
 
@@ -156,16 +149,6 @@
     function onCreateTestMessages([ctx, num]: [MessageContext, number]) {
         if (messageContextsEqual(ctx, messageContext)) {
             createTestMessages(num);
-        }
-    }
-
-    function importToCommunity() {
-        importToCommunities = $communitiesStore.filter((c) => c.membership.role === ROLE_OWNER);
-        if (importToCommunities.size === 0) {
-            toastStore.showFailureToast(i18nKey("communities.noOwned"));
-            importToCommunities = undefined;
-        } else {
-            setRightPanelHistory([]);
         }
     }
 
@@ -388,13 +371,6 @@
     <AreYouSure title={i18nKey("removePreviewQuestion")} action={removePreview} />
 {/if}
 
-{#if importToCommunities !== undefined}
-    <ImportToCommunity
-        groupId={chat.id}
-        onCancel={() => (importToCommunities = undefined)}
-        ownedCommunities={importToCommunities} />
-{/if}
-
 <PollBuilder onSend={onSendMessageWithContent} bind:this={pollBuilder} bind:open={creatingPoll} />
 
 {#if creatingCryptoTransfer !== undefined}
@@ -447,7 +423,6 @@
         {:else}
             <CurrentChatHeader
                 onSearchChat={searchChat}
-                onImportToCommunity={importToCommunity}
                 {blocked}
                 {readonly}
                 selectedChatSummary={chat}

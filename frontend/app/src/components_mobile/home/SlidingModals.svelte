@@ -108,7 +108,7 @@
         | { kind: "receive_token"; tokenState: TokenState }
         | { kind: "token_page"; tokenState: TokenState }
         | { kind: "direct_chat_details"; chat: DirectChatSummary }
-        | { kind: "group_chat_details"; chat: GroupChatSummary }
+        | { kind: "group_chat_details"; chat: MultiUserChat }
         | { kind: "new_message" }
         | { kind: "update_community_add_members" }
         | { kind: "update_community_details" }

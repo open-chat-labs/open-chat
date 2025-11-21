@@ -189,7 +189,7 @@ export type PubSubEvents = {
     newCommunity: undefined;
     newMessage: undefined;
     directChatDetails: DirectChatSummary;
-    groupChatDetails: GroupChatSummary;
+    groupChatDetails: MultiUserChat;
     tokenPage: unknown;
     receiveToken: unknown;
     sendToken: unknown;

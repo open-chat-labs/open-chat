@@ -1,17 +1,18 @@
 <script lang="ts">
+    import { activeVideoCall } from "@src/stores/video";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import { Avatar, Container, Label, SectionHeader } from "component-lib";
-    import type { ChatSummary, DiamondMembershipStatus, GroupChatSummary } from "openchat-client";
+    import type { ChatSummary, DiamondMembershipStatus } from "openchat-client";
     import {
         allUsersStore,
         anonUserStore,
+        chatIdentifiersEqual,
         chatListScopeStore,
         publish,
         restrictToSelectedChat,
         routeForChatIdentifier,
         selectedChatIdStore,
         selectedCommunitySummaryStore,
-        setRightPanelHistory,
         byContext as typersByContext,
         type OpenChat,
         type TypersByKey,
@@ -19,6 +20,7 @@
     import page from "page";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
+    import Video from "svelte-material-icons/VideoOutline.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { now } from "../../stores/time";
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
@@ -36,17 +38,9 @@
         readonly: boolean;
         hasPinned: boolean;
         onSearchChat: (search: string) => void;
-        onImportToCommunity: (group: GroupChatSummary) => void;
     }
 
-    let {
-        selectedChatSummary,
-        blocked,
-        readonly,
-        hasPinned,
-        onSearchChat,
-        onImportToCommunity,
-    }: Props = $props();
+    let { selectedChatSummary, blocked, readonly, hasPinned, onSearchChat }: Props = $props();
 
     let userId = $derived(
         selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them.userId : "",
@@ -59,6 +53,17 @@
     let verified = $derived(
         selectedChatSummary.kind === "group_chat" && selectedChatSummary.verified,
     );
+    let canStartVideoCalls = $derived(
+        !blocked && client.canStartVideoCalls(selectedChatSummary.id),
+    );
+    let videoCallInProgress = $derived(selectedChatSummary.videoCallInProgress !== undefined);
+    let inCall = $derived(
+        $activeVideoCall !== undefined &&
+            videoCallInProgress &&
+            chatIdentifiersEqual($activeVideoCall.chatId, selectedChatSummary?.id),
+    );
+    let canStartOrJoinVideoCall = $derived(!inCall && (videoCallInProgress || canStartVideoCalls));
+    let isPublic = $derived(!client.isChatPrivate(selectedChatSummary));
 
     function clearSelection() {
         publish("clearSelection");
@@ -69,15 +74,10 @@
             if (selectedChatSummary.kind === "direct_chat") {
                 publish("directChatDetails", selectedChatSummary);
                 return;
-            } else if (selectedChatSummary.kind === "group_chat") {
+            } else {
                 publish("groupChatDetails", selectedChatSummary);
                 return;
             }
-            setRightPanelHistory([
-                {
-                    kind: "group_details",
-                },
-            ]);
         }
     }
 
@@ -156,6 +156,14 @@
         }
     }
 
+    function startVideoCall() {
+        publish("startVideoCall", {
+            chatId: selectedChatSummary.id,
+            callType: isPublic ? "broadcast" : "default",
+            join: videoCallInProgress,
+        });
+    }
+
     let chat = $derived(normaliseChatSummary($now, selectedChatSummary, $typersByContext));
 </script>
 
@@ -165,13 +173,18 @@
             {hasPinned}
             {selectedChatSummary}
             {blocked}
-            {onImportToCommunity}
             onShowGroupDetails={showGroupDetails}
             {onSearchChat} />
     {/if}
 {/snippet}
 
+{#snippet action(color: string)}
+    <Video {color} />
+{/snippet}
+
 <SectionHeader
+    onAction={canStartOrJoinVideoCall ? startVideoCall : undefined}
+    action={canStartOrJoinVideoCall ? action : undefined}
     menu={!readonly && !$anonUserStore ? menu : undefined}
     onBack={$restrictToSelectedChat ? undefined : clearSelection}>
     {#snippet avatar()}
@@ -226,13 +239,6 @@
             <ChatSubtext chat={selectedChatSummary} />
         {/if}
     {/snippet}
-
-    <!-- TODO - have to come back to this
-    {#snippet action()}
-        <ActiveVideoCallResume />
-        <ActiveBroadcastSummary />
-    {/snippet}
-    -->
 </SectionHeader>
 
 <style lang="scss">
