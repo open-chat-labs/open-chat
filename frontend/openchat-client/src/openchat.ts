@@ -3936,20 +3936,6 @@ export class OpenChat {
         serverEventsStore.update(fn);
     }
 
-    async #sendMessageWebRtc(
-        clientChat: ChatSummary,
-        message: NewUnconfirmedMessage,
-        threadRootMessageIndex: number | undefined,
-    ): Promise<void> {
-        rtcConnectionsManager.sendMessage([...selectedChatUserIdsStore.value], {
-            kind: "remote_user_sent_message",
-            id: clientChat.id,
-            message: serialiseMessageForRtc(message),
-            userId: currentUserIdStore.value,
-            threadRootMessageIndex,
-        });
-    }
-
     deleteFailedMessage(
         chatId: ChatIdentifier,
         messageId: bigint,
@@ -4016,6 +4002,7 @@ export class OpenChat {
             messageEvent.event,
         );
         const ledger = this.#extractLedgerFromContent(message.content);
+        const messageRecipients = [...selectedChatUserIdsStore.value];
 
         const sendMessagePromise: Promise<SendMessageResponse> = new Promise((resolve) => {
             this.#inflightMessagePromises.set(messageId, resolve);
@@ -4040,7 +4027,13 @@ export class OpenChat {
                         localUpdates.markUnconfirmedAccepted(messageContext, messageId);
 
                         if (!isTransfer(message.content)) {
-                            this.#sendMessageWebRtc(chat, message, threadRootMessageIndex);
+                            rtcConnectionsManager.sendMessage(messageRecipients, {
+                                kind: "remote_user_sent_message",
+                                id: chat.id,
+                                message: serialiseMessageForRtc(message),
+                                userId: currentUserIdStore.value,
+                                threadRootMessageIndex,
+                            });
                         }
                         return;
                     }
