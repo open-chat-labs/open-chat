@@ -9,6 +9,7 @@ export { default as IconButton } from "./components/buttons/IconButton.svelte";
 export { default as ChatSummary } from "./components/ChatSummary.svelte";
 export { default as Chip } from "./components/Chip.svelte";
 export { default as Container } from "./components/Container.svelte";
+export { default as CopyCard } from "./components/CopyCard.svelte";
 export { default as CountBadge } from "./components/CountBadge.svelte";
 export { default as Form } from "./components/forms/Form.svelte";
 export { default as Input } from "./components/forms/Input.svelte";

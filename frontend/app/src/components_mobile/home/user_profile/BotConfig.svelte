@@ -1,11 +1,11 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
-    import { BodySmall, Container, H2, IconButton, Label } from "component-lib";
+    import { BodySmall, Container, CopyCard, H2 } from "component-lib";
     import { OpenChat, type BotClientConfigData } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import Translatable from "../../Translatable.svelte";
+    import Markdown from "../Markdown.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -25,8 +25,9 @@
     }
 </script>
 
-{#snippet datum(title: string, value: string)}
-    <Container crossAxisAlignment={"start"}>
+{#snippet datum(title: string, body: string)}
+    <CopyCard {title} {body} />
+    <!-- <Container crossAxisAlignment={"start"}>
         <Container gap={"sm"} direction={"vertical"}>
             <BodySmall colour={"primary"}>
                 <Translatable resourceKey={i18nKey(title)}></Translatable>
@@ -43,39 +44,35 @@
                 <ContentCopy {color}></ContentCopy>
             {/snippet}
         </IconButton>
-    </Container>
+    </Container> -->
 {/snippet}
 
 <SlidingPageContent title={i18nKey("Bot configuration")} subtitle={i18nKey("Advanced options")}>
     <Container
-        padding={"xxl"}
+        padding={["xxl", "lg"]}
         gap={"lg"}
         height={{ kind: "fill" }}
         crossAxisAlignment={"center"}
         direction={"vertical"}>
-        <Container gap={"xl"} direction={"vertical"}>
-            <Container gap={"lg"} direction={"vertical"}>
-                <H2 width={{ kind: "fixed", size: "80%" }} fontWeight={"bold"} colour={"primary"}>
-                    <Translatable resourceKey={i18nKey("Building a bot")}></Translatable>
-                </H2>
+        <Container padding={["zero", "lg"]} gap={"xl"} direction={"vertical"}>
+            <H2 width={{ kind: "fixed", size: "80%" }} fontWeight={"bold"} colour={"primary"}>
+                <Translatable resourceKey={i18nKey("Building a bot")}></Translatable>
+            </H2>
 
-                <BodySmall>
-                    <Translatable
-                        resourceKey={i18nKey(
-                            "If you are creating an OpenChat bot you will need certain pieces of configuration data as described in the bot development documentation. Tap on the values below to copy the relevant config for this environment.",
-                        )}>
-                    </Translatable>
-                </BodySmall>
-
-                {#if botConfigData !== undefined}
-                    {@render datum("IC host URL", botConfigData?.icHost)}
-                    {@render datum(
-                        "OpenStorage index canister",
-                        botConfigData?.openStorageIndexCanister,
-                    )}
-                    {@render datum("OpenChat public key", botConfigData?.ocPublicKey)}
-                {/if}
-            </Container>
+            <BodySmall>
+                <Markdown
+                    text={"If you are creating an OpenChat bot you will need certain pieces of configuration data as described in the [bot development documentation](https://github.com/open-chat-labs/open-chat-bots). Tap on the values below to copy the relevant config for this environment."} />
+            </BodySmall>
+        </Container>
+        <Container gap={"lg"} direction={"vertical"}>
+            {#if botConfigData !== undefined}
+                {@render datum("IC host URL", botConfigData?.icHost)}
+                {@render datum(
+                    "OpenStorage index canister",
+                    botConfigData?.openStorageIndexCanister,
+                )}
+                {@render datum("OpenChat public key", botConfigData?.ocPublicKey)}
+            {/if}
         </Container>
     </Container>
 </SlidingPageContent>
