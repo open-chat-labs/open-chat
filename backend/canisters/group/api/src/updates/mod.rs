@@ -28,7 +28,6 @@ pub mod c2c_update_user_principal;
 pub mod cancel_invites;
 pub mod cancel_p2p_swap;
 pub mod change_role;
-pub mod claim_prize;
 pub mod convert_into_community;
 pub mod decline_invitation;
 pub mod delete_messages;
