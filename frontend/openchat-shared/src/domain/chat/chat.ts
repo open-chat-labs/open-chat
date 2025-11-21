@@ -1,3 +1,4 @@
+import { Type, type Static } from "@sinclair/typebox";
 import { ROLE_NONE } from "../../constants";
 import { emptyChatMetrics } from "../../utils";
 import type { AccessControlled, AccessGateConfig, UpdatedRules, VersionedRules } from "../access";
@@ -14,7 +15,7 @@ import type {
     CommunitySummary,
 } from "../community";
 import type { WalletConfig } from "../crypto";
-import type { DataContent } from "../data/data";
+import { type DataContent, DataContentSchema } from "../data/data";
 import type { OCError } from "../error";
 import type { OptionUpdate } from "../optionUpdate";
 import type {
@@ -40,6 +41,42 @@ import type { Referral, UserSummary } from "../user/user";
 
 export type CallerNotInGroup = { kind: "caller_not_in_group" };
 export type CanisterNotFound = { kind: "canister_not_found" };
+
+const DirectChatIdentifierSchema = Type.Object({
+    kind: Type.Literal("direct_chat"),
+    userId: Type.String()
+});
+export type DirectChatIdentifier = Static<typeof DirectChatIdentifierSchema>;
+
+const GroupChatIdentifierSchema = Type.Object({
+    kind: Type.Literal("group_chat"),
+    groupId: Type.String()
+});
+export type GroupChatIdentifier = Static<typeof GroupChatIdentifierSchema>;
+
+const ChannelIdentifierSchema = Type.Object({
+    kind: Type.Literal("channel"),
+    communityId: Type.String(),
+    channelId: Type.Number()
+});
+export type ChannelIdentifier = Static<typeof ChannelIdentifierSchema>;
+
+export type FavouriteChatsInitial = {
+    chats: ChatIdentifier[];
+    pinned: ChatIdentifier[];
+};
+
+export const MultipleUserChatIdentifierSchema = Type.Union([ChannelIdentifierSchema, GroupChatIdentifierSchema]);
+export type MultiUserChatIdentifier = ChannelIdentifier | GroupChatIdentifier;
+
+export const ChatIdentifierSchema = Type.Union([MultipleUserChatIdentifierSchema, DirectChatIdentifierSchema]);
+export type ChatIdentifier = MultiUserChatIdentifier | DirectChatIdentifier;
+
+const ThreadIdentifierSchema = Type.Object({
+    chatId: ChatIdentifierSchema,
+    threadRootMessageIndex: Type.Number(),
+});
+export type ThreadIdentifier = Static<typeof ThreadIdentifierSchema>;
 
 export type MessageContent =
     | FileContent
@@ -84,7 +121,8 @@ export type VideoCallContent = {
     callType: VideoCallType;
 };
 
-export type VideoCallType = "broadcast" | "default";
+export const VideoCallTypeSchema = Type.Union([Type.Literal("broadcast"), Type.Literal("default")]);
+export type VideoCallType = Static<typeof VideoCallTypeSchema>;
 
 export interface PrizeContentInitial {
     kind: "prize_content_initial";
@@ -194,13 +232,15 @@ export function canRetryMessage(content: MessageContent): boolean {
 
 export type IndexRange = [number, number];
 
-export interface PlaceholderContent {
-    kind: "placeholder_content";
-}
+export const PlaceholderContentSchema = Type.Object({
+    kind: Type.Literal("placeholder_content"),
+});
+export type PlaceholderContent = Static<typeof PlaceholderContentSchema>;
 
-export interface BotPlaceholderContent {
-    kind: "bot_placeholder_content";
-}
+export const BotPlaceholderContentSchema = Type.Object({
+    kind: Type.Literal("bot_placeholder_content"),
+});
+export type BotPlaceholderContent = Static<typeof BotPlaceholderContentSchema>;
 
 export type CryptocurrencyDeposit = {
     ledger: string;
@@ -297,51 +337,57 @@ export interface CryptocurrencyContent {
     transfer: CryptocurrencyTransfer;
 }
 
-export type GiphyImage = {
-    height: number;
-    width: number;
-    url: string;
-    mimeType: string;
-};
+export const GiphyImageSchema = Type.Object({
+    height: Type.Number(),
+    width: Type.Number(),
+    url: Type.String(),
+    mimeType: Type.String(),
+});
+export type GiphyImage = Static<typeof GiphyImageSchema>;
 
-export interface GiphyContent {
-    kind: "giphy_content";
-    caption?: string;
-    title: string;
-    desktop: GiphyImage; //will be "original" from the giphy api
-    mobile: GiphyImage; //will be "downsized_large" from the giphy api
-}
+export const GiphyContentSchema = Type.Object({
+    kind: Type.Literal("giphy_content"),
+    caption: Type.Optional(Type.String()),
+    title: Type.String(),
+    desktop: GiphyImageSchema, //will be "original" from the giphy api
+    mobile: GiphyImageSchema, //will be "downsized_large" from the giphy api
+})
+export type GiphyContent = Static<typeof GiphyContentSchema>;
 
 export type UserReferralCard = {
     kind: "user_referral_card";
 };
 
-export type ReportedMessageContent = {
-    kind: "reported_message_content";
-    total: number;
-    reports: MessageReport[];
-};
+export const MessageReportSchema = Type.Object({
+    notes: Type.Optional(Type.String()),
+    reasonCode: Type.Number(),
+    timestamp: Type.Number(),
+    reportedBy: Type.String(),
+});
+export type MessageReport = Static<typeof MessageReportSchema>;
 
-export type MessageReport = {
-    notes?: string;
-    reasonCode: number;
-    timestamp: number;
-    reportedBy: string;
-};
+export const ReportedMessageContentSchema = Type.Object({
+    kind: Type.Literal("reported_message_content"),
+    total: Type.Number(),
+    reports: Type.Array(MessageReportSchema),
+});
+export type ReportedMessageContent = Static<typeof ReportedMessageContentSchema>;
 
-export type MessageReminderCreatedContent = {
-    kind: "message_reminder_created_content";
-    notes?: string;
-    remindAt: number;
-    reminderId: bigint;
-    hidden: boolean;
-};
+export const MessageReminderCreatedContentSchema = Type.Object({
+    kind: Type.Literal("message_reminder_created_content"),
+    notes: Type.Optional(Type.String()),
+    remindAt: Type.Number(),
+    reminderId: Type.BigInt(),
+    hidden: Type.Boolean(),
+});
+export type MessageReminderCreatedContent = Static<typeof MessageReminderCreatedContentSchema>;
 
-export type MessageReminderContent = {
-    kind: "message_reminder_content";
-    notes?: string;
-    reminderId: bigint;
-};
+export const MessageReminderContentSchema = Type.Object({
+    kind: Type.Literal("message_reminder_content"),
+    notes: Type.Optional(Type.String()),
+    reminderId: Type.BigInt(),
+});
+export type MessageReminderContent = Static<typeof MessageReminderContentSchema>;
 
 export interface PrizeWinnerContent {
     kind: "prize_winner_content";
@@ -349,22 +395,23 @@ export interface PrizeWinnerContent {
     prizeMessageIndex: number;
 }
 
-export interface PrizeContent {
-    kind: "prize_content";
-    prizesRemaining: number;
-    prizesPending: number;
-    diamondOnly: boolean;
-    lifetimeDiamondOnly: boolean;
-    uniquePersonOnly: boolean;
-    streakOnly: number;
-    winnerCount: number;
-    userIsWinner: boolean;
-    token: string;
-    endDate: bigint;
-    caption?: string;
-    requiresCaptcha: boolean;
-    minChitEarned: number;
-}
+export const PrizeContentSchema = Type.Object({
+    kind: Type.Literal("prize_content"),
+    prizesRemaining: Type.Number(),
+    prizesPending: Type.Number(),
+    diamondOnly: Type.Boolean(),
+    lifetimeDiamondOnly: Type.Boolean(),
+    uniquePersonOnly: Type.Boolean(),
+    streakOnly: Type.Number(),
+    winnerCount: Type.Number(),
+    userIsWinner: Type.Boolean(),
+    token: Type.String(),
+    endDate: Type.BigInt(),
+    caption: Type.Optional(Type.String()),
+    requiresCaptcha: Type.Boolean(),
+    minChitEarned: Type.Number(),
+});
+export type PrizeContent = Static<typeof PrizeContentSchema>;
 
 export interface P2PSwapContent {
     kind: "p2p_swap_content";
@@ -519,109 +566,125 @@ export interface SnsProposal extends ProposalCommon {
     action: number;
 }
 
-export interface ImageContent extends DataContent {
-    kind: "image_content";
-    height: number;
-    width: number;
-    thumbnailData: string;
-    caption?: string;
-    mimeType: string;
-}
+export const ImageContentSchema = Type.Intersect([DataContentSchema, Type.Object({
+    kind: Type.Literal("image_content"),
+    height: Type.Number(),
+    width: Type.Number(),
+    thumbnailData: Type.String(),
+    caption: Type.Optional(Type.String()),
+    mimeType: Type.String(),
+})]);
+export type ImageContent = Static<typeof ImageContentSchema>;
 
-export interface MemeFighterContent {
-    kind: "meme_fighter_content";
-    height: number;
-    width: number;
-    url: string;
-}
+export const MemeFighterContentSchema = Type.Object({
+    kind: Type.Literal("meme_fighter_content"),
+    height: Type.Number(),
+    width: Type.Number(),
+    url: Type.String(),
+});
+export type MemeFighterContent = Static<typeof MemeFighterContentSchema>;
 
-export interface VideoContent {
-    kind: "video_content";
-    height: number;
-    width: number;
-    thumbnailData: string;
-    caption?: string;
-    mimeType: string;
-    imageData: DataContent;
-    videoData: DataContent;
-}
+export const VideoContentSchema = Type.Object({
+    kind: Type.Literal("video_content"),
+    height: Type.Number(),
+    width: Type.Number(),
+    thumbnailData: Type.String(),
+    caption: Type.Optional(Type.String()),
+    mimeType: Type.String(),
+    imageData: DataContentSchema,
+    videoData: DataContentSchema,
+});
+export type VideoContent = Static<typeof VideoContentSchema>;
 
-export interface AudioContent extends DataContent {
-    kind: "audio_content";
-    caption?: string;
-    mimeType: string;
-}
+export const AudioContentSchema = Type.Intersect([DataContentSchema, Type.Object({
+    kind: Type.Literal("audio_content"),
+    caption: Type.Optional(Type.String()),
+    mimeType: Type.String(),
+})]);
+export type AudioContent = Static<typeof AudioContentSchema>;
 
-export type DeletedContent = {
-    kind: "deleted_content";
-    deletedBy: string;
-    timestamp: bigint;
-};
+export const DeletedContentSchema = Type.Object({
+    kind: Type.Literal("deleted_content"),
+    deletedBy: Type.String(),
+    timestamp: Type.BigInt(),
+});
+export type DeletedContent = Static<typeof DeletedContentSchema>;
 
-export type BlockedContent = {
-    kind: "blocked_content";
-};
+export const BlockedContentSchema = Type.Object({
+    kind: Type.Literal("blocked_content"),
+});
+export type BlockedContent = Static<typeof BlockedContentSchema>;
 
-export type PollContent = {
-    kind: "poll_content";
-    votes: PollVotes;
-    config: PollConfig;
-    ended: boolean;
-};
+export const PollConfigSchema = Type.Object({
+    allowMultipleVotesPerUser: Type.Boolean(),
+    allowUserToChangeVote: Type.Boolean(),
+    text: Type.Optional(Type.String()),
+    showVotesBeforeEndDate: Type.Boolean(),
+    endDate: Type.Optional(Type.BigInt()),
+    anonymous: Type.Boolean(),
+    options: Type.Array(Type.String()),
+});
+export type PollConfig = Static<typeof PollConfigSchema>;
 
-export type PollVotes = {
-    total: TotalPollVotes;
-    user: number[];
-};
+const AnonymousPollVotesSchema = Type.Object({
+    kind: Type.Literal("anonymous_poll_votes"),
+    votes: Type.Record(Type.Number(), Type.Number()),
+});
+export type AnonymousPollVotes = Static<typeof AnonymousPollVotesSchema>;
 
-export type PollConfig = {
-    allowMultipleVotesPerUser: boolean;
-    allowUserToChangeVote: boolean;
-    text?: string;
-    showVotesBeforeEndDate: boolean;
-    endDate?: bigint;
-    anonymous: boolean;
-    options: string[];
-};
+const VisiblePollVotesSchema = Type.Object({
+    kind: Type.Literal("visible_poll_votes"),
+    votes: Type.Record(Type.Number(), Type.Array(Type.String())),
+})
+export type VisiblePollVotes = Static<typeof VisiblePollVotesSchema>;
 
-export type TotalPollVotes = AnonymousPollVotes | VisiblePollVotes | HiddenPollVotes;
+const HiddenPollVotesSchema = Type.Object({
+    kind: Type.Literal("hidden_poll_votes"),
+    votes: Type.Number(),
+});
+export type HiddenPollVotes = Static<typeof HiddenPollVotesSchema>;
 
-export type AnonymousPollVotes = {
-    kind: "anonymous_poll_votes";
-    votes: Record<number, number>;
-};
+const TotalPollVotesSchema = Type.Union([AnonymousPollVotesSchema, VisiblePollVotesSchema, HiddenPollVotesSchema]);
+export type TotalPollVotes = Static<typeof TotalPollVotesSchema>;
 
-export type VisiblePollVotes = {
-    kind: "visible_poll_votes";
-    votes: Record<number, string[]>;
-};
+export const PollVotesSchema = Type.Object({
+    total: TotalPollVotesSchema,
+    user: Type.Array(Type.Number()),
+});
+export type PollVotes = Static<typeof PollVotesSchema>;
 
-export type HiddenPollVotes = {
-    kind: "hidden_poll_votes";
-    votes: number;
-};
+export const PollContentSchema = Type.Object({
+    kind: Type.Literal("poll_content"),
+    votes: PollVotesSchema,
+    config: PollConfigSchema,
+    ended: Type.Boolean(),
+})
+export type PollContent = Static<typeof PollContentSchema>
 
-export interface TextContent {
-    kind: "text_content";
-    text: string;
-}
+export const TextContentSchema = Type.Object({
+    kind: Type.Literal("text_content"),
+    text: Type.String(),
+})
+export type TextContent = Static<typeof TextContentSchema>;
 
 export type StoredMediaContent = FileContent | VideoContent | AudioContent | ImageContent;
 
-export interface FileContent extends DataContent {
-    kind: "file_content";
-    name: string;
-    caption?: string;
-    mimeType: string;
-    fileSize: number;
-}
+export const FileContentSchema = Type.Intersect([DataContentSchema, Type.Object({
+    kind: Type.Literal("file_content"),
+    name: Type.String(),
+    caption: Type.Optional(Type.String()),
+    mimeType: Type.String(),
+    fileSize: Type.Number(),
+})]);
+export type FileContent = Static<typeof FileContentSchema>;
 
 export type ReplyContext = RawReplyContext | RehydratedReplyContext;
 
-export type MessageContext = {
-    chatId: ChatIdentifier;
-    threadRootMessageIndex?: number;
-};
+const MessageContextSchema = Type.Object({
+    chatId: ChatIdentifierSchema,
+    threadRootMessageIndex: Type.Optional(Type.Number()),
+})
+export type MessageContext = Static<typeof MessageContextSchema>;
 
 export function messageContextFromString(ctxStr: string): MessageContext {
     return JSON.parse(ctxStr);
@@ -644,11 +707,12 @@ export function messageContextToChatListScope(ctx: MessageContext): ChatListScop
     }
 }
 
-export type RawReplyContext = {
-    kind: "raw_reply_context";
-    eventIndex: number;
-    sourceContext?: MessageContext;
-};
+const RawReplyContextSchema = Type.Object({
+    kind: Type.Literal("raw_reply_context"),
+    eventIndex: Type.Number(),
+    sourceContext: Type.Optional(MessageContextSchema),
+});
+export type RawReplyContext = Static<typeof RawReplyContextSchema>;
 
 export type RehydratedReplyContext = {
     kind: "rehydrated_reply_context";
@@ -1123,9 +1187,6 @@ export type DirectChatsInitial = {
     summaries: DirectChatSummary[];
 };
 
-export type ChatIdentifier = MultiUserChatIdentifier | DirectChatIdentifier;
-export type MultiUserChatIdentifier = ChannelIdentifier | GroupChatIdentifier;
-
 export type ExpiredEventsRange = { kind: "expired_events_range"; start: number; end: number };
 export type ExpiredMessagesRange = { kind: "expired_messages_range"; start: number; end: number };
 
@@ -1188,32 +1249,6 @@ export function chatIdentifiersEqual(
             return b.kind === "group_chat" && a.groupId === b.groupId;
     }
 }
-
-export type ThreadIdentifier = {
-    chatId: ChatIdentifier;
-    threadRootMessageIndex: number;
-};
-
-export type DirectChatIdentifier = {
-    kind: "direct_chat";
-    userId: string;
-};
-
-export type GroupChatIdentifier = {
-    kind: "group_chat";
-    groupId: string;
-};
-
-export type ChannelIdentifier = {
-    kind: "channel";
-    communityId: string;
-    channelId: number;
-};
-
-export type FavouriteChatsInitial = {
-    chats: ChatIdentifier[];
-    pinned: ChatIdentifier[];
-};
 
 export type UserCanisterChannelSummary = {
     id: ChannelIdentifier;

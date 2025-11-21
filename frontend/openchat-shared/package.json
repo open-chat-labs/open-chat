@@ -20,6 +20,7 @@
     "author": "julian.jelfs@gmail.com",
     "dependencies": {
         "@dfinity/ledger-icrc": "^4.0.0",
+        "@sinclair/typebox": "^0.34.33",
         "drange": "^2.0.1",
         "rollbar": "^2.26.5"
     },

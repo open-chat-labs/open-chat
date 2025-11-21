@@ -1,15 +1,18 @@
 import type { Principal } from "@icp-sdk/core/principal";
+import { Type, type Static } from "@sinclair/typebox";
 
-export interface BlobReference {
-    blobId: bigint;
-    canisterId: string;
-}
+export const BlobReferenceSchema = Type.Object({
+    blobId: Type.BigInt(),
+    canisterId: Type.String(),
+})
+export type BlobReference = Static<typeof BlobReferenceSchema>;
 
-export interface DataContent {
-    blobReference?: BlobReference;
-    blobData?: Uint8Array;
-    blobUrl?: string;
-}
+export const DataContentSchema = Type.Object({
+    blobReference: Type.Optional(BlobReferenceSchema),
+    blobData: Type.Optional(Type.Uint8Array()),
+    blobUrl: Type.Optional(Type.String()),
+});
+export type DataContent = Static<typeof DataContentSchema>;
 
 export type StorageStatus = {
     byteLimit: number;
