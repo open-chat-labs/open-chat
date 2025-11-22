@@ -349,6 +349,12 @@
         margin-top: -1.75rem;
     }
 
+    :global(.container.group_details_header) {
+        background-size: cover !important;
+        background-position: center !important;
+        background-repeat: no-repeat !important;
+    }
+
     :global(.container.group_details_header > .icon_button:first-child) {
         margin-inline-end: auto;
     }
