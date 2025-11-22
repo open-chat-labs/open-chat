@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { createLocalStorageStore } from "@src/utils/store";
-    import { Button, Container, Form, Switch } from "component-lib";
+    import { BodySmall, Button, Container, Form, Switch } from "component-lib";
     import type { CreatedUser, OpenChat, UserOrUserGroup, UserSummary } from "openchat-client";
     import { AuthProvider, identityStateStore, selectedAuthProviderStore } from "openchat-client";
     import { getContext, onMount } from "svelte";
@@ -207,12 +207,14 @@
                     onSelectUser={selectUser} />
             {/if}
 
-            <Switch reverse bind:checked={termsAccepted}>
-                <Container onClick={onShowGuidelines}>
-                    <Translatable
-                        resourceKey={i18nKey("I agree to the OpenChat terms & conditions")} />
-                </Container>
-            </Switch>
+            <Container onClick={onShowGuidelines} padding={["zero", "md"]}>
+                <Switch reverse bind:checked={termsAccepted}>
+                    <BodySmall onClick={onShowGuidelines}>
+                        <Translatable
+                            resourceKey={i18nKey("I agree to the OpenChat terms & conditions")} />
+                    </BodySmall>
+                </Switch>
+            </Container>
 
             {#if error !== undefined}
                 <div class="error">
@@ -240,13 +242,3 @@
         {/if}
     </Container>
 </div> -->
-
-<style lang="scss">
-    :global(.guidelines-modal .card .header:not(.open) .arrow path) {
-        fill: var(--txt);
-    }
-    :global(.username-wrapper .results) {
-        max-height: 250px;
-        @include nice-scrollbar();
-    }
-</style>

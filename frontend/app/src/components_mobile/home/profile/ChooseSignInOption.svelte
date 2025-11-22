@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Container, Form, Input } from "component-lib";
+    import { Body, Container, Form, Input } from "component-lib";
     import { AuthProvider, selectedAuthProviderStore, type OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -147,10 +147,10 @@
     {/each}
 
     {#if !showAllOptions && options.length > 1}
-        <div class="more">
-            <a role="button" tabindex="0" onclick={() => (showMore = true)}>
+        <Container mainAxisAlignment={"center"} onClick={() => (showMore = true)}>
+            <Body width={{ kind: "hug" }} colour={"secondary"}>
                 <Translatable resourceKey={i18nKey("loginDialog.showMore")} />
-            </a>
-        </div>
+            </Body>
+        </Container>
     {/if}
 </Container>
