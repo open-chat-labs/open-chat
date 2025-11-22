@@ -1,11 +1,10 @@
 <script lang="ts">
+    import { Container, Form, Input } from "component-lib";
     import { AuthProvider, selectedAuthProviderStore, type OpenChat } from "openchat-client";
     import { getContext } from "svelte";
-    import EmailIcon from "svelte-material-icons/EmailOutline.svelte";
+    import { _ } from "svelte-i18n";
     import SendIcon from "svelte-material-icons/Send.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
-    import Button from "../../Button.svelte";
-    import Input from "../../Input.svelte";
+    import { i18nKey, interpolate } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import SignInOption from "./SignInOption.svelte";
 
@@ -103,46 +102,47 @@
     });
 </script>
 
-<div class="sign-in-options">
+<Container gap={"lg"} direction={"vertical"}>
     {#each options as provider, i}
         {#if showAllOptions || i === 0}
-            <div
-                class={`option ${
+            <Container
+                supplementalClass={`option ${
                     showAllOptions && options.length > 1 && i === 0 ? "separate" : ""
                 }`}>
                 {#if provider === AuthProvider.EMAIL}
-                    <div class="email">
-                        <div class="email-icon icon">
-                            <EmailIcon size={"1.5em"} color={"var(--txt-light)"} />
-                        </div>
-                        <div class="email-txt">
-                            <Input
-                                bind:value={email}
-                                minlength={10}
-                                maxlength={200}
-                                onEnter={() => onLogin(provider)}
-                                placeholder={i18nKey(
-                                    mode === "signin"
-                                        ? "loginDialog.signinEmailPlaceholder"
-                                        : "loginDialog.signupEmailPlaceholder",
-                                )} />
-                        </div>
-                        <Button disabled={emailInvalid} tiny onClick={() => onLogin(provider)}>
-                            <div class="center">
+                    <Form onSubmit={() => onLogin(provider)}>
+                        <Container gap={"lg"} crossAxisAlignment={"center"}>
+                            <Container width={{ kind: "fill" }}>
+                                <Input
+                                    bind:value={email}
+                                    minlength={10}
+                                    maxlength={200}
+                                    placeholder={interpolate(
+                                        $_,
+                                        i18nKey(
+                                            mode === "signin"
+                                                ? "loginDialog.signinEmailPlaceholder"
+                                                : "loginDialog.signupEmailPlaceholder",
+                                        ),
+                                    )} />
+                            </Container>
+                            <Container
+                                width={{ kind: "hug" }}
+                                onClick={emailInvalid ? undefined : () => onLogin(provider)}>
                                 <SendIcon size={"1.5em"} />
-                            </div>
-                        </Button>
-                    </div>
+                            </Container>
+                        </Container>
+                    </Form>
                 {:else}
                     <SignInOption
-                        {provider}
+                        hollow={provider !== AuthProvider.PASSKEY}
                         name={i18nKey(
                             mode === "signin" ? "loginDialog.signinWith" : "loginDialog.signupWith",
                             { provider: providerName(provider) },
                         )}
                         onClick={() => onLogin(provider)} />
                 {/if}
-            </div>
+            </Container>
         {/if}
     {/each}
 
@@ -153,101 +153,4 @@
             </a>
         </div>
     {/if}
-</div>
-
-<style lang="scss">
-    $height: 45px;
-
-    :global(.sign-in-options .email .input-wrapper) {
-        margin-bottom: 0;
-    }
-
-    :global(.sign-in-options .email button) {
-        height: $height;
-        width: 50px;
-        padding: 0 $sp3 !important;
-        border-radius: 0 $sp2 $sp2 0;
-    }
-
-    :global(.sign-in-options .email .input-wrapper input) {
-        border-radius: 0;
-        box-shadow: none;
-        border-right: 1px solid var(--bd);
-        height: $height;
-    }
-
-    :global(.sign-in-options .email [data-lastpass-icon-root]) {
-        display: none;
-    }
-
-    :global(.sign-in-options button.tiny) {
-        padding: $sp2 $sp4;
-        min-height: 45px;
-        min-width: auto;
-    }
-
-    .center {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    a:hover {
-        text-decoration: underline;
-    }
-
-    .sign-in-options {
-        display: flex;
-        gap: 12px;
-        flex-direction: column;
-        align-items: center;
-        margin-bottom: $sp3;
-        width: 100%;
-
-        .option {
-            width: 100%;
-            max-width: 440px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-
-            .email {
-                flex: 1;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-
-                .email-txt {
-                    flex: auto;
-                }
-            }
-
-            &.separate {
-                margin-bottom: $sp2;
-                border-bottom: 1px solid var(--bd);
-                padding-bottom: $sp4;
-            }
-        }
-
-        .icon {
-            flex: 0 0 60px;
-            width: 60px;
-            height: $height;
-            border-radius: $sp2 0 0 $sp2;
-            border-right: 1px solid var(--bd);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: var(--input-bg);
-
-            .nfid-img {
-                width: 40px;
-            }
-
-            .eth-img,
-            .sol-img {
-                width: 30px;
-            }
-        }
-    }
-</style>
+</Container>

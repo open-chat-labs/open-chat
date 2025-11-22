@@ -213,10 +213,6 @@
                     {#snippet icon(color)}
                         <Video {color} />
                     {/snippet}
-                    <Translatable
-                        resourceKey={i18nKey(
-                            videoCallInProgress ? "Join video call" : "Start video call",
-                        )} />
                 </IconButton>
                 {#if canEdit}
                     <IconButton onclick={editGroup} size={"md"} mode={"dark"}>

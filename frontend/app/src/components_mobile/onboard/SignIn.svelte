@@ -6,7 +6,6 @@
         AuthProvider,
         identityStateStore,
         OpenChat,
-        querystringStore,
         selectedAuthProviderStore,
     } from "openchat-client";
     import { getContext } from "svelte";
@@ -33,7 +32,8 @@
     let email = $state(localStorage.getItem(configKeys.selectedAuthEmail) ?? "");
     let verificationCode: string | undefined = $state(undefined);
     let emailSigninHandler = new EmailSigninHandler(client, "registration", true);
-    let restrictTo = $derived(new Set($querystringStore.getAll("auth")));
+    // let restrictTo = $derived(new Set($querystringStore.getAll("auth")));
+    const restrictTo = new Set(["II", "PASSKEY"]);
     let loggingInWithEmail = $derived(
         loginState === "logging-in" && $selectedAuthProviderStore === AuthProvider.EMAIL,
     );

@@ -1,21 +1,14 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { createLocalStorageStore } from "@src/utils/store";
-    import { CommonButton, Container } from "component-lib";
+    import { Button, Container, Form, Switch } from "component-lib";
     import type { CreatedUser, OpenChat, UserOrUserGroup, UserSummary } from "openchat-client";
-    import {
-        AuthProvider,
-        identityStateStore,
-        mobileWidth,
-        selectedAuthProviderStore,
-    } from "openchat-client";
+    import { AuthProvider, identityStateStore, selectedAuthProviderStore } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import AlertBox from "../AlertBox.svelte";
-    import Button from "../Button.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import FindUser from "../FindUser.svelte";
     import TermsContent from "../landingpages/TermsContent.svelte";
-    import Legend from "../Legend.svelte";
     import ModalContent from "../ModalContent.svelte";
     import Overlay from "../Overlay.svelte";
     import Translatable from "../Translatable.svelte";
@@ -41,6 +34,7 @@
     let referringUser: UserSummary | undefined = $state(undefined);
     let createdUser: CreatedUser | undefined = undefined;
     let passkeyCreated = $state(false);
+    let termsAccepted = $state(false);
 
     function onShowGuidelines() {
         showGuidelines = true;
@@ -175,7 +169,7 @@
             {/snippet}
             {#snippet footer(onClose)}
                 <span>
-                    <Button onClick={() => onClose?.()} small={!$mobileWidth} tiny={$mobileWidth}>
+                    <Button onClick={() => onClose?.()}>
                         <Translatable resourceKey={i18nKey("register.agree")} />
                     </Button>
                 </span>
@@ -194,9 +188,8 @@
         </p>
     </AlertBox>
 {:else}
-    <form class="username-wrapper" onsubmit={register}>
-        <div class="form-element">
-            <Legend label={i18nKey("username")} rules={i18nKey("usernameRules")} />
+    <Form onSubmit={register}>
+        <Container gap={"lg"} direction={"vertical"}>
             <UsernameInput
                 {client}
                 disabled={busy}
@@ -204,50 +197,49 @@
                 bind:username
                 bind:usernameValid
                 bind:errorMsg={error} />
-        </div>
 
-        <div class="form-element">
             {#if referringUser !== undefined}
-                <Legend label={i18nKey("register.referredBy")} />
                 <UserPill onDeleteUser={deleteUser} userOrGroup={referringUser} />
             {:else}
-                <Legend label={i18nKey("register.findReferrer")} />
                 <FindUser
-                    placeholderKey={"register.searchForReferrer"}
+                    placeholderKey={"register.findReferrer"}
                     {userLookup}
                     onSelectUser={selectUser} />
             {/if}
-        </div>
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div onclick={onShowGuidelines} class="smallprint">
-            <Translatable resourceKey={i18nKey("register.disclaimer")} />
-        </div>
-        {#if error !== undefined}
-            <div class="error">
-                <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
-            </div>
-        {/if}
-    </form>
+
+            <Switch reverse bind:checked={termsAccepted}>
+                <Container onClick={onShowGuidelines}>
+                    <Translatable
+                        resourceKey={i18nKey("I agree to the OpenChat terms & conditions")} />
+                </Container>
+            </Switch>
+
+            {#if error !== undefined}
+                <div class="error">
+                    <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
+                </div>
+            {/if}
+        </Container>
+    </Form>
 {/if}
 
-<div class="footer">
+<Button
+    width={{ kind: "fill" }}
+    disabled={!termsAccepted || !usernameValid || busy}
+    loading={checkingUsername || busy}
+    onClick={register}>
+    <Translatable resourceKey={i18nKey("Start my journey")} />
+</Button>
+
+<!-- <div class="footer">
     <Container gap={"md"} mainAxisAlignment={"end"} crossAxisAlignment={"end"}>
         {#if badCode}
             <CommonButton mode={"default"} onClick={clearCodeAndLogout} size={"small_text"}>
                 <Translatable resourceKey={i18nKey("cancel")}></Translatable>
             </CommonButton>
         {/if}
-        <CommonButton
-            mode={"active"}
-            disabled={!usernameValid || busy}
-            loading={checkingUsername || busy}
-            onClick={register}
-            size={"medium"}>
-            <Translatable resourceKey={i18nKey("register.proceed")} />
-        </CommonButton>
     </Container>
-</div>
+</div> -->
 
 <style lang="scss">
     :global(.guidelines-modal .card .header:not(.open) .arrow path) {
@@ -256,41 +248,5 @@
     :global(.username-wrapper .results) {
         max-height: 250px;
         @include nice-scrollbar();
-    }
-
-    .username-wrapper {
-        margin-bottom: $sp4;
-        width: 100%;
-    }
-
-    .smallprint {
-        margin-top: $sp4;
-        align-self: flex-start;
-        @include font(light, normal, fs-60);
-        color: var(--primary);
-        cursor: pointer;
-        text-decoration: none;
-
-        @media (hover: hover) {
-            &:hover {
-                text-decoration: underline;
-            }
-        }
-    }
-
-    .footer {
-        align-self: flex-end;
-    }
-
-    .error {
-        margin-top: $sp4;
-    }
-
-    .main {
-        margin-bottom: $sp3;
-    }
-
-    .sub {
-        color: var(--txt-light);
     }
 </style>
