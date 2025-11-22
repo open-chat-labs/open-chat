@@ -37,6 +37,7 @@ impl SubscriptionRemover {
 
             if !subscriptions_to_remove.is_empty() {
                 let count = subscriptions_to_remove.len();
+                let user_ids: Vec<_> = subscriptions_to_remove.keys().map(|u| u.to_string()).collect();
                 if let Err(error) = self
                     .ic_agent
                     .remove_subscriptions(&self.index_canister_id, subscriptions_to_remove)
@@ -44,7 +45,7 @@ impl SubscriptionRemover {
                 {
                     error!(?error, "Failed to remove subscriptions");
                 } else {
-                    info!("Removed {count} subscriptions");
+                    info!(?user_ids, "Removed {count} subscriptions");
                 }
             }
 

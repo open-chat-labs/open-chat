@@ -113,7 +113,7 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
     const id = Date.now().toString();
     console.debug("SW: push notification received", id);
     if (!event.data) {
-        console.debug("SW: notification data is empty", id);
+        console.error("SW: notification data is empty", id);
         return;
     }
 
@@ -124,7 +124,6 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
 
     const webPushNotification = decodeWebPushNotification(bytes, timestamp);
     if (webPushNotification === undefined) {
-        console.debug("SW: unable to decode notification", id);
         return;
     }
 

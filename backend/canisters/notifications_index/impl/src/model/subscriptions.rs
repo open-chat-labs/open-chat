@@ -1,18 +1,17 @@
-use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{HashMap, VecDeque};
-use types::{SubscriptionInfo, UserId};
+use types::{SubscriptionInfo, SubscriptionKeys, TimestampMillis, UserId};
 
-#[derive(CandidType, Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct Subscriptions {
-    subscriptions: HashMap<UserId, VecDeque<SubscriptionInfo>>,
+    subscriptions: HashMap<UserId, VecDeque<SubscriptionInfoInternal>>,
     total: u64,
 }
 
 impl Subscriptions {
     // Returns any subscriptions which were removed
-    pub fn push(&mut self, user_id: UserId, subscription: SubscriptionInfo) -> Vec<SubscriptionInfo> {
+    pub fn push(&mut self, user_id: UserId, subscription: SubscriptionInfoInternal) -> Vec<SubscriptionInfoInternal> {
         let mut removed = Vec::new();
         match self.subscriptions.entry(user_id) {
             Occupied(e) => {
@@ -41,7 +40,7 @@ impl Subscriptions {
         }
     }
 
-    pub fn remove(&mut self, user_id: UserId, endpoint: &str) -> Option<SubscriptionInfo> {
+    pub fn remove(&mut self, user_id: UserId, endpoint: &str) -> Option<SubscriptionInfoInternal> {
         let mut removed = None;
         if let Occupied(mut e) = self.subscriptions.entry(user_id) {
             let subs = e.get_mut();
@@ -70,11 +69,36 @@ impl Subscriptions {
         }
     }
 
+    pub fn get_by_user(&self, user_id: &UserId) -> Vec<SubscriptionInfoInternal> {
+        self.subscriptions
+            .get(user_id)
+            .map_or(Vec::new(), |subs| subs.iter().cloned().collect())
+    }
+
     pub fn total(&self) -> u64 {
         self.total
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (&UserId, &VecDeque<SubscriptionInfo>)> {
+    pub fn iter(&self) -> impl Iterator<Item = (&UserId, &VecDeque<SubscriptionInfoInternal>)> {
         self.subscriptions.iter()
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct SubscriptionInfoInternal {
+    #[serde(rename = "a", default)]
+    pub added: TimestampMillis,
+    #[serde(rename = "e", alias = "endpoint")]
+    pub endpoint: String,
+    #[serde(rename = "k", alias = "keys")]
+    pub keys: SubscriptionKeys,
+}
+
+impl From<SubscriptionInfoInternal> for SubscriptionInfo {
+    fn from(value: SubscriptionInfoInternal) -> Self {
+        SubscriptionInfo {
+            endpoint: value.endpoint,
+            keys: value.keys,
+        }
     }
 }

@@ -32,7 +32,6 @@ fn main() {
     generate_ts_method!(group, cancel_invites);
     generate_ts_method!(group, cancel_p2p_swap);
     generate_ts_method!(group, change_role);
-    generate_ts_method!(group, claim_prize);
     generate_ts_method!(group, convert_into_community);
     generate_ts_method!(group, decline_invitation);
     generate_ts_method!(group, delete_messages);

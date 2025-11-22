@@ -1,4 +1,5 @@
-import type { ChatIdentifier, NewUnconfirmedMessage, VideoCallType } from "../chat/chat";
+import { type Static, Type } from "@sinclair/typebox";
+import { ChatIdentifierSchema, type NewUnconfirmedMessage, VideoCallTypeSchema } from "../chat/chat";
 
 export type WebRtcMessage =
     | RemoteUserStoppedTyping
@@ -12,65 +13,77 @@ export type WebRtcMessage =
     | RemoteVideoCallStarted
     | RemoteVideoCallEnded;
 
-type WebRtcMessageCommon = {
-    id: ChatIdentifier;
-    userId: string;
-    threadRootMessageIndex?: number;
-};
+export const WebRtcMessageCommonSchema = Type.Object({
+    id: ChatIdentifierSchema,
+    userId: Type.String(),
+    threadRootMessageIndex: Type.Optional(Type.Number()),
+})
+export type WebRtcMessageCommon = Static<typeof WebRtcMessageCommonSchema>;
 
-export type RemoteVideoCallStarted = WebRtcMessageCommon & {
-    kind: "remote_video_call_started";
-    messageId: bigint;
-    callType: VideoCallType;
-};
+const RemoteVideoCallStartedSchema = Type.Intersect([WebRtcMessageCommonSchema, Type.Object({
+    kind: Type.Literal("remote_video_call_started"),
+    messageId: Type.BigInt(),
+    callType: VideoCallTypeSchema,
+})]);
+export type RemoteVideoCallStarted = Static<typeof RemoteVideoCallStartedSchema>;
 
-export type RemoteVideoCallEnded = WebRtcMessageCommon & {
-    kind: "remote_video_call_ended";
-    messageId: bigint;
-};
+const RemoteVideoCallEndedSchema = Type.Intersect([WebRtcMessageCommonSchema, Type.Object({
+    kind: Type.Literal("remote_video_call_ended"),
+    messageId: Type.BigInt(),
+})]);
+export type RemoteVideoCallEnded = Static<typeof RemoteVideoCallEndedSchema>;
 
-export type CurrentUserTyping = WebRtcMessageCommon & {
-    kind: "current_user_typing";
-};
+const CurrentUserTypingSchema = Type.Intersect([WebRtcMessageCommonSchema, Type.Object({
+    kind: Type.Literal("current_user_typing"),
+})]);
+export type CurrentUserTyping = Static<typeof CurrentUserTypingSchema>;
 
-export type CurrentUserStoppedTyping = WebRtcMessageCommon & {
-    kind: "current_user_stopped_typing";
-};
+const CurrentUserStoppedTypingSchema = Type.Intersect([WebRtcMessageCommonSchema, Type.Object({
+    kind: Type.Literal("current_user_stopped_typing"),
+})]);
+export type CurrentUserStoppedTyping = Static<typeof CurrentUserStoppedTypingSchema>;
 
-export type RemoteUserTyping = WebRtcMessageCommon & {
-    kind: "remote_user_typing";
-};
+const RemoteUserTypingSchema = Type.Intersect([WebRtcMessageCommonSchema, Type.Object({
+    kind: Type.Literal("remote_user_typing"),
+})]);
+export type RemoteUserTyping = Static<typeof RemoteUserTypingSchema>;
 
-export type RemoteUserStoppedTyping = WebRtcMessageCommon & {
-    kind: "remote_user_stopped_typing";
-};
+const RemoteUserStoppedTypingSchema = Type.Intersect([WebRtcMessageCommonSchema, Type.Object({
+    kind: Type.Literal("remote_user_stopped_typing"),
+})]);
+export type RemoteUserStoppedTyping = Static<typeof RemoteUserStoppedTypingSchema>;
 
-export type RemoteUserToggledReaction = WebRtcMessageCommon & {
-    kind: "remote_user_toggled_reaction";
-    messageId: bigint;
-    reaction: string;
-    added: boolean;
-};
+const RemoteUserToggledReactionSchema = Type.Intersect([WebRtcMessageCommonSchema, Type.Object({
+    kind: Type.Literal("remote_user_toggled_reaction"),
+    messageId: Type.BigInt(),
+    reaction: Type.String(),
+    added: Type.Boolean(),
+})]);
+export type RemoteUserToggledReaction = Static<typeof RemoteUserToggledReactionSchema>;
 
-export type RemoteUserRemovedMessage = WebRtcMessageCommon & {
-    kind: "remote_user_removed_message";
-    messageId: bigint;
-};
+const RemoteUserRemovedMessageSchema = Type.Intersect([WebRtcMessageCommonSchema, Type.Object({
+    kind: Type.Literal("remote_user_removed_message"),
+    messageId: Type.BigInt(),
+})]);
+export type RemoteUserRemovedMessage = Static<typeof RemoteUserRemovedMessageSchema>;
 
-export type RemoteUserDeletedMessage = WebRtcMessageCommon & {
-    kind: "remote_user_deleted_message";
-    messageId: bigint;
-};
+const RemoteUserDeletedMessageSchema = Type.Intersect([WebRtcMessageCommonSchema, Type.Object({
+    kind: Type.Literal("remote_user_deleted_message"),
+    messageId: Type.BigInt(),
+})]);
+export type RemoteUserDeletedMessage = Static<typeof RemoteUserDeletedMessageSchema>;
 
-export type RemoteUserUndeletedMessage = WebRtcMessageCommon & {
-    kind: "remote_user_undeleted_message";
-    messageId: bigint;
-};
+const RemoteUserUndeletedMessageSchema = Type.Intersect([WebRtcMessageCommonSchema, Type.Object({
+    kind: Type.Literal("remote_user_undeleted_message"),
+    messageId: Type.BigInt(),
+})]);
+export type RemoteUserUndeletedMessage = Static<typeof RemoteUserUndeletedMessageSchema>;
 
-export type RemoteUserReadMessage = WebRtcMessageCommon & {
-    kind: "remote_user_read_message";
-    messageId: bigint;
-};
+const RemoteUserReadMessageSchema = Type.Intersect([WebRtcMessageCommonSchema, Type.Object({
+    kind: Type.Literal("remote_user_read_message"),
+    messageId: Type.BigInt(),
+})]);
+export type RemoteUserReadMessage = Static<typeof RemoteUserReadMessageSchema>;
 
 export type RemoteUserSentMessage = WebRtcMessageCommon & {
     kind: "remote_user_sent_message";

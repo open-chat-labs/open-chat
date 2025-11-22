@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Use the endpoint as unique identifier for notification subscriptions ([#8670](https://github.com/open-chat-labs/open-chat/pull/8670))
+- Log the user Id when a subscription is removed ([#8675](https://github.com/open-chat-labs/open-chat/pull/8675))
 
 ## [[2.0.1894](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1894-notification_pusher)] - 2025-09-11
 

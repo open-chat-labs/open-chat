@@ -22,7 +22,6 @@ generate_msgpack_update_call!(add_reaction);
 generate_msgpack_update_call!(block_user);
 generate_msgpack_update_call!(cancel_p2p_swap);
 generate_msgpack_update_call!(change_role);
-generate_msgpack_update_call!(claim_prize);
 generate_msgpack_update_call!(convert_into_community);
 generate_msgpack_update_call!(delete_messages);
 generate_msgpack_update_call!(edit_message_v2);
@@ -416,20 +415,6 @@ pub mod happy_path {
         match response {
             group_canister::delete_messages::Response::Success => {}
             response => panic!("'delete_messages' error: {response:?}"),
-        }
-    }
-
-    pub fn claim_prize(env: &mut PocketIc, sender: Principal, group_chat_id: ChatId, message_id: MessageId) {
-        let response = super::claim_prize(
-            env,
-            sender,
-            group_chat_id.into(),
-            &group_canister::claim_prize::Args { message_id },
-        );
-
-        match response {
-            group_canister::claim_prize::Response::Success => {}
-            response => panic!("'claim_prize' error: {response:?}"),
         }
     }
 
