@@ -2,6 +2,6 @@ type GetPrincipalArgs = record {
   email : text;
 };
 
-service {
+service : {
   get_principal : (GetPrincipalArgs) -> (principal) query;
 }
