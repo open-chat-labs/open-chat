@@ -593,6 +593,7 @@ pub struct FailedMessageUsers {
 #[derive(Serialize, Deserialize)]
 pub struct UserToDelete {
     pub user_id: UserId,
+    #[serde(default)]
     pub triggered_by_user: bool,
     pub attempt: usize,
 }
