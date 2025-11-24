@@ -9,7 +9,7 @@ use serde::Serialize;
 use serde::de::DeserializeOwned;
 use std::time::Duration;
 use testing::rng::random_internet_identity_principal;
-use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration};
+use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration, SignedDelegation};
 
 mod macros;
 
@@ -130,22 +130,26 @@ pub fn register_user(env: &mut PocketIc, canister_ids: &CanisterIds) -> User {
 
 pub fn register_user_on_subnet(env: &mut PocketIc, canister_ids: &CanisterIds, subnet: Principal) -> User {
     let (auth_principal, public_key) = random_internet_identity_principal();
-    register_user_internal(env, canister_ids, None, auth_principal, public_key, Some(subnet))
+    register_user_internal(env, canister_ids, None, auth_principal, public_key, Some(subnet)).0
 }
 
 pub fn register_user_with_referrer(env: &mut PocketIc, canister_ids: &CanisterIds, referral_code: Option<String>) -> User {
     let (auth_principal, public_key) = random_internet_identity_principal();
-    register_user_internal(env, canister_ids, referral_code, auth_principal, public_key, None)
+    register_user_internal(env, canister_ids, referral_code, auth_principal, public_key, None).0
 }
 
 pub fn register_user_and_include_auth(env: &mut PocketIc, canister_ids: &CanisterIds) -> (User, UserAuth) {
-    let (auth_principal, public_key, delegation) = sign_in_with_email(env, canister_ids);
-    let user = register_user_internal(env, canister_ids, None, auth_principal, public_key.clone(), None);
+    let (auth_principal, auth_public_key, auth_delegation) = sign_in_with_email(env, canister_ids);
+    let (user, oc_public_key, oc_delegation) =
+        register_user_internal(env, canister_ids, None, auth_principal, auth_public_key.clone(), None);
+
     let user_auth = UserAuth {
-        auth_principal,
-        public_key,
-        delegation,
+        auth_public_key,
+        auth_delegation,
+        oc_public_key,
+        oc_delegation,
     };
+
     (user, user_auth)
 }
 
@@ -191,7 +195,7 @@ fn register_user_internal(
     auth_principal: Principal,
     public_key: Vec<u8>,
     subnet: Option<Principal>,
-) -> User {
+) -> (User, Vec<u8>, SignedDelegation) {
     let session_key = random::<[u8; 32]>().to_vec();
     let create_identity_result = identity::happy_path::create_identity(
         env,
@@ -200,6 +204,14 @@ fn register_user_internal(
         public_key,
         session_key.clone(),
         true,
+    );
+
+    let delegation = identity::happy_path::get_delegation(
+        env,
+        auth_principal,
+        canister_ids.identity,
+        session_key,
+        create_identity_result.expiration,
     );
 
     let local_user_index = subnet
@@ -213,13 +225,15 @@ fn register_user_internal(
         })
         .unwrap_or_else(|| user_index::happy_path::user_registration_canister(env, canister_ids.user_index));
 
-    local_user_index::happy_path::register_user_with_referrer(
+    let user = local_user_index::happy_path::register_user_with_referrer(
         env,
         Principal::self_authenticating(&create_identity_result.user_key),
         local_user_index,
-        create_identity_result.user_key,
+        create_identity_result.user_key.clone(),
         referral_code,
-    )
+    );
+
+    (user, create_identity_result.user_key, delegation)
 }
 
 fn unwrap_response<R: CandidType + DeserializeOwned>(response: Result<Vec<u8>, RejectResponse>) -> R {

@@ -18,18 +18,18 @@ fn link_and_unlink_auth_identities(delay: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let (user, user_auth) = register_user_and_include_auth(env, canister_ids);
-    let (auth_principal2, public_key2) = random_internet_identity_principal();
+    let (user1, user1_auth) = register_user_and_include_auth(env, canister_ids);
+    let (user2_auth_principal, user2_public_key) = random_internet_identity_principal();
 
     let session_key2 = random::<[u8; 32]>().to_vec();
 
     client::identity::happy_path::initiate_identity_link(
         env,
-        auth_principal2,
+        user2_auth_principal,
         canister_ids.identity,
-        public_key2,
+        user2_public_key,
         true,
-        user_auth.auth_principal,
+        user1_auth.auth_principal(),
     );
 
     if delay {
@@ -38,23 +38,27 @@ fn link_and_unlink_auth_identities(delay: bool) {
 
     let approve_identity_link_response = client::identity::approve_identity_link(
         env,
-        user_auth.auth_principal,
+        user1_auth.auth_principal(),
         canister_ids.identity,
         &identity_canister::approve_identity_link::Args {
-            delegation: user_auth.delegation,
-            public_key: user_auth.public_key,
-            link_initiated_by: auth_principal2,
+            delegation: user1_auth.auth_delegation.clone(),
+            public_key: user1_auth.auth_delegation.delegation.pubkey.clone(),
+            link_initiated_by: user2_auth_principal,
         },
     );
 
     match approve_identity_link_response {
         identity_canister::approve_identity_link::Response::Success if !delay => {
-            let prepare_delegation_response =
-                client::identity::happy_path::prepare_delegation(env, auth_principal2, canister_ids.identity, session_key2);
+            let prepare_delegation_response = client::identity::happy_path::prepare_delegation(
+                env,
+                user2_auth_principal,
+                canister_ids.identity,
+                session_key2,
+            );
 
             let oc_principal2 = Principal::self_authenticating(prepare_delegation_response.user_key);
 
-            assert_eq!(user.principal, oc_principal2);
+            assert_eq!(user1.principal, oc_principal2);
         }
         identity_canister::approve_identity_link::Response::Error(e)
             if delay && e.matches_code(OCErrorCode::DelegationTooOld) => {}
@@ -67,16 +71,17 @@ fn link_and_unlink_auth_identities(delay: bool) {
 
     let remove_identity_link_response = client::identity::remove_identity_link(
         env,
-        user_auth.auth_principal,
+        user1_auth.auth_principal(),
         canister_ids.identity,
         &identity_canister::remove_identity_link::Args {
-            linked_principal: auth_principal2,
+            linked_principal: user2_auth_principal,
         },
     );
 
     match remove_identity_link_response {
         identity_canister::remove_identity_link::Response::Success => {
-            let response = client::identity::check_auth_principal_v2(env, auth_principal2, canister_ids.identity, &Empty {});
+            let response =
+                client::identity::check_auth_principal_v2(env, user2_auth_principal, canister_ids.identity, &Empty {});
 
             assert!(matches!(
                 response,
@@ -92,21 +97,22 @@ fn link_identities_via_qr_code() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let (_, user_auth) = register_user_and_include_auth(env, canister_ids);
-    let (auth_principal2, public_key2) = random_internet_identity_principal();
+    let (_, user1_auth) = register_user_and_include_auth(env, canister_ids);
+    let (user2_auth_principal, user2_public_key) = random_internet_identity_principal();
     let link_code = random();
 
-    client::identity::happy_path::initiate_identity_link_via_qr_code(env, &user_auth, canister_ids.identity, link_code);
+    client::identity::happy_path::initiate_identity_link_via_qr_code(env, &user1_auth, canister_ids.identity, link_code);
     client::identity::happy_path::accept_identity_link_via_qr_code(
         env,
-        auth_principal2,
+        user2_auth_principal,
         canister_ids.identity,
         link_code,
-        public_key2,
+        user2_public_key,
         true,
     );
 
-    let auth_principals = client::identity::happy_path::auth_principals(env, user_auth.auth_principal, canister_ids.identity);
+    let auth_principals =
+        client::identity::happy_path::auth_principals(env, user1_auth.auth_principal(), canister_ids.identity);
 
     assert_eq!(auth_principals.len(), 2);
 }

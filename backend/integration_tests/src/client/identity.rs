@@ -174,12 +174,12 @@ pub mod happy_path {
     ) {
         let response = super::initiate_identity_link_via_qr_code(
             env,
-            user_auth.auth_principal,
+            user_auth.auth_principal(),
             identity_canister_id,
             &identity_canister::initiate_identity_link_via_qr_code::Args {
                 link_code,
-                public_key: user_auth.public_key.clone(),
-                delegation: user_auth.delegation.clone(),
+                public_key: user_auth.auth_public_key.clone(),
+                delegation: user_auth.auth_delegation.clone(),
             },
         );
 
@@ -229,14 +229,14 @@ pub mod happy_path {
         }
     }
 
-    pub fn delete_user(env: &mut PocketIc, user: &UserAuth, identity_canister_id: CanisterId) {
+    pub fn delete_user(env: &mut PocketIc, user_auth: &UserAuth, identity_canister_id: CanisterId) {
         let response = super::delete_user(
             env,
-            user.auth_principal,
+            user_auth.auth_principal(),
             identity_canister_id,
             &identity_canister::delete_user::Args {
-                public_key: user.public_key.clone(),
-                delegation: user.delegation.clone(),
+                public_key: user_auth.auth_public_key.clone(),
+                delegation: user_auth.auth_delegation.clone(),
             },
         );
 
