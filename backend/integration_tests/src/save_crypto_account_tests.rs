@@ -3,11 +3,10 @@ use crate::{TestEnv, client};
 use oc_error_codes::OCErrorCode;
 use std::ops::Deref;
 use testing::rng::{random_principal, random_string};
-use types::Empty;
 use user_canister::NamedAccount;
 
 #[test]
-fn save_crypto_account_succeeds() {
+fn save_and_delete_crypto_account_succeeds() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
@@ -15,15 +14,21 @@ fn save_crypto_account_succeeds() {
     let name = random_string();
     let account = random_principal().to_string();
 
-    let named_account = NamedAccount { name, account };
+    client::user::happy_path::save_crypto_account(env, &user, &name, &account);
 
-    let response = client::user::save_crypto_account(env, user.principal, user.canister(), &named_account);
-    assert!(matches!(response, user_canister::save_crypto_account::Response::Success));
+    let accounts = client::user::happy_path::saved_crypto_accounts(env, &user);
 
-    let user_canister::saved_crypto_accounts::Response::Success(accounts) =
-        client::user::saved_crypto_accounts(env, user.principal, user.canister(), &Empty {});
+    assert_eq!(
+        accounts,
+        vec![NamedAccount {
+            name: name.clone(),
+            account
+        }]
+    );
 
-    assert_eq!(accounts, vec![named_account]);
+    client::user::happy_path::delete_saved_crypto_account(env, &user, name);
+
+    assert!(client::user::happy_path::saved_crypto_accounts(env, &user).is_empty());
 }
 
 #[test]
@@ -79,24 +84,10 @@ fn save_crypto_account_with_same_account_updates_name() {
     let name2 = random_string();
     let account = random_principal().to_string();
 
-    let named_account1 = NamedAccount {
-        name: name1,
-        account: account.clone(),
-    };
+    client::user::happy_path::save_crypto_account(env, &user, name1, &account);
+    client::user::happy_path::save_crypto_account(env, &user, &name2, &account);
 
-    let response1 = client::user::save_crypto_account(env, user.principal, user.canister(), &named_account1);
-    assert!(matches!(response1, user_canister::save_crypto_account::Response::Success));
+    let accounts = client::user::happy_path::saved_crypto_accounts(env, &user);
 
-    let named_account2 = NamedAccount {
-        name: name2.clone(),
-        account,
-    };
-
-    let response2 = client::user::save_crypto_account(env, user.principal, user.canister(), &named_account2);
-    assert!(matches!(response2, user_canister::save_crypto_account::Response::Success));
-
-    let user_canister::saved_crypto_accounts::Response::Success(accounts) =
-        client::user::saved_crypto_accounts(env, user.principal, user.canister(), &Empty {});
-
-    assert_eq!(accounts, vec![named_account2]);
+    assert_eq!(accounts, vec![NamedAccount { name: name2, account }]);
 }
