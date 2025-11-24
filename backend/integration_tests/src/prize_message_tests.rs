@@ -7,8 +7,8 @@ use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    ChatEvent, CryptoTransaction, EventIndex, MessageContent, MessageContentInitial, OptionUpdate, PendingCryptoTransaction,
-    PrizeContentInitial, icrc1,
+    ChatEvent, CryptoTransaction, EventIndex, MessageContent, MessageContentInitial, MultiUserChat, OptionUpdate,
+    PendingCryptoTransaction, PrizeContentInitial, icrc1,
 };
 
 #[test]
@@ -75,11 +75,25 @@ fn prize_messages_can_be_claimed_successfully() {
     );
 
     if let user_canister::send_message_with_transfer_to_group::Response::Success(result) = send_message_response {
-        client::group::happy_path::claim_prize(env, user2.principal, group_id, message_id);
+        let local_user_index = canister_ids.local_user_index(env, group_id);
+
+        client::local_user_index::happy_path::claim_prize(
+            env,
+            user2.principal,
+            local_user_index,
+            MultiUserChat::Group(group_id),
+            message_id,
+        );
         let user2_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
         assert_eq!(user2_balance, 200000);
 
-        client::group::happy_path::claim_prize(env, user3.principal, group_id, message_id);
+        client::local_user_index::happy_path::claim_prize(
+            env,
+            user3.principal,
+            local_user_index,
+            MultiUserChat::Group(group_id),
+            message_id,
+        );
         let user3_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user3.user_id);
         assert_eq!(user3_balance, 100000);
 
@@ -184,7 +198,14 @@ fn unclaimed_prizes_get_refunded(case: u32) {
         },
     );
 
-    client::group::happy_path::claim_prize(env, user2.principal, group_id, message_id);
+    let local_user_index = canister_ids.local_user_index(env, group_id);
+    client::local_user_index::happy_path::claim_prize(
+        env,
+        user2.principal,
+        local_user_index,
+        MultiUserChat::Group(group_id),
+        message_id,
+    );
 
     let interval = match case {
         1 => HOUR_IN_MS,

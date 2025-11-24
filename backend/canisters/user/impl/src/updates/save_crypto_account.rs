@@ -24,12 +24,13 @@ fn save_crypto_account_impl(mut args: Args, state: &mut RuntimeState) -> OCResul
     let valid = Principal::from_text(&args.account).is_ok() || AccountIdentifier::from_hex(&args.account).is_ok();
 
     if valid {
+        let name_lowercase = args.name.to_lowercase();
         for named_account in state.data.saved_crypto_accounts.iter_mut() {
             if named_account.account == args.account {
                 named_account.name = args.name;
                 return Ok(());
             }
-            if named_account.name == args.name {
+            if named_account.name.to_lowercase() == name_lowercase {
                 return Err(OCErrorCode::NameTaken.into());
             }
         }

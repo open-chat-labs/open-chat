@@ -22,7 +22,6 @@ pub mod cancel_invites;
 pub mod cancel_p2p_swap;
 pub mod change_channel_role;
 pub mod change_role;
-pub mod claim_prize;
 pub mod create_channel;
 pub mod create_user_group;
 pub mod decline_invitation;

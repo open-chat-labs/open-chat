@@ -7,7 +7,6 @@ import type {
     CancelP2PSwapResponse,
     ChangeRoleResponse,
     ChatEvent,
-    ClaimPrizeResponse,
     ConvertToCommunityResponse,
     DeclineInvitationResponse,
     DeletedGroupMessageResponse,
@@ -77,8 +76,6 @@ import {
     GroupCancelInvitesArgs,
     GroupCancelP2pSwapArgs,
     GroupChangeRoleArgs,
-    GroupClaimPrizeArgs,
-    GroupClaimPrizeResponse,
     GroupConvertIntoCommunityArgs,
     GroupConvertIntoCommunityResponse,
     GroupDeletedMessageArgs,
@@ -172,7 +169,6 @@ import {
     apiMessageContent,
     apiUser as apiUserV2,
     apiVideoCallPresence,
-    claimPrizeResponse,
     deletedMessageSuccess,
     enableOrResetInviteCodeSuccess,
     getEventsSuccess,
@@ -545,18 +541,6 @@ export class GroupClient extends MsgpackCanisterAgent {
                     UnitResult,
                 );
             });
-    }
-
-    claimPrize(messageId: bigint): Promise<ClaimPrizeResponse> {
-        return this.executeMsgpackUpdate(
-            "claim_prize",
-            {
-                message_id: messageId,
-            },
-            claimPrizeResponse,
-            GroupClaimPrizeArgs,
-            GroupClaimPrizeResponse,
-        );
     }
 
     sendMessage(

@@ -25,6 +25,7 @@ generate_msgpack_update_call!(delete_community);
 generate_msgpack_update_call!(delete_direct_chat);
 generate_msgpack_update_call!(delete_group);
 generate_msgpack_update_call!(delete_messages);
+generate_msgpack_update_call!(delete_saved_crypto_account);
 generate_msgpack_update_call!(edit_message_v2);
 generate_update_call!(end_video_call_v2);
 generate_msgpack_update_call!(join_video_call);
@@ -55,9 +56,10 @@ pub mod happy_path {
     use pocket_ic::PocketIc;
     use testing::rng::random_from_u128;
     use types::{
-        CanisterId, Chat, ChatId, CommunityId, EventIndex, EventsResponse, MessageContentInitial, MessageId, MessageIndex,
-        Milliseconds, Reaction, ReplyContext, Rules, TextContent, TimestampMillis, UserId, VideoCallType,
+        CanisterId, Chat, ChatId, CommunityId, Empty, EventIndex, EventsResponse, MessageContentInitial, MessageId,
+        MessageIndex, Milliseconds, Reaction, ReplyContext, Rules, TextContent, TimestampMillis, UserId, VideoCallType,
     };
+    use user_canister::NamedAccount;
     use user_canister::set_pin_number::PinNumberVerification;
 
     pub fn send_text_message(
@@ -605,5 +607,40 @@ pub mod happy_path {
         let response = super::set_profile_background(env, user.principal, user.canister(), args);
 
         assert!(matches!(response, user_canister::set_profile_background::Response::Success));
+    }
+
+    pub fn save_crypto_account(env: &mut PocketIc, user: &User, name: impl Into<String>, account: impl Into<String>) {
+        let response = super::save_crypto_account(
+            env,
+            user.principal,
+            user.canister(),
+            &user_canister::save_crypto_account::Args {
+                name: name.into(),
+                account: account.into(),
+            },
+        );
+
+        assert!(matches!(response, user_canister::save_crypto_account::Response::Success));
+    }
+
+    pub fn delete_saved_crypto_account(env: &mut PocketIc, user: &User, name: impl Into<String>) {
+        let response = super::delete_saved_crypto_account(
+            env,
+            user.principal,
+            user.canister(),
+            &user_canister::delete_saved_crypto_account::Args { name: name.into() },
+        );
+
+        assert!(matches!(
+            response,
+            user_canister::delete_saved_crypto_account::Response::Success
+        ));
+    }
+
+    pub fn saved_crypto_accounts(env: &mut PocketIc, user: &User) -> Vec<NamedAccount> {
+        let user_canister::saved_crypto_accounts::Response::Success(accounts) =
+            super::saved_crypto_accounts(env, user.principal, user.canister(), &Empty {});
+
+        accounts
     }
 }
