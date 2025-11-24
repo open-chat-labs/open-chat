@@ -250,6 +250,8 @@ pub struct ReferralCodeAdded {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct DeleteUser {
     pub user_id: UserId,
+    #[serde(default)]
+    #[deprecated]
     pub triggered_by_user: bool,
 }
 

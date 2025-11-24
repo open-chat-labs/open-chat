@@ -227,6 +227,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             if state.data.local_users.contains(&ev.user_id) {
                 state.data.users_to_delete_queue.push_back(UserToDelete {
                     user_id: ev.user_id,
+                    #[allow(deprecated)]
                     triggered_by_user: ev.triggered_by_user,
                     attempt: 0,
                 });

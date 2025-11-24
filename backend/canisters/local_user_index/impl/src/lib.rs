@@ -594,6 +594,7 @@ pub struct FailedMessageUsers {
 pub struct UserToDelete {
     pub user_id: UserId,
     #[serde(default)]
+    #[deprecated]
     pub triggered_by_user: bool,
     pub attempt: usize,
 }
