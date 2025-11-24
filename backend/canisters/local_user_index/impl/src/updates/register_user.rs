@@ -222,7 +222,7 @@ fn commit(
             principal,
             user_id,
             username: username.clone(),
-            email: email.clone(),
+            email,
             referred_by,
             is_from_identity_canister,
         })),
