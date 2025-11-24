@@ -15,7 +15,6 @@ import type {
     ChatIdentifier,
     ChatMembership,
     ChatPermissions,
-    ClaimPrizeResponse,
     CommandArg,
     CommandDefinition,
     CommandParam,
@@ -147,7 +146,6 @@ import type {
     WebhookDetails as ApiWebhookDetails,
     BotCommandArg,
     BotDataEncoding,
-    CommunityClaimPrizeResponse,
     CommunityCreateChannelSuccessResult,
     CommunityDeletedMessageSuccessResult,
     CommunityEnableInviteCodeSuccessResult,
@@ -159,7 +157,6 @@ import type {
     CommunityThreadPreviewsSuccessResult,
     CommunityUndeleteMessagesSuccessResult,
     CommunityUpdateChannelSuccessResult,
-    GroupClaimPrizeResponse,
     GroupDeletedMessageSuccessResult,
     GroupEnableInviteCodeSuccessResult,
     GroupInviteCodeSuccessResult,
@@ -2627,18 +2624,6 @@ export function enableOrResetInviteCodeSuccess(
         kind: "success",
         code: codeToText(value.code),
     };
-}
-
-export function claimPrizeResponse(
-    value: GroupClaimPrizeResponse | CommunityClaimPrizeResponse,
-): ClaimPrizeResponse {
-    if (typeof value === "object") {
-        if ("TransferFailed" in value || "FailedAfterTransfer" in value) {
-            console.warn("ClaimPrize failed with ", value);
-            return CommonResponses.failure();
-        }
-    }
-    return unitResult(value);
 }
 
 export function acceptP2PSwapSuccess(value: AcceptSwapSuccess): AcceptP2PSwapResponse {
