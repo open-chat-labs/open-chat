@@ -4,7 +4,6 @@ use user_canister::*;
 // Queries
 generate_c2c_call!(c2c_bot_chat_summary);
 generate_c2c_call!(c2c_can_issue_access_token_v2);
-generate_c2c_call!(c2c_is_empty_and_dormant);
 generate_c2c_call!(c2c_groups_and_communities);
 
 // Updates

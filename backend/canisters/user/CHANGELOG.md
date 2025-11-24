@@ -15,6 +15,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Removed pinned from direct and group chat initial_state and updates ([#8631](https://github.com/open-chat-labs/open-chat/pull/8631))
 - Add `duration_ms` and `samples` to `AudioContent` ([#8669](https://github.com/open-chat-labs/open-chat/pull/8669))
 
+### Removed
+
+- Remove ancient code that deleted empty and dormant accounts ([#8685](https://github.com/open-chat-labs/open-chat/pull/8685))
+
 ### Fixed
 
 - Update `delete_saved_crypto_account` to make it work with Typebox ([#8681](https://github.com/open-chat-labs/open-chat/pull/8681))
