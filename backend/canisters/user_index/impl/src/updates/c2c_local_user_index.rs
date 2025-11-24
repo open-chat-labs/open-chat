@@ -8,8 +8,8 @@ use constants::ONE_MB;
 use event_store_producer::EventBuilder;
 use group_index_canister::UserIndexEvent as GroupIndexEvent;
 use local_user_index_canister::{
-    ChitBalance, DeleteUser, OpenChatBotMessage, OpenChatBotMessageV2, UserIndexEvent, UserJoinedCommunityOrChannel,
-    UserJoinedGroup, UserRegistered, UsernameChanged,
+    ChitBalance, OpenChatBotMessage, OpenChatBotMessageV2, UserIndexEvent, UserJoinedCommunityOrChannel, UserJoinedGroup,
+    UserRegistered, UsernameChanged,
 };
 use rand::RngCore;
 use stable_memory_map::StableMemoryMap;
@@ -93,16 +93,6 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                     content: ev.content,
                     mentioned: ev.mentioned,
                 })),
-            );
-        }
-        LocalUserIndexEvent::UserDeleted(ev) => {
-            state.delete_user(ev.user_id, false);
-            state.push_event_to_all_local_user_indexes(
-                UserIndexEvent::DeleteUser(DeleteUser {
-                    user_id: ev.user_id,
-                    triggered_by_user: false,
-                }),
-                Some(caller),
             );
         }
         LocalUserIndexEvent::UserSetProfileBackground(ev) => {

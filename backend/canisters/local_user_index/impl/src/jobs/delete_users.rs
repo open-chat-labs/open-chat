@@ -5,7 +5,6 @@ use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
 use types::{C2CError, CanisterId, Empty, Milliseconds};
-use user_index_canister::UserDeleted;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -46,11 +45,6 @@ async fn process_user(user: UserToDelete) {
                 state.data.local_users.remove(&user_id);
 
                 let now = state.env.now();
-                if !user.triggered_by_user {
-                    state.data.canister_pool.push(user_id.into());
-                    state.push_event_to_user_index(UserIndexEvent::UserDeleted(Box::new(UserDeleted { user_id })), now);
-                }
-
                 for canister_id in canisters_to_notify {
                     state.push_event_to_user_index(UserIndexEvent::NotifyOfUserDeleted(canister_id, user_id), now);
                 }

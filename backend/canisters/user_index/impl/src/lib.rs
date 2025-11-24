@@ -200,10 +200,6 @@ impl RuntimeState {
                 timestamp: now,
             });
 
-            // TODO remove this once the website switches to deleting accounts via the Identity canister
-            self.data.identity_canister_user_sync_queue.push_back((user.principal, None));
-            jobs::sync_users_to_identity_canister::try_run_now(self);
-
             self.data.remove_from_online_users_queue.push_back(user.principal);
             jobs::remove_from_online_users_canister::start_job_if_required(self);
 
