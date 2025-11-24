@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add `duration_ms` and `samples` to `AudioContent` ([#8669](https://github.com/open-chat-labs/open-chat/pull/8669))
 - Use the endpoint as unique identifier for notification subscriptions ([#8670](https://github.com/open-chat-labs/open-chat/pull/8670))
+- Use optional `email` on `register_user` as backup auth ([#8682](https://github.com/open-chat-labs/open-chat/pull/8682))
 
 ## [[2.0.1904](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1904-local_user_index)] - 2025-09-24
 

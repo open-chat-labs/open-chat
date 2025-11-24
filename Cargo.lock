@@ -1453,7 +1453,7 @@ dependencies = [
  "registry_canister",
  "registry_canister_client",
  "sha256",
- "sign_in_with_email_canister",
+ "sign_in_with_email_canister 0.13.0",
  "storage_index_canister",
  "test_utils",
  "tokio",
@@ -1542,7 +1542,7 @@ dependencies = [
  "proposals_bot_canister",
  "registry_canister",
  "sha256",
- "sign_in_with_email_canister",
+ "sign_in_with_email_canister 0.13.0",
  "storage_index_canister",
  "storage_index_canister_client",
  "tokio",
@@ -5190,6 +5190,8 @@ dependencies = [
  "serde",
  "serde_bytes",
  "sha256",
+ "sign_in_with_email_canister 0.1.0",
+ "sign_in_with_email_canister_c2c_client",
  "stable_memory",
  "tracing",
  "types",
@@ -5486,7 +5488,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha256",
- "sign_in_with_email_canister",
+ "sign_in_with_email_canister 0.13.0",
  "stable_memory_map",
  "storage_bucket_canister",
  "storage_index_canister",
@@ -6055,6 +6057,7 @@ dependencies = [
  "community_canister_c2c_client",
  "constants",
  "ct-codecs",
+ "email_address",
  "event_store_producer",
  "event_store_producer_cdk_runtime",
  "event_store_utils",
@@ -6155,7 +6158,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_with",
- "sign_in_with_email_canister",
+ "sign_in_with_email_canister 0.13.0",
  "utils 0.13.0",
 ]
 
@@ -9362,6 +9365,15 @@ checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
 
 [[package]]
 name = "sign_in_with_email_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "serde",
+]
+
+[[package]]
+name = "sign_in_with_email_canister"
 version = "0.13.0"
 source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.13.0#751a1a3af44308995df198584aaa12b7206cddd4"
 dependencies = [
@@ -9371,6 +9383,17 @@ dependencies = [
  "rsa",
  "serde",
  "serde_bytes",
+]
+
+[[package]]
+name = "sign_in_with_email_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "ic-cdk",
+ "sign_in_with_email_canister 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -10587,7 +10610,7 @@ dependencies = [
  "magic_links",
  "rand 0.8.5",
  "rsa",
- "sign_in_with_email_canister",
+ "sign_in_with_email_canister 0.13.0",
  "utils 0.13.0",
 ]
 
@@ -11666,6 +11689,7 @@ dependencies = [
  "msgpack",
  "oc_error_codes",
  "rand 0.8.5",
+ "regex-lite",
  "serde",
  "serde_json",
  "sha256",
@@ -11686,7 +11710,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "sha2 0.10.9",
- "sign_in_with_email_canister",
+ "sign_in_with_email_canister 0.13.0",
 ]
 
 [[package]]

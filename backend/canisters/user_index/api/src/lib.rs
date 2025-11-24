@@ -41,6 +41,7 @@ pub struct UserRegistered {
     pub principal: Principal,
     pub user_id: UserId,
     pub username: String,
+    pub email: Option<String>,
     pub referred_by: Option<UserId>,
     pub is_from_identity_canister: bool,
 }

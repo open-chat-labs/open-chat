@@ -1,0 +1,11 @@
+[package]
+name = "sign_in_with_email_canister"
+version.workspace = true
+edition.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+candid = { workspace = true }
+candid_gen = { path = "../../../libraries/candid_gen" }
+serde = { workspace = true }

@@ -73,6 +73,8 @@ members = [
     "backend/external_canisters/ckbtc_minter/c2c_client",
     "backend/external_canisters/cmc/api",
     "backend/external_canisters/cmc/c2c_client",
+    "backend/external_canisters/sign_in_with_email/api",    
+    "backend/external_canisters/sign_in_with_email/c2c_client",    
     "backend/external_canisters/icdex/api",
     "backend/external_canisters/icdex/c2c_client",
     "backend/external_canisters/icp_ledger/api",
@@ -188,6 +190,7 @@ data-encoding = "2"
 dataurl = "0.1"
 dotenv = "0.15.0"
 either = "1.15.0"
+email_address = "0.2.4"
 enum-repr = "0.2"
 envconfig = "0.11"
 event_store_canister = { git = "https://github.com/open-chat-labs/event-store", tag = "v0.10.0" }
