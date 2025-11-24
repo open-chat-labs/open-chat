@@ -22,7 +22,7 @@ fn test_account_linking_create_link_code() {
     //
     let create_linking_code_response = client::identity::create_account_linking_code(
         env,
-        user_auth.auth_principal,
+        user_auth.auth_principal(),
         canister_ids.identity,
         &identity_canister::create_account_linking_code::Args {},
     );
@@ -42,7 +42,7 @@ fn test_account_linking_create_link_code() {
 
     let repeated_linking_code_response = client::identity::create_account_linking_code(
         env,
-        user_auth.auth_principal,
+        user_auth.auth_principal(),
         canister_ids.identity,
         &identity_canister::create_account_linking_code::Args {},
     );

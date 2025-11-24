@@ -75,9 +75,20 @@ pub struct User {
 
 #[derive(Debug)]
 pub struct UserAuth {
-    pub auth_principal: Principal,
-    pub public_key: Vec<u8>,
-    pub delegation: SignedDelegation,
+    pub auth_public_key: Vec<u8>,
+    pub auth_delegation: SignedDelegation,
+    pub oc_public_key: Vec<u8>,
+    pub oc_delegation: SignedDelegation,
+}
+
+impl UserAuth {
+    pub fn auth_principal(&self) -> Principal {
+        Principal::self_authenticating(&self.auth_public_key)
+    }
+
+    pub fn oc_principal(&self) -> Principal {
+        Principal::self_authenticating(&self.oc_public_key)
+    }
 }
 
 impl User {
