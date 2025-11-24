@@ -11689,7 +11689,6 @@ dependencies = [
  "msgpack",
  "oc_error_codes",
  "rand 0.8.5",
- "regex-lite",
  "serde",
  "serde_json",
  "sha256",
