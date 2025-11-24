@@ -17,7 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
-- Remove ancient code which deleted empty and dormant accounts ([#8685](https://github.com/open-chat-labs/open-chat/pull/8685))
+- Remove ancient code that deleted empty and dormant accounts ([#8685](https://github.com/open-chat-labs/open-chat/pull/8685))
 
 ### Fixed
 
