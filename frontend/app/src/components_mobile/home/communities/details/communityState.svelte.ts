@@ -1,6 +1,12 @@
 import { i18nKey } from "@src/i18n/i18n";
 import { toastStore } from "@src/stores/toast";
-import { OpenChat, ROLE_NONE, type CommunitySummary, type UserGroupDetails } from "openchat-client";
+import {
+    OpenChat,
+    publish,
+    ROLE_NONE,
+    type CommunitySummary,
+    type UserGroupDetails,
+} from "openchat-client";
 
 export class CommunityState {
     #confirmingUserGroupDelete = $state(false);
@@ -58,7 +64,7 @@ export class CommunityState {
     }
 
     share() {
-        console.log("Not sure what this does yet");
+        publish("inviteAndShare", { collection: this.community, view: "share" });
     }
 
     confirmDeleteUserGroup(userGroup: UserGroupDetails) {

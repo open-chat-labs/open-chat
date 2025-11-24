@@ -2,12 +2,20 @@ import { i18nKey } from "@src/i18n/i18n";
 import { toastStore } from "@src/stores/toast";
 import {
     compareRoles,
+    currentUserIdStore,
     publish,
     roleAsText,
+    routeForChatIdentifier,
+    selectedChatBlockedUsersStore,
     selectedChatBotsStore,
+    selectedChatInvitedUsersStore,
+    selectedChatLapsedMembersStore,
     selectedChatMembersStore,
     selectedChatWebhooksStore,
+    selectedCommunityBlockedUsersStore,
     selectedCommunityBotsStore,
+    selectedCommunityInvitedUsersStore,
+    selectedCommunityLapsedMembersStore,
     selectedCommunityMembersStore,
     type CommunitySummary,
     type EnhancedExternalBot,
@@ -26,8 +34,14 @@ import {
 
 export class MemberManagement {
     #members = $state<ReadonlyMap<string, Member>>(new Map());
+    #lapsed = $state<ReadonlySet<string>>(new Set());
+    #blocked = $state<ReadonlySet<string>>(new Set());
+    #invited = $state<ReadonlySet<string>>(new Set());
     #bots = $state<ReadonlyMap<string, GrantedBotPermissions>>(new Map());
     #webhooks = $state<ReadonlyMap<string, WebhookDetails>>(new Map());
+    #togglingSharingLink = $state(false);
+    #sharingLinkEnabled = $state(false);
+    #sharingLinkCode = $state<string>();
 
     destroy: () => void;
 
@@ -40,11 +54,29 @@ export class MemberManagement {
                 ? selectedCommunityMembersStore
                 : selectedChatMembersStore;
 
+        const lapsedStore =
+            collection.kind === "community"
+                ? selectedCommunityLapsedMembersStore
+                : selectedChatLapsedMembersStore;
+
+        const blockedStore =
+            collection.kind === "community"
+                ? selectedCommunityBlockedUsersStore
+                : selectedChatBlockedUsersStore;
+
+        const invitedStore =
+            collection.kind === "community"
+                ? selectedCommunityInvitedUsersStore
+                : selectedChatInvitedUsersStore;
+
         const botsStore =
             collection.kind === "community" ? selectedCommunityBotsStore : selectedChatBotsStore;
 
         const unsubs = [
             membersStore.subscribe((m) => (this.#members = m)),
+            lapsedStore.subscribe((m) => (this.#lapsed = m)),
+            blockedStore.subscribe((m) => (this.#blocked = m)),
+            invitedStore.subscribe((m) => (this.#invited = m)),
             botsStore.subscribe((b) => (this.#bots = b)),
         ];
 
@@ -55,6 +87,30 @@ export class MemberManagement {
         this.destroy = () => {
             unsubs.forEach((u) => u());
         };
+    }
+
+    get togglingSharingLink() {
+        return this.#togglingSharingLink;
+    }
+
+    get sharingLinkEnabled() {
+        return this.#sharingLinkEnabled;
+    }
+
+    get sharingLinkCode() {
+        return this.#sharingLinkCode;
+    }
+
+    get invited() {
+        return this.#invited;
+    }
+
+    get blocked() {
+        return this.#blocked;
+    }
+
+    get lapsed() {
+        return this.#lapsed;
     }
 
     get members() {
@@ -192,6 +248,99 @@ export class MemberManagement {
         return this.client.canDemote(this.collection.id, from, to);
     }
 
+    get isPublic() {
+        return this.collection.public;
+    }
+
+    initialiseSharing() {
+        if (this.collection.public || this.collection.kind === "channel") {
+            return;
+        }
+        this.client
+            .getInviteCode(this.collection.id)
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    this.#sharingLinkEnabled = resp.code !== undefined;
+                    this.#sharingLinkCode = resp.code;
+                }
+            })
+            .catch((err) => {
+                console.error("Unable to get invite code: ", err);
+            });
+    }
+
+    toggleInviteLink() {
+        if (this.collection.kind === "channel") return;
+        if (this.#togglingSharingLink) return;
+
+        this.#togglingSharingLink = true;
+        this.#sharingLinkEnabled = !this.#sharingLinkEnabled;
+        if (this.#sharingLinkEnabled) {
+            this.client
+                .enableInviteCode(this.collection.id)
+                .then((resp) => {
+                    if (resp.kind === "success") {
+                        this.#sharingLinkCode = resp.code;
+                    } else {
+                        this.#sharingLinkEnabled = false;
+                        console.error("Unauthorized response calling enableInviteCode");
+                    }
+                })
+                .catch((err) => {
+                    this.#sharingLinkEnabled = false;
+                    console.error("Unable to enable invite code: ", err);
+                })
+                .finally(() => {
+                    this.#togglingSharingLink = false;
+                });
+        } else {
+            this.client
+                .disableInviteCode(this.collection.id)
+                .catch((err) => {
+                    this.#sharingLinkCode = undefined;
+                    this.#sharingLinkEnabled = true;
+                    console.error("Unable to disable invite code: ", err);
+                })
+                .finally(() => {
+                    this.#togglingSharingLink = false;
+                });
+        }
+    }
+
+    shareLink(url: string): void {
+        const share = {
+            url,
+            files: [],
+        };
+        navigator.share(share).catch((e: DOMException) => {
+            if (e.name !== "AbortError") {
+                const errorMessage = `Failed to share link ${url}`;
+                console.log(`${errorMessage}: ${e}`);
+                toastStore.showFailureToast(i18nKey("failedToShareLink"));
+            }
+        });
+    }
+
+    getSharingLink() {
+        const qs =
+            `/?ref=${currentUserIdStore.value}` +
+            (!this.collection.public ? `&code=${this.#sharingLinkCode}` : "");
+        switch (this.collection.id.kind) {
+            case "community":
+                return `${window.location.origin}/community/${this.collection.id.communityId}${qs}`;
+            case "channel":
+                return `${window.location.origin}${routeForChatIdentifier(
+                    "community",
+                    this.collection.id,
+                )}${qs}`;
+            case "group_chat":
+                return `${window.location.origin}${routeForChatIdentifier(
+                    "chats",
+                    this.collection.id,
+                )}${qs}`;
+        }
+    }
+
     canManageBots() {
         return this.client.canManageBots(this.collection.id);
     }
@@ -250,18 +399,10 @@ export class MemberManagement {
     }
 
     showAllMembers() {
-        if (this.collection.kind === "community") {
-            console.log("Open community members");
-        } else {
-            publish("groupMembers", { chat: this.collection, view: "members" });
-        }
+        publish("showMembers", { collection: this.collection, view: "members" });
     }
 
     inviteUsers() {
-        if (this.collection.kind === "community") {
-            console.log("Open invite community members");
-        } else {
-            publish("groupMembers", { chat: this.collection, view: "invite" });
-        }
+        publish("inviteAndShare", { collection: this.collection, view: "invite" });
     }
 }

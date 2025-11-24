@@ -200,8 +200,12 @@ export type PubSubEvents = {
     walletSettings: undefined;
     showThreads: undefined;
     openThread: { chat: ChatSummary; msg: EventWrapper<Message> };
-    groupMembers: { chat: MultiUserChat; view: "members" | "invite" | "lapsed" | "blocked" };
+    showMembers: {
+        collection: MultiUserChat | CommunitySummary;
+        view: "members" | "add" | "lapsed" | "blocked";
+    };
     showUserGroups: undefined;
     showUserGroup: UserGroupDetails;
     editUserGroup: UserGroupDetails;
+    inviteAndShare: { collection: MultiUserChat | CommunitySummary; view: "invite" | "share" };
 };

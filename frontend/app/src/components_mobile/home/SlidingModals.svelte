@@ -48,6 +48,7 @@
     import DirectChatDetails from "./groupdetails/DirectChatDetails.svelte";
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
     import { UpdateGroupOrCommunityState } from "./groupOrCommunity.svelte";
+    import InviteAndShare from "./membership/InviteAndShare.svelte";
     import MemberManagement from "./membership/MemberManagement.svelte";
     import NewMessage from "./NewMessage.svelte";
     import Rules from "./Rules.svelte";
@@ -84,6 +85,11 @@
      */
 
     type SlidingModalType =
+        | {
+              kind: "invite_and_share";
+              collection: MultiUserChat | CommunitySummary;
+              view: "invite" | "share";
+          }
         | { kind: "user_groups"; community: CommunitySummary }
         | { kind: "user_group"; community: CommunitySummary; userGroup: UserGroupDetails }
         | { kind: "edit_user_group"; community: CommunitySummary; userGroup: UserGroupDetails }
@@ -95,9 +101,9 @@
         | { kind: "open_thread"; chat: ChatSummary; msg: EventWrapper<Message> }
         | { kind: "show_threads" }
         | {
-              kind: "group_members";
-              chat: MultiUserChat;
-              view: "members" | "invite" | "lapsed" | "blocked";
+              kind: "show_members";
+              collection: MultiUserChat | CommunitySummary;
+              view: "members" | "add" | "lapsed" | "blocked";
           }
         | { kind: "edit_recipient"; account: NamedAccount; onComplete: () => void }
         | { kind: "add_recipient"; account?: NamedAccount; onComplete: () => void }
@@ -155,6 +161,9 @@
 
     onMount(() => {
         const unsubs = [
+            subscribe("inviteAndShare", ({ collection, view }) =>
+                push({ kind: "invite_and_share", collection, view }),
+            ),
             subscribe("showUserGroups", () => {
                 if ($selectedCommunitySummaryStore !== undefined) {
                     push({ kind: "user_groups", community: $selectedCommunitySummaryStore });
@@ -195,8 +204,8 @@
             ),
             subscribe("openThread", ({ chat, msg }) => push({ kind: "open_thread", chat, msg })),
             subscribe("showThreads", () => push({ kind: "show_threads" })),
-            subscribe("groupMembers", ({ chat, view }) =>
-                push({ kind: "group_members", chat, view }),
+            subscribe("showMembers", ({ collection, view }) =>
+                push({ kind: "show_members", collection, view }),
             ),
             subscribe("editRecipient", ({ account, onComplete }) =>
                 push({ kind: "edit_recipient", account, onComplete }),
@@ -420,8 +429,8 @@
             <ConfirmDeleteChat chat={page.chat} />
         {:else if page.kind === "delete_community"}
             <ConfirmDeleteCommunity community={page.community} />
-        {:else if page.kind === "group_members"}
-            <MemberManagement chat={page.chat} view={page.view} />
+        {:else if page.kind === "show_members"}
+            <MemberManagement collection={page.collection} view={page.view} />
         {:else if page.kind === "community_details"}
             <CommunitySummaryComponent community={page.community} />
         {:else if page.kind === "user_groups"}
@@ -430,6 +439,8 @@
             <UserGroup community={page.community} userGroup={page.userGroup} />
         {:else if page.kind === "edit_user_group"}
             <EditUserGroup community={page.community} original={page.userGroup} />
+        {:else if page.kind === "invite_and_share"}
+            <InviteAndShare collection={page.collection} view={page.view} />
         {/if}
     </SlidingPage>
 {/each}

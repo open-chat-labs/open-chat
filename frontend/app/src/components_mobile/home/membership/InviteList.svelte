@@ -45,6 +45,8 @@
      *          private channel: add community member, invite, enable link
      *          public channel: add community member, invite, share url
      *
+     * - Right the update is that we have the members page with (member management, lapsed & blocked, add community member for channels) and we have a separate
+     * - Invite & Share page with tabs for Invite & Share
      */
 </script>
 
@@ -102,15 +104,17 @@
         {/if}
 
         {#if count > 0}
-            <Body fontWeight={"bold"}>
-                <Translatable resourceKey={i18nKey(`Previously invited users (${count})`)} />
-            </Body>
-            <Body colour={"textSecondary"}>
-                <Translatable
-                    resourceKey={i18nKey(
-                        "Users which have been invited to this group, but have not accepted the invite yet.",
-                    )} />
-            </Body>
+            <Container direction={"vertical"} gap={"md"}>
+                <Body fontWeight={"bold"}>
+                    <Translatable resourceKey={i18nKey(`Previously invited users (${count})`)} />
+                </Body>
+                <Body colour={"textSecondary"}>
+                    <Translatable
+                        resourceKey={i18nKey(
+                            "Users which have been invited to this group, but have not accepted the invite yet.",
+                        )} />
+                </Body>
+            </Container>
             {#if virtualise}
                 <VirtualList keyFn={(user) => user.userId} items={users}>
                     {#snippet children(user)}

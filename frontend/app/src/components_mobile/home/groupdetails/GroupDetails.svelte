@@ -156,7 +156,7 @@
     }
 
     function shareGroup() {
-        console.log("Share group - to do");
+        publish("inviteAndShare", { collection: chat, view: "share" });
     }
 
     function leaveGroup() {

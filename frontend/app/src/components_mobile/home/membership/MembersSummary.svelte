@@ -34,8 +34,6 @@
     onDestroy(() => {
         membersState.destroy();
     });
-
-    function share() {}
 </script>
 
 <Container gap={"xl"} direction={"vertical"}>
@@ -58,14 +56,7 @@
         {#snippet icon(color)}
             <AccountPlus {color} />
         {/snippet}
-        Add members
-    </ListAction>
-
-    <ListAction colour={"secondary"} onClick={share}>
-        {#snippet icon(color)}
-            <AccountPlus {color} />
-        {/snippet}
-        Invite via link or QR code
+        Invite & share
     </ListAction>
 
     <MemberList members={subset} {membersState} />

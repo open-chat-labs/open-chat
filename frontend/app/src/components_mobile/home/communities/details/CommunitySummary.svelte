@@ -328,19 +328,6 @@
                 </Container>
             {/if}
         {/if}
-
-        <!-- {#if combinedRulesText.length > 0}
-            <div class="separator"></div>
-
-            <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
-                <Body colour={"textSecondary"} fontWeight={"bold"}>
-                    <Translatable resourceKey={i18nKey("Group rules")}></Translatable>
-                </Body>
-
-                <Body><Markdown inline={false} text={combinedRulesText} /></Body>
-            </Container>
-        {/if}
-         -->
     </Container>
 </Container>
 

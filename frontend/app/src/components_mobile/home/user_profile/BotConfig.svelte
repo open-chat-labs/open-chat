@@ -19,32 +19,10 @@
                 toastStore.showFailureToast(i18nKey("bots.config.failure"), err);
             });
     });
-
-    function onCopy(txt: string) {
-        navigator.clipboard.writeText(txt);
-    }
 </script>
 
 {#snippet datum(title: string, body: string)}
     <CopyCard {title} {body} />
-    <!-- <Container crossAxisAlignment={"start"}>
-        <Container gap={"sm"} direction={"vertical"}>
-            <BodySmall colour={"primary"}>
-                <Translatable resourceKey={i18nKey(title)}></Translatable>
-            </BodySmall>
-            <Label width={{ kind: "hug" }} align={"start"}>
-                <code class="label">
-                    {value}
-                </code>
-            </Label>
-        </Container>
-
-        <IconButton onclick={() => onCopy(value)} size={"sm"}>
-            {#snippet icon(color)}
-                <ContentCopy {color}></ContentCopy>
-            {/snippet}
-        </IconButton>
-    </Container> -->
 {/snippet}
 
 <SlidingPageContent title={i18nKey("Bot configuration")} subtitle={i18nKey("Advanced options")}>
@@ -76,9 +54,3 @@
         </Container>
     </Container>
 </SlidingPageContent>
-
-<style lang="scss">
-    .label {
-        word-break: break-all;
-    }
-</style>
