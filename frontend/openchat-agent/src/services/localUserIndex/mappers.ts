@@ -395,6 +395,9 @@ export function registerUserResponse(
     if (value === "UsernameInvalid") {
         return { kind: "username_invalid" };
     }
+    if (value === "EmailInvalid") {
+        return { kind: "email_invalid" };
+    }
     if (value === "AlreadyRegistered") {
         return { kind: "already_registered" };
     }
