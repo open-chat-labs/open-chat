@@ -1,6 +1,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { createLocalStorageStore } from "@src/utils/store";
+    import EmailValidator from "email-validator";
     import type { CreatedUser, OpenChat, UserOrUserGroup, UserSummary } from "openchat-client";
     import {
         AuthProvider,
@@ -14,6 +15,7 @@
     import ButtonGroup from "../ButtonGroup.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import FindUser from "../FindUser.svelte";
+    import Input from "../Input.svelte";
     import TermsContent from "../landingpages/TermsContent.svelte";
     import Legend from "../Legend.svelte";
     import ModalContent from "../ModalContent.svelte";
@@ -36,6 +38,8 @@
     let usernameValid = $state(false);
     let usernameStore = createLocalStorageStore("openchat_candidate_username", "");
     let checkingUsername: boolean = $state(false);
+    let email = $state("");
+    let emailValid = $derived(email.length === 0 || EmailValidator.validate(email));
     let busy = $state(false);
     let badCode = $state(false);
     let referringUser: UserSummary | undefined = $state(undefined);
@@ -52,7 +56,7 @@
 
     async function register(e: Event) {
         e.preventDefault();
-        if (usernameValid) {
+        if (usernameValid && emailValid) {
             usernameStore.set(username);
             try {
                 busy = true;
@@ -71,7 +75,7 @@
                     }
                 }
                 passkeyCreated = true;
-                await registerUser(username);
+                await registerUser(username, email.length > 0 ? email : undefined);
             } catch (err) {
                 error = `Error registering user: ${err}`;
             } finally {
@@ -80,8 +84,8 @@
         }
     }
 
-    async function registerUser(username: string) {
-        await client.registerUser(username).then((resp) => {
+    async function registerUser(username: string, email: string | undefined) {
+        await client.registerUser(username, email).then((resp) => {
             badCode = false;
             if (resp.kind === "username_taken") {
                 error = "register.usernameTaken";
@@ -91,6 +95,8 @@
                 error = "register.usernameTooLong";
             } else if (resp.kind === "username_invalid") {
                 error = "register.usernameInvalid";
+            } else if (resp.kind === "email_invalid") {
+                error = "register.emailInvalid";
             } else if (resp.kind === "user_limit_reached") {
                 error = "register.userLimitReached";
             } else if (resp.kind === "internal_error") {
@@ -201,11 +207,23 @@
                 {client}
                 disabled={busy}
                 originalUsername={$usernameStore ?? ""}
-                autofocus={true}
+                autofocus
                 bind:username
                 bind:usernameValid
                 bind:checking={checkingUsername}
                 bind:error />
+        </div>
+
+        <div class="form-element">
+            <Legend label={i18nKey("register.email")} rules={i18nKey("register.emailRules")} />
+
+            <Input
+                invalid={!emailValid}
+                disabled={busy}
+                placeholder={i18nKey("register.emailPlaceholder")}
+                bind:value={email}
+                minlength={0}
+                maxlength={254} />
         </div>
 
         <div class="form-element">
@@ -245,7 +263,7 @@
         {/if}
         <Button
             loading={checkingUsername || busy}
-            disabled={!usernameValid || busy}
+            disabled={!usernameValid || !emailValid || busy}
             onClick={register}>
             <Translatable resourceKey={i18nKey("register.proceed")} />
         </Button>

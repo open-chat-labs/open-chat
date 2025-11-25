@@ -2450,6 +2450,7 @@ export const LocalUserIndexBotDeleteChannelArgs = Type.Object({
 export type LocalUserIndexRegisterUserArgs = Static<typeof LocalUserIndexRegisterUserArgs>;
 export const LocalUserIndexRegisterUserArgs = Type.Object({
     username: Type.String(),
+    email: Type.Optional(Type.String()),
     referral_code: Type.Optional(Type.String()),
     public_key: TSBytes,
 });
@@ -6101,6 +6102,7 @@ export const LocalUserIndexRegisterUserResponse = Type.Union([
     Type.Literal("AlreadyRegistered"),
     Type.Literal("UserLimitReached"),
     Type.Literal("UsernameInvalid"),
+    Type.Literal("EmailInvalid"),
     Type.Object({
         UsernameTooShort: Type.Number(),
     }),
