@@ -135,6 +135,7 @@ async fn install_service_canisters_impl(
         governance_principals: vec![principal],
         user_index_canister_id: canister_ids.user_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
+        sign_in_with_email_canister_id: canister_ids.sign_in_with_email,
         originating_canisters: vec![
             canister_ids.nns_internet_identity,
             canister_ids.sign_in_with_email,

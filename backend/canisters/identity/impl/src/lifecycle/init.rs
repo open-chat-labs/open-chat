@@ -17,6 +17,7 @@ fn init(args: Args) {
         args.governance_principals.into_iter().collect(),
         args.user_index_canister_id,
         args.cycles_dispenser_canister_id,
+        args.sign_in_with_email_canister_id,
         args.originating_canisters,
         args.skip_captcha_whitelist,
         args.ic_root_key,

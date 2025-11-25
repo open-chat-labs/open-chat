@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `c2c_set_user_identities` to replace `c2c_set_user_ids` ([#8682](https://github.com/open-chat-labs/open-chat/pull/8682))
+
 ### Changed
 
 - Switch some endpoints over to using common response types ([#8450](https://github.com/open-chat-labs/open-chat/pull/8450))

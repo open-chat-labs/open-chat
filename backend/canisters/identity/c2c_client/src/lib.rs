@@ -5,3 +5,4 @@ use identity_canister::*;
 
 // Updates
 generate_c2c_call!(c2c_set_user_ids);
+generate_c2c_call!(c2c_set_user_identities);
