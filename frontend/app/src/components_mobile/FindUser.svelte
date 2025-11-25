@@ -98,7 +98,7 @@
 {/snippet}
 
 {#if communityMembers?.length > 0 || users?.length > 0}
-    <Container direction={"vertical"}>
+    <Container gap={"md"} padding={["zero", "md"]} direction={"vertical"}>
         <Body fontWeight={"bold"}>
             <Translatable resourceKey={i18nKey("Search results")}></Translatable>
         </Body>
@@ -107,43 +107,49 @@
             <Label colour={"textSecondary"}>
                 <Translatable resourceKey={i18nKey("communityMembers")} />
             </Label>
-            {#each communityMembers as user (user.userId)}
-                {#if matchingUser !== undefined}
-                    {@render matchingUser(user, onSelectUser)}
-                {:else}
-                    {@render match(user)}
-                {/if}
-            {/each}
+            <Container direction={"vertical"}>
+                {#each communityMembers as user (user.userId)}
+                    {#if matchingUser !== undefined}
+                        {@render matchingUser(user, onSelectUser)}
+                    {:else}
+                        {@render match(user)}
+                    {/if}
+                {/each}
+            </Container>
         {/if}
         {#if communityMembers?.length > 0 && users?.length > 0}
             <Label colour={"textSecondary"}>
                 <Translatable resourceKey={i18nKey("otherUsers")} />
             </Label>
         {/if}
-        {#each users as user (user.userId)}
-            {#if matchingUser !== undefined}
-                {@render matchingUser(user, onSelectUser)}
-            {:else}
-                {@render match(user)}
-            {/if}
-        {/each}
-    </Container>
-{/if}
-
-{#if dms.length > 0}
-    <Container direction={"vertical"}>
-        <Body fontWeight={"bold"}>
-            <Translatable resourceKey={i18nKey("Frequently contacted on OpenChat")}></Translatable>
-        </Body>
-
-        {#each dms as user (user?.userId)}
-            {#if user}
+        <Container direction={"vertical"}>
+            {#each users as user (user.userId)}
                 {#if matchingUser !== undefined}
                     {@render matchingUser(user, onSelectUser)}
                 {:else}
                     {@render match(user)}
                 {/if}
-            {/if}
-        {/each}
+            {/each}
+        </Container>
+    </Container>
+{/if}
+
+{#if dms.length > 0}
+    <Container gap={"md"} padding={["zero", "md"]} direction={"vertical"}>
+        <Body fontWeight={"bold"}>
+            <Translatable resourceKey={i18nKey("Frequently contacted on OpenChat")}></Translatable>
+        </Body>
+
+        <Container direction={"vertical"}>
+            {#each dms as user (user?.userId)}
+                {#if user}
+                    {#if matchingUser !== undefined}
+                        {@render matchingUser(user, onSelectUser)}
+                    {:else}
+                        {@render match(user)}
+                    {/if}
+                {/if}
+            {/each}
+        </Container>
     </Container>
 {/if}

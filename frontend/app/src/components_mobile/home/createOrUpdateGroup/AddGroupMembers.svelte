@@ -3,7 +3,7 @@
     import { Container, FloatingButton } from "component-lib";
     import { OpenChat, publish, type UserSummary } from "openchat-client";
     import { getContext } from "svelte";
-    import Check from "svelte-material-icons/Check.svelte";
+    import Save from "svelte-material-icons/ContentSaveOutline.svelte";
     import SelectUsers from "../SelectUsers.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import { updateGroupState } from "./group.svelte";
@@ -32,16 +32,8 @@
     </Container>
 </SlidingPageContent>
 
-<FloatingButton pos={{ bottom: "md", right: "md" }} onClick={() => publish("updateGroupDetails")}>
+<FloatingButton pos={{ bottom: "md", right: "md" }} onClick={() => publish("closeModalPage")}>
     {#snippet icon(color)}
-        <Check {color} />
+        <Save {color} />
     {/snippet}
 </FloatingButton>
-
-<style lang="scss">
-    .add_group_members_next {
-        position: absolute;
-        bottom: var(--sp-md);
-        right: var(--sp-md);
-    }
-</style>

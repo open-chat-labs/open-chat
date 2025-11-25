@@ -39,6 +39,7 @@ export type PubSubEvents = {
     showInviteGroupUsers: boolean;
     replyPrivatelyTo: EnhancedReplyContext;
     showGroupMembers: undefined;
+    addGroupMembers: undefined;
     upgrade: undefined;
     verifyHumanity: undefined;
     deleteChat: MultiUserChat;

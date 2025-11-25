@@ -9,6 +9,7 @@
         FloatingButton,
         Form,
         Input,
+        ListAction,
         Switch,
         TextArea,
         UserChip,
@@ -17,6 +18,7 @@
     import { getContext } from "svelte";
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
+    import AccountPlus from "svelte-material-icons/AccountPlusOutline.svelte";
     import AlertOutline from "svelte-material-icons/AlertOutline.svelte";
     import AlertRhombusOutline from "svelte-material-icons/AlertRhombusOutline.svelte";
     import Check from "svelte-material-icons/Check.svelte";
@@ -66,7 +68,7 @@
     <Container
         supplementalClass={"group_info"}
         height={{ kind: "fill" }}
-        gap={"xl"}
+        gap={"xxl"}
         direction={"vertical"}
         padding={["xxl", "lg", "lg", "lg"]}>
         <Container
@@ -135,13 +137,19 @@
 
             <DisappearingMessages />
         </Container>
-        {#if ugs.candidateMembers.length > 0}
-            <Container direction={"vertical"} gap={"md"}>
+        <Container padding={["zero", "md"]} direction={"vertical"} gap={"xl"}>
+            <ListAction onClick={() => publish("addGroupMembers")}>
+                {#snippet icon(color)}
+                    <AccountPlus {color} />
+                {/snippet}
+                Add members
+            </ListAction>
+
+            {#if ugs.candidateMembers.length > 0}
                 <Container direction={"vertical"}>
                     <Body fontWeight={"bold"}>
                         <Translatable resourceKey={i18nKey("Selected members")}></Translatable>
                     </Body>
-
                     <BodySmall colour={"textSecondary"}>
                         <Translatable
                             resourceKey={i18nKey(
@@ -156,8 +164,8 @@
                             onRemove={() => ugs.deleteMember(user)}>@{user.username}</UserChip>
                     {/each}
                 </Container>
-            </Container>
-        {/if}
+            {/if}
+        </Container>
 
         <Container direction={"vertical"} gap={"lg"} supplementalClass={"group_sub_sections"}>
             <LinkedCard

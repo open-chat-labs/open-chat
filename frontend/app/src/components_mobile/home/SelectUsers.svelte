@@ -52,7 +52,7 @@
         {placeholderKey}>
         {#snippet selected()}
             {#if selectedUsers.length > 0}
-                <Container wrap gap={"sm"} crossAxisAlignment={"center"}>
+                <Container padding={["zero", "sm"]} wrap gap={"sm"} crossAxisAlignment={"center"}>
                     {#each selectedUsers as user (user.userId)}
                         <UserChip
                             avatarUrl={client.userAvatarUrl(user)}

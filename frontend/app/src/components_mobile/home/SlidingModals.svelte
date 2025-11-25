@@ -38,6 +38,7 @@
     import EditUserGroup from "./communities/details/EditUserGroup.svelte";
     import UserGroup from "./communities/details/UserGroup.svelte";
     import UserGroups from "./communities/details/UserGroups.svelte";
+    import AddGroupMembers from "./createOrUpdateGroup/AddGroupMembers.svelte";
     import GroupInfo from "./createOrUpdateGroup/GroupInfo.svelte";
     import GroupPermissions from "./createOrUpdateGroup/Permissions.svelte";
     import ConfirmDeleteChat from "./groupdetails/ConfirmDelete.svelte";
@@ -131,6 +132,7 @@
         | { kind: "update_balance_gate"; data: UpdateGroupOrCommunityState; gate: TokenBalanceGate }
         | { kind: "update_chit_gate"; data: UpdateGroupOrCommunityState; gate: ChitEarnedGate }
         | { kind: "access_gates_learn_more" }
+        | { kind: "add_group_members" }
         | { kind: "user_profile_chats_and_video" }
         | { kind: "user_profile_share" }
         | { kind: "user_profile_about" }
@@ -158,6 +160,7 @@
 
     onMount(() => {
         const unsubs = [
+            subscribe("addGroupMembers", () => push({ kind: "update_group_add_members" })),
             subscribe("inviteAndShare", ({ collection, view }) =>
                 push({ kind: "invite_and_share", collection, view }),
             ),
@@ -231,8 +234,8 @@
             subscribe("updateCommunity", () => push({ kind: "update_community_details" })),
             subscribe("updateCommunityDetails", () => push({ kind: "update_community_details" })),
             subscribe("updateCommunityChannels", () => push({ kind: "update_community_channels" })),
-            subscribe("newChannel", () => push({ kind: "update_group_add_members" })),
-            subscribe("newGroup", () => push({ kind: "update_group_add_members" })),
+            subscribe("newChannel", () => push({ kind: "update_group_details" })),
+            subscribe("newGroup", () => push({ kind: "update_group_details" })),
             subscribe("updateGroup", () => push({ kind: "update_group_details" })),
             subscribe("updateRules", (data) =>
                 push({
@@ -355,7 +358,7 @@
         {:else if page.kind === "app_settings"}
             <AppSettings />
         {:else if page.kind === "update_group_add_members"}
-            <GroupInfo />
+            <AddGroupMembers />
         {:else if page.kind === "update_group_details"}
             <GroupInfo />
         {:else if page.kind === "update_rules"}

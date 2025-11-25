@@ -3,7 +3,7 @@
     import type { BotMatch, DiamondMembershipStatus, OpenChat, UserSummary } from "openchat-client";
     import { currentUserIdStore } from "openchat-client";
     import { getContext } from "svelte";
-    import CheckboxMarkedOutline from "svelte-material-icons/CheckboxMarkedOutline.svelte";
+    import Check from "svelte-material-icons/Check.svelte";
     import FilteredUsername from "./FilteredUsername.svelte";
     import Badges from "./home/profile/Badges.svelte";
 
@@ -79,6 +79,6 @@
         </BodySmall>
     </Container>
     {#if checked}
-        <CheckboxMarkedOutline size={"1.4rem"} color={ColourVars.primary} />
+        <Check size={"1.4rem"} color={ColourVars.primary} />
     {/if}
 </Container>
