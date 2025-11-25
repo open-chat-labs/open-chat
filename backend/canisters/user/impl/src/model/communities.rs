@@ -95,10 +95,6 @@ impl Communities {
         self.communities.len()
     }
 
-    pub fn removed_len(&self) -> usize {
-        self.removed.len()
-    }
-
     fn next_index(&self) -> u32 {
         self.communities.values().map(|c| c.index.value).max().unwrap_or_default() + 1
     }

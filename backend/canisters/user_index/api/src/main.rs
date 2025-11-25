@@ -39,7 +39,6 @@ fn main() {
     generate_ts_method!(user_index, check_username);
     generate_ts_method!(user_index, chit_leaderboard);
     generate_ts_method!(user_index, current_user);
-    generate_ts_method!(user_index, delete_user);
     generate_ts_method!(user_index, diamond_membership_fees);
     generate_ts_method!(user_index, explore_bots);
     generate_ts_method!(user_index, external_achievements);
