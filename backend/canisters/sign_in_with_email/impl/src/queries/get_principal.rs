@@ -3,10 +3,10 @@ use crate::{env, state};
 use candid::Principal;
 use ic_canister_sig_creation::CanisterSigPublicKey;
 use ic_cdk::query;
-use sign_in_with_email_canister::GetPrincipalArgs;
+use sign_in_with_email_canister::get_principal::Args;
 
 #[query(guard = "caller_is_whitelisted")]
-fn get_principal(args: GetPrincipalArgs) -> Principal {
+fn get_principal(args: Args) -> Principal {
     state::read(|s| {
         let seed = s.calculate_seed(&args.email);
         let canister_id = env::canister_id();

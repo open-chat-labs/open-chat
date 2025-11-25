@@ -4,10 +4,10 @@ use crate::{
 };
 use email_magic_links::DoubleSignedMagicLink;
 use ic_cdk::update;
-use sign_in_with_email_canister::{HandleMagicLinkArgs, HandleMagicLinkResponse};
+use sign_in_with_email_canister::handle_magic_link::{Args, Response};
 
 #[update]
-async fn handle_magic_link(args: HandleMagicLinkArgs) -> HandleMagicLinkResponse {
+async fn handle_magic_link(args: Args) -> Response {
     let params = querystring::querify(&args.link);
     let magic_link_hex = get_query_param_value(&params, "m").unwrap();
     let signature1_hex = get_query_param_value(&params, "s1").unwrap();
@@ -16,10 +16,10 @@ async fn handle_magic_link(args: HandleMagicLinkArgs) -> HandleMagicLinkResponse
     let magic_link = DoubleSignedMagicLink::from_hex_strings(&magic_link_hex, &signature1_hex, &signature2_hex);
 
     match state::mutate(|s| s.process_auth_request(magic_link, code, true, env::now())) {
-        AuthResult::Success => HandleMagicLinkResponse::Success,
-        AuthResult::LinkExpired => HandleMagicLinkResponse::LinkExpired,
-        AuthResult::LinkInvalid(error) => HandleMagicLinkResponse::LinkInvalid(error),
+        AuthResult::Success => Response::Success,
+        AuthResult::LinkExpired => Response::LinkExpired,
+        AuthResult::LinkInvalid(error) => Response::LinkInvalid(error),
         AuthResult::RequiresUpgrade => unreachable!(),
-        AuthResult::CodeIncorrect => HandleMagicLinkResponse::CodeIncorrect,
+        AuthResult::CodeIncorrect => Response::CodeIncorrect,
     }
 }

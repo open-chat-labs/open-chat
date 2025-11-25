@@ -4,12 +4,12 @@ use email_magic_links::DoubleSignedMagicLink;
 use ic_cdk::{query, update};
 use ic_http_certification::{HttpRequest, HttpResponse};
 
-#[query]
+#[query(hidden = true)]
 fn http_request(request: HttpRequest) -> HttpResponse {
     handle_http_request(request, false)
 }
 
-#[update]
+#[update(hidden = true)]
 fn http_request_update(request: HttpRequest) -> HttpResponse {
     handle_http_request(request, true)
 }

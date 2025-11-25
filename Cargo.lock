@@ -9365,7 +9365,7 @@ version = "0.1.0"
 dependencies = [
  "base64 0.22.1",
  "candid",
- "rand 0.8.5",
+ "candid_gen",
  "rsa",
  "serde",
  "serde_bytes",

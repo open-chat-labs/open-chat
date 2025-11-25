@@ -2,12 +2,12 @@ use candid::{CandidType, Deserialize};
 use serde::Serialize;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct HandleMagicLinkArgs {
+pub struct Args {
     pub link: String,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum HandleMagicLinkResponse {
+pub enum Response {
     Success,
     LinkExpired,
     LinkInvalid(String),

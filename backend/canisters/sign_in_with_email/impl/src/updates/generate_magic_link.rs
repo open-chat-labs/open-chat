@@ -1,14 +1,12 @@
 use crate::{email_sender, env, rng, state};
 use email_utils::ValidatedEmail;
 use ic_cdk::update;
-use sign_in_with_email_canister::{
-    GenerateMagicLinkArgs, GenerateMagicLinkResponse, GenerateMagicLinkResponse::*, GenerateMagicLinkSuccess,
-};
+use sign_in_with_email_canister::generate_magic_link::{Args, GenerateMagicLinkSuccess, Response};
 
 #[update]
-async fn generate_magic_link(args: GenerateMagicLinkArgs) -> GenerateMagicLinkResponse {
+async fn generate_magic_link(args: Args) -> Response {
     let Ok(email) = ValidatedEmail::try_from(args.email) else {
-        return EmailInvalid;
+        return Response::EmailInvalid;
     };
 
     let start = env::now();
@@ -26,12 +24,12 @@ async fn generate_magic_link(args: GenerateMagicLinkArgs) -> GenerateMagicLinkRe
     let code = signed_magic_link.magic_link.code().to_string();
 
     if let Err(error) = email_sender::send_magic_link(signed_magic_link).await {
-        FailedToSendEmail(error)
+        Response::FailedToSendEmail(error)
     } else {
         state::mutate(|s| {
             s.record_magic_link_sent(seed, &delegation, env::now());
 
-            Success(GenerateMagicLinkSuccess {
+            Response::Success(GenerateMagicLinkSuccess {
                 created: start,
                 user_key: s.der_encode_canister_sig_key(seed),
                 expiration: delegation.expiration,
