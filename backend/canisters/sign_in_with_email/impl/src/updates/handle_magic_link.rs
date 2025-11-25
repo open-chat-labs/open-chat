@@ -13,8 +13,7 @@ async fn handle_magic_link(args: HandleMagicLinkArgs) -> HandleMagicLinkResponse
     let signature1_hex = get_query_param_value(&params, "s1").unwrap();
     let signature2_hex = get_query_param_value(&params, "s2").unwrap();
     let code = get_query_param_value(&params, "c").unwrap();
-    let magic_link =
-        DoubleSignedMagicLink::from_hex_strings(&magic_link_hex, &signature1_hex, &signature2_hex);
+    let magic_link = DoubleSignedMagicLink::from_hex_strings(&magic_link_hex, &signature1_hex, &signature2_hex);
 
     match state::mutate(|s| s.process_auth_request(magic_link, code, true, env::now())) {
         AuthResult::Success => HandleMagicLinkResponse::Success,

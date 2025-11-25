@@ -23,10 +23,7 @@ fn post_upgrade(args: InitOrUpgradeArgs) {
     rng::set_seed(state.salt(), entropy);
 
     if let Some(config) = upgrade_args.email_sender_config {
-        let rsa_private_key = state
-            .rsa_private_key()
-            .clone()
-            .expect("RSA private key not set");
+        let rsa_private_key = state.rsa_private_key().clone().expect("RSA private key not set");
 
         state.set_email_sender_config(config.decrypt(&rsa_private_key));
     }
@@ -38,11 +35,7 @@ fn post_upgrade(args: InitOrUpgradeArgs) {
     }
 
     // TODO: Remove this after next deployment
-    let identity_canister = if state.test_mode() {
-        "rejcv-jqaaa-aaaak-afj5q-cai"
-    } else {
-        "6klfq-niaaa-aaaar-qadbq-cai"
-    };
+    let identity_canister = if state.test_mode() { "rejcv-jqaaa-aaaak-afj5q-cai" } else { "6klfq-niaaa-aaaar-qadbq-cai" };
     state.set_whitelisted_principals(vec![Principal::from_text(identity_canister).unwrap()]);
 
     state::init(state);

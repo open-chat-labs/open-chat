@@ -78,15 +78,9 @@ pub struct AwsEmailSenderConfigPublic {
 }
 
 impl EmailSenderConfig {
-    pub fn encrypt<R: CryptoRngCore>(
-        self,
-        rsa_public_key: &RsaPublicKey,
-        rng: &mut R,
-    ) -> EncryptedEmailSenderConfig {
+    pub fn encrypt<R: CryptoRngCore>(self, rsa_public_key: &RsaPublicKey, rng: &mut R) -> EncryptedEmailSenderConfig {
         match self {
-            EmailSenderConfig::Aws(aws) => {
-                EncryptedEmailSenderConfig::Aws(aws.encrypt(rsa_public_key, rng))
-            }
+            EmailSenderConfig::Aws(aws) => EncryptedEmailSenderConfig::Aws(aws.encrypt(rsa_public_key, rng)),
         }
     }
 }
@@ -94,19 +88,13 @@ impl EmailSenderConfig {
 impl EncryptedEmailSenderConfig {
     pub fn decrypt(self, rsa_private_key: &RsaPrivateKey) -> EmailSenderConfig {
         match self {
-            EncryptedEmailSenderConfig::Aws(aws) => {
-                EmailSenderConfig::Aws(aws.decrypt(rsa_private_key))
-            }
+            EncryptedEmailSenderConfig::Aws(aws) => EmailSenderConfig::Aws(aws.decrypt(rsa_private_key)),
         }
     }
 }
 
 impl AwsEmailSenderConfig {
-    pub fn encrypt<R: CryptoRngCore>(
-        self,
-        rsa_public_key: &RsaPublicKey,
-        rng: &mut R,
-    ) -> EncryptedAwsEmailSenderConfig {
+    pub fn encrypt<R: CryptoRngCore>(self, rsa_public_key: &RsaPublicKey, rng: &mut R) -> EncryptedAwsEmailSenderConfig {
         EncryptedAwsEmailSenderConfig {
             region: self.region,
             function_url: self.function_url,
@@ -146,11 +134,7 @@ impl From<&AwsEmailSenderConfig> for AwsEmailSenderConfigPublic {
 }
 
 fn encrypt<R: CryptoRngCore>(value: &str, rsa_public_key: &RsaPublicKey, rng: &mut R) -> String {
-    BASE64_STANDARD.encode(
-        rsa_public_key
-            .encrypt(rng, Pkcs1v15Encrypt, value.as_bytes())
-            .unwrap(),
-    )
+    BASE64_STANDARD.encode(rsa_public_key.encrypt(rng, Pkcs1v15Encrypt, value.as_bytes()).unwrap())
 }
 
 fn decrypt(value: &str, rsa_private_key: &RsaPrivateKey) -> String {

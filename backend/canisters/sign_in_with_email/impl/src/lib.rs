@@ -14,10 +14,7 @@ mod updates;
 type Hash = [u8; 32];
 
 fn get_query_param_value(params: &QueryParams, key: &str) -> Option<String> {
-    params
-        .iter()
-        .find(|(k, _)| *k == key)
-        .map(|(_, v)| v.to_string())
+    params.iter().find(|(k, _)| *k == key).map(|(_, v)| v.to_string())
 }
 
 #[cfg(test)]

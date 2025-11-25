@@ -11,11 +11,7 @@ impl TryFrom<String> for ValidatedEmail {
     fn try_from(value: String) -> Result<Self, Self::Error> {
         let email = value.trim().to_lowercase();
 
-        if EmailAddress::is_valid(&email) {
-            Ok(ValidatedEmail(email))
-        } else {
-            Err(())
-        }
+        if EmailAddress::is_valid(&email) { Ok(ValidatedEmail(email)) } else { Err(()) }
     }
 }
 

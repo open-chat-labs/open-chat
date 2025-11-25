@@ -1,6 +1,6 @@
 use ic_stable_structures::{
-    memory_manager::{MemoryId, MemoryManager, VirtualMemory},
     DefaultMemoryImpl,
+    memory_manager::{MemoryId, MemoryManager, VirtualMemory},
 };
 
 const UPGRADES: MemoryId = MemoryId::new(0);

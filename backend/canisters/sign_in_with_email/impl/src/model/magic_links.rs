@@ -19,13 +19,7 @@ pub struct EmailStats {
 }
 
 impl MagicLinks {
-    pub fn mark_magic_link_sent(
-        &mut self,
-        seed: Hash,
-        msg_hash: Hash,
-        expiration: TimestampMillis,
-        now: TimestampMillis,
-    ) {
+    pub fn mark_magic_link_sent(&mut self, seed: Hash, msg_hash: Hash, expiration: TimestampMillis, now: TimestampMillis) {
         self.prune_expired(now);
         self.active.insert((seed, msg_hash), expiration);
         self.stats
