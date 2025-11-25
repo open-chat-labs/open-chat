@@ -52,6 +52,8 @@ members = [
     "backend/canisters/registry/c2c_client",
     "backend/canisters/registry/client",
     "backend/canisters/registry/impl",
+    "backend/canisters/sign_in_with_email/api",
+    "backend/canisters/sign_in_with_email/impl",
     "backend/canisters/storage_bucket/api",
     "backend/canisters/storage_bucket/c2c_client",
     "backend/canisters/storage_bucket/impl",
@@ -121,6 +123,8 @@ members = [
     "backend/libraries/constants",
     "backend/libraries/cycles_dispenser_client",
     "backend/libraries/dynamodb_index_store",
+    "backend/libraries/email_magic_links",
+    "backend/libraries/email_utils",
     "backend/libraries/error_codes",
     "backend/libraries/fire_and_forget_handler",
     "backend/libraries/gated_groups",
@@ -162,6 +166,8 @@ members = [
     "backend/tools/canister_upgrader",
     "backend/tools/canister_wasm_chunks_uploader",
     "backend/tools/dupe_deps_detector",
+    "backend/tools/email_sender/aws",
+    "backend/tools/email_sender/core",
     "backend/tools/local_canister_creator",
     "backend/tools/principal_generator",
     "backend/tools/translation_tool",
@@ -180,7 +186,9 @@ async-channel = "2"
 async-trait = "0.1"
 aws-config = "1"
 aws-sdk-dynamodb = "1"
+aws-sign-v4 = "0.3.0"
 aws-types = "1"
+base64 = "0.22"
 bitflags = { version = "2", features = ["serde"] }
 candid = "0.10"
 canbench-rs = "0.2"
@@ -190,7 +198,7 @@ data-encoding = "2"
 dataurl = "0.1"
 dotenv = "0.15.0"
 either = "1.15.0"
-email_address = "0.2.4"
+email_address = "0.2"
 enum-repr = "0.2"
 envconfig = "0.11"
 event_store_canister = { git = "https://github.com/open-chat-labs/event-store", tag = "v0.10.0" }
@@ -203,6 +211,7 @@ futures = "0.3"
 getrandom = { version = "0.2", features = ["custom"] }
 hex = "0.4"
 hmac-sha256 = { version = "1", features = ["traits010"] }
+http = "1"
 ic-agent = "0.40"
 ic-canister-sig-creation = "1"
 ic-captcha = "1"
@@ -211,6 +220,7 @@ ic-cdk = "0.18"
 ic-cdk-timers = "0.12"
 ic-certificate-verification = "2"
 ic-certification = "2"
+ic-http-certification = "2"
 ic-ledger-types = "0.15"
 ic-management-canister-types = "0.3"
 ic_principal = "0.1"
@@ -238,12 +248,14 @@ proptest = "1"
 pulldown-cmark = { version = "0.13", default-features = false, features = [
     "html",
 ] }
+querystring = "1"
 quote = "1"
 rand = "0.8"
 range-set = "0.1"
 regex-lite = "0.1"
 reqwest = "0.12"
 rmp-serde = "1"
+rsa = "0.9"
 rustls = "0.23"
 serde = "1"
 serde_bytes = "0.11"
@@ -251,6 +263,8 @@ serde_cbor = "0.11"
 serde_json = "1"
 serde_repr = "0.1"
 serde_tokenstream = "0.2"
+serde_urlencoded = "0.7"
+serde_with = "3"
 sha2 = "0.10"
 sha3 = "0.10"
 sign_in_with_email_canister = { git = "https://github.com/open-chat-labs/ic-sign-in-with-email", rev = "v0.13.0" }
@@ -285,5 +299,6 @@ codegen-units = 1
 debug = false
 
 [patch.crates-io]
+aws-sign-v4 = { git = "https://github.com/hpeebles/aws-sign-v4", rev = "33b65dfde0676544a23c41608da77bd0a117d9ce" }
 rmp-serde = { git = "https://github.com/hpeebles/msgpack-rust", rev = "832a3f48e67eea56c869715ae6e1045583dd011b" }
 ts-rs = { git = "https://github.com/hpeebles/ts-rs", rev = "c584e25ce28fa27b64964c208725b6bc100fbdac" }

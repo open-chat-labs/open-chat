@@ -1,0 +1,78 @@
+type AwsEmailSenderConfigPublic = record {
+  region : text;
+  function_url : text;
+  access_key : text;
+};
+type Delegation = record { pubkey : blob; expiration : nat64 };
+type EmailSenderConfigPublic = variant { Aws : AwsEmailSenderConfigPublic };
+type EmailSenderConfigResponse = record {
+  email_sender_rsa_public_key : text;
+  email_sender_config : opt EmailSenderConfigPublic;
+};
+type EncryptedAwsEmailSenderConfig = record {
+  region : text;
+  function_url : text;
+  access_key : text;
+  secret_key_encrypted : text;
+};
+type EncryptedEmailSenderConfig = variant {
+  Aws : EncryptedAwsEmailSenderConfig;
+};
+type GenerateMagicLinkArgs = record {
+  session_key : blob;
+  email : text;
+  max_time_to_live : opt nat64;
+};
+type GenerateMagicLinkResponse = variant {
+  Blocked : nat64;
+  EmailInvalid;
+  FailedToSendEmail : text;
+  Success : GenerateMagicLinkSuccess;
+};
+type GenerateMagicLinkSuccess = record {
+  created : nat64;
+  user_key : blob;
+  code : text;
+  expiration : nat64;
+};
+type GetDelegationArgs = record {
+  session_key : blob;
+  email : text;
+  expiration : nat64;
+};
+type GetDelegationResponse = variant { NotFound; Success : SignedDelegation };
+type HandleMagicLinkArgs = record { link : text };
+type HandleMagicLinkResponse = variant {
+  CodeIncorrect;
+  Success;
+  LinkExpired;
+  LinkInvalid : text;
+};
+type HttpRequest = record {
+  url : text;
+  method : text;
+  body : blob;
+  headers : vec record { text; text };
+};
+type HttpResponse = record {
+  body : blob;
+  headers : vec record { text; text };
+  upgrade : opt bool;
+  status_code : nat16;
+};
+type InitArgs = record { salt : opt blob; email_sender_public_key_pem : text };
+type InitOrUpgradeArgs = variant { Upgrade : UpgradeArgs; Init : InitArgs };
+type SignedDelegation = record { signature : blob; delegation : Delegation };
+type UpgradeArgs = record {
+  email_sender_public_key_pem : opt text;
+  email_sender_config : opt EncryptedEmailSenderConfig;
+};
+service : (InitOrUpgradeArgs) -> {
+  email_sender_config : () -> (EmailSenderConfigResponse) query;
+  generate_magic_link : (GenerateMagicLinkArgs) -> (GenerateMagicLinkResponse);
+  get_delegation : (GetDelegationArgs) -> (GetDelegationResponse) query;
+  handle_magic_link : (HandleMagicLinkArgs) -> (HandleMagicLinkResponse);
+  http_request : (HttpRequest) -> (HttpResponse) query;
+  http_request_update : (HttpRequest) -> (HttpResponse);
+  rsa_public_key : () -> (opt text) query;
+}
