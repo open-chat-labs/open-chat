@@ -307,7 +307,7 @@ async fn install_service_canisters_impl(
     };
 
     let sign_in_with_email_wasm = get_canister_wasm(CanisterName::SignInWithEmail, version);
-    let sign_in_with_email_init_args = sign_in_with_email_canister_test_utils::default_init_args();
+    let sign_in_with_email_init_args = sign_in_with_email_test_utils::default_init_args();
 
     let sign_in_with_ethereum_wasm = get_canister_wasm(CanisterName::SignInWithEthereum, version);
     let sign_in_with_ethereum_init_args = siwe::SettingsInput {

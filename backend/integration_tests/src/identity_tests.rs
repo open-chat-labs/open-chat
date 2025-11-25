@@ -168,7 +168,7 @@ pub(crate) fn sign_in_with_email(env: &mut PocketIc, canister_ids: &CanisterIds)
         panic!("{generate_magic_link_response:?}");
     };
 
-    let magic_link = sign_in_with_email_canister_test_utils::generate_magic_link(
+    let magic_link = sign_in_with_email_test_utils::generate_magic_link(
         &email,
         session_key.clone(),
         generate_magic_link_success.created * NANOS_PER_MILLISECOND,
