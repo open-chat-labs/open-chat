@@ -9,6 +9,7 @@
         FloatingButton,
         Form,
         Input,
+        Switch,
         TextArea,
         UserChip,
     } from "component-lib";
@@ -20,15 +21,16 @@
     import AlertRhombusOutline from "svelte-material-icons/AlertRhombusOutline.svelte";
     import Check from "svelte-material-icons/Check.svelte";
     import ClockOutline from "svelte-material-icons/ClockOutline.svelte";
-    import Cog from "svelte-material-icons/Cog.svelte";
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";
     import FormatList from "svelte-material-icons/FormatListBulletedType.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import AreYouSure from "../../AreYouSure.svelte";
     import EditableAvatar from "../../EditableAvatar.svelte";
     import LinkedCard from "../../LinkedCard.svelte";
+    import Setting from "../../Setting.svelte";
     import Translatable from "../../Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
+    import DisappearingMessages from "./DisappearingMessages.svelte";
     import {
         MAX_DESC_LENGTH,
         MAX_NAME_LENGTH,
@@ -109,6 +111,30 @@
                 </TextArea>
             </Container>
         </Form>
+        <Container padding={["zero", "md"]} gap={"xxl"} direction={"vertical"}>
+            <Setting
+                toggle={() => (ugs.candidateGroup.public = !ugs.candidateGroup.public)}
+                info={"Groups are private by default, and limited to people you invite. Public channels must have unique names, and community members are automatically added to them."}>
+                <Switch width={{ kind: "fill" }} reverse bind:checked={ugs.candidateGroup.public}>
+                    <Translatable resourceKey={i18nKey("Public group")}></Translatable>
+                </Switch>
+            </Setting>
+
+            <Setting
+                toggle={() =>
+                    (ugs.candidateGroup.historyVisible = !ugs.candidateGroup.historyVisible)}
+                info={"By default new memebers in the group will see all the previous messages that were sent within the group. Enable this option to hide chat history for new members."}>
+                <Switch
+                    width={{ kind: "fill" }}
+                    reverse
+                    bind:checked={ugs.candidateGroup.historyVisible}>
+                    <Translatable resourceKey={i18nKey("Hide chat history for new members")}
+                    ></Translatable>
+                </Switch>
+            </Setting>
+
+            <DisappearingMessages />
+        </Container>
         {#if ugs.candidateMembers.length > 0}
             <Container direction={"vertical"} gap={"md"}>
                 <Container direction={"vertical"}>
@@ -134,13 +160,6 @@
         {/if}
 
         <Container direction={"vertical"} gap={"lg"} supplementalClass={"group_sub_sections"}>
-            <LinkedCard
-                onClick={() => publish("updateGroupGeneralSetup")}
-                Icon={Cog}
-                title={i18nKey("General setup")}
-                info={i18nKey(
-                    "Enable sharing via link, disappearing messages, or hide chat history for new members.",
-                )} />
             <LinkedCard
                 onClick={() => publish("updateAccessGates", ugs)}
                 Icon={AlertRhombusOutline}

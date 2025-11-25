@@ -3,7 +3,7 @@
     import type { Snippet } from "svelte";
 
     interface Props {
-        mode?: "transparent" | "dark" | "primary";
+        mode?: "transparent" | "dark" | "primary" | "secondary";
         icon: Snippet<[string]>;
         disabled?: boolean;
         padding?: Padding;
@@ -23,6 +23,8 @@
     let paddingCss = $derived(getPaddingCss(padding));
     let iconColour = $derived.by(() => {
         switch (mode) {
+            case "secondary":
+                return ColourVars.textPrimary;
             case "transparent":
                 return disabled ? ColourVars.disabledButton : ColourVars.textPrimary;
             case "dark":
@@ -83,6 +85,10 @@
 
         &.primary {
             background-color: var(--primary);
+        }
+
+        &.secondary {
+            background-color: var(--text-tertiary);
         }
     }
 </style>

@@ -33,7 +33,7 @@
                 {/if}
             </div>
             <div class="editable_avatar_edit_icon">
-                <IconButton onclick={choosePhoto} mode={"primary"}>
+                <IconButton size={"md"} onclick={choosePhoto} mode={"secondary"}>
                     {#snippet icon(color)}
                         <ImageEditOutline {color} />
                     {/snippet}
@@ -44,18 +44,19 @@
 </EditableImageWrapper>
 
 <style lang="scss">
-    :global(.editable_avatar_edit_icon svg) {
+    /* :global(.editable_avatar_edit_icon svg) {
         width: var(--icon-md);
         height: var(--icon-md);
-    }
+    } */
 
     .editable_avatar_edit_icon {
         position: absolute;
-        bottom: 6px;
-        right: 6px;
+        bottom: 0px;
+        right: 0px;
+        padding: 2px;
         border-radius: var(--rad-circle);
-        background-color: var(--background-1);
-        border: 4px solid var(--background-0);
+        background-color: var(--text-tertiary);
+        border: 6px solid var(--background-0);
     }
 
     .border {
@@ -66,6 +67,7 @@
 
         &.highlight {
             background: var(--gradient);
+            background: var(--text-tertiary);
         }
     }
 
@@ -75,7 +77,7 @@
         justify-content: center;
         align-items: center;
         position: relative;
-        background-color: var(--text-tertiary);
+        background: var(--gradient);
 
         &.headline {
             width: toRem(170);

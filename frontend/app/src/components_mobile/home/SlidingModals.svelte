@@ -38,8 +38,6 @@
     import EditUserGroup from "./communities/details/EditUserGroup.svelte";
     import UserGroup from "./communities/details/UserGroup.svelte";
     import UserGroups from "./communities/details/UserGroups.svelte";
-    import AddGroupMembers from "./createOrUpdateGroup/AddGroupMembers.svelte";
-    import GeneralSetup from "./createOrUpdateGroup/GeneralSetup.svelte";
     import GroupInfo from "./createOrUpdateGroup/GroupInfo.svelte";
     import GroupPermissions from "./createOrUpdateGroup/Permissions.svelte";
     import ConfirmDeleteChat from "./groupdetails/ConfirmDelete.svelte";
@@ -122,7 +120,6 @@
         | { kind: "update_group_add_members" }
         | { kind: "update_group_details" }
         | { kind: "update_rules"; data: UpdateGroupOrCommunityState }
-        | { kind: "update_group_general_setup" }
         | { kind: "update_group_permissions" }
         | { kind: "update_community_permissions" }
         | { kind: "update_access_gates"; data: UpdateGroupOrCommunityState }
@@ -244,9 +241,7 @@
                 }),
             ),
             subscribe("updateGroupDetails", () => push({ kind: "update_group_details" })),
-            subscribe("updateGroupGeneralSetup", () =>
-                push({ kind: "update_group_general_setup" }),
-            ),
+
             subscribe("updateCommunityPermissions", () =>
                 push({ kind: "update_community_permissions" }),
             ),
@@ -360,13 +355,11 @@
         {:else if page.kind === "app_settings"}
             <AppSettings />
         {:else if page.kind === "update_group_add_members"}
-            <AddGroupMembers />
+            <GroupInfo />
         {:else if page.kind === "update_group_details"}
             <GroupInfo />
         {:else if page.kind === "update_rules"}
             <Rules data={page.data} />
-        {:else if page.kind === "update_group_general_setup"}
-            <GeneralSetup />
         {:else if page.kind === "update_access_gates"}
             <AccessGates data={page.data} />
         {:else if page.kind === "update_group_permissions"}
