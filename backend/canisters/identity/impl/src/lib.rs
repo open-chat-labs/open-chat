@@ -180,6 +180,8 @@ struct Data {
     governance_principals: HashSet<Principal>,
     user_index_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
+    #[serde(default = "sign_in_with_email_canister_id_default")]
+    sign_in_with_email_canister_id: CanisterId,
     originating_canisters: HashSet<CanisterId>,
     skip_captcha_whitelist: HashSet<CanisterId>,
     user_principals: UserPrincipals,
@@ -198,11 +200,17 @@ struct Data {
     account_linking_codes: AccountLinkingCodes,
 }
 
+fn sign_in_with_email_canister_id_default() -> CanisterId {
+    Principal::from_text("zi2i7-nqaaa-aaaar-qaemq-cai").unwrap()
+}
+
 impl Data {
+    #[expect(clippy::too_many_arguments)]
     pub fn new(
         governance_principals: HashSet<Principal>,
         user_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
+        sign_in_with_email_canister_id: CanisterId,
         originating_canisters: Vec<CanisterId>,
         skip_captcha_whitelist: Vec<CanisterId>,
         ic_root_key: Vec<u8>,
@@ -212,6 +220,7 @@ impl Data {
             governance_principals,
             user_index_canister_id,
             cycles_dispenser_canister_id,
+            sign_in_with_email_canister_id,
             originating_canisters: originating_canisters.into_iter().collect(),
             skip_captcha_whitelist: skip_captcha_whitelist.into_iter().collect(),
             user_principals: UserPrincipals::default(),

@@ -56,6 +56,7 @@ pub mod happy_path {
                 username: principal_to_username(principal),
                 referral_code,
                 public_key: public_key.clone(),
+                email: None,
             },
         );
 

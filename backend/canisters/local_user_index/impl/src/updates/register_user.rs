@@ -4,6 +4,7 @@ use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::{CREATE_CANISTER_CYCLES_FEE, USER_LIMIT, min_cycles_balance};
+use email_address::EmailAddress;
 use ledger_utils::default_ledger_account;
 use local_user_index_canister::ChildCanisterType;
 use local_user_index_canister::register_user::{Response::*, *};
@@ -51,6 +52,7 @@ async fn register_user(args: Args) -> Response {
                     caller,
                     user_id,
                     args.username,
+                    args.email,
                     wasm_version,
                     referred_by,
                     is_from_identity_canister,
@@ -124,6 +126,12 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         Err(UsernameValidationError::Invalid) => return Err(UsernameInvalid),
     };
 
+    if let Some(email) = &args.email
+        && !EmailAddress::is_valid(email)
+    {
+        return Err(EmailInvalid);
+    }
+
     let openchat_bot_messages = if referral_code
         .as_ref()
         .filter(|c| matches!(c, ReferralCode::BtcMiami(_)))
@@ -193,10 +201,12 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
     })
 }
 
+#[expect(clippy::too_many_arguments)]
 fn commit(
     principal: Principal,
     user_id: UserId,
     username: String,
+    email: Option<String>,
     wasm_version: BuildVersion,
     referred_by: Option<UserId>,
     is_from_identity_canister: bool,
@@ -212,6 +222,7 @@ fn commit(
             principal,
             user_id,
             username: username.clone(),
+            email,
             referred_by,
             is_from_identity_canister,
         })),
