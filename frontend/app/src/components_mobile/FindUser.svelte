@@ -14,12 +14,16 @@
     import MatchingUser from "./MatchingUser.svelte";
     import Translatable from "./Translatable.svelte";
 
+    type OnSelectUser = (user: UserSummary) => void;
+
     interface Props {
         userLookup: (searchTerm: string) => Promise<[UserSummary[], UserSummary[]]>;
         placeholderKey?: string;
-        onSelectUser?: (user: UserSummary) => void;
+        onSelectUser: OnSelectUser;
         selected?: Snippet;
         selectedUsers?: UserSummary[];
+        matchingUser?: Snippet<[UserSummary, OnSelectUser]>;
+        dmFilter?: (user: UserSummary) => boolean;
     }
 
     let {
@@ -28,6 +32,8 @@
         onSelectUser,
         selected,
         selectedUsers = [],
+        matchingUser,
+        dmFilter,
     }: Props = $props();
 
     let searchTerm: string = $state("");
@@ -59,6 +65,7 @@
 
     function clearFilter() {
         users = [];
+        communityMembers = [];
         searchTerm = "";
     }
 
@@ -66,7 +73,10 @@
         [...$serverDirectChatsStore.values()]
             .sort(compareChats)
             .map((c) => $allUsersStore.get(c.them.userId))
-            .filter((u) => u?.kind !== "bot")
+            .filter(
+                (u) =>
+                    u !== undefined && u.kind !== "bot" && (dmFilter === undefined || dmFilter(u)),
+            )
             .slice(0, 30),
     );
 </script>
@@ -98,7 +108,11 @@
                 <Translatable resourceKey={i18nKey("communityMembers")} />
             </Label>
             {#each communityMembers as user (user.userId)}
-                {@render match(user)}
+                {#if matchingUser !== undefined}
+                    {@render matchingUser(user, onSelectUser)}
+                {:else}
+                    {@render match(user)}
+                {/if}
             {/each}
         {/if}
         {#if communityMembers?.length > 0 && users?.length > 0}
@@ -107,7 +121,11 @@
             </Label>
         {/if}
         {#each users as user (user.userId)}
-            {@render match(user)}
+            {#if matchingUser !== undefined}
+                {@render matchingUser(user, onSelectUser)}
+            {:else}
+                {@render match(user)}
+            {/if}
         {/each}
     </Container>
 {/if}
@@ -120,7 +138,11 @@
 
         {#each dms as user (user?.userId)}
             {#if user}
-                {@render match(user)}
+                {#if matchingUser !== undefined}
+                    {@render matchingUser(user, onSelectUser)}
+                {:else}
+                    {@render match(user)}
+                {/if}
             {/if}
         {/each}
     </Container>

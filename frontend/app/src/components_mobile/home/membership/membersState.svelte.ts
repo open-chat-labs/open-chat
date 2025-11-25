@@ -17,6 +17,8 @@ import {
     selectedCommunityInvitedUsersStore,
     selectedCommunityLapsedMembersStore,
     selectedCommunityMembersStore,
+    selectedCommunitySummaryStore,
+    type ChannelIdentifier,
     type CommunitySummary,
     type EnhancedExternalBot,
     type ExternalBot,
@@ -28,11 +30,14 @@ import {
     type OpenChat,
     type ReadonlyMap,
     type ReadonlySet,
+    type UserOrUserGroup,
     type UserSummary,
     type WebhookDetails,
 } from "openchat-client";
 
 export class MemberManagement {
+    #usersToAddOrInvite = $state<UserSummary[]>([]);
+    #inviting = $state(false);
     #members = $state<ReadonlyMap<string, Member>>(new Map());
     #lapsed = $state<ReadonlySet<string>>(new Set());
     #blocked = $state<ReadonlySet<string>>(new Set());
@@ -90,6 +95,10 @@ export class MemberManagement {
         };
     }
 
+    get inviting() {
+        return this.#inviting;
+    }
+
     get confirmingResetLink() {
         return this.#confirmingResetLink;
     }
@@ -132,6 +141,22 @@ export class MemberManagement {
 
     get level() {
         return this.collection.level;
+    }
+
+    get usersToAddOrInvite() {
+        return this.#usersToAddOrInvite;
+    }
+
+    deleteInvited(user: UserOrUserGroup): void {
+        if (user.kind !== "user") return;
+        this.#usersToAddOrInvite = this.#usersToAddOrInvite.filter((m) => m.userId !== user.userId);
+    }
+
+    addInvited(user: UserSummary): void {
+        const u = this.#usersToAddOrInvite.find((u) => u.userId === user.userId);
+        if (u === undefined) {
+            this.#usersToAddOrInvite.push(user);
+        }
     }
 
     #resetLink(): Promise<void> {
@@ -232,11 +257,49 @@ export class MemberManagement {
         });
     }
 
-    inviteUser(userId: string) {
+    addUsers(): Promise<boolean> {
+        if (this.collection.kind !== "channel") return Promise.resolve(false);
+
+        this.#inviting = true;
+
+        const userIds = this.#usersToAddOrInvite.map((u) => u.userId);
+
+        return this.client
+            .addMembersToChannel(this.collection.id as ChannelIdentifier, userIds)
+            .then((resp) => {
+                switch (resp.kind) {
+                    case "success": {
+                        return true;
+                    }
+                    case "add_to_channel_partial_success": {
+                        toastStore.showSuccessToast(i18nKey("group.addMembersPartialSuccess"));
+                        return true;
+                    }
+                    default: {
+                        toastStore.showFailureToast(i18nKey("group.addMembersFailed"));
+                        return false;
+                    }
+                }
+            })
+            .catch(() => {
+                toastStore.showFailureToast(i18nKey("group.addMembersFailed"));
+                return false;
+            })
+            .finally(() => (this.#inviting = false));
+    }
+
+    inviteUsers() {
+        if (this.#usersToAddOrInvite.length === 0) return;
+
+        this.#inviting = true;
         this.client
-            .inviteUsers(this.collection.id, [userId])
+            .inviteUsers(
+                this.collection.id,
+                this.#usersToAddOrInvite.map((u) => u.userId),
+            )
             .then((resp) => {
                 if (resp) {
+                    this.#usersToAddOrInvite = [];
                     if (this.collection?.public ?? false) {
                         toastStore.showSuccessToast(i18nKey("group.usersInvited"));
                     }
@@ -250,7 +313,8 @@ export class MemberManagement {
                 toastStore.showFailureToast(
                     i18nKey("group.inviteUsersFailed", undefined, this.collection.level, true),
                 );
-            });
+            })
+            .finally(() => (this.#inviting = false));
     }
 
     cancelInvites(userIds: string[]) {
@@ -263,6 +327,16 @@ export class MemberManagement {
 
     canInvite() {
         return this.client.canInviteUsers(this.collection.id);
+    }
+
+    canAdd() {
+        const community = selectedCommunitySummaryStore.value;
+        return (
+            community !== undefined &&
+            !community.public &&
+            this.collection.kind === "channel" &&
+            this.client.canAddMembers(this.collection.id)
+        );
     }
 
     canBlockUsers() {
@@ -435,11 +509,11 @@ export class MemberManagement {
         }, [] as EnhancedExternalBot[]);
     }
 
-    showAllMembers() {
-        publish("showMembers", { collection: this.collection, view: "members" });
+    showAllMembers(view: "members" | "blocked" | "lapsed" | "add" = "members") {
+        publish("showMembers", { collection: this.collection, view });
     }
 
-    inviteUsers() {
+    showInviteUsers() {
         publish("inviteAndShare", { collection: this.collection, view: "invite" });
     }
 }

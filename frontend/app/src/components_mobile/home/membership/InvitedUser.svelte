@@ -9,15 +9,14 @@
 
     interface Props {
         user: UserSummary;
-        searchTerm?: string;
         me?: boolean;
         onCancelInvite?: (userId: string) => void;
     }
 
-    let { user, searchTerm = "", me = false, onCancelInvite }: Props = $props();
+    let { user, me = false, onCancelInvite }: Props = $props();
 </script>
 
-<User {me} {user} {searchTerm}>
+<User {me} {user}>
     {#if onCancelInvite !== undefined}
         <MenuItem onclick={() => onCancelInvite(user.userId)}>
             {#snippet icon()}

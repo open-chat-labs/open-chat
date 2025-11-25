@@ -52,12 +52,21 @@
         {/if}
     </Container>
 
-    <ListAction onClick={() => membersState.inviteUsers()}>
+    <ListAction onClick={() => membersState.showInviteUsers()}>
         {#snippet icon(color)}
             <AccountPlus {color} />
         {/snippet}
         Invite & share
     </ListAction>
+
+    {#if membersState.canAdd()}
+        <ListAction colour={"tertiary"} onClick={() => membersState.showAllMembers("add")}>
+            {#snippet icon(color)}
+                <AccountPlus {color} />
+            {/snippet}
+            Add users
+        </ListAction>
+    {/if}
 
     <MemberList members={subset} {membersState} />
 </Container>

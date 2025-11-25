@@ -14,8 +14,10 @@
     import AccountAlert from "svelte-material-icons/AccountAlertOutline.svelte";
     import AccountCancel from "svelte-material-icons/AccountCancelOutline.svelte";
     import Account from "svelte-material-icons/AccountGroupOutline.svelte";
+    import AccountPlus from "svelte-material-icons/AccountPlusOutline.svelte";
     import Translatable from "../../Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
+    import AddList from "./AddList.svelte";
     import BlockedList from "./BlockedList.svelte";
     import LapsedList from "./LapsedList.svelte";
     import MemberList from "./MemberList.svelte";
@@ -36,6 +38,7 @@
     let members = $derived<FullMember[]>(
         membersState.getKnownUsers($allUsersStore, [...membersState.members.values()]),
     );
+    let canAdd = $derived(membersState.canAdd());
     let filteredMembers = $derived(
         members
             .filter((u) => membersState.matchesSearch(searchTermLower, u))
@@ -71,10 +74,12 @@
             gap={"lg"}
             padding={["xxl", "lg", "lg", "lg"]}
             direction={"vertical"}>
-            <Search
-                onClear={() => (searchTermEntered = undefined)}
-                bind:value={searchTermEntered}
-                placeholder={"Search for users"}></Search>
+            {#if view !== "add"}
+                <Search
+                    onClear={() => (searchTermEntered = undefined)}
+                    bind:value={searchTermEntered}
+                    placeholder={"Search for users"}></Search>
+            {/if}
 
             {#if view === "members"}
                 <Container
@@ -98,6 +103,8 @@
                     searchTerm={searchTermEntered}
                     users={filteredLapsed}
                     {membersState} />
+            {:else if view === "add"}
+                <AddList {membersState} />
             {:else if view === "blocked"}
                 <BlockedList
                     onReset={() => (view = "members")}
@@ -115,6 +122,17 @@
                 onClick={() => setView("members")}>
                 <Translatable resourceKey={i18nKey("Members")} />
             </BigButton>
+            {#if canAdd}
+                <BigButton
+                    width={{ kind: "fixed", size: "7rem" }}
+                    mode={view === "add" ? "active" : "default"}
+                    onClick={() => setView("add")}>
+                    {#snippet icon(color)}
+                        <AccountPlus {color} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("Add users")} />
+                </BigButton>
+            {/if}
             <BigButton
                 width={{ kind: "fixed", size: "7rem" }}
                 mode={view === "lapsed" ? "active" : "default"}

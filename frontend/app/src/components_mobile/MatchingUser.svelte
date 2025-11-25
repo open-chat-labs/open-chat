@@ -16,6 +16,7 @@
         diamond: DiamondMembershipStatus["kind"];
         streak: number;
         username: string;
+        chitEarned: number;
     };
 
     interface Props {
@@ -39,6 +40,7 @@
                     diamond: "inactive",
                     streak: 0,
                     username: user.name,
+                    chitEarned: 0,
                 };
             default:
                 return {
@@ -48,6 +50,7 @@
                     diamond: user.diamondStatus,
                     streak: user.streak,
                     username: `@${user.username}`,
+                    chitEarned: user.totalChitEarned,
                 };
         }
     }
@@ -68,6 +71,7 @@
             <Badges
                 uniquePerson={match.unique}
                 diamondStatus={match.diamond}
+                chitEarned={match.chitEarned}
                 streak={match.streak} />
         </Container>
         <BodySmall colour={"textSecondary"}>

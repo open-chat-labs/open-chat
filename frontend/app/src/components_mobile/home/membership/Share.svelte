@@ -22,7 +22,6 @@
 
     interface Props {
         membersState: MemberManagement;
-        onReset: () => void;
     }
     let { membersState }: Props = $props();
 
