@@ -1,13 +1,15 @@
 <script lang="ts">
     import { Body, Caption, ColourVars, Container } from "component-lib";
+    import type { Snippet } from "svelte";
     import Copy from "svelte-material-icons/ContentCopy.svelte";
 
     interface Props {
         title: string;
         body: string;
+        action?: Snippet;
     }
 
-    let { title, body }: Props = $props();
+    let { title, body, action }: Props = $props();
 
     function onCopy() {
         navigator.clipboard.writeText(body);
@@ -30,6 +32,9 @@
         <Copy size={"1.25em"} color={ColourVars.secondary} />
     </Container>
     <Body>{body}</Body>
+    {#if action}
+        {@render action()}
+    {/if}
 </Container>
 
 <style lang="scss">

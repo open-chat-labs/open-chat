@@ -4,6 +4,7 @@
     interface Props {
         checked: boolean;
         disabled?: boolean;
+        loading?: boolean;
         onChange?: () => void;
         children?: Snippet;
         reverse?: boolean;
@@ -14,6 +15,7 @@
     let {
         checked = $bindable(),
         disabled = false,
+        loading = false,
         onChange,
         children,
         reverse = false,
@@ -22,7 +24,7 @@
     }: Props = $props();
 
     function internalOnChange(e?: Event) {
-        if (disabled) return;
+        if (disabled || loading) return;
         if (bound) {
             checked = !checked;
         }
@@ -39,10 +41,10 @@
     crossAxisAlignment={"center"}
     onClick={internalOnChange}
     gap={"md"}>
-    <label class="toggle" class:disabled>
+    <label class="toggle" class:disabled={disabled || loading}>
         <input
             onchange={internalOnChange}
-            {disabled}
+            disabled={disabled || loading}
             {checked}
             type="checkbox"
             class="toggle-input" />

@@ -42,6 +42,7 @@ export class MemberManagement {
     #togglingSharingLink = $state(false);
     #sharingLinkEnabled = $state(false);
     #sharingLinkCode = $state<string>();
+    #confirmingResetLink = $state(false);
 
     destroy: () => void;
 
@@ -89,6 +90,10 @@ export class MemberManagement {
         };
     }
 
+    get confirmingResetLink() {
+        return this.#confirmingResetLink;
+    }
+
     get togglingSharingLink() {
         return this.#togglingSharingLink;
     }
@@ -123,6 +128,38 @@ export class MemberManagement {
 
     get webhooks() {
         return this.#webhooks;
+    }
+
+    get level() {
+        return this.collection.level;
+    }
+
+    #resetLink(): Promise<void> {
+        if (this.collection.kind === "channel") return Promise.resolve();
+        return this.client
+            .resetInviteCode(this.collection.id)
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    this.#sharingLinkCode = resp.code;
+                } else {
+                    console.error("Unauthorized response calling resetInviteCode");
+                }
+            })
+            .catch((err) => {
+                console.error("Unable to reset invite code: ", err);
+            });
+    }
+
+    confirmResetLinkResponse(yes: boolean): Promise<void> {
+        const result = yes ? this.#resetLink() : Promise.resolve();
+
+        return result.finally(() => {
+            this.#confirmingResetLink = false;
+        });
+    }
+
+    confirmResetLink() {
+        this.#confirmingResetLink = true;
     }
 
     getUsersFromSet(userLookup: Map<string, UserSummary>, ids: ReadonlySet<string>) {
