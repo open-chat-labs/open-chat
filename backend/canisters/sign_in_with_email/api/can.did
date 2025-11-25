@@ -41,6 +41,9 @@ type GetDelegationArgs = record {
   expiration : nat64;
 };
 type GetDelegationResponse = variant { NotFound; Success : SignedDelegation };
+type GetPrincipalArgs = record {
+  email : text;
+};
 type HandleMagicLinkArgs = record { link : text };
 type HandleMagicLinkResponse = variant {
   CodeIncorrect;
@@ -60,7 +63,7 @@ type HttpResponse = record {
   upgrade : opt bool;
   status_code : nat16;
 };
-type InitArgs = record { salt : opt blob; email_sender_public_key_pem : text };
+type InitArgs = record { salt : opt blob; email_sender_public_key_pem : text; whitelisted_principals: vec principal };
 type InitOrUpgradeArgs = variant { Upgrade : UpgradeArgs; Init : InitArgs };
 type SignedDelegation = record { signature : blob; delegation : Delegation };
 type UpgradeArgs = record {
@@ -71,6 +74,7 @@ service : (InitOrUpgradeArgs) -> {
   email_sender_config : () -> (EmailSenderConfigResponse) query;
   generate_magic_link : (GenerateMagicLinkArgs) -> (GenerateMagicLinkResponse);
   get_delegation : (GetDelegationArgs) -> (GetDelegationResponse) query;
+  get_principal : (GetPrincipalArgs) -> (principal) query;
   handle_magic_link : (HandleMagicLinkArgs) -> (HandleMagicLinkResponse);
   http_request : (HttpRequest) -> (HttpResponse) query;
   http_request_update : (HttpRequest) -> (HttpResponse);

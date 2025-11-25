@@ -1,6 +1,7 @@
 use crate::model::magic_links::MagicLinks;
 use crate::model::salt::Salt;
 use crate::{Hash, env};
+use candid::Principal;
 use email_magic_links::DoubleSignedMagicLink;
 use email_utils::{calculate_seed, delegation_signature_msg_hash};
 use ic_canister_sig_creation::signature_map::{CanisterSigInputs, LABEL_SIG, SignatureMap};
@@ -24,6 +25,8 @@ pub struct State {
     magic_links: MagicLinks,
     rsa_private_key: Option<RsaPrivateKey>,
     salt: Salt,
+    #[serde(default)]
+    whitelisted_principals: Vec<Principal>,
     test_mode: bool,
 }
 
@@ -53,7 +56,7 @@ pub fn take() -> State {
 }
 
 impl State {
-    pub fn new(email_sender_public_key: RsaPublicKey, test_mode: bool) -> State {
+    pub fn new(email_sender_public_key: RsaPublicKey, whitelisted_principals: Vec<Principal>, test_mode: bool) -> State {
         State {
             signature_map: SignatureMap::default(),
             email_sender_config: None,
@@ -61,6 +64,7 @@ impl State {
             magic_links: MagicLinks::default(),
             rsa_private_key: None,
             salt: Salt::default(),
+            whitelisted_principals,
             test_mode,
         }
     }
@@ -95,6 +99,10 @@ impl State {
 
     pub fn set_salt(&mut self, salt: [u8; 32]) {
         self.salt.set(salt);
+    }
+
+    pub fn set_whitelisted_principals(&mut self, principals: Vec<Principal>) {
+        self.whitelisted_principals = principals;
     }
 
     pub fn test_mode(&self) -> bool {
@@ -172,6 +180,11 @@ impl State {
     pub fn der_encode_canister_sig_key(&self, seed: Hash) -> Vec<u8> {
         let canister_id = env::canister_id();
         CanisterSigPublicKey::new(canister_id, seed.to_vec()).to_der()
+    }
+
+    pub fn is_caller_whitelisted(&self) -> bool {
+        let caller = env::caller();
+        self.whitelisted_principals.contains(&caller)
     }
 
     fn update_root_hash(&mut self) {

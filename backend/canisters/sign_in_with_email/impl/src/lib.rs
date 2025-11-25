@@ -22,6 +22,7 @@ fn get_query_param_value(params: &QueryParams, key: &str) -> Option<String> {
 
 #[cfg(test)]
 mod generate_candid_file {
+    use candid::Principal;
     use ic_cdk::export_candid;
     use ic_http_certification::*;
     use sign_in_with_email_canister::*;

@@ -2,6 +2,7 @@ use crate::lifecycle::READER_WRITER_BUFFER_SIZE;
 use crate::memory::get_upgrades_memory;
 use crate::state::State;
 use crate::{email_sender, env, rng, state};
+use candid::Principal;
 use email_sender_core::NullEmailSender;
 use ic_cdk::post_upgrade;
 use ic_stable_structures::reader::{BufferedReader, Reader};
@@ -35,6 +36,14 @@ fn post_upgrade(args: InitOrUpgradeArgs) {
     } else if state.test_mode() {
         email_sender::init(NullEmailSender::default());
     }
+
+    // TODO: Remove this after next deployment
+    let identity_canister = if state.test_mode() {
+        "rejcv-jqaaa-aaaak-afj5q-cai"
+    } else {
+        "6klfq-niaaa-aaaar-qadbq-cai"
+    };
+    state.set_whitelisted_principals(vec![Principal::from_text(identity_canister).unwrap()]);
 
     state::init(state);
 }

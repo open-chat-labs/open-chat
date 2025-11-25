@@ -31,8 +31,8 @@ rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 sha256 = { path = "../../../libraries/sha256" }
-sign_in_with_email_canister = { path = "../../../external_canisters/sign_in_with_email/api" }
-sign_in_with_email_canister_c2c_client = { path = "../../../external_canisters/sign_in_with_email/c2c_client" }
+sign_in_with_email_canister = { path = "../../sign_in_with_email/api" }
+sign_in_with_email_canister_c2c_client = { path = "../../sign_in_with_email/c2c_client" }
 stable_memory = { path = "../../../libraries/stable_memory" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }

@@ -134,8 +134,9 @@
     },
     "sign_in_with_email": {
       "type": "custom",
-      "candid": "https://github.com/open-chat-labs/ic-sign-in-with-email/releases/download/v0.13.0/can.did",
-      "wasm": "https://github.com/open-chat-labs/ic-sign-in-with-email/releases/download/v0.13.0/sign_in_with_email.wasm.gz"
+      "candid": "backend/canisters/event_relay/api/can.did",
+      "wasm": "wasms/sign_in_with_email.wasm.gz",
+      "build": "./scripts/generate-wasm.sh sign_in_with_email"
     },
     "sign_in_with_ethereum": {
       "type": "custom",

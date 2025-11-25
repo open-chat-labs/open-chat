@@ -27,19 +27,25 @@ fn handle_http_request(request: HttpRequest, update: bool) -> HttpResponse {
             let signature1_hex = get_query_param_value(&params, "s1").unwrap();
             let signature2_hex = get_query_param_value(&params, "s2").unwrap();
             let code = get_query_param_value(&params, "c").unwrap();
-            let magic_link = DoubleSignedMagicLink::from_hex_strings(&magic_link_hex, &signature1_hex, &signature2_hex);
-            let (status_code, body, upgrade) =
-                match state::mutate(|s| s.process_auth_request(magic_link, code, update, env::now())) {
-                    AuthResult::Success => (
-                        200,
-                        "Successfully signed in! You may now close this tab and return to OpenChat".to_string(),
-                        false,
-                    ),
-                    AuthResult::RequiresUpgrade => (200, "".to_string(), true),
-                    AuthResult::LinkExpired => (400, "Link expired".to_string(), false),
-                    AuthResult::LinkInvalid(error) => (400, format!("Link invalid: {error}"), false),
-                    AuthResult::CodeIncorrect => (400, "Code incorrect".to_string(), false),
-                };
+            let magic_link = DoubleSignedMagicLink::from_hex_strings(
+                &magic_link_hex,
+                &signature1_hex,
+                &signature2_hex,
+            );
+            let (status_code, body, upgrade) = match state::mutate(|s| {
+                s.process_auth_request(magic_link, code, update, env::now())
+            }) {
+                AuthResult::Success => (
+                    200,
+                    "Successfully signed in! You may now close this tab and return to OpenChat"
+                        .to_string(),
+                    false,
+                ),
+                AuthResult::RequiresUpgrade => (200, "".to_string(), true),
+                AuthResult::LinkExpired => (400, "Link expired".to_string(), false),
+                AuthResult::LinkInvalid(error) => (400, format!("Link invalid: {error}"), false),
+                AuthResult::CodeIncorrect => (400, "Code incorrect".to_string(), false),
+            };
 
             HttpResponse {
                 status_code,

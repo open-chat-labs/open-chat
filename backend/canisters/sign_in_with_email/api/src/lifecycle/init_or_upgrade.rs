@@ -1,5 +1,5 @@
 use crate::EncryptedEmailSenderConfig;
-use candid::{CandidType, Deserialize};
+use candid::{CandidType, Deserialize, Principal};
 use serde::Serialize;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -29,6 +29,7 @@ pub struct InitArgs {
     pub email_sender_public_key_pem: String,
     // Only use this for testing
     pub salt: Option<[u8; 32]>,
+    pub whitelisted_principals: Vec<Principal>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Default)]
