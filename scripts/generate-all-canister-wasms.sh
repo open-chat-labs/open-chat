@@ -39,6 +39,7 @@ cargo build --locked --target wasm32-unknown-unknown --release \
   --package proposal_validation_canister_impl \
   --package proposals_bot_canister_impl \
   --package registry_canister_impl \
+  --package sign_in_with_email_canister_impl \
   --package storage_bucket_canister_impl \
   --package storage_index_canister_impl \
   --package translations_canister_impl \
