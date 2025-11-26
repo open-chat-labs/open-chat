@@ -239,7 +239,7 @@ export async function quantiseWaveform(
         channels.push(audioBuffer.getChannelData(c));
     }
     const samples = reduceWaveform(channels);
-    const durationMs = BigInt(audioBuffer.duration * 1000);
+    const durationMs = BigInt(Math.floor(audioBuffer.duration * 1000));
 
     return { samples, durationMs };
 }
