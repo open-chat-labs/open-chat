@@ -70,6 +70,7 @@ ic-wasm ./target/wasm32-unknown-unknown/release/openchat_installer_canister_impl
 ic-wasm ./target/wasm32-unknown-unknown/release/proposal_validation_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/proposal_validation_canister_impl-opt.wasm shrink
 ic-wasm ./target/wasm32-unknown-unknown/release/proposals_bot_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/proposals_bot_canister_impl-opt.wasm shrink
 ic-wasm ./target/wasm32-unknown-unknown/release/registry_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/registry_canister_impl-opt.wasm shrink
+ic-wasm ./target/wasm32-unknown-unknown/release/sign_in_with_email_canister_impl -o ./target/wasm32-unknown-unknown/release/sign_in_with_email_canister_impl-opt.wasm shrink
 ic-wasm ./target/wasm32-unknown-unknown/release/storage_bucket_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/storage_bucket_canister_impl-opt.wasm shrink
 ic-wasm ./target/wasm32-unknown-unknown/release/storage_index_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/storage_index_canister_impl-opt.wasm shrink
 ic-wasm ./target/wasm32-unknown-unknown/release/translations_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/translations_canister_impl-opt.wasm shrink
@@ -95,6 +96,7 @@ gzip -fckn9 target/wasm32-unknown-unknown/release/openchat_installer_canister_im
 gzip -fckn9 target/wasm32-unknown-unknown/release/proposal_validation_canister_impl-opt.wasm > ./wasms/proposal_validation.wasm.gz
 gzip -fckn9 target/wasm32-unknown-unknown/release/proposals_bot_canister_impl-opt.wasm > ./wasms/proposals_bot.wasm.gz
 gzip -fckn9 target/wasm32-unknown-unknown/release/registry_canister_impl-opt.wasm > ./wasms/registry.wasm.gz
+gzip -fckn9 target/wasm32-unknown-unknown/release/sign_in_with_email_canister_impl-opt.wasm > ./wasms/sign_in_with_email.wasm.gz
 gzip -fckn9 target/wasm32-unknown-unknown/release/storage_bucket_canister_impl-opt.wasm > ./wasms/storage_bucket.wasm.gz
 gzip -fckn9 target/wasm32-unknown-unknown/release/storage_index_canister_impl-opt.wasm > ./wasms/storage_index.wasm.gz
 gzip -fckn9 target/wasm32-unknown-unknown/release/translations_canister_impl-opt.wasm > ./wasms/translations.wasm.gz
