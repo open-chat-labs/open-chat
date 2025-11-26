@@ -407,9 +407,7 @@ struct Data {
     pub deleted_users: Vec<DeletedUser>,
     #[serde(with = "serde_bytes")]
     pub ic_root_key: Vec<u8>,
-    // TODO: Remove this after the canister is upgraded
-    pub identity_canister_user_sync_queue: VecDeque<(Principal, Option<UserId>)>,
-    #[serde(default)]
+    #[serde(alias = "identity_canister_user_sync_queue_2")]
     pub identity_canister_user_sync_queue_2: VecDeque<UserIdentity>,
     pub remove_from_online_users_queue: VecDeque<Principal>,
     pub survey_messages_sent: usize,
@@ -494,7 +492,6 @@ impl Data {
             chit_leaderboard: ChitLeaderboard::new(now),
             deleted_users: Vec::new(),
             ic_root_key,
-            identity_canister_user_sync_queue: VecDeque::new(),
             identity_canister_user_sync_queue_2: VecDeque::new(),
             remove_from_online_users_queue: VecDeque::new(),
             survey_messages_sent: 0,
@@ -611,7 +608,6 @@ impl Default for Data {
             chit_leaderboard: ChitLeaderboard::new(0),
             deleted_users: Vec::new(),
             ic_root_key: Vec::new(),
-            identity_canister_user_sync_queue: VecDeque::new(),
             identity_canister_user_sync_queue_2: VecDeque::new(),
             remove_from_online_users_queue: VecDeque::new(),
             survey_messages_sent: 0,

@@ -180,7 +180,6 @@ struct Data {
     governance_principals: HashSet<Principal>,
     user_index_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
-    #[serde(default = "sign_in_with_email_canister_id_default")]
     sign_in_with_email_canister_id: CanisterId,
     originating_canisters: HashSet<CanisterId>,
     skip_captcha_whitelist: HashSet<CanisterId>,
@@ -198,10 +197,6 @@ struct Data {
     challenges: Challenges,
     test_mode: bool,
     account_linking_codes: AccountLinkingCodes,
-}
-
-fn sign_in_with_email_canister_id_default() -> CanisterId {
-    Principal::from_text("zi2i7-nqaaa-aaaar-qaemq-cai").unwrap()
 }
 
 impl Data {
