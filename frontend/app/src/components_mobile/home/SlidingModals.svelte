@@ -161,6 +161,7 @@
     onMount(() => {
         const unsubs = [
             subscribe("addGroupMembers", () => push({ kind: "update_group_add_members" })),
+            subscribe("addCommunityMembers", () => push({ kind: "update_community_add_members" })),
             subscribe("inviteAndShare", ({ collection, view }) =>
                 push({ kind: "invite_and_share", collection, view }),
             ),
@@ -230,9 +231,8 @@
             subscribe("directChatDetails", (chat) => push({ kind: "direct_chat_details", chat })),
             subscribe("groupChatDetails", (chat) => push({ kind: "group_chat_details", chat })),
             subscribe("newMessage", () => push({ kind: "new_message" })),
-            subscribe("newCommunity", () => push({ kind: "update_community_add_members" })),
+            subscribe("addCommunityMembers", () => push({ kind: "update_community_add_members" })),
             subscribe("updateCommunity", () => push({ kind: "update_community_details" })),
-            subscribe("updateCommunityDetails", () => push({ kind: "update_community_details" })),
             subscribe("updateCommunityChannels", () => push({ kind: "update_community_channels" })),
             subscribe("newChannel", () => push({ kind: "update_group_details" })),
             subscribe("newGroup", () => push({ kind: "update_group_details" })),

@@ -32,9 +32,7 @@
     </Container>
 </SlidingPageContent>
 
-<FloatingButton
-    pos={{ bottom: "md", right: "md" }}
-    onClick={() => publish("updateCommunityDetails")}>
+<FloatingButton pos={{ bottom: "md", right: "md" }} onClick={() => publish("closeModalPage")}>
     {#snippet icon(color)}
         <Check {color} />
     {/snippet}

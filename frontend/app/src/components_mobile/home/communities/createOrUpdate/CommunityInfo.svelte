@@ -11,19 +11,21 @@
         Form,
         IconButton,
         Input,
+        ListAction,
+        Switch,
         TextArea,
         UserChip,
     } from "component-lib";
     import { publish, type OpenChat } from "openchat-client";
-    import { getContext } from "svelte";
+    import { getContext, tick } from "svelte";
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
+    import AccountPlus from "svelte-material-icons/AccountPlusOutline.svelte";
     import AlertOutline from "svelte-material-icons/AlertOutline.svelte";
     import AlertRhombusOutline from "svelte-material-icons/AlertRhombusOutline.svelte";
     import ChatPlusOutline from "svelte-material-icons/ChatPlusOutline.svelte";
     import Check from "svelte-material-icons/Check.svelte";
     import ClockOutline from "svelte-material-icons/ClockOutline.svelte";
-    import Cog from "svelte-material-icons/Cog.svelte";
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";
     import FormatList from "svelte-material-icons/FormatListBulletedType.svelte";
     import ImageEditOutline from "svelte-material-icons/ImageEditOutline.svelte";
@@ -32,6 +34,7 @@
     import EditableAvatar from "../../../EditableAvatar.svelte";
     import EditableImageWrapper from "../../../EditableImageWrapper.svelte";
     import LinkedCard from "../../../LinkedCard.svelte";
+    import Setting from "../../../Setting.svelte";
     import Translatable from "../../../Translatable.svelte";
     import LanguageSelector from "../../LanguageSelector.svelte";
     import SlidingPageContent from "../../SlidingPageContent.svelte";
@@ -51,6 +54,7 @@
     let selectedLanguage = $derived(
         supportedLanguages.find((l) => l.code === ucs.candidate.primaryLanguage),
     );
+    let confirmExit = $state(false);
 </script>
 
 {#snippet rulesError()}
@@ -65,7 +69,21 @@
         action={(yes) => ucs.saveCommunity(client, yes)} />
 {/if}
 
+{#if confirmExit}
+    <AreYouSure
+        title={i18nKey("Unsaved changes")}
+        message={i18nKey("Are you sure that you want to close this page without saving?")}
+        action={(yes) => {
+            confirmExit = false;
+            if (yes) {
+                tick().then(() => publish("closeModalPage"));
+            }
+            return Promise.resolve();
+        }} />
+{/if}
+
 <SlidingPageContent
+    onBack={ucs.valid ? () => (confirmExit = true) : undefined}
     title={i18nKey(
         ucs.editMode ? "Update community info" : "Add community info",
         undefined,
@@ -156,38 +174,50 @@
                 </TextArea>
             </Container>
         </Form>
-        {#if ucs.candidateMembers.length > 0}
-            <Container direction={"vertical"} gap={"md"}>
-                <Container direction={"vertical"}>
-                    <Body fontWeight={"bold"}>
-                        <Translatable resourceKey={i18nKey("Selected members")}></Translatable>
-                    </Body>
 
-                    <BodySmall colour={"textSecondary"}>
-                        <Translatable
-                            resourceKey={i18nKey(
-                                "Members that will be added or invited to the newly created community",
-                            )}></Translatable>
-                    </BodySmall>
-                </Container>
-                <Container wrap gap={"sm"} crossAxisAlignment={"center"}>
-                    {#each ucs.candidateMembers as { user } (user.userId)}
-                        <UserChip
-                            avatarUrl={client.userAvatarUrl(user)}
-                            onRemove={() => ucs.deleteMember(user)}>@{user.username}</UserChip>
-                    {/each}
-                </Container>
+        <Container padding={["zero", "md"]} gap={"xxl"} direction={"vertical"}>
+            <Setting
+                toggle={() => (ucs.candidate.public = !ucs.candidate.public)}
+                info={"Communities are public by default, and limited to people you invite. Public communties can be found in the communities explorer."}>
+                <Switch width={{ kind: "fill" }} reverse bind:checked={ucs.candidate.public}>
+                    <Translatable resourceKey={i18nKey("Public community")}></Translatable>
+                </Switch>
+            </Setting>
+        </Container>
+
+        {#if !ucs.editMode}
+            <Container padding={["zero", "md"]} direction={"vertical"} gap={"xl"}>
+                <ListAction onClick={() => publish("addCommunityMembers")}>
+                    {#snippet icon(color)}
+                        <AccountPlus {color} />
+                    {/snippet}
+                    Add members
+                </ListAction>
+
+                {#if ucs.candidateMembers.length > 0}
+                    <Container direction={"vertical"}>
+                        <Body fontWeight={"bold"}>
+                            <Translatable resourceKey={i18nKey("Selected members")}></Translatable>
+                        </Body>
+                        <BodySmall colour={"textSecondary"}>
+                            <Translatable
+                                resourceKey={i18nKey(
+                                    "Members that will be added or invited to the newly created community",
+                                )}></Translatable>
+                        </BodySmall>
+                    </Container>
+                    <Container wrap gap={"sm"} crossAxisAlignment={"center"}>
+                        {#each ucs.candidateMembers as { user } (user.userId)}
+                            <UserChip
+                                avatarUrl={client.userAvatarUrl(user)}
+                                onRemove={() => ucs.deleteMember(user)}>@{user.username}</UserChip>
+                        {/each}
+                    </Container>
+                {/if}
             </Container>
         {/if}
 
         <Container direction={"vertical"} gap={"lg"} supplementalClass={"group_sub_sections"}>
-            <LinkedCard
-                onClick={() => publish("updateCommunityGeneralSetup")}
-                Icon={Cog}
-                title={i18nKey("General setup")}
-                info={i18nKey(
-                    "Enable sharing via link, disappearing messages, or hide chat history for new members.",
-                )} />
             {#if !ucs.editMode}
                 <LinkedCard
                     onClick={() => publish("updateCommunityChannels")}

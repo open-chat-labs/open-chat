@@ -79,7 +79,7 @@
 {/if}
 
 <SlidingPageContent
-    onBack={() => (confirmExit = true)}
+    onBack={ugs.valid ? () => (confirmExit = true) : undefined}
     title={i18nKey(
         ugs.editMode ? "group.updateInfo" : "group.addGroupInfo",
         undefined,
@@ -257,8 +257,11 @@
                 )} />
         </Container>
         <Container mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"end"}>
-            <CommonButton onClick={() => publish("closeModalPage")} size={"small_text"}>
-                <Translatable resourceKey={i18nKey("group.back")}></Translatable>
+            <CommonButton
+                mode={"active"}
+                onClick={() => publish("closeModalPage")}
+                size={"small_text"}>
+                <Translatable resourceKey={i18nKey("cancel")}></Translatable>
             </CommonButton>
             {#if !ugs.editMode}
                 <CommonButton
@@ -283,6 +286,7 @@
     </Container>
     {#if ugs.editMode}
         <FloatingButton
+            disabled={!ugs.valid}
             loading={ugs.busy}
             pos={{ bottom: "lg", right: "lg" }}
             onClick={() => ugs.saveGroup(client)}>

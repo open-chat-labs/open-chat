@@ -277,7 +277,7 @@ class UpdateCommunityState extends UpdateGroupOrCommunityState {
                 createCandidateCommunity("", maxIndex + 1),
                 defaultChatRules("community"),
             );
-            publish("newCommunity");
+            publish("updateCommunity");
         }
     }
 }

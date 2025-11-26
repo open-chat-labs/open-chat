@@ -40,6 +40,7 @@ export type PubSubEvents = {
     replyPrivatelyTo: EnhancedReplyContext;
     showGroupMembers: undefined;
     addGroupMembers: undefined;
+    addCommunityMembers: undefined;
     upgrade: undefined;
     verifyHumanity: undefined;
     deleteChat: MultiUserChat;
@@ -182,11 +183,8 @@ export type PubSubEvents = {
     updateChitGate: { data: unknown; gate: ChitEarnedGate };
     updateTokenBalanceGate: { data: unknown; gate: TokenBalanceGate };
     updateCommunity: undefined;
-    updateCommunityDetails: undefined;
-    updateCommunityGeneralSetup: undefined;
     updateCommunityRules: undefined;
     updateCommunityChannels: undefined;
-    newCommunity: undefined;
     newMessage: undefined;
     directChatDetails: DirectChatSummary;
     groupChatDetails: MultiUserChat;

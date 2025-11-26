@@ -111,6 +111,7 @@
     let canMarkAllRead = $derived(anythingUnread(unreadCounts));
     let allChats = $derived($chatSummariesListStore);
     let filteredChats = $derived.by(() => {
+        if ($chatListScopeStore.kind !== "chats") return allChats;
         return allChats.filter((c) => {
             return (
                 $chatListFilterStore === "all" ||

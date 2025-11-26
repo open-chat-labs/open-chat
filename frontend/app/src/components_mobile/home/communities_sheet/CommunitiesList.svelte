@@ -11,12 +11,9 @@
     } from "component-lib";
     import {
         allUsersStore,
-        anonUserStore,
         type CommunitySummary,
         currentUserIdStore,
-        isDiamondStore,
         OpenChat,
-        publish,
         sortedCommunitiesStore,
         type UnreadCounts,
     } from "openchat-client";
@@ -44,18 +41,7 @@
     }
 
     function createCommunity() {
-        if ($anonUserStore) {
-            client.updateIdentityState({
-                kind: "logging_in",
-                postLogin: { kind: "create_community" },
-            });
-            return;
-        }
-        if (!$isDiamondStore) {
-            publish("upgrade");
-        } else {
-            updateCommunityState.createCommunity(client);
-        }
+        updateCommunityState.createCommunity(client);
     }
 </script>
 
@@ -79,8 +65,11 @@
             </Container>
             <Container gap={"xs"} mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"end"}>
                 <BodySmall colour={"textSecondary"} ellipsisTruncate fontWeight={"normal"}>
-                    The idea is that we put the latest message here, but not sure how we get that
-                    yet
+                    {#if community.description === undefined || community.description === ""}
+                        {`Public community with ${community.memberCount} members`}
+                    {:else}
+                        {community.description}
+                    {/if}
                 </BodySmall>
                 {#if unread}
                     <CountBadge {muted}>{count}</CountBadge>
