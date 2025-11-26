@@ -15,7 +15,7 @@ import type {
     CommunitySummary,
 } from "../community";
 import type { WalletConfig } from "../crypto";
-import { type DataContent, DataContentSchema } from "../data/data";
+import { DataContentSchema, type DataContent } from "../data/data";
 import type { OCError } from "../error";
 import type { OptionUpdate } from "../optionUpdate";
 import type {
@@ -44,20 +44,20 @@ export type CanisterNotFound = { kind: "canister_not_found" };
 
 const DirectChatIdentifierSchema = Type.Object({
     kind: Type.Literal("direct_chat"),
-    userId: Type.String()
+    userId: Type.String(),
 });
 export type DirectChatIdentifier = Static<typeof DirectChatIdentifierSchema>;
 
 const GroupChatIdentifierSchema = Type.Object({
     kind: Type.Literal("group_chat"),
-    groupId: Type.String()
+    groupId: Type.String(),
 });
 export type GroupChatIdentifier = Static<typeof GroupChatIdentifierSchema>;
 
 const ChannelIdentifierSchema = Type.Object({
     kind: Type.Literal("channel"),
     communityId: Type.String(),
-    channelId: Type.Number()
+    channelId: Type.Number(),
 });
 export type ChannelIdentifier = Static<typeof ChannelIdentifierSchema>;
 
@@ -66,10 +66,16 @@ export type FavouriteChatsInitial = {
     pinned: ChatIdentifier[];
 };
 
-export const MultipleUserChatIdentifierSchema = Type.Union([ChannelIdentifierSchema, GroupChatIdentifierSchema]);
+export const MultipleUserChatIdentifierSchema = Type.Union([
+    ChannelIdentifierSchema,
+    GroupChatIdentifierSchema,
+]);
 export type MultiUserChatIdentifier = ChannelIdentifier | GroupChatIdentifier;
 
-export const ChatIdentifierSchema = Type.Union([MultipleUserChatIdentifierSchema, DirectChatIdentifierSchema]);
+export const ChatIdentifierSchema = Type.Union([
+    MultipleUserChatIdentifierSchema,
+    DirectChatIdentifierSchema,
+]);
 export type ChatIdentifier = MultiUserChatIdentifier | DirectChatIdentifier;
 
 const ThreadIdentifierSchema = Type.Object({
@@ -351,7 +357,7 @@ export const GiphyContentSchema = Type.Object({
     title: Type.String(),
     desktop: GiphyImageSchema, //will be "original" from the giphy api
     mobile: GiphyImageSchema, //will be "downsized_large" from the giphy api
-})
+});
 export type GiphyContent = Static<typeof GiphyContentSchema>;
 
 export type UserReferralCard = {
@@ -566,14 +572,17 @@ export interface SnsProposal extends ProposalCommon {
     action: number;
 }
 
-export const ImageContentSchema = Type.Intersect([DataContentSchema, Type.Object({
-    kind: Type.Literal("image_content"),
-    height: Type.Number(),
-    width: Type.Number(),
-    thumbnailData: Type.String(),
-    caption: Type.Optional(Type.String()),
-    mimeType: Type.String(),
-})]);
+export const ImageContentSchema = Type.Intersect([
+    DataContentSchema,
+    Type.Object({
+        kind: Type.Literal("image_content"),
+        height: Type.Number(),
+        width: Type.Number(),
+        thumbnailData: Type.String(),
+        caption: Type.Optional(Type.String()),
+        mimeType: Type.String(),
+    }),
+]);
 export type ImageContent = Static<typeof ImageContentSchema>;
 
 export const MemeFighterContentSchema = Type.Object({
@@ -596,13 +605,16 @@ export const VideoContentSchema = Type.Object({
 });
 export type VideoContent = Static<typeof VideoContentSchema>;
 
-export const AudioContentSchema = Type.Intersect([DataContentSchema, Type.Object({
-    kind: Type.Literal("audio_content"),
-    caption: Type.Optional(Type.String()),
-    mimeType: Type.String(),
-    samples: Type.Uint8Array(),
-    duration: Type.Number(),
-})]);
+export const AudioContentSchema = Type.Intersect([
+    DataContentSchema,
+    Type.Object({
+        kind: Type.Literal("audio_content"),
+        caption: Type.Optional(Type.String()),
+        mimeType: Type.String(),
+        samples: Type.Uint8Array(),
+        durationMs: Type.BigInt(),
+    }),
+]);
 export type AudioContent = Static<typeof AudioContentSchema>;
 
 export const DeletedContentSchema = Type.Object({
@@ -637,7 +649,7 @@ export type AnonymousPollVotes = Static<typeof AnonymousPollVotesSchema>;
 const VisiblePollVotesSchema = Type.Object({
     kind: Type.Literal("visible_poll_votes"),
     votes: Type.Record(Type.Number(), Type.Array(Type.String())),
-})
+});
 export type VisiblePollVotes = Static<typeof VisiblePollVotesSchema>;
 
 const HiddenPollVotesSchema = Type.Object({
@@ -646,7 +658,11 @@ const HiddenPollVotesSchema = Type.Object({
 });
 export type HiddenPollVotes = Static<typeof HiddenPollVotesSchema>;
 
-const TotalPollVotesSchema = Type.Union([AnonymousPollVotesSchema, VisiblePollVotesSchema, HiddenPollVotesSchema]);
+const TotalPollVotesSchema = Type.Union([
+    AnonymousPollVotesSchema,
+    VisiblePollVotesSchema,
+    HiddenPollVotesSchema,
+]);
 export type TotalPollVotes = Static<typeof TotalPollVotesSchema>;
 
 export const PollVotesSchema = Type.Object({
@@ -660,24 +676,27 @@ export const PollContentSchema = Type.Object({
     votes: PollVotesSchema,
     config: PollConfigSchema,
     ended: Type.Boolean(),
-})
-export type PollContent = Static<typeof PollContentSchema>
+});
+export type PollContent = Static<typeof PollContentSchema>;
 
 export const TextContentSchema = Type.Object({
     kind: Type.Literal("text_content"),
     text: Type.String(),
-})
+});
 export type TextContent = Static<typeof TextContentSchema>;
 
 export type StoredMediaContent = FileContent | VideoContent | AudioContent | ImageContent;
 
-export const FileContentSchema = Type.Intersect([DataContentSchema, Type.Object({
-    kind: Type.Literal("file_content"),
-    name: Type.String(),
-    caption: Type.Optional(Type.String()),
-    mimeType: Type.String(),
-    fileSize: Type.Number(),
-})]);
+export const FileContentSchema = Type.Intersect([
+    DataContentSchema,
+    Type.Object({
+        kind: Type.Literal("file_content"),
+        name: Type.String(),
+        caption: Type.Optional(Type.String()),
+        mimeType: Type.String(),
+        fileSize: Type.Number(),
+    }),
+]);
 export type FileContent = Static<typeof FileContentSchema>;
 
 export type ReplyContext = RawReplyContext | RehydratedReplyContext;
@@ -685,7 +704,7 @@ export type ReplyContext = RawReplyContext | RehydratedReplyContext;
 const MessageContextSchema = Type.Object({
     chatId: ChatIdentifierSchema,
     threadRootMessageIndex: Type.Optional(Type.Number()),
-})
+});
 export type MessageContext = Static<typeof MessageContextSchema>;
 
 export function messageContextFromString(ctxStr: string): MessageContext {

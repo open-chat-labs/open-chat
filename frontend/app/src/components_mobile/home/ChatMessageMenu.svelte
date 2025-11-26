@@ -1,6 +1,7 @@
 <script lang="ts">
     import { quickReactions } from "@src/stores/quickReactions";
     import { confirmMessageDeletion } from "@src/stores/settings";
+    import { urlForMediaContent } from "@src/utils/media";
     import { Container, IconButton, MenuItem } from "component-lib";
     import {
         chatListScopeStore,
@@ -26,6 +27,7 @@
     import ChatPlusOutline from "svelte-material-icons/ChatPlusOutline.svelte";
     import ClockPlusOutline from "svelte-material-icons/ClockPlusOutline.svelte";
     import ClockRemoveOutline from "svelte-material-icons/ClockRemoveOutline.svelte";
+    import Download from "svelte-material-icons/CloudDownloadOutline.svelte";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import DeleteOffOutline from "svelte-material-icons/DeleteOffOutline.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
@@ -139,6 +141,7 @@
         onDeleteMessage,
     }: Props = $props();
 
+    let mediaUrl = $derived(urlForMediaContent(msg.content));
     let canRemind = $derived(
         msg.content.kind !== "message_reminder_content" &&
             msg.content.kind !== "message_reminder_created_content",
@@ -189,6 +192,35 @@
             msg,
             $cryptoLookup,
         );
+    }
+
+    async function download(url: string) {
+        if (!url) return;
+
+        try {
+            const res = await fetch(url);
+            if (!res.ok) {
+                console.error("Unable to download media", res.status, res.statusText);
+                toastStore.showFailureToast(i18nKey("Unable to download media"));
+            }
+            const blob = await res.blob();
+            const objectUrl = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = objectUrl;
+            const disposition = res.headers.get("content-disposition");
+            let filename = "download";
+            if (disposition && disposition.includes("filename=")) {
+                filename = disposition.split("filename=")[1].split(";")[0].replace(/"/g, "");
+            } else {
+                filename = url.split("/").pop() || "download";
+            }
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(objectUrl);
+        } catch (err) {
+            console.error("Unable to download media", err);
+            toastStore.showFailureToast(i18nKey("Unable to download media"));
+        }
     }
 
     function copyMessageUrl() {
@@ -357,6 +389,14 @@
         {/snippet}
         <Translatable resourceKey={i18nKey("copyMessageUrl")} />
     </MenuItem>
+    {#if mediaUrl !== undefined}
+        <MenuItem onclick={() => download(mediaUrl)}>
+            {#snippet icon(color, size)}
+                <Download {color} {size} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("Download media")} />
+        </MenuItem>
+    {/if}
 {/if}
 <MenuItem onclick={copyMessage}>
     {#snippet icon(color, size)}

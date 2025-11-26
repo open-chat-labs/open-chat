@@ -230,7 +230,7 @@ function reduceWaveform(channels: Float32Array[]): Uint8Array {
 
 export async function quantiseWaveform(
     bytes: ArrayBuffer,
-): Promise<{ duration: number; samples: Uint8Array }> {
+): Promise<{ durationMs: bigint; samples: Uint8Array }> {
     const ctx = new AudioContext();
     const audioBuffer = await ctx.decodeAudioData(bytes);
 
@@ -239,9 +239,9 @@ export async function quantiseWaveform(
         channels.push(audioBuffer.getChannelData(c));
     }
     const samples = reduceWaveform(channels);
-    const duration = audioBuffer.duration;
+    const durationMs = BigInt(audioBuffer.duration * 1000);
 
-    return { samples, duration };
+    return { samples, durationMs };
 }
 
 export async function messageContentFromFile(
@@ -314,7 +314,6 @@ export async function messageContentFromFile(
                 };
             } else if (isAudio) {
                 const quantised = await quantiseWaveform(data.slice(0));
-                console.log("Quantised: ", quantised);
                 content = {
                     kind: "audio_content",
                     mimeType: mimeType,

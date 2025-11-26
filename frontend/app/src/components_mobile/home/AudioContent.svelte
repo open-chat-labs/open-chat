@@ -19,6 +19,7 @@
     let currentTime = $state<string>();
     let waveformDiv: HTMLDivElement | undefined;
     let playing = $state(false);
+    let duration = $derived(Number(content.durationMs) / 1000);
 
     function togglePlay() {
         wavesurfer?.playPause();
@@ -55,7 +56,7 @@
                 barGap: width,
                 url: content.blobUrl,
                 peaks: precomputed.length > 0 ? [precomputed] : undefined,
-                duration: content.duration,
+                duration,
             });
 
             wavesurfer.on("interaction", () => {
@@ -84,7 +85,7 @@
         gap={"zero"}>
         <IconButton size={"lg"} onclick={togglePlay} mode={"transparent"}>
             {#snippet icon()}
-                {@const color = me ? ColourVars.textSecondary : ColourVars.textSecondary}
+                {@const color = ColourVars.textPrimary}
                 {#if playing}
                     <Pause {color} />
                 {:else}
@@ -98,7 +99,7 @@
             </Caption>
             <Caption width={{ kind: "hug" }}>/</Caption>
             <Caption width={{ kind: "hug" }}>
-                {formatTime(content.duration)}
+                {formatTime(duration)}
             </Caption>
         </Container>
     </Container>

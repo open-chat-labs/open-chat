@@ -5452,7 +5452,7 @@ export const AudioContent = Type.Object({
     mime_type: Type.String(),
     blob_reference: Type.Optional(BlobReference),
     duration_ms: Type.Optional(Type.BigInt()),
-    samples: Type.Optional(Type.Array(Type.Number())),
+    samples: Type.Optional(TSBytes),
 });
 
 export type ImageContent = Static<typeof ImageContent>;
