@@ -201,14 +201,6 @@ impl RuntimeState {
                 timestamp: now,
             });
 
-            // TODO remove this once the website switches to deleting accounts via the Identity canister
-            self.data.identity_canister_user_sync_queue_2.push_back(UserIdentity {
-                principal: user.principal,
-                user_id: None,
-                email: None,
-            });
-            jobs::sync_users_to_identity_canister::try_run_now(self);
-
             self.data.remove_from_online_users_queue.push_back(user.principal);
             jobs::remove_from_online_users_canister::start_job_if_required(self);
 
@@ -408,7 +400,7 @@ struct Data {
     #[serde(with = "serde_bytes")]
     pub ic_root_key: Vec<u8>,
     #[serde(alias = "identity_canister_user_sync_queue_2")]
-    pub identity_canister_user_sync_queue_2: VecDeque<UserIdentity>,
+    pub identity_canister_user_sync_queue: VecDeque<UserIdentity>,
     pub remove_from_online_users_queue: VecDeque<Principal>,
     pub survey_messages_sent: usize,
     pub external_achievements: ExternalAchievements,
@@ -492,7 +484,7 @@ impl Data {
             chit_leaderboard: ChitLeaderboard::new(now),
             deleted_users: Vec::new(),
             ic_root_key,
-            identity_canister_user_sync_queue_2: VecDeque::new(),
+            identity_canister_user_sync_queue: VecDeque::new(),
             remove_from_online_users_queue: VecDeque::new(),
             survey_messages_sent: 0,
             external_achievements: ExternalAchievements::default(),
@@ -608,7 +600,7 @@ impl Default for Data {
             chit_leaderboard: ChitLeaderboard::new(0),
             deleted_users: Vec::new(),
             ic_root_key: Vec::new(),
-            identity_canister_user_sync_queue_2: VecDeque::new(),
+            identity_canister_user_sync_queue: VecDeque::new(),
             remove_from_online_users_queue: VecDeque::new(),
             survey_messages_sent: 0,
             external_achievements: ExternalAchievements::default(),
