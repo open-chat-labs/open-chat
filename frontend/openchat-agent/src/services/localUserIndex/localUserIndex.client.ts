@@ -283,12 +283,14 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
 
     registerUser(
         username: string,
+        email: string | undefined,
         referralCode: string | undefined,
     ): Promise<RegisterUserResponse> {
         return this.executeMsgpackUpdate(
             "register_user",
             {
                 username,
+                email,
                 referral_code: referralCode,
                 public_key: new Uint8Array((this.identity as SignIdentity).getPublicKey().toDer()),
             },

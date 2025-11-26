@@ -5093,10 +5093,11 @@ export class OpenChat {
             });
     }
 
-    registerUser(username: string): Promise<RegisterUserResponse> {
+    registerUser(username: string, email: string | undefined): Promise<RegisterUserResponse> {
         return this.#sendRequest({
             kind: "registerUser",
             username,
+            email,
             referralCode: this.#referralCode,
         })
             .then((res) => {
@@ -5171,7 +5172,9 @@ export class OpenChat {
     }
 
     #subscriptionExists(endpoint: string, p256dh_key: string): Promise<boolean> {
-        return this.#sendRequest({ kind: "subscriptionExists", endpoint, p256dh_key }).catch(() => false);
+        return this.#sendRequest({ kind: "subscriptionExists", endpoint, p256dh_key }).catch(
+            () => false,
+        );
     }
 
     #pushSubscription(subscription: PushSubscriptionJSON): Promise<void> {
@@ -9840,7 +9843,12 @@ export class OpenChat {
         if (pushSubscription) {
             console.debug("PUSH: found existing push subscription");
             // Check if the subscription has already been pushed to the notifications canister
-            if (await this.#subscriptionExists(pushSubscription.endpoint, this.#extract_p256dh_key(pushSubscription))) {
+            if (
+                await this.#subscriptionExists(
+                    pushSubscription.endpoint,
+                    this.#extract_p256dh_key(pushSubscription),
+                )
+            ) {
                 console.debug("PUSH: subscription exists in the backend");
                 return true;
             }
@@ -9908,7 +9916,12 @@ export class OpenChat {
         if (registration !== undefined) {
             const pushSubscription = await registration.pushManager.getSubscription();
             if (pushSubscription) {
-                if (await this.#subscriptionExists(pushSubscription.endpoint, this.#extract_p256dh_key(pushSubscription))) {
+                if (
+                    await this.#subscriptionExists(
+                        pushSubscription.endpoint,
+                        this.#extract_p256dh_key(pushSubscription),
+                    )
+                ) {
                     console.debug("PUSH: removing push subscription");
                     await this.#removeSubscription(pushSubscription.toJSON());
                 }

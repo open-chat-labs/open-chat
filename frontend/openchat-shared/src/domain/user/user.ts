@@ -384,6 +384,7 @@ export type RegisterUserResponse =
     | { kind: "username_too_short" }
     | { kind: "username_too_long" }
     | { kind: "username_invalid" }
+    | { kind: "email_invalid" }
     | { kind: "public_key_invalid" }
     | { kind: "referral_code_invalid" }
     | { kind: "referral_code_already_claimed" }
