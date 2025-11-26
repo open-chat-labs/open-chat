@@ -11,10 +11,9 @@
         content: AudioContent;
         edited: boolean;
         blockLevelMarkdown?: boolean;
-        me: boolean;
     }
 
-    let { content, edited, blockLevelMarkdown = false, me }: Props = $props();
+    let { content, edited, blockLevelMarkdown = false }: Props = $props();
 
     let currentTime = $state<string>();
     let waveformDiv: HTMLDivElement | undefined;
