@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Add `duration_ms` and `samples` to `AudioContent` ([#8669](https://github.com/open-chat-labs/open-chat/pull/8669))
+- Apply user re-authentication check when claiming prizes ([#8696](https://github.com/open-chat-labs/open-chat/pull/8696))
 
 ### Removed
 

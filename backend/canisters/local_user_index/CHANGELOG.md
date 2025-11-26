@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Apply user re-authentication check when claiming prizes ([#8696](https://github.com/open-chat-labs/open-chat/pull/8696))
+
 ### Removed
 
 - Remove `c2c_diamond_membership_expiry_dates` endpoint ([#8691](https://github.com/open-chat-labs/open-chat/pull/8691))
