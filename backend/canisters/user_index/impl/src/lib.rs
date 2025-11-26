@@ -14,6 +14,7 @@ use event_store_producer::{EventBuilder, EventStoreClient, EventStoreClientBuild
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
+use identity_canister::UserIdentity;
 use local_user_index_canister::UserIndexEvent as LocalUserIndexEvent;
 use model::chit_leaderboard::ChitLeaderboard;
 use model::external_achievements::{ExternalAchievementMetrics, ExternalAchievements};
@@ -201,7 +202,11 @@ impl RuntimeState {
             });
 
             // TODO remove this once the website switches to deleting accounts via the Identity canister
-            self.data.identity_canister_user_sync_queue.push_back((user.principal, None));
+            self.data.identity_canister_user_sync_queue_2.push_back(UserIdentity {
+                principal: user.principal,
+                user_id: None,
+                email: None,
+            });
             jobs::sync_users_to_identity_canister::try_run_now(self);
 
             self.data.remove_from_online_users_queue.push_back(user.principal);
@@ -402,7 +407,10 @@ struct Data {
     pub deleted_users: Vec<DeletedUser>,
     #[serde(with = "serde_bytes")]
     pub ic_root_key: Vec<u8>,
+    // TODO: Remove this after the canister is upgraded
     pub identity_canister_user_sync_queue: VecDeque<(Principal, Option<UserId>)>,
+    #[serde(default)]
+    pub identity_canister_user_sync_queue_2: VecDeque<UserIdentity>,
     pub remove_from_online_users_queue: VecDeque<Principal>,
     pub survey_messages_sent: usize,
     pub external_achievements: ExternalAchievements,
@@ -487,6 +495,7 @@ impl Data {
             deleted_users: Vec::new(),
             ic_root_key,
             identity_canister_user_sync_queue: VecDeque::new(),
+            identity_canister_user_sync_queue_2: VecDeque::new(),
             remove_from_online_users_queue: VecDeque::new(),
             survey_messages_sent: 0,
             external_achievements: ExternalAchievements::default(),
@@ -603,6 +612,7 @@ impl Default for Data {
             deleted_users: Vec::new(),
             ic_root_key: Vec::new(),
             identity_canister_user_sync_queue: VecDeque::new(),
+            identity_canister_user_sync_queue_2: VecDeque::new(),
             remove_from_online_users_queue: VecDeque::new(),
             survey_messages_sent: 0,
             external_achievements: ExternalAchievements::default(),

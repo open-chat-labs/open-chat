@@ -215,12 +215,17 @@ impl UserPrincipals {
 
     // This is O(number of users) so we may need to revisit this in the future, but it is only
     // called once per user so is fine for now.
-    pub fn set_user_id(&mut self, principal: Principal, user_id: Option<UserId>) -> bool {
-        if let Some(user) = self.user_principals.iter_mut().find(|u| u.principal == principal) {
+    pub fn set_user_id(&mut self, principal: Principal, user_id: Option<UserId>) -> Option<u32> {
+        if let Some((index, user)) = self
+            .user_principals
+            .iter_mut()
+            .enumerate()
+            .find(|(_, u)| u.principal == principal)
+        {
             user.user_id = user_id;
-            true
+            Some(index as u32)
         } else {
-            false
+            None
         }
     }
 

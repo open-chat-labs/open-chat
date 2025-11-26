@@ -7,6 +7,7 @@ pub struct Args {
     pub governance_principals: Vec<Principal>,
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
+    pub sign_in_with_email_canister_id: CanisterId,
     pub originating_canisters: Vec<CanisterId>,
     pub skip_captcha_whitelist: Vec<CanisterId>,
     pub ic_root_key: Vec<u8>,

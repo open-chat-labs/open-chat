@@ -21,7 +21,6 @@ pub enum LocalUserIndexEvent {
     UserJoinedCommunityOrChannel(Box<UserJoinedCommunityOrChannel>),
     OpenChatBotMessage(Box<OpenChatBotMessage>),
     OpenChatBotMessageV2(Box<OpenChatBotMessageV2>),
-    UserDeleted(Box<UserDeleted>),
     UserSetProfileBackground(Box<(UserId, Option<u128>)>),
     NotifyUniquePersonProof(Box<(UserId, UniquePersonProof)>),
     NotifyChit(Box<(UserId, NotifyChit)>),
@@ -41,6 +40,7 @@ pub struct UserRegistered {
     pub principal: Principal,
     pub user_id: UserId,
     pub username: String,
+    pub email: Option<String>,
     pub referred_by: Option<UserId>,
     pub is_from_identity_canister: bool,
 }

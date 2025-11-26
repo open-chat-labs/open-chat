@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- On registration optionally add email auth provider ([#8682](https://github.com/open-chat-labs/open-chat/pull/8682))
+
+### Removed
+
+- Remove ancient code that deleted empty and dormant accounts ([#8685](https://github.com/open-chat-labs/open-chat/pull/8685))
+
 ## [[2.0.1909](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1909-user_index)] - 2025-09-24
 
 ### Changed

@@ -15,7 +15,7 @@ use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, DeleteFileReference
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::{ChatEventInternal, EventPusher};
-use constants::{DAY_IN_MS, ICP_LEDGER_CANISTER_ID, LIFETIME_DIAMOND_TIMESTAMP, OPENCHAT_BOT_USER_ID};
+use constants::{ICP_LEDGER_CANISTER_ID, LIFETIME_DIAMOND_TIMESTAMP, OPENCHAT_BOT_USER_ID};
 use event_store_types::{Event, EventBuilder};
 use fire_and_forget_handler::FireAndForgetHandler;
 use ic_principal::Principal;
@@ -41,8 +41,8 @@ use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     Achievement, BotDefinitionUpdate, BotEvent, BotInitiator, BotInstallationLocation, BotLifecycleEvent, BotNotification,
     BotPermissions, BotUninstalledEvent, BotUpdated, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEvent,
-    ChitEventType, CommunityId, Cycles, DirectChatUserNotificationPayload, Document, IdempotentEnvelope, Milliseconds,
-    Notification, NotifyChit, TimestampMillis, Timestamped, UniquePersonProof, UserCanisterStreakInsuranceClaim,
+    ChitEventType, CommunityId, Cycles, DirectChatUserNotificationPayload, Document, IdempotentEnvelope, Notification,
+    NotifyChit, TimestampMillis, Timestamped, UniquePersonProof, UserCanisterStreakInsuranceClaim,
     UserCanisterStreakInsurancePayment, UserId, UserNotification,
 };
 use user_canister::{MessageActivityEvent, NamedAccount, UserCanisterEvent, WalletConfig};
@@ -65,7 +65,6 @@ mod token_swaps;
 mod updates;
 
 pub const COMMUNITY_CREATION_LIMIT: u32 = 10;
-const SIX_MONTHS: Milliseconds = 183 * DAY_IN_MS;
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
@@ -236,23 +235,6 @@ Your streak is now {new_streak} days and you have {days_remaining_text} of strea
                 self.env.now(),
             );
         }
-    }
-
-    pub fn is_empty_and_dormant(&self) -> bool {
-        if self.data.direct_chats.len() <= 1
-            && self.data.group_chats.len() == 0
-            && self.data.communities.len() == 0
-            && self.data.diamond_membership_expires_at.is_none()
-            && self.data.unique_person_proof.is_none()
-            && self.data.group_chats.removed_len() == 0
-            && self.data.communities.removed_len() == 0
-        {
-            let now = self.env.now();
-            if self.data.user_created + SIX_MONTHS < now && self.data.chit_events.last_updated() + SIX_MONTHS < now {
-                return true;
-            }
-        }
-        false
     }
 
     pub fn push_bot_notification(&mut self, notification: Option<BotNotification>) {

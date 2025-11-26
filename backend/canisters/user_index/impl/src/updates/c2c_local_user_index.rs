@@ -1,5 +1,5 @@
 use crate::guards::caller_is_local_user_index_canister;
-use crate::{RuntimeState, UserRegisteredEventPayload, mutate_state};
+use crate::{RuntimeState, UserIdentity, UserRegisteredEventPayload, mutate_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_time::now_millis;
@@ -8,8 +8,8 @@ use constants::ONE_MB;
 use event_store_producer::EventBuilder;
 use group_index_canister::UserIndexEvent as GroupIndexEvent;
 use local_user_index_canister::{
-    ChitBalance, DeleteUser, OpenChatBotMessage, OpenChatBotMessageV2, UserIndexEvent, UserJoinedCommunityOrChannel,
-    UserJoinedGroup, UserRegistered, UsernameChanged,
+    ChitBalance, OpenChatBotMessage, OpenChatBotMessageV2, UserIndexEvent, UserJoinedCommunityOrChannel, UserJoinedGroup,
+    UserRegistered, UsernameChanged,
 };
 use rand::RngCore;
 use stable_memory_map::StableMemoryMap;
@@ -49,7 +49,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
 ) {
     match event {
         LocalUserIndexEvent::UserRegistered(ev) => {
-            process_new_user(ev.principal, ev.username, ev.user_id, ev.referred_by, caller, state)
+            process_new_user(ev.principal, ev.username, ev.email, ev.user_id, ev.referred_by, caller, state)
         }
         LocalUserIndexEvent::UserJoinedGroup(ev) => {
             state.push_event_to_local_user_index(
@@ -93,16 +93,6 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                     content: ev.content,
                     mentioned: ev.mentioned,
                 })),
-            );
-        }
-        LocalUserIndexEvent::UserDeleted(ev) => {
-            state.delete_user(ev.user_id, false);
-            state.push_event_to_all_local_user_indexes(
-                UserIndexEvent::DeleteUser(DeleteUser {
-                    user_id: ev.user_id,
-                    triggered_by_user: false,
-                }),
-                Some(caller),
             );
         }
         LocalUserIndexEvent::UserSetProfileBackground(ev) => {
@@ -198,6 +188,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
 fn process_new_user(
     principal: Principal,
     username: String,
+    email: Option<String>,
     user_id: UserId,
     referred_by: Option<UserId>,
     local_user_index_canister_id: CanisterId,
@@ -275,10 +266,11 @@ You can change your username at any time by clicking \"Profile settings\" from t
         byte_limit: 100 * ONE_MB,
     });
 
-    state
-        .data
-        .identity_canister_user_sync_queue
-        .push_back((principal, Some(user_id)));
+    state.data.identity_canister_user_sync_queue_2.push_back(UserIdentity {
+        principal,
+        user_id: Some(user_id),
+        email,
+    });
 
     crate::jobs::sync_users_to_identity_canister::try_run_now(state);
 }

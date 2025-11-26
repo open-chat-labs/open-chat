@@ -23,11 +23,11 @@ fn delete_user_succeeds_if_signed_in_recently(delay: Milliseconds, should_delete
 
     let delete_user_response = client::identity::delete_user(
         env,
-        user_auth.auth_principal,
+        user_auth.auth_principal(),
         canister_ids.identity,
         &identity_canister::delete_user::Args {
-            public_key: user_auth.public_key,
-            delegation: user_auth.delegation,
+            public_key: user_auth.auth_public_key,
+            delegation: user_auth.auth_delegation,
         },
     );
 

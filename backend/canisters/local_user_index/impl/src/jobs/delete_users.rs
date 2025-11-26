@@ -5,7 +5,6 @@ use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
 use types::{C2CError, CanisterId, Empty, Milliseconds};
-use user_index_canister::UserDeleted;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -46,20 +45,15 @@ async fn process_user(user: UserToDelete) {
                 state.data.local_users.remove(&user_id);
 
                 let now = state.env.now();
-                if !user.triggered_by_user {
-                    state.data.canister_pool.push(user_id.into());
-                    state.push_event_to_user_index(UserIndexEvent::UserDeleted(Box::new(UserDeleted { user_id })), now);
-                }
-
                 for canister_id in canisters_to_notify {
                     state.push_event_to_user_index(UserIndexEvent::NotifyOfUserDeleted(canister_id, user_id), now);
                 }
             }
-            Ok(DeleteUserSuccess::Skipped) => {}
             Err(_) => {
                 if user.attempt < 50 {
                     state.data.users_to_delete_queue.push_back(UserToDelete {
                         user_id,
+                        #[allow(deprecated)]
                         triggered_by_user: user.triggered_by_user,
                         attempt: user.attempt + 1,
                     });
@@ -74,13 +68,6 @@ async fn process_user(user: UserToDelete) {
 async fn process_user_inner(user: &UserToDelete) -> Result<DeleteUserSuccess, C2CError> {
     let user_id = user.user_id;
     let canister_id = user_id.into();
-
-    if !user.triggered_by_user {
-        let is_empty_and_dormant = user_canister_c2c_client::c2c_is_empty_and_dormant(canister_id, &Empty {}).await?;
-        if !is_empty_and_dormant {
-            return Ok(DeleteUserSuccess::Skipped);
-        }
-    }
 
     let (groups, communities) = user_canister_c2c_client::c2c_groups_and_communities(canister_id, &Empty {})
         .await
@@ -99,5 +86,4 @@ async fn process_user_inner(user: &UserToDelete) -> Result<DeleteUserSuccess, C2
 
 enum DeleteUserSuccess {
     Deleted(Vec<CanisterId>),
-    Skipped,
 }

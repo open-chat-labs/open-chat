@@ -268,6 +268,11 @@ export const UserMarkAchievementsSeenArgs = Type.Object({
     last_seen: Type.BigInt(),
 });
 
+export type UserDeleteSavedCryptoAccountArgs = Static<typeof UserDeleteSavedCryptoAccountArgs>;
+export const UserDeleteSavedCryptoAccountArgs = Type.Object({
+    name: Type.String(),
+});
+
 export type UserBioResponse = Static<typeof UserBioResponse>;
 export const UserBioResponse = Type.Object({
     Success: Type.String(),
@@ -2445,6 +2450,7 @@ export const LocalUserIndexBotDeleteChannelArgs = Type.Object({
 export type LocalUserIndexRegisterUserArgs = Static<typeof LocalUserIndexRegisterUserArgs>;
 export const LocalUserIndexRegisterUserArgs = Type.Object({
     username: Type.String(),
+    email: Type.Optional(Type.String()),
     referral_code: Type.Optional(Type.String()),
     public_key: TSBytes,
 });
@@ -2700,12 +2706,6 @@ export const CommunityToggleMuteNotificationsArgs = Type.Object({
     channel_id: Type.Optional(ChannelId),
     mute: Type.Optional(Type.Boolean()),
     mute_at_everyone: Type.Optional(Type.Boolean()),
-});
-
-export type CommunityClaimPrizeArgs = Static<typeof CommunityClaimPrizeArgs>;
-export const CommunityClaimPrizeArgs = Type.Object({
-    channel_id: ChannelId,
-    message_id: MessageId,
 });
 
 export type CommunityCancelInvitesArgs = Static<typeof CommunityCancelInvitesArgs>;
@@ -3805,11 +3805,6 @@ export const GroupConvertIntoCommunityArgs = Type.Object({
     permissions: Type.Optional(CommunityPermissions),
     primary_language: Type.Optional(Type.String()),
     history_visible_to_new_joiners: Type.Boolean(),
-});
-
-export type GroupClaimPrizeArgs = Static<typeof GroupClaimPrizeArgs>;
-export const GroupClaimPrizeArgs = Type.Object({
-    message_id: MessageId,
 });
 
 export type GroupCancelInvitesArgs = Static<typeof GroupCancelInvitesArgs>;
@@ -6107,6 +6102,7 @@ export const LocalUserIndexRegisterUserResponse = Type.Union([
     Type.Literal("AlreadyRegistered"),
     Type.Literal("UserLimitReached"),
     Type.Literal("UsernameInvalid"),
+    Type.Literal("EmailInvalid"),
     Type.Object({
         UsernameTooShort: Type.Number(),
     }),
@@ -7442,20 +7438,6 @@ export const LocalUserIndexBotChatEventsArgs = Type.Object({
     events: LocalUserIndexChatEventsEventsSelectionCriteria,
 });
 
-export type CommunityClaimPrizeResponse = Static<typeof CommunityClaimPrizeResponse>;
-export const CommunityClaimPrizeResponse = Type.Union([
-    Type.Literal("Success"),
-    Type.Object({
-        TransferFailed: Type.Tuple([Type.String(), FailedCryptoTransaction]),
-    }),
-    Type.Object({
-        FailedAfterTransfer: Type.Tuple([Type.String(), CompletedCryptoTransaction]),
-    }),
-    Type.Object({
-        Error: OCError,
-    }),
-]);
-
 export type CommunityRegisterPollVoteResponse = Static<typeof CommunityRegisterPollVoteResponse>;
 export const CommunityRegisterPollVoteResponse = Type.Union([
     Type.Object({
@@ -7543,20 +7525,6 @@ export const IdentityApproveIdentityLinkArgs = Type.Object({
     public_key: TSBytes,
     link_initiated_by: TSPrincipal,
 });
-
-export type GroupClaimPrizeResponse = Static<typeof GroupClaimPrizeResponse>;
-export const GroupClaimPrizeResponse = Type.Union([
-    Type.Literal("Success"),
-    Type.Object({
-        TransferFailed: Type.Tuple([Type.String(), FailedCryptoTransaction]),
-    }),
-    Type.Object({
-        FailedAfterTransfer: Type.Tuple([Type.String(), CompletedCryptoTransaction]),
-    }),
-    Type.Object({
-        Error: OCError,
-    }),
-]);
 
 export type GroupRegisterPollVoteResponse = Static<typeof GroupRegisterPollVoteResponse>;
 export const GroupRegisterPollVoteResponse = Type.Union([

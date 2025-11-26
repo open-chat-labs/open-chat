@@ -1067,6 +1067,7 @@ type AddFcmToken = {
 
 type RegisterUser = {
     username: string;
+    email: string | undefined;
     referralCode: string | undefined;
     kind: "registerUser";
 };
