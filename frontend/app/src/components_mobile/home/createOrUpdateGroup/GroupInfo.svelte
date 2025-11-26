@@ -14,8 +14,8 @@
         TextArea,
         UserChip,
     } from "component-lib";
-    import { publish, type OpenChat } from "openchat-client";
-    import { getContext } from "svelte";
+    import { isDiamondStore, publish, type OpenChat } from "openchat-client";
+    import { getContext, tick } from "svelte";
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountPlus from "svelte-material-icons/AccountPlusOutline.svelte";
@@ -31,6 +31,7 @@
     import LinkedCard from "../../LinkedCard.svelte";
     import Setting from "../../Setting.svelte";
     import Translatable from "../../Translatable.svelte";
+    import DiamondUpgradeBox from "../DiamondUpgradeBox.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import DisappearingMessages from "./DisappearingMessages.svelte";
     import {
@@ -43,6 +44,13 @@
     const client = getContext<OpenChat>("client");
 
     let ugs = updateGroupState;
+    let canEditDisappearingMessages = $derived(
+        !ugs.editMode ? true : client.hasOwnerRights(ugs.candidate.membership.role),
+    );
+    let requiresUpgrade = $derived(
+        !ugs.editMode && !$isDiamondStore && ugs.candidate.level !== "channel",
+    );
+    let confirmExit = $state(false);
 </script>
 
 {#snippet rulesError()}
@@ -57,7 +65,21 @@
         action={(yes) => ugs.saveGroup(client, yes)} />
 {/if}
 
+{#if confirmExit}
+    <AreYouSure
+        title={i18nKey("Unsaved changes")}
+        message={i18nKey("Are you sure that you want to close this page without saving?")}
+        action={(yes) => {
+            confirmExit = false;
+            if (yes) {
+                tick().then(() => publish("closeModalPage"));
+            }
+            return Promise.resolve();
+        }} />
+{/if}
+
 <SlidingPageContent
+    onBack={() => (confirmExit = true)}
     title={i18nKey(
         ugs.editMode ? "group.updateInfo" : "group.addGroupInfo",
         undefined,
@@ -113,11 +135,19 @@
                 </TextArea>
             </Container>
         </Form>
+        {#if requiresUpgrade}
+            <DiamondUpgradeBox message={i18nKey("upgrade.groupMsg")} />
+        {/if}
         <Container padding={["zero", "md"]} gap={"xxl"} direction={"vertical"}>
             <Setting
+                disabled={requiresUpgrade}
                 toggle={() => (ugs.candidateGroup.public = !ugs.candidateGroup.public)}
                 info={"Groups are private by default, and limited to people you invite. Public channels must have unique names, and community members are automatically added to them."}>
-                <Switch width={{ kind: "fill" }} reverse bind:checked={ugs.candidateGroup.public}>
+                <Switch
+                    disabled={requiresUpgrade}
+                    width={{ kind: "fill" }}
+                    reverse
+                    bind:checked={ugs.candidateGroup.public}>
                     <Translatable resourceKey={i18nKey("Public group")}></Translatable>
                 </Switch>
             </Setting>
@@ -135,7 +165,9 @@
                 </Switch>
             </Setting>
 
-            <DisappearingMessages />
+            {#if canEditDisappearingMessages}
+                <DisappearingMessages />
+            {/if}
         </Container>
         {#if !ugs.hideInviteUsers}
             <Container padding={["zero", "md"]} direction={"vertical"} gap={"xl"}>
@@ -171,6 +203,7 @@
 
         <Container direction={"vertical"} gap={"lg"} supplementalClass={"group_sub_sections"}>
             <LinkedCard
+                disabled={requiresUpgrade}
                 onClick={() => publish("updateAccessGates", ugs)}
                 Icon={AlertRhombusOutline}
                 title={i18nKey("Access gates")}
