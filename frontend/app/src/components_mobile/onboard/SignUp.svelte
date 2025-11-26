@@ -1,10 +1,12 @@
 <script lang="ts">
-    import { i18nKey } from "@src/i18n/i18n";
+    import { i18nKey, interpolate } from "@src/i18n/i18n";
     import { createLocalStorageStore } from "@src/utils/store";
-    import { BodySmall, Button, Container, Form, Switch } from "component-lib";
+    import { BodySmall, Button, Container, Form, Input, Switch } from "component-lib";
+    import EmailValidator from "email-validator";
     import type { CreatedUser, OpenChat, UserOrUserGroup, UserSummary } from "openchat-client";
     import { AuthProvider, identityStateStore, selectedAuthProviderStore } from "openchat-client";
     import { getContext, onMount } from "svelte";
+    import { _ } from "svelte-i18n";
     import AlertBox from "../AlertBox.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import FindUser from "../FindUser.svelte";
@@ -29,6 +31,8 @@
     let usernameValid = $state(false);
     let usernameStore = createLocalStorageStore("openchat_candidate_username", "");
     let checkingUsername: boolean = $state(false);
+    let email = $state("");
+    let emailValid = $derived(email.length === 0 || EmailValidator.validate(email));
     let busy = $state(false);
     let badCode = $state(false);
     let referringUser: UserSummary | undefined = $state(undefined);
@@ -46,7 +50,7 @@
 
     async function register(e: Event) {
         e.preventDefault();
-        if (usernameValid) {
+        if (usernameValid && emailValid) {
             usernameStore.set(username);
             try {
                 busy = true;
@@ -65,7 +69,7 @@
                     }
                 }
                 passkeyCreated = true;
-                await registerUser(username);
+                await registerUser(username, email.length > 0 ? email : undefined);
             } catch (err) {
                 error = `Error registering user: ${err}`;
             } finally {
@@ -74,8 +78,8 @@
         }
     }
 
-    async function registerUser(username: string) {
-        await client.registerUser(username).then((resp) => {
+    async function registerUser(username: string, email: string | undefined) {
+        await client.registerUser(username, email).then((resp) => {
             badCode = false;
             if (resp.kind === "username_taken") {
                 error = "register.usernameTaken";
@@ -85,6 +89,8 @@
                 error = "register.usernameTooLong";
             } else if (resp.kind === "username_invalid") {
                 error = "register.usernameInvalid";
+            } else if (resp.kind === "email_invalid") {
+                error = "register.emailInvalid";
             } else if (resp.kind === "user_limit_reached") {
                 error = "register.userLimitReached";
             } else if (resp.kind === "internal_error") {
@@ -198,6 +204,18 @@
                 bind:usernameValid
                 bind:errorMsg={error} />
 
+            <Input
+                error={!emailValid}
+                disabled={busy}
+                placeholder={interpolate($_, i18nKey("register.emailPlaceholder"))}
+                bind:value={email}
+                minlength={0}
+                maxlength={254}>
+                {#snippet subtext()}
+                    <Translatable resourceKey={i18nKey("register.emailRules")} />
+                {/snippet}
+            </Input>
+
             {#if referringUser !== undefined}
                 <UserPill onDeleteUser={deleteUser} userOrGroup={referringUser} />
             {:else}
@@ -227,7 +245,7 @@
 
 <Button
     width={{ kind: "fill" }}
-    disabled={!termsAccepted || !usernameValid || busy}
+    disabled={!termsAccepted || !usernameValid || !emailValid || busy}
     loading={checkingUsername || busy}
     onClick={register}>
     <Translatable resourceKey={i18nKey("Start my journey")} />
