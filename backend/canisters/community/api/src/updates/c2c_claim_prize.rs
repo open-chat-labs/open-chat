@@ -11,6 +11,7 @@ pub struct Args {
     pub total_chit_earned: u32,
     pub streak: u16,
     pub streak_ends: TimestampMillis,
+    pub user_reauthenticated: bool,
 }
 
 // this is needed so that the generate_c2c_call macro doesn't complain

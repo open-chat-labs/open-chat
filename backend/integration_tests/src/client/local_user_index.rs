@@ -34,7 +34,7 @@ pub mod happy_path {
     use pocket_ic::PocketIc;
     use types::{
         BotInstallationLocation, BotPermissions, CanisterId, ChannelId, ChatId, CommunityCanisterCommunitySummary, CommunityId,
-        Empty, MessageId, MultiUserChat, UserId,
+        Empty, MessageId, MultiUserChat, SignedDelegation, UserId,
     };
 
     pub fn register_user(env: &mut PocketIc, principal: Principal, canister_id: CanisterId, public_key: Vec<u8>) -> User {
@@ -338,12 +338,17 @@ pub mod happy_path {
         local_user_index: CanisterId,
         chat_id: MultiUserChat,
         message_id: MessageId,
+        delegation: Option<SignedDelegation>,
     ) {
         let response = super::claim_prize(
             env,
             sender,
             local_user_index,
-            &local_user_index_canister::claim_prize::Args { chat_id, message_id },
+            &local_user_index_canister::claim_prize::Args {
+                chat_id,
+                message_id,
+                delegation,
+            },
         );
 
         match response {

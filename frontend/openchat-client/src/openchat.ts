@@ -6632,6 +6632,7 @@ export class OpenChat {
         chatId: MultiUserChatIdentifier,
         messageId: bigint,
         e: MouseEvent,
+        delegation: JsonnableDelegationChain,
     ): Promise<boolean> {
         if (!this.#validMouseEvent(e)) {
             return Promise.resolve(false);
