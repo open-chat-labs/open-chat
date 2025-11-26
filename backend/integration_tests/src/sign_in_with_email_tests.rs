@@ -1,6 +1,5 @@
 use crate::env::ENV;
 use crate::{TestEnv, client};
-use sign_in_with_email_canister::{GenerateMagicLinkArgs, GenerateMagicLinkResponse, GetDelegationArgs, GetDelegationResponse};
 use sign_in_with_email_test_utils::generate_magic_link;
 use std::ops::Deref;
 use testing::rng::random_internet_identity_principal;
@@ -18,14 +17,16 @@ fn end_to_end() {
         env,
         principal,
         canister_ids.sign_in_with_email,
-        &GenerateMagicLinkArgs {
+        &sign_in_with_email_canister::generate_magic_link::Args {
             email: email.to_string(),
             session_key: public_key.clone(),
             max_time_to_live: None,
         },
     );
 
-    let GenerateMagicLinkResponse::Success(generate_magic_link_success) = generate_magic_link_response else {
+    let sign_in_with_email_canister::generate_magic_link::Response::Success(generate_magic_link_success) =
+        generate_magic_link_response
+    else {
         panic!();
     };
 
@@ -61,12 +62,15 @@ fn end_to_end() {
         env,
         principal,
         canister_ids.sign_in_with_email,
-        &GetDelegationArgs {
+        &sign_in_with_email_canister::get_delegation::Args {
             email: email.to_string(),
             session_key: public_key,
             expiration: generate_magic_link_success.expiration,
         },
     );
 
-    assert!(matches!(get_delegation_response, GetDelegationResponse::Success(_)));
+    assert!(matches!(
+        get_delegation_response,
+        sign_in_with_email_canister::get_delegation::Response::Success(_)
+    ));
 }
