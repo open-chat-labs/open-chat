@@ -958,12 +958,13 @@ export async function updateCachedProposalTallies(
                     event.event.kind === "message" &&
                     event.event.content.kind === "proposal_content"
                 ) {
-                    const updateCache =
+                    const updated =
                         tally.timestamp > event.event.content.proposal.tally.timestamp;
-                    event.event.content.proposal.tally = tally;
+
                     messages.push(event as EventWrapper<Message>);
 
-                    if (updateCache) {
+                    if (updated) {
+                        event.event.content.proposal.tally = tally;
                         return eventStore.put(event, cacheKey);
                     }
                 }
