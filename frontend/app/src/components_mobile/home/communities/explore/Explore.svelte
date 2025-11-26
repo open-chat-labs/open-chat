@@ -41,6 +41,8 @@
     import FancyLoader from "../../../icons/FancyLoader.svelte";
     import Translatable from "../../../Translatable.svelte";
     import Markdown from "../../Markdown.svelte";
+    import NothingToSee from "../../NothingToSee.svelte";
+    import { updateCommunityState } from "../createOrUpdate/community.svelte";
     import BotFilters from "./BotFilters.svelte";
     import CommunityCard from "./CommunityCard.svelte";
     import CommunityCardLink from "./CommunityCardLink.svelte";
@@ -272,6 +274,7 @@
                 mainAxisAlignment={"center"}
                 crossAxisAlignment={"center"}
                 gap={"sm"}
+                height={{ kind: "fill" }}
                 direction={"vertical"}
                 padding={["lg", "zero"]}>
                 {#if $offlineStore}
@@ -280,16 +283,14 @@
                         <Translatable resourceKey={i18nKey("offlineError")} />
                     </Subtitle>
                 {:else}
-                    <Title align={"center"} fontWeight="bold">
-                        {#if view === "communities"}
-                            <Translatable resourceKey={i18nKey("communities.noMatch")} />
-                        {:else}
-                            <Translatable resourceKey={i18nKey("No bots found")} />
-                        {/if}
-                    </Title>
-                    <Subtitle colour={"textSecondary"} align={"center"}>
-                        <Translatable resourceKey={i18nKey("communities.refineSearch")} />
-                    </Subtitle>
+                    <NothingToSee
+                        reset={{
+                            onClick: () => updateCommunityState.createCommunity(client),
+                            text: "Create a community",
+                        }}
+                        subtitle={interpolate($_, i18nKey("communities.refineSearch"))}
+                        title={interpolate($_, i18nKey("communities.noMatch"))}>
+                    </NothingToSee>
                 {/if}
             </Container>
         {:else}
