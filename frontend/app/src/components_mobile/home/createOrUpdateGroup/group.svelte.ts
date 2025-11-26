@@ -34,6 +34,9 @@ export class UpdateGroupState extends UpdateGroupOrCommunityState {
             this.#candidateGroup.name.length >= MIN_NAME_LENGTH &&
             this.#candidateGroup.name.length <= MAX_NAME_LENGTH,
     );
+    #hideInviteUsers = $derived(
+        this.#candidateGroup?.level === "channel" && this.#candidateGroup?.public,
+    );
     #valid = $derived(this.rulesValid && this.#nameValid);
     #editMode = $derived.by(() => {
         if (this.#candidateGroup === undefined) return false;
@@ -63,6 +66,10 @@ export class UpdateGroupState extends UpdateGroupOrCommunityState {
 
     get originalRules() {
         return this.original.rules;
+    }
+
+    get hideInviteUsers() {
+        return this.#hideInviteUsers;
     }
 
     enableDefaultRules() {

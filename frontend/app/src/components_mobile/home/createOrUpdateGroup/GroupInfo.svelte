@@ -137,35 +137,37 @@
 
             <DisappearingMessages />
         </Container>
-        <Container padding={["zero", "md"]} direction={"vertical"} gap={"xl"}>
-            <ListAction onClick={() => publish("addGroupMembers")}>
-                {#snippet icon(color)}
-                    <AccountPlus {color} />
-                {/snippet}
-                Add members
-            </ListAction>
+        {#if !ugs.hideInviteUsers}
+            <Container padding={["zero", "md"]} direction={"vertical"} gap={"xl"}>
+                <ListAction onClick={() => publish("addGroupMembers")}>
+                    {#snippet icon(color)}
+                        <AccountPlus {color} />
+                    {/snippet}
+                    Add members
+                </ListAction>
 
-            {#if ugs.candidateMembers.length > 0}
-                <Container direction={"vertical"}>
-                    <Body fontWeight={"bold"}>
-                        <Translatable resourceKey={i18nKey("Selected members")}></Translatable>
-                    </Body>
-                    <BodySmall colour={"textSecondary"}>
-                        <Translatable
-                            resourceKey={i18nKey(
-                                "Members that will be added or invited to the newly created group",
-                            )}></Translatable>
-                    </BodySmall>
-                </Container>
-                <Container wrap gap={"sm"} crossAxisAlignment={"center"}>
-                    {#each ugs.candidateMembers as { user } (user.userId)}
-                        <UserChip
-                            avatarUrl={client.userAvatarUrl(user)}
-                            onRemove={() => ugs.deleteMember(user)}>@{user.username}</UserChip>
-                    {/each}
-                </Container>
-            {/if}
-        </Container>
+                {#if ugs.candidateMembers.length > 0}
+                    <Container direction={"vertical"}>
+                        <Body fontWeight={"bold"}>
+                            <Translatable resourceKey={i18nKey("Selected members")}></Translatable>
+                        </Body>
+                        <BodySmall colour={"textSecondary"}>
+                            <Translatable
+                                resourceKey={i18nKey(
+                                    "Members that will be added or invited to the newly created group",
+                                )}></Translatable>
+                        </BodySmall>
+                    </Container>
+                    <Container wrap gap={"sm"} crossAxisAlignment={"center"}>
+                        {#each ugs.candidateMembers as { user } (user.userId)}
+                            <UserChip
+                                avatarUrl={client.userAvatarUrl(user)}
+                                onRemove={() => ugs.deleteMember(user)}>@{user.username}</UserChip>
+                        {/each}
+                    </Container>
+                {/if}
+            </Container>
+        {/if}
 
         <Container direction={"vertical"} gap={"lg"} supplementalClass={"group_sub_sections"}>
             <LinkedCard
