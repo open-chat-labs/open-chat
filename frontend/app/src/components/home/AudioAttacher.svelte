@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { iconSize, type AudioContent, type OpenChat } from "openchat-client";
+    import { iconSize, quantiseWaveform, type AudioContent, type OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Microphone from "svelte-material-icons/Microphone.svelte";
@@ -98,13 +98,13 @@
                             // let the user know if we stopped recording prematurely
                             toastStore.showFailureToast(i18nKey("maxAudioSize"));
                         }
+                        const quantised = await quantiseWaveform(data.slice(0));
                         onAudioCaptured({
                             kind: "audio_content",
                             mimeType: mimeType,
                             blobData: new Uint8Array(data),
                             blobUrl: client.dataToBlobUrl(data, mimeType),
-                            samples: new Uint8Array(),
-                            duration: 0,
+                            ...quantised,
                         });
                         stream.getTracks().forEach((track) => track.stop());
                     });

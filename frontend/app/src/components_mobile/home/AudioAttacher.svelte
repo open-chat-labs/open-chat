@@ -98,7 +98,6 @@
                             toastStore.showFailureToast(i18nKey("maxAudioSize"));
                         }
                         const quantised = await quantiseWaveform(data.slice(0));
-                        console.log("Quantised: ", quantised);
                         onAudioCaptured({
                             kind: "audio_content",
                             mimeType: mimeType,

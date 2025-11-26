@@ -1207,8 +1207,8 @@ function audioContent(value: TAudioContent): AudioContent {
         mimeType: value.mime_type,
         blobReference: mapOptional(value.blob_reference, blobReference),
         caption: mapOptional(value.caption, identity),
-        samples: new Uint8Array(),
-        duration: 0,
+        samples: mapOptional(value.samples, (s) => new Uint8Array(s)) ?? new Uint8Array(),
+        duration: mapOptional(value.duration_ms, Number) ?? 0,
     };
 }
 
@@ -1663,6 +1663,8 @@ function apiAudioContent(domain: AudioContent): TAudioContent {
         mime_type: domain.mimeType,
         blob_reference: apiBlobReference(domain.blobReference),
         caption: domain.caption,
+        duration_ms: BigInt(domain.duration),
+        samples: [...domain.samples],
     };
 }
 
