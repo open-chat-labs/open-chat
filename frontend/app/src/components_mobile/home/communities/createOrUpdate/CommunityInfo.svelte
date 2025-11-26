@@ -292,8 +292,11 @@
                 )} />
         </Container>
         <Container mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"end"}>
-            <CommonButton onClick={() => publish("closeModalPage")} size={"small_text"}>
-                <Translatable resourceKey={i18nKey("group.back")}></Translatable>
+            <CommonButton
+                mode={"active"}
+                onClick={() => publish("closeModalPage")}
+                size={"small_text"}>
+                <Translatable resourceKey={i18nKey("cancel")}></Translatable>
             </CommonButton>
             {#if !ucs.editMode}
                 <CommonButton
