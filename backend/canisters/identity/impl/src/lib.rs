@@ -191,6 +191,7 @@ impl RuntimeState {
             oc_public_key: self
                 .data
                 .oc_key_pair
+                .as_ref()
                 .map(|k| k.public_key_pem().to_string())
                 .unwrap_or_default(),
             canister_ids: CanisterIds {
