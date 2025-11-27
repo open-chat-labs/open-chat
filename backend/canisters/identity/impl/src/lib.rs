@@ -188,6 +188,12 @@ impl RuntimeState {
             auth_principals: self.data.user_principals.auth_principals_count(),
             originating_canisters: self.data.user_principals.originating_canisters().clone(),
             stable_memory_sizes: memory::memory_sizes(),
+            oc_public_key: self
+                .data
+                .oc_key_pair
+                .as_ref()
+                .map(|k| k.public_key_pem().to_string())
+                .unwrap_or_default(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
@@ -313,6 +319,7 @@ pub struct Metrics {
     pub auth_principals: u32,
     pub originating_canisters: HashMap<CanisterId, u32>,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
+    pub oc_public_key: String,
     pub canister_ids: CanisterIds,
     pub account_linking_codes_count: usize,
 }
