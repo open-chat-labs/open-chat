@@ -13,6 +13,7 @@ use ic_canister_sig_creation::signature_map::{LABEL_SIG, SignatureMap};
 use ic_cdk::api::certified_data_set;
 use identity_canister::{WEBAUTHN_ORIGINATING_CANISTER, WebAuthnKey};
 use identity_utils::verify_signature;
+use p256_key_pair::P256KeyPair;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use sha256::sha256;
@@ -211,6 +212,7 @@ struct Data {
     #[serde(skip)]
     signature_map: SignatureMap,
     encryption_key_requests: EncryptionKeyRequests,
+    oc_key_pair: Option<P256KeyPair>,
     salt: Salt,
     rng_seed: [u8; 32],
     challenges: Challenges,
@@ -227,6 +229,7 @@ impl Data {
         sign_in_with_email_canister_id: CanisterId,
         originating_canisters: Vec<CanisterId>,
         skip_captcha_whitelist: Vec<CanisterId>,
+        oc_secret_key_der: Vec<u8>,
         salt: [u8; 32],
         test_mode: bool,
     ) -> Data {
@@ -244,6 +247,7 @@ impl Data {
             signature_map: SignatureMap::default(),
             encryption_key_requests: EncryptionKeyRequests::default(),
             salt: Salt::new(salt),
+            oc_key_pair: Some(P256KeyPair::from_secret_key_der(oc_secret_key_der).unwrap()),
             rng_seed: [0; 32],
             challenges: Challenges::default(),
             test_mode,

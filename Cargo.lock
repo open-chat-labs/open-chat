@@ -5186,6 +5186,7 @@ dependencies = [
  "identity_utils",
  "msgpack",
  "oc_error_codes",
+ "p256_key_pair",
  "rand 0.8.5",
  "serde",
  "serde_bytes",
