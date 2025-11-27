@@ -1,12 +1,15 @@
-import { BandwidthMonitor, MIN_DOWNLINK } from "openchat-shared";
+import { ConnectivityMonitor, MIN_DOWNLINK } from "openchat-shared";
 import { derived } from "svelte/store";
 
-export const bandwidthMonitor = new BandwidthMonitor({
-    pollIntervalMs: 10_000,
-    probeUrl: "/api/health",
+export const connectivityMonitor = new ConnectivityMonitor({
+    pollIntervalMs: 30_000,
+    probeUrl: "/.well-known/assetlinks.json",
     timeoutMs: 5_000,
 });
 
-export const offlineStore = derived(bandwidthMonitor, (status) => {
-    return !status.online || (status.bandwidthMbps !== null && status.bandwidthMbps < MIN_DOWNLINK);
+export const offlineStore = derived(connectivityMonitor, (status) => {
+    return (
+        !status.online ||
+        (status.estimatedDownlinkMbps !== null && status.estimatedDownlinkMbps < MIN_DOWNLINK)
+    );
 });
