@@ -397,8 +397,6 @@ struct Data {
     pub empty_users: HashSet<UserId>,
     pub chit_leaderboard: ChitLeaderboard,
     pub deleted_users: Vec<DeletedUser>,
-    #[serde(with = "serde_bytes")]
-    pub ic_root_key: Vec<u8>,
     #[serde(alias = "identity_canister_user_sync_queue_2")]
     pub identity_canister_user_sync_queue: VecDeque<UserIdentity>,
     pub remove_from_online_users_queue: VecDeque<Principal>,
@@ -431,7 +429,6 @@ impl Data {
         translations_canister_id: CanisterId,
         website_canister_id: CanisterId,
         video_call_operators: Vec<Principal>,
-        ic_root_key: Vec<u8>,
         test_mode: bool,
         now: TimestampMillis,
     ) -> Self {
@@ -483,7 +480,6 @@ impl Data {
             empty_users: HashSet::new(),
             chit_leaderboard: ChitLeaderboard::new(now),
             deleted_users: Vec::new(),
-            ic_root_key,
             identity_canister_user_sync_queue: VecDeque::new(),
             remove_from_online_users_queue: VecDeque::new(),
             survey_messages_sent: 0,
@@ -599,7 +595,6 @@ impl Default for Data {
             empty_users: HashSet::new(),
             chit_leaderboard: ChitLeaderboard::new(0),
             deleted_users: Vec::new(),
-            ic_root_key: Vec::new(),
             identity_canister_user_sync_queue: VecDeque::new(),
             remove_from_online_users_queue: VecDeque::new(),
             survey_messages_sent: 0,

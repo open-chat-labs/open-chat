@@ -19,6 +19,5 @@ pub struct Args {
     pub website_canister_id: CanisterId,
     pub video_call_operators: Vec<Principal>,
     pub oc_secret_key_der: Option<Vec<u8>>,
-    pub ic_root_key: Vec<u8>,
     pub test_mode: bool,
 }

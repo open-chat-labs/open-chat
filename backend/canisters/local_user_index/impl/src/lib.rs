@@ -106,7 +106,7 @@ impl RuntimeState {
                     self.data.internet_identity_canister_id,
                     self.data.website_canister_id,
                     jwt,
-                    &self.data.ic_root_key,
+                    &self.env.ic_root_key(),
                     now,
                 ) {
                     self.push_event_to_user_index(
@@ -570,8 +570,6 @@ struct Data {
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
     pub users_to_delete_queue: VecDeque<UserToDelete>,
-    #[serde(with = "serde_bytes")]
-    pub ic_root_key: Vec<u8>,
     pub events_for_remote_users: Vec<(UserId, UserEvent)>,
     pub cycles_balance_check_queue: VecDeque<CanisterId>,
     pub fire_and_forget_handler: FireAndForgetHandler,
@@ -616,7 +614,6 @@ impl Data {
         canister_pool_target_size: u16,
         video_call_operators: Vec<Principal>,
         oc_secret_key_der: Option<Vec<u8>>,
-        ic_root_key: Vec<u8>,
         test_mode: bool,
     ) -> Self {
         Data {
@@ -664,7 +661,6 @@ impl Data {
                 .build(),
             event_deduper: EventDeduper::default(),
             users_to_delete_queue: VecDeque::new(),
-            ic_root_key,
             events_for_remote_users: Vec::new(),
             cycles_balance_check_queue: VecDeque::new(),
             bots: BotsMap::default(),

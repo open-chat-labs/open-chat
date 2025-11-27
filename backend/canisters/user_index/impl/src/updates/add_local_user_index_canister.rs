@@ -124,7 +124,6 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                     .oc_key_pair
                     .is_initialised()
                     .then_some(state.data.oc_key_pair.secret_key_der().to_vec()),
-                ic_root_key: state.data.ic_root_key.clone(),
                 test_mode: state.data.test_mode,
             },
         })

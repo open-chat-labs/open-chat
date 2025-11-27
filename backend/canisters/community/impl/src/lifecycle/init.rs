@@ -44,7 +44,6 @@ fn init(args: Args) {
         args.default_channel_rules,
         args.mark_active_duration,
         args.video_call_operators,
-        args.ic_root_key,
         args.test_mode,
         env.rng(),
         now,
