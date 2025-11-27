@@ -1,10 +1,11 @@
 use crate::guards::caller_is_registry_canister;
 use crate::updates::upgrade_user_canister_wasm::upgrade_user_wasm_in_local_user_index;
-use crate::{RuntimeState, mutate_state, read_state};
+use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ic_cdk::management_canister::{CanisterInfoArgs, CanisterInstallMode};
 use local_user_index_canister::{SetPremiumItemCost, UserDetailsFull, UserIndexEvent};
+use rand::Rng;
 use tracing::info;
 use types::{BuildVersion, CanisterId, CanisterWasm, Hash};
 use user_index_canister::ChildCanisterType;
@@ -16,7 +17,7 @@ use utils::canister::{
 #[update(guard = "caller_is_registry_canister", msgpack = true)]
 #[trace]
 async fn add_local_user_index_canister(args: Args) -> Response {
-    match read_state(|state| prepare(&args, state)) {
+    match mutate_state(|state| prepare(&args, state)) {
         Ok(result) => {
             let wasm_version = result.canister_wasm.version;
 
@@ -93,7 +94,7 @@ struct PrepareResult {
     init_args: local_user_index_canister::init::Args,
 }
 
-fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
+fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Response> {
     if !state.data.local_index_map.contains_key(&args.canister_id) {
         let canister_wasm = state.data.child_canister_wasms.get(ChildCanisterType::LocalUserIndex);
 
@@ -119,11 +120,9 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 internet_identity_canister_id: state.data.internet_identity_canister_id,
                 website_canister_id: state.data.website_canister_id,
                 video_call_operators: state.data.video_call_operators.clone(),
-                oc_secret_key_der: state
-                    .data
-                    .oc_key_pair
-                    .is_initialised()
-                    .then_some(state.data.oc_key_pair.secret_key_der().to_vec()),
+                oc_secret_key_der: state.data.oc_key_pair.secret_key_der().to_vec(),
+                rng_seed: state.env.rng().r#gen(),
+                ic_root_key: ic_cdk::api::root_key(),
                 test_mode: state.data.test_mode,
             },
         })

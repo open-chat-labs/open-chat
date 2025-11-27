@@ -25,5 +25,6 @@ pub struct Args {
     pub openchat_bot_messages: Vec<MessageContentInitial>,
     pub video_call_operators: Vec<Principal>,
     pub referred_by: Option<UserId>,
+    pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }

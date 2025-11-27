@@ -11,6 +11,8 @@ pub struct CanisterEnv {
 
 impl CanisterEnv {
     pub fn new(seed: [u8; 32]) -> Self {
+        assert_ne!(seed, [0; 32]);
+
         Self {
             rng: StdRng::from_seed(seed),
         }
