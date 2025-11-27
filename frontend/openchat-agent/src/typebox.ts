@@ -6036,12 +6036,6 @@ export const UserIndexPlatformModeratorsGroupResponse = Type.Object({
     Success: ChatId,
 });
 
-export type LocalUserIndexClaimPrizeArgs = Static<typeof LocalUserIndexClaimPrizeArgs>;
-export const LocalUserIndexClaimPrizeArgs = Type.Object({
-    chat_id: MultiUserChat,
-    message_id: MessageId,
-});
-
 export type LocalUserIndexInstallBotArgs = Static<typeof LocalUserIndexInstallBotArgs>;
 export const LocalUserIndexInstallBotArgs = Type.Object({
     location: BotInstallationLocation,
@@ -7339,6 +7333,13 @@ export const UserIndexCurrentUserResponse = Type.Union([
         Error: OCError,
     }),
 ]);
+
+export type LocalUserIndexClaimPrizeArgs = Static<typeof LocalUserIndexClaimPrizeArgs>;
+export const LocalUserIndexClaimPrizeArgs = Type.Object({
+    chat_id: MultiUserChat,
+    message_id: MessageId,
+    delegation: Type.Optional(SignedDelegation),
+});
 
 export type LocalUserIndexClaimPrizeResponse = Static<typeof LocalUserIndexClaimPrizeResponse>;
 export const LocalUserIndexClaimPrizeResponse = Type.Union([

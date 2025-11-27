@@ -1,4 +1,5 @@
 import type { HttpAgent, Identity, SignIdentity } from "@icp-sdk/core/agent";
+import type { SignedDelegation } from "@icp-sdk/core/identity";
 import type {
     AccessTokenType,
     BotInstallationLocation,
@@ -518,12 +519,13 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
         );
     }
 
-    claimPrize(id: MultiUserChatIdentifier, messageId: bigint): Promise<ClaimPrizeResponse> {
+    claimPrize(id: MultiUserChatIdentifier, messageId: bigint, delegation: SignedDelegation | undefined): Promise<ClaimPrizeResponse> {
         return this.executeMsgpackUpdate(
             "claim_prize",
             {
                 chat_id: apiMultiUserChat(id),
                 message_id: messageId,
+                delegation
             },
             (resp) => {
                 console.log("Resp: ", resp);

@@ -1194,7 +1194,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.claimPrize(payload.chatId, payload.messageId),
+                    agent.claimPrize(payload.chatId, payload.messageId, payload.delegation),
                 );
                 break;
 

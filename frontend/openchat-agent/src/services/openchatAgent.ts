@@ -1,5 +1,6 @@
 /* eslint-disable no-case-declarations */
 import { HttpAgent, type Identity } from "@icp-sdk/core/agent";
+import type { SignedDelegation } from "@icp-sdk/core/identity";
 import type { Principal } from "@icp-sdk/core/principal";
 import type {
     AcceptP2PSwapResponse,
@@ -3368,23 +3369,16 @@ export class OpenChatAgent extends EventTarget {
     async claimPrize(
         chatId: MultiUserChatIdentifier,
         messageId: bigint,
+        delegation: SignedDelegation | undefined,
     ): Promise<ClaimPrizeResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
-        switch (chatId.kind) {
-            case "group_chat": {
-                const localUserIndex = await this.getGroupClient(chatId.groupId).localUserIndex();
-                const localUserIndexClient = this.getLocalUserIndexClient(localUserIndex);
-                return localUserIndexClient.claimPrize(chatId, messageId);
-            }
-            case "channel": {
-                const localUserIndex = await this.communityClient(
-                    chatId.communityId,
-                ).localUserIndex();
-                const localUserIndexClient = this.getLocalUserIndexClient(localUserIndex);
-                return localUserIndexClient.claimPrize(chatId, messageId);
-            }
-        }
+        const localUserIndex = await (chatId.kind === "group_chat"
+            ? this.getGroupClient(chatId.groupId).localUserIndex()
+            : this.communityClient(chatId.communityId).localUserIndex());
+
+        const localUserIndexClient = this.getLocalUserIndexClient(localUserIndex);
+        return localUserIndexClient.claimPrize(chatId, messageId, delegation);
     }
 
     payForDiamondMembership(
