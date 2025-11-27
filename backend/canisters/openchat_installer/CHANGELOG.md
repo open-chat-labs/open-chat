@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Switch the Identity canister to be installed/upgraded by the OpenChat Installer canister ([#8698](https://github.com/open-chat-labs/open-chat/pull/8698))
+
 ## [[2.0.1925](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1925-openchat_installer)] - 2025-11-26
 
 ### Changed
