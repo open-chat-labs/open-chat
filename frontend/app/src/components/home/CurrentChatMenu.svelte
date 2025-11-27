@@ -283,7 +283,9 @@
     }
 
     function registerWebhook() {
-        publish("registerWebhook");
+        if (selectedChatSummary.kind !== "direct_chat") {
+            publish("registerWebhook", selectedChatSummary);
+        }
     }
 
     function startVideoCall() {

@@ -20,6 +20,7 @@
         type UserGroupDetails,
     } from "openchat-client";
     import { onMount } from "svelte";
+    import WebhookModal from "../bots/WebhookModal.svelte";
     import AboutAccessGates from "./access_gates/AboutAccessGates.svelte";
     import AccessGates from "./access_gates/AccessGates.svelte";
     import BalanceGates from "./access_gates/BalanceGates.svelte";
@@ -90,6 +91,7 @@
               view: "invite" | "share";
           }
         | { kind: "user_groups"; community: CommunitySummary }
+        | { kind: "register_webhook"; chat: MultiUserChat }
         | { kind: "user_group"; community: CommunitySummary; userGroup: UserGroupDetails }
         | { kind: "edit_user_group"; community: CommunitySummary; userGroup: UserGroupDetails }
         | { kind: "community_details"; community: CommunitySummary }
@@ -160,6 +162,7 @@
 
     onMount(() => {
         const unsubs = [
+            subscribe("registerWebhook", (chat) => push({ kind: "register_webhook", chat })),
             subscribe("addGroupMembers", () => push({ kind: "update_group_add_members" })),
             subscribe("addCommunityMembers", () => push({ kind: "update_community_add_members" })),
             subscribe("inviteAndShare", ({ collection, view }) =>
@@ -437,6 +440,8 @@
             <EditUserGroup community={page.community} original={page.userGroup} />
         {:else if page.kind === "invite_and_share"}
             <InviteAndShare collection={page.collection} view={page.view} />
+        {:else if page.kind === "register_webhook"}
+            <WebhookModal chat={page.chat} />
         {/if}
     </SlidingPage>
 {/each}

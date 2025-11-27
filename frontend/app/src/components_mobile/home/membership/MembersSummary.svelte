@@ -42,14 +42,13 @@
             <Translatable resourceKey={i18nKey("Members")}></Translatable>
         </Body>
 
-        {#if membersState.members.size > TO_SHOW}
-            <CommonButton
-                onClick={() => membersState.showAllMembers()}
-                size={"small_text"}
-                mode={"active"}>
-                <Translatable resourceKey={i18nKey(`View all (+${more})`)}></Translatable>
-            </CommonButton>
-        {/if}
+        <CommonButton
+            onClick={() => membersState.showAllMembers()}
+            size={"small_text"}
+            mode={"active"}>
+            <Translatable resourceKey={i18nKey(`View all (${membersState.members.size})`)}
+            ></Translatable>
+        </CommonButton>
     </Container>
 
     <ListAction onClick={() => membersState.showInviteUsers()}>

@@ -456,6 +456,11 @@ export class MemberManagement {
         return this.client.canManageBots(this.collection.id);
     }
 
+    canRegisterWebhook() {
+        if (this.collection.kind === "community") return false;
+        return this.client.canRegisterWebhook(this.collection.id);
+    }
+
     onRemoveMember(userId: string): void {
         (this.collection.kind === "community"
             ? this.client.removeCommunityMember(this.collection.id, userId)

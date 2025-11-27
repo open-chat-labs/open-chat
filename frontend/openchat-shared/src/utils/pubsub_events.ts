@@ -110,7 +110,7 @@ export type PubSubEvents = {
     registerBot: undefined;
     updateBot: undefined;
     removeBot: undefined;
-    registerWebhook: undefined;
+    registerWebhook: MultiUserChat;
     updateWebhook: FullWebhookDetails;
     deleteWebhook: undefined;
     loadedMessageWindow: {

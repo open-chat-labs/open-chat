@@ -19,9 +19,10 @@
         chat: MultiUserChat;
         webhook: WebhookDetails;
         searchTerm: string;
+        canManage: boolean;
     }
 
-    let { chat, webhook, searchTerm }: Props = $props();
+    let { chat, webhook, searchTerm, canManage }: Props = $props();
 
     function deleteWebhook() {
         client.deleteWebhook(chat.id, webhook.id).then((success) => {
@@ -62,12 +63,14 @@
                 {/snippet}
                 <Translatable resourceKey={i18nKey("webhook.viewEditAction")} />
             </MenuItem>
-            <MenuItem onclick={() => deleteWebhook()}>
-                {#snippet icon(color, size)}
-                    <DeleteOutline {size} {color} />
-                {/snippet}
-                <Translatable resourceKey={i18nKey("webhook.removeAction")} />
-            </MenuItem>
+            {#if canManage}
+                <MenuItem onclick={() => deleteWebhook()}>
+                    {#snippet icon(color, size)}
+                        <DeleteOutline {size} {color} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("webhook.removeAction")} />
+                </MenuItem>
+            {/if}
         {/snippet}
     </MenuTrigger>
 </Container>

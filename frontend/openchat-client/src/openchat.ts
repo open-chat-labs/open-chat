@@ -8918,7 +8918,12 @@ export class OpenChat {
         } else if (bot.command.name === "register_bot") {
             publish("registerBot");
         } else if (bot.command.name === "register_webhook") {
-            publish("registerWebhook");
+            if (
+                selectedChatSummaryStore.value !== undefined &&
+                selectedChatSummaryStore.value.kind !== "direct_chat"
+            ) {
+                publish("registerWebhook", selectedChatSummaryStore.value);
+            }
         } else if (bot.command.name === "update_bot") {
             publish("updateBot");
         } else if (bot.command.name === "remove_bot") {

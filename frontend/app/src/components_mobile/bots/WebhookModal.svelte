@@ -1,79 +1,61 @@
 <script lang="ts">
     import { toastStore } from "@src/stores/toast";
     import { copyToClipboard } from "@src/utils/urls";
+    import { BodySmall, Button, ColourVars, Container, Form, Input, Subtitle } from "component-lib";
     import {
         emptyWebhookInstance,
-        iconSize,
-        mobileWidth,
         OpenChat,
+        publish,
         validBotComponentName,
         type FullWebhookDetails,
-        type MultiUserChatIdentifier,
+        type MultiUserChat,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
-    import { i18nKey } from "../../i18n/i18n";
-    import Button from "../Button.svelte";
-    import ButtonGroup from "../ButtonGroup.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
+    import Webhook from "svelte-material-icons/Webhook.svelte";
+    import { i18nKey, interpolate } from "../../i18n/i18n";
     import EditableAvatar from "../EditableAvatar.svelte";
-    import Legend from "../Legend.svelte";
-    import ModalContent from "../ModalContent.svelte";
+    import Markdown from "../home/Markdown.svelte";
+    import SlidingPageContent from "../home/SlidingPageContent.svelte";
     import Translatable from "../Translatable.svelte";
-    import ValidatingInput from "./ValidatingInput.svelte";
 
     const client = getContext<OpenChat>("client");
 
     interface Props {
-        onClose: () => void;
-        chatId: MultiUserChatIdentifier;
-        mode: { kind: "register" } | { kind: "update"; webhook: FullWebhookDetails };
+        chat: MultiUserChat;
+        webhook?: FullWebhookDetails;
     }
 
-    let { onClose, chatId, mode = $bindable({ kind: "register" }) }: Props = $props();
+    let { chat, webhook = $bindable(emptyWebhookInstance()) }: Props = $props();
 
     let busy = $state(false);
     let busyUpdate = $state(false);
-    let step = $state(mode.kind as string);
-
-    let webhook = $state({
-        original: mode.kind === "update" ? mode.webhook : emptyWebhookInstance(),
-        current: mode.kind === "update" ? { ...mode.webhook } : emptyWebhookInstance(),
-    });
-
-    let nameDirty = $derived(webhook.original.name !== webhook.current.name);
-    let avatarDirty = $derived(webhook.original.avatarUrl !== webhook.current.avatarUrl);
+    let original = { ...webhook };
+    let editing = $derived(webhook.id !== "");
+    let nameDirty = $derived(original.name !== webhook.name);
+    let avatarDirty = $derived(original.avatarUrl !== webhook.avatarUrl);
     let dirty = $derived(nameDirty || avatarDirty);
-    let name_errors = $derived(validBotComponentName(webhook.current.name, 3));
+    let name_errors = $derived(validBotComponentName(webhook.name, 3));
     let valid = $derived(name_errors.length === 0);
-    let url = $derived(client.webhookUrl(webhook.current, chatId));
+    let url = $derived(client.webhookUrl(webhook, chat.id));
 
     let titleKey = $derived.by(() => {
-        switch (step) {
-            case "update":
-                return i18nKey("webhook.updateTitle", { name: webhook.current.name });
-            default:
-                return i18nKey("webhook.registerTitle");
-        }
+        return editing
+            ? i18nKey("webhook.updateTitle", { name: webhook.name })
+            : i18nKey("webhook.registerTitle");
     });
 
     function register() {
         if (valid && dirty) {
             busy = true;
             client
-                .registerWebhook(chatId, webhook.current.name, webhook.current.avatarUrl)
+                .registerWebhook(chat.id, webhook.name, webhook.avatarUrl)
                 .then((success) => {
                     if (success === undefined) {
                         toastStore.showFailureToast(i18nKey("Unable to register webhook"));
                     } else {
-                        webhook.current = {
-                            id: success.id,
-                            name: webhook.current.name,
-                            secret: success.secret,
-                            avatarUrl: success.avatarUrl,
-                        };
-                        webhook.original = { ...webhook.current };
-                        step = "registered";
+                        publish("closeModalPage");
                     }
                 })
                 .finally(() => (busy = false));
@@ -85,12 +67,12 @@
         if (valid && dirty) {
             client
                 .updateWebhook(
-                    chatId,
-                    webhook.current,
-                    nameDirty ? webhook.current.name : undefined,
+                    chat.id,
+                    webhook,
+                    nameDirty ? webhook.name : undefined,
                     avatarDirty
-                        ? webhook.current.avatarUrl !== undefined
-                            ? { value: webhook.current.avatarUrl }
+                        ? webhook.avatarUrl !== undefined
+                            ? { value: webhook.avatarUrl }
                             : "set_to_none"
                         : undefined,
                 )
@@ -98,7 +80,7 @@
                     if (!success) {
                         toastStore.showFailureToast(i18nKey("Unable to update webhook details"));
                     } else {
-                        webhook.original = { ...webhook.current };
+                        original = { ...webhook };
                     }
                 })
                 .finally(() => (busyUpdate = false));
@@ -108,13 +90,13 @@
     function regenerate() {
         busy = true;
         client
-            .regenerateWebhook(chatId, webhook.original.id)
+            .regenerateWebhook(chat.id, original.id)
             .then((success) => {
                 if (success === undefined) {
                     toastStore.showFailureToast(i18nKey("Unable to regenerate webhook"));
                 } else {
-                    webhook.current.secret = success;
-                    webhook.original.secret = success;
+                    webhook.secret = success;
+                    original.secret = success;
                 }
             })
             .finally(() => (busy = false));
@@ -125,7 +107,7 @@
     }
 
     function avatarSelected(detail: { url: string; data: Uint8Array }) {
-        webhook.current.avatarUrl = detail.url;
+        webhook.avatarUrl = detail.url;
     }
 
     function copy() {
@@ -143,40 +125,100 @@
     }
 </script>
 
-<ModalContent {onClose}>
-    {#snippet header()}
-        <div class="header">
-            <Translatable resourceKey={titleKey}></Translatable>
-        </div>
-    {/snippet}
-    {#snippet body()}
+<SlidingPageContent title={titleKey} subtitle={i18nKey(chat.name)}>
+    <Container gap={"xxxl"} direction={"vertical"} padding={["xxl", "lg"]}>
+        <Container
+            crossAxisAlignment={"center"}
+            borderRadius={"lg"}
+            padding={"lg"}
+            background={ColourVars.background1}
+            gap={"lg"}>
+            <Webhook color={ColourVars.textSecondary} size={"4rem"} />
+            <Container direction={"vertical"}>
+                <Subtitle fontWeight={"bold"}>
+                    <Translatable resourceKey={i18nKey("Webhooks")} />
+                </Subtitle>
+                <BodySmall colour={"textSecondary"}>
+                    <Markdown
+                        text={interpolate(
+                            $_,
+                            i18nKey(
+                                "Webhooks let you send external events to this group programmatically. Once registered, your group gets a URL you can use to forward events. Learn more in the [bots developer guide](https://github.com/open-chat-labs/open-chat-bots).",
+                            ),
+                        )}></Markdown>
+                </BodySmall>
+            </Container>
+        </Container>
+        <Form {onSubmit}>
+            <Container crossAxisAlignment={"center"} direction={"vertical"} gap={"xl"}>
+                <EditableAvatar
+                    highlightBorder
+                    size={"headline"}
+                    image={webhook.avatarUrl}
+                    onImageSelected={avatarSelected} />
+
+                <Input
+                    minlength={3}
+                    maxlength={15}
+                    disabled={editing}
+                    error={name_errors.length > 0}
+                    bind:value={webhook.name}
+                    autofocus
+                    placeholder={interpolate($_, i18nKey("Webhook name"))}>
+                    {#snippet subtext()}
+                        <Translatable
+                            resourceKey={i18nKey(
+                                "Must be unique in this chat and contain alphanumeric characters and underscores only (required)",
+                            )} />
+                    {/snippet}
+                </Input>
+
+                {#if !editing}
+                    <Button
+                        loading={busy}
+                        disabled={busy || (!editing && (!valid || !dirty))}
+                        onClick={register}>
+                        {#snippet icon(color)}
+                            <Webhook {color} />
+                        {/snippet}
+                        <Translatable resourceKey={i18nKey("Register webhook")} />
+                    </Button>
+                    <Button onClick={() => publish("closeModalPage")} secondary>
+                        {#snippet icon(color)}
+                            <Close {color} />
+                        {/snippet}
+                        <Translatable resourceKey={i18nKey("cancel")} />
+                    </Button>
+                {/if}
+            </Container>
+        </Form>
+
         <div class="body">
-            <form onsubmit={onSubmit} class="webhook-form">
+            <!-- <form onsubmit={onSubmit} class="webhook-form">
                 <Legend label={i18nKey("webhook.avatarLabel")} />
                 <div class="photo">
                     <EditableAvatar
                         size={"medium"}
-                        image={webhook.current.avatarUrl}
+                        image={webhook.avatarUrl}
                         onImageSelected={avatarSelected} />
                 </div>
 
                 <Legend
                     required
                     label={i18nKey("webhook.nameLabel")}
-                    rules={step !== "registered" ? i18nKey("webhook.nameRules") : undefined}
-                ></Legend>
+                    rules={editing ? i18nKey("webhook.nameRules") : undefined}></Legend>
                 <ValidatingInput
                     minlength={3}
                     maxlength={15}
-                    disabled={step === "registered"}
+                    disabled={editing}
                     invalid={name_errors.length > 0}
                     placeholder={i18nKey("webhook.namePlaceholder")}
                     error={name_errors}
-                    bind:value={webhook.current.name}>
+                    bind:value={webhook.name}>
                 </ValidatingInput>
-            </form>
+            </form> -->
 
-            {#if step !== "register" && url !== undefined}
+            <!-- {#if step !== "register" && url !== undefined}
                 {#if step === "update"}
                     <ButtonGroup>
                         <Button
@@ -199,11 +241,9 @@
                     </div>
                 </div>
                 {url}
-            {/if}
+            {/if} -->
         </div>
-    {/snippet}
-    {#snippet footer()}
-        <div class="footer">
+        <!-- <div class="footer">
             <ButtonGroup>
                 <Button secondary small={!$mobileWidth} tiny={$mobileWidth} onClick={onClose}>
                     <Translatable
@@ -225,9 +265,9 @@
                               : i18nKey("copy")} />
                 </Button>
             </ButtonGroup>
-        </div>
-    {/snippet}
-</ModalContent>
+        </div> -->
+    </Container>
+</SlidingPageContent>
 
 <style lang="scss">
     .webhook-form {
