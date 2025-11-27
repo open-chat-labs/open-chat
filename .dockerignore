@@ -1,6 +1,8 @@
+# Do not ignore!
+!.dfx
+
 # by default, ignore all hidden files and make some exceptions
 .*
-!.dfx
 *.md
 *.log
 Dockerfile

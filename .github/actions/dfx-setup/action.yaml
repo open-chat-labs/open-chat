@@ -1,0 +1,29 @@
+name: Setup DFX
+description: 'Sets up the DFX SDK for Internet Computer development'
+
+inputs:
+  dfx-version:
+    description: The version of DFX to install (by default 0.29.1)
+    required: false
+    default: "0.29.1"
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install curl
+      shell: bash
+      run: sudo apt-get update && sudo apt-get install -y curl
+
+    - name: Install DFX
+      shell: bash
+      run: |
+        DFX_VERSION="${{ inputs.dfx-version }}" \
+        DFXVM_INIT_YES=true \
+        sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
+
+        echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
+        echo "$HOME/.dfx/bin" >> $GITHUB_PATH
+
+    - name: Verify DFX installation
+      shell: bash
+      run: dfx --version
