@@ -219,6 +219,7 @@ struct Data {
 }
 
 impl Data {
+    #[expect(clippy::too_many_arguments)]
     pub fn new(
         governance_principals: HashSet<Principal>,
         user_index_canister_id: CanisterId,
@@ -226,6 +227,7 @@ impl Data {
         sign_in_with_email_canister_id: CanisterId,
         originating_canisters: Vec<CanisterId>,
         skip_captcha_whitelist: Vec<CanisterId>,
+        salt: [u8; 32],
         test_mode: bool,
     ) -> Data {
         Data {
@@ -241,7 +243,7 @@ impl Data {
             webauthn_keys: WebAuthnKeys::default(),
             signature_map: SignatureMap::default(),
             encryption_key_requests: EncryptionKeyRequests::default(),
-            salt: Salt::default(),
+            salt: Salt::new(salt),
             rng_seed: [0; 32],
             challenges: Challenges::default(),
             test_mode,
