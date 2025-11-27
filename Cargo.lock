@@ -7265,6 +7265,7 @@ dependencies = [
  "ic-cdk",
  "ic-cdk-timers",
  "ic-stable-structures 0.7.0",
+ "identity_canister",
  "msgpack",
  "notifications_index_canister",
  "openchat_installer_canister",
