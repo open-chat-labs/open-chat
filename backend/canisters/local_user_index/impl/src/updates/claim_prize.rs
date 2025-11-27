@@ -1,7 +1,8 @@
 use crate::{guards::caller_is_openchat_user, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use constants::LIFETIME_DIAMOND_TIMESTAMP;
+use constants::{LIFETIME_DIAMOND_TIMESTAMP, MINUTE_IN_MS};
+use identity_utils::verify_signature;
 use local_user_index_canister::{GlobalUser, claim_prize::*};
 use types::{
     DiamondMembershipStatus, MultiUserChat,
@@ -19,8 +20,24 @@ async fn claim_prize(args: Args) -> PrizeClaimResponse {
             unique_person_proof,
             ..
         },
+        user_reauthenticated,
         now,
-    ) = read_state(|state| (state.calling_user(), state.env.now()));
+    ) = read_state(|state| {
+        let user = state.calling_user();
+        let user_reauthenticated = args.delegation.is_some_and(|d| {
+            verify_signature(
+                &d.signature,
+                state.data.identity_canister_id,
+                5 * MINUTE_IN_MS,
+                &state.data.ic_root_key,
+                state.env.now(),
+            )
+            .is_ok()
+        });
+        let now = state.env.now();
+
+        (user, user_reauthenticated, now)
+    });
 
     let is_unique_person = unique_person_proof.is_some();
     let diamond_status = match diamond_membership_expires_at {
@@ -41,6 +58,7 @@ async fn claim_prize(args: Args) -> PrizeClaimResponse {
                 total_chit_earned,
                 streak: chit.streak,
                 streak_ends: chit.streak_ends,
+                user_reauthenticated,
             };
             group_canister_c2c_client::c2c_claim_prize(chat_id.into(), &c2c_args).await
         }
@@ -54,6 +72,7 @@ async fn claim_prize(args: Args) -> PrizeClaimResponse {
                 total_chit_earned,
                 streak: chit.streak,
                 streak_ends: chit.streak_ends,
+                user_reauthenticated,
             };
             community_canister_c2c_client::c2c_claim_prize(community_id.into(), &c2c_args).await
         }

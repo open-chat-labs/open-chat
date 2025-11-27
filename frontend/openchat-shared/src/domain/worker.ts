@@ -1,4 +1,4 @@
-import type { JsonnableDelegationChain } from "@icp-sdk/core/identity";
+import type { SignedDelegation, JsonnableDelegationChain } from "@icp-sdk/core/identity";
 import type { AccessGateConfig, Rules, UpdatedRules, VerifiedCredentialArgs } from "./access";
 import type {
     CkbtcMinterDepositInfo,
@@ -1906,6 +1906,7 @@ type DeleteFailedMessage = {
 type ClaimPrize = {
     chatId: MultiUserChatIdentifier;
     messageId: bigint;
+    delegation: SignedDelegation | undefined;
     kind: "claimPrize";
 };
 

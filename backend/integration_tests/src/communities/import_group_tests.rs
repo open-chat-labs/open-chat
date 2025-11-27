@@ -252,6 +252,7 @@ fn pending_prizes_transferred_to_community() {
         local_user_index,
         MultiUserChat::Channel(community_id, channel_id),
         message_id,
+        None,
     );
     client::local_user_index::happy_path::claim_prize(
         env,
@@ -259,6 +260,7 @@ fn pending_prizes_transferred_to_community() {
         local_user_index,
         MultiUserChat::Channel(community_id, channel_id),
         message_id,
+        None,
     );
 
     let community_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, Principal::from(community_id));
