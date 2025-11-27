@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove `c2c_diamond_membership_expiry_dates` endpoint ([#8691](https://github.com/open-chat-labs/open-chat/pull/8691))
+
+## [[2.0.1922](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1922-local_user_index)] - 2025-11-26
+
 ### Changed
 
 - Add `duration_ms` and `samples` to `AudioContent` ([#8669](https://github.com/open-chat-labs/open-chat/pull/8669))

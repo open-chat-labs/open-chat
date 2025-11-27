@@ -2154,20 +2154,6 @@ export const UserIndexSearchArgs = Type.Object({
     max_results: Type.Number(),
 });
 
-export type UserIndexDeleteUserResponse = Static<typeof UserIndexDeleteUserResponse>;
-export const UserIndexDeleteUserResponse = Type.Union([
-    Type.Literal("Success"),
-    Type.Literal("NotAuthorized"),
-    Type.Object({
-        MalformedSignature: Type.String(),
-    }),
-    Type.Literal("DelegationTooOld"),
-    Type.Literal("UserNotFound"),
-    Type.Object({
-        Error: OCError,
-    }),
-]);
-
 export type UserIndexRemoveBotArgs = Static<typeof UserIndexRemoveBotArgs>;
 export const UserIndexRemoveBotArgs = Type.Object({
     bot_id: UserId,
@@ -7284,12 +7270,6 @@ export const RegistryUpdatesResponse = Type.Union([
     }),
     Type.Literal("SuccessNoUpdates"),
 ]);
-
-export type UserIndexDeleteUserArgs = Static<typeof UserIndexDeleteUserArgs>;
-export const UserIndexDeleteUserArgs = Type.Object({
-    user_id: UserId,
-    delegation: SignedDelegation,
-});
 
 export type UserIndexCurrentUserSuccessResult = Static<typeof UserIndexCurrentUserSuccessResult>;
 export const UserIndexCurrentUserSuccessResult = Type.Object({

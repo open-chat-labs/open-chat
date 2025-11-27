@@ -51,11 +51,12 @@ fn create_proposal(config: Config) -> Result<Proposal, Box<dyn Error>> {
     let filter = None;
 
     let payload = match config.canister_name {
-        CanisterName::UserIndex | CanisterName::GroupIndex | CanisterName::NotificationsIndex => {
+        CanisterName::UserIndex | CanisterName::GroupIndex | CanisterName::NotificationsIndex | CanisterName::Identity => {
             let canister_type = match config.canister_name {
                 CanisterName::UserIndex => openchat_installer_canister::CanisterType::UserIndex,
                 CanisterName::GroupIndex => openchat_installer_canister::CanisterType::GroupIndex,
                 CanisterName::NotificationsIndex => openchat_installer_canister::CanisterType::NotificationsIndex,
+                CanisterName::Identity => openchat_installer_canister::CanisterType::Identity,
                 _ => unreachable!(),
             };
             Encode!(&openchat_installer_canister::upgrade_canister::Args {

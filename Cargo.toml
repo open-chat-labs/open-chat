@@ -253,8 +253,8 @@ serde_repr = "0.1"
 serde_tokenstream = "0.2"
 sha2 = "0.10"
 sha3 = "0.10"
-sign_in_with_email_canister = { git = "https://github.com/open-chat-labs/ic-sign-in-with-email", rev = "v0.13.0" }
-sign_in_with_email_canister_test_utils = { package = "test_utils", git = "https://github.com/open-chat-labs/ic-sign-in-with-email", rev = "v0.13.0" }
+sign_in_with_email_canister = { git = "https://github.com/open-chat-labs/ic-sign-in-with-email", rev = "v0.14.0" }
+sign_in_with_email_canister_test_utils = { package = "test_utils", git = "https://github.com/open-chat-labs/ic-sign-in-with-email", rev = "v0.14.0" }
 subenum = "1.1.2"
 syn = "2"
 tauri = "2.8.5"
