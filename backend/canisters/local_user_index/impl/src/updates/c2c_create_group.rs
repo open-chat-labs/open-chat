@@ -116,7 +116,8 @@ fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
         avatar: args.avatar,
         gate_config: args.gate_config,
         video_call_operators: state.data.video_call_operators.clone(),
-        ic_root_key: state.data.ic_root_key.clone(),
+        #[expect(deprecated)]
+        ic_root_key: ic_cdk::api::root_key(),
         wasm_version: canister_wasm.version,
         test_mode: state.data.test_mode,
     };

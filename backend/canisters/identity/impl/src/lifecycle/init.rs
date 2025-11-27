@@ -20,7 +20,6 @@ fn init(args: Args) {
         args.sign_in_with_email_canister_id,
         args.originating_canisters,
         args.skip_captcha_whitelist,
-        args.ic_root_key,
         args.test_mode,
     );
 

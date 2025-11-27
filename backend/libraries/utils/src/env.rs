@@ -15,6 +15,7 @@ pub trait Environment {
     fn liquid_cycles_balance(&self) -> Cycles;
     fn rng(&mut self) -> &mut StdRng;
     fn arg_data_raw(&self) -> Vec<u8>;
+    fn ic_root_key(&self) -> Vec<u8>;
 
     fn now(&self) -> TimestampMillis {
         self.now_nanos() / 1_000_000

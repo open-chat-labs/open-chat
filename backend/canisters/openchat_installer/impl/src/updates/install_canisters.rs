@@ -69,7 +69,6 @@ fn prepare(args: Args, state: &State) -> Result<PrepareResult, Response> {
     } else if identity_wasm_hash != args.identity_wasm_hash {
         Err(HashMismatch(CanisterType::Identity, identity_wasm_hash))
     } else {
-        let ic_root_key = ic_cdk::api::root_key();
         let user_index = InstallCanisterArgs {
             canister_id: state.data.user_index_canister_id,
             wasm: state.data.canister_wasms.wasm_from_chunks(CanisterType::UserIndex),
@@ -92,7 +91,6 @@ fn prepare(args: Args, state: &State) -> Result<PrepareResult, Response> {
                 translations_canister_id: state.data.translations_canister_id,
                 website_canister_id: state.data.website_canister_id,
                 video_call_operators: args.video_call_operators.clone(),
-                ic_root_key: ic_root_key.clone(),
                 wasm_version: args.wasm_version,
                 test_mode: state.data.test_mode,
             },
@@ -112,7 +110,6 @@ fn prepare(args: Args, state: &State) -> Result<PrepareResult, Response> {
                 registry_canister_id: state.data.registry_canister_id,
                 internet_identity_canister_id: state.data.internet_identity_canister_id,
                 video_call_operators: args.video_call_operators.clone(),
-                ic_root_key: ic_root_key.clone(),
                 wasm_version: args.wasm_version,
                 test_mode: state.data.test_mode,
             },
@@ -145,7 +142,6 @@ fn prepare(args: Args, state: &State) -> Result<PrepareResult, Response> {
                 sign_in_with_email_canister_id: state.data.sign_in_with_email_canister_id,
                 originating_canisters: args.identity_originating_canisters,
                 skip_captcha_whitelist: args.identity_skip_captcha_whitelist,
-                ic_root_key: ic_root_key.clone(),
                 wasm_version: args.wasm_version,
                 test_mode: state.data.test_mode,
             },

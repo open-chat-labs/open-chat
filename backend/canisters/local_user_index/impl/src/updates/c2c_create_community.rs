@@ -123,9 +123,10 @@ fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
         channels: channels.clone(),
         default_channel_rules: args.default_channel_rules,
         source_group: args.source_group,
+        #[expect(deprecated)]
+        ic_root_key: ic_cdk::api::root_key(),
         wasm_version: canister_wasm.version,
         video_call_operators: state.data.video_call_operators.clone(),
-        ic_root_key: state.data.ic_root_key.clone(),
         test_mode: state.data.test_mode,
         primary_language: args.primary_language,
     };

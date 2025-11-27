@@ -10,7 +10,6 @@ pub struct Args {
     pub sign_in_with_email_canister_id: CanisterId,
     pub originating_canisters: Vec<CanisterId>,
     pub skip_captcha_whitelist: Vec<CanisterId>,
-    pub ic_root_key: Vec<u8>,
     pub wasm_version: BuildVersion,
     pub test_mode: bool,
 }

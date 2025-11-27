@@ -42,7 +42,6 @@ fn init(args: Args) {
         args.permissions_v2,
         args.gate_config.map(|g| g.into()),
         args.video_call_operators,
-        args.ic_root_key,
         env.rng().r#gen(),
     );
 

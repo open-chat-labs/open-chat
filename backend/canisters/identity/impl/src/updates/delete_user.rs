@@ -47,9 +47,7 @@ fn prepare(args: Args, state: &RuntimeState) -> OCResult<PrepareResult> {
     };
 
     let now = state.env.now();
-    state
-        .data
-        .verify_certificate_time(&auth_principal, &args.delegation.signature, now, 5 * MINUTE_IN_MS)?;
+    state.verify_certificate_time(&auth_principal, &args.delegation.signature, now, 5 * MINUTE_IN_MS)?;
 
     if let Some(user_id) = state
         .data
