@@ -101,7 +101,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let user_index_canister_id = create_canister(env, openchat_installer_canister_id);
     let group_index_canister_id = create_canister(env, openchat_installer_canister_id);
     let notifications_index_canister_id = create_canister(env, openchat_installer_canister_id);
-    let identity_canister_id = create_canister(env, controller);
+    let identity_canister_id = create_canister(env, openchat_installer_canister_id);
     let online_users_canister_id = create_canister(env, controller);
     let airdrop_bot_canister_id = create_canister(env, controller);
     let proposals_bot_canister_id = create_canister(env, controller);
@@ -195,6 +195,14 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         openchat_installer_canister_id,
         &notifications_index_canister_wasm.module,
         openchat_installer_canister::CanisterType::NotificationsIndex,
+    );
+
+    client::openchat_installer::happy_path::upload_wasm_in_chunks(
+        env,
+        controller,
+        openchat_installer_canister_id,
+        &identity_canister_wasm.module,
+        openchat_installer_canister::CanisterType::Identity,
     );
 
     client::openchat_installer::happy_path::install_canisters(
