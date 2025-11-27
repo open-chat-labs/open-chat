@@ -31,6 +31,7 @@ pub struct Args {
     #[deprecated]
     #[serde(with = "serde_bytes", default)]
     pub ic_root_key: Vec<u8>,
+    pub rng_seed: [u8; 32],
     pub wasm_version: BuildVersion,
     pub test_mode: bool,
 }

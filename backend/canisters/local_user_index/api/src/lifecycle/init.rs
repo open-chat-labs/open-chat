@@ -18,6 +18,8 @@ pub struct Args {
     pub internet_identity_canister_id: CanisterId,
     pub website_canister_id: CanisterId,
     pub video_call_operators: Vec<Principal>,
-    pub oc_secret_key_der: Option<Vec<u8>>,
+    pub oc_secret_key_der: Vec<u8>,
+    pub rng_seed: [u8; 32],
+    pub ic_root_key: Vec<u8>,
     pub test_mode: bool,
 }

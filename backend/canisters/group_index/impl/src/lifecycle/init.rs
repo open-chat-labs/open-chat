@@ -1,10 +1,11 @@
 use crate::Data;
-use crate::lifecycle::{init_env, init_state};
+use crate::lifecycle::init_state;
 use canister_tracing_macros::trace;
 use group_index_canister::init::Args;
 use ic_cdk::init;
 use tracing::info;
 use utils::cycles::init_cycles_dispenser_client;
+use utils::env::canister::CanisterEnv;
 
 #[init]
 #[trace]
@@ -12,7 +13,7 @@ fn init(args: Args) {
     canister_logger::init(args.test_mode);
     init_cycles_dispenser_client(args.cycles_dispenser_canister_id, args.test_mode);
 
-    let env = init_env([0; 32]);
+    let env = Box::new(CanisterEnv::new(args.rng_seed));
 
     let data = Data::new(
         args.governance_principals,

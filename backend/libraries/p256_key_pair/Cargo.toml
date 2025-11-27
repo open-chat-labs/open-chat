@@ -8,3 +8,4 @@ edition.workspace = true
 [dependencies]
 p256 = { workspace = true, features = ["pem", "ecdsa", "pkcs8"] }
 serde = { workspace = true }
+serde_bytes = { workspace = true }

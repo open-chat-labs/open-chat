@@ -11,6 +11,8 @@ pub struct CanisterEnv {
 
 impl CanisterEnv {
     pub fn new(seed: [u8; 32]) -> Self {
+        assert_ne!(seed, [0; 32]);
+
         Self {
             rng: StdRng::from_seed(seed),
         }
@@ -58,7 +60,7 @@ impl Environment for CanisterEnv {
 
 impl Default for CanisterEnv {
     fn default() -> Self {
-        let seed = CanisterEnv::new([0; 32]).entropy();
+        let seed = CanisterEnv::new([1; 32]).entropy();
         CanisterEnv::new(seed)
     }
 }

@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Move `ic_root_key` to `Environment` trait ([#8701](https://github.com/open-chat-labs/open-chat/pull/8701))
+- Take RNG seed in init args ([#8702](https://github.com/open-chat-labs/open-chat/pull/8702))
 
 ## [[2.0.1920](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1920-identity)] - 2025-11-26
 

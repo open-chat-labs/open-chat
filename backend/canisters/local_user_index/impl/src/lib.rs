@@ -613,7 +613,7 @@ impl Data {
         website_canister_id: CanisterId,
         canister_pool_target_size: u16,
         video_call_operators: Vec<Principal>,
-        oc_secret_key_der: Option<Vec<u8>>,
+        oc_secret_key_der: Vec<u8>,
         test_mode: bool,
     ) -> Self {
         Data {
@@ -653,9 +653,7 @@ impl Data {
             rng_seed: [0; 32],
             notification_pushers: HashSet::new(),
             video_call_operators,
-            oc_key_pair: oc_secret_key_der
-                .map(|sk| P256KeyPair::from_secret_key_der(sk).unwrap())
-                .unwrap_or_default(),
+            oc_key_pair: P256KeyPair::from_secret_key_der(oc_secret_key_der).unwrap(),
             event_store_client: EventStoreClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_millis(MINUTE_IN_MS))
                 .build(),

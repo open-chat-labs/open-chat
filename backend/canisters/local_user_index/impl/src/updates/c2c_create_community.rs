@@ -8,7 +8,7 @@ use event_store_producer::EventBuilder;
 use local_user_index_canister::ChildCanisterType;
 use local_user_index_canister::c2c_create_community::{Response::*, *};
 use oc_error_codes::OCErrorCode;
-use rand::RngCore;
+use rand::{Rng, RngCore};
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChannelId, CommunityCreatedEventPayload, CommunityId, Cycles, OCResult, UserId,
     UserType,
@@ -125,6 +125,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
         source_group: args.source_group,
         #[expect(deprecated)]
         ic_root_key: ic_cdk::api::root_key(),
+        rng_seed: state.env.rng().r#gen(),
         wasm_version: canister_wasm.version,
         video_call_operators: state.data.video_call_operators.clone(),
         test_mode: state.data.test_mode,
