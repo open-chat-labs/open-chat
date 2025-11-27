@@ -23,6 +23,7 @@ fn init(args: Args) {
         args.sign_in_with_email_canister_id,
         args.originating_canisters,
         args.skip_captcha_whitelist,
+        args.oc_secret_key_der,
         env.rng().r#gen(),
         args.test_mode,
     );
