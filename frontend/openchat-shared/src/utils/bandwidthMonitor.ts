@@ -112,7 +112,6 @@ export class ConnectivityMonitor implements Readable<ConnectivityStatus> {
     }
 
     #updateStatus(status: ConnectivityStatus): void {
-        console.debug("NetworkStatus: ", status);
         const changed =
             this.#currentStatus.online !== status.online ||
             this.#currentStatus.estimatedDownlinkMbps !== status.estimatedDownlinkMbps;
