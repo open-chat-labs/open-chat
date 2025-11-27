@@ -27,6 +27,7 @@ identity_canister = { path = "../api" }
 identity_utils = { path = "../../../libraries/identity_utils" }
 msgpack = { path = "../../../libraries/msgpack" }
 oc_error_codes = { path = "../../../libraries/error_codes" }
+p256_key_pair = { path = "../../../libraries/p256_key_pair" }
 rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }

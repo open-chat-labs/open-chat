@@ -68,6 +68,7 @@ fn prepare(args: Args, state: &State) -> Result<PrepareResult, Response> {
             CanisterType::UserIndex => state.data.user_index_canister_id,
             CanisterType::GroupIndex => state.data.group_index_canister_id,
             CanisterType::NotificationsIndex => state.data.notifications_index_canister_id,
+            CanisterType::Identity => state.data.identity_canister_id,
         };
 
         Ok(PrepareResult {

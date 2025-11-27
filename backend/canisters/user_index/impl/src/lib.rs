@@ -201,14 +201,6 @@ impl RuntimeState {
                 timestamp: now,
             });
 
-            // TODO remove this once the website switches to deleting accounts via the Identity canister
-            self.data.identity_canister_user_sync_queue_2.push_back(UserIdentity {
-                principal: user.principal,
-                user_id: None,
-                email: None,
-            });
-            jobs::sync_users_to_identity_canister::try_run_now(self);
-
             self.data.remove_from_online_users_queue.push_back(user.principal);
             jobs::remove_from_online_users_canister::start_job_if_required(self);
 
@@ -405,12 +397,8 @@ struct Data {
     pub empty_users: HashSet<UserId>,
     pub chit_leaderboard: ChitLeaderboard,
     pub deleted_users: Vec<DeletedUser>,
-    #[serde(with = "serde_bytes")]
-    pub ic_root_key: Vec<u8>,
-    // TODO: Remove this after the canister is upgraded
-    pub identity_canister_user_sync_queue: VecDeque<(Principal, Option<UserId>)>,
-    #[serde(default)]
-    pub identity_canister_user_sync_queue_2: VecDeque<UserIdentity>,
+    #[serde(alias = "identity_canister_user_sync_queue_2")]
+    pub identity_canister_user_sync_queue: VecDeque<UserIdentity>,
     pub remove_from_online_users_queue: VecDeque<Principal>,
     pub survey_messages_sent: usize,
     pub external_achievements: ExternalAchievements,
@@ -441,7 +429,7 @@ impl Data {
         translations_canister_id: CanisterId,
         website_canister_id: CanisterId,
         video_call_operators: Vec<Principal>,
-        ic_root_key: Vec<u8>,
+        oc_secret_key_der: Vec<u8>,
         test_mode: bool,
         now: TimestampMillis,
     ) -> Self {
@@ -489,13 +477,11 @@ impl Data {
             rng_seed: [0; 32],
             diamond_membership_fees: DiamondMembershipFees::default(),
             video_call_operators,
-            oc_key_pair: P256KeyPair::default(),
+            oc_key_pair: P256KeyPair::from_secret_key_der(oc_secret_key_der).unwrap(),
             empty_users: HashSet::new(),
             chit_leaderboard: ChitLeaderboard::new(now),
             deleted_users: Vec::new(),
-            ic_root_key,
             identity_canister_user_sync_queue: VecDeque::new(),
-            identity_canister_user_sync_queue_2: VecDeque::new(),
             remove_from_online_users_queue: VecDeque::new(),
             survey_messages_sent: 0,
             external_achievements: ExternalAchievements::default(),
@@ -606,13 +592,11 @@ impl Default for Data {
             rng_seed: [0; 32],
             diamond_membership_fees: DiamondMembershipFees::default(),
             video_call_operators: Vec::default(),
-            oc_key_pair: P256KeyPair::default(),
+            oc_key_pair: P256KeyPair::new(&mut rand::thread_rng()),
             empty_users: HashSet::new(),
             chit_leaderboard: ChitLeaderboard::new(0),
             deleted_users: Vec::new(),
-            ic_root_key: Vec::new(),
             identity_canister_user_sync_queue: VecDeque::new(),
-            identity_canister_user_sync_queue_2: VecDeque::new(),
             remove_from_online_users_queue: VecDeque::new(),
             survey_messages_sent: 0,
             external_achievements: ExternalAchievements::default(),

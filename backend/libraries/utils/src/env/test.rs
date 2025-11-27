@@ -41,6 +41,10 @@ impl Environment for TestEnv {
     fn arg_data_raw(&self) -> Vec<u8> {
         Vec::new()
     }
+
+    fn ic_root_key(&self) -> Vec<u8> {
+        Vec::new()
+    }
 }
 
 impl Default for TestEnv {

@@ -8,6 +8,7 @@ use group_canister::init::Args as InitGroupCanisterArgs;
 use local_user_index_canister::ChildCanisterType;
 use local_user_index_canister::c2c_create_group::{Response::*, *};
 use oc_error_codes::OCErrorCode;
+use rand::Rng;
 use types::{BuildVersion, CanisterId, CanisterWasm, ChatId, Cycles, GroupCreatedEventPayload, OCResult, UserId, UserType};
 use utils::canister;
 
@@ -116,7 +117,9 @@ fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
         avatar: args.avatar,
         gate_config: args.gate_config,
         video_call_operators: state.data.video_call_operators.clone(),
-        ic_root_key: state.data.ic_root_key.clone(),
+        #[expect(deprecated)]
+        ic_root_key: ic_cdk::api::root_key(),
+        rng_seed: state.env.rng().r#gen(),
         wasm_version: canister_wasm.version,
         test_mode: state.data.test_mode,
     };

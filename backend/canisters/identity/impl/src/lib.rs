@@ -13,6 +13,7 @@ use ic_canister_sig_creation::signature_map::{LABEL_SIG, SignatureMap};
 use ic_cdk::api::certified_data_set;
 use identity_canister::{WEBAUTHN_ORIGINATING_CANISTER, WebAuthnKey};
 use identity_utils::verify_signature;
+use p256_key_pair::P256KeyPair;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use sha256::sha256;
@@ -153,6 +154,27 @@ impl RuntimeState {
             .and_then(|u| u.user_id)
     }
 
+    pub fn verify_certificate_time(
+        &self,
+        auth_principal: &AuthPrincipal,
+        signature: &[u8],
+        now: TimestampMillis,
+        max_offset: Milliseconds,
+    ) -> OCResult {
+        if auth_principal.originating_canister != WEBAUTHN_ORIGINATING_CANISTER {
+            verify_signature(
+                signature,
+                auth_principal.originating_canister,
+                max_offset,
+                self.env.ic_root_key().as_slice(),
+                now,
+            )
+        } else {
+            // TODO verify WebAuthn signatures somehow
+            Ok(())
+        }
+    }
+
     pub fn metrics(&self) -> Metrics {
         Metrics {
             heap_memory_used: utils::memory::heap(),
@@ -166,6 +188,12 @@ impl RuntimeState {
             auth_principals: self.data.user_principals.auth_principals_count(),
             originating_canisters: self.data.user_principals.originating_canisters().clone(),
             stable_memory_sizes: memory::memory_sizes(),
+            oc_public_key: self
+                .data
+                .oc_key_pair
+                .as_ref()
+                .map(|k| k.public_key_pem().to_string())
+                .unwrap_or_default(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
@@ -180,7 +208,6 @@ struct Data {
     governance_principals: HashSet<Principal>,
     user_index_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
-    #[serde(default = "sign_in_with_email_canister_id_default")]
     sign_in_with_email_canister_id: CanisterId,
     originating_canisters: HashSet<CanisterId>,
     skip_captcha_whitelist: HashSet<CanisterId>,
@@ -191,17 +218,12 @@ struct Data {
     #[serde(skip)]
     signature_map: SignatureMap,
     encryption_key_requests: EncryptionKeyRequests,
-    #[serde(with = "serde_bytes")]
-    ic_root_key: Vec<u8>,
+    oc_key_pair: Option<P256KeyPair>,
     salt: Salt,
     rng_seed: [u8; 32],
     challenges: Challenges,
     test_mode: bool,
     account_linking_codes: AccountLinkingCodes,
-}
-
-fn sign_in_with_email_canister_id_default() -> CanisterId {
-    Principal::from_text("zi2i7-nqaaa-aaaar-qaemq-cai").unwrap()
 }
 
 impl Data {
@@ -213,7 +235,8 @@ impl Data {
         sign_in_with_email_canister_id: CanisterId,
         originating_canisters: Vec<CanisterId>,
         skip_captcha_whitelist: Vec<CanisterId>,
-        ic_root_key: Vec<u8>,
+        oc_secret_key_der: Vec<u8>,
+        salt: [u8; 32],
         test_mode: bool,
     ) -> Data {
         Data {
@@ -229,8 +252,8 @@ impl Data {
             webauthn_keys: WebAuthnKeys::default(),
             signature_map: SignatureMap::default(),
             encryption_key_requests: EncryptionKeyRequests::default(),
-            ic_root_key,
-            salt: Salt::default(),
+            salt: Salt::new(salt),
+            oc_key_pair: Some(P256KeyPair::from_secret_key_der(oc_secret_key_der).unwrap()),
             rng_seed: [0; 32],
             challenges: Challenges::default(),
             test_mode,
@@ -260,27 +283,6 @@ impl Data {
 
     pub fn requires_captcha(&self, originating_canister_id: &CanisterId) -> bool {
         !self.skip_captcha_whitelist.contains(originating_canister_id)
-    }
-
-    pub fn verify_certificate_time(
-        &self,
-        auth_principal: &AuthPrincipal,
-        signature: &[u8],
-        now: TimestampMillis,
-        max_offset: Milliseconds,
-    ) -> OCResult {
-        if auth_principal.originating_canister != WEBAUTHN_ORIGINATING_CANISTER {
-            verify_signature(
-                signature,
-                auth_principal.originating_canister,
-                max_offset,
-                self.ic_root_key.as_slice(),
-                now,
-            )
-        } else {
-            // TODO verify WebAuthn signatures somehow
-            Ok(())
-        }
     }
 }
 
@@ -317,6 +319,7 @@ pub struct Metrics {
     pub auth_principals: u32,
     pub originating_canisters: HashMap<CanisterId, u32>,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
+    pub oc_public_key: String,
     pub canister_ids: CanisterIds,
     pub account_linking_codes_count: usize,
 }

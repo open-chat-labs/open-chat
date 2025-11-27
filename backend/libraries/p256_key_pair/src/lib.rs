@@ -7,30 +7,29 @@ use p256::{
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 
-#[derive(Debug, Serialize, Deserialize, Default)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct P256KeyPair {
+    #[serde(with = "serde_bytes")]
     sk_der: Vec<u8>,
     pk_pem: String,
 }
 
 impl P256KeyPair {
+    pub fn new(rng: &mut impl CryptoRngCore) -> P256KeyPair {
+        let sk: ecdsa::SigningKey = ecdsa::SigningKey::random(rng);
+
+        P256KeyPair {
+            sk_der: P256KeyPair::to_der(&sk).unwrap(),
+            pk_pem: Self::signing_key_to_public_key_pem(sk),
+        }
+    }
+
     pub fn from_secret_key_der(sk_der: Vec<u8>) -> Result<P256KeyPair, Box<dyn Error>> {
         let p256_sk = p256::SecretKey::from_pkcs8_der(&sk_der)?;
         let sk = ecdsa::SigningKey::from_bytes(&p256_sk.to_bytes())?;
-        let pk_pem = Self::signing_key_to_pem(sk);
+        let pk_pem = Self::signing_key_to_public_key_pem(sk);
 
         Ok(P256KeyPair { sk_der, pk_pem })
-    }
-
-    pub fn initialize(&mut self, rng: &mut impl CryptoRngCore) {
-        if self.is_initialised() {
-            return;
-        }
-
-        let sk: ecdsa::SigningKey = ecdsa::SigningKey::random(rng);
-
-        self.sk_der = P256KeyPair::to_der(&sk).unwrap();
-        self.pk_pem = Self::signing_key_to_pem(sk);
     }
 
     pub fn secret_key_der(&self) -> &[u8] {
@@ -45,7 +44,7 @@ impl P256KeyPair {
         !self.sk_der.is_empty()
     }
 
-    fn signing_key_to_pem(sk: ecdsa::SigningKey) -> String {
+    fn signing_key_to_public_key_pem(sk: ecdsa::SigningKey) -> String {
         sk.verifying_key().to_public_key_pem(Default::default()).unwrap()
     }
 

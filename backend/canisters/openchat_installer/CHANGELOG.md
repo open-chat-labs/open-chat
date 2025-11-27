@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Switch the Identity canister to be installed/upgraded by the OpenChat Installer canister ([#8698](https://github.com/open-chat-labs/open-chat/pull/8698))
+- Move `ic_root_key` to `Environment` trait ([#8701](https://github.com/open-chat-labs/open-chat/pull/8701))
+- Seed RNG and OC secret key in the OpenChat Installer canister ([#8702](https://github.com/open-chat-labs/open-chat/pull/8702))
+- Initialize Identity canister with the OC secret key ([#8703](https://github.com/open-chat-labs/open-chat/pull/8703))
+
+## [[2.0.1925](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1925-openchat_installer)] - 2025-11-26
+
+### Changed
+
 - Expose `liquid_cycles_balance` in metrics ([#8350](https://github.com/open-chat-labs/open-chat/pull/8350))
 
 ## [[2.0.1708](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1708-openchat_installer)] - 2025-04-23

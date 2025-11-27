@@ -8,6 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Move `ic_root_key` to `Environment` trait ([#8701](https://github.com/open-chat-labs/open-chat/pull/8701))
+- Pass in RNG seed in init args when creating Group/Community/User ([#8702](https://github.com/open-chat-labs/open-chat/pull/8702))
+
+### Removed
+
+- Remove `c2c_diamond_membership_expiry_dates` endpoint ([#8691](https://github.com/open-chat-labs/open-chat/pull/8691))
+
+## [[2.0.1922](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1922-local_user_index)] - 2025-11-26
+
+### Changed
+
 - Add `duration_ms` and `samples` to `AudioContent` ([#8669](https://github.com/open-chat-labs/open-chat/pull/8669))
 - Use the endpoint as unique identifier for notification subscriptions ([#8670](https://github.com/open-chat-labs/open-chat/pull/8670))
 - Use optional `email` on `register_user` as backup auth ([#8682](https://github.com/open-chat-labs/open-chat/pull/8682))
@@ -15,7 +26,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Remove ancient code that deleted empty and dormant accounts ([#8685](https://github.com/open-chat-labs/open-chat/pull/8685))
-- Remove `c2c_diamond_membership_expiry_dates` endpoint ([#8691](https://github.com/open-chat-labs/open-chat/pull/8691))
 
 ## [[2.0.1904](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1904-local_user_index)] - 2025-09-24
 
