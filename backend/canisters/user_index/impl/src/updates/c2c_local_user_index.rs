@@ -266,7 +266,7 @@ You can change your username at any time by clicking \"Profile settings\" from t
         byte_limit: 100 * ONE_MB,
     });
 
-    state.data.identity_canister_user_sync_queue_2.push_back(UserIdentity {
+    state.data.identity_canister_user_sync_queue.push_back(UserIdentity {
         principal,
         user_id: Some(user_id),
         email,

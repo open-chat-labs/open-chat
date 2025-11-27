@@ -1453,7 +1453,7 @@ dependencies = [
  "registry_canister",
  "registry_canister_client",
  "sha256",
- "sign_in_with_email_canister 0.13.0",
+ "sign_in_with_email_canister 0.14.0",
  "storage_index_canister",
  "test_utils",
  "tokio",
@@ -1542,7 +1542,7 @@ dependencies = [
  "proposals_bot_canister",
  "registry_canister",
  "sha256",
- "sign_in_with_email_canister 0.13.0",
+ "sign_in_with_email_canister 0.14.0",
  "storage_index_canister",
  "storage_index_canister_client",
  "tokio",
@@ -5488,7 +5488,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha256",
- "sign_in_with_email_canister 0.13.0",
+ "sign_in_with_email_canister 0.14.0",
  "stable_memory_map",
  "storage_bucket_canister",
  "storage_index_canister",
@@ -6145,8 +6145,8 @@ dependencies = [
 
 [[package]]
 name = "magic_links"
-version = "0.13.0"
-source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.13.0#751a1a3af44308995df198584aaa12b7206cddd4"
+version = "0.14.0"
+source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.14.0#8d70a55185238d0623e0c5f7914c5ed489813bdc"
 dependencies = [
  "aes-gcm",
  "clap 4.5.45",
@@ -6158,8 +6158,8 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_with",
- "sign_in_with_email_canister 0.13.0",
- "utils 0.13.0",
+ "sign_in_with_email_canister 0.14.0",
+ "utils 0.14.0",
 ]
 
 [[package]]
@@ -7265,6 +7265,7 @@ dependencies = [
  "ic-cdk",
  "ic-cdk-timers",
  "ic-stable-structures 0.7.0",
+ "identity_canister",
  "msgpack",
  "notifications_index_canister",
  "openchat_installer_canister",
@@ -9374,8 +9375,8 @@ dependencies = [
 
 [[package]]
 name = "sign_in_with_email_canister"
-version = "0.13.0"
-source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.13.0#751a1a3af44308995df198584aaa12b7206cddd4"
+version = "0.14.0"
+source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.14.0#8d70a55185238d0623e0c5f7914c5ed489813bdc"
 dependencies = [
  "base64 0.22.1",
  "candid",
@@ -10604,14 +10605,14 @@ dependencies = [
 
 [[package]]
 name = "test_utils"
-version = "0.13.0"
-source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.13.0#751a1a3af44308995df198584aaa12b7206cddd4"
+version = "0.14.0"
+source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.14.0#8d70a55185238d0623e0c5f7914c5ed489813bdc"
 dependencies = [
  "magic_links",
  "rand 0.8.5",
  "rsa",
- "sign_in_with_email_canister 0.13.0",
- "utils 0.13.0",
+ "sign_in_with_email_canister 0.14.0",
+ "utils 0.14.0",
 ]
 
 [[package]]
@@ -11701,15 +11702,15 @@ dependencies = [
 
 [[package]]
 name = "utils"
-version = "0.13.0"
-source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.13.0#751a1a3af44308995df198584aaa12b7206cddd4"
+version = "0.14.0"
+source = "git+https://github.com/open-chat-labs/ic-sign-in-with-email?rev=v0.14.0#8d70a55185238d0623e0c5f7914c5ed489813bdc"
 dependencies = [
  "email_address",
  "rsa",
  "serde",
  "serde_bytes",
  "sha2 0.10.9",
- "sign_in_with_email_canister 0.13.0",
+ "sign_in_with_email_canister 0.14.0",
 ]
 
 [[package]]
