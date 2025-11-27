@@ -159,9 +159,9 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         registry_canister_id,
         translations_canister_id,
         website_canister_id,
+        sign_in_with_email_canister_id,
         nns_governance_canister_id,
         internet_identity_canister_id: NNS_INTERNET_IDENTITY_CANISTER_ID,
-        ic_root_key: env.root_key().unwrap(),
         wasm_version,
         test_mode,
     };
@@ -204,36 +204,20 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         sha256(&user_index_canister_wasm.module),
         sha256(&group_index_canister_wasm.module),
         sha256(&notifications_index_canister_wasm.module),
+        sha256(&identity_canister_wasm.module),
         vec![VIDEO_CALL_OPERATOR],
         vec![controller],
-        wasm_version,
-    );
-
-    let identity_init_args = identity_canister::init::Args {
-        governance_principals: vec![controller],
-        user_index_canister_id,
-        cycles_dispenser_canister_id,
-        sign_in_with_email_canister_id,
-        originating_canisters: vec![
+        vec![
             NNS_INTERNET_IDENTITY_CANISTER_ID,
             sign_in_with_email_canister_id,
             WEBAUTHN_ORIGINATING_CANISTER,
         ],
-        skip_captcha_whitelist: vec![
+        vec![
             NNS_INTERNET_IDENTITY_CANISTER_ID,
             sign_in_with_email_canister_id,
             WEBAUTHN_ORIGINATING_CANISTER,
         ],
-        ic_root_key: env.root_key().unwrap(),
         wasm_version,
-        test_mode,
-    };
-    install_canister(
-        env,
-        controller,
-        identity_canister_id,
-        identity_canister_wasm,
-        identity_init_args,
     );
 
     let translations_init_args = translations_canister::init::Args {
