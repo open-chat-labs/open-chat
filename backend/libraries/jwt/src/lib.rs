@@ -137,7 +137,6 @@ mod tests {
     use super::*;
     use candid::Principal;
     use p256_key_pair::P256KeyPair;
-    use rand::thread_rng;
     use std::time::{SystemTime, UNIX_EPOCH};
     use types::{Chat, StartVideoCallClaims, VideoCallType};
 
