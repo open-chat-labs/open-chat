@@ -13,6 +13,7 @@
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import Chat from "svelte-material-icons/ChatOutline.svelte";
+    import LoadMore from "svelte-material-icons/CloudDownloadOutline.svelte";
     import Cash from "svelte-material-icons/CurrencyUsd.svelte";
     import Flash from "svelte-material-icons/FlashOutline.svelte";
     import Gift from "svelte-material-icons/GiftOutline.svelte";
@@ -232,19 +233,23 @@
             <FancyLoader />
         </div>
     {/if}
+    {#if transactionData.kind !== "idle"}
+        {#if moreAvailable}
+            <Container mainAxisAlignment={"center"}>
+                <CommonButton
+                    size={"small_text"}
+                    onClick={loadTransactions}
+                    disabled={loading}
+                    {loading}>
+                    {#snippet icon(color, size)}
+                        <LoadMore {color} {size} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("cryptoAccount.loadMoreTransactions")} />
+                </CommonButton>
+            </Container>
+        {/if}
+    {/if}
 </Container>
-
-{#if transactionData.kind !== "idle"}
-    <Container mainAxisAlignment={"end"}>
-        <CommonButton
-            mode={"active"}
-            onClick={loadTransactions}
-            disabled={!moreAvailable && !loading}
-            {loading}>
-            <Translatable resourceKey={i18nKey("cryptoAccount.loadMoreTransactions")} />
-        </CommonButton>
-    </Container>
-{/if}
 
 <style lang="scss">
     .loading {
