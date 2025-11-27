@@ -20,15 +20,17 @@ async fn install_canisters(args: Args) -> Response {
         user_index,
         group_index,
         notifications_index,
+        identity,
     } = match read_state(|state| prepare(args, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
 
-    let results = futures::future::try_join3(
+    let results = futures::future::try_join4(
         install_canister(user_index, wasm_version),
         install_canister(group_index, wasm_version),
         install_canister(notifications_index, wasm_version),
+        install_canister(identity, wasm_version),
     )
     .await;
 
@@ -42,6 +44,7 @@ struct PrepareResult {
     user_index: InstallCanisterArgs<user_index_canister::init::Args>,
     group_index: InstallCanisterArgs<group_index_canister::init::Args>,
     notifications_index: InstallCanisterArgs<notifications_index_canister::init::Args>,
+    identity: InstallCanisterArgs<identity_canister::init::Args>,
 }
 
 struct InstallCanisterArgs<A: CandidType> {
@@ -55,6 +58,7 @@ fn prepare(args: Args, state: &State) -> Result<PrepareResult, Response> {
     let user_index_wasm_hash = state.data.canister_wasms.chunks_hash(CanisterType::UserIndex);
     let group_index_wasm_hash = state.data.canister_wasms.chunks_hash(CanisterType::GroupIndex);
     let notifications_index_wasm_hash = state.data.canister_wasms.chunks_hash(CanisterType::NotificationsIndex);
+    let identity_wasm_hash = state.data.canister_wasms.chunks_hash(CanisterType::Identity);
 
     if user_index_wasm_hash != args.user_index_wasm_hash {
         Err(HashMismatch(CanisterType::UserIndex, user_index_wasm_hash))
@@ -62,7 +66,10 @@ fn prepare(args: Args, state: &State) -> Result<PrepareResult, Response> {
         Err(HashMismatch(CanisterType::GroupIndex, group_index_wasm_hash))
     } else if notifications_index_wasm_hash != args.notifications_index_wasm_hash {
         Err(HashMismatch(CanisterType::NotificationsIndex, group_index_wasm_hash))
+    } else if identity_wasm_hash != args.identity_wasm_hash {
+        Err(HashMismatch(CanisterType::Identity, identity_wasm_hash))
     } else {
+        let ic_root_key = ic_cdk::api::root_key();
         let user_index = InstallCanisterArgs {
             canister_id: state.data.user_index_canister_id,
             wasm: state.data.canister_wasms.wasm_from_chunks(CanisterType::UserIndex),
@@ -85,7 +92,7 @@ fn prepare(args: Args, state: &State) -> Result<PrepareResult, Response> {
                 translations_canister_id: state.data.translations_canister_id,
                 website_canister_id: state.data.website_canister_id,
                 video_call_operators: args.video_call_operators.clone(),
-                ic_root_key: state.data.ic_root_key.clone(),
+                ic_root_key: ic_root_key.clone(),
                 wasm_version: args.wasm_version,
                 test_mode: state.data.test_mode,
             },
@@ -105,7 +112,7 @@ fn prepare(args: Args, state: &State) -> Result<PrepareResult, Response> {
                 registry_canister_id: state.data.registry_canister_id,
                 internet_identity_canister_id: state.data.internet_identity_canister_id,
                 video_call_operators: args.video_call_operators.clone(),
-                ic_root_key: state.data.ic_root_key.clone(),
+                ic_root_key: ic_root_key.clone(),
                 wasm_version: args.wasm_version,
                 test_mode: state.data.test_mode,
             },
@@ -127,10 +134,28 @@ fn prepare(args: Args, state: &State) -> Result<PrepareResult, Response> {
             },
         };
 
+        let identity = InstallCanisterArgs {
+            canister_id: state.data.identity_canister_id,
+            wasm: state.data.canister_wasms.wasm_from_chunks(CanisterType::Identity),
+            wasm_hash: args.identity_wasm_hash,
+            init_args: identity_canister::init::Args {
+                governance_principals: state.data.governance_principals.clone(),
+                user_index_canister_id: state.data.user_index_canister_id,
+                cycles_dispenser_canister_id: state.data.cycles_dispenser_canister_id,
+                sign_in_with_email_canister_id: state.data.sign_in_with_email_canister_id,
+                originating_canisters: args.identity_originating_canisters,
+                skip_captcha_whitelist: args.identity_skip_captcha_whitelist,
+                ic_root_key: ic_root_key.clone(),
+                wasm_version: args.wasm_version,
+                test_mode: state.data.test_mode,
+            },
+        };
+
         Ok(PrepareResult {
             user_index,
             group_index,
             notifications_index,
+            identity,
         })
     }
 }
