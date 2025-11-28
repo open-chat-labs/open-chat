@@ -1,12 +1,11 @@
 <script lang="ts">
     import { toastStore } from "@src/stores/toast";
+    import { copyToClipboard } from "@src/utils/urls";
     import { Container, IconButton, MenuItem, MenuTrigger } from "component-lib";
-    import { type MultiUserChat, OpenChat } from "openchat-client";
-    import { publish, type WebhookDetails } from "openchat-shared";
+    import { OpenChat, type MultiUserChat } from "openchat-client";
+    import { publish, type FullWebhookDetails, type WebhookDetails } from "openchat-shared";
     import { getContext } from "svelte";
-    import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
-    import TextBoxOutline from "svelte-material-icons/TextBoxOutline.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import FilteredUsername from "../FilteredUsername.svelte";
     import BotBadge from "../home/profile/BotBadge.svelte";
@@ -18,11 +17,12 @@
     interface Props {
         chat: MultiUserChat;
         webhook: WebhookDetails;
-        searchTerm: string;
-        canManage: boolean;
+        searchTerm?: string;
+        canManage?: boolean;
+        showMenu?: boolean;
     }
 
-    let { chat, webhook, searchTerm, canManage }: Props = $props();
+    let { chat, webhook, searchTerm = "", canManage = false, showMenu = true }: Props = $props();
 
     function deleteWebhook() {
         client.deleteWebhook(chat.id, webhook.id).then((success) => {
@@ -32,15 +32,32 @@
         });
     }
 
-    function viewEditWebhook() {
+    function getWebhookAndThen(fn: (hook: FullWebhookDetails) => void) {
         client.getWebhook(chat.id, webhook.id).then((secret) => {
             if (secret !== undefined) {
-                publish("updateWebhook", {
+                fn({
                     ...webhook,
                     secret,
                 });
             }
         });
+    }
+
+    function copy() {
+        getWebhookAndThen((hook) => {
+            const url = client.webhookUrl(hook, chat.id);
+            if (url) {
+                copyToClipboard(url);
+            }
+        });
+    }
+
+    function regenerate() {
+        getWebhookAndThen((hook) => publish("regenerateWebhook", { chat, hook }));
+    }
+
+    function edit() {
+        getWebhookAndThen((hook) => publish("updateWebhook", { chat, hook }));
     }
 </script>
 
@@ -50,27 +67,29 @@
         <BotBadge webhook />
         <FilteredUsername {searchTerm} username={webhook.name} />
     </Container>
-    <MenuTrigger position={"bottom"} align={"end"}>
-        <IconButton padding={["sm", "xs", "sm", "zero"]} size={"md"}>
-            {#snippet icon(color)}
-                <DotsVertical {color} />
-            {/snippet}
-        </IconButton>
-        {#snippet menuItems()}
-            <MenuItem onclick={() => viewEditWebhook()}>
-                {#snippet icon(color, size)}
-                    <TextBoxOutline {size} {color} />
+    {#if showMenu}
+        <MenuTrigger position={"bottom"} align={"end"}>
+            <IconButton padding={["sm", "xs", "sm", "zero"]} size={"md"}>
+                {#snippet icon(color)}
+                    <DotsVertical {color} />
                 {/snippet}
-                <Translatable resourceKey={i18nKey("webhook.viewEditAction")} />
-            </MenuItem>
-            {#if canManage}
-                <MenuItem onclick={() => deleteWebhook()}>
-                    {#snippet icon(color, size)}
-                        <DeleteOutline {size} {color} />
-                    {/snippet}
-                    <Translatable resourceKey={i18nKey("webhook.removeAction")} />
+            </IconButton>
+            {#snippet menuItems()}
+                <MenuItem onclick={() => copy()}>
+                    <Translatable resourceKey={i18nKey("Copy URL")} />
                 </MenuItem>
-            {/if}
-        {/snippet}
-    </MenuTrigger>
+                {#if canManage}
+                    <MenuItem onclick={() => edit()}>
+                        <Translatable resourceKey={i18nKey("Edit")} />
+                    </MenuItem>
+                    <MenuItem onclick={() => regenerate()}>
+                        <Translatable resourceKey={i18nKey("Regenerate")} />
+                    </MenuItem>
+                    <MenuItem danger onclick={() => deleteWebhook()}>
+                        <Translatable resourceKey={i18nKey("Remove")} />
+                    </MenuItem>
+                {/if}
+            {/snippet}
+        </MenuTrigger>
+    {/if}
 </Container>

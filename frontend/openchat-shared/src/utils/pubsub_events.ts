@@ -111,7 +111,8 @@ export type PubSubEvents = {
     updateBot: undefined;
     removeBot: undefined;
     registerWebhook: MultiUserChat;
-    updateWebhook: FullWebhookDetails;
+    updateWebhook: { chat: MultiUserChat; hook: FullWebhookDetails };
+    regenerateWebhook: { chat: MultiUserChat; hook: FullWebhookDetails };
     deleteWebhook: undefined;
     loadedMessageWindow: {
         context: MessageContext;

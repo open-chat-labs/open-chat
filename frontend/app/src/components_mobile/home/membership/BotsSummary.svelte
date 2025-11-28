@@ -4,6 +4,7 @@
     import {
         botState,
         OpenChat,
+        publish,
         type CommunitySummary,
         type EnhancedExternalBot,
         type MultiUserChat,
@@ -33,7 +34,6 @@
     let canManageBots = $derived(membersState.canManageBots());
     let canRegisterWebhook = $derived(membersState.canRegisterWebhook());
     let botCount = $derived(membersState.bots.size + membersState.webhooks.size);
-    let more = $derived(botCount - TO_SHOW);
     let installedBots = $derived(
         membersState.hydrateBots(membersState.bots, botState.externalBots),
     );
@@ -49,7 +49,11 @@
 
     function addBots() {}
 
-    function registerHook() {}
+    function registerHook() {
+        if (collection.kind !== "community") {
+            publish("registerWebhook", collection);
+        }
+    }
 </script>
 
 <Container gap={"xl"} direction={"vertical"}>

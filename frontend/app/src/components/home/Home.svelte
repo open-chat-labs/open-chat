@@ -1,5 +1,6 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
+    import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import type {
         CandidateGroupChat,
         ChannelIdentifier,
@@ -87,7 +88,6 @@
     import SelectChatModal from "../SelectChatModal.svelte";
     import SuspendedModal from "../SuspendedModal.svelte";
     import Toast from "../Toast.svelte";
-    import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import AcceptRulesModal from "./AcceptRulesModal.svelte";
     import GateCheckFailed from "./access/AccessGateCheckFailed.svelte";
     import AccessGateEvaluator from "./access/AccessGateEvaluator.svelte";
@@ -280,7 +280,7 @@
         modal = { kind: "register_webhook" };
     }
 
-    function updateWebhook(webhook: FullWebhookDetails) {
+    function updateWebhook({ webhook }: { webhook: FullWebhookDetails }) {
         modal = { kind: "update_webhook", webhook };
     }
 

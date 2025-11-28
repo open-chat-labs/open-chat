@@ -38,8 +38,11 @@
         client.getWebhook(chat.id, webhook.id).then((secret) => {
             if (secret !== undefined) {
                 publish("updateWebhook", {
-                    ...webhook,
-                    secret,
+                    chat,
+                    hook: {
+                        ...webhook,
+                        secret,
+                    },
                 });
             }
         });

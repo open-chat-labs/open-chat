@@ -9,6 +9,7 @@
         type CommunitySummary,
         type DirectChatSummary,
         type EventWrapper,
+        type FullWebhookDetails,
         type GroupChatSummary,
         type Message,
         type MultiUserChat,
@@ -92,6 +93,8 @@
           }
         | { kind: "user_groups"; community: CommunitySummary }
         | { kind: "register_webhook"; chat: MultiUserChat }
+        | { kind: "update_webhook"; chat: MultiUserChat; webhook: FullWebhookDetails }
+        | { kind: "regenerate_webhook"; chat: MultiUserChat; webhook: FullWebhookDetails }
         | { kind: "user_group"; community: CommunitySummary; userGroup: UserGroupDetails }
         | { kind: "edit_user_group"; community: CommunitySummary; userGroup: UserGroupDetails }
         | { kind: "community_details"; community: CommunitySummary }
@@ -163,6 +166,12 @@
     onMount(() => {
         const unsubs = [
             subscribe("registerWebhook", (chat) => push({ kind: "register_webhook", chat })),
+            subscribe("updateWebhook", ({ chat, hook }) =>
+                push({ kind: "update_webhook", chat, webhook: hook }),
+            ),
+            subscribe("regenerateWebhook", ({ chat, hook }) =>
+                push({ kind: "regenerate_webhook", chat, webhook: hook }),
+            ),
             subscribe("addGroupMembers", () => push({ kind: "update_group_add_members" })),
             subscribe("addCommunityMembers", () => push({ kind: "update_community_add_members" })),
             subscribe("inviteAndShare", ({ collection, view }) =>
@@ -441,7 +450,11 @@
         {:else if page.kind === "invite_and_share"}
             <InviteAndShare collection={page.collection} view={page.view} />
         {:else if page.kind === "register_webhook"}
-            <WebhookModal chat={page.chat} />
+            <WebhookModal chat={page.chat} mode={"register"} />
+        {:else if page.kind === "update_webhook"}
+            <WebhookModal chat={page.chat} mode={"update"} bind:webhook={page.webhook} />
+        {:else if page.kind === "regenerate_webhook"}
+            <WebhookModal chat={page.chat} mode={"regenerate"} bind:webhook={page.webhook} />
         {/if}
     </SlidingPage>
 {/each}
