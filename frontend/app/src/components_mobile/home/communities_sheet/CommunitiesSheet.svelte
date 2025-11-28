@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Container, type SwipeDirection } from "component-lib";
+    import { ColourVars, Container, type SwipeDirection } from "component-lib";
     import {
         activityFeedShowing,
         emptyCombinedUnreadCounts,
@@ -10,6 +10,8 @@
     } from "openchat-client";
     import page from "page";
     import { getContext, onMount } from "svelte";
+    import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
+    import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import { fade } from "svelte/transition";
     import CommunitiesList from "./CommunitiesList.svelte";
     import CommunitiesScroller from "./CommunitiesScroller.svelte";
@@ -103,7 +105,7 @@
     padding={["md", "zero", "lg", "zero"]}
     width={{ kind: "fill" }}
     height={{ kind: "fixed", size: expanded ? "70%" : "7rem" }}
-    background={"var(--background-1)"}>
+    background={ColourVars.background1}>
     <button onclick={() => (expanded = !expanded)} aria-label="handle" class="handle_outer">
         <div class="handle_inner"></div>
     </button>
@@ -111,13 +113,17 @@
     {#if unreadRight}
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div onclick={() => scrollToUnread(unreadRight)} transition:fade class="right"></div>
+        <div onclick={() => scrollToUnread(unreadRight)} transition:fade class="right">
+            <ChevronRight size={"2.5rem"} color={ColourVars.primary} />
+        </div>
     {/if}
 
     {#if unreadLeft}
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div onclick={() => scrollToUnread(unreadLeft)} transition:fade class="left"></div>
+        <div onclick={() => scrollToUnread(unreadLeft)} transition:fade class="left">
+            <ChevronLeft size={"2.5rem"} color={ColourVars.primary} />
+        </div>
     {/if}
 
     {#if !expanded}
@@ -137,6 +143,10 @@
         margin-bottom: -6px;
     }
 
+    :global(.communities_sheet .left path, .communities_sheet .right path) {
+        filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.5));
+    }
+
     .list,
     .scroller {
         width: 100%;
@@ -144,20 +154,23 @@
 
     .right,
     .left {
+        padding-top: toRem(12);
         position: fixed;
-        bottom: toRem(120);
+        bottom: toRem(110);
         z-index: 1;
         height: toRem(105);
-        width: 6px;
+        width: fit-content;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 
     .right {
-        background: linear-gradient(90deg, transparent, var(--primary));
         right: 0;
     }
 
     .left {
-        background: linear-gradient(90deg, var(--primary), transparent);
+        // background: linear-gradient(90deg, var(--primary), transparent);
         left: 0;
     }
 
