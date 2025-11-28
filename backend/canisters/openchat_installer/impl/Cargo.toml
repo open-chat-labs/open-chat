@@ -27,6 +27,7 @@ identity_canister = { path = "../../identity/api" }
 msgpack = { path = "../../../libraries/msgpack" }
 notifications_index_canister = { path = "../../notifications_index/api" }
 openchat_installer_canister = { path = "../api" }
+p256_key_pair = { path = "../../../libraries/p256_key_pair" }
 rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }

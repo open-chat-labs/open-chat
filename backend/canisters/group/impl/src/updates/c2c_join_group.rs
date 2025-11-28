@@ -74,7 +74,7 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> OCResult<IsPermitt
                     .map(|vc| CheckVerifiedCredentialGateArgs {
                         user_ii_principal: vc.user_ii_principal,
                         credential_jwts: vc.credential_jwts(),
-                        ic_root_key: state.data.ic_root_key.clone(),
+                        ic_root_key: state.env.ic_root_key(),
                         ii_canister_id: state.data.internet_identity_canister_id,
                         ii_origin: vc.ii_origin.clone(),
                     }),
