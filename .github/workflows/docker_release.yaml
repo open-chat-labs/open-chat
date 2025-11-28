@@ -6,11 +6,16 @@ on:
   workflow_dispatch:      # Allows manual triggering
 
 jobs:
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+
+      - name: Update ubuntu
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl libunwind-dev build-essential
 
       - name: Setup Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -33,10 +38,17 @@ jobs:
 
           # Stop the DFX replica
           dfx stop
+      
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
       - name: Build Docker image
         run: |
-          docker build -t ${{ vars.DOCKER_HUB_USERNAME }}/open-chat:latest -f Dockerfile.oc2 .
+          docker build -t ${{ vars.DOCKER_HUB_USERNAME }}/open-chat-test:latest -f Dockerfile.oc2 .
+          docker push ${{ vars.DOCKER_HUB_USERNAME }}/open-chat-test:latest
 
 
   # check-merges:
