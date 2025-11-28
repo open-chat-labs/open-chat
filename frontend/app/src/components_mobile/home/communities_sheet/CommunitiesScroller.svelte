@@ -40,7 +40,7 @@
 <Container
     bind:ref
     padding={["zero", "lg"]}
-    supplementalClass="scroller"
+    supplementalClass="communities_scroller"
     allowOverflow
     width={{ kind: "fill" }}
     gap={"lg"}>

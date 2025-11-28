@@ -571,29 +571,31 @@ html:active-view-transition-type(slide_left, slide_right) {
         view-transition-name: communities_sheet;
     }
 
+    .communities_scroller {
+        view-transition-name: communities_scroller;
+    }
+
     .footer.thread,
     .footer.message {
         view-transition-name: footer;
     }
 
-    &::view-transition-old(footer),
-    &:view-transition-new(footer) {
-        animation: none;
-    }
-    &::view-transition-old(bottom_nav_bar),
-    &:view-transition-new(bottom_nav_bar) {
-        animation: none;
-    }
-    &::view-transition-old(communities_sheet),
-    &:view-transition-new(communities_sheet) {
-        animation: none;
-    }
-    &::view-transition-old(sheet_content),
-    &:view-transition-new(sheet_content) {
-        animation: none;
-    }
-    &::view-transition-old(sliding_modal),
-    &:view-transition-new(sliding_modal) {
+    &::view-transition-old(
+            communities_sheet,
+            communities_scroller,
+            bottom_nav_bar,
+            footer,
+            sheet_content,
+            sliding_modal
+        ),
+    &:view-transition-new(
+            communities_sheet,
+            communities_scroller,
+            bottom_nav_bar,
+            footer,
+            sheet_content,
+            sliding_modal
+        ) {
         animation: none;
     }
 }
