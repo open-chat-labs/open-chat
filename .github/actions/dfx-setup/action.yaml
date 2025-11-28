@@ -10,9 +10,9 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Install curl
-      shell: bash
-      run: sudo apt-get update && sudo apt-get install -y curl
+    # - name: Install curl
+    #   shell: bash
+    #   run: sudo apt-get update && sudo apt-get install -y curl
 
     - name: Install DFX
       shell: bash
