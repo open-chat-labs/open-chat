@@ -117,7 +117,7 @@ COPY --from=build-app /oc/frontend/app/public /usr/share/nginx/html
 
 #################################################
 # Copy the built UI files from the previous stage
-COPY --from=build-app /oc/.dfx /oc/.dfx
+COPY --from=build-app /oc/.dfx/ /oc/.dfx/
 COPY --from=build-app /oc/dfx.json /oc/dfx.json
 COPY --from=build-app /oc/scripts/docker-entrypoint.sh /oc/docker-entrypoint.sh
 
