@@ -6,24 +6,44 @@ FROM ubuntu:latest AS build-app
 SHELL ["/bin/bash", "-c"]
 WORKDIR /
 
-##################
+
+################################################################################
 # Install updates!
 RUN apt-get update
-RUN apt-get install -y curl
+RUN apt-get install -y curl libunwind-dev build-essential
 
-#################################################
+
+################################################################################
+# Install latest rust!
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -o install_rust.sh
+RUN chmod +x install_rust.sh
+RUN ./install_rust.sh -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+RUN cargo --version
+
+# Download and install dfx
+RUN DFX_VERSION=0.29.1 DFXVM_INIT_YES=true sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
+ENV PATH="/root/.local/share/dfx/bin:${PATH}"
+RUN dfx --help
+
 # Install node and confirm commands are available
 RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && apt-get install -y nodejs
 RUN nodejs --version
 RUN npm --version
 
-#################################################
+
+################################################################################
 # Make the oc directory, and copy code into it!
 # This will also copy externally built canisters.
 WORKDIR /oc
 COPY . .
 
-##########
+
+################################################################################
+# Build canisters for docker
+RUN ./scripts/docker-install-canisters.sh
+
+################################################################################
 # Build UI
 WORKDIR /oc/frontend
 RUN npm run build:docker
@@ -103,9 +123,8 @@ COPY --from=build-app /oc/scripts/docker-entrypoint.sh /oc/docker-entrypoint.sh
 
 ##########################
 # Nginx runs on port 80...
-# Dfx runs on port 8080 but is proxied via 8082, still we provide access.
+# Dfx runs on port 8080 but is bound to localhost.
 EXPOSE 80
-EXPOSE 8080
 EXPOSE 8082
 
 WORKDIR /oc

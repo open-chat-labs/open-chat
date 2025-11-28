@@ -12,32 +12,32 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Update ubuntu
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y curl libunwind-dev build-essential
+      # - name: Update ubuntu
+      #   run: |
+      #     sudo apt-get update
+      #     sudo apt-get install -y curl libunwind-dev build-essential
 
-      - name: Setup Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+      # - name: Setup Rust toolchain
+      #   uses: actions-rust-lang/setup-rust-toolchain@v1
 
-      - name: Setup DFX
-        uses: ./.github/actions/dfx-setup
+      # - name: Setup DFX
+      #   uses: ./.github/actions/dfx-setup
           
-      - name: Build DFX canisters
-        run: |
-          dfx start --clean --background
+      # - name: Build DFX canisters
+      #   run: |
+      #     dfx start --clean --background
 
-          # Wait for replica to be ready
-          for i in {1..60}; do
-              if dfx ping; then break; fi
-              sleep 1
-          done
+      #     # Wait for replica to be ready
+      #     for i in {1..60}; do
+      #         if dfx ping; then break; fi
+      #         sleep 1
+      #     done
 
-          # Run the build
-          ./scripts/deploy-local.sh
+      #     # Run the build
+      #     ./scripts/deploy-local.sh
 
-          # Stop the DFX replica
-          dfx stop
+      #     # Stop the DFX replica
+      #     dfx stop
       
       - name: Log in to Docker Hub
         uses: docker/login-action@v3

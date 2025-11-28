@@ -17,4 +17,4 @@ LICENSE
 Makefile
 
 # Do not ignore!
-!.dfx
+# !.dfx
