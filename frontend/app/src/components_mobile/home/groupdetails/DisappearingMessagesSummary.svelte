@@ -5,6 +5,7 @@
     import { OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import Translatable from "../../Translatable.svelte";
+    import Separator from "../Separator.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -30,8 +31,8 @@
 </script>
 
 {#if disappearsIn !== undefined}
-    <div class="separator"></div>
-    <Container direction={"vertical"} gap={"md"}>
+    <Separator />
+    <Container padding={["zero", "md"]} direction={"vertical"} gap={"md"}>
         <Container crossAxisAlignment={"center"} mainAxisAlignment={"spaceBetween"}>
             <Body colour={"textSecondary"} fontWeight={"bold"}>
                 <Translatable resourceKey={i18nKey("Disappearing messages")}></Translatable>

@@ -23,6 +23,7 @@ export class BorderWidth {
         public zero: Pixel,
         public thin: Pixel,
         public thick: Pixel,
+        public extraThick: Pixel,
     ) {}
 
     cssVariables(): CssVariable[] {
@@ -30,6 +31,7 @@ export class BorderWidth {
             this.zero.cssVariable("bw", "zero"),
             this.thin.cssVariable("bw", "thin"),
             this.thick.cssVariable("bw", "thick"),
+            this.extraThick.cssVariable("bw", "extra-thick"),
         ];
     }
 }

@@ -5,6 +5,7 @@
     import AccountGroup from "svelte-material-icons/AccountGroupOutline.svelte";
     import { SvelteSet } from "svelte/reactivity";
     import Translatable from "../../../Translatable.svelte";
+    import Separator from "../../Separator.svelte";
     import type { CommunityState } from "./communityState.svelte";
     import UserGroupRow from "./UserGroupRow.svelte";
 
@@ -34,7 +35,9 @@
 </script>
 
 {#if show}
-    <Container gap={"xl"} direction={"vertical"}>
+    <Separator />
+
+    <Container padding={["zero", "md"]} gap={"xl"} direction={"vertical"}>
         <Container>
             <Body colour={"textSecondary"} fontWeight={"bold"}>
                 <Translatable resourceKey={i18nKey("User groups")}></Translatable>

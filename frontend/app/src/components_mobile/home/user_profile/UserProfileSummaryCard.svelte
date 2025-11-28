@@ -8,7 +8,7 @@
         Container,
         defaultBackgroundGradient,
         H2,
-        Logo,
+        ReadMore,
     } from "component-lib";
     import {
         currentUserIdStore,
@@ -19,8 +19,9 @@
     } from "openchat-client";
     import { getContext, onMount, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
-    import Account from "svelte-material-icons/AccountBadgeOutline.svelte";
     import Calendar from "svelte-material-icons/CalendarMonthOutline.svelte";
+    import Check from "svelte-material-icons/Check.svelte";
+    import DiamondOutline from "svelte-material-icons/DiamondOutline.svelte";
     import Markdown from "../Markdown.svelte";
     import Badges from "../profile/Badges.svelte";
     import ChitSummary from "./ChitSummary.svelte";
@@ -49,7 +50,7 @@
         } catch (_) {}
     });
 
-    let [status] = $derived(
+    let [status, online] = $derived(
         lastOnline !== undefined && lastOnline !== 0
             ? client.formatLastOnlineDate($_, Date.now(), lastOnline)
             : ["", false],
@@ -82,7 +83,20 @@
     }
 </script>
 
-<Container direction={"vertical"}>
+{#snippet accountPill(Icon: any, text: string, colour: string)}
+    <Container
+        width={{ kind: "hug" }}
+        background={colour}
+        gap={"xs"}
+        crossAxisAlignment={"center"}
+        padding={["xs", "md"]}
+        borderRadius={"circle"}>
+        <Icon color={ColourVars.textPrimary} />
+        <BodySmall>{text}</BodySmall>
+    </Container>
+{/snippet}
+
+<Container gap={"lg"} direction={"vertical"}>
     <Container
         supplementalClass={"user_background_image"}
         borderRadius={"md"}
@@ -101,59 +115,66 @@
         gap={"xl"}
         padding={["zero", "lg"]}
         direction="vertical">
-        <Container gap={"sm"}>
-            <Avatar borderWidth={"thick"} size={"xxl"} url={avatarUrl}></Avatar>
-            <Container height={{ kind: "fill" }} mainAxisAlignment={"end"} direction={"vertical"}>
+        <Container gap={"xs"}>
+            <Avatar borderWidth={"extra-thick"} size={"huge"} url={avatarUrl}></Avatar>
+            <Container gap={"xs"} crossAxisSelfAlignment={"end"} direction={"vertical"}>
                 <Container gap={"sm"} crossAxisAlignment={"center"}>
-                    <H2 width={{ kind: "hug" }}>{profile.displayName ?? `@${profile.username}`}</H2>
-                    <Badges
-                        diamondStatus={user.diamondStatus}
-                        uniquePerson={user.isUniquePerson}
-                        streak={user.streak}
-                        chitEarned={user.totalChitEarned} />
+                    <div class="icon">
+                        <Calendar size={"1.25rem"} color={ColourVars.primary} />
+                    </div>
+                    <Container gap={"xs"}>
+                        <Body width={{ kind: "hug" }} colour={"textSecondary"}>joined</Body>
+                        <Body width={{ kind: "hug" }} fontWeight={"bold"}
+                            >{formatDate(profile.created)}</Body>
+                    </Container>
                 </Container>
-                <BodySmall colour={"textSecondary"}>@{user.username}</BodySmall>
-            </Container>
-        </Container>
-        <Body fontWeight={"light"}>
-            <Markdown inline={false} text={profile.bio} />
-        </Body>
-
-        <Container gap={"sm"} direction={"vertical"}>
-            <Container gap={"sm"} crossAxisAlignment={"center"}>
-                <div class="icon">
-                    <Calendar size={"1.25rem"} color={ColourVars.primary} />
-                </div>
-                <Container gap={"xs"}>
-                    <Body width={{ kind: "hug" }} colour={"textSecondary"}>joined</Body>
-                    <Body width={{ kind: "hug" }} fontWeight={"bold"}
-                        >{formatDate(profile.created)}</Body>
-                </Container>
-            </Container>
-            <Container gap={"sm"} crossAxisAlignment={"center"}>
-                <Logo size={"xs"}></Logo>
-                <Container gap={"xs"}>
-                    <Body width={{ kind: "hug" }} fontWeight={"bold"}
-                        >{user.totalChitEarned.toLocaleString()}</Body>
-                    <Body width={{ kind: "hug" }} colour={"textSecondary"}>CHIT earned</Body>
-                </Container>
-            </Container>
-            <Container gap={"sm"} crossAxisAlignment={"center"}>
-                <div class="icon">
-                    <Account size={"1.25rem"} color={ColourVars.primary} />
-                </div>
-                <Container gap={"xs"}>
+                <Container gap={"sm"} crossAxisAlignment={"center"} width={{ kind: "hug" }}>
                     <Body width={{ kind: "hug" }} fontWeight={"bold"}>{status}</Body>
+                    {#if online}
+                        <div class="online"></div>
+                    {/if}
                 </Container>
             </Container>
         </Container>
+        <Container direction={"vertical"}>
+            <H2 width={{ kind: "hug" }}>{profile.displayName ?? `@${profile.username}`}</H2>
+            <Container gap={"sm"} crossAxisAlignment={"center"}>
+                <BodySmall width={{ kind: "hug" }} colour={"textSecondary"}
+                    >@{user.username}</BodySmall>
+                <Badges
+                    diamondStatus={user.diamondStatus}
+                    uniquePerson={user.isUniquePerson}
+                    streak={user.streak}
+                    chitEarned={user.totalChitEarned} />
+            </Container>
+            {#if user.isUniquePerson || user.diamondStatus !== "inactive"}
+                <Container padding={["sm", "zero"]} gap={"sm"}>
+                    {#if user.diamondStatus === "active"}
+                        {@render accountPill(DiamondOutline, "Diamond member", ColourVars.primary)}
+                    {:else if user.diamondStatus === "lifetime"}
+                        {@render accountPill(
+                            DiamondOutline,
+                            "Lifetime member",
+                            ColourVars.gradient,
+                        )}
+                    {/if}
+                    {#if user.isUniquePerson}
+                        {@render accountPill(Check, "Verified account", ColourVars.secondary)}
+                    {/if}
+                </Container>
+            {/if}
+        </Container>
+        <ReadMore>
+            <Body fontWeight={"light"}>
+                <Markdown inline={false} text={profile.bio} />
+            </Body>
+        </ReadMore>
     </Container>
-
     {#if !$disableChit && showChit}
         <Container
             onClick={me ? () => publish("userProfileChitRewards") : undefined}
-            padding={["xl", "zero"]}
             direction={"vertical"}
+            padding={["zero", "zero", "xl", "zero"]}
             allowOverflow>
             <ChitSummary
                 {mode}
@@ -166,11 +187,18 @@
 
 <style lang="scss">
     :global(.container.username_and_bio) {
-        margin-top: -1.75rem;
+        margin-top: -5rem;
     }
 
-    :global(.container.user_background_image > .icon_button:first-child) {
+    /* :global(.container.user_background_image > .icon_button:first-child) {
         margin-inline-end: auto;
+    } */
+
+    .online {
+        border-radius: var(--rad-circle);
+        width: 0.5rem;
+        height: 0.5rem;
+        background-color: var(--success);
     }
 
     .icon {

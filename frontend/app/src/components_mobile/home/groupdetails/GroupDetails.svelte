@@ -50,6 +50,7 @@
     import Markdown from "../Markdown.svelte";
     import BotsSummary from "../membership/BotsSummary.svelte";
     import MembersSummary from "../membership/MembersSummary.svelte";
+    import Separator from "../Separator.svelte";
     import Stats from "../Stats.svelte";
     import DisappearingMessagesSummary from "./DisappearingMessagesSummary.svelte";
     import PermissionsSummary from "./PermissionsSummary.svelte";
@@ -286,41 +287,23 @@
             </Container>
         </Container>
 
-        <div class="separator"></div>
+        <MembersSummary collection={chat} />
 
-        <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
-            <MembersSummary collection={chat} />
-        </Container>
+        <BotsSummary collection={chat} />
 
-        <div class="separator"></div>
+        <PermissionsSummary
+            permissions={chat.permissions}
+            isPublic={chat.public}
+            isCommunityPublic={$selectedCommunitySummaryStore?.public ?? true}
+            isChannel={chat.kind === "channel"}
+            embeddedContent={chat.kind === "channel" && chat.externalUrl !== undefined} />
 
-        <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
-            <BotsSummary collection={chat} />
-        </Container>
+        <AccessGateSummary gateConfig={chat.gateConfig} />
 
-        <div class="separator"></div>
-
-        <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
-            <PermissionsSummary
-                permissions={chat.permissions}
-                isPublic={chat.public}
-                isCommunityPublic={$selectedCommunitySummaryStore?.public ?? true}
-                isChannel={chat.kind === "channel"}
-                embeddedContent={chat.kind === "channel" && chat.externalUrl !== undefined} />
-        </Container>
-
-        <div class="separator"></div>
-
-        <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
-            <AccessGateSummary gateConfig={chat.gateConfig} />
-        </Container>
-
-        <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
-            <DisappearingMessagesSummary eventsTTL={chat.eventsTTL} />
-        </Container>
+        <DisappearingMessagesSummary eventsTTL={chat.eventsTTL} />
 
         {#if combinedRulesText.length > 0}
-            <div class="separator"></div>
+            <Separator />
 
             <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
                 <Body colour={"textSecondary"} fontWeight={"bold"}>
@@ -331,7 +314,7 @@
             </Container>
         {/if}
 
-        <div class="separator"></div>
+        <Separator />
 
         <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
             <BodySmall colour={"textSecondary"} fontWeight={"bold"}>
@@ -341,7 +324,7 @@
         </Container>
 
         {#if canConvert}
-            <div class="separator"></div>
+            <Separator />
 
             <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
                 <Container direction={"vertical"} gap={"sm"}>
@@ -366,7 +349,7 @@
         {/if}
 
         {#if canImportToCommunity}
-            <div class="separator"></div>
+            <Separator />
 
             <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
                 <Container direction={"vertical"} gap={"sm"}>
@@ -391,7 +374,8 @@
         {/if}
 
         {#if client.canDeleteGroup(chat.id)}
-            <div class="separator"></div>
+            <Separator />
+
             <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
                 <Container direction={"vertical"} gap={"sm"}>
                     <Body fontWeight={"bold"}>
@@ -413,7 +397,8 @@
                 </Button>
             </Container>
         {:else if client.canLeaveGroup(chat.id)}
-            <div class="separator"></div>
+            <Separator />
+
             <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
                 <Container direction={"vertical"} gap={"sm"}>
                     <Body fontWeight={"bold"}>
@@ -438,11 +423,6 @@
     </Container>
 </Container>
 
-<!-- <Container background={ColourVars.background0} height={{ kind: "fill" }} direction={"vertical"}>
-    <GroupDetailsHeader level={chat.level} {canEdit} {onClose} onEditGroup={editGroup} />
-    <GroupDetailsBody {chat} {memberCount} />
-</Container> -->
-
 <style lang="scss">
     :global(.container.name_and_description) {
         margin-top: -1.75rem;
@@ -450,19 +430,5 @@
 
     :global(.container.group_details_header > .icon_button:first-child) {
         margin-inline-end: auto;
-    }
-
-    .icon {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .separator {
-        height: 6px;
-        align-self: stretch;
-        background-color: var(--background-1);
-        border-radius: var(--rad-circle);
-        margin: 0 var(--sp-md);
     }
 </style>

@@ -5,6 +5,7 @@
     import { OpenChat, type AccessGateConfig, type LeafGate } from "openchat-client";
     import { getContext } from "svelte";
     import Translatable from "../Translatable.svelte";
+    import Separator from "./Separator.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -49,7 +50,9 @@
     {/if}
 {/snippet}
 
-<Container gap={"xl"} direction={"vertical"}>
+<Separator />
+
+<Container padding={["zero", "md"]} gap={"xl"} direction={"vertical"}>
     <Container direction={"vertical"} gap={"md"}>
         <Body colour={"textSecondary"} fontWeight={"bold"}>
             <Translatable resourceKey={i18nKey("Access gates")}></Translatable>

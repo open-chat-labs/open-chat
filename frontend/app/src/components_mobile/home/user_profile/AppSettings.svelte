@@ -20,7 +20,7 @@
     }
 </script>
 
-<SlidingPageContent title={i18nKey("Edit user info")}>
+<SlidingPageContent title={i18nKey("App settings")}>
     {#snippet menu()}
         <MenuItem onclick={() => publish("userProfileAbout")}>About OpenChat</MenuItem>
         <MenuItem onclick={help}>Get help</MenuItem>

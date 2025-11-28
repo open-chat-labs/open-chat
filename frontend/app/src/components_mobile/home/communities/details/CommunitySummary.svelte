@@ -39,6 +39,7 @@
     import Markdown from "../../Markdown.svelte";
     import BotsSummary from "../../membership/BotsSummary.svelte";
     import MembersSummary from "../../membership/MembersSummary.svelte";
+    import Separator from "../../Separator.svelte";
     import Stats from "../../Stats.svelte";
     import { updateCommunityState } from "../createOrUpdate/community.svelte";
     import { CommunityState } from "./communityState.svelte";
@@ -183,36 +184,18 @@
             </Container>
         </Container>
 
-        <div class="separator"></div>
+        <MembersSummary collection={community} />
 
-        <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
-            <MembersSummary collection={community} />
-        </Container>
+        <BotsSummary collection={community} />
 
-        <div class="separator"></div>
+        <UserGroupSummary {communityState} />
 
-        <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
-            <BotsSummary collection={community} />
-        </Container>
+        <PermissionsSummary permissions={community.permissions} isPublic={community.public} />
 
-        <div class="separator"></div>
-
-        <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
-            <UserGroupSummary {communityState} />
-        </Container>
-
-        <div class="separator"></div>
-
-        <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
-            <PermissionsSummary permissions={community.permissions} isPublic={community.public} />
-        </Container>
-
-        <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
-            <AccessGateSummary gateConfig={community.gateConfig} />
-        </Container>
+        <AccessGateSummary gateConfig={community.gateConfig} />
 
         {#if rules.enabled}
-            <div class="separator"></div>
+            <Separator />
 
             <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
                 <Body colour={"textSecondary"} fontWeight={"bold"}>
@@ -223,7 +206,7 @@
             </Container>
         {/if}
 
-        <div class="separator"></div>
+        <Separator />
 
         <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
             <BodySmall colour={"textSecondary"} fontWeight={"bold"}>
@@ -232,9 +215,9 @@
             <Stats showReported={false} stats={community.metrics} />
         </Container>
 
-        <div class="separator"></div>
-
         {#if canCreateChannel}
+            <Separator />
+
             <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
                 <Container direction={"vertical"} gap={"sm"}>
                     <Body fontWeight={"bold"}>
@@ -254,7 +237,7 @@
                 </Button>
             </Container>
 
-            <div class="separator"></div>
+            <Separator />
 
             <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
                 <Container direction={"vertical"} gap={"sm"}>
@@ -278,7 +261,7 @@
             </Container>
 
             {#if client.canDeleteCommunity(community.id)}
-                <div class="separator"></div>
+                <Separator />
 
                 <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
                     <Container direction={"vertical"} gap={"sm"}>
@@ -304,7 +287,7 @@
                     </Button>
                 </Container>
             {:else if community.membership.role !== ROLE_NONE}
-                <div class="separator"></div>
+                <Separator />
 
                 <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
                     <Container direction={"vertical"} gap={"sm"}>
@@ -344,13 +327,5 @@
 
     :global(.container.group_details_header > .icon_button:first-child) {
         margin-inline-end: auto;
-    }
-
-    .separator {
-        height: 6px;
-        align-self: stretch;
-        background-color: var(--background-1);
-        border-radius: var(--rad-circle);
-        margin: 0 var(--sp-md);
     }
 </style>

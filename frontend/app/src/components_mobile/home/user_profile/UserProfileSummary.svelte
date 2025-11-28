@@ -2,7 +2,15 @@
     import MulticolourText from "@src/components_mobile/MulticolourText.svelte";
     import { i18nKey } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
-    import { Body, BodySmall, ColourVars, Container, IconButton } from "component-lib";
+    import {
+        Body,
+        BodySmall,
+        ColourVars,
+        Container,
+        IconButton,
+        MenuItem,
+        MenuTrigger,
+    } from "component-lib";
     import {
         allUsersStore,
         currentUserIdStore,
@@ -16,11 +24,9 @@
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import AccountStar from "svelte-material-icons/AccountStarOutline.svelte";
-    import Cog from "svelte-material-icons/Cog.svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
-    import Logout from "svelte-material-icons/Logout.svelte";
+    import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import Share from "svelte-material-icons/ShareVariantOutline.svelte";
-    import SquareEdit from "svelte-material-icons/SquareEditOutline.svelte";
     import Progress from "../../Progress.svelte";
     import SparkleBox from "../../SparkleBox.svelte";
     import Translatable from "../../Translatable.svelte";
@@ -71,69 +77,35 @@
     height={{ kind: "fill" }}
     crossAxisAlignment={"center"}
     direction={"vertical"}>
-    <Container padding={["zero", "zero", "lg", "zero"]} gap={"lg"} direction={"vertical"}>
+    <Container padding={["zero", "zero", "lg", "zero"]} gap={"xl"} direction={"vertical"}>
         {#if user !== undefined && profile !== undefined}
             <UserProfileSummaryCard {user} {profile}>
                 {#snippet buttons()}
-                    <IconButton onclick={() => client.logout()} size={"md"} mode={"dark"}>
-                        {#snippet icon(color)}
-                            <Logout {color} />
-                        {/snippet}
-                    </IconButton>
                     <IconButton onclick={shareProfile} size={"md"} mode={"dark"}>
                         {#snippet icon(color)}
                             <Share {color} />
                         {/snippet}
                     </IconButton>
-                    <IconButton onclick={userInformation} size={"md"} mode={"dark"}>
-                        {#snippet icon(color)}
-                            <SquareEdit {color} />
+                    <MenuTrigger position={"bottom"} align={"end"}>
+                        <IconButton size={"md"} mode={"dark"}>
+                            {#snippet icon(color)}
+                                <DotsVertical {color} />
+                            {/snippet}
+                        </IconButton>
+                        {#snippet menuItems()}
+                            <MenuItem onclick={userInformation}>
+                                <Translatable resourceKey={i18nKey("Edit profile")} />
+                            </MenuItem>
+                            <MenuItem onclick={appSettings}>
+                                <Translatable resourceKey={i18nKey("App settings")} />
+                            </MenuItem>
+                            <MenuItem danger onclick={() => client.logout()}>
+                                <Translatable resourceKey={i18nKey("Logout")} />
+                            </MenuItem>
                         {/snippet}
-                    </IconButton>
-                    <IconButton onclick={appSettings} size={"md"} mode={"dark"}>
-                        {#snippet icon(color)}
-                            <Cog {color} />
-                        {/snippet}
-                    </IconButton>
+                    </MenuTrigger>
                 {/snippet}
             </UserProfileSummaryCard>
-        {/if}
-        {#if !verified}
-            <SparkleBox
-                buttonText={i18nKey("Start verification")}
-                onClick={() => publish("userProfileVerify")}>
-                {#snippet title()}
-                    <MulticolourText
-                        parts={[
-                            {
-                                text: i18nKey("Verify you are a "),
-                                colour: "primaryLight",
-                            },
-                            {
-                                text: i18nKey("real person"),
-                                colour: "primary",
-                            },
-                        ]} />
-                {/snippet}
-                {#snippet body()}
-                    <MulticolourText
-                        parts={[
-                            {
-                                text: i18nKey(
-                                    "Verify your unique personhood as a signal of your trustworthiness to other users! ",
-                                ),
-                                colour: "primaryLight",
-                            },
-                            {
-                                text: i18nKey("It only takes a minute."),
-                                colour: "textPrimary",
-                            },
-                        ]} />
-                {/snippet}
-                {#snippet buttonIcon(color)}
-                    <AccountStar {color} />
-                {/snippet}
-            </SparkleBox>
         {/if}
         <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
             <BodySmall colour={"textSecondary"} fontWeight={"bold"}>
@@ -181,6 +153,44 @@
                 </Body>
             </Container>
         </Container>
+
+        {#if !verified}
+            <SparkleBox
+                buttonText={i18nKey("Start verification")}
+                onClick={() => publish("userProfileVerify")}>
+                {#snippet title()}
+                    <MulticolourText
+                        parts={[
+                            {
+                                text: i18nKey("Verify you are a "),
+                                colour: "primaryLight",
+                            },
+                            {
+                                text: i18nKey("real person"),
+                                colour: "primary",
+                            },
+                        ]} />
+                {/snippet}
+                {#snippet body()}
+                    <MulticolourText
+                        parts={[
+                            {
+                                text: i18nKey(
+                                    "Verify your unique personhood as a signal of your trustworthiness to other users! ",
+                                ),
+                                colour: "primaryLight",
+                            },
+                            {
+                                text: i18nKey("It only takes a minute."),
+                                colour: "textPrimary",
+                            },
+                        ]} />
+                {/snippet}
+                {#snippet buttonIcon(color)}
+                    <AccountStar {color} />
+                {/snippet}
+            </SparkleBox>
+        {/if}
 
         <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
             <BodySmall colour={"textSecondary"} fontWeight={"bold"}>

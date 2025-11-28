@@ -136,7 +136,7 @@
     }
 </script>
 
-<SlidingPageContent title={i18nKey("Edit user info")}>
+<SlidingPageContent title={i18nKey("Edit profile")}>
     <Container
         padding={["zero", "lg", "lg", "lg"]}
         gap={"lg"}

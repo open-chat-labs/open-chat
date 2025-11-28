@@ -95,7 +95,7 @@
                 <EditableAvatar
                     onImageSelected={userAvatarSelected}
                     image={avatarUrl}
-                    size={"headline"} />
+                    size={"large"} />
             </Container>
         </Container>
     {/snippet}

@@ -11,6 +11,7 @@
         type ResourceKey,
     } from "openchat-client";
     import Translatable from "../../../Translatable.svelte";
+    import Separator from "../../Separator.svelte";
 
     interface Props {
         permissions: CommunityPermissions;
@@ -47,7 +48,9 @@
     const width: SizeMode = { kind: "hug" };
 </script>
 
-<Container gap={"xl"} direction={"vertical"}>
+<Separator />
+
+<Container padding={["zero", "md"]} gap={"xl"} direction={"vertical"}>
     <Body colour={"textSecondary"} fontWeight={"bold"}>
         <Translatable resourceKey={i18nKey("Permissions")}></Translatable>
     </Body>

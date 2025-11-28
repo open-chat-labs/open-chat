@@ -10,10 +10,6 @@
         type MemberRole,
     } from "openchat-client";
     import { _ } from "svelte-i18n";
-    import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
-    import AccountRemoveOutline from "svelte-material-icons/AccountRemoveOutline.svelte";
-    import Cancel from "svelte-material-icons/Cancel.svelte";
-    import MinusCircleOutline from "svelte-material-icons/MinusCircleOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import User from "../User.svelte";
@@ -90,9 +86,6 @@
 {#snippet children()}
     {#if canPromoteToOwner}
         <MenuItem onclick={() => changeRole(ROLE_OWNER)}>
-            {#snippet icon(color, size)}
-                <AccountPlusOutline {size} {color} />
-            {/snippet}
             <Translatable
                 resourceKey={i18nKey("promoteTo", {
                     role: ownerText,
@@ -101,9 +94,6 @@
     {/if}
     {#if canPromoteToAdmin}
         <MenuItem onclick={() => changeRole(ROLE_ADMIN)}>
-            {#snippet icon(color, size)}
-                <AccountPlusOutline {size} {color} />
-            {/snippet}
             <Translatable
                 resourceKey={i18nKey("promoteTo", {
                     role: adminText,
@@ -112,9 +102,6 @@
     {/if}
     {#if canDemoteToAdmin}
         <MenuItem onclick={() => changeRole(ROLE_ADMIN)}>
-            {#snippet icon(color, size)}
-                <AccountRemoveOutline {size} {color} />
-            {/snippet}
             <Translatable
                 resourceKey={i18nKey("demoteTo", {
                     role: adminText,
@@ -123,9 +110,6 @@
     {/if}
     {#if canPromoteToModerator}
         <MenuItem onclick={() => changeRole(ROLE_MODERATOR)}>
-            {#snippet icon(color, size)}
-                <AccountPlusOutline {size} {color} />
-            {/snippet}
             <Translatable
                 resourceKey={i18nKey("promoteTo", {
                     role: moderatorText,
@@ -134,9 +118,6 @@
     {/if}
     {#if canDemoteToModerator}
         <MenuItem onclick={() => changeRole(ROLE_MODERATOR)}>
-            {#snippet icon(color, size)}
-                <AccountRemoveOutline {size} {color} />
-            {/snippet}
             <Translatable
                 resourceKey={i18nKey("demoteTo", {
                     role: moderatorText,
@@ -145,9 +126,6 @@
     {/if}
     {#if canDemoteToMember}
         <MenuItem onclick={() => changeRole(ROLE_MEMBER)}>
-            {#snippet icon(color, size)}
-                <AccountRemoveOutline {size} {color} />
-            {/snippet}
             <Translatable
                 resourceKey={i18nKey("demoteTo", {
                     role: memberText,
@@ -156,17 +134,11 @@
     {/if}
     {#if canBlockUser}
         <MenuItem onclick={blockUser}>
-            {#snippet icon(color, size)}
-                <Cancel {size} {color} />
-            {/snippet}
             <Translatable resourceKey={i18nKey("blockUser")} />
         </MenuItem>
     {/if}
     {#if canRemoveMember}
         <MenuItem onclick={removeUser}>
-            {#snippet icon(color, size)}
-                <MinusCircleOutline {size} {color} />
-            {/snippet}
             <Translatable resourceKey={i18nKey("remove")} />
         </MenuItem>
     {/if}

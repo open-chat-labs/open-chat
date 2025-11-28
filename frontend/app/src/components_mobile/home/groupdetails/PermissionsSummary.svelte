@@ -15,6 +15,7 @@
     import { _ } from "svelte-i18n";
     import Translatable from "../../Translatable.svelte";
     import GroupPermissionsPartitionViewer from "../GroupPermissionsPartitionViewer.svelte";
+    import Separator from "../Separator.svelte";
 
     interface Props {
         permissions: ChatPermissions;
@@ -137,7 +138,9 @@
     </Chip>
 {/snippet}
 
-<Container gap={"xl"} direction={"vertical"}>
+<Separator />
+
+<Container padding={["zero", "md"]} gap={"xl"} direction={"vertical"}>
     <Body colour={"textSecondary"} fontWeight={"bold"}>
         <Translatable resourceKey={i18nKey("Permissions")}></Translatable>
     </Body>

@@ -8,7 +8,7 @@
         size?: AvatarSize;
         name?: string;
         radius?: BorderRadiusSize;
-        borderWidth?: "zero" | "thin" | "thick";
+        borderWidth?: "zero" | "thin" | "thick" | "extra-thick";
         customSize?: string;
         highlightBorder?: boolean;
         onClick?: (ev: Event) => void;

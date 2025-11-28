@@ -11,6 +11,7 @@
     import { getContext, onDestroy } from "svelte";
     import AccountPlus from "svelte-material-icons/AccountPlusOutline.svelte";
     import Translatable from "../../Translatable.svelte";
+    import Separator from "../Separator.svelte";
     import MemberList from "./MemberList.svelte";
     import { MemberManagement } from "./membersState.svelte";
 
@@ -23,7 +24,6 @@
     let { collection }: Props = $props();
 
     let membersState = new MemberManagement(getContext<OpenChat>("client"), collection);
-    let more = $derived(membersState.members.size - TO_SHOW);
     let subset = $derived<FullMember[]>(
         membersState.getKnownUsers(
             $allUsersStore,
@@ -36,7 +36,9 @@
     });
 </script>
 
-<Container gap={"xl"} direction={"vertical"}>
+<Separator />
+
+<Container padding={["zero", "md"]} gap={"xl"} direction={"vertical"}>
     <Container>
         <Body colour={"textSecondary"} fontWeight={"bold"}>
             <Translatable resourceKey={i18nKey("Members")}></Translatable>

@@ -41,7 +41,7 @@ export class Theme {
             Rem.fromPixels(160),
         );
 
-        this.borderWidth = new BorderWidth(new Pixel(0), new Pixel(1), new Pixel(2));
+        this.borderWidth = new BorderWidth(new Pixel(0), new Pixel(1), new Pixel(2), new Pixel(4));
 
         this.iconSize = new IconSize(
             Rem.fromPixels(12),
