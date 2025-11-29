@@ -207,4 +207,5 @@ export type PubSubEvents = {
     showUserGroup: UserGroupDetails;
     editUserGroup: UserGroupDetails;
     inviteAndShare: { collection: MultiUserChat | CommunitySummary; view: "invite" | "share" };
+    showBots: ChatSummary | CommunitySummary
 };

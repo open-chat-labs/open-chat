@@ -37,11 +37,8 @@
     );
 
     function showAllBots() {
-        // TODO This is probably wrong
-        membersState.showAllMembers();
+        publish("showBots", collection);
     }
-
-    function addBots() {}
 
     function registerHook() {
         if (collection.kind !== "community") {
@@ -65,7 +62,7 @@
         </Container>
 
         {#if canManageBots}
-            <ListAction onClick={addBots}>
+            <ListAction onClick={showAllBots}>
                 {#snippet icon(color)}
                     <Robot {color} />
                 {/snippet}

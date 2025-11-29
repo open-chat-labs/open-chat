@@ -49,6 +49,7 @@
     import DirectChatDetails from "./groupdetails/DirectChatDetails.svelte";
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
     import { UpdateGroupOrCommunityState } from "./groupOrCommunity.svelte";
+    import BotsList from "./membership/BotsList.svelte";
     import InviteAndShare from "./membership/InviteAndShare.svelte";
     import MemberManagement from "./membership/MemberManagement.svelte";
     import NewMessage from "./NewMessage.svelte";
@@ -92,6 +93,7 @@
               view: "invite" | "share";
           }
         | { kind: "user_groups"; community: CommunitySummary }
+        | { kind: "show_bots"; collection: ChatSummary | CommunitySummary }
         | { kind: "register_webhook"; chat: MultiUserChat }
         | { kind: "update_webhook"; chat: MultiUserChat; webhook: FullWebhookDetails }
         | { kind: "regenerate_webhook"; chat: MultiUserChat; webhook: FullWebhookDetails }
@@ -165,6 +167,7 @@
 
     onMount(() => {
         const unsubs = [
+            subscribe("showBots", (collection) => push({ kind: "show_bots", collection })),
             subscribe("registerWebhook", (chat) => push({ kind: "register_webhook", chat })),
             subscribe("updateWebhook", ({ chat, hook }) =>
                 push({ kind: "update_webhook", chat, webhook: hook }),
@@ -455,6 +458,8 @@
             <WebhookModal chat={page.chat} mode={"update"} bind:webhook={page.webhook} />
         {:else if page.kind === "regenerate_webhook"}
             <WebhookModal chat={page.chat} mode={"regenerate"} bind:webhook={page.webhook} />
+        {:else if page.kind === "show_bots"}
+            <BotsList collection={page.collection} />
         {/if}
     </SlidingPage>
 {/each}
