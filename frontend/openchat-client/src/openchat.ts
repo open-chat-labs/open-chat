@@ -4002,7 +4002,10 @@ export class OpenChat {
             messageEvent.event,
         );
         const ledger = this.#extractLedgerFromContent(message.content);
-        const messageRecipients = [...selectedChatUserIdsStore.value];
+
+        // a DM should only ever be sent to the recipient regardless of selectedChatUserIdsStore
+        const messageRecipients =
+            chat.kind === "direct_chat" ? [chat.id.userId] : [...selectedChatUserIdsStore.value];
 
         const sendMessagePromise: Promise<SendMessageResponse> = new Promise((resolve) => {
             this.#inflightMessagePromises.set(messageId, resolve);

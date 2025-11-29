@@ -12,6 +12,7 @@ import {
 import { get } from "svelte/store";
 import {
     blockedUsersStore,
+    currentUserIdStore,
     selectedChatSummaryStore,
     serverCommunitiesStore,
     serverDirectChatsStore,
@@ -44,15 +45,24 @@ export function createRemoteVideoStartedEvent(msg: RemoteVideoCallStarted) {
 function findChatByChatType(msg: WebRtcMessage): ChatSummary | undefined {
     switch (msg.id.kind) {
         case "direct_chat":
-            return get(serverDirectChatsStore).get({ kind: "direct_chat", userId: msg.userId });
+            // make sure that not only does this DM come from one of my contacts
+            // but also that the message is to me.
+            // Note - we should never receive a DM that isn't for us over WebRtcMessage
+            // but this is just in case we *do*
+            const chat = serverDirectChatsStore.value.get({
+                kind: "direct_chat",
+                userId: msg.userId,
+            });
+            const toMe = msg.id.userId === currentUserIdStore.value;
+            return toMe ? chat : undefined;
         case "group_chat":
-            return get(serverGroupChatsStore).get(msg.id);
+            return serverGroupChatsStore.value.get(msg.id);
         case "channel":
             const communityId: CommunityIdentifier = {
                 kind: "community",
                 communityId: msg.id.communityId,
             };
-            const channels = get(serverCommunitiesStore).get(communityId)?.channels ?? [];
+            const channels = serverCommunitiesStore.value.get(communityId)?.channels ?? [];
             const channelId = msg.id.channelId;
             return channels.find((c) => c.id.channelId === channelId);
     }
