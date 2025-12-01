@@ -12,6 +12,7 @@ import type {
     EnhancedReplyContext,
     EphemeralMessageEvent,
     EventWrapper,
+    ExternalBot,
     FullWebhookDetails,
     GroupChatSummary,
     Level,
@@ -207,5 +208,6 @@ export type PubSubEvents = {
     showUserGroup: UserGroupDetails;
     editUserGroup: UserGroupDetails;
     inviteAndShare: { collection: MultiUserChat | CommunitySummary; view: "invite" | "share" };
-    showBots: ChatSummary | CommunitySummary
+    showBots: ChatSummary | CommunitySummary;
+    showBot: ExternalBot;
 };

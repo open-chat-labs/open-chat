@@ -1,19 +1,28 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { Container, Search } from "component-lib";
+    import { Body, Container, Search } from "component-lib";
     import {
         allUsersStore,
+        botState,
+        OpenChat,
+        publish,
         type BotInstallationLocation,
         type ChatSummary,
         type CommunitySummary,
     } from "openchat-client";
+    import { getContext } from "svelte";
+    import BotMatch from "../../bots/BotMatch.svelte";
+    import Translatable from "../../Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
+
+    const client = getContext<OpenChat>("client");
 
     interface Props {
         collection: ChatSummary | CommunitySummary;
     }
 
     let { collection }: Props = $props();
+    let canManageBots = $derived(client.canManageBots(collection.id));
     let searchTerm = $state<string>();
     let searchTermLower = $derived(searchTerm?.toLocaleLowerCase());
     let location = $derived.by<BotInstallationLocation>(() => {
@@ -32,21 +41,37 @@
                 return collection.name;
         }
     });
-
-    // TODO - there's no need to use the client.exploreBots here - just use botState.externalBots
+    let allBots = $derived([...botState.externalBots.values()]);
+    let matchingBots = $derived(
+        allBots.filter(
+            (b) =>
+                searchTermLower === undefined ||
+                searchTermLower === "" ||
+                b.name.toLocaleLowerCase().includes(searchTermLower) ||
+                b.definition.description.toLocaleLowerCase().includes(searchTermLower),
+        ),
+    );
 </script>
 
 <SlidingPageContent title={i18nKey("Thing bots")} subtitle={i18nKey(name)}>
     <Container height={{ kind: "fill" }} mainAxisAlignment={"spaceBetween"} direction={"vertical"}>
         <Container
             height={{ kind: "fill" }}
-            gap={"lg"}
+            gap={"xl"}
             padding={["xxl", "lg", "lg", "lg"]}
             direction={"vertical"}>
-            <pre>{JSON.stringify(location, null, 4)}</pre>
-            <pre>{searchTermLower}</pre>
-            <Search placeholder={"Search for bots"} bind:value={searchTerm}></Search>
-            <div>Search results</div>
+            <Search
+                onClear={() => (searchTerm = undefined)}
+                placeholder={"Search for bots"}
+                bind:value={searchTerm}></Search>
+            <Container gap={"lg"} direction={"vertical"} padding={["zero", "md"]}>
+                <Body fontWeight={"bold"}>
+                    <Translatable resourceKey={i18nKey(`Available bots (${allBots.length})`)} />
+                </Body>
+                {#each matchingBots as bot}
+                    <BotMatch {bot} {searchTerm} onSelect={(bot) => publish("showBot", bot)} />
+                {/each}
+            </Container>
             <div>installed bots</div>
             <div>installed webhooks (if chat)</div>
             <div>recommended bots?</div>

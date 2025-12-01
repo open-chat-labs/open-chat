@@ -625,7 +625,7 @@
 {/if}
 
 <Container
-    allowOverflow
+    overflow={"visible"}
     gap={"sm"}
     mainAxisAlignment={"spaceBetween"}
     crossAxisAlignment={"end"}

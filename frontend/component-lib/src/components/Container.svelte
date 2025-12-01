@@ -39,6 +39,8 @@
      * unexpected results. This can always be resolved but only if you understand what is going on.
      */
 
+    type Overflow = "auto" | "visible" | "hidden";
+
     interface Props {
         children: Snippet;
         direction?: Direction;
@@ -66,7 +68,7 @@
         onClick?: (e?: MouseEvent) => void;
         onDoubleClick?: (e?: MouseEvent) => void;
         supplementalClass?: string;
-        allowOverflow?: boolean;
+        overflow?: Overflow;
         tag?: "div" | "button" | "main" | "section"; // this could be just about anything but let's try to limit it
         id?: string;
         onInsideStart?: (fromStart: number) => void;
@@ -109,7 +111,7 @@
         onClick,
         onDoubleClick,
         supplementalClass,
-        allowOverflow = false,
+        overflow = "auto",
         tag = "div",
         id,
         onInsideEnd,
@@ -159,7 +161,7 @@
               : "",
     );
     let style = $derived(
-        `${wrapCss} ${backgroundCss} box-shadow: ${shadow}; max-width: ${maxWidth}; max-height: ${maxHeight}; min-width: ${minWidth}; min-height: ${minHeight}; ${alignmentCss}; ${colourCss}; ${heightCss}; ${widthCss}; ${borderStyleCss}; ${borderRadiusCss}; ${borderWidthCss}; ${paddingCss}; ${gapCss};`,
+        `overflow: ${overflow}; ${wrapCss} ${backgroundCss} box-shadow: ${shadow}; max-width: ${maxWidth}; max-height: ${maxHeight}; min-width: ${minWidth}; min-height: ${minHeight}; ${alignmentCss}; ${colourCss}; ${heightCss}; ${widthCss}; ${borderStyleCss}; ${borderRadiusCss}; ${borderWidthCss}; ${paddingCss}; ${gapCss};`,
     );
     // TODO I think it might be nice to do a lot of this flex sizing with classes rather than inline styles
     // although I'm not sure I can say *why*
@@ -180,7 +182,6 @@
     use:scrollLimits={{ onEnd: onInsideEnd, onStart: onInsideStart }}
     {id}
     class:clickable={onClick !== undefined}
-    class:overflow={allowOverflow}
     class:reverse
     ondblclick={onDoubleClick}
     onclick={onClick}
@@ -191,7 +192,6 @@
 
 <style lang="scss">
     .container {
-        overflow: auto;
         scrollbar-width: none;
         position: relative;
         background-size: cover;
@@ -204,10 +204,6 @@
             flex-basis 200ms ease-in-out,
             padding 200ms ease-in-out,
             gap 200ms ease-in-out;
-
-        &.overflow {
-            overflow: visible;
-        }
 
         &.horizontal {
             display: flex;

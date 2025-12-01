@@ -99,7 +99,7 @@
             </Container>
         </Container>
 
-        <Container padding={["lg", "zero"]} direction={"vertical"} allowOverflow>
+        <Container padding={["lg", "zero"]} direction={"vertical"} overflow={"visible"}>
             <ChitSummary
                 insuranceLink={false}
                 streak={$chitStateStore.streak}

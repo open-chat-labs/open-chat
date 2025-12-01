@@ -69,7 +69,7 @@
     }
 </script>
 
-<Container gap={"lg"} allowOverflow direction={"vertical"} padding={"xl"}>
+<Container gap={"lg"} overflow={"visible"} direction={"vertical"} padding={"xl"}>
     <Container direction={"vertical"} gap={"xs"}>
         <div class="label">
             <Subtitle fontWeight={"bold"}>
@@ -92,7 +92,7 @@
             width={{ kind: "hug" }}
             direction={"vertical"}
             {height}
-            allowOverflow
+            overflow={"visible"}
             padding={["md", "xxl", "md", "zero"]}>
             <div class="track">
                 <div class="progress" style={`height: ${percentFromIndex(selectedIndex, true)}%`}>

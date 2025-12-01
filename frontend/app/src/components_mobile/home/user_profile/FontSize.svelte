@@ -4,8 +4,8 @@
     import Range from "../../Range.svelte";
 </script>
 
-<Container allowOverflow direction={"vertical"}>
-    <Container allowOverflow minHeight={"1rem"} mainAxisAlignment={"spaceBetween"}>
+<Container overflow={"visible"} direction={"vertical"}>
+    <Container overflow={"visible"} minHeight={"1rem"} mainAxisAlignment={"spaceBetween"}>
         <div
             class:selected={$fontScaleStore === 0}
             class="letter zero"

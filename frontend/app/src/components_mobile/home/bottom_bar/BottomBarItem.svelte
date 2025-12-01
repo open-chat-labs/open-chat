@@ -27,7 +27,7 @@
 <Container
     onClick={onSelect}
     borderWidth={"zero"}
-    allowOverflow
+    overflow={"visible"}
     borderColour={"red"}
     borderStyle={"dashed"}
     crossAxisAlignment={"center"}

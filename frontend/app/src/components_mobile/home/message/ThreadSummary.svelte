@@ -84,7 +84,7 @@
 
 <Container
     onClick={() => page(url)}
-    allowOverflow
+    overflow={"visible"}
     {borderColour}
     borderWidth={"thick"}
     crossAxisAlignment={"center"}

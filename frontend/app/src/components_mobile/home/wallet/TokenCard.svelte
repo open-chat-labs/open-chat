@@ -33,7 +33,7 @@
             >{tokenState.token.name}</Caption>
     </Container>
     <Container
-        allowOverflow
+        overflow={"visible"}
         crossAxisAlignment={"end"}
         width={{ kind: "hug" }}
         direction={"vertical"}>

@@ -1,7 +1,11 @@
 <script lang="ts">
     import { BodySmall, Container, IconButton, MenuItem, MenuTrigger } from "component-lib";
-    import { type CommunitySummary, type MultiUserChat } from "openchat-client";
-    import { type ExternalBot, type GrantedBotPermissions } from "openchat-shared";
+    import { type CommunitySummary } from "openchat-client";
+    import {
+        type ChatSummary,
+        type ExternalBot,
+        type GrantedBotPermissions,
+    } from "openchat-shared";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
@@ -15,7 +19,7 @@
     import WithBotManagement from "./WithBotManagement.svelte";
 
     interface Props {
-        collection: CommunitySummary | MultiUserChat;
+        collection: CommunitySummary | ChatSummary;
         bot: ExternalBot;
         canManage: boolean;
         searchTerm: string;

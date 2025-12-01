@@ -194,7 +194,7 @@
 <Container
     bind:ref
     supplementalClass={classList}
-    allowOverflow
+    overflow={"visible"}
     {onDoubleClick}
     minWidth={senderWidth}
     direction={"vertical"}

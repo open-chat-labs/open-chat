@@ -175,7 +175,7 @@
             onClick={me ? () => publish("userProfileChitRewards") : undefined}
             direction={"vertical"}
             padding={["zero", "zero", "xl", "zero"]}
-            allowOverflow>
+            overflow={"visible"}>
             <ChitSummary
                 {mode}
                 streak={user.streak}

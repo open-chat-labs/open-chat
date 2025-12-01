@@ -1,5 +1,6 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
+    import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import { Avatar, Container, MenuTrigger } from "component-lib";
     import {
         type ChatIdentifier,
@@ -39,7 +40,6 @@
     import ModalContent from "../ModalContent.svelte";
     import Overlay from "../Overlay.svelte";
     import Translatable from "../Translatable.svelte";
-    import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import ChatMessageContent from "./ChatMessageContent.svelte";
     import ChatMessageMenu from "./ChatMessageMenu.svelte";
     import EmojiPicker from "./EmojiPickerWrapper.svelte";
@@ -554,7 +554,7 @@
                 bind:ref={msgElement}
                 padding={last ? ["zero", "zero", "sm", "zero"] : "zero"}
                 gap={"sm"}
-                allowOverflow
+                overflow={"visible"}
                 mainAxisAlignment={me ? "end" : "start"}>
                 {#if showAvatar}
                     <div class:first class="avatar">
@@ -569,7 +569,7 @@
                 {@const hasTips = tips.length > 0}
                 <Container
                     supplementalClass={"message_bubble_wrapper"}
-                    allowOverflow
+                    overflow={"visible"}
                     crossAxisAlignment={me ? "end" : "start"}
                     width={{ kind: "hug" }}
                     maxWidth={"85%"}

@@ -144,7 +144,10 @@
                 </Body>
             {/if}
             {#if showCurrentPin}
-                <Container allowOverflow crossAxisAlignment={"center"} direction={"vertical"}>
+                <Container
+                    overflow={"visible"}
+                    crossAxisAlignment={"center"}
+                    direction={"vertical"}>
                     <Pincode
                         subtext={type.kind === "change"
                             ? i18nKey("pinNumber.currentPin")

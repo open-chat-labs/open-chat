@@ -41,7 +41,7 @@
     bind:ref
     padding={["zero", "lg"]}
     supplementalClass="communities_scroller"
-    allowOverflow
+    overflow={"visible"}
     width={{ kind: "fill" }}
     gap={"lg"}>
     {#each $sortedCommunitiesStore as community}
@@ -49,7 +49,7 @@
         <Container
             supplementalClass={`scroller_item ${unread && !muted ? "unread" : ""}`}
             id={`scroller_item_${community.id.communityId}`}
-            allowOverflow
+            overflow={"visible"}
             width={{ kind: "hug" }}
             onClick={() => onSelect(community)}>
             <Avatar

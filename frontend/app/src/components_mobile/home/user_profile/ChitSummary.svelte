@@ -107,7 +107,7 @@
                 <Translatable resourceKey={i18nKey("streak")}></Translatable>
             </BodySmall>
         </Container>
-        <Container gap={"xxs"} allowOverflow direction={"vertical"}>
+        <Container gap={"xxs"} overflow={"visible"} direction={"vertical"}>
             <div class="badges">
                 {#each badgesVisible as badge}
                     <div class="badge" style="left: {(badge * 100) / maxBadgeVisible}%">

@@ -146,7 +146,7 @@
                 width={{ kind: "hug" }}
                 {height}
                 direction={"vertical"}
-                allowOverflow
+                overflow={"visible"}
                 padding={["md", "xxl", "md", "zero"]}>
                 <div class="track">
                     <div class="progress" style={`height: ${percentFromIndex(currentStageIndex)}%`}>
