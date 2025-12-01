@@ -2,7 +2,7 @@
 # FIRST PART
 # This first part sets up the app UI!
 ################################################################################
-FROM ubuntu:latest AS build-app
+FROM ubuntu:latest
 SHELL ["/bin/bash", "-c"]
 WORKDIR /
 
@@ -10,7 +10,7 @@ WORKDIR /
 ################################################################################
 # Install updates!
 RUN apt-get update
-RUN apt-get install -y curl libunwind-dev build-essential
+RUN apt-get install -y curl libunwind-dev build-essential nginx tini
 
 
 ################################################################################
@@ -21,15 +21,18 @@ RUN ./install_rust.sh -y
 ENV PATH="/root/.cargo/bin:${PATH}"
 RUN cargo --version
 
-# Download and install dfx
-RUN DFX_VERSION=0.29.1 DFXVM_INIT_YES=true sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
-ENV PATH="/root/.local/share/dfx/bin:${PATH}"
-RUN dfx --help
-
 # Install node and confirm commands are available
 RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && apt-get install -y nodejs
 RUN nodejs --version
 RUN npm --version
+
+
+################################################################################
+# Download and install dfx
+# We'll keep the dfx.
+RUN DFX_VERSION=0.29.1 DFXVM_INIT_YES=true sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
+ENV PATH="/root/.local/share/dfx/bin:${PATH}"
+RUN dfx --help
 
 
 ################################################################################
@@ -48,26 +51,7 @@ RUN ./scripts/docker-install-canisters.sh
 WORKDIR /oc/frontend
 RUN npm run build:docker
 
-
-################################################################################
-# SECOND PART
-# Second part runs the UI and DFX!
-# On the first run, it will build and deploy canisters locally.
-################################################################################
-FROM ubuntu:latest AS run-app
-SHELL ["/bin/bash", "-c"]
 WORKDIR /
-
-##################
-# Install updates!
-RUN apt-get update
-RUN apt-get install -y curl nginx tini
-
-##########################
-# Download and install dfx
-RUN DFX_VERSION=0.29.1 DFXVM_INIT_YES=true sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
-ENV PATH="/root/.local/share/dfx/bin:${PATH}"
-RUN dfx --help
 
 #############################################
 # Nginx conf for serving the UI, and proxying
@@ -112,14 +96,25 @@ server {\n\
 
 #################################################
 # Copy the built UI files from the previous stage
-COPY --from=build-app /oc/frontend/app/build /usr/share/nginx/html
-COPY --from=build-app /oc/frontend/app/public /usr/share/nginx/html
+RUN cp -r /oc/frontend/app/build /usr/share/nginx/html
+RUN cp -r /oc/frontend/app/public /usr/share/nginx/html
 
 #################################################
-# Copy the built UI files from the previous stage
-COPY --from=build-app /oc/.dfx/ /oc/.dfx/
-COPY --from=build-app /oc/dfx.json /oc/dfx.json
-COPY --from=build-app /oc/scripts/docker-entrypoint.sh /oc/docker-entrypoint.sh
+# Cleanup!!!!!!!!!!
+RUN rm -rf /root/.cargo /root/.rustup
+RUN rm -rf /oc/target
+RUN rm -rf /oc/wasms
+RUN rm -rf /oc/backend
+RUN rm -rf /oc/frontend
+RUN rm -rf /oc/architecture
+RUN rm -rf /oc/sns
+
+RUN npm cache clean --force
+RUN rm -rf /root/.npm
+
+RUN apt-get purge -y build-essential libunwind-dev \
+    && apt-get autoremove -y \
+    && apt-get clean
 
 ##########################
 # Nginx runs on port 80...
