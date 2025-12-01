@@ -9,6 +9,7 @@
         type CommunitySummary,
         type DirectChatSummary,
         type EventWrapper,
+        type ExternalBot,
         type FullWebhookDetails,
         type GroupChatSummary,
         type Message,
@@ -21,6 +22,7 @@
         type UserGroupDetails,
     } from "openchat-client";
     import { onMount } from "svelte";
+    import BotDetailsPage from "../bots/BotDetailsPage.svelte";
     import WebhookModal from "../bots/WebhookModal.svelte";
     import AboutAccessGates from "./access_gates/AboutAccessGates.svelte";
     import AccessGates from "./access_gates/AccessGates.svelte";
@@ -92,8 +94,9 @@
               collection: MultiUserChat | CommunitySummary;
               view: "invite" | "share";
           }
+        | { kind: "show_bot"; bot: ExternalBot; collection?: ChatSummary | CommunitySummary }
         | { kind: "user_groups"; community: CommunitySummary }
-        | { kind: "show_bots"; collection: ChatSummary | CommunitySummary }
+        | { kind: "show_bots"; collection: MultiUserChat | CommunitySummary }
         | { kind: "register_webhook"; chat: MultiUserChat }
         | { kind: "update_webhook"; chat: MultiUserChat; webhook: FullWebhookDetails }
         | { kind: "regenerate_webhook"; chat: MultiUserChat; webhook: FullWebhookDetails }
@@ -167,6 +170,9 @@
 
     onMount(() => {
         const unsubs = [
+            subscribe("showBot", ({ bot, collection }) =>
+                push({ kind: "show_bot", bot, collection }),
+            ),
             subscribe("showBots", (collection) => push({ kind: "show_bots", collection })),
             subscribe("registerWebhook", (chat) => push({ kind: "register_webhook", chat })),
             subscribe("updateWebhook", ({ chat, hook }) =>
@@ -460,6 +466,8 @@
             <WebhookModal chat={page.chat} mode={"regenerate"} bind:webhook={page.webhook} />
         {:else if page.kind === "show_bots"}
             <BotsList collection={page.collection} />
+        {:else if page.kind === "show_bot"}
+            <BotDetailsPage bot={page.bot} collection={page.collection} />
         {/if}
     </SlidingPage>
 {/each}

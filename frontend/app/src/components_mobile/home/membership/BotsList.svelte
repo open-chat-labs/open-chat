@@ -154,7 +154,10 @@
                     resourceKey={i18nKey(`Available bots (${matchingUninstalledBots.length})`)} />
             </Body>
             {#each matchingUninstalledBots as bot}
-                <BotMatch {bot} {searchTerm} onSelect={(bot) => publish("showBot", bot)} />
+                <BotMatch
+                    {bot}
+                    {searchTerm}
+                    onSelect={(bot) => publish("showBot", { bot, collection })} />
             {/each}
         </Container>
     </Container>
