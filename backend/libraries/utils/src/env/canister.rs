@@ -11,6 +11,8 @@ pub struct CanisterEnv {
 
 impl CanisterEnv {
     pub fn new(seed: [u8; 32]) -> Self {
+        assert_ne!(seed, [0; 32]);
+
         Self {
             rng: StdRng::from_seed(seed),
         }
@@ -19,6 +21,7 @@ impl CanisterEnv {
 
 thread_local! {
     static CANISTER_ID: LazyCell<CanisterId> = LazyCell::new(ic_cdk::api::canister_self);
+    static ROOT_KEY: LazyCell<Vec<u8>> = LazyCell::new(ic_cdk::api::root_key);
 }
 
 impl Environment for CanisterEnv {
@@ -49,11 +52,15 @@ impl Environment for CanisterEnv {
     fn arg_data_raw(&self) -> Vec<u8> {
         ic_cdk::api::msg_arg_data()
     }
+
+    fn ic_root_key(&self) -> Vec<u8> {
+        ROOT_KEY.with(|rk| rk.to_vec())
+    }
 }
 
 impl Default for CanisterEnv {
     fn default() -> Self {
-        let seed = CanisterEnv::new([0; 32]).entropy();
+        let seed = CanisterEnv::new([1; 32]).entropy();
         CanisterEnv::new(seed)
     }
 }

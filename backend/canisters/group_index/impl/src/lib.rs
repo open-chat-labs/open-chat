@@ -286,7 +286,6 @@ struct Data {
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub video_call_operators: Vec<Principal>,
     pub upload_wasm_chunks_whitelist: HashSet<Principal>,
-    pub ic_root_key: Vec<u8>,
     pub rng_seed: [u8; 32],
     pub idempotency_checker: IdempotencyChecker,
     #[serde(alias = "local_group_index_event_sync_queue")]
@@ -305,7 +304,6 @@ impl Data {
         registry_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
         video_call_operators: Vec<Principal>,
-        ic_root_key: Vec<u8>,
         test_mode: bool,
     ) -> Data {
         Data {
@@ -334,7 +332,6 @@ impl Data {
             fire_and_forget_handler: FireAndForgetHandler::default(),
             video_call_operators,
             upload_wasm_chunks_whitelist: HashSet::default(),
-            ic_root_key,
             rng_seed: [0; 32],
             idempotency_checker: IdempotencyChecker::default(),
             local_index_event_sync_queue: GroupedTimerJobQueue::new(10, false),
@@ -443,7 +440,6 @@ impl Default for Data {
             fire_and_forget_handler: FireAndForgetHandler::default(),
             video_call_operators: Vec::default(),
             upload_wasm_chunks_whitelist: HashSet::default(),
-            ic_root_key: Vec::new(),
             rng_seed: [0; 32],
             idempotency_checker: IdempotencyChecker::default(),
             local_index_event_sync_queue: GroupedTimerJobQueue::new(10, false),

@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Move `ic_root_key` to `Environment` trait ([#8701](https://github.com/open-chat-labs/open-chat/pull/8701))
+- Take RNG seed in init args ([#8702](https://github.com/open-chat-labs/open-chat/pull/8702))
+- Initialize Identity canister with the OC secret key ([#8703](https://github.com/open-chat-labs/open-chat/pull/8703))
+- Temporary code to sync existing OC secret key to Identity canister ([#8704](https://github.com/open-chat-labs/open-chat/pull/8704))
+
 ## [[2.0.1920](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1920-identity)] - 2025-11-26
 
 ### Added

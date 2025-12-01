@@ -21,9 +21,7 @@ fn initiate_identity_link_via_qr_code_impl(args: Args, state: &mut RuntimeState)
         .ok_or(OCErrorCode::InitiatorNotFound)?;
 
     let now = state.env.now();
-    state
-        .data
-        .verify_certificate_time(&auth_principal, &args.delegation.signature, now, 5 * MINUTE_IN_MS)?;
+    state.verify_certificate_time(&auth_principal, &args.delegation.signature, now, 5 * MINUTE_IN_MS)?;
 
     state
         .data

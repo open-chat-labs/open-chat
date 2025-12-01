@@ -513,8 +513,6 @@ struct Data {
     pub pending_payments_queue: PendingPaymentsQueue,
     pub total_payment_receipts: PaymentReceipts,
     pub video_call_operators: Vec<Principal>,
-    #[serde(with = "serde_bytes")]
-    pub ic_root_key: Vec<u8>,
     achievements: Achievements,
     expiring_members: ExpiringMembers,
     expiring_member_actions: ExpiringMemberActions,
@@ -559,7 +557,6 @@ impl Data {
         permissions: Option<GroupPermissions>,
         gate_config: Option<AccessGateConfigInternal>,
         video_call_operators: Vec<Principal>,
-        ic_root_key: Vec<u8>,
         anonymized_chat_id: u128,
     ) -> Data {
         let chat = GroupChatCore::new(
@@ -609,7 +606,6 @@ impl Data {
             pending_payments_queue: PendingPaymentsQueue::default(),
             total_payment_receipts: PaymentReceipts::default(),
             video_call_operators,
-            ic_root_key,
             achievements: Achievements::default(),
             expiring_members: ExpiringMembers::default(),
             expiring_member_actions: ExpiringMemberActions::default(),
