@@ -2,7 +2,7 @@ export * from "openchat-shared";
 export type { OpenChatConfig } from "./config";
 export { OpenChat } from "./openchat";
 export * from "./state";
-export { botState } from "./state/bots.svelte";
+export * from "./state/bots.svelte";
 export { debouncedDerived, withEqCheck } from "./state/reactivity.svelte";
 export * from "./stores";
 export { immutableStore } from "./stores/immutable";

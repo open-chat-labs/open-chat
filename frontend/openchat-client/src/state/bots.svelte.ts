@@ -1,15 +1,23 @@
 import {
     argIsValid,
     createArgsFromSchema,
+    installationLocationsEqual,
     type BotCommandInstance,
+    type BotInstallationLocation,
+    type ChatSummary,
     type CommandArg,
     type CommandParam,
+    type CommunitySummary,
+    type EnhancedExternalBot,
     type ExternalBot,
     type FlattenedCommand,
+    type GrantedBotPermissions,
     type MessageContext,
     type MessageFormatter,
+    type ReadonlyMap,
 } from "openchat-shared";
 import { builtinBot } from "../utils/builtinBotCommands";
+import { currentUserIdStore } from "./app/stores";
 
 function filterCommand(
     formatter: MessageFormatter,
@@ -281,3 +289,48 @@ export class BotState {
 }
 
 export const botState = new BotState();
+
+export function hydrateBots(
+    installed: ReadonlyMap<string, GrantedBotPermissions>,
+    allBots: Map<string, ExternalBot>,
+): EnhancedExternalBot[] {
+    return [...installed.entries()].reduce((bots, [id, perm]) => {
+        const bot = allBots.get(id);
+        if (bot !== undefined) {
+            bots.push({
+                ...bot,
+                grantedPermissions: perm,
+            });
+        }
+        return bots;
+    }, [] as EnhancedExternalBot[]);
+}
+
+export function botIsInstallable(bot: ExternalBot, location: BotInstallationLocation) {
+    if (bot.definition.restrictedLocations?.includes(location.kind) === false) {
+        return false;
+    }
+
+    switch (bot.registrationStatus.kind) {
+        case "public":
+            return true;
+        case "private": {
+            return (
+                bot.ownerId === currentUserIdStore.value ||
+                (bot.registrationStatus.location !== undefined &&
+                    installationLocationsEqual(bot.registrationStatus.location, location))
+            );
+        }
+    }
+}
+
+export function installationLocationFrom(
+    collection: ChatSummary | CommunitySummary,
+): BotInstallationLocation {
+    switch (collection.kind) {
+        case "channel":
+            return { kind: "community", communityId: collection.id.communityId };
+        default:
+            return collection.id;
+    }
+}

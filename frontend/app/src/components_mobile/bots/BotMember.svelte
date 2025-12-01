@@ -22,7 +22,7 @@
         collection: CommunitySummary | ChatSummary;
         bot: ExternalBot;
         canManage: boolean;
-        searchTerm: string;
+        searchTerm?: string;
         grantedPermissions: GrantedBotPermissions;
     }
 
