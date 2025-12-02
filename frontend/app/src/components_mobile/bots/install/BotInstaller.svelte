@@ -1,13 +1,14 @@
 <script lang="ts">
     import {
-        type BotInstallationLocation,
+        type ChatSummary,
+        type CommunitySummary,
         definitionToPermissions,
         type ExternalBotLike,
         type GrantedBotPermissions,
-        type Level,
+        installationLocationFrom,
         mobileWidth,
         OpenChat,
-        type ReadonlyMap,
+        publish,
         type ResourceKey,
     } from "openchat-client";
     import { getContext } from "svelte";
@@ -26,22 +27,21 @@
     type Step = "choose_command_permissions" | "choose_autonomous_permissions" | "unknown";
 
     interface Props {
-        location: BotInstallationLocation;
-        level: Level;
+        collection: CommunitySummary | ChatSummary;
         bot: ExternalBotLike;
-        onClose: (installed: boolean) => void;
-        installedBots: ReadonlyMap<string, GrantedBotPermissions>;
     }
 
-    let { location, bot, onClose, level, installedBots }: Props = $props();
+    let { bot, collection }: Props = $props();
     let requestedPermissions = $derived(definitionToPermissions(bot.definition));
     let grantedPermissions = $state(filterByLocation(definitionToPermissions(bot.definition)));
+    let location = $derived(installationLocationFrom(collection));
+    let level = $derived(collection.kind === "direct_chat" ? "group" : collection.level); // TODO suspect
 
     let busy = $state(false);
     let step = $state<Step>(firstStep());
 
     function filterByLocation(perm: GrantedBotPermissions): GrantedBotPermissions {
-        if (level === "group") {
+        if (collection.kind === "group_chat") {
             perm.command.communityPermissions = [];
             if (perm.autonomous !== undefined) {
                 perm.autonomous.communityPermissions = [];
@@ -67,7 +67,7 @@
                     step = "choose_autonomous_permissions";
                 } else {
                     busy = true;
-                    install(() => onClose(true));
+                    install();
                 }
                 break;
             case "choose_autonomous_permissions":
@@ -77,31 +77,20 @@
         }
     }
 
-    function install(then?: () => void) {
-        if (installedBots.has(bot.id)) {
-            if (then) {
-                then();
-            } else {
-                onClose(true);
-            }
-        } else {
-            client
-                .installBot(location, bot.id, {
-                    command: grantedPermissions.command,
-                    autonomous: grantedPermissions.autonomous,
-                })
-                .then((success) => {
-                    if (!success) {
-                        toastStore.showFailureToast(i18nKey("bots.add.failure"));
-                    } else {
-                        if (then) {
-                            then();
-                        } else {
-                            onClose(true);
-                        }
-                    }
-                });
-        }
+    function install() {
+        client
+            .installBot(location, bot.id, {
+                command: grantedPermissions.command,
+                autonomous: grantedPermissions.autonomous,
+            })
+            .then((success) => {
+                if (!success) {
+                    toastStore.showFailureToast(i18nKey("bots.add.failure"));
+                } else {
+                    publish("closeModalPage");
+                }
+            })
+            .finally(() => (busy = false));
     }
 </script>
 
@@ -140,7 +129,7 @@
                     {#if step === "choose_command_permissions" && bot.definition.autonomousConfig !== undefined}
                         {@render button(i18nKey("bots.add.next"), () => nextStep(step))}
                     {:else}
-                        {@render button(i18nKey("cancel"), () => onClose(false), true)}
+                        {@render button(i18nKey("cancel"), () => publish("closeModalPage"), true)}
                         {@render button(i18nKey("bots.add.install"), () => nextStep(step))}
                     {/if}
                 </ButtonGroup>

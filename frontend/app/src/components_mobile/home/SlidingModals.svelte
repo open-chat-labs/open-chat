@@ -23,6 +23,7 @@
     } from "openchat-client";
     import { onMount } from "svelte";
     import BotDetailsPage from "../bots/BotDetailsPage.svelte";
+    import BotInstaller from "../bots/install/BotInstaller.svelte";
     import WebhookModal from "../bots/WebhookModal.svelte";
     import AboutAccessGates from "./access_gates/AboutAccessGates.svelte";
     import AccessGates from "./access_gates/AccessGates.svelte";
@@ -95,6 +96,7 @@
               view: "invite" | "share";
           }
         | { kind: "show_bot"; bot: ExternalBot; collection?: ChatSummary | CommunitySummary }
+        | { kind: "install_bot"; bot: ExternalBot; collection: ChatSummary | CommunitySummary }
         | { kind: "user_groups"; community: CommunitySummary }
         | { kind: "show_bots"; collection: MultiUserChat | CommunitySummary }
         | { kind: "register_webhook"; chat: MultiUserChat }
@@ -170,6 +172,9 @@
 
     onMount(() => {
         const unsubs = [
+            subscribe("installBot", ({ bot, collection }) =>
+                push({ kind: "install_bot", bot, collection }),
+            ),
             subscribe("showBot", ({ bot, collection }) =>
                 push({ kind: "show_bot", bot, collection }),
             ),
@@ -468,6 +473,8 @@
             <BotsList collection={page.collection} />
         {:else if page.kind === "show_bot"}
             <BotDetailsPage bot={page.bot} collection={page.collection} />
+        {:else if page.kind === "install_bot"}
+            <BotInstaller bot={page.bot} collection={page.collection} />
         {/if}
     </SlidingPage>
 {/each}

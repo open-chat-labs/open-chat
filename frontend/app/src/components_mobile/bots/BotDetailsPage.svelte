@@ -19,6 +19,7 @@
     } from "component-lib";
     import {
         allUsersStore,
+        botIsInstallable,
         definitionToPermissions,
         installationLocationFrom,
         publish,
@@ -41,6 +42,7 @@
     import MulticolourText from "../MulticolourText.svelte";
     import Translatable from "../Translatable.svelte";
     import BotCommands from "./BotCommands.svelte";
+    import OwnedLocationSelector from "./OwnedLocationSelector.svelte";
 
     type PermissionType = "community" | "chat" | "message";
 
@@ -55,13 +57,15 @@
         collection?: ChatSummary | CommunitySummary;
     }
 
-    let { bot, collection }: Props = $props();
+    let { bot, collection = $bindable() }: Props = $props();
 
     let location = $derived(collection ? installationLocationFrom(collection) : undefined);
+    let installableHere = $derived(location !== undefined && botIsInstallable(bot, location));
     // svelte-ignore state_referenced_locally
     let selectedPermissionType = $state<PermissionType>(
         location === undefined || location.kind === "community" ? "community" : "chat",
     );
+    let selectInstallationLocation = $state(false);
     let permissions = $derived(definitionToPermissions(bot.definition));
     let owner = $derived($allUsersStore.get(bot.ownerId));
     let collectionName = $derived.by(() => {
@@ -84,9 +88,22 @@
     }
 
     function installBot() {
-        console.log("Install to ", location);
+        if (collection === undefined || !installableHere) {
+            selectInstallationLocation = true;
+        } else {
+            publish("installBot", { bot, collection });
+        }
     }
 </script>
+
+{#if selectInstallationLocation}
+    <OwnedLocationSelector
+        onSelect={(c) => {
+            collection = c;
+            selectInstallationLocation = false;
+            publish("installBot", { bot, collection });
+        }} />
+{/if}
 
 {#snippet metaDatum(title: string, Icon: any, label: string)}
     <Container
@@ -176,7 +193,7 @@
             <Translatable resourceKey={i18nKey("Proceed to installation")} />
         </Button>
         <BodySmall align={"center"} colour={"textSecondary"}>
-            {#if collectionName !== undefined}
+            {#if installableHere && collectionName !== undefined}
                 <MulticolourText
                     parts={[
                         {

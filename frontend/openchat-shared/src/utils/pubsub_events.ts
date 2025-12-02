@@ -1,5 +1,6 @@
 import type { Readable } from "svelte/store";
 import type {
+    BotInstallationLocation,
     ChannelIdentifier,
     ChatIdentifier,
     ChatSummary,
@@ -210,4 +211,8 @@ export type PubSubEvents = {
     inviteAndShare: { collection: MultiUserChat | CommunitySummary; view: "invite" | "share" };
     showBots: MultiUserChat | CommunitySummary;
     showBot: { bot: ExternalBot; collection?: ChatSummary | CommunitySummary };
+    installBot: {
+        bot: ExternalBot;
+        collection: ChatSummary | CommunitySummary;
+    };
 };

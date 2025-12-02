@@ -31,7 +31,7 @@
 
     let { location = $bindable() }: Props = $props();
     let searchTerm: string = $state("");
-    let placeholder = i18nKey("Search for a community, group or user");
+    let placeholder = i18nKey("Search for a community or group");
     let results: Match[] = $state([]);
     let selected: Match | undefined = $state(undefined);
     let focused = $state(false);
