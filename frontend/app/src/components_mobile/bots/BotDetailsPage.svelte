@@ -6,7 +6,9 @@
         BodySmall,
         Button,
         Caption,
+        Chip,
         ColourVars,
+        CommonButton,
         Container,
         defaultBackgroundGradient,
         H2,
@@ -18,21 +20,29 @@
     import {
         allUsersStore,
         definitionToPermissions,
+        installationLocationFrom,
         publish,
+        type BotChatPermission,
+        type BotCommunityPermission,
         type ChatSummary,
         type CommunitySummary,
         type ExternalBot,
+        type ExternalBotPermissions,
+        type MessagePermission,
     } from "openchat-client";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import Calendar from "svelte-material-icons/CalendarMonthOutline.svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import Installs from "svelte-material-icons/CloudDownloadOutline.svelte";
+    import Lock from "svelte-material-icons/Lock.svelte";
     import ThumbUp from "svelte-material-icons/ThumbUpOutline.svelte";
     import Markdown from "../home/Markdown.svelte";
     import Bitcoin from "../icons/Bitcoin.svelte";
     import MulticolourText from "../MulticolourText.svelte";
     import Translatable from "../Translatable.svelte";
     import BotCommands from "./BotCommands.svelte";
+
+    type PermissionType = "community" | "chat" | "message";
 
     /**
      * This page will be used for displaying the details of an individual bot
@@ -47,6 +57,11 @@
 
     let { bot, collection }: Props = $props();
 
+    let location = $derived(collection ? installationLocationFrom(collection) : undefined);
+    // svelte-ignore state_referenced_locally
+    let selectedPermissionType = $state<PermissionType>(
+        location === undefined || location.kind === "community" ? "community" : "chat",
+    );
     let permissions = $derived(definitionToPermissions(bot.definition));
     let owner = $derived($allUsersStore.get(bot.ownerId));
     let collectionName = $derived.by(() => {
@@ -205,10 +220,105 @@
         <BotCommands commands={bot.definition.commands} />
     </Container>
 
-    <Container padding={["zero", "md"]} direction={"vertical"} gap={"sm"}>
-        <pre>{JSON.stringify(permissions, null, 4)}</pre>
+    {#if bot.definition.commands.length > 0}
+        <Container padding={["zero", "md"]} direction={"vertical"} gap={"sm"}>
+            <BodySmall colour={"textSecondary"}>
+                <Translatable resourceKey={i18nKey("Command permissions")} />
+            </BodySmall>
+            <Body>
+                <Translatable
+                    resourceKey={i18nKey(
+                        "This bot requests the following permissions to support its commands.",
+                    )} />
+            </Body>
+            {@render permissionsView(permissions.command)}
+        </Container>
+    {/if}
+
+    {#if permissions.autonomous !== undefined}
+        <Container padding={["zero", "md"]} direction={"vertical"} gap={"sm"}>
+            <BodySmall colour={"textSecondary"}>
+                <Translatable resourceKey={i18nKey("Autonomous permissions")} />
+            </BodySmall>
+            <Body>
+                <Translatable
+                    resourceKey={i18nKey(
+                        "This bot requests the following permissions to support its autonomous behaviour.",
+                    )} />
+            </Body>
+            {@render permissionsView(permissions.autonomous)}
+        </Container>
+    {/if}
+
+    <Container
+        padding={["zero", "md"]}
+        mainAxisAlignment={"spaceBetween"}
+        crossAxisAlignment={"center"}>
+        <CommonButton onClick={likeBot} mode={"active"} size={"small_text"}>
+            {#snippet icon(color, size)}
+                <ThumbUp {color} {size} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("I like this")} />
+        </CommonButton>
+        <CommonButton onClick={tipBot} mode={"active"} size={"medium"}>
+            {#snippet icon(color, size)}
+                <Bitcoin {color} {size} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("Tip the creator")} />
+        </CommonButton>
     </Container>
 </Container>
+
+{#snippet permTab(t: PermissionType, label: string)}
+    <Chip
+        onClick={() => (selectedPermissionType = t)}
+        mode={selectedPermissionType === t ? "rounded" : "unselected"}>
+        <Translatable resourceKey={i18nKey(label)} />
+    </Chip>
+{/snippet}
+
+{#snippet permList(
+    p: (BotChatPermission | BotCommunityPermission | MessagePermission)[],
+    labelPrefix: string = "",
+)}
+    {#if p.length === 0}
+        <Body>
+            <Translatable resourceKey={i18nKey("bots.add.noPermissions")}></Translatable>
+        </Body>
+    {:else}
+        <Container wrap crossAxisAlignment={"center"} gap={"sm"}>
+            {#each p as perm}
+                {@render permChip(`${labelPrefix}${perm}`)}
+            {/each}
+        </Container>
+    {/if}
+{/snippet}
+
+{#snippet permChip(p: string)}
+    <Chip>
+        {#snippet icon(color)}
+            <Lock {color} />
+        {/snippet}
+        <Translatable resourceKey={i18nKey(`permissions.${p}`)} />
+    </Chip>
+{/snippet}
+
+{#snippet permissionsView(p: ExternalBotPermissions)}
+    <Container padding={["zero", "zero", "md", "zero"]} crossAxisAlignment={"center"} gap={"sm"}>
+        {#if location === undefined || location.kind === "community"}
+            {@render permTab("community", "Community")}
+        {/if}
+        {@render permTab("chat", "Chat")}
+        {@render permTab("message", "Message")}
+    </Container>
+    {#if selectedPermissionType === "chat"}
+        {@render permList(p.chatPermissions)}
+    {:else if selectedPermissionType === "community"}
+        {@render permList(p.communityPermissions)}
+    {:else if selectedPermissionType === "message"}
+        {@render permList(p.messagePermissions, "messagePermissions.")}
+    {/if}
+{/snippet}
 
 <style lang="scss">
     :global(.container.bot_background_gradient > .icon_button:first-child) {
