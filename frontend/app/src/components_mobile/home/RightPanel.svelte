@@ -16,7 +16,6 @@
         roleAsText,
         selectedChatIdStore,
         selectedChatMembersStore,
-        selectedChatPinnedMessagesStore,
         selectedChatSummaryStore,
         selectedCommunityBlockedUsersStore,
         selectedCommunityBotsStore,
@@ -36,7 +35,6 @@
     import ChannelOrCommunitySummary from "./ChannelOrCommunitySummary.svelte";
     import InviteUsers from "./groupdetails/InviteUsers.svelte";
     import Members from "./groupdetails/Members.svelte";
-    import PinnedMessages from "./pinned/PinnedMessages.svelte";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import ActiveCallParticipants from "./video/ActiveCallParticipants.svelte";
 
@@ -434,12 +432,6 @@
                 onInviteUsers={onInviteGroupUsers}
                 onCancelInviteUsers={client.popRightPanelHistory} />
         {/if}
-    {:else if $lastRightPanelState.kind === "show_pinned" && $selectedChatIdStore !== undefined && ($selectedChatIdStore.kind === "group_chat" || $selectedChatIdStore.kind === "channel") && multiUserChat !== undefined}
-        <PinnedMessages
-            chatId={$selectedChatIdStore}
-            pinned={$selectedChatPinnedMessagesStore}
-            dateLastPinned={multiUserChat.dateLastPinned}
-            onClose={client.popRightPanelHistory} />
     {:else if $lastRightPanelState.kind === "proposal_filters" && $selectedChatSummaryStore !== undefined}
         <ProposalGroupFilters
             selectedChat={$selectedChatSummaryStore}

@@ -26,6 +26,7 @@ import type {
     Notification,
     PaymentGate,
     PublicProfile,
+    ReadonlySet,
     ResourceKey,
     TokenBalanceGate,
     UpdatedRules,
@@ -219,4 +220,5 @@ export type PubSubEvents = {
         bot: ExternalBot;
         collection: ChatSummary | CommunitySummary;
     };
+    showPinned: { chat: MultiUserChat; pinned: ReadonlySet<number> };
 };

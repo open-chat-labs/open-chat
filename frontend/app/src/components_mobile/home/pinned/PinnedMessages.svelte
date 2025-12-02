@@ -2,37 +2,31 @@
     import type {
         EventWrapper,
         Message,
-        MultiUserChatIdentifier,
+        MultiUserChat,
         OpenChat,
         ReadonlySet,
     } from "openchat-client";
     import {
         currentUserStore,
-        iconSize,
         messagesRead,
         selectedChatPinnedMessagesStore,
         subscribe,
     } from "openchat-client";
-    import { isSuccessfulEventsResponse } from "openchat-shared";
+    import { isSuccessfulEventsResponse, publish } from "openchat-shared";
     import { getContext, onMount, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
-    import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import type { RemoteData } from "../../../utils/remoteData";
-    import HoverIcon from "../../HoverIcon.svelte";
     import Loading from "../../Loading.svelte";
-    import SectionHeader from "../../SectionHeader.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import SlidingPageContent from "../SlidingPageContent.svelte";
     import PinnedMessage from "./PinnedMessage.svelte";
 
     interface Props {
         pinned: ReadonlySet<number>;
-        chatId: MultiUserChatIdentifier;
-        dateLastPinned: bigint | undefined;
-        onClose: () => void;
+        chat: MultiUserChat;
     }
 
-    let { chatId, dateLastPinned, onClose }: Props = $props();
+    let { pinned, chat }: Props = $props();
 
     const client = getContext<OpenChat>("client");
     let unread = $state<boolean>(false);
@@ -40,9 +34,9 @@
 
     onMount(() => {
         const unsubs = [
-            subscribe("chatWith", onClose),
+            subscribe("chatWith", () => publish("closeModalPage")),
             messagesRead.subscribe(() => {
-                unread = client.unreadPinned(chatId, dateLastPinned);
+                unread = client.unreadPinned(chat.id, chat.dateLastPinned);
             }),
         ];
         return () => {
@@ -55,7 +49,7 @@
     let messages: RemoteData<EventWrapper<Message>[][], string> = $state({ kind: "idle" });
 
     function close() {
-        onClose();
+        publish("closeModalPage");
         messages = { kind: "idle" };
     }
 
@@ -75,7 +69,7 @@
                     messages = { kind: "loading" };
                 }
                 client
-                    .getMessagesByMessageIndex(chatId, undefined, pinned)
+                    .getMessagesByMessageIndex(chat.id, undefined, pinned)
                     .then((resp) => {
                         if (!isSuccessfulEventsResponse(resp)) {
                             messages = { kind: "error", error: "Unable to load pinned messages" };
@@ -88,7 +82,7 @@
                             };
 
                             if (unread) {
-                                client.markPinnedMessagesRead(chatId, dateLastPinned!);
+                                client.markPinnedMessagesRead(chat.id, chat.dateLastPinned!);
                             }
 
                             tick().then(scrollBottom);
@@ -106,7 +100,7 @@
 
     $effect(() => {
         reloadPinned(pinnedMessages);
-        unread = client.unreadPinned(chatId, dateLastPinned);
+        unread = client.unreadPinned(chat.id, chat.dateLastPinned);
     });
 
     function dateGroupKey(group: EventWrapper<Message>[]): string {
@@ -115,46 +109,35 @@
     }
 </script>
 
-<SectionHeader gap>
-    <h4><Translatable resourceKey={i18nKey("pinnedMessages")} /></h4>
-    <span title={$_("close")} class="close" onclick={close}>
-        <HoverIcon>
-            <Close size={$iconSize} color={"var(--icon-txt)"} />
-        </HoverIcon>
-    </span>
-</SectionHeader>
-
-<div bind:this={messagesDiv} class="pinned-messages">
-    {#if messages.kind !== "success"}
-        <Loading />
-    {:else}
-        {#each messages.data as dayGroup (dateGroupKey(dayGroup))}
-            <div class="day-group">
-                <div class="date-label">
-                    {client.formatMessageDate(dayGroup[0]?.timestamp, $_("today"), $_("yesterday"))}
+<SlidingPageContent title={i18nKey("pinnedMessages")}>
+    <div bind:this={messagesDiv} class="pinned-messages">
+        {#if messages.kind !== "success"}
+            <Loading />
+        {:else}
+            {#each messages.data as dayGroup (dateGroupKey(dayGroup))}
+                <div class="day-group">
+                    <div class="date-label">
+                        {client.formatMessageDate(
+                            dayGroup[0]?.timestamp,
+                            $_("today"),
+                            $_("yesterday"),
+                        )}
+                    </div>
+                    {#each dayGroup as message (message.event.messageId)}
+                        <PinnedMessage
+                            chatId={chat.id}
+                            timestamp={message.timestamp}
+                            user={$currentUserStore}
+                            senderId={message.event.sender}
+                            msg={message.event} />
+                    {/each}
                 </div>
-                {#each dayGroup as message (message.event.messageId)}
-                    <PinnedMessage
-                        {chatId}
-                        timestamp={message.timestamp}
-                        user={$currentUserStore}
-                        senderId={message.event.sender}
-                        msg={message.event} />
-                {/each}
-            </div>
-        {/each}
-    {/if}
-</div>
+            {/each}
+        {/if}
+    </div>
+</SlidingPageContent>
 
 <style lang="scss">
-    h4 {
-        flex: 1;
-        margin: 0 $sp3;
-        @include font-size(fs-120);
-    }
-    .close {
-        flex: 0 0 30px;
-    }
     .pinned-messages {
         @include message-list();
     }

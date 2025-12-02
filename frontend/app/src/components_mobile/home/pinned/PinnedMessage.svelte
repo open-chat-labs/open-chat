@@ -1,5 +1,6 @@
 <script lang="ts">
     import { findUser } from "@src/utils/user";
+    import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import type { CreatedUser, Message, MultiUserChatIdentifier, OpenChat } from "openchat-client";
     import {
         allUsersStore,
@@ -7,6 +8,7 @@
         chatListScopeStore,
         fullWidth,
         mobileWidth,
+        publish,
         routeForMessage,
         selectedChatIdStore,
         selectedChatWebhooksStore,
@@ -17,7 +19,6 @@
     import { rtlStore } from "../../../stores/rtl";
     import Avatar from "../../Avatar.svelte";
     import Link from "../../Link.svelte";
-    import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import ChatMessageContent from "../ChatMessageContent.svelte";
     import IntersectionObserver from "../IntersectionObserver.svelte";
     import RepliesTo from "../RepliesTo.svelte";
@@ -78,6 +79,7 @@
                     msg.messageIndex,
                 ),
             );
+            publish("closeModalPage");
         }
     }
 </script>

@@ -19,6 +19,7 @@
         type NeuronGate,
         type PaymentGate,
         type PublicProfile,
+        type ReadonlySet,
         type TokenBalanceGate,
         type UserGroupDetails,
     } from "openchat-client";
@@ -57,6 +58,7 @@
     import InviteAndShare from "./membership/InviteAndShare.svelte";
     import MemberManagement from "./membership/MemberManagement.svelte";
     import NewMessage from "./NewMessage.svelte";
+    import PinnedMessages from "./pinned/PinnedMessages.svelte";
     import Rules from "./Rules.svelte";
     import SlidingPage from "./SlidingPage.svelte";
     import Thread from "./thread/Thread.svelte";
@@ -102,6 +104,7 @@
               collection?: ChatSummary | CommunitySummary;
               grantedPermissions?: GrantedBotPermissions;
           }
+        | { kind: "show_pinned"; chat: MultiUserChat; pinned: ReadonlySet<number> }
         | { kind: "install_bot"; bot: ExternalBot; collection: ChatSummary | CommunitySummary }
         | { kind: "user_groups"; community: CommunitySummary }
         | { kind: "show_bots"; collection: MultiUserChat | CommunitySummary }
@@ -178,6 +181,9 @@
 
     onMount(() => {
         const unsubs = [
+            subscribe("showPinned", ({ chat, pinned }) =>
+                push({ kind: "show_pinned", chat, pinned }),
+            ),
             subscribe("installBot", ({ bot, collection }) =>
                 push({ kind: "install_bot", bot, collection }),
             ),
@@ -484,6 +490,8 @@
                 grantedPermissions={page.grantedPermissions} />
         {:else if page.kind === "install_bot"}
             <BotInstaller bot={page.bot} collection={page.collection} />
+        {:else if page.kind === "show_pinned"}
+            <PinnedMessages chat={page.chat} pinned={page.pinned} />
         {/if}
     </SlidingPage>
 {/each}

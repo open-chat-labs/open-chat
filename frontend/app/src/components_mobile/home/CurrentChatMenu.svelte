@@ -7,11 +7,12 @@
         directChatBotsStore,
         favouritesStore,
         isProposalGroupStore,
+        type MultiUserChat,
         notificationsSupported,
         type OpenChat,
         platformModeratorStore,
         publish,
-        setRightPanelHistory,
+        selectedChatPinnedMessagesStore,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -79,12 +80,8 @@
         onShowGroupDetails();
     }
 
-    function showPinned() {
-        setRightPanelHistory([
-            {
-                kind: "show_pinned",
-            },
-        ]);
+    function showPinned(chat: MultiUserChat) {
+        publish("showPinned", { chat, pinned: $selectedChatPinnedMessagesStore });
     }
 
     function searchChat() {
@@ -204,7 +201,7 @@
 {/if}
 {#if selectedChatSummary.kind === "group_chat" || selectedChatSummary.kind === "channel"}
     {#if hasPinned}
-        <MenuItem onclick={showPinned}>
+        <MenuItem onclick={() => showPinned(selectedChatSummary)}>
             <Translatable resourceKey={i18nKey("showPinned")} />
         </MenuItem>
     {/if}
