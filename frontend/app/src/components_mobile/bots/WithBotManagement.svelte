@@ -11,6 +11,7 @@
     import {
         definitionToPermissions,
         i18nKey,
+        publish,
         type BotInstallationLocation,
         type BotSummaryMode,
         type ExternalBot,
@@ -80,12 +81,7 @@
     }
 
     function viewBotDetails() {
-        botSummaryMode = {
-            kind: "viewing_bot",
-            id: commandContextId,
-            requested: definitionToPermissions(bot.definition),
-            granted: grantedPermissions,
-        };
+        publish("showBot", { bot, collection, grantedPermissions });
     }
 
     function closeModal() {

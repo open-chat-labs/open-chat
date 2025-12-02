@@ -11,6 +11,7 @@
         type EventWrapper,
         type ExternalBot,
         type FullWebhookDetails,
+        type GrantedBotPermissions,
         type GroupChatSummary,
         type Message,
         type MultiUserChat,
@@ -95,7 +96,12 @@
               collection: MultiUserChat | CommunitySummary;
               view: "invite" | "share";
           }
-        | { kind: "show_bot"; bot: ExternalBot; collection?: ChatSummary | CommunitySummary }
+        | {
+              kind: "show_bot";
+              bot: ExternalBot;
+              collection?: ChatSummary | CommunitySummary;
+              grantedPermissions?: GrantedBotPermissions;
+          }
         | { kind: "install_bot"; bot: ExternalBot; collection: ChatSummary | CommunitySummary }
         | { kind: "user_groups"; community: CommunitySummary }
         | { kind: "show_bots"; collection: MultiUserChat | CommunitySummary }
@@ -175,8 +181,8 @@
             subscribe("installBot", ({ bot, collection }) =>
                 push({ kind: "install_bot", bot, collection }),
             ),
-            subscribe("showBot", ({ bot, collection }) =>
-                push({ kind: "show_bot", bot, collection }),
+            subscribe("showBot", ({ bot, collection, grantedPermissions }) =>
+                push({ kind: "show_bot", bot, collection, grantedPermissions }),
             ),
             subscribe("showBots", (collection) => push({ kind: "show_bots", collection })),
             subscribe("registerWebhook", (chat) => push({ kind: "register_webhook", chat })),
@@ -472,7 +478,10 @@
         {:else if page.kind === "show_bots"}
             <BotsList collection={page.collection} />
         {:else if page.kind === "show_bot"}
-            <BotDetailsPage bot={page.bot} collection={page.collection} />
+            <BotDetailsPage
+                bot={page.bot}
+                collection={page.collection}
+                grantedPermissions={page.grantedPermissions} />
         {:else if page.kind === "install_bot"}
             <BotInstaller bot={page.bot} collection={page.collection} />
         {/if}

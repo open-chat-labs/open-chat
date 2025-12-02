@@ -1,5 +1,6 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
+    import { toastStore } from "@src/stores/toast";
     import {
         Avatar,
         Body,
@@ -19,23 +20,29 @@
     import {
         allUsersStore,
         botIsInstallable,
+        chatListScopeStore,
         definitionToPermissions,
         installationLocationFrom,
+        OpenChat,
         publish,
+        routeForScope,
         type BotChatPermission,
         type BotCommunityPermission,
         type ChatSummary,
         type CommunitySummary,
         type ExternalBot,
         type ExternalBotPermissions,
+        type GrantedBotPermissions,
         type MessagePermission,
     } from "openchat-client";
+    import { getContext } from "svelte";
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import Calendar from "svelte-material-icons/CalendarMonthOutline.svelte";
     import ChatOutline from "svelte-material-icons/ChatOutline.svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import Installs from "svelte-material-icons/CloudDownloadOutline.svelte";
+    import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import ThumbUp from "svelte-material-icons/ThumbUpOutline.svelte";
     import Markdown from "../home/Markdown.svelte";
@@ -46,24 +53,24 @@
     import BotsPermissionInfo from "./BotsPermissionInfo.svelte";
     import OwnedLocationSelector from "./OwnedLocationSelector.svelte";
 
-    /**
-     * This page will be used for displaying the details of an individual bot
-     * We *might* be able to use this for register bot as well - not sure yet.
-     * Not that the bot may or may not be installed when we use this page.
-     */
+    const client = getContext<OpenChat>("client");
 
     interface Props {
         bot: ExternalBot;
         collection?: ChatSummary | CommunitySummary;
+        grantedPermissions?: GrantedBotPermissions; // this will be set if the bot is already installed
     }
 
-    let { bot, collection = $bindable() }: Props = $props();
+    let { bot, collection = $bindable(), grantedPermissions }: Props = $props();
 
+    let canManageBots = $derived(
+        collection !== undefined ? client.canManageBots(collection.id) : true,
+    );
     let isPublic = $derived(bot.registrationStatus.kind === "public");
     let location = $derived(collection ? installationLocationFrom(collection) : undefined);
     let installableHere = $derived(location !== undefined && botIsInstallable(bot, location));
     let selectInstallationLocation = $state(false);
-    let permissions = $derived(definitionToPermissions(bot.definition));
+    let requestedPermissions = $derived(definitionToPermissions(bot.definition));
     let owner = $derived($allUsersStore.get(bot.ownerId));
     let collectionName = $derived.by(() => {
         if (collection === undefined) return undefined;
@@ -82,6 +89,19 @@
 
     function tipBot() {
         console.log("tip bot");
+    }
+
+    function removeBot() {
+        if (location === undefined) return;
+
+        if (location.kind === "direct_chat") {
+            page(routeForScope($chatListScopeStore));
+        }
+        client.uninstallBot(location, bot.id).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast(i18nKey("bots.manage.removeFailed"));
+            }
+        });
     }
 
     function installBot() {
@@ -185,39 +205,58 @@
     <Caption colour={"textSecondary"} align={"center"}
         >TODO - none of the above stats are real</Caption>
 
-    <Container gap={"sm"} padding={["zero", "md"]} direction={"vertical"}>
-        <Button onClick={installBot}>
-            {#snippet icon(color)}
-                <ChevronRight {color} />
-            {/snippet}
-            <Translatable resourceKey={i18nKey("Proceed to installation")} />
-        </Button>
-        <BodySmall align={"center"} colour={"textSecondary"}>
-            {#if installableHere && collectionName !== undefined}
-                <MulticolourText
-                    parts={[
-                        {
-                            text: i18nKey(
-                                "By pressing the above button, you will proceed to configure this bot to be installed into the ",
-                            ),
-                            colour: "textSecondary",
-                        },
-                        {
-                            text: i18nKey(collectionName),
-                            colour: "primary",
-                        },
-                        {
-                            text: i18nKey(" location."),
-                            colour: "textSecondary",
-                        },
-                    ]}>
-                </MulticolourText>
+    {#if canManageBots}
+        <Container gap={"sm"} padding={["zero", "md"]} direction={"vertical"}>
+            {#if grantedPermissions !== undefined}
+                <Button onClick={installBot}>
+                    {#snippet icon(color)}
+                        <ChevronRight {color} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("Review bot permissions")} />
+                </Button>
+                <Button secondary onClick={removeBot}>
+                    {#snippet icon(color)}
+                        <DeleteOutline {color} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("Remove bot")} />
+                </Button>
             {:else}
-                <Translatable
-                    resourceKey={i18nKey(`Choose a location in which to install this bot.`)} />
+                <Button onClick={installBot}>
+                    {#snippet icon(color)}
+                        <ChevronRight {color} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("Proceed to installation")} />
+                </Button>
+                <BodySmall align={"center"} colour={"textSecondary"}>
+                    {#if installableHere && collectionName !== undefined}
+                        <MulticolourText
+                            parts={[
+                                {
+                                    text: i18nKey(
+                                        "By pressing the above button, you will proceed to configure this bot to be installed into the ",
+                                    ),
+                                    colour: "textSecondary",
+                                },
+                                {
+                                    text: i18nKey(collectionName),
+                                    colour: "primary",
+                                },
+                                {
+                                    text: i18nKey(" location."),
+                                    colour: "textSecondary",
+                                },
+                            ]}>
+                        </MulticolourText>
+                    {:else}
+                        <Translatable
+                            resourceKey={i18nKey(
+                                `Choose a location in which to install this bot.`,
+                            )} />
+                    {/if}
+                </BodySmall>
             {/if}
-        </BodySmall>
-    </Container>
+        </Container>
+    {/if}
 
     <Container padding={["zero", "md"]} direction={"vertical"} gap={"sm"}>
         <Body fontWeight={"bold"}>
@@ -234,7 +273,7 @@
         <Body fontWeight={"bold"}>
             <Translatable resourceKey={i18nKey("Commands")} />
         </Body>
-        <BotCommands commands={bot.definition.commands} />
+        <BotCommands commands={bot.definition.commands} {grantedPermissions} />
     </Container>
 
     <BotsPermissionInfo />
@@ -244,16 +283,19 @@
             <Body fontWeight={"bold"}>
                 <Translatable resourceKey={i18nKey("Command permissions")} />
             </Body>
-            {@render permissionsView(permissions.command)}
+            {@render permissionsView(requestedPermissions.command, grantedPermissions?.command)}
         </Container>
     {/if}
 
-    {#if permissions.autonomous !== undefined}
+    {#if requestedPermissions.autonomous !== undefined}
         <Container padding={["zero", "md"]} direction={"vertical"} gap={"sm"}>
             <Body fontWeight={"bold"}>
                 <Translatable resourceKey={i18nKey("Autonomous permissions")} />
             </Body>
-            {@render permissionsView(permissions.autonomous)}
+            {@render permissionsView(
+                requestedPermissions.autonomous,
+                grantedPermissions?.autonomous,
+            )}
         </Container>
     {/if}
 
@@ -279,21 +321,23 @@
 {#snippet permList(
     name: string,
     Icon: any,
-    p: (BotChatPermission | BotCommunityPermission | MessagePermission)[],
+    requested: (BotChatPermission | BotCommunityPermission | MessagePermission)[],
+    granted: (BotChatPermission | BotCommunityPermission | MessagePermission)[] | undefined,
     labelPrefix: string = "",
 )}
     <Container wrap crossAxisAlignment={"center"} gap={"xs"}>
         <Icon color={ColourVars.primary} />
         <Body width={hug} fontWeight={"bold"} colour={"primary"}>{name}</Body>
         <Body width={hug} fontWeight={"bold"} colour={"textSecondary"}>//</Body>
-        {#if p.length === 0}
+        {#if requested.length === 0}
             <Body width={hug}>
                 <Translatable resourceKey={i18nKey("bots.add.noPermissions")}></Translatable>
             </Body>
         {:else}
-            {#each p as perm, i}
-                {@const last = i === p.length - 1}
-                <Body width={hug}>
+            {#each requested as perm, i}
+                {@const isGranted = granted === undefined || granted.includes(perm)}
+                {@const last = i === requested.length - 1}
+                <Body colour={isGranted ? "textPrimary" : "textTertiary"} width={hug}>
                     <Translatable resourceKey={i18nKey(`permissions.${labelPrefix}${perm}`)} />
                     {#if !last}
                         {","}
@@ -304,14 +348,30 @@
     </Container>
 {/snippet}
 
-{#snippet permissionsView(p: ExternalBotPermissions)}
+{#snippet permissionsView(requested: ExternalBotPermissions, granted?: ExternalBotPermissions)}
     <Container direction={"vertical"} gap={"xl"}>
         {@const showCommunity = location === undefined || location.kind === "community"}
         {#if showCommunity}
-            {@render permList("In communities", AccountGroup, p.communityPermissions)}
+            {@render permList(
+                "In communities",
+                AccountGroup,
+                requested.communityPermissions,
+                granted?.communityPermissions,
+            )}
         {/if}
-        {@render permList("In chats", ForumOutline, p.chatPermissions)}
-        {@render permList("For messages", ChatOutline, p.messagePermissions, "messagePermissions.")}
+        {@render permList(
+            "In chats",
+            ForumOutline,
+            requested.chatPermissions,
+            granted?.chatPermissions,
+        )}
+        {@render permList(
+            "For messages",
+            ChatOutline,
+            requested.messagePermissions,
+            granted?.messagePermissions,
+            "messagePermissions.",
+        )}
     </Container>
 {/snippet}
 

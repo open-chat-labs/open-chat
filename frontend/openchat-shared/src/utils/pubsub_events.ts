@@ -1,6 +1,5 @@
 import type { Readable } from "svelte/store";
 import type {
-    BotInstallationLocation,
     ChannelIdentifier,
     ChatIdentifier,
     ChatSummary,
@@ -15,6 +14,7 @@ import type {
     EventWrapper,
     ExternalBot,
     FullWebhookDetails,
+    GrantedBotPermissions,
     GroupChatSummary,
     Level,
     Message,
@@ -210,7 +210,11 @@ export type PubSubEvents = {
     editUserGroup: UserGroupDetails;
     inviteAndShare: { collection: MultiUserChat | CommunitySummary; view: "invite" | "share" };
     showBots: MultiUserChat | CommunitySummary;
-    showBot: { bot: ExternalBot; collection?: ChatSummary | CommunitySummary };
+    showBot: {
+        bot: ExternalBot;
+        collection?: ChatSummary | CommunitySummary;
+        grantedPermissions?: GrantedBotPermissions;
+    };
     installBot: {
         bot: ExternalBot;
         collection: ChatSummary | CommunitySummary;

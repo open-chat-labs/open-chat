@@ -33,7 +33,11 @@
     {#snippet contents({ removeBot, reviewPermissions, viewBotDetails })}
         <Container crossAxisAlignment={"start"} gap={"md"}>
             <BotAvatar size={"md"} {bot} />
-            <Container gap={"xxs"} direction={"vertical"} width={{ kind: "fill" }}>
+            <Container
+                overflow={"hidden"}
+                gap={"xxs"}
+                direction={"vertical"}
+                width={{ kind: "fill" }}>
                 <Container crossAxisAlignment={"center"} gap={"xs"}>
                     <FilteredUsername {searchTerm} username={bot.name} />
                     <BotBadge bot />
