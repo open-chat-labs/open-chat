@@ -33,17 +33,18 @@
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import Calendar from "svelte-material-icons/CalendarMonthOutline.svelte";
+    import ChatOutline from "svelte-material-icons/ChatOutline.svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import Installs from "svelte-material-icons/CloudDownloadOutline.svelte";
+    import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import ThumbUp from "svelte-material-icons/ThumbUpOutline.svelte";
     import Markdown from "../home/Markdown.svelte";
     import Bitcoin from "../icons/Bitcoin.svelte";
     import MulticolourText from "../MulticolourText.svelte";
     import Translatable from "../Translatable.svelte";
     import BotCommands from "./BotCommands.svelte";
+    import BotsPermissionInfo from "./BotsPermissionInfo.svelte";
     import OwnedLocationSelector from "./OwnedLocationSelector.svelte";
-
-    type PermissionType = "community" | "chat" | "message";
 
     /**
      * This page will be used for displaying the details of an individual bot
@@ -61,10 +62,6 @@
     let isPublic = $derived(bot.registrationStatus.kind === "public");
     let location = $derived(collection ? installationLocationFrom(collection) : undefined);
     let installableHere = $derived(location !== undefined && botIsInstallable(bot, location));
-    // svelte-ignore state_referenced_locally
-    let selectedPermissionType = $state<PermissionType>(
-        location === undefined || location.kind === "community" ? "community" : "chat",
-    );
     let selectInstallationLocation = $state(false);
     let permissions = $derived(definitionToPermissions(bot.definition));
     let owner = $derived($allUsersStore.get(bot.ownerId));
@@ -240,17 +237,7 @@
         <BotCommands commands={bot.definition.commands} />
     </Container>
 
-    <Container padding={["zero", "md"]} direction={"vertical"} gap={"sm"}>
-        <Body fontWeight={"bold"}>
-            <Translatable resourceKey={i18nKey("Bot permissions")} />
-        </Body>
-        <Body colour={"textSecondary"}>
-            <Translatable
-                resourceKey={i18nKey(
-                    "Bots use command and autonomous permissions. Command permissions are required by the bot’s commands, while autonomous permissions are required for bot’s autonomous operations. ",
-                )} />
-        </Body>
-    </Container>
+    <BotsPermissionInfo />
 
     {#if bot.definition.commands.length > 0}
         <Container padding={["zero", "md"]} direction={"vertical"} gap={"sm"}>
@@ -323,13 +310,8 @@
         {#if showCommunity}
             {@render permList("In communities", AccountGroup, p.communityPermissions)}
         {/if}
-        {@render permList("In chats", AccountGroup, p.chatPermissions)}
-        {@render permList(
-            "For messages",
-            AccountGroup,
-            p.messagePermissions,
-            "messagePermissions.",
-        )}
+        {@render permList("In chats", ForumOutline, p.chatPermissions)}
+        {@render permList("For messages", ChatOutline, p.messagePermissions, "messagePermissions.")}
     </Container>
 {/snippet}
 

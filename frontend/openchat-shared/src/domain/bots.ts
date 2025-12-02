@@ -218,7 +218,9 @@ export function flattenCommandPermissions(definition: BotDefinition): ExternalBo
 export function definitionToPermissions(definition: BotDefinition): GrantedBotPermissions {
     return {
         command: flattenCommandPermissions(definition),
-        autonomous: definition.autonomousConfig?.permissions,
+        autonomous: definition.autonomousConfig
+            ? { ...definition.autonomousConfig.permissions }
+            : undefined,
     };
 }
 
