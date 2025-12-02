@@ -6,7 +6,6 @@
         BodySmall,
         Button,
         Caption,
-        Chip,
         ColourVars,
         CommonButton,
         Container,
@@ -31,11 +30,11 @@
         type ExternalBotPermissions,
         type MessagePermission,
     } from "openchat-client";
+    import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import Calendar from "svelte-material-icons/CalendarMonthOutline.svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import Installs from "svelte-material-icons/CloudDownloadOutline.svelte";
-    import Lock from "svelte-material-icons/Lock.svelte";
     import ThumbUp from "svelte-material-icons/ThumbUpOutline.svelte";
     import Markdown from "../home/Markdown.svelte";
     import Bitcoin from "../icons/Bitcoin.svelte";
@@ -59,6 +58,7 @@
 
     let { bot, collection = $bindable() }: Props = $props();
 
+    let isPublic = $derived(bot.registrationStatus.kind === "public");
     let location = $derived(collection ? installationLocationFrom(collection) : undefined);
     let installableHere = $derived(location !== undefined && botIsInstallable(bot, location));
     // svelte-ignore state_referenced_locally
@@ -163,7 +163,10 @@
                 size={"xxl"}
                 url={bot.avatarUrl ?? "/assets/bot_avatar.svg"}></Avatar>
             <Container crossAxisSelfAlignment={"end"} direction={"vertical"}>
-                <H2 fontWeight={"bold"}>{bot.name}</H2>
+                <Container crossAxisAlignment={"center"} gap={"sm"}>
+                    <H2 width={hug} fontWeight={"bold"}>{bot.name}</H2>
+                    <div class={`img ${isPublic ? "public" : "private"}`}></div>
+                </Container>
                 <Container gap={"xs"}>
                     <BodySmall width={{ kind: "hug" }} colour={"textSecondary"}>
                         <Translatable resourceKey={i18nKey("Owned by")} />
@@ -220,33 +223,39 @@
     </Container>
 
     <Container padding={["zero", "md"]} direction={"vertical"} gap={"sm"}>
-        <BodySmall fontWeight={"bold"} colour={"textSecondary"}>
+        <Body fontWeight={"bold"}>
             <Translatable resourceKey={i18nKey("Description")} />
-        </BodySmall>
+        </Body>
         <ReadMore>
-            <Body>
+            <Body colour={"textSecondary"}>
                 <Markdown inline={false} text={bot.definition.description} />
             </Body>
         </ReadMore>
     </Container>
 
     <Container padding={["zero", "md"]} direction={"vertical"} gap={"sm"}>
-        <BodySmall fontWeight={"bold"} colour={"textSecondary"}>
+        <Body fontWeight={"bold"}>
             <Translatable resourceKey={i18nKey("Commands")} />
-        </BodySmall>
+        </Body>
         <BotCommands commands={bot.definition.commands} />
+    </Container>
+
+    <Container padding={["zero", "md"]} direction={"vertical"} gap={"sm"}>
+        <Body fontWeight={"bold"}>
+            <Translatable resourceKey={i18nKey("Bot permissions")} />
+        </Body>
+        <Body colour={"textSecondary"}>
+            <Translatable
+                resourceKey={i18nKey(
+                    "Bots use command and autonomous permissions. Command permissions are required by the bot’s commands, while autonomous permissions are required for bot’s autonomous operations. ",
+                )} />
+        </Body>
     </Container>
 
     {#if bot.definition.commands.length > 0}
         <Container padding={["zero", "md"]} direction={"vertical"} gap={"sm"}>
-            <BodySmall colour={"textSecondary"}>
+            <Body fontWeight={"bold"}>
                 <Translatable resourceKey={i18nKey("Command permissions")} />
-            </BodySmall>
-            <Body>
-                <Translatable
-                    resourceKey={i18nKey(
-                        "This bot requests the following permissions to support its commands.",
-                    )} />
             </Body>
             {@render permissionsView(permissions.command)}
         </Container>
@@ -254,14 +263,8 @@
 
     {#if permissions.autonomous !== undefined}
         <Container padding={["zero", "md"]} direction={"vertical"} gap={"sm"}>
-            <BodySmall colour={"textSecondary"}>
+            <Body fontWeight={"bold"}>
                 <Translatable resourceKey={i18nKey("Autonomous permissions")} />
-            </BodySmall>
-            <Body>
-                <Translatable
-                    resourceKey={i18nKey(
-                        "This bot requests the following permissions to support its autonomous behaviour.",
-                    )} />
             </Body>
             {@render permissionsView(permissions.autonomous)}
         </Container>
@@ -286,55 +289,48 @@
     </Container>
 </Container>
 
-{#snippet permTab(t: PermissionType, label: string)}
-    <Chip
-        onClick={() => (selectedPermissionType = t)}
-        mode={selectedPermissionType === t ? "rounded" : "unselected"}>
-        <Translatable resourceKey={i18nKey(label)} />
-    </Chip>
-{/snippet}
-
 {#snippet permList(
+    name: string,
+    Icon: any,
     p: (BotChatPermission | BotCommunityPermission | MessagePermission)[],
     labelPrefix: string = "",
 )}
-    {#if p.length === 0}
-        <Body>
-            <Translatable resourceKey={i18nKey("bots.add.noPermissions")}></Translatable>
-        </Body>
-    {:else}
-        <Container wrap crossAxisAlignment={"center"} gap={"sm"}>
-            {#each p as perm}
-                {@render permChip(`${labelPrefix}${perm}`)}
+    <Container wrap crossAxisAlignment={"center"} gap={"xs"}>
+        <Icon color={ColourVars.primary} />
+        <Body width={hug} fontWeight={"bold"} colour={"primary"}>{name}</Body>
+        <Body width={hug} fontWeight={"bold"} colour={"textSecondary"}>//</Body>
+        {#if p.length === 0}
+            <Body width={hug}>
+                <Translatable resourceKey={i18nKey("bots.add.noPermissions")}></Translatable>
+            </Body>
+        {:else}
+            {#each p as perm, i}
+                {@const last = i === p.length - 1}
+                <Body width={hug}>
+                    <Translatable resourceKey={i18nKey(`permissions.${labelPrefix}${perm}`)} />
+                    {#if !last}
+                        {","}
+                    {/if}
+                </Body>
             {/each}
-        </Container>
-    {/if}
-{/snippet}
-
-{#snippet permChip(p: string)}
-    <Chip>
-        {#snippet icon(color)}
-            <Lock {color} />
-        {/snippet}
-        <Translatable resourceKey={i18nKey(`permissions.${p}`)} />
-    </Chip>
+        {/if}
+    </Container>
 {/snippet}
 
 {#snippet permissionsView(p: ExternalBotPermissions)}
-    <Container padding={["zero", "zero", "md", "zero"]} crossAxisAlignment={"center"} gap={"sm"}>
-        {#if location === undefined || location.kind === "community"}
-            {@render permTab("community", "Community")}
+    <Container direction={"vertical"} gap={"xl"}>
+        {@const showCommunity = location === undefined || location.kind === "community"}
+        {#if showCommunity}
+            {@render permList("In communities", AccountGroup, p.communityPermissions)}
         {/if}
-        {@render permTab("chat", "Chat")}
-        {@render permTab("message", "Message")}
+        {@render permList("In chats", AccountGroup, p.chatPermissions)}
+        {@render permList(
+            "For messages",
+            AccountGroup,
+            p.messagePermissions,
+            "messagePermissions.",
+        )}
     </Container>
-    {#if selectedPermissionType === "chat"}
-        {@render permList(p.chatPermissions)}
-    {:else if selectedPermissionType === "community"}
-        {@render permList(p.communityPermissions)}
-    {:else if selectedPermissionType === "message"}
-        {@render permList(p.messagePermissions, "messagePermissions.")}
-    {/if}
 {/snippet}
 
 <style lang="scss">
@@ -349,5 +345,21 @@
         height: 2rem;
         width: toRem(4);
         background-color: var(--background-2);
+    }
+
+    .img {
+        background-repeat: no-repeat;
+        $size: 1rem;
+        flex: 0 0 $size;
+        width: $size;
+        height: $size;
+
+        &.public {
+            background-image: url("/assets/unlocked.svg");
+        }
+
+        &.private {
+            background-image: url("/assets/locked.svg");
+        }
     }
 </style>
