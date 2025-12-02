@@ -9,11 +9,12 @@
         <Body fontWeight={"bold"}>
             <Translatable resourceKey={i18nKey("Bot permissions")} />
         </Body>
-        <CommonButton
-            size={"small_text"}
-            mode={"active"}
-            onClick={() => console.log("Go to bot sdk page?")}>
-            <Translatable resourceKey={i18nKey("Find out more")} />
+        <CommonButton size={"small_text"} mode={"active"}>
+            <a
+                href={"https://github.com/open-chat-labs/open-chat-bots/blob/main/OVERVIEW.md"}
+                target={"_blank"}>
+                <Translatable resourceKey={i18nKey("Find out more")} />
+            </a>
         </CommonButton>
     </Container>
     <Body colour={"textSecondary"}>

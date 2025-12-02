@@ -25,6 +25,12 @@
     </Container>
 {/snippet}
 
+{#snippet noperm()}
+    <Body>
+        <Translatable resourceKey={i18nKey("bots.add.noPermissions")}></Translatable>
+    </Body>
+{/snippet}
+
 {#snippet chatTab()}
     <Container
         direction={"vertical"}
@@ -34,7 +40,7 @@
         background={ColourVars.background1}>
         {@render permHeader("Chat permissions", ForumOutline)}
         {#if requested.chatPermissions.length === 0}
-            <Translatable resourceKey={i18nKey("bots.add.noPermissions")}></Translatable>
+            {@render noperm()}
         {:else}
             {#each requested.chatPermissions as perm}
                 <Switch
@@ -57,7 +63,7 @@
         background={ColourVars.background1}>
         {@render permHeader("Community permissions", AccountGroup)}
         {#if requested.communityPermissions.length === 0}
-            <Translatable resourceKey={i18nKey("bots.add.noPermissions")}></Translatable>
+            {@render noperm()}
         {:else}
             {#each requested.communityPermissions as perm}
                 <Switch
@@ -80,7 +86,7 @@
         background={ColourVars.background1}>
         {@render permHeader("Message permissions", ChatOutline)}
         {#if requested.messagePermissions.length === 0}
-            <Translatable resourceKey={i18nKey("bots.add.noPermissions")}></Translatable>
+            {@render noperm()}
         {:else}
             {#each requested.messagePermissions as perm}
                 <Switch

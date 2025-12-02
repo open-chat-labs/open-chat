@@ -2,20 +2,15 @@
     import { toastStore } from "@src/stores/toast";
     import {
         chatListScopeStore,
-        chatSummariesListStore,
         currentUserIdStore,
-        mobileWidth,
-        pageRedirect,
         routeForScope,
         type ChatSummary,
         type CommunitySummary,
         type OpenChat,
     } from "openchat-client";
     import {
-        chatIdentifiersEqual,
         definitionToPermissions,
         i18nKey,
-        routeForChatIdentifier,
         type BotInstallationLocation,
         type BotSummaryMode,
         type ExternalBot,
@@ -66,18 +61,7 @@
         const botId = bot.id;
 
         if (commandContextId.kind === "direct_chat") {
-            if ($mobileWidth) {
-                page(routeForScope($chatListScopeStore));
-            } else {
-                const first = $chatSummariesListStore.find(
-                    (c) => !chatIdentifiersEqual(c.id, { kind: "direct_chat", userId: bot.id }),
-                );
-                if (first) {
-                    pageRedirect(routeForChatIdentifier($chatListScopeStore.kind, first.id));
-                } else {
-                    page(routeForScope(client.getDefaultScope()));
-                }
-            }
+            page(routeForScope($chatListScopeStore));
         }
         client.uninstallBot(ctx, botId).then((success) => {
             if (!success) {

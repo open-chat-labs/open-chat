@@ -6,6 +6,7 @@
         Button,
         ColourVars,
         Container,
+        defaultBackgroundGradient,
         ReadMore,
         StatusCard,
         Subtitle,
@@ -108,63 +109,56 @@
 
 <SlidingPageContent title={i18nKey("bots.add.title", undefined, level, true)}>
     <Container gap={"xl"} direction={"vertical"} padding={["xl", "lg"]}>
-        <Container
-            padding={"xs"}
-            borderRadius={"lg"}
-            background={"linear-gradient(90deg, var(--primary), var(--secondary))"}>
+        <Container gap={"sm"} direction={"vertical"}>
             <Container
-                padding={"xl"}
-                gap={"xxl"}
-                direction={"vertical"}
+                overflow={"visible"}
                 borderRadius={"md"}
-                background={ColourVars.background1}>
-                <Container crossAxisAlignment={"start"} gap={"md"}>
-                    <BotAvatar size={"xl"} {bot} />
-                    <Container
-                        overflow={"hidden"}
-                        gap={"xxs"}
-                        direction={"vertical"}
-                        width={{ kind: "fill" }}>
-                        <Body colour={"primary"} fontWeight={"bold"}>
-                            <Translatable resourceKey={i18nKey("Installing")} />
-                        </Body>
-                        <Subtitle fontWeight={"bold"}>
-                            {bot.name}
-                        </Subtitle>
-                    </Container>
-                </Container>
-
+                padding={"md"}
+                background={defaultBackgroundGradient}
+                crossAxisAlignment={"start"}
+                gap={"md"}>
+                <BotAvatar size={"xl"} {bot} />
                 <Container
-                    borderRadius={"xl"}
-                    mainAxisAlignment={"center"}
-                    crossAxisAlignment={"center"}
-                    overflow={"visible"}
-                    height={{ kind: "fixed", size: "4px" }}
-                    background={ColourVars.primary}>
-                    <Container
-                        supplementalClass={"connecting_arrow"}
-                        padding={"sm"}
-                        width={{ kind: "hug" }}
-                        background={ColourVars.primary}
-                        borderRadius={"circle"}>
-                        <ArrowDown size={"2rem"} color={ColourVars.background1} />
-                    </Container>
+                    overflow={"hidden"}
+                    gap={"xxs"}
+                    direction={"vertical"}
+                    width={{ kind: "fill" }}>
+                    <Body colour={"textPrimary"} fontWeight={"bold"}>
+                        <Translatable resourceKey={i18nKey("Installing")} />
+                    </Body>
+                    <Subtitle colour={"textOnPrimary"} fontWeight={"bold"}>
+                        {bot.name}
+                    </Subtitle>
                 </Container>
+            </Container>
 
-                <Container crossAxisAlignment={"start"} gap={"md"}>
-                    <Avatar url={containerAvatarUrl} size={"xl"} />
-                    <Container
-                        overflow={"hidden"}
-                        gap={"xxs"}
-                        direction={"vertical"}
-                        width={{ kind: "fill" }}>
-                        <Body colour={"primary"} fontWeight={"bold"}>
-                            <Translatable resourceKey={i18nKey("Into")} />
-                        </Body>
-                        <Subtitle fontWeight={"bold"}>
-                            {containerName}
-                        </Subtitle>
-                    </Container>
+            <Container
+                overflow={"visible"}
+                borderRadius={"md"}
+                padding={"md"}
+                background={defaultBackgroundGradient}
+                crossAxisAlignment={"start"}
+                gap={"md"}>
+                <Avatar url={containerAvatarUrl} size={"xl"} />
+                <Container
+                    overflow={"hidden"}
+                    gap={"xxs"}
+                    direction={"vertical"}
+                    width={{ kind: "fill" }}>
+                    <Body colour={"textPrimary"} fontWeight={"bold"}>
+                        <Translatable resourceKey={i18nKey("Into")} />
+                    </Body>
+                    <Subtitle colour={"textOnPrimary"} fontWeight={"bold"}>
+                        {containerName}
+                    </Subtitle>
+                </Container>
+                <Container
+                    supplementalClass={"connecting_arrow"}
+                    padding={"sm"}
+                    width={{ kind: "hug" }}
+                    background={ColourVars.background1}
+                    borderRadius={"circle"}>
+                    <ArrowDown size={"1.2rem"} color={ColourVars.primary} />
                 </Container>
             </Container>
         </Container>
@@ -247,11 +241,7 @@
                 {/snippet}
                 <Translatable resourceKey={i18nKey("bots.add.install")} />
             </Button>
-            <Button
-                secondary
-                disabled={busy}
-                loading={busy}
-                onClick={() => publish("closeModalPage")}>
+            <Button secondary disabled={busy} onClick={() => publish("closeModalPage")}>
                 <Translatable resourceKey={i18nKey("cancel")} />
             </Button>
         </Container>
@@ -261,5 +251,8 @@
 <style lang="scss">
     :global(.container.connecting_arrow) {
         position: absolute !important;
+        top: 0;
+        left: 50%;
+        transform: translateY(calc(-50% - 4px)) translateX(-50%);
     }
 </style>
