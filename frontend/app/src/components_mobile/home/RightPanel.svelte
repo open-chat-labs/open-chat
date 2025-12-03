@@ -35,7 +35,6 @@
     import ChannelOrCommunitySummary from "./ChannelOrCommunitySummary.svelte";
     import InviteUsers from "./groupdetails/InviteUsers.svelte";
     import Members from "./groupdetails/Members.svelte";
-    import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -425,10 +424,6 @@
                 onInviteUsers={onInviteGroupUsers}
                 onCancelInviteUsers={client.popRightPanelHistory} />
         {/if}
-    {:else if $lastRightPanelState.kind === "proposal_filters" && $selectedChatSummaryStore !== undefined}
-        <ProposalGroupFilters
-            selectedChat={$selectedChatSummaryStore}
-            onClose={client.popRightPanelHistory} />
     {/if}
 </section>
 

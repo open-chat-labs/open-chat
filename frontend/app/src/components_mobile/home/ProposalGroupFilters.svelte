@@ -1,33 +1,25 @@
 <script lang="ts">
+    import { CommonButton, Container, Switch } from "component-lib";
     import type { ChatSummary, OpenChat } from "openchat-client";
-    import {
-        filteredProposalsStore,
-        iconSize,
-        mobileWidth,
-        proposalTopicsStore,
-    } from "openchat-client";
+    import { filteredProposalsStore, proposalTopicsStore } from "openchat-client";
     import { getContext } from "svelte";
-    import { _ } from "svelte-i18n";
-    import Close from "svelte-material-icons/Close.svelte";
+    import Check from "svelte-material-icons/CheckCircleOutline.svelte";
+    import Minus from "svelte-material-icons/MinusCircleOutline.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import {
         proposalActionCategories,
         type ProposalActionCategory,
     } from "../../stores/proposalSections";
     import { OC_GOVERNANCE_CANISTER_ID } from "../../utils/sns";
-    import Checkbox from "../Checkbox.svelte";
     import CollapsibleCard from "../CollapsibleCard.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
-    import LinkButton from "../LinkButton.svelte";
-    import SectionHeader from "../SectionHeader.svelte";
     import Translatable from "../Translatable.svelte";
+    import SlidingPageContent from "./SlidingPageContent.svelte";
 
     interface Props {
         selectedChat: ChatSummary;
-        onClose: () => void;
     }
 
-    let { selectedChat, onClose }: Props = $props();
+    let { selectedChat }: Props = $props();
 
     type SectionLabels = Record<ProposalActionCategory, string>;
 
@@ -88,83 +80,54 @@
     }
 </script>
 
-<SectionHeader flush={$mobileWidth}>
-    <h4><Translatable resourceKey={i18nKey("proposal.filter")} /></h4>
-    <span title={$_("close")} class="close" onclick={onClose}>
-        <HoverIcon>
-            <Close size={$iconSize} color={"var(--icon-txt)"} />
-        </HoverIcon>
-    </span>
-</SectionHeader>
-
-<div class="proposal-filters">
-    <div class="controls">
-        <LinkButton onClick={() => client.enableAllProposalFilters()} underline={"hover"}
-            ><Translatable resourceKey={i18nKey("proposal.enableAll")} /></LinkButton>
-        <LinkButton
-            onClick={() => client.disableAllProposalFilters(topics.map(([id]) => id))}
-            underline={"hover"}
-            ><Translatable resourceKey={i18nKey("proposal.disableAll")} /></LinkButton>
-    </div>
-    {#each grouped as [category, topicsInCategory]}
-        {#if groupTopics}
-            <CollapsibleCard
-                onToggle={() => proposalActionCategories.toggle(category)}
-                open={$proposalActionCategories[category]}
-                headerText={i18nKey(sectionLabels[category])}>
-                {#each topicsInCategory as [id, label]}
-                    <div class="toggle">
-                        <Checkbox
-                            id={kebab(label)}
+<SlidingPageContent title={i18nKey("proposal.filter")}>
+    <Container gap={"lg"} padding={"lg"} direction={"vertical"}>
+        <Container gap={"md"}>
+            <CommonButton onClick={() => client.enableAllProposalFilters()}>
+                {#snippet icon(color, size)}
+                    <Check {color} {size} />
+                {/snippet}
+                <Translatable resourceKey={i18nKey("proposal.enableAll")} />
+            </CommonButton>
+            <CommonButton
+                onClick={() => client.disableAllProposalFilters(topics.map(([id]) => id))}>
+                {#snippet icon(color, size)}
+                    <Minus {color} {size} />
+                {/snippet}
+                <Translatable resourceKey={i18nKey("proposal.disableAll")} />
+            </CommonButton>
+        </Container>
+        {#each grouped as [category, topicsInCategory]}
+            {#if groupTopics}
+                <CollapsibleCard
+                    onToggle={() => proposalActionCategories.toggle(category)}
+                    open={$proposalActionCategories[category]}
+                    headerText={i18nKey(sectionLabels[category])}>
+                    <Container direction={"vertical"}>
+                        {#each topicsInCategory as [id, label]}
+                            <Switch
+                                width={{ kind: "fill" }}
+                                reverse
+                                onChange={() => client.toggleProposalFilter(id)}
+                                checked={!$filteredProposalsStore?.hasFilter(id)}>
+                                <Translatable resourceKey={i18nKey(label)}></Translatable>
+                            </Switch>
+                        {/each}
+                    </Container>
+                </CollapsibleCard>
+            {:else}
+                <Container gap={"lg"} direction={"vertical"}>
+                    {#each topicsInCategory as [id, label]}
+                        <Switch
+                            width={{ kind: "fill" }}
+                            reverse
                             onChange={() => client.toggleProposalFilter(id)}
-                            label={i18nKey(label)}
-                            checked={!$filteredProposalsStore?.hasFilter(id)} />
-                    </div>
-                {/each}
-            </CollapsibleCard>
-        {:else}
-            {#each topicsInCategory as [id, label]}
-                <div class="toggle">
-                    <Checkbox
-                        id={kebab(label)}
-                        onChange={() => client.toggleProposalFilter(id)}
-                        label={i18nKey(label)}
-                        checked={!$filteredProposalsStore?.hasFilter(id)} />
-                </div>
-            {/each}
-        {/if}
-    {/each}
-</div>
-
-<style lang="scss">
-    h4 {
-        flex: 1;
-        margin: 0;
-        @include font-size(fs-120);
-    }
-    .close {
-        flex: 0 0 30px;
-    }
-
-    .toggle {
-        margin-bottom: $sp4;
-    }
-
-    .proposal-filters {
-        background-color: var(--bg);
-        padding: $sp4;
-        padding-bottom: 0;
-        @include nice-scrollbar();
-
-        @include mobile() {
-            height: 100%;
-        }
-    }
-
-    .controls {
-        display: flex;
-        gap: $sp4;
-        align-items: center;
-        margin-bottom: $sp4;
-    }
-</style>
+                            checked={!$filteredProposalsStore?.hasFilter(id)}>
+                            <Translatable resourceKey={i18nKey(label)}></Translatable>
+                        </Switch>
+                    {/each}
+                </Container>
+            {/if}
+        {/each}
+    </Container>
+</SlidingPageContent>

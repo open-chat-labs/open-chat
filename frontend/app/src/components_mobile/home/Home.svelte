@@ -191,7 +191,6 @@
             subscribe("forward", forwardMessage),
             subscribe("toggleMuteNotifications", toggleMuteNotifications),
             subscribe("successfulImport", successfulImport),
-            subscribe("showProposalFilters", showProposalFilters),
             subscribe("clearSelection", () => page(routeForScope($chatListScopeStore))),
             subscribe("userSuspensionChanged", () => window.location.reload()),
             subscribe("selectedChatInvalid", selectedChatInvalid),
@@ -495,16 +494,6 @@
 
     function showProfile() {
         setRightPanelHistory([{ kind: "user_profile" }]);
-    }
-
-    function showProposalFilters() {
-        if ($selectedChatIdStore !== undefined) {
-            setRightPanelHistory([
-                {
-                    kind: "proposal_filters",
-                },
-            ]);
-        }
     }
 
     function showMakeProposalModal() {

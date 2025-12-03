@@ -1,6 +1,7 @@
 <script lang="ts">
     import {
         selectedChatMembersStore,
+        selectedChatSummaryStore,
         selectedCommunitySummaryStore,
         subscribe,
         type ChannelIdentifier,
@@ -60,6 +61,7 @@
     import MemberManagement from "./membership/MemberManagement.svelte";
     import NewMessage from "./NewMessage.svelte";
     import PinnedMessages from "./pinned/PinnedMessages.svelte";
+    import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import Rules from "./Rules.svelte";
     import SlidingPage from "./SlidingPage.svelte";
     import Thread from "./thread/Thread.svelte";
@@ -121,6 +123,7 @@
               installedWithPermissions?: GrantedBotPermissions;
           }
         | { kind: "user_groups"; community: CommunitySummary }
+        | { kind: "proposal_filters"; chat: ChatSummary }
         | { kind: "show_bots"; collection: MultiUserChat | CommunitySummary }
         | { kind: "register_webhook"; chat: MultiUserChat }
         | { kind: "update_webhook"; chat: MultiUserChat; webhook: FullWebhookDetails }
@@ -195,6 +198,11 @@
 
     onMount(() => {
         const unsubs = [
+            subscribe("showProposalFilters", () => {
+                if ($selectedChatSummaryStore !== undefined) {
+                    push({ kind: "proposal_filters", chat: $selectedChatSummaryStore });
+                }
+            }),
             subscribe("showVideoCallParticipants", ({ chatId, messageId, isOwner }) =>
                 push({ kind: "show_video_call_participants", chatId, messageId, isOwner }),
             ),
@@ -517,6 +525,8 @@
                 chatId={page.chatId}
                 messageId={page.messageId}
                 isOwner={page.isOwner} />
+        {:else if page.kind === "proposal_filters"}
+            <ProposalGroupFilters selectedChat={page.chat} />
         {/if}
     </SlidingPage>
 {/each}
