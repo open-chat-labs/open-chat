@@ -8,6 +8,7 @@
     import CommunitiesSheet from "./communities_sheet/CommunitiesSheet.svelte";
     import SlidingModals from "./SlidingModals.svelte";
     import UserProfileSummary from "./user_profile/UserProfileSummary.svelte";
+    import ActiveCallSummary from "./video/ActiveCallSummary.svelte";
     import Wallet from "./wallet/Wallet.svelte";
 
     let showProfileSummary = $derived($routeStore.kind === "profile_summary_route");
@@ -77,6 +78,7 @@
         {:else}
             <ChatList />
         {/if}
+        <ActiveCallSummary />
     </Container>
     {#if $chatListScopeStore.kind === "community" && !$activityFeedShowing}
         <CommunitiesSheet bind:expanded={communitiesExpanded} />

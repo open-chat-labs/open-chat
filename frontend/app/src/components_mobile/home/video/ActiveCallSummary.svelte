@@ -1,7 +1,7 @@
 <script lang="ts">
+    import { Avatar, ColourVars, Container, IconButton, Subtitle } from "component-lib";
     import {
         allUsersStore,
-        AvatarSize,
         chatIdentifiersEqual,
         communitiesStore,
         OpenChat,
@@ -30,7 +30,6 @@
         microphone,
         sharing,
     } from "../../../stores/video";
-    import Avatar from "../../Avatar.svelte";
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import Translatable from "../../Translatable.svelte";
 
@@ -54,8 +53,8 @@
         }
     }
 
-    function askToSpeak(e: Event) {
-        e.stopPropagation();
+    function askToSpeak(e?: Event) {
+        e?.stopPropagation();
         publish("askToSpeak");
     }
 
@@ -93,8 +92,8 @@
         }
     }
 
-    function toggleShare(e: Event) {
-        e.stopPropagation();
+    function toggleShare(e?: Event) {
+        e?.stopPropagation();
         if ($activeVideoCall?.call) {
             if ($sharing) {
                 $activeVideoCall.call.stopScreenShare();
@@ -104,127 +103,109 @@
         }
     }
 
-    function toggleMic(e: Event) {
-        e.stopPropagation();
+    function toggleMic(e?: Event) {
+        e?.stopPropagation();
         if ($activeVideoCall?.call) {
             $activeVideoCall.call.setLocalAudio(!$activeVideoCall.call.localAudio());
         }
     }
 
-    function toggleCamera(e: Event) {
-        e.stopPropagation();
+    function toggleCamera(e?: Event) {
+        e?.stopPropagation();
         if ($activeVideoCall?.call) {
             $activeVideoCall.call.setLocalVideo(!$activeVideoCall.call.localVideo());
         }
     }
 
-    function hangup(e: Event) {
-        e.stopPropagation();
+    function hangup(e?: Event) {
+        e?.stopPropagation();
         publish("hangup");
     }
 </script>
 
 {#if show && $activeVideoCall !== undefined && chat !== undefined}
-    <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <div class="call" tabindex="0" role="button" onclick={goToCall}>
+    <Container
+        crossAxisAlignment={"center"}
+        gap={"lg"}
+        padding={"lg"}
+        onClick={goToCall}
+        background={ColourVars.success}>
         {#if $activeVideoCall.status === "joining"}
-            <div class="joining">
-                <FancyLoader loop />
-            </div>
+            <FancyLoader size={"3rem"} loop />
         {:else}
-            <div class="avatar">
-                <Avatar
-                    statusBorder={"var(--toast-success-bg)"}
-                    url={chat.avatarUrl}
-                    showStatus
-                    userId={chat.userId?.userId}
-                    size={AvatarSize.Default} />
-            </div>
+            <Avatar size={"lg"} url={chat.avatarUrl} />
         {/if}
-        <div class="details">
-            <div class="actions">
+        <Container direction={"vertical"}>
+            <Container gap={"md"}>
                 {#if !$hasPresence && $activeVideoCall?.status !== "joining"}
                     <Tooltip position={"top"} align={"middle"}>
-                        <div role="button" tabindex="0" class="cam" onclick={askToSpeak}>
-                            <HandFrontLeft size={"1.6em"} color={"var(--toast-success-txt)"} />
-                        </div>
+                        <IconButton padding={"zero"} onclick={askToSpeak}>
+                            {#snippet icon(color)}
+                                <HandFrontLeft {color} />
+                            {/snippet}
+                        </IconButton>
                         {#snippet popupTemplate()}
                             <Translatable resourceKey={i18nKey("videoCall.askToSpeak")} />
                         {/snippet}
                     </Tooltip>
                 {:else}
                     <Tooltip position={"top"} align={"middle"}>
-                        <div role="button" tabindex="0" class="cam" onclick={toggleCamera}>
-                            {#if $camera}
-                                <Video size={"1.6em"} color={"var(--toast-success-txt)"} />
-                            {:else}
-                                <VideoOff size={"1.6em"} color={"var(--toast-success-txt)"} />
-                            {/if}
-                        </div>
+                        <IconButton padding={"zero"} onclick={toggleCamera}>
+                            {#snippet icon(color)}
+                                {#if $camera}
+                                    <Video {color} />
+                                {:else}
+                                    <VideoOff {color} />
+                                {/if}
+                            {/snippet}
+                        </IconButton>
                         {#snippet popupTemplate()}
                             <Translatable resourceKey={i18nKey("videoCall.toggleCam")} />
                         {/snippet}
                     </Tooltip>
                     <Tooltip position={"top"} align={"middle"}>
-                        <div role="button" tabindex="0" class="mic" onclick={toggleMic}>
-                            {#if $microphone}
-                                <Microphone size={"1.6em"} color={"var(--toast-success-txt)"} />
-                            {:else}
-                                <MicrophoneOff size={"1.6em"} color={"var(--toast-success-txt)"} />
-                            {/if}
-                        </div>
+                        <IconButton padding={"zero"} onclick={toggleMic}>
+                            {#snippet icon(color)}
+                                {#if $microphone}
+                                    <Microphone {color} />
+                                {:else}
+                                    <MicrophoneOff {color} />
+                                {/if}
+                            {/snippet}
+                        </IconButton>
                         {#snippet popupTemplate()}
                             <Translatable resourceKey={i18nKey("videoCall.toggleMic")} />
                         {/snippet}
                     </Tooltip>
                     <Tooltip position={"top"} align={"middle"}>
-                        <div role="button" tabindex="0" class="mic" onclick={toggleShare}>
-                            {#if $sharing}
-                                <MonitorOff size={"1.6em"} color={"var(--toast-success-txt)"} />
-                            {:else}
-                                <MonitorShare size={"1.6em"} color={"var(--toast-success-txt)"} />
-                            {/if}
-                        </div>
+                        <IconButton padding={"zero"} onclick={toggleShare}>
+                            {#snippet icon(color)}
+                                {#if $sharing}
+                                    <MonitorOff {color} />
+                                {:else}
+                                    <MonitorShare {color} />
+                                {/if}
+                            {/snippet}
+                        </IconButton>
                         {#snippet popupTemplate()}
                             <Translatable resourceKey={i18nKey("videoCall.toggleShare")} />
                         {/snippet}
                     </Tooltip>
                 {/if}
                 <Tooltip position={"top"} align={"middle"}>
-                    <div role="button" tabindex="0" class="hangup" onclick={hangup}>
-                        <PhoneHangup size={"1.6em"} color={"var(--toast-success-txt)"} />
-                    </div>
+                    <IconButton padding={"zero"} onclick={hangup}>
+                        {#snippet icon(color)}
+                            <PhoneHangup {color} />
+                        {/snippet}
+                    </IconButton>
                     {#snippet popupTemplate()}
                         <Translatable resourceKey={i18nKey("videoCall.leave")} />
                     {/snippet}
                 </Tooltip>
-            </div>
-            <span class="name">{chat.name}</span>
-        </div>
-    </div>
+            </Container>
+            <Subtitle fontWeight={"bold"}>
+                {chat.name}
+            </Subtitle>
+        </Container>
+    </Container>
 {/if}
-
-<style lang="scss">
-    .call {
-        cursor: pointer;
-        position: sticky;
-        display: flex;
-        gap: $sp4;
-        align-items: center;
-        bottom: 0;
-        width: 100%;
-        padding: $sp4;
-        background-color: var(--toast-success-bg);
-        color: var(--toast-success-txt);
-    }
-
-    .joining {
-        width: toRem(48);
-        height: toRem(48);
-    }
-
-    .actions {
-        display: flex;
-        gap: $sp4;
-    }
-</style>

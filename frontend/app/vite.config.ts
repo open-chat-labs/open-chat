@@ -39,6 +39,7 @@ export default defineConfig({
         "import.meta.env.OC_WEBSITE_VERSION": JSON.stringify(version),
     },
     server: {
+        allowedHosts: ["host.docker.internal"],
         host: true,
         cors: true,
         port,

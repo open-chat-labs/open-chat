@@ -36,7 +36,6 @@
     import InviteUsers from "./groupdetails/InviteUsers.svelte";
     import Members from "./groupdetails/Members.svelte";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
-    import ActiveCallParticipants from "./video/ActiveCallParticipants.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -341,12 +340,6 @@
                 selectedTab="channel"
                 onClose={client.popRightPanelHistory} />
         {/if}
-    {:else if $lastRightPanelState.kind === "call_participants_panel"}
-        <ActiveCallParticipants
-            isOwner={$lastRightPanelState.isOwner}
-            chatId={$lastRightPanelState.chatId}
-            onClose={client.popRightPanelHistory}
-            messageId={$lastRightPanelState.messageId} />
     {:else if $lastRightPanelState.kind === "invite_community_users" && $selectedCommunitySummaryStore !== undefined}
         {#if multiUserChat !== undefined && multiUserChat.kind === "channel" && $selectedCommunitySummaryStore !== undefined}
             <ChannelOrCommunityInvite

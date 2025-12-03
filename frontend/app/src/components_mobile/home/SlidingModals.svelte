@@ -15,6 +15,7 @@
         type GroupChatSummary,
         type Message,
         type MultiUserChat,
+        type MultiUserChatIdentifier,
         type NamedAccount,
         type NeuronGate,
         type PaymentGate,
@@ -75,6 +76,7 @@
     import Share from "./user_profile/Share.svelte";
     import UserInformation from "./user_profile/UserInformation.svelte";
     import Verify from "./user_profile/Verify.svelte";
+    import ActiveCallParticipants from "./video/ActiveCallParticipants.svelte";
     import EditRecipient from "./wallet/EditRecipient.svelte";
     import ManageRecipients from "./wallet/ManageRecipients.svelte";
     import ReceiveCrypto from "./wallet/ReceiveCrypto.svelte";
@@ -93,6 +95,13 @@
      */
 
     type SlidingModalType =
+        | {
+              kind: "show_video_call_participants";
+
+              chatId: MultiUserChatIdentifier;
+              messageId: bigint;
+              isOwner: boolean;
+          }
         | {
               kind: "invite_and_share";
               collection: MultiUserChat | CommunitySummary;
@@ -186,6 +195,9 @@
 
     onMount(() => {
         const unsubs = [
+            subscribe("showVideoCallParticipants", ({ chatId, messageId, isOwner }) =>
+                push({ kind: "show_video_call_participants", chatId, messageId, isOwner }),
+            ),
             subscribe("showPinned", ({ chat, pinned }) =>
                 push({ kind: "show_pinned", chat, pinned }),
             ),
@@ -500,6 +512,11 @@
                 installedWithPermissions={page.installedWithPermissions} />
         {:else if page.kind === "show_pinned"}
             <PinnedMessages chat={page.chat} pinned={page.pinned} />
+        {:else if page.kind === "show_video_call_participants"}
+            <ActiveCallParticipants
+                chatId={page.chatId}
+                messageId={page.messageId}
+                isOwner={page.isOwner} />
         {/if}
     </SlidingPage>
 {/each}

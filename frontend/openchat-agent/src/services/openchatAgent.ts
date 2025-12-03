@@ -344,6 +344,7 @@ export class OpenChatAgent extends EventTarget {
     constructor(private identity: Identity, private config: AgentConfig) {
         super();
         this._logger = config.logger;
+        console.log("url", config.icUrl);
         this._agent = createHttpAgentSync(identity, config.icUrl);
         this.db = initDb(this.principal);
         this._onlineClient = new OnlineClient(identity, this._agent, config.onlineCanister);

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Chip, Container } from "component-lib";
     import {
         type ChatIdentifier,
         type MultiUserChatIdentifier,
@@ -6,6 +7,7 @@
         type UserSummary,
         chatIdentifiersEqual,
         currentUserIdStore,
+        publish,
         subscribe,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
@@ -14,8 +16,8 @@
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import Translatable from "../../Translatable.svelte";
     import VirtualList from "../../VirtualList.svelte";
+    import SlidingPageContent from "../SlidingPageContent.svelte";
     import ActiveCallParticipant from "./ActiveCallParticipant.svelte";
-    import ActiveCallParticipantsHeader from "./ActiveCallParticipantsHeader.svelte";
 
     type MappedParticipants = {
         participants: Record<string, UserSummary>;
@@ -29,10 +31,9 @@
         chatId: MultiUserChatIdentifier;
         messageId: bigint;
         isOwner: boolean;
-        onClose: () => void;
     }
 
-    let { chatId, messageId, isOwner, onClose }: Props = $props();
+    let { chatId, messageId, isOwner }: Props = $props();
 
     let demoted = $state(new Set<string>());
     let loading = $state(false);
@@ -77,7 +78,7 @@
     }
 
     function close() {
-        onClose();
+        publish("closeModalPage");
         activeVideoCall.participantsOpen(false);
         client.popRightPanelHistory();
     }
@@ -93,69 +94,68 @@
     }
 </script>
 
-<ActiveCallParticipantsHeader onClose={close} />
+<SlidingPageContent onBack={close} title={i18nKey("videoCall.participants")}>
+    <Container height={{ kind: "fill" }} gap={"lg"} direction={"vertical"} padding={"lg"}>
+        {#if $activeVideoCall !== undefined}
+            {#if loading}
+                <Container
+                    height={{ kind: "fill" }}
+                    mainAxisAlignment={"center"}
+                    crossAxisAlignment={"center"}>
+                    <FancyLoader size={"5rem"} loop />
+                </Container>
+            {:else}
+                {#if $activeVideoCall?.callType === "broadcast"}
+                    <Container gap={"sm"}>
+                        <Chip
+                            mode={selectedTab === "presenters" ? "rounded" : "unselected"}
+                            onClick={() => selectTab("presenters")}>
+                            <Translatable
+                                resourceKey={i18nKey("videoCall.presenters", {
+                                    count: participants.length,
+                                })} />
+                        </Chip>
+                        <Chip
+                            mode={selectedTab === "viewers" ? "rounded" : "unselected"}
+                            onClick={() => selectTab("viewers")}>
+                            <Translatable
+                                resourceKey={i18nKey("videoCall.viewers", {
+                                    count: hidden.length,
+                                })} />
+                        </Chip>
+                    </Container>
+                {/if}
 
-{#if $activeVideoCall !== undefined}
-    {#if loading}
-        <div class="loader">
-            <FancyLoader loop />
-        </div>
-    {:else}
-        {#if $activeVideoCall?.callType === "broadcast"}
-            <div class="tabs">
-                <!-- svelte-ignore a11y_click_events_have_key_events -->
-                <div
-                    tabindex="0"
-                    role="button"
-                    onclick={() => selectTab("presenters")}
-                    class:selected={selectedTab === "presenters"}
-                    class="tab">
-                    <Translatable
-                        resourceKey={i18nKey("videoCall.presenters", {
-                            count: participants.length,
-                        })} />
-                </div>
-                <!-- svelte-ignore a11y_click_events_have_key_events -->
-                <div
-                    tabindex="0"
-                    role="button"
-                    onclick={() => selectTab("viewers")}
-                    class:selected={selectedTab === "viewers"}
-                    class="tab">
-                    <Translatable
-                        resourceKey={i18nKey("videoCall.viewers", {
-                            count: hidden.length,
-                        })} />
-                </div>
-            </div>
-        {/if}
+                <Container direction={"vertical"} height={{ kind: "fill" }}>
+                    {#if selectedTab === "presenters"}
+                        {#each participants as participant}
+                            <ActiveCallParticipant
+                                {isOwner}
+                                callType={$activeVideoCall.callType}
+                                onDemote={demote}
+                                presence={isOwner && participant.userId === $currentUserIdStore
+                                    ? "owner"
+                                    : "default"}
+                                {participant} />
+                        {/each}
+                    {/if}
 
-        {#if selectedTab === "presenters"}
-            {#each participants as participant}
-                <ActiveCallParticipant
-                    {isOwner}
-                    callType={$activeVideoCall.callType}
-                    onDemote={demote}
-                    presence={isOwner && participant.userId === $currentUserIdStore
-                        ? "owner"
-                        : "default"}
-                    {participant} />
-            {/each}
+                    {#if selectedTab === "viewers"}
+                        <VirtualList keyFn={(user) => user.userId} items={hidden}>
+                            {#snippet children(item)}
+                                <ActiveCallParticipant
+                                    callType={$activeVideoCall.callType}
+                                    {isOwner}
+                                    presence={"hidden"}
+                                    participant={item} />
+                            {/snippet}
+                        </VirtualList>
+                    {/if}
+                </Container>
+            {/if}
         {/if}
-
-        {#if selectedTab === "viewers"}
-            <VirtualList keyFn={(user) => user.userId} items={hidden}>
-                {#snippet children(item)}
-                    <ActiveCallParticipant
-                        callType={$activeVideoCall.callType}
-                        {isOwner}
-                        presence={"hidden"}
-                        participant={item} />
-                {/snippet}
-            </VirtualList>
-        {/if}
-    {/if}
-{/if}
+    </Container>
+</SlidingPageContent>
 
 <style lang="scss">
     .tabs {

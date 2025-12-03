@@ -38,7 +38,6 @@
     import SelectedCommunityHeader from "./communities/SelectedCommunityHeader.svelte";
     import NoMatchingChats from "./NoMatchingChats.svelte";
     import ThreadIndicator from "./ThreadIndicator.svelte";
-    import ActiveCallSummary from "./video/ActiveCallSummary.svelte";
 
     const client = getContext<OpenChat>("client");
     const TO_SHOW = 30;
@@ -168,7 +167,6 @@
             {/each}
         {/if}
     </Container>
-    <ActiveCallSummary />
     {#if showPreview}
         <PreviewWrapper>
             {#snippet children(joiningCommunity, joinCommunity)}

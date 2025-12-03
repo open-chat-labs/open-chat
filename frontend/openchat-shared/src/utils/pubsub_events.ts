@@ -222,4 +222,9 @@ export type PubSubEvents = {
         intalledWithPermissions?: GrantedBotPermissions;
     };
     showPinned: { chat: MultiUserChat; pinned: ReadonlySet<number> };
+    showVideoCallParticipants: {
+        chatId: MultiUserChatIdentifier;
+        messageId: bigint;
+        isOwner: boolean;
+    };
 };

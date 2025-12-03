@@ -7,7 +7,7 @@
         icon: Snippet<[string]>;
         disabled?: boolean;
         padding?: Padding;
-        onclick?: () => void;
+        onclick?: (e?: Event) => void;
         size?: "xs" | "sm" | "md" | "lg";
     }
 
