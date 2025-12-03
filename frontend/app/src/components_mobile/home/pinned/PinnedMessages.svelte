@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Container } from "component-lib";
     import type {
         EventWrapper,
         Message,
@@ -27,6 +28,7 @@
     }
 
     let { pinned, chat }: Props = $props();
+    void pinned;
 
     const client = getContext<OpenChat>("client");
     let unread = $state<boolean>(false);
@@ -47,11 +49,6 @@
     let messagesDiv: HTMLDivElement | undefined = $state();
 
     let messages: RemoteData<EventWrapper<Message>[][], string> = $state({ kind: "idle" });
-
-    function close() {
-        publish("closeModalPage");
-        messages = { kind: "idle" };
-    }
 
     function scrollBottom() {
         if (messagesDiv !== undefined) {
@@ -110,12 +107,12 @@
 </script>
 
 <SlidingPageContent title={i18nKey("pinnedMessages")}>
-    <div bind:this={messagesDiv} class="pinned-messages">
+    <Container gap={"sm"} padding={"lg"} direction={"vertical"} bind:ref={messagesDiv}>
         {#if messages.kind !== "success"}
             <Loading />
         {:else}
             {#each messages.data as dayGroup (dateGroupKey(dayGroup))}
-                <div class="day-group">
+                <Container gap={"sm"} direction={"vertical"}>
                     <div class="date-label">
                         {client.formatMessageDate(
                             dayGroup[0]?.timestamp,
@@ -131,34 +128,26 @@
                             senderId={message.event.sender}
                             msg={message.event} />
                     {/each}
-                </div>
+                </Container>
             {/each}
         {/if}
-    </div>
+    </Container>
 </SlidingPageContent>
 
 <style lang="scss">
-    .pinned-messages {
-        @include message-list();
-    }
-
-    .day-group {
-        position: relative;
-
-        .date-label {
-            padding: $sp2;
-            background-color: var(--currentChat-date-bg);
-            border: var(--currentChat-date-bd);
-            color: var(--currentChat-date-txt);
-            position: sticky;
-            top: 0;
-            width: 200px;
-            margin: 0 auto;
-            border-radius: $sp4;
-            @include z-index("date-label");
-            @include font(book, normal, fs-70);
-            text-align: center;
-            margin-bottom: $sp4;
-        }
+    .date-label {
+        padding: $sp2;
+        background-color: var(--currentChat-date-bg);
+        border: var(--currentChat-date-bd);
+        color: var(--currentChat-date-txt);
+        position: sticky;
+        top: 0;
+        width: 200px;
+        margin: 0 auto;
+        border-radius: $sp4;
+        @include z-index("date-label");
+        @include font(book, normal, fs-70);
+        text-align: center;
+        margin-bottom: $sp4;
     }
 </style>

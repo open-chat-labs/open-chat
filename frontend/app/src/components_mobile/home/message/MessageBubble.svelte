@@ -1,7 +1,6 @@
 <script lang="ts">
     import {
         Body,
-        ChatLabel,
         ColourVars,
         Container,
         type BorderRadiusSize,
@@ -36,7 +35,7 @@
 
     interface Props {
         chatId: ChatIdentifier;
-        senderTyping: boolean;
+        senderTyping?: boolean;
         senderContext?: SenderContext;
         sender?: UserSummary;
         ref?: HTMLElement;
@@ -44,29 +43,29 @@
         messageContent?: Snippet<[boolean]>;
         hasThread?: boolean;
         time: number;
-        first: boolean;
-        last: boolean;
-        failed: boolean;
-        undeleting: boolean;
+        first?: boolean;
+        last?: boolean;
+        failed?: boolean;
+        undeleting?: boolean;
         bot: boolean;
-        accepted: boolean;
+        accepted?: boolean;
         chatType: ChatType;
-        readByThem: boolean;
-        readByMe: boolean;
+        readByThem?: boolean;
+        readByMe?: boolean;
         expiresAt: number | undefined;
-        percentageExpired: number;
+        percentageExpired?: number;
         pinned: boolean;
         repliesTo: Snippet<[RehydratedReplyContext]>;
         fill: boolean;
         onOpenUserProfile: (e?: Event) => void;
-        focused: boolean;
+        focused?: boolean;
         onGoToMessageIndex?: (args: { index: number }) => void;
-        onDoubleClick: () => void;
+        onDoubleClick?: () => void;
     }
 
     let {
         chatId,
-        senderTyping,
+        senderTyping = false,
         senderContext,
         sender,
         ref = $bindable(),
@@ -74,22 +73,22 @@
         messageContent,
         time,
         hasThread = false,
-        first,
-        last,
-        failed,
-        undeleting,
+        first = false,
+        last = false,
+        failed = false,
+        undeleting = false,
         bot,
-        accepted,
+        accepted = true,
         chatType,
-        readByThem,
-        readByMe,
+        readByThem = true,
+        readByMe = true,
         expiresAt,
-        percentageExpired,
+        percentageExpired = 0,
         pinned,
         repliesTo,
         fill,
         onOpenUserProfile,
-        focused,
+        focused = false,
         onGoToMessageIndex,
         onDoubleClick,
     }: Props = $props();
@@ -216,7 +215,7 @@
             crossAxisAlignment={"center"}
             gap={"xs"}
             onClick={onOpenUserProfile}>
-            <ChatLabel fontWeight={"bold"} width={{ kind: "hug" }}>{senderDisplayName}</ChatLabel>
+            <Body fontWeight={"bold"} width={{ kind: "hug" }}>{senderDisplayName}</Body>
             <Badges
                 uniquePerson={sender?.isUniquePerson}
                 diamondStatus={sender?.diamondStatus}
