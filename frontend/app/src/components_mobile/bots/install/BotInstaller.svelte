@@ -7,6 +7,7 @@
         ColourVars,
         Container,
         defaultBackgroundGradient,
+        FloatingButton,
         ReadMore,
         StatusCard,
         Subtitle,
@@ -25,6 +26,7 @@
     import { getContext } from "svelte";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import Cloud from "svelte-material-icons/CloudDownloadOutline.svelte";
+    import Save from "svelte-material-icons/ContentSaveOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import Markdown from "../../home/Markdown.svelte";
@@ -36,16 +38,24 @@
     import BotsPermissionInfo from "../BotsPermissionInfo.svelte";
     import ChoosePermissions from "./ChoosePermissions.svelte";
 
+    /**
+     * This component is used for both installing a new bot and reviewing the permissions of a bot that is already installed
+     */
+
     const client = getContext<OpenChat>("client");
 
     interface Props {
         collection: CommunitySummary | ChatSummary;
         bot: ExternalBotLike;
+        installedWithPermissions?: GrantedBotPermissions;
     }
 
-    let { bot, collection }: Props = $props();
+    let { bot, collection, installedWithPermissions }: Props = $props();
     let requestedPermissions = $derived(definitionToPermissions(bot.definition));
-    let grantedPermissions = $state(filterByLocation(definitionToPermissions(bot.definition)));
+    let grantedPermissions = $state(
+        installedWithPermissions ?? filterByLocation(definitionToPermissions(bot.definition)),
+    );
+    let installing = $state(installedWithPermissions === undefined);
     let location = $derived(installationLocationFrom(collection));
     let level = $derived(collection.kind === "direct_chat" ? "group" : collection.level); // TODO suspect
     let container = $derived.by(() => {
@@ -69,9 +79,7 @@
     let containerName = $derived.by(() => {
         switch (container.kind) {
             case "direct_chat":
-                return (
-                    $allUsersStore.get(container.id.userId)?.username ?? "TODO come back to this"
-                );
+                return $allUsersStore.get(container.id.userId)?.username ?? "Unknown user";
             default:
                 return container.name;
         }
@@ -87,6 +95,20 @@
             }
         }
         return perm;
+    }
+
+    function update() {
+        busy = true;
+        client
+            .updateInstalledBot(location, bot.id, grantedPermissions)
+            .then((success) => {
+                if (!success) {
+                    toastStore.showFailureToast(i18nKey("bots.edit.failure"));
+                } else {
+                    publish("closeModalPage");
+                }
+            })
+            .finally(() => (busy = false));
     }
 
     function install() {
@@ -107,8 +129,14 @@
     }
 </script>
 
-<SlidingPageContent title={i18nKey("bots.add.title", undefined, level, true)}>
-    <Container gap={"xl"} direction={"vertical"} padding={["xl", "lg"]}>
+<SlidingPageContent
+    title={i18nKey(
+        installing ? "bots.add.title" : "Review bot permissions",
+        undefined,
+        level,
+        true,
+    )}>
+    <Container height={{ kind: "fill" }} gap={"xl"} direction={"vertical"} padding={["xl", "lg"]}>
         <Container gap={"sm"} direction={"vertical"}>
             <Container
                 overflow={"visible"}
@@ -124,7 +152,8 @@
                     direction={"vertical"}
                     width={{ kind: "fill" }}>
                     <Body colour={"textPrimary"} fontWeight={"bold"}>
-                        <Translatable resourceKey={i18nKey("Installing")} />
+                        <Translatable
+                            resourceKey={i18nKey(installing ? "Installing" : "Reviewing")} />
                     </Body>
                     <Subtitle colour={"textOnPrimary"} fontWeight={"bold"}>
                         {bot.name}
@@ -146,7 +175,7 @@
                     direction={"vertical"}
                     width={{ kind: "fill" }}>
                     <Body colour={"textPrimary"} fontWeight={"bold"}>
-                        <Translatable resourceKey={i18nKey("Into")} />
+                        <Translatable resourceKey={i18nKey(installing ? "Into" : "Installed in")} />
                     </Body>
                     <Subtitle colour={"textOnPrimary"} fontWeight={"bold"}>
                         {containerName}
@@ -214,38 +243,47 @@
                 body={"Granting limited permissions will limit bot's supported commands. Unavailable commands are greyed out."} />
         </Container>
 
-        <Container padding={["zero", "md"]} direction={"vertical"} gap={"lg"}>
-            <BodySmall align={"center"} colour={"textSecondary"}>
-                <MulticolourText
-                    parts={[
-                        {
-                            text: i18nKey(
-                                "By pressing the button below, you will install this bot int the ",
-                            ),
-                            colour: "textSecondary",
-                        },
-                        {
-                            text: i18nKey(containerName),
-                            colour: "primary",
-                        },
-                        {
-                            text: i18nKey(" location."),
-                            colour: "textSecondary",
-                        },
-                    ]}>
-                </MulticolourText>
-            </BodySmall>
-            <Button disabled={busy} loading={busy} onClick={install}>
-                {#snippet icon(color)}
-                    <Cloud {color} />
-                {/snippet}
-                <Translatable resourceKey={i18nKey("bots.add.install")} />
-            </Button>
-            <Button secondary disabled={busy} onClick={() => publish("closeModalPage")}>
-                <Translatable resourceKey={i18nKey("cancel")} />
-            </Button>
-        </Container>
+        {#if installing}
+            <Container padding={["zero", "md"]} direction={"vertical"} gap={"lg"}>
+                <BodySmall align={"center"} colour={"textSecondary"}>
+                    <MulticolourText
+                        parts={[
+                            {
+                                text: i18nKey(
+                                    "By pressing the button below, you will install this bot int the ",
+                                ),
+                                colour: "textSecondary",
+                            },
+                            {
+                                text: i18nKey(containerName),
+                                colour: "primary",
+                            },
+                            {
+                                text: i18nKey(" location."),
+                                colour: "textSecondary",
+                            },
+                        ]}>
+                    </MulticolourText>
+                </BodySmall>
+                <Button disabled={busy} loading={busy} onClick={install}>
+                    {#snippet icon(color)}
+                        <Cloud {color} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("bots.add.install")} />
+                </Button>
+                <Button secondary disabled={busy} onClick={() => publish("closeModalPage")}>
+                    <Translatable resourceKey={i18nKey("cancel")} />
+                </Button>
+            </Container>
+        {/if}
     </Container>
+    {#if !installing}
+        <FloatingButton loading={busy} pos={{ bottom: "lg", right: "lg" }} onClick={update}>
+            {#snippet icon(color)}
+                <Save {color} />
+            {/snippet}
+        </FloatingButton>
+    {/if}
 </SlidingPageContent>
 
 <style lang="scss">

@@ -61,7 +61,7 @@
     }
 </script>
 
-<Container crossAxisAlignment={"center"} gap={"md"}>
+<Container onClick={edit} crossAxisAlignment={"center"} gap={"md"}>
     <BotAvatar size={"md"} bot={webhook} />
     <Container crossAxisAlignment={"center"} gap={"sm"}>
         <BotBadge webhook />

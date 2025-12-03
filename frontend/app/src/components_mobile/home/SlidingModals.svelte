@@ -105,7 +105,12 @@
               grantedPermissions?: GrantedBotPermissions;
           }
         | { kind: "show_pinned"; chat: MultiUserChat; pinned: ReadonlySet<number> }
-        | { kind: "install_bot"; bot: ExternalBot; collection: ChatSummary | CommunitySummary }
+        | {
+              kind: "install_bot";
+              bot: ExternalBot;
+              collection: ChatSummary | CommunitySummary;
+              installedWithPermissions?: GrantedBotPermissions;
+          }
         | { kind: "user_groups"; community: CommunitySummary }
         | { kind: "show_bots"; collection: MultiUserChat | CommunitySummary }
         | { kind: "register_webhook"; chat: MultiUserChat }
@@ -184,8 +189,8 @@
             subscribe("showPinned", ({ chat, pinned }) =>
                 push({ kind: "show_pinned", chat, pinned }),
             ),
-            subscribe("installBot", ({ bot, collection }) =>
-                push({ kind: "install_bot", bot, collection }),
+            subscribe("installBot", ({ bot, collection, installedWithPermissions }) =>
+                push({ kind: "install_bot", bot, collection, installedWithPermissions }),
             ),
             subscribe("showBot", ({ bot, collection, grantedPermissions }) =>
                 push({ kind: "show_bot", bot, collection, grantedPermissions }),
@@ -489,7 +494,10 @@
                 collection={page.collection}
                 grantedPermissions={page.grantedPermissions} />
         {:else if page.kind === "install_bot"}
-            <BotInstaller bot={page.bot} collection={page.collection} />
+            <BotInstaller
+                bot={page.bot}
+                collection={page.collection}
+                installedWithPermissions={page.installedWithPermissions} />
         {:else if page.kind === "show_pinned"}
             <PinnedMessages chat={page.chat} pinned={page.pinned} />
         {/if}

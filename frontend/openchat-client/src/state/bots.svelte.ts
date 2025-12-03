@@ -330,6 +330,8 @@ export function installationLocationFrom(
     switch (collection.kind) {
         case "channel":
             return { kind: "community", communityId: collection.id.communityId };
+        case "direct_chat":
+            return { kind: "direct_chat", userId: currentUserIdStore.value };
         default:
             return collection.id;
     }

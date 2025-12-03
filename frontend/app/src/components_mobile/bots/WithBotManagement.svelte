@@ -2,7 +2,7 @@
     import { toastStore } from "@src/stores/toast";
     import {
         chatListScopeStore,
-        currentUserIdStore,
+        installationLocationFrom,
         routeForScope,
         type ChatSummary,
         type CommunitySummary,
@@ -44,18 +44,7 @@
     });
     let { collection, bot, grantedPermissions, contents }: Props = $props();
     let botSummaryMode = $state<BotSummaryMode | undefined>(undefined);
-    let commandContextId = $derived.by<BotInstallationLocation>(() => {
-        switch (collection.kind) {
-            case "channel":
-                return { kind: "community", communityId: collection.id.communityId };
-            case "direct_chat":
-                return { kind: "direct_chat", userId: $currentUserIdStore };
-            case "group_chat":
-                return collection.id;
-            case "community":
-                return collection.id;
-        }
-    });
+    let commandContextId = $derived<BotInstallationLocation>(installationLocationFrom(collection));
 
     function removeBot() {
         const ctx = commandContextId;

@@ -76,7 +76,9 @@ export class MemberManagement {
                 : selectedChatInvitedUsersStore;
 
         const botsStore =
-            collection.kind === "community" ? selectedCommunityBotsStore : selectedChatBotsStore;
+            collection.kind === "community" || collection.kind === "channel"
+                ? selectedCommunityBotsStore
+                : selectedChatBotsStore;
 
         const unsubs = [
             membersStore.subscribe((m) => (this.#members = m)),

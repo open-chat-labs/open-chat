@@ -20,12 +20,10 @@
     import {
         allUsersStore,
         botIsInstallable,
-        chatListScopeStore,
         definitionToPermissions,
         installationLocationFrom,
         OpenChat,
         publish,
-        routeForScope,
         type BotChatPermission,
         type BotCommunityPermission,
         type ChatSummary,
@@ -66,6 +64,7 @@
     let canManageBots = $derived(
         collection !== undefined ? client.canManageBots(collection.id) : true,
     );
+    let busy = $state(false);
     let isPublic = $derived(bot.registrationStatus.kind === "public");
     let location = $derived(collection ? installationLocationFrom(collection) : undefined);
     let installableHere = $derived(location !== undefined && botIsInstallable(bot, location));
@@ -93,15 +92,17 @@
 
     function removeBot() {
         if (location === undefined) return;
-
-        if (location.kind === "direct_chat") {
-            page(routeForScope($chatListScopeStore));
-        }
-        client.uninstallBot(location, bot.id).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast(i18nKey("bots.manage.removeFailed"));
-            }
-        });
+        busy = true;
+        client
+            .uninstallBot(location, bot.id)
+            .then((success) => {
+                if (!success) {
+                    toastStore.showFailureToast(i18nKey("bots.manage.removeFailed"));
+                } else {
+                    publish("closeModalPage");
+                }
+            })
+            .finally(() => (busy = false));
     }
 
     function installBot() {
@@ -109,6 +110,16 @@
             selectInstallationLocation = true;
         } else {
             publish("installBot", { bot, collection });
+        }
+    }
+
+    function reviewBot() {
+        if (collection && grantedPermissions) {
+            publish("installBot", {
+                bot,
+                collection,
+                installedWithPermissions: grantedPermissions,
+            });
         }
     }
 </script>
@@ -208,13 +219,13 @@
     {#if canManageBots}
         <Container gap={"sm"} padding={["zero", "md"]} direction={"vertical"}>
             {#if grantedPermissions !== undefined}
-                <Button onClick={installBot}>
+                <Button disabled={busy} onClick={reviewBot}>
                     {#snippet icon(color)}
                         <ChevronRight {color} />
                     {/snippet}
                     <Translatable resourceKey={i18nKey("Review bot permissions")} />
                 </Button>
-                <Button secondary onClick={removeBot}>
+                <Button disabled={busy} loading={busy} secondary onClick={removeBot}>
                     {#snippet icon(color)}
                         <DeleteOutline {color} />
                     {/snippet}

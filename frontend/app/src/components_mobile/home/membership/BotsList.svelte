@@ -37,6 +37,8 @@
         switch (collection.kind) {
             case "community":
                 return $selectedCommunityBotsStore;
+            case "channel":
+                return $selectedCommunityBotsStore;
             default:
                 return $selectedChatBotsStore;
         }

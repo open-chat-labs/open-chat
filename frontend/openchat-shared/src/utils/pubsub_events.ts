@@ -219,6 +219,7 @@ export type PubSubEvents = {
     installBot: {
         bot: ExternalBot;
         collection: ChatSummary | CommunitySummary;
+        intalledWithPermissions?: GrantedBotPermissions;
     };
     showPinned: { chat: MultiUserChat; pinned: ReadonlySet<number> };
 };
