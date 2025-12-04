@@ -40,14 +40,16 @@
         client.unreadThreadMessageCount(chatId, threadRootMessageIndex, lastMessageIndex),
     );
     let hasUnread = $derived(unreadCount > 0);
-    let borderColour = $derived(hasUnread ? ColourVars.primary : ColourVars.disabledButton);
+    let isFollowedByMe = $derived(
+        $threadsFollowedByMeStore.get(chatId)?.has(threadRootMessageIndex) ?? false,
+    );
+    let borderColour = $derived(
+        hasUnread && isFollowedByMe ? ColourVars.primary : ColourVars.disabledButton,
+    );
     let borderRadius = $derived<Radius>(me ? ["xl", "sm", "xl", "xl"] : ["sm", "xl", "xl", "xl"]); // this will need more logic
     let padding = $derived<Padding>(me ? ["xs", "md", "xs", "xs"] : ["xs", "xs", "xs", "md"]);
     let participantAvatarUrls = $derived(
         [...threadSummary.participantIds].map((p) => client.userAvatarUrl($allUsersStore.get(p))),
-    );
-    let isFollowedByMe = $derived(
-        $threadsFollowedByMeStore.get(chatId)?.has(threadRootMessageIndex) ?? false,
     );
     let additional = $derived(participantAvatarUrls.length - MAX_AVATARS);
     let text = $derived(

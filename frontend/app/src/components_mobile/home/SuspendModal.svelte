@@ -1,13 +1,10 @@
 <script lang="ts">
+    import { Button, Container, Sheet, Subtitle, TextArea } from "component-lib";
     import type { OpenChat } from "openchat-client";
     import { getContext } from "svelte";
-    import { i18nKey } from "../../i18n/i18n";
-    import Button from "../Button.svelte";
-    import ButtonGroup from "../ButtonGroup.svelte";
+    import { _ } from "svelte-i18n";
+    import { i18nKey, interpolate } from "../../i18n/i18n";
     import ErrorMessage from "../ErrorMessage.svelte";
-    import ModalContent from "../ModalContent.svelte";
-    import Overlay from "../Overlay.svelte";
-    import TextArea from "../TextArea.svelte";
     import Translatable from "../Translatable.svelte";
 
     interface Props {
@@ -37,38 +34,31 @@
     }
 </script>
 
-<Overlay dismissible {onClose}>
-    <ModalContent {onClose}>
-        {#snippet header()}
-            <div><Translatable resourceKey={i18nKey("suspendedUser")} /></div>
-        {/snippet}
-        {#snippet body()}
-            <div>
-                <TextArea
-                    bind:value={reason}
-                    autofocus
-                    minlength={3}
-                    maxlength={512}
-                    placeholder={i18nKey("reasonForSuspension")}>
-                    {#if showError}
-                        <ErrorMessage
-                            ><Translatable
-                                resourceKey={i18nKey("failedToSuspendUser")} /></ErrorMessage>
-                    {/if}
-                </TextArea>
-            </div>
-        {/snippet}
-        {#snippet footer()}
-            <div>
-                <ButtonGroup>
-                    <Button onClick={onSuspend} loading={suspending} small>
-                        <Translatable resourceKey={i18nKey("suspend")} />
-                    </Button>
-                    <Button onClick={onClose} disabled={suspending} small secondary>
-                        <Translatable resourceKey={i18nKey("cancel")} />
-                    </Button>
-                </ButtonGroup>
-            </div>
-        {/snippet}
-    </ModalContent>
-</Overlay>
+<Sheet onDismiss={onClose}>
+    <Container gap={"xl"} padding={"xl"} direction={"vertical"}>
+        <Subtitle fontWeight={"bold"}>
+            <Translatable resourceKey={i18nKey("suspendedUser")} />
+        </Subtitle>
+
+        <TextArea
+            bind:value={reason}
+            minlength={3}
+            maxlength={512}
+            placeholder={interpolate($_, i18nKey("reasonForSuspension"))}>
+        </TextArea>
+
+        {#if showError}
+            <ErrorMessage
+                ><Translatable resourceKey={i18nKey("failedToSuspendUser")} /></ErrorMessage>
+        {/if}
+
+        <Container gap={"md"} direction={"vertical"}>
+            <Button onClick={onSuspend} loading={suspending}>
+                <Translatable resourceKey={i18nKey("suspend")} />
+            </Button>
+            <Button onClick={onClose} disabled={suspending} secondary>
+                <Translatable resourceKey={i18nKey("cancel")} />
+            </Button>
+        </Container>
+    </Container>
+</Sheet>

@@ -40,7 +40,7 @@
         &.muted {
             border: var(--bw-thin) solid transparent;
             background: var(--text-tertiary);
-            color: var(--text-secondary);
+            color: var(--text-primary);
         }
 
         &.on_primary_mode {
@@ -58,7 +58,7 @@
 
         &.additive_mode {
             background: var(--text-tertiary);
-            color: var(--text-secondary);
+            color: var(--text-primary);
         }
     }
 </style>
