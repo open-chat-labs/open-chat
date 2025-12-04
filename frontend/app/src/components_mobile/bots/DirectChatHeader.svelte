@@ -59,10 +59,6 @@
             });
     }
 
-    function reviewPermissions() {
-        console.log("Review permissions", grantedPermissions);
-    }
-
     function viewBotDetails() {
         publish("showBot", { bot, collection: chat, grantedPermissions });
     }
