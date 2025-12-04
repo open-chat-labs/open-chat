@@ -1,6 +1,6 @@
 use crate::lifecycle::init_state;
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
-use crate::{Data, read_state};
+use crate::{Data, mutate_state, read_state};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
@@ -47,5 +47,26 @@ fn post_upgrade(args: Args) {
             .await
             .unwrap();
         });
+    });
+
+    mutate_state(|state| {
+        let cut_off = 1764547200000; // 1st December
+        let users_to_suspend: Vec<_> = state
+            .data
+            .users
+            .iter()
+            .filter(|u| {
+                u.date_created > cut_off && u.suspension_details.is_none() && u.username.to_lowercase().contains("ocapp")
+            })
+            .map(|u| u.user_id)
+            .collect();
+
+        if !users_to_suspend.is_empty() {
+            info!(count = users_to_suspend.len(), "Suspending users");
+
+            state.data.users_to_suspend.extend(users_to_suspend);
+
+            crate::jobs::suspend_users::start_job_if_required(state);
+        }
     });
 }
