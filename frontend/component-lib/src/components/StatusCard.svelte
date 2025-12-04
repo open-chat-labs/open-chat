@@ -15,7 +15,7 @@
         icon?: Snippet<[string, string]>;
     }
 
-    let { mode, title, body, confirmed = $bindable(false), confirmation, icon }: Props = $props();
+    let { mode, title, body, confirmed = $bindable(false), icon }: Props = $props();
 
     let iconColour = $derived(mode === "information" ? ColourVars.secondary : ColourVars.warning);
 </script>

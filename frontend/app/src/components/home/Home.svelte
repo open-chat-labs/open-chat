@@ -280,8 +280,8 @@
         modal = { kind: "register_webhook" };
     }
 
-    function updateWebhook({ webhook }: { webhook: FullWebhookDetails }) {
-        modal = { kind: "update_webhook", webhook };
+    function updateWebhook({ hook }: { hook: FullWebhookDetails; chat: MultiUserChat }) {
+        modal = { kind: "update_webhook", webhook: hook };
     }
 
     function updateBot() {

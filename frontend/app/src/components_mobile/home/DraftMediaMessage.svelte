@@ -16,7 +16,7 @@
     {#if content.kind === "video_content"}
         <VideoContent edited={false} fill={false} {content} draft />
     {:else if content.kind === "audio_content"}
-        <AudioContent me edited={false} {content} />
+        <AudioContent edited={false} {content} />
     {:else if content.kind === "image_content"}
         <ImageContent edited={false} fill={false} {content} draft />
     {:else if content.kind === "file_content"}

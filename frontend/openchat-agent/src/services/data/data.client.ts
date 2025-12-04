@@ -1,21 +1,21 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { sha3_256 } from "js-sha3";
-import type { AgentConfig } from "../../config";
-import { buildBlobUrl } from "../../utils/chat";
 import type {
-    StorageStatus,
-    MessageContent,
-    StoredMediaContent,
-    BlobReference,
-    UploadFileResponse,
     AllowanceExceeded,
+    BlobReference,
+    MessageContent,
     ProjectedAllowance,
+    StorageStatus,
     StorageUserNotFound,
+    StoredMediaContent,
+    UploadFileResponse,
 } from "openchat-shared";
 import { random128, StorageUpdated } from "openchat-shared";
-import { StorageIndexClient } from "../storageIndex/storageIndex.client";
+import type { AgentConfig } from "../../config";
+import { buildBlobUrl } from "../../utils/chat";
 import { StorageBucketClient } from "../storageBucket/storageBucket.client";
+import { StorageIndexClient } from "../storageIndex/storageIndex.client";
 
 export class DataClient extends EventTarget {
     private storageIndexClient: StorageIndexClient;
@@ -68,7 +68,7 @@ export class DataClient extends EventTarget {
                 const response = await this.uploadFile(
                     content.mimeType,
                     accessorIds,
-                    content.blobData,
+                    content.blobData.slice().buffer,
                 );
 
                 const ref = this.extractBlobReference(response);
@@ -96,8 +96,16 @@ export class DataClient extends EventTarget {
                 const accessorIds = accessorCanisterIds.map((c) => Principal.fromText(c));
 
                 await Promise.all([
-                    this.uploadFile(content.mimeType, accessorIds, content.videoData.blobData),
-                    this.uploadFile("image/jpg", accessorIds, content.imageData.blobData),
+                    this.uploadFile(
+                        content.mimeType,
+                        accessorIds,
+                        content.videoData.blobData.slice().buffer,
+                    ),
+                    this.uploadFile(
+                        "image/jpg",
+                        accessorIds,
+                        content.imageData.blobData.slice().buffer,
+                    ),
                 ]).then(([video, image]) => {
                     const videoRef = this.extractBlobReference(video);
                     const imageRef = this.extractBlobReference(image);

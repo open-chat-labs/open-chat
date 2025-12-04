@@ -74,10 +74,6 @@
             }
         }),
     ]);
-
-    function kebab(name: string): string {
-        return `topic_${name.toLowerCase().split(" ").join("_")}`;
-    }
 </script>
 
 <SlidingPageContent title={i18nKey("proposal.filter")}>
@@ -103,7 +99,7 @@
                     onToggle={() => proposalActionCategories.toggle(category)}
                     open={$proposalActionCategories[category]}
                     headerText={i18nKey(sectionLabels[category])}>
-                    <Container direction={"vertical"}>
+                    <Container gap={"lg"} direction={"vertical"}>
                         {#each topicsInCategory as [id, label]}
                             <Switch
                                 width={{ kind: "fill" }}

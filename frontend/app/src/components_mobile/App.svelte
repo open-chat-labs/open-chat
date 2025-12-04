@@ -1,7 +1,6 @@
 <script lang="ts">
     import "@styles/global.scss";
 
-    import Router from "./Router.svelte";
     import "@i18n/i18n";
     import { reviewingTranslations } from "@i18n/i18n";
     import { trackedEffect } from "@src/utils/effects.svelte";
@@ -50,6 +49,7 @@
     import { _, isLoading } from "svelte-i18n";
     import { getFcmToken, svelteReady } from "tauri-plugin-oc-api";
     import Head from "./Head.svelte";
+    import Router from "./Router.svelte";
     import Snow from "./Snow.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
     import NotificationsBar from "./home/NotificationsBar.svelte";
@@ -124,11 +124,6 @@
     );
     let burstUrl = $derived(isFirefox ? `${burstPath}.png` : `${burstPath}.svg`);
     let burstFixed = $derived(isScrollingRoute($routeStore));
-
-    let upgrading = $derived(
-        $identityStateStore.kind === "upgrading_user" ||
-            $identityStateStore.kind === "upgrade_user",
-    );
 
     trackedEffect("rtl", () => {
         // subscribe to the rtl store so that we can set the overall page direction at the right time

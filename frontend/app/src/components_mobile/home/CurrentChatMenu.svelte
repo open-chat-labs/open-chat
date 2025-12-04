@@ -256,11 +256,6 @@
     {/if}
 {/if}
 {#if selectedChatSummary.kind === "direct_chat" && !isBot}
-    {#if hasPinned}
-        <MenuItem onclick={showPinned}>
-            <Translatable resourceKey={i18nKey("showPinned")} />
-        </MenuItem>
-    {/if}
     {#if notificationsSupported}
         {#if selectedChatSummary.membership.notificationsMuted === true}
             <MenuItem onclick={() => toggleMuteNotifications(false, undefined)}>

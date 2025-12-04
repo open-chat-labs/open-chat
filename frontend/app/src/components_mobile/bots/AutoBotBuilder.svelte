@@ -192,7 +192,7 @@
 
 {#snippet commands()}
     {#if candidate.definition.commands.length > 0}
-        <BotCommands {errors} commands={candidate.definition.commands} onClick={onSelectCommand} />
+        <BotCommands commands={candidate.definition.commands} onClick={onSelectCommand} />
     {:else}
         <div class="smallprint">
             <Translatable resourceKey={i18nKey("bots.builder.noCommands")}></Translatable>

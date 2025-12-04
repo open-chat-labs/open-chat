@@ -62,7 +62,7 @@
         "rollup-plugin-livereload": "^2.0.5",
         "rollup-styles": "^1.5.0",
         "svelte": "^5.38.1",
-        "svelte-check": "^4.1.5",
+        "svelte-check": "^4.3.4",
         "turbo": "^2.1.2"
     },
     "dependencies": {

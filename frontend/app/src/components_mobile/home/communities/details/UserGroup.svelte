@@ -51,7 +51,9 @@
     let searchTerm = $derived(trimLeadingAtSymbol(searchTermEntered));
     let searchTermLower = $derived(searchTerm.toLowerCase());
     let groupUsers = $derived(
-        [...userGroup.members].map((m) => $allUsersStore.get(m)).filter((u) => u !== undefined),
+        [...userGroup.members]
+            .map((m) => $allUsersStore.get(m))
+            .filter((u) => u !== undefined) as UserSummary[],
     );
     let matchedUsers = $derived(groupUsers.filter((u) => matchesSearch(searchTermLower, u)));
 

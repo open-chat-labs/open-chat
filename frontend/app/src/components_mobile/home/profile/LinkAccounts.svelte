@@ -366,15 +366,9 @@
                 <Translatable resourceKey={i18nKey("identity.linkTwoIdentities")} />
             </div>
             <div class="identities">
-                <SignInOption
-                    hollow
-                    provider={substep.initiator.provider}
-                    name={i18nKey(substep.initiator.provider)} />
+                <SignInOption hollow name={i18nKey(substep.initiator.provider)} />
                 <ArrowRightBoldOutline size={$iconSize} color={"var(--icon-txt)"} />
-                <SignInOption
-                    hollow
-                    provider={substep.approver.provider}
-                    name={i18nKey(substep.approver.provider)} />
+                <SignInOption hollow name={i18nKey(substep.approver.provider)} />
             </div>
         {:else if substep.kind === "initiator" && linkInternetIdentity}
             <div class="info">

@@ -18,7 +18,6 @@
     import TextBoxOutline from "svelte-material-icons/TextBoxOutline.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
-    import WithBotManagement from "./WithBotManagement.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -45,67 +44,75 @@
     function searchChat() {
         onSearchChat("");
     }
+
+    function removeBot() {
+        console.log("Remove bot");
+    }
+
+    function reviewPermissions() {
+        console.log("Review permissions", grantedPermissions);
+    }
+
+    function viewBotDetails() {
+        console.log("View bot details");
+    }
 </script>
 
-<WithBotManagement collection={chat} {bot} canManage {grantedPermissions}>
-    {#snippet contents({ removeBot, reviewPermissions, viewBotDetails })}
-        <SectionHeader onBack={() => publish("clearSelection")}>
-            {#snippet avatar()}
-                <Avatar url={client.userAvatarUrl(botUser)} size={"lg"} />
-            {/snippet}
-
-            {#snippet title()}
-                {client.displayName(botUser)}
-            {/snippet}
-
-            {#snippet subtitle()}
-                <Translatable resourceKey={i18nKey("Use bot commands below")} />
-            {/snippet}
-
-            {#snippet menu()}
-                {#if !$favouritesStore.has(chat.id)}
-                    <MenuItem danger onclick={addToFavourites}>
-                        {#snippet icon(color, size)}
-                            <HeartPlus {size} {color} />
-                        {/snippet}
-                        <Translatable resourceKey={i18nKey("communities.addToFavourites")} />
-                    </MenuItem>
-                {:else}
-                    <MenuItem danger onclick={removeFromFavourites}>
-                        {#snippet icon(color, size)}
-                            <HeartMinus {color} {size} />
-                        {/snippet}
-                        <Translatable resourceKey={i18nKey("communities.removeFromFavourites")} />
-                    </MenuItem>
-                {/if}
-                <MenuItem onclick={searchChat}>
-                    {#snippet icon(color, size)}
-                        <Magnify {color} {size} />
-                    {/snippet}
-                    <Translatable resourceKey={i18nKey("searchChat")} />
-                </MenuItem>
-
-                <MenuItem onclick={() => removeBot()}>
-                    {#snippet icon(color, size)}
-                        <DeleteOutline {color} {size} />
-                    {/snippet}
-                    <Translatable resourceKey={i18nKey("bots.manage.remove")} />
-                </MenuItem>
-
-                <MenuItem onclick={() => reviewPermissions()}>
-                    {#snippet icon(color, size)}
-                        <PencilOutline {color} {size} />
-                    {/snippet}
-                    <Translatable resourceKey={i18nKey("bots.manage.review")} />
-                </MenuItem>
-
-                <MenuItem onclick={() => viewBotDetails()}>
-                    {#snippet icon(color, size)}
-                        <TextBoxOutline {color} {size} />
-                    {/snippet}
-                    <Translatable resourceKey={i18nKey("bots.manage.view")} />
-                </MenuItem>
-            {/snippet}
-        </SectionHeader>
+<SectionHeader onBack={() => publish("clearSelection")}>
+    {#snippet avatar()}
+        <Avatar url={client.userAvatarUrl(botUser)} size={"lg"} />
     {/snippet}
-</WithBotManagement>
+
+    {#snippet title()}
+        {client.displayName(botUser)}
+    {/snippet}
+
+    {#snippet subtitle()}
+        <Translatable resourceKey={i18nKey("Use bot commands below")} />
+    {/snippet}
+
+    {#snippet menu()}
+        {#if !$favouritesStore.has(chat.id)}
+            <MenuItem danger onclick={addToFavourites}>
+                {#snippet icon(color, size)}
+                    <HeartPlus {size} {color} />
+                {/snippet}
+                <Translatable resourceKey={i18nKey("communities.addToFavourites")} />
+            </MenuItem>
+        {:else}
+            <MenuItem danger onclick={removeFromFavourites}>
+                {#snippet icon(color, size)}
+                    <HeartMinus {color} {size} />
+                {/snippet}
+                <Translatable resourceKey={i18nKey("communities.removeFromFavourites")} />
+            </MenuItem>
+        {/if}
+        <MenuItem onclick={searchChat}>
+            {#snippet icon(color, size)}
+                <Magnify {color} {size} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("searchChat")} />
+        </MenuItem>
+
+        <MenuItem onclick={() => removeBot()}>
+            {#snippet icon(color, size)}
+                <DeleteOutline {color} {size} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("bots.manage.remove")} />
+        </MenuItem>
+
+        <MenuItem onclick={() => reviewPermissions()}>
+            {#snippet icon(color, size)}
+                <PencilOutline {color} {size} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("bots.manage.review")} />
+        </MenuItem>
+
+        <MenuItem onclick={() => viewBotDetails()}>
+            {#snippet icon(color, size)}
+                <TextBoxOutline {color} {size} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("bots.manage.view")} />
+        </MenuItem>
+    {/snippet}
+</SectionHeader>

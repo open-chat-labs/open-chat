@@ -783,7 +783,7 @@ function makeSerialisable<T extends ChatEvent>(
 
 function dataToBlobUrl(data: Uint8Array, type?: string): string {
     const options = type ? { type } : undefined;
-    const blob = new Blob([data], options);
+    const blob = new Blob([data.slice().buffer], options);
     return URL.createObjectURL(blob);
 }
 
@@ -958,8 +958,7 @@ export async function updateCachedProposalTallies(
                     event.event.kind === "message" &&
                     event.event.content.kind === "proposal_content"
                 ) {
-                    const updated =
-                        tally.timestamp > event.event.content.proposal.tally.timestamp;
+                    const updated = tally.timestamp > event.event.content.proposal.tally.timestamp;
 
                     messages.push(event as EventWrapper<Message>);
 

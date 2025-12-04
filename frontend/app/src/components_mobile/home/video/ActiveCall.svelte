@@ -366,12 +366,7 @@
         !(participantsOpen && $mobileWidth) &&
         chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatSummaryStore?.id)}>
     {#if chat !== undefined}
-        <ActiveCallHeader
-            {onClearSelection}
-            onHangup={hangup}
-            onAskToSpeak={askToSpeak}
-            {chat}
-            {askedToSpeak} />
+        <ActiveCallHeader {onClearSelection} onAskToSpeak={askToSpeak} {chat} {askedToSpeak} />
     {/if}
     <div class="iframe-container" bind:this={iframeContainer}></div>
 </div>

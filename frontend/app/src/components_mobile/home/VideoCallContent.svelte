@@ -27,7 +27,6 @@
 
     let { content, messageIndex, timestamp, senderId }: Props = $props();
 
-    let me = $derived(senderId === $currentUserIdStore);
     let displayName = $derived(
         client.getDisplayName(senderId, $selectedCommunityMembersStore, $selectedChatWebhooksStore),
     );

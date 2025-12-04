@@ -150,10 +150,10 @@
         return client.searchUsers(searchTerm, 20).then((res) => [[], res]);
     }
 
-    function clearCodeAndLogout() {
-        client.clearReferralCode();
-        client.logout();
-    }
+    // function clearCodeAndLogout() {
+    //     client.clearReferralCode();
+    //     client.logout();
+    // }
 
     onMount(async () => {
         referringUser = await client.getReferringUser();

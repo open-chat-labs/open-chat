@@ -10,14 +10,12 @@
     import type { ChatIdentifier, CommunityIdentifier, GroupChatIdentifier } from "openchat-client";
     import {
         botState,
-        definitionToPermissions,
         emptyGrantedBotPermissions,
         selectedChatBotsStore,
         selectedCommunityBotsStore,
     } from "openchat-client";
-    import BotSummary from "./BotSummary.svelte";
 
-    let { botId, chatId, onClose }: BotProfileProps = $props();
+    let { botId, chatId }: BotProfileProps = $props();
 
     let grantedPermissions = $derived.by(() => {
         if (chatId.kind === "channel") {
@@ -40,7 +38,9 @@
 </script>
 
 {#if bot !== undefined && id !== undefined}
-    <BotSummary
+    <pre>TODO - something here</pre>
+    <pre>{grantedPermissions}</pre>
+    <!-- <BotSummary
         level={"group"}
         mode={{
             kind: "viewing_bot",
@@ -49,5 +49,5 @@
             granted: grantedPermissions,
         }}
         {onClose}
-        {bot} />
+        {bot} /> -->
 {/if}

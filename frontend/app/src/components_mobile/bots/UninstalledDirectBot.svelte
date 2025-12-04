@@ -1,20 +1,7 @@
 <script lang="ts">
-    import {
-        botState,
-        chatIdentifiersEqual,
-        chatListScopeStore,
-        currentUserIdStore,
-        directChatBotsStore,
-        OpenChat,
-        routeForScope,
-        routeStore,
-        type DirectChatIdentifier,
-    } from "openchat-client";
-    import page from "page";
-    import { getContext } from "svelte";
-    import BotInstaller from "./install/BotInstaller.svelte";
+    import { botState, type DirectChatIdentifier } from "openchat-client";
 
-    const client = getContext<OpenChat>("client");
+    // const client = getContext<OpenChat>("client");
 
     interface Props {
         chatId: DirectChatIdentifier;
@@ -22,29 +9,29 @@
         onClose: () => void;
     }
 
-    let { botId, chatId, onClose }: Props = $props();
+    let { botId }: Props = $props();
 
     let bot = $derived(botState.externalBots.get(botId));
 
-    function closeInstaller(installed: boolean) {
-        if (!installed) {
-            client.removeChat(chatId);
-            if (
-                $routeStore.kind === "global_chat_selected_route" &&
-                chatIdentifiersEqual(chatId, $routeStore.chatId)
-            ) {
-                page(routeForScope($chatListScopeStore));
-            }
-        }
-        onClose();
-    }
+    // function closeInstaller(installed: boolean) {
+    //     if (!installed) {
+    //         client.removeChat(chatId);
+    //         if (
+    //             $routeStore.kind === "global_chat_selected_route" &&
+    //             chatIdentifiersEqual(chatId, $routeStore.chatId)
+    //         ) {
+    //             page(routeForScope($chatListScopeStore));
+    //         }
+    //     }
+    //     onClose();
+    // }
 </script>
 
 {#if bot !== undefined}
-    <BotInstaller
+    <!-- <BotInstaller
         level={"group"}
         location={{ kind: "direct_chat", userId: $currentUserIdStore }}
         {bot}
         onClose={closeInstaller}
-        installedBots={$directChatBotsStore} />
+        installedBots={$directChatBotsStore} /> -->
 {/if}
