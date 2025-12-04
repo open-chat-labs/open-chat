@@ -1,6 +1,6 @@
 <script lang="ts">
     import { toastStore } from "@src/stores/toast";
-    import { ColourVars, CommonButton, Container, Label, Overview } from "component-lib";
+    import { Button, ColourVars, Container, Label, Overview, Sheet } from "component-lib";
     import {
         LEDGER_CANISTER_CHAT,
         OpenChat,
@@ -15,8 +15,6 @@
     import ShieldHalfFull from "svelte-material-icons/ShieldHalfFull.svelte";
     import ShieldPlusOutline from "svelte-material-icons/ShieldPlusOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import ModalContent from "../../ModalContent.svelte";
-    import Overlay from "../../Overlay.svelte";
     import Translatable from "../../Translatable.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
 
@@ -62,134 +60,104 @@
     }
 </script>
 
-<Overlay {onClose}>
-    <ModalContent fill {onClose}>
-        {#snippet header()}
-            {#if !confirming && !confirmed}
-                <Container crossAxisAlignment={"center"} mainAxisAlignment={"spaceBetween"}>
-                    <Container crossAxisAlignment={"center"} gap={"sm"}>
-                        <ShieldHalfFull size={"1em"} />
-                        <Translatable resourceKey={i18nKey("streakInsurance.topUpTitle")} />
-                    </Container>
-
-                    <BalanceWithRefresh
-                        {ledger}
-                        value={remainingBalance}
-                        bind:refreshing={refreshingBalance} />
+<Sheet onDismiss={onClose}>
+    <Container padding={"xl"} gap={"lg"} direction={"vertical"}>
+        {#if !confirming && !confirmed}
+            <Container crossAxisAlignment={"center"} mainAxisAlignment={"spaceBetween"}>
+                <Container width={{ kind: "fill" }} crossAxisAlignment={"center"} gap={"sm"}>
+                    <ShieldHalfFull size={"1em"} />
+                    <Translatable resourceKey={i18nKey("streakInsurance.topUpTitle")} />
                 </Container>
-            {/if}
-        {/snippet}
-        {#snippet body()}
+
+                <BalanceWithRefresh
+                    {ledger}
+                    value={remainingBalance}
+                    bind:refreshing={refreshingBalance} />
+            </Container>
+        {/if}
+        <Container
+            padding={"lg"}
+            gap={"md"}
+            mainAxisAlignment={"spaceAround"}
+            crossAxisAlignment={"end"}>
+            <Container crossAxisAlignment={"center"} direction={"vertical"}>
+                <Label align={"center"} width={{ kind: "hug" }} colour={"textSecondary"} uppercase>
+                    <Translatable resourceKey={i18nKey("streakInsurance.bought")}></Translatable>
+                </Label>
+                <Overview
+                    align={"center"}
+                    width={{ kind: "hug" }}
+                    colour={"primary"}
+                    fontWeight={"bold"}>
+                    {totalDays}
+                </Overview>
+            </Container>
+
             <Container
-                padding={"lg"}
-                gap={"md"}
-                mainAxisAlignment={"spaceAround"}
-                crossAxisAlignment={"end"}>
-                <Container crossAxisAlignment={"center"} direction={"vertical"}>
-                    <Label
-                        align={"center"}
-                        width={{ kind: "hug" }}
-                        colour={"textSecondary"}
-                        uppercase>
-                        <Translatable resourceKey={i18nKey("streakInsurance.bought")}
-                        ></Translatable>
-                    </Label>
-                    <Overview
-                        align={"center"}
-                        width={{ kind: "hug" }}
-                        colour={"primary"}
-                        fontWeight={"bold"}>
-                        {totalDays}
-                    </Overview>
-                </Container>
-
-                <Container
-                    padding={["zero", "md"]}
-                    width={{ kind: "hug" }}
-                    height={{ kind: "fill" }}
-                    crossAxisAlignment={"center"}>
-                    <Minus color={ColourVars.textSecondary} />
-                </Container>
-
-                <Container crossAxisAlignment={"center"} direction={"vertical"}>
-                    <Label
-                        align={"center"}
-                        width={{ kind: "hug" }}
-                        colour={"textSecondary"}
-                        uppercase>
-                        <Translatable resourceKey={i18nKey("streakInsurance.missed")}
-                        ></Translatable>
-                    </Label>
-                    <Overview
-                        align={"center"}
-                        width={{ kind: "hug" }}
-                        colour={"primary"}
-                        fontWeight={"bold"}>
-                        {currentDaysMissed}
-                    </Overview>
-                </Container>
-
-                <Container
-                    width={{ kind: "hug" }}
-                    padding={["zero", "md"]}
-                    height={{ kind: "fill" }}
-                    crossAxisAlignment={"center"}>
-                    <Equal color={ColourVars.textSecondary} />
-                </Container>
-
-                <Container crossAxisAlignment={"center"} direction={"vertical"}>
-                    <Label
-                        align={"center"}
-                        width={{ kind: "hug" }}
-                        colour={"textSecondary"}
-                        uppercase>
-                        <Translatable resourceKey={i18nKey("streakInsurance.remaining")}
-                        ></Translatable>
-                    </Label>
-                    <Overview
-                        align={"center"}
-                        width={{ kind: "hug" }}
-                        colour={"primary"}
-                        fontWeight={"bold"}>
-                        {remaining}
-                    </Overview>
-                </Container>
+                padding={["zero", "md"]}
+                width={{ kind: "hug" }}
+                height={{ kind: "fill" }}
+                crossAxisAlignment={"center"}>
+                <Minus color={ColourVars.textSecondary} />
             </Container>
-        {/snippet}
-        {#snippet footer()}
-            <Container gap={"md"} mainAxisAlignment={"end"} crossAxisAlignment={"end"}>
-                <CommonButton
-                    mode={"default"}
-                    disabled={paying}
-                    onClick={onClose}
-                    size={"small_text"}>
-                    <Translatable resourceKey={i18nKey("cancel")}></Translatable>
-                </CommonButton>
-                <CommonButton
-                    mode={"active"}
-                    disabled={paying || maxReached}
-                    onClick={() => (additionalDays += 1)}
-                    size={"medium"}>
-                    {#snippet icon(color, size)}
-                        <ShieldPlusOutline {color} {size}></ShieldPlusOutline>
-                    {/snippet}
-                    <Translatable resourceKey={i18nKey("streakInsurance.addDay")}></Translatable>
-                </CommonButton>
-                <CommonButton
-                    mode={"active"}
-                    loading={paying}
-                    disabled={paying || additionalDays === 0 || insufficientBalance}
-                    onClick={pay}
-                    size={"medium"}>
-                    {#snippet icon(color, size)}
-                        <CreditCard {color} {size}></CreditCard>
-                    {/snippet}
-                    <Translatable
-                        resourceKey={i18nKey("streakInsurance.pay", {
-                            price: price.toLocaleString(),
-                        })}></Translatable>
-                </CommonButton>
+
+            <Container crossAxisAlignment={"center"} direction={"vertical"}>
+                <Label align={"center"} width={{ kind: "hug" }} colour={"textSecondary"} uppercase>
+                    <Translatable resourceKey={i18nKey("streakInsurance.missed")}></Translatable>
+                </Label>
+                <Overview
+                    align={"center"}
+                    width={{ kind: "hug" }}
+                    colour={"primary"}
+                    fontWeight={"bold"}>
+                    {currentDaysMissed}
+                </Overview>
             </Container>
-        {/snippet}
-    </ModalContent>
-</Overlay>
+
+            <Container
+                width={{ kind: "hug" }}
+                padding={["zero", "md"]}
+                height={{ kind: "fill" }}
+                crossAxisAlignment={"center"}>
+                <Equal color={ColourVars.textSecondary} />
+            </Container>
+
+            <Container crossAxisAlignment={"center"} direction={"vertical"}>
+                <Label align={"center"} width={{ kind: "hug" }} colour={"textSecondary"} uppercase>
+                    <Translatable resourceKey={i18nKey("streakInsurance.remaining")}></Translatable>
+                </Label>
+                <Overview
+                    align={"center"}
+                    width={{ kind: "hug" }}
+                    colour={"primary"}
+                    fontWeight={"bold"}>
+                    {remaining}
+                </Overview>
+            </Container>
+        </Container>
+        <Container
+            direction={"vertical"}
+            gap={"md"}
+            mainAxisAlignment={"end"}
+            crossAxisAlignment={"end"}>
+            <Button secondary disabled={paying || maxReached} onClick={() => (additionalDays += 1)}>
+                {#snippet icon(color)}
+                    <ShieldPlusOutline {color}></ShieldPlusOutline>
+                {/snippet}
+                <Translatable resourceKey={i18nKey("streakInsurance.addDay")}></Translatable>
+            </Button>
+            <Button
+                loading={paying}
+                disabled={paying || additionalDays === 0 || insufficientBalance}
+                onClick={pay}>
+                {#snippet icon(color)}
+                    <CreditCard {color}></CreditCard>
+                {/snippet}
+                <Translatable
+                    resourceKey={i18nKey("streakInsurance.pay", {
+                        price: price.toLocaleString(),
+                    })}></Translatable>
+            </Button>
+        </Container>
+    </Container>
+</Sheet>

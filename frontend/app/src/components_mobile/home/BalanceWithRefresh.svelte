@@ -88,7 +88,11 @@
     });
 </script>
 
-<Container mainAxisAlignment={"end"} crossAxisAlignment={"center"} gap={"sm"}>
+<Container
+    width={{ kind: "hug" }}
+    mainAxisAlignment={"end"}
+    crossAxisAlignment={"center"}
+    gap={"sm"}>
     <Body blur={hideBalance} width={{ kind: "hug" }} fontWeight={"bold"}>
         {formattedValue}
     </Body>
