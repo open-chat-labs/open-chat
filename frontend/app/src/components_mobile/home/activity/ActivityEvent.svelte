@@ -1,5 +1,13 @@
 <script lang="ts">
-    import { Avatar, Body, BodySmall, Caption, Container, CountBadge } from "component-lib";
+    import {
+        Avatar,
+        Body,
+        BodySmall,
+        Caption,
+        Container,
+        CountBadge,
+        Subtitle,
+    } from "component-lib";
     import type { Message, MessageActivityEvent, ResourceKey } from "openchat-client";
     import {
         allUsersStore,
@@ -170,12 +178,12 @@
 </script>
 
 <Container padding={"lg"} gap={"md"} supplementalClass={"activity-event"} {onClick}>
-    <Avatar size={"sm"} url={client.userAvatarUrl(sender)}></Avatar>
+    <Avatar size={"lg"} url={client.userAvatarUrl(sender)}></Avatar>
     <Container direction={"vertical"}>
         <Container mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
-            <Body ellipsisTruncate fontWeight={"bold"}>
+            <Subtitle fontWeight={"bold"}>
                 <Markdown text={interpolate($_, eventSummary)} />
-            </Body>
+            </Subtitle>
             <Caption colour={"textSecondary"} width={{ kind: "hug" }}>
                 {client.formatMessageDate(
                     event.timestamp,
@@ -186,15 +194,19 @@
                 )}
             </Caption>
         </Container>
-        <BodySmall colour={"textSecondary"}>
+        <BodySmall width={{ kind: "hug" }} colour={"primary"}>{chatName}</BodySmall>
+        <Body colour={"textSecondary"}>
             {#if event.message !== undefined}
                 <Markdown text={lastMessage} oneLine twoLine suppressLinks />
             {:else}
                 <Translatable resourceKey={i18nKey("activity.missingMessage")} />
             {/if}
-        </BodySmall>
-        <Container gap={"sm"} mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"end"}>
-            <Caption width={{ kind: "hug" }} colour={"textSecondary"}>{chatName}</Caption>
+        </Body>
+        <Container
+            padding={["sm", "zero", "zero", "zero"]}
+            gap={"sm"}
+            mainAxisAlignment={"spaceBetween"}
+            crossAxisAlignment={"end"}>
             {#if event.activity === "reaction" && event.message !== undefined && event.message.reactions.length > 0}
                 <Container gap={"xs"} crossAxisAlignment={"center"} width={{ kind: "hug" }}>
                     {@const more = event.message.reactions.length - MAX_REACTIONS}
