@@ -3,7 +3,7 @@ import { derived } from "svelte/store";
 
 export const connectivityMonitor = new ConnectivityMonitor({
     pollIntervalMs: 30_000,
-    probeUrl: "/.well-known/assetlinks.json",
+    probeUrl: "https://cloudflare.com/cdn-cgi/trace",
     timeoutMs: 5_000,
 });
 
