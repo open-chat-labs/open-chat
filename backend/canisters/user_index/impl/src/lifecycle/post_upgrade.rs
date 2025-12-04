@@ -65,6 +65,8 @@ fn post_upgrade(args: Args) {
             info!(count = users_to_suspend.len(), "Suspending users");
 
             state.data.users_to_suspend.extend(users_to_suspend);
+
+            crate::jobs::suspend_users::start_job_if_required(state);
         }
     });
 }

@@ -12,6 +12,7 @@ pub(crate) fn start(state: &RuntimeState) {
     make_pending_payments::start_job_if_required(state);
     remove_from_online_users_canister::start_job_if_required(state);
     submit_message_to_modclub::start_job_if_required(state);
+    suspend_users::start_job_if_required(state);
     sync_events_to_local_user_index_canisters::start_job_if_required(state);
     sync_users_to_identity_canister::start_job_if_required(state);
     upgrade_canisters::start_job_if_required(state);
