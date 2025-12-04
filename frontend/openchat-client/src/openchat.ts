@@ -2529,7 +2529,8 @@ export class OpenChat {
                 return false;
             });
 
-        this.#sendRtcMessage([...selectedChatUserIdsStore.value], {
+        const messageRecipients = this.#rtcMessageRecipients(chatId);
+        this.#sendRtcMessage(messageRecipients, {
             kind: "remote_user_toggled_reaction",
             id: chatId,
             messageId: messageId,
@@ -3980,6 +3981,13 @@ export class OpenChat {
         });
     }
 
+    #rtcMessageRecipients(chatId: ChatIdentifier) {
+        // a DM should only ever be sent to the recipient regardless of selectedChatUserIdsStore
+        return chatId.kind === "direct_chat"
+            ? [chatId.userId]
+            : [...selectedChatUserIdsStore.value];
+    }
+
     async #sendMessageCommon(
         chat: ChatSummary,
         messageContext: MessageContext,
@@ -4032,7 +4040,8 @@ export class OpenChat {
             messageEvent.event,
         );
         const ledger = this.#extractLedgerFromContent(message.content);
-        const messageRecipients = [...selectedChatUserIdsStore.value];
+
+        const messageRecipients = this.#rtcMessageRecipients(chat.id);
 
         const sendMessagePromise: Promise<SendMessageResponse> = new Promise((resolve) => {
             this.#inflightMessagePromises.set(messageId, resolve);
