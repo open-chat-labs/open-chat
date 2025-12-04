@@ -2,7 +2,6 @@
     import { Logo, MenuItem, SectionHeader } from "component-lib";
     import { OpenChat } from "openchat-client";
     import { getContext } from "svelte";
-    import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
 
@@ -24,9 +23,6 @@
     {/snippet}
     {#snippet menu()}
         <MenuItem disabled={!canMarkAllRead} onclick={() => client.markAllReadForCurrentScope()}>
-            {#snippet icon(color, size)}
-                <CheckboxMultipleMarked {color} {size} />
-            {/snippet}
             <Translatable resourceKey={i18nKey("markAllRead")} />
         </MenuItem>
     {/snippet}

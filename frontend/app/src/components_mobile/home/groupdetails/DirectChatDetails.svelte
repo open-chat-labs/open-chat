@@ -128,7 +128,11 @@
 
 <Container background={ColourVars.background0} height={{ kind: "fill" }} direction={"vertical"}>
     {#if user !== undefined}
-        <Container gap={"xl"} direction={"vertical"} padding={["lg", "md", "md", "md"]}>
+        <Container
+            supplementalClass={"direct_chat_details"}
+            gap={"xl"}
+            direction={"vertical"}
+            padding={["lg", "md", "md", "md"]}>
             {#if profile}
                 <UserProfileSummaryCard showChit={false} mode={"view"} {user} {profile}>
                     {#snippet buttons()}
@@ -203,5 +207,9 @@
         background-color: var(--background-1);
         border-radius: var(--rad-circle);
         margin: 0 var(--sp-md);
+    }
+
+    :global(.container.direct_chat_details .icon_button:first-child) {
+        margin-inline-end: auto;
     }
 </style>

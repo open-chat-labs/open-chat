@@ -2,8 +2,6 @@
     import { Container, Logo, MenuItem, SectionHeader } from "component-lib";
     import { namedAccountsStore, OpenChat, publish } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import Book from "svelte-material-icons/BookOpenOutline.svelte";
-    import Cog from "svelte-material-icons/CogOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import Accounts from "./Accounts.svelte";
@@ -42,15 +40,9 @@
 
     {#snippet menu()}
         <MenuItem onclick={() => publish("manageRecipients")}>
-            {#snippet icon(color, size)}
-                <Book {color} {size} />
-            {/snippet}
             <Translatable resourceKey={i18nKey("Manage recipients")} />
         </MenuItem>
         <MenuItem onclick={() => publish("walletSettings")}>
-            {#snippet icon(color, size)}
-                <Cog {color} {size} />
-            {/snippet}
             <Translatable resourceKey={i18nKey("Settings")} />
         </MenuItem>
     {/snippet}

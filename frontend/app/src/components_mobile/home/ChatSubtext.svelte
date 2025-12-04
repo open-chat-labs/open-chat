@@ -14,11 +14,9 @@
 
     interface Props {
         chat: ChatSummary;
-        clickableMembers?: boolean;
-        onMembersClick?: () => void;
     }
 
-    let { chat, clickableMembers = false, onMembersClick }: Props = $props();
+    let { chat }: Props = $props();
 
     let userId = $derived(chat.kind === "direct_chat" ? chat.them.userId : "");
     let isBot = $derived($allUsersStore.get(userId)?.kind === "bot");
@@ -37,12 +35,6 @@
             });
         }
     });
-
-    function click() {
-        if (clickableMembers) {
-            onMembersClick?.();
-        }
-    }
 </script>
 
 {#if chat.kind === "direct_chat"}
@@ -53,7 +45,7 @@
         {subtext}
     </Container>
 {:else if chat.kind === "group_chat" || chat.kind === "channel"}
-    <Container onClick={click} gap={"sm"} crossAxisAlignment={"center"}>
+    <Container gap={"sm"} crossAxisAlignment={"center"}>
         <BodySmall width={{ kind: "hug" }} colour={"textSecondary"}>
             <VisibilityLabel isPublic={chat.public} />
         </BodySmall>

@@ -2,8 +2,6 @@
     import type { OpenChat } from "openchat-client";
     import { anonUserStore, identityStateStore, publish } from "openchat-client";
     import { getContext, tick } from "svelte";
-    import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
-    import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
 
@@ -41,14 +39,8 @@
 </script>
 
 <MenuItem onclick={newGroup}>
-    {#snippet icon(color, size)}
-        <AccountMultiplePlus {color} {size} />
-    {/snippet}
     <Translatable resourceKey={i18nKey("newGroup")} />
 </MenuItem>
 <MenuItem disabled={!canMarkAllRead} onclick={() => client.markAllReadForCurrentScope()}>
-    {#snippet icon(color, size)}
-        <CheckboxMultipleMarked {color} {size} />
-    {/snippet}
     <Translatable resourceKey={i18nKey("markAllRead")} />
 </MenuItem>

@@ -10,14 +10,12 @@
         chatListScopeStore,
         publish,
         restrictToSelectedChat,
-        routeForChatIdentifier,
         selectedChatIdStore,
         selectedCommunitySummaryStore,
         byContext as typersByContext,
         type OpenChat,
         type TypersByKey,
     } from "openchat-client";
-    import page from "page";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Video from "svelte-material-icons/VideoOutline.svelte";
@@ -81,12 +79,6 @@
         }
     }
 
-    function showGroupMembers() {
-        if (selectedChatSummary.kind !== "direct_chat") {
-            publish("showMembers", { collection: selectedChatSummary, view: "members" });
-        }
-    }
-
     function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
         switch (chatSummary.kind) {
             case "direct_chat":
@@ -144,18 +136,6 @@
         }
     }
 
-    function navigateToCommunity() {
-        if ($selectedCommunitySummaryStore !== undefined) {
-            page(`/community/${$selectedCommunitySummaryStore.id.communityId}`);
-        }
-    }
-
-    function navigateToChannel() {
-        if ($selectedCommunitySummaryStore !== undefined) {
-            page(routeForChatIdentifier("community", selectedChatSummary.id));
-        }
-    }
-
     function startVideoCall() {
         publish("startVideoCall", {
             chatId: selectedChatSummary.id,
@@ -192,52 +172,53 @@
     {/snippet}
 
     {#snippet title()}
-        {#if isMultiUser && !readonly}
-            <WithVerifiedBadge {verified} size={"small"}>
-                <Container gap={"md"}>
-                    {#if $selectedCommunitySummaryStore !== undefined && $chatListScopeStore.kind === "favourite"}
-                        <span onclick={navigateToCommunity} class="pointer">
-                            {$selectedCommunitySummaryStore.name}
-                        </span>
-                        <span>{">"}</span>
-                        <span onclick={navigateToChannel} class="pointer">
+        <Container onClick={showGroupDetails}>
+            {#if isMultiUser && !readonly}
+                <WithVerifiedBadge {verified} size={"small"}>
+                    <Container gap={"xs"}>
+                        {#if $selectedCommunitySummaryStore !== undefined && $chatListScopeStore.kind === "favourite"}
+                            <span>
+                                {$selectedCommunitySummaryStore.name}
+                            </span>
+                            <span>{">"}</span>
+                            <span>
+                                {chat.name}
+                            </span>
+                        {:else}
                             {chat.name}
-                        </span>
-                    {:else}
-                        {chat.name}
-                    {/if}
+                        {/if}
+                    </Container>
+                </WithVerifiedBadge>
+            {:else if hasUserProfile}
+                <Container crossAxisAlignment={"center"} gap={"xxs"}>
+                    {chat.name}
+                    <Badges
+                        uniquePerson={chat.uniquePerson}
+                        diamondStatus={chat.diamondStatus}
+                        streak={chat.streak}
+                        chitEarned={chat.chitEarned} />
+                    <Label colour={"textSecondary"}>{chat.username}</Label>
                 </Container>
-            </WithVerifiedBadge>
-        {:else if hasUserProfile}
-            <Container onClick={openUserProfile} crossAxisAlignment={"center"} gap={"xxs"}>
+            {:else}
                 {chat.name}
-                <Badges
-                    uniquePerson={chat.uniquePerson}
-                    diamondStatus={chat.diamondStatus}
-                    streak={chat.streak}
-                    chitEarned={chat.chitEarned} />
-                <Label colour={"textSecondary"}>{chat.username}</Label>
-            </Container>
-        {:else}
-            {chat.name}
-        {/if}
+            {/if}
+        </Container>
     {/snippet}
 
     {#snippet subtitle()}
-        {#if blocked}
-            <Translatable resourceKey={i18nKey("blocked")} />
-        {:else if readonly}
-            <ChatSubtext chat={selectedChatSummary} />
-        {:else if chat.typing !== undefined}
-            {chat.typing} <Typing />
-        {:else if isMultiUser}
-            <ChatSubtext
-                chat={selectedChatSummary}
-                clickableMembers
-                onMembersClick={showGroupMembers} />
-        {:else}
-            <ChatSubtext chat={selectedChatSummary} />
-        {/if}
+        <Container onClick={showGroupDetails}>
+            {#if blocked}
+                <Translatable resourceKey={i18nKey("blocked")} />
+            {:else if readonly}
+                <ChatSubtext chat={selectedChatSummary} />
+            {:else if chat.typing !== undefined}
+                {chat.typing} <Typing />
+            {:else if isMultiUser}
+                <ChatSubtext chat={selectedChatSummary} />
+            {:else}
+                <ChatSubtext chat={selectedChatSummary} />
+            {/if}
+        </Container>
     {/snippet}
 </SectionHeader>
 
