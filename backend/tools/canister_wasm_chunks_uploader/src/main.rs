@@ -15,6 +15,9 @@ async fn main() {
         CanisterName::GroupIndex => {
             upload_group_index_canister_wasm(identity, opts.url, opts.openchat_installer, opts.version).await
         }
+        CanisterName::Identity => {
+            upload_identity_canister_wasm(identity, opts.url, opts.openchat_installer, opts.version).await
+        }
         CanisterName::LocalUserIndex => {
             upload_local_user_index_canister_wasm(identity, opts.url, opts.user_index, opts.version).await
         }
