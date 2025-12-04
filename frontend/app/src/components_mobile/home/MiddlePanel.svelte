@@ -22,7 +22,6 @@
     import { fade } from "svelte/transition";
     import { activeVideoCall, type ActiveVideoCall } from "../../stores/video";
     import { currentTheme } from "../../theme/themes";
-    import Loading from "../Loading.svelte";
     import ExploreCommunities from "./communities/explore/Explore.svelte";
     import CurrentChat from "./CurrentChat.svelte";
     import NoChatSelected from "./NoChatSelected.svelte";
@@ -114,14 +113,6 @@
         <RecommendedGroups {joining} />
     {:else if $routeStore.kind === "communities_route"}
         <ExploreCommunities />
-    {:else if $routeStore.kind === "admin_route"}
-        {#await import("./admin/Admin.svelte")}
-            <div class="loading">
-                <Loading />
-            </div>
-        {:then { default: Admin }}
-            <Admin />
-        {/await}
     {:else if $selectedChatIdStore === undefined}
         {#if noChat}
             <div class="no-chat" in:fade>

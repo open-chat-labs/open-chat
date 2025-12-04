@@ -1,13 +1,14 @@
 <script lang="ts">
     import {
-        BigButton,
         Body,
         BodySmall,
+        Chip,
         ColourVars,
         CommonButton,
         Container,
         FloatingButton,
-        IconButton,
+        MenuItem,
+        Overview,
         Search,
         SectionHeader,
         Sheet,
@@ -29,8 +30,8 @@
     import Account from "svelte-material-icons/AccountGroupOutline.svelte";
     import ArrowUp from "svelte-material-icons/ArrowUp.svelte";
     import CloudOffOutline from "svelte-material-icons/CloudOffOutline.svelte";
+    import Filter from "svelte-material-icons/FilterVariant.svelte";
     import Robot from "svelte-material-icons/RobotOutline.svelte";
-    import Tune from "svelte-material-icons/Tune.svelte";
     import { i18nKey, interpolate } from "../../../../i18n/i18n";
     import {
         botSearchState,
@@ -62,16 +63,13 @@
         view === "communities" ? communitySearchState : botSearchState,
     );
 
-    function selectView(v: View) {
-        transition(["fade"], () => {
-            view = v;
-        });
-        search(true);
-    }
-
     function clear() {
         searchState.term = "";
         search(true);
+    }
+
+    function createCommunity() {
+        updateCommunityState.createCommunity(client);
     }
 
     function searchCommunities(
@@ -162,6 +160,13 @@
         };
     });
 
+    function setView(v: View) {
+        transition(["fade"], () => {
+            view = v;
+        });
+        search(true);
+    }
+
     function scrollToTop() {
         if (scrollableElement) {
             scrollableElement.scrollTop = 0;
@@ -233,38 +238,72 @@
     </Container>
 {/snippet}
 
-<Container height={{ kind: "fill" }} parentDirection={"vertical"} gap={"sm"} direction={"vertical"}>
-    <SectionHeader onBack={() => history.back()}>
+<Container
+    bind:ref={scrollableElement}
+    height={{ kind: "fill" }}
+    parentDirection={"vertical"}
+    gap={"xl"}
+    direction={"vertical"}>
+    <SectionHeader onAction={createCommunity} onBack={() => history.back()}>
         {#snippet title()}
             <Translatable resourceKey={i18nKey("communities.exploreMobile")} />
         {/snippet}
-        {#snippet action()}
-            <IconButton onclick={() => (showingFilters = true)}>
-                {#snippet icon(color)}
-                    <Tune {color} />
-                {/snippet}
-            </IconButton>
+        {#snippet menu()}
+            <MenuItem onclick={createCommunity}>
+                <Translatable resourceKey={i18nKey("communities.create")} />
+            </MenuItem>
         {/snippet}
     </SectionHeader>
 
-    <Container padding={["zero", "md"]}>
-        <Search
-            bind:value={searchState.term}
-            onClear={clear}
-            {searching}
-            onSearch={() => search(true)}
-            placeholder={interpolate(
-                $_,
-                i18nKey(view === "communities" ? "communities.search" : "Search bots"),
-            )} />
+    <Container direction={"vertical"} gap={"md"} padding={["zero", "xxl"]}>
+        <Overview>
+            <Translatable resourceKey={i18nKey("Explore Communities & Bots")} />
+        </Overview>
+        <Body colour={"textSecondary"}>
+            <Translatable
+                resourceKey={i18nKey(
+                    "Find communities that resonate with you or maybe start a community of your own. Whether it's crypto, gaming or your favourite sport - this is the place to find your people.",
+                )} />
+        </Body>
     </Container>
 
     <Container
-        bind:ref={scrollableElement}
-        gap={"md"}
-        height={{ kind: "fill" }}
+        supplementalClass={"explore_search_and_chips"}
         direction={"vertical"}
-        padding={["md", "md"]}>
+        padding={["zero", "zero", "lg", "zero"]}
+        gap={"lg"}
+        background={ColourVars.background0}>
+        <Container padding={["zero", "lg"]}>
+            <Search
+                bind:value={searchState.term}
+                onClear={clear}
+                {searching}
+                onSearch={() => search(true)}
+                placeholder={interpolate(
+                    $_,
+                    i18nKey(view === "communities" ? "communities.search" : "Search bots"),
+                )} />
+        </Container>
+
+        <Container padding={["zero", "xl"]} gap={"sm"}>
+            <Chip
+                onClick={() => setView("communities")}
+                mode={view === "communities" ? "rounded" : "unselected"}>
+                {#snippet icon(color)}
+                    <Account {color} />
+                {/snippet}
+                <Translatable resourceKey={i18nKey("Communities")} />
+            </Chip>
+            <Chip onClick={() => setView("bots")} mode={view === "bots" ? "rounded" : "unselected"}>
+                {#snippet icon(color)}
+                    <Robot {color} />
+                {/snippet}
+                <Translatable resourceKey={i18nKey("Bots")} />
+            </Chip>
+        </Container>
+    </Container>
+
+    <Container gap={"md"} direction={"vertical"} padding={["zero", "lg", "md", "lg"]}>
         {#if loading}
             <div class="loading">
                 <FancyLoader />
@@ -333,23 +372,13 @@
             {/if}
         {/if}
     </Container>
-    <Container padding={["zero", "md"]} gap={"sm"}>
-        <BigButton
-            mode={view === "communities" ? "active" : "default"}
-            onClick={() => selectView("communities")}>
-            {#snippet icon(color)}
-                <Account {color} />
-            {/snippet}
-            <Translatable resourceKey={i18nKey("Communities")} />
-        </BigButton>
-        <BigButton mode={view === "bots" ? "active" : "default"} onClick={() => selectView("bots")}>
-            {#snippet icon(color)}
-                <Robot {color} />
-            {/snippet}
-            <Translatable resourceKey={i18nKey("Bots")} />
-        </BigButton>
-    </Container>
 </Container>
+
+<FloatingButton onClick={() => (showingFilters = true)} pos={{ bottom: "lg", right: "lg" }}>
+    {#snippet icon(color)}
+        <Filter {color} />
+    {/snippet}
+</FloatingButton>
 
 {#if showFab}
     <div class="fab">
@@ -362,6 +391,12 @@
 {/if}
 
 <style lang="scss">
+    :global(.container.explore_search_and_chips) {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+
     $size: 150px;
 
     .loading {
@@ -372,7 +407,7 @@
     .fab {
         position: absolute;
         bottom: 5.5rem;
-        right: var(--sp-md);
+        right: var(--sp-lg);
     }
 
     .img {
