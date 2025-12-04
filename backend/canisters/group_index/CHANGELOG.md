@@ -13,6 +13,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Move `ic_root_key` to `Environment` trait ([#8701](https://github.com/open-chat-labs/open-chat/pull/8701))
 - Take RNG seed in init args ([#8702](https://github.com/open-chat-labs/open-chat/pull/8702))
 
+### Fixed
+
+- Fix deserialization issue due to field missing ([#8709](https://github.com/open-chat-labs/open-chat/pull/8709))
+
 ## [[2.0.1859](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1859-group_index)] - 2025-08-05
 
 ### Fixed
