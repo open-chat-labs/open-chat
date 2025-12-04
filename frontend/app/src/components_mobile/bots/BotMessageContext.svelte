@@ -1,18 +1,12 @@
 <script lang="ts">
-    import {
-        allUsersStore,
-        AvatarSize,
-        mobileWidth,
-        OpenChat,
-        type CommandArg,
-    } from "openchat-client";
+    import { Caption, ColourVars, Container, Tooltip } from "component-lib";
+    import { allUsersStore, AvatarSize, OpenChat, type CommandArg } from "openchat-client";
     import type { BotContextCommand } from "openchat-shared";
     import { getContext } from "svelte";
     import CogOutline from "svelte-material-icons/CogOutline.svelte";
     import Avatar from "../Avatar.svelte";
     import Typing from "../Typing.svelte";
     import Markdown from "../home/Markdown.svelte";
-    import Tooltip from "../tooltip/Tooltip.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -23,7 +17,7 @@
     }
 
     let { botCommand, finalised }: Props = $props();
-    let MAX_COMMAND_LENGTH = $derived($mobileWidth ? 50 : 150);
+    const MAX_COMMAND_LENGTH = 30;
     let paramValues = $derived(botCommand.args.map(paramValue));
     let paramsLength = $derived(paramValues.reduce((total, p) => total + p.length, 0));
     let paramMode: "truncated" | "full" = $derived(
@@ -59,18 +53,20 @@
     }
 </script>
 
-<div class="bot-context">
+<Container crossAxisAlignment={"center"} gap={"xs"} supplementalClass={"bot-context"}>
     {#if user}
         <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={AvatarSize.Tiny} />
     {/if}
-    <Markdown {text} />
+    <Caption colour={"textSecondary"}>
+        <Markdown {text} />
+    </Caption>
     {#if botCommand.args.length > 0}
         {#if paramMode === "truncated"}
             <Tooltip position="right" align="middle">
                 <div class="cog">
-                    <CogOutline size={"1.2em"} color={"var(--icon-txt)"} />
+                    <CogOutline color={ColourVars.textSecondary} />
                 </div>
-                {#snippet popupTemplate()}
+                {#snippet popup()}
                     <div class="command-params">
                         {#each botCommand.args as param}
                             <div class="param">
@@ -90,17 +86,10 @@
     {#if !finalised}
         <Typing />
     {/if}
-</div>
+</Container>
 
 <style lang="scss">
-    .bot-context {
-        @include font(light, normal, fs-70);
-        color: var(--txt-light);
-        display: flex;
-        gap: $sp2;
-        align-items: center;
-        @include ellipsis();
-
+    :global(.bot-context) {
         :global(.markdown-wrapper) {
             @include ellipsis();
             flex-shrink: 0;
@@ -116,7 +105,6 @@
     }
 
     .inline-param {
-        // background-color: #efefef;
         padding: 0 $sp2;
         border-radius: $sp2;
         border: 1px solid var(--bd);

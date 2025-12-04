@@ -50,6 +50,7 @@
     // import ThreadSummary from "./ThreadSummary.svelte";
     import { confirmMessageDeletion, dclickReply } from "@src/stores/settings";
     import AreYouSure from "../AreYouSure.svelte";
+    import BotMessageContext from "../bots/BotMessageContext.svelte";
     import Checkbox from "../Checkbox.svelte";
     import Reactions from "./message/Reactions.svelte";
     import ThreadSummary from "./message/ThreadSummary.svelte";
@@ -717,9 +718,19 @@
             </Container>
         {/snippet}
     </IntersectionObserverComponent>
+    {#if senderContext?.kind === "bot" && senderContext.command !== undefined}
+        <div class="bot-context">
+            <BotMessageContext
+                botName={"cockpiss"}
+                botCommand={senderContext.command}
+                finalised={senderContext.finalised} />
+        </div>
+    {/if}
 {/if}
 
 <style lang="scss">
+    $avatar-width-mob: 2.5rem;
+
     :global(.container.message_bubble_wrapper .menu-trigger) {
         width: 100%;
     }
@@ -732,5 +743,11 @@
         align-items: center;
         padding: $sp3 $sp4;
         background-color: var(--section-bg);
+    }
+    .bot-context {
+        display: flex;
+        margin-inline-start: $avatar-width-mob;
+        margin-bottom: $sp2;
+        margin-top: $sp2;
     }
 </style>
