@@ -18,7 +18,7 @@
         }
     }
 
-    const SPEED = 500;
+    const SPEED = 400;
 </script>
 
 {#if !top}
@@ -56,7 +56,7 @@
 
         &:not(.top) {
             transform: scale(0.93);
-            opacity: 0;
+            opacity: 0.8;
         }
     }
 
