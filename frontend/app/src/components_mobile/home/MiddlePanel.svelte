@@ -6,6 +6,7 @@
         directChatBotsStore,
         filteredProposalsStore,
         mobileWidth,
+        publish,
         rightPanelMode,
         rightPanelWidth,
         routeStore,
@@ -21,7 +22,6 @@
     import { fade } from "svelte/transition";
     import { activeVideoCall, type ActiveVideoCall } from "../../stores/video";
     import { currentTheme } from "../../theme/themes";
-    import UninstalledDirectBot from "../bots/UninstalledDirectBot.svelte";
     import Loading from "../Loading.svelte";
     import ExploreCommunities from "./communities/explore/Explore.svelte";
     import CurrentChat from "./CurrentChat.svelte";
@@ -36,22 +36,20 @@
 
     let middlePanel: HTMLElement | undefined;
 
-    let botId = $derived.by(() => {
+    let bot = $derived.by(() => {
         if ($selectedChatSummaryStore === undefined) return undefined;
         if ($selectedChatSummaryStore.kind !== "direct_chat") return undefined;
-        return botState.externalBots.get($selectedChatSummaryStore.them.userId)?.id;
+        return botState.externalBots.get($selectedChatSummaryStore.them.userId);
     });
-
-    let uninstalledBotId = $derived.by(() => {
-        return botId !== undefined && $directChatBotsStore.get(botId) === undefined
-            ? botId
+    let uninstalledBot = $derived.by(() => {
+        return bot !== undefined && $directChatBotsStore.get(bot.id) === undefined
+            ? bot
             : undefined;
     });
 
-    let installingBot = $state(false);
     trackedEffect("installing-bot", () => {
-        if (uninstalledBotId !== undefined) {
-            installingBot = true;
+        if (uninstalledBot !== undefined && $selectedChatSummaryStore !== undefined) {
+            publish("installBot", { bot: uninstalledBot, collection: $selectedChatSummaryStore });
         }
     });
 
@@ -130,11 +128,6 @@
                 <NoChatSelected />
             </div>
         {/if}
-    {:else if installingBot && botId && $selectedChatIdStore.kind === "direct_chat"}
-        <UninstalledDirectBot
-            onClose={() => (installingBot = false)}
-            chatId={$selectedChatIdStore}
-            {botId} />
     {:else if $selectedChatSummaryStore !== undefined}
         <CurrentChat
             {joining}

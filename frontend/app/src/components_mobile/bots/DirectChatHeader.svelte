@@ -1,20 +1,23 @@
 <script lang="ts">
+    import { toastStore } from "@src/stores/toast";
     import { Avatar, MenuItem, SectionHeader } from "component-lib";
-    import type { DirectChatSummary, ExternalBot } from "openchat-client";
+    import type { DirectChatSummary, ExternalBot, OpenChat } from "openchat-client";
     import {
         allUsersStore,
+        chatListScopeStore,
+        currentUserIdStore,
         definitionToPermissions,
         directChatBotsStore,
         favouritesStore,
-        type OpenChat,
         publish,
+        routeForScope,
     } from "openchat-client";
+    import page from "page";
     import { getContext } from "svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import HeartMinus from "svelte-material-icons/HeartMinus.svelte";
     import HeartPlus from "svelte-material-icons/HeartPlus.svelte";
     import Magnify from "svelte-material-icons/Magnify.svelte";
-    import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
     import TextBoxOutline from "svelte-material-icons/TextBoxOutline.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
@@ -46,7 +49,14 @@
     }
 
     function removeBot() {
-        console.log("Remove bot");
+        page(routeForScope($chatListScopeStore));
+        client
+            .uninstallBot({ kind: "direct_chat", userId: $currentUserIdStore }, bot.id)
+            .then((success) => {
+                if (!success) {
+                    toastStore.showFailureToast(i18nKey("bots.manage.removeFailed"));
+                }
+            });
     }
 
     function reviewPermissions() {
@@ -54,7 +64,7 @@
     }
 
     function viewBotDetails() {
-        console.log("View bot details");
+        publish("showBot", { bot, collection: chat, grantedPermissions });
     }
 </script>
 
@@ -99,13 +109,6 @@
                 <DeleteOutline {color} {size} />
             {/snippet}
             <Translatable resourceKey={i18nKey("bots.manage.remove")} />
-        </MenuItem>
-
-        <MenuItem onclick={() => reviewPermissions()}>
-            {#snippet icon(color, size)}
-                <PencilOutline {color} {size} />
-            {/snippet}
-            <Translatable resourceKey={i18nKey("bots.manage.review")} />
         </MenuItem>
 
         <MenuItem onclick={() => viewBotDetails()}>

@@ -1,5 +1,6 @@
 import {
     argIsValid,
+    chatIdentifiersEqual,
     createArgsFromSchema,
     installationLocationsEqual,
     type BotCommandInstance,
@@ -8,16 +9,18 @@ import {
     type CommandArg,
     type CommandParam,
     type CommunitySummary,
+    type DirectChatSummary,
     type EnhancedExternalBot,
     type ExternalBot,
     type FlattenedCommand,
     type GrantedBotPermissions,
+    type GroupChatSummary,
     type MessageContext,
     type MessageFormatter,
     type ReadonlyMap,
 } from "openchat-shared";
 import { builtinBot } from "../utils/builtinBotCommands";
-import { currentUserIdStore } from "./app/stores";
+import { communitiesStore, currentUserIdStore } from "./app/stores";
 
 function filterCommand(
     formatter: MessageFormatter,
@@ -321,6 +324,23 @@ export function botIsInstallable(bot: ExternalBot, location: BotInstallationLoca
                     installationLocationsEqual(bot.registrationStatus.location, location))
             );
         }
+    }
+}
+
+export function botContainerFrom(
+    collection: ChatSummary | CommunitySummary,
+): GroupChatSummary | DirectChatSummary | CommunitySummary | undefined {
+    switch (collection.kind) {
+        case "channel":
+            return [...communitiesStore.value.values()].find((c) => {
+                return (
+                    c.channels.findIndex((ch) => chatIdentifiersEqual(ch.id, collection.id)) >= 0
+                );
+            });
+        case "direct_chat":
+            return { ...collection, id: { kind: "direct_chat", userId: currentUserIdStore.value } };
+        default:
+            return collection;
     }
 }
 

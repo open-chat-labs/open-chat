@@ -14,6 +14,7 @@
     } from "component-lib";
     import {
         allUsersStore,
+        botContainerFrom,
         type ChatSummary,
         type CommunitySummary,
         definitionToPermissions,
@@ -23,7 +24,7 @@
         OpenChat,
         publish,
     } from "openchat-client";
-    import { getContext } from "svelte";
+    import { getContext, tick } from "svelte";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import Cloud from "svelte-material-icons/CloudDownloadOutline.svelte";
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";
@@ -58,15 +59,9 @@
     let installing = $state(installedWithPermissions === undefined);
     let location = $derived(installationLocationFrom(collection));
     let level = $derived(collection.kind === "direct_chat" ? "group" : collection.level); // TODO suspect
-    let container = $derived.by(() => {
-        switch (collection.kind) {
-            case "channel":
-                return client.getCommunityForChannel(collection.id)!;
-            default:
-                return collection;
-        }
-    });
+    let container = $derived(botContainerFrom(collection));
     let containerAvatarUrl = $derived.by(() => {
+        if (container === undefined) return undefined;
         switch (container.kind) {
             case "community":
                 return client.communityAvatarUrl(container.id.communityId, container.avatar);
@@ -77,6 +72,7 @@
         }
     });
     let containerName = $derived.by(() => {
+        if (container === undefined) return undefined;
         switch (container.kind) {
             case "direct_chat":
                 return $allUsersStore.get(container.id.userId)?.username ?? "Unknown user";
@@ -127,9 +123,18 @@
             })
             .finally(() => (busy = false));
     }
+
+    function cancel() {
+        if (collection.kind === "direct_chat") {
+            client.removeChat(collection.id);
+            publish("clearSelection");
+        }
+        tick().then(() => publish("closeModalPage"));
+    }
 </script>
 
 <SlidingPageContent
+    onBack={cancel}
     title={i18nKey(
         installing ? "bots.add.title" : "Review bot permissions",
         undefined,
@@ -168,14 +173,19 @@
                 background={defaultBackgroundGradient}
                 crossAxisAlignment={"start"}
                 gap={"md"}>
-                <Avatar url={containerAvatarUrl} size={"xl"} />
+                <Avatar url={containerAvatarUrl!} size={"xl"} />
                 <Container
                     overflow={"hidden"}
                     gap={"xxs"}
                     direction={"vertical"}
                     width={{ kind: "fill" }}>
                     <Body colour={"textPrimary"} fontWeight={"bold"}>
-                        <Translatable resourceKey={i18nKey(installing ? "Into" : "Installed in")} />
+                        {#if collection.kind === "direct_chat"}
+                            <Translatable resourceKey={i18nKey("As a direct chat with")} />
+                        {:else}
+                            <Translatable
+                                resourceKey={i18nKey(installing ? "Into" : "Installed in")} />
+                        {/if}
                     </Body>
                     <Subtitle colour={"textOnPrimary"} fontWeight={"bold"}>
                         {containerName}
@@ -255,7 +265,7 @@
                                 colour: "textSecondary",
                             },
                             {
-                                text: i18nKey(containerName),
+                                text: i18nKey(containerName!),
                                 colour: "primary",
                             },
                             {
@@ -271,7 +281,7 @@
                     {/snippet}
                     <Translatable resourceKey={i18nKey("bots.add.install")} />
                 </Button>
-                <Button secondary disabled={busy} onClick={() => publish("closeModalPage")}>
+                <Button secondary disabled={busy} onClick={cancel}>
                     <Translatable resourceKey={i18nKey("cancel")} />
                 </Button>
             </Container>
