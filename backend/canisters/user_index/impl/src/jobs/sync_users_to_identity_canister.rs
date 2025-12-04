@@ -13,7 +13,7 @@ thread_local! {
 }
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
-    if TIMER_ID.get().is_none() && !state.data.identity_canister_user_sync_queue.is_empty() {
+    if TIMER_ID.get().is_none() && !state.data.identity_canister_user_sync_queue_2.is_empty() {
         let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run);
         TIMER_ID.set(Some(timer_id));
         true
@@ -44,12 +44,12 @@ fn run() {
 }
 
 fn next_batch(state: &mut RuntimeState) -> Option<(CanisterId, Vec<UserIdentity>)> {
-    let count = min(state.data.identity_canister_user_sync_queue.len(), BATCH_SIZE);
+    let count = min(state.data.identity_canister_user_sync_queue_2.len(), BATCH_SIZE);
     if count == 0 {
         return None;
     }
 
-    let batch: Vec<_> = state.data.identity_canister_user_sync_queue.drain(..count).collect();
+    let batch: Vec<_> = state.data.identity_canister_user_sync_queue_2.drain(..count).collect();
 
     Some((state.data.identity_canister_id, batch))
 }
@@ -62,7 +62,7 @@ async fn sync_users(identity_canister_id: CanisterId, users: Vec<UserIdentity>) 
 
     mutate_state(|state| {
         if !success {
-            state.data.identity_canister_user_sync_queue.extend(users);
+            state.data.identity_canister_user_sync_queue_2.extend(users);
         }
         start_job_if_required(state);
     });
