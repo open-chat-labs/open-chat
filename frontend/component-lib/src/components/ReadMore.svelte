@@ -38,6 +38,7 @@
 
 <Container crossAxisAlignment={"end"} direction={"vertical"}>
     <Container
+        overflow={overflowing && !expanded ? "hidden" : "auto"}
         supplementalClass={`read_more_content ${expanded ? "expanded" : ""}`}
         maxHeight={expanded ? "1000rem" : maxHeight}
         bind:ref={container}>
