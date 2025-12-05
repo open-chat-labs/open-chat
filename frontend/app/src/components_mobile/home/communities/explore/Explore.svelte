@@ -275,7 +275,7 @@
                 <BodySmall colour={"textSecondary"}>
                     <Markdown twoLine inline={false} text={community.description} />
                 </BodySmall>
-                <BodySmall colour={"textSecondary"}>
+                <BodySmall colour={"secondary"}>
                     {community.memberCount.toLocaleString()} member(s), {supportedLanguagesByCode[
                         community.primaryLanguage
                     ]?.name}
