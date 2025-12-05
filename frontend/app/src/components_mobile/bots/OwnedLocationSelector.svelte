@@ -11,18 +11,34 @@
         Subtitle,
     } from "component-lib";
     import {
+        allUsersStore,
+        botIsInstallable,
         communitiesStore,
+        currentUserIdStore,
+        currentUserStore,
+        emptyChatMetrics,
         i18nKey,
+        nullMembership,
         OpenChat,
         ROLE_OWNER,
         serverGroupChatsStore,
         type CommunitySummary,
+        type DirectChatSummary,
+        type ExternalBot,
         type GroupChatSummary,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Translatable from "../Translatable.svelte";
     import NothingToSee from "../home/NothingToSee.svelte";
+
+    /**
+     * There is a problem with this. We might get her by clicking a bot in the Explorer.
+     * This is supposed to show a list of the locations into which we can install this bot.
+     * Ideally this should exclude any location into which the bot is already installed. However,
+     * that information is only available when we have that community / chat *selected*. So we don't know.
+     * And we also need to add an entry to install the bot as a direct chat
+     */
 
     const client = getContext<OpenChat>("client");
 
@@ -31,22 +47,51 @@
         name: string;
         id: string;
         isCommunity: boolean;
-        collection: GroupChatSummary | CommunitySummary;
+        collection: DirectChatSummary | GroupChatSummary | CommunitySummary;
     };
 
     interface Props {
-        onSelect: (collection: GroupChatSummary | CommunitySummary) => void;
+        bot: ExternalBot;
+        onSelect: (collection: DirectChatSummary | GroupChatSummary | CommunitySummary) => void;
+        onDismiss: () => void;
     }
 
-    let { onSelect }: Props = $props();
+    let { onSelect, bot, onDismiss }: Props = $props();
     let searchTerm = $state<string>();
     let placeholder = $derived(interpolate($_, i18nKey("Search for a community or group")));
     let results: Match[] = $state([]);
+
+    const fakeDirectChat: DirectChatSummary = {
+        kind: "direct_chat",
+        id: { kind: "direct_chat", userId: $currentUserIdStore },
+        them: { kind: "direct_chat", userId: $currentUserIdStore },
+        readByThemUpTo: undefined,
+        latestMessage: undefined,
+        latestEventIndex: 0,
+        latestMessageIndex: undefined,
+        lastUpdated: BigInt(Date.now()),
+        dateCreated: BigInt(Date.now()),
+        metrics: emptyChatMetrics(),
+        eventsTTL: undefined,
+        eventsTtlLastUpdated: BigInt(0),
+        membership: {
+            ...nullMembership(),
+            role: ROLE_OWNER,
+        },
+    };
 
     onMount(() => onPerformSearch(""));
 
     function onPerformSearch(term?: string) {
         const termLower = term?.toLowerCase();
+
+        const me = {
+            avatarUrl: client.userAvatarUrl($allUsersStore.get($currentUserIdStore)),
+            name: $currentUserStore.username,
+            id: $currentUserIdStore,
+            isCommunity: false,
+            collection: fakeDirectChat,
+        };
 
         const communities: Match[] = [...$communitiesStore.values()]
             .filter(
@@ -78,11 +123,13 @@
 
         communities.sort((a: Match, b: Match) => a.name.localeCompare(b.name));
         groups.sort((a: Match, b: Match) => a.name.localeCompare(b.name));
-        results = [...communities, ...groups];
+        results = [me, ...communities, ...groups].filter((l) =>
+            botIsInstallable(bot, l.collection.id),
+        );
     }
 </script>
 
-<Sheet>
+<Sheet {onDismiss}>
     <Container
         height={{ size: "100%" }}
         supplementalClass={"token_selector"}
@@ -128,9 +175,9 @@
                                 <Body>{match.name}</Body>
                                 <BodySmall colour={"textSecondary"}>
                                     {#if match.isCommunity}
-                                        Community
+                                        Install into community
                                     {:else}
-                                        Group chat
+                                        Install into chat
                                     {/if}
                                 </BodySmall>
                             </Container>

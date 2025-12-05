@@ -62,7 +62,7 @@
     background={backgroundColours[mode]}
     mainAxisAlignment={"spaceBetween"}
     crossAxisAlignment={"center"}
-    width={{ kind: fill ? "fill" : "hug" }}
+    width={fill ? "fill" : "hug"}
     gap={"sm"}
     borderColour={borderColours[mode]}
     borderRadius={mode === "rounded" || mode === "unselected" ? "circle" : "md"}

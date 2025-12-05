@@ -30,6 +30,7 @@
     import { _ } from "svelte-i18n";
     import Account from "svelte-material-icons/AccountGroupOutline.svelte";
     import ArrowUp from "svelte-material-icons/ArrowUp.svelte";
+    import LoadMore from "svelte-material-icons/CloudDownloadOutline.svelte";
     import CloudOffOutline from "svelte-material-icons/CloudOffOutline.svelte";
     import Filter from "svelte-material-icons/FilterVariant.svelte";
     import RobotSolid from "svelte-material-icons/Robot.svelte";
@@ -360,14 +361,14 @@
     </Container>
 
     <Container
-        height={searchState.results.length === 0 ? "fill" : "hug"}
+        height={loading || searchState.results.length === 0 ? "fill" : "hug"}
+        crossAxisAlignment={loading ? "center" : "start"}
+        mainAxisAlignment={loading ? "center" : "start"}
         gap={"md"}
         direction={"vertical"}
         padding={["zero", "lg", "md", "lg"]}>
         {#if loading}
-            <div class="loading">
-                <FancyLoader />
-            </div>
+            <FancyLoader size={"4rem"} />
         {:else if searchState.results.length === 0}
             <Container
                 mainAxisAlignment={"center"}
@@ -415,16 +416,15 @@
             {#if more}
                 <Container mainAxisAlignment={"center"}>
                     <CommonButton
-                        width={"hug"}
+                        size={"small_text"}
+                        onClick={() => search(false)}
                         disabled={searching}
-                        loading={searching}
-                        mode={"active"}
-                        onClick={() => search(false)}>
+                        loading={searching}>
                         {#snippet icon(color, size)}
-                            <Account {color} {size} />
+                            <LoadMore {color} {size} />
                         {/snippet}
-                        <Translatable
-                            resourceKey={i18nKey("communities.loadMore")} /></CommonButton>
+                        <Translatable resourceKey={i18nKey("communities.loadMore")} />
+                    </CommonButton>
                 </Container>
             {/if}
         {/if}
@@ -455,11 +455,6 @@
     }
 
     $size: 150px;
-
-    .loading {
-        width: $size;
-        margin: auto;
-    }
 
     .fab {
         position: absolute;

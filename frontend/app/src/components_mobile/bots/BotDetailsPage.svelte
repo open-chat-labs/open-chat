@@ -126,6 +126,8 @@
 
 {#if selectInstallationLocation}
     <OwnedLocationSelector
+        {bot}
+        onDismiss={() => (selectInstallationLocation = false)}
         onSelect={(c) => {
             collection = c;
             selectInstallationLocation = false;
