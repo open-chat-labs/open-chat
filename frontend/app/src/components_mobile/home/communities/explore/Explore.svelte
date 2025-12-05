@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        Avatar,
         Body,
         BodySmall,
         Chip,
@@ -13,16 +14,16 @@
         SectionHeader,
         Sheet,
         Subtitle,
-        Title,
         transition,
-        UserChip,
     } from "component-lib";
     import type { BotMatch, CommunityMatch, OpenChat } from "openchat-client";
     import {
         allUsersStore,
         botState,
         exploreCommunitiesFiltersStore,
+        ModerationFlags,
         offlineStore,
+        publish,
         showUnpublishedBots,
     } from "openchat-client";
     import { getContext, onMount, tick } from "svelte";
@@ -31,8 +32,10 @@
     import ArrowUp from "svelte-material-icons/ArrowUp.svelte";
     import CloudOffOutline from "svelte-material-icons/CloudOffOutline.svelte";
     import Filter from "svelte-material-icons/FilterVariant.svelte";
+    import RobotSolid from "svelte-material-icons/Robot.svelte";
     import Robot from "svelte-material-icons/RobotOutline.svelte";
-    import { i18nKey, interpolate } from "../../../../i18n/i18n";
+    import { fade } from "svelte/transition";
+    import { i18nKey, interpolate, supportedLanguagesByCode } from "../../../../i18n/i18n";
     import {
         botSearchState,
         communitySearchState,
@@ -40,12 +43,12 @@
     } from "../../../../stores/search.svelte";
     import BotAvatar from "../../../bots/BotAvatar.svelte";
     import FancyLoader from "../../../icons/FancyLoader.svelte";
+    import WithVerifiedBadge from "../../../icons/WithVerifiedBadge.svelte";
     import Translatable from "../../../Translatable.svelte";
     import Markdown from "../../Markdown.svelte";
     import NothingToSee from "../../NothingToSee.svelte";
     import { updateCommunityState } from "../createOrUpdate/community.svelte";
     import BotFilters from "./BotFilters.svelte";
-    import CommunityCard from "./CommunityCard.svelte";
     import CommunityCardLink from "./CommunityCardLink.svelte";
     import CommunityFilters from "./Filters.svelte";
 
@@ -65,11 +68,17 @@
 
     function clear() {
         searchState.term = "";
+        communitySearchState.term = "";
+        botSearchState.term = "";
         search(true);
     }
 
     function createCommunity() {
         updateCommunityState.createCommunity(client);
+    }
+
+    function registerBot() {
+        publish("registerBot");
     }
 
     function searchCommunities(
@@ -79,16 +88,15 @@
         },
         reset = false,
     ) {
-        searching = true;
         if (reset) {
-            searchState.reset();
+            communitySearchState.reset();
         } else {
-            searchState.nextPage();
+            communitySearchState.nextPage();
         }
         client
             .exploreCommunities(
-                searchState.term === "" ? undefined : searchState.term,
-                searchState.index,
+                communitySearchState.term === "" ? undefined : communitySearchState.term,
+                communitySearchState.index,
                 32,
                 filters.flags ?? 0,
                 filters.languages,
@@ -96,11 +104,11 @@
             .then((results) => {
                 if (results.kind === "success") {
                     if (reset) {
-                        searchState.results = results.matches;
+                        communitySearchState.results = results.matches;
                     } else {
-                        searchState.appendResults(results.matches);
+                        communitySearchState.appendResults(results.matches);
                     }
-                    searchState.total = results.total;
+                    communitySearchState.total = results.total;
                 }
             })
             .finally(() => (searching = false));
@@ -120,9 +128,11 @@
                 ...b,
                 kind: "bot_match",
             }));
+        searching = false;
     }
 
     function search(reset = false) {
+        searching = true;
         if (view === "communities") {
             searchCommunities($exploreCommunitiesFiltersStore, reset);
         } else {
@@ -140,14 +150,14 @@
         });
 
         const unsub = exploreCommunitiesFiltersStore.subscribe((filters) => {
-            if (initialised || searchState.results.length === 0) {
+            if (initialised || communitySearchState.results.length === 0) {
                 searchCommunities(filters, true);
             }
             initialised = true;
         });
 
         const unsubBot = showUnpublishedBots.subscribe((show) => {
-            if (initialised || searchState.results.length === 0) {
+            if (initialised || botSearchState.results.length === 0) {
                 searchBots(show);
             }
             initialised = true;
@@ -181,11 +191,18 @@
     }
     let more = $derived(searchState.total > searchState.results.length);
     let loading = $derived(searching && searchState.results.length === 0);
-
-    let installing = $state<BotMatch>();
-    let showInstalling = $state(false);
-    function hideInstalling() {
-        showInstalling = false;
+    function serialiseFlags(flags: number) {
+        const f: string[] = [];
+        if (client.hasModerationFlag(flags, ModerationFlags.Adult)) {
+            f.push("communities.adult");
+        }
+        if (client.hasModerationFlag(flags, ModerationFlags.Offensive)) {
+            f.push("communities.offensive");
+        }
+        if (client.hasModerationFlag(flags, ModerationFlags.UnderReview)) {
+            f.push("communities.underReview");
+        }
+        return f;
     }
 </script>
 
@@ -199,40 +216,76 @@
     </Sheet>
 {/if}
 
-{#if showInstalling && installing}
-    <Sheet onDismiss={hideInstalling}>
-        {@render botCard(installing)}
-        <Body align={"center"} colour={"textSecondary"}>This is where we will do the install</Body>
-    </Sheet>
-{/if}
-
 {#snippet botCard(bot: BotMatch)}
     {@const isPublic = botState.externalBots.get(bot.id)?.registrationStatus?.kind === "public"}
     {@const owner = $allUsersStore.get(bot.ownerId)}
     <Container
-        onClick={() => {
-            installing = bot;
-            showInstalling = true;
-        }}
-        padding={"lg"}
-        borderRadius={"md"}
-        background={ColourVars.background1}
+        onClick={() => publish("showBot", { bot: botState.externalBots.get(bot.id)! })}
+        padding={["sm", "zero"]}
         direction={"vertical"}>
-        <Container gap={"sm"}>
-            <BotAvatar {bot} />
-            <Container gap={"sm"} direction={"vertical"}>
+        <Container overflow={"hidden"} gap={"md"}>
+            <BotAvatar size={"xxl"} {bot}>
+                <div class="robot">
+                    <RobotSolid size={"1rem"} color={ColourVars.textOnPrimary} />
+                </div>
+            </BotAvatar>
+            <Container gap={"xs"} direction={"vertical"}>
                 <Container crossAxisAlignment={"center"} gap={"sm"}>
                     <div class={`img ${isPublic ? "public" : "private"}`}></div>
-                    <Title fontWeight={"bold"}>
+                    <Subtitle fontWeight={"bold"}>
                         {bot.name}
-                    </Title>
+                    </Subtitle>
                 </Container>
-                <BodySmall>
-                    <Markdown inline={false} text={bot.definition.description} />
+                <BodySmall colour={"textSecondary"}>
+                    <Markdown oneLine text={bot.definition.description} />
                 </BodySmall>
                 {#if owner}
-                    <UserChip avatarUrl={client.userAvatarUrl(owner)}>@{owner?.username}</UserChip>
+                    <Container gap={"xs"}>
+                        <BodySmall width={"hug"}>Owned by</BodySmall>
+                        <BodySmall width={"hug"} fontWeight={"bold"} colour={"secondary"}>
+                            @{owner.username}
+                        </BodySmall>
+                    </Container>
                 {/if}
+            </Container>
+        </Container>
+    </Container>
+{/snippet}
+
+{#snippet communityCard(community: CommunityMatch)}
+    <Container padding={["sm", "zero"]} direction={"vertical"}>
+        <Container overflow={"hidden"} gap={"md"}>
+            <Avatar
+                radius={"lg"}
+                size={"xxl"}
+                url={client.communityAvatarUrl(community.id.communityId, community.avatar)}>
+            </Avatar>
+            <Container direction={"vertical"}>
+                <Container gap={"sm"} crossAxisAlignment={"center"}>
+                    <WithVerifiedBadge
+                        verified={community.verified}
+                        size={"small"}
+                        tooltip={i18nKey("verified.verified", undefined, "community")}>
+                        <Subtitle fontWeight={"bold"}>
+                            {community.name}
+                        </Subtitle>
+                    </WithVerifiedBadge>
+                </Container>
+                <BodySmall colour={"textSecondary"}>
+                    <Markdown twoLine inline={false} text={community.description} />
+                </BodySmall>
+                <BodySmall colour={"textSecondary"}>
+                    {community.memberCount.toLocaleString()} member(s), {supportedLanguagesByCode[
+                        community.primaryLanguage
+                    ]?.name}
+                </BodySmall>
+                <Container gap={"sm"} wrap>
+                    {#each serialiseFlags(community.flags) as flag}
+                        <Chip mode={"default"}>
+                            <Translatable resourceKey={i18nKey(flag)} />
+                        </Chip>
+                    {/each}
+                </Container>
             </Container>
         </Container>
     </Container>
@@ -251,6 +304,9 @@
         {#snippet menu()}
             <MenuItem onclick={createCommunity}>
                 <Translatable resourceKey={i18nKey("communities.create")} />
+            </MenuItem>
+            <MenuItem onclick={registerBot}>
+                <Translatable resourceKey={i18nKey("Register a bot")} />
             </MenuItem>
         {/snippet}
     </SectionHeader>
@@ -303,7 +359,11 @@
         </Container>
     </Container>
 
-    <Container gap={"md"} direction={"vertical"} padding={["zero", "lg", "md", "lg"]}>
+    <Container
+        height={searchState.results.length === 0 ? "fill" : "hug"}
+        gap={"md"}
+        direction={"vertical"}
+        padding={["zero", "lg", "md", "lg"]}>
         {#if loading}
             <div class="loading">
                 <FancyLoader />
@@ -314,8 +374,7 @@
                 crossAxisAlignment={"center"}
                 gap={"sm"}
                 height={"fill"}
-                direction={"vertical"}
-                padding={["lg", "zero"]}>
+                direction={"vertical"}>
                 {#if $offlineStore}
                     <CloudOffOutline size={"1.8em"} />
                     <Subtitle colour={"textSecondary"} align={"center"}>
@@ -324,36 +383,34 @@
                 {:else}
                     <NothingToSee
                         reset={{
-                            onClick: () => updateCommunityState.createCommunity(client),
-                            text: "Create a community",
+                            onClick: view === "communities" ? createCommunity : registerBot,
+                            text: view === "communities" ? "Create a community" : "Register a bot",
                         }}
                         subtitle={interpolate($_, i18nKey("communities.refineSearch"))}
-                        title={interpolate($_, i18nKey("communities.noMatch"))}>
+                        title={interpolate(
+                            $_,
+                            i18nKey(
+                                view === "communities" ? "communities.noMatch" : "No matching bots",
+                            ),
+                        )}>
                     </NothingToSee>
                 {/if}
             </Container>
         {:else}
             {#if view === "communities"}
-                {#each communitySearchState.results as community (community.id.communityId)}
-                    <CommunityCardLink url={`/community/${community.id.communityId}`}>
-                        <CommunityCard
-                            id={community.id.communityId}
-                            name={community.name}
-                            description={community.description}
-                            avatar={community.avatar}
-                            banner={community.banner}
-                            memberCount={community.memberCount}
-                            channelCount={community.channelCount}
-                            gateConfig={community.gateConfig}
-                            language={community.primaryLanguage}
-                            flags={community.flags}
-                            verified={community.verified} />
-                    </CommunityCardLink>
-                {/each}
+                <Container padding={["zero", "lg"]} direction={"vertical"} gap={"lg"}>
+                    {#each communitySearchState.results as community (community.id.communityId)}
+                        <CommunityCardLink url={`/community/${community.id.communityId}`}>
+                            {@render communityCard(community)}
+                        </CommunityCardLink>
+                    {/each}
+                </Container>
             {:else}
-                {#each botSearchState.results as bot (bot.id)}
-                    {@render botCard(bot)}
-                {/each}
+                <Container padding={["zero", "lg"]} direction={"vertical"} gap={"lg"}>
+                    {#each botSearchState.results as bot (bot.id)}
+                        {@render botCard(bot)}
+                    {/each}
+                </Container>
             {/if}
             {#if more}
                 <Container mainAxisAlignment={"center"}>
@@ -381,7 +438,7 @@
 </FloatingButton>
 
 {#if showFab}
-    <div class="fab">
+    <div transition:fade class="fab">
         <FloatingButton onClick={scrollToTop}>
             {#snippet icon(color)}
                 <ArrowUp {color} />
@@ -422,5 +479,19 @@
         &.private {
             background-image: url("/assets/locked.svg");
         }
+    }
+
+    .robot {
+        border: 4px solid var(--background-0);
+        background-color: var(--primary);
+        border-radius: var(--rad-circle);
+        width: 2rem;
+        height: 2rem;
+        position: absolute;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        bottom: -2px;
+        right: -2px;
     }
 </style>

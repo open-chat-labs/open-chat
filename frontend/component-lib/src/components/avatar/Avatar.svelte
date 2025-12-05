@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { BorderRadiusSize } from "component-lib";
+    import type { Snippet } from "svelte";
 
     export type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl" | "xxl" | "huge";
 
@@ -12,6 +13,7 @@
         customSize?: string;
         highlightBorder?: boolean;
         onClick?: (ev: Event) => void;
+        children?: Snippet;
     }
 
     // TODO - add intersection observer
@@ -24,6 +26,7 @@
         borderWidth = highlightBorder ? "thick" : "zero",
         customSize,
         onClick,
+        children,
     }: Props = $props();
     let borderCss = $derived.by(() => {
         switch (borderWidth) {
@@ -52,10 +55,12 @@
         alt={name}
         class={`avatar ${size}`}
         style={`${sizeCss} ${radiusCss}`} />
+    {@render children?.()}
 </div>
 
 <style lang="scss">
     .border {
+        position: relative;
         background: var(--background-0);
         width: var(--size);
         height: var(--size);
