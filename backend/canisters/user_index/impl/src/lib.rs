@@ -301,7 +301,6 @@ impl RuntimeState {
             stable_memory_sizes: memory::memory_sizes(),
             streak_insurance_metrics: self.data.streak_insurance_logs.metrics(),
             premium_item_metrics: self.data.premium_items.metrics(),
-            users_to_suspend: self.data.users_to_suspend.len() as u32,
             canister_ids: CanisterIds {
                 group_index: self.data.group_index_canister_id,
                 notifications_index: self.data.notifications_index_canister_id,
@@ -398,7 +397,8 @@ struct Data {
     pub empty_users: HashSet<UserId>,
     pub chit_leaderboard: ChitLeaderboard,
     pub deleted_users: Vec<DeletedUser>,
-    pub identity_canister_user_sync_queue_2: VecDeque<UserIdentity>,
+    #[serde(alias = "identity_canister_user_sync_queue_2")]
+    pub identity_canister_user_sync_queue: VecDeque<UserIdentity>,
     pub remove_from_online_users_queue: VecDeque<Principal>,
     pub survey_messages_sent: usize,
     pub external_achievements: ExternalAchievements,
@@ -407,8 +407,6 @@ struct Data {
     pub idempotency_checker: IdempotencyChecker,
     pub blocked_users: UserIdsSet,
     pub premium_items: PremiumItems,
-    #[serde(default)]
-    pub users_to_suspend: VecDeque<UserId>,
 }
 
 impl Data {
@@ -483,7 +481,7 @@ impl Data {
             empty_users: HashSet::new(),
             chit_leaderboard: ChitLeaderboard::new(now),
             deleted_users: Vec::new(),
-            identity_canister_user_sync_queue_2: VecDeque::new(),
+            identity_canister_user_sync_queue: VecDeque::new(),
             remove_from_online_users_queue: VecDeque::new(),
             survey_messages_sent: 0,
             external_achievements: ExternalAchievements::default(),
@@ -492,7 +490,6 @@ impl Data {
             idempotency_checker: IdempotencyChecker::default(),
             blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
             premium_items: PremiumItems::default(),
-            users_to_suspend: VecDeque::new(),
         };
 
         // Register the ProposalsBot
@@ -599,7 +596,7 @@ impl Default for Data {
             empty_users: HashSet::new(),
             chit_leaderboard: ChitLeaderboard::new(0),
             deleted_users: Vec::new(),
-            identity_canister_user_sync_queue_2: VecDeque::new(),
+            identity_canister_user_sync_queue: VecDeque::new(),
             remove_from_online_users_queue: VecDeque::new(),
             survey_messages_sent: 0,
             external_achievements: ExternalAchievements::default(),
@@ -608,7 +605,6 @@ impl Default for Data {
             idempotency_checker: IdempotencyChecker::default(),
             blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
             premium_items: PremiumItems::default(),
-            users_to_suspend: VecDeque::new(),
         }
     }
 }
@@ -659,7 +655,6 @@ pub struct Metrics {
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub streak_insurance_metrics: StreakInsuranceMetrics,
     pub premium_item_metrics: PremiumItemMetrics,
-    pub users_to_suspend: u32,
     pub canister_ids: CanisterIds,
 }
 

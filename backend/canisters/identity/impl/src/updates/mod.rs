@@ -1,6 +1,5 @@
 pub mod accept_identity_link_via_qr_code;
 pub mod approve_identity_link;
-pub mod c2c_set_oc_secret_key;
 pub mod c2c_set_user_identities;
 pub mod create_account_linking_code;
 pub mod create_identity;
