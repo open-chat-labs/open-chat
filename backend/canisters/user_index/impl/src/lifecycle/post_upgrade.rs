@@ -1,11 +1,10 @@
+use crate::Data;
 use crate::lifecycle::init_state;
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
-use crate::{Data, mutate_state, read_state};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
-use std::time::Duration;
 use tracing::info;
 use user_index_canister::post_upgrade::Args;
 use utils::cycles::init_cycles_dispenser_client;
@@ -30,43 +29,4 @@ fn post_upgrade(args: Args) {
 
     let total_instructions = ic_cdk::api::call_context_instruction_counter();
     info!(version = %args.wasm_version, total_instructions, "Post-upgrade complete");
-
-    ic_cdk_timers::set_timer(Duration::ZERO, || {
-        ic_cdk::futures::spawn(async {
-            let (identity_canister_id, oc_secret_key_der) = read_state(|state| {
-                (
-                    state.data.identity_canister_id,
-                    state.data.oc_key_pair.secret_key_der().to_vec(),
-                )
-            });
-
-            identity_canister_c2c_client::c2c_set_oc_secret_key(
-                identity_canister_id,
-                &identity_canister::c2c_set_oc_secret_key::Args { oc_secret_key_der },
-            )
-            .await
-            .unwrap();
-        });
-    });
-
-    mutate_state(|state| {
-        let cut_off = 1764547200000; // 1st December
-        let users_to_suspend: Vec<_> = state
-            .data
-            .users
-            .iter()
-            .filter(|u| {
-                u.date_created > cut_off && u.suspension_details.is_none() && u.username.to_lowercase().contains("ocapp")
-            })
-            .map(|u| u.user_id)
-            .collect();
-
-        if !users_to_suspend.is_empty() {
-            info!(count = users_to_suspend.len(), "Suspending users");
-
-            state.data.users_to_suspend.extend(users_to_suspend);
-
-            crate::jobs::suspend_users::start_job_if_required(state);
-        }
-    });
 }
