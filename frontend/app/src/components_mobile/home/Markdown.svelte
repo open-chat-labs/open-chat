@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { linkHandler } from "@src/actions/linkHandler";
     import "highlight.js/styles/base16/helios.css";
     import { marked } from "marked";
     import type { OpenChat, ReadonlyMap, UserGroupSummary } from "openchat-client";
@@ -105,6 +106,7 @@
 </script>
 
 <p
+    use:linkHandler
     class="markdown-wrapper"
     class:inline
     class:oneLine

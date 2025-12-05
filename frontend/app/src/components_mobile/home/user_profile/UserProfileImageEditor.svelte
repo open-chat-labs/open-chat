@@ -6,12 +6,14 @@
         currentUserIdStore,
         i18nKey,
         OpenChat,
+        PremiumItem,
         type PublicProfile,
     } from "openchat-client";
     import { getContext } from "svelte";
     import ImageEditOutline from "svelte-material-icons/ImageEditOutline.svelte";
     import EditableAvatar from "../../EditableAvatar.svelte";
     import EditableImageWrapper from "../../EditableImageWrapper.svelte";
+    import PremiumItemComponent from "../../PremiumItem.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -80,11 +82,17 @@
                 gap={"xs"}
                 backgroundImage={backgroundUrl}
                 background={gradient}>
-                <IconButton onclick={choosePhoto} size={"md"} mode={"dark"}>
-                    {#snippet icon(color)}
-                        <ImageEditOutline {color} />
+                <PremiumItemComponent
+                    item={PremiumItem.CustomProfileBackground}
+                    onClick={choosePhoto}>
+                    {#snippet children(click)}
+                        <IconButton onclick={click} size={"md"} mode={"dark"}>
+                            {#snippet icon(color)}
+                                <ImageEditOutline {color} />
+                            {/snippet}
+                        </IconButton>
                     {/snippet}
-                </IconButton>
+                </PremiumItemComponent>
             </Container>
             <Container
                 supplementalClass={"user_profile_editable_avatar"}

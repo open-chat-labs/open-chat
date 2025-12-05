@@ -13,19 +13,22 @@
         confirmed?: boolean;
         confirmation?: string;
         icon?: Snippet<[string, string]>;
+        background?: string;
     }
 
-    let { mode, title, body, confirmed = $bindable(false), icon }: Props = $props();
+    let {
+        mode,
+        title,
+        body,
+        confirmed = $bindable(false),
+        icon,
+        background = ColourVars.background1,
+    }: Props = $props();
 
     let iconColour = $derived(mode === "information" ? ColourVars.secondary : ColourVars.warning);
 </script>
 
-<Container
-    borderRadius={"lg"}
-    gap={"md"}
-    direction={"vertical"}
-    padding={"lg"}
-    background={ColourVars.background1}>
+<Container borderRadius={"lg"} gap={"md"} direction={"vertical"} padding={"lg"} {background}>
     <Container crossAxisAlignment={"center"} gap={"sm"}>
         {#if icon}
             {@render icon(iconColour, "1.5rem")}

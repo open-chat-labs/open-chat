@@ -1,6 +1,15 @@
 <script lang="ts">
-    import { i18nKey } from "@src/i18n/i18n";
+    import { i18nKey, interpolate } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
+    import {
+        Body,
+        Button,
+        ColourVars,
+        Container,
+        Sheet,
+        StatusCard,
+        Subtitle,
+    } from "component-lib";
     import {
         currentUserStore,
         OpenChat,
@@ -9,11 +18,7 @@
         type ResourceKey,
     } from "openchat-client";
     import { getContext } from "svelte";
-    import AlertBox from "./AlertBox.svelte";
-    import Button from "./Button.svelte";
-    import ButtonGroup from "./ButtonGroup.svelte";
-    import ModalContent from "./ModalContent.svelte";
-    import Overlay from "./Overlay.svelte";
+    import { _ } from "svelte-i18n";
     import Translatable from "./Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -50,57 +55,47 @@
     }
 </script>
 
-<Overlay>
-    <ModalContent>
-        {#snippet header()}
+<Sheet onDismiss={onCancel}>
+    <Container gap={"lg"} direction={"vertical"} padding={"xl"}>
+        <Subtitle fontWeight={"bold"}>
             <Translatable resourceKey={labels[item] ?? i18nKey("premiumItem.title")}></Translatable>
-        {/snippet}
+        </Subtitle>
+        {#if insufficient}
+            <StatusCard
+                background={ColourVars.background0}
+                mode={"warning"}
+                title={"Insufficient CHIT"}
+                body={interpolate(
+                    $_,
+                    i18nKey("premiumItem.insufficientChit", {
+                        price: premiumPrices[item].toLocaleString(),
+                        balance: $currentUserStore.chitBalance.toLocaleString(),
+                    }),
+                )}>
+            </StatusCard>
+        {:else}
+            <Container padding={["lg", "zero"]} gap={"md"}>
+                <div class="icon"></div>
+                <Body>
+                    <Translatable
+                        resourceKey={i18nKey("premiumItem.priceMessage", {
+                            price: premiumPrices[item].toLocaleString(),
+                            balance: $currentUserStore.chitBalance.toLocaleString(),
+                        })}></Translatable>
+                </Body>
+            </Container>
+        {/if}
 
-        {#snippet body()}
-            <div class="body">
-                {#if insufficient}
-                    <AlertBox>
-                        <Translatable
-                            resourceKey={i18nKey("premiumItem.insufficientChit", {
-                                price: premiumPrices[item].toLocaleString(),
-                                balance: $currentUserStore.chitBalance.toLocaleString(),
-                            })}></Translatable>
-                    </AlertBox>
-                {:else}
-                    <div class="message">
-                        <div class="icon"></div>
-                        <Translatable
-                            resourceKey={i18nKey("premiumItem.priceMessage", {
-                                price: premiumPrices[item].toLocaleString(),
-                                balance: $currentUserStore.chitBalance.toLocaleString(),
-                            })}></Translatable>
-                    </div>
-                {/if}
-            </div>
-        {/snippet}
-
-        {#snippet footer()}
-            <ButtonGroup>
-                <Button onClick={onCancel} secondary>Cancel</Button>
-                <Button loading={paying} disabled={paying || insufficient} onClick={pay}
-                    >Pay</Button>
-            </ButtonGroup>
-        {/snippet}
-    </ModalContent>
-</Overlay>
+        <Button loading={paying} disabled={paying || insufficient} onClick={pay}>Pay</Button>
+    </Container>
+</Sheet>
 
 <style lang="scss">
-    .message {
-        display: flex;
-        gap: $sp4;
-        align-items: flex-start;
-
-        .icon {
-            background-image: url(/assets/chit.svg);
-            background-repeat: no-repeat;
-            background-position: 50%;
-            width: toRem(48);
-            height: toRem(48);
-        }
+    .icon {
+        background-image: url(/assets/chit.svg);
+        background-repeat: no-repeat;
+        background-position: 50%;
+        width: toRem(48);
+        height: toRem(48);
     }
 </style>

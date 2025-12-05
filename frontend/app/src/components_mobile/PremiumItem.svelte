@@ -1,11 +1,11 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
+    import { ColourVars, Tooltip } from "component-lib";
     import { PremiumItem, premiumItemsStore, premiumPrices } from "openchat-client";
     import { type Snippet } from "svelte";
     import Lock from "svelte-material-icons/Lock.svelte";
     import PremiumItemPayment from "./PremiumItemPayment.svelte";
     import Translatable from "./Translatable.svelte";
-    import Tooltip from "./tooltip/Tooltip.svelte";
 
     type OnClick = () => void;
 
@@ -41,11 +41,11 @@
 
         {#if !hasFeature}
             <div class="locked">
-                <Lock size={"1.3em"} color={"var(--accent)"} />
+                <Lock size={"1.3em"} color={ColourVars.secondary} />
             </div>
         {/if}
     </div>
-    {#snippet popupTemplate()}
+    {#snippet popup()}
         <Translatable
             resourceKey={i18nKey("premiumItem.priceTooltip", {
                 price: premiumPrices[item].toLocaleString(),
@@ -61,6 +61,8 @@
         align-items: flex-start;
 
         .locked {
+            top: -0.3rem;
+            left: -0.3rem;
             transition: opacity 200ms ease-in-out;
             position: absolute;
             pointer-events: none;
