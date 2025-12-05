@@ -12,7 +12,7 @@
         {#snippet children(onAction)}
             <Container gap={"xxl"}>
                 <Container
-                    width={{ kind: "fixed", size: "400px" }}
+                    width={{ size: "400px" }}
                     borderWidth={"thick"}
                     borderRadius={"lg"}
                     borderStyle={"dashed"}
@@ -48,7 +48,7 @@
                     </ListAction>
                 </Container>
                 <Container
-                    width={{ kind: "fixed", size: "400px" }}
+                    width={{ size: "400px" }}
                     borderWidth={"thick"}
                     borderRadius={"lg"}
                     borderStyle={"dashed"}

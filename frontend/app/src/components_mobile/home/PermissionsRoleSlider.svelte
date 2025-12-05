@@ -89,7 +89,7 @@
         mainAxisAlignment={"start"}
         padding={["zero", "sm"]}>
         <Container
-            width={{ kind: "hug" }}
+            width={"hug"}
             direction={"vertical"}
             {height}
             overflow={"visible"}
@@ -116,7 +116,7 @@
             </div>
         </Container>
         <Container
-            width={{ kind: "hug" }}
+            width={"hug"}
             {height}
             direction={"vertical"}
             padding={"zero"}
@@ -131,7 +131,7 @@
                         align={"center"}
                         colour={active ? "primary" : "textSecondary"}
                         fontWeight={"bold"}
-                        width={{ kind: "hug" }}>
+                        width={"hug"}>
                         {roleLabel(r)}
                     </Subtitle>
                 </button>

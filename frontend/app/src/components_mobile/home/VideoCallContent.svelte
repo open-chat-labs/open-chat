@@ -104,7 +104,7 @@
                     mainAxisAlignment={"center"}
                     crossAxisAlignment={"center"}
                     direction={"vertical"}>
-                    <Body width={{ kind: "hug" }} fontWeight={"bold"} colour={"textOnPrimary"}>
+                    <Body width={"hug"} fontWeight={"bold"} colour={"textOnPrimary"}>
                         <Translatable
                             resourceKey={endedDate
                                 ? i18nKey("videoCall.endedAt", {
@@ -113,7 +113,7 @@
                                 : i18nKey("videoCall.join")} />
                     </Body>
                     {#if duration}
-                        <BodySmall width={{ kind: "hug" }} colour={"textOnPrimary"}>
+                        <BodySmall width={"hug"} colour={"textOnPrimary"}>
                             <Translatable resourceKey={duration} />
                         </BodySmall>
                     {/if}

@@ -39,7 +39,7 @@
 
 {#if showExampleRules}
     <Sheet onDismiss={() => (showExampleRules = false)}>
-        <Container height={{ kind: "hug" }} padding={"xl"} gap={"xl"} direction={"vertical"}>
+        <Container height={"hug"} padding={"xl"} gap={"xl"} direction={"vertical"}>
             <Subtitle fontWeight={"bold"}>
                 <Translatable resourceKey={i18nKey("Example rules")} />
             </Subtitle>
@@ -78,7 +78,7 @@
 <SlidingPageContent title={i18nKey("Rules", undefined, data.candidate.level, true)}>
     <Container
         supplementalClass={"group_general_setup"}
-        height={{ kind: "fill" }}
+        height={"fill"}
         gap={"xl"}
         direction={"vertical"}
         padding={["xxl", "lg", "lg", "lg"]}>
@@ -90,7 +90,7 @@
             <Setting
                 toggle={() => data.toggleRulesEnabled()}
                 info={"If enabled, new members must agree to the rules before they can send messages. View example!"}>
-                <Switch width={{ kind: "fill" }} reverse bind:checked={data.rules.enabled}>
+                <Switch width={"fill"} reverse bind:checked={data.rules.enabled}>
                     <Translatable resourceKey={i18nKey("Enable rules for the group")} />
                 </Switch>
             </Setting>
@@ -98,7 +98,7 @@
                 <Setting
                     toggle={() => data.toggleNewRulesVersion()}
                     info={"rules.promptExistingUsersInstructions"}>
-                    <Switch width={{ kind: "fill" }} reverse bind:checked={data.rules.newVersion}>
+                    <Switch width={"fill"} reverse bind:checked={data.rules.newVersion}>
                         <Translatable resourceKey={i18nKey("rules.promptExistingUsers")} />
                     </Switch>
                 </Setting>

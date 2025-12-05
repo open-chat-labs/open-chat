@@ -75,8 +75,8 @@
         mainAxisAlignment={spinner ? "center" : undefined}
         crossAxisAlignment={spinner ? "center" : undefined}
         supplementalClass={"threads"}
-        width={{ kind: "fill" }}
-        height={{ kind: "fill" }}
+        width={"fill"}
+        height={"fill"}
         direction={"vertical"}>
         {#if loading && !initialised}
             <FancyLoader size={"3rem"} />

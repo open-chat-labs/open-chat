@@ -41,7 +41,7 @@
     <Account {color} {size} />
 {/snippet}
 
-<Container height={{ kind: "fill" }} padding={["zero", "md"]} gap={"xl"} direction={"vertical"}>
+<Container height={"fill"} padding={["zero", "md"]} gap={"xl"} direction={"vertical"}>
     {#if count === 0}
         <NothingToSee
             reset={{ onClick: onReset, icon: membersIcon, text: "View all members" }}

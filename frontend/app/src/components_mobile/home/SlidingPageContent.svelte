@@ -25,11 +25,7 @@
     );
 </script>
 
-<Container
-    {onSwipe}
-    background={ColourVars.background0}
-    height={{ kind: "fill" }}
-    direction={"vertical"}>
+<Container {onSwipe} background={ColourVars.background0} height={"fill"} direction={"vertical"}>
     <SlidingPageHeader {menu} {avatar} subtitleKey={subtitle} {onBack} titleKey={title} />
     {@render children()}
 </Container>

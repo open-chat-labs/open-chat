@@ -41,7 +41,7 @@
     {#if avatar}
         {@render avatar()}
     {/if}
-    <Container gap={"xxs"} direction={"vertical"} width={{ kind: "fill" }}>
+    <Container gap={"xxs"} direction={"vertical"} width={"fill"}>
         <Title ellipsisTruncate fontWeight={"semi-bold"}>
             {@render title()}
         </Title>

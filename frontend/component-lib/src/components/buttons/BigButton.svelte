@@ -21,8 +21,8 @@
         onClick,
         mode = "default",
         countBadge,
-        width = { kind: "fill" },
-        height = { kind: "fill" },
+        width = "fill",
+        height = "fill",
         disabled = false,
     }: Props = $props();
 

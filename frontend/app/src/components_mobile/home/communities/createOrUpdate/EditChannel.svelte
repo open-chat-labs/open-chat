@@ -31,7 +31,7 @@
 </script>
 
 <Sheet onDismiss={onCancel}>
-    <Container height={{ kind: "hug" }} padding={"xl"} gap={"xl"} direction={"vertical"}>
+    <Container height={"hug"} padding={"xl"} gap={"xl"} direction={"vertical"}>
         <Container gap={"lg"} padding={"md"} direction={"vertical"}>
             <Title fontWeight={"bold"}>
                 <Translatable

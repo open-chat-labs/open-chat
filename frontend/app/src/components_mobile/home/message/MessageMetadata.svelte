@@ -54,7 +54,7 @@
     padding={["zero", "zero", "xs", "zero"]}
     crossAxisAlignment={"center"}
     crossAxisSelfAlignment={"end"}
-    width={{ kind: "hug" }}>
+    width={"hug"}>
     {#if edited}
         <ChatFootnote>(<Translatable resourceKey={i18nKey("edited")} />)</ChatFootnote>
     {/if}

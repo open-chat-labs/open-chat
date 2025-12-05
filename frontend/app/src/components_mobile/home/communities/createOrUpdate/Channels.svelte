@@ -61,7 +61,7 @@
 <SlidingPageContent title={i18nKey("Public channels")}>
     <Container
         supplementalClass={"gate_list"}
-        height={{ kind: "fill" }}
+        height={"fill"}
         gap={"lg"}
         direction={"vertical"}
         padding={["xl", "lg"]}>

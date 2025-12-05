@@ -19,7 +19,7 @@
         onChange,
         children,
         reverse = false,
-        width = { kind: "hug" },
+        width = "hug",
         bound = true,
     }: Props = $props();
 

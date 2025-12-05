@@ -73,7 +73,7 @@
         {#if monthTitleTemplate}
             {@render monthTitleTemplate()}
         {:else}
-            <Subtitle width={{ kind: "hug" }} fontWeight={"bold"}>
+            <Subtitle width={"hug"} fontWeight={"bold"}>
                 {calendarState.monthTitle}
             </Subtitle>
         {/if}

@@ -32,7 +32,7 @@
     borderStyle={"dashed"}
     crossAxisAlignment={"center"}
     mainAxisAlignment={"center"}
-    height={{ kind: "fill" }}
+    height={"fill"}
     direction={"vertical"}>
     <div class="bottom_bar_icon">
         {@render icon(iconColour)}

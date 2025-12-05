@@ -126,7 +126,7 @@
     }
 </script>
 
-<Container background={ColourVars.background0} height={{ kind: "fill" }} direction={"vertical"}>
+<Container background={ColourVars.background0} height={"fill"} direction={"vertical"}>
     {#if user !== undefined}
         <Container
             supplementalClass={"direct_chat_details"}
@@ -170,11 +170,7 @@
                         <Setting
                             toggle={onToggle}
                             info={"A feature that automatically deletes messages after a set period, helping keep chats private and temporary."}>
-                            <Switch
-                                onChange={onToggle}
-                                width={{ kind: "fill" }}
-                                reverse
-                                checked={enabled}>
+                            <Switch onChange={onToggle} width={"fill"} reverse checked={enabled}>
                                 <Translatable resourceKey={i18nKey("disappearingMessages.label")} />
                             </Switch>
                         </Setting>
@@ -189,7 +185,7 @@
                 <Body colour={"textSecondary"}>
                     <Translatable resourceKey={blockInfo} />
                 </Body>
-                <Button secondary={blocked} width={{ kind: "fill" }} onClick={toggleBlocked}>
+                <Button secondary={blocked} width={"fill"} onClick={toggleBlocked}>
                     {#snippet icon(color)}
                         <CancelIcon {color} />
                     {/snippet}

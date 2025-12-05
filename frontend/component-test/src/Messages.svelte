@@ -8,7 +8,7 @@
 <DebugEvent>
     {#snippet children(onAction)}
         <Container
-            width={{ kind: "fixed", size: "800px" }}
+            width={{ size: "800px" }}
             borderColour={"cyan"}
             borderStyle={"dashed"}
             borderWidth={"thick"}

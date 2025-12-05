@@ -572,7 +572,7 @@
                     supplementalClass={"message_bubble_wrapper"}
                     overflow={"visible"}
                     crossAxisAlignment={me ? "end" : "start"}
-                    width={{ kind: "hug" }}
+                    width={"hug"}
                     maxWidth={"85%"}
                     gap={"xxs"}
                     minWidth={"6rem"}

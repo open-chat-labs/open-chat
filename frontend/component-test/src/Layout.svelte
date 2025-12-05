@@ -31,8 +31,8 @@
         borderRadius={"md"}
         mainAxisAlignment={"center"}
         crossAxisAlignment={"center"}
-        width={!fixed ? { kind: "fill" } : { kind: "fixed", size: "140px" }}
-        height={{ kind: "fixed", size: "140px" }}>
+        width={!fixed ? "fill" : { size: "140px" }}
+        height={{ size: "140px" }}>
         {name} - {fixed ? "fixed 140px" : "fill"}
     </Container>
 {/snippet}
@@ -51,7 +51,7 @@
         <Container
             padding={[paddingTop, paddingRight, paddingBottom, paddingLeft]}
             borderWidth={"thick"}
-            width={{ kind: "fill" }}
+            width={"fill"}
             borderRadius={"lg"}
             {gap}>
             {@render contentBlocks()}
@@ -59,7 +59,7 @@
 
         <H2>Vertical Container / Column</H2>
 
-        <Container width={{ kind: "hug" }} gap={"lg"}>
+        <Container width={"hug"} gap={"lg"}>
             <Container
                 direction={"vertical"}
                 padding={[paddingTop, paddingRight, paddingBottom, paddingLeft]}
@@ -94,7 +94,7 @@
                 {@render contentBlock("B", false)}
                 {@render contentBlock("C", false)}
             </Container>
-            <Container height={{ kind: "fill" }} gap={"lg"} direction={"vertical"}>
+            <Container height={"fill"} gap={"lg"} direction={"vertical"}>
                 {@render contentBlock("A", false)}
                 <Container
                     gap={"md"}
@@ -106,8 +106,8 @@
                     borderRadius={"md"}
                     mainAxisAlignment={"center"}
                     crossAxisAlignment={"end"}
-                    width={{ kind: "fill" }}
-                    height={{ kind: "fill" }}>
+                    width={"fill"}
+                    height={"fill"}>
                     <Button>A</Button>
                     <Button secondary>B</Button>
                     <Button secondary>C</Button>
@@ -115,7 +115,7 @@
             </Container>
         </Container>
     </Container>
-    <Container gap={"xs"} width={{ kind: "fixed", size: "300px" }} direction={"vertical"}>
+    <Container gap={"xs"} width={{ size: "300px" }} direction={"vertical"}>
         <Subtitle fontWeight={"semi-bold"}>Spacing</Subtitle>
 
         <Label fontWeight={"light"}>Padding top</Label>

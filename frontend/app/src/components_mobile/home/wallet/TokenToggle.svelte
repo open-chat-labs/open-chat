@@ -22,12 +22,12 @@
     }
 </script>
 
-<Container height={{ kind: "fixed", size: "2rem" }} mainAxisAlignment={"spaceBetween"} gap={"sm"}>
+<Container height={{ size: "2rem" }} mainAxisAlignment={"spaceBetween"} gap={"sm"}>
     {#each options as { id, label }}
         {@const isSelected = selected === id}
         <CommonButton
-            height={{ kind: "fill" }}
-            width={isSelected ? { kind: "share", value: 1.3 } : { kind: "share", value: 1 }}
+            height={"fill"}
+            width={isSelected ? { share: 1.3 } : { share: 1 }}
             onClick={() => selectOption(id)}
             mode={isSelected ? "active" : "default"}
             size={"small"}>

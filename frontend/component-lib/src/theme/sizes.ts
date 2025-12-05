@@ -130,11 +130,7 @@ export class Spacings {
     }
 }
 
-export type SizeMode =
-    | { kind: "hug" }
-    | { kind: "fill" }
-    | { kind: "fixed"; size: string }
-    | { kind: "share"; value: number };
+export type SizeMode = "hug" | "fill" | { size: string } | { share: number };
 
 export type MainAxisAlignment = "start" | "center" | "end" | "spaceBetween" | "spaceAround";
 
@@ -180,9 +176,9 @@ export function getFlexStyle(
 ): string {
     // Fallback for unknown or non-flex parent
     if (parentDirection === "unknown" || parentDirection === undefined) {
-        if (mode.kind === "fixed") return `${axis}: ${mode.size ?? "auto"}`;
-        if (mode.kind === "hug") return `${axis}: fit-content`;
-        if (mode.kind === "fill") return `${axis}: 100%`;
+        if (mode === "hug") return `${axis}: fit-content`;
+        if (mode === "fill") return `${axis}: 100%`;
+        if ("size" in mode) return `${axis}: ${mode.size ?? "auto"}`;
     }
 
     const isMainAxis =
@@ -190,18 +186,18 @@ export function getFlexStyle(
         (axis === "height" && parentDirection === "vertical");
 
     if (isMainAxis) {
-        if (mode.kind === "fixed") return `flex: 0 0 ${mode.size ?? "auto"}`;
-        if (mode.kind === "hug") return `flex: 0 0 auto`;
+        if (mode === "hug") return `flex: 0 0 auto`;
+        if (mode === "fill") return `flex: 1 1 0`;
+        if ("size" in mode) return `flex: 0 0 ${mode.size ?? "auto"}`;
         // if (mode.kind === "fill") return `flex: 1 1 auto`;
-        if (mode.kind === "fill") return `flex: 1 1 0`;
-        if (mode.kind === "share") return `flex: ${mode.value}`;
+        if ("share" in mode) return `flex: ${mode.share}`;
     }
 
     if (!isMainAxis) {
-        if (mode.kind === "fixed") return `${axis}: ${mode.size ?? "auto"}`;
-        if (mode.kind === "hug") return `${axis}: fit-content`;
-        if (mode.kind === "fill") return `align-self: stretch`;
-        if (mode.kind === "share") {
+        if (mode === "hug") return `${axis}: fit-content`;
+        if (mode === "fill") return `align-self: stretch`;
+        if ("size" in mode) return `${axis}: ${mode.size ?? "auto"}`;
+        if ("share" in mode) {
             console.warn(
                 "share SizeMode does not make sense for the cross-axis - you are probably making a mistake",
             );

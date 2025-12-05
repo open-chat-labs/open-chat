@@ -73,7 +73,7 @@
     {#snippet selectOptions(onSelect)}
         <Container
             onClick={(e) => e?.stopPropagation()}
-            height={{ kind: "fixed", size: "100%" }}
+            height={{ size: "100%" }}
             supplementalClass={"language_options"}
             padding={"lg"}
             gap={"lg"}

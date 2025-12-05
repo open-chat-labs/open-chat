@@ -775,7 +775,7 @@
     reverse
     padding={["md", "lg", "zero", "lg"]}
     direction={"vertical"}
-    height={{ kind: "fill" }}
+    height={"fill"}
     gap={"xs"}
     id={`scrollable-list-${rootSelector}`}
     supplementalClass={`scrollable-list ${rootSelector} ${interrupt ? "interrupt" : ""}`}

@@ -49,7 +49,7 @@
 </script>
 
 <Sheet>
-    <Container height={{ kind: "hug" }} padding={"xl"} gap={"xl"} direction={"vertical"}>
+    <Container height={"hug"} padding={"xl"} gap={"xl"} direction={"vertical"}>
         {#if title !== undefined}
             <Title fontWeight={"bold"}>
                 <Translatable resourceKey={title} />

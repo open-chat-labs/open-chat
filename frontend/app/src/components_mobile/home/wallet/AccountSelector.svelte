@@ -37,7 +37,7 @@
 
 <Sheet {onDismiss}>
     <Container
-        height={{ kind: "fixed", size: "100%" }}
+        height={{ size: "100%" }}
         supplementalClass={"account_selector"}
         padding={"lg"}
         gap={"xl"}

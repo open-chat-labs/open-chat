@@ -112,7 +112,7 @@
             <PincodeInput onUpdate={onUpdateCharacter} onClear={onClearCharacter} {type} {char} />
         {/each}
     </Container>
-    <BodySmall width={{ kind: "hug" }} colour={"textSecondary"}>
+    <BodySmall width={"hug"} colour={"textSecondary"}>
         <Translatable resourceKey={subtext} />
     </BodySmall>
 </div>

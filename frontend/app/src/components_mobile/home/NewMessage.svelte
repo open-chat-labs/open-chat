@@ -73,10 +73,10 @@
 <SlidingPageContent title={i18nKey("New message")}>
     <Container
         padding={["zero", "lg", "zero", "lg"]}
-        width={{ kind: "fill" }}
+        width={"fill"}
         gap={"xl"}
         direction={"vertical"}
-        height={{ kind: "hug" }}>
+        height={"hug"}>
         <ChatListSearch
             bind:userAndBotsSearchResults={userAndBotSearchResults}
             bind:groupSearchResults
@@ -95,11 +95,11 @@
             {/await}
         {/if}
         <Container
-            width={{ kind: "fill" }}
+            width={"fill"}
             gap={"lg"}
             padding={["zero", "md"]}
             direction={"vertical"}
-            height={{ kind: "hug" }}>
+            height={"hug"}>
             <ListAction onClick={newGroup}>
                 {#snippet icon(color)}
                     <AccountMultiplePlusOutline {color} />

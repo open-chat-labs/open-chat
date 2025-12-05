@@ -23,8 +23,8 @@
 {#snippet button(f: ChatListFilter, name: string)}
     {@const selected = filter === f}
     <CommonButton
-        height={{ kind: "fill" }}
-        width={selected ? { kind: "share", value: 1.3 } : { kind: "share", value: 1 }}
+        height={"fill"}
+        width={selected ? { share: 1.3 } : { share: 1 }}
         onClick={() => setFilter(f)}
         mode={selected ? "active" : "default"}
         size={"small"}>
@@ -33,7 +33,7 @@
 {/snippet}
 
 <Container
-    height={{ kind: "fixed", size: "3rem" }}
+    height={{ size: "3rem" }}
     mainAxisAlignment={"spaceBetween"}
     padding={["sm", "md"]}
     gap={"sm"}>

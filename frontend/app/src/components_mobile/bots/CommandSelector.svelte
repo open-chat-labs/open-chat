@@ -233,7 +233,7 @@
             mainAxisAlignment={"spaceBetween"}
             gap={"sm"}
             onClick={() => selectCommand(command)}>
-            <Container maxWidth={"3rem"} maxHeight={"3rem"} width={{ kind: "hug" }}>
+            <Container maxWidth={"3rem"} maxHeight={"3rem"} width={"hug"}>
                 {#if command.kind === "external_bot"}
                     <BotAvatar bot={command} />
                 {:else}
@@ -242,7 +242,7 @@
             </Container>
             <Container direction={"vertical"}>
                 <Container crossAxisAlignment={"center"} gap={"sm"}>
-                    <Body fontWeight={"bold"} width={{ kind: "hug" }}>
+                    <Body fontWeight={"bold"} width={"hug"}>
                         /{command.name}
                     </Body>
                     {#each command?.params ?? [] as param}
@@ -261,13 +261,13 @@
                 <Container>
                     <div class="interface"></div>
                     {#if command.description}
-                        <Body ellipsisTruncate width={{ kind: "hug" }} colour={"textSecondary"}>
+                        <Body ellipsisTruncate width={"hug"} colour={"textSecondary"}>
                             <Translatable resourceKey={i18nKey(command.description)} />
                         </Body>
                     {/if}
                 </Container>
             </Container>
-            <BodySmall width={{ kind: "hug" }} colour={"textSecondary"}>
+            <BodySmall width={"hug"} colour={"textSecondary"}>
                 <Translatable resourceKey={i18nKey(command.botName)} />
             </BodySmall>
         </Container>

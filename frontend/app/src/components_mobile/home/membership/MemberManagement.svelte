@@ -68,9 +68,9 @@
 {/snippet}
 
 <SlidingPageContent title={i18nKey("Member management")} subtitle={i18nKey(collection.name)}>
-    <Container height={{ kind: "fill" }} mainAxisAlignment={"spaceBetween"} direction={"vertical"}>
+    <Container height={"fill"} mainAxisAlignment={"spaceBetween"} direction={"vertical"}>
         <Container
-            height={{ kind: "fill" }}
+            height={"fill"}
             gap={"lg"}
             padding={["xxl", "lg", "lg", "lg"]}
             direction={"vertical"}>
@@ -83,7 +83,7 @@
 
             {#if view === "members"}
                 <Container
-                    height={{ kind: "fill" }}
+                    height={"fill"}
                     padding={["zero", "md"]}
                     gap={"xl"}
                     direction={"vertical"}>
@@ -117,14 +117,14 @@
         <Container onSwipe={() => {}} padding={["zero", "md"]} gap={"sm"}>
             <BigButton
                 icon={membersIcon}
-                width={{ kind: "fixed", size: "7rem" }}
+                width={{ size: "7rem" }}
                 mode={view === "members" ? "active" : "default"}
                 onClick={() => setView("members")}>
                 <Translatable resourceKey={i18nKey("Members")} />
             </BigButton>
             {#if canAdd}
                 <BigButton
-                    width={{ kind: "fixed", size: "7rem" }}
+                    width={{ size: "7rem" }}
                     mode={view === "add" ? "active" : "default"}
                     onClick={() => setView("add")}>
                     {#snippet icon(color)}
@@ -134,7 +134,7 @@
                 </BigButton>
             {/if}
             <BigButton
-                width={{ kind: "fixed", size: "7rem" }}
+                width={{ size: "7rem" }}
                 mode={view === "lapsed" ? "active" : "default"}
                 onClick={() => setView("lapsed")}>
                 {#snippet icon(color)}
@@ -143,7 +143,7 @@
                 <Translatable resourceKey={i18nKey("Lapsed")} />
             </BigButton>
             <BigButton
-                width={{ kind: "fixed", size: "7rem" }}
+                width={{ size: "7rem" }}
                 mode={view === "blocked" ? "active" : "default"}
                 onClick={() => setView("blocked")}>
                 {#snippet icon(color)}

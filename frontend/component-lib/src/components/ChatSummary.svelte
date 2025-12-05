@@ -42,13 +42,13 @@
     {:else}
         <Avatar url={avatarUrls[0]} size={"lg"} />
     {/if}
-    <Container gap={"xxs"} direction={"vertical"} width={{ kind: "fill" }}>
+    <Container gap={"xxs"} direction={"vertical"} width={"fill"}>
         <Container gap={"xs"} mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"start"}>
             <Title ellipsisTruncate fontWeight={"semi-bold"}>
                 {title}
             </Title>
             {#if time}
-                <Caption width={{ kind: "hug" }} colour={timeColour}>{time}</Caption>
+                <Caption width={"hug"} colour={timeColour}>{time}</Caption>
             {/if}
         </Container>
         <Container gap={"xs"} mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"end"}>
@@ -58,7 +58,7 @@
             {#if unreadCount > 0}
                 <CountBadge>{unreadCount}</CountBadge>
             {:else}
-                <Container mainAxisAlignment={"end"} width={{ kind: "hug" }}>
+                <Container mainAxisAlignment={"end"} width={"hug"}>
                     <CheckCircle color={iconColor} />
                     <CheckCircle color={iconColor} />
                 </Container>

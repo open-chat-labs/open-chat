@@ -178,7 +178,7 @@
     minHeight={"4.875rem"}
     {onSwipe}
     borderColour={"var(--background-0)"}
-    height={{ kind: "fixed", size: "4.875rem" }}
+    height={{ size: "4.875rem" }}
     borderRadius={["md", "md", "zero", "zero"]}
     background={"var(--background-1)"}
     mainAxisAlignment={"spaceAround"}>

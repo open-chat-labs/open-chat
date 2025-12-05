@@ -23,8 +23,8 @@
     gap={"xxs"}
     wrap
     padding={["zero", "md"]}
-    width={{ kind: "hug" }}
-    height={{ kind: "hug" }}
+    width={"hug"}
+    height={"hug"}
     crossAxisAlignment={"center"}>
     {#each reactions as reaction}
         <ReactionComponent {alignTooltip} {onClick} {intersecting} {reaction} />

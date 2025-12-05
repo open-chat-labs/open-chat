@@ -41,7 +41,7 @@
     {/snippet}
     {#snippet selectOptions(onSelect)}
         <Container
-            height={{ kind: "fixed", size: "100%" }}
+            height={{ size: "100%" }}
             supplementalClass={"binding_options"}
             padding={"lg"}
             gap={"lg"}

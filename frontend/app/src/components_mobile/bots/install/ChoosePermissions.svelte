@@ -45,7 +45,7 @@
             {#each requested.chatPermissions as perm}
                 <Switch
                     reverse
-                    width={{ kind: "fill" }}
+                    width={"fill"}
                     onChange={() => togglePermission(granted, "chatPermissions", perm)}
                     checked={granted.chatPermissions.includes(perm)}>
                     <Translatable resourceKey={i18nKey(`permissions.${perm}`)} />
@@ -68,7 +68,7 @@
             {#each requested.communityPermissions as perm}
                 <Switch
                     reverse
-                    width={{ kind: "fill" }}
+                    width={"fill"}
                     onChange={() => togglePermission(granted, "communityPermissions", perm)}
                     checked={granted.communityPermissions.includes(perm)}>
                     <Translatable resourceKey={i18nKey(`permissions.${perm}`)} />
@@ -91,7 +91,7 @@
             {#each requested.messagePermissions as perm}
                 <Switch
                     reverse
-                    width={{ kind: "fill" }}
+                    width={"fill"}
                     onChange={() => togglePermission(granted, "messagePermissions", perm)}
                     checked={granted.messagePermissions.includes(perm)}>
                     <Translatable resourceKey={i18nKey(`permissions.messagePermissions.${perm}`)} />

@@ -46,7 +46,7 @@
 
 <Sheet {onDismiss}>
     <Container
-        height={{ kind: "fixed", size: "100%" }}
+        height={{ size: "100%" }}
         supplementalClass={"token_selector"}
         padding={"lg"}
         gap={"xl"}
@@ -67,7 +67,7 @@
         <Container gap={"sm"} supplementalClass={"token_selector"} direction={"vertical"}>
             {#if filteredTokens.length === 0}
                 <NothingToSee
-                    height={{ kind: "fixed", size: "6" }}
+                    height={{ size: "6" }}
                     padding={"zero"}
                     reset={{ onClick: onDismiss, text: "Close" }}
                     title={"No matching tokens"}

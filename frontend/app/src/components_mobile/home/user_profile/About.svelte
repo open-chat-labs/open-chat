@@ -19,7 +19,7 @@
 <SlidingPageContent title={i18nKey("About")}>
     <Container
         padding={["sm", "xxl", "xxl", "xxl"]}
-        height={{ kind: "fill" }}
+        height={"fill"}
         gap={"xs"}
         crossAxisAlignment={"center"}
         direction={"vertical"}>

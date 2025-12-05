@@ -12,6 +12,6 @@
     let { name, hollow = false, onClick }: Props = $props();
 </script>
 
-<Button width={{ kind: "fill" }} secondary={hollow} {onClick}>
+<Button width={"fill"} secondary={hollow} {onClick}>
     <Translatable resourceKey={name} />
 </Button>

@@ -32,7 +32,7 @@
         title,
         subtitle,
         reset,
-        height = { kind: "fill" },
+        height = "fill",
         padding = ["huge", "zero", "zero", "zero"],
         icon,
     }: Props = $props();
@@ -51,15 +51,11 @@
         <Robot color={ColourVars.primary} size={"6rem"} />
     {/if}
 
-    <Container
-        gap={"xs"}
-        crossAxisAlignment={"center"}
-        width={{ kind: "hug" }}
-        direction={"vertical"}>
-        <Body align={"center"} colour={"primary"} width={{ kind: "hug" }} fontWeight={"bold"}>
+    <Container gap={"xs"} crossAxisAlignment={"center"} width={"hug"} direction={"vertical"}>
+        <Body align={"center"} colour={"primary"} width={"hug"} fontWeight={"bold"}>
             <Translatable resourceKey={i18nKey(title)}></Translatable>
         </Body>
-        <BodySmall align={"center"} width={{ kind: "hug" }} colour={"textSecondary"}>
+        <BodySmall align={"center"} width={"hug"} colour={"textSecondary"}>
             <Translatable resourceKey={i18nKey(subtitle)}></Translatable>
         </BodySmall>
     </Container>

@@ -11,7 +11,7 @@
 </script>
 
 <Container
-    width={{ kind: "hug" }}
+    width={"hug"}
     crossAxisAlignment={"center"}
     gap={"xs"}
     borderRadius={"sm"}

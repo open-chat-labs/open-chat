@@ -95,7 +95,7 @@
 
 <SlidingPageContent title={i18nKey("Thing bots")} subtitle={i18nKey(collection.name)}>
     <Container
-        height={{ kind: "fill" }}
+        height={"fill"}
         gap={"xl"}
         padding={["xxl", "lg", "lg", "lg"]}
         direction={"vertical"}>

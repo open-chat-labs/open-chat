@@ -338,7 +338,7 @@
                     <BodySmall colour={"textSecondary"}>
                         <Translatable resourceKey={i18nKey("Transfer amount")} />
                     </BodySmall>
-                    <Body width={{ kind: "hug" }} colour={"primary"} fontWeight={"bold"}>
+                    <Body width={"hug"} colour={"primary"} fontWeight={"bold"}>
                         {formatTokens(tokenState.draftAmount, tokenState.decimals)}
                     </Body>
                 </Container>
@@ -346,7 +346,7 @@
                     <BodySmall colour={"textSecondary"}>
                         <Translatable resourceKey={i18nKey("Fee")} />
                     </BodySmall>
-                    <Body width={{ kind: "hug" }} fontWeight={"bold"}>
+                    <Body width={"hug"} fontWeight={"bold"}>
                         {formatTokens(tokenState.transferFees, tokenState.decimals)}
                     </Body>
                 </Container>
@@ -355,7 +355,7 @@
                         <BodySmall colour={"textSecondary"}>
                             <Translatable resourceKey={i18nKey("Network fee")} />
                         </BodySmall>
-                        <Body width={{ kind: "hug" }} fontWeight={"bold"}>
+                        <Body width={"hug"} fontWeight={"bold"}>
                             <Translatable
                                 resourceKey={i18nKey("cryptoAccount.networkFee", {
                                     amount: networkFeeFormatted,
@@ -368,7 +368,7 @@
                     <BodySmall colour={"textSecondary"}>
                         <Translatable resourceKey={i18nKey("Date & time")} />
                     </BodySmall>
-                    <Body width={{ kind: "hug" }} fontWeight={"bold"}>
+                    <Body width={"hug"} fontWeight={"bold"}>
                         {new Date().toISOString()}
                     </Body>
                 </Container>
@@ -376,7 +376,7 @@
                     <BodySmall colour={"textSecondary"}>
                         <Translatable resourceKey={i18nKey("Transaction ID")} />
                     </BodySmall>
-                    <Body width={{ kind: "hug" }} fontWeight={"bold"}>
+                    <Body width={"hug"} fontWeight={"bold"}>
                         {"XXXXXXXX"}
                     </Body>
                 </Container>

@@ -9,7 +9,7 @@
 
 <DebugEvent>
     {#snippet children(onAction)}
-        <Container width={{ kind: "fixed", size: "500px" }}>
+        <Container width={{ size: "500px" }}>
             <Container gap={"xxl"} direction={"vertical"}>
                 <ChatSummary
                     onClick={onClick(onAction)}

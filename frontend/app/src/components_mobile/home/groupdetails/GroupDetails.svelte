@@ -192,7 +192,7 @@
 <Container
     closeMenuOnScroll
     background={ColourVars.background0}
-    height={{ kind: "fill" }}
+    height={"fill"}
     direction={"vertical"}>
     <Container gap={"xl"} direction={"vertical"} padding={["lg", "md", "md", "md"]}>
         <!-- this is the group card -->
@@ -234,9 +234,9 @@
                         direction={"vertical"}
                         mainAxisAlignment={"center"}
                         supplementalClass={"group_name"}>
-                        <H2 fontWeight={"bold"} width={{ kind: "hug" }}>{chat.name}</H2>
+                        <H2 fontWeight={"bold"} width={"hug"}>{chat.name}</H2>
                         <Container gap={"xs"}>
-                            <BodySmall colour={"textSecondary"} width={{ kind: "hug" }}>
+                            <BodySmall colour={"textSecondary"} width={"hug"}>
                                 <Translatable resourceKey={i18nKey("owned by")} />
                             </BodySmall>
                             <BodySmall colour={"primary"}>

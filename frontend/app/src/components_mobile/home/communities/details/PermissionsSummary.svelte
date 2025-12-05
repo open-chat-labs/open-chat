@@ -45,7 +45,7 @@
         );
     }
     let partitioned = $derived(partitionPermissions(permissions));
-    const width: SizeMode = { kind: "hug" };
+    const width: SizeMode = "hug";
 </script>
 
 <Separator />

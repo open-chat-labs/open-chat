@@ -24,7 +24,7 @@
 
 <DebugEvent>
     {#snippet children(onAction)}
-        <Container width={{ kind: "fixed", size: "800px" }} gap={"xl"} direction={"vertical"}>
+        <Container width={{ size: "800px" }} gap={"xl"} direction={"vertical"}>
             <H2>Common buttons for any use</H2>
 
             <Container gap={"lg"}>

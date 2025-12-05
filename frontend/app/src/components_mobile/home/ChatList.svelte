@@ -147,8 +147,8 @@
         closeMenuOnScroll
         gap={"lg"}
         onInsideEnd={insideBottom}
-        width={{ kind: "fill" }}
-        height={{ kind: "fill" }}
+        width={"fill"}
+        height={"fill"}
         direction={"vertical"}>
         {#if chats.length === 0}
             <NoMatchingChats onReset={() => chatListFilterStore.set("all")} />

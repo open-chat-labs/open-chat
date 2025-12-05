@@ -711,7 +711,7 @@
 
                     <Container
                         padding={["zero", "sm", "zero", "zero"]}
-                        width={{ kind: "hug" }}
+                        width={"hug"}
                         gap={"md"}>
                         <IconButton
                             onclick={() => (showCustomMessageTrigger = !showCustomMessageTrigger)}
@@ -752,7 +752,7 @@
         {/if}
 
         {#if directChatBotId === undefined}
-            <Container gap={"xs"} padding={["zero", "zero", "xs", "zero"]} width={{ kind: "hug" }}>
+            <Container gap={"xs"} padding={["zero", "zero", "xs", "zero"]} width={"hug"}>
                 {#if editingEvent === undefined}
                     {#if permittedMessages.get("audio") && messageIsEmpty && audioMimeType !== undefined && audioSupported}
                         <AudioAttacher

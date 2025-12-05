@@ -92,7 +92,7 @@
     )}
     subtitle={i18nKey(ucs.editMode ? "Update community" : "Create community")}>
     <Container
-        height={{ kind: "fill" }}
+        height={"fill"}
         gap={"xl"}
         direction={"vertical"}
         padding={["xxl", "lg", "lg", "lg"]}>
@@ -179,7 +179,7 @@
             <Setting
                 toggle={() => (ucs.candidate.public = !ucs.candidate.public)}
                 info={"Communities are public by default, and limited to people you invite. Public communties can be found in the communities explorer."}>
-                <Switch width={{ kind: "fill" }} reverse bind:checked={ucs.candidate.public}>
+                <Switch width={"fill"} reverse bind:checked={ucs.candidate.public}>
                     <Translatable resourceKey={i18nKey("Public community")}></Translatable>
                 </Switch>
             </Setting>

@@ -288,7 +288,7 @@
     <Container
         {onClick}
         background={ColourVars.textTertiary}
-        height={{ kind: "fixed", size: "3rem" }}
+        height={{ size: "3rem" }}
         padding={["xs", "md"]}
         borderRadius={"circle"}
         gap={"sm"}
@@ -313,7 +313,7 @@
 {/snippet}
 
 <SlidingPageContent title={i18nKey("Swap tokens")}>
-    <Container height={{ kind: "fill" }} gap={"lg"} padding={"xl"} direction={"vertical"}>
+    <Container height={"fill"} gap={"lg"} padding={"xl"} direction={"vertical"}>
         <Container gap={"md"} direction={"vertical"} padding={"md"}>
             <Body fontWeight={"bold"}>
                 <Translatable resourceKey={i18nKey(`Swap ${inToken.symbol}`)} />
@@ -341,8 +341,8 @@
                         {@render selectedToken(selectFrom, inToken.token)}
                         <Container
                             supplementalClass={"swap_down_arrow"}
-                            width={{ kind: "fixed", size: "3rem" }}
-                            height={{ kind: "fixed", size: "3rem" }}
+                            width={{ size: "3rem" }}
+                            height={{ size: "3rem" }}
                             borderRadius={"circle"}
                             background={ColourVars.background1}
                             mainAxisAlignment={"center"}
@@ -363,18 +363,15 @@
                             {`Minimum amount ${inToken.minAmountLabel} ${inToken.symbol}`}
                         {/snippet}
                         {#snippet icon()}
-                            <Container padding={["zero", "xs"]} width={{ kind: "hug" }}>
+                            <Container padding={["zero", "xs"]} width={"hug"}>
                                 <Avatar url={inToken.logo} size={"sm"} />
                             </Container>
                         {/snippet}
                     </TokenInput>
 
-                    <Container
-                        height={{ kind: "fixed", size: "2rem" }}
-                        direction={"vertical"}
-                        gap={"xs"}>
+                    <Container height={{ size: "2rem" }} direction={"vertical"} gap={"xs"}>
                         <Container
-                            height={{ kind: "fill" }}
+                            height={"fill"}
                             mainAxisAlignment={"spaceBetween"}
                             padding={["sm", "zero"]}
                             gap={"sm"}>
@@ -406,16 +403,13 @@
                         <BodySmall colour={"textSecondary"}>
                             <Translatable resourceKey={i18nKey("You swap")} />
                         </BodySmall>
-                        <Container
-                            crossAxisAlignment={"end"}
-                            width={{ kind: "hug" }}
-                            direction={"vertical"}>
-                            <Body align={"end"} width={{ kind: "hug" }} fontWeight={"bold"}>
+                        <Container crossAxisAlignment={"end"} width={"hug"} direction={"vertical"}>
+                            <Body align={"end"} width={"hug"} fontWeight={"bold"}>
                                 {`${swapMessageValues.amountIn} ${swapMessageValues.tokenIn}`}
                             </Body>
                             <Caption
                                 align={"end"}
-                                width={{ kind: "hug" }}
+                                width={"hug"}
                                 fontWeight={"bold"}
                                 colour={"textSecondary"}>
                                 ${swapMessageValues.usdIn}
@@ -426,20 +420,17 @@
                         <BodySmall colour={"textSecondary"}>
                             <Translatable resourceKey={i18nKey("You receive (approx.)")} />
                         </BodySmall>
-                        <Container
-                            crossAxisAlignment={"end"}
-                            width={{ kind: "hug" }}
-                            direction={"vertical"}>
+                        <Container crossAxisAlignment={"end"} width={"hug"} direction={"vertical"}>
                             <Body
                                 align={"end"}
-                                width={{ kind: "hug" }}
+                                width={"hug"}
                                 colour={"primary"}
                                 fontWeight={"bold"}>
                                 {`${swapMessageValues.amountOut} ${swapMessageValues.tokenOut}`}
                             </Body>
                             <Caption
                                 align={"end"}
-                                width={{ kind: "hug" }}
+                                width={"hug"}
                                 fontWeight={"bold"}
                                 colour={"textSecondary"}>
                                 ${swapMessageValues.usdOut}
@@ -450,7 +441,7 @@
                         <BodySmall colour={"textSecondary"}>
                             <Translatable resourceKey={i18nKey("Exchange rate")} />
                         </BodySmall>
-                        <Body width={{ kind: "hug" }} fontWeight={"bold"}>
+                        <Body width={"hug"} fontWeight={"bold"}>
                             {`${swapMessageValues.rate} ${swapMessageValues.tokenOut} ~ 1 ${swapMessageValues.tokenIn}`}
                         </Body>
                     </Container>
@@ -458,7 +449,7 @@
                         <BodySmall colour={"textSecondary"}>
                             <Translatable resourceKey={i18nKey("Quote provider")} />
                         </BodySmall>
-                        <Body width={{ kind: "hug" }} fontWeight={"bold"}>
+                        <Body width={"hug"} fontWeight={"bold"}>
                             {`${swapMessageValues.dex}`}
                         </Body>
                     </Container>
@@ -573,11 +564,7 @@
 {/if}
 
 {#snippet percentage(perc: number)}
-    <CommonButton
-        width={{ kind: "fill" }}
-        onClick={() => setAmount(perc)}
-        mode={"active"}
-        size={"small"}>
+    <CommonButton width={"fill"} onClick={() => setAmount(perc)} mode={"active"} size={"small"}>
         {`${perc}%`}
     </CommonButton>
 {/snippet}

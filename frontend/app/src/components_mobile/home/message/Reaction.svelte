@@ -68,7 +68,7 @@
     <Container
         onClick={() => onClick?.(reaction)}
         borderRadius={"lg"}
-        width={{ kind: "hug" }}
+        width={"hug"}
         padding={["zero", "xs"]}
         background={selected ? ColourVars.disabledButton : ColourVars.background2}
         crossAxisAlignment={"center"}

@@ -46,7 +46,7 @@
     </Container>
 {:else if chat.kind === "group_chat" || chat.kind === "channel"}
     <Container gap={"sm"} crossAxisAlignment={"center"}>
-        <BodySmall width={{ kind: "hug" }} colour={"textSecondary"}>
+        <BodySmall width={"hug"} colour={"textSecondary"}>
             <VisibilityLabel isPublic={chat.public} />
         </BodySmall>
         {#if chat.eventsTTL !== undefined}

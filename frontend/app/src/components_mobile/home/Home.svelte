@@ -830,11 +830,7 @@
     {/if}
 {/if}
 
-<Container
-    height={{ kind: "fill" }}
-    width={{ kind: "fill" }}
-    supplementalClass={mainClass}
-    tag="main">
+<Container height={"fill"} width={"fill"} supplementalClass={mainClass} tag="main">
     <LeftPanel />
     <MiddlePanel {joining} />
 </Container>

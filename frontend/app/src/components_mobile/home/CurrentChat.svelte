@@ -410,7 +410,7 @@
     <Container
         onSwipe={onSwipeRight(() => publish("clearSelection"))}
         background={ColourVars.background0}
-        height={{ kind: "fill" }}
+        height={"fill"}
         direction={"vertical"}>
         {#if showSearchHeader}
             <CurrentChatSearchHeader

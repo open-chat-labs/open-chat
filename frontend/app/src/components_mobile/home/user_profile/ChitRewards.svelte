@@ -85,12 +85,12 @@
     <Container
         padding={"xl"}
         gap={"lg"}
-        height={{ kind: "fill" }}
+        height={"fill"}
         crossAxisAlignment={"center"}
         direction={"vertical"}>
         <Container padding={["zero", "md"]} gap={"xl"} direction={"vertical"}>
             <Container supplementalClass={"streak_title"} gap={"xl"} direction={"vertical"}>
-                <H1 width={{ kind: "fixed", size: "70%" }} fontWeight={"bold"} colour={"primary"}>
+                <H1 width={{ size: "70%" }} fontWeight={"bold"} colour={"primary"}>
                     <Translatable
                         resourceKey={i18nKey("You are on a {streak} day streak!", {
                             streak: $chitStateStore.streak,
@@ -130,14 +130,14 @@
 
             <Setting
                 info={"CHIT is our in-app currency that can be earned by simply using the app. CHIT rewards can then be exchanged for in-app items like emoji packs, or profile backgrounds and themes. If you'd prefer not to see anything CHIT related outside of this settings page you can opt out here."}>
-                <Switch width={{ kind: "fill" }} reverse bind:checked={$disableChit}>
+                <Switch width={"fill"} reverse bind:checked={$disableChit}>
                     <Translatable resourceKey={i18nKey("hideChit")}></Translatable>
                 </Switch>
             </Setting>
 
             <Setting
                 info={"Any time you perform a certain actions that is on the list of achievements, you will get notified. If you would like to opt out of the small celebratory notification, you may do so here. To learn more tap here to view achievements."}>
-                <Switch width={{ kind: "fill" }} reverse bind:checked={$chitPopup}>
+                <Switch width={"fill"} reverse bind:checked={$chitPopup}>
                     <Translatable resourceKey={i18nKey("Notify me of my CHIT achievements")}
                     ></Translatable>
                 </Switch>
@@ -148,10 +148,7 @@
             </Body>
             <Calendar {dateSelected}>
                 {#snippet monthTitleTemplate()}
-                    <Container
-                        width={{ kind: "hug" }}
-                        crossAxisAlignment={"center"}
-                        direction={"vertical"}>
+                    <Container width={"hug"} crossAxisAlignment={"center"} direction={"vertical"}>
                         <Subtitle>{calendarState.monthTitle}</Subtitle>
                         <BodySmall colour={"textSecondary"}
                             >{totalEarned.toLocaleString()} CHIT earned</BodySmall>
@@ -168,7 +165,7 @@
 
             <Setting
                 info={"You CHIT claim window should automatically adjust to your own timezone and run from midnight to midnight to midnight. If anything looks odd, you might also want to view the CHIT events calendar in UTC mode."}>
-                <Switch width={{ kind: "fill" }} reverse onChange={changeMode} checked={$utcMode}>
+                <Switch width={"fill"} reverse onChange={changeMode} checked={$utcMode}>
                     <Translatable resourceKey={i18nKey("Show in UTC")}></Translatable>
                 </Switch>
             </Setting>

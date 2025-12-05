@@ -21,8 +21,8 @@
         onClick,
         loading = false,
         secondary = false,
-        width = { kind: "fill" },
-        height = { kind: "hug" },
+        width = "fill",
+        height = "hug",
         danger = false,
     }: Props = $props();
 

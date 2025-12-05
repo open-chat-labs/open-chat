@@ -136,7 +136,7 @@
     <Container crossAxisAlignment={"center"} gap={"sm"}>
         <div class={`legend ${cls} key`}></div>
         <div class={`legend ${cls}`}>{n.toLocaleString()}</div>
-        <BodySmall width={{ kind: "hug" }}>
+        <BodySmall width={"hug"}>
             <Translatable resourceKey={i18nKey(resourceKey)} />
         </BodySmall>
     </Container>
@@ -175,17 +175,17 @@
         crossAxisAlignment={"center"}
         direction={"vertical"}>
         <Container mainAxisAlignment={"center"} gap={"xs"}>
-            <Body colour={"primary"} width={{ kind: "hug" }} fontWeight={"bold"}
+            <Body colour={"primary"} width={"hug"} fontWeight={"bold"}
                 >{$minutesOnlineStore.minutesOnlineThisMonth.toLocaleString()}</Body>
-            <Body width={{ kind: "hug" }} fontWeight={"bold"}>min</Body>
+            <Body width={"hug"} fontWeight={"bold"}>min</Body>
         </Container>
         <Body align={"center"}>
             <Translatable resourceKey={i18nKey("online this month")}></Translatable>
         </Body>
         <Container mainAxisAlignment={"center"} gap={"xs"}>
-            <BodySmall colour={"textSecondary"} width={{ kind: "hug" }} fontWeight={"bold"}
+            <BodySmall colour={"textSecondary"} width={"hug"} fontWeight={"bold"}
                 >{$minutesOnlineStore.minutesOnlineLastMonth.toLocaleString()}</BodySmall>
-            <BodySmall colour={"textSecondary"} width={{ kind: "hug" }} fontWeight={"bold"}
+            <BodySmall colour={"textSecondary"} width={"hug"} fontWeight={"bold"}
                 >previous month</BodySmall>
         </Container>
     </Container>
@@ -213,10 +213,10 @@
         <Container gap={"xs"} direction={"vertical"}>
             <Container crossAxisAlignment={"center"} gap={"xs"}>
                 <Flag color={ColourVars.error} />
-                <Subtitle width={{ kind: "hug" }} colour={"error"} fontWeight={"bold"}>
+                <Subtitle width={"hug"} colour={"error"} fontWeight={"bold"}>
                     <Translatable resourceKey={i18nKey("stats.reportedMessages")} />
                 </Subtitle>
-                <Subtitle width={{ kind: "hug" }} colour={"error"} fontWeight={"bold"}>
+                <Subtitle width={"hug"} colour={"error"} fontWeight={"bold"}>
                     / {stats.reportedMessages.toLocaleString()}
                 </Subtitle>
             </Container>

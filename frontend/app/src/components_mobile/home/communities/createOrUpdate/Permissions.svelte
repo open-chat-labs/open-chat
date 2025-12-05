@@ -30,7 +30,7 @@
     {@const [key, resourceKey] = selected}
     <Sheet onDismiss={() => (selected = undefined)}>
         <PermissionsRoleSlider
-            height={{ kind: "fixed", size: "150px" }}
+            height={{ size: "150px" }}
             roles={communityRoles}
             label={i18nKey(resourceKey)}
             onClose={() => (selected = undefined)}
@@ -40,7 +40,7 @@
 
 <SlidingPageContent title={i18nKey("Community permissions")}>
     <Container
-        height={{ kind: "fill" }}
+        height={"fill"}
         gap={"xl"}
         direction={"vertical"}
         padding={["xxl", "xl", "lg", "xl"]}>
@@ -67,7 +67,7 @@
                             <Translatable resourceKey={i18nKey(resourceKey)}></Translatable>
                         </Body>
                     </div>
-                    <BodySmall colour={"primary"} fontWeight={"bold"} width={{ kind: "hug" }}
+                    <BodySmall colour={"primary"} fontWeight={"bold"} width={"hug"}
                         >{$_(`role.${roleAsText(ucs.permissions[key])}`)}</BodySmall>
                 </Container>
             {/each}

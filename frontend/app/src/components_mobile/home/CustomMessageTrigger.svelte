@@ -37,8 +37,8 @@
         onAttachGif,
         onMakeMeme,
     }: Props = $props();
-    const width: SizeMode = { kind: "fixed", size: "6.5rem" };
-    const height: SizeMode = { kind: "fixed", size: "4.5rem" };
+    const width: SizeMode = { size: "6.5rem" };
+    const height: SizeMode = { size: "4.5rem" };
     let mediaPermitted = $derived(
         permittedMessages.get("audio") ||
             permittedMessages.get("video") ||

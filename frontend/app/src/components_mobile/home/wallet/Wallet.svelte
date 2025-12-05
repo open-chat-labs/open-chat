@@ -48,12 +48,7 @@
     {/snippet}
 </SectionHeader>
 
-<Container
-    gap={"lg"}
-    height={{ kind: "fill" }}
-    padding={"lg"}
-    closeMenuOnScroll
-    direction={"vertical"}>
+<Container gap={"lg"} height={"fill"} padding={"lg"} closeMenuOnScroll direction={"vertical"}>
     <TokenToggle options={conversionOptions} bind:selected={selectedConversion} />
     <OverallBalance {onRefreshWallet} {selectedConversion} />
     <Accounts bind:selectedConversion />

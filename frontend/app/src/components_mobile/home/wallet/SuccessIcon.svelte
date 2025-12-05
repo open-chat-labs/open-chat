@@ -9,7 +9,7 @@
 </script>
 
 <Container padding={"xl"} crossAxisAlignment={"center"} mainAxisAlignment={"center"}>
-    <Container overflow={"visible"} width={{ kind: "hug" }}>
+    <Container overflow={"visible"} width={"hug"}>
         <svg
             width="80"
             height="80"

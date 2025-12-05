@@ -47,7 +47,7 @@
             {#if !channel.public}
                 <div class="private"></div>
             {/if}
-            <Container width={{ kind: "hug" }} crossAxisAlignment={"center"} gap={"xxs"}>
+            <Container width={"hug"} crossAxisAlignment={"center"} gap={"xxs"}>
                 <AccountMultiple size={"1.2em"} />
                 <BodySmall>{channel.memberCount.toLocaleString()}</BodySmall>
             </Container>

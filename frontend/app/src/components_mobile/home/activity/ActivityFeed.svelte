@@ -71,7 +71,7 @@
 <Container
     mainAxisAlignment={initialised ? undefined : "center"}
     crossAxisAlignment={initialised ? undefined : "center"}
-    height={{ kind: "fill" }}
+    height={"fill"}
     closeMenuOnScroll
     direction={"vertical"}>
     {#if !initialised}

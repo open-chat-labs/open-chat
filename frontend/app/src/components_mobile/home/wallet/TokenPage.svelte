@@ -48,7 +48,7 @@
             {/if}
         {/if}
     {/snippet}
-    <Container height={{ kind: "fill" }} padding={"lg"} gap={"lg"} direction={"vertical"}>
+    <Container height={"fill"} padding={"lg"} gap={"lg"} direction={"vertical"}>
         <TokenCard {tokenState} />
 
         <Container

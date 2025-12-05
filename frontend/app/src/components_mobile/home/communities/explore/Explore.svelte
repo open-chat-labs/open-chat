@@ -240,7 +240,7 @@
 
 <Container
     bind:ref={scrollableElement}
-    height={{ kind: "fill" }}
+    height={"fill"}
     parentDirection={"vertical"}
     gap={"xl"}
     direction={"vertical"}>
@@ -313,7 +313,7 @@
                 mainAxisAlignment={"center"}
                 crossAxisAlignment={"center"}
                 gap={"sm"}
-                height={{ kind: "fill" }}
+                height={"fill"}
                 direction={"vertical"}
                 padding={["lg", "zero"]}>
                 {#if $offlineStore}
@@ -358,7 +358,7 @@
             {#if more}
                 <Container mainAxisAlignment={"center"}>
                     <CommonButton
-                        width={{ kind: "hug" }}
+                        width={"hug"}
                         disabled={searching}
                         loading={searching}
                         mode={"active"}

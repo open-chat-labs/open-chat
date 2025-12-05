@@ -42,7 +42,7 @@
     padding={["zero", "lg"]}
     supplementalClass="communities_scroller"
     overflow={"visible"}
-    width={{ kind: "fill" }}
+    width={"fill"}
     gap={"lg"}>
     {#each $sortedCommunitiesStore as community}
         {@const [unread, muted] = hasUnread(community)}
@@ -50,7 +50,7 @@
             supplementalClass={`scroller_item ${unread && !muted ? "unread" : ""}`}
             id={`scroller_item_${community.id.communityId}`}
             overflow={"visible"}
-            width={{ kind: "hug" }}
+            width={"hug"}
             onClick={() => onSelect(community)}>
             <Avatar
                 url={client.communityAvatarUrl(community.id.communityId, community.avatar)}

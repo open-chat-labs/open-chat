@@ -184,7 +184,7 @@
             <Subtitle fontWeight={"bold"}>
                 <Markdown text={interpolate($_, eventSummary)} />
             </Subtitle>
-            <Caption colour={"textSecondary"} width={{ kind: "hug" }}>
+            <Caption colour={"textSecondary"} width={"hug"}>
                 {client.formatMessageDate(
                     event.timestamp,
                     $_("today"),
@@ -194,7 +194,7 @@
                 )}
             </Caption>
         </Container>
-        <BodySmall width={{ kind: "hug" }} colour={"primary"}>{chatName}</BodySmall>
+        <BodySmall width={"hug"} colour={"primary"}>{chatName}</BodySmall>
         <Body colour={"textSecondary"}>
             {#if event.message !== undefined}
                 <Markdown text={lastMessage} oneLine twoLine suppressLinks />
@@ -208,7 +208,7 @@
             mainAxisAlignment={"spaceBetween"}
             crossAxisAlignment={"end"}>
             {#if event.activity === "reaction" && event.message !== undefined && event.message.reactions.length > 0}
-                <Container gap={"xs"} crossAxisAlignment={"center"} width={{ kind: "hug" }}>
+                <Container gap={"xs"} crossAxisAlignment={"center"} width={"hug"}>
                     {@const more = event.message.reactions.length - MAX_REACTIONS}
                     {#each event.message.reactions.slice(0, MAX_REACTIONS) as reaction (reaction.reaction)}
                         <Reaction alignTooltip={"end"} {reaction} intersecting />
@@ -219,7 +219,7 @@
                 </Container>
             {/if}
             {#if event.activity === "tip" && tips.length > 0}
-                <Container gap={"xs"} crossAxisAlignment={"center"} width={{ kind: "hug" }}>
+                <Container gap={"xs"} crossAxisAlignment={"center"} width={"hug"}>
                     {@const more = tips.length - MAX_REACTIONS}
                     {#each tips.slice(0, MAX_REACTIONS) as tip}
                         <Tip alignTooltip={"end"} {tip} />

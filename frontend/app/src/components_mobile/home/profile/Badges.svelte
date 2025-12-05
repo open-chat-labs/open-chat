@@ -22,7 +22,7 @@
     }: Props = $props();
 </script>
 
-<Container width={{ kind: "hug" }} crossAxisAlignment={"center"} gap={"xs"}>
+<Container width={"hug"} crossAxisAlignment={"center"} gap={"xs"}>
     <Diamond status={diamondStatus} />
     <Verified size={"small"} verified={uniquePerson} />
     {#if !$disableChit}

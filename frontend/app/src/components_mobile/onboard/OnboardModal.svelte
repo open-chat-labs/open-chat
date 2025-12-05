@@ -67,7 +67,7 @@
                 <H1 fontWeight={"bold"}>OpenChat</H1>
             </Container>
 
-            <Overview fontWeight={"light"} width={{ kind: "fixed", size: "70%" }}>
+            <Overview fontWeight={"light"} width={{ size: "70%" }}>
                 <Translatable resourceKey={i18nKey("Full featured. Fully secure.")} />
             </Overview>
 

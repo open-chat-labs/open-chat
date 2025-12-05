@@ -18,12 +18,12 @@
 
 <Container onClick={() => onSelect(bot)} crossAxisAlignment={"start"} gap={"md"}>
     <BotAvatar size={"md"} {bot} />
-    <Container overflow={"hidden"} gap={"xxs"} direction={"vertical"} width={{ kind: "fill" }}>
+    <Container overflow={"hidden"} gap={"xxs"} direction={"vertical"} width={"fill"}>
         <Container crossAxisAlignment={"center"} gap={"xs"}>
             <FilteredUsername {searchTerm} username={bot.name} />
             <BotBadge bot />
         </Container>
-        <BodySmall width={{ kind: "hug" }} colour={"textSecondary"}>
+        <BodySmall width={"hug"} colour={"textSecondary"}>
             <Markdown twoLine inline={false} suppressLinks text={bot.definition.description} />
         </BodySmall>
     </Container>

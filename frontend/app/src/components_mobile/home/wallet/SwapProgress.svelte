@@ -38,7 +38,7 @@
 
     ledgerOut;
 
-    const height: SizeMode = { kind: "fixed", size: "200px" };
+    const height: SizeMode = { size: "200px" };
     const client = getContext<OpenChat>("client");
     const POLL_INTERVAL = 1000;
     const labelPrefix = "tokenSwap.progress.";
@@ -143,7 +143,7 @@
             mainAxisAlignment={"start"}
             padding={["zero", "sm"]}>
             <Container
-                width={{ kind: "hug" }}
+                width={"hug"}
                 {height}
                 direction={"vertical"}
                 overflow={"visible"}
@@ -168,7 +168,7 @@
                 </div>
             </Container>
             <Container
-                width={{ kind: "hug" }}
+                width={"hug"}
                 {height}
                 direction={"vertical"}
                 padding={"zero"}
@@ -187,7 +187,7 @@
                                       ? "textPrimary"
                                       : "textSecondary"}
                                 fontWeight={"bold"}
-                                width={{ kind: "hug" }}>
+                                width={"hug"}>
                                 <Translatable
                                     resourceKey={i18nKey(`${labelPrefix}${stage}`, labelValues)} />
                             </BodySmall>

@@ -132,7 +132,7 @@
 </script>
 
 <SlidingPageContent title={i18nKey("Wallet settings")}>
-    <Container height={{ kind: "fill" }} gap={"lg"} padding={"lg"} direction={"vertical"}>
+    <Container height={"fill"} gap={"lg"} padding={"lg"} direction={"vertical"}>
         <Container padding={"sm"} gap={"xl"} direction={"vertical"}>
             <Container gap={"md"} direction={"vertical"}>
                 <Setting
@@ -140,7 +140,7 @@
                     info={"Set a PIN number to add an extra layer of security to your wallet. You will be prompted to enter your pin before making any transactions."}>
                     <Switch
                         onChange={togglePin}
-                        width={{ kind: "fill" }}
+                        width={"fill"}
                         reverse
                         bound={false}
                         checked={$pinNumberRequiredStore ?? false}>
@@ -164,7 +164,7 @@
                 ]}>
                 <Switch
                     onChange={toggleMode}
-                    width={{ kind: "fill" }}
+                    width={"fill"}
                     reverse
                     checked={config.kind === "auto_wallet"}>
                     <Translatable resourceKey={i18nKey("Automatic configuration")} />
@@ -223,7 +223,7 @@
         supplementalClass={"user_chip"}
         mainAxisAlignment={"spaceBetween"}
         crossAxisAlignment={"center"}
-        width={{ kind: "hug" }}
+        width={"hug"}
         gap={"md"}
         padding={["xs", "xs", "xs", "xs"]}
         borderColour={ColourVars.primary}
@@ -231,7 +231,7 @@
         borderWidth={"thick"}
         onClick={() => selectToken(token)}>
         <Avatar size={"xs"} url={token.logo}></Avatar>
-        <Label colour={"primaryLight"} width={{ kind: "hug" }}>
+        <Label colour={"primaryLight"} width={"hug"}>
             {token.symbol}
         </Label>
         <span class="icon">

@@ -79,7 +79,7 @@
     <Container
         mainAxisAlignment={"center"}
         crossAxisAlignment={"center"}
-        width={{ kind: "fixed", size: "3.5rem" }}
+        width={{ size: "3.5rem" }}
         direction={"vertical"}
         gap={"zero"}>
         <IconButton size={"lg"} onclick={togglePlay} mode={"transparent"}>
@@ -93,11 +93,11 @@
             {/snippet}
         </IconButton>
         <Container mainAxisAlignment={"center"} crossAxisAlignment={"end"} gap={"xxs"}>
-            <Caption fontWeight={"bold"} colour={"secondary"} width={{ kind: "hug" }}>
+            <Caption fontWeight={"bold"} colour={"secondary"} width={"hug"}>
                 {currentTime ?? "0:00"}
             </Caption>
-            <Caption width={{ kind: "hug" }}>/</Caption>
-            <Caption width={{ kind: "hug" }}>
+            <Caption width={"hug"}>/</Caption>
+            <Caption width={"hug"}>
                 {formatTime(duration)}
             </Caption>
         </Container>

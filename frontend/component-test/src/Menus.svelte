@@ -56,10 +56,7 @@
 <Container gap={"xl"} direction={"vertical"}>
     <H2>Context menus</H2>
 
-    <Container
-        height={{ kind: "fixed", size: "300px" }}
-        mainAxisAlignment={"spaceBetween"}
-        gap="lg">
+    <Container height={{ size: "300px" }} mainAxisAlignment={"spaceBetween"} gap="lg">
         <MenuTrigger position={"bottom"} align={"middle"}>
             <CommonButton size={"large"} mode={"active"}>
                 {#snippet icon(color, size)}
@@ -85,10 +82,7 @@
         </MenuTrigger>
     </Container>
 
-    <Container
-        height={{ kind: "fixed", size: "300px" }}
-        mainAxisAlignment={"spaceBetween"}
-        gap="lg">
+    <Container height={{ size: "300px" }} mainAxisAlignment={"spaceBetween"} gap="lg">
         <MenuTrigger position={"right"} align={"start"}>
             <CommonButton size={"large"} mode={"active"}>
                 {#snippet icon(color, size)}
@@ -114,10 +108,7 @@
         </MenuTrigger>
     </Container>
 
-    <Container
-        height={{ kind: "fixed", size: "300px" }}
-        mainAxisAlignment={"spaceBetween"}
-        gap="lg">
+    <Container height={{ size: "300px" }} mainAxisAlignment={"spaceBetween"} gap="lg">
         <MenuTrigger position={"top"} align={"start"}>
             <CommonButton size={"large"} mode={"active"}>
                 {#snippet icon(color, size)}

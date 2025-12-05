@@ -168,7 +168,7 @@
     {/if}
 {/snippet}
 
-<Container height={{ kind: "fill" }} gap={"xl"} direction={"vertical"}>
+<Container height={"fill"} gap={"xl"} direction={"vertical"}>
     <Container padding={["lg", "zero", "zero", "zero"]}>
         <BodySmall colour={"textTertiary"} fontWeight={"bold"}>
             <Translatable resourceKey={i18nKey("cryptoAccount.transactions")} />
@@ -202,7 +202,7 @@
                     </BodySmall>
                     <Container crossAxisAlignment={"center"} gap={"sm"}>
                         {@render transactionIcon(transaction)}
-                        <Body width={{ kind: "hug" }}>
+                        <Body width={"hug"}>
                             {#if negative}
                                 <Translatable resourceKey={i18nKey("to")} />
                             {:else}
@@ -214,7 +214,7 @@
                         </Body>
                     </Container>
                 </Container>
-                <Container width={{ kind: "hug" }} crossAxisAlignment={"center"} gap={"xs"}>
+                <Container width={"hug"} crossAxisAlignment={"center"} gap={"xs"}>
                     <Body fontWeight={"bold"} colour={negative ? "secondary" : "primary"}>
                         {#if negative}
                             -

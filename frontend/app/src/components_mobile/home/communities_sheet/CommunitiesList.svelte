@@ -49,7 +49,7 @@
     {@const [unread, muted, counts] = props.hasUnread(community)}
     {@const count = muted ? counts.muted : counts.unmuted}
     <Container
-        height={{ kind: "hug" }}
+        height={"hug"}
         onClick={() => props.onSelect(community)}
         crossAxisAlignment={"center"}
         gap={"md"}>
@@ -57,7 +57,7 @@
             url={client.communityAvatarUrl(community.id.communityId, community.avatar)}
             size={"lg"}
             radius={"lg"} />
-        <Container gap={"xxs"} direction={"vertical"} width={{ kind: "fill" }}>
+        <Container gap={"xxs"} direction={"vertical"} width={"fill"}>
             <Container gap={"xs"} mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"start"}>
                 <Title ellipsisTruncate fontWeight={"semi-bold"}>
                     {community.name}
@@ -81,11 +81,11 @@
 
 <Container
     padding={["zero", "lg", "zero", "lg"]}
-    width={{ kind: "fill" }}
+    width={"fill"}
     gap={"xl"}
     direction={"vertical"}
-    height={{ kind: "hug" }}>
-    <Container width={{ kind: "fill" }} gap={"lg"} direction={"vertical"} height={{ kind: "hug" }}>
+    height={"hug"}>
+    <Container width={"fill"} gap={"lg"} direction={"vertical"} height={"hug"}>
         <ListAction onClick={exploreCommunities}>
             {#snippet icon(color)}
                 <Compass {color} />
@@ -106,7 +106,7 @@
             </ListAction>
         {/if}
     </Container>
-    <Container width={{ kind: "fill" }} gap={"lg"} direction={"vertical"}>
+    <Container width={"fill"} gap={"lg"} direction={"vertical"}>
         <Label fontWeight={"bold"} colour={"textSecondary"}>Your communities</Label>
 
         {#each $sortedCommunitiesStore as community}

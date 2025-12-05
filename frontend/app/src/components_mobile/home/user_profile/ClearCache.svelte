@@ -24,12 +24,12 @@
     <Container
         padding={"xxl"}
         gap={"lg"}
-        height={{ kind: "fill" }}
+        height={"fill"}
         crossAxisAlignment={"center"}
         direction={"vertical"}>
         <Container gap={"xl"} direction={"vertical"}>
             <Container gap={"lg"} direction={"vertical"}>
-                <H2 width={{ kind: "fixed", size: "80%" }} fontWeight={"bold"} colour={"primary"}>
+                <H2 width={{ size: "80%" }} fontWeight={"bold"} colour={"primary"}>
                     <Translatable resourceKey={i18nKey("In case of emergency break glass")}
                     ></Translatable>
                 </H2>

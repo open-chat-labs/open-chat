@@ -14,7 +14,7 @@
         <Setting
             toggle={onToggle}
             info={"When enabled, messages older than the specified timeout will get automatically deleted from the group."}>
-            <Switch onChange={onToggle} width={{ kind: "fill" }} reverse checked={enabled}>
+            <Switch onChange={onToggle} width={"fill"} reverse checked={enabled}>
                 <Translatable resourceKey={i18nKey("Enable disappearing messages")}></Translatable>
             </Switch>
         </Setting>

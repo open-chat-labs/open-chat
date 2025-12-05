@@ -62,7 +62,7 @@
     <Container
         parentDirection={"vertical"}
         maxHeight={"75vh"}
-        height={{ kind: "hug" }}
+        height={"hug"}
         background={ColourVars.background1}
         supplementalClass={"sheet_content"}
         borderRadius={["xl", "xl", "zero", "zero"]}

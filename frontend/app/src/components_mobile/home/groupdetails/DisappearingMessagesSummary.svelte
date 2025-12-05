@@ -37,7 +37,7 @@
             <Body colour={"textSecondary"} fontWeight={"bold"}>
                 <Translatable resourceKey={i18nKey("Disappearing messages")}></Translatable>
             </Body>
-            <Body width={{ kind: "hug" }} colour={"secondary"} fontWeight={"bold"}>
+            <Body width={"hug"} colour={"secondary"} fontWeight={"bold"}>
                 <Translatable resourceKey={i18nKey(`${disappearsIn}`)}></Translatable>
             </Body>
         </Container>

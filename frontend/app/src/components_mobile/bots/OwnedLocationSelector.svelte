@@ -84,7 +84,7 @@
 
 <Sheet>
     <Container
-        height={{ kind: "fixed", size: "100%" }}
+        height={{ size: "100%" }}
         supplementalClass={"token_selector"}
         padding={"lg"}
         gap={"xl"}
@@ -109,7 +109,7 @@
             direction={"vertical"}>
             {#if results.length === 0}
                 <NothingToSee
-                    height={{ kind: "fixed", size: "6" }}
+                    height={{ size: "6" }}
                     padding={"zero"}
                     title={"No matching locations"}
                     subtitle={searchTerm !== ""

@@ -64,7 +64,7 @@
     <Container padding={"xl"} gap={"lg"} direction={"vertical"}>
         {#if !confirming && !confirmed}
             <Container crossAxisAlignment={"center"} mainAxisAlignment={"spaceBetween"}>
-                <Container width={{ kind: "fill" }} crossAxisAlignment={"center"} gap={"sm"}>
+                <Container width={"fill"} crossAxisAlignment={"center"} gap={"sm"}>
                     <ShieldHalfFull size={"1em"} />
                     <Translatable resourceKey={i18nKey("streakInsurance.topUpTitle")} />
                 </Container>
@@ -81,56 +81,44 @@
             mainAxisAlignment={"spaceAround"}
             crossAxisAlignment={"end"}>
             <Container crossAxisAlignment={"center"} direction={"vertical"}>
-                <Label align={"center"} width={{ kind: "hug" }} colour={"textSecondary"} uppercase>
+                <Label align={"center"} width={"hug"} colour={"textSecondary"} uppercase>
                     <Translatable resourceKey={i18nKey("streakInsurance.bought")}></Translatable>
                 </Label>
-                <Overview
-                    align={"center"}
-                    width={{ kind: "hug" }}
-                    colour={"primary"}
-                    fontWeight={"bold"}>
+                <Overview align={"center"} width={"hug"} colour={"primary"} fontWeight={"bold"}>
                     {totalDays}
                 </Overview>
             </Container>
 
             <Container
                 padding={["zero", "md"]}
-                width={{ kind: "hug" }}
-                height={{ kind: "fill" }}
+                width={"hug"}
+                height={"fill"}
                 crossAxisAlignment={"center"}>
                 <Minus color={ColourVars.textSecondary} />
             </Container>
 
             <Container crossAxisAlignment={"center"} direction={"vertical"}>
-                <Label align={"center"} width={{ kind: "hug" }} colour={"textSecondary"} uppercase>
+                <Label align={"center"} width={"hug"} colour={"textSecondary"} uppercase>
                     <Translatable resourceKey={i18nKey("streakInsurance.missed")}></Translatable>
                 </Label>
-                <Overview
-                    align={"center"}
-                    width={{ kind: "hug" }}
-                    colour={"primary"}
-                    fontWeight={"bold"}>
+                <Overview align={"center"} width={"hug"} colour={"primary"} fontWeight={"bold"}>
                     {currentDaysMissed}
                 </Overview>
             </Container>
 
             <Container
-                width={{ kind: "hug" }}
+                width={"hug"}
                 padding={["zero", "md"]}
-                height={{ kind: "fill" }}
+                height={"fill"}
                 crossAxisAlignment={"center"}>
                 <Equal color={ColourVars.textSecondary} />
             </Container>
 
             <Container crossAxisAlignment={"center"} direction={"vertical"}>
-                <Label align={"center"} width={{ kind: "hug" }} colour={"textSecondary"} uppercase>
+                <Label align={"center"} width={"hug"} colour={"textSecondary"} uppercase>
                     <Translatable resourceKey={i18nKey("streakInsurance.remaining")}></Translatable>
                 </Label>
-                <Overview
-                    align={"center"}
-                    width={{ kind: "hug" }}
-                    colour={"primary"}
-                    fontWeight={"bold"}>
+                <Overview align={"center"} width={"hug"} colour={"primary"} fontWeight={"bold"}>
                     {remaining}
                 </Overview>
             </Container>

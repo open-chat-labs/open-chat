@@ -62,7 +62,7 @@
         <Subtitle fontWeight={"bold"}>{candidateGroup.name}</Subtitle>
         <Container gap={"xs"} supplementalClass="group_card_features" wrap>
             {#each fragments as { text, colour }}
-                <BodySmall width={{ kind: "hug" }} {colour}>
+                <BodySmall width={"hug"} {colour}>
                     {text}
                 </BodySmall>
             {/each}

@@ -35,7 +35,7 @@
 
 <DebugEvent>
     {#snippet children(onAction)}
-        <Container width={{ kind: "fixed", size: "500px" }}>
+        <Container width={{ size: "500px" }}>
             <Container gap={"xxl"} direction={"vertical"}>
                 {@render user("Contact Name", "@Username", "/witch.png", onAction)}
                 {@render user("Julian Jelfs", "@julian_jelfs", "/mushroom.png", onAction)}

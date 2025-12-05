@@ -59,7 +59,7 @@
 
 <Sheet onDismiss={onCancel}>
     <Container
-        height={{ kind: "fixed", size: "100%" }}
+        height={{ size: "100%" }}
         supplementalClass={"token_selector"}
         padding={"lg"}
         gap={"xl"}

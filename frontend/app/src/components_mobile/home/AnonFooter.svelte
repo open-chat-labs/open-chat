@@ -15,7 +15,7 @@
     background={ColourVars.gradientInverted}
     onClick={() => client.updateIdentityState({ kind: "logging_in" })}
     supplementalClass={"anon-footer"}>
-    <Subtitle width={{ kind: "hug" }}>
+    <Subtitle width={"hug"}>
         <Markdown text={$_("createAccountOrSignIn")} />
     </Subtitle>
 </Container>

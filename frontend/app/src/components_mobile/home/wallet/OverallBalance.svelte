@@ -45,10 +45,10 @@
     crossAxisAlignment={"center"}
     direction={"vertical"}
     gap={"sm"}>
-    <BodySmall width={{ kind: "hug" }} fontWeight={"bold"} colour={"textSecondary"}>
+    <BodySmall width={"hug"} fontWeight={"bold"} colour={"textSecondary"}>
         <Translatable resourceKey={i18nKey("Total balance")} />
     </BodySmall>
-    <H1 blur={$hideTokenBalances} width={{ kind: "hug" }} fontWeight={"bold"}>
+    <H1 blur={$hideTokenBalances} width={"hug"} fontWeight={"bold"}>
         {selectedConversion === "usd" ? "$" : ""}
         {total}
     </H1>
@@ -59,7 +59,7 @@
             {/snippet}
             <Translatable resourceKey={i18nKey("Refresh wallet")} />
         </CommonButton>
-        <Body width={{ kind: "hug" }}>/</Body>
+        <Body width={"hug"}>/</Body>
         <CommonButton onClick={hideTokenBalances.toggle} mode={"active"} size={"small_text"}>
             {#snippet icon(color, size)}
                 {#if $hideTokenBalances}

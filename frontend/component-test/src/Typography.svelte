@@ -19,39 +19,39 @@
     <H2>Typography</H2>
 
     <Container gap={"md"}>
-        <Overview width={{ kind: "fixed", size: "200px" }}>Overview</Overview>
+        <Overview width={{ size: "200px" }}>Overview</Overview>
         <Overview {fontWeight}>The quick brown fox jumps over the lazy dog</Overview>
     </Container>
     <Container gap={"md"}>
-        <H1 width={{ kind: "fixed", size: "200px" }}>H1</H1>
+        <H1 width={{ size: "200px" }}>H1</H1>
         <H1 {fontWeight}>The quick brown fox jumps over the lazy dog</H1>
     </Container>
     <Container gap={"md"}>
-        <H2 width={{ kind: "fixed", size: "200px" }}>H2</H2>
+        <H2 width={{ size: "200px" }}>H2</H2>
         <H2 {fontWeight}>The quick brown fox jumps over the lazy dog</H2>
     </Container>
     <Container gap={"md"}>
-        <Subtitle width={{ kind: "fixed", size: "200px" }}>Subtitle</Subtitle>
+        <Subtitle width={{ size: "200px" }}>Subtitle</Subtitle>
         <Subtitle {fontWeight}>The quick brown fox jumps over the lazy dog</Subtitle>
     </Container>
     <Container gap={"md"}>
-        <Body width={{ kind: "fixed", size: "200px" }}>Body</Body>
+        <Body width={{ size: "200px" }}>Body</Body>
         <Body {fontWeight}>The quick brown fox jumps over the lazy dog</Body>
     </Container>
     <Container gap={"md"}>
-        <BodySmall width={{ kind: "fixed", size: "200px" }}>Body Small</BodySmall>
+        <BodySmall width={{ size: "200px" }}>Body Small</BodySmall>
         <BodySmall {fontWeight}>The quick brown fox jumps over the lazy dog</BodySmall>
     </Container>
     <Container gap={"md"}>
-        <Caption width={{ kind: "fixed", size: "200px" }}>Caption</Caption>
+        <Caption width={{ size: "200px" }}>Caption</Caption>
         <Caption {fontWeight}>The quick brown fox jumps over the lazy dog</Caption>
     </Container>
     <Container gap={"md"}>
-        <Label width={{ kind: "fixed", size: "200px" }}>Label</Label>
+        <Label width={{ size: "200px" }}>Label</Label>
         <Label {fontWeight}>The quick brown fox jumps over the lazy dog</Label>
     </Container>
 
-    <Container gap={"sm"} width={{ kind: "fixed", size: "300px" }} direction={"vertical"}>
+    <Container gap={"sm"} width={{ size: "300px" }} direction={"vertical"}>
         <Subtitle>Font weight</Subtitle>
         <select bind:value={fontWeight}>
             <option value="light">Light</option>

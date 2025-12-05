@@ -95,15 +95,15 @@
         <Container
             supplementalClass={"streak_bubble"}
             borderRadius={"circle"}
-            width={{ kind: "fixed", size: "5rem" }}
-            height={{ kind: "fixed", size: "5rem" }}
+            width={{ size: "5rem" }}
+            height={{ size: "5rem" }}
             crossAxisAlignment={"center"}
             mainAxisAlignment={"center"}
             gap={"xs"}
             background={ColourVars.primary}
             direction={"vertical"}>
-            <H2 width={{ kind: "hug" }} colour={"textOnPrimary"} fontWeight={"bold"}>{streak}</H2>
-            <BodySmall fontWeight={"bold"} width={{ kind: "hug" }}>
+            <H2 width={"hug"} colour={"textOnPrimary"} fontWeight={"bold"}>{streak}</H2>
+            <BodySmall fontWeight={"bold"} width={"hug"}>
                 <Translatable resourceKey={i18nKey("streak")}></Translatable>
             </BodySmall>
         </Container>
@@ -122,9 +122,9 @@
                 <div class="line"></div>
             </div>
             <Container crossAxisAlignment={"center"} gap={"xs"}>
-                <Subtitle width={{ kind: "hug" }} fontWeight={"bold"} colour={"primary"}
+                <Subtitle width={"hug"} fontWeight={"bold"} colour={"primary"}
                     >{`${balance.toLocaleString()} CHIT`}</Subtitle>
-                <BodySmall width={{ kind: "hug" }} fontWeight={"bold"} colour={"textSecondary"}
+                <BodySmall width={"hug"} fontWeight={"bold"} colour={"textSecondary"}
                     >{`/ ${earned.toLocaleString()} earned`}</BodySmall>
             </Container>
         </Container>

@@ -83,7 +83,7 @@
         <Container gap={"sm"}>
             <Avatar borderWidth={"thick"} size={"xxl"} url={client.communityAvatarUrl(id, avatar)}
             ></Avatar>
-            <Container height={{ kind: "fill" }} mainAxisAlignment={"end"} direction={"vertical"}>
+            <Container height={"fill"} mainAxisAlignment={"end"} direction={"vertical"}>
                 <Container gap={"sm"} crossAxisAlignment={"center"}>
                     <WithVerifiedBadge
                         {verified}

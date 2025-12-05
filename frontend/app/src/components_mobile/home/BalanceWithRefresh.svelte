@@ -89,11 +89,11 @@
 </script>
 
 <Container
-    width={{ kind: "hug" }}
+    width={"hug"}
     mainAxisAlignment={"end"}
     crossAxisAlignment={"center"}
     gap={"sm"}>
-    <Body blur={hideBalance} width={{ kind: "hug" }} fontWeight={"bold"}>
+    <Body blur={hideBalance} width={"hug"} fontWeight={"bold"}>
         {formattedValue}
     </Body>
     {#if showRefresh && !hideBalance}

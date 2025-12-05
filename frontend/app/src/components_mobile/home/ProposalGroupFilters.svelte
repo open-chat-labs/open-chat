@@ -102,7 +102,7 @@
                     <Container gap={"lg"} direction={"vertical"}>
                         {#each topicsInCategory as [id, label]}
                             <Switch
-                                width={{ kind: "fill" }}
+                                width={"fill"}
                                 reverse
                                 onChange={() => client.toggleProposalFilter(id)}
                                 checked={!$filteredProposalsStore?.hasFilter(id)}>
@@ -115,7 +115,7 @@
                 <Container gap={"lg"} direction={"vertical"}>
                     {#each topicsInCategory as [id, label]}
                         <Switch
-                            width={{ kind: "fill" }}
+                            width={"fill"}
                             reverse
                             onChange={() => client.toggleProposalFilter(id)}
                             checked={!$filteredProposalsStore?.hasFilter(id)}>

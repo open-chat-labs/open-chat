@@ -127,7 +127,7 @@
     let errorMessage = $derived($pinNumberErrorMessageStore);
 </script>
 
-<Container height={{ kind: "hug" }} padding={"xl"} gap={"xl"} direction={"vertical"}>
+<Container height={"hug"} padding={"xl"} gap={"xl"} direction={"vertical"}>
     <Subtitle fontWeight={"bold"}>
         <Translatable resourceKey={title} />
     </Subtitle>

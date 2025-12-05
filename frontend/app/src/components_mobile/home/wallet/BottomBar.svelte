@@ -31,7 +31,7 @@
 
     let { selectedConversion }: Props = $props();
 
-    const width: SizeMode = { kind: "fixed", size: "6rem" };
+    const width: SizeMode = { size: "6rem" };
     let tokenSelector = $state<TokenSelectorParams>();
 
     function onSelect(ev: "receiveToken" | "sendToken" | "swapToken", token: EnhancedTokenDetails) {

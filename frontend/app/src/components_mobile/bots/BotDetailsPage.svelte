@@ -80,7 +80,7 @@
                 return collection.name;
         }
     });
-    const hug: SizeMode = { kind: "hug" };
+    const hug: SizeMode = "hug";
 
     function likeBot() {
         console.log("Like bot");
@@ -154,7 +154,7 @@
     background={ColourVars.background0}
     padding={"lg"}
     gap={"xxl"}
-    height={{ kind: "fill" }}
+    height={"fill"}
     direction={"vertical"}>
     <Container
         borderRadius={"md"}
@@ -196,10 +196,10 @@
                     <div class={`img ${isPublic ? "public" : "private"}`}></div>
                 </Container>
                 <Container gap={"xs"}>
-                    <BodySmall width={{ kind: "hug" }} colour={"textSecondary"}>
+                    <BodySmall width={"hug"} colour={"textSecondary"}>
                         <Translatable resourceKey={i18nKey("Owned by")} />
                     </BodySmall>
-                    <BodySmall width={{ kind: "hug" }} colour={"primary"}>
+                    <BodySmall width={"hug"} colour={"primary"}>
                         {`@${owner?.username}`}
                     </BodySmall>
                 </Container>

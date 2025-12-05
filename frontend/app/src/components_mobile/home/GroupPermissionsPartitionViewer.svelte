@@ -27,7 +27,7 @@
         [ROLE_MEMBER]: "permissions.allMembers",
     };
 
-    const width: SizeMode = { kind: "hug" };
+    const width: SizeMode = "hug";
 </script>
 
 {#each chatRoles as role}

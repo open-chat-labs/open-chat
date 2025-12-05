@@ -29,7 +29,7 @@
     <Container
         onClick={() => onClick?.(ledger)}
         borderRadius={"lg"}
-        width={{ kind: "hug" }}
+        width={"hug"}
         padding={["zero", "xs"]}
         background={ColourVars.background2}
         crossAxisAlignment={"center"}

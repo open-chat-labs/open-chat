@@ -429,7 +429,7 @@
                 {/if}
                 <VideoCallIcon video={chat.video} />
             </div>
-            <Container width={{ kind: "fill" }} gap={"xxs"} direction={"vertical"}>
+            <Container width={"fill"} gap={"xxs"} direction={"vertical"}>
                 <Container
                     gap={"xs"}
                     mainAxisAlignment={"spaceBetween"}
@@ -437,7 +437,7 @@
                     {#if chat.private}
                         <div class="private"></div>
                     {/if}
-                    <Container crossAxisAlignment={"center"} gap={"xxs"} width={{ kind: "hug" }}>
+                    <Container crossAxisAlignment={"center"} gap={"xxs"} width={"hug"}>
                         <WithVerifiedBadge {verified} size={"small"}>
                             <Title ellipsisTruncate fontWeight={"semi-bold"}>
                                 {#if community !== undefined && $chatListScopeStore.kind === "favourite"}

@@ -8,15 +8,11 @@
     const client = getContext<OpenChat>("client");
 </script>
 
-<Container
-    height={{ kind: "fixed", size: "55vh" }}
-    padding={"lg"}
-    gap={"lg"}
-    direction={"vertical"}>
+<Container height={{ size: "55vh" }} padding={"lg"} gap={"lg"} direction={"vertical"}>
     <Title fontWeight={"bold"}>
         <Translatable resourceKey={i18nKey("communities.primaryLanguage")} />
     </Title>
-    <Container height={{ kind: "fill" }} direction={"vertical"} gap={"md"}>
+    <Container height={"fill"} direction={"vertical"} gap={"md"}>
         {#each supportedLanguages as lang}
             <Switch
                 onChange={() => client.toggleCommunityFilterLanguage(lang.code)}

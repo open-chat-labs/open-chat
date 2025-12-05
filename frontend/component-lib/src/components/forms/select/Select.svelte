@@ -31,7 +31,7 @@
 <Container onClick={() => (popupVisible = true)} direction={"vertical"} gap={"xs"}>
     <Container
         background={ColourVars.textTertiary}
-        height={{ kind: "fixed", size: "3rem" }}
+        height={{ size: "3rem" }}
         padding={["xs", "xl"]}
         borderRadius={"circle"}
         gap={"sm"}

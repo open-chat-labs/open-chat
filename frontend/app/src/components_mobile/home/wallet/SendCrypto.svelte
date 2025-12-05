@@ -24,13 +24,13 @@
 <SlidingPageContent {title}>
     <Container
         mainAxisAlignment={"spaceBetween"}
-        height={{ kind: "fill" }}
+        height={"fill"}
         gap={"xl"}
         padding={"xl"}
         direction={"vertical"}>
         <TokenCard {tokenState} />
 
-        <Container gap={"xl"} height={{ kind: "fill" }} direction={"vertical"}>
+        <Container gap={"xl"} height={"fill"} direction={"vertical"}>
             {#if mode === "user"}
                 <SendToUser onComplete={onClose} {tokenState} />
             {:else if mode === "address"}

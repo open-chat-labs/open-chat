@@ -34,8 +34,8 @@
         loading = false,
         mode = "default",
         size = "medium",
-        width = { kind: "hug" },
-        height = { kind: "hug" },
+        width = "hug",
+        height = "hug",
     }: Props = $props();
 
     const SPEED = 250;
@@ -171,13 +171,10 @@
     {/if}
     {#if children}
         {#if size !== "large"}
-            <ButtonSmall
-                align={"center"}
-                width={{ kind: "hug" }}
-                colour={textColour}
-                fontWeight={"bold"}>{@render children?.()}</ButtonSmall>
+            <ButtonSmall align={"center"} width={"hug"} colour={textColour} fontWeight={"bold"}
+                >{@render children?.()}</ButtonSmall>
         {:else}
-            <Body align={"center"} width={{ kind: "hug" }} colour={textColour} fontWeight={"bold"}
+            <Body align={"center"} width={"hug"} colour={textColour} fontWeight={"bold"}
                 >{@render children?.()}</Body>
         {/if}
     {/if}

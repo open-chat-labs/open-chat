@@ -21,20 +21,20 @@
 <Container {onClick} crossAxisAlignment={"center"} gap={"lg"}>
     <Avatar url={avatarUrl} size={"lg"} />
     <Container {onClick} crossAxisAlignment={"center"} gap={"md"}>
-        <Container gap={"xxs"} direction={"vertical"} width={{ kind: "fill" }}>
+        <Container gap={"xxs"} direction={"vertical"} width={"fill"}>
             <Container gap={"xs"} mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"start"}>
                 <Title ellipsisTruncate fontWeight={"semi-bold"}>
                     {title}
                 </Title>
                 {#if badges}
-                    <Caption width={{ kind: "hug" }} colour={"textSecondary"}>{"Badges?"}</Caption>
+                    <Caption width={"hug"} colour={"textSecondary"}>{"Badges?"}</Caption>
                 {/if}
             </Container>
             <Container gap={"xs"} mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"end"}>
                 <BodySmall colour={"textSecondary"}>{subtitle}</BodySmall>
             </Container>
         </Container>
-        <Container gap={"xxs"} width={{ kind: "hug" }}>
+        <Container gap={"xxs"} width={"hug"}>
             {@render button?.()}
         </Container>
     </Container>

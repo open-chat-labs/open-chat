@@ -89,7 +89,7 @@
     subtitle={i18nKey(ugs.editMode ? "Update group" : "Create group")}>
     <Container
         supplementalClass={"group_info"}
-        height={{ kind: "fill" }}
+        height={"fill"}
         gap={"xxl"}
         direction={"vertical"}
         padding={["xxl", "lg", "lg", "lg"]}>
@@ -145,7 +145,7 @@
                 info={"Groups are private by default, and limited to people you invite. Public channels must have unique names, and community members are automatically added to them."}>
                 <Switch
                     disabled={requiresUpgrade}
-                    width={{ kind: "fill" }}
+                    width={"fill"}
                     reverse
                     bind:checked={ugs.candidateGroup.public}>
                     <Translatable resourceKey={i18nKey("Public group")}></Translatable>
@@ -156,10 +156,7 @@
                 toggle={() =>
                     (ugs.candidateGroup.historyVisible = !ugs.candidateGroup.historyVisible)}
                 info={"By default new memebers in the group will see all the previous messages that were sent within the group. Enable this option to hide chat history for new members."}>
-                <Switch
-                    width={{ kind: "fill" }}
-                    reverse
-                    bind:checked={ugs.candidateGroup.historyVisible}>
+                <Switch width={"fill"} reverse bind:checked={ugs.candidateGroup.historyVisible}>
                     <Translatable resourceKey={i18nKey("Hide chat history for new members")}
                     ></Translatable>
                 </Switch>

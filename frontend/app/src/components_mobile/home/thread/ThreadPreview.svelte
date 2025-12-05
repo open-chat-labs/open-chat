@@ -148,8 +148,8 @@
             <div class="avatar">
                 <Avatar url={chatData.avatarUrl} size={"lg"} />
             </div>
-            <Container width={{ kind: "fill" }} gap={"xxs"} direction={"vertical"}>
-                <Container width={{ kind: "hug" }} gap={"sm"}>
+            <Container width={"fill"} gap={"xxs"} direction={"vertical"}>
+                <Container width={"hug"} gap={"sm"}>
                     <Title ellipsisTruncate fontWeight={"semi-bold"}>
                         {(chat.kind === "group_chat" || chat.kind === "channel") && chat.name}
                     </Title>
@@ -219,7 +219,7 @@
                         senderContext={thread.rootMessage.event.senderContext} />
                     {#if missingMessages > 0}
                         <BodySmall
-                            height={{ kind: "fixed", size: "2rem" }}
+                            height={{ size: "2rem" }}
                             colour={"textSecondary"}
                             align={"center"}
                             fontWeight={"bold"}>

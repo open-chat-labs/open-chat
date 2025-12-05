@@ -141,7 +141,7 @@
         level,
         true,
     )}>
-    <Container height={{ kind: "fill" }} gap={"xl"} direction={"vertical"} padding={["xl", "lg"]}>
+    <Container height={"fill"} gap={"xl"} direction={"vertical"} padding={["xl", "lg"]}>
         <Container gap={"sm"} direction={"vertical"}>
             <Container
                 overflow={"visible"}
@@ -155,7 +155,7 @@
                     overflow={"hidden"}
                     gap={"xxs"}
                     direction={"vertical"}
-                    width={{ kind: "fill" }}>
+                    width={"fill"}>
                     <Body colour={"textPrimary"} fontWeight={"bold"}>
                         <Translatable
                             resourceKey={i18nKey(installing ? "Installing" : "Reviewing")} />
@@ -178,7 +178,7 @@
                     overflow={"hidden"}
                     gap={"xxs"}
                     direction={"vertical"}
-                    width={{ kind: "fill" }}>
+                    width={"fill"}>
                     <Body colour={"textPrimary"} fontWeight={"bold"}>
                         {#if collection.kind === "direct_chat"}
                             <Translatable resourceKey={i18nKey("As a direct chat with")} />
@@ -194,7 +194,7 @@
                 <Container
                     supplementalClass={"connecting_arrow"}
                     padding={"sm"}
-                    width={{ kind: "hug" }}
+                    width={"hug"}
                     background={ColourVars.background1}
                     borderRadius={"circle"}>
                     <ArrowDown size={"1.2rem"} color={ColourVars.primary} />

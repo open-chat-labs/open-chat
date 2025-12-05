@@ -14,7 +14,7 @@
 {/snippet}
 
 <SlidingPageContent title={i18nKey("About access gates")}>
-    <Container height={{ kind: "fill" }} direction={"vertical"} padding={"xs"}>
+    <Container height={"fill"} direction={"vertical"} padding={"xs"}>
         {@render gate(
             "lifetime_diamond.svg",
             "lifetime diamond",

@@ -95,11 +95,11 @@
 </script>
 
 <SlidingPageContent onBack={close} title={i18nKey("videoCall.participants")}>
-    <Container height={{ kind: "fill" }} gap={"lg"} direction={"vertical"} padding={"lg"}>
+    <Container height={"fill"} gap={"lg"} direction={"vertical"} padding={"lg"}>
         {#if $activeVideoCall !== undefined}
             {#if loading}
                 <Container
-                    height={{ kind: "fill" }}
+                    height={"fill"}
                     mainAxisAlignment={"center"}
                     crossAxisAlignment={"center"}>
                     <FancyLoader size={"5rem"} loop />
@@ -126,7 +126,7 @@
                     </Container>
                 {/if}
 
-                <Container direction={"vertical"} height={{ kind: "fill" }}>
+                <Container direction={"vertical"} height={"fill"}>
                     {#if selectedTab === "presenters"}
                         {#each participants as participant}
                             <ActiveCallParticipant

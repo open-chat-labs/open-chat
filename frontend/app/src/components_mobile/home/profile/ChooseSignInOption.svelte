@@ -112,7 +112,7 @@
                 {#if provider === AuthProvider.EMAIL}
                     <Form onSubmit={() => onLogin(provider)}>
                         <Container gap={"lg"} crossAxisAlignment={"center"}>
-                            <Container width={{ kind: "fill" }}>
+                            <Container width={"fill"}>
                                 <Input
                                     bind:value={email}
                                     minlength={10}
@@ -127,7 +127,7 @@
                                     )} />
                             </Container>
                             <Container
-                                width={{ kind: "hug" }}
+                                width={"hug"}
                                 onClick={emailInvalid ? undefined : () => onLogin(provider)}>
                                 <SendIcon size={"1.5em"} />
                             </Container>
@@ -148,7 +148,7 @@
 
     {#if !showAllOptions && options.length > 1}
         <Container mainAxisAlignment={"center"} onClick={() => (showMore = true)}>
-            <Body width={{ kind: "hug" }} colour={"secondary"}>
+            <Body width={"hug"} colour={"secondary"}>
                 <Translatable resourceKey={i18nKey("loginDialog.showMore")} />
             </Body>
         </Container>

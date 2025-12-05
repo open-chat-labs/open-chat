@@ -200,11 +200,11 @@
     {borderRadius}
     {padding}
     gap={"xs"}
-    width={{ kind: "fill" }}
+    width={"fill"}
     background={backgroundColour}>
     {#if showHeader}
         <Container
-            width={{ kind: "hug" }}
+            width={"hug"}
             bind:ref={senderContainer}
             padding={fill ? "xs" : "zero"}
             borderRadius={fill
@@ -215,7 +215,7 @@
             crossAxisAlignment={"center"}
             gap={"xs"}
             onClick={onOpenUserProfile}>
-            <Body fontWeight={"bold"} width={{ kind: "hug" }}>{senderDisplayName}</Body>
+            <Body fontWeight={"bold"} width={"hug"}>{senderDisplayName}</Body>
             <Badges
                 uniquePerson={sender?.isUniquePerson}
                 diamondStatus={sender?.diamondStatus}

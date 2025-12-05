@@ -66,19 +66,19 @@
         padding={"sm"}>
         <Avatar url={token.logo}></Avatar>
         <Container direction={"vertical"}>
-            <Body width={{ kind: "hug" }} fontWeight={"bold"}>{token.symbol}</Body>
-            <Caption width={{ kind: "hug" }} colour={"textSecondary"} fontWeight={"bold"}
+            <Body width={"hug"} fontWeight={"bold"}>{token.symbol}</Body>
+            <Caption width={"hug"} colour={"textSecondary"} fontWeight={"bold"}
                 >{tokenState.formattedUnitValue}</Caption>
         </Container>
         <BodySmall
             blur={$hideTokenBalances}
             align={"end"}
-            width={{ kind: "hug" }}
+            width={"hug"}
             fontWeight={"bold"}>{tokenState.formattedTokenBalance}</BodySmall>
         <Body
             blur={$hideTokenBalances}
             align={"end"}
-            width={{ kind: "hug" }}
+            width={"hug"}
             colour={"primary"}
             fontWeight={"bold"}>{tokenState.formattedConvertedValue}</Body>
         {#if withMenu}

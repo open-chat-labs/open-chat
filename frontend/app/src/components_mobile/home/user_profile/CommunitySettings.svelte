@@ -77,7 +77,7 @@
     <Container
         padding={["xxl", "lg"]}
         gap={"lg"}
-        height={{ kind: "fill" }}
+        height={"fill"}
         crossAxisAlignment={"center"}
         direction={"vertical"}>
         <Container gap={"xl"} direction={"vertical"}>

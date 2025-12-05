@@ -18,7 +18,7 @@
 <Container onClick={disabled ? undefined : toggle} gap={"sm"} direction={"vertical"}>
     {@render children()}
     {#each paras as para}
-        <BodySmall width={{ kind: "fill" }} colour={disabled ? "textTertiary" : "textSecondary"}>
+        <BodySmall width={"fill"} colour={disabled ? "textTertiary" : "textSecondary"}>
             <Translatable resourceKey={i18nKey(para)}></Translatable>
         </BodySmall>
     {/each}

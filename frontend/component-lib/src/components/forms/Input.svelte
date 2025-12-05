@@ -51,7 +51,7 @@
     <Container mainAxisAlignment={"spaceBetween"} gap={"xs"}>
         <Container
             background={ColourVars.textTertiary}
-            height={{ kind: "fixed", size: "3rem" }}
+            height={{ size: "3rem" }}
             {padding}
             borderRadius={"circle"}
             gap={"sm"}
@@ -81,13 +81,13 @@
                 </div>
             {/if}
             {#if textButtons}
-                <Container width={{ kind: "hug" }} gap={"xs"}>
+                <Container width={"hug"} gap={"xs"}>
                     {@render textButtons()}
                 </Container>
             {/if}
         </Container>
         {#if iconButtons}
-            <Container width={{ kind: "hug" }} gap={"xs"}>
+            <Container width={"hug"} gap={"xs"}>
                 {@render iconButtons(ColourVars.textPrimary)}
             </Container>
         {/if}

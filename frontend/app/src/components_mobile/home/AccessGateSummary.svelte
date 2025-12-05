@@ -16,7 +16,7 @@
     let { gateConfig }: Props = $props();
 
     let gates = $derived(flattenGateConfig(gateConfig));
-    const width: SizeMode = { kind: "hug" };
+    const width: SizeMode = "hug";
     let evaluationDays = $derived(initialEvaluationDays());
     function initialEvaluationDays() {
         if (gateConfig.expiry === undefined) return undefined;

@@ -244,7 +244,7 @@
 {/if}
 
 <Button
-    width={{ kind: "fill" }}
+    width={"fill"}
     disabled={!termsAccepted || !usernameValid || !emailValid || busy}
     loading={checkingUsername || busy}
     onClick={register}>

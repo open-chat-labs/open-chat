@@ -126,7 +126,7 @@
 {#if joinedText !== undefined || deletedText !== undefined || roleChangedTextList?.length > 0}
     <Container padding={"sm"} crossAxisAlignment={"center"} direction={"vertical"}>
         {#if joinedText !== undefined}
-            <Caption width={{ kind: "hug" }} colour={"textSecondary"}>
+            <Caption width={"hug"} colour={"textSecondary"}>
                 <Markdown oneLine suppressLinks text={joinedText} />
             </Caption>
         {/if}
@@ -136,14 +136,14 @@
                 data-index={messagesDeleted.join(" ")}
                 class="deleted">
                 <Container onClick={expandDeletedMessages}>
-                    <Caption width={{ kind: "hug" }} colour={"textSecondary"}>
+                    <Caption width={"hug"} colour={"textSecondary"}>
                         {deletedText}
                     </Caption>
                 </Container>
             </div>
         {/if}
         {#each roleChangedTextList as text}
-            <Caption width={{ kind: "hug" }} colour={"textSecondary"}>
+            <Caption width={"hug"} colour={"textSecondary"}>
                 <Markdown suppressLinks {text} />
             </Caption>
         {/each}

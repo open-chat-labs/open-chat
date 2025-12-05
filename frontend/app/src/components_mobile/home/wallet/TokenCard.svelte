@@ -28,24 +28,17 @@
     padding={"lg"}>
     <Avatar url={tokenState.token.logo}></Avatar>
     <Container direction={"vertical"}>
-        <Body width={{ kind: "hug" }} fontWeight={"bold"}>{tokenState.token.symbol}</Body>
-        <Caption width={{ kind: "hug" }} colour={"textSecondary"} fontWeight={"bold"}
+        <Body width={"hug"} fontWeight={"bold"}>{tokenState.token.symbol}</Body>
+        <Caption width={"hug"} colour={"textSecondary"} fontWeight={"bold"}
             >{tokenState.token.name}</Caption>
     </Container>
-    <Container
-        overflow={"visible"}
-        crossAxisAlignment={"end"}
-        width={{ kind: "hug" }}
-        direction={"vertical"}>
-        <Subtitle
-            blur={$hideTokenBalances}
-            align={"end"}
-            width={{ kind: "hug" }}
-            fontWeight={"bold"}>{tokenState.formattedTokenBalance}</Subtitle>
+    <Container overflow={"visible"} crossAxisAlignment={"end"} width={"hug"} direction={"vertical"}>
+        <Subtitle blur={$hideTokenBalances} align={"end"} width={"hug"} fontWeight={"bold"}
+            >{tokenState.formattedTokenBalance}</Subtitle>
         <BodySmall
             blur={$hideTokenBalances}
             align={"end"}
-            width={{ kind: "hug" }}
+            width={"hug"}
             colour={"primary"}
             fontWeight={"bold"}>{tokenState.formattedConvertedValue}</BodySmall>
     </Container>

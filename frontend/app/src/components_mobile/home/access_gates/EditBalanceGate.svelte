@@ -99,7 +99,7 @@
 </script>
 
 <SlidingPageContent title={i18nKey("Provide gate values")}>
-    <Container height={{ kind: "fill" }} gap={"lg"} direction={"vertical"} padding={["xl", "lg"]}>
+    <Container height={"fill"} gap={"lg"} direction={"vertical"} padding={["xl", "lg"]}>
         <AboutPaymentGate padding={"lg"} background={ColourVars.background1} />
 
         <Container gap={"xl"} direction={"vertical"}>

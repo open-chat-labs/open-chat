@@ -21,8 +21,8 @@
     gap={"xxs"}
     wrap
     padding={["zero", "md"]}
-    width={{ kind: "hug" }}
-    height={{ kind: "hug" }}
+    width={"hug"}
+    height={"hug"}
     crossAxisAlignment={"center"}>
     {#each tipEntries as tip}
         <Tip {alignTooltip} {tip} onClick={canTip ? onClick : undefined} />

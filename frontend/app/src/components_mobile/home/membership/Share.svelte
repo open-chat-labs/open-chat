@@ -60,7 +60,7 @@
     </Container>
 {/snippet}
 
-<Container gap={"xl"} direction={"vertical"} height={{ kind: "fill" }}>
+<Container gap={"xl"} direction={"vertical"} height={"fill"}>
     {#if !membersState.isPublic}
         <Container padding={["zero", "md"]} gap={"xl"} direction={"vertical"}>
             <Setting
@@ -69,7 +69,7 @@
                 <Switch
                     loading={membersState.togglingSharingLink}
                     onChange={() => membersState.toggleInviteLink()}
-                    width={{ kind: "fill" }}
+                    width={"fill"}
                     reverse
                     checked={membersState.sharingLinkEnabled}>
                     <Translatable resourceKey={i18nKey("Enable sharing via link")}></Translatable>

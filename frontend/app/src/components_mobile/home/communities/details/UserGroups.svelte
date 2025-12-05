@@ -44,9 +44,9 @@
 </script>
 
 <SlidingPageContent title={i18nKey("User groups")} subtitle={i18nKey(community.name)}>
-    <Container height={{ kind: "fill" }} mainAxisAlignment={"spaceBetween"} direction={"vertical"}>
+    <Container height={"fill"} mainAxisAlignment={"spaceBetween"} direction={"vertical"}>
         <Container
-            height={{ kind: "fill" }}
+            height={"fill"}
             gap={"xl"}
             padding={["xxl", "lg", "lg", "lg"]}
             direction={"vertical"}>

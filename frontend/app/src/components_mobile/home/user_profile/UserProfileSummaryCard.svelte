@@ -85,7 +85,7 @@
 
 {#snippet accountPill(Icon: any, text: string, colour: string)}
     <Container
-        width={{ kind: "hug" }}
+        width={"hug"}
         background={colour}
         gap={"xs"}
         crossAxisAlignment={"center"}
@@ -123,13 +123,13 @@
                         <Calendar size={"1.25rem"} color={ColourVars.primary} />
                     </div>
                     <Container gap={"xs"}>
-                        <Body width={{ kind: "hug" }} colour={"textSecondary"}>joined</Body>
-                        <Body width={{ kind: "hug" }} fontWeight={"bold"}
+                        <Body width={"hug"} colour={"textSecondary"}>joined</Body>
+                        <Body width={"hug"} fontWeight={"bold"}
                             >{formatDate(profile.created)}</Body>
                     </Container>
                 </Container>
-                <Container gap={"sm"} crossAxisAlignment={"center"} width={{ kind: "hug" }}>
-                    <Body width={{ kind: "hug" }} fontWeight={"bold"}>{status}</Body>
+                <Container gap={"sm"} crossAxisAlignment={"center"} width={"hug"}>
+                    <Body width={"hug"} fontWeight={"bold"}>{status}</Body>
                     {#if online}
                         <div class="online"></div>
                     {/if}
@@ -137,9 +137,9 @@
             </Container>
         </Container>
         <Container direction={"vertical"}>
-            <H2 width={{ kind: "hug" }}>{profile.displayName ?? `@${profile.username}`}</H2>
+            <H2 width={"hug"}>{profile.displayName ?? `@${profile.username}`}</H2>
             <Container gap={"sm"} crossAxisAlignment={"center"}>
-                <BodySmall width={{ kind: "hug" }} colour={"textSecondary"}
+                <BodySmall width={"hug"} colour={"textSecondary"}
                     >@{user.username}</BodySmall>
                 <Badges
                     diamondStatus={user.diamondStatus}

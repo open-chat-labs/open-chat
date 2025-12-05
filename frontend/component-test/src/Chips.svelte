@@ -23,7 +23,7 @@
 
 <DebugEvent>
     {#snippet children(onAction)}
-        <Container width={{ kind: "fixed", size: "400px" }} gap={"xl"} direction={"vertical"}>
+        <Container width={{ size: "400px" }} gap={"xl"} direction={"vertical"}>
             <Container mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
                 <Chip mode={"default"}>Chip</Chip>
 

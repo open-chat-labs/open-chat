@@ -82,7 +82,7 @@
     </SelectUsers>
 </Container>
 
-<Container height={{ kind: "fill" }} padding={["zero", "md"]} gap={"xl"} direction={"vertical"}>
+<Container height={"fill"} padding={["zero", "md"]} gap={"xl"} direction={"vertical"}>
     {#if invited.length === 0}
         <NothingToSee
             reset={{

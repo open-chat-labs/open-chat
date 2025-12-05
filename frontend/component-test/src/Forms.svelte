@@ -23,7 +23,7 @@
     {#snippet children(onAction)}
         <Form onSubmit={() => onAction("Form submitted")}>
             <Container
-                width={{ kind: "fixed", size: "500px" }}
+                width={{ size: "500px" }}
                 borderWidth={"thick"}
                 borderRadius={"lg"}
                 borderStyle={"dashed"}

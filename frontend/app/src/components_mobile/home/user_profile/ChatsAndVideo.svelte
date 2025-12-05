@@ -31,7 +31,7 @@
 </script>
 
 <SlidingPageContent title={i18nKey("Chats & video calls")} subtitle={i18nKey("General options")}>
-    <Container padding={"xxl"} gap={"lg"} height={{ kind: "fill" }} direction={"vertical"}>
+    <Container padding={"xxl"} gap={"lg"} height={"fill"} direction={"vertical"}>
         <Container gap={"xl"} direction={"vertical"}>
             <H2 colour={"primary"}>
                 <Translatable resourceKey={i18nKey("Chats")}></Translatable>
@@ -39,24 +39,21 @@
             <Setting
                 toggle={() => lowBandwidth.toggle()}
                 info={"If you're having connection issues or just want to save bandwidth, enabling this option will try to optimise the app's data traffic."}>
-                <Switch width={{ kind: "fill" }} reverse bind:checked={$lowBandwidth}>
+                <Switch width={"fill"} reverse bind:checked={$lowBandwidth}>
                     <Translatable resourceKey={i18nKey("lowBandwidth")}></Translatable>
                 </Switch>
             </Setting>
             <Setting
                 toggle={() => renderPreviews.toggle()}
                 info={"When you share links in your message, with this option turned on, a preview will ne automatically rendered. Turn it off if you don't want to see previews."}>
-                <Switch width={{ kind: "fill" }} reverse bind:checked={$renderPreviews}>
+                <Switch width={"fill"} reverse bind:checked={$renderPreviews}>
                     <Translatable resourceKey={i18nKey("renderPreviews")}></Translatable>
                 </Switch>
             </Setting>
             <Setting
                 toggle={() => hideMessagesFromDirectBlocked.toggle()}
                 info={"With this option turned on, messages from users you have blocked will not be visible in group and community chats. Keep in mind that this might cause you to lose some conversation context."}>
-                <Switch
-                    width={{ kind: "fill" }}
-                    reverse
-                    bind:checked={$hideMessagesFromDirectBlocked}>
+                <Switch width={"fill"} reverse bind:checked={$hideMessagesFromDirectBlocked}>
                     <Translatable resourceKey={i18nKey("Hide messages from blocked users")} />
                 </Switch>
             </Setting>
@@ -68,21 +65,21 @@
             <Setting
                 toggle={() => videoCameraOn.toggle()}
                 info={"With this option on, camera will be active when a vide call starts. By default, this option is turned on."}>
-                <Switch width={{ kind: "fill" }} reverse bind:checked={$videoCameraOn}>
+                <Switch width={"fill"} reverse bind:checked={$videoCameraOn}>
                     <Translatable resourceKey={i18nKey("profile.videoCameraOn")}></Translatable>
                 </Switch>
             </Setting>
             <Setting
                 toggle={() => videoMicOn.toggle()}
                 info={"When this option on, your microphone will be active when a video call starts, otherwise it will be muted. By default, this option is turned on."}>
-                <Switch width={{ kind: "fill" }} reverse bind:checked={$videoMicOn}>
+                <Switch width={"fill"} reverse bind:checked={$videoMicOn}>
                     <Translatable resourceKey={i18nKey("profile.videoMicOn")}></Translatable>
                 </Switch>
             </Setting>
             <Setting
                 toggle={() => videoSpeakerView.toggle()}
                 info={"This setting controls whether the video call view will focus on the active speaker or automatically or just show a grid of all of the speakers."}>
-                <Switch width={{ kind: "fill" }} reverse bind:checked={$videoSpeakerView}>
+                <Switch width={"fill"} reverse bind:checked={$videoSpeakerView}>
                     <Translatable resourceKey={i18nKey("profile.videoSpeakerView")}></Translatable>
                 </Switch>
             </Setting>
@@ -95,7 +92,7 @@
                 toggle={() => toggleModerationFlag(ModerationFlags.Offensive)}
                 info={"Choose if you would like to see communities and groups marked as offensive."}>
                 <Switch
-                    width={{ kind: "fill" }}
+                    width={"fill"}
                     reverse
                     onChange={() => toggleModerationFlag(ModerationFlags.Offensive)}
                     checked={$offensiveEnabledStore}>
@@ -106,7 +103,7 @@
                 toggle={() => toggleModerationFlag(ModerationFlags.Adult)}
                 info={"Choose if you would like to see communitie and groups marked as containing adult content."}>
                 <Switch
-                    width={{ kind: "fill" }}
+                    width={"fill"}
                     reverse
                     onChange={() => toggleModerationFlag(ModerationFlags.Adult)}
                     checked={$adultEnabledStore}>
@@ -117,7 +114,7 @@
                 toggle={() => toggleModerationFlag(ModerationFlags.UnderReview)}
                 info={"Choose if you would like to see communities and groups that are currently under review."}>
                 <Switch
-                    width={{ kind: "fill" }}
+                    width={"fill"}
                     reverse
                     onChange={() => toggleModerationFlag(ModerationFlags.UnderReview)}
                     checked={$underReviewEnabledStore}>

@@ -54,7 +54,7 @@
     {@const { label } = selected}
     <Sheet onDismiss={syncPermission}>
         <PermissionsRoleSlider
-            height={{ kind: "fixed", size: "250px" }}
+            height={{ size: "250px" }}
             {roles}
             {label}
             onClose={syncPermission}
@@ -79,10 +79,10 @@
             </BodySmall>
         </div>
         {#if role !== undefined}
-            <BodySmall colour={"primary"} fontWeight={"bold"} width={{ kind: "hug" }}
+            <BodySmall colour={"primary"} fontWeight={"bold"} width={"hug"}
                 >{$_(`role.${roleAsText(role)}`)}</BodySmall>
         {:else if defaultRole !== undefined}
-            <BodySmall colour={"primary"} fontWeight={"bold"} width={{ kind: "hug" }}
+            <BodySmall colour={"primary"} fontWeight={"bold"} width={"hug"}
                 >{defaultText} ({$_(`role.${roleAsText(defaultRole)}`)})</BodySmall>
         {/if}
     </Container>
@@ -90,8 +90,8 @@
 
 {#snippet button(name: ResourceKey)}
     <CommonButton
-        height={{ kind: "fill" }}
-        width={{ kind: "fill" }}
+        height={"fill"}
+        width={"fill"}
         onClick={() => (selectedTab = name.key)}
         mode={selectedTab === name.key ? "active" : "default"}
         size={"small"}>
@@ -175,14 +175,14 @@
 
 <SlidingPageContent title={i18nKey("Permission")}>
     <Container
-        height={{ kind: "fill" }}
+        height={"fill"}
         gap={"xxl"}
         direction={"vertical"}
         padding={["xxl", "xl", "lg", "xl"]}>
         <GroupCard candidateGroup={data.candidateGroup} />
 
         <Container
-            height={{ kind: "fixed", size: "3rem" }}
+            height={{ size: "3rem" }}
             mainAxisAlignment={"spaceBetween"}
             padding={["zero", "zero", "sm", "zero"]}
             gap={"sm"}>

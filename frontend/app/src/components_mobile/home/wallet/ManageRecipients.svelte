@@ -45,7 +45,7 @@
 </script>
 
 <SlidingPageContent title={i18nKey("Manage recipients")}>
-    <Container height={{ kind: "fill" }} gap={"lg"} padding={"lg"} direction={"vertical"}>
+    <Container height={"fill"} gap={"lg"} padding={"lg"} direction={"vertical"}>
         <Container padding={"sm"} gap={"sm"} direction={"vertical"}>
             <Body fontWeight={"bold"}>
                 <Translatable resourceKey={i18nKey("List of recipients")} />
@@ -57,7 +57,7 @@
                     )} />
             </BodySmall>
         </Container>
-        <Container closeMenuOnScroll height={{ kind: "fill" }} gap={"md"} direction={"vertical"}>
+        <Container closeMenuOnScroll height={"fill"} gap={"md"} direction={"vertical"}>
             {#each $namedAccountsStore as account}
                 <MenuTrigger maskUI fill position={"bottom"} align={"end"}>
                     <Container

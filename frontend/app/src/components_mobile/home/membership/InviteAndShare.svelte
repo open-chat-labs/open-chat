@@ -30,9 +30,9 @@
 </script>
 
 <SlidingPageContent title={i18nKey("Invite to thing")} subtitle={i18nKey(collection.name)}>
-    <Container height={{ kind: "fill" }} mainAxisAlignment={"spaceBetween"} direction={"vertical"}>
+    <Container height={"fill"} mainAxisAlignment={"spaceBetween"} direction={"vertical"}>
         <Container
-            height={{ kind: "fill" }}
+            height={"fill"}
             gap={"lg"}
             padding={["xxl", "lg", "lg", "lg"]}
             direction={"vertical"}>
@@ -45,7 +45,7 @@
         {#if canInvite}
             <Container onSwipe={() => {}} padding={["zero", "md"]} gap={"sm"}>
                 <BigButton
-                    width={{ kind: "share", value: 1 }}
+                    width={{ share: 1 }}
                     mode={view === "invite" ? "active" : "default"}
                     onClick={() => setView("invite")}>
                     {#snippet icon(color)}
@@ -54,7 +54,7 @@
                     <Translatable resourceKey={i18nKey("Invite users")} />
                 </BigButton>
                 <BigButton
-                    width={{ kind: "share", value: 1 }}
+                    width={{ share: 1 }}
                     mode={view === "share" ? "active" : "default"}
                     onClick={() => setView("share")}>
                     {#snippet icon(color)}

@@ -57,7 +57,7 @@
     </MenuItem>
 {/snippet}
 
-<Container width={{ kind: "fixed", size: "500px" }}>
+<Container width={{ size: "500px" }}>
     <Container gap={"xl"} direction={"vertical"}>
         <SectionHeader>
             {#snippet title()}

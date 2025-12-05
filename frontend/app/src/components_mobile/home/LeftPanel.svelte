@@ -61,13 +61,13 @@
     supplementalClass={sectionClass}
     background={ColourVars.background0}
     tag={"section"}
-    height={{ kind: "fill" }}
+    height={"fill"}
     direction={"vertical"}>
     <Container
         supplementalClass={`left_panel_inner ${dimmed ? "dimmed" : ""}`}
         gap={"sm"}
-        height={{ kind: "fill" }}
-        width={{ kind: "fill" }}
+        height={"fill"}
+        width={"fill"}
         direction={"vertical"}>
         {#if showNotifications}
             <ActivityFeed />

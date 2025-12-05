@@ -19,7 +19,7 @@
 
 <SlidingPageContent title={i18nKey("Add members")} subtitle={i18nKey("Create community")}>
     <Container
-        height={{ kind: "fill" }}
+        height={"fill"}
         gap={"xl"}
         direction={"vertical"}
         padding={["xxl", "lg", "lg", "lg"]}>

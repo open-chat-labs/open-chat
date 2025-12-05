@@ -103,8 +103,8 @@
     supplementalClass={"communities_sheet"}
     direction={"vertical"}
     padding={["md", "zero", "lg", "zero"]}
-    width={{ kind: "fill" }}
-    height={{ kind: "fixed", size: expanded ? "70%" : "7rem" }}
+    width={"fill"}
+    height={{ size: expanded ? "70%" : "7rem" }}
     background={ColourVars.background1}>
     <button onclick={() => (expanded = !expanded)} aria-label="handle" class="handle_outer">
         <div class="handle_inner"></div>

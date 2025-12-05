@@ -69,7 +69,7 @@
         {#each allColours as { name, colours }}
             <Container
                 borderRadius={"lg"}
-                width={{ kind: "hug" }}
+                width={"hug"}
                 padding={"lg"}
                 borderWidth={"thin"}
                 direction={"vertical"}>
@@ -84,7 +84,7 @@
             </Container>
         {/each}
         <Container
-            width={{ kind: "hug" }}
+            width={"hug"}
             borderRadius={"lg"}
             padding={"lg"}
             borderWidth={"thin"}

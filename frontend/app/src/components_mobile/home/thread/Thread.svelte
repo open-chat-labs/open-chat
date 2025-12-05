@@ -361,7 +361,7 @@
     <Container
         onSwipe={onSwipeRight(onCloseThread)}
         background={ColourVars.background0}
-        height={{ kind: "fill" }}
+        height={"fill"}
         direction={"vertical"}>
         <ThreadHeader {threadRootMessageIndex} {onCloseThread} {rootEvent} chatSummary={chat} />
         <ChatEventList

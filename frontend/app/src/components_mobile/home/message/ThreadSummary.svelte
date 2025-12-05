@@ -93,9 +93,9 @@
     {borderRadius}
     {padding}
     gap={"md"}
-    height={{ kind: "hug" }}
-    width={{ kind: "hug" }}>
-    <Container supplementalClass={"thread-summary-avatars"} width={{ kind: "hug" }}>
+    height={"hug"}
+    width={"hug"}>
+    <Container supplementalClass={"thread-summary-avatars"} width={"hug"}>
         {#each participantAvatarUrls.slice(0, MAX_AVATARS) as url}
             <Avatar {url} size={"xs"}></Avatar>
         {/each}
@@ -103,8 +103,8 @@
             <CountBadge mode="additive">+{additional}</CountBadge>
         {/if}
     </Container>
-    <ChatFootnote width={{ kind: "hug" }} colour={"textSecondary"}>{text}</ChatFootnote>
-    <Container width={{ kind: "hug" }}>
+    <ChatFootnote width={"hug"} colour={"textSecondary"}>{text}</ChatFootnote>
+    <Container width={"hug"}>
         <div class={`arrow`} class:hasUnread>
             <ChevronRight color={ColourVars.background0} />
         </div>

@@ -91,7 +91,7 @@
             <Avatar size={"lg"} url={client.groupAvatarUrl(chat)} />
             <Container direction={"vertical"} gap={"xxs"}>
                 <Subtitle fontWeight={"bold"}>{chat.name}</Subtitle>
-                <BodySmall width={{ kind: "hug" }} colour={"textSecondary"}>
+                <BodySmall width={"hug"} colour={"textSecondary"}>
                     {#if lapsed}
                         <Translatable
                             resourceKey={i18nKey(

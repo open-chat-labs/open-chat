@@ -94,7 +94,7 @@
 {#snippet role_label()}
     {#if role > ROLE_MEMBER}
         <Container
-            width={{ kind: "hug" }}
+            width={"hug"}
             borderRadius={"sm"}
             padding={["zero", "xs"]}
             background={getRoleColour()}>
@@ -105,7 +105,7 @@
 
 <Container onClick={click} crossAxisAlignment={"center"} gap={"md"}>
     <Avatar url={client.userAvatarUrl(user)} size={"md"} />
-    <Container gap={"xxs"} direction={"vertical"} width={{ kind: "fill" }}>
+    <Container gap={"xxs"} direction={"vertical"} width={"fill"}>
         <Container crossAxisAlignment={"center"} gap={"xs"}>
             <FilteredUsername {searchTerm} username={displayName} {me} />
             <Badges
@@ -115,7 +115,7 @@
                 chitEarned={user.totalChitEarned} />
         </Container>
         <Container crossAxisAlignment={"center"} gap={"sm"}>
-            <BodySmall width={{ kind: "hug" }} colour={"textSecondary"}>
+            <BodySmall width={"hug"} colour={"textSecondary"}>
                 @{user.username}
             </BodySmall>
             {@render role_label()}

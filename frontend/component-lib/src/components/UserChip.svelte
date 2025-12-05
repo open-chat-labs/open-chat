@@ -17,7 +17,7 @@
     supplementalClass={"user_chip"}
     mainAxisAlignment={"spaceBetween"}
     crossAxisAlignment={"center"}
-    width={{ kind: "hug" }}
+    width={"hug"}
     gap={"sm"}
     padding={["zero", "md", "zero", "zero"]}
     borderColour={ColourVars.secondary}
@@ -25,7 +25,7 @@
     borderWidth={"thick"}
     onClick={onRemove}>
     <Avatar size={"sm"} url={avatarUrl}></Avatar>
-    <Label colour={"secondaryLight"} width={{ kind: "hug" }}>
+    <Label colour={"secondaryLight"} width={"hug"}>
         {@render children?.()}
     </Label>
     {#if onRemove}

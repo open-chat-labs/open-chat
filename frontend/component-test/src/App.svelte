@@ -68,7 +68,7 @@
     <MenuItem onclick={() => (selected = section)}>{labels[section]}</MenuItem>
 {/snippet}
 
-<Container gap={"xl"} height={{ kind: "fill" }} direction={"vertical"}>
+<Container gap={"xl"} height={"fill"} direction={"vertical"}>
     <Container crossAxisAlignment={"center"} padding={["zero", "lg"]} gap={"xl"}>
         <MenuTrigger>
             <CommonButton mode="active" size="large">
@@ -86,7 +86,7 @@
         <Overview>{labels[selected]}</Overview>
     </Container>
 
-    <Container height={{ kind: "fill" }} direction={"vertical"} padding={"lg"}>
+    <Container height={"fill"} direction={"vertical"} padding={"lg"}>
         {#if selected === "colours"}
             <Colours></Colours>
         {:else if selected === "chips"}

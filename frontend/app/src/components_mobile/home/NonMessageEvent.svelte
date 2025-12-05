@@ -16,10 +16,10 @@
 </script>
 
 <Container padding={"sm"} crossAxisAlignment={"center"} direction={"vertical"}>
-    <Caption width={{ kind: "hug" }} colour={"textSecondary"}>
+    <Caption width={"hug"} colour={"textSecondary"}>
         <Markdown suppressLinks {text} />
     </Caption>
-    <Caption width={{ kind: "hug" }} colour={"textSecondary"}>
+    <Caption width={"hug"} colour={"textSecondary"}>
         {`${client.toLongDateString(date)} @ ${client.toShortTimeString(date)}`}
     </Caption>
 </Container>
