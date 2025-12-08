@@ -18,7 +18,7 @@
         }
     }
 
-    const SPEED = 400;
+    const SPEED = 300;
 </script>
 
 {#if !top}

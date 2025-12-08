@@ -1,12 +1,17 @@
 <script lang="ts">
     import { ColourVars, Container } from "component-lib";
-    import { activityFeedShowing, chatListScopeStore, routeStore, showLeft } from "openchat-client";
+    import {
+        activityFeedShowing,
+        anonUserStore,
+        chatListScopeStore,
+        routeStore,
+        showLeft,
+    } from "openchat-client";
     import { rtlStore } from "../../stores/rtl";
     import ActivityFeed from "./activity/ActivityFeed.svelte";
     import BottomBar, { type Selection } from "./bottom_bar/BottomBar.svelte";
     import ChatList from "./ChatList.svelte";
     import CommunitiesSheet from "./communities_sheet/CommunitiesSheet.svelte";
-    import SlidingModals from "./SlidingModals.svelte";
     import UserProfileSummary from "./user_profile/UserProfileSummary.svelte";
     import ActiveCallSummary from "./video/ActiveCallSummary.svelte";
     import Wallet from "./wallet/Wallet.svelte";
@@ -54,8 +59,6 @@
     }
 </script>
 
-<SlidingModals />
-
 <Container
     mainAxisAlignment={"spaceBetween"}
     supplementalClass={sectionClass}
@@ -80,10 +83,13 @@
         {/if}
         <ActiveCallSummary />
     </Container>
-    {#if $chatListScopeStore.kind === "community" && !$activityFeedShowing}
-        <CommunitiesSheet bind:expanded={communitiesExpanded} />
+
+    {#if !$anonUserStore}
+        {#if $chatListScopeStore.kind === "community" && !$activityFeedShowing}
+            <CommunitiesSheet bind:expanded={communitiesExpanded} />
+        {/if}
+        <BottomBar {selection} />
     {/if}
-    <BottomBar {selection} />
 </Container>
 
 <style lang="scss">

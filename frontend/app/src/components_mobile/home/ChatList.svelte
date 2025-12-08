@@ -3,6 +3,7 @@
     import { CommonButton, Container, FloatingButton } from "component-lib";
     import {
         allUsersStore,
+        anonUserStore,
         chatIdentifiersEqual,
         chatIdentifierToString,
         type ChatListScope,
@@ -85,7 +86,8 @@
     }
 
     let showPreview = $derived(
-        $selectedCommunitySummaryStore?.membership.role === ROLE_NONE &&
+        !$anonUserStore &&
+            $selectedCommunitySummaryStore?.membership.role === ROLE_NONE &&
             $selectedChatIdStore === undefined,
     );
     let user = $derived($allUsersStore.get($currentUserIdStore));

@@ -19,6 +19,7 @@
     import type { BotMatch, CommunityMatch, OpenChat } from "openchat-client";
     import {
         allUsersStore,
+        anonUserStore,
         botState,
         exploreCommunitiesFiltersStore,
         ModerationFlags,
@@ -46,6 +47,7 @@
     import FancyLoader from "../../../icons/FancyLoader.svelte";
     import WithVerifiedBadge from "../../../icons/WithVerifiedBadge.svelte";
     import Translatable from "../../../Translatable.svelte";
+    import AnonFooter from "../../AnonFooter.svelte";
     import Markdown from "../../Markdown.svelte";
     import NothingToSee from "../../NothingToSee.svelte";
     import { updateCommunityState } from "../createOrUpdate/community.svelte";
@@ -399,7 +401,10 @@
             </Container>
         {:else}
             {#if view === "communities"}
-                <Container padding={["zero", "lg"]} direction={"vertical"} gap={"lg"}>
+                <Container
+                    padding={$anonUserStore ? ["zero", "lg", "huge", "lg"] : ["zero", "lg"]}
+                    direction={"vertical"}
+                    gap={"lg"}>
                     {#each communitySearchState.results as community (community.id.communityId)}
                         <CommunityCardLink url={`/community/${community.id.communityId}`}>
                             {@render communityCard(community)}
@@ -407,7 +412,10 @@
                     {/each}
                 </Container>
             {:else}
-                <Container padding={["zero", "lg"]} direction={"vertical"} gap={"lg"}>
+                <Container
+                    padding={$anonUserStore ? ["zero", "lg", "huge", "lg"] : ["zero", "lg"]}
+                    direction={"vertical"}
+                    gap={"lg"}>
                     {#each botSearchState.results as bot (bot.id)}
                         {@render botCard(bot)}
                     {/each}
@@ -431,11 +439,21 @@
     </Container>
 </Container>
 
-<FloatingButton onClick={() => (showingFilters = true)} pos={{ bottom: "lg", right: "lg" }}>
-    {#snippet icon(color)}
-        <Filter {color} />
-    {/snippet}
-</FloatingButton>
+{#if $anonUserStore}
+    <AnonFooter>
+        <FloatingButton onClick={() => (showingFilters = true)}>
+            {#snippet icon(color)}
+                <Filter {color} />
+            {/snippet}
+        </FloatingButton>
+    </AnonFooter>
+{:else}
+    <FloatingButton onClick={() => (showingFilters = true)} pos={{ bottom: "lg", right: "lg" }}>
+        {#snippet icon(color)}
+            <Filter {color} />
+        {/snippet}
+    </FloatingButton>
+{/if}
 
 {#if showFab}
     <div transition:fade class="fab">

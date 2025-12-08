@@ -100,6 +100,7 @@
     import VerifyHumanity from "./profile/VerifyHumanity.svelte";
     import ViewUserProfile from "./profile/ViewUserProfileModal.svelte";
     import MakeProposalModal from "./proposal/MakeProposalModal.svelte";
+    import SlidingModals from "./SlidingModals.svelte";
     import SuspendModal from "./SuspendModal.svelte";
     import Upgrade from "./upgrade/Upgrade.svelte";
     import SetPinNumberModal from "./wallet/SetPinNumberModal.svelte";
@@ -835,7 +836,9 @@
     <MiddlePanel {joining} />
 </Container>
 
-{#if $anonUserStore}
+<SlidingModals />
+
+{#if $anonUserStore && $routeStore.kind !== "communities_route"}
     <AnonFooter />
 {/if}
 

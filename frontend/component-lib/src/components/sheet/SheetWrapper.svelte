@@ -6,9 +6,17 @@
         onDismiss?: () => void;
         children?: Snippet;
         block?: boolean;
+        transparent?: boolean;
+        animate?: boolean;
     }
 
-    let { onDismiss, children, block = true }: Props = $props();
+    let {
+        onDismiss,
+        children,
+        transparent = false,
+        block = !transparent,
+        animate = true,
+    }: Props = $props();
 
     let container: HTMLElement | undefined;
     const SPEED = 250;
@@ -56,6 +64,8 @@
 <div
     style={`--speed: ${SPEED}ms`}
     class:block
+    class:animate
+    class:transparent
     bind:this={container}
     class="sheet_overlay"
     onmousedown={onMousedown}>
@@ -63,7 +73,7 @@
         parentDirection={"vertical"}
         maxHeight={"75vh"}
         height={"hug"}
-        background={ColourVars.background1}
+        background={transparent ? undefined : ColourVars.background1}
         supplementalClass={"sheet_content"}
         borderRadius={["xl", "xl", "zero", "zero"]}
         direction={"vertical"}>
@@ -72,25 +82,37 @@
 </div>
 
 <style lang="scss">
+    :global(.sheet_overlay) {
+        animation: var(--speed) ease-out fade-out;
+    }
+
     :global(.sheet_overlay.block) {
         background: rgba(0, 0, 0, 0.5);
     }
 
-    :global(.sheet_overlay) {
-        animation: var(--speed) ease-out fade-out;
+    :global(.sheet_content) {
+        pointer-events: all;
     }
 
     :global(.sheet_overlay .sheet_content) {
         animation: var(--speed) ease-out slide_down;
     }
 
-    :global(.sheet_overlay.faded) {
+    :global(.sheet_overlay.faded.block) {
         background: rgba(0, 0, 0, 0.5);
         animation: var(--speed) ease-out fade-in;
     }
 
     :global(.sheet_overlay.faded .sheet_content) {
         animation: var(--speed) ease-out slide_up;
+    }
+
+    :global(.sheet_overlay:not(.animate)) {
+        animation: none;
+    }
+
+    :global(.sheet_overlay:not(.animate) .sheet_content) {
+        animation: none;
     }
 
     .sheet_overlay {

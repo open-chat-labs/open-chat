@@ -16,14 +16,16 @@
         menu?: Snippet;
         action?: Snippet<[string]>;
         avatar?: Snippet;
+        onClick?: () => void;
     }
 
-    let { onBack, onAction, title, subtitle, menu, action, avatar }: Props = $props();
+    let { onBack, onAction, title, subtitle, menu, action, avatar, onClick }: Props = $props();
 
     let padding = $derived<Padding>(onBack ? "sm" : ["sm", "sm", "sm", "lg"]);
 </script>
 
 <Container
+    {onClick}
     supplementalClass={"section_header"}
     {padding}
     background={ColourVars.background0}

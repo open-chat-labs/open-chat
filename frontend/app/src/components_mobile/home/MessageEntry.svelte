@@ -624,166 +624,165 @@
         query={emojiQuery} />
 {/if}
 
-<Container
-    overflow={"visible"}
-    gap={"sm"}
-    mainAxisAlignment={"spaceBetween"}
-    crossAxisAlignment={"end"}
-    background={editingEvent !== undefined ? ColourVars.gradient : ColourVars.background0}
-    padding={["sm", "md"]}
-    minHeight={"3.75rem"}>
-    {#if frozen}
-        <div class="frozen">
-            <Translatable resourceKey={i18nKey("chatFrozen")} />
-        </div>
-    {:else if blocked}
-        <div class="blocked">
-            <Translatable resourceKey={i18nKey("userIsBlocked")} />
-        </div>
-    {:else if (preview || lapsed) && chat.kind !== "direct_chat"}
-        <PreviewFooter {lapsed} {joining} {chat} />
-    {:else if externalContent}
-        <div class="disclaimer">
-            <Alert size={$iconSize} color={"var(--warn"} />
-            <Translatable resourceKey={i18nKey("externalContent.disclaimer")} />
-        </div>
-    {:else if !canSendAny}
-        <div class="disabled">
-            <Translatable
-                resourceKey={i18nKey(
-                    $anonUserStore
-                        ? "sendMessageDisabledAnon"
-                        : mode === "thread"
-                          ? "readOnlyThread"
-                          : "readOnlyChat",
-                )} />
-        </div>
-    {:else if $throttleDeadline > 0}
-        <ThrottleCountdown deadline={$throttleDeadline} />
-    {:else}
-        {#if recording}
-            <div class="recording">
-                <Progress percent={percentRecorded} />
+{#if !$anonUserStore}
+    <Container
+        overflow={"visible"}
+        gap={"sm"}
+        mainAxisAlignment={"spaceBetween"}
+        crossAxisAlignment={"end"}
+        background={editingEvent !== undefined ? ColourVars.gradient : ColourVars.background0}
+        padding={["sm", "md"]}
+        minHeight={"3.75rem"}>
+        {#if frozen}
+            <div class="frozen">
+                <Translatable resourceKey={i18nKey("chatFrozen")} />
             </div>
-        {:else if canEnterText}
-            {#key textboxId}
-                <Container
-                    gap={"sm"}
-                    background={ColourVars.textTertiary}
-                    borderRadius={"xxl"}
-                    minHeight={"3rem"}
-                    maxHeight={"calc(var(--vh, 1vh) * 50)"}
-                    crossAxisAlignment={"end"}
-                    mainAxisAlignment={"spaceBetween"}
-                    supplementalClass={"message_entry_text_box"}>
-                    <IconButton
-                        onclick={() => onAttachGif("")}
-                        padding={["sm", "zero", "md", "sm"]}
-                        size={"md"}>
-                        {#snippet icon()}
-                            <StickerEmoji color={ColourVars.textPlaceholder} />
-                        {/snippet}
-                    </IconButton>
-                    <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_static_element_interactions -->
-                    <div
-                        data-gram="false"
-                        data-gramm_editor="false"
-                        data-enable-grammarly="false"
-                        tabindex={0}
-                        bind:this={inp}
-                        onblur={saveSelection}
-                        class="textbox"
-                        class:recording
-                        class:empty={messageIsEmpty}
-                        contenteditable
-                        onpaste={onPaste}
-                        placeholder={interpolate($_, placeholder)}
-                        use:translatable={{
-                            key: placeholder,
-                            position: "absolute",
-                            right: 12,
-                            top: 12,
-                        }}
-                        spellcheck
-                        oninput={onInput}
-                        onkeypress={keyPress}>
-                    </div>
-
+        {:else if blocked}
+            <div class="blocked">
+                <Translatable resourceKey={i18nKey("userIsBlocked")} />
+            </div>
+        {:else if (preview || lapsed) && chat.kind !== "direct_chat"}
+            <PreviewFooter {lapsed} {joining} {chat} />
+        {:else if externalContent}
+            <div class="disclaimer">
+                <Alert size={$iconSize} color={"var(--warn"} />
+                <Translatable resourceKey={i18nKey("externalContent.disclaimer")} />
+            </div>
+        {:else if !canSendAny}
+            <div class="disabled">
+                <Translatable
+                    resourceKey={i18nKey(mode === "thread" ? "readOnlyThread" : "readOnlyChat")} />
+            </div>
+        {:else if $throttleDeadline > 0}
+            <ThrottleCountdown deadline={$throttleDeadline} />
+        {:else}
+            {#if recording}
+                <div class="recording">
+                    <Progress percent={percentRecorded} />
+                </div>
+            {:else if canEnterText}
+                {#key textboxId}
                     <Container
-                        padding={["zero", "sm", "zero", "zero"]}
-                        width={"hug"}
-                        gap={"md"}>
+                        gap={"sm"}
+                        background={ColourVars.textTertiary}
+                        borderRadius={"xxl"}
+                        minHeight={"3rem"}
+                        maxHeight={"calc(var(--vh, 1vh) * 50)"}
+                        crossAxisAlignment={"end"}
+                        mainAxisAlignment={"spaceBetween"}
+                        supplementalClass={"message_entry_text_box"}>
                         <IconButton
-                            onclick={() => (showCustomMessageTrigger = !showCustomMessageTrigger)}
-                            padding={["sm", "zero", "md", "zero"]}
+                            onclick={() => onAttachGif("")}
+                            padding={["sm", "zero", "md", "sm"]}
                             size={"md"}>
                             {#snippet icon()}
-                                <div class:open={showCustomMessageTrigger} class="drawer_trigger">
-                                    <PlusCircle color={ColourVars.textPlaceholder} />
-                                </div>
+                                <StickerEmoji color={ColourVars.textPlaceholder} />
                             {/snippet}
                         </IconButton>
+                        <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_static_element_interactions -->
+                        <div
+                            data-gram="false"
+                            data-gramm_editor="false"
+                            data-enable-grammarly="false"
+                            tabindex={0}
+                            bind:this={inp}
+                            onblur={saveSelection}
+                            class="textbox"
+                            class:recording
+                            class:empty={messageIsEmpty}
+                            contenteditable
+                            onpaste={onPaste}
+                            placeholder={interpolate($_, placeholder)}
+                            use:translatable={{
+                                key: placeholder,
+                                position: "absolute",
+                                right: 12,
+                                top: 12,
+                            }}
+                            spellcheck
+                            oninput={onInput}
+                            onkeypress={keyPress}>
+                        </div>
 
-                        {#if messageIsEmpty && canAddImageOrVideo}
-                            <FileAttacher {onFileSelected}>
-                                {#snippet children(onClick)}
-                                    <IconButton
-                                        onclick={onClick}
-                                        padding={["sm", "zero", "md", "zero"]}
-                                        size={"md"}>
-                                        {#snippet icon()}
-                                            <Camera color={ColourVars.textPlaceholder} />
-                                        {/snippet}
-                                    </IconButton>
+                        <Container
+                            padding={["zero", "sm", "zero", "zero"]}
+                            width={"hug"}
+                            gap={"md"}>
+                            <IconButton
+                                onclick={() =>
+                                    (showCustomMessageTrigger = !showCustomMessageTrigger)}
+                                padding={["sm", "zero", "md", "zero"]}
+                                size={"md"}>
+                                {#snippet icon()}
+                                    <div
+                                        class:open={showCustomMessageTrigger}
+                                        class="drawer_trigger">
+                                        <PlusCircle color={ColourVars.textPlaceholder} />
+                                    </div>
                                 {/snippet}
-                            </FileAttacher>
+                            </IconButton>
+
+                            {#if messageIsEmpty && canAddImageOrVideo}
+                                <FileAttacher {onFileSelected}>
+                                    {#snippet children(onClick)}
+                                        <IconButton
+                                            onclick={onClick}
+                                            padding={["sm", "zero", "md", "zero"]}
+                                            size={"md"}>
+                                            {#snippet icon()}
+                                                <Camera color={ColourVars.textPlaceholder} />
+                                            {/snippet}
+                                        </IconButton>
+                                    {/snippet}
+                                </FileAttacher>
+                            {/if}
+                        </Container>
+
+                        {#if containsMarkdown}
+                            <MarkdownToggle {editingEvent} />
                         {/if}
                     </Container>
+                {/key}
+            {:else}
+                <div class="textbox">
+                    <Translatable resourceKey={placeholder} />
+                </div>
+            {/if}
 
-                    {#if containsMarkdown}
-                        <MarkdownToggle {editingEvent} />
-                    {/if}
-                </Container>
-            {/key}
-        {:else}
-            <div class="textbox">
-                <Translatable resourceKey={placeholder} />
-            </div>
-        {/if}
-
-        {#if directChatBotId === undefined}
-            <Container gap={"xs"} padding={["zero", "zero", "xs", "zero"]} width={"hug"}>
-                {#if editingEvent === undefined}
-                    {#if permittedMessages.get("audio") && messageIsEmpty && audioMimeType !== undefined && audioSupported}
-                        <AudioAttacher
-                            mimeType={audioMimeType}
-                            bind:percentRecorded
-                            bind:recording
-                            bind:supported={audioSupported}
-                            onAudioCaptured={onFileSelected} />
-                    {:else if canEnterText}
-                        <IconButton mode={"primary"} size={"md"} onclick={sendMessage}>
+            {#if directChatBotId === undefined}
+                <Container gap={"xs"} padding={["zero", "zero", "xs", "zero"]} width={"hug"}>
+                    {#if editingEvent === undefined}
+                        {#if permittedMessages.get("audio") && messageIsEmpty && audioMimeType !== undefined && audioSupported}
+                            <AudioAttacher
+                                mimeType={audioMimeType}
+                                bind:percentRecorded
+                                bind:recording
+                                bind:supported={audioSupported}
+                                onAudioCaptured={onFileSelected} />
+                        {:else if canEnterText}
+                            <IconButton mode={"primary"} size={"md"} onclick={sendMessage}>
+                                {#snippet icon(color)}
+                                    <Send {color} />
+                                {/snippet}
+                            </IconButton>
+                        {/if}
+                    {:else}
+                        <IconButton mode={"dark"} size={"md"} onclick={sendMessage}>
                             {#snippet icon(color)}
-                                <Send {color} />
+                                <ContentSaveEditOutline {color} />
+                            {/snippet}
+                        </IconButton>
+                        <IconButton mode={"dark"} size={"md"} onclick={onCancelEdit}>
+                            {#snippet icon(color)}
+                                <Close {color} />
                             {/snippet}
                         </IconButton>
                     {/if}
-                {:else}
-                    <IconButton mode={"dark"} size={"md"} onclick={sendMessage}>
-                        {#snippet icon(color)}
-                            <ContentSaveEditOutline {color} />
-                        {/snippet}
-                    </IconButton>
-                    <IconButton mode={"dark"} size={"md"} onclick={onCancelEdit}>
-                        {#snippet icon(color)}
-                            <Close {color} />
-                        {/snippet}
-                    </IconButton>
-                {/if}
-            </Container>
+                </Container>
+            {/if}
         {/if}
-    {/if}
-</Container>
+    </Container>
+{/if}
 <CustomMessageTrigger
     {permittedMessages}
     {onTokenTransfer}

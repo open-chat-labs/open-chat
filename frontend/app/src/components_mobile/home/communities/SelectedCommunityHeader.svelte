@@ -1,6 +1,12 @@
 <script lang="ts">
     import { Avatar, Body, Container, SectionHeader } from "component-lib";
-    import { setRightPanelHistory, type CommunitySummary, type OpenChat } from "openchat-client";
+    import {
+        anonUserStore,
+        publish,
+        setRightPanelHistory,
+        type CommunitySummary,
+        type OpenChat,
+    } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import WithVerifiedBadge from "../../icons/WithVerifiedBadge.svelte";
@@ -29,7 +35,16 @@
     <OtherChannels {community} onClose={() => (showOtherChannels = false)} />
 {/if}
 
-<SectionHeader>
+{#snippet menu()}
+    <CommunityMenu
+        onOtherChannels={() => (showOtherChannels = true)}
+        {canMarkAllRead}
+        {community} />
+{/snippet}
+
+<SectionHeader
+    onClick={() => publish("communityDetails", community)}
+    menu={$anonUserStore ? undefined : menu}>
     {#snippet avatar()}
         <Avatar
             radius={"md"}
@@ -53,12 +68,6 @@
                 </div>
             </Body>
         </Container>
-    {/snippet}
-    {#snippet menu()}
-        <CommunityMenu
-            onOtherChannels={() => (showOtherChannels = true)}
-            {canMarkAllRead}
-            {community} />
     {/snippet}
 </SectionHeader>
 

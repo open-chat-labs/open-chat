@@ -6,9 +6,11 @@
         onDismiss?: () => void;
         children?: Snippet;
         block?: boolean;
+        transparent?: boolean;
+        animate?: boolean;
     }
 
-    let { onDismiss, children, block }: Props = $props();
+    let { onDismiss, children, block, transparent, animate }: Props = $props();
 
     const context = getAllContexts();
     let mounted: Record<string, any> | undefined = undefined;
@@ -28,6 +30,8 @@
                 children,
                 onDismiss,
                 block,
+                transparent,
+                animate,
             },
             context,
         });
