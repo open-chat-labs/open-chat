@@ -67,7 +67,7 @@
         gap={"sm"}
         mainAxisAlignment={children ? "spaceBetween" : "center"}
         supplementalClass={"anon-footer"}
-        padding={"lg"}>
+        padding={["lg", "lg", "zero", "lg"]}>
         <Container
             width={"hug"}
             height={{ size: "3.5rem" }}

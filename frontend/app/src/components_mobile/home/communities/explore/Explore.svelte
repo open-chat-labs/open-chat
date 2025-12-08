@@ -81,7 +81,15 @@
     }
 
     function registerBot() {
-        publish("registerBot");
+        if (anonUserStore.value) {
+            client.updateIdentityState({
+                kind: "logging_in",
+                postLogin: { kind: "register_bot" },
+            });
+            return;
+        } else {
+            publish("registerBot");
+        }
     }
 
     function searchCommunities(
