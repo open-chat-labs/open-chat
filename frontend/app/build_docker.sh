@@ -12,11 +12,11 @@ export OC_BUILD_ENV=$NODE_ENV
 export OC_CANISTER_URL_PATH=http://{canisterId}.localhost:8080
 export OC_DEV_PORT=5001
 export OC_DFX_NETWORK=local
-# Note: changed the port to 8081, we do expect there to be a reverse proxy
+# Note: changed the port to 8082, we do expect there to be a reverse proxy
 # for the local dfx setup, since from dfx v0.28.0-beta1 we get a CORS issue
 # when querying the local deployment. Once that's fixed we'll revert to port
 # 8080 again.
-export OC_IC_URL=http://localhost:8081
+export OC_IC_URL=http://localhost:8082
 export OC_INTERNET_IDENTITY_CANISTER_ID=qhbym-qaaaa-aaaaa-aaafq-cai
 export OC_INTERNET_IDENTITY_URL=http://qhbym-qaaaa-aaaaa-aaafq-cai.localhost:8080
 export OC_NFID_URL=http://qhbym-qaaaa-aaaaa-aaafq-cai.localhost:8080
