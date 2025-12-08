@@ -93,7 +93,6 @@
         <audio playsinline={true} autoplay={true} src={ringtoneUrl} muted={false} preload="auto">
         </audio>
     {/if}
-
     <Overlay onClose={cancel} dismissible>
         <ModalContent hideHeader hideFooter closeIcon>
             {#snippet body()}

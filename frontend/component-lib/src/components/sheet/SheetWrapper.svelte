@@ -19,7 +19,7 @@
     }: Props = $props();
 
     let container: HTMLElement | undefined;
-    const SPEED = 250;
+    const SPEED = animate ? 250 : 0;
 
     export async function beforeClose(): Promise<void> {
         container?.classList.remove("faded");

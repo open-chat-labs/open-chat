@@ -554,12 +554,55 @@ svelte-virtual-list-viewport {
 
 $speed: 200ms;
 
-html:active-view-transition-type(fade) {
-    &::view-transition-old(root) {
-        animation: $speed ease-in-out both fade-out;
+html:active-view-transition-type(slide_left, slide_right) {
+    .sliding_page {
+        view-transition-name: sliding_modal;
     }
-    &::view-transition-new(root) {
-        animation: $speed ease-in-out both fade-in;
+
+    .sheet_overlay .sheet_content {
+        view-transition-name: sheet_content;
+    }
+
+    .bottom_nav_bar {
+        view-transition-name: bottom_nav_bar;
+    }
+
+    .communities_sheet {
+        view-transition-name: communities_sheet;
+    }
+
+    .communities_scroller {
+        view-transition-name: communities_scroller;
+    }
+
+    .footer.thread,
+    .footer.message {
+        view-transition-name: footer;
+    }
+
+    .anon-footer {
+        view-transition-name: anon_footer;
+    }
+
+    &::view-transition-old(
+            communities_sheet,
+            communities_scroller,
+            bottom_nav_bar,
+            footer,
+            sheet_content,
+            sliding_modal,
+            anon_footer
+        ),
+    &:view-transition-new(
+            communities_sheet,
+            communities_scroller,
+            bottom_nav_bar,
+            footer,
+            sheet_content,
+            sliding_modal,
+            anon_footer
+        ) {
+        animation: none;
     }
 }
 

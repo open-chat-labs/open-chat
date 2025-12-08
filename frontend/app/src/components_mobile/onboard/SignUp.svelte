@@ -1,7 +1,16 @@
 <script lang="ts">
     import { i18nKey, interpolate } from "@src/i18n/i18n";
     import { createLocalStorageStore } from "@src/utils/store";
-    import { BodySmall, Button, Container, Form, Input, Switch } from "component-lib";
+    import {
+        BodySmall,
+        Button,
+        Container,
+        Form,
+        Input,
+        Sheet,
+        Subtitle,
+        Switch,
+    } from "component-lib";
     import EmailValidator from "email-validator";
     import type { CreatedUser, OpenChat, UserOrUserGroup, UserSummary } from "openchat-client";
     import { AuthProvider, identityStateStore, selectedAuthProviderStore } from "openchat-client";
@@ -11,8 +20,6 @@
     import ErrorMessage from "../ErrorMessage.svelte";
     import FindUser from "../FindUser.svelte";
     import TermsContent from "../landingpages/TermsContent.svelte";
-    import ModalContent from "../ModalContent.svelte";
-    import Overlay from "../Overlay.svelte";
     import Translatable from "../Translatable.svelte";
     import UsernameInput from "../UsernameInput.svelte";
     import UserPill from "../UserPill.svelte";
@@ -161,102 +168,82 @@
 </script>
 
 {#if showGuidelines}
-    <Overlay onClose={onCloseGuidelines} dismissible={false}>
-        <ModalContent large onClose={onCloseGuidelines}>
-            {#snippet header()}
-                <span class="header">
-                    <h1>OpenChat Terms</h1>
-                </span>
-            {/snippet}
-            {#snippet body()}
-                <span class="guidelines-modal">
-                    <TermsContent />
-                </span>
-            {/snippet}
-            {#snippet footer(onClose)}
-                <span>
-                    <Button onClick={() => onClose?.()}>
-                        <Translatable resourceKey={i18nKey("register.agree")} />
-                    </Button>
-                </span>
-            {/snippet}
-        </ModalContent>
-    </Overlay>
-{/if}
-
-{#if badCode}
-    <AlertBox>
-        <h4 class="main">
-            <Translatable resourceKey={i18nKey("register.referralCodeInvalid")} />
-        </h4>
-        <p class="sub">
-            <Translatable resourceKey={i18nKey("register.doYouWantToProceed")} />
-        </p>
-    </AlertBox>
-{:else}
-    <Form onSubmit={register}>
-        <Container gap={"lg"} direction={"vertical"}>
-            <UsernameInput
-                {client}
-                disabled={busy}
-                originalUsername={$usernameStore ?? ""}
-                bind:username
-                bind:usernameValid
-                bind:errorMsg={error} />
-
-            <Input
-                error={!emailValid}
-                disabled={busy}
-                placeholder={interpolate($_, i18nKey("register.emailPlaceholder"))}
-                bind:value={email}
-                minlength={0}
-                maxlength={254}>
-                {#snippet subtext()}
-                    <Translatable resourceKey={i18nKey("register.emailRules")} />
-                {/snippet}
-            </Input>
-
-            {#if referringUser !== undefined}
-                <UserPill onDeleteUser={deleteUser} userOrGroup={referringUser} />
-            {:else}
-                <FindUser
-                    placeholderKey={"register.findReferrer"}
-                    {userLookup}
-                    onSelectUser={selectUser} />
-            {/if}
-
-            <Container onClick={onShowGuidelines} padding={["zero", "md"]}>
-                <Switch reverse bind:checked={termsAccepted}>
-                    <BodySmall onClick={onShowGuidelines}>
-                        <Translatable
-                            resourceKey={i18nKey("I agree to the OpenChat terms & conditions")} />
-                    </BodySmall>
-                </Switch>
-            </Container>
-
-            {#if error !== undefined}
-                <div class="error">
-                    <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
-                </div>
-            {/if}
+    <Sheet onDismiss={onCloseGuidelines}>
+        <Container gap={"lg"} direction={"vertical"} padding={"xl"}>
+            <Subtitle>OpenChat Terms</Subtitle>
+            <TermsContent />
+            <Button onClick={onCloseGuidelines}>
+                <Translatable resourceKey={i18nKey("register.agree")} />
+            </Button>
         </Container>
-    </Form>
+    </Sheet>
 {/if}
 
-<Button
-    width={"fill"}
-    disabled={!termsAccepted || !usernameValid || !emailValid || busy}
-    loading={checkingUsername || busy}
-    onClick={register}>
-    <Translatable resourceKey={i18nKey("Start my journey")} />
-</Button>
+<Container padding={["md", "zero", "xxl", "zero"]}>
+    {#if badCode}
+        <AlertBox>
+            <h4 class="main">
+                <Translatable resourceKey={i18nKey("register.referralCodeInvalid")} />
+            </h4>
+            <p class="sub">
+                <Translatable resourceKey={i18nKey("register.doYouWantToProceed")} />
+            </p>
+        </AlertBox>
+    {:else}
+        <Form onSubmit={register}>
+            <Container gap={"xl"} direction={"vertical"}>
+                <UsernameInput
+                    {client}
+                    disabled={busy}
+                    originalUsername={$usernameStore ?? ""}
+                    bind:username
+                    bind:usernameValid
+                    bind:errorMsg={error} />
 
-<!-- <div class="footer">
-    <Container gap={"md"} mainAxisAlignment={"end"} crossAxisAlignment={"end"}>
-        {#if badCode}
-            <CommonButton mode={"default"} onClick={clearCodeAndLogout} size={"small_text"}>
-                <Translatable resourceKey={i18nKey("cancel")}></Translatable>
-            </CommonButton>
-        {/if}
+                <Input
+                    error={!emailValid}
+                    disabled={busy}
+                    placeholder={interpolate($_, i18nKey("register.emailPlaceholder"))}
+                    bind:value={email}
+                    minlength={0}
+                    maxlength={254}>
+                    {#snippet subtext()}
+                        <Translatable resourceKey={i18nKey("register.emailRules")} />
+                    {/snippet}
+                </Input>
+
+                {#if referringUser !== undefined}
+                    <UserPill onDeleteUser={deleteUser} userOrGroup={referringUser} />
+                {:else}
+                    <FindUser
+                        placeholderKey={"register.findReferrer"}
+                        {userLookup}
+                        onSelectUser={selectUser} />
+                {/if}
+
+                {#if error !== undefined}
+                    <div class="error">
+                        <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
+                    </div>
+                {/if}
+            </Container>
+        </Form>
+    {/if}
+</Container>
+
+<Container direction={"vertical"} gap={"lg"} padding={["zero", "md"]}>
+    <Container onClick={onShowGuidelines}>
+        <Switch reverse bind:checked={termsAccepted}>
+            <BodySmall onClick={onShowGuidelines}>
+                <Translatable resourceKey={i18nKey("I agree to the OpenChat terms & conditions")} />
+            </BodySmall>
+        </Switch>
     </Container>
-</div> -->
+    <Button
+        width={"fill"}
+        disabled={!termsAccepted || !usernameValid || !emailValid || busy}
+        loading={checkingUsername || busy}
+        onClick={register}>
+        <Translatable resourceKey={i18nKey("Start my journey")} />
+    </Button>
+</Container>

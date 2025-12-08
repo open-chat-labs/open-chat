@@ -16,16 +16,19 @@
         Subtitle,
         transition,
     } from "component-lib";
-    import type { BotMatch, CommunityMatch, OpenChat } from "openchat-client";
     import {
         allUsersStore,
         anonUserStore,
         botState,
         exploreCommunitiesFiltersStore,
+        identityStateStore,
         ModerationFlags,
         offlineStore,
         publish,
         showUnpublishedBots,
+        type BotMatch,
+        type CommunityMatch,
+        type OpenChat,
     } from "openchat-client";
     import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
@@ -68,6 +71,8 @@
     let searchState = $derived<SearchState<CommunityMatch | BotMatch>>(
         view === "communities" ? communitySearchState : botSearchState,
     );
+
+    $inspect($identityStateStore);
 
     function clear() {
         searchState.term = "";
@@ -447,7 +452,7 @@
     </Container>
 </Container>
 
-{#if $anonUserStore}
+{#if $identityStateStore.kind !== "logging_in" && $identityStateStore.kind !== "registering"}
     <AnonFooter>
         <FloatingButton onClick={() => (showingFilters = true)}>
             {#snippet icon(color)}

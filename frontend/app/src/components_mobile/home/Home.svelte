@@ -33,7 +33,6 @@
         communitiesStore,
         currentUserStore,
         defaultChatRules,
-        dimensionsHeight,
         fullWidth,
         identityStateStore,
         localUpdates,
@@ -64,22 +63,16 @@
     import { chitPopup, disableChit } from "../../stores/settings";
     import { toastStore } from "../../stores/toast";
     import { activeVideoCall, incomingVideoCall } from "../../stores/video";
-    import {
-        currentTheme,
-        currentThemeName,
-        preferredDarkThemeName,
-        themeType,
-    } from "../../theme/themes";
+    import { currentThemeName, preferredDarkThemeName, themeType } from "../../theme/themes";
     import { scream } from "../../utils/scream";
     import type { Share } from "../../utils/share";
     import { removeQueryStringParam } from "../../utils/urls";
     import AreYouSure from "../AreYouSure.svelte";
-    import BackgroundLogo from "../BackgroundLogo.svelte";
     import BotBuilderModal from "../bots/BotBuilderModal.svelte";
-    import NativeOnboardModal from "../mobile/NativeOnboardModal.svelte";
     import NotFound from "../NotFound.svelte";
     import OfflineFooter from "../OfflineFooter.svelte";
-    import OnboardModal from "../onboard/OnboardModal.svelte";
+    import NativeOnboardModal from "../onboard/NativeOnboardModal.svelte";
+    // import OnboardModal from "../onboard/OnboardModal.svelte";
     import Overlay from "../Overlay.svelte";
     import SelectChatModal from "../SelectChatModal.svelte";
     import SuspendedModal from "../SuspendedModal.svelte";
@@ -151,8 +144,6 @@
         | { kind: "hall_of_fame" }
         | { kind: "edit_community"; community: CommunitySummary; communityRules: Rules }
         | { kind: "make_proposal"; chat: MultiUserChat; nervousSystem: NervousSystemDetails }
-        | { kind: "registering" }
-        | { kind: "logging_in" }
         | { kind: "not_found" }
         | { kind: "claim_daily_chit" }
         | { kind: "challenge" }
@@ -754,16 +745,20 @@
     );
     let nervousSystem = $derived(client.tryGetNervousSystem(governanceCanisterId));
     // $: nervousSystem = client.tryGetNervousSystem("rrkah-fqaaa-aaaaa-aaaaq-cai");
+    //
+    let showOnboarding = $derived(
+        $identityStateStore.kind === "registering" || $identityStateStore.kind === "logging_in",
+    );
 
     trackedEffect("identity-state", () => {
-        if ($identityStateStore.kind === "registering") {
-            modal = { kind: "registering" };
-        } else if ($identityStateStore.kind === "logging_in") {
-            modal = { kind: "logging_in" };
-        } else if ($identityStateStore.kind === "logged_in" && modal.kind === "registering") {
-            console.log("We are now logged in so we are closing the register modal");
-            closeModal();
-        } else if ($identityStateStore.kind === "challenging") {
+        // if ($identityStateStore.kind === "registering") {
+        //     modal = { kind: "registering" };
+        // } else if ($identityStateStore.kind === "logging_in") {
+        //     modal = { kind: "logging_in" };
+        // if ($identityStateStore.kind === "logged_in" && modal.kind === "registering") {
+        //     console.log("We are now logged in so we are closing the register modal");
+        //     closeModal();
+        if ($identityStateStore.kind === "challenging") {
             modal = { kind: "challenge" };
         }
         if (
@@ -804,13 +799,8 @@
         }
     });
 
-    let bgHeight = $derived($dimensionsHeight * 0.9);
-    let bgClip = $derived((($dimensionsHeight - 32) / bgHeight) * 361);
     let mainClass = $derived.by(() => {
         const cls = [];
-        if ($anonUserStore) {
-            cls.push("anon");
-        }
         if ($offlineStore) {
             cls.push("offline");
         }
@@ -831,11 +821,22 @@
 {/if}
 
 <Container height={"fill"} width={"fill"} supplementalClass={mainClass} tag="main">
-    <LeftPanel />
-    <MiddlePanel {joining} />
+    {#if showOnboarding}
+        {#if client.isNativeAndroid()}
+            <NativeOnboardModal />
+        {:else}
+            <NativeOnboardModal />
+            <!-- <OnboardModal
+            step={modal.kind === "registering" ? "sign_up" : "select_mode"}
+            onClose={closeModal} /> -->
+        {/if}
+    {:else}
+        <LeftPanel />
+        <MiddlePanel {joining} />
+    {/if}
 </Container>
 
-{#if $anonUserStore && $routeStore.kind !== "communities_route"}
+{#if $anonUserStore && $identityStateStore.kind !== "logging_in" && $identityStateStore.kind !== "registering" && $routeStore.kind !== "communities_route"}
     <AnonFooter />
 {/if}
 
@@ -862,7 +863,6 @@
     <Overlay
         dismissible={modal.kind !== "select_chat" &&
             modal.kind !== "not_found" &&
-            modal.kind !== "registering" &&
             modal.kind !== "make_proposal"}
         alignLeft={modal.kind === "select_chat"}
         onClose={closeModal}>
@@ -901,14 +901,6 @@
                 selectedMultiUserChat={modal.chat}
                 nervousSystem={modal.nervousSystem}
                 onClose={closeModal} />
-        {:else if modal.kind === "logging_in" || modal.kind === "registering"}
-            {#if client.isNativeAndroid()}
-                <NativeOnboardModal onClose={closeModal} />
-            {:else}
-                <OnboardModal
-                    step={modal.kind === "registering" ? "sign_up" : "select_mode"}
-                    onClose={closeModal} />
-            {/if}
         {:else if modal.kind === "claim_daily_chit"}
             <DailyChitModal onLeaderboard={leaderboard} onClose={closeModal} />
         {:else if modal.kind === "challenge"}
@@ -919,16 +911,6 @@
             <SuspendModal userId={modal.userId} onClose={closeModal} />
         {/if}
     </Overlay>
-{/if}
-
-{#if $currentTheme.logo}
-    <BackgroundLogo
-        width={`${bgHeight}px`}
-        bottom={"unset"}
-        left={"0"}
-        opacity={"0.05"}
-        skew={"5deg"}
-        viewBox={`0 0 361 ${bgClip}`} />
 {/if}
 
 {#if $rulesAcceptanceStore !== undefined}
@@ -956,10 +938,6 @@
 <style lang="scss">
     :global(.edited-msg) {
         @include font(light, normal, fs-70);
-    }
-
-    :global(main.anon) {
-        margin-bottom: toRem(50);
     }
 
     :global(main.offline) {

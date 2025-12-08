@@ -1,6 +1,6 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { Body, ColourVars, Container, Sheet } from "component-lib";
+    import { Body, ColourVars, Container, Sheet, transition } from "component-lib";
     import { type OpenChat, pageReplace, publish, routeStore } from "openchat-client";
     import { getContext, type Snippet } from "svelte";
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
@@ -53,23 +53,26 @@
     });
 
     function back() {
-        publish("closeModalStack");
-        if ($routeStore.kind === "communities_route") {
-            client.updateIdentityState({ kind: "logging_in" });
-        } else {
-            pageReplace("/communities");
-        }
+        transition(["fade"], () => {
+            publish("closeModalStack");
+            if ($routeStore.kind === "communities_route") {
+                client.updateIdentityState({ kind: "logging_in" });
+            } else {
+                pageReplace("/communities");
+            }
+        });
     }
 </script>
 
 <Sheet transparent animate={false}>
     <Container
         gap={"sm"}
+        overflow={"visible"}
         mainAxisAlignment={children ? "spaceBetween" : "center"}
         supplementalClass={"anon-footer"}
         padding={["lg", "lg", "zero", "lg"]}>
         <Container
-            width={"hug"}
+            width={children ? "fill" : "hug"}
             height={{ size: "3.5rem" }}
             padding={["md", "xl", "md", "sm"]}
             gap={"sm"}

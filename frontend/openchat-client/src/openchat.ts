@@ -8670,6 +8670,7 @@ export class OpenChat {
     }
 
     getDefaultScope(): ChatListScope {
+        console.trace("what's calling this");
         if (anonUserStore.value) return { kind: "chats" };
 
         // sometimes we have to re-direct the user to home route "/"
