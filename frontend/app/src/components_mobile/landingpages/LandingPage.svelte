@@ -92,14 +92,7 @@
                 <DiamondPage />
             {/await}
         {:else if showOnboarding}
-            {#if client.isNativeAndroid()}
-                <NativeOnboardModal />
-            {:else}
-                <NativeOnboardModal />
-                <!-- <OnboardModal
-                step={modal.kind === "registering" ? "sign_up" : "select_mode"}
-                onClose={closeModal} /> -->
-            {/if}
+            <NativeOnboardModal />
         {:else}
             <HomePage on:login={() => client.login()} />
         {/if}

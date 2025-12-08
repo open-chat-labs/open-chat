@@ -822,14 +822,7 @@
 
 <Container height={"fill"} width={"fill"} supplementalClass={mainClass} tag="main">
     {#if showOnboarding}
-        {#if client.isNativeAndroid()}
-            <NativeOnboardModal />
-        {:else}
-            <NativeOnboardModal />
-            <!-- <OnboardModal
-            step={modal.kind === "registering" ? "sign_up" : "select_mode"}
-            onClose={closeModal} /> -->
-        {/if}
+        <NativeOnboardModal />
     {:else}
         <LeftPanel />
         <MiddlePanel {joining} />
