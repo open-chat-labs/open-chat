@@ -57,6 +57,13 @@ export function profileSummaryRoute(_ctx: PageJS.Context): RouteParams {
     };
 }
 
+export function welcomeRoute(_ctx: PageJS.Context): RouteParams {
+    return {
+        kind: "welcome_route",
+        scope: noScope,
+    };
+}
+
 export function walletRoute(_ctx: PageJS.Context): RouteParams {
     return {
         kind: "wallet_route",

@@ -28,7 +28,6 @@
         publish,
         showUnpublishedBots,
         type BotMatch,
-        type CommunityIdentifier,
         type CommunityMatch,
         type OpenChat,
     } from "openchat-client";
@@ -76,8 +75,6 @@
     let searchState = $derived<SearchState<CommunityMatch | BotMatch>>(
         view === "communities" ? communitySearchState : botSearchState,
     );
-
-    $inspect($identityStateStore);
 
     function clear() {
         searchState.term = "";
@@ -232,10 +229,6 @@
 
     function showCommunity(community: CommunityMatch) {
         selectedCommunity = community;
-    }
-
-    function getCommunitySummary(id: CommunityIdentifier) {
-        return client.getCommunitySummary(id);
     }
 </script>
 

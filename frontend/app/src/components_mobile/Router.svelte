@@ -35,6 +35,7 @@
         threadMessageIndexStore,
         threadOpenStore,
         walletRoute,
+        welcomeRoute,
     } from "openchat-client";
     import page from "page";
     import { getContext, onDestroy, onMount, tick, untrack } from "svelte";
@@ -53,6 +54,7 @@
     const bottomBarRoutes: RouteParams["kind"][] = [
         "chat_list_route",
         "selected_community_route",
+        "welcome_route",
         "favourites_route",
         "notifications_route",
         "wallet_route",
@@ -272,6 +274,7 @@
         page("/share", parsePathParams(shareRoute), track, () => (route = Home));
         page("/admin", parsePathParams(adminRoute), track, () => (route = Home));
         page("/profile_summary", parsePathParams(profileSummaryRoute), track, () => (route = Home));
+        page("/welcome", parsePathParams(welcomeRoute), track, () => (route = Home));
         page("/wallet", parsePathParams(walletRoute), track, () => (route = Home));
         page("/notifications", parsePathParams(notificationsRoute), track, () => (route = Home));
         page(

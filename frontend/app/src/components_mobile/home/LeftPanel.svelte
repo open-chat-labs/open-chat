@@ -16,8 +16,10 @@
     import UserProfileSummary from "./user_profile/UserProfileSummary.svelte";
     import ActiveCallSummary from "./video/ActiveCallSummary.svelte";
     import Wallet from "./wallet/Wallet.svelte";
+    import WelcomePage from "./WelcomePage.svelte";
 
     let showProfileSummary = $derived($routeStore.kind === "profile_summary_route");
+    let showWelcome = $derived($routeStore.kind === "welcome_route");
     let showWallet = $derived($routeStore.kind === "wallet_route");
     let showNotifications = $derived($routeStore.kind === "notifications_route");
     let selection = $derived<Selection>(bottomBarSelection());
@@ -47,6 +49,8 @@
             return "profile";
         } else if (showWallet) {
             return "wallet";
+        } else if (showWelcome) {
+            return "communities";
         } else {
             switch ($chatListScopeStore.kind) {
                 case "community":
@@ -58,6 +62,8 @@
             }
         }
     }
+
+    $inspect($routeStore).with(console.trace);
 </script>
 
 <SlidingModals />
@@ -81,6 +87,8 @@
             <Wallet />
         {:else if showProfileSummary}
             <UserProfileSummary />
+        {:else if showWelcome}
+            <WelcomePage />
         {:else}
             <ChatList />
         {/if}

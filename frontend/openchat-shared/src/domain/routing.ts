@@ -35,6 +35,7 @@ export type RouteParams =
     | HotGroupsRoute
     | AdminRoute
     | ProfileSummaryRoute
+    | WelcomeRoute
     | WalletRoute
     | NotificationsRoute;
 
@@ -107,6 +108,10 @@ export type AdminRoute = NoScope & {
 
 export type ProfileSummaryRoute = NoScope & {
     kind: "profile_summary_route";
+};
+
+export type WelcomeRoute = NoScope & {
+    kind: "welcome_route";
 };
 
 export type WalletRoute = NoScope & {

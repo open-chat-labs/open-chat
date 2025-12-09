@@ -96,16 +96,8 @@
             case "communities":
                 const selected = client.selectDefaultCommunity();
                 if (!selected) {
-                    console.log("is this happening");
-                    // we have to decide what to do here
-                    page("/communities");
+                    page("/welcome");
                 }
-                // const selected = client.selectDefaultCommunity();
-                // if (!selected) {
-                //     // this probably means that we are not a member of any communities so
-                //     // let's go the the /communities route
-                //     page("/communities");
-                // }
                 break;
             case "favourites":
                 page("/favourite");
