@@ -6,7 +6,6 @@
         ChannelIdentifier,
         ChatIdentifier,
         CommunityIdentifier,
-        CommunitySummary,
         DirectChatIdentifier,
         EnhancedAccessGate,
         EnhancedReplyContext,
@@ -20,7 +19,6 @@
         PubSubEvents,
         ResourceKey,
         RouteParams,
-        Rules,
     } from "openchat-client";
     import {
         allUsersStore,
@@ -30,10 +28,7 @@
         chatsInitialisedStore,
         chatSummariesListStore,
         chatSummariesStore,
-        communitiesStore,
         currentUserStore,
-        defaultChatRules,
-        fullWidth,
         identityStateStore,
         localUpdates,
         offlineStore,
@@ -47,10 +42,7 @@
         routeForScope,
         routeStore,
         captureRulesAcceptanceStore as rulesAcceptanceStore,
-        selectedChatIdStore,
         selectedChatSummaryStore,
-        selectedCommunityRulesStore,
-        setRightPanelHistory,
         subscribe,
         suspendedUserStore,
     } from "openchat-client";
@@ -58,13 +50,10 @@
     import { getContext, onMount, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
-    import { createCandidateCommunity } from "../../stores/community";
     import { messageToForwardStore } from "../../stores/messageToForward";
     import { chitPopup, disableChit } from "../../stores/settings";
     import { toastStore } from "../../stores/toast";
     import { activeVideoCall, incomingVideoCall } from "../../stores/video";
-    import { currentThemeName, preferredDarkThemeName, themeType } from "../../theme/themes";
-    import { scream } from "../../utils/scream";
     import type { Share } from "../../utils/share";
     import { removeQueryStringParam } from "../../utils/urls";
     import AreYouSure from "../AreYouSure.svelte";
@@ -141,10 +130,8 @@
         | { kind: "no_access" }
         | { kind: "gate_check_failed"; gates: EnhancedAccessGate[] }
         | { kind: "hall_of_fame" }
-        | { kind: "edit_community"; community: CommunitySummary; communityRules: Rules }
         | { kind: "make_proposal"; chat: MultiUserChat; nervousSystem: NervousSystemDetails }
         | { kind: "not_found" }
-        | { kind: "claim_daily_chit" }
         | { kind: "challenge" }
         | {
               kind: "evaluating_access_gates";
@@ -164,19 +151,14 @@
     onMount(() => {
         const unsubEvents = [
             subscribe("chatWith", chatWith),
-            subscribe("showInviteGroupUsers", showInviteGroupUsers),
             subscribe("replyPrivatelyTo", replyPrivatelyTo),
             subscribe("upgrade", upgrade),
             subscribe("verifyHumanity", verifyHumanity),
             subscribe("deleteCommunity", onTriggerConfirm),
-            subscribe("editCommunity", editCommunity),
             subscribe("leaveCommunity", onTriggerConfirm),
             subscribe("makeProposal", showMakeProposalModal),
             subscribe("leaveGroup", onTriggerConfirm),
-            subscribe("profile", showProfile),
-            subscribe("claimDailyChit", claimDailyChit),
             subscribe("joinGroup", joinGroup),
-            subscribe("createCommunity", createCommunity),
             subscribe("unarchiveChat", unarchiveChat),
             subscribe("forward", forwardMessage),
             subscribe("toggleMuteNotifications", toggleMuteNotifications),
@@ -185,7 +167,6 @@
             subscribe("userSuspensionChanged", () => window.location.reload()),
             subscribe("selectedChatInvalid", selectedChatInvalid),
             subscribe("sendMessageFailed", sendMessageFailed),
-            subscribe("summonWitch", summonWitch),
             subscribe("registerBot", registerBot),
             subscribe("updateBot", updateBot),
             subscribe("removeBot", removeBot),
@@ -240,20 +221,6 @@
         modal = { kind: "remove_bot" };
     }
 
-    function summonWitch() {
-        const isHalloweenTheme = $currentThemeName === "halloween";
-        if (!isHalloweenTheme) {
-            themeType.set("dark");
-            preferredDarkThemeName.set("halloween");
-        }
-        document.body.classList.add("witch");
-        scream.currentTime = 0;
-        scream.play();
-        window.setTimeout(() => {
-            document.body.classList.remove("witch");
-        }, 2000);
-    }
-
     function remoteVideoCallEnded(messageId: bigint) {
         if ($incomingVideoCall?.messageId === messageId) {
             incomingVideoCall.set(undefined);
@@ -275,10 +242,10 @@
 
     async function routeChange(initialised: boolean, route: RouteParams): Promise<void> {
         // wrap the whole thing in untrack because we don't want it to react to everything it reads in here
+        console.log("Route change: ", route, initialised);
         untrack(async () => {
             // wait until we have loaded the chats
             if (initialised) {
-                client.filterRightPanelHistory((state) => state.kind !== "community_filters");
                 if (
                     $anonUserStore &&
                     client.isChatListRoute(route) &&
@@ -289,39 +256,27 @@
                     return;
                 }
 
+                if (client.isHomeRoute(route) && $anonUserStore) {
+                    showOnboarding = true;
+                    return;
+                }
+
                 if (client.setChatListScopeAndRedirect(route)) {
                     return;
                 }
 
-                if (client.isHomeRoute(route)) {
-                    filterChatSpecificRightPanelStates();
-                } else if (client.isCommunitiesRoute(route)) {
-                    setRightPanelHistory($fullWidth ? [{ kind: "community_filters" }] : []);
-                } else {
-                    // any other route with no associated chat therefore we must clear any selected chat and potentially close the right panel
-                    if (client.isShareRoute(route)) {
-                        share = {
-                            title: route.title,
-                            text: route.text,
-                            url: route.url,
-                            files: [],
-                        };
-                        pageReplace(routeForScope(client.getDefaultScope()));
-                        modal = { kind: "select_chat" };
-                    }
-                }
-
-                if (modal?.kind === "claim_daily_chit") {
-                    modal = { kind: "none" };
+                if (client.isShareRoute(route)) {
+                    share = {
+                        title: route.title,
+                        text: route.text,
+                        url: route.url,
+                        files: [],
+                    };
+                    pageReplace(routeForScope(client.getDefaultScope()));
+                    modal = { kind: "select_chat" };
                 }
             }
         });
-    }
-
-    // Note: very important (and hacky) that this is hidden in a function rather than inline in the top level reactive
-    // statement because we don't want that reactive statement to execute in reponse to changes in rightPanelHistory :puke:
-    function filterChatSpecificRightPanelStates() {
-        client.filterRightPanelHistory((panel) => panel.kind === "user_profile");
     }
 
     function leaderboard() {
@@ -380,9 +335,7 @@
             case "leave_community":
                 return leaveCommunity(confirmActionEvent.communityId);
             case "delete_community":
-                return deleteCommunity(confirmActionEvent.communityId).then((_) => {
-                    setRightPanelHistory([]);
-                });
+                return deleteCommunity(confirmActionEvent.communityId);
             default:
                 return Promise.reject();
         }
@@ -444,16 +397,6 @@
         page(routeForChatIdentifier(chat ? $chatListScopeStore.kind : "chats", chatId));
     }
 
-    function showInviteGroupUsers(show: boolean) {
-        if ($selectedChatIdStore !== undefined) {
-            if (show) {
-                setRightPanelHistory([{ kind: "invite_group_users" }]);
-            } else {
-                client.pushRightPanelHistory({ kind: "invite_group_users" });
-            }
-        }
-    }
-
     function replyPrivatelyTo(context: EnhancedReplyContext) {
         if (context.sender === undefined) return;
 
@@ -480,10 +423,6 @@
     function forwardMessage(message: Message) {
         messageToForward = message;
         modal = { kind: "select_chat" };
-    }
-
-    function showProfile() {
-        setRightPanelHistory([{ kind: "user_profile" }]);
     }
 
     function showMakeProposalModal() {
@@ -667,26 +606,6 @@
         return true;
     }
 
-    function createCommunity() {
-        const maxIndex = $communitiesStore.reduce(
-            (m, [_, c]) => (c.membership.index > m ? c.membership.index : m),
-            0,
-        );
-        modal = {
-            kind: "edit_community",
-            community: createCandidateCommunity("", maxIndex + 1),
-            communityRules: defaultChatRules("community"),
-        };
-    }
-
-    function editCommunity(community: CommunitySummary) {
-        modal = {
-            kind: "edit_community",
-            community,
-            communityRules: $selectedCommunityRulesStore ?? defaultChatRules("community"),
-        };
-    }
-
     function successfulImport(id: ChannelIdentifier) {
         page(`/community/${id.communityId}`);
     }
@@ -726,10 +645,6 @@
         modal = { kind: "verify_humanity" };
     }
 
-    function claimDailyChit() {
-        modal = { kind: "claim_daily_chit" };
-    }
-
     let confirmMessage = $derived(getConfirmMessage(confirmActionEvent));
     let selectedMultiUserChat = $derived(
         $selectedChatSummaryStore?.kind === "group_chat" ||
@@ -744,37 +659,12 @@
     );
     let nervousSystem = $derived(client.tryGetNervousSystem(governanceCanisterId));
     // $: nervousSystem = client.tryGetNervousSystem("rrkah-fqaaa-aaaaa-aaaaq-cai");
-    //
-    // let showOnboarding = $derived(
-    //     $identityStateStore.kind === "loading_user" ||
-    //         $identityStateStore.kind === "registering" ||
-    //         $identityStateStore.kind === "logging_in",
-    // );
 
-    let showOnboarding = $state(false);
-    $effect(() => {
-        if (
-            ($identityStateStore.kind === "loading_user" && $identityStateStore.registering) ||
-            $identityStateStore.kind === "registering" ||
-            $identityStateStore.kind === "logging_in"
-        ) {
-            showOnboarding = true;
-        }
-        if ($identityStateStore.kind === "logged_in" && showOnboarding) {
-            showOnboarding = false;
-        }
-    });
+    let showOnboarding = $derived(client.isHomeRoute($routeStore) && $anonUserStore);
 
-    $inspect("Home", $identityStateStore).with(console.trace);
+    $inspect("Home", $identityStateStore, $chatsInitialisedStore).with(console.trace);
 
     trackedEffect("identity-state", () => {
-        // if ($identityStateStore.kind === "registering") {
-        //     modal = { kind: "registering" };
-        // } else if ($identityStateStore.kind === "logging_in") {
-        //     modal = { kind: "logging_in" };
-        // if ($identityStateStore.kind === "logged_in" && modal.kind === "registering") {
-        //     console.log("We are now logged in so we are closing the register modal");
-        //     closeModal();
         if ($identityStateStore.kind === "challenging") {
             modal = { kind: "challenge" };
         }
@@ -806,12 +696,6 @@
             if ($querystringStore.get("hof") !== null) {
                 modal = { kind: "hall_of_fame" };
                 pageReplace(removeQueryStringParam("hof"));
-            }
-            const usergroup = $querystringStore.get("usergroup");
-            if (usergroup !== null) {
-                const userGroupId = Number(usergroup);
-                setRightPanelHistory([{ kind: "show_community_members", userGroupId }]);
-                pageReplace(removeQueryStringParam("usergroup"));
             }
         }
     });
@@ -846,7 +730,7 @@
     {/if}
 </Container>
 
-{#if $anonUserStore && $identityStateStore.kind !== "logging_in" && $identityStateStore.kind !== "registering" && $routeStore.kind !== "communities_route"}
+{#if $anonUserStore && !showOnboarding && $routeStore.kind !== "communities_route"}
     <AnonFooter />
 {/if}
 

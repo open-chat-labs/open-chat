@@ -6,7 +6,6 @@
         OpenChat,
         type RouteParams,
         adminRoute,
-        blogRoute,
         chatIdentifiersEqual,
         chatListRoute,
         chatListScopeStore,
@@ -38,18 +37,11 @@
         welcomeRoute,
     } from "openchat-client";
     import page from "page";
-    import { getContext, onDestroy, onMount, tick, untrack } from "svelte";
-    import Home, { type HomeType } from "./home/HomeRoute.svelte";
-    import LandingPage, { type LandingPageType } from "./landingpages/LandingPage.svelte";
-    import NotFound, { type NotFoundType } from "./NotFound.svelte";
+    import { type Component, getContext, onDestroy, onMount, tick, untrack } from "svelte";
+    import Home from "./home/HomeRoute.svelte";
+    import NotFound from "./NotFound.svelte";
 
     const client = getContext<OpenChat>("client");
-
-    interface Props {
-        showLandingPage: boolean;
-    }
-
-    let { showLandingPage }: Props = $props();
 
     const bottomBarRoutes: RouteParams["kind"][] = [
         "chat_list_route",
@@ -110,7 +102,7 @@
         return nextIdx > currIdx ? "slide_left" : "slide_right";
     }
 
-    let route: HomeType | LandingPageType | NotFoundType | undefined = $state(undefined);
+    let route: Component | undefined = $state(undefined);
 
     function parsePathParams(fn: (ctx: PageJS.Context) => RouteParams) {
         return (ctx: PageJS.Context, next: () => any) => {
@@ -139,61 +131,6 @@
     }
 
     onMount(() => {
-        page(
-            "/home",
-            parsePathParams(() => ({ kind: "home_landing_route", scope: { kind: "none" } })),
-            track,
-            () => (route = LandingPage),
-        );
-        page(
-            "/features",
-            parsePathParams(() => ({ kind: "features_route", scope: { kind: "none" } })),
-            track,
-            () => (route = LandingPage),
-        );
-        page(
-            "/roadmap",
-            parsePathParams(() => ({ kind: "roadmap_route", scope: { kind: "none" } })),
-            track,
-            () => (route = LandingPage),
-        );
-        page("/blog/:slug?", parsePathParams(blogRoute), track, () => (route = LandingPage));
-        page(
-            "/whitepaper",
-            parsePathParams(() => ({ kind: "whitepaper_route", scope: { kind: "none" } })),
-            track,
-            () => (route = LandingPage),
-        );
-        page(
-            "/guidelines",
-            parsePathParams(() => ({ kind: "guidelines_route", scope: { kind: "none" } })),
-            track,
-            () => (route = LandingPage),
-        );
-        page(
-            "/terms",
-            parsePathParams(() => ({ kind: "terms_route", scope: { kind: "none" } })),
-            track,
-            () => (route = LandingPage),
-        );
-        page(
-            "/faq",
-            parsePathParams(() => ({ kind: "faq_route", scope: { kind: "none" } })),
-            track,
-            () => (route = LandingPage),
-        );
-        page(
-            "/diamond",
-            parsePathParams(() => ({ kind: "diamond_route", scope: { kind: "none" } })),
-            track,
-            () => (route = LandingPage),
-        );
-        page(
-            "/architecture",
-            parsePathParams(() => ({ kind: "architecture_route", scope: { kind: "none" } })),
-            track,
-            () => (route = LandingPage),
-        );
         // this is for explore mode
         page("/communities", parsePathParams(communitesRoute), track, () => (route = Home));
         // global direct chat selected
@@ -424,5 +361,5 @@
 
 {#if route !== undefined}
     {@const RouteComponent = route}
-    <RouteComponent {showLandingPage} />
+    <RouteComponent />
 {/if}

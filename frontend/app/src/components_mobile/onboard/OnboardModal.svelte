@@ -93,10 +93,10 @@
 
     function onCreatedUser(user: CreatedUser) {
         client.onRegisteredUser(user);
+        page("/welcome");
     }
 
     function explore() {
-        client.updateIdentityState({ kind: "anon" });
         page("/communities");
     }
 </script>

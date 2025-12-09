@@ -8242,7 +8242,7 @@ export class OpenChat {
                 communityId: "dgegb-daaaa-aaaar-arlhq-cai",
             });
         }
-        return undefined;
+        return Promise.resolve(undefined);
     }
 
     async getCommunitySummary(id: CommunityIdentifier): Promise<CommunitySummary | undefined> {
@@ -8692,7 +8692,7 @@ export class OpenChat {
     }
 
     getDefaultScope(): ChatListScope {
-        if (anonUserStore.value) return { kind: "chats" };
+        if (anonUserStore.value) return { kind: "none" };
 
         // sometimes we have to re-direct the user to home route "/"
         // However, with communities enabled it is not clear what this means

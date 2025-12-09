@@ -2,7 +2,6 @@
     import "@styles/global.scss";
 
     import "@i18n/i18n";
-    import { reviewingTranslations } from "@i18n/i18n";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import { detectNeedsSafeInset, setupKeyboardTracking } from "@src/utils/safe_area";
     import { rtlStore } from "@stores/rtl";
@@ -16,13 +15,11 @@
         expectPushNotifications,
     } from "@utils/native/notification_channels";
     import "@utils/scream";
-    import { isLandingPageRoute } from "@utils/urls";
     import { portalState } from "component-lib";
     import {
         type ChatIdentifier,
         OpenChat,
         type VideoCallType,
-        anonUserStore,
         botState,
         chatListScopeStore,
         fontSize,
@@ -30,7 +27,6 @@
         inititaliseLogger,
         routeForChatIdentifier,
         routeForScope,
-        routeStore,
         subscribe,
     } from "openchat-client";
     import page from "page";
@@ -103,11 +99,6 @@
 
     // I can't (yet) find a way to avoid using "any" here. Will try to improve but need to commit this crime for the time being
     let videoCallElement: any;
-    let landingPageRoute = $derived(isLandingPageRoute($routeStore));
-    let homeRoute = $derived($routeStore.kind === "home_route");
-    let showLandingPage = $derived(
-        landingPageRoute || (homeRoute && $identityStateStore.kind === "anon" && $anonUserStore),
-    );
 
     trackedEffect("rtl", () => {
         // subscribe to the rtl store so that we can set the overall page direction at the right time
@@ -263,7 +254,6 @@
 <Head />
 
 <ActiveCall
-    {showLandingPage}
     onClearSelection={() => page(routeForScope($chatListScopeStore))}
     bind:this={videoCallElement} />
 
@@ -273,9 +263,10 @@
 
 <NotificationsBar />
 
+<!-- should we perhaps just _always_ render the router -->
 {#if $identityStateStore.kind === "anon" || $identityStateStore.kind === "logging_in" || $identityStateStore.kind === "registering" || $identityStateStore.kind === "logged_in" || $identityStateStore.kind === "loading_user" || $identityStateStore.kind === "challenging"}
-    {#if !$isLoading || $reviewingTranslations}
-        <Router {showLandingPage} />
+    {#if !$isLoading}
+        <Router />
     {/if}
 {/if}
 

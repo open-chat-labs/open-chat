@@ -1,10 +1,5 @@
-<script module lang="ts">
-    export type NotFoundType = Component;
-</script>
-
 <script lang="ts">
     import { mobileWidth } from "openchat-client";
-    import type { Component } from "svelte";
     import { i18nKey } from "../i18n/i18n";
     import Button from "./Button.svelte";
     import ButtonGroup from "./ButtonGroup.svelte";

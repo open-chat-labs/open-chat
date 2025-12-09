@@ -37,9 +37,12 @@
     let ocCommunity = $state<CommunitySummary>();
     let highlightCommunity = $derived(ocCommunity ?? communitySearchState.results[0]);
 
-    onMount(async () => {
+    onMount(() => {
         searchCommunities();
-        ocCommunity = await client.getOpenChatCommunity();
+        client.getOpenChatCommunity().then((c) => (ocCommunity = c));
+        return () => {
+            communitySearchState.reset();
+        };
     });
 
     function searchCommunities() {

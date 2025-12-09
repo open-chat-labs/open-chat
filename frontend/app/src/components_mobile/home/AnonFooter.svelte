@@ -1,12 +1,11 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { Body, ColourVars, Container, Sheet, transition } from "component-lib";
-    import { type OpenChat, pageReplace, publish, routeStore } from "openchat-client";
-    import { getContext, type Snippet } from "svelte";
+    import { pageReplace, publish, routeStore } from "openchat-client";
+    import page from "page";
+    import { type Snippet } from "svelte";
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
     import MulticolourText, { type TextPart } from "../MulticolourText.svelte";
-
-    const client = getContext<OpenChat>("client");
 
     interface Props {
         children?: Snippet;
@@ -56,7 +55,7 @@
         transition(["fade"], () => {
             publish("closeModalStack");
             if ($routeStore.kind === "communities_route") {
-                client.updateIdentityState({ kind: "logging_in" });
+                page("/");
             } else {
                 pageReplace("/communities");
             }
