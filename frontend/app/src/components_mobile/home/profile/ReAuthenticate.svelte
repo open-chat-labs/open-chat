@@ -177,7 +177,7 @@
         <ChooseSignInOption mode={"signin"} bind:emailInvalid bind:email onLogin={login} />
     {:else if authStep === "choose_eth_wallet"}
         <div class="eth-options">
-            {#await import("../SigninWithEth.svelte")}
+            {#await import("../SignInWithEth.svelte")}
                 <div class="loading">...</div>
             {:then { default: SigninWithEth }}
                 <SigninWithEth
@@ -187,7 +187,7 @@
         </div>
     {:else if authStep === "choose_sol_wallet"}
         <div class="sol-options">
-            {#await import("../SigninWithSol.svelte")}
+            {#await import("../SignInWithSol.svelte")}
                 <div class="loading">...</div>
             {:then { default: SigninWithSol }}
                 <SigninWithSol
