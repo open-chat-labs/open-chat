@@ -1,11 +1,20 @@
 <script lang="ts">
     import { flattenGateConfig, gateLabel } from "@src/utils/access";
-    import { Avatar, Body, BodySmall, Chip, ColourVars, Container, Title } from "component-lib";
+    import {
+        Avatar,
+        Body,
+        BodySmall,
+        Chip,
+        ColourVars,
+        Container,
+        ReadMore,
+        Title,
+    } from "component-lib";
     import type { AccessGateConfig, DataContent, OpenChat } from "openchat-client";
     import { ModerationFlags } from "openchat-client";
     import { getContext } from "svelte";
     import Check from "svelte-material-icons/Check.svelte";
-    import Pound from "svelte-material-icons/Pound.svelte";
+    import Translate from "svelte-material-icons/Translate.svelte";
     import { i18nKey, supportedLanguagesByCode } from "../../../../i18n/i18n";
     import Translatable from "../../../Translatable.svelte";
     import WithVerifiedBadge from "../../../icons/WithVerifiedBadge.svelte";
@@ -72,7 +81,21 @@
     direction={"vertical"}>
     <IntersectionObserver>
         {#snippet children(intersecting)}
-            <CommunityBanner {intersecting} square={header} {banner}></CommunityBanner>
+            <CommunityBanner {intersecting} square={header} {banner}>
+                <Container
+                    pos={{ bottom: "sm", right: "sm" }}
+                    width={"hug"}
+                    crossAxisAlignment={"center"}
+                    gap={"xs"}
+                    borderRadius={"md"}
+                    padding={["xs", "md"]}
+                    background={ColourVars.background0}>
+                    <Translate color={ColourVars.primaryLight} />
+                    <BodySmall colour={"primaryLight"}>
+                        {supportedLanguagesByCode[language]?.name}
+                    </BodySmall>
+                </Container>
+            </CommunityBanner>
         {/snippet}
     </IntersectionObserver>
     <Container
@@ -97,22 +120,18 @@
                 <BodySmall colour={"textSecondary"}>
                     <Container gap={"xs"}>
                         {memberCount.toLocaleString()} members
-                        <span>.</span>
-                        {supportedLanguagesByCode[language]?.name}
+                        <span>//</span>
+                        {channelCount} channels
                     </Container>
                 </BodySmall>
             </Container>
         </Container>
-        <Body fontWeight={"light"}>
-            <Markdown inline={false} text={description} />
-        </Body>
+        <ReadMore>
+            <Body fontWeight={"light"}>
+                <Markdown inline={false} text={description} />
+            </Body>
+        </ReadMore>
         <Container gap={"sm"} wrap>
-            <Chip mode={"default"}>
-                {#snippet icon(color)}
-                    <Pound {color} />
-                {/snippet}
-                {channelCount.toLocaleString()} channels
-            </Chip>
             {#each flagsArray as flag}
                 <Chip mode={"default"}>
                     <div class="flag"><Translatable resourceKey={i18nKey(flag)} /></div>

@@ -1,12 +1,12 @@
 <script lang="ts">
     import type { DataContent, OpenChat } from "openchat-client";
-    import { getContext } from "svelte";
+    import { getContext, type Snippet } from "svelte";
 
     interface Props {
         banner: DataContent;
         square?: boolean;
         intersecting?: boolean;
-        children?: import("svelte").Snippet;
+        children?: Snippet;
     }
 
     let { banner, square = false, intersecting = false, children }: Props = $props();

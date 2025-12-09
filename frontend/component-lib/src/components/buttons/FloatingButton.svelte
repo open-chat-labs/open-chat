@@ -1,13 +1,6 @@
 <script lang="ts">
-    import { ColourVars, type SpacingSize, Spinner, sizeToCssVar } from "component-lib";
+    import { ColourVars, posToStyle, Spinner, type Pos } from "component-lib";
     import { type Snippet } from "svelte";
-
-    type Pos = {
-        top?: SpacingSize;
-        bottom?: SpacingSize;
-        left?: SpacingSize;
-        right?: SpacingSize;
-    };
 
     interface Props {
         onClick?: (e: MouseEvent) => void;
@@ -17,23 +10,6 @@
         loading?: boolean;
     }
     let { icon, onClick, disabled = false, pos, loading = false }: Props = $props();
-
-    function posToStyle(pos?: Pos) {
-        if (pos === undefined) return "";
-        const keys: (keyof Pos)[] = ["top", "right", "bottom", "left"];
-        return keys
-            .reduce(
-                (res, key) => {
-                    const val = pos[key];
-                    if (val !== undefined) {
-                        res.push(`${key}: ${sizeToCssVar(val)}`);
-                    }
-                    return res;
-                },
-                ["position: absolute"] as string[],
-            )
-            .join("; ");
-    }
 </script>
 
 <button

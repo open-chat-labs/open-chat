@@ -8235,6 +8235,21 @@ export class OpenChat {
         }
     }
 
+    async getCommunitySummary(id: CommunityIdentifier): Promise<CommunitySummary | undefined> {
+        const community = communitiesStore.value.get(id);
+        if (community) return community;
+
+        const resp = await this.#sendRequest({
+            kind: "getCommunitySummary",
+            communityId: id.communityId,
+        });
+        if ("id" in resp) {
+            return resp;
+        } else {
+            return undefined;
+        }
+    }
+
     async setSelectedCommunity(id: CommunityIdentifier): Promise<boolean> {
         let community = communitiesStore.value.get(id);
         let preview = false;
@@ -8249,11 +8264,8 @@ export class OpenChat {
                 await this.setCommunityReferral(id, referredBy);
             }
 
-            const resp = await this.#sendRequest({
-                kind: "getCommunitySummary",
-                communityId: id.communityId,
-            });
-            if ("id" in resp) {
+            const resp = await this.getCommunitySummary(id);
+            if (resp !== undefined) {
                 // Make the community appear at the top of the list
                 resp.membership.index = nextCommunityIndexStore.value;
                 community = resp;

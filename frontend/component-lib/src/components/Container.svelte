@@ -9,6 +9,7 @@
         getGapCss,
         getPaddingCss,
         menuCloser,
+        posToStyle,
         scrollLimits,
         swipe,
         type BorderWidthSize,
@@ -16,6 +17,7 @@
         type Direction,
         type MainAxisAlignment,
         type Padding,
+        type Pos,
         type Radius,
         type SizeMode,
         type SpacingSize,
@@ -82,6 +84,7 @@
         reverse?: boolean;
         data_id?: string; //todo find a better way to do this
         data_index?: string; // tod fine a better way to do this
+        pos?: Pos;
     }
 
     let {
@@ -125,6 +128,7 @@
         reverse = false,
         data_id,
         data_index,
+        pos,
     }: Props = $props();
 
     void clientHeight;
@@ -161,7 +165,9 @@
               : "",
     );
     let style = $derived(
-        `overflow: ${overflow}; ${wrapCss} ${backgroundCss} box-shadow: ${shadow}; max-width: ${maxWidth}; max-height: ${maxHeight}; min-width: ${minWidth}; min-height: ${minHeight}; ${alignmentCss}; ${colourCss}; ${heightCss}; ${widthCss}; ${borderStyleCss}; ${borderRadiusCss}; ${borderWidthCss}; ${paddingCss}; ${gapCss};`,
+        `${posToStyle(
+            pos,
+        )} overflow: ${overflow}; ${wrapCss} ${backgroundCss} box-shadow: ${shadow}; max-width: ${maxWidth}; max-height: ${maxHeight}; min-width: ${minWidth}; min-height: ${minHeight}; ${alignmentCss}; ${colourCss}; ${heightCss}; ${widthCss}; ${borderStyleCss}; ${borderRadiusCss}; ${borderWidthCss}; ${paddingCss}; ${gapCss};`,
     );
     // TODO I think it might be nice to do a lot of this flex sizing with classes rather than inline styles
     // although I'm not sure I can say *why*

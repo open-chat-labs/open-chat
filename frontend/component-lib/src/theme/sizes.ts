@@ -1,5 +1,12 @@
 import { CssVariable } from "./variable";
 
+export type Pos = {
+    top?: SpacingSize;
+    bottom?: SpacingSize;
+    left?: SpacingSize;
+    right?: SpacingSize;
+};
+
 export class IconSize {
     constructor(
         public xs: Rem,
@@ -251,4 +258,23 @@ export class Rem extends Unit {
     toString(): string {
         return `${this.val}rem`;
     }
+}
+
+export function posToStyle(pos?: Pos) {
+    if (pos === undefined) return "";
+    const keys: (keyof Pos)[] = ["top", "right", "bottom", "left"];
+    return (
+        keys
+            .reduce(
+                (res, key) => {
+                    const val = pos[key];
+                    if (val !== undefined) {
+                        res.push(`${key}: ${sizeToCssVar(val)}`);
+                    }
+                    return res;
+                },
+                ["position: absolute"] as string[],
+            )
+            .join("; ") + ";"
+    );
 }

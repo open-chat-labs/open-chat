@@ -3,6 +3,7 @@
         Avatar,
         Body,
         BodySmall,
+        Button,
         Chip,
         ColourVars,
         CommonButton,
@@ -27,15 +28,18 @@
         publish,
         showUnpublishedBots,
         type BotMatch,
+        type CommunityIdentifier,
         type CommunityMatch,
         type OpenChat,
     } from "openchat-client";
+    import page from "page";
     import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import Account from "svelte-material-icons/AccountGroupOutline.svelte";
     import ArrowUp from "svelte-material-icons/ArrowUp.svelte";
     import LoadMore from "svelte-material-icons/CloudDownloadOutline.svelte";
     import CloudOffOutline from "svelte-material-icons/CloudOffOutline.svelte";
+    import EyeOutline from "svelte-material-icons/EyeOutline.svelte";
     import Filter from "svelte-material-icons/FilterVariant.svelte";
     import RobotSolid from "svelte-material-icons/Robot.svelte";
     import Robot from "svelte-material-icons/RobotOutline.svelte";
@@ -55,7 +59,7 @@
     import NothingToSee from "../../NothingToSee.svelte";
     import { updateCommunityState } from "../createOrUpdate/community.svelte";
     import BotFilters from "./BotFilters.svelte";
-    import CommunityCardLink from "./CommunityCardLink.svelte";
+    import CommunityCard from "./CommunityCard.svelte";
     import CommunityFilters from "./Filters.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -67,6 +71,7 @@
     let initialised = $state(false);
     let view = $state<View>("communities");
     let showingFilters = $state(false);
+    let selectedCommunity = $state<CommunityMatch>();
 
     let searchState = $derived<SearchState<CommunityMatch | BotMatch>>(
         view === "communities" ? communitySearchState : botSearchState,
@@ -220,7 +225,45 @@
         }
         return f;
     }
+
+    function goToCommunity(community: CommunityMatch) {
+        page(`/community/${community.id.communityId}`);
+    }
+
+    function showCommunity(community: CommunityMatch) {
+        selectedCommunity = community;
+    }
+
+    function getCommunitySummary(id: CommunityIdentifier) {
+        return client.getCommunitySummary(id);
+    }
 </script>
+
+{#if selectedCommunity !== undefined}
+    <Sheet onDismiss={() => (selectedCommunity = undefined)}>
+        <Container padding={"lg"} direction={"vertical"} gap={"md"}>
+            {@const community = selectedCommunity}
+            <CommunityCard
+                id={selectedCommunity.id.communityId}
+                name={selectedCommunity.name}
+                description={selectedCommunity.description}
+                avatar={selectedCommunity.avatar}
+                banner={selectedCommunity.banner}
+                memberCount={selectedCommunity.memberCount}
+                channelCount={selectedCommunity.channelCount}
+                header={false}
+                gateConfig={selectedCommunity.gateConfig}
+                language={selectedCommunity.primaryLanguage}
+                flags={selectedCommunity.flags}
+                verified={selectedCommunity.verified} />
+            <Button onClick={() => goToCommunity(community)}>
+                {#snippet icon(color)}
+                    <EyeOutline {color} />
+                {/snippet}
+                View community</Button>
+        </Container>
+    </Sheet>
+{/if}
 
 {#if showingFilters}
     <Sheet onDismiss={() => (showingFilters = false)}>
@@ -269,7 +312,10 @@
 {/snippet}
 
 {#snippet communityCard(community: CommunityMatch)}
-    <Container padding={["sm", "zero"]} direction={"vertical"}>
+    <Container
+        onClick={() => showCommunity(community)}
+        padding={["sm", "zero"]}
+        direction={"vertical"}>
         <Container overflow={"hidden"} gap={"md"}>
             <Avatar
                 radius={"lg"}
@@ -419,9 +465,7 @@
                     direction={"vertical"}
                     gap={"lg"}>
                     {#each communitySearchState.results as community (community.id.communityId)}
-                        <CommunityCardLink url={`/community/${community.id.communityId}`}>
-                            {@render communityCard(community)}
-                        </CommunityCardLink>
+                        {@render communityCard(community)}
                     {/each}
                 </Container>
             {:else}
