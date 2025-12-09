@@ -450,7 +450,7 @@ body.native-android {
     background: var(--background-0);
 
     // Status bar on Android devices
-    &:before {
+    &:not(.onboarding):before {
         content: "";
         position: fixed;
         top: 0;
@@ -464,7 +464,7 @@ body.native-android {
     // We need to adjust the main content to account for the status bar height!
     // This is a workaround for the Android status bar issue
     // where the content is pushed down by the status bar height.
-    &:not(.landing-page) > main {
+    &:not(.landing-page, .onboarding) > main {
         // height: calc(100vh - var(--status-bar-height));
         // we also need to account for the safe area at the bottom
         padding-top: var(--status-bar-height) !important;

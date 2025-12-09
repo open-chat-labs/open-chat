@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { i18nKey, interpolate, setLocale } from "@src/i18n/i18n";
+    import { i18nKey, interpolate } from "@src/i18n/i18n";
     import {
         Body,
         BodySmall,
@@ -13,8 +13,8 @@
     import { OpenChat, type CreatedUser } from "openchat-client";
     import { ErrorCode } from "openchat-shared";
     import page from "page";
-    import { getContext } from "svelte";
-    import { _, locale } from "svelte-i18n";
+    import { getContext, onMount } from "svelte";
+    import { _ } from "svelte-i18n";
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import Markdown from "../home/Markdown.svelte";
@@ -33,10 +33,12 @@
     let linkingInProgress = $state(false);
     let error: string | undefined = $state(undefined);
     let signUpError: string | undefined = $state(undefined);
-    let selectedLocale = $state(($locale as string).substring(0, 2));
 
-    $effect(() => {
-        setLocale(selectedLocale);
+    onMount(() => {
+        document.body.classList.add("onboarding");
+        return () => {
+            document.body.classList.remove("onboarding");
+        };
     });
 
     function signIn() {
