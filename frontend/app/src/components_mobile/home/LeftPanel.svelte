@@ -62,8 +62,6 @@
             }
         }
     }
-
-    $inspect($routeStore).with(console.trace);
 </script>
 
 <SlidingModals />

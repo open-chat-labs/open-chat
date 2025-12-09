@@ -29,6 +29,7 @@
         background-position: center center;
         border-radius: var(--rad-md) var(--rad-md) 0 0;
         padding-bottom: 50%; // forces 2:1 aspect ratio
+        width: 100%;
 
         &.square {
             border-radius: 0;

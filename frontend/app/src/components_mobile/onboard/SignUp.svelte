@@ -222,9 +222,7 @@
                 {/if}
 
                 {#if error !== undefined}
-                    <div class="error">
-                        <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
-                    </div>
+                    <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
                 {/if}
             </Container>
         </Form>

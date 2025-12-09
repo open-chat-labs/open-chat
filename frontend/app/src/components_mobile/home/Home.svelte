@@ -71,8 +71,7 @@
     import BotBuilderModal from "../bots/BotBuilderModal.svelte";
     import NotFound from "../NotFound.svelte";
     import OfflineFooter from "../OfflineFooter.svelte";
-    import NativeOnboardModal from "../onboard/NativeOnboardModal.svelte";
-    // import OnboardModal from "../onboard/OnboardModal.svelte";
+    import OnboardModal from "../onboard/OnboardModal.svelte";
     import Overlay from "../Overlay.svelte";
     import SelectChatModal from "../SelectChatModal.svelte";
     import SuspendedModal from "../SuspendedModal.svelte";
@@ -746,9 +745,27 @@
     let nervousSystem = $derived(client.tryGetNervousSystem(governanceCanisterId));
     // $: nervousSystem = client.tryGetNervousSystem("rrkah-fqaaa-aaaaa-aaaaq-cai");
     //
-    let showOnboarding = $derived(
-        $identityStateStore.kind === "registering" || $identityStateStore.kind === "logging_in",
-    );
+    // let showOnboarding = $derived(
+    //     $identityStateStore.kind === "loading_user" ||
+    //         $identityStateStore.kind === "registering" ||
+    //         $identityStateStore.kind === "logging_in",
+    // );
+
+    let showOnboarding = $state(false);
+    $effect(() => {
+        if (
+            ($identityStateStore.kind === "loading_user" && $identityStateStore.registering) ||
+            $identityStateStore.kind === "registering" ||
+            $identityStateStore.kind === "logging_in"
+        ) {
+            showOnboarding = true;
+        }
+        if ($identityStateStore.kind === "logged_in" && showOnboarding) {
+            showOnboarding = false;
+        }
+    });
+
+    $inspect("Home", $identityStateStore).with(console.trace);
 
     trackedEffect("identity-state", () => {
         // if ($identityStateStore.kind === "registering") {
@@ -822,7 +839,7 @@
 
 <Container height={"fill"} width={"fill"} supplementalClass={mainClass} tag="main">
     {#if showOnboarding}
-        <NativeOnboardModal />
+        <OnboardModal />
     {:else}
         <LeftPanel />
         <MiddlePanel {joining} />

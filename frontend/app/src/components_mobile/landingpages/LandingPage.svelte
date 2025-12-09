@@ -7,7 +7,7 @@
     import { identityStateStore, routeStore, type OpenChat } from "openchat-client";
     import { getContext, type Component } from "svelte";
     import Loading from "../Loading.svelte";
-    import NativeOnboardModal from "../onboard/NativeOnboardModal.svelte";
+    import OnboardModal from "../onboard/OnboardModal.svelte";
     import BlogPage from "./BlogPage.svelte";
     import FeaturesPage from "./FeaturesPage.svelte";
     import HomePage from "./HomePage.svelte";
@@ -17,6 +17,7 @@
     let showOnboarding = $derived(
         $identityStateStore.kind === "anon" && $routeStore.kind === "home_route",
     );
+    $inspect("LandingPage", $identityStateStore).with(console.trace);
 </script>
 
 <Container height={"fill"} width={"fill"} tag="main">
@@ -92,7 +93,7 @@
                 <DiamondPage />
             {/await}
         {:else if showOnboarding}
-            <NativeOnboardModal />
+            <OnboardModal />
         {:else}
             <HomePage on:login={() => client.login()} />
         {/if}

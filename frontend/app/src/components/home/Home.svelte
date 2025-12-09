@@ -80,7 +80,6 @@
     import BotBuilderModal from "../bots/BotBuilderModal.svelte";
     import WebhookModal from "../bots/WebhookModal.svelte";
     import EditLabel from "../EditLabel.svelte";
-    import NativeOnboardModal from "../mobile/NativeOnboardModal.svelte";
     import NotFound from "../NotFound.svelte";
     import OfflineFooter from "../OfflineFooter.svelte";
     import OnboardModal from "../onboard/OnboardModal.svelte";
@@ -1066,13 +1065,9 @@
                 nervousSystem={modal.nervousSystem}
                 onClose={closeModal} />
         {:else if modal.kind === "logging_in" || modal.kind === "registering"}
-            {#if client.isNativeAndroid()}
-                <NativeOnboardModal onClose={closeModal} />
-            {:else}
-                <OnboardModal
-                    step={modal.kind === "registering" ? "sign_up" : "select_mode"}
-                    onClose={closeModal} />
-            {/if}
+            <OnboardModal
+                step={modal.kind === "registering" ? "sign_up" : "select_mode"}
+                onClose={closeModal} />
         {:else if modal.kind === "claim_daily_chit"}
             <DailyChitModal onLeaderboard={leaderboard} onClose={closeModal} />
         {:else if modal.kind === "challenge"}

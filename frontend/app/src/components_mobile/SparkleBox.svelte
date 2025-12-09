@@ -7,7 +7,7 @@
 
     interface Props {
         title: Snippet;
-        body: Snippet;
+        body?: Snippet;
         onClick: () => void;
         buttonIcon: Snippet<[string]>;
         buttonText: ResourceKey;
@@ -21,9 +21,11 @@
         {@render title()}
     </Subtitle>
 
-    <BodySmall colour={"primaryLight"}>
-        {@render body()}
-    </BodySmall>
+    {#if body}
+        <BodySmall colour={"primaryLight"}>
+            {@render body()}
+        </BodySmall>
+    {/if}
 
     <Button {onClick} icon={buttonIcon}>
         <Translatable resourceKey={buttonText}></Translatable>

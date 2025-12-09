@@ -8235,6 +8235,16 @@ export class OpenChat {
         }
     }
 
+    getOpenChatCommunity() {
+        if (import.meta.env.OC_NODE_ENV === "production") {
+            return this.getCommunitySummary({
+                kind: "community",
+                communityId: "dgegb-daaaa-aaaar-arlhq-cai",
+            });
+        }
+        return undefined;
+    }
+
     async getCommunitySummary(id: CommunityIdentifier): Promise<CommunitySummary | undefined> {
         const community = communitiesStore.value.get(id);
         if (community) return community;
@@ -8682,7 +8692,6 @@ export class OpenChat {
     }
 
     getDefaultScope(): ChatListScope {
-        console.trace("what's calling this");
         if (anonUserStore.value) return { kind: "chats" };
 
         // sometimes we have to re-direct the user to home route "/"
