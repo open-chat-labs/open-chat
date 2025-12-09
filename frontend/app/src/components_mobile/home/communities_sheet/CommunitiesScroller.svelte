@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { Avatar, Container, NotificationIndicator } from "component-lib";
+    import { Avatar, Container, ListAction, NotificationIndicator } from "component-lib";
     import {
+        communityIdentifiersEqual,
         OpenChat,
         selectedCommunityIdStore,
         sortedCommunitiesStore,
@@ -8,6 +9,8 @@
         type UnreadCounts,
     } from "openchat-client";
     import { getContext } from "svelte";
+    import AccountGroupOutline from "svelte-material-icons/AccountGroupOutline.svelte";
+    import Compass from "svelte-material-icons/CompassOutline.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -15,9 +18,11 @@
         onSelect: (community: CommunitySummary) => void;
         hasUnread: (community: CommunitySummary) => [boolean, boolean, UnreadCounts];
         ref?: HTMLElement;
+        onCreate: () => void;
+        onExplore: () => void;
     }
 
-    let { ref = $bindable(), onSelect, hasUnread }: Props = $props();
+    let { ref = $bindable(), onSelect, hasUnread, onCreate, onExplore }: Props = $props();
 
     $effect(() => {
         if ($selectedCommunityIdStore !== undefined) {
@@ -47,7 +52,9 @@
     {#each $sortedCommunitiesStore as community}
         {@const [unread, muted] = hasUnread(community)}
         <Container
-            supplementalClass={`scroller_item ${unread && !muted ? "unread" : ""}`}
+            supplementalClass={`scroller_item ${unread && !muted ? "unread" : ""} ${
+                communityIdentifiersEqual(community.id, $selectedCommunityIdStore) ? "selected" : ""
+            }`}
             id={`scroller_item_${community.id.communityId}`}
             overflow={"visible"}
             width={"hug"}
@@ -63,9 +70,28 @@
             {/if}
         </Container>
     {/each}
+    <ListAction size={"large"} onClick={onExplore}>
+        {#snippet icon(color)}
+            <Compass {color} />
+        {/snippet}
+    </ListAction>
+    <ListAction size={"large"} onClick={onCreate} colour={"tertiary"}>
+        {#snippet icon(color)}
+            <AccountGroupOutline {color} />
+        {/snippet}
+    </ListAction>
 </Container>
 
 <style lang="scss">
+    :global(.scroller_item.selected::before) {
+        content: "";
+        width: 100%;
+        height: 4px;
+        border-radius: var(--rad-xl);
+        background-color: var(--primary);
+        position: absolute;
+        top: -10px;
+    }
     .unread {
         position: absolute;
         bottom: -6px;

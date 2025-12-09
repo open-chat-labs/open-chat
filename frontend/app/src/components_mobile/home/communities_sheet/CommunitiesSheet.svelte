@@ -13,6 +13,7 @@
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import { fade } from "svelte/transition";
+    import { updateCommunityState } from "../communities/createOrUpdate/community.svelte";
     import CommunitiesList from "./CommunitiesList.svelte";
     import CommunitiesScroller from "./CommunitiesScroller.svelte";
 
@@ -95,6 +96,14 @@
             container.removeEventListener("scroll", offscreenUnreadCheck);
         };
     });
+
+    function createCommunity() {
+        updateCommunityState.createCommunity(client);
+    }
+
+    function exploreCommunities() {
+        page("/communities");
+    }
 </script>
 
 <Container
@@ -104,7 +113,7 @@
     direction={"vertical"}
     padding={["md", "zero", "lg", "zero"]}
     width={"fill"}
-    height={{ size: expanded ? "70%" : "7rem" }}
+    height={{ size: expanded ? "70%" : "7.5rem" }}
     background={ColourVars.background1}>
     <button onclick={() => (expanded = !expanded)} aria-label="handle" class="handle_outer">
         <div class="handle_inner"></div>
@@ -128,12 +137,20 @@
 
     {#if !expanded}
         <div transition:fade={{ duration: 200 }} class="scroller">
-            <CommunitiesScroller bind:ref={scroller} {hasUnread} onSelect={selectCommunity}
-            ></CommunitiesScroller>
+            <CommunitiesScroller
+                onCreate={createCommunity}
+                onExplore={exploreCommunities}
+                bind:ref={scroller}
+                {hasUnread}
+                onSelect={selectCommunity}></CommunitiesScroller>
         </div>
     {:else}
         <div transition:fade={{ duration: 200 }} class="list">
-            <CommunitiesList {hasUnread} onSelect={selectCommunity}></CommunitiesList>
+            <CommunitiesList
+                onCreate={createCommunity}
+                onExplore={exploreCommunities}
+                {hasUnread}
+                onSelect={selectCommunity}></CommunitiesList>
         </div>
     {/if}
 </Container>
@@ -176,7 +193,7 @@
 
     .handle_outer {
         all: unset;
-        padding: 0 0 var(--sp-lg) 0;
+        padding: 0 0 var(--sp-xl) 0;
         position: sticky;
         cursor: pointer;
         top: 0rem;

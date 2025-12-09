@@ -452,7 +452,7 @@
     </Container>
 </Container>
 
-{#if $identityStateStore.kind !== "logging_in" && $identityStateStore.kind !== "registering"}
+{#if $anonUserStore && $identityStateStore.kind !== "logging_in" && $identityStateStore.kind !== "registering"}
     <AnonFooter>
         <FloatingButton onClick={() => (showingFilters = true)}>
             {#snippet icon(color)}

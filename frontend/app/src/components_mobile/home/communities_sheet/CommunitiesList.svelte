@@ -17,11 +17,9 @@
         sortedCommunitiesStore,
         type UnreadCounts,
     } from "openchat-client";
-    import page from "page";
     import { getContext } from "svelte";
     import AccountGroupOutline from "svelte-material-icons/AccountGroupOutline.svelte";
     import Compass from "svelte-material-icons/CompassOutline.svelte";
-    import { updateCommunityState } from "../communities/createOrUpdate/community.svelte";
     import DiamondUpgradeBox from "../DiamondUpgradeBox.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -32,17 +30,11 @@
     interface Props {
         onSelect: (community: CommunitySummary) => void;
         hasUnread: (community: CommunitySummary) => [boolean, boolean, UnreadCounts];
+        onCreate: () => void;
+        onExplore: () => void;
     }
 
     let props: Props = $props();
-
-    function exploreCommunities() {
-        page("/communities");
-    }
-
-    function createCommunity() {
-        updateCommunityState.createCommunity(client);
-    }
 </script>
 
 {#snippet communityRow(community: CommunitySummary)}
@@ -86,7 +78,7 @@
     direction={"vertical"}
     height={"hug"}>
     <Container width={"fill"} gap={"lg"} direction={"vertical"} height={"hug"}>
-        <ListAction onClick={exploreCommunities}>
+        <ListAction onClick={() => props.onExplore()}>
             {#snippet icon(color)}
                 <Compass {color} />
             {/snippet}
@@ -98,7 +90,7 @@
                     "To create a community of your own and enjoy many other benefits.",
                 )} />
         {:else}
-            <ListAction onClick={createCommunity} colour={"tertiary"}>
+            <ListAction onClick={() => props.onCreate()} colour={"tertiary"}>
                 {#snippet icon(color)}
                     <AccountGroupOutline {color} />
                 {/snippet}

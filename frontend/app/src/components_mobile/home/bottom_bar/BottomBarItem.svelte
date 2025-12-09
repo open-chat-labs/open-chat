@@ -1,5 +1,5 @@
 <script module lang="ts">
-    export type Unread = { show: boolean; muted: boolean };
+    export type Unread = { show: boolean; muted: boolean; pulse?: boolean };
 </script>
 
 <script lang="ts">
@@ -14,7 +14,7 @@
     }
 
     let {
-        indicator = { show: false, muted: false },
+        indicator = { show: false, muted: false, pulse: false },
         selected = false,
         onSelect,
         icon,
@@ -37,7 +37,7 @@
     <div class="bottom_bar_icon">
         {@render icon(iconColour)}
     </div>
-    <div class="indicator">
+    <div class="indicator" class:pulse={indicator.show && indicator.pulse}>
         {#if indicator.show}
             <NotificationIndicator muted={indicator.muted} />
         {/if}
@@ -53,5 +53,21 @@
         position: absolute;
         display: flex;
         bottom: -0.75rem;
+
+        &.pulse {
+            animation: pulse 3s infinite;
+        }
+    }
+
+    @keyframes pulse {
+        0% {
+            scale: 1;
+        }
+        50% {
+            scale: 1.2;
+        }
+        100% {
+            scale: 1;
+        }
     }
 </style>

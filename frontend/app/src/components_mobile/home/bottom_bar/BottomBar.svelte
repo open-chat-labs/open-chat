@@ -9,9 +9,12 @@
 </script>
 
 <script lang="ts">
+    import { disableChit } from "@src/stores/settings";
+    import { now500 } from "@src/stores/time";
     import { Avatar, Container, type SwipeDirection } from "component-lib";
     import {
         allUsersStore,
+        chitStateStore,
         currentUserIdStore,
         favouritesStore,
         mergeListOfCombinedUnreadCounts,
@@ -47,6 +50,9 @@
     );
     let numIcons = $derived($favouritesStore.size > 0 ? 6 : 5);
     let iconSize = $derived(numIcons === 6 ? "1.7rem" : "1.9rem");
+    let claimChitAvailable = $derived(
+        !$disableChit && $chitStateStore.nextDailyChitClaim < $now500,
+    );
 
     let chatIndicator = $derived.by(() => showIndicator($unreadDirectAndGroupCountsStore.chats));
     let communityIndicator = $derived(showIndicator(unreadCommunities.chats));
@@ -192,10 +198,11 @@
     {@render item("notification", Lightbulb, activityIndicator)}
     {@render item("wallet", Wallet)}
     <BottomBarItem
+        indicator={{ show: claimChitAvailable, muted: false, pulse: claimChitAvailable }}
         onSelect={() => itemSelected("profile")}
         selected={props.selection === "profile"}>
         {#snippet icon()}
-            <Avatar customSize={iconSize} size={"lg"} url={avatarUrl} name={avatarName}></Avatar>
+            <Avatar customSize={"2.5rem"} size={"lg"} url={avatarUrl} name={avatarName}></Avatar>
         {/snippet}
     </BottomBarItem>
 </Container>

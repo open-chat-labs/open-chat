@@ -65,7 +65,8 @@
     let showInsurance = $state(false);
     let busy = $state(false);
 
-    function claim() {
+    function claim(e?: MouseEvent) {
+        e?.stopPropagation();
         busy = true;
         client
             .claimDailyChit()
