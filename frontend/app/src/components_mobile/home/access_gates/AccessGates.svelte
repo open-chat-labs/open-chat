@@ -209,7 +209,7 @@
                         onChange={() => data.toggleOperator()}
                         disabled={!isCompositeGate(data.gateConfig.gate)}
                         checked={isCompositeGate(data.gateConfig.gate) &&
-                            data.gateConfig.gate.operator === "and"}>
+                            data.gateConfig.gate.operator === "or"}>
                         <Translatable resourceKey={i18nKey("Require any access gate")}
                         ></Translatable>
                     </Switch>
