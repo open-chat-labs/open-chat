@@ -1064,6 +1064,11 @@ export class OpenChat {
     }
 
     onRegisteredUser(user: CreatedUser) {
+        user.blobUrl = buildUserAvatarUrl(
+            this.config.blobUrlPattern,
+            user.userId,
+            user.blobReference?.blobId,
+        );
         this.onCreatedUser(user);
         userStore.addUser({
             kind: user.isBot ? "bot" : "user",
@@ -1079,12 +1084,15 @@ export class OpenChat {
             maxStreak: 0,
             blobReference: user.blobReference,
             blobData: user.blobData,
-            blobUrl: buildUserAvatarUrl(
-                this.config.blobUrlPattern,
-                user.userId,
-                user.blobReference?.blobId ?? undefined,
-            ),
+            blobUrl: user.blobUrl,
             isUniquePerson: user.isUniquePerson,
+        });
+        this.getPublicProfile(user.userId).subscribe({
+            onResult: (profile) => {
+                if (profile !== undefined) {
+                    currentUserProfileStore.set(profile);
+                }
+            },
         });
     }
 
@@ -6333,7 +6341,11 @@ export class OpenChat {
                         ...currentUser,
                         blobReference,
                         blobData: undefined,
-                        blobUrl: undefined,
+                        blobUrl: buildUserAvatarUrl(
+                            this.config.blobUrlPattern,
+                            currentUser.userId,
+                            currentUser.blobReference?.blobId,
+                        ),
                     };
 
                     userStore.addUser(this.#rehydrateDataContent(user, "avatar"));

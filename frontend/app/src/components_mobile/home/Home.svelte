@@ -242,7 +242,6 @@
 
     async function routeChange(initialised: boolean, route: RouteParams): Promise<void> {
         // wrap the whole thing in untrack because we don't want it to react to everything it reads in here
-        console.log("Route change: ", route, initialised);
         untrack(async () => {
             // wait until we have loaded the chats
             if (initialised) {
@@ -662,8 +661,6 @@
 
     let showOnboarding = $derived(client.isHomeRoute($routeStore) && $anonUserStore);
 
-    $inspect("Home", $identityStateStore, $chatsInitialisedStore).with(console.trace);
-
     trackedEffect("identity-state", () => {
         if ($identityStateStore.kind === "challenging") {
             modal = { kind: "challenge" };
@@ -781,22 +778,11 @@
                 gates={modal.gates}
                 onClose={closeModal}
                 onSuccess={accessGatesEvaluated} />
-        {:else if modal.kind === "edit_community"}
-            <EditCommunity
-                originalRules={modal.communityRules}
-                original={modal.community}
-                onClose={closeModal} />
-        {:else if modal.kind === "hall_of_fame"}
-            <HallOfFame
-                onStreak={() => (modal = { kind: "claim_daily_chit" })}
-                onClose={closeModal} />
         {:else if modal.kind === "make_proposal"}
             <MakeProposalModal
                 selectedMultiUserChat={modal.chat}
                 nervousSystem={modal.nervousSystem}
                 onClose={closeModal} />
-        {:else if modal.kind === "claim_daily_chit"}
-            <DailyChitModal onLeaderboard={leaderboard} onClose={closeModal} />
         {:else if modal.kind === "challenge"}
             <ChallengeModal on:close={closeModal} />
         {:else if modal.kind === "verify_humanity"}

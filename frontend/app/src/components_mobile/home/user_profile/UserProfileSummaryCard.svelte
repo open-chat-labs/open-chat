@@ -56,15 +56,7 @@
             : ["", false],
     );
 
-    let avatarUrl = $derived(
-        profile !== undefined
-            ? client.buildUserAvatarUrl(
-                  import.meta.env.OC_BLOB_URL_PATTERN!,
-                  user.userId,
-                  profile.avatarId,
-              )
-            : "/assets/unknownUserAvatar.svg",
-    );
+    let avatarUrl = $derived(client.userAvatarUrl(user));
 
     let backgroundUrl = $derived(
         client.buildUserBackgroundUrl(
@@ -81,6 +73,8 @@
             year: "numeric",
         });
     }
+
+    $inspect(profile);
 </script>
 
 {#snippet accountPill(Icon: any, text: string, colour: string)}
@@ -124,8 +118,7 @@
                     </div>
                     <Container gap={"xs"}>
                         <Body width={"hug"} colour={"textSecondary"}>joined</Body>
-                        <Body width={"hug"} fontWeight={"bold"}
-                            >{formatDate(profile.created)}</Body>
+                        <Body width={"hug"} fontWeight={"bold"}>{formatDate(profile.created)}</Body>
                     </Container>
                 </Container>
                 <Container gap={"sm"} crossAxisAlignment={"center"} width={"hug"}>
@@ -139,8 +132,7 @@
         <Container direction={"vertical"}>
             <H2 width={"hug"}>{profile.displayName ?? `@${profile.username}`}</H2>
             <Container gap={"sm"} crossAxisAlignment={"center"}>
-                <BodySmall width={"hug"} colour={"textSecondary"}
-                    >@{user.username}</BodySmall>
+                <BodySmall width={"hug"} colour={"textSecondary"}>@{user.username}</BodySmall>
                 <Badges
                     diamondStatus={user.diamondStatus}
                     uniquePerson={user.isUniquePerson}
