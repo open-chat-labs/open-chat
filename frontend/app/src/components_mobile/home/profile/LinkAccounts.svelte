@@ -401,7 +401,7 @@
                 onLogin={loginProvider} />
         {:else if providerStep === "choose_eth_wallet"}
             <div class="eth-options">
-                {#await import("../SignInWithEth.svelte")}
+                {#await import("../SigninWithEth.svelte")}
                     <div class="loading">...</div>
                 {:then { default: SigninWithEth }}
                     <SigninWithEth
@@ -411,7 +411,7 @@
             </div>
         {:else if providerStep === "choose_sol_wallet"}
             <div class="sol-options">
-                {#await import("../SignInWithSol.svelte")}
+                {#await import("../SigninWithSol.svelte")}
                     <div class="loading">...</div>
                 {:then { default: SigninWithSol }}
                     <SigninWithSol

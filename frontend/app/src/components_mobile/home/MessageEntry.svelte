@@ -427,17 +427,6 @@
         selection.addRange(selectedRange);
     }
 
-    function setCaretToEnd() {
-        if (!inp) return;
-
-        const range = document.createRange();
-        range.selectNodeContents(inp);
-        range.collapse(false);
-        const sel = window.getSelection();
-        sel?.removeAllRanges();
-        sel?.addRange(range);
-    }
-
     function setCaretTo(node: Node, pos: number) {
         const range = document.createRange();
         range.selectNodeContents(node);
@@ -475,11 +464,6 @@
         replaceTextWith(userLabel);
 
         showMentionPicker = false;
-    }
-
-    function cancelMention() {
-        showMentionPicker = false;
-        setCaretToEnd();
     }
 
     function completeEmoji(emoji: string) {
@@ -601,7 +585,6 @@
     <MentionPicker
         supportsUserGroups
         offset={messageEntryHeight}
-        onClose={cancelMention}
         onMention={mention}
         prefix={mentionPrefix} />
 {/if}

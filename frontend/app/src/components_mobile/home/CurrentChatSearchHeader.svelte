@@ -213,10 +213,6 @@
         }
     }
 
-    function setCaretToEnd() {
-        inputElement?.setSelectionRange(searchTerm.length, searchTerm.length);
-    }
-
     function replaceTextWith(replacement: string) {
         if (rangeToReplace === undefined) return;
 
@@ -234,11 +230,6 @@
         showMentionPicker = false;
         performSearch();
     }
-
-    function cancelMention() {
-        showMentionPicker = false;
-        setCaretToEnd();
-    }
 </script>
 
 <svelte:window onkeydown={onWindowKeyDown} />
@@ -250,7 +241,6 @@
         prefix={mentionPrefix}
         mentionSelf
         usersOnly
-        onClose={cancelMention}
         onMention={mention} />
 {/if}
 

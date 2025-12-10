@@ -16,11 +16,10 @@
     interface Props {
         lifetime: boolean;
         level: Level;
-        onCancel: () => void;
         onCredentialReceived: (cred: string) => void;
     }
 
-    let { lifetime, level, onCancel, onCredentialReceived }: Props = $props();
+    let { lifetime, level, onCredentialReceived }: Props = $props();
 
     let refreshingBalance = $state(false);
     let error: string | undefined = $state();

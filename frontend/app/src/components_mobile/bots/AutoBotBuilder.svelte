@@ -257,16 +257,10 @@
             label={i18nKey("bots.builder.ownerLabel")}
             rules={i18nKey("bots.builder.ownerRules")}></Legend>
         <SingleUserSelector
-            invalid={errors.has("bot_owner")}
-            error={errors.get("bot_owner")}
-            border={false}
-            direction={"up"}
             mentionSelf
             onUserSelected={(user) => (candidate.ownerId = user.userId)}
-            onUserRemoved={() => (candidate.ownerId = "")}
             selectedReceiver={$allUsersStore.get(candidate.ownerId)}
-            placeholder={"bots.builder.ownerLabel"}
-            autofocus={false} />
+            placeholder={"bots.builder.ownerLabel"} />
     {/if}
 
     {#if mode === "register"}

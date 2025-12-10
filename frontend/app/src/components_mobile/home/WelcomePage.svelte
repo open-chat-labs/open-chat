@@ -125,13 +125,13 @@
             </Container>
             {#if highlightCommunity}
                 {@render highlightCard(highlightCommunity)}
+                <Button onClick={() => goToCommunity(highlightCommunity.id)}>
+                    {#snippet icon(color)}
+                        <RightChevron {color} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("Visit OpenChat community")} />
+                </Button>
             {/if}
-            <Button>
-                {#snippet icon(color)}
-                    <RightChevron {color} />
-                {/snippet}
-                <Translatable resourceKey={i18nKey("Visit OpenChat community")} />
-            </Button>
         </Container>
         {@render or()}
         <Container direction={"vertical"} padding={["zero", "lg"]} gap={"xl"}>

@@ -73,8 +73,6 @@
             year: "numeric",
         });
     }
-
-    $inspect(profile);
 </script>
 
 {#snippet accountPill(Icon: any, text: string, colour: string)}

@@ -22,7 +22,6 @@
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
     import ErrorMessage from "../ErrorMessage.svelte";
-    import Legend from "../Legend.svelte";
     import Translatable from "../Translatable.svelte";
     import AccountInfo from "./AccountInfo.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
@@ -163,12 +162,11 @@
                 <AccountInfo {ledger} />
             {:else}
                 {#if multiUserChat}
-                    <div class="receiver">
-                        <Legend label={i18nKey("tokenTransfer.receiver")} />
-                        <SingleUserSelector
-                            bind:selectedReceiver={receiver}
-                            autofocus={multiUserChat} />
-                    </div>
+                    <SingleUserSelector bind:selectedReceiver={receiver}>
+                        {#snippet subtext()}
+                            <Translatable resourceKey={i18nKey("Choose a token recipient")} />
+                        {/snippet}
+                    </SingleUserSelector>
                 {/if}
                 <TokenInput
                     {ledger}

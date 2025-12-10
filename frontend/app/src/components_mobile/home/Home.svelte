@@ -28,7 +28,6 @@
         chatsInitialisedStore,
         chatSummariesListStore,
         chatSummariesStore,
-        currentUserStore,
         identityStateStore,
         localUpdates,
         offlineStore,
@@ -71,9 +70,6 @@
     import AnonFooter from "./AnonFooter.svelte";
     import ChallengeModal from "./ChallengeModal.svelte";
     import ChitEarned from "./ChitEarned.svelte";
-    import HallOfFame from "./ChitHallOfFame.svelte";
-    import EditCommunity from "./communities/edit/Edit.svelte";
-    import DailyChitModal from "./DailyChitModal.svelte";
     import LeftPanel from "./LeftPanel.svelte";
     import MiddlePanel from "./MiddlePanel.svelte";
     import NoAccess from "./NoAccess.svelte";
@@ -273,10 +269,6 @@
                 }
             }
         });
-    }
-
-    function leaderboard() {
-        modal = { kind: "hall_of_fame" };
     }
 
     function closeModal() {

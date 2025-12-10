@@ -210,14 +210,12 @@
                     <DiamondGateEvaluator
                         level={currentGate.level}
                         lifetime
-                        onCredentialReceived={credentialReceived}
-                        onCancel={onClose} />
+                        onCredentialReceived={credentialReceived} />
                 {:else if isDiamondGate(currentGate)}
                     <DiamondGateEvaluator
                         level={currentGate.level}
                         lifetime={false}
-                        onCredentialReceived={credentialReceived}
-                        onCancel={onClose} />
+                        onCredentialReceived={credentialReceived} />
                 {/if}
             {/if}
         </div>

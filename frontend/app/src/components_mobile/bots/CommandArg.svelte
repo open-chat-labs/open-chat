@@ -27,11 +27,6 @@
             onUserSelected={(user) => {
                 arg.userId = user.userId;
             }}
-            onUserRemoved={() => {
-                arg.userId = undefined;
-            }}
-            autofocus={false}
-            direction={"down"}
             placeholder={$_(param.placeholder ?? "")} />
     {:else if arg.kind === "string" && param.kind === "string"}
         <Legend

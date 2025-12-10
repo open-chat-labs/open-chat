@@ -1,20 +1,16 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { Avatar, BodySmall, Container, Option, Search, Select, Subtitle } from "component-lib";
+    import { Container, Option, Search, Select, Subtitle } from "component-lib";
     import {
         allUsersStore,
         compareChats,
-        currentUserIdStore,
-        OpenChat,
         serverDirectChatsStore,
         type UserSummary,
     } from "openchat-client";
-    import { getContext, type Snippet } from "svelte";
+    import { type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
-    import FilteredUsername from "./FilteredUsername.svelte";
     import Translatable from "./Translatable.svelte";
-
-    const client = getContext<OpenChat>("client");
+    import User from "./home/User.svelte";
 
     interface Props {
         disabled?: boolean;
@@ -50,20 +46,7 @@
 </script>
 
 {#snippet match(user: UserSummary)}
-    <Container crossAxisAlignment={"center"} gap={"md"} onClick={() => internalSelect(user)}>
-        <Avatar size={"md"} url={client.userAvatarUrl(user)} />
-        <Container direction={"vertical"}>
-            <Container crossAxisAlignment={"center"} gap={"xs"}>
-                <FilteredUsername
-                    {searchTerm}
-                    me={user.kind === "user" && user.userId === $currentUserIdStore}
-                    username={user.username} />
-            </Container>
-            <BodySmall colour={"textSecondary"}>
-                <FilteredUsername {searchTerm} username={user.username} />
-            </BodySmall>
-        </Container>
-    </Container>
+    <User profile={false} {searchTerm} onClick={() => internalSelect(user)} {user} />
 {/snippet}
 
 <Select {disabled} {subtext} onSelect={internalSelect} {placeholder} value={selected}>

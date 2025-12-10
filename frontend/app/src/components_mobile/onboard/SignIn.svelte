@@ -123,13 +123,13 @@
         <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
     {/if}
 {:else if loggingInWithEth}
-    {#await import("../home/SignInWithEth.svelte")}
+    {#await import("../home/SigninWithEth.svelte")}
         <div class="loading">...</div>
     {:then { default: SigninWithEth }}
         <SigninWithEth />
     {/await}
 {:else if loggingInWithSol}
-    {#await import("../home/SignInWithSol.svelte")}
+    {#await import("../home/SigninWithSol.svelte")}
         <div class="loading">...</div>
     {:then { default: SigninWithSol }}
         <SigninWithSol />

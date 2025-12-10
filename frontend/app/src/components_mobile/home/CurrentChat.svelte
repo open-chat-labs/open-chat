@@ -377,7 +377,6 @@
     <CryptoTransferBuilder
         {chat}
         ledger={creatingCryptoTransfer.ledger}
-        draftAmount={creatingCryptoTransfer.amount}
         defaultReceiver={defaultCryptoTransferReceiver()}
         {messageContext}
         onClose={() => (creatingCryptoTransfer = undefined)} />
