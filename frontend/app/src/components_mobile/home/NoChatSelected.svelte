@@ -3,27 +3,14 @@
         chatListScopeStore,
         isLocked,
         ROLE_NONE,
-        routeForScope,
         selectedCommunitySummaryStore,
         type ChatListScope,
-        type OpenChat,
     } from "openchat-client";
-    import page from "page";
-    import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Button from "../Button.svelte";
     import Translatable from "../Translatable.svelte";
     import CommunityCard from "./communities/explore/CommunityCard.svelte";
     import PreviewWrapper from "./communities/PreviewWrapper.svelte";
-
-    const client = getContext<OpenChat>("client");
-
-    function cancelPreview() {
-        if ($selectedCommunitySummaryStore) {
-            client.removeCommunity($selectedCommunitySummaryStore.id);
-            page(routeForScope(client.getDefaultScope()));
-        }
-    }
 
     function getMessageForScope(scope: ChatListScope["kind"]): [string, string] {
         switch (scope) {
@@ -46,7 +33,7 @@
 {#if previewingCommunity && $selectedCommunitySummaryStore !== undefined}
     <div class="wrapper community">
         <PreviewWrapper>
-            {#snippet children(joiningCommunity, joinCommunity)}
+            {#snippet children(joiningCommunity, joinCommunity, cancelPreview)}
                 {#if $selectedCommunitySummaryStore !== undefined}
                     <CommunityCard
                         id={$selectedCommunitySummaryStore.id.communityId}

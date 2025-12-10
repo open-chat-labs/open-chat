@@ -1,9 +1,8 @@
 <script lang="ts">
     import { chatListFilterStore } from "@src/stores/settings";
-    import { CommonButton, Container, FloatingButton } from "component-lib";
+    import { Container, FloatingButton } from "component-lib";
     import {
         allUsersStore,
-        anonUserStore,
         chatIdentifiersEqual,
         chatIdentifierToString,
         type ChatListScope,
@@ -17,9 +16,7 @@
         numberOfThreadsStore,
         OpenChat,
         publish,
-        ROLE_NONE,
         routeForChatIdentifier,
-        routeForScope,
         selectedChatIdStore,
         selectedCommunitySummaryStore,
         unreadCommunityChannelCountsStore,
@@ -29,13 +26,10 @@
     import page from "page";
     import { getContext, tick } from "svelte";
     import Pencil from "svelte-material-icons/LeadPencil.svelte";
-    import { i18nKey } from "../../i18n/i18n";
-    import Translatable from "../Translatable.svelte";
     import ChatListFilters, { type ChatListFilter } from "./ChatListFilters.svelte";
     import ChatSummary from "./ChatSummary.svelte";
     import DirectAndGroupChatsHeader from "./communities/DirectAndGroupChatsHeader.svelte";
     import FavouriteChatsHeader from "./communities/FavouriteChatsHeader.svelte";
-    import PreviewWrapper from "./communities/PreviewWrapper.svelte";
     import SelectedCommunityHeader from "./communities/SelectedCommunityHeader.svelte";
     import NoMatchingChats from "./NoMatchingChats.svelte";
     import ThreadIndicator from "./ThreadIndicator.svelte";
@@ -69,13 +63,6 @@
         );
     }
 
-    function cancelPreview() {
-        if ($selectedCommunitySummaryStore) {
-            client.removeCommunity($selectedCommunitySummaryStore.id);
-            page(routeForScope(client.getDefaultScope()));
-        }
-    }
-
     function chatSelected({ id }: ChatSummaryType): void {
         const url = routeForChatIdentifier($chatListScopeStore.kind, id);
         page(url);
@@ -85,11 +72,6 @@
         previousScope = $chatListScopeStore;
     }
 
-    let showPreview = $derived(
-        !$anonUserStore &&
-            $selectedCommunitySummaryStore?.membership.role === ROLE_NONE &&
-            $selectedChatIdStore === undefined,
-    );
     let user = $derived($allUsersStore.get($currentUserIdStore));
     let unreadCounts = $derived.by(() => {
         switch ($chatListScopeStore.kind) {
@@ -169,27 +151,6 @@
             {/each}
         {/if}
     </Container>
-    {#if showPreview}
-        <PreviewWrapper>
-            {#snippet children(joiningCommunity, joinCommunity)}
-                <div class="join">
-                    <Container crossAxisAlignment={"end"} mainAxisAlignment={"end"} gap={"md"}>
-                        <CommonButton onClick={cancelPreview}>
-                            <Translatable resourceKey={i18nKey("close")} />
-                        </CommonButton>
-
-                        <CommonButton
-                            mode={"active"}
-                            loading={joiningCommunity}
-                            disabled={joiningCommunity}
-                            onClick={joinCommunity}>
-                            <Translatable resourceKey={i18nKey("communities.joinCommunity")} />
-                        </CommonButton>
-                    </Container>
-                </div>
-            {/snippet}
-        </PreviewWrapper>
-    {/if}
 {/if}
 
 {#if $chatListScopeStore.kind === "chats"}

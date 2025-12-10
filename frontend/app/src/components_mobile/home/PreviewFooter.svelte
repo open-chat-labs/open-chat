@@ -1,15 +1,5 @@
 <script lang="ts">
-    import { gateLabel } from "@src/utils/access";
-    import {
-        Avatar,
-        BodySmall,
-        Chip,
-        ColourVars,
-        CommonButton,
-        Container,
-        Sheet,
-        Subtitle,
-    } from "component-lib";
+    import { Caption, ColourVars, CommonButton, Container, Sheet } from "component-lib";
     import {
         chatListScopeStore,
         type EnhancedAccessGate,
@@ -26,7 +16,8 @@
     } from "openchat-client";
     import page from "page";
     import { getContext } from "svelte";
-    import Check from "svelte-material-icons/Check.svelte";
+    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
+    import Enter from "svelte-material-icons/LocationEnter.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
 
@@ -56,6 +47,7 @@
             return [];
         });
     });
+    let hasGates = $derived(flattenedGates.length > 0);
     let locked = $derived(gates.some((g) => isLocked(g)));
 
     function joinGroup() {
@@ -67,8 +59,7 @@
 
     function cancelPreview() {
         if (previewingCommunity && $selectedCommunitySummaryStore) {
-            client.removeCommunity($selectedCommunitySummaryStore.id);
-            page(routeForScope(client.getDefaultScope()));
+            page(`/community/${$selectedCommunitySummaryStore.id.communityId}`);
         } else {
             if (!chat.public) {
                 client.declineInvitation(chat.id);
@@ -82,49 +73,24 @@
 </script>
 
 <Sheet onDismiss={cancelPreview}>
-    <Container direction={"vertical"} gap={"lg"} padding={"xl"}>
-        <Container
-            crossAxisAlignment={"center"}
-            gap={"lg"}
-            background={ColourVars.background1}
-            borderRadius={"lg"}>
-            <Avatar size={"lg"} url={client.groupAvatarUrl(chat)} />
-            <Container direction={"vertical"} gap={"xxs"}>
-                <Subtitle fontWeight={"bold"}>{chat.name}</Subtitle>
-                <BodySmall width={"hug"} colour={"textSecondary"}>
-                    {#if lapsed}
-                        <Translatable
-                            resourceKey={i18nKey(
-                                "Your membership has lapsed. Click re-join to below to join the chat",
-                            )} />
-                    {:else}
-                        <Translatable resourceKey={i18nKey("Click join below to join the chat")} />
-                    {/if}
-                </BodySmall>
-            </Container>
-        </Container>
-        <Container wrap gap={"xs"}>
-            {#each flattenedGates as gate}
-                <Chip mode={"filter"}>
-                    {#snippet icon(color)}
-                        <Check {color} />
+    <Container gap={"sm"} direction={"vertical"} padding={"lg"} background={ColourVars.background1}>
+        <Container crossAxisAlignment={"center"}>
+            <Container>
+                <CommonButton onClick={cancelPreview} size={"small_text"}>
+                    {#snippet icon(color, size)}
+                        <ArrowLeft {color} {size} />
                     {/snippet}
-                    <Translatable resourceKey={i18nKey(gateLabel[gate.kind])}></Translatable>
-                </Chip>
-            {/each}
-        </Container>
-        <Container crossAxisAlignment={"end"} mainAxisAlignment={"end"} gap={"md"}>
-            {#if !lapsed}
-                <CommonButton onClick={cancelPreview}>
-                    <Translatable resourceKey={i18nKey("close")} />
+                    <Translatable resourceKey={i18nKey("back")} />
                 </CommonButton>
-            {/if}
-
+            </Container>
             <CommonButton
                 mode={"active"}
                 loading={joining !== undefined}
                 disabled={locked || joining !== undefined}
                 onClick={joinGroup}>
+                {#snippet icon(color, size)}
+                    <Enter {color} {size} />
+                {/snippet}
                 <Translatable
                     resourceKey={locked
                         ? i18nKey("access.lockedGate", undefined, chat.level, true)
@@ -133,5 +99,12 @@
                           : i18nKey("joinGroup", undefined, chat.level, true)} />
             </CommonButton>
         </Container>
+        {#if hasGates}
+            <Container padding={["zero", "sm"]} mainAxisAlignment={"end"}>
+                <Caption width={"hug"} fontWeight={"bold"} colour={"textSecondary"}>
+                    <Translatable resourceKey={i18nKey("Access gates enabled")} />
+                </Caption>
+            </Container>
+        {/if}
     </Container>
 </Sheet>

@@ -6,6 +6,7 @@
         ROLE_NONE,
         selectedCommunitySummaryStore,
     } from "openchat-client";
+    import page from "page";
     import { getContext, tick, type Snippet } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
@@ -13,7 +14,7 @@
     import GateCheckFailed from "../access/AccessGateCheckFailed.svelte";
     import AccessGateEvaluator from "../access/AccessGateEvaluator.svelte";
     interface Props {
-        children?: Snippet<[boolean, () => void]>;
+        children?: Snippet<[boolean, () => void, () => void, boolean]>;
     }
 
     let { children }: Props = $props();
@@ -23,6 +24,11 @@
     let joiningCommunity = $state(false);
     let gateCheckFailed: EnhancedAccessGate | undefined = $state(undefined);
     let checkingAccessGate: EnhancedAccessGate | undefined = $state(undefined);
+    let gatesInEffect = $derived(
+        $selectedCommunitySummaryStore !== undefined &&
+            $selectedCommunitySummaryStore.gateConfig.gate.kind !== "no_gate" &&
+            !$selectedCommunitySummaryStore.isInvited,
+    );
 
     function joinCommunity() {
         if ($anonUserStore) {
@@ -50,10 +56,7 @@
             };
 
             if (gateCheck === undefined) {
-                if (
-                    $selectedCommunitySummaryStore.gateConfig.gate.kind !== "no_gate" &&
-                    !$selectedCommunitySummaryStore.isInvited
-                ) {
+                if (gatesInEffect) {
                     const gateConfigs = [$selectedCommunitySummaryStore.gateConfig];
                     const gates = gateConfigs.map((gc) => gc.gate);
                     const passed = client.doesUserMeetAccessGates(gates);
@@ -104,6 +107,13 @@
             tick().then(() => joinCommunity());
         }
     });
+
+    function cancelPreview() {
+        if ($selectedCommunitySummaryStore) {
+            client.removeCommunity($selectedCommunitySummaryStore.id);
+            page("/communities");
+        }
+    }
 </script>
 
 {#if checkingAccessGate}
@@ -121,4 +131,4 @@
     </Overlay>
 {/if}
 
-{@render children?.(joiningCommunity, joinCommunity)}
+{@render children?.(joiningCommunity, joinCommunity, cancelPreview, gatesInEffect)}

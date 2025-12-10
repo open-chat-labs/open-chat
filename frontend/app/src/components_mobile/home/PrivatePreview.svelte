@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Container } from "component-lib";
     import { mobileWidth } from "openchat-client";
     import { onMount } from "svelte";
 
@@ -19,32 +20,27 @@
 </script>
 
 {#each messages as [percentage, lines]}
-    <div class="bubble">
-        <div class="avatar" />
+    <Container gap={"md"}>
+        <div class="avatar"></div>
         <div class="fake-message" style={`width: ${percentage}%`}>
             {#each lines as _}
-                <div class="line" />
+                <div class="line"></div>
             {/each}
         </div>
-    </div>
+    </Container>
 {/each}
 
 <style lang="scss">
-    .bubble {
-        display: flex;
-        gap: $sp4;
-    }
-
     .avatar {
         flex: 0 0 toRem(48);
         height: toRem(48);
         width: toRem(48);
         border-radius: 50%;
-        background-color: var(--currentChat-msg-bg);
+        background-color: var(--text-tertiary);
     }
     .fake-message {
         border-radius: $sp3;
-        background-color: var(--currentChat-msg-bg);
+        background-color: var(--background-2);
         padding: toRem(8) toRem(12) toRem(8) toRem(12);
         max-width: 80%;
         min-width: 90px;
@@ -59,6 +55,7 @@
         .line {
             height: 8px;
             background-color: rgba(255, 255, 255, 0.05);
+            background-color: var(--text-tertiary);
             margin-bottom: $sp3;
             border-radius: var(--rd);
             &:last-child {
