@@ -2,10 +2,9 @@
     import {
         Body,
         BodySmall,
-        Button,
         ColourVars,
+        CommonButton,
         Container,
-        Form,
         Sheet,
         StatusCard,
         TextArea,
@@ -19,6 +18,7 @@
     import { type CryptocurrencyContent, type MessageContext, nowNanos } from "openchat-shared";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
+    import Chat from "svelte-material-icons/ChatPlusOutline.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
     import ErrorMessage from "../ErrorMessage.svelte";
@@ -29,6 +29,7 @@
     import CryptoSelector from "./CryptoSelector.svelte";
     import SingleUserSelector from "./SingleUserSelector.svelte";
     import TokenInput from "./TokenInput.svelte";
+    import TransferFeesMessage from "./TransferFeesMessage.svelte";
     import { TokenState } from "./wallet/walletState.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -144,84 +145,101 @@
                 onRefreshed={onBalanceRefreshed}
                 onError={onBalanceRefreshError} />
         </Container>
-        <Form onSubmit={send}>
-            <Container padding={["zero", "md"]} gap={"md"} direction={"vertical"}>
-                {#if zero || toppingUp}
-                    <Container direction={"vertical"} gap={"xs"}>
-                        {#if zero}
-                            <Body fontWeight={"bold"}>
-                                <Translatable
-                                    resourceKey={i18nKey("tokenTransfer.zeroBalance", {
-                                        token: tokenState.symbol,
-                                    })} />
-                            </Body>
-                        {/if}
-                        <BodySmall colour={"textSecondary"}>
-                            <Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} />
-                        </BodySmall>
-                    </Container>
-                    <AccountInfo {ledger} />
-                {:else}
-                    {#if multiUserChat}
-                        <div class="receiver">
-                            <Legend label={i18nKey("tokenTransfer.receiver")} />
-                            <SingleUserSelector
-                                bind:selectedReceiver={receiver}
-                                autofocus={multiUserChat} />
-                        </div>
+        <Container padding={["zero", "md"]} gap={"md"} direction={"vertical"}>
+            {#if zero || toppingUp}
+                <Container direction={"vertical"} gap={"xs"}>
+                    {#if zero}
+                        <Body fontWeight={"bold"}>
+                            <Translatable
+                                resourceKey={i18nKey("tokenTransfer.zeroBalance", {
+                                    token: tokenState.symbol,
+                                })} />
+                        </Body>
                     {/if}
-                    <TokenInput
-                        {ledger}
-                        minAmount={tokenState.minAmount}
-                        disabled={sending}
-                        error={!validAmount}
-                        bind:valid={validAmount}
-                        maxAmount={tokenState.maxAmount}
-                        bind:amount={tokenState.draftAmount}>
-                        {#snippet subtext()}
-                            {`Minimum amount ${tokenState.minAmountLabel} ${tokenState.symbol}`}
-                        {/snippet}
-                    </TokenInput>
-
-                    <TextArea
-                        disabled={sending}
-                        maxlength={200}
-                        rows={3}
-                        placeholder={interpolate($_, i18nKey("tokenTransfer.messagePlaceholder"))}
-                        bind:value={message}>
-                        {#snippet subtext()}
-                            {"Recipient will receive this message as a DM"}
-                        {/snippet}
-                    </TextArea>
-
-                    {#if confirming}
-                        <StatusCard
-                            background={ColourVars.background2}
-                            title={"Warning"}
-                            body={interpolate(
-                                $_,
-                                i18nKey("tokenTransfer.warning", { token: tokenState.symbol }),
-                            )}
-                            mode={"warning"}></StatusCard>
-                    {/if}
-                    {#if errorMessage !== undefined}
-                        <div class="error">
-                            <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
-                        </div>
-                    {/if}
-                {/if}
-            </Container>
-        </Form>
-        <Container padding={["zero", "lg"]} direction={"vertical"} gap={"md"}>
-            {#if toppingUp || zero}
-                <Button disabled={refreshing} loading={refreshing} onClick={reset}
-                    ><Translatable resourceKey={i18nKey("refresh")} /></Button>
+                    <BodySmall colour={"textSecondary"}>
+                        <Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} />
+                    </BodySmall>
+                </Container>
+                <AccountInfo {ledger} />
             {:else}
-                <Button disabled={!valid || sending} loading={sending} onClick={send}
-                    ><Translatable
+                {#if multiUserChat}
+                    <div class="receiver">
+                        <Legend label={i18nKey("tokenTransfer.receiver")} />
+                        <SingleUserSelector
+                            bind:selectedReceiver={receiver}
+                            autofocus={multiUserChat} />
+                    </div>
+                {/if}
+                <TokenInput
+                    {ledger}
+                    minAmount={tokenState.minAmount}
+                    disabled={sending}
+                    error={!validAmount}
+                    bind:valid={validAmount}
+                    maxAmount={tokenState.maxAmount}
+                    bind:amount={tokenState.draftAmount}>
+                    {#snippet subtext()}
+                        {`Minimum amount ${tokenState.minAmountLabel} ${tokenState.symbol}`}
+                    {/snippet}
+                </TokenInput>
+
+                <TextArea
+                    disabled={sending}
+                    maxlength={200}
+                    rows={3}
+                    placeholder={interpolate($_, i18nKey("tokenTransfer.messagePlaceholder"))}
+                    bind:value={message}>
+                    {#snippet subtext()}
+                        {"Recipient will receive this message as a DM"}
+                    {/snippet}
+                </TextArea>
+
+                {#if confirming}
+                    <StatusCard
+                        background={ColourVars.background2}
+                        title={"Warning"}
+                        body={interpolate(
+                            $_,
+                            i18nKey("tokenTransfer.warning", { token: tokenState.symbol }),
+                        )}
+                        mode={"warning"}></StatusCard>
+                {/if}
+                {#if errorMessage !== undefined}
+                    <div class="error">
+                        <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
+                    </div>
+                {/if}
+            {/if}
+        </Container>
+        <Container
+            padding={["zero", "lg"]}
+            mainAxisAlignment={"spaceBetween"}
+            crossAxisAlignment={"center"}>
+            <TransferFeesMessage
+                symbol={tokenState.symbol}
+                tokenDecimals={tokenState.decimals}
+                transferFees={tokenState.transferFees} />
+
+            {#if toppingUp || zero}
+                <CommonButton
+                    mode={"active"}
+                    disabled={refreshing}
+                    loading={refreshing}
+                    onClick={reset}><Translatable resourceKey={i18nKey("refresh")} /></CommonButton>
+            {:else}
+                <CommonButton
+                    onClick={send}
+                    loading={sending}
+                    disabled={!valid || sending}
+                    mode={"active"}>
+                    {#snippet icon(color, size)}
+                        <Chat {color} {size} />
+                    {/snippet}
+                    <Translatable
                         resourceKey={i18nKey(
                             confirming ? "tokenTransfer.confirm" : "tokenTransfer.send",
-                        )} /></Button>
+                        )} />
+                </CommonButton>
             {/if}
         </Container>
     </Container>
