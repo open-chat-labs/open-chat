@@ -1,7 +1,5 @@
 <script lang="ts">
     import {
-        Avatar,
-        Body,
         ColourVars,
         Container,
         SectionHeader,
@@ -18,11 +16,10 @@
         publish,
     } from "openchat-client";
     import { onMount } from "svelte";
-    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
-    import TokenSelector from "../wallet/TokenSelector.svelte";
+    import CryptoSelector from "../CryptoSelector.svelte";
     import Features from "./Features.svelte";
     import Payment from "./Payment.svelte";
 
@@ -35,7 +32,6 @@
     let confirming = $state(false);
     let confirmed = $state(false);
     let refreshingBalance = $state(false);
-    let showTokenSelector = $state(false);
 
     let tokenDetails = $derived({
         token: $cryptoLookup.get(ledger),
@@ -87,19 +83,6 @@
     });
 </script>
 
-{#if showTokenSelector}
-    <TokenSelector
-        selected={new Set(ledger)}
-        onSelect={(t) => {
-            ledger = t.ledger;
-            showTokenSelector = false;
-        }}
-        placeholder={i18nKey("Filter tokens...")}
-        onDismiss={() => (showTokenSelector = false)}
-        extraFilter={(t) => ["chat", "icp"].includes(t.symbol.toLowerCase())}
-        title={i18nKey("Select payment token")} />
-{/if}
-
 <Container {onSwipe} background={ColourVars.background0} height={"fill"} direction={"vertical"}>
     <SectionHeader onBack={onCancel}>
         {#snippet title()}
@@ -108,18 +91,9 @@
             {:else}
                 {@const token = tokenDetails.token}
                 {#if token}
-                    <Container
-                        supplementalClass={"wallet_token"}
-                        width={"hug"}
-                        gap={"md"}
-                        onClick={() => (showTokenSelector = true)}
-                        mainAxisAlignment={"spaceBetween"}
-                        crossAxisAlignment={"center"}
-                        padding={"sm"}>
-                        <Avatar size={"sm"} url={token.logo}></Avatar>
-                        <Body width={"hug"} fontWeight={"bold"}>{token.symbol}</Body>
-                        <ChevronDown color={ColourVars.primary} />
-                    </Container>
+                    <CryptoSelector
+                        bind:ledger
+                        filter={(t) => ["chat", "icp"].includes(t.symbol.toLowerCase())} />
                 {/if}
             {/if}
         {/snippet}
