@@ -82,7 +82,6 @@
     import ViewUserProfile from "./profile/ViewUserProfileModal.svelte";
     import MakeProposalModal from "./proposal/MakeProposalModal.svelte";
     import SuspendModal from "./SuspendModal.svelte";
-    import Upgrade from "./upgrade/Upgrade.svelte";
     import SetPinNumberModal from "./wallet/SetPinNumberModal.svelte";
 
     type ViewProfileConfig = {
@@ -144,7 +143,6 @@
     let modal: ModalType = $state({ kind: "none" });
     let confirmActionEvent: ConfirmActionEvent | undefined = $state();
     let joining: MultiUserChat | undefined = $state(undefined);
-    let showUpgrade: boolean = $state(false);
     let share: Share = { title: "", text: "", url: "", files: [] };
     let messageToForward: Message | undefined = undefined;
 
@@ -152,7 +150,6 @@
         const unsubEvents = [
             subscribe("chatWith", chatWith),
             subscribe("replyPrivatelyTo", replyPrivatelyTo),
-            subscribe("upgrade", upgrade),
             subscribe("verifyHumanity", verifyHumanity),
             subscribe("deleteCommunity", onTriggerConfirm),
             subscribe("leaveCommunity", onTriggerConfirm),
@@ -520,10 +517,6 @@
             .catch(() => (joining = undefined));
     }
 
-    function upgrade() {
-        showUpgrade = true;
-    }
-
     function onSelectChat(chatId: ChatIdentifier) {
         closeModal();
         if (messageToForward !== undefined) {
@@ -682,10 +675,6 @@
 
     $effect(() => {
         if ($chatsInitialisedStore) {
-            if ($querystringStore.get("diamond") !== null) {
-                showUpgrade = true;
-                pageReplace(removeQueryStringParam("diamond"));
-            }
             const faq = $querystringStore.get("faq");
             if (faq !== null) {
                 pageReplace(`/faq?q=${faq}`);
@@ -745,10 +734,6 @@
 {/if}
 
 <Toast />
-
-{#if showUpgrade && $currentUserStore}
-    <Upgrade onCancel={() => (showUpgrade = false)} />
-{/if}
 
 {#if modal.kind !== "none"}
     <Overlay

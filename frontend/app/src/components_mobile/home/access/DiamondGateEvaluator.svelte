@@ -86,13 +86,10 @@
         bind:refreshingBalance
         {ledger}
         {error}
-        allowBack={false}
         {lifetime}
         showExpiry={false}
-        padded={false}
         accountBalance={Number(tokenDetails.balance)}
-        onSuccess={onCredentialReceived}
-        {onCancel} />
+        onSuccess={onCredentialReceived} />
 </div>
 
 <style lang="scss">

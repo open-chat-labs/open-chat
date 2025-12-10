@@ -1,28 +1,30 @@
 <script lang="ts">
     import {
+        Avatar,
+        Body,
+        ColourVars,
+        Container,
+        SectionHeader,
+        transition,
+        type SwipeDirection,
+    } from "component-lib";
+    import {
         LEDGER_CANISTER_CHAT,
         LEDGER_CANISTER_ICP,
         canExtendDiamondStore,
         cryptoBalanceStore,
         cryptoLookup,
         isDiamondStore,
+        publish,
     } from "openchat-client";
     import { onMount } from "svelte";
+    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import Diamond from "../../icons/Diamond.svelte";
-    import ModalContent from "../../ModalContent.svelte";
-    import Overlay from "../../Overlay.svelte";
     import Translatable from "../../Translatable.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
-    import CryptoSelector from "../CryptoSelector.svelte";
+    import TokenSelector from "../wallet/TokenSelector.svelte";
     import Features from "./Features.svelte";
     import Payment from "./Payment.svelte";
-
-    interface Props {
-        onCancel: () => void;
-    }
-
-    let { onCancel }: Props = $props();
 
     let ledger: string = $state(
         import.meta.env.OC_NODE_ENV === "production" ? LEDGER_CANISTER_CHAT : LEDGER_CANISTER_ICP,
@@ -33,9 +35,10 @@
     let confirming = $state(false);
     let confirmed = $state(false);
     let refreshingBalance = $state(false);
+    let showTokenSelector = $state(false);
 
     let tokenDetails = $derived({
-        symbol: $cryptoLookup.get(ledger),
+        token: $cryptoLookup.get(ledger),
         balance: $cryptoBalanceStore.get(ledger) ?? BigInt(0),
     });
 
@@ -47,91 +50,106 @@
         error = err;
     }
 
+    function setStep(s: "features" | "payment") {
+        transition(["fade"], () => {
+            step = s;
+        });
+    }
+
     onMount(() => {
         if ($canExtendDiamondStore) {
-            step = "payment";
+            setStep("payment");
+        }
+    });
+
+    function onCancel() {
+        if (step === "payment") {
+            setStep("features");
+        } else {
+            publish("closeModalPage");
+        }
+    }
+
+    let titleKey = $derived.by(() => {
+        if ($canExtendDiamondStore) {
+            return i18nKey("upgrade.extend");
+        } else if ($isDiamondStore) {
+            return i18nKey("upgrade.benefits");
+        } else {
+            return i18nKey("upgrade.featuresTitle");
+        }
+    });
+
+    let onSwipe = $derived((dir: SwipeDirection) => {
+        if (dir === "right") {
+            onCancel();
         }
     });
 </script>
 
-<Overlay>
-    <ModalContent overflows={step === "features"} hideFooter fill>
-        {#snippet header()}
-            <div class="header">
-                {#if !confirming && !confirmed}
-                    <div class="title">
-                        <Diamond size={"1em"} show={"blue"} />
-                        {#if step === "features"}
-                            {#if $canExtendDiamondStore}
-                                <Translatable resourceKey={i18nKey("upgrade.extend")} />
-                            {:else if $isDiamondStore}
-                                <Translatable resourceKey={i18nKey("upgrade.benefits")} />
-                            {:else}
-                                <Translatable resourceKey={i18nKey("upgrade.featuresTitle")} />
-                            {/if}
-                        {:else if step === "payment"}
-                            <div>
-                                <CryptoSelector
-                                    bind:ledger
-                                    filter={(t) =>
-                                        ["chat", "icp"].includes(t.symbol.toLowerCase())} />
-                            </div>
-                        {/if}
-                    </div>
-                    {#if step === "payment"}
-                        <div class="balance">
-                            <BalanceWithRefresh
-                                {ledger}
-                                value={tokenDetails.balance}
-                                bind:refreshing={refreshingBalance}
-                                onRefreshed={onBalanceRefreshed}
-                                onError={onBalanceRefreshError} />
-                        </div>
-                    {/if}
+{#if showTokenSelector}
+    <TokenSelector
+        selected={new Set(ledger)}
+        onSelect={(t) => {
+            ledger = t.ledger;
+            showTokenSelector = false;
+        }}
+        placeholder={i18nKey("Filter tokens...")}
+        onDismiss={() => (showTokenSelector = false)}
+        extraFilter={(t) => ["chat", "icp"].includes(t.symbol.toLowerCase())}
+        title={i18nKey("Select payment token")} />
+{/if}
+
+<Container {onSwipe} background={ColourVars.background0} height={"fill"} direction={"vertical"}>
+    <SectionHeader onBack={onCancel}>
+        {#snippet title()}
+            {#if step === "features"}
+                <Translatable resourceKey={titleKey} />
+            {:else}
+                {@const token = tokenDetails.token}
+                {#if token}
+                    <Container
+                        supplementalClass={"wallet_token"}
+                        width={"hug"}
+                        gap={"md"}
+                        onClick={() => (showTokenSelector = true)}
+                        mainAxisAlignment={"spaceBetween"}
+                        crossAxisAlignment={"center"}
+                        padding={"sm"}>
+                        <Avatar size={"sm"} url={token.logo}></Avatar>
+                        <Body width={"hug"} fontWeight={"bold"}>{token.symbol}</Body>
+                        <ChevronDown color={ColourVars.primary} />
+                    </Container>
                 {/if}
-            </div>
+            {/if}
         {/snippet}
-        {#snippet body()}
-            <div class="body">
-                {#if step === "features"}
-                    <Features
-                        canExtend={$canExtendDiamondStore}
-                        isDiamond={$isDiamondStore}
-                        {onCancel}
-                        onUpgrade={() => (step = "payment")} />
-                {/if}
-                {#if step === "payment"}
-                    <Payment
-                        bind:confirmed
-                        bind:confirming
-                        bind:refreshingBalance
-                        {ledger}
-                        {error}
-                        accountBalance={Number(tokenDetails.balance)}
-                        {onCancel}
-                        onFeatures={() => (step = "features")} />
-                {/if}
+        {#if step === "payment"}
+            <div class="balance">
+                <BalanceWithRefresh
+                    {ledger}
+                    value={tokenDetails.balance}
+                    bind:refreshing={refreshingBalance}
+                    onRefreshed={onBalanceRefreshed}
+                    onError={onBalanceRefreshError} />
             </div>
-        {/snippet}
-    </ModalContent>
-</Overlay>
-
-<style lang="scss">
-    .header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .body {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-    }
-
-    .title {
-        display: flex;
-        align-items: center;
-        gap: $sp3;
-    }
-</style>
+        {/if}
+    </SectionHeader>
+    <Container height={"fill"} direction={"vertical"}>
+        {#if step === "features"}
+            <Features
+                canExtend={$canExtendDiamondStore}
+                isDiamond={$isDiamondStore}
+                {onCancel}
+                onUpgrade={() => setStep("payment")} />
+        {/if}
+        {#if step === "payment"}
+            <Payment
+                bind:confirmed
+                bind:confirming
+                bind:refreshingBalance
+                {ledger}
+                {error}
+                accountBalance={Number(tokenDetails.balance)} />
+        {/if}
+    </Container>
+</Container>

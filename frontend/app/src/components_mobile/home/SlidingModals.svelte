@@ -66,6 +66,7 @@
     import SlidingPage from "./SlidingPage.svelte";
     import Thread from "./thread/Thread.svelte";
     import ThreadPreviews from "./thread/ThreadPreviews.svelte";
+    import Upgrade from "./upgrade/Upgrade.svelte";
     import About from "./user_profile/About.svelte";
     import Appearance from "./user_profile/Appearance.svelte";
     import AppSettings from "./user_profile/AppSettings.svelte";
@@ -182,6 +183,7 @@
         | { kind: "user_profile_delete_account" }
         | { kind: "user_profile_cache_management" }
         | { kind: "app_settings" }
+        | { kind: "upgrade_diamond" }
         | { kind: "user_information"; profile: PublicProfile };
 
     let modalStack = $state<SlidingModalType[]>([]);
@@ -198,6 +200,7 @@
 
     onMount(() => {
         const unsubs = [
+            subscribe("upgrade", () => push({ kind: "upgrade_diamond" })),
             subscribe("showProposalFilters", () => {
                 if ($selectedChatSummaryStore !== undefined) {
                     push({ kind: "proposal_filters", chat: $selectedChatSummaryStore });
@@ -527,6 +530,8 @@
                 isOwner={page.isOwner} />
         {:else if page.kind === "proposal_filters"}
             <ProposalGroupFilters selectedChat={page.chat} />
+        {:else if page.kind === "upgrade_diamond"}
+            <Upgrade />
         {/if}
     </SlidingPage>
 {/each}

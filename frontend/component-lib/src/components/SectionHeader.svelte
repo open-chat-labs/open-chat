@@ -17,9 +17,11 @@
         action?: Snippet<[string]>;
         avatar?: Snippet;
         onClick?: () => void;
+        children?: Snippet;
     }
 
-    let { onBack, onAction, title, subtitle, menu, action, avatar, onClick }: Props = $props();
+    let { onBack, onAction, title, subtitle, menu, action, avatar, onClick, children }: Props =
+        $props();
 
     let padding = $derived<Padding>(onBack ? "sm" : ["sm", "sm", "sm", "lg"]);
 </script>
@@ -60,6 +62,7 @@
             {/snippet}
         </IconButton>
     {/if}
+    {@render children?.()}
     {#if menu}
         <MenuTrigger position={"bottom"} align={"end"}>
             <IconButton padding={["sm", "xs", "sm", "zero"]} size={"md"}>
