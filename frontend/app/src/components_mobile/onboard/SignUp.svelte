@@ -19,7 +19,7 @@
     import AlertBox from "../AlertBox.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import FindUser from "../FindUser.svelte";
-    import TermsContent from "../landingpages/TermsContent.svelte";
+    import TermsContent from "../TermsContent.svelte";
     import Translatable from "../Translatable.svelte";
     import UsernameInput from "../UsernameInput.svelte";
     import UserPill from "../UserPill.svelte";

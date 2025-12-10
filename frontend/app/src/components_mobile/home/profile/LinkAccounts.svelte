@@ -26,7 +26,7 @@
     } from "../../../utils/signin";
     import AlertBox from "../../AlertBox.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import InternetIdentityLogo from "../../landingpages/InternetIdentityLogo.svelte";
+    import InternetIdentityLogo from "../../icons/InternetIdentityLogo.svelte";
     import Translatable from "../../Translatable.svelte";
     import EmailSigninFeedback from "../EmailSigninFeedback.svelte";
     import ChooseSignInOption from "./ChooseSignInOption.svelte";
