@@ -71,7 +71,7 @@
     onmousedown={onMousedown}>
     <Container
         parentDirection={"vertical"}
-        maxHeight={"75vh"}
+        maxHeight={"85vh"}
         height={"hug"}
         background={transparent ? undefined : ColourVars.background1}
         supplementalClass={"sheet_content"}

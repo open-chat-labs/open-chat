@@ -1,45 +1,56 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { Avatar, ColourVars, Container, Subtitle } from "component-lib";
+    import { hideTokenBalances } from "@src/stores/settings";
+    import { Avatar, Body, BodySmall, ColourVars, Column, Row, type SizeMode } from "component-lib";
     import type { EnhancedTokenDetails } from "openchat-client";
-    import { cryptoLookup, cryptoTokensSorted } from "openchat-client";
+    import { enhancedCryptoLookup } from "openchat-client";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import TokenSelector from "./wallet/TokenSelector.svelte";
+    import { TokenState } from "./wallet/walletState.svelte";
 
     interface Props {
-        ledger: string | undefined;
+        width?: SizeMode;
+        ledger: string;
         filter?: (details: EnhancedTokenDetails) => boolean;
         onSelect?: (ledger: string, urlFormat: string) => void;
+        draftAmount?: bigint;
     }
 
-    let { ledger = $bindable(), filter = (_) => true, onSelect }: Props = $props();
-
-    let allAvailableTokens = $derived($cryptoTokensSorted.filter((t) => t.enabled && filter(t)));
+    let { ledger = $bindable(), filter, onSelect, width = "fill", draftAmount }: Props = $props();
+    let token = $derived($enhancedCryptoLookup.get(ledger));
+    let showTokenSelector = $state(false);
+    let tokenState = $derived(token ? new TokenState(token, "usd") : undefined);
 
     $effect(() => {
-        if (ledger === undefined && allAvailableTokens.length > 0) {
-            ledger = allAvailableTokens[0].ledger;
+        if (draftAmount !== undefined && tokenState !== undefined) {
+            tokenState.draftAmount = draftAmount;
         }
     });
-
-    let showTokenSelector = $state(false);
-    let token = $derived($cryptoLookup.get(ledger ?? ""));
 </script>
 
-<Container
-    supplementalClass={"wallet_token"}
-    width={"hug"}
-    gap={"sm"}
-    onClick={() => (showTokenSelector = true)}
-    mainAxisAlignment={"spaceBetween"}
-    crossAxisAlignment={"center"}
-    padding={"sm"}>
-    {#if token}
-        <Avatar size={"sm"} url={token.logo}></Avatar>
-        <Subtitle width={"hug"} fontWeight={"bold"}>{token.symbol}</Subtitle>
-    {/if}
-    <ChevronDown size={"1.5rem"} color={ColourVars.primary} />
-</Container>
+{#if tokenState}
+    <Row
+        {width}
+        background={ColourVars.background2}
+        gap={"md"}
+        borderRadius={"lg"}
+        onClick={() => (showTokenSelector = true)}
+        mainAxisAlignment={"spaceBetween"}
+        crossAxisAlignment={"center"}
+        padding={["sm", "md"]}>
+        <Avatar url={tokenState.logo}></Avatar>
+        <Column>
+            <Body width={"hug"} fontWeight={"bold"}>{tokenState.symbol}</Body>
+            <BodySmall
+                colour={"textSecondary"}
+                blur={$hideTokenBalances}
+                align={"end"}
+                width={"hug"}
+                fontWeight={"bold"}>{tokenState.formattedTokenBalance}</BodySmall>
+        </Column>
+        <ChevronDown size={"1.5rem"} color={ColourVars.textSecondary} />
+    </Row>
+{/if}
 
 {#if showTokenSelector}
     <TokenSelector
@@ -49,6 +60,7 @@
             showTokenSelector = false;
             onSelect?.(t.ledger, t.urlFormat);
         }}
+        extraFilter={filter}
         placeholder={i18nKey("Filter tokens...")}
         onDismiss={() => (showTokenSelector = false)}
         title={i18nKey("Select token")} />

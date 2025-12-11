@@ -1,7 +1,6 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { hideTokenBalances } from "@src/stores/settings";
-    import { toastStore } from "@src/stores/toast";
     import {
         Avatar,
         Body,
@@ -40,20 +39,6 @@
 
     let tokenState = $derived(new TokenState(token, selectedConversion));
     let manualWalletConfig = $derived($walletConfigStore.kind === "manual_wallet");
-    let refreshing = $state(false);
-
-    function refreshBalance(ledger: string) {
-        refreshing = true;
-
-        return client
-            .refreshAccountBalance(ledger, true)
-            .catch((_) => {
-                toastStore.showFailureToast(
-                    i18nKey("unableToRefreshAccountBalance", { token: token.symbol }),
-                );
-            })
-            .finally(() => (refreshing = false));
-    }
 </script>
 
 {#snippet content()}
@@ -70,11 +55,8 @@
             <Caption width={"hug"} colour={"textSecondary"} fontWeight={"bold"}
                 >{tokenState.formattedUnitValue}</Caption>
         </Container>
-        <BodySmall
-            blur={$hideTokenBalances}
-            align={"end"}
-            width={"hug"}
-            fontWeight={"bold"}>{tokenState.formattedTokenBalance}</BodySmall>
+        <BodySmall blur={$hideTokenBalances} align={"end"} width={"hug"} fontWeight={"bold"}
+            >{tokenState.formattedTokenBalance}</BodySmall>
         <Body
             blur={$hideTokenBalances}
             align={"end"}
@@ -82,7 +64,7 @@
             colour={"primary"}
             fontWeight={"bold"}>{tokenState.formattedConvertedValue}</Body>
         {#if withMenu}
-            {#if refreshing}
+            {#if tokenState.refreshingBalance}
                 <Reload color={ColourVars.textSecondary} />
             {:else}
                 <MenuRight color={ColourVars.textSecondary} />
@@ -100,7 +82,7 @@
         position={"bottom"}
         align={"end"}>
         {#snippet menuItems()}
-            <MenuItem onclick={() => refreshBalance(token.ledger)}>
+            <MenuItem onclick={() => tokenState.refreshBalance(client)}>
                 {#snippet icon(color)}
                     <Reload {color} />
                 {/snippet}

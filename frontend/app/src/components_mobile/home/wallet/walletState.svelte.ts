@@ -1,8 +1,13 @@
+import { toastStore } from "@src/stores/toast";
 import {
     cryptoBalanceStore,
+    currentUserStore,
     exchangeRatesLookupStore,
     formatTokens,
     getConvertedBalances,
+    i18nKey,
+    ICP_SYMBOL,
+    OpenChat,
     type ConvertedBalances,
     type EnhancedTokenDetails,
 } from "openchat-client";
@@ -71,6 +76,7 @@ const nullToken: EnhancedTokenDetails = {
 };
 
 export class TokenState {
+    #refreshingBalance = $state(false);
     #selectedConversion = $state<ConversionToken>("usd");
     #token = $state<EnhancedTokenDetails>(nullToken);
     #enabled = $derived(this.#token.enabled);
@@ -115,10 +121,21 @@ export class TokenState {
         if (conversion === undefined || token === undefined || conversion === 0) return "?????";
         return formatConvertedValue(this.#selectedConversion, token / conversion);
     });
+    #account = $derived.by(() => {
+        if (this.#token.symbol === ICP_SYMBOL) {
+            return currentUserStore.value.cryptoAccount;
+        } else {
+            return currentUserStore.value.userId;
+        }
+    });
 
     constructor(t: EnhancedTokenDetails, c: ConversionToken) {
         this.#token = t;
         this.#selectedConversion = c;
+    }
+
+    get account() {
+        return this.#account;
     }
 
     get remainingBalance() {
@@ -204,7 +221,23 @@ export class TokenState {
         this.#token = val;
     }
 
+    get refreshingBalance() {
+        return this.#refreshingBalance;
+    }
+
     set selectedConversion(val: ConversionToken) {
         this.#selectedConversion = val;
+    }
+
+    refreshBalance(client: OpenChat) {
+        this.#refreshingBalance = true;
+        return client
+            .refreshAccountBalance(this.ledger, true)
+            .catch((_) => {
+                toastStore.showFailureToast(
+                    i18nKey("unableToRefreshAccountBalance", { token: this.symbol }),
+                );
+            })
+            .finally(() => (this.#refreshingBalance = false));
     }
 }
