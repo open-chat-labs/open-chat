@@ -288,7 +288,6 @@ struct Data {
     pub upload_wasm_chunks_whitelist: HashSet<Principal>,
     pub rng_seed: [u8; 32],
     pub idempotency_checker: IdempotencyChecker,
-    #[serde(alias = "local_group_index_event_sync_queue")]
     pub local_index_event_sync_queue: GroupedTimerJobQueue<LocalIndexEventBatch>,
 }
 

@@ -98,22 +98,12 @@ struct Data {
     registry_canister_id: CanisterId,
     translations_canister_id: CanisterId,
     website_canister_id: CanisterId,
-    #[serde(default = "sign_in_with_email_canister_id")]
     sign_in_with_email_canister_id: CanisterId,
     nns_governance_canister_id: CanisterId,
     internet_identity_canister_id: CanisterId,
     canister_wasms: ChildCanisterWasms<CanisterType>,
     rng_seed: [u8; 32],
     test_mode: bool,
-}
-
-fn sign_in_with_email_canister_id() -> CanisterId {
-    CanisterId::from_text(match ic_cdk::api::canister_self().to_string().as_str() {
-        "jodzs-iqaaa-aaaar-qamqa-cai" => "zi2i7-nqaaa-aaaar-qaemq-cai",
-        "xeg2u-baaaa-aaaaf-bscyq-cai" => "rubs2-eaaaa-aaaaf-bijfq-cai",
-        _ => panic!("Sign in with email canister not initialized"),
-    })
-    .unwrap()
 }
 
 impl Data {
