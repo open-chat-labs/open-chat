@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Button, Container, H2, Label, Subtitle, type SpacingSize } from "component-lib";
+    import { Button, H2, Label, Subtitle, type SpacingSize, Column, Row } from "component-lib";
 
     let paddingLeft = $state<SpacingSize>("lg");
     let paddingRight = $state<SpacingSize>("lg");
@@ -22,7 +22,7 @@
 {/snippet}
 
 {#snippet contentBlock(name: string, fixed = true)}
-    <Container
+    <Row
         colour={"var(--secondary-muted)"}
         borderWidth={"thick"}
         padding={"lg"}
@@ -34,7 +34,7 @@
         width={!fixed ? "fill" : { size: "140px" }}
         height={{ size: "140px" }}>
         {name} - {fixed ? "fixed 140px" : "fill"}
-    </Container>
+    </Row>
 {/snippet}
 
 {#snippet contentBlocks()}
@@ -44,59 +44,56 @@
     {@render contentBlock("Content D")}
 {/snippet}
 
-<Container mainAxisAlignment={"spaceBetween"} gap={"xxl"}>
-    <Container gap={"lg"} direction={"vertical"}>
+<Row mainAxisAlignment={"spaceBetween"} gap={"xxl"}>
+    <Column gap={"lg"}>
         <H2>Horizontal Container / Row</H2>
 
-        <Container
+        <Row
             padding={[paddingTop, paddingRight, paddingBottom, paddingLeft]}
             borderWidth={"thick"}
             width={"fill"}
             borderRadius={"lg"}
             {gap}>
             {@render contentBlocks()}
-        </Container>
+        </Row>
 
         <H2>Vertical Container / Column</H2>
 
-        <Container width={"hug"} gap={"lg"}>
-            <Container
-                direction={"vertical"}
+        <Row width={"hug"} gap={"lg"}>
+            <Column
                 padding={[paddingTop, paddingRight, paddingBottom, paddingLeft]}
                 borderWidth={"thick"}
                 borderRadius={"lg"}
                 {gap}>
                 {@render contentBlocks()}
-            </Container>
-            <Container
-                direction={"vertical"}
+            </Column>
+            <Column
                 padding={[paddingTop, paddingRight, paddingBottom, paddingLeft]}
                 borderWidth={"thick"}
                 borderRadius={"lg"}
                 {gap}>
                 {@render contentBlocks()}
-            </Container>
-            <Container
-                direction={"vertical"}
+            </Column>
+            <Column
                 padding={[paddingTop, paddingRight, paddingBottom, paddingLeft]}
                 borderWidth={"thick"}
                 borderRadius={"lg"}
                 {gap}>
                 {@render contentBlocks()}
-            </Container>
-        </Container>
+            </Column>
+        </Row>
 
         <H2>Complex Layout</H2>
 
-        <Container gap={"lg"} padding={"xl"} borderRadius={"lg"} borderWidth={"thin"}>
-            <Container gap={"lg"} direction={"vertical"}>
+        <Row gap={"lg"} padding={"xl"} borderRadius={"lg"} borderWidth={"thin"}>
+            <Column gap={"lg"}>
                 {@render contentBlock("A", false)}
                 {@render contentBlock("B", false)}
                 {@render contentBlock("C", false)}
-            </Container>
-            <Container height={"fill"} gap={"lg"} direction={"vertical"}>
+            </Column>
+            <Column height={"fill"} gap={"lg"}>
                 {@render contentBlock("A", false)}
-                <Container
+                <Row
                     gap={"md"}
                     colour={"var(--secondary-muted)"}
                     borderWidth={"thick"}
@@ -111,11 +108,11 @@
                     <Button>A</Button>
                     <Button secondary>B</Button>
                     <Button secondary>C</Button>
-                </Container>
-            </Container>
-        </Container>
-    </Container>
-    <Container gap={"xs"} width={{ size: "300px" }} direction={"vertical"}>
+                </Row>
+            </Column>
+        </Row>
+    </Column>
+    <Column gap={"xs"} width={{ size: "300px" }}>
         <Subtitle fontWeight={"semi-bold"}>Spacing</Subtitle>
 
         <Label fontWeight={"light"}>Padding top</Label>
@@ -142,8 +139,8 @@
         <select bind:value={gap}>
             {@render sizeOptions()}
         </select>
-    </Container>
-</Container>
+    </Column>
+</Row>
 
 <style lang="scss">
     select {

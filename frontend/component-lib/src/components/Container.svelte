@@ -1,45 +1,5 @@
-<script lang="ts">
-    import {
-        ColourVars,
-        getAlignmentCss,
-        getBorderRadiusCss,
-        getBorderStyleCss,
-        getBorderWidthCss,
-        getFlexStyle,
-        getGapCss,
-        getPaddingCss,
-        menuCloser,
-        posToStyle,
-        scrollLimits,
-        swipe,
-        type BorderWidthSize,
-        type CrossAxisAlignment,
-        type Direction,
-        type MainAxisAlignment,
-        type Padding,
-        type Pos,
-        type Radius,
-        type SizeMode,
-        type SpacingSize,
-        type SwipeDirection,
-    } from "component-lib";
-    import { getContext, setContext, type Snippet } from "svelte";
-
-    /**
-     * Some notes on usage. This component uses the Figma concepts of Hug and Fill which need to be understood to use it properly.
-     * Width and height are expressed using a SizeMode. SizeMode can be "hug", "fill" or "fixed".
-     * Hug is used to express that a container's width (e.g.) should be dictated by the intrinsic width of its children.
-     * Fill is used to express that a child should use all available space as dictated by its parent.
-     * Fixed is used to express that the container should simply occupy a fixed width.
-     *
-     * This is powerful and flexible system but it has some implications that need to be understood:
-     *
-     * The overall width/height _must_ be defined by either the parent or the children. You cannot declare that each is
-     * relying on the other to define the size. For example, if you have a parent container that has "hug" width this
-     * means that its width will be defined by the widths of its children. But if those children have "fill" width this
-     * means that their widths will be defined by the width of the parent and we have a deadly embrace and may well get
-     * unexpected results. This can always be resolved but only if you understand what is going on.
-     */
+<script module lang="ts">
+    export type ContainerProps = Props;
 
     type Overflow = "auto" | "visible" | "hidden";
 
@@ -86,6 +46,50 @@
         data_index?: string; // tod fine a better way to do this
         pos?: Pos;
     }
+</script>
+
+<script lang="ts">
+    import {
+        ColourVars,
+        getAlignmentCss,
+        getBorderRadiusCss,
+        getBorderStyleCss,
+        getBorderWidthCss,
+        getFlexStyle,
+        getGapCss,
+        getPaddingCss,
+        menuCloser,
+        posToStyle,
+        scrollLimits,
+        swipe,
+        type BorderWidthSize,
+        type CrossAxisAlignment,
+        type Direction,
+        type MainAxisAlignment,
+        type Padding,
+        type Pos,
+        type Radius,
+        type SizeMode,
+        type SpacingSize,
+        type SwipeDirection,
+    } from "component-lib";
+    import { getContext, setContext, type Snippet } from "svelte";
+
+    /**
+     * Some notes on usage. This component uses the Figma concepts of Hug and Fill which need to be understood to use it properly.
+     * Width and height are expressed using a SizeMode. SizeMode can be "hug", "fill" or "fixed".
+     * Hug is used to express that a container's width (e.g.) should be dictated by the intrinsic width of its children.
+     * Fill is used to express that a child should use all available space as dictated by its parent.
+     * Fixed is used to express that the container should simply occupy a fixed width.
+     *
+     * This is powerful and flexible system but it has some implications that need to be understood:
+     *
+     * The overall width/height _must_ be defined by either the parent or the children. You cannot declare that each is
+     * relying on the other to define the size. For example, if you have a parent container that has "hug" width this
+     * means that its width will be defined by the widths of its children. But if those children have "fill" width this
+     * means that their widths will be defined by the width of the parent and we have a deadly embrace and may well get
+     * unexpected results. This can always be resolved but only if you understand what is going on.
+     */
 
     let {
         children,

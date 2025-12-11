@@ -8,6 +8,7 @@ export { default as FloatingButton } from "./components/buttons/FloatingButton.s
 export { default as IconButton } from "./components/buttons/IconButton.svelte";
 export { default as ChatSummary } from "./components/ChatSummary.svelte";
 export { default as Chip } from "./components/Chip.svelte";
+export { default as Column } from "./components/Column.svelte";
 export { default as Container } from "./components/Container.svelte";
 export { default as CopyCard } from "./components/CopyCard.svelte";
 export { default as CountBadge } from "./components/CountBadge.svelte";
@@ -26,6 +27,7 @@ export { default as MenuTrigger } from "./components/menu/MenuTrigger.svelte";
 export { default as NotificationIndicator } from "./components/NotificationIndicator.svelte";
 export { default as Radio } from "./components/Radio.svelte";
 export { default as ReadMore } from "./components/ReadMore.svelte";
+export { default as Row } from "./components/Row.svelte";
 export { default as SectionHeader } from "./components/SectionHeader.svelte";
 export { default as Sheet } from "./components/sheet/Sheet.svelte";
 export { default as Spinner } from "./components/Spinner.svelte";
