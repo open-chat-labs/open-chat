@@ -13,9 +13,10 @@
 
     interface Props {
         duration?: Duration;
+        extend: boolean;
     }
 
-    let { duration }: Props = $props();
+    let { duration, extend }: Props = $props();
 
     let parts = $derived<TextPart[]>(
         duration
@@ -35,7 +36,7 @@
               ]
             : [
                   {
-                      text: i18nKey("Select "),
+                      text: i18nKey(extend ? "Extend " : "Select "),
                       colour: "textPrimary",
                   },
                   {

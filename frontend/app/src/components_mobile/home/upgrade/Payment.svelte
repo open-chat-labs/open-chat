@@ -1,4 +1,6 @@
 <script lang="ts">
+    import MulticolourText from "@src/components_mobile/MulticolourText.svelte";
+    import { now500 } from "@src/stores/time";
     import {
         Body,
         BodySmall,
@@ -8,12 +10,14 @@
         CommonButton,
         defaultBackgroundGradient,
         Row,
+        Sheet,
         StatusCard,
         Switch,
         transition,
         type ColourVarKeys,
     } from "component-lib";
     import {
+        diamondStatusStore,
         E8S_PER_TOKEN,
         enhancedCryptoLookup,
         LEDGER_CANISTER_CHAT,
@@ -24,7 +28,7 @@
         type ResourceKey,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import { _ } from "svelte-i18n";
+    import { _, locale } from "svelte-i18n";
     import Warning from "svelte-material-icons/AlertRhombusOutline.svelte";
     import Right from "svelte-material-icons/ChevronRight.svelte";
     import Diamond from "svelte-material-icons/DiamondOutline.svelte";
@@ -36,20 +40,19 @@
     import type { RemoteData } from "../../../utils/remoteData";
     import Setting from "../../Setting.svelte";
     import Translatable from "../../Translatable.svelte";
+    import AccountInfo from "../AccountInfo.svelte";
     import CryptoSelector from "../CryptoSelector.svelte";
     import { TokenState } from "../wallet/walletState.svelte";
-    import Expiry from "./Expiry.svelte";
     import SelectMembershipHeader from "./SelectMembershipHeader.svelte";
 
     type Step = "choose" | "confirm";
 
     interface Props {
         lifetime?: boolean;
-        showExpiry?: boolean;
         onSuccess?: (proof: string) => void;
     }
 
-    let { lifetime = false, showExpiry = true, onSuccess }: Props = $props();
+    let { lifetime = false, onSuccess }: Props = $props();
 
     let confirming = $state(false);
     let step = $state<Step>("choose");
@@ -88,6 +91,7 @@
 
     let autoRenew = $state(true);
     let selectedOption: Option | undefined = $state(options[lifetime ? 3 : 0]);
+    let topup = $state(false);
 
     let ledger: string = $state(
         import.meta.env.OC_NODE_ENV === "production" ? LEDGER_CANISTER_CHAT : LEDGER_CANISTER_ICP,
@@ -133,6 +137,7 @@
             )
             .then((resp) => {
                 if (resp.kind === "success") {
+                    tokenState.refreshBalance(client);
                     onSuccess?.(resp.proof);
                 } else {
                     const errorKey = "upgrade.paymentFailed";
@@ -173,29 +178,46 @@
         const toPayE8s = amountInE8s(tokenDetails.symbol, diamondFees, options[index]);
         return toPayE8s - tokenState.remainingBalance > 0.0001;
     }
+
+    let expiry = $derived.by(() => {
+        if ($diamondStatusStore.kind !== "active") return undefined;
+        const expiresIn = client.diamondExpiresIn($now500, $locale);
+        const expiresAtMs = Number($diamondStatusStore.expiresAt);
+        const expiresAt = client.toDateString(new Date(expiresAtMs));
+        return { expiresIn, expiresAt, expiresAtMs };
+    });
+
+    function getExtendTo({ index }: Option) {
+        if (expiry === undefined) return undefined;
+        const duration = indexToDuration[index] ?? 0;
+        if (duration === "lifetime") return `Upgrade to lifetime`;
+        const extendByMs = client.diamondDurationToMs(duration);
+        return `Extend to ${client.toDateString(new Date(expiry.expiresAtMs + extendByMs))}`;
+    }
 </script>
 
 {#snippet membershipTier(option: Option)}
+    {@const lifetime = option.index === 3}
+    {@const extendTo = getExtendTo(option)}
     {@const insufficient = insufficientFundsForSub(option.index)}
-    {@const bg =
-        option.index === 3
-            ? insufficient
-                ? ColourVars.disabledButton
-                : defaultBackgroundGradient
-            : undefined}
-    {@const txt: ColourVarKeys = option.index === 3 ? "textOnPrimary" : (insufficient ? "disabledButton" : "textPrimary")}
-    {@const icon =
-        option.index === 3
-            ? ColourVars.textOnPrimary
-            : insufficient
-              ? ColourVars.disabledButton
-              : ColourVars.textPrimary}
+    {@const bg = lifetime
+        ? insufficient
+            ? ColourVars.disabledButton
+            : defaultBackgroundGradient
+        : undefined}
+    {@const txt: ColourVarKeys = lifetime ? "textOnPrimary" : (insufficient ? "disabledButton" : "textPrimary")}
+    {@const extendTxt: ColourVarKeys = lifetime ? "textOnPrimary" :(insufficient ? "disabledButton" : "textSecondary")}
+    {@const icon = lifetime
+        ? ColourVars.textOnPrimary
+        : insufficient
+          ? ColourVars.disabledButton
+          : ColourVars.textPrimary}
     <Row
         onClick={() => {
             if (option.enabled) {
                 selectedOption = option;
                 if (!insufficient) {
-                    transition(["fade"], () => {
+                    transition(["slide_left"], () => {
                         step = "confirm";
                     });
                 }
@@ -205,12 +227,19 @@
         crossAxisAlignment={"center"}
         background={bg}
         borderRadius={"md"}
-        borderWidth={"thick"}
+        borderWidth={lifetime ? "zero" : "thick"}
         borderColour={insufficient ? ColourVars.disabledButton : ColourVars.primary}
         padding={["md", "lg"]}>
-        <Body fontWeight={"bold"} colour={txt} width={"hug"}>
-            <Translatable resourceKey={option.duration} />
-        </Body>
+        <Column>
+            <Body fontWeight={"bold"} colour={txt} width={"hug"}>
+                <Translatable resourceKey={option.duration} />
+            </Body>
+            {#if extendTo}
+                <BodySmall fontWeight={"light"} colour={extendTxt} width={"hug"}>
+                    {extendTo}
+                </BodySmall>
+            {/if}
+        </Column>
         <Row width={"hug"} gap={"sm"}>
             <Body fontWeight={"bold"} colour={txt} width={"hug"}>
                 {`${amount(amountInE8s(tokenDetails.symbol, diamondFees, option))} ${
@@ -225,7 +254,14 @@
 {#snippet selectMembershipTier()}
     <Column gap={"sm"}>
         <BodySmall colour={"textSecondary"}>
-            <Translatable resourceKey={i18nKey("Select a membership duration")} />
+            {#if expiry !== undefined}
+                <Translatable
+                    resourceKey={i18nKey("upgrade.expiryMessage", {
+                        relative: expiry.expiresIn,
+                    })} />
+            {:else}
+                <Translatable resourceKey={i18nKey("Select a membership duration")} />
+            {/if}
         </BodySmall>
         {#each options as option}
             {@render membershipTier(option)}
@@ -235,7 +271,7 @@
 
 <Column height={{ size: "100%" }} gap={"lg"} padding={["xxl", "xl"]}>
     <Column gap={"xl"}>
-        <SelectMembershipHeader duration={headerProps} />
+        <SelectMembershipHeader extend={expiry !== undefined} duration={headerProps} />
 
         {#if step === "confirm"}
             {#if selectedDuration !== "lifetime"}
@@ -333,6 +369,36 @@
                 </Row>
             {/if}
 
+            {#if expiry !== undefined}
+                <Body colour={"textSecondary"}>
+                    <MulticolourText
+                        parts={[
+                            {
+                                text: i18nKey("Your current membership is due to expire in "),
+                                colour: "textSecondary",
+                            },
+                            {
+                                text: i18nKey(expiry.expiresIn!),
+                                colour: "primary",
+                            },
+                            {
+                                text: i18nKey(" on "),
+                                colour: "textSecondary",
+                            },
+                            {
+                                text: i18nKey(expiry.expiresAt),
+                                colour: "primary",
+                            },
+                            {
+                                text: i18nKey(
+                                    ". Any extended membership would start from that date.",
+                                ),
+                                colour: "textSecondary",
+                            },
+                        ]} />
+                </Body>
+            {/if}
+
             <Column gap={"sm"}>
                 <BodySmall colour={"textSecondary"}>
                     <Translatable resourceKey={i18nKey("Select token to pay with")} />
@@ -345,6 +411,7 @@
 
                     {#if insufficientFundsForAllSubs}
                         <Column
+                            onClick={() => (topup = true)}
                             mainAxisAlignment={"center"}
                             crossAxisAlignment={"center"}
                             width={{ size: "3.5rem" }}
@@ -374,7 +441,14 @@
             {/if}
         {/if}
     </Column>
-    {#if showExpiry}
-        <Expiry extendBy={selectedDuration} />
-    {/if}
 </Column>
+
+{#if topup}
+    <Sheet
+        onDismiss={() => {
+            tokenState.refreshBalance(client);
+            topup = false;
+        }}>
+        <AccountInfo ledger={tokenState.ledger} />
+    </Sheet>
+{/if}

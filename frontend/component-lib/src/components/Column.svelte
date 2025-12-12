@@ -4,4 +4,4 @@
     let props: Omit<ContainerProps, "direction"> = $props();
 </script>
 
-<Container direction={"vertical"} {...props}>{@render props.children?.()}</Container>
+<Container direction={"vertical"} {...props} />

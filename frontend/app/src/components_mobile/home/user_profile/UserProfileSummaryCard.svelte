@@ -22,6 +22,7 @@
     import Calendar from "svelte-material-icons/CalendarMonthOutline.svelte";
     import Check from "svelte-material-icons/Check.svelte";
     import DiamondOutline from "svelte-material-icons/DiamondOutline.svelte";
+    import Lifetime from "svelte-material-icons/DiamondStone.svelte";
     import Markdown from "../Markdown.svelte";
     import Badges from "../profile/Badges.svelte";
     import ChitSummary from "./ChitSummary.svelte";
@@ -75,8 +76,9 @@
     }
 </script>
 
-{#snippet accountPill(Icon: any, text: string, colour: string)}
+{#snippet accountPill(Icon: any, text: string, colour: string, onClick?: () => void)}
     <Container
+        {onClick}
         width={"hug"}
         background={colour}
         gap={"xs"}
@@ -140,13 +142,14 @@
             {#if user.isUniquePerson || user.diamondStatus !== "inactive"}
                 <Container padding={["sm", "zero"]} gap={"sm"}>
                     {#if user.diamondStatus === "active"}
-                        {@render accountPill(DiamondOutline, "Diamond member", ColourVars.primary)}
-                    {:else if user.diamondStatus === "lifetime"}
                         {@render accountPill(
                             DiamondOutline,
-                            "Lifetime member",
-                            ColourVars.gradient,
+                            "Diamond member",
+                            ColourVars.primary,
+                            () => publish("upgrade"),
                         )}
+                    {:else if user.diamondStatus === "lifetime"}
+                        {@render accountPill(Lifetime, "Lifetime member", ColourVars.gradient)}
                     {/if}
                     {#if user.isUniquePerson}
                         {@render accountPill(Check, "Verified account", ColourVars.secondary)}
