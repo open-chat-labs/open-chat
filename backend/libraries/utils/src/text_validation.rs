@@ -39,7 +39,10 @@ impl From<UsernameValidationError> for OCError {
     }
 }
 
-pub fn validate_display_name(display_name: &str) -> Result<(), UsernameValidationError> {
+pub fn validate_display_name(
+    display_name: &str,
+    blocked_display_name_patterns: &[String],
+) -> Result<(), UsernameValidationError> {
     const FORBIDDEN_CHARS: [char; 10] = ['@', '<', '>', '/', '\\', '#', '"', '\'', '`', '💎'];
     match validate_string_length(display_name, MIN_DISPLAY_NAME_LENGTH, MAX_DISPLAY_NAME_LENGTH) {
         Ok(()) => {
@@ -48,6 +51,7 @@ pub fn validate_display_name(display_name: &str) -> Result<(), UsernameValidatio
                 || display_name.contains(|c: char| c.is_ascii_whitespace() && c != ' ')
                 || display_name.contains("  ")
                 || (display_name.chars().any(|c| FORBIDDEN_CHARS.contains(&c)))
+                || input_matches_any(&display_name.to_lowercase(), blocked_display_name_patterns)
             {
                 Err(UsernameValidationError::Invalid)
             } else {
@@ -100,12 +104,15 @@ fn is_username_reserved(username: &str, blocked_username_patterns: &[String]) ->
         }
     }
 
-    for pattern in blocked_username_patterns {
-        if regex_lite::Regex::new(pattern).is_ok_and(|r| r.is_match(&username_lower)) {
+    input_matches_any(&username_lower, blocked_username_patterns)
+}
+
+fn input_matches_any(input: &str, patterns: &[String]) -> bool {
+    for pattern in patterns {
+        if regex_lite::Regex::new(pattern).is_ok_and(|r| r.is_match(&input)) {
             return true;
         }
     }
-
     false
 }
 
@@ -296,39 +303,44 @@ mod tests {
             Err(UsernameValidationError::Invalid)
         ));
         assert!(matches!(
-            validate_username("OCBot_123", &blocked),
+            validate_username("OcBot_123", &blocked),
             Err(UsernameValidationError::Invalid)
         ));
     }
 
     #[test]
     fn valid_display_names() {
-        assert!(validate_display_name("John* $Smith--(*)").is_ok());
-        assert!(validate_display_name("John 👍️ Smith").is_ok());
-        assert!(validate_display_name("早期用户有保证奖励").is_ok());
-        assert!(validate_display_name("Jon").is_ok());
-        assert!(validate_display_name("The fox jumps over John S").is_ok());
+        let blocked = [];
+
+        assert!(validate_display_name("John* $Smith--(*)", &blocked).is_ok());
+        assert!(validate_display_name("John 👍️ Smith", &blocked).is_ok());
+        assert!(validate_display_name("早期用户有保证奖励", &blocked).is_ok());
+        assert!(validate_display_name("Jon", &blocked).is_ok());
+        assert!(validate_display_name("The fox jumps over John S", &blocked).is_ok());
     }
 
     #[test]
     fn invalid_display_names() {
-        assert!(validate_display_name("JS").is_err());
-        assert!(validate_display_name("The fox jumps over John Smith").is_err());
-        assert!(validate_display_name(" John Smith").is_err());
-        assert!(validate_display_name("John Smith ").is_err());
-        assert!(validate_display_name("John    Smith").is_err());
-        assert!(validate_display_name("John  Smith").is_err());
-        assert!(validate_display_name("John\nSmith").is_err());
-        assert!(validate_display_name("John\tSmith").is_err());
-        assert!(validate_display_name("John/Smith").is_err());
-        assert!(validate_display_name("John@Smith").is_err());
-        assert!(validate_display_name("John<Smith").is_err());
-        assert!(validate_display_name("John>Smith").is_err());
-        assert!(validate_display_name("John'Smith").is_err());
-        assert!(validate_display_name("John\"Smith").is_err());
-        assert!(validate_display_name("John`Smith").is_err());
-        assert!(validate_display_name("John#Smith").is_err());
-        assert!(validate_display_name("John💎Smith").is_err());
+        let blocked = ["ocbot*".to_string()];
+
+        assert!(validate_display_name("JS", &blocked).is_err());
+        assert!(validate_display_name("The fox jumps over John Smith", &blocked).is_err());
+        assert!(validate_display_name(" John Smith", &blocked).is_err());
+        assert!(validate_display_name("John Smith ", &blocked).is_err());
+        assert!(validate_display_name("John    Smith", &blocked).is_err());
+        assert!(validate_display_name("John  Smith", &blocked).is_err());
+        assert!(validate_display_name("John\nSmith", &blocked).is_err());
+        assert!(validate_display_name("John\tSmith", &blocked).is_err());
+        assert!(validate_display_name("John/Smith", &blocked).is_err());
+        assert!(validate_display_name("John@Smith", &blocked).is_err());
+        assert!(validate_display_name("John<Smith", &blocked).is_err());
+        assert!(validate_display_name("John>Smith", &blocked).is_err());
+        assert!(validate_display_name("John'Smith", &blocked).is_err());
+        assert!(validate_display_name("John\"Smith", &blocked).is_err());
+        assert!(validate_display_name("John`Smith", &blocked).is_err());
+        assert!(validate_display_name("John#Smith", &blocked).is_err());
+        assert!(validate_display_name("John💎Smith", &blocked).is_err());
+        assert!(validate_display_name("OcBot_123", &blocked).is_err());
     }
 
     #[test]
