@@ -125,7 +125,7 @@ fn validate_request(args: &Args, owner_id: UserId, state: &RuntimeState) -> Resu
         return Err("already registered".to_string());
     }
 
-    match validate_username(&args.name) {
+    match validate_username(&args.name, &state.data.blocked_username_patterns) {
         Ok(_) => {}
         Err(UsernameValidationError::TooShort(_)) => return Err("name too short".to_string()),
         Err(UsernameValidationError::TooLong(_)) => return Err("name too long".to_string()),

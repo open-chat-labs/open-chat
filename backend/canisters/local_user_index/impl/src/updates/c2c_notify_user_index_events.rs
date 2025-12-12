@@ -10,7 +10,10 @@ use stable_memory_map::StableMemoryMap;
 use std::cell::LazyCell;
 use std::cmp::min;
 use tracing::info;
-use types::{BotEvent, BotInstallationLocation, BotLifecycleEvent, BotNotification, BotRegisteredEvent, TimestampMillis};
+use types::{
+    BotEvent, BotInstallationLocation, BotLifecycleEvent, BotNotification, BotRegisteredEvent, PushIfNotContains,
+    TimestampMillis,
+};
 use user_canister::{
     DiamondMembershipPaymentReceived, DisplayNameChanged, ExternalAchievementAwarded, OpenChatBotMessageV2,
     PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserJoinedCommunityOrChannel, UserJoinedGroup,
@@ -323,6 +326,13 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             state.data.blocked_users.remove(&(unblocked, user_id));
         }
         UserIndexEvent::SetPremiumItemCost(ev) => state.data.premium_items.set(ev.item_id, ev.chit_cost),
+        UserIndexEvent::UpdateBlockedUsernamePatterns(ev) => {
+            if ev.add {
+                state.data.blocked_username_patterns.push_if_not_contains(ev.pattern);
+            } else {
+                state.data.blocked_username_patterns.retain(|p| *p != ev.pattern);
+            }
+        }
     }
 }
 

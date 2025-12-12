@@ -30,6 +30,7 @@ pub mod set_username;
 pub mod submit_proof_of_unique_personhood;
 pub mod suspend_user;
 pub mod unsuspend_user;
+mod update_blocked_username_patterns;
 pub mod update_bot;
 pub mod update_diamond_membership_subscription;
 pub mod upgrade_local_user_index_canister_wasm;

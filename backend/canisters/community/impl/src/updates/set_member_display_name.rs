@@ -18,7 +18,7 @@ fn set_member_display_name_impl(args: Args, state: &mut RuntimeState) -> OCResul
     let member = state.get_calling_member(true)?;
 
     if let Some(display_name) = args.display_name.as_ref()
-        && let Err(error) = validate_display_name(display_name)
+        && let Err(error) = validate_display_name(display_name, &[])
     {
         return Err(match error {
             UsernameValidationError::TooShort(s) => OCErrorCode::DisplayNameTooShort.with_message(s.min_length),
