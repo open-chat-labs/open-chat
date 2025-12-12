@@ -301,7 +301,7 @@ impl RuntimeState {
             stable_memory_sizes: memory::memory_sizes(),
             streak_insurance_metrics: self.data.streak_insurance_logs.metrics(),
             premium_item_metrics: self.data.premium_items.metrics(),
-            blocked_username_patterns: self.data.blocked_username_patterns.iter().cloned().collect(),
+            blocked_username_patterns: self.data.blocked_username_patterns.clone(),
             canister_ids: CanisterIds {
                 group_index: self.data.group_index_canister_id,
                 notifications_index: self.data.notifications_index_canister_id,

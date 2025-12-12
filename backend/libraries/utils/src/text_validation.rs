@@ -109,7 +109,7 @@ fn is_username_reserved(username: &str, blocked_username_patterns: &[String]) ->
 
 fn input_matches_any(input: &str, patterns: &[String]) -> bool {
     for pattern in patterns {
-        if regex_lite::Regex::new(pattern).is_ok_and(|r| r.is_match(&input)) {
+        if regex_lite::Regex::new(pattern).is_ok_and(|r| r.is_match(input)) {
             return true;
         }
     }
