@@ -301,6 +301,7 @@ impl RuntimeState {
             stable_memory_sizes: memory::memory_sizes(),
             streak_insurance_metrics: self.data.streak_insurance_logs.metrics(),
             premium_item_metrics: self.data.premium_items.metrics(),
+            blocked_username_patterns: self.data.blocked_username_patterns.iter().cloned().collect(),
             canister_ids: CanisterIds {
                 group_index: self.data.group_index_canister_id,
                 notifications_index: self.data.notifications_index_canister_id,
@@ -407,6 +408,8 @@ struct Data {
     pub idempotency_checker: IdempotencyChecker,
     pub blocked_users: UserIdsSet,
     pub premium_items: PremiumItems,
+    #[serde(default)]
+    pub blocked_username_patterns: Vec<String>,
 }
 
 impl Data {
@@ -490,6 +493,7 @@ impl Data {
             idempotency_checker: IdempotencyChecker::default(),
             blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
             premium_items: PremiumItems::default(),
+            blocked_username_patterns: Vec::new(),
         };
 
         // Register the ProposalsBot
@@ -605,6 +609,7 @@ impl Default for Data {
             idempotency_checker: IdempotencyChecker::default(),
             blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
             premium_items: PremiumItems::default(),
+            blocked_username_patterns: Vec::new(),
         }
     }
 }
@@ -655,6 +660,7 @@ pub struct Metrics {
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub streak_insurance_metrics: StreakInsuranceMetrics,
     pub premium_item_metrics: PremiumItemMetrics,
+    pub blocked_username_patterns: Vec<String>,
     pub canister_ids: CanisterIds,
 }
 

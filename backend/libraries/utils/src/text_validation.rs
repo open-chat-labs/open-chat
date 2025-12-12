@@ -59,18 +59,23 @@ pub fn validate_display_name(display_name: &str) -> Result<(), UsernameValidatio
     }
 }
 
-pub fn validate_username(username: &str) -> Result<(), UsernameValidationError> {
-    validate_username_custom(username, MIN_USERNAME_LENGTH, MAX_USERNAME_LENGTH)
+pub fn validate_username(username: &str, blocked_username_patterns: &[String]) -> Result<(), UsernameValidationError> {
+    validate_username_custom(username, MIN_USERNAME_LENGTH, MAX_USERNAME_LENGTH, blocked_username_patterns)
 }
 
-pub fn validate_username_custom(username: &str, min_length: u32, max_length: u32) -> Result<(), UsernameValidationError> {
+pub fn validate_username_custom(
+    username: &str,
+    min_length: u32,
+    max_length: u32,
+    blocked_username_patterns: &[String],
+) -> Result<(), UsernameValidationError> {
     match validate_string_length(username, min_length, max_length) {
         Ok(()) => {
             if username.starts_with('_')
                 || username.ends_with('_')
                 || username.contains("__")
                 || (username.chars().any(|c| !c.is_ascii_alphanumeric() && c != '_'))
-                || is_username_reserved(username)
+                || is_username_reserved(username, blocked_username_patterns)
             {
                 Err(UsernameValidationError::Invalid)
             } else {
@@ -82,15 +87,21 @@ pub fn validate_username_custom(username: &str, min_length: u32, max_length: u32
     }
 }
 
-fn is_username_reserved(username: &str) -> bool {
-    let normalised = username.replace('_', "").to_uppercase();
-    let is_bot_like = normalised.ends_with("BOT") || normalised.ends_with("B0T");
+fn is_username_reserved(username: &str, blocked_username_patterns: &[String]) -> bool {
+    let username_lower = username.to_lowercase();
+    let is_bot_like = username_lower.ends_with("bot") || username_lower.ends_with("b0t");
 
     if is_bot_like {
-        if normalised == "OPENCHATBOT" {
+        if username_lower == "openchatbot" {
             return true;
         }
-        if normalised.starts_with("SNS") {
+        if username_lower.starts_with("sns") {
+            return true;
+        }
+    }
+
+    for pattern in blocked_username_patterns {
+        if regex_lite::Regex::new(pattern).is_ok_and(|r| r.is_match(&username_lower)) {
             return true;
         }
     }
@@ -216,34 +227,78 @@ mod tests {
 
     #[test]
     fn valid_usernames() {
-        assert!(validate_username("abcde").is_ok());
-        assert!(validate_username("12345").is_ok());
-        assert!(validate_username("SNSABC").is_ok());
-        assert!(validate_username("TwentyCharactersLong").is_ok());
+        let blocked = Vec::new();
+
+        assert!(validate_username("abcde", &blocked).is_ok());
+        assert!(validate_username("12345", &blocked).is_ok());
+        assert!(validate_username("SNSABC", &blocked).is_ok());
+        assert!(validate_username("TwentyCharactersLong", &blocked).is_ok());
     }
 
     #[test]
     fn invalid_usernames() {
+        let blocked = ["ocbot*".to_string()];
+
         assert!(matches!(
-            validate_username("1_2_3_4_5_6_7_8_9_0_1_2_3_4"),
+            validate_username("1_2_3_4_5_6_7_8_9_0_1_2_3_4", &blocked),
             Err(UsernameValidationError::TooLong(_))
         ));
-        assert!(matches!(validate_username("abcd"), Err(UsernameValidationError::TooShort(_))));
-        assert!(matches!(validate_username("ab cde"), Err(UsernameValidationError::Invalid)));
-        assert!(matches!(validate_username("ab cde"), Err(UsernameValidationError::Invalid)));
-        assert!(matches!(validate_username("_abcde"), Err(UsernameValidationError::Invalid)));
-        assert!(matches!(validate_username("abcde_"), Err(UsernameValidationError::Invalid)));
-        assert!(matches!(validate_username("ab__cde"), Err(UsernameValidationError::Invalid)));
-        assert!(matches!(validate_username("ab,cde"), Err(UsernameValidationError::Invalid)));
-        assert!(matches!(validate_username("abcéd"), Err(UsernameValidationError::Invalid)));
-        assert!(matches!(validate_username("abcṷd"), Err(UsernameValidationError::Invalid)));
-        assert!(matches!(validate_username("abc王d"), Err(UsernameValidationError::Invalid)));
         assert!(matches!(
-            validate_username("OpenChat_Bot"),
+            validate_username("abcd", &blocked),
+            Err(UsernameValidationError::TooShort(_))
+        ));
+        assert!(matches!(
+            validate_username("ab cde", &blocked),
             Err(UsernameValidationError::Invalid)
         ));
-        assert!(matches!(validate_username("SNS1Bot"), Err(UsernameValidationError::Invalid)));
-        assert!(matches!(validate_username("SNS2_B0T"), Err(UsernameValidationError::Invalid)));
+        assert!(matches!(
+            validate_username("ab cde", &blocked),
+            Err(UsernameValidationError::Invalid)
+        ));
+        assert!(matches!(
+            validate_username("_abcde", &blocked),
+            Err(UsernameValidationError::Invalid)
+        ));
+        assert!(matches!(
+            validate_username("abcde_", &blocked),
+            Err(UsernameValidationError::Invalid)
+        ));
+        assert!(matches!(
+            validate_username("ab__cde", &blocked),
+            Err(UsernameValidationError::Invalid)
+        ));
+        assert!(matches!(
+            validate_username("ab,cde", &blocked),
+            Err(UsernameValidationError::Invalid)
+        ));
+        assert!(matches!(
+            validate_username("abcéd", &blocked),
+            Err(UsernameValidationError::Invalid)
+        ));
+        assert!(matches!(
+            validate_username("abcṷd", &blocked),
+            Err(UsernameValidationError::Invalid)
+        ));
+        assert!(matches!(
+            validate_username("abc王d", &blocked),
+            Err(UsernameValidationError::Invalid)
+        ));
+        assert!(matches!(
+            validate_username("OpenChat_Bot", &blocked),
+            Err(UsernameValidationError::Invalid)
+        ));
+        assert!(matches!(
+            validate_username("SNS1Bot", &blocked),
+            Err(UsernameValidationError::Invalid)
+        ));
+        assert!(matches!(
+            validate_username("SNS2_B0T", &blocked),
+            Err(UsernameValidationError::Invalid)
+        ));
+        assert!(matches!(
+            validate_username("OCBot_123", &blocked),
+            Err(UsernameValidationError::Invalid)
+        ));
     }
 
     #[test]

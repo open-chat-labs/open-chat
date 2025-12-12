@@ -5,6 +5,7 @@ use community_canister::register_webhook::*;
 use oc_error_codes::OCErrorCode;
 use types::OCResult;
 use utils::document::try_parse_data_url;
+use utils::text_validation::{UsernameValidationError, validate_username_custom};
 
 #[update(msgpack = true)]
 #[trace]
@@ -25,6 +26,13 @@ fn register_webhook_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succe
     if !member.role().is_owner() {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
+
+    match validate_username_custom(&args.name, 3, 15, &[]) {
+        Ok(_) => {}
+        Err(UsernameValidationError::TooShort(_)) => return Err(OCErrorCode::InvalidRequest.with_message("name too short")),
+        Err(UsernameValidationError::TooLong(_)) => return Err(OCErrorCode::InvalidRequest.with_message("name too long")),
+        Err(UsernameValidationError::Invalid) => return Err(OCErrorCode::InvalidRequest.with_message("name invalid")),
+    };
 
     let avatar = args
         .avatar
