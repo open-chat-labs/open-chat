@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Allow platform operators to block usernames via regex patterns ([#8719](https://github.com/open-chat-labs/open-chat/pull/8719))
+
 ### Changed
 
 - Move `ic_root_key` to `Environment` trait ([#8701](https://github.com/open-chat-labs/open-chat/pull/8701))
