@@ -92,19 +92,19 @@ pub fn validate_username_custom(
 }
 
 fn is_username_reserved(username: &str, blocked_username_patterns: &[String]) -> bool {
-    let username_lower = username.to_lowercase();
-    let is_bot_like = username_lower.ends_with("bot") || username_lower.ends_with("b0t");
+    let normalised = username.replace('_', "").to_lowercase();
+    let is_bot_like = normalised.ends_with("bot") || normalised.ends_with("b0t");
 
     if is_bot_like {
-        if username_lower == "openchatbot" {
+        if normalised == "openchatbot" {
             return true;
         }
-        if username_lower.starts_with("sns") {
+        if normalised.starts_with("sns") {
             return true;
         }
     }
 
-    input_matches_any(&username_lower, blocked_username_patterns)
+    input_matches_any(&normalised, blocked_username_patterns)
 }
 
 fn input_matches_any(input: &str, patterns: &[String]) -> bool {
