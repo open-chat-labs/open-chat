@@ -7,6 +7,7 @@
         CommonButton,
         Container,
         H2,
+        Row,
         Sheet,
         type SwipeDirection,
     } from "component-lib";
@@ -93,6 +94,11 @@
                     ]} />
             </Body>
         </Column>
+        <Row
+            height={{ size: "4px" }}
+            background={"linear-gradient(90deg, var(--primary), var(--secondary))"}>
+            <span></span>
+        </Row>
         <Features />
         <div class="fade"></div>
     </Container>

@@ -26,7 +26,7 @@
     let iconSize = "1rem";
 </script>
 
-<Container padding={["zero", "md"]}>
+<Container padding={["xl", "md", "zero", "md"]}>
     <Container height={"fill"} padding={"md"} mainAxisAlignment={"center"} width={{ share: 1 }}>
         <span></span>
     </Container>
