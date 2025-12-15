@@ -10194,6 +10194,14 @@ export class OpenChat {
         }
         return false;
     }
+
+    updateBlockedUsernamePatterns(pattern: string, add: boolean): Promise<void> {
+        return this.#sendRequest({
+            kind: "updateBlockedUsernamePatterns",
+            pattern,
+            add,
+        });
+    }
 }
 
 type UserIndexMetrics = {

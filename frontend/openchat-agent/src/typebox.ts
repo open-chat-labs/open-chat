@@ -2302,6 +2302,14 @@ export const UserIndexSetDiamondMembershipFeesResponse = Type.Union([
     Type.Literal("Invalid"),
 ]);
 
+export type UserIndexUpdateBlockedUsernamePatternsArgs = Static<
+    typeof UserIndexUpdateBlockedUsernamePatternsArgs
+>;
+export const UserIndexUpdateBlockedUsernamePatternsArgs = Type.Object({
+    pattern: Type.String(),
+    add: Type.Boolean(),
+});
+
 export type UserIndexRegisterBotSuccessResult = Static<typeof UserIndexRegisterBotSuccessResult>;
 export const UserIndexRegisterBotSuccessResult = Type.Object({
     bot_id: UserId,
