@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { flattenGateConfig, gateLabel } from "@src/utils/access";
+    import { flattenGateConfig } from "@src/utils/access";
     import {
         Avatar,
         Body,
@@ -13,13 +13,13 @@
     import type { AccessGateConfig, DataContent, OpenChat } from "openchat-client";
     import { ModerationFlags } from "openchat-client";
     import { getContext } from "svelte";
-    import Check from "svelte-material-icons/Check.svelte";
     import Translate from "svelte-material-icons/Translate.svelte";
     import { i18nKey, supportedLanguagesByCode } from "../../../../i18n/i18n";
     import Translatable from "../../../Translatable.svelte";
     import WithVerifiedBadge from "../../../icons/WithVerifiedBadge.svelte";
     import IntersectionObserver from "../../IntersectionObserver.svelte";
     import Markdown from "../../Markdown.svelte";
+    import AccessGateChip from "../../access_gates/AccessGateChip.svelte";
     import CommunityBanner from "./CommunityBanner.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -140,12 +140,7 @@
         </Container>
         <Container gap={"sm"} wrap>
             {#each gates as gate}
-                <Chip mode={"filter"}>
-                    {#snippet icon(color)}
-                        <Check {color} />
-                    {/snippet}
-                    <Translatable resourceKey={i18nKey(gateLabel[gate.kind])}></Translatable>
-                </Chip>
+                <AccessGateChip {gate} />
             {/each}
         </Container>
     </Container>

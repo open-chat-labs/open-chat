@@ -1,6 +1,5 @@
 <script lang="ts">
     import {
-        iconSize,
         isCompositeGate,
         isCredentialGate,
         isDiamondGate,
@@ -16,12 +15,12 @@
         type PaymentGateApprovals,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import VectorCombine from "svelte-material-icons/VectorCombine.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import Button from "../../Button.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
-    import ModalContent from "../../ModalContent.svelte";
-    import Radio from "../../Radio.svelte";
+
+    import MulticolourText from "@src/components_mobile/MulticolourText.svelte";
+    import { Body, Button, ColourVars, Column, CommonButton, H2, Row } from "component-lib";
+    import Diamond from "svelte-material-icons/DiamondOutline.svelte";
+    import ShieldStar from "svelte-material-icons/ShieldStarOutline.svelte";
     import Translatable from "../../Translatable.svelte";
     import AccessGateSummary from "./AccessGateSummary.svelte";
     import CredentialGateEvaluator from "./CredentialGateEvaluator.svelte";
@@ -150,107 +149,104 @@
     }
 </script>
 
-<ModalContent
-    hideHeader
+<Column gap={"xl"} padding={"xl"}>
+    {#if currentGate}
+        {#if isCompositeGate(currentGate) && currentGate.operator === "or"}
+            <Column gap={"lg"}>
+                <ShieldStar size={"4.5rem"} color={ColourVars.primary} />
+                <H2 fontWeight={"bold"}>
+                    <Translatable resourceKey={i18nKey("Choose how to join")} />
+                </H2>
+                <Body>
+                    <MulticolourText
+                        parts={[
+                            {
+                                text: i18nKey("To join you will need to satisfy "),
+                                colour: "textSecondary",
+                            },
+                            {
+                                text: i18nKey("at least one access gate."),
+                                colour: "warning",
+                            },
+                        ]} />
+                </Body>
+            </Column>
+            {#each currentGate.gates as subgate, i}
+                <AccessGateSummary
+                    onClick={() => {
+                        toggleIndex(i, currentGate);
+                        nextGate();
+                    }}
+                    gate={subgate} />
+            {/each}
+            <Row mainAxisAlignment={"center"}>
+                <CommonButton width={"hug"} onClick={onClose} size={"small_text"}>
+                    <Translatable resourceKey={i18nKey("cancel")} />
+                </CommonButton>
+            </Row>
+        {:else if isCredentialGate(currentGate)}
+            <CredentialGateEvaluator
+                {onClose}
+                onCredentialReceived={credentialReceived}
+                gate={currentGate}
+                level={currentGate.level} />
+        {:else if isUniquePersonGate(currentGate)}
+            <UniqueHumanGateEvaluator
+                onCredentialReceived={credentialReceived}
+                {onClose}
+                expiry={currentGate.expiry}
+                level={currentGate.level} />
+        {:else if isPaymentGate(currentGate)}
+            <PaymentGateEvaluator
+                {paymentApprovals}
+                gate={currentGate}
+                level={currentGate.level}
+                {onApprovePayment}
+                {onClose} />
+        {:else if isLifetimeDiamondGate(currentGate)}
+            <DiamondGateEvaluator
+                onCancel={onClose}
+                lifetime
+                onCredentialReceived={credentialReceived} />
+        {:else if isDiamondGate(currentGate)}
+            <DiamondGateEvaluator
+                onCancel={onClose}
+                lifetime={false}
+                onCredentialReceived={credentialReceived} />
+        {/if}
+    {/if}
+
+    <Row mainAxisAlignment={"center"}>
+        {#if currentGate !== undefined}
+            {#if isCompositeGate(currentGate) && currentGate.operator === "and"}
+                <Button disabled={optionalInvalid} onClick={nextGate}>
+                    {#snippet icon(color)}
+                        <Diamond {color} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("access.next")} />
+                </Button>
+            {/if}
+        {:else}
+            <Button onClick={onClose}>
+                {#snippet icon(color)}
+                    <Diamond {color} />
+                {/snippet}
+                <Translatable resourceKey={i18nKey("access.join")} />
+            </Button>
+        {/if}
+    </Row>
+</Column>
+
+<!-- <ModalContent
     hideFooter={currentGate !== undefined && currentGate.kind !== "composite_gate"}
     closeIcon
     {onClose}>
-    {#snippet body()}
-        <div class="body access-gate-evaluator">
-            {#if currentGate}
-                {#if isCompositeGate(currentGate) && currentGate.operator === "or"}
-                    <div class="header">
-                        <div class="icon">
-                            <VectorCombine size={$iconSize} color={"var(--txt)"} />
-                        </div>
-                        <p class="title">
-                            <Translatable resourceKey={i18nKey("access.chooseOneGate")} />
-                        </p>
-                    </div>
-                    <p class="subtitle">
-                        <Translatable resourceKey={i18nKey("access.chooseOneGateInfo")} />
-                    </p>
-
-                    {#each currentGate.gates as subgate, i}
-                        <div class="optional-gate">
-                            <Radio
-                                group={"optional_gates"}
-                                checked={!optionalGatesByIndex.has(i)}
-                                onChange={() => toggleIndex(i, currentGate)}
-                                label={i18nKey(subgate.kind)}
-                                id={`subgate_${i}`}>
-                                <AccessGateSummary
-                                    editable={false}
-                                    level={currentGate.level}
-                                    showNoGate={false}
-                                    gateConfig={{ expiry: undefined, gate: subgate }} />
-                            </Radio>
-                        </div>
-                    {/each}
-                {:else if isCredentialGate(currentGate)}
-                    <CredentialGateEvaluator
-                        {onClose}
-                        onCredentialReceived={credentialReceived}
-                        gate={currentGate}
-                        level={currentGate.level} />
-                {:else if isUniquePersonGate(currentGate)}
-                    <UniqueHumanGateEvaluator
-                        onCredentialReceived={credentialReceived}
-                        {onClose}
-                        expiry={currentGate.expiry}
-                        level={currentGate.level} />
-                {:else if isPaymentGate(currentGate)}
-                    <PaymentGateEvaluator
-                        {paymentApprovals}
-                        gate={currentGate}
-                        level={currentGate.level}
-                        {onApprovePayment}
-                        {onClose} />
-                {:else if isLifetimeDiamondGate(currentGate)}
-                    <DiamondGateEvaluator
-                        level={currentGate.level}
-                        lifetime
-                        onCredentialReceived={credentialReceived} />
-                {:else if isDiamondGate(currentGate)}
-                    <DiamondGateEvaluator
-                        level={currentGate.level}
-                        lifetime={false}
-                        onCredentialReceived={credentialReceived} />
-                {/if}
-            {/if}
-        </div>
-    {/snippet}
 
     {#snippet footer()}
-        <div>
-            <ButtonGroup>
-                {#if currentGate !== undefined}
-                    {#if isCompositeGate(currentGate)}
-                        <Button disabled={optionalInvalid} onClick={nextGate}>
-                            <Translatable resourceKey={i18nKey("access.next")} />
-                        </Button>
-                    {/if}
-                {:else}
-                    <Button onClick={onClose}>
-                        <Translatable resourceKey={i18nKey("access.join")} />
-                    </Button>
-                {/if}
-            </ButtonGroup>
-        </div>
     {/snippet}
-</ModalContent>
+</ModalContent> -->
 
 <style lang="scss">
-    .header {
-        @include font(bold, normal, fs-130, 29);
-        margin-bottom: $sp4;
-        display: flex;
-        align-items: center;
-        gap: $sp3;
-    }
-    .subtitle {
-        margin-bottom: $sp4;
-    }
     .optional-gate {
         margin-bottom: $sp3;
     }

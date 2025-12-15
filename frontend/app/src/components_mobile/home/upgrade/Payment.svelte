@@ -15,6 +15,8 @@
         Switch,
         transition,
         type ColourVarKeys,
+        type Padding,
+        type SizeMode,
     } from "component-lib";
     import {
         diamondStatusStore,
@@ -24,6 +26,7 @@
         LEDGER_CANISTER_ICP,
         type DiamondMembershipDuration,
         type DiamondMembershipFees,
+        type Level,
         type OpenChat,
         type ResourceKey,
     } from "openchat-client";
@@ -50,12 +53,21 @@
     interface Props {
         lifetime?: boolean;
         onSuccess?: (proof: string) => void;
+        padding?: Padding;
+        height?: SizeMode;
+        joining?: Level;
+        onCancel?: () => void;
     }
 
-    let { lifetime = false, onSuccess }: Props = $props();
+    let {
+        lifetime = false,
+        onSuccess,
+        padding = ["xxl", "xl"],
+        onCancel,
+        height = { size: "100%" },
+    }: Props = $props();
 
     let confirming = $state(false);
-    let step = $state<Step>("choose");
 
     type FeeKey = keyof Omit<DiamondMembershipFees, "token">;
     type FeeData = RemoteData<Record<"ICP" | "CHAT", DiamondMembershipFees>, string>;
@@ -88,6 +100,10 @@
             enabled: true,
         },
     ];
+
+    let enabledOptions = $derived(options.filter((o) => o.enabled));
+    // svelte-ignore state_referenced_locally
+    let step = $state<Step>(enabledOptions.length === 1 ? "confirm" : "choose");
 
     let autoRenew = $state(true);
     let selectedOption: Option | undefined = $state(options[lifetime ? 3 : 0]);
@@ -263,13 +279,13 @@
                 <Translatable resourceKey={i18nKey("Select a membership duration")} />
             {/if}
         </BodySmall>
-        {#each options as option}
+        {#each enabledOptions as option}
             {@render membershipTier(option)}
         {/each}
     </Column>
 {/snippet}
 
-<Column height={{ size: "100%" }} gap={"lg"} padding={["xxl", "xl"]}>
+<Column {height} gap={"lg"} {padding}>
     <Column gap={"xl"}>
         <SelectMembershipHeader extend={expiry !== undefined} duration={headerProps} />
 
@@ -302,6 +318,11 @@
                         )} />
                 </Body>
             {/if}
+
+            {#if insufficientFundsForAnySub}
+                {@render insufficientWarning()}
+            {/if}
+            {@render cryptoSelector()}
 
             <Column
                 borderRadius={"lg"}
@@ -343,30 +364,28 @@
             </Button>
 
             {#if step === "confirm"}
-                <CommonButton
-                    width={"fill"}
-                    size={"small_text"}
-                    onClick={() => {
-                        transition(["fade"], () => {
-                            step = "choose";
-                        });
-                    }}>
-                    <Translatable resourceKey={i18nKey("back")} />
-                </CommonButton>
+                {#if insufficientFundsForSelectedSub}
+                    {@render refreshBalance()}
+                {:else}
+                    <CommonButton
+                        width={"fill"}
+                        size={"small_text"}
+                        onClick={() => {
+                            if (enabledOptions.length === 1) {
+                                onCancel?.();
+                            } else {
+                                transition(["fade"], () => {
+                                    step = "choose";
+                                });
+                            }
+                        }}>
+                        <Translatable resourceKey={i18nKey("back")} />
+                    </CommonButton>
+                {/if}
             {/if}
         {:else}
             {#if insufficientFundsForAnySub}
-                <Row crossAxisAlignment={"center"} gap={"md"}>
-                    <Warning size={"1.5rem"} color={ColourVars.warning} />
-                    <BodySmall fontWeight={"bold"} colour={"warning"}>
-                        <Translatable
-                            resourceKey={i18nKey(
-                                `Insufficient funds! Top up your ${
-                                    tokenState.symbol
-                                } account with at least ${`${toPay} ${tokenState.symbol}`} or choose a different token as payment.`,
-                            )} />
-                    </BodySmall>
-                </Row>
+                {@render insufficientWarning()}
             {/if}
 
             {#if expiry !== undefined}
@@ -399,49 +418,70 @@
                 </Body>
             {/if}
 
-            <Column gap={"sm"}>
-                <BodySmall colour={"textSecondary"}>
-                    <Translatable resourceKey={i18nKey("Select token to pay with")} />
-                </BodySmall>
-
-                <Row gap={"sm"}>
-                    <CryptoSelector
-                        bind:ledger
-                        filter={(t) => ["chat", "icp"].includes(t.symbol.toLowerCase())} />
-
-                    {#if insufficientFundsForAllSubs}
-                        <Column
-                            onClick={() => (topup = true)}
-                            mainAxisAlignment={"center"}
-                            crossAxisAlignment={"center"}
-                            width={{ size: "3.5rem" }}
-                            height={"fill"}
-                            borderRadius={"lg"}
-                            background={ColourVars.background2}
-                            padding={["sm", "md"]}>
-                            <QrCode size={"2rem"} color={ColourVars.textSecondary} />
-                        </Column>
-                    {/if}
-                </Row>
-            </Column>
+            {@render cryptoSelector()}
             {@render selectMembershipTier()}
-
             {#if insufficientFundsForAllSubs}
-                <CommonButton
-                    width={"fill"}
-                    mode={"active"}
-                    size={"small_text"}
-                    onClick={() => tokenState.refreshBalance(client)}>
-                    {#snippet icon(color, size)}
-                        <Refresh {color} {size} />
-                    {/snippet}
-
-                    <Translatable resourceKey={i18nKey(`Refresh ${tokenState.symbol} balance`)} />
-                </CommonButton>
+                {@render refreshBalance()}
             {/if}
         {/if}
     </Column>
 </Column>
+
+{#snippet refreshBalance()}
+    <CommonButton
+        width={"fill"}
+        mode={"active"}
+        size={"small_text"}
+        onClick={() => tokenState.refreshBalance(client)}>
+        {#snippet icon(color, size)}
+            <Refresh {color} {size} />
+        {/snippet}
+
+        <Translatable resourceKey={i18nKey(`Refresh ${tokenState.symbol} balance`)} />
+    </CommonButton>
+{/snippet}
+
+{#snippet insufficientWarning()}
+    <Row crossAxisAlignment={"center"} gap={"md"}>
+        <Warning size={"1.5rem"} color={ColourVars.warning} />
+        <BodySmall fontWeight={"bold"} colour={"warning"}>
+            <Translatable
+                resourceKey={i18nKey(
+                    `Insufficient funds! Top up your ${
+                        tokenState.symbol
+                    } account with at least ${`${toPay} ${tokenState.symbol}`} or choose a different token as payment.`,
+                )} />
+        </BodySmall>
+    </Row>
+{/snippet}
+
+{#snippet cryptoSelector()}
+    <Column gap={"sm"}>
+        <BodySmall colour={"textSecondary"}>
+            <Translatable resourceKey={i18nKey("Select token to pay with")} />
+        </BodySmall>
+
+        <Row gap={"sm"}>
+            <CryptoSelector
+                bind:ledger
+                filter={(t) => ["chat", "icp"].includes(t.symbol.toLowerCase())} />
+
+            {#if insufficientFundsForAllSubs}
+                <Column
+                    onClick={() => (topup = true)}
+                    mainAxisAlignment={"center"}
+                    crossAxisAlignment={"center"}
+                    width={{ size: "3.5rem" }}
+                    height={"fill"}
+                    borderRadius={"lg"}
+                    background={ColourVars.background2}
+                    padding={["sm", "md"]}>
+                    <QrCode size={"2rem"} color={ColourVars.textSecondary} />
+                </Column>
+            {/if}
+        </Row>
+    </Column>
+{/snippet}
 
 {#if topup}
     <Sheet
@@ -449,6 +489,12 @@
             tokenState.refreshBalance(client);
             topup = false;
         }}>
-        <AccountInfo ledger={tokenState.ledger} />
+        <Column gap={"xs"} padding={"xl"}>
+            <AccountInfo
+                background={ColourVars.background2}
+                padding={"zero"}
+                ledger={tokenState.ledger} />
+            {@render refreshBalance()}
+        </Column>
     </Sheet>
 {/if}

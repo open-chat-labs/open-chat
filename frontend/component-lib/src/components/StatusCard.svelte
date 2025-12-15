@@ -9,7 +9,7 @@
     interface Props {
         mode: Mode;
         title: string;
-        body: string;
+        body: string | Snippet;
         confirmed?: boolean;
         confirmation?: string;
         icon?: Snippet<[string, string]>;
@@ -42,6 +42,10 @@
         </Body>
     </Container>
     <Body colour={"textSecondary"}>
-        {body}
+        {#if typeof body === "string"}
+            {body}
+        {:else}
+            {@render body()}
+        {/if}
     </Body>
 </Container>

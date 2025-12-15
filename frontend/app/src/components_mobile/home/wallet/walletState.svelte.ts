@@ -129,9 +129,13 @@ export class TokenState {
         }
     });
 
-    constructor(t: EnhancedTokenDetails, c: ConversionToken) {
+    constructor(t: EnhancedTokenDetails, c: ConversionToken = "usd") {
         this.#token = t;
         this.#selectedConversion = c;
+    }
+
+    formatTokens(amount: bigint) {
+        return formatTokens(amount, this.#decimals);
     }
 
     get account() {
@@ -232,7 +236,7 @@ export class TokenState {
     refreshBalance(client: OpenChat) {
         this.#refreshingBalance = true;
         return client
-            .refreshAccountBalance(this.ledger, true)
+            .refreshAccountBalance(this.ledger, false)
             .catch((_) => {
                 toastStore.showFailureToast(
                     i18nKey("unableToRefreshAccountBalance", { token: this.symbol }),

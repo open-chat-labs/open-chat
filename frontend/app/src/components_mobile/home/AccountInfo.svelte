@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { BodySmall, ColourVars, Container } from "component-lib";
+    import { BodySmall, ColourVars, Container, type Padding } from "component-lib";
     import {
         BTC_SYMBOL,
         CKBTC_SYMBOL,
@@ -22,9 +22,11 @@
 
     interface Props {
         ledger: string;
+        padding?: Padding;
+        background?: string;
     }
 
-    let { ledger }: Props = $props();
+    let { ledger, padding = ["lg", "xl"], background = ColourVars.background1 }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
@@ -136,9 +138,9 @@
 <Container gap={"xs"} direction={"vertical"}>
     <Container
         borderRadius={["lg", "lg", "zero", "zero"]}
-        background={ColourVars.background1}
+        {background}
         direction={"vertical"}
-        padding={["lg", "xl"]}>
+        {padding}>
         {#if networks.length > 0 && selectedNetwork !== undefined}
             <NetworkSelector {networks} bind:selectedNetwork />
         {/if}
@@ -163,7 +165,7 @@
 
     <Container
         borderRadius={["zero", "zero", "lg", "lg"]}
-        background={ColourVars.background1}
+        {background}
         direction={"vertical"}
         padding={["lg", "xl"]}>
         <BodySmall colour={"textSecondary"} fontWeight={"bold"}>

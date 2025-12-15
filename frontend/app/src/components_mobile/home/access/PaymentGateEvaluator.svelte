@@ -1,24 +1,35 @@
 <script lang="ts">
     import {
+        Body,
+        BodySmall,
+        Button,
+        ColourVars,
+        Column,
+        CommonButton,
+        H2,
+        Row,
+        Sheet,
+        StatusCard,
+    } from "component-lib";
+    import {
         type Level,
         type OpenChat,
         type PaymentGate,
         type PaymentGateApprovals,
         type ResourceKey,
-        cryptoBalanceStore,
+        enhancedCryptoLookup,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
+    import Bitcoin from "svelte-material-icons/Bitcoin.svelte";
+    import Refresh from "svelte-material-icons/Refresh.svelte";
+    import ShieldStar from "svelte-material-icons/ShieldStarOutline.svelte";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
-    import AlertBox from "../../AlertBox.svelte";
-    import Button from "../../Button.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
-    import ErrorMessage from "../../ErrorMessage.svelte";
     import Translatable from "../../Translatable.svelte";
     import AccountInfo from "../AccountInfo.svelte";
-    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import Markdown from "../Markdown.svelte";
+    import { TokenState } from "../wallet/walletState.svelte";
     import AccessGateExpiry from "./AccessGateExpiry.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -33,9 +44,13 @@
 
     let { gate, level, paymentApprovals, onApprovePayment, onClose }: Props = $props();
 
+    let token = $derived($enhancedCryptoLookup.get(gate.ledgerCanister)!);
+    let tokenState = $derived(new TokenState(token));
     let error: ResourceKey | undefined = $state(undefined);
-    let balanceWithRefresh: BalanceWithRefresh | undefined = $state();
     let refreshingBalance = $state(false);
+    let totalAmount = $derived(tokenState.formatTokens(gate.amount));
+    let toOwner = $derived(tokenState.formatTokens(BigInt(Number(gate.amount) * 0.98)));
+    let toOC = $derived(tokenState.formatTokens(BigInt(Number(gate.amount) * 0.02)));
 
     function balanceAfterCurrentCommitments(
         ledger: string,
@@ -45,35 +60,8 @@
         return balance - (approvals.get(ledger)?.amount ?? 0n);
     }
 
-    function onStartRefreshingBalance() {
-        refreshingBalance = true;
-    }
-
-    function onRefreshingBalanceSuccess() {
-        error = insufficientFunds ? i18nKey("Insufficient funds") : undefined;
-        refreshingBalance = false;
-    }
-
-    function onRefreshingBalanceFailed() {
-        error = i18nKey("Failed to refresh balance");
-        refreshingBalance = false;
-    }
-
-    function onClickPrimary() {
-        if (insufficientFunds) {
-            balanceWithRefresh?.refresh();
-        } else {
-            onApprovePayment({
-                ledger: token.ledger,
-                amount: gate.amount,
-                approvalFee: token.transferFee,
-            });
-        }
-    }
-    let token = $derived(client.getTokenDetailsForAccessGate(gate)!);
-    let originalBalance = $derived($cryptoBalanceStore.get(token.ledger) ?? 0n);
     let cryptoBalance = $derived(
-        balanceAfterCurrentCommitments(token.ledger, paymentApprovals, originalBalance),
+        balanceAfterCurrentCommitments(token.ledger, paymentApprovals, tokenState.cryptoBalance),
     );
     let insufficientFunds = $derived(cryptoBalance < gate.amount);
     let approvalMessage = $derived(
@@ -82,7 +70,7 @@
             i18nKey(
                 "access.paymentApprovalMessage",
                 {
-                    amount: client.formatTokens(gate.amount, token.decimals),
+                    amount: tokenState.formatTokens(gate.amount),
                     token: token.symbol,
                 },
                 level,
@@ -90,80 +78,109 @@
             ),
         ),
     );
-    let distributionMessage = $derived(
-        interpolate($_, i18nKey("access.paymentDistributionMessage", undefined, level, true)),
-    );
     let errorMessage = $derived(error !== undefined ? error : $pinNumberErrorMessageStore);
 </script>
 
-<div class="header">
-    <div class="title-and-icon">
-        <div class="icon">🔒️</div>
-        <div class="title">
-            <Translatable resourceKey={i18nKey("access.approvePaymentTitle")} />
-        </div>
-    </div>
-    <BalanceWithRefresh
-        bind:this={balanceWithRefresh}
-        ledger={gate.ledgerCanister}
-        value={cryptoBalance}
-        onClick={onStartRefreshingBalance}
-        onRefreshed={onRefreshingBalanceSuccess}
-        onError={onRefreshingBalanceFailed} />
-</div>
-<div>
-    <p>
-        <Markdown text={approvalMessage + " " + distributionMessage} />
-    </p>
+<Column gap={"lg"}>
+    <ShieldStar size={"4.5rem"} color={ColourVars.primary} />
+    <H2 fontWeight={"bold"}>
+        <Translatable resourceKey={i18nKey("Join via payment gate")} />
+    </H2>
+    <Body colour={"textSecondary"}>
+        <Markdown text={approvalMessage} />
+    </Body>
     {#if gate.expiry !== undefined}
-        <AlertBox>
-            <AccessGateExpiry expiry={gate.expiry} />
-        </AlertBox>
+        <StatusCard
+            background={ColourVars.background2}
+            mode={"warning"}
+            title={interpolate($_, i18nKey("This is a recurring payment"))}>
+            {#snippet body()}
+                <AccessGateExpiry expiry={gate.expiry} />
+            {/snippet}
+        </StatusCard>
     {/if}
-    {#if errorMessage !== undefined}
-        <div class="error">
-            <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
-        </div>
-    {/if}
-    {#if insufficientFunds}
-        <AccountInfo ledger={gate.ledgerCanister} />
-        <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
-    {/if}
-</div>
-<div>
-    <ButtonGroup>
-        <Button secondary onClick={onClose}>{$_("cancel")}</Button>
-        <Button loading={refreshingBalance} onClick={onClickPrimary}
-            ><Translatable
-                resourceKey={i18nKey(insufficientFunds ? "Refresh" : "Approve payment")} /></Button>
-    </ButtonGroup>
-</div>
 
-<style lang="scss">
-    .header {
-        @include font(bold, normal, fs-130, 29);
-        margin-bottom: $sp4;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: $sp2;
-    }
+    <Column borderRadius={"lg"} gap={"lg"} padding={"lg"} background={ColourVars.background2}>
+        <Row mainAxisAlignment={"spaceBetween"}>
+            <BodySmall colour={"textSecondary"}>
+                <Translatable resourceKey={i18nKey("Payment amount")} />
+            </BodySmall>
+            <Body width={"hug"} colour={"primary"} fontWeight={"bold"}>
+                {totalAmount}
+                {tokenState.symbol}
+            </Body>
+        </Row>
+        <Row mainAxisAlignment={"spaceBetween"}>
+            <BodySmall colour={"textSecondary"}>
+                <Translatable resourceKey={i18nKey("Owner receives (98%)")} />
+            </BodySmall>
+            <Body width={"hug"} colour={"textPrimary"} fontWeight={"bold"}>
+                {toOwner}
+                {tokenState.symbol}
+            </Body>
+        </Row>
+        <Row mainAxisAlignment={"spaceBetween"}>
+            <BodySmall colour={"textSecondary"}>
+                <Translatable resourceKey={i18nKey("OpenChat treasury receives (2%)")} />
+            </BodySmall>
+            <Body width={"hug"} colour={"textPrimary"} fontWeight={"bold"}>
+                {toOC}
+                {tokenState.symbol}
+            </Body>
+        </Row>
+    </Column>
+</Column>
+{#if insufficientFunds}
+    <Sheet onDismiss={onClose}>
+        <Column gap={"xs"} padding={"xl"}>
+            <StatusCard
+                background={ColourVars.background2}
+                mode={"warning"}
+                title={"Insufficient funds"}>
+                {#snippet body()}
+                    <Markdown text={approvalMessage} />
+                {/snippet}
+            </StatusCard>
+            <AccountInfo
+                background={ColourVars.background2}
+                padding={"zero"}
+                ledger={gate.ledgerCanister} />
+            {@render refreshBalance()}
+        </Column>
+    </Sheet>
+{/if}
 
-    .title-and-icon {
-        display: flex;
-        align-items: center;
-        gap: $sp3;
-    }
+{#if insufficientFunds}
+    {@render refreshBalance()}
+{:else}
+    <Button
+        width={"fill"}
+        onClick={() =>
+            onApprovePayment({
+                ledger: token.ledger,
+                amount: gate.amount,
+                approvalFee: token.transferFee,
+            })}>
+        {#snippet icon(color)}
+            <Bitcoin {color} />
+        {/snippet}
+        <Translatable resourceKey={i18nKey("Approve payment")} />
+    </Button>
+    <CommonButton width={"fill"} size={"small_text"} onClick={onClose}>
+        <Translatable resourceKey={i18nKey("cancel")} />
+    </CommonButton>
+{/if}
 
-    .icon {
-        @include font-size(fs-130);
-    }
-
-    p {
-        margin-bottom: $sp4;
-    }
-
-    .error {
-        margin-top: $sp4;
-    }
-</style>
+{#snippet refreshBalance()}
+    <CommonButton
+        loading={refreshingBalance}
+        width={"fill"}
+        mode={"active"}
+        size={"small_text"}
+        onClick={() => tokenState.refreshBalance(client)}>
+        {#snippet icon(color, size)}
+            <Refresh {color} {size} />
+        {/snippet}
+        <Translatable resourceKey={i18nKey(`Refresh ${tokenState.symbol} balance`)} />
+    </CommonButton>
+{/snippet}

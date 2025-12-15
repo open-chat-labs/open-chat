@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Sheet } from "component-lib";
     import type { EnhancedAccessGate, GateCheckSucceeded, OpenChat } from "openchat-client";
     import {
         anonUserStore,
@@ -10,7 +11,6 @@
     import { getContext, tick, type Snippet } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
-    import Overlay from "../../Overlay.svelte";
     import GateCheckFailed from "../access/AccessGateCheckFailed.svelte";
     import AccessGateEvaluator from "../access/AccessGateEvaluator.svelte";
     interface Props {
@@ -117,18 +117,18 @@
 </script>
 
 {#if checkingAccessGate}
-    <Overlay dismissible onClose={closeModal}>
+    <Sheet onDismiss={closeModal}>
         <AccessGateEvaluator
             gates={[checkingAccessGate]}
             onClose={closeModal}
             onSuccess={accessGatesEvaluated} />
-    </Overlay>
+    </Sheet>
 {/if}
 
 {#if gateCheckFailed}
-    <Overlay dismissible onClose={closeModal}>
+    <Sheet onDismiss={closeModal}>
         <GateCheckFailed onClose={closeModal} gates={[gateCheckFailed]} />
-    </Overlay>
+    </Sheet>
 {/if}
 
 {@render children?.(joiningCommunity, joinCommunity, cancelPreview, gatesInEffect)}

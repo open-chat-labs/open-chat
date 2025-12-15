@@ -1,102 +1,115 @@
 <script lang="ts">
-    import { type AccessGate, type AccessGateConfig, type Level } from "openchat-client";
-    import AccessGateIcon from "./AccessGateIcon.svelte";
-    import { gateLabel } from "../../../utils/access";
-    import { i18nKey } from "../../../i18n/i18n";
+    import { i18nKey } from "@src/i18n/i18n";
+    import {
+        Avatar,
+        Body,
+        BodySmall,
+        Button,
+        Caption,
+        ColourVars,
+        Column,
+        Row,
+    } from "component-lib";
+    import { enhancedCryptoLookup, type LeafGate } from "openchat-client";
+    import Diamond from "svelte-material-icons/DiamondOutline.svelte";
+    import Lifetime from "svelte-material-icons/DiamondStone.svelte";
     import Translatable from "../../Translatable.svelte";
-    import AccessGateBuilder from "./AccessGateBuilder.svelte";
-    import { _ } from "svelte-i18n";
+    import AccessGateText from "../access_gates/AccessGateText.svelte";
+    import { TokenState } from "../wallet/walletState.svelte";
 
     interface Props {
-        gateConfig: AccessGateConfig;
-        editable: boolean;
-        level: Level;
-        valid?: boolean;
-        showNoGate?: boolean;
-        onUpdated?: () => void;
+        gate: LeafGate;
+        onClick?: (g: LeafGate) => void;
     }
 
-    let {
-        gateConfig = $bindable(),
-        editable,
-        level,
-        valid = $bindable(true),
-        showNoGate = false,
-        onUpdated,
-    }: Props = $props();
-
-    let showDetail = $state(false);
-
-    function open(e: Event) {
-        e.preventDefault();
-        e.stopPropagation();
-        showDetail = true;
-    }
-
-    function getGateResourceKey(gate: AccessGate) {
-        return gateLabel[gate.kind] ?? "access.unknownGate";
-    }
-
-    function getGateText(gate: AccessGate) {
-        if (gate.kind === "composite_gate") {
-            return i18nKey(
-                gate.gates.map((g) => $_(getGateResourceKey(g))).join(` ${gate.operator} `),
-            );
+    let { gate, onClick }: Props = $props();
+    let tokenState = $derived.by(() => {
+        switch (gate.kind) {
+            case "token_balance_gate":
+            case "payment_gate":
+                return new TokenState($enhancedCryptoLookup.get(gate.ledgerCanister)!, "usd");
+            default:
+                return undefined;
         }
-        return i18nKey(getGateResourceKey(gate));
-    }
-
-    function close() {
-        showDetail = false;
-        onUpdated?.();
-    }
-    let gateText = $derived(getGateText(gateConfig.gate));
+    });
 </script>
 
-{#if showDetail}
-    <AccessGateBuilder bind:valid {level} onClose={close} bind:gateConfig {editable} />
+{#if gate.kind !== "no_gate"}
+    {#if gate.kind === "payment_gate" && tokenState}
+        <Row
+            onClick={onClick ? () => onClick(gate) : undefined}
+            mainAxisAlignment={"spaceBetween"}
+            crossAxisAlignment={"center"}
+            borderRadius={"md"}
+            gap={"md"}
+            borderWidth={"thick"}
+            borderColour={ColourVars.primary}
+            padding={["md", "lg"]}>
+            <Avatar url={tokenState.logo} />
+
+            <Column width={"fill"}>
+                <Row crossAxisAlignment={"center"} gap={"xs"}>
+                    <Body fontWeight={"bold"} colour={"primary"} width={"hug"}
+                        >{tokenState.symbol}</Body>
+                    <Body fontWeight={"bold"} colour={"textPrimary"} width={"hug"}
+                        >payment gate</Body>
+                </Row>
+                <Caption colour={"textSecondary"} fontWeight={"bold"}>
+                    {tokenState.formattedTokenBalance}
+                </Caption>
+            </Column>
+
+            <Row width={"hug"}>
+                <BodySmall colour={"textSecondary"}>
+                    {tokenState.formatTokens(gate.amount)}
+                </BodySmall>
+            </Row>
+        </Row>
+    {:else if gate.kind === "token_balance_gate" && tokenState}
+        <Row
+            onClick={onClick ? () => onClick(gate) : undefined}
+            mainAxisAlignment={"spaceBetween"}
+            crossAxisAlignment={"center"}
+            borderRadius={"md"}
+            gap={"md"}
+            borderWidth={"thick"}
+            borderColour={ColourVars.primary}
+            padding={["md", "lg"]}>
+            <Avatar url={tokenState.logo} />
+
+            <Column width={"fill"}>
+                <Row crossAxisAlignment={"center"} gap={"xs"}>
+                    <Body fontWeight={"bold"} colour={"primary"} width={"hug"}
+                        >{tokenState.symbol}</Body>
+                    <Body fontWeight={"bold"} colour={"textPrimary"} width={"hug"}
+                        >minimum balance gate</Body>
+                </Row>
+                <Caption colour={"textSecondary"} fontWeight={"bold"}>
+                    {tokenState.formattedTokenBalance}
+                </Caption>
+            </Column>
+
+            <Row width={"hug"}>
+                <BodySmall colour={"textSecondary"}>
+                    {tokenState.formatTokens(gate.minBalance)}
+                </BodySmall>
+            </Row>
+        </Row>
+    {:else if gate.kind === "lifetime_diamond_gate"}
+        <Button onClick={onClick ? () => onClick(gate) : undefined}>
+            {#snippet icon(color)}
+                <Lifetime {color} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("Get lifetime membership")} />
+        </Button>
+    {:else if gate.kind === "diamond_gate"}
+        <Button onClick={onClick ? () => onClick(gate) : undefined}>
+            {#snippet icon(color)}
+                <Diamond {color} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("Get diamond membership")} />
+        </Button>
+    {:else}
+        <AccessGateText {gate} />
+    {/if}
 {/if}
-
-{#if gateConfig.gate.kind !== "no_gate" || showNoGate}
-    <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class:invalid={!valid} onclick={open} class:editable class="summary">
-        <div class="icon">
-            <AccessGateIcon button {level} showNoGate {gateConfig} />
-        </div>
-        <div class="name">
-            {#if gateText !== undefined}
-                <Translatable resourceKey={gateText} />
-            {/if}
-        </div>
-    </div>
-{/if}
-
-<style lang="scss">
-    .summary {
-        width: fit-content;
-        padding: $sp3 $sp4;
-        display: flex;
-        align-items: center;
-        gap: $sp3;
-        background: var(--button-bg);
-        border-radius: var(--button-rd);
-        color: var(--button-txt);
-        transition:
-            background ease-in-out 200ms,
-            color ease-in-out 200ms;
-        cursor: pointer;
-
-        @media (hover: hover) {
-            &:hover {
-                background: var(--button-hv);
-                color: var(--button-hv-txt);
-            }
-        }
-
-        &.invalid {
-            background: var(--toast-failure-bg);
-            color: var(--toast-failure-txt);
-        }
-    }
-</style>

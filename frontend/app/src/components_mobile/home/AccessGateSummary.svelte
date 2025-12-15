@@ -1,13 +1,11 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { flattenGateConfig, gateLabel } from "@src/utils/access";
+    import { flattenGateConfig } from "@src/utils/access";
     import { Body, Container, type SizeMode } from "component-lib";
-    import { OpenChat, type AccessGateConfig, type LeafGate } from "openchat-client";
-    import { getContext } from "svelte";
+    import { type AccessGateConfig } from "openchat-client";
     import Translatable from "../Translatable.svelte";
     import Separator from "./Separator.svelte";
-
-    const client = getContext<OpenChat>("client");
+    import AccessGateText from "./access_gates/AccessGateText.svelte";
 
     interface Props {
         gateConfig: AccessGateConfig;
@@ -24,32 +22,6 @@
     }
 </script>
 
-{#snippet gateText(gate: LeafGate)}
-    {@const token = client.getTokenDetailsForAccessGate(gate)}
-    <Body {width}>
-        <Translatable resourceKey={i18nKey(gateLabel[gate.kind])}></Translatable>
-    </Body>
-    {#if gate.kind === "neuron_gate" && token && gate.minStakeE8s !== undefined}
-        <Body {width} fontWeight={"bold"} colour={"secondary"}>
-            {token.symbol}, {client.formatTokens(BigInt(gate.minStakeE8s), token.decimals)}
-        </Body>
-    {:else if gate.kind === "token_balance_gate" && token}
-        <Body {width} fontWeight={"bold"} colour={"secondary"}>
-            {client.formatTokens(gate.minBalance, token.decimals)}
-            {token.symbol}
-        </Body>
-    {:else if gate.kind === "payment_gate" && token}
-        <Body {width} fontWeight={"bold"} colour={"secondary"}>
-            {client.formatTokens(gate.amount, token.decimals)}
-            {token.symbol}
-        </Body>
-    {:else if gate.kind === "chit_earned_gate"}
-        <Body {width} fontWeight={"bold"} colour={"secondary"}>
-            {gate.minEarned}
-        </Body>
-    {/if}
-{/snippet}
-
 <Separator />
 
 <Container padding={["zero", "md"]} gap={"xl"} direction={"vertical"}>
@@ -62,7 +34,7 @@
             <Container {width} wrap gap={"sm"}>
                 {#each gates as gate, i}
                     {@const last = i === gates.length - 1}
-                    {@render gateText(gate)}
+                    <AccessGateText {gate} />
                     {#if !last}
                         <Body colour={"primary"} {width}>/</Body>
                     {/if}

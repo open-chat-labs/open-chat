@@ -1,6 +1,5 @@
 <script lang="ts">
     import { i18nKey, supportedLanguages } from "@src/i18n/i18n";
-    import { gateLabel } from "@src/utils/access";
     import {
         Body,
         BodySmall,
@@ -24,7 +23,6 @@
     import AlertOutline from "svelte-material-icons/AlertOutline.svelte";
     import AlertRhombusOutline from "svelte-material-icons/AlertRhombusOutline.svelte";
     import ChatPlusOutline from "svelte-material-icons/ChatPlusOutline.svelte";
-    import Check from "svelte-material-icons/Check.svelte";
     import ClockOutline from "svelte-material-icons/ClockOutline.svelte";
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";
     import FormatList from "svelte-material-icons/FormatListBulletedType.svelte";
@@ -36,6 +34,7 @@
     import LinkedCard from "../../../LinkedCard.svelte";
     import Setting from "../../../Setting.svelte";
     import Translatable from "../../../Translatable.svelte";
+    import AccessGateChip from "../../access_gates/AccessGateChip.svelte";
     import LanguageSelector from "../../LanguageSelector.svelte";
     import SlidingPageContent from "../../SlidingPageContent.svelte";
     import {
@@ -247,13 +246,7 @@
                 )}>
                 <Container wrap gap={"sm"}>
                     {#each ucs.accessGates as gate}
-                        <Chip mode={"filter"}>
-                            {#snippet icon(color)}
-                                <Check {color} />
-                            {/snippet}
-                            <Translatable resourceKey={i18nKey(gateLabel[gate.kind])}
-                            ></Translatable>
-                        </Chip>
+                        <AccessGateChip {gate} />
                     {/each}
                     {#if ucs.candidate.gateConfig.expiry !== undefined}
                         <Chip>
