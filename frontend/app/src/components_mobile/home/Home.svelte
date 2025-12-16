@@ -1,7 +1,7 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
-    import { Container } from "component-lib";
+    import { Container, Sheet } from "component-lib";
     import type {
         ChannelIdentifier,
         ChatIdentifier,
@@ -728,46 +728,50 @@
 <Toast />
 
 {#if modal.kind !== "none"}
-    <Overlay
-        dismissible={modal.kind !== "select_chat" &&
-            modal.kind !== "not_found" &&
-            modal.kind !== "make_proposal"}
-        alignLeft={modal.kind === "select_chat"}
-        onClose={closeModal}>
-        {#if modal.kind === "select_chat"}
-            <SelectChatModal onClose={onCloseSelectChat} onSelect={onSelectChat} />
-        {:else if modal.kind === "suspended"}
-            <SuspendedModal onClose={closeModal} />
-        {:else if modal.kind === "register_bot"}
-            <BotBuilderModal mode={"register"} onClose={closeModal} />
-        {:else if modal.kind === "update_bot"}
-            <BotBuilderModal mode={"update"} onClose={closeModal} />
-        {:else if modal.kind === "remove_bot"}
-            <BotBuilderModal mode={"remove"} onClose={closeModal} />
-        {:else if modal.kind === "no_access"}
-            <NoAccess onClose={closeNoAccess} />
-        {:else if modal.kind === "not_found"}
-            <NotFound onClose={closeNoAccess} />
-        {:else if modal.kind === "gate_check_failed"}
-            <GateCheckFailed onClose={closeModal} gates={modal.gates} />
-        {:else if modal.kind === "evaluating_access_gates"}
+    {#if modal.kind === "evaluating_access_gates"}
+        <Sheet onDismiss={closeModal}>
             <AccessGateEvaluator
                 gates={modal.gates}
                 onClose={closeModal}
                 onSuccess={accessGatesEvaluated} />
-        {:else if modal.kind === "make_proposal"}
-            <MakeProposalModal
-                selectedMultiUserChat={modal.chat}
-                nervousSystem={modal.nervousSystem}
-                onClose={closeModal} />
-        {:else if modal.kind === "challenge"}
-            <ChallengeModal on:close={closeModal} />
-        {:else if modal.kind === "verify_humanity"}
-            <VerifyHumanity onClose={closeModal} onSuccess={closeModal} />
-        {:else if modal.kind === "suspending"}
-            <SuspendModal userId={modal.userId} onClose={closeModal} />
-        {/if}
-    </Overlay>
+        </Sheet>
+    {:else}
+        <Overlay
+            dismissible={modal.kind !== "select_chat" &&
+                modal.kind !== "not_found" &&
+                modal.kind !== "make_proposal"}
+            alignLeft={modal.kind === "select_chat"}
+            onClose={closeModal}>
+            {#if modal.kind === "select_chat"}
+                <SelectChatModal onClose={onCloseSelectChat} onSelect={onSelectChat} />
+            {:else if modal.kind === "suspended"}
+                <SuspendedModal onClose={closeModal} />
+            {:else if modal.kind === "register_bot"}
+                <BotBuilderModal mode={"register"} onClose={closeModal} />
+            {:else if modal.kind === "update_bot"}
+                <BotBuilderModal mode={"update"} onClose={closeModal} />
+            {:else if modal.kind === "remove_bot"}
+                <BotBuilderModal mode={"remove"} onClose={closeModal} />
+            {:else if modal.kind === "no_access"}
+                <NoAccess onClose={closeNoAccess} />
+            {:else if modal.kind === "not_found"}
+                <NotFound onClose={closeNoAccess} />
+            {:else if modal.kind === "gate_check_failed"}
+                <GateCheckFailed onClose={closeModal} />
+            {:else if modal.kind === "make_proposal"}
+                <MakeProposalModal
+                    selectedMultiUserChat={modal.chat}
+                    nervousSystem={modal.nervousSystem}
+                    onClose={closeModal} />
+            {:else if modal.kind === "challenge"}
+                <ChallengeModal on:close={closeModal} />
+            {:else if modal.kind === "verify_humanity"}
+                <VerifyHumanity onClose={closeModal} onSuccess={closeModal} />
+            {:else if modal.kind === "suspending"}
+                <SuspendModal userId={modal.userId} onClose={closeModal} />
+            {/if}
+        </Overlay>
+    {/if}
 {/if}
 
 {#if $rulesAcceptanceStore !== undefined}
