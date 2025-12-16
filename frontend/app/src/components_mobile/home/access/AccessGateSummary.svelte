@@ -33,10 +33,11 @@
 
     interface Props {
         gate: LeafGate;
+        satisfied: boolean;
         onClick?: (g: LeafGate) => void;
     }
 
-    let { gate, onClick }: Props = $props();
+    let { gate, onClick, satisfied }: Props = $props();
     let topup = $state<TokenState>();
     let tokenState = $derived.by(() => {
         switch (gate.kind) {
@@ -167,20 +168,17 @@
             false,
         )}
     {:else if gate.kind === "lifetime_diamond_gate"}
-        {@const has = $currentUserStore.diamondStatus.kind === "lifetime"}
         {@render booleanGate(
-            has,
+            satisfied,
             Lifetime,
             "Get lifetime membership",
             "Lifetime diamond membership",
         )}
     {:else if gate.kind === "diamond_gate"}
-        {@const has = $currentUserStore.diamondStatus.kind !== "inactive"}
-        {@render booleanGate(has, Diamond, "Get diamond membership", "Diamond membership")}
+        {@render booleanGate(satisfied, Diamond, "Get diamond membership", "Diamond membership")}
     {:else if gate.kind === "unique_person_gate"}
-        {@const has = $currentUserStore.isUniquePerson}
         {@render booleanGate(
-            has,
+            satisfied,
             AccountCheck,
             "Verify unique personhood",
             "Unique personhood verified",

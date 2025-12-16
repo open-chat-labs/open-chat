@@ -12,7 +12,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import GateCheckFailed from "../access/AccessGateCheckFailed.svelte";
-    import AccessGateEvaluator from "../access/AccessGateEvaluator.svelte";
+    import AccessGatesEvaluator from "../access/AccessGatesEvaluator.svelte";
     interface Props {
         children?: Snippet<[boolean, () => void, () => void, boolean]>;
     }
@@ -118,7 +118,7 @@
 
 {#if checkingAccessGate}
     <Sheet onDismiss={closeModal}>
-        <AccessGateEvaluator
+        <AccessGatesEvaluator
             gates={[checkingAccessGate]}
             onClose={closeModal}
             onSuccess={accessGatesEvaluated} />

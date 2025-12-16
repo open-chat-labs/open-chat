@@ -66,7 +66,7 @@
     import Toast from "../Toast.svelte";
     import AcceptRulesModal from "./AcceptRulesModal.svelte";
     import GateCheckFailed from "./access/AccessGateCheckFailed.svelte";
-    import AccessGateEvaluator from "./access/AccessGateEvaluator.svelte";
+    import AccessGatesEvaluator from "./access/AccessGatesEvaluator.svelte";
     import AnonFooter from "./AnonFooter.svelte";
     import ChallengeModal from "./ChallengeModal.svelte";
     import ChitEarned from "./ChitEarned.svelte";
@@ -730,7 +730,7 @@
 {#if modal.kind !== "none"}
     {#if modal.kind === "evaluating_access_gates"}
         <Sheet onDismiss={closeModal}>
-            <AccessGateEvaluator
+            <AccessGatesEvaluator
                 gates={modal.gates}
                 onClose={closeModal}
                 onSuccess={accessGatesEvaluated} />
