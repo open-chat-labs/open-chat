@@ -171,14 +171,16 @@
                         ]} />
                 </Body>
             </Column>
-            {#each currentGate.gates as subgate, i}
-                <AccessGateSummary
-                    onClick={() => {
-                        toggleIndex(i, currentGate);
-                        nextGate();
-                    }}
-                    gate={subgate} />
-            {/each}
+            <Column gap={"md"}>
+                {#each currentGate.gates as subgate, i}
+                    <AccessGateSummary
+                        onClick={() => {
+                            toggleIndex(i, currentGate);
+                            nextGate();
+                        }}
+                        gate={subgate} />
+                {/each}
+            </Column>
             <Row mainAxisAlignment={"center"}>
                 <CommonButton width={"hug"} onClick={onClose} size={"small_text"}>
                     <Translatable resourceKey={i18nKey("cancel")} />

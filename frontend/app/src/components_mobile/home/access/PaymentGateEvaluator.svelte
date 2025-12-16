@@ -16,7 +16,6 @@
         type OpenChat,
         type PaymentGate,
         type PaymentGateApprovals,
-        type ResourceKey,
         enhancedCryptoLookup,
     } from "openchat-client";
     import { getContext } from "svelte";
@@ -25,7 +24,6 @@
     import Refresh from "svelte-material-icons/Refresh.svelte";
     import ShieldStar from "svelte-material-icons/ShieldStarOutline.svelte";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
-    import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
     import Translatable from "../../Translatable.svelte";
     import AccountInfo from "../AccountInfo.svelte";
     import Markdown from "../Markdown.svelte";
@@ -46,7 +44,6 @@
 
     let token = $derived($enhancedCryptoLookup.get(gate.ledgerCanister)!);
     let tokenState = $derived(new TokenState(token));
-    let error: ResourceKey | undefined = $state(undefined);
     let refreshingBalance = $state(false);
     let totalAmount = $derived(tokenState.formatTokens(gate.amount));
     let toOwner = $derived(tokenState.formatTokens(BigInt(Number(gate.amount) * 0.98)));
@@ -78,7 +75,6 @@
             ),
         ),
     );
-    let errorMessage = $derived(error !== undefined ? error : $pinNumberErrorMessageStore);
 </script>
 
 <Column gap={"lg"}>

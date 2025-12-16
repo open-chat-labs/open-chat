@@ -37,6 +37,6 @@
     </Body>
 {:else if gate.kind === "chit_earned_gate"}
     <Body {width} fontWeight={"bold"} colour={"secondary"}>
-        {gate.minEarned}
+        {gate.minEarned.toLocaleString()}
     </Body>
 {/if}
