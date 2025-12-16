@@ -2,7 +2,17 @@
     import { AuthClient } from "@dfinity/auth-client";
     import { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
     import { Principal } from "@icp-sdk/core/principal";
-    import { CommonButton, Container } from "component-lib";
+    import {
+        Body,
+        Button,
+        ColourVars,
+        Column,
+        CommonButton,
+        Container,
+        Row,
+        StatusCard,
+        Subtitle,
+    } from "component-lib";
     import {
         AuthProvider,
         InMemoryAuthClientStorage,
@@ -24,7 +34,6 @@
         EmailPollerSuccess,
         EmailSigninHandler,
     } from "../../../utils/signin";
-    import AlertBox from "../../AlertBox.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import InternetIdentityLogo from "../../icons/InternetIdentityLogo.svelte";
     import Translatable from "../../Translatable.svelte";
@@ -338,67 +347,69 @@
     }
 </script>
 
-<div class="header">
+<Row crossAxisAlignment={"center"} gap={"md"}>
     <LinkVariantPlus size={$iconSize} color={"var(--txt)"} />
-    <div class="title">
-        <Translatable resourceKey={i18nKey("identity.linkIdentity")} />
-    </div>
-</div>
 
+    <Subtitle fontWeight={"bold"}>
+        <Translatable resourceKey={i18nKey("identity.linkIdentity")} />
+    </Subtitle>
+</Row>
 <div class="body">
     {#if error !== undefined}
-        <p class="info">
-            <ErrorMessage>
-                <Translatable resourceKey={i18nKey(error)} />
-            </ErrorMessage>
-        </p>
+        <ErrorMessage>
+            <Translatable resourceKey={i18nKey(error)} />
+        </ErrorMessage>
     {:else if step === "explain"}
-        <AlertBox>
-            {#each explanations as explanation}
-                <p class="info">
+        <StatusCard background={ColourVars.background2} title={"Link identity"} mode={"warning"}>
+            {#snippet body()}
+                {#each explanations as explanation}
                     <Translatable resourceKey={explanation} />
-                </p>
-            {/each}
-        </AlertBox>
+                {/each}
+            {/snippet}
+        </StatusCard>
     {:else if step === "linking"}
         {#if substep.kind === "ready_to_link"}
-            <div class="info">
-                <Translatable resourceKey={i18nKey("identity.linkTwoIdentities")} />
-            </div>
-            <div class="identities">
-                <SignInOption hollow name={i18nKey(substep.initiator.provider)} />
-                <ArrowRightBoldOutline size={$iconSize} color={"var(--icon-txt)"} />
-                <SignInOption hollow name={i18nKey(substep.approver.provider)} />
-            </div>
+            <Column gap={"lg"}>
+                <Body colour={"textSecondary"}>
+                    <Translatable resourceKey={i18nKey("identity.linkTwoIdentities")} />
+                </Body>
+                <Row mainAxisAlignment={"spaceBetween"} gap={"sm"} crossAxisAlignment={"center"}>
+                    <SignInOption hollow name={i18nKey(substep.initiator.provider)} />
+                    <ArrowRightBoldOutline size={$iconSize} color={ColourVars.textSecondary} />
+                    <SignInOption hollow name={i18nKey(substep.approver.provider)} />
+                </Row>
+            </Column>
         {:else if substep.kind === "initiator" && linkInternetIdentity}
-            <div class="info">
-                <Translatable resourceKey={i18nKey("identity.signInNext")} />
-            </div>
-            <CommonButton
-                mode={"active"}
-                size={"small"}
-                loading={loggingInInitiator}
-                disabled={loggingInInitiator}
-                onClick={loginInternetIdentity}>
-                {#snippet icon()}
-                    <span class="link-ii-logo">
-                        <InternetIdentityLogo />
-                    </span>
-                {/snippet}
-                <Translatable resourceKey={i18nKey("loginDialog.signin")} />
-            </CommonButton>
+            <Column gap={"lg"}>
+                <Body colour={"textSecondary"}>
+                    <Translatable resourceKey={i18nKey("identity.signInNext")} />
+                </Body>
+                <Button
+                    loading={loggingInInitiator}
+                    disabled={loggingInInitiator}
+                    onClick={loginInternetIdentity}>
+                    {#snippet icon()}
+                        <span class="link-ii-logo">
+                            <InternetIdentityLogo />
+                        </span>
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("loginDialog.signin")} />
+                </Button>
+            </Column>
         {:else if providerStep === "choose_provider"}
-            <div class="info center">
-                <Translatable resourceKey={i18nKey(`identity.signIn_${substep.kind}`)} />
-            </div>
-            <ChooseSignInOption
-                mode={"signin"}
-                {restrictTo}
-                {currentProvider}
-                showMore={substep.kind === "initiator"}
-                bind:emailInvalid
-                bind:email
-                onLogin={loginProvider} />
+            <Column gap={"lg"}>
+                <Body colour={"textSecondary"}>
+                    <Translatable resourceKey={i18nKey(`identity.signIn_${substep.kind}`)} />
+                </Body>
+                <ChooseSignInOption
+                    mode={"signin"}
+                    {restrictTo}
+                    {currentProvider}
+                    showMore={substep.kind === "initiator"}
+                    bind:emailInvalid
+                    bind:email
+                    onLogin={loginProvider} />
+            </Column>
         {:else if providerStep === "choose_eth_wallet"}
             <div class="eth-options">
                 {#await import("../SigninWithEth.svelte")}
@@ -431,69 +442,52 @@
     {/if}
 </div>
 
-<div class="footer">
-    <Container mainAxisAlignment={"end"} gap={"sm"} crossAxisAlignment={"end"}>
-        <CommonButton onClick={onClose} size={"small_text"}>
-            <Translatable resourceKey={i18nKey("cancel")}></Translatable>
+<Container mainAxisAlignment={"end"} gap={"sm"} crossAxisAlignment={"end"}>
+    <CommonButton onClick={onClose} size={"small_text"}>
+        <Translatable resourceKey={i18nKey("cancel")}></Translatable>
+    </CommonButton>
+    {#if error !== undefined}
+        <CommonButton mode={"active"} onClick={reset} size={"small_text"}>
+            <Translatable resourceKey={i18nKey("identity.tryAgain")}></Translatable>
         </CommonButton>
-        {#if error !== undefined}
-            <CommonButton mode={"active"} onClick={reset} size={"small"}>
-                <Translatable resourceKey={i18nKey("identity.tryAgain")}></Translatable>
+    {:else if step === "explain"}
+        {#if linkInternetIdentity}
+            <CommonButton mode={"active"} onClick={initiateLinking} size={"small_text"}>
+                {#snippet icon()}
+                    <span class="link-ii-logo">
+                        <InternetIdentityLogo />
+                    </span>
+                {/snippet}
+                <Translatable resourceKey={i18nKey("identity.link")}></Translatable>
             </CommonButton>
-        {:else if step === "explain"}
-            {#if linkInternetIdentity}
-                <CommonButton mode={"active"} onClick={initiateLinking} size={"small"}>
-                    {#snippet icon()}
-                        <span class="link-ii-logo">
-                            <InternetIdentityLogo />
-                        </span>
-                    {/snippet}
-                    <Translatable resourceKey={i18nKey("identity.link")}></Translatable>
-                </CommonButton>
-            {:else}
-                <CommonButton mode={"active"} onClick={initiateLinking} size={"small"}>
-                    <Translatable resourceKey={i18nKey("identity.linkedAccounts.start")}
-                    ></Translatable>
-                </CommonButton>
-            {/if}
-        {:else if step === "linking"}
-            <CommonButton onClick={reset} size={"small_text"}>
-                <Translatable resourceKey={i18nKey("identity.back")}></Translatable>
+        {:else}
+            <CommonButton mode={"active"} onClick={initiateLinking} size={"small_text"}>
+                <Translatable resourceKey={i18nKey("identity.linkedAccounts.start")}></Translatable>
             </CommonButton>
-            {#if substep.kind === "ready_to_link"}
-                <CommonButton
-                    mode={"active"}
-                    disabled={linking}
-                    loading={linking}
-                    onClick={linkIdentities}
-                    size={"medium"}>
-                    <Translatable resourceKey={i18nKey("identity.link")}></Translatable>
-                </CommonButton>
-            {/if}
         {/if}
-    </Container>
-</div>
+    {:else if step === "linking"}
+        <CommonButton onClick={reset} size={"small_text"}>
+            <Translatable resourceKey={i18nKey("identity.back")}></Translatable>
+        </CommonButton>
+        {#if substep.kind === "ready_to_link"}
+            <CommonButton
+                mode={"active"}
+                disabled={linking}
+                loading={linking}
+                onClick={linkIdentities}
+                size={"small"}>
+                {#snippet icon(color)}
+                    <LinkVariantPlus {color} />
+                {/snippet}
+                <Translatable resourceKey={i18nKey("identity.link")}></Translatable>
+            </CommonButton>
+        {/if}
+    {/if}
+</Container>
 
 <style lang="scss">
-    .header {
-        @include font(bold, normal, fs-130, 29);
-        margin-bottom: $sp4;
-        display: flex;
-        align-items: center;
-        gap: $sp3;
-    }
-
-    .body,
-    .header {
+    .body {
         margin-bottom: $sp5;
-    }
-
-    .info {
-        margin-bottom: $sp4;
-
-        &.center {
-            text-align: center;
-        }
     }
 
     .eth-options,
@@ -502,13 +496,5 @@
         display: flex;
         flex-direction: column;
         gap: $sp4;
-    }
-
-    .identities {
-        display: flex;
-        gap: $sp3;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
     }
 </style>

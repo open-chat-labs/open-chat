@@ -1,38 +1,38 @@
 <script lang="ts">
-    import { mobileWidth, type EnhancedAccessGate } from "openchat-client";
+    import { ColourVars, Column, CommonButton, Row, StatusCard } from "component-lib";
     import { i18nKey } from "../../../i18n/i18n";
-    import ModalContent from "../../ModalContent.svelte";
     import Translatable from "../../Translatable.svelte";
-    import AccessGateSummary from "./AccessGateSummary.svelte";
 
     interface Props {
-        gates: EnhancedAccessGate[];
         onClose: () => void;
     }
 
-    let { gates, onClose }: Props = $props();
+    let { onClose }: Props = $props();
+
+    /**
+     * TODO - ideally we would tell them which access gate was failed. And the response from the back end *does*
+     * tell us the gate check fail reason, but it seems to be giving us the wrong reason at the moment. e.g.
+     * When I select a token balance gate from an "any" composite gate, it reports back that it failed because
+     * I'm not diamond.
+     */
 </script>
 
-<ModalContent fixedWidth={$mobileWidth} fitToContent={!$mobileWidth} {onClose}>
-    {#snippet header()}
-        <div><Translatable resourceKey={i18nKey("access.gateCheckFailed")} /></div>
-    {/snippet}
-    {#snippet body()}
-        <div class="body">
-            {#each gates as gate}
-                <AccessGateSummary
-                    editable={false}
-                    gateConfig={{ expiry: gate.expiry, gate }}
-                    level={gate.level} />
-            {/each}
-        </div>
-    {/snippet}
-</ModalContent>
+<Column gap={"xl"} padding={"xl"}>
+    <StatusCard
+        mode={"warning"}
+        background={ColourVars.background2}
+        title={"Access gate check failed"}>
+        {#snippet body()}
+            <Translatable
+                resourceKey={i18nKey(
+                    "We have been unable to verify that you meet the required access gates to join this chat. Please double check and try again.",
+                )} />
+        {/snippet}
+    </StatusCard>
 
-<style lang="scss">
-    .body {
-        display: flex;
-        flex-direction: column;
-        gap: $sp4;
-    }
-</style>
+    <Row mainAxisAlignment={"end"}>
+        <CommonButton width={"hug"} mode={"active"} onClick={onClose} size={"small_text"}>
+            <Translatable resourceKey={i18nKey("close")} />
+        </CommonButton>
+    </Row>
+</Column>

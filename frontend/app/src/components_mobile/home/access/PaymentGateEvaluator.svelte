@@ -130,23 +130,10 @@
         </Row>
     </Column>
 </Column>
+
 {#if insufficientFunds}
     <Sheet onDismiss={onClose}>
-        <Column gap={"xs"} padding={"xl"}>
-            <StatusCard
-                background={ColourVars.background2}
-                mode={"warning"}
-                title={"Insufficient funds"}>
-                {#snippet body()}
-                    <Markdown text={approvalMessage} />
-                {/snippet}
-            </StatusCard>
-            <AccountInfo
-                background={ColourVars.background2}
-                padding={"zero"}
-                ledger={gate.ledgerCanister} />
-            {@render refreshBalance()}
-        </Column>
+        {@render topup()}
     </Sheet>
 {/if}
 
@@ -174,7 +161,7 @@
 {#snippet refreshBalance()}
     <CommonButton
         loading={refreshingBalance}
-        width={"fill"}
+        width={"hug"}
         mode={"active"}
         size={"small_text"}
         onClick={() => tokenState.refreshBalance(client)}>
@@ -183,4 +170,31 @@
         {/snippet}
         <Translatable resourceKey={i18nKey(`Refresh ${tokenState.symbol} balance`)} />
     </CommonButton>
+{/snippet}
+
+{#snippet cancel()}
+    <CommonButton width={"hug"} size={"small_text"} onClick={onClose}>
+        <Translatable resourceKey={i18nKey("cancel")} />
+    </CommonButton>
+{/snippet}
+
+{#snippet topup()}
+    <Column gap={"xs"} padding={"xl"}>
+        <StatusCard
+            background={ColourVars.background2}
+            mode={"warning"}
+            title={"Insufficient funds"}>
+            {#snippet body()}
+                <Markdown text={approvalMessage} />
+            {/snippet}
+        </StatusCard>
+        <AccountInfo
+            background={ColourVars.background2}
+            padding={"zero"}
+            ledger={gate.ledgerCanister} />
+        <Row mainAxisAlignment={"spaceBetween"}>
+            {@render cancel()}
+            {@render refreshBalance()}
+        </Row>
+    </Column>
 {/snippet}

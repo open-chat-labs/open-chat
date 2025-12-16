@@ -11,6 +11,7 @@
         Row,
     } from "component-lib";
     import { enhancedCryptoLookup, type LeafGate } from "openchat-client";
+    import AccountCheck from "svelte-material-icons/AccountCheckOutline.svelte";
     import Diamond from "svelte-material-icons/DiamondOutline.svelte";
     import Lifetime from "svelte-material-icons/DiamondStone.svelte";
     import Translatable from "../../Translatable.svelte";
@@ -108,6 +109,13 @@
                 <Diamond {color} />
             {/snippet}
             <Translatable resourceKey={i18nKey("Get diamond membership")} />
+        </Button>
+    {:else if gate.kind === "unique_person_gate"}
+        <Button onClick={onClick ? () => onClick(gate) : undefined}>
+            {#snippet icon(color)}
+                <AccountCheck {color} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("Verify unique personhood")} />
         </Button>
     {:else}
         <AccessGateText {gate} />

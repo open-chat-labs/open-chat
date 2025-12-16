@@ -1,13 +1,21 @@
 <script lang="ts">
+    import {
+        Body,
+        BodySmall,
+        Button,
+        ColourVars,
+        Column,
+        CommonButton,
+        H2,
+        Row,
+        StatusCard,
+    } from "component-lib";
     import { iconSize, type Level, type OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import AccountCheck from "svelte-material-icons/AccountCheck.svelte";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
     import { uniquePersonCredentialGate } from "../../../utils/access";
-    import AlertBox from "../../AlertBox.svelte";
-    import Button from "../../Button.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import Translatable from "../../Translatable.svelte";
@@ -75,15 +83,15 @@
         onProceed={() => (step = "verification")}
         explanations={[i18nKey("identity.humanityWarning")]} />
 {:else}
-    <div class="header">
+    <Row gap={"md"} crossAxisAlignment={"center"}>
         <AccountCheck size={$iconSize} color={"var(--txt)"} />
-        <div class="title">
+        <H2 fontWeight={"bold"}>
             <Translatable resourceKey={i18nKey("access.uniquePerson")} />
-        </div>
-    </div>
+        </H2>
+    </Row>
     <div>
         {#if failed}
-            <p class="info">
+            <Column gap={"lg"}>
                 <ErrorMessage>
                     <Translatable
                         resourceKey={i18nKey(
@@ -95,61 +103,59 @@
                             true,
                         )} />
                 </ErrorMessage>
-            </p>
-            <p class="question">
-                <Translatable resourceKey={i18nKey("access.uniquePersonInfo1")} />
-            </p>
 
-            <p class="answer">
-                <Markdown text={interpolate($_, i18nKey("access.uniquePersonInfo2"))} />
-            </p>
+                <Body>
+                    <Translatable resourceKey={i18nKey("access.uniquePersonInfo1")} />
+                </Body>
 
-            <p class="answer">
-                <Translatable resourceKey={i18nKey("access.uniquePersonInfo3")} />
-            </p>
+                <BodySmall colour={"textSecondary"}>
+                    <Markdown text={interpolate($_, i18nKey("access.uniquePersonInfo2"))} />
+                </BodySmall>
+
+                <BodySmall colour={"textSecondary"}>
+                    <Translatable resourceKey={i18nKey("access.uniquePersonInfo3")} />
+                </BodySmall>
+            </Column>
         {:else}
-            <p class="info">
-                <Translatable
-                    resourceKey={i18nKey(
-                        "access.credential.credentialCheckMessage",
-                        {
-                            credential: "Unique person",
-                        },
-                        level,
-                        true,
-                    )} />
-            </p>
+            <Column gap={"lg"}>
+                <BodySmall>
+                    <Translatable
+                        resourceKey={i18nKey(
+                            "access.credential.credentialCheckMessage",
+                            {
+                                credential: "Unique person",
+                            },
+                            level,
+                            true,
+                        )} />
+                </BodySmall>
 
-            <HumanityConfirmation bind:confirmed />
+                <HumanityConfirmation bind:confirmed />
 
-            {#if expiry !== undefined}
-                <AlertBox>
-                    <AccessGateExpiry {expiry} />
-                </AlertBox>
-            {/if}
+                {#if expiry !== undefined}
+                    <StatusCard
+                        background={ColourVars.background2}
+                        mode={"warning"}
+                        title={interpolate($_, i18nKey("Recurring access gate"))}>
+                        {#snippet body()}
+                            <AccessGateExpiry {expiry} />
+                        {/snippet}
+                    </StatusCard>
+                {/if}
+            </Column>
         {/if}
     </div>
-    <div>
-        <ButtonGroup>
-            <Button secondary onClick={onClose}
-                ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-            <Button
-                loading={verifying}
-                disabled={verifying || !confirmed || iiPrincipal === undefined}
-                onClick={verify}><Translatable resourceKey={i18nKey("access.verify")} /></Button>
-        </ButtonGroup>
-    </div>
+    <Column gap={"md"} crossAxisAlignment={"center"}>
+        <Button
+            loading={verifying}
+            disabled={verifying || !confirmed || iiPrincipal === undefined}
+            onClick={verify}><Translatable resourceKey={i18nKey("access.verify")} /></Button>
+        <CommonButton width={"hug"} size={"small_text"} onClick={onClose}
+            ><Translatable resourceKey={i18nKey("cancel")} /></CommonButton>
+    </Column>
 {/if}
 
 <style lang="scss">
-    .header {
-        @include font(bold, normal, fs-130, 29);
-        margin-bottom: $sp4;
-        display: flex;
-        align-items: center;
-        gap: $sp3;
-    }
-
     .info,
     .question,
     .answer {

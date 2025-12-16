@@ -127,7 +127,7 @@
 
 {#if gateCheckFailed}
     <Sheet onDismiss={closeModal}>
-        <GateCheckFailed onClose={closeModal} gates={[gateCheckFailed]} />
+        <GateCheckFailed onClose={closeModal} />
     </Sheet>
 {/if}
 
