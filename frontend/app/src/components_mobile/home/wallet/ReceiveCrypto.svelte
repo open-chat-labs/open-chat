@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { Body, Container } from "component-lib";
+    import MulticolourText from "@src/components_mobile/MulticolourText.svelte";
+    import { Avatar, Body, Column, Row } from "component-lib";
     import { i18nKey } from "../../../i18n/i18n";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import Translatable from "../../Translatable.svelte";
     import AccountInfo from "../AccountInfo.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import type { TokenState } from "./walletState.svelte";
@@ -19,20 +19,34 @@
 </script>
 
 <SlidingPageContent {title}>
-    <Container gap={"lg"} padding={"lg"} direction={"vertical"}>
-        <Container padding={["lg", "xl"]}>
+    <Column gap={"lg"} padding={"lg"}>
+        <Row gap={"lg"} padding={["lg", "md"]}>
+            <Avatar size={"lg"} url={tokenState.logo} />
             <Body>
-                <Translatable
-                    resourceKey={i18nKey(
-                        `This is your ${tokenState.symbol} address for deposits in the OpenChat Wallet. Either have your address QR code scanned, or copy and paste your address in a message!`,
-                    )} />
+                <MulticolourText
+                    parts={[
+                        {
+                            text: i18nKey("Have your "),
+                            colour: "textPrimary",
+                        },
+                        {
+                            text: i18nKey(tokenState.symbol),
+                            colour: "primary",
+                        },
+                        {
+                            text: i18nKey(
+                                " address QR code scanned by the sender, or copy / paste it in a message!",
+                            ),
+                            colour: "textPrimary",
+                        },
+                    ]} />
             </Body>
-        </Container>
-        <Container mainAxisAlignment={"center"}>
+        </Row>
+        <Column mainAxisAlignment={"center"}>
             <AccountInfo ledger={tokenState.ledger} />
             {#if error}
                 <ErrorMessage>{error}</ErrorMessage>
             {/if}
-        </Container>
-    </Container>
+        </Column>
+    </Column>
 </SlidingPageContent>

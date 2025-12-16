@@ -38,13 +38,13 @@
 
 <Container crossAxisAlignment={"center"} gap={"md"}>
     {@render children?.()}
-    <Body colour={"primary"} fontWeight={"bold"}>
+    <Body colour={"textPrimary"} fontWeight={"bold"}>
         {collapseAccount(account)}
     </Body>
     {#if !disableCopy}
-        <IconButton onclick={copy}>
+        <IconButton padding={"zero"} onclick={copy}>
             {#snippet icon()}
-                <ContentCopy color={ColourVars.textSecondary} />
+                <ContentCopy color={ColourVars.primary} />
             {/snippet}
         </IconButton>
     {/if}

@@ -45,6 +45,7 @@
         doJoinCommunity(success);
     }
 
+    // let's put this in a shared util module
     function doJoinCommunity(gateCheck: GateCheckSucceeded | undefined): Promise<void> {
         if (previewingCommunity && $selectedCommunitySummaryStore) {
             const credentials = gateCheck?.credentials ?? [];

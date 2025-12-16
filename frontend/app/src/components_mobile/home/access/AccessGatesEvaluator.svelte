@@ -18,8 +18,6 @@
 
     let { gates, onSuccess, onClose }: Props = $props();
 
-    $inspect(gates);
-
     // find the first gate that the user does not meet
     let currentGateIndex = $state(gates.findIndex((g) => !client.doesUserMeetAccessGate(g)));
     let currentGate = $derived(gates[currentGateIndex]);

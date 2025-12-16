@@ -1,35 +1,20 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import {
-        Avatar,
-        Body,
-        BodySmall,
-        Caption,
-        ColourVars,
-        Column,
-        CommonButton,
-        Row,
-        Sheet,
-    } from "component-lib";
+    import { Avatar, Body, BodySmall, Caption, ColourVars, Column, Row } from "component-lib";
     import {
         currentUserStore,
         enhancedCryptoLookup,
-        OpenChat,
+        publish,
         type LeafGate,
     } from "openchat-client";
-    import { getContext } from "svelte";
     import AccountCheck from "svelte-material-icons/AccountCheckOutline.svelte";
     import Check from "svelte-material-icons/CheckBold.svelte";
     import Diamond from "svelte-material-icons/DiamondOutline.svelte";
     import Lifetime from "svelte-material-icons/DiamondStone.svelte";
     import QrCode from "svelte-material-icons/QrCode.svelte";
-    import Refresh from "svelte-material-icons/Refresh.svelte";
     import Translatable from "../../Translatable.svelte";
     import AccessGateText from "../access_gates/AccessGateText.svelte";
-    import AccountInfo from "../AccountInfo.svelte";
     import { TokenState } from "../wallet/walletState.svelte";
-
-    const client = getContext<OpenChat>("client");
 
     interface Props {
         gate: LeafGate;
@@ -38,7 +23,6 @@
     }
 
     let { gate, onClick, satisfied }: Props = $props();
-    let topup = $state<TokenState>();
     let tokenState = $derived.by(() => {
         switch (gate.kind) {
             case "token_balance_gate":
@@ -121,7 +105,7 @@
 
         {#if insufficient && supportsTopup}
             <Column
-                onClick={() => (topup = tokenState)}
+                onClick={() => publish("receiveToken", tokenState)}
                 mainAxisAlignment={"center"}
                 crossAxisAlignment={"center"}
                 background={ColourVars.background2}
@@ -187,33 +171,3 @@
         <AccessGateText {gate} />
     {/if}
 {/if}
-
-{#if topup !== undefined}
-    <Sheet
-        onDismiss={() => {
-            topup?.refreshBalance(client);
-            topup = undefined;
-        }}>
-        <Column gap={"xs"} padding={"xl"}>
-            <AccountInfo
-                background={ColourVars.background0}
-                padding={"zero"}
-                ledger={topup.ledger} />
-            {@render refreshBalance(topup)}
-        </Column>
-    </Sheet>
-{/if}
-
-{#snippet refreshBalance(tokenState: TokenState)}
-    <CommonButton
-        width={"fill"}
-        mode={"active"}
-        size={"small_text"}
-        onClick={() => tokenState.refreshBalance(client)}>
-        {#snippet icon(color, size)}
-            <Refresh {color} {size} />
-        {/snippet}
-
-        <Translatable resourceKey={i18nKey(`Refresh ${tokenState.symbol} balance`)} />
-    </CommonButton>
-{/snippet}

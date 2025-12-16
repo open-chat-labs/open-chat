@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { BodySmall, ColourVars, Container, type Padding } from "component-lib";
+    import { BodySmall, ColourVars, Container, Row, type Padding } from "component-lib";
     import {
         BTC_SYMBOL,
         CKBTC_SYMBOL,
@@ -8,8 +8,8 @@
         currentUserStore,
         ICP_SYMBOL,
         Lazy,
-        type OneSecTransferFees,
         OpenChat,
+        type OneSecTransferFees,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -141,10 +141,6 @@
         {background}
         direction={"vertical"}
         {padding}>
-        {#if networks.length > 0 && selectedNetwork !== undefined}
-            <NetworkSelector {networks} bind:selectedNetwork />
-        {/if}
-
         {#if account === undefined}
             <div class="generating">
                 {#if error !== undefined}
@@ -162,6 +158,50 @@
                 border={false} />
         {/if}
     </Container>
+
+    {#if isBtcNetwork}
+        <Row {background} padding={["lg", "xl"]}>
+            {#await btcDepositFeePromise.get()}
+                <BodySmall colour={"textSecondary"}>
+                    {$_("cryptoAccount.fetchingDepositFee")}
+                </BodySmall>
+            {:then amount}
+                <BodySmall colour={"textSecondary"}>
+                    {$_("cryptoAccount.networkFee", {
+                        values: { amount, token: tokenDetails.symbol },
+                    })}
+                </BodySmall>
+            {:catch}
+                <BodySmall colour={"error"}>
+                    {$_("cryptoAccount.failedToFetchDepositFee")}
+                </BodySmall>
+            {/await}
+        </Row>
+    {:else if isOneSecNetwork}
+        <Row {background} padding={["lg", "xl"]}>
+            {#await oneSecFeesPromise.get()}
+                <BodySmall colour={"textSecondary"}>
+                    {$_("cryptoAccount.fetchingDepositFee")}
+                </BodySmall>
+            {:then}
+                {#if oneSecTotalFee !== undefined}
+                    <BodySmall colour={"textSecondary"}>
+                        {$_("cryptoAccount.networkFee", {
+                            values: { amount: oneSecTotalFee, token: tokenDetails.symbol },
+                        })}
+                    </BodySmall>
+                {:else}
+                    <BodySmall colour={"error"}>
+                        {$_("cryptoAccount.failedToFetchDepositFee")}
+                    </BodySmall>
+                {/if}
+            {:catch}
+                <BodySmall colour={"error"}>
+                    {$_("cryptoAccount.failedToFetchDepositFee")}
+                </BodySmall>
+            {/await}
+        </Row>
+    {/if}
 
     <Container
         borderRadius={["zero", "zero", "lg", "lg"]}
@@ -185,54 +225,19 @@
         {:else}
             <TruncatedAccount {account} />
         {/if}
-
-        {#if isBtcNetwork}
-            {#await btcDepositFeePromise.get()}
-                <BodySmall colour={"textSecondary"}>
-                    {$_("cryptoAccount.fetchingDepositFee")}
-                </BodySmall>
-            {:then amount}
-                <BodySmall colour={"textSecondary"}>
-                    {$_("cryptoAccount.networkFee", {
-                        values: { amount, token: tokenDetails.symbol },
-                    })}
-                </BodySmall>
-            {:catch}
-                <BodySmall colour={"error"}>
-                    {$_("cryptoAccount.failedToFetchDepositFee")}
-                </BodySmall>
-            {/await}
-        {:else if isOneSecNetwork}
-            {#await oneSecFeesPromise.get()}
-                <BodySmall colour={"textSecondary"}>
-                    {$_("cryptoAccount.fetchingDepositFee")}
-                </BodySmall>
-            {:then}
-                {#if oneSecTotalFee !== undefined}
-                    <BodySmall colour={"textSecondary"}>
-                        {$_("cryptoAccount.networkFee", {
-                            values: { amount: oneSecTotalFee, token: tokenDetails.symbol },
-                        })}
-                    </BodySmall>
-                {:else}
-                    <BodySmall colour={"error"}>
-                        {$_("cryptoAccount.failedToFetchDepositFee")}
-                    </BodySmall>
-                {/if}
-            {:catch}
-                <BodySmall colour={"error"}>
-                    {$_("cryptoAccount.failedToFetchDepositFee")}
-                </BodySmall>
-            {/await}
-        {/if}
     </Container>
+
+    {#if networks.length > 0 && selectedNetwork !== undefined}
+        <Row padding={["lg", "zero"]}>
+            <NetworkSelector {networks} bind:selectedNetwork />
+        </Row>
+    {/if}
 </Container>
 
 <style lang="scss">
     .generating {
         height: 298px;
-        width: 298px;
-        border: 1px solid var(--bd);
+        width: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
