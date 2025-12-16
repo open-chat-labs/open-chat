@@ -19,9 +19,9 @@
 
     import MulticolourText from "@src/components_mobile/MulticolourText.svelte";
     import { Body, Button, ColourVars, Column, CommonButton, H2, Row } from "component-lib";
-    import Diamond from "svelte-material-icons/DiamondOutline.svelte";
     import ShieldStar from "svelte-material-icons/ShieldStarOutline.svelte";
     import Translatable from "../../Translatable.svelte";
+    import AccessGateExpiry from "./AccessGateExpiry.svelte";
     import AccessGateSummary from "./AccessGateSummary.svelte";
     import CredentialGateEvaluator from "./CredentialGateEvaluator.svelte";
     import DiamondGateEvaluator from "./DiamondGateEvaluator.svelte";
@@ -44,15 +44,13 @@
     let credentials: string[] = [];
     let paymentApprovals: PaymentGateApprovals = new Map();
     let optionalGatesByIndex: Map<number, LeafGate> = $state(new Map());
-    let optionalInvalid = $derived(
-        currentGate?.kind === "composite_gate" &&
-            optionalGatesByIndex.size >= currentGate.gates.length,
-    );
+    $inspect(currentGate).with(console.trace);
+    $inspect(gates);
 
     onMount(nextGate);
 
     function needsPreprocessing(gate: EnhancedAccessGate): boolean {
-        if (isCompositeGate(gate) && gate.operator === "or") {
+        if (isCompositeGate(gate)) {
             return gate.gates.some((g) => shouldPreprocessGate(g));
         } else {
             return shouldPreprocessGate(gate);
@@ -151,36 +149,76 @@
 
 <Column gap={"xl"} padding={"xl"}>
     {#if currentGate}
-        {#if isCompositeGate(currentGate) && currentGate.operator === "or"}
-            <Column gap={"lg"}>
-                <ShieldStar size={"4.5rem"} color={ColourVars.primary} />
-                <H2 fontWeight={"bold"}>
-                    <Translatable resourceKey={i18nKey("Choose how to join")} />
-                </H2>
-                <Body>
-                    <MulticolourText
-                        parts={[
-                            {
-                                text: i18nKey("To join you will need to satisfy "),
-                                colour: "textSecondary",
-                            },
-                            {
-                                text: i18nKey("at least one access gate."),
-                                colour: "warning",
-                            },
-                        ]} />
-                </Body>
-            </Column>
-            <Column gap={"md"}>
-                {#each currentGate.gates as subgate, i}
-                    <AccessGateSummary
-                        onClick={() => {
-                            toggleIndex(i, currentGate);
-                            nextGate();
-                        }}
-                        gate={subgate} />
-                {/each}
-            </Column>
+        {#if isCompositeGate(currentGate)}
+            {#if currentGate.operator === "or"}
+                <Column gap={"lg"}>
+                    <ShieldStar size={"4.5rem"} color={ColourVars.primary} />
+                    <H2 fontWeight={"bold"}>
+                        <Translatable resourceKey={i18nKey("Choose how to join")} />
+                    </H2>
+                    <Row wrap>
+                        <Body width={"hug"}>
+                            <MulticolourText
+                                parts={[
+                                    {
+                                        text: i18nKey("To join you will need to satisfy "),
+                                        colour: "textSecondary",
+                                    },
+                                    {
+                                        text: i18nKey("at least one access gate."),
+                                        colour: "warning",
+                                    },
+                                ]} />
+                        </Body>
+                        <Body width={"hug"} colour={"textSecondary"}>
+                            <AccessGateExpiry expiry={currentGate.expiry} />
+                        </Body>
+                    </Row>
+                </Column>
+                <Column gap={"md"}>
+                    {#each currentGate.gates as subgate, i}
+                        <AccessGateSummary
+                            onClick={() => {
+                                toggleIndex(i, currentGate);
+                                nextGate();
+                            }}
+                            gate={subgate} />
+                    {/each}
+                </Column>
+            {:else}
+                <Column gap={"lg"}>
+                    <ShieldStar size={"4.5rem"} color={ColourVars.primary} />
+                    <H2 fontWeight={"bold"}>
+                        <Translatable resourceKey={i18nKey("Community access gates")} />
+                    </H2>
+                    <Row wrap>
+                        <Body width={"hug"}>
+                            <MulticolourText
+                                parts={[
+                                    {
+                                        text: i18nKey("To join you will need to satisfy "),
+                                        colour: "textSecondary",
+                                    },
+                                    {
+                                        text: i18nKey("ALL access gates."),
+                                        colour: "secondary",
+                                    },
+                                ]} />
+                        </Body>
+                        <Body width={"hug"} colour={"textSecondary"}>
+                            <AccessGateExpiry expiry={currentGate.expiry} />
+                        </Body>
+                    </Row>
+                </Column>
+                <Column gap={"md"}>
+                    {#each currentGate.gates as subgate}
+                        <AccessGateSummary onClick={nextGate} gate={subgate} />
+                    {/each}
+                </Column>
+                <Button onClick={nextGate}>
+                    <Translatable resourceKey={i18nKey("Let's go")} />
+                </Button>
+            {/if}
             <Row mainAxisAlignment={"center"}>
                 <CommonButton width={"hug"} onClick={onClose} size={"small_text"}>
                     <Translatable resourceKey={i18nKey("cancel")} />
@@ -217,39 +255,4 @@
                 onCredentialReceived={credentialReceived} />
         {/if}
     {/if}
-
-    <Row mainAxisAlignment={"center"}>
-        {#if currentGate !== undefined}
-            {#if isCompositeGate(currentGate) && currentGate.operator === "and"}
-                <Button disabled={optionalInvalid} onClick={nextGate}>
-                    {#snippet icon(color)}
-                        <Diamond {color} />
-                    {/snippet}
-                    <Translatable resourceKey={i18nKey("access.next")} />
-                </Button>
-            {/if}
-        {:else}
-            <Button onClick={onClose}>
-                {#snippet icon(color)}
-                    <Diamond {color} />
-                {/snippet}
-                <Translatable resourceKey={i18nKey("access.join")} />
-            </Button>
-        {/if}
-    </Row>
 </Column>
-
-<!-- <ModalContent
-    hideFooter={currentGate !== undefined && currentGate.kind !== "composite_gate"}
-    closeIcon
-    {onClose}>
-
-    {#snippet footer()}
-    {/snippet}
-</ModalContent> -->
-
-<style lang="scss">
-    .optional-gate {
-        margin-bottom: $sp3;
-    }
-</style>

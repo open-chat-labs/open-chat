@@ -4,7 +4,6 @@
         Avatar,
         Body,
         BodySmall,
-        Button,
         Caption,
         ColourVars,
         Column,
@@ -20,6 +19,7 @@
     } from "openchat-client";
     import { getContext } from "svelte";
     import AccountCheck from "svelte-material-icons/AccountCheckOutline.svelte";
+    import Check from "svelte-material-icons/CheckBold.svelte";
     import Diamond from "svelte-material-icons/DiamondOutline.svelte";
     import Lifetime from "svelte-material-icons/DiamondStone.svelte";
     import QrCode from "svelte-material-icons/QrCode.svelte";
@@ -48,6 +48,30 @@
         }
     });
 </script>
+
+{#snippet booleanGate(has: boolean, Icon: any, getLabel: string, hasLabel: string)}
+    <Row
+        onClick={onClick ? () => onClick(gate) : undefined}
+        mainAxisAlignment={"spaceBetween"}
+        crossAxisAlignment={"center"}
+        borderRadius={"md"}
+        minHeight={"4.25rem"}
+        gap={"md"}
+        background={has ? undefined : ColourVars.background2}
+        borderWidth={has ? "thick" : "zero"}
+        borderColour={has ? ColourVars.primary : undefined}
+        padding={["md", "lg"]}>
+        <Row mainAxisAlignment={"center"} width={{ size: "2.5rem" }}>
+            <Icon size={"1.5rem"} />
+        </Row>
+        <Body fontWeight="bold" colour={has ? "textPrimary" : "textSecondary"}>
+            <Translatable resourceKey={i18nKey(has ? hasLabel : getLabel)} />
+        </Body>
+        {#if has}
+            <Check color={ColourVars.primary} size={"1.2rem"} />
+        {/if}
+    </Row>
+{/snippet}
 
 {#snippet tokenGate(
     logo: string,
@@ -143,26 +167,24 @@
             false,
         )}
     {:else if gate.kind === "lifetime_diamond_gate"}
-        <Button onClick={onClick ? () => onClick(gate) : undefined}>
-            {#snippet icon(color)}
-                <Lifetime {color} />
-            {/snippet}
-            <Translatable resourceKey={i18nKey("Get lifetime membership")} />
-        </Button>
+        {@const has = $currentUserStore.diamondStatus.kind === "lifetime"}
+        {@render booleanGate(
+            has,
+            Lifetime,
+            "Get lifetime membership",
+            "Lifetime diamond membership",
+        )}
     {:else if gate.kind === "diamond_gate"}
-        <Button onClick={onClick ? () => onClick(gate) : undefined}>
-            {#snippet icon(color)}
-                <Diamond {color} />
-            {/snippet}
-            <Translatable resourceKey={i18nKey("Get diamond membership")} />
-        </Button>
+        {@const has = $currentUserStore.diamondStatus.kind !== "inactive"}
+        {@render booleanGate(has, Diamond, "Get diamond membership", "Diamond membership")}
     {:else if gate.kind === "unique_person_gate"}
-        <Button onClick={onClick ? () => onClick(gate) : undefined}>
-            {#snippet icon(color)}
-                <AccountCheck {color} />
-            {/snippet}
-            <Translatable resourceKey={i18nKey("Verify unique personhood")} />
-        </Button>
+        {@const has = $currentUserStore.isUniquePerson}
+        {@render booleanGate(
+            has,
+            AccountCheck,
+            "Verify unique personhood",
+            "Unique personhood verified",
+        )}
     {:else}
         <AccessGateText {gate} />
     {/if}

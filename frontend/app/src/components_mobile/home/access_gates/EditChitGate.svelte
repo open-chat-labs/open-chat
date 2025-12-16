@@ -35,6 +35,11 @@
     let invalidMinEarned = $derived(minEarned === undefined);
     let valid = $derived(!invalidMinEarned);
 
+    function onRemove() {
+        data.deleteGate(gate);
+        publish("closeModalPage");
+    }
+
     function initialMinEarned(gate: AccessGate): string {
         if (isChitEarnedGate(gate)) {
             return gate.minEarned.toString();
@@ -102,7 +107,10 @@
             </Form>
         </Container>
 
-        <Container mainAxisAlignment={"end"} crossAxisAlignment={"center"}>
+        <Container mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
+            <CommonButton onClick={onRemove} size={"small_text"}>
+                <Translatable resourceKey={i18nKey("Remove gate")}></Translatable>
+            </CommonButton>
             <CommonButton disabled={!valid} onClick={save} mode={"active"} size={"medium"}>
                 {#snippet icon(color, size)}
                     <Save {color} {size} />

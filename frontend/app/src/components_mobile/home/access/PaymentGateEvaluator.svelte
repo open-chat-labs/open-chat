@@ -177,7 +177,7 @@
 {#snippet topup()}
     <Column gap={"xs"} padding={"xl"}>
         <StatusCard
-            background={ColourVars.background2}
+            background={ColourVars.background0}
             mode={"warning"}
             title={"Insufficient funds"}>
             {#snippet body()}
@@ -185,7 +185,7 @@
             {/snippet}
         </StatusCard>
         <AccountInfo
-            background={ColourVars.background2}
+            background={ColourVars.background0}
             padding={"zero"}
             ledger={gate.ledgerCanister} />
         <Row mainAxisAlignment={"spaceBetween"}>
