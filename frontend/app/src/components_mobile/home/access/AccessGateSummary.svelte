@@ -13,10 +13,12 @@
         Row,
     } from "component-lib";
     import {
+        type CryptocurrencyDetails,
         currentUserStore,
         enhancedCryptoLookup,
-        OpenChat,
         type LeafGate,
+        type NeuronGate,
+        OpenChat,
     } from "openchat-client";
     import { getContext } from "svelte";
     import AccountCheck from "svelte-material-icons/AccountCheckOutline.svelte";
@@ -36,6 +38,7 @@
     }
 
     let { gate, onClick, satisfied }: Props = $props();
+    let token = $derived(client.getTokenDetailsForAccessGate(gate));
     let tokenState = $derived.by(() => {
         switch (gate.kind) {
             case "token_balance_gate":
@@ -45,6 +48,19 @@
                 return undefined;
         }
     });
+
+    function neuronGateSubtext(gate: NeuronGate): string | undefined {
+        const dissolveDelayDays = client.getMinDissolveDelayDays(gate);
+        const minStake = client.getMinStakeInTokens(gate);
+        const parts: string[] = [];
+        if (dissolveDelayDays !== undefined) {
+            parts.push(`${dissolveDelayDays}d dissolve delay`);
+        }
+        if (minStake !== undefined) {
+            parts.push(`${minStake} token stake`);
+        }
+        return parts.join(" / ");
+    }
 </script>
 
 {#snippet booleanGate(Icon: any, title: string, subtitle?: string)}
@@ -65,6 +81,22 @@
     </AccessGateBox>
 {/snippet}
 
+{#snippet neuronGate(gate: NeuronGate, token: CryptocurrencyDetails)}
+    {@const subtext = neuronGateSubtext(gate)}
+    <AccessGateBox {satisfied} satisfiable onClick={() => onClick(gate)}>
+        <Avatar url={token.logo} />
+
+        <Column width={"fill"}>
+            <Body fontWeight={"bold"} colour={"textPrimary"} width={"hug"}>{token.name}</Body>
+            {#if subtext !== undefined}
+                <Caption colour={"textSecondary"}>
+                    {subtext}
+                </Caption>
+            {/if}
+        </Column>
+    </AccessGateBox>
+{/snippet}
+
 {#snippet tokenGate(
     logo: string,
     symbol: string,
@@ -72,6 +104,7 @@
     label: string,
     required: string,
     balance: string,
+    onClick?: () => void,
     refresh?: () => void,
 )}
     <MenuTrigger maskUI align={"end"} position={"bottom"} fill mobileMode={"longpress"}>
@@ -80,7 +113,7 @@
                 <Translatable resourceKey={i18nKey("Refresh balance")} />
             </MenuItem>
         {/snippet}
-        <AccessGateBox {satisfied} satisfiable={!insufficient} onClick={() => onClick(gate)}>
+        <AccessGateBox {satisfied} satisfiable={!insufficient} {onClick}>
             <Avatar url={logo} />
 
             <Column width={"fill"}>
@@ -94,10 +127,10 @@
                         colour={insufficient ? "textSecondary" : "textPrimary"}
                         width={"hug"}>{label}</Body>
                 </Row>
-                <Caption colour={insufficient ? "error" : "textSecondary"} fontWeight={"bold"}>
+                <Caption colour={insufficient ? "error" : "textSecondary"}>
                     {balance}
                     {#if insufficient}
-                        / Insufficient funds
+                        {`/ Insufficient ${symbol}`}
                     {/if}
                 </Caption>
             </Column>
@@ -125,6 +158,7 @@
             "payment gate",
             tokenState.formatTokens(gate.amount),
             tokenState.formatTokens(balance),
+            () => onClick(gate),
             () => tokenState.refreshBalance(client),
         )}
     {:else if gate.kind === "token_balance_gate" && tokenState}
@@ -140,8 +174,11 @@
             "minimum balance gate",
             tokenState.formatTokens(gate.minBalance),
             tokenState.formatTokens(balance),
+            () => onClick(gate),
             () => tokenState.refreshBalance(client),
         )}
+    {:else if gate.kind === "neuron_gate" && token}
+        {@render neuronGate(gate, token)}
     {:else if gate.kind === "chit_earned_gate"}
         {@const insufficient = $currentUserStore.totalChitEarned < gate.minEarned}
         {@render tokenGate(

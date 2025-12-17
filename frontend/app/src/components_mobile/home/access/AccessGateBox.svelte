@@ -8,7 +8,7 @@
         satisfied: boolean;
         satisfiable: boolean;
         children: Snippet;
-        onClick: () => void;
+        onClick?: () => void;
     }
 
     let { satisfied, satisfiable, onClick, children }: Props = $props();
@@ -37,7 +37,7 @@
         {@render children()}
         {#if satisfied}
             <Check color={ColourVars.success} size={"1rem"} />
-        {:else}
+        {:else if onClick}
             <ChevronRight color={ColourVars.primary} size={"1.5rem"} />
         {/if}
     </Row>

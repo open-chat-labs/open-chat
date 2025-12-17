@@ -7,6 +7,7 @@
         isDiamondGate,
         isLeafGate,
         isLifetimeDiamondGate,
+        isNeuronGate,
         isPaymentGate,
         isUniquePersonGate,
         publish,
@@ -37,6 +38,7 @@
     import AccessGateSummary from "./AccessGateSummary.svelte";
     import CredentialGateEvaluator from "./CredentialGateEvaluator.svelte";
     import DiamondGateEvaluator from "./DiamondGateEvaluator.svelte";
+    import NeuronGateEvaluator from "./NeuronGateEvaluator.svelte";
     import PaymentGateEvaluator from "./PaymentGateEvaluator.svelte";
     import UniqueHumanGateEvaluator from "./UniqueHumanGateEvaluator.svelte";
 
@@ -50,9 +52,9 @@
 
     let { gate, onClose, onComplete }: Props = $props();
 
-    let flattenedGates = $state<SatisfiedLeafGate[]>(
-        normaliseGates(gate).toSorted(orderBySatisfied),
-    );
+    let flattenedGates = $state<SatisfiedLeafGate[]>(normaliseGates(gate));
+
+    let sortedGates = $derived(flattenedGates.toSorted(orderBySatisfied));
 
     function orderBySatisfied(a: SatisfiedLeafGate, b: SatisfiedLeafGate): number {
         if (a.satisfied && b.satisfied) return 0;
@@ -61,18 +63,19 @@
 
     $inspect(flattenedGates);
     let currentGateIndex = $state(-1);
-    let satisfiedGates = $derived(flattenedGates.filter((g) => g.satisfied).length);
+    let satisfiedGates = $derived(sortedGates.filter((g) => g.satisfied).length);
     let compositeOr = $derived(isCompositeGate(gate) && gate.operator === "or");
     let complete = $derived(
-        compositeOr ? satisfiedGates >= 1 : satisfiedGates === flattenedGates.length,
+        compositeOr ? satisfiedGates >= 1 : satisfiedGates === sortedGates.length,
     );
-    let evaluatingGate = $derived<SatisfiedLeafGate>(flattenedGates[currentGateIndex]);
+    let evaluatingGate = $derived<SatisfiedLeafGate>(sortedGates[currentGateIndex]);
 
     function normaliseGates(gate: EnhancedAccessGate): SatisfiedLeafGate[] {
         if (isCompositeGate(gate)) {
             return gate.gates.map((l) => ({
                 ...l,
                 level: gate.level,
+                collectionName: gate.collectionName,
                 expiry: gate.expiry,
                 satisfied: doesUserMeetLeafGate(l),
                 satisfiable: false,
@@ -122,14 +125,19 @@
     }
 
     function refreshBalanceGates() {
-        flattenedGates = flattenedGates
-            .map((g) => {
-                if (g.kind === "token_balance_gate") {
-                    g.satisfied = doesUserMeetBalanceGate(g);
-                }
-                return g;
-            })
-            .toSorted(orderBySatisfied);
+        flattenedGates = flattenedGates.map((g) => {
+            if (g.kind === "token_balance_gate") {
+                g.satisfied = doesUserMeetBalanceGate(g);
+            }
+            return g;
+        });
+    }
+
+    function confirmNeuronGate() {
+        if (evaluatingGate !== undefined) {
+            evaluatingGate.satisfied = true;
+            onBack();
+        }
     }
 
     function onApprovePayment({
@@ -193,6 +201,11 @@
                     level={evaluatingGate.level}
                     {onApprovePayment}
                     onClose={cancelGate} />
+            {:else if isNeuronGate(evaluatingGate)}
+                <NeuronGateEvaluator
+                    gate={evaluatingGate}
+                    onClose={cancelGate}
+                    onApprove={confirmNeuronGate} />
             {:else if isLifetimeDiamondGate(evaluatingGate)}
                 <DiamondGateEvaluator
                     onCancel={cancelGate}
@@ -259,7 +272,7 @@
                 </Row>
             </Column>
             <Column gap={"md"}>
-                {#each flattenedGates as subgate, i}
+                {#each sortedGates as subgate, i}
                     <AccessGateSummary
                         satisfied={subgate.satisfied}
                         onClick={() => selectGate(i)}
@@ -275,7 +288,7 @@
                             colour: "textSecondary",
                         },
                         {
-                            text: i18nKey(`${satisfiedGates} out of ${flattenedGates.length}`),
+                            text: i18nKey(`${satisfiedGates} out of ${sortedGates.length}`),
                             colour: "primary",
                         },
                         {
