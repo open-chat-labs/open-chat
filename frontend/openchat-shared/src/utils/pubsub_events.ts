@@ -228,4 +228,5 @@ export type PubSubEvents = {
         isOwner: boolean;
     };
     evaluateCommunityAccessGate: undefined;
+    evaluateGroupAccessGate: undefined;
 };

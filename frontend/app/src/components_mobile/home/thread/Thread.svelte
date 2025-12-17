@@ -458,7 +458,6 @@
                 {replyingTo}
                 {textContent}
                 user={$currentUserStore}
-                joining={undefined}
                 preview={false}
                 lapsed={false}
                 mode={"thread"}

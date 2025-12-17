@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { communityPreviewState } from "@src/utils/preview.svelte";
+    import { communityPreviewState, groupPreviewState } from "@src/utils/preview.svelte";
     import {
         OpenChat,
         selectedChatMembersStore,
@@ -129,6 +129,7 @@
           }
         | { kind: "user_groups"; community: CommunitySummary }
         | { kind: "evaluate_community_access_gate" }
+        | { kind: "evaluate_group_access_gate" }
         | { kind: "proposal_filters"; chat: ChatSummary }
         | { kind: "show_bots"; collection: MultiUserChat | CommunitySummary }
         | { kind: "register_webhook"; chat: MultiUserChat }
@@ -207,6 +208,9 @@
         const unsubs = [
             subscribe("evaluateCommunityAccessGate", () =>
                 push({ kind: "evaluate_community_access_gate" }),
+            ),
+            subscribe("evaluateGroupAccessGate", () =>
+                push({ kind: "evaluate_group_access_gate" }),
             ),
             subscribe("upgrade", () => push({ kind: "upgrade_diamond" })),
             subscribe("showProposalFilters", () => {
@@ -546,6 +550,14 @@
                 onClose={() => communityPreviewState.reset()}
                 onSuccess={(res) => {
                     communityPreviewState.doJoinCommunity(client, res);
+                    pop();
+                }} />
+        {:else if page.kind === "evaluate_group_access_gate"}
+            <AccessGatesEvaluator
+                gates={groupPreviewState.gatesToEvaluate}
+                onClose={() => groupPreviewState.reset()}
+                onSuccess={(res) => {
+                    groupPreviewState.doJoinGroup(client, res);
                     pop();
                 }} />
         {/if}

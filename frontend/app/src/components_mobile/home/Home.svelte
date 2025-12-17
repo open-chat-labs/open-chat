@@ -1,15 +1,13 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
-    import { Container, Sheet } from "component-lib";
+    import { Container } from "component-lib";
     import type {
         ChannelIdentifier,
         ChatIdentifier,
         CommunityIdentifier,
         DirectChatIdentifier,
-        EnhancedAccessGate,
         EnhancedReplyContext,
-        GateCheckSucceeded,
         Level,
         Message,
         MultiUserChat,
@@ -27,7 +25,6 @@
         chatListScopeStore,
         chatsInitialisedStore,
         chatSummariesListStore,
-        chatSummariesStore,
         identityStateStore,
         localUpdates,
         offlineStore,
@@ -36,7 +33,6 @@
         pinNumberResolverStore,
         publish,
         querystringStore,
-        ROLE_NONE,
         routeForChatIdentifier,
         routeForScope,
         routeStore,
@@ -46,7 +42,7 @@
         suspendedUserStore,
     } from "openchat-client";
     import page from "page";
-    import { getContext, onMount, tick, untrack } from "svelte";
+    import { getContext, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
     import { messageToForwardStore } from "../../stores/messageToForward";
@@ -65,8 +61,6 @@
     import SuspendedModal from "../SuspendedModal.svelte";
     import Toast from "../Toast.svelte";
     import AcceptRulesModal from "./AcceptRulesModal.svelte";
-    import GateCheckFailed from "./access/AccessGateCheckFailed.svelte";
-    import AccessGatesEvaluator from "./access/AccessGatesEvaluator.svelte";
     import AnonFooter from "./AnonFooter.svelte";
     import ChallengeModal from "./ChallengeModal.svelte";
     import ChitEarned from "./ChitEarned.svelte";
@@ -123,22 +117,13 @@
         | { kind: "suspended" }
         | { kind: "suspending"; userId: string }
         | { kind: "no_access" }
-        | { kind: "gate_check_failed"; gates: EnhancedAccessGate[] }
         | { kind: "hall_of_fame" }
         | { kind: "make_proposal"; chat: MultiUserChat; nervousSystem: NervousSystemDetails }
         | { kind: "not_found" }
-        | { kind: "challenge" }
-        | {
-              kind: "evaluating_access_gates";
-              group: MultiUserChat;
-              select: boolean;
-              gates: EnhancedAccessGate[];
-              level: Level;
-          };
+        | { kind: "challenge" };
 
     let modal: ModalType = $state({ kind: "none" });
     let confirmActionEvent: ConfirmActionEvent | undefined = $state();
-    let joining: MultiUserChat | undefined = $state(undefined);
     let share: Share = { title: "", text: "", url: "", files: [] };
     let messageToForward: Message | undefined = undefined;
 
@@ -151,7 +136,6 @@
             subscribe("leaveCommunity", onTriggerConfirm),
             subscribe("makeProposal", showMakeProposalModal),
             subscribe("leaveGroup", onTriggerConfirm),
-            subscribe("joinGroup", joinGroup),
             subscribe("unarchiveChat", unarchiveChat),
             subscribe("forward", forwardMessage),
             subscribe("toggleMuteNotifications", toggleMuteNotifications),
@@ -273,7 +257,6 @@
 
     function closeModal() {
         modal = { kind: "none" };
-        joining = undefined;
     }
 
     function closeNoAccess() {
@@ -417,96 +400,6 @@
         if (nervousSystem !== undefined && selectedMultiUserChat !== undefined) {
             modal = { kind: "make_proposal", chat: selectedMultiUserChat, nervousSystem };
         }
-    }
-
-    async function joinGroup(detail: { group: MultiUserChat; select: boolean }): Promise<void> {
-        if ($anonUserStore) {
-            client.updateIdentityState({
-                kind: "logging_in",
-                postLogin: { kind: "join_group", ...detail },
-            });
-            return;
-        }
-        const { group, select } = detail;
-
-        // it's possible that we got here via a postLogin capture in which case it's possible
-        // that we are actually already a member of this group, so we should double check here
-        // that we actually *need* to join the group
-        let chat = $chatSummariesStore.get(group.id);
-        if (chat === undefined || chat.membership.role === ROLE_NONE || client.isLapsed(chat.id)) {
-            doJoinGroup(group, select, undefined);
-        }
-    }
-
-    function accessGatesEvaluated(success: GateCheckSucceeded) {
-        if (modal.kind === "evaluating_access_gates") {
-            const { group, select } = modal;
-            closeModal();
-            doJoinGroup(group, select, success);
-        }
-    }
-
-    /**
-     * When we try to join a group we need to first scrutinise the access gates and
-     * see whether any of them require client side action before we can proceed with the
-     * call to the back end. If there are gates which require action, we need to perform
-     * those actions one by one until they are all done and then feed their results
-     * back into this function.
-     */
-
-    async function doJoinGroup(
-        group: MultiUserChat,
-        select: boolean,
-        gateCheck: GateCheckSucceeded | undefined,
-    ): Promise<void> {
-        joining = group;
-        const credentials = gateCheck?.credentials ?? [];
-        const paymentApprovals = gateCheck?.paymentApprovals ?? new Map();
-
-        if (gateCheck === undefined) {
-            const gates = client.accessGatesForChat(group, true);
-            const passed = client.doesUserMeetAccessGates(gates);
-
-            if (!passed) {
-                /**
-                 * If we cannot already tell that the user passes the access gate(s), check if there are any gates that require front end
-                 * pre-processing.
-                 */
-                if (client.gatePreprocessingRequired(gates)) {
-                    modal = {
-                        kind: "evaluating_access_gates",
-                        group,
-                        select,
-                        gates,
-                        level: group.level,
-                    };
-                    return Promise.resolve();
-                }
-            }
-        }
-
-        return client
-            .joinGroup(group, credentials, paymentApprovals)
-            .then((resp) => {
-                if (resp.kind === "blocked") {
-                    toastStore.showFailureToast(i18nKey("youreBlocked"));
-                    joining = undefined;
-                } else if (resp.kind === "gate_check_failed") {
-                    const gates = client.accessGatesForChat(group);
-                    modal = { kind: "gate_check_failed", gates };
-                } else if (resp.kind !== "success") {
-                    toastStore.showFailureToast(
-                        i18nKey("joinGroupFailed", undefined, group.level, true),
-                    );
-                    joining = undefined;
-                } else if (select) {
-                    joining = undefined;
-                    page(routeForChatIdentifier($chatListScopeStore.kind, group.id));
-                } else {
-                    joining = undefined;
-                }
-            })
-            .catch(() => (joining = undefined));
     }
 
     function onSelectChat(chatId: ChatIdentifier) {
@@ -655,9 +548,9 @@
             $identityStateStore.postLogin?.kind === "join_group" &&
             $chatsInitialisedStore
         ) {
-            const join = { ...$identityStateStore.postLogin };
+            // const join = { ...$identityStateStore.postLogin };
             client.clearPostLoginState();
-            tick().then(() => joinGroup(join));
+            // tick().then(() => joinGroup(join));
         }
     });
 
@@ -704,7 +597,7 @@
         <OnboardModal />
     {:else}
         <LeftPanel />
-        <MiddlePanel {joining} />
+        <MiddlePanel />
     {/if}
 </Container>
 
@@ -728,50 +621,39 @@
 <Toast />
 
 {#if modal.kind !== "none"}
-    {#if modal.kind === "evaluating_access_gates"}
-        <Sheet onDismiss={closeModal}>
-            <AccessGatesEvaluator
-                gates={modal.gates}
-                onClose={closeModal}
-                onSuccess={accessGatesEvaluated} />
-        </Sheet>
-    {:else}
-        <Overlay
-            dismissible={modal.kind !== "select_chat" &&
-                modal.kind !== "not_found" &&
-                modal.kind !== "make_proposal"}
-            alignLeft={modal.kind === "select_chat"}
-            onClose={closeModal}>
-            {#if modal.kind === "select_chat"}
-                <SelectChatModal onClose={onCloseSelectChat} onSelect={onSelectChat} />
-            {:else if modal.kind === "suspended"}
-                <SuspendedModal onClose={closeModal} />
-            {:else if modal.kind === "register_bot"}
-                <BotBuilderModal mode={"register"} onClose={closeModal} />
-            {:else if modal.kind === "update_bot"}
-                <BotBuilderModal mode={"update"} onClose={closeModal} />
-            {:else if modal.kind === "remove_bot"}
-                <BotBuilderModal mode={"remove"} onClose={closeModal} />
-            {:else if modal.kind === "no_access"}
-                <NoAccess onClose={closeNoAccess} />
-            {:else if modal.kind === "not_found"}
-                <NotFound onClose={closeNoAccess} />
-            {:else if modal.kind === "gate_check_failed"}
-                <GateCheckFailed onClose={closeModal} />
-            {:else if modal.kind === "make_proposal"}
-                <MakeProposalModal
-                    selectedMultiUserChat={modal.chat}
-                    nervousSystem={modal.nervousSystem}
-                    onClose={closeModal} />
-            {:else if modal.kind === "challenge"}
-                <ChallengeModal on:close={closeModal} />
-            {:else if modal.kind === "verify_humanity"}
-                <VerifyHumanity onClose={closeModal} onSuccess={closeModal} />
-            {:else if modal.kind === "suspending"}
-                <SuspendModal userId={modal.userId} onClose={closeModal} />
-            {/if}
-        </Overlay>
-    {/if}
+    <Overlay
+        dismissible={modal.kind !== "select_chat" &&
+            modal.kind !== "not_found" &&
+            modal.kind !== "make_proposal"}
+        alignLeft={modal.kind === "select_chat"}
+        onClose={closeModal}>
+        {#if modal.kind === "select_chat"}
+            <SelectChatModal onClose={onCloseSelectChat} onSelect={onSelectChat} />
+        {:else if modal.kind === "suspended"}
+            <SuspendedModal onClose={closeModal} />
+        {:else if modal.kind === "register_bot"}
+            <BotBuilderModal mode={"register"} onClose={closeModal} />
+        {:else if modal.kind === "update_bot"}
+            <BotBuilderModal mode={"update"} onClose={closeModal} />
+        {:else if modal.kind === "remove_bot"}
+            <BotBuilderModal mode={"remove"} onClose={closeModal} />
+        {:else if modal.kind === "no_access"}
+            <NoAccess onClose={closeNoAccess} />
+        {:else if modal.kind === "not_found"}
+            <NotFound onClose={closeNoAccess} />
+        {:else if modal.kind === "make_proposal"}
+            <MakeProposalModal
+                selectedMultiUserChat={modal.chat}
+                nervousSystem={modal.nervousSystem}
+                onClose={closeModal} />
+        {:else if modal.kind === "challenge"}
+            <ChallengeModal on:close={closeModal} />
+        {:else if modal.kind === "verify_humanity"}
+            <VerifyHumanity onClose={closeModal} onSuccess={closeModal} />
+        {:else if modal.kind === "suspending"}
+            <SuspendModal userId={modal.userId} onClose={closeModal} />
+        {/if}
+    </Overlay>
 {/if}
 
 {#if $rulesAcceptanceStore !== undefined}

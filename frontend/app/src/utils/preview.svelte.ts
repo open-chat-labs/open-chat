@@ -8,13 +8,18 @@ import type {
     CommunitySummary,
     EnhancedAccessGate,
     GateCheckSucceeded,
+    MultiUserChat,
     OpenChat,
 } from "openchat-client";
 import {
     anonUserStore,
+    chatListScopeStore,
+    chatSummariesStore,
     type PaymentGateApprovals,
     publish,
     ROLE_NONE,
+    routeForScope,
+    selectedChatSummaryStore,
     selectedCommunitySummaryStore,
 } from "openchat-client";
 import page from "page";
@@ -65,6 +70,127 @@ class ApprovalsAndCredentials {
 
     balanceAfterCurrentCommitments(ledger: string, balance: bigint) {
         return balance - (this.#paymentApprovals.get(ledger)?.amount ?? 0n);
+    }
+}
+
+class GroupPreview {
+    #community = $state<CommunitySummary>();
+    #chat = $state<MultiUserChat>();
+    #joining = $state<MultiUserChat>();
+    #gateCheckFailed = $state<EnhancedAccessGate[]>([]);
+    #gatesToEvaluate = $state<EnhancedAccessGate[]>([]);
+    #previewingCommunity = $derived(
+        this.#community?.membership.role === ROLE_NONE || this.#community?.membership.lapsed,
+    );
+    constructor() {
+        selectedChatSummaryStore.subscribe((chat) => {
+            if (chat === undefined || chat.kind === "direct_chat") {
+                this.#chat = undefined;
+            } else {
+                this.#chat = chat;
+            }
+        });
+        selectedCommunitySummaryStore.subscribe((community) => {
+            this.#community = community;
+        });
+    }
+
+    get joining() {
+        return this.#joining;
+    }
+
+    get gateCheckFailed() {
+        return this.#gateCheckFailed;
+    }
+
+    get gatesToEvaluate() {
+        return this.#gatesToEvaluate;
+    }
+
+    reset() {
+        this.#gatesToEvaluate = [];
+        this.#gateCheckFailed = [];
+    }
+
+    cancelPreview(client: OpenChat) {
+        if (this.#previewingCommunity && this.#community) {
+            page(`/community/${this.#community.id.communityId}`);
+        } else {
+            if (this.#chat) {
+                if (!this.#chat.public) {
+                    client.declineInvitation(this.#chat.id);
+                }
+                client.removePreviewedChat(this.#chat.id);
+                page(routeForScope(chatListScopeStore.value));
+            }
+        }
+    }
+
+    joinGroup(client: OpenChat) {
+        if (this.#chat === undefined) return;
+
+        if (anonUserStore.value) {
+            client.updateIdentityState({
+                kind: "logging_in",
+                postLogin: {
+                    kind: "join_group",
+                    group: this.#chat,
+                    select: false,
+                },
+            });
+            return;
+        }
+
+        // it's possible that we got here via a postLogin capture in which case it's possible
+        // that we are actually already a member of this group, so we should double check here
+        // that we actually *need* to join the group
+        const chat = chatSummariesStore.value.get(this.#chat.id);
+        if (chat === undefined || chat.membership.role === ROLE_NONE || client.isLapsed(chat.id)) {
+            this.doJoinGroup(client);
+        }
+    }
+
+    doJoinGroup(client: OpenChat, gateCheck?: GateCheckSucceeded): Promise<void> {
+        if (this.#chat === undefined) return Promise.resolve();
+
+        const group = this.#chat;
+        this.#joining = this.#chat;
+        const credentials = gateCheck?.credentials ?? [];
+        const paymentApprovals = gateCheck?.paymentApprovals ?? new Map();
+
+        if (gateCheck === undefined) {
+            const gates = client.accessGatesForChat(group, true);
+            const passed = client.doesUserMeetAccessGates(gates);
+
+            if (!passed) {
+                /**
+                 * If we cannot already tell that the user passes the access gate(s), check if there are any gates that require front end
+                 * pre-processing.
+                 */
+                if (client.gatePreprocessingRequired(gates)) {
+                    accessApprovalState.reset();
+                    this.#gatesToEvaluate = gates;
+                    publish("evaluateGroupAccessGate");
+                    return Promise.resolve();
+                }
+            }
+        }
+
+        return client
+            .joinGroup(group, credentials, paymentApprovals)
+            .then((resp) => {
+                if (resp.kind === "blocked") {
+                    toastStore.showFailureToast(i18nKey("youreBlocked"));
+                } else if (resp.kind === "gate_check_failed") {
+                    const gates = client.accessGatesForChat(group);
+                    this.#gateCheckFailed = gates;
+                } else if (resp.kind !== "success") {
+                    toastStore.showFailureToast(
+                        i18nKey("joinGroupFailed", undefined, group.level, true),
+                    );
+                }
+            })
+            .finally(() => (this.#joining = undefined));
     }
 }
 
@@ -127,7 +253,7 @@ class CommunityPreview {
             const gateConfigWithLevel: EnhancedAccessGate = {
                 ...this.#community.gateConfig.gate,
                 level: "community",
-                name: this.#community.name,
+                collectionName: this.#community.name,
                 expiry: this.#community.gateConfig.expiry,
             };
 
@@ -169,12 +295,13 @@ class CommunityPreview {
     }
 
     cancelPreview(client: OpenChat) {
-        if (this.#community) {
+        if (this.#previewing && this.#community) {
             client.removeCommunity(this.#community.id);
             page("/communities");
         }
     }
 }
 
+export const groupPreviewState = new GroupPreview();
 export const communityPreviewState = new CommunityPreview();
 export const accessApprovalState = new ApprovalsAndCredentials();

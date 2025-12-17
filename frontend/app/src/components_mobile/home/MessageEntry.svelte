@@ -10,7 +10,6 @@
         ExternalBot,
         Message,
         MessageContext,
-        MultiUserChat,
         OpenChat,
         SelectedEmoji,
         User,
@@ -66,7 +65,6 @@
         blocked: boolean;
         preview: boolean;
         lapsed: boolean;
-        joining: MultiUserChat | undefined;
         attachment: AttachmentContent | undefined;
         editingEvent: EventWrapper<Message> | undefined;
         replyingTo: EnhancedReplyContext | undefined;
@@ -95,7 +93,6 @@
         blocked,
         preview,
         lapsed,
-        joining,
         attachment,
         editingEvent,
         replyingTo,
@@ -625,7 +622,7 @@
                 <Translatable resourceKey={i18nKey("userIsBlocked")} />
             </div>
         {:else if (preview || lapsed) && chat.kind !== "direct_chat"}
-            <PreviewFooter {lapsed} {joining} {chat} />
+            <PreviewFooter {lapsed} {chat} />
         {:else if externalContent}
             <div class="disclaimer">
                 <Alert size={$iconSize} color={"var(--warn"} />

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { groupPreviewState } from "@src/utils/preview.svelte";
     import {
         AvatarSize,
         chatListScopeStore,
@@ -8,7 +9,6 @@
         iconSize,
         isLocked,
         mobileWidth,
-        type MultiUserChat,
         type OpenChat,
         publish,
         routeForChatIdentifier,
@@ -33,11 +33,10 @@
 
     interface Props {
         group: GroupChatSummary;
-        joining: MultiUserChat | undefined;
         onDismissRecommendation: (id: GroupChatIdentifier) => void;
     }
 
-    let { group, joining, onDismissRecommendation }: Props = $props();
+    let { group, onDismissRecommendation }: Props = $props();
 
     let member = $derived($chatSummariesStore.has(group.id));
     let locked = $derived(isLocked(group.gateConfig.gate));
@@ -102,8 +101,8 @@
         {:else}
             {#if !$suspendedUserStore}
                 <Button
-                    disabled={locked || joining === group}
-                    loading={joining === group}
+                    disabled={locked || groupPreviewState.joining === group}
+                    loading={groupPreviewState.joining === group}
                     tiny
                     hollow
                     onClick={() => joinGroup(group)}
@@ -112,7 +111,10 @@
                             ? i18nKey("access.lockedGate", undefined, group.level, true)
                             : i18nKey("join")} /></Button>
             {/if}
-            <Button disabled={joining === group} tiny onClick={() => gotoGroup(group)}
+            <Button
+                disabled={groupPreviewState.joining === group}
+                tiny
+                onClick={() => gotoGroup(group)}
                 ><Translatable resourceKey={i18nKey("preview")} /></Button>
         {/if}
     </Footer>

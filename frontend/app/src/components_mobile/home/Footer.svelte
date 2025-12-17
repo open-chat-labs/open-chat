@@ -13,7 +13,6 @@
         type Message,
         type MessageAction,
         type MessageContext,
-        type MultiUserChat,
         type OpenChat,
         type SelectedEmoji,
         type User,
@@ -38,7 +37,6 @@
         blocked: boolean;
         preview: boolean;
         lapsed: boolean;
-        joining: MultiUserChat | undefined;
         chat: ChatSummary;
         attachment: AttachmentContent | undefined;
         editingEvent: EventWrapper<Message> | undefined;
@@ -68,7 +66,6 @@
         blocked,
         preview,
         lapsed,
-        joining,
         chat,
         attachment,
         editingEvent,
@@ -216,7 +213,6 @@
         {preview}
         {lapsed}
         {blocked}
-        {joining}
         {attachment}
         {editingEvent}
         {replyingTo}

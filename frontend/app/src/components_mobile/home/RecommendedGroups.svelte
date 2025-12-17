@@ -2,7 +2,6 @@
     import {
         type GroupChatIdentifier,
         type GroupChatSummary,
-        type MultiUserChat,
         type OpenChat,
         chatIdentifiersEqual,
         chatListScopeStore,
@@ -24,12 +23,6 @@
     import SectionHeader from "../SectionHeader.svelte";
     import Translatable from "../Translatable.svelte";
     import RecommendedGroup from "./RecommendedGroup.svelte";
-
-    interface Props {
-        joining: MultiUserChat | undefined;
-    }
-
-    let { joining }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
@@ -85,7 +78,7 @@
 
         <div class="groups">
             {#each hotGroups.data as group (group.id.groupId)}
-                <RecommendedGroup {onDismissRecommendation} {group} {joining} />
+                <RecommendedGroup {onDismissRecommendation} {group} />
             {/each}
         </div>
     </div>

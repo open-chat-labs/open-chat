@@ -22,7 +22,6 @@
         type MessageContext,
         messageContextsEqual,
         messagesRead,
-        type MultiUserChat,
         type OpenChat,
         publish,
         type ReadonlySet,
@@ -55,12 +54,11 @@
     import PrizeContentBuilder from "./PrizeContentBuilder.svelte";
 
     interface Props {
-        joining: MultiUserChat | undefined;
         chat: ChatSummary;
         filteredProposals: FilteredProposals | undefined;
     }
 
-    let { joining, chat, filteredProposals }: Props = $props();
+    let { chat, filteredProposals }: Props = $props();
 
     let currentChatMessages = $state<CurrentChatMessages>();
 
@@ -458,7 +456,6 @@
                 textContent={$selectedChatDraftMessageStore?.textContent}
                 user={$currentUserStore}
                 mode={"message"}
-                {joining}
                 {preview}
                 {lapsed}
                 {blocked}

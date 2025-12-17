@@ -115,16 +115,6 @@
         });
     }
 
-    function nextGate() {
-        transition(["fade"], () => {
-            if (complete) {
-                onComplete();
-            } else {
-                currentGateIndex = flattenedGates.findIndex((g) => !g.satisfied);
-            }
-        });
-    }
-
     function cancelGate() {
         transition(["fade"], () => {
             currentGateIndex = -1;
@@ -182,7 +172,7 @@
 <SlidingPageContent
     {onBack}
     title={i18nKey("joinGroup", undefined, gate.level)}
-    subtitle={i18nKey(gate.name)}>
+    subtitle={i18nKey(gate.collectionName)}>
     <Column gap={"xl"} padding={"xl"}>
         {#if evaluatingGate !== undefined}
             {#if isCredentialGate(evaluatingGate)}
@@ -226,7 +216,7 @@
                                 colour: "textPrimary",
                             },
                             {
-                                text: i18nKey(gate.name + " "),
+                                text: i18nKey(gate.collectionName + " "),
                                 colour: "primary",
                             },
                             {

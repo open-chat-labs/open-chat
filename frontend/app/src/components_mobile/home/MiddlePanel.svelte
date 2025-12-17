@@ -16,7 +16,6 @@
         showMiddle,
         showNav,
         type ChatIdentifier,
-        type MultiUserChat,
     } from "openchat-client";
     import { tick } from "svelte";
     import { fade } from "svelte/transition";
@@ -26,12 +25,6 @@
     import CurrentChat from "./CurrentChat.svelte";
     import NoChatSelected from "./NoChatSelected.svelte";
     import RecommendedGroups from "./RecommendedGroups.svelte";
-
-    interface Props {
-        joining: MultiUserChat | undefined;
-    }
-
-    let { joining }: Props = $props();
 
     let middlePanel: HTMLElement | undefined;
 
@@ -110,7 +103,7 @@
     class:offset
     class:halloween={$currentTheme.name === "halloween"}>
     {#if $routeStore.kind === "explore_groups_route"}
-        <RecommendedGroups {joining} />
+        <RecommendedGroups />
     {:else if $routeStore.kind === "communities_route"}
         <ExploreCommunities />
     {:else if $selectedChatIdStore === undefined}
@@ -120,10 +113,7 @@
             </div>
         {/if}
     {:else if $selectedChatSummaryStore !== undefined}
-        <CurrentChat
-            {joining}
-            chat={$selectedChatSummaryStore}
-            filteredProposals={$filteredProposalsStore} />
+        <CurrentChat chat={$selectedChatSummaryStore} filteredProposals={$filteredProposalsStore} />
     {/if}
 </section>
 

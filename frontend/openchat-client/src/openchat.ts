@@ -4789,6 +4789,7 @@ export class OpenChat {
             gates.push({
                 level: "community",
                 expiry: community.gateConfig.expiry,
+                collectionName: community.name,
                 ...community.gateConfig.gate,
             });
         }
@@ -4800,6 +4801,7 @@ export class OpenChat {
             gates.push({
                 level: chat.level,
                 expiry: chat.gateConfig.expiry,
+                collectionName: chat.name,
                 ...chat.gateConfig.gate,
             });
         }
