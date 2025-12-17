@@ -1,11 +1,15 @@
 <script lang="ts">
     import MulticolourText from "@src/components_mobile/MulticolourText.svelte";
     import { Avatar, Body, Column, Row } from "component-lib";
+    import { publish, type OpenChat } from "openchat-client";
+    import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import AccountInfo from "../AccountInfo.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import type { TokenState } from "./walletState.svelte";
+
+    const client = getContext<OpenChat>("client");
 
     interface Props {
         tokenState: TokenState;
@@ -16,9 +20,14 @@
     let error: string | undefined = $state(undefined);
 
     let title = $derived(i18nKey(`cryptoAccount.receiveToken`, { symbol: tokenState.symbol }));
+
+    function onBack() {
+        tokenState.refreshBalance(client);
+        publish("closeModalPage");
+    }
 </script>
 
-<SlidingPageContent {title}>
+<SlidingPageContent {onBack} {title}>
     <Column gap={"lg"} padding={"lg"}>
         <Row gap={"lg"} padding={["lg", "md"]}>
             <Avatar size={"lg"} url={tokenState.logo} />

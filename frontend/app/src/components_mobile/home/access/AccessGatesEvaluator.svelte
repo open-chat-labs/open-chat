@@ -1,10 +1,6 @@
 <script lang="ts">
-    import {
-        OpenChat,
-        type EnhancedAccessGate,
-        type GateCheckSucceeded,
-        type PaymentGateApprovals,
-    } from "openchat-client";
+    import { accessApprovalState } from "@src/utils/preview.svelte";
+    import { OpenChat, type EnhancedAccessGate, type GateCheckSucceeded } from "openchat-client";
     import { getContext } from "svelte";
     import AccessGateEvaluator from "./AccessGateEvaluator.svelte";
 
@@ -21,12 +17,13 @@
     // find the first gate that the user does not meet
     let currentGateIndex = $state(gates.findIndex((g) => !client.doesUserMeetAccessGate(g)));
     let currentGate = $derived(gates[currentGateIndex]);
-    let credentials: string[] = [];
-    let paymentApprovals: PaymentGateApprovals = new Map();
 
     $effect(() => {
         if (currentGate === undefined) {
-            onSuccess({ credentials, paymentApprovals });
+            onSuccess({
+                credentials: accessApprovalState.credentials,
+                paymentApprovals: accessApprovalState.paymentApprovals,
+            });
         }
     });
 
@@ -36,10 +33,5 @@
 </script>
 
 {#if currentGate}
-    <AccessGateEvaluator
-        gate={currentGate}
-        onComplete={nextGate}
-        {paymentApprovals}
-        {credentials}
-        {onClose} />
+    <AccessGateEvaluator gate={currentGate} onComplete={nextGate} {onClose} />
 {/if}

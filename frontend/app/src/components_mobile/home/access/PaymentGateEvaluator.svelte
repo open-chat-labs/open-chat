@@ -1,31 +1,33 @@
 <script lang="ts">
+    import MulticolourText from "@src/components_mobile/MulticolourText.svelte";
+    import { accessApprovalState } from "@src/utils/preview.svelte";
     import {
+        Avatar,
         Body,
         BodySmall,
         Button,
+        Caption,
         ColourVars,
         Column,
         CommonButton,
         H2,
         Row,
-        Sheet,
         StatusCard,
     } from "component-lib";
     import {
         type Level,
         type OpenChat,
         type PaymentGate,
-        type PaymentGateApprovals,
         enhancedCryptoLookup,
+        publish,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import Bitcoin from "svelte-material-icons/Bitcoin.svelte";
+    import QrCode from "svelte-material-icons/QrCode.svelte";
     import Refresh from "svelte-material-icons/Refresh.svelte";
-    import ShieldStar from "svelte-material-icons/ShieldStarOutline.svelte";
+    import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
-    import AccountInfo from "../AccountInfo.svelte";
     import Markdown from "../Markdown.svelte";
     import { TokenState } from "../wallet/walletState.svelte";
     import AccessGateExpiry from "./AccessGateExpiry.svelte";
@@ -35,12 +37,11 @@
     interface Props {
         gate: PaymentGate & { expiry: bigint | undefined };
         level: Level;
-        paymentApprovals: PaymentGateApprovals;
         onApprovePayment: (args: { ledger: string; amount: bigint; approvalFee: bigint }) => void;
         onClose: () => void;
     }
 
-    let { gate, level, paymentApprovals, onApprovePayment, onClose }: Props = $props();
+    let { gate, level, onApprovePayment, onClose }: Props = $props();
 
     let token = $derived($enhancedCryptoLookup.get(gate.ledgerCanister)!);
     let tokenState = $derived(new TokenState(token));
@@ -49,17 +50,13 @@
     let toOwner = $derived(tokenState.formatTokens(BigInt(Number(gate.amount) * 0.98)));
     let toOC = $derived(tokenState.formatTokens(BigInt(Number(gate.amount) * 0.02)));
 
-    function balanceAfterCurrentCommitments(
-        ledger: string,
-        approvals: PaymentGateApprovals,
-        balance: bigint,
-    ) {
-        return balance - (approvals.get(ledger)?.amount ?? 0n);
-    }
-
     let cryptoBalance = $derived(
-        balanceAfterCurrentCommitments(token.ledger, paymentApprovals, tokenState.cryptoBalance),
+        accessApprovalState.balanceAfterCurrentCommitments(
+            tokenState.ledger,
+            tokenState.cryptoBalance,
+        ),
     );
+
     let insufficientFunds = $derived(cryptoBalance < gate.amount);
     let approvalMessage = $derived(
         interpolate(
@@ -77,61 +74,118 @@
     );
 </script>
 
+{#snippet tokenBalance()}
+    <Row gap={"sm"}>
+        <Row
+            mainAxisAlignment={"spaceBetween"}
+            crossAxisAlignment={"center"}
+            borderRadius={"md"}
+            minHeight={"4rem"}
+            gap={"md"}
+            background={ColourVars.background2}
+            padding={["md", "lg"]}>
+            <Avatar url={tokenState.logo} />
+            <Column width={"fill"}>
+                <Body fontWeight={"bold"} colour={"textPrimary"} width={"hug"}
+                    >{tokenState.symbol}</Body>
+                <Caption colour={"textSecondary"} fontWeight={"bold"}>
+                    {tokenState.formatTokens(cryptoBalance)}
+                </Caption>
+            </Column>
+        </Row>
+        {#if insufficientFunds}
+            <Column
+                onClick={() => publish("receiveToken", tokenState)}
+                mainAxisAlignment={"center"}
+                crossAxisAlignment={"center"}
+                width={{ size: "4rem" }}
+                height={"fill"}
+                borderRadius={"lg"}
+                background={ColourVars.background2}
+                padding={["sm", "md"]}>
+                <QrCode size={"2rem"} color={ColourVars.textSecondary} />
+            </Column>
+        {/if}
+    </Row>
+{/snippet}
+
 <Column gap={"lg"}>
-    <ShieldStar size={"4.5rem"} color={ColourVars.primary} />
+    <Wallet size={"4.5rem"} color={ColourVars.primary} />
     <H2 fontWeight={"bold"}>
-        <Translatable resourceKey={i18nKey("Join via payment gate")} />
+        <MulticolourText
+            parts={[
+                {
+                    text: i18nKey(tokenState.symbol),
+                    colour: "primary",
+                },
+                {
+                    text: i18nKey(" payment gate"),
+                    colour: "textPrimary",
+                },
+            ]} />
     </H2>
     <Body colour={"textSecondary"}>
         <Markdown text={approvalMessage} />
     </Body>
-    {#if gate.expiry !== undefined}
-        <StatusCard
-            background={ColourVars.background2}
-            mode={"warning"}
-            title={interpolate($_, i18nKey("This is a recurring payment"))}>
-            {#snippet body()}
-                <AccessGateExpiry expiry={gate.expiry} />
-            {/snippet}
-        </StatusCard>
-    {/if}
 
-    <Column borderRadius={"lg"} gap={"lg"} padding={"lg"} background={ColourVars.background2}>
-        <Row mainAxisAlignment={"spaceBetween"}>
-            <BodySmall colour={"textSecondary"}>
-                <Translatable resourceKey={i18nKey("Payment amount")} />
-            </BodySmall>
-            <Body width={"hug"} colour={"primary"} fontWeight={"bold"}>
-                {totalAmount}
-                {tokenState.symbol}
-            </Body>
-        </Row>
-        <Row mainAxisAlignment={"spaceBetween"}>
-            <BodySmall colour={"textSecondary"}>
-                <Translatable resourceKey={i18nKey("Owner receives (98%)")} />
-            </BodySmall>
-            <Body width={"hug"} colour={"textPrimary"} fontWeight={"bold"}>
-                {toOwner}
-                {tokenState.symbol}
-            </Body>
-        </Row>
-        <Row mainAxisAlignment={"spaceBetween"}>
-            <BodySmall colour={"textSecondary"}>
-                <Translatable resourceKey={i18nKey("OpenChat treasury receives (2%)")} />
-            </BodySmall>
-            <Body width={"hug"} colour={"textPrimary"} fontWeight={"bold"}>
-                {toOC}
-                {tokenState.symbol}
-            </Body>
-        </Row>
+    <Column gap={"sm"}>
+        {@render tokenBalance()}
+        {#if insufficientFunds}
+            <StatusCard
+                borderColour={ColourVars.background2}
+                background={ColourVars.background0}
+                mode={"warning"}
+                body={interpolate(
+                    $_,
+                    i18nKey(
+                        `Top up your ${tokenState.symbol} token account. Tap the QR code button to get your receiving address.`,
+                    ),
+                )}
+                title={interpolate($_, i18nKey("Insufficient funds"))}>
+            </StatusCard>
+        {/if}
+        {#if gate.expiry !== undefined}
+            <StatusCard
+                background={ColourVars.background2}
+                mode={"information"}
+                title={interpolate($_, i18nKey("This is a recurring payment"))}>
+                {#snippet body()}
+                    <AccessGateExpiry expiry={gate.expiry} />
+                {/snippet}
+            </StatusCard>
+        {/if}
+
+        <Column borderRadius={"lg"} gap={"lg"} padding={"lg"} background={ColourVars.background2}>
+            <Row mainAxisAlignment={"spaceBetween"}>
+                <BodySmall colour={"textSecondary"}>
+                    <Translatable resourceKey={i18nKey("Payment amount")} />
+                </BodySmall>
+                <Body width={"hug"} colour={"primary"} fontWeight={"bold"}>
+                    {totalAmount}
+                    {tokenState.symbol}
+                </Body>
+            </Row>
+            <Row mainAxisAlignment={"spaceBetween"}>
+                <BodySmall colour={"textSecondary"}>
+                    <Translatable resourceKey={i18nKey("Owner receives (98%)")} />
+                </BodySmall>
+                <Body width={"hug"} colour={"textPrimary"} fontWeight={"bold"}>
+                    {toOwner}
+                    {tokenState.symbol}
+                </Body>
+            </Row>
+            <Row mainAxisAlignment={"spaceBetween"}>
+                <BodySmall colour={"textSecondary"}>
+                    <Translatable resourceKey={i18nKey("OpenChat treasury receives (2%)")} />
+                </BodySmall>
+                <Body width={"hug"} colour={"textPrimary"} fontWeight={"bold"}>
+                    {toOC}
+                    {tokenState.symbol}
+                </Body>
+            </Row>
+        </Column>
     </Column>
 </Column>
-
-{#if insufficientFunds}
-    <Sheet onDismiss={onClose}>
-        {@render topup()}
-    </Sheet>
-{/if}
 
 {#if insufficientFunds}
     {@render refreshBalance()}
@@ -145,7 +199,7 @@
                 approvalFee: token.transferFee,
             })}>
         {#snippet icon(color)}
-            <Bitcoin {color} />
+            <Wallet {color} />
         {/snippet}
         <Translatable resourceKey={i18nKey("Approve payment")} />
     </Button>
@@ -157,7 +211,7 @@
 {#snippet refreshBalance()}
     <CommonButton
         loading={refreshingBalance}
-        width={"hug"}
+        width={"fill"}
         mode={"active"}
         size={"small_text"}
         onClick={() => tokenState.refreshBalance(client)}>
@@ -166,31 +220,4 @@
         {/snippet}
         <Translatable resourceKey={i18nKey(`Refresh ${tokenState.symbol} balance`)} />
     </CommonButton>
-{/snippet}
-
-{#snippet cancel()}
-    <CommonButton width={"hug"} size={"small_text"} onClick={onClose}>
-        <Translatable resourceKey={i18nKey("cancel")} />
-    </CommonButton>
-{/snippet}
-
-{#snippet topup()}
-    <Column gap={"xs"} padding={"xl"}>
-        <StatusCard
-            background={ColourVars.background0}
-            mode={"warning"}
-            title={"Insufficient funds"}>
-            {#snippet body()}
-                <Markdown text={approvalMessage} />
-            {/snippet}
-        </StatusCard>
-        <AccountInfo
-            background={ColourVars.background0}
-            padding={"zero"}
-            ledger={gate.ledgerCanister} />
-        <Row mainAxisAlignment={"spaceBetween"}>
-            {@render cancel()}
-            {@render refreshBalance()}
-        </Row>
-    </Column>
 {/snippet}

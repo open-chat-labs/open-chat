@@ -14,6 +14,7 @@
         confirmation?: string;
         icon?: Snippet<[string, string]>;
         background?: string;
+        borderColour?: string;
     }
 
     let {
@@ -22,13 +23,21 @@
         body,
         confirmed = $bindable(false),
         icon,
+        borderColour,
         background = ColourVars.background1,
     }: Props = $props();
 
     let iconColour = $derived(mode === "information" ? ColourVars.secondary : ColourVars.warning);
 </script>
 
-<Container borderRadius={"lg"} gap={"md"} direction={"vertical"} padding={"lg"} {background}>
+<Container
+    {borderColour}
+    borderRadius={"lg"}
+    borderWidth={borderColour ? "thick" : "zero"}
+    gap={"md"}
+    direction={"vertical"}
+    padding={"lg"}
+    {background}>
     <Container crossAxisAlignment={"center"} gap={"sm"}>
         {#if icon}
             {@render icon(iconColour, "1.5rem")}

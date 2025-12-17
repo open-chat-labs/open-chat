@@ -1,5 +1,7 @@
 <script lang="ts">
+    import { communityPreviewState } from "@src/utils/preview.svelte";
     import {
+        OpenChat,
         selectedChatMembersStore,
         selectedChatSummaryStore,
         selectedCommunitySummaryStore,
@@ -25,10 +27,11 @@
         type TokenBalanceGate,
         type UserGroupDetails,
     } from "openchat-client";
-    import { onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
     import BotDetailsPage from "../bots/BotDetailsPage.svelte";
     import BotInstaller from "../bots/install/BotInstaller.svelte";
     import WebhookModal from "../bots/WebhookModal.svelte";
+    import AccessGatesEvaluator from "./access/AccessGatesEvaluator.svelte";
     import AboutAccessGates from "./access_gates/AboutAccessGates.svelte";
     import AccessGates from "./access_gates/AccessGates.svelte";
     import BalanceGates from "./access_gates/BalanceGates.svelte";
@@ -97,6 +100,7 @@
      * sleeping dogs lie.
      */
 
+    const client = getContext<OpenChat>("client");
     type SlidingModalType =
         | {
               kind: "show_video_call_participants";
@@ -124,6 +128,7 @@
               installedWithPermissions?: GrantedBotPermissions;
           }
         | { kind: "user_groups"; community: CommunitySummary }
+        | { kind: "evaluate_community_access_gate" }
         | { kind: "proposal_filters"; chat: ChatSummary }
         | { kind: "show_bots"; collection: MultiUserChat | CommunitySummary }
         | { kind: "register_webhook"; chat: MultiUserChat }
@@ -200,6 +205,9 @@
 
     onMount(() => {
         const unsubs = [
+            subscribe("evaluateCommunityAccessGate", () =>
+                push({ kind: "evaluate_community_access_gate" }),
+            ),
             subscribe("upgrade", () => push({ kind: "upgrade_diamond" })),
             subscribe("showProposalFilters", () => {
                 if ($selectedChatSummaryStore !== undefined) {
@@ -532,6 +540,14 @@
             <ProposalGroupFilters selectedChat={page.chat} />
         {:else if page.kind === "upgrade_diamond"}
             <Upgrade />
+        {:else if page.kind === "evaluate_community_access_gate"}
+            <AccessGatesEvaluator
+                gates={communityPreviewState.gatesToEvaluate}
+                onClose={() => communityPreviewState.reset()}
+                onSuccess={(res) => {
+                    communityPreviewState.doJoinCommunity(client, res);
+                    pop();
+                }} />
         {/if}
     </SlidingPage>
 {/each}

@@ -1,25 +1,38 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { Avatar, Body, BodySmall, Caption, ColourVars, Column, Row } from "component-lib";
+    import { accessApprovalState } from "@src/utils/preview.svelte";
+    import {
+        Avatar,
+        Body,
+        BodySmall,
+        Caption,
+        ColourVars,
+        Column,
+        MenuItem,
+        MenuTrigger,
+        Row,
+    } from "component-lib";
     import {
         currentUserStore,
         enhancedCryptoLookup,
-        publish,
+        OpenChat,
         type LeafGate,
     } from "openchat-client";
+    import { getContext } from "svelte";
     import AccountCheck from "svelte-material-icons/AccountCheckOutline.svelte";
-    import Check from "svelte-material-icons/CheckBold.svelte";
     import Diamond from "svelte-material-icons/DiamondOutline.svelte";
     import Lifetime from "svelte-material-icons/DiamondStone.svelte";
-    import QrCode from "svelte-material-icons/QrCode.svelte";
     import Translatable from "../../Translatable.svelte";
     import AccessGateText from "../access_gates/AccessGateText.svelte";
     import { TokenState } from "../wallet/walletState.svelte";
+    import AccessGateBox from "./AccessGateBox.svelte";
+
+    const client = getContext<OpenChat>("client");
 
     interface Props {
         gate: LeafGate;
         satisfied: boolean;
-        onClick?: (g: LeafGate) => void;
+        onClick: (g: LeafGate) => void;
     }
 
     let { gate, onClick, satisfied }: Props = $props();
@@ -34,28 +47,22 @@
     });
 </script>
 
-{#snippet booleanGate(has: boolean, Icon: any, getLabel: string, hasLabel: string)}
-    <Row
-        onClick={onClick ? () => onClick(gate) : undefined}
-        mainAxisAlignment={"spaceBetween"}
-        crossAxisAlignment={"center"}
-        borderRadius={"md"}
-        minHeight={"4.25rem"}
-        gap={"md"}
-        background={has ? undefined : ColourVars.background2}
-        borderWidth={has ? "thick" : "zero"}
-        borderColour={has ? ColourVars.primary : undefined}
-        padding={["md", "lg"]}>
+{#snippet booleanGate(Icon: any, title: string, subtitle?: string)}
+    <AccessGateBox {satisfied} satisfiable onClick={() => onClick(gate)}>
         <Row mainAxisAlignment={"center"} width={{ size: "2.5rem" }}>
-            <Icon size={"1.5rem"} />
+            <Icon color={ColourVars.warning} size={"1.5rem"} />
         </Row>
-        <Body fontWeight="bold" colour={has ? "textPrimary" : "textSecondary"}>
-            <Translatable resourceKey={i18nKey(has ? hasLabel : getLabel)} />
-        </Body>
-        {#if has}
-            <Check color={ColourVars.primary} size={"1.2rem"} />
-        {/if}
-    </Row>
+        <Column>
+            <Body fontWeight="bold" colour={"textPrimary"}>
+                <Translatable resourceKey={i18nKey(title)} />
+            </Body>
+            {#if subtitle !== undefined}
+                <Caption colour={"textSecondary"}>
+                    <Translatable resourceKey={i18nKey(subtitle)} />
+                </Caption>
+            {/if}
+        </Column>
+    </AccessGateBox>
 {/snippet}
 
 {#snippet tokenGate(
@@ -65,19 +72,15 @@
     label: string,
     required: string,
     balance: string,
-    supportsTopup: boolean = true,
+    refresh?: () => void,
 )}
-    <Row gap={"sm"}>
-        <Row
-            onClick={onClick && !insufficient ? () => onClick(gate) : undefined}
-            mainAxisAlignment={"spaceBetween"}
-            crossAxisAlignment={"center"}
-            borderRadius={"md"}
-            background={insufficient ? ColourVars.background2 : undefined}
-            gap={"md"}
-            borderWidth={insufficient ? "zero" : "thick"}
-            borderColour={insufficient ? undefined : ColourVars.primary}
-            padding={["md", "lg"]}>
+    <MenuTrigger maskUI align={"end"} position={"bottom"} fill mobileMode={"longpress"}>
+        {#snippet menuItems()}
+            <MenuItem onclick={refresh}>
+                <Translatable resourceKey={i18nKey("Refresh balance")} />
+            </MenuItem>
+        {/snippet}
+        <AccessGateBox {satisfied} satisfiable={!insufficient} onClick={() => onClick(gate)}>
             <Avatar url={logo} />
 
             <Column width={"fill"}>
@@ -91,8 +94,11 @@
                         colour={insufficient ? "textSecondary" : "textPrimary"}
                         width={"hug"}>{label}</Body>
                 </Row>
-                <Caption colour={"textSecondary"} fontWeight={"bold"}>
+                <Caption colour={insufficient ? "error" : "textSecondary"} fontWeight={"bold"}>
                     {balance}
+                    {#if insufficient}
+                        / Insufficient funds
+                    {/if}
                 </Caption>
             </Column>
 
@@ -101,44 +107,40 @@
                     {required}
                 </BodySmall>
             </Row>
-        </Row>
-
-        {#if insufficient && supportsTopup}
-            <Column
-                onClick={() => publish("receiveToken", tokenState)}
-                mainAxisAlignment={"center"}
-                crossAxisAlignment={"center"}
-                background={ColourVars.background2}
-                width={{ size: "4rem" }}
-                height={"fill"}
-                borderRadius={"md"}
-                padding={["sm", "md"]}>
-                <QrCode size={"2rem"} color={ColourVars.textSecondary} />
-            </Column>
-        {/if}
-    </Row>
+        </AccessGateBox>
+    </MenuTrigger>
 {/snippet}
 
 {#if gate.kind !== "no_gate"}
     {#if gate.kind === "payment_gate" && tokenState}
-        {@const insufficient = tokenState.cryptoBalance < gate.amount}
+        {@const balance = accessApprovalState.balanceAfterCurrentCommitments(
+            tokenState.ledger,
+            tokenState.cryptoBalance,
+        )}
+        {@const insufficient = balance < gate.amount && !satisfied}
         {@render tokenGate(
             tokenState.logo,
             tokenState.symbol,
             insufficient,
             "payment gate",
             tokenState.formatTokens(gate.amount),
-            tokenState.formattedTokenBalance,
+            tokenState.formatTokens(balance),
+            () => tokenState.refreshBalance(client),
         )}
     {:else if gate.kind === "token_balance_gate" && tokenState}
-        {@const insufficient = tokenState.cryptoBalance < gate.minBalance}
+        {@const balance = accessApprovalState.balanceAfterCurrentCommitments(
+            tokenState.ledger,
+            tokenState.cryptoBalance,
+        )}
+        {@const insufficient = balance < gate.minBalance}
         {@render tokenGate(
             tokenState.logo,
             tokenState.symbol,
             insufficient,
             "minimum balance gate",
             tokenState.formatTokens(gate.minBalance),
-            tokenState.formattedTokenBalance,
+            tokenState.formatTokens(balance),
+            () => tokenState.refreshBalance(client),
         )}
     {:else if gate.kind === "chit_earned_gate"}
         {@const insufficient = $currentUserStore.totalChitEarned < gate.minEarned}
@@ -149,23 +151,24 @@
             "earned gate",
             gate.minEarned.toLocaleString(),
             $currentUserStore.totalChitEarned.toLocaleString(),
-            false,
         )}
     {:else if gate.kind === "lifetime_diamond_gate"}
         {@render booleanGate(
-            satisfied,
             Lifetime,
-            "Get lifetime membership",
-            "Lifetime diamond membership",
+            satisfied ? "Lifetime diamond membership" : "Get lifetime membership",
+            satisfied ? undefined : "You are currently not a member",
         )}
     {:else if gate.kind === "diamond_gate"}
-        {@render booleanGate(satisfied, Diamond, "Get diamond membership", "Diamond membership")}
+        {@render booleanGate(
+            Diamond,
+            satisfied ? "Diamond membership" : "Get diamond membership",
+            satisfied ? undefined : "You are currently not a member",
+        )}
     {:else if gate.kind === "unique_person_gate"}
         {@render booleanGate(
-            satisfied,
             AccountCheck,
-            "Verify unique personhood",
-            "Unique personhood verified",
+            satisfied ? "Unique personhood verified" : "Verify unique personhood",
+            satisfied ? undefined : "You have not yet been verified",
         )}
     {:else}
         <AccessGateText {gate} />

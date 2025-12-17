@@ -4742,6 +4742,11 @@ export class OpenChat {
                 return currentUserStore.value.isUniquePerson;
             } else if (gate.kind === "chit_earned_gate") {
                 return currentUserStore.value.totalChitEarned >= gate.minEarned;
+            } else if (gate.kind === "token_balance_gate") {
+                // Note that this takes no account of accumulated commitments incurred during gate evaluation
+                // So it is only good for telling us if a balance gate is *initially* satisfied.
+                // How to make that *reactive* is another issue
+                return (cryptoBalanceStore.value.get(gate.ledgerCanister) ?? 0n) >= gate.minBalance;
             } else {
                 return false;
             }

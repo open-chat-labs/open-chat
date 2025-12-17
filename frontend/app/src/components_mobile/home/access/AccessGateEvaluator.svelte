@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        cryptoBalanceStore,
         currentUserStore,
         isCompositeGate,
         isCredentialGate,
@@ -8,16 +9,19 @@
         isLifetimeDiamondGate,
         isPaymentGate,
         isUniquePersonGate,
-        OpenChat,
+        publish,
         type EnhancedAccessGate,
         type EnhancedLeafGate,
-        type PaymentGateApprovals,
+        type LeafGate,
+        type TokenBalanceGate,
     } from "openchat-client";
     import { i18nKey } from "../../../i18n/i18n";
 
     import MulticolourText from "@src/components_mobile/MulticolourText.svelte";
+    import { accessApprovalState } from "@src/utils/preview.svelte";
     import {
         Body,
+        BodySmall,
         Button,
         ColourVars,
         Column,
@@ -26,9 +30,9 @@
         Row,
         transition,
     } from "component-lib";
-    import { getContext } from "svelte";
     import ShieldStar from "svelte-material-icons/ShieldStarOutline.svelte";
     import Translatable from "../../Translatable.svelte";
+    import SlidingPageContent from "../SlidingPageContent.svelte";
     import AccessGateExpiry from "./AccessGateExpiry.svelte";
     import AccessGateSummary from "./AccessGateSummary.svelte";
     import CredentialGateEvaluator from "./CredentialGateEvaluator.svelte";
@@ -36,39 +40,33 @@
     import PaymentGateEvaluator from "./PaymentGateEvaluator.svelte";
     import UniqueHumanGateEvaluator from "./UniqueHumanGateEvaluator.svelte";
 
-    const client = getContext<OpenChat>("client");
-
     type SatisfiedLeafGate = EnhancedLeafGate & { satisfied: boolean; satisfiable: boolean };
 
     interface Props {
         gate: EnhancedAccessGate;
         onClose: () => void;
-        paymentApprovals: PaymentGateApprovals;
-        credentials: string[];
         onComplete: () => void;
     }
 
-    let { gate, onClose, paymentApprovals, credentials, onComplete }: Props = $props();
+    let { gate, onClose, onComplete }: Props = $props();
 
-    let flattenedGates = $state<SatisfiedLeafGate[]>(normaliseGates(gate));
+    let flattenedGates = $state<SatisfiedLeafGate[]>(
+        normaliseGates(gate).toSorted(orderBySatisfied),
+    );
+
+    function orderBySatisfied(a: SatisfiedLeafGate, b: SatisfiedLeafGate): number {
+        if (a.satisfied && b.satisfied) return 0;
+        return a.satisfied ? -1 : 1;
+    }
+
+    $inspect(flattenedGates);
     let currentGateIndex = $state(-1);
     let satisfiedGates = $derived(flattenedGates.filter((g) => g.satisfied).length);
     let compositeOr = $derived(isCompositeGate(gate) && gate.operator === "or");
     let complete = $derived(
         compositeOr ? satisfiedGates >= 1 : satisfiedGates === flattenedGates.length,
     );
-    let levelString = $derived.by(() => {
-        switch (gate.level) {
-            case "channel":
-                return "Channel";
-            case "community":
-                return "Community";
-            case "group":
-                return "Group";
-        }
-    });
-
-    $inspect(flattenedGates, $currentUserStore.diamondStatus.kind);
+    let evaluatingGate = $derived<SatisfiedLeafGate>(flattenedGates[currentGateIndex]);
 
     function normaliseGates(gate: EnhancedAccessGate): SatisfiedLeafGate[] {
         if (isCompositeGate(gate)) {
@@ -76,19 +74,46 @@
                 ...l,
                 level: gate.level,
                 expiry: gate.expiry,
-                satisfied: client.doesUserMeetAccessGate(l),
+                satisfied: doesUserMeetLeafGate(l),
                 satisfiable: false,
             }));
         }
         if (isLeafGate(gate)) {
-            return [
-                { ...gate, satisfied: client.doesUserMeetAccessGate(gate), satisfiable: false },
-            ];
+            return [{ ...gate, satisfied: doesUserMeetLeafGate(gate), satisfiable: false }];
         }
         return [];
     }
 
-    let evaluatingGate = $derived<SatisfiedLeafGate>(flattenedGates[currentGateIndex]);
+    function doesUserMeetLeafGate(gate: LeafGate): boolean {
+        if (gate.kind === "diamond_gate") {
+            return $currentUserStore.diamondStatus.kind !== "inactive";
+        } else if (gate.kind === "lifetime_diamond_gate") {
+            return $currentUserStore.diamondStatus.kind === "lifetime";
+        } else if (gate.kind === "unique_person_gate") {
+            return $currentUserStore.isUniquePerson;
+        } else if (gate.kind === "chit_earned_gate") {
+            return $currentUserStore.totalChitEarned >= gate.minEarned;
+        } else if (gate.kind === "token_balance_gate") {
+            return doesUserMeetBalanceGate(gate);
+        } else {
+            return false;
+        }
+    }
+
+    function doesUserMeetBalanceGate(gate: TokenBalanceGate): boolean {
+        const balance = $cryptoBalanceStore.get(gate.ledgerCanister) ?? 0n;
+        const liveBalance = accessApprovalState.balanceAfterCurrentCommitments(
+            gate.ledgerCanister,
+            balance,
+        );
+        return liveBalance >= gate.minBalance;
+    }
+
+    function selectGate(idx: number) {
+        transition(["fade"], () => {
+            currentGateIndex = idx;
+        });
+    }
 
     function nextGate() {
         transition(["fade"], () => {
@@ -106,6 +131,17 @@
         });
     }
 
+    function refreshBalanceGates() {
+        flattenedGates = flattenedGates
+            .map((g) => {
+                if (g.kind === "token_balance_gate") {
+                    g.satisfied = doesUserMeetBalanceGate(g);
+                }
+                return g;
+            })
+            .toSorted(orderBySatisfied);
+    }
+
     function onApprovePayment({
         ledger,
         amount,
@@ -115,85 +151,117 @@
         amount: bigint;
         approvalFee: bigint;
     }) {
+        // TODO problem is that topping up a token can cause gates to be spontaneously satisfied
+        // This is not accounted for an it's difficult to account for.
         if (evaluatingGate !== undefined) {
-            const existing = paymentApprovals.get(ledger);
-            if (existing !== undefined) {
-                // if we already have an approval pending for this ledger we add on the amount
-                // but there will only be one fee
-                existing.amount += amount;
-                paymentApprovals.set(ledger, existing);
-            } else {
-                paymentApprovals.set(ledger, {
-                    amount,
-                    approvalFee,
-                });
-            }
+            accessApprovalState.addPaymentApproval({ ledger, amount, approvalFee });
             evaluatingGate.satisfied = true;
-            nextGate();
+            refreshBalanceGates();
+            onBack();
         }
     }
 
     function credentialReceived(cred: string) {
         if (evaluatingGate !== undefined) {
             evaluatingGate.satisfied = true;
-            credentials.push(cred);
-            nextGate();
+            accessApprovalState.addCredential(cred);
+            refreshBalanceGates();
+            onBack();
+        }
+    }
+
+    function onBack() {
+        if (evaluatingGate !== undefined) {
+            selectGate(-1);
+        } else {
+            publish("closeModalPage");
         }
     }
 </script>
 
-<Column gap={"xl"} padding={"xl"}>
-    {#if evaluatingGate !== undefined}
-        {#if isCredentialGate(evaluatingGate)}
-            <CredentialGateEvaluator
-                {onClose}
-                onCredentialReceived={credentialReceived}
-                gate={evaluatingGate}
-                level={evaluatingGate.level} />
-        {:else if isUniquePersonGate(evaluatingGate)}
-            <UniqueHumanGateEvaluator
-                onCredentialReceived={credentialReceived}
-                {onClose}
-                expiry={evaluatingGate.expiry}
-                level={evaluatingGate.level} />
-        {:else if isPaymentGate(evaluatingGate)}
-            <PaymentGateEvaluator
-                {paymentApprovals}
-                gate={evaluatingGate}
-                level={evaluatingGate.level}
-                {onApprovePayment}
-                onClose={cancelGate} />
-        {:else if isLifetimeDiamondGate(evaluatingGate)}
-            <DiamondGateEvaluator
-                onCancel={cancelGate}
-                lifetime
-                onCredentialReceived={credentialReceived} />
-        {:else if isDiamondGate(evaluatingGate)}
-            <DiamondGateEvaluator
-                onCancel={cancelGate}
-                lifetime={false}
-                onCredentialReceived={credentialReceived} />
-        {/if}
-    {:else if isCompositeGate(gate)}
-        {#if gate.operator === "or"}
+<SlidingPageContent
+    {onBack}
+    title={i18nKey("joinGroup", undefined, gate.level)}
+    subtitle={i18nKey(gate.name)}>
+    <Column gap={"xl"} padding={"xl"}>
+        {#if evaluatingGate !== undefined}
+            {#if isCredentialGate(evaluatingGate)}
+                <CredentialGateEvaluator
+                    {onClose}
+                    onCredentialReceived={credentialReceived}
+                    gate={evaluatingGate}
+                    level={evaluatingGate.level} />
+            {:else if isUniquePersonGate(evaluatingGate)}
+                <UniqueHumanGateEvaluator
+                    onCredentialReceived={credentialReceived}
+                    {onClose}
+                    expiry={evaluatingGate.expiry}
+                    level={evaluatingGate.level} />
+            {:else if isPaymentGate(evaluatingGate)}
+                <PaymentGateEvaluator
+                    gate={evaluatingGate}
+                    level={evaluatingGate.level}
+                    {onApprovePayment}
+                    onClose={cancelGate} />
+            {:else if isLifetimeDiamondGate(evaluatingGate)}
+                <DiamondGateEvaluator
+                    onCancel={cancelGate}
+                    lifetime
+                    onCredentialReceived={credentialReceived} />
+            {:else if isDiamondGate(evaluatingGate)}
+                <DiamondGateEvaluator
+                    onCancel={cancelGate}
+                    lifetime={false}
+                    onCredentialReceived={credentialReceived} />
+            {/if}
+        {:else if isCompositeGate(gate)}
+            {@const or = gate.operator === "or"}
             <Column gap={"lg"}>
                 <ShieldStar size={"4.5rem"} color={ColourVars.primary} />
                 <H2 fontWeight={"bold"}>
-                    <Translatable resourceKey={i18nKey("Choose how to join")} />
+                    <MulticolourText
+                        parts={[
+                            {
+                                text: i18nKey("Join the "),
+                                colour: "textPrimary",
+                            },
+                            {
+                                text: i18nKey(gate.name + " "),
+                                colour: "primary",
+                            },
+                            {
+                                text: i18nKey(gate.level),
+                                colour: "textPrimary",
+                            },
+                        ]} />
                 </H2>
                 <Row wrap>
                     <Body width={"hug"}>
-                        <MulticolourText
-                            parts={[
-                                {
-                                    text: i18nKey("To join you will need to satisfy "),
-                                    colour: "textSecondary",
-                                },
-                                {
-                                    text: i18nKey("at least one access gate."),
-                                    colour: "warning",
-                                },
-                            ]} />
+                        {#if or}
+                            <MulticolourText
+                                parts={[
+                                    {
+                                        text: i18nKey("To join you will need to satisfy "),
+                                        colour: "textSecondary",
+                                    },
+                                    {
+                                        text: i18nKey("at least one access gate."),
+                                        colour: "secondary",
+                                    },
+                                ]} />
+                        {:else}
+                            <MulticolourText
+                                parts={[
+                                    {
+                                        text: i18nKey("To join you will need to satisfy "),
+                                        colour: "textSecondary",
+                                    },
+                                    {
+                                        text: i18nKey("ALL access gates."),
+                                        colour: "warning",
+                                    },
+                                ]} />
+                        {/if}
                     </Body>
                     <Body width={"hug"} colour={"textSecondary"}>
                         <AccessGateExpiry expiry={gate.expiry} />
@@ -204,51 +272,36 @@
                 {#each flattenedGates as subgate, i}
                     <AccessGateSummary
                         satisfied={subgate.satisfied}
-                        onClick={() => (currentGateIndex = i)}
+                        onClick={() => selectGate(i)}
                         gate={subgate} />
                 {/each}
             </Column>
-        {:else}
-            <Column gap={"lg"}>
-                <ShieldStar size={"4.5rem"} color={ColourVars.primary} />
-                <H2 fontWeight={"bold"}>
-                    <Translatable resourceKey={i18nKey(`${levelString} access gates`)} />
-                </H2>
-                <Row wrap>
-                    <Body width={"hug"}>
-                        <MulticolourText
-                            parts={[
-                                {
-                                    text: i18nKey("To join you will need to satisfy "),
-                                    colour: "textSecondary",
-                                },
-                                {
-                                    text: i18nKey("ALL access gates."),
-                                    colour: "secondary",
-                                },
-                            ]} />
-                    </Body>
-                    <Body width={"hug"} colour={"textSecondary"}>
-                        <AccessGateExpiry expiry={gate.expiry} />
-                    </Body>
-                </Row>
+
+            <BodySmall align={"center"} fontWeight={"bold"}>
+                <MulticolourText
+                    parts={[
+                        {
+                            text: i18nKey("You current satisfy "),
+                            colour: "textSecondary",
+                        },
+                        {
+                            text: i18nKey(`${satisfiedGates} out of ${flattenedGates.length}`),
+                            colour: "primary",
+                        },
+                        {
+                            text: i18nKey(" gates."),
+                            colour: "textSecondary",
+                        },
+                    ]} />
+            </BodySmall>
+            <Column crossAxisAlignment={"center"} gap={"md"}>
+                <Button disabled={!complete} onClick={onComplete}>
+                    <Translatable resourceKey={i18nKey("Join")} />
+                </Button>
+                <CommonButton onClick={onClose} width={"hug"} mode={"active"} size={"small_text"}>
+                    <Translatable resourceKey={i18nKey("cancel")} />
+                </CommonButton>
             </Column>
-            <Column gap={"md"}>
-                {#each flattenedGates as subgate}
-                    <AccessGateSummary
-                        satisfied={subgate.satisfied}
-                        onClick={nextGate}
-                        gate={subgate} />
-                {/each}
-            </Column>
-            <Button onClick={nextGate}>
-                <Translatable resourceKey={i18nKey("Let's go")} />
-            </Button>
         {/if}
-        <Row mainAxisAlignment={"center"}>
-            <CommonButton width={"hug"} onClick={onClose} size={"small_text"}>
-                <Translatable resourceKey={i18nKey("cancel")} />
-            </CommonButton>
-        </Row>
-    {/if}
-</Column>
+    </Column>
+</SlidingPageContent>

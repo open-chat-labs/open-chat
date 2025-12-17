@@ -227,4 +227,5 @@ export type PubSubEvents = {
         messageId: bigint;
         isOwner: boolean;
     };
+    evaluateCommunityAccessGate: undefined;
 };
