@@ -547,7 +547,10 @@
         {:else if page.kind === "evaluate_community_access_gate"}
             <AccessGatesEvaluator
                 gates={communityPreviewState.gatesToEvaluate}
-                onClose={() => communityPreviewState.reset()}
+                onClose={() => {
+                    communityPreviewState.reset();
+                    pop();
+                }}
                 onSuccess={(res) => {
                     communityPreviewState.doJoinCommunity(client, res);
                     pop();
@@ -555,7 +558,10 @@
         {:else if page.kind === "evaluate_group_access_gate"}
             <AccessGatesEvaluator
                 gates={groupPreviewState.gatesToEvaluate}
-                onClose={() => groupPreviewState.reset()}
+                onClose={() => {
+                    groupPreviewState.reset();
+                    pop();
+                }}
                 onSuccess={(res) => {
                     groupPreviewState.doJoinGroup(client, res);
                     pop();

@@ -17,9 +17,16 @@
     // find the first gate that the user does not meet
     let currentGateIndex = $state(gates.findIndex((g) => !client.doesUserMeetAccessGate(g)));
     let currentGate = $derived(gates[currentGateIndex]);
+    let cancelled = $state(false);
+
+    function internalClose() {
+        cancelled = true;
+        accessApprovalState.reset();
+        onClose();
+    }
 
     $effect(() => {
-        if (currentGate === undefined) {
+        if (currentGate === undefined && !cancelled) {
             onSuccess({
                 credentials: accessApprovalState.credentials,
                 paymentApprovals: accessApprovalState.paymentApprovals,
@@ -33,5 +40,5 @@
 </script>
 
 {#if currentGate}
-    <AccessGateEvaluator gate={currentGate} onComplete={nextGate} {onClose} />
+    <AccessGateEvaluator gate={currentGate} onComplete={nextGate} onClose={internalClose} />
 {/if}
