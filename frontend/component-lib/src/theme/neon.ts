@@ -23,6 +23,7 @@ const background0 = Colour.fromHex("#13151B");
 const background1 = Colour.fromHex("#1C1D26");
 const background2 = Colour.fromHex("#282B34");
 const disabledButton = Colour.fromHex("#7c7e85");
+const myChatBubble = Colour.fromHex("#dc3954");
 
 const textPrimary = Colour.fromHex("#ffffff");
 const textSecondary = Colour.fromHex("#9c9ea4");
@@ -52,6 +53,7 @@ export const theme = new Theme(
         background1,
         background2,
         disabledButton,
+        myChatBubble,
         textPrimary,
         textSecondary,
         textTertiary,
