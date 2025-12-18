@@ -23,17 +23,19 @@
     let { onBack, onAction, title, subtitle, menu, action, avatar, onClick, children }: Props =
         $props();
 
-    let padding = $derived<Padding>(onBack ? "sm" : ["sm", "sm", "sm", "lg"]);
+    let padding = $derived<Padding>(onBack ? "sm" : ["md", "sm", "md", "lg"]);
+    let height = { size: "4rem" };
 </script>
 
 <Container
     {onClick}
     supplementalClass={"section_header"}
     {padding}
+    {height}
     background={ColourVars.background0}
     crossAxisAlignment={"center"}
     mainAxisAlignment={"spaceBetween"}
-    gap={"md"}>
+    gap={"lg"}>
     {#if onBack}
         <IconButton padding={["sm", "zero", "sm", "xs"]} size={"md"} onclick={onBack}>
             {#snippet icon(color)}
@@ -65,7 +67,7 @@
     {@render children?.()}
     {#if menu}
         <MenuTrigger position={"bottom"} align={"end"}>
-            <IconButton padding={["sm", "xs", "sm", "zero"]} size={"md"}>
+            <IconButton padding={["sm", "xs", "sm", "xs"]} size={"lg"}>
                 {#snippet icon(color)}
                     <DotsVertical {color} />
                 {/snippet}
