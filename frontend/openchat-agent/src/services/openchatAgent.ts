@@ -4705,7 +4705,7 @@ export class OpenChatAgent extends EventTarget {
         return this.getLocalUserIndexClient(localUserIndex).payForPremiumItem(item);
     }
 
-    async setPremiumItemCost(item: PremiumItem, chitCost: number): Promise<void> {
+    setPremiumItemCost(item: PremiumItem, chitCost: number): Promise<void> {
         return this._userIndexClient.setPremiumItemCost(item, chitCost);
     }
 
@@ -4715,6 +4715,10 @@ export class OpenChatAgent extends EventTarget {
             userId,
             days,
         );
+    }
+
+    updateBlockedUsernamePatterns(pattern: string, add: boolean): Promise<void> {
+        return this._userIndexClient.updateBlockedUsernamePatterns(pattern, add);
     }
 }
 

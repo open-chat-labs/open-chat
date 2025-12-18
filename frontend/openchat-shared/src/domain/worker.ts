@@ -478,7 +478,14 @@ export type WorkerRequest =
     | OneSecEnableForwarding
     | OneSecGetTransferFees
     | OneSecForwardEvmToIcp
-    | OneSecGetForwardingStatus;
+    | OneSecGetForwardingStatus
+    | UpdateBlockedUsernamePatterns;
+
+type UpdateBlockedUsernamePatterns = {
+    kind: "updateBlockedUsernamePatterns";
+    pattern: string;
+    add: boolean;
+};
 
 type OneSecEnableForwarding = {
     kind: "oneSecEnableForwarding";
@@ -2639,4 +2646,6 @@ export type WorkerResult<T> = T extends Init
     ? OneSecForwardingStatus
     : T extends OneSecGetForwardingStatus
     ? OneSecForwardingStatus
+    : T extends UpdateBlockedUsernamePatterns
+    ? void
     : never;

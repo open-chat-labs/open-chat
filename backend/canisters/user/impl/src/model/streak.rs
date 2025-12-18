@@ -209,8 +209,7 @@ impl Streak {
     pub fn utc_offset_mins_at_ts(&self, ts: TimestampMillis) -> i16 {
         self.utc_offset_updates
             .iter()
-            .filter(|(updated_at, _)| *updated_at < ts)
-            .next_back()
+            .rfind(|(updated_at, _)| *updated_at < ts)
             .map(|(_, offset)| *offset)
             .unwrap_or_default()
     }

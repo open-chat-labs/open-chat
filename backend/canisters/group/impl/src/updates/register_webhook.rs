@@ -27,7 +27,7 @@ fn register_webhook_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succe
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
-    match validate_username_custom(&args.name, 3, 15) {
+    match validate_username_custom(&args.name, 3, 15, &[]) {
         Ok(_) => {}
         Err(UsernameValidationError::TooShort(_)) => return Err(OCErrorCode::InvalidRequest.with_message("name too short")),
         Err(UsernameValidationError::TooLong(_)) => return Err(OCErrorCode::InvalidRequest.with_message("name too long")),
