@@ -193,6 +193,7 @@ export class Colours {
         public background1: Colour,
         public background2: Colour,
         public disabledButton: Colour,
+        public myChatBubble: Colour,
         public textPrimary: Colour,
         public textSecondary: Colour,
         public textTertiary: Colour,
@@ -201,7 +202,6 @@ export class Colours {
         public textAccent: Colour,
         public gradientPrimary: Colour,
         public gradientSecondary: Colour,
-        public myChatBubble: Colour,
     ) {
         this.gradient = new Gradient(gradientPrimary, gradientSecondary);
         this.gradientInverted = new Gradient(gradientSecondary, gradientPrimary);
@@ -225,6 +225,7 @@ export class Colours {
             this.background1.cssVariable("background-1"),
             this.background2.cssVariable("background-2"),
             this.disabledButton.cssVariable("disabled-button"),
+            this.myChatBubble.cssVariable("my-chat-bubble"),
             this.textPrimary.cssVariable("text-primary"),
             this.textSecondary.cssVariable("text-secondary"),
             this.textTertiary.cssVariable("text-tertiary"),

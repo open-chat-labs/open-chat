@@ -4,7 +4,6 @@ import { Theme } from "./theme";
 const primary = Colour.fromHex("#FF5672");
 const secondary = Colour.fromHex("#23A2EE");
 const tertiary = Colour.fromHex("#e41e79");
-const myChatBubble = Colour.fromHex("#DC3954");
 
 const primaryMuted = Colour.fromHex("#AA2E43");
 const secondaryMuted = Colour.fromHex("#004e7d");
@@ -23,6 +22,7 @@ const background0 = Colour.fromHex("#13151B");
 const background1 = Colour.fromHex("#1C1D26");
 const background2 = Colour.fromHex("#282B34");
 const disabledButton = Colour.fromHex("#7c7e85");
+const myChatBubble = Colour.fromHex("#dc3954");
 
 const textPrimary = Colour.fromHex("#ffffff");
 const textSecondary = Colour.fromHex("#9c9ea4");
@@ -52,6 +52,7 @@ export const theme = new Theme(
         background1,
         background2,
         disabledButton,
+        myChatBubble,
         textPrimary,
         textSecondary,
         textTertiary,
@@ -60,6 +61,5 @@ export const theme = new Theme(
         textAccent,
         gradientPrimary,
         gradientSecondary,
-        myChatBubble,
     ),
 );
