@@ -1,8 +1,11 @@
 <script lang="ts">
     import {
+        Body,
         ColourVars,
         CommonButton,
         Container,
+        IconButton,
+        Row,
         Sheet,
         StatusCard,
         TextArea,
@@ -17,6 +20,7 @@
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Chat from "svelte-material-icons/ChatPlusOutline.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
     import ErrorMessage from "../ErrorMessage.svelte";
@@ -100,69 +104,71 @@
 </script>
 
 <Sheet onDismiss={onClose}>
-    <Container gap={"md"} padding={"lg"} direction={"vertical"}>
-        <Container
-            padding={["zero", "lg", "lg", "lg"]}
-            gap={"sm"}
-            crossAxisAlignment={"center"}
-            mainAxisAlignment={"spaceBetween"}>
-            <CryptoSelector
-                draftAmount={tokenState.draftAmount}
-                filter={(t) => t.balance > 0}
-                bind:ledger />
-        </Container>
-        <Container padding={["zero", "md"]} gap={"md"} direction={"vertical"}>
-            {#if multiUserChat}
-                <SingleUserSelector bind:selectedReceiver={receiver}>
-                    {#snippet subtext()}
-                        <Translatable resourceKey={i18nKey("Choose a token recipient")} />
-                    {/snippet}
-                </SingleUserSelector>
-            {/if}
-            <TokenInput
-                {ledger}
-                minAmount={tokenState.minAmount}
-                disabled={sending}
-                error={!validAmount}
-                bind:valid={validAmount}
-                maxAmount={tokenState.maxAmount}
-                bind:amount={tokenState.draftAmount}>
-                {#snippet subtext()}
-                    {`Minimum amount ${tokenState.minAmountLabel} ${tokenState.symbol}`}
+    <Container gap={"lg"} padding={["lg", "xl"]} direction={"vertical"}>
+        <Row>
+            <Body fontWeight={"bold"}>
+                <Translatable resourceKey={i18nKey("Send crypto")} />
+            </Body>
+            <IconButton onclick={onClose}>
+                {#snippet icon(color)}
+                    <Close {color} />
                 {/snippet}
-            </TokenInput>
+            </IconButton>
+        </Row>
+        <CryptoSelector
+            showRefresh
+            draftAmount={tokenState.draftAmount}
+            filter={(t) => t.balance > 0}
+            bind:ledger />
 
-            <TextArea
-                disabled={sending}
-                maxlength={200}
-                rows={3}
-                placeholder={interpolate($_, i18nKey("tokenTransfer.messagePlaceholder"))}
-                bind:value={message}>
+        {#if multiUserChat}
+            <SingleUserSelector bind:selectedReceiver={receiver}>
                 {#snippet subtext()}
-                    {"Recipient will receive this message as a DM"}
+                    <Translatable resourceKey={i18nKey("Choose a token recipient")} />
                 {/snippet}
-            </TextArea>
+            </SingleUserSelector>
+        {/if}
+        <TokenInput
+            {ledger}
+            minAmount={tokenState.minAmount}
+            disabled={sending}
+            error={!validAmount}
+            bind:valid={validAmount}
+            maxAmount={tokenState.maxAmount}
+            bind:amount={tokenState.draftAmount}>
+            {#snippet subtext()}
+                {`Minimum amount ${tokenState.minAmountLabel} ${tokenState.symbol}`}
+            {/snippet}
+        </TokenInput>
 
-            {#if confirming}
-                <StatusCard
-                    background={ColourVars.background2}
-                    title={"Warning"}
-                    body={interpolate(
-                        $_,
-                        i18nKey("tokenTransfer.warning", { token: tokenState.symbol }),
-                    )}
-                    mode={"warning"}></StatusCard>
-            {/if}
-            {#if errorMessage !== undefined}
-                <div class="error">
-                    <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
-                </div>
-            {/if}
-        </Container>
-        <Container
-            padding={["zero", "lg"]}
-            mainAxisAlignment={"spaceBetween"}
-            crossAxisAlignment={"center"}>
+        <TextArea
+            disabled={sending}
+            maxlength={200}
+            rows={3}
+            placeholder={interpolate($_, i18nKey("tokenTransfer.messagePlaceholder"))}
+            bind:value={message}>
+            {#snippet subtext()}
+                {"Recipient will receive this message as a DM"}
+            {/snippet}
+        </TextArea>
+
+        {#if confirming}
+            <StatusCard
+                background={ColourVars.background2}
+                title={"Warning"}
+                body={interpolate(
+                    $_,
+                    i18nKey("tokenTransfer.warning", { token: tokenState.symbol }),
+                )}
+                mode={"warning"}></StatusCard>
+        {/if}
+        {#if errorMessage !== undefined}
+            <div class="error">
+                <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
+            </div>
+        {/if}
+
+        <Container mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
             <TransferFeesMessage
                 symbol={tokenState.symbol}
                 tokenDecimals={tokenState.decimals}
