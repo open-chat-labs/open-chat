@@ -376,6 +376,8 @@ export function contentTypeToPermission(contentType: AttachmentContent["kind"]):
             return "audio";
         case "file_content":
             return "file";
+        case "giphy_content":
+            return "giphy";
         default:
             throw new UnsupportedValueError("Unknown attachment content type", contentType);
     }
