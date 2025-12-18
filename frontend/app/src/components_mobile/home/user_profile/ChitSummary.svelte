@@ -11,13 +11,12 @@
         H2,
         Subtitle,
     } from "component-lib";
-    import { chitStateStore, i18nKey, OpenChat } from "openchat-client";
+    import { chitStateStore, i18nKey, OpenChat, publish } from "openchat-client";
     import { getContext } from "svelte";
     import PartyPopper from "svelte-material-icons/PartyPopper.svelte";
     import ShieldStarOutline from "svelte-material-icons/ShieldStarOutline.svelte";
     import Progress from "../../Progress.svelte";
     import Translatable from "../../Translatable.svelte";
-    import StreakInsuranceBuy from "../insurance/StreakInsuranceBuy.svelte";
     import Streak from "./Streak.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -62,7 +61,6 @@
     let remaining = $derived(
         client.formatTimeRemaining($now500, Number($chitStateStore.nextDailyChitClaim), true),
     );
-    let showInsurance = $state(false);
     let busy = $state(false);
 
     function claim(e?: MouseEvent) {
@@ -86,10 +84,6 @@
             });
     }
 </script>
-
-{#if showInsurance}
-    <StreakInsuranceBuy onClose={() => (showInsurance = false)} />
-{/if}
 
 <SparkleBoxOutline>
     <Container padding={["zero", "zero", "lg", "zero"]} gap={"sm"} crossAxisAlignment={"center"}>
@@ -151,7 +145,7 @@
             {#if insuranceLink}
                 <CommonButton
                     mode={"default"}
-                    onClick={() => (showInsurance = true)}
+                    onClick={() => publish("streakInsurance")}
                     size={"small_text"}>
                     {#snippet icon(color, size)}
                         <ShieldStarOutline {color} {size}></ShieldStarOutline>

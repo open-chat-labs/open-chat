@@ -229,4 +229,5 @@ export type PubSubEvents = {
     };
     evaluateCommunityAccessGate: undefined;
     evaluateGroupAccessGate: undefined;
+    streakInsurance: undefined;
 };

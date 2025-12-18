@@ -1,22 +1,36 @@
 <script lang="ts">
+    import MulticolourText from "@src/components_mobile/MulticolourText.svelte";
     import { toastStore } from "@src/stores/toast";
-    import { Button, ColourVars, Container, Label, Overview, Sheet } from "component-lib";
+    import {
+        Avatar,
+        Body,
+        BodySmall,
+        Caption,
+        type ColourVarKeys,
+        ColourVars,
+        Column,
+        CommonButton,
+        Container,
+        H2,
+        Row,
+        Subtitle,
+    } from "component-lib";
     import {
         LEDGER_CANISTER_CHAT,
         OpenChat,
-        cryptoBalanceStore,
-        cryptoLookup,
+        enhancedCryptoLookup,
+        publish,
         streakInsuranceStore,
     } from "openchat-client";
     import { getContext } from "svelte";
-    import CreditCard from "svelte-material-icons/CreditCardOutline.svelte";
-    import Equal from "svelte-material-icons/Equal.svelte";
-    import Minus from "svelte-material-icons/Minus.svelte";
-    import ShieldHalfFull from "svelte-material-icons/ShieldHalfFull.svelte";
-    import ShieldPlusOutline from "svelte-material-icons/ShieldPlusOutline.svelte";
+    import Plus from "svelte-material-icons/Plus.svelte";
+    import QrCode from "svelte-material-icons/QrCode.svelte";
+    import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
-    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
+    import SlidingPageContent from "../SlidingPageContent.svelte";
+    import StreakHeadline from "../user_profile/StreakHeadline.svelte";
+    import { TokenState } from "../wallet/walletState.svelte";
 
     const client = getContext<OpenChat>("client");
     interface Props {
@@ -25,30 +39,26 @@
 
     const MAX_DAYS = 30;
     const ledger = LEDGER_CANISTER_CHAT;
+    const token = $derived($enhancedCryptoLookup.get(ledger));
+    const tokenState = $derived(new TokenState(token!));
     const currentDaysInsured = $streakInsuranceStore.daysInsured;
     const currentDaysMissed = $streakInsuranceStore.daysMissed;
     let { onClose }: Props = $props();
-    let tokenDetails = $derived({
-        symbol: $cryptoLookup.get(ledger),
-        balance: $cryptoBalanceStore.get(ledger) ?? 0n,
-    });
     let additionalDays = $state(0);
-    let confirming = $state(false);
-    let confirmed = $state(false);
-    let refreshingBalance = $state(false);
-    let priceE8s = $derived(client.streakInsurancePrice(currentDaysInsured, additionalDays));
-    let price = $derived(priceE8s / 100_000_000n);
-    let remainingBalance = $derived(tokenDetails.balance - priceE8s);
-    let insufficientBalance = $derived(remainingBalance < 0);
+    let insufficientBalance = $derived(tokenState.remainingBalance < 0);
     let paying = $state(false);
     let remaining = $derived(currentDaysInsured + additionalDays - currentDaysMissed);
     let totalDays = $derived(currentDaysInsured + additionalDays);
     let maxReached = $derived(totalDays >= MAX_DAYS);
 
+    $effect(() => {
+        tokenState.draftAmount = client.streakInsurancePrice(currentDaysInsured, additionalDays);
+    });
+
     function pay() {
         paying = true;
         client
-            .payForStreakInsurance(additionalDays, priceE8s)
+            .payForStreakInsurance(additionalDays, tokenState.draftAmount)
             .then((resp) => {
                 if (resp.kind !== "success") {
                     toastStore.showFailureToast(i18nKey("streakInsurance.failure"));
@@ -60,92 +70,135 @@
     }
 </script>
 
-<Sheet onDismiss={onClose}>
-    <Container padding={"xl"} gap={"lg"} direction={"vertical"}>
-        {#if !confirming && !confirmed}
-            <Container crossAxisAlignment={"center"} mainAxisAlignment={"spaceBetween"}>
-                <Container width={"fill"} crossAxisAlignment={"center"} gap={"sm"}>
-                    <ShieldHalfFull size={"1em"} />
-                    <Translatable resourceKey={i18nKey("streakInsurance.topUpTitle")} />
-                </Container>
+{#snippet metric(word: string, subtext: string, accent: ColourVarKeys, val: number)}
+    <Row
+        mainAxisAlignment={"spaceBetween"}
+        crossAxisAlignment={"center"}
+        borderRadius={"md"}
+        minHeight={"4rem"}
+        gap={"md"}
+        background={ColourVars.background2}
+        padding={["md", "lg"]}>
+        <Column width={"fill"}>
+            <Subtitle fontWeight={"bold"}>
+                <MulticolourText
+                    parts={[
+                        { text: i18nKey("Days "), colour: "textPrimary" },
+                        { text: i18nKey(word), colour: accent },
+                    ]} />
+            </Subtitle>
+            <BodySmall colour={"textSecondary"}>
+                <Translatable resourceKey={i18nKey(subtext)} />
+            </BodySmall>
+        </Column>
+        <H2 colour={accent} width={"hug"} fontWeight={"bold"}>{val}</H2>
+    </Row>
+{/snippet}
 
-                <BalanceWithRefresh
-                    {ledger}
-                    value={remainingBalance}
-                    bind:refreshing={refreshingBalance} />
-            </Container>
+{#snippet tokenBalance()}
+    <Row gap={"sm"}>
+        <Row
+            mainAxisAlignment={"spaceBetween"}
+            crossAxisAlignment={"center"}
+            borderRadius={"md"}
+            minHeight={"4rem"}
+            gap={"md"}
+            background={ColourVars.background2}
+            padding={["md", "lg"]}>
+            <Avatar url={tokenState.logo} />
+            <Column width={"fill"}>
+                <Body fontWeight={"bold"} colour={"textPrimary"} width={"hug"}
+                    >{tokenState.symbol}</Body>
+                <Caption colour={"textSecondary"} fontWeight={"bold"}>
+                    {tokenState.formattedTokenBalance}
+                </Caption>
+            </Column>
+        </Row>
+        {#if insufficientBalance}
+            <Column
+                onClick={() => publish("receiveToken", tokenState)}
+                mainAxisAlignment={"center"}
+                crossAxisAlignment={"center"}
+                width={{ size: "4rem" }}
+                height={"fill"}
+                borderRadius={"lg"}
+                background={ColourVars.background2}
+                padding={["sm", "md"]}>
+                <QrCode size={"2rem"} color={ColourVars.textSecondary} />
+            </Column>
         {/if}
-        <Container
-            padding={"lg"}
-            gap={"md"}
-            mainAxisAlignment={"spaceAround"}
-            crossAxisAlignment={"end"}>
-            <Container crossAxisAlignment={"center"} direction={"vertical"}>
-                <Label align={"center"} width={"hug"} colour={"textSecondary"} uppercase>
-                    <Translatable resourceKey={i18nKey("streakInsurance.bought")}></Translatable>
-                </Label>
-                <Overview align={"center"} width={"hug"} colour={"primary"} fontWeight={"bold"}>
-                    {totalDays}
-                </Overview>
-            </Container>
+    </Row>
+{/snippet}
 
-            <Container
-                padding={["zero", "md"]}
-                width={"hug"}
-                height={"fill"}
-                crossAxisAlignment={"center"}>
-                <Minus color={ColourVars.textSecondary} />
-            </Container>
+<SlidingPageContent
+    title={i18nKey("Streak insurance")}
+    subtitle={i18nKey("Make sure your streak stays intact")}>
+    <Container padding={"xl"} gap={"xl"} direction={"vertical"}>
+        <StreakHeadline />
 
-            <Container crossAxisAlignment={"center"} direction={"vertical"}>
-                <Label align={"center"} width={"hug"} colour={"textSecondary"} uppercase>
-                    <Translatable resourceKey={i18nKey("streakInsurance.missed")}></Translatable>
-                </Label>
-                <Overview align={"center"} width={"hug"} colour={"primary"} fontWeight={"bold"}>
-                    {currentDaysMissed}
-                </Overview>
-            </Container>
+        <Body>
+            <MulticolourText
+                parts={[
+                    {
+                        text: i18nKey("Use our "),
+                        colour: "textSecondary",
+                    },
+                    {
+                        text: i18nKey("streak insurance "),
+                        colour: "primary",
+                    },
+                    {
+                        text: i18nKey(
+                            "feature to prevent your streak from reseting to zero if you miss a day or two for any reason.",
+                        ),
+                        colour: "textSecondary",
+                    },
+                ]} />
+        </Body>
 
-            <Container
-                width={"hug"}
-                padding={["zero", "md"]}
-                height={"fill"}
-                crossAxisAlignment={"center"}>
-                <Equal color={ColourVars.textSecondary} />
-            </Container>
+        {@render tokenBalance()}
 
-            <Container crossAxisAlignment={"center"} direction={"vertical"}>
-                <Label align={"center"} width={"hug"} colour={"textSecondary"} uppercase>
-                    <Translatable resourceKey={i18nKey("streakInsurance.remaining")}></Translatable>
-                </Label>
-                <Overview align={"center"} width={"hug"} colour={"primary"} fontWeight={"bold"}>
-                    {remaining}
-                </Overview>
-            </Container>
-        </Container>
-        <Container
-            direction={"vertical"}
-            gap={"md"}
-            mainAxisAlignment={"end"}
-            crossAxisAlignment={"end"}>
-            <Button secondary disabled={paying || maxReached} onClick={() => (additionalDays += 1)}>
+        <Column gap={"sm"}>
+            {@render metric(
+                "insured",
+                "Number of streak days you've insured",
+                "primary",
+                totalDays,
+            )}
+            {@render metric(
+                "missed",
+                "Number of used streak insurance days",
+                "secondary",
+                currentDaysMissed,
+            )}
+            {@render metric("remaining", "Remaining insured streak days", "warning", remaining)}
+        </Column>
+
+        <Row crossAxisAlignment={"center"} mainAxisAlignment={"spaceBetween"}>
+            <CommonButton
+                mode={"active"}
+                size={"small_text"}
+                disabled={paying || maxReached}
+                onClick={() => (additionalDays += 1)}>
                 {#snippet icon(color)}
-                    <ShieldPlusOutline {color}></ShieldPlusOutline>
+                    <Plus {color} />
                 {/snippet}
                 <Translatable resourceKey={i18nKey("streakInsurance.addDay")}></Translatable>
-            </Button>
-            <Button
+            </CommonButton>
+            <CommonButton
+                mode={"active"}
+                size={"medium"}
                 loading={paying}
                 disabled={paying || additionalDays === 0 || insufficientBalance}
                 onClick={pay}>
-                {#snippet icon(color)}
-                    <CreditCard {color}></CreditCard>
+                {#snippet icon(color, size)}
+                    <Wallet {color} {size} />
                 {/snippet}
                 <Translatable
                     resourceKey={i18nKey("streakInsurance.pay", {
-                        price: price.toLocaleString(),
+                        price: tokenState.formatTokens(tokenState.draftAmount),
                     })}></Translatable>
-            </Button>
-        </Container>
+            </CommonButton>
+        </Row>
     </Container>
-</Sheet>
+</SlidingPageContent>

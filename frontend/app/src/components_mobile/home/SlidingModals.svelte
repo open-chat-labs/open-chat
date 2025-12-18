@@ -59,6 +59,7 @@
     import DirectChatDetails from "./groupdetails/DirectChatDetails.svelte";
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
     import { UpdateGroupOrCommunityState } from "./groupOrCommunity.svelte";
+    import StreakInsuranceBuy from "./insurance/StreakInsuranceBuy.svelte";
     import BotsList from "./membership/BotsList.svelte";
     import InviteAndShare from "./membership/InviteAndShare.svelte";
     import MemberManagement from "./membership/MemberManagement.svelte";
@@ -128,6 +129,7 @@
               installedWithPermissions?: GrantedBotPermissions;
           }
         | { kind: "user_groups"; community: CommunitySummary }
+        | { kind: "streak_insurance" }
         | { kind: "evaluate_community_access_gate" }
         | { kind: "evaluate_group_access_gate" }
         | { kind: "proposal_filters"; chat: ChatSummary }
@@ -206,6 +208,7 @@
 
     onMount(() => {
         const unsubs = [
+            subscribe("streakInsurance", () => push({ kind: "streak_insurance" })),
             subscribe("evaluateCommunityAccessGate", () =>
                 push({ kind: "evaluate_community_access_gate" }),
             ),
@@ -544,6 +547,8 @@
             <ProposalGroupFilters selectedChat={page.chat} />
         {:else if page.kind === "upgrade_diamond"}
             <Upgrade />
+        {:else if page.kind === "streak_insurance"}
+            <StreakInsuranceBuy onClose={pop} />
         {:else if page.kind === "evaluate_community_access_gate"}
             <AccessGatesEvaluator
                 gates={communityPreviewState.gatesToEvaluate}

@@ -2,22 +2,20 @@
     import { isSameDay } from "@src/components/calendar/utils";
     import { i18nKey } from "@src/i18n/i18n";
     import { chitPopup, disableChit, utcMode } from "@src/stores/settings";
-    import { Body, BodySmall, Button, Container, H1, Subtitle, Switch } from "component-lib";
-    import { chitStateStore, OpenChat, type ChitEvent } from "openchat-client";
+    import { Body, BodySmall, Button, Container, Subtitle, Switch } from "component-lib";
+    import { chitStateStore, OpenChat, publish, type ChitEvent } from "openchat-client";
     import { getContext } from "svelte";
     import FlashOutline from "svelte-material-icons/FlashOutline.svelte";
     import Calendar from "../../calendar/Calendar.svelte";
     import { calendarState, type DateRange } from "../../calendar/calendarState.svelte";
     import Setting from "../../Setting.svelte";
     import Translatable from "../../Translatable.svelte";
-    import StreakInsuranceBuy from "../insurance/StreakInsuranceBuy.svelte";
     import ChitEventsForDay from "../profile/ChitEventsForDay.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import ChitSummary from "./ChitSummary.svelte";
+    import StreakHeadline from "./StreakHeadline.svelte";
 
     const client = getContext<OpenChat>("client");
-
-    let showInsurance = $state(false);
 
     let events = $state<ChitEvent[]>([]);
 
@@ -77,10 +75,6 @@
     }
 </script>
 
-{#if showInsurance}
-    <StreakInsuranceBuy onClose={() => (showInsurance = false)} />
-{/if}
-
 <SlidingPageContent title={i18nKey("CHIT rewards")} subtitle={i18nKey("General options")}>
     <Container
         padding={"xl"}
@@ -89,14 +83,7 @@
         crossAxisAlignment={"center"}
         direction={"vertical"}>
         <Container padding={["zero", "md"]} gap={"xl"} direction={"vertical"}>
-            <Container supplementalClass={"streak_title"} gap={"xl"} direction={"vertical"}>
-                <H1 width={{ size: "70%" }} fontWeight={"bold"} colour={"primary"}>
-                    <Translatable
-                        resourceKey={i18nKey("You are on a {streak} day streak!", {
-                            streak: $chitStateStore.streak,
-                        })}></Translatable>
-                </H1>
-            </Container>
+            <StreakHeadline />
         </Container>
 
         <Container padding={["lg", "zero"]} direction={"vertical"} overflow={"visible"}>
@@ -120,7 +107,7 @@
                         )}></Translatable>
                 </BodySmall>
 
-                <Button onClick={() => (showInsurance = true)}>
+                <Button onClick={() => publish("streakInsurance")}>
                     {#snippet icon(color)}
                         <FlashOutline {color} />
                     {/snippet}
@@ -172,11 +159,3 @@
         </Container>
     </Container>
 </SlidingPageContent>
-
-<style lang="scss">
-    :global(.container.streak_title > h1) {
-        background: var(--gradient-inverted);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-</style>
