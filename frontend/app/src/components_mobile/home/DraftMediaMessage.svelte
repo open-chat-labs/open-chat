@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Row } from "component-lib";
-    import type { AttachmentContent } from "openchat-client";
+    import type { AttachmentContent, MessageContext } from "openchat-client";
     import AudioContent from "./AudioContent.svelte";
     import FileContent from "./FileContent.svelte";
     import GiphyContent from "./GiphyContent.svelte";
@@ -9,9 +9,10 @@
 
     interface Props {
         content: AttachmentContent;
+        ctx: MessageContext;
     }
 
-    let { content }: Props = $props();
+    let { content, ctx }: Props = $props();
 </script>
 
 <Row>
@@ -22,7 +23,7 @@
     {:else if content.kind === "image_content"}
         <ImageContent edited={false} fill={false} {content} draft />
     {:else if content.kind === "giphy_content"}
-        <GiphyContent edited={false} fill={false} {content} draft />
+        <GiphyContent {ctx} edited={false} fill={false} {content} draft />
     {:else if content.kind === "file_content"}
         <div class="file-preview">
             <FileContent edited={false} me {content} draft />

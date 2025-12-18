@@ -10,8 +10,8 @@
     } from "component-lib";
     import {
         localUpdates,
-        type ChatSummary,
         type GiphyContent,
+        type MessageContext,
         type SelectedEmoji,
     } from "openchat-client";
     import Backspace from "svelte-material-icons/BackspaceOutline.svelte";
@@ -23,12 +23,12 @@
     type Tab = "emoji" | "gif";
 
     interface Props {
-        chat: ChatSummary;
+        ctx: MessageContext;
         onClose: () => void;
         onEmojiSelected: (emoji: SelectedEmoji) => void;
     }
 
-    let { chat, onClose, onEmojiSelected }: Props = $props();
+    let { ctx, onClose, onEmojiSelected }: Props = $props();
 
     let selected = $state<Tab>("emoji");
 
@@ -39,7 +39,7 @@
     }
 
     function sendGiphy(content: GiphyContent) {
-        localUpdates.draftMessages.setAttachment({ chatId: chat.id }, content);
+        localUpdates.draftMessages.setAttachment(ctx, content);
         onClose();
     }
 </script>

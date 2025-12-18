@@ -1,6 +1,11 @@
 <script lang="ts">
     import { BodySmall, ColourVars, Column, IconButton, Row, Subtitle } from "component-lib";
-    import { mobileWidth, type GiphyContent } from "openchat-client";
+    import {
+        localUpdates,
+        mobileWidth,
+        type GiphyContent,
+        type MessageContext,
+    } from "openchat-client";
     import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { rtlStore } from "../../stores/rtl";
@@ -18,6 +23,7 @@
         intersecting?: boolean;
         edited: boolean;
         blockLevelMarkdown?: boolean;
+        ctx: MessageContext;
     }
 
     let {
@@ -29,6 +35,7 @@
         intersecting = true,
         edited,
         blockLevelMarkdown = false,
+        ctx,
     }: Props = $props();
 
     let withCaption = $derived(content.caption !== undefined && content.caption !== "");
@@ -41,7 +48,7 @@
     let hidden = $derived($lowBandwidth);
 
     function removeDraft() {
-        console.log("work out how to remove the draft message");
+        localUpdates.draftMessages.delete(ctx);
     }
 </script>
 
@@ -54,8 +61,8 @@
         background={ColourVars.background1}>
         <img class={"thumb"} src={content.mobile.url} alt={content.caption ?? content.title} />
         <Column>
-            <Subtitle fontWeight={"bold"}>
-                {"This should be the gif's alt"}
+            <Subtitle ellipsisTruncate fontWeight={"bold"}>
+                {content.title}
             </Subtitle>
             <BodySmall colour={"textSecondary"}>
                 <Translatable resourceKey={i18nKey("Sharing a GIF")} />
@@ -208,5 +215,6 @@
         min-height: 5rem !important;
         flex: 0 0 5rem;
         aspect-ratio: 1 / 1;
+        object-fit: cover;
     }
 </style>

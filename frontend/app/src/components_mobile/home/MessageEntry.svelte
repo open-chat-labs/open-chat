@@ -766,7 +766,7 @@
     {#if showEmojiPicker}
         <!-- we don't actually want this to be a sheet, we want it to appear below the message entry box so we might indeed need to move it into the footer. We shall see.  -->
         <EmojiOrGif
-            {chat}
+            ctx={messageContext}
             onEmojiSelected={insertEmoji}
             onClose={() => (showEmojiPicker = false)} />
     {/if}

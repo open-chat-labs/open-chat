@@ -114,7 +114,6 @@
     onMount(() => {
         const unsubs = [
             subscribe("createPoll", onCreatePoll),
-            subscribe("attachGif", onAttachGif),
             subscribe("tokenTransfer", onTokenTransfer),
             subscribe("createTestMessages", onCreateTestMessages),
         ];

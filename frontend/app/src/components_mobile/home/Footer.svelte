@@ -11,10 +11,8 @@
         type EphemeralMessageEvent,
         type EventWrapper,
         type Message,
-        type MessageAction,
         type MessageContext,
         type OpenChat,
-        type SelectedEmoji,
         type User,
     } from "openchat-client";
     import { getContext, onMount, tick } from "svelte";
@@ -85,7 +83,6 @@
     }: Props = $props();
 
     let ephemeralMessageEvent = $state<EphemeralMessageEvent>();
-    let messageAction: MessageAction = $state(undefined);
     //@ts-ignore
     let messageEntry: MessageEntry;
 
@@ -142,10 +139,6 @@
         }
     }
 
-    function emojiSelected(selected: SelectedEmoji) {
-        messageEntry?.insertEmoji(selected);
-    }
-
     $effect(() => {
         if (
             ephemeralMessageEvent !== undefined &&
@@ -170,7 +163,7 @@
                     <ReplyingTo readonly {onCancelReply} {user} {replyingTo} />
                 {/if}
                 {#if attachment !== undefined}
-                    <DraftMediaMessage content={attachment} />
+                    <DraftMediaMessage ctx={messageContext} content={attachment} />
                 {/if}
             </Column>
         {/if}

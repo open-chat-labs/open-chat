@@ -85,7 +85,7 @@
     function getMoreGifs() {
         refreshing = true;
         const url =
-            searchTerm === ""
+            searchTerm === undefined || searchTerm === ""
                 ? `${TRENDING_API_URL}&pos=${pos}`
                 : `${SEARCH_API_URL}${searchTerm}&pos=${pos}`;
         return fetch(url)
@@ -109,7 +109,7 @@
         if (gif !== undefined) {
             const content: GiphyContent = {
                 kind: "giphy_content",
-                title: gif.title,
+                title: gif.title || gif.content_description,
                 desktop: {
                     height: Number(gif.media_formats.mp4.dims[1]),
                     width: Number(gif.media_formats.mp4.dims[0]),
@@ -133,19 +133,6 @@
         gifs = [...gifs, ...nextPage];
     }
 
-    function onScroll() {
-        if (containerElement) {
-            if (
-                Math.abs(
-                    containerElement.scrollHeight -
-                        containerElement.clientHeight -
-                        containerElement.scrollTop,
-                ) < 200
-            ) {
-                nextPage();
-            }
-        }
-    }
     $effect(() => {
         let containerWidth = containerElement?.clientWidth ?? 0;
         let numCols = 3;
@@ -170,7 +157,10 @@
 </Column>
 
 <Container padding={["zero", "md"]}>
-    <div class="giphy-container" onscroll={onScroll} bind:this={containerElement}>
+    <Container
+        onInsideEnd={nextPage}
+        height={{ size: "calc(var(--vh, 1vh) * 40)" }}
+        bind:ref={containerElement}>
         {#each Object.values(gifCache) as item (item.key)}
             <img
                 class="thumb"
@@ -179,17 +169,10 @@
                 style={`width: ${imgWidth}px; top: ${item.top}px; left: ${item.left}px`}
                 alt={item.title} />
         {/each}
-    </div>
+    </Container>
 </Container>
 
 <style lang="scss">
-    .giphy-container {
-        overflow: auto;
-        position: relative;
-        height: calc(var(--vh, 1vh) * 50);
-        width: 100%;
-    }
-
     .thumb {
         position: absolute;
         cursor: pointer;
