@@ -115,7 +115,7 @@
             return ColourVars.error;
         }
         if (me) {
-            return ColourVars.primary;
+            return ColourVars.myChatBubble;
         }
         return ColourVars.background2;
     });

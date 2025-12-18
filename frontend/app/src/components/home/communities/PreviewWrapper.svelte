@@ -47,6 +47,7 @@
                 ...$selectedCommunitySummaryStore.gateConfig.gate,
                 level: "community",
                 expiry: $selectedCommunitySummaryStore.gateConfig.expiry,
+                collectionName: $selectedCommunitySummaryStore.name,
             };
 
             if (gateCheck === undefined) {

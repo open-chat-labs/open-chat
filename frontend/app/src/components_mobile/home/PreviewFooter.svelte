@@ -29,7 +29,12 @@
     let flattenedGates = $derived.by<EnhancedAccessGate[]>(() => {
         return gates.flatMap((g) => {
             if (isCompositeGate(g)) {
-                return g.gates.map((l) => ({ ...l, level: g.level, expiry: g.expiry }));
+                return g.gates.map((l) => ({
+                    ...l,
+                    level: g.level,
+                    expiry: g.expiry,
+                    collectionName: g.collectionName,
+                }));
             }
             if (isLeafGate(g)) {
                 return [g];

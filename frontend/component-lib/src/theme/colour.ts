@@ -201,6 +201,7 @@ export class Colours {
         public textAccent: Colour,
         public gradientPrimary: Colour,
         public gradientSecondary: Colour,
+        public myChatBubble: Colour,
     ) {
         this.gradient = new Gradient(gradientPrimary, gradientSecondary);
         this.gradientInverted = new Gradient(gradientSecondary, gradientPrimary);
@@ -234,6 +235,7 @@ export class Colours {
             this.gradientInverted.cssVariable("gradient-inverted"),
             this.gradientPrimary.cssVariable("gradient-primary"),
             this.gradientSecondary.cssVariable("gradient-secondary"),
+            this.myChatBubble.cssVariable("my-chat-bubble"),
         ];
     }
 }
@@ -254,6 +256,7 @@ const dummyColour = Colour.fromHex("#000000");
 export const ColourVars: ColourVarsType = Object.fromEntries(
     Object.keys(
         new Colours(
+            dummyColour,
             dummyColour,
             dummyColour,
             dummyColour,
