@@ -2,6 +2,7 @@
     import {
         cryptoBalanceStore,
         currentUserStore,
+        isBalanceGate,
         isCompositeGate,
         isCredentialGate,
         isDiamondGate,
@@ -31,11 +32,13 @@
         Row,
         transition,
     } from "component-lib";
+    import { onMount } from "svelte";
     import ShieldStar from "svelte-material-icons/ShieldStarOutline.svelte";
     import Translatable from "../../Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import AccessGateExpiry from "./AccessGateExpiry.svelte";
     import AccessGateSummary from "./AccessGateSummary.svelte";
+    import BalanceGateEvaluator from "./BalanceGateEvaluator.svelte";
     import CredentialGateEvaluator from "./CredentialGateEvaluator.svelte";
     import DiamondGateEvaluator from "./DiamondGateEvaluator.svelte";
     import NeuronGateEvaluator from "./NeuronGateEvaluator.svelte";
@@ -52,6 +55,12 @@
 
     let { gate, onClose, onComplete }: Props = $props();
 
+    onMount(() => {
+        return cryptoBalanceStore.subscribe((_) => {
+            refreshBalanceGates();
+        });
+    });
+
     let flattenedGates = $state<SatisfiedLeafGate[]>(normaliseGates(gate));
 
     let sortedGates = $derived(flattenedGates.toSorted(orderBySatisfied));
@@ -61,7 +70,6 @@
         return a.satisfied ? -1 : 1;
     }
 
-    $inspect(flattenedGates);
     let currentGateIndex = $state(-1);
     let satisfiedGates = $derived(sortedGates.filter((g) => g.satisfied).length);
     let compositeOr = $derived(isCompositeGate(gate) && gate.operator === "or");
@@ -206,6 +214,8 @@
                     gate={evaluatingGate}
                     onClose={cancelGate}
                     onApprove={confirmNeuronGate} />
+            {:else if isBalanceGate(evaluatingGate)}
+                <BalanceGateEvaluator gate={evaluatingGate} onClose={cancelGate} />
             {:else if isLifetimeDiamondGate(evaluatingGate)}
                 <DiamondGateEvaluator
                     onCancel={cancelGate}
@@ -217,8 +227,7 @@
                     lifetime={false}
                     onCredentialReceived={credentialReceived} />
             {/if}
-        {:else if isCompositeGate(gate)}
-            {@const or = gate.operator === "or"}
+        {:else}
             <Column gap={"lg"}>
                 <ShieldStar size={"4.5rem"} color={ColourVars.primary} />
                 <H2 fontWeight={"bold"}>
@@ -239,33 +248,36 @@
                         ]} />
                 </H2>
                 <Row wrap>
-                    <Body width={"hug"}>
-                        {#if or}
-                            <MulticolourText
-                                parts={[
-                                    {
-                                        text: i18nKey("To join you will need to satisfy "),
-                                        colour: "textSecondary",
-                                    },
-                                    {
-                                        text: i18nKey("at least one access gate."),
-                                        colour: "secondary",
-                                    },
-                                ]} />
-                        {:else}
-                            <MulticolourText
-                                parts={[
-                                    {
-                                        text: i18nKey("To join you will need to satisfy "),
-                                        colour: "textSecondary",
-                                    },
-                                    {
-                                        text: i18nKey("ALL access gates."),
-                                        colour: "warning",
-                                    },
-                                ]} />
-                        {/if}
-                    </Body>
+                    {#if isCompositeGate(gate)}
+                        {@const or = gate.operator === "or"}
+                        <Body width={"hug"}>
+                            {#if or}
+                                <MulticolourText
+                                    parts={[
+                                        {
+                                            text: i18nKey("To join you will need to satisfy "),
+                                            colour: "textSecondary",
+                                        },
+                                        {
+                                            text: i18nKey("at least one access gate."),
+                                            colour: "secondary",
+                                        },
+                                    ]} />
+                            {:else}
+                                <MulticolourText
+                                    parts={[
+                                        {
+                                            text: i18nKey("To join you will need to satisfy "),
+                                            colour: "textSecondary",
+                                        },
+                                        {
+                                            text: i18nKey("ALL access gates."),
+                                            colour: "warning",
+                                        },
+                                    ]} />
+                            {/if}
+                        </Body>
+                    {/if}
                     <Body width={"hug"} colour={"textSecondary"}>
                         <AccessGateExpiry expiry={gate.expiry} />
                     </Body>
@@ -280,23 +292,25 @@
                 {/each}
             </Column>
 
-            <BodySmall align={"center"} fontWeight={"bold"}>
-                <MulticolourText
-                    parts={[
-                        {
-                            text: i18nKey("You current satisfy "),
-                            colour: "textSecondary",
-                        },
-                        {
-                            text: i18nKey(`${satisfiedGates} out of ${sortedGates.length}`),
-                            colour: "primary",
-                        },
-                        {
-                            text: i18nKey(" gates."),
-                            colour: "textSecondary",
-                        },
-                    ]} />
-            </BodySmall>
+            {#if isCompositeGate(gate)}
+                <BodySmall align={"center"} fontWeight={"bold"}>
+                    <MulticolourText
+                        parts={[
+                            {
+                                text: i18nKey("You current satisfy "),
+                                colour: "textSecondary",
+                            },
+                            {
+                                text: i18nKey(`${satisfiedGates} out of ${sortedGates.length}`),
+                                colour: "primary",
+                            },
+                            {
+                                text: i18nKey(" gates."),
+                                colour: "textSecondary",
+                            },
+                        ]} />
+                </BodySmall>
+            {/if}
             <Column crossAxisAlignment={"center"} gap={"md"}>
                 <Button disabled={!complete} onClick={onComplete}>
                     <Translatable resourceKey={i18nKey("Join")} />

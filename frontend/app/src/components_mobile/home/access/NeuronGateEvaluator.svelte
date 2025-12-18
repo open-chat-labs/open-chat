@@ -32,7 +32,7 @@
 
     let { gate, onClose, onApprove }: Props = $props();
 
-    let token = client.getTokenDetailsForAccessGate(gate);
+    let token = $derived(client.getTokenDetailsForAccessGate(gate));
     let confirmed = $state(false);
 
     function neuronGateSubtext(gate: NeuronGate): string | undefined {
