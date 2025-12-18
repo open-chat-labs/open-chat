@@ -4,7 +4,6 @@ import { Theme } from "./theme";
 const primary = Colour.fromHex("#FF5672");
 const secondary = Colour.fromHex("#23A2EE");
 const tertiary = Colour.fromHex("#e41e79");
-const myChatBubble = Colour.fromHex("#DC3954");
 
 const primaryMuted = Colour.fromHex("#AA2E43");
 const secondaryMuted = Colour.fromHex("#004e7d");

@@ -202,7 +202,6 @@ export class Colours {
         public textAccent: Colour,
         public gradientPrimary: Colour,
         public gradientSecondary: Colour,
-        public myChatBubble: Colour,
     ) {
         this.gradient = new Gradient(gradientPrimary, gradientSecondary);
         this.gradientInverted = new Gradient(gradientSecondary, gradientPrimary);
