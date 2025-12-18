@@ -4,9 +4,12 @@
         Body,
         BodySmall,
         Caption,
+        Chip,
         ColourVars,
+        Column,
         CommonButton,
         Container,
+        Row,
         Switch,
     } from "component-lib";
     import {
@@ -369,24 +372,20 @@
                         {/snippet}
                     </TokenInput>
 
-                    <Container height={{ size: "2rem" }} direction={"vertical"} gap={"xs"}>
-                        <Container
-                            height={"fill"}
-                            mainAxisAlignment={"spaceBetween"}
-                            padding={["sm", "zero"]}
-                            gap={"sm"}>
+                    <Column gap={"xs"}>
+                        <Row mainAxisAlignment={"spaceBetween"} padding={["sm", "zero"]} gap={"sm"}>
                             {@render percentage(25)}
                             {@render percentage(50)}
                             {@render percentage(75)}
                             {@render percentage(100)}
-                        </Container>
+                        </Row>
                         <Caption colour={"disabledButton"}>
                             <Translatable
                                 resourceKey={i18nKey(
                                     "Use the options above to select a specific percentage of your total token amount you would like to swap.",
                                 )} />
                         </Caption>
-                    </Container>
+                    </Column>
                 </Container>
             {/if}
 
@@ -564,9 +563,9 @@
 {/if}
 
 {#snippet percentage(perc: number)}
-    <CommonButton width={"fill"} onClick={() => setAmount(perc)} mode={"active"} size={"small"}>
+    <Chip fill mode={"rounded"} onClick={() => setAmount(perc)}>
         {`${perc}%`}
-    </CommonButton>
+    </Chip>
 {/snippet}
 
 <style lang="scss">
