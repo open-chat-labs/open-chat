@@ -72,7 +72,7 @@
     {#if icon}
         <span class="icon">{@render icon(iconColours[mode])}</span>
     {/if}
-    <Label align={"center"} colour={textColours[mode]} width={"hug"}>
+    <Label align={"center"} colour={textColours[mode]} width={"fill"}>
         {@render children?.()}
     </Label>
     {#if onRemove}

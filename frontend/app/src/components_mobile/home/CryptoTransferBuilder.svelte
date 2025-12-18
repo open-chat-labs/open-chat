@@ -1,7 +1,9 @@
 <script lang="ts">
     import {
         Body,
+        Chip,
         ColourVars,
+        Column,
         CommonButton,
         Container,
         IconButton,
@@ -101,7 +103,19 @@
             })
             .finally(() => (sending = false));
     }
+
+    function setAmount(percentage: number) {
+        tokenState.draftAmount =
+            BigInt(Math.floor(Number(tokenState.cryptoBalance) * (percentage / 100))) -
+            tokenState.transferFees;
+    }
 </script>
+
+{#snippet percentage(perc: number)}
+    <Chip fill mode={"rounded"} onClick={() => setAmount(perc)}>
+        {`${perc}%`}
+    </Chip>
+{/snippet}
 
 <Sheet onDismiss={onClose}>
     <Container gap={"lg"} padding={["lg", "xl"]} direction={"vertical"}>
@@ -115,31 +129,42 @@
                 {/snippet}
             </IconButton>
         </Row>
+
         <CryptoSelector
             showRefresh
             draftAmount={tokenState.draftAmount}
             filter={(t) => t.balance > 0}
             bind:ledger />
 
-        {#if multiUserChat}
-            <SingleUserSelector bind:selectedReceiver={receiver}>
+        <Column gap={"md"}>
+            {#if multiUserChat}
+                <SingleUserSelector bind:selectedReceiver={receiver}>
+                    {#snippet subtext()}
+                        <Translatable resourceKey={i18nKey("Choose a token recipient")} />
+                    {/snippet}
+                </SingleUserSelector>
+            {/if}
+
+            <TokenInput
+                {ledger}
+                minAmount={tokenState.minAmount}
+                disabled={sending}
+                error={!validAmount}
+                bind:valid={validAmount}
+                maxAmount={tokenState.maxAmount}
+                bind:amount={tokenState.draftAmount}>
                 {#snippet subtext()}
-                    <Translatable resourceKey={i18nKey("Choose a token recipient")} />
+                    {`Minimum amount ${tokenState.minAmountLabel} ${tokenState.symbol}`}
                 {/snippet}
-            </SingleUserSelector>
-        {/if}
-        <TokenInput
-            {ledger}
-            minAmount={tokenState.minAmount}
-            disabled={sending}
-            error={!validAmount}
-            bind:valid={validAmount}
-            maxAmount={tokenState.maxAmount}
-            bind:amount={tokenState.draftAmount}>
-            {#snippet subtext()}
-                {`Minimum amount ${tokenState.minAmountLabel} ${tokenState.symbol}`}
-            {/snippet}
-        </TokenInput>
+            </TokenInput>
+
+            <Row mainAxisAlignment={"spaceBetween"} gap={"sm"}>
+                {@render percentage(25)}
+                {@render percentage(50)}
+                {@render percentage(75)}
+                {@render percentage(100)}
+            </Row>
+        </Column>
 
         <TextArea
             disabled={sending}
