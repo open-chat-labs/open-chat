@@ -1,5 +1,11 @@
 <script lang="ts">
-    import { ColourVars, Container, Spinner } from "component-lib";
+    import {
+        ColourVars,
+        Container,
+        Spinner,
+        type BorderWidthSize,
+        type Padding,
+    } from "component-lib";
     import Close from "svelte-material-icons/Close.svelte";
     import Magnify from "svelte-material-icons/Magnify.svelte";
 
@@ -11,6 +17,10 @@
         onClear?: () => void;
         searching?: boolean;
         debounceDuration?: number;
+        padding?: Padding;
+        background?: string;
+        borderColour?: string;
+        borderWidth?: BorderWidthSize;
     }
 
     let {
@@ -21,6 +31,10 @@
         onClear,
         searching = $bindable(false),
         debounceDuration = 300,
+        padding = "lg",
+        background = ColourVars.textTertiary,
+        borderColour,
+        borderWidth,
     }: Props = $props();
     let timer: number | undefined;
 
@@ -41,8 +55,10 @@
 </script>
 
 <Container
-    background={ColourVars.textTertiary}
-    padding={"lg"}
+    {borderColour}
+    {borderWidth}
+    {background}
+    {padding}
     borderRadius={"circle"}
     gap={"lg"}
     crossAxisAlignment={"center"}>

@@ -47,7 +47,6 @@
     import DropTarget from "./DropTarget.svelte";
     import ExternalContent from "./ExternalContent.svelte";
     import Footer from "./Footer.svelte";
-    import GiphySelector from "./GiphySelector.svelte";
     import MemeBuilder from "./MemeBuilder.svelte";
     import P2PSwapContentBuilder from "./P2PSwapContentBuilder.svelte";
     import PollBuilder from "./PollBuilder.svelte";
@@ -71,12 +70,9 @@
     let creatingCryptoTransfer: { ledger: string; amount: bigint } | undefined = $state(undefined);
     let creatingPrizeMessage = $state(false);
     let creatingP2PSwapMessage = $state(false);
-    let selectingGif = $state(false);
     let buildingMeme = $state(false);
     //@ts-ignore
     let pollBuilder: PollBuilder = $state();
-    //@ts-ignore
-    let giphySelector: GiphySelector = $state();
     //@ts-ignore
     let memeBuilder: MemeBuilder = $state();
     let showSearchHeader = $state(false);
@@ -116,7 +112,6 @@
                 firstUnreadMention = client.getFirstUnreadMention(chat);
             }),
             subscribe("createPoll", onCreatePoll),
-            subscribe("attachGif", onAttachGif),
             subscribe("tokenTransfer", onTokenTransfer),
             subscribe("createTestMessages", onCreateTestMessages),
             subscribe("searchChat", onSearchChat),
@@ -129,12 +124,6 @@
     function onCreatePoll(ctx: MessageContext) {
         if (messageContextsEqual(ctx, messageContext)) {
             createPoll();
-        }
-    }
-
-    function onAttachGif([evContext, search]: [MessageContext, string]) {
-        if (messageContextsEqual(messageContext, evContext)) {
-            attachGif(search);
         }
     }
 
@@ -186,13 +175,6 @@
 
     function onFileSelected(content: AttachmentContent) {
         localUpdates.draftMessages.setAttachment({ chatId: chat.id }, content);
-    }
-
-    function attachGif(search: string) {
-        selectingGif = true;
-        if (giphySelector !== undefined) {
-            giphySelector.reset(search);
-        }
     }
 
     function makeMeme() {
@@ -396,11 +378,6 @@
         onClose={() => (creatingP2PSwapMessage = false)} />
 {/if}
 
-<GiphySelector
-    onSend={onSendMessageWithContent}
-    bind:this={giphySelector}
-    bind:open={selectingGif} />
-
 <MemeBuilder onSend={onSendMessageWithContent} bind:this={memeBuilder} bind:open={buildingMeme} />
 
 <DropTarget {chat} mode={"message"} {onFileSelected}>
@@ -471,7 +448,6 @@
                 onStopTyping={stopTyping}
                 {onFileSelected}
                 {onSendMessage}
-                onAttachGif={attachGif}
                 onMakeMeme={makeMeme}
                 onTokenTransfer={tokenTransfer}
                 onCreatePrizeMessage={createPrizeMessage}

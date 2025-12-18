@@ -145,30 +145,18 @@
 
     emoji-picker {
         width: 100%;
-        --emoji-padding: 0.3rem;
-        --emoji-size: 1.8rem;
+        // --emoji-padding: 0.3rem;
+        --emoji-size: 2rem;
         --background: transparent;
-
         --border-size: 0;
         --border-color: var(--bd);
-        --input-font-color: var(--txt);
-        --input-border-color: var(--bd);
-        --input-padding: 8px 16px;
-
-        --num-columns: 12 !important;
-
-        @include size-below(sm) {
-            --num-columns: 11 !important;
-        }
-        @include size-below(xs) {
-            --num-columns: 9 !important;
-        }
-        @include size-below(xxs) {
-            --num-columns: 7 !important;
-        }
-
-        &.thread {
-            --num-columns: 10 !important;
-        }
+        --input-font-color: var(--text-primary);
+        --input-font-size: var(--typo-body-sz);
+        --input-line-height: var(--typo-body-lh);
+        --input-border-color: var(--text-tertiary);
+        --input-border-radius: var(--rad-circle);
+        --input-padding: var(--sp-sm) var(--sp-lg);
+        --indicator-color: var(--primary);
+        --num-columns: 8 !important;
     }
 </style>

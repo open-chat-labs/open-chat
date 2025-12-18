@@ -46,7 +46,6 @@
     import CryptoTransferBuilder from "../CryptoTransferBuilder.svelte";
     import DropTarget from "../DropTarget.svelte";
     import Footer from "../Footer.svelte";
-    import GiphySelector from "../GiphySelector.svelte";
     import MemeBuilder from "../MemeBuilder.svelte";
     import P2PSwapContentBuilder from "../P2PSwapContentBuilder.svelte";
     import PollBuilder from "../PollBuilder.svelte";
@@ -66,12 +65,9 @@
     //@ts-ignore
     let pollBuilder: PollBuilder = $state();
     //@ts-ignore
-    let giphySelector: GiphySelector = $state();
-    //@ts-ignore
     let memeBuilder: MemeBuilder = $state();
     let creatingPoll = $state(false);
     let creatingCryptoTransfer: { ledger: string; amount: bigint } | undefined = $state(undefined);
-    let selectingGif = $state(false);
     let buildingMeme = $state(false);
     let initialised = $state(false);
     let messagesDiv: HTMLDivElement | undefined = $state();
@@ -130,12 +126,6 @@
     function onCreatePoll(ctx: MessageContext) {
         if (messageContextsEqual(ctx, messageContext)) {
             createPoll();
-        }
-    }
-
-    function onAttachGif([evContext, search]: [MessageContext, string]) {
-        if (messageContextsEqual(messageContext, evContext)) {
-            attachGif(search);
         }
     }
 
@@ -252,13 +242,6 @@
         creatingPoll = true;
     }
 
-    function attachGif(search: string) {
-        selectingGif = true;
-        if (giphySelector !== undefined) {
-            giphySelector.reset(search);
-        }
-    }
-
     function makeMeme() {
         buildingMeme = true;
         if (memeBuilder !== undefined) {
@@ -339,11 +322,6 @@
         {messageContext}
         onClose={() => (creatingP2PSwapMessage = false)} />
 {/if}
-
-<GiphySelector
-    onSend={onSendMessageWithContent}
-    bind:this={giphySelector}
-    bind:open={selectingGif} />
 
 <MemeBuilder onSend={onSendMessageWithContent} bind:this={memeBuilder} bind:open={buildingMeme} />
 
@@ -471,7 +449,6 @@
                 {onStopTyping}
                 {onFileSelected}
                 {onSendMessage}
-                onAttachGif={attachGif}
                 onMakeMeme={makeMeme}
                 onTokenTransfer={tokenTransfer}
                 onCreateP2PSwapMessage={createP2PSwapMessage}

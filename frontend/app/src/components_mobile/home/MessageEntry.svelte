@@ -52,6 +52,7 @@
     import AudioAttacher from "./AudioAttacher.svelte";
     import CustomMessageTrigger from "./CustomMessageTrigger.svelte";
     import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
+    import EmojiOrGif from "./EmojiOrGif.svelte";
     import FileAttacher from "./FileAttacher.svelte";
     import MarkdownToggle from "./MarkdownToggle.svelte";
     import MentionPicker from "./MentionPicker.svelte";
@@ -84,7 +85,6 @@
         onCreatePrizeMessage?: () => void;
         onCreateP2PSwapMessage: () => void;
         onCreatePoll: () => void;
-        onAttachGif: (search: string) => void;
         onMakeMeme: () => void;
     }
 
@@ -112,7 +112,6 @@
         onCreatePrizeMessage,
         onCreateP2PSwapMessage,
         onCreatePoll,
-        onAttachGif,
         onMakeMeme,
     }: Props = $props();
 
@@ -145,6 +144,7 @@
 
     // Update this to force a new textbox instance to be created
     let textboxId = $state(Symbol());
+    let showEmojiPicker = $state(false);
 
     // TODO - note that this is not actually going to work yet - there is a lot
     // more to do to make the message entry component work with non-text elements
@@ -652,7 +652,7 @@
                         mainAxisAlignment={"spaceBetween"}
                         supplementalClass={"message_entry_text_box"}>
                         <IconButton
-                            onclick={() => onAttachGif("")}
+                            onclick={() => (showEmojiPicker = true)}
                             padding={["sm", "zero", "md", "sm"]}
                             size={"md"}>
                             {#snippet icon()}
@@ -762,13 +762,20 @@
             {/if}
         {/if}
     </Container>
+
+    {#if showEmojiPicker}
+        <!-- we don't actually want this to be a sheet, we want it to appear below the message entry box so we might indeed need to move it into the footer. We shall see.  -->
+        <EmojiOrGif
+            {chat}
+            onEmojiSelected={insertEmoji}
+            onClose={() => (showEmojiPicker = false)} />
+    {/if}
 {/if}
 <CustomMessageTrigger
     {permittedMessages}
     {onTokenTransfer}
     {onCreatePrizeMessage}
     {onCreateP2PSwapMessage}
-    {onAttachGif}
     {onMakeMeme}
     {onCreatePoll}
     {onClearAttachment}

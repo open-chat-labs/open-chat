@@ -1,7 +1,15 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
-    import { Avatar, Container, MenuTrigger } from "component-lib";
+    import {
+        Avatar,
+        Container,
+        IconButton,
+        MenuTrigger,
+        Row,
+        Sheet,
+        Subtitle,
+    } from "component-lib";
     import {
         type ChatIdentifier,
         chatListScopeStore,
@@ -9,7 +17,6 @@
         currentUserIdStore,
         currentUserStore,
         type EnhancedReplyContext,
-        iconSize,
         localUpdates,
         type Message,
         type MessageReminderCreatedContent,
@@ -36,9 +43,6 @@
     import { canShareMessage } from "../../utils/share";
     import { removeQueryStringParam } from "../../utils/urls";
     import BotProfile, { type BotProfileProps } from "../bots/BotProfile.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
-    import ModalContent from "../ModalContent.svelte";
-    import Overlay from "../Overlay.svelte";
     import Translatable from "../Translatable.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
     import ChatMessageMenu from "./ChatMessageMenu.svelte";
@@ -487,23 +491,23 @@
 {/if}
 
 {#if showEmojiPicker && canReact}
-    <Overlay onClose={() => (showEmojiPicker = false)} dismissible>
-        <ModalContent hideFooter hideHeader fill>
-            {#snippet body()}
-                <div class="emoji-header">
-                    <h4><Translatable resourceKey={i18nKey("chooseReaction")} /></h4>
-                    <HoverIcon onclick={() => (showEmojiPicker = false)}>
-                        <Close size={$iconSize} color={"var(--icon-txt)"} />
-                    </HoverIcon>
-                </div>
-                <EmojiPicker
-                    onEmojiSelected={selectReaction}
-                    onSkintoneChanged={(tone) => quickReactions.reload(tone)}
-                    supportCustom={true}
-                    mode={"reaction"} />
-            {/snippet}
-        </ModalContent>
-    </Overlay>
+    <Sheet onDismiss={() => (showEmojiPicker = false)}>
+        <Row padding={"lg"} mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
+            <Subtitle fontWeight={"bold"}>
+                <Translatable resourceKey={i18nKey("chooseReaction")} />
+            </Subtitle>
+            <IconButton onclick={() => (showEmojiPicker = false)}>
+                {#snippet icon(color)}
+                    <Close {color} />
+                {/snippet}
+            </IconButton>
+        </Row>
+        <EmojiPicker
+            onEmojiSelected={selectReaction}
+            onSkintoneChanged={(tone) => quickReactions.reload(tone)}
+            supportCustom={true}
+            mode={"reaction"} />
+    </Sheet>
 {/if}
 
 {#if showRemindMe}

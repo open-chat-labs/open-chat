@@ -167,7 +167,12 @@ export type CaptionedContent =
     | GiphyContent
     | PrizeContent;
 
-export type AttachmentContent = ImageContent | VideoContent | AudioContent | FileContent;
+export type AttachmentContent =
+    | ImageContent
+    | VideoContent
+    | AudioContent
+    | FileContent
+    | GiphyContent;
 
 export function isAttachmentContent(content: MessageContent): content is AttachmentContent {
     switch (content.kind) {
@@ -175,6 +180,7 @@ export function isAttachmentContent(content: MessageContent): content is Attachm
         case "video_content":
         case "audio_content":
         case "file_content":
+        case "giphy_content":
             return true;
         default:
             return false;

@@ -1,5 +1,7 @@
 <script lang="ts">
+    import { BodySmall, ColourVars, Column, IconButton, Row, Subtitle } from "component-lib";
     import { mobileWidth, type GiphyContent } from "openchat-client";
+    import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { rtlStore } from "../../stores/rtl";
     import { lowBandwidth } from "../../stores/settings";
@@ -37,63 +39,91 @@
     );
 
     let hidden = $derived($lowBandwidth);
+
+    function removeDraft() {
+        console.log("work out how to remove the draft message");
+    }
 </script>
 
-<div class="img-wrapper">
-    {#if !intersecting}
-        <div
-            class="placeholder"
-            class:landscape
-            class:fill
-            class:withCaption
-            {style}
-            class:draft
-            title={content.caption ?? content.title}
-            class:reply
-            class:rtl={$rtlStore}>
-        </div>
-    {:else if $mobileWidth || hidden}
-        {#if hidden && !$mobileWidth}
-            <div class="mask">
-                {#if !reply}
-                    <div class="reveal">
-                        <Button onClick={() => (hidden = false)}
-                            ><Translatable resourceKey={i18nKey("loadGif")} /></Button>
-                    </div>
-                {/if}
+{#if draft}
+    <Row
+        gap={"lg"}
+        crossAxisAlignment={"center"}
+        padding={["sm", "lg", "sm", "sm"]}
+        borderRadius={"lg"}
+        background={ColourVars.background1}>
+        <img class={"thumb"} src={content.mobile.url} alt={content.caption ?? content.title} />
+        <Column>
+            <Subtitle fontWeight={"bold"}>
+                {"This should be the gif's alt"}
+            </Subtitle>
+            <BodySmall colour={"textSecondary"}>
+                <Translatable resourceKey={i18nKey("Sharing a GIF")} />
+            </BodySmall>
+        </Column>
+        <IconButton onclick={removeDraft}>
+            {#snippet icon()}
+                <Close color={ColourVars.textSecondary} />
+            {/snippet}
+        </IconButton>
+    </Row>
+{:else}
+    <div class="img-wrapper">
+        {#if !intersecting}
+            <div
+                class="placeholder"
+                class:landscape
+                class:fill
+                class:withCaption
+                {style}
+                class:draft
+                title={content.caption ?? content.title}
+                class:reply
+                class:rtl={$rtlStore}>
             </div>
+        {:else if $mobileWidth || hidden}
+            {#if hidden && !$mobileWidth}
+                <div class="mask">
+                    {#if !reply}
+                        <div class="reveal">
+                            <Button onClick={() => (hidden = false)}
+                                ><Translatable resourceKey={i18nKey("loadGif")} /></Button>
+                        </div>
+                    {/if}
+                </div>
+            {/if}
+            <img
+                class:landscape
+                class:fill
+                class:withCaption
+                class:draft
+                class:reply
+                class:rtl={$rtlStore}
+                {style}
+                src={content.mobile.url}
+                alt={content.caption ?? content.title} />
+        {:else}
+            <video
+                autoplay
+                muted
+                loop
+                playsinline
+                class:landscape
+                class:fill
+                class:withCaption
+                class:draft
+                class:reply
+                class:rtl={$rtlStore}
+                title={content.caption ?? content.title}
+                {style}>
+                <track kind="captions" />
+                <source src={content.desktop.url} type="video/mp4" />
+            </video>
         {/if}
-        <img
-            class:landscape
-            class:fill
-            class:withCaption
-            class:draft
-            class:reply
-            class:rtl={$rtlStore}
-            {style}
-            src={content.mobile.url}
-            alt={content.caption ?? content.title} />
-    {:else}
-        <video
-            autoplay
-            muted
-            loop
-            playsinline
-            class:landscape
-            class:fill
-            class:withCaption
-            class:draft
-            class:reply
-            class:rtl={$rtlStore}
-            title={content.caption ?? content.title}
-            {style}>
-            <track kind="captions" />
-            <source src={content.desktop.url} type="video/mp4" />
-        </video>
-    {/if}
-</div>
+    </div>
 
-<ContentCaption caption={content.caption} {edited} {blockLevelMarkdown} />
+    <ContentCaption caption={content.caption} {edited} {blockLevelMarkdown} />
+{/if}
 
 <style lang="scss">
     .img-wrapper {
@@ -170,5 +200,13 @@
             max-height: 90px;
             width: auto;
         }
+    }
+
+    .thumb {
+        width: 5rem;
+        height: 5rem;
+        min-height: 5rem !important;
+        flex: 0 0 5rem;
+        aspect-ratio: 1 / 1;
     }
 </style>

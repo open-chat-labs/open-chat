@@ -1,7 +1,7 @@
 <script lang="ts">
     import { fileFromDataTransferItems } from "@src/utils/datatransfer";
+    import { Column } from "component-lib";
     import {
-        iconSize,
         messageContextsEqual,
         subscribe,
         type AttachmentContent,
@@ -19,15 +19,10 @@
     } from "openchat-client";
     import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
-    import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
     import EphemeralMessage from "../bots/EphemeralMessage.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
-    import ModalContent from "../ModalContent.svelte";
-    import Translatable from "../Translatable.svelte";
     import DraftMediaMessage from "./DraftMediaMessage.svelte";
-    import EmojiPicker from "./EmojiPickerWrapper.svelte";
     import MessageEntry from "./MessageEntry.svelte";
     import ReplyingTo from "./ReplyingTo.svelte";
 
@@ -58,7 +53,6 @@
         onCreatePrizeMessage?: () => void;
         onCreateP2PSwapMessage: () => void;
         onCreatePoll: () => void;
-        onAttachGif: (search: string) => void;
         onMakeMeme: () => void;
     }
 
@@ -87,7 +81,6 @@
         onCreatePrizeMessage,
         onCreateP2PSwapMessage,
         onCreatePoll,
-        onAttachGif,
         onMakeMeme,
     }: Props = $props();
 
@@ -164,29 +157,6 @@
     });
 </script>
 
-{#if messageAction === "emoji"}
-    <div class={`emoji-overlay ${mode}`}>
-        <ModalContent hideFooter hideHeader fill>
-            {#snippet body()}
-                <span>
-                    <div class="emoji-header">
-                        <h4><Translatable resourceKey={i18nKey("pickEmoji")} /></h4>
-                        <span title={$_("close")} class="close-emoji">
-                            <HoverIcon onclick={() => (messageAction = undefined)}>
-                                <Close size={$iconSize} color={"var(--icon-txt)"} />
-                            </HoverIcon>
-                        </span>
-                    </div>
-                    <EmojiPicker onEmojiSelected={emojiSelected} {mode} supportCustom={false} />
-                </span>
-            {/snippet}
-            {#snippet footer()}
-                <span></span>
-            {/snippet}
-        </ModalContent>
-    </div>
-{/if}
-
 <div class={`footer ${mode}`}>
     <div class="footer-overlay">
         {#if ephemeralMessageEvent !== undefined}
@@ -195,14 +165,14 @@
                 event={ephemeralMessageEvent} />
         {/if}
         {#if editingEvent === undefined && (replyingTo || attachment !== undefined)}
-            <div class="draft-container">
+            <Column padding={"lg"}>
                 {#if replyingTo}
                     <ReplyingTo readonly {onCancelReply} {user} {replyingTo} />
                 {/if}
                 {#if attachment !== undefined}
                     <DraftMediaMessage content={attachment} />
                 {/if}
-            </div>
+            </Column>
         {/if}
     </div>
     <MessageEntry
@@ -228,7 +198,6 @@
         {onTokenTransfer}
         {onCreatePrizeMessage}
         {onCreateP2PSwapMessage}
-        {onAttachGif}
         {onMakeMeme}
         {onClearAttachment}
         {onFileSelected} />
@@ -237,15 +206,6 @@
 <style lang="scss">
     :global(body.witch .middle .footer) {
         @include z-index("footer");
-    }
-
-    :global(.emoji-overlay .modal-content) {
-        border: var(--bw) solid var(--bd);
-    }
-
-    :global(.emoji-overlay.thread .modal-content) {
-        width: 100%;
-        border-radius: var(--modal-rd) var(--modal-rd) 0 0;
     }
 
     .footer {
@@ -262,40 +222,5 @@
         align-content: center;
         align-items: flex-start;
         background-color: var(--entry-bg);
-    }
-
-    .emoji-overlay {
-        position: absolute;
-        bottom: toRem(70);
-        left: toRem(10);
-        width: 100%;
-        @include z-index("footer-overlay");
-
-        @include mobile() {
-            left: 0;
-            bottom: toRem(60);
-        }
-
-        .emoji-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: $sp3 $sp4;
-            background-color: var(--section-bg);
-
-            .close-emoji {
-                flex: 0 0 20px;
-            }
-        }
-
-        &.thread {
-            bottom: toRem(60);
-            left: 0;
-        }
-    }
-
-    .draft-container {
-        max-width: 80%;
-        padding: 0 $sp4 $sp4 $sp4;
     }
 </style>

@@ -1,9 +1,11 @@
 <script lang="ts">
+    import { Row } from "component-lib";
     import type { AttachmentContent } from "openchat-client";
-    import VideoContent from "./VideoContent.svelte";
-    import ImageContent from "./ImageContent.svelte";
     import AudioContent from "./AudioContent.svelte";
     import FileContent from "./FileContent.svelte";
+    import GiphyContent from "./GiphyContent.svelte";
+    import ImageContent from "./ImageContent.svelte";
+    import VideoContent from "./VideoContent.svelte";
 
     interface Props {
         content: AttachmentContent;
@@ -12,26 +14,23 @@
     let { content }: Props = $props();
 </script>
 
-<div class="msg-preview">
+<Row>
     {#if content.kind === "video_content"}
         <VideoContent edited={false} fill={false} {content} draft />
     {:else if content.kind === "audio_content"}
         <AudioContent edited={false} {content} />
     {:else if content.kind === "image_content"}
         <ImageContent edited={false} fill={false} {content} draft />
+    {:else if content.kind === "giphy_content"}
+        <GiphyContent edited={false} fill={false} {content} draft />
     {:else if content.kind === "file_content"}
         <div class="file-preview">
             <FileContent edited={false} me {content} draft />
         </div>
     {/if}
-</div>
+</Row>
 
 <style lang="scss">
-    .msg-preview {
-        min-width: 90px;
-        margin-top: $sp4;
-    }
-
     .file-preview {
         border-radius: $sp4;
         padding: $sp3;

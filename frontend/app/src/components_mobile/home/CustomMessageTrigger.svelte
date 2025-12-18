@@ -5,7 +5,6 @@
     import File from "svelte-material-icons/FileOutline.svelte";
     import Gift from "svelte-material-icons/GiftOutline.svelte";
     import Gallery from "svelte-material-icons/ImageMultipleOutline.svelte";
-    import Sticker from "svelte-material-icons/StickerEmoji.svelte";
     import Swap from "svelte-material-icons/SwapHorizontal.svelte";
     import { expoInOut } from "svelte/easing";
     import { fly } from "svelte/transition";
@@ -21,7 +20,6 @@
         onCreatePrizeMessage?: () => void;
         onCreateP2PSwapMessage: () => void;
         onCreatePoll: () => void;
-        onAttachGif: (search: string) => void;
         onMakeMeme: () => void;
         onFileSelected: (content: AttachmentContent) => void;
     }
@@ -34,7 +32,6 @@
         onCreatePrizeMessage,
         onCreatePoll,
         onCreateP2PSwapMessage,
-        onAttachGif,
         onMakeMeme,
     }: Props = $props();
     const width: SizeMode = { size: "6.5rem" };
@@ -115,14 +112,6 @@
                     <MemeFighter {color} />
                 {/snippet}
                 Meme
-            </BigButton>
-        {/if}
-        {#if permittedMessages.get("giphy")}
-            <BigButton {height} {width} onClick={() => onAttachGif("")}>
-                {#snippet icon(color)}
-                    <Sticker {color} />
-                {/snippet}
-                Gif
             </BigButton>
         {/if}
     </Container>
