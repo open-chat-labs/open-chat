@@ -61,6 +61,5 @@ export const theme = new Theme(
         textAccent,
         gradientPrimary,
         gradientSecondary,
-        myChatBubble,
     ),
 );
