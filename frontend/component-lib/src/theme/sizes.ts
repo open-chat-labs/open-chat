@@ -46,7 +46,9 @@ export class BorderWidth {
 export type BorderWidthSize = Exclude<keyof BorderWidth, keyof object | "cssVariables">;
 
 export function getBorderWidthCss(bw: BorderWidthSize): string {
-    return bw === "zero" ? "" : `border-width: var(--bw-${bw})`;
+    return bw === "zero"
+        ? ""
+        : `border-width: var(--bw-${bw === "extraThick" ? "extra-thick" : bw})`;
 }
 
 export function getBorderStyleCss(

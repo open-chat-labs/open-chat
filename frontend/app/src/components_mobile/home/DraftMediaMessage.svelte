@@ -7,6 +7,7 @@
     import FileContent from "./FileContent.svelte";
     import GiphyContent from "./GiphyContent.svelte";
     import ImageContent from "./ImageContent.svelte";
+    import P2PSwapContentInitial from "./P2PSwapContentInitial.svelte";
     import VideoContent from "./VideoContent.svelte";
 
     interface Props {
@@ -28,6 +29,8 @@
         <GiphyContent {ctx} edited={false} fill={false} {content} draft />
     {:else if content.kind === "crypto_content"}
         <CryptoContent me {ctx} {content} draft senderId={$currentUserIdStore} />
+    {:else if content.kind === "p2p_swap_content_initial"}
+        <P2PSwapContentInitial me {ctx} {content} draft senderId={$currentUserIdStore} />
     {:else if content.kind === "file_content"}
         <div class="file-preview">
             <FileContent edited={false} me {content} draft />

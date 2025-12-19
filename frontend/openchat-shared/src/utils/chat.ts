@@ -378,6 +378,10 @@ export function contentTypeToPermission(contentType: AttachmentContent["kind"]):
             return "file";
         case "giphy_content":
             return "giphy";
+        case "crypto_content":
+            return "crypto";
+        case "p2p_swap_content_initial":
+            return "p2pSwap";
         default:
             throw new UnsupportedValueError("Unknown attachment content type", contentType);
     }

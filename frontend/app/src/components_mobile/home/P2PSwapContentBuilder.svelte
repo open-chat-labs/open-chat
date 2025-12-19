@@ -1,28 +1,38 @@
 <script lang="ts">
+    import {
+        Body,
+        BodySmall,
+        Chip,
+        Column,
+        CommonButton,
+        IconButton,
+        Row,
+        Sheet,
+        transition,
+    } from "component-lib";
     import type { MessageContext, OpenChat, P2PSwapContentInitial } from "openchat-client";
     import {
         enhancedCryptoLookup as cryptoLookup,
         isDiamondStore,
-        mobileWidth,
+        localUpdates,
+        ONE_DAY,
         publish,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
+    import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
+    import Paperclip from "svelte-material-icons/Paperclip.svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
     import AreYouSure from "../AreYouSure.svelte";
-    import Button from "../Button.svelte";
-    import ButtonGroup from "../ButtonGroup.svelte";
-    import ErrorMessage from "../ErrorMessage.svelte";
-    import Legend from "../Legend.svelte";
-    import ModalContent from "../ModalContent.svelte";
-    import Overlay from "../Overlay.svelte";
-    import TextArea from "../TextArea.svelte";
     import Translatable from "../Translatable.svelte";
-    import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
-    import DurationPicker from "./DurationPicker.svelte";
+    import DurationSelector from "./DurationSelector.svelte";
     import TokenInput from "./TokenInput.svelte";
+    import TransferFeesMessage from "./TransferFeesMessage.svelte";
+    import { TokenState } from "./wallet/walletState.svelte";
+
+    type Step = "from" | "to";
 
     const client = getContext<OpenChat>("client");
 
@@ -34,30 +44,28 @@
 
     let { fromLedger = $bindable(), messageContext, onClose }: Props = $props();
 
-    let durationValid = $state(false);
+    let toLedger: string = $state(initialToLedger());
+    let fromDetails = $derived($cryptoLookup.get(fromLedger)!);
+    let toDetails = $derived($cryptoLookup.get(toLedger)!);
+    let fromState = $derived(new TokenState(fromDetails));
+    let step = $state<Step>("from");
     let fromAmount: bigint = $state(0n);
     let fromAmountValid: boolean = $state(false);
-    let toLedger: string = $state("");
     let toAmount: bigint = $state(0n);
     let toAmountValid: boolean = $state(false);
-    let expiresIn: bigint = $state(0n);
-    let message = $state("");
+    let expiresIn: bigint = $state(BigInt(ONE_DAY));
     let error: string | undefined = $state(undefined);
     let tokenInputState: "ok" | "zero" | "too_low" | "too_high" = $state("ok");
     let confirming = $state(false);
-    let sending = $state(false);
 
-    let fromDetails = $derived($cryptoLookup.get(fromLedger)!);
-    let toDetails = $derived($cryptoLookup.get(toLedger)!);
     let totalFees = $derived(fromDetails.transferFee * BigInt(2));
-    let remainingBalance = $state(0n);
-    $effect(() => {
-        remainingBalance =
-            fromAmount > 0n ? fromDetails.balance - fromAmount - totalFees : fromDetails.balance;
-    });
     let minAmount = $derived(fromDetails.transferFee * BigInt(10));
-    let valid = $derived(error === undefined && fromAmountValid && toAmountValid && durationValid);
-    let errorMessage = $derived(error !== undefined ? i18nKey(error) : $pinNumberErrorMessageStore);
+    let valid = $derived(error === undefined && fromAmountValid && toAmountValid);
+
+    function initialToLedger() {
+        // just grab any old ledger for starters
+        return $cryptoLookup.keys().find((l) => l !== fromLedger) ?? "";
+    }
 
     $effect(() => {
         if (tokenInputState === "too_low") {
@@ -108,44 +116,13 @@
             },
             token0Amount: fromAmount,
             token1Amount: toAmount,
-            caption: message === "" ? undefined : message,
+            caption: undefined,
             expiresIn,
         };
 
-        sending = true;
-        error = undefined;
-
-        return client
-            .sendMessageWithContent(messageContext, content, false)
-            .then((resp) => {
-                if (resp.kind === "success" || resp.kind === "transfer_success") {
-                    onClose();
-                } else if ($pinNumberErrorMessageStore === undefined) {
-                    error = "errorSendingMessage";
-                }
-            })
-            .finally(() => (sending = false));
-    }
-
-    function cancel() {
+        localUpdates.draftMessages.setAttachment(messageContext, content);
         onClose();
-    }
-
-    function onBalanceRefreshed() {
-        onBalanceRefreshFinished();
-        error = undefined;
-    }
-
-    function onBalanceRefreshError(err: string) {
-        onBalanceRefreshFinished();
-        error = err;
-    }
-
-    function onBalanceRefreshFinished() {
-        if (remainingBalance < 0) {
-            remainingBalance = BigInt(0);
-            fromAmount = fromDetails.balance - totalFees;
-        }
+        return Promise.resolve();
     }
 
     function onSelectFromToken(ledger: string, _: string) {
@@ -153,6 +130,20 @@
             toLedger =
                 [...$cryptoLookup.values()].map((t) => t.ledger).find((l) => l !== toLedger) ??
                 toLedger;
+        }
+    }
+
+    function setFromAmount(percentage: number) {
+        fromAmount =
+            BigInt(Math.floor(Number(fromDetails.balance) * (percentage / 100))) -
+            fromState.transferFees * 2n;
+    }
+
+    function next() {
+        if (step === "from") {
+            transition(["fade"], () => {
+                step = "to";
+            });
         }
     }
 </script>
@@ -166,7 +157,104 @@
         action={send} />
 {/if}
 
-<Overlay dismissible>
+{#snippet percentage(perc: number)}
+    <Chip fill mode={"rounded"} onClick={() => setFromAmount(perc)}>
+        {`${perc}%`}
+    </Chip>
+{/snippet}
+
+<Sheet onDismiss={onClose}>
+    <Column gap={"lg"} padding={["lg", "xl"]}>
+        <Row>
+            <Body fontWeight={"bold"}>
+                {#if step === "from"}
+                    <Translatable resourceKey={i18nKey("Select token to swap")} />
+                {:else}
+                    <Translatable resourceKey={i18nKey("Select token to receive")} />
+                {/if}
+            </Body>
+            <IconButton onclick={onClose}>
+                {#snippet icon(color)}
+                    <Close {color} />
+                {/snippet}
+            </IconButton>
+        </Row>
+
+        {#if step === "from"}
+            <CryptoSelector
+                filter={(t) => t.balance > 0}
+                bind:ledger={fromLedger}
+                showRefresh
+                onSelect={onSelectFromToken} />
+
+            <Column gap={"md"}>
+                <!-- TODO desktop TokenInput has the ability to showDollarAmount which I removed for some reason -->
+                <TokenInput
+                    ledger={fromLedger}
+                    {minAmount}
+                    maxAmount={fromDetails.balance - totalFees}
+                    bind:status={tokenInputState}
+                    bind:valid={fromAmountValid}
+                    bind:amount={fromAmount}>
+                    {#snippet subtext()}
+                        {`Minimum amount ${fromState.formatTokens(minAmount)} ${fromState.symbol}`}
+                    {/snippet}
+                </TokenInput>
+
+                <Row mainAxisAlignment={"spaceBetween"} gap={"sm"}>
+                    {@render percentage(25)}
+                    {@render percentage(50)}
+                    {@render percentage(75)}
+                    {@render percentage(100)}
+                </Row>
+            </Column>
+        {:else}
+            <CryptoSelector filter={(t) => t.ledger !== fromLedger} bind:ledger={toLedger} />
+
+            <TokenInput ledger={toLedger} bind:valid={toAmountValid} bind:amount={toAmount} />
+
+            <DurationSelector bind:duration={expiresIn}>
+                {#snippet title()}
+                    <BodySmall fontWeight={"bold"}>
+                        <Translatable resourceKey={i18nKey("Swap expiry time")} />
+                    </BodySmall>
+                {/snippet}
+            </DurationSelector>
+        {/if}
+
+        <Row
+            mainAxisAlignment={step === "from" ? "end" : "spaceBetween"}
+            crossAxisAlignment={"end"}>
+            {#if step === "to"}
+                <TransferFeesMessage
+                    symbol={fromDetails.symbol}
+                    tokenDecimals={fromDetails.decimals}
+                    transferFees={totalFees} />
+            {/if}
+            {#if step === "from"}
+                <CommonButton
+                    disabled={!fromAmountValid}
+                    onClick={next}
+                    mode={"active"}
+                    size={"medium"}>
+                    {#snippet icon(color, size)}
+                        <ArrowRight {color} {size} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("Next 1/2")} />
+                </CommonButton>
+            {:else}
+                <CommonButton disabled={!valid} onClick={onSend} mode={"active"} size={"medium"}>
+                    {#snippet icon(color, size)}
+                        <Paperclip {color} {size} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("Confirm")} />
+                </CommonButton>
+            {/if}
+        </Row>
+    </Column>
+</Sheet>
+
+<!-- <Overlay dismissible>
     <ModalContent>
         {#snippet header()}
             <span class="header">
@@ -254,7 +342,7 @@
             </span>
         {/snippet}
     </ModalContent>
-</Overlay>
+</Overlay> -->
 
 <style lang="scss">
     :global(.swap-builder .row input.amount-val) {
