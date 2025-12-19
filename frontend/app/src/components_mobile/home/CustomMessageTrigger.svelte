@@ -1,6 +1,6 @@
 <script lang="ts">
     import { BigButton, Container, type SizeMode } from "component-lib";
-    import type { AttachmentContent, MessagePermission } from "openchat-client";
+    import { publish, type AttachmentContent, type MessagePermission } from "openchat-client";
     import Poll from "svelte-material-icons/ChartBoxOutline.svelte";
     import File from "svelte-material-icons/FileOutline.svelte";
     import Gift from "svelte-material-icons/GiftOutline.svelte";
@@ -19,9 +19,9 @@
         onTokenTransfer: (args: { ledger?: string; amount?: bigint }) => void;
         onCreatePrizeMessage?: () => void;
         onCreateP2PSwapMessage: () => void;
-        onCreatePoll: () => void;
         onMakeMeme: () => void;
         onFileSelected: (content: AttachmentContent) => void;
+        messageContext: MessageContext;
     }
 
     let {
@@ -30,9 +30,9 @@
         onTokenTransfer,
         onFileSelected,
         onCreatePrizeMessage,
-        onCreatePoll,
         onCreateP2PSwapMessage,
         onMakeMeme,
+        messageContext,
     }: Props = $props();
     const width: SizeMode = { size: "6.5rem" };
     const height: SizeMode = { size: "4.5rem" };
@@ -91,7 +91,7 @@
             </BigButton>
         {/if}
         {#if permittedMessages.get("poll")}
-            <BigButton {height} {width} onClick={onCreatePoll}>
+            <BigButton {height} {width} onClick={() => publish("createPoll", messageContext)}>
                 {#snippet icon(color)}
                     <Poll {color} />
                 {/snippet}

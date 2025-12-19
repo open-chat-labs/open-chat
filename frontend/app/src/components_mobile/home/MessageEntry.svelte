@@ -84,7 +84,6 @@
         onTokenTransfer: (args: { ledger?: string; amount?: bigint }) => void;
         onCreatePrizeMessage?: () => void;
         onCreateP2PSwapMessage: () => void;
-        onCreatePoll: () => void;
         onMakeMeme: () => void;
     }
 
@@ -111,7 +110,6 @@
         onTokenTransfer,
         onCreatePrizeMessage,
         onCreateP2PSwapMessage,
-        onCreatePoll,
         onMakeMeme,
     }: Props = $props();
 
@@ -776,9 +774,9 @@
     {onCreatePrizeMessage}
     {onCreateP2PSwapMessage}
     {onMakeMeme}
-    {onCreatePoll}
     {onClearAttachment}
     {onFileSelected}
+    {messageContext}
     bind:open={showCustomMessageTrigger} />
 
 <style lang="scss">

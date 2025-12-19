@@ -50,7 +50,6 @@
         onTokenTransfer: (args: { ledger?: string; amount?: bigint }) => void;
         onCreatePrizeMessage?: () => void;
         onCreateP2PSwapMessage: () => void;
-        onCreatePoll: () => void;
         onMakeMeme: () => void;
     }
 
@@ -78,7 +77,6 @@
         onTokenTransfer,
         onCreatePrizeMessage,
         onCreateP2PSwapMessage,
-        onCreatePoll,
         onMakeMeme,
     }: Props = $props();
 
@@ -187,7 +185,6 @@
         {onSetTextContent}
         {onStartTyping}
         {onStopTyping}
-        {onCreatePoll}
         {onTokenTransfer}
         {onCreatePrizeMessage}
         {onCreateP2PSwapMessage}

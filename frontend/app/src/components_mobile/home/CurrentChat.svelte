@@ -49,7 +49,6 @@
     import Footer from "./Footer.svelte";
     import MemeBuilder from "./MemeBuilder.svelte";
     import P2PSwapContentBuilder from "./P2PSwapContentBuilder.svelte";
-    import PollBuilder from "./PollBuilder.svelte";
     import PrizeContentBuilder from "./PrizeContentBuilder.svelte";
 
     interface Props {
@@ -66,13 +65,10 @@
     let previousChatId: ChatIdentifier | undefined = $state(undefined);
     let unreadMessages = $state<number>(0);
     let firstUnreadMention = $state<Mention | undefined>();
-    let creatingPoll = $state(false);
     let creatingCryptoTransfer: { ledger: string; amount: bigint } | undefined = $state(undefined);
     let creatingPrizeMessage = $state(false);
     let creatingP2PSwapMessage = $state(false);
     let buildingMeme = $state(false);
-    //@ts-ignore
-    let pollBuilder: PollBuilder = $state();
     //@ts-ignore
     let memeBuilder: MemeBuilder = $state();
     let showSearchHeader = $state(false);
@@ -111,7 +107,6 @@
                 unreadMessages = getUnreadMessageCount(chat);
                 firstUnreadMention = client.getFirstUnreadMention(chat);
             }),
-            subscribe("createPoll", onCreatePoll),
             subscribe("tokenTransfer", onTokenTransfer),
             subscribe("createTestMessages", onCreateTestMessages),
             subscribe("searchChat", onSearchChat),
@@ -120,12 +115,6 @@
             unsubs.forEach((u) => u());
         };
     });
-
-    function onCreatePoll(ctx: MessageContext) {
-        if (messageContextsEqual(ctx, messageContext)) {
-            createPoll();
-        }
-    }
 
     function onTokenTransfer(args: { context: MessageContext; ledger?: string; amount?: bigint }) {
         if (messageContextsEqual(messageContext, args.context)) {
@@ -147,15 +136,6 @@
 
     function onWindowFocus() {
         client.closeNotificationsForChat(chat.id);
-    }
-
-    function createPoll() {
-        if (!client.canSendMessage(chat.id, "message", "poll")) return;
-
-        if (pollBuilder !== undefined) {
-            pollBuilder.resetPoll();
-        }
-        creatingPoll = true;
     }
 
     function tokenTransfer(detail: { ledger?: string; amount?: bigint }) {
@@ -351,8 +331,6 @@
     <AreYouSure title={i18nKey("removePreviewQuestion")} action={removePreview} />
 {/if}
 
-<PollBuilder onSend={onSendMessageWithContent} bind:this={pollBuilder} bind:open={creatingPoll} />
-
 {#if creatingCryptoTransfer !== undefined}
     <CryptoTransferBuilder
         {chat}
@@ -451,8 +429,7 @@
                 onMakeMeme={makeMeme}
                 onTokenTransfer={tokenTransfer}
                 onCreatePrizeMessage={createPrizeMessage}
-                onCreateP2PSwapMessage={createP2PSwapMessage}
-                onCreatePoll={createPoll} />
+                onCreateP2PSwapMessage={createP2PSwapMessage} />
         {/if}
     </Container>
 </DropTarget>

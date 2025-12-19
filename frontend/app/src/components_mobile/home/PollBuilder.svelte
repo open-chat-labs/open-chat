@@ -1,102 +1,116 @@
 <script lang="ts">
     import {
-        iconSize,
-        mobileWidth,
+        Body,
+        Column,
+        CommonButton,
+        Input,
+        InputIconButton,
+        Row,
+        StatusCard,
+        Switch,
+        transition,
+    } from "component-lib";
+    import {
+        ONE_DAY,
+        OpenChat,
+        type MessageContext,
         type PollContent,
-        type ResourceKey,
         type TotalPollVotes,
     } from "openchat-client";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
-    import PlusCircleOutline from "svelte-material-icons/PlusCircleOutline.svelte";
-    import { i18nKey } from "../../i18n/i18n";
-    import Button from "../Button.svelte";
-    import ButtonGroup from "../ButtonGroup.svelte";
-    import ErrorMessage from "../ErrorMessage.svelte";
-    import Input from "../Input.svelte";
-    import Legend from "../Legend.svelte";
-    import ModalContent from "../ModalContent.svelte";
-    import Overlay from "../Overlay.svelte";
-    import Radio from "../Radio.svelte";
-    import Toggle from "../Toggle.svelte";
+    import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
+    import Chart from "svelte-material-icons/ChartBoxOutline.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
+    import Plus from "svelte-material-icons/Plus.svelte";
+    import { i18nKey, interpolate } from "../../i18n/i18n";
+    import Setting from "../Setting.svelte";
     import Translatable from "../Translatable.svelte";
+    import DurationSelector from "./DurationSelector.svelte";
+    import SlidingPageContent from "./SlidingPageContent.svelte";
+
+    const client = getContext<OpenChat>("client");
+
+    type Step = "definition" | "settings";
 
     const MAX_QUESTION_LENGTH = 250;
     const MAX_ANSWER_LENGTH = 50;
     const MAX_ANSWERS = 10;
-    const durations: Duration[] = ["oneHour", "oneDay", "oneWeek"];
-
-    type Duration = "oneHour" | "oneDay" | "oneWeek";
 
     type CandidatePoll = {
         pollQuestion: string;
         anonymous: boolean;
-        limitedDuration: boolean;
         showVotesBeforeEndDate: boolean;
         allowMultipleVotesPerUser: boolean;
         allowUserToChangeVote: boolean;
-        pollAnswers: Map<string, string>;
+        pollAnswers: string[];
+        duration: bigint;
     };
 
     interface Props {
-        open: boolean;
-        onSend: (content: PollContent) => void;
+        messageContext: MessageContext;
+        onClose: () => void;
     }
 
-    let { open = $bindable(), onSend }: Props = $props();
+    let { messageContext, onClose }: Props = $props();
 
+    let step = $state<Step>("definition");
     let poll: CandidatePoll = $state(emptyPoll());
-    let nextAnswer: string = $state("");
-    let answerError: ResourceKey | undefined = $state(undefined);
-    let selectedDuration: Duration = $state("oneDay");
-    let showSettings = $state(false);
+
+    let emptyAnswers = $derived(
+        poll.pollAnswers.reduce((n, a) => {
+            if (a.length === 0) {
+                return n + 1;
+            }
+            return n;
+        }, 0),
+    );
+    let enoughAnswers = $derived(poll.pollAnswers.length >= 2);
+    let uniqueAnswers = $derived.by(() => {
+        const a = poll.pollAnswers.map((a) => a.toUpperCase());
+        return a.length === new Set(a).size;
+    });
+    let validQuestion = $derived(poll.pollQuestion.length > 0);
+    let validAnswers = $derived(enoughAnswers && uniqueAnswers && emptyAnswers === 0);
+    let valid = $derived(validQuestion && validAnswers);
 
     export function resetPoll() {
-        selectedDuration = "oneDay";
-        answerError = undefined;
-        nextAnswer = "";
         poll = emptyPoll();
-        showSettings = false;
     }
 
     function emptyPoll() {
         return {
-            pollQuestion: "",
+            pollQuestion: "Which is the best chat app?",
             anonymous: true,
-            limitedDuration: true,
             showVotesBeforeEndDate: true,
             allowMultipleVotesPerUser: false,
             allowUserToChangeVote: true,
-            pollAnswers: new Map<string, string>(),
+            pollAnswers: ["OpenChat", "Nah - it's OpenChat"],
+            duration: BigInt(ONE_DAY),
         };
     }
 
-    function answerIsValid(answer: string): boolean {
-        const trimmed = answer?.trim();
-        return (
-            trimmed !== undefined &&
-            trimmed.length > 0 &&
-            trimmed.length <= MAX_ANSWER_LENGTH &&
-            !poll.pollAnswers.has(trimmed.toUpperCase())
-        );
+    function setStep(s: Step) {
+        transition(["fade"], () => {
+            step = s;
+        });
     }
 
     function addAnswer() {
-        const trimmed = nextAnswer?.trim();
-        if (answerIsValid(trimmed)) {
-            answerError = undefined;
-            poll.pollAnswers = new Map(poll.pollAnswers.set(trimmed.toUpperCase(), trimmed));
-            nextAnswer = "";
-            return true;
-        } else {
-            answerError = i18nKey("poll.invalidAnswer");
-            return false;
-        }
+        transition(["fade"], () => {
+            poll.pollAnswers.push("");
+        });
     }
 
-    function deleteAnswer(answer: string) {
-        poll.pollAnswers.delete(answer.toUpperCase());
-        poll.pollAnswers = new Map(poll.pollAnswers);
+    function deleteAnswer(idx: number) {
+        transition(["fade"], () => {
+            poll.pollAnswers = poll.pollAnswers.reduce((all, a, i) => {
+                if (i !== idx) {
+                    all.push(a);
+                }
+                return all;
+            }, [] as string[]);
+        });
     }
 
     function createPollVotes(): TotalPollVotes {
@@ -109,24 +123,7 @@
         }
     }
 
-    const ONE_HOUR = 1000 * 60 * 60;
-    const ONE_DAY = ONE_HOUR * 24;
-    const ONE_WEEK = ONE_DAY * 7;
-
-    function createPollEndDate() {
-        if (!poll.limitedDuration) return undefined;
-        const now = Date.now();
-        if (selectedDuration === "oneHour") return BigInt(now + ONE_HOUR);
-        if (selectedDuration === "oneDay") return BigInt(now + ONE_DAY);
-        if (selectedDuration === "oneWeek") return BigInt(now + ONE_WEEK);
-    }
-
     function createPollContent(): PollContent | undefined {
-        if (nextAnswer !== "") {
-            if (!addAnswer()) {
-                return undefined;
-            }
-        }
         return {
             kind: "poll_content",
             votes: {
@@ -138,7 +135,7 @@
                 allowUserToChangeVote: poll.allowUserToChangeVote,
                 text: poll.pollQuestion === "" ? undefined : poll.pollQuestion,
                 showVotesBeforeEndDate: poll.showVotesBeforeEndDate,
-                endDate: createPollEndDate(),
+                endDate: BigInt(+new Date()) + poll.duration,
                 anonymous: poll.anonymous,
                 options: [...poll.pollAnswers.values()],
             },
@@ -149,207 +146,158 @@
     function start() {
         const poll = createPollContent();
         if (poll) {
-            onSend(poll);
-            open = false;
+            client.sendMessageWithContent(messageContext, poll, false);
+            onClose();
         }
     }
-    let valid = $derived(
-        poll.pollAnswers.size >= 2 ||
-            (poll.pollAnswers.size === 1 && nextAnswer.length > 0 && answerIsValid(nextAnswer)),
-    );
 </script>
 
-{#if open}
-    <Overlay>
-        <ModalContent>
-            {#snippet header()}
-                <Translatable resourceKey={i18nKey("poll.create")} />
-            {/snippet}
-            {#snippet body()}
-                <div class="buttons">
-                    <ButtonGroup align={"start"}>
-                        <Button
-                            small={!$mobileWidth}
-                            tiny={$mobileWidth}
-                            secondary={showSettings}
-                            onClick={() => (showSettings = false)}
-                            ><Translatable resourceKey={i18nKey("poll.poll")} /></Button>
-                        <Button
-                            small={!$mobileWidth}
-                            secondary={!showSettings}
-                            tiny={$mobileWidth}
-                            onClick={() => (showSettings = true)}
-                            ><Translatable resourceKey={i18nKey("poll.settings")} /></Button>
-                    </ButtonGroup>
-                </div>
-                {#if !showSettings}
-                    <form>
-                        <div class="section underline">
-                            <Legend label={i18nKey("poll.questionLabel")} />
-                            <Input
-                                bind:value={poll.pollQuestion}
-                                autofocus
-                                minlength={0}
-                                maxlength={MAX_QUESTION_LENGTH}
-                                countdown
-                                placeholder={i18nKey("poll.optionalQuestion")} />
-                        </div>
+<SlidingPageContent
+    title={i18nKey(`Create a poll ${step === "definition" ? 1 : 2} / 2`)}
+    subtitle={i18nKey("Duration, question and answers")}>
+    <Column height={"fill"} gap={"xxl"} padding={["lg", "xxl"]}>
+        {#if step === "definition"}
+            <Column gap={"md"}>
+                <Body fontWeight={"bold"}>
+                    <Translatable resourceKey={i18nKey("Poll question")} />
+                </Body>
+                <Input
+                    bind:value={poll.pollQuestion}
+                    autofocus
+                    minlength={1}
+                    maxlength={MAX_QUESTION_LENGTH}
+                    countdown
+                    placeholder={interpolate($_, i18nKey("Enter your question here"))}>
+                    {#snippet subtext()}
+                        <Translatable
+                            resourceKey={i18nKey("What do you want to ask in this poll?")} />
+                    {/snippet}
+                </Input>
+            </Column>
 
-                        <div class="section">
-                            <Legend
-                                label={i18nKey("poll.answersLabel")}
-                                rules={i18nKey("poll.atLeastTwo")} />
-                            {#each [...poll.pollAnswers.values()] as answer (answer)}
-                                <div class="answer">
-                                    <div class="answer-text">
-                                        {answer}
-                                    </div>
-                                    <div class="delete" onclick={() => deleteAnswer(answer)}>
-                                        <DeleteOutline size={$iconSize} color={"var(--icon-txt)"} />
-                                    </div>
-                                </div>
-                            {/each}
-                            {#if poll.pollAnswers.size < MAX_ANSWERS}
-                                <div class="next">
-                                    <div class="next-txt">
-                                        <Input
-                                            bind:value={nextAnswer}
-                                            disabled={poll.pollAnswers.size >= MAX_ANSWERS}
-                                            minlength={1}
-                                            maxlength={MAX_ANSWER_LENGTH}
-                                            countdown
-                                            onEnter={addAnswer}
-                                            placeholder={i18nKey(
-                                                poll.pollAnswers.size === MAX_ANSWERS
-                                                    ? "poll.maxReached"
-                                                    : "poll.answerText",
-                                            )}>
-                                            {#if answerError !== undefined}
-                                                <ErrorMessage
-                                                    ><Translatable
-                                                        resourceKey={answerError} /></ErrorMessage>
-                                            {/if}
-                                        </Input>
-                                    </div>
-                                    <div class="add-btn" onclick={addAnswer}>
-                                        <PlusCircleOutline
-                                            size={$iconSize}
-                                            color={"var(--icon-txt)"} />
-                                    </div>
-                                </div>
-                            {/if}
-                        </div>
-                    </form>
-                {:else}
-                    <Toggle
-                        small
-                        id={"anonymous"}
-                        onChange={() => (poll.anonymous = !poll.anonymous)}
-                        label={i18nKey("poll.anonymous")}
-                        checked={poll.anonymous} />
+            <Column gap={"md"}>
+                <Body fontWeight={"bold"}>
+                    <Translatable resourceKey={i18nKey("Poll answers (min 2)")} />
+                </Body>
+                {#each poll.pollAnswers as _, i}
+                    {#snippet iconButtons(color: string)}
+                        <InputIconButton onClick={() => deleteAnswer(i)}>
+                            <Close {color} />
+                        </InputIconButton>
+                    {/snippet}
 
-                    <Toggle
-                        small
-                        id={"allow-multiple"}
-                        label={i18nKey("poll.allowMultipleVotes")}
-                        onChange={() =>
-                            (poll.allowMultipleVotesPerUser = !poll.allowMultipleVotesPerUser)}
-                        checked={poll.allowMultipleVotesPerUser} />
+                    <Input
+                        iconButtons={i >= 2 ? iconButtons : undefined}
+                        maxlength={MAX_ANSWER_LENGTH}
+                        minlength={1}
+                        placeholder={"Provide a unique answer"}
+                        bind:value={poll.pollAnswers[i]}>
+                    </Input>
+                {/each}
+            </Column>
 
-                    <Toggle
-                        small
-                        id={"allow-change"}
-                        disabled={poll.allowMultipleVotesPerUser}
-                        label={i18nKey("poll.allowChangeVotes")}
-                        onChange={() => (poll.allowUserToChangeVote = !poll.allowUserToChangeVote)}
-                        checked={!poll.allowMultipleVotesPerUser && poll.allowUserToChangeVote} />
+            {#if !valid}
+                <StatusCard
+                    mode={"warning"}
+                    title={"Poll is not currently valid"}
+                    body={"Please make sure that you have a question and at least two answers. Each answer must be different."}>
+                </StatusCard>
+            {/if}
 
-                    <Toggle
-                        small
-                        id={"limited-duration"}
-                        label={i18nKey("poll.limitedDuration")}
-                        onChange={() => (poll.limitedDuration = !poll.limitedDuration)}
-                        checked={poll.limitedDuration} />
+            <Row mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
+                <CommonButton
+                    disabled={poll.pollAnswers.length >= MAX_ANSWERS}
+                    onClick={() => addAnswer()}
+                    mode={"active"}
+                    size={"small_text"}>
+                    {#snippet icon(color, size)}
+                        <Plus {color} {size} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("Add answer")} />
+                </CommonButton>
+                <CommonButton
+                    disabled={!valid}
+                    onClick={() => setStep("settings")}
+                    mode={"active"}
+                    size={"medium"}>
+                    {#snippet icon(color, size)}
+                        <ArrowRight {color} {size} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("To settings")} />
+                </CommonButton>
+            </Row>
+        {:else if step === "settings"}
+            <Setting
+                toggle={() => (poll.anonymous = !poll.anonymous)}
+                info={"Polls are anonymous by default. If you make it public, everyone will be able to ssee each others votes."}>
+                <Switch
+                    onChange={() => (poll.anonymous = !poll.anonymous)}
+                    width={"fill"}
+                    reverse
+                    checked={!poll.anonymous}>
+                    <Translatable resourceKey={i18nKey("Public poll")} />
+                </Switch>
+            </Setting>
 
-                    {#if poll.limitedDuration}
-                        <Toggle
-                            small
-                            id={"show-before-end"}
-                            label={i18nKey("poll.showBeforeEnd")}
-                            onChange={() =>
-                                (poll.showVotesBeforeEndDate = !poll.showVotesBeforeEndDate)}
-                            checked={poll.showVotesBeforeEndDate} />
+            <DurationSelector bind:duration={poll.duration}>
+                {#snippet title()}
+                    <Body fontWeight={"bold"}>
+                        <Translatable resourceKey={i18nKey("Poll duration")} />
+                    </Body>
+                {/snippet}
+            </DurationSelector>
 
-                        <Legend label={i18nKey("poll.pollDuration")} />
-                        {#each durations as d}
-                            <Radio
-                                onChange={() => (selectedDuration = d)}
-                                value={d}
-                                checked={selectedDuration === d}
-                                id={`duration_${d}`}
-                                label={i18nKey(`poll.${d}`)}
-                                group={"poll_duration"} />
-                        {/each}
-                    {/if}
-                {/if}
-            {/snippet}
-            {#snippet footer()}
-                <ButtonGroup>
-                    <Button
-                        small={!$mobileWidth}
-                        tiny={$mobileWidth}
-                        secondary
-                        onClick={() => (open = false)}>{$_("cancel")}</Button>
-                    <Button
-                        small={!$mobileWidth}
-                        disabled={!valid}
-                        tiny={$mobileWidth}
-                        onClick={start}>{$_("poll.start")}</Button>
-                </ButtonGroup>
-            {/snippet}
-        </ModalContent>
-    </Overlay>
-{/if}
+            <Setting
+                toggle={() => (poll.allowMultipleVotesPerUser = !poll.allowMultipleVotesPerUser)}
+                info={"Users can only vote for a single option by default, but if you would like to allow users to vote for multiple options, toggle this on."}>
+                <Switch
+                    onChange={() =>
+                        (poll.allowMultipleVotesPerUser = !poll.allowMultipleVotesPerUser)}
+                    width={"fill"}
+                    reverse
+                    checked={poll.allowMultipleVotesPerUser}>
+                    <Translatable resourceKey={i18nKey("Allow multiple votes")} />
+                </Switch>
+            </Setting>
 
-<style lang="scss">
-    .section {
-        padding-bottom: $sp4;
+            <Setting
+                toggle={() => (poll.allowUserToChangeVote = !poll.allowUserToChangeVote)}
+                info={"With this option on, once they vote, users will not be able to change their opinion."}>
+                <Switch
+                    onChange={() => (poll.allowUserToChangeVote = !poll.allowUserToChangeVote)}
+                    width={"fill"}
+                    reverse
+                    checked={!poll.allowUserToChangeVote}>
+                    <Translatable resourceKey={i18nKey("Users cannot change their votes")} />
+                </Switch>
+            </Setting>
 
-        &.underline {
-            margin-bottom: $sp4;
-            border-bottom: 1px solid var(--bd);
-        }
-    }
+            <Setting
+                toggle={() => (poll.showVotesBeforeEndDate = !poll.showVotesBeforeEndDate)}
+                info={"If you don't want the poll participants to see the results before the poll ends, turn this option on."}>
+                <Switch
+                    onChange={() => (poll.showVotesBeforeEndDate = !poll.showVotesBeforeEndDate)}
+                    width={"fill"}
+                    reverse
+                    checked={!poll.showVotesBeforeEndDate}>
+                    <Translatable resourceKey={i18nKey("Hide votes before end of the poll")} />
+                </Switch>
+            </Setting>
 
-    .buttons {
-        margin-bottom: $sp4;
-    }
-
-    .answer-text {
-        flex: 1;
-        padding: $sp3 $sp4;
-        border-radius: var(--rd);
-        margin-bottom: $sp3;
-        position: relative;
-        border: 1px solid var(--bd);
-        background-color: var(--input-bg);
-    }
-
-    .next,
-    .answer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: $sp3;
-    }
-
-    .next-txt {
-        flex: 1;
-    }
-
-    .add-btn,
-    .delete {
-        flex: 0 0 30px;
-        cursor: pointer;
-    }
-</style>
+            <Row mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
+                <CommonButton
+                    onClick={() => setStep("definition")}
+                    mode={"active"}
+                    size={"small_text"}>
+                    <Translatable resourceKey={i18nKey("back")} />
+                </CommonButton>
+                <CommonButton disabled={!valid} onClick={start} mode={"active"} size={"medium"}>
+                    {#snippet icon(color, size)}
+                        <Chart {color} {size} />
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("Publish poll")} />
+                </CommonButton>
+            </Row>
+        {/if}
+    </Column>
+</SlidingPageContent>

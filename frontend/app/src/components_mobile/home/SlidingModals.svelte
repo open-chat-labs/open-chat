@@ -17,6 +17,7 @@
         type GrantedBotPermissions,
         type GroupChatSummary,
         type Message,
+        type MessageContext,
         type MultiUserChat,
         type MultiUserChatIdentifier,
         type NamedAccount,
@@ -65,6 +66,7 @@
     import MemberManagement from "./membership/MemberManagement.svelte";
     import NewMessage from "./NewMessage.svelte";
     import PinnedMessages from "./pinned/PinnedMessages.svelte";
+    import PollBuilder from "./PollBuilder.svelte";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import Rules from "./Rules.svelte";
     import SlidingPage from "./SlidingPage.svelte";
@@ -130,6 +132,7 @@
           }
         | { kind: "user_groups"; community: CommunitySummary }
         | { kind: "streak_insurance" }
+        | { kind: "create_poll"; messageContext: MessageContext }
         | { kind: "evaluate_community_access_gate" }
         | { kind: "evaluate_group_access_gate" }
         | { kind: "proposal_filters"; chat: ChatSummary }
@@ -208,6 +211,9 @@
 
     onMount(() => {
         const unsubs = [
+            subscribe("createPoll", (messageContext) =>
+                push({ kind: "create_poll", messageContext }),
+            ),
             subscribe("streakInsurance", () => push({ kind: "streak_insurance" })),
             subscribe("evaluateCommunityAccessGate", () =>
                 push({ kind: "evaluate_community_access_gate" }),
@@ -549,6 +555,8 @@
             <Upgrade />
         {:else if page.kind === "streak_insurance"}
             <StreakInsuranceBuy onClose={pop} />
+        {:else if page.kind === "create_poll"}
+            <PollBuilder messageContext={page.messageContext} onClose={pop} />
         {:else if page.kind === "evaluate_community_access_gate"}
             <AccessGatesEvaluator
                 gates={communityPreviewState.gatesToEvaluate}

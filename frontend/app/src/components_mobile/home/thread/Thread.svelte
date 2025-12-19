@@ -48,7 +48,6 @@
     import Footer from "../Footer.svelte";
     import MemeBuilder from "../MemeBuilder.svelte";
     import P2PSwapContentBuilder from "../P2PSwapContentBuilder.svelte";
-    import PollBuilder from "../PollBuilder.svelte";
     import TimelineDate from "../TimelineDate.svelte";
     import ThreadHeader from "./ThreadHeader.svelte";
 
@@ -63,10 +62,7 @@
 
     let chatEventList: ChatEventList | undefined = $state();
     //@ts-ignore
-    let pollBuilder: PollBuilder = $state();
-    //@ts-ignore
     let memeBuilder: MemeBuilder = $state();
-    let creatingPoll = $state(false);
     let creatingCryptoTransfer: { ledger: string; amount: bigint } | undefined = $state(undefined);
     let buildingMeme = $state(false);
     let initialised = $state(false);
@@ -113,7 +109,6 @@
 
     onMount(() => {
         const unsubs = [
-            subscribe("createPoll", onCreatePoll),
             subscribe("tokenTransfer", onTokenTransfer),
             subscribe("createTestMessages", onCreateTestMessages),
         ];
@@ -121,12 +116,6 @@
             unsubs.forEach((u) => u());
         };
     });
-
-    function onCreatePoll(ctx: MessageContext) {
-        if (messageContextsEqual(ctx, messageContext)) {
-            createPoll();
-        }
-    }
 
     function onTokenTransfer(args: { context: MessageContext; ledger?: string; amount?: bigint }) {
         if (messageContextsEqual(messageContext, args.context)) {
@@ -232,15 +221,6 @@
         };
     }
 
-    function createPoll() {
-        if (!client.canSendMessage(chat.id, "thread", "poll")) return;
-
-        if (pollBuilder !== undefined) {
-            pollBuilder.resetPoll();
-        }
-        creatingPoll = true;
-    }
-
     function makeMeme() {
         buildingMeme = true;
         if (memeBuilder !== undefined) {
@@ -312,8 +292,6 @@
 {#if removeLinkPreviewDetails !== undefined}
     <AreYouSure title={i18nKey("removePreviewQuestion")} action={removePreview} />
 {/if}
-
-<PollBuilder onSend={onSendMessageWithContent} bind:this={pollBuilder} bind:open={creatingPoll} />
 
 {#if creatingP2PSwapMessage}
     <P2PSwapContentBuilder
@@ -450,8 +428,7 @@
                 {onSendMessage}
                 onMakeMeme={makeMeme}
                 onTokenTransfer={tokenTransfer}
-                onCreateP2PSwapMessage={createP2PSwapMessage}
-                onCreatePoll={createPoll} />
+                onCreateP2PSwapMessage={createP2PSwapMessage} />
         {/if}
     </Container>
 </DropTarget>
