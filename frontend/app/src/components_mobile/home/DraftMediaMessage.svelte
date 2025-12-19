@@ -30,7 +30,7 @@
     {:else if content.kind === "crypto_content"}
         <CryptoContent me {ctx} {content} draft senderId={$currentUserIdStore} />
     {:else if content.kind === "p2p_swap_content_initial"}
-        <P2PSwapContentInitial me {ctx} {content} draft senderId={$currentUserIdStore} />
+        <P2PSwapContentInitial {ctx} {content} />
     {:else if content.kind === "file_content"}
         <div class="file-preview">
             <FileContent edited={false} me {content} draft />

@@ -64,7 +64,7 @@
 
     function initialToLedger() {
         // just grab any old ledger for starters
-        return $cryptoLookup.keys().find((l) => l !== fromLedger) ?? "";
+        return [...$cryptoLookup.keys()].find((l) => l !== fromLedger) ?? "";
     }
 
     $effect(() => {

@@ -18,16 +18,16 @@
 
     interface Props {
         content: P2PSwapContentInitial;
-        messageContext: MessageContext;
+        ctx: MessageContext;
     }
 
-    let { content, messageContext }: Props = $props();
+    let { content, ctx }: Props = $props();
 
     let fromState = $derived(new TokenState($enhancedCryptoLookup.get(content.token0.ledger)!));
     let toState = $derived(new TokenState($enhancedCryptoLookup.get(content.token1.ledger)!));
 
     function removeDraft() {
-        localUpdates.draftMessages.delete(messageContext);
+        localUpdates.draftMessages.delete(ctx);
     }
 </script>
 
