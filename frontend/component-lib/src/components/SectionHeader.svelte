@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ColourVars, Label, type Padding } from "component-lib";
+    import { ColourVars, Label, type Padding, BodySmall } from "component-lib";
     import type { Snippet } from "svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
@@ -23,7 +23,7 @@
     let { onBack, onAction, title, subtitle, menu, action, avatar, onClick, children }: Props =
         $props();
 
-    let padding = $derived<Padding>(onBack ? "sm" : ["md", "sm", "md", "lg"]);
+    let padding = $derived<Padding>(["zero", "sm", "zero", onBack ? "zero" : "lg"]);
     let height = { size: "4rem" };
 </script>
 
@@ -35,30 +35,33 @@
     background={ColourVars.background0}
     crossAxisAlignment={"center"}
     mainAxisAlignment={"spaceBetween"}
-    gap={"lg"}>
+    gap={"sm"}>
     {#if onBack}
-        <IconButton padding={["sm", "zero", "sm", "xs"]} size={"md"} onclick={onBack}>
+        <IconButton padding={["md", "zero", "md", "sm"]} size={"md"} onclick={onBack}>
             {#snippet icon(color)}
                 <ArrowLeft {color} />
             {/snippet}
         </IconButton>
     {/if}
 
-    {#if avatar}
-        {@render avatar()}
-    {/if}
-    <Container gap={"xxs"} direction={"vertical"} width={"fill"}>
-        <Title ellipsisTruncate fontWeight={"semi-bold"}>
-            {@render title()}
-        </Title>
-        {#if subtitle !== undefined}
-            <Label colour={"textSecondary"} ellipsisTruncate fontWeight={"normal"}>
-                {@render subtitle()}
-            </Label>
+    <Container direction="horizontal" gap={"lg"} width={"fill"} crossAxisAlignment="center">
+        {#if avatar}
+            {@render avatar()}
         {/if}
+        <Container gap={"xxs"} direction={"vertical"} width={"fill"}>
+            <Title ellipsisTruncate fontWeight={"semi-bold"}>
+                {@render title()}
+            </Title>
+            {#if subtitle !== undefined}
+                <BodySmall colour={"textSecondary"} ellipsisTruncate fontWeight={"normal"}>
+                    {@render subtitle()}
+                </BodySmall>
+            {/if}
+        </Container>
     </Container>
+
     {#if action}
-        <IconButton padding={["sm", "zero"]} size={"md"} onclick={onAction}>
+        <IconButton padding={["sm", "zero"]} size={"lg"} onclick={onAction}>
             {#snippet icon(color)}
                 {@render action(color)}
             {/snippet}
@@ -67,7 +70,7 @@
     {@render children?.()}
     {#if menu}
         <MenuTrigger position={"bottom"} align={"end"}>
-            <IconButton padding={["sm", "xs", "sm", "xs"]} size={"lg"}>
+            <IconButton padding={["sm", "zero"]} size={"lg"}>
                 {#snippet icon(color)}
                     <DotsVertical {color} />
                 {/snippet}
@@ -81,6 +84,6 @@
 
 <style lang="scss">
     :global(.container.section_header) {
-        border-bottom: var(--bw-thin) solid var(--background-1);
+        border-bottom: var(--bw-thick) solid var(--background-1);
     }
 </style>

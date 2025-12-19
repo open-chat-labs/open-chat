@@ -1,7 +1,7 @@
 <script lang="ts">
     import { activeVideoCall } from "@src/stores/video";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
-    import { Avatar, Container, Label, SectionHeader } from "component-lib";
+    import { Avatar, Container, SectionHeader } from "component-lib";
     import type { ChatSummary, DiamondMembershipStatus } from "openchat-client";
     import {
         allUsersStore,
@@ -191,13 +191,12 @@
                 </WithVerifiedBadge>
             {:else if hasUserProfile}
                 <Container crossAxisAlignment={"center"} gap={"xxs"}>
-                    {chat.name}
+                    {chat.name ?? chat.username}
                     <Badges
                         uniquePerson={chat.uniquePerson}
                         diamondStatus={chat.diamondStatus}
                         streak={chat.streak}
                         chitEarned={chat.chitEarned} />
-                    <Label colour={"textSecondary"}>{chat.username}</Label>
                 </Container>
             {:else}
                 {chat.name}

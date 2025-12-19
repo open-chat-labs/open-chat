@@ -177,20 +177,20 @@
         <ChooseSignInOption mode={"signin"} bind:emailInvalid bind:email onLogin={login} />
     {:else if authStep === "choose_eth_wallet"}
         <div class="eth-options">
-            {#await import("../SigninWithEth.svelte")}
+            {#await import("../SignInWithEth.svelte")}
                 <div class="loading">...</div>
-            {:then { default: SigninWithEth }}
-                <SigninWithEth
+            {:then { default: SignInWithEth }}
+                <SignInWithEth
                     assumeIdentity={false}
                     onConnected={(ev) => authComplete(AuthProvider.ETH, ev)} />
             {/await}
         </div>
     {:else if authStep === "choose_sol_wallet"}
         <div class="sol-options">
-            {#await import("../SigninWithSol.svelte")}
+            {#await import("../SignInWithSol.svelte")}
                 <div class="loading">...</div>
-            {:then { default: SigninWithSol }}
-                <SigninWithSol
+            {:then { default: SignInWithSol }}
+                <SignInWithSol
                     assumeIdentity={false}
                     onConnected={(ev) => authComplete(AuthProvider.SOL, ev)} />
             {/await}

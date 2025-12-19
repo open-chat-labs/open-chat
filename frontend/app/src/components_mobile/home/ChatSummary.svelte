@@ -2,12 +2,13 @@
     import { trackedEffect } from "@src/utils/effects.svelte";
     import {
         Avatar,
+        Body,
         BodySmall,
         Container,
         CountBadge,
         MenuItem,
         MenuTrigger,
-        Title,
+        Subtitle,
     } from "component-lib";
     import type {
         ChatSummary,
@@ -60,7 +61,6 @@
     import Typing from "../Typing.svelte";
     import ArchiveOffIcon from "./ArchiveOffIcon.svelte";
     import Markdown from "./Markdown.svelte";
-    import Badges from "./profile/Badges.svelte";
     import BotBadge from "./profile/BotBadge.svelte";
     import VideoCallIcon from "./video/VideoCallIcon.svelte";
 
@@ -429,33 +429,30 @@
                 {/if}
                 <VideoCallIcon video={chat.video} />
             </div>
-            <Container width={"fill"} gap={"xxs"} direction={"vertical"}>
+            <Container width={"fill"} direction={"vertical"}>
                 <Container
-                    gap={"xs"}
+                    gap={"lg"}
+                    width={"fill"}
                     mainAxisAlignment={"spaceBetween"}
                     crossAxisAlignment={"center"}>
                     {#if chat.private}
                         <div class="private"></div>
                     {/if}
-                    <Container crossAxisAlignment={"center"} gap={"xxs"} width={"hug"}>
+                    <Container crossAxisAlignment={"center"} gap={"sm"} width={"fill"}>
                         <WithVerifiedBadge {verified} size={"small"}>
-                            <Title ellipsisTruncate fontWeight={"semi-bold"}>
+                            <Subtitle ellipsisTruncate fontWeight={"semi-bold"}>
                                 {#if community !== undefined && $chatListScopeStore.kind === "favourite"}
                                     <span>{community.name}</span>
                                     <span>{">"}</span>
                                 {/if}
                                 <span>{chat.name}</span>
-                            </Title>
-                            <Badges
-                                uniquePerson={chat.uniquePerson}
-                                diamondStatus={chat.diamondStatus}
-                                streak={chat.streak}
-                                chitEarned={chat.chitEarned} />
+                            </Subtitle>
                         </WithVerifiedBadge>
                         <BotBadge bot={chat.bot} />
                     </Container>
                     <Container
                         supplementalClass={"chat-date"}
+                        width={"hug"}
                         gap={"xs"}
                         crossAxisAlignment={"center"}
                         mainAxisAlignment={"end"}>
@@ -474,27 +471,31 @@
                                 <Heart size={"1em"} color={"var(--icon-txt)"} />
                             </div>
                         {/if}
-                        {client.formatMessageDate(
-                            displayDate,
-                            $_("today"),
-                            $_("yesterday"),
-                            true,
-                            true,
-                        )}
+                        <BodySmall colour={"textSecondary"} fontWeight={"semi-bold"}>
+                            {client.formatMessageDate(
+                                displayDate,
+                                $_("today"),
+                                $_("yesterday"),
+                                true,
+                                true,
+                            )}
+                        </BodySmall>
                     </Container>
                 </Container>
                 <Container gap={"xs"} mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"end"}>
-                    <BodySmall ellipsisTruncate colour={"textSecondary"}>
+                    <Body ellipsisTruncate colour={"textSecondary"}>
                         {#if chat.typing !== undefined}
                             {chat.typing} <Typing />
                         {:else}
                             <Markdown text={lastMessage} oneLine suppressLinks />
                         {/if}
-                    </BodySmall>
+                    </Body>
                     {#if unreadMessages > 0}
                         <CountBadge {muted}
-                            >{unreadMessages > 999 ? "999+" : unreadMessages}</CountBadge>
+                            >{unreadMessages > 999 ? "999+" : unreadMessages}
+                        </CountBadge>
                     {/if}
+                    <!-- TODO add read/received receipt -->
                 </Container>
             </Container>
         </Container>

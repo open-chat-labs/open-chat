@@ -59,6 +59,7 @@
                 return "h1";
             case "h2":
                 return "h2";
+            case "h3":
             case "title":
                 return "h3";
             case "subtitle":
@@ -126,6 +127,10 @@
     .h2 {
         font-size: var(--typo-h2-sz);
         line-height: var(--typo-h2-lh);
+    }
+    .h3 {
+        font-size: var(--typo-h3-sz);
+        line-height: var(--typo-h3-lh);
     }
     .title {
         font-size: var(--typo-title-sz);
