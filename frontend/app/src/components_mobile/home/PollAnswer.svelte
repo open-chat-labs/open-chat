@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Tooltip } from "component-lib";
+    import { Body, ColourVars, Row, Tooltip } from "component-lib";
     import type { OpenChat, UserLookup } from "openchat-client";
     import { allUsersStore, currentUserIdStore } from "openchat-client";
     import { getContext } from "svelte";
@@ -10,8 +10,6 @@
     const client = getContext<OpenChat>("client");
 
     interface Props {
-        finished: boolean;
-        readonly: boolean;
         percent: number;
         answer: string;
         voted: boolean;
@@ -23,18 +21,8 @@
         onClick?: () => void;
     }
 
-    let {
-        finished,
-        readonly,
-        percent,
-        answer,
-        voted,
-        txtColor,
-        voters,
-        numVotes,
-        showVotes,
-        onClick,
-    }: Props = $props();
+    let { percent, answer, voted, txtColor, voters, numVotes, showVotes, onClick }: Props =
+        $props();
 
     let longPressed: boolean = $state(false);
 
@@ -84,38 +72,21 @@
     longestWord={30}
     position={"right"}
     align={"middle"}
+    fill
     enable={showVotes}>
-    <div class:readonly class="answer-text" class:finished onclick={click}>
-        <Progress {percent}>
-            <div class="label">
-                <span>{answer}</span>
+    <Row onClick={click}>
+        <Progress colour={ColourVars.primaryMuted} {percent}>
+            <Row gap={"md"} crossAxisAlignment={"center"}>
+                <Body width={"hug"}>
+                    {answer}
+                </Body>
                 {#if voted}
                     <CheckCircleOutline size={"1em"} color={txtColor} />
                 {/if}
-            </div>
+            </Row>
         </Progress>
-    </div>
+    </Row>
     {#snippet popup()}
         {buildTooltipText()}
     {/snippet}
 </Tooltip>
-
-<style lang="scss">
-    .label {
-        display: flex;
-        align-items: center;
-        gap: $sp3;
-    }
-
-    .answer-text {
-        cursor: pointer;
-
-        &.finished {
-            cursor: default;
-        }
-
-        &.readonly {
-            cursor: default;
-        }
-    }
-</style>

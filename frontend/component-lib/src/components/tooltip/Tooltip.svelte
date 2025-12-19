@@ -13,11 +13,13 @@
         autoWidth?: boolean;
         textLength?: number;
         longestWord?: number;
+        fill?: boolean;
     }
 
     let props: Props = $props();
     let popup = $derived(props.popup);
     let children = $derived(props.children);
+    let fill = $derived(props.fill ?? false);
 
     let tooltip: HTMLElement;
     let open = $state(false);
@@ -60,6 +62,12 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <!-- svelte-ignore a11y_mouse_events_have_key_events -->
-<div class="tooltip_wrapper" class:open bind:this={tooltip} use:longpress={click}>
+<div class="tooltip_wrapper" class:open bind:this={tooltip} use:longpress={click} class:fill>
     {@render children()}
 </div>
+
+<style lang="scss">
+    .tooltip_wrapper.fill {
+        width: 100%;
+    }
+</style>

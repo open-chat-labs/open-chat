@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { currentUserIdStore, iconSize, type OpenChat, type PollContent } from "openchat-client";
+    import { Body, BodySmall, ColourVars, Column, Row } from "component-lib";
+    import { currentUserIdStore, type OpenChat, type PollContent } from "openchat-client";
     import { getContext } from "svelte";
     import Poll from "svelte-material-icons/Poll.svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -99,86 +100,52 @@
     );
 </script>
 
-<div class="poll">
+<Column gap={"lg"}>
     {#if content.config.text !== undefined}
-        <div class="question">
-            <div class="icon">
-                <Poll size={$iconSize} color={txtColor} />
-            </div>
-            <p class="question-txt">{content.config.text}</p>
-        </div>
+        <Row gap={"md"} crossAxisAlignment={"center"}>
+            <Poll color={ColourVars.textPrimary} />
+            <Body fontWeight={"bold"}>
+                {content.config.text}
+            </Body>
+        </Row>
     {/if}
-    <div class="answers">
-        {#each [...content.config.options] as answer, i (answer)}
-            <PollAnswer
-                onClick={() => vote(i)}
-                finished={content.ended}
-                {readonly}
-                percent={percentageOfVote(i)}
-                {answer}
-                voted={votedFor(i)}
-                {txtColor}
-                {me}
-                voters={voters(i)}
-                numVotes={voteCount(i)}
-                {showVotes} />
-        {/each}
-    </div>
-    <p class="total-votes">
-        <Translatable
-            resourceKey={i18nKey("poll.totalVotes", { total: numberOfVotes.toString() })} />
-    </p>
-    <p class="timestamp">
-        {#if content.config.anonymous}
-            <Translatable resourceKey={i18nKey("poll.votersPrivate")} />
-        {:else}
-            <Translatable resourceKey={i18nKey("poll.votersPublic")} />
-        {/if}
-    </p>
-    {#if date !== undefined}
-        <p class="timestamp">
-            {#if content.ended}
-                <Translatable resourceKey={i18nKey("poll.finished")} />
+    {#each [...content.config.options] as answer, i (answer)}
+        <PollAnswer
+            onClick={() => vote(i)}
+            percent={percentageOfVote(i)}
+            {answer}
+            voted={votedFor(i)}
+            {txtColor}
+            {me}
+            voters={voters(i)}
+            numVotes={voteCount(i)}
+            {showVotes} />
+    {/each}
+    <Column>
+        <Body fontWeight={"bold"}>
+            <Translatable
+                resourceKey={i18nKey("poll.totalVotes", { total: numberOfVotes.toString() })} />
+        </Body>
+        <BodySmall>
+            {#if content.config.anonymous}
+                <Translatable resourceKey={i18nKey("poll.votersPrivate")} />
             {:else}
-                <Translatable
-                    resourceKey={i18nKey("poll.pollEnds", {
-                        end: `${client.toLongDateString(date)} @ ${client.toShortTimeString(date)}`,
-                    })} />
+                <Translatable resourceKey={i18nKey("poll.votersPublic")} />
             {/if}
-        </p>
-    {/if}
-</div>
-
-<style lang="scss">
-    .poll {
-        @include size-above(sm) {
-            min-width: 240px;
-        }
-    }
-
-    .question {
-        display: flex;
-        align-items: flex-start;
-        .question-txt {
-            @include font(bold, normal, fs-110);
-        }
-        .icon {
-            flex: 0 0 30px;
-        }
-    }
-
-    .answers {
-        margin: $sp3 0 $sp4 0;
-        display: flex;
-        flex-direction: column;
-        gap: $sp4;
-    }
-
-    .total-votes {
-        @include font(bold, normal, fs-70);
-    }
-
-    .timestamp {
-        @include font(light, normal, fs-70);
-    }
-</style>
+        </BodySmall>
+        {#if date !== undefined}
+            <BodySmall>
+                {#if content.ended}
+                    <Translatable resourceKey={i18nKey("poll.finished")} />
+                {:else}
+                    <Translatable
+                        resourceKey={i18nKey("poll.pollEnds", {
+                            end: `${client.toLongDateString(date)} @ ${client.toShortTimeString(
+                                date,
+                            )}`,
+                        })} />
+                {/if}
+            </BodySmall>
+        {/if}
+    </Column>
+</Column>
