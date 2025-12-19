@@ -1,6 +1,11 @@
 <script lang="ts">
     import { BigButton, Container, type SizeMode } from "component-lib";
-    import { publish, type AttachmentContent, type MessagePermission } from "openchat-client";
+    import {
+        publish,
+        type AttachmentContent,
+        type MessageContext,
+        type MessagePermission,
+    } from "openchat-client";
     import Poll from "svelte-material-icons/ChartBoxOutline.svelte";
     import File from "svelte-material-icons/FileOutline.svelte";
     import Gift from "svelte-material-icons/GiftOutline.svelte";

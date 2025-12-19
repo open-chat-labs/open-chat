@@ -13,6 +13,7 @@
     import {
         ONE_DAY,
         OpenChat,
+        publish,
         type MessageContext,
         type PollContent,
         type TotalPollVotes,
@@ -150,9 +151,18 @@
             onClose();
         }
     }
+
+    function back() {
+        if (step === "definition") {
+            publish("closeModalPage");
+        } else {
+            setStep("definition");
+        }
+    }
 </script>
 
 <SlidingPageContent
+    onBack={back}
     title={i18nKey(`Create a poll ${step === "definition" ? 1 : 2} / 2`)}
     subtitle={i18nKey("Duration, question and answers")}>
     <Column height={"fill"} gap={"xxl"} padding={["lg", "xxl"]}>
@@ -285,10 +295,7 @@
             </Setting>
 
             <Row mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
-                <CommonButton
-                    onClick={() => setStep("definition")}
-                    mode={"active"}
-                    size={"small_text"}>
+                <CommonButton onClick={back} mode={"active"} size={"small_text"}>
                     <Translatable resourceKey={i18nKey("back")} />
                 </CommonButton>
                 <CommonButton disabled={!valid} onClick={start} mode={"active"} size={"medium"}>
