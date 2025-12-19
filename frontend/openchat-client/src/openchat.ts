@@ -4409,9 +4409,11 @@ export class OpenChat {
         // *before* the new message is added to the unconfirmed store. Is this nice? No it is not.
         window.setTimeout(() => {
             withPausedStores(() => {
-                if (!isTransfer(messageEvent.event.content)) {
-                    localUpdates.addUnconfirmed(context, messageEvent);
-                }
+                // TODO - I'm not sure *why* we are doing this - it does not appear to be necessary
+                // if (!isTransfer(messageEvent.event.content)) {
+                //     localUpdates.addUnconfirmed(context, messageEvent);
+                // }
+                localUpdates.addUnconfirmed(context, messageEvent);
 
                 localUpdates.deleteFailedMessage(context, messageEvent.event.messageId);
 

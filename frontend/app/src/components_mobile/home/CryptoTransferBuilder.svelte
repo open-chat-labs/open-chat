@@ -2,28 +2,25 @@
     import {
         Body,
         Chip,
-        ColourVars,
         Column,
         CommonButton,
         Container,
         IconButton,
         Row,
         Sheet,
-        StatusCard,
-        TextArea,
     } from "component-lib";
-    import type { ChatSummary, OpenChat, UserSummary } from "openchat-client";
+    import type { ChatSummary, UserSummary } from "openchat-client";
     import {
         allUsersStore,
         enhancedCryptoLookup as cryptoLookup,
         currentUserIdStore,
+        localUpdates,
     } from "openchat-client";
     import { type CryptocurrencyContent, type MessageContext, nowNanos } from "openchat-shared";
-    import { getContext, onMount } from "svelte";
-    import { _ } from "svelte-i18n";
+    import { onMount } from "svelte";
     import Chat from "svelte-material-icons/ChatPlusOutline.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import { i18nKey, interpolate } from "../../i18n/i18n";
+    import { i18nKey } from "../../i18n/i18n";
     import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
     import ErrorMessage from "../ErrorMessage.svelte";
     import Translatable from "../Translatable.svelte";
@@ -32,8 +29,6 @@
     import TokenInput from "./TokenInput.svelte";
     import TransferFeesMessage from "./TransferFeesMessage.svelte";
     import { TokenState } from "./wallet/walletState.svelte";
-
-    const client = getContext<OpenChat>("client");
 
     interface Props {
         ledger: string;
@@ -46,12 +41,8 @@
     let { ledger = $bindable(), chat, defaultReceiver, messageContext, onClose }: Props = $props();
 
     let error: string | undefined = $state(undefined);
-    let message = $state("");
-    let confirming = $state(false);
     let receiver: UserSummary | undefined = $state(undefined);
     let validAmount: boolean = $state(false);
-    let sending = $state(false);
-
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let tokenState = $derived(new TokenState(tokenDetails, "usd"));
     let multiUserChat = $derived(chat.kind === "group_chat" || chat.kind === "channel");
@@ -68,16 +59,10 @@
     });
 
     function send() {
-        if (!confirming) {
-            confirming = true;
-            return;
-        }
-
         if (receiver === undefined) return;
 
         const content: CryptocurrencyContent = {
             kind: "crypto_content",
-            caption: message === "" ? undefined : message,
             transfer: {
                 kind: "pending",
                 ledger,
@@ -89,19 +74,9 @@
             },
         };
 
-        sending = true;
-        error = undefined;
+        localUpdates.draftMessages.setAttachment(messageContext, content);
 
-        client
-            .sendMessageWithContent(messageContext, content, false)
-            .then((resp) => {
-                if (resp.kind === "success" || resp.kind === "transfer_success") {
-                    onClose();
-                } else if ($pinNumberErrorMessageStore === undefined) {
-                    error = "errorSendingMessage";
-                }
-            })
-            .finally(() => (sending = false));
+        onClose();
     }
 
     function setAmount(percentage: number) {
@@ -148,7 +123,6 @@
             <TokenInput
                 {ledger}
                 minAmount={tokenState.minAmount}
-                disabled={sending}
                 error={!validAmount}
                 bind:valid={validAmount}
                 maxAmount={tokenState.maxAmount}
@@ -166,27 +140,6 @@
             </Row>
         </Column>
 
-        <TextArea
-            disabled={sending}
-            maxlength={200}
-            rows={3}
-            placeholder={interpolate($_, i18nKey("tokenTransfer.messagePlaceholder"))}
-            bind:value={message}>
-            {#snippet subtext()}
-                {"Recipient will receive this message as a DM"}
-            {/snippet}
-        </TextArea>
-
-        {#if confirming}
-            <StatusCard
-                background={ColourVars.background2}
-                title={"Warning"}
-                body={interpolate(
-                    $_,
-                    i18nKey("tokenTransfer.warning", { token: tokenState.symbol }),
-                )}
-                mode={"warning"}></StatusCard>
-        {/if}
         {#if errorMessage !== undefined}
             <div class="error">
                 <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
@@ -199,18 +152,11 @@
                 tokenDecimals={tokenState.decimals}
                 transferFees={tokenState.transferFees} />
 
-            <CommonButton
-                onClick={send}
-                loading={sending}
-                disabled={!valid || sending}
-                mode={"active"}>
+            <CommonButton onClick={send} disabled={!valid} mode={"active"}>
                 {#snippet icon(color, size)}
                     <Chat {color} {size} />
                 {/snippet}
-                <Translatable
-                    resourceKey={i18nKey(
-                        confirming ? "tokenTransfer.confirm" : "tokenTransfer.send",
-                    )} />
+                <Translatable resourceKey={i18nKey("tokenTransfer.send")} />
             </CommonButton>
         </Container>
     </Container>

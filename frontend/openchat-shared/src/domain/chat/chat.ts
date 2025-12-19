@@ -172,7 +172,8 @@ export type AttachmentContent =
     | VideoContent
     | AudioContent
     | FileContent
-    | GiphyContent;
+    | GiphyContent
+    | CryptocurrencyContent;
 
 export function isAttachmentContent(content: MessageContent): content is AttachmentContent {
     switch (content.kind) {
@@ -181,6 +182,7 @@ export function isAttachmentContent(content: MessageContent): content is Attachm
         case "audio_content":
         case "file_content":
         case "giphy_content":
+        case "crypto_content":
             return true;
         default:
             return false;

@@ -1,7 +1,9 @@
 <script lang="ts">
     import { Row } from "component-lib";
     import type { AttachmentContent, MessageContext } from "openchat-client";
+    import { currentUserIdStore } from "openchat-client";
     import AudioContent from "./AudioContent.svelte";
+    import CryptoContent from "./CryptoContent.svelte";
     import FileContent from "./FileContent.svelte";
     import GiphyContent from "./GiphyContent.svelte";
     import ImageContent from "./ImageContent.svelte";
@@ -24,6 +26,8 @@
         <ImageContent edited={false} fill={false} {content} draft />
     {:else if content.kind === "giphy_content"}
         <GiphyContent {ctx} edited={false} fill={false} {content} draft />
+    {:else if content.kind === "crypto_content"}
+        <CryptoContent me {ctx} {content} draft senderId={$currentUserIdStore} />
     {:else if content.kind === "file_content"}
         <div class="file-preview">
             <FileContent edited={false} me {content} draft />

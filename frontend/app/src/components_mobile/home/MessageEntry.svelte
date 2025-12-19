@@ -493,9 +493,8 @@
     let directBot = $derived(
         directChatBotId ? botState.externalBots.get(directChatBotId) : undefined,
     );
-    let messageIsEmpty = $derived(
-        (textContent?.trim() ?? "").length === 0 && attachment === undefined,
-    );
+    let textboxEmpty = $derived((textContent?.trim() ?? "").length === 0);
+    let messageIsEmpty = $derived(textboxEmpty && attachment === undefined);
     let canSendAny = $derived(!$anonUserStore && client.canSendMessage(chat.id, mode));
     let permittedMessages = $derived(client.permittedMessages(chat.id, mode));
     let canEnterText = $derived(
@@ -669,7 +668,7 @@
                             onblur={saveSelection}
                             class="textbox"
                             class:recording
-                            class:empty={messageIsEmpty}
+                            class:empty={textboxEmpty}
                             contenteditable
                             onpaste={onPaste}
                             placeholder={interpolate($_, placeholder)}
