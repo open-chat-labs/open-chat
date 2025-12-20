@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { Tooltip } from "component-lib";
+    import { Tooltip, Caption, ColourVars } from "component-lib";
+    import BadgeContainer from "./BadgeContainer.svelte";
 
     type Streak =
         | "none"
@@ -16,7 +17,7 @@
         disabled?: boolean;
     }
 
-    let { days = 0, showTooltip = true, disabled = false }: Props = $props();
+    let { days = 0, showTooltip = true }: Props = $props();
 
     function streakFromDays(days: number): Streak {
         return days < 3
@@ -57,81 +58,55 @@
     let num = $derived(streakNumber(streak));
 </script>
 
+{#snippet renderStreak()}
+    <BadgeContainer supplementalClass="streak-badge" backgroundColor={ColourVars.error}>
+        <Caption align="center" fontWeight="bold">{num}</Caption>
+        <svg
+            class="commet-tail"
+            width="17"
+            height="18"
+            viewBox="0 0 17 18"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg">
+            <path
+                d="M8.41613 4.90705L10.3144 0.956614C10.3144 0.956614 2.63919 4.12504 0.320312 6C-1.99856 7.87496 8.90159 20.1676 12.6179 17.6467C16.3343 15.1257 16.0091 4.30476 16.0091 4.30476L12.2126 7.54332L15.5345 0L8.41613 4.90705Z"
+                fill={ColourVars.error} />
+        </svg>
+    </BadgeContainer>
+{/snippet}
+
 {#if show}
     {#if showTooltip}
         <Tooltip uppercase position="top" align="middle">
-            <div class:disabled class={`icon ${streak.replace(/ /g, "_")}`}>
-                {num}
-            </div>
+            {@render renderStreak()}
             {#snippet popup()}
                 {`${streak} day streak!`}
             {/snippet}
         </Tooltip>
     {:else}
-        <div class="wrapper">
-            <div>
-                {`${streak.toUpperCase()} day streak!`}
-            </div>
-            <div class:disabled class={`icon ${streak}`}>
-                {num}
-            </div>
-        </div>
+        {@render renderStreak()}
     {/if}
 {/if}
 
 <style lang="scss">
-    .icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-repeat: no-repeat;
-        width: 21px;
-        height: 18px;
-        padding: 1px 0 0 7px;
-        @include font(bold, normal, fs-50);
-        font-size: 0.4rem;
-        margin-top: 1px;
+    :global {
+        .streak-badge {
+            .commet-tail {
+                position: absolute;
+                right: -0.125rem;
+                top: -0.25rem;
+            }
 
-        &.three {
-            background-image: url("/assets/streaks/streak_three.svg");
-            color: rgb(10, 203, 50);
-            padding-left: 8px;
+            .caption {
+                z-index: 1;
+                scale: 0.8;
+                width: 100%;
+                text-shadow:
+                    -1px -1px 0 var(--primary-muted),
+                    1px -1px 0 var(--primary-muted),
+                    -1px 1px 0 var(--primary-muted),
+                    1px 1px 0 var(--primary-muted);
+            }
         }
-        &.seven {
-            background-image: url("/assets/streaks/streak_seven.svg");
-            color: rgb(246, 28, 255);
-            padding-left: 8px;
-        }
-        &.fourteen {
-            background-image: url("/assets/streaks/streak_fourteen.svg");
-            color: rgb(255, 159, 27);
-        }
-        &.thirty {
-            background-image: url("/assets/streaks/streak_thirty.svg");
-            color: rgb(255, 0, 0);
-        }
-
-        &.one_hundred {
-            background-image: url("/assets/streaks/streak_100.svg");
-            color: white;
-            text-shadow: 0.5px 0.5px 0.5px #555;
-        }
-
-        &.three_six_five {
-            background-image: url("/assets/streaks/streak_365.svg");
-            padding: 0 0 0 7px;
-            color: #085c8c;
-        }
-
-        &.disabled {
-            background-image: url("/assets/streaks/streak_disabled.svg");
-            color: #9a9a9a;
-        }
-    }
-
-    .wrapper {
-        display: flex;
-        align-items: center;
-        gap: $sp2;
     }
 </style>

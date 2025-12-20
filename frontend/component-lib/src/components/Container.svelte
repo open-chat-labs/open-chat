@@ -26,6 +26,7 @@
         maxHeight?: string;
         shadow?: string;
         background?: string;
+        backgroundColor?: string;
         backgroundImage?: string;
         onClick?: (e?: MouseEvent) => void;
         onDoubleClick?: (e?: MouseEvent) => void;
@@ -114,6 +115,7 @@
         maxHeight = "auto",
         shadow,
         background = "unset",
+        backgroundColor,
         backgroundImage,
         onClick,
         onDoubleClick,
@@ -164,14 +166,17 @@
     let backgroundCss = $derived(
         backgroundImage
             ? `background-image: url(${backgroundImage});`
-            : background
+            : background && background !== "unset"
               ? `background: ${background};`
               : "",
+    );
+    let backgroundColorCss = $derived(
+        background === "unset" && backgroundColor ? `background-color: ${backgroundColor};` : "",
     );
     let style = $derived(
         `${posToStyle(
             pos,
-        )} overflow: ${overflow}; ${wrapCss} ${backgroundCss} box-shadow: ${shadow}; max-width: ${maxWidth}; max-height: ${maxHeight}; min-width: ${minWidth}; min-height: ${minHeight}; ${alignmentCss}; ${colourCss}; ${heightCss}; ${widthCss}; ${borderStyleCss}; ${borderRadiusCss}; ${borderWidthCss}; ${paddingCss}; ${gapCss};`,
+        )} overflow: ${overflow}; ${wrapCss} ${backgroundCss} ${backgroundColorCss} box-shadow: ${shadow}; max-width: ${maxWidth}; max-height: ${maxHeight}; min-width: ${minWidth}; min-height: ${minHeight}; ${alignmentCss}; ${colourCss}; ${heightCss}; ${widthCss}; ${borderStyleCss}; ${borderRadiusCss}; ${borderWidthCss}; ${paddingCss}; ${gapCss};`,
     );
     // TODO I think it might be nice to do a lot of this flex sizing with classes rather than inline styles
     // although I'm not sure I can say *why*
