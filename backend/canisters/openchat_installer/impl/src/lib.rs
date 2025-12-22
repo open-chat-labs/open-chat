@@ -98,10 +98,9 @@ struct Data {
     registry_canister_id: CanisterId,
     translations_canister_id: CanisterId,
     website_canister_id: CanisterId,
+    sign_in_with_email_canister_id: CanisterId,
     nns_governance_canister_id: CanisterId,
     internet_identity_canister_id: CanisterId,
-    #[serde(with = "serde_bytes")]
-    ic_root_key: Vec<u8>,
     canister_wasms: ChildCanisterWasms<CanisterType>,
     rng_seed: [u8; 32],
     test_mode: bool,
@@ -126,9 +125,9 @@ impl Data {
         registry_canister_id: CanisterId,
         translations_canister_id: CanisterId,
         website_canister_id: CanisterId,
+        sign_in_with_email_canister_id: CanisterId,
         nns_governance_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
-        ic_root_key: Vec<u8>,
         test_mode: bool,
     ) -> Data {
         Data {
@@ -148,9 +147,9 @@ impl Data {
             registry_canister_id,
             translations_canister_id,
             website_canister_id,
+            sign_in_with_email_canister_id,
             nns_governance_canister_id,
             internet_identity_canister_id,
-            ic_root_key,
             canister_wasms: ChildCanisterWasms::default(),
             rng_seed: [0; 32],
             test_mode,

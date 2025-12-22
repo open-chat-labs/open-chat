@@ -301,6 +301,7 @@ impl RuntimeState {
             stable_memory_sizes: memory::memory_sizes(),
             streak_insurance_metrics: self.data.streak_insurance_logs.metrics(),
             premium_item_metrics: self.data.premium_items.metrics(),
+            blocked_username_patterns: self.data.blocked_username_patterns.clone(),
             canister_ids: CanisterIds {
                 group_index: self.data.group_index_canister_id,
                 notifications_index: self.data.notifications_index_canister_id,
@@ -397,8 +398,6 @@ struct Data {
     pub empty_users: HashSet<UserId>,
     pub chit_leaderboard: ChitLeaderboard,
     pub deleted_users: Vec<DeletedUser>,
-    #[serde(with = "serde_bytes")]
-    pub ic_root_key: Vec<u8>,
     #[serde(alias = "identity_canister_user_sync_queue_2")]
     pub identity_canister_user_sync_queue: VecDeque<UserIdentity>,
     pub remove_from_online_users_queue: VecDeque<Principal>,
@@ -409,6 +408,8 @@ struct Data {
     pub idempotency_checker: IdempotencyChecker,
     pub blocked_users: UserIdsSet,
     pub premium_items: PremiumItems,
+    #[serde(default)]
+    pub blocked_username_patterns: Vec<String>,
 }
 
 impl Data {
@@ -431,7 +432,7 @@ impl Data {
         translations_canister_id: CanisterId,
         website_canister_id: CanisterId,
         video_call_operators: Vec<Principal>,
-        ic_root_key: Vec<u8>,
+        oc_secret_key_der: Vec<u8>,
         test_mode: bool,
         now: TimestampMillis,
     ) -> Self {
@@ -479,11 +480,10 @@ impl Data {
             rng_seed: [0; 32],
             diamond_membership_fees: DiamondMembershipFees::default(),
             video_call_operators,
-            oc_key_pair: P256KeyPair::default(),
+            oc_key_pair: P256KeyPair::from_secret_key_der(oc_secret_key_der).unwrap(),
             empty_users: HashSet::new(),
             chit_leaderboard: ChitLeaderboard::new(now),
             deleted_users: Vec::new(),
-            ic_root_key,
             identity_canister_user_sync_queue: VecDeque::new(),
             remove_from_online_users_queue: VecDeque::new(),
             survey_messages_sent: 0,
@@ -493,6 +493,7 @@ impl Data {
             idempotency_checker: IdempotencyChecker::default(),
             blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
             premium_items: PremiumItems::default(),
+            blocked_username_patterns: Vec::new(),
         };
 
         // Register the ProposalsBot
@@ -595,11 +596,10 @@ impl Default for Data {
             rng_seed: [0; 32],
             diamond_membership_fees: DiamondMembershipFees::default(),
             video_call_operators: Vec::default(),
-            oc_key_pair: P256KeyPair::default(),
+            oc_key_pair: P256KeyPair::new(&mut rand::thread_rng()),
             empty_users: HashSet::new(),
             chit_leaderboard: ChitLeaderboard::new(0),
             deleted_users: Vec::new(),
-            ic_root_key: Vec::new(),
             identity_canister_user_sync_queue: VecDeque::new(),
             remove_from_online_users_queue: VecDeque::new(),
             survey_messages_sent: 0,
@@ -609,6 +609,7 @@ impl Default for Data {
             idempotency_checker: IdempotencyChecker::default(),
             blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
             premium_items: PremiumItems::default(),
+            blocked_username_patterns: Vec::new(),
         }
     }
 }
@@ -659,6 +660,7 @@ pub struct Metrics {
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub streak_insurance_metrics: StreakInsuranceMetrics,
     pub premium_item_metrics: PremiumItemMetrics,
+    pub blocked_username_patterns: Vec<String>,
     pub canister_ids: CanisterIds,
 }
 

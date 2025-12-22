@@ -21,7 +21,9 @@ pub struct Args {
     pub translations_canister_id: CanisterId,
     pub website_canister_id: CanisterId,
     pub video_call_operators: Vec<Principal>,
-    pub ic_root_key: Vec<u8>,
+    #[serde(with = "serde_bytes")]
+    pub oc_secret_key_der: Vec<u8>,
+    pub rng_seed: [u8; 32],
     pub wasm_version: BuildVersion,
     pub test_mode: bool,
 }

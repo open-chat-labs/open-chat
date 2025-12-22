@@ -10,6 +10,7 @@ pub struct Args {
     pub authorizers: Vec<CanisterId>,
     pub cycles_dispenser_canister_id: CanisterId,
     pub registry_canister_id: CanisterId,
+    pub rng_seed: [u8; 32],
     pub wasm_version: BuildVersion,
     pub test_mode: bool,
 }

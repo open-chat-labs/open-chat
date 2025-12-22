@@ -20,8 +20,11 @@ pub mod happy_path {
         user_index_wasm_hash: Hash,
         group_index_wasm_hash: Hash,
         notifications_index_wasm_hash: Hash,
+        identity_wasm_hash: Hash,
         video_call_operators: Vec<Principal>,
         push_service_principals: Vec<Principal>,
+        identity_originating_canisters: Vec<CanisterId>,
+        identity_skip_captcha_whitelist: Vec<CanisterId>,
         wasm_version: BuildVersion,
     ) {
         let response = super::install_canisters(
@@ -32,8 +35,11 @@ pub mod happy_path {
                 user_index_wasm_hash,
                 group_index_wasm_hash,
                 notifications_index_wasm_hash,
+                identity_wasm_hash,
                 video_call_operators,
                 push_service_principals,
+                identity_originating_canisters,
+                identity_skip_captcha_whitelist,
                 wasm_version,
             },
         );
