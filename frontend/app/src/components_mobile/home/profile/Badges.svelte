@@ -22,11 +22,28 @@
     }: Props = $props();
 </script>
 
-<Container width={"hug"} crossAxisAlignment={"center"} gap={"xs"}>
+<Container
+    supplementalClass={"badges"}
+    crossAxisAlignment={"center"}
+    gap={"xs"}
+    padding={["xxs", "zero"]}>
     <Diamond status={diamondStatus} />
-    <Verified size={"small"} verified={uniquePerson} />
+    <Verified verified={uniquePerson} />
     {#if !$disableChit}
         <Streak days={streak} />
         <ChitEarnedBadge earned={chitEarned} />
     {/if}
 </Container>
+
+<style lang="scss">
+    :global {
+        .badges {
+            overflow: visible;
+
+            > *:not(:first-child) {
+                z-index: 1;
+                margin-left: -0.5rem;
+            }
+        }
+    }
+</style>

@@ -15,7 +15,7 @@ const tertiaryLight = Colour.fromHex("#f4a5c9");
 
 const success = Colour.fromHex("#4dc164");
 const warn = Colour.fromHex("#f36d28");
-const error = Colour.fromHex("#ea2929");
+const error = Colour.fromHex("#ff2448");
 
 const background0 = Colour.fromHex("#13151B");
 // const background1 = Colour.fromHex("#272934");
