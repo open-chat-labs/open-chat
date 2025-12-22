@@ -1,5 +1,6 @@
 <script lang="ts">
     import { communityPreviewState, groupPreviewState } from "@src/utils/preview.svelte";
+    import { portalState } from "component-lib";
     import {
         OpenChat,
         selectedChatMembersStore,
@@ -219,6 +220,7 @@
                 if (pop() === undefined) {
                     // if there was nothing in the modal stack let's fallback to the history api
                     history.back();
+                    portalState.close();
                 }
             }).catch(console.error);
         }
