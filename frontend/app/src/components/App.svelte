@@ -205,6 +205,7 @@
             updateMarketMakerConfig,
             withdrawFromIcpSwap,
             setPremiumItemCost,
+            updateBlockedUsernamePatterns,
             pauseEventLoop: () => client.pauseEventLoop(),
             resumeEventLoop: () => client.resumeEventLoop(),
         };
@@ -567,6 +568,10 @@
 
     function setPremiumItemCost(item: PremiumItem, chitCost: number): void {
         client.setPremiumItemCost(item, chitCost);
+    }
+
+    function updateBlockedUsernamePatterns(pattern: string, add: boolean) {
+        client.updateBlockedUsernamePatterns(pattern, add);
     }
 
     function calculateHeight() {

@@ -50,6 +50,7 @@ fn main() {
     generate_ts_method!(user_index, reported_messages);
     generate_ts_method!(user_index, search);
     generate_ts_method!(user_index, suspected_bots);
+    generate_ts_method!(user_index, update_blocked_username_patterns);
     generate_ts_method!(user_index, user);
     generate_ts_method!(user_index, user_registration_canister);
     generate_ts_method!(user_index, users);

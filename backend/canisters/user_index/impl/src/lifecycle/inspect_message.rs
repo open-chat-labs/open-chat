@@ -29,9 +29,10 @@ fn accept_if_valid(state: &RuntimeState) {
             state.data.users.get_by_principal(&caller).is_some()
         }
         "suspend_user" | "unsuspend_user" => state.is_caller_platform_moderator(),
-        "set_diamond_membership_fees" | "set_premium_item_cost" | "set_user_upgrade_concurrency" => {
-            state.is_caller_platform_operator()
-        }
+        "set_diamond_membership_fees"
+        | "set_premium_item_cost"
+        | "set_user_upgrade_concurrency"
+        | "update_blocked_username_patterns" => state.is_caller_platform_operator(),
         "upload_wasm_chunk" => state.can_caller_upload_wasm_chunks(),
         "add_platform_moderator"
         | "add_platform_operator"

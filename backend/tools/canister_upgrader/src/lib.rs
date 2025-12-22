@@ -84,18 +84,11 @@ pub async fn upgrade_notifications_index_canister(
 pub async fn upgrade_identity_canister(
     identity: Box<dyn Identity>,
     url: String,
-    identity_canister_id: CanisterId,
+    openchat_installer_canister_id: CanisterId,
     version: BuildVersion,
 ) {
-    upgrade_top_level_canister(
-        identity,
-        url,
-        identity_canister_id,
-        version,
-        identity_canister::post_upgrade::Args { wasm_version: version },
-        CanisterName::Identity,
-    )
-    .await;
+    upgrade_canister_via_openchat_installer(identity, url, openchat_installer_canister_id, version, CanisterName::Identity)
+        .await;
 
     println!("Identity canister upgraded");
 }
@@ -541,6 +534,7 @@ async fn upgrade_canister_via_openchat_installer(
         CanisterName::UserIndex => openchat_installer_canister::CanisterType::UserIndex,
         CanisterName::GroupIndex => openchat_installer_canister::CanisterType::GroupIndex,
         CanisterName::NotificationsIndex => openchat_installer_canister::CanisterType::NotificationsIndex,
+        CanisterName::Identity => openchat_installer_canister::CanisterType::Identity,
         _ => unreachable!(),
     };
 

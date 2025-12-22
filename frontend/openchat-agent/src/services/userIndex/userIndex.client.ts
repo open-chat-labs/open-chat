@@ -72,6 +72,7 @@ import {
     UserIndexSuspendUserResponse,
     UserIndexUnsuspendUserArgs,
     UserIndexUnsuspendUserResponse,
+    UserIndexUpdateBlockedUsernamePatternsArgs,
     UserIndexUpdateBotArgs,
     UserIndexUpdateBotResponse,
     UserIndexUserRegistrationCanisterResponse,
@@ -741,6 +742,19 @@ export class UserIndexClient extends MsgpackCanisterAgent {
             },
             toVoid,
             UserIndexSetPremiumItemCostArgs,
+            UnitResult,
+        );
+    }
+
+    updateBlockedUsernamePatterns(pattern: string, add: boolean): Promise<void> {
+        return this.executeMsgpackUpdate(
+            "update_blocked_username_patterns",
+            {
+                pattern,
+                add,
+            },
+            toVoid,
+            UserIndexUpdateBlockedUsernamePatternsArgs,
             UnitResult,
         );
     }

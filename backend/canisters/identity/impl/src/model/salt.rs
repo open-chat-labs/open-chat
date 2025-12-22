@@ -6,17 +6,12 @@ pub struct Salt {
 }
 
 impl Salt {
+    pub fn new(salt: [u8; 32]) -> Self {
+        assert_ne!(salt, [0; 32]);
+        Self { salt }
+    }
+
     pub fn get(&self) -> [u8; 32] {
-        assert!(self.is_initialized());
         self.salt
-    }
-
-    pub fn set(&mut self, salt: [u8; 32]) {
-        assert!(!self.is_initialized());
-        self.salt = salt;
-    }
-
-    pub fn is_initialized(&self) -> bool {
-        self.salt != [0; 32]
     }
 }

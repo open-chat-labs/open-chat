@@ -22,9 +22,7 @@ fn approve_identity_link_impl(args: Args, state: &mut RuntimeState) -> OCResult 
     let now = state.env.now();
     state.data.user_principals.bump_last_used(&caller, now);
 
-    state
-        .data
-        .verify_certificate_time(&auth_principal, &args.delegation.signature, now, 5 * MINUTE_IN_MS)?;
+    state.verify_certificate_time(&auth_principal, &args.delegation.signature, now, 5 * MINUTE_IN_MS)?;
 
     if let Some(identity_link_request) = state.data.identity_link_requests.take(caller, args.link_initiated_by, now) {
         if state.data.user_principals.link_auth_principal_with_existing_user(

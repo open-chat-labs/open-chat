@@ -57,6 +57,7 @@ pub enum UserIndexEvent {
     UserUnblocked(UserId, UserId),
     UpdateChitBalance(UserId, ChitBalance),
     SetPremiumItemCost(SetPremiumItemCost),
+    UpdateBlockedUsernamePatterns(UpdateBlockedUsernamePatterns),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -419,4 +420,10 @@ impl LocalCommunity {
 pub struct SetPremiumItemCost {
     pub item_id: u32,
     pub chit_cost: u32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct UpdateBlockedUsernamePatterns {
+    pub pattern: String,
+    pub add: bool,
 }
