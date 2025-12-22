@@ -33,7 +33,7 @@
     import { onMount, setContext } from "svelte";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
     import { _, isLoading } from "svelte-i18n";
-    import { getFcmToken, svelteReady } from "tauri-plugin-oc-api";
+    import { getFcmToken, svelteReady, openUrl } from "tauri-plugin-oc-api";
     import Head from "./Head.svelte";
     import Router from "./Router.svelte";
     import Snow from "./Snow.svelte";
@@ -42,6 +42,7 @@
     import ActiveCall from "./home/video/ActiveCall.svelte";
     import IncomingCall from "./home/video/IncomingCall.svelte";
     import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
+    import { synonymousUrlRegex } from "../utils/urls";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
@@ -50,6 +51,23 @@
         import.meta.env.OC_WEBSITE_VERSION!,
         import.meta.env.OC_BUILD_ENV!,
     );
+
+    // Open external links in a browser!
+    window.addEventListener("click", (event) => {
+        // TODO add any oc paths here that we wish to open in a browser
+        const forbiddenPaths: Set<string> = new Set([]);
+        const target = event.target as HTMLElement | null;
+        const link = target?.closest("a") as HTMLAnchorElement | null;
+
+        if (link && link.href) {
+            const url = new URL(link.href);
+
+            if (!synonymousUrlRegex.test(link.href) || forbiddenPaths.has(url.pathname)) {
+                event.preventDefault();
+                openUrl({ url: url.toString() });
+            }
+        }
+    });
 
     function createOpenChatClient(): OpenChat {
         const client = new OpenChat({
