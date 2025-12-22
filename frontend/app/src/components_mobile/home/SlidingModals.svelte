@@ -95,6 +95,7 @@
     import TokenPage from "./wallet/TokenPage.svelte";
     import WalletSettings from "./wallet/WalletSettings.svelte";
     import type { TokenState } from "./wallet/walletState.svelte";
+    import { expectBackPress } from "../../utils/native/notification_channels";
     /**
      * It is tempting to think that this can completely replace the right panel on mobile but it's not quite so simple.
      * It can replace everything _that is not represented by it's own route_. That is because at the moment
@@ -212,6 +213,9 @@
     }
 
     onMount(() => {
+        // Expect user to press back in the app, handle that behaviour here.
+        expectBackPress(pop).catch(console.error);
+
         const unsubs = [
             subscribe("createPoll", (messageContext) =>
                 push({ kind: "create_poll", messageContext }),

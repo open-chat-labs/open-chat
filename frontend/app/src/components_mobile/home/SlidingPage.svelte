@@ -1,6 +1,4 @@
 <script lang="ts">
-    import { swipe, type SwipeDirection } from "component-lib";
-    import { publish } from "openchat-client";
     import type { Snippet } from "svelte";
     import { elasticInOut, expoInOut } from "svelte/easing";
     import { fade, fly } from "svelte/transition";
@@ -11,12 +9,6 @@
     }
 
     let { children, top }: Props = $props();
-
-    function onSwipe(dir: SwipeDirection) {
-        if (dir === "right") {
-            publish("closeModalPage");
-        }
-    }
 
     const SPEED = 300;
 </script>
@@ -29,7 +21,6 @@
 {/if}
 <div
     class:top
-    use:swipe={{ onSwipe }}
     transition:fly={{ duration: SPEED, easing: expoInOut, x: window.innerWidth }}
     style={`--speed: ${SPEED}ms`}
     class="sliding_page">

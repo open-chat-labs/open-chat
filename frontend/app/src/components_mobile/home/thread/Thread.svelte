@@ -1,7 +1,7 @@
 <script lang="ts">
     import { activeVideoCall } from "@src/stores/video";
     import { removeQueryStringParam, stripThreadFromUrl } from "@src/utils/urls";
-    import { ColourVars, Container, onSwipeRight } from "component-lib";
+    import { ColourVars, Container } from "component-lib";
     import type {
         AttachmentContent,
         ChatEvent as ChatEventType,
@@ -312,11 +312,7 @@
 {/if}
 
 <DropTarget {chat} mode={"thread"} {onFileSelected}>
-    <Container
-        onSwipe={onSwipeRight(onCloseThread)}
-        background={ColourVars.background0}
-        height={"fill"}
-        direction={"vertical"}>
+    <Container background={ColourVars.background0} height={"fill"} direction={"vertical"}>
         <ThreadHeader {threadRootMessageIndex} {onCloseThread} {rootEvent} chatSummary={chat} />
         <ChatEventList
             threadRootEvent={rootEvent}

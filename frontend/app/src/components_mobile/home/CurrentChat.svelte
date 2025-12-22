@@ -1,6 +1,6 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
-    import { ColourVars, Container, onSwipeRight } from "component-lib";
+    import { ColourVars, Container } from "component-lib";
     import {
         type AttachmentContent,
         blockedUsersStore,
@@ -23,7 +23,6 @@
         messageContextsEqual,
         messagesRead,
         type OpenChat,
-        publish,
         type ReadonlySet,
         selectedChatDraftMessageStore,
         selectedChatPinnedMessagesStore,
@@ -348,11 +347,7 @@
 <MemeBuilder onSend={onSendMessageWithContent} bind:this={memeBuilder} bind:open={buildingMeme} />
 
 <DropTarget {chat} mode={"message"} {onFileSelected}>
-    <Container
-        onSwipe={onSwipeRight(() => publish("clearSelection"))}
-        background={ColourVars.background0}
-        height={"fill"}
-        direction={"vertical"}>
+    <Container background={ColourVars.background0} height={"fill"} direction={"vertical"}>
         {#if showSearchHeader}
             <CurrentChatSearchHeader
                 {chat}

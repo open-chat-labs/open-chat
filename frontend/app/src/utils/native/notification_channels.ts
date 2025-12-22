@@ -7,6 +7,7 @@ const TAURI_PLUGIN_NAME = "oc";
 const PUSH_NOTIFICATION_EVENT = "push-notification";
 const NEW_FCM_TOKEN_EVENT = "fcm-token";
 const NOTIFICATION_TAP_EVENT = "notification-tap";
+const BACK_PRESS_EVENT = "back-pressed";
 
 type PushNotification = {
     id: number;
@@ -177,4 +178,17 @@ async function askForPermission(): Promise<boolean> {
 export async function expectNewFcmToken<T>(handler: (data: T) => void): Promise<PluginListener> {
     // Set up the listener for new FCM tokens!
     return addPluginListener(TAURI_PLUGIN_NAME, NEW_FCM_TOKEN_EVENT, handler);
+}
+
+/**
+ * Add a listener awaiting for the user to press the back button.
+ *
+ * TODO either rename this file, or move to a new one!
+ *
+ * @param handler runs on back press
+ * @returns
+ */
+export async function expectBackPress(handler: () => void): Promise<PluginListener> {
+    // Set up the listener for nav back presses
+    return addPluginListener(TAURI_PLUGIN_NAME, BACK_PRESS_EVENT, handler);
 }

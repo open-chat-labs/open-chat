@@ -1,22 +1,25 @@
 package com.oc.app
 
 import android.content.Intent
-import android.util.Log
 import android.os.Bundle
-import com.ocplugin.app.NotificationsManager
-import kotlinx.coroutines.launch
-import androidx.lifecycle.ProcessLifecycleOwner
-import androidx.lifecycle.lifecycleScope
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
-import android.webkit.WebView
 import android.view.ViewTreeObserver
+import android.webkit.WebView
+import androidx.activity.addCallback
+import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import app.tauri.plugin.JSObject
 import com.ocplugin.app.LOG_TAG
+import com.ocplugin.app.NotificationsManager
+import com.ocplugin.app.OCPluginCompanion
+import kotlinx.coroutines.launch
 
 class MainActivity : TauriActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         try {
             // Makes sure inputs are visible on soft keyboard toggle
             handleViewportSizeOnSoftKeyboardToggle()
@@ -24,6 +27,19 @@ class MainActivity : TauriActivity() {
         } catch (e: Exception) {
             Log.e(LOG_TAG, "Error occurred $e")
         }
+
+        onBackPressedDispatcher.addCallback(this) { interceptBack() }
+    }
+
+    private fun interceptBack() {
+        Log.d(LOG_TAG, "Back pressed/swiped intercepted in MainActivity")
+
+        // Raise back pressed, but send no data!
+        OCPluginCompanion.triggerRef("back-pressed", JSObject())
+
+        // If you want to allow default Android back afterwards:
+        // this.remove()   // remove callback
+        // onBackPressedDispatcher.onBackPressed() // dispatch again
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -34,18 +50,22 @@ class MainActivity : TauriActivity() {
             Log.e(LOG_TAG, "Error occurred $e")
         }
     }
-    
+
     private fun handleNotificationIntent(intent: Intent) {
         val notificationPayload = intent.getStringExtra("notificationPayload")
-        
+
         // Payload should be json string
         if (notificationPayload != null) {
             ProcessLifecycleOwner.get().lifecycleScope.launch {
-                NotificationsManager.releaseNotificationsAfterTapOrDismissed(this@MainActivity, notificationPayload, true)
+                NotificationsManager.releaseNotificationsAfterTapOrDismissed(
+                        this@MainActivity,
+                        notificationPayload,
+                        true
+                )
             }
         }
     }
-    
+
     // Handle viewport resize when soft keyboard pops or hides
     //
     // Setting `android:windowSoftInputMode="adjustResize"` in the AndroidManifest.xml does not
@@ -53,39 +73,43 @@ class MainActivity : TauriActivity() {
     // we start implementation of the new UI, and fix the issue.
     private fun handleViewportSizeOnSoftKeyboardToggle() {
         val root = findViewById<View>(android.R.id.content)
-        
+
         // Difference between visible and full height, which is a sum of heights of status bar
         // and bottom navigation bar.
         var heightDelta: Int? = null
 
-        root.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
-            override fun onGlobalLayout() {
-                val webView = findWebView(root)
-                
-                if (webView != null) {
-                    val rect = android.graphics.Rect()
-                    root.getWindowVisibleDisplayFrame(rect)
-                    
-                    val visibleHeight = rect.height()
-                    val fullHeight = root.rootView.height
+        root.viewTreeObserver.addOnGlobalLayoutListener(
+                object : ViewTreeObserver.OnGlobalLayoutListener {
+                    override fun onGlobalLayout() {
+                        val webView = findWebView(root)
 
-                    if (heightDelta == null) {
-                        heightDelta = fullHeight - visibleHeight
-                        Log.d("TEST_OC", "Full vs visible height offset: $heightDelta")
-                    }
+                        if (webView != null) {
+                            val rect = android.graphics.Rect()
+                            root.getWindowVisibleDisplayFrame(rect)
 
-                    val keyboardHeight = fullHeight - visibleHeight - heightDelta
-                    // Assume keyboard is visible if the difference is greater than 200
-                    val isKeyboardVisible = keyboardHeight > 200
-                    
-                    webView.post {
-                        val newHeight = if (isKeyboardVisible) fullHeight - keyboardHeight else fullHeight
-                        webView.layoutParams?.height = newHeight
-                        webView.requestLayout()
+                            val visibleHeight = rect.height()
+                            val fullHeight = root.rootView.height
+
+                            if (heightDelta == null) {
+                                heightDelta = fullHeight - visibleHeight
+                                Log.d("TEST_OC", "Full vs visible height offset: $heightDelta")
+                            }
+
+                            val keyboardHeight = fullHeight - visibleHeight - heightDelta
+                            // Assume keyboard is visible if the difference is greater than 200
+                            val isKeyboardVisible = keyboardHeight > 200
+
+                            webView.post {
+                                val newHeight =
+                                        if (isKeyboardVisible) fullHeight - keyboardHeight
+                                        else fullHeight
+                                webView.layoutParams?.height = newHeight
+                                webView.requestLayout()
+                            }
+                        }
                     }
                 }
-            }
-        })
+        )
     }
 
     private fun findWebView(view: View): WebView? {
