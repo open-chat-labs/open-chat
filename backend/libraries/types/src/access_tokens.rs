@@ -43,10 +43,10 @@ impl BotActionScope {
     pub fn chat(&self, channel_id: Option<ChannelId>) -> Option<Chat> {
         match self {
             BotActionScope::Chat(details) => {
-                if let Chat::Channel(community_id, _) = details.chat {
-                    if let Some(override_id) = channel_id {
-                        return Some(Chat::Channel(community_id, override_id));
-                    }
+                if let Chat::Channel(community_id, _) = details.chat
+                    && let Some(override_id) = channel_id
+                {
+                    return Some(Chat::Channel(community_id, override_id));
                 }
                 Some(details.chat)
             }
