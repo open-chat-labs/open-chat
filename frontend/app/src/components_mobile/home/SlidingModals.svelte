@@ -214,7 +214,9 @@
 
     onMount(() => {
         // Expect user to press back in the app, handle that behaviour here.
-        expectBackPress(pop).catch(console.error);
+        if (client.isNativeApp()) {
+            expectBackPress(pop).catch(console.error);
+        }
 
         const unsubs = [
             subscribe("createPoll", (messageContext) =>

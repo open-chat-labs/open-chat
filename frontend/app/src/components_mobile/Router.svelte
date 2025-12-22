@@ -133,7 +133,9 @@
 
     onMount(() => {
         // Expect user to press back in the app, handle that behaviour here.
-        expectBackPress(() => history.back()).catch(console.error);
+        if (client.isNativeApp()) {
+            expectBackPress(() => history.back()).catch(console.error);
+        }
 
         // this is for explore mode
         page("/communities", parsePathParams(communitesRoute), track, () => (route = Home));

@@ -190,12 +190,5 @@ export async function expectNewFcmToken<T>(handler: (data: T) => void): Promise<
  */
 export async function expectBackPress(handler: () => void): Promise<PluginListener | undefined> {
     // Set up the listener for nav back presses
-    if (isTauri()) {
-        return addPluginListener(TAURI_PLUGIN_NAME, BACK_PRESS_EVENT, handler);
-    }
-}
-
-export function isTauri(): boolean {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return typeof (window as any).__TAURI__ !== "undefined";
+    return addPluginListener(TAURI_PLUGIN_NAME, BACK_PRESS_EVENT, handler);
 }
