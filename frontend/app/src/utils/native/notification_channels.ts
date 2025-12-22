@@ -1,7 +1,7 @@
-import { isPermissionGranted, requestPermission } from "@tauri-apps/plugin-notification";
 import { addPluginListener, PluginListener } from "@tauri-apps/api/core";
-import { showNotification } from "tauri-plugin-oc-api";
+import { isPermissionGranted, requestPermission } from "@tauri-apps/plugin-notification";
 import page from "page";
+import { showNotification } from "tauri-plugin-oc-api";
 
 const TAURI_PLUGIN_NAME = "oc";
 const PUSH_NOTIFICATION_EVENT = "push-notification";
@@ -22,11 +22,11 @@ type PushNotification = {
 /**
  * Sets up a listener for push notifications. This function will ask for
  * permission to show notifications!
- * 
+ *
  * Can be tested within App.svelte onMount:
  * ```ts
  * import { expectPushNotifications } from "@utils/native/notification_channels";
- * 
+ *
  * if (client.isNativeApp()) {
  *   // Listen for incoming push notifications
  *   expectPushNotifications().catch((error) => {
@@ -38,7 +38,7 @@ type PushNotification = {
  * @param handler - The function to call when a push notification is received.
  * @returns A promise that resolves to a PluginListener for the push, and
  * provides the unlisten method.
- * 
+ *
  * TODO handle favourite paths
  */
 export async function expectPushNotifications(): Promise<PluginListener> {
@@ -188,7 +188,14 @@ export async function expectNewFcmToken<T>(handler: (data: T) => void): Promise<
  * @param handler runs on back press
  * @returns
  */
-export async function expectBackPress(handler: () => void): Promise<PluginListener> {
+export async function expectBackPress(handler: () => void): Promise<PluginListener | undefined> {
     // Set up the listener for nav back presses
-    return addPluginListener(TAURI_PLUGIN_NAME, BACK_PRESS_EVENT, handler);
+    if (isTauri()) {
+        return addPluginListener(TAURI_PLUGIN_NAME, BACK_PRESS_EVENT, handler);
+    }
+}
+
+export function isTauri(): boolean {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return typeof (window as any).__TAURI__ !== "undefined";
 }

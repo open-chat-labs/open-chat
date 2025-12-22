@@ -142,6 +142,8 @@ export interface PrizeContentInitial {
     transfer: PendingCryptocurrencyTransfer;
     prizes: bigint[];
     requiresCaptcha: boolean;
+    fees: bigint;
+    amount: bigint;
 }
 
 export interface P2PSwapContentInitial {
@@ -174,6 +176,7 @@ export type AttachmentContent =
     | FileContent
     | GiphyContent
     | CryptocurrencyContent
+    | PrizeContentInitial
     | P2PSwapContentInitial;
 
 export function isAttachmentContent(content: MessageContent): content is AttachmentContent {
@@ -185,6 +188,7 @@ export function isAttachmentContent(content: MessageContent): content is Attachm
         case "giphy_content":
         case "crypto_content":
         case "p2p_swap_content_initial":
+        case "prize_content_initial":
             return true;
         default:
             return false;

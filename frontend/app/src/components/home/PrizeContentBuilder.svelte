@@ -196,6 +196,8 @@
                 feeE8s: transferFee,
                 createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
             },
+            amount: draftAmount,
+            fees: totalFees,
             prizes,
             requiresCaptcha: requiresAuth,
         };

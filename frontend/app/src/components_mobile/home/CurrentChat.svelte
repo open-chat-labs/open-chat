@@ -23,6 +23,7 @@
         messageContextsEqual,
         messagesRead,
         type OpenChat,
+        publish,
         type ReadonlySet,
         selectedChatDraftMessageStore,
         selectedChatPinnedMessagesStore,

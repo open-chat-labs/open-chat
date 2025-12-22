@@ -297,7 +297,7 @@ class CommunityPreview {
     cancelPreview(client: OpenChat) {
         if (this.#previewing && this.#community) {
             client.removeCommunity(this.#community.id);
-            page("/communities");
+            history.back();
         }
     }
 }

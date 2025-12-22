@@ -1,5 +1,4 @@
 <script lang="ts" module>
-    type Duration = "oneHour" | "oneDay" | "oneWeek";
     type PrizeConfig = {
         minChitEarned: number;
         diamond: "none" | "standard" | "lifetime";
@@ -21,16 +20,26 @@
 </script>
 
 <script lang="ts">
-    import { Body, Chip, Column, Row, Switch } from "component-lib";
+    import {
+        Body,
+        Chip,
+        Column,
+        CommonButton,
+        InputTextButton,
+        NumberInput,
+        Row,
+        Switch,
+    } from "component-lib";
     import type { MessageContext, PrizeContentInitial } from "openchat-client";
     import {
         bigIntMax,
         chitBands,
         cryptoBalanceStore,
-        cryptoLookup,
+        enhancedCryptoLookup as cryptoLookup,
         lastCryptoSent,
         LEDGER_CANISTER_ICP,
         LocalStorageStore,
+        localUpdates,
         ONE_DAY,
     } from "openchat-client";
     import Account from "svelte-material-icons/AccountOutline.svelte";
@@ -38,13 +47,9 @@
     import Lifetime from "svelte-material-icons/DiamondStone.svelte";
     import Fingerprint from "svelte-material-icons/Fingerprint.svelte";
     import Flash from "svelte-material-icons/FlashOutline.svelte";
+    import Gift from "svelte-material-icons/GiftOutline.svelte";
     import LightningBolt from "svelte-material-icons/LightningBoltCircle.svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
-    import ErrorMessage from "../ErrorMessage.svelte";
-    import Legend from "../Legend.svelte";
-    import NumberInput from "../NumberInput.svelte";
-    import Range from "../Range.svelte";
     import Setting from "../Setting.svelte";
     import Translatable from "../Translatable.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
@@ -53,6 +58,8 @@
     import SelectMinStreak from "./SelectMinStreak.svelte";
     import SlidingPageContent from "./SlidingPageContent.svelte";
     import TokenInput from "./TokenInput.svelte";
+    import TransferFeesMessage from "./TransferFeesMessage.svelte";
+    import { TokenState } from "./wallet/walletState.svelte";
 
     const OC_FEE_PERCENTAGE = 5n;
     const streaks = [3, 7, 14, 30, 100, 365];
@@ -62,7 +69,7 @@
         onClose: () => void;
     }
 
-    let { context }: Props = $props();
+    let { context, onClose }: Props = $props();
 
     let draftAmount = $state(0n);
     let ledger = $state($lastCryptoSent ?? LEDGER_CANISTER_ICP);
@@ -75,33 +82,28 @@
         (_a, _b) => false,
     );
 
-    let numberOfWinners = $state(20);
+    let numberOfWinners = $state<number | undefined>(20);
+    let numberOfWinnersValid = $derived(
+        numberOfWinners !== undefined && numberOfWinners >= 1 && numberOfWinners <= 1000,
+    );
     let distribution: "equal" | "random" = $state($prizeConfig.distribution);
     let selectedDuration = $state($prizeConfig.duration);
     let diamondType: "none" | "standard" | "lifetime" = $state($prizeConfig.diamond);
-    let diamondOnly = $derived(diamondType !== "none");
     let uniquePersonOnly = $state($prizeConfig.uniquePersonOnly);
     let minStreak = $state<number>($prizeConfig.minStreak);
     let minChitEarned = $state<number>($prizeConfig.minChitEarned);
-    let streakOnly = $derived(minStreak > 0);
-    let chitOnly = $derived(minChitEarned > 0);
-    let error: string | undefined = $state(undefined);
-    let tokenChanging = $state(true);
     let tokenInputState: "ok" | "zero" | "too_low" | "too_high" = $state("ok");
     let requiresAuth = $state($prizeConfig.requiresAuth);
-    let anyUser = $derived(!diamondOnly && !uniquePersonOnly && !streakOnly && !chitOnly);
     let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? 0n);
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
-    let symbol = $derived(tokenDetails.symbol);
+    let tokenState = $derived(new TokenState(tokenDetails));
     let transferFee = $derived(tokenDetails.transferFee);
     let transferFees = $derived(transferFee * BigInt(numberOfWinners ?? 0));
     let prizeFees = $derived(transferFees + (draftAmount * OC_FEE_PERCENTAGE) / 100n);
     let totalFees = $derived(transferFee + prizeFees);
     let minAmount = $derived(100n * BigInt(numberOfWinners ?? 0) * transferFee);
     let maxAmount = $derived(bigIntMax(cryptoBalance - totalFees, BigInt(0)));
-    let valid = $derived(error === undefined && tokenInputState === "ok" && !tokenChanging);
-    let zero = $derived(cryptoBalance <= transferFee && !tokenChanging);
-    let errorMessage = $derived(error !== undefined ? i18nKey(error) : $pinNumberErrorMessageStore);
+    let valid = $derived(numberOfWinnersValid && tokenInputState === "ok");
     let selectMinChitEarned = $state(false);
     let selectMinStreak = $state(false);
 
@@ -144,8 +146,7 @@
     }
 
     function getEndDate() {
-        const now = Date.now();
-        return BigInt(now + selectedDuration);
+        return BigInt(BigInt(Date.now()) + selectedDuration);
     }
 
     function send() {
@@ -164,12 +165,14 @@
             transfer: {
                 kind: "pending",
                 ledger,
-                token: symbol,
+                token: tokenState.symbol,
                 recipient: recipientFromContext(context),
                 amountE8s,
                 feeE8s: transferFee,
                 createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
             },
+            amount: draftAmount,
+            fees: totalFees,
             prizes,
             requiresCaptcha: requiresAuth,
         };
@@ -184,18 +187,9 @@
             duration: selectedDuration,
         });
 
-        error = undefined;
+        localUpdates.draftMessages.setAttachment(context, content);
 
-        // client
-        //     .sendMessageWithContent(context, content, false)
-        //     .then((resp) => {
-        //         if (resp.kind === "success" || resp.kind === "transfer_success") {
-        //             onClose();
-        //         } else if ($pinNumberErrorMessageStore === undefined) {
-        //             error = "errorSendingMessage";
-        //         }
-        //     })
-        //     .finally(() => (sending = false));
+        onClose();
     }
 
     function generatePrizes(): bigint[] {
@@ -221,7 +215,7 @@
     }
 
     function generateEquallyDistributedPrizes(fund: bigint, share: number): bigint[] {
-        const prizes = Array.from({ length: numberOfWinners }).map(() => BigInt(share));
+        const prizes = Array.from({ length: numberOfWinners ?? 0 }).map(() => BigInt(share));
         return compensateRounding(prizes, fund);
     }
 
@@ -229,7 +223,9 @@
         const min = share * 0.1;
         const max = share * 2;
 
-        const intermediate = Array.from({ length: numberOfWinners }).map(() => random(min, max));
+        const intermediate = Array.from({ length: numberOfWinners ?? 0 }).map(() =>
+            random(min, max),
+        );
         const total = intermediate.reduce((agg, p) => agg + p, 0);
 
         // we might have more prizes than the total so let's scale
@@ -278,6 +274,10 @@
                 break;
         }
     }
+
+    function setAmount(percentage: number) {
+        draftAmount = BigInt(Math.floor(Number(maxAmount) * (percentage / 100)));
+    }
 </script>
 
 {#if selectMinChitEarned}
@@ -301,31 +301,56 @@
         }} />
 {/if}
 
+{#snippet percentage(perc: number)}
+    <Chip fill mode={"rounded"} onClick={() => setAmount(perc)}>
+        {`${perc}%`}
+    </Chip>
+{/snippet}
+
 <SlidingPageContent title={i18nKey("Create a prize")}>
     <Column height={"fill"} gap={"xxl"} padding={["lg", "xxl"]}>
         <CryptoSelector filter={(t) => t.balance > 0} {draftAmount} showRefresh bind:ledger />
-        <TokenInput
-            {ledger}
-            bind:status={tokenInputState}
-            {minAmount}
-            {maxAmount}
-            bind:amount={draftAmount} />
-        <div class="winners">
-            <Legend
-                label={i18nKey("prizes.numberOfWinners")}
-                rules={i18nKey(numberOfWinners?.toString())} />
-            <div class="pickers">
-                <Range fat min={1} max={1000} bind:value={numberOfWinners} />
-                <div class="num-picker">
-                    <NumberInput
-                        align={"right"}
-                        defaultValue={20}
-                        min={1}
-                        max={1000}
-                        bind:value={numberOfWinners} />
-                </div>
-            </div>
-        </div>
+
+        <Column gap={"xs"}>
+            <TokenInput
+                {ledger}
+                bind:status={tokenInputState}
+                {minAmount}
+                {maxAmount}
+                bind:amount={draftAmount}>
+                {#snippet subtext()}
+                    <Translatable
+                        resourceKey={i18nKey(
+                            `Minimum amount ${tokenState.formatTokens(minAmount)} ${
+                                tokenState.symbol
+                            }`,
+                        )} />
+                {/snippet}
+            </TokenInput>
+
+            <Row mainAxisAlignment={"spaceBetween"} padding={["sm", "zero"]} gap={"sm"}>
+                {@render percentage(25)}
+                {@render percentage(50)}
+                {@render percentage(75)}
+                {@render percentage(100)}
+            </Row>
+
+            <TransferFeesMessage
+                symbol={tokenState.symbol}
+                tokenDecimals={tokenState.decimals}
+                transferFees={totalFees} />
+        </Column>
+
+        <NumberInput error={!numberOfWinnersValid} min={1} max={1000} bind:value={numberOfWinners}>
+            {#snippet subtext()}
+                <Translatable resourceKey={i18nKey("Please enter a number between 1 and 1000")} />
+            {/snippet}
+            {#snippet textButtons()}
+                <InputTextButton onClick={() => (numberOfWinners = 1000)}>
+                    <Translatable resourceKey={i18nKey("tokenTransfer.max")} />
+                </InputTextButton>
+            {/snippet}
+        </NumberInput>
 
         <DurationSelector bind:duration={selectedDuration}>
             {#snippet title()}
@@ -425,106 +450,16 @@
             </Chip>
         </Row>
 
-        {#if errorMessage !== undefined}
-            <div class="error">
-                <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
-            </div>
-        {/if}
+        <Row mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
+            <CommonButton onClick={onClose} mode={"active"} size={"small_text"}>
+                <Translatable resourceKey={i18nKey("back")} />
+            </CommonButton>
+            <CommonButton disabled={!valid} onClick={send} mode={"active"} size={"medium"}>
+                {#snippet icon(color, size)}
+                    <Gift {color} {size} />
+                {/snippet}
+                <Translatable resourceKey={i18nKey("Attach prize")} />
+            </CommonButton>
+        </Row>
     </Column>
 </SlidingPageContent>
-
-<style lang="scss">
-    :global(.restrictions .diamond-choice .radio) {
-        margin-bottom: 0;
-    }
-
-    .header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: $sp2;
-
-        .left {
-            flex: auto;
-            display: flex;
-            align-items: center;
-            gap: $sp4;
-
-            .main-title {
-                flex: auto;
-                display: flex;
-                align-items: baseline;
-                gap: 10px;
-                @include font(bold, normal, fs-120);
-            }
-        }
-    }
-
-    .body {
-        transition: background-color 100ms ease-in-out;
-        @include font(book, normal, fs-100, 28);
-    }
-
-    .transfer {
-        margin-bottom: $sp4;
-    }
-
-    .how-to {
-        margin-top: $sp4;
-    }
-
-    .distributions {
-        display: flex;
-        gap: $sp6;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: $sp3;
-
-        .distribution {
-            cursor: pointer;
-        }
-
-        .dist-icon {
-            margin: $sp3 0;
-            padding: $sp3 $sp5;
-            border-radius: $sp3;
-            transition: background-color 250ms ease-in-out;
-            &.selected {
-                background-color: var(--icon-hv);
-            }
-        }
-
-        .dist-label {
-            text-align: center;
-        }
-    }
-
-    .config {
-        display: flex;
-        gap: $sp5;
-        justify-content: space-between;
-
-        .restrictions,
-        .duration {
-            flex: 1;
-        }
-    }
-
-    .pickers {
-        display: flex;
-        align-items: center;
-        gap: $sp3;
-
-        .num-picker {
-            flex: 0 0 80px;
-        }
-    }
-
-    .error {
-        margin-top: $sp4;
-    }
-
-    .diamond-choice {
-        margin-left: $sp6;
-    }
-</style>

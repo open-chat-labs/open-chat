@@ -16,6 +16,7 @@ export { default as Form } from "./components/forms/Form.svelte";
 export { default as Input } from "./components/forms/Input.svelte";
 export { default as InputIconButton } from "./components/forms/InputIconButton.svelte";
 export { default as InputTextButton } from "./components/forms/InputTextButton.svelte";
+export { default as NumberInput } from "./components/forms/NumberInput.svelte";
 export { default as Search } from "./components/forms/Search.svelte";
 export { default as Option } from "./components/forms/select/Option.svelte";
 export { default as Select } from "./components/forms/select/Select.svelte";
