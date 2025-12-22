@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ColourVars, Label, type ColourVarKeys } from "component-lib";
+    import { ColourVars, IconButton, Label, type ColourVarKeys } from "component-lib";
     import { type Snippet } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import Container from "./Container.svelte";
@@ -68,7 +68,7 @@
     borderRadius={mode === "rounded" || mode === "unselected" ? "circle" : "md"}
     borderWidth={"thick"}
     padding={["xs", onRemove ? "md" : "lg", "xs", icon ? "md" : "lg"]}
-    onClick={onRemove ?? onClick}>
+    {onClick}>
     {#if icon}
         <span class="icon">{@render icon(iconColours[mode])}</span>
     {/if}
@@ -76,9 +76,17 @@
         {@render children?.()}
     </Label>
     {#if onRemove}
-        <span class="icon">
-            <Close color={textColourVars[mode]} />
-        </span>
+        <IconButton
+            size={"sm"}
+            padding={"zero"}
+            onclick={(e) => {
+                e?.stopPropagation();
+                onRemove();
+            }}>
+            {#snippet icon()}
+                <Close color={textColourVars[mode]} />
+            {/snippet}
+        </IconButton>
     {/if}
 </Container>
 
@@ -87,7 +95,6 @@
         width: 1rem;
         height: 1rem;
     }
-
     .icon {
         display: flex;
     }

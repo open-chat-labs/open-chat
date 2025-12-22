@@ -128,6 +128,7 @@ export type PubSubEvents = {
         initialLoad: boolean;
     };
     createPoll: MessageContext;
+    createPrize: MessageContext;
     attachGif: [MessageContext, string];
     tokenTransfer: {
         context: MessageContext;

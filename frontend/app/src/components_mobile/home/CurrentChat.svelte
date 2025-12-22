@@ -49,7 +49,6 @@
     import Footer from "./Footer.svelte";
     import MemeBuilder from "./MemeBuilder.svelte";
     import P2PSwapContentBuilder from "./P2PSwapContentBuilder.svelte";
-    import PrizeContentBuilder from "./PrizeContentBuilder.svelte";
 
     interface Props {
         chat: ChatSummary;
@@ -66,7 +65,6 @@
     let unreadMessages = $state<number>(0);
     let firstUnreadMention = $state<Mention | undefined>();
     let creatingCryptoTransfer: { ledger: string; amount: bigint } | undefined = $state(undefined);
-    let creatingPrizeMessage = $state(false);
     let creatingP2PSwapMessage = $state(false);
     let buildingMeme = $state(false);
     //@ts-ignore
@@ -146,7 +144,7 @@
     }
 
     function createPrizeMessage() {
-        creatingPrizeMessage = true;
+        publish("createPrize", messageContext);
     }
 
     function createP2PSwapMessage() {
@@ -338,15 +336,6 @@
         defaultReceiver={defaultCryptoTransferReceiver()}
         {messageContext}
         onClose={() => (creatingCryptoTransfer = undefined)} />
-{/if}
-
-{#if creatingPrizeMessage}
-    <PrizeContentBuilder
-        context={messageContext}
-        {chat}
-        ledger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
-        draftAmount={0n}
-        onClose={() => (creatingPrizeMessage = false)} />
 {/if}
 
 {#if creatingP2PSwapMessage}
