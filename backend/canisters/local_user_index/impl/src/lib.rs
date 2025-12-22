@@ -581,7 +581,6 @@ struct Data {
     pub blocked_users: UserIdsSet,
     pub fcm_token_store: FcmTokenStore,
     pub premium_items: PremiumItems,
-    #[serde(default)]
     pub blocked_username_patterns: Vec<String>,
 }
 
