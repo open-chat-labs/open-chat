@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Add optional `channel_id` to `bot_invite_user` ([#8724](https://github.com/open-chat-labs/open-chat/pull/8724))
+
 ### Removed
 
 - Remove `c2c_diamond_membership_expiry_dates` endpoint ([#8691](https://github.com/open-chat-labs/open-chat/pull/8691))
