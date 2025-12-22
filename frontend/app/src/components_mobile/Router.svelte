@@ -40,7 +40,6 @@
     import { type Component, getContext, onDestroy, onMount, tick, untrack } from "svelte";
     import Home from "./home/HomeRoute.svelte";
     import NotFound from "./NotFound.svelte";
-    import { expectBackPress } from "../utils/native/notification_channels";
 
     const client = getContext<OpenChat>("client");
 
@@ -132,11 +131,6 @@
     }
 
     onMount(() => {
-        // Expect user to press back in the app, handle that behaviour here.
-        if (client.isNativeApp()) {
-            expectBackPress(() => history.back()).catch(console.error);
-        }
-
         // this is for explore mode
         page("/communities", parsePathParams(communitesRoute), track, () => (route = Home));
         // global direct chat selected

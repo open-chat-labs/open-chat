@@ -29,6 +29,7 @@
         type UserGroupDetails,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
+    import { expectBackPress } from "../../utils/native/notification_channels";
     import BotDetailsPage from "../bots/BotDetailsPage.svelte";
     import BotInstaller from "../bots/install/BotInstaller.svelte";
     import WebhookModal from "../bots/WebhookModal.svelte";
@@ -95,7 +96,6 @@
     import TokenPage from "./wallet/TokenPage.svelte";
     import WalletSettings from "./wallet/WalletSettings.svelte";
     import type { TokenState } from "./wallet/walletState.svelte";
-    import { expectBackPress } from "../../utils/native/notification_channels";
     /**
      * It is tempting to think that this can completely replace the right panel on mobile but it's not quite so simple.
      * It can replace everything _that is not represented by it's own route_. That is because at the moment
@@ -209,13 +209,18 @@
     }
 
     function pop() {
-        modalStack.pop();
+        return modalStack.pop();
     }
 
     onMount(() => {
-        // Expect user to press back in the app, handle that behaviour here.
         if (client.isNativeApp()) {
-            expectBackPress(pop).catch(console.error);
+            // Expect user to press back in the app, handle that behaviour here.
+            expectBackPress(() => {
+                if (pop() === undefined) {
+                    // if there was nothing in the modal stack let's fallback to the history api
+                    history.back();
+                }
+            }).catch(console.error);
         }
 
         const unsubs = [
