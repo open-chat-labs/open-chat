@@ -42,6 +42,7 @@
     import ActiveCall from "./home/video/ActiveCall.svelte";
     import IncomingCall from "./home/video/IncomingCall.svelte";
     import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
+    import { synonymousUrlRegex } from "../utils/urls";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
@@ -58,14 +59,10 @@
         const target = event.target as HTMLElement | null;
         const link = target?.closest("a") as HTMLAnchorElement | null;
 
-        if (link) {
-            const href = link.href;
-            if (!href) return;
+        if (link && link.href) {
+            const url = new URL(link.href);
 
-            const url = new URL(href);
-            const isExternal = url.host && url.host !== window.location.host;
-
-            if (isExternal || forbiddenPaths.has(url.pathname)) {
+            if (!synonymousUrlRegex.test(link.href) || forbiddenPaths.has(url.pathname)) {
                 event.preventDefault();
                 openUrl({ url: url.toString() });
             }
