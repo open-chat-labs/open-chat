@@ -33,7 +33,7 @@
     import { onMount, setContext } from "svelte";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
     import { _, isLoading } from "svelte-i18n";
-    import { getFcmToken, svelteReady } from "tauri-plugin-oc-api";
+    import { getFcmToken, svelteReady, openUrl } from "tauri-plugin-oc-api";
     import Head from "./Head.svelte";
     import Router from "./Router.svelte";
     import Snow from "./Snow.svelte";
@@ -50,6 +50,27 @@
         import.meta.env.OC_WEBSITE_VERSION!,
         import.meta.env.OC_BUILD_ENV!,
     );
+
+    // Open external links in a browser!
+    window.addEventListener("click", (event) => {
+        // TODO add any oc paths here that we wish to open in a browser
+        const forbiddenPaths: Set<string> = new Set([]);
+        const target = event.target as HTMLElement | null;
+        const link = target?.closest("a") as HTMLAnchorElement | null;
+
+        if (link) {
+            const href = link.href;
+            if (!href) return;
+
+            const url = new URL(href);
+            const isExternal = url.host && url.host !== window.location.host;
+
+            if (isExternal || forbiddenPaths.has(url.pathname)) {
+                event.preventDefault();
+                openUrl({ url: url.toString() });
+            }
+        }
+    });
 
     function createOpenChatClient(): OpenChat {
         const client = new OpenChat({
