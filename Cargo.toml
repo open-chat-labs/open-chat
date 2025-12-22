@@ -89,8 +89,8 @@ members = [
     "backend/external_canisters/nns_governance/c2c_client",
     "backend/external_canisters/one_sec_minter/api",
     "backend/external_canisters/one_sec_minter/c2c_client",
-    "backend/external_canisters/sign_in_with_email/api",    
-    "backend/external_canisters/sign_in_with_email/c2c_client",    
+    "backend/external_canisters/sign_in_with_email/api",
+    "backend/external_canisters/sign_in_with_email/c2c_client",
     "backend/external_canisters/sns_archive/api",
     "backend/external_canisters/sns_archive/c2c_client",
     "backend/external_canisters/sns_governance/api",
@@ -259,6 +259,7 @@ subenum = "1.1.2"
 syn = "2"
 tauri = "2.8.5"
 tauri-build = "2.4.1"
+tauri-plugin-devtools = "2.0.1"
 tauri-plugin-deep-link = "2.4.3"
 tauri-plugin-notification = "2.3.1"
 test-case = "3"
