@@ -217,11 +217,14 @@
         if (client.isNativeApp()) {
             // Expect user to press back in the app, handle that behaviour here.
             expectBackPress(() => {
-                if (pop() === undefined) {
-                    // if there was nothing in the modal stack let's fallback to the history api
-                    history.back();
-                    portalState.close();
-                }
+                try {
+                    console.log("Back gesture detected");
+                    if (pop() === undefined) {
+                        // if there was nothing in the modal stack let's fallback to the history api
+                        history.back();
+                        portalState.close();
+                    }
+                } catch {}
             }).catch(console.error);
         }
 

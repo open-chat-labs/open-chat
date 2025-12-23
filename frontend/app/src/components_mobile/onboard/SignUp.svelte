@@ -78,7 +78,7 @@
                 passkeyCreated = true;
                 await registerUser(username, email.length > 0 ? email : undefined);
             } catch (err) {
-                error = `Error registering user: ${err}`;
+                error = `Error registering user: ${JSON.stringify(err)}`;
             } finally {
                 busy = false;
             }

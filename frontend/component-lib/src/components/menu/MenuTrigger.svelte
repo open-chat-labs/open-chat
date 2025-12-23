@@ -56,6 +56,10 @@
     }
 
     export function showMenu() {
+        if (!menu) {
+            console.log("Menu is not defined");
+            return;
+        }
         open = portalState.open(
             mount(MenuWrapper, {
                 target: document.body,
