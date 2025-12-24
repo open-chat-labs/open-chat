@@ -511,6 +511,7 @@ impl RuntimeState {
                     commands: b.commands.iter().map(|c| c.name.clone()).collect(),
                 })
                 .collect(),
+            blocked_username_patterns: self.data.blocked_username_patterns.clone(),
             stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
@@ -580,6 +581,7 @@ struct Data {
     pub blocked_users: UserIdsSet,
     pub fcm_token_store: FcmTokenStore,
     pub premium_items: PremiumItems,
+    pub blocked_username_patterns: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -669,6 +671,7 @@ impl Data {
             blocked_users: UserIdsSet::new(UserIdsKeyPrefix::new_for_blocked_users()),
             fcm_token_store: FcmTokenStore::default(),
             premium_items: PremiumItems::default(),
+            blocked_username_patterns: Vec::new(),
         }
     }
 }
@@ -732,6 +735,7 @@ pub struct Metrics {
     pub oc_secret_key_initialized: bool,
     pub cycles_balance_check_queue_len: u32,
     pub bots: Vec<BotMetrics>,
+    pub blocked_username_patterns: Vec<String>,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }

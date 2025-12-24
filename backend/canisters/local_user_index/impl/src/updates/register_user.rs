@@ -120,7 +120,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         }
     }
 
-    match validate_username(&args.username) {
+    match validate_username(&args.username, &state.data.blocked_username_patterns) {
         Ok(_) => {}
         Err(UsernameValidationError::TooShort(s)) => return Err(UsernameTooShort(s.min_length as u16)),
         Err(UsernameValidationError::TooLong(l)) => return Err(UsernameTooLong(l.max_length as u16)),
