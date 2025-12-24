@@ -1,4 +1,4 @@
-use crate::lifecycle::{init_env, init_state};
+use crate::lifecycle::init_state;
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
 use crate::{Data, read_state};
 use canister_api_macros::post_upgrade;
@@ -8,6 +8,7 @@ use group_canister::post_upgrade::Args;
 use instruction_counts_log::InstructionCountFunctionId;
 use stable_memory::get_reader;
 use tracing::info;
+use utils::env::canister::CanisterEnv;
 
 #[post_upgrade(msgpack = true)]
 #[trace]
@@ -22,7 +23,7 @@ fn post_upgrade(args: Args) {
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
-    let env = init_env(data.rng_seed);
+    let env = Box::new(CanisterEnv::new(data.rng_seed));
     init_state(env, data, args.wasm_version);
 
     let total_instructions = ic_cdk::api::call_context_instruction_counter();

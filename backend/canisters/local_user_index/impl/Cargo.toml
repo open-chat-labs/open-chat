@@ -21,6 +21,7 @@ community_canister = { path = "../../community/api" }
 community_canister_c2c_client = { path = "../../community/c2c_client" }
 constants = { path = "../../../libraries/constants" }
 ct-codecs = { workspace = true }
+email_address = { workspace = true }
 event_store_producer = { workspace = true }
 event_store_producer_cdk_runtime = { workspace = true }
 event_store_utils = { workspace = true }

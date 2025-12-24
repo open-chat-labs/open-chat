@@ -2882,12 +2882,17 @@ export class OpenChatAgent extends EventTarget {
 
     async registerUser(
         username: string,
+        email: string | undefined,
         referralCode: string | undefined,
     ): Promise<RegisterUserResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
         const localUserIndex = await this._userIndexClient.userRegistrationCanister();
-        return this.getLocalUserIndexClient(localUserIndex).registerUser(username, referralCode);
+        return this.getLocalUserIndexClient(localUserIndex).registerUser(
+            username,
+            email,
+            referralCode,
+        );
     }
 
     getUserStorageLimits(): Promise<StorageStatus> {
@@ -3870,7 +3875,10 @@ export class OpenChatAgent extends EventTarget {
             }
         }
 
-        const equivalentSymbols = [["btc", "ckbtc"], ["eth", "cketh"]];
+        const equivalentSymbols = [
+            ["btc", "ckbtc"],
+            ["eth", "cketh"],
+        ];
 
         // If any symbols within a group of equivalent symbols are missing exchange rates,
         // copy them over from other symbols within the group
@@ -4692,7 +4700,7 @@ export class OpenChatAgent extends EventTarget {
         return this.getLocalUserIndexClient(localUserIndex).payForPremiumItem(item);
     }
 
-    async setPremiumItemCost(item: PremiumItem, chitCost: number): Promise<void> {
+    setPremiumItemCost(item: PremiumItem, chitCost: number): Promise<void> {
         return this._userIndexClient.setPremiumItemCost(item, chitCost);
     }
 
@@ -4702,6 +4710,10 @@ export class OpenChatAgent extends EventTarget {
             userId,
             days,
         );
+    }
+
+    updateBlockedUsernamePatterns(pattern: string, add: boolean): Promise<void> {
+        return this._userIndexClient.updateBlockedUsernamePatterns(pattern, add);
     }
 }
 

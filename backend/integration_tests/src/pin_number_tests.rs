@@ -60,7 +60,7 @@ fn can_set_pin_number_by_providing_recent_delegation(within_5_minutes: bool) {
         user.canister(),
         &user_canister::set_pin_number::Args {
             new: None,
-            verification: PinNumberVerification::Delegation(user_auth.delegation),
+            verification: PinNumberVerification::Delegation(user_auth.oc_delegation),
         },
     );
 

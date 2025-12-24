@@ -537,7 +537,8 @@ pub struct AudioContent {
     pub blob_reference: Option<BlobReference>,
     // TODO remove the `Option` wrapper here and on `samples` once everything is released
     pub duration_ms: Option<Milliseconds>,
-    #[serde(serialize_with = "serialize_samples", deserialize_with = "deserialize_samples")]
+    #[serde(serialize_with = "serialize_samples", deserialize_with = "deserialize_samples", default)]
+    #[ts(as = "Option::<ts_export::TSBytes>")]
     pub samples: Option<Vec<u8>>,
 }
 

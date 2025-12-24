@@ -6,7 +6,7 @@ use crate::{
 use canister_api_macros::update;
 use local_user_index_canister::bot_invite_users::*;
 use oc_error_codes::OCErrorCode;
-use types::{Chat, UserId};
+use types::{ChannelId, Chat, UserId};
 
 #[update(candid = true, json = true, msgpack = true)]
 async fn bot_invite_users(args: Args) -> Response {
@@ -15,11 +15,11 @@ async fn bot_invite_users(args: Args) -> Response {
         Err(_) => return OCErrorCode::BotNotAuthenticated.into(),
     };
 
-    call_chat_canister(context, args.user_ids).await
+    call_chat_canister(context, args.channel_id, args.user_ids).await
 }
 
-async fn call_chat_canister(context: BotAccessContext, user_ids: Vec<UserId>) -> Response {
-    let Some(chat) = context.scope.chat(None) else {
+async fn call_chat_canister(context: BotAccessContext, channel_id: Option<ChannelId>, user_ids: Vec<UserId>) -> Response {
+    let Some(chat) = context.scope.chat(channel_id) else {
         return OCErrorCode::InvalidBotActionScope
             .with_message("Channel not specified")
             .into();

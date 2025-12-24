@@ -20,10 +20,9 @@ pub struct Args {
     pub registry_canister_id: CanisterId,
     pub translations_canister_id: CanisterId,
     pub website_canister_id: CanisterId,
+    pub sign_in_with_email_canister_id: CanisterId,
     pub nns_governance_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
-    #[serde(with = "serde_bytes")]
-    pub ic_root_key: Vec<u8>,
     pub wasm_version: BuildVersion,
     pub test_mode: bool,
 }

@@ -2154,20 +2154,6 @@ export const UserIndexSearchArgs = Type.Object({
     max_results: Type.Number(),
 });
 
-export type UserIndexDeleteUserResponse = Static<typeof UserIndexDeleteUserResponse>;
-export const UserIndexDeleteUserResponse = Type.Union([
-    Type.Literal("Success"),
-    Type.Literal("NotAuthorized"),
-    Type.Object({
-        MalformedSignature: Type.String(),
-    }),
-    Type.Literal("DelegationTooOld"),
-    Type.Literal("UserNotFound"),
-    Type.Object({
-        Error: OCError,
-    }),
-]);
-
 export type UserIndexRemoveBotArgs = Static<typeof UserIndexRemoveBotArgs>;
 export const UserIndexRemoveBotArgs = Type.Object({
     bot_id: UserId,
@@ -2316,6 +2302,14 @@ export const UserIndexSetDiamondMembershipFeesResponse = Type.Union([
     Type.Literal("Invalid"),
 ]);
 
+export type UserIndexUpdateBlockedUsernamePatternsArgs = Static<
+    typeof UserIndexUpdateBlockedUsernamePatternsArgs
+>;
+export const UserIndexUpdateBlockedUsernamePatternsArgs = Type.Object({
+    pattern: Type.String(),
+    add: Type.Boolean(),
+});
+
 export type UserIndexRegisterBotSuccessResult = Static<typeof UserIndexRegisterBotSuccessResult>;
 export const UserIndexRegisterBotSuccessResult = Type.Object({
     bot_id: UserId,
@@ -2450,6 +2444,7 @@ export const LocalUserIndexBotDeleteChannelArgs = Type.Object({
 export type LocalUserIndexRegisterUserArgs = Static<typeof LocalUserIndexRegisterUserArgs>;
 export const LocalUserIndexRegisterUserArgs = Type.Object({
     username: Type.String(),
+    email: Type.Optional(Type.String()),
     referral_code: Type.Optional(Type.String()),
     public_key: TSBytes,
 });
@@ -5451,7 +5446,7 @@ export const AudioContent = Type.Object({
     mime_type: Type.String(),
     blob_reference: Type.Optional(BlobReference),
     duration_ms: Type.Optional(Type.BigInt()),
-    samples: Type.Optional(Type.Array(Type.Number())),
+    samples: Type.Optional(TSBytes),
 });
 
 export type ImageContent = Static<typeof ImageContent>;
@@ -6101,6 +6096,7 @@ export const LocalUserIndexRegisterUserResponse = Type.Union([
     Type.Literal("AlreadyRegistered"),
     Type.Literal("UserLimitReached"),
     Type.Literal("UsernameInvalid"),
+    Type.Literal("EmailInvalid"),
     Type.Object({
         UsernameTooShort: Type.Number(),
     }),
@@ -7282,12 +7278,6 @@ export const RegistryUpdatesResponse = Type.Union([
     }),
     Type.Literal("SuccessNoUpdates"),
 ]);
-
-export type UserIndexDeleteUserArgs = Static<typeof UserIndexDeleteUserArgs>;
-export const UserIndexDeleteUserArgs = Type.Object({
-    user_id: UserId,
-    delegation: SignedDelegation,
-});
 
 export type UserIndexCurrentUserSuccessResult = Static<typeof UserIndexCurrentUserSuccessResult>;
 export const UserIndexCurrentUserSuccessResult = Type.Object({

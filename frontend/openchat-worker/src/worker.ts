@@ -709,7 +709,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.registerUser(payload.username, payload.referralCode),
+                    agent.registerUser(payload.username, payload.email, payload.referralCode),
                 );
                 break;
 
@@ -2216,6 +2216,13 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.receiver,
                     ),
                 );
+                break;
+
+            case "updateBlockedUsernamePatterns":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.updateBlockedUsernamePatterns(payload.pattern, payload.add));
                 break;
 
             default:

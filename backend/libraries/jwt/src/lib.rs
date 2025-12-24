@@ -146,8 +146,7 @@ mod tests {
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64;
 
         for _ in 0..50 {
-            let mut kp = P256KeyPair::default();
-            kp.initialize(&mut rng);
+            let kp = P256KeyPair::new(&mut rng);
 
             let sk_der = kp.secret_key_der();
             let pk_pem = kp.public_key_pem();

@@ -1,11 +1,10 @@
-use crate::{RuntimeState, mutate_state};
-use candid::Principal;
+use crate::{RuntimeState, UserIdentity, mutate_state};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::cmp::min;
 use std::time::Duration;
 use tracing::trace;
-use types::{CanisterId, UserId};
+use types::CanisterId;
 
 const BATCH_SIZE: usize = 100;
 
@@ -44,8 +43,7 @@ fn run() {
     }
 }
 
-#[expect(clippy::type_complexity)]
-fn next_batch(state: &mut RuntimeState) -> Option<(CanisterId, Vec<(Principal, Option<UserId>)>)> {
+fn next_batch(state: &mut RuntimeState) -> Option<(CanisterId, Vec<UserIdentity>)> {
     let count = min(state.data.identity_canister_user_sync_queue.len(), BATCH_SIZE);
     if count == 0 {
         return None;
@@ -56,9 +54,9 @@ fn next_batch(state: &mut RuntimeState) -> Option<(CanisterId, Vec<(Principal, O
     Some((state.data.identity_canister_id, batch))
 }
 
-async fn sync_users(identity_canister_id: CanisterId, users: Vec<(Principal, Option<UserId>)>) {
-    let args = identity_canister::c2c_set_user_ids::Args { users: users.clone() };
-    let success = identity_canister_c2c_client::c2c_set_user_ids(identity_canister_id, &args)
+async fn sync_users(identity_canister_id: CanisterId, users: Vec<UserIdentity>) {
+    let args = identity_canister::c2c_set_user_identities::Args { users: users.clone() };
+    let success = identity_canister_c2c_client::c2c_set_user_identities(identity_canister_id, &args)
         .await
         .is_ok();
 

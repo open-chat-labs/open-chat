@@ -9,6 +9,7 @@ use types::UserId;
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub username: String,
+    pub email: Option<String>,
     pub referral_code: Option<String>,
     #[serde(with = "serde_bytes")]
     pub public_key: Vec<u8>,
@@ -22,6 +23,7 @@ pub enum Response {
     AlreadyRegistered,
     UserLimitReached,
     UsernameInvalid,
+    EmailInvalid,
     UsernameTooShort(u16),
     UsernameTooLong(u16),
     CyclesBalanceTooLow,

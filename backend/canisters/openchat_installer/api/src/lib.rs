@@ -15,4 +15,5 @@ pub enum CanisterType {
     UserIndex,
     GroupIndex,
     NotificationsIndex,
+    Identity,
 }

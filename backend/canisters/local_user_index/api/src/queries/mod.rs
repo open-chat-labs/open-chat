@@ -6,7 +6,6 @@ pub mod bot_community_events;
 pub mod bot_community_summary;
 pub mod bot_members;
 pub mod c2c_can_push_notifications;
-pub mod c2c_diamond_membership_expiry_dates;
 pub mod c2c_lookup_user;
 pub mod c2c_lookup_users;
 pub mod c2c_user_principals;
