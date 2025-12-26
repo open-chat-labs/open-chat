@@ -15,6 +15,7 @@ import {
     anonUserStore,
     chatListScopeStore,
     chatSummariesStore,
+    pageReplace,
     type PaymentGateApprovals,
     publish,
     ROLE_NONE,
@@ -22,7 +23,6 @@ import {
     selectedChatSummaryStore,
     selectedCommunitySummaryStore,
 } from "openchat-client";
-import page from "page";
 
 class ApprovalsAndCredentials {
     #credentials = $state<string[]>([]);
@@ -114,14 +114,14 @@ class GroupPreview {
 
     cancelPreview(client: OpenChat) {
         if (this.#previewingCommunity && this.#community) {
-            page(`/community/${this.#community.id.communityId}`);
+            pageReplace(`/community/${this.#community.id.communityId}`);
         } else {
             if (this.#chat) {
                 if (!this.#chat.public) {
                     client.declineInvitation(this.#chat.id);
                 }
                 client.removePreviewedChat(this.#chat.id);
-                page(routeForScope(chatListScopeStore.value));
+                pageReplace(routeForScope(chatListScopeStore.value));
             }
         }
     }
