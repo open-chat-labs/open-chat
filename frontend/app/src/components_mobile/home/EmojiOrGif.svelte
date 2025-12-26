@@ -24,11 +24,13 @@
 
     interface Props {
         ctx: MessageContext;
+        empty: boolean;
         onClose: () => void;
+        onBackspace: () => void;
         onEmojiSelected: (emoji: SelectedEmoji) => void;
     }
 
-    let { ctx, onClose, onEmojiSelected }: Props = $props();
+    let { ctx, empty, onClose, onEmojiSelected, onBackspace }: Props = $props();
 
     let selected = $state<Tab>("emoji");
 
@@ -63,9 +65,9 @@
         {@render toggle("Reactions", "emoji", Sticker)}
         {@render toggle("Send GIFs", "gif", Gif)}
     </Row>
-    <IconButton onclick={onClose}>
+    <IconButton disabled={empty} onclick={onBackspace}>
         {#snippet icon()}
-            <Backspace color={ColourVars.textSecondary} />
+            <Backspace color={empty ? ColourVars.textTertiary : ColourVars.textSecondary} />
         {/snippet}
     </IconButton>
 </Row>

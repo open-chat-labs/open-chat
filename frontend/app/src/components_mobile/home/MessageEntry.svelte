@@ -1,6 +1,6 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
-    import { ColourVars, Container, IconButton } from "component-lib";
+    import { ColourVars, Container, IconButton, transition } from "component-lib";
     import type {
         AttachmentContent,
         BotActionScope,
@@ -37,6 +37,7 @@
     import Camera from "svelte-material-icons/CameraOutline.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import ContentSaveEditOutline from "svelte-material-icons/ContentSaveMoveOutline.svelte";
+    import Keyboard from "svelte-material-icons/KeyboardOutline.svelte";
     import PlusCircle from "svelte-material-icons/PlusCircleOutline.svelte";
     import StickerEmoji from "svelte-material-icons/StickerEmoji.svelte";
     import { translatable } from "../../actions/translatable";
@@ -144,11 +145,13 @@
     let textboxId = $state(Symbol());
     let showEmojiPicker = $state(false);
 
-    // TODO - note that this is not actually going to work yet - there is a lot
-    // more to do to make the message entry component work with non-text elements
-    // But we will come back to this a bit later. Custom emoji reactions is a
-    // much easier place to start
-    export function insertEmoji(emoji: SelectedEmoji) {
+    function toggleEmojiPicker() {
+        transition(["fade"], () => {
+            showEmojiPicker = !showEmojiPicker;
+        });
+    }
+
+    function insertEmoji(emoji: SelectedEmoji) {
         if (emoji.kind === "native") {
             replaceSelectionWithNode(document.createTextNode(emoji.unicode));
         } else {
@@ -156,6 +159,10 @@
             el.dataset.id = emoji.code;
             replaceSelectionWithNode(el);
         }
+    }
+
+    function backspace() {
+        document.execCommand("delete");
     }
 
     export function replaceSelectionWithNode(node: Node) {
@@ -649,11 +656,15 @@
                         mainAxisAlignment={"spaceBetween"}
                         supplementalClass={"message_entry_text_box"}>
                         <IconButton
-                            onclick={() => (showEmojiPicker = true)}
+                            onclick={toggleEmojiPicker}
                             padding={["sm", "zero", "md", "sm"]}
                             size={"md"}>
                             {#snippet icon()}
-                                <StickerEmoji color={ColourVars.textPlaceholder} />
+                                {#if showEmojiPicker}
+                                    <Keyboard color={ColourVars.textPlaceholder} />
+                                {:else}
+                                    <StickerEmoji color={ColourVars.textPlaceholder} />
+                                {/if}
                             {/snippet}
                         </IconButton>
                         <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_static_element_interactions -->
@@ -761,11 +772,12 @@
     </Container>
 
     {#if showEmojiPicker}
-        <!-- we don't actually want this to be a sheet, we want it to appear below the message entry box so we might indeed need to move it into the footer. We shall see.  -->
         <EmojiOrGif
+            empty={textboxEmpty}
             ctx={messageContext}
             onEmojiSelected={insertEmoji}
-            onClose={() => (showEmojiPicker = false)} />
+            onBackspace={backspace}
+            onClose={toggleEmojiPicker} />
     {/if}
 {/if}
 <CustomMessageTrigger
