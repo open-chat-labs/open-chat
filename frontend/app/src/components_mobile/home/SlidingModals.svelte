@@ -213,6 +213,12 @@
         return modalStack.pop();
     }
 
+    function closeThread() {
+        if (top?.kind === "open_thread") {
+            pop();
+        }
+    }
+
     onMount(() => {
         if (client.isNativeApp()) {
             // Expect user to press back in the app, handle that behaviour here.
@@ -229,6 +235,7 @@
         }
 
         const unsubs = [
+            subscribe("closeThread", closeThread),
             subscribe("createPoll", (messageContext) =>
                 push({ kind: "create_poll", messageContext }),
             ),

@@ -104,7 +104,7 @@
     function onCloseThread() {
         pageReplace(stripThreadFromUrl(removeQueryStringParam("open")));
         activeVideoCall.threadOpen(false);
-        publish("closeModalPage");
+        publish("closeThread");
     }
 
     onMount(() => {

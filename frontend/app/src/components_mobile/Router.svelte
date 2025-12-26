@@ -22,6 +22,7 @@
         notificationsRoute,
         pageReplace,
         profileSummaryRoute,
+        publish,
         routeKindStore,
         routeStore,
         routerReadyStore,
@@ -310,7 +311,7 @@
     $effect(() => {
         if (!$threadOpenStore) {
             untrack(() => {
-                client.filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
+                publish("closeThread");
             });
         }
     });

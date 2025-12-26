@@ -170,6 +170,7 @@ export type PubSubEvents = {
     userProfileCommunitySettings: undefined;
     userProfileVerify: undefined;
     closeModalPage: undefined;
+    closeThread: undefined;
     closeModalStack: undefined;
     updateGroupDetails: undefined;
     updateRules: unknown;
