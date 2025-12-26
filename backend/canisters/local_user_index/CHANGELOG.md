@@ -6,9 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1937](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1937-local_user_index)] - 2025-12-22
+
 ### Added
 
 - Allow platform operators to block usernames via regex patterns ([#8719](https://github.com/open-chat-labs/open-chat/pull/8719))
+
+### Changed
+
+- Add optional `channel_id` to `bot_invite_user` ([#8724](https://github.com/open-chat-labs/open-chat/pull/8724))
+
+## [[2.0.1934](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1934-local_user_index)] - 2025-12-05
 
 ### Changed
 
