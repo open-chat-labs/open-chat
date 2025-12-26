@@ -140,7 +140,7 @@
             subscribe("forward", forwardMessage),
             subscribe("toggleMuteNotifications", toggleMuteNotifications),
             subscribe("successfulImport", successfulImport),
-            subscribe("clearSelection", () => page(routeForScope($chatListScopeStore))),
+            subscribe("clearSelection", () => pageReplace(routeForScope($chatListScopeStore))),
             subscribe("userSuspensionChanged", () => window.location.reload()),
             subscribe("selectedChatInvalid", selectedChatInvalid),
             subscribe("sendMessageFailed", sendMessageFailed),

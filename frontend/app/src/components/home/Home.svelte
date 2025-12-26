@@ -221,7 +221,7 @@
             subscribe("successfulImport", successfulImport),
             subscribe("showProposalFilters", showProposalFilters),
             subscribe("convertGroupToCommunity", convertGroupToCommunity),
-            subscribe("clearSelection", () => page(routeForScope($chatListScopeStore))),
+            subscribe("clearSelection", () => pageReplace(routeForScope($chatListScopeStore))),
             subscribe("editGroup", editGroup),
             subscribe("userSuspensionChanged", () => window.location.reload()),
             subscribe("selectedChatInvalid", selectedChatInvalid),
