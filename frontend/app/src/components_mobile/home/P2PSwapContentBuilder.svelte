@@ -8,7 +8,6 @@
         IconButton,
         Row,
         Sheet,
-        transition,
     } from "component-lib";
     import type { MessageContext, OpenChat, P2PSwapContentInitial } from "openchat-client";
     import {
@@ -20,7 +19,6 @@
     } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import Paperclip from "svelte-material-icons/Paperclip.svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -31,8 +29,6 @@
     import TokenInput from "./TokenInput.svelte";
     import TransferFeesMessage from "./TransferFeesMessage.svelte";
     import { TokenState } from "./wallet/walletState.svelte";
-
-    type Step = "from" | "to";
 
     const client = getContext<OpenChat>("client");
 
@@ -48,7 +44,7 @@
     let fromDetails = $derived($cryptoLookup.get(fromLedger)!);
     let toDetails = $derived($cryptoLookup.get(toLedger)!);
     let fromState = $derived(new TokenState(fromDetails));
-    let step = $state<Step>("from");
+    let toState = $derived(new TokenState(toDetails));
     let fromAmount: bigint = $state(0n);
     let fromAmountValid: boolean = $state(false);
     let toAmount: bigint = $state(0n);
@@ -138,14 +134,6 @@
             BigInt(Math.floor(Number(fromDetails.balance) * (percentage / 100))) -
             fromState.transferFees * 2n;
     }
-
-    function next() {
-        if (step === "from") {
-            transition(["fade"], () => {
-                step = "to";
-            });
-        }
-    }
 </script>
 
 {#if confirming}
@@ -167,11 +155,7 @@
     <Column gap={"lg"} padding={["lg", "xl"]}>
         <Row>
             <Body fontWeight={"bold"}>
-                {#if step === "from"}
-                    <Translatable resourceKey={i18nKey("Select token to swap")} />
-                {:else}
-                    <Translatable resourceKey={i18nKey("Select token to receive")} />
-                {/if}
+                <Translatable resourceKey={i18nKey("Select tokens to swap")} />
             </Body>
             <IconButton onclick={onClose}>
                 {#snippet icon(color)}
@@ -180,218 +164,70 @@
             </IconButton>
         </Row>
 
-        {#if step === "from"}
-            <CryptoSelector
-                filter={(t) => t.balance > 0}
-                bind:ledger={fromLedger}
-                showRefresh
-                onSelect={onSelectFromToken} />
+        <CryptoSelector
+            filter={(t) => t.balance > 0}
+            bind:ledger={fromLedger}
+            draftAmount={fromAmount}
+            showRefresh
+            onSelect={onSelectFromToken} />
 
-            <Column gap={"md"}>
-                <!-- TODO desktop TokenInput has the ability to showDollarAmount which I removed for some reason -->
-                <TokenInput
-                    ledger={fromLedger}
-                    {minAmount}
-                    maxAmount={fromDetails.balance - totalFees}
-                    bind:status={tokenInputState}
-                    bind:valid={fromAmountValid}
-                    bind:amount={fromAmount}>
-                    {#snippet subtext()}
-                        {`Minimum amount ${fromState.formatTokens(minAmount)} ${fromState.symbol}`}
-                    {/snippet}
-                </TokenInput>
-
-                <Row mainAxisAlignment={"spaceBetween"} gap={"sm"}>
-                    {@render percentage(25)}
-                    {@render percentage(50)}
-                    {@render percentage(75)}
-                    {@render percentage(100)}
-                </Row>
-            </Column>
-        {:else}
-            <CryptoSelector filter={(t) => t.ledger !== fromLedger} bind:ledger={toLedger} />
-
-            <TokenInput ledger={toLedger} bind:valid={toAmountValid} bind:amount={toAmount} />
-
-            <DurationSelector bind:duration={expiresIn}>
-                {#snippet title()}
-                    <BodySmall fontWeight={"bold"}>
-                        <Translatable resourceKey={i18nKey("Swap expiry time")} />
+        <Column gap={"md"}>
+            <TokenInput
+                ledger={fromLedger}
+                {minAmount}
+                bind:status={tokenInputState}
+                bind:valid={fromAmountValid}
+                bind:amount={fromAmount}>
+                {#snippet subtext()}
+                    {`Minimum amount ${fromState.formatTokens(minAmount)} ${fromState.symbol}`}
+                {/snippet}
+                {#snippet converted()}
+                    <BodySmall colour={"textSecondary"}>
+                        {`${fromState.formatConvertedTokens(fromAmount)}`}
                     </BodySmall>
                 {/snippet}
-            </DurationSelector>
-        {/if}
+            </TokenInput>
 
-        <Row
-            mainAxisAlignment={step === "from" ? "end" : "spaceBetween"}
-            crossAxisAlignment={"end"}>
-            {#if step === "to"}
-                <TransferFeesMessage
-                    symbol={fromDetails.symbol}
-                    tokenDecimals={fromDetails.decimals}
-                    transferFees={totalFees} />
-            {/if}
-            {#if step === "from"}
-                <CommonButton
-                    disabled={!fromAmountValid}
-                    onClick={next}
-                    mode={"active"}
-                    size={"medium"}>
-                    {#snippet icon(color, size)}
-                        <ArrowRight {color} {size} />
-                    {/snippet}
-                    <Translatable resourceKey={i18nKey("Next 1/2")} />
-                </CommonButton>
-            {:else}
-                <CommonButton disabled={!valid} onClick={onSend} mode={"active"} size={"medium"}>
-                    {#snippet icon(color, size)}
-                        <Paperclip {color} {size} />
-                    {/snippet}
-                    <Translatable resourceKey={i18nKey("Confirm")} />
-                </CommonButton>
-            {/if}
+            <Row mainAxisAlignment={"spaceBetween"} gap={"sm"}>
+                {@render percentage(25)}
+                {@render percentage(50)}
+                {@render percentage(75)}
+                {@render percentage(100)}
+            </Row>
+        </Column>
+
+        <CryptoSelector filter={(t) => t.ledger !== fromLedger} bind:ledger={toLedger} />
+
+        <TokenInput ledger={toLedger} bind:valid={toAmountValid} bind:amount={toAmount}>
+            {#snippet subtext()}
+                {`The amount of ${toDetails.symbol} tokens you would like in return`}
+            {/snippet}
+            {#snippet converted()}
+                <BodySmall colour={"textSecondary"}>
+                    {`${toState.formatConvertedTokens(toAmount)}`}
+                </BodySmall>
+            {/snippet}
+        </TokenInput>
+
+        <DurationSelector bind:duration={expiresIn}>
+            {#snippet title()}
+                <BodySmall fontWeight={"bold"}>
+                    <Translatable resourceKey={i18nKey("Swap expiry time")} />
+                </BodySmall>
+            {/snippet}
+        </DurationSelector>
+
+        <Row mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"end"}>
+            <TransferFeesMessage
+                symbol={fromDetails.symbol}
+                tokenDecimals={fromDetails.decimals}
+                transferFees={totalFees} />
+            <CommonButton disabled={!valid} onClick={onSend} mode={"active"} size={"medium"}>
+                {#snippet icon(color, size)}
+                    <Paperclip {color} {size} />
+                {/snippet}
+                <Translatable resourceKey={i18nKey("Confirm")} />
+            </CommonButton>
         </Row>
     </Column>
 </Sheet>
-
-<!-- <Overlay dismissible>
-    <ModalContent>
-        {#snippet header()}
-            <span class="header">
-                <div class="main-title">
-                    <Translatable resourceKey={i18nKey("p2pSwap.builderTitle")} />
-                </div>
-                <BalanceWithRefresh
-                    ledger={fromLedger}
-                    value={remainingBalance}
-                    onRefreshed={onBalanceRefreshed}
-                    onError={onBalanceRefreshError} />
-            </span>
-        {/snippet}
-        {#snippet body()}
-            <form class="body swap-builder">
-                <div class="row">
-                    <div class="select-from">
-                        <Legend label={i18nKey("cryptoAccount.transactionHeaders.from")} />
-                        <div class="inner">
-                            <CryptoSelector
-                                filter={(t) => t.balance > 0}
-                                bind:ledger={fromLedger}
-                                onSelect={onSelectFromToken} />
-                        </div>
-                    </div>
-                    <div class="amount">
-                        <TokenInput
-                            ledger={fromLedger}
-                            {minAmount}
-                            maxAmount={fromDetails.balance - totalFees}
-                            bind:status={tokenInputState}
-                            bind:valid={fromAmountValid}
-                            bind:amount={fromAmount} />
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="select-to">
-                        <Legend label={i18nKey("cryptoAccount.transactionHeaders.to")} />
-                        <div class="inner">
-                            <CryptoSelector
-                                filter={(t) => t.ledger !== fromLedger}
-                                bind:ledger={toLedger} />
-                        </div>
-                    </div>
-                    <div class="amount">
-                        <TokenInput
-                            ledger={toLedger}
-                            bind:valid={toAmountValid}
-                            bind:amount={toAmount} />
-                    </div>
-                </div>
-                <div class="duration">
-                    <Legend label={i18nKey("p2pSwap.expiryTime")} />
-                    <DurationPicker bind:valid={durationValid} bind:milliseconds={expiresIn} />
-                </div>
-                <div class="message">
-                    <Legend label={i18nKey("tokenTransfer.message")} />
-                    <TextArea
-                        maxlength={200}
-                        rows={3}
-                        autofocus={false}
-                        placeholder={i18nKey("tokenTransfer.messagePlaceholder")}
-                        bind:value={message} />
-                </div>
-                {#if errorMessage !== undefined}
-                    <div class="error">
-                        <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
-                    </div>
-                {/if}
-            </form>
-        {/snippet}
-        {#snippet footer()}
-            <span>
-                <ButtonGroup>
-                    <Button small={!$mobileWidth} tiny={$mobileWidth} secondary onClick={cancel}
-                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-                    <Button
-                        small={!$mobileWidth}
-                        disabled={!valid || sending}
-                        loading={sending}
-                        tiny={$mobileWidth}
-                        onClick={onSend}
-                        ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>
-                </ButtonGroup>
-            </span>
-        {/snippet}
-    </ModalContent>
-</Overlay> -->
-
-<style lang="scss">
-    :global(.swap-builder .row input.amount-val) {
-        border: var(--bw) solid var(--bd) !important;
-        border-radius: 0 var(--rd) var(--rd) 0 !important;
-        height: 47px;
-    }
-
-    .header {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: $sp2;
-
-        .main-title {
-            flex: auto;
-        }
-    }
-
-    .body {
-        display: flex;
-        flex-direction: column;
-        gap: $sp4;
-    }
-
-    .row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-radius: var(--rd);
-
-        .inner {
-            @include font(book, normal, fs-100);
-            padding: 0 $sp4;
-            background-color: var(--modal-bg);
-            border: var(--bw) solid var(--bd);
-            border-right: 0;
-            border-radius: var(--rd) 0 0 var(--rd);
-            display: flex;
-            height: 47px;
-            align-items: center;
-        }
-
-        .amount {
-            flex-grow: 1;
-        }
-    }
-
-    .error {
-        margin-top: $sp4;
-    }
-</style>

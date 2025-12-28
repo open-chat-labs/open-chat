@@ -19,6 +19,7 @@
         fees?: Snippet;
         disabled?: boolean;
         icon?: Snippet;
+        converted?: Snippet;
     }
 
     let {
@@ -33,6 +34,7 @@
         fees,
         disabled = false,
         icon,
+        converted,
     }: Props = $props();
 
     valid;
@@ -121,7 +123,7 @@
         </div>
     {/if}
     <Container
-        padding={["xs", "xs", "xs", "xl"]}
+        padding={["xs", converted ? "xl" : "xs", "xs", "xl"]}
         crossAxisAlignment={"center"}
         maxHeight={"3rem"}
         background={ColourVars.textTertiary}
@@ -143,9 +145,8 @@
                 <Translatable resourceKey={i18nKey("tokenTransfer.max")} />
             </InputTextButton>
         {/if}
-        {#if icon !== undefined}
-            {@render icon()}
-        {/if}
+        {@render converted?.()}
+        {@render icon?.()}
     </Container>
 
     {#if subtext}
