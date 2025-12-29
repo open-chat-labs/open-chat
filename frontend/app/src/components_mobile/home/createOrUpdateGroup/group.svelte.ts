@@ -27,6 +27,7 @@ export const MAX_NAME_LENGTH = 40;
 export const MAX_DESC_LENGTH = 1024;
 
 export class UpdateGroupState extends UpdateGroupOrCommunityState {
+    #embedded = $state(false);
     #candidateGroup = $state<CandidateGroupChat>();
     #originalGroup: CandidateGroupChat | undefined;
     #nameValid = $derived(
@@ -34,7 +35,16 @@ export class UpdateGroupState extends UpdateGroupOrCommunityState {
             this.#candidateGroup.name.length >= MIN_NAME_LENGTH &&
             this.#candidateGroup.name.length <= MAX_NAME_LENGTH,
     );
-    #valid = $derived(this.rulesValid && this.#nameValid);
+    #urlValid = $derived.by(() => {
+        if (this.candidateGroup.externalUrl === undefined) return true;
+        try {
+            new URL(this.candidateGroup.externalUrl);
+        } catch (_) {
+            return false;
+        }
+        return true;
+    });
+    #valid = $derived(this.rulesValid && this.#nameValid && this.#urlValid);
     #editMode = $derived.by(() => {
         if (this.#candidateGroup === undefined) return false;
         const id = this.#candidateGroup.id;
@@ -73,6 +83,10 @@ export class UpdateGroupState extends UpdateGroupOrCommunityState {
         return this.#hideInviteUsers;
     }
 
+    get embedded() {
+        return this.#embedded;
+    }
+
     enableDefaultRules() {
         const newVersion = this.rules.newVersion;
         this.candidate.rules = {
@@ -85,6 +99,7 @@ export class UpdateGroupState extends UpdateGroupOrCommunityState {
     initialise(group: CandidateGroupChat | undefined) {
         this.reset();
         this.#candidateGroup = group;
+        this.#embedded = group?.externalUrl !== undefined;
         this.#originalGroup = $state.snapshot(this.candidateGroup);
     }
 
@@ -101,6 +116,10 @@ export class UpdateGroupState extends UpdateGroupOrCommunityState {
 
     get nameValid() {
         return this.#nameValid;
+    }
+
+    get urlValid() {
+        return this.#urlValid;
     }
 
     get valid() {

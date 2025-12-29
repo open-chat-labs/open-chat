@@ -1,6 +1,6 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
-    import { ColourVars, Container, IconButton, transition } from "component-lib";
+    import { BodySmall, ColourVars, Container, IconButton, Row, transition } from "component-lib";
     import type {
         AttachmentContent,
         BotActionScope,
@@ -21,7 +21,6 @@
         botState,
         currentUserIdStore,
         directMessageCommandInstance,
-        iconSize,
         localUpdates,
         messageContextsEqual,
         random64,
@@ -628,10 +627,12 @@
         {:else if (preview || lapsed) && chat.kind !== "direct_chat"}
             <PreviewFooter {lapsed} {chat} />
         {:else if externalContent}
-            <div class="disclaimer">
-                <Alert size={$iconSize} color={"var(--warn"} />
-                <Translatable resourceKey={i18nKey("externalContent.disclaimer")} />
-            </div>
+            <Row crossAxisAlignment={"center"} gap={"md"}>
+                <Alert size={"1.5rem"} color={"var(--warning)"} />
+                <BodySmall colour={"textSecondary"}>
+                    <Translatable resourceKey={i18nKey("externalContent.disclaimer")} />
+                </BodySmall>
+            </Row>
         {:else if !canSendAny}
             <div class="disabled">
                 <Translatable
@@ -836,13 +837,5 @@
         justify-content: center;
         align-items: center;
         width: 100%;
-    }
-
-    .disclaimer {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100%;
-        gap: $sp4;
     }
 </style>

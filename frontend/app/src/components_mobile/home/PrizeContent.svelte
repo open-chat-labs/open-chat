@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
+    import { Column, defaultBackgroundGradient } from "component-lib";
     import {
         AuthProvider,
         chitBands,
@@ -31,6 +32,7 @@
     import Verified from "../icons/Verified.svelte";
     import SecureButton from "../SecureButton.svelte";
     import Translatable from "../Translatable.svelte";
+    import ContentCaption from "./ContentCaption.svelte";
     import Badges from "./profile/Badges.svelte";
     import ChitEarnedBadge from "./profile/ChitEarnedBadge.svelte";
     import ReAuthenticateModal from "./profile/ReAuthenticateModal.svelte";
@@ -145,7 +147,11 @@
 {/if}
 
 <div class={`prize ${content.token}`}>
-    <div class="top">
+    <Column
+        mainAxisAlignment={"center"}
+        crossAxisAlignment={"center"}
+        background={defaultBackgroundGradient}
+        padding={"xl"}>
         <div class="countdown" class:rtl={$rtlStore}>
             <Clock size={"1em"} color={"#ffffff"} />
             <span>
@@ -168,13 +174,11 @@
         <div class="prize-coin">
             <SpinningToken {logo} {spin} {mirror} />
         </div>
-    </div>
+    </Column>
     <div class="bottom">
-        {#if content.caption !== undefined}
-            <div class="caption">
-                {content.caption}
-            </div>
-        {/if}
+        <Column padding={["zero", "zero", "lg", "zero"]}>
+            <ContentCaption caption={content.caption} edited={false} />
+        </Column>
         {#if !me}
             {#if restrictedPrize}
                 <div class="restricted">
@@ -225,7 +229,6 @@
                         <div onclick={onUniquePersonClick}>
                             <div>
                                 <Verified
-                                    size={"small"}
                                     verified={content.uniquePersonOnly}
                                     tooltip={i18nKey("prizes.uniquePerson")} />
                             </div>

@@ -16,6 +16,7 @@
     } from "component-lib";
     import { isDiamondStore, publish, type OpenChat } from "openchat-client";
     import { getContext, tick } from "svelte";
+    import { _ } from "svelte-i18n";
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountPlus from "svelte-material-icons/AccountPlusOutline.svelte";
@@ -25,7 +26,7 @@
     import ClockOutline from "svelte-material-icons/ClockOutline.svelte";
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";
     import FormatList from "svelte-material-icons/FormatListBulletedType.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
+    import { i18nKey, interpolate } from "../../../i18n/i18n";
     import AreYouSure from "../../AreYouSure.svelte";
     import EditableAvatar from "../../EditableAvatar.svelte";
     import LinkedCard from "../../LinkedCard.svelte";
@@ -41,6 +42,8 @@
         updateGroupState,
     } from "./group.svelte";
 
+    const MIN_LENGTH = 3;
+    const MAX_URL_LENGTH = 500;
     const client = getContext<OpenChat>("client");
 
     let ugs = updateGroupState;
@@ -120,6 +123,27 @@
                         ></Translatable>
                     {/snippet}
                 </Input>
+                {#if ugs.embedded}
+                    <Input
+                        minlength={MIN_LENGTH}
+                        maxlength={MAX_URL_LENGTH}
+                        error={!ugs.urlValid}
+                        disabled={ugs.busy}
+                        placeholder={interpolate(
+                            $_,
+                            i18nKey(
+                                "group.externalUrlPlaceholder",
+                                undefined,
+                                ugs.candidateGroup.level,
+                                true,
+                            ),
+                        )}
+                        bind:value={ugs.candidateGroup.externalUrl}>
+                        {#snippet subtext()}
+                            <Translatable resourceKey={i18nKey("group.externalUrlWarning")} />
+                        {/snippet}
+                    </Input>
+                {/if}
                 <TextArea
                     maxlength={MAX_DESC_LENGTH}
                     countdown
@@ -152,18 +176,20 @@
                 </Switch>
             </Setting>
 
-            <Setting
-                toggle={() =>
-                    (ugs.candidateGroup.historyVisible = !ugs.candidateGroup.historyVisible)}
-                info={"By default new memebers in the group will see all the previous messages that were sent within the group. Enable this option to hide chat history for new members."}>
-                <Switch width={"fill"} reverse bind:checked={ugs.candidateGroup.historyVisible}>
-                    <Translatable resourceKey={i18nKey("Hide chat history for new members")}
-                    ></Translatable>
-                </Switch>
-            </Setting>
+            {#if !ugs.embedded}
+                <Setting
+                    toggle={() =>
+                        (ugs.candidateGroup.historyVisible = !ugs.candidateGroup.historyVisible)}
+                    info={"By default new memebers in the group will see all the previous messages that were sent within the group. Enable this option to hide chat history for new members."}>
+                    <Switch width={"fill"} reverse bind:checked={ugs.candidateGroup.historyVisible}>
+                        <Translatable resourceKey={i18nKey("Hide chat history for new members")}
+                        ></Translatable>
+                    </Switch>
+                </Setting>
 
-            {#if canEditDisappearingMessages}
-                <DisappearingMessages />
+                {#if canEditDisappearingMessages}
+                    <DisappearingMessages />
+                {/if}
             {/if}
         </Container>
         {#if !ugs.hideInviteUsers}
@@ -228,23 +254,25 @@
                     {/if}
                 </Container>
             </LinkedCard>
-            <LinkedCard
-                error={ugs.rulesValid ? undefined : rulesError}
-                onClick={() => publish("updateRules", ugs)}
-                Icon={FormatList}
-                title={i18nKey("Rules")}
-                info={i18nKey(
-                    "Define a set of rules that the members of your group will have to follow.",
-                )}>
-                {#if ugs.candidateGroup.rules.enabled}
-                    <Chip>
-                        {#snippet icon(color)}
-                            <AlertOutline {color} />
-                        {/snippet}
-                        <Translatable resourceKey={i18nKey("Rules enabled")}></Translatable>
-                    </Chip>
-                {/if}
-            </LinkedCard>
+            {#if !ugs.embedded}
+                <LinkedCard
+                    error={ugs.rulesValid ? undefined : rulesError}
+                    onClick={() => publish("updateRules", ugs)}
+                    Icon={FormatList}
+                    title={i18nKey("Rules")}
+                    info={i18nKey(
+                        "Define a set of rules that the members of your group will have to follow.",
+                    )}>
+                    {#if ugs.candidateGroup.rules.enabled}
+                        <Chip>
+                            {#snippet icon(color)}
+                                <AlertOutline {color} />
+                            {/snippet}
+                            <Translatable resourceKey={i18nKey("Rules enabled")}></Translatable>
+                        </Chip>
+                    {/if}
+                </LinkedCard>
+            {/if}
             <LinkedCard
                 onClick={() => publish("updateGroupPermissions")}
                 Icon={AccountMultiple}
