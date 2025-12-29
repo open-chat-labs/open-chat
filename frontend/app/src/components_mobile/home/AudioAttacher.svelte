@@ -1,6 +1,6 @@
 <script lang="ts">
     import { IconButton } from "component-lib";
-    import { iconSize, quantiseWaveform, type AudioContent, type OpenChat } from "openchat-client";
+    import { quantiseWaveform, type AudioContent, type OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import Microphone from "svelte-material-icons/MicrophoneOutline.svelte";
     import RadioboxMarked from "svelte-material-icons/RadioboxMarked.svelte";
@@ -119,9 +119,9 @@
     <IconButton mode={"primary"} onclick={toggle}>
         {#snippet icon(color)}
             {#if recording}
-                <RadioboxMarked size={$iconSize} {color} />
+                <RadioboxMarked {color} />
             {:else}
-                <Microphone size={$iconSize} {color} />
+                <Microphone {color} />
             {/if}
         {/snippet}
     </IconButton>

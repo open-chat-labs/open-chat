@@ -613,7 +613,7 @@
         overflow={"visible"}
         gap={"sm"}
         mainAxisAlignment={"spaceBetween"}
-        crossAxisAlignment={"end"}
+        crossAxisAlignment={recording ? "center" : "end"}
         background={editingEvent !== undefined ? ColourVars.gradient : ColourVars.background0}
         padding={["sm", "md"]}
         minHeight={"3.75rem"}>
@@ -641,9 +641,7 @@
             <ThrottleCountdown deadline={$throttleDeadline} />
         {:else}
             {#if recording}
-                <div class="recording">
-                    <Progress percent={percentRecorded} />
-                </div>
+                <Progress size={"3rem"} percent={percentRecorded} />
             {:else if canEnterText}
                 {#key textboxId}
                     <Container
@@ -738,7 +736,7 @@
             {/if}
 
             {#if directChatBotId === undefined}
-                <Container gap={"xs"} padding={["zero", "zero", "xs", "zero"]} width={"hug"}>
+                <Container crossAxisAlignment={"center"} height={"fill"} gap={"xs"} width={"hug"}>
                     {#if editingEvent === undefined}
                         {#if permittedMessages.get("audio") && messageIsEmpty && audioMimeType !== undefined && audioSupported}
                             <AudioAttacher
@@ -838,11 +836,6 @@
         justify-content: center;
         align-items: center;
         width: 100%;
-    }
-
-    .recording {
-        padding: 0 $sp3;
-        flex: auto;
     }
 
     .disclaimer {
