@@ -157,7 +157,7 @@ pub enum BotUpdate {
     Updated = 3,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct BotInternal {
     pub added_by: UserId,
     pub permissions: BotPermissions,

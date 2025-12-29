@@ -3,6 +3,7 @@ use std::env;
 use ts_export::generate_ts_method;
 
 fn main() {
+    generate_candid_method!(user_index, bot_installations, query);
     generate_candid_method!(user_index, bot_updates, query);
     generate_candid_method!(user_index, check_username, query);
     generate_candid_method!(user_index, chit_leaderboard, query);
@@ -35,6 +36,7 @@ fn main() {
         std::fs::remove_dir_all(&directory).unwrap();
     }
 
+    generate_ts_method!(user_index, bot_installations);
     generate_ts_method!(user_index, bot_updates);
     generate_ts_method!(user_index, check_username);
     generate_ts_method!(user_index, chit_leaderboard);
