@@ -1,5 +1,13 @@
 <script lang="ts">
-    import { ColourVars, IconButton, Label, type ColourVarKeys } from "component-lib";
+    import {
+        ColourVars,
+        IconButton,
+        Label,
+        ButtonSmall,
+        type ColourVarKeys,
+        type Padding,
+        type SizeMode,
+    } from "component-lib";
     import { type Snippet } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import Container from "./Container.svelte";
@@ -13,8 +21,9 @@
         onRemove?: () => void;
         onClick?: () => void;
         fill?: boolean;
+        width?: SizeMode;
     }
-    let { children, icon, mode = "default", onRemove, fill = false, onClick }: Props = $props();
+    let { children, icon, mode = "default", onRemove, fill, width, onClick }: Props = $props();
 
     const iconColours: Record<Mode, string> = {
         filled: ColourVars.primaryLight,
@@ -55,45 +64,65 @@
         default: "transparent",
         unselected: "transparent",
     };
+
+    const isRounded = ["rounded", "unselected"].indexOf(mode) > -1;
+    const padding: Padding = isRounded ? ["sm", "zero"] : "zero";
+    const height: SizeMode = {
+        size: isRounded ? "1.75rem" : "2rem",
+    };
 </script>
 
-<Container
-    supplementalClass={"chip"}
-    background={backgroundColours[mode]}
-    mainAxisAlignment={"spaceBetween"}
-    crossAxisAlignment={"center"}
-    width={fill ? "fill" : "hug"}
-    gap={"sm"}
-    borderColour={borderColours[mode]}
-    borderRadius={mode === "rounded" || mode === "unselected" ? "circle" : "md"}
-    borderWidth={"thick"}
-    padding={["xs", onRemove ? "md" : "lg", "xs", icon ? "md" : "lg"]}
-    {onClick}>
-    {#if icon}
-        <span class="icon">{@render icon(iconColours[mode])}</span>
-    {/if}
-    <Label align={"center"} colour={textColours[mode]} width={"fill"}>
-        {@render children?.()}
-    </Label>
-    {#if onRemove}
-        <IconButton
-            size={"sm"}
-            padding={"zero"}
-            onclick={(e) => {
-                e?.stopPropagation();
-                onRemove();
-            }}>
-            {#snippet icon()}
-                <Close color={textColourVars[mode]} />
-            {/snippet}
-        </IconButton>
-    {/if}
+<Container supplementalClass={"chip"} {padding} {onClick} width={fill ? "fill" : width ?? "hug"}>
+    <Container
+        {height}
+        gap={"sm"}
+        width={"fill"}
+        background={backgroundColours[mode]}
+        mainAxisAlignment={"spaceBetween"}
+        crossAxisAlignment={"center"}
+        borderColour={borderColours[mode]}
+        borderRadius={isRounded ? "circle" : "md"}
+        borderWidth={"thick"}
+        padding={["xs", onRemove ? "md" : "lg", "xs", icon ? "md" : "lg"]}>
+        {#if icon}
+            <span class="icon">{@render icon(iconColours[mode])}</span>
+        {/if}
+
+        {#if isRounded}
+            <ButtonSmall align={"center"} colour={textColours[mode]} width={"fill"}>
+                {@render children?.()}
+            </ButtonSmall>
+        {:else}
+            <Label align={"center"} colour={textColours[mode]} width={"fill"}>
+                {@render children?.()}
+            </Label>
+        {/if}
+
+        {#if onRemove}
+            <IconButton
+                size={"sm"}
+                padding={"zero"}
+                onclick={(e) => {
+                    e?.stopPropagation();
+                    onRemove();
+                }}>
+                {#snippet icon()}
+                    <Close color={textColourVars[mode]} />
+                {/snippet}
+            </IconButton>
+        {/if}
+    </Container>
 </Container>
 
 <style lang="scss">
-    :global(.chip .icon svg) {
-        width: 1rem;
-        height: 1rem;
+    :global {
+        .container.chip {
+            transition: flex-grow 150ms ease-out;
+            .icon svg {
+                width: 1rem;
+                height: 1rem;
+            }
+        }
     }
     .icon {
         display: flex;

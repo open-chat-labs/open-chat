@@ -122,33 +122,45 @@
         <SelectedCommunityHeader community={$selectedCommunitySummaryStore} {canMarkAllRead} />
     {/if}
 
-    {#if $chatListScopeStore.kind === "chats"}
-        <ChatListFilters bind:filter={$chatListFilterStore as ChatListFilter} />
-    {/if}
-
     <Container
-        supplementalClass={"chat_summary_list"}
         closeMenuOnScroll
-        gap={"lg"}
-        onInsideEnd={insideBottom}
+        direction={"vertical"}
+        gap={"sm"}
         width={"fill"}
         height={"fill"}
-        direction={"vertical"}>
+        padding={["lg", "zero", "xxxl"]}>
+        <!-- chat filters -->
+        {#if $chatListScopeStore.kind === "chats"}
+            <ChatListFilters bind:filter={$chatListFilterStore as ChatListFilter} />
+        {/if}
+
         {#if chats.length === 0}
             <NoMatchingChats onReset={() => chatListFilterStore.set("all")} />
         {:else}
+            <!-- threads -->
             {#if $numberOfThreadsStore > 0}
                 <ThreadIndicator
                     onClick={() => publish("showThreads")}
                     unread={unreadCounts.threads} />
             {/if}
-            {#each chats as chatSummary (chatIdentifierToString(chatSummary.id))}
-                <ChatSummary
-                    {chatSummary}
-                    selected={chatIdentifiersEqual($selectedChatIdStore, chatSummary.id)}
-                    visible={!chatSummary.membership.archived}
-                    onChatSelected={chatSelected} />
-            {/each}
+
+            <!-- chat list -->
+            <Container
+                supplementalClass={"chat_summary_list"}
+                direction={"vertical"}
+                gap={"lg"}
+                onInsideEnd={insideBottom}
+                width={"fill"}
+                height={"hug"}
+                padding={["sm", "zero", "xxxl"]}>
+                {#each chats as chatSummary (chatIdentifierToString(chatSummary.id))}
+                    <ChatSummary
+                        {chatSummary}
+                        selected={chatIdentifiersEqual($selectedChatIdStore, chatSummary.id)}
+                        visible={!chatSummary.membership.archived}
+                        onChatSelected={chatSelected} />
+                {/each}
+            </Container>
         {/if}
     </Container>
 {/if}

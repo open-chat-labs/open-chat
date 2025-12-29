@@ -4,7 +4,7 @@
 
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { CommonButton, Container, transition } from "component-lib";
+    import { Container, transition, Chip } from "component-lib";
     import Translatable from "../Translatable.svelte";
 
     interface Props {
@@ -22,21 +22,15 @@
 
 {#snippet button(f: ChatListFilter, name: string)}
     {@const selected = filter === f}
-    <CommonButton
-        height={"fill"}
+    <Chip
         width={selected ? { share: 1.3 } : { share: 1 }}
-        onClick={() => setFilter(f)}
-        mode={selected ? "active" : "default"}
-        size={"small"}>
+        mode={selected ? "rounded" : "unselected"}
+        onClick={() => setFilter(f)}>
         <Translatable resourceKey={i18nKey(name)}></Translatable>
-    </CommonButton>
+    </Chip>
 {/snippet}
 
-<Container
-    height={{ size: "3rem" }}
-    mainAxisAlignment={"spaceBetween"}
-    padding={["sm", "md"]}
-    gap={"sm"}>
+<Container mainAxisAlignment={"spaceBetween"} padding={["zero", "lg"]} gap={"sm"}>
     {@render button("all", "All")}
     {@render button("direct", "Direct")}
     {@render button("groups", "Groups")}

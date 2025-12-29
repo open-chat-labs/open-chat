@@ -88,7 +88,6 @@
     direction={"vertical"}>
     <Container
         supplementalClass={`left_panel_inner ${dimmed ? "dimmed" : ""}`}
-        gap={"sm"}
         height={"fill"}
         width={"fill"}
         direction={"vertical"}>

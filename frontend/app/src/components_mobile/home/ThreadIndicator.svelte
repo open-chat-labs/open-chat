@@ -1,6 +1,6 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { BodySmall, ColourVars, Container, CountBadge } from "component-lib";
+    import { Body, ColourVars, Container, CountBadge } from "component-lib";
     import { numberOfThreadsStore, type UnreadCounts } from "openchat-client";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import MessageText from "svelte-material-icons/MessageTextOutline.svelte";
@@ -21,14 +21,14 @@
         {onClick}
         crossAxisAlignment={"center"}
         mainAxisAlignment={"spaceBetween"}
-        gap={"md"}
-        padding={["sm", "md"]}>
+        gap={"sm"}
+        padding={["sm", "lg"]}>
         <div class="icon">
             <MessageText size={"1.5rem"} color={ColourVars.textSecondary} />
         </div>
-        <BodySmall colour={"textSecondary"}>
+        <Body colour={"textSecondary"}>
             <Translatable resourceKey={i18nKey("Thread replies")} />
-        </BodySmall>
+        </Body>
         <ChevronRight color={ColourVars.textSecondary} />
         {#if count > 0}
             <CountBadge {muted}>
