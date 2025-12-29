@@ -1,17 +1,10 @@
 <script lang="ts">
     import { start } from "@memefighter/maker-core";
-    import {
-        iconSize,
-        mobileWidth,
-        type MemeFighterContent as MemeFighterContentType,
-    } from "openchat-client";
+    import { Column, CommonButton, Row, Sheet, Subtitle } from "component-lib";
+    import { iconSize, type MemeFighterContent as MemeFighterContentType } from "openchat-client";
     import { tick } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { currentTheme } from "../../theme/themes";
-    import Button from "../Button.svelte";
-    import ButtonGroup from "../ButtonGroup.svelte";
-    import ModalContent from "../ModalContent.svelte";
-    import Overlay from "../Overlay.svelte";
     import Translatable from "../Translatable.svelte";
     import MemeFighter from "../icons/MemeFighter.svelte";
 
@@ -78,58 +71,36 @@
 </script>
 
 {#if open}
-    <Overlay dismissible onClose={close}>
-        <ModalContent fill closeIcon onClose={close}>
-            {#snippet header()}
-                <div class="header">
-                    <MemeFighter size={$iconSize} color={"var(--icon-txt)"} />
-                    <div class="title">Meme Fighter</div>
-                </div>
-            {/snippet}
-            {#snippet body()}
-                <div class="meme-body">
-                    {#if memeUrl}
-                        <img bind:this={img} class="meme" src={memeUrl} onerror={error} />
-                    {:else}
-                        <iframe
-                            bind:this={iframe}
-                            {width}
-                            {height}
-                            style="border: none; max-width: 100%;"></iframe>
-                    {/if}
-                </div>
-            {/snippet}
-            {#snippet footer()}
-                <span class="footer">
-                    <ButtonGroup align={$mobileWidth ? "center" : "end"}>
-                        <Button tiny secondary onClick={reset}
-                            ><Translatable resourceKey={i18nKey("reset")} /></Button>
-                        <Button tiny secondary onClick={close}
-                            ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-                        <Button tiny disabled={memeUrl === undefined} onClick={send}
-                            ><Translatable resourceKey={i18nKey("send")} /></Button>
-                    </ButtonGroup>
-                </span>
-            {/snippet}
-        </ModalContent>
-    </Overlay>
+    <Sheet onDismiss={close}>
+        <Column gap={"lg"} padding={"lg"}>
+            <Row crossAxisAlignment={"center"} gap={"sm"}>
+                <MemeFighter size={$iconSize} color={"var(--icon-txt)"} />
+                <Subtitle fontWeight={"bold"}>Meme Fighter</Subtitle>
+            </Row>
+            <Column minHeight={"25rem"} crossAxisAlignment={"center"} mainAxisAlignment={"center"}>
+                {#if memeUrl}
+                    <img bind:this={img} class="meme" src={memeUrl} onerror={error} />
+                {:else}
+                    <iframe
+                        bind:this={iframe}
+                        {width}
+                        {height}
+                        style="border: none; max-width: 100%;"></iframe>
+                {/if}
+            </Column>
+            <Row mainAxisAlignment={"end"} gap={"md"} crossAxisAlignment={"center"}>
+                <CommonButton size={"small_text"} onClick={reset}
+                    ><Translatable resourceKey={i18nKey("reset")} /></CommonButton>
+                <CommonButton size={"small_text"} onClick={close}
+                    ><Translatable resourceKey={i18nKey("cancel")} /></CommonButton>
+                <CommonButton
+                    mode={"active"}
+                    size={"medium"}
+                    disabled={memeUrl === undefined}
+                    onClick={send}>
+                    <Translatable resourceKey={i18nKey("send")} />
+                </CommonButton>
+            </Row>
+        </Column>
+    </Sheet>
 {/if}
-
-<style lang="scss">
-    .header {
-        display: flex;
-        gap: $sp4;
-        align-items: center;
-    }
-
-    .meme {
-        width: 100%;
-    }
-
-    .meme-body {
-        min-height: 400px;
-        background-color: #1b1c21;
-        padding: $sp4 $sp5;
-        text-align: center;
-    }
-</style>
