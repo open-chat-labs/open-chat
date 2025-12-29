@@ -4,10 +4,12 @@
         Avatar,
         Body,
         BodySmall,
+        ColourVars,
         Container,
         CountBadge,
         MenuItem,
         MenuTrigger,
+        Row,
         Subtitle,
     } from "component-lib";
     import type {
@@ -46,16 +48,24 @@
     import CameraTimer from "svelte-material-icons/CameraTimer.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import Heart from "svelte-material-icons/Heart.svelte";
+    import Image from "svelte-material-icons/ImageOutline.svelte";
     import LocationExit from "svelte-material-icons/LocationExit.svelte";
+    import Phone from "svelte-material-icons/Phone.svelte";
     import PinIcon from "svelte-material-icons/Pin.svelte";
     import PinOffIcon from "svelte-material-icons/PinOff.svelte";
+    import Sticker from "svelte-material-icons/StickerEmoji.svelte";
+    import Swap from "svelte-material-icons/SwapHorizontal.svelte";
+    import Video from "svelte-material-icons/VideoOutline.svelte";
+    import Waveform from "svelte-material-icons/Waveform.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import { rtlStore } from "../../stores/rtl";
     import { now } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
     import { buildDisplayName } from "../../utils/user";
+    import Bitcoin from "../icons/Bitcoin.svelte";
     import HeartMinus from "../icons/HeartMinus.svelte";
     import HeartPlus from "../icons/HeartPlus.svelte";
+    import MemeFighter from "../icons/MemeFighter.svelte";
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
     import Translatable from "../Translatable.svelte";
     import Typing from "../Typing.svelte";
@@ -96,6 +106,7 @@
     );
     let muted = $derived(chatSummary.membership.notificationsMuted);
     let atEveryoneMuted = $derived(chatSummary.membership.atEveryoneMuted);
+    let LastMessageIcon = $derived(getLastMessageIcon());
 
     $effect(() => updateUnreadCounts(chatSummary));
 
@@ -119,6 +130,30 @@
                 unarchiveChat();
             }
         });
+    }
+
+    function getLastMessageIcon() {
+        switch (chatSummary.latestMessage?.event?.content?.kind) {
+            case "audio_content":
+                return Waveform;
+            case "giphy_content":
+                return Sticker;
+            case "p2p_swap_content":
+            case "p2p_swap_content_initial":
+                return Swap;
+            case "crypto_content":
+                return Bitcoin;
+            case "image_content":
+                return Image;
+            case "meme_fighter_content":
+                return MemeFighter;
+            case "video_call_content":
+                return Phone;
+            case "video_content":
+                return Video;
+            default:
+                return undefined;
+        }
     }
 
     function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
@@ -483,13 +518,18 @@
                     </Container>
                 </Container>
                 <Container gap={"xs"} mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"end"}>
-                    <Body ellipsisTruncate colour={"textSecondary"}>
-                        {#if chat.typing !== undefined}
-                            {chat.typing} <Typing />
-                        {:else}
-                            <Markdown text={lastMessage} oneLine suppressLinks />
+                    <Row gap={"xs"} crossAxisAlignment={"center"}>
+                        {#if LastMessageIcon}
+                            <LastMessageIcon color={ColourVars.textSecondary} />
                         {/if}
-                    </Body>
+                        <Body ellipsisTruncate colour={"textSecondary"}>
+                            {#if chat.typing !== undefined}
+                                {chat.typing} <Typing />
+                            {:else}
+                                <Markdown text={lastMessage} oneLine suppressLinks />
+                            {/if}
+                        </Body>
+                    </Row>
                     {#if unreadMessages > 0}
                         <CountBadge {muted}
                             >{unreadMessages > 999 ? "999+" : unreadMessages}

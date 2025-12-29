@@ -165,11 +165,13 @@ export function getContentAsFormattedText(
     if (content.kind === "text_content") {
         text = content.text;
     } else if (content.kind === "image_content") {
-        text = captionedContent("image", content.caption);
+        text = captionedContent("Image", content.caption);
     } else if (content.kind === "video_content") {
-        text = captionedContent("video", content.caption);
+        text = captionedContent("Video", content.caption);
     } else if (content.kind === "audio_content") {
-        text = captionedContent("audio", content.caption);
+        text = `${captionedContent("Audio", content.caption)} / ${Math.round(
+            Number(content.durationMs) / 1000,
+        )}s`;
     } else if (content.kind === "file_content") {
         text = captionedContent(content.name, content.caption);
     } else if (content.kind === "crypto_content") {
@@ -180,13 +182,13 @@ export function getContentAsFormattedText(
             content.caption,
         );
     } else if (content.kind === "deleted_content" || content.kind === "blocked_content") {
-        text = "deleted message";
+        text = "Deleted message";
     } else if (content.kind === "placeholder_content") {
-        text = "placeholder content";
+        text = "Placeholder content";
     } else if (content.kind === "bot_placeholder_content") {
         text = "Bot working ...";
     } else if (content.kind === "poll_content") {
-        text = content.config.text ?? "poll";
+        text = content.config.text ?? "Poll";
     } else if (content.kind === "proposal_content") {
         text = content.proposal.title;
     } else if (content.kind === "giphy_content") {
