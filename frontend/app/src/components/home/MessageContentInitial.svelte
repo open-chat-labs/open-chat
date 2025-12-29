@@ -1,7 +1,7 @@
 <script lang="ts">
+    import type { ResourceKey } from "openchat-client";
     import FancyLoader from "../icons/FancyLoader.svelte";
     import Translatable from "../Translatable.svelte";
-    import type { ResourceKey } from "openchat-client";
 
     interface Props {
         text: ResourceKey;

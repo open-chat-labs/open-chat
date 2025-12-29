@@ -1,7 +1,8 @@
 <script lang="ts">
+    import { ChatText, Column } from "component-lib";
+    import type { ResourceKey } from "openchat-client";
     import FancyLoader from "../icons/FancyLoader.svelte";
     import Translatable from "../Translatable.svelte";
-    import type { ResourceKey } from "openchat-client";
 
     interface Props {
         text: ResourceKey;
@@ -11,24 +12,20 @@
     let { text, failed }: Props = $props();
 </script>
 
-<div class={"prize"}>
+<Column gap={"lg"} padding={"lg"} mainAxisAlignment={"center"}>
     {#if !failed}
         <div class="spinner">
             <FancyLoader />
         </div>
     {/if}
-    <p><Translatable resourceKey={text} /></p>
-</div>
+    <ChatText>
+        <Translatable resourceKey={text} />
+    </ChatText>
+</Column>
 
 <style lang="scss">
-    .prize {
-        padding: $sp5;
-        display: flex;
-        flex-direction: column;
-        gap: $sp6;
-    }
     .spinner {
-        width: 100px;
+        width: 4rem;
         margin: 0 auto;
     }
 </style>

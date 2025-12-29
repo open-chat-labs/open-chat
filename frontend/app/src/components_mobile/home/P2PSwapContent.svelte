@@ -1,4 +1,14 @@
 <script lang="ts">
+    import {
+        Avatar,
+        BodySmall,
+        Button,
+        ColourVars,
+        Column,
+        type Padding,
+        Row,
+        Subtitle,
+    } from "component-lib";
     import type {
         AcceptP2PSwapResponse,
         CancelP2PSwapResponse,
@@ -8,30 +18,27 @@
         ResourceKey,
     } from "openchat-client";
     import {
-        cryptoLookup,
+        enhancedCryptoLookup as cryptoLookup,
         currentUserIdStore,
-        exchangeRatesLookupStore as exchangeRatesLookup,
         isDiamondStore,
         publish,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
+    import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import Clock from "svelte-material-icons/Clock.svelte";
-    import SwapIcon from "svelte-material-icons/SwapHorizontal.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
-    import { rtlStore } from "../../stores/rtl";
     import { now500 } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
-    import { calculateDollarAmount } from "../../utils/exchange";
     import AreYouSure from "../AreYouSure.svelte";
-    import Button from "../Button.svelte";
-    import ButtonGroup from "../ButtonGroup.svelte";
-    import SpinningToken from "../icons/SpinningToken.svelte";
+    import MulticolourText from "../MulticolourText.svelte";
     import Translatable from "../Translatable.svelte";
     import AcceptP2PSwapModal from "./AcceptP2PSwapModal.svelte";
+    import ContentCaption from "./ContentCaption.svelte";
     import Markdown from "./Markdown.svelte";
     import P2PSwapProgress from "./P2PSwapProgress.svelte";
+    import { TokenState } from "./wallet/walletState.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -52,6 +59,8 @@
 
     let fromDetails = $derived($cryptoLookup.get(content.token0.ledger)!);
     let toDetails = $derived($cryptoLookup.get(content.token1.ledger)!);
+    let fromState = $derived(new TokenState(fromDetails));
+    let toState = $derived(new TokenState(toDetails));
     let finished = $derived($now500 >= Number(content.expiresAt));
     let timeRemaining = $derived(
         finished
@@ -69,20 +78,6 @@
     let fromAmount = $derived(client.formatTokens(content.token0Amount, content.token0.decimals));
     let toAmount = $derived(client.formatTokens(content.token1Amount, content.token1.decimals));
     let buttonDisabled = $derived(content.status.kind !== "p2p_swap_open" || reply || pinned);
-    let fromAmountInUsd = $derived(
-        calculateDollarAmount(
-            content.token0Amount,
-            $exchangeRatesLookup.get(fromDetails.symbol.toLowerCase())?.toUSD,
-            fromDetails.decimals,
-        ),
-    );
-    let toAmountInUsd = $derived(
-        calculateDollarAmount(
-            content.token1Amount,
-            $exchangeRatesLookup.get(toDetails.symbol.toLowerCase())?.toUSD,
-            toDetails.decimals,
-        ),
-    );
 
     type Labels = {
         instructionText?: string;
@@ -257,153 +252,101 @@
     <P2PSwapProgress {senderId} {content} onClose={() => (showDetails = false)} />
 {/if}
 
-<div class="swap">
-    <div class="top">
-        {#if content.status.kind === "p2p_swap_open"}
-            <div class="countdown" class:rtl={$rtlStore}>
-                <Clock size={"1em"} color={"#ffffff"} />
-                <span>{timeRemaining}</span>
-            </div>
-        {/if}
-        <div class="coins" onclick={onSwapClick}>
-            <div class="coin">
-                <SpinningToken logo={fromDetails.logo} spin={false} size="medium" />
-                <div class="amount">
-                    <div>{fromAmount} {content.token0.symbol}</div>
-                    <div class="dollar">({fromAmountInUsd} USD)</div>
-                </div>
-            </div>
+{#snippet token(
+    label: string,
+    state: TokenState,
+    amount: bigint,
+    padding: Padding = ["md", "lg", "md", "sm"],
+)}
+    <Row
+        gap={"lg"}
+        crossAxisAlignment={"center"}
+        {padding}
+        borderRadius={"lg"}
+        background={ColourVars.background1}>
+        <Avatar size={"lg"} url={state.logo} />
+        <Column>
+            <Subtitle ellipsisTruncate fontWeight={"bold"}>
+                <MulticolourText
+                    parts={[
+                        {
+                            text: i18nKey(label),
+                            colour: "textPrimary",
+                        },
+                        {
+                            text: i18nKey(`${state.formatTokens(amount)} ${state.symbol}`),
+                            colour: "primary",
+                        },
+                    ]} />
+            </Subtitle>
+            <BodySmall colour={"textSecondary"}>
+                {`= ${state.formatConvertedTokens(amount)}`}
+            </BodySmall>
+        </Column>
+    </Row>
+{/snippet}
 
-            <div class="swap-icon">
-                <SwapIcon size={"2.5em"} />
-            </div>
-
-            <div class="coin">
-                <SpinningToken logo={toDetails.logo} spin={false} size="medium" />
-                <div class="amount">
-                    <div>{toAmount} {content.token1.symbol}</div>
-                    <div class="dollar">({toAmountInUsd} USD)</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="bottom">
-        {#if content.caption !== undefined}
-            <div class="caption">
-                {content.caption}
-            </div>
-        {/if}
-        <div class="summary"><Translatable resourceKey={labels.summaryText} /></div>
-        {#if labels.instructionText !== undefined}
-            <div class="instructions">
-                <Markdown text={labels.instructionText} />
-            </div>
-        {/if}
-        <div class="accept">
-            <ButtonGroup align="fill">
-                <Button
-                    loading={content.status.kind === "p2p_swap_reserved" ||
-                        content.status.kind === "p2p_swap_accepted"}
-                    disabled={buttonDisabled}
-                    hollow
-                    onClick={onAcceptOrCancel}>
-                    <Translatable resourceKey={labels.buttonText} />
-                </Button>
-            </ButtonGroup>
-        </div>
-    </div>
-</div>
+<Column
+    padding={["lg", "zero"]}
+    gap={"md"}
+    crossAxisAlignment={"center"}
+    mainAxisAlignment={"center"}>
+    {#if content.status.kind === "p2p_swap_open"}
+        <Row
+            padding={["sm", "md"]}
+            borderRadius={"md"}
+            mainAxisAlignment={"center"}
+            width={"hug"}
+            backgroundColor={ColourVars.background1}
+            crossAxisAlignment={"center"}
+            gap={"xs"}>
+            <Clock size={"1em"} color={"#ffffff"} />
+            <BodySmall colour={"textSecondary"}>
+                {timeRemaining}
+            </BodySmall>
+        </Row>
+    {/if}
+    <Column minWidth={"16rem"} onClick={onSwapClick} crossAxisAlignment={"center"} gap={"xs"}>
+        {@render token("Swap ", fromState, content.token0Amount, ["md", "lg", "xl", "sm"])}
+        <Row
+            supplementalClass={"swap_content_down_arrow"}
+            width={{ size: "2.5rem" }}
+            height={{ size: "2.5rem" }}
+            borderRadius={"circle"}
+            borderWidth={"extraThick"}
+            borderColour={me ? ColourVars.primary : ColourVars.background2}
+            background={ColourVars.background1}
+            mainAxisAlignment={"center"}
+            crossAxisAlignment={"center"}>
+            <ArrowDown size={"1.2rem"} />
+        </Row>
+        {@render token("For ", toState, content.token1Amount, ["xl", "lg", "md", "sm"])}
+    </Column>
+    <ContentCaption caption={content.caption} edited={false} />
+    {#if labels.instructionText !== undefined}
+        <BodySmall>
+            <Markdown text={labels.instructionText} />
+        </BodySmall>
+    {/if}
+    <Row overflow={"visible"} background={ColourVars.background1} borderRadius={"sm"}>
+        <Button
+            secondary
+            width={"fill"}
+            loading={content.status.kind === "p2p_swap_reserved" ||
+                content.status.kind === "p2p_swap_accepted"}
+            disabled={buttonDisabled}
+            onClick={onAcceptOrCancel}>
+            <Translatable resourceKey={labels.buttonText} />
+        </Button>
+    </Row>
+</Column>
 
 <style lang="scss">
-    $accent: var(--prize);
-
-    .swap .bottom .accept {
-        :global(button:not(.disabled)) {
-            border: 1px solid $accent !important;
-        }
-
-        :global(button:not(.disabled):hover) {
-            background-color: $accent;
-            color: var(--button-txt);
-        }
-
-        :global(button.loading) {
-            background-color: $accent;
-            color: var(--button-txt);
-        }
-
-        min-height: 45px !important;
-        min-width: unset !important;
-    }
-
-    .swap {
-        max-width: 400px;
-        padding: 0 $sp3 $sp3 $sp3;
-    }
-
-    .top {
-        position: relative;
-        margin-bottom: $sp4;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .countdown {
-        @include font-size(fs-60);
-        font-weight: 700;
-        display: flex;
-        gap: $sp2;
-        align-items: center;
-        border-radius: var(--rd);
-        color: white;
-        background-color: rgba(0, 0, 0, 0.3);
-        padding: $sp2 $sp3;
-        text-transform: lowercase;
-
-        &.rtl {
-            left: unset;
-            right: 10px;
-        }
-    }
-
-    .summary,
-    .instructions,
-    .caption {
-        @include font(book, normal, fs-80);
-        margin-bottom: $sp4;
-    }
-
-    .coins {
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        margin-top: $sp3;
-        width: 100%;
-        cursor: pointer;
-    }
-
-    .amount {
-        @include font(bold, normal, fs-80);
-        text-align: center;
-
-        .dollar {
-            @include font(light, normal, fs-60);
-        }
-    }
-
-    .swap-icon {
-        height: 2.5em;
-        position: relative;
-        top: calc(2.5rem - 12px);
-    }
-
-    .coin {
-        display: flex;
-        flex-direction: column;
-        gap: $sp2;
-        align-items: center;
-        flex: 1;
+    :global(.container.swap_content_down_arrow) {
+        position: absolute;
+        width: 2.5rem;
+        height: 2.5rem;
+        transform: translateY(4rem);
+        z-index: 1;
     }
 </style>
