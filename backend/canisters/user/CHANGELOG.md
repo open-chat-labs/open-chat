@@ -15,8 +15,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Removed pinned from direct and group chat initial_state and updates ([#8631](https://github.com/open-chat-labs/open-chat/pull/8631))
 - Add `duration_ms` and `samples` to `AudioContent` ([#8669](https://github.com/open-chat-labs/open-chat/pull/8669))
 - Take RNG seed in init args ([#8702](https://github.com/open-chat-labs/open-chat/pull/8702))
-- Granted bot permissions are union of command and autonomous permissions ([#8729](https://github.com/open-chat-labs/open-chat/pull/8729))
 - One-time sync of bot installations with LUI ([#8731](https://github.com/open-chat-labs/open-chat/pull/8731))
+- Granted bot permissions are union of command and autonomous permissions ([#8732](https://github.com/open-chat-labs/open-chat/pull/8732))
 
 ### Removed
 
