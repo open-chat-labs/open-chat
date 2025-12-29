@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `duration_ms` and `samples` to `AudioContent` ([#8669](https://github.com/open-chat-labs/open-chat/pull/8669))
 - Move `ic_root_key` to `Environment` trait ([#8701](https://github.com/open-chat-labs/open-chat/pull/8701))
 - Take RNG seed in init args ([#8702](https://github.com/open-chat-labs/open-chat/pull/8702))
+- Granted bot permissions are union of command and autonomous permissions ([#8729](https://github.com/open-chat-labs/open-chat/pull/8729))
 
 ### Removed
 

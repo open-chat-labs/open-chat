@@ -774,11 +774,17 @@ impl Data {
         // Try to get the installed bot
         let bot = self.bots.get(bot_id)?;
 
-        // Get the granted permissions when initiated by command or API key
         match initiator {
-            BotInitiator::Command(command) => self
-                .get_user_permissions(&command.initiator)
-                .map(|u| BotPermissions::intersect(&bot.permissions, &u)),
+            BotInitiator::Command(command) => {
+                let granted_to_bot = if let Some(autonomous_permissions) = &bot.autonomous_permissions {
+                    &BotPermissions::union(&bot.permissions, autonomous_permissions)
+                } else {
+                    &bot.permissions
+                };
+
+                self.get_user_permissions(&command.initiator)
+                    .map(|u| BotPermissions::intersect(granted_to_bot, &u))
+            }
             BotInitiator::Autonomous => bot.autonomous_permissions.clone(),
         }
     }
