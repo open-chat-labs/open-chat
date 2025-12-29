@@ -776,14 +776,13 @@ impl Data {
 
         match initiator {
             BotInitiator::Command(command) => {
-                let granted_to_bot = if let Some(autonomous_permissions) = &bot.autonomous_permissions {
-                    &BotPermissions::union(&bot.permissions, autonomous_permissions)
-                } else {
-                    &bot.permissions
+                let Some(user_permissions) = self.get_user_permissions(&command.initiator) else {
+                    return None;
                 };
-
-                self.get_user_permissions(&command.initiator)
-                    .map(|u| BotPermissions::intersect(granted_to_bot, &u))
+                Some(BotPermissions::union(
+                    &BotPermissions::intersect(&bot.permissions, &user_permissions),
+                    &bot.autonomous_permissions.clone().unwrap_or_default(),
+                ))
             }
             BotInitiator::Autonomous => bot.autonomous_permissions.clone(),
         }

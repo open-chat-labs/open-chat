@@ -1085,13 +1085,7 @@ impl Data {
 
         // Get the permissions granted to the bot when initiated by command or autonomously
         let granted_to_bot = match initiator {
-            BotInitiator::Command(_) => {
-                if let Some(autonomous_permissions) = &bot.autonomous_permissions {
-                    &BotPermissions::union(&bot.permissions, autonomous_permissions)
-                } else {
-                    &bot.permissions
-                }
-            }
+            BotInitiator::Command(_) => &bot.permissions,
             BotInitiator::Autonomous => bot.autonomous_permissions.as_ref()?,
         };
 
@@ -1114,9 +1108,13 @@ impl Data {
 
         match initiator {
             BotInitiator::Command(command) => {
-                // Intersect the permissions granted to the bot with the user's permissions
-                self.get_user_permissions(&command.initiator, channel_id)
-                    .map(|u| BotPermissions::intersect(granted_to_bot, &u))
+                let Some(user_permissions) = self.get_user_permissions(&command.initiator, channel_id) else {
+                    return None;
+                };
+                Some(BotPermissions::union(
+                    &BotPermissions::intersect(&granted_to_bot, &user_permissions),
+                    &bot.autonomous_permissions.clone().unwrap_or_default(),
+                ))
             }
             BotInitiator::Autonomous => {
                 if is_private_channel && !bot_is_channel_owner {
