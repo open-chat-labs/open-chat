@@ -23,8 +23,8 @@ async fn install_bot_impl(args: Args) -> OCResult {
         &c2c_install_bot::Args {
             bot_id: args.bot_id,
             caller: user_id,
-            granted_permissions: args.granted_permissions,
-            granted_autonomous_permissions: args.granted_autonomous_permissions,
+            granted_permissions: args.granted_permissions.clone(),
+            granted_autonomous_permissions: args.granted_autonomous_permissions.clone(),
             default_subscriptions,
         },
     )
@@ -40,6 +40,8 @@ async fn install_bot_impl(args: Args) -> OCResult {
                 bot_id: args.bot_id,
                 location: args.location,
                 installed_by: user_id,
+                granted_permissions: args.granted_permissions,
+                granted_autonomous_permissions: args.granted_autonomous_permissions.unwrap_or_default(),
             })),
             state.env.now(),
         );

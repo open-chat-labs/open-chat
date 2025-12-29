@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Move `ic_root_key` to `Environment` trait ([#8701](https://github.com/open-chat-labs/open-chat/pull/8701))
 - Take RNG seed in init args ([#8702](https://github.com/open-chat-labs/open-chat/pull/8702))
 - Granted bot permissions are union of command and autonomous permissions ([#8729](https://github.com/open-chat-labs/open-chat/pull/8729))
+- One-time sync of bot installations with LUI ([#8731](https://github.com/open-chat-labs/open-chat/pull/8731))
 
 ### Removed
 
