@@ -5,9 +5,12 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewTreeObserver
 import android.webkit.WebView
 import androidx.activity.addCallback
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import app.tauri.plugin.JSObject
@@ -19,7 +22,7 @@ import kotlinx.coroutines.launch
 class MainActivity : TauriActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        
         try {
             // Makes sure inputs are visible on soft keyboard toggle
             handleViewportSizeOnSoftKeyboardToggle()
@@ -30,7 +33,7 @@ class MainActivity : TauriActivity() {
 
         onBackPressedDispatcher.addCallback(this) { interceptBack() }
     }
-
+    
     private fun interceptBack() {
         Log.d(LOG_TAG, "Back pressed/swiped intercepted in MainActivity")
 
@@ -66,52 +69,57 @@ class MainActivity : TauriActivity() {
         }
     }
 
-    // Handle viewport resize when soft keyboard pops or hides
-    //
-    // Setting `android:windowSoftInputMode="adjustResize"` in the AndroidManifest.xml does not
-    // seem to work in this case. This is a workaround, that seem to work well for now, until
-    // we start implementation of the new UI, and fix the issue.
-    private fun handleViewportSizeOnSoftKeyboardToggle() {
-        val root = findViewById<View>(android.R.id.content)
+    override fun onWebViewCreate(webView: WebView) {
+        super.onWebViewCreate(webView)
 
-        // Difference between visible and full height, which is a sum of heights of status bar
-        // and bottom navigation bar.
-        var heightDelta: Int? = null
+        // Check if the device is set for gesture or button navigation!
+        ViewCompat.setOnApplyWindowInsetsListener(webView) { _, insets ->
+            val navInsets = insets.getInsets(
+                WindowInsetsCompat.Type.navigationBars()
+            )
 
-        root.viewTreeObserver.addOnGlobalLayoutListener(
-                object : ViewTreeObserver.OnGlobalLayoutListener {
-                    override fun onGlobalLayout() {
-                        val webView = findWebView(root)
+            val density = webView.resources.displayMetrics.density
+            val bottomDp = navInsets.bottom / density
 
-                        if (webView != null) {
-                            val rect = android.graphics.Rect()
-                            root.getWindowVisibleDisplayFrame(rect)
-
-                            val visibleHeight = rect.height()
-                            val fullHeight = root.rootView.height
-
-                            if (heightDelta == null) {
-                                heightDelta = fullHeight - visibleHeight
-                                Log.d("TEST_OC", "Full vs visible height offset: $heightDelta")
-                            }
-
-                            val keyboardHeight = fullHeight - visibleHeight - heightDelta
-                            // Assume keyboard is visible if the difference is greater than 200
-                            val isKeyboardVisible = keyboardHeight > 200
-
-                            webView.post {
-                                val newHeight =
-                                        if (isKeyboardVisible) fullHeight - keyboardHeight
-                                        else fullHeight
-                                webView.layoutParams?.height = newHeight
-                                webView.requestLayout()
-                            }
-                        }
-                    }
-                }
-        )
+            // Detect if the app is using gesture navigation!
+            val isGestureNavigation = bottomDp <= 36
+            
+            OCPluginCompanion.triggerRef(
+                "gesture-navigation", 
+                JSObject().put("isGestureNavigation", isGestureNavigation)
+            )
+            
+            insets
+        }
     }
 
+    // Handle viewport resize when soft keyboard pops or hides
+    //
+    // Setting only `android:windowSoftInputMode="adjustResize"` in the AndroidManifest.xml does not
+    // seem to work by itself, but adds to this and can improve resize behaviour for web/hybrid apps.
+    private fun handleViewportSizeOnSoftKeyboardToggle() {
+
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        val rootView = findViewById<View>(android.R.id.content)
+
+        ViewCompat.setOnApplyWindowInsetsListener(rootView) { _, insets ->
+            val imeVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
+            val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
+            val imeHeight = imeInsets.bottom
+
+            if (imeVisible) {
+                Log.d(LOG_TAG, "Keyboard OPEN, height = $imeHeight")
+                rootView.updatePadding(bottom = imeHeight)
+            } else {
+                Log.d(LOG_TAG, "Keyboard CLOSED")
+                rootView.updatePadding(bottom = 0)
+            }
+
+            // Important: return the insets unchanged
+            insets
+        }
+    }
+    
     private fun findWebView(view: View): WebView? {
         if (view is WebView) return view
 

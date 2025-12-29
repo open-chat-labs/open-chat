@@ -8,6 +8,7 @@ const PUSH_NOTIFICATION_EVENT = "push-notification";
 const NEW_FCM_TOKEN_EVENT = "fcm-token";
 const NOTIFICATION_TAP_EVENT = "notification-tap";
 const BACK_PRESS_EVENT = "back-pressed";
+const NAVIGATION_TYPE_EVENT = "gesture-navigation";
 
 type PushNotification = {
     id: number;
@@ -188,7 +189,21 @@ export async function expectNewFcmToken<T>(handler: (data: T) => void): Promise<
  * @param handler runs on back press
  * @returns
  */
-export async function expectBackPress(handler: () => void): Promise<PluginListener | undefined> {
+export async function expectBackPress(handler: () => void): Promise<PluginListener> {
     // Set up the listener for nav back presses
     return addPluginListener(TAURI_PLUGIN_NAME, BACK_PRESS_EVENT, handler);
+}
+
+/**
+ * Data shape epxected to be received from the native code, informing us of the
+ * navigation type that the Android app is using.
+ */
+export interface NavigationType {
+    isGestureNavigation: boolean;
+}
+
+export async function expectNavigationType(
+    handler: (data: NavigationType) => void,
+): Promise<PluginListener> {
+    return addPluginListener(TAURI_PLUGIN_NAME, NAVIGATION_TYPE_EVENT, handler);
 }

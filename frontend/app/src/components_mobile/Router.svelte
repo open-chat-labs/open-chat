@@ -80,6 +80,7 @@
                 return "fade";
             }
         }
+
         if (
             next.kind === "selected_community_route" &&
             current.kind === "selected_community_route"
@@ -120,11 +121,9 @@
             // Finally - we are in a position to specify the *type* of transition
             const transitionType = routeToTransitionType(params, routeStore.value);
             (document as any).startViewTransition({
-                update: async () => {
+                update: () => {
                     client.setRouteParams(ctx, params);
                     scrollToTop();
-                    await tick();
-                    next();
                 },
                 types: [transitionType],
             });

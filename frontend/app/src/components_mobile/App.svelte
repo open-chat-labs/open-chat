@@ -42,7 +42,8 @@
     import ActiveCall from "./home/video/ActiveCall.svelte";
     import IncomingCall from "./home/video/IncomingCall.svelte";
     import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
-    import { synonymousUrlRegex } from "../utils/urls";
+    import { synonymousUrlRegex } from "@utils/urls";
+    import { expectNavigationType } from "@utils/native/notification_channels";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
@@ -68,6 +69,13 @@
             }
         }
     });
+
+    expectNavigationType((data) => {
+        const buttonNavClass = "with-button-nav";
+        data.isGestureNavigation
+            ? document.body.classList.remove(buttonNavClass)
+            : document.body.classList.add(buttonNavClass);
+    }).catch(console.error);
 
     function createOpenChatClient(): OpenChat {
         const client = new OpenChat({

@@ -200,7 +200,7 @@
 
     .footer {
         position: relative;
-        flex: 0 0 toRem(60);
+        flex: 0 0 toRem(80);
         width: 100%;
     }
 

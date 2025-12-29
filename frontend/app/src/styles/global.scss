@@ -197,6 +197,8 @@ html {
     --font: "Roboto", sans-serif;
     --font-bold: "Manrope", sans-serif;
     --safe-inset: 0;
+    --android-inset-with-buttons: 3.375rem;
+    --android-inset-without-buttons: 1.75rem;
 }
 
 body {
@@ -244,7 +246,7 @@ body {
 // this is designed to target only iOS devices where the app is saved to home screen
 // and the device does not have a home button (hence the min-height check)
 // and the virtual keyboard is not visible
-body.needs-safe-inset:not(.keyboard) {
+body.needs-safe-inset:not(.keyboard):not(.native-android) {
     --safe-inset: 32px;
     padding-bottom: var(--safe-inset);
 

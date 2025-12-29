@@ -32,13 +32,13 @@
     borderStyle={"dashed"}
     crossAxisAlignment={"center"}
     mainAxisAlignment={"center"}
-    height={"fill"}
+    height={{ size: "3.5rem" }}
     direction={"vertical"}>
     <div class="bottom_bar_icon">
         {@render icon(iconColour)}
     </div>
     <div class="indicator" class:pulse={indicator.show && indicator.pulse}>
-        {#if indicator.show}
+        {#if indicator.show && !indicator.muted}
             <NotificationIndicator muted={indicator.muted} />
         {/if}
     </div>
@@ -52,11 +52,12 @@
     .indicator {
         position: absolute;
         display: flex;
-        bottom: -0.75rem;
+        bottom: -0.3rem;
 
-        &.pulse {
-            animation: pulse 3s infinite;
-        }
+        // TODO revisit this to make the indicators more noticeable in the bottom menu!
+        // &.pulse {
+        //     animation: pulse 3s infinite;
+        // }
     }
 
     @keyframes pulse {

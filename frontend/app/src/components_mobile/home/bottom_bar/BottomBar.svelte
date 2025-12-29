@@ -30,13 +30,17 @@
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
-    import Lightbulb from "svelte-material-icons/LightbulbVariantOutline.svelte";
-    import Wallet from "svelte-material-icons/WalletOutline.svelte";
+    import BellOutline from "svelte-material-icons/BellOutline.svelte";
     import BottomBarItem, { type Unread } from "./BottomBarItem.svelte";
 
     interface Props {
         selection: Selection;
     }
+
+    type MenuIcon =
+        | { kind: "icon" }
+        | { kind: "svg"; svgPath: string }
+        | { kind: "avatar"; url: string; name: string };
 
     const client = getContext<OpenChat>("client");
 
@@ -49,7 +53,7 @@
         mergeListOfCombinedUnreadCounts(Array.from($unreadCommunityChannelCountsStore.values())),
     );
     let numIcons = $derived($favouritesStore.size > 0 ? 6 : 5);
-    let iconSize = $derived(numIcons === 6 ? "1.7rem" : "1.9rem");
+    const iconSize = "1.5rem";
     let claimChitAvailable = $derived(
         !$disableChit && $chitStateStore.nextDailyChitClaim < $now500,
     );
@@ -157,46 +161,67 @@
     }
 </script>
 
-{#snippet item(selection: Selection, Icon: any, indicator?: Unread)}
+{#snippet item(selection: Selection, menuIcon: MenuIcon, indicator?: Unread)}
     <BottomBarItem
         {indicator}
         onSelect={() => itemSelected(selection)}
         selected={props.selection === selection}>
         {#snippet icon(color)}
-            <Icon {color} size={iconSize} />
+            {#if menuIcon.kind == "icon"}
+                {#if selection == "chats"}
+                    <ForumOutline {color} size={iconSize} />
+                {:else if selection == "communities"}
+                    <AccountGroup {color} size={iconSize} />
+                {:else if selection == "favourites"}
+                    <HeartOutline {color} size={iconSize} />
+                {:else if selection == "notification"}
+                    <BellOutline {color} size={iconSize} />
+                {/if}
+            {:else if menuIcon.kind == "svg"}
+                <svg
+                    width={iconSize}
+                    height={iconSize}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path d={menuIcon.svgPath} fill={color} />
+                </svg>
+            {:else if menuIcon.kind == "avatar"}
+                <Avatar customSize={"2rem"} size={"lg"} url={menuIcon.url} name={menuIcon.name}
+                ></Avatar>
+            {/if}
         {/snippet}
     </BottomBarItem>
 {/snippet}
 
 <Container
     supplementalClass={"bottom_nav_bar"}
-    padding={["xl", "lg", "md", "lg"]}
+    padding={["sm", "lg", "zero", "lg"]}
     borderWidth={"thick"}
     minWidth={"100%"}
-    minHeight={"4.875rem"}
     {onSwipe}
     borderColour={"var(--background-0)"}
-    height={{ size: "4.875rem" }}
     borderRadius={["md", "md", "zero", "zero"]}
     background={"var(--background-1)"}
     mainAxisAlignment={"spaceAround"}>
     <div style={`--num: ${numIcons}`} class:showFavourites class={`selection ${props.selection}`}>
     </div>
-    {@render item("chats", ForumOutline, chatIndicator)}
-    {@render item("communities", AccountGroup, communityIndicator)}
+    {@render item("chats", { kind: "icon" }, chatIndicator)}
+    {@render item("communities", { kind: "icon" }, communityIndicator)}
     {#if $favouritesStore.size > 0}
-        {@render item("favourites", HeartOutline, favouritesIndicator)}
+        {@render item("favourites", { kind: "icon" }, favouritesIndicator)}
     {/if}
-    {@render item("notification", Lightbulb, activityIndicator)}
-    {@render item("wallet", Wallet)}
-    <BottomBarItem
-        indicator={{ show: claimChitAvailable, muted: false, pulse: claimChitAvailable }}
-        onSelect={() => itemSelected("profile")}
-        selected={props.selection === "profile"}>
-        {#snippet icon()}
-            <Avatar customSize={"2.5rem"} size={"lg"} url={avatarUrl} name={avatarName}></Avatar>
-        {/snippet}
-    </BottomBarItem>
+    {@render item("notification", { kind: "icon" }, activityIndicator)}
+    {@render item("wallet", {
+        kind: "svg",
+        svgPath:
+            "M15.5 15.5C16.33 15.5 17 14.83 17 14C17 13.17 16.33 12.5 15.5 12.5C14.67 12.5 14 13.17 14 14C14 14.83 14.67 15.5 15.5 15.5ZM7 3H17C18.11 3 19 3.9 19 5V7C20.11 7 21 7.9 21 9V19C21 20.11 20.11 21 19 21H7C4.79 21 3 19.21 3 17V7C3 4.79 4.79 3 7 3ZM17 7V5H7C5.9 5 5 5.9 5 7V7.54C5.59 7.2 6.27 7 7 7H17ZM5 17C5 18.11 5.9 19 7 19H19V9H7C5.9 9 5 9.9 5 11V17Z",
+    })}
+    {@render item(
+        "profile",
+        { kind: "avatar", url: avatarUrl, name: avatarName },
+        { show: claimChitAvailable, muted: false, pulse: false },
+    )}
 </Container>
 
 <style lang="scss">
@@ -206,15 +231,16 @@
         border-bottom: none !important;
     }
 
-    :global(.bottom_nav_bar:after) {
-        content: "";
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: var(--safe-inset);
-        background-color: var(--background-1);
-        z-index: 1;
+    :global {
+        body.native-android {
+            &:not(.with-button-nav) .bottom_nav_bar {
+                padding-bottom: var(--android-inset-without-buttons) !important;
+            }
+
+            &.with-button-nav .bottom_nav_bar {
+                padding-bottom: var(--android-inset-with-buttons) !important;
+            }
+        }
     }
 
     .selection {
@@ -225,7 +251,7 @@
         position: absolute;
         width: var(--width);
         left: 0;
-        top: 0.375rem;
+        top: 0.125rem;
         height: var(--sp-xs);
         background: var(--gradient);
         border-radius: var(--rad-sm);
