@@ -75,19 +75,18 @@ impl Subscriptions {
     }
 
     pub fn mark_active(&mut self, user_id: &UserId, endpoint: &str, now: TimestampMillis) -> bool {
-        if let Some(subscriptions) = self.subscriptions.get_mut(user_id) {
-            if let Some(subscription) = subscriptions.iter_mut().find(|s| s.endpoint == endpoint) {
-                subscription.last_active = now;
-                return true;
-            }
+        if let Some(subscriptions) = self.subscriptions.get_mut(user_id)
+            && let Some(subscription) = subscriptions.iter_mut().find(|s| s.endpoint == endpoint)
+        {
+            subscription.last_active = now;
+            true
+        } else {
+            false
         }
-        false
     }
 
     pub fn get_by_user(&self, user_id: &UserId) -> Vec<SubscriptionInfoInternal> {
-        self.subscriptions
-            .get(user_id)
-            .map_or(Vec::new(), |subs| subs.iter().cloned().collect())
+        self.subscriptions.get(user_id).map_or(Vec::new(), |subs| subs.to_vec())
     }
 
     pub fn total(&self) -> u64 {
