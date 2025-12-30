@@ -3310,6 +3310,13 @@ export type NotificationsIndexFcmTokenExistsResponse = Static<
 >;
 export const NotificationsIndexFcmTokenExistsResponse = Type.Boolean();
 
+export type NotificationsIndexMarkSubscriptionActiveArgs = Static<
+    typeof NotificationsIndexMarkSubscriptionActiveArgs
+>;
+export const NotificationsIndexMarkSubscriptionActiveArgs = Type.Object({
+    endpoint: Type.String(),
+});
+
 export type NotificationsIndexSubscriptionExistsArgs = Static<
     typeof NotificationsIndexSubscriptionExistsArgs
 >;

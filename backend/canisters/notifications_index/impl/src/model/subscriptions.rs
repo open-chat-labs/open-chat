@@ -1,11 +1,11 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use std::collections::{HashMap, VecDeque};
 use types::{SubscriptionInfo, SubscriptionKeys, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Subscriptions {
-    subscriptions: HashMap<UserId, VecDeque<SubscriptionInfoInternal>>,
+    subscriptions: HashMap<UserId, Vec<SubscriptionInfoInternal>>,
     total: u64,
 }
 
@@ -20,13 +20,20 @@ impl Subscriptions {
                     return removed;
                 }
                 while subscriptions.len() >= 10 {
-                    removed.push(subscriptions.pop_front().unwrap());
+                    let to_remove = subscriptions
+                        .iter()
+                        .enumerate()
+                        .min_by_key(|(_, s)| s.last_active)
+                        .map(|(i, _)| i)
+                        .unwrap();
+
+                    removed.push(subscriptions.remove(to_remove));
                     self.total = self.total.saturating_sub(1);
                 }
-                subscriptions.push_back(subscription);
+                subscriptions.push(subscription);
             }
             Vacant(e) => {
-                e.insert(VecDeque::from([subscription]));
+                e.insert(vec![subscription]);
             }
         }
 
@@ -50,7 +57,7 @@ impl Subscriptions {
                 .find(|(_, s)| s.endpoint.as_str() == endpoint)
                 .map(|(i, _)| i)
             {
-                removed = subs.remove(index);
+                removed = Some(subs.remove(index));
                 if subs.is_empty() {
                     e.remove();
                 }
@@ -67,6 +74,16 @@ impl Subscriptions {
         }
     }
 
+    pub fn mark_active(&mut self, user_id: &UserId, endpoint: &str, now: TimestampMillis) -> bool {
+        if let Some(subscriptions) = self.subscriptions.get_mut(user_id) {
+            if let Some(subscription) = subscriptions.iter_mut().find(|s| s.endpoint == endpoint) {
+                subscription.last_active = now;
+                return true;
+            }
+        }
+        false
+    }
+
     pub fn get_by_user(&self, user_id: &UserId) -> Vec<SubscriptionInfoInternal> {
         self.subscriptions
             .get(user_id)
@@ -77,7 +94,7 @@ impl Subscriptions {
         self.total
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (&UserId, &VecDeque<SubscriptionInfoInternal>)> {
+    pub fn iter(&self) -> impl Iterator<Item = (&UserId, &Vec<SubscriptionInfoInternal>)> {
         self.subscriptions.iter()
     }
 }
@@ -86,6 +103,8 @@ impl Subscriptions {
 pub struct SubscriptionInfoInternal {
     #[serde(rename = "a", default)]
     pub added: TimestampMillis,
+    #[serde(rename = "l", default)]
+    pub last_active: TimestampMillis,
     #[serde(rename = "e", alias = "endpoint")]
     pub endpoint: String,
     #[serde(rename = "k", alias = "keys")]
