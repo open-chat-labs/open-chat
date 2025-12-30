@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Remove the deprecated `claim_prize` endpoint ([#8680](https://github.com/open-chat-labs/open-chat/pull/8680))
+- Remove ability for platform moderators to assume ownership ([#8734](https://github.com/open-chat-labs/open-chat/pull/8734))
 
 ## [[2.0.1906](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1906-community)] - 2025-09-24
 

@@ -213,15 +213,12 @@ impl CommunityMembers {
         target_user_id: UserId,
         new_role: CommunityRole,
         permissions: &CommunityPermissions,
-        is_caller_platform_moderator: bool,
-        is_user_platform_moderator: bool,
         now: TimestampMillis,
     ) -> OCResult<ChangeRoleSuccess> {
         // Is the caller authorized to change the user to this role
         let initiator = self.get_verified_member(user_id.into())?;
 
-        // Platform moderators can always promote themselves to owner
-        if !(initiator.role.can_change_roles(new_role, permissions) || (is_caller_platform_moderator && new_role.is_owner())) {
+        if !initiator.role.can_change_roles(new_role, permissions) {
             return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }
 
@@ -229,11 +226,6 @@ impl CommunityMembers {
             .members_map
             .get(&target_user_id)
             .ok_or(OCErrorCode::TargetUserNotInCommunity)?;
-
-        // Platform moderators cannot be demoted from owner except by themselves
-        if is_user_platform_moderator && member.role.is_owner() && target_user_id != user_id {
-            return Err(OCErrorCode::InitiatorNotAuthorized.into());
-        }
 
         // It is not possible to change the role of the last owner
         if member.role.is_owner() && self.owners.len() <= 1 {

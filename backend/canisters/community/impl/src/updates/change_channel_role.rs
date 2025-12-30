@@ -19,9 +19,7 @@ fn change_channel_role_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
     let now = state.env.now();
 
-    let result = channel
-        .chat
-        .change_role(member.user_id, args.user_id, args.new_role, false, false, now)?;
+    let result = channel.chat.change_role(member.user_id, args.user_id, args.new_role, now)?;
 
     // Owners can't "lapse" so either add or remove user from expiry list if they lose or gain owner status
     if let Some(gate_expiry) = channel.chat.gate_config.value.as_ref().and_then(|gc| gc.expiry()) {

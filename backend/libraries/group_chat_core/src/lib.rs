@@ -1064,19 +1064,11 @@ impl GroupChatCore {
         caller: UserId,
         target_user: UserId,
         new_role: GroupRole,
-        is_caller_platform_moderator: bool,
-        is_user_platform_moderator: bool,
         now: TimestampMillis,
     ) -> OCResult<ChangeRoleSuccess> {
-        let prev_role = self.members.change_role(
-            caller,
-            target_user,
-            new_role.into(),
-            &self.permissions,
-            is_caller_platform_moderator,
-            is_user_platform_moderator,
-            now,
-        )?;
+        let prev_role = self
+            .members
+            .change_role(caller, target_user, new_role.into(), &self.permissions, now)?;
 
         let event = RoleChanged {
             user_ids: vec![target_user],
