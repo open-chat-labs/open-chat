@@ -477,7 +477,13 @@ export type WorkerRequest =
     | OneSecGetTransferFees
     | OneSecForwardEvmToIcp
     | OneSecGetForwardingStatus
-    | UpdateBlockedUsernamePatterns;
+    | UpdateBlockedUsernamePatterns
+    | MarkNotificationSubscriptionActive;
+
+type MarkNotificationSubscriptionActive = {
+    kind: "markNotificationSubscriptionActive";
+    endpoint: string;
+};
 
 type UpdateBlockedUsernamePatterns = {
     kind: "updateBlockedUsernamePatterns";
@@ -2637,5 +2643,7 @@ export type WorkerResult<T> = T extends Init
     : T extends OneSecGetForwardingStatus
     ? OneSecForwardingStatus
     : T extends UpdateBlockedUsernamePatterns
+    ? void
+    : T extends MarkNotificationSubscriptionActive
     ? void
     : never;

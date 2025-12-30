@@ -3,6 +3,7 @@ import {
     NotificationsIndexAddFcmTokenArgs,
     NotificationsIndexFcmTokenExistsArgs,
     NotificationsIndexFcmTokenExistsResponse,
+    NotificationsIndexMarkSubscriptionActiveArgs,
     NotificationsIndexPushSubscriptionArgs,
     NotificationsIndexPushSubscriptionResponse,
     NotificationsIndexRemoveSubscriptionArgs,
@@ -83,6 +84,16 @@ export class NotificationsClient extends MsgpackCanisterAgent {
             },
             NotificationsIndexAddFcmTokenArgs,
             UnitResult,
+        );
+    }
+
+    markSubscriptionActive(endpoint: string): Promise<void> {
+        return this.executeMsgpackUpdate(
+            "mark_subscription_active",
+            { endpoint },
+            toVoid,
+            NotificationsIndexMarkSubscriptionActiveArgs,
+            SuccessOnly,
         );
     }
 }

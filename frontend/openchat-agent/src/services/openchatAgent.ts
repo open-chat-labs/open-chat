@@ -2785,6 +2785,10 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
+    markNotificationSubscriptionActive(endpoint: string): Promise<void> {
+        return this._notificationClient.markSubscriptionActive(endpoint);
+    }
+
     getGroupDetails(
         chatId: MultiUserChatIdentifier,
         chatLastUpdated: bigint,
