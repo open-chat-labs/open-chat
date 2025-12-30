@@ -208,12 +208,8 @@
         <Container onClick={showGroupDetails}>
             {#if blocked}
                 <Translatable resourceKey={i18nKey("blocked")} />
-            {:else if readonly}
-                <ChatSubtext chat={selectedChatSummary} />
             {:else if chat.typing !== undefined}
                 {chat.typing} <Typing />
-            {:else if isMultiUser}
-                <ChatSubtext chat={selectedChatSummary} />
             {:else}
                 <ChatSubtext chat={selectedChatSummary} />
             {/if}

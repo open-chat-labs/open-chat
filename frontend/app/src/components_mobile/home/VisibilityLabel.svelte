@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { Container } from "component-lib";
+    import { ColourVars, Container } from "component-lib";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
+    import LockOutline from "svelte-material-icons/LockOutline.svelte";
 
     interface Props {
         isPublic: boolean;
@@ -10,37 +11,20 @@
     let { isPublic }: Props = $props();
 </script>
 
-<Container
-    width={"hug"}
-    crossAxisAlignment={"center"}
-    gap={"xs"}
-    borderRadius={"sm"}
-    background={"var(--chatSummary-bg-selected)"}>
-    <div class={`img ${isPublic ? "public" : "private"}`}></div>
-    <div class="name">
-        <Translatable resourceKey={i18nKey(isPublic ? "access.public" : "access.private")} />
-    </div>
-</Container>
+{#if !isPublic}
+    <Container gap={"xs"} width={"hug"} supplementalClass="visibility-indicator">
+        <Container gap={"xs"} crossAxisAlignment={"center"}>
+            <LockOutline color={ColourVars.error} />
+            <Translatable resourceKey={i18nKey(isPublic ? "access.public" : "access.private")} />
+        </Container>
+        //
+    </Container>
+{/if}
 
 <style lang="scss">
-    .img {
-        background-repeat: no-repeat;
-        $size: 12px;
-        flex: 0 0 $size;
-        width: $size;
-        height: $size;
-
-        &.public {
-            background-image: url("/assets/unlocked.svg");
+    :global {
+        .visibility-indicator {
+            text-transform: lowercase;
         }
-
-        &.private {
-            background-image: url("/assets/locked.svg");
-        }
-    }
-
-    .name {
-        text-transform: uppercase;
-        @include font(book, normal, fs-70);
     }
 </style>
