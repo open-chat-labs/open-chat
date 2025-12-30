@@ -52,6 +52,7 @@ impl RuntimeState {
             user_id,
             SubscriptionInfoInternal {
                 added: now,
+                last_active: now,
                 endpoint: subscription.endpoint.clone(),
                 keys: subscription.keys.clone(),
             },

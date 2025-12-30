@@ -7,6 +7,7 @@ generate_msgpack_query_call!(subscription_exists);
 
 // Updates
 generate_update_call!(notify_local_index_added);
+generate_msgpack_update_call!(mark_subscription_active);
 generate_msgpack_update_call!(push_subscription);
 
 pub mod happy_path {
@@ -59,5 +60,25 @@ pub mod happy_path {
         );
 
         matches!(response, notifications_index_canister::subscription_exists::Response::Yes)
+    }
+
+    pub fn mark_subscription_active(
+        env: &mut PocketIc,
+        sender: Principal,
+        notifications_index_canister_id: CanisterId,
+        endpoint: impl Into<String>,
+    ) {
+        let response = super::mark_subscription_active(
+            env,
+            sender,
+            notifications_index_canister_id,
+            &notifications_index_canister::mark_subscription_active::Args {
+                endpoint: endpoint.into(),
+            },
+        );
+        assert!(matches!(
+            response,
+            notifications_index_canister::mark_subscription_active::Response::Success
+        ));
     }
 }

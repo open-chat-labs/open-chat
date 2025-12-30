@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Switch to only using `endpoint` to identify notification subscriptions ([#8733](https://github.com/open-chat-labs/open-chat/pull/8733))
+- Remove notification subscriptions based on least recently active ([#8735](https://github.com/open-chat-labs/open-chat/pull/8735))
 
 ## [[2.0.1929](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1929-notifications_index)] - 2025-12-04
 
