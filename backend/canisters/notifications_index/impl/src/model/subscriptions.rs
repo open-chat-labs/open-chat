@@ -47,7 +47,7 @@ impl Subscriptions {
             if let Some(index) = subs
                 .iter()
                 .enumerate()
-                .find(|(_, s)| s.endpoint.as_str() == endpoint || s.keys.p256dh.as_str() == endpoint)
+                .find(|(_, s)| s.endpoint.as_str() == endpoint)
                 .map(|(i, _)| i)
             {
                 removed = subs.remove(index);
@@ -62,9 +62,7 @@ impl Subscriptions {
 
     pub fn exists(&self, user_id: &UserId, endpoint: &str) -> bool {
         match self.subscriptions.get(user_id) {
-            Some(subscriptions) => subscriptions
-                .iter()
-                .any(|s| s.endpoint.as_str() == endpoint || s.keys.p256dh.as_str() == endpoint),
+            Some(subscriptions) => subscriptions.iter().any(|s| s.endpoint.as_str() == endpoint),
             None => false,
         }
     }

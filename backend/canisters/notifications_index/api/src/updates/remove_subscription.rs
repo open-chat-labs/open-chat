@@ -7,7 +7,6 @@ use types::SuccessOnly;
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub endpoint: String,
-    pub p256dh_key: String,
 }
 
 pub type Response = SuccessOnly;

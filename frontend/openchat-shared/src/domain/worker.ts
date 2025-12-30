@@ -1039,7 +1039,7 @@ type InviteUsers = {
 };
 
 type RemoveSub = {
-    subscription: PushSubscriptionJSON;
+    endpoint: string;
     kind: "removeSubscription";
 };
 
@@ -1050,7 +1050,6 @@ type PushSub = {
 
 type SubscriptionExists = {
     endpoint: string;
-    p256dh_key: string;
     kind: "subscriptionExists";
 };
 
