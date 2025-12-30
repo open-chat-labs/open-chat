@@ -399,7 +399,7 @@ impl BotCommandArgValue {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum BotInstallationLocation {
     Community(CommunityId),
     Group(ChatId),

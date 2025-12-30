@@ -7,7 +7,8 @@ use canister_tracing_macros::trace;
 use local_user_index_canister::GroupOrCommunityEvent;
 use local_user_index_canister::c2c_group_canister::*;
 use std::cell::LazyCell;
-use types::TimestampMillis;
+use types::{BotEvent, BotInstallationLocation, BotLifecycleEvent, Notification, TimestampMillis};
+use user_index_canister::BotInstallationUpdated;
 
 #[update(guard = "caller_is_local_group_canister", msgpack = true)]
 #[trace]
@@ -68,6 +69,24 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         }
         GroupOrCommunityEvent::EventStoreEvent(event) => state.data.event_store_client.push(event),
         GroupOrCommunityEvent::Notification(notification) => {
+            if let Notification::Bot(bot_notification) = &*notification
+                && let BotEvent::Lifecycle(BotLifecycleEvent::Installed(event)) = &bot_notification.event
+            {
+                state.push_event_to_user_index(
+                    crate::UserIndexEvent::BotInstallationUpdated(Box::new(BotInstallationUpdated {
+                        bot_id: bot_notification.recipients[0],
+                        location: if is_group {
+                            BotInstallationLocation::Group(caller.into())
+                        } else {
+                            BotInstallationLocation::Community(caller.into())
+                        },
+                        granted_permissions: event.granted_command_permissions.clone(),
+                        granted_autonomous_permissions: event.granted_autonomous_permissions.clone(),
+                    })),
+                    **now,
+                );
+            }
+
             state.handle_notification(*notification, state.env.canister_id(), **now)
         }
     }

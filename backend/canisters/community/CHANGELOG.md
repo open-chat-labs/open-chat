@@ -11,10 +11,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `duration_ms` and `samples` to `AudioContent` ([#8669](https://github.com/open-chat-labs/open-chat/pull/8669))
 - Move `ic_root_key` to `Environment` trait ([#8701](https://github.com/open-chat-labs/open-chat/pull/8701))
 - Take RNG seed in init args ([#8702](https://github.com/open-chat-labs/open-chat/pull/8702))
+- One-time sync of bot installations with LUI ([#8731](https://github.com/open-chat-labs/open-chat/pull/8731))
+- Granted bot permissions are union of command and autonomous permissions ([#8732](https://github.com/open-chat-labs/open-chat/pull/8732))
 
 ### Removed
 
 - Remove the deprecated `claim_prize` endpoint ([#8680](https://github.com/open-chat-labs/open-chat/pull/8680))
+- Remove ability for platform moderators to assume ownership ([#8734](https://github.com/open-chat-labs/open-chat/pull/8734))
 
 ## [[2.0.1906](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1906-community)] - 2025-09-24
 

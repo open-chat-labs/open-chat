@@ -165,10 +165,24 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             value: GroupIndexEvent::NotifyOfUserDeleted(c, u),
         }),
         LocalUserIndexEvent::BotInstalled(ev) => {
-            state
-                .data
-                .users
-                .add_bot_installation(ev.bot_id, ev.location, caller, ev.installed_by, **now);
+            state.data.users.add_bot_installation(
+                ev.bot_id,
+                ev.location,
+                caller,
+                ev.granted_permissions,
+                ev.granted_autonomous_permissions,
+                ev.installed_by,
+                **now,
+            );
+        }
+        LocalUserIndexEvent::BotInstallationUpdated(ev) => {
+            state.data.users.update_bot_installation(
+                ev.bot_id,
+                ev.location,
+                ev.granted_permissions,
+                ev.granted_autonomous_permissions,
+                **now,
+            );
         }
         LocalUserIndexEvent::BotUninstalled(ev) => {
             state.data.users.remove_bot_installation(ev.bot_id, &ev.location);

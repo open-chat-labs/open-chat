@@ -2736,16 +2736,16 @@ export class OpenChatAgent extends EventTarget {
         return this._onlineClient.markAsOnline();
     }
 
-    subscriptionExists(endpoint: string, p256dh_key: string): Promise<boolean> {
-        return this._notificationClient.subscriptionExists(endpoint, p256dh_key);
+    subscriptionExists(endpoint: string): Promise<boolean> {
+        return this._notificationClient.subscriptionExists(endpoint);
     }
 
     pushSubscription(subscription: PushSubscriptionJSON): Promise<void> {
         return this._notificationClient.pushSubscription(subscription);
     }
 
-    removeSubscription(subscription: PushSubscriptionJSON): Promise<void> {
-        return this._notificationClient.removeSubscription(subscription);
+    removeSubscription(endpoint: string): Promise<void> {
+        return this._notificationClient.removeSubscription(endpoint);
     }
 
     fcmTokenExists(fcmToken: string): Promise<boolean> {

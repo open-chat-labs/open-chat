@@ -647,7 +647,9 @@ impl Data {
 
         // Get the granted permissions when initiated by command or API key
         let granted = match initiator {
-            BotInitiator::Command(_) => &bot.permissions,
+            BotInitiator::Command(_) => {
+                &BotPermissions::union(&bot.permissions, &bot.autonomous_permissions.clone().unwrap_or_default())
+            }
             BotInitiator::Autonomous => match bot.autonomous_permissions.as_ref() {
                 Some(permissions) => permissions,
                 None => return false,

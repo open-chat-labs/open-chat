@@ -3314,7 +3314,6 @@ export type NotificationsIndexSubscriptionExistsArgs = Static<
     typeof NotificationsIndexSubscriptionExistsArgs
 >;
 export const NotificationsIndexSubscriptionExistsArgs = Type.Object({
-    p256dh_key: Type.String(),
     endpoint: Type.String(),
 });
 
@@ -3331,7 +3330,6 @@ export type NotificationsIndexRemoveSubscriptionArgs = Static<
 >;
 export const NotificationsIndexRemoveSubscriptionArgs = Type.Object({
     endpoint: Type.String(),
-    p256dh_key: Type.String(),
 });
 
 export type NotificationsIndexAddFcmTokenArgs = Static<typeof NotificationsIndexAddFcmTokenArgs>;

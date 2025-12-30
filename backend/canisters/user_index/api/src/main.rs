@@ -35,6 +35,7 @@ fn main() {
         std::fs::remove_dir_all(&directory).unwrap();
     }
 
+    generate_ts_method!(user_index, bot_installations);
     generate_ts_method!(user_index, bot_updates);
     generate_ts_method!(user_index, check_username);
     generate_ts_method!(user_index, chit_leaderboard);

@@ -104,7 +104,7 @@ fn execute_operation(members: &mut GroupMembers, op: Operation, timestamp: Times
         } => {
             let owner = get(&members.owners, owner_index);
             let user_id = get(&members.member_ids, user_index);
-            let _ = members.change_role(owner, user_id, role, &GroupPermissions::default(), false, false, timestamp);
+            let _ = members.change_role(owner, user_id, role, &GroupPermissions::default(), timestamp);
         }
         Operation::ToggleMuteNotifications {
             user_index,

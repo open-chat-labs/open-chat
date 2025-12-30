@@ -40,6 +40,12 @@
     onMount(() => {
         config = clone($walletConfigStore);
 
+        if (config.kind === "manual_wallet") {
+            // Refresh balances of disabled tokens so that we discover which
+            // ones have non-zero balances are therefore should be searchable
+            refreshDisabledTokenBalances();
+        }
+
         return () => {
             if (client.walletConfigChanged($walletConfigStore, config)) {
                 client.setWalletConfig(config).then((success) => {
@@ -113,6 +119,15 @@
                 break;
         }
     }
+
+    function refreshDisabledTokenBalances() {
+        for (const token of $cryptoLookup.values()) {
+            if (!token.enabled) {
+                client.refreshAccountBalance(token.ledger, true);
+            }
+        }
+    }
+
     let valid = $derived(config.kind === "manual_wallet" || !isNaN(Number(config.minDollarValue)));
     let defaultLedgers = $derived(getDefaultLedgers($cryptoLookup));
     let searchTermLower = $derived(searchTerm.toLowerCase());
