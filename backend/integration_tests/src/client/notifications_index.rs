@@ -54,7 +54,6 @@ pub mod happy_path {
             sender,
             notifications_index_canister_id,
             &notifications_index_canister::subscription_exists::Args {
-                p256dh_key: String::default(),
                 endpoint: endpoint.into(),
             },
         );
