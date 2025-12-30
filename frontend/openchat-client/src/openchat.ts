@@ -9863,6 +9863,10 @@ export class OpenChat {
             console.debug("PUSH: found existing push subscription");
             // Check if the subscription has already been pushed to the notifications canister
             if (await this.#subscriptionExists(pushSubscription.endpoint)) {
+                this.#sendRequest({
+                    kind: "markNotificationSubscriptionActive",
+                    endpoint: pushSubscription.endpoint,
+                });
                 console.debug("PUSH: subscription exists in the backend");
                 return true;
             }
