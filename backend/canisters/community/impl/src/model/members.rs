@@ -206,7 +206,6 @@ impl CommunityMembers {
         Some(member)
     }
 
-    #[expect(clippy::too_many_arguments)]
     pub fn change_role(
         &mut self,
         user_id: UserId,
