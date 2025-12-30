@@ -43,7 +43,6 @@ pub struct GroupMembers {
     latest_update_removed: TimestampMillis,
 }
 
-#[expect(clippy::too_many_arguments)]
 impl GroupMembers {
     pub fn new(creator_user_id: UserId, user_type: UserType, chat: MultiUserChat, now: TimestampMillis) -> GroupMembers {
         let member = GroupMemberInternal {
@@ -270,15 +269,12 @@ impl GroupMembers {
         user_id: UserId,
         new_role: GroupRoleInternal,
         permissions: &GroupPermissions,
-        is_caller_platform_moderator: bool,
-        is_user_platform_moderator: bool,
         now: TimestampMillis,
     ) -> OCResult<GroupRoleInternal> {
         // Is the caller authorized to change the user to this role
         let member = self.get_verified_member(caller_id)?;
 
-        // Platform moderators can always promote themselves to owner
-        if !(member.role.can_change_roles(new_role, permissions) || (is_caller_platform_moderator && new_role.is_owner())) {
+        if !member.role.can_change_roles(new_role, permissions) {
             return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }
 
@@ -286,11 +282,6 @@ impl GroupMembers {
             Some(p) => p,
             None => return Err(OCErrorCode::TargetUserNotFound.into()),
         };
-
-        // Platform moderators cannot be demoted from owner except by themselves
-        if is_user_platform_moderator && member.role.is_owner() && user_id != caller_id {
-            return Err(OCErrorCode::InitiatorNotAuthorized.into());
-        }
 
         // It is not possible to change the role of the last owner
         if member.role.is_owner() && self.owners.len() <= 1 {
