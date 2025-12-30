@@ -601,11 +601,6 @@ pub struct AddMemberSuccess {
     pub bot_notification: Option<BotNotification>,
 }
 
-pub struct ChangeRoleSuccess {
-    pub prev_role: GroupRoleInternal,
-    pub bot_notification: Option<BotNotification>,
-}
-
 #[derive(Clone)]
 pub struct GroupMemberInternal {
     user_id: UserId,
