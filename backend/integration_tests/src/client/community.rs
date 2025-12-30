@@ -318,7 +318,11 @@ pub mod happy_path {
             env,
             sender,
             community_id.into(),
-            &community_canister::change_role::Args { user_id, new_role },
+            &community_canister::change_role::Args {
+                user_id,
+                user_ids: vec![user_id],
+                new_role,
+            },
         );
 
         match response {

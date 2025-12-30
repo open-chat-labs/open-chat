@@ -47,7 +47,7 @@ fn change_channel_role_impl(mut args: Args, state: &mut RuntimeState) -> OCResul
             } else if matches!(prev_role, GroupRoleInternal::Owner) {
                 state.data.expiring_members.push(ExpiringMember {
                     expires: now + gate_expiry,
-                    channel_id: None,
+                    channel_id: Some(args.channel_id),
                     user_id,
                 });
             }
