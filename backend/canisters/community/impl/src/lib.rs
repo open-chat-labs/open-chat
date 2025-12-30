@@ -1108,11 +1108,9 @@ impl Data {
 
         match initiator {
             BotInitiator::Command(command) => {
-                let Some(user_permissions) = self.get_user_permissions(&command.initiator, channel_id) else {
-                    return None;
-                };
+                let user_permissions = self.get_user_permissions(&command.initiator, channel_id)?;
                 Some(BotPermissions::union(
-                    &BotPermissions::intersect(&granted_to_bot, &user_permissions),
+                    &BotPermissions::intersect(granted_to_bot, &user_permissions),
                     &bot.autonomous_permissions.clone().unwrap_or_default(),
                 ))
             }

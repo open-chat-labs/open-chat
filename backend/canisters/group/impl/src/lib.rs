@@ -776,9 +776,7 @@ impl Data {
 
         match initiator {
             BotInitiator::Command(command) => {
-                let Some(user_permissions) = self.get_user_permissions(&command.initiator) else {
-                    return None;
-                };
+                let user_permissions = self.get_user_permissions(&command.initiator)?;
                 Some(BotPermissions::union(
                     &BotPermissions::intersect(&bot.permissions, &user_permissions),
                     &bot.autonomous_permissions.clone().unwrap_or_default(),
