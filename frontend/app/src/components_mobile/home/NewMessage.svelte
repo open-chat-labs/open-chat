@@ -72,9 +72,9 @@
 
 <SlidingPageContent title={i18nKey("New message")}>
     <Container
-        padding={["zero", "lg", "zero", "lg"]}
+        padding={["xxl", "lg"]}
         width={"fill"}
-        gap={"xl"}
+        gap={"xxl"}
         direction={"vertical"}
         height={"hug"}>
         <ChatListSearch
@@ -109,17 +109,19 @@
         </Container>
 
         {#if dms.length > 0}
-            <Container padding={["zero", "md"]} direction={"vertical"}>
+            <Container padding={["zero", "md"]} gap={"lg"} direction={"vertical"}>
                 <Body fontWeight={"bold"}>
                     <Translatable resourceKey={i18nKey("Frequently contacted on OpenChat")}
                     ></Translatable>
                 </Body>
 
-                {#each dms as user (user?.userId)}
-                    {#if user}
-                        {@render matched_user(user)}
-                    {/if}
-                {/each}
+                <Container gap={"md"} direction={"vertical"}>
+                    {#each dms as user (user?.userId)}
+                        {#if user}
+                            {@render matched_user(user)}
+                        {/if}
+                    {/each}
+                </Container>
             </Container>
         {/if}
     </Container>

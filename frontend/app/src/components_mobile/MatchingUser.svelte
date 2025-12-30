@@ -57,9 +57,9 @@
 </script>
 
 <Container
-    padding={["md", "zero"]}
+    padding={["sm", "zero"]}
     crossAxisAlignment={"center"}
-    gap={"md"}
+    gap={"lg"}
     onClick={() => onSelect(user)}>
     <Avatar size={"md"} url={match.avatarUrl} />
     <Container direction={"vertical"}>
