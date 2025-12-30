@@ -79,7 +79,7 @@ impl IcAgent {
     pub async fn remove_subscriptions(
         &self,
         index_canister_id: &CanisterId,
-        subscriptions_by_user: HashMap<UserId, (Vec<String>, Vec<String>)>,
+        subscriptions_by_user: HashMap<UserId, Vec<String>>,
     ) -> Result<(), Error> {
         if subscriptions_by_user.is_empty() {
             return Ok(());
@@ -87,13 +87,7 @@ impl IcAgent {
 
         let subscriptions_by_user = subscriptions_by_user
             .into_iter()
-            .map(
-                |(user_id, (endpoints, p256dh_keys))| remove_subscriptions::UserSubscriptions {
-                    user_id,
-                    endpoints,
-                    p256dh_keys,
-                },
-            )
+            .map(|(user_id, endpoints)| remove_subscriptions::UserSubscriptions { user_id, endpoints })
             .collect();
 
         let args = remove_subscriptions::Args { subscriptions_by_user };

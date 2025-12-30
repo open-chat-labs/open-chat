@@ -16,9 +16,6 @@ fn remove_subscriptions_impl(args: Args, state: &mut RuntimeState) -> Response {
         for endpoint in user.endpoints {
             state.remove_subscription(user.user_id, endpoint, now);
         }
-        for key in user.p256dh_keys {
-            state.remove_subscription(user.user_id, key, now);
-        }
     }
     Response::Success
 }
