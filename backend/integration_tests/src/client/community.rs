@@ -341,6 +341,7 @@ pub mod happy_path {
             community_id.into(),
             &community_canister::change_channel_role::Args {
                 user_id,
+                user_ids: vec![user_id],
                 new_role,
                 channel_id,
             },

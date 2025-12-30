@@ -7,12 +7,12 @@ use chat_events::{
 use group_community_common::MemberUpdate;
 use itertools::Itertools;
 use lazy_static::lazy_static;
-use oc_error_codes::OCErrorCode;
+use oc_error_codes::{OCError, OCErrorCode};
 use regex_lite::Regex;
 use search::simple::Query;
 use serde::{Deserialize, Serialize};
 use std::cmp::{Reverse, max, min};
-use std::collections::{BTreeMap, BTreeSet, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use types::{
     AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotMessageContext, BotNotification, Caller, Chat,
     CustomPermission, DiamondMembershipStatus, Document, EventIndex, EventOrExpiredRange, EventWrapper, EventsCaller,
@@ -1062,29 +1062,49 @@ impl GroupChatCore {
     pub fn change_role(
         &mut self,
         caller: UserId,
-        target_user: UserId,
+        target_users: Vec<UserId>,
         new_role: GroupRole,
         now: TimestampMillis,
-    ) -> OCResult<ChangeRoleSuccess> {
-        let prev_role = self
-            .members
-            .change_role(caller, target_user, new_role.into(), &self.permissions, now)?;
-
-        let event = RoleChanged {
-            user_ids: vec![target_user],
-            old_role: prev_role.into(),
-            new_role,
-            changed_by: caller,
+    ) -> ChangeRoleResults {
+        let mut results = ChangeRoleResults {
+            users: HashMap::new(),
+            bot_notification: None,
         };
 
-        let result = self
-            .events
-            .push_main_event(ChatEventInternal::RoleChanged(Box::new(event)), now);
+        for target_user in target_users {
+            let result = self
+                .members
+                .change_role(caller, target_user, new_role.into(), &self.permissions, now);
 
-        Ok(ChangeRoleSuccess {
-            prev_role,
-            bot_notification: result.bot_notification,
-        })
+            results.users.insert(target_user, result);
+        }
+
+        // Push a single RoleChanged event for all successful role changes
+        let successful_changes: Vec<_> = results
+            .users
+            .iter()
+            .filter_map(|(&user_id, result)| match result {
+                Ok(prev_role) => Some((user_id, *prev_role)),
+                _ => None,
+            })
+            .collect();
+
+        if !successful_changes.is_empty() {
+            let event = RoleChanged {
+                user_ids: successful_changes.iter().map(|(user_id, _)| *user_id).collect(),
+                old_role: successful_changes[0].1.into(),
+                new_role,
+                changed_by: caller,
+            };
+
+            let result = self
+                .events
+                .push_main_event(ChatEventInternal::RoleChanged(Box::new(event)), now);
+
+            results.bot_notification = result.bot_notification;
+        }
+
+        results
     }
 
     pub fn pin_message(
@@ -2163,5 +2183,10 @@ impl AtEveryoneMention {
 
 pub struct LeaveGroupSuccess {
     pub member: GroupMemberInternal,
+    pub bot_notification: Option<BotNotification>,
+}
+
+pub struct ChangeRoleResults {
+    pub users: HashMap<UserId, Result<GroupRoleInternal, OCError>>,
     pub bot_notification: Option<BotNotification>,
 }
