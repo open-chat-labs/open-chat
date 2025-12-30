@@ -9811,7 +9811,7 @@ export class OpenChat {
                 case "granted":
                     this.#notificationSubscriptionPoller = new Poller(
                         () => this.#trySubscribe(),
-                        5 * ONE_MINUTE_MILLIS,
+                        ONE_HOUR,
                         undefined,
                         true);
                     break;
