@@ -1917,7 +1917,7 @@ export class OpenChat {
                 return this.communityAvatarUrl(community.id.communityId, community.avatar);
             }
         }
-        return "/assets/group.svg";
+        return this.mobileLayout === "v2" ? "unknown" : "/assets/group.svg";
     }
 
     toShortTimeString(date: Date): string {

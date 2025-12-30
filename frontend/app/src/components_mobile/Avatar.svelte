@@ -5,6 +5,7 @@
     import { rtlStore } from "../stores/rtl";
     import { now } from "../stores/time";
     import LighteningBolt from "./home/nav/LighteningBolt.svelte";
+    import { DefaultAvatar, isValueUrlOrPath } from "component-lib";
 
     const client = getContext<OpenChat>("client");
 
@@ -12,6 +13,7 @@
 
     interface Props {
         url: string | undefined;
+        name?: string;
         showStatus?: boolean | undefined;
         userId?: string | undefined;
         size?: AvatarSize;
@@ -23,6 +25,7 @@
 
     let {
         url,
+        name,
         showStatus = false,
         userId = undefined,
         size = AvatarSize.Default,
@@ -64,7 +67,11 @@
     class:default={size === AvatarSize.Default}
     class:large={size === AvatarSize.Large}
     class:blocked>
-    <img alt="Avatar" class="avatar-image" src={url} loading="lazy" />
+    {#if isValueUrlOrPath(url)}
+        <img alt="Avatar" class="avatar-image" src={url} loading="lazy" />
+    {:else}
+        <DefaultAvatar {name} />
+    {/if}
     {#if userStatus === UserStatus.Online}
         <div class:rtl={$rtlStore} class="online" style={`box-shadow: ${statusBorder} 0 0 0 2px`}>
         </div>

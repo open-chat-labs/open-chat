@@ -1,5 +1,6 @@
 export * from "./actions";
 export { default as Avatar } from "./components/avatar/Avatar.svelte";
+export { default as DefaultAvatar } from "./components/avatar/DefaultAvatar.svelte";
 export { default as MultiAvatar } from "./components/avatar/MultiAvatar.svelte";
 export { default as BigButton } from "./components/buttons/BigButton.svelte";
 export { default as Button } from "./components/buttons/Button.svelte";

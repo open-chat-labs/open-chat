@@ -37,7 +37,7 @@
         {#if $activeVideoCall?.status === "joining"}
             <FancyLoader size={"3rem"} loop />
         {:else}
-            <Avatar url={chat.avatarUrl} />
+            <Avatar url={chat.avatarUrl} name={chat.name} />
         {/if}
     {/snippet}
 </SectionHeader>

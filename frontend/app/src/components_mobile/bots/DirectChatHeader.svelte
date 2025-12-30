@@ -66,7 +66,10 @@
 
 <SectionHeader onBack={() => publish("clearSelection")}>
     {#snippet avatar()}
-        <Avatar url={client.userAvatarUrl(botUser)} size={"lg"} />
+        <Avatar
+            url={client.userAvatarUrl(botUser)}
+            size={"lg"}
+            name={client.displayName(botUser)} />
     {/snippet}
 
     {#snippet title()}

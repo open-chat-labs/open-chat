@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { DefaultAvatar, isValueUrlOrPath } from "component-lib";
     import type { BorderRadiusSize } from "component-lib";
     import type { Snippet } from "svelte";
 
@@ -49,12 +50,16 @@
     class="border"
     onclick={onClick}
     style={`${sizeCss} ${radiusCss} ${borderCss}`}>
-    <img
-        loading="lazy"
-        src={url}
-        alt={name}
-        class={`avatar ${size}`}
-        style={`${sizeCss} ${radiusCss}`} />
+    {#if isValueUrlOrPath(url)}
+        <img
+            loading="lazy"
+            src={url}
+            alt={name}
+            class={`avatar ${size}`}
+            style={`${sizeCss} ${radiusCss}`} />
+    {:else}
+        <DefaultAvatar {name} />
+    {/if}
     {@render children?.()}
 </div>
 

@@ -82,7 +82,7 @@
 
 <SectionHeader onBack={close}>
     {#snippet avatar()}
-        <Avatar url={chat.avatarUrl} size={"lg"} />
+        <Avatar url={chat.avatarUrl} size={"lg"} name={chat.title} />
     {/snippet}
     {#snippet title()}
         {chat.title}

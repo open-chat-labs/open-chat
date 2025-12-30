@@ -168,7 +168,7 @@
     menu={!readonly && !$anonUserStore ? menu : undefined}
     onBack={$restrictToSelectedChat ? undefined : clearSelection}>
     {#snippet avatar()}
-        <Avatar onClick={openUserProfile} url={chat.avatarUrl} size={"lg"} />
+        <Avatar onClick={openUserProfile} url={chat.avatarUrl} size={"lg"} name={chat.name} />
     {/snippet}
 
     {#snippet title()}
