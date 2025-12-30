@@ -662,6 +662,7 @@ export class OpenChat {
     #userUpdatePoller: Poller | undefined = undefined;
     #exchangeRatePoller: Poller | undefined = undefined;
     #proposalTalliesPoller: Poller | undefined = undefined;
+    #notificationSubscriptionPoller: Poller | undefined = undefined;
     #recentlyActiveUsersTracker: RecentlyActiveUsersTracker = new RecentlyActiveUsersTracker();
     #inflightMessagePromises: Map<
         bigint,
@@ -1678,7 +1679,7 @@ export class OpenChat {
             spender,
             ledger,
             amount: amount - approvalFee, // The user should pay only the amount not amount+fee so it is a round number
-            expiresIn: BigInt(5 * 60 * 1000), // Allow 5 mins for the join_group call before the approval expires
+            expiresIn: BigInt(5 * ONE_MINUTE_MILLIS), // Allow 5 mins for the join_group call before the approval expires
             pin,
         })
             .then((response) => {
@@ -3202,7 +3203,7 @@ export class OpenChat {
     getMinDissolveDelayDays(gate: AccessGate): number | undefined {
         if (isNeuronGate(gate)) {
             return gate.minDissolveDelay
-                ? gate.minDissolveDelay / (24 * 60 * 60 * 1000)
+                ? gate.minDissolveDelay / ONE_DAY
                 : undefined;
         }
     }
@@ -7312,7 +7313,7 @@ export class OpenChat {
                 pin,
             },
             false,
-            1000 * 60 * 3,
+            3 * ONE_MINUTE_MILLIS,
         ).then((resp) => {
             if (resp.kind === "error") {
                 const pinNumberFailure = pinNumberFailureFromError(resp);
@@ -9192,7 +9193,7 @@ export class OpenChat {
                 if (resp.nextDailyChitClaim > chitStateStore.value.nextDailyChitClaim) {
                     chitStateStore.update((state) => ({
                         chitBalance: resp.chitBalance,
-                        streakEnds: resp.nextDailyChitClaim + BigInt(1000 * 60 * 60 * 24),
+                        streakEnds: resp.nextDailyChitClaim + BigInt(ONE_DAY),
                         streak: resp.streak,
                         maxStreak: resp.maxStreak,
                         nextDailyChitClaim: resp.nextDailyChitClaim,
@@ -9808,13 +9809,22 @@ export class OpenChat {
         notificationStatus.subscribe((status) => {
             switch (status) {
                 case "granted":
-                    this.#trySubscribe();
+                    this.#notificationSubscriptionPoller = new Poller(
+                        () => this.#trySubscribe(),
+                        5 * ONE_MINUTE_MILLIS,
+                        undefined,
+                        true);
                     break;
                 case "pending-init":
                     break;
                 default:
                     this.#unsubscribeNotifications();
                     break;
+            }
+        }, () => {
+            if (this.#notificationSubscriptionPoller !== undefined) {
+                this.#notificationSubscriptionPoller.stop();
+                this.#notificationSubscriptionPoller = undefined;
             }
         });
 
