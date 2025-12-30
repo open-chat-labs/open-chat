@@ -127,6 +127,8 @@
                 },
                 types: [transitionType],
             });
+
+            tick().then(() => next());
         };
     }
 
