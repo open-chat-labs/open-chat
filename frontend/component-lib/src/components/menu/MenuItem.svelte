@@ -10,7 +10,7 @@
 </script>
 
 <script lang="ts">
-    import { Body, ColourVars } from "component-lib";
+    import { Body, Subtitle, ColourVars } from "component-lib";
 
     import type { Snippet } from "svelte";
 
@@ -36,9 +36,9 @@
                 {@render icon(iconColour, iconSize)}
             </span>
         {/if}
-        <Body width={"hug"}>
+        <Subtitle width={"hug"}>
             {@render children?.()}
-        </Body>
+        </Subtitle>
     </div>
 {:else if separator}
     <hr class="menu_item_separator" />
@@ -58,9 +58,9 @@
                 {@render icon(iconColour, iconSize)}
             </span>
         {/if}
-        <Body colour={danger ? "error" : "textPrimary"} width={"hug"}>
+        <Subtitle colour={danger ? "error" : "textPrimary"} width={"hug"}>
             {@render children?.()}
-        </Body>
+        </Subtitle>
     </a>
 {/if}
 
