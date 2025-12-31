@@ -1,4 +1,4 @@
-import type { AuthClientStorage } from "@dfinity/auth-client";
+import type { AuthClientStorage } from "@icp-sdk/auth/client";
 import { ECDSAKeyIdentity } from "@icp-sdk/core/identity";
 
 const KEY_STORAGE_EMAIL_LINK = "email_link";

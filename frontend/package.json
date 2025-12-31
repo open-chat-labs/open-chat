@@ -66,8 +66,8 @@
         "turbo": "^2.1.2"
     },
     "dependencies": {
-        "@dfinity/auth-client": "^3.4.3",
-        "@icp-sdk/core": "^4.2.3",
+        "@icp-sdk/auth": "^5.0.0",
+        "@icp-sdk/core": "^5.0.0",
         "chrono-node": "^2.7.8",
         "svelte-dnd-action": "^0.9.52",
         "svelte-i18n": "^4.0.1",

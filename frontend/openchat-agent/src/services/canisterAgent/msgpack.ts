@@ -4,7 +4,7 @@ import {
     HttpAgent,
     type Identity,
     isV2ResponseBody,
-    isV3ResponseBody,
+    isV4ResponseBody,
     lookupResultToBuffer,
     polling,
     RejectError,
@@ -103,12 +103,14 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
             });
             const canisterId = Principal.fromText(this.canisterId);
 
-            if (isV3ResponseBody(response.body)) {
+            if (isV4ResponseBody(response.body)) {
                 // const certTime = this.agent.replicaTime;
                 const certificate = await Certificate.create({
                     certificate: response.body.certificate,
                     rootKey: this.agent.rootKey!,
-                    canisterId: Principal.from(canisterId),
+                    principal: {
+                        canisterId: Principal.from(canisterId),
+                    },
                     blsVerify: undefined,
                 });
                 const path = [utf8ToBytes("request_status"), requestId];
@@ -214,10 +216,10 @@ export abstract class MsgpackCanisterAgent extends CanisterAgent {
     }
 
     private static deserializeResponse<Resp extends TSchema>(
-        responseBytes: ArrayBuffer,
+        responseBytes: Uint8Array,
         validator: Resp,
     ): Static<Resp> {
-        const response = deserializeFromMsgPack(new Uint8Array(responseBytes));
+        const response = deserializeFromMsgPack(responseBytes);
         return typeboxValidate(response, validator);
     }
 }

@@ -951,7 +951,7 @@ export function withdrawCryptoResponse(
 function formatIcrc1Account(value: AccountICRC1): string {
     return encodeIcrcAccount({
         owner: Principal.fromText(principalBytesToString(value.owner)),
-        subaccount: value?.subaccount,
+        subaccount: mapOptional(value?.subaccount, Uint8Array.from),
     });
 }
 

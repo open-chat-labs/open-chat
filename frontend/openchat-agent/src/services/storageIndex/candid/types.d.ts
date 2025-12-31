@@ -1,6 +1,6 @@
-import type { Principal } from '@dfinity/principal';
-import type { ActorMethod } from '@dfinity/agent';
-import type { IDL } from '@dfinity/candid';
+import type { Principal } from '@icp-sdk/core/principal';
+import type { ActorMethod } from '@icp-sdk/core/agent';
+import type { IDL } from '@icp-sdk/core/candid';
 
 export interface AcceptSwapSuccess { 'token1_txn_in' : bigint }
 export type AccessGate = { 'UniquePerson' : null } |
@@ -133,7 +133,9 @@ export interface AllocatedBucketSuccessResult {
 export interface AudioContent {
   'mime_type' : string,
   'blob_reference' : [] | [BlobReference],
+  'samples' : [] | [Uint8Array | number[]],
   'caption' : [] | [string],
+  'duration_ms' : [] | [Milliseconds],
 }
 export interface AvatarChanged {
   'changed_by' : UserId,
@@ -192,12 +194,16 @@ export interface BotConfig {
   'is_oc_controlled' : boolean,
   'supports_direct_messages' : boolean,
 }
-export type BotDataEncoding = { 'Json' : null } |
+export type BotDataEncoding = { 'MsgPack' : null } |
+  { 'Json' : null } |
   { 'Candid' : null };
 export interface BotGroupConfig { 'permissions' : BotPermissions }
 export type BotInstallationLocation = { 'Group' : CanisterId } |
   { 'User' : UserId } |
   { 'Community' : CanisterId };
+export type BotInstallationLocationType = { 'Group' : null } |
+  { 'User' : null } |
+  { 'Community' : null };
 export interface BotMessageContext {
   'command' : [] | [BotCommand],
   'finalised' : boolean,
@@ -338,7 +344,12 @@ export type ChatEventType = { 'NameChanged' : null } |
   { 'MessagePollVote' : null } |
   { 'Message' : null } |
   { 'PermissionsChanged' : null } |
-  { 'MembersJoined' : null } |
+  {
+    /**
+     * Membership category
+     */
+    'MembersJoined' : null
+  } |
   { 'MessagePollEnded' : null } |
   { 'UsersUnblocked' : null } |
   { 'Unfrozen' : null } |
@@ -355,7 +366,12 @@ export type ChatEventType = { 'NameChanged' : null } |
   { 'MessageUndeleted' : null } |
   { 'RoleChanged' : null } |
   { 'BotAdded' : null } |
-  { 'Created' : null } |
+  {
+    /**
+     * Details category
+     */
+    'Created' : null
+  } |
   { 'MessageTipped' : null } |
   { 'Frozen' : null } |
   { 'MessageEdited' : null } |
@@ -754,6 +770,9 @@ export type DocumentIdUpdate = { 'NoChange' : null } |
 export type DocumentUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : Document };
+/**
+ * Number of nanoseconds between two [Timestamp]s.
+ */
 export type Duration = bigint;
 export type EmptyArgs = {};
 export interface EncryptedContent {
@@ -833,6 +852,9 @@ export type GateCheckFailedReason = { 'NotLifetimeDiamondMember' : null } |
   { 'FailedVerifiedCredentialCheck' : string } |
   { 'NoSnsNeuronsWithRequiredStakeFound' : null };
 export type GetIndexPrincipalError = {
+    /**
+     * Any error not covered by the above variants.
+     */
     'GenericError' : { 'description' : string, 'error_code' : bigint }
   } |
   { 'IndexPrincipalNotSet' : null };
@@ -1854,6 +1876,9 @@ export interface ThreadSyncDetails {
   'latest_event' : [] | [EventIndex],
   'latest_message' : [] | [MessageIndex],
 }
+/**
+ * Number of nanoseconds since the UNIX epoch in UTC timezone.
+ */
 export type Timestamp = bigint;
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;

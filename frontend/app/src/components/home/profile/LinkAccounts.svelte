@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AuthClient } from "@dfinity/auth-client";
+    import { AuthClient } from "@icp-sdk/auth/client";
     import { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
     import { Principal } from "@icp-sdk/core/principal";
     import {

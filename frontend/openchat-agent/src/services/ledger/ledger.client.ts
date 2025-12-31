@@ -1,7 +1,7 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
+import { Principal } from "@icp-sdk/core/principal";
 import { idlFactory, type LedgerService } from "./candid/idl";
 import { CandidCanisterAgent } from "../canisterAgent/candid";
-import { Principal } from "@icp-sdk/core/principal";
 
 export class LedgerClient extends CandidCanisterAgent<LedgerService> {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {

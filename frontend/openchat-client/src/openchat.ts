@@ -1,5 +1,5 @@
 /* eslint-disable no-case-declarations */
-import { AuthClient, type AuthClientLoginOptions } from "@dfinity/auth-client";
+import { AuthClient, type AuthClientLoginOptions } from "@icp-sdk/auth/client";
 import { DER_COSE_OID, unwrapDER, type Identity, type SignIdentity } from "@icp-sdk/core/agent";
 import {
     DelegationChain,
