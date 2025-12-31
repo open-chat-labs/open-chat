@@ -14,9 +14,11 @@
     import { chitStateStore, i18nKey, OpenChat, publish } from "openchat-client";
     import { getContext } from "svelte";
     import PartyPopper from "svelte-material-icons/PartyPopper.svelte";
+    import Rocket from "svelte-material-icons/RocketLaunchOutline.svelte";
     import ShieldStarOutline from "svelte-material-icons/ShieldStarOutline.svelte";
     import Progress from "../../Progress.svelte";
     import Translatable from "../../Translatable.svelte";
+    import LearnToEarn from "../profile/LearnToEarn.svelte";
     import Streak from "./Streak.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -29,6 +31,7 @@
         earned?: number;
         balance?: number;
         insuranceLink?: boolean;
+        earnMoreLink?: boolean;
     }
 
     let {
@@ -37,7 +40,10 @@
         earned = 0,
         balance = 0,
         insuranceLink = true,
+        earnMoreLink = false,
     }: Props = $props();
+
+    let showLearnToEarn = $state(false);
 
     function calculateBadgesVisible(streak: number): number[] {
         if (streak < 30) {
@@ -84,6 +90,10 @@
             });
     }
 </script>
+
+{#if showLearnToEarn}
+    <LearnToEarn onClose={() => (showLearnToEarn = false)} />
+{/if}
 
 <SparkleBoxOutline>
     <Container padding={["zero", "zero", "lg", "zero"]} gap={"sm"} crossAxisAlignment={"center"}>
@@ -151,6 +161,17 @@
                         <ShieldStarOutline {color} {size}></ShieldStarOutline>
                     {/snippet}
                     <Translatable resourceKey={i18nKey("Streak insurance")}></Translatable>
+                </CommonButton>
+            {/if}
+            {#if earnMoreLink}
+                <CommonButton
+                    mode={"default"}
+                    onClick={() => (showLearnToEarn = true)}
+                    size={"small_text"}>
+                    {#snippet icon(color, size)}
+                        <Rocket {color} {size}></Rocket>
+                    {/snippet}
+                    <Translatable resourceKey={i18nKey("Earn more")}></Translatable>
                 </CommonButton>
             {/if}
         </Container>

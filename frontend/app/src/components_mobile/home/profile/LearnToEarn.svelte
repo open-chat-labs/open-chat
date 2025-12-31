@@ -1,27 +1,37 @@
 <script lang="ts">
     import {
+        Body,
+        BodySmall,
+        Chip,
+        ColourVars,
+        Column,
+        Row,
+        Sheet,
+        Title,
+        transition,
+    } from "component-lib";
+    import {
         OpenChat,
         achievements,
         achievementsStore,
         currentUserIdStore,
         currentUserStore,
-        iconSize,
         type Achievement,
         type ExternalAchievement,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
+    import { _ } from "svelte-i18n";
     import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
     import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
     import InformationOutline from "svelte-material-icons/InformationOutline.svelte";
+    import RobotHappy from "svelte-material-icons/RobotHappyOutline.svelte";
+    import RobotLove from "svelte-material-icons/RobotLoveOutline.svelte";
     import Tooltip from "../../../components/tooltip/Tooltip.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
+    import { i18nKey, interpolate } from "../../../i18n/i18n";
     import { now } from "../../../stores/time";
-    import Button from "../../Button.svelte";
-    import ModalContent from "../../ModalContent.svelte";
-    import Overlay from "../../Overlay.svelte";
     import Progress from "../../Progress.svelte";
     import Translatable from "../../Translatable.svelte";
-    import ExternalLink from "../../landingpages/ExternalLink.svelte";
+    import NothingToSee from "../NothingToSee.svelte";
 
     const client = getContext<OpenChat>("client");
     const enabled = new Set<string>([
@@ -91,7 +101,9 @@
     }
 
     function selectTab(tab: "todo" | "done" | "external") {
-        selectedTab = tab;
+        transition(["fade"], () => {
+            selectedTab = tab;
+        });
     }
 
     onMount(() => {
@@ -120,255 +132,146 @@
     );
 </script>
 
-<Overlay {onClose} dismissible>
-    <ModalContent closeIcon {onClose}>
-        {#snippet header()}
-            <span class="header"><Translatable resourceKey={i18nKey("learnToEarn.title")} /></span>
-        {/snippet}
+<Sheet onDismiss={onClose}>
+    <Column gap={"lg"} padding={"xl"}>
+        <Title fontWeight={"bold"}>
+            <Translatable resourceKey={i18nKey("learnToEarn.title")} />
+        </Title>
 
-        {#snippet body()}
-            <div class="body">
-                <div class="tabs">
-                    <!-- svelte-ignore a11y_click_events_have_key_events -->
-                    <div
-                        tabindex="0"
-                        role="button"
-                        onclick={() => selectTab("todo")}
-                        class:selected={selectedTab === "todo"}
-                        class="tab">
-                        <Translatable resourceKey={i18nKey("learnToEarn.todo")} />
-                    </div>
-                    {#if externalAchievements.length > 0}
-                        <!-- svelte-ignore a11y_click_events_have_key_events -->
-                        <div
-                            tabindex="0"
-                            role="button"
-                            onclick={() => selectTab("external")}
-                            class:selected={selectedTab === "external"}
-                            class="tab">
-                            <Translatable resourceKey={i18nKey("learnToEarn.external")} />
-                            <div class="icon">
-                                <Tooltip position={"bottom"} align={"end"}>
-                                    <InformationOutline
-                                        size={"1.2em"}
-                                        color={selectedTab === "external"
-                                            ? "var(--txt)"
-                                            : "var(--txt-light)"} />
-                                    {#snippet popupTemplate()}
-                                        <Translatable
-                                            resourceKey={i18nKey("learnToEarn.externalInfo")} />
-                                    {/snippet}
-                                </Tooltip>
-                            </div>
-                        </div>
-                    {/if}
-                    <!-- svelte-ignore a11y_click_events_have_key_events -->
-                    <div
-                        tabindex="0"
-                        role="button"
-                        onclick={() => selectTab("done")}
-                        class:selected={selectedTab === "done"}
-                        class="tab">
-                        <Translatable resourceKey={i18nKey("learnToEarn.done")} />
-                    </div>
-                </div>
-                {#if selectedTab === "todo"}
-                    <div class="list">
-                        {#if internalNotAchieved.length === 0}
-                            <div class="empty">
-                                <div class="emoji">😎</div>
-                                <div class="msg">
-                                    <Translatable
-                                        resourceKey={i18nKey("learnToEarn.nothingLeftToDo")} />
-                                </div>
-                            </div>
-                        {:else}
-                            {#each internalNotAchieved as achievement}
-                                <div class="achievement">
-                                    <div class="no icon">
-                                        <CheckCircleOutline size={$iconSize} color={"#ccc"} />
-                                    </div>
-                                    <Translatable
-                                        resourceKey={i18nKey(`learnToEarn.${achievement}`)} />
-                                </div>
-                            {/each}
-                        {/if}
-                    </div>
-                {/if}
-                {#if selectedTab === "done"}
-                    <div class="list">
-                        {#if achieved.length === 0}
-                            <div class="empty">
-                                <div class="emoji">😢</div>
-                                <div class="msg">
-                                    <Translatable
-                                        resourceKey={i18nKey("learnToEarn.nothingDone")} />
-                                </div>
-                            </div>
-                        {:else}
-                            {#each achieved as achievement}
-                                <div class="achievement">
-                                    <div class="yes icon">
-                                        <CheckCircle
-                                            size={$iconSize}
-                                            color={"var(--toast-success-bg)"} />
-                                    </div>
-                                    <Translatable resourceKey={i18nKey(achievement)} />
-                                </div>
-                            {/each}
-                        {/if}
-                    </div>
-                {/if}
-                {#if selectedTab === "external"}
-                    <div class="list">
-                        {#if validExternalNotAchieved.length === 0}
-                            <div class="empty">
-                                <div class="emoji">😎</div>
-                                <div class="msg">
-                                    <Translatable
-                                        resourceKey={i18nKey("learnToEarn.nothingLeftToDo")} />
-                                </div>
-                            </div>
-                        {:else}
-                            {#each validExternalNotAchieved as achievement}
-                                <div class="achievement external">
-                                    <div class="external icon">
-                                        <img
-                                            class="logo"
-                                            src={client.achievementLogo(achievement.id)}
-                                            alt={achievement.name} />
-                                        <ExternalLink
-                                            iconColor={"var(--txt)"}
-                                            href={`${achievement.url}?oc_userid=${$currentUserIdStore}&oc_username=${$currentUserStore.username}`}>
-                                            {achievement.name}
-                                        </ExternalLink>
-                                        <div class="reward">
-                                            {achievement.chitReward.toLocaleString()}
-                                        </div>
-                                    </div>
-                                </div>
-                            {/each}
-                        {/if}
-                    </div>
-                {/if}
-            </div>
-        {/snippet}
+        <Row mainAxisAlignment={"spaceAround"} gap={"lg"}>
+            <Chip
+                width={{ share: 1 }}
+                onClick={() => selectTab("todo")}
+                mode={"todo" === selectedTab ? "rounded" : "unselected"}>
+                <Translatable resourceKey={i18nKey("learnToEarn.todo")} />
+            </Chip>
+            {#if externalAchievements.length > 0}
+                <Chip
+                    width={{ share: 2 }}
+                    onClick={() => selectTab("external")}
+                    mode={"external" === selectedTab ? "rounded" : "unselected"}>
+                    <Row
+                        mainAxisAlignment={"center"}
+                        width={"hug"}
+                        crossAxisAlignment={"center"}
+                        gap={"xs"}>
+                        <Translatable resourceKey={i18nKey("learnToEarn.external")} />
+                        <Tooltip position={"bottom"} align={"end"}>
+                            <InformationOutline
+                                size={"1.2em"}
+                                color={selectedTab === "external"
+                                    ? ColourVars.primary
+                                    : ColourVars.textSecondary} />
+                            {#snippet popupTemplate()}
+                                <Translatable resourceKey={i18nKey("learnToEarn.externalInfo")} />
+                            {/snippet}
+                        </Tooltip>
+                    </Row>
+                </Chip>
+            {/if}
+            <Chip
+                width={{ share: 1 }}
+                onClick={() => selectTab("done")}
+                mode={"done" === selectedTab ? "rounded" : "unselected"}>
+                <Translatable resourceKey={i18nKey("learnToEarn.done")} />
+            </Chip>
+        </Row>
 
-        {#snippet footer()}
-            <span class="footer">
-                <div class="perc">
-                    <Progress size={"45px"} percent={percComplete}>
-                        <Translatable
-                            resourceKey={i18nKey("learnToEarn.percentageComplete", {
-                                perc: percComplete,
-                            })} />
-                    </Progress>
-                </div>
-                <Button small onClick={onClose}>
-                    <Translatable resourceKey={i18nKey("close")} />
-                </Button>
-            </span>
-        {/snippet}
-    </ModalContent>
-</Overlay>
+        {#if selectedTab === "todo"}
+            {#if internalNotAchieved.length === 0}
+                <NothingToSee
+                    padding={["xl", "zero"]}
+                    height={{ size: "12rem" }}
+                    title={"Good job!"}
+                    subtitle={interpolate($_, i18nKey("learnToEarn.nothingLeftToDo"))}>
+                    {#snippet icon(color, size)}
+                        <RobotHappy {color} {size} />
+                    {/snippet}
+                </NothingToSee>
+            {:else}
+                <Column gap={"sm"} maxHeight={"25rem"}>
+                    {#each internalNotAchieved as achievement}
+                        <Row crossAxisAlignment={"center"} gap={"sm"}>
+                            <CheckCircleOutline size={"1.3rem"} color={ColourVars.textPrimary} />
+                            <Body>
+                                <Translatable resourceKey={i18nKey(`learnToEarn.${achievement}`)} />
+                            </Body>
+                        </Row>
+                    {/each}
+                </Column>
+            {/if}
+        {/if}
+        {#if selectedTab === "done"}
+            {#if achieved.length === 0}
+                <NothingToSee
+                    padding={["xl", "zero"]}
+                    height={{ size: "12rem" }}
+                    title={"Keep trying!"}
+                    subtitle={interpolate($_, i18nKey("learnToEarn.nothingDone"))}>
+                    {#snippet icon(color, size)}
+                        <RobotLove {color} {size} />
+                    {/snippet}
+                </NothingToSee>
+            {:else}
+                <Column gap={"sm"} maxHeight={"25rem"}>
+                    {#each achieved as achievement}
+                        <Row crossAxisAlignment={"center"} gap={"sm"}>
+                            <CheckCircle size={"1.3rem"} color={ColourVars.success} />
+                            <Body>
+                                <Translatable resourceKey={i18nKey(achievement)} />
+                            </Body>
+                        </Row>
+                    {/each}
+                </Column>
+            {/if}
+        {/if}
+        {#if selectedTab === "external"}
+            {#if validExternalNotAchieved.length === 0}
+                <NothingToSee
+                    padding={["xl", "zero"]}
+                    height={{ size: "12rem" }}
+                    title={"Good job!"}
+                    subtitle={interpolate($_, i18nKey("learnToEarn.nothingLeftToDo"))}>
+                    {#snippet icon(color, size)}
+                        <RobotHappy {color} {size} />
+                    {/snippet}
+                </NothingToSee>
+            {:else}
+                <Column gap={"sm"} maxHeight={"25rem"}>
+                    {#each validExternalNotAchieved as achievement}
+                        <Row crossAxisAlignment={"center"} gap={"sm"}>
+                            <img
+                                class="logo"
+                                src={client.achievementLogo(achievement.id)}
+                                alt={achievement.name} />
+                            <a
+                                target={"_blank"}
+                                href={`${achievement.url}?oc_userid=${$currentUserIdStore}&oc_username=${$currentUserStore.username}`}>
+                                {achievement.name}
+                            </a>
+                            <Body>
+                                {achievement.chitReward.toLocaleString()}
+                            </Body>
+                        </Row>
+                    {/each}
+                </Column>
+            {/if}
+        {/if}
+        <Column padding={["md", "zero"]} gap={"sm"}>
+            <Progress size={"0.5rem"} percent={percComplete}></Progress>
+            <BodySmall align={"center"} colour={"textSecondary"}>
+                <Translatable
+                    resourceKey={i18nKey("learnToEarn.percentageComplete", {
+                        perc: percComplete,
+                    })} />
+            </BodySmall>
+        </Column>
+    </Column>
+</Sheet>
 
 <style lang="scss">
-    :global(.tab .icon .noselect) {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .achievement {
-        display: flex;
-        gap: $sp3;
-
-        &.external {
-            margin-bottom: $sp2;
-        }
-    }
-
-    .perc {
-        flex: auto;
-        color: var(--txt);
-    }
-
-    .footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: $sp4;
-    }
-
-    .tabs {
-        display: flex;
-        align-items: center;
-        @include font(medium, normal, fs-90);
-        color: var(--txt-light);
-        gap: $sp5;
-        border-bottom: 1px solid var(--bd);
-        cursor: pointer;
-        margin-bottom: $sp5;
-
-        @include mobile() {
-            gap: $sp4;
-        }
-
-        .tab {
-            padding-bottom: 10px;
-            margin-bottom: -2px;
-            border-bottom: 3px solid transparent;
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
-            gap: $sp2;
-
-            &.selected {
-                color: var(--txt);
-                border-bottom: 3px solid var(--txt);
-            }
-        }
-    }
-
-    .list {
-        height: 400px;
-        @include nice-scrollbar();
-    }
-
-    .empty {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        padding: 0 25%;
-        gap: $sp4;
-        text-align: center;
-
-        .emoji {
-            @include font(book, normal, fs-260);
-        }
-        .msg {
-            @include font(bold, normal, fs-140);
-        }
-    }
-
     .logo {
         width: toRem(20);
         height: toRem(20);
-    }
-
-    .external {
-        display: flex;
-        align-items: center;
-        gap: $sp3;
-    }
-
-    .reward {
-        background: var(--button-bg);
-        color: var(--button-txt);
-        padding: $sp1 $sp2;
-        border-radius: $sp2;
-        @include font(light, normal, fs-70);
     }
 </style>
