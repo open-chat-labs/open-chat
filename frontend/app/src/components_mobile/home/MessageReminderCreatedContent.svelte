@@ -1,9 +1,11 @@
 <script lang="ts">
+    import { ChatText, ColourVars, Column, Row } from "component-lib";
     import type { MessageReminderCreatedContent, OpenChat } from "openchat-client";
     import { getContext } from "svelte";
-    import ReminderNotes from "./ReminderNotes.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Alarm from "svelte-material-icons/Alarm.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
+    import ReminderNotes from "./ReminderNotes.svelte";
 
     interface Props {
         content: MessageReminderCreatedContent;
@@ -13,14 +15,15 @@
     const client = getContext<OpenChat>("client");
 </script>
 
-<div class="msg">
-    ⏰ <Translatable resourceKey={i18nKey("reminders.remindAt", { datetime: "" })} />
-    <span class="datetime">{client.toDatetimeString(new Date(content.remindAt))}</span>
-</div>
-<ReminderNotes notes={content.notes} />
-
-<style lang="scss">
-    .datetime {
-        font-weight: 700;
-    }
-</style>
+<Column gap={"lg"}>
+    <Row crossAxisAlignment={"center"} gap={"xs"} wrap>
+        <ChatText width={"hug"}>
+            <Translatable resourceKey={i18nKey("reminders.remindAt", { datetime: "" })} />
+        </ChatText>
+        <ChatText width={"hug"} fontWeight={"bold"} colour={"primary"}>
+            {client.toDatetimeString(new Date(content.remindAt))}
+        </ChatText>
+        <Alarm color={ColourVars.textPrimary} />
+    </Row>
+    <ReminderNotes notes={content.notes} />
+</Column>

@@ -22,6 +22,7 @@
         type SenderContext,
         type UserSummary,
     } from "openchat-client";
+    import page from "page";
     import { getContext, type Snippet } from "svelte";
     import Typing from "../../Typing.svelte";
     import Badges from "../profile/Badges.svelte";

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { ChatText } from "component-lib";
     import Markdown from "./Markdown.svelte";
 
     interface Props {
@@ -9,14 +10,7 @@
 </script>
 
 {#if notes !== undefined && notes !== ""}
-    <div class="notes">
+    <ChatText fontWeight={"bold"}>
         <Markdown inline suppressLinks text={notes} />
-    </div>
+    </ChatText>
 {/if}
-
-<style lang="scss">
-    .notes {
-        margin-top: $sp4;
-        @include font(book, italic, fs-100);
-    }
-</style>
