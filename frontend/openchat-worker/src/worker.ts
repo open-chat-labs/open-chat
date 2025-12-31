@@ -749,6 +749,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "markNotificationSubscriptionActive":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.markNotificationSubscriptionActive(payload.endpoint),
+                );
+                break;
+
             case "inviteUsers":
                 executeThenReply(
                     payload,
