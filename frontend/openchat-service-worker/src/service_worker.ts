@@ -195,7 +195,7 @@ function toUint8Array(base64String: string): Uint8Array {
     try {
         return Uint8Array.from(atob(base64String), (c) => c.charCodeAt(0));
     } catch (e) {
-        console.error("SW: unable to decode base64String", base64String, e);
+        console.error("SW: unable to decode base64 string", base64String, e);
         throw e;
     }
 }
