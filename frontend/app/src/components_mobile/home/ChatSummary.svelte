@@ -552,7 +552,7 @@
 
     :global(.menu_trigger_clone > .chat_summary) {
         margin: 0 var(--sp-sm);
-        padding: var(--sp-md) var(--sp-sm) !important;
+        padding: var(--sp-sm) var(--sp-sm) !important;
         border-radius: var(--rad-md) !important;
         background-color: var(--background-1) !important;
         box-shadow: var(--menu-sh);

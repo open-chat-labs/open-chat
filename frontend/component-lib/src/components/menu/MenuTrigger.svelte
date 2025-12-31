@@ -73,9 +73,7 @@
             }),
             closeMenu,
         );
-        if (maskUI) {
-            activateMask();
-        }
+        activateMask(maskUI);
     }
 
     function closeMenu() {
@@ -84,32 +82,35 @@
         let overlay = document.getElementById("masked_overlay");
         if (overlay) {
             overlay.classList.remove("visible");
+            overlay.classList.remove("active");
         }
     }
 
-    function activateMask() {
+    function activateMask(opaque: boolean = true) {
         let overlay = document.getElementById("masked_overlay");
         if (!overlay) {
             overlay = document.createElement("div");
             overlay.id = "masked_overlay";
             document.body.appendChild(overlay);
         }
-        overlay.classList.add("visible");
+        overlay.classList.add("active");
+        if (opaque) {
+            overlay.classList.add("visible");
 
-        menuClone = menu.cloneNode(true) as HTMLElement;
-        const sourceRect = menu.getBoundingClientRect();
-        let parent = document.body;
-        let { top, left } = sourceRect;
-        if (props.constrainMask !== undefined) {
-            parent = document.getElementById(props.constrainMask) ?? document.body;
-        }
-        const parentRect = parent.getBoundingClientRect();
-        top = sourceRect.top - parentRect.top + parent.scrollTop;
-        left = sourceRect.left - parentRect.left + parent.scrollLeft;
+            menuClone = menu.cloneNode(true) as HTMLElement;
+            const sourceRect = menu.getBoundingClientRect();
+            let parent = document.body;
+            let { top, left } = sourceRect;
+            if (props.constrainMask !== undefined) {
+                parent = document.getElementById(props.constrainMask) ?? document.body;
+            }
+            const parentRect = parent.getBoundingClientRect();
+            top = sourceRect.top - parentRect.top + parent.scrollTop;
+            left = sourceRect.left - parentRect.left + parent.scrollLeft;
 
-        menuClone.addEventListener("contextmenu", (e) => e.preventDefault());
-        menuClone.classList.add("menu_trigger_clone");
-        menuClone.style.cssText = `
+            menuClone.addEventListener("contextmenu", (e) => e.preventDefault());
+            menuClone.classList.add("menu_trigger_clone");
+            menuClone.style.cssText = `
                 position: absolute;
                 left: ${left}px;
                 top: ${top}px;
@@ -122,12 +123,13 @@
                 opacity: 0.8;
             `;
 
-        parent.appendChild(menuClone);
-        setTimeout(() => {
-            if (menuClone !== undefined) {
-                menuClone.style.opacity = "1";
-            }
-        }, 0);
+            parent.appendChild(menuClone);
+            setTimeout(() => {
+                if (menuClone !== undefined) {
+                    menuClone.style.opacity = "1";
+                }
+            }, 0);
+        }
     }
 </script>
 

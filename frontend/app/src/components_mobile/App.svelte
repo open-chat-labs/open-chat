@@ -10,11 +10,13 @@
     import { broadcastLoggedInUser } from "@stores/xframe";
     import "@utils/markdown";
     import {
+        expectNavigationType,
         expectNewFcmToken,
         expectNotificationTap,
         expectPushNotifications,
     } from "@utils/native/notification_channels";
     import "@utils/scream";
+    import { synonymousUrlRegex } from "@utils/urls";
     import { portalState } from "component-lib";
     import {
         type ChatIdentifier,
@@ -33,7 +35,7 @@
     import { onMount, setContext } from "svelte";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
     import { _, isLoading } from "svelte-i18n";
-    import { getFcmToken, svelteReady, openUrl } from "tauri-plugin-oc-api";
+    import { getFcmToken, openUrl, svelteReady } from "tauri-plugin-oc-api";
     import Head from "./Head.svelte";
     import Router from "./Router.svelte";
     import Snow from "./Snow.svelte";
@@ -42,8 +44,6 @@
     import ActiveCall from "./home/video/ActiveCall.svelte";
     import IncomingCall from "./home/video/IncomingCall.svelte";
     import VideoCallAccessRequests from "./home/video/VideoCallAccessRequests.svelte";
-    import { synonymousUrlRegex } from "@utils/urls";
-    import { expectNavigationType } from "@utils/native/notification_channels";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
@@ -69,13 +69,6 @@
             }
         }
     });
-
-    expectNavigationType((data) => {
-        const buttonNavClass = "with-button-nav";
-        data.isGestureNavigation
-            ? document.body.classList.remove(buttonNavClass)
-            : document.body.classList.add(buttonNavClass);
-    }).catch(console.error);
 
     function createOpenChatClient(): OpenChat {
         const client = new OpenChat({
@@ -116,6 +109,15 @@
             accountLinkingCodesEnabled:
                 import.meta.env.OC_ACCOUNT_LINKING_CODES_ENABLED! === "true",
         });
+
+        if (client.isNativeApp()) {
+            expectNavigationType((data) => {
+                const buttonNavClass = "with-button-nav";
+                data.isGestureNavigation
+                    ? document.body.classList.remove(buttonNavClass)
+                    : document.body.classList.add(buttonNavClass);
+            }).catch(console.error);
+        }
 
         return client;
     }

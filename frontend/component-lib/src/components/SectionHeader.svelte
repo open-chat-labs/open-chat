@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ColourVars, Label, type Padding, BodySmall } from "component-lib";
+    import { BodySmall, ColourVars, type Padding } from "component-lib";
     import type { Snippet } from "svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
@@ -69,7 +69,7 @@
     {/if}
     {@render children?.()}
     {#if menu}
-        <MenuTrigger position={"bottom"} align={"end"}>
+        <MenuTrigger gutter={0} position={"bottom"} align={"end"}>
             <IconButton padding={["sm", "zero"]} size={"lg"}>
                 {#snippet icon(color)}
                     <DotsVertical {color} />

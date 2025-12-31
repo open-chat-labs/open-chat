@@ -72,6 +72,7 @@
 
 <style lang="scss">
     .menu {
+        border-radius: var(--rad-xl);
         position: fixed;
         z-index: 100;
     }

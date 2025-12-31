@@ -504,6 +504,9 @@ svelte-virtual-list-viewport {
     &.visible {
         opacity: 0.8;
     }
+    &.active {
+        pointer-events: auto;
+    }
 }
 
 @keyframes fade-in {
