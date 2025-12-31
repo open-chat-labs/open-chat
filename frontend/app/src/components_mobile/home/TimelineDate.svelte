@@ -38,6 +38,7 @@
 
 <style lang="scss">
     .date-label {
+        text-align: center;
         padding: var(--sp-xs) var(--sp-md);
         background-color: var(--background-2);
         box-shadow: var(--menu-sh);

@@ -17,8 +17,11 @@
     import Translatable from "../../Translatable.svelte";
 
     import { canShare } from "@src/utils/share";
-    import { onMount } from "svelte";
+    import { OpenChat } from "openchat-client";
+    import { getContext, onMount } from "svelte";
     import type { MemberManagement } from "./membersState.svelte";
+
+    const client = getContext<OpenChat>("client");
 
     interface Props {
         membersState: MemberManagement;
@@ -27,7 +30,7 @@
 
     onMount(() => membersState.initialiseSharing());
 
-    let link = $derived(membersState.getSharingLink());
+    let link = $derived(membersState.getSharingLink(client));
 
     function onShare() {
         membersState.shareLink(link);

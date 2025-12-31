@@ -734,6 +734,14 @@ export class OpenChat {
         return this.#appType === "android";
     }
 
+    canonicalOrigin() {
+        if (this.isNativeApp()) {
+            return "https://oc.app";
+        } else {
+            return window.location.origin;
+        }
+    }
+
     isNativeApp() {
         // TODO this will be updated to include iOS
         return this.isNativeAndroid();
@@ -5235,9 +5243,7 @@ export class OpenChat {
     }
 
     #subscriptionExists(endpoint: string): Promise<boolean> {
-        return this.#sendRequest({ kind: "subscriptionExists", endpoint }).catch(
-            () => false,
-        );
+        return this.#sendRequest({ kind: "subscriptionExists", endpoint }).catch(() => false);
     }
 
     #pushSubscription(subscription: PushSubscriptionJSON): Promise<void> {

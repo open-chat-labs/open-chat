@@ -434,20 +434,22 @@ export class MemberManagement {
         });
     }
 
-    getSharingLink() {
+    getSharingLink(client: OpenChat) {
         const qs =
             `/?ref=${currentUserIdStore.value}` +
             (!this.collection.public ? `&code=${this.#sharingLinkCode}` : "");
         switch (this.collection.id.kind) {
             case "community":
-                return `${window.location.origin}/community/${this.collection.id.communityId}${qs}`;
+                return `${client.canonicalOrigin()}/community/${
+                    this.collection.id.communityId
+                }${qs}`;
             case "channel":
-                return `${window.location.origin}${routeForChatIdentifier(
+                return `${client.canonicalOrigin()}${routeForChatIdentifier(
                     "community",
                     this.collection.id,
                 )}${qs}`;
             case "group_chat":
-                return `${window.location.origin}${routeForChatIdentifier(
+                return `${client.canonicalOrigin()}${routeForChatIdentifier(
                     "chats",
                     this.collection.id,
                 )}${qs}`;

@@ -14,7 +14,7 @@
     const client = getContext<OpenChat>("client");
 
     let user = $derived($allUsersStore.get($currentUserIdStore) ?? client.nullUser("unknown"));
-    let link = $derived(`${window.location.origin}/?ref=${$currentUserIdStore}`);
+    let link = $derived(`${client.canonicalOrigin()}/?ref=${$currentUserIdStore}`);
 
     function onCopy() {
         navigator.clipboard.writeText(user.userId).then(() => {

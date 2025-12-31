@@ -29,6 +29,7 @@
     import MulticolourText from "../MulticolourText.svelte";
     import SparkleBoxOutline from "../SparkleBoxOutline.svelte";
     import Translatable from "../Translatable.svelte";
+    import { updateCommunityState } from "./communities/createOrUpdate/community.svelte";
     import CommunityBanner from "./communities/explore/CommunityBanner.svelte";
     import CommunityMatchComponent from "./communities/explore/CommunityMatch.svelte";
 
@@ -44,6 +45,10 @@
             communitySearchState.reset();
         };
     });
+
+    function createCommunity() {
+        updateCommunityState.createCommunity(client);
+    }
 
     function searchCommunities() {
         communitySearchState.reset();
@@ -238,7 +243,7 @@
                     </Container>
                 </SparkleBoxOutline>
             {:else}
-                <Button>
+                <Button onClick={createCommunity}>
                     {#snippet icon(color)}
                         <RightChevron {color} />
                     {/snippet}

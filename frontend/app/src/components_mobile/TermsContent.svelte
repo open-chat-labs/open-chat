@@ -1,11 +1,14 @@
 <script lang="ts">
-    import { locationStore } from "openchat-client";
+    import { locationStore, OpenChat } from "openchat-client";
+    import { getContext } from "svelte";
     import { copyToClipboard } from "../utils/urls";
     import HashLinkTarget from "./HashLinkTarget.svelte";
 
+    const client = getContext<OpenChat>("client");
+
     function onCopyUrl(e: Event, section: string): void {
         e.stopPropagation();
-        copyToClipboard(`${window.location.origin}${$locationStore}?section=${section}`);
+        copyToClipboard(`${client.canonicalOrigin()}${$locationStore}?section=${section}`);
     }
 </script>
 

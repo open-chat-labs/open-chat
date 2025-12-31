@@ -19,6 +19,8 @@
 
     const client = getContext<OpenChat>("client");
 
+    let origin = $derived(client.canonicalOrigin());
+
     let viewPortContent = $state("width=device-width, initial-scale=1");
 
     type Details = {
@@ -36,26 +38,23 @@
         chat: ChatSummary | undefined,
         community: CommunitySummary | undefined,
     ): Details {
-        let canonicalUrl = new URL("/", window.location.origin);
+        let canonicalUrl = new URL("/", origin);
         let title = "OpenChat";
         let description =
             "OpenChat is a fully featured chat application running end-to-end on the Internet Computer blockchain.";
 
         if (location === "/communities") {
-            canonicalUrl = new URL("/communities", window.location.origin);
+            canonicalUrl = new URL("/communities", origin);
         }
 
         if (community !== undefined) {
             title = `${title} - ${community.name}`;
             description = community.description;
-            canonicalUrl = new URL(
-                `/community/${community.id.communityId}`,
-                window.location.origin,
-            );
+            canonicalUrl = new URL(`/community/${community.id.communityId}`, origin);
         }
         if (chat !== undefined) {
             if (chat.kind === "direct_chat") {
-                title = `${title} - 
+                title = `${title} -
                     ${
                         users.get(chat.them.userId)?.displayName ??
                         users.get(chat.them.userId)?.username ??
@@ -64,10 +63,7 @@
             } else {
                 title = `${title} - ${chat.name}`;
                 description = chat.description;
-                canonicalUrl = new URL(
-                    routeForChatIdentifier(scope.kind, chat.id),
-                    window.location.origin,
-                );
+                canonicalUrl = new URL(routeForChatIdentifier(scope.kind, chat.id), origin);
             }
         }
         const merged = client.mergeCombinedUnreadCounts(unread);
