@@ -649,8 +649,9 @@
                         gap={"sm"}
                         background={ColourVars.textTertiary}
                         borderRadius={"xxl"}
-                        minHeight={"3rem"}
+                        minHeight={"3.5rem"}
                         maxHeight={"calc(var(--vh, 1vh) * 50)"}
+                        padding={["zero", "xs", "xs", "xs"]}
                         crossAxisAlignment={"end"}
                         mainAxisAlignment={"spaceBetween"}
                         supplementalClass={"message_entry_text_box"}>
@@ -737,7 +738,7 @@
             {/if}
 
             {#if directChatBotId === undefined}
-                <Container crossAxisAlignment={"center"} height={"fill"} gap={"xs"} width={"hug"}>
+                <Container crossAxisAlignment={"center"} gap={"xs"} width={"hug"}>
                     {#if editingEvent === undefined}
                         {#if permittedMessages.get("audio") && messageIsEmpty && audioMimeType !== undefined && audioSupported}
                             <AudioAttacher
@@ -747,19 +748,23 @@
                                 bind:supported={audioSupported}
                                 onAudioCaptured={onFileSelected} />
                         {:else if canEnterText}
-                            <IconButton mode={"primary"} size={"md"} onclick={sendMessage}>
+                            <IconButton
+                                padding={"md"}
+                                mode={"primary"}
+                                size={"lg"}
+                                onclick={sendMessage}>
                                 {#snippet icon(color)}
                                     <Send {color} />
                                 {/snippet}
                             </IconButton>
                         {/if}
                     {:else}
-                        <IconButton mode={"dark"} size={"md"} onclick={sendMessage}>
+                        <IconButton mode={"dark"} size={"lg"} padding={"md"} onclick={sendMessage}>
                             {#snippet icon(color)}
                                 <ContentSaveEditOutline {color} />
                             {/snippet}
                         </IconButton>
-                        <IconButton mode={"dark"} size={"md"} onclick={onCancelEdit}>
+                        <IconButton mode={"dark"} size={"lg"} padding={"md"} onclick={onCancelEdit}>
                             {#snippet icon(color)}
                                 <Close {color} />
                             {/snippet}
@@ -791,6 +796,10 @@
     bind:open={showCustomMessageTrigger} />
 
 <style lang="scss">
+    :global(.container.message_entry_text_box) {
+        border-radius: toRem(32) !important;
+    }
+
     .drawer_trigger {
         display: flex;
         justify-content: center;

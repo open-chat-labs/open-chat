@@ -116,7 +116,7 @@
 </script>
 
 {#if supported}
-    <IconButton mode={"primary"} onclick={toggle}>
+    <IconButton padding={"md"} size={"lg"} mode={"primary"} onclick={toggle}>
         {#snippet icon(color)}
             {#if recording}
                 <RadioboxMarked {color} />
