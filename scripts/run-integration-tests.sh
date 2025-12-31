@@ -40,7 +40,6 @@ cd ../..
 ./scripts/download-nns-canister-wasm.sh sns_wasm sns-wasm-canister
 ./scripts/download-nns-canister-wasm.sh icrc_ledger ic-icrc1-ledger
 ./scripts/download-canister-wasm-dfx.sh event_store || exit 1
-./scripts/download-canister-wasm-dfx.sh sign_in_with_email || exit 1
 
 function cleanup() {
   rm -rf ./backend/integration_tests/pocket_ic_state

@@ -1,0 +1,13 @@
+[package]
+name = "sign_in_with_email_test_utils"
+version.workspace = true
+edition.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+email_magic_links.path = "../email_magic_links"
+rand.workspace = true
+rsa.workspace = true
+sign_in_with_email_canister.path = "../../canisters/sign_in_with_email/api"
+utils.path = "../utils"
