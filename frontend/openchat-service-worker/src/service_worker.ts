@@ -192,7 +192,12 @@ function decodeWebPushNotification(bytes: Uint8Array, timestamp: bigint): Notifi
 }
 
 function toUint8Array(base64String: string): Uint8Array {
-    return Uint8Array.from(atob(base64String), (c) => c.charCodeAt(0));
+    try {
+        return Uint8Array.from(atob(base64String), (c) => c.charCodeAt(0));
+    } catch (e) {
+        console.error("SW: unable to decode base64String", base64String, e);
+        throw e;
+    }
 }
 
 function buildNotification(n: Notification): [string, NotificationOptions] {
