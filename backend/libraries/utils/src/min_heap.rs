@@ -19,6 +19,12 @@ impl<T: Ord> MinBinaryHeap<T> {
         MinBinaryHeap::default()
     }
 
+    pub fn with_capacity(capacity: usize) -> MinBinaryHeap<T> {
+        MinBinaryHeap {
+            heap: BinaryHeap::with_capacity(capacity),
+        }
+    }
+
     pub fn push(&mut self, item: T) {
         self.heap.push(Reverse(item));
     }
@@ -40,5 +46,13 @@ impl<T: Ord> MinBinaryHeap<T> {
 
     pub fn peek(&self) -> Option<&T> {
         self.heap.peek().map(|e| &e.0)
+    }
+
+    pub fn len(&self) -> usize {
+        self.heap.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.heap.is_empty()
     }
 }
