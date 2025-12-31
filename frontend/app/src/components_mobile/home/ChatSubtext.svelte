@@ -45,7 +45,7 @@
         {subtext}
     </Container>
 {:else if chat.kind === "group_chat" || chat.kind === "channel"}
-    <Container gap={"sm"} crossAxisAlignment={"center"}>
+    <Container gap={"xs"} crossAxisAlignment={"center"}>
         <BodySmall width={"hug"} colour={"textSecondary"}>
             <VisibilityLabel isPublic={chat.public} />
         </BodySmall>
@@ -54,17 +54,15 @@
         {/if}
         <BodySmall colour={"textSecondary"}>
             <span class="num">{chat.memberCount.toLocaleString()}</span>
-            <Translatable resourceKey={i18nKey("members")} />
+            <span class="subject"><Translatable resourceKey={i18nKey("members")} /></span>
         </BodySmall>
     </Container>
 {/if}
 
 <style lang="scss">
-    .num {
-        color: var(--txt);
-        font-weight: 700;
+    .subject {
+        text-transform: lowercase;
     }
-
     .clickable {
         cursor: pointer;
     }

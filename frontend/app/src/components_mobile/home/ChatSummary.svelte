@@ -50,6 +50,7 @@
     import Heart from "svelte-material-icons/Heart.svelte";
     import Image from "svelte-material-icons/ImageOutline.svelte";
     import LocationExit from "svelte-material-icons/LocationExit.svelte";
+    import LockOutline from "svelte-material-icons/LockOutline.svelte";
     import Phone from "svelte-material-icons/Phone.svelte";
     import PinIcon from "svelte-material-icons/Pin.svelte";
     import PinOffIcon from "svelte-material-icons/PinOff.svelte";
@@ -72,7 +73,6 @@
     import ArchiveOffIcon from "./ArchiveOffIcon.svelte";
     import Markdown from "./Markdown.svelte";
     import BotBadge from "./profile/BotBadge.svelte";
-    import VideoCallIcon from "./video/VideoCallIcon.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -112,6 +112,12 @@
 
     onMount(() => {
         return messagesRead.subscribe(() => updateUnreadCounts(chatSummary));
+    });
+
+    trackedEffect("unarchive-chat", () => {
+        if (chatSummary.membership.archived && unreadMessages > 0 && !chat.bot) {
+            unarchiveChat();
+        }
     });
 
     /***
@@ -270,12 +276,6 @@
 
         return `${user}: ${latestMessageText}`;
     }
-
-    trackedEffect("unarchive-chat", () => {
-        if (chatSummary.membership.archived && unreadMessages > 0 && !chat.bot) {
-            unarchiveChat();
-        }
-    });
 
     function pinChat() {
         client.pinChat(chatSummary.id).then((success) => {
@@ -462,7 +462,13 @@
                         <CameraTimer size={"1em"} color={"var(--txt)"} />
                     </div>
                 {/if}
-                <VideoCallIcon video={chat.video} />
+                <!-- TODO video call info should be the displayed instead of the last message if tehre are active calls  -->
+                <!-- <VideoCallIcon video={chat.video} /> -->
+                {#if chat.private}
+                    <div class="private">
+                        <LockOutline size="0.85rem" color={ColourVars.error} />
+                    </div>
+                {/if}
             </div>
             <Container width={"fill"} direction={"vertical"}>
                 <Container
@@ -470,9 +476,6 @@
                     width={"fill"}
                     mainAxisAlignment={"spaceBetween"}
                     crossAxisAlignment={"center"}>
-                    {#if chat.private}
-                        <div class="private"></div>
-                    {/if}
                     <Container crossAxisAlignment={"center"} gap={"sm"} width={"fill"}>
                         <WithVerifiedBadge {verified} size={"small"}>
                             <Subtitle ellipsisTruncate fontWeight={"semi-bold"}>
@@ -503,7 +506,7 @@
                         {/if}
                         {#if chat.fav}
                             <div class="icon">
-                                <Heart size={"1em"} color={"var(--icon-txt)"} />
+                                <Heart size={"1em"} color={"var(--primary)"} />
                             </div>
                         {/if}
                         <BodySmall colour={"textSecondary"} fontWeight={"semi-bold"}>
@@ -576,11 +579,18 @@
     }
 
     .private {
-        background-repeat: no-repeat;
-        $size: 12px;
+        $size: 1.35rem;
+        position: absolute;
+        right: -0.5rem;
+        bottom: -0.05rem;
+        display: flex;
         flex: 0 0 $size;
+        align-items: center;
+        justify-content: center;
+        align-content: center;
         width: $size;
         height: $size;
-        background-image: url("/assets/locked.svg");
+        background-color: var(--background-0);
+        border-radius: var(--rad-circle);
     }
 </style>

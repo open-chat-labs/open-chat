@@ -12,7 +12,7 @@
         cls?: string;
     }
 
-    let { centered = false, fit = false, children, shadow = true, cls }: Props = $props();
+    let { centered = false, fit = false, children, shadow = true, cls = "" }: Props = $props();
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -24,11 +24,10 @@
     class:shadow
     class:centered>
     <Container
-        borderWidth={"thin"}
-        padding={["sm", "zero"]}
+        padding={["lg", "zero"]}
         background={"var(--background-1)"}
         minWidth={Rem.fromPixels(200).toString()}
-        borderRadius={"lg"}
+        borderRadius={"xl"}
         shadow={"var(--shadow-menu)"}
         width={"fill"}
         height={"fill"}
@@ -41,7 +40,7 @@
     .menu {
         max-height: 80vh;
         max-height: var(--override-height, 80vh);
-        border-radius: var(--rad-lg);
+        border-radius: var(--rad-xl);
 
         &.centered {
             width: 70vw;

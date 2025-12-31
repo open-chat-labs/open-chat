@@ -66,14 +66,14 @@
 
 <style lang="scss">
     :global(.menu_item) {
-        display: flex;
         cursor: pointer;
-        color: var(--text-primary);
+        display: flex;
+        width: 100%;
+        height: 3rem;
         align-items: center;
         gap: var(--sp-sm);
-        height: 2.375rem;
-        padding: 0 var(--sp-lg);
-        width: 100%;
+        color: var(--text-primary);
+        padding: var(--sp-md) var(--sp-lg);
 
         &:last-child {
             border-bottom: none;
