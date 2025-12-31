@@ -1,14 +1,12 @@
 <script lang="ts">
     import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
-    import { CommonButton, Container } from "component-lib";
+    import { Column, CommonButton, Container, Sheet, Title } from "component-lib";
     import { AuthProvider, i18nKey, OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Delete from "svelte-material-icons/DeleteForeverOutline.svelte";
     import { interpolate } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
-    import ModalContent from "../../ModalContent.svelte";
-    import Overlay from "../../Overlay.svelte";
     import Translatable from "../../Translatable.svelte";
     import Markdown from "../Markdown.svelte";
     import ReAuthenticate from "./ReAuthenticate.svelte";
@@ -43,42 +41,38 @@
     }
 </script>
 
-<Overlay>
-    <ModalContent>
-        {#snippet header()}
+<Sheet>
+    <Column gap={"xl"} padding={"xl"}>
+        <Title fontWeight={"bold"}>
             <Translatable resourceKey={i18nKey("danger.deleteAccount")} />
-        {/snippet}
-        {#snippet body()}
-            {#if authenticating}
-                <ReAuthenticate onSuccess={deleteAccount} message={i18nKey("danger.reauth")} />
-            {:else}
-                <Markdown
-                    inline={false}
-                    text={interpolate($_, i18nKey("danger.deleteAccountConfirm"))} />
-            {/if}
-        {/snippet}
-        {#snippet footer()}
-            <Container gap={"md"} mainAxisAlignment={"end"} crossAxisAlignment={"end"}>
-                <CommonButton mode={"default"} onClick={onClose} size={"small_text"}>
-                    <Translatable resourceKey={i18nKey("cancel")}></Translatable>
+        </Title>
+        {#if authenticating}
+            <ReAuthenticate onSuccess={deleteAccount} message={i18nKey("danger.reauth")} />
+        {:else}
+            <Markdown
+                inline={false}
+                text={interpolate($_, i18nKey("danger.deleteAccountConfirm"))} />
+        {/if}
+        <Container gap={"md"} mainAxisAlignment={"end"} crossAxisAlignment={"end"}>
+            <CommonButton mode={"default"} onClick={onClose} size={"small_text"}>
+                <Translatable resourceKey={i18nKey("cancel")}></Translatable>
+            </CommonButton>
+            {#if !authenticating}
+                <CommonButton
+                    mode={"active"}
+                    disabled={deleting}
+                    loading={deleting}
+                    onClick={() => (authenticating = true)}
+                    size={"medium"}>
+                    {#snippet icon(color, size)}
+                        <Delete {color} {size}></Delete>
+                    {/snippet}
+                    <Translatable
+                        resourceKey={i18nKey(
+                            deleting ? "danger.deleting" : "danger.deleteAccount",
+                        )} />
                 </CommonButton>
-                {#if !authenticating}
-                    <CommonButton
-                        mode={"active"}
-                        disabled={deleting}
-                        loading={deleting}
-                        onClick={() => (authenticating = true)}
-                        size={"medium"}>
-                        {#snippet icon(color, size)}
-                            <Delete {color} {size}></Delete>
-                        {/snippet}
-                        <Translatable
-                            resourceKey={i18nKey(
-                                deleting ? "danger.deleting" : "danger.deleteAccount",
-                            )} />
-                    </CommonButton>
-                {/if}
-            </Container>
-        {/snippet}
-    </ModalContent>
-</Overlay>
+            {/if}
+        </Container>
+    </Column>
+</Sheet>
