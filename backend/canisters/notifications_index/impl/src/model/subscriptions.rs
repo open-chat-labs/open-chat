@@ -100,13 +100,13 @@ impl Subscriptions {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct SubscriptionInfoInternal {
-    #[serde(rename = "a", default)]
+    #[serde(rename = "a")]
     pub added: TimestampMillis,
-    #[serde(rename = "l", default)]
+    #[serde(rename = "l")]
     pub last_active: TimestampMillis,
-    #[serde(rename = "e", alias = "endpoint")]
+    #[serde(rename = "e")]
     pub endpoint: String,
-    #[serde(rename = "k", alias = "keys")]
+    #[serde(rename = "k")]
     pub keys: SubscriptionKeys,
 }
 
