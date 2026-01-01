@@ -2,7 +2,7 @@ use crate::ic_agent::IcAgent;
 use crate::metrics::write_metrics;
 use crate::{BotNotification, FcmNotification, NotificationMetadata, PushNotification, UserNotification};
 use async_channel::Sender;
-use ct_codecs::{Base64NoPadding, Decoder, Encoder};
+use ct_codecs::{Base64NoPadding, Encoder};
 use index_store::IndexStore;
 use std::sync::Arc;
 use std::time::Instant;
