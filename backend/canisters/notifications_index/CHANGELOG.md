@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1940](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1940-notifications_index)] - 2025-12-31
+
 ### Changed
 
 - Switch to only using `endpoint` to identify notification subscriptions ([#8733](https://github.com/open-chat-labs/open-chat/pull/8733))
