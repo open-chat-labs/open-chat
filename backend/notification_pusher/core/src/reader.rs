@@ -2,7 +2,7 @@ use crate::ic_agent::IcAgent;
 use crate::metrics::write_metrics;
 use crate::{BotNotification, FcmNotification, NotificationMetadata, PushNotification, UserNotification};
 use async_channel::Sender;
-use ct_codecs::{Base64UrlSafeNoPadding, Encoder};
+use ct_codecs::{Base64NoPadding, Decoder, Encoder};
 use index_store::IndexStore;
 use std::sync::Arc;
 use std::time::Instant;
@@ -87,7 +87,7 @@ impl<I: IndexStore> Reader<I> {
                         break;
                     }
 
-                    let base64 = Base64UrlSafeNoPadding::encode_to_string(notification.notification_bytes)?;
+                    let base64 = Base64NoPadding::encode_to_string(notification.notification_bytes)?;
                     let payload = Arc::new(serde_json::to_vec(&Timestamped::new(base64, notification.timestamp)).unwrap());
 
                     for user_id in notification.recipients {
