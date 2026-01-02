@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
+use tracing::info;
 use types::{SubscriptionInfo, SubscriptionKeys, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
@@ -95,6 +96,34 @@ impl Subscriptions {
 
     pub fn iter(&self) -> impl Iterator<Item = (&UserId, &Vec<SubscriptionInfoInternal>)> {
         self.subscriptions.iter()
+    }
+
+    pub fn remove_inactive(&mut self, cutoff: TimestampMillis) -> Vec<(UserId, Vec<String>)> {
+        let mut all_removed = Vec::new();
+        let mut count_removed = 0;
+
+        self.subscriptions.retain(|user_id, subscriptions| {
+            let removed: Vec<_> = subscriptions
+                .extract_if(.., |s| s.last_active < cutoff)
+                .map(|s| s.endpoint)
+                .collect();
+
+            count_removed += removed.len() as u32;
+
+            if subscriptions.is_empty() {
+                all_removed.push((*user_id, Vec::new()));
+                return false;
+            }
+
+            if !removed.is_empty() {
+                all_removed.push((*user_id, removed));
+            }
+            true
+        });
+
+        info!(count_removed, "Removed inactive subscriptions");
+
+        all_removed
     }
 }
 

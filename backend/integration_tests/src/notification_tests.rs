@@ -1,9 +1,10 @@
 use crate::env::ENV;
-use crate::utils::tick_many;
+use crate::utils::{now_millis, tick_many};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
+use constants::{DAY_IN_MS, NANOS_PER_MILLISECOND};
 use itertools::Itertools;
-use pocket_ic::PocketIc;
+use pocket_ic::{PocketIc, Time};
 use rand::{RngCore, thread_rng};
 use std::collections::VecDeque;
 use std::ops::Deref;
@@ -323,6 +324,70 @@ fn subscriptions_removed_based_on_last_active() {
             ));
         }
     }
+}
+
+#[test]
+fn inactive_subscriptions_removed() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let TestData { user1, .. } = init_test_data(env, canister_ids);
+
+    // We only remove inactive subscriptions after the timestamp below
+    if now_millis(env) < 1767484800000 {
+        env.set_time(Time::from_nanos_since_unix_epoch(1767484800000 * NANOS_PER_MILLISECOND));
+    }
+
+    let rand1 = random_string();
+    let rand2 = random_string();
+
+    client::notifications_index::happy_path::push_subscription(
+        env,
+        user1.principal,
+        canister_ids.notifications_index,
+        rand1.clone(),
+        rand1.clone(),
+        rand1.clone(),
+    );
+
+    env.advance_time(Duration::from_millis(DAY_IN_MS));
+
+    client::notifications_index::happy_path::push_subscription(
+        env,
+        user1.principal,
+        canister_ids.notifications_index,
+        rand2.clone(),
+        rand2.clone(),
+        rand2.clone(),
+    );
+
+    env.advance_time(Duration::from_millis(89 * DAY_IN_MS + 1));
+    env.tick();
+    env.tick();
+
+    assert!(!client::notifications_index::happy_path::subscription_exists(
+        env,
+        user1.principal,
+        canister_ids.notifications_index,
+        rand1
+    ));
+    assert!(client::notifications_index::happy_path::subscription_exists(
+        env,
+        user1.principal,
+        canister_ids.notifications_index,
+        rand2.clone()
+    ));
+
+    env.advance_time(Duration::from_millis(DAY_IN_MS));
+    env.tick();
+    env.tick();
+
+    assert!(!client::notifications_index::happy_path::subscription_exists(
+        env,
+        user1.principal,
+        canister_ids.notifications_index,
+        rand2
+    ));
 }
 
 #[test]
