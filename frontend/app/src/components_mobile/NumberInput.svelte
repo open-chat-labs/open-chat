@@ -1,6 +1,7 @@
 <script lang="ts">
+    import { Caption, ColourVars, Container } from "component-lib";
     import type { ResourceKey } from "openchat-client";
-    import { onMount } from "svelte";
+    import { onMount, type Snippet } from "svelte";
     import { _ } from "svelte-i18n";
     import { interpolate } from "../i18n/i18n";
 
@@ -16,6 +17,8 @@
         shouldClamp?: boolean;
         onChange?: () => void;
         onEnter?: () => void;
+        subtext?: Snippet;
+        error?: boolean;
     }
 
     let {
@@ -30,6 +33,8 @@
         shouldClamp = true,
         onChange,
         onEnter,
+        subtext,
+        error,
     }: Props = $props();
 
     let inp: HTMLInputElement | undefined = $state();
@@ -66,32 +71,43 @@
     }
 </script>
 
-<div class="input-wrapper">
-    <input
-        data-gram="false"
-        data-gramm_editor="false"
-        data-enable-grammarly="false"
-        spellcheck="false"
-        {disabled}
-        type="number"
-        {min}
-        {max}
-        placeholder={placeholder !== undefined ? interpolate($_, placeholder) : ""}
-        onkeydown={keyDown}
-        oninput={handleInput}
-        bind:this={inp}
-        bind:value
-        class={`textbox ${align}`} />
-</div>
+<Container direction={"vertical"} gap={"xs"}>
+    <Container
+        background={ColourVars.textTertiary}
+        height={{ size: "3rem" }}
+        padding={["xs", "xl"]}
+        borderRadius={"circle"}
+        gap={"sm"}
+        crossAxisAlignment={"center"}>
+        <input
+            data-gram="false"
+            data-gramm_editor="false"
+            data-enable-grammarly="false"
+            spellcheck="false"
+            {disabled}
+            type="number"
+            {min}
+            {max}
+            placeholder={placeholder !== undefined ? interpolate($_, placeholder) : ""}
+            onkeydown={keyDown}
+            oninput={handleInput}
+            bind:this={inp}
+            bind:value
+            class={`textbox ${align}`} />
+    </Container>
+    {#if subtext}
+        <div class="subtext">
+            <Caption colour={error ? "error" : "textSecondary"}>
+                {@render subtext()}
+            </Caption>
+        </div>
+    {/if}
+</Container>
 
 <style lang="scss">
-    .input-wrapper {
-        position: relative;
-        margin-bottom: $sp3;
-
-        @include mobile() {
-            margin-bottom: $sp3;
-        }
+    .subtext {
+        padding-inline-start: var(--sp-xl);
+        padding-inline-end: var(--sp-xl);
     }
 
     input[type="number"] {
@@ -112,6 +128,7 @@
         width: 100%;
 
         @include input();
+        padding: 0;
 
         &.left {
             text-align: left;

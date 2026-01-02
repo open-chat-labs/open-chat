@@ -1,12 +1,10 @@
 <script lang="ts">
-    import { CommonButton, Container } from "component-lib";
+    import { Button, ColourVars, Column, Sheet, Subtitle } from "component-lib";
     import type { Snippet } from "svelte";
     import type { CropData } from "svelte-easy-crop";
     import Cropper from "svelte-easy-crop";
     import Crop from "svelte-material-icons/Crop.svelte";
     import { i18nKey } from "../i18n/i18n";
-    import ModalContent from "./ModalContent.svelte";
-    import Overlay from "./Overlay.svelte";
     import Translatable from "./Translatable.svelte";
 
     type OnChoosePhoto = () => void;
@@ -120,36 +118,25 @@
 </script>
 
 {#if showModal}
-    <Overlay>
-        <ModalContent fill>
-            {#snippet header()}
-                Crop image
-            {/snippet}
-            {#snippet body()}
-                <div class="cropper">
-                    <Cropper
-                        image={selectedImage}
-                        on:cropcomplete={onCrop}
-                        crop={{ x: 0, y: 0 }}
-                        {aspect}
-                        cropShape={CROP_SHAPE} />
-                </div>
-            {/snippet}
-            {#snippet footer()}
-                <Container mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"end"}>
-                    <CommonButton onClick={() => (showModal = false)} size={"small_text"}>
-                        <Translatable resourceKey={i18nKey("cancel")}></Translatable>
-                    </CommonButton>
-                    <CommonButton onClick={cropImage} size={"medium"} mode={"active"}>
-                        {#snippet icon(color, size)}
-                            <Crop {color} {size}></Crop>
-                        {/snippet}
-                        <Translatable resourceKey={i18nKey("apply")} />
-                    </CommonButton>
-                </Container>
-            {/snippet}
-        </ModalContent>
-    </Overlay>
+    <Sheet onDismiss={() => (showModal = false)}>
+        <Column gap={"lg"} padding={"lg"}>
+            <Subtitle fontWeight={"bold"}>Crop image</Subtitle>
+            <Column backgroundColor={ColourVars.background1} height={{ size: "25rem" }}>
+                <Cropper
+                    image={selectedImage}
+                    on:cropcomplete={onCrop}
+                    crop={{ x: 0, y: 0 }}
+                    {aspect}
+                    cropShape={CROP_SHAPE} />
+            </Column>
+            <Button onClick={cropImage}>
+                {#snippet icon(color)}
+                    <Crop {color}></Crop>
+                {/snippet}
+                <Translatable resourceKey={i18nKey("apply")} />
+            </Button>
+        </Column>
+    </Sheet>
 {/if}
 
 <input
@@ -162,11 +149,3 @@
 <div class={`editable-image ${classString}`} bind:clientWidth={elementWidth}>
     {@render children(addPhoto, elementWidth, elementHeight)}
 </div>
-
-<style lang="scss">
-    .cropper {
-        position: relative;
-        height: 400px;
-        width: 100%;
-    }
-</style>

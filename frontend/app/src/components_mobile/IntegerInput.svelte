@@ -1,7 +1,8 @@
 <script lang="ts">
-    import type { ResourceKey } from "openchat-client";
-    import NumberInput from "./NumberInput.svelte";
     import { trackedEffect } from "@src/utils/effects.svelte";
+    import type { ResourceKey } from "openchat-client";
+    import type { Snippet } from "svelte";
+    import NumberInput from "./NumberInput.svelte";
 
     interface Props {
         disabled?: boolean;
@@ -12,6 +13,8 @@
         value: bigint | null;
         align?: "left" | "right" | "center";
         shouldClamp?: boolean;
+        subtext?: Snippet;
+        error?: boolean;
     }
 
     let {
@@ -23,6 +26,8 @@
         value = $bindable(min),
         align = "left",
         shouldClamp = true,
+        subtext,
+        error,
     }: Props = $props();
 
     let valueNum = $state(value != null ? Number(value) : null);
@@ -37,6 +42,8 @@
 </script>
 
 <NumberInput
+    {subtext}
+    {error}
     {disabled}
     {autofocus}
     {placeholder}
