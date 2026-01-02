@@ -98,6 +98,8 @@ impl Subscriptions {
         self.subscriptions.iter()
     }
 
+    // Return value is the vec of subscriptions removed per user.
+    // If the vec of subscriptions is empty, that means all of the user's subscriptions were removed.
     pub fn remove_inactive(&mut self, cutoff: TimestampMillis) -> Vec<(UserId, Vec<String>)> {
         let mut removed = Vec::new();
         let mut count_removed = 0;
