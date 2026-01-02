@@ -47,7 +47,6 @@
     import DropTarget from "../DropTarget.svelte";
     import Footer from "../Footer.svelte";
     import MemeBuilder from "../MemeBuilder.svelte";
-    import P2PSwapContentBuilder from "../P2PSwapContentBuilder.svelte";
     import TimelineDate from "../TimelineDate.svelte";
     import ThreadHeader from "./ThreadHeader.svelte";
 
@@ -68,7 +67,6 @@
     let initialised = $state(false);
     let messagesDiv: HTMLDivElement | undefined = $state();
     let messagesDivHeight: number = $state(0);
-    let creatingP2PSwapMessage = $state(false);
     let removeLinkPreviewDetails: { event: EventWrapper<Message>; url: string } | undefined =
         $state(undefined);
 
@@ -253,7 +251,10 @@
     }
 
     function createP2PSwapMessage() {
-        creatingP2PSwapMessage = true;
+        publish("createSwap", {
+            fromLedger: $lastCryptoSent ?? LEDGER_CANISTER_ICP,
+            ctx: messageContext,
+        });
     }
 
     function onRemovePreview(event: EventWrapper<Message>, url: string): void {
@@ -291,13 +292,6 @@
 
 {#if removeLinkPreviewDetails !== undefined}
     <AreYouSure title={i18nKey("removePreviewQuestion")} action={removePreview} />
-{/if}
-
-{#if creatingP2PSwapMessage}
-    <P2PSwapContentBuilder
-        fromLedger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
-        {messageContext}
-        onClose={() => (creatingP2PSwapMessage = false)} />
 {/if}
 
 <MemeBuilder onSend={onSendMessageWithContent} bind:this={memeBuilder} bind:open={buildingMeme} />

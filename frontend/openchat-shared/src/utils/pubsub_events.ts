@@ -232,4 +232,5 @@ export type PubSubEvents = {
     evaluateCommunityAccessGate: undefined;
     evaluateGroupAccessGate: undefined;
     streakInsurance: undefined;
+    createSwap: { fromLedger: string; ctx: MessageContext };
 };

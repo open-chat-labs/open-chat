@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Body, BodySmall, ColourVars, Container, Row } from "component-lib";
     import type { ResourceKey } from "openchat-client";
     import { _ } from "svelte-i18n";
     import DoneIcon from "svelte-material-icons/CheckCircle.svelte";
@@ -15,80 +16,61 @@
     }
 
     let { label, status, step = 0 }: Props = $props();
+
+    const colours: Record<string, string> = {
+        todo: ColourVars.textPrimary,
+        done: ColourVars.success,
+        failed: ColourVars.error,
+    };
 </script>
 
-<div class={`step ${status}`}>
+<Row padding={["sm", "zero"]} gap={"md"} crossAxisAlignment={"center"}>
     {#if status === "doing"}
         <div class="spinner">
             <Spinner
-                size="25px"
+                size="1.6rem"
+                strokeWidth={"2px"}
                 foregroundColour={$currentTheme.toast.success.bg}
                 backgroundColour={"rgba(255,255,255,0.5)"}></Spinner>
-            <div class="number">{step + 1}</div>
+            <div class="number">
+                <BodySmall align={"center"} width={"hug"}>
+                    {step + 1}
+                </BodySmall>
+            </div>
         </div>
     {:else if status === "overall-done"}
-        <div class="icon">
-            <DoneIcon size="30px" viewBox="2 2 24 24" color={$currentTheme.toast.success.bg} />
-        </div>
+        <DoneIcon size="1.6rem" color={ColourVars.success} />
     {:else if status === "overall-failed"}
-        <div class="icon">
-            <FailedIcon size="30px" viewBox="2 2 24 24" color={$currentTheme.error} />
-        </div>
+        <FailedIcon size="1.6rem" color={ColourVars.error} />
     {:else}
-        <div class={`index ${status}`}>
-            {step + 1}
-        </div>
+        <Container
+            borderColour={colours[status] ?? ColourVars.textPrimary}
+            borderWidth={"thick"}
+            borderRadius={"circle"}
+            mainAxisAlignment={"center"}
+            crossAxisAlignment={"center"}
+            width={{ size: "1.5rem" }}
+            height={{ size: "1.5rem" }}>
+            <BodySmall width={"hug"}>
+                {step + 1}
+            </BodySmall>
+        </Container>
     {/if}
-    <div class={`label ${status}`}>
+    <Body>
         <Markdown text={interpolate($_, label)} />
-    </div>
-</div>
+    </Body>
+</Row>
 
 <style lang="scss">
-    .step {
-        display: flex;
-        gap: $sp3;
-        align-items: center;
-        margin-bottom: $sp4;
-        &.todo {
-            color: var(--text-secondary);
-            font-size: var(--typo-body-small-sz);
-            line-height: var(--typo-body-small-lh);
-        }
-        .index {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            @include font(book, normal, fs-80);
-            border: 3px solid red;
-            width: 25px;
-            height: 25px;
-            border-radius: 50%;
-            &.todo {
-                border-color: var(--txt-light);
-            }
-            &.done {
-                border-color: var(--toast-success-bg);
-            }
-            &.failed {
-                border-color: var(--error);
-            }
-        }
-    }
     .spinner {
         position: relative;
-        height: 25px;
+        height: 24px;
+        width: 24px;
         .number {
-            @include font(book, normal, fs-80);
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
         }
-    }
-
-    .icon {
-        width: 25px;
-        height: 25px;
     }
 </style>

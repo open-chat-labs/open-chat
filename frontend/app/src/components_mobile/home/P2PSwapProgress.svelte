@@ -1,11 +1,10 @@
 <script lang="ts">
+    import { Column, Sheet, Subtitle } from "component-lib";
     import type { OpenChat, P2PSwapContent } from "openchat-client";
-    import Overlay from "../Overlay.svelte";
-    import ModalContent from "../ModalContent.svelte";
-    import ProgressSteps, { type Result, type Step } from "../ProgressSteps.svelte";
     import { getContext } from "svelte";
-    import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import ProgressSteps, { type Result, type Step } from "../ProgressSteps.svelte";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
     const labelPrefix = "p2pSwap.progress.";
@@ -130,25 +129,11 @@
     let title = $derived(i18nKey("p2pSwap.swapTokenTo", labelValues));
 </script>
 
-<Overlay dismissible {onClose}>
-    <ModalContent hideFooter>
-        {#snippet header()}
+<Sheet onDismiss={onClose}>
+    <Column gap={"lg"} padding={"lg"}>
+        <Subtitle fontWeight={"bold"}>
             <Translatable resourceKey={title} />
-        {/snippet}
-        {#snippet body()}
-            <div class="p2p-swap-progress">
-                <ProgressSteps steps={fullSteps} {labelValues} result={fullResult} />
-            </div>
-        {/snippet}
-    </ModalContent>
-</Overlay>
-
-<style lang="scss">
-    :global(.p2p-swap-progress .markdown-wrapper a) {
-        color: unset;
-        text-decoration: none;
-        &:hover {
-            text-decoration: underline;
-        }
-    }
-</style>
+        </Subtitle>
+        <ProgressSteps steps={fullSteps} {labelValues} result={fullResult} />
+    </Column>
+</Sheet>

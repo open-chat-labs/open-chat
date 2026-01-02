@@ -67,6 +67,7 @@
     import InviteAndShare from "./membership/InviteAndShare.svelte";
     import MemberManagement from "./membership/MemberManagement.svelte";
     import NewMessage from "./NewMessage.svelte";
+    import P2PSwapContentBuilder from "./P2PSwapContentBuilder.svelte";
     import PinnedMessages from "./pinned/PinnedMessages.svelte";
     import PollBuilder from "./PollBuilder.svelte";
     import PrizeContentBuilder from "./PrizeContentBuilder.svelte";
@@ -108,6 +109,7 @@
 
     const client = getContext<OpenChat>("client");
     type SlidingModalType =
+        | { kind: "create_swap"; fromLedger: string; ctx: MessageContext }
         | {
               kind: "show_video_call_participants";
 
@@ -235,6 +237,9 @@
         }
 
         const unsubs = [
+            subscribe("createSwap", ({ fromLedger, ctx }) =>
+                push({ kind: "create_swap", fromLedger, ctx }),
+            ),
             subscribe("closeThread", closeThread),
             subscribe("createPoll", (messageContext) =>
                 push({ kind: "create_poll", messageContext }),
@@ -587,6 +592,11 @@
             <PollBuilder messageContext={page.messageContext} onClose={pop} />
         {:else if page.kind === "create_prize"}
             <PrizeContentBuilder context={page.messageContext} onClose={pop} />
+        {:else if page.kind === "create_swap"}
+            <P2PSwapContentBuilder
+                fromLedger={page.fromLedger}
+                messageContext={page.ctx}
+                onClose={pop} />
         {:else if page.kind === "evaluate_community_access_gate"}
             <AccessGatesEvaluator
                 gates={communityPreviewState.gatesToEvaluate}

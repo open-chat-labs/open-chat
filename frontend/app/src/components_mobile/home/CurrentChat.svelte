@@ -48,7 +48,6 @@
     import ExternalContent from "./ExternalContent.svelte";
     import Footer from "./Footer.svelte";
     import MemeBuilder from "./MemeBuilder.svelte";
-    import P2PSwapContentBuilder from "./P2PSwapContentBuilder.svelte";
 
     interface Props {
         chat: ChatSummary;
@@ -65,7 +64,6 @@
     let unreadMessages = $state<number>(0);
     let firstUnreadMention = $state<Mention | undefined>();
     let creatingCryptoTransfer: { ledger: string; amount: bigint } | undefined = $state(undefined);
-    let creatingP2PSwapMessage = $state(false);
     let buildingMeme = $state(false);
     //@ts-ignore
     let memeBuilder: MemeBuilder = $state();
@@ -148,7 +146,10 @@
     }
 
     function createP2PSwapMessage() {
-        creatingP2PSwapMessage = true;
+        publish("createSwap", {
+            fromLedger: $lastCryptoSent ?? LEDGER_CANISTER_ICP,
+            ctx: messageContext,
+        });
     }
 
     function onFileSelected(content: AttachmentContent) {
@@ -336,13 +337,6 @@
         defaultReceiver={defaultCryptoTransferReceiver()}
         {messageContext}
         onClose={() => (creatingCryptoTransfer = undefined)} />
-{/if}
-
-{#if creatingP2PSwapMessage}
-    <P2PSwapContentBuilder
-        fromLedger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
-        {messageContext}
-        onClose={() => (creatingP2PSwapMessage = false)} />
 {/if}
 
 <MemeBuilder onSend={onSendMessageWithContent} bind:this={memeBuilder} bind:open={buildingMeme} />

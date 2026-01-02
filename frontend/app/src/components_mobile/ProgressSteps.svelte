@@ -16,12 +16,13 @@
 </script>
 
 <script lang="ts">
-    import { fade } from "svelte/transition";
+    import { Column } from "component-lib";
+    import type { InterpolationValues } from "openchat-client";
     import { flip } from "svelte/animate";
+    import { fade } from "svelte/transition";
+    import { i18nKey } from "../i18n/i18n";
     import Progress from "./Progress.svelte";
     import ProgressStep from "./ProgressStep.svelte";
-    import type { InterpolationValues } from "openchat-client";
-    import { i18nKey } from "../i18n/i18n";
 
     interface Props {
         steps: Step[];
@@ -33,7 +34,7 @@
     let { steps, result, labelValues = undefined, percent = undefined }: Props = $props();
 </script>
 
-<div>
+<Column>
     {#each steps as step, i ("step" + i)}
         <div in:fade={{ duration: 500 }} animate:flip={{ duration: 500 }}>
             <ProgressStep
@@ -49,10 +50,8 @@
                 status={"overall-" + result.status} />
         </div>
     {/if}
-</div>
+</Column>
 
 {#if result === undefined && percent !== undefined}
-    <div class="progress">
-        <Progress size={"30px"} {percent} />
-    </div>
+    <Progress size={"8px"} {percent} />
 {/if}

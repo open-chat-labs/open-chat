@@ -1,14 +1,5 @@
 <script lang="ts">
-    import {
-        Body,
-        BodySmall,
-        Chip,
-        Column,
-        CommonButton,
-        IconButton,
-        Row,
-        Sheet,
-    } from "component-lib";
+    import { BodySmall, Chip, Column, CommonButton, Row } from "component-lib";
     import type { MessageContext, OpenChat, P2PSwapContentInitial } from "openchat-client";
     import {
         enhancedCryptoLookup as cryptoLookup,
@@ -19,13 +10,13 @@
     } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import Close from "svelte-material-icons/Close.svelte";
     import Paperclip from "svelte-material-icons/Paperclip.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import AreYouSure from "../AreYouSure.svelte";
     import Translatable from "../Translatable.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
     import DurationSelector from "./DurationSelector.svelte";
+    import SlidingPageContent from "./SlidingPageContent.svelte";
     import TokenInput from "./TokenInput.svelte";
     import TransferFeesMessage from "./TransferFeesMessage.svelte";
     import { TokenState } from "./wallet/walletState.svelte";
@@ -151,27 +142,27 @@
     </Chip>
 {/snippet}
 
-<Sheet onDismiss={onClose}>
-    <Column gap={"lg"} padding={["lg", "xl"]}>
-        <Row>
-            <Body fontWeight={"bold"}>
-                <Translatable resourceKey={i18nKey("Select tokens to swap")} />
-            </Body>
-            <IconButton onclick={onClose}>
-                {#snippet icon(color)}
-                    <Close {color} />
-                {/snippet}
-            </IconButton>
-        </Row>
-
-        <CryptoSelector
-            filter={(t) => t.balance > 0}
-            bind:ledger={fromLedger}
-            draftAmount={fromAmount}
-            showRefresh
-            onSelect={onSelectFromToken} />
+<SlidingPageContent title={i18nKey("Create a swap offer")} subtitle={i18nKey("P2P Swap")}>
+    <Column gap={"xl"} padding={["lg", "xl"]}>
+        <Column>
+            <BodySmall fontWeight={"bold"}>
+                <Translatable resourceKey={i18nKey("Token to offer")} />
+            </BodySmall>
+            <BodySmall colour={"textSecondary"}>
+                <Translatable
+                    resourceKey={i18nKey(
+                        "This is the token that you are offering for exchange. You can only swap tokens for which you hold a non-zero balance. Top up via your wallet if necessary.",
+                    )} />
+            </BodySmall>
+        </Column>
 
         <Column gap={"md"}>
+            <CryptoSelector
+                filter={(t) => t.balance > 0}
+                bind:ledger={fromLedger}
+                draftAmount={fromAmount}
+                showRefresh
+                onSelect={onSelectFromToken} />
             <TokenInput
                 ledger={fromLedger}
                 {minAmount}
@@ -196,19 +187,31 @@
             </Row>
         </Column>
 
-        <CryptoSelector filter={(t) => t.ledger !== fromLedger} bind:ledger={toLedger} />
+        <Column>
+            <BodySmall fontWeight={"bold"}>
+                <Translatable resourceKey={i18nKey("Token to receive")} />
+            </BodySmall>
+            <BodySmall colour={"textSecondary"}>
+                <Translatable
+                    resourceKey={i18nKey(
+                        "This is the token that you would like to receive in return. You decide how many tokens you would like to receive in the exchange.",
+                    )} />
+            </BodySmall>
+        </Column>
+        <Column gap={"md"}>
+            <CryptoSelector filter={(t) => t.ledger !== fromLedger} bind:ledger={toLedger} />
 
-        <TokenInput ledger={toLedger} bind:valid={toAmountValid} bind:amount={toAmount}>
-            {#snippet subtext()}
-                {`The amount of ${toDetails.symbol} tokens you would like in return`}
-            {/snippet}
-            {#snippet converted()}
-                <BodySmall colour={"textSecondary"}>
-                    {`${toState.formatConvertedTokens(toAmount)}`}
-                </BodySmall>
-            {/snippet}
-        </TokenInput>
-
+            <TokenInput ledger={toLedger} bind:valid={toAmountValid} bind:amount={toAmount}>
+                {#snippet subtext()}
+                    {`The amount of ${toDetails.symbol} tokens you would like in return`}
+                {/snippet}
+                {#snippet converted()}
+                    <BodySmall colour={"textSecondary"}>
+                        {`${toState.formatConvertedTokens(toAmount)}`}
+                    </BodySmall>
+                {/snippet}
+            </TokenInput>
+        </Column>
         <DurationSelector bind:duration={expiresIn}>
             {#snippet title()}
                 <BodySmall fontWeight={"bold"}>
@@ -230,4 +233,4 @@
             </CommonButton>
         </Row>
     </Column>
-</Sheet>
+</SlidingPageContent>
