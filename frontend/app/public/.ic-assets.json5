@@ -6,4 +6,10 @@
             "X-Cacheable-Resource": "true",
         },
     },
+    {
+        match: "openchat.webmanifest",
+        headers: {
+            "Content-Type": "application/manifest+json",
+        }
+    }
 ]
