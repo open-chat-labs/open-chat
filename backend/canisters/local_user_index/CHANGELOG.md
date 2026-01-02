@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Sync bot installation updates with `user_index` ([#8731](https://github.com/open-chat-labs/open-chat/pull/8731))
+- When fetching updates prioritise chats with the latest activity ([#8739](https://github.com/open-chat-labs/open-chat/pull/8739))
+- Remove `p256hd_key` from `SubscriptionRemoved` events ([#8746](https://github.com/open-chat-labs/open-chat/pull/8746))
 
 ## [[2.0.1937](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1937-local_user_index)] - 2025-12-22
 
