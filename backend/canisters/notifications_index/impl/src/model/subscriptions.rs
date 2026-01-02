@@ -99,31 +99,31 @@ impl Subscriptions {
     }
 
     pub fn remove_inactive(&mut self, cutoff: TimestampMillis) -> Vec<(UserId, Vec<String>)> {
-        let mut all_removed = Vec::new();
+        let mut removed = Vec::new();
         let mut count_removed = 0;
 
         self.subscriptions.retain(|user_id, subscriptions| {
-            let removed: Vec<_> = subscriptions
+            let removed_for_user: Vec<_> = subscriptions
                 .extract_if(.., |s| s.last_active < cutoff)
                 .map(|s| s.endpoint)
                 .collect();
 
-            count_removed += removed.len() as u32;
+            count_removed += removed_for_user.len() as u32;
 
             if subscriptions.is_empty() {
-                all_removed.push((*user_id, Vec::new()));
+                removed.push((*user_id, Vec::new()));
                 return false;
             }
 
-            if !removed.is_empty() {
-                all_removed.push((*user_id, removed));
+            if !removed_for_user.is_empty() {
+                removed.push((*user_id, removed_for_user));
             }
             true
         });
 
         info!(count_removed, "Removed inactive subscriptions");
 
-        all_removed
+        removed
     }
 }
 
