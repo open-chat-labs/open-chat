@@ -625,23 +625,16 @@ const EXCHANGE_RATE_UPDATE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
 
-type UnresolvedRequest = {
-    kind: string;
-    sentAt: number;
-};
-
 type PromiseResolver<T> = {
     resolve: (val: T | PromiseLike<T>, final: boolean) => void;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     reject: (reason?: any) => void;
-    timeout: number;
 };
 
 export class OpenChat {
     #worker!: Worker;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     #pending: Map<string, PromiseResolver<any>> = new Map(); // in-flight requests
-    #unresolved: Map<string, UnresolvedRequest> = new Map(); // requests that never resolved
     #connectedToWorker = false;
     #authIdentityStorage: IdentityStorage;
     #authPrincipal: string | undefined;
@@ -710,6 +703,8 @@ export class OpenChat {
         this.#authClient
             .then((c) => c.getIdentity())
             .then((authIdentity) => this.#loadedAuthenticationIdentity(authIdentity, undefined));
+
+        window.setInterval(() => this.monitorPendingRequests(), ONE_MINUTE_MILLIS);
     }
 
     public get AuthPrincipal(): string {
@@ -4030,7 +4025,6 @@ export class OpenChat {
                     newAchievement,
                 },
                 undefined,
-                ledger !== undefined ? 2 * DEFAULT_WORKER_TIMEOUT : undefined,
             ).subscribe({
                 onResult: (response) => {
                     if (response === "accepted") {
@@ -5392,7 +5386,6 @@ export class OpenChat {
                 adopt,
             },
             false,
-            2 * DEFAULT_WORKER_TIMEOUT,
         ).catch(CommonResponses.failure);
     }
 
@@ -7237,7 +7230,6 @@ export class OpenChat {
                 transactionFee: nervousSystem.token.transferFee,
             },
             false,
-            2 * DEFAULT_WORKER_TIMEOUT,
         )
             .then((resp) => {
                 if (resp.kind === "success" || resp.kind === "retrying") {
@@ -7313,7 +7305,6 @@ export class OpenChat {
                 pin,
             },
             false,
-            3 * ONE_MINUTE_MILLIS,
         ).then((resp) => {
             if (resp.kind === "error") {
                 const pinNumberFailure = pinNumberFailureFromError(resp);
@@ -9528,15 +9519,8 @@ export class OpenChat {
     }
 
     #logUnexpected(correlationId: string): void {
-        const unresolved = this.#unresolved.get(correlationId);
-        const timedOut =
-            unresolved === undefined
-                ? ""
-                : `Timed-out req of kind: ${unresolved.kind} received after ${
-                      Date.now() - unresolved.sentAt
-                  }ms`;
         console.error(
-            `WORKER_CLIENT: unexpected correlationId received (${correlationId}). ${timedOut}`,
+            `WORKER_CLIENT: unexpected correlationId received (${correlationId})`,
         );
     }
 
@@ -9545,47 +9529,30 @@ export class OpenChat {
         if (promise !== undefined) {
             promise.resolve(data.response, data.final);
             if (data.final) {
-                window.clearTimeout(promise.timeout);
                 this.#pending.delete(data.correlationId);
             }
         } else {
             this.#logUnexpected(data.correlationId);
         }
-        this.#unresolved.delete(data.correlationId);
     }
 
     #resolveError(data: WorkerError): void {
         const promise = this.#pending.get(data.correlationId);
         if (promise !== undefined) {
             promise.reject(JSON.parse(data.error));
-            window.clearTimeout(promise.timeout);
             this.#pending.delete(data.correlationId);
         } else {
             this.#logUnexpected(data.correlationId);
         }
-        this.#unresolved.delete(data.correlationId);
     }
 
-    responseHandler<Req extends WorkerRequest, T>(
-        req: Req,
+    responseHandler<T>(
         correlationId: string,
-        timeout: number,
     ): (resolve: (val: T, final: boolean) => void, reject: (reason?: unknown) => void) => void {
         return (resolve, reject) => {
-            const sentAt = Date.now();
             this.#pending.set(correlationId, {
                 resolve,
                 reject,
-                timeout: window.setTimeout(() => {
-                    reject(
-                        `WORKER_CLIENT: Request of kind ${req.kind} with correlationId ${correlationId} did not receive a response withing the ${DEFAULT_WORKER_TIMEOUT}ms timeout`,
-                    );
-                    this.#unresolved.set(correlationId, {
-                        kind: req.kind,
-                        sentAt,
-                    });
-                    this.#pending.delete(correlationId);
-                }, timeout),
             });
         };
     }
@@ -9593,27 +9560,24 @@ export class OpenChat {
     #sendStreamRequest<Req extends WorkerRequest>(
         req: Req,
         connecting = false,
-        timeout: number = DEFAULT_WORKER_TIMEOUT,
     ): Stream<WorkerResult<Req>> {
         //eslint-disable-next-line @typescript-eslint/ban-ts-comment
         //@ts-ignore
-        return new Stream<WorkerResult<Req>>(this.#sendRequestInternal(req, connecting, timeout));
+        return new Stream<WorkerResult<Req>>(this.#sendRequestInternal(req, connecting));
     }
 
     async #sendRequest<Req extends WorkerRequest>(
         req: Req,
         connecting = false,
-        timeout: number = DEFAULT_WORKER_TIMEOUT,
     ): Promise<WorkerResult<Req>> {
         //eslint-disable-next-line @typescript-eslint/ban-ts-comment
         //@ts-ignore
-        return new Promise<WorkerResult<Req>>(this.#sendRequestInternal(req, connecting, timeout));
+        return new Promise<WorkerResult<Req>>(this.#sendRequestInternal(req, connecting));
     }
 
     #sendRequestInternal<Req extends WorkerRequest, T>(
         req: Req,
         connecting: boolean,
-        timeout: number,
     ): (resolve: (val: T, final: boolean) => void, reject: (reason?: unknown) => void) => void {
         if (!connecting && !this.#connectedToWorker) {
             throw new Error("WORKER_CLIENT: the client is not yet connected to the worker");
@@ -9628,7 +9592,14 @@ export class OpenChat {
             console.error("Error sending postMessage to worker", err);
             throw err;
         }
-        return this.responseHandler(req, correlationId, timeout);
+        return this.responseHandler(correlationId);
+    }
+
+    monitorPendingRequests() {
+        const pendingRequests = this.#pending.size;
+        if (pendingRequests >= 0) {
+            this.#logger.error("Pending request count exceeded limit", { count: pendingRequests });
+        }
     }
 
     getBotConfig(): Promise<BotClientConfigData> {
