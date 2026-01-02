@@ -9597,7 +9597,7 @@ export class OpenChat {
 
     monitorPendingRequests() {
         const pendingRequests = this.#pending.size;
-        if (pendingRequests >= 0) {
+        if (pendingRequests >= 100) {
             this.#logger.error("Pending request count exceeded limit", { count: pendingRequests });
         }
     }
