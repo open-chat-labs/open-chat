@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Fix Base64 encoding of notifications ([#8743](https://github.com/open-chat-labs/open-chat/pull/8743))
+
+## [[2.0.1940](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1940-notification_pusher)] - 2025-12-30
+
 ### Changed
 
 - Use the endpoint as unique identifier for notification subscriptions ([#8670](https://github.com/open-chat-labs/open-chat/pull/8670))
