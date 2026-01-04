@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Remove `p256hd_key` from `SubscriptionRemoved` events ([#8746](https://github.com/open-chat-labs/open-chat/pull/8746))
+- Remove subscriptions that have been inactive for 90 days ([#8747](https://github.com/open-chat-labs/open-chat/pull/8747))
 
 ## [[2.0.1940](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1940-notifications_index)] - 2025-12-31
 
