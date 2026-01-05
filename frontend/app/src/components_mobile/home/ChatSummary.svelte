@@ -340,209 +340,214 @@
 
 {#if visible}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
-
-    <MenuTrigger
-        fill
-        maskUI
-        classString={"chat_summary_menu_trigger"}
-        disabled={$suspendedUserStore || readonly}
-        position={"top"}
-        align={"end"}
-        mobileMode={"longpress"}>
-        {#snippet menuItems()}
-            {#if !$favouritesStore.has(chatSummary.id)}
-                <MenuItem onclick={addToFavourites}>
-                    {#snippet icon(_, size)}
-                        <HeartPlus color={"var(--error)"} {size} />
-                    {/snippet}
-                    <Translatable resourceKey={i18nKey("communities.addToFavourites")} />
-                </MenuItem>
-            {:else}
-                <MenuItem onclick={removeFromFavourites}>
-                    {#snippet icon(_, size)}
-                        <HeartMinus color={"var(--error)"} {size} />
-                    {/snippet}
-                    <Translatable resourceKey={i18nKey("communities.removeFromFavourites")} />
-                </MenuItem>
-            {/if}
-            {#if !pinned}
-                <MenuItem onclick={pinChat}>
-                    {#snippet icon(color, size)}
-                        <PinIcon {color} {size} />
-                    {/snippet}
-                    <Translatable resourceKey={i18nKey("pinChat.menuItem")} />
-                </MenuItem>
-            {:else}
-                <MenuItem onclick={unpinChat}>
-                    {#snippet icon(color, size)}
-                        <PinOffIcon {color} {size} />
-                    {/snippet}
-                    <Translatable resourceKey={i18nKey("pinChat.unpinMenuItem")} />
-                </MenuItem>
-            {/if}
-            {#if notificationsSupported && !externalContent}
-                {#if muted}
-                    <MenuItem onclick={() => toggleMuteNotifications(false, undefined)}>
-                        {#snippet icon(color, size)}
-                            <BellIcon {color} {size} />
+    <Container supplementalClass="chat_summary_wrapper" padding={["zero", "sm"]}>
+        <MenuTrigger
+            fill
+            maskUI
+            classString={"chat_summary_menu_trigger"}
+            disabled={$suspendedUserStore || readonly}
+            position={"top"}
+            align={"end"}
+            mobileMode={"longpress"}>
+            {#snippet menuItems()}
+                {#if !$favouritesStore.has(chatSummary.id)}
+                    <MenuItem onclick={addToFavourites}>
+                        {#snippet icon(_, size)}
+                            <HeartPlus color={"var(--error)"} {size} />
                         {/snippet}
-                        <Translatable resourceKey={i18nKey("unmuteNotifications")} />
+                        <Translatable resourceKey={i18nKey("communities.addToFavourites")} />
                     </MenuItem>
                 {:else}
-                    <MenuItem onclick={() => toggleMuteNotifications(true, undefined)}>
-                        {#snippet icon(color, size)}
-                            <MutedIcon {color} {size} />
+                    <MenuItem onclick={removeFromFavourites}>
+                        {#snippet icon(_, size)}
+                            <HeartMinus color={"var(--error)"} {size} />
                         {/snippet}
-                        <Translatable resourceKey={i18nKey("muteNotifications")} />
+                        <Translatable resourceKey={i18nKey("communities.removeFromFavourites")} />
                     </MenuItem>
                 {/if}
-                {#if atEveryoneMuted}
-                    <MenuItem onclick={() => toggleMuteNotifications(undefined, false)}>
+                {#if !pinned}
+                    <MenuItem onclick={pinChat}>
                         {#snippet icon(color, size)}
-                            <MutedIcon {color} {size} />
+                            <PinIcon {color} {size} />
                         {/snippet}
-                        <Translatable resourceKey={i18nKey("unmuteAtEveryone")} />
-                    </MenuItem>
-                {:else}
-                    <MenuItem onclick={() => toggleMuteNotifications(undefined, true)}>
-                        {#snippet icon(color, size)}
-                            <MutedIcon {color} {size} />
-                        {/snippet}
-                        <Translatable resourceKey={i18nKey("muteAtEveryone")} />
-                    </MenuItem>
-                {/if}
-            {/if}
-            {#if !externalContent}
-                <MenuItem
-                    disabled={unreadMessages === 0}
-                    onclick={() => client.markAllRead(chatSummary)}>
-                    {#snippet icon(color, size)}
-                        <CheckboxMultipleMarked {size} {color} />
-                    {/snippet}
-                    <Translatable resourceKey={i18nKey("markAllRead")} />
-                </MenuItem>
-            {/if}
-            {#if !chat.bot}
-                {#if chatSummary.membership.archived}
-                    <MenuItem onclick={selectChat}>
-                        {#snippet icon(color, size)}
-                            <ArchiveOffIcon {color} {size} />
-                        {/snippet}
-                        <Translatable resourceKey={i18nKey("unarchiveChat")} />
+                        <Translatable resourceKey={i18nKey("pinChat.menuItem")} />
                     </MenuItem>
                 {:else}
-                    <MenuItem onclick={archiveChat}>
+                    <MenuItem onclick={unpinChat}>
                         {#snippet icon(color, size)}
-                            <ArchiveIcon {color} {size} />
+                            <PinOffIcon {color} {size} />
                         {/snippet}
-                        <Translatable resourceKey={i18nKey("archiveChat")} />
+                        <Translatable resourceKey={i18nKey("pinChat.unpinMenuItem")} />
                     </MenuItem>
                 {/if}
-            {/if}
-            {#if chatSummary.kind !== "direct_chat" && client.canLeaveGroup(chatSummary.id)}
-                <MenuItem danger onclick={leaveGroup}>
-                    {#snippet icon(color, size)}
-                        <LocationExit {color} {size} />
-                    {/snippet}
-                    {interpolate($_, i18nKey("leaveGroup", undefined, chatSummary.level, true))}
-                </MenuItem>
-            {/if}
-        {/snippet}
-        <Container
-            onClick={selectChat}
-            supplementalClass={"chat_summary"}
-            padding={["sm", "lg"]}
-            mainAxisAlignment={"spaceBetween"}
-            crossAxisAlignment={"center"}
-            gap={"lg"}>
-            <div class="avatar">
-                <Avatar size={"lg"} url={chat.avatarUrl} name={chat.name} />
-                {#if chat.eventsTTL}
-                    <div class="expires">
-                        <CameraTimer size={"1em"} color={"var(--txt)"} />
-                    </div>
+                {#if notificationsSupported && !externalContent}
+                    {#if muted}
+                        <MenuItem onclick={() => toggleMuteNotifications(false, undefined)}>
+                            {#snippet icon(color, size)}
+                                <BellIcon {color} {size} />
+                            {/snippet}
+                            <Translatable resourceKey={i18nKey("unmuteNotifications")} />
+                        </MenuItem>
+                    {:else}
+                        <MenuItem onclick={() => toggleMuteNotifications(true, undefined)}>
+                            {#snippet icon(color, size)}
+                                <MutedIcon {color} {size} />
+                            {/snippet}
+                            <Translatable resourceKey={i18nKey("muteNotifications")} />
+                        </MenuItem>
+                    {/if}
+                    {#if atEveryoneMuted}
+                        <MenuItem onclick={() => toggleMuteNotifications(undefined, false)}>
+                            {#snippet icon(color, size)}
+                                <MutedIcon {color} {size} />
+                            {/snippet}
+                            <Translatable resourceKey={i18nKey("unmuteAtEveryone")} />
+                        </MenuItem>
+                    {:else}
+                        <MenuItem onclick={() => toggleMuteNotifications(undefined, true)}>
+                            {#snippet icon(color, size)}
+                                <MutedIcon {color} {size} />
+                            {/snippet}
+                            <Translatable resourceKey={i18nKey("muteAtEveryone")} />
+                        </MenuItem>
+                    {/if}
                 {/if}
-                <!-- TODO video call info should be the displayed instead of the last message if tehre are active calls  -->
-                <!-- <VideoCallIcon video={chat.video} /> -->
-                {#if chat.private}
-                    <div class="private">
-                        <LockOutline size="0.85rem" color={ColourVars.error} />
-                    </div>
+                {#if !externalContent}
+                    <MenuItem
+                        disabled={unreadMessages === 0}
+                        onclick={() => client.markAllRead(chatSummary)}>
+                        {#snippet icon(color, size)}
+                            <CheckboxMultipleMarked {size} {color} />
+                        {/snippet}
+                        <Translatable resourceKey={i18nKey("markAllRead")} />
+                    </MenuItem>
                 {/if}
-            </div>
-            <Container width={"fill"} direction={"vertical"}>
-                <Container
-                    gap={"lg"}
-                    width={"fill"}
-                    mainAxisAlignment={"spaceBetween"}
-                    crossAxisAlignment={"center"}>
-                    <Container crossAxisAlignment={"center"} gap={"sm"} width={"fill"}>
-                        <WithVerifiedBadge {verified} size={"small"}>
-                            <Subtitle ellipsisTruncate fontWeight={"semi-bold"}>
-                                {#if community !== undefined && $chatListScopeStore.kind === "favourite"}
-                                    <span>{community.name}</span>
-                                    <span>{">"}</span>
-                                {/if}
-                                <span>{chat.name}</span>
-                            </Subtitle>
-                        </WithVerifiedBadge>
-                        <BotBadge bot={chat.bot} />
+                {#if !chat.bot}
+                    {#if chatSummary.membership.archived}
+                        <MenuItem onclick={selectChat}>
+                            {#snippet icon(color, size)}
+                                <ArchiveOffIcon {color} {size} />
+                            {/snippet}
+                            <Translatable resourceKey={i18nKey("unarchiveChat")} />
+                        </MenuItem>
+                    {:else}
+                        <MenuItem onclick={archiveChat}>
+                            {#snippet icon(color, size)}
+                                <ArchiveIcon {color} {size} />
+                            {/snippet}
+                            <Translatable resourceKey={i18nKey("archiveChat")} />
+                        </MenuItem>
+                    {/if}
+                {/if}
+                {#if chatSummary.kind !== "direct_chat" && client.canLeaveGroup(chatSummary.id)}
+                    <MenuItem danger onclick={leaveGroup}>
+                        {#snippet icon(color, size)}
+                            <LocationExit {color} {size} />
+                        {/snippet}
+                        {interpolate($_, i18nKey("leaveGroup", undefined, chatSummary.level, true))}
+                    </MenuItem>
+                {/if}
+            {/snippet}
+            <Container
+                onClick={selectChat}
+                supplementalClass={"chat_summary"}
+                padding={["sm", "sm"]}
+                mainAxisAlignment={"spaceBetween"}
+                crossAxisAlignment={"center"}
+                gap={"lg"}
+                borderRadius={"md"}>
+                <div class="avatar">
+                    <Avatar size={"lg"} url={chat.avatarUrl} name={chat.name} />
+                    {#if chat.eventsTTL}
+                        <div class="expires">
+                            <CameraTimer size={"1em"} color={"var(--txt)"} />
+                        </div>
+                    {/if}
+                    <!-- TODO video call info should be the displayed instead of the last message if tehre are active calls  -->
+                    <!-- <VideoCallIcon video={chat.video} /> -->
+                    {#if chat.private}
+                        <div class="private">
+                            <LockOutline size="0.85rem" color={ColourVars.error} />
+                        </div>
+                    {/if}
+                </div>
+                <Container width={"fill"} direction={"vertical"}>
+                    <Container
+                        gap={"lg"}
+                        width={"fill"}
+                        mainAxisAlignment={"spaceBetween"}
+                        crossAxisAlignment={"center"}>
+                        <Container crossAxisAlignment={"center"} gap={"sm"} width={"fill"}>
+                            <WithVerifiedBadge {verified} size={"small"}>
+                                <Subtitle ellipsisTruncate fontWeight={"semi-bold"}>
+                                    {#if community !== undefined && $chatListScopeStore.kind === "favourite"}
+                                        <span>{community.name}</span>
+                                        <span>{">"}</span>
+                                    {/if}
+                                    <span>{chat.name}</span>
+                                </Subtitle>
+                            </WithVerifiedBadge>
+                            <BotBadge bot={chat.bot} />
+                        </Container>
+                        <Container
+                            supplementalClass={"chat-date"}
+                            width={"hug"}
+                            gap={"xs"}
+                            crossAxisAlignment={"center"}
+                            mainAxisAlignment={"end"}>
+                            {#if muted && notificationsSupported}
+                                <div class="icon" class:rtl={$rtlStore}>
+                                    <MutedIcon size={"1em"} color={"var(--icon-txt)"} />
+                                </div>
+                            {/if}
+                            {#if pinned}
+                                <div class="icon">
+                                    <PinIcon size={"1em"} color={"var(--icon-txt)"} />
+                                </div>
+                            {/if}
+                            {#if chat.fav}
+                                <div class="icon">
+                                    <Heart size={"1em"} color={"var(--primary)"} />
+                                </div>
+                            {/if}
+                            <BodySmall colour={"textSecondary"} fontWeight={"semi-bold"}>
+                                {client.formatMessageDate(
+                                    displayDate,
+                                    $_("today"),
+                                    $_("yesterday"),
+                                    true,
+                                    true,
+                                )}
+                            </BodySmall>
+                        </Container>
                     </Container>
                     <Container
-                        supplementalClass={"chat-date"}
-                        width={"hug"}
                         gap={"xs"}
-                        crossAxisAlignment={"center"}
-                        mainAxisAlignment={"end"}>
-                        {#if muted && notificationsSupported}
-                            <div class="icon" class:rtl={$rtlStore}>
-                                <MutedIcon size={"1em"} color={"var(--icon-txt)"} />
-                            </div>
+                        mainAxisAlignment={"spaceBetween"}
+                        crossAxisAlignment={"end"}>
+                        <Row gap={"xs"} crossAxisAlignment={"center"}>
+                            {#if LastMessageIcon}
+                                <LastMessageIcon color={ColourVars.textSecondary} />
+                            {/if}
+                            <Body ellipsisTruncate colour={"textSecondary"}>
+                                {#if chat.typing !== undefined}
+                                    {chat.typing} <Typing />
+                                {:else}
+                                    <Markdown text={lastMessage} oneLine suppressLinks />
+                                {/if}
+                            </Body>
+                        </Row>
+                        {#if unreadMessages > 0}
+                            <CountBadge {muted}
+                                >{unreadMessages > 999 ? "999+" : unreadMessages}
+                            </CountBadge>
                         {/if}
-                        {#if pinned}
-                            <div class="icon">
-                                <PinIcon size={"1em"} color={"var(--icon-txt)"} />
-                            </div>
-                        {/if}
-                        {#if chat.fav}
-                            <div class="icon">
-                                <Heart size={"1em"} color={"var(--primary)"} />
-                            </div>
-                        {/if}
-                        <BodySmall colour={"textSecondary"} fontWeight={"semi-bold"}>
-                            {client.formatMessageDate(
-                                displayDate,
-                                $_("today"),
-                                $_("yesterday"),
-                                true,
-                                true,
-                            )}
-                        </BodySmall>
+                        <!-- TODO add read/received receipt -->
                     </Container>
                 </Container>
-                <Container gap={"xs"} mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"end"}>
-                    <Row gap={"xs"} crossAxisAlignment={"center"}>
-                        {#if LastMessageIcon}
-                            <LastMessageIcon color={ColourVars.textSecondary} />
-                        {/if}
-                        <Body ellipsisTruncate colour={"textSecondary"}>
-                            {#if chat.typing !== undefined}
-                                {chat.typing} <Typing />
-                            {:else}
-                                <Markdown text={lastMessage} oneLine suppressLinks />
-                            {/if}
-                        </Body>
-                    </Row>
-                    {#if unreadMessages > 0}
-                        <CountBadge {muted}
-                            >{unreadMessages > 999 ? "999+" : unreadMessages}
-                        </CountBadge>
-                    {/if}
-                    <!-- TODO add read/received receipt -->
-                </Container>
             </Container>
-        </Container>
-    </MenuTrigger>
+        </MenuTrigger>
+    </Container>
 {/if}
 
 <style lang="scss">
@@ -551,12 +556,16 @@
     }
 
     :global(.menu_trigger_clone > .chat_summary) {
-        margin: 0 var(--sp-sm);
-        padding: var(--sp-sm) var(--sp-sm) !important;
-        border-radius: var(--rad-md) !important;
+        transition:
+            background-color 300ms ease-out,
+            box-shadow 200ms ease;
         background-color: var(--background-1) !important;
         box-shadow: var(--menu-sh);
-        opacity: 1 !important;
+    }
+
+    :global(.menu_trigger_clone.fadeout > .chat_summary) {
+        background-color: transparent !important;
+        box-shadow: 0 0 0 rgba(0, 0, 0, 0);
     }
 
     :global(.chat_summary .chat-date) {

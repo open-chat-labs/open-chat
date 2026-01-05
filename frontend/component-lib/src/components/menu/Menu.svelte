@@ -19,7 +19,7 @@
 <div
     oncontextmenu={(e) => e.preventDefault()}
     in:fade={{ duration: 100 }}
-    class={`menu ${cls}`}
+    class={`menu-content ${cls}`}
     class:fit
     class:shadow
     class:centered>
@@ -37,7 +37,7 @@
 </div>
 
 <style lang="scss">
-    .menu {
+    .menu-conten {
         max-height: 80vh;
         max-height: var(--override-height, 80vh);
         border-radius: var(--rad-xl);
