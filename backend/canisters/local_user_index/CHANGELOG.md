@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `bot_change_role` endpoint ([#8753](https://github.com/open-chat-labs/open-chat/pull/8753))
+
 ### Changed
 
 - Sync bot installation updates with `user_index` ([#8731](https://github.com/open-chat-labs/open-chat/pull/8731))

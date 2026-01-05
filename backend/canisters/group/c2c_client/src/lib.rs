@@ -16,6 +16,7 @@ generate_c2c_call!(summary_updates);
 
 // Updates
 generate_c2c_call!(c2c_bot_add_reaction);
+generate_c2c_call!(c2c_bot_change_role);
 generate_c2c_call!(c2c_bot_delete_messages);
 generate_c2c_call!(c2c_bot_invite_users);
 generate_c2c_call!(c2c_bot_remove_user);

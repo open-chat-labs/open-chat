@@ -1,4 +1,5 @@
 pub mod bot_add_reaction;
+pub mod bot_change_role;
 pub mod bot_create_channel;
 pub mod bot_delete_channel;
 pub mod bot_delete_messages;
