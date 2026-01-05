@@ -1,6 +1,5 @@
 import type {
     AddMembersToChannelResponse,
-    ChangeRoleResponse,
     ChannelMatch,
     ChannelSummaryResponse,
     CommunityCanisterChannelSummaryUpdates,
@@ -41,12 +40,9 @@ import type {
     CommunitySelectedInitialResponse,
     CommunitySelectedUpdatesResponse,
     CommunityUpdateCommunitySuccessResult,
-    OCError,
     ChannelMatch as TChannelMatch,
     CommunityCanisterChannelSummaryUpdates as TCommunityCanisterChannelSummaryUpdates,
     CommunityCanisterCommunitySummaryUpdates as TCommunityCanisterCommunitySummaryUpdates,
-    CommunityChangeChannelRoleResponse as TCommunityChangeChannelRoleResponse,
-    CommunityChangeRoleResponse as TCommunityChangeRoleResponse,
     CommunityMembershipUpdates as TCommunityMembershipUpdates,
     CommunityRole as TCommunityRole,
     CommunitySummaryResponse as TCommunitySummaryResponse,
@@ -67,7 +63,6 @@ import {
     groupPermissions,
     groupSubtype,
     installedBotDetails,
-    mapResult,
     memberRole,
     mentions,
     messageEvent,
@@ -459,26 +454,4 @@ export function createUserGroupSuccess(
         kind: "success",
         userGroupId: value.user_group_id,
     };
-}
-
-export function changeRoleResult(value: TCommunityChangeRoleResponse): ChangeRoleResponse {
-    if (value === "Success") {
-        return CommonResponses.success();
-    }
-
-    // Handle PartialSuccess by returning the first error found
-    if ("PartialSuccess" in value) {
-        for (const error of Object.values(value.PartialSuccess as Record<string, OCError>)) {
-            return mapResult({ Error: error }, CommonResponses.success);
-        }
-        return CommonResponses.success();
-    }
-
-    return mapResult(value, CommonResponses.success);
-}
-
-export function changeChannelRoleResult(
-    value: TCommunityChangeChannelRoleResponse,
-): ChangeRoleResponse {
-    return changeRoleResult(value);
 }
