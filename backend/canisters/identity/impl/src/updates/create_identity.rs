@@ -68,8 +68,5 @@ fn create_identity_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     let result = prepare_delegation_inner(seed, args.session_key, args.max_time_to_live, state);
 
-    Success(SuccessResult {
-        user_key: result.user_key,
-        expiration: result.expiration,
-    })
+    Success(result)
 }
