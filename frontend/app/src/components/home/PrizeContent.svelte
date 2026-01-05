@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { DelegationChain, ECDSAKeyIdentity, SignedDelegation } from "@icp-sdk/core/identity";
+    import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
     import {
         AuthProvider,
         chitBands,
@@ -51,7 +51,7 @@
     let progressWidth = $state(0);
     let mouseEvent = $state<MouseEvent>();
 
-    async function claim(e: MouseEvent, auth: { key: ECDSAKeyIdentity, delegation: DelegationChain }) {
+    async function claim(e: MouseEvent, auth: { key: ECDSAKeyIdentity, delegation: DelegationChain } | undefined) {
         let signInProof: string | undefined = undefined;
         if (content.requiresCaptcha) {
             if (auth) {
