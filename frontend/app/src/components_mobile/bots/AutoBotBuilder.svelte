@@ -1,8 +1,8 @@
 <script lang="ts">
+    import { Body, BodySmall, Column, Form, Input, InputIconButton, Row } from "component-lib";
     import {
         allUsersStore,
         debouncedDerived,
-        iconSize,
         OpenChat,
         validateBot,
         ValidationErrors,
@@ -12,15 +12,15 @@
         type ExternalBot,
         type ValidationErrorMessages,
     } from "openchat-client";
-    import { getContext } from "svelte";
+    import { getContext, untrack } from "svelte";
+    import { _ } from "svelte-i18n";
     import Reload from "svelte-material-icons/Reload.svelte";
-    import { i18nKey } from "../../i18n/i18n";
+    import { i18nKey, interpolate } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
     import EditableAvatar from "../EditableAvatar.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import Markdown from "../home/Markdown.svelte";
     import SingleUserSelector from "../home/SingleUserSelector.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
     import Legend from "../Legend.svelte";
     import Tabs, { type Tab } from "../Tabs.svelte";
     import Translatable from "../Translatable.svelte";
@@ -134,6 +134,11 @@
         selectedCommandIndex = index;
     }
 
+    $effect(() => {
+        void candidate.endpoint;
+        untrack(endpointChanged);
+    });
+
     function endpointChanged() {
         schemaLoaded = false;
         candidate.definition = {
@@ -158,7 +163,7 @@
                         candidate.definition = resp;
                         schemaLoaded = true;
                     } else {
-                        toastStore.showFailureToast(i18nKey(`${JSON.stringify(resp.error)}`));
+                        toastStore.showFailureToast(i18nKey("Failed to load bot definition"));
                     }
                 })
                 .finally(() => (schemaLoading = false));
@@ -183,7 +188,9 @@
 {#snippet configtabs()}
     {@const tabs = getTabs(candidate.definition)}
     {#if tabs.length === 1}
-        <Legend label={tabs[0].title}></Legend>
+        <Body fontWeight={"bold"}>
+            <Translatable resourceKey={tabs[0].title} />
+        </Body>
         {@render tabs[0].snippet()}
     {:else}
         <Tabs {tabs}></Tabs>
@@ -222,118 +229,131 @@
         command={selectedCommand}></CommandViewer>
 {/if}
 
-<form onsubmit={onSubmit} class="bot">
-    <Legend label={i18nKey("bots.builder.iconLabel")} />
-    <div class="photo">
-        <EditableAvatar
-            size={"medium"}
-            image={candidate.avatarUrl}
-            onImageSelected={botAvatarSelected} />
-    </div>
+<Form {onSubmit}>
+    <Column gap={"xl"}>
+        <Row mainAxisAlignment={"center"} crossAxisAlignment={"center"}>
+            <EditableAvatar
+                highlightBorder
+                size={"headline"}
+                image={candidate.avatarUrl}
+                onImageSelected={botAvatarSelected} />
+        </Row>
 
-    {#if candidate.registrationStatus.kind === "private" && mode === "register"}
-        <InstallationLocationSelector bind:location={candidate.registrationStatus.location} />
-    {/if}
+        {#if candidate.registrationStatus.kind === "private" && mode === "register"}
+            <InstallationLocationSelector bind:location={candidate.registrationStatus.location} />
+        {/if}
 
-    <Legend
-        required={mode === "register"}
-        label={i18nKey("bots.builder.principalLabel")}
-        rules={i18nKey("bots.builder.principalRules")}></Legend>
-    <ValidatingInput
-        autofocus
-        minlength={3}
-        maxlength={100}
-        invalid={errors.has("bot_principal")}
-        placeholder={mode === "update"
-            ? i18nKey("bots.builder.editPrincipalPlaceholder")
-            : i18nKey("bots.builder.principalPlaceholder")}
-        error={errors.get("bot_principal")}
-        bind:value={principal}>
-    </ValidatingInput>
-
-    {#if mode === "update"}
-        <Legend
-            required
-            label={i18nKey("bots.builder.ownerLabel")}
-            rules={i18nKey("bots.builder.ownerRules")}></Legend>
-        <SingleUserSelector
-            mentionSelf
-            onUserSelected={(user) => (candidate.ownerId = user.userId)}
-            selectedReceiver={$allUsersStore.get(candidate.ownerId)}
-            placeholder={"bots.builder.ownerLabel"} />
-    {/if}
-
-    {#if mode === "register"}
-        <Legend
-            required
-            label={i18nKey("bots.builder.nameLabel")}
-            rules={i18nKey("bots.builder.nameRules")}></Legend>
-        <ValidatingInput
+        <Input
+            autofocus
             minlength={3}
-            maxlength={25}
-            invalid={errors.has("bot_name")}
-            placeholder={i18nKey("bots.builder.namePlaceholder")}
-            error={errors.get("bot_name")}
-            bind:value={candidate.name}>
-        </ValidatingInput>
-    {/if}
+            maxlength={100}
+            placeholder={interpolate(
+                $_,
+                mode === "update"
+                    ? i18nKey("bots.builder.editPrincipalPlaceholder")
+                    : i18nKey("bots.builder.principalPlaceholder"),
+            )}
+            error={errors.has("bot_principal")}
+            bind:value={principal}>
+            {#snippet subtext()}
+                <Row gap={"xs"}>
+                    <Translatable resourceKey={i18nKey("bots.builder.principalLabel")} />
+                    <span>
+                        (<Translatable resourceKey={i18nKey("bots.builder.principalRules")} />)
+                    </span>
+                </Row>
+            {/snippet}
+        </Input>
 
-    <Legend
-        label={i18nKey("bots.builder.endpointLabel")}
-        required
-        rules={i18nKey("bots.builder.endpointRules")}></Legend>
-    <div class="endpoint" class:endpoint-error={errors.has("bot_endpoint")}>
-        <div class="endpoint-input">
+        {#if mode === "update"}
+            <SingleUserSelector
+                mentionSelf
+                onUserSelected={(user) => (candidate.ownerId = user.userId)}
+                selectedReceiver={$allUsersStore.get(candidate.ownerId)}
+                placeholder={"bots.builder.ownerLabel"}>
+                {#snippet subtext()}
+                    <Translatable resourceKey={i18nKey("bots.builder.ownerRules")} />
+                {/snippet}
+            </SingleUserSelector>
+        {/if}
+
+        {#if mode === "register"}
+            <Legend
+                required
+                label={i18nKey("bots.builder.nameLabel")}
+                rules={i18nKey("bots.builder.nameRules")}></Legend>
             <ValidatingInput
                 minlength={3}
-                maxlength={200}
-                invalid={errors.has("bot_endpoint")}
-                error={errors.get("bot_endpoint")}
-                onInput={endpointChanged}
-                onEnter={loadDefinition}
-                placeholder={i18nKey("https://my_openchat_bot")}
-                bind:value={candidate.endpoint} />
-        </div>
-        <div class="icon">
-            {#if !errors.has("bot_endpoint")}
-                <HoverIcon title={"load definition"} onclick={loadDefinition}>
-                    <Reload
-                        size={$iconSize}
-                        color={schemaLoaded ? "var(--icon-txt)" : "var(--accent)"}></Reload>
-                </HoverIcon>
-            {/if}
-        </div>
-    </div>
+                maxlength={25}
+                invalid={errors.has("bot_name")}
+                placeholder={i18nKey("bots.builder.namePlaceholder")}
+                error={errors.get("bot_name")}
+                bind:value={candidate.name}>
+            </ValidatingInput>
+        {/if}
 
-    {#if schemaLoaded}
-        <Legend label={i18nKey("bots.builder.descLabel")}></Legend>
-        <div class="desc">
-            <Markdown inline={false} text={candidate.definition.description} />
-        </div>
+        <Input
+            autofocus
+            minlength={3}
+            maxlength={200}
+            placeholder={interpolate($_, i18nKey("https://my_openchat_bot"))}
+            error={errors.has("bot_endpoint")}
+            bind:value={candidate.endpoint}>
+            {#snippet subtext()}
+                <Row gap={"xs"}>
+                    <Translatable resourceKey={i18nKey("bots.builder.endpointLabel")} />
+                    <span>
+                        (<Translatable resourceKey={i18nKey("bots.builder.endpointRules")} />)
+                    </span>
+                </Row>
+            {/snippet}
 
-        {@render configtabs()}
+            {#snippet iconButtons()}
+                <InputIconButton disabled={errors.has("bot_endpoint")} onClick={loadDefinition}>
+                    {#snippet children(color)}
+                        <Reload {color}></Reload>
+                    {/snippet}
+                </InputIconButton>
+            {/snippet}
+        </Input>
 
-        <div class="error">
-            {#if errors.has("duplicate_commands")}
-                <ErrorMessage>
-                    <Translatable resourceKey={errors.get("duplicate_commands")[0]}></Translatable
-                    ></ErrorMessage>
-            {/if}
-            {#if errors.has("no_commands")}
-                <ErrorMessage>
-                    <Translatable resourceKey={errors.get("no_commands")[0]}></Translatable
-                    ></ErrorMessage>
-            {/if}
-        </div>
-    {/if}
+        {#if schemaLoaded}
+            <Column gap={"xl"} padding={["zero", "md"]}>
+                <Column>
+                    <Body fontWeight={"bold"}>
+                        <Translatable resourceKey={i18nKey("bots.builder.descLabel")} />
+                    </Body>
+                    <BodySmall colour={"textSecondary"}>
+                        <Markdown inline={false} text={candidate.definition.description} />
+                    </BodySmall>
+                </Column>
 
-    {#if debug}
-        <pre class="debug">
+                {@render configtabs()}
+            </Column>
+
+            <div class="error">
+                {#if errors.has("duplicate_commands")}
+                    <ErrorMessage>
+                        <Translatable resourceKey={errors.get("duplicate_commands")[0]}
+                        ></Translatable
+                        ></ErrorMessage>
+                {/if}
+                {#if errors.has("no_commands")}
+                    <ErrorMessage>
+                        <Translatable resourceKey={errors.get("no_commands")[0]}></Translatable
+                        ></ErrorMessage>
+                {/if}
+            </div>
+        {/if}
+
+        {#if debug}
+            <pre class="debug">
             {JSON.stringify(candidate, null, 4)}
         </pre>
-        <pre>{valid}</pre>
-    {/if}
-</form>
+            <pre>{valid}</pre>
+        {/if}
+    </Column>
+</Form>
 
 <style lang="scss">
     .debug {

@@ -31,6 +31,7 @@
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { expectBackPress } from "../../utils/native/notification_channels";
+    import BotBuilderModal from "../bots/BotBuilderModal.svelte";
     import BotDetailsPage from "../bots/BotDetailsPage.svelte";
     import BotInstaller from "../bots/install/BotInstaller.svelte";
     import WebhookModal from "../bots/WebhookModal.svelte";
@@ -201,6 +202,9 @@
         | { kind: "user_profile_cache_management" }
         | { kind: "app_settings" }
         | { kind: "upgrade_diamond" }
+        | { kind: "update_bot" }
+        | { kind: "register_bot" }
+        | { kind: "remove_bot" }
         | { kind: "user_information"; profile: PublicProfile };
 
     let modalStack = $state<SlidingModalType[]>([]);
@@ -237,6 +241,9 @@
         }
 
         const unsubs = [
+            subscribe("registerBot", () => push({ kind: "register_bot" })),
+            subscribe("updateBot", () => push({ kind: "update_bot" })),
+            subscribe("removeBot", () => push({ kind: "remove_bot" })),
             subscribe("createSwap", ({ fromLedger, ctx }) =>
                 push({ kind: "create_swap", fromLedger, ctx }),
             ),
@@ -455,6 +462,12 @@
     <SlidingPage top={page === top}>
         {#if page.kind === "user_profile_chats_and_video"}
             <ChatsAndVideo />
+        {:else if page.kind === "register_bot"}
+            <BotBuilderModal onClose={pop} mode={"register"} />
+        {:else if page.kind === "update_bot"}
+            <BotBuilderModal onClose={pop} mode={"update"} />
+        {:else if page.kind === "remove_bot"}
+            <BotBuilderModal onClose={pop} mode={"remove"} />
         {:else if page.kind === "user_profile_share"}
             <Share />
         {:else if page.kind === "user_profile_delete_account"}

@@ -52,7 +52,6 @@
     import type { Share } from "../../utils/share";
     import { removeQueryStringParam } from "../../utils/urls";
     import AreYouSure from "../AreYouSure.svelte";
-    import BotBuilderModal from "../bots/BotBuilderModal.svelte";
     import NotFound from "../NotFound.svelte";
     import OfflineFooter from "../OfflineFooter.svelte";
     import OnboardModal from "../onboard/OnboardModal.svelte";
@@ -111,9 +110,6 @@
         | { kind: "none" }
         | { kind: "verify_humanity" }
         | { kind: "select_chat" }
-        | { kind: "register_bot" }
-        | { kind: "update_bot" }
-        | { kind: "remove_bot" }
         | { kind: "suspended" }
         | { kind: "suspending"; userId: string }
         | { kind: "no_access" }
@@ -144,9 +140,6 @@
             subscribe("userSuspensionChanged", () => window.location.reload()),
             subscribe("selectedChatInvalid", selectedChatInvalid),
             subscribe("sendMessageFailed", sendMessageFailed),
-            subscribe("registerBot", registerBot),
-            subscribe("updateBot", updateBot),
-            subscribe("removeBot", removeBot),
             subscribe("remoteVideoCallStarted", remoteVideoCallStarted),
             subscribe("remoteVideoCallEnded", remoteVideoCallEnded),
             subscribe("notification", (n) => client.notificationReceived(n)),
@@ -184,18 +177,6 @@
         if (alert) {
             toastStore.showFailureToast(i18nKey("errorSendingMessage"));
         }
-    }
-
-    function registerBot() {
-        modal = { kind: "register_bot" };
-    }
-
-    function updateBot() {
-        modal = { kind: "update_bot" };
-    }
-
-    function removeBot() {
-        modal = { kind: "remove_bot" };
     }
 
     function remoteVideoCallEnded(messageId: bigint) {
@@ -631,12 +612,6 @@
             <SelectChatModal onClose={onCloseSelectChat} onSelect={onSelectChat} />
         {:else if modal.kind === "suspended"}
             <SuspendedModal onClose={closeModal} />
-        {:else if modal.kind === "register_bot"}
-            <BotBuilderModal mode={"register"} onClose={closeModal} />
-        {:else if modal.kind === "update_bot"}
-            <BotBuilderModal mode={"update"} onClose={closeModal} />
-        {:else if modal.kind === "remove_bot"}
-            <BotBuilderModal mode={"remove"} onClose={closeModal} />
         {:else if modal.kind === "no_access"}
             <NoAccess onClose={closeNoAccess} />
         {:else if modal.kind === "not_found"}

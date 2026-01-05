@@ -1,23 +1,18 @@
 <script lang="ts">
+    import { Body, BodySmall, Chip, Column, CommonButton, Row, Sheet } from "component-lib";
     import {
         type CommandDefinition,
         type CommandParam,
-        iconSize,
+        type ResourceKey,
         ValidationErrors,
     } from "openchat-client";
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import ErrorMessage from "../ErrorMessage.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
-    import Input from "../Input.svelte";
-    import Legend from "../Legend.svelte";
-    import ModalContent from "../ModalContent.svelte";
-    import Overlay from "../Overlay.svelte";
     import Translatable from "../Translatable.svelte";
     import BotPermissionViewer from "./BotPermissionViewer.svelte";
     import CommandParameterViewer from "./CommandParameterViewer.svelte";
-    import ValidatingInput from "./ValidatingInput.svelte";
 
     interface Props {
         errors: ValidationErrors;
@@ -71,132 +66,77 @@
         param={selectedParam}></CommandParameterViewer>
 {/if}
 
-<Overlay dismissible {onClose}>
-    <ModalContent closeIcon {onClose}>
-        {#snippet header()}
-            <Translatable resourceKey={i18nKey("bots.builder.commandLabel", { name: command.name })}
-            ></Translatable>
-        {/snippet}
-        {#snippet body()}
-            <section>
-                <Legend required label={i18nKey("bots.builder.commandNameLabel")}></Legend>
-                <ValidatingInput
-                    disabled
-                    error={errors.get(`${errorPath}_name`)}
-                    minlength={3}
-                    maxlength={25}
-                    invalid={errors.has(`${errorPath}_name`)}
-                    placeholder={i18nKey("bots.builder.commandNamePlaceholder")}
-                    value={command.name} />
-            </section>
+{#snippet field(title: string, value: string, error: ResourceKey[])}
+    <Column>
+        <Body fontWeight={"bold"}>
+            <Translatable resourceKey={i18nKey(title)} />
+        </Body>
 
-            <section>
-                <Legend required label={i18nKey("bots.builder.commandDescLabel")}></Legend>
-                <Input
-                    disabled
-                    minlength={5}
-                    maxlength={500}
-                    placeholder={i18nKey("bots.builder.commandDescPlaceholder")}
-                    value={command.description} />
-            </section>
+        <BodySmall colour={"textSecondary"}>
+            {value}
+        </BodySmall>
 
-            <section>
-                <Legend label={i18nKey("bots.builder.commandPlaceholderLabel")}></Legend>
-                <Input
-                    disabled
-                    minlength={5}
-                    maxlength={500}
-                    placeholder={i18nKey("bots.builder.commandPlaceholderPlaceholder")}
-                    value={command.placeholder} />
-            </section>
+        {#if error[0]}
+            <BodySmall colour={"error"}>
+                {error[0]}
+            </BodySmall>
+        {/if}
+    </Column>
+{/snippet}
 
-            <section>
-                <BotPermissionViewer
-                    title={i18nKey("bots.builder.commandPermissionsLabel")}
-                    permissions={command.permissions} />
-            </section>
+<Sheet onDismiss={onClose}>
+    <Column gap={"xl"} padding={"xl"}>
+        {@render field(
+            "bots.builder.commandNameLabel",
+            `/${command.name}`,
+            errors.get(`${errorPath}_name`),
+        )}
 
-            {#if command.params.length > 0}
-                <section>
-                    <Legend label={i18nKey("bots.builder.paramsLabel")}></Legend>
-                    <div class="params">
-                        {#each command.params as param, i}
-                            <!-- svelte-ignore a11y_click_events_have_key_events -->
-                            <!-- svelte-ignore a11y_no_static_element_interactions -->
-                            <div
-                                onclick={() => onSelectParam(param, i)}
-                                class="param"
-                                class:param-error={errors.has(`${errorPath}_param_${i}`)}>
-                                <Translatable resourceKey={i18nKey(param.name)}></Translatable>
-                            </div>
-                        {/each}
-                    </div>
-                </section>
-            {/if}
+        {#if command.description}
+            {@render field("bots.builder.commandDescLabel", command.description ?? "", [])}
+        {/if}
 
-            {#if errors.has(`${errorPath}_duplicate_params`)}
-                <ErrorMessage>{errors.get(`${errorPath}_duplicate_params`)}</ErrorMessage>
-            {/if}
-        {/snippet}
+        {#if command.placeholder}
+            {@render field("bots.builder.commandPlaceholderLabel", command.placeholder ?? "", [])}
+        {/if}
 
-        {#snippet footer()}
-            <div class="footer">
-                <div class="navigate">
-                    <HoverIcon disabled={onPrevious === undefined} onclick={onPrevious}>
-                        <ChevronLeft size={$iconSize} color={"var(--icon-txt)"}></ChevronLeft>
-                    </HoverIcon>
-                    <HoverIcon disabled={onNext === undefined} onclick={onNext}>
-                        <ChevronRight size={$iconSize} color={"var(--icon-txt)"}></ChevronRight>
-                    </HoverIcon>
-                </div>
-            </div>
-        {/snippet}
-    </ModalContent>
-</Overlay>
+        <Column gap={"sm"}>
+            <BotPermissionViewer
+                title={i18nKey("bots.builder.commandPermissionsLabel")}
+                permissions={command.permissions} />
+        </Column>
 
-<style lang="scss">
-    section {
-        margin-bottom: $sp4;
-    }
+        {#if command.params.length > 0}
+            <Column gap={"sm"}>
+                <Body fontWeight={"bold"}>
+                    <Translatable resourceKey={i18nKey("bots.builder.paramsLabel")} />
+                </Body>
+                <Row crossAxisAlignment={"center"} wrap gap={"sm"}>
+                    {#each command.params as param, i}
+                        <Chip mode={"filter"} onClick={() => onSelectParam(param, i)}>
+                            <Translatable resourceKey={i18nKey(param.name)}></Translatable>
+                        </Chip>
+                    {/each}
+                </Row>
+            </Column>
+        {/if}
 
-    .navigate {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .params {
-        margin: 0 0 $sp3 0;
-        display: flex;
-        gap: $sp3;
-        flex-wrap: wrap;
-
-        .param {
-            padding: $sp3 $sp4;
-            cursor: pointer;
-            align-items: center;
-            background: var(--button-bg);
-            color: var(--button-txt);
-            transition:
-                background ease-in-out 200ms,
-                color ease-in-out 200ms;
-            border-radius: var(--button-rd);
-
-            @media (hover: hover) {
-                &:hover {
-                    background: var(--button-hv);
-                    color: var(--button-hv-txt);
-                }
-            }
-
-            &.param-error {
-                background-color: var(--error);
-                @media (hover: hover) {
-                    &:hover {
-                        background: var(--error);
-                    }
-                }
-            }
-        }
-    }
-</style>
+        {#if errors.has(`${errorPath}_duplicate_params`)}
+            <ErrorMessage>{errors.get(`${errorPath}_duplicate_params`)}</ErrorMessage>
+        {/if}
+    </Column>
+    <Row padding={["lg", "zero"]} mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
+        <CommonButton size={"small_text"} disabled={onPrevious === undefined} onClick={onPrevious}>
+            {#snippet icon(color, size)}
+                <ChevronLeft {color} {size}></ChevronLeft>
+            {/snippet}
+            <Translatable resourceKey={i18nKey("Previous")}></Translatable>
+        </CommonButton>
+        <CommonButton reverse size={"small_text"} disabled={onNext === undefined} onClick={onNext}>
+            {#snippet icon(color, size)}
+                <ChevronRight {color} {size}></ChevronRight>
+            {/snippet}
+            <Translatable resourceKey={i18nKey("Next")}></Translatable>
+        </CommonButton>
+    </Row>
+</Sheet>

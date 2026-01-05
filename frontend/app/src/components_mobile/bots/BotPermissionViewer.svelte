@@ -1,6 +1,5 @@
 <script lang="ts">
-    import Check from "svelte-material-icons/Check.svelte";
-    import Minus from "svelte-material-icons/Minus.svelte";
+    import { Body, Column, Row } from "component-lib";
     import {
         botChatPermissionList,
         botCommunityPermissionList,
@@ -8,10 +7,11 @@
         messagePermissionsList,
         type ResourceKey,
     } from "openchat-client";
+    import Check from "svelte-material-icons/Check.svelte";
+    import Minus from "svelte-material-icons/Minus.svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import Legend from "../Legend.svelte";
-    import Translatable from "../Translatable.svelte";
     import Tabs from "../Tabs.svelte";
+    import Translatable from "../Translatable.svelte";
 
     interface Props {
         permissions: ExternalBotPermissions;
@@ -23,44 +23,53 @@
 </script>
 
 {#snippet check(label: ResourceKey, requested: boolean)}
-    <div class="perm" class:disabled={!requested}>
-        <div class="check">
-            {#if requested}
-                <Check size={"1em"} color={"var(--success)"} />
-            {:else}
-                <Minus size={"1em"} color={"var(--txt-light)"} />
-            {/if}
-        </div>
-        <div class="label">
+    <Row crossAxisAlignment={"center"} gap={"sm"}>
+        {#if requested}
+            <Check size={"1em"} color={"var(--success)"} />
+        {:else}
+            <Minus size={"1em"} color={"var(--txt-light)"} />
+        {/if}
+        <Body colour={requested ? "textPrimary" : "textSecondary"}>
             <Translatable resourceKey={label}></Translatable>
-        </div>
-    </div>
+        </Body>
+    </Row>
 {/snippet}
 
 {#snippet chatTab()}
-    {#each botChatPermissionList as perm}
-        {@render check(i18nKey(`permissions.${perm}`), permissions.chatPermissions.includes(perm))}
-    {/each}
+    <Column gap={"sm"}>
+        {#each botChatPermissionList as perm}
+            {@render check(
+                i18nKey(`permissions.${perm}`),
+                permissions.chatPermissions.includes(perm),
+            )}
+        {/each}
+    </Column>
 {/snippet}
 {#snippet communityTab()}
-    {#each botCommunityPermissionList as perm}
-        {@render check(
-            i18nKey(`permissions.${perm}`),
-            permissions.communityPermissions.includes(perm),
-        )}
-    {/each}
+    <Column gap={"sm"}>
+        {#each botCommunityPermissionList as perm}
+            {@render check(
+                i18nKey(`permissions.${perm}`),
+                permissions.communityPermissions.includes(perm),
+            )}
+        {/each}
+    </Column>
 {/snippet}
 {#snippet messageTab()}
-    {#each messagePermissionsList as perm}
-        {@render check(
-            i18nKey(`permissions.messagePermissions.${perm}`),
-            permissions.messagePermissions.includes(perm),
-        )}
-    {/each}
+    <Column gap={"sm"}>
+        {#each messagePermissionsList as perm}
+            {@render check(
+                i18nKey(`permissions.messagePermissions.${perm}`),
+                permissions.messagePermissions.includes(perm),
+            )}
+        {/each}
+    </Column>
 {/snippet}
 
 {#if title !== undefined}
-    <Legend label={title}></Legend>
+    <Body fontWeight={"bold"}>
+        <Translatable resourceKey={title} />
+    </Body>
 {/if}
 <Tabs
     {nested}
@@ -79,16 +88,3 @@
             snippet: messageTab,
         },
     ]}></Tabs>
-
-<style lang="scss">
-    .perm {
-        display: flex;
-        gap: $sp3;
-        align-items: center;
-
-        &.disabled {
-            @include font(light, normal, fs-100);
-            color: var(--txt-light);
-        }
-    }
-</style>

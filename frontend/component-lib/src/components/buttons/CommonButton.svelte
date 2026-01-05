@@ -25,6 +25,7 @@
         icon?: Snippet<[string, string]>;
         width?: SizeMode;
         height?: SizeMode;
+        reverse?: boolean;
     }
     let {
         children,
@@ -36,6 +37,7 @@
         size = "medium",
         width = "hug",
         height = "hug",
+        reverse = false,
     }: Props = $props();
 
     const SPEED = 250;
@@ -151,14 +153,7 @@
     }
 </script>
 
-<button
-    type="button"
-    aria-busy={loading}
-    {style}
-    class={`common_button ${internalMode} ${size}`}
-    class:disabled={disabled || loading}
-    onclick={clickInternal}
-    disabled={disabled || loading}>
+{#snippet icon_view()}
     {#if loading}
         <span class="icon">
             <Spinner
@@ -169,6 +164,19 @@
     {:else if icon}
         <span class="icon">{@render icon(iconColour, iconSize)}</span>
     {/if}
+{/snippet}
+
+<button
+    type="button"
+    aria-busy={loading}
+    {style}
+    class={`common_button ${internalMode} ${size}`}
+    class:disabled={disabled || loading}
+    onclick={clickInternal}
+    disabled={disabled || loading}>
+    {#if !reverse}
+        {@render icon_view()}
+    {/if}
     {#if children}
         {#if size !== "large"}
             <ButtonSmall align={"center"} width={"hug"} colour={textColour} fontWeight={"bold"}
@@ -177,6 +185,9 @@
             <Body align={"center"} width={"hug"} colour={textColour} fontWeight={"bold"}
                 >{@render children?.()}</Body>
         {/if}
+    {/if}
+    {#if reverse}
+        {@render icon_view()}
     {/if}
 </button>
 

@@ -6,6 +6,7 @@
 </script>
 
 <script lang="ts">
+    import { Body, BodySmall, Row, transition } from "component-lib";
     import type { ResourceKey } from "openchat-client";
     import type { Snippet } from "svelte";
     import Translatable from "./Translatable.svelte";
@@ -27,13 +28,16 @@
     }: Props = $props();
 
     function selectTab(idx: number) {
-        selectedIndex = idx;
-        onTabSelected?.(idx);
+        transition(["fade"], () => {
+            selectedIndex = idx;
+            onTabSelected?.(idx);
+        });
     }
 </script>
 
-<div class="tabs" class:nested>
+<Row overflow={"visible"} gap={"md"} crossAxisAlignment={"center"}>
     {#each tabs as tab, i}
+        {@const selected = selectedIndex === i}
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <div
             tabindex="0"
@@ -41,46 +45,34 @@
             class="tab"
             class:nested
             onclick={() => selectTab(i)}
-            class:selected={selectedIndex === i}>
-            <Translatable resourceKey={tab.title}></Translatable>
+            class:selected>
+            {#if nested}
+                <BodySmall colour={selected ? "textPrimary" : "textSecondary"} fontWeight={"bold"}>
+                    <Translatable resourceKey={tab.title}></Translatable>
+                </BodySmall>
+            {:else}
+                <Body colour={selected ? "textPrimary" : "textSecondary"} fontWeight={"bold"}>
+                    <Translatable resourceKey={tab.title}></Translatable>
+                </Body>
+            {/if}
         </div>
     {/each}
-</div>
+</Row>
 {#if selectedIndex !== undefined}
     {@render tabs[selectedIndex]?.snippet()}
 {/if}
 
 <style lang="scss">
-    .tabs {
-        display: flex;
-        align-items: center;
-        @include font(medium, normal, fs-90);
-        color: var(--txt-light);
-        gap: $sp5;
-        border-bottom: 1px solid var(--bd);
-        cursor: pointer;
-        margin-bottom: $sp4;
+    .tab {
+        padding-bottom: toRem(8);
+        margin-bottom: -2px;
+        border-bottom: var(--bw-thick) solid transparent;
+        white-space: nowrap;
+        &.selected {
+            border-bottom: var(--bw-thick) solid var(--text-primary);
 
-        @include mobile() {
-            gap: $sp4;
-        }
-
-        &.nested {
-            @include font(medium, normal, fs-80);
-        }
-
-        .tab {
-            padding-bottom: 10px;
-            margin-bottom: -2px;
-            border-bottom: 3px solid transparent;
-            white-space: nowrap;
-            &.selected {
-                color: var(--txt);
-                border-bottom: 3px solid var(--txt);
-
-                &.nested {
-                    border-bottom-color: var(--accent);
-                }
+            &.nested {
+                border-bottom-color: var(--primary);
             }
         }
     }

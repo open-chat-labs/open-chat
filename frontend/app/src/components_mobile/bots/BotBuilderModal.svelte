@@ -1,18 +1,16 @@
 <script lang="ts">
+    import { Column, CommonButton, Row } from "component-lib";
     import {
         currentUserIdStore,
         emptyBotInstance,
-        mobileWidth,
         OpenChat,
         type ExternalBot,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
-    import Button from "../Button.svelte";
-    import ButtonGroup from "../ButtonGroup.svelte";
+    import SlidingPageContent from "../home/SlidingPageContent.svelte";
     import FancyLoader from "../icons/FancyLoader.svelte";
-    import ModalContent from "../ModalContent.svelte";
     import Translatable from "../Translatable.svelte";
     import BotBuilder from "./AutoBotBuilder.svelte";
     import ChooseBot from "./ChooseBot.svelte";
@@ -130,62 +128,52 @@
     });
 </script>
 
-<ModalContent {onClose}>
-    {#snippet header()}
-        <div class="header">
-            <Translatable resourceKey={titleKey}></Translatable>
-        </div>
-    {/snippet}
-    {#snippet body()}
-        <div class="body">
-            {#if step === "choose"}
-                {#if !busy && (mode === "update" || mode === "remove")}
-                    <ChooseBot ownedOnly onSelect={selectBot} />
-                {/if}
-                {#if mode === "remove" && busy}
-                    <div class="loader">
-                        <FancyLoader />
-                    </div>
-                {/if}
-            {:else if step === "edit" && botState.current !== undefined && mode !== "remove"}
-                <BotBuilder
-                    {nameDirty}
-                    {mode}
-                    bind:candidate={botState.current}
-                    bind:schemaLoaded
-                    bind:valid
-                    bind:principal />
+<SlidingPageContent onBack={onClose} title={titleKey}>
+    <Column height={"fill"} gap={"xl"} padding={"xl"}>
+        {#if step === "choose"}
+            {#if !busy && (mode === "update" || mode === "remove")}
+                <ChooseBot ownedOnly onSelect={selectBot} />
             {/if}
-        </div>
-    {/snippet}
-    {#snippet footer()}
-        <div class="footer">
-            <ButtonGroup>
-                <Button secondary small={!$mobileWidth} tiny={$mobileWidth} onClick={onClose}>
-                    <Translatable resourceKey={i18nKey("cancel")} />
-                </Button>
-                {#if mode !== "remove"}
-                    <Button
-                        onClick={mode === "update" ? update : register}
-                        disabled={!valid || busy}
-                        loading={busy}
-                        small={!$mobileWidth}
-                        tiny={$mobileWidth}>
-                        <Translatable
-                            resourceKey={mode === "update"
-                                ? i18nKey("bots.update_bot.action")
-                                : i18nKey("bots.add.action")} />
-                    </Button>
-                {/if}
-            </ButtonGroup>
-        </div>
-    {/snippet}
-</ModalContent>
+            {#if mode === "remove" && busy}
+                <div class="loader">
+                    <FancyLoader />
+                </div>
+            {/if}
+        {:else if step === "edit" && botState.current !== undefined && mode !== "remove"}
+            <BotBuilder
+                {nameDirty}
+                {mode}
+                bind:candidate={botState.current}
+                bind:schemaLoaded
+                bind:valid
+                bind:principal />
+        {/if}
+
+        <Row crossAxisAlignment={"center"} mainAxisAlignment={"end"} gap={"md"}>
+            <CommonButton onClick={onClose} size={"small_text"}>
+                <Translatable resourceKey={i18nKey("cancel")} />
+            </CommonButton>
+            {#if mode !== "remove"}
+                <CommonButton
+                    mode={"active"}
+                    size={"medium"}
+                    onClick={mode === "update" ? update : register}
+                    disabled={!valid || busy}
+                    loading={busy}>
+                    <Translatable
+                        resourceKey={mode === "update"
+                            ? i18nKey("bots.update_bot.action")
+                            : i18nKey("bots.add.action")} />
+                </CommonButton>
+            {/if}
+        </Row>
+    </Column>
+</SlidingPageContent>
 
 <style lang="scss">
     .loader {
-        width: toRem(80);
-        height: toRem(80);
+        width: toRem(50);
+        height: toRem(50);
         margin: auto;
     }
 </style>
