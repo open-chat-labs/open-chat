@@ -412,10 +412,7 @@ export async function getCachedChats(
     const resolvedDb = await db;
     const chats = await resolvedDb.get("chats", principal.toString());
 
-    if (
-        chats !== undefined &&
-        chats.latestUserCanisterUpdates < BigInt(Date.now() - 30 * ONE_DAY)
-    ) {
+    if (chats && chats.latestUserCanisterUpdates < BigInt(Date.now() - 30 * ONE_DAY)) {
         // If the cache was last updated more than 30 days ago, clear the cache and return undefined
         const storeNames = resolvedDb.objectStoreNames;
         for (let i = 0; i < storeNames.length; i++) {

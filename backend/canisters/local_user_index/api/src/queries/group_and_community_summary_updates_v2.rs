@@ -14,7 +14,7 @@ pub struct Args {
 }
 
 #[ts_export(local_user_index, group_and_community_summary_updates_v2)]
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
 pub struct SummaryUpdatesArgs {
     pub canister_id: CanisterId,
     pub is_community: bool,

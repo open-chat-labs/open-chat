@@ -11,7 +11,13 @@ impl TimerJobItem for UserEventBatch {
         let response = user_canister_c2c_client::c2c_local_user_index(
             self.key.into(),
             &user_canister::c2c_local_user_index::Args {
-                events: self.items.clone(),
+                events: self
+                    .items
+                    .iter()
+                    // TODO remove this filter once User canisters have been released
+                    .filter(|e| !matches!(e.value, UserEvent::BotUpdated(_)))
+                    .cloned()
+                    .collect(),
             },
         )
         .await;

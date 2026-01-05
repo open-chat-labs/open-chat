@@ -1,11 +1,12 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use std::collections::{HashMap, VecDeque};
+use tracing::info;
 use types::{SubscriptionInfo, SubscriptionKeys, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Subscriptions {
-    subscriptions: HashMap<UserId, VecDeque<SubscriptionInfoInternal>>,
+    subscriptions: HashMap<UserId, Vec<SubscriptionInfoInternal>>,
     total: u64,
 }
 
@@ -20,13 +21,20 @@ impl Subscriptions {
                     return removed;
                 }
                 while subscriptions.len() >= 10 {
-                    removed.push(subscriptions.pop_front().unwrap());
+                    let to_remove = subscriptions
+                        .iter()
+                        .enumerate()
+                        .min_by_key(|(_, s)| s.last_active)
+                        .map(|(i, _)| i)
+                        .unwrap();
+
+                    removed.push(subscriptions.remove(to_remove));
                     self.total = self.total.saturating_sub(1);
                 }
-                subscriptions.push_back(subscription);
+                subscriptions.push(subscription);
             }
             Vacant(e) => {
-                e.insert(VecDeque::from([subscription]));
+                e.insert(vec![subscription]);
             }
         }
 
@@ -47,10 +55,10 @@ impl Subscriptions {
             if let Some(index) = subs
                 .iter()
                 .enumerate()
-                .find(|(_, s)| s.endpoint.as_str() == endpoint || s.keys.p256dh.as_str() == endpoint)
+                .find(|(_, s)| s.endpoint.as_str() == endpoint)
                 .map(|(i, _)| i)
             {
-                removed = subs.remove(index);
+                removed = Some(subs.remove(index));
                 if subs.is_empty() {
                     e.remove();
                 }
@@ -62,35 +70,74 @@ impl Subscriptions {
 
     pub fn exists(&self, user_id: &UserId, endpoint: &str) -> bool {
         match self.subscriptions.get(user_id) {
-            Some(subscriptions) => subscriptions
-                .iter()
-                .any(|s| s.endpoint.as_str() == endpoint || s.keys.p256dh.as_str() == endpoint),
+            Some(subscriptions) => subscriptions.iter().any(|s| s.endpoint.as_str() == endpoint),
             None => false,
         }
     }
 
+    pub fn mark_active(&mut self, user_id: &UserId, endpoint: &str, now: TimestampMillis) -> bool {
+        if let Some(subscriptions) = self.subscriptions.get_mut(user_id)
+            && let Some(subscription) = subscriptions.iter_mut().find(|s| s.endpoint == endpoint)
+        {
+            subscription.last_active = now;
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn get_by_user(&self, user_id: &UserId) -> Vec<SubscriptionInfoInternal> {
-        self.subscriptions
-            .get(user_id)
-            .map_or(Vec::new(), |subs| subs.iter().cloned().collect())
+        self.subscriptions.get(user_id).map_or(Vec::new(), |subs| subs.to_vec())
     }
 
     pub fn total(&self) -> u64 {
         self.total
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (&UserId, &VecDeque<SubscriptionInfoInternal>)> {
+    pub fn iter(&self) -> impl Iterator<Item = (&UserId, &Vec<SubscriptionInfoInternal>)> {
         self.subscriptions.iter()
+    }
+
+    // Return value is the vec of subscriptions removed per user.
+    // If the vec of subscriptions is empty, that means all of the user's subscriptions were removed.
+    pub fn remove_inactive(&mut self, cutoff: TimestampMillis) -> Vec<(UserId, Vec<String>)> {
+        let mut removed = Vec::new();
+        let mut count_removed = 0;
+
+        self.subscriptions.retain(|user_id, subscriptions| {
+            let removed_for_user: Vec<_> = subscriptions
+                .extract_if(.., |s| s.last_active < cutoff)
+                .map(|s| s.endpoint)
+                .collect();
+
+            count_removed += removed_for_user.len() as u32;
+
+            if subscriptions.is_empty() {
+                removed.push((*user_id, Vec::new()));
+                return false;
+            }
+
+            if !removed_for_user.is_empty() {
+                removed.push((*user_id, removed_for_user));
+            }
+            true
+        });
+
+        info!(count_removed, "Removed inactive subscriptions");
+
+        removed
     }
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct SubscriptionInfoInternal {
-    #[serde(rename = "a", default)]
+    #[serde(rename = "a")]
     pub added: TimestampMillis,
-    #[serde(rename = "e", alias = "endpoint")]
+    #[serde(rename = "l")]
+    pub last_active: TimestampMillis,
+    #[serde(rename = "e")]
     pub endpoint: String,
-    #[serde(rename = "k", alias = "keys")]
+    #[serde(rename = "k")]
     pub keys: SubscriptionKeys,
 }
 

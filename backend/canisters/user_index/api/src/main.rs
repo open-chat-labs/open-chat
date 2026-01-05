@@ -35,6 +35,7 @@ fn main() {
         std::fs::remove_dir_all(&directory).unwrap();
     }
 
+    generate_ts_method!(user_index, bot_installations);
     generate_ts_method!(user_index, bot_updates);
     generate_ts_method!(user_index, check_username);
     generate_ts_method!(user_index, chit_leaderboard);
@@ -50,6 +51,7 @@ fn main() {
     generate_ts_method!(user_index, reported_messages);
     generate_ts_method!(user_index, search);
     generate_ts_method!(user_index, suspected_bots);
+    generate_ts_method!(user_index, update_blocked_username_patterns);
     generate_ts_method!(user_index, user);
     generate_ts_method!(user_index, user_registration_canister);
     generate_ts_method!(user_index, users);

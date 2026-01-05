@@ -476,7 +476,20 @@ export type WorkerRequest =
     | OneSecEnableForwarding
     | OneSecGetTransferFees
     | OneSecForwardEvmToIcp
-    | OneSecGetForwardingStatus;
+    | OneSecGetForwardingStatus
+    | UpdateBlockedUsernamePatterns
+    | MarkNotificationSubscriptionActive;
+
+type MarkNotificationSubscriptionActive = {
+    kind: "markNotificationSubscriptionActive";
+    endpoint: string;
+};
+
+type UpdateBlockedUsernamePatterns = {
+    kind: "updateBlockedUsernamePatterns";
+    pattern: string;
+    add: boolean;
+};
 
 type OneSecEnableForwarding = {
     kind: "oneSecEnableForwarding";
@@ -1032,7 +1045,7 @@ type InviteUsers = {
 };
 
 type RemoveSub = {
-    subscription: PushSubscriptionJSON;
+    endpoint: string;
     kind: "removeSubscription";
 };
 
@@ -1043,7 +1056,6 @@ type PushSub = {
 
 type SubscriptionExists = {
     endpoint: string;
-    p256dh_key: string;
     kind: "subscriptionExists";
 };
 
@@ -2631,4 +2643,8 @@ export type WorkerResult<T> = T extends Init
     ? OneSecForwardingStatus
     : T extends OneSecGetForwardingStatus
     ? OneSecForwardingStatus
+    : T extends UpdateBlockedUsernamePatterns
+    ? void
+    : T extends MarkNotificationSubscriptionActive
+    ? void
     : never;

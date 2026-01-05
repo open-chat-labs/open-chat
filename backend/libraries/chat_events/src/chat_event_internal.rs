@@ -90,6 +90,7 @@ impl ChatEventInternal {
             ChatEventInternal::Message(_)
                 | ChatEventInternal::DirectChatCreated(_)
                 | ChatEventInternal::EventsTimeToLiveUpdated(_)
+                | ChatEventInternal::BotUpdated(_)
         )
     }
 

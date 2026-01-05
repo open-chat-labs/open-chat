@@ -2736,16 +2736,16 @@ export class OpenChatAgent extends EventTarget {
         return this._onlineClient.markAsOnline();
     }
 
-    subscriptionExists(endpoint: string, p256dh_key: string): Promise<boolean> {
-        return this._notificationClient.subscriptionExists(endpoint, p256dh_key);
+    subscriptionExists(endpoint: string): Promise<boolean> {
+        return this._notificationClient.subscriptionExists(endpoint);
     }
 
     pushSubscription(subscription: PushSubscriptionJSON): Promise<void> {
         return this._notificationClient.pushSubscription(subscription);
     }
 
-    removeSubscription(subscription: PushSubscriptionJSON): Promise<void> {
-        return this._notificationClient.removeSubscription(subscription);
+    removeSubscription(endpoint: string): Promise<void> {
+        return this._notificationClient.removeSubscription(endpoint);
     }
 
     fcmTokenExists(fcmToken: string): Promise<boolean> {
@@ -2784,6 +2784,10 @@ export class OpenChatAgent extends EventTarget {
                     muteAtEveryone,
                 );
         }
+    }
+
+    markNotificationSubscriptionActive(endpoint: string): Promise<void> {
+        return this._notificationClient.markSubscriptionActive(endpoint);
     }
 
     getGroupDetails(
@@ -4694,7 +4698,7 @@ export class OpenChatAgent extends EventTarget {
         return this.getLocalUserIndexClient(localUserIndex).payForPremiumItem(item);
     }
 
-    async setPremiumItemCost(item: PremiumItem, chitCost: number): Promise<void> {
+    setPremiumItemCost(item: PremiumItem, chitCost: number): Promise<void> {
         return this._userIndexClient.setPremiumItemCost(item, chitCost);
     }
 
@@ -4704,6 +4708,10 @@ export class OpenChatAgent extends EventTarget {
             userId,
             days,
         );
+    }
+
+    updateBlockedUsernamePatterns(pattern: string, add: boolean): Promise<void> {
+        return this._userIndexClient.updateBlockedUsernamePatterns(pattern, add);
     }
 }
 

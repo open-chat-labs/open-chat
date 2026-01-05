@@ -169,6 +169,7 @@ import {
     apiMessageContent,
     apiUser as apiUserV2,
     apiVideoCallPresence,
+    changeRoleResult,
     deletedMessageSuccess,
     enableOrResetInviteCodeSuccess,
     getEventsSuccess,
@@ -276,7 +277,7 @@ export class GroupClient extends MsgpackCanisterAgent {
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
-        if (missing.size === 0) {
+        if (missing.size === 0 || offline()) {
             return Promise.resolve(cachedEvents);
         } else {
             return this.chatEventsByIndexFromBackend(
@@ -493,13 +494,15 @@ export class GroupClient extends MsgpackCanisterAgent {
         if (new_role === undefined) {
             throw new Error(`Cannot change user's role to: ${newRole}`);
         }
+        const user_id = principalStringToBytes(userId);
         return this.executeMsgpackUpdate(
             "change_role",
             {
-                user_id: principalStringToBytes(userId),
+                user_id,
+                user_ids: [user_id],
                 new_role,
             },
-            unitResult,
+            changeRoleResult,
             GroupChangeRoleArgs,
             UnitResult,
         );

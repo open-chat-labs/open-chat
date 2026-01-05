@@ -211,6 +211,7 @@ import {
     apiMessageContent,
     apiUser as apiUserV2,
     apiVideoCallPresence,
+    changeRoleResult,
     createGroupSuccess,
     deletedMessageSuccess,
     enableOrResetInviteCodeSuccess,
@@ -329,27 +330,31 @@ export class CommunityClient extends MsgpackCanisterAgent {
         userId: string,
         newRole: MemberRole,
     ): Promise<ChangeRoleResponse> {
+        const user_id = principalStringToBytes(userId);
         return this.executeMsgpackUpdate(
             "change_channel_role",
             {
                 channel_id: toBigInt32(chatId.channelId),
-                user_id: principalStringToBytes(userId),
+                user_id,
+                user_ids: [user_id],
                 new_role: apiMemberRole(newRole),
             },
-            unitResult,
+            changeRoleResult,
             CommunityChangeChannelRoleArgs,
             UnitResult,
         );
     }
 
     changeRole(userId: string, newRole: MemberRole): Promise<ChangeCommunityRoleResponse> {
+        const user_id = principalStringToBytes(userId);
         return this.executeMsgpackUpdate(
             "change_role",
             {
-                user_id: principalStringToBytes(userId),
+                user_id,
+                user_ids: [user_id],
                 new_role: apiCommunityRole(newRole),
             },
-            unitResult,
+            changeRoleResult,
             CommunityChangeRoleArgs,
             UnitResult,
         );
@@ -785,7 +790,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
-        if (missing.size === 0) {
+        if (missing.size === 0 || offline()) {
             return Promise.resolve(cachedEvents);
         } else {
             return this.eventsByIndexFromBackend(

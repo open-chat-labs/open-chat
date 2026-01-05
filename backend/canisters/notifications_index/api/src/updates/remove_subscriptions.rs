@@ -11,7 +11,6 @@ pub struct Args {
 pub struct UserSubscriptions {
     pub user_id: UserId,
     pub endpoints: Vec<String>,
-    pub p256dh_keys: Vec<String>,
 }
 
 pub type Response = SuccessOnly;

@@ -475,8 +475,6 @@ struct Data {
     rng_seed: [u8; 32],
     pending_payments_queue: PendingPaymentsQueue,
     total_payment_receipts: PaymentReceipts,
-    #[serde(with = "serde_bytes")]
-    ic_root_key: Vec<u8>,
     achievements: Achievements,
     expiring_members: ExpiringMembers,
     expiring_member_actions: ExpiringMemberActions,
@@ -516,7 +514,6 @@ impl Data {
         default_channel_rules: Option<Rules>,
         mark_active_duration: Milliseconds,
         video_call_operators: Vec<Principal>,
-        ic_root_key: Vec<u8>,
         test_mode: bool,
         rng: &mut StdRng,
         now: TimestampMillis,
@@ -588,7 +585,6 @@ impl Data {
             pending_payments_queue: PendingPaymentsQueue::default(),
             total_payment_receipts: PaymentReceipts::default(),
             video_call_operators,
-            ic_root_key,
             achievements: Achievements::default(),
             expiring_members: ExpiringMembers::default(),
             expiring_member_actions: ExpiringMemberActions::default(),
@@ -1112,9 +1108,11 @@ impl Data {
 
         match initiator {
             BotInitiator::Command(command) => {
-                // Intersect the permissions granted to the bot with the user's permissions
-                self.get_user_permissions(&command.initiator, channel_id)
-                    .map(|u| BotPermissions::intersect(granted_to_bot, &u))
+                let user_permissions = self.get_user_permissions(&command.initiator, channel_id)?;
+                Some(BotPermissions::union(
+                    &BotPermissions::intersect(granted_to_bot, &user_permissions),
+                    &bot.autonomous_permissions.clone().unwrap_or_default(),
+                ))
             }
             BotInitiator::Autonomous => {
                 if is_private_channel && !bot_is_channel_owner {

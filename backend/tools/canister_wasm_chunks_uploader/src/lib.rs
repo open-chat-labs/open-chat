@@ -29,6 +29,15 @@ pub async fn upload_notifications_index_canister_wasm(
     upload_wasm_to_openchat_installer(identity, url, openchat_installer, version, CanisterName::NotificationsIndex).await;
 }
 
+pub async fn upload_identity_canister_wasm(
+    identity: Box<dyn Identity>,
+    url: String,
+    openchat_installer: CanisterId,
+    version: BuildVersion,
+) {
+    upload_wasm_to_openchat_installer(identity, url, openchat_installer, version, CanisterName::Identity).await;
+}
+
 pub async fn upload_local_user_index_canister_wasm(
     identity: Box<dyn Identity>,
     url: String,
@@ -119,6 +128,7 @@ async fn upload_wasm_to_openchat_installer(
         CanisterName::UserIndex => openchat_installer_canister::CanisterType::UserIndex,
         CanisterName::GroupIndex => openchat_installer_canister::CanisterType::GroupIndex,
         CanisterName::NotificationsIndex => openchat_installer_canister::CanisterType::NotificationsIndex,
+        CanisterName::Identity => openchat_installer_canister::CanisterType::Identity,
         _ => unreachable!(),
     };
 

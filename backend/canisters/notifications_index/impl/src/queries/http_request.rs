@@ -33,7 +33,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
             .subscriptions
             .get_by_user(&user_id)
             .into_iter()
-            .map(|s| (s.added, s.endpoint))
+            .map(|s| (s.added, s.last_active, s.endpoint))
             .collect();
 
         build_json_response(&endpoints)

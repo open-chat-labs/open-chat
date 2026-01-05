@@ -17,6 +17,7 @@ use utils::fcm_token_store::FcmTokenStore;
 use utils::idempotency_checker::IdempotencyChecker;
 
 mod guards;
+mod jobs;
 mod lifecycle;
 mod memory;
 mod model;
@@ -52,6 +53,7 @@ impl RuntimeState {
             user_id,
             SubscriptionInfoInternal {
                 added: now,
+                last_active: now,
                 endpoint: subscription.endpoint.clone(),
                 keys: subscription.keys.clone(),
             },
@@ -64,7 +66,6 @@ impl RuntimeState {
         for removed in subscriptions_removed {
             let event = NotificationsIndexEvent::SubscriptionRemoved(SubscriptionRemoved {
                 user_id,
-                p256dh_key: removed.keys.p256dh,
                 endpoint: removed.endpoint,
             });
 
@@ -73,14 +74,11 @@ impl RuntimeState {
     }
 
     pub fn remove_subscription(&mut self, user_id: UserId, endpoint: String, now: TimestampMillis) {
-        if let Some(removed) = self.data.subscriptions.remove(user_id, &endpoint) {
-            let event = NotificationsIndexEvent::SubscriptionRemoved(SubscriptionRemoved {
-                user_id,
-                endpoint: removed.endpoint,
-                p256dh_key: removed.keys.p256dh,
-            });
-
-            self.push_event_to_local_indexes(event, now);
+        if self.data.subscriptions.remove(user_id, &endpoint).is_some() {
+            self.push_event_to_local_indexes(
+                NotificationsIndexEvent::SubscriptionRemoved(SubscriptionRemoved { user_id, endpoint }),
+                now,
+            );
         }
     }
 

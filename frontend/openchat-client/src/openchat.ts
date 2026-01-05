@@ -626,23 +626,16 @@ const EXCHANGE_RATE_UPDATE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
 
-type UnresolvedRequest = {
-    kind: string;
-    sentAt: number;
-};
-
 type PromiseResolver<T> = {
     resolve: (val: T | PromiseLike<T>, final: boolean) => void;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     reject: (reason?: any) => void;
-    timeout: number;
 };
 
 export class OpenChat {
     #worker!: Worker;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     #pending: Map<string, PromiseResolver<any>> = new Map(); // in-flight requests
-    #unresolved: Map<string, UnresolvedRequest> = new Map(); // requests that never resolved
     #connectedToWorker = false;
     #authIdentityStorage: IdentityStorage;
     #authPrincipal: string | undefined;
@@ -663,6 +656,7 @@ export class OpenChat {
     #userUpdatePoller: Poller | undefined = undefined;
     #exchangeRatePoller: Poller | undefined = undefined;
     #proposalTalliesPoller: Poller | undefined = undefined;
+    #notificationSubscriptionPoller: Poller | undefined = undefined;
     #recentlyActiveUsersTracker: RecentlyActiveUsersTracker = new RecentlyActiveUsersTracker();
     #inflightMessagePromises: Map<
         bigint,
@@ -710,6 +704,8 @@ export class OpenChat {
         this.#authClient
             .then((c) => c.getIdentity())
             .then((authIdentity) => this.#loadedAuthenticationIdentity(authIdentity, undefined));
+
+        window.setInterval(() => this.monitorPendingRequests(), ONE_MINUTE_MILLIS);
     }
 
     public get AuthPrincipal(): string {
@@ -1679,7 +1675,7 @@ export class OpenChat {
             spender,
             ledger,
             amount: amount - approvalFee, // The user should pay only the amount not amount+fee so it is a round number
-            expiresIn: BigInt(5 * 60 * 1000), // Allow 5 mins for the join_group call before the approval expires
+            expiresIn: BigInt(5 * ONE_MINUTE_MILLIS), // Allow 5 mins for the join_group call before the approval expires
             pin,
         })
             .then((response) => {
@@ -2506,7 +2502,8 @@ export class OpenChat {
                 return false;
             });
 
-        this.#sendRtcMessage([...selectedChatUserIdsStore.value], {
+        const messageRecipients = this.#rtcMessageRecipients(chatId);
+        this.#sendRtcMessage(messageRecipients, {
             kind: "remote_user_toggled_reaction",
             id: chatId,
             messageId: messageId,
@@ -3202,7 +3199,7 @@ export class OpenChat {
     getMinDissolveDelayDays(gate: AccessGate): number | undefined {
         if (isNeuronGate(gate)) {
             return gate.minDissolveDelay
-                ? gate.minDissolveDelay / (24 * 60 * 60 * 1000)
+                ? gate.minDissolveDelay / ONE_DAY
                 : undefined;
         }
     }
@@ -3951,6 +3948,13 @@ export class OpenChat {
         });
     }
 
+    #rtcMessageRecipients(chatId: ChatIdentifier) {
+        // a DM should only ever be sent to the recipient regardless of selectedChatUserIdsStore
+        return chatId.kind === "direct_chat"
+            ? [chatId.userId]
+            : [...selectedChatUserIdsStore.value];
+    }
+
     async #sendMessageCommon(
         chat: ChatSummary,
         messageContext: MessageContext,
@@ -4003,7 +4007,8 @@ export class OpenChat {
             messageEvent.event,
         );
         const ledger = this.#extractLedgerFromContent(message.content);
-        const messageRecipients = [...selectedChatUserIdsStore.value];
+
+        const messageRecipients = this.#rtcMessageRecipients(chat.id);
 
         const sendMessagePromise: Promise<SendMessageResponse> = new Promise((resolve) => {
             this.#inflightMessagePromises.set(messageId, resolve);
@@ -4021,7 +4026,6 @@ export class OpenChat {
                     newAchievement,
                 },
                 undefined,
-                ledger !== undefined ? 2 * DEFAULT_WORKER_TIMEOUT : undefined,
             ).subscribe({
                 onResult: (response) => {
                     if (response === "accepted") {
@@ -5172,8 +5176,8 @@ export class OpenChat {
         return this.config.i18nFormatter("unknownUser");
     }
 
-    #subscriptionExists(endpoint: string, p256dh_key: string): Promise<boolean> {
-        return this.#sendRequest({ kind: "subscriptionExists", endpoint, p256dh_key }).catch(
+    #subscriptionExists(endpoint: string): Promise<boolean> {
+        return this.#sendRequest({ kind: "subscriptionExists", endpoint }).catch(
             () => false,
         );
     }
@@ -5182,8 +5186,8 @@ export class OpenChat {
         return this.#sendRequest({ kind: "pushSubscription", subscription });
     }
 
-    #removeSubscription(subscription: PushSubscriptionJSON): Promise<void> {
-        return this.#sendRequest({ kind: "removeSubscription", subscription });
+    #removeSubscription(endpoint: string): Promise<void> {
+        return this.#sendRequest({ kind: "removeSubscription", endpoint });
     }
 
     #inviteUsersLocally(
@@ -5383,7 +5387,6 @@ export class OpenChat {
                 adopt,
             },
             false,
-            2 * DEFAULT_WORKER_TIMEOUT,
         ).catch(CommonResponses.failure);
     }
 
@@ -7229,7 +7232,6 @@ export class OpenChat {
                 transactionFee: nervousSystem.token.transferFee,
             },
             false,
-            2 * DEFAULT_WORKER_TIMEOUT,
         )
             .then((resp) => {
                 if (resp.kind === "success" || resp.kind === "retrying") {
@@ -7305,7 +7307,6 @@ export class OpenChat {
                 pin,
             },
             false,
-            1000 * 60 * 3,
         ).then((resp) => {
             if (resp.kind === "error") {
                 const pinNumberFailure = pinNumberFailureFromError(resp);
@@ -9185,7 +9186,7 @@ export class OpenChat {
                 if (resp.nextDailyChitClaim > chitStateStore.value.nextDailyChitClaim) {
                     chitStateStore.update((state) => ({
                         chitBalance: resp.chitBalance,
-                        streakEnds: resp.nextDailyChitClaim + BigInt(1000 * 60 * 60 * 24),
+                        streakEnds: resp.nextDailyChitClaim + BigInt(ONE_DAY),
                         streak: resp.streak,
                         maxStreak: resp.maxStreak,
                         nextDailyChitClaim: resp.nextDailyChitClaim,
@@ -9520,15 +9521,8 @@ export class OpenChat {
     }
 
     #logUnexpected(correlationId: string): void {
-        const unresolved = this.#unresolved.get(correlationId);
-        const timedOut =
-            unresolved === undefined
-                ? ""
-                : `Timed-out req of kind: ${unresolved.kind} received after ${
-                      Date.now() - unresolved.sentAt
-                  }ms`;
         console.error(
-            `WORKER_CLIENT: unexpected correlationId received (${correlationId}). ${timedOut}`,
+            `WORKER_CLIENT: unexpected correlationId received (${correlationId})`,
         );
     }
 
@@ -9537,47 +9531,30 @@ export class OpenChat {
         if (promise !== undefined) {
             promise.resolve(data.response, data.final);
             if (data.final) {
-                window.clearTimeout(promise.timeout);
                 this.#pending.delete(data.correlationId);
             }
         } else {
             this.#logUnexpected(data.correlationId);
         }
-        this.#unresolved.delete(data.correlationId);
     }
 
     #resolveError(data: WorkerError): void {
         const promise = this.#pending.get(data.correlationId);
         if (promise !== undefined) {
             promise.reject(JSON.parse(data.error));
-            window.clearTimeout(promise.timeout);
             this.#pending.delete(data.correlationId);
         } else {
             this.#logUnexpected(data.correlationId);
         }
-        this.#unresolved.delete(data.correlationId);
     }
 
-    responseHandler<Req extends WorkerRequest, T>(
-        req: Req,
+    responseHandler<T>(
         correlationId: string,
-        timeout: number,
     ): (resolve: (val: T, final: boolean) => void, reject: (reason?: unknown) => void) => void {
         return (resolve, reject) => {
-            const sentAt = Date.now();
             this.#pending.set(correlationId, {
                 resolve,
                 reject,
-                timeout: window.setTimeout(() => {
-                    reject(
-                        `WORKER_CLIENT: Request of kind ${req.kind} with correlationId ${correlationId} did not receive a response withing the ${DEFAULT_WORKER_TIMEOUT}ms timeout`,
-                    );
-                    this.#unresolved.set(correlationId, {
-                        kind: req.kind,
-                        sentAt,
-                    });
-                    this.#pending.delete(correlationId);
-                }, timeout),
             });
         };
     }
@@ -9585,27 +9562,24 @@ export class OpenChat {
     #sendStreamRequest<Req extends WorkerRequest>(
         req: Req,
         connecting = false,
-        timeout: number = DEFAULT_WORKER_TIMEOUT,
     ): Stream<WorkerResult<Req>> {
         //eslint-disable-next-line @typescript-eslint/ban-ts-comment
         //@ts-ignore
-        return new Stream<WorkerResult<Req>>(this.#sendRequestInternal(req, connecting, timeout));
+        return new Stream<WorkerResult<Req>>(this.#sendRequestInternal(req, connecting));
     }
 
     async #sendRequest<Req extends WorkerRequest>(
         req: Req,
         connecting = false,
-        timeout: number = DEFAULT_WORKER_TIMEOUT,
     ): Promise<WorkerResult<Req>> {
         //eslint-disable-next-line @typescript-eslint/ban-ts-comment
         //@ts-ignore
-        return new Promise<WorkerResult<Req>>(this.#sendRequestInternal(req, connecting, timeout));
+        return new Promise<WorkerResult<Req>>(this.#sendRequestInternal(req, connecting));
     }
 
     #sendRequestInternal<Req extends WorkerRequest, T>(
         req: Req,
         connecting: boolean,
-        timeout: number,
     ): (resolve: (val: T, final: boolean) => void, reject: (reason?: unknown) => void) => void {
         if (!connecting && !this.#connectedToWorker) {
             throw new Error("WORKER_CLIENT: the client is not yet connected to the worker");
@@ -9620,7 +9594,14 @@ export class OpenChat {
             console.error("Error sending postMessage to worker", err);
             throw err;
         }
-        return this.responseHandler(req, correlationId, timeout);
+        return this.responseHandler(correlationId);
+    }
+
+    monitorPendingRequests() {
+        const pendingRequests = this.#pending.size;
+        if (pendingRequests >= 100) {
+            this.#logger.error("Pending request count exceeded limit", { count: pendingRequests });
+        }
     }
 
     getBotConfig(): Promise<BotClientConfigData> {
@@ -9801,13 +9782,22 @@ export class OpenChat {
         notificationStatus.subscribe((status) => {
             switch (status) {
                 case "granted":
-                    this.#trySubscribe();
+                    this.#notificationSubscriptionPoller = new Poller(
+                        () => this.#trySubscribe(),
+                        ONE_HOUR,
+                        undefined,
+                        true);
                     break;
                 case "pending-init":
                     break;
                 default:
                     this.#unsubscribeNotifications();
                     break;
+            }
+        }, () => {
+            if (this.#notificationSubscriptionPoller !== undefined) {
+                this.#notificationSubscriptionPoller.stop();
+                this.#notificationSubscriptionPoller = undefined;
             }
         });
 
@@ -9845,12 +9835,11 @@ export class OpenChat {
         if (pushSubscription) {
             console.debug("PUSH: found existing push subscription");
             // Check if the subscription has already been pushed to the notifications canister
-            if (
-                await this.#subscriptionExists(
-                    pushSubscription.endpoint,
-                    this.#extract_p256dh_key(pushSubscription),
-                )
-            ) {
+            if (await this.#subscriptionExists(pushSubscription.endpoint)) {
+                this.#sendRequest({
+                    kind: "markNotificationSubscriptionActive",
+                    endpoint: pushSubscription.endpoint,
+                });
                 console.debug("PUSH: subscription exists in the backend");
                 return true;
             }
@@ -9906,26 +9895,15 @@ export class OpenChat {
         return Uint8Array.from(atob(base64String), (c) => c.charCodeAt(0));
     }
 
-    #extract_p256dh_key(subscription: PushSubscription): string {
-        const json = subscription.toJSON();
-
-        const key = json.keys!["p256dh"];
-        return key;
-    }
     async #unsubscribeNotifications(): Promise<void> {
         console.debug("PUSH: unsubscribing from notifications");
         const registration = await this.#getRegistration();
         if (registration !== undefined) {
             const pushSubscription = await registration.pushManager.getSubscription();
             if (pushSubscription) {
-                if (
-                    await this.#subscriptionExists(
-                        pushSubscription.endpoint,
-                        this.#extract_p256dh_key(pushSubscription),
-                    )
-                ) {
+                if (await this.#subscriptionExists(pushSubscription.endpoint)) {
                     console.debug("PUSH: removing push subscription");
-                    await this.#removeSubscription(pushSubscription.toJSON());
+                    await this.#removeSubscription(pushSubscription.endpoint);
                 }
             }
         }
@@ -10186,6 +10164,14 @@ export class OpenChat {
             }
         }
         return false;
+    }
+
+    updateBlockedUsernamePatterns(pattern: string, add: boolean): Promise<void> {
+        return this.#sendRequest({
+            kind: "updateBlockedUsernamePatterns",
+            pattern,
+            add,
+        });
     }
 }
 

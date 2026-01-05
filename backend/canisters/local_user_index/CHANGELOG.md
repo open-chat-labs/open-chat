@@ -9,6 +9,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Apply user re-authentication check when claiming prizes ([#8696](https://github.com/open-chat-labs/open-chat/pull/8696))
+- Sync bot installation updates with `user_index` ([#8731](https://github.com/open-chat-labs/open-chat/pull/8731))
+- When fetching updates prioritise chats with the latest activity ([#8739](https://github.com/open-chat-labs/open-chat/pull/8739))
+- Remove `p256hd_key` from `SubscriptionRemoved` events ([#8746](https://github.com/open-chat-labs/open-chat/pull/8746))
+
+## [[2.0.1937](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1937-local_user_index)] - 2025-12-22
+
+### Added
+
+- Allow platform operators to block usernames via regex patterns ([#8719](https://github.com/open-chat-labs/open-chat/pull/8719))
+
+### Changed
+
+- Add optional `channel_id` to `bot_invite_user` ([#8724](https://github.com/open-chat-labs/open-chat/pull/8724))
+
+## [[2.0.1934](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1934-local_user_index)] - 2025-12-05
+
+### Changed
+
+- Move `ic_root_key` to `Environment` trait ([#8701](https://github.com/open-chat-labs/open-chat/pull/8701))
+- Pass in RNG seed in init args when creating Group/Community/User ([#8702](https://github.com/open-chat-labs/open-chat/pull/8702))
+- Temporarily stop pushing BotUpdated events to User canisters ([#8715](https://github.com/open-chat-labs/open-chat/pull/8715))
 
 ### Removed
 

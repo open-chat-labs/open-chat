@@ -9,6 +9,7 @@ import type {
     BotDefinition,
     BotInstallationLocationType,
     BotMessageContext,
+    ChangeRoleResponse,
     ChannelIdentifier,
     ChannelSummary,
     ChatEvent,
@@ -181,6 +182,8 @@ import type {
     ChatMetrics as TChatMetrics,
     CommunityCanisterChannelSummary as TCommunityCanisterChannelSummary,
     CommunityCanisterCommunitySummary as TCommunityCanisterCommunitySummary,
+    CommunityChangeChannelRoleResponse as TCommunityChangeChannelRoleResponse,
+    CommunityChangeRoleResponse as TCommunityChangeRoleResponse,
     CommunityPermissionRole as TCommunityPermissionRole,
     CommunityPermissions as TCommunityPermissions,
     CommunityRole as TCommunityRole,
@@ -200,6 +203,7 @@ import type {
     GiphyImageVariant as TGiphyImageVariant,
     GroupCanisterGroupChatSummary as TGroupCanisterGroupChatSummary,
     GroupCanisterThreadDetails as TGroupCanisterThreadDetails,
+    GroupChangeRoleResponse as TGroupChangeRoleResponse,
     GroupMember as TGroupMember,
     GroupMembership as TGroupMembership,
     GroupPermissionRole as TGroupPermissionRole,
@@ -2918,4 +2922,25 @@ export function videoCallInProgress(value: VideoCall): VideoCallInProgress {
         callType: value.call_type === "Default" ? "default" : "broadcast",
         joinedByCurrentUser: value.joined_by_current_user,
     };
+}
+
+export function changeRoleResult(
+    value:
+        | TCommunityChangeRoleResponse
+        | TCommunityChangeChannelRoleResponse
+        | TGroupChangeRoleResponse,
+): ChangeRoleResponse {
+    if (value === "Success") {
+        return CommonResponses.success();
+    }
+
+    // Handle PartialSuccess by returning the first error found
+    if ("PartialSuccess" in value) {
+        for (const error of Object.values(value.PartialSuccess as Record<string, TOCError>)) {
+            return mapResult({ Error: error }, CommonResponses.success);
+        }
+        return CommonResponses.success();
+    }
+
+    return mapResult(value, CommonResponses.success);
 }

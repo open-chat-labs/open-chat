@@ -717,7 +717,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.subscriptionExists(payload.endpoint, payload.p256dh_key),
+                    agent.subscriptionExists(payload.endpoint),
                 );
                 break;
 
@@ -733,7 +733,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.removeSubscription(payload.subscription).then(() => undefined),
+                    agent.removeSubscription(payload.endpoint).then(() => undefined),
                 );
                 break;
 
@@ -746,6 +746,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     payload,
                     correlationId,
                     agent.addFcmToken(payload.fcmToken, payload.onResponseError),
+                );
+                break;
+
+            case "markNotificationSubscriptionActive":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.markNotificationSubscriptionActive(payload.endpoint),
                 );
                 break;
 
@@ -2216,6 +2224,13 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.receiver,
                     ),
                 );
+                break;
+
+            case "updateBlockedUsernamePatterns":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.updateBlockedUsernamePatterns(payload.pattern, payload.add));
                 break;
 
             default:

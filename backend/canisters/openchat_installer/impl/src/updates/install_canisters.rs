@@ -6,6 +6,9 @@ use ic_cdk::management_canister::CanisterInstallMode;
 use ic_cdk::update;
 use openchat_installer_canister::CanisterType;
 use openchat_installer_canister::install_canisters::{Response::*, *};
+use p256_key_pair::P256KeyPair;
+use rand::rngs::StdRng;
+use rand::{Rng, SeedableRng};
 use types::{BuildVersion, C2CError, CanisterId, CanisterWasmBytes, Hash};
 use utils::canister::{
     CanisterToInstall, ChunkedWasmToInstall, WasmToInstall, clear_chunk_store, install, upload_wasm_in_chunks,
@@ -16,19 +19,24 @@ use utils::canister::{
 async fn install_canisters(args: Args) -> Response {
     let wasm_version = args.wasm_version;
 
+    let rng_seed = utils::canister::get_random_seed().await;
+    let mut rng = StdRng::from_seed(rng_seed);
+
     let PrepareResult {
         user_index,
         group_index,
         notifications_index,
-    } = match read_state(|state| prepare(args, state)) {
+        identity,
+    } = match read_state(|state| prepare(args, &mut rng, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
 
-    let results = futures::future::try_join3(
+    let results = futures::future::try_join4(
         install_canister(user_index, wasm_version),
         install_canister(group_index, wasm_version),
         install_canister(notifications_index, wasm_version),
+        install_canister(identity, wasm_version),
     )
     .await;
 
@@ -42,6 +50,7 @@ struct PrepareResult {
     user_index: InstallCanisterArgs<user_index_canister::init::Args>,
     group_index: InstallCanisterArgs<group_index_canister::init::Args>,
     notifications_index: InstallCanisterArgs<notifications_index_canister::init::Args>,
+    identity: InstallCanisterArgs<identity_canister::init::Args>,
 }
 
 struct InstallCanisterArgs<A: CandidType> {
@@ -51,10 +60,11 @@ struct InstallCanisterArgs<A: CandidType> {
     init_args: A,
 }
 
-fn prepare(args: Args, state: &State) -> Result<PrepareResult, Response> {
+fn prepare(args: Args, rng: &mut StdRng, state: &State) -> Result<PrepareResult, Response> {
     let user_index_wasm_hash = state.data.canister_wasms.chunks_hash(CanisterType::UserIndex);
     let group_index_wasm_hash = state.data.canister_wasms.chunks_hash(CanisterType::GroupIndex);
     let notifications_index_wasm_hash = state.data.canister_wasms.chunks_hash(CanisterType::NotificationsIndex);
+    let identity_wasm_hash = state.data.canister_wasms.chunks_hash(CanisterType::Identity);
 
     if user_index_wasm_hash != args.user_index_wasm_hash {
         Err(HashMismatch(CanisterType::UserIndex, user_index_wasm_hash))
@@ -62,7 +72,11 @@ fn prepare(args: Args, state: &State) -> Result<PrepareResult, Response> {
         Err(HashMismatch(CanisterType::GroupIndex, group_index_wasm_hash))
     } else if notifications_index_wasm_hash != args.notifications_index_wasm_hash {
         Err(HashMismatch(CanisterType::NotificationsIndex, group_index_wasm_hash))
+    } else if identity_wasm_hash != args.identity_wasm_hash {
+        Err(HashMismatch(CanisterType::Identity, identity_wasm_hash))
     } else {
+        let oc_key_pair = P256KeyPair::new(rng);
+        let oc_secret_key_der = oc_key_pair.secret_key_der();
         let user_index = InstallCanisterArgs {
             canister_id: state.data.user_index_canister_id,
             wasm: state.data.canister_wasms.wasm_from_chunks(CanisterType::UserIndex),
@@ -85,7 +99,8 @@ fn prepare(args: Args, state: &State) -> Result<PrepareResult, Response> {
                 translations_canister_id: state.data.translations_canister_id,
                 website_canister_id: state.data.website_canister_id,
                 video_call_operators: args.video_call_operators.clone(),
-                ic_root_key: state.data.ic_root_key.clone(),
+                oc_secret_key_der: oc_secret_key_der.to_vec(),
+                rng_seed: rng.r#gen(),
                 wasm_version: args.wasm_version,
                 test_mode: state.data.test_mode,
             },
@@ -105,7 +120,7 @@ fn prepare(args: Args, state: &State) -> Result<PrepareResult, Response> {
                 registry_canister_id: state.data.registry_canister_id,
                 internet_identity_canister_id: state.data.internet_identity_canister_id,
                 video_call_operators: args.video_call_operators.clone(),
-                ic_root_key: state.data.ic_root_key.clone(),
+                rng_seed: rng.r#gen(),
                 wasm_version: args.wasm_version,
                 test_mode: state.data.test_mode,
             },
@@ -122,6 +137,25 @@ fn prepare(args: Args, state: &State) -> Result<PrepareResult, Response> {
                 authorizers: vec![state.data.user_index_canister_id, state.data.group_index_canister_id],
                 cycles_dispenser_canister_id: state.data.cycles_dispenser_canister_id,
                 registry_canister_id: state.data.registry_canister_id,
+                rng_seed: rng.r#gen(),
+                wasm_version: args.wasm_version,
+                test_mode: state.data.test_mode,
+            },
+        };
+
+        let identity = InstallCanisterArgs {
+            canister_id: state.data.identity_canister_id,
+            wasm: state.data.canister_wasms.wasm_from_chunks(CanisterType::Identity),
+            wasm_hash: args.identity_wasm_hash,
+            init_args: identity_canister::init::Args {
+                governance_principals: state.data.governance_principals.clone(),
+                user_index_canister_id: state.data.user_index_canister_id,
+                cycles_dispenser_canister_id: state.data.cycles_dispenser_canister_id,
+                sign_in_with_email_canister_id: state.data.sign_in_with_email_canister_id,
+                originating_canisters: args.identity_originating_canisters,
+                skip_captcha_whitelist: args.identity_skip_captcha_whitelist,
+                oc_secret_key_der: oc_secret_key_der.to_vec(),
+                rng_seed: rng.r#gen(),
                 wasm_version: args.wasm_version,
                 test_mode: state.data.test_mode,
             },
@@ -131,6 +165,7 @@ fn prepare(args: Args, state: &State) -> Result<PrepareResult, Response> {
             user_index,
             group_index,
             notifications_index,
+            identity,
         })
     }
 }
