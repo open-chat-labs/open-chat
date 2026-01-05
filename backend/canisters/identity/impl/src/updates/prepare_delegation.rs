@@ -5,10 +5,9 @@ use canister_tracing_macros::trace;
 use constants::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 use ic_canister_sig_creation::signature_map::CanisterSigInputs;
 use ic_canister_sig_creation::{DELEGATION_SIG_DOMAIN, delegation_signature_msg};
-use identity_canister::UserSignedInClaims;
 use identity_canister::prepare_delegation::{Response::*, *};
 use jwt::Claims;
-use types::Nanoseconds;
+use types::{Nanoseconds, UserSignedInClaims};
 
 const DEFAULT_EXPIRATION_PERIOD: Nanoseconds = 30 * DAY_IN_MS * NANOS_PER_MILLISECOND;
 const MAX_EXPIRATION_PERIOD: Nanoseconds = 90 * DAY_IN_MS * NANOS_PER_MILLISECOND;

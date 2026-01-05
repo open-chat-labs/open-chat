@@ -3,6 +3,7 @@ use crate::utils::{now_millis, now_nanos, tick_many};
 use crate::{TestEnv, client};
 use constants::{HOUR_IN_MS, ICP_SYMBOL, ICP_TRANSFER_FEE, MINUTE_IN_MS, PRIZE_FEE_PERCENT};
 use oc_error_codes::OCErrorCode;
+use rand::random;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
@@ -197,7 +198,7 @@ fn prize_message_requiring_reauthentication() {
         &local_user_index_canister::claim_prize::Args {
             chat_id: MultiUserChat::Group(group_id),
             message_id,
-            delegation: None,
+            sign_in_proof_jwt: None,
         },
     );
 
@@ -205,13 +206,17 @@ fn prize_message_requiring_reauthentication() {
         matches!(response, local_user_index_canister::claim_prize::Response::Error(e) if e.matches_code(OCErrorCode::PrizeUserNotElligible))
     );
 
+    let session_key = random::<[u8; 32]>().to_vec();
+    let prepare_delegation_response =
+        client::identity::happy_path::prepare_delegation(env, user2_auth.auth_principal(), canister_ids.identity, session_key);
+
     client::local_user_index::happy_path::claim_prize(
         env,
         user2.principal,
         local_user_index,
         MultiUserChat::Group(group_id),
         message_id,
-        Some(user2_auth.auth_delegation),
+        Some(prepare_delegation_response.proof_jwt),
     );
     let user2_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
     assert_eq!(user2_balance, 200000);

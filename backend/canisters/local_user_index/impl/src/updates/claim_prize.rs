@@ -1,12 +1,12 @@
 use crate::{guards::caller_is_openchat_user, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use constants::{LIFETIME_DIAMOND_TIMESTAMP, MINUTE_IN_MS};
-use identity_utils::verify_signature;
+use constants::LIFETIME_DIAMOND_TIMESTAMP;
 use local_user_index_canister::{GlobalUser, claim_prize::*};
 use types::{
     DiamondMembershipStatus, MultiUserChat,
     PrizeClaimResponse::{self, *},
+    UserSignedInClaims,
 };
 
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
@@ -24,17 +24,11 @@ async fn claim_prize(args: Args) -> PrizeClaimResponse {
         now,
     ) = read_state(|state| {
         let user = state.calling_user();
-        let user_reauthenticated = args.delegation.is_some_and(|d| {
-            verify_signature(
-                &d.signature,
-                state.data.identity_canister_id,
-                5 * MINUTE_IN_MS,
-                &state.data.ic_root_key,
-                state.env.now(),
-            )
-            .is_ok()
-        });
         let now = state.env.now();
+        let user_reauthenticated = args.sign_in_proof_jwt.is_some_and(|jwt| {
+            jwt::verify_and_decode::<UserSignedInClaims>(&jwt, state.data.oc_key_pair.public_key_pem())
+                .is_ok_and(|claims| claims.exp_ms() > now && claims.custom().principal == user.principal)
+        });
 
         (user, user_reauthenticated, now)
     });

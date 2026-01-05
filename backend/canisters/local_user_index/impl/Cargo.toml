@@ -32,9 +32,7 @@ group_canister_c2c_client = { path = "../../group/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
-ic-certificate-verification = { workspace = true }
 ic-stable-structures = { workspace = true }
-identity_utils = { path = "../../../libraries/identity_utils" }
 itertools = { workspace = true }
 json = { path = "../../../libraries/json" }
 jwt = { path = "../../../libraries/jwt" }

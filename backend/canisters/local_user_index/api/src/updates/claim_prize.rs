@@ -2,14 +2,14 @@ use candid::CandidType;
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{CompletedCryptoTransaction, FailedCryptoTransaction, MessageId, MultiUserChat, SignedDelegation};
+use types::{CompletedCryptoTransaction, FailedCryptoTransaction, MessageId, MultiUserChat};
 
 #[ts_export(local_user_index, claim_prize)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub chat_id: MultiUserChat,
     pub message_id: MessageId,
-    pub delegation: Option<SignedDelegation>,
+    pub sign_in_proof_jwt: Option<String>,
 }
 
 #[ts_export(local_user_index, claim_prize)]
