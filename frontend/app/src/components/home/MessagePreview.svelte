@@ -3,6 +3,7 @@
     import {
         allUsersStore,
         AvatarSize,
+        currentUserIdStore,
         eventListScrolling,
         isSuccessfulEventsResponse,
         OpenChat,
@@ -19,6 +20,7 @@
     type Preview = {
         content: MessageContent;
         senderId: string;
+        me: boolean;
         messageId: bigint;
         edited: boolean;
         displayName: string;
@@ -28,7 +30,6 @@
 
     interface Props {
         url: string;
-        me: boolean;
         chatId: MultiUserChatIdentifier;
         threadRootMessageIndex: number | undefined;
         messageIndex: number;
@@ -36,14 +37,14 @@
         onRendered: (url: string) => void;
     }
 
-    let { url, me, chatId, threadRootMessageIndex, messageIndex, intersecting, onRendered }: Props =
+    const { url, chatId, threadRootMessageIndex, messageIndex, intersecting, onRendered }: Props =
         $props();
 
     let previewPromise: Promise<Preview | undefined> | undefined = $state();
     let rendered = $state(false);
 
     async function loadPreview(): Promise<Preview | undefined> {
-        let result = await client.getMessagesByMessageIndex(
+        const result = await client.getMessagesByMessageIndex(
             chatId,
             threadRootMessageIndex,
             new Set([messageIndex]),
@@ -53,11 +54,13 @@
             return;
         }
 
-        let message = result.events[0].event;
+        const message = result.events[0].event;
+        const me = message.sender === $currentUserIdStore;
 
         return {
             content: message.content,
             senderId: message.sender,
+            me,
             messageId: message.messageId,
             edited: message.edited,
             displayName: me
@@ -88,7 +91,7 @@
             <a href={url}>
                 <div
                     class="wrapper"
-                    class:me
+                    class:me={preview.me}
                     class:p2pSwap={preview.content.kind === "p2p_swap_content"}>
                     <div class="title">
                         <Avatar
@@ -104,7 +107,7 @@
                     <div class="inert">
                         <ChatMessageContent
                             showPreviews
-                            {me}
+                            me={preview.me}
                             readonly
                             messageContext={{
                                 chatId,
