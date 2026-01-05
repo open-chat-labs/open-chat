@@ -25,4 +25,5 @@ pub struct SuccessResult {
     #[serde(with = "serde_bytes")]
     pub user_key: Vec<u8>,
     pub expiration: TimestampNanos,
+    pub proof_jwt: String,
 }

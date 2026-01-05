@@ -188,12 +188,7 @@ impl RuntimeState {
             auth_principals: self.data.user_principals.auth_principals_count(),
             originating_canisters: self.data.user_principals.originating_canisters().clone(),
             stable_memory_sizes: memory::memory_sizes(),
-            oc_public_key: self
-                .data
-                .oc_key_pair
-                .as_ref()
-                .map(|k| k.public_key_pem().to_string())
-                .unwrap_or_default(),
+            oc_public_key: self.data.oc_key_pair.public_key_pem().to_string(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
@@ -218,7 +213,7 @@ struct Data {
     #[serde(skip)]
     signature_map: SignatureMap,
     encryption_key_requests: EncryptionKeyRequests,
-    oc_key_pair: Option<P256KeyPair>,
+    oc_key_pair: P256KeyPair,
     salt: Salt,
     rng_seed: [u8; 32],
     challenges: Challenges,
@@ -253,7 +248,7 @@ impl Data {
             signature_map: SignatureMap::default(),
             encryption_key_requests: EncryptionKeyRequests::default(),
             salt: Salt::new(salt),
-            oc_key_pair: Some(P256KeyPair::from_secret_key_der(oc_secret_key_der).unwrap()),
+            oc_key_pair: P256KeyPair::from_secret_key_der(oc_secret_key_der).unwrap(),
             rng_seed: [0; 32],
             challenges: Challenges::default(),
             test_mode,
