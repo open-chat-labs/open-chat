@@ -1,4 +1,4 @@
-import type { SignedDelegation, JsonnableDelegationChain } from "@icp-sdk/core/identity";
+import type { JsonnableDelegationChain } from "@icp-sdk/core/identity";
 import type { AccessGateConfig, Rules, UpdatedRules, VerifiedCredentialArgs } from "./access";
 import type {
     CkbtcMinterDepositInfo,
@@ -471,6 +471,7 @@ export type WorkerRequest =
     | ReinstateMissedDailyClaims
     | VerifyAccountLinkingCode
     | FinaliseAccountLinkingWithCode
+    | GetSignInProof
     | PayForPremiumItem
     | SetPremiumItemCost
     | OneSecEnableForwarding
@@ -1690,6 +1691,12 @@ type FinaliseAccountLinkingWithCode = {
     webAuthnKey?: WebAuthnKeyFull;
 };
 
+type GetSignInProof = {
+    kind: "getSignInProof";
+    identityKey: CryptoKeyPair;
+    delegation: JsonnableDelegationChain;
+};
+
 /**
  * Worker error type
  */
@@ -1918,7 +1925,7 @@ type DeleteFailedMessage = {
 type ClaimPrize = {
     chatId: MultiUserChatIdentifier;
     messageId: bigint;
-    delegation: SignedDelegation | undefined;
+    signInProof: string | undefined;
     kind: "claimPrize";
 };
 
@@ -2633,6 +2640,8 @@ export type WorkerResult<T> = T extends Init
     ? void
     : T extends CreateAccountLinkingCode
     ? AccountLinkingCode | undefined
+    : T extends GetSignInProof
+    ? string
     : T extends ReinstateMissedDailyClaims
     ? boolean
     : T extends OneSecEnableForwarding

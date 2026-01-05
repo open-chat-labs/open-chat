@@ -5,7 +5,6 @@ import {
     DelegationChain,
     DelegationIdentity,
     ECDSAKeyIdentity,
-    type SignedDelegation,
     WebAuthnIdentity,
     type JsonnableDelegationChain,
 } from "@icp-sdk/core/identity";
@@ -6636,13 +6635,13 @@ export class OpenChat {
         chatId: MultiUserChatIdentifier,
         messageId: bigint,
         e: MouseEvent,
-        delegation: SignedDelegation | undefined,
+        signInProof: string | undefined,
     ): Promise<boolean> {
         if (!this.#validMouseEvent(e)) {
             return Promise.resolve(false);
         }
 
-        return this.#sendRequest({ kind: "claimPrize", chatId, messageId, delegation })
+        return this.#sendRequest({ kind: "claimPrize", chatId, messageId, signInProof })
             .then((resp) => {
                 if (resp.kind !== "success") {
                     return false;
@@ -7972,6 +7971,14 @@ export class OpenChat {
         return this.#sendRequest({
             kind: "setCachedWebAuthnKey",
             key,
+        });
+    }
+
+    getSignInProof(identityKey: ECDSAKeyIdentity, delegation: DelegationChain): Promise<string> {
+        return this.#sendRequest({
+            kind: "getSignInProof",
+            identityKey: identityKey.getKeyPair(),
+            delegation: delegation.toJSON(),
         });
     }
 

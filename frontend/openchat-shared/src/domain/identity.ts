@@ -36,10 +36,22 @@ export type PrepareDelegationResponse =
     | { kind: "not_found" }
     | { kind: "error"; error: string };
 
+export type PrepareDelegationWithProofResponse =
+    | PrepareDelegationWithProofSuccess
+    | { kind: "not_found" }
+    | { kind: "error"; error: string };
+
 export type PrepareDelegationSuccess = {
     kind: "success";
     userKey: Uint8Array;
     expiration: bigint;
+};
+
+export type PrepareDelegationWithProofSuccess = {
+    kind: "success";
+    userKey: Uint8Array;
+    expiration: bigint;
+    proofJwt: string;
 };
 
 export type GetDelegationResponse =

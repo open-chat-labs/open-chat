@@ -51,18 +51,26 @@
     let progressWidth = $state(0);
     let mouseEvent = $state<MouseEvent>();
 
-    function claim(e: MouseEvent, delegation: SignedDelegation | undefined) {
-        if (content.requiresCaptcha && !delegation) {
-            mouseEvent = e;
-            showAuthentication = true;
-            return;
+    async function claim(e: MouseEvent, auth: { key: ECDSAKeyIdentity, delegation: DelegationChain }) {
+        let signInProof: string | undefined = undefined;
+        if (content.requiresCaptcha) {
+            if (auth) {
+                signInProof = await client.getSignInProof(
+                    auth.key,
+                    auth.delegation,
+                );
+            } else {
+                mouseEvent = e;
+                showAuthentication = true;
+                return;
+            }
         }
 
         showAuthentication = false;
         if (e.isTrusted && chatId.kind !== "direct_chat" && !me && userEligible) {
             claimsStore.add(messageId);
             client
-                .claimPrize(chatId, messageId, e, delegation)
+                .claimPrize(chatId, messageId, e, signInProof)
                 .then((success) => {
                     if (!success) {
                         toastStore.showFailureToast(i18nKey("prizes.claimFailed"));
@@ -131,7 +139,7 @@
         provider: AuthProvider;
     }) {
         if (mouseEvent !== undefined) {
-            claim(mouseEvent, detail.delegation.delegations[0]);
+            claim(mouseEvent, detail);
         }
     }
 </script>

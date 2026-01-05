@@ -86,21 +86,29 @@ export class IdentityAgent {
         return createIdentityResponse.kind;
     }
 
-    async getOpenChatIdentity(sessionKey: SignIdentity): Promise<DelegationIdentity | undefined> {
+    async getOpenChatIdentity(sessionKey: SignIdentity): Promise<{ identity: DelegationIdentity, signInProofJwt: string } | undefined> {
         const sessionKeyDer = toDer(sessionKey);
         const prepareDelegationResponse = await this._identityClient.prepareDelegation(
             sessionKeyDer,
             this._isIIPrincipal,
         );
 
-        return prepareDelegationResponse.kind === "success"
-            ? this.getDelegation(
-                  prepareDelegationResponse.userKey,
-                  sessionKey,
-                  sessionKeyDer,
-                  prepareDelegationResponse.expiration,
-              )
-            : undefined;
+        if (prepareDelegationResponse.kind === "success") {
+            const identity = await this.getDelegation(
+                prepareDelegationResponse.userKey,
+                sessionKey,
+                sessionKeyDer,
+                prepareDelegationResponse.expiration,
+            );
+
+            if (identity !== undefined) {
+                return {
+                    identity,
+                    signInProofJwt: prepareDelegationResponse.proofJwt,
+                }
+            }
+        }
+        return undefined;
     }
 
     generateChallenge(): Promise<GenerateChallengeResponse> {

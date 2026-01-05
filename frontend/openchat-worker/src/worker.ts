@@ -88,11 +88,11 @@ async function initialize(
     if (ocIdentityExists) {
         const sessionKey = await ECDSAKeyIdentity.generate();
 
-        const identity = await identityAgent.getOpenChatIdentity(sessionKey);
+        const getIdentityResult = await identityAgent.getOpenChatIdentity(sessionKey);
 
-        if (identity !== undefined && typeof identity !== "string") {
-            await ocIdentityStorage.set(sessionKey, identity.getDelegation(), authPrincipalString);
-            return { kind: "success", identity };
+        if (getIdentityResult !== undefined && typeof getIdentityResult.identity !== "string") {
+            await ocIdentityStorage.set(sessionKey, getIdentityResult.identity.getDelegation(), authPrincipalString);
+            return { kind: "success", identity: getIdentityResult.identity };
         }
     }
 
@@ -1202,7 +1202,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.claimPrize(payload.chatId, payload.messageId, payload.delegation),
+                    agent.claimPrize(payload.chatId, payload.messageId, payload.signInProof),
                 );
                 break;
 
@@ -2056,6 +2056,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "getSignInProof":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    getSignInProof(payload.identityKey, payload.delegation)
+                );
+                break;
+
             case "installBot":
                 executeThenReply(
                     payload,
@@ -2345,4 +2353,16 @@ async function deleteUser(
     const identityAgent = await IdentityAgent.create(identity, identityCanister, icUrl, undefined);
     const response = await identityAgent.deleteUser();
     return response.kind === "success";
+}
+
+async function getSignInProof(identityKey: CryptoKeyPair, delegation: JsonnableDelegationChain): Promise<string | undefined> {
+    const identity = DelegationIdentity.fromDelegation(
+        await ECDSAKeyIdentity.fromKeyPair(identityKey),
+        DelegationChain.fromJSON(delegation),
+    );
+    const identityAgent = await IdentityAgent.create(identity, identityCanister, icUrl, undefined);
+    const sessionKey = await ECDSAKeyIdentity.generate();
+
+    const getIdentityResult = await identityAgent.getOpenChatIdentity(sessionKey);
+    return getIdentityResult?.signInProofJwt;
 }

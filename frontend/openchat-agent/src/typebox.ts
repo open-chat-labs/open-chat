@@ -3614,6 +3614,7 @@ export type IdentityPrepareDelegationSuccessResult = Static<
 export const IdentityPrepareDelegationSuccessResult = Type.Object({
     user_key: TSBytes,
     expiration: Type.BigInt(),
+    proof_jwt: Type.String(),
 });
 
 export type IdentityPrepareDelegationResponse = Static<typeof IdentityPrepareDelegationResponse>;
@@ -6102,6 +6103,13 @@ export const UserIndexPlatformModeratorsGroupResponse = Type.Object({
     Success: ChatId,
 });
 
+export type LocalUserIndexClaimPrizeArgs = Static<typeof LocalUserIndexClaimPrizeArgs>;
+export const LocalUserIndexClaimPrizeArgs = Type.Object({
+    chat_id: MultiUserChat,
+    message_id: MessageId,
+    sign_in_proof_jwt: Type.Optional(Type.String()),
+});
+
 export type LocalUserIndexInstallBotArgs = Static<typeof LocalUserIndexInstallBotArgs>;
 export const LocalUserIndexInstallBotArgs = Type.Object({
     location: BotInstallationLocation,
@@ -7416,13 +7424,6 @@ export const UserIndexCurrentUserResponse = Type.Union([
         Error: OCError,
     }),
 ]);
-
-export type LocalUserIndexClaimPrizeArgs = Static<typeof LocalUserIndexClaimPrizeArgs>;
-export const LocalUserIndexClaimPrizeArgs = Type.Object({
-    chat_id: MultiUserChat,
-    message_id: MessageId,
-    delegation: Type.Optional(SignedDelegation),
-});
 
 export type LocalUserIndexClaimPrizeResponse = Static<typeof LocalUserIndexClaimPrizeResponse>;
 export const LocalUserIndexClaimPrizeResponse = Type.Union([

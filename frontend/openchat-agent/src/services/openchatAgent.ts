@@ -1,6 +1,5 @@
 /* eslint-disable no-case-declarations */
 import { HttpAgent, type Identity } from "@icp-sdk/core/agent";
-import type { SignedDelegation } from "@icp-sdk/core/identity";
 import type { Principal } from "@icp-sdk/core/principal";
 import type {
     AcceptP2PSwapResponse,
@@ -3373,7 +3372,7 @@ export class OpenChatAgent extends EventTarget {
     async claimPrize(
         chatId: MultiUserChatIdentifier,
         messageId: bigint,
-        delegation: SignedDelegation | undefined,
+        signInProof: string | undefined,
     ): Promise<ClaimPrizeResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
@@ -3382,7 +3381,7 @@ export class OpenChatAgent extends EventTarget {
             : this.communityClient(chatId.communityId).localUserIndex());
 
         const localUserIndexClient = this.getLocalUserIndexClient(localUserIndex);
-        return localUserIndexClient.claimPrize(chatId, messageId, delegation);
+        return localUserIndexClient.claimPrize(chatId, messageId, signInProof);
     }
 
     payForDiamondMembership(
