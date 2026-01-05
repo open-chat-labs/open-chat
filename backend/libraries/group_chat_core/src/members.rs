@@ -14,8 +14,8 @@ use std::cmp::max;
 use std::collections::{BTreeMap, BTreeSet};
 use std::ops::Deref;
 use types::{
-    BotNotification, EventIndex, GroupMember, GroupPermissions, GroupRole, MessageIndex, MultiUserChat, OCResult,
-    TimestampMillis, Timestamped, UserId, UserType, Version, is_default,
+    BotNotification, EventIndex, GroupMember, GroupRole, MessageIndex, MultiUserChat, OCResult, TimestampMillis, Timestamped,
+    UserId, UserType, Version, is_default,
 };
 use utils::timestamped_set::TimestampedSet;
 
@@ -265,19 +265,10 @@ impl GroupMembers {
 
     pub fn change_role(
         &mut self,
-        caller_id: UserId,
         user_id: UserId,
         new_role: GroupRoleInternal,
-        permissions: &GroupPermissions,
         now: TimestampMillis,
     ) -> OCResult<GroupRoleInternal> {
-        // Is the caller authorized to change the user to this role
-        let member = self.get_verified_member(caller_id)?;
-
-        if !member.role.can_change_roles(new_role, permissions) {
-            return Err(OCErrorCode::InitiatorNotAuthorized.into());
-        }
-
         let member = match self.members_map.get(&user_id) {
             Some(p) => p,
             None => return Err(OCErrorCode::TargetUserNotFound.into()),

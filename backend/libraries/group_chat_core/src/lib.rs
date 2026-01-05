@@ -1061,7 +1061,7 @@ impl GroupChatCore {
 
     pub fn change_role(
         &mut self,
-        caller: UserId,
+        changed_by: UserId,
         target_users: Vec<UserId>,
         new_role: GroupRole,
         now: TimestampMillis,
@@ -1071,10 +1071,10 @@ impl GroupChatCore {
             bot_notification: None,
         };
 
+        let new_role_internal = new_role.into();
+
         for target_user in target_users {
-            let result = self
-                .members
-                .change_role(caller, target_user, new_role.into(), &self.permissions, now);
+            let result = self.members.change_role(target_user, new_role_internal, now);
 
             results.users.insert(target_user, result);
         }
@@ -1094,7 +1094,7 @@ impl GroupChatCore {
                 user_ids: successful_changes.iter().map(|(user_id, _)| *user_id).collect(),
                 old_role: successful_changes[0].1.into(),
                 new_role,
-                changed_by: caller,
+                changed_by,
             };
 
             let result = self
