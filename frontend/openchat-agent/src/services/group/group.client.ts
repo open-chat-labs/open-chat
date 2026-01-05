@@ -199,6 +199,7 @@ import {
     apiOptionalGroupPermissions,
     apiRole,
     apiUpdatedRules,
+    changeRoleResult,
     convertToCommunitySuccess,
     groupChatSummary,
     summaryUpdatesResponse,
@@ -493,13 +494,15 @@ export class GroupClient extends MsgpackCanisterAgent {
         if (new_role === undefined) {
             throw new Error(`Cannot change user's role to: ${newRole}`);
         }
+        const user_id = principalStringToBytes(userId);
         return this.executeMsgpackUpdate(
             "change_role",
             {
-                user_id: principalStringToBytes(userId),
+                user_id,
+                user_ids: [user_id],
                 new_role,
             },
-            unitResult,
+            changeRoleResult,
             GroupChangeRoleArgs,
             UnitResult,
         );

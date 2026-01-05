@@ -243,6 +243,8 @@ import {
     apiCommunityRole,
     apiMemberRole,
     apiOptionalCommunityPermissions,
+    changeChannelRoleResult,
+    changeRoleResult,
     communityChannelSummaryResponse,
     communityDetailsResponse,
     communityDetailsUpdatesResponse,
@@ -329,27 +331,31 @@ export class CommunityClient extends MsgpackCanisterAgent {
         userId: string,
         newRole: MemberRole,
     ): Promise<ChangeRoleResponse> {
+        const user_id = principalStringToBytes(userId);
         return this.executeMsgpackUpdate(
             "change_channel_role",
             {
                 channel_id: toBigInt32(chatId.channelId),
-                user_id: principalStringToBytes(userId),
+                user_id,
+                user_ids: [user_id],
                 new_role: apiMemberRole(newRole),
             },
-            unitResult,
+            changeChannelRoleResult,
             CommunityChangeChannelRoleArgs,
             UnitResult,
         );
     }
 
     changeRole(userId: string, newRole: MemberRole): Promise<ChangeCommunityRoleResponse> {
+        const user_id = principalStringToBytes(userId);
         return this.executeMsgpackUpdate(
             "change_role",
             {
-                user_id: principalStringToBytes(userId),
+                user_id,
+                user_ids: [user_id],
                 new_role: apiCommunityRole(newRole),
             },
-            unitResult,
+            changeRoleResult,
             CommunityChangeRoleArgs,
             UnitResult,
         );

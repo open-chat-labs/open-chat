@@ -1,4 +1,5 @@
 import type {
+    ChangeRoleResponse,
     ConvertToCommunityResponse,
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
@@ -10,6 +11,7 @@ import type {
     UpdatedRules,
 } from "openchat-shared";
 import {
+    CommonResponses,
     emptyChatMetrics,
     ROLE_ADMIN,
     ROLE_MEMBER,
@@ -22,8 +24,10 @@ import type {
     GroupConvertIntoCommunitySuccessResult,
     GroupRole,
     GroupSummaryUpdatesResponse,
+    OCError,
     GroupCanisterGroupChatSummary as TGroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates as TGroupCanisterGroupChatSummaryUpdates,
+    GroupChangeRoleResponse as TGroupChangeRoleResponse,
     GroupMembershipUpdates as TGroupMembershipUpdates,
     OptionalGroupPermissions as TOptionalGroupPermissions,
     OptionalMessagePermissions as TOptionalMessagePermissions,
@@ -245,4 +249,20 @@ export function apiUpdatedRules(rules: UpdatedRules): TUpdatedRules {
         enabled: rules.enabled,
         new_version: rules.newVersion,
     };
+}
+
+export function changeRoleResult(value: TGroupChangeRoleResponse): ChangeRoleResponse {
+    if (value === "Success") {
+        return CommonResponses.success();
+    }
+
+    // Handle PartialSuccess by returning the first error found
+    if ("PartialSuccess" in value) {
+        for (const error of Object.values(value.PartialSuccess as Record<string, OCError>)) {
+            return mapResult({ Error: error }, CommonResponses.success);
+        }
+        return CommonResponses.success();
+    }
+
+    return mapResult(value, CommonResponses.success);
 }
