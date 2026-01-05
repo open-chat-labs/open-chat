@@ -1765,6 +1765,7 @@ impl GroupChatCore {
         total_chit_earned: u32,
         streak: u16,
         streak_ends: TimestampMillis,
+        user_reauthenticated: bool,
     ) -> OCResult<ReservePrizeSuccess> {
         let member = self.members.get_verified_member(user_id)?;
         let min_visible_event_index = member.min_visible_event_index();
@@ -1779,6 +1780,7 @@ impl GroupChatCore {
             total_chit_earned,
             streak,
             streak_ends,
+            user_reauthenticated,
         )
     }
 

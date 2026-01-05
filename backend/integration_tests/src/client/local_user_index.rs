@@ -338,12 +338,17 @@ pub mod happy_path {
         local_user_index: CanisterId,
         chat_id: MultiUserChat,
         message_id: MessageId,
+        sign_in_proof_jwt: Option<String>,
     ) {
         let response = super::claim_prize(
             env,
             sender,
             local_user_index,
-            &local_user_index_canister::claim_prize::Args { chat_id, message_id },
+            &local_user_index_canister::claim_prize::Args {
+                chat_id,
+                message_id,
+                sign_in_proof_jwt,
+            },
         );
 
         match response {

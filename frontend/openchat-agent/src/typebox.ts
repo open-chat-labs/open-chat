@@ -3614,6 +3614,7 @@ export type IdentityPrepareDelegationSuccessResult = Static<
 export const IdentityPrepareDelegationSuccessResult = Type.Object({
     user_key: TSBytes,
     expiration: Type.BigInt(),
+    proof_jwt: Type.String(),
 });
 
 export type IdentityPrepareDelegationResponse = Static<typeof IdentityPrepareDelegationResponse>;
@@ -6106,6 +6107,7 @@ export type LocalUserIndexClaimPrizeArgs = Static<typeof LocalUserIndexClaimPriz
 export const LocalUserIndexClaimPrizeArgs = Type.Object({
     chat_id: MultiUserChat,
     message_id: MessageId,
+    sign_in_proof_jwt: Type.Optional(Type.String()),
 });
 
 export type LocalUserIndexInstallBotArgs = Static<typeof LocalUserIndexInstallBotArgs>;

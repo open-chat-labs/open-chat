@@ -6,6 +6,7 @@ use local_user_index_canister::{GlobalUser, claim_prize::*};
 use types::{
     DiamondMembershipStatus, MultiUserChat,
     PrizeClaimResponse::{self, *},
+    UserSignedInClaims,
 };
 
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
@@ -19,8 +20,18 @@ async fn claim_prize(args: Args) -> PrizeClaimResponse {
             unique_person_proof,
             ..
         },
+        user_reauthenticated,
         now,
-    ) = read_state(|state| (state.calling_user(), state.env.now()));
+    ) = read_state(|state| {
+        let user = state.calling_user();
+        let now = state.env.now();
+        let user_reauthenticated = args.sign_in_proof_jwt.is_some_and(|jwt| {
+            jwt::verify_and_decode::<UserSignedInClaims>(&jwt, state.data.oc_key_pair.public_key_pem())
+                .is_ok_and(|claims| claims.exp_ms() > now && claims.custom().principal == user.principal)
+        });
+
+        (user, user_reauthenticated, now)
+    });
 
     let is_unique_person = unique_person_proof.is_some();
     let diamond_status = match diamond_membership_expires_at {
@@ -41,6 +52,7 @@ async fn claim_prize(args: Args) -> PrizeClaimResponse {
                 total_chit_earned,
                 streak: chit.streak,
                 streak_ends: chit.streak_ends,
+                user_reauthenticated,
             };
             group_canister_c2c_client::c2c_claim_prize(chat_id.into(), &c2c_args).await
         }
@@ -54,6 +66,7 @@ async fn claim_prize(args: Args) -> PrizeClaimResponse {
                 total_chit_earned,
                 streak: chit.streak,
                 streak_ends: chit.streak_ends,
+                user_reauthenticated,
             };
             community_canister_c2c_client::c2c_claim_prize(community_id.into(), &c2c_args).await
         }

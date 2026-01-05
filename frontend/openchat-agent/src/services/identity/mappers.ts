@@ -17,8 +17,7 @@ import type {
     GenerateChallengeResponse,
     GetDelegationResponse,
     InitiateIdentityLinkResponse,
-    PrepareDelegationResponse,
-    PrepareDelegationSuccess,
+    PrepareDelegationWithProofResponse,
     RemoveIdentityLinkResponse,
     WebAuthnKeyFull,
 } from "openchat-shared";
@@ -40,7 +39,11 @@ export function createIdentityResponse(
         return { kind: "challenge_required" };
     }
     if ("Success" in value) {
-        return prepareDelegationSuccess(value.Success);
+        return {
+            kind: "success",
+            userKey: consolidateBytes(value.Success.user_key),
+            expiration: value.Success.expiration,
+        };
     }
     if ("PublicKeyInvalid" in value) {
         return { kind: "public_key_invalid" };
@@ -74,12 +77,17 @@ export function checkAuthPrincipalResponse(
 
 export function prepareDelegationResponse(
     value: IdentityPrepareDelegationResponse,
-): PrepareDelegationResponse {
+): PrepareDelegationWithProofResponse {
     if (value === "NotFound") {
         return { kind: "not_found" };
     }
     if ("Success" in value) {
-        return prepareDelegationSuccess(value.Success);
+        return {
+            kind: "success",
+            userKey: consolidateBytes(value.Success.user_key),
+            expiration: value.Success.expiration,
+            proofJwt: value.Success.proof_jwt,
+        };
     }
     throw new UnsupportedValueError("Unexpected ApiPrepareDelegationResponse type received", value);
 }
@@ -104,17 +112,6 @@ export function signedDelegation(signedDelegation: SignedDelegation): GetDelegat
             signedDelegation.delegation.expiration,
         ),
         signature: consolidateBytes(signedDelegation.signature) as unknown as Signature,
-    };
-}
-
-function prepareDelegationSuccess(value: {
-    user_key: Uint8Array | number[];
-    expiration: bigint;
-}): PrepareDelegationSuccess {
-    return {
-        kind: "success",
-        userKey: consolidateBytes(value.user_key),
-        expiration: value.expiration,
     };
 }
 
