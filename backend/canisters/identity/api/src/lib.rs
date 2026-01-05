@@ -50,3 +50,8 @@ pub struct UserIdentity {
     pub user_id: Option<UserId>,
     pub email: Option<String>,
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct UserSignedInClaims {
+    pub principal: Principal,
+}
