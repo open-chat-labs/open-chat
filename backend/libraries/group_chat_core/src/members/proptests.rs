@@ -7,7 +7,7 @@ use proptest::prelude::*;
 use proptest::prop_oneof;
 use std::collections::BTreeSet;
 use test_strategy::proptest;
-use types::{EventIndex, GroupPermissions, MessageIndex, MultiUserChat, TimestampMillis, UserId, UserType};
+use types::{EventIndex, MessageIndex, MultiUserChat, TimestampMillis, UserId, UserType};
 
 #[derive(Debug, Clone)]
 enum Operation {
@@ -15,7 +15,6 @@ enum Operation {
         user_id: UserId,
     },
     ChangeRole {
-        owner_index: usize,
         user_index: usize,
         role: GroupRoleInternal,
     },
@@ -49,8 +48,8 @@ enum Operation {
 fn operation_strategy() -> impl Strategy<Value = Operation> {
     prop_oneof![
         50 => any::<usize>().prop_map(|user_index| Operation::Add { user_id: user_id(user_index) }),
-        20 => (any::<usize>(), any::<usize>(), any::<usize>())
-            .prop_map(|(owner_index, user_index, role_index)| Operation::ChangeRole { owner_index, user_index, role: role(role_index) }),
+        20 => (any::<usize>(), any::<usize>())
+            .prop_map(|(user_index, role_index)| Operation::ChangeRole { user_index, role: role(role_index) }),
         10 => (any::<usize>(), any::<Option<bool>>(), any::<Option<bool>>())
             .prop_map(|(user_index, mute, at_everyone_mute)| Operation::ToggleMuteNotifications { user_index, mute, at_everyone_mute }),
         10 => any::<usize>().prop_map(|user_index| Operation::Remove { user_index}),
@@ -97,14 +96,9 @@ fn execute_operation(members: &mut GroupMembers, op: Operation, timestamp: Times
                 UserType::User,
             );
         }
-        Operation::ChangeRole {
-            owner_index,
-            user_index,
-            role,
-        } => {
-            let owner = get(&members.owners, owner_index);
+        Operation::ChangeRole { user_index, role } => {
             let user_id = get(&members.member_ids, user_index);
-            let _ = members.change_role(owner, user_id, role, &GroupPermissions::default(), timestamp);
+            let _ = members.change_role(user_id, role, timestamp);
         }
         Operation::ToggleMuteNotifications {
             user_index,
