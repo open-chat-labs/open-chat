@@ -78,7 +78,11 @@
 
     function closeMenu() {
         open = portalState.close();
-        menuClone?.remove();
+
+        // Fade-out menu clone to prevent a "blinking" effect when closing the mneu.
+        menuClone?.classList.add("fadeout");
+        setTimeout(() => menuClone?.remove(), 250);
+
         let overlay = document.getElementById("masked_overlay");
         if (overlay) {
             overlay.classList.remove("visible");
