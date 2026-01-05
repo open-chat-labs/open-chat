@@ -2828,8 +2828,20 @@ export const CommunityUndeleteMessagesArgs = Type.Object({
 export type CommunityChangeRoleArgs = Static<typeof CommunityChangeRoleArgs>;
 export const CommunityChangeRoleArgs = Type.Object({
     user_id: UserId,
+    user_ids: Type.Array(UserId),
     new_role: CommunityRole,
 });
+
+export type CommunityChangeRoleResponse = Static<typeof CommunityChangeRoleResponse>;
+export const CommunityChangeRoleResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Object({
+        PartialSuccess: Type.Record(UserId, OCError),
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
 
 export type CommunitySelectedChannelInitialArgs = Static<
     typeof CommunitySelectedChannelInitialArgs
@@ -3009,8 +3021,20 @@ export type CommunityChangeChannelRoleArgs = Static<typeof CommunityChangeChanne
 export const CommunityChangeChannelRoleArgs = Type.Object({
     channel_id: ChannelId,
     user_id: UserId,
+    user_ids: Type.Array(UserId),
     new_role: GroupRole,
 });
+
+export type CommunityChangeChannelRoleResponse = Static<typeof CommunityChangeChannelRoleResponse>;
+export const CommunityChangeChannelRoleResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Object({
+        PartialSuccess: Type.Record(UserId, OCError),
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
 
 export type CommunityDeclineInvitationArgs = Static<typeof CommunityDeclineInvitationArgs>;
 export const CommunityDeclineInvitationArgs = Type.Object({
@@ -3866,9 +3890,21 @@ export const GroupUndeleteMessagesArgs = Type.Object({
     message_ids: Type.Array(MessageId),
 });
 
+export type GroupChangeRoleResponse = Static<typeof GroupChangeRoleResponse>;
+export const GroupChangeRoleResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Object({
+        PartialSuccess: Type.Record(UserId, OCError),
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
 export type GroupChangeRoleArgs = Static<typeof GroupChangeRoleArgs>;
 export const GroupChangeRoleArgs = Type.Object({
     user_id: UserId,
+    user_ids: Type.Array(UserId),
     new_role: GroupRole,
 });
 
@@ -5937,6 +5973,23 @@ export const UserIndexUsersChitResponse = Type.Object({
     Success: UserIndexUsersChitSuccessResult,
 });
 
+export type UserIndexBotInstallationsArgs = Static<typeof UserIndexBotInstallationsArgs>;
+export const UserIndexBotInstallationsArgs = Type.Object({
+    installed_since: Type.Optional(BotInstallationLocation),
+    max_results: Type.Number(),
+});
+
+export type UserIndexBotInstallationsInstallationDetails = Static<
+    typeof UserIndexBotInstallationsInstallationDetails
+>;
+export const UserIndexBotInstallationsInstallationDetails = Type.Object({
+    location: BotInstallationLocation,
+    installed_at: Type.BigInt(),
+    local_user_index: TSPrincipal,
+    granted_permissions: BotPermissions,
+    granted_autonomous_permissions: BotPermissions,
+});
+
 export type UserIndexPlatformModeratorsResponse = Static<
     typeof UserIndexPlatformModeratorsResponse
 >;
@@ -7284,6 +7337,23 @@ export const RegistryUpdatesResponse = Type.Union([
     Type.Literal("SuccessNoUpdates"),
 ]);
 
+export type UserIndexBotInstallationsSuccessResult = Static<
+    typeof UserIndexBotInstallationsSuccessResult
+>;
+export const UserIndexBotInstallationsSuccessResult = Type.Object({
+    installations: Type.Array(UserIndexBotInstallationsInstallationDetails),
+});
+
+export type UserIndexBotInstallationsResponse = Static<typeof UserIndexBotInstallationsResponse>;
+export const UserIndexBotInstallationsResponse = Type.Union([
+    Type.Object({
+        Success: UserIndexBotInstallationsSuccessResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
 export type UserIndexCurrentUserSuccessResult = Static<typeof UserIndexCurrentUserSuccessResult>;
 export const UserIndexCurrentUserSuccessResult = Type.Object({
     user_id: UserId,
@@ -7405,6 +7475,7 @@ export const LocalUserIndexBotRemoveUserArgs = Type.Object({
 export type LocalUserIndexBotInviteUsersArgs = Static<typeof LocalUserIndexBotInviteUsersArgs>;
 export const LocalUserIndexBotInviteUsersArgs = Type.Object({
     chat_context: BotChatContext,
+    channel_id: Type.Optional(ChannelId),
     user_ids: Type.Array(UserId),
 });
 
