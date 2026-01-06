@@ -105,14 +105,12 @@ fn insert_field_attributes(field: &mut Field, is_tuple: bool, derives_serde: boo
             field.attrs.push(parse_quote!( #[ts(as = "ts_export::TSPrincipal")] ));
         } else if field.attrs.iter().any(is_using_serde_bytes) {
             field.attrs.push(parse_quote!( #[ts(as = "ts_export::TSBytes")] ));
-        } else if !is_tuple {
-            if type_path.path.segments[0].ident == "Option" {
-                field.attrs.push(parse_quote!( #[ts(optional)] ));
-                if derives_serde {
-                    field
-                        .attrs
-                        .push(parse_quote!( #[serde(skip_serializing_if = "Option::is_none")] ));
-                }
+        } else if !is_tuple && type_path.path.segments[0].ident == "Option" {
+            field.attrs.push(parse_quote!( #[ts(optional)] ));
+            if derives_serde {
+                field
+                    .attrs
+                    .push(parse_quote!( #[serde(skip_serializing_if = "Option::is_none")] ));
             }
         }
     }
