@@ -16,6 +16,7 @@ pub enum PinNumberVerification {
     None,
     PIN(PinNumberWrapper),
     Delegation(SignedDelegation),
+    Reauthenticated(String),
 }
 
 pub type Response = UnitResult;
