@@ -1,10 +1,8 @@
 <script lang="ts">
-    import { mobileWidth } from "openchat-client";
-    import { i18nKey } from "../i18n/i18n";
-    import Button from "./Button.svelte";
-    import ButtonGroup from "./ButtonGroup.svelte";
-    import ModalContent from "./ModalContent.svelte";
-    import Translatable from "./Translatable.svelte";
+    import { Sheet } from "component-lib";
+    import Home from "svelte-material-icons/HomeCircleOutline.svelte";
+    import RobotDead from "svelte-material-icons/RobotDeadOutline.svelte";
+    import NothingToSee from "./home/NothingToSee.svelte";
 
     interface Props {
         onClose?: () => void;
@@ -12,45 +10,18 @@
     let { onClose }: Props = $props();
 </script>
 
-<ModalContent backgroundImage={"/assets/landscape.png"} {onClose}>
-    {#snippet body()}
-        <div class="body">
-            <h1 class="msg">page not found</h1>
-            <div class="not-found"></div>
-        </div>
-    {/snippet}
-    {#snippet footer()}
-        <div>
-            <ButtonGroup align={$mobileWidth ? "fill" : "center"}>
-                <Button onClick={onClose}>
-                    <Translatable resourceKey={i18nKey("goHome")} />
-                </Button>
-            </ButtonGroup>
-        </div>
-    {/snippet}
-</ModalContent>
+<Sheet onDismiss={onClose}>
+    <NothingToSee
+        title={"Page not found"}
+        subtitle={"We can't find the page you're looking for"}
+        reset={onClose ? { text: "Go home", onClick: onClose, icon: home } : undefined}
+        height={{ size: "20rem" }}>
+        {#snippet icon(color, size)}
+            <RobotDead {color} {size} />
+        {/snippet}
+    </NothingToSee>
+</Sheet>
 
-<style lang="scss">
-    .body {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: $sp5;
-    }
-    .msg {
-        @include font(bold, normal, fs-200);
-        text-shadow: 2px 2px #000;
-        text-transform: uppercase;
-    }
-
-    .not-found {
-        background-image: url("/assets/not_found.svg");
-        width: 250px;
-        height: 250px;
-
-        @include mobile() {
-            width: 150px;
-            height: 150px;
-        }
-    }
-</style>
+{#snippet home(color: string, size: string)}
+    <Home {color} {size} />
+{/snippet}
