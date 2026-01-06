@@ -27,6 +27,7 @@ pub mod c2c_upgrade_community_canister_wasm;
 pub mod c2c_upgrade_group_canister_wasm;
 pub mod c2c_upgrade_user_canister_wasm;
 pub mod c2c_user_canister;
+pub mod c2c_verify_sign_in_proof;
 pub mod claim_prize;
 pub mod install_bot;
 pub mod invite_users_to_channel;

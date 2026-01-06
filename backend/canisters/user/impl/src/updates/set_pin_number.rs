@@ -3,7 +3,7 @@ use crate::{execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
-use types::{Achievement, FieldTooLongResult, FieldTooShortResult, UnitResult};
+use types::{Achievement, FieldTooLongResult, FieldTooShortResult};
 use user_canister::set_pin_number::*;
 
 const MIN_LENGTH: usize = 4;
@@ -24,18 +24,17 @@ async fn set_pin_number_impl(args: Args) -> Response {
                     return Response::Error(error.into());
                 }
             }
-            PinNumberVerification::Delegation(delegation) => {
+            PinNumberVerification::Delegation(_) => {}
+            PinNumberVerification::Reauthenticated(sign_in_proof_jwt) => {
                 let local_user_index_canister_id = read_state(|state| state.data.local_user_index_canister_id);
-                match local_user_index_canister_c2c_client::c2c_verify_signature(
+                match local_user_index_canister_c2c_client::c2c_verify_sign_in_proof(
                     local_user_index_canister_id,
-                    &local_user_index_canister::c2c_verify_signature::Args {
-                        signature: delegation.signature,
-                    },
+                    &local_user_index_canister::c2c_verify_sign_in_proof::Args { sign_in_proof_jwt },
                 )
                 .await
                 {
-                    Ok(UnitResult::Success) => {}
-                    Ok(other) => return other,
+                    Ok(Response::Success) => {}
+                    Ok(error) => return error,
                     Err(error) => return Response::Error(error.into()),
                 }
             }
