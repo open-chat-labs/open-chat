@@ -143,7 +143,7 @@ describe("merging metrics", () => {
             ...emptyChatMetrics(),
             audioMessages: 10,
             edits: 30,
-            icpMessages: 40,
+            cryptoMessages: 40,
         };
         expect(mergeChatMetrics(metrics, emptyChatMetrics())).toMatchObject(metrics);
     });
@@ -152,12 +152,12 @@ describe("merging metrics", () => {
             ...emptyChatMetrics(),
             audioMessages: 10,
             edits: 30,
-            icpMessages: 40,
+            cryptoMessages: 40,
         };
         expect(mergeChatMetrics(metrics, metrics)).toMatchObject({
             audioMessages: 20,
             edits: 60,
-            icpMessages: 80,
+            cryptoMessages: 80,
         });
     });
 });
