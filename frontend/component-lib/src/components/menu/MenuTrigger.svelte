@@ -79,7 +79,7 @@
     function closeMenu() {
         open = portalState.close();
 
-        // Fade-out menu clone to prevent a "blinking" effect when closing the mneu.
+        // Fade-out menu clone bg to prevent a "blinking" effect when closing the mneu.
         menuClone?.classList.add("fadeout");
         setTimeout(() => menuClone?.remove(), 250);
 

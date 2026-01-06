@@ -11,7 +11,7 @@
     const borderClass = border ? `border-${border}` : "";
 </script>
 
-<div class="outer">
+<div class="notification_indicator outer">
     <div class={`inner ${borderClass}`} class:muted></div>
 </div>
 

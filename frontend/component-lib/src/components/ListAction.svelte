@@ -75,8 +75,8 @@
         position: relative;
         width: 2.5rem;
         height: 2.5rem;
+        border-radius: var(--rad-md);
         color: var(--text-primary);
-        border-radius: var(--rad-lg);
         border: none;
         display: flex;
         align-items: center;
@@ -85,6 +85,7 @@
         &.large {
             width: 3.5rem;
             height: 3.5rem;
+            border-radius: var(--rad-lg);
         }
 
         &.primary {

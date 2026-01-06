@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ColourVars, Container, type SwipeDirection } from "component-lib";
+    import { ColourVars, Container } from "component-lib";
     import {
         activityFeedShowing,
         emptyCombinedUnreadCounts,
@@ -39,15 +39,6 @@
         const { mentions, unmuted } = unread;
 
         return [mentions || unmuted > 0, unread];
-    }
-
-    function onSwipe(dir: SwipeDirection) {
-        if (dir === "up") {
-            expanded = true;
-        }
-        if (dir === "down") {
-            expanded = false;
-        }
     }
 
     let container: HTMLElement;
@@ -100,18 +91,168 @@
     function exploreCommunities() {
         page("/communities");
     }
+
+    // SHEET LIKE BEHAVIOUR....
+
+    const MAX_HEIGHT_RATIO = 0.7; // 70% of viewport
+    const CLOSED_HEIGHT = 96; // px (peek / handle visible)
+    const OPEN_HEIGHT = computeOpenHeight();
+    const OPEN_THRESHOLD = 0.2; // 60% → snap open
+    const CLOSE_THRESHOLD = 0.9; // 40% → snap closed
+
+    let isOpen = $state(false);
+    let openFactor = $state(0);
+    let startY: undefined | number;
+    let startHeight: undefined | number;
+    let currentHeight: undefined | number;
+    let handle: HTMLElement;
+
+    let animating = false;
+    let animationStart = 0;
+    let animationFrom = 0;
+    let animationTo: 0 | 1 = 1;
+    let animationDuration = 0;
+    const SNAP_DURATION = 250; // ms
+
+    function getScrollerOpacity(): number {
+        return 1 - openFactor / OPEN_THRESHOLD;
+    }
+
+    function viewportHeight() {
+        return window.visualViewport?.height ?? window.innerHeight;
+    }
+
+    function computeOpenHeight() {
+        // TODO recalculate on resize once we modify this for web!
+        return Math.round(viewportHeight() * MAX_HEIGHT_RATIO);
+    }
+
+    function openness(height: number) {
+        return Math.min(1, Math.max(0, (height - CLOSED_HEIGHT) / (OPEN_HEIGHT - CLOSED_HEIGHT)));
+    }
+
+    function setSheetHeight(height: number) {
+        container.style.height = `${height}px`;
+    }
+
+    // Only track movement in y dimension!
+    function onDragStart(e: PointerEvent) {
+        container.style.transition = "none";
+
+        // Capture immediately
+        handle.setPointerCapture(e.pointerId);
+
+        startY = e.clientY;
+        startHeight = container.getBoundingClientRect().height;
+    }
+
+    function onDrag(e: PointerEvent) {
+        if (!handle.hasPointerCapture(e.pointerId)) return;
+        if (startY == null || startHeight == null) return;
+
+        const delta = startY - e.clientY;
+        currentHeight = Math.min(OPEN_HEIGHT, Math.max(CLOSED_HEIGHT, startHeight + delta));
+        openFactor = openness(currentHeight);
+        setSheetHeight(currentHeight);
+    }
+
+    function onDragStop(e: PointerEvent) {
+        // Remove the added transition, and fallback to CSS defined one!
+        container.style.transition = "";
+
+        if (handle.hasPointerCapture(e.pointerId)) {
+            handle.releasePointerCapture(e.pointerId);
+        }
+
+        if (isOpen) {
+            // Sheet is open → maybe close it
+            if (openFactor <= CLOSE_THRESHOLD) {
+                closeSheet();
+            } else {
+                openSheet();
+            }
+        } else {
+            if (openFactor >= OPEN_THRESHOLD) {
+                openSheet();
+            } else {
+                closeSheet();
+            }
+        }
+
+        startY = undefined;
+        startHeight = undefined;
+    }
+
+    function openSheet() {
+        isOpen = true;
+        snapTo(1);
+    }
+
+    function closeSheet() {
+        isOpen = false;
+        snapTo(0);
+    }
+
+    function snapDuration(factor: number, target: 0 | 1) {
+        let duration: number;
+        if (target === 1) {
+            duration = ((1 - factor) / (1 - OPEN_THRESHOLD)) * SNAP_DURATION;
+        } else {
+            duration = (factor / CLOSE_THRESHOLD) * SNAP_DURATION;
+        }
+        return Math.max(0, Math.min(SNAP_DURATION, duration));
+    }
+
+    function snapTo(target: 0 | 1) {
+        animating = true;
+        animationStart = performance.now();
+        animationFrom = openFactor;
+        animationTo = target;
+        animationDuration = 2 * snapDuration(animationFrom, target);
+
+        container.style.transition = `height ${animationDuration}ms cubic-bezier(0.2, 0, 0, 1)`;
+        setSheetHeight(target === 1 ? OPEN_HEIGHT : CLOSED_HEIGHT);
+
+        // Shorten the duration for the factor change
+        animationDuration *= 0.9;
+        requestAnimationFrame(trackAnimation);
+    }
+
+    function trackAnimation(now: number) {
+        if (!animating) return;
+
+        const elapsed = now - animationStart;
+        const t = animationDuration === 0 ? 1 : Math.min(elapsed / animationDuration, 1);
+
+        openFactor = animationFrom + (animationTo - animationFrom) * t;
+
+        if (t < 1) {
+            requestAnimationFrame(trackAnimation);
+        } else {
+            openFactor = animationTo;
+            animating = false;
+        }
+    }
 </script>
 
 <Container
     bind:ref={container}
-    {onSwipe}
     supplementalClass={"communities_sheet"}
+    overflow={"hidden"}
     direction={"vertical"}
-    padding={["md", "zero", "lg", "zero"]}
+    padding={["sm", "zero", "sm", "zero"]}
     width={"fill"}
-    height={{ size: expanded ? "70%" : "7.5rem" }}
+    borderRadius={["md", "md", "zero", "zero"]}
     background={ColourVars.background1}>
-    <button onclick={() => (expanded = !expanded)} aria-label="handle" class="handle_outer">
+    <button
+        bind:this={handle}
+        onpointerdown={onDragStart}
+        onpointermove={onDrag}
+        onpointerup={onDragStop}
+        onpointercancel={onDragStop}
+        oncontextmenu={(e) => e.preventDefault()}
+        aria-label="handle"
+        class="handle_outer">
         <div class="handle_inner"></div>
     </button>
 
@@ -131,8 +272,8 @@
         </div>
     {/if}
 
-    {#if !expanded}
-        <div transition:fade={{ duration: 200 }} class="scroller">
+    {#if openFactor < OPEN_THRESHOLD}
+        <div class="scroller" style={`opacity: ${getScrollerOpacity()}`}>
             <CommunitiesScroller
                 onCreate={createCommunity}
                 onExplore={exploreCommunities}
@@ -141,7 +282,7 @@
                 onSelect={selectCommunity}></CommunitiesScroller>
         </div>
     {:else}
-        <div transition:fade={{ duration: 200 }} class="list">
+        <div class="list" style={`opacity: ${openFactor}`}>
             <CommunitiesList
                 onCreate={createCommunity}
                 onExplore={exploreCommunities}
@@ -153,7 +294,7 @@
 
 <style lang="scss">
     :global(.container.communities_sheet) {
-        margin-bottom: -6px;
+        margin-bottom: -0.5rem;
     }
 
     :global(.communities_sheet .left path, .communities_sheet .right path) {
@@ -163,6 +304,7 @@
     .list,
     .scroller {
         width: 100%;
+        overflow: hidden;
     }
 
     .right,
@@ -189,9 +331,11 @@
 
     .handle_outer {
         all: unset;
-        padding: 0 0 var(--sp-xl) 0;
+        padding-bottom: var(--sp-sm);
         position: sticky;
-        cursor: pointer;
+        touch-action: none;
+        user-select: none;
+        cursor: grab;
         top: 0rem;
         left: 50%;
         transform: translateX(-50%);
@@ -199,8 +343,8 @@
     }
 
     .handle_inner {
+        height: 0.25rem;
         border-radius: var(--rad-circle);
-        height: 4px;
         background-color: var(--text-tertiary);
     }
 </style>

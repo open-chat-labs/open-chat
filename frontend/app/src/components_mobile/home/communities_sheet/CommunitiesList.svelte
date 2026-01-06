@@ -75,9 +75,9 @@
 {/snippet}
 
 <Container
-    padding={["zero", "lg", "zero", "lg"]}
+    padding={["sm", "xl", "xl"]}
     width={"fill"}
-    gap={"xl"}
+    gap={"xxl"}
     direction={"vertical"}
     height={"hug"}>
     <Container width={"fill"} gap={"lg"} direction={"vertical"} height={"hug"}>

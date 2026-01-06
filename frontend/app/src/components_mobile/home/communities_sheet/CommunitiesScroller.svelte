@@ -44,9 +44,9 @@
 
 <Container
     bind:ref
-    padding={["zero", "lg"]}
+    padding={["md", "lg", "lg"]}
     supplementalClass="communities_scroller"
-    overflow={"visible"}
+    overflow={"auto"}
     width={"fill"}
     gap={"lg"}>
     {#each $sortedCommunitiesStore as community}
@@ -61,21 +61,21 @@
             onClick={() => onSelect(community)}>
             <Avatar
                 url={client.communityAvatarUrl(community.id.communityId, community.avatar)}
-                size={"xl"}
-                radius={"lg"} />
+                size={"md"}
+                radius={"md"} />
             {#if unread}
                 <div class="unread">
-                    <NotificationIndicator></NotificationIndicator>
+                    <NotificationIndicator border={"secondary"}></NotificationIndicator>
                 </div>
             {/if}
         </Container>
     {/each}
-    <ListAction size={"large"} onClick={onExplore}>
+    <ListAction size={"default"} onClick={onExplore}>
         {#snippet icon(color)}
             <Compass {color} />
         {/snippet}
     </ListAction>
-    <ListAction size={"large"} onClick={onCreate} colour={"tertiary"}>
+    <ListAction size={"default"} onClick={onCreate} colour={"tertiary"}>
         {#snippet icon(color)}
             <AccountGroupOutline {color} />
         {/snippet}
@@ -85,18 +85,19 @@
 <style lang="scss">
     :global(.scroller_item.selected::before) {
         content: "";
-        width: 100%;
-        height: 4px;
+        width: 95%;
+        top: -0.75rem;
+        left: 2.5%;
+        height: 0.25rem;
         border-radius: var(--rad-xl);
-        background-color: var(--primary);
+        background: var(--gradient);
         position: absolute;
-        top: -10px;
     }
     .unread {
+        display: flex;
         position: absolute;
-        bottom: -6px;
+        bottom: -9px;
         left: 50%;
         transform: translateX(-50%);
-        display: flex;
     }
 </style>
