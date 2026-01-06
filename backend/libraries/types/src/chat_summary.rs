@@ -10,7 +10,7 @@ use ts_export::ts_export;
 pub const MAX_THREADS_IN_SUMMARY: usize = 20;
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct DirectChatSummary {
     pub them: UserId,
     pub last_updated: TimestampMillis,
@@ -31,7 +31,7 @@ pub struct DirectChatSummary {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct DirectChatSummaryUpdates {
     pub chat_id: ChatId,
     pub last_updated: TimestampMillis,
@@ -82,7 +82,7 @@ pub struct PublicGroupSummary {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GroupCanisterGroupChatSummary {
     pub chat_id: ChatId,
     pub local_user_index_canister_id: CanisterId,
@@ -115,7 +115,7 @@ pub struct GroupCanisterGroupChatSummary {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GroupCanisterGroupChatSummaryUpdates {
     pub chat_id: ChatId,
     pub last_updated: TimestampMillis,
@@ -152,7 +152,7 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GroupMembership {
     pub joined: TimestampMillis,
     pub role: GroupRole,
@@ -166,7 +166,7 @@ pub struct GroupMembership {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GroupMembershipUpdates {
     pub role: Option<GroupRole>,
     pub mentions: Vec<HydratedMention>,
@@ -215,7 +215,7 @@ impl SelectedGroupUpdates {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Debug, Default, Clone)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct ChatMetrics {
     pub text_messages: u64,
     pub image_messages: u64,
