@@ -22,13 +22,11 @@
     import ErrorMessage from "../ErrorMessage.svelte";
     import Markdown from "../home/Markdown.svelte";
     import SingleUserSelector from "../home/SingleUserSelector.svelte";
-    import Legend from "../Legend.svelte";
     import Tabs, { type Tab } from "../Tabs.svelte";
     import Translatable from "../Translatable.svelte";
     import BotCommands from "./BotCommands.svelte";
     import BotPermissionViewer from "./BotPermissionViewer.svelte";
     import InstallationLocationSelector from "./InstallationLocationSelector.svelte";
-    import ValidatingInput from "./ValidatingInput.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -175,9 +173,9 @@
     {#if candidate.definition.commands.length > 0}
         <BotCommands commands={candidate.definition.commands} onClick={onSelectCommand} />
     {:else}
-        <div class="smallprint">
+        <BodySmall colour={"textSecondary"}>
             <Translatable resourceKey={i18nKey("bots.builder.noCommands")}></Translatable>
-        </div>
+        </BodySmall>
     {/if}
 {/snippet}
 
@@ -187,9 +185,9 @@
             nested
             permissions={candidate.definition.autonomousConfig.permissions} />
     {:else}
-        <div class="smallprint">
+        <BodySmall colour={"textSecondary"}>
             <Translatable resourceKey={i18nKey("bots.builder.noAutonomousConfig")}></Translatable>
-        </div>
+        </BodySmall>
     {/if}
 {/snippet}
 
@@ -242,18 +240,16 @@
         {/if}
 
         {#if mode === "register"}
-            <Legend
-                required
-                label={i18nKey("bots.builder.nameLabel")}
-                rules={i18nKey("bots.builder.nameRules")}></Legend>
-            <ValidatingInput
+            <Input
                 minlength={3}
                 maxlength={25}
-                invalid={errors.has("bot_name")}
-                placeholder={i18nKey("bots.builder.namePlaceholder")}
-                error={errors.get("bot_name")}
+                placeholder={interpolate($_, i18nKey("bots.builder.namePlaceholder"))}
+                error={errors.has("bot_name")}
                 bind:value={candidate.name}>
-            </ValidatingInput>
+                {#snippet subtext()}
+                    <Translatable resourceKey={i18nKey("bots.builder.nameRules")} />
+                {/snippet}
+            </Input>
         {/if}
 
         <Input
@@ -323,49 +319,10 @@
     .debug {
         @include font(book, normal, fs-80);
     }
-    .photo {
-        max-width: toRem(100);
-        margin-bottom: $sp3;
-    }
 
     .error {
         :global(.error) {
             margin-top: $sp3;
         }
-    }
-
-    .endpoint {
-        display: flex;
-        align-items: center;
-        gap: $sp3;
-        margin-bottom: $sp3;
-
-        &.endpoint-error {
-            margin-bottom: 22px;
-        }
-
-        :global(.input-wrapper) {
-            margin-bottom: 0;
-        }
-
-        .endpoint-input {
-            flex: 3;
-        }
-
-        .icon {
-            flex: 0 0 40px;
-        }
-    }
-
-    .smallprint {
-        @include font(light, normal, fs-80);
-        color: var(--txt-light);
-    }
-
-    .desc {
-        @include input();
-        max-height: 180px;
-        overflow: auto;
-        margin-bottom: $sp3;
     }
 </style>

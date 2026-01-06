@@ -1,19 +1,16 @@
 <script lang="ts">
+    import { interpolate } from "@src/i18n/i18n";
+    import { Avatar, Body, BodySmall, Column, Option, Row, Search, Select } from "component-lib";
     import {
-        AvatarSize,
         communitiesStore,
         i18nKey,
         OpenChat,
         serverGroupChatsStore,
         type BotInstallationLocation,
     } from "openchat-client";
-    import { getContext, onMount } from "svelte";
-    import Avatar from "../Avatar.svelte";
-    import SelectedMatch from "../home/proposal/SelectedMatch.svelte";
-    import Legend from "../Legend.svelte";
-    import Menu from "../Menu.svelte";
-    import MenuItem from "../MenuItem.svelte";
-    import Search from "../Search.svelte";
+    import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
+    import NothingToSee from "../home/NothingToSee.svelte";
     import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -32,47 +29,43 @@
     let { location = $bindable() }: Props = $props();
     let searchTerm: string = $state("");
     let placeholder = i18nKey("Search for a community or group");
-    let results: Match[] = $state([]);
-    let selected: Match | undefined = $state(undefined);
-    let focused = $state(false);
+    let selected = $state<Match>();
+    let searchTermLower = $derived(searchTerm.toLocaleLowerCase());
     location; // usual hack
 
-    onMount(() => onPerformSearch(""));
+    let options = $derived.by(() => {
+        const communities: Match[] = [...$communitiesStore.values()].map((c) => ({
+            avatarUrl: client.communityAvatarUrl(c.id.communityId, c.avatar),
+            name: c.name,
+            id: c.id.communityId,
+            isCommunity: true,
+        }));
 
-    function onPerformSearch(term: string) {
-        const termLower = term.toLowerCase();
-
-        const communities: Match[] = [...$communitiesStore.values()]
-            .filter((c) => termLower === "" || c.name.toLowerCase().includes(termLower))
-            .map((c) => ({
-                avatarUrl: client.communityAvatarUrl(c.id.communityId, c.avatar),
-                name: c.name,
-                id: c.id.communityId,
-                isCommunity: true,
-            }));
-
-        const groups: Match[] = [...$serverGroupChatsStore.values()]
-            .filter((g) => termLower === "" || g.name.toLowerCase().includes(termLower))
-            .map((g) => ({
-                avatarUrl: client.groupAvatarUrl(g),
-                name: g.name,
-                id: g.id.groupId,
-                isCommunity: false,
-            }));
+        const groups: Match[] = [...$serverGroupChatsStore.values()].map((g) => ({
+            avatarUrl: client.groupAvatarUrl(g),
+            name: g.name,
+            id: g.id.groupId,
+            isCommunity: false,
+        }));
 
         communities.sort((a: Match, b: Match) => a.name.localeCompare(b.name));
         groups.sort((a: Match, b: Match) => a.name.localeCompare(b.name));
-        results = [...communities, ...groups];
-    }
+        return [...communities, ...groups];
+    });
+
+    let matches = $derived(
+        options.filter(
+            (o) => searchTermLower === "" || o.name.toLocaleLowerCase().includes(searchTermLower),
+        ),
+    );
 
     function reset() {
         selected = undefined;
-        onPerformSearch("");
+        searchTerm = "";
     }
 
     function select(match: Match | undefined) {
         selected = match;
-        results = [];
         if (match !== undefined) {
             if (match.isCommunity) {
                 location = { kind: "community", communityId: match.id };
@@ -81,102 +74,69 @@
             }
         }
     }
-
-    function onFocus() {
-        focused = true;
-    }
-
-    function onBlur() {
-        window.setTimeout(() => (focused = false), 300);
-    }
 </script>
 
-<div class="bot-install-location" class:showing-menu={results.length > 0}>
-    <Legend
-        label={i18nKey("bots.builder.testContext")}
-        rules={i18nKey("bots.builder.testContextInfo")}></Legend>
-    {#if selected !== undefined}
-        <SelectedMatch onRemove={() => reset()} match={selected}></SelectedMatch>
-    {:else}
-        <Search
-            inputStyle
-            {placeholder}
-            searching={false}
-            {searchTerm}
-            {onPerformSearch}
-            {onFocus}
-            {onBlur} />
-    {/if}
+<Select
+    placeholder={interpolate($_, i18nKey("bots.builder.testContext"))}
+    onSelect={select}
+    value={selected}>
+    {#snippet selectedValue(match)}
+        {match.name}
+    {/snippet}
+    {#snippet selectOptions(onSelect)}
+        <Column gap={"xl"} padding={"xl"}>
+            <Column padding={["zero", "sm"]} gap={"md"} crossAxisAlignment={"center"}>
+                <Body fontWeight={"bold"}>
+                    <Translatable resourceKey={i18nKey("bots.builder.testContext")}></Translatable>
+                </Body>
+                <BodySmall colour={"textSecondary"}>
+                    <Translatable resourceKey={i18nKey("bots.builder.testContextExplanation")}
+                    ></Translatable>
+                </BodySmall>
+            </Column>
 
-    {#if focused && results.length > 0}
-        <div class="menu">
-            <Menu shadow={false}>
-                {#each results as match (match.id)}
-                    <MenuItem onclick={() => select(match)}>
-                        {#snippet icon()}
-                            <Avatar url={match.avatarUrl} size={AvatarSize.Small} />
-                        {/snippet}
-                        {#snippet text()}
-                            <div class="details">
-                                <div class="name">
-                                    {match.name}
-                                </div>
-                                <div class="type">
-                                    {#if match.isCommunity}
-                                        Community
-                                    {:else}
-                                        Group chat
-                                    {/if}
-                                </div>
-                            </div>
-                        {/snippet}
-                    </MenuItem>
-                {/each}
-            </Menu>
-        </div>
-    {/if}
+            <Search
+                placeholder={interpolate($_, placeholder)}
+                searching={false}
+                bind:value={searchTerm}
+                onClear={reset} />
 
-    <p class="info">
-        <Translatable resourceKey={i18nKey("bots.builder.testContextExplanation")}></Translatable>
-    </p>
-</div>
-
-<style lang="scss">
-    .bot-install-location {
-        margin-bottom: $sp4;
-
-        &.showing-menu {
-            :global(.wrapper) {
-                border-radius: var(--rd) var(--rd) var(--rd) 0;
-            }
-
-            :global(.menu) {
-                border-radius: 0 0 var(--rd) var(--rd);
-            }
-
-            :global(.menu .menu) {
-                border-radius: 0 0 var(--rd) var(--rd);
-                border-top: none;
-            }
-        }
-    }
-    .info {
-        @include font(book, normal, fs-70);
-        color: var(--txt-light);
-        margin-top: $sp3;
-    }
-
-    .menu {
-        max-height: 250px;
-        overflow: auto;
-        width: fit-content;
-        position: absolute;
-        @include z-index("popup-menu");
-        box-shadow: var(--menu-sh);
-    }
-
-    .type {
-        @include font(light, normal, fs-70);
-        color: var(--txt-light);
-    }
-</style>
+            <Column padding={["zero", "md"]} gap={"lg"}>
+                {#if matches.length === 0}
+                    <NothingToSee
+                        height={{ size: "6" }}
+                        padding={"zero"}
+                        title={"No matching locations"}
+                        subtitle={searchTerm !== ""
+                            ? "Try relaxing your search criteria"
+                            : "You may not be a member of any groups or communities"} />
+                {:else}
+                    {#each matches as match (match.id)}
+                        <Option
+                            onClick={() => onSelect(match)}
+                            padding={["zero", "md", "zero", "zero"]}
+                            value={match}
+                            selected={false}>
+                            <Row gap={"md"}>
+                                <Avatar url={match.avatarUrl} size={"md"}></Avatar>
+                                <Column>
+                                    <Body>{match.name}</Body>
+                                    <BodySmall colour={"textSecondary"}>
+                                        {#if match.isCommunity}
+                                            Test in community
+                                        {:else}
+                                            Test in chat
+                                        {/if}
+                                    </BodySmall>
+                                </Column>
+                            </Row>
+                        </Option>
+                    {/each}
+                {/if}
+            </Column>
+        </Column>
+    {/snippet}
+    {#snippet subtext()}
+        <Translatable resourceKey={i18nKey("bots.builder.testContextInfo")} />
+    {/snippet}
+</Select>

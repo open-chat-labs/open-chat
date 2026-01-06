@@ -28,7 +28,7 @@
     let popupVisible = $state(false);
 </script>
 
-<Container onClick={() => (popupVisible = true)} direction={"vertical"} gap={"xs"}>
+<Container onClick={() => (popupVisible = true)} direction={"vertical"}>
     <Container
         background={ColourVars.textTertiary}
         height={{ size: "3rem" }}
