@@ -53,24 +53,27 @@ fn change_role_inner(
 
     state.data.verify_not_frozen()?;
 
-    match &caller {
-        Caller::BotV2(bot_caller) => {
-            if state.data.is_bot_permitted(
-                &bot_caller.bot,
-                &bot_caller.initiator,
-                &BotPermissions::from_chat_permission(ChatPermission::ChangeRoles),
-            ) {
-                return Err(OCErrorCode::InitiatorNotAuthorized.into());
-            }
-        }
-        _ => {
-            let member = state.data.chat.members.get_verified_member(caller.agent())?;
-            if !member
-                .role()
-                .can_change_roles(args.new_role.into(), &state.data.chat.permissions)
-            {
-                return Err(OCErrorCode::InitiatorNotAuthorized.into());
-            }
+    // If caller is a bot then check bot permissions
+    if let Caller::BotV2(bot_caller) = &caller
+        && state.data.is_bot_permitted(
+            &bot_caller.bot,
+            &bot_caller.initiator,
+            &BotPermissions::from_chat_permission(ChatPermission::ChangeRoles),
+        )
+    {
+        return Err(OCErrorCode::InitiatorNotAuthorized.into());
+    }
+
+    // Check whether the initiating user is permitted
+    // Note: A bot acting in autonomous mode with the "change role" permission is
+    // able to promote/demote owners
+    if let Some(initiator) = caller.initiator() {
+        let member = state.data.chat.members.get_verified_member(initiator)?;
+        if !member
+            .role()
+            .can_change_roles(args.new_role.into(), &state.data.chat.permissions)
+        {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }
     }
 
