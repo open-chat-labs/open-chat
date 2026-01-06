@@ -10,6 +10,7 @@
         type ChannelIdentifier,
         type ChatSummary,
         type ChitEarnedGate,
+        type CommandDefinition,
         type CommunitySummary,
         type DirectChatSummary,
         type EventWrapper,
@@ -33,6 +34,7 @@
     import { expectBackPress } from "../../utils/native/notification_channels";
     import BotBuilderModal from "../bots/BotBuilderModal.svelte";
     import BotDetailsPage from "../bots/BotDetailsPage.svelte";
+    import CommandViewer from "../bots/CommandViewer.svelte";
     import BotInstaller from "../bots/install/BotInstaller.svelte";
     import WebhookModal from "../bots/WebhookModal.svelte";
     import AccessGatesEvaluator from "./access/AccessGatesEvaluator.svelte";
@@ -110,6 +112,7 @@
 
     const client = getContext<OpenChat>("client");
     type SlidingModalType =
+        | { kind: "view_bot_command"; command: CommandDefinition }
         | { kind: "create_swap"; fromLedger: string; ctx: MessageContext }
         | {
               kind: "show_video_call_participants";
@@ -241,6 +244,7 @@
         }
 
         const unsubs = [
+            subscribe("viewBotCommand", (command) => push({ kind: "view_bot_command", command })),
             subscribe("registerBot", () => push({ kind: "register_bot" })),
             subscribe("updateBot", () => push({ kind: "update_bot" })),
             subscribe("removeBot", () => push({ kind: "remove_bot" })),
@@ -468,6 +472,8 @@
             <BotBuilderModal onClose={pop} mode={"update"} />
         {:else if page.kind === "remove_bot"}
             <BotBuilderModal onClose={pop} mode={"remove"} />
+        {:else if page.kind === "view_bot_command"}
+            <CommandViewer command={page.command} onClose={pop} />
         {:else if page.kind === "user_profile_share"}
             <Share />
         {:else if page.kind === "user_profile_delete_account"}

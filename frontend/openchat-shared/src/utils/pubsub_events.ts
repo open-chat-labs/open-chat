@@ -5,6 +5,7 @@ import type {
     ChatSummary,
     ChitEarnedGate,
     ChitEvent,
+    CommandDefinition,
     CommunityIdentifier,
     CommunitySummary,
     DirectChatIdentifier,
@@ -233,4 +234,5 @@ export type PubSubEvents = {
     evaluateGroupAccessGate: undefined;
     streakInsurance: undefined;
     createSwap: { fromLedger: string; ctx: MessageContext };
+    viewBotCommand: CommandDefinition;
 };

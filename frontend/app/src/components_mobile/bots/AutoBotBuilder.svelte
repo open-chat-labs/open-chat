@@ -4,6 +4,7 @@
         allUsersStore,
         debouncedDerived,
         OpenChat,
+        publish,
         validateBot,
         ValidationErrors,
         validEndpoint,
@@ -26,7 +27,6 @@
     import Translatable from "../Translatable.svelte";
     import BotCommands from "./BotCommands.svelte";
     import BotPermissionViewer from "./BotPermissionViewer.svelte";
-    import CommandViewer from "./CommandViewer.svelte";
     import InstallationLocationSelector from "./InstallationLocationSelector.svelte";
     import ValidatingInput from "./ValidatingInput.svelte";
 
@@ -49,15 +49,8 @@
         nameDirty,
         mode,
     }: Props = $props();
-    let selectedCommand = $state<CommandDefinition | undefined>(undefined);
-    let selectedCommandIndex = $state<number | undefined>(undefined);
     let debug = $state(false);
     let schemaLoading = $state(false);
-    let showNext = $derived(
-        selectedCommandIndex !== undefined &&
-            selectedCommandIndex < candidate.definition.commands.length - 1,
-    );
-    let showPrev = $derived(selectedCommandIndex !== undefined && selectedCommandIndex > 0);
 
     let errors = $derived.by(
         debouncedDerived(
@@ -73,24 +66,6 @@
             new ValidationErrors(),
         ),
     );
-
-    function traverseCommand(add: number) {
-        if (selectedCommandIndex === undefined) return;
-
-        selectedCommandIndex += add;
-        selectedCommand = candidate.definition.commands[selectedCommandIndex];
-        if (selectedCommand === undefined) {
-            selectedCommandIndex = undefined;
-        }
-    }
-
-    function nextCommand() {
-        traverseCommand(1);
-    }
-
-    function previousCommand() {
-        traverseCommand(-1);
-    }
 
     function checkUsername(value: string): Promise<ValidationErrorMessages> {
         return client
@@ -129,9 +104,8 @@
         e.preventDefault();
     }
 
-    function onSelectCommand(cmd: CommandDefinition, index: number) {
-        selectedCommand = cmd;
-        selectedCommandIndex = index;
+    function onSelectCommand(cmd: CommandDefinition) {
+        publish("viewBotCommand", cmd);
     }
 
     $effect(() => {
@@ -218,16 +192,6 @@
         </div>
     {/if}
 {/snippet}
-
-{#if selectedCommand !== undefined && selectedCommandIndex !== undefined}
-    <CommandViewer
-        onClose={() => (selectedCommand = undefined)}
-        errorPath={`command_${selectedCommandIndex}`}
-        onNext={showNext ? nextCommand : undefined}
-        onPrevious={showPrev ? previousCommand : undefined}
-        {errors}
-        command={selectedCommand}></CommandViewer>
-{/if}
 
 <Form {onSubmit}>
     <Column gap={"xl"}>

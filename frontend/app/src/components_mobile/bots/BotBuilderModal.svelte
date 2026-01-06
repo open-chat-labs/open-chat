@@ -149,24 +149,26 @@
                 bind:principal />
         {/if}
 
-        <Row crossAxisAlignment={"center"} mainAxisAlignment={"end"} gap={"md"}>
-            <CommonButton onClick={onClose} size={"small_text"}>
-                <Translatable resourceKey={i18nKey("cancel")} />
-            </CommonButton>
-            {#if mode !== "remove"}
-                <CommonButton
-                    mode={"active"}
-                    size={"medium"}
-                    onClick={mode === "update" ? update : register}
-                    disabled={!valid || busy}
-                    loading={busy}>
-                    <Translatable
-                        resourceKey={mode === "update"
-                            ? i18nKey("bots.update_bot.action")
-                            : i18nKey("bots.add.action")} />
+        {#if step !== "choose"}
+            <Row crossAxisAlignment={"center"} mainAxisAlignment={"end"} gap={"md"}>
+                <CommonButton onClick={onClose} size={"small_text"}>
+                    <Translatable resourceKey={i18nKey("cancel")} />
                 </CommonButton>
-            {/if}
-        </Row>
+                {#if mode !== "remove"}
+                    <CommonButton
+                        mode={"active"}
+                        size={"medium"}
+                        onClick={mode === "update" ? update : register}
+                        disabled={!valid || busy}
+                        loading={busy}>
+                        <Translatable
+                            resourceKey={mode === "update"
+                                ? i18nKey("bots.update_bot.action")
+                                : i18nKey("bots.add.action")} />
+                    </CommonButton>
+                {/if}
+            </Row>
+        {/if}
     </Column>
 </SlidingPageContent>
 
