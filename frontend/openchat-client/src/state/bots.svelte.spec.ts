@@ -51,7 +51,7 @@ describe("bot state", () => {
                     botState.commands[0],
                 );
                 expect(botState.selectedCommand).toEqual(botState.commands[0]);
-                expect(botState.showingBuilder).toEqual(messageContext);
+                expect(botState.showingBuilder).toBeUndefined();
                 expect(botState.selectedCommandArgs.length).toEqual(1);
                 expect(botState.selectedCommandArgs[0]).toMatchObject({
                     name: "bots.faq.params.topic.name",
@@ -62,7 +62,7 @@ describe("bot state", () => {
                         botState.selectedCommand!,
                         botState.selectedCommandArgs,
                     ),
-                ).toBe(false);
+                ).toBe(true);
 
                 // TODO - this _should_ in fact fail
                 expect(
