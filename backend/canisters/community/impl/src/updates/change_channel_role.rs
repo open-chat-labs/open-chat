@@ -66,17 +66,16 @@ fn change_channel_role_inner(
 
     let channel = state.data.channels.get_mut_or_err(&args.channel_id)?;
 
-    // If caller is not a bot then check member permissions
-    match &caller {
-        Caller::BotV2(_) => {}
-        _ => {
-            let member = channel.chat.members.get_verified_member(caller.agent())?;
-            if !member
-                .role()
-                .can_change_roles(args.new_role.into(), &channel.chat.permissions)
-            {
-                return Err(OCErrorCode::InitiatorNotAuthorized.into());
-            }
+    // Check whether the initiating user is permitted
+    // Note: A bot acting in autonomous mode with the "change role" permission is
+    // able to promote/demote owners
+    if let Some(initiator) = caller.initiator() {
+        let member = channel.chat.members.get_verified_member(initiator)?;
+        if !member
+            .role()
+            .can_change_roles(args.new_role.into(), &channel.chat.permissions)
+        {
+            return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }
     }
 
