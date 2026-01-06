@@ -54,7 +54,7 @@ fn change_channel_role_inner(
 
     // If caller is a bot then check bot permissions
     if let Caller::BotV2(bot_caller) = &caller
-        && state.data.is_bot_permitted(
+        && !state.data.is_bot_permitted(
             &bot_caller.bot,
             Some(args.channel_id),
             &bot_caller.initiator,

@@ -55,7 +55,7 @@ fn change_role_inner(
 
     // If caller is a bot then check bot permissions
     if let Caller::BotV2(bot_caller) = &caller
-        && state.data.is_bot_permitted(
+        && !state.data.is_bot_permitted(
             &bot_caller.bot,
             &bot_caller.initiator,
             &BotPermissions::from_chat_permission(ChatPermission::ChangeRoles),
