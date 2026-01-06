@@ -578,30 +578,6 @@ export const VideoCallPresence = Type.Union([
     Type.Literal("Hidden"),
 ]);
 
-export type ChatMetrics = Static<typeof ChatMetrics>;
-export const ChatMetrics = Type.Object({
-    text_messages: Type.BigInt(),
-    image_messages: Type.BigInt(),
-    video_messages: Type.BigInt(),
-    audio_messages: Type.BigInt(),
-    file_messages: Type.BigInt(),
-    polls: Type.BigInt(),
-    poll_votes: Type.BigInt(),
-    crypto_messages: Type.BigInt(),
-    deleted_messages: Type.BigInt(),
-    giphy_messages: Type.BigInt(),
-    prize_messages: Type.BigInt(),
-    prize_winner_messages: Type.BigInt(),
-    replies: Type.BigInt(),
-    edits: Type.BigInt(),
-    reactions: Type.BigInt(),
-    proposals: Type.BigInt(),
-    reported_messages: Type.BigInt(),
-    message_reminders: Type.BigInt(),
-    custom_type_messages: Type.BigInt(),
-    last_active: Type.BigInt(),
-});
-
 export type VideoCallType = Static<typeof VideoCallType>;
 export const VideoCallType = Type.Union([Type.Literal("Broadcast"), Type.Literal("Default")]);
 
@@ -1086,6 +1062,9 @@ export const TransferFromError = Type.Union([
         }),
     }),
 ]);
+
+export type TSBigIntWithDefault = Static<typeof TSBigIntWithDefault>;
+export const TSBigIntWithDefault = Type.BigInt({ default: BigInt(0) });
 
 export type ChannelMessageTipped = Static<typeof ChannelMessageTipped>;
 export const ChannelMessageTipped = Type.Object({
@@ -4837,6 +4816,30 @@ export type BotRemoved = Static<typeof BotRemoved>;
 export const BotRemoved = Type.Object({
     user_id: UserId,
     removed_by: UserId,
+});
+
+export type ChatMetrics = Static<typeof ChatMetrics>;
+export const ChatMetrics = Type.Object({
+    text_messages: TSBigIntWithDefault,
+    image_messages: TSBigIntWithDefault,
+    video_messages: TSBigIntWithDefault,
+    audio_messages: TSBigIntWithDefault,
+    file_messages: TSBigIntWithDefault,
+    polls: TSBigIntWithDefault,
+    poll_votes: TSBigIntWithDefault,
+    crypto_messages: TSBigIntWithDefault,
+    deleted_messages: TSBigIntWithDefault,
+    giphy_messages: TSBigIntWithDefault,
+    prize_messages: TSBigIntWithDefault,
+    prize_winner_messages: TSBigIntWithDefault,
+    replies: TSBigIntWithDefault,
+    edits: TSBigIntWithDefault,
+    reactions: TSBigIntWithDefault,
+    proposals: TSBigIntWithDefault,
+    reported_messages: TSBigIntWithDefault,
+    message_reminders: TSBigIntWithDefault,
+    custom_type_messages: TSBigIntWithDefault,
+    last_active: Type.BigInt(),
 });
 
 export type BlobReference = Static<typeof BlobReference>;
