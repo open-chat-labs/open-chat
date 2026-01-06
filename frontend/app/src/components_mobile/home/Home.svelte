@@ -602,33 +602,33 @@
 <Toast />
 
 {#if modal.kind !== "none"}
-    <Overlay
-        dismissible={modal.kind !== "select_chat" &&
-            modal.kind !== "not_found" &&
-            modal.kind !== "make_proposal"}
-        alignLeft={modal.kind === "select_chat"}
-        onClose={closeModal}>
-        {#if modal.kind === "select_chat"}
-            <SelectChatModal onClose={onCloseSelectChat} onSelect={onSelectChat} />
-        {:else if modal.kind === "suspended"}
-            <SuspendedModal onClose={closeModal} />
-        {:else if modal.kind === "no_access"}
-            <NoAccess onClose={closeNoAccess} />
-        {:else if modal.kind === "not_found"}
-            <NotFound onClose={closeNoAccess} />
-        {:else if modal.kind === "make_proposal"}
-            <MakeProposalModal
-                selectedMultiUserChat={modal.chat}
-                nervousSystem={modal.nervousSystem}
-                onClose={closeModal} />
-        {:else if modal.kind === "challenge"}
-            <ChallengeModal on:close={closeModal} />
-        {:else if modal.kind === "verify_humanity"}
-            <VerifyHumanity onClose={closeModal} onSuccess={closeModal} />
-        {:else if modal.kind === "suspending"}
-            <SuspendModal userId={modal.userId} onClose={closeModal} />
-        {/if}
-    </Overlay>
+    {#if modal.kind === "not_found"}
+        <NotFound onClose={closeNoAccess} />
+    {:else if modal.kind === "suspended"}
+        <SuspendedModal onClose={closeModal} />
+    {:else}
+        <Overlay
+            dismissible={modal.kind !== "select_chat" && modal.kind !== "make_proposal"}
+            alignLeft={modal.kind === "select_chat"}
+            onClose={closeModal}>
+            {#if modal.kind === "select_chat"}
+                <SelectChatModal onClose={onCloseSelectChat} onSelect={onSelectChat} />
+            {:else if modal.kind === "no_access"}
+                <NoAccess onClose={closeNoAccess} />
+            {:else if modal.kind === "make_proposal"}
+                <MakeProposalModal
+                    selectedMultiUserChat={modal.chat}
+                    nervousSystem={modal.nervousSystem}
+                    onClose={closeModal} />
+            {:else if modal.kind === "challenge"}
+                <ChallengeModal on:close={closeModal} />
+            {:else if modal.kind === "verify_humanity"}
+                <VerifyHumanity onClose={closeModal} onSuccess={closeModal} />
+            {:else if modal.kind === "suspending"}
+                <SuspendModal userId={modal.userId} onClose={closeModal} />
+            {/if}
+        </Overlay>
+    {/if}
 {/if}
 
 {#if $rulesAcceptanceStore !== undefined}
