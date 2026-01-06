@@ -37,7 +37,7 @@
 </div>
 
 <style lang="scss">
-    .menu-conten {
+    .menu-content {
         max-height: 80vh;
         max-height: var(--override-height, 80vh);
         border-radius: var(--rad-xl);

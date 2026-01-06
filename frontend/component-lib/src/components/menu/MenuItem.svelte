@@ -10,7 +10,7 @@
 </script>
 
 <script lang="ts">
-    import { Body, Subtitle, ColourVars } from "component-lib";
+    import { Subtitle, ColourVars } from "component-lib";
 
     import type { Snippet } from "svelte";
 

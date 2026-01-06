@@ -127,6 +127,7 @@
         direction={"vertical"}
         gap={"sm"}
         width={"fill"}
+        onInsideEnd={insideBottom}
         height={"fill"}
         padding={["lg", "zero", "xxxl"]}>
         <!-- chat filters -->
@@ -149,10 +150,9 @@
                 supplementalClass={"chat_summary_list"}
                 direction={"vertical"}
                 gap={"lg"}
-                onInsideEnd={insideBottom}
                 width={"fill"}
                 height={"hug"}
-                padding={["sm", "zero", "xxxl"]}>
+                padding={["sm", "zero", "zero"]}>
                 {#each chats as chatSummary (chatIdentifierToString(chatSummary.id))}
                     <ChatSummary
                         {chatSummary}
