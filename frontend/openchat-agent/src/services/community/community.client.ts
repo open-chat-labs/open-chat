@@ -79,6 +79,7 @@ import {
     ResponseTooLargeError,
     isSuccessfulEventsResponse,
     offline,
+    random32,
     textToCode,
     toBigInt32,
 } from "openchat-shared";
@@ -372,7 +373,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
                 history_visible_to_new_joiners: channel.historyVisible,
                 avatar: mapOptional(channel.avatar?.blobData, (data) => {
                     return {
-                        id: DataClient.newBlobId(),
+                        id: BigInt(random32()),
                         data,
                         mime_type: "image/jpg",
                     };
@@ -1404,7 +1405,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
                         ? "NoChange"
                         : {
                               SetToSome: {
-                                  id: DataClient.newBlobId(),
+                                  id: BigInt(random32()),
                                   mime_type: "image/jpg",
                                   data: avatar,
                               },
@@ -1450,7 +1451,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
                         ? "NoChange"
                         : {
                               SetToSome: {
-                                  id: DataClient.newBlobId(),
+                                  id: BigInt(random32()),
                                   mime_type: "image/jpg",
                                   data: avatar,
                               },
@@ -1460,7 +1461,7 @@ export class CommunityClient extends MsgpackCanisterAgent {
                         ? "NoChange"
                         : {
                               SetToSome: {
-                                  id: DataClient.newBlobId(),
+                                  id: BigInt(random32()),
                                   mime_type: "image/jpg",
                                   data: banner,
                               },
