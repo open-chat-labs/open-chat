@@ -62,6 +62,7 @@ import {
     MAX_MESSAGES,
     MAX_MISSING,
     offline,
+    random32,
     ResponseTooLargeError,
     textToCode,
 } from "openchat-shared";
@@ -632,7 +633,7 @@ export class GroupClient extends MsgpackCanisterAgent {
                         ? "NoChange"
                         : {
                               SetToSome: {
-                                  id: DataClient.newBlobId(),
+                                  id: BigInt(random32()),
                                   mime_type: "image/jpg",
                                   data: avatar,
                               },
