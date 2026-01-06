@@ -2,7 +2,7 @@ use proc_macro::TokenStream;
 use quote::{ToTokens, format_ident, quote};
 use std::fmt::Write;
 use syn::punctuated::Punctuated;
-use syn::{Attribute, Field, Fields, Ident, Item, PathSegment, Token, Type, parse_macro_input, parse_quote};
+use syn::{Attribute, Field, Fields, Ident, Item, Token, Type, parse_macro_input, parse_quote};
 
 struct MethodAttribute {
     canister_name: String,
@@ -113,85 +113,8 @@ fn insert_field_attributes(field: &mut Field, is_tuple: bool, derives_serde: boo
                         .attrs
                         .push(parse_quote!( #[serde(skip_serializing_if = "Option::is_none")] ));
                 }
-            } else if let Some(Defaults {
-                func: _,
-                default_override: _,
-                type_override: _,
-            }) = skip_serializing_if_default(&type_path.path.segments[0])
-                && derives_serde
-            {
-                field.attrs.push(parse_quote!( #[serde(default)] ));
             }
-            // field.attrs.push(parse_quote!( #[serde(skip_serializing_if = #func)]));
-            //
-            // if let Some(default_override) = default_override {
-            //     let doc_comment = format!(" @default {default_override}");
-            //     field.attrs.push(parse_quote!( #[doc = #doc_comment]));
-            // }
-            // if let Some(type_override) = type_override {
-            //     field.attrs.push(parse_quote!( #[ts(as = #type_override)]));
-            // }
         }
-    }
-}
-
-fn skip_serializing_if_default(path_segment: &PathSegment) -> Option<Defaults> {
-    match path_segment.ident.to_string().as_str() {
-        "Vec" => Some(Defaults {
-            func: "Vec::is_empty",
-            default_override: Some("[]"),
-            type_override: None,
-        }),
-        "BTreeMap" => Some(Defaults {
-            func: "BTreeMap::is_empty",
-            default_override: Some("{}"),
-            type_override: None,
-        }),
-        "BTreeSet" => Some(Defaults {
-            func: "BTreeSet::is_empty",
-            default_override: Some("[]"),
-            type_override: None,
-        }),
-        "HashMap" => Some(Defaults {
-            func: "HashMap::is_empty",
-            default_override: Some("{}"),
-            type_override: None,
-        }),
-        "HashSet" => Some(Defaults {
-            func: "HashSet::is_empty",
-            default_override: Some("[]"),
-            type_override: None,
-        }),
-        "OptionUpdate" => Some(Defaults {
-            func: "OptionUpdate::is_empty",
-            default_override: None,
-            type_override: None,
-        }),
-        "GroupRole" | "CommunityRole" => Some(Defaults {
-            func: "ts_export::is_default",
-            default_override: None,
-            type_override: None,
-        }),
-        "bool" => Some(Defaults {
-            func: "ts_export::is_default",
-            default_override: None,
-            type_override: Some("ts_export::TSBoolWithDefault"),
-        }),
-        "i8" | "i16" | "i32" | "u8" | "u16" | "u32" | "f8" | "f16" | "f32" | "f64" | "EventIndex" | "MessageIndex" => {
-            Some(Defaults {
-                func: "ts_export::is_default",
-                default_override: None,
-                type_override: Some("ts_export::TSNumberWithDefault"),
-            })
-        }
-        // TODO: Sort out how to make Typebox work with BigInts as default values
-        "i64" | "i128" | "u64" | "u128" | "MessageId" | "Milliseconds" | "Nanoseconds" | "Nat" | "TimestampMillis"
-        | "TimestampNanos" => Some(Defaults {
-            func: "ts_export::is_default",
-            default_override: None,
-            type_override: Some("ts_export::TSBigIntWithDefault"),
-        }),
-        _ => None,
     }
 }
 
@@ -206,13 +129,6 @@ fn derives_serde(attr: &Attribute) -> bool {
     } else {
         false
     }
-}
-
-#[expect(dead_code)]
-struct Defaults {
-    func: &'static str,
-    default_override: Option<&'static str>,
-    type_override: Option<&'static str>,
 }
 
 fn get_method_attribute(inputs: Vec<String>) -> MethodAttribute {

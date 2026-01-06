@@ -217,25 +217,63 @@ impl SelectedGroupUpdates {
 #[ts_export]
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct ChatMetrics {
-    pub text_messages: u64,
-    pub image_messages: u64,
-    pub video_messages: u64,
-    pub audio_messages: u64,
-    pub file_messages: u64,
-    pub polls: u64,
-    pub poll_votes: u64,
-    pub crypto_messages: u64,
-    pub deleted_messages: u64,
-    pub giphy_messages: u64,
-    pub prize_messages: u64,
-    pub prize_winner_messages: u64,
-    pub replies: u64,
-    pub edits: u64,
-    pub reactions: u64,
-    pub proposals: u64,
-    pub reported_messages: u64,
-    pub message_reminders: u64,
-    pub custom_type_messages: u64,
+    #[serde(default, skip_serializing_if = "ts_export::is_default")]
+    #[ts(as = "ts_export::TSBigIntWithDefault")]
+    pub text_messages: u32,
+    #[serde(default, skip_serializing_if = "ts_export::is_default")]
+    #[ts(as = "ts_export::TSBigIntWithDefault")]
+    pub image_messages: u32,
+    #[serde(default, skip_serializing_if = "ts_export::is_default")]
+    #[ts(as = "ts_export::TSBigIntWithDefault")]
+    pub video_messages: u32,
+    #[serde(default, skip_serializing_if = "ts_export::is_default")]
+    #[ts(as = "ts_export::TSBigIntWithDefault")]
+    pub audio_messages: u32,
+    #[serde(default, skip_serializing_if = "ts_export::is_default")]
+    #[ts(as = "ts_export::TSBigIntWithDefault")]
+    pub file_messages: u32,
+    #[serde(default, skip_serializing_if = "ts_export::is_default")]
+    #[ts(as = "ts_export::TSBigIntWithDefault")]
+    pub polls: u32,
+    #[serde(default, skip_serializing_if = "ts_export::is_default")]
+    #[ts(as = "ts_export::TSBigIntWithDefault")]
+    pub poll_votes: u32,
+    #[serde(default, skip_serializing_if = "ts_export::is_default")]
+    #[ts(as = "ts_export::TSBigIntWithDefault")]
+    pub crypto_messages: u32,
+    #[serde(default, skip_serializing_if = "ts_export::is_default")]
+    #[ts(as = "ts_export::TSBigIntWithDefault")]
+    pub deleted_messages: u32,
+    #[serde(default, skip_serializing_if = "ts_export::is_default")]
+    #[ts(as = "ts_export::TSBigIntWithDefault")]
+    pub giphy_messages: u32,
+    #[serde(default, skip_serializing_if = "ts_export::is_default")]
+    #[ts(as = "ts_export::TSBigIntWithDefault")]
+    pub prize_messages: u32,
+    #[serde(default, skip_serializing_if = "ts_export::is_default")]
+    #[ts(as = "ts_export::TSBigIntWithDefault")]
+    pub prize_winner_messages: u32,
+    #[serde(default, skip_serializing_if = "ts_export::is_default")]
+    #[ts(as = "ts_export::TSBigIntWithDefault")]
+    pub replies: u32,
+    #[serde(default, skip_serializing_if = "ts_export::is_default")]
+    #[ts(as = "ts_export::TSBigIntWithDefault")]
+    pub edits: u32,
+    #[serde(default, skip_serializing_if = "ts_export::is_default")]
+    #[ts(as = "ts_export::TSBigIntWithDefault")]
+    pub reactions: u32,
+    #[serde(default, skip_serializing_if = "ts_export::is_default")]
+    #[ts(as = "ts_export::TSBigIntWithDefault")]
+    pub proposals: u32,
+    #[serde(default, skip_serializing_if = "ts_export::is_default")]
+    #[ts(as = "ts_export::TSBigIntWithDefault")]
+    pub reported_messages: u32,
+    #[serde(default, skip_serializing_if = "ts_export::is_default")]
+    #[ts(as = "ts_export::TSBigIntWithDefault")]
+    pub message_reminders: u32,
+    #[serde(default, skip_serializing_if = "ts_export::is_default")]
+    #[ts(as = "ts_export::TSBigIntWithDefault")]
+    pub custom_type_messages: u32,
     pub last_active: TimestampMillis,
 }
 
