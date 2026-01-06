@@ -54,14 +54,14 @@ fn change_role_inner(
     state.data.verify_not_frozen()?;
 
     // If caller is a bot then check bot permissions
-    if let Caller::BotV2(bot_caller) = &caller {
-        if state.data.is_bot_permitted(
+    if let Caller::BotV2(bot_caller) = &caller
+        && state.data.is_bot_permitted(
             &bot_caller.bot,
             &bot_caller.initiator,
             &BotPermissions::from_chat_permission(ChatPermission::ChangeRoles),
-        ) {
-            return Err(OCErrorCode::InitiatorNotAuthorized.into());
-        }
+        )
+    {
+        return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
 
     // Check whether the initiating user is permitted
