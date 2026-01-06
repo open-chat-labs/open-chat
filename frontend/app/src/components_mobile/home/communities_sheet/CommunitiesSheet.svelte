@@ -167,7 +167,7 @@
 
     .right,
     .left {
-        padding-top: toRem(12);
+        padding-top: toRem(48);
         position: fixed;
         bottom: toRem(110);
         z-index: 1;
