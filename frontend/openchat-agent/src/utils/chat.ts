@@ -485,9 +485,7 @@ export function emptyChatMetrics(): Metrics {
     return {
         audioMessages: 0,
         edits: 0,
-        icpMessages: 0,
-        sns1Messages: 0,
-        ckbtcMessages: 0,
+        cryptoMessages: 0,
         giphyMessages: 0,
         deletedMessages: 0,
         reportedMessages: 0,
@@ -500,12 +498,4 @@ export function emptyChatMetrics(): Metrics {
         polls: 0,
         reactions: 0,
     };
-}
-
-export function nextIndex(
-    ascending: boolean,
-    events: EventWrapper<ChatEvent>[],
-): number | undefined {
-    if (events.length === 0) return undefined;
-    return ascending ? events[events.length - 1].index + 1 : events[0].index - 1;
 }
