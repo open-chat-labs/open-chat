@@ -2,13 +2,11 @@ import Identicon from "identicon.js";
 import md5 from "md5";
 import type {
     ChannelIdentifier,
-    ChatEvent,
     CommunityCanisterCommunitySummaryUpdates,
     CommunityDetails,
     CommunityDetailsUpdates,
     DirectChatSummary,
     DirectChatSummaryUpdates,
-    EventWrapper,
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
     GroupCanisterThreadDetails,
