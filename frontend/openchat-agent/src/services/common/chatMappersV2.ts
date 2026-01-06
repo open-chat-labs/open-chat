@@ -1426,9 +1426,7 @@ export function chatMetrics(value: TChatMetrics): Metrics {
     return {
         audioMessages: Number(value.audio_messages),
         edits: Number(value.edits),
-        icpMessages: Number(value.icp_messages),
-        sns1Messages: Number(value.sns1_messages),
-        ckbtcMessages: Number(value.ckbtc_messages),
+        cryptoMessages: Number(value.crypto_messages),
         giphyMessages: Number(value.giphy_messages),
         deletedMessages: Number(value.deleted_messages),
         fileMessages: Number(value.file_messages),

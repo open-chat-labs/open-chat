@@ -588,11 +588,6 @@ export const ChatMetrics = Type.Object({
     polls: Type.BigInt(),
     poll_votes: Type.BigInt(),
     crypto_messages: Type.BigInt(),
-    icp_messages: Type.BigInt(),
-    sns1_messages: Type.BigInt(),
-    ckbtc_messages: Type.BigInt(),
-    chat_messages: Type.BigInt(),
-    kinic_messages: Type.BigInt(),
     deleted_messages: Type.BigInt(),
     giphy_messages: Type.BigInt(),
     prize_messages: Type.BigInt(),
@@ -7622,6 +7617,9 @@ export const UserSetPinNumberPinNumberVerification = Type.Union([
     }),
     Type.Object({
         Delegation: SignedDelegation,
+    }),
+    Type.Object({
+        Reauthenticated: Type.String(),
     }),
 ]);
 

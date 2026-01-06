@@ -57,7 +57,7 @@ import {
     updateCreatedUser,
 } from "openchat-shared";
 
-const CACHE_VERSION = 144;
+const CACHE_VERSION = 145;
 const EARLIEST_SUPPORTED_MIGRATION = 138;
 const MAX_INDEX = 9999999999;
 
@@ -268,6 +268,7 @@ const migrations: Record<number, MigrationFunction<ChatSchema>> = {
     142: createPublicProfileStore,
     143: clearCommunityDetailsStore,
     144: clearChatsStore,
+    145: clearChatsStore,
 };
 
 async function migrate(
