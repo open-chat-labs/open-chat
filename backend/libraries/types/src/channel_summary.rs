@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct CommunityCanisterChannelSummary {
     pub channel_id: ChannelId,
     pub last_updated: TimestampMillis,
@@ -39,7 +39,7 @@ pub struct CommunityCanisterChannelSummary {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct CommunityCanisterChannelSummaryUpdates {
     pub channel_id: ChannelId,
     pub last_updated: TimestampMillis,

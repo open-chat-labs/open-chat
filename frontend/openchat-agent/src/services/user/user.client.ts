@@ -6,6 +6,7 @@ import {
     MAX_MESSAGES,
     MAX_MISSING,
     offline,
+    random32,
     ResponseTooLargeError,
     Stream,
     toBigInt32,
@@ -357,14 +358,14 @@ export class UserClient extends MsgpackCanisterAgent {
                 history_visible_to_new_joiners: community.historyVisible,
                 avatar: mapOptional(community.avatar?.blobData, (data) => {
                     return {
-                        id: DataClient.newBlobId(),
+                        id: BigInt(random32()),
                         data,
                         mime_type: "image/jpg",
                     };
                 }),
                 banner: mapOptional(community.banner?.blobData, (data) => {
                     return {
-                        id: DataClient.newBlobId(),
+                        id: BigInt(random32()),
                         data,
                         mime_type: "image/jpg",
                     };
@@ -394,7 +395,7 @@ export class UserClient extends MsgpackCanisterAgent {
                 history_visible_to_new_joiners: group.historyVisible,
                 avatar: mapOptional(group.avatar?.blobData, (data) => {
                     return {
-                        id: DataClient.newBlobId(),
+                        id: BigInt(random32()),
                         data,
                         mime_type: "image/jpg",
                     };
@@ -716,7 +717,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     setAvatar(bytes: Uint8Array): Promise<BlobReference> {
-        const blobId = DataClient.newBlobId();
+        const blobId = BigInt(random32());
         return this.executeMsgpackUpdate(
             "set_avatar",
             {
@@ -741,7 +742,7 @@ export class UserClient extends MsgpackCanisterAgent {
     }
 
     setProfileBackground(bytes: Uint8Array): Promise<BlobReference> {
-        const blobId = DataClient.newBlobId();
+        const blobId = BigInt(random32());
         return this.executeMsgpackUpdate(
             "set_profile_background",
             {

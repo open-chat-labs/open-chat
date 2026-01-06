@@ -62,6 +62,7 @@ import {
     MAX_MESSAGES,
     MAX_MISSING,
     offline,
+    random32,
     ResponseTooLargeError,
     textToCode,
 } from "openchat-shared";
@@ -169,6 +170,7 @@ import {
     apiMessageContent,
     apiUser as apiUserV2,
     apiVideoCallPresence,
+    changeRoleResult,
     deletedMessageSuccess,
     enableOrResetInviteCodeSuccess,
     getEventsSuccess,
@@ -493,13 +495,15 @@ export class GroupClient extends MsgpackCanisterAgent {
         if (new_role === undefined) {
             throw new Error(`Cannot change user's role to: ${newRole}`);
         }
+        const user_id = principalStringToBytes(userId);
         return this.executeMsgpackUpdate(
             "change_role",
             {
-                user_id: principalStringToBytes(userId),
+                user_id,
+                user_ids: [user_id],
                 new_role,
             },
-            unitResult,
+            changeRoleResult,
             GroupChangeRoleArgs,
             UnitResult,
         );
@@ -629,7 +633,7 @@ export class GroupClient extends MsgpackCanisterAgent {
                         ? "NoChange"
                         : {
                               SetToSome: {
-                                  id: DataClient.newBlobId(),
+                                  id: BigInt(random32()),
                                   mime_type: "image/jpg",
                                   data: avatar,
                               },

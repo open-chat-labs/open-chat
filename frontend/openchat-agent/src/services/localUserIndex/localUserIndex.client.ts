@@ -518,12 +518,13 @@ export class LocalUserIndexClient extends MsgpackCanisterAgent {
         );
     }
 
-    claimPrize(id: MultiUserChatIdentifier, messageId: bigint): Promise<ClaimPrizeResponse> {
+    claimPrize(id: MultiUserChatIdentifier, messageId: bigint, signInProof: string | undefined): Promise<ClaimPrizeResponse> {
         return this.executeMsgpackUpdate(
             "claim_prize",
             {
                 chat_id: apiMultiUserChat(id),
                 message_id: messageId,
+                sign_in_proof_jwt: signInProof
             },
             (resp) => {
                 console.log("Resp: ", resp);

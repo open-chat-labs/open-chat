@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Added delete_crypto_account ([#8652](https://github.com/open-chat-labs/open-chat/pull/8652))
+- Implement resetting PIN by providing proof of re-authentication ([#8754](https://github.com/open-chat-labs/open-chat/pull/8754))
 
 ### Changed
 
@@ -17,6 +18,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Take RNG seed in init args ([#8702](https://github.com/open-chat-labs/open-chat/pull/8702))
 - One-time sync of bot installations with LUI ([#8731](https://github.com/open-chat-labs/open-chat/pull/8731))
 - Granted bot permissions are union of command and autonomous permissions ([#8732](https://github.com/open-chat-labs/open-chat/pull/8732))
+- Remove old crypto token fields from metrics ([#8758](https://github.com/open-chat-labs/open-chat/pull/8758))
+- Skip serializing fields from chat metrics where value is 0 ([#8760](https://github.com/open-chat-labs/open-chat/pull/8760))
 
 ### Removed
 

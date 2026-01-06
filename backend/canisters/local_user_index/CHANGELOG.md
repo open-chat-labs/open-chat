@@ -6,9 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `bot_change_role` endpoint ([#8753](https://github.com/open-chat-labs/open-chat/pull/8753))
+- Implement resetting PIN by providing proof of re-authentication ([#8754](https://github.com/open-chat-labs/open-chat/pull/8754))
+
 ### Changed
 
+- Apply user re-authentication check when claiming prizes ([#8696](https://github.com/open-chat-labs/open-chat/pull/8696))
 - Sync bot installation updates with `user_index` ([#8731](https://github.com/open-chat-labs/open-chat/pull/8731))
+- When fetching updates prioritise chats with the latest activity ([#8739](https://github.com/open-chat-labs/open-chat/pull/8739))
+- Remove `p256hd_key` from `SubscriptionRemoved` events ([#8746](https://github.com/open-chat-labs/open-chat/pull/8746))
+- Remove old crypto token fields from metrics ([#8758](https://github.com/open-chat-labs/open-chat/pull/8758))
+- Skip serializing fields from chat metrics where value is 0 ([#8760](https://github.com/open-chat-labs/open-chat/pull/8760))
 
 ## [[2.0.1937](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1937-local_user_index)] - 2025-12-22
 

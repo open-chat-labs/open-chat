@@ -12,7 +12,7 @@ pub struct Args {
     pub new_role: CommunityRole,
 }
 
-#[ts_export(group, change_role)]
+#[ts_export(community, change_role)]
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,

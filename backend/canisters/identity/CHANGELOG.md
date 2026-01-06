@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Return JWT when user signs in to use as proof of recent sign in ([#8750](https://github.com/open-chat-labs/open-chat/pull/8750))
+
 ## [[2.0.1931](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1931-identity)] - 2025-12-04
 
 ### Changed

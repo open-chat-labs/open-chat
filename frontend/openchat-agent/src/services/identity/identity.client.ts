@@ -35,7 +35,7 @@ import type {
     GetDelegationResponse,
     InitiateIdentityLinkResponse,
     OCError,
-    PrepareDelegationResponse,
+    PrepareDelegationWithProofResponse,
     RemoveIdentityLinkResponse,
     Success,
     WebAuthnKeyFull,
@@ -100,7 +100,7 @@ export class IdentityClient extends MsgpackCanisterAgent {
     prepareDelegation(
         sessionKey: Uint8Array,
         isIIPrincipal: boolean | undefined,
-    ): Promise<PrepareDelegationResponse> {
+    ): Promise<PrepareDelegationWithProofResponse> {
         const args = {
             session_key: sessionKey,
             is_ii_principal: isIIPrincipal,

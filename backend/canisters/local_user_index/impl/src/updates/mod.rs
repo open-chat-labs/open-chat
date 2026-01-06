@@ -1,4 +1,5 @@
 pub mod bot_add_reaction;
+pub mod bot_change_role;
 pub mod bot_create_channel;
 pub mod bot_delete_channel;
 pub mod bot_delete_messages;
@@ -24,6 +25,7 @@ pub mod c2c_upgrade_community_canister_wasm;
 pub mod c2c_upgrade_group_canister_wasm;
 pub mod c2c_upgrade_user_canister_wasm;
 pub mod c2c_user_canister;
+pub mod c2c_verify_sign_in_proof;
 pub mod c2c_verify_signature;
 pub mod claim_prize;
 pub mod install_bot;
