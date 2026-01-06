@@ -31,18 +31,14 @@
         page(`/community/${community.id.communityId}`);
     }
 
-    function hasUnread(community: CommunitySummary): [boolean, boolean, UnreadCounts] {
+    function hasUnread(community: CommunitySummary): [boolean, UnreadCounts] {
         const unread = client.mergeCombinedUnreadCounts(
             $unreadCommunityChannelCountsStore.get(community.id) ?? emptyCombinedUnreadCounts(),
         );
 
-        const { mentions, unmuted, muted } = unread;
+        const { mentions, unmuted } = unread;
 
-        return [
-            mentions || unmuted > 0 || muted > 0,
-            !mentions && unmuted === 0 && muted > 0,
-            unread,
-        ];
+        return [mentions || unmuted > 0, unread];
     }
 
     function onSwipe(dir: SwipeDirection) {

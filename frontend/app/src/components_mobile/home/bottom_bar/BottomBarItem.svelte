@@ -8,17 +8,12 @@
 
     interface Props {
         selected?: boolean;
-        indicator?: Unread;
+        indicator: boolean;
         onSelect: () => void;
         icon: Snippet<[string]>;
     }
 
-    let {
-        indicator = { show: false, muted: false, pulse: false },
-        selected = false,
-        onSelect,
-        icon,
-    }: Props = $props();
+    let { indicator, selected = false, onSelect, icon }: Props = $props();
 
     let iconColour = $derived(selected ? "var(--primary)" : "var(--text-primary)");
 </script>
@@ -37,11 +32,11 @@
     <div class="bottom_bar_icon">
         {@render icon(iconColour)}
     </div>
-    <div class="indicator" class:pulse={indicator.show && indicator.pulse}>
-        {#if indicator.show && !indicator.muted}
-            <NotificationIndicator muted={indicator.muted} />
-        {/if}
-    </div>
+    {#if indicator}
+        <div class="indicator">
+            <NotificationIndicator />
+        </div>
+    {/if}
 </Container>
 
 <style lang="scss">
@@ -53,11 +48,6 @@
         position: absolute;
         display: flex;
         bottom: -0.3rem;
-
-        // TODO revisit this to make the indicators more noticeable in the bottom menu!
-        // &.pulse {
-        //     animation: pulse 3s infinite;
-        // }
     }
 
     @keyframes pulse {

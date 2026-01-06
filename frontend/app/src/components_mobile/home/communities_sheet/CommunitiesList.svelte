@@ -29,7 +29,7 @@
 
     interface Props {
         onSelect: (community: CommunitySummary) => void;
-        hasUnread: (community: CommunitySummary) => [boolean, boolean, UnreadCounts];
+        hasUnread: (community: CommunitySummary) => [boolean, UnreadCounts];
         onCreate: () => void;
         onExplore: () => void;
     }
@@ -38,8 +38,9 @@
 </script>
 
 {#snippet communityRow(community: CommunitySummary)}
-    {@const [unread, muted, counts] = props.hasUnread(community)}
-    {@const count = muted ? counts.muted : counts.unmuted}
+    {@const [unread, counts] = props.hasUnread(community)}
+    {@const count = counts.unmuted}
+    {@const mentions = counts.mentions}
     <Container
         height={"hug"}
         onClick={() => props.onSelect(community)}
@@ -63,8 +64,10 @@
                         {community.description}
                     {/if}
                 </BodySmall>
-                {#if unread}
-                    <CountBadge {muted}>{count}</CountBadge>
+                {#if mentions}
+                    <CountBadge>@</CountBadge>
+                {:else if unread}
+                    <CountBadge>{count}</CountBadge>
                 {/if}
             </Container>
         </Container>

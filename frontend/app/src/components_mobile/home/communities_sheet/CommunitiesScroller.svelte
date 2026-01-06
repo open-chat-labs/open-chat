@@ -16,7 +16,7 @@
 
     interface Props {
         onSelect: (community: CommunitySummary) => void;
-        hasUnread: (community: CommunitySummary) => [boolean, boolean, UnreadCounts];
+        hasUnread: (community: CommunitySummary) => [boolean, UnreadCounts];
         ref?: HTMLElement;
         onCreate: () => void;
         onExplore: () => void;
@@ -50,9 +50,9 @@
     width={"fill"}
     gap={"lg"}>
     {#each $sortedCommunitiesStore as community}
-        {@const [unread, muted] = hasUnread(community)}
+        {@const [unread] = hasUnread(community)}
         <Container
-            supplementalClass={`scroller_item ${unread && !muted ? "unread" : ""} ${
+            supplementalClass={`scroller_item ${unread ? "unread" : ""} ${
                 communityIdentifiersEqual(community.id, $selectedCommunityIdStore) ? "selected" : ""
             }`}
             id={`scroller_item_${community.id.communityId}`}
@@ -65,7 +65,7 @@
                 radius={"lg"} />
             {#if unread}
                 <div class="unread">
-                    <NotificationIndicator {muted}></NotificationIndicator>
+                    <NotificationIndicator></NotificationIndicator>
                 </div>
             {/if}
         </Container>

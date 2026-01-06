@@ -28,10 +28,10 @@
     import page from "page";
     import { getContext } from "svelte";
     import AccountGroup from "svelte-material-icons/AccountGroup.svelte";
+    import BellOutline from "svelte-material-icons/BellOutline.svelte";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
-    import BellOutline from "svelte-material-icons/BellOutline.svelte";
-    import BottomBarItem, { type Unread } from "./BottomBarItem.svelte";
+    import BottomBarItem from "./BottomBarItem.svelte";
 
     interface Props {
         selection: Selection;
@@ -64,32 +64,12 @@
         showIndicator(client.mergeCombinedUnreadCounts($unreadFavouriteCountsStore)),
     );
     let showFavourites = $derived($favouritesStore.size > 0);
-    // TODO - activity *might* have to account for threads if we do it that way. Something like the below ...
-    // let activityIndicator = $derived.by(() => {
-    //     const directAndGroup = showIndicator($unreadDirectAndGroupCountsStore.threads);
-    //     const communities = showIndicator(unreadCommunities.threads);
-    //     const show =
-    //         directAndGroup.show ||
-    //         communities.show ||
-    //         $messageActivitySummaryStore.latestTimestamp > 0n;
-    //     return {
-    //         show,
-    //         muted: false,
-    //     };
-    // });
     let activityIndicator = $derived.by(() => {
-        const show = $messageActivitySummaryStore.unreadCount > 0;
-        return {
-            show,
-            muted: false,
-        };
+        return $messageActivitySummaryStore.unreadCount > 0;
     });
 
-    function showIndicator({ mentions, unmuted, muted }: UnreadCounts): Unread {
-        return {
-            show: mentions || unmuted > 0 || muted > 0,
-            muted: !mentions && unmuted === 0 && muted > 0,
-        };
+    function showIndicator({ mentions, unmuted }: UnreadCounts): boolean {
+        return unmuted > 0 || mentions;
     }
 
     function itemSelected(s: Selection) {
@@ -161,7 +141,7 @@
     }
 </script>
 
-{#snippet item(selection: Selection, menuIcon: MenuIcon, indicator?: Unread)}
+{#snippet item(selection: Selection, menuIcon: MenuIcon, indicator: boolean)}
     <BottomBarItem
         {indicator}
         onSelect={() => itemSelected(selection)}
@@ -212,15 +192,19 @@
         {@render item("favourites", { kind: "icon" }, favouritesIndicator)}
     {/if}
     {@render item("notification", { kind: "icon" }, activityIndicator)}
-    {@render item("wallet", {
-        kind: "svg",
-        svgPath:
-            "M15.5 15.5C16.33 15.5 17 14.83 17 14C17 13.17 16.33 12.5 15.5 12.5C14.67 12.5 14 13.17 14 14C14 14.83 14.67 15.5 15.5 15.5ZM7 3H17C18.11 3 19 3.9 19 5V7C20.11 7 21 7.9 21 9V19C21 20.11 20.11 21 19 21H7C4.79 21 3 19.21 3 17V7C3 4.79 4.79 3 7 3ZM17 7V5H7C5.9 5 5 5.9 5 7V7.54C5.59 7.2 6.27 7 7 7H17ZM5 17C5 18.11 5.9 19 7 19H19V9H7C5.9 9 5 9.9 5 11V17Z",
-    })}
+    {@render item(
+        "wallet",
+        {
+            kind: "svg",
+            svgPath:
+                "M15.5 15.5C16.33 15.5 17 14.83 17 14C17 13.17 16.33 12.5 15.5 12.5C14.67 12.5 14 13.17 14 14C14 14.83 14.67 15.5 15.5 15.5ZM7 3H17C18.11 3 19 3.9 19 5V7C20.11 7 21 7.9 21 9V19C21 20.11 20.11 21 19 21H7C4.79 21 3 19.21 3 17V7C3 4.79 4.79 3 7 3ZM17 7V5H7C5.9 5 5 5.9 5 7V7.54C5.59 7.2 6.27 7 7 7H17ZM5 17C5 18.11 5.9 19 7 19H19V9H7C5.9 9 5 9.9 5 11V17Z",
+        },
+        false,
+    )}
     {@render item(
         "profile",
         { kind: "avatar", url: avatarUrl, name: avatarName },
-        { show: claimChitAvailable, muted: false, pulse: false },
+        claimChitAvailable,
     )}
 </Container>
 
