@@ -31,6 +31,7 @@ export { default as Radio } from "./components/Radio.svelte";
 export { default as ReadMore } from "./components/ReadMore.svelte";
 export { default as Row } from "./components/Row.svelte";
 export { default as SectionHeader } from "./components/SectionHeader.svelte";
+export { default as AnchoredSheet, fraction } from "./components/sheet/AnchoredSheet.svelte";
 export { default as Sheet } from "./components/sheet/Sheet.svelte";
 export { default as Spinner } from "./components/Spinner.svelte";
 export { default as StatusCard } from "./components/StatusCard.svelte";
