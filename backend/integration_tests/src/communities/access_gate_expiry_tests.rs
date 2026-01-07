@@ -508,15 +508,15 @@ fn has_user_lapsed(env: &mut PocketIc, user: &User, container: &Container) -> bo
     match container {
         Container::Community(community_id) => {
             let summary = client::community::happy_path::summary(env, user.principal, *community_id);
-            summary.membership.is_some_and(|m| m.lapsed)
+            summary.membership.is_some_and(|m| m.lapsed.unwrap_or_default())
         }
         Container::Channel(community_id, channel_id) => {
             let summary = client::community::happy_path::channel_summary(env, user, *community_id, *channel_id);
-            summary.membership.is_some_and(|m| m.lapsed)
+            summary.membership.is_some_and(|m| m.lapsed.unwrap_or_default())
         }
         Container::Group(group_id) => {
             let summary = client::group::happy_path::summary(env, user.principal, *group_id);
-            summary.membership.is_some_and(|m| m.lapsed)
+            summary.membership.is_some_and(|m| m.lapsed.unwrap_or_default())
         }
     }
 }

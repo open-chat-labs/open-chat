@@ -60,15 +60,17 @@ fn mention_users_succeeds(mention_everyone: bool) {
 
     let user2_summary = client::group::happy_path::summary(env, user2.principal, group_id);
     let membership = user2_summary.membership.unwrap();
-    assert_eq!(membership.mentions.len(), 1);
-    let mention = membership.mentions.first().unwrap();
+    let mentions = membership.mentions.unwrap_or_default();
+    assert_eq!(mentions.len(), 1);
+    let mention = mentions.first().unwrap();
     assert_eq!(mention.message_index, 0.into());
     assert_eq!(mention.message_id, message_id);
 
     let user3_summary = client::group::happy_path::summary(env, user3.principal, group_id);
     let membership = user3_summary.membership.unwrap();
-    assert_eq!(membership.mentions.len(), 1);
-    let mention = membership.mentions.first().unwrap();
+    let mentions = membership.mentions.unwrap_or_default();
+    assert_eq!(mentions.len(), 1);
+    let mention = mentions.first().unwrap();
     assert_eq!(mention.message_index, 0.into());
     assert_eq!(mention.message_id, message_id);
 }
@@ -139,12 +141,13 @@ fn mention_everyone_only_succeeds_if_authorized(authorized: bool) {
     let membership = user1_summary.membership.unwrap();
 
     if authorized {
-        assert_eq!(membership.mentions.len(), 1);
-        let mention = membership.mentions.first().unwrap();
+        let mentions = membership.mentions.unwrap_or_default();
+        assert_eq!(mentions.len(), 1);
+        let mention = mentions.first().unwrap();
         assert_eq!(mention.message_index, 0.into());
         assert_eq!(mention.message_id, message_id);
     } else {
-        assert!(membership.mentions.is_empty())
+        assert!(membership.mentions.unwrap_or_default().is_empty())
     }
 }
 
@@ -195,8 +198,8 @@ fn mentioned_in_thread_adds_user_as_follower() {
 
     let summary = client::group::happy_path::summary(env, user2.principal, group_id);
     let membership = summary.membership.unwrap();
-    assert_eq!(membership.mentions.len(), 1);
-    assert_eq!(membership.latest_threads.len(), 1);
+    assert_eq!(membership.mentions.unwrap_or_default().len(), 1);
+    assert_eq!(membership.latest_threads.unwrap_or_default().len(), 1);
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
