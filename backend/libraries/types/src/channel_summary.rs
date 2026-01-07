@@ -91,6 +91,8 @@ pub struct CommunityCanisterChannelSummaryUpdates {
     #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
     #[ts(as = "Option<crate::OptionUpdateString>", optional)]
     pub external_url: OptionUpdate<String>,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
     pub any_updates_missed: bool,
 }
 

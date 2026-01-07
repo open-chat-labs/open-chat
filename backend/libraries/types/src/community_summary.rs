@@ -62,24 +62,38 @@ pub struct CommunityCanisterCommunitySummaryUpdates {
     pub last_updated: TimestampMillis,
     pub name: Option<String>,
     pub description: Option<String>,
-    #[ts(as = "crate::OptionUpdateU128")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateU128>", optional)]
     pub avatar_id: OptionUpdate<u128>,
-    #[ts(as = "crate::OptionUpdateU128")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateU128>", optional)]
     pub banner_id: OptionUpdate<u128>,
     pub is_public: Option<bool>,
     pub member_count: Option<u32>,
     pub permissions: Option<CommunityPermissions>,
-    #[ts(as = "crate::OptionUpdateFrozenGroupInfo")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateFrozenGroupInfo>", optional)]
     pub frozen: OptionUpdate<FrozenGroupInfo>,
-    #[ts(as = "crate::OptionUpdateAccessGateConfig")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateAccessGateConfig>", optional)]
     pub gate_config: OptionUpdate<AccessGateConfig>,
     pub primary_language: Option<String>,
     pub latest_event_index: Option<EventIndex>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<CommunityCanisterChannelSummary>>", optional)]
     pub channels_added: Vec<CommunityCanisterChannelSummary>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<CommunityCanisterChannelSummaryUpdates>>", optional)]
     pub channels_updated: Vec<CommunityCanisterChannelSummaryUpdates>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<ChannelId>>", optional)]
     pub channels_removed: Vec<ChannelId>,
     pub membership: Option<CommunityMembershipUpdates>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<UserGroupSummary>>", optional)]
     pub user_groups: Vec<UserGroupSummary>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<u32>>", optional)]
     pub user_groups_deleted: Vec<u32>,
     pub metrics: Option<ChatMetrics>,
     pub verified: Option<bool>,
