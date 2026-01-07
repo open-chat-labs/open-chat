@@ -32,11 +32,14 @@
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { expectBackPress } from "../../utils/native/notification_channels";
+    import type { Share as ShareType } from "../../utils/share";
     import BotBuilderModal from "../bots/BotBuilderModal.svelte";
     import BotDetailsPage from "../bots/BotDetailsPage.svelte";
     import CommandViewer from "../bots/CommandViewer.svelte";
     import BotInstaller from "../bots/install/BotInstaller.svelte";
     import WebhookModal from "../bots/WebhookModal.svelte";
+    import ForwardMessageModal from "../ForwardMessageModal.svelte";
+    import ShareMessageModal from "../ShareMessageModal.svelte";
     import AccessGatesEvaluator from "./access/AccessGatesEvaluator.svelte";
     import AboutAccessGates from "./access_gates/AboutAccessGates.svelte";
     import AccessGates from "./access_gates/AccessGates.svelte";
@@ -112,6 +115,8 @@
 
     const client = getContext<OpenChat>("client");
     type SlidingModalType =
+        | { kind: "share_message"; share: ShareType }
+        | { kind: "forward_message"; msg: Message }
         | { kind: "view_bot_command"; command: CommandDefinition }
         | { kind: "create_swap"; fromLedger: string; ctx: MessageContext }
         | {
@@ -244,6 +249,10 @@
         }
 
         const unsubs = [
+            subscribe("forward", (msg) => push({ kind: "forward_message", msg })),
+            subscribe("shareMessage", (share) =>
+                push({ kind: "share_message", share: share as unknown as ShareType }),
+            ),
             subscribe("viewBotCommand", (command) => push({ kind: "view_bot_command", command })),
             subscribe("registerBot", () => push({ kind: "register_bot" })),
             subscribe("updateBot", () => push({ kind: "update_bot" })),
@@ -466,6 +475,10 @@
     <SlidingPage top={page === top}>
         {#if page.kind === "user_profile_chats_and_video"}
             <ChatsAndVideo />
+        {:else if page.kind === "forward_message"}
+            <ForwardMessageModal onClose={pop} msg={page.msg} />
+        {:else if page.kind === "share_message"}
+            <ShareMessageModal onClose={pop} share={page.share} />
         {:else if page.kind === "register_bot"}
             <BotBuilderModal onClose={pop} mode={"register"} />
         {:else if page.kind === "update_bot"}

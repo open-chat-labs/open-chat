@@ -250,7 +250,7 @@
     }
 
     function forward() {
-        publish("forward", msg);
+        window.setTimeout(() => publish("forward", msg), 250);
     }
 
     function undeleteMessage() {

@@ -1,6 +1,16 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
+    import {
+        Avatar,
+        Body,
+        BodySmall,
+        ColourVars,
+        Column,
+        Row,
+        Search,
+        Subtitle,
+    } from "component-lib";
     import type {
         ChatIdentifier,
         ChatSummary,
@@ -13,33 +23,26 @@
     } from "openchat-client";
     import {
         allUsersStore,
-        AvatarSize,
         chatIdentifiersEqual,
         communitiesStore,
         favouritesStore,
-        iconSize,
         selectedChatIdStore,
         serverDirectChatsStore,
         serverGroupChatsStore,
     } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
     import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
-    import { i18nKey } from "../i18n/i18n";
-    import { rtlStore } from "../stores/rtl";
+    import { i18nKey, interpolate } from "../i18n/i18n";
     import { now } from "../stores/time";
     import { buildDisplayName } from "../utils/user";
-    import Avatar from "./Avatar.svelte";
     import CollapsibleCard from "./CollapsibleCard.svelte";
-    import HoverIcon from "./HoverIcon.svelte";
-    import Search from "./Search.svelte";
-    import SectionHeader from "./SectionHeader.svelte";
-    import Translatable from "./Translatable.svelte";
+    import NothingToSee from "./home/NothingToSee.svelte";
     import Badges from "./home/profile/Badges.svelte";
+    import SlidingPageContent from "./home/SlidingPageContent.svelte";
+    import Translatable from "./Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -278,296 +281,135 @@
     }
 </script>
 
-<section>
-    <SectionHeader border={false} gap>
-        <HoverIcon>
-            <AccountMultiple size={$iconSize} color={"var(--icon-txt)"} />
-        </HoverIcon>
-        <h4><Translatable resourceKey={i18nKey("sendTo")} /></h4>
-        <span role="button" tabindex="0" title={$_("close")} class="close" onclick={onClose}>
-            <HoverIcon>
-                <Close size={$iconSize} color={"var(--icon-txt)"} />
-            </HoverIcon>
-        </span>
-    </SectionHeader>
-    <div class="search">
-        <Search searching={false} bind:searchTerm placeholder={i18nKey("search")} />
-    </div>
+{#snippet generalHeader(Icon: any, title: string)}
+    <Row padding={["sm", "zero"]} gap={"md"} crossAxisAlignment={"center"}>
+        <Icon size={"1.5rem"} color={ColourVars.textPrimary} />
+        <Subtitle fontWeight={"bold"}>
+            <Translatable resourceKey={i18nKey(title)} />
+        </Subtitle>
+    </Row>
+{/snippet}
+
+{#snippet nonDirect(target: ShareChat)}
+    <Row
+        onClick={() => onSelect(target.id)}
+        padding={["sm", "md"]}
+        gap={"md"}
+        crossAxisAlignment={"center"}>
+        <Avatar url={target.avatarUrl} size={"lg"} />
+        <Column>
+            <Body width={"hug"}>{target.name}</Body>
+            <Body colour={"textSecondary"}>
+                {target.description}
+            </Body>
+        </Column>
+    </Row>
+{/snippet}
+
+<SlidingPageContent title={i18nKey("sendTo")} onBack={onClose}>
+    <Column gap={"xl"} padding={"lg"}>
+        <Search
+            onClear={() => (searchTerm = "")}
+            searching={false}
+            bind:value={searchTerm}
+            placeholder={interpolate($_, i18nKey("search"))} />
+    </Column>
     {#if noTargets}
-        <div class="no-chats"><Translatable resourceKey={i18nKey("noChatsAvailable")} /></div>
+        <NothingToSee
+            title={interpolate($_, i18nKey("noChatsAvailable"))}
+            subtitle={"Looks like you aren't a member of any other chats"} />
     {:else}
-        <div class="selectable-chats">
+        <Column>
             {#if targets.directChats.length > 0}
                 <CollapsibleCard
                     open={searchTerm !== ""}
                     first
+                    fill
                     transition={false}
                     headerText={i18nKey("communities.directChats")}>
                     {#snippet titleSlot()}
-                        <div class="card-header">
-                            <div class="avatar">
-                                <MessageOutline size={$iconSize} color={"var(--icon-txt)"} />
-                            </div>
-                            <div class="details">
-                                <h4 class="title">
-                                    <Translatable
-                                        resourceKey={i18nKey("communities.directChats")} />
-                                </h4>
-                            </div>
-                        </div>
+                        {@render generalHeader(MessageOutline, "communities.directChats")}
                     {/snippet}
                     {#each targets.directChats as target}
-                        <div
-                            role="button"
-                            tabindex="0"
-                            class="row"
-                            class:rtl={$rtlStore}
-                            onclick={() => onSelect(target.id)}>
-                            <div class="avatar">
-                                <Avatar url={target.avatarUrl} size={AvatarSize.Default} />
-                            </div>
-                            <div class="details">
-                                <div class="name">
-                                    <span class="display-name">
-                                        {target.name}
-                                    </span>
+                        <Row
+                            onClick={() => onSelect(target.id)}
+                            padding={["sm", "md"]}
+                            gap={"md"}
+                            crossAxisAlignment={"center"}>
+                            <Avatar url={target.avatarUrl} size={"lg"} />
+                            <Column>
+                                <Row width={"hug"} crossAxisAlignment={"center"} gap={"xs"}>
+                                    <Body width={"hug"}>{target.name}</Body>
                                     <Badges
                                         uniquePerson={target.uniquePerson}
                                         diamondStatus={target.diamondStatus}
                                         streak={target.streak} />
                                     {#if target.username !== undefined}
-                                        <span class="username">{target.username}</span>
+                                        <BodySmall colour={"textSecondary"}>
+                                            {target.username}
+                                        </BodySmall>
                                     {/if}
-                                </div>
-                                <div class="description">{target.description}</div>
-                            </div>
-                        </div>
+                                </Row>
+                                <Body colour={"textSecondary"}>
+                                    {target.description}
+                                </Body>
+                            </Column>
+                        </Row>
                     {/each}
                 </CollapsibleCard>
             {/if}
             {#if targets.groupChats.length > 0}
                 <CollapsibleCard
                     transition={false}
+                    fill
                     open={searchTerm !== ""}
                     headerText={i18nKey("communities.groupChats")}>
                     {#snippet titleSlot()}
-                        <div class="card-header">
-                            <div class="avatar">
-                                <ForumOutline size={$iconSize} color={"var(--icon-txt)"} />
-                            </div>
-                            <div class="details">
-                                <h4 class="title">
-                                    <Translatable resourceKey={i18nKey("communities.groupChats")} />
-                                </h4>
-                            </div>
-                        </div>
+                        {@render generalHeader(ForumOutline, "communities.groupChats")}
                     {/snippet}
                     {#each targets.groupChats as target}
-                        <div
-                            role="button"
-                            tabindex="0"
-                            class="row"
-                            class:rtl={$rtlStore}
-                            onclick={() => onSelect(target.id)}>
-                            <div class="avatar">
-                                <Avatar url={target.avatarUrl} size={AvatarSize.Default} />
-                            </div>
-                            <div class="details">
-                                <div class="name">{target.name}</div>
-                                <div class="description">{target.description}</div>
-                            </div>
-                        </div>
+                        {@render nonDirect(target)}
                     {/each}
                 </CollapsibleCard>
             {/if}
             {#if targets.favourites.length > 0}
                 <CollapsibleCard
                     transition={false}
+                    fill
                     open={searchTerm !== ""}
                     headerText={i18nKey("communities.favourites")}>
                     {#snippet titleSlot()}
-                        <div class="card-header">
-                            <div class="avatar">
-                                <HeartOutline size={$iconSize} color={"var(--icon-txt)"} />
-                            </div>
-                            <div class="details">
-                                <h4 class="title">
-                                    <Translatable resourceKey={i18nKey("communities.favourites")} />
-                                </h4>
-                            </div>
-                        </div>
+                        {@render generalHeader(HeartOutline, "communities.favourites")}
                     {/snippet}
                     {#each targets.favourites as target}
-                        <div
-                            role="button"
-                            tabindex="0"
-                            class="row"
-                            class:rtl={$rtlStore}
-                            onclick={() => onSelect(target.id)}>
-                            <div class="avatar">
-                                <Avatar url={target.avatarUrl} size={AvatarSize.Default} />
-                            </div>
-                            <div class="details">
-                                <div class="name">{target.name}</div>
-                                <div class="description">{target.description}</div>
-                            </div>
-                        </div>
+                        {@render nonDirect(target)}
                     {/each}
                 </CollapsibleCard>
             {/if}
             {#each targets.communities as community}
                 {#if community.channels.length > 0}
                     <CollapsibleCard
+                        fill
                         transition={false}
                         open={searchTerm !== ""}
                         headerText={i18nKey(community.name)}>
                         {#snippet titleSlot()}
-                            <div class="card-header">
-                                <div class="avatar">
-                                    <Avatar url={community.avatarUrl} size={AvatarSize.Default} />
-                                </div>
-                                <div class="details">
-                                    <h4 class="title">
-                                        {community.name}
-                                    </h4>
-                                </div>
-                            </div>
+                            <Row
+                                padding={["zero", "zero"]}
+                                gap={"md"}
+                                crossAxisAlignment={"center"}>
+                                <Avatar url={community.avatarUrl} size={"lg"} />
+                                <Subtitle fontWeight={"bold"}>
+                                    {community.name}
+                                </Subtitle>
+                            </Row>
                         {/snippet}
                         {#each community.channels as target}
-                            <div
-                                role="button"
-                                tabindex="0"
-                                class="row"
-                                class:rtl={$rtlStore}
-                                onclick={() => onSelect(target.id)}>
-                                <div class="avatar">
-                                    <Avatar url={target.avatarUrl} size={AvatarSize.Default} />
-                                </div>
-                                <div class="details">
-                                    <div class="name">{target.name}</div>
-                                    <div class="description">{target.description}</div>
-                                </div>
-                            </div>
+                            {@render nonDirect(target)}
                         {/each}
                     </CollapsibleCard>
                 {/if}
             {/each}
-        </div>
+        </Column>
     {/if}
-</section>
-
-<style lang="scss">
-    :global(.selectable-chats .body) {
-        padding: 0;
-    }
-
-    :global(.selectable-chats .header) {
-        padding: $sp3;
-    }
-
-    h4 {
-        flex: 1;
-        margin: 0;
-        margin-top: 2px;
-    }
-
-    section {
-        background: var(--panel-right-modal);
-        height: calc(var(--vh, 1vh) * 100);
-        position: relative;
-        width: 500px;
-        overflow: auto;
-        overflow-x: hidden;
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-
-        @include mobile() {
-            width: 100%;
-        }
-    }
-
-    .no-chats {
-        margin: $sp3;
-        padding: $sp3 $sp4;
-        background-color: var(--chatSummary-bg);
-        @include font(bold, normal, fs-100);
-        color: var(--error);
-    }
-
-    .close {
-        flex: 0 0 30px;
-    }
-
-    .selectable-chats {
-        overflow: auto;
-        @include nice-scrollbar();
-        @include mobile() {
-            width: 100%;
-        }
-    }
-
-    .card-header {
-        position: relative;
-        display: flex;
-        align-items: center;
-        width: calc(100% - 24px);
-        gap: toRem(12);
-
-        .avatar {
-            flex: 0 0 48px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 48px;
-            border-radius: 50%;
-            background-color: var(--chatSummary-bg-selected);
-
-            @include mobile() {
-                flex: 0 0 42px;
-                height: 42px;
-            }
-        }
-    }
-
-    .row {
-        position: relative;
-        display: flex;
-        gap: toRem(12);
-        justify-content: space-between;
-        align-items: center;
-        background-color: var(--chatSummary-bg);
-        cursor: pointer;
-        padding: $sp3;
-
-        @media (hover: hover) {
-            &:hover {
-                background-color: var(--chatSummary-hv);
-            }
-        }
-    }
-
-    .details {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        overflow: hidden;
-        .name {
-            @include font(book, normal, fs-100);
-
-            display: flex;
-            align-items: center;
-            gap: $sp2;
-
-            .username {
-                color: var(--txt-light);
-            }
-        }
-        .description {
-            @include ellipsis();
-            @include font(book, normal, fs-80);
-            color: var(--txt-light);
-        }
-    }
-</style>
+</SlidingPageContent>

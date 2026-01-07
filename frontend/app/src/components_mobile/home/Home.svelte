@@ -9,7 +9,6 @@
         DirectChatIdentifier,
         EnhancedReplyContext,
         Level,
-        Message,
         MultiUserChat,
         MultiUserChatIdentifier,
         NervousSystemDetails,
@@ -45,18 +44,15 @@
     import { getContext, onMount, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
-    import { messageToForwardStore } from "../../stores/messageToForward";
     import { chitPopup, disableChit } from "../../stores/settings";
     import { toastStore } from "../../stores/toast";
     import { activeVideoCall, incomingVideoCall } from "../../stores/video";
-    import type { Share } from "../../utils/share";
     import { removeQueryStringParam } from "../../utils/urls";
     import AreYouSure from "../AreYouSure.svelte";
     import NotFound from "../NotFound.svelte";
     import OfflineFooter from "../OfflineFooter.svelte";
     import OnboardModal from "../onboard/OnboardModal.svelte";
     import Overlay from "../Overlay.svelte";
-    import SelectChatModal from "../SelectChatModal.svelte";
     import SuspendedModal from "../SuspendedModal.svelte";
     import Toast from "../Toast.svelte";
     import AcceptRulesModal from "./AcceptRulesModal.svelte";
@@ -109,7 +105,6 @@
     type ModalType =
         | { kind: "none" }
         | { kind: "verify_humanity" }
-        | { kind: "select_chat" }
         | { kind: "suspended" }
         | { kind: "suspending"; userId: string }
         | { kind: "no_access" }
@@ -120,8 +115,6 @@
 
     let modal: ModalType = $state({ kind: "none" });
     let confirmActionEvent: ConfirmActionEvent | undefined = $state();
-    let share: Share = { title: "", text: "", url: "", files: [] };
-    let messageToForward: Message | undefined = undefined;
 
     onMount(() => {
         const unsubEvents = [
@@ -133,7 +126,6 @@
             subscribe("makeProposal", showMakeProposalModal),
             subscribe("leaveGroup", onTriggerConfirm),
             subscribe("unarchiveChat", unarchiveChat),
-            subscribe("forward", forwardMessage),
             subscribe("toggleMuteNotifications", toggleMuteNotifications),
             subscribe("successfulImport", successfulImport),
             subscribe("clearSelection", () => pageReplace(routeForScope($chatListScopeStore))),
@@ -223,14 +215,13 @@
                 }
 
                 if (client.isShareRoute(route)) {
-                    share = {
+                    publish("shareMessage", {
                         title: route.title,
                         text: route.text,
                         url: route.url,
                         files: [],
-                    };
+                    });
                     pageReplace(routeForScope(client.getDefaultScope()));
-                    modal = { kind: "select_chat" };
                 }
             }
         });
@@ -372,54 +363,10 @@
         }
     }
 
-    function forwardMessage(message: Message) {
-        messageToForward = message;
-        modal = { kind: "select_chat" };
-    }
-
     function showMakeProposalModal() {
         if (nervousSystem !== undefined && selectedMultiUserChat !== undefined) {
             modal = { kind: "make_proposal", chat: selectedMultiUserChat, nervousSystem };
         }
-    }
-
-    function onSelectChat(chatId: ChatIdentifier) {
-        closeModal();
-        if (messageToForward !== undefined) {
-            forwardToChat(chatId);
-            messageToForward = undefined;
-        } else {
-            shareWithChat(chatId);
-        }
-    }
-
-    function onCloseSelectChat() {
-        closeModal();
-        messageToForward = undefined;
-    }
-
-    function forwardToChat(chatId: ChatIdentifier) {
-        page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
-        messageToForwardStore.set(messageToForward);
-    }
-
-    function shareWithChat(chatId: ChatIdentifier) {
-        page(routeForChatIdentifier($chatListScopeStore.kind, chatId));
-
-        const shareText = share.text ?? "";
-        const shareTitle = share.title ?? "";
-        const shareUrl = share.url ?? "";
-
-        let text = shareText.length > 0 ? shareText : shareTitle;
-
-        if (shareUrl.length > 0) {
-            if (text.length > 0) {
-                text += "\n";
-            }
-            text += shareUrl;
-        }
-
-        localUpdates.draftMessages.setTextContent({ chatId }, text);
     }
 
     function toggleMuteNotifications(detail: {
@@ -612,20 +559,15 @@
         <VerifyHumanity onClose={closeModal} onSuccess={closeModal} />
     {:else if modal.kind === "no_access"}
         <NoAccess onClose={closeNoAccess} />
+    {:else if modal.kind === "challenge"}
+        <ChallengeModal on:close={closeModal} />
     {:else}
-        <Overlay
-            dismissible={modal.kind !== "select_chat" && modal.kind !== "make_proposal"}
-            alignLeft={modal.kind === "select_chat"}
-            onClose={closeModal}>
-            {#if modal.kind === "select_chat"}
-                <SelectChatModal onClose={onCloseSelectChat} onSelect={onSelectChat} />
-            {:else if modal.kind === "make_proposal"}
+        <Overlay dismissible={modal.kind !== "make_proposal"} onClose={closeModal}>
+            {#if modal.kind === "make_proposal"}
                 <MakeProposalModal
                     selectedMultiUserChat={modal.chat}
                     nervousSystem={modal.nervousSystem}
                     onClose={closeModal} />
-            {:else if modal.kind === "challenge"}
-                <ChallengeModal on:close={closeModal} />
             {/if}
         </Overlay>
     {/if}

@@ -84,6 +84,7 @@ export type PubSubEvents = {
     createCommunity: undefined;
     unarchiveChat: ChatIdentifier;
     forward: Message;
+    shareMessage: unknown;
     toggleMuteNotifications: {
         chatId: ChatIdentifier;
         mute: boolean | undefined;
