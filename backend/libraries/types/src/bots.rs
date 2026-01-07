@@ -106,13 +106,13 @@ pub struct BotCommandOptionChoice<T> {
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
 pub struct BotPermissions {
-    #[serde(skip_serializing_if = "is_zero")]
+    #[serde(default, skip_serializing_if = "is_zero")]
     #[ts(as = "Option::<u32>", optional)]
     community: u32,
-    #[serde(skip_serializing_if = "is_zero")]
+    #[serde(default, skip_serializing_if = "is_zero")]
     #[ts(as = "Option::<u32>", optional)]
     chat: u32,
-    #[serde(skip_serializing_if = "is_zero")]
+    #[serde(default, skip_serializing_if = "is_zero")]
     #[ts(as = "Option::<u32>", optional)]
     message: u32,
 }
