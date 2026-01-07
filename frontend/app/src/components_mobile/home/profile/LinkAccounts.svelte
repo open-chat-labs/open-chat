@@ -348,13 +348,14 @@
 </script>
 
 <Row crossAxisAlignment={"center"} gap={"md"}>
-    <LinkVariantPlus size={$iconSize} color={"var(--txt)"} />
+    <LinkVariantPlus size={$iconSize} color={ColourVars.textPrimary} />
 
     <Subtitle fontWeight={"bold"}>
         <Translatable resourceKey={i18nKey("identity.linkIdentity")} />
     </Subtitle>
 </Row>
-<div class="body">
+
+<Column padding={["lg", "zero"]}>
     {#if error !== undefined}
         <ErrorMessage>
             <Translatable resourceKey={i18nKey(error)} />
@@ -440,7 +441,7 @@
             {/if}
         {/if}
     {/if}
-</div>
+</Column>
 
 <Container mainAxisAlignment={"end"} gap={"sm"} crossAxisAlignment={"end"}>
     <CommonButton onClick={onClose} size={"small_text"}>
@@ -486,10 +487,6 @@
 </Container>
 
 <style lang="scss">
-    .body {
-        margin-bottom: $sp5;
-    }
-
     .eth-options,
     .sol-options {
         text-align: center;

@@ -1,6 +1,15 @@
 <script lang="ts">
-    import { CommonButton, Container } from "component-lib";
-    import { iconSize, type OpenChat } from "openchat-client";
+    import {
+        Body,
+        ColourVars,
+        Column,
+        CommonButton,
+        Container,
+        Row,
+        Sheet,
+        Subtitle,
+    } from "component-lib";
+    import { type OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import AccountCheck from "svelte-material-icons/AccountCheck.svelte";
@@ -9,7 +18,6 @@
     import { uniquePersonCredentialGate } from "../../../utils/access";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import FancyLoader from "../../icons/FancyLoader.svelte";
-    import ModalContent from "../../ModalContent.svelte";
     import Translatable from "../../Translatable.svelte";
     import Markdown from "../Markdown.svelte";
     import LinkAccounts from "./LinkAccounts.svelte";
@@ -71,15 +79,13 @@
 </script>
 
 {#if checkingPrincipal}
-    <ModalContent hideFooter hideHeader fadeDelay={0} fadeDuration={0}>
-        {#snippet body()}
-            <div>
-                <div class="loader">
-                    <FancyLoader />
-                </div>
+    <Sheet>
+        <Column crossAxisAlignment={"center"} mainAxisAlignment={"center"} padding={"xl"}>
+            <div class="loader">
+                <FancyLoader />
             </div>
-        {/snippet}
-    </ModalContent>
+        </Column>
+    </Sheet>
 {:else if step === "linking"}
     <LinkAccountsModal>
         <LinkAccounts
@@ -89,43 +95,40 @@
             explanations={[i18nKey("identity.humanityWarning")]} />
     </LinkAccountsModal>
 {:else}
-    <ModalContent fadeDelay={0} fadeDuration={0}>
-        {#snippet header()}
-            <div class="header">
-                <AccountCheck size={$iconSize} color={"var(--txt)"} />
-                <div class="title">
+    <Sheet>
+        <Column gap={"xl"} padding={"xl"}>
+            <Row crossAxisAlignment={"center"} gap={"sm"}>
+                <AccountCheck size={"1.5rem"} color={ColourVars.textPrimary} />
+                <Subtitle fontWeight={"bold"}>
                     <Translatable resourceKey={i18nKey("access.uniquePerson")} />
-                </div>
-            </div>
-        {/snippet}
-        {#snippet body()}
-            <div>
+                </Subtitle>
+            </Row>
+            <Column gap={"md"}>
                 {#if failed}
-                    <p class="info">
+                    <Body>
                         <ErrorMessage>
                             <Translatable resourceKey={i18nKey("human.failed")} />
                         </ErrorMessage>
-                    </p>
-                    <p class="question">
+                    </Body>
+
+                    <Body>
                         <Translatable resourceKey={i18nKey("access.uniquePersonInfo1")} />
-                    </p>
+                    </Body>
 
-                    <p class="answer">
+                    <Body>
                         <Markdown text={interpolate($_, i18nKey("access.uniquePersonInfo2"))} />
-                    </p>
+                    </Body>
 
-                    <p class="answer">
+                    <Body>
                         <Translatable resourceKey={i18nKey("access.uniquePersonInfo3")} />
-                    </p>
+                    </Body>
                 {:else}
-                    <p class="info">
+                    <Body>
                         <Translatable resourceKey={i18nKey("human.instruction")} />
-                    </p>
+                    </Body>
                 {/if}
-            </div>
-        {/snippet}
+            </Column>
 
-        {#snippet footer()}
             <Container mainAxisAlignment={"end"} gap={"sm"} crossAxisAlignment={"end"}>
                 <CommonButton onClick={onClose} size={"small_text"}>
                     <Translatable resourceKey={i18nKey("cancel")}></Translatable>
@@ -142,36 +145,13 @@
                     <Translatable resourceKey={i18nKey("access.verify")}></Translatable>
                 </CommonButton>
             </Container>
-        {/snippet}
-    </ModalContent>
+        </Column>
+    </Sheet>
 {/if}
 
 <style lang="scss">
     :global(.link-ii-logo img) {
         width: 24px;
-    }
-
-    .header {
-        @include font(bold, normal, fs-130, 29);
-        margin-bottom: $sp4;
-        display: flex;
-        align-items: center;
-        gap: $sp3;
-    }
-
-    .info,
-    .question,
-    .answer {
-        margin-bottom: $sp4;
-    }
-
-    .question {
-        @include font(book, normal, fs-90);
-    }
-
-    .answer {
-        color: var(--txt-light);
-        @include font(book, normal, fs-90);
     }
 
     .loader {

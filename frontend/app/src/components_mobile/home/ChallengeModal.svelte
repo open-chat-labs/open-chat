@@ -124,11 +124,6 @@
         padding-bottom: 0;
     }
 
-    .challenge {
-        @include mobile() {
-            width: 100%;
-        }
-    }
     .loader {
         width: 100px;
     }
