@@ -578,6 +578,30 @@ export const VideoCallPresence = Type.Union([
     Type.Literal("Hidden"),
 ]);
 
+export type ChatMetrics = Static<typeof ChatMetrics>;
+export const ChatMetrics = Type.Object({
+    text_messages: Type.Optional(Type.Number()),
+    image_messages: Type.Optional(Type.Number()),
+    video_messages: Type.Optional(Type.Number()),
+    audio_messages: Type.Optional(Type.Number()),
+    file_messages: Type.Optional(Type.Number()),
+    polls: Type.Optional(Type.Number()),
+    poll_votes: Type.Optional(Type.Number()),
+    crypto_messages: Type.Optional(Type.Number()),
+    deleted_messages: Type.Optional(Type.Number()),
+    giphy_messages: Type.Optional(Type.Number()),
+    prize_messages: Type.Optional(Type.Number()),
+    prize_winner_messages: Type.Optional(Type.Number()),
+    replies: Type.Optional(Type.Number()),
+    edits: Type.Optional(Type.Number()),
+    reactions: Type.Optional(Type.Number()),
+    proposals: Type.Optional(Type.Number()),
+    reported_messages: Type.Optional(Type.Number()),
+    message_reminders: Type.Optional(Type.Number()),
+    custom_type_messages: Type.Optional(Type.Number()),
+    last_active: Type.BigInt(),
+});
+
 export type VideoCallType = Static<typeof VideoCallType>;
 export const VideoCallType = Type.Union([Type.Literal("Broadcast"), Type.Literal("Default")]);
 
@@ -1062,9 +1086,6 @@ export const TransferFromError = Type.Union([
         }),
     }),
 ]);
-
-export type TSBigIntWithDefault = Static<typeof TSBigIntWithDefault>;
-export const TSBigIntWithDefault = Type.BigInt({ default: BigInt(0) });
 
 export type ChannelMessageTipped = Static<typeof ChannelMessageTipped>;
 export const ChannelMessageTipped = Type.Object({
@@ -4831,30 +4852,6 @@ export const BotRemoved = Type.Object({
     removed_by: UserId,
 });
 
-export type ChatMetrics = Static<typeof ChatMetrics>;
-export const ChatMetrics = Type.Object({
-    text_messages: TSBigIntWithDefault,
-    image_messages: TSBigIntWithDefault,
-    video_messages: TSBigIntWithDefault,
-    audio_messages: TSBigIntWithDefault,
-    file_messages: TSBigIntWithDefault,
-    polls: TSBigIntWithDefault,
-    poll_votes: TSBigIntWithDefault,
-    crypto_messages: TSBigIntWithDefault,
-    deleted_messages: TSBigIntWithDefault,
-    giphy_messages: TSBigIntWithDefault,
-    prize_messages: TSBigIntWithDefault,
-    prize_winner_messages: TSBigIntWithDefault,
-    replies: TSBigIntWithDefault,
-    edits: TSBigIntWithDefault,
-    reactions: TSBigIntWithDefault,
-    proposals: TSBigIntWithDefault,
-    reported_messages: TSBigIntWithDefault,
-    message_reminders: TSBigIntWithDefault,
-    custom_type_messages: TSBigIntWithDefault,
-    last_active: Type.BigInt(),
-});
-
 export type BlobReference = Static<typeof BlobReference>;
 export const BlobReference = Type.Object({
     canister_id: TSPrincipal,
@@ -5604,14 +5601,14 @@ export const CompletedCryptoTransactionICRC1 = Type.Object({
 export type GroupMembership = Static<typeof GroupMembership>;
 export const GroupMembership = Type.Object({
     joined: Type.BigInt(),
-    role: GroupRole,
-    mentions: Type.Array(HydratedMention),
-    notifications_muted: Type.Boolean(),
-    at_everyone_muted: Type.Boolean(),
+    role: Type.Optional(GroupRole),
+    mentions: Type.Optional(Type.Array(HydratedMention)),
+    notifications_muted: Type.Optional(Type.Boolean()),
+    at_everyone_muted: Type.Optional(Type.Boolean()),
     my_metrics: ChatMetrics,
-    latest_threads: Type.Array(GroupCanisterThreadDetails),
-    rules_accepted: Type.Boolean(),
-    lapsed: Type.Boolean(),
+    latest_threads: Type.Optional(Type.Array(GroupCanisterThreadDetails)),
+    rules_accepted: Type.Optional(Type.Boolean()),
+    lapsed: Type.Optional(Type.Boolean()),
 });
 
 export type OptionUpdateFrozenGroupInfo = Static<typeof OptionUpdateFrozenGroupInfo>;
@@ -5694,12 +5691,12 @@ export const ChannelMessageNotification = Type.Object({
 export type GroupMembershipUpdates = Static<typeof GroupMembershipUpdates>;
 export const GroupMembershipUpdates = Type.Object({
     role: Type.Optional(GroupRole),
-    mentions: Type.Array(HydratedMention),
+    mentions: Type.Optional(Type.Array(HydratedMention)),
     notifications_muted: Type.Optional(Type.Boolean()),
     at_everyone_muted: Type.Optional(Type.Boolean()),
     my_metrics: Type.Optional(ChatMetrics),
-    latest_threads: Type.Array(GroupCanisterThreadDetails),
-    unfollowed_threads: Type.Array(MessageIndex),
+    latest_threads: Type.Optional(Type.Array(GroupCanisterThreadDetails)),
+    unfollowed_threads: Type.Optional(Type.Array(MessageIndex)),
     rules_accepted: Type.Optional(Type.Boolean()),
     lapsed: Type.Optional(Type.Boolean()),
 });
@@ -8833,8 +8830,8 @@ export const CommunityCanisterChannelSummaryUpdates = Type.Object({
     last_updated: Type.BigInt(),
     name: Type.Optional(Type.String()),
     description: Type.Optional(Type.String()),
-    subtype: OptionUpdateGroupSubtype,
-    avatar_id: OptionUpdateU128,
+    subtype: Type.Optional(OptionUpdateGroupSubtype),
+    avatar_id: Type.Optional(OptionUpdateU128),
     is_public: Type.Optional(Type.Boolean()),
     messages_visible_to_non_members: Type.Optional(Type.Boolean()),
     latest_message: Type.Optional(EventWrapperMessage),
@@ -8843,17 +8840,19 @@ export const CommunityCanisterChannelSummaryUpdates = Type.Object({
     latest_message_index: Type.Optional(MessageIndex),
     member_count: Type.Optional(Type.Number()),
     permissions_v2: Type.Optional(GroupPermissions),
-    updated_events: Type.Array(
-        Type.Tuple([Type.Union([MessageIndex, Type.Null()]), EventIndex, Type.BigInt()]),
+    updated_events: Type.Optional(
+        Type.Array(
+            Type.Tuple([Type.Union([MessageIndex, Type.Null()]), EventIndex, Type.BigInt()]),
+        ),
     ),
     metrics: Type.Optional(ChatMetrics),
     date_last_pinned: Type.Optional(Type.BigInt()),
-    events_ttl: OptionUpdateU64,
+    events_ttl: Type.Optional(OptionUpdateU64),
     events_ttl_last_updated: Type.Optional(Type.BigInt()),
-    gate_config: OptionUpdateAccessGateConfig,
+    gate_config: Type.Optional(OptionUpdateAccessGateConfig),
     membership: Type.Optional(GroupMembershipUpdates),
-    video_call_in_progress: OptionUpdateVideoCall,
-    external_url: OptionUpdateString,
+    video_call_in_progress: Type.Optional(OptionUpdateVideoCall),
+    external_url: Type.Optional(OptionUpdateString),
     any_updates_missed: Type.Boolean(),
 });
 
@@ -9015,12 +9014,12 @@ export const DirectChatSummary = Type.Object({
     date_created: Type.BigInt(),
     read_by_me_up_to: Type.Optional(MessageIndex),
     read_by_them_up_to: Type.Optional(MessageIndex),
-    notifications_muted: Type.Boolean(),
+    notifications_muted: Type.Optional(Type.Boolean()),
     metrics: ChatMetrics,
     my_metrics: ChatMetrics,
-    archived: Type.Boolean(),
+    archived: Type.Optional(Type.Boolean()),
     events_ttl: Type.Optional(Type.BigInt()),
-    events_ttl_last_updated: Type.BigInt(),
+    events_ttl_last_updated: Type.Optional(Type.BigInt()),
     video_call_in_progress: Type.Optional(VideoCall),
 });
 
@@ -9040,11 +9039,11 @@ export const GroupCanisterGroupChatSummary = Type.Object({
     description: Type.String(),
     subtype: Type.Optional(GroupSubtype),
     avatar_id: Type.Optional(Type.BigInt()),
-    is_public: Type.Boolean(),
-    history_visible_to_new_joiners: Type.Boolean(),
-    messages_visible_to_non_members: Type.Boolean(),
-    min_visible_event_index: EventIndex,
-    min_visible_message_index: MessageIndex,
+    is_public: Type.Optional(Type.Boolean()),
+    history_visible_to_new_joiners: Type.Optional(Type.Boolean()),
+    messages_visible_to_non_members: Type.Optional(Type.Boolean()),
+    min_visible_event_index: Type.Optional(EventIndex),
+    min_visible_message_index: Type.Optional(MessageIndex),
     latest_message: Type.Optional(EventWrapperMessage),
     latest_event_index: EventIndex,
     latest_message_index: Type.Optional(MessageIndex),
@@ -9055,11 +9054,11 @@ export const GroupCanisterGroupChatSummary = Type.Object({
     frozen: Type.Optional(FrozenGroupInfo),
     date_last_pinned: Type.Optional(Type.BigInt()),
     events_ttl: Type.Optional(Type.BigInt()),
-    events_ttl_last_updated: Type.BigInt(),
+    events_ttl_last_updated: Type.Optional(Type.BigInt()),
     gate_config: Type.Optional(AccessGateConfig),
     membership: Type.Optional(GroupMembership),
     video_call_in_progress: Type.Optional(VideoCall),
-    verified: Type.Boolean(),
+    verified: Type.Optional(Type.Boolean()),
 });
 
 export type EventWrapperChatEvent = Static<typeof EventWrapperChatEvent>;
@@ -9085,28 +9084,26 @@ export const GroupCanisterGroupChatSummaryUpdates = Type.Object({
     last_updated: Type.BigInt(),
     name: Type.Optional(Type.String()),
     description: Type.Optional(Type.String()),
-    subtype: OptionUpdateGroupSubtype,
-    avatar_id: OptionUpdateU128,
+    subtype: Type.Optional(OptionUpdateGroupSubtype),
+    avatar_id: Type.Optional(OptionUpdateU128),
     latest_message: Type.Optional(EventWrapperMessage),
     latest_event_index: Type.Optional(EventIndex),
     latest_message_index: Type.Optional(MessageIndex),
     participant_count: Type.Optional(Type.Number()),
     wasm_version: Type.Optional(BuildVersion),
     permissions_v2: Type.Optional(GroupPermissions),
-    updated_events: Type.Array(
-        Type.Tuple([Type.Union([MessageIndex, Type.Null()]), EventIndex, Type.BigInt()]),
-    ),
+    updated_events: Type.Optional(Type.Boolean()),
     metrics: Type.Optional(ChatMetrics),
     is_public: Type.Optional(Type.Boolean()),
     messages_visible_to_non_members: Type.Optional(Type.Boolean()),
-    frozen: OptionUpdateFrozenGroupInfo,
+    frozen: Type.Optional(OptionUpdateFrozenGroupInfo),
     date_last_pinned: Type.Optional(Type.BigInt()),
-    events_ttl: OptionUpdateU64,
+    events_ttl: Type.Union([OptionUpdateU64, Type.Null()]),
     events_ttl_last_updated: Type.Optional(Type.BigInt()),
-    gate_config: OptionUpdateAccessGateConfig,
+    gate_config: Type.Union([OptionUpdateAccessGateConfig, Type.Null()]),
     membership: Type.Optional(GroupMembershipUpdates),
-    video_call_in_progress: OptionUpdateVideoCall,
-    any_updates_missed: Type.Boolean(),
+    video_call_in_progress: Type.Union([OptionUpdateVideoCall, Type.Null()]),
+    any_updates_missed: Type.Optional(Type.Boolean()),
     verified: Type.Optional(Type.Boolean()),
 });
 
@@ -9120,13 +9117,13 @@ export const DirectChatSummaryUpdates = Type.Object({
     read_by_me_up_to: Type.Optional(MessageIndex),
     read_by_them_up_to: Type.Optional(MessageIndex),
     notifications_muted: Type.Optional(Type.Boolean()),
-    updated_events: Type.Array(Type.Tuple([EventIndex, Type.BigInt()])),
+    updated_events: Type.Optional(Type.Array(Type.Tuple([EventIndex, Type.BigInt()]))),
     metrics: Type.Optional(ChatMetrics),
     my_metrics: Type.Optional(ChatMetrics),
     archived: Type.Optional(Type.Boolean()),
-    events_ttl: OptionUpdateU64,
+    events_ttl: Type.Optional(OptionUpdateU64),
     events_ttl_last_updated: Type.Optional(Type.BigInt()),
-    video_call_in_progress: OptionUpdateVideoCall,
+    video_call_in_progress: Type.Optional(OptionUpdateVideoCall),
 });
 
 export type PublicGroupSummary = Static<typeof PublicGroupSummary>;
@@ -9160,11 +9157,11 @@ export const CommunityCanisterChannelSummary = Type.Object({
     description: Type.String(),
     subtype: Type.Optional(GroupSubtype),
     avatar_id: Type.Optional(Type.BigInt()),
-    is_public: Type.Boolean(),
-    history_visible_to_new_joiners: Type.Boolean(),
-    messages_visible_to_non_members: Type.Boolean(),
-    min_visible_event_index: EventIndex,
-    min_visible_message_index: MessageIndex,
+    is_public: Type.Optional(Type.Boolean()),
+    history_visible_to_new_joiners: Type.Optional(Type.Boolean()),
+    messages_visible_to_non_members: Type.Optional(Type.Boolean()),
+    min_visible_event_index: Type.Optional(EventIndex),
+    min_visible_message_index: Type.Optional(MessageIndex),
     latest_message: Type.Optional(EventWrapperMessage),
     latest_message_sender_display_name: Type.Optional(Type.String()),
     latest_event_index: EventIndex,
@@ -9174,7 +9171,7 @@ export const CommunityCanisterChannelSummary = Type.Object({
     metrics: ChatMetrics,
     date_last_pinned: Type.Optional(Type.BigInt()),
     events_ttl: Type.Optional(Type.BigInt()),
-    events_ttl_last_updated: Type.BigInt(),
+    events_ttl_last_updated: Type.Optional(Type.BigInt()),
     gate_config: Type.Optional(AccessGateConfig),
     membership: Type.Optional(GroupMembership),
     video_call_in_progress: Type.Optional(VideoCall),
