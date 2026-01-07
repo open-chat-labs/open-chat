@@ -133,7 +133,7 @@ fn update_group_privacy_succeeds() {
     // Check the privacy and name have changed
     let summary = client::group::happy_path::summary(env, user2.principal, group_id);
     assert_eq!(summary.name, new_group_name);
-    assert!(!summary.is_public);
+    assert!(!summary.is_public.unwrap_or_default());
 
     tick_many(env, 3);
 
@@ -183,9 +183,9 @@ fn make_private_group_public_succeeds() {
 
     let group_summary = client::group::happy_path::summary(env, user2.principal, group_id);
 
-    assert!(group_summary.is_public);
-    assert_eq!(group_summary.min_visible_event_index, 6.into());
-    assert_eq!(group_summary.min_visible_message_index, 5.into());
+    assert!(group_summary.is_public.unwrap_or_default());
+    assert_eq!(group_summary.min_visible_event_index.unwrap_or_default(), 6.into());
+    assert_eq!(group_summary.min_visible_message_index.unwrap_or_default(), 5.into());
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal, group_name: &str) -> TestData {

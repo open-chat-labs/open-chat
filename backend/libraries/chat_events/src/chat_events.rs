@@ -2156,21 +2156,25 @@ impl ChatEvents {
         })
     }
 
-    pub fn video_call_in_progress_updates(&self, caller: Option<UserId>, since: TimestampMillis) -> OptionUpdate<VideoCall> {
+    pub fn video_call_in_progress_updates(
+        &self,
+        caller: Option<UserId>,
+        since: TimestampMillis,
+    ) -> Option<OptionUpdate<VideoCall>> {
         if let Some(message_index) = self.video_call_in_progress.as_ref().map(|vc| vc.message_index) {
             let Some(event) = self.main_events_reader().message_event_internal(message_index.into()) else {
-                return OptionUpdate::SetToNone;
+                return Some(OptionUpdate::SetToNone);
             };
             let message = event.event;
 
             let MessageContentInternal::VideoCall(vc) = message.content else {
-                return OptionUpdate::SetToNone;
+                return Some(OptionUpdate::SetToNone);
             };
 
             let current_user_joined_at = caller.and_then(|u| vc.participants.get(&u).map(|p| p.joined));
 
             if event.timestamp > since || current_user_joined_at > Some(since) {
-                OptionUpdate::SetToSome(VideoCall {
+                Some(OptionUpdate::SetToSome(VideoCall {
                     started: event.timestamp,
                     started_by: message.sender,
                     event_index: event.index,
@@ -2178,14 +2182,14 @@ impl ChatEvents {
                     message_id: message.message_id,
                     call_type: vc.call_type,
                     joined_by_current_user: current_user_joined_at.is_some(),
-                })
+                }))
             } else {
-                OptionUpdate::NoChange
+                None
             }
         } else if self.video_call_in_progress.timestamp > since {
-            OptionUpdate::SetToNone
+            Some(OptionUpdate::SetToNone)
         } else {
-            OptionUpdate::NoChange
+            None
         }
     }
 

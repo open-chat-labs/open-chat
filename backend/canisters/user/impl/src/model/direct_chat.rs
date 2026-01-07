@@ -3,8 +3,8 @@ use chat_events::{ChatEvents, EventPusher, PushMessageArgs, Reader};
 use serde::{Deserialize, Serialize};
 use std::cmp::min;
 use types::{
-    DirectChatSummary, DirectChatSummaryUpdates, EventWrapper, Message, MessageId, MessageIndex, Milliseconds, OptionUpdate,
-    TimestampMillis, Timestamped, UserId, UserType,
+    DirectChatSummary, DirectChatSummaryUpdates, EventWrapper, Message, MessageId, MessageIndex, Milliseconds, NoneIfDefault,
+    NoneIfEmpty, OptionUpdate, TimestampMillis, Timestamped, UserId, UserType,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -103,16 +103,16 @@ impl DirectChat {
             date_created: self.date_created,
             read_by_me_up_to: self.read_by_me_up_to.value,
             read_by_them_up_to: self.read_by_them_up_to.value,
-            notifications_muted: self.notifications_muted.value,
+            notifications_muted: self.notifications_muted.value.none_if_default(),
             metrics: self.events.metrics().hydrate(),
             my_metrics: self
                 .events
                 .user_metrics(&my_user_id, None)
                 .map(|m| m.hydrate())
                 .unwrap_or_default(),
-            archived: self.archived.value,
+            archived: self.archived.value.none_if_default(),
             events_ttl: events_ttl.value,
-            events_ttl_last_updated: events_ttl.timestamp,
+            events_ttl_last_updated: events_ttl.timestamp.none_if_default(),
             video_call_in_progress: self.events.video_call_in_progress(Some(my_user_id)),
         }
     }
@@ -143,17 +143,14 @@ impl DirectChat {
             read_by_me_up_to: self.read_by_me_up_to.if_set_after(updates_since).copied().flatten(),
             read_by_them_up_to: self.read_by_them_up_to.if_set_after(updates_since).copied().flatten(),
             notifications_muted,
-            updated_events,
+            updated_events: updated_events.none_if_empty(),
             metrics,
             my_metrics: self
                 .events
                 .user_metrics(&my_user_id, Some(updates_since))
                 .map(|m| m.hydrate()),
             archived: self.archived.if_set_after(updates_since).copied(),
-            events_ttl: events_ttl
-                .if_set_after(updates_since)
-                .copied()
-                .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
+            events_ttl: events_ttl.if_set_after(updates_since).copied().map(OptionUpdate::from_update),
             events_ttl_last_updated: (events_ttl.timestamp > updates_since).then_some(events_ttl.timestamp),
             video_call_in_progress: self.events.video_call_in_progress_updates(Some(my_user_id), updates_since),
         }

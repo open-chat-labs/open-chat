@@ -46,9 +46,10 @@ fn create_user_group_succeeds() {
     assert!(user_group_id > 0);
 
     let summary = client::community::happy_path::summary(env, user1.principal, community_id);
-    assert_eq!(summary.user_groups.len(), 1);
+    let user_groups = summary.user_groups.unwrap();
+    assert_eq!(user_groups.len(), 1);
 
-    let user_group = summary.user_groups.first().unwrap();
+    let user_group = user_groups.first().unwrap();
     assert_eq!(user_group.user_group_id, user_group_id);
     assert_eq!(user_group.name, user_group_name);
     assert_eq!(user_group.members, 3);
@@ -115,9 +116,10 @@ fn update_user_group_succeeds() {
     ));
 
     let summary = client::community::happy_path::summary(env, user1.principal, community_id);
-    assert_eq!(summary.user_groups.len(), 1);
+    let user_groups = summary.user_groups.unwrap();
+    assert_eq!(user_groups.len(), 1);
 
-    let user_group = summary.user_groups.first().unwrap();
+    let user_group = user_groups.first().unwrap();
     assert_eq!(user_group.user_group_id, user_group_id);
     assert_eq!(user_group.name, new_name);
     assert_eq!(user_group.members, 2);
@@ -182,11 +184,14 @@ fn delete_user_group_succeeds() {
     ));
 
     let summary = client::community::happy_path::summary(env, user1.principal, community_id);
-    assert!(summary.user_groups.is_empty());
+    assert!(summary.user_groups.unwrap_or_default().is_empty());
 
     let summary_updates =
         client::community::happy_path::summary_updates(env, user1.principal, community_id, now_millis(env) - 1);
-    assert_eq!(summary_updates.unwrap().user_groups_deleted, vec![user_group_id]);
+    assert_eq!(
+        summary_updates.unwrap().user_groups_deleted.unwrap_or_default(),
+        vec![user_group_id]
+    );
 }
 
 #[test]
@@ -222,7 +227,7 @@ fn send_message_mentioning_user_group() {
         client::community::happy_path::send_text_message(env, &user3, community_id, channel_id, None, text, None);
 
     let user1_channel_summary = client::community::happy_path::channel_summary(env, &user1, community_id, channel_id);
-    let user1_mentions = user1_channel_summary.membership.unwrap().mentions;
+    let user1_mentions = user1_channel_summary.membership.unwrap().mentions.unwrap_or_default();
     assert_eq!(user1_mentions.len(), 1);
     assert_eq!(
         user1_mentions.first().unwrap().message_index,
@@ -230,7 +235,7 @@ fn send_message_mentioning_user_group() {
     );
 
     let user2_channel_summary = client::community::happy_path::channel_summary(env, &user2, community_id, channel_id);
-    let user2_mentions = user2_channel_summary.membership.unwrap().mentions;
+    let user2_mentions = user2_channel_summary.membership.unwrap().mentions.unwrap_or_default();
     assert_eq!(user2_mentions.len(), 1);
     assert_eq!(
         user2_mentions.first().unwrap().message_index,

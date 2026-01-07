@@ -21,12 +21,12 @@ pub struct DirectChatSummary {
     pub date_created: TimestampMillis,
     pub read_by_me_up_to: Option<MessageIndex>,
     pub read_by_them_up_to: Option<MessageIndex>,
-    pub notifications_muted: bool,
+    pub notifications_muted: Option<bool>,
     pub metrics: ChatMetrics,
     pub my_metrics: ChatMetrics,
-    pub archived: bool,
+    pub archived: Option<bool>,
     pub events_ttl: Option<Milliseconds>,
-    pub events_ttl_last_updated: TimestampMillis,
+    pub events_ttl_last_updated: Option<TimestampMillis>,
     pub video_call_in_progress: Option<VideoCall>,
 }
 
@@ -42,15 +42,15 @@ pub struct DirectChatSummaryUpdates {
     pub read_by_me_up_to: Option<MessageIndex>,
     pub read_by_them_up_to: Option<MessageIndex>,
     pub notifications_muted: Option<bool>,
-    pub updated_events: Vec<(EventIndex, TimestampMillis)>,
+    pub updated_events: Option<Vec<(EventIndex, TimestampMillis)>>,
     pub metrics: Option<ChatMetrics>,
     pub my_metrics: Option<ChatMetrics>,
     pub archived: Option<bool>,
-    #[ts(as = "crate::OptionUpdateU64")]
-    pub events_ttl: OptionUpdate<Milliseconds>,
+    #[ts(as = "Option<crate::OptionUpdateU64>")]
+    pub events_ttl: Option<OptionUpdate<Milliseconds>>,
     pub events_ttl_last_updated: Option<TimestampMillis>,
-    #[ts(as = "crate::OptionUpdateVideoCall")]
-    pub video_call_in_progress: OptionUpdate<VideoCall>,
+    #[ts(as = "Option<crate::OptionUpdateVideoCall>")]
+    pub video_call_in_progress: Option<OptionUpdate<VideoCall>>,
 }
 
 // TODO: This type is used in the response from group::public_summary and group_index::recommended_groups
@@ -91,27 +91,26 @@ pub struct GroupCanisterGroupChatSummary {
     pub description: String,
     pub subtype: Option<GroupSubtype>,
     pub avatar_id: Option<u128>,
-    pub is_public: bool,
-    pub history_visible_to_new_joiners: bool,
-    pub messages_visible_to_non_members: bool,
-    pub min_visible_event_index: EventIndex,
-    pub min_visible_message_index: MessageIndex,
+    pub is_public: Option<bool>,
+    pub history_visible_to_new_joiners: Option<bool>,
+    pub messages_visible_to_non_members: Option<bool>,
+    pub min_visible_event_index: Option<EventIndex>,
+    pub min_visible_message_index: Option<MessageIndex>,
     #[ts(as = "Option<crate::EventWrapperMessage>")]
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: EventIndex,
     pub latest_message_index: Option<MessageIndex>,
     pub participant_count: u32,
-    pub wasm_version: BuildVersion,
     pub permissions_v2: GroupPermissions,
     pub metrics: ChatMetrics,
     pub frozen: Option<FrozenGroupInfo>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: Option<Milliseconds>,
-    pub events_ttl_last_updated: TimestampMillis,
+    pub events_ttl_last_updated: Option<TimestampMillis>,
     pub gate_config: Option<AccessGateConfig>,
     pub membership: Option<GroupMembership>,
     pub video_call_in_progress: Option<VideoCall>,
-    pub verified: bool,
+    pub verified: Option<bool>,
 }
 
 #[ts_export]
@@ -121,10 +120,10 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub last_updated: TimestampMillis,
     pub name: Option<String>,
     pub description: Option<String>,
-    #[ts(as = "crate::OptionUpdateGroupSubtype")]
-    pub subtype: OptionUpdate<GroupSubtype>,
-    #[ts(as = "crate::OptionUpdateU128")]
-    pub avatar_id: OptionUpdate<u128>,
+    #[ts(as = "Option<crate::OptionUpdateGroupSubtype>")]
+    pub subtype: Option<OptionUpdate<GroupSubtype>>,
+    #[ts(as = "Option<crate::OptionUpdateU128>")]
+    pub avatar_id: Option<OptionUpdate<u128>>,
     #[ts(as = "Option<crate::EventWrapperMessage>")]
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
@@ -132,22 +131,22 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub participant_count: Option<u32>,
     pub wasm_version: Option<BuildVersion>,
     pub permissions_v2: Option<GroupPermissions>,
-    pub updated_events: Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)>, // (Thread root message index, event index, timestamp)
+    pub updated_events: Option<Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)>>, // (Thread root message index, event index, timestamp)
     pub metrics: Option<ChatMetrics>,
     pub is_public: Option<bool>,
     pub messages_visible_to_non_members: Option<bool>,
-    #[ts(as = "crate::OptionUpdateFrozenGroupInfo")]
-    pub frozen: OptionUpdate<FrozenGroupInfo>,
+    #[ts(as = "Option<crate::OptionUpdateFrozenGroupInfo>")]
+    pub frozen: Option<OptionUpdate<FrozenGroupInfo>>,
     pub date_last_pinned: Option<TimestampMillis>,
-    #[ts(as = "crate::OptionUpdateU64")]
-    pub events_ttl: OptionUpdate<Milliseconds>,
+    #[ts(as = "Option<crate::OptionUpdateU64>")]
+    pub events_ttl: Option<OptionUpdate<Milliseconds>>,
     pub events_ttl_last_updated: Option<TimestampMillis>,
-    #[ts(as = "crate::OptionUpdateAccessGateConfig")]
-    pub gate_config: OptionUpdate<AccessGateConfig>,
+    #[ts(as = "Option<crate::OptionUpdateAccessGateConfig>")]
+    pub gate_config: Option<OptionUpdate<AccessGateConfig>>,
     pub membership: Option<GroupMembershipUpdates>,
-    #[ts(as = "crate::OptionUpdateVideoCall")]
-    pub video_call_in_progress: OptionUpdate<VideoCall>,
-    pub any_updates_missed: bool,
+    #[ts(as = "Option<crate::OptionUpdateVideoCall>")]
+    pub video_call_in_progress: Option<OptionUpdate<VideoCall>>,
+    pub any_updates_missed: Option<bool>,
     pub verified: Option<bool>,
 }
 
@@ -155,26 +154,26 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GroupMembership {
     pub joined: TimestampMillis,
-    pub role: GroupRole,
-    pub mentions: Vec<HydratedMention>,
-    pub notifications_muted: bool,
-    pub at_everyone_muted: bool,
+    pub role: Option<GroupRole>,
+    pub mentions: Option<Vec<HydratedMention>>,
+    pub notifications_muted: Option<bool>,
+    pub at_everyone_muted: Option<bool>,
     pub my_metrics: ChatMetrics,
-    pub latest_threads: Vec<GroupCanisterThreadDetails>,
-    pub rules_accepted: bool,
-    pub lapsed: bool,
+    pub latest_threads: Option<Vec<GroupCanisterThreadDetails>>,
+    pub rules_accepted: Option<bool>,
+    pub lapsed: Option<bool>,
 }
 
 #[ts_export]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GroupMembershipUpdates {
     pub role: Option<GroupRole>,
-    pub mentions: Vec<HydratedMention>,
+    pub mentions: Option<Vec<HydratedMention>>,
     pub notifications_muted: Option<bool>,
     pub at_everyone_muted: Option<bool>,
     pub my_metrics: Option<ChatMetrics>,
-    pub latest_threads: Vec<GroupCanisterThreadDetails>,
-    pub unfollowed_threads: Vec<MessageIndex>,
+    pub latest_threads: Option<Vec<GroupCanisterThreadDetails>>,
+    pub unfollowed_threads: Option<Vec<MessageIndex>>,
     pub rules_accepted: Option<bool>,
     pub lapsed: Option<bool>,
 }
@@ -217,63 +216,25 @@ impl SelectedGroupUpdates {
 #[ts_export]
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct ChatMetrics {
-    #[serde(default, skip_serializing_if = "ts_export::is_default")]
-    #[ts(as = "ts_export::TSBigIntWithDefault")]
-    pub text_messages: u32,
-    #[serde(default, skip_serializing_if = "ts_export::is_default")]
-    #[ts(as = "ts_export::TSBigIntWithDefault")]
-    pub image_messages: u32,
-    #[serde(default, skip_serializing_if = "ts_export::is_default")]
-    #[ts(as = "ts_export::TSBigIntWithDefault")]
-    pub video_messages: u32,
-    #[serde(default, skip_serializing_if = "ts_export::is_default")]
-    #[ts(as = "ts_export::TSBigIntWithDefault")]
-    pub audio_messages: u32,
-    #[serde(default, skip_serializing_if = "ts_export::is_default")]
-    #[ts(as = "ts_export::TSBigIntWithDefault")]
-    pub file_messages: u32,
-    #[serde(default, skip_serializing_if = "ts_export::is_default")]
-    #[ts(as = "ts_export::TSBigIntWithDefault")]
-    pub polls: u32,
-    #[serde(default, skip_serializing_if = "ts_export::is_default")]
-    #[ts(as = "ts_export::TSBigIntWithDefault")]
-    pub poll_votes: u32,
-    #[serde(default, skip_serializing_if = "ts_export::is_default")]
-    #[ts(as = "ts_export::TSBigIntWithDefault")]
-    pub crypto_messages: u32,
-    #[serde(default, skip_serializing_if = "ts_export::is_default")]
-    #[ts(as = "ts_export::TSBigIntWithDefault")]
-    pub deleted_messages: u32,
-    #[serde(default, skip_serializing_if = "ts_export::is_default")]
-    #[ts(as = "ts_export::TSBigIntWithDefault")]
-    pub giphy_messages: u32,
-    #[serde(default, skip_serializing_if = "ts_export::is_default")]
-    #[ts(as = "ts_export::TSBigIntWithDefault")]
-    pub prize_messages: u32,
-    #[serde(default, skip_serializing_if = "ts_export::is_default")]
-    #[ts(as = "ts_export::TSBigIntWithDefault")]
-    pub prize_winner_messages: u32,
-    #[serde(default, skip_serializing_if = "ts_export::is_default")]
-    #[ts(as = "ts_export::TSBigIntWithDefault")]
-    pub replies: u32,
-    #[serde(default, skip_serializing_if = "ts_export::is_default")]
-    #[ts(as = "ts_export::TSBigIntWithDefault")]
-    pub edits: u32,
-    #[serde(default, skip_serializing_if = "ts_export::is_default")]
-    #[ts(as = "ts_export::TSBigIntWithDefault")]
-    pub reactions: u32,
-    #[serde(default, skip_serializing_if = "ts_export::is_default")]
-    #[ts(as = "ts_export::TSBigIntWithDefault")]
-    pub proposals: u32,
-    #[serde(default, skip_serializing_if = "ts_export::is_default")]
-    #[ts(as = "ts_export::TSBigIntWithDefault")]
-    pub reported_messages: u32,
-    #[serde(default, skip_serializing_if = "ts_export::is_default")]
-    #[ts(as = "ts_export::TSBigIntWithDefault")]
-    pub message_reminders: u32,
-    #[serde(default, skip_serializing_if = "ts_export::is_default")]
-    #[ts(as = "ts_export::TSBigIntWithDefault")]
-    pub custom_type_messages: u32,
+    pub text_messages: Option<u32>,
+    pub image_messages: Option<u32>,
+    pub video_messages: Option<u32>,
+    pub audio_messages: Option<u32>,
+    pub file_messages: Option<u32>,
+    pub polls: Option<u32>,
+    pub poll_votes: Option<u32>,
+    pub crypto_messages: Option<u32>,
+    pub deleted_messages: Option<u32>,
+    pub giphy_messages: Option<u32>,
+    pub prize_messages: Option<u32>,
+    pub prize_winner_messages: Option<u32>,
+    pub replies: Option<u32>,
+    pub edits: Option<u32>,
+    pub reactions: Option<u32>,
+    pub proposals: Option<u32>,
+    pub reported_messages: Option<u32>,
+    pub message_reminders: Option<u32>,
+    pub custom_type_messages: Option<u32>,
     pub last_active: TimestampMillis,
 }
 

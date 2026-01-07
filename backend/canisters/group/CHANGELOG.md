@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Support changing role of multiple members in one call ([#8738](https://github.com/open-chat-labs/open-chat/pull/8738))
 - Remove old crypto token fields from metrics ([#8758](https://github.com/open-chat-labs/open-chat/pull/8758))
 - Skip serializing fields from chat metrics where value is 0 ([#8760](https://github.com/open-chat-labs/open-chat/pull/8760))
+- Make chat summary fields optional where possible then skip if default ([#8765](https://github.com/open-chat-labs/open-chat/pull/8765))
 
 ### Removed
 

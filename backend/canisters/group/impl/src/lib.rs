@@ -36,9 +36,9 @@ use types::{
     AccessGateConfigInternal, Achievement, BotAdded, BotDefinitionUpdate, BotEventsCaller, BotInitiator, BotNotification,
     BotPermissions, BotRemoved, BotSubscriptions, BotUpdated, BuildVersion, Caller, CanisterId, ChatId, ChatMetrics,
     CommunityId, Cycles, Document, EventIndex, EventsCaller, FrozenGroupInfo, GroupCanisterGroupChatSummary,
-    GroupChatUserNotificationPayload, GroupMembership, GroupPermissions, GroupSubtype, IdempotentEnvelope,
-    MAX_THREADS_IN_SUMMARY, MessageIndex, Milliseconds, MultiUserChat, Notification, OCResult, Rules, TimestampMillis,
-    Timestamped, UserId, UserNotification, UserType,
+    GroupChatUserNotificationPayload, GroupMembership, GroupPermissions, GroupRole, GroupSubtype, IdempotentEnvelope,
+    MAX_THREADS_IN_SUMMARY, MessageIndex, Milliseconds, MultiUserChat, NoneIfDefault, NoneIfEmpty, Notification, OCResult,
+    Rules, TimestampMillis, Timestamped, UserId, UserNotification, UserType,
 };
 use user_canister::GroupCanisterEvent;
 use utils::env::Environment;
@@ -179,10 +179,10 @@ impl RuntimeState {
 
         let membership = GroupMembership {
             joined: member.date_added(),
-            role: member.role().value.into(),
-            mentions: chat.most_recent_mentions(member, None),
-            notifications_muted: member.notifications_muted().value,
-            at_everyone_muted: member.at_everyone_muted().value,
+            role: GroupRole::from(member.role().value).none_if_default(),
+            mentions: chat.most_recent_mentions(member, None).none_if_empty(),
+            notifications_muted: member.notifications_muted().value.into(),
+            at_everyone_muted: member.at_everyone_muted().value.none_if_default(),
             my_metrics: chat
                 .events
                 .user_metrics(&member.user_id(), None)
@@ -194,12 +194,14 @@ impl RuntimeState {
                 .rev()
                 .filter_map(|(i, _)| self.data.chat.events.thread_details(i))
                 .take(MAX_THREADS_IN_SUMMARY)
-                .collect(),
+                .collect::<Vec<_>>()
+                .none_if_empty(),
             rules_accepted: member
                 .rules_accepted
                 .as_ref()
-                .is_some_and(|version| version.value >= chat.rules.text.version),
-            lapsed: member.lapsed().value,
+                .is_some_and(|version| version.value >= chat.rules.text.version)
+                .none_if_default(),
+            lapsed: member.lapsed().value.none_if_default(),
         };
 
         GroupCanisterGroupChatSummary {
@@ -210,11 +212,11 @@ impl RuntimeState {
             description: chat.description.value.clone(),
             subtype: chat.subtype.value.clone(),
             avatar_id: Document::id(&chat.avatar),
-            is_public: chat.is_public.value,
-            history_visible_to_new_joiners: chat.history_visible_to_new_joiners,
-            messages_visible_to_non_members: chat.messages_visible_to_non_members.value,
-            min_visible_event_index,
-            min_visible_message_index,
+            is_public: chat.is_public.value.none_if_default(),
+            history_visible_to_new_joiners: chat.history_visible_to_new_joiners.none_if_default(),
+            messages_visible_to_non_members: chat.messages_visible_to_non_members.value.none_if_default(),
+            min_visible_event_index: min_visible_event_index.none_if_default(),
+            min_visible_message_index: min_visible_message_index.none_if_default(),
             latest_message: main_events_reader.latest_message_event(Some(member.user_id())),
             latest_event_index: main_events_reader.latest_event_index().unwrap_or_default(),
             latest_message_index: main_events_reader.latest_message_index(),
@@ -222,14 +224,13 @@ impl RuntimeState {
             permissions_v2: chat.permissions.value.clone(),
             metrics: chat.events.metrics().hydrate(),
             frozen: self.data.frozen.value.clone(),
-            wasm_version: BuildVersion::default(),
             date_last_pinned: chat.date_last_pinned,
             events_ttl: events_ttl.value,
-            events_ttl_last_updated: events_ttl.timestamp,
+            events_ttl_last_updated: events_ttl.timestamp.none_if_default(),
             gate_config: chat.gate_config.value.clone().map(|gc| gc.into()),
             membership: Some(membership),
             video_call_in_progress: chat.events.video_call_in_progress(Some(member.user_id())),
-            verified: self.data.verified.value,
+            verified: self.data.verified.value.none_if_default(),
         }
     }
 

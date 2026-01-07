@@ -79,12 +79,12 @@ fn members_added_if_channel_made_public_or_gate_removed(make_public: bool) {
     let user3_channel_summary = client::community::happy_path::channel_summary(env, &user3, community_id, channel_id);
 
     if make_public {
-        assert!(user3_channel_summary.is_public);
-        assert_eq!(user3_channel_summary.min_visible_event_index, 10.into());
-        assert_eq!(user3_channel_summary.min_visible_message_index, 5.into());
+        assert!(user3_channel_summary.is_public.unwrap_or_default());
+        assert_eq!(user3_channel_summary.min_visible_event_index.unwrap_or_default(), 10.into());
+        assert_eq!(user3_channel_summary.min_visible_message_index.unwrap_or_default(), 5.into());
     } else {
         assert!(user3_channel_summary.gate_config.is_none());
-        assert_eq!(user3_channel_summary.min_visible_event_index, 0.into());
-        assert_eq!(user3_channel_summary.min_visible_message_index, 0.into());
+        assert_eq!(user3_channel_summary.min_visible_event_index.unwrap_or_default(), 0.into());
+        assert_eq!(user3_channel_summary.min_visible_message_index.unwrap_or_default(), 0.into());
     }
 }
