@@ -38,18 +38,26 @@ fn main() {
 
     let mut output = Vec::new();
     let mut remaining = VecDeque::from(all_exports);
-    while !remaining.is_empty() {
-        let mut next = remaining.pop_front().unwrap();
+    loop {
+        let start_count = remaining.len();
 
-        if next.dependencies.iter().all(|d| types_available.contains(d)) {
-            types_available.insert(next.name);
-            writeln!(output, "{}", next.contents).unwrap();
-        } else if next.iterations < 50 {
-            next.iterations += 1;
-            remaining.push_back(next);
-        } else {
+        remaining.retain_mut(|next| {
+            next.unsatisfied_dependencies.retain(|d| !types_available.contains(d));
+            if next.unsatisfied_dependencies.is_empty() {
+                types_available.insert(next.name.clone());
+                writeln!(output, "{}", next.contents).unwrap();
+                false
+            } else {
+                true
+            }
+        });
+
+        if remaining.is_empty() {
+            break;
+        }
+        if remaining.len() == start_count {
             remaining.make_contiguous().sort_unstable_by(|l, r| l.name.cmp(&r.name));
-            panic!("Loop detected: {next:?}. Remaining: {remaining:?}");
+            panic!("No progress being made: {remaining:?}");
         }
     }
 
@@ -88,8 +96,7 @@ fn extract_exports(file: impl AsRef<Path>) -> ParsedExport {
 struct ParsedExport {
     contents: String,
     name: String,
-    dependencies: Vec<String>,
-    iterations: usize,
+    unsatisfied_dependencies: Vec<String>,
 }
 
 impl FromStr for ParsedExport {
@@ -111,8 +118,7 @@ impl FromStr for ParsedExport {
         Ok(ParsedExport {
             contents,
             name,
-            dependencies,
-            iterations: 0,
+            unsatisfied_dependencies: dependencies,
         })
     }
 }
