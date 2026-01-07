@@ -299,7 +299,7 @@
         <Avatar url={target.avatarUrl} size={"lg"} />
         <Column>
             <Body width={"hug"}>{target.name}</Body>
-            <Body colour={"textSecondary"}>
+            <Body ellipsisTruncate colour={"textSecondary"}>
                 {target.description}
             </Body>
         </Column>
