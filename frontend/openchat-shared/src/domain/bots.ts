@@ -526,8 +526,8 @@ export function argIsValid(schema: CommandParam, arg: CommandArg): boolean {
         return (
             !schema.required ||
             (arg.value !== undefined &&
-                arg.value.length > schema.minLength &&
-                arg.value.length < schema.maxLength)
+                arg.value.length >= schema.minLength &&
+                arg.value.length <= schema.maxLength)
         );
     } else if (schema.kind === "integer" && arg.kind === "integer") {
         return (
@@ -555,13 +555,25 @@ export function i18nKey(key: string, params?: InterpolationValues): ResourceKey 
     };
 }
 
-// This is used for all names: bot, command, param
+// This is used for bot and command names
 export function validBotComponentName(name: string, min: number): ResourceKey[] {
     const errors = [];
     if (name.length < min) {
         errors.push(i18nKey("bots.builder.errors.minLength", { n: min }));
     }
     const regex = /^[a-zA-Z0-9_]+$/;
+    if (!regex.test(name)) {
+        errors.push(i18nKey("bots.builder.errors.alphaOnly"));
+    }
+    return errors;
+}
+
+export function validBotParamName(name: string, min: number): ResourceKey[] {
+    const errors = [];
+    if (name.length < min) {
+        errors.push(i18nKey("bots.builder.errors.minLength", { n: min }));
+    }
+    const regex = /^[a-zA-Z0-9_ ]+$/;
     if (!regex.test(name)) {
         errors.push(i18nKey("bots.builder.errors.alphaOnly"));
     }
@@ -662,7 +674,7 @@ function validateParameter(
     errors: ValidationErrors,
 ): boolean {
     let valid = true;
-    const nameErrors = validBotComponentName(param.name, MIN_PARAM_NAME_LENGTH);
+    const nameErrors = validBotParamName(param.name, MIN_PARAM_NAME_LENGTH);
     if (nameErrors.length > 0) {
         errors.addErrors(`${errorPath}_name`, nameErrors);
         valid = false;
