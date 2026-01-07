@@ -224,16 +224,12 @@ impl GroupChatCore {
             timestamp: self.last_updated(user_id),
             name: self.name.if_set_after(since).cloned(),
             description: self.description.if_set_after(since).cloned(),
-            subtype: self
-                .subtype
-                .if_set_after(since)
-                .cloned()
-                .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
+            subtype: self.subtype.if_set_after(since).cloned().map(OptionUpdate::from_update),
             avatar_id: self
                 .avatar
                 .if_set_after(since)
                 .map(Document::id)
-                .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
+                .map(OptionUpdate::from_update),
             latest_message,
             latest_event_index: events_reader.latest_event_index(),
             latest_message_index: events_reader.latest_message_index(),
@@ -245,23 +241,16 @@ impl GroupChatCore {
             is_public: self.is_public.if_set_after(since).copied(),
             messages_visible_to_non_members: self.messages_visible_to_non_members.if_set_after(since).copied(),
             date_last_pinned: self.date_last_pinned.filter(|ts| *ts > since),
-            events_ttl: events_ttl
-                .if_set_after(since)
-                .copied()
-                .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
+            events_ttl: events_ttl.if_set_after(since).copied().map(OptionUpdate::from_update),
             events_ttl_last_updated: (events_ttl.timestamp > since).then_some(events_ttl.timestamp),
             gate_config: self
                 .gate_config
                 .if_set_after(since)
                 .cloned()
-                .map_or(OptionUpdate::NoChange, |ogc| OptionUpdate::from_update(ogc.map(|g| g.into()))),
+                .map(|ogc| OptionUpdate::from_update(ogc.map(|g| g.into()))),
             rules_changed: self.rules.version_last_updated > since,
             video_call_in_progress: self.events.video_call_in_progress_updates(user_id, since),
-            external_url: self
-                .external_url
-                .if_set_after(since)
-                .cloned()
-                .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
+            external_url: self.external_url.if_set_after(since).cloned().map(OptionUpdate::from_update),
             any_updates_missed: self.members.any_updates_removed(since)
                 || member.as_ref().map(|m| m.any_updates_removed(since)).unwrap_or_default()
                 || self.events.latest_event_update_removed() > since,
@@ -2069,8 +2058,8 @@ pub struct SummaryUpdates {
     pub timestamp: TimestampMillis,
     pub name: Option<String>,
     pub description: Option<String>,
-    pub subtype: OptionUpdate<GroupSubtype>,
-    pub avatar_id: OptionUpdate<u128>,
+    pub subtype: Option<OptionUpdate<GroupSubtype>>,
+    pub avatar_id: Option<OptionUpdate<u128>>,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
     pub latest_message_index: Option<MessageIndex>,
@@ -2082,12 +2071,12 @@ pub struct SummaryUpdates {
     pub is_public: Option<bool>,
     pub messages_visible_to_non_members: Option<bool>,
     pub date_last_pinned: Option<TimestampMillis>,
-    pub events_ttl: OptionUpdate<Milliseconds>,
+    pub events_ttl: Option<OptionUpdate<Milliseconds>>,
     pub events_ttl_last_updated: Option<TimestampMillis>,
-    pub gate_config: OptionUpdate<AccessGateConfig>,
+    pub gate_config: Option<OptionUpdate<AccessGateConfig>>,
     pub rules_changed: bool,
-    pub video_call_in_progress: OptionUpdate<VideoCall>,
-    pub external_url: OptionUpdate<String>,
+    pub video_call_in_progress: Option<OptionUpdate<VideoCall>>,
+    pub external_url: Option<OptionUpdate<String>>,
     pub any_updates_missed: bool,
 }
 

@@ -11,8 +11,8 @@ use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeSet, HashMap};
 use types::{
     ChannelId, ChannelMatch, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, CommunityId,
-    GroupMembership, GroupMembershipUpdates, GroupPermissionRole, GroupPermissions, MAX_THREADS_IN_SUMMARY, MultiUserChat,
-    Rules, TimestampMillis, UserId, UserType,
+    GroupMembership, GroupMembershipUpdates, GroupPermissionRole, GroupPermissions, GroupRole, MAX_THREADS_IN_SUMMARY,
+    MultiUserChat, NoneIfDefault, NoneIfEmpty, Rules, TimestampMillis, UserId, UserType,
 };
 
 #[derive(Serialize, Deserialize, Default)]
@@ -292,10 +292,10 @@ impl Channel {
 
         let membership = member.as_ref().map(|m| GroupMembership {
             joined: m.date_added(),
-            role: m.role().value.into(),
-            mentions: chat.most_recent_mentions(m, None),
-            notifications_muted: m.notifications_muted().value,
-            at_everyone_muted: m.at_everyone_muted().value,
+            role: GroupRole::from(m.role().value).none_if_default(),
+            mentions: chat.most_recent_mentions(m, None).none_if_empty(),
+            notifications_muted: m.notifications_muted().value.none_if_default(),
+            at_everyone_muted: m.at_everyone_muted().value.none_if_default(),
             my_metrics: chat
                 .events
                 .user_metrics(&m.user_id(), None)
@@ -307,12 +307,14 @@ impl Channel {
                 .rev()
                 .filter_map(|(i, _)| self.chat.events.thread_details(i))
                 .take(MAX_THREADS_IN_SUMMARY)
-                .collect(),
+                .collect::<Vec<_>>()
+                .none_if_empty(),
             rules_accepted: m
                 .rules_accepted
                 .as_ref()
-                .is_some_and(|version| version.value >= chat.rules.text.version),
-            lapsed: m.lapsed().value,
+                .is_some_and(|version| version.value >= chat.rules.text.version)
+                .none_if_default(),
+            lapsed: m.lapsed().value.none_if_default(),
         });
 
         Some(CommunityCanisterChannelSummary {
@@ -322,11 +324,11 @@ impl Channel {
             description: chat.description.value.clone(),
             subtype: chat.subtype.value.clone(),
             avatar_id: types::Document::id(&chat.avatar),
-            is_public: chat.is_public.value,
-            history_visible_to_new_joiners: chat.history_visible_to_new_joiners,
-            messages_visible_to_non_members: chat.messages_visible_to_non_members.value,
-            min_visible_event_index,
-            min_visible_message_index,
+            is_public: chat.is_public.value.none_if_default(),
+            history_visible_to_new_joiners: chat.history_visible_to_new_joiners.none_if_default(),
+            messages_visible_to_non_members: chat.messages_visible_to_non_members.value.none_if_default(),
+            min_visible_event_index: min_visible_event_index.none_if_default(),
+            min_visible_message_index: min_visible_message_index.none_if_default(),
             latest_message,
             latest_message_sender_display_name,
             latest_event_index: main_events_reader.latest_event_index().unwrap_or_default(),
@@ -336,7 +338,7 @@ impl Channel {
             metrics: chat.events.metrics().hydrate(),
             date_last_pinned: chat.date_last_pinned,
             events_ttl: events_ttl.value,
-            events_ttl_last_updated: events_ttl.timestamp,
+            events_ttl_last_updated: events_ttl.timestamp.none_if_default(),
             gate_config: chat.gate_config.value.clone().map(|gc| gc.into()),
             membership,
             video_call_in_progress: chat.events.video_call_in_progress(user_id),
@@ -388,7 +390,7 @@ impl Channel {
 
         let membership = member.as_ref().map(|m| GroupMembershipUpdates {
             role: updates.role_changed.then_some(m.role().value.into()),
-            mentions: updates.mentions,
+            mentions: updates.mentions.none_if_empty(),
             notifications_muted: m.notifications_muted().if_set_after(since).cloned(),
             at_everyone_muted: m.at_everyone_muted().if_set_after(since).cloned(),
             my_metrics: self.chat.events.user_metrics(&m.user_id(), Some(since)).map(|m| m.hydrate()),
@@ -397,8 +399,14 @@ impl Channel {
                 .updated_since(since)
                 .filter_map(|(i, _)| self.chat.events.thread_details(i))
                 .take(MAX_THREADS_IN_SUMMARY)
-                .collect(),
-            unfollowed_threads: m.unfollowed_threads.updated_since(since).map(|(i, _)| *i).collect(),
+                .collect::<Vec<_>>()
+                .none_if_empty(),
+            unfollowed_threads: m
+                .unfollowed_threads
+                .updated_since(since)
+                .map(|(i, _)| *i)
+                .collect::<Vec<_>>()
+                .none_if_empty(),
             rules_accepted: m
                 .rules_accepted
                 .as_ref()
@@ -422,7 +430,7 @@ impl Channel {
             latest_message_index: updates.latest_message_index,
             member_count: updates.member_count,
             permissions_v2: updates.permissions,
-            updated_events: updates.updated_events,
+            updated_events: updates.updated_events.none_if_empty(),
             metrics: Some(self.chat.events.metrics().hydrate()),
             date_last_pinned: updates.date_last_pinned,
             events_ttl: updates.events_ttl,
@@ -431,7 +439,7 @@ impl Channel {
             membership,
             video_call_in_progress: updates.video_call_in_progress,
             external_url: updates.external_url,
-            any_updates_missed: updates.any_updates_missed,
+            any_updates_missed: updates.any_updates_missed.none_if_default(),
         })
     }
 

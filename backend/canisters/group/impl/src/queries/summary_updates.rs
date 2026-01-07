@@ -4,7 +4,8 @@ use group_canister::summary_updates::{Response::*, *};
 use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
 use types::{
-    GroupCanisterGroupChatSummaryUpdates, GroupMembershipUpdates, MAX_THREADS_IN_SUMMARY, OptionUpdate, TimestampMillis,
+    GroupCanisterGroupChatSummaryUpdates, GroupMembershipUpdates, MAX_THREADS_IN_SUMMARY, NoneIfDefault, NoneIfEmpty,
+    OptionUpdate, TimestampMillis,
 };
 
 #[query(msgpack = true)]
@@ -44,7 +45,7 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
 
     let membership = GroupMembershipUpdates {
         role: updates.role_changed.then_some(member.role().value.into()),
-        mentions: updates.mentions,
+        mentions: updates.mentions.none_if_empty(),
         notifications_muted: member.notifications_muted().if_set_after(updates_since).cloned(),
         at_everyone_muted: member.at_everyone_muted().if_set_after(updates_since).cloned(),
         my_metrics: state
@@ -58,12 +59,14 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
             .updated_since(updates_since)
             .filter_map(|(i, _)| state.data.chat.events.thread_details(i))
             .take(MAX_THREADS_IN_SUMMARY)
-            .collect(),
+            .collect::<Vec<_>>()
+            .none_if_empty(),
         unfollowed_threads: member
             .unfollowed_threads
             .updated_since(updates_since)
             .map(|(i, _)| *i)
-            .collect(),
+            .collect::<Vec<_>>()
+            .none_if_empty(),
         rules_accepted: member
             .rules_accepted
             .as_ref()
@@ -85,7 +88,7 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
             latest_message_index: updates.latest_message_index,
             participant_count: updates.member_count,
             permissions_v2: updates.permissions,
-            updated_events: updates.updated_events,
+            updated_events: updates.updated_events.none_if_empty(),
             metrics: Some(chat.events.metrics().hydrate()),
             is_public: updates.is_public,
             messages_visible_to_non_members: updates.messages_visible_to_non_members,
@@ -94,7 +97,7 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
                 .frozen
                 .if_set_after(updates_since)
                 .cloned()
-                .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
+                .map(OptionUpdate::from_update),
             wasm_version: None,
             date_last_pinned: updates.date_last_pinned,
             events_ttl: updates.events_ttl,
@@ -102,7 +105,7 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
             gate_config: updates.gate_config,
             membership: Some(membership),
             video_call_in_progress: updates.video_call_in_progress,
-            any_updates_missed: updates.any_updates_missed,
+            any_updates_missed: updates.any_updates_missed.none_if_default(),
             verified: state.data.verified.if_set_after(updates_since).copied(),
         },
     })
