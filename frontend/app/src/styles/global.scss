@@ -572,8 +572,8 @@ html:active-view-transition-type(slide_left, slide_right) {
         view-transition-name: bottom_nav_bar;
     }
 
-    .communities_sheet {
-        view-transition-name: communities_sheet;
+    .anchored_sheet {
+        view-transition-name: anchored_sheet;
     }
 
     .communities_scroller {
@@ -590,22 +590,24 @@ html:active-view-transition-type(slide_left, slide_right) {
     }
 
     &::view-transition-old(
-            communities_sheet,
+            anchored_sheet,
             communities_scroller,
             bottom_nav_bar,
             footer,
             sheet_content,
             sliding_modal,
-            anon_footer
+            anon_footer,
+
         ),
     &:view-transition-new(
-            communities_sheet,
+            anchored_sheet,
             communities_scroller,
             bottom_nav_bar,
             footer,
             sheet_content,
             sliding_modal,
-            anon_footer
+            anon_footer,
+
         ) {
         animation: none;
     }
