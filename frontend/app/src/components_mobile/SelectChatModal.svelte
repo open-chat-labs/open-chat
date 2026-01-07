@@ -83,17 +83,13 @@
     let { onClose, onSelect }: Props = $props();
     let searchTerm = $state("");
     let searchTermLower = $derived(searchTerm.toLowerCase());
-    let targets = $state<ShareTo>({
-        directChats: [],
-        groupChats: [],
-        favourites: [],
-        communities: [],
-    });
+    let targets = $state<ShareTo>();
 
     trackedEffect("select-chat-modal", () => {
         buildListOfTargets($now, $selectedChatIdStore, searchTermLower).then((t) => (targets = t));
     });
-    let noTargets = $derived(getNumberOfTargets(targets) === 0);
+
+    let noTargets = $derived(targets !== undefined ? getNumberOfTargets(targets) === 0 : false);
 
     function getNumberOfTargets(targets: ShareTo): number {
         return (
@@ -318,7 +314,7 @@
         <NothingToSee
             title={interpolate($_, i18nKey("noChatsAvailable"))}
             subtitle={"Looks like you aren't a member of any other chats"} />
-    {:else}
+    {:else if targets !== undefined}
         <Column>
             {#if targets.directChats.length > 0}
                 <CollapsibleCard
