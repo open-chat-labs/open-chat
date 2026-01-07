@@ -2415,6 +2415,19 @@ export const LocalUserIndexBotDeleteChannelArgs = Type.Object({
     channel_id: ChannelId,
 });
 
+export type LocalUserIndexBotChangeRoleResponse = Static<
+    typeof LocalUserIndexBotChangeRoleResponse
+>;
+export const LocalUserIndexBotChangeRoleResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Object({
+        PartialSuccess: Type.Record(UserId, OCError),
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
 export type LocalUserIndexRegisterUserArgs = Static<typeof LocalUserIndexRegisterUserArgs>;
 export const LocalUserIndexRegisterUserArgs = Type.Object({
     username: Type.String(),
@@ -7440,6 +7453,13 @@ export const LocalUserIndexClaimPrizeResponse = Type.Union([
 export type LocalUserIndexBotChatSummaryArgs = Static<typeof LocalUserIndexBotChatSummaryArgs>;
 export const LocalUserIndexBotChatSummaryArgs = Type.Object({
     chat_context: BotChatContext,
+});
+
+export type LocalUserIndexBotChangeRoleArgs = Static<typeof LocalUserIndexBotChangeRoleArgs>;
+export const LocalUserIndexBotChangeRoleArgs = Type.Object({
+    chat_context: BotChatContext,
+    user_ids: Type.Array(UserId),
+    new_role: GroupRole,
 });
 
 export type LocalUserIndexChatEventsEventsArgs = Static<typeof LocalUserIndexChatEventsEventsArgs>;
