@@ -1,11 +1,11 @@
 use crate::{
     AccessGateConfig, BuildVersion, CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupMember,
     GroupPermissions, GroupRole, HydratedMention, InstalledBotDetails, Message, MessageId, MessageIndex, Milliseconds,
-    OptionUpdate, TimestampMillis, UserId, Version, WebhookDetails,
+    OptionUpdate, TimestampMillis, UserId, Version, WebhookDetails, is_default,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use ts_export::{is_default, ts_export};
+use ts_export::ts_export;
 
 pub const MAX_THREADS_IN_SUMMARY: usize = 20;
 
@@ -159,7 +159,7 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub wasm_version: Option<BuildVersion>,
     pub permissions_v2: Option<GroupPermissions>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    #[ts(as = "Option<bool>", optional)]
+    #[ts(as = "Option<Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)>>", optional)]
     pub updated_events: Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)>, // (Thread root message index, event index, timestamp)
     pub metrics: Option<ChatMetrics>,
     pub is_public: Option<bool>,
@@ -169,15 +169,15 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub frozen: OptionUpdate<FrozenGroupInfo>,
     pub date_last_pinned: Option<TimestampMillis>,
     #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
-    #[ts(as = "Option<crate::OptionUpdateU64>")]
+    #[ts(as = "Option<crate::OptionUpdateU64>", optional)]
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub events_ttl_last_updated: Option<TimestampMillis>,
     #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
-    #[ts(as = "Option<crate::OptionUpdateAccessGateConfig>")]
+    #[ts(as = "Option<crate::OptionUpdateAccessGateConfig>", optional)]
     pub gate_config: OptionUpdate<AccessGateConfig>,
     pub membership: Option<GroupMembershipUpdates>,
     #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
-    #[ts(as = "Option<crate::OptionUpdateVideoCall>")]
+    #[ts(as = "Option<crate::OptionUpdateVideoCall>", optional)]
     pub video_call_in_progress: OptionUpdate<VideoCall>,
     #[serde(default, skip_serializing_if = "is_default")]
     #[ts(as = "Option<bool>", optional)]

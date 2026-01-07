@@ -25,14 +25,9 @@ pub struct GroupPermissions {
     pub pin_messages: GroupPermissionRole,
     pub react_to_messages: GroupPermissionRole,
     pub mention_all_members: GroupPermissionRole,
-    #[serde(default = "admin")]
     pub start_video_call: GroupPermissionRole,
     pub message_permissions: MessagePermissions,
     pub thread_permissions: Option<MessagePermissions>,
-}
-
-fn admin() -> GroupPermissionRole {
-    GroupPermissionRole::Admins
 }
 
 #[ts_export]
@@ -49,7 +44,6 @@ pub struct MessagePermissions {
     pub giphy: Option<GroupPermissionRole>,
     pub prize: Option<GroupPermissionRole>,
     pub p2p_swap: Option<GroupPermissionRole>,
-    #[serde(default)]
     pub video_call: Option<GroupPermissionRole>,
     pub custom: Vec<CustomPermission>,
 }
@@ -83,29 +77,44 @@ pub struct OptionalGroupPermissions {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 pub struct OptionalMessagePermissions {
     pub default: Option<GroupPermissionRole>,
-    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateGroupPermissionRole>", optional)]
     pub text: OptionUpdate<GroupPermissionRole>,
-    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateGroupPermissionRole>", optional)]
     pub image: OptionUpdate<GroupPermissionRole>,
-    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateGroupPermissionRole>", optional)]
     pub video: OptionUpdate<GroupPermissionRole>,
-    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateGroupPermissionRole>", optional)]
     pub audio: OptionUpdate<GroupPermissionRole>,
-    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateGroupPermissionRole>", optional)]
     pub file: OptionUpdate<GroupPermissionRole>,
-    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateGroupPermissionRole>", optional)]
     pub poll: OptionUpdate<GroupPermissionRole>,
-    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateGroupPermissionRole>", optional)]
     pub crypto: OptionUpdate<GroupPermissionRole>,
-    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateGroupPermissionRole>", optional)]
     pub giphy: OptionUpdate<GroupPermissionRole>,
-    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateGroupPermissionRole>", optional)]
     pub prize: OptionUpdate<GroupPermissionRole>,
-    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateGroupPermissionRole>", optional)]
     pub p2p_swap: OptionUpdate<GroupPermissionRole>,
-    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateGroupPermissionRole>", optional)]
     pub video_call: OptionUpdate<GroupPermissionRole>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<CustomPermission>>", optional)]
     pub custom_updated: Vec<CustomPermission>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<String>>", optional)]
     pub custom_deleted: Vec<String>,
 }
 

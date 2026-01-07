@@ -263,7 +263,7 @@ pub enum ResultLowercase<T, E> {
 }
 
 pub fn is_default<T: Default + PartialEq>(value: &T) -> bool {
-    *value == Default::default()
+    *value == T::default()
 }
 
 #[ts_export]

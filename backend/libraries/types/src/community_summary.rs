@@ -2,7 +2,7 @@ use crate::user_groups::UserGroupSummary;
 use crate::{
     AccessGateConfig, CanisterId, ChannelId, ChatMetrics, CommunityCanisterChannelSummary,
     CommunityCanisterChannelSummaryUpdates, CommunityId, CommunityPermissions, CommunityRole, EventIndex, FrozenGroupInfo,
-    OptionUpdate, TimestampMillis,
+    OptionUpdate, TimestampMillis, is_default,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -18,6 +18,8 @@ pub struct CommunityCanisterCommunitySummary {
     pub description: String,
     pub avatar_id: Option<u128>,
     pub banner_id: Option<u128>,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
     pub is_public: bool,
     pub member_count: u32,
     pub permissions: CommunityPermissions,
@@ -27,9 +29,13 @@ pub struct CommunityCanisterCommunitySummary {
     pub latest_event_index: EventIndex,
     pub channels: Vec<CommunityCanisterChannelSummary>,
     pub membership: Option<CommunityMembership>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<UserGroupSummary>>", optional)]
     pub user_groups: Vec<UserGroupSummary>,
     pub is_invited: Option<bool>,
     pub metrics: ChatMetrics,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
     pub verified: bool,
 }
 
@@ -37,9 +43,15 @@ pub struct CommunityCanisterCommunitySummary {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CommunityMembership {
     pub joined: TimestampMillis,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<CommunityRole>", optional)]
     pub role: CommunityRole,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
     pub rules_accepted: bool,
     pub display_name: Option<String>,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
     pub lapsed: bool,
 }
 
@@ -78,7 +90,8 @@ pub struct CommunityCanisterCommunitySummaryUpdates {
 pub struct CommunityMembershipUpdates {
     pub role: Option<CommunityRole>,
     pub rules_accepted: Option<bool>,
-    #[ts(as = "crate::OptionUpdateString")]
+    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
+    #[ts(as = "Option<crate::OptionUpdateString>", optional)]
     pub display_name: OptionUpdate<String>,
     pub lapsed: Option<bool>,
 }

@@ -1,10 +1,10 @@
 use crate::{
     AccessGateConfig, ChannelId, ChatMetrics, EventIndex, EventWrapper, GroupMembership, GroupMembershipUpdates,
-    GroupPermissions, GroupSubtype, Message, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis, VideoCall,
+    GroupPermissions, GroupSubtype, Message, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis, VideoCall, is_default,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use ts_export::{is_default, ts_export};
+use ts_export::ts_export;
 
 #[ts_export]
 #[derive(Serialize, Deserialize, Clone, Debug)]

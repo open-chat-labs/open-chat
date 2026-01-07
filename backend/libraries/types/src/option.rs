@@ -4,12 +4,17 @@ use ts_export::ts_export;
 
 // This is needed when we would otherwise use an Option<Option<T>> in which case it would not be
 // possible to tell which layer is None when represented as JSON
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum OptionUpdate<T> {
-    #[default]
     NoChange,
     SetToNone,
     SetToSome(T),
+}
+
+impl<T> Default for OptionUpdate<T> {
+    fn default() -> Self {
+        OptionUpdate::NoChange
+    }
 }
 
 impl<T: PartialEq> OptionUpdate<T> {

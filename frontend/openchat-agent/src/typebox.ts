@@ -1213,10 +1213,10 @@ export const PrimaryLanguageChanged = Type.Object({
 export type CommunityMembership = Static<typeof CommunityMembership>;
 export const CommunityMembership = Type.Object({
     joined: Type.BigInt(),
-    role: CommunityRole,
-    rules_accepted: Type.Boolean(),
+    role: Type.Optional(CommunityRole),
+    rules_accepted: Type.Optional(Type.Boolean()),
     display_name: Type.Optional(Type.String()),
-    lapsed: Type.Boolean(),
+    lapsed: Type.Optional(Type.Boolean()),
 });
 
 export type VerifiedCredentialArgumentValue = Static<typeof VerifiedCredentialArgumentValue>;
@@ -4642,7 +4642,7 @@ export type CommunityMembershipUpdates = Static<typeof CommunityMembershipUpdate
 export const CommunityMembershipUpdates = Type.Object({
     role: Type.Optional(CommunityRole),
     rules_accepted: Type.Optional(Type.Boolean()),
-    display_name: OptionUpdateString,
+    display_name: Type.Optional(OptionUpdateString),
     lapsed: Type.Optional(Type.Boolean()),
 });
 
@@ -4669,19 +4669,19 @@ export const SnsNeuronGate = Type.Object({
 export type OptionalMessagePermissions = Static<typeof OptionalMessagePermissions>;
 export const OptionalMessagePermissions = Type.Object({
     default: Type.Optional(GroupPermissionRole),
-    text: OptionUpdateGroupPermissionRole,
-    image: OptionUpdateGroupPermissionRole,
-    video: OptionUpdateGroupPermissionRole,
-    audio: OptionUpdateGroupPermissionRole,
-    file: OptionUpdateGroupPermissionRole,
-    poll: OptionUpdateGroupPermissionRole,
-    crypto: OptionUpdateGroupPermissionRole,
-    giphy: OptionUpdateGroupPermissionRole,
-    prize: OptionUpdateGroupPermissionRole,
-    p2p_swap: OptionUpdateGroupPermissionRole,
-    video_call: OptionUpdateGroupPermissionRole,
-    custom_updated: Type.Array(CustomPermission),
-    custom_deleted: Type.Array(Type.String()),
+    text: Type.Optional(OptionUpdateGroupPermissionRole),
+    image: Type.Optional(OptionUpdateGroupPermissionRole),
+    video: Type.Optional(OptionUpdateGroupPermissionRole),
+    audio: Type.Optional(OptionUpdateGroupPermissionRole),
+    file: Type.Optional(OptionUpdateGroupPermissionRole),
+    poll: Type.Optional(OptionUpdateGroupPermissionRole),
+    crypto: Type.Optional(OptionUpdateGroupPermissionRole),
+    giphy: Type.Optional(OptionUpdateGroupPermissionRole),
+    prize: Type.Optional(OptionUpdateGroupPermissionRole),
+    p2p_swap: Type.Optional(OptionUpdateGroupPermissionRole),
+    video_call: Type.Optional(OptionUpdateGroupPermissionRole),
+    custom_updated: Type.Optional(Type.Array(CustomPermission)),
+    custom_deleted: Type.Optional(Type.Array(Type.String())),
 });
 
 export type Delegation = Static<typeof Delegation>;
@@ -9092,17 +9092,21 @@ export const GroupCanisterGroupChatSummaryUpdates = Type.Object({
     participant_count: Type.Optional(Type.Number()),
     wasm_version: Type.Optional(BuildVersion),
     permissions_v2: Type.Optional(GroupPermissions),
-    updated_events: Type.Optional(Type.Boolean()),
+    updated_events: Type.Optional(
+        Type.Array(
+            Type.Tuple([Type.Union([MessageIndex, Type.Null()]), EventIndex, Type.BigInt()]),
+        ),
+    ),
     metrics: Type.Optional(ChatMetrics),
     is_public: Type.Optional(Type.Boolean()),
     messages_visible_to_non_members: Type.Optional(Type.Boolean()),
     frozen: Type.Optional(OptionUpdateFrozenGroupInfo),
     date_last_pinned: Type.Optional(Type.BigInt()),
-    events_ttl: Type.Union([OptionUpdateU64, Type.Null()]),
+    events_ttl: Type.Optional(OptionUpdateU64),
     events_ttl_last_updated: Type.Optional(Type.BigInt()),
-    gate_config: Type.Union([OptionUpdateAccessGateConfig, Type.Null()]),
+    gate_config: Type.Optional(OptionUpdateAccessGateConfig),
     membership: Type.Optional(GroupMembershipUpdates),
-    video_call_in_progress: Type.Union([OptionUpdateVideoCall, Type.Null()]),
+    video_call_in_progress: Type.Optional(OptionUpdateVideoCall),
     any_updates_missed: Type.Optional(Type.Boolean()),
     verified: Type.Optional(Type.Boolean()),
 });
@@ -9406,7 +9410,7 @@ export const CommunityCanisterCommunitySummary = Type.Object({
     description: Type.String(),
     avatar_id: Type.Optional(Type.BigInt()),
     banner_id: Type.Optional(Type.BigInt()),
-    is_public: Type.Boolean(),
+    is_public: Type.Optional(Type.Boolean()),
     member_count: Type.Number(),
     permissions: CommunityPermissions,
     frozen: Type.Optional(FrozenGroupInfo),
@@ -9415,10 +9419,10 @@ export const CommunityCanisterCommunitySummary = Type.Object({
     latest_event_index: EventIndex,
     channels: Type.Array(CommunityCanisterChannelSummary),
     membership: Type.Optional(CommunityMembership),
-    user_groups: Type.Array(UserGroupSummary),
+    user_groups: Type.Optional(Type.Array(UserGroupSummary)),
     is_invited: Type.Optional(Type.Boolean()),
     metrics: ChatMetrics,
-    verified: Type.Boolean(),
+    verified: Type.Optional(Type.Boolean()),
 });
 
 export type CommunityCanisterCommunitySummaryUpdates = Static<
