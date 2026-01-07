@@ -4669,19 +4669,19 @@ export const SnsNeuronGate = Type.Object({
 export type OptionalMessagePermissions = Static<typeof OptionalMessagePermissions>;
 export const OptionalMessagePermissions = Type.Object({
     default: Type.Optional(GroupPermissionRole),
-    text: Type.Optional(OptionUpdateGroupPermissionRole),
-    image: Type.Optional(OptionUpdateGroupPermissionRole),
-    video: Type.Optional(OptionUpdateGroupPermissionRole),
-    audio: Type.Optional(OptionUpdateGroupPermissionRole),
-    file: Type.Optional(OptionUpdateGroupPermissionRole),
-    poll: Type.Optional(OptionUpdateGroupPermissionRole),
-    crypto: Type.Optional(OptionUpdateGroupPermissionRole),
-    giphy: Type.Optional(OptionUpdateGroupPermissionRole),
-    prize: Type.Optional(OptionUpdateGroupPermissionRole),
-    p2p_swap: Type.Optional(OptionUpdateGroupPermissionRole),
-    video_call: Type.Optional(OptionUpdateGroupPermissionRole),
-    custom_updated: Type.Optional(Type.Array(CustomPermission)),
-    custom_deleted: Type.Optional(Type.Array(Type.String())),
+    text: OptionUpdateGroupPermissionRole,
+    image: OptionUpdateGroupPermissionRole,
+    video: OptionUpdateGroupPermissionRole,
+    audio: OptionUpdateGroupPermissionRole,
+    file: OptionUpdateGroupPermissionRole,
+    poll: OptionUpdateGroupPermissionRole,
+    crypto: OptionUpdateGroupPermissionRole,
+    giphy: OptionUpdateGroupPermissionRole,
+    prize: OptionUpdateGroupPermissionRole,
+    p2p_swap: OptionUpdateGroupPermissionRole,
+    video_call: OptionUpdateGroupPermissionRole,
+    custom_updated: Type.Array(CustomPermission),
+    custom_deleted: Type.Array(Type.String()),
 });
 
 export type Delegation = Static<typeof Delegation>;

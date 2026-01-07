@@ -77,44 +77,29 @@ pub struct OptionalGroupPermissions {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 pub struct OptionalMessagePermissions {
     pub default: Option<GroupPermissionRole>,
-    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
-    #[ts(as = "Option<crate::OptionUpdateGroupPermissionRole>", optional)]
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub text: OptionUpdate<GroupPermissionRole>,
-    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
-    #[ts(as = "Option<crate::OptionUpdateGroupPermissionRole>", optional)]
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub image: OptionUpdate<GroupPermissionRole>,
-    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
-    #[ts(as = "Option<crate::OptionUpdateGroupPermissionRole>", optional)]
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub video: OptionUpdate<GroupPermissionRole>,
-    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
-    #[ts(as = "Option<crate::OptionUpdateGroupPermissionRole>", optional)]
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub audio: OptionUpdate<GroupPermissionRole>,
-    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
-    #[ts(as = "Option<crate::OptionUpdateGroupPermissionRole>", optional)]
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub file: OptionUpdate<GroupPermissionRole>,
-    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
-    #[ts(as = "Option<crate::OptionUpdateGroupPermissionRole>", optional)]
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub poll: OptionUpdate<GroupPermissionRole>,
-    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
-    #[ts(as = "Option<crate::OptionUpdateGroupPermissionRole>", optional)]
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub crypto: OptionUpdate<GroupPermissionRole>,
-    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
-    #[ts(as = "Option<crate::OptionUpdateGroupPermissionRole>", optional)]
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub giphy: OptionUpdate<GroupPermissionRole>,
-    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
-    #[ts(as = "Option<crate::OptionUpdateGroupPermissionRole>", optional)]
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub prize: OptionUpdate<GroupPermissionRole>,
-    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
-    #[ts(as = "Option<crate::OptionUpdateGroupPermissionRole>", optional)]
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub p2p_swap: OptionUpdate<GroupPermissionRole>,
-    #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
-    #[ts(as = "Option<crate::OptionUpdateGroupPermissionRole>", optional)]
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub video_call: OptionUpdate<GroupPermissionRole>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    #[ts(as = "Option<Vec<CustomPermission>>", optional)]
     pub custom_updated: Vec<CustomPermission>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    #[ts(as = "Option<Vec<String>>", optional)]
     pub custom_deleted: Vec<String>,
 }
 
