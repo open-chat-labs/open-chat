@@ -45,16 +45,22 @@
         height={"hug"}
         onClick={() => props.onSelect(community)}
         crossAxisAlignment={"center"}
-        gap={"md"}>
+        padding={["sm", "zero"]}
+        gap={"lg"}>
         <Avatar
             url={client.communityAvatarUrl(community.id.communityId, community.avatar)}
             size={"lg"}
-            radius={"lg"} />
+            radius={"md"} />
         <Container gap={"xxs"} direction={"vertical"} width={"fill"}>
             <Container gap={"xs"} mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"start"}>
                 <Title ellipsisTruncate fontWeight={"semi-bold"}>
                     {community.name}
                 </Title>
+                {#if mentions}
+                    <CountBadge>@</CountBadge>
+                {:else if unread}
+                    <CountBadge>{count}</CountBadge>
+                {/if}
             </Container>
             <Container gap={"xs"} mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"end"}>
                 <BodySmall colour={"textSecondary"} ellipsisTruncate fontWeight={"normal"}>
@@ -64,18 +70,13 @@
                         {community.description}
                     {/if}
                 </BodySmall>
-                {#if mentions}
-                    <CountBadge>@</CountBadge>
-                {:else if unread}
-                    <CountBadge>{count}</CountBadge>
-                {/if}
             </Container>
         </Container>
     </Container>
 {/snippet}
 
 <Container
-    padding={["sm", "xl", "xl"]}
+    padding={["sm", "xl", "xxxl"]}
     width={"fill"}
     gap={"xxl"}
     direction={"vertical"}

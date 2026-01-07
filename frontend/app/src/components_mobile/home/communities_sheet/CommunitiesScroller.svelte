@@ -44,7 +44,7 @@
 
 <Container
     bind:ref
-    padding={["md", "lg", "lg"]}
+    padding={["md", "lg"]}
     supplementalClass="communities_scroller"
     overflow={"auto"}
     width={"fill"}

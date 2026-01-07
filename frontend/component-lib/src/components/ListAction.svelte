@@ -35,7 +35,12 @@
     }
 </script>
 
-<Container width={"hug"} crossAxisAlignment={"center"} gap={"lg"} {onClick}>
+<Container
+    width={"hug"}
+    crossAxisAlignment={"center"}
+    gap={"lg"}
+    padding={["xs", "zero"]}
+    {onClick}>
     <button class:large={size === "large"} class={`list_action_button ${colour}`} type="button">
         {@render icon(iconColour)}
         {#if smallIcon !== undefined}
