@@ -26,13 +26,11 @@
 
 <script lang="ts">
     import { ColourVars, Container } from "component-lib";
-    import { onMount, type Snippet } from "svelte";
+    import { type Snippet } from "svelte";
 
     let {
         collapsedContent,
         expandedContent,
-        onInit,
-        onScroll,
         supplementalClass,
         maxViewportHeightFraction = fraction(0.7),
         closedHeight = 96,
@@ -59,29 +57,6 @@
     let animationFrom = 0;
     let animationTo: 0 | 1 = 1;
     let animationDuration = 0;
-
-    onMount(() => {
-        if (!sheet) return;
-
-        // Run init fn
-        if ("function" === typeof onInit) {
-            onInit(sheet);
-        }
-
-        // Attach listeners!
-        let onScrollWrapper: () => void | undefined;
-        if ("function" === typeof onScroll) {
-            onScrollWrapper = () => onScroll(sheet);
-            sheet.addEventListener("scroll", onScrollWrapper);
-        }
-
-        // Cleanup on unmount
-        return () => {
-            if ("function" === typeof onScrollWrapper) {
-                sheet?.removeEventListener("scroll", onScrollWrapper);
-            }
-        };
-    });
 
     export function collapse() {
         isExpanded = false;

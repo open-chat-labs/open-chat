@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ColourVars, AnchoredSheet } from "component-lib";
+    import { AnchoredSheet, ColourVars } from "component-lib";
     import {
         activityFeedShowing,
         emptyCombinedUnreadCounts,
@@ -27,7 +27,7 @@
     let { expanded = $bindable(false) }: Props = $props();
 
     let anchoredSheet: AnchoredSheet;
-    let scroller: HTMLElement;
+    let scroller = $state<HTMLElement>();
 
     let unreadLeft = $state<HTMLElement>();
     let unreadRight = $state<HTMLElement>();
@@ -47,6 +47,19 @@
 
         return [mentions || unmuted > 0, unread];
     }
+
+    // this needs to be an effect rather that onMount because the scroller is repeatedly rendered and
+    // destroyed as the sheet is opened and closed
+    $effect(() => {
+        if (!scroller) return;
+
+        scroller.addEventListener("scroll", offscreenUnreadCheck);
+        offscreenUnreadCheck();
+
+        return () => {
+            scroller?.removeEventListener("scroll", offscreenUnreadCheck);
+        };
+    });
 
     function offscreenUnreadCheck() {
         if (!scroller) return;
@@ -125,12 +138,7 @@
         onSelect={selectCommunity}></CommunitiesList>
 {/snippet}
 
-<AnchoredSheet
-    bind:this={anchoredSheet}
-    {collapsedContent}
-    {expandedContent}
-    onInit={offscreenUnreadCheck}
-    onScroll={offscreenUnreadCheck} />
+<AnchoredSheet bind:this={anchoredSheet} {collapsedContent} {expandedContent} />
 
 <style lang="scss">
     :global(.communities_sheet .left path, .communities_sheet .right path) {
