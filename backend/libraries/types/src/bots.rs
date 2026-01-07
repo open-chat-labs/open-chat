@@ -3,7 +3,7 @@ use crate::{
     AudioContent, CanisterId, Chat, ChatEventCategory, ChatEventType, ChatId, ChatPermission, CommunityEventCategory,
     CommunityEventType, CommunityId, CommunityOrGroup, CommunityPermission, FileContent, GiphyContent, GroupRole, ImageContent,
     MessageContentInitial, MessageId, MessagePermission, OptionUpdate, PollContent, TextContent, TimestampMillis, UserId,
-    VideoContent,
+    VideoContent, is_default,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -106,19 +106,15 @@ pub struct BotCommandOptionChoice<T> {
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
 pub struct BotPermissions {
-    #[serde(skip_serializing_if = "is_zero")]
+    #[serde(default, skip_serializing_if = "is_default")]
     #[ts(as = "Option::<u32>", optional)]
     community: u32,
-    #[serde(skip_serializing_if = "is_zero")]
+    #[serde(default, skip_serializing_if = "is_default")]
     #[ts(as = "Option::<u32>", optional)]
     chat: u32,
-    #[serde(skip_serializing_if = "is_zero")]
+    #[serde(default, skip_serializing_if = "is_default")]
     #[ts(as = "Option::<u32>", optional)]
     message: u32,
-}
-
-fn is_zero(value: &u32) -> bool {
-    *value == 0
 }
 
 impl BotPermissions {
