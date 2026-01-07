@@ -9,7 +9,7 @@
         type UnreadCounts,
     } from "openchat-client";
     import page from "page";
-    import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import ChevronLeft from "svelte-material-icons/ChevronLeft.svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import { fade } from "svelte/transition";
@@ -27,6 +27,7 @@
 
     function selectCommunity(community: CommunitySummary) {
         expanded = false;
+        closeSheet();
         activityFeedShowing.set(false);
         page(`/community/${community.id.communityId}`);
     }
@@ -42,16 +43,18 @@
     }
 
     let container: HTMLElement;
-    let scroller: HTMLElement;
+    let scroller = $state<HTMLElement>();
 
     let unreadLeft = $state<HTMLElement>();
     let unreadRight = $state<HTMLElement>();
 
     function offscreenUnreadCheck() {
-        const withUnread = container.querySelectorAll(
+        if (!scroller) return;
+
+        const withUnread = scroller.querySelectorAll(
             ".scroller_item.unread",
         ) as NodeListOf<HTMLElement>;
-        const { scrollLeft, clientWidth } = container;
+        const { scrollLeft, clientWidth } = scroller;
         unreadLeft = undefined;
         unreadRight = undefined;
         for (const el of withUnread) {
@@ -76,11 +79,16 @@
         }
     }
 
-    onMount(() => {
-        container.addEventListener("scroll", offscreenUnreadCheck);
+    // this needs to be an effect rather that onMount because the scroller is repeatedly rendered and
+    // destroyed as the sheet is opened and closed
+    $effect(() => {
+        if (!scroller) return;
+
+        scroller.addEventListener("scroll", offscreenUnreadCheck);
         offscreenUnreadCheck();
+
         return () => {
-            container.removeEventListener("scroll", offscreenUnreadCheck);
+            scroller?.removeEventListener("scroll", offscreenUnreadCheck);
         };
     });
 
@@ -256,23 +264,23 @@
         <div class="handle_inner"></div>
     </button>
 
-    {#if unreadRight}
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div onclick={() => scrollToUnread(unreadRight)} transition:fade class="right">
-            <ChevronRight size={"2.5rem"} color={ColourVars.primary} />
-        </div>
-    {/if}
-
-    {#if unreadLeft}
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div onclick={() => scrollToUnread(unreadLeft)} transition:fade class="left">
-            <ChevronLeft size={"2.5rem"} color={ColourVars.primary} />
-        </div>
-    {/if}
-
     {#if openFactor < OPEN_THRESHOLD}
+        {#if unreadRight}
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <div onclick={() => scrollToUnread(unreadRight)} transition:fade class="right">
+                <ChevronRight size={"2.5rem"} color={ColourVars.primary} />
+            </div>
+        {/if}
+
+        {#if unreadLeft}
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <div onclick={() => scrollToUnread(unreadLeft)} transition:fade class="left">
+                <ChevronLeft size={"2.5rem"} color={ColourVars.primary} />
+            </div>
+        {/if}
+
         <div class="scroller" style={`opacity: ${getScrollerOpacity()}`}>
             <CommunitiesScroller
                 onCreate={createCommunity}
@@ -309,7 +317,7 @@
 
     .right,
     .left {
-        padding-top: toRem(48);
+        padding-top: 4.5rem;
         position: fixed;
         bottom: toRem(110);
         z-index: 1;

@@ -1,16 +1,19 @@
 <script lang="ts">
-    import { mobileWidth, type Challenge, type OpenChat, type ResourceKey } from "openchat-client";
+    import {
+        Column,
+        CommonButton,
+        Form,
+        IconButton,
+        Input,
+        Row,
+        Sheet,
+        Subtitle,
+    } from "component-lib";
+    import { type Challenge, type OpenChat, type ResourceKey } from "openchat-client";
     import { getContext, onMount } from "svelte";
-    import { _ } from "svelte-i18n";
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import Button from "../Button.svelte";
-    import ButtonGroup from "../ButtonGroup.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
-    import Input from "../Input.svelte";
-    import Legend from "../Legend.svelte";
-    import ModalContent from "../ModalContent.svelte";
     import Translatable from "../Translatable.svelte";
     import FancyLoader from "../icons/FancyLoader.svelte";
 
@@ -72,93 +75,60 @@
     }
 </script>
 
-<div class="challenge">
-    <ModalContent fitToContent={!$mobileWidth} fixedWidth={$mobileWidth}>
-        {#snippet header()}
-            <div class="header login">
-                <div class="title">
-                    <Translatable resourceKey={i18nKey("challenge.title")} />
-                </div>
-                <div title={$_("cancel")} class="close" onclick={cancel}>
-                    <HoverIcon>
-                        <CloseIcon size={"1em"} color={"var(--icon-txt)"} />
-                    </HoverIcon>
-                </div>
-            </div>
-        {/snippet}
-        {#snippet body()}
-            <div class="body">
-                {#if challenge === undefined}
-                    <div class="loader"><FancyLoader /></div>
-                {:else}
-                    <img alt="captcha" src={challenge.pngBase64} />
+<Sheet>
+    <Column gap={"xl"} padding={"xl"}>
+        <Row mainAxisAlignment={"spaceBetween"}>
+            <Subtitle fontWeight={"bold"}>
+                <Translatable resourceKey={i18nKey("challenge.title")} />
+                <IconButton onclick={cancel}>
+                    {#snippet icon(color)}
+                        <CloseIcon {color} />
+                    {/snippet}
+                </IconButton>
+            </Subtitle>
+        </Row>
+        <Column gap={"lg"}>
+            {#if challenge === undefined}
+                <div class="loader"><FancyLoader /></div>
+            {:else}
+                <img alt="captcha" src={challenge.pngBase64} />
 
-                    <form class="chars-wrapper" onsubmit={submit}>
-                        <Legend label={i18nKey("challenge.prompt")} />
-                        <Input
-                            invalid={error !== undefined}
-                            autofocus
-                            bind:value={chars}
-                            minlength={4}
-                            maxlength={4} />
-                    </form>
-                {/if}
-                {#if error !== undefined}
-                    <ErrorMessage><Translatable resourceKey={error} /></ErrorMessage>
-                {/if}
-            </div>
-        {/snippet}
-        {#snippet footer()}
-            <ButtonGroup align={"fill"}>
-                <Button disabled={!valid || submitting} loading={submitting} onClick={submit}
-                    >{$_("next")}</Button>
-                <Button secondary onClick={cancel}>{$_("cancel")}</Button>
-            </ButtonGroup>
-        {/snippet}
-    </ModalContent>
-</div>
+                <Form onSubmit={submit}>
+                    <Input
+                        error={error !== undefined}
+                        autofocus
+                        bind:value={chars}
+                        minlength={4}
+                        maxlength={4}>
+                        {#snippet subtext()}
+                            <Translatable resourceKey={i18nKey("challenge.prompt")} />
+                        {/snippet}
+                    </Input>
+                </Form>
+            {/if}
+            {#if error !== undefined}
+                <ErrorMessage><Translatable resourceKey={error} /></ErrorMessage>
+            {/if}
+        </Column>
+
+        <Row mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
+            <CommonButton size={"small_text"} onClick={cancel}>
+                <Translatable resourceKey={i18nKey("cancel")} />
+            </CommonButton>
+            <CommonButton
+                disabled={!valid || submitting}
+                loading={submitting}
+                onClick={submit}
+                mode={"active"}
+                size={"medium"}>
+                <Translatable resourceKey={i18nKey("next")} />
+            </CommonButton>
+        </Row>
+    </Column>
+</Sheet>
 
 <style lang="scss">
-    :global(.challenge .body) {
-        padding-top: $sp2;
-        padding-bottom: 0;
-    }
-
     .loader {
         width: 100px;
-    }
-    .header {
-        display: flex;
-        flex-direction: row;
-        width: 320px;
-
-        @include mobile() {
-            width: 100%;
-        }
-
-        .title {
-            flex: 1;
-        }
-
-        .close {
-            flex: 0;
-            position: relative;
-            top: -$sp3;
-            right: -$sp4;
-        }
-    }
-    .body {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        gap: $sp6;
-
-        img {
-            width: 100%;
-        }
-    }
-    .chars-wrapper {
-        width: 100%;
     }
 </style>

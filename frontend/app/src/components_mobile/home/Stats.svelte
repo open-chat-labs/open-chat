@@ -54,7 +54,6 @@
         return percentages.slice(from, to).reduce((total, n) => total + percToDegree(n), 0);
     }
 
-    let cryptoMessages = $derived(stats.icpMessages + stats.sns1Messages + stats.ckbtcMessages);
     $effect(() => {
         if (previousStats === undefined || !client.metricsEqual(stats, previousStats)) {
             totalMessages =
@@ -64,7 +63,7 @@
                 stats.audioMessages +
                 stats.fileMessages +
                 stats.polls +
-                cryptoMessages +
+                stats.cryptoMessages +
                 stats.giphyMessages;
 
             slice(stats.textMessages, textPerc);
@@ -73,7 +72,7 @@
             slice(stats.audioMessages, audioPerc);
             slice(stats.fileMessages, filePerc);
             slice(stats.polls, pollPerc);
-            slice(cryptoMessages, cryptoPerc);
+            slice(stats.cryptoMessages, cryptoPerc);
             slice(stats.giphyMessages, giphyPerc);
             previousStats = stats;
         }
@@ -195,7 +194,7 @@
             {@render mediaStat(stats.textMessages, "stats.textMessages", "text")}
             {@render mediaStat(stats.videoMessages, "stats.videoMessages", "video")}
             {@render mediaStat(stats.fileMessages, "stats.fileMessages", "file")}
-            {@render mediaStat(cryptoMessages, "stats.cryptoTransfers", "crypto")}
+            {@render mediaStat(stats.cryptoMessages, "stats.cryptoTransfers", "crypto")}
             {@render mediaStat(stats.pollVotes, "stats.pollVotes")}
             {@render mediaStat(stats.reactions, "stats.reactions")}
         </Container>
