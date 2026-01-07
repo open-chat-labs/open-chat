@@ -661,7 +661,7 @@ fn get_community_rules(env: &mut PocketIc, user: &User, community_id: CommunityI
 
     ChatRules {
         enabled: selected.chat_rules.enabled,
-        accepted: summary.membership.unwrap().rules_accepted.unwrap_or_default(),
+        accepted: summary.membership.unwrap().rules_accepted,
         text: selected.chat_rules.text,
         version: selected.chat_rules.version,
     }
@@ -673,7 +673,7 @@ fn get_channel_rules(env: &mut PocketIc, user: &User, community_id: CommunityId,
 
     ChatRules {
         enabled: selected.chat_rules.enabled,
-        accepted: summary.membership.unwrap().rules_accepted.unwrap_or_default(),
+        accepted: summary.membership.unwrap().rules_accepted,
         text: selected.chat_rules.text,
         version: selected.chat_rules.version,
     }

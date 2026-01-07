@@ -261,7 +261,7 @@ fn assert_group_verification_status(
     assert_eq!(group_match.verified, verified);
 
     let summary = client::group::happy_path::summary(env, sender, group_id);
-    assert_eq!(summary.verified.unwrap_or_default(), verified);
+    assert_eq!(summary.verified, verified);
 }
 
 fn assert_community_verification_status(
@@ -276,5 +276,5 @@ fn assert_community_verification_status(
     assert_eq!(community_match.verified, verified);
 
     let summary = client::community::happy_path::summary(env, sender, community_id);
-    assert_eq!(summary.verified.unwrap_or_default(), verified);
+    assert_eq!(summary.verified, verified);
 }

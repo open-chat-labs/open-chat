@@ -21,18 +21,12 @@ fn owner_can_promote_to_and_demote_from_owner() {
     client::group::happy_path::change_role(env, user1.principal, group_id, user2.user_id, GroupRole::Owner);
 
     let summary1 = client::group::happy_path::summary(env, user2.principal, group_id);
-    assert!(matches!(
-        summary1.membership.unwrap().role.unwrap_or_default(),
-        GroupRole::Owner
-    ));
+    assert!(matches!(summary1.membership.unwrap().role, GroupRole::Owner));
 
     client::group::happy_path::change_role(env, user1.principal, group_id, user2.user_id, GroupRole::Admin);
 
     let summary1 = client::group::happy_path::summary(env, user2.principal, group_id);
-    assert!(matches!(
-        summary1.membership.unwrap().role.unwrap_or_default(),
-        GroupRole::Admin
-    ));
+    assert!(matches!(summary1.membership.unwrap().role, GroupRole::Admin));
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {

@@ -23,7 +23,7 @@ pub enum Response {
 pub struct SuccessResult {
     pub last_updated: TimestampMillis,
     pub token_details: Option<Vec<TokenDetails>>,
-    #[ts(as = "Option<Vec::<ts_export::TSPrincipal>>")]
+    #[ts(as = "Option::<Vec::<ts_export::TSPrincipal>>")]
     pub tokens_uninstalled: Option<Vec<CanisterId>>,
     pub nervous_system_details: Vec<NervousSystemSummary>,
     pub message_filters_added: Vec<MessageFilterSummary>,

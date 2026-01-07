@@ -35,7 +35,7 @@ fn create_channel_succeeds(is_public: bool) {
         summary
             .channels
             .iter()
-            .any(|c| c.channel_id == channel_id && c.is_public.unwrap_or_default() == is_public && c.name == channel_name)
+            .any(|c| c.channel_id == channel_id && c.is_public == is_public && c.name == channel_name)
     );
 
     let community_details = client::community::happy_path::selected_initial(env, user.principal, community_id);

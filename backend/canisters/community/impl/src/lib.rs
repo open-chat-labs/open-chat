@@ -38,8 +38,8 @@ use types::{
     BotNotification, BotPermissions, BotUpdated, BuildVersion, Caller, CanisterId, ChannelCreated, ChannelId,
     ChannelUserNotificationPayload, ChatMetrics, ChatPermission, CommunityCanisterCommunitySummary, CommunityEvent,
     CommunityMembership, CommunityPermissions, Cycles, Document, EventIndex, EventsCaller, FrozenGroupInfo, GroupRole,
-    IdempotentEnvelope, MembersAdded, Milliseconds, NoneIfDefault, NoneIfEmpty, Notification, Rules, TimestampMillis,
-    Timestamped, UserId, UserNotification, UserType,
+    IdempotentEnvelope, MembersAdded, Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId,
+    UserNotification, UserType,
 };
 use types::{BotSubscriptions, CommunityId};
 use user_canister::CommunityCanisterEvent;
@@ -211,14 +211,13 @@ impl RuntimeState {
         let (channels, membership) = if let Some(m) = member {
             let membership = CommunityMembership {
                 joined: m.date_added,
-                role: m.role().none_if_default(),
+                role: m.role(),
                 rules_accepted: m
                     .rules_accepted
                     .as_ref()
-                    .is_some_and(|version| version.value >= self.data.rules.text.version)
-                    .none_if_default(),
+                    .is_some_and(|version| version.value >= self.data.rules.text.version),
                 display_name: m.display_name().value.clone(),
-                lapsed: m.lapsed().value.none_if_default(),
+                lapsed: m.lapsed().value,
             };
 
             // Return all the channels that the user is a member of
@@ -263,7 +262,7 @@ impl RuntimeState {
             description: data.description.value.clone(),
             avatar_id: Document::id(&data.avatar),
             banner_id: Document::id(&data.banner),
-            is_public: data.is_public.value.none_if_default(),
+            is_public: data.is_public.value,
             latest_event_index: data.events.latest_event_index(),
             member_count: data.members.len() as u32,
             permissions: data.permissions.value.clone(),
@@ -272,15 +271,10 @@ impl RuntimeState {
             primary_language: data.primary_language.value.clone(),
             channels,
             membership,
-            user_groups: data
-                .members
-                .iter_user_groups()
-                .map(|u| u.into())
-                .collect::<Vec<_>>()
-                .none_if_empty(),
+            user_groups: data.members.iter_user_groups().map(|u| u.into()).collect(),
             is_invited,
             metrics: data.cached_chat_metrics.value.clone(),
-            verified: data.verified.value.none_if_default(),
+            verified: data.verified.value,
         }
     }
 
