@@ -196,7 +196,7 @@ fn make_private_community_public_succeeds() {
 
     let result = client::community::happy_path::summary(env, user.principal, community_id);
 
-    assert!(result.is_public.unwrap_or_default());
+    assert!(result.is_public);
 
     assert!(
         client::group_index::happy_path::explore_communities(env, user.principal, canister_ids.group_index)

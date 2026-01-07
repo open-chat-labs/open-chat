@@ -157,8 +157,8 @@ impl ChatMetricsInternal {
         }
     }
 
-    fn get(&self, key: MetricKey) -> Option<u32> {
-        self.metrics.iter().find(|m| m.key() == key).map(|m| m.count())
+    fn get(&self, key: MetricKey) -> u32 {
+        self.metrics.iter().find(|m| m.key() == key).map_or(0, |m| m.count())
     }
 }
 

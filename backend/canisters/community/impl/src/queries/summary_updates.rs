@@ -6,8 +6,7 @@ use community_canister::summary_updates::{Response::*, *};
 use ic_principal::Principal;
 use std::cmp::max;
 use types::{
-    AccessGateConfig, CommunityCanisterCommunitySummaryUpdates, CommunityMembershipUpdates, NoneIfEmpty, OptionUpdate,
-    TimestampMillis,
+    AccessGateConfig, CommunityCanisterCommunitySummaryUpdates, CommunityMembershipUpdates, OptionUpdate, TimestampMillis,
 };
 
 #[query(msgpack = true)]
@@ -127,23 +126,29 @@ fn summary_updates_impl(
         .data
         .avatar
         .if_set_after(updates_since)
-        .map(|a| OptionUpdate::from_update(a.as_ref().map(|d| d.id)));
+        .map_or(OptionUpdate::NoChange, |a| {
+            OptionUpdate::from_update(a.as_ref().map(|d| d.id))
+        });
     let banner_id = state
         .data
         .banner
         .if_set_after(updates_since)
-        .map(|a| OptionUpdate::from_update(a.as_ref().map(|d| d.id)));
+        .map_or(OptionUpdate::NoChange, |a| {
+            OptionUpdate::from_update(a.as_ref().map(|d| d.id))
+        });
     let frozen = state
         .data
         .frozen
         .if_set_after(updates_since)
         .cloned()
-        .map(OptionUpdate::from_update);
+        .map_or(OptionUpdate::NoChange, OptionUpdate::from_update);
     let gate_config = state
         .data
         .gate_config
         .if_set_after(updates_since)
-        .map(|gc| OptionUpdate::from_update(gc.clone().map(AccessGateConfig::from)));
+        .map_or(OptionUpdate::NoChange, |gc| {
+            OptionUpdate::from_update(gc.clone().map(AccessGateConfig::from))
+        });
 
     let membership = member.map(|m| CommunityMembershipUpdates {
         role: Some(m.role()),
@@ -155,7 +160,7 @@ fn summary_updates_impl(
         display_name: m
             .display_name()
             .if_set_after(updates_since)
-            .map(|display_name| match display_name {
+            .map_or(OptionUpdate::NoChange, |display_name| match display_name {
                 Some(display_name) => OptionUpdate::SetToSome(display_name.clone()),
                 None => OptionUpdate::SetToNone,
             }),
@@ -176,9 +181,9 @@ fn summary_updates_impl(
         gate_config,
         primary_language,
         latest_event_index,
-        channels_added: channels_added.none_if_empty(),
-        channels_updated: channels_updated.none_if_empty(),
-        channels_removed: channels_removed.none_if_empty(),
+        channels_added,
+        channels_updated,
+        channels_removed,
         membership,
         user_groups: state
             .data
@@ -186,9 +191,8 @@ fn summary_updates_impl(
             .iter_user_groups()
             .filter(|u| u.last_updated() > updates_since)
             .map(|u| u.into())
-            .collect::<Vec<_>>()
-            .none_if_empty(),
-        user_groups_deleted: state.data.members.user_groups_deleted_since(updates_since).none_if_empty(),
+            .collect(),
+        user_groups_deleted: state.data.members.user_groups_deleted_since(updates_since),
         metrics: state.data.cached_chat_metrics.if_set_after(updates_since).cloned(),
         verified: state.data.verified.if_set_after(updates_since).copied(),
     })

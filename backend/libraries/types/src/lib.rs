@@ -285,36 +285,3 @@ pub fn ok_or_default<'de, T: Deserialize<'de> + Default, D: Deserializer<'de>>(d
 
     Ok(if let Ok(Temp::Val(value)) = Temp::deserialize(d) { value } else { T::default() })
 }
-
-pub trait NoneIfDefault {
-    fn none_if_default(self) -> Option<Self>
-    where
-        Self: Sized;
-}
-
-impl<T: Default + Eq> NoneIfDefault for T {
-    fn none_if_default(self) -> Option<Self> {
-        if self == T::default() { None } else { Some(self) }
-    }
-}
-
-pub trait NoneIfEmpty {
-    fn none_if_empty(self) -> Option<Self>
-    where
-        Self: Sized;
-}
-
-impl<T> NoneIfEmpty for Vec<T> {
-    fn none_if_empty(self) -> Option<Self> {
-        if self.is_empty() { None } else { Some(self) }
-    }
-}
-
-impl<T> NoneIfEmpty for OptionUpdate<T> {
-    fn none_if_empty(self) -> Option<Self>
-    where
-        Self: Sized,
-    {
-        if self.is_empty() { None } else { Some(self) }
-    }
-}
