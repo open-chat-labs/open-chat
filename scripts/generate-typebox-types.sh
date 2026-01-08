@@ -23,15 +23,6 @@ canister_names=(
   user_index
 )
 
-build_command_args=""
-for canister_name in "${canister_names[@]}"; do
-  build_command_args+=" --bin ${canister_name}_canister";
-done
-
-echo Building binaries
-cargo build $build_cmd_args
-
-echo Running binaries
 for canister_name in "${canister_names[@]}"; do
   cargo run -p ${canister_name}_canister > /dev/null
 done
