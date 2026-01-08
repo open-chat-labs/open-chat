@@ -45,23 +45,7 @@ pub fn deserialize_owned_then_unwrap<T: DeserializeOwned>(bytes: impl AsRef<[u8]
     rmp_serde::from_slice(bytes.as_ref()).unwrap()
 }
 
-pub fn deserialize_with_fallback<'a, T>(bytes: &'a [u8]) -> T
-where
-    T: Fallback + Deserialize<'a>,
-    T::FallbackType: Deserialize<'a>,
-{
-    if let Ok(value) = deserialize_from_slice(bytes) {
-        value
-    } else {
-        deserialize_from_slice::<T::FallbackType>(bytes).unwrap().into()
-    }
-}
-
 pub fn serialize_empty() -> Vec<u8> {
     Vec::new()
 }
 pub fn deserialize_empty(_bytes: Vec<u8>) {}
-
-pub trait Fallback: Sized {
-    type FallbackType: Into<Self>;
-}

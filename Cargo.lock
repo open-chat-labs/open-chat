@@ -2496,7 +2496,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d162beedaa69905488a8da94f5ac3edb4dd4788b732fadb7bd120b2625c1976"
 dependencies = [
  "data-encoding",
- "syn 1.0.109",
+ "syn 2.0.106",
 ]
 
 [[package]]
@@ -11178,18 +11178,17 @@ checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 
 [[package]]
 name = "ts-rs"
-version = "10.1.0"
-source = "git+https://github.com/hpeebles/ts-rs?rev=c584e25ce28fa27b64964c208725b6bc100fbdac#c584e25ce28fa27b64964c208725b6bc100fbdac"
+version = "11.1.0"
+source = "git+https://github.com/hpeebles/ts-rs?rev=96e2b23ee8fb6131fefb504a0795af38fb2d01fb#96e2b23ee8fb6131fefb504a0795af38fb2d01fb"
 dependencies = [
- "lazy_static",
  "thiserror 2.0.16",
  "ts-rs-macros",
 ]
 
 [[package]]
 name = "ts-rs-macros"
-version = "10.1.0"
-source = "git+https://github.com/hpeebles/ts-rs?rev=c584e25ce28fa27b64964c208725b6bc100fbdac#c584e25ce28fa27b64964c208725b6bc100fbdac"
+version = "11.1.0"
+source = "git+https://github.com/hpeebles/ts-rs?rev=96e2b23ee8fb6131fefb504a0795af38fb2d01fb#96e2b23ee8fb6131fefb504a0795af38fb2d01fb"
 dependencies = [
  "proc-macro2",
  "quote",
