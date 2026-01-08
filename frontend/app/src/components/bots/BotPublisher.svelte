@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey, type ExternalBot } from "openchat-client";
-    import ChooseBot from "./ChooseBot.svelte";
     import Legend from "../Legend.svelte";
+    import ChooseBot from "./ChooseBot.svelte";
     import BotProperties from "./install/BotProperties.svelte";
 
     interface Props {

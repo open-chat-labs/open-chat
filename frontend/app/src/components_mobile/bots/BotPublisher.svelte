@@ -1,7 +1,8 @@
 <script lang="ts">
+    import { Body, Column } from "component-lib";
     import { i18nKey, type ExternalBot } from "openchat-client";
+    import Translatable from "../Translatable.svelte";
     import ChooseBot from "./ChooseBot.svelte";
-    import Legend from "../Legend.svelte";
     import BotProperties from "./install/BotProperties.svelte";
 
     interface Props {
@@ -16,11 +17,12 @@
 </script>
 
 {#if selected === undefined}
-    <Legend large label={i18nKey("proposal.maker.chooseBot")} />
-    <ChooseBot ownedOnly onSelect={select} />
+    <Column padding={["zero", "md"]} gap={"md"}>
+        <Body>
+            <Translatable resourceKey={i18nKey("proposal.maker.chooseBot")} />
+        </Body>
+        <ChooseBot ownedOnly onSelect={select} />
+    </Column>
 {:else}
     <BotProperties padded bot={selected} installing={false}></BotProperties>
 {/if}
-
-<style lang="scss">
-</style>

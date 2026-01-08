@@ -1,5 +1,4 @@
 <script lang="ts">
-    import BotPublisher from "@src/components/bots/BotPublisher.svelte";
     import {
         Body,
         BodySmall,
@@ -39,6 +38,7 @@
         createRegisterExternalAchievementPayload,
         createUpdateTokenPayload,
     } from "../../../utils/sns";
+    import BotPublisher from "../../bots/BotPublisher.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import Legend from "../../Legend.svelte";
     import Translatable from "../../Translatable.svelte";
@@ -735,52 +735,56 @@
                         </DurationSelector>
                     </Column>
                 {:else if selectedProposalType === "add_token" || selectedProposalType === "update_token"}
-                    <section>
-                        <Legend label={i18nKey("proposal.maker.ledgerCanisterId")} required />
-                        <Input
-                            autofocus
-                            disabled={busy}
-                            error={addOrUpdateTokenLedgerCanisterId.length > 0 &&
-                                !isPrincipalValid(addOrUpdateTokenLedgerCanisterId)}
-                            bind:value={addOrUpdateTokenLedgerCanisterId}
-                            minlength={CANISTER_ID_LENGTH}
-                            maxlength={CANISTER_ID_LENGTH}
-                            countdown
-                            placeholder={interpolate($_, i18nKey("2ouva-viaaa-aaaaq-aaamq-cai"))} />
-                    </section>
-                    <section>
-                        <Legend
-                            label={i18nKey("proposal.maker.tokenInfoUrl")}
-                            required={selectedProposalType === "add_token"} />
-                        <Input
-                            disabled={busy}
-                            minlength={1}
-                            maxlength={100}
-                            bind:value={addOrUpdateTokenInfoUrl}
-                            countdown
-                            placeholder={interpolate($_, i18nKey("https://token.com/info"))} />
-                    </section>
-                    <section>
-                        <Legend
-                            label={i18nKey("proposal.maker.transactionUrlFormat")}
-                            required={selectedProposalType === "add_token"} />
-                        <Input
-                            disabled={busy}
-                            minlength={1}
-                            maxlength={200}
-                            bind:value={addOrUpdateTokenTransactionUrlFormat}
-                            countdown
-                            placeholder={interpolate(
-                                $_,
-                                i18nKey(`https://token.com/transactions/{transaction_index}`),
-                            )} />
-                    </section>
+                    <Input
+                        autofocus
+                        disabled={busy}
+                        error={addOrUpdateTokenLedgerCanisterId.length > 0 &&
+                            !isPrincipalValid(addOrUpdateTokenLedgerCanisterId)}
+                        bind:value={addOrUpdateTokenLedgerCanisterId}
+                        minlength={CANISTER_ID_LENGTH}
+                        maxlength={CANISTER_ID_LENGTH}
+                        countdown
+                        required
+                        placeholder={interpolate($_, i18nKey("2ouva-viaaa-aaaaq-aaamq-cai"))}>
+                        {#snippet subtext()}
+                            <Translatable
+                                resourceKey={i18nKey("proposal.maker.ledgerCanisterId")} />
+                        {/snippet}
+                    </Input>
+                    <Input
+                        disabled={busy}
+                        minlength={1}
+                        maxlength={100}
+                        bind:value={addOrUpdateTokenInfoUrl}
+                        countdown
+                        required={selectedProposalType === "add_token"}
+                        placeholder={interpolate($_, i18nKey("https://token.com/info"))}>
+                        {#snippet subtext()}
+                            <Translatable resourceKey={i18nKey("proposal.maker.tokenInfoUrl")} />
+                        {/snippet}
+                    </Input>
+                    <Input
+                        disabled={busy}
+                        minlength={1}
+                        maxlength={200}
+                        bind:value={addOrUpdateTokenTransactionUrlFormat}
+                        countdown
+                        required={selectedProposalType === "add_token"}
+                        placeholder={interpolate(
+                            $_,
+                            i18nKey(`https://token.com/transactions/{transaction_index}`),
+                        )}>
+                        {#snippet subtext()}
+                            <Translatable
+                                resourceKey={i18nKey("proposal.maker.transactionUrlFormat")} />
+                        {/snippet}
+                    </Input>
                 {/if}
             {/if}
         </Column>
 
         <!-- Footer -->
-        <Column gap={"lg"}>
+        <Column gap={"lg"} padding={["zero", "md"]}>
             {#if (selectedProposalType === "register_external_achievement" || selectedProposalType === "add_token") && step === 2}
                 <Body colour={insufficientFundsForPayment ? "error" : "textSecondary"}>
                     <Translatable
