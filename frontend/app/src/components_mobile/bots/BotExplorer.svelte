@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { interpolate } from "@src/i18n/i18n";
+    import { Search } from "component-lib";
     import {
         i18nKey,
         type BotInstallationLocation,
@@ -7,8 +9,8 @@
         type OpenChat,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
+    import { _ } from "svelte-i18n";
     import { botSearchState } from "../../stores/search.svelte";
-    import Search from "../Search.svelte";
     import BotProperties from "./install/BotProperties.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -57,10 +59,11 @@
 </script>
 
 <Search
-    onPerformSearch={() => onSearchEntered(true)}
+    onSearch={() => onSearchEntered(true)}
+    onClear={() => (botSearchState.term = "")}
     searching={false}
-    bind:searchTerm={botSearchState.term}
-    placeholder={i18nKey("search")} />
+    bind:value={botSearchState.term}
+    placeholder={interpolate($_, i18nKey("search"))} />
 
 <div class="matches" style={maxHeight ? `max-height: ${maxHeight}` : ""}>
     {#each botSearchState.results as match}

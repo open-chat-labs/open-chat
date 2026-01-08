@@ -12,6 +12,7 @@
         selectOptions,
         selectedValue,
         onSelect,
+        onOpen,
     } = $props<{
         value?: T;
         invalid?: boolean;
@@ -23,9 +24,16 @@
         selectedValue: Snippet<[T]>;
         selectOptions: Snippet<[(val: T) => void]>;
         onSelect: (val: T) => void;
+        onOpen?: () => void;
     }>();
 
     let popupVisible = $state(false);
+
+    $effect(() => {
+        if (popupVisible) {
+            onOpen?.();
+        }
+    });
 </script>
 
 <Container onClick={() => (popupVisible = true)} direction={"vertical"}>

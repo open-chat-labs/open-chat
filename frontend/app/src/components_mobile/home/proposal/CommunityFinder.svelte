@@ -1,13 +1,11 @@
 <script lang="ts">
-    import { AvatarSize, OpenChat, type CommunityMatch } from "openchat-client";
+    import { Avatar, Column, Option, Row, Search, Select, Subtitle } from "component-lib";
+    import { OpenChat, type CommunityMatch } from "openchat-client";
     import { getContext } from "svelte";
-    import { i18nKey } from "../../../i18n/i18n";
+    import { _ } from "svelte-i18n";
+    import { i18nKey, interpolate } from "../../../i18n/i18n";
     import { communitySearchState } from "../../../stores/search.svelte";
-    import Avatar from "../../Avatar.svelte";
-    import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItem.svelte";
-    import Search from "../../Search.svelte";
-    import SelectedMatch from "./SelectedMatch.svelte";
+    import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
     const PAGE_SIZE = 15;
@@ -19,8 +17,8 @@
 
     let { onSelect, selected }: Props = $props();
 
-    function search(term: string) {
-        if (term === "") {
+    function search(term?: string) {
+        if (term === undefined || term === "") {
             reset(true);
             return;
         }
@@ -36,6 +34,7 @@
                 [],
             )
             .then((results) => {
+                console.log("results", results);
                 if (results.kind === "success") {
                     communitySearchState.results = results.matches;
                     communitySearchState.total = results.total;
@@ -58,49 +57,64 @@
     }
 </script>
 
-<div class="finder">
-    {#if selected !== undefined}
-        <SelectedMatch onRemove={() => reset(true)} match={selected}></SelectedMatch>
-    {:else}
-        <Search
-            bind:searchTerm={communitySearchState.term}
-            searching={false}
-            onPerformSearch={search}
-            placeholder={i18nKey("communities.search")} />
-    {/if}
+<Select
+    onSelect={select}
+    onOpen={() => search(communitySearchState.term)}
+    placeholder={interpolate($_, i18nKey("verified.choose", undefined, "community", true))}
+    value={selected}>
+    {#snippet subtext()}
+        <Translatable resourceKey={i18nKey("verified.choose", undefined, "community", true)}
+        ></Translatable>
+    {/snippet}
+    {#snippet selectedValue(val)}
+        {val.name}
+    {/snippet}
+    {#snippet selectOptions(onSelect)}
+        <Column
+            onClick={(e) => e?.stopPropagation()}
+            height={{ size: "100%" }}
+            supplementalClass={"community_options"}
+            padding={"lg"}
+            gap={"lg"}>
+            <Subtitle fontWeight={"bold"}>
+                <Translatable resourceKey={i18nKey("verified.choose", undefined, "community", true)}
+                ></Translatable>
+            </Subtitle>
 
-    {#if communitySearchState.results.length > 0}
-        <div class="menu">
-            <Menu fit>
+            <Search
+                onSearch={search}
+                onClear={() => (communitySearchState.term = "")}
+                searching={false}
+                placeholder={interpolate($_, i18nKey("communities.search"))}
+                value={communitySearchState.term} />
+
+            <Column supplementalClass={"binding_options"}>
                 {#each communitySearchState.results as community (community.id.communityId)}
-                    <MenuItem onclick={() => select(community)}>
-                        {#snippet icon()}
+                    <Option
+                        padding={["xs", "lg", "xs", "xs"]}
+                        value={community}
+                        onClick={onSelect}
+                        selected={selected?.id.communityId === community.id.communityId}>
+                        <Row padding={["zero", "zero"]} gap={"md"} crossAxisAlignment={"center"}>
                             <Avatar
                                 url={client.communityAvatarUrl(
                                     community.id.communityId,
                                     community.avatar,
                                 )}
-                                size={AvatarSize.Small} />
-                        {/snippet}
-                        {#snippet text()}
-                            {community.name}
-                        {/snippet}
-                    </MenuItem>
+                                size={"lg"} />
+                            <Subtitle fontWeight={"bold"}>
+                                {community.name}
+                            </Subtitle>
+                        </Row>
+                    </Option>
                 {/each}
-            </Menu>
-        </div>
-    {/if}
-</div>
+            </Column>
+        </Column>
+    {/snippet}
+</Select>
 
 <style lang="scss">
-    .finder {
-        margin-bottom: $sp3;
-    }
-
-    .menu {
-        max-height: 250px;
-        overflow: auto;
-        width: fit-content;
-        margin-top: $sp3;
+    :global(.container.community_options) {
+        flex: auto !important;
     }
 </style>

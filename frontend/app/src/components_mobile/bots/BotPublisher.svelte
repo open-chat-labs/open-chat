@@ -17,7 +17,7 @@
 </script>
 
 {#if selected === undefined}
-    <Column padding={["zero", "md"]} gap={"md"}>
+    <Column padding={["zero", "md"]} gap={"lg"}>
         <Body>
             <Translatable resourceKey={i18nKey("proposal.maker.chooseBot")} />
         </Body>

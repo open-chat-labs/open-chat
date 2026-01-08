@@ -1,20 +1,18 @@
 <script lang="ts">
     import { IDL } from "@icp-sdk/core/candid";
-    import { _ } from "svelte-i18n";
-    import Legend from "../../Legend.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
-    import Input from "../../Input.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import { Principal } from "@icp-sdk/core/principal";
+    import { Body, Column, Input } from "component-lib";
     import {
         type CommunityMatch,
         type ExecuteGenericNervousSystemFunction,
         type GroupMatch,
         type Level,
     } from "openchat-client";
+    import { _ } from "svelte-i18n";
+    import { i18nKey, interpolate } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
     import CommunityFinder from "./CommunityFinder.svelte";
     import GroupFinder from "./GroupFinder.svelte";
-    import { fade } from "svelte/transition";
-    import { Principal } from "@icp-sdk/core/principal";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
@@ -149,8 +147,7 @@
     }
 </script>
 
-<section>
-    <Legend label={i18nKey("verified.choose", undefined, level, true)} />
+<Column gap={"lg"}>
     {#if type === "set_community_verification" || type === "revoke_community_verification"}
         <CommunityFinder onSelect={selectMatch}></CommunityFinder>
     {/if}
@@ -159,24 +156,27 @@
     {/if}
 
     {#if selected !== undefined && operation === "set"}
-        <section in:fade class="name">
-            <Legend label={i18nKey("verified.preferredName")} />
-            <Input
-                autofocus
-                disabled={selected === undefined}
-                invalid={!nameValid}
-                bind:value={name}
-                minlength={MIN_LENGTH}
-                maxlength={MAX_LENGTH}
-                countdown
-                placeholder={i18nKey("verified.preferredName")} />
-            <p class="info">
+        <Input
+            autofocus
+            disabled={selected === undefined}
+            error={!nameValid}
+            bind:value={name}
+            minlength={MIN_LENGTH}
+            maxlength={MAX_LENGTH}
+            countdown
+            placeholder={interpolate($_, i18nKey("verified.preferredName"))}>
+            {#snippet subtext()}
+                <Translatable resourceKey={i18nKey("verified.preferredName")} />
+            {/snippet}
+        </Input>
+        <Column padding={["zero", "md"]}>
+            <Body colour={"textSecondary"}>
                 <Translatable resourceKey={i18nKey("verified.rename", undefined, level, true)}
                 ></Translatable>
-            </p>
-        </section>
+            </Body>
+        </Column>
     {/if}
-</section>
+</Column>
 
 <style lang="scss">
     .info {

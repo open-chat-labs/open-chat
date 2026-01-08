@@ -1,14 +1,14 @@
 <script lang="ts">
     import { IDL } from "@icp-sdk/core/candid";
-    import { _ } from "svelte-i18n";
-    import Legend from "../../Legend.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
+    import { Principal } from "@icp-sdk/core/principal";
+    import { Column } from "component-lib";
     import {
         type ExecuteGenericNervousSystemFunction,
         type ExternalBotLike,
     } from "openchat-client";
-    import { Principal } from "@icp-sdk/core/principal";
+    import { i18nKey } from "../../../i18n/i18n";
     import BotExplorer from "../../bots/BotExplorer.svelte";
+    import Legend from "../../Legend.svelte";
     import SelectedMatch from "./SelectedMatch.svelte";
 
     interface Props {
@@ -58,11 +58,11 @@
     }
 </script>
 
-<section>
+<Column>
     <Legend label={i18nKey("bots.manage.removeSearch")} />
     {#if selected !== undefined}
         <SelectedMatch onRemove={() => (selected = undefined)} match={selected}></SelectedMatch>
     {:else}
         <BotExplorer maxHeight={"450px"} fill onSelect={selectMatch}></BotExplorer>
     {/if}
-</section>
+</Column>
