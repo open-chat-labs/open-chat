@@ -56,7 +56,6 @@ mod http;
 mod idempotency;
 mod identity;
 mod indexed_event;
-pub mod install_bot;
 mod members;
 mod mention;
 mod message;

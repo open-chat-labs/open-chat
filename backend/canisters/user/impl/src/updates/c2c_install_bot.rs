@@ -5,37 +5,17 @@ use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use types::{
-    BotEvent, BotInstallationLocation, BotInstalledEvent, BotLifecycleEvent, BotNotification, UserId, c2c_install_bot,
-    install_bot::*,
+    BotEvent, BotInstallationLocation, BotInstalledEvent, BotLifecycleEvent, BotNotification, OCResult, UserId, UserType,
+    c2c_install_bot::*,
 };
-use types::{OCResult, UserType};
 
-#[update(msgpack = true)]
-#[trace]
-fn install_bot(args: Args) -> Response {
-    execute_update(|state| {
-        install_bot_impl(
-            c2c_install_bot::Args {
-                bot_id: args.bot_id,
-                caller: state.env.caller().into(),
-                granted_permissions: args.granted_permissions,
-                granted_autonomous_permissions: args.granted_autonomous_permissions,
-                default_subscriptions: args.default_subscriptions,
-            },
-            state,
-        )
-    })
-    .into()
-}
-
-// TODO: remove this once user canisters have been upgraded
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
-fn c2c_install_bot(args: c2c_install_bot::Args) -> Response {
-    execute_update(|state| install_bot_impl(args, state)).into()
+fn c2c_install_bot(args: Args) -> Response {
+    execute_update(|state| c2c_install_bot_impl(args, state)).into()
 }
 
-fn install_bot_impl(args: c2c_install_bot::Args, state: &mut RuntimeState) -> OCResult {
+fn c2c_install_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let user_id: UserId = state.env.canister_id().into();
 
     if args.caller != user_id && args.caller != state.data.owner.into() {

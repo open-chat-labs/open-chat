@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Added delete_crypto_account ([#8652](https://github.com/open-chat-labs/open-chat/pull/8652))
 - Implement resetting PIN by providing proof of re-authentication ([#8754](https://github.com/open-chat-labs/open-chat/pull/8754))
-- Add `install_bot` and `uninstall_bot` endpoints ([#8772](https://github.com/open-chat-labs/open-chat/pull/8772))
+- Add `uninstall_bot` endpoint ([#8772](https://github.com/open-chat-labs/open-chat/pull/8772))
 
 ### Changed
 
