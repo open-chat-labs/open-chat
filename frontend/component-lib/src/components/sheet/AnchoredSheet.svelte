@@ -58,6 +58,13 @@
     let animationTo: 0 | 1 = 1;
     let animationDuration = 0;
 
+    $effect(() => {
+        if (sheet) {
+            closedHeight = sheet.offsetHeight;
+            console.log("HEIGHT", closedHeight);
+        }
+    });
+
     export function collapse() {
         isExpanded = false;
         snapTo(0);

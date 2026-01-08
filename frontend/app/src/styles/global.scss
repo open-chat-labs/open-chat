@@ -559,58 +559,92 @@ svelte-virtual-list-viewport {
 
 $speed: 200ms;
 
-// Elements included in the transition snapshot!
-.left_panel_inner {
-    view-transition-name: transition_root;
-    contain: layout;
+@mixin disableTransitionDuringSlideFor($selector, $name) {
+    #{$selector} {
+        view-transition-name: #{$name};
+        contain: layout;
+    }
+
+    html:active-view-transition-type(slide_left, slide_right) {
+        &::view-transition-old(#{$name}),
+        &::view-transition-new(#{$name}) {
+            animation: none;
+        }
+    }
+
 }
 
-.anchored_sheet {
-    view-transition-name: anchored_sheet;
-    contain: layout;
-}
+@include disableTransitionDuringSlideFor(".sliding_page", "sliding_modal");
+@include disableTransitionDuringSlideFor(".bottom_nav_bar", "bottom_nav_bar");
+@include disableTransitionDuringSlideFor(".anchored_sheet", "anchored_sheet");
+@include disableTransitionDuringSlideFor(".sheet_overlay .sheet_content", "sheet_content");
+@include disableTransitionDuringSlideFor(".footer.thread, .footer.message", "footer");
+@include disableTransitionDuringSlideFor(".anon-footer", "anon_footer");
 
-.bottom_nav_bar {
-    view-transition-name: bottom_nav_bar;
-    contain: layout;
-}
+// .sliding_page {
+//     view-transition-name: sliding_modal;
+// }
 
-.floating {
-    view-transition-name: floating_button;
-    contain: layout;
-}
+// .sheet_overlay .sheet_content {
+//     view-transition-name: sheet_content;
+// }
+
+// .bottom_nav_bar {
+//     view-transition-name: bottom_nav_bar;
+// }
+
+// .anchored_sheet {
+//     view-transition-name: anchored_sheet;
+// }
+
+// .footer.thread,
+// .footer.message {
+//     view-transition-name: footer;
+// }
+
+// .anon-footer {
+//     view-transition-name: anon_footer;
+// }
+
+// html:active-view-transition-type(slide_left, slide_right) {
+//     &::view-transition-old(
+//             anchored_sheet,
+//             communities_scroller,
+//             bottom_nav_bar,
+//             footer,
+//             sheet_content,
+//             sliding_modal,
+//             anon_footer,
+
+//         ),
+//     &:view-transition-new(
+//             anchored_sheet,
+//             communities_scroller,
+//             bottom_nav_bar,
+//             footer,
+//             sheet_content,
+//             sliding_modal,
+//             anon_footer,
+
+//         ) {
+//         animation: none;
+//     }
+// }
 
 // Ensure bottom nav is always above the transitioning content!
 html::view-transition-group(bottom_nav_bar) {
     z-index: 100;
 }
-html::view-transition-group(transition_root) {
+
+html::view-transition-group(anchored_sheet) {
+    z-index: 99;
+}
+
+html::view-transition-group(root) {
     z-index: 1;
 }
 
-// Define transitions for the content!!
-
-// We don't animate root to prevent transitions on elements that are not
-// relevant, but would otherwise be a subject to a default fade animation.
-// Bottom nav bar is also not transitioned, but we need to include it into
-// snapshot to keep it visually above transitioning content.
-::view-transition-old(root),
-::view-transition-new(root),
-::view-transition-old(bottom_nav_bar),
-::view-transition-new(bottom_nav_bar) {
-    animation: none;
-}
-
-::view-transition-old(anchored_sheet),
-::view-transition-old(floating_button) {
-    animation: $speed ease-in-out both fade-out;
-}
-
-::view-transition-new(anchored_sheet),
-::view-transition-new(floating_button) {
-    animation: $speed ease-in-out both fade-in;
-}
-
+// Root animations!
 html:active-view-transition-type(slide_left) {
     &::view-transition-old(transition_root) {
         animation:
