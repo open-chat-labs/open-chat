@@ -14,11 +14,8 @@
     export interface Props {
         collapsedContent: Snippet;
         expandedContent: Snippet;
-        onInit?: (sheet: HTMLElement) => void;
-        onScroll?: (sheet: HTMLElement) => void;
         supplementalClass?: string;
         maxViewportHeightFraction?: Fraction;
-        closedHeight?: number; // px
         openThreshold?: Fraction;
         closeThreshold?: Fraction;
     }
@@ -33,12 +30,11 @@
         expandedContent,
         supplementalClass,
         maxViewportHeightFraction = fraction(0.7),
-        closedHeight = 96,
         openThreshold = fraction(0.2),
         closeThreshold = fraction(0.9),
     }: Props = $props();
 
-    const OPEN_HEIGHT = computeExpandedSheetHeight();
+    const EXPANDED_HEIGHT = computeExpandedSheetHeight();
     const SNAP_DURATION = 250; // ms
 
     let sheet: HTMLElement;
@@ -48,6 +44,7 @@
     let openFactor = $state(0);
     let startY: undefined | number;
     let startHeight: undefined | number;
+    let collapsedHeight = 100;
 
     // Vars below are used during the snapping phase, to update the openFactor
     // value. The animation itself is a CSS transition, but openFactor is used
@@ -60,14 +57,20 @@
 
     $effect(() => {
         if (sheet) {
-            closedHeight = sheet.offsetHeight;
-            console.log("HEIGHT", closedHeight);
+            collapsedHeight = sheet.offsetHeight;
         }
     });
 
     export function collapse() {
         isExpanded = false;
         snapTo(0);
+    }
+
+    export function collapseInstant() {
+        isExpanded = false;
+        openFactor = 0;
+        unsetSheetTransition();
+        setSheetHeight(collapsedHeight);
     }
 
     export function expand() {
@@ -91,17 +94,28 @@
 
     // Calc how much the sheet is open as a 0..1 fraction
     function openness(height: number) {
-        return Math.min(1, Math.max(0, (height - closedHeight) / (OPEN_HEIGHT - closedHeight)));
+        return Math.min(
+            1,
+            Math.max(0, (height - collapsedHeight) / (EXPANDED_HEIGHT - collapsedHeight)),
+        );
     }
 
     function setSheetHeight(height: number) {
         sheet.style.height = `${height}px`;
     }
 
+    function setSheetTransition(duration: number) {
+        sheet.style.transition = `height ${duration}ms cubic-bezier(0.2, 0, 0, 1)`;
+    }
+
+    function unsetSheetTransition() {
+        sheet.style.transition = "none";
+    }
+
     // Only track movement in y dimension!
     function onDragStart(e: PointerEvent) {
         // Remove any transition that may be attached to the sheet...
-        sheet.style.transition = "none";
+        unsetSheetTransition();
 
         // Set handle as the target for future drag events!
         handle.setPointerCapture(e.pointerId);
@@ -116,7 +130,10 @@
         if (!handle.hasPointerCapture(e.pointerId) || startY == null || startHeight == null) return;
 
         const delta = startY - e.clientY;
-        const currentHeight = Math.min(OPEN_HEIGHT, Math.max(closedHeight, startHeight + delta));
+        const currentHeight = Math.min(
+            EXPANDED_HEIGHT,
+            Math.max(collapsedHeight, startHeight + delta),
+        );
 
         // Call the open factor and set sheet height!
         openFactor = openness(currentHeight);
@@ -159,8 +176,8 @@
         animationTo = target;
         animationDuration = 2 * snapDuration(animationFrom, target);
 
-        sheet.style.transition = `height ${animationDuration}ms cubic-bezier(0.2, 0, 0, 1)`;
-        setSheetHeight(target === 1 ? OPEN_HEIGHT : closedHeight);
+        setSheetTransition(animationDuration);
+        setSheetHeight(target === 1 ? EXPANDED_HEIGHT : collapsedHeight);
 
         // Shorten the duration for the content fade in, so it would finish by
         // the time CSS transition is done.
