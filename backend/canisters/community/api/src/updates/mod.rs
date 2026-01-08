@@ -47,6 +47,7 @@ pub mod end_video_call_v2;
 pub mod follow_thread;
 pub mod handle_webhook;
 pub mod import_group;
+pub mod install_bot;
 pub mod join_video_call;
 pub mod leave_channel;
 pub mod pin_message;

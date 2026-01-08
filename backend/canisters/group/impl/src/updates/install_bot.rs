@@ -4,15 +4,34 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
 use types::{BotEvent, BotInstalledEvent, BotLifecycleEvent, BotNotification, OCResult};
-use types::{BotInstallationLocation, c2c_install_bot::*};
+use types::{BotInstallationLocation, c2c_install_bot, install_bot::*};
 
-#[update(guard = "caller_is_local_user_index", msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
-fn c2c_install_bot(args: Args) -> Response {
-    execute_update(|state| c2c_install_bot_impl(args, state)).into()
+fn install_bot(args: Args) -> Response {
+    execute_update(|state| {
+        install_bot_impl(
+            c2c_install_bot::Args {
+                bot_id: args.bot_id,
+                caller: state.env.caller().into(),
+                granted_permissions: args.granted_permissions,
+                granted_autonomous_permissions: args.granted_autonomous_permissions,
+                default_subscriptions: args.default_subscriptions,
+            },
+            state,
+        )
+    })
+    .into()
 }
 
-fn c2c_install_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+// TODO: remove this once group canisters have been upgraded
+#[update(guard = "caller_is_local_user_index", msgpack = true)]
+#[trace]
+fn c2c_install_bot(args: c2c_install_bot::Args) -> c2c_install_bot::Response {
+    execute_update(|state| install_bot_impl(args, state)).into()
+}
+
+fn install_bot_impl(args: c2c_install_bot::Args, state: &mut RuntimeState) -> OCResult {
     state.data.verify_not_frozen()?;
 
     let member = state.data.chat.members.get_verified_member(args.caller)?;

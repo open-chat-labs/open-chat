@@ -39,6 +39,7 @@ pub mod enable_invite_code;
 pub mod end_video_call_v2;
 pub mod follow_thread;
 pub mod handle_webhook;
+pub mod install_bot;
 pub mod join_video_call;
 pub mod pin_message_v2;
 pub mod regenerate_webhook;

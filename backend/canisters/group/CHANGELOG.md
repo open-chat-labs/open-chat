@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add `c2c_bot_change_role` endpoint ([#8753](https://github.com/open-chat-labs/open-chat/pull/8753))
+- Add `install_bot` and `uninstall_bot` endpoints ([#8772](https://github.com/open-chat-labs/open-chat/pull/8772))
 
 ### Changed
 
