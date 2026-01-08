@@ -1,6 +1,7 @@
 <script lang="ts">
-    import Translatable from "./Translatable.svelte";
+    import { Body, BodySmall, Row } from "component-lib";
     import type { ResourceKey } from "openchat-client";
+    import Translatable from "./Translatable.svelte";
 
     interface Props {
         label: ResourceKey;
@@ -9,36 +10,23 @@
         large?: boolean;
     }
 
-    let { label, rules = undefined, required = false, large = false }: Props = $props();
+    let { label, rules = undefined, required = false }: Props = $props();
 </script>
 
-<div class="legend">
-    <span class="label" class:large><Translatable resourceKey={label} /></span>
+<Row width={"hug"} gap={"xs"} crossAxisAlignment={"center"}>
+    <Body width={"hug"}>
+        <Translatable resourceKey={label} />
+    </Body>
     {#if rules}
-        <span class="rules">(<Translatable resourceKey={rules} />)</span>
+        <BodySmall>(<Translatable resourceKey={rules} />)</BodySmall>
     {/if}
     {#if required}
         <span class="required">*</span>
     {/if}
-</div>
+</Row>
 
 <style lang="scss">
-    .legend {
-        margin-bottom: $sp2;
-
-        .label {
-            @include font(book, normal, fs-60);
-
-            &.large {
-                @include font(book, normal, fs-100);
-            }
-        }
-        .rules {
-            @include font(light, normal, fs-60);
-            color: var(--txt-light);
-        }
-        .required {
-            color: var(--error);
-        }
+    .required {
+        color: var(--error);
     }
 </style>

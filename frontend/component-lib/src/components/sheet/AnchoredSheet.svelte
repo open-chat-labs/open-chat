@@ -2,7 +2,7 @@
     export type Fraction = number & { readonly __brand: "Fraction" };
 
     // Ensures fractions are properly provided!
-    export function fraction(value: number): Fraction {
+    function fraction(value: number): Fraction {
         if (value < 0 || value > 1) {
             throw new Error("Fraction must be between 0 and 1");
         }
@@ -14,8 +14,11 @@
     export interface Props {
         collapsedContent: Snippet;
         expandedContent: Snippet;
+        onInit?: (sheet: HTMLElement) => void;
+        onScroll?: (sheet: HTMLElement) => void;
         supplementalClass?: string;
         maxViewportHeightFraction?: Fraction;
+        closedHeight?: number; // px
         openThreshold?: Fraction;
         closeThreshold?: Fraction;
     }
@@ -23,18 +26,19 @@
 
 <script lang="ts">
     import { ColourVars, Container } from "component-lib";
-    import { type Snippet, onMount } from "svelte";
+    import { type Snippet } from "svelte";
 
     let {
         collapsedContent,
         expandedContent,
         supplementalClass,
         maxViewportHeightFraction = fraction(0.7),
+        closedHeight = 96,
         openThreshold = fraction(0.2),
         closeThreshold = fraction(0.9),
     }: Props = $props();
 
-    const EXPANDED_HEIGHT = computeExpandedSheetHeight();
+    const OPEN_HEIGHT = computeExpandedSheetHeight();
     const SNAP_DURATION = 250; // ms
 
     let sheet: HTMLElement;
@@ -44,7 +48,6 @@
     let openFactor = $state(0);
     let startY: undefined | number;
     let startHeight: undefined | number;
-    let collapsedHeight = 100; // px, with reasonable default value
 
     // Vars below are used during the snapping phase, to update the openFactor
     // value. The animation itself is a CSS transition, but openFactor is used
@@ -55,23 +58,9 @@
     let animationTo: 0 | 1 = 1;
     let animationDuration = 0;
 
-    onMount(() => {
-        if (!sheet) return;
-
-        // Set initial height for the sheet when in collapsed state!
-        collapsedHeight = sheet.offsetHeight;
-    });
-
     export function collapse() {
         isExpanded = false;
         snapTo(0);
-    }
-
-    export function collapseInstantly() {
-        isExpanded = false;
-        openFactor = 0;
-        setSheetHeight(collapsedHeight);
-        removeSheetTransition();
     }
 
     export function expand() {
@@ -95,28 +84,17 @@
 
     // Calc how much the sheet is open as a 0..1 fraction
     function openness(height: number) {
-        return Math.min(
-            1,
-            Math.max(0, (height - collapsedHeight) / (EXPANDED_HEIGHT - collapsedHeight)),
-        );
+        return Math.min(1, Math.max(0, (height - closedHeight) / (OPEN_HEIGHT - closedHeight)));
     }
 
     function setSheetHeight(height: number) {
         sheet.style.height = `${height}px`;
     }
 
-    function setSheetTransition(duration: number) {
-        sheet.style.transition = `height ${duration}ms cubic-bezier(0.2, 0, 0, 1)`;
-    }
-
-    function removeSheetTransition() {
-        sheet.style.transition = `none`;
-    }
-
     // Only track movement in y dimension!
     function onDragStart(e: PointerEvent) {
         // Remove any transition that may be attached to the sheet...
-        removeSheetTransition();
+        sheet.style.transition = "none";
 
         // Set handle as the target for future drag events!
         handle.setPointerCapture(e.pointerId);
@@ -131,10 +109,7 @@
         if (!handle.hasPointerCapture(e.pointerId) || startY == null || startHeight == null) return;
 
         const delta = startY - e.clientY;
-        const currentHeight = Math.min(
-            EXPANDED_HEIGHT,
-            Math.max(collapsedHeight, startHeight + delta),
-        );
+        const currentHeight = Math.min(OPEN_HEIGHT, Math.max(closedHeight, startHeight + delta));
 
         // Call the open factor and set sheet height!
         openFactor = openness(currentHeight);
@@ -177,8 +152,8 @@
         animationTo = target;
         animationDuration = 2 * snapDuration(animationFrom, target);
 
-        setSheetTransition(animationDuration);
-        setSheetHeight(target === 1 ? EXPANDED_HEIGHT : collapsedHeight);
+        sheet.style.transition = `height ${animationDuration}ms cubic-bezier(0.2, 0, 0, 1)`;
+        setSheetHeight(target === 1 ? OPEN_HEIGHT : closedHeight);
 
         // Shorten the duration for the content fade in, so it would finish by
         // the time CSS transition is done.

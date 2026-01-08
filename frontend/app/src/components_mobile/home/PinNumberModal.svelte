@@ -1,7 +1,6 @@
 <script lang="ts">
-    import { mobileWidth } from "openchat-client";
+    import { Column, Sheet, Subtitle } from "component-lib";
     import { i18nKey } from "../../i18n/i18n";
-    import ModalContent from "../ModalContent.svelte";
     import Pincode from "../pincode/Pincode.svelte";
     import Translatable from "../Translatable.svelte";
     import ForgotPinLabel from "./ForgotPinLabel.svelte";
@@ -19,24 +18,14 @@
     }
 </script>
 
-<ModalContent closeIcon hideFooter fitToContent={!$mobileWidth} fixedWidth={false} {onClose}>
-    {#snippet header()}
-        <Translatable resourceKey={i18nKey("pinNumber.enterPin")} />
-    {/snippet}
-    {#snippet body()}
-        <div class="body">
+<Sheet onDismiss={onClose}>
+    <Column gap={"xl"} padding={"xl"}>
+        <Subtitle fontWeight={"bold"}>
+            <Translatable resourceKey={i18nKey("pinNumber.enterPin")} />
+        </Subtitle>
+        <Column gap={"lg"}>
             <Pincode type="numeric" length={6} onComplete={onPinComplete} />
             <ForgotPinLabel {onForgot} />
-        </div>
-    {/snippet}
-</ModalContent>
-
-<style lang="scss">
-    .body {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: $sp4;
-        max-width: 500px;
-    }
-</style>
+        </Column>
+    </Column>
+</Sheet>

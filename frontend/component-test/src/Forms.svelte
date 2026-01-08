@@ -86,9 +86,10 @@
                     <Label labelFor={"basic_input_error"}>Basic input with error</Label>
                     <Input
                         id={"basic_input_error"}
+                        error
                         placeholder={"Basic input with error"}
                         bind:value={basicInputError}>
-                        {#snippet error()}
+                        {#snippet subtext()}
                             This means that some sort of error occurred related to the field
                         {/snippet}
                     </Input>

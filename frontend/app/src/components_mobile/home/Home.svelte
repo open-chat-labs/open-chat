@@ -1,7 +1,7 @@
 <script lang="ts">
     import { trackedEffect } from "@src/utils/effects.svelte";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
-    import { Container } from "component-lib";
+    import { Container, Sheet } from "component-lib";
     import type {
         ChannelIdentifier,
         ChatIdentifier,
@@ -52,7 +52,6 @@
     import NotFound from "../NotFound.svelte";
     import OfflineFooter from "../OfflineFooter.svelte";
     import OnboardModal from "../onboard/OnboardModal.svelte";
-    import Overlay from "../Overlay.svelte";
     import SuspendedModal from "../SuspendedModal.svelte";
     import Toast from "../Toast.svelte";
     import AcceptRulesModal from "./AcceptRulesModal.svelte";
@@ -561,34 +560,28 @@
         <NoAccess onClose={closeNoAccess} />
     {:else if modal.kind === "challenge"}
         <ChallengeModal on:close={closeModal} />
-    {:else}
-        <Overlay dismissible={modal.kind !== "make_proposal"} onClose={closeModal}>
-            {#if modal.kind === "make_proposal"}
-                <MakeProposalModal
-                    selectedMultiUserChat={modal.chat}
-                    nervousSystem={modal.nervousSystem}
-                    onClose={closeModal} />
-            {/if}
-        </Overlay>
+    {:else if modal.kind === "make_proposal"}
+        <MakeProposalModal
+            selectedMultiUserChat={modal.chat}
+            nervousSystem={modal.nervousSystem}
+            onClose={closeModal} />
     {/if}
 {/if}
 
 {#if $rulesAcceptanceStore !== undefined}
     <AcceptRulesModal />
 {:else if forgotPin}
-    <Overlay>
+    <Sheet onDismiss={() => (forgotPin = false)}>
         <SetPinNumberModal
             onPinSet={onPinNumberComplete}
             onClose={() => (forgotPin = false)}
             type={{ kind: "forgot", while: { kind: "enter" } }} />
-    </Overlay>
+    </Sheet>
 {:else if $pinNumberResolverStore !== undefined}
-    <Overlay>
-        <PinNumberModal
-            onClose={onPinNumberClose}
-            onComplete={onPinNumberComplete}
-            onForgot={onForgotPin} />
-    </Overlay>
+    <PinNumberModal
+        onClose={onPinNumberClose}
+        onComplete={onPinNumberComplete}
+        onForgot={onForgotPin} />
 {/if}
 
 {#if $chitPopup && !$disableChit}
