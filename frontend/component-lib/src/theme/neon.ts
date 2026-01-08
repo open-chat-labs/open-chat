@@ -33,6 +33,7 @@ const textAccent = primary;
 
 const gradientPrimary = tertiary;
 const gradientSecondary = primary;
+const backdrop = Colour.fromRGBA(19, 21, 27, 0.75);
 
 export const theme = new Theme(
     new Colours(
@@ -61,5 +62,6 @@ export const theme = new Theme(
         textAccent,
         gradientPrimary,
         gradientSecondary,
+        backdrop,
     ),
 );

@@ -210,6 +210,7 @@
 
 <style lang="scss">
     :global(.bottom_nav_bar) {
+        z-index: 20;
         border-left: none !important;
         border-right: none !important;
         border-bottom: none !important;

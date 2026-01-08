@@ -204,6 +204,13 @@
     }
 </script>
 
+<button
+    class="backdrop"
+    style={`opacity: ${openFactor};`}
+    onclick={collapse}
+    aria-label="close sheet">
+</button>
+
 <Container
     bind:ref={sheet}
     supplementalClass={`anchored_sheet ${supplementalClass ?? ""}`}
@@ -238,7 +245,16 @@
 
 <style lang="scss">
     :global(.container.anchored_sheet) {
+        z-index: 10;
         margin-bottom: -0.5rem;
+    }
+
+    .backdrop {
+        all: unset;
+        inset: 0;
+        position: fixed;
+        z-index: 1;
+        background-color: var(--backdrop);
     }
 
     .collapsed_content,
