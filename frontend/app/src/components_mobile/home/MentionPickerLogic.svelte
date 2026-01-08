@@ -71,7 +71,7 @@
     }
     const itemHeight = 48;
     const borderWidth = 0;
-    let maxHeight = $derived(
+    let maxHeight = $derived<string>(
         direction === "down" ? `${3.2 * itemHeight + borderWidth}px` : "calc(var(--vh, 1vh) * 50)",
     );
     let prefixLower = $derived(prefix?.toLowerCase());
