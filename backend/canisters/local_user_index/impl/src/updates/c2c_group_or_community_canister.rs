@@ -8,7 +8,7 @@ use local_user_index_canister::GroupOrCommunityEvent;
 use local_user_index_canister::c2c_group_canister::*;
 use std::cell::LazyCell;
 use types::{BotEvent, BotLifecycleEvent, Notification, TimestampMillis};
-use user_index_canister::{BotInstalled, BotUninstalled};
+use user_index_canister::BotInstalled;
 
 #[update(guard = "caller_is_local_group_canister", msgpack = true)]
 #[trace]

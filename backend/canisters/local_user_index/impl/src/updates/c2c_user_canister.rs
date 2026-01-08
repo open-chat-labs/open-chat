@@ -8,7 +8,7 @@ use local_user_index_canister::c2c_user_canister::*;
 use stable_memory_map::StableMemoryMap;
 use std::cell::LazyCell;
 use types::{BotEvent, BotLifecycleEvent, Notification, StreakInsuranceClaim, StreakInsurancePayment, TimestampMillis, UserId};
-use user_index_canister::{BotInstalled, BotUninstalled};
+use user_index_canister::BotInstalled;
 
 #[update(guard = "caller_is_local_user_canister", msgpack = true)]
 #[trace]
