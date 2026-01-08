@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Simplify handling of bot installation lifecycle events ([#8776](https://github.com/open-chat-labs/open-chat/pull/8776))
+
+## [[2.0.1945](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1945-user_index)] - 2026-01-08
+
 ### Added
 
 - Allow platform operators to block usernames via regex patterns ([#8719](https://github.com/open-chat-labs/open-chat/pull/8719))
