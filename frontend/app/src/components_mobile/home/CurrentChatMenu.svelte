@@ -38,15 +38,16 @@
             ? selectedChatSummary.them.userId
             : undefined,
     );
-    let governanceCanisterId = $derived(
-        selectedChatSummary.kind !== "direct_chat" &&
-            selectedChatSummary.subtype?.kind === "governance_proposals"
-            ? selectedChatSummary.subtype.governanceCanisterId
-            : undefined,
-    );
-    let canMakeProposals = $derived(
-        client.tryGetNervousSystem(governanceCanisterId)?.submittingProposalsEnabled ?? false,
-    );
+    // let governanceCanisterId = $derived(
+    //     selectedChatSummary.kind !== "direct_chat" &&
+    //         selectedChatSummary.subtype?.kind === "governance_proposals"
+    //         ? selectedChatSummary.subtype.governanceCanisterId
+    //         : undefined,
+    // );
+    // let canMakeProposals = $derived(
+    //     client.tryGetNervousSystem(governanceCanisterId)?.submittingProposalsEnabled ?? false,
+    // );
+    let canMakeProposals = $derived(true);
     let userId = $derived(
         selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them.userId : "",
     );

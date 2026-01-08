@@ -2,7 +2,9 @@
     import BotPublisher from "@src/components/bots/BotPublisher.svelte";
     import {
         Body,
+        BodySmall,
         Caption,
+        ColourVars,
         Column,
         CommonButton,
         Input,
@@ -42,7 +44,7 @@
     import Translatable from "../../Translatable.svelte";
     import AccountInfo from "../AccountInfo.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
-    import DurationPicker from "../DurationPicker.svelte";
+    import DurationSelector from "../DurationSelector.svelte";
     import Markdown from "../Markdown.svelte";
     import RemoveBot from "./RemoveBot.svelte";
     import TransferSnsFunds from "./TransferSNSFunds.svelte";
@@ -59,7 +61,7 @@
     const MIN_CHIT_REWARD = 5000;
     const MIN_AWARDS = 200;
     const CHAT_FEE_PER_CHIT_AWARD: bigint = 20_000n; // 1/5000th of a CHAT
-    const ONE_MONTH = 1000 * 60 * 60 * 24 * 7 * 4;
+    const ONE_MONTH = 1000 * 60 * 60 * 24 * 30;
     const TOKEN_LISTING_FEE: bigint = 50_000_100_000n; // 500 CHAT + transfer fee
 
     const PROPOSALS_BOT_CANISTER = import.meta.env.OC_PROPOSALS_BOT_CANISTER!;
@@ -444,7 +446,7 @@
             { name: "Advance SNS target version", value: "advance_sns_target_version" },
         ];
 
-        if (symbol === "CHAT") {
+        if (symbol === "CHAT" || true) {
             options.push(
                 { name: "Register external achievement", value: "register_external_achievement" },
                 { name: "Add token", value: "add_token" },
@@ -488,145 +490,158 @@
                 onRefreshed={onRefreshingBalanceSuccess}
                 onError={onRefreshingBalanceFailed} />
         </Row>
-    </Column>
-    <Column gap={"lg"}>
-        {#if step === 0}
-            <AccountInfo {ledger} />
-            <Body colour={"textSecondary"}>
-                <Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} />
-            </Body>
-        {:else if step === 1}
-            <Select
-                onSelect={(val) => (selectedProposalType = val)}
-                placeholder={interpolate($_, i18nKey("proposal.maker.selectType"))}
-                value={selectedProposalType}>
-                {#snippet selectedValue(val)}
-                    {val}
-                {/snippet}
-                {#snippet selectOptions(onSelect)}
+        <Column gap={"lg"}>
+            {#if step === 0}
+                <AccountInfo {ledger} />
+                <Body colour={"textSecondary"}>
+                    <Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} />
+                </Body>
+            {:else if step === 1}
+                <Select
+                    onSelect={(val) => (selectedProposalType = val)}
+                    placeholder={interpolate($_, i18nKey("proposal.maker.selectType"))}
+                    value={selectedProposalType}>
+                    {#snippet selectedValue(val)}
+                        {val}
+                    {/snippet}
+                    {#snippet selectOptions(onSelect)}
+                        <Column padding={"lg"}>
+                            {#each proposalOptions as { name, value }}
+                                <Option
+                                    {value}
+                                    onClick={onSelect}
+                                    selected={selectedProposalType === value}>
+                                    {name}
+                                </Option>
+                            {/each}
+                        </Column>
+                    {/snippet}
+                    {#snippet subtext()}
+                        <Translatable resourceKey={i18nKey("proposal.maker.selectType")} />
+                    {/snippet}
+                </Select>
+
+                <Input
+                    autofocus
+                    disabled={busy}
+                    error={title.length > 0 && !titleValid}
+                    bind:value={title}
+                    minlength={MIN_TITLE_LENGTH}
+                    maxlength={MAX_TITLE_LENGTH}
+                    countdown
+                    required
+                    placeholder={interpolate($_, i18nKey("proposal.maker.enterTitle"))}>
+                    {#snippet subtext()}
+                        <Translatable resourceKey={i18nKey("proposal.maker.enterTitle")} />
+                    {/snippet}
+                </Input>
+
+                <Input
+                    disabled={busy}
+                    error={!urlValid}
+                    bind:value={url}
+                    maxlength={MAX_URL_LENGTH}
+                    countdown
+                    placeholder={interpolate($_, i18nKey("proposal.maker.enterUrl"))}>
+                    {#snippet subtext()}
+                        <Translatable resourceKey={i18nKey("proposal.maker.urlRules")} />
+                    {/snippet}
+                </Input>
+
+                <Column gap={"xs"}>
                     <Column>
-                        {#each proposalOptions as { name, value }}
-                            <Option
-                                {value}
-                                onClick={onSelect}
-                                selected={selectedProposalType === value}>
-                                {name}
-                            </Option>
-                        {/each}
-                    </Column>
-                {/snippet}
-                {#snippet subtext()}
-                    <Translatable resourceKey={i18nKey("proposal.maker.type")} />
-                {/snippet}
-            </Select>
-
-            <Input
-                autofocus
-                disabled={busy}
-                error={title.length > 0 && !titleValid}
-                bind:value={title}
-                minlength={MIN_TITLE_LENGTH}
-                maxlength={MAX_TITLE_LENGTH}
-                countdown
-                placeholder={interpolate($_, i18nKey("proposal.maker.enterTitle"))}>
-                {#snippet subtext()}
-                    <Translatable resourceKey={i18nKey("proposal.maker.enterTitle")} />
-                {/snippet}
-            </Input>
-
-            <Input
-                disabled={busy}
-                error={!urlValid}
-                bind:value={url}
-                maxlength={MAX_URL_LENGTH}
-                countdown
-                placeholder={interpolate($_, i18nKey("proposal.maker.enterUrl"))}>
-                {#snippet subtext()}
-                    <Translatable resourceKey={i18nKey("proposal.maker.urlRules")} />
-                {/snippet}
-            </Input>
-
-            <Column>
-                <Row mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
-                    <Legend
-                        required
-                        label={summaryLabel}
-                        rules={i18nKey("proposal.maker.summaryRules")} />
-                    <Row
-                        onClick={() => (summaryPreview = !summaryPreview)}
-                        width={"hug"}
-                        crossAxisAlignment={"center"}>
-                        <Caption colour={"textSecondary"}>
-                            <Translatable
-                                resourceKey={i18nKey(summaryPreview ? "edit" : "preview")} />
-                        </Caption>
                         {#if summaryPreview}
-                            <PencilIcon />
+                            <Row
+                                background={ColourVars.textTertiary}
+                                padding={["md", "xl", "xs", "xl"]}
+                                borderRadius={"xxl"}
+                                height={{ size: "12rem" }}
+                                gap={"sm"}
+                                crossAxisAlignment={"start"}>
+                                <Body>
+                                    <Markdown inline={false} text={wrappedSummary(summary)} />
+                                </Body>
+                            </Row>
                         {:else}
-                            <EyeIcon />
+                            <TextArea
+                                rows={8}
+                                disabled={busy}
+                                error={summary.length > 0 && !summaryValid}
+                                bind:value={summary}
+                                minlength={MIN_SUMMARY_LENGTH}
+                                maxlength={MAX_SUMMARY_LENGTH}
+                                placeholder={interpolate($_, summaryPlaceholder)}></TextArea>
                         {/if}
+                    </Column>
+                    <Row mainAxisAlignment={"spaceBetween"} crossAxisAlignment={"center"}>
+                        <Legend
+                            required
+                            label={summaryLabel}
+                            rules={i18nKey("proposal.maker.summaryRules")} />
+                        <Row
+                            onClick={() => (summaryPreview = !summaryPreview)}
+                            width={"hug"}
+                            padding={["zero", "xl", "zero", "zero"]}
+                            gap={"xs"}
+                            crossAxisAlignment={"center"}>
+                            <Caption colour={"textSecondary"}>
+                                <Translatable
+                                    resourceKey={i18nKey(summaryPreview ? "edit" : "preview")} />
+                            </Caption>
+                            {#if summaryPreview}
+                                <PencilIcon color={ColourVars.textSecondary} />
+                            {:else}
+                                <EyeIcon color={ColourVars.textSecondary} />
+                            {/if}
+                        </Row>
                     </Row>
-                </Row>
-                <Column>
-                    {#if summaryPreview}
-                        <Body>
-                            <Markdown inline={false} text={wrappedSummary(summary)} />
-                        </Body>
-                    {:else}
-                        <TextArea
-                            rows={8}
-                            disabled={busy}
-                            error={summary.length > 0 && !summaryValid}
-                            bind:value={summary}
-                            minlength={MIN_SUMMARY_LENGTH}
-                            maxlength={MAX_SUMMARY_LENGTH}
-                            placeholder={interpolate($_, summaryPlaceholder)}></TextArea>
-                    {/if}
                 </Column>
-            </Column>
-        {:else if step === 2}
-            {#if selectedProposalType === "set_community_verification" || selectedProposalType === "revoke_community_verification" || selectedProposalType === "set_group_verification" || selectedProposalType === "revoke_group_verification"}
-                <VerificationProposal
-                    bind:this={verificationComponent}
-                    bind:valid={verificationValid}
-                    type={selectedProposalType} />
-            {:else if selectedProposalType === "publish_bot"}
-                <BotPublisher bind:selected={selectedBot}></BotPublisher>
-            {:else if selectedProposalType === "remove_bot"}
-                <RemoveBot bind:valid={removeBotValid}></RemoveBot>
-            {:else if selectedProposalType === "transfer_sns_funds"}
-                <TransferSnsFunds
-                    bind:valid={transferSnsFundsValid}
-                    bind:this={transferSnsFunds}
-                    {nervousSystem} />
-            {:else if selectedProposalType === "register_external_achievement"}
-                <section>
-                    <Legend label={i18nKey("proposal.maker.achievementName")} required />
+            {:else if step === 2}
+                {#if selectedProposalType === "set_community_verification" || selectedProposalType === "revoke_community_verification" || selectedProposalType === "set_group_verification" || selectedProposalType === "revoke_group_verification"}
+                    <VerificationProposal
+                        bind:this={verificationComponent}
+                        bind:valid={verificationValid}
+                        type={selectedProposalType} />
+                {:else if selectedProposalType === "publish_bot"}
+                    <BotPublisher bind:selected={selectedBot}></BotPublisher>
+                {:else if selectedProposalType === "remove_bot"}
+                    <RemoveBot bind:valid={removeBotValid}></RemoveBot>
+                {:else if selectedProposalType === "transfer_sns_funds"}
+                    <TransferSnsFunds
+                        bind:valid={transferSnsFundsValid}
+                        bind:this={transferSnsFunds}
+                        {nervousSystem} />
+                {:else if selectedProposalType === "register_external_achievement"}
                     <Input
                         autofocus
                         disabled={busy}
                         error={achivementName.length > 0 && !achievementNameValid}
                         bind:value={achivementName}
+                        required
                         minlength={MIN_ACHIEVEMENT_NAME_LENGTH}
                         maxlength={MAX_ACHIEVEMENT_NAME_LENGTH}
                         countdown
                         placeholder={interpolate(
                             $_,
                             i18nKey("proposal.maker.enterAchievementName"),
-                        )} />
-                </section>
-                <section>
-                    <Legend label={i18nKey("proposal.maker.achievementUrl")} required />
+                        )}>
+                        {#snippet subtext()}
+                            <Translatable
+                                resourceKey={i18nKey("proposal.maker.enterAchievementName")} />
+                        {/snippet}
+                    </Input>
                     <Input
                         disabled={busy}
                         minlength={1}
                         maxlength={100}
                         bind:value={achievementUrl}
                         countdown
-                        placeholder={interpolate($_, i18nKey("https://myapp.xyz/register"))} />
-                </section>
-                <section>
-                    <Legend label={i18nKey("proposal.maker.achievementLogo")} />
+                        required
+                        placeholder={interpolate($_, i18nKey("https://myapp.xyz/register"))}>
+                        {#snippet subtext()}
+                            <Translatable resourceKey={i18nKey("proposal.maker.achievementUrl")} />
+                        {/snippet}
+                    </Input>
                     <Input
                         disabled={busy}
                         error={!isLogoValid(logo)}
@@ -637,13 +652,11 @@
                         placeholder={interpolate(
                             $_,
                             i18nKey("data:image/svg+xml;base64,PHN2ZyB3aW..."),
-                        )} />
-                </section>
-                <section>
-                    <Legend
-                        label={i18nKey("proposal.maker.awardingAchievementCanisterId")}
-                        rules={i18nKey("proposal.maker.awardingAchievementCanisterIdRules")}
-                        required />
+                        )}>
+                        {#snippet subtext()}
+                            <Translatable resourceKey={i18nKey("proposal.maker.achievementLogo")} />
+                        {/snippet}
+                    </Input>
                     <Input
                         autofocus
                         disabled={busy}
@@ -652,129 +665,159 @@
                         bind:value={awardingAchievementCanisterId}
                         minlength={CANISTER_ID_LENGTH}
                         maxlength={CANISTER_ID_LENGTH}
+                        required
                         countdown
-                        placeholder={interpolate($_, i18nKey("2ouva-viaaa-aaaaq-aaamq-cai"))} />
-                </section>
-                <section>
-                    <Legend
-                        label={i18nKey("proposal.maker.chitReward")}
-                        rules={i18nKey("proposal.maker.chitRewardRules", {
-                            value: MIN_CHIT_REWARD,
-                        })}
-                        required />
+                        placeholder={interpolate(
+                            $_,
+                            i18nKey("proposal.maker.awardingAchievementCanisterId"),
+                        )}>
+                        {#snippet subtext()}
+                            <Translatable
+                                resourceKey={i18nKey(
+                                    "proposal.maker.awardingAchievementCanisterIdRules",
+                                )} />
+                        {/snippet}
+                    </Input>
                     <Input
                         disabled={busy}
                         error={chitRewardText.length > 0 && !chitRewardValid}
                         minlength={4}
                         maxlength={5}
+                        required
                         bind:value={chitRewardText}
-                        placeholder={interpolate($_, i18nKey("proposal.maker.enterChitReward"))} />
-                </section>
-                <section>
-                    <Legend
-                        label={i18nKey("proposal.maker.maxAwards")}
-                        rules={i18nKey("proposal.maker.maxAwardsRules", {
-                            value: MIN_AWARDS,
-                        })}
-                        required />
+                        placeholder={interpolate($_, i18nKey("proposal.maker.enterChitReward"))}>
+                        {#snippet subtext()}
+                            <Row gap={"xs"}>
+                                <Translatable resourceKey={i18nKey("proposal.maker.chitReward")} />
+                                (<Translatable
+                                    resourceKey={i18nKey("proposal.maker.chitRewardRules", {
+                                        value: MIN_CHIT_REWARD,
+                                    })} />)
+                            </Row>
+                        {/snippet}
+                    </Input>
                     <Input
                         disabled={busy}
                         error={maxAwardsText.length > 0 && !maxAwardsValid}
                         minlength={3}
                         maxlength={8}
+                        required
                         bind:value={maxAwardsText}
-                        placeholder={interpolate($_, i18nKey("proposal.maker.enterMaxAwards"))} />
-                </section>
-                <section>
-                    <Legend label={i18nKey("proposal.maker.achievementExpiry")} required />
+                        placeholder={interpolate($_, i18nKey("proposal.maker.enterMaxAwards"))}>
+                        {#snippet subtext()}
+                            <Row gap={"xs"}>
+                                <Translatable resourceKey={i18nKey("proposal.maker.maxAwards")} />
+                                (<Translatable
+                                    resourceKey={i18nKey("proposal.maker.maxAwardsRules", {
+                                        value: MIN_AWARDS,
+                                    })} />)
+                            </Row>
+                        {/snippet}
+                    </Input>
+                    <Column padding={["zero", "md"]}>
+                        <DurationSelector bind:duration={achievementExpiry}>
+                            {#snippet title()}
+                                <Column>
+                                    <Body>
+                                        <Translatable
+                                            resourceKey={i18nKey(
+                                                "proposal.maker.achievementExpiry",
+                                            )} />
+                                    </Body>
+                                    <BodySmall colour={"textSecondary"}>
+                                        <Translatable
+                                            resourceKey={i18nKey(
+                                                "Specify how long you would like your promotion to run for",
+                                            )} />
+                                    </BodySmall>
+                                </Column>
+                            {/snippet}
+                        </DurationSelector>
+                    </Column>
+                {:else if selectedProposalType === "add_token" || selectedProposalType === "update_token"}
+                    <section>
+                        <Legend label={i18nKey("proposal.maker.ledgerCanisterId")} required />
+                        <Input
+                            autofocus
+                            disabled={busy}
+                            error={addOrUpdateTokenLedgerCanisterId.length > 0 &&
+                                !isPrincipalValid(addOrUpdateTokenLedgerCanisterId)}
+                            bind:value={addOrUpdateTokenLedgerCanisterId}
+                            minlength={CANISTER_ID_LENGTH}
+                            maxlength={CANISTER_ID_LENGTH}
+                            countdown
+                            placeholder={interpolate($_, i18nKey("2ouva-viaaa-aaaaq-aaamq-cai"))} />
+                    </section>
+                    <section>
+                        <Legend
+                            label={i18nKey("proposal.maker.tokenInfoUrl")}
+                            required={selectedProposalType === "add_token"} />
+                        <Input
+                            disabled={busy}
+                            minlength={1}
+                            maxlength={100}
+                            bind:value={addOrUpdateTokenInfoUrl}
+                            countdown
+                            placeholder={interpolate($_, i18nKey("https://token.com/info"))} />
+                    </section>
+                    <section>
+                        <Legend
+                            label={i18nKey("proposal.maker.transactionUrlFormat")}
+                            required={selectedProposalType === "add_token"} />
+                        <Input
+                            disabled={busy}
+                            minlength={1}
+                            maxlength={200}
+                            bind:value={addOrUpdateTokenTransactionUrlFormat}
+                            countdown
+                            placeholder={interpolate(
+                                $_,
+                                i18nKey(`https://token.com/transactions/{transaction_index}`),
+                            )} />
+                    </section>
+                {/if}
+            {/if}
+        </Column>
 
-                    <DurationPicker
-                        bind:valid={achievementExpiryValid}
-                        bind:milliseconds={achievementExpiry}
-                        unitFilter={(u) => !["minutes", "hours"].includes(u)} />
-                </section>
-            {:else if selectedProposalType === "add_token" || selectedProposalType === "update_token"}
-                <section>
-                    <Legend label={i18nKey("proposal.maker.ledgerCanisterId")} required />
-                    <Input
-                        autofocus
-                        disabled={busy}
-                        error={addOrUpdateTokenLedgerCanisterId.length > 0 &&
-                            !isPrincipalValid(addOrUpdateTokenLedgerCanisterId)}
-                        bind:value={addOrUpdateTokenLedgerCanisterId}
-                        minlength={CANISTER_ID_LENGTH}
-                        maxlength={CANISTER_ID_LENGTH}
-                        countdown
-                        placeholder={interpolate($_, i18nKey("2ouva-viaaa-aaaaq-aaamq-cai"))} />
-                </section>
-                <section>
-                    <Legend
-                        label={i18nKey("proposal.maker.tokenInfoUrl")}
-                        required={selectedProposalType === "add_token"} />
-                    <Input
-                        disabled={busy}
-                        minlength={1}
-                        maxlength={100}
-                        bind:value={addOrUpdateTokenInfoUrl}
-                        countdown
-                        placeholder={interpolate($_, i18nKey("https://token.com/info"))} />
-                </section>
-                <section>
-                    <Legend
-                        label={i18nKey("proposal.maker.transactionUrlFormat")}
-                        required={selectedProposalType === "add_token"} />
-                    <Input
-                        disabled={busy}
-                        minlength={1}
-                        maxlength={200}
-                        bind:value={addOrUpdateTokenTransactionUrlFormat}
-                        countdown
-                        placeholder={interpolate(
-                            $_,
-                            i18nKey(`https://token.com/transactions/{transaction_index}`),
+        <!-- Footer -->
+        <Column gap={"lg"}>
+            {#if (selectedProposalType === "register_external_achievement" || selectedProposalType === "add_token") && step === 2}
+                <Body colour={insufficientFundsForPayment ? "error" : "textSecondary"}>
+                    <Translatable
+                        resourceKey={i18nKey(
+                            "proposal.maker." +
+                                (selectedProposalType === "add_token"
+                                    ? "addTokenChatCost"
+                                    : "achievementChatCost"),
+                            {
+                                cost: client.formatTokens(
+                                    selectedProposalType === "add_token"
+                                        ? TOKEN_LISTING_FEE
+                                        : achievementChatCost,
+                                    8,
+                                ),
+                                chat: "CHAT",
+                            },
                         )} />
-                </section>
+                </Body>
             {/if}
-        {/if}
-    </Column>
-
-    <!-- Footer -->
-    <Column gap={"lg"}>
-        {#if (selectedProposalType === "register_external_achievement" || selectedProposalType === "add_token") && step === 2}
-            <Body colour={insufficientFundsForPayment ? "error" : "textSecondary"}>
-                <Translatable
-                    resourceKey={i18nKey(
-                        "proposal.maker." +
-                            (selectedProposalType === "add_token"
-                                ? "addTokenChatCost"
-                                : "achievementChatCost"),
-                        {
-                            cost: client.formatTokens(
-                                selectedProposalType === "add_token"
-                                    ? TOKEN_LISTING_FEE
-                                    : achievementChatCost,
-                                8,
-                            ),
-                            chat: "CHAT",
-                        },
-                    )} />
-            </Body>
-        {/if}
-        {#if depositMessage !== undefined}
-            <Body colour={depositError ? "error" : "textSecondary"}>
-                <Translatable resourceKey={depositMessage} />
-            </Body>
-        {/if}
-        {#if errorMessage !== undefined}
-            <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
-        {/if}
-
-        <Row gap={"md"} mainAxisAlignment={"end"}>
-            {#if step > 1 || (step == 1 && insufficientFunds)}
-                <CommonButton size={"small_text"} disabled={busy} onClick={() => (step = step - 1)}
-                    ><Translatable resourceKey={i18nKey("group.back")} /></CommonButton>
+            {#if depositMessage !== undefined}
+                <Body colour={depositError ? "error" : "textSecondary"}>
+                    <Translatable resourceKey={depositMessage} />
+                </Body>
             {/if}
-            <div class="actions">
+            {#if errorMessage !== undefined}
+                <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
+            {/if}
+
+            <Row crossAxisAlignment={"center"} gap={"md"} mainAxisAlignment={"end"}>
+                {#if step > 1 || (step == 1 && insufficientFunds)}
+                    <CommonButton
+                        size={"small_text"}
+                        disabled={busy}
+                        onClick={() => (step = step - 1)}
+                        ><Translatable resourceKey={i18nKey("group.back")} /></CommonButton>
+                {/if}
                 <CommonButton size={"small_text"} disabled={busy} onClick={onClose}
                     >{$_("cancel")}</CommonButton>
 
@@ -788,7 +831,7 @@
                         resourceKey={i18nKey(
                             step === 0 ? "refresh" : canSubmit ? "submit" : "group.next",
                         )} /></CommonButton>
-            </div>
-        </Row>
+            </Row>
+        </Column>
     </Column>
 </Sheet>

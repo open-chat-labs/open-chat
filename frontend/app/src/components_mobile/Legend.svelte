@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Body, BodySmall, Row } from "component-lib";
+    import { BodySmall, Row, type Padding } from "component-lib";
     import type { ResourceKey } from "openchat-client";
     import Translatable from "./Translatable.svelte";
 
@@ -8,17 +8,23 @@
         rules?: ResourceKey | undefined;
         required?: boolean;
         large?: boolean;
+        padding?: Padding;
     }
 
-    let { label, rules = undefined, required = false }: Props = $props();
+    let {
+        label,
+        rules = undefined,
+        required = false,
+        padding = ["zero", "xl", "xs", "xl"],
+    }: Props = $props();
 </script>
 
-<Row width={"hug"} gap={"xs"} crossAxisAlignment={"center"}>
-    <Body width={"hug"}>
+<Row {padding} width={"hug"} gap={"xs"} crossAxisAlignment={"center"}>
+    <BodySmall width={"hug"}>
         <Translatable resourceKey={label} />
-    </Body>
+    </BodySmall>
     {#if rules}
-        <BodySmall>(<Translatable resourceKey={rules} />)</BodySmall>
+        <BodySmall colour={"textSecondary"}>(<Translatable resourceKey={rules} />)</BodySmall>
     {/if}
     {#if required}
         <span class="required">*</span>

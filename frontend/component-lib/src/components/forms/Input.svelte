@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Caption, ColourVars, Container, type Padding } from "component-lib";
+    import { BodySmall, Caption, ColourVars, Container, Row, type Padding } from "component-lib";
     import { onMount, type Snippet } from "svelte";
 
     interface Props {
@@ -16,6 +16,7 @@
         textButtons?: Snippet;
         disabled?: boolean;
         autofocus?: boolean;
+        required?: boolean;
     }
 
     let {
@@ -32,6 +33,7 @@
         textButtons,
         disabled = false,
         autofocus = false,
+        required = false,
     }: Props = $props();
 
     let remaining = $derived(maxlength - (value?.toString()?.length ?? 0));
@@ -93,11 +95,14 @@
         {/if}
     </Container>
     {#if subtext}
-        <div class="subtext">
-            <Caption colour={error ? "error" : "textSecondary"}>
+        <Row width={"hug"} gap={"xs"} padding={["zero", "xl"]}>
+            <Caption width={"hug"} colour={error ? "error" : "textSecondary"}>
                 {@render subtext()}
             </Caption>
-        </div>
+            {#if required}
+                <BodySmall width={"hug"} colour={"error"}>*</BodySmall>
+            {/if}
+        </Row>
     {/if}
 </Container>
 
@@ -122,11 +127,6 @@
         &::placeholder {
             color: var(--text-placeholder);
         }
-    }
-
-    .subtext {
-        padding-inline-start: var(--sp-xl);
-        padding-inline-end: var(--sp-xl);
     }
 
     .countdown {

@@ -1,15 +1,16 @@
 <script lang="ts">
+    import { Column, Input, Radio } from "component-lib";
     import {
         isPrincipalValid,
         isSubAccountValid,
         type NervousSystemDetails,
-        type Treasury,
         type TransferSnsFunds,
+        type Treasury,
     } from "openchat-client";
-    import { i18nKey } from "../../../i18n/i18n";
+    import { _ } from "svelte-i18n";
+    import { i18nKey, interpolate } from "../../../i18n/i18n";
     import Legend from "../../Legend.svelte";
-    import Radio from "../../Radio.svelte";
-    import Input from "../../Input.svelte";
+    import Translatable from "../../Translatable.svelte";
 
     interface Props {
         nervousSystem: NervousSystemDetails;
@@ -57,59 +58,69 @@
     }
 </script>
 
-<div>
-    <section>
-        <Legend label={i18nKey("proposal.maker.treasury")} required />
-        <Radio
-            id="chat_treasury"
-            group="treasury"
-            value={symbol}
-            label={i18nKey(symbol)}
-            disabled={busy}
-            checked={treasury === "SNS"}
-            onChange={() => (treasury = "SNS")} />
-        <Radio
-            id="icp_treasury"
-            group="treasury"
-            value="ICP"
-            label={i18nKey("ICP")}
-            disabled={busy}
-            checked={treasury === "ICP"}
-            onChange={() => (treasury = "ICP")} />
-    </section>
-    <section>
+<Column gap={"xl"}>
+    <Column>
+        <Legend
+            padding={["zero", "zero", "xs", "zero"]}
+            label={i18nKey("proposal.maker.treasury")}
+            required />
+        <Column gap={"sm"}>
+            <Radio
+                id="chat_treasury"
+                group="treasury"
+                value={symbol}
+                disabled={busy}
+                checked={treasury === "SNS"}
+                onChange={() => (treasury = "SNS")}>
+                <Translatable resourceKey={i18nKey(symbol)} />
+            </Radio>
+            <Radio
+                id="icp_treasury"
+                group="treasury"
+                value="ICP"
+                disabled={busy}
+                checked={treasury === "ICP"}
+                onChange={() => (treasury = "ICP")}>
+                <Translatable resourceKey={i18nKey("ICP")} />
+            </Radio>
+        </Column>
+    </Column>
+    <Column>
         <Legend label={i18nKey("proposal.maker.recipientOwner")} required />
         <Input
             disabled={busy}
-            invalid={recipientOwner.length > 0 && !recipientOwnerValid}
+            error={recipientOwner.length > 0 && !recipientOwnerValid}
             maxlength={63}
             bind:value={recipientOwner}
-            placeholder={i18nKey("proposal.maker.enterRecipientOwner")} />
-    </section>
-    <section>
+            placeholder={interpolate($_, i18nKey("proposal.maker.enterRecipientOwner"))} />
+    </Column>
+    <Column>
         <Legend
             label={i18nKey("proposal.maker.recipientSubaccount")}
             rules={i18nKey("proposal.maker.recipientSubaccountRules")} />
         <Input
             disabled={busy}
-            invalid={!recipientSubaccountValid}
+            error={!recipientSubaccountValid}
             maxlength={64}
             bind:value={recipientSubaccount}
-            placeholder={i18nKey("proposal.maker.enterRecipientSubaccount")} />
-    </section>
-    <section>
+            placeholder={interpolate($_, i18nKey("proposal.maker.enterRecipientSubaccount"))} />
+    </Column>
+    <Column>
         <Legend
             label={i18nKey("proposal.maker.amount")}
             rules={i18nKey("proposal.maker.amountRules", { token })}
             required />
         <Input
             disabled={busy}
-            invalid={amountText.length > 0 && !amountValid}
+            error={amountText.length > 0 && !amountValid}
             minlength={1}
             maxlength={20}
             bind:value={amountText}
-            placeholder={i18nKey("proposal.maker.enterAmount", {
-                token,
-            })} />
-    </section>
-</div>
+            placeholder={interpolate(
+                $_,
+                i18nKey("proposal.maker.enterAmount", {
+                    token,
+                }),
+            )} />
+    </Column>
+</Column>

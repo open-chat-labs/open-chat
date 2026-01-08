@@ -456,13 +456,13 @@
             ? $selectedChatSummaryStore
             : undefined,
     );
-    let governanceCanisterId = $derived(
-        selectedMultiUserChat !== undefined
-            ? selectedMultiUserChat.subtype?.governanceCanisterId
-            : undefined,
-    );
-    let nervousSystem = $derived(client.tryGetNervousSystem(governanceCanisterId));
-    // $: nervousSystem = client.tryGetNervousSystem("rrkah-fqaaa-aaaaa-aaaaq-cai");
+    // let governanceCanisterId = $derived(
+    //     selectedMultiUserChat !== undefined
+    //         ? selectedMultiUserChat.subtype?.governanceCanisterId
+    //         : undefined,
+    // );
+    // let nervousSystem = $derived(client.tryGetNervousSystem(governanceCanisterId));
+    let nervousSystem = $derived(client.tryGetNervousSystem("rrkah-fqaaa-aaaaa-aaaaq-cai"));
 
     let showOnboarding = $derived(client.isHomeRoute($routeStore) && $anonUserStore);
 
