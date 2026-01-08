@@ -206,6 +206,7 @@
 
 <button
     class="backdrop"
+    class:active={openFactor > 0.2}
     style={`opacity: ${openFactor};`}
     onclick={collapse}
     aria-label="close sheet">
@@ -255,6 +256,11 @@
         position: fixed;
         z-index: 1;
         background-color: var(--backdrop);
+        pointer-events: none;
+
+        &.active {
+            pointer-events: auto;
+        }
     }
 
     .collapsed_content,
