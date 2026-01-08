@@ -76,9 +76,14 @@ impl Bot {
         granted_autonomous_permissions: BotPermissions,
         installed_by: UserId,
         installed_at: TimestampMillis,
-    ) -> bool {
-        self.installations
-            .insert(
+    ) {
+        if let Some(installation) = self.installations.get_mut(&location) {
+            installation.local_user_index = local_user_index;
+            installation.granted_permissions = granted_permissions;
+            installation.granted_autonomous_permissions = granted_autonomous_permissions;
+            installation.updated_at = installed_at;
+        } else {
+            self.installations.insert(
                 location,
                 InstalledBotDetails {
                     local_user_index,
@@ -88,24 +93,7 @@ impl Bot {
                     granted_autonomous_permissions,
                     updated_at: installed_at,
                 },
-            )
-            .is_none()
-    }
-
-    pub fn update_installation(
-        &mut self,
-        location: BotInstallationLocation,
-        granted_permissions: BotPermissions,
-        granted_autonomous_permissions: BotPermissions,
-        updated_at: TimestampMillis,
-    ) -> bool {
-        if let Some(installation) = self.installations.get_mut(&location) {
-            installation.granted_permissions = granted_permissions;
-            installation.granted_autonomous_permissions = granted_autonomous_permissions;
-            installation.updated_at = updated_at;
-            true
-        } else {
-            false
+            );
         }
     }
 
@@ -135,11 +123,8 @@ pub struct InstalledBotDetails {
     pub local_user_index: CanisterId,
     pub installed_by: UserId,
     pub installed_at: TimestampMillis,
-    #[serde(default)]
     pub granted_permissions: BotPermissions,
-    #[serde(default)]
     pub granted_autonomous_permissions: BotPermissions,
-    #[serde(default)]
     pub updated_at: TimestampMillis,
 }
 
@@ -423,22 +408,8 @@ impl UserMap {
                 granted_autonomous_permissions,
                 installed_by,
                 now,
-            )
-        } else {
-            false
-        }
-    }
-
-    pub fn update_bot_installation(
-        &mut self,
-        bot_id: UserId,
-        location: BotInstallationLocation,
-        granted_permissions: BotPermissions,
-        granted_autonomous_permissions: BotPermissions,
-        now: TimestampMillis,
-    ) -> bool {
-        if let Some(bot) = self.bots.get_mut(&bot_id) {
-            bot.update_installation(location, granted_permissions, granted_autonomous_permissions, now)
+            );
+            true
         } else {
             false
         }
