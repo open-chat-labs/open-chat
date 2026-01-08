@@ -25,14 +25,9 @@ pub struct GroupPermissions {
     pub pin_messages: GroupPermissionRole,
     pub react_to_messages: GroupPermissionRole,
     pub mention_all_members: GroupPermissionRole,
-    #[serde(default = "admin")]
     pub start_video_call: GroupPermissionRole,
     pub message_permissions: MessagePermissions,
     pub thread_permissions: Option<MessagePermissions>,
-}
-
-fn admin() -> GroupPermissionRole {
-    GroupPermissionRole::Admins
 }
 
 #[ts_export]
@@ -49,7 +44,6 @@ pub struct MessagePermissions {
     pub giphy: Option<GroupPermissionRole>,
     pub prize: Option<GroupPermissionRole>,
     pub p2p_swap: Option<GroupPermissionRole>,
-    #[serde(default)]
     pub video_call: Option<GroupPermissionRole>,
     pub custom: Vec<CustomPermission>,
 }

@@ -3,8 +3,11 @@ use candid::Principal;
 use dataurl::DataUrl;
 use http_request::{AvatarRoute, Route, build_json_response, encode_logs, extract_route, get_document};
 use ic_cdk::query;
-use std::collections::BTreeMap;
-use types::{HeaderField, HttpRequest, HttpResponse, TimestampMillis, UserId};
+use serde::Serialize;
+use std::collections::{BTreeMap, HashSet};
+use types::{
+    ChatPermission, CommunityPermission, HeaderField, HttpRequest, HttpResponse, MessagePermission, TimestampMillis, UserId,
+};
 use utils::time::MonthKey;
 
 #[query]
@@ -38,9 +41,29 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         let bots: Vec<_> = state
             .data
             .users
-            .iter()
-            .filter(|u| u.user_type.is_bot())
-            .map(|u| (u.user_id.to_string(), u.username.clone()))
+            .iter_bots()
+            .map(|(u, b)| {
+                let mut total_permissions = b
+                    .definition
+                    .autonomous_config
+                    .as_ref()
+                    .map(|c| c.permissions.clone())
+                    .unwrap_or_default();
+
+                for command in b.definition.commands.iter() {
+                    total_permissions = total_permissions.union(&command.permissions);
+                }
+
+                BotSummary {
+                    user_id: u.to_string(),
+                    name: b.name.clone(),
+                    owner_id: b.owner.to_string(),
+                    owner_username: state.data.users.get_by_user_id(&b.owner).map(|u| u.username.clone()),
+                    requested_community_permissions: total_permissions.community(),
+                    requested_chat_permissions: total_permissions.chat(),
+                    requested_message_permissions: total_permissions.message(),
+                }
+            })
             .collect();
 
         build_json_response(&bots)
@@ -116,4 +139,15 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         Route::Other(path, _) => read_state(|state| handle_other_path(path, state)),
         _ => HttpResponse::not_found(),
     }
+}
+
+#[derive(Serialize)]
+struct BotSummary {
+    user_id: String,
+    name: String,
+    owner_id: String,
+    owner_username: Option<String>,
+    requested_community_permissions: HashSet<CommunityPermission>,
+    requested_chat_permissions: HashSet<ChatPermission>,
+    requested_message_permissions: HashSet<MessagePermission>,
 }
