@@ -1,13 +1,11 @@
 <script lang="ts">
-    import { AvatarSize, OpenChat, type GroupMatch } from "openchat-client";
+    import { Avatar, Column, Option, Row, Search, Select, Subtitle } from "component-lib";
+    import { chatIdentifiersEqual, OpenChat, type GroupMatch } from "openchat-client";
     import { getContext } from "svelte";
-    import { i18nKey } from "../../../i18n/i18n";
+    import { _ } from "svelte-i18n";
+    import { i18nKey, interpolate } from "../../../i18n/i18n";
     import { groupSearchState } from "../../../stores/search.svelte";
-    import Avatar from "../../Avatar.svelte";
-    import Menu from "../../Menu.svelte";
-    import MenuItem from "../../MenuItem.svelte";
-    import Search from "../../Search.svelte";
-    import SelectedMatch from "./SelectedMatch.svelte";
+    import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
     const PAGE_SIZE = 15;
@@ -19,8 +17,8 @@
 
     let { onSelect, selected }: Props = $props();
 
-    function search(term: string) {
-        if (term === "") {
+    function search(term?: string) {
+        if (term === undefined || term === "") {
             reset(true);
             return;
         }
@@ -50,49 +48,64 @@
     }
 </script>
 
-<div class="finder">
-    {#if selected !== undefined}
-        <SelectedMatch onRemove={() => reset(true)} match={selected}></SelectedMatch>
-    {:else}
-        <Search
-            bind:searchTerm={groupSearchState.term}
-            searching={false}
-            onPerformSearch={search}
-            placeholder={i18nKey("searchGroupsPlaceholder")} />
-    {/if}
+<Select
+    onSelect={select}
+    onOpen={() => search(groupSearchState.term)}
+    placeholder={interpolate($_, i18nKey("verified.choose", undefined, "group", true))}
+    value={selected}>
+    {#snippet subtext()}
+        <Translatable resourceKey={i18nKey("verified.choose", undefined, "group", true)}
+        ></Translatable>
+    {/snippet}
+    {#snippet selectedValue(val)}
+        {val.name}
+    {/snippet}
+    {#snippet selectOptions(onSelect)}
+        <Column
+            onClick={(e) => e?.stopPropagation()}
+            height={{ size: "100%" }}
+            supplementalClass={"group_options"}
+            padding={"lg"}
+            gap={"lg"}>
+            <Subtitle fontWeight={"bold"}>
+                <Translatable resourceKey={i18nKey("verified.choose", undefined, "group", true)}
+                ></Translatable>
+            </Subtitle>
 
-    {#if groupSearchState.results.length > 0}
-        <div class="menu">
-            <Menu fit>
+            <Search
+                onSearch={search}
+                onClear={() => (groupSearchState.term = "")}
+                searching={false}
+                placeholder={interpolate($_, i18nKey("search"))}
+                value={groupSearchState.term} />
+
+            <Column supplementalClass={"binding_options"}>
                 {#each groupSearchState.results as group (group.chatId.groupId)}
-                    <MenuItem onclick={() => select(group)}>
-                        {#snippet icon()}
+                    <Option
+                        padding={["xs", "lg", "xs", "xs"]}
+                        value={group}
+                        onClick={onSelect}
+                        selected={chatIdentifiersEqual(selected?.chatId, group.chatId)}>
+                        <Row padding={["zero", "zero"]} gap={"md"} crossAxisAlignment={"center"}>
                             <Avatar
                                 url={client.groupAvatarUrl({
                                     ...group,
                                     id: group.chatId,
                                 })}
-                                size={AvatarSize.Small} />
-                        {/snippet}
-                        {#snippet text()}
-                            {group.name}
-                        {/snippet}
-                    </MenuItem>
+                                size={"lg"} />
+                            <Subtitle fontWeight={"bold"}>
+                                {group.name}
+                            </Subtitle>
+                        </Row>
+                    </Option>
                 {/each}
-            </Menu>
-        </div>
-    {/if}
-</div>
+            </Column>
+        </Column>
+    {/snippet}
+</Select>
 
 <style lang="scss">
-    .finder {
-        margin-bottom: $sp3;
-    }
-
-    .menu {
-        max-height: 250px;
-        overflow: auto;
-        width: fit-content;
-        margin-top: $sp3;
+    :global(.container.group_options) {
+        flex: auto !important;
     }
 </style>
