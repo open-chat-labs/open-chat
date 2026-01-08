@@ -1,33 +1,32 @@
 <script lang="ts">
     import type { Snippet } from "svelte";
-    import { elasticInOut, expoInOut } from "svelte/easing";
+    import { cubicInOut } from "svelte/easing";
     import { fade, fly } from "svelte/transition";
 
     interface Props {
         children: Snippet;
         top: boolean;
+        speed?: number;
     }
 
-    let { children, top }: Props = $props();
-
-    const SPEED = 300;
+    let { children, top, speed = 300 }: Props = $props();
 </script>
 
 {#if !top}
     <div
-        transition:fade={{ duration: SPEED, easing: elasticInOut }}
+        transition:fade={{ duration: speed, easing: cubicInOut }}
         class="sliding_page_overlay_before">
     </div>
 {/if}
 <div
     class:top
-    transition:fly={{ duration: SPEED, easing: expoInOut, x: window.innerWidth }}
-    style={`--speed: ${SPEED}ms`}
+    transition:fly={{ duration: speed, easing: cubicInOut, x: window.innerWidth }}
+    style={`--speed: ${speed}ms`}
     class="sliding_page">
     {@render children()}
 </div>
 {#if !top}
-    <div transition:fade={{ duration: SPEED }} class="sliding_page_overlay"></div>
+    <div transition:fade={{ duration: speed }} class="sliding_page_overlay"></div>
 {/if}
 
 <style lang="scss">

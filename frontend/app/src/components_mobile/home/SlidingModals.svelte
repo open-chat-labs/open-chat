@@ -472,7 +472,7 @@
 </script>
 
 {#each modalStack as page}
-    <SlidingPage top={page === top}>
+    <SlidingPage speed={page.kind === "open_thread" ? 500 : 300} top={page === top}>
         {#if page.kind === "user_profile_chats_and_video"}
             <ChatsAndVideo />
         {:else if page.kind === "forward_message"}
