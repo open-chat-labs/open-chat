@@ -47,13 +47,13 @@
         min-width: 100px;
         margin: 0 auto;
         border-radius: var(--rad-circle);
-        @include z-index("date-label");
         margin-bottom: var(--sp-lg);
 
         &.floating {
             position: absolute;
             top: 90px;
             left: 50%;
+            @include z-index("date-label");
             transform: translateX(calc(-50% - 3px));
         }
     }

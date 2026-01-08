@@ -1,17 +1,9 @@
 <script lang="ts">
+    import { Avatar, Body, ColourVars, Column, MenuItem, Row } from "component-lib";
     import type { OpenChat, UserOrUserGroup } from "openchat-client";
-    import {
-        allUsersStore,
-        AvatarSize,
-        iconSize,
-        selectedCommunityMembersStore,
-    } from "openchat-client";
+    import { allUsersStore, iconSize, selectedCommunityMembersStore } from "openchat-client";
     import { getContext } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
-    import Avatar from "../Avatar.svelte";
-    import Menu from "../Menu.svelte";
-    import MenuItem from "../MenuItem.svelte";
-    import VirtualList from "../VirtualList.svelte";
     import MentionPickerLogic from "./MentionPickerLogic.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -60,104 +52,67 @@
                 class:inline
                 class:border
                 {style}>
-                <Menu fit>
-                    <VirtualList keyFn={userOrGroupKey} items={filtered}>
-                        {#snippet children(item, itemIndex)}
-                            <MenuItem selected={itemIndex === index} onclick={() => mention(item)}>
-                                {#snippet icon()}
-                                    <div class="avatar">
-                                        {#if item.kind === "user_group" || item.kind === "everyone"}
-                                            <div class="group-icon">
-                                                <AccountMultiple
-                                                    color={"var(--menu-disabled-txt)"}
-                                                    size={$iconSize} />
-                                            </div>
-                                        {:else}
-                                            <Avatar
-                                                url={client.userAvatarUrl(
-                                                    $allUsersStore.get(item.userId),
-                                                )}
-                                                userId={item.userId}
-                                                size={AvatarSize.Small} />
-                                        {/if}
+                <Column
+                    borderRadius={"md"}
+                    backgroundColor={ColourVars.background1}
+                    width={"fill"}
+                    height={"fill"}>
+                    {#each filtered as item, itemIndex (userOrGroupKey(item))}
+                        <MenuItem selected={itemIndex === index} onclick={() => mention(item)}>
+                            {#snippet icon()}
+                                {#if item.kind === "user_group" || item.kind === "everyone"}
+                                    <div class="group-icon">
+                                        <AccountMultiple
+                                            color={"var(--menu-disabled-txt)"}
+                                            size={$iconSize} />
                                     </div>
-                                {/snippet}
-                                {#snippet text()}
-                                    <div>
-                                        {#if item.kind === "user_group"}
-                                            <span class="display-name">
-                                                {item.name}
-                                            </span>
-                                        {:else if item.kind === "everyone"}
-                                            <span class="display-name">
-                                                {"everyone"}
-                                            </span>
-                                        {:else}
-                                            <span class="display-name">
-                                                {client.getDisplayName(
-                                                    item.userId,
-                                                    $selectedCommunityMembersStore,
-                                                )}
-                                            </span>
-                                            <span class="username">
-                                                @{item.username}
-                                            </span>
-                                        {/if}
-                                    </div>
-                                {/snippet}
-                            </MenuItem>
-                        {/snippet}
-                    </VirtualList>
-                </Menu>
+                                {:else}
+                                    <Avatar
+                                        url={client.userAvatarUrl($allUsersStore.get(item.userId))}
+                                        size={"sm"} />
+                                {/if}
+                            {/snippet}
+                            <Row gap={"xs"} crossAxisAlignment={"center"}>
+                                {#if item.kind === "user_group"}
+                                    <Body width={"hug"}>
+                                        {item.name}
+                                    </Body>
+                                {:else if item.kind === "everyone"}
+                                    <Body width={"hug"}>
+                                        {"everyone"}
+                                    </Body>
+                                {:else}
+                                    <Body width={"hug"}>
+                                        {client.getDisplayName(
+                                            item.userId,
+                                            $selectedCommunityMembersStore,
+                                        )}
+                                    </Body>
+                                    <Body colour={"textSecondary"} width={"hug"}>
+                                        @{item.username}
+                                    </Body>
+                                {/if}
+                            </Row>
+                        </MenuItem>
+                    {/each}
+                </Column>
             </div>
         {/if}
     {/snippet}
 </MentionPickerLogic>
 
 <style lang="scss">
-    :global(.mention-picker .menu) {
-        box-shadow: none;
-        position: relative;
-        width: 100%;
-        height: 100%;
-        @include z-index("footer-overlay");
-    }
-
     .mention-picker {
+        @include z-index("footer-overlay");
         position: absolute;
         max-height: calc(var(--vh, 1vh) * 50);
         overflow: auto;
         z-index: 10000;
 
-        &.up {
-            box-shadow: var(--menu-inverted-sh);
-        }
-
-        &.down {
-            box-shadow: var(--menu-sh);
-        }
-
         &.inline {
             position: relative;
             box-shadow: none;
         }
-
-        &.border {
-            border: 1px solid var(--bd);
-            border-top: none;
-        }
-
-        .display-name {
-            font-weight: 500;
-        }
-
-        .username {
-            font-weight: 200;
-            color: var(--menu-disabled-txt);
-        }
-    }
-    .avatar {
-        margin-right: $sp3;
     }
 
     .group-icon {

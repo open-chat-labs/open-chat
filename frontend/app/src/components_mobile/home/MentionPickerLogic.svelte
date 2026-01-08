@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { OpenChat, UserOrUserGroup } from "openchat-client";
-    import { currentUserIdStore, mobileWidth } from "openchat-client";
+    import { currentUserIdStore } from "openchat-client";
     import { getContext, onMount, type Snippet } from "svelte";
 
     const client = getContext<OpenChat>("client");
@@ -54,6 +54,7 @@
                 return order[a.kind] - order[b.kind];
             },
         );
+        console.log("UsersAndGroups", usersAndGroups);
     });
 
     function mention(userOrGroup: UserOrUserGroup) {
@@ -68,8 +69,8 @@
         }
         return a.length < b.length ? -1 : 1;
     }
-    let itemHeight = $derived($mobileWidth ? 53 : 55);
-    let borderWidth = $derived(direction === "up" ? 2 : 3);
+    const itemHeight = 48;
+    const borderWidth = 0;
     let maxHeight = $derived(
         direction === "down" ? `${3.2 * itemHeight + borderWidth}px` : "calc(var(--vh, 1vh) * 50)",
     );
@@ -123,6 +124,8 @@
                   filtered.length * itemHeight + borderWidth
               }px; max-height: ${maxHeight}`,
     );
+
+    $inspect(filtered.length, itemHeight, borderWidth);
 
     function userOrGroupKey(u: UserOrUserGroup): string {
         switch (u.kind) {

@@ -24,6 +24,7 @@ export { default as Select } from "./components/forms/select/Select.svelte";
 export { default as TextArea } from "./components/forms/TextArea.svelte";
 export { default as ListAction } from "./components/ListAction.svelte";
 export { default as Logo } from "./components/Logo.svelte";
+export { default as Menu } from "./components/menu/Menu.svelte";
 export { default as MenuItem } from "./components/menu/MenuItem.svelte";
 export { default as MenuTrigger } from "./components/menu/MenuTrigger.svelte";
 export { default as NotificationIndicator } from "./components/NotificationIndicator.svelte";

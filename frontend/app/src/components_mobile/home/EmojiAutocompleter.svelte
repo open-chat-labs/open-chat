@@ -1,11 +1,9 @@
 <script lang="ts">
+    import { ColourVars, Column, MenuItem } from "component-lib";
     import type { NativeEmoji } from "emoji-picker-element/shared";
     import { mobileWidth } from "openchat-client";
     import { untrack } from "svelte";
     import { emojiDatabase } from "../../utils/emojis";
-    import Menu from "../Menu.svelte";
-    import MenuItem from "../MenuItem.svelte";
-    import VirtualList from "../VirtualList.svelte";
 
     type EmojiSummary = {
         unicode: string;
@@ -87,24 +85,18 @@
 </script>
 
 <div class="picker" style={`bottom: ${offset}px; height: ${matches.length * ITEM_HEIGHT}px`}>
-    <Menu>
-        <VirtualList keyFn={(e) => e.unicode} items={matches}>
-            {#snippet children(match, itemIndex)}
-                <MenuItem selected={itemIndex === index} onclick={() => select(match.unicode)}>
-                    {#snippet icon()}
-                        <div class="emoji">
-                            {match.unicode}
-                        </div>
-                    {/snippet}
-                    {#snippet text()}
-                        <div>
-                            :{match.code}:
-                        </div>
-                    {/snippet}
-                </MenuItem>
-            {/snippet}
-        </VirtualList>
-    </Menu>
+    <Column backgroundColor={ColourVars.background1}>
+        {#each matches as match, i}
+            <MenuItem selected={i === index} onclick={() => select(match.unicode)}>
+                {#snippet icon()}
+                    <div class="emoji">
+                        {match.unicode}
+                    </div>
+                {/snippet}
+                :{match.code}:
+            </MenuItem>
+        {/each}
+    </Column>
 </div>
 
 <svelte:body onkeydown={onKeyDown} />
@@ -120,10 +112,10 @@
 
     .picker {
         position: absolute;
+        z-index: 10;
         width: 100%;
         max-height: calc(var(--vh, 1vh) * 50);
         overflow: auto;
-        box-shadow: var(--menu-inverted-sh);
     }
     .emoji {
         @include font(book, normal, fs-160);

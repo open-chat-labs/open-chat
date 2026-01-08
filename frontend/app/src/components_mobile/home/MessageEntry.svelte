@@ -132,7 +132,6 @@
     let showEmojiSearch = $state(false);
     let mentionPrefix: string | undefined = $state();
     let emojiQuery: string | undefined = $state();
-    let messageEntryHeight: number = $state(0);
     let rangeToReplace: [Node, number, number] | undefined = undefined;
     let containsMarkdown = $state(false);
     let showDirectBotChatWarning = $state(false);
@@ -582,11 +581,7 @@
 {/if}
 
 {#if showMentionPicker}
-    <MentionPicker
-        supportsUserGroups
-        offset={messageEntryHeight}
-        onMention={mention}
-        prefix={mentionPrefix} />
+    <MentionPicker supportsUserGroups offset={80} onMention={mention} prefix={mentionPrefix} />
 {/if}
 
 {#if showCommandSelector}
@@ -601,7 +596,7 @@
 
 {#if showEmojiSearch}
     <EmojiAutocompleter
-        offset={messageEntryHeight}
+        offset={80}
         onClose={() => (showEmojiSearch = false)}
         onSelect={completeEmoji}
         query={emojiQuery} />
