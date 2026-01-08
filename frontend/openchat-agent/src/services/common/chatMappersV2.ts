@@ -291,8 +291,8 @@ export async function getEventsSuccess(
     return (
         error ?? {
             events: value.events.map(eventWrapper),
-            expiredEventRanges: value.expired_event_ranges.map(expiredEventsRange),
-            expiredMessageRanges: value.expired_message_ranges.map(expiredMessagesRange),
+            expiredEventRanges: value.expired_event_ranges?.map(expiredEventsRange) ?? [],
+            expiredMessageRanges: value.expired_message_ranges?.map(expiredMessagesRange) ?? [],
             latestEventIndex: value.latest_event_index,
         }
     );
@@ -547,13 +547,13 @@ export function message(value: TMessage): Message {
         repliesTo: mapOptional(value.replies_to, replyContext),
         messageId: toBigInt64(value.message_id),
         messageIndex: value.message_index,
-        reactions: reactions(value.reactions),
-        tips: tips(value.tips),
-        edited: value.edited,
-        forwarded: value.forwarded,
+        reactions: reactions(value.reactions ?? []),
+        tips: tips(value.tips ?? []),
+        edited: value.edited ?? false,
+        forwarded: value.forwarded ?? false,
         deleted: content.kind === "deleted_content",
         thread: mapOptional(value.thread_summary, threadSummary),
-        blockLevelMarkdown: value.block_level_markdown,
+        blockLevelMarkdown: value.block_level_markdown ?? false,
         senderContext: mapOptional(value.sender_context, senderContext),
     };
 }
