@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use types::{
-    BotEvent, BotInstallationLocation, BotInstalledEvent, BotLifecycleEvent, BotNotification, OCResult, UserId, UserType,
+    BotEvent, BotInstallationLocation, BotInstalledEvent, BotLifecycleEvent, BotNotification, OCResult, UserType,
     c2c_install_bot::*,
 };
 
@@ -16,9 +16,7 @@ fn c2c_install_bot(args: Args) -> Response {
 }
 
 fn c2c_install_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    let user_id: UserId = state.env.canister_id().into();
-
-    if args.caller != user_id && args.caller != state.data.owner.into() {
+    if args.caller != state.env.canister_id().into() {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     };
 
@@ -30,7 +28,7 @@ fn c2c_install_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
     if !state.data.bots.add(
         args.bot_id,
-        user_id,
+        args.caller,
         args.granted_permissions.clone(),
         args.granted_autonomous_permissions.clone(),
         args.default_subscriptions.clone(),
@@ -57,8 +55,8 @@ fn c2c_install_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
     state.push_bot_notification(Some(BotNotification {
         event: BotEvent::Lifecycle(BotLifecycleEvent::Installed(BotInstalledEvent {
-            installed_by: user_id,
-            location: BotInstallationLocation::User(user_id.into()),
+            installed_by: args.caller,
+            location: BotInstallationLocation::User(args.caller.into()),
             granted_command_permissions: args.granted_permissions,
             granted_autonomous_permissions: args.granted_autonomous_permissions.unwrap_or_default(),
         })),
