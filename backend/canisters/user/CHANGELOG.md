@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Skip serializing chat summary fields which are their default values ([#8769](https://github.com/open-chat-labs/open-chat/pull/8769))
 - Skip serializing chat event fields which are their default values ([#8770](https://github.com/open-chat-labs/open-chat/pull/8770))
 - Simplify handling of bot installation lifecycle events ([#8776](https://github.com/open-chat-labs/open-chat/pull/8776))
+- Skip serializing fields of user updates which are their default values ([#8779](https://github.com/open-chat-labs/open-chat/pull/8779))
 
 ### Removed
 
