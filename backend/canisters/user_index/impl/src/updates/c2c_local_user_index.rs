@@ -175,15 +175,6 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 **now,
             );
         }
-        LocalUserIndexEvent::BotInstallationUpdated(ev) => {
-            state.data.users.update_bot_installation(
-                ev.bot_id,
-                ev.location,
-                ev.granted_permissions,
-                ev.granted_autonomous_permissions,
-                **now,
-            );
-        }
         LocalUserIndexEvent::BotUninstalled(ev) => {
             state.data.users.remove_bot_installation(ev.bot_id, &ev.location);
         }

@@ -151,7 +151,7 @@ fn process_event(event: LocalUserIndexEvent, state: &mut RuntimeState) {
             state.award_external_achievement(ev.name, ev.chit_reward, now);
         }
         LocalUserIndexEvent::ReinstateMissedDailyClaims(days) => state.reinstate_missed_daily_claims(days),
-        LocalUserIndexEvent::BotRemoved(bot_id) => state.uninstall_bot(bot_id, false),
+        LocalUserIndexEvent::BotRemoved(bot_id) => state.uninstall_bot(bot_id),
         LocalUserIndexEvent::BotUpdated(ev) => {
             state.data.handle_bot_definition_updated(*ev, now);
         }
