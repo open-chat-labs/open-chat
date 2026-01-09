@@ -1,17 +1,22 @@
 <script lang="ts">
-    import { iconSize, mobileWidth, type ChatIdentifier, type OpenChat } from "openchat-client";
+    import {
+        BodySmall,
+        Button,
+        Column,
+        Option,
+        Row,
+        Select,
+        Sheet,
+        Subtitle,
+        Switch,
+    } from "component-lib";
+    import { iconSize, type ChatIdentifier, type OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Flag from "svelte-material-icons/Flag.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
-    import Button from "../Button.svelte";
-    import ButtonGroup from "../ButtonGroup.svelte";
-    import Checkbox from "../Checkbox.svelte";
-    import Legend from "../Legend.svelte";
-    import ModalContent from "../ModalContent.svelte";
-    import Overlay from "../Overlay.svelte";
-    import Select from "../Select.svelte";
+    import Setting from "../Setting.svelte";
     import Translatable from "../Translatable.svelte";
     import Markdown from "./Markdown.svelte";
 
@@ -28,8 +33,8 @@
     const client = getContext<OpenChat>("client");
 
     let deleteMessage = $state(false);
-    let busy = false;
-    let selectedReasonIndex = $state(-1);
+    let busy = $state(false);
+    let selectedReason = $state<string>();
     let reasons = [
         "report.pleaseSelect",
         "report.threat",
@@ -40,7 +45,7 @@
         "report.scam",
     ];
 
-    let valid = $derived(selectedReasonIndex > -1);
+    let valid = $derived(selectedReason !== undefined);
 
     function createReport() {
         report();
@@ -60,72 +65,70 @@
     }
 </script>
 
-<Overlay {onClose} dismissible>
-    <ModalContent {onClose} closeIcon>
-        {#snippet header()}
-            <span class="header">
-                <Flag size={$iconSize} color={"var(--error)"} />
-                <h1><Translatable resourceKey={i18nKey("report.title")} /></h1>
-            </span>
-        {/snippet}
-        {#snippet body()}
-            <span>
-                <div class="reason">
-                    <Legend label={i18nKey("report.reason")} />
-                    <Select bind:value={selectedReasonIndex}>
-                        {#each reasons as reason, i}
-                            <option disabled={i === 0} value={i - 1}
-                                ><Translatable resourceKey={i18nKey(reason)} /></option>
+<Sheet>
+    <Column gap={"xl"} padding={"xl"}>
+        <Row crossAxisAlignment={"center"} gap={"sm"}>
+            <Flag size={$iconSize} color={"var(--error)"} />
+            <Subtitle fontWeight={"bold"}
+                ><Translatable resourceKey={i18nKey("report.title")} /></Subtitle>
+        </Row>
+        <Column gap={"lg"}>
+            <Select
+                error={selectedReason === undefined}
+                placeholder={"Select a reason for your report"}
+                onSelect={(reason) => (selectedReason = reason)}
+                value={selectedReason}>
+                {#snippet subtext()}
+                    <Translatable resourceKey={i18nKey("Select a reason for your report")} />
+                {/snippet}
+                {#snippet selectedValue(reason)}
+                    <Translatable resourceKey={i18nKey(reason)} />
+                {/snippet}
+                {#snippet selectOptions(onSelect)}
+                    <Column
+                        onClick={(e) => e?.stopPropagation()}
+                        height={{ size: "100%" }}
+                        supplementalClass={"reason_options"}
+                        padding={"lg"}
+                        gap={"lg"}>
+                        {#each reasons as reason}
+                            <Option
+                                padding={"xs"}
+                                selected={false}
+                                value={reason}
+                                onClick={onSelect}>
+                                <Translatable resourceKey={i18nKey(reason)} />
+                            </Option>
                         {/each}
-                    </Select>
-                </div>
-                {#if canDelete}
-                    <div class="delete">
-                        <Checkbox
-                            id={"delete_message"}
-                            label={i18nKey("report.deleteMessage")}
-                            bind:checked={deleteMessage} />
-                    </div>
-                {/if}
-                <div class="advice">
-                    <Markdown
-                        text={$_("report.advice", {
-                            values: { rules: "https://oc.app/guidelines?section=3" },
-                        })} />
-                </div>
-            </span>
-        {/snippet}
-        {#snippet footer()}
-            <span>
-                <ButtonGroup>
-                    <Button secondary small={!$mobileWidth} tiny={$mobileWidth} onClick={onClose}
-                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-                    <Button
-                        disabled={busy || !valid}
-                        loading={busy}
-                        small={!$mobileWidth}
-                        tiny={$mobileWidth}
-                        onClick={createReport}
-                        ><Translatable resourceKey={i18nKey("report.menu")} /></Button>
-                </ButtonGroup>
-            </span>
-        {/snippet}
-    </ModalContent>
-</Overlay>
+                    </Column>
+                {/snippet}
+            </Select>
+            {#if canDelete}
+                <Setting
+                    toggle={() => (deleteMessage = !deleteMessage)}
+                    info={"As well as reporting this message, you can also choose whether or not to delete it by toggling this setting."}>
+                    <Switch
+                        onChange={() => (deleteMessage = !deleteMessage)}
+                        width={"fill"}
+                        reverse
+                        checked={deleteMessage}>
+                        <Translatable resourceKey={i18nKey("Delete message")} />
+                    </Switch>
+                </Setting>
+            {/if}
 
-<style lang="scss">
-    .header {
-        display: flex;
-        gap: $sp3;
-        align-items: center;
-    }
-
-    .advice {
-        @include font(book, normal, fs-80);
-        color: var(--txt-light);
-    }
-
-    .delete {
-        margin-bottom: $sp4;
-    }
-</style>
+            <BodySmall colour={"textSecondary"}>
+                <Markdown
+                    text={$_("report.advice", {
+                        values: { rules: "https://oc.app/guidelines?section=3" },
+                    })} />
+            </BodySmall>
+        </Column>
+        <Column gap={"md"}>
+            <Button disabled={!valid} loading={busy} onClick={createReport}
+                ><Translatable resourceKey={i18nKey("report.menu")} /></Button>
+            <Button secondary onClick={onClose}
+                ><Translatable resourceKey={i18nKey("cancel")} /></Button>
+        </Column>
+    </Column>
+</Sheet>
