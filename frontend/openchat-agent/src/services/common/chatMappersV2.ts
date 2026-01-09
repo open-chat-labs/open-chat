@@ -1426,32 +1426,32 @@ export function permissionRole(value: TGroupPermissionRole): PermissionRole {
 
 export function chatMetrics(value: TChatMetrics): Metrics {
     return {
-        audioMessages: Number(value.audio_messages),
-        edits: Number(value.edits),
-        cryptoMessages: Number(value.crypto_messages),
-        giphyMessages: Number(value.giphy_messages),
-        deletedMessages: Number(value.deleted_messages),
-        fileMessages: Number(value.file_messages),
-        pollVotes: Number(value.poll_votes),
-        textMessages: Number(value.text_messages),
-        imageMessages: Number(value.image_messages),
-        replies: Number(value.replies),
-        videoMessages: Number(value.video_messages),
-        polls: Number(value.polls),
-        reactions: Number(value.reactions),
-        reportedMessages: Number(value.reported_messages),
+        audioMessages: value.audio_messages ?? 0,
+        edits: value.edits ?? 0,
+        cryptoMessages: value.crypto_messages ?? 0,
+        giphyMessages: value.giphy_messages ?? 0,
+        deletedMessages: value.deleted_messages ?? 0,
+        fileMessages: value.file_messages ?? 0,
+        pollVotes: value.poll_votes ?? 0,
+        textMessages: value.text_messages ?? 0,
+        imageMessages: value.image_messages ?? 0,
+        replies: value.replies ?? 0,
+        videoMessages: value.video_messages ?? 0,
+        polls: value.polls ?? 0,
+        reactions: value.reactions ?? 0,
+        reportedMessages: value.reported_messages ?? 0,
     };
 }
 
-export function memberRole(value: TGroupRole | TCommunityRole): MemberRole {
+export function memberRole(value: TGroupRole | TCommunityRole | undefined): MemberRole {
+    if (value === undefined || value === "Participant" || value === "Member") {
+        return ROLE_MEMBER;
+    }
     if (value === "Admin") {
         return ROLE_ADMIN;
     }
     if (value === "Moderator") {
         return ROLE_MODERATOR;
-    }
-    if (value === "Participant" || value === "Member") {
-        return ROLE_MEMBER;
     }
     if (value === "Owner") {
         return ROLE_OWNER;
@@ -2083,10 +2083,10 @@ export function groupChatSummary(value: TGroupCanisterGroupChatSummary): GroupCh
         latestMessage,
         name: value.name,
         description: value.description,
-        public: value.is_public,
-        historyVisible: value.history_visible_to_new_joiners,
-        minVisibleEventIndex: value.min_visible_event_index,
-        minVisibleMessageIndex: value.min_visible_message_index,
+        public: value.is_public ?? false,
+        historyVisible: value.history_visible_to_new_joiners ?? false,
+        minVisibleEventIndex: value.min_visible_event_index ?? 0,
+        minVisibleMessageIndex: value.min_visible_message_index ?? 0,
         latestEventIndex: value.latest_event_index,
         latestMessageIndex: value.latest_message_index,
         lastUpdated: value.last_updated,
@@ -2108,12 +2108,12 @@ export function groupChatSummary(value: TGroupCanisterGroupChatSummary): GroupCh
         },
         level: "group",
         eventsTTL: value.events_ttl,
-        eventsTtlLastUpdated: value.events_ttl_last_updated,
+        eventsTtlLastUpdated: value.events_ttl_last_updated ?? BigInt(0),
         membership: mapGroupMembership(value.membership, latestMessage),
         localUserIndex: principalBytesToString(value.local_user_index_canister_id),
         isInvited: false, // this is only applicable when we are not a member
-        messagesVisibleToNonMembers: value.messages_visible_to_non_members,
-        verified: value.verified,
+        messagesVisibleToNonMembers: value.messages_visible_to_non_members ?? false,
+        verified: value.verified ?? false,
     };
 }
 
@@ -2129,13 +2129,13 @@ function mapGroupMembership(
         joined: value.joined,
         role: memberRole(value.role),
         mentions: mentions(value.mentions),
-        latestThreads: value.latest_threads.map(threadSyncDetails),
+        latestThreads: value.latest_threads?.map(threadSyncDetails) ?? [],
         myMetrics: chatMetrics(value.my_metrics),
-        notificationsMuted: value.notifications_muted,
-        atEveryoneMuted: value.at_everyone_muted,
+        notificationsMuted: value.notifications_muted ?? false,
+        atEveryoneMuted: value.at_everyone_muted ?? false,
         readByMeUpTo: latestMessage?.event.messageIndex,
         archived: false,
-        rulesAccepted: value.rules_accepted,
+        rulesAccepted: value.rules_accepted ?? false,
         lapsed: value.lapsed ?? false,
     };
 }
@@ -2148,7 +2148,7 @@ export function communitySummary(value: TCommunityCanisterCommunitySummary): Com
         id: { kind: "community", communityId },
         name: value.name,
         description: value.description,
-        public: value.is_public,
+        public: value.is_public ?? false,
         historyVisible: false,
         latestEventIndex: value.latest_event_index,
         lastUpdated: value.last_updated,
@@ -2185,10 +2185,10 @@ export function communitySummary(value: TCommunityCanisterCommunitySummary): Com
         },
         channels: value.channels.map((c) => communityChannelSummary(c, communityId)),
         primaryLanguage: value.primary_language,
-        userGroups: new Map(value.user_groups.map(userGroup)),
+        userGroups: new Map(value.user_groups?.map(userGroup) ?? []),
         localUserIndex,
         isInvited: value.is_invited ?? false,
-        verified: value.verified,
+        verified: value.verified ?? false,
     };
 }
 
@@ -2215,10 +2215,10 @@ export function communityChannelSummary(
         latestMessage,
         name: value.name,
         description: value.description,
-        public: value.is_public,
-        historyVisible: value.history_visible_to_new_joiners,
-        minVisibleEventIndex: value.min_visible_event_index,
-        minVisibleMessageIndex: value.min_visible_message_index,
+        public: value.is_public ?? false,
+        historyVisible: value.history_visible_to_new_joiners ?? false,
+        minVisibleEventIndex: value.min_visible_event_index ?? 0,
+        minVisibleMessageIndex: value.min_visible_message_index ?? 0,
         latestEventIndex: value.latest_event_index,
         latestMessageIndex: value.latest_message_index,
         lastUpdated: value.last_updated,
@@ -2239,11 +2239,11 @@ export function communityChannelSummary(
         },
         level: "channel",
         eventsTTL: value.events_ttl,
-        eventsTtlLastUpdated: value.events_ttl_last_updated,
+        eventsTtlLastUpdated: value.events_ttl_last_updated ?? BigInt(0),
         videoCallInProgress: mapOptional(value.video_call_in_progress, videoCallInProgress),
         membership: mapGroupMembership(value.membership, latestMessage),
         isInvited: value.is_invited ?? false,
-        messagesVisibleToNonMembers: value.messages_visible_to_non_members,
+        messagesVisibleToNonMembers: value.messages_visible_to_non_members ?? false,
         externalUrl: value.external_url,
     };
 }
@@ -2363,8 +2363,8 @@ export function mention(value: TMention): Mention {
     };
 }
 
-export function mentions(value: TMention[]): Mention[] {
-    return value.filter((m) => m.thread_root_message_index === undefined).map(mention);
+export function mentions(value: TMention[] | undefined): Mention[] {
+    return (value ?? []).filter((m) => m.thread_root_message_index === undefined).map(mention);
 }
 
 export function expiredEventsRange([start, end]: [number, number]): ExpiredEventsRange {

@@ -520,25 +520,24 @@ export function argIsValid(schema: CommandParam, arg: CommandArg): boolean {
     } else if (schema.kind === "boolean" && arg.kind === "boolean") {
         return !schema.required || arg.value !== undefined;
     } else if (schema.kind === "string" && arg.kind === "string") {
-        // TODO - this is not quite right because it doesn't account for choices.
-        // if we specify choices then the value of the arg must match one of the choices.
-        // this means that we can currently do things like /faq some_old_nonsense
-        return (
-            !schema.required ||
-            (arg.value !== undefined &&
-                arg.value.length >= schema.minLength &&
-                arg.value.length <= schema.maxLength)
-        );
-    } else if (schema.kind === "integer" && arg.kind === "integer") {
-        return (
-            (!schema.required && arg.value === null) ||
-            (arg.value !== null && arg.value >= schema.minValue && arg.value <= schema.maxValue)
-        );
-    } else if (schema.kind === "decimal" && arg.kind === "decimal") {
-        return (
-            (!schema.required && arg.value === null) ||
-            (arg.value !== null && arg.value >= schema.minValue && arg.value <= schema.maxValue)
-        );
+        if (!schema.required && arg.value === undefined) return true;
+        if (arg.value === undefined) return false;
+        if (schema.choices.length > 0) {
+            return schema.choices.map((c) => c.value).includes(arg.value);
+        } else {
+            return arg.value.length >= schema.minLength && arg.value.length <= schema.maxLength;
+        }
+    } else if (
+        (schema.kind === "integer" && arg.kind === "integer") ||
+        (schema.kind === "decimal" && arg.kind === "decimal")
+    ) {
+        if (!schema.required && arg.value === null) return true;
+        if (arg.value === null) return false;
+        if (schema.choices.length > 0) {
+            return schema.choices.map((c) => c.value).includes(arg.value);
+        } else {
+            return arg.value >= schema.minValue && arg.value <= schema.maxValue;
+        }
     } else if (schema.kind === "dateTime" && arg.kind === "dateTime") {
         return !schema.required || (arg.value !== undefined && arg.value !== null);
     }
