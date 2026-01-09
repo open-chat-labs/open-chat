@@ -8679,12 +8679,12 @@ export const Message = Type.Object({
     content: MessageContent,
     sender_context: Type.Optional(SenderContext),
     replies_to: Type.Optional(ReplyContext),
-    reactions: Type.Array(Type.Tuple([Reaction, Type.Array(UserId)])),
-    tips: Tips,
+    reactions: Type.Optional(Type.Array(Type.Tuple([Reaction, Type.Array(UserId)]))),
+    tips: Type.Optional(Tips),
     thread_summary: Type.Optional(ThreadSummary),
-    edited: Type.Boolean(),
-    forwarded: Type.Boolean(),
-    block_level_markdown: Type.Boolean(),
+    edited: Type.Optional(Type.Boolean()),
+    forwarded: Type.Optional(Type.Boolean()),
+    block_level_markdown: Type.Optional(Type.Boolean()),
 });
 
 export type ChatSummary = Static<typeof ChatSummary>;
@@ -9381,9 +9381,9 @@ export const UserMessagesByMessageIndexResponse = Type.Union([
 export type EventsResponse = Static<typeof EventsResponse>;
 export const EventsResponse = Type.Object({
     events: Type.Array(EventWrapperChatEvent),
-    unauthorized: Type.Array(EventIndex),
-    expired_event_ranges: Type.Array(Type.Tuple([EventIndex, EventIndex])),
-    expired_message_ranges: Type.Array(Type.Tuple([MessageIndex, MessageIndex])),
+    unauthorized: Type.Optional(Type.Array(EventIndex)),
+    expired_event_ranges: Type.Optional(Type.Array(Type.Tuple([EventIndex, EventIndex]))),
+    expired_message_ranges: Type.Optional(Type.Array(Type.Tuple([MessageIndex, MessageIndex]))),
     latest_event_index: EventIndex,
     chat_last_updated: Type.BigInt(),
 });

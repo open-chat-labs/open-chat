@@ -1,6 +1,6 @@
 use crate::{
     Achievement, BotCaller, BotCommand, CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex, Reaction,
-    ThreadSummary, UserId,
+    ThreadSummary, UserId, is_default,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -16,11 +16,21 @@ pub struct Message {
     pub content: MessageContent,
     pub sender_context: Option<SenderContext>,
     pub replies_to: Option<ReplyContext>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Vec<(Reaction, Vec<UserId>)>>", optional)]
     pub reactions: Vec<(Reaction, Vec<UserId>)>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[ts(as = "Option<Tips>", optional)]
     pub tips: Tips,
     pub thread_summary: Option<ThreadSummary>,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
     pub edited: bool,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
     pub forwarded: bool,
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<bool>", optional)]
     pub block_level_markdown: bool,
 }
 
