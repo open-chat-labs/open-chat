@@ -131,7 +131,7 @@ export class Colour {
         else if (h < 180) [r, g, b] = [0, c, x];
         else if (h < 240) [r, g, b] = [0, x, c];
         else if (h < 300) [r, g, b] = [x, 0, c];
-        else [r, g, b] = [c, 0, x];
+        else[r, g, b] = [c, 0, x];
 
         return new Colour(
             Math.round((r + m) * 255),
@@ -202,6 +202,7 @@ export class Colours {
         public textAccent: Colour,
         public gradientPrimary: Colour,
         public gradientSecondary: Colour,
+        public backdrop: Colour,
     ) {
         this.gradient = new Gradient(gradientPrimary, gradientSecondary);
         this.gradientInverted = new Gradient(gradientSecondary, gradientPrimary);
@@ -237,6 +238,7 @@ export class Colours {
             this.gradientPrimary.cssVariable("gradient-primary"),
             this.gradientSecondary.cssVariable("gradient-secondary"),
             this.myChatBubble.cssVariable("my-chat-bubble"),
+            this.backdrop.cssVariable("backdrop"),
         ];
     }
 }
@@ -257,6 +259,7 @@ const dummyColour = Colour.fromHex("#000000");
 export const ColourVars: ColourVarsType = Object.fromEntries(
     Object.keys(
         new Colours(
+            dummyColour,
             dummyColour,
             dummyColour,
             dummyColour,
