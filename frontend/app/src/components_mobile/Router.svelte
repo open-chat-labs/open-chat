@@ -124,11 +124,11 @@
                 update: () => {
                     client.setRouteParams(ctx, params);
                     scrollToTop();
+                    next();
+                    return tick();
                 },
                 types: [transitionType],
             });
-
-            tick().then(() => next());
         };
     }
 
