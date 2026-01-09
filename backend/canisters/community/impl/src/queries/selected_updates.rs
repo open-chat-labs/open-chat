@@ -58,7 +58,8 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
         user_groups_deleted: data.members.user_groups_deleted_since(args.updates_since),
         referrals_added: vec![],
         referrals_removed: vec![],
-        public_channel_list_updated: state.data.public_channel_list_updated,
+        public_channel_list_updated: (state.data.public_channel_list_updated >= args.updates_since)
+            .then_some(state.data.public_channel_list_updated),
     };
 
     let mut user_updates_handler = UserUpdatesHandler {

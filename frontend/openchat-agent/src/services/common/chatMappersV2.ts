@@ -111,7 +111,7 @@ import type {
     VideoCallPresence,
     VideoCallType,
     VideoContent,
-    WebhookDetails,
+    WebhookDetails, VersionedRules,
 } from "openchat-shared";
 import {
     CommonResponses,
@@ -2444,15 +2444,14 @@ export function groupDetailsSuccess(
     const bots = "bots" in value ? value.bots : [];
     return {
         members,
-        blockedUsers: new Set(value.blocked_users.map(principalBytesToString)),
-        invitedUsers: new Set(value.invited_users.map(principalBytesToString)),
-        pinnedMessages: new Set(value.pinned_messages),
-        rules: value.chat_rules,
+        blockedUsers: new Set(value.blocked_users?.map(principalBytesToString) ?? []),
+        invitedUsers: new Set(value.invited_users?.map(principalBytesToString) ?? []),
+        pinnedMessages: new Set(value.pinned_messages ?? []),
+        rules: value.chat_rules ?? emptyRules(),
         timestamp: value.timestamp,
-        bots: bots.map(installedBotDetails),
-        webhooks: value.webhooks.map((v) =>
-            webhookDetails(v, blobUrlPattern, canisterId, channelId),
-        ),
+        bots: bots?.map(installedBotDetails) ?? [],
+        webhooks: value.webhooks?.map((v) =>
+            webhookDetails(v, blobUrlPattern, canisterId, channelId)) ?? [],
     };
 }
 
@@ -2466,13 +2465,13 @@ export function groupDetailsUpdatesResponse(
         if ("Success" in value) {
             return {
                 kind: "success",
-                membersAddedOrUpdated: value.Success.members_added_or_updated.map(member),
-                membersRemoved: new Set(value.Success.members_removed.map(principalBytesToString)),
+                membersAddedOrUpdated: value.Success.members_added_or_updated?.map(member) ?? [],
+                membersRemoved: new Set(value.Success.members_removed?.map(principalBytesToString) ?? []),
                 blockedUsersAdded: new Set(
-                    value.Success.blocked_users_added.map(principalBytesToString),
+                    value.Success.blocked_users_added?.map(principalBytesToString) ?? [],
                 ),
                 blockedUsersRemoved: new Set(
-                    value.Success.blocked_users_removed.map(principalBytesToString),
+                    value.Success.blocked_users_removed?.map(principalBytesToString) ?? [],
                 ),
                 pinnedMessagesAdded: new Set(value.Success.pinned_messages_added),
                 pinnedMessagesRemoved: new Set(value.Success.pinned_messages_removed),
@@ -2482,8 +2481,8 @@ export function groupDetailsUpdatesResponse(
                     (invited_users) => new Set(invited_users.map(principalBytesToString)),
                 ),
                 timestamp: value.Success.timestamp,
-                botsAddedOrUpdated: value.Success.bots_added_or_updated.map(installedBotDetails),
-                botsRemoved: new Set(value.Success.bots_removed.map(principalBytesToString)),
+                botsAddedOrUpdated: value.Success.bots_added_or_updated?.map(installedBotDetails) ?? [],
+                botsRemoved: new Set(value.Success.bots_removed?.map(principalBytesToString) ?? []),
                 webhooks: mapOptional(value.Success.webhooks, (whs) =>
                     whs.map((v) => webhookDetails(v, blobUrlPattern, canisterId, channelId)),
                 ),
@@ -2504,7 +2503,7 @@ export function member(value: TGroupMember): Member {
         role: memberRole(value.role),
         userId: principalBytesToString(value.user_id),
         displayName: undefined,
-        lapsed: value.lapsed,
+        lapsed: value.lapsed ?? false,
     };
 }
 
@@ -2942,3 +2941,10 @@ export function changeRoleResult(
 
     return mapResult(value, CommonResponses.success);
 }
+ function emptyRules(): VersionedRules {
+    return {
+        text: "",
+        enabled: false,
+        version: 0,
+    };
+ }
