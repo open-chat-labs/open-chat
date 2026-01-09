@@ -102,9 +102,7 @@
     class:visible={$showMiddle}
     class:offset
     class:halloween={$currentTheme.name === "halloween"}>
-    {#if $routeStore.kind === "explore_groups_route"}
-        <RecommendedGroups />
-    {:else if $routeStore.kind === "communities_route"}
+    {#if $routeStore.kind === "communities_route"}
         <ExploreCommunities />
     {:else if $selectedChatIdStore === undefined}
         {#if noChat}
