@@ -138,19 +138,20 @@ export class TokenState {
         return formatTokens(amount, this.#decimals);
     }
 
-    formatConvertedTokens(amount: bigint) {
-        return formatConvertedValue(
+    getConvertedTokens(amount: bigint) {
+        return getConvertedTokenValue(
             this.#selectedConversion,
-            getConvertedTokenValue(
-                this.#selectedConversion,
-                getConvertedBalances(
-                    exchangeRatesLookupStore.value,
-                    amount,
-                    this.#decimals,
-                    this.#symbol,
-                ),
+            getConvertedBalances(
+                exchangeRatesLookupStore.value,
+                amount,
+                this.#decimals,
+                this.#symbol,
             ),
         );
+    }
+
+    formatConvertedTokens(amount: bigint) {
+        return formatConvertedValue(this.#selectedConversion, this.getConvertedTokens(amount));
     }
 
     get account() {
