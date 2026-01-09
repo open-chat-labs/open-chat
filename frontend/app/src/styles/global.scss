@@ -183,6 +183,7 @@ html {
     box-sizing: border-box;
     font-size: var(--font-size);
 }
+
 *,
 *:before,
 *:after {
@@ -283,7 +284,8 @@ a {
     background-image: url("assets/flags.png") !important;
 }
 
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+@media (-webkit-min-device-pixel-ratio: 2),
+(min-resolution: 192dpi) {
     .iti__flag {
         background-image: url("assets/flags@2x.png") !important;
     }
@@ -330,6 +332,7 @@ a {
     h4 {
         margin-top: toRem(24);
         margin-bottom: toRem(16);
+
         &:first-child {
             margin-top: 0;
         }
@@ -342,6 +345,7 @@ a {
     pre,
     blockquote {
         margin-bottom: toRem(16);
+
         &:last-child {
             margin-bottom: 0;
         }
@@ -466,7 +470,7 @@ body.native-android {
     // We need to adjust the main content to account for the status bar height!
     // This is a workaround for the Android status bar issue
     // where the content is pushed down by the status bar height.
-    &:not(.landing-page, .onboarding) > main {
+    &:not(.landing-page, .onboarding)>main {
         // height: calc(100vh - var(--status-bar-height));
         // we also need to account for the safe area at the bottom
         padding-top: var(--status-bar-height) !important;
@@ -477,11 +481,11 @@ body.native-android {
             background-color: #1b1c20;
         }
 
-        > .wrapper {
+        >.wrapper {
             top: var(--status-bar-height);
         }
 
-        > .main {
+        >.main {
             margin-top: var(--status-bar-height);
             padding-top: var(--status-bar-height);
             height: calc(100vh - var(--status-bar-height));
@@ -501,9 +505,11 @@ svelte-virtual-list-viewport {
     z-index: 90;
     pointer-events: none;
     opacity: 0;
+
     &.visible {
         opacity: 0.8;
     }
+
     &.active {
         pointer-events: auto;
     }
@@ -572,18 +578,17 @@ $speed: 200ms;
 @include defineTransitionNameFor(".anchored_sheet", "anchored_sheet");
 @include defineTransitionNameFor(".sliding_page", "sliding_modal");
 @include defineTransitionNameFor(".sheet_overlay .sheet_content", "sheet_content");
-@include defineTransitionNameFor(".footer.thread, .footer.message", "footer");
 @include defineTransitionNameFor(".anon-footer", "anon_footer");
 
 // Ensure, elements are positioned as they should be!
 html::view-transition-group(bottom_nav_bar),
-html::view-transition-group(floating_button) {
+html::view-transition-group(floating_button),
+html::view-transition-group(sliding_modal) {
     z-index: 100;
 }
 
 html::view-transition-group(anchored_sheet),
-html::view-transition-group(footer),
-html::view-transition-group(annon_footer) {
+html::view-transition-group(anon_footer) {
     z-index: 99;
 }
 
@@ -599,6 +604,7 @@ html:active-view-transition-type(slide_left) {
             $speed ease-in-out both slide-to-left,
             $speed ease-in-out both fade-out;
     }
+
     &::view-transition-new(root) {
         animation:
             $speed ease-in-out both slide-from-right,
@@ -612,6 +618,7 @@ html:active-view-transition-type(slide_right) {
             $speed ease-in-out both slide-to-right,
             $speed ease-in-out both fade-out;
     }
+
     &::view-transition-new(root) {
         animation:
             $speed ease-in-out both slide-from-left,
