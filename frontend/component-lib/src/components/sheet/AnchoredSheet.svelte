@@ -40,6 +40,7 @@
     let sheet: HTMLElement;
     let handle: HTMLElement;
 
+    let dragged = $state(false);
     let isExpanded = $state(false);
     let openFactor = $state(0);
     let startY: undefined | number;
@@ -122,6 +123,7 @@
 
         // If the user grabs handle in the middle of animation!
         animating = false;
+        dragged = true;
         startY = e.clientY;
         startHeight = sheet.getBoundingClientRect().height;
     }
@@ -147,6 +149,7 @@
 
         startY = undefined;
         startHeight = undefined;
+        dragged = false;
         if (isExpanded) {
             openFactor <= closeThreshold ? collapse() : expand();
         } else {
@@ -217,7 +220,7 @@
     supplementalClass={`anchored_sheet ${supplementalClass ?? ""}`}
     overflow={"hidden"}
     direction={"vertical"}
-    padding={["sm", "zero", "sm", "zero"]}
+    padding={["zero", "zero", "sm", "zero"]}
     width={"fill"}
     borderRadius={["md", "md", "zero", "zero"]}
     background={ColourVars.background1}>
@@ -229,7 +232,8 @@
         onpointercancel={onDragStop}
         oncontextmenu={(e) => e.preventDefault()}
         aria-label="handle"
-        class="handle">
+        class="handle"
+        class:dragged>
         <div class="inner"></div>
     </button>
 
@@ -278,6 +282,7 @@
 
     .handle {
         all: unset;
+        padding-top: var(--sp-sm);
         padding-bottom: var(--sp-sm);
         position: sticky;
         touch-action: none;
@@ -292,6 +297,14 @@
             height: 0.25rem;
             border-radius: var(--rad-circle);
             background-color: var(--text-tertiary);
+            transition:
+                background-color 0.2s ease,
+                box-shadow 0.2s ease;
+        }
+
+        &.dragged .inner {
+            background-color: var(--primary);
+            box-shadow: 0 0 0.5rem 0.125rem var(--primary-muted);
         }
     }
 </style>
