@@ -24,7 +24,6 @@
     import ExploreCommunities from "./communities/explore/Explore.svelte";
     import CurrentChat from "./CurrentChat.svelte";
     import NoChatSelected from "./NoChatSelected.svelte";
-    import RecommendedGroups from "./RecommendedGroups.svelte";
 
     let middlePanel: HTMLElement | undefined;
 
