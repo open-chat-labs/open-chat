@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { Body, Column } from "component-lib";
     import { iconSize } from "openchat-client";
-    import { _ } from "svelte-i18n";
     import ThumbDown from "svelte-material-icons/ThumbDown.svelte";
     import ThumbUp from "svelte-material-icons/ThumbUp.svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -19,17 +19,14 @@
 
     let label = $derived(mode === "yes" ? i18nKey("proposal.adopt") : i18nKey("proposal.reject"));
     let iconColor = $derived(disabled && !voted ? "var(--vote-maybe-color)" : "var(--txt)");
-    let title = $derived(
-        voted
-            ? mode === "yes"
-                ? $_("proposal.youVotedAdopt")
-                : $_("proposal.youVotedReject")
-            : "",
-    );
 </script>
 
-<div class="vote-button" {title}>
-    <div class="label"><Translatable resourceKey={label} /></div>
+<Column crossAxisAlignment={"center"} mainAxisAlignment={"center"} gap={"sm"}>
+    <Body fontWeight={"bold"} width={"hug"}>
+        <Translatable resourceKey={label} />
+    </Body>
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div onclick={onClick} class:voting class:voted class:disabled class={`icon ${mode}`}>
         {#if !voting}
             {#if mode === "yes"}
@@ -39,17 +36,12 @@
             {/if}
         {/if}
     </div>
-    <div class={`percentage ${mode}`}>{percentage}%</div>
-</div>
+    <Body fontWeight={"bold"} colour={mode === "yes" ? "success" : "error"} width={"hug"}>
+        {percentage}%
+    </Body>
+</Column>
 
 <style lang="scss">
-    .vote-button {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 6px;
-    }
-
     .icon {
         border-radius: 50%;
         display: flex;
@@ -60,7 +52,6 @@
         cursor: pointer;
         border: solid 1px transparent;
         background-color: var(--vote-maybe-color);
-        transition: background-color 250ms ease-in-out;
 
         &.voted.yes,
         &.voting.yes {
@@ -70,16 +61,6 @@
         &.voted.no,
         &.voting.no {
             background-color: var(--vote-no-color);
-        }
-
-        @media (hover: hover) {
-            &.yes:not(.voted):not(.voting):not(.disabled):hover {
-                background-color: var(--vote-yes-color);
-            }
-
-            &.no:not(.voted):not(.voting):not(.disabled):hover {
-                background-color: var(--vote-no-color);
-            }
         }
 
         &.disabled {
@@ -98,15 +79,6 @@
                 var(--button-spinner),
                 "/assets/plain-spinner.svg"
             );
-        }
-    }
-
-    .percentage {
-        &.yes {
-            color: var(--vote-yes-color);
-        }
-        &.no {
-            color: var(--vote-no-color);
         }
     }
 </style>

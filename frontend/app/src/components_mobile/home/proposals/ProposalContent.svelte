@@ -1,5 +1,18 @@
 <script lang="ts">
     import {
+        Body,
+        BodySmall,
+        Caption,
+        ChatText,
+        ColourVars,
+        Column,
+        CommonButton,
+        ReadMore,
+        Row,
+        Sheet,
+        Subtitle,
+    } from "component-lib";
+    import {
         type ChatIdentifier,
         type OpenChat,
         type ProposalContent,
@@ -12,18 +25,14 @@
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ExpandIcon from "svelte-material-icons/ArrowExpandDown.svelte";
-    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Launch from "svelte-material-icons/Launch.svelte";
     import OpenInNew from "svelte-material-icons/OpenInNew.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { NamedNeurons } from "../../../stores/namedNeurons";
     import { proposalVotes } from "../../../stores/proposalVotes";
-    import { rtlStore } from "../../../stores/rtl";
     import { now } from "../../../stores/time";
     import { toastStore } from "../../../stores/toast";
     import { round2 } from "../../../utils/math";
-    import ModalContent from "../../ModalContent.svelte";
-    import Overlay from "../../Overlay.svelte";
     import Translatable from "../../Translatable.svelte";
     import Markdown from "../Markdown.svelte";
     import ProposalProgressLayout from "./ProposalProgressLayout.svelte";
@@ -56,17 +65,8 @@
     const EMPTY_MOTION_PAYLOAD = "# Motion Proposal:\n## Motion Text:\n\n";
 
     const dashboardUrl = "https://dashboard.internetcomputer.org";
-
-    let summaryExpanded = $state(false);
     let showNeuronInfo = $state(false);
     let showPayload = $state(false);
-
-    function toggleSummary() {
-        if (!showFullSummary) {
-            summaryExpanded = !summaryExpanded;
-        }
-    }
-
     function onVote(adopt: boolean) {
         if (votingDisabled || (chatId.kind !== "group_chat" && chatId.kind !== "channel")) {
             return;
@@ -82,7 +82,12 @@
                 if (resp.kind === "success") {
                     success = true;
                     proposalVotes.insert(mId, adopt ? "adopted" : "rejected");
-                    client.getProposalVoteDetails(messageId, content.governanceCanisterId, proposal.id, isNns);
+                    client.getProposalVoteDetails(
+                        messageId,
+                        content.governanceCanisterId,
+                        proposal.id,
+                        isNns,
+                    );
                 } else if (resp.kind === "error" && resp.code === ErrorCode.NoEligibleNeurons) {
                     showNeuronInfo = true;
                 } else {
@@ -149,15 +154,14 @@
             (content.myVote !== undefined ? (content.myVote ? "adopted" : "rejected") : undefined),
     );
     let proposal = $derived(content.proposal);
-    let positive = $derived(
-        proposal.status == ProposalDecisionStatus.Adopted ||
-            proposal.status == ProposalDecisionStatus.Executed,
-    );
-    let negative = $derived(
-        proposal.status == ProposalDecisionStatus.Failed ||
-            proposal.status == ProposalDecisionStatus.Rejected ||
-            proposal.status == ProposalDecisionStatus.Unspecified,
-    );
+    let statusColour: Record<ProposalDecisionStatus, string> = {
+        0: ColourVars.error,
+        1: ColourVars.error,
+        2: ColourVars.warning,
+        3: ColourVars.error,
+        4: ColourVars.success,
+        5: ColourVars.success,
+    };
     let proposalUrl = $derived(
         isNns
             ? `${dashboardUrl}/proposal/${proposal.id}`
@@ -174,273 +178,162 @@
     let disable = $derived(readonly || reply || votingEnded);
     let votingDisabled = $derived(voteStatus !== undefined || disable);
     let typeValue = $derived(getProposalTopicLabel(content, $proposalTopicsStore));
-    let showFullSummary = $derived(proposal.summary.length < 400);
     let payload = $derived(content.proposal.payloadTextRendering);
     let payloadEmpty = $derived(
         payload === undefined || payload === EMPTY_MOTION_PAYLOAD || payload.length === 0,
     );
-    $effect(() => {
-        if (collapsed) {
-            summaryExpanded = false;
-        }
-    });
 </script>
 
-{#if collapsed}
-    <div onclick={onClick}>
-        <em>{proposal.title}</em>
-        <ExpandIcon viewBox="0 -3 24 24" />
-    </div>
-{:else}
-    <div class="wrapper">
-        <div class="header">
-            <div class="title-block">
-                <div class="title">
-                    {#if proposal.url.length > 0}
-                        <a href={proposal.url} rel="noreferrer" target="_blank"
-                            >{proposal.title} <Launch viewBox="0 -1 24 24" /></a>
-                    {:else}
+{#snippet header()}
+    <Column gap={"xs"}>
+        {#if proposal.url.length > 0}
+            <a href={proposal.url} rel="noreferrer" target="_blank">
+                <Row crossAxisAlignment={"center"}>
+                    <Body fontWeight={"bold"} width={"hug"} ellipsisTruncate>
                         {proposal.title}
-                    {/if}
-                </div>
-                <div class="status" class:positive class:negative>
-                    {ProposalDecisionStatus[proposal.status]}
-                </div>
-            </div>
-        </div>
-
-        {#if proposal.summary.length > 0}
-            <div class="summary" class:expanded={summaryExpanded} class:full={showFullSummary}>
-                <Markdown text={proposal.summary} inline={false} />
-            </div>
+                    </Body>
+                    <Launch />
+                </Row>
+            </a>
+        {:else}
+            <Body fontWeight={"bold"} width={"hug"} ellipsisTruncate>
+                {proposal.title}
+            </Body>
         {/if}
-        <div class="actions">
-            {#if !showFullSummary}
-                <div class="expand" onclick={toggleSummary}>
-                    <div class="label">
-                        <Translatable
-                            resourceKey={summaryExpanded
-                                ? i18nKey("proposal.readless")
-                                : i18nKey("proposal.readmore")} />
-                    </div>
-                    <div class="icon" class:open={summaryExpanded}>
-                        <ChevronDown viewBox="0 -3 24 24" size="1.6em" color="var(--icon-txt)" />
-                    </div>
-                </div>
-            {/if}
+        <Row crossAxisAlignment={"center"} gap={"sm"}>
+            <Row
+                width={"hug"}
+                borderRadius={"md"}
+                padding={["xxs", "sm"]}
+                backgroundColor={statusColour[proposal.status]}>
+                <BodySmall width={"hug"} colour={"textPrimary"}>
+                    {ProposalDecisionStatus[proposal.status]}
+                </BodySmall>
+            </Row>
             {#if !payloadEmpty}
-                <div onclick={() => (showPayload = true)} class="payload">
-                    <span><Translatable resourceKey={i18nKey("proposal.details")} /></span>
-                    <OpenInNew color="var(--icon-txt)" />
-                </div>
+                <Row onClick={() => (showPayload = true)} gap={"xs"} crossAxisAlignment={"center"}>
+                    <BodySmall colour={"textSecondary"} width={"hug"}>
+                        <Translatable resourceKey={i18nKey("proposal.details")} />
+                    </BodySmall>
+                    <OpenInNew color={ColourVars.textSecondary} />
+                </Row>
             {/if}
-        </div>
+        </Row>
+    </Column>
+{/snippet}
 
-        <ProposalProgressLayout>
-            {#snippet adopt()}
-                <div class="adopt">
-                    <ProposalVoteButton
-                        voting={voteStatus === "adopting"}
-                        voted={voteStatus === "adopted"}
-                        disabled={votingDisabled}
-                        mode={"yes"}
-                        onClick={() => onVote(true)}
-                        percentage={adoptPercent} />
-                </div>
-            {/snippet}
+{#snippet summary()}
+    <ReadMore>
+        <Body fontWeight={"light"}>
+            <Markdown text={proposal.summary} inline={false} />
+        </Body>
+    </ReadMore>
+{/snippet}
 
-            {#snippet progress()}
-                <div class="progress">
-                    <ProposalVotingProgress
-                        deadline={proposal.deadline}
-                        {votingEnded}
-                        {adoptPercent}
-                        {rejectPercent}
-                        minYesPercentageOfTotal={proposal.minYesPercentageOfTotal}
-                        minYesPercentageOfExercised={proposal.minYesPercentageOfExercised} />
-                </div>
-            {/snippet}
-
-            {#snippet reject()}
-                <div class="reject">
-                    <ProposalVoteButton
-                        voting={voteStatus === "rejecting"}
-                        voted={voteStatus === "rejected"}
-                        disabled={votingDisabled}
-                        mode={"no"}
-                        onClick={() => onVote(false)}
-                        percentage={rejectPercent} />
-                </div>
-            {/snippet}
-        </ProposalProgressLayout>
-    </div>
-    <div class="more" class:rtl={$rtlStore}>
-        <a href={proposalUrl} rel="noreferrer" target="_blank">{proposal.id}</a>
-        <div class="subtitle">
-            {typeValue} |
+{#snippet metadata()}
+    <Row wrap crossAxisAlignment={"center"} gap={"xs"}>
+        <Caption colour={"textSecondary"} width={"hug"}>
+            <a href={proposalUrl} rel="noreferrer" target="_blank">{proposal.id}</a>
+        </Caption>
+        <Caption colour={"primary"} width={"hug"}>|</Caption>
+        <Caption colour={"textSecondary"} width={"hug"}>
+            {typeValue}
+        </Caption>
+        <Caption colour={"primary"} width={"hug"}>|</Caption>
+        <Caption colour={"textSecondary"} width={"hug"}>
             <Translatable resourceKey={i18nKey("proposal.proposedBy")} />
+        </Caption>
+        <Caption colour={"textSecondary"} width={"hug"}>
             <a target="_blank" rel="noreferrer" href={proposerUrl}
                 >{renderNeuronId(proposal.proposer)}</a>
-        </div>
-    </div>
+        </Caption>
+    </Row>
+{/snippet}
+
+{#snippet progress()}
+    <ProposalProgressLayout>
+        {#snippet adopt()}
+            <ProposalVoteButton
+                voting={voteStatus === "adopting"}
+                voted={voteStatus === "adopted"}
+                disabled={votingDisabled}
+                mode={"yes"}
+                onClick={() => onVote(true)}
+                percentage={adoptPercent} />
+        {/snippet}
+
+        {#snippet progress()}
+            <ProposalVotingProgress
+                deadline={proposal.deadline}
+                {votingEnded}
+                {adoptPercent}
+                {rejectPercent}
+                minYesPercentageOfTotal={proposal.minYesPercentageOfTotal}
+                minYesPercentageOfExercised={proposal.minYesPercentageOfExercised} />
+        {/snippet}
+
+        {#snippet reject()}
+            <ProposalVoteButton
+                voting={voteStatus === "rejecting"}
+                voted={voteStatus === "rejected"}
+                disabled={votingDisabled}
+                mode={"no"}
+                onClick={() => onVote(false)}
+                percentage={rejectPercent} />
+        {/snippet}
+    </ProposalProgressLayout>
+{/snippet}
+
+{#if collapsed}
+    <Row padding={"sm"} {onClick} crossAxisAlignment={"center"} gap={"sm"}>
+        <ChatText>
+            {proposal.title}
+        </ChatText>
+        <ExpandIcon />
+    </Row>
+{:else}
+    <Column padding={"sm"} gap={"lg"}>
+        {@render header()}
+        {@render summary()}
+        {@render progress()}
+        {@render metadata()}
+    </Column>
 {/if}
 
 {#if showNeuronInfo}
-    <Overlay dismissible onClose={() => (showNeuronInfo = false)}>
-        <ModalContent compactFooter onClose={() => (showNeuronInfo = false)}>
-            {#snippet header()}
+    <Sheet onDismiss={() => (showNeuronInfo = false)}>
+        <Column gap={"xl"} padding={"xl"}>
+            <Subtitle fontWeight={"bold"}>
                 <Translatable resourceKey={i18nKey("proposal.noEligibleNeurons")} />
-            {/snippet}
-            {#snippet body()}
-                <Markdown
-                    text={$_("proposal.noEligibleNeuronsMessage", {
-                        values: { userId: $currentUserIdStore },
-                    })} />
-            {/snippet}
-        </ModalContent>
-    </Overlay>
+            </Subtitle>
+            <Markdown
+                text={$_("proposal.noEligibleNeuronsMessage", {
+                    values: { userId: $currentUserIdStore },
+                })} />
+            <Row mainAxisAlignment={"end"}>
+                <CommonButton
+                    size={"medium"}
+                    mode={"active"}
+                    onClick={() => (showNeuronInfo = false)}>
+                    <Translatable resourceKey={i18nKey("close")} />
+                </CommonButton>
+            </Row>
+        </Column>
+    </Sheet>
 {/if}
 
 {#if showPayload && !payloadEmpty}
-    <Overlay dismissible onClose={() => (showPayload = false)}>
-        <ModalContent compactFooter onClose={() => (showPayload = false)}>
-            {#snippet header()}
-                <div><Translatable resourceKey={i18nKey("proposal.details")} /></div>
-            {/snippet}
-            {#snippet body()}
-                <div class="payload-body">
-                    <Markdown text={payload ?? ""} inline={false} />
-                </div>
-            {/snippet}
-        </ModalContent>
-    </Overlay>
+    <Sheet onDismiss={() => (showPayload = false)}>
+        <Column gap={"xl"} padding={"xl"}>
+            <Subtitle fontWeight={"bold"}>
+                <Translatable resourceKey={i18nKey("proposal.details")} />
+            </Subtitle>
+            <Markdown text={payload ?? ""} inline={false} />
+            <Row mainAxisAlignment={"end"}>
+                <CommonButton size={"medium"} mode={"active"} onClick={() => (showPayload = false)}>
+                    <Translatable resourceKey={i18nKey("close")} />
+                </CommonButton>
+            </Row>
+        </Column>
+    </Sheet>
 {/if}
-
-<style lang="scss">
-    .header {
-        margin-bottom: toRem(4);
-
-        .title-block {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: $sp4;
-            gap: $sp3;
-            .title {
-                @include font(bold, normal, fs-120, 22);
-                word-break: break-all;
-
-                a {
-                    display: flex;
-                    gap: $sp2;
-                    align-items: center;
-                    width: fit-content;
-                }
-            }
-            .status {
-                border-radius: var(--rd);
-                padding: toRem(1) toRem(6);
-                height: fit-content;
-                color: white;
-                background-color: var(--vote-maybe-color);
-
-                &.positive {
-                    background-color: var(--vote-yes-color);
-                }
-
-                &.negative {
-                    background-color: var(--vote-no-color);
-                }
-            }
-        }
-    }
-
-    .summary {
-        transition: none;
-        max-height: toRem(72);
-        @include nice-scrollbar();
-        overflow-y: auto;
-        cursor: pointer;
-        position: relative;
-        overflow-x: hidden;
-        color: "inherit";
-        background-color: rgba(0, 0, 0, 0.05);
-        padding: $sp3;
-
-        &.expanded {
-            transition: max-height ease-in 200ms;
-            max-height: toRem(360);
-        }
-
-        &.full {
-            max-height: none;
-            cursor: default;
-        }
-    }
-
-    .value {
-        @include font-size(fs-120);
-        font-feature-settings: "tnum";
-        font-variant-numeric: tabular-nums;
-    }
-
-    .progress {
-        flex: auto;
-        width: 100%;
-    }
-
-    .more {
-        margin-top: $sp2;
-        @include font-size(fs-70);
-        float: left;
-        display: flex;
-        gap: $sp3;
-        &.rtl {
-            float: right;
-        }
-
-        .subtitle {
-            @include font(book, normal, fs-70);
-            font-weight: 700;
-            @include font-size(fs-70);
-        }
-    }
-
-    .expand {
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-
-        .label {
-            min-width: 70px;
-        }
-
-        .icon {
-            transition: transform 200ms ease-in-out;
-            transform-origin: 50%;
-            &.open {
-                transform: rotate(180deg);
-            }
-        }
-    }
-
-    .actions {
-        margin-top: $sp3;
-        cursor: pointer;
-        @include font(book, normal, fs-80);
-        display: flex;
-        align-items: center;
-        gap: $sp4;
-    }
-
-    .payload {
-        display: flex;
-        align-items: center;
-        gap: $sp2;
-    }
-
-    .payload-body {
-        word-wrap: break-word;
-        max-height: 65vh;
-    }
-</style>
