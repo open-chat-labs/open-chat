@@ -868,6 +868,7 @@
         position: absolute;
         @include z-index("fab");
         right: 20px;
+        right: var(--sp-md);
         bottom: 0;
         opacity: 0;
         pointer-events: none;
@@ -885,6 +886,7 @@
 
     .mentions {
         bottom: 140px;
+        bottom: calc(140px + var(--sp-md));
 
         .mention-count {
             @include font(bold, normal, fs-140);
@@ -904,6 +906,7 @@
         bottom: 24px;
         &.footer {
             bottom: 80px;
+            bottom: calc(80px + var(--sp-md));
         }
     }
 
