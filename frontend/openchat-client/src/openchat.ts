@@ -3197,9 +3197,7 @@ export class OpenChat {
 
     getMinDissolveDelayDays(gate: AccessGate): number | undefined {
         if (isNeuronGate(gate)) {
-            return gate.minDissolveDelay
-                ? gate.minDissolveDelay / ONE_DAY
-                : undefined;
+            return gate.minDissolveDelay ? gate.minDissolveDelay / ONE_DAY : undefined;
         }
     }
 
@@ -5176,9 +5174,7 @@ export class OpenChat {
     }
 
     #subscriptionExists(endpoint: string): Promise<boolean> {
-        return this.#sendRequest({ kind: "subscriptionExists", endpoint }).catch(
-            () => false,
-        );
+        return this.#sendRequest({ kind: "subscriptionExists", endpoint }).catch(() => false);
     }
 
     #pushSubscription(subscription: PushSubscriptionJSON): Promise<void> {
@@ -7079,13 +7075,22 @@ export class OpenChat {
                         this.currentAirdropChannel = registry.currentAirdropChannel;
                         const cryptoMap = new Map(registry.tokenDetails.map((t) => [t.ledger, t]));
                         const nsMap = new Map(
-                            registry.nervousSystemSummary.map((ns) => [
-                                ns.governanceCanisterId,
-                                {
-                                    ...ns,
-                                    token: cryptoMap.get(ns.ledgerCanisterId)!,
+                            registry.nervousSystemSummary.reduce(
+                                (entries, ns) => {
+                                    const token = cryptoMap.get(ns.ledgerCanisterId);
+                                    if (token) {
+                                        entries.push([
+                                            ns.governanceCanisterId,
+                                            {
+                                                ...ns,
+                                                token,
+                                            },
+                                        ]);
+                                    }
+                                    return entries;
                                 },
-                            ]),
+                                [] as [string, NervousSystemDetails][],
+                            ),
                         );
 
                         nervousSystemLookup.set(nsMap);
@@ -9528,9 +9533,7 @@ export class OpenChat {
     }
 
     #logUnexpected(correlationId: string): void {
-        console.error(
-            `WORKER_CLIENT: unexpected correlationId received (${correlationId})`,
-        );
+        console.error(`WORKER_CLIENT: unexpected correlationId received (${correlationId})`);
     }
 
     #resolveResponse(data: WorkerResponse): void {
@@ -9786,27 +9789,31 @@ export class OpenChat {
             }
         });
 
-        notificationStatus.subscribe((status) => {
-            switch (status) {
-                case "granted":
-                    this.#notificationSubscriptionPoller = new Poller(
-                        () => this.#trySubscribe(),
-                        ONE_HOUR,
-                        undefined,
-                        true);
-                    break;
-                case "pending-init":
-                    break;
-                default:
-                    this.#unsubscribeNotifications();
-                    break;
-            }
-        }, () => {
-            if (this.#notificationSubscriptionPoller !== undefined) {
-                this.#notificationSubscriptionPoller.stop();
-                this.#notificationSubscriptionPoller = undefined;
-            }
-        });
+        notificationStatus.subscribe(
+            (status) => {
+                switch (status) {
+                    case "granted":
+                        this.#notificationSubscriptionPoller = new Poller(
+                            () => this.#trySubscribe(),
+                            ONE_HOUR,
+                            undefined,
+                            true,
+                        );
+                        break;
+                    case "pending-init":
+                        break;
+                    default:
+                        this.#unsubscribeNotifications();
+                        break;
+                }
+            },
+            () => {
+                if (this.#notificationSubscriptionPoller !== undefined) {
+                    this.#notificationSubscriptionPoller.stop();
+                    this.#notificationSubscriptionPoller = undefined;
+                }
+            },
+        );
 
         return true;
     }
