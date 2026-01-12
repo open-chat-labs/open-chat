@@ -1,9 +1,8 @@
 <script lang="ts">
+    import { Avatar, Body, ColourVars, Column, Row, Sheet, Subtitle } from "component-lib";
     import {
         allUsersStore,
-        AvatarSize,
         communitiesStore,
-        iconSize,
         selectedCommunitySummaryStore,
         type ChatIdentifier,
         type OpenChat,
@@ -12,7 +11,6 @@
     import { getContext } from "svelte";
     import Phone from "svelte-material-icons/Phone.svelte";
     import PhoneHangup from "svelte-material-icons/PhoneHangup.svelte";
-    import Tooltip from "../../../components/tooltip/Tooltip.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import {
         activeVideoCall,
@@ -22,9 +20,6 @@
         type IncomingVideoCall,
         type RingtoneKey,
     } from "../../../stores/video";
-    import Avatar from "../../Avatar.svelte";
-    import ModalContent from "../../ModalContent.svelte";
-    import Overlay from "../../Overlay.svelte";
     import Translatable from "../../Translatable.svelte";
 
     interface Props {
@@ -93,49 +88,44 @@
         <audio playsinline={true} autoplay={true} src={ringtoneUrl} muted={false} preload="auto">
         </audio>
     {/if}
-    <Overlay onClose={cancel} dismissible>
-        <ModalContent hideHeader hideFooter closeIcon>
-            {#snippet body()}
-                <span class="body">
-                    <div class="details">
-                        <div class="avatar">
-                            <Avatar url={chat.avatarUrl} size={AvatarSize.Default} />
-                        </div>
-                        <div class="txt">
-                            <div class="name">
-                                {chat.name}
-                            </div>
-                            <div class="msg">
-                                <Translatable
-                                    resourceKey={i18nKey("videoCall.remoteStart", {
-                                        name: chat.initiator,
-                                    })} />
-                            </div>
-                        </div>
-                    </div>
-                    <div class="btns">
-                        <Tooltip position={"top"} align={"middle"}>
-                            <div role="button" onclick={cancel} class="btn ignore">
-                                <PhoneHangup size={$iconSize} color={"var(--txt)"} />
-                            </div>
-                            {#snippet popupTemplate()}
-                                <Translatable resourceKey={i18nKey("videoCall.ignore")} />
-                            {/snippet}
-                        </Tooltip>
-                        <Tooltip position={"top"} align={"middle"}>
-                            <div role="button" onclick={join} class="btn join">
-                                <Phone size={$iconSize} color={"var(--txt)"} />
-                            </div>
-                            {#snippet popupTemplate()}
-                                <Translatable resourceKey={i18nKey("videoCall.join")} />
-                            {/snippet}
-                        </Tooltip>
-                    </div>
-                </span>
-            {/snippet}
-        </ModalContent>
-    </Overlay>
+    <Sheet onDismiss={cancel}>
+        <Column gap={"xxl"} padding={"xxxl"}>
+            <Row gap={"lg"}>
+                <Avatar url={chat.avatarUrl} size={"lg"} />
+                <Column>
+                    <Subtitle fontWeight={"bold"}>{chat.name}</Subtitle>
+                    <Body colour={"textSecondary"}>
+                        <Translatable
+                            resourceKey={i18nKey("videoCall.remoteStart", {
+                                name: chat.initiator,
+                            })} />
+                    </Body>
+                </Column>
+            </Row>
+            <Row
+                padding={["zero", "xl"]}
+                gap={"lg"}
+                crossAxisAlignment={"center"}
+                mainAxisAlignment={"spaceAround"}>
+                {@render button(PhoneHangup, ColourVars.error, cancel)}
+                {@render button(Phone, ColourVars.success, join)}
+            </Row>
+        </Column>
+    </Sheet>
 {/if}
+
+{#snippet button(Icon: any, colour: string, onClick: () => void)}
+    <Column
+        mainAxisAlignment={"center"}
+        crossAxisAlignment={"center"}
+        borderRadius={"circle"}
+        {onClick}
+        backgroundColor={colour}
+        width={{ size: "5rem" }}
+        height={{ size: "5rem" }}>
+        <Icon size={"2.5rem"} color={ColourVars.textPrimary} />
+    </Column>
+{/snippet}
 
 <style lang="scss">
     .body {
